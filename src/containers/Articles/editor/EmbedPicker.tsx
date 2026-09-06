@@ -9,7 +9,7 @@ type Props = {
 	initialConfig?: ArticleEmbedConfig | null
 }
 
-const ASPECT_OPTIONS: { value: ArticleEmbedAspectRatio; label: string }[] = [
+const ASPECT_OPTIONS: Array<{ value: ArticleEmbedAspectRatio; label: string }> = [
 	{ value: '16/9', label: '16 : 9' },
 	{ value: '4/3', label: '4 : 3' },
 	{ value: '1/1', label: '1 : 1' },

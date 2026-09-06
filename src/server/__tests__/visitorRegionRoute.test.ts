@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { readCloudflareCountry, visitorAudience, visitorRegionRoute } from '~/server/visitorRegionRoute'
 
-function request(headers: Record<string, string | string[] | undefined> = {}) {
+function request(headers: Record<string, string | Array<string> | undefined> = {}) {
 	return {
 		method: 'GET',
 		url: '/api/dynamic/visitor-region',
@@ -11,7 +11,7 @@ function request(headers: Record<string, string | string[] | undefined> = {}) {
 }
 
 describe('visitorRegionRoute', () => {
-	it('returns the visitor country and EU audience', async () => {
+	test('returns the visitor country and EU audience', async () => {
 		const result = await visitorRegionRoute.handle(request({ 'cf-ipcountry': 'de' }))
 
 		expect(result).toEqual({
@@ -24,7 +24,7 @@ describe('visitorRegionRoute', () => {
 		})
 	})
 
-	it('fails closed when the header is missing', async () => {
+	test('fails closed when the header is missing', async () => {
 		const result = await visitorRegionRoute.handle(request())
 
 		expect(result).toEqual({
@@ -34,13 +34,13 @@ describe('visitorRegionRoute', () => {
 		})
 	})
 
-	it('does not echo malformed header values', () => {
+	test('does not echo malformed header values', () => {
 		expect(readCloudflareCountry('not-a-country')).toBeNull()
 		expect(readCloudflareCountry(['fr', 'us'])).toBe('FR')
 		expect(readCloudflareCountry('T1')).toBe('T1')
 	})
 
-	it('classifies non-EU and Cloudflare special country codes', () => {
+	test('classifies non-EU and Cloudflare special country codes', () => {
 		expect(visitorAudience('US')).toBe('rest')
 		expect(visitorAudience('XX')).toBe('unknown')
 		expect(visitorAudience('T1')).toBe('unknown')

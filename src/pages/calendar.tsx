@@ -49,7 +49,7 @@ export const getStaticProps = withPerformanceLogging('calendar', async () => {
 	const res = await fetchAllProtocolEmissions()
 	const nowSec = Date.now() / 1000
 
-	const emissions: CalendarEmission[] = []
+	const emissions: Array<CalendarEmission> = []
 	for (const protocol of res) {
 		const unlocksByDate = new Map<number, number>()
 		for (const e of protocol.events) {
@@ -93,14 +93,14 @@ const columnHelper = createColumnHelper<CalendarRow>()
 
 const options = ['Unlock', 'Close', 'Macro', 'Crypto']
 
-export default function Protocols({ emissions }: { emissions: CalendarEmission[] }) {
+export default function Protocols({ emissions }: { emissions: Array<CalendarEmission> }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'timestamp', desc: false }])
 	const router = useRouter()
 	const { type } = router.query
 
 	const selectedOptions = React.useMemo(() => {
-		let selectedOptions: string[]
+		let selectedOptions: Array<string>
 		if (type) {
 			if (typeof type === 'string') {
 				selectedOptions = type === 'All' ? [...options] : type === 'None' ? [] : [type]
@@ -186,7 +186,7 @@ export default function Protocols({ emissions }: { emissions: CalendarEmission[]
 		<Layout
 			title="Crypto Events & Token Unlocks Calendar - DefiLlama"
 			description="Track token unlocks, FOMC and CPI dates, halvings, and monthly or quarterly closes. Filter unlock, macro, crypto, and close events."
-			canonicalUrl={`/calendar`}
+			canonicalUrl="/calendar"
 		>
 			<Announcement notCancellable>Want us to track other events? Tweet at @0xngmi on twitter!</Announcement>
 
@@ -320,10 +320,10 @@ export const calendarColumns = [
 const SimpleUpcomingEvent = ({ timestamp, name }: { timestamp: number; name: string }) => {
 	const [nowMs, setNowMs] = React.useState(() => Date.now())
 	const timeLeft = Math.max(0, timestamp - nowMs / 1e3)
-	const days = Math.floor(timeLeft / 86400)
-	const hours = Math.floor((timeLeft - 86400 * days) / 3600)
-	const minutes = Math.floor((timeLeft - 86400 * days - 3600 * hours) / 60)
-	const seconds = Math.floor(timeLeft - 86400 * days - 3600 * hours - minutes * 60)
+	const days = Math.floor(timeLeft / 86_400)
+	const hours = Math.floor((timeLeft - 86_400 * days) / 3600)
+	const minutes = Math.floor((timeLeft - 86_400 * days - 3600 * hours) / 60)
+	const seconds = Math.floor(timeLeft - 86_400 * days - 3600 * hours - minutes * 60)
 
 	React.useEffect(() => {
 		const id = setInterval(() => setNowMs(Date.now()), 1000)

@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildEtherfiCashTvlData } from './api'
 
 describe('Ether.fi chart data', () => {
-	it('derives TVL and signed inflows from the production tuple response', () => {
+	test('derives TVL and signed inflows from the production tuple response', () => {
 		const raw = [
-			[1_000, 100],
-			[2_000, 130],
-			[3_000, 120]
+			[1000, 100],
+			[2000, 130],
+			[3000, 120]
 		] as const
 		const result = buildEtherfiCashTvlData([...raw])
 
@@ -14,29 +14,29 @@ describe('Ether.fi chart data', () => {
 			tvlDataset: {
 				dimensions: ['timestamp', 'TVL'],
 				source: [
-					[1_000, 100],
-					[2_000, 130],
-					[3_000, 120]
+					[1000, 100],
+					[2000, 130],
+					[3000, 120]
 				]
 			},
 			inflowsDataset: {
 				dimensions: ['timestamp', 'USD Inflows'],
 				source: [
-					[2_000, 30],
-					[3_000, -10]
+					[2000, 30],
+					[3000, -10]
 				]
 			},
 			previousTvl: 130,
 			previousInflow: 30
 		})
 		expect(raw).toEqual([
-			[1_000, 100],
-			[2_000, 130],
-			[3_000, 120]
+			[1000, 100],
+			[2000, 130],
+			[3000, 120]
 		])
 	})
 
-	it('keeps empty datasets dimensioned for their chart configurations', () => {
+	test('keeps empty datasets dimensioned for their chart configurations', () => {
 		expect(buildEtherfiCashTvlData([])).toEqual({
 			tvlDataset: { source: [], dimensions: ['timestamp', 'TVL'] },
 			inflowsDataset: { source: [], dimensions: ['timestamp', 'USD Inflows'] },

@@ -10,7 +10,7 @@ interface HlVenueFunding {
 }
 
 type HlVenueEntry = [string, HlVenueFunding | null]
-type HlPredictedRow = [string, HlVenueEntry[]]
+type HlPredictedRow = [string, Array<HlVenueEntry>]
 
 export interface PredictedFunding {
 	coin: string
@@ -27,9 +27,9 @@ export interface PredictedFunding {
 
 const CEX_VENUES = ['BinPerp', 'BybitPerp', 'OkxPerp']
 
-export function buildPredictedFundings(raw: HlPredictedRow[]): PredictedFunding[] {
+export function buildPredictedFundings(raw: Array<HlPredictedRow>): Array<PredictedFunding> {
 	return raw.map(([coin, venues]) => {
-		const venueMap = new Map(venues.filter(([, info]) => info != null) as [string, HlVenueFunding][])
+		const venueMap = new Map(venues.filter(([, info]) => info != null) as Array<[string, HlVenueFunding]>)
 		const venueRates: Record<string, number | null> = {}
 
 		for (const [name, info] of venueMap.entries()) {
@@ -63,7 +63,7 @@ export function buildPredictedFundings(raw: HlPredictedRow[]): PredictedFunding[
 
 export default async function handler(
 	req: NextApiRequest,
-	res: NextApiResponse<PredictedFunding[] | { error: string }>
+	res: NextApiResponse<Array<PredictedFunding> | { error: string }>
 ) {
 	if (req.method !== 'GET') {
 		res.setHeader('Allow', ['GET'])
@@ -71,7 +71,7 @@ export default async function handler(
 	}
 
 	try {
-		const raw = await postInfo<HlPredictedRow[]>({ type: 'predictedFundings' })
+		const raw = await postInfo<Array<HlPredictedRow>>({ type: 'predictedFundings' })
 
 		const result = buildPredictedFundings(raw)
 

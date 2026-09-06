@@ -19,7 +19,7 @@ const CATEGORY_CONFIG: Record<FilterPresetCategory, { label: string; color: stri
 	category: { label: 'Category', color: 'bg-cyan-500/20 text-cyan-400' }
 }
 
-const CATEGORY_ORDER: FilterPresetCategory[] = [
+const CATEGORY_ORDER: Array<FilterPresetCategory> = [
 	'quick',
 	'growth',
 	'activity',
@@ -55,7 +55,7 @@ const GROUPED_PRESETS = (() => {
 	const filtered = CORE_FILTER_PRESETS.filter(
 		(preset) => !preset.strategyType || preset.strategyType === 'protocols' || preset.strategyType === 'both'
 	)
-	const grouped = new Map<FilterPresetCategory, FilterPreset[]>()
+	const grouped = new Map<FilterPresetCategory, Array<FilterPreset>>()
 	for (const preset of filtered) {
 		const existing = grouped.get(preset.category) ?? []
 		existing.push(preset)
@@ -68,7 +68,7 @@ export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelector
 	const groupedPresets = GROUPED_PRESETS
 	const currentEntries = useMemo(() => normalizeEntries(currentFilters), [currentFilters])
 
-	if (!groupedPresets.size) {
+	if (groupedPresets.size === 0) {
 		return null
 	}
 

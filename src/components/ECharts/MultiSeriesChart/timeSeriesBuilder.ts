@@ -17,14 +17,14 @@ export type PeriodBarSeries = {
 	name: string
 	color: string
 	stack?: string
-	points: readonly TimePoint[]
+	points: ReadonlyArray<TimePoint>
 }
 
 /** Multi-series line input where each series contributes one numeric value per timestamp. */
 type PeriodLineSeries = {
 	name: string
 	color: string
-	points: readonly TimePoint[]
+	points: ReadonlyArray<TimePoint>
 }
 
 /**
@@ -38,23 +38,23 @@ type TimeSeriesChartInput =
 	| {
 			kind: 'periodBars'
 			groupBy: ChartTimeGrouping
-			series: readonly PeriodBarSeries[]
+			series: ReadonlyArray<PeriodBarSeries>
 	  }
 	| {
 			kind: 'periodLines'
 			groupBy: ChartTimeGrouping
-			series: readonly PeriodLineSeries[]
+			series: ReadonlyArray<PeriodLineSeries>
 	  }
 	| {
 			kind: 'cumulativeLines'
-			series: readonly PeriodLineSeries[]
+			series: ReadonlyArray<PeriodLineSeries>
 			carryForwardMissingValues?: boolean
 	  }
 
 /** Exact `MultiSeriesChart` render shape returned by the builder. */
 export type TimeSeriesChartSpec = {
 	dataset: MultiSeriesTimeSeriesDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 }
 
 const EMPTY_CHART_SPEC: TimeSeriesChartSpec = {
@@ -82,7 +82,7 @@ function getOrCreateRow(
 }
 
 /** Reject ambiguous output while collecting dimensions in input order. */
-function addSeriesName(name: string, seenNames: Set<string>, dimensions: string[]) {
+function addSeriesName(name: string, seenNames: Set<string>, dimensions: Array<string>) {
 	if (seenNames.has(name)) {
 		throw new Error(`Duplicate series name "${name}" is not allowed`)
 	}
@@ -96,7 +96,7 @@ function finalizeRows(
 	seriesCount: number,
 	isCumulative: boolean,
 	carryForwardMissingValues: boolean
-): MultiSeriesTimeSeriesRow[] {
+): Array<MultiSeriesTimeSeriesRow> {
 	const source = Array.from(rowsByTimestamp.values()).sort((a, b) => a[0] - b[0])
 
 	if (isCumulative) {

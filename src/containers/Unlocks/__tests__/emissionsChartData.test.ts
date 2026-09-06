@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { EmissionsChartRow } from '../api.types'
 import { buildEmissionProjectionModel, processGroupedChartData, sortStacksByVolatility } from '../emissionsChartData'
 
@@ -7,7 +7,7 @@ function createRow(timestamp: number): EmissionsChartRow {
 }
 
 describe('emissions chart data transforms', () => {
-	it('keeps forecast series separate when standard allocation groups their base series', () => {
+	test('keeps forecast series separate when standard allocation groups their base series', () => {
 		const result = buildEmissionProjectionModel({
 			chartSections: ['App Rewards', 'Projected Rewards'],
 			categoriesBreakdown: { farming: ['App Rewards'] },
@@ -35,7 +35,7 @@ describe('emissions chart data transforms', () => {
 		])
 	})
 
-	it('keeps directly grouped TBD series separate from documented values', () => {
+	test('keeps directly grouped TBD series separate from documented values', () => {
 		const result = buildEmissionProjectionModel({
 			chartSections: ['Community', 'Community (TBD)'],
 			categoriesBreakdown: { farming: ['Community', 'Community (TBD)'] },
@@ -54,7 +54,7 @@ describe('emissions chart data transforms', () => {
 		})
 	})
 
-	it('uses projection flags carried by chart points when section metadata is absent', () => {
+	test('uses projection flags carried by chart points when section metadata is absent', () => {
 		expect(
 			buildEmissionProjectionModel({
 				chartSections: ['Forecast Rewards'],
@@ -70,7 +70,7 @@ describe('emissions chart data transforms', () => {
 		})
 	})
 
-	it('ignores flagged metadata sections that have no chart data', () => {
+	test('ignores flagged metadata sections that have no chart data', () => {
 		const result = buildEmissionProjectionModel({
 			chartSections: ['Node Operators & Company'],
 			categoriesBreakdown: {
@@ -89,7 +89,7 @@ describe('emissions chart data transforms', () => {
 		})
 	})
 
-	it('groups categories with case-insensitive first-match semantics', () => {
+	test('groups categories with case-insensitive first-match semantics', () => {
 		const row = createRow(1)
 		row.Team = 10
 		row.team = 20
@@ -106,7 +106,7 @@ describe('emissions chart data transforms', () => {
 		})
 	})
 
-	it('sorts stacks by volatility without mutating their input order', () => {
+	test('sorts stacks by volatility without mutating their input order', () => {
 		const first = createRow(1)
 		first.volatile = 0
 		first.moderate = 0

@@ -18,12 +18,12 @@ import { pushYieldsQuery } from '../queryUpdates.client'
 // set + vocabulary + cleared/checked keys (see BorrowView).
 
 type PresetParams = {
-	token?: string[]
-	collateralToken?: string[]
-	borrowToken?: string[]
-	attribute?: string[]
-	category?: string[]
-	protocol?: string[]
+	token?: Array<string>
+	collateralToken?: Array<string>
+	borrowToken?: Array<string>
+	attribute?: Array<string>
+	category?: Array<string>
+	protocol?: Array<string>
 	minTvl?: number
 	maxTvl?: number
 	minApy?: number
@@ -32,14 +32,14 @@ type PresetParams = {
 	maxAvailable?: number
 }
 
-type CriteriaGroup = { label: string; items: string[]; tone: 'neutral' | 'accent' }
+type CriteriaGroup = { label: string; items: Array<string>; tone: 'neutral' | 'accent' }
 
 export interface Preset {
 	id: string
 	label: string
 	icon: IIcon['name']
 	params: PresetParams
-	criteria: CriteriaGroup[]
+	criteria: Array<CriteriaGroup>
 }
 
 const ARRAY_PARAM_KEYS = ['token', 'collateralToken', 'borrowToken', 'attribute', 'category', 'protocol'] as const
@@ -50,7 +50,7 @@ type NumberParamKey = (typeof NUMBER_PARAM_KEYS)[number]
 // The earn attributes EarnView can honour (URL `attribute` values).
 const EARN_ATTRIBUTE_VOCABULARY = new Set(['stablecoins', 'single_exposure', 'no_il', 'audited'])
 
-const EARN_PRESETS: Preset[] = [
+const EARN_PRESETS: Array<Preset> = [
 	{
 		id: 'stables',
 		label: 'Stables',
@@ -131,21 +131,21 @@ const EARN_CLEARED_KEYS = [
 
 // Params compared for active-state: token, attribute, category + the TVL/APY ranges.
 // (chain/protocol are cleared when a preset applies but are not checked here.)
-const EARN_ARRAY_CHECK_KEYS: readonly ArrayParamKey[] = ['token', 'attribute', 'category']
-const EARN_NUMBER_CHECK_KEYS: readonly NumberParamKey[] = ['minTvl', 'maxTvl', 'minApy', 'maxApy']
+const EARN_ARRAY_CHECK_KEYS: ReadonlyArray<ArrayParamKey> = ['token', 'attribute', 'category']
+const EARN_NUMBER_CHECK_KEYS: ReadonlyArray<NumberParamKey> = ['minTvl', 'maxTvl', 'minApy', 'maxApy']
 
-function toArray(value: string | string[] | undefined): string[] {
+function toArray(value: string | Array<string> | undefined): Array<string> {
 	if (typeof value === 'string') return [value]
 	return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []
 }
 
-function sameSet(actual: string[], expected: string[] = []): boolean {
+function sameSet(actual: Array<string>, expected: Array<string> = []): boolean {
 	if (actual.length !== expected.length) return false
 	const set = new Set(actual)
 	return expected.every((value) => set.has(value))
 }
 
-function readNumber(value: string | string[] | undefined): number | null {
+function readNumber(value: string | Array<string> | undefined): number | null {
 	const raw = Array.isArray(value) ? value[0] : value
 	if (raw == null || raw.trim() === '') return null
 	const parsed = Number(raw)
@@ -154,11 +154,11 @@ function readNumber(value: string | string[] | undefined): number | null {
 
 function isPresetActive(
 	preset: Preset,
-	query: Record<string, string | string[] | undefined>,
+	query: Record<string, string | Array<string> | undefined>,
 	options: {
 		attributeVocabulary: Set<string>
-		arrayCheckKeys: readonly ArrayParamKey[]
-		numberCheckKeys: readonly NumberParamKey[]
+		arrayCheckKeys: ReadonlyArray<ArrayParamKey>
+		numberCheckKeys: ReadonlyArray<NumberParamKey>
 	}
 ): boolean {
 	for (const key of options.arrayCheckKeys) {
@@ -181,19 +181,19 @@ export function CuratedViews({
 	arrayCheckKeys = EARN_ARRAY_CHECK_KEYS,
 	numberCheckKeys = EARN_NUMBER_CHECK_KEYS
 }: {
-	presets?: Preset[]
+	presets?: Array<Preset>
 	attributeVocabulary?: Set<string>
-	clearedKeys?: readonly string[]
-	arrayCheckKeys?: readonly ArrayParamKey[]
-	numberCheckKeys?: readonly NumberParamKey[]
+	clearedKeys?: ReadonlyArray<string>
+	arrayCheckKeys?: ReadonlyArray<ArrayParamKey>
+	numberCheckKeys?: ReadonlyArray<NumberParamKey>
 } = {}) {
 	const router = useRouter()
-	const query = router.query as Record<string, string | string[] | undefined>
+	const query = router.query as Record<string, string | Array<string> | undefined>
 	const activeOptions = { attributeVocabulary, arrayCheckKeys, numberCheckKeys }
 
 	function apply(preset: Preset) {
 		const active = isPresetActive(preset, query, activeOptions)
-		const updates: Record<string, string | number | string[] | undefined> = {}
+		const updates: Record<string, string | number | Array<string> | undefined> = {}
 		for (const key of clearedKeys) updates[key] = undefined
 		if (!active) {
 			trackYieldsEvent(YIELDS_EVENTS.FILTER_PRESET, { preset: preset.id })

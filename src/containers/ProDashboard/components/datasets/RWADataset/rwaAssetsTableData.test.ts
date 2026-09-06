@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { sumRwaMetricBreakdown } from '~/containers/ProDashboard/rwaMetrics'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { buildRWAAllChainsAssetTableRows, buildRWAAssetCsv, buildRWAChainAssetTableRows } from './rwaAssetsTableData'
@@ -20,7 +20,7 @@ function asset(overrides: Partial<IFetchedRWAProject> = {}): IFetchedRWAProject 
 }
 
 describe('RWA asset table data', () => {
-	it('distinguishes an unavailable active-mcap breakdown from measured zero', () => {
+	test('distinguishes an unavailable active-mcap breakdown from measured zero', () => {
 		expect(sumRwaMetricBreakdown(undefined)).toBeNull()
 		expect(sumRwaMetricBreakdown(null)).toBeNull()
 		expect(sumRwaMetricBreakdown({})).toBeNull()
@@ -28,13 +28,13 @@ describe('RWA asset table data', () => {
 		expect(sumRwaMetricBreakdown({ Ethereum: 10, Base: 5 })).toBe(15)
 	})
 
-	it('preserves unavailable stock metrics while treating absent DeFi usage as zero', () => {
+	test('preserves unavailable stock metrics while treating absent DeFi usage as zero', () => {
 		expect(buildRWAAllChainsAssetTableRows([asset()])).toMatchObject([
 			{ activeMcap: null, onChainMcap: null, defiActiveTvl: 0 }
 		])
 	})
 
-	it('preserves suspicious metadata for warnings and CSV exports', () => {
+	test('preserves suspicious metadata for warnings and CSV exports', () => {
 		const rows = buildRWAAllChainsAssetTableRows([
 			asset({ suspicious: true, suspiciousReason: 'Unverified valuation source' })
 		])
@@ -44,7 +44,7 @@ describe('RWA asset table data', () => {
 		expect(csv[1]?.slice(-2)).toEqual([true, 'Unverified valuation source'])
 	})
 
-	it('includes selected-chain assets based on source membership even when every value is zero', () => {
+	test('includes selected-chain assets based on source membership even when every value is zero', () => {
 		const rows = buildRWAChainAssetTableRows(
 			[
 				asset({ activeMcap: { Ethereum: 0 }, onChainMcap: { Ethereum: 0 } }),
@@ -57,7 +57,7 @@ describe('RWA asset table data', () => {
 		expect(rows[0]).toMatchObject({ name: 'Asset', activeMcap: 0, onChainMcap: 0, defiActiveTvl: 0 })
 	})
 
-	it('uses canonical chain normalization for selected-chain totals', () => {
+	test('uses canonical chain normalization for selected-chain totals', () => {
 		const rows = buildRWAChainAssetTableRows(
 			[asset({ activeMcap: { 'Arbitrum One': 12 }, defiActiveTvl: { 'Arbitrum One': { protocol: 3 } } })],
 			'arbitrum-one'
@@ -66,7 +66,7 @@ describe('RWA asset table data', () => {
 		expect(rows[0]).toMatchObject({ activeMcap: 12, onChainMcap: null, defiActiveTvl: 3 })
 	})
 
-	it('uses all-chain sums but selected-chain values for every displayed metric', () => {
+	test('uses all-chain sums but selected-chain values for every displayed metric', () => {
 		const input = [
 			asset({
 				onChainMcap: { Ethereum: 70, Base: 30 },

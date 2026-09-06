@@ -7,7 +7,7 @@ import { DepthIcon, DocumentationIcon, KpiIcon, PerformanceIndexIcon, SpreadIcon
 
 type TabIcon = ComponentType<{ className?: string }>
 
-export const MARKET_MAKER_TABS: { label: string; to: string; Icon: TabIcon }[] = [
+export const MARKET_MAKER_TABS: Array<{ label: string; to: string; Icon: TabIcon }> = [
 	{ label: 'Performance Index', to: '/market-makers', Icon: PerformanceIndexIcon },
 	{ label: 'Depth', to: '/market-makers/depth', Icon: DepthIcon },
 	{ label: 'Volume', to: '/market-makers/volume', Icon: VolumeIcon },

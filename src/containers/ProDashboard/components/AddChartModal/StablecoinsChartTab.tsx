@@ -73,11 +73,11 @@ const STABLECOIN_ASSET_CHART_TYPES = [
 	{ value: 'chainDominance', label: 'Chain Dominance' }
 ]
 
-const EMPTY_HALLMARKS: [number, string][] = []
-const EMPTY_CHAIN_LIST: StablecoinChainInfo[] = []
-const EMPTY_ASSET_LIST: StablecoinAssetInfo[] = []
-const EMPTY_SERIES: string[] = []
-const TOTAL_CIRCULATING_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const EMPTY_HALLMARKS: Array<[number, string]> = []
+const EMPTY_CHAIN_LIST: Array<StablecoinChainInfo> = []
+const EMPTY_ASSET_LIST: Array<StablecoinAssetInfo> = []
+const EMPTY_SERIES: Array<string> = []
+const TOTAL_CIRCULATING_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: '#3e79cc' }
 ]
 const AREA_EXPORT_BUTTONS = { csv: true, png: true, filename: 'chart' }
@@ -129,8 +129,8 @@ export function StablecoinsChartTab({
 	const { data: assetsListData, isLoading: assetsLoading } = useStablecoinAssetsList()
 	const chainsList = chainsListData ?? EMPTY_CHAIN_LIST
 	const assetsList = assetsListData ?? EMPTY_ASSET_LIST
-	const chainOptions: VirtualizedSelectOption[] = useMemo(() => {
-		const options: VirtualizedSelectOption[] = [{ value: 'All', label: 'All Chains', icon: '🌐' }]
+	const chainOptions: Array<VirtualizedSelectOption> = useMemo(() => {
+		const options: Array<VirtualizedSelectOption> = [{ value: 'All', label: 'All Chains', icon: '🌐' }]
 		for (const chain of chainsList) {
 			options.push({
 				value: chain.name,
@@ -142,7 +142,7 @@ export function StablecoinsChartTab({
 		return options
 	}, [chainsList])
 
-	const assetOptions: VirtualizedSelectOption[] = useMemo(() => {
+	const assetOptions: Array<VirtualizedSelectOption> = useMemo(() => {
 		return assetsList.map((asset) => ({
 			value: asset.name,
 			label: `${asset.name} (${asset.symbol})`,
@@ -307,7 +307,7 @@ export function StablecoinsChartTab({
 		return colors
 	}, [seriesNames])
 
-	const chainCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
+	const chainCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			chainChartPayload.charts.map((chart) => ({
 				...chart,
@@ -316,7 +316,7 @@ export function StablecoinsChartTab({
 			})),
 		[chainChartPayload.charts, chainChartType, stackColors]
 	)
-	const assetChainCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
+	const assetChainCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			assetPresentation.chartType === 'chainMcaps'
 				? assetPresentation.charts.map((chart) => ({
@@ -327,7 +327,7 @@ export function StablecoinsChartTab({
 				: [],
 		[assetPresentation, assetChainColors]
 	)
-	const assetChainDominanceCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
+	const assetChainDominanceCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			assetPresentation.chartType === 'chainDominance'
 				? assetPresentation.charts.map((chart) => ({
@@ -491,7 +491,7 @@ export function StablecoinsChartTab({
 							dataset={assetDataset}
 							charts={assetChainDominanceCharts}
 							selectedCharts={selectedAssetCharts}
-							expandTo100Percent={true}
+							expandTo100Percent
 							chartOptions={STABLECOIN_PERCENT_CHART_OPTIONS}
 							csvSource={{ type: 'dataset', prepare: prepareCompleteAssetCsvDataset }}
 							exportButtons={AREA_EXPORT_BUTTONS}

@@ -13,10 +13,10 @@ import { useTokenSearch } from '../../../datasets/TokenUsageDataset/useTokenSear
 import type { CombinedTableType } from '../../types'
 
 interface SimpleTableConfigProps {
-	selectedChains: string[]
+	selectedChains: Array<string>
 	chainOptions: Array<{ value: string; label: string }>
 	protocolsLoading: boolean
-	onChainsChange: (values: string[]) => void
+	onChainsChange: (values: Array<string>) => void
 	selectedDatasetChain: string | null
 	onDatasetChainChange: (value: string | null) => void
 	selectedCexAnalyticsView: 'starter' | CexAnalyticsView
@@ -27,8 +27,8 @@ interface SimpleTableConfigProps {
 	onCexAnalyticsTopNChange: (topN: number) => void
 	selectedTableType: CombinedTableType
 	onTableTypeChange: (type: CombinedTableType) => void
-	selectedTokens: string[]
-	onTokensChange: (tokens: string[]) => void
+	selectedTokens: Array<string>
+	onTokensChange: (tokens: Array<string>) => void
 	includeCex: boolean
 	onIncludeCexChange: (include: boolean) => void
 	onBackToTypeSelector: () => void
@@ -140,7 +140,7 @@ function CexAnalyticsPreview({
 	metric: CexAnalyticsMetric
 	topN: number
 }) {
-	const previewItems = useMemo<CexDatasetTableConfig[]>(() => {
+	const previewItems = useMemo<Array<CexDatasetTableConfig>>(() => {
 		const createConfig = (previewView: CexAnalyticsView, idSuffix: string): CexDatasetTableConfig =>
 			createDatasetTableConfig({
 				id: `cex-preview-${idSuffix}`,

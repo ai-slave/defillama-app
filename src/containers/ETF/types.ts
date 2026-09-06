@@ -9,7 +9,7 @@ export interface AssetTotals {
 
 /** A processed snapshot row with the `chain` field added for display */
 export interface IETFSnapshotRow extends IETFSnapshotApiItem {
-	chain: string[]
+	chain: Array<string>
 }
 
 /** Processed flows keyed by unix timestamp (seconds) as string keys */
@@ -22,7 +22,7 @@ export type IProcessedFlows = Record<
 >
 
 export interface ETFOverviewProps {
-	snapshot: IETFSnapshotRow[]
+	snapshot: Array<IETFSnapshotRow>
 	flows: IProcessedFlows
 	lastUpdated: string
 	totalsByAsset: AssetTotals

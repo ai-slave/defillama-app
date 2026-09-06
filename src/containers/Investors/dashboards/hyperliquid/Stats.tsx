@@ -4,9 +4,10 @@ import {
 	getSortedRowModel,
 	type PaginationState,
 	type SortingState,
-	useReactTable
+	useReactTable,
+	type ColumnDef,
+	type Table
 } from '@tanstack/react-table'
-import type { ColumnDef, Table } from '@tanstack/react-table'
 import type { EChartsOption } from 'echarts'
 import { BarChart, PieChart as EPieChart, ScatterChart as EScatterChart } from 'echarts/charts'
 import { GridComponent, TooltipComponent } from 'echarts/components'
@@ -31,7 +32,7 @@ import {
 
 echarts.use([CanvasRenderer, BarChart, EPieChart, EScatterChart, GridComponent, TooltipComponent])
 
-const ALL_MIDS_SUB: WsSubscription[] = [{ type: 'allMids' }]
+const ALL_MIDS_SUB: Array<WsSubscription> = [{ type: 'allMids' }]
 const TICKER_SPEED_PX_PER_SEC = 52
 const PAGE_SIZE = 10
 
@@ -86,10 +87,10 @@ function formatTimestamp(ts: number | null | undefined) {
 	})
 }
 
-function PriceTickerTape({ coins }: { coins: string[] }) {
+function PriceTickerTape({ coins }: { coins: Array<string> }) {
 	const trackRef = useRef<HTMLDivElement>(null)
-	const priceEls = useRef<Map<string, HTMLElement[]>>(new Map())
-	const itemEls = useRef<Map<string, HTMLElement[]>>(new Map())
+	const priceEls = useRef<Map<string, Array<HTMLElement>>>(new Map())
+	const itemEls = useRef<Map<string, Array<HTMLElement>>>(new Map())
 	const prevPrices = useRef<Record<string, string>>({})
 	const latestMidsRef = useRef<Record<string, string> | null>(null)
 	const flashTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
@@ -102,8 +103,8 @@ function PriceTickerTape({ coins }: { coins: string[] }) {
 		const track = trackRef.current
 		if (!track) return
 
-		const nextPrices = new Map<string, HTMLElement[]>()
-		const nextItems = new Map<string, HTMLElement[]>()
+		const nextPrices = new Map<string, Array<HTMLElement>>()
+		const nextItems = new Map<string, Array<HTMLElement>>()
 		for (const coin of coins) {
 			const els = Array.from(track.querySelectorAll<HTMLElement>(`[data-coin="${coin}"]`))
 			nextItems.set(coin, els)
@@ -242,7 +243,7 @@ function MetricCard({ label, value, helper }: { label: string; value: string | n
 	)
 }
 
-function FundingChart({ data }: { data: { name: string; value: number }[] }) {
+function FundingChart({ data }: { data: Array<{ name: string; value: number }> }) {
 	const [isDark] = useDarkModeManager()
 	const c = isDark ? CHART_COLORS.dark : CHART_COLORS.light
 	const { containerRef, chartRef } = usePersistentChart(data.length > 0)
@@ -337,7 +338,7 @@ function Pagination<Row>({ table }: { table: Table<Row> }) {
 	)
 }
 
-const perpColumns: ColumnDef<PerpMarket>[] = [
+const perpColumns: Array<ColumnDef<PerpMarket>> = [
 	{
 		header: 'Asset',
 		accessorKey: 'name',
@@ -428,7 +429,7 @@ const perpColumns: ColumnDef<PerpMarket>[] = [
 	}
 ]
 
-const spotColumns: ColumnDef<SpotMarket>[] = [
+const spotColumns: Array<ColumnDef<SpotMarket>> = [
 	{
 		header: 'Pair',
 		accessorKey: 'name',
@@ -467,7 +468,7 @@ const spotColumns: ColumnDef<SpotMarket>[] = [
 	}
 ]
 
-const predictedFundingColumns: ColumnDef<PredictedFunding>[] = [
+const predictedFundingColumns: Array<ColumnDef<PredictedFunding>> = [
 	{
 		header: 'Coin',
 		accessorKey: 'coin',
@@ -535,7 +536,7 @@ const predictedFundingColumns: ColumnDef<PredictedFunding>[] = [
 	}
 ]
 
-function OIDistributionChart({ data }: { data: { name: string; value: number }[] }) {
+function OIDistributionChart({ data }: { data: Array<{ name: string; value: number }> }) {
 	const [isDark] = useDarkModeManager()
 	const c = isDark ? CHART_COLORS.dark : CHART_COLORS.light
 	const { containerRef, chartRef } = usePersistentChart(data.length > 0)
@@ -586,7 +587,7 @@ function OIDistributionChart({ data }: { data: { name: string; value: number }[]
 	)
 }
 
-function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
+function VolumeOIScatter({ data }: { data: Array<PerpMarket> }) {
 	const [isDark] = useDarkModeManager()
 	const c = isDark ? CHART_COLORS.dark : CHART_COLORS.light
 	const { containerRef, chartRef } = usePersistentChart(data.length > 0)
@@ -642,7 +643,7 @@ function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
 						}
 						return points
 					})(),
-					symbolSize: (val: number[]) => Math.max(6, Math.min(24, Math.abs(val[2]) * 2)),
+					symbolSize: (val: Array<number>) => Math.max(6, Math.min(24, Math.abs(val[2]) * 2)),
 					itemStyle: {
 						color: (params) =>
 							Array.isArray(params.data) && typeof params.data[2] === 'number' && params.data[2] >= 0
@@ -669,7 +670,7 @@ function VolumeOIScatter({ data }: { data: PerpMarket[] }) {
 	)
 }
 
-function PredictedFundingTable({ data }: { data: PredictedFunding[] }) {
+function PredictedFundingTable({ data }: { data: Array<PredictedFunding> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'spreadToBestCex', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
 
@@ -698,7 +699,7 @@ function PredictedFundingTable({ data }: { data: PredictedFunding[] }) {
 	)
 }
 
-function PerpsTable({ data }: { data: PerpMarket[] }) {
+function PerpsTable({ data }: { data: Array<PerpMarket> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'dayNtlVlm', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
 
@@ -723,7 +724,7 @@ function PerpsTable({ data }: { data: PerpMarket[] }) {
 	)
 }
 
-function SpotTable({ data }: { data: SpotMarket[] }) {
+function SpotTable({ data }: { data: Array<SpotMarket> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'dayNtlVlm', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
 

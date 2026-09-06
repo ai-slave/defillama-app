@@ -116,8 +116,8 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
 			resendRef.current?.start()
 			setStep('confirm')
-		} catch (err: any) {
-			setError(err.message || 'Failed to send verification code. Please try again.')
+		} catch (requestError: any) {
+			setError(requestError.message || 'Failed to send verification code. Please try again.')
 		}
 	}
 
@@ -155,8 +155,8 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 			}
 
 			setStep('success')
-		} catch (err: any) {
-			setError(err.message || 'Failed to switch to email authentication. Please try again.')
+		} catch (confirmError: any) {
+			setError(confirmError.message || 'Failed to switch to email authentication. Please try again.')
 		}
 	}
 
@@ -169,8 +169,8 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
 			resendRef.current?.start()
 			toast.success('Verification code resent!')
-		} catch (err: any) {
-			setError(err.message || 'Failed to resend verification code.')
+		} catch (resendError: any) {
+			setError(resendError.message || 'Failed to resend verification code.')
 		}
 	}
 

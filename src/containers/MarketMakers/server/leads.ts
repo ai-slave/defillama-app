@@ -17,7 +17,7 @@ const RATE_WINDOW_MS = 10 * 60 * 1000
 const LEAD_RATE_LIMIT = 5
 const CTA_RATE_LIMIT = 30
 
-const rateBuckets = new Map<string, number[]>()
+const rateBuckets = new Map<string, Array<number>>()
 
 function isRateLimited(bucket: string, limit: number): boolean {
 	const now = Date.now()
@@ -96,7 +96,7 @@ export function validateConnectBody(raw: unknown): Validated {
 	if (!common.ok) return common
 
 	const interest = str(body, 'interest', 64)
-	if (!interest || !(CONNECT_INTERESTS as readonly string[]).includes(interest)) {
+	if (!interest || !(CONNECT_INTERESTS as ReadonlyArray<string>).includes(interest)) {
 		return { ok: false, error: 'Invalid interest' }
 	}
 	const fullName = str(body, 'full_name')
@@ -105,7 +105,7 @@ export function validateConnectBody(raw: unknown): Validated {
 	if (!email || !EMAIL_PATTERN.test(email)) return { ok: false, error: 'Invalid email' }
 
 	const tokenStatus = str(body, 'token_status', 32)
-	if (tokenStatus && !(TOKEN_STATUSES as readonly string[]).includes(tokenStatus)) {
+	if (tokenStatus && !(TOKEN_STATUSES as ReadonlyArray<string>).includes(tokenStatus)) {
 		return { ok: false, error: 'Invalid token status' }
 	}
 

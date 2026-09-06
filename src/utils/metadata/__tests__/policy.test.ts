@@ -1,20 +1,20 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { isLocalDevWithoutApiKey, shouldSkipMetadataRefresh, shouldWriteMetadataStubsOnFailure } from '../policy'
 
 describe('metadata stub policy', () => {
-	it('detects local development without an API key', () => {
+	test('detects local development without an API key', () => {
 		expect(isLocalDevWithoutApiKey({ NODE_ENV: 'development', API_KEY: '' })).toBe(true)
 		expect(isLocalDevWithoutApiKey({ NODE_ENV: 'development', API_KEY: 'key' })).toBe(false)
 		expect(isLocalDevWithoutApiKey({ NODE_ENV: 'production', API_KEY: '' })).toBe(false)
 	})
 
-	it('uses the same local-dev no-key condition for runtime refresh skips', () => {
+	test('uses the same local-dev no-key condition for runtime refresh skips', () => {
 		expect(shouldSkipMetadataRefresh({ NODE_ENV: 'development', API_KEY: '' })).toBe(true)
 		expect(shouldSkipMetadataRefresh({ NODE_ENV: 'development', API_KEY: 'key' })).toBe(false)
 		expect(shouldSkipMetadataRefresh({ NODE_ENV: 'production', API_KEY: '' })).toBe(false)
 	})
 
-	it('allows stub writes only in development', () => {
+	test('allows stub writes only in development', () => {
 		expect(shouldWriteMetadataStubsOnFailure({ CI: 'true', NODE_ENV: 'production' })).toBe(false)
 		expect(shouldWriteMetadataStubsOnFailure({ CI: 'false', NODE_ENV: 'production' })).toBe(false)
 		expect(shouldWriteMetadataStubsOnFailure({ CI: '1', NODE_ENV: 'production' })).toBe(false)

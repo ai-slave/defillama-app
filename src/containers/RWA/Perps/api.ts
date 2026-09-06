@@ -75,8 +75,8 @@ function createRWAPerpsFundingHistoryUrl(id: string, params?: IRWAPerpsFundingHi
 /**
  * Fetch the latest DEX snapshot, optionally including CEX markets.
  */
-export async function fetchRWAPerpsCurrent(includeCex: boolean): Promise<IRWAPerpsMarket[]> {
-	return fetchJson<IRWAPerpsMarket[]>(createRWAPerpsScopedUrl('current', includeCex))
+export async function fetchRWAPerpsCurrent(includeCex: boolean): Promise<Array<IRWAPerpsMarket>> {
+	return fetchJson<Array<IRWAPerpsMarket>>(createRWAPerpsScopedUrl('current', includeCex))
 }
 
 /**
@@ -103,17 +103,17 @@ export async function fetchRWAPerpsMarketById(id: string): Promise<IRWAPerpsMark
 /**
  * Fetch all markets for a contract across venues.
  */
-export async function fetchRWAPerpsMarketsByContract(contract: string): Promise<IRWAPerpsMarket[]> {
+export async function fetchRWAPerpsMarketsByContract(contract: string): Promise<Array<IRWAPerpsMarket>> {
 	const encodedContract = encodeRWAPerpsPathSegment(contract)
-	return fetchJson<IRWAPerpsMarket[]>(`${RWA_PERPS_SERVER_URL}/contract/${encodedContract}?zz=19`)
+	return fetchJson<Array<IRWAPerpsMarket>>(`${RWA_PERPS_SERVER_URL}/contract/${encodedContract}?zz=19`)
 }
 
 /**
  * Fetch all markets listed on a venue.
  */
-export async function fetchRWAPerpsMarketsByVenue(venue: string): Promise<IRWAPerpsMarket[]> {
+export async function fetchRWAPerpsMarketsByVenue(venue: string): Promise<Array<IRWAPerpsMarket>> {
 	const encodedVenue = encodeRWAPerpsPathSegment(venue)
-	return fetchJson<IRWAPerpsMarket[]>(`${RWA_PERPS_SERVER_URL}/venue/${encodedVenue}?zz=19`)
+	return fetchJson<Array<IRWAPerpsMarket>>(`${RWA_PERPS_SERVER_URL}/venue/${encodedVenue}?zz=19`)
 }
 
 /**
@@ -122,33 +122,35 @@ export async function fetchRWAPerpsMarketsByVenue(venue: string): Promise<IRWAPe
 export async function fetchRWAPerpsMarketsByAssetGroup(
 	assetGroup: string,
 	includeCex: boolean
-): Promise<IRWAPerpsMarket[]> {
+): Promise<Array<IRWAPerpsMarket>> {
 	const encodedAssetGroup = encodeRWAPerpsPathSegment(assetGroup)
-	return fetchJson<IRWAPerpsMarket[]>(createRWAPerpsScopedUrl(`assetGroup/${encodedAssetGroup}`, includeCex))
+	return fetchJson<Array<IRWAPerpsMarket>>(createRWAPerpsScopedUrl(`assetGroup/${encodedAssetGroup}`, includeCex))
 }
 
 /**
  * Fetch all markets mapped to one canonical reference asset.
  */
-export async function fetchRWAPerpsMarketsByAsset(asset: string, includeCex: boolean): Promise<IRWAPerpsMarket[]> {
+export async function fetchRWAPerpsMarketsByAsset(asset: string, includeCex: boolean): Promise<Array<IRWAPerpsMarket>> {
 	const encodedAsset = encodeRWAPerpsPathSegment(asset)
-	return fetchJson<IRWAPerpsMarket[]>(createRWAPerpsScopedUrl(`asset/${encodedAsset}`, includeCex))
+	return fetchJson<Array<IRWAPerpsMarket>>(createRWAPerpsScopedUrl(`asset/${encodedAsset}`, includeCex))
 }
 
 /**
  * Fetch the historical time-series for one market.
  */
-export async function fetchRWAPerpsMarketChart(id: string): Promise<IRWAPerpsMarketChartPoint[]> {
+export async function fetchRWAPerpsMarketChart(id: string): Promise<Array<IRWAPerpsMarketChartPoint>> {
 	const encodedId = encodeRWAPerpsPathSegment(id)
-	return fetchJson<IRWAPerpsMarketChartPoint[]>(`${RWA_PERPS_SERVER_URL}/chart/${encodedId}?zz=19`)
+	return fetchJson<Array<IRWAPerpsMarketChartPoint>>(`${RWA_PERPS_SERVER_URL}/chart/${encodedId}?zz=19`)
 }
 
 /**
  * Fetch historical constituent rows for a venue.
  */
-export async function fetchRWAPerpsVenueChart(venue: string): Promise<IRWAPerpsAggregateHistoricalPoint[]> {
+export async function fetchRWAPerpsVenueChart(venue: string): Promise<Array<IRWAPerpsAggregateHistoricalPoint>> {
 	const encodedVenue = encodeRWAPerpsPathSegment(venue)
-	return fetchJson<IRWAPerpsAggregateHistoricalPoint[]>(`${RWA_PERPS_SERVER_URL}/chart/venue/${encodedVenue}?zz=19`)
+	return fetchJson<Array<IRWAPerpsAggregateHistoricalPoint>>(
+		`${RWA_PERPS_SERVER_URL}/chart/venue/${encodedVenue}?zz=19`
+	)
 }
 
 export async function fetchRWAPerpsOverviewBreakdownChartData(
@@ -209,8 +211,8 @@ export async function fetchRWAPerpsMarketBreakdownChartData(
 export async function fetchRWAPerpsFundingHistory(
 	id: string,
 	params?: IRWAPerpsFundingHistoryParams
-): Promise<IRWAPerpsFundingHistoryPoint[]> {
-	const points = await fetchJson<IRWAPerpsFundingHistoryWirePoint[]>(createRWAPerpsFundingHistoryUrl(id, params))
+): Promise<Array<IRWAPerpsFundingHistoryPoint>> {
+	const points = await fetchJson<Array<IRWAPerpsFundingHistoryWirePoint>>(createRWAPerpsFundingHistoryUrl(id, params))
 	return points.map((point) => ({
 		timestamp: point.timestamp * 1e3,
 		id: point.id,

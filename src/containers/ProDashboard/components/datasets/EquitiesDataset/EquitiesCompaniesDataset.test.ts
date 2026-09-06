@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	formatEquitiesCompanyDividendYield,
 	formatEquitiesCompanyVolume,
@@ -6,19 +6,19 @@ import {
 } from './EquitiesCompaniesDataset.utils'
 
 describe('Pro Equities company units', () => {
-	it('formats company volume as a share count', () => {
+	test('formats company volume as a share count', () => {
 		expect(formatEquitiesCompanyVolume(50_000_000)).toBe('50m')
 		expect(formatEquitiesCompanyVolume(0)).toBe('0')
 		expect(formatEquitiesCompanyVolume(null)).toBeNull()
 	})
 
-	it('formats dividend yield as producer percentage points', () => {
+	test('formats dividend yield as producer percentage points', () => {
 		expect(formatEquitiesCompanyDividendYield(0.34)).toBe('0.34%')
 		expect(formatEquitiesCompanyDividendYield(0)).toBe('0.00%')
 		expect(formatEquitiesCompanyDividendYield(null)).toBe('—')
 	})
 
-	it('preserves raw share volume and percentage-point yield in CSV', () => {
+	test('preserves raw share volume and percentage-point yield in CSV', () => {
 		expect(
 			getEquitiesCompanyCsvRow({
 				ticker: 'AAPL',

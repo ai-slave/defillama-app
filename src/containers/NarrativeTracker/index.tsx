@@ -30,10 +30,10 @@ const columnHelper = createColumnHelper<IPctChangeRow>()
 
 // for bar + heatmap
 function calculateDenominatedChange2(
-	data: IPctChangeRow[],
+	data: Array<IPctChangeRow>,
 	denominatedCoin: string,
 	field: PeriodConfig['field']
-): IPctChangeRow[] {
+): Array<IPctChangeRow> {
 	const denomRow = data.find((i) => i.name === denominatedCoin)
 	const denomChange = denomRow?.[field]
 	if (denomChange == null) return data
@@ -41,7 +41,7 @@ function calculateDenominatedChange2(
 	const denominatedCoinPerformance = 1 + denomChange / 100
 	if (denominatedCoinPerformance === 0) return data
 
-	const denominatedReturns: IPctChangeRow[] = []
+	const denominatedReturns: Array<IPctChangeRow> = []
 	for (const i of data) {
 		const change = i[field]
 		if (change == null) {
@@ -82,7 +82,7 @@ const DENOM_COIN_NAMES = ['Bitcoin', 'Ethereum', 'Solana'] as const
 const DENOM_COIN_NAME_SET = new Set<string>(DENOM_COIN_NAMES)
 const BAR_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
 const LINE_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
-const EMPTY_SERIES: string[] = []
+const EMPTY_SERIES: Array<string> = []
 
 export const CategoryPerformanceContainer = ({
 	pctChanges,
@@ -105,7 +105,7 @@ export const CategoryPerformanceContainer = ({
 		[selectedSeries, tab]
 	)
 	const setBoundedSelectedSeries = React.useCallback(
-		(values: string[]) => {
+		(values: Array<string>) => {
 			if (tab === 'heatmap') {
 				setSelectedSeries(values)
 				return
@@ -136,7 +136,7 @@ export const CategoryPerformanceContainer = ({
 			}
 		}
 
-		const disabled: Denom[] = []
+		const disabled: Array<Denom> = []
 		for (const denom of DENOMS) {
 			if (denom === '$') continue
 			const coinName = DENOM_COIN_MAP[denom]
@@ -355,8 +355,8 @@ export const CategoryPerformanceContainer = ({
 			<TableWithSearch
 				data={sortedPctChanges}
 				columns={isCoinPage ? CoinPerformanceColumn : CategoryPerformanceColumn}
-				columnToSearch={'name'}
-				placeholder={'Search...'}
+				columnToSearch="name"
+				placeholder="Search..."
 				header="Categories"
 				csvFileName={isCoinPage ? 'narrative-tracker-coin' : 'narrative-tracker-category'}
 				sortingState={DEFAULT_SORTING_STATE}

@@ -3,8 +3,12 @@ import type { ComponentProps } from 'react'
 import { Icon } from '~/ui/Icon'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
-import { EXCHANGE_SEGMENT_LABELS, type ExchangeEeaOrderbookOwnership } from './models'
-import type { ExchangeEuStatus, ExchangeMicaStatus } from './models'
+import {
+	EXCHANGE_SEGMENT_LABELS,
+	type ExchangeEeaOrderbookOwnership,
+	type ExchangeEuStatus,
+	type ExchangeMicaStatus
+} from './models'
 
 type ComplianceTone = 'positive' | 'caution' | 'negative' | 'neutral'
 
@@ -131,8 +135,8 @@ export function getMicaLicensePresentation(mica: MicaLicenseValueModel): StatusP
 	return { label: 'Not licensed', tone: 'negative', icon: 'circle-x' }
 }
 
-export function getKycRequirementIndicators(kycShort: string): KycRequirementIndicator[] {
-	const indicators: KycRequirementIndicator[] = []
+export function getKycRequirementIndicators(kycShort: string): Array<KycRequirementIndicator> {
+	const indicators: Array<KycRequirementIndicator> = []
 	const seen = new Set<KycRequirementKey>()
 	for (const token of kycShort.split('+')) {
 		const indicator = KYC_REQUIREMENT_BY_TOKEN[token.trim().toLowerCase()]

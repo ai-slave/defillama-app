@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { chartDatasetsBySlug } from '../chart-datasets'
 import { datasetsBySlug } from '../datasets'
 
@@ -15,7 +15,7 @@ function chartDataset(slug: string) {
 }
 
 describe('strict download dataset extractors', () => {
-	it('exposes legacy funding and LSD rate datasets with their original contracts', () => {
+	test('exposes legacy funding and LSD rate datasets with their original contracts', () => {
 		const perpFunding = dataset('perp-funding')
 		const lsdRates = dataset('lsd-rates')
 
@@ -27,7 +27,7 @@ describe('strict download dataset extractors', () => {
 		expect(lsdRates.extractItems([{ name: 'Lido', symbol: 'stETH' }])).toEqual([{ name: 'Lido', symbol: 'stETH' }])
 	})
 
-	it('preserves protocol percentage calculations and chain data', () => {
+	test('preserves protocol percentage calculations and chain data', () => {
 		const rows = dataset('protocols').extractItems({
 			protocols: [
 				{
@@ -58,7 +58,7 @@ describe('strict download dataset extractors', () => {
 		])
 	})
 
-	it('preserves grouped protocol ordering and child labels', () => {
+	test('preserves grouped protocol ordering and child labels', () => {
 		const options = chartDataset('protocol-fees-chart').extractOptions({
 			protocols: [
 				{ name: 'Solo', displayName: 'Solo', total24h: 30 },
@@ -76,7 +76,7 @@ describe('strict download dataset extractors', () => {
 		])
 	})
 
-	it('keeps timestamp/value pairs unchanged', () => {
+	test('keeps timestamp/value pairs unchanged', () => {
 		expect(
 			chartDataset('protocol-fees-chart').extractRows([
 				[1, 12.5],
@@ -88,7 +88,7 @@ describe('strict download dataset extractors', () => {
 		])
 	})
 
-	it('exports hacks and raises with explicit whole-USD fields', () => {
+	test('exports hacks and raises with explicit whole-USD fields', () => {
 		const hacks = dataset('hacks').extractItems([
 			{
 				date: 1,

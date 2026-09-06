@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const fetchJson = vi.fn()
-vi.mock('~/utils/async', () => ({ fetchJson: (...args: unknown[]) => fetchJson(...args) }))
+vi.mock('~/utils/async', () => ({ fetchJson: (...args: Array<unknown>) => fetchJson(...args) }))
 
 import {
 	exchangeOptionsFromScoringConfig,
@@ -73,7 +73,7 @@ afterEach(() => {
 })
 
 describe('UTR project API', () => {
-	it('loads claim options with the Forgd bearer key', async () => {
+	test('loads claim options with the Forgd bearer key', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'qk_test_123')
 		fetchJson
 			.mockResolvedValueOnce([{ arcticId: 'project-1', projectName: 'Ethereum' }])
@@ -115,7 +115,7 @@ describe('UTR project API', () => {
 		)
 	})
 
-	it('returns empty results when the project API is unavailable', async () => {
+	test('returns empty results when the project API is unavailable', async () => {
 		fetchJson.mockRejectedValue(new Error('unavailable'))
 
 		await expect(fetchUtrProjects()).resolves.toEqual([])
@@ -125,7 +125,7 @@ describe('UTR project API', () => {
 		await expect(fetchUtrUniverseWithLive()).resolves.toEqual({ rows: [], scoredCount: 0, totalCount: 0 })
 	})
 
-	it('loads the leaderboard with the Forgd bearer key and preserves upstream failures', async () => {
+	test('loads the leaderboard with the Forgd bearer key and preserves upstream failures', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'qk_test_123')
 		const payload = {
 			configVersion: 18,

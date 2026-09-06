@@ -20,11 +20,11 @@ type TabId = (typeof TABS)[number]['id']
 
 interface SqlChartModalSidebarProps {
 	chartOptionsMap: ChartOptionsMap
-	loadedTables: RegisteredTable[]
+	loadedTables: Array<RegisteredTable>
 	onLoadTable: (source: TableSource) => Promise<RegisteredTable | null>
 	schemaLoading: string | null
 	busyTaskId: string | null
-	savedQueries: QuerySavedConfig[]
+	savedQueries: Array<QuerySavedConfig>
 	onApplyExample: (example: ExampleQuery) => void
 	onApplySaved: (query: QuerySavedConfig) => void
 	onReplaceSql: (snippet: string) => void

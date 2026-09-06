@@ -72,7 +72,7 @@ function ExpandedExamplesPanel({
 				)
 			: EXAMPLE_QUERIES
 
-		const byGroup = new Map<ExampleSubcategory, ExampleQuery[]>()
+		const byGroup = new Map<ExampleSubcategory, Array<ExampleQuery>>()
 		for (const ex of matches) {
 			const list = byGroup.get(ex.subcategory) ?? []
 			list.push(ex)
@@ -88,7 +88,7 @@ function ExpandedExamplesPanel({
 	}, [hoveredGroup, filteredGroups])
 
 	const groupOrdinalOffsets = useMemo(() => {
-		const offsets: number[] = []
+		const offsets: Array<number> = []
 		let offset = 0
 		for (const group of filteredGroups) {
 			offsets.push(offset)

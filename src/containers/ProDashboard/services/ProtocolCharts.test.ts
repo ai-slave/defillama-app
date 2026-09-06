@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { fetchAdapterProtocolChartData, fetchProtocolTvlChart } = vi.hoisted(() => ({
 	fetchAdapterProtocolChartData: vi.fn(),
@@ -20,7 +20,7 @@ describe('fetchProProtocolChartData focused TVL sources', () => {
 		fetchAdapterProtocolChartData.mockReset()
 	})
 
-	it('uses typed adapter contracts for protocol activity charts', async () => {
+	test('uses typed adapter contracts for protocol activity charts', async () => {
 		fetchAdapterProtocolChartData.mockResolvedValue([[1_700_000_000, 10]])
 
 		await expect(fetchProProtocolChartData('activeUsers', 'compound-v2')).resolves.toEqual([[1_700_000_000, 10]])
@@ -50,10 +50,10 @@ describe('fetchProProtocolChartData focused TVL sources', () => {
 		})
 	})
 
-	it('fetches total TVL from V2 and preserves the Pro seconds contract', async () => {
+	test('fetches total TVL from V2 and preserves the Pro seconds contract', async () => {
 		fetchProtocolTvlChart.mockResolvedValue([
-			[1_000, 10],
-			[2_000, 20]
+			[1000, 10],
+			[2000, 20]
 		])
 
 		await expect(fetchProProtocolChartData('tvl', 'aave')).resolves.toEqual([
@@ -63,14 +63,14 @@ describe('fetchProProtocolChartData focused TVL sources', () => {
 		expect(fetchProtocolTvlChart).toHaveBeenCalledWith({ protocol: 'aave' })
 	})
 
-	it('requests the focused borrowed value series instead of reconstructing V1 chain TVLs', async () => {
-		fetchProtocolTvlChart.mockResolvedValue([[3_000, 30]])
+	test('requests the focused borrowed value series instead of reconstructing V1 chain TVLs', async () => {
+		fetchProtocolTvlChart.mockResolvedValue([[3000, 30]])
 
 		await expect(fetchProProtocolChartData('borrowed', 'aave')).resolves.toEqual([[3, 30]])
 		expect(fetchProtocolTvlChart).toHaveBeenCalledWith({ protocol: 'aave', key: 'borrowed' })
 	})
 
-	it('returns no points when the focused endpoint has no series', async () => {
+	test('returns no points when the focused endpoint has no series', async () => {
 		fetchProtocolTvlChart.mockResolvedValue(null)
 
 		await expect(fetchProProtocolChartData('tvl', 'missing')).resolves.toEqual([])

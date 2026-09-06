@@ -10,14 +10,14 @@ import { YieldsColumnManagementPanel } from './YieldsColumnManagementPanel'
 import { YieldsFiltersPanel } from './YieldsFiltersPanel'
 import { YieldsTableHeader } from './YieldsTableHeader'
 
-const EMPTY_YIELDS_ROWS: ProYieldRow[] = []
+const EMPTY_YIELDS_ROWS: Array<ProYieldRow> = []
 
 interface YieldsDatasetProps {
-	chains?: string[]
-	columnOrder?: string[]
+	chains?: Array<string>
+	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
 	filters?: YieldsFilters
-	onColumnsChange?: (columnOrder: string[], columnVisibility: Record<string, boolean>) => void
+	onColumnsChange?: (columnOrder: Array<string>, columnVisibility: Record<string, boolean>) => void
 	onFiltersChange?: (filters: YieldsFilters) => void
 }
 
@@ -149,5 +149,5 @@ export function YieldsDataset({
 }
 
 const NOOP = () => {}
-const NOOP_COLUMNS_CHANGE = (_columnOrder: string[], _columnVisibility: Record<string, boolean>) => {}
+const NOOP_COLUMNS_CHANGE = (_columnOrder: Array<string>, _columnVisibility: Record<string, boolean>) => {}
 const NOOP_FILTERS_CHANGE = (_filters: YieldsFilters) => {}

@@ -166,7 +166,7 @@ const assetsByChainColumnOrders: ColumnOrdersByBreakpoint = {
 	480: ['name', 'change_7d', 'circulating', 'change_1d', 'change_1m', 'bridgeInfo', 'bridgedAmount'],
 	1024: ['name', 'bridgeInfo', 'bridgedAmount', 'change_1d', 'change_7d', 'change_1m', 'circulating']
 }
-export function StablecoinByChainUsageTable({ data }: { data: StablecoinByChainRow[] }) {
+export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinByChainRow> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'circulating', desc: true }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 	const [expanded, setExpanded] = React.useState<ExpandedState>({})

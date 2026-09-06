@@ -32,7 +32,7 @@ const HoldersRevenueByChain = (props: IChainsByAdapterPageData) => {
 		<Layout
 			title="Holders Revenue by Chain - DefiLlama"
 			description="Compare holder revenue across chains, from buyback and burn, fee burning, and direct distributions to stakers."
-			canonicalUrl={`/holders-revenue/chains`}
+			canonicalUrl="/holders-revenue/chains"
 			pageName={pageName}
 		>
 			<ChainsByAdapter {...props} type={type} />

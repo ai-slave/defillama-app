@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { DashboardItemConfig } from '~/containers/ProDashboard/dashboardItemConfig'
 import type { DashboardStreamChunk } from '~/containers/ProDashboard/dashboardStreamContract'
 import { auditProDashboardTableSources } from './proDashboardTableAudit'
 import { buildProDashboardTableSourcePlan, type ProDashboardTableSource } from './proDashboardTableSourcePlan'
 
 describe('buildProDashboardTableSourcePlan', () => {
-	it('shares one RWA asset source across global and selected-chain tables', () => {
-		const items: DashboardItemConfig[] = [
+	test('shares one RWA asset source across global and selected-chain tables', () => {
+		const items: Array<DashboardItemConfig> = [
 			{ id: 'all-assets', kind: 'dataset-table', datasetType: 'rwa' },
 			{ id: 'ethereum-assets', kind: 'dataset-table', datasetType: 'rwa-selected-chain', chain: 'Ethereum' },
 			{ id: 'base-assets', kind: 'dataset-table', datasetType: 'rwa-selected-chain', chain: 'Base' }
@@ -22,8 +22,8 @@ describe('buildProDashboardTableSourcePlan', () => {
 })
 
 describe('auditProDashboardTableSources', () => {
-	it('reports exact missing, duplicate, unexpected, and empty table identities', () => {
-		const expected: ProDashboardTableSource[] = [
+	test('reports exact missing, duplicate, unexpected, and empty table identities', () => {
+		const expected: Array<ProDashboardTableSource> = [
 			{
 				chunkType: 'tokenUsageData',
 				key: '["pro-dashboard","token-usage",["USDC"],false]'
@@ -41,7 +41,7 @@ describe('auditProDashboardTableSources', () => {
 				key: '["pro-dashboard","rwa-chains-table"]'
 			}
 		]
-		const chunks: DashboardStreamChunk[] = [
+		const chunks: Array<DashboardStreamChunk> = [
 			{
 				type: 'tokenUsageData',
 				key: '["pro-dashboard","token-usage",["USDC"],false]',

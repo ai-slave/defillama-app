@@ -7,7 +7,7 @@ import { createDisabledProtocolToggledMetrics, type IToggledMetrics } from './ty
 
 type ProtocolChartMetricQueryKey = (typeof protocolCharts)[ProtocolChartsLabels]
 export type ProtocolChartQueryKey = ProtocolChartMetricQueryKey | 'denomination' | 'events' | 'groupBy'
-export type ProtocolChartQueryValue = string | string[] | null | undefined
+export type ProtocolChartQueryValue = string | Array<string> | null | undefined
 
 const getSingleQueryValue = (value: ProtocolChartQueryValue): string | null =>
 	typeof value === 'string' ? value : null
@@ -43,15 +43,15 @@ export function resolveProtocolChartQuery({
 	defaultChartView
 }: {
 	getQueryValue: (key: ProtocolChartQueryKey) => ProtocolChartQueryValue
-	availableCharts: ProtocolChartsLabels[]
-	defaultToggledCharts: ProtocolChartsLabels[]
+	availableCharts: Array<ProtocolChartsLabels>
+	defaultToggledCharts: Array<ProtocolChartsLabels>
 	chartDenominations: Array<{ symbol: string }>
 	hallmarks: Array<[number, string]>
 	rangeHallmarks: Array<[[number, number], string]>
 	defaultChartView: string | undefined
 }): {
 	toggledMetrics: IToggledMetrics
-	toggledCharts: ProtocolChartsLabels[]
+	toggledCharts: Array<ProtocolChartsLabels>
 	hasAtLeastOneBarChart: boolean
 	hasEvents: boolean
 	groupBy: LowercaseDwmcGrouping

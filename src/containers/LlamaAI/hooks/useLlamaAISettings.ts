@@ -75,14 +75,14 @@ export type TipDTO = {
 
 export interface SettingsQueryResult {
 	settings: StoredLlamaAISettings
-	availableModels: ModelOption[]
-	availableEfforts: EffortOption[]
+	availableModels: Array<ModelOption>
+	availableEfforts: Array<EffortOption>
 	telegramStatus: TelegramStatus | null
 	tip: TipDTO | null
 }
 
-const EMPTY_MODEL_OPTIONS: ModelOption[] = []
-const EMPTY_EFFORT_OPTIONS: EffortOption[] = []
+const EMPTY_MODEL_OPTIONS: Array<ModelOption> = []
+const EMPTY_EFFORT_OPTIONS: Array<EffortOption> = []
 
 const DEFAULT_SETTINGS: LlamaAISettings = {
 	customInstructions: '',
@@ -225,7 +225,7 @@ function applyStoredSettings(update: LlamaAISettingsUpdate) {
 }
 
 function mergeDefinedSettings(base: StoredLlamaAISettings, incoming: LlamaAISettingsUpdate): StoredLlamaAISettings {
-	const merged: LlamaAISettingsUpdate = { ...(base ?? {}) }
+	const merged: LlamaAISettingsUpdate = { ...base }
 	if (incoming.customInstructions !== undefined) merged.customInstructions = incoming.customInstructions
 	if (incoming.enableMemory !== undefined) merged.enableMemory = incoming.enableMemory
 	if (incoming.enablePremiumTools !== undefined) merged.enablePremiumTools = incoming.enablePremiumTools
@@ -373,8 +373,8 @@ export function useLlamaAISettings() {
 				}
 			const data = (await response.json().catch(() => null)) as {
 				settings?: unknown
-				availableModels?: ModelOption[]
-				availableEfforts?: EffortOption[]
+				availableModels?: Array<ModelOption>
+				availableEfforts?: Array<EffortOption>
 				telegramStatus?: TelegramStatus | null
 				tip?: TipDTO | null
 			} | null

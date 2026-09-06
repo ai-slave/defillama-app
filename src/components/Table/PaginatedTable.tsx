@@ -25,7 +25,7 @@ import { Tooltip } from '~/ui/Tooltip'
 
 interface PaginatedTableProps<T extends RowData> {
 	table: ReactTable<T>
-	pageSizeOptions: readonly number[]
+	pageSizeOptions: ReadonlyArray<number>
 	className?: string
 	style?: CSSProperties
 	tableClassName?: string

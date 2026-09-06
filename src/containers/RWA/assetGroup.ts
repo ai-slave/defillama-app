@@ -6,6 +6,6 @@ export function normalizeRwaAssetGroup(assetGroup: string | null | undefined): s
 	return normalizedAssetGroup.length > 0 ? normalizedAssetGroup : UNKNOWN_RWA_ASSET_GROUP
 }
 
-export function appendUnknownRwaAssetGroup(assetGroups: string[]): string[] {
+export function appendUnknownRwaAssetGroup(assetGroups: Array<string>): Array<string> {
 	return assetGroups.includes(UNKNOWN_RWA_ASSET_GROUP) ? assetGroups : [...assetGroups, UNKNOWN_RWA_ASSET_GROUP]
 }

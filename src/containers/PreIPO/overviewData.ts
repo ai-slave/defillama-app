@@ -1,14 +1,14 @@
 import type { PreIpoCompanyListItem } from './api.types'
 
 export function filterPreIpoCompanies(
-	companies: PreIpoCompanyListItem[],
+	companies: Array<PreIpoCompanyListItem>,
 	searchValue: string,
 	sectorFilter: ReadonlySet<string> | null
-): PreIpoCompanyListItem[] {
+): Array<PreIpoCompanyListItem> {
 	const search = searchValue.trim().toLowerCase()
 	if (!search && sectorFilter == null) return companies
 
-	const filtered: PreIpoCompanyListItem[] = []
+	const filtered: Array<PreIpoCompanyListItem> = []
 	for (const company of companies) {
 		if (sectorFilter != null && !sectorFilter.has(company.sector)) continue
 		if (
@@ -24,7 +24,7 @@ export function filterPreIpoCompanies(
 	return filtered
 }
 
-export function getPreIpoSectors(companies: PreIpoCompanyListItem[]): string[] {
+export function getPreIpoSectors(companies: Array<PreIpoCompanyListItem>): Array<string> {
 	const sectors = new Set<string>()
 	for (const company of companies) sectors.add(company.sector)
 	return Array.from(sectors).sort((a, b) => a.localeCompare(b))

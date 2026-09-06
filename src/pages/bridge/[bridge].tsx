@@ -84,7 +84,7 @@ export default function Bridge(props: InferGetStaticPropsType<typeof getStaticPr
 	if (props.state === 'disabled') {
 		return (
 			<TemporarilyDisabledPage
-				title={`Bridge Volume - DefiLlama`}
+				title="Bridge Volume - DefiLlama"
 				description="This bridge route is temporarily unavailable and will be back shortly."
 				canonicalUrl={`/bridge/${props.bridgeSlug}`}
 				heading="Bridge data temporarily unavailable"

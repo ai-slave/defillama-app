@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	buildRuntimePieChartCsvDataset,
@@ -11,7 +11,7 @@ const buildRuntimePieChartData = (args: Parameters<typeof buildRuntimePieChartPr
 	buildRuntimePieChartPresentation(args).chartData
 
 describe('preparePieChartData', () => {
-	it('converts a Record into sorted { name, value } array', () => {
+	test('converts a Record into sorted { name, value } array', () => {
 		expect(
 			preparePieChartData({
 				data: { Ethereum: 100, Solana: 300, Arbitrum: 200 }
@@ -23,7 +23,7 @@ describe('preparePieChartData', () => {
 		])
 	})
 
-	it('converts an array of records using custom identifiers', () => {
+	test('converts an array of records using custom identifiers', () => {
 		expect(
 			preparePieChartData({
 				data: [
@@ -39,7 +39,7 @@ describe('preparePieChartData', () => {
 		])
 	})
 
-	it('limits slices and merges remainder into Others', () => {
+	test('limits slices and merges remainder into Others', () => {
 		expect(
 			preparePieChartData({
 				data: { A: 100, B: 50, C: 30, D: 20, E: 10 },
@@ -53,7 +53,7 @@ describe('preparePieChartData', () => {
 		])
 	})
 
-	it('consolidates existing Others entry in top slices with overflow', () => {
+	test('consolidates existing Others entry in top slices with overflow', () => {
 		expect(
 			preparePieChartData({
 				data: { A: 100, Others: 80, C: 30, D: 20 },
@@ -65,19 +65,19 @@ describe('preparePieChartData', () => {
 		])
 	})
 
-	it('returns all slices when limit is not specified', () => {
+	test('returns all slices when limit is not specified', () => {
 		const result = preparePieChartData({ data: { A: 1, B: 2, C: 3 } })
 		expect(result).toHaveLength(3)
 	})
 
-	it('ignores inherited enumerable fields on record input', () => {
+	test('ignores inherited enumerable fields on record input', () => {
 		const inherited = Object.create({ Phantom: 99 }) as Record<string, number>
 		inherited.Real = 5
 
 		expect(preparePieChartData({ data: inherited })).toEqual([{ name: 'Real', value: 5 }])
 	})
 
-	it('normalizes numeric-string values from record-shaped JSON', () => {
+	test('normalizes numeric-string values from record-shaped JSON', () => {
 		const data = { A: '10', B: '5', C: '2' } as unknown as Record<string, number>
 
 		expect(preparePieChartData({ data, limit: 1 })).toEqual([
@@ -86,7 +86,7 @@ describe('preparePieChartData', () => {
 		])
 	})
 
-	it('does not read inherited fields from row-shaped input', () => {
+	test('does not read inherited fields from row-shaped input', () => {
 		expect(
 			preparePieChartData({
 				data: [{ value: 5 }],
@@ -95,7 +95,7 @@ describe('preparePieChartData', () => {
 		).toEqual([{ name: 'undefined', value: 5 }])
 	})
 
-	it('omits Others when overflow sum is 0', () => {
+	test('omits Others when overflow sum is 0', () => {
 		const result = preparePieChartData({ data: { A: 100, B: 50 }, limit: 2 })
 		expect(result).toEqual([
 			{ name: 'A', value: 100 },
@@ -105,7 +105,7 @@ describe('preparePieChartData', () => {
 })
 
 describe('runtime pie selection', () => {
-	it('renders an upstream Others-only source without exposing it as selectable', () => {
+	test('renders an upstream Others-only source without exposing it as selectable', () => {
 		const series = prepareRuntimePieChartData({ data: { Others: 2 }, limit: 15 })
 
 		expect(series.peers).toEqual([])
@@ -113,7 +113,7 @@ describe('runtime pie selection', () => {
 		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(), includeUpstreamOthers: false })).toEqual([])
 	})
 
-	it('selects every peer while rendering top N plus a dynamic selected-tail Others', () => {
+	test('selects every peer while rendering top N plus a dynamic selected-tail Others', () => {
 		const data = Object.fromEntries(Array.from({ length: 479 }, (_, index) => [`Chain ${index}`, 479 - index]))
 		const series = prepareRuntimePieChartData({ data, limit: 10 })
 
@@ -133,13 +133,13 @@ describe('runtime pie selection', () => {
 		})
 	})
 
-	it('renders exact selections below the visual limit without Others', () => {
+	test('renders exact selections below the visual limit without Others', () => {
 		const series = prepareRuntimePieChartData({ data: { A: 4, B: 3, C: 2, D: 1 }, limit: 3 })
 		expect(buildRuntimePieChartData({ series, selectedSeries: new Set(['B']) })).toEqual([{ name: 'B', value: 3 }])
 		expect(buildRuntimePieChartData({ series, selectedSeries: new Set() })).toEqual([])
 	})
 
-	it('adds Others at N+1 and decreases it when a selected tail peer is removed', () => {
+	test('adds Others at N+1 and decreases it when a selected tail peer is removed', () => {
 		const series = prepareRuntimePieChartData({ data: { A: 6, B: 5, C: 4, D: 3, E: 2 }, limit: 3 })
 		expect(buildRuntimePieChartPresentation({ series }).stackColors).toMatchObject({
 			A: CHART_COLORS[0],
@@ -170,7 +170,7 @@ describe('runtime pie selection', () => {
 		})
 	})
 
-	it('keeps Others distinct from selected peers after the palette wraps', () => {
+	test('keeps Others distinct from selected peers after the palette wraps', () => {
 		const series = prepareRuntimePieChartData({
 			data: Object.fromEntries(
 				Array.from({ length: CHART_COLORS.length + 6 }, (_, index) => [`Peer ${index}`, 1000 - index])
@@ -189,7 +189,7 @@ describe('runtime pie selection', () => {
 		expect(presentation.stackColors[`Peer ${CHART_COLORS.length + 2}`]).not.toBe(presentation.stackColors.Others)
 	})
 
-	it('keeps peer colors stable across related views with different rankings', () => {
+	test('keeps peer colors stable across related views with different rankings', () => {
 		const firstView = prepareRuntimePieChartData({ data: { USDC: 10, ETH: 5 }, limit: 3 })
 		const secondView = prepareRuntimePieChartData({ data: { ETH: 20, USDC: 1 }, limit: 3 })
 		const colorIndexByPeer = new Map([
@@ -202,7 +202,7 @@ describe('runtime pie selection', () => {
 		)
 	})
 
-	it('includes upstream Others only while every known peer is selected', () => {
+	test('includes upstream Others only while every known peer is selected', () => {
 		const series = prepareRuntimePieChartData({ data: { A: 4, B: 3, Others: 2 }, limit: 2 })
 		expect(buildRuntimePieChartData({ series })).toEqual([
 			{ name: 'A', value: 4 },
@@ -221,7 +221,7 @@ describe('runtime pie selection', () => {
 		])
 	})
 
-	it('combines selected overflow with duplicate upstream Others rows', () => {
+	test('combines selected overflow with duplicate upstream Others rows', () => {
 		const series = prepareRuntimePieChartData({
 			data: [
 				{ name: 'A', value: 5 },
@@ -244,13 +244,13 @@ describe('runtime pie selection', () => {
 		])
 	})
 
-	it('does not create Others for a zero-valued selected tail', () => {
+	test('does not create Others for a zero-valued selected tail', () => {
 		const series = prepareRuntimePieChartData({ data: { A: 5, B: 0 }, limit: 1 })
 		expect(series.peers.map((peer) => peer.name)).toEqual(['A'])
 		expect(buildRuntimePieChartData({ series })).toEqual([{ name: 'A', value: 5 }])
 	})
 
-	it('coalesces duplicate selectable names before ranking and selection', () => {
+	test('coalesces duplicate selectable names before ranking and selection', () => {
 		const series = prepareRuntimePieChartData({
 			data: [
 				{ name: 'A', value: 4 },
@@ -266,7 +266,7 @@ describe('runtime pie selection', () => {
 		])
 	})
 
-	it('supports custom row keys while preserving first-seen order for tied values', () => {
+	test('supports custom row keys while preserving first-seen order for tied values', () => {
 		const series = prepareRuntimePieChartData({
 			data: [
 				{ token: 'stETH', stakedEth: 3 },

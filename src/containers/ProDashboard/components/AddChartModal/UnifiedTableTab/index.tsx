@@ -54,8 +54,8 @@ interface UnifiedTableTabProps {
 	focusedSectionOnly?: 'filters' | 'columns' | undefined
 	selectedTableType: CombinedTableType
 	onTableTypeChange: (type: CombinedTableType) => void
-	selectedChains: string[]
-	onChainsChange: (values: string[]) => void
+	selectedChains: Array<string>
+	onChainsChange: (values: Array<string>) => void
 	selectedDatasetChain: string | null
 	onDatasetChainChange: (value: string | null) => void
 	selectedCexAnalyticsView: 'starter' | CexAnalyticsView
@@ -64,15 +64,15 @@ interface UnifiedTableTabProps {
 	onCexAnalyticsMetricChange: (metric: CexAnalyticsMetric) => void
 	selectedCexAnalyticsTopN: number
 	onCexAnalyticsTopNChange: (topN: number) => void
-	selectedTokens: string[]
-	onTokensChange: (tokens: string[]) => void
+	selectedTokens: Array<string>
+	onTokensChange: (tokens: Array<string>) => void
 	includeCex: boolean
 	onIncludeCexChange: (include: boolean) => void
 	protocolsLoading: boolean
 	isEditingItem?: boolean | undefined
 }
 
-const PROTOCOL_ROW_HEADER_ORDER: UnifiedRowHeaderType[] = ['chain', 'category', 'parent-protocol']
+const PROTOCOL_ROW_HEADER_ORDER: Array<UnifiedRowHeaderType> = ['chain', 'category', 'parent-protocol']
 
 type TabKey = 'setup' | 'columns' | 'filters'
 
@@ -82,7 +82,7 @@ const countActiveFilters = (filters: UnifiedTableFilters | undefined): number =>
 	for (const value of Object.values(filters)) {
 		if (value == null) continue
 		if (Array.isArray(value)) {
-			if (value.length) count++
+			if (value.length > 0) count++
 			continue
 		}
 		if (typeof value === 'boolean') {
@@ -96,7 +96,7 @@ const countActiveFilters = (filters: UnifiedTableFilters | undefined): number =>
 	return count
 }
 
-const arraysEqual = (a: string[], b: string[]) => {
+const arraysEqual = (a: Array<string>, b: Array<string>) => {
 	if (a.length !== b.length) return false
 	return a.every((value, index) => value === b[index])
 }
@@ -136,7 +136,7 @@ const TABLE_TYPE_CARDS: Array<{
 	label: string
 	description: string
 	icon: TableTypeCardIcon
-	tags: string[]
+	tags: Array<string>
 }> = [
 	{
 		value: 'protocols',
@@ -197,7 +197,7 @@ const TABLE_TYPE_CARDS: Array<{
 	}
 ]
 
-const RWA_TABLE_TYPES: CombinedTableType[] = ['rwa', 'rwa-chains', 'rwa-selected-chain']
+const RWA_TABLE_TYPES: Array<CombinedTableType> = ['rwa', 'rwa-chains', 'rwa-selected-chain']
 
 const RWA_TABS: Array<{ value: CombinedTableType; label: string }> = [
 	{ value: 'rwa-chains', label: 'By Chain' },
@@ -205,7 +205,7 @@ const RWA_TABS: Array<{ value: CombinedTableType; label: string }> = [
 	{ value: 'rwa-selected-chain', label: 'On Chain' }
 ]
 
-const EQUITIES_TABLE_TYPES: CombinedTableType[] = ['equities', 'equities-financials', 'equities-filings']
+const EQUITIES_TABLE_TYPES: Array<CombinedTableType> = ['equities', 'equities-financials', 'equities-filings']
 
 const EQUITIES_TABS: Array<{ value: CombinedTableType; label: string }> = [
 	{ value: 'equities', label: 'Companies' },
@@ -426,7 +426,7 @@ function TabContent({
 
 	const handleApplyPreset = (preset: FilterPreset) => {
 		setFilters(preset.filters ?? {})
-		if (preset.filters?.categories && preset.filters.categories.length) {
+		if (preset.filters?.categories && preset.filters.categories.length > 0) {
 			setChains(['All'])
 		}
 		if (preset.sortBy) {
@@ -441,8 +441,8 @@ function TabContent({
 
 	const activeFilterChips = useMemo(() => getActiveFilterChips(filters), [filters])
 
-	const activeFilterPills: FilterPill[] = useMemo(() => {
-		const pills: FilterPill[] = []
+	const activeFilterPills: Array<FilterPill> = useMemo(() => {
+		const pills: Array<FilterPill> = []
 
 		for (const chain of chains.filter((chain) => chain !== 'All')) {
 			pills.push({

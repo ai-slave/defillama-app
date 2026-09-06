@@ -6,7 +6,7 @@ export interface BridgeNetflowChartPoint {
 	value: number
 }
 
-export type BridgeNetflowChartData = Record<BridgeNetflowPeriod, BridgeNetflowChartPoint[]>
+export type BridgeNetflowChartData = Record<BridgeNetflowPeriod, Array<BridgeNetflowChartPoint>>
 
 export interface BridgeVolumeChartPoint {
 	date: number
@@ -43,8 +43,8 @@ export interface BridgePieChartSlice {
 }
 
 export interface BridgeTableData {
-	tokensTableData: BridgeTokenTableRow[]
-	addressesTableData: BridgeAddressTableRow[]
+	tokensTableData: Array<BridgeTokenTableRow>
+	addressesTableData: Array<BridgeAddressTableRow>
 	tokenDeposits: RuntimePieChartData | null
 	tokenWithdrawals: RuntimePieChartData | null
 	totalDepositedUSD: number | null
@@ -57,9 +57,9 @@ export interface BridgeTableData {
 export interface BridgePageData {
 	displayName: string
 	logo: string
-	chains: string[]
+	chains: Array<string>
 	defaultChain: string
-	volumeDataByChain: Record<string, BridgeVolumeChartPoint[]>
+	volumeDataByChain: Record<string, Array<BridgeVolumeChartPoint>>
 	tableDataByChain: Record<string, BridgeTableData>
 	config: RawBridgeInfo
 }

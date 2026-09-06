@@ -17,12 +17,12 @@ import { convertToNumberFormat, normalizeHourlyToDaily } from '../utils'
 export interface ProtocolChartDataOptions {
 	geckoId?: string | null
 	dataType?: string
-	fetchRatio?: (protocol: string, type: 'pf' | 'ps') => Promise<[number, number][]>
+	fetchRatio?: (protocol: string, type: 'pf' | 'ps') => Promise<Array<[number, number]>>
 }
 
-function toProChartSeconds(data: IProtocolValueChart | null): [number, number][] {
+function toProChartSeconds(data: IProtocolValueChart | null): Array<[number, number]> {
 	if (!data) return []
-	const points: [number, number][] = []
+	const points: Array<[number, number]> = []
 	// Protocol V2 charts are canonical milliseconds; Pro's tuple pipeline is seconds.
 	for (const [timestampMs, value] of data) {
 		points.push([Math.floor(timestampMs / 1e3), value])
@@ -30,7 +30,7 @@ function toProChartSeconds(data: IProtocolValueChart | null): [number, number][]
 	return points
 }
 
-async function fetchProtocolTvlData(protocolId: string): Promise<[number, number][]> {
+async function fetchProtocolTvlData(protocolId: string): Promise<Array<[number, number]>> {
 	if (!protocolId) return []
 	try {
 		return toProChartSeconds(await fetchProtocolTvlChart({ protocol: protocolId }))
@@ -44,7 +44,7 @@ async function fetchProtocolAdapterData(
 	protocol: string,
 	type: `${ADAPTER_TYPES}`,
 	dataType?: `${ADAPTER_DATA_TYPES}`
-): Promise<[number, number][]> {
+): Promise<Array<[number, number]>> {
 	if (!protocol) return []
 	const data = await fetchAdapterProtocolChartData({
 		adapterType: type,
@@ -54,14 +54,14 @@ async function fetchProtocolAdapterData(
 	return data
 }
 
-async function fetchProtocolIncentivesData(protocol: string): Promise<[number, number][]> {
+async function fetchProtocolIncentivesData(protocol: string): Promise<Array<[number, number]>> {
 	if (!protocol) return []
 	try {
 		const emission = await fetchProtocolEmission(protocol)
 		const chart = emission?.unlockUsdChart
 		if (!Array.isArray(chart)) return []
 
-		const points: [number, number][] = []
+		const points: Array<[number, number]> = []
 		for (const point of chart) {
 			if (!Array.isArray(point) || point.length < 2) continue
 			const ts = Number(point[0])
@@ -71,8 +71,8 @@ async function fetchProtocolIncentivesData(protocol: string): Promise<[number, n
 		}
 
 		return points
-	} catch (e) {
-		recordRuntimeError(e, 'pageBuild')
+	} catch (error) {
+		recordRuntimeError(error, 'pageBuild')
 		return []
 	}
 }
@@ -80,22 +80,22 @@ async function fetchProtocolIncentivesData(protocol: string): Promise<[number, n
 async function fetchProtocolUnlocksData(
 	protocol: string,
 	dataType: 'documented' | 'realtime' = 'documented'
-): Promise<[number, number][]> {
+): Promise<Array<[number, number]>> {
 	if (!protocol) return []
 	try {
 		const resolvedDataType = dataType === 'realtime' ? 'documented' : dataType
 		const data = await getProtocolEmissionsCharts(slug(protocol))
 		const chart = data?.chartData?.[resolvedDataType] ?? []
-		if (!chart.length) return []
-		const totals: [number, number][] = []
+		if (chart.length === 0) return []
+		const totals: Array<[number, number]> = []
 		for (const { timestamp, ...rest } of chart) {
 			let total = 0
 			for (const key in rest) total += rest[key] ?? 0
 			totals.push([Math.floor(timestamp / 1e3), total])
 		}
 		return totals
-	} catch (e) {
-		recordRuntimeError(e, 'pageBuild')
+	} catch (error) {
+		recordRuntimeError(error, 'pageBuild')
 		return []
 	}
 }
@@ -105,78 +105,78 @@ async function fetchProtocolTokenData(geckoId: string) {
 	return result?.data ?? { mcaps: [], prices: [], volumes: [] }
 }
 
-async function fetchProtocolTokenMcapData(geckoId: string): Promise<[number, number][]> {
+async function fetchProtocolTokenMcapData(geckoId: string): Promise<Array<[number, number]>> {
 	const data = await fetchProtocolTokenData(geckoId)
 	const converted = convertToNumberFormat(data.mcaps ?? [], true)
 	return normalizeHourlyToDaily(converted, 'last')
 }
 
-async function fetchProtocolTokenPriceData(geckoId: string): Promise<[number, number][]> {
+async function fetchProtocolTokenPriceData(geckoId: string): Promise<Array<[number, number]>> {
 	const data = await fetchProtocolTokenData(geckoId)
 	const converted = convertToNumberFormat(data.prices ?? [], true)
 	return normalizeHourlyToDaily(converted, 'last')
 }
 
-async function fetchProtocolTokenVolumeData(geckoId: string): Promise<[number, number][]> {
+async function fetchProtocolTokenVolumeData(geckoId: string): Promise<Array<[number, number]>> {
 	const data = await fetchProtocolTokenData(geckoId)
 	const converted = convertToNumberFormat(data.volumes ?? [], true)
 	return normalizeHourlyToDaily(converted, 'sum')
 }
 
-async function fetchProtocolTreasuryData(protocol: string): Promise<[number, number][]> {
+async function fetchProtocolTreasuryData(protocol: string): Promise<Array<[number, number]>> {
 	if (!protocol) return []
 	try {
 		const data = await fetchProtocolTreasuryChart({ protocol: slug(protocol) })
 		if (!data) return []
 		return data.map(([timestampMs, value]) => [Math.floor(timestampMs / 1e3), value] as [number, number])
-	} catch (e) {
-		recordRuntimeError(e, 'pageBuild')
+	} catch (error) {
+		recordRuntimeError(error, 'pageBuild')
 		return []
 	}
 }
 
-async function fetchProtocolMedianApyData(protocol: string): Promise<[number, number][]> {
-	const res: [number, number][] = []
+async function fetchProtocolMedianApyData(protocol: string): Promise<Array<[number, number]>> {
+	const res: Array<[number, number]> = []
 	for (const item of await fetchProtocolMedianHistory(protocol)) {
 		res.push([dayjs(item.date).unix(), item.medianApy])
 	}
 	return res
 }
 
-async function fetchProtocolBorrowedData(protocol: string): Promise<[number, number][]> {
+async function fetchProtocolBorrowedData(protocol: string): Promise<Array<[number, number]>> {
 	if (!protocol) return []
 	try {
 		return toProChartSeconds(await fetchProtocolTvlChart({ protocol, key: 'borrowed' }))
-	} catch (e) {
-		recordRuntimeError(e, 'pageBuild')
+	} catch (error) {
+		recordRuntimeError(error, 'pageBuild')
 		return []
 	}
 }
 
-async function fetchProtocolPfRatioData(protocol: string): Promise<[number, number][]> {
+async function fetchProtocolPfRatioData(protocol: string): Promise<Array<[number, number]>> {
 	if (!protocol) return []
 	try {
 		const res = await fetchWithPoolingOnServer(
 			`/api/public/pro-dashboard/pf-ps-chart?protocol=${encodeURIComponent(protocol)}&type=pf`
 		)
 		if (!res.ok) return []
-		return (await res.json()) as [number, number][]
-	} catch (e) {
-		recordRuntimeError(e, 'pageBuild')
+		return (await res.json()) as Array<[number, number]>
+	} catch (error) {
+		recordRuntimeError(error, 'pageBuild')
 		return []
 	}
 }
 
-async function fetchProtocolPsRatioData(protocol: string): Promise<[number, number][]> {
+async function fetchProtocolPsRatioData(protocol: string): Promise<Array<[number, number]>> {
 	if (!protocol) return []
 	try {
 		const res = await fetchWithPoolingOnServer(
 			`/api/public/pro-dashboard/pf-ps-chart?protocol=${encodeURIComponent(protocol)}&type=ps`
 		)
 		if (!res.ok) return []
-		return (await res.json()) as [number, number][]
-	} catch (e) {
-		recordRuntimeError(e, 'pageBuild')
+		return (await res.json()) as Array<[number, number]>
+	} catch (error) {
+		recordRuntimeError(error, 'pageBuild')
 		return []
 	}
 }
@@ -185,7 +185,7 @@ export async function fetchProProtocolChartData(
 	chartType: string,
 	protocol: string,
 	options: ProtocolChartDataOptions = {}
-): Promise<[number, number][]> {
+): Promise<Array<[number, number]>> {
 	if (!isProDashboardChartType(chartType)) return []
 	switch (chartType) {
 		case 'tvl':

@@ -2,11 +2,11 @@ import { getMetadataCache, type StaticParamPath } from '~/server/routeRegistry/c
 import { slug } from '~/utils'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 
-function dedupeSlugs(slugs: string[]): string[] {
+function dedupeSlugs(slugs: Array<string>): Array<string> {
 	return [...new Set(slugs)]
 }
 
-function getStablecoinChainSlugsFromMetadata(metadataCache: MetadataCache): string[] {
+function getStablecoinChainSlugsFromMetadata(metadataCache: MetadataCache): Array<string> {
 	const slugs = new Set<string>()
 
 	for (const chainSlug in metadataCache.chainMetadata) {
@@ -39,8 +39,8 @@ export function resolveStablecoinAssetParamFromMetadata(
 	return metadataCache.stablecoinPeggedAssetSlugsSet.has(peggedAssetSlug) ? peggedAssetSlug : null
 }
 
-export async function getStablecoinSitemapRoutes(metadataCache: MetadataCache): Promise<string[]> {
-	const routes: string[] = []
+export async function getStablecoinSitemapRoutes(metadataCache: MetadataCache): Promise<Array<string>> {
+	const routes: Array<string> = []
 
 	for (const stablecoinSlug of metadataCache.stablecoinPeggedAssetSlugs) {
 		routes.push(`stablecoin/${stablecoinSlug}`)

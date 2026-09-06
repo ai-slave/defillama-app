@@ -13,12 +13,12 @@ const RESEARCH_FEED_PAGE_CACHE_CONTROL = 'public, max-age=300, s-maxage=900, sta
 const PREVIEW_ITEM_COUNT = 12
 
 type ResearchFeedPageProps = {
-	items: ResearchFeedPreviewItem[]
+	items: Array<ResearchFeedPreviewItem>
 }
 
-async function loadPreviewItems(): Promise<ResearchFeedPreviewItem[]> {
+async function loadPreviewItems(): Promise<Array<ResearchFeedPreviewItem>> {
 	const list = await listArticles({ sort: 'newest', limit: PREVIEW_ITEM_COUNT + 4 })
-	const items: ResearchFeedPreviewItem[] = []
+	const items: Array<ResearchFeedPreviewItem> = []
 	for (const article of list.items) {
 		if (!article.section) continue
 		items.push({
@@ -33,7 +33,7 @@ async function loadPreviewItems(): Promise<ResearchFeedPreviewItem[]> {
 }
 
 const getServerSidePropsHandler: GetServerSideProps<ResearchFeedPageProps> = async ({ res }) => {
-	let items: ResearchFeedPreviewItem[] = []
+	let items: Array<ResearchFeedPreviewItem> = []
 
 	try {
 		items = await loadPreviewItems()

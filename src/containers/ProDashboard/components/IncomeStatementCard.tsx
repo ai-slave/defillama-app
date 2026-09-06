@@ -74,7 +74,7 @@ export function IncomeStatementCard({ config }: IncomeStatementCardProps) {
 					<h3 className="text-base font-semibold">{displayName} Income statement</h3>
 				</div>
 				<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
-					{(['table', 'sankey'] as ViewMode[]).map((mode) => (
+					{(['table', 'sankey'] as Array<ViewMode>).map((mode) => (
 						<button
 							key={mode}
 							type="button"

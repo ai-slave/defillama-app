@@ -107,13 +107,13 @@ async function doRefresh(source?: string): Promise<void> {
 			staleAgeMs,
 			status: 'success'
 		})
-	} catch (err) {
+	} catch (error) {
 		const now = Date.now()
 		lastAttemptMs = now
 		refreshStatus.failedRefreshes += 1
 		recordMetadataRefreshTelemetry({
 			durationMs: now - startedAt,
-			error: err,
+			error,
 			source,
 			staleAgeMs,
 			status: 'failure'
@@ -122,7 +122,7 @@ async function doRefresh(source?: string): Promise<void> {
 			source
 				? `[metadata] refresh failed from ${source}, keeping stale cache:`
 				: '[metadata] refresh failed, keeping stale cache:',
-			err
+			error
 		)
 	}
 }

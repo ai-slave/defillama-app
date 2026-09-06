@@ -71,7 +71,7 @@ export function SubscribeLayout2({
 				</header>
 
 				<main className="grow">
-					<header className="flex min-h-[64px] items-center justify-end gap-4 px-5 py-3"></header>
+					<header className="flex min-h-[64px] items-center justify-end gap-4 px-5 py-3" />
 					{children}
 				</main>
 

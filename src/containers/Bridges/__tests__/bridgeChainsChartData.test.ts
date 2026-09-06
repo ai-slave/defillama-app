@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildBridgeChainsChartRows, buildBridgeChainsMultiSeriesChart } from '../queries.server'
 
 describe('bridge chains chart contract', () => {
-	it('builds chart rows from normalized per-chain API streams', () => {
+	test('builds chart rows from normalized per-chain API streams', () => {
 		const chartDataByChain = [
 			[
 				{ date: 3, depositUSD: 30, withdrawUSD: 5 },
@@ -26,9 +26,9 @@ describe('bridge chains chart contract', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Ethereum', 'Arbitrum'],
 			source: [
-				[1_000, null, 16],
-				[2_000, null, null],
-				[3_000, 25, null]
+				[1000, null, 16],
+				[2000, null, null],
+				[3000, 25, null]
 			]
 		})
 		expect(result.charts).toEqual([
@@ -51,7 +51,7 @@ describe('bridge chains chart contract', () => {
 		])
 	})
 
-	it('keeps normalized dates without mutating points', () => {
+	test('keeps normalized dates without mutating points', () => {
 		const point = { date: 1, depositUSD: 5, withdrawUSD: null }
 		const chartDataByChain = [[point], [{ date: 2, depositUSD: null, withdrawUSD: 2 }]]
 
@@ -67,7 +67,7 @@ describe('bridge chains chart contract', () => {
 		expect(point).toEqual({ date: 1, depositUSD: 5, withdrawUSD: null })
 	})
 
-	it('rejects misaligned chain and chart response arrays', () => {
+	test('rejects misaligned chain and chart response arrays', () => {
 		expect(() =>
 			buildBridgeChainsChartRows({
 				chains: [{ name: 'Ethereum' }, { name: 'Arbitrum' }],
@@ -76,7 +76,7 @@ describe('bridge chains chart contract', () => {
 		).toThrow('Bridge chain/chart response count mismatch: 2 chains, 1 charts')
 	})
 
-	it('returns a dimensioned empty chart for empty streams', () => {
+	test('returns a dimensioned empty chart for empty streams', () => {
 		const chartRows = buildBridgeChainsChartRows({ chains: [{ name: 'Ethereum' }], chartDataByChain: [[]] })
 		const result = buildBridgeChainsMultiSeriesChart({ chartRows, chains: ['Ethereum'] })
 
@@ -84,7 +84,7 @@ describe('bridge chains chart contract', () => {
 		expect(result.charts[0]?.encode.y).toBe(1)
 	})
 
-	it('keeps an unavailable chain stream out of rows without dropping other chains', () => {
+	test('keeps an unavailable chain stream out of rows without dropping other chains', () => {
 		const chartRows = buildBridgeChainsChartRows({
 			chains: [{ name: 'Unavailable' }, { name: 'Ethereum' }],
 			chartDataByChain: [null, [{ date: 1, depositUSD: 5, withdrawUSD: 2 }]]

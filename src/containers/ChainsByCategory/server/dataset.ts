@@ -8,7 +8,7 @@ export async function fetchChainsDatasetRows({
 }: {
 	category?: string
 	limit?: number | null
-}): Promise<ChainsDatasetRow[]> {
+}): Promise<Array<ChainsDatasetRow>> {
 	let categoryParam = typeof category === 'string' && category ? category : 'All'
 	const normalizedLimit = typeof limit === 'number' && Number.isFinite(limit) && limit > 0 ? limit : null
 
@@ -26,7 +26,7 @@ export async function fetchChainsDatasetRows({
 
 	const chains = data.chains || []
 
-	const formattedChains: ChainsDatasetRow[] = chains.map((chain) => ({
+	const formattedChains: Array<ChainsDatasetRow> = chains.map((chain) => ({
 		name: chain.name,
 		icon: chainIconUrl(chain.name),
 		protocols: chain.protocols || 0,

@@ -1,8 +1,8 @@
 import { getRaisesInvestorSlugsFromSnapshot } from './routeData'
 
-export async function getRaisesInvestorRoutes(): Promise<string[]> {
+export async function getRaisesInvestorRoutes(): Promise<Array<string>> {
 	const investorSlugs = await getRaisesInvestorSlugsFromSnapshot()
-	const routes: string[] = []
+	const routes: Array<string> = []
 	for (const investorSlug of investorSlugs) {
 		routes.push(`raises/${investorSlug}`)
 	}

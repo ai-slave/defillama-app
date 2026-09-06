@@ -1,14 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildRollingMedianSeries } from './queries'
 
 const HOUR = 60 * 60 * 1000
 
 describe('buildRollingMedianSeries', () => {
-	it('returns no rows for an empty sales history', () => {
+	test('returns no rows for an empty sales history', () => {
 		expect(buildRollingMedianSeries([])).toEqual([])
 	})
 
-	it('advances ascending window bounds and computes the same six-hour medians', () => {
+	test('advances ascending window bounds and computes the same six-hour medians', () => {
 		expect(
 			buildRollingMedianSeries([
 				[0, 1],
@@ -23,7 +23,7 @@ describe('buildRollingMedianSeries', () => {
 		])
 	})
 
-	it('uses a 24-hour window for large histories while retaining the boundary point', () => {
+	test('uses a 24-hour window for large histories while retaining the boundary point', () => {
 		const sales: Array<[number, number]> = []
 		for (let i = 0; i < 301; i++) sales.push([i * HOUR, i])
 

@@ -3,7 +3,7 @@ import type { ArticleChartAnnotation } from './types'
 
 /** Keep chart markers in the same A/B/C order as the annotation list below the figure. */
 export function buildArticleAnnotationMarkLine(
-	annotations: ArticleChartAnnotation[]
+	annotations: Array<ArticleChartAnnotation>
 ): LineSeriesOption['markLine'] | undefined {
 	if (annotations.length === 0) return undefined
 	return {

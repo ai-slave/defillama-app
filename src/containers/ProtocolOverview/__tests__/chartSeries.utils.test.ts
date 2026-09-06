@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getProtocolBridgeVolumeMetrics,
 	normalizeBridgeVolumeToChartMs,
@@ -8,12 +8,12 @@ import {
 } from '../chartSeries.utils'
 
 describe('ProtocolOverview chart series normalization', () => {
-	it('keeps a successful empty bridge chart distinct from nullable absence', () => {
+	test('keeps a successful empty bridge chart distinct from nullable absence', () => {
 		expect(normalizeBridgeVolumeToChartMs([])).toEqual([])
 		expect(normalizeBridgeVolumeToChartMs(null)).toBeNull()
 	})
 
-	it('normalizes the exact numeric producer tuple contract from seconds or milliseconds', () => {
+	test('normalizes the exact numeric producer tuple contract from seconds or milliseconds', () => {
 		expect(normalizeChartPointsToMs([])).toEqual([])
 		expect(
 			normalizeChartPointsToMs([
@@ -28,7 +28,7 @@ describe('ProtocolOverview chart series normalization', () => {
 		])
 	})
 
-	it('normalizes mixed second and millisecond timestamps to seconds', () => {
+	test('normalizes mixed second and millisecond timestamps to seconds', () => {
 		expect(
 			normalizeSeriesToSeconds([
 				[1_700_000_000, 1],
@@ -40,7 +40,7 @@ describe('ProtocolOverview chart series normalization', () => {
 		])
 	})
 
-	it('normalizes mixed second and millisecond timestamps to milliseconds', () => {
+	test('normalizes mixed second and millisecond timestamps to milliseconds', () => {
 		expect(
 			normalizeSeriesToMilliseconds([
 				[1_700_000_000_000, 1],
@@ -52,7 +52,7 @@ describe('ProtocolOverview chart series normalization', () => {
 		])
 	})
 
-	it('aggregates adjacent bridge rows while preserving the ascending API order', () => {
+	test('aggregates adjacent bridge rows while preserving the ascending API order', () => {
 		expect(
 			normalizeBridgeVolumeToChartMs([
 				{ date: 1, depositUSD: 10, withdrawUSD: 2 },
@@ -60,12 +60,12 @@ describe('ProtocolOverview chart series normalization', () => {
 				{ date: 2, depositUSD: 8, withdrawUSD: 2 }
 			])
 		).toEqual([
-			[1_000, 8],
-			[2_000, 5]
+			[1000, 8],
+			[2000, 5]
 		])
 	})
 
-	it('preserves bridge-volume dates whose gross volume is unknown', () => {
+	test('preserves bridge-volume dates whose gross volume is unknown', () => {
 		expect(
 			normalizeBridgeVolumeToChartMs([
 				{ date: 1, depositUSD: 10, withdrawUSD: null },
@@ -73,13 +73,13 @@ describe('ProtocolOverview chart series normalization', () => {
 				{ date: 3, depositUSD: 6, withdrawUSD: 2 }
 			])
 		).toEqual([
-			[1_000, null],
-			[2_000, null],
-			[3_000, 4]
+			[1000, null],
+			[2000, null],
+			[3000, 4]
 		])
 	})
 
-	it('uses exact completed UTC days, merges duplicate rows, preserves zero, and excludes the current day', () => {
+	test('uses exact completed UTC days, merges duplicate rows, preserves zero, and excludes the current day', () => {
 		const sec = (date: string) => Date.parse(`${date}T00:00:00Z`) / 1e3
 		expect(
 			getProtocolBridgeVolumeMetrics(
@@ -88,7 +88,7 @@ describe('ProtocolOverview chart series normalization', () => {
 					{ date: sec('2022-09-02'), depositUSD: 2, withdrawUSD: 2 },
 					{ date: sec('2022-09-02'), depositUSD: 4, withdrawUSD: 2 },
 					{ date: sec('2022-09-03'), depositUSD: 0, withdrawUSD: 0 },
-					{ date: sec('2022-09-04'), depositUSD: 1_000, withdrawUSD: 1_000 }
+					{ date: sec('2022-09-04'), depositUSD: 1000, withdrawUSD: 1000 }
 				],
 				Date.parse('2022-09-04T12:00:00Z')
 			)
@@ -100,7 +100,7 @@ describe('ProtocolOverview chart series normalization', () => {
 		})
 	})
 
-	it('null-propagates an explicit unknown leg while treating omitted dates as zero activity', () => {
+	test('null-propagates an explicit unknown leg while treating omitted dates as zero activity', () => {
 		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
 		const data: Array<{ date: number; depositUSD: number; withdrawUSD: number | null }> = Array.from(
 			{ length: 30 },

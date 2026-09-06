@@ -43,8 +43,8 @@ type RevenueMetrics = NonNullable<IChildProtocol['revenue']>
 type HoldersRevenueMetrics = NonNullable<IChildProtocol['holdersRevenue']>
 type EmissionsMetrics = NonNullable<IChildProtocol['emissions']>
 
-const CLASSIFICATION_TVL_TYPES: readonly ClassificationTvlType[] = ['doublecounted', 'liquidstaking']
-const EXTRA_TVL_TYPES: readonly ExtraTvlType[] = [
+const CLASSIFICATION_TVL_TYPES: ReadonlyArray<ClassificationTvlType> = ['doublecounted', 'liquidstaking']
+const EXTRA_TVL_TYPES: ReadonlyArray<ExtraTvlType> = [
 	...PROTOCOL_LIST_ADDITIVE_TVL_KEYS,
 	...CLASSIFICATION_TVL_TYPES,
 	'excludeParent'
@@ -169,7 +169,7 @@ function subtractKnownValue(total: number | null, excluded: number | null): numb
 	return total === null || excluded === null ? null : total - excluded
 }
 
-function collectParentTvlContributions(children: StoredChildProtocol[]): {
+function collectParentTvlContributions(children: Array<StoredChildProtocol>): {
 	defaultTvl: ProtocolRankingTvlEntry | undefined
 	extraTvls: Partial<Record<ExtraTvlType, ProtocolRankingTvlEntry>>
 } {
@@ -193,7 +193,7 @@ function collectParentTvlContributions(children: StoredChildProtocol[]): {
 	return { defaultTvl, extraTvls }
 }
 
-function aggregateCanonicalParentTvls(children: StoredChildProtocol[]): ProtocolRankingTvls | null {
+function aggregateCanonicalParentTvls(children: Array<StoredChildProtocol>): ProtocolRankingTvls | null {
 	const { extraTvls, defaultTvl: collectedDefaultTvl } = collectParentTvlContributions(children)
 	let defaultTvl = collectedDefaultTvl
 	if (!defaultTvl) return null
@@ -210,7 +210,7 @@ function aggregateCanonicalParentTvls(children: StoredChildProtocol[]): Protocol
 	return { default: defaultTvl, ...extraTvls }
 }
 
-function aggregateForkParentTvls(children: StoredChildProtocol[]): ProtocolRankingTvls {
+function aggregateForkParentTvls(children: Array<StoredChildProtocol>): ProtocolRankingTvls {
 	const { defaultTvl, extraTvls } = collectParentTvlContributions(children)
 	return {
 		default: defaultTvl ?? {
@@ -235,7 +235,7 @@ function getAvailableMetricTotal(total: AvailableMetricTotal): number | null {
 	return total.hasValue ? total.value : null
 }
 
-function aggregateFees(children: StoredChildProtocol[], parentMcap: number | null): FeeMetrics | undefined {
+function aggregateFees(children: Array<StoredChildProtocol>, parentMcap: number | null): FeeMetrics | undefined {
 	let hasMetric = false
 	const total24h: AvailableMetricTotal = { value: 0, hasValue: false }
 	const total7d: AvailableMetricTotal = { value: 0, hasValue: false }
@@ -269,7 +269,7 @@ function aggregateFees(children: StoredChildProtocol[], parentMcap: number | nul
 	}
 }
 
-function aggregateRevenue(children: StoredChildProtocol[], parentMcap: number | null): RevenueMetrics | undefined {
+function aggregateRevenue(children: Array<StoredChildProtocol>, parentMcap: number | null): RevenueMetrics | undefined {
 	let hasMetric = false
 	const total24h: AvailableMetricTotal = { value: 0, hasValue: false }
 	const total7d: AvailableMetricTotal = { value: 0, hasValue: false }
@@ -303,7 +303,7 @@ function aggregateRevenue(children: StoredChildProtocol[], parentMcap: number | 
 	}
 }
 
-function aggregateHoldersRevenue(children: StoredChildProtocol[]): HoldersRevenueMetrics | undefined {
+function aggregateHoldersRevenue(children: Array<StoredChildProtocol>): HoldersRevenueMetrics | undefined {
 	let hasMetric = false
 	const total24h: AvailableMetricTotal = { value: 0, hasValue: false }
 	const total7d: AvailableMetricTotal = { value: 0, hasValue: false }
@@ -333,7 +333,7 @@ function aggregateHoldersRevenue(children: StoredChildProtocol[]): HoldersRevenu
 	}
 }
 
-function aggregateEmissions(children: StoredChildProtocol[]): EmissionsMetrics | undefined {
+function aggregateEmissions(children: Array<StoredChildProtocol>): EmissionsMetrics | undefined {
 	let total24h: number | null = 0
 	let total7d: number | null = 0
 	let total30d: number | null = 0
@@ -365,7 +365,7 @@ function aggregateEmissions(children: StoredChildProtocol[]): EmissionsMetrics |
 }
 
 function aggregateActivityMetric(
-	children: StoredChildProtocol[],
+	children: Array<StoredChildProtocol>,
 	metricKey: ProtocolRankingActivitySourceKey
 ): ProtocolRankingActivityMetric | undefined {
 	let hasMetric = false
@@ -511,8 +511,8 @@ export const getProtocolsByChain = async ({
 				}).catch(() => null)
 			: Promise.resolve(null),
 		chain === 'All'
-			? getProtocolEmissionsLookupFromAggregated().catch((err) => {
-					console.log(err)
+			? getProtocolEmissionsLookupFromAggregated().catch((error) => {
+					console.log(error)
 					return null
 				})
 			: Promise.resolve(null),
@@ -627,7 +627,7 @@ export const getProtocolsByChain = async ({
 	if (dexAggregators) activity.dexAggregators = dexAggregators
 	if (perpsAggregators) activity.perpsAggregators = perpsAggregators
 	if (bridgeAggregators) activity.bridgeAggregators = bridgeAggregators
-	const activityMetricKeys = Object.keys(activity) as ProtocolRankingActivitySourceKey[]
+	const activityMetricKeys = Object.keys(activity) as Array<ProtocolRankingActivitySourceKey>
 	const dimensionProtocols = buildDimensionProtocolMetrics({
 		fees,
 		revenue,
@@ -636,7 +636,7 @@ export const getProtocolsByChain = async ({
 	})
 	const protocolsStore: Record<string, IProtocol> = {}
 
-	const parentStore: Record<string, StoredChildProtocol[]> = {}
+	const parentStore: Record<string, Array<StoredChildProtocol>> = {}
 
 	for (const { protocol, metadata } of eligibleProtocols) {
 		const selectedChainTvl = chain === 'All' ? undefined : protocol.chainTvls[currentChainMetadata.name]
@@ -790,7 +790,7 @@ export const getProtocolsByChain = async ({
 		}
 	}
 
-	const storeChildrenUngrouped = (children: StoredChildProtocol[]) => {
+	const storeChildrenUngrouped = (children: Array<StoredChildProtocol>) => {
 		for (const child of children) protocolsStore[child.defillamaId] = child.row
 	}
 
@@ -859,7 +859,7 @@ export const getProtocolsByChain = async ({
 				: null
 		const parentProtocolTvl = parentTvl?.default.tvl ?? null
 		const parentMcapTvl = getMcapTvlRatio(parentProtocol.mcap, parentProtocolTvl)
-		const publicChildren: IChildProtocol[] = []
+		const publicChildren: Array<IChildProtocol> = []
 		for (const child of childProtocols) publicChildren.push(child.row)
 		const parentRow: IProtocol = {
 			id: parentProtocol.id,

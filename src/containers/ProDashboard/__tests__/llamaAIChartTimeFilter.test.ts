@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { filterLlamaAIChartPayload } from '../utils/llamaAIChartTimeFilter'
 
@@ -34,29 +34,29 @@ describe('filterLlamaAIChartPayload', () => {
 		{ date: '2025-01-01', tvl: 3 }
 	]
 
-	it('returns all rows when time period is all', () => {
+	test('returns all rows when time period is all', () => {
 		expect(filterLlamaAIChartPayload([baseConfig], rows, 'all')).toEqual(rows)
 	})
 
-	it('filters time-series rows by preset period', () => {
+	test('filters time-series rows by preset period', () => {
 		const filtered = filterLlamaAIChartPayload([baseConfig], rows, 'custom', {
 			type: 'absolute',
-			startDate: 1577836800,
-			endDate: 1717209600
+			startDate: 1_577_836_800,
+			endDate: 1_717_209_600
 		})
 		expect(filtered.map((row) => row.date)).toEqual(['2020-01-01', '2024-06-01'])
 	})
 
-	it('filters record chart data by dataset key', () => {
+	test('filters record chart data by dataset key', () => {
 		const filtered = filterLlamaAIChartPayload([baseConfig], { 'chart-1': rows }, 'custom', {
 			type: 'absolute',
-			startDate: 1577836800,
-			endDate: 1717209600
+			startDate: 1_577_836_800,
+			endDate: 1_717_209_600
 		})
 		expect(filtered['chart-1'].map((row) => row.date)).toEqual(['2020-01-01', '2024-06-01'])
 	})
 
-	it('leaves non-time charts unchanged', () => {
+	test('leaves non-time charts unchanged', () => {
 		const pieConfig: ChartConfiguration = {
 			...baseConfig,
 			type: 'pie',

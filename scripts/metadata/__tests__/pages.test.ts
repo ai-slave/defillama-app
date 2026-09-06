@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
 import { buildTrendingPages, writePagesAndTrendingIfNeeded, type DefillamaPages } from '../pages'
 
-const tempDirs: string[] = []
+const tempDirs: Array<string> = []
 
 async function createRepoRoot(): Promise<string> {
 	const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'metadata-pages-test-'))
@@ -18,7 +18,7 @@ afterEach(async () => {
 })
 
 describe('metadata page helpers', () => {
-	it('excludes retired governance URLs while preserving related token and protocol pages', () => {
+	test('excludes retired governance URLs while preserving related token and protocol pages', () => {
 		const retiredRoutes = [
 			'/governance',
 			'/governance/',
@@ -42,7 +42,7 @@ describe('metadata page helpers', () => {
 		expect(trendingPages.map((page) => page.route)).toEqual(preservedRoutes)
 	})
 
-	it('writes pages even when there are no trending pages', async () => {
+	test('writes pages even when there are no trending pages', async () => {
 		const repoRoot = await createRepoRoot()
 		const pages: DefillamaPages = {
 			Metrics: [{ route: '/fees', name: 'Fees' }]
@@ -54,7 +54,7 @@ describe('metadata page helpers', () => {
 		await expect(fs.stat(path.join(repoRoot, 'public', 'trending.json'))).rejects.toThrow()
 	})
 
-	it('does not filter protocol routes as pro routes', () => {
+	test('does not filter protocol routes as pro routes', () => {
 		const trendingPages = buildTrendingPages({}, [
 			['/protocols/aave', 10],
 			['/pro', 9],

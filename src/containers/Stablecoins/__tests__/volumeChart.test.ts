@@ -1,21 +1,21 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { StablecoinVolumeBreakdownChartPoint } from '../api.types'
 import { buildStablecoinVolumeChartPayload, groupStablecoinVolumeChartPayload } from '../volumeChart'
 
 describe('buildStablecoinVolumeChartPayload', () => {
-	it('formats total volume as a single MultiSeriesChart bar', () => {
+	test('formats total volume as a single MultiSeriesChart bar', () => {
 		const payload = buildStablecoinVolumeChartPayload({
 			data: [
-				[1609459200, 100],
-				[1609545600, 125]
+				[1_609_459_200, 100],
+				[1_609_545_600, 125]
 			],
 			chart: 'total'
 		})
 
 		expect(payload.dataset).toEqual({
 			source: [
-				[1609459200000, 100],
-				[1609545600000, 125]
+				[1_609_459_200_000, 100],
+				[1_609_545_600_000, 125]
 			],
 			dimensions: ['timestamp', 'Volume']
 		})
@@ -24,56 +24,56 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.stacked).toBe(false)
 	})
 
-	it('trims trailing incomplete zero buckets without removing interior zeroes', () => {
+	test('trims trailing incomplete zero buckets without removing interior zeroes', () => {
 		const payload = buildStablecoinVolumeChartPayload({
 			data: [
-				[1609459200, 100],
-				[1609545600, 0],
-				[1609632000, 125],
-				[1609718400, 0]
+				[1_609_459_200, 100],
+				[1_609_545_600, 0],
+				[1_609_632_000, 125],
+				[1_609_718_400, 0]
 			],
 			chart: 'total',
 			trimIncompleteTail: true
 		})
 
 		expect(payload.dataset.source).toEqual([
-			[1609459200000, 100],
-			[1609545600000, 0],
-			[1609632000000, 125]
+			[1_609_459_200_000, 100],
+			[1_609_545_600_000, 0],
+			[1_609_632_000_000, 125]
 		])
 		expect(
 			buildStablecoinVolumeChartPayload({
 				data: [
-					[1609459200, 100],
-					[1609545600, 0]
+					[1_609_459_200, 100],
+					[1_609_545_600, 0]
 				],
 				chart: 'total'
 			}).dataset.source
 		).toHaveLength(2)
 	})
 
-	it('limits breakdown series and folds the rest into Others', () => {
+	test('limits breakdown series and folds the rest into Others', () => {
 		const payload = buildStablecoinVolumeChartPayload({
 			data: [
-				[1609459200, { ethereum: 100, tron: 80, base: 50, bsc: 25 }],
-				[1609545600, { ethereum: 120, tron: 90, base: 60, bsc: 30 }]
+				[1_609_459_200, { ethereum: 100, tron: 80, base: 50, bsc: 25 }],
+				[1_609_545_600, { ethereum: 120, tron: 90, base: 60, bsc: 30 }]
 			],
 			chart: 'chain',
 			limit: 2
 		})
 
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'ethereum', 'tron', 'Others'])
-		expect(payload.dataset.source[1]).toEqual([1609545600000, 120, 90, 90])
+		expect(payload.dataset.source[1]).toEqual([1_609_545_600_000, 120, 90, 90])
 		expect(payload.showTotalInTooltip).toBe(true)
 		expect(payload.stacked).toBe(true)
 		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
 		expect(payload.charts.find((chart) => chart.name === 'Others')?.color).toBe('#AAAAAA')
 	})
 
-	it('keeps every breakdown series when a complete export explicitly disables the limit', () => {
+	test('keeps every breakdown series when a complete export explicitly disables the limit', () => {
 		const names = Array.from({ length: 55 }, (_, index) => `chain-${index + 1}`)
 		const payload = buildStablecoinVolumeChartPayload({
-			data: [[1609459200, Object.fromEntries(names.map((name, index) => [name, names.length - index]))]],
+			data: [[1_609_459_200, Object.fromEntries(names.map((name, index) => [name, names.length - index]))]],
 			chart: 'chain',
 			limit: null
 		})
@@ -82,11 +82,11 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.dataset.dimensions).not.toContain('Others')
 	})
 
-	it('keeps zero and missing breakdown values exact while preserving input order', () => {
+	test('keeps zero and missing breakdown values exact while preserving input order', () => {
 		const payload = buildStablecoinVolumeChartPayload({
 			data: [
-				[1609459200, { ethereum: 100, base: 5 }],
-				[1609545600, { ethereum: 0, tron: 10, base: 0 }]
+				[1_609_459_200, { ethereum: 100, base: 5 }],
+				[1_609_545_600, { ethereum: 0, tron: 10, base: 0 }]
 			],
 			chart: 'chain',
 			limit: 2
@@ -94,8 +94,8 @@ describe('buildStablecoinVolumeChartPayload', () => {
 
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'tron', 'ethereum', 'Others'])
 		expect(payload.dataset.source).toEqual([
-			[1609459200000, 0, 100, 5],
-			[1609545600000, 10, 0, 0]
+			[1_609_459_200_000, 0, 100, 5],
+			[1_609_545_600_000, 10, 0, 0]
 		])
 		expect(payload.availableSeries).toEqual(['tron', 'ethereum', 'base'])
 		expect(payload.showTotalInTooltip).toBe(true)
@@ -103,10 +103,10 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.charts.every((chart) => chart.large === false)).toBe(true)
 	})
 
-	it('projects explicit historical peers and aggregates only the selected tail', () => {
-		const data: StablecoinVolumeBreakdownChartPoint[] = [
-			[1609459200, { ethereum: 100, base: 5 }],
-			[1609545600, { ethereum: 0, tron: 10, base: 7 }]
+	test('projects explicit historical peers and aggregates only the selected tail', () => {
+		const data: Array<StablecoinVolumeBreakdownChartPoint> = [
+			[1_609_459_200, { ethereum: 100, base: 5 }],
+			[1_609_545_600, { ethereum: 0, tron: 10, base: 7 }]
 		]
 		const selected = buildStablecoinVolumeChartPayload({
 			data,
@@ -116,8 +116,8 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		})
 		expect(selected.dataset.dimensions).toEqual(['timestamp', 'base'])
 		expect(selected.dataset.source).toEqual([
-			[1609459200000, 5],
-			[1609545600000, 7]
+			[1_609_459_200_000, 5],
+			[1_609_545_600_000, 7]
 		])
 
 		const overflow = buildStablecoinVolumeChartPayload({
@@ -128,8 +128,8 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		})
 		expect(overflow.dataset.dimensions).toEqual(['timestamp', 'tron', 'Others'])
 		expect(overflow.dataset.source).toEqual([
-			[1609459200000, 0, 5],
-			[1609545600000, 10, 7]
+			[1_609_459_200_000, 0, 5],
+			[1_609_545_600_000, 10, 7]
 		])
 
 		const excluded = buildStablecoinVolumeChartPayload({
@@ -140,16 +140,16 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		})
 		expect(excluded.dataset.dimensions).toEqual(['timestamp', 'tron', 'Others'])
 		expect(excluded.dataset.source).toEqual([
-			[1609459200000, 0, 5],
-			[1609545600000, 10, 7]
+			[1_609_459_200_000, 0, 5],
+			[1_609_545_600_000, 10, 7]
 		])
 	})
 
-	it('ranks from the latest non-empty breakdown when the current bucket is empty', () => {
+	test('ranks from the latest non-empty breakdown when the current bucket is empty', () => {
 		const payload = buildStablecoinVolumeChartPayload({
 			data: [
-				[1609459200, { ethereum: 100, tron: 80 }],
-				[1609545600, {}]
+				[1_609_459_200, { ethereum: 100, tron: 80 }],
+				[1_609_545_600, {}]
 			],
 			chart: 'chain',
 			limit: 2,
@@ -157,14 +157,14 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		})
 
 		expect(payload.dataset.dimensions).toEqual(['timestamp', 'ethereum', 'tron'])
-		expect(payload.dataset.source).toEqual([[1609459200000, 100, 80]])
+		expect(payload.dataset.source).toEqual([[1_609_459_200_000, 100, 80]])
 	})
 
-	it('returns an empty breakdown payload when every bucket is empty', () => {
+	test('returns an empty breakdown payload when every bucket is empty', () => {
 		const payload = buildStablecoinVolumeChartPayload({
 			data: [
-				[1609459200, {}],
-				[1609545600, {}]
+				[1_609_459_200, {}],
+				[1_609_545_600, {}]
 			],
 			chart: 'chain',
 			trimIncompleteTail: true
@@ -177,26 +177,26 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		expect(payload.charts).toEqual([])
 	})
 
-	it('groups volume payloads by the selected interval', () => {
+	test('groups volume payloads by the selected interval', () => {
 		const payload = buildStablecoinVolumeChartPayload({
 			data: [
-				[1609459200, 100],
-				[1609545600, 125]
+				[1_609_459_200, 100],
+				[1_609_545_600, 125]
 			],
 			chart: 'total'
 		})
 
 		const grouped = groupStablecoinVolumeChartPayload(payload, 'yearly')
 
-		expect(grouped.dataset.source).toEqual([[1609459200000, 225]])
+		expect(grouped.dataset.source).toEqual([[1_609_459_200_000, 225]])
 		expect(grouped.charts.at(0)?.type).toBe('bar')
 	})
 
-	it('renders cumulative volume totals as lines without bar-only options', () => {
+	test('renders cumulative volume totals as lines without bar-only options', () => {
 		const payload = buildStablecoinVolumeChartPayload({
 			data: [
-				[1609459200, 100],
-				[1609545600, 25]
+				[1_609_459_200, 100],
+				[1_609_545_600, 25]
 			],
 			chart: 'total'
 		})
@@ -205,8 +205,8 @@ describe('buildStablecoinVolumeChartPayload', () => {
 		const groupedChart = grouped.charts.at(0)
 
 		expect(grouped.dataset.source).toEqual([
-			[1609459200000, 100],
-			[1609545600000, 125]
+			[1_609_459_200_000, 100],
+			[1_609_545_600_000, 125]
 		])
 		expect(groupedChart).toMatchObject({ type: 'line', name: 'Volume' })
 		expect(groupedChart).not.toHaveProperty('barMinWidth')

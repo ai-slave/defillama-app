@@ -41,7 +41,7 @@ export const Switch = ({
 			>
 				<span
 					className={`block size-4 rounded-full bg-white shadow-xs transition-transform ${checked ? 'translate-x-4' : ''}`}
-				></span>
+				/>
 			</span>
 			{help ? (
 				<span className="flex items-center gap-1">

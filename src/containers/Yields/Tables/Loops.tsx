@@ -20,13 +20,13 @@ import {
 // exposure multipliers (supply = leverage, borrow = leverage − 1). The scaled legs subtotal to
 // Looped APY. Borrow reward offsets cost, so it reads as a positive (+) contribution; borrow base
 // cost is the only negative.
-function loopLegRows(row: LoopTableRow): SignedTipRow[] {
+function loopLegRows(row: LoopTableRow): Array<SignedTipRow> {
 	const { leverage, supplyApyBase, supplyApyReward, supplyApyIntrinsic, borrowApyBase, borrowApyReward } = row
 	const sMult = leverage ?? 1
 	const bMult = leverage != null ? leverage - 1 : 1
 	const sMultProp = leverage != null ? sMult : undefined
 	const bMultProp = leverage != null ? bMult : undefined
-	const rows: SignedTipRow[] = []
+	const rows: Array<SignedTipRow> = []
 	if (supplyApyBase != null)
 		rows.push({
 			label: 'Supply base',
@@ -132,7 +132,7 @@ const loopColumns: TableOptions<LoopTableRow>['columns'] = [
 		header: 'Chain',
 		enableSorting: false,
 		cell: (info) => (
-			<IconsRow items={toChainIconItems(info.getValue() as string[], (chain) => chainHref('/chain', chain))} />
+			<IconsRow items={toChainIconItems(info.getValue() as Array<string>, (chain) => chainHref('/chain', chain))} />
 		),
 		meta: { headerClassName: 'w-[50px] min-w-[50px]', align: 'end' }
 	}),
@@ -153,30 +153,31 @@ const loopColumns: TableOptions<LoopTableRow>['columns'] = [
 			// Defensive fallback to leg totals if a row somehow carries no component split.
 			const supplyMult = leverage ?? 1
 			const borrowMult = leverage != null ? leverage - 1 : 1
-			const tooltipRows: SignedTipRow[] = legRows.length
-				? legRows
-				: [
-						...(supplyApy != null
-							? [
-									{
-										label: 'Supply',
-										value: supplyApy * supplyMult,
-										signed: 'plus' as const,
-										...(leverage != null ? { multiple: supplyMult } : {})
-									}
-								]
-							: []),
-						...(borrowApy != null
-							? [
-									{
-										label: 'Borrow cost',
-										value: borrowApy * borrowMult,
-										signed: 'minus' as const,
-										...(leverage != null ? { multiple: borrowMult } : {})
-									}
-								]
-							: [])
-					]
+			const tooltipRows: Array<SignedTipRow> =
+				legRows.length > 0
+					? legRows
+					: [
+							...(supplyApy != null
+								? [
+										{
+											label: 'Supply',
+											value: supplyApy * supplyMult,
+											signed: 'plus' as const,
+											...(leverage != null ? { multiple: supplyMult } : {})
+										}
+									]
+								: []),
+							...(borrowApy != null
+								? [
+										{
+											label: 'Borrow cost',
+											value: borrowApy * borrowMult,
+											signed: 'minus' as const,
+											...(leverage != null ? { multiple: borrowMult } : {})
+										}
+									]
+								: [])
+						]
 			return <SignedApyCell value={loopApy} summaryLabel="Loop APY" note={note} tooltipRows={tooltipRows} />
 		},
 		meta: {

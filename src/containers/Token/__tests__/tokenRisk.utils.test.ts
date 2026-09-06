@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { TokenRiskBorrowCapacityResponse } from '../api.types'
 import {
 	buildExposuresSection,
@@ -49,7 +49,7 @@ function createTokenEntry(
 }
 
 describe('tokenRisk utils', () => {
-	it('indexes borrow capacity by chain-address key and merges rows across candidates', () => {
+	test('indexes borrow capacity by chain-address key and merges rows across candidates', () => {
 		const tokens = [
 			createTokenEntry({
 				asset: { symbol: 'USDC', address: '0xAsset1', priceUsd: 1 }
@@ -66,7 +66,7 @@ describe('tokenRisk utils', () => {
 		expect(merged).toHaveLength(2)
 	})
 
-	it('canonicalizes native token sentinel addresses when indexing borrow capacity', () => {
+	test('canonicalizes native token sentinel addresses when indexing borrow capacity', () => {
 		const tokens = [
 			createTokenEntry({
 				asset: { symbol: 'ETH', address: '0x0000000000000000000000000000000000000000', priceUsd: 3000 }
@@ -83,7 +83,7 @@ describe('tokenRisk utils', () => {
 		expect(merged).toHaveLength(2)
 	})
 
-	it('infers token risk candidates from borrow capacity symbols and native wrapped aliases', () => {
+	test('infers token risk candidates from borrow capacity symbols and native wrapped aliases', () => {
 		const candidates = inferTokenRiskCandidatesFromBorrowCapacity({
 			tokenSymbol: 'ETH',
 			tokens: [
@@ -121,7 +121,7 @@ describe('tokenRisk utils', () => {
 		])
 	})
 
-	it('filters scope candidates down to assets that have borrow capacity data', () => {
+	test('filters scope candidates down to assets that have borrow capacity data', () => {
 		const indexedTokens = indexBorrowCapacityByAssetKey([
 			createTokenEntry({
 				chain: 'ethereum',
@@ -136,7 +136,7 @@ describe('tokenRisk utils', () => {
 		expect(filterTokenRiskCandidatesWithData(candidates, indexedTokens)).toEqual([candidates[0]])
 	})
 
-	it('builds rows from protocol-level liquidity borrow capacity and keeps current exposure partial when needed', () => {
+	test('builds rows from protocol-level liquidity borrow capacity and keeps current exposure partial when needed', () => {
 		const section = buildExposuresSection(
 			[
 				createTokenEntry({
@@ -212,7 +212,7 @@ describe('tokenRisk utils', () => {
 		])
 	})
 
-	it('builds protocol summaries with sorted chain breakdowns from exposure rows', () => {
+	test('builds protocol summaries with sorted chain breakdowns from exposure rows', () => {
 		const summaries = buildTokenRiskProtocolSummaries([
 			{
 				protocol: 'aave-v3',
@@ -258,7 +258,7 @@ describe('tokenRisk utils', () => {
 		expect(summaries[0]?.chainBreakdowns.map((chain) => chain.chainDisplayName)).toEqual(['Ethereum', 'Base'])
 	})
 
-	it('dedupes identical protocol-chain-asset rows and sums liquidity-based max borrow', () => {
+	test('dedupes identical protocol-chain-asset rows and sums liquidity-based max borrow', () => {
 		const section = buildExposuresSection(
 			[
 				createTokenEntry({
@@ -307,7 +307,7 @@ describe('tokenRisk utils', () => {
 		expect(section.summary.totalMinBadDebtAtPriceZeroUsd).toBe(15)
 	})
 
-	it('marks zero-price bad debt as partial when grouped rows mix known and null values', () => {
+	test('marks zero-price bad debt as partial when grouped rows mix known and null values', () => {
 		const section = buildExposuresSection(
 			[
 				createTokenEntry({
@@ -344,7 +344,7 @@ describe('tokenRisk utils', () => {
 		expect(section.summary.minBadDebtUnknownCount).toBe(1)
 	})
 
-	it('keeps zero-price bad debt unavailable when every merged contribution is null', () => {
+	test('keeps zero-price bad debt unavailable when every merged contribution is null', () => {
 		const section = buildExposuresSection(
 			[
 				createTokenEntry({
@@ -381,7 +381,7 @@ describe('tokenRisk utils', () => {
 		expect(section.summary.minBadDebtUnknownCount).toBe(1)
 	})
 
-	it('filters out protocol rows with zero borrowable capacity and no current exposure', () => {
+	test('filters out protocol rows with zero borrowable capacity and no current exposure', () => {
 		const section = buildExposuresSection(
 			[
 				createTokenEntry({

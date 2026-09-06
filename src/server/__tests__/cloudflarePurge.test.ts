@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
 	dashboardPathsToUrls,
 	normalizeResearchCachePaths,
@@ -7,7 +7,7 @@ import {
 } from '~/server/cloudflarePurge'
 
 describe('research Cloudflare purge helpers', () => {
-	it('normalizes only research paths', () => {
+	test('normalizes only research paths', () => {
 		expect(
 			normalizeResearchCachePaths([
 				'/research',
@@ -19,7 +19,7 @@ describe('research Cloudflare purge helpers', () => {
 		).toEqual(['/research', '/research/report/story'])
 	})
 
-	it('purges Cloudflare by exact public urls', async () => {
+	test('purges Cloudflare by exact public urls', async () => {
 		const fetchImpl = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
 
 		const result = await purgeCloudflareResearchUrls(['/research', '/research/report/story'], {
@@ -49,7 +49,7 @@ describe('research Cloudflare purge helpers', () => {
 		})
 	})
 
-	it('uses the configured site url when building purge urls', () => {
+	test('uses the configured site url when building purge urls', () => {
 		expect(
 			researchPathsToUrls(['/research/report/story'], { ...process.env, SITE_URL: 'https://www.defillama.test' })
 		).toEqual(['https://www.defillama.test/research/report/story'])
@@ -59,7 +59,7 @@ describe('research Cloudflare purge helpers', () => {
 describe('dashboard Cloudflare purge helpers', () => {
 	const env = { ...process.env, NEXT_PUBLIC_SITE_URL: 'https://defillama.test' }
 
-	it('builds page and stream urls for id, slug, and previous slug', () => {
+	test('builds page and stream urls for id, slug, and previous slug', () => {
 		expect(dashboardPathsToUrls({ id: 'dash-1', slug: 'yield-overview', previousSlug: 'old-yield' }, env)).toEqual([
 			'https://defillama.test/pro/dash-1',
 			'https://defillama.test/api/dynamic/pro-dashboard/dash-1/stream',
@@ -70,14 +70,14 @@ describe('dashboard Cloudflare purge helpers', () => {
 		])
 	})
 
-	it('dedupes keys and skips empty slugs', () => {
+	test('dedupes keys and skips empty slugs', () => {
 		expect(dashboardPathsToUrls({ id: 'dash-1', slug: 'dash-1', previousSlug: null }, env)).toEqual([
 			'https://defillama.test/pro/dash-1',
 			'https://defillama.test/api/dynamic/pro-dashboard/dash-1/stream'
 		])
 	})
 
-	it('purges next data payloads when a build id is known', () => {
+	test('purges next data payloads when a build id is known', () => {
 		expect(dashboardPathsToUrls({ id: 'dash-1', slug: 'yield-overview' }, env, 'build-123')).toEqual([
 			'https://defillama.test/pro/dash-1',
 			'https://defillama.test/api/dynamic/pro-dashboard/dash-1/stream',

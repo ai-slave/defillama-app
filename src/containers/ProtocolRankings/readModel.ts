@@ -100,7 +100,7 @@ export function buildDimensionProtocolMetrics({
 		}
 	}
 
-	for (const metricKey of Object.keys(activity) as ProtocolRankingActivitySourceKey[]) {
+	for (const metricKey of Object.keys(activity) as Array<ProtocolRankingActivitySourceKey>) {
 		for (const protocol of activity[metricKey]?.protocols ?? []) {
 			const row = (dimensionProtocols[protocol.defillamaId] ??= {})
 			const preserveLegacyDexZeros = metricKey === 'dexs'

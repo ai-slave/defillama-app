@@ -6,8 +6,8 @@ import { findTokenRightsByDefillamaId, findTokenRightsByProtocolName } from './d
 
 const TOKEN_RIGHTS_FILES = DATASET_SNAPSHOT_CONTRACT['token-rights'].files
 
-export function fetchTokenRightsEntries(): Promise<IRawTokenRightsEntry[]> {
-	return datasetSnapshotReader.readJson<IRawTokenRightsEntry[]>('token-rights', TOKEN_RIGHTS_FILES.full)
+export function fetchTokenRightsEntries(): Promise<Array<IRawTokenRightsEntry>> {
+	return datasetSnapshotReader.readJson<Array<IRawTokenRightsEntry>>('token-rights', TOKEN_RIGHTS_FILES.full)
 }
 
 export async function fetchTokenRightsEntryByDefillamaId(defillamaId: string): Promise<IRawTokenRightsEntry | null> {

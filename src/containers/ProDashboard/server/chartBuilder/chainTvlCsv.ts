@@ -17,7 +17,7 @@ type ChainTvlValueRow = ChainTvlEntityRow & {
 	value: number | null
 }
 
-async function allowedCategoryChains(categories: string[]): Promise<string[]> {
+async function allowedCategoryChains(categories: Array<string>): Promise<Array<string>> {
 	if (categories.length === 0) return []
 	const names = await resolveAllowedChainNamesFromCategories(categories)
 	return Array.from(names, toInternalSlug)
@@ -31,7 +31,7 @@ export async function streamChainTvlCsv(request: ChartBuilderCsvRequest, output:
 	const { startDate, endDate } = getCsvDateBounds(request)
 	const selectedChains = normalizeLegacyChartBuilderChains(request.config.chains).map(toInternalSlug)
 	const categoryChains = await allowedCategoryChains(request.config.chainCategories ?? [])
-	const params: unknown[] = [startDate, endDate]
+	const params: Array<unknown> = [startDate, endDate]
 	let protocolPredicate = ''
 	let source = 'lens.metrics_chain_daily m'
 	if (protocol) {

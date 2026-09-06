@@ -72,7 +72,7 @@ const BRIDGE_CHAIN_CHART_OPTIONS = [
 ]
 type BridgeOverviewPageData = Awaited<ReturnType<typeof getBridgeOverviewPageData>>
 type BridgesOverviewByChainProps = Omit<BridgeOverviewPageData, 'chain'> & { selectedChain?: string }
-const EMPTY_CHAINS: string[] = []
+const EMPTY_CHAINS: Array<string> = []
 const EMPTY_PROTOCOLS: BridgeOverviewPageData['filteredBridges'] = []
 const CHART_VIEW_OPTIONS = [
 	{ key: 'netflow' as const, label: 'Net Flows By Chain' },
@@ -423,7 +423,7 @@ export function BridgesOverviewByChain({
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_CHARTS}
-											hideDefaultLegend={true}
+											hideDefaultLegend
 											valueSymbol="$"
 											onReady={handleChartReady}
 										/>
@@ -435,7 +435,7 @@ export function BridgesOverviewByChain({
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={NET_FLOW_PCT_CHARTS}
-											hideDefaultLegend={true}
+											hideDefaultLegend
 											valueSymbol="%"
 											onReady={handleChartReady}
 										/>
@@ -447,7 +447,7 @@ export function BridgesOverviewByChain({
 										<MultiSeriesChart
 											dataset={activeChart.dataset}
 											charts={CHAIN_INFLOW_CHARTS}
-											hideDefaultLegend={true}
+											hideDefaultLegend
 											valueSymbol="$"
 											onReady={handleChartReady}
 										/>

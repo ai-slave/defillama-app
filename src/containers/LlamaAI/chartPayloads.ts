@@ -41,7 +41,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function hasOwn(value: Record<string, unknown>, key: string) {
-	return Object.prototype.hasOwnProperty.call(value, key)
+	return Object.hasOwn(value, key)
 }
 
 function isUnsafeRecordKey(key: string) {
@@ -56,20 +56,20 @@ function isLikelyChartConfiguration(value: unknown): value is ChartConfiguration
 	return isRecord(axes) && isRecord(axes.x) && Array.isArray(axes.yAxes) && Array.isArray(value.series)
 }
 
-export function normalizeChartConfigs(value: unknown): ChartConfiguration[] {
+export function normalizeChartConfigs(value: unknown): Array<ChartConfiguration> {
 	if (!Array.isArray(value)) return []
-	const charts: ChartConfiguration[] = []
+	const charts: Array<ChartConfiguration> = []
 	for (const item of value) {
 		if (isLikelyChartConfiguration(item)) charts.push(item)
 	}
 	return charts
 }
 
-function firstDatasetKey(charts?: ChartConfiguration[]) {
+function firstDatasetKey(charts?: Array<ChartConfiguration>) {
 	return charts?.[0]?.datasetName || charts?.[0]?.id || 'default'
 }
 
-export function normalizeChartDataByKey(value: unknown, charts?: ChartConfiguration[]): ChartDataByKey {
+export function normalizeChartDataByKey(value: unknown, charts?: Array<ChartConfiguration>): ChartDataByKey {
 	if (Array.isArray(value)) {
 		// Sessions before the backend keyed-chart-data transition stored one flat row array.
 		return { [firstDatasetKey(charts)]: value }
@@ -85,8 +85,10 @@ export function normalizeChartDataByKey(value: unknown, charts?: ChartConfigurat
 	return normalized
 }
 
-export function migrateDashboardItems(items: PersistedDashboardItemConfig[] | undefined): DashboardItemConfig[] {
-	const migratedItems: DashboardItemConfig[] = []
+export function migrateDashboardItems(
+	items: Array<PersistedDashboardItemConfig> | undefined
+): Array<DashboardItemConfig> {
+	const migratedItems: Array<DashboardItemConfig> = []
 	for (const item of items ?? []) {
 		const migrated = migrateDashboardItemConfig(item)
 		if (migrated) migratedItems.push(migrated)
@@ -94,7 +96,7 @@ export function migrateDashboardItems(items: PersistedDashboardItemConfig[] | un
 	return migratedItems
 }
 
-export function normalizeDashboardArtifactOutcomes(value: unknown): DashboardArtifactOutcome[] | undefined {
+export function normalizeDashboardArtifactOutcomes(value: unknown): Array<DashboardArtifactOutcome> | undefined {
 	if (!Array.isArray(value)) return undefined
 	const outcomes = value.filter((entry): entry is DashboardArtifactOutcome => {
 		if (!isRecord(entry)) return false

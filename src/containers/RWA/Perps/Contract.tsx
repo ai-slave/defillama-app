@@ -63,7 +63,9 @@ export function getRWAPerpsContractChartGroup(value: string | null | undefined):
 	return normalizeChartGroup(value) ?? 'daily'
 }
 
-export function getRWAPerpsContractEnabledMetrics(searchParams: URLSearchParams): RWAPerpsContractChartMetricKey[] {
+export function getRWAPerpsContractEnabledMetrics(
+	searchParams: URLSearchParams
+): Array<RWAPerpsContractChartMetricKey> {
 	return RWA_PERPS_CONTRACT_CHART_METRICS.filter(
 		(metric) =>
 			resolveVisibility({
@@ -339,7 +341,7 @@ function RWAPerpsContractChartPanel({ contract }: { contract: IRWAPerpsContractD
 							<input
 								type="checkbox"
 								value={metric.key}
-								checked={true}
+								checked
 								onChange={() => {
 									void pushShallowQuery(router, getRWAPerpsContractMetricQueryPatch({ metric, isActive: true }))
 								}}

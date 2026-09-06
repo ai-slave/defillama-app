@@ -5,11 +5,11 @@ export interface Capability {
 	name: string
 	icon: IIcon['name']
 	description: string
-	prompts: string[]
+	prompts: Array<string>
 	badge?: string
 }
 
-export const CAPABILITIES: Capability[] = [
+export const CAPABILITIES: Array<Capability> = [
 	// ── Featured ─────────────────────────────────────────────
 	{
 		key: 'trade_thesis',

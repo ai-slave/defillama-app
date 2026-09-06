@@ -12,11 +12,11 @@ function addSecretValue(values: Set<string>, value: string): void {
 	values.add(encodeURIComponent(value))
 }
 
-function getSecretValues(env: NodeJS.ProcessEnv): string[] {
+function getSecretValues(env: NodeJS.ProcessEnv): Array<string> {
 	const values = new Set<string>()
 
 	for (const key in env) {
-		if (!Object.prototype.hasOwnProperty.call(env, key)) continue
+		if (!Object.hasOwn(env, key)) continue
 		const value = env[key]
 		// Redaction is intentionally env-name based: secret-like variable names
 		// define values that are scrubbed wherever they appear in command output.

@@ -4,11 +4,11 @@ import { legacyProtocolParam } from './legacyQuery'
 import { TOKEN_MATCHES, TOKEN_ONS, type TokenMatch, type TokenOn } from './tokenMatch'
 import type { ApyComponent, ApyWindow } from './types'
 
-const APY_WINDOWS: readonly ApyWindow[] = ['current', 'avg_7d', 'avg_30d']
-const APY_COMPONENT_ORDER: readonly ApyComponent[] = ['base', 'reward', 'intrinsic']
+const APY_WINDOWS: ReadonlyArray<ApyWindow> = ['current', 'avg_7d', 'avg_30d']
+const APY_COMPONENT_ORDER: ReadonlyArray<ApyComponent> = ['base', 'reward', 'intrinsic']
 
 /** Repeatable query param (`?chain=a&chain=b`) → string list. */
-export function toArray(value: string | string[] | undefined): string[] {
+export function toArray(value: string | Array<string> | undefined): Array<string> {
 	if (typeof value === 'string') return [value]
 	return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []
 }
@@ -51,7 +51,7 @@ export function parseApyWindow(query: ApiQuery): ApyWindow {
 }
 
 // `base` is always implied; default view is `base,reward`.
-export function parseApyComponents(query: ApiQuery): ApyComponent[] {
+export function parseApyComponents(query: ApiQuery): Array<ApyComponent> {
 	const raw = queryString(query, 'apyComponents')
 	const selected = new Set<ApyComponent>(['base'])
 	if (raw == null) {
@@ -70,7 +70,7 @@ export interface CommonFilters {
 	chains: Set<string> | null
 	projects: Set<string> | null
 	categories: Set<string> | null
-	tokens: string[]
+	tokens: Array<string>
 	includeMemeTokens: boolean
 }
 
@@ -83,18 +83,18 @@ export function parseCommonFilters(query: ApiQuery): CommonFilters {
 	const projects = toArray(legacyProtocolParam(query))
 	const categories = toArray(query.category)
 	return {
-		ids: ids.length ? new Set(ids) : null,
-		chains: chains.length ? new Set(chains) : null,
-		projects: projects.length ? new Set(projects) : null,
-		categories: categories.length ? new Set(categories) : null,
+		ids: ids.length > 0 ? new Set(ids) : null,
+		chains: chains.length > 0 ? new Set(chains) : null,
+		projects: projects.length > 0 ? new Set(projects) : null,
+		categories: categories.length > 0 ? new Set(categories) : null,
 		tokens: toArray(query.token),
 		includeMemeTokens: queryBoolean(query, 'includeMemeTokens')
 	}
 }
 
 export interface TokenPairFilters {
-	collateralTokens: string[]
-	borrowTokens: string[]
+	collateralTokens: Array<string>
+	borrowTokens: Array<string>
 }
 
 // The /yields/borrow token pickers emit `collateralToken` / `borrowToken` option keys
@@ -109,10 +109,10 @@ export function parseTokenPairFilters(query: ApiQuery): TokenPairFilters {
 
 // True when no tokens are requested, or any requested option key appears in any
 // of the given token-keys targets (reference_asset / borrow_token / pool_token).
-export function createTokensMatcher(tokens: string[]) {
-	if (tokens.length === 0) return (_targets: Array<string[] | null | undefined>) => true
+export function createTokensMatcher(tokens: Array<string>) {
+	if (tokens.length === 0) return (_targets: Array<Array<string> | null | undefined>) => true
 	const selected = new Set(tokens)
-	return (targets: Array<string[] | null | undefined>) => {
+	return (targets: Array<Array<string> | null | undefined>) => {
 		for (const target of targets) {
 			if (!target) continue
 			for (const key of target) if (selected.has(key)) return true
@@ -155,23 +155,23 @@ export function parseTokenOn(query: ApiQuery): TokenOn {
 
 export interface TokenFilterInput {
 	// Presence sets: option keys that *some* token in the target belongs to.
-	referenceKeys: string[]
-	poolKeys: string[]
+	referenceKeys: Array<string>
+	poolKeys: Array<string>
 	// Whole-set set for the reference target: option keys the ENTIRE reference token
 	// set belongs to (served as `reference_asset_exact`). The pool target holds a single
 	// token, so its presence set doubles as its whole-set set.
-	referenceExactKeys: string[]
+	referenceExactKeys: Array<string>
 }
 
 // Asset-level (`asset:`) keys only — families are groupings, so Set (pair) equality
 // compares literal token composition.
-function assetKeySet(keys: string[]): Set<string> {
+function assetKeySet(keys: Array<string>): Set<string> {
 	const set = new Set<string>()
 	for (const key of keys) if (key.startsWith('asset:')) set.add(key)
 	return set
 }
 
-function anyPresent(tokens: Set<string>, keys: string[]): boolean {
+function anyPresent(tokens: Set<string>, keys: Array<string>): boolean {
 	for (const key of keys) if (tokens.has(key)) return true
 	return false
 }
@@ -196,7 +196,12 @@ function matchesExactAny(tokens: Set<string>, on: TokenOn, input: TokenFilterInp
 //     agrees with true set equality whenever the family is redundant with a selected asset
 //     but is a RESIDUAL GAP otherwise — a purely family-constrained composition can't be
 //     verified.
-function matchesSetTarget(want: Set<string>, families: string[], presentKeys: string[], exactKeys: string[]): boolean {
+function matchesSetTarget(
+	want: Set<string>,
+	families: Array<string>,
+	presentKeys: Array<string>,
+	exactKeys: Array<string>
+): boolean {
 	if (want.size === 0) {
 		return families.length === 1 && exactKeys.includes(families[0]!)
 	}
@@ -206,7 +211,7 @@ function matchesSetTarget(want: Set<string>, families: string[], presentKeys: st
 	return true
 }
 
-function matchesSet(want: Set<string>, families: string[], on: TokenOn, input: TokenFilterInput): boolean {
+function matchesSet(want: Set<string>, families: Array<string>, on: TokenOn, input: TokenFilterInput): boolean {
 	if (on === 'pool') return matchesSetTarget(want, families, input.poolKeys, input.poolKeys)
 	if (on === 'reference') return matchesSetTarget(want, families, input.referenceKeys, input.referenceExactKeys)
 	return (
@@ -223,7 +228,7 @@ function matchesContains(tokens: Set<string>, on: TokenOn, input: TokenFilterInp
 	return anyPresent(tokens, input.referenceKeys) || anyPresent(tokens, input.poolKeys)
 }
 
-export function createTokenFilterMatcher(tokens: string[], match: TokenMatch, on: TokenOn) {
+export function createTokenFilterMatcher(tokens: Array<string>, match: TokenMatch, on: TokenOn) {
 	if (tokens.length === 0) return (_input: TokenFilterInput) => true
 	const selected = new Set(tokens)
 	if (match === 'contains') return (input: TokenFilterInput) => matchesContains(selected, on, input)

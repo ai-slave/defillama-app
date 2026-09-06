@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from '../types'
 
 const canonicalProtocolAaveRegex =
@@ -104,7 +104,7 @@ afterEach(() => {
 })
 
 describe('ProtocolOverview final page SEO', () => {
-	it('renders the final protocol page without a noindex tag and with a canonical URL', async () => {
+	test('renders the final protocol page without a noindex tag and with a canonical URL', async () => {
 		vi.doMock('next/head', () => ({
 			default: ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children)
 		}))
@@ -246,7 +246,7 @@ function setupLayoutMocks() {
 				description: string | null | undefined
 				canonicalUrl: string | null | undefined
 				noIndex?: boolean
-				pageName?: string[]
+				pageName?: Array<string>
 				children?: React.ReactNode
 			}) =>
 				React.createElement(
@@ -265,7 +265,7 @@ function setupLayoutMocks() {
 }
 
 describe('ProtocolOverviewLayout SEO', () => {
-	it('falls back when SEO producers pass empty strings', async () => {
+	test('falls back when SEO producers pass empty strings', async () => {
 		setupLayoutMocks()
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -286,7 +286,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 		expect(markup).toContain('Track Aave metrics on DefiLlama')
 	})
 
-	it('keeps the information tab indexable with a canonical URL', async () => {
+	test('keeps the information tab indexable with a canonical URL', async () => {
 		setupLayoutMocks()
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -300,7 +300,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 		expect(markup).not.toMatch(robotsNoindexRegex)
 	})
 
-	it('marks configured protocol overview pages as noindex while keeping the canonical URL', async () => {
+	test('marks configured protocol overview pages as noindex while keeping the canonical URL', async () => {
 		setupLayoutMocks()
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -314,7 +314,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 		expect(markup).toMatch(robotsNoindexRegex)
 	})
 
-	it('marks a non-standalone tab as noindex without a canonical URL', async () => {
+	test('marks a non-standalone tab as noindex without a canonical URL', async () => {
 		setupLayoutMocks()
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -328,7 +328,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 		expect(markup).not.toMatch(canonicalProtocolAaveRegex)
 	})
 
-	it('keeps the active loans tab indexable with the new canonical URL', async () => {
+	test('keeps the active loans tab indexable with the new canonical URL', async () => {
 		setupLayoutMocks()
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -342,7 +342,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 		expect(markup).not.toMatch(robotsNoindexRegex)
 	})
 
-	it('does not show TVL toggle instructions on the page-owned active loans tab', async () => {
+	test('does not show TVL toggle instructions on the page-owned active loans tab', async () => {
 		setupLayoutMocks()
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -366,7 +366,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 		expect(overviewMarkup).toContain('toggle Active Loans')
 	})
 
-	it.each(['Vesper', 'Metronome', 'Metronome Synth'])(
+	test.each(['Vesper', 'Metronome', 'Metronome Synth'])(
 		'shows the Odyssey enterprise dashboard announcement for %s',
 		async (name) => {
 			setupLayoutMocks()
@@ -385,7 +385,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 		}
 	)
 
-	it('shows the in-page enterprise dashboard for Odyssey Finance without the external announcement', async () => {
+	test('shows the in-page enterprise dashboard for Odyssey Finance without the external announcement', async () => {
 		setupLayoutMocks()
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -403,7 +403,7 @@ describe('ProtocolOverviewLayout SEO', () => {
 })
 
 describe('ProtocolOverview SEO contract', () => {
-	it('canonicalizes a lower-case denomination for overview summary formatting', async () => {
+	test('canonicalizes a lower-case denomination for overview summary formatting', async () => {
 		let formattedSummaryValue: string | number | null | undefined
 
 		vi.doMock('next/router', () => ({
@@ -453,7 +453,7 @@ describe('ProtocolOverview SEO contract', () => {
 		expect(formattedSummaryValue).toBe('50 ETH')
 	})
 
-	it('passes the information tab to ProtocolOverviewLayout', async () => {
+	test('passes the information tab to ProtocolOverviewLayout', async () => {
 		let capturedTab: string | undefined
 
 		vi.doMock('next/router', () => ({
@@ -514,7 +514,7 @@ describe('ProtocolOverview SEO contract', () => {
 		expect(capturedTab).toBe('information')
 	})
 
-	it('renders a protocol website link in the header', async () => {
+	test('renders a protocol website link in the header', async () => {
 		vi.doMock('next/router', () => ({
 			useRouter: () => ({ query: {} })
 		}))
@@ -574,7 +574,7 @@ describe('ProtocolOverview SEO contract', () => {
 })
 
 describe('ProtocolInfo category links', () => {
-	it('renders category links and parent product metadata', async () => {
+	test('renders category links and parent product metadata', async () => {
 		vi.doMock('~/ui/Icon', () => ({
 			Icon: () => null
 		}))

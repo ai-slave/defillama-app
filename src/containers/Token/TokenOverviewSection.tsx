@@ -59,7 +59,7 @@ const TOKEN_OVERVIEW_CHART_ORDER = [
 	'Token Volume',
 	'Mcap',
 	'FDV'
-] as const satisfies readonly TokenOverviewChartLabel[]
+] as const satisfies ReadonlyArray<TokenOverviewChartLabel>
 const TOKEN_OVERVIEW_CHART_LABELS: ReadonlySet<string> = new Set(TOKEN_OVERVIEW_CHART_ORDER)
 const FDV_TOOLTIP =
 	"Fully Diluted Valuation, this is calculated by taking the expected maximum supply of the token and multiplying it by the price. It's mainly used to calculate the hypothetical marketcap of the token if all the tokens were unlocked and circulating."
@@ -79,7 +79,7 @@ const MARKET_CATEGORY_LABELS: Record<Segment, string> = {
 	linear_perp: 'USD Perp',
 	inverse_perp: 'COIN Perp'
 }
-const MARKET_CATEGORY_ORDER: Segment[] = ['spot', 'linear_perp', 'inverse_perp']
+const MARKET_CATEGORY_ORDER: Array<Segment> = ['spot', 'linear_perp', 'inverse_perp']
 const TOKEN_OVERVIEW_CHART_QUERY_KEY = 'chart'
 const TOKEN_OVERVIEW_TIMEFRAME_QUERY_KEY = 'timeframe'
 
@@ -120,7 +120,7 @@ function isTokenOverviewChartLabel(value: string): value is TokenOverviewChartLa
 	return TOKEN_OVERVIEW_CHART_LABELS.has(value)
 }
 
-function areTokenOverviewChartsEqual(a: TokenOverviewChartLabel[], b: TokenOverviewChartLabel[]) {
+function areTokenOverviewChartsEqual(a: Array<TokenOverviewChartLabel>, b: Array<TokenOverviewChartLabel>) {
 	return a.length === b.length && a.every((value, index) => value === b[index])
 }
 
@@ -599,7 +599,7 @@ function TokenChartPanel({ overview, geckoId }: { overview: TokenOverviewData; g
 		})
 	}
 
-	const setActiveCharts = (nextCharts: TokenOverviewChartLabel[]) => {
+	const setActiveCharts = (nextCharts: Array<TokenOverviewChartLabel>) => {
 		const availableChartsSet = new Set(availableCharts)
 		const normalizedCharts = nextCharts.filter(
 			(chart, index, charts) => availableChartsSet.has(chart) && charts.indexOf(chart) === index

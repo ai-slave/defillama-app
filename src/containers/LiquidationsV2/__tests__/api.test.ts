@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { fetchTokenLiquidationsClient } from '../api'
 import type { TokenLiquidationsSectionData } from '../api.types'
 
@@ -61,8 +61,8 @@ function makeTokenLiquidationsPart(symbol: string, firstUsd: number, secondUsd: 
 }
 
 describe('fetchTokenLiquidationsClient', () => {
-	it('preserves the Token-page symbol in its private route', async () => {
-		const urls: string[] = []
+	test('preserves the Token-page symbol in its private route', async () => {
+		const urls: Array<string> = []
 		const result = await fetchTokenLiquidationsClient('wstETH', async (url: string) => {
 			urls.push(url)
 			return new Response(JSON.stringify(makeTokenLiquidationsPart('BTC', 10, 20)), { status: 200 })
@@ -73,7 +73,7 @@ describe('fetchTokenLiquidationsClient', () => {
 		expect(result.totalCollateralUsd).toBe(30)
 	})
 
-	it('keeps a failed family route unavailable', async () => {
+	test('keeps a failed family route unavailable', async () => {
 		await expect(
 			fetchTokenLiquidationsClient(
 				'wbtc',

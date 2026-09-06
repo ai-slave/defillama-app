@@ -94,7 +94,7 @@ export function Account({ asPath: _asPath }: { asPath: string }) {
 	return (
 		<SignInModal
 			text="Sign In / Subscribe"
-			className={buttonStyles({ variant: 'primary', size: 'sm' }) + ' w-full'}
+			className={`${buttonStyles({ variant: 'primary', size: 'sm' })} w-full`}
 			hideWhenAuthenticated={false}
 		/>
 	)

@@ -2,7 +2,7 @@
 
 import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import {
 	fetchAgenticResponse,
@@ -14,11 +14,11 @@ import { useDuelStream } from '~/containers/LlamaAI/hooks/useDuelStream'
 type MockFetch = (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => Promise<Response>
 type MockFetchSpy = ReturnType<typeof vi.fn<MockFetch>>
 
-function encodeSseEvents(events: string[]) {
+function encodeSseEvents(events: Array<string>) {
 	return events.map((event) => `data: ${event}\n\n`).join('')
 }
 
-function sseReader(...events: string[]) {
+function sseReader(...events: Array<string>) {
 	const encoder = new TextEncoder()
 	const stream = new ReadableStream<Uint8Array>({
 		start(controller) {
@@ -29,7 +29,7 @@ function sseReader(...events: string[]) {
 	return stream.getReader()
 }
 
-function sseResponse(events: string[]) {
+function sseResponse(events: Array<string>) {
 	return new Response(encodeSseEvents(events), {
 		status: 200,
 		headers: { 'Content-Type': 'text/event-stream' }
@@ -60,7 +60,7 @@ function callbacks(): AgenticSSECallbacks {
 }
 
 describe('duel capability handshake', () => {
-	it('declares duelCapable on every prompt so the backend may sample the turn', async () => {
+	test('declares duelCapable on every prompt so the backend may sample the turn', async () => {
 		const fetchFn = vi.fn<MockFetch>(async () => sseResponse([JSON.stringify({ type: 'done' })]))
 
 		await fetchAgenticResponse({
@@ -81,7 +81,7 @@ describe('duel capability handshake', () => {
 })
 
 describe('duel stream routing', () => {
-	it('routes duel_start to onDuelStart instead of the single-answer pipeline', async () => {
+	test('routes duel_start to onDuelStart instead of the single-answer pipeline', async () => {
 		const cb = callbacks()
 
 		await parseSSEStream(
@@ -96,7 +96,7 @@ describe('duel stream routing', () => {
 		expect(cb.onDone).toHaveBeenCalledOnce()
 	})
 
-	it('keeps arm-tagged answer events out of the single-answer callbacks', async () => {
+	test('keeps arm-tagged answer events out of the single-answer callbacks', async () => {
 		const cb = callbacks()
 
 		await parseSSEStream(
@@ -119,7 +119,7 @@ describe('duel stream routing', () => {
 		])
 	})
 
-	it('leaves untagged events on the normal path so a non-duel turn is unchanged', async () => {
+	test('leaves untagged events on the normal path so a non-duel turn is unchanged', async () => {
 		const cb = callbacks()
 
 		await parseSSEStream(
@@ -161,7 +161,7 @@ function mountDuelStream() {
 }
 
 describe('useDuelStream', () => {
-	it('binds each arm to its persisted message id without rendering it as answer content', () => {
+	test('binds each arm to its persisted message id without rendering it as answer content', () => {
 		const duel = mountDuelStream()
 
 		act(() => duel.current.start('pair-1'))
@@ -192,7 +192,7 @@ describe('useDuelStream', () => {
 		duel.unmount()
 	})
 
-	it('settles both arms when the outer request finishes without response_end events', () => {
+	test('settles both arms when the outer request finishes without response_end events', () => {
 		const duel = mountDuelStream()
 
 		act(() => duel.current.start('pair-1'))
@@ -214,7 +214,7 @@ describe('useDuelStream', () => {
 		duel.unmount()
 	})
 
-	it('settles an arm on its typed response_end event', () => {
+	test('settles an arm on its typed response_end event', () => {
 		const duel = mountDuelStream()
 
 		act(() => duel.current.start('pair-1'))
@@ -230,7 +230,7 @@ describe('useDuelStream', () => {
 		duel.unmount()
 	})
 
-	it('clears arm errors before the next duel starts', () => {
+	test('clears arm errors before the next duel starts', () => {
 		const duel = mountDuelStream()
 
 		act(() => duel.current.start('pair-1'))
@@ -246,7 +246,7 @@ describe('useDuelStream', () => {
 		duel.unmount()
 	})
 
-	it('keeps consuming chunks after an outer stream hands off', () => {
+	test('keeps consuming chunks after an outer stream hands off', () => {
 		const duel = mountDuelStream()
 
 		act(() => duel.current.start('pair-1'))

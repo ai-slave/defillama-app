@@ -7,14 +7,14 @@ export type InstanceRevalidateResult =
 	| {
 			instance: string
 			status: 'revalidated'
-			revalidated: string[]
-			revalidateErrors: { path: string; reason: string }[]
+			revalidated: Array<string>
+			revalidateErrors: Array<{ path: string; reason: string }>
 	  }
 	| { instance: string; status: 'failed'; reason: string }
 
 export type RevalidateFanoutResult = {
 	status: 'disabled' | 'fanned-out'
-	instances: InstanceRevalidateResult[]
+	instances: Array<InstanceRevalidateResult>
 }
 
 type AssertFanoutOptions = {
@@ -33,8 +33,8 @@ const DEFAULT_TIMEOUT_MS = 4000
 const WORKER_PATH = '/api/private/revalidate-instances'
 
 type InstanceWorkerResponse = {
-	revalidated: string[]
-	revalidateErrors: { path: string; reason: string }[]
+	revalidated: Array<string>
+	revalidateErrors: Array<{ path: string; reason: string }>
 }
 
 export function normalizeCachePath(value: unknown): string | null {
@@ -45,7 +45,7 @@ export function normalizeCachePath(value: unknown): string | null {
 	return path.startsWith('/') ? path : null
 }
 
-export function normalizeCachePaths(values: unknown): string[] {
+export function normalizeCachePaths(values: unknown): Array<string> {
 	const input = Array.isArray(values) ? values : []
 	const paths = new Set<string>()
 	for (const value of input) {
@@ -55,7 +55,7 @@ export function normalizeCachePaths(values: unknown): string[] {
 	return Array.from(paths).slice(0, 50)
 }
 
-export function revalidateInstancesFromEnv(env: NodeJS.ProcessEnv = process.env): string[] {
+export function revalidateInstancesFromEnv(env: NodeJS.ProcessEnv = process.env): Array<string> {
 	const raw = env.REVALIDATE_INSTANCES ?? ''
 	const instances = new Set<string>()
 	for (const entry of raw.split(',')) {
@@ -72,7 +72,7 @@ function revalidateHostHeaderFromEnv(env: NodeJS.ProcessEnv = process.env): stri
 
 export function assertRevalidateFanoutSucceeded(
 	result: RevalidateFanoutResult,
-	paths: string[],
+	paths: Array<string>,
 	{ env = process.env, requireConfigured = env.NODE_ENV === 'production' }: AssertFanoutOptions = {}
 ): void {
 	if (normalizeCachePaths(paths).length === 0) return
@@ -84,7 +84,7 @@ export function assertRevalidateFanoutSucceeded(
 		return
 	}
 
-	const failures: InstanceRevalidateResult[] = []
+	const failures: Array<InstanceRevalidateResult> = []
 	for (const instance of result.instances) {
 		if (instance.status === 'failed' || instance.revalidateErrors.length > 0) {
 			failures.push(instance)
@@ -143,7 +143,7 @@ async function revalidateWithHostHeader(
 				timeout: timeoutMs
 			},
 			(res) => {
-				const chunks: Buffer[] = []
+				const chunks: Array<Buffer> = []
 				res.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)))
 				res.on('end', () => {
 					resolve(
@@ -163,7 +163,7 @@ async function revalidateWithHostHeader(
 
 async function revalidateOneInstance(
 	instance: string,
-	paths: string[],
+	paths: Array<string>,
 	secret: string,
 	dryRun: boolean,
 	{
@@ -208,7 +208,7 @@ async function revalidateOneInstance(
 }
 
 async function fanoutRevalidateRequest(
-	paths: string[],
+	paths: Array<string>,
 	dryRun: boolean,
 	{ env = process.env, fetchImpl = fetch, logger = console, timeoutMs = DEFAULT_TIMEOUT_MS }: FanoutOptions
 ): Promise<RevalidateFanoutResult> {
@@ -231,12 +231,15 @@ async function fanoutRevalidateRequest(
 }
 
 export async function checkRevalidateFanoutReady(
-	paths: string[],
+	paths: Array<string>,
 	options: FanoutOptions = {}
 ): Promise<RevalidateFanoutResult> {
 	return fanoutRevalidateRequest(paths, true, options)
 }
 
-export async function fanoutRevalidate(paths: string[], options: FanoutOptions = {}): Promise<RevalidateFanoutResult> {
+export async function fanoutRevalidate(
+	paths: Array<string>,
+	options: FanoutOptions = {}
+): Promise<RevalidateFanoutResult> {
 	return fanoutRevalidateRequest(paths, false, options)
 }

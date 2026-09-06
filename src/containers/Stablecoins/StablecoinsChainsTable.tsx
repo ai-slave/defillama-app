@@ -169,7 +169,7 @@ export function StablecoinsChainsTable({
 	data,
 	deprecatedChains
 }: {
-	data: StablecoinsByChainRow[]
+	data: Array<StablecoinsByChainRow>
 	deprecatedChains: Record<string, true>
 }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -204,7 +204,7 @@ export function StablecoinsChainsTable({
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	const [groupTvls, updater] = useLocalStorageSettingsManager('tvl_chains')
 
-	const setAggrOptions: React.Dispatch<React.SetStateAction<string[]>> = (action) => {
+	const setAggrOptions: React.Dispatch<React.SetStateAction<Array<string>>> = (action) => {
 		const selectedKeys = typeof action === 'function' ? action(selectedAggregateTypes) : action
 		const selectedSet = new Set(selectedKeys)
 		for (const item of CHAINS_CATEGORY_GROUP_SETTINGS) {
@@ -236,7 +236,7 @@ export function StablecoinsChainsTable({
 					selectedValues={selectedAggregateTypes}
 					setSelectedValues={setAggrOptions}
 					nestedMenu={false}
-					label={'Group Chains'}
+					label="Group Chains"
 					labelType="smol"
 					variant="filter-responsive"
 					size="md"

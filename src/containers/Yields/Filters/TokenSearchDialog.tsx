@@ -21,12 +21,12 @@ import type { TokenOption } from '../data/types'
 const MATCH_LABELS: Record<TokenMatch, string> = { exact: 'Exact', contains: 'Contains', set: 'Set' }
 const ON_LABELS: Record<TokenOn, string> = { reference: 'Reference', pool: 'Pool', both: 'Both' }
 
-const MATCH_HELP: { term: string; def: string }[] = [
+const MATCH_HELP: Array<{ term: string; def: string }> = [
 	{ term: 'Exact', def: 'Pools that include a token you picked.' },
 	{ term: 'Contains', def: 'Pools containing at least one of your picks.' },
 	{ term: 'Set', def: 'Pools whose tokens are exactly your selection (pair search).' }
 ]
-const ON_HELP: { term: string; def: string }[] = [
+const ON_HELP: Array<{ term: string; def: string }> = [
 	{ term: 'Reference', def: 'The asset you provide to enter the pool.' },
 	{ term: 'Pool', def: 'The token you hold while in the pool.' },
 	{ term: 'Both', def: 'Match on either of the two.' }
@@ -43,8 +43,8 @@ interface Props {
 	open: boolean
 	onClose: () => void
 	title: string
-	options: TokenOption[]
-	selectedValues: string[]
+	options: Array<TokenOption>
+	selectedValues: Array<string>
 	multiple: boolean
 	onToggle: (value: string, wasSelected: boolean) => void
 	onClear: () => void
@@ -56,7 +56,7 @@ function isFamily(value: string): boolean {
 	return value.startsWith('family:')
 }
 
-function HelpIcon({ items, label }: { items: { term: string; def: string }[]; label: string }) {
+function HelpIcon({ items, label }: { items: Array<{ term: string; def: string }>; label: string }) {
 	return (
 		<Hovercard
 			placement="top-start"
@@ -135,8 +135,8 @@ function TokenResults({
 	onToggle,
 	query
 }: {
-	families: TokenOption[]
-	assets: TokenOption[]
+	families: Array<TokenOption>
+	assets: Array<TokenOption>
 	selectedSet: Set<string>
 	multiple: boolean
 	onToggle: (value: string, wasSelected: boolean) => void
@@ -182,7 +182,7 @@ function TokenResults({
 
 	return (
 		<div className={`${dialogScrollableBodyStyles} px-2 pb-2`} ref={resultsRef}>
-			{families.length ? (
+			{families.length > 0 ? (
 				<div className="mb-1" ref={familiesRef}>
 					<SectionHeader
 						label="Groups"
@@ -203,7 +203,7 @@ function TokenResults({
 				</div>
 			) : null}
 
-			{assets.length ? (
+			{assets.length > 0 ? (
 				<div>
 					<SectionHeader label="Assets" hint="individual tokens" count={assets.length} />
 					<div className="relative" style={{ height: assetVirtualizer.getTotalSize() }} ref={assetsRef}>
@@ -229,7 +229,7 @@ function TokenResults({
 				</div>
 			) : null}
 
-			{!families.length && !assets.length ? (
+			{families.length === 0 && assets.length === 0 ? (
 				<div className="px-3 py-6 text-center body-sm text-tertiary">No matches</div>
 			) : null}
 		</div>
@@ -257,8 +257,8 @@ export function TokenSearchDialog({
 	const [snapshot] = useState(() => new Set(selectedValues))
 
 	const { families, assets } = useMemo(() => {
-		const fam: TokenOption[] = []
-		const ast: TokenOption[] = []
+		const fam: Array<TokenOption> = []
+		const ast: Array<TokenOption> = []
 		const q = query.trim()
 		const source = q
 			? matchSorter(options, q, { keys: [(o) => o[0], (o) => o[1]], threshold: matchSorter.rankings.CONTAINS })

@@ -233,15 +233,15 @@ function segmentColumn(spec: {
 
 /** The perpetual class the merged view reports. COIN perps settle differently and are
  *  left to their own segment table rather than folded into a USD-perp column. */
-const ALL_PERP_SEGMENTS = ['linear_perp'] as const satisfies readonly ExchangeSegment[]
+const ALL_PERP_SEGMENTS = ['linear_perp'] as const satisfies ReadonlyArray<ExchangeSegment>
 
 /** Segments normalized volume is computed for. */
-const NVOL_SEGMENTS = ['spot', 'linear_perp'] as const satisfies readonly ExchangeSegment[]
+const NVOL_SEGMENTS = ['spot', 'linear_perp'] as const satisfies ReadonlyArray<ExchangeSegment>
 
-const fellBackWithBook = (row: ExchangeDirectoryRowModel, segments: readonly ExchangeSegment[]) =>
+const fellBackWithBook = (row: ExchangeDirectoryRowModel, segments: ReadonlyArray<ExchangeSegment>) =>
 	segments.some(
 		(segment) =>
-			(NVOL_SEGMENTS as readonly ExchangeSegment[]).includes(segment) &&
+			(NVOL_SEGMENTS as ReadonlyArray<ExchangeSegment>).includes(segment) &&
 			row.segments[segment] &&
 			normalizedOrReported(row, segment).reported
 	)
@@ -271,7 +271,7 @@ function perpColumn(spec: {
 		const values = parts(row)
 			.map((part) => part.value)
 			.filter((value): value is number => value != null)
-		return values.length ? values.reduce((sum, value) => sum + value, 0) : undefined
+		return values.length > 0 ? values.reduce((sum, value) => sum + value, 0) : undefined
 	}
 	return columnHelper.accessor(total, {
 		id: spec.id,
@@ -304,7 +304,7 @@ function perpColumn(spec: {
  * describe different markets, and the only honest fix for that is to say so where a
  * reader looks for what a number means.
  */
-function executionScopeNote(basket: string[]): string {
+function executionScopeNote(basket: Array<string>): string {
 	if (basket.length === 0) return 'Measured on each venue’s own covered perps.'
 	if (basket.length === 1) {
 		return `Measured on the ${basket[0]} perp on every venue, so rows compare like for like.`
@@ -315,8 +315,8 @@ function executionScopeNote(basket: string[]): string {
 export function buildDirectoryColumns(
 	scope: DirectoryScope,
 	executionAvailable: boolean,
-	executionCostBasket: string[] = [],
-	executionFillBasket: string[] = []
+	executionCostBasket: Array<string> = [],
+	executionFillBasket: Array<string> = []
 ) {
 	const definitions = exchangeDefinitions.directory
 	// Every exact-segment column reads through these. The merged `all` view has no
@@ -367,7 +367,7 @@ export function buildDirectoryColumns(
 							<Tooltip
 								content={<QualityHover quality={quality} kind={venue.kind} />}
 								className="shrink-0"
-								data-fullwidth={true}
+								data-fullwidth
 							>
 								<TierBadge tier={quality.tier} />
 							</Tooltip>

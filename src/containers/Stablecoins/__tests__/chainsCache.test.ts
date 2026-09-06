@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchBlockExplorers: vi.fn(),
@@ -164,7 +164,7 @@ describe('stablecoin chain consumer caches', () => {
 	})
 	afterEach(() => vi.useRealTimers())
 
-	it('stores compact page data without raw assets, config, or chart histories', async () => {
+	test('stores compact page data without raw assets, config, or chart histories', async () => {
 		const page = await getStablecoinChainsPageData()
 		const cachedEntry = findStoredPageEntry()
 
@@ -183,7 +183,7 @@ describe('stablecoin chain consumer caches', () => {
 		expect(mocks.fetchStablecoinDominanceAllApi).toHaveBeenCalledOnce()
 	})
 
-	it('builds the chain-page headline from exclusion-safe asset histories', async () => {
+	test('builds the chain-page headline from exclusion-safe asset histories', async () => {
 		const doublecountedAsset = {
 			...stablecoinAssets.peggedAssets[0],
 			id: 'double',
@@ -213,7 +213,7 @@ describe('stablecoin chain consumer caches', () => {
 		expect(page.change1d).toBe('+11.11')
 	})
 
-	it('stores only normalized chart histories and avoids page-only requests', async () => {
+	test('stores only normalized chart histories and avoids page-only requests', async () => {
 		await getStablecoinChainsChartSeries('chainMcaps', false, 10)
 		const cachedSource = findStoredValue('stablecoins:chains-chart-source-v4')
 
@@ -244,7 +244,7 @@ describe('stablecoin chain consumer caches', () => {
 		expect(mocks.fetchStablecoinChartAllApi).not.toHaveBeenCalled()
 	})
 
-	it('reuses shared upstream results across page and chart caches', async () => {
+	test('reuses shared upstream results across page and chart caches', async () => {
 		await getStablecoinChainsPageData()
 		await getStablecoinChainsChartSeries('totalMcap')
 
@@ -254,7 +254,7 @@ describe('stablecoin chain consumer caches', () => {
 		expect(mocks.fetchStablecoinChartAllApi).toHaveBeenCalledOnce()
 	})
 
-	it('falls back independently to the versioned page and chart cache entries', async () => {
+	test('falls back independently to the versioned page and chart cache entries', async () => {
 		const page = await getStablecoinChainsPageData()
 		const pageEntry = findStoredPageEntry()
 		const chart = await getStablecoinChainsChartSeries('totalMcap')
@@ -267,7 +267,7 @@ describe('stablecoin chain consumer caches', () => {
 		await expect(getStablecoinChainsChartSeries('totalMcap')).resolves.toEqual(chart)
 	})
 
-	it('returns a fully fresh cache entry and its rows without cloning or leaking timestamps', async () => {
+	test('returns a fully fresh cache entry and its rows without cloning or leaking timestamps', async () => {
 		await getStablecoinChainsPageData()
 		const cachedEntry = findStoredPageEntry()
 		rejectStablecoinChainUpstreams()
@@ -282,7 +282,7 @@ describe('stablecoin chain consumer caches', () => {
 		expect(fallback).not.toHaveProperty('latestChainTimestamps')
 	})
 
-	it('clears stale aggregate fields while preserving a chain with fresh history', async () => {
+	test('clears stale aggregate fields while preserving a chain with fresh history', async () => {
 		await getStablecoinChainsPageData()
 		const storedEntry = findStoredPageEntry()
 		const cachedEntry: PageCacheEntry = {
@@ -323,7 +323,7 @@ describe('stablecoin chain consumer caches', () => {
 		})
 	})
 
-	it('preserves fresh aggregate changes while clearing only a stale chain row', async () => {
+	test('preserves fresh aggregate changes while clearing only a stale chain row', async () => {
 		await getStablecoinChainsPageData()
 		const storedEntry = findStoredPageEntry()
 		const cachedEntry: PageCacheEntry = {
@@ -359,7 +359,7 @@ describe('stablecoin chain consumer caches', () => {
 		expect(cachedEntry).toEqual(cachedSnapshot)
 	})
 
-	it('keeps aggregate freshness unset while independently clearing a stale chain', async () => {
+	test('keeps aggregate freshness unset while independently clearing a stale chain', async () => {
 		await getStablecoinChainsPageData()
 		const storedEntry = findStoredPageEntry()
 		const cachedEntry: PageCacheEntry = {

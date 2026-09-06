@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { IProtocolOverviewPageData } from '../types'
 
 vi.mock('~/ui/Tooltip', () => ({
@@ -24,7 +24,7 @@ const emptyActivity: NonNullable<IProtocolOverviewPageData['users']> = {
 }
 
 describe('UserActivity', () => {
-	it('renders native gas usage and USD gas cost as separate metrics', async () => {
+	test('renders native gas usage and USD gas cost as separate metrics', async () => {
 		const markup = await renderUserActivity({
 			...emptyActivity,
 			gasUsed: 398_354,
@@ -37,7 +37,7 @@ describe('UserActivity', () => {
 		expect(markup).toContain('$28,520')
 	})
 
-	it('preserves zero and independent availability for both gas metrics', async () => {
+	test('preserves zero and independent availability for both gas metrics', async () => {
 		const nativeOnly = await renderUserActivity({ ...emptyActivity, gasUsed: 0 })
 		expect(nativeOnly).toContain('0 POL')
 		expect(nativeOnly).not.toContain('Gas Cost (24h)')

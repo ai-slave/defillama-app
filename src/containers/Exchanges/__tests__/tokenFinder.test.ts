@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { TokenExchangeListing } from '~/containers/Markets/api.types'
 import { buildTokenFinderRows } from '../ExchangeTokenFinder'
 import type { ExchangeDirectoryModel } from '../models'
@@ -39,7 +39,7 @@ describe('exchange token finder', () => {
 		tokenListing('ethereum', 'eth', [{ slug: 'both', segment: 'linear_perp' }])
 	]
 
-	it('distinguishes all-token from any-token matching', () => {
+	test('distinguishes all-token from any-token matching', () => {
 		const common = { selectedTokens: ['bitcoin', 'ethereum'], tokens, directory, country: null, catalog: null }
 		const allRows = buildTokenFinderRows({ ...common, mode: 'all' })
 		expect(allRows.map((row) => row.slug)).toEqual(['both'])

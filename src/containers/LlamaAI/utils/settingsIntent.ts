@@ -27,7 +27,7 @@ export function isSlackResult(value: unknown): value is SlackResult {
 	return typeof value === 'string' && SLACK_RESULT_VALUES.includes(value as SlackResult)
 }
 
-type RouterQuery = Record<string, string | string[] | undefined>
+type RouterQuery = Record<string, string | Array<string> | undefined>
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 
 const PENDING_TGLOGIN_KEY = 'pending_tglogin'
@@ -41,7 +41,7 @@ export function isSettingsTabId(tab: unknown): tab is SettingsTabId {
 	return typeof tab === 'string' && SETTINGS_TAB_IDS.includes(tab as SettingsTabId)
 }
 
-function firstQueryValue(value: string | string[] | undefined) {
+function firstQueryValue(value: string | Array<string> | undefined) {
 	return Array.isArray(value) ? value[0] : value
 }
 

@@ -55,7 +55,7 @@ function fetchWithCurl(query: string): Promise<unknown> {
 		const tmpFile = join(tmpdir(), `maple-gql-${Date.now()}-${Math.random().toString(36).slice(2)}.json`)
 		writeFileSync(tmpFile, payload)
 
-		const chunks: Buffer[] = []
+		const chunks: Array<Buffer> = []
 		const proc = spawn('curl', [
 			'-s',
 			'-X',
@@ -78,8 +78,8 @@ function fetchWithCurl(query: string): Promise<unknown> {
 			if (code !== 0) return reject(new Error(`curl exited with code ${code}`))
 			try {
 				resolve(JSON.parse(Buffer.concat(chunks).toString()))
-			} catch (e) {
-				reject(e)
+			} catch (error) {
+				reject(error)
 			}
 		})
 
@@ -93,12 +93,12 @@ function fetchWithCurl(query: string): Promise<unknown> {
 }
 
 async function fetchAllPages(config: PaginatedQueryConfig): Promise<unknown> {
-	const allResults: unknown[] = []
+	const allResults: Array<unknown> = []
 	let skip = 0
 
 	while (true) {
 		const query = config.queryFn(PAGE_SIZE, skip)
-		const response = (await fetchWithCurl(query)) as { data: Record<string, unknown[]> }
+		const response = (await fetchWithCurl(query)) as { data: Record<string, Array<unknown>> }
 		const page = response.data?.[config.entityKey]
 		if (!page || !Array.isArray(page)) break
 		allResults.push(...page)

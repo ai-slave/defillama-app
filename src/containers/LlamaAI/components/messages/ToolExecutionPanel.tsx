@@ -24,9 +24,9 @@ function getToolExecutionKey(execution: ToolExecution) {
 
 const formatStepDuration = (ms: number): string => {
 	if (ms < 1000) return `${ms}ms`
-	if (ms < 60000) return `${formatFixedNumber(ms / 1000, 1)}s`
-	const m = Math.floor(ms / 60000)
-	const s = Math.floor((ms % 60000) / 1000)
+	if (ms < 60_000) return `${formatFixedNumber(ms / 1000, 1)}s`
+	const m = Math.floor(ms / 60_000)
+	const s = Math.floor((ms % 60_000) / 1000)
 	return `${m}m ${s}s`
 }
 
@@ -39,7 +39,7 @@ export function ToolExecutionPanel({
 	toolExecutions,
 	showDetails = false
 }: {
-	toolExecutions: ToolExecution[]
+	toolExecutions: Array<ToolExecution>
 	showDetails?: boolean
 }) {
 	const totalTime = toolExecutions.reduce((sum, execution) => sum + execution.executionTimeMs, 0)

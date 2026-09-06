@@ -8,7 +8,7 @@ export type VisitorRegionResult = {
 
 const VISITOR_REGION_QUERY_KEY = ['visitor-region'] as const
 
-function targetCountries(banner: Banner): string[] {
+function targetCountries(banner: Banner): Array<string> {
 	return Array.isArray(banner.targetCountries)
 		? banner.targetCountries
 				.filter((country): country is string => typeof country === 'string')

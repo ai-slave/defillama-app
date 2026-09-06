@@ -45,12 +45,10 @@ export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
 			props.chartDenominations[1]?.symbol &&
 			props.chartDenominations[1].symbol === selectedDenomination
 		) {
-			return (
-				formatCompactNumber(value / chainPrice.price, {
-					minimumCompactValue: 1_000_000,
-					compactSuffix: 'lowercase'
-				}) + ` ${chainPrice.symbol}`
-			)
+			return `${formatCompactNumber(value / chainPrice.price, {
+				minimumCompactValue: 1_000_000,
+				compactSuffix: 'lowercase'
+			})} ${chainPrice.symbol}`
 		}
 
 		return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
@@ -175,8 +173,8 @@ function ProtocolHeader({
 	hasTvlData: boolean
 	oracleTvs: number | null
 	tvl: number
-	tvlByChain: [string, number][]
-	oracleTvsByChain: [string, number][]
+	tvlByChain: Array<[string, number]>
+	oracleTvsByChain: Array<[string, number]>
 	formatPrice: (value: number | null) => string | number | null
 	headingAs?: 'h1' | 'div'
 }) {
@@ -208,7 +206,7 @@ function ProtocolHeader({
 			</Tag>
 			{primaryMetricOverride ? (
 				<PrimaryValue
-					hasTvl={true}
+					hasTvl
 					value={primaryMetricOverride.value}
 					name={props.name}
 					category={props.category}
@@ -219,10 +217,10 @@ function ProtocolHeader({
 				/>
 			) : props.isOracleProtocol ? (
 				<PrimaryValue
-					hasTvl={true}
+					hasTvl
 					value={oracleTvs}
 					name={props.name}
-					category={'Oracle'}
+					category="Oracle"
 					valueByChain={oracleTvsByChain}
 					formatPrice={formatPrice}
 				/>
@@ -255,7 +253,7 @@ const PrimaryValue = ({
 	name: string
 	category: string | null | undefined
 	formatPrice: (value: number | null) => string | number | null
-	valueByChain?: [string, number][]
+	valueByChain?: Array<[string, number]>
 	title?: string
 	byChainTitle?: string
 }) => {

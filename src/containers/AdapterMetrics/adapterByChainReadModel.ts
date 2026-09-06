@@ -7,7 +7,7 @@ import type { IAdapterByChainPageData, IAdapterChainOverview, IProtocol } from '
 import type { ActiveLiquidityData, NormalizedVolumeData, OpenInterestData } from './utils'
 
 type AdapterChainProtocolMetric = IAdapterChainOverview['protocols'][number]
-type NonEmptyArray<T> = [T, ...T[]]
+type NonEmptyArray<T> = [T, ...Array<T>]
 
 type ProtocolMcapData = {
 	protocols: Array<{ name: string; mcap: number | null }>
@@ -19,7 +19,7 @@ type AdapterByChainRankBy = 'pfOrPs' | 'total24h'
 
 type AdapterByChainReadModel = {
 	protocols: IAdapterByChainPageData['protocols']
-	categories: string[]
+	categories: Array<string>
 	openInterest: number | null
 	activeLiquidity: number | null
 }
@@ -164,7 +164,7 @@ function buildParentProtocolSummary({
 	let activeLiquidity: number | null = null
 	let normalizedVolume24h: number | null = null
 	const methodologySet = new Set<string>()
-	const methodologyChildrenByMethod = new Map<string, string[]>()
+	const methodologyChildrenByMethod = new Map<string, Array<string>>()
 	let topProtocol = firstChildProtocol
 	const breakdownAliasSet = new Set<string>()
 	const chainSet = new Set<string>()
@@ -211,7 +211,7 @@ function buildParentProtocolSummary({
 	if (methodology.length === 1 && onlyMethodology !== undefined) {
 		methodologyText = onlyMethodology
 	} else if (methodology.length > 1) {
-		const methodologyParts: string[] = []
+		const methodologyParts: Array<string> = []
 		for (const method of methodology) {
 			methodologyParts.push(`${(methodologyChildrenByMethod.get(method) ?? []).join(', ')}: ${method}`)
 		}

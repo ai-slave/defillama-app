@@ -42,7 +42,7 @@ type StablecoinsTableInputRow = {
 	yieldBearing?: boolean
 	depeggedTwoPercent?: boolean
 	floatingPeg?: boolean
-	chains: string[]
+	chains: Array<string>
 	pegDeviation?: number | null
 	pegDeviation_1m?: number | null
 	pegDeviationInfo?: StablecoinDeviationInfo | null
@@ -60,7 +60,7 @@ type StablecoinsTableInputRow = {
 	delisted?: boolean
 	deadFrom?: string
 	circulating?: number | null
-	subRows?: StablecoinsTableInputRow[]
+	subRows?: Array<StablecoinsTableInputRow>
 }
 type StablecoinRow = ReturnType<typeof useCalcCirculating<StablecoinsTableInputRow>>[number]
 const columnHelper = createColumnHelper<StablecoinRow>()
@@ -347,7 +347,7 @@ function pegDeviationText(pegDeviationInfo: { timestamp: number; price: number; 
 	return `On ${date}, ${sourceLabel ?? (priceSource != null ? `source ${String(priceSource)}` : 'an unknown source')} reported a price of ${formatUsd(price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}.`
 }
 
-export function StablecoinsTable({ data }: { data: StablecoinRow[] }) {
+export function StablecoinsTable({ data }: { data: Array<StablecoinRow> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'mcap', desc: true }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])

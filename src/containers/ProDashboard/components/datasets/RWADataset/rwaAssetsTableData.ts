@@ -62,8 +62,8 @@ function buildBaseRow(asset: IFetchedRWAProject, values: ReturnType<typeof build
 	}
 }
 
-export function buildRWAAllChainsAssetTableRows(data: IFetchedRWAProject[]): RWAAssetTableRow[] {
-	const rows: RWAAssetTableRow[] = []
+export function buildRWAAllChainsAssetTableRows(data: Array<IFetchedRWAProject>): Array<RWAAssetTableRow> {
+	const rows: Array<RWAAssetTableRow> = []
 	for (const asset of data) {
 		if (asset.stablecoin || asset.governance) continue
 		const values = buildMetricValues(asset)
@@ -72,8 +72,8 @@ export function buildRWAAllChainsAssetTableRows(data: IFetchedRWAProject[]): RWA
 	return rows
 }
 
-export function buildRWAChainAssetTableRows(data: IFetchedRWAProject[], chain: string): RWAAssetTableRow[] {
-	const rows: RWAAssetTableRow[] = []
+export function buildRWAChainAssetTableRows(data: Array<IFetchedRWAProject>, chain: string): Array<RWAAssetTableRow> {
+	const rows: Array<RWAAssetTableRow> = []
 	for (const asset of data) {
 		if (asset.stablecoin || asset.governance) continue
 		const values = buildMetricValues(asset, chain)
@@ -83,8 +83,8 @@ export function buildRWAChainAssetTableRows(data: IFetchedRWAProject[], chain: s
 	return rows
 }
 
-export function buildRWAAssetCsv(rows: RWAAssetTableRow[], includeTicker: boolean): CsvCell[][] {
-	const headers: CsvCell[] = ['Name']
+export function buildRWAAssetCsv(rows: Array<RWAAssetTableRow>, includeTicker: boolean): Array<Array<CsvCell>> {
+	const headers: Array<CsvCell> = ['Name']
 	if (includeTicker) headers.push('Ticker')
 	headers.push(
 		'Asset Group',
@@ -96,9 +96,9 @@ export function buildRWAAssetCsv(rows: RWAAssetTableRow[], includeTicker: boolea
 		'Suspicious',
 		'Suspicious reason'
 	)
-	const csv: CsvCell[][] = [headers]
+	const csv: Array<Array<CsvCell>> = [headers]
 	for (const item of rows) {
-		const row: CsvCell[] = [item.name]
+		const row: Array<CsvCell> = [item.name]
 		if (includeTicker) row.push(item.ticker)
 		row.push(
 			item.assetGroup,

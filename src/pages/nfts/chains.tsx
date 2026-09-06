@@ -19,7 +19,7 @@ export const getStaticProps = withPerformanceLogging(`nfts/chains`, async () => 
 
 	if (!data) throw new Error('Missing page data for route=/nfts/chains')
 
-	const chains: INftChainRow[] = (data.protocols ?? []).map((chain) => {
+	const chains: Array<INftChainRow> = (data.protocols ?? []).map((chain) => {
 		return {
 			name: chain.displayName,
 			logo: chainIconUrl(chain.slug),
@@ -41,7 +41,7 @@ export default function NftsOnAllChains(props: InferGetStaticPropsType<typeof ge
 		<Layout
 			title="NFT Volume by Chain - DefiLlama"
 			description="Compare NFT trading volume by chain. Track 24h volume rankings across blockchains."
-			canonicalUrl={`/nfts/chains`}
+			canonicalUrl="/nfts/chains"
 			pageName={pageName}
 		>
 			<NftsByChain {...props} />

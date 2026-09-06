@@ -11,7 +11,7 @@ import {
 	getYieldsTableSortingFromQuery
 } from './yieldsTableQuery'
 
-type QueryRecord = Record<string, string | string[] | undefined>
+type QueryRecord = Record<string, string | Array<string> | undefined>
 
 type YieldsServerTableOptions<TRow> = {
 	endpoint: string

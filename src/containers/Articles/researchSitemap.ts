@@ -15,12 +15,12 @@ function isParseableIsoDate(value: string): boolean {
 
 const RESEARCH_HUB_ENTRY: SitemapUrlEntry = { path: 'research' }
 
-const RESEARCH_SECTION_ENTRIES: SitemapUrlEntry[] = ARTICLE_SECTIONS.map((section) => ({
+const RESEARCH_SECTION_ENTRIES: Array<SitemapUrlEntry> = ARTICLE_SECTIONS.map((section) => ({
 	path: `research/${ARTICLE_SECTION_SLUGS[section]}`
 }))
 
-export function buildResearchSitemapEntries(articlePaths: ArticlePathItem[] = []): SitemapUrlEntry[] {
-	const articleEntries = articlePaths.flatMap((item): SitemapUrlEntry[] => {
+export function buildResearchSitemapEntries(articlePaths: Array<ArticlePathItem> = []): Array<SitemapUrlEntry> {
+	const articleEntries = articlePaths.flatMap((item): Array<SitemapUrlEntry> => {
 		const path = articlePathToSitemapPath(item)
 		if (!path) return []
 

@@ -86,7 +86,7 @@ function RssCornerMotif() {
 	)
 }
 
-export function ResearchFeedLanding({ items }: { items: ResearchFeedPreviewItem[] }) {
+export function ResearchFeedLanding({ items }: { items: Array<ResearchFeedPreviewItem> }) {
 	const hasPreview = items.length > 0
 	return (
 		<>

@@ -66,7 +66,7 @@ export type EmissionAmountBreakdown = {
 }
 
 export function getEmissionAmountBreakdownOverInterval(
-	events: readonly EmissionEvent[],
+	events: ReadonlyArray<EmissionEvent>,
 	startTimestampSec: number,
 	endTimestampSec: number
 ): EmissionAmountBreakdown {

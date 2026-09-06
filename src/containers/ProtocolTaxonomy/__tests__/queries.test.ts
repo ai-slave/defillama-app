@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import type { ParentProtocolLite, ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 
@@ -180,13 +180,13 @@ const protocolsResponse = ({
 	parentProtocols = [],
 	chains = []
 }: {
-	protocols: ProtocolLite[]
-	parentProtocols?: ParentProtocolLite[]
-	chains?: string[]
+	protocols: Array<ProtocolLite>
+	parentProtocols?: Array<ParentProtocolLite>
+	chains?: Array<string>
 }): ProtocolsResponse => ({ protocols, parentProtocols, chains, protocolCategories: [] })
 
 describe('ProtocolTaxonomy queries', () => {
-	it('enriches a copied parent chain list without mutating the producer DTO', () => {
+	test('enriches a copied parent chain list without mutating the producer DTO', () => {
 		const parent: ParentProtocolLite = {
 			id: 'parent#interface-suite',
 			name: 'Interface Suite',
@@ -217,8 +217,8 @@ describe('ProtocolTaxonomy queries', () => {
 	})
 
 	beforeEach(() => {
-		const liteProtocols: ProtocolLite[] = []
-		const parentProtocols: ParentProtocolLite[] = []
+		const liteProtocols: Array<ProtocolLite> = []
+		const parentProtocols: Array<ParentProtocolLite> = []
 
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
@@ -229,10 +229,10 @@ describe('ProtocolTaxonomy queries', () => {
 		)
 
 		fetchCategoryChartMock.mockResolvedValue({
-			tvl: { 1710000000: 100 }
+			tvl: { 1_710_000_000: 100 }
 		})
 		fetchTagChartMock.mockResolvedValue({
-			tvl: { 1710000000: 100 }
+			tvl: { 1_710_000_000: 100 }
 		})
 		fetchJsonMock.mockResolvedValue({ Interface: ['Ethereum'] })
 		fetchCardBreakdownChartMock.mockResolvedValue([])
@@ -302,15 +302,15 @@ describe('ProtocolTaxonomy queries', () => {
 		fetchAdapterChainChartDataMock.mockImplementation(async ({ adapterType }) => {
 			if (adapterType === 'dexs') {
 				return [
-					[1710000000, 10],
-					[1710086400, 20]
+					[1_710_000_000, 10],
+					[1_710_086_400, 20]
 				]
 			}
 
 			if (adapterType === 'derivatives') {
 				return [
-					[1710000000, 4],
-					[1710086400, 8]
+					[1_710_000_000, 4],
+					[1_710_086_400, 8]
 				]
 			}
 
@@ -322,16 +322,16 @@ describe('ProtocolTaxonomy queries', () => {
 		vi.clearAllMocks()
 	})
 
-	it('builds category charts with final category-aware metric names', () => {
+	test('builds category charts with final category-aware metric names', () => {
 		const chart = buildCategoryCharts({
 			effectiveCategory: 'Interface',
 			metrics: ['tvl', 'dexVolume', 'perpVolume'],
-			tvlChartData: [[1710000000, 100]],
+			tvlChartData: [[1_710_000_000, 100]],
 			feesChartData: null,
 			revenueChartData: null,
-			dexVolumeChartData: [[1710000000, 10]],
+			dexVolumeChartData: [[1_710_000_000, 10]],
 			dexAggregatorsVolumeChartData: null,
-			perpVolumeChartData: [[1710000000, 4]],
+			perpVolumeChartData: [[1_710_000_000, 4]],
 			openInterestChartData: null,
 			optionsPremiumVolumeChartData: null,
 			optionsNotionalVolumeChartData: null,
@@ -340,17 +340,17 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 
 		expect(chart.dataset.dimensions).toEqual(['timestamp', 'TVL', 'Spot Volume', 'Perp Volume'])
-		expect(chart.dataset.source).toEqual([[1710000000000, 100, 10, 4]])
+		expect(chart.dataset.source).toEqual([[1_710_000_000_000, 100, 10, 4]])
 		expect(chart.charts.map((series) => series.name)).toEqual(['TVL', 'Spot Volume', 'Perp Volume'])
 	})
 
-	it('builds revenue-only charts without restoring explicitly disabled TVL', () => {
+	test('builds revenue-only charts without restoring explicitly disabled TVL', () => {
 		const chart = buildCategoryCharts({
 			effectiveCategory: 'Physical TCG',
 			metrics: ['revenue'],
-			tvlChartData: [[1710000000, 100]],
+			tvlChartData: [[1_710_000_000, 100]],
 			feesChartData: null,
-			revenueChartData: [[1710000000, 25]],
+			revenueChartData: [[1_710_000_000, 25]],
 			dexVolumeChartData: null,
 			dexAggregatorsVolumeChartData: null,
 			perpVolumeChartData: null,
@@ -361,25 +361,25 @@ describe('ProtocolTaxonomy queries', () => {
 			stakingChartData: undefined
 		})
 
-		expect(chart.dataset).toEqual({ dimensions: ['timestamp', 'Revenue'], source: [[1710000000000, 25]] })
+		expect(chart.dataset).toEqual({ dimensions: ['timestamp', 'Revenue'], source: [[1_710_000_000_000, 25]] })
 		expect(chart.charts).toEqual([
 			expect.objectContaining({ type: 'bar', name: 'Revenue', yAxisIndex: 1, valueSymbol: '$' })
 		])
 	})
 
-	it('builds a stacked volume breakdown ordered by all-time total', () => {
+	test('builds a stacked volume breakdown ordered by all-time total', () => {
 		const chart = buildBreakdownCharts(
 			[
-				[1710000000, { 'Small Card': 5, 'Big Card': 100 }],
-				[1710086400, { 'Small Card': 7, 'Big Card': 200, 'New Card': 50 }]
+				[1_710_000_000, { 'Small Card': 5, 'Big Card': 100 }],
+				[1_710_086_400, { 'Small Card': 7, 'Big Card': 200, 'New Card': 50 }]
 			],
 			'protocolBreakdown'
 		)
 
 		expect(chart?.dataset.dimensions).toEqual(['timestamp', 'Big Card', 'New Card', 'Small Card'])
 		expect(chart?.dataset.source).toEqual([
-			[1710000000000, 100, null, 5],
-			[1710086400000, 200, 50, 7]
+			[1_710_000_000_000, 100, null, 5],
+			[1_710_086_400_000, 200, 50, 7]
 		])
 		expect(chart?.charts).toEqual([
 			expect.objectContaining({ type: 'bar', name: 'Big Card', stack: 'protocolBreakdown', valueSymbol: '$' }),
@@ -388,17 +388,17 @@ describe('ProtocolTaxonomy queries', () => {
 		])
 	})
 
-	it('returns no volume breakdown when the response is empty or all-zero', () => {
+	test('returns no volume breakdown when the response is empty or all-zero', () => {
 		expect(buildBreakdownCharts(null, 'protocolBreakdown')).toBeNull()
 		expect(buildBreakdownCharts([], 'protocolBreakdown')).toBeNull()
-		expect(buildBreakdownCharts([[1710000000, { 'Dead Card': 0 }]], 'protocolBreakdown')).toBeNull()
+		expect(buildBreakdownCharts([[1_710_000_000, { 'Dead Card': 0 }]], 'protocolBreakdown')).toBeNull()
 	})
 
-	it('leaves a revenue-only chart empty when revenue history is unavailable', () => {
+	test('leaves a revenue-only chart empty when revenue history is unavailable', () => {
 		const chart = buildCategoryCharts({
 			effectiveCategory: 'Physical TCG',
 			metrics: ['revenue'],
-			tvlChartData: [[1710000000, 100]],
+			tvlChartData: [[1_710_000_000, 100]],
 			feesChartData: null,
 			revenueChartData: null,
 			dexVolumeChartData: null,
@@ -415,9 +415,9 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(chart.charts).toEqual([])
 	})
 
-	it('fetches and publishes Physical TCG revenue history without TVL', async () => {
+	test('fetches and publishes Physical TCG revenue history without TVL', async () => {
 		fetchAdapterChainChartDataMock.mockImplementation(async ({ adapterType, dataType }) => {
-			if (adapterType === 'fees' && dataType === 'dailyRevenue') return [[1710000000, 25]]
+			if (adapterType === 'fees' && dataType === 'dailyRevenue') return [[1_710_000_000, 25]]
 			return []
 		})
 
@@ -449,12 +449,12 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 		expect(result?.charts.dataset).toEqual({
 			dimensions: ['timestamp', 'Revenue'],
-			source: [[1710000000000, 25]]
+			source: [[1_710_000_000_000, 25]]
 		})
 	})
 
-	it('fetches the protocol volume breakdown for categories that opt in', async () => {
-		fetchAdapterChainChartDataByProtocolBreakdownMock.mockResolvedValue([[1710000000, { 'Nexo Card': 40 }]])
+	test('fetches the protocol volume breakdown for categories that opt in', async () => {
+		fetchAdapterChainChartDataByProtocolBreakdownMock.mockResolvedValue([[1_710_000_000, { 'Nexo Card': 40 }]])
 
 		const result = await getProtocolTaxonomyPageData({
 			kind: 'category',
@@ -481,11 +481,11 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 		expect(result?.breakdownCharts.protocol?.dataset).toEqual({
 			dimensions: ['timestamp', 'Nexo Card'],
-			source: [[1710000000000, 40]]
+			source: [[1_710_000_000_000, 40]]
 		})
 	})
 
-	it('skips the protocol volume breakdown for categories that do not opt in', async () => {
+	test('skips the protocol volume breakdown for categories that do not opt in', async () => {
 		const result = await getProtocolTaxonomyPageData({
 			kind: 'category',
 			category: 'Interface',
@@ -511,11 +511,11 @@ describe('ProtocolTaxonomy queries', () => {
 		chainMetadata: { ethereum: { name: 'Ethereum', id: 'ethereum', dexs: true } }
 	}
 
-	it('builds the card network and custody breakdowns on the all-chains page', async () => {
+	test('builds the card network and custody breakdowns on the all-chains page', async () => {
 		fetchCardBreakdownChartMock.mockImplementation(async (type: string) =>
 			type === 'network'
-				? [[1710000000, { Visa: 60, Mastercard: 40 }]]
-				: [[1710000000, { Custodial: 70, 'Self-custodial': 30 }]]
+				? [[1_710_000_000, { Visa: 60, Mastercard: 40 }]]
+				: [[1_710_000_000, { Custodial: 70, 'Self-custodial': 30 }]]
 		)
 
 		const result = await getProtocolTaxonomyPageData(cardIssuerParams)
@@ -524,13 +524,13 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(fetchCardBreakdownChartMock).toHaveBeenCalledWith('custody')
 		expect(result?.breakdownCharts.network?.dataset).toEqual({
 			dimensions: ['timestamp', 'Visa', 'Mastercard'],
-			source: [[1710000000000, 60, 40]]
+			source: [[1_710_000_000_000, 60, 40]]
 		})
 		expect(result?.breakdownCharts.custody?.dataset.dimensions).toEqual(['timestamp', 'Custodial', 'Self-custodial'])
 	})
 
-	it('builds the chain breakdown from the category-scoped adapter route', async () => {
-		fetchAdapterChainChartDataByChainBreakdownMock.mockResolvedValue([[1710000000, { Ethereum: 90, Base: 10 }]])
+	test('builds the chain breakdown from the category-scoped adapter route', async () => {
+		fetchAdapterChainChartDataByChainBreakdownMock.mockResolvedValue([[1_710_000_000, { Ethereum: 90, Base: 10 }]])
 
 		const result = await getProtocolTaxonomyPageData(cardIssuerParams)
 
@@ -540,12 +540,12 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 		expect(result?.breakdownCharts.chain?.dataset).toEqual({
 			dimensions: ['timestamp', 'Ethereum', 'Base'],
-			source: [[1710000000000, 90, 10]]
+			source: [[1_710_000_000_000, 90, 10]]
 		})
 	})
 
-	it('omits the chain breakdown on chain pages, where it would be a single bar', async () => {
-		fetchAdapterChainChartDataByChainBreakdownMock.mockResolvedValue([[1710000000, { Ethereum: 90 }]])
+	test('omits the chain breakdown on chain pages, where it would be a single bar', async () => {
+		fetchAdapterChainChartDataByChainBreakdownMock.mockResolvedValue([[1_710_000_000, { Ethereum: 90 }]])
 
 		const result = await getProtocolTaxonomyPageData({ ...cardIssuerParams, chain: 'ethereum' })
 
@@ -553,7 +553,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result?.breakdownCharts.chain).toBeUndefined()
 	})
 
-	it('omits the card breakdowns on chain pages because upstream has no chain filter', async () => {
+	test('omits the card breakdowns on chain pages because upstream has no chain filter', async () => {
 		const result = await getProtocolTaxonomyPageData({ ...cardIssuerParams, chain: 'ethereum' })
 
 		expect(fetchCardBreakdownChartMock).not.toHaveBeenCalled()
@@ -561,10 +561,10 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result?.breakdownCharts.custody).toBeUndefined()
 	})
 
-	it('drops a card breakdown whose upstream request fails without failing the page', async () => {
+	test('drops a card breakdown whose upstream request fails without failing the page', async () => {
 		fetchCardBreakdownChartMock.mockImplementation(async (type: string) => {
 			if (type === 'network') throw new Error('pro api key missing')
-			return [[1710000000, { Custodial: 70 }]]
+			return [[1_710_000_000, { Custodial: 70 }]]
 		})
 
 		const result = await getProtocolTaxonomyPageData(cardIssuerParams)
@@ -573,7 +573,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result?.breakdownCharts.custody?.dataset.dimensions).toEqual(['timestamp', 'Custodial'])
 	})
 
-	it('builds protocol categories page data without fetching category chart summary', async () => {
+	test('builds protocol categories page data without fetching category chart summary', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -644,7 +644,7 @@ describe('ProtocolTaxonomy queries', () => {
 		])
 	})
 
-	it('returns only requested categories extra TVL chart series', async () => {
+	test('returns only requested categories extra TVL chart series', async () => {
 		fetchCategoriesSummaryMock.mockResolvedValue({
 			categories: { Dexes: [] },
 			chart: {
@@ -674,7 +674,7 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 	})
 
-	it('keeps category parent TVL as the visible child sum when a child has excluded parent overlap', async () => {
+	test('keeps category parent TVL as the visible child sum when a child has excluded parent overlap', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -738,7 +738,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(parent?.subRows?.map((row) => row.name)).toEqual(['Jupiter Lend', 'Jupiter Orderbook'])
 	})
 
-	it('hides denylisted Options TVL from the parent only', async () => {
+	test('hides denylisted Options TVL from the parent only', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -796,7 +796,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result?.protocols.find((protocol) => protocol.name === 'Other Options')?.tvl).toBe(50_000)
 	})
 
-	it('matches a hyphenated selected chain exactly and preserves zero borrowed TVL', async () => {
+	test('matches a hyphenated selected chain exactly and preserves zero borrowed TVL', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -859,7 +859,7 @@ describe('ProtocolTaxonomy queries', () => {
 		)
 	})
 
-	it('excludes off-chain siblings before grouping a chain page', async () => {
+	test('excludes off-chain siblings before grouping a chain page', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -934,7 +934,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result?.protocols[0]?.subRows).toBeUndefined()
 	})
 
-	it('keeps a chain parent base known when a sibling only reports extra TVL', async () => {
+	test('keeps a chain parent base known when a sibling only reports extra TVL', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -1024,7 +1024,7 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 	})
 
-	it('skips a no-TVL deprecated child in its parent while leaving unknown-parent children public', async () => {
+	test('skips a no-TVL deprecated child in its parent while leaving unknown-parent children public', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -1079,7 +1079,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result?.protocols.find((protocol) => protocol.name === 'Orphan Child')?.tvl).toBe(5)
 	})
 
-	it('merges adapter-only interface protocols and preserves both dex and perp metrics', async () => {
+	test('merges adapter-only interface protocols and preserves both dex and perp metrics', async () => {
 		const result = await getProtocolTaxonomyPageData({
 			kind: 'category',
 			category: 'Interface',
@@ -1104,7 +1104,7 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 	})
 
-	it('preserves category and tags together when normalizing exact lite rows', async () => {
+	test('preserves category and tags together when normalizing exact lite rows', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -1136,7 +1136,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result?.protocols).toEqual([expect.objectContaining({ name: 'Tagged Interface' })])
 	})
 
-	it('keeps successful omitted adapter activity at zero and failed sources unavailable for direct and parent rows', async () => {
+	test('keeps successful omitted adapter activity at zero and failed sources unavailable for direct and parent rows', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [
@@ -1197,7 +1197,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result?.revenue7d).toBeNull()
 	})
 
-	it('keeps lending supplied known at zero TVL for direct and parent rows', async () => {
+	test('keeps lending supplied known at zero TVL for direct and parent rows', async () => {
 		const borrowedEntry = (value: number) => ({
 			tvl: value,
 			tvlPrevDay: value,
@@ -1271,7 +1271,7 @@ describe('ProtocolTaxonomy queries', () => {
 		})
 	})
 
-	it('keeps categories revenue null when its independent adapter source fails', async () => {
+	test('keeps categories revenue null when its independent adapter source fails', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				protocols: [makeLiteProtocol({ defillamaId: 'failed-revenue', name: 'Failed Revenue' })]
@@ -1284,7 +1284,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(result.tableData).toEqual([expect.objectContaining({ name: 'Interface', revenue: null })])
 	})
 
-	it('skips adapter category-chain metric fetches when metadata says the chain is unsupported', async () => {
+	test('skips adapter category-chain metric fetches when metadata says the chain is unsupported', async () => {
 		const result = await getProtocolTaxonomyPageData({
 			kind: 'category',
 			category: 'Interface',
@@ -1306,7 +1306,7 @@ describe('ProtocolTaxonomy queries', () => {
 		expect(fetchAdapterChainChartDataMock).not.toHaveBeenCalled()
 	})
 
-	it('uses dimAgg metric keys to skip unsupported metrics on a supported category chain', async () => {
+	test('uses dimAgg metric keys to skip unsupported metrics on a supported category chain', async () => {
 		const result = await getProtocolTaxonomyPageData({
 			kind: 'category',
 			category: 'Interface',

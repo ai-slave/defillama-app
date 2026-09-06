@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { UnifiedTableConfig } from './config/current'
 import {
 	getProtocolMetricCapabilities,
@@ -17,7 +17,7 @@ const config = (overrides: Partial<UnifiedTableConfig>): UnifiedTableConfig => (
 })
 
 describe('protocol supplemental metric capabilities', () => {
-	it('requests v2 supplements only for active columns, shares, sorting, or expressions', () => {
+	test('requests v2 supplements only for active columns, shares, sorting, or expressions', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
@@ -29,14 +29,14 @@ describe('protocol supplemental metric capabilities', () => {
 		).toEqual(['earnings', 'bridge-aggregator-volume'])
 	})
 
-	it('validates the public supplemental vocabulary exactly', () => {
+	test('validates the public supplemental vocabulary exactly', () => {
 		expect(isProtocolSupplementalMetric('earnings')).toBe(true)
 		expect(isProtocolSupplementalMetric('bridge-aggregators')).toBe(false)
 	})
 })
 
 describe('protocol oracle capabilities', () => {
-	it('requests oracle membership only for an active oracle column, sort, or filter', () => {
+	test('requests oracle membership only for an active oracle column, sort, or filter', () => {
 		expect(
 			getProtocolMetricCapabilities(config({ columnOrder: ['oracles'], columnVisibility: { oracles: false } }))
 				.needsOracleMembership
@@ -55,7 +55,7 @@ describe('protocol oracle capabilities', () => {
 })
 
 describe('protocol point metric capabilities', () => {
-	it('requests only visible, sorted, or custom-expression point metrics', () => {
+	test('requests only visible, sorted, or custom-expression point metrics', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
@@ -76,7 +76,7 @@ describe('protocol point metric capabilities', () => {
 		).toEqual(['fees', 'revenue', 'perps-volume'])
 	})
 
-	it('does not request metrics used only by hidden custom columns', () => {
+	test('does not request metrics used only by hidden custom columns', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
@@ -95,14 +95,14 @@ describe('protocol point metric capabilities', () => {
 		).toEqual([])
 	})
 
-	it('validates the public query vocabulary exactly', () => {
+	test('validates the public query vocabulary exactly', () => {
 		expect(isProtocolPointMetric('fees')).toBe(true)
 		expect(isProtocolPointMetric('fee')).toBe(false)
 	})
 })
 
 describe('protocol base metric family capabilities', () => {
-	it('requests incentives and long-period families from columns and custom expressions', () => {
+	test('requests incentives and long-period families from columns and custom expressions', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
@@ -121,7 +121,7 @@ describe('protocol base metric family capabilities', () => {
 		).toEqual(['tvl', 'fees', 'holder-revenue', 'incentives', 'options-volume'])
 	})
 
-	it('requests holder revenue for the 7d over 7d column', () => {
+	test('requests holder revenue for the 7d over 7d column', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
@@ -132,7 +132,7 @@ describe('protocol base metric family capabilities', () => {
 		).toEqual(['holder-revenue'])
 	})
 
-	it('requests fees and revenue for chain economics columns', () => {
+	test('requests fees and revenue for chain economics columns', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
@@ -149,7 +149,7 @@ describe('protocol base metric family capabilities', () => {
 		).toEqual(['fees', 'revenue'])
 	})
 
-	it('requests the current family for visible, sorted, and filtered point comparisons', () => {
+	test('requests the current family for visible, sorted, and filtered point comparisons', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
@@ -161,7 +161,7 @@ describe('protocol base metric family capabilities', () => {
 		).toEqual(['dex-volume', 'fees', 'revenue'])
 	})
 
-	it('derives canonical families from visible columns, sorting, filters, shares, and expressions', () => {
+	test('derives canonical families from visible columns, sorting, filters, shares, and expressions', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({
@@ -183,7 +183,7 @@ describe('protocol base metric family capabilities', () => {
 		).toEqual(['tvl', 'fees', 'revenue', 'aggregator-volume', 'options-volume', 'open-interest', 'market-cap'])
 	})
 
-	it('does not request a family used only by a hidden column', () => {
+	test('does not request a family used only by a hidden column', () => {
 		expect(
 			getProtocolMetricCapabilities(
 				config({ columnOrder: ['openInterest'], columnVisibility: { openInterest: false } })
@@ -191,7 +191,7 @@ describe('protocol base metric family capabilities', () => {
 		).toEqual([])
 	})
 
-	it('validates the public base-family vocabulary exactly', () => {
+	test('validates the public base-family vocabulary exactly', () => {
 		expect(isProtocolBaseMetricFamily('open-interest')).toBe(true)
 		expect(isProtocolBaseMetricFamily('openInterest')).toBe(false)
 	})

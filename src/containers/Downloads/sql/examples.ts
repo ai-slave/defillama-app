@@ -14,7 +14,7 @@ export interface ExampleQuery {
 	title: string
 	description: string
 	subcategory: ExampleSubcategory
-	tables: QueryTableRef[]
+	tables: Array<QueryTableRef>
 	sql: string
 }
 
@@ -26,7 +26,7 @@ export interface SubcategoryMeta {
 
 // Ordered intentionally — groups render in this order in the panel. Keep
 // "Leaderboards" first since it's the easiest on-ramp, tricky analyses later.
-export const SUBCATEGORY_META: SubcategoryMeta[] = [
+export const SUBCATEGORY_META: Array<SubcategoryMeta> = [
 	{ name: 'Leaderboards', color: '#6366f1', blurb: 'Top-N rankings across the DefiLlama catalogue.' },
 	{ name: 'Cross-joins', color: '#0ea5e9', blurb: 'Stitch datasets together — the point of SQL.' },
 	{ name: 'Time series', color: '#f59e0b', blurb: 'Trends, rolling windows, temporal joins.' },
@@ -37,7 +37,7 @@ export const SUBCATEGORY_META: SubcategoryMeta[] = [
 	{ name: 'Outliers', color: '#f97316', blurb: 'Anomalies worth a second look.' }
 ]
 
-export const EXAMPLE_QUERIES: ExampleQuery[] = [
+export const EXAMPLE_QUERIES: Array<ExampleQuery> = [
 	// ─── Leaderboards ────────────────────────────────────────────────────────
 	{
 		title: 'Top fee earners (24h)',

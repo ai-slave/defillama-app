@@ -17,8 +17,8 @@ function olderRun(a?: string, b?: string): string | undefined {
 }
 
 // Drift is protocol-level, inherited per-vault → phrase the banner as protocol-wide.
-function DriftBanner({ entries, protocolId }: { entries: DriftEntry[]; protocolId: string }) {
-	if (!entries.length) return null
+function DriftBanner({ entries, protocolId }: { entries: Array<DriftEntry>; protocolId: string }) {
+	if (entries.length === 0) return null
 	return (
 		<RiskCallout as="details" className="group">
 			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 label-md text-(--yield-warning-text)">
@@ -84,7 +84,7 @@ export function FreshnessFooter({
 					</span>
 				</p>
 			) : null}
-			{staleMap.size ? (
+			{staleMap.size > 0 ? (
 				<p className="flex items-center gap-1.5 body-sm text-secondary">
 					<Icon name="clock" className="size-3.5" />
 					{staleMap.size} reading{staleMap.size === 1 ? '' : 's'} could not be refreshed this run.
@@ -100,7 +100,7 @@ export function FreshnessFooter({
 					</span>
 					{updatedLabel}
 				</span>
-				{sources.length ? (
+				{sources.length > 0 ? (
 					<span className="flex flex-wrap items-center gap-1.5">
 						<span>Sources:</span>
 						{sources.map((s) => (

@@ -16,7 +16,7 @@ export const DWMC_GROUPING_OPTIONS_LOWERCASE = [
 	{ value: 'quarterly', label: 'Quarterly', shortLabel: 'Q' },
 	{ value: 'yearly', label: 'Yearly', shortLabel: 'Y' },
 	{ value: 'cumulative', label: 'Cumulative', shortLabel: 'C' }
-] as const satisfies readonly ChartGroupingOption<ChartTimeGroupingWithCumulative>[]
+] as const satisfies ReadonlyArray<ChartGroupingOption<ChartTimeGroupingWithCumulative>>
 
 export const DWM_GROUPING_OPTIONS_LOWERCASE = [
 	{ value: 'daily', label: 'Daily', shortLabel: 'D' },
@@ -24,14 +24,14 @@ export const DWM_GROUPING_OPTIONS_LOWERCASE = [
 	{ value: 'monthly', label: 'Monthly', shortLabel: 'M' },
 	{ value: 'quarterly', label: 'Quarterly', shortLabel: 'Q' },
 	{ value: 'yearly', label: 'Yearly', shortLabel: 'Y' }
-] as const satisfies readonly ChartGroupingOption<ChartTimeGrouping>[]
+] as const satisfies ReadonlyArray<ChartGroupingOption<ChartTimeGrouping>>
 
 export type LowercaseDwmcGrouping = (typeof DWMC_GROUPING_OPTIONS_LOWERCASE)[number]['value']
 export type LowercaseDwmGrouping = (typeof DWM_GROUPING_OPTIONS_LOWERCASE)[number]['value']
 
 type BaseProps<T extends string> = {
 	value: T
-	options: readonly ChartGroupingOption<T>[]
+	options: ReadonlyArray<ChartGroupingOption<T>>
 	className?: string | undefined
 	buttonClassName?: string | undefined
 }

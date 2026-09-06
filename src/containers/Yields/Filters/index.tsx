@@ -33,7 +33,7 @@ function filterSelectionKey(filters: Record<string, unknown>): string {
 
 // The "＋ Save view" pill: a single dashed-outline pill that opens ONE popover
 // containing a save-current form + the saved list (with per-entry load/delete).
-function SaveViewButton({ currentFilters }: { currentFilters: Record<string, string | string[] | undefined> }) {
+function SaveViewButton({ currentFilters }: { currentFilters: Record<string, string | Array<string> | undefined> }) {
 	const { savedFilters, saveFilter, deleteFilter } = useYieldFilters()
 	const router = useRouter()
 	const [name, setName] = React.useState('')

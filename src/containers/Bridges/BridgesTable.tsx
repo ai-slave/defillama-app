@@ -33,11 +33,11 @@ type BridgesTableRow = {
 }
 
 export type BridgesTableHandle = {
-	prepareCsv: () => { filename: string; rows: CsvCell[][] }
+	prepareCsv: () => { filename: string; rows: Array<Array<CsvCell>> }
 }
 
 type BridgesTableProps = {
-	data: BridgesTableRow[]
+	data: Array<BridgesTableRow>
 	searchValue?: string
 	csvFileName?: string
 }

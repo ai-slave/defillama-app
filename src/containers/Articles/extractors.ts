@@ -63,7 +63,7 @@ function extractCitation(attrs: Record<string, unknown> | null | undefined): Art
 }
 
 export function extractArticleContent(contentJson: TiptapJson): ArticleExtractionResult {
-	const textParts: string[] = []
+	const textParts: Array<string> = []
 	const entities = new Map<string, ArticleEntityRef>()
 	const charts = new Map<string, NonNullable<ArticleExtractionResult['charts'][number]>>()
 	const citations = new Map<string, ArticleCitation>()
@@ -175,8 +175,8 @@ function getQAAnswerText(answerNode: TiptapJson | null | undefined): string {
 	return paragraphs.join(' ').replace(/\s+/g, ' ').trim()
 }
 
-export function extractQAPairs(contentJson: TiptapJson | null | undefined): ArticleQAPair[] {
-	const pairs: ArticleQAPair[] = []
+export function extractQAPairs(contentJson: TiptapJson | null | undefined): Array<ArticleQAPair> {
+	const pairs: Array<ArticleQAPair> = []
 	const visit = (node: TiptapJson | null | undefined) => {
 		if (!node) return
 		if (node.type === 'qa') {

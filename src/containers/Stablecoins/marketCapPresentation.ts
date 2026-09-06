@@ -10,16 +10,16 @@ type MarketCapSlice = { name: string; value: number; color: string }
 
 export type StablecoinMarketCapSeries = {
 	kind: 'pie' | 'hbar' | 'treemap'
-	peers: MarketCapSlice[]
-	selectionSeries: string[]
-	defaultSeries: string[]
+	peers: Array<MarketCapSlice>
+	selectionSeries: Array<string>
+	defaultSeries: Array<string>
 	upstreamRemainderValue: number
 }
 
 export type StablecoinMarketCapPresentation =
 	| { kind: 'pie'; chartData: Array<{ name: string; value: number }>; stackColors: Record<string, string> }
-	| { kind: 'hbar'; categories: string[]; values: number[]; colors: string[] }
-	| { kind: 'treemap'; treeData: TreemapNode[] }
+	| { kind: 'hbar'; categories: Array<string>; values: Array<number>; colors: Array<string> }
+	| { kind: 'treemap'; treeData: Array<TreemapNode> }
 
 /** Export every canonical peer; visual top-N and legend state are presentation-only. */
 export function buildStablecoinMarketCapCsvDataset(series: StablecoinMarketCapSeries): MultiSeriesChartDataset {
@@ -37,7 +37,7 @@ export function prepareStablecoinMarketCapSeries<T>({
 	getValue,
 	isAggregateIncluded = () => true
 }: {
-	rows: T[]
+	rows: Array<T>
 	view: StablecoinMarketCapSeries['kind']
 	getName: (row: NoInfer<T>) => string
 	getValue: (row: NoInfer<T>) => number
@@ -86,7 +86,7 @@ export function buildStablecoinMarketCapPresentation({
 	selectedSeries?: ReadonlySet<string>
 }): StablecoinMarketCapPresentation {
 	if (series.kind === 'treemap') {
-		const visibleSlices: MarketCapSlice[] = []
+		const visibleSlices: Array<MarketCapSlice> = []
 		for (const peer of series.peers) {
 			if (peer.value <= 0 || (selectedSeries && !selectedSeries.has(peer.name))) continue
 			visibleSlices.push(peer)
@@ -94,7 +94,7 @@ export function buildStablecoinMarketCapPresentation({
 
 		let total = 0
 		for (const slice of visibleSlices) total += slice.value
-		const treeData: TreemapNode[] = []
+		const treeData: Array<TreemapNode> = []
 		for (const slice of visibleSlices) {
 			const share = total > 0 ? roundNumber((slice.value / total) * 100, 2) : 0
 			treeData.push({
@@ -108,7 +108,7 @@ export function buildStablecoinMarketCapPresentation({
 	}
 
 	const limit = series.kind === 'pie' ? PIE_SLICE_LIMIT : HORIZONTAL_BAR_SLICE_LIMIT
-	const visibleSlices: MarketCapSlice[] = []
+	const visibleSlices: Array<MarketCapSlice> = []
 	let selectedPeerCount = 0
 	let othersValue = 0
 	for (const peer of series.peers) {
@@ -136,9 +136,9 @@ export function buildStablecoinMarketCapPresentation({
 		return { kind: 'pie', chartData, stackColors }
 	}
 
-	const categories: string[] = []
-	const values: number[] = []
-	const colors: string[] = []
+	const categories: Array<string> = []
+	const values: Array<number> = []
+	const colors: Array<string> = []
 	for (const slice of visibleSlices) {
 		categories.push(slice.name)
 		values.push(slice.value)

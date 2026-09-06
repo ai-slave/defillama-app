@@ -16,8 +16,8 @@ interface NotebookCellProps {
 	total: number
 	focused: boolean
 	cellName: string
-	loadedTables: RegisteredTable[]
-	availableChartSources: ChartSourceOption[]
+	loadedTables: Array<RegisteredTable>
+	availableChartSources: Array<ChartSourceOption>
 	onSourceChange: (next: string) => void
 	onRun: () => void
 	onCancel: () => void
@@ -253,7 +253,7 @@ function CellMenu({
 	onDelete: () => void
 	onConvertType: (next: CellType) => void
 }) {
-	const otherTypes: CellType[] = (['sql', 'markdown', 'chart'] as CellType[]).filter((t) => t !== cellType)
+	const otherTypes: Array<CellType> = (['sql', 'markdown', 'chart'] as Array<CellType>).filter((t) => t !== cellType)
 	return (
 		<Ariakit.MenuProvider>
 			<Ariakit.MenuButton

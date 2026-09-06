@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	beginQueuedMessageEdit,
 	cancelAllQueuedMessages,
@@ -83,7 +83,7 @@ describe('useChatQueueController', () => {
 		vi.useRealTimers()
 	})
 
-	it('ignores foreign and stale snapshots', async () => {
+	test('ignores foreign and stale snapshots', async () => {
 		await act(async () => {
 			controller.applySnapshot(snapshot(2, [pending('new')]))
 			controller.applySnapshot(snapshot(1, [pending('stale')]))
@@ -93,7 +93,7 @@ describe('useChatQueueController', () => {
 		expect(controller.serverQueue.map((item) => item.id)).toEqual(['new'])
 	})
 
-	it('opens the editor only after the reservation snapshot arrives', async () => {
+	test('opens the editor only after the reservation snapshot arrives', async () => {
 		let confirm: ((value: Awaited<ReturnType<typeof beginQueuedMessageEdit>>) => void) | null = null
 		vi.mocked(beginQueuedMessageEdit).mockImplementation(() => new Promise((resolve) => (confirm = resolve)))
 		await act(async () => controller.applySnapshot(snapshot(1, [pending()])))
@@ -115,7 +115,7 @@ describe('useChatQueueController', () => {
 		expect(controller.ownedEditId).toBe('q1')
 	})
 
-	it('renews only while the owned editor is visible', async () => {
+	test('renews only while the owned editor is visible', async () => {
 		vi.useFakeTimers()
 		const editing = {
 			...pending(),
@@ -150,7 +150,7 @@ describe('useChatQueueController', () => {
 		expect(renewQueuedMessageEdit).toHaveBeenCalledTimes(2)
 	})
 
-	it('restores this tab edit ownership and draft when returning to a session', async () => {
+	test('restores this tab edit ownership and draft when returning to a session', async () => {
 		const editing = {
 			...pending(),
 			state: 'editing' as const,
@@ -170,7 +170,7 @@ describe('useChatQueueController', () => {
 		expect(controller.rowStatus.q1?.unsavedDraft).toBe('draft from session one')
 	})
 
-	it('keeps the remembered draft copyable after the lease expires', async () => {
+	test('keeps the remembered draft copyable after the lease expires', async () => {
 		const editing = {
 			...pending(),
 			state: 'editing' as const,
@@ -193,7 +193,7 @@ describe('useChatQueueController', () => {
 		})
 	})
 
-	it('does not treat another lease for the same row as owned', async () => {
+	test('does not treat another lease for the same row as owned', async () => {
 		const editing = {
 			...pending(),
 			state: 'editing' as const,
@@ -211,7 +211,7 @@ describe('useChatQueueController', () => {
 		expect(controller.rowStatus.q1?.unsavedDraft).toBe('my draft')
 	})
 
-	it('serializes rapid optimistic submissions in order', async () => {
+	test('serializes rapid optimistic submissions in order', async () => {
 		const pendingRequests: Array<{
 			payload: Parameters<typeof queueMessage>[2]
 			resolve: (value: Awaited<ReturnType<typeof queueMessage>>) => void
@@ -255,7 +255,7 @@ describe('useChatQueueController', () => {
 		expect(second.payload.message).toBe('C')
 	})
 
-	it('reconciles SSE confirmation when the POST response is lost', async () => {
+	test('reconciles SSE confirmation when the POST response is lost', async () => {
 		let reject: ((error: Error) => void) | null = null
 		vi.mocked(queueMessage).mockImplementationOnce(
 			() => new Promise((_resolve, rejectPromise) => (reject = rejectPromise))
@@ -278,7 +278,7 @@ describe('useChatQueueController', () => {
 		expect(controller.rows.map((row) => row.id)).toEqual(['confirmed'])
 	})
 
-	it('keeps later prompts waiting when confirmed rows fill capacity', async () => {
+	test('keeps later prompts waiting when confirmed rows fill capacity', async () => {
 		let confirm: ((value: Awaited<ReturnType<typeof queueMessage>>) => void) | null = null
 		vi.mocked(queueMessage).mockImplementationOnce(() => new Promise((resolve) => (confirm = resolve)))
 
@@ -306,7 +306,7 @@ describe('useChatQueueController', () => {
 		])
 	})
 
-	it('preserves an aborted local intent when switching away and back', async () => {
+	test('preserves an aborted local intent when switching away and back', async () => {
 		vi.mocked(queueMessage).mockImplementation((_fetch, _sessionId, _payload, signal) => {
 			return new Promise((_resolve, reject) => {
 				signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
@@ -327,7 +327,7 @@ describe('useChatQueueController', () => {
 		expect(controller.rows.map((row) => [row.kind, row.state])).toEqual([['local', 'waiting']])
 	})
 
-	it('moves local intents from a temporary session to the canonical session', async () => {
+	test('moves local intents from a temporary session to the canonical session', async () => {
 		vi.mocked(queueMessage).mockImplementation((_fetch, _sessionId, _payload, signal) => {
 			return new Promise((_resolve, reject) => {
 				signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
@@ -358,7 +358,7 @@ describe('useChatQueueController', () => {
 		expect(controller.rows.map((row) => [row.kind, row.state])).toEqual([['local', 'adding']])
 	})
 
-	it('keeps later intents behind a failed head and advances after dismiss', async () => {
+	test('keeps later intents behind a failed head and advances after dismiss', async () => {
 		vi.mocked(queueMessage)
 			.mockRejectedValueOnce(new Error('server rejected the prompt'))
 			.mockImplementationOnce(
@@ -397,7 +397,7 @@ describe('useChatQueueController', () => {
 		expect(retryCall[2].message).toBe('C')
 	})
 
-	it('clears a failed local error when retrying the prompt', async () => {
+	test('clears a failed local error when retrying the prompt', async () => {
 		vi.mocked(queueMessage)
 			.mockRejectedValueOnce(new Error('server rejected the prompt'))
 			.mockImplementationOnce((_fetch, _sessionId, _payload, signal) => {
@@ -431,7 +431,7 @@ describe('useChatQueueController', () => {
 		expect(retriedRow.kind === 'local' ? retriedRow.error : undefined).toBeUndefined()
 	})
 
-	it('continues and clears the complete queue through acknowledged snapshots', async () => {
+	test('continues and clears the complete queue through acknowledged snapshots', async () => {
 		const paused = { ...pending(), state: 'not_sent' as const, reason: 'execution_stopped' as const }
 		await act(async () => controller.applySnapshot(snapshot(1, [paused])))
 		vi.mocked(continueQueuedMessages).mockResolvedValue({ snapshot: snapshot(2, [pending()]) })
@@ -445,7 +445,7 @@ describe('useChatQueueController', () => {
 		expect(controller.rows).toEqual([])
 	})
 
-	it('does not admit local prompts while Clear waits for its response', async () => {
+	test('does not admit local prompts while Clear waits for its response', async () => {
 		const paused = { ...pending(), state: 'not_sent' as const, reason: 'execution_failed' as const }
 		await act(async () => controller.applySnapshot(snapshot(1, [paused])))
 		await act(async () => controller.enqueue(payload))
@@ -472,7 +472,7 @@ describe('useChatQueueController', () => {
 		expect(controller.rows).toEqual([])
 	})
 
-	it('keeps local prompts waiting when the Clear response is lost', async () => {
+	test('keeps local prompts waiting when the Clear response is lost', async () => {
 		const paused = { ...pending(), state: 'not_sent' as const, reason: 'execution_failed' as const }
 		await act(async () => controller.applySnapshot(snapshot(1, [paused])))
 		await act(async () => controller.enqueue(payload))
@@ -498,7 +498,7 @@ describe('useChatQueueController', () => {
 		})
 	})
 
-	it('uses the atomic retry command and applies its snapshot', async () => {
+	test('uses the atomic retry command and applies its snapshot', async () => {
 		const retried = pending('q1')
 		vi.mocked(retryQueuedMessage).mockResolvedValue({ snapshot: snapshot(2, [retried]) })
 		await act(async () => controller.retry('q1'))
@@ -507,7 +507,7 @@ describe('useChatQueueController', () => {
 		expect(controller.serverQueue).toEqual([retried])
 	})
 
-	it('keeps queued content for the execution handoff even when the firing snapshot is missed', async () => {
+	test('keeps queued content for the execution handoff even when the firing snapshot is missed', async () => {
 		const queued = pending('q1')
 		await act(async () => {
 			controller.applySnapshot(snapshot(1, [queued]))

@@ -38,7 +38,7 @@ function FinancialRow({
 	showExpandPlaceholder
 }: {
 	row: IEquitiesStatementTableRow
-	headers: EquitiesStatementHeader[]
+	headers: Array<EquitiesStatementHeader>
 	showExpandPlaceholder: boolean
 }) {
 	const hasSubRows = Boolean(row.subRows?.length)
@@ -236,14 +236,14 @@ export function EquitiesFinancialsDataset({ ticker }: { ticker: string }) {
 						</div>
 						<CSVExportButton
 							onClick={() => {
-								const headers: CsvCell[] = ['Name']
+								const headers: Array<CsvCell> = ['Name']
 								for (const header of statementHeaders) {
 									headers.push(formatStatementPeriodLabel(header.periodEnding))
 								}
 								const flattenedRows = flattenEquitiesStatementRows(rows)
-								const csv: CsvCell[][] = [headers]
+								const csv: Array<Array<CsvCell>> = [headers]
 								for (const row of flattenedRows) {
-									const csvRow: CsvCell[] = [row.depth > 0 ? '  ' + row.label : row.label]
+									const csvRow: Array<CsvCell> = [row.depth > 0 ? `  ${row.label}` : row.label]
 									for (const header of statementHeaders) {
 										csvRow.push(getEquitiesStatementValue(row, header))
 									}

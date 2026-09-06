@@ -33,7 +33,7 @@ const TOC_IDS = TOC_ITEMS.map((item) => item.id)
 
 type WeightRow = { metric: string; weighting: string; ranking?: number }
 
-const PERFORMANCE_GLOBAL_WEIGHTS: WeightRow[] = [
+const PERFORMANCE_GLOBAL_WEIGHTS: Array<WeightRow> = [
 	{ metric: 'Trading KPIs', weighting: '40%' },
 	{ metric: 'Trust & Integration', weighting: '20%' },
 	{ metric: 'Coverage & Capabilities', weighting: '15%' },
@@ -41,7 +41,7 @@ const PERFORMANCE_GLOBAL_WEIGHTS: WeightRow[] = [
 	{ metric: 'Integration Level', weighting: '15%' }
 ]
 
-const PERFORMANCE_KPI_WEIGHTS: WeightRow[] = [
+const PERFORMANCE_KPI_WEIGHTS: Array<WeightRow> = [
 	{ metric: 'Bid Depth 100 bps, USD Value', weighting: '12.50%', ranking: 1 },
 	{ metric: 'Maker Fill Volume, USD Value', weighting: '10.25%', ranking: 2 },
 	{ metric: 'Combine Uptime %', weighting: '10.00%', ranking: 3 },
@@ -72,7 +72,7 @@ const PERFORMANCE_KPI_WEIGHTS: WeightRow[] = [
 	{ metric: 'Loan Utilization, Taker Fill Volume', weighting: '0.05%', ranking: 28 }
 ]
 
-const DEPTH_WEIGHTS: WeightRow[] = [
+const DEPTH_WEIGHTS: Array<WeightRow> = [
 	{ metric: 'Bid Depth 200 bps, USD Value', weighting: '15.00%', ranking: 1 },
 	{ metric: 'Number of Projects', weighting: '10.00%', ranking: 2 },
 	{ metric: 'Bid Depth 200 bps, % of Market', weighting: '9.25%', ranking: 3 },
@@ -94,7 +94,7 @@ const DEPTH_WEIGHTS: WeightRow[] = [
 	{ metric: 'Ask Depth 50 bps, % of Market', weighting: '1.25%', ranking: 19 }
 ]
 
-const VOLUME_WEIGHTS: WeightRow[] = [
+const VOLUME_WEIGHTS: Array<WeightRow> = [
 	{ metric: 'Maker Fill Volume, USD Value', weighting: '35.00%', ranking: 1 },
 	{ metric: 'Maker Fill Volume, % of Market', weighting: '25.00%', ranking: 2 },
 	{ metric: 'Taker Fill Volume, USD Value', weighting: '10.00%', ranking: 3 },
@@ -105,13 +105,13 @@ const VOLUME_WEIGHTS: WeightRow[] = [
 	{ metric: 'Volume Loan Utilization', weighting: '2.50%', ranking: 8 }
 ]
 
-const SPREAD_WEIGHTS: WeightRow[] = [
+const SPREAD_WEIGHTS: Array<WeightRow> = [
 	{ metric: 'Volume-Weighted Bid-Ask Spread', weighting: '50.00%', ranking: 1 },
 	{ metric: 'Spread Uptime', weighting: '40.00%', ranking: 2 },
 	{ metric: 'Number of Projects', weighting: '10.00%', ranking: 3 }
 ]
 
-const KPI_WEIGHTS: WeightRow[] = [
+const KPI_WEIGHTS: Array<WeightRow> = [
 	{ metric: 'Depth 200 bps, Uptime %', weighting: '35.00%', ranking: 1 },
 	{ metric: 'Depth 100 bps, Uptime %', weighting: '20.00%', ranking: 2 },
 	{ metric: 'Volume-Weighted Bid-Ask Spread, Uptime %', weighting: '20.00%', ranking: 3 },
@@ -119,9 +119,9 @@ const KPI_WEIGHTS: WeightRow[] = [
 	{ metric: 'Projects Count', weighting: '10.00%', ranking: 5 }
 ]
 
-type GlossaryEntry = { term: string; def: string; bullets?: string[]; code?: string }
+type GlossaryEntry = { term: string; def: string; bullets?: Array<string>; code?: string }
 
-const GLOSSARY: GlossaryEntry[] = [
+const GLOSSARY: Array<GlossaryEntry> = [
 	{
 		term: '% of Market',
 		def: "A market maker's relative contribution to total depth or volume within a defined set of engagements or thresholds. Take the following example:",
@@ -349,7 +349,7 @@ const GLOSSARY: GlossaryEntry[] = [
 	}
 ]
 
-function useActiveSection(ids: readonly string[]) {
+function useActiveSection(ids: ReadonlyArray<string>) {
 	const [active, setActive] = useState<string>(ids[0] ?? '')
 
 	useEffect(() => {
@@ -480,7 +480,7 @@ function P({ children }: { children: ReactNode }) {
 	return <p className="body-lg text-secondary">{children}</p>
 }
 
-function Bullets({ items, ordered = false }: { items: ReactNode[]; ordered?: boolean }) {
+function Bullets({ items, ordered = false }: { items: Array<ReactNode>; ordered?: boolean }) {
 	const cls = 'ml-5 flex flex-col gap-2 body-lg text-secondary'
 	const inner = items.map((item, i) => (
 		<li key={i} className={ordered ? 'list-decimal' : 'list-disc'}>
@@ -490,7 +490,7 @@ function Bullets({ items, ordered = false }: { items: ReactNode[]; ordered?: boo
 	return ordered ? <ol className={cls}>{inner}</ol> : <ul className={cls}>{inner}</ul>
 }
 
-function WeightTable({ rows, showRanking = true }: { rows: WeightRow[]; showRanking?: boolean }) {
+function WeightTable({ rows, showRanking = true }: { rows: Array<WeightRow>; showRanking?: boolean }) {
 	return (
 		<div className="overflow-hidden rounded-lg border border-subtle">
 			<div className="overflow-x-auto">

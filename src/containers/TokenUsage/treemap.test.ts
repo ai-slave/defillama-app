@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	buildTokenUsageTreemapTreeData,
@@ -9,7 +9,7 @@ import {
 } from './treemap'
 
 describe('buildTokenUsageTreemapTreeData', () => {
-	it('aggregates typed values while preserving category, protocol, share, and color ordering', () => {
+	test('aggregates typed values while preserving category, protocol, share, and color ordering', () => {
 		const tree = buildTokenUsageTreemapTreeData(
 			[
 				{ name: 'Beta', amountUsd: 25, category: ' DeFi ' },
@@ -49,7 +49,7 @@ describe('buildTokenUsageTreemapTreeData', () => {
 		expect(tree[1].children?.[0].itemStyle?.color).toBe(CHART_COLORS[1])
 	})
 
-	it('returns no nodes when the typed rows have no positive usage', () => {
+	test('returns no nodes when the typed rows have no positive usage', () => {
 		expect(
 			buildTokenUsageTreemapTreeData([
 				{ name: 'Zero', amountUsd: 0, category: 'DeFi' },
@@ -58,7 +58,7 @@ describe('buildTokenUsageTreemapTreeData', () => {
 		).toEqual([])
 	})
 
-	it('filters exact protocol leaves while preserving colors and recomputing visible shares', () => {
+	test('filters exact protocol leaves while preserving colors and recomputing visible shares', () => {
 		const tree = buildTokenUsageTreemapTreeData([
 			{ name: 'Alpha', amountUsd: 60, category: 'DeFi' },
 			{ name: 'Beta', amountUsd: 40, category: 'DeFi' },
@@ -88,7 +88,7 @@ describe('buildTokenUsageTreemapTreeData', () => {
 		})
 	})
 
-	it('totals the visible protocols as CEX and protocol filters change', () => {
+	test('totals the visible protocols as CEX and protocol filters change', () => {
 		const rows = [
 			{ name: 'Alpha', amountUsd: 60, category: 'DeFi' },
 			{ name: 'Beta', amountUsd: 40, category: 'DeFi' },
@@ -105,7 +105,7 @@ describe('buildTokenUsageTreemapTreeData', () => {
 		expect(getTokenUsageTreemapTotal([])).toBe(0)
 	})
 
-	it('uses composite keys and disambiguated labels for duplicate names in different categories', () => {
+	test('uses composite keys and disambiguated labels for duplicate names in different categories', () => {
 		const tree = buildTokenUsageTreemapTreeData([
 			{ name: 'Shared', amountUsd: 60, category: 'DeFi' },
 			{ name: 'Shared', amountUsd: 40, category: 'CEX' }
@@ -119,7 +119,7 @@ describe('buildTokenUsageTreemapTreeData', () => {
 		expect(filterTokenUsageTreemapTreeData(tree, new Set([options[1].key])).map((node) => node.name)).toEqual(['CEX'])
 	})
 
-	it('keeps slash-containing category and protocol tuples independently selectable', () => {
+	test('keeps slash-containing category and protocol tuples independently selectable', () => {
 		const tree = buildTokenUsageTreemapTreeData([
 			{ name: 'C', amountUsd: 60, category: 'A/B' },
 			{ name: 'B/C', amountUsd: 40, category: 'A' }

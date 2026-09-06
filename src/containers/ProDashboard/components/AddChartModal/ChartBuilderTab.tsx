@@ -30,7 +30,7 @@ import type { ChartBuilderConfig, ChartBuilderUpdate } from './types'
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
 
-const EMPTY_CATEGORIES: string[] = []
+const EMPTY_CATEGORIES: Array<string> = []
 const EMPTY_SELECT_OPTIONS: Array<{ value: string; label: string }> = []
 
 const DEFAULT_SERIES_COLOR = '#3e61cc'
@@ -426,19 +426,19 @@ export function ChartBuilderTab({
 		onChartBuilderChange(updates)
 	}
 
-	const handleChainsChange = (chains: string[]) => {
+	const handleChainsChange = (chains: Array<string>) => {
 		onChartBuilderChange({ chains })
 	}
 
-	const handleCategoriesChange = (categories: string[]) => {
+	const handleCategoriesChange = (categories: Array<string>) => {
 		onChartBuilderChange({ categories })
 	}
 
-	const handleChainCategoriesChange = (chainCategories: string[]) => {
+	const handleChainCategoriesChange = (chainCategories: Array<string>) => {
 		onChartBuilderChange({ chainCategories })
 	}
 
-	const handleProtocolCategoriesChange = (protocolCategories: string[]) => {
+	const handleProtocolCategoriesChange = (protocolCategories: Array<string>) => {
 		onChartBuilderChange({ protocolCategories })
 	}
 
@@ -495,7 +495,7 @@ export function ChartBuilderTab({
 	const handleSeriesColorChange = (seriesName: string, color: string) => {
 		onChartBuilderChange({
 			seriesColors: {
-				...(chartBuilder.seriesColors || {}),
+				...chartBuilder.seriesColors,
 				[seriesName]: color
 			}
 		})
@@ -866,14 +866,14 @@ export function ChartBuilderTab({
 					>
 						{previewLoading ? (
 							<div className="text-center">
-								<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-pro-info-100 dark:border-pro-info-300/20"></div>
+								<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-pro-info-100 dark:border-pro-info-300/20" />
 								<p className="text-sm text-pro-text-secondary">Loading preview...</p>
 							</div>
 						) : previewData && previewData.series.length > 0 ? (
 							<div className="absolute inset-0 p-2">
 								<Suspense
 									fallback={
-										<div className="size-full animate-pulse rounded-md border border-pro-cards-border bg-pro-cards-bg"></div>
+										<div className="size-full animate-pulse rounded-md border border-pro-cards-border bg-pro-cards-bg" />
 									}
 								>
 									{chartBuilder.chartType === 'treemap' ? (
@@ -884,7 +884,7 @@ export function ChartBuilderTab({
 											dataset={previewChart.dataset}
 											charts={previewChart.charts}
 											valueSymbol={displayAs === 'percentage' ? '%' : '$'}
-											hideDataZoom={true}
+											hideDataZoom
 											hideDefaultLegend={false}
 											solidChartAreaStyle={chartBuilder.chartType === 'stackedArea'}
 											exportButtons="hidden"

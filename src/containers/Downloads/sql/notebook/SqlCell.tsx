@@ -23,7 +23,7 @@ export interface SqlCellHandle {
 
 interface SqlCellProps {
 	cell: NotebookCell
-	loadedTables: RegisteredTable[]
+	loadedTables: Array<RegisteredTable>
 	onSourceChange: (next: string) => void
 	onRun: () => void
 	onRunAndAdvance: () => void

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getPreIpoSitemapRoutes, resolvePreIpoCompanyId } from '../server/routes'
 
 const metadata = {
@@ -7,12 +7,12 @@ const metadata = {
 }
 
 describe('pre-IPO routes', () => {
-	it('resolves canonical IDs case-insensitively and rejects unknown companies', () => {
+	test('resolves canonical IDs case-insensitively and rejects unknown companies', () => {
 		expect(resolvePreIpoCompanyId('Anthropic', metadata)).toBe('anthropic')
 		expect(resolvePreIpoCompanyId('unknown', metadata)).toBeNull()
 	})
 
-	it('builds every company sitemap route from metadata', () => {
+	test('builds every company sitemap route from metadata', () => {
 		expect(getPreIpoSitemapRoutes(metadata)).toEqual(['pre-ipo/anthropic', 'pre-ipo/commonwealth-fusion'])
 	})
 })

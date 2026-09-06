@@ -12,8 +12,8 @@ export function filterBorrowRoutes({
 	minAvailable,
 	maxAvailable
 }: {
-	rows: RouteTableRow[]
-	selectedChains: string[]
+	rows: Array<RouteTableRow>
+	selectedChains: Array<string>
 	minAvailable: string
 	maxAvailable: string
 }) {

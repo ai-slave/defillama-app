@@ -136,7 +136,7 @@ export function formatCompactNumber(
 ): string | null {
 	const number = finiteValue(value)
 	if (number == null) return null
-	if (Math.abs(number) < (options.minimumCompactValue ?? 1_000)) {
+	if (Math.abs(number) < (options.minimumCompactValue ?? 1000)) {
 		return formatNumber(number, {
 			signDisplay: options.signDisplay,
 			...precisionOptions(options)
@@ -160,7 +160,7 @@ export function formatUsd(value: NumericValue | null | undefined, options?: Form
 export function formatUsd(value: NumericValue | null | undefined, options: FormatUsdOptions = {}): string | null {
 	const number = finiteValue(value)
 	if (number == null) return null
-	const compact = options.compact && Math.abs(number) >= (options.minimumCompactValue ?? 1_000)
+	const compact = options.compact && Math.abs(number) >= (options.minimumCompactValue ?? 1000)
 	const maximumFractionDigits =
 		options.maximumFractionDigits ?? (compact ? compactFractionDigits(number) : adaptiveFractionDigits(number, 2, 2))
 	const formatted = getFormatter({
@@ -207,7 +207,7 @@ export function formatPercent(value: NumericValue | null | undefined, options: F
 	const number = finiteValue(value)
 	if (number == null) return null
 	const percent = options.input === 'fraction' ? number * 100 : number
-	const compact = options.compact && Math.abs(percent) >= (options.minimumCompactValue ?? 1_000)
+	const compact = options.compact && Math.abs(percent) >= (options.minimumCompactValue ?? 1000)
 	const maximumFractionDigits =
 		options.maximumFractionDigits ?? (compact ? compactFractionDigits(percent) : adaptiveFractionDigits(percent, 2, 2))
 	const formatted = applyCompactSuffixCase(

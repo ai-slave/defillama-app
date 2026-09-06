@@ -14,7 +14,7 @@ import { getCachedStablecoinChainBreakdown } from './stablecoinData'
 
 const clampTopN = (limit: number): number => Math.min(Math.max(Math.trunc(limit), 1), 20)
 
-function withoutOthers(series: ChartSeries[]): ChartSeries[] {
+function withoutOthers(series: Array<ChartSeries>): Array<ChartSeries> {
 	return series.filter((entry) => !entry.name.startsWith('Others'))
 }
 
@@ -27,7 +27,7 @@ async function getProtocolSeries(config: ChartBuilderConfig['config']): Promise<
 	const chainFilterMode = config.chainFilterMode
 	const categoryFilterMode = config.categoryFilterMode
 	const topN = clampTopN(config.limit)
-	let series: ChartSeries[]
+	let series: Array<ChartSeries>
 	if (config.metric === 'tvl') {
 		series = parseCachedJsonResult(
 			await getCachedProtocolTvlBreakdown({
@@ -69,7 +69,7 @@ async function getChainSeries(config: ChartBuilderConfig['config']): Promise<Cha
 	// The browser route omits a zero limit and therefore uses the route's default of five.
 	const topN = config.limit === 0 ? 5 : clampTopN(config.limit)
 
-	let series: ChartSeries[]
+	let series: Array<ChartSeries>
 	if (config.metric === 'tvl') {
 		series = parseCachedJsonResult(
 			await getCachedProtocolTvlChainBreakdown({

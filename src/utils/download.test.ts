@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { addTimestampToFilename, downloadCSV } from './download'
 
 describe('downloadCSV', () => {
-	it('escapes CSV syntax and neutralizes formula strings without changing numeric values', async () => {
+	test('escapes CSV syntax and neutralizes formula strings without changing numeric values', async () => {
 		let csvBlob: Blob | undefined
 		const link = { href: '', download: '', style: { display: '' }, click: vi.fn() }
 		vi.stubGlobal('window', {
@@ -41,15 +41,15 @@ describe('downloadCSV', () => {
 })
 
 describe('addTimestampToFilename', () => {
-	it('inserts the date before the final extension', () => {
+	test('inserts the date before the final extension', () => {
 		expect(addTimestampToFilename('bridge.activity.csv', '2026-07-28')).toBe('bridge.activity_2026-07-28.csv')
 	})
 
-	it('preserves a filename without an extension', () => {
+	test('preserves a filename without an extension', () => {
 		expect(addTimestampToFilename('bridge-activity', '2026-07-28')).toBe('bridge-activity_2026-07-28')
 	})
 
-	it('does not add the same date twice', () => {
+	test('does not add the same date twice', () => {
 		expect(addTimestampToFilename('bridge-activity_2026-07-28.csv', '2026-07-28')).toBe(
 			'bridge-activity_2026-07-28.csv'
 		)

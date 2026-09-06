@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { ExecutionCoordinator } from '~/containers/LlamaAI/executionCoordinator'
 import { AgenticExecutionChangedError, type AgenticSSECallbacks } from '~/containers/LlamaAI/fetchAgenticResponse'
 import { useChatExecutionOwner } from '~/containers/LlamaAI/hooks/useChatExecutionOwner'
@@ -13,7 +13,7 @@ const transport = vi.hoisted(() => ({
 }))
 
 vi.mock('~/hooks/useStableCallback', () => ({
-	useStableCallback: <Args extends unknown[], Result>(callback: (...args: Args) => Result) => callback
+	useStableCallback: <Args extends Array<unknown>, Result>(callback: (...args: Args) => Result) => callback
 }))
 
 vi.mock('~/containers/LlamaAI/fetchAgenticResponse', async (importOriginal) => {
@@ -52,7 +52,7 @@ function useTestExecutionOwner({
 	appendMessage = vi.fn()
 }: {
 	coordinator?: ExecutionCoordinator
-	queue?: QueuedMessageElement[]
+	queue?: Array<QueuedMessageElement>
 	onSettled?: ReturnType<typeof vi.fn<(sessionId: string) => void>>
 	clearRecovery?: ReturnType<typeof vi.fn<() => void>>
 	appendMessage?: ReturnType<typeof vi.fn<(message: Message) => void>>
@@ -92,7 +92,7 @@ describe('useChatExecutionOwner', () => {
 		transport.resume.mockReset()
 	})
 
-	it('probes after a prompt operation releases the session', async () => {
+	test('probes after a prompt operation releases the session', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const promptDone = deferred()
 		const prompt = coordinator.run('session-a', 'prompt', async () => promptDone.promise)
@@ -108,7 +108,7 @@ describe('useChatExecutionOwner', () => {
 		expect(transport.checkActive).toHaveBeenCalledOnce()
 	})
 
-	it('keeps temporary disconnects recoverable instead of settling them', async () => {
+	test('keeps temporary disconnects recoverable instead of settling them', async () => {
 		transport.checkActive.mockRejectedValue(new Error('Failed to fetch'))
 		const onTemporaryDisconnect = vi.fn()
 		const owner = useTestExecutionOwner()
@@ -121,10 +121,10 @@ describe('useChatExecutionOwner', () => {
 		expect(owner.clearRecovery).not.toHaveBeenCalled()
 	})
 
-	it('pins a rearmed queue stream to its observed execution and cursor', async () => {
+	test('pins a rearmed queue stream to its observed execution and cursor', async () => {
 		vi.useFakeTimers()
 		try {
-			const queue = [{ id: 'queue-1', state: 'firing' }] as QueuedMessageElement[]
+			const queue = [{ id: 'queue-1', state: 'firing' }] as Array<QueuedMessageElement>
 			transport.attach
 				.mockImplementationOnce(async ({ callbacks, eventCounter }) => {
 					callbacks.onMessageId?.('execution-1')
@@ -152,7 +152,7 @@ describe('useChatExecutionOwner', () => {
 		}
 	})
 
-	it('separates buffered output when the active execution changes', async () => {
+	test('separates buffered output when the active execution changes', async () => {
 		transport.checkActive.mockResolvedValue({ active: true, execution: execution('execution-1') })
 		transport.resume
 			.mockImplementationOnce(async ({ callbacks }) => {
@@ -176,7 +176,7 @@ describe('useChatExecutionOwner', () => {
 		})
 	})
 
-	it('skips completed replay when opening a session that already has the answer', async () => {
+	test('skips completed replay when opening a session that already has the answer', async () => {
 		transport.checkActive.mockResolvedValue({
 			active: false,
 			execution: { ...execution('execution-1'), cursor: 4, hasResult: true, status: 'completed' }
@@ -190,7 +190,7 @@ describe('useChatExecutionOwner', () => {
 		expect(owner.onSettled).not.toHaveBeenCalled()
 	})
 
-	it('reports an invalidated replay as aborted instead of settled', async () => {
+	test('reports an invalidated replay as aborted instead of settled', async () => {
 		const coordinator = new ExecutionCoordinator()
 		transport.checkActive.mockResolvedValue({
 			active: false,

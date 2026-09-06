@@ -15,7 +15,7 @@ import { getProjectTier } from './tier'
 import type { ProjectWithStats } from './types'
 
 type SortBy = 'updated' | 'created' | 'name'
-const EMPTY_PROJECTS: ProjectWithStats[] = []
+const EMPTY_PROJECTS: Array<ProjectWithStats> = []
 
 export function ProjectsGrid() {
 	const { user, hasActiveSubscription, isTrial } = useAuthContext()
@@ -33,7 +33,7 @@ export function ProjectsGrid() {
 	const deferredQuery = useDeferredValue(query)
 	const allProjects = data ?? EMPTY_PROJECTS
 
-	const visibleProjects = useMemo<ProjectWithStats[]>(() => {
+	const visibleProjects = useMemo<Array<ProjectWithStats>>(() => {
 		const q = deferredQuery.trim()
 		const filtered = q
 			? matchSorter(allProjects, q, {

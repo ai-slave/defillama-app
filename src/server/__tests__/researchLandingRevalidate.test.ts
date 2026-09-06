@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { researchLandingRevalidateHandler } from '~/pages/api/private/research/revalidate-landing'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
@@ -19,7 +19,7 @@ describe('/api/private/research/revalidate-landing', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('requires an auth header', async () => {
+	test('requires an auth header', async () => {
 		const fetchImpl = vi.fn()
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
@@ -31,7 +31,7 @@ describe('/api/private/research/revalidate-landing', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Unauthorized' })
 	})
 
-	it('validates the researcher session, then purges /research', async () => {
+	test('validates the researcher session, then purges /research', async () => {
 		vi.stubEnv('CF_ZONE', 'zone')
 		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'token')
 		vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://defillama.test')
@@ -66,7 +66,7 @@ describe('/api/private/research/revalidate-landing', () => {
 		})
 	})
 
-	it('passes auth validation failures through without touching caches', async () => {
+	test('passes auth validation failures through without touching caches', async () => {
 		const fetchImpl = vi.fn().mockResolvedValueOnce(
 			new Response(JSON.stringify({ error: 'Forbidden' }), {
 				headers: { 'Content-Type': 'application/json' },

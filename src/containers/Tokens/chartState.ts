@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 
 export const TOKENS_PAGE_VIEWS = ['table', 'map', 'movers'] as const
@@ -43,7 +43,7 @@ export const TOKENS_CHART_QUERY_KEYS: Record<keyof TokensChartState, string> = {
 	moversWindow: 'moversWindow'
 }
 
-function normalize<T extends string>(value: string | undefined, allowed: readonly T[], fallback: T): T {
+function normalize<T extends string>(value: string | undefined, allowed: ReadonlyArray<T>, fallback: T): T {
 	return value && allowed.includes(value as T) ? (value as T) : fallback
 }
 

@@ -23,7 +23,7 @@ export const CEXS_PAGE_METADATA = {
 	pageName: ['CEXs']
 }
 
-export default function CexsPage({ cexs }: { cexs: ICex[] }) {
+export default function CexsPage({ cexs }: { cexs: Array<ICex> }) {
 	return (
 		<Layout {...CEXS_PAGE_METADATA}>
 			<Cexs cexs={cexs} />

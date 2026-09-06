@@ -1,9 +1,9 @@
-import type { ParsedUrlQuery, ParsedUrlQueryInput } from 'querystring'
+import type { ParsedUrlQuery, ParsedUrlQueryInput } from 'node:querystring'
 import type { NextRouter } from 'next/router'
 
-type QueryParamInput = string | string[] | undefined | null
+type QueryParamInput = string | Array<string> | undefined | null
 type QueryPrimitive = string | number | boolean
-type QueryUpdateValue = QueryPrimitive | QueryPrimitive[] | undefined
+type QueryUpdateValue = QueryPrimitive | Array<QueryPrimitive> | undefined
 
 // ============================================================================
 // Array Parsing
@@ -19,7 +19,7 @@ type QueryUpdateValue = QueryPrimitive | QueryPrimitive[] | undefined
  * toNonEmptyArrayParam(['foo', '', 'bar']) // ['foo', 'bar']
  * toNonEmptyArrayParam(undefined) // []
  */
-export function toNonEmptyArrayParam(param: QueryParamInput): string[] {
+export function toNonEmptyArrayParam(param: QueryParamInput): Array<string> {
 	if (!param) return []
 	return Array.isArray(param) ? param.filter(Boolean) : [param].filter(Boolean)
 }
@@ -32,7 +32,7 @@ export function toNonEmptyArrayParam(param: QueryParamInput): string[] {
  * toRawArrayParam(['foo', 'bar']) // ['foo', 'bar']
  * toRawArrayParam(undefined) // []
  */
-export function toRawArrayParam(param: QueryParamInput): string[] {
+export function toRawArrayParam(param: QueryParamInput): Array<string> {
 	if (!param) return []
 	return Array.isArray(param) ? param : [param]
 }
@@ -219,7 +219,11 @@ export function isParamNone(param: QueryParamInput): boolean {
  * parseArrayParam('None', ['foo', 'bar']) // []
  * parseArrayParam(undefined, ['foo', 'bar']) // ['foo', 'bar']
  */
-export function parseArrayParam(param: QueryParamInput, allValues: string[], validSet?: Set<string>): string[] {
+export function parseArrayParam(
+	param: QueryParamInput,
+	allValues: Array<string>,
+	validSet?: Set<string>
+): Array<string> {
 	if (param === 'None') return []
 	if (!param) return allValues
 	const arr = toNonEmptyArrayParam(param).filter((v) => v !== 'None')
@@ -235,7 +239,7 @@ export function parseArrayParam(param: QueryParamInput, allValues: string[], val
  * getSelectedChainFilters('None', ['eth', 'btc']) // []
  * getSelectedChainFilters('eth', ['eth', 'btc']) // ['eth']
  */
-export function getSelectedChainFilters(chainQueryParam: QueryParamInput, allChains: string[]): string[] {
+export function getSelectedChainFilters(chainQueryParam: QueryParamInput, allChains: Array<string>): Array<string> {
 	if (!chainQueryParam) return allChains
 
 	const validChains = new Set(allChains)
@@ -262,7 +266,7 @@ export function getSelectedChainFilters(chainQueryParam: QueryParamInput, allCha
  * toQueryString({ foo: 'bar', baz: ['a', 'b'] }) // '?foo=bar&baz=a&baz=b'
  * toQueryString({ empty: undefined }) // ''
  */
-export function toQueryString(query: Record<string, string | string[] | undefined>): string {
+export function toQueryString(query: Record<string, string | Array<string> | undefined>): string {
 	const params = new URLSearchParams()
 	for (const [key, value] of Object.entries(query)) {
 		if (value == null) continue
@@ -381,9 +385,9 @@ export function safeInternalPath(raw: unknown): string | undefined {
 		if (hasPathTraversalSegment) return undefined
 
 		return decoded
-	} catch (e) {
+	} catch (error) {
 		if (process.env.NODE_ENV === 'development') {
-			console.warn('[routerQuery] Failed to decode path in safeInternalPath', e)
+			console.warn('[routerQuery] Failed to decode path in safeInternalPath', error)
 		}
 	}
 	return undefined

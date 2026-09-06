@@ -96,7 +96,7 @@ function isChartMetadataKey(value: string): value is ChartMetadataKey {
 // TODO(chain-normalizer): saved ProDashboard chain chart configs can still
 // contain legacy/internal chain values. Remove this once chart configs and
 // external chain chart calls use v2 display-name chain values end to end.
-function getChainNames(chain: string): string[] {
+function getChainNames(chain: string): Array<string> {
 	const displayName = toDisplayName(chain)
 	if (displayName !== chain) {
 		return [chain, displayName]
@@ -108,7 +108,7 @@ async function fetchChainDimensionsData(
 	chain: string,
 	adapterType: `${ADAPTER_TYPES}`,
 	dataType?: `${ADAPTER_DATA_TYPES}`
-): Promise<[number, number][]> {
+): Promise<Array<[number, number]>> {
 	if (!chain) return []
 	const apiChain = toDisplayName(chain)
 	const data = await fetchAdapterChainChartData({
@@ -123,7 +123,7 @@ async function fetchChainProtocolData(
 	chain: string,
 	adapterType: `${ADAPTER_TYPES}`,
 	dataType?: `${ADAPTER_DATA_TYPES}`
-): Promise<[number, number][]> {
+): Promise<Array<[number, number]>> {
 	if (!chain) return []
 	const apiChain = toDisplayName(chain)
 	const data = await fetchAdapterProtocolChartData({
@@ -134,7 +134,7 @@ async function fetchChainProtocolData(
 	return data
 }
 
-async function fetchChainTvlData(chain: string): Promise<[number, number][]> {
+async function fetchChainTvlData(chain: string): Promise<Array<[number, number]>> {
 	if (!chain) return []
 
 	const chainNames = getChainNames(chain)
@@ -157,7 +157,7 @@ async function fetchChainTvlData(chain: string): Promise<[number, number][]> {
 	throw new Error(`Unable to fetch TVL chart for ${chain}`)
 }
 
-async function fetchChainStablecoinsData(chain: string, dataType?: string): Promise<[number, number][]> {
+async function fetchChainStablecoinsData(chain: string, dataType?: string): Promise<Array<[number, number]>> {
 	if (!chain) return []
 	const apiChain = toDisplayName(chain)
 	const encodedChain = apiChain.includes(' ') ? encodeURIComponent(apiChain) : apiChain
@@ -171,10 +171,10 @@ async function fetchChainStablecoinsData(chain: string, dataType?: string): Prom
 	return totals
 }
 
-function calculateStablecoinInflows(aggregatedData: StablecoinAggregatePair[]): [number, number][] {
+function calculateStablecoinInflows(aggregatedData: Array<StablecoinAggregatePair>): Array<[number, number]> {
 	if (aggregatedData.length < 2) return []
 
-	const inflowsData: [number, number][] = []
+	const inflowsData: Array<[number, number]> = []
 
 	for (let i = 1; i < aggregatedData.length; i++) {
 		const currentDay = aggregatedData[i]
@@ -186,7 +186,7 @@ function calculateStablecoinInflows(aggregatedData: StablecoinAggregatePair[]): 
 	return inflowsData
 }
 
-async function fetchChainAssetsData(chain: string, chainAssetId?: string): Promise<[number, number][]> {
+async function fetchChainAssetsData(chain: string, chainAssetId?: string): Promise<Array<[number, number]>> {
 	if (!chain) return []
 
 	const resolvedChainAssetId = chainAssetId ?? (await resolveChainAssetId(chain))
@@ -201,7 +201,7 @@ async function fetchChainTokenData(geckoId: string) {
 	return result?.data ?? null
 }
 
-async function fetchChainMcapData(geckoId?: string): Promise<[number, number][]> {
+async function fetchChainMcapData(geckoId?: string): Promise<Array<[number, number]>> {
 	if (!geckoId) return []
 	const data = await fetchChainTokenData(geckoId)
 	if (!data) return []
@@ -209,7 +209,7 @@ async function fetchChainMcapData(geckoId?: string): Promise<[number, number][]>
 	return normalizeHourlyToDaily(converted, 'last')
 }
 
-async function fetchChainPriceData(geckoId?: string): Promise<[number, number][]> {
+async function fetchChainPriceData(geckoId?: string): Promise<Array<[number, number]>> {
 	if (!geckoId) return []
 	const data = await fetchChainTokenData(geckoId)
 	if (!data) return []
@@ -222,7 +222,7 @@ export async function fetchProChainChartData(
 	chain: string,
 	geckoId?: string,
 	chainAssetId?: string
-): Promise<[number, number][]> {
+): Promise<Array<[number, number]>> {
 	if (!isChartMetadataKey(chartType)) return []
 	const metadata = CHART_METADATA[chartType]
 

@@ -53,7 +53,7 @@ function groupPending(roles: VaultRoles, nowSec: number) {
 	return [...map.values()].sort((a, b) => Number(a.live) - Number(b.live) || a.soonestValidAt - b.soonestValidAt)
 }
 
-function capabilityByRole(caps: RoleCapability[] | undefined): Map<string, RoleCapability> {
+function capabilityByRole(caps: Array<RoleCapability> | undefined): Map<string, RoleCapability> {
 	const map = new Map<string, RoleCapability>()
 	for (const c of caps ?? []) map.set(c.role, c)
 	return map
@@ -115,11 +115,11 @@ function OperatorLine({
 }
 
 // "1 multisig · 2 contracts · 1 EOA" — the collapsed line's make-up summary.
-function entityBreakdown(entities: RoleEntity[]): string {
+function entityBreakdown(entities: Array<RoleEntity>): string {
 	const counts: Record<string, number> = {}
 	for (const e of entities) counts[e.kind] = (counts[e.kind] ?? 0) + 1
 	const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
-	const parts: string[] = []
+	const parts: Array<string> = []
 	if (counts.safe) parts.push(plural(counts.safe, 'multisig'))
 	if (counts.contract) parts.push(plural(counts.contract, 'contract'))
 	if (counts.eoa) parts.push(plural(counts.eoa, 'EOA'))
@@ -138,7 +138,7 @@ function RoleListDisclosure({
 }: {
 	roleName: string
 	roleKey: string
-	entities: RoleEntity[]
+	entities: Array<RoleEntity>
 	capability?: RoleCapability
 	linkChain: string
 	explorers?: BlockExplorersResponse
@@ -195,7 +195,7 @@ export function VaultRolesBlock({
 	nowIso
 }: {
 	roles: VaultRoles
-	capabilities?: RoleCapability[]
+	capabilities?: Array<RoleCapability>
 	chain?: string
 	explorers?: BlockExplorersResponse
 	nowIso?: string
@@ -237,7 +237,7 @@ export function VaultRolesBlock({
 				</p>
 			) : null}
 
-			{pending.length ? (
+			{pending.length > 0 ? (
 				<RiskCallout padding="sm">
 					<p className="flex items-center gap-1.5 label-sm text-(--yield-warning-text)">
 						<Icon name="clock" className="size-3.5" />
@@ -306,7 +306,7 @@ export function VaultRolesBlock({
 				</div>
 				<div className="flex flex-col divide-y divide-(--border-subtle)">
 					{/* the veto slot: guardian OR sentinels (never both); neither = unguarded, the danger state */}
-					{guardian || !sentinels.length ? (
+					{guardian || sentinels.length === 0 ? (
 						<OperatorLine
 							roleName={caps.get('guardian')?.role_label ?? 'Guardian'}
 							roleKey="guardian"
@@ -316,7 +316,7 @@ export function VaultRolesBlock({
 							{...(explorers ? { explorers } : {})}
 						/>
 					) : null}
-					{sentinels.length ? (
+					{sentinels.length > 0 ? (
 						<RoleListDisclosure
 							roleName="Sentinels"
 							roleKey="sentinel"
@@ -326,7 +326,7 @@ export function VaultRolesBlock({
 							{...(explorers ? { explorers } : {})}
 						/>
 					) : null}
-					{allocators.length ? (
+					{allocators.length > 0 ? (
 						<RoleListDisclosure
 							roleName="Allocators"
 							roleKey="allocator"

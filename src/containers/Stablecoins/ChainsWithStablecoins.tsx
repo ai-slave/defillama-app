@@ -64,10 +64,10 @@ const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart')) as 
 const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 const UNRELEASED_QUERY_KEY = 'unreleased'
 const EMPTY_PIE_DATA: IPieChartProps['chartData'] = []
-const EMPTY_HBAR_CATEGORIES: string[] = []
-const EMPTY_HBAR_VALUES: number[] = []
+const EMPTY_HBAR_CATEGORIES: Array<string> = []
+const EMPTY_HBAR_VALUES: Array<number> = []
 const EMPTY_TREEMAP_DATA: TreemapChartProps['treeData'] = []
-const EMPTY_SERIES: string[] = []
+const EMPTY_SERIES: Array<string> = []
 const EMPTY_RUNTIME_SERIES = {
 	selectableSeries: EMPTY_SERIES,
 	defaultSeries: EMPTY_SERIES,
@@ -77,9 +77,9 @@ const EMPTY_RUNTIME_SERIES = {
 }
 
 interface ChainsWithStablecoinsProps {
-	chainCirculatings: IFormattedStablecoinChainRow[]
-	chainList: string[]
-	chainsGroupbyParent: Record<string, Record<string, string[]>>
+	chainCirculatings: Array<IFormattedStablecoinChainRow>
+	chainList: Array<string>
+	chainsGroupbyParent: Record<string, Record<string, Array<string>>>
 	deprecatedChains: Record<string, true>
 	change1d: string | null
 	change7d: string | null

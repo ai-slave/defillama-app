@@ -40,7 +40,7 @@ const POPULAR_COUNTRIES = [
 const POPULARITY_RANK = new Map<string, number>(POPULAR_COUNTRIES.map((country, index) => [country, index]))
 
 /** Popular countries first (in POPULAR_COUNTRIES order), then the rest alphabetically by display label. */
-export function orderCountryOptions(options: SelectOption[]): SelectOption[] {
+export function orderCountryOptions(options: Array<SelectOption>): Array<SelectOption> {
 	return [...options].sort((left, right) => {
 		const leftRank = POPULARITY_RANK.get(left.key) ?? POPULAR_COUNTRIES.length
 		const rightRank = POPULARITY_RANK.get(right.key) ?? POPULAR_COUNTRIES.length
@@ -98,8 +98,8 @@ export function useExchangeCountry() {
 	return { country, setCountry, catalog, catalogFailed }
 }
 
-function countryOptions(catalog: MasterExchangeRegionCatalogResponse | null): SelectOption[] {
-	const countries: SelectOption[] = []
+function countryOptions(catalog: MasterExchangeRegionCatalogResponse | null): Array<SelectOption> {
+	const countries: Array<SelectOption> = []
 	if (catalog) {
 		for (const country of catalog.countries) {
 			const regionKey = catalog.country_regions[country]

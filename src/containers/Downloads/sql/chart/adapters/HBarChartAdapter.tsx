@@ -14,7 +14,7 @@ const HBarChart = lazy(() => import('~/components/ECharts/HBarChart'))
 interface HBarChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -53,7 +53,7 @@ export function HBarChartAdapter({ config, result, classified, onReady }: HBarCh
 	)
 }
 
-export function buildSqlHBarData(rows: unknown[][], labelIndex: number, valueIndex: number, cap = 40) {
+export function buildSqlHBarData(rows: Array<Array<unknown>>, labelIndex: number, valueIndex: number, cap = 40) {
 	const topPairs: Array<{ name: string; value: number }> = []
 	for (const row of rows) {
 		const nameRaw = row[labelIndex]

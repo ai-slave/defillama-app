@@ -46,7 +46,7 @@ export default function Collection() {
 	if (fetchingData) {
 		return (
 			<Layout
-				title={'NFT Royalties - DefiLlama'}
+				title="NFT Royalties - DefiLlama"
 				description={collectionDescription}
 				canonicalUrl={collection ? `/nfts/royalties/${collection}` : `/nfts/royalties`}
 			>
@@ -58,7 +58,7 @@ export default function Collection() {
 	if (error || !collectionData) {
 		return (
 			<Layout
-				title={'NFT Royalties - DefiLlama'}
+				title="NFT Royalties - DefiLlama"
 				description={collectionDescription}
 				canonicalUrl={collection ? `/nfts/royalties/${collection}` : `/nfts/royalties`}
 			>
@@ -71,7 +71,7 @@ export default function Collection() {
 
 	return (
 		<Layout
-			title={props.name + ' Royalties - DefiLlama'}
+			title={`${props.name} Royalties - DefiLlama`}
 			description={`Track NFT royalties for ${props.name}. Compare 30d and lifetime earnings with historical charts.`}
 			canonicalUrl={collection ? `/nfts/royalties/${collection}` : `/nfts/royalties`}
 		>

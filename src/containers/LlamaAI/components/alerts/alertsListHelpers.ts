@@ -15,10 +15,10 @@ export function getAlertsAccessState(
 }
 
 export function applyAlertUpdateToList(
-	alerts: Alert[],
+	alerts: Array<Alert>,
 	input: UpdateAlertInput,
 	conditionUpdate: { shouldInclude: boolean; value: string | null }
-): Alert[] {
+): Array<Alert> {
 	const newExpression = input.alertConfig
 		? input.alertConfig.frequency === 'weekly'
 			? `Weekly on ${DAYS_OF_WEEK[input.alertConfig.dayOfWeek]} at ${input.alertConfig.hour}:00 ${input.alertConfig.timezone}`
@@ -89,7 +89,7 @@ export interface AlertChip {
 	variant: 'static'
 }
 
-export const ALERT_EMPTY_STATE_CHIPS: AlertChip[] = [
+export const ALERT_EMPTY_STATE_CHIPS: Array<AlertChip> = [
 	{ text: 'Daily brief on Hyperliquid, Solana and stablecoins, every morning', variant: 'static' },
 	{ text: 'Ping me if ETH drops below $3,000', variant: 'static' }
 ]

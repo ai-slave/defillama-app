@@ -1,6 +1,6 @@
 import { promisify } from 'node:util'
 import { gzip } from 'node:zlib'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const cacheMocks = vi.hoisted(() => ({
 	getCache: vi.fn(),
@@ -58,7 +58,7 @@ afterEach(() => {
 })
 
 describe('getTokensMarketSnapshot window freshness', () => {
-	it('serves the published snapshot while it belongs to the current wall-clock window', async () => {
+	test('serves the published snapshot while it belongs to the current wall-clock window', async () => {
 		vi.useFakeTimers()
 		// Distinct base time per test: the in-process cache keys on the window.
 		vi.setSystemTime(new Date('2027-01-01T10:02:00.000Z'))
@@ -72,11 +72,11 @@ describe('getTokensMarketSnapshot window freshness', () => {
 		expect(upstreamMocks.fetchCoinGeckoTokensListFromDataset).not.toHaveBeenCalled()
 	})
 
-	it('rebuilds when the pointer still holds the previous window - alignment with CDN expiry', async () => {
+	test('rebuilds when the pointer still holds the previous window - alignment with CDN expiry', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2027-02-01T10:05:01.000Z'))
 		// Published 10:04:59 - pointer TTL alive, but the window has flipped.
-		const stale = storedSnapshot('version-staleee-0001', Date.now() - 2_000 - (Date.now() % WINDOW_MS))
+		const stale = storedSnapshot('version-staleee-0001', Date.now() - 2000 - (Date.now() % WINDOW_MS))
 		cacheMocks.getObjectCache.mockResolvedValue({ version: stale.version, publishedAt: stale.generatedAt })
 		cacheMocks.getCache.mockResolvedValue(await blobFor(stale))
 		upstreamMocks.fetchCoinGeckoTokensListFromDataset.mockResolvedValue([])
@@ -90,7 +90,7 @@ describe('getTokensMarketSnapshot window freshness', () => {
 		expect(snapshot.generatedAt).toBe(Date.now())
 	})
 
-	it('adopts a concurrent winner published for this window instead of double-publishing', async () => {
+	test('adopts a concurrent winner published for this window instead of double-publishing', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2027-03-01T10:06:00.000Z'))
 		const winner = storedSnapshot('version-winnerr-0001', Date.now() - 500)
@@ -107,7 +107,7 @@ describe('getTokensMarketSnapshot window freshness', () => {
 		expect(snapshot.version).toBe(winner.version)
 		expect(cacheMocks.setCache).not.toHaveBeenCalled()
 	})
-	it('keeps an outage null and does not reinterpret an old flag-based empty snapshot', async () => {
+	test('keeps an outage null and does not reinterpret an old flag-based empty snapshot', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2027-04-01T10:02:00.000Z'))
 		const old = { ...storedSnapshot('old-market-0000000001', Date.now()), marketsAvailable: false }

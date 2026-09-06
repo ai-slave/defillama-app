@@ -127,7 +127,7 @@ type RouteTelemetryContext = {
 
 type PendingBatch = {
 	idempotencyKey: string
-	events: TelemetryEvent[]
+	events: Array<TelemetryEvent>
 }
 
 type RouteTelemetryOptions<T> = {
@@ -157,7 +157,7 @@ type AsyncLocalStorageLike<T> = {
 type TelemetryStore = RouteTelemetryContext | undefined
 
 let telemetryContext: AsyncLocalStorageLike<TelemetryStore> | null = null
-const queue: TelemetryEvent[] = []
+const queue: Array<TelemetryEvent> = []
 
 let retryBatch: PendingBatch | null = null
 let flushPromise: Promise<void> | null = null
@@ -204,7 +204,7 @@ export function slowRouteThresholdMs(): number {
 }
 
 export function slowUpstreamThresholdMs(): number {
-	return Math.max(1, getEnvNumber('OPS_TELEMETRY_SLOW_UPSTREAM_MS', 3_000))
+	return Math.max(1, getEnvNumber('OPS_TELEMETRY_SLOW_UPSTREAM_MS', 3000))
 }
 
 export function largePageBuildFinishGapMs(): number {
@@ -212,7 +212,7 @@ export function largePageBuildFinishGapMs(): number {
 }
 
 function requestBodyMaxBytes(): number {
-	return Math.max(1, getEnvNumber('OPS_TELEMETRY_REQUEST_BODY_MAX_BYTES', 4_096))
+	return Math.max(1, getEnvNumber('OPS_TELEMETRY_REQUEST_BODY_MAX_BYTES', 4096))
 }
 
 function isCircuitOpen(): boolean {
@@ -232,7 +232,7 @@ function telemetryTargetId(): string {
 	return process.env.OPS_TELEMETRY_TARGET_ID?.trim() || defaultTelemetryTargetId
 }
 
-function firstProcessEnvValue(keys: readonly string[]): string | undefined {
+function firstProcessEnvValue(keys: ReadonlyArray<string>): string | undefined {
 	for (const key of keys) {
 		const value = process.env[key]?.trim()
 		if (value) return value
@@ -339,7 +339,7 @@ function mergeRuntimeErrorAttributes(
 async function getTelemetryContextStorage(): Promise<AsyncLocalStorageLike<TelemetryStore>> {
 	if (telemetryContext) return telemetryContext
 
-	const { AsyncLocalStorage } = await import(/* webpackIgnore: true */ 'async_hooks')
+	const { AsyncLocalStorage } = await import(/* webpackIgnore: true */ 'node:async_hooks')
 	telemetryContext = new AsyncLocalStorage<TelemetryStore>()
 	return telemetryContext
 }
@@ -415,7 +415,7 @@ function nextBatch(): PendingBatch | null {
 	if (retryBatch) return retryBatch
 	if (queue.length === 0) return null
 
-	const events: TelemetryEvent[] = []
+	const events: Array<TelemetryEvent> = []
 	const max = Math.min(batchSize(), queue.length)
 	for (let i = 0; i < max; i++) {
 		const event = queue.shift()
@@ -927,13 +927,13 @@ function sanitizeRequestPathForTelemetry(url: URL): string {
 	return `${pathname}${url.search}`
 }
 
-function sanitizeQueryForTelemetry(query: Record<string, string | string[] | undefined>): TelemetryAttributes {
+function sanitizeQueryForTelemetry(query: Record<string, string | Array<string> | undefined>): TelemetryAttributes {
 	const sanitized: TelemetryAttributes = {}
 
 	for (const key in query) {
 		const value = query[key]
 		if (Array.isArray(value)) {
-			const values: string[] = []
+			const values: Array<string> = []
 			for (const item of value) {
 				values.push(sanitizeQueryValueForTelemetry(key, item))
 			}
@@ -954,7 +954,7 @@ function encodeStaticRouteSegment(segment: string): string {
 const UNRESOLVED_STATIC_ROUTE_TOKEN_PATTERN = /\[\[?\.{3}(?!REDACTED\]?\])[^/\]]+\]?\]|\[(?!REDACTED\])[^/\]]+\]/
 
 export function staticRouteTelemetryAttributes(
-	params?: Record<string, string | string[] | undefined>
+	params?: Record<string, string | Array<string> | undefined>
 ): TelemetryAttributes | undefined {
 	if (!params) return undefined
 
@@ -963,7 +963,7 @@ export function staticRouteTelemetryAttributes(
 
 export function buildStaticRouteRequestPath(
 	route: string,
-	params?: Record<string, string | string[] | undefined>
+	params?: Record<string, string | Array<string> | undefined>
 ): string | undefined {
 	if (!params) return undefined
 
@@ -1070,7 +1070,7 @@ function bodyText(value: BodyInit | null | undefined): string | undefined {
 
 function redactJsonValue(value: unknown): unknown {
 	if (Array.isArray(value)) {
-		const redacted: unknown[] = []
+		const redacted: Array<unknown> = []
 		for (const item of value) {
 			redacted.push(redactJsonValue(item))
 		}

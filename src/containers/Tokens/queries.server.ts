@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchAdapterChainMetrics } from '~/containers/AdapterMetrics/api'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
@@ -58,13 +58,13 @@ const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60
 type AdapterProtocolMetric = IAdapterChainMetrics['protocols'][number]
 
 interface TokensSourceRows {
-	unavailableSources: TokensOptionalSource[]
-	rows: TokensSourceRow[]
+	unavailableSources: Array<TokensOptionalSource>
+	rows: Array<TokensSourceRow>
 	sortIndexes: TokensSortIndexes
 	stats: TokensPageStats
 	updatedAt: string | null
-	chainOptions: TokensFilterOption[]
-	categoryOptions: TokensFilterOption[]
+	chainOptions: Array<TokensFilterOption>
+	categoryOptions: Array<TokensFilterOption>
 }
 
 interface TokensSourceData extends TokensSourceRows {
@@ -95,7 +95,7 @@ interface TokenUnlockMetrics {
 	upcomingUnlockUsd: number | null
 }
 
-function buildMetricMap(rows: AdapterProtocolMetric[]): Map<string, number> {
+function buildMetricMap(rows: Array<AdapterProtocolMetric>): Map<string, number> {
 	const map = new Map<string, number>()
 	const parentTotals = new Map<string, number>()
 
@@ -149,7 +149,7 @@ function getTokenRightsSummary(parsed: ITokenRightsData): TokensRightsSummary {
 	}
 }
 
-function buildTokenRightsMap(entries: IRawTokenRightsEntry[]): Map<string, TokensRightsSummary> {
+function buildTokenRightsMap(entries: Array<IRawTokenRightsEntry>): Map<string, TokensRightsSummary> {
 	const map = new Map<string, TokensRightsSummary>()
 	for (const entry of entries) {
 		const parsed = parseTokenRightsEntry(entry)
@@ -158,7 +158,7 @@ function buildTokenRightsMap(entries: IRawTokenRightsEntry[]): Map<string, Token
 	return map
 }
 
-function buildUnlocksMap(rows: EnrichedProtocolEmission[], nowSec: number): Map<string, TokenUnlockMetrics> {
+function buildUnlocksMap(rows: Array<EnrichedProtocolEmission>, nowSec: number): Map<string, TokenUnlockMetrics> {
 	const map = new Map<string, TokenUnlockMetrics>()
 	const startSec = nowSec - THIRTY_DAYS_SECONDS
 
@@ -248,7 +248,7 @@ function getUnlockedPercentFromSupplyMetrics(
 }
 
 function firstUpdatedAt(
-	tokens: IResponseCGTokenRankingsDatasetItem[],
+	tokens: Array<IResponseCGTokenRankingsDatasetItem>,
 	markets: TokenMarketsListResponse | null
 ): string | null {
 	if (markets?.last_updated) return markets.last_updated
@@ -345,14 +345,14 @@ export function buildTokensSourceRows({
 	metadata,
 	nowSec
 }: {
-	tokens: IResponseCGTokenRankingsDatasetItem[]
+	tokens: Array<IResponseCGTokenRankingsDatasetItem>
 	markets: TokenMarketsListResponse | null
 	currentMetricsById?: Record<string, TokenOverviewCurrentMetrics>
-	tokenRightsEntries: IRawTokenRightsEntry[] | null
-	fees: AdapterProtocolMetric[] | null
-	revenue: AdapterProtocolMetric[] | null
-	holdersRevenue: AdapterProtocolMetric[] | null
-	unlocks: EnrichedProtocolEmission[] | null
+	tokenRightsEntries: Array<IRawTokenRightsEntry> | null
+	fees: Array<AdapterProtocolMetric> | null
+	revenue: Array<AdapterProtocolMetric> | null
+	holdersRevenue: Array<AdapterProtocolMetric> | null
+	unlocks: Array<EnrichedProtocolEmission> | null
 	metadata: MetadataCache
 	nowSec: number
 }): TokensSourceRows {
@@ -363,14 +363,14 @@ export function buildTokensSourceRows({
 	const revenueByDefillamaId = buildMetricMap(revenue ?? [])
 	const holdersRevenueByDefillamaId = buildMetricMap(holdersRevenue ?? [])
 	const unlocksByGeckoId = buildUnlocksMap(unlocks ?? [], nowSec)
-	const unavailableSources: TokensOptionalSource[] = []
+	const unavailableSources: Array<TokensOptionalSource> = []
 	if (markets === null) unavailableSources.push('markets')
 	if (tokenRightsEntries === null) unavailableSources.push('rights')
 	if (fees === null) unavailableSources.push('fees')
 	if (revenue === null) unavailableSources.push('revenue')
 	if (holdersRevenue === null) unavailableSources.push('holdersRevenue')
 	if (unlocks === null) unavailableSources.push('unlocks')
-	const rows: TokensSourceRow[] = []
+	const rows: Array<TokensSourceRow> = []
 	const stats: TokensPageStats = {
 		totalMarketCap: 0,
 		marketCapWeightedChange24h: null,
@@ -489,7 +489,7 @@ export function buildTokensSourceRows({
 export function buildTokenFilterOptions(
 	rows: Array<Pick<TokensSourceRow, 'marketCap' | 'chains' | 'categories'>>,
 	metadata: Partial<Pick<MetadataCache, 'chainDisplayNames' | 'tokenFilterMetadata'>>
-): { chainOptions: TokensFilterOption[]; categoryOptions: TokensFilterOption[] } {
+): { chainOptions: Array<TokensFilterOption>; categoryOptions: Array<TokensFilterOption> } {
 	const chainMarketCaps = new Map<string, number>()
 	const categoryMarketCaps = new Map<string, number>()
 	for (const row of rows) {
@@ -505,11 +505,11 @@ export function buildTokenFilterOptions(
 		const marketCapDiff = b.marketCap - a.marketCap
 		return marketCapDiff || a.label.localeCompare(b.label) || a.id.localeCompare(b.id)
 	}
-	const chainOptions: RankedOption[] = []
+	const chainOptions: Array<RankedOption> = []
 	for (const [id, marketCap] of chainMarketCaps) {
 		chainOptions.push({ id, label: metadata.chainDisplayNames?.get(id) ?? id, marketCap })
 	}
-	const categoryOptions: RankedOption[] = (metadata.tokenFilterMetadata?.categories ?? []).map((category) => ({
+	const categoryOptions: Array<RankedOption> = (metadata.tokenFilterMetadata?.categories ?? []).map((category) => ({
 		...category,
 		marketCap: categoryMarketCaps.get(category.id) ?? 0
 	}))

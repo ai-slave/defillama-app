@@ -15,7 +15,7 @@ export interface CexDatasetRow extends RawCex {
 async function cexDatasetHandler(_req: NextApiRequest, res: NextApiResponse) {
 	try {
 		const cexData = await fetchCexs()
-		const cexList: CexDatasetRow[] = cexData.cexs.map((c) => ({
+		const cexList: Array<CexDatasetRow> = cexData.cexs.map((c) => ({
 			...c,
 			tvl: c.currentTvl ?? null,
 			cleanTvl: c.cleanAssetsTvl ?? null,

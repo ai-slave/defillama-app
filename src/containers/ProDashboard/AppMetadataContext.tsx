@@ -37,7 +37,7 @@ const PROTOCOL_FLAG_KEYS = [
 	'newUsers',
 	'txCount',
 	'gasUsed'
-] as const satisfies readonly (keyof IProtocolMetadata)[]
+] as const satisfies ReadonlyArray<keyof IProtocolMetadata>
 
 type ProtocolFlag = (typeof PROTOCOL_FLAG_KEYS)[number]
 type ProtocolFlags = Partial<Record<ProtocolFlag, true>>
@@ -45,7 +45,7 @@ type ProtocolFlags = Partial<Record<ProtocolFlag, true>>
 type ProtocolRecord = {
 	slug: string
 	displayName: string | undefined
-	chains: string[]
+	chains: Array<string>
 	builderMetrics: Set<BuilderMetric>
 	flags: ProtocolFlags
 }
@@ -63,9 +63,9 @@ type AppMetadataContextType = {
 	error: string | undefined
 	protocolsBySlug: Map<string, ProtocolRecord>
 	hasProtocolBuilderMetric: (slug: string, metric: BuilderMetric) => boolean
-	availableProtocolChartTypes: (slug: string, opts?: { hasGeckoId?: boolean }) => ProtocolChartType[]
+	availableProtocolChartTypes: (slug: string, opts?: { hasGeckoId?: boolean }) => Array<ProtocolChartType>
 	chainsByName: Map<string, ChainRecord>
-	availableChainChartTypes: (chainName: string, opts?: { hasGeckoId?: boolean }) => ChainChartType[]
+	availableChainChartTypes: (chainName: string, opts?: { hasGeckoId?: boolean }) => Array<ChainChartType>
 }
 
 type AppMetadataContextValue = AppMetadataContextType & { requestMetadata: () => void }
@@ -91,7 +91,7 @@ const PROTOCOL_BUILDER_METRIC_FLAGS = [
 	['stablecoins', 'stablecoins'],
 	['chain-fees', null],
 	['chain-revenue', null]
-] as const satisfies readonly (readonly [BuilderMetric, ProtocolFlag | null])[]
+] as const satisfies ReadonlyArray<readonly [BuilderMetric, ProtocolFlag | null]>
 export function buildProtocolMetadataIndex(protocolsRaw: Record<string, IProtocolMetadata>) {
 	const aggregatedProtocols = new Map<string, { flags: ProtocolFlags; chains: Set<string>; displayName?: string }>()
 
@@ -146,7 +146,7 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 	} = useQuery({
 		queryKey: ['pro-dashboard', 'app-metadata'],
 		queryFn: async () => {
-			const fetchPfPs = async (): Promise<{ pf: string[]; ps: string[] }> => {
+			const fetchPfPs = async (): Promise<{ pf: Array<string>; ps: Array<string> }> => {
 				try {
 					const res = await fetch('/api/public/pro-dashboard/pf-ps-protocols')
 					if (!res.ok) return { pf: [], ps: [] }

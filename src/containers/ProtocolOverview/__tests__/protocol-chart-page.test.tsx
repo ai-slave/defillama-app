@@ -3,13 +3,13 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import ProtocolChartPage, { getStaticProps } from '~/pages/chart/protocol/[protocol]'
 import { ProtocolChartPanel } from '../ProtocolChartPanel'
 import type { IProtocolOverviewPageData, IProtocolPageMetrics } from '../types'
 
 const mocks = vi.hoisted(() => {
-	const routerState: { query: Record<string, string | string[]>; asPath: string } = { query: {}, asPath: '' }
+	const routerState: { query: Record<string, string | Array<string>>; asPath: string } = { query: {}, asPath: '' }
 	return {
 		routerState,
 		useFetchProtocolChartData: vi.fn(),
@@ -92,7 +92,7 @@ vi.mock('~/utils/maxAgeForNext', () => ({
 }))
 
 vi.mock('~/utils/perf', () => ({
-	withPerformanceLogging: <T extends (...args: never[]) => Promise<object>>(_name: string, fn: T) => fn
+	withPerformanceLogging: <T extends (...args: Array<never>) => Promise<object>>(_name: string, fn: T) => fn
 }))
 
 const metrics: IProtocolPageMetrics = {
@@ -199,7 +199,7 @@ describe('chart/protocol/[protocol]', () => {
 		mocks.acquireOptionalYieldsSnapshot.mockReset()
 	})
 
-	it('keeps the protocol chart page when the optional Yields snapshot is unavailable', async () => {
+	test('keeps the protocol chart page when the optional Yields snapshot is unavailable', async () => {
 		const pageData = createProps()
 		mocks.acquireOptionalYieldsSnapshot.mockResolvedValueOnce(null)
 		mocks.getProtocolOverviewPageData.mockResolvedValueOnce(pageData)
@@ -211,7 +211,7 @@ describe('chart/protocol/[protocol]', () => {
 		expect(mocks.getProtocolOverviewPageData).toHaveBeenCalledWith(expect.objectContaining({ yieldsSnapshot: null }))
 	})
 
-	it('parses TVL include query params as booleans', () => {
+	test('parses TVL include query params as booleans', () => {
 		mocks.routerState.query = {
 			include_staking_in_tvl: 'false',
 			include_pool2_in_tvl: '1',
@@ -232,7 +232,7 @@ describe('chart/protocol/[protocol]', () => {
 		expect(request).not.toHaveProperty('feesSettings')
 	})
 
-	it('shares main-chart defaults, explicit TVL, events, interval, and denomination semantics', () => {
+	test('shares main-chart defaults, explicit TVL, events, interval, and denomination semantics', () => {
 		mocks.routerState.query = { tvl: 'true', denomination: 'eth' }
 		const props: IProtocolOverviewPageData = {
 			...createProps(),
@@ -257,7 +257,7 @@ describe('chart/protocol/[protocol]', () => {
 		expect(request.groupBy).toBe('weekly')
 	})
 
-	it('treats repeated main and embed query values as invalid instead of selecting the first value', async () => {
+	test('treats repeated main and embed query values as invalid instead of selecting the first value', async () => {
 		const props: IProtocolOverviewPageData = {
 			...createProps(),
 			availableCharts: ['TVL', 'Fees'],
@@ -302,7 +302,7 @@ describe('chart/protocol/[protocol]', () => {
 		expect(embedRequest.groupBy).toBe('daily')
 	})
 
-	it('returns page data that survives a JSON round trip', async () => {
+	test('returns page data that survives a JSON round trip', async () => {
 		const pageData: IProtocolOverviewPageData = {
 			...createProps(),
 			currentTvlByChain: { Ethereum: 100 },

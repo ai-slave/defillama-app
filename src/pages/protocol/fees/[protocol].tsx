@@ -51,7 +51,7 @@ type OptionalAdapterOverviewResult = {
 interface ProtocolFeesPageProps {
 	name: string
 	deprecated: boolean
-	otherProtocols: string[]
+	otherProtocols: Array<string>
 	category: string | null
 	metrics: IProtocolOverviewPageData['metrics']
 	fees: NonNullable<IProtocolOverviewPageData['fees']>
@@ -64,17 +64,17 @@ interface ProtocolFeesPageProps {
 		revenue: IAdapterChart
 		holdersRevenue: IAdapterChart
 	}
-	defaultCharts: ProtocolFeeChartName[]
-	protocolChains: string[]
-	protocolRevenueChains: string[]
-	protocolFeesVersions: string[]
-	protocolRevenueVersions: string[]
+	defaultCharts: Array<ProtocolFeeChartName>
+	protocolChains: Array<string>
+	protocolRevenueChains: Array<string>
+	protocolFeesVersions: Array<string>
+	protocolRevenueVersions: Array<string>
 	warningBanners: ReturnType<typeof getProtocolWarningBanners>
 	defaultChartView: LowercaseDwmcGrouping
-	hallmarks: HallmarkPoint[] | null
+	hallmarks: Array<HallmarkPoint> | null
 	seoTitle: string
 	seoDescription: string
-	failedMetrics: OptionalProtocolFeeMetric[]
+	failedMetrics: Array<OptionalProtocolFeeMetric>
 }
 
 const fetchOptionalAdapterProtocolOverview = async (
@@ -141,7 +141,7 @@ export const getStaticProps = withPerformanceLogging<ProtocolFeesPageProps, { pr
 		])
 		const revenueData = revenueResult.data
 		const holdersRevenueData = holdersRevenueResult.data
-		const failedMetrics: OptionalProtocolFeeMetric[] = []
+		const failedMetrics: Array<OptionalProtocolFeeMetric> = []
 		if (revenueResult.failed) failedMetrics.push('Revenue')
 		if (holdersRevenueResult.failed) failedMetrics.push('Holders Revenue')
 
@@ -176,7 +176,7 @@ export const getStaticProps = withPerformanceLogging<ProtocolFeesPageProps, { pr
 			holdersRevenue: holdersRevenueData?.totalDataChart ?? []
 		}
 
-		const defaultCharts: ProtocolFeeChartName[] = []
+		const defaultCharts: Array<ProtocolFeeChartName> = []
 
 		if (charts.fees.length > 0) {
 			defaultCharts.push('Fees')
@@ -244,7 +244,7 @@ export const getStaticPaths = () => {
 
 export default function Protocols(props: ProtocolFeesPageProps) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
-	const [charts, setCharts] = useState<string[]>(props.defaultCharts)
+	const [charts, setCharts] = useState<Array<string>>(props.defaultCharts)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
@@ -380,6 +380,6 @@ export default function Protocols(props: ProtocolFeesPageProps) {
 	)
 }
 
-function FailedProtocolFeeMetricsPopover({ failedMetrics }: { failedMetrics: OptionalProtocolFeeMetric[] }) {
+function FailedProtocolFeeMetricsPopover({ failedMetrics }: { failedMetrics: Array<OptionalProtocolFeeMetric> }) {
 	return <FailedDataPopover items={failedMetrics} ariaLabel="Show failed metric APIs" />
 }

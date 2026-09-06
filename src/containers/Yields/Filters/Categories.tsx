@@ -4,7 +4,7 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
-const EMPTY_ARRAY: string[] = []
+const EMPTY_ARRAY: Array<string> = []
 
 interface IFiltersByCategoryProps {
 	categoryList: Array<string>

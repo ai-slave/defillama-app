@@ -24,7 +24,7 @@ export interface ClassifiedAgenticRequestError {
 const FREE_LIMIT_CODES = ['FREE_QUESTION_LIMIT', 'FREE_FORM_LIMIT', 'FREE_DAILY_LIMIT'] as const
 
 export function isFreeLimitError(error: UsageLimitError | null | undefined): error is FreeLimitError {
-	return !!error?.code && (FREE_LIMIT_CODES as readonly string[]).includes(error.code)
+	return !!error?.code && (FREE_LIMIT_CODES as ReadonlyArray<string>).includes(error.code)
 }
 
 function toUsageLimitError(error: unknown): UsageLimitError {

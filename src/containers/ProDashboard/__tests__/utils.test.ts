@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { convertToNumberFormat, normalizeHourlyToDaily } from '../utils'
 
 describe('convertToNumberFormat', () => {
-	it('normalizes mixed API tuple scalars in one pass', () => {
+	test('normalizes mixed API tuple scalars in one pass', () => {
 		expect(
 			convertToNumberFormat(
 				[
@@ -19,12 +19,12 @@ describe('convertToNumberFormat', () => {
 })
 
 describe('normalizeHourlyToDaily', () => {
-	it('keeps the last hourly value for each day in one pass', () => {
+	test('keeps the last hourly value for each day in one pass', () => {
 		expect(
 			normalizeHourlyToDaily([
 				[0, 1],
-				[3_600, 2],
-				[7_200, 3],
+				[3600, 2],
+				[7200, 3],
 				[86_400, 4]
 			])
 		).toEqual([
@@ -33,12 +33,12 @@ describe('normalizeHourlyToDaily', () => {
 		])
 	})
 
-	it('sums hourly flow values per day', () => {
+	test('sums hourly flow values per day', () => {
 		expect(
 			normalizeHourlyToDaily(
 				[
 					[0, 1],
-					[3_600, 2],
+					[3600, 2],
 					[86_400, 4]
 				],
 				'sum'
@@ -49,8 +49,8 @@ describe('normalizeHourlyToDaily', () => {
 		])
 	})
 
-	it('returns already-daily data without allocating a replacement', () => {
-		const data: [number, number][] = [
+	test('returns already-daily data without allocating a replacement', () => {
+		const data: Array<[number, number]> = [
 			[0, 1],
 			[86_400, 2]
 		]

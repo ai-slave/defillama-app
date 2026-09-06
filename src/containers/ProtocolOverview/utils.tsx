@@ -4,7 +4,7 @@ import type { IProtocolWarningBanner } from './api.types'
 export const getProtocolWarningBanners = (
 	protocolData: Pick<IProtocolMetricsV2, 'warningBanners' | 'rugged' | 'deadUrl'>
 ) => {
-	const banners: IProtocolWarningBanner[] = []
+	const banners: Array<IProtocolWarningBanner> = []
 	const now = Date.now()
 	if (protocolData.warningBanners) {
 		for (const banner of protocolData.warningBanners) {

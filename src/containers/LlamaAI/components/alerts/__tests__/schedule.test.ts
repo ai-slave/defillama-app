@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { getUserTimezone, parseScheduleExpression } from '~/containers/LlamaAI/components/alerts/schedule'
 
 describe('alert schedule helpers', () => {
@@ -6,7 +6,7 @@ describe('alert schedule helpers', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('keeps fractional-offset user timezones instead of rounding to a neighboring Etc/GMT zone', () => {
+	test('keeps fractional-offset user timezones instead of rounding to a neighboring Etc/GMT zone', () => {
 		vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-330)
 		vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(
 			() =>
@@ -18,7 +18,7 @@ describe('alert schedule helpers', () => {
 		expect(getUserTimezone()).toBe('Asia/Kolkata')
 	})
 
-	it('prefers the resolved IANA user timezone over a fixed whole-hour offset', () => {
+	test('prefers the resolved IANA user timezone over a fixed whole-hour offset', () => {
 		vi.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(300)
 		vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(
 			() =>
@@ -30,18 +30,18 @@ describe('alert schedule helpers', () => {
 		expect(getUserTimezone()).toBe('America/New_York')
 	})
 
-	it('ignores out-of-range schedule hours', () => {
+	test('ignores out-of-range schedule hours', () => {
 		expect(parseScheduleExpression('Daily at 9:00 UTC')).toMatchObject({ hour: 9, timezone: 'UTC' })
 		expect(parseScheduleExpression('Daily at 25:00 UTC')).toMatchObject({ hour: undefined, timezone: 'UTC' })
 	})
 
-	it('parses backend 12-hour AM/PM schedule strings', () => {
+	test('parses backend 12-hour AM/PM schedule strings', () => {
 		expect(parseScheduleExpression('Daily at 12:00 AM UTC')).toMatchObject({ hour: 0, timezone: 'UTC' })
 		expect(parseScheduleExpression('Daily at 12:00 PM UTC')).toMatchObject({ hour: 12, timezone: 'UTC' })
 		expect(parseScheduleExpression('Daily at 9:00 PM UTC')).toMatchObject({ hour: 21, timezone: 'UTC' })
 	})
 
-	it('parses multi-segment IANA zones and whole-hour fixed offsets', () => {
+	test('parses multi-segment IANA zones and whole-hour fixed offsets', () => {
 		expect(parseScheduleExpression('Daily at 9:00 America/Argentina/Buenos_Aires')).toMatchObject({
 			hour: 9,
 			timezone: 'Etc/GMT+3'
@@ -49,7 +49,7 @@ describe('alert schedule helpers', () => {
 		expect(parseScheduleExpression('Daily at 9:00 UTC+5')).toMatchObject({ hour: 9, timezone: 'Etc/GMT-5' })
 	})
 
-	it('keeps fractional fixed offsets round-trippable', () => {
+	test('keeps fractional fixed offsets round-trippable', () => {
 		expect(parseScheduleExpression('Daily at 9:00 UTC+05:30')).toMatchObject({
 			hour: 9,
 			timezone: 'UTC+05:30'

@@ -48,7 +48,7 @@ function TabPanel({ tab, active }: { tab: RiskTab; active: boolean }) {
 	)
 }
 
-export function RiskTabs({ tabs, defaultId }: { tabs: RiskTab[]; defaultId: string }) {
+export function RiskTabs({ tabs, defaultId }: { tabs: Array<RiskTab>; defaultId: string }) {
 	const [active, setActive] = useState(defaultId)
 	const tablistRef = useRef<HTMLDivElement>(null)
 

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const recordRuntimeErrorMock = vi.hoisted(() => vi.fn())
 
@@ -12,7 +12,7 @@ describe('optionalPageData', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('returns successful data without recording a degradation', async () => {
+	test('returns successful data without recording a degradation', async () => {
 		const { optionalPageData } = await import('../optionalPageData')
 
 		await expect(optionalPageData('chain:ethereum:stablecoins', async () => 123, 0)).resolves.toBe(123)
@@ -20,7 +20,7 @@ describe('optionalPageData', () => {
 		expect(recordRuntimeErrorMock).not.toHaveBeenCalled()
 	})
 
-	it('records optional page degradation and returns fallback on failure', async () => {
+	test('records optional page degradation and returns fallback on failure', async () => {
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		const error = new Error('upstream unavailable')
 		const { optionalPageData } = await import('../optionalPageData')

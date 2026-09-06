@@ -6,7 +6,7 @@ import { normalizeHack, type Hack } from './model'
 /**
  * Fetch the list of recorded hacks.
  */
-export async function fetchHacks(): Promise<Hack[]> {
-	const hacks = await fetchJson<IHackApiItem[]>(`${SERVER_URL}/hacks`)
+export async function fetchHacks(): Promise<Array<Hack>> {
+	const hacks = await fetchJson<Array<IHackApiItem>>(`${SERVER_URL}/hacks`)
 	return hacks.map(normalizeHack)
 }

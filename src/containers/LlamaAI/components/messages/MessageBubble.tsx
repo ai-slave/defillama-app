@@ -21,8 +21,7 @@ import {
 	type ArtifactRecord,
 	type MessageRenderBlock
 } from '~/containers/LlamaAI/renderModel'
-import type { DashboardArtifact } from '~/containers/LlamaAI/types'
-import type { Message, ToolExecution } from '~/containers/LlamaAI/types'
+import type { DashboardArtifact, Message, ToolExecution } from '~/containers/LlamaAI/types'
 import { buildMessageExportRequest } from '~/containers/LlamaAI/utils/articleExport'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { wrapLegacyUrlCitations } from '~/containers/LlamaAI/utils/markdownHelpers'
@@ -312,7 +311,7 @@ function InlineContent({
 	readOnly
 }: {
 	message: Message
-	toolExecutions?: ToolExecution[]
+	toolExecutions?: Array<ToolExecution>
 	isStreaming?: boolean
 	sessionId?: string | null
 	onActionClick?: (message: string) => void

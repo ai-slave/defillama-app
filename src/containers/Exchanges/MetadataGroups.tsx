@@ -70,7 +70,7 @@ function MetadataBadge({ value, tone = 'neutral' }: { value: string; tone?: Exch
 	)
 }
 
-function MetadataPills({ values }: { values: string[] }) {
+function MetadataPills({ values }: { values: Array<string> }) {
 	return (
 		<span className="flex flex-wrap gap-1">
 			{values.map((value) => (
@@ -428,7 +428,7 @@ function MetadataGroup({
 	)
 }
 
-export function hasExchangeInformation(groups: ExchangeMetadataGroupModel[]): boolean {
+export function hasExchangeInformation(groups: Array<ExchangeMetadataGroupModel>): boolean {
 	return groups.some((group) => group.key !== 'metrics')
 }
 
@@ -441,13 +441,13 @@ export function MetadataGroups({
 	groups,
 	exchangeName
 }: {
-	groups: ExchangeMetadataGroupModel[]
+	groups: Array<ExchangeMetadataGroupModel>
 	exchangeName: string
 }) {
 	const groupsByKey = new Map(groups.map((group) => [group.key, group]))
 	const overview = groupsByKey.get('identity')
 	const links = groupsByKey.get('links')
-	const rest: ExchangeMetadataGroupModel[] = []
+	const rest: Array<ExchangeMetadataGroupModel> = []
 	for (const key of METADATA_GROUP_ORDER) {
 		if (key === 'identity' || key === 'links') continue
 		const group = groupsByKey.get(key)
@@ -456,7 +456,7 @@ export function MetadataGroups({
 
 	if (!overview && !links && rest.length === 0) return null
 
-	const rows: ExchangeMetadataGroupModel[][] = []
+	const rows: Array<Array<ExchangeMetadataGroupModel>> = []
 	for (const group of rest) {
 		const previous = rows[rows.length - 1]
 		const previousGroup = previous?.[0]

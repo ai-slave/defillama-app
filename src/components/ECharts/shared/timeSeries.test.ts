@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	formatBarChart,
 	formatLineChart,
@@ -17,7 +17,7 @@ const weekBucketJan21 = toMs(2024, 1, 21)
 const weekBucketJan28 = toMs(2024, 1, 28)
 
 describe('formatBarChart', () => {
-	it('exports canonical bucket helpers for week/month/quarter/year', () => {
+	test('exports canonical bucket helpers for week/month/quarter/year', () => {
 		expect(getBucketTimestampSec(toSec(2024, 1, 17) + 13 * 60 * 60, 'daily')).toBe(toSec(2024, 1, 17))
 		expect(getBucketTimestampSec(toSec(2024, 1, 17), 'weekly')).toBe(toSec(2024, 1, 21))
 		expect(getBucketTimestampSec(toSec(2024, 3, 17), 'monthly')).toBe(toSec(2024, 3, 1))
@@ -26,11 +26,11 @@ describe('formatBarChart', () => {
 		expect(getBucketTimestampMs(toMs(2024, 3, 17), 'quarterly')).toBe(toMs(2024, 1, 1))
 	})
 
-	it('returns empty array for empty input', () => {
+	test('returns empty array for empty input', () => {
 		expect(formatBarChart({ data: [], groupBy: 'daily', denominationPriceHistory: null })).toEqual([])
 	})
 
-	it('preserves hourly timestamps in daily mode and converts sec → ms', () => {
+	test('preserves hourly timestamps in daily mode and converts sec → ms', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -46,7 +46,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('keeps same-day hourly points distinct in daily mode (regression: no midnight snapping)', () => {
+	test('keeps same-day hourly points distinct in daily mode (regression: no midnight snapping)', () => {
 		const h6 = toSec(2024, 1, 1) + 6 * 3600
 		const h18 = toSec(2024, 1, 1) + 18 * 3600
 		const result = formatBarChart({
@@ -63,7 +63,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('sums values into weekly buckets (lastDayOfWeek)', () => {
+	test('sums values into weekly buckets (lastDayOfWeek)', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -80,7 +80,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('sums values into monthly buckets', () => {
+	test('sums values into monthly buckets', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -97,7 +97,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('sums values into quarterly buckets', () => {
+	test('sums values into quarterly buckets', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -114,7 +114,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('sums values into yearly buckets', () => {
+	test('sums values into yearly buckets', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -131,7 +131,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('computes running total for cumulative mode', () => {
+	test('computes running total for cumulative mode', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -149,7 +149,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('sums duplicate timestamps before computing cumulative totals', () => {
+	test('sums duplicate timestamps before computing cumulative totals', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -166,7 +166,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('keeps cumulative denomination totals unknown after a missing price', () => {
+	test('keeps cumulative denomination totals unknown after a missing price', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -188,7 +188,7 @@ describe('formatBarChart', () => {
 		])
 	})
 
-	it('supports millisecond input timestamps', () => {
+	test('supports millisecond input timestamps', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -202,7 +202,7 @@ describe('formatBarChart', () => {
 		).toEqual([[toMs(2024, 1, 1), 30]])
 	})
 
-	it('accepts string dates', () => {
+	test('accepts string dates', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -215,7 +215,7 @@ describe('formatBarChart', () => {
 		).toEqual([[toMs(2024, 1, 1), 30]])
 	})
 
-	it('converts denominated values before grouped sums', () => {
+	test('converts denominated values before grouped sums', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -231,7 +231,7 @@ describe('formatBarChart', () => {
 		).toEqual([[toMs(2024, 1, 1), 10]]) // 10/2 + 20/4 = 5 + 5
 	})
 
-	it('does not fabricate a partial grouped total when a denomination price is missing', () => {
+	test('does not fabricate a partial grouped total when a denomination price is missing', () => {
 		expect(
 			formatBarChart({
 				data: [
@@ -246,7 +246,7 @@ describe('formatBarChart', () => {
 		).toEqual([[toMs(2024, 1, 1), null]])
 	})
 
-	it('applies denomination in daily mode', () => {
+	test('applies denomination in daily mode', () => {
 		expect(
 			formatBarChart({
 				data: [[toSec(2024, 1, 1), 100]],
@@ -256,7 +256,7 @@ describe('formatBarChart', () => {
 		).toEqual([[toMs(2024, 1, 1), 20]]) // 100/5
 	})
 
-	it('returns null for daily entry with no matching denomination price', () => {
+	test('returns null for daily entry with no matching denomination price', () => {
 		expect(
 			formatBarChart({
 				data: [[toSec(2024, 1, 1), 100]],
@@ -268,7 +268,7 @@ describe('formatBarChart', () => {
 })
 
 describe('formatNullableBarChart', () => {
-	it('preserves known zero and unknown observations in daily mode', () => {
+	test('preserves known zero and unknown observations in daily mode', () => {
 		expect(
 			formatNullableBarChart({
 				data: [
@@ -284,7 +284,7 @@ describe('formatNullableBarChart', () => {
 		])
 	})
 
-	it('marks a grouped period unknown when any contributing observation is unknown', () => {
+	test('marks a grouped period unknown when any contributing observation is unknown', () => {
 		expect(
 			formatNullableBarChart({
 				data: [
@@ -301,7 +301,7 @@ describe('formatNullableBarChart', () => {
 		])
 	})
 
-	it('keeps cumulative values unknown after the first unknown observation', () => {
+	test('keeps cumulative values unknown after the first unknown observation', () => {
 		expect(
 			formatNullableBarChart({
 				data: [
@@ -319,7 +319,7 @@ describe('formatNullableBarChart', () => {
 		])
 	})
 
-	it('does not fabricate partial denominated sums when a price is missing', () => {
+	test('does not fabricate partial denominated sums when a price is missing', () => {
 		expect(
 			formatNullableBarChart({
 				data: [
@@ -332,7 +332,7 @@ describe('formatNullableBarChart', () => {
 		).toEqual([[weekBucketJan21, null]])
 	})
 
-	it('preserves an all-unknown grouped series', () => {
+	test('preserves an all-unknown grouped series', () => {
 		expect(
 			formatNullableBarChart({
 				data: [
@@ -345,7 +345,7 @@ describe('formatNullableBarChart', () => {
 		).toEqual([[weekBucketJan21, null]])
 	})
 
-	it('treats omitted sparse dates as zero contribution rather than unknown', () => {
+	test('treats omitted sparse dates as zero contribution rather than unknown', () => {
 		expect(
 			formatNullableBarChart({
 				data: [
@@ -374,7 +374,7 @@ describe('formatNullableBarChart', () => {
 })
 
 describe('formatLineChart', () => {
-	it('preserves hourly timestamps in daily mode', () => {
+	test('preserves hourly timestamps in daily mode', () => {
 		expect(
 			formatLineChart({
 				data: [
@@ -390,7 +390,7 @@ describe('formatLineChart', () => {
 		])
 	})
 
-	it('keeps same-day hourly points distinct in daily mode (regression: no midnight snapping)', () => {
+	test('keeps same-day hourly points distinct in daily mode (regression: no midnight snapping)', () => {
 		const h6 = toSec(2024, 1, 1) + 6 * 3600
 		const h18 = toSec(2024, 1, 1) + 18 * 3600
 		const result = formatLineChart({
@@ -407,7 +407,7 @@ describe('formatLineChart', () => {
 		])
 	})
 
-	it('keeps the last value in weekly buckets', () => {
+	test('keeps the last value in weekly buckets', () => {
 		expect(
 			formatLineChart({
 				data: [
@@ -424,7 +424,7 @@ describe('formatLineChart', () => {
 		])
 	})
 
-	it('keeps the last value in monthly buckets', () => {
+	test('keeps the last value in monthly buckets', () => {
 		expect(
 			formatLineChart({
 				data: [
@@ -438,7 +438,7 @@ describe('formatLineChart', () => {
 		).toEqual([[toMs(2024, 3, 1), 30]])
 	})
 
-	it('keeps the last value in quarterly buckets', () => {
+	test('keeps the last value in quarterly buckets', () => {
 		expect(
 			formatLineChart({
 				data: [
@@ -455,7 +455,7 @@ describe('formatLineChart', () => {
 		])
 	})
 
-	it('keeps the last value in yearly buckets', () => {
+	test('keeps the last value in yearly buckets', () => {
 		expect(
 			formatLineChart({
 				data: [
@@ -472,7 +472,7 @@ describe('formatLineChart', () => {
 		])
 	})
 
-	it('passes through daily for cumulative mode (no aggregation)', () => {
+	test('passes through daily for cumulative mode (no aggregation)', () => {
 		expect(
 			formatLineChart({
 				data: [
@@ -490,7 +490,7 @@ describe('formatLineChart', () => {
 		])
 	})
 
-	it('supports millisecond input timestamps', () => {
+	test('supports millisecond input timestamps', () => {
 		expect(
 			formatLineChart({
 				data: [
@@ -504,7 +504,7 @@ describe('formatLineChart', () => {
 		).toEqual([[toMs(2024, 1, 1), 20]])
 	})
 
-	it('converts denominated values (last wins per bucket)', () => {
+	test('converts denominated values (last wins per bucket)', () => {
 		expect(
 			formatLineChart({
 				data: [
@@ -520,7 +520,7 @@ describe('formatLineChart', () => {
 		).toEqual([[toMs(2024, 1, 1), 5]]) // last entry: 20/4
 	})
 
-	it('emits null when denomination price is missing (last mode)', () => {
+	test('emits null when denomination price is missing (last mode)', () => {
 		expect(
 			formatLineChart({
 				data: [
@@ -536,7 +536,7 @@ describe('formatLineChart', () => {
 		).toEqual([[toMs(2024, 1, 1), null]])
 	})
 
-	it('last-wins with 3+ values in a single bucket', () => {
+	test('last-wins with 3+ values in a single bucket', () => {
 		expect(
 			formatLineChart({
 				data: [

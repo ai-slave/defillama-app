@@ -32,7 +32,7 @@ const MultiSeriesChart = React.lazy(
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
-function RaisesByInvestorTable({ raises }: { raises: Raise[] }) {
+function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ desc: true, id: 'date' }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
@@ -81,11 +81,11 @@ function RaisesByInvestorTable({ raises }: { raises: Raise[] }) {
 }
 
 interface InvestorContainerProps {
-	raises: Raise[]
-	investors: string[]
-	rounds: string[]
-	sectors: string[]
-	chains: string[]
+	raises: Array<Raise>
+	investors: Array<string>
+	rounds: Array<string>
+	sectors: Array<string>
+	chains: Array<string>
 	investorName: string
 }
 
@@ -132,7 +132,7 @@ export const InvestorContainer = ({
 			</Announcement>
 
 			<RaisesFilters
-				header={'Raises'}
+				header="Raises"
 				headingAs="h2"
 				rounds={rounds}
 				selectedRounds={selectedRounds}
@@ -165,7 +165,7 @@ export const InvestorContainer = ({
 						</summary>
 
 						{raisesByCategory.map(({ name, value }) => (
-							<p className="my-1 flex flex-wrap items-center justify-between gap-2" key={'total' + name + value}>
+							<p className="my-1 flex flex-wrap items-center justify-between gap-2" key={`total${name}${value}`}>
 								<span className="text-secondary">{name}</span>
 								<span className="font-jetbrains">{value}</span>
 							</p>

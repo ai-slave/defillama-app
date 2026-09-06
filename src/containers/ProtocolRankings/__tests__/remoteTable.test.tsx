@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { TvlSettingsKey } from '~/contexts/LocalStorage'
 import type { TablePageRequestResult } from '~/hooks/useTablePages'
 import { useRemoteProtocolRankingsTable } from '../remoteTable'
@@ -54,7 +54,7 @@ describe('remote protocol ranking errors', () => {
 	let container: HTMLDivElement
 	let root: Root
 	let latest: HookResult
-	let pending: PendingRequest[]
+	let pending: Array<PendingRequest>
 	let onRequestSettled: (result: TablePageRequestResult) => void
 
 	const render = async (sort: string) => {
@@ -94,7 +94,7 @@ describe('remote protocol ranking errors', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('reports a replacement request failure', async () => {
+	test('reports a replacement request failure', async () => {
 		await render('fees_24h')
 		expect(pending).toHaveLength(1)
 
@@ -105,7 +105,7 @@ describe('remote protocol ranking errors', () => {
 		expect(onRequestSettled).toHaveBeenCalledWith({ mode: 'replace', status: 'error' })
 	})
 
-	it('reports an append request failure', async () => {
+	test('reports an append request failure', async () => {
 		await render('tvl')
 		act(() => void latest.loadMore())
 		expect(pending).toHaveLength(1)

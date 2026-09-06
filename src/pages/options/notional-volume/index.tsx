@@ -34,7 +34,7 @@ const NotionalVolumeOnAllChains = (props: IAdapterByChainPageData) => {
 		<Layout
 			title="Options Notional Volume Rankings - DefiLlama"
 			description="Track options notional volume by protocol, the sum of the notional value traded on DeFi options exchanges."
-			canonicalUrl={`/options/notional-volume`}
+			canonicalUrl="/options/notional-volume"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

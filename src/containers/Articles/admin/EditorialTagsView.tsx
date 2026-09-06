@@ -95,7 +95,8 @@ function EditorialTagSection({ definition }: { definition: EditorialTagDefinitio
 	const editorialTagQueryKey = ['research', 'admin', 'editorial-tag', definition.slug] as const
 
 	const reorderMutation = useMutation({
-		mutationFn: (payload: EditorialTagOrderItem[]) => reorderEditorialTag(definition.slug, payload, authorizedFetch),
+		mutationFn: (payload: Array<EditorialTagOrderItem>) =>
+			reorderEditorialTag(definition.slug, payload, authorizedFetch),
 		onMutate: async (payload) => {
 			await queryClient.cancelQueries({ queryKey: editorialTagQueryKey })
 			const previous = queryClient.getQueryData<ArticleByTagResponse>(editorialTagQueryKey)

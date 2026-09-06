@@ -97,7 +97,7 @@ const columns = [
 async function fetchTokenUsageRows(
 	tokenSymbol: string,
 	authorizedFetch: (url: string) => Promise<Response | null>
-): Promise<TokenUsageSectionRow[]> {
+): Promise<Array<TokenUsageSectionRow>> {
 	const data = await fetchProtocolsByTokenClient(tokenSymbol, authorizedFetch)
 	return buildTokenUsageRows(data)
 }

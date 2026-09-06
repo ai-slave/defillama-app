@@ -1,14 +1,14 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const forgdFetch = vi.fn()
-vi.mock('../client', () => ({ forgdFetch: (...a: unknown[]) => forgdFetch(...a) }))
+vi.mock('../client', () => ({ forgdFetch: (...a: Array<unknown>) => forgdFetch(...a) }))
 
 import { leaderboardVolume, marketMakerDetails } from '../api'
 
 afterEach(() => forgdFetch.mockReset())
 
 describe('leaderboardVolume route', () => {
-	it('forwards date params and reuses the serialized leaderboard payload', async () => {
+	test('forwards date params and reuses the serialized leaderboard payload', async () => {
 		forgdFetch.mockResolvedValue([{ marketMakerId: 'lhava' }])
 		const request = {
 			method: 'GET',
@@ -28,7 +28,7 @@ describe('leaderboardVolume route', () => {
 		expect(forgdFetch).toHaveBeenCalledTimes(1)
 	})
 
-	it('reuses the serialized all-details payload', async () => {
+	test('reuses the serialized all-details payload', async () => {
 		forgdFetch.mockResolvedValue([{ marketMakerId: 'details-cache-test' }])
 		const request = {
 			method: 'GET',

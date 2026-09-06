@@ -42,7 +42,7 @@ interface ISelectBase {
 	triggerProps?: Ariakit.SelectProps
 	portal?: boolean
 	placement?: Ariakit.SelectProviderProps['placement']
-	defaultSelectedValues?: string[]
+	defaultSelectedValues?: Array<string>
 	unmountOnHide?: boolean
 	popoverVariant?: 'default' | 'legacy'
 }
@@ -50,7 +50,7 @@ interface ISelectBase {
 interface ISelectWithUrlParams extends ISelectBase {
 	includeQueryKey: string
 	excludeQueryKey: ExcludeQueryKey
-	defaultSelectedValues?: string[]
+	defaultSelectedValues?: Array<string>
 	setSelectedValues?: never
 }
 
@@ -108,7 +108,7 @@ export function Select(props: ISelect) {
 	const getAllKeys = React.useCallback(() => allValues.map((v) => (typeof v === 'string' ? v : v.key)), [allValues])
 
 	const setSelectedValues = React.useCallback(
-		(values: string[] | string) => {
+		(values: Array<string> | string) => {
 			if (isUrlSelect(props)) {
 				updateQueryFromSelected(
 					router,

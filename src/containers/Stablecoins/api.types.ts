@@ -46,13 +46,13 @@ export type StablecoinPegBalances = Partial<Record<StablecoinPegType, number>>
 export type StablecoinNullablePegBalances = Partial<Record<StablecoinPegType, number | null>>
 
 export interface StablecoinsListResponse {
-	peggedAssets: StablecoinListAsset[]
-	chains: StablecoinListChain[]
+	peggedAssets: Array<StablecoinListAsset>
+	chains: Array<StablecoinListChain>
 }
 
 export interface RawStablecoinsListResponse {
-	peggedAssets: RawStablecoinListAsset[]
-	chains: StablecoinListChain[]
+	peggedAssets: Array<RawStablecoinListAsset>
+	chains: Array<StablecoinListChain>
 }
 
 export interface StablecoinListAsset {
@@ -60,7 +60,7 @@ export interface StablecoinListAsset {
 	name: string
 	symbol: string
 	gecko_id: string | null
-	chains: string[]
+	chains: Array<string>
 	pegType: StablecoinPegType
 	pegMechanism: StablecoinPegMechanism
 	priceSource?: StablecoinPriceSource | null
@@ -95,16 +95,16 @@ export interface StablecoinListChain {
 
 interface RawStablecoinBridgeConfig {
 	lzConfig?: {
-		symbols?: string[]
-		excludeChains?: string[]
-		oftTypes?: string[]
+		symbols?: Array<string>
+		excludeChains?: Array<string>
+		oftTypes?: Array<string>
 		chainMap?: Record<string, string>
 		requirePeggedToSource?: boolean
 	}
 	hyperlaneConfig?: {
-		symbols?: string[]
-		excludeChains?: string[]
-		standardTypes?: string[]
+		symbols?: Array<string>
+		excludeChains?: Array<string>
+		standardTypes?: Array<string>
 		chainMap?: Record<string, string>
 		sourceChain?: string
 	}
@@ -112,7 +112,7 @@ interface RawStablecoinBridgeConfig {
 
 interface RawStablecoinChainConfig {
 	decimals?: number
-	chains: Record<string, Record<string, string | string[]>>
+	chains: Record<string, Record<string, string | Array<string>>>
 }
 
 export interface RawStablecoinDetailResponse {
@@ -129,7 +129,7 @@ export interface RawStablecoinDetailResponse {
 	pegType: StablecoinPegType
 	pegMechanism: RawStablecoinPegMechanism
 	priceSource?: StablecoinPriceSource | null
-	auditLinks?: string[] | string | null
+	auditLinks?: Array<string> | string | null
 	twitter: string | null
 	wiki?: string | null
 	price: number | null
@@ -143,8 +143,8 @@ export interface RawStablecoinDetailResponse {
 	coin_icon?: string
 	bridgeConfig?: RawStablecoinBridgeConfig
 	chainConfig?: RawStablecoinChainConfig
-	tokens: StablecoinDetailToken[]
-	chainBalances: Record<string, { tokens: StablecoinChainBalanceToken[] }>
+	tokens: Array<StablecoinDetailToken>
+	chainBalances: Record<string, { tokens: Array<StablecoinChainBalanceToken> }>
 	currentChainBalances: Record<string, StablecoinNullablePegBalances>
 }
 
@@ -162,7 +162,7 @@ export interface StablecoinDetailResponse {
 	pegType: StablecoinPegType
 	pegMechanism: StablecoinPegMechanism
 	priceSource: StablecoinPriceSource | null
-	auditLinks: string[] | null
+	auditLinks: Array<string> | null
 	twitter: string | null
 	wiki: string | null
 	price: number | null
@@ -172,8 +172,8 @@ export interface StablecoinDetailResponse {
 	yieldBearing?: true
 	doublecounted?: true
 	deadFrom?: string
-	tokens: StablecoinDetailToken[]
-	chainBalances: Record<string, { tokens: StablecoinChainBalanceToken[] }>
+	tokens: Array<StablecoinDetailToken>
+	chainBalances: Record<string, { tokens: Array<StablecoinChainBalanceToken> }>
 	currentChainBalances: Record<string, StablecoinNullablePegBalances>
 }
 
@@ -205,10 +205,10 @@ export interface StablecoinDetailToken {
 export type StablecoinChainBalanceToken = StablecoinDetailToken
 
 export interface StablecoinChartResponse {
-	aggregated: StablecoinChartPoint[]
-	breakdown: Record<string, StablecoinChartPoint[]>
+	aggregated: Array<StablecoinChartPoint>
+	breakdown: Record<string, Array<StablecoinChartPoint>>
 	/** IDs refer to `StablecoinListAsset.id`. */
-	doublecountedIds: string[]
+	doublecountedIds: Array<string>
 }
 
 export type StablecoinVolumeGlobalChartKind = 'total' | 'chain' | 'token' | 'currency'
@@ -219,11 +219,13 @@ export type StablecoinVolumeChartKind = StablecoinVolumeGlobalChartKind
 export type StablecoinVolumeTotalChartPoint = [timestamp: number, volume: number]
 export type StablecoinVolumeBreakdownChartPoint = [timestamp: number, breakdown: Record<string, number>]
 
-export type StablecoinVolumeChartResponse = StablecoinVolumeTotalChartPoint[] | StablecoinVolumeBreakdownChartPoint[]
+export type StablecoinVolumeChartResponse =
+	| Array<StablecoinVolumeTotalChartPoint>
+	| Array<StablecoinVolumeBreakdownChartPoint>
 
 export type StablecoinVolumeChartResponseFor<TChart extends StablecoinVolumeChartKind> = TChart extends 'total'
-	? StablecoinVolumeTotalChartPoint[]
-	: StablecoinVolumeBreakdownChartPoint[]
+	? Array<StablecoinVolumeTotalChartPoint>
+	: Array<StablecoinVolumeBreakdownChartPoint>
 
 export interface StablecoinChartPoint {
 	date: string
@@ -235,8 +237,8 @@ export interface StablecoinChartPoint {
 }
 
 export interface StablecoinDominanceResponse {
-	dominanceMap: Record<string, StablecoinDominanceEntry[]>
-	chainChartMap: Record<string, StablecoinDominanceChartPoint[]>
+	dominanceMap: Record<string, Array<StablecoinDominanceEntry>>
+	chainChartMap: Record<string, Array<StablecoinDominanceChartPoint>>
 }
 
 export interface StablecoinDominanceEntry {
@@ -251,7 +253,7 @@ export interface StablecoinDominanceEntry {
 
 export type StablecoinDominanceChartPoint = StablecoinChartPoint
 
-export type StablecoinRecentCoinsDataResponse = Record<string, StablecoinRecentCoinDataPoint[]>
+export type StablecoinRecentCoinsDataResponse = Record<string, Array<StablecoinRecentCoinDataPoint>>
 export type StablecoinRecentCoinDataPoint = StablecoinChartPoint
 
 export interface RawStablecoinPriceSnapshot {
@@ -259,21 +261,21 @@ export interface RawStablecoinPriceSnapshot {
 	prices: Record<string, string | number>
 }
 
-export type RawStablecoinPricesResponse = RawStablecoinPriceSnapshot[]
+export type RawStablecoinPricesResponse = Array<RawStablecoinPriceSnapshot>
 
 export interface StablecoinPriceSnapshot {
 	date: number
 	prices: Record<string, number>
 }
 
-export type StablecoinPricesResponse = StablecoinPriceSnapshot[]
+export type StablecoinPricesResponse = Array<StablecoinPriceSnapshot>
 
 export interface StablecoinRateSnapshot {
 	date: number
 	rates: Record<string, number>
 }
 
-export type StablecoinRatesResponse = StablecoinRateSnapshot[]
+export type StablecoinRatesResponse = Array<StablecoinRateSnapshot>
 
 export type StablecoinConfigResponse = Record<string, string>
 

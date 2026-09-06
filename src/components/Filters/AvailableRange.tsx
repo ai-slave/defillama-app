@@ -1,11 +1,11 @@
-import * as Ariakit from '@ariakit/react'
+import type * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import type { FormSubmitEvent } from '~/types/forms'
 import { formatNumber } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
-type QueryUpdates = Record<string, string | string[] | undefined>
+type QueryUpdates = Record<string, string | Array<string> | undefined>
 
 export function AvailableRange({
 	nestedMenu,

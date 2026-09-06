@@ -1,8 +1,8 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
-var authState = {
+let authState = {
 	hasActiveSubscription: false,
 	isAuthenticated: false,
 	loaders: { userLoading: false }
@@ -58,7 +58,7 @@ afterEach(() => {
 })
 
 describe('LiquidationsAccessGate', () => {
-	it('shows the public protocol shell and sign-in CTA for unauthenticated users', () => {
+	test('shows the public protocol shell and sign-in CTA for unauthenticated users', () => {
 		const html = renderToStaticMarkup(
 			<LiquidationsAccessGate
 				protocolLinks={[
@@ -81,7 +81,7 @@ describe('LiquidationsAccessGate', () => {
 		expect(html).toContain('sign-in-modal')
 	})
 
-	it('hides the chain row when there is only all chains plus one chain', () => {
+	test('hides the chain row when there is only all chains plus one chain', () => {
 		const html = renderToStaticMarkup(
 			<LiquidationsAccessGate
 				protocolLinks={[
@@ -101,7 +101,7 @@ describe('LiquidationsAccessGate', () => {
 		expect(html).not.toContain('Tron')
 	})
 
-	it('shows the subscribe link for authenticated users without a subscription', () => {
+	test('shows the subscribe link for authenticated users without a subscription', () => {
 		authState = {
 			hasActiveSubscription: false,
 			isAuthenticated: true,
@@ -122,7 +122,7 @@ describe('LiquidationsAccessGate', () => {
 })
 
 describe('LiquidationsShellLoader', () => {
-	it('shows the loader while preserving the shell chrome', () => {
+	test('shows the loader while preserving the shell chrome', () => {
 		const html = renderToStaticMarkup(
 			<LiquidationsShellLoader
 				protocolLinks={[{ label: 'Overview', to: '/liquidations' }]}

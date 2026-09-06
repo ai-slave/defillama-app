@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import { buildETFChartSpec, buildETFFlowChartData } from './chartData'
 import type { IProcessedFlows } from './types'
@@ -8,7 +8,7 @@ const jan1 = Date.UTC(2026, 0, 1) / 1e3
 const jan2 = jan1 + DAY
 
 describe('buildETFFlowChartData', () => {
-	it('groups all assets in one chronological pass and retains asset-only dates', () => {
+	test('groups all assets in one chronological pass and retains asset-only dates', () => {
 		const flows: IProcessedFlows = {
 			[jan2]: { date: jan2, Bitcoin: -2, Ethereum: 4 },
 			[jan1]: { date: jan1, Ethereum: 3, Solana: 5 }
@@ -23,7 +23,7 @@ describe('buildETFFlowChartData', () => {
 		expect(buildETFFlowChartData(flows, 'weekly')).toEqual([[weeklyBucket * 1e3, -2, 7, 5]])
 	})
 
-	it('keeps cumulative gaps blank and resumes each asset running total when data returns', () => {
+	test('keeps cumulative gaps blank and resumes each asset running total when data returns', () => {
 		const jan3 = jan2 + DAY
 		const flows: IProcessedFlows = {
 			[jan1]: { date: jan1, Bitcoin: 10, Ethereum: 3 },
@@ -38,7 +38,7 @@ describe('buildETFFlowChartData', () => {
 		])
 	})
 
-	it.each(['monthly', 'quarterly', 'yearly'] as const)('aggregates %s buckets without sorting again', (groupBy) => {
+	test.each(['monthly', 'quarterly', 'yearly'] as const)('aggregates %s buckets without sorting again', (groupBy) => {
 		const flows: IProcessedFlows = {
 			[jan2]: { date: jan2, Bitcoin: 2, Ethereum: 4 },
 			[jan1]: { date: jan1, Bitcoin: 1, Ethereum: 3 }
@@ -48,7 +48,7 @@ describe('buildETFFlowChartData', () => {
 		expect(buildETFFlowChartData(flows, groupBy)).toEqual([[bucket * 1e3, 3, 7, null]])
 	})
 
-	it('builds the exact filtered dataset and chart contract used by the overview', () => {
+	test('builds the exact filtered dataset and chart contract used by the overview', () => {
 		const flows: IProcessedFlows = {
 			[jan1]: { date: jan1, Bitcoin: 1, Ethereum: -2, Solana: 3 }
 		}
@@ -77,7 +77,7 @@ describe('buildETFFlowChartData', () => {
 		for (const chart of result.charts) expect(chart.encode.y).toBeGreaterThan(0)
 	})
 
-	it('uses line series for cumulative flows and supports an empty selection', () => {
+	test('uses line series for cumulative flows and supports an empty selection', () => {
 		const flows: IProcessedFlows = { [jan1]: { date: jan1, Bitcoin: 1 } }
 		expect(buildETFChartSpec({ flows, groupBy: 'cumulative', assets: ['Bitcoin'] }).charts[0]?.type).toBe('line')
 		expect(buildETFChartSpec({ flows, groupBy: 'weekly', assets: [] })).toMatchObject({

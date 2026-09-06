@@ -88,10 +88,10 @@ function normalizeOptionalDate(value: unknown): string | null {
 	return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
 
-function normalizeTags(value: unknown): string[] {
+function normalizeTags(value: unknown): Array<string> {
 	if (!Array.isArray(value)) return []
 	const seen = new Set<string>()
-	const tags: string[] = []
+	const tags: Array<string> = []
 	for (const item of value) {
 		if (typeof item !== 'string') continue
 		const normalized = normalizeSlug(item)
@@ -116,9 +116,9 @@ function normalizeInterviewUrl(value: unknown): string | null {
 	return `https://${trimmed}`
 }
 
-function normalizeInterviewees(value: unknown): ArticleInterviewee[] | undefined {
+function normalizeInterviewees(value: unknown): Array<ArticleInterviewee> | undefined {
 	if (!Array.isArray(value)) return undefined
-	const out: ArticleInterviewee[] = []
+	const out: Array<ArticleInterviewee> = []
 	for (const entry of value) {
 		if (!isRecord(entry)) continue
 		const name = normalizeOptionalString(entry.name)
@@ -153,9 +153,9 @@ function normalizeGuestAuthorUrl(value: unknown): string | undefined {
 	}
 }
 
-function normalizeGuestAuthors(value: unknown): ArticleGuestAuthor[] | undefined {
+function normalizeGuestAuthors(value: unknown): Array<ArticleGuestAuthor> | undefined {
 	if (!Array.isArray(value)) return undefined
-	const out: ArticleGuestAuthor[] = []
+	const out: Array<ArticleGuestAuthor> = []
 	for (const entry of value) {
 		if (!isRecord(entry)) continue
 		const name = normalizeOptionalString(entry.name)
@@ -170,10 +170,10 @@ function normalizeGuestAuthors(value: unknown): ArticleGuestAuthor[] | undefined
 	return out.length > 0 ? out : undefined
 }
 
-function normalizePageAssets(value: unknown): ArticlePageAsset[] | undefined {
+function normalizePageAssets(value: unknown): Array<ArticlePageAsset> | undefined {
 	if (!Array.isArray(value)) return undefined
 	const seen = new Set<string>()
-	const out: ArticlePageAsset[] = []
+	const out: Array<ArticlePageAsset> = []
 	for (const entry of value) {
 		if (!isRecord(entry)) continue
 		const geckoId = normalizeOptionalString(entry.geckoId)
@@ -251,16 +251,16 @@ function hasForbiddenDashboardEmbed(node: unknown): boolean {
 
 type NormalizedContentNode = {
 	node: TiptapJson
-	hoisted: TiptapJson[]
+	hoisted: Array<TiptapJson>
 }
 
 type StrippedQAAnswerNode = {
 	node: TiptapJson | null
-	hoisted: TiptapJson[]
+	hoisted: Array<TiptapJson>
 }
 
 const EMPTY_QA_QUESTION: TiptapJson = { type: 'qaQuestion', content: [] }
-const EMPTY_QA_ANSWER_CONTENT: TiptapJson[] = [{ type: 'paragraph' }]
+const EMPTY_QA_ANSWER_CONTENT: Array<TiptapJson> = [{ type: 'paragraph' }]
 
 function normalizeQANode(node: TiptapJson): NormalizedContentNode {
 	const children = node.content ?? []
@@ -284,9 +284,9 @@ function normalizeQANode(node: TiptapJson): NormalizedContentNode {
 	}
 }
 
-function normalizeQAAnswerNode(node: TiptapJson | undefined): { node: TiptapJson; hoisted: TiptapJson[] } {
-	const hoisted: TiptapJson[] = []
-	const content: TiptapJson[] = []
+function normalizeQAAnswerNode(node: TiptapJson | undefined): { node: TiptapJson; hoisted: Array<TiptapJson> } {
+	const hoisted: Array<TiptapJson> = []
+	const content: Array<TiptapJson> = []
 
 	for (const child of node?.content ?? []) {
 		const stripped = stripNestedQAsFromAnswer(child)
@@ -311,8 +311,8 @@ function stripNestedQAsFromAnswer(node: TiptapJson): StrippedQAAnswerNode {
 
 	if (!node.content) return { node, hoisted: [] }
 
-	const hoisted: TiptapJson[] = []
-	const content: TiptapJson[] = []
+	const hoisted: Array<TiptapJson> = []
+	const content: Array<TiptapJson> = []
 	for (const child of node.content) {
 		const stripped = stripNestedQAsFromAnswer(child)
 		if (stripped.node) content.push(stripped.node)
@@ -336,7 +336,7 @@ function normalizeArticleContentNode(node: TiptapJson): NormalizedContentNode {
 	if (node.type === 'qa') return normalizeQANode(node)
 	if (!node.content) return { node, hoisted: [] }
 
-	const content: TiptapJson[] = []
+	const content: Array<TiptapJson> = []
 	for (const child of node.content) {
 		const normalized = normalizeArticleContentNode(child)
 		content.push(normalized.node, ...normalized.hoisted)
@@ -492,8 +492,8 @@ export type ArticlePublishValidationError = {
 	message: string
 }
 
-export function validateLocalArticleForPublish(doc: LocalArticleDocument): ArticlePublishValidationError[] {
-	const errors: ArticlePublishValidationError[] = []
+export function validateLocalArticleForPublish(doc: LocalArticleDocument): Array<ArticlePublishValidationError> {
+	const errors: Array<ArticlePublishValidationError> = []
 	if (!doc.section) errors.push({ field: 'section', message: 'Section is required' })
 	if (!doc.title || doc.title.trim() === '' || doc.title === 'Untitled research') {
 		errors.push({ field: 'title', message: 'Headline is required' })

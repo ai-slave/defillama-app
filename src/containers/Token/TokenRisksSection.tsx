@@ -52,7 +52,7 @@ function TableEntityCell({
 	)
 }
 
-function formatProtocolChains(chainBreakdowns: TokenRiskChainExposureSummary[]) {
+function formatProtocolChains(chainBreakdowns: Array<TokenRiskChainExposureSummary>) {
 	if (chainBreakdowns.length === 0) return ''
 	if (chainBreakdowns.length === 1) return chainBreakdowns[0]!.chainDisplayName
 	return `${chainBreakdowns.length} chains`
@@ -88,7 +88,7 @@ function ProtocolExposureSummaryText({
 	)
 }
 
-function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: TokenRiskChainExposureSummary[] }) {
+function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: Array<TokenRiskChainExposureSummary> }) {
 	return (
 		<div className="w-80 max-w-(--popover-available-width) space-y-2 body-sm">
 			<p className="font-medium text-primary">Breakdown by chain</p>
@@ -126,7 +126,7 @@ function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: To
 	)
 }
 
-function ProtocolChainsLabel({ chainBreakdowns }: { chainBreakdowns: TokenRiskChainExposureSummary[] }) {
+function ProtocolChainsLabel({ chainBreakdowns }: { chainBreakdowns: Array<TokenRiskChainExposureSummary> }) {
 	const label = formatProtocolChains(chainBreakdowns)
 	if (!label) return null
 

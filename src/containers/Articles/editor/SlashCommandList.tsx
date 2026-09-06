@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
 import type { SlashCommandItem } from './slashCommand'
 
 type Props = {
-	items: SlashCommandItem[]
+	items: Array<SlashCommandItem>
 	command: (item: SlashCommandItem) => void
 }
 

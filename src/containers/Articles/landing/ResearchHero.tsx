@@ -9,7 +9,7 @@ import type { ArticleDocument } from '~/containers/Articles/types'
 interface ResearchHeroProps {
 	title: React.ReactNode
 	subtitle: React.ReactNode
-	reports: ArticleDocument[]
+	reports: Array<ArticleDocument>
 }
 
 export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, reports }) => {

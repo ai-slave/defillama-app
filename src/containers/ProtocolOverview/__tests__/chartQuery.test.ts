@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	resolveProtocolChartDenomination,
 	resolveProtocolChartQuery,
@@ -16,8 +16,8 @@ const resolveQuery = ({
 	defaultChartView = 'weekly'
 }: {
 	query?: Partial<Record<ProtocolChartQueryKey, ProtocolChartQueryValue>>
-	availableCharts?: ProtocolChartsLabels[]
-	defaultToggledCharts?: ProtocolChartsLabels[]
+	availableCharts?: Array<ProtocolChartsLabels>
+	defaultToggledCharts?: Array<ProtocolChartsLabels>
 	hallmarks?: Array<[number, string]>
 	rangeHallmarks?: Array<[[number, number], string]>
 	defaultChartView?: string
@@ -41,7 +41,7 @@ const eventCases: Array<{
 ]
 
 describe('protocol chart query resolution', () => {
-	it('ignores retired governance toggles in saved URLs while honoring supported charts', () => {
+	test('ignores retired governance toggles in saved URLs while honoring supported charts', () => {
 		const query = { totalProposals: 'true', successfulProposals: 'true', maxVotes: 'true', tvl: 'true' }
 		const result = resolveQuery({ query })
 
@@ -51,7 +51,7 @@ describe('protocol chart query resolution', () => {
 		expect(result.toggledMetrics).not.toHaveProperty('maxVotes')
 	})
 
-	it.each(eventCases)(
+	test.each(eventCases)(
 		'defaults events on for either point or range hallmarks and honors explicit visibility',
 		(events) => {
 			expect(resolveQuery(events).toggledMetrics.events).toBe('true')
@@ -60,17 +60,17 @@ describe('protocol chart query resolution', () => {
 		}
 	)
 
-	it('keeps events off when the protocol has no event data', () => {
+	test('keeps events off when the protocol has no event data', () => {
 		expect(resolveQuery({ query: { events: 'true' } }).toggledMetrics.events).toBe('false')
 	})
 
-	it('uses the producer default chart interval when absent and a valid explicit override when present', () => {
+	test('uses the producer default chart interval when absent and a valid explicit override when present', () => {
 		expect(resolveQuery().groupBy).toBe('weekly')
 		expect(resolveQuery({ query: { groupBy: 'Monthly' } }).groupBy).toBe('monthly')
 		expect(resolveQuery({ query: { groupBy: ['monthly'] } }).groupBy).toBe('weekly')
 	})
 
-	it('honors explicit non-default TVL while retaining staking as the default chart', () => {
+	test('honors explicit non-default TVL while retaining staking as the default chart', () => {
 		const result = resolveQuery({
 			query: { tvl: 'true' },
 			availableCharts: ['TVL', 'Staking'],
@@ -82,7 +82,7 @@ describe('protocol chart query resolution', () => {
 		expect(result.toggledCharts).toStrictEqual(['TVL', 'Staking'])
 	})
 
-	it('canonicalizes supported denomination casing and rejects unsupported or array query values', () => {
+	test('canonicalizes supported denomination casing and rejects unsupported or array query values', () => {
 		const denominations = [{ symbol: 'USD' }, { symbol: 'ETH' }]
 
 		expect(resolveProtocolChartDenomination('eth', denominations)).toBe('ETH')

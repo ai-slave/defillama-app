@@ -43,7 +43,7 @@ import type { ProtocolTableRow } from '../types'
 import { getProtocolAggregationPlan } from '../utils/aggregation'
 import { filterReadModelRowsByConfig, filterRowsByConfig, hasProtocolSubsetFilters } from '../utils/dataFilters'
 
-const EMPTY_ROWS: ProtocolTableSourceRow[] = []
+const EMPTY_ROWS: Array<ProtocolTableSourceRow> = []
 const EMPTY_PARENT_METRICS: Record<string, ParentProtocolMetrics> = {}
 const EMPTY_CHAIN_METRICS: NonNullable<ProtocolsUnifiedTableResponse['chainMetrics']> = {}
 const getProtocolTableRowId = (row: ProtocolTableRow) => row.id
@@ -60,7 +60,7 @@ const getProtocolTablePaginationRowModel = getPaginationRowModel<ProtocolTableRo
 
 interface UseUnifiedTableArgs {
 	config: UnifiedTableConfig
-	rowHeaders: UnifiedRowHeaderType[]
+	rowHeaders: Array<UnifiedRowHeaderType>
 	searchTerm: string
 	columnOrder: ColumnOrderState
 	columnVisibility: VisibilityState
@@ -68,7 +68,7 @@ interface UseUnifiedTableArgs {
 	onSortingChange: (updater: SortingState | ((prev: SortingState) => SortingState)) => void
 }
 
-const fetchUnifiedTableRows = async (config: UnifiedTableConfig, rowHeaders: UnifiedRowHeaderType[]) => {
+const fetchUnifiedTableRows = async (config: UnifiedTableConfig, rowHeaders: Array<UnifiedRowHeaderType>) => {
 	const queryString = buildUnifiedTableQueryString(config, rowHeaders)
 	return fetchJson<ProtocolsUnifiedTableResponse>(
 		`/api/public/pro-dashboard/unified-table/${config.strategy}?${queryString}`
@@ -134,7 +134,7 @@ export function useUnifiedTable({
 		for (const sort of sorting) {
 			addMetricKey(sort.id)
 		}
-		const orderedMetricKeys: FilteredShareMetricKey[] = []
+		const orderedMetricKeys: Array<FilteredShareMetricKey> = []
 		for (const metricKey of FILTERED_SHARE_METRIC_KEYS) {
 			if (metricKeys.has(metricKey)) orderedMetricKeys.push(metricKey)
 		}

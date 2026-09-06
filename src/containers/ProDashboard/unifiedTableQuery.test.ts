@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { UnifiedTableConfig } from './unifiedTable/config/current'
 import { getUnifiedTableQueryIdentity } from './unifiedTableQuery'
 
-const createConfig = (chains: string[], category?: string): UnifiedTableConfig => ({
+const createConfig = (chains: Array<string>, category?: string): UnifiedTableConfig => ({
 	id: 'table',
 	kind: 'unified-table',
 	configVersion: 3,
@@ -12,21 +12,21 @@ const createConfig = (chains: string[], category?: string): UnifiedTableConfig =
 })
 
 describe('getUnifiedTableQueryIdentity', () => {
-	it('uses one identity for equivalent all-chain configurations', () => {
+	test('uses one identity for equivalent all-chain configurations', () => {
 		const empty = getUnifiedTableQueryIdentity(createConfig([]), ['protocol'])
 		const all = getUnifiedTableQueryIdentity(createConfig(['All']), ['protocol'])
 
 		expect(all).toEqual(empty)
 	})
 
-	it('deduplicates, normalizes and sorts chain aliases', () => {
+	test('deduplicates, normalizes and sorts chain aliases', () => {
 		const first = getUnifiedTableQueryIdentity(createConfig(['Optimism', 'Ethereum', 'OP Mainnet']), ['protocol'])
 		const second = getUnifiedTableQueryIdentity(createConfig(['ethereum', 'op-mainnet']), ['protocol'])
 
 		expect(first).toEqual(second)
 	})
 
-	it('keys source identity by category and aggregate-versus-chain granularity', () => {
+	test('keys source identity by category and aggregate-versus-chain granularity', () => {
 		const lending = getUnifiedTableQueryIdentity(createConfig([], 'Lending'), ['protocol'])
 		const dex = getUnifiedTableQueryIdentity(createConfig([], 'Dexes'), ['protocol'])
 		const grouped = getUnifiedTableQueryIdentity(createConfig([], 'Lending'), ['category', 'protocol'])
@@ -37,7 +37,7 @@ describe('getUnifiedTableQueryIdentity', () => {
 		expect(lending.queryKey).not.toEqual(byChain.queryKey)
 	})
 
-	it('changes identity only when a requested point-comparison source changes', () => {
+	test('changes identity only when a requested point-comparison source changes', () => {
 		const hidden = createConfig([])
 		hidden.columnOrder = ['fees24hChange7dAgo']
 		hidden.columnVisibility = { fees24hChange7dAgo: false }
@@ -55,7 +55,7 @@ describe('getUnifiedTableQueryIdentity', () => {
 		)
 	})
 
-	it('requests point comparisons used only by hidden filters', () => {
+	test('requests point comparisons used only by hidden filters', () => {
 		const config = createConfig([])
 		config.columnVisibility = { fees24hChange7dAgo: false }
 		config.filters = { fees24hChange7dAgoMin: -20 }
@@ -64,7 +64,7 @@ describe('getUnifiedTableQueryIdentity', () => {
 		expect(getUnifiedTableQueryIdentity(config, ['protocol']).baseMetricFamilies).toEqual(['fees'])
 	})
 
-	it('includes only requested base metric families in the identity', () => {
+	test('includes only requested base metric families in the identity', () => {
 		const hidden = createConfig([])
 		hidden.columnOrder = ['openInterest']
 		hidden.columnVisibility = { openInterest: false }
@@ -77,7 +77,7 @@ describe('getUnifiedTableQueryIdentity', () => {
 		)
 	})
 
-	it('derives ratio dependencies from the requested metric families rather than response rows', () => {
+	test('derives ratio dependencies from the requested metric families rather than response rows', () => {
 		const config = createConfig([])
 		config.columnOrder = ['mcaptvl', 'pf']
 		config.columnVisibility = { mcaptvl: true, pf: true }
@@ -90,7 +90,7 @@ describe('getUnifiedTableQueryIdentity', () => {
 		})
 	})
 
-	it('separates metric-preset membership from a broad custom table with the same columns', () => {
+	test('separates metric-preset membership from a broad custom table with the same columns', () => {
 		const custom = createConfig([])
 		custom.columnOrder = ['fees24h']
 		custom.columnVisibility = { fees24h: true }

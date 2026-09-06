@@ -22,8 +22,8 @@ export function buildEtherfiCashTvlData(raw: Array<readonly [number, number]>) {
 		}
 	}
 
-	const tvlSource = new Array<number[]>(raw.length)
-	const inflowsSource: number[][] = []
+	const tvlSource = new Array<Array<number>>(raw.length)
+	const inflowsSource: Array<Array<number>> = []
 	for (let i = 0; i < raw.length; i++) {
 		const [ts, value] = raw[i]
 		tvlSource[i] = [ts, value]
@@ -116,7 +116,7 @@ export function useEtherfiCashFeesCharts() {
 		const feesDataset = buildTimeSeriesDataset(fees.data ?? [], 'Fees', 1000)
 		const revenueDataset = buildTimeSeriesDataset(revenue.data ?? [], 'Revenue', 1000)
 		const holdersPoints = holdersRevenue.data ?? []
-		const holdersSource = new Array<number[]>(holdersPoints.length)
+		const holdersSource = new Array<Array<number>>(holdersPoints.length)
 		let hasHoldersRevenue = false
 		for (let i = 0; i < holdersPoints.length; i++) {
 			const [timestamp, value] = holdersPoints[i]

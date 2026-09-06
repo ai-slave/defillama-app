@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptCandlestickData } from '~/containers/LlamaAI/utils/chartAdapters/candlestick'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
@@ -35,7 +35,7 @@ const baseConfig: ChartConfiguration = {
 }
 
 describe('chart adapters', () => {
-	it('forwards configured y-axis positions to the renderer', () => {
+	test('forwards configured y-axis positions to the renderer', () => {
 		const config = {
 			...baseConfig,
 			type: 'line',
@@ -61,7 +61,7 @@ describe('chart adapters', () => {
 		expect(yAxis?.position).toBe('right')
 	})
 
-	it('supports display names that match logical dimensions but rejects duplicate series identities', () => {
+	test('supports display names that match logical dimensions but rejects duplicate series identities', () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const timestampSeries = {
 			...baseConfig,
@@ -94,7 +94,7 @@ describe('chart adapters', () => {
 		consoleLog.mockRestore()
 	})
 
-	it('preserves falsy category labels in cartesian, pie, hbar, and scatter adapters', () => {
+	test('preserves falsy category labels in cartesian, pie, hbar, and scatter adapters', () => {
 		const categoryConfig = {
 			...baseConfig,
 			type: 'bar',
@@ -119,7 +119,7 @@ describe('chart adapters', () => {
 		expect(adaptScatterChartData(baseConfig, [{ x: 1, y: 2, protocol: 0 }]).props.chartData).toEqual([[1, 2, '0', '0']])
 	})
 
-	it('keeps legacy blank category labels as Unknown while preserving numeric zero', () => {
+	test('keeps legacy blank category labels as Unknown while preserving numeric zero', () => {
 		const categoryConfig = {
 			...baseConfig,
 			type: 'bar',
@@ -144,7 +144,7 @@ describe('chart adapters', () => {
 		])
 	})
 
-	it('matches an entityFilter with a string value against numeric row values', () => {
+	test('matches an entityFilter with a string value against numeric row values', () => {
 		const numericSeriesConfig = {
 			...baseConfig,
 			type: 'bar',
@@ -182,10 +182,10 @@ describe('chart adapters', () => {
 		} satisfies ChartConfiguration
 
 		const result = adaptCartesianChartData(numericSeriesConfig, [
-			{ exchange: 'binance', trade_size_usd: 10000, round_trip_slippage_bps: 20.1 },
-			{ exchange: 'binance', trade_size_usd: 50000, round_trip_slippage_bps: 40.2 },
-			{ exchange: 'gate', trade_size_usd: 10000, round_trip_slippage_bps: 21.5 },
-			{ exchange: 'gate', trade_size_usd: 50000, round_trip_slippage_bps: 42.0 }
+			{ exchange: 'binance', trade_size_usd: 10_000, round_trip_slippage_bps: 20.1 },
+			{ exchange: 'binance', trade_size_usd: 50_000, round_trip_slippage_bps: 40.2 },
+			{ exchange: 'gate', trade_size_usd: 10_000, round_trip_slippage_bps: 21.5 },
+			{ exchange: 'gate', trade_size_usd: 50_000, round_trip_slippage_bps: 42.0 }
 		])
 
 		expect(result.props.dataset.source).toEqual([
@@ -194,7 +194,7 @@ describe('chart adapters', () => {
 		])
 	})
 
-	it('honors explicit per-slice colors on a pie via config.seriesColors', () => {
+	test('honors explicit per-slice colors on a pie via config.seriesColors', () => {
 		const pieConfig = {
 			...baseConfig,
 			type: 'pie',
@@ -212,7 +212,7 @@ describe('chart adapters', () => {
 		expect(result.props.stackColors?.Balancer).not.toBe('#ff007a')
 	})
 
-	it('rotates a crowded category x-axis so long labels do not drop, and reserves grid bottom', () => {
+	test('rotates a crowded category x-axis so long labels do not drop, and reserves grid bottom', () => {
 		const cfg = {
 			...baseConfig,
 			type: 'bar',
@@ -254,7 +254,7 @@ describe('chart adapters', () => {
 		expect(grid?.bottom).toBeGreaterThan(44)
 	})
 
-	it('leaves a small, short-label category axis flat', () => {
+	test('leaves a small, short-label category axis flat', () => {
 		const cfg = {
 			...baseConfig,
 			type: 'bar',
@@ -285,7 +285,7 @@ describe('chart adapters', () => {
 		expect(xAxis?.axisLabel).toBeUndefined()
 	})
 
-	it('uses category logos only when every rendered category has one', () => {
+	test('uses category logos only when every rendered category has one', () => {
 		const categorySeries: ChartConfiguration['series'][number] = {
 			...baseSeries,
 			type: 'bar',
@@ -346,7 +346,7 @@ describe('chart adapters', () => {
 		expect(completeHBar.props.logos?.every(Boolean)).toBe(true)
 	})
 
-	it('builds grouped series for a multi-series hbar (two bars per category)', () => {
+	test('builds grouped series for a multi-series hbar (two bars per category)', () => {
 		const groupedHBar = {
 			...baseConfig,
 			type: 'hbar',
@@ -390,7 +390,7 @@ describe('chart adapters', () => {
 		])
 	})
 
-	it('honors per-category seriesColors on a single-series hbar (editor recolor)', () => {
+	test('honors per-category seriesColors on a single-series hbar (editor recolor)', () => {
 		const hbar = {
 			...baseConfig,
 			type: 'hbar',
@@ -405,7 +405,7 @@ describe('chart adapters', () => {
 		expect(result.props.colors![1]).not.toBe('#ff007a') // gate keeps the palette
 	})
 
-	it('gives hbar bars distinct colors regardless of the series styling.color the tool stamps', () => {
+	test('gives hbar bars distinct colors regardless of the series styling.color the tool stamps', () => {
 		// the backend stamps styling.color = palette[0] on every series, including single-series hbar;
 		// hbar must ignore it and keep per-bar distinct colors (a ranking chart, not one flat color).
 		const hbar = {
@@ -422,7 +422,7 @@ describe('chart adapters', () => {
 		expect(new Set(result.props.colors).size).toBe(2)
 	})
 
-	it('filters scatter rows with missing or non-numeric coordinates', () => {
+	test('filters scatter rows with missing or non-numeric coordinates', () => {
 		const result = adaptScatterChartData(baseConfig, [
 			{ x: 1, y: 2, protocol: 'valid' },
 			{ x: null, y: 3, protocol: 'null-x' },
@@ -437,7 +437,7 @@ describe('chart adapters', () => {
 		])
 	})
 
-	it('escapes scatter tooltip entity names', () => {
+	test('escapes scatter tooltip entity names', () => {
 		const result = adaptScatterChartData(baseConfig, [{ x: 1, y: 2, protocol: '<img src=x onerror=alert(1)>' }])
 		const tooltip = result.props.tooltipFormatter?.({ value: [1, 2, '<img src=x onerror=alert(1)>'] })
 
@@ -445,7 +445,7 @@ describe('chart adapters', () => {
 		expect(tooltip).not.toContain('<img src=x')
 	})
 
-	it('keeps cartesian time-series rows sorted after adaptation', () => {
+	test('keeps cartesian time-series rows sorted after adaptation', () => {
 		const timeConfig = {
 			...baseConfig,
 			type: 'line',
@@ -473,7 +473,7 @@ describe('chart adapters', () => {
 		])
 	})
 
-	it('constructs mixed positional series with sparse explicit gaps and stable axes', () => {
+	test('constructs mixed positional series with sparse explicit gaps and stable axes', () => {
 		const config = {
 			...baseConfig,
 			type: 'combo',
@@ -523,9 +523,9 @@ describe('chart adapters', () => {
 		expect(result.props.dataset).toEqual({
 			dimensions: ['timestamp', 'TVL', 'Fees', 'APY'],
 			source: [
-				[1_000, 10, 2, null],
-				[2_000, null, 3, null],
-				[3_000, 12, undefined, 4]
+				[1000, 10, 2, null],
+				[2000, null, 3, null],
+				[3000, 12, undefined, 4]
 			]
 		})
 		expect(result.props.charts).toMatchObject([
@@ -540,7 +540,7 @@ describe('chart adapters', () => {
 		])
 	})
 
-	it('filters candlestick rows with invalid timestamps before building indicators', () => {
+	test('filters candlestick rows with invalid timestamps before building indicators', () => {
 		const timestamp = Date.UTC(2026, 0, 1)
 		const config = {
 			...baseConfig,

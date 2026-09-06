@@ -41,7 +41,7 @@ export function sumStablecoinPegBalances(balances: StablecoinPegBalances | undef
 	return total
 }
 
-export function buildStablecoinAggregatePairs(response: StablecoinChartResponse): StablecoinAggregatePair[] {
+export function buildStablecoinAggregatePairs(response: StablecoinChartResponse): Array<StablecoinAggregatePair> {
 	const totalsByTimestamp = new Map<number, number>()
 	for (const point of response.aggregated) {
 		totalsByTimestamp.set(Number(point.date), getStablecoinValueFromPoint(point, 'totalCirculatingUSD') ?? 0)
@@ -139,8 +139,8 @@ export type FormattedStablecoinAsset = Pick<
 export function buildUniqueStablecoinChartLabels(
 	peggedAssets: Array<Pick<StablecoinListAsset, 'id' | 'name' | 'symbol' | 'gecko_id'>>,
 	preferredLabel: 'name' | 'symbol'
-): string[] {
-	const labels: string[] = []
+): Array<string> {
+	const labels: Array<string> = []
 	const usedLabels = new Set<string>(['Others'])
 	for (const [index, asset] of peggedAssets.entries()) {
 		const alternateLabel = preferredLabel === 'name' ? asset.symbol : asset.name
@@ -196,18 +196,18 @@ export type StablecoinIssuanceType =
 
 interface IFormatPeggedAssetsDataParams {
 	chain?: string
-	peggedAssets?: StablecoinListAsset[]
+	peggedAssets?: Array<StablecoinListAsset>
 	chartDataByPeggedAsset?: Array<Array<StablecoinChartDataPoint> | null | undefined>
 	priceData?: StablecoinPricesResponse
-	rateData?: IRateChartPoint[]
+	rateData?: Array<IRateChartPoint>
 	peggedAssetIdToChartDataIndex?: Record<string, number>
-	doublecountedIndexes?: number[]
+	doublecountedIndexes?: Array<number>
 	currentTimeMs?: number
 }
 
 interface IFormatPeggedChainsDataParams {
-	chainList?: string[]
-	peggedChartDataByChain?: Array<StablecoinChartPoint[] | null>
+	chainList?: Array<string>
+	peggedChartDataByChain?: Array<Array<StablecoinChartPoint> | null>
 	chainDominances?: Record<string, { symbol: string; mcap: number }>
 	currentTimeMs?: number
 }
@@ -215,7 +215,7 @@ interface IFormatPeggedChainsDataParams {
 type StablecoinChartLookupOptions = { currentTimeMs?: number }
 
 export function getFreshStablecoinCurrentPoint<T>(
-	series: readonly T[] | null | undefined,
+	series: ReadonlyArray<T> | null | undefined,
 	getTimestamp: (point: T) => string | number,
 	currentTimeMs: number = Date.now()
 ): T | null {
@@ -227,7 +227,7 @@ export function getFreshStablecoinCurrentPoint<T>(
 }
 
 function findStablecoinPeriodPreviousPoint<T>(
-	series: readonly T[] | null | undefined,
+	series: ReadonlyArray<T> | null | undefined,
 	daysBefore: number,
 	getTimestamp: (point: T) => string | number,
 	currentTimeMs?: number
@@ -242,12 +242,12 @@ function findStablecoinPeriodPreviousPoint<T>(
 
 export interface IBuildStablecoinChartDataParams {
 	chartDataByAssetOrChain: Array<Array<StablecoinChartDataPoint> | null | undefined>
-	assetsOrChainsList: string[]
-	filteredIndexes?: number[]
+	assetsOrChainsList: Array<string>
+	filteredIndexes?: Array<number>
 	issuanceType?: StablecoinIssuanceType
 	selectedChain?: string | null
 	totalChartTooltipLabel?: string
-	doublecountedIds?: number[]
+	doublecountedIds?: Array<number>
 }
 
 export function getPrevStablecoinTotalFromChart(
@@ -400,11 +400,11 @@ const BACKFILLED_CHAINS = new Set([
 ])
 
 export const isStablecoinChartDateVisible = (selectedChain: string | null | undefined, date: string | number) =>
-	Boolean(selectedChain && BACKFILLED_CHAINS.has(selectedChain)) || Number(date) > 1652241600
+	Boolean(selectedChain && BACKFILLED_CHAINS.has(selectedChain)) || Number(date) > 1_652_241_600
 
 const getTargetPrice = (
 	pegType: StablecoinPegType,
-	ratesChart: IRateChartPoint[],
+	ratesChart: Array<IRateChartPoint>,
 	targetTimestampMs: number | null,
 	currentTimeMs: number
 ): number | null => {
@@ -430,14 +430,14 @@ export const formatPeggedAssetsData = ({
 	peggedAssetIdToChartDataIndex = {},
 	doublecountedIndexes = [],
 	currentTimeMs = Date.now()
-}: IFormatPeggedAssetsDataParams): FormattedStablecoinAsset[] => {
+}: IFormatPeggedAssetsDataParams): Array<FormattedStablecoinAsset> => {
 	const chartLabels = buildUniqueStablecoinChartLabels(peggedAssets, 'symbol')
 	const doublecountedIndexSet = new Set(doublecountedIndexes)
 	const completePriceHistory = getCompleteTimeSeriesDailyWindow(priceData, 31, (point) => point.date, {
 		currentTimeMs
 	})
 	const sluggedChain = chain ? slug(chain) : null
-	const mappedAssets: FormattedStablecoinAsset[] = []
+	const mappedAssets: Array<FormattedStablecoinAsset> = []
 	for (const [assetIndex, pegged] of peggedAssets.entries()) {
 		if (sluggedChain && !pegged.chains.some((candidate) => slug(candidate) === sluggedChain)) continue
 		const chartLabel = chartLabels[assetIndex]
@@ -592,8 +592,8 @@ export const formatPeggedChainsData = ({
 	peggedChartDataByChain = [],
 	chainDominances = {},
 	currentTimeMs = Date.now()
-}: IFormatPeggedChainsDataParams): IFormattedStablecoinChainRow[] => {
-	const formattedStablecoinChains: IFormattedStablecoinChainRow[] = []
+}: IFormatPeggedChainsDataParams): Array<IFormattedStablecoinChainRow> => {
+	const formattedStablecoinChains: Array<IFormattedStablecoinChainRow> = []
 	for (const [i, chainName] of chainList.entries()) {
 		const chart = peggedChartDataByChain[i] ?? null
 		const chainDominance = chainDominances[chainName] ?? null

@@ -37,7 +37,7 @@ function ProjectComingSoon() {
 }
 
 function useProjectModules(projects: typeof ALL_PROJECTS) {
-	const [tabsByProject, setTabsByProject] = useState<Record<string, DashboardTabConfig[]>>({})
+	const [tabsByProject, setTabsByProject] = useState<Record<string, Array<DashboardTabConfig>>>({})
 	const [headersByProject, setHeadersByProject] = useState<Record<string, DashboardModule['header']>>({})
 	const [loadingProjects, setLoadingProjects] = useState<Set<string>>(
 		() => new Set(projects.filter((p) => p.dashboardId && !p.comingSoon).map((p) => p.id))

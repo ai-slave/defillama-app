@@ -221,7 +221,7 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 					</ExternalLinkButton>
 				) : null}
 			</div>
-			{categories.length ? (
+			{categories.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-2">
 					<span className="label-md text-secondary">{categories.length > 1 ? 'Categories' : 'Category'}:</span>
 					{categories.map((category) => (
@@ -237,7 +237,7 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 				</div>
 			) : null}
 			{props.tags?.length ? <p className="flex items-center gap-1">Sub Category: {props.tags.join(', ')}</p> : null}
-			{childProtocols.length ? (
+			{childProtocols.length > 0 ? (
 				<div className="@container flex flex-col gap-2">
 					<span className="label-md text-secondary">Products:</span>
 					<ul className="grid gap-2 @2xl:grid-cols-2">

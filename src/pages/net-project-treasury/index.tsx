@@ -27,14 +27,14 @@ const NetProjectTreasuries = (props: InferGetStaticPropsType<typeof getStaticPro
 		<Layout
 			title="Net Treasury Rankings - Excl. Native Token - DefiLlama"
 			description="Track DeFi protocol net treasury rankings - value of assets owned excluding native tokens. Compare protocol treasuries holding stables, ETH, BTC, and other assets across 500+ protocols. Real-time net treasury analytics."
-			canonicalUrl={`/net-project-treasury`}
+			canonicalUrl="/net-project-treasury"
 			pageName={pageName}
 		>
 			<TableWithSearch
 				data={props.protocols}
 				columns={columns}
-				placeholder={'Search protocols...'}
-				columnToSearch={'name'}
+				placeholder="Search protocols..."
+				columnToSearch="name"
 				header="Protocol Rankings"
 				headingAs="h1"
 				csvFileName="net-project-treasury"

@@ -435,8 +435,8 @@ export function resolvePairColumns({
 	segment: ExchangeSegment
 	capabilities: { openInterest: boolean; funding: boolean; depth: boolean }
 	showVenue: boolean
-	omitColumns?: readonly string[]
-	columnOrder?: readonly string[]
+	omitColumns?: ReadonlyArray<string>
+	columnOrder?: ReadonlyArray<string>
 }) {
 	const omit = new Set(omitColumns ?? [])
 	const columns = buildPairColumns(segment, capabilities, showVenue).filter(
@@ -452,7 +452,7 @@ export function resolvePairColumns({
 
 export function resolvePairColumnVisibility(
 	columns: ReturnType<typeof buildPairColumns>,
-	initialVisibleColumns?: readonly string[]
+	initialVisibleColumns?: ReadonlyArray<string>
 ): VisibilityState {
 	if (!initialVisibleColumns) return pairColumnVisibility()
 	const visible = new Set(initialVisibleColumns)
@@ -481,18 +481,18 @@ export function PairTable({
 	embedded = false,
 	leadingControls = null
 }: {
-	pairs: PairTableRow[]
+	pairs: Array<PairTableRow>
 	segment: ExchangeSegment
 	capabilities: { openInterest: boolean; funding: boolean; depth: boolean }
 	csvFileName: string
 	/** Prepend a Venue column — for surfaces whose rows mix venues (token page markets). */
 	showVenue?: boolean
 	/** Column ids that do not apply on this surface; dropped entirely (column selector + CSV included). */
-	omitColumns?: readonly string[]
+	omitColumns?: ReadonlyArray<string>
 	/** Preferred column order; unlisted columns follow in their definition order. */
-	columnOrder?: readonly string[]
+	columnOrder?: ReadonlyArray<string>
 	/** Columns visible on first render; other applicable columns remain available in the selector. */
-	initialVisibleColumns?: readonly string[]
+	initialVisibleColumns?: ReadonlyArray<string>
 	/** Initial sorting. Pass [] to preserve the caller's pre-ranked row order (e.g. bybit-first). */
 	sorting?: SortingState
 	columnToSearch?: string

@@ -97,7 +97,7 @@ export function DesktopNav({
 														route={pageRoute}
 														name={pageName}
 														asPath={asPath}
-														isOld={true}
+														isOld
 													/>
 												))}
 											</div>
@@ -140,7 +140,7 @@ export function DesktopNav({
 	)
 }
 
-function NavDetailsSection({ category, pages, asPath }: { category: string; pages: TNavLink[]; asPath: string }) {
+function NavDetailsSection({ category, pages, asPath }: { category: string; pages: Array<TNavLink>; asPath: string }) {
 	const lastItemRef = React.useRef<HTMLDivElement>(null)
 
 	return (

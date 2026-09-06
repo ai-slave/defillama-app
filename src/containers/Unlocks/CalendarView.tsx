@@ -40,7 +40,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 
 	const viewParam = readSingleQueryValue(router.query.view)
 	const viewMode: (typeof VIEW_MODES)[number] =
-		viewParam && (VIEW_MODES as readonly string[]).includes(viewParam)
+		viewParam && (VIEW_MODES as ReadonlyArray<string>).includes(viewParam)
 			? (viewParam as (typeof VIEW_MODES)[number])
 			: 'Month'
 
@@ -72,7 +72,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 			filteredData = {}
 			for (const date in initialUnlocksData) {
 				const dailyData = initialUnlocksData[date]!
-				const filteredEvents: CalendarUnlockEvent[] = []
+				const filteredEvents: Array<CalendarUnlockEvent> = []
 				for (const event of dailyData.events) {
 					if (showOnlyWatchlist && !savedProtocols.has(event.protocol)) continue
 					if (showOnlyInsider && event.category !== 'insiders') continue
@@ -96,9 +96,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 		if (viewMode === 'TreeMap' || viewMode === 'List') return []
 
 		if (viewMode === 'Week') {
-			return generateWeekDays(currentDate) as DayInfo[]
+			return generateWeekDays(currentDate) as Array<DayInfo>
 		}
-		return generateCalendarDays(currentDate) as DayInfo[]
+		return generateCalendarDays(currentDate) as Array<DayInfo>
 	}, [currentDate, viewMode])
 
 	const listEventsData = React.useMemo(() => {

@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { DashboardAction, DashboardState } from './dashboardReducer'
 import type { TextConfig } from './types'
@@ -70,9 +70,9 @@ describe('useDashboardActions', () => {
 		container.remove()
 	})
 
-	it('uses a reordered list as the synchronous source for the next mutation and save', async () => {
+	test('uses a reordered list as the synchronous source for the next mutation and save', async () => {
 		const dispatch = vi.fn<(action: DashboardAction) => void>()
-		const autoSave = vi.fn<(items: DashboardItemConfig[]) => void>()
+		const autoSave = vi.fn<(items: Array<DashboardItemConfig>) => void>()
 		const rendered: { actions?: ReturnType<typeof useDashboardActions> } = {}
 
 		function Harness() {
@@ -94,9 +94,9 @@ describe('useDashboardActions', () => {
 		expect(autoSave.mock.calls[1]?.[0].map((item) => item.id)).toEqual(['second', 'first', 'third'])
 	})
 
-	it('duplicates a unified table with independent nested configuration and a fresh id', async () => {
+	test('duplicates a unified table with independent nested configuration and a fresh id', async () => {
 		const dispatch = vi.fn<(action: DashboardAction) => void>()
-		const autoSave = vi.fn<(items: DashboardItemConfig[]) => void>()
+		const autoSave = vi.fn<(items: Array<DashboardItemConfig>) => void>()
 		const rendered: { actions?: ReturnType<typeof useDashboardActions> } = {}
 
 		function Harness() {

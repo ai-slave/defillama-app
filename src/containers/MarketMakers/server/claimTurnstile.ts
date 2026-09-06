@@ -1,7 +1,7 @@
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
-const TURNSTILE_TIMEOUT_MS = 5_000
+const TURNSTILE_TIMEOUT_MS = 5000
 const TURNSTILE_ACTION = 'claim'
-const MAX_TOKEN_LENGTH = 2_048
+const MAX_TOKEN_LENGTH = 2048
 
 const UNAVAILABLE_ERROR_CODES = new Set([
 	'missing-input-secret',

@@ -39,7 +39,7 @@ export interface IEquitiesTreemapLeaf extends MarketTreemapLeaf {
 }
 
 export interface IEquitiesTreemapGroup extends Omit<MarketTreemapGroup, 'children'> {
-	children: IEquitiesTreemapLeaf[]
+	children: Array<IEquitiesTreemapLeaf>
 }
 
 export type EquitiesTreemapNode = IEquitiesTreemapLeaf | IEquitiesTreemapGroup
@@ -52,14 +52,14 @@ export interface IEquitiesTreemapOptions {
 }
 
 export interface IEquitiesTreemapResult {
-	treeData: EquitiesTreemapNode[]
-	leaves: IEquitiesTreemapLeaf[]
+	treeData: Array<EquitiesTreemapNode>
+	leaves: Array<IEquitiesTreemapLeaf>
 	excludedCount: number
 	truncatedCount: number
 }
 
 export interface IEquitiesTreemapRanking {
-	rows: EquitiesTreemapRow[]
+	rows: Array<EquitiesTreemapRow>
 	sizeMetric: EquitiesTreemapSizeMetric
 	excludedCount: number
 	truncatedCount: number
@@ -71,7 +71,7 @@ export function prepareEquitiesTreemapCsv({
 	colorLabel,
 	filename
 }: {
-	leaves: readonly IEquitiesTreemapLeaf[]
+	leaves: ReadonlyArray<IEquitiesTreemapLeaf>
 	sizeLabel: string
 	colorLabel: string
 	filename: string
@@ -130,11 +130,11 @@ export function prepareCompleteEquitiesTreemapCsv({
 }
 
 export function rankEquitiesTreemapRows(
-	rows: EquitiesTreemapRow[],
+	rows: Array<EquitiesTreemapRow>,
 	sizeMetric: EquitiesTreemapSizeMetric,
 	limit = EQUITIES_TREEMAP_DEFAULT_LIMIT
 ): IEquitiesTreemapRanking {
-	const rankedRows: EquitiesTreemapRow[] = []
+	const rankedRows: Array<EquitiesTreemapRow> = []
 	let excludedCount = 0
 
 	for (const row of rows) {
@@ -157,8 +157,8 @@ export function rankEquitiesTreemapRows(
 export function buildEquitiesTreemapLeaves(
 	ranking: IEquitiesTreemapRanking,
 	colorMetric: EquitiesTreemapColorMetric
-): IEquitiesTreemapLeaf[] {
-	const leaves: IEquitiesTreemapLeaf[] = []
+): Array<IEquitiesTreemapLeaf> {
+	const leaves: Array<IEquitiesTreemapLeaf> = []
 	const { rows, sizeMetric } = ranking
 
 	let index = 0
@@ -183,12 +183,12 @@ export function buildEquitiesTreemapLeaves(
 }
 
 export function groupEquitiesTreemapLeaves(
-	leaves: IEquitiesTreemapLeaf[],
+	leaves: Array<IEquitiesTreemapLeaf>,
 	groupBy: EquitiesTreemapGroupBy
-): EquitiesTreemapNode[] {
+): Array<EquitiesTreemapNode> {
 	if (groupBy === 'none') return leaves
 
-	const treeData: IEquitiesTreemapGroup[] = []
+	const treeData: Array<IEquitiesTreemapGroup> = []
 	const groups = new Map<string, IEquitiesTreemapGroup>()
 	for (const leaf of leaves) {
 		const sector = leaf.sector
@@ -206,7 +206,7 @@ export function groupEquitiesTreemapLeaves(
 }
 
 export function buildEquitiesTreemap(
-	rows: EquitiesTreemapRow[],
+	rows: Array<EquitiesTreemapRow>,
 	{ groupBy, sizeMetric, colorMetric, limit = EQUITIES_TREEMAP_DEFAULT_LIMIT }: IEquitiesTreemapOptions
 ): IEquitiesTreemapResult {
 	const ranking = rankEquitiesTreemapRows(rows, sizeMetric, limit)

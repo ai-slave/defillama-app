@@ -8,11 +8,11 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
-const EMPTY_ARTICLE_DOCUMENTS: ArticleDocument[] = []
+const EMPTY_ARTICLE_DOCUMENTS: Array<ArticleDocument> = []
 
 type Props = {
-	value: string[]
-	onChange: (ids: string[]) => void
+	value: Array<string>
+	onChange: (ids: Array<string>) => void
 	hint?: string
 	listArticlesParams?: Partial<ListArticlesParams>
 }
@@ -37,7 +37,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 	const items = results?.items ?? EMPTY_ARTICLE_DOCUMENTS
 
 	const hasUnresolved = value.some((id) => !titles[id])
-	const resolveQuery = useQuery<ArticleDocument[]>({
+	const resolveQuery = useQuery<Array<ArticleDocument>>({
 		queryKey: ['research', 'admin', 'article-multi-picker', 'resolve', value, listArticlesParams],
 		queryFn: async () => {
 			const fallback = await listArticles({ limit: 100, sort: 'newest', ...listArticlesParams }, authorizedFetch)
@@ -101,8 +101,12 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 					unmountOnHide
 					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
 				>
-					{isFetching && !items.length ? <p className="p-3 text-center text-xs text-tertiary">Searching…</p> : null}
-					{!isFetching && !items.length ? <p className="p-3 text-center text-xs text-tertiary">No results</p> : null}
+					{isFetching && items.length === 0 ? (
+						<p className="p-3 text-center text-xs text-tertiary">Searching…</p>
+					) : null}
+					{!isFetching && items.length === 0 ? (
+						<p className="p-3 text-center text-xs text-tertiary">No results</p>
+					) : null}
 					{items.map((article) => {
 						const selected = value.includes(article.id)
 						return (
@@ -126,7 +130,7 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 				</Ariakit.ComboboxPopover>
 			</Ariakit.ComboboxProvider>
 
-			{value.length ? (
+			{value.length > 0 ? (
 				<div className="flex flex-wrap gap-2">
 					{value.map((id) => (
 						<span

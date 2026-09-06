@@ -10,7 +10,7 @@ function isRecord(x: unknown): x is Record<string, unknown> {
 	return !!x && typeof x === 'object' && !Array.isArray(x)
 }
 
-function isStringArray(x: unknown): x is string[] {
+function isStringArray(x: unknown): x is Array<string> {
 	return Array.isArray(x) && x.every((v) => typeof v === 'string')
 }
 
@@ -41,10 +41,10 @@ function toChartCsvCell(value: unknown): CsvCell {
 }
 
 function getDatasetFromOption(option: ReturnType<echarts.ECharts['getOption']>): {
-	dimensions: string[] | null
-	source: unknown[] | null
+	dimensions: Array<string> | null
+	source: Array<unknown> | null
 } {
-	const datasetOption = option.dataset as DatasetComponentOption | DatasetComponentOption[] | undefined
+	const datasetOption = option.dataset as DatasetComponentOption | Array<DatasetComponentOption> | undefined
 	const dataset = Array.isArray(datasetOption) ? datasetOption[0] : datasetOption
 	const dimensionsRaw = dataset?.dimensions
 	const sourceRaw = dataset?.source
@@ -52,8 +52,8 @@ function getDatasetFromOption(option: ReturnType<echarts.ECharts['getOption']>):
 	if (!Array.isArray(sourceRaw)) return { dimensions: null, source: null }
 	if (!dimensionsRaw) return { dimensions: null, source: sourceRaw }
 
-	const dimensions: string[] = []
-	const indexes: number[] = []
+	const dimensions: Array<string> = []
+	const indexes: Array<number> = []
 	for (const [index, dimension] of dimensionsRaw.entries()) {
 		const name = typeof dimension === 'string' ? dimension : dimension.displayName
 		if (name === undefined) continue
@@ -68,14 +68,17 @@ function getDatasetFromOption(option: ReturnType<echarts.ECharts['getOption']>):
 	return { dimensions: dimensions.length > 0 ? dimensions : null, source }
 }
 
-export function buildCsvRowsFromDataset(dimensions: string[] | null, source: unknown[] | null): Array<Array<CsvCell>> {
+export function buildCsvRowsFromDataset(
+	dimensions: Array<string> | null,
+	source: Array<unknown> | null
+): Array<Array<CsvCell>> {
 	if (!source || source.length === 0) return []
 
 	// ECharts dataset.source can be:
 	// - object rows: [{ timestamp: 1, A: 2 }, ...]
 	// - array rows with explicit `dimensions`: [[1,2,...], ...]
 	// - array rows with header row: [['timestamp','A',...], [1,2,...], ...]
-	let dataRows: unknown[] = source
+	let dataRows: Array<unknown> = source
 
 	const headerDimsFromSource = !dimensions && isStringArray(source[0]) ? source[0] : null
 	const dims =
@@ -115,7 +118,7 @@ export function buildCsvRowsFromDataset(dimensions: string[] | null, source: unk
 
 		for (const row of dataRows) {
 			let tsRaw: unknown = ''
-			let values: CsvCell[] = []
+			let values: Array<CsvCell> = []
 
 			if (isRecord(row)) {
 				tsRaw = getOwnRecordValue(row, 'timestamp')
@@ -156,8 +159,8 @@ export function buildCsvFromDataset({
 	source,
 	filenameBase
 }: {
-	dimensions: string[] | null
-	source: unknown[] | null
+	dimensions: Array<string> | null
+	source: Array<unknown> | null
 	filenameBase: string | undefined
 }): { filename: string; rows: Array<Array<CsvCell>> } {
 	const rows = buildCsvRowsFromDataset(dimensions, source)
@@ -170,16 +173,16 @@ export function buildCsvFromDataset({
 
 function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 	const seriesRaw = option?.series
-	const seriesArr: any[] = Array.isArray(seriesRaw) ? seriesRaw : seriesRaw ? [seriesRaw] : []
+	const seriesArr: Array<any> = Array.isArray(seriesRaw) ? seriesRaw : seriesRaw ? [seriesRaw] : []
 	if (seriesArr.length === 0) return []
 	const isScatterChart = seriesArr.every((series) => series?.type === 'scatter')
 
 	const xAxisRaw = option?.xAxis
 	const xAxis = Array.isArray(xAxisRaw) ? xAxisRaw[0] : xAxisRaw
-	const xAxisData: unknown[] | null = Array.isArray(xAxis?.data) ? xAxis.data : null
+	const xAxisData: Array<unknown> | null = Array.isArray(xAxis?.data) ? xAxis.data : null
 	const yAxisRaw = option?.yAxis
 	const yAxis = Array.isArray(yAxisRaw) ? yAxisRaw[0] : yAxisRaw
-	const yAxisData: unknown[] | null = Array.isArray(yAxis?.data) ? yAxis.data : null
+	const yAxisData: Array<unknown> | null = Array.isArray(yAxis?.data) ? yAxis.data : null
 	const categoryAxisData = xAxisData ?? yAxisData
 
 	if (isScatterChart) {
@@ -188,7 +191,7 @@ function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 		const rows: Array<Array<CsvCell>> = [[xHeader, yHeader, 'Entity']]
 
 		for (const series of seriesArr) {
-			const data: unknown[] = Array.isArray(series?.data) ? series.data : []
+			const data: Array<unknown> = Array.isArray(series?.data) ? series.data : []
 			for (const point of data) {
 				let value: unknown = point
 				if (isRecord(point) && 'value' in point) {
@@ -207,7 +210,7 @@ function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 		return rows
 	}
 
-	const seriesNames: string[] = []
+	const seriesNames: Array<string> = []
 	const rowsByX = new Map<string | number, Record<string, CsvCell>>() // key type must be stable
 
 	for (let s = 0; s < seriesArr.length; s++) {
@@ -215,7 +218,7 @@ function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 		const name = typeof series?.name === 'string' && series.name ? series.name : `series_${s + 1}`
 		seriesNames.push(name)
 
-		const data: unknown[] = Array.isArray(series?.data) ? series.data : []
+		const data: Array<unknown> = Array.isArray(series?.data) ? series.data : []
 		for (let i = 0; i < data.length; i++) {
 			const point = data[i]
 			let x: unknown = categoryAxisData?.[i]
@@ -293,8 +296,8 @@ function buildCsvFromChart({
 }
 
 export interface ChartCsvDataset {
-	dimensions: string[] | null
-	source: unknown[] | null
+	dimensions: Array<string> | null
+	source: Array<unknown> | null
 }
 
 export type PrepareChartCsvDataset = () => ChartCsvDataset | Promise<ChartCsvDataset>

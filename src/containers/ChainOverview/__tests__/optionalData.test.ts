@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ICategoriesAndTags, IChainMetadata } from '~/utils/metadata/types'
 
 const mocks = vi.hoisted(() => ({
@@ -124,7 +124,7 @@ describe('getChainOverviewData optional sections', () => {
 		vi.clearAllMocks()
 	})
 
-	it('falls back when stablecoins fail', async () => {
+	test('falls back when stablecoins fail', async () => {
 		resetMocks()
 		const error = new Error('stablecoins unavailable')
 		mocks.getStablecoinChainMcapSummary.mockRejectedValueOnce(error)
@@ -141,7 +141,7 @@ describe('getChainOverviewData optional sections', () => {
 		expect(mocks.recordOptionalPageDataFailure).toHaveBeenCalledWith('chain:Ethereum:stablecoins', error)
 	})
 
-	it('looks up sponsored reports by the canonical chain page identity', async () => {
+	test('looks up sponsored reports by the canonical chain page identity', async () => {
 		resetMocks()
 		const reports = [{ id: 'report-id' }]
 		mocks.getSponsoredResearchReports.mockResolvedValueOnce({ sponsor: null, reports })
@@ -160,7 +160,7 @@ describe('getChainOverviewData optional sections', () => {
 		expect(data?.researchSponsorEntitySlug).toBe('canonical-ethereum')
 	})
 
-	it('still rejects when protocols by chain fail', async () => {
+	test('still rejects when protocols by chain fail', async () => {
 		resetMocks()
 		mocks.getProtocolsByChain.mockRejectedValueOnce(new Error('protocols unavailable'))
 		const { getChainOverviewData } = await import('../queries.server')
@@ -175,7 +175,7 @@ describe('getChainOverviewData optional sections', () => {
 		).rejects.toThrow('Error fetching chainOverview:Ethereum')
 	})
 
-	it('still rejects when required protocol aggregation is absent', async () => {
+	test('still rejects when required protocol aggregation is absent', async () => {
 		resetMocks()
 		mocks.getProtocolsByChain.mockResolvedValueOnce(null)
 		const { getChainOverviewData } = await import('../queries.server')
@@ -190,7 +190,7 @@ describe('getChainOverviewData optional sections', () => {
 		).rejects.toThrow('Missing protocol aggregation for Ethereum')
 	})
 
-	it('retains an explicit zero NFT volume', async () => {
+	test('retains an explicit zero NFT volume', async () => {
 		resetMocks()
 		mocks.fetchJson.mockResolvedValueOnce({ ethereum: 0 })
 		const { getChainOverviewData } = await import('../queries.server')
@@ -205,7 +205,7 @@ describe('getChainOverviewData optional sections', () => {
 		expect(data?.nfts).toEqual({ total24h: 0 })
 	})
 
-	it('keeps chain-native and app fee/revenue requests on their canonical endpoints', async () => {
+	test('keeps chain-native and app fee/revenue requests on their canonical endpoints', async () => {
 		resetMocks()
 		const { getChainOverviewData } = await import('../queries.server')
 		const metricChain = {
@@ -246,7 +246,7 @@ describe('getChainOverviewData optional sections', () => {
 		})
 	})
 
-	it('keeps the top fee protocol ordering, positive-value filter, and 14-row limit', async () => {
+	test('keeps the top fee protocol ordering, positive-value filter, and 14-row limit', async () => {
 		resetMocks()
 		const protocols = Array.from({ length: 16 }, (_, index) => ({
 			id: `protocol-${index + 1}`,

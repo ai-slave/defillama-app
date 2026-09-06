@@ -5,7 +5,7 @@ export interface TokenYieldStats {
 	averageAPY: number | null
 }
 
-export function getTokenYieldStats(rows: IYieldTableRow[]): TokenYieldStats {
+export function getTokenYieldStats(rows: Array<IYieldTableRow>): TokenYieldStats {
 	let totalApy = 0
 	let poolsWithApy = 0
 

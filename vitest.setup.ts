@@ -1,6 +1,6 @@
 import { afterEach, beforeEach } from 'vitest'
 
-const unexpectedFetches: string[] = []
+const unexpectedFetches: Array<string> = []
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 globalThis.fetch = (async (input: RequestInfo | URL) => {

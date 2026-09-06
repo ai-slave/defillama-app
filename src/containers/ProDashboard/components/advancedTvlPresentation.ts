@@ -30,7 +30,7 @@ const SINGLE_INFLOWS_CHART_OPTIONS = {
 	grid: chartGrid()
 }
 
-const TVL_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const TVL_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'line',
 		name: 'TVL',
@@ -38,7 +38,7 @@ const TVL_CHARTS: MultiSeriesChartSeriesConfig[] = [
 		color: DASHBOARD_BLUE
 	}
 ]
-const USD_INFLOWS_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const USD_INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'bar',
 		name: 'USD Inflows',
@@ -48,7 +48,7 @@ const USD_INFLOWS_CHARTS: MultiSeriesChartSeriesConfig[] = [
 	}
 ]
 
-export function orderAdvancedTvlChains(dataset: TimestampDataset, chainNames: string[]): string[] {
+export function orderAdvancedTvlChains(dataset: TimestampDataset, chainNames: Array<string>): Array<string> {
 	const latest = dataset.source[dataset.source.length - 1]
 	if (!latest) return chainNames
 	const dimensionIndex = new Map(dataset.dimensions.map((dimension, index) => [dimension, index]))
@@ -69,8 +69,8 @@ export function buildAdvancedTvlPresentation({
 }: {
 	chartType: AdvancedTvlChartType
 	chainsDataset: TimestampDataset
-	chainNames: string[]
-	tokenNames: string[]
+	chainNames: Array<string>
+	tokenNames: Array<string>
 }) {
 	const orderedChainNames = orderAdvancedTvlChains(chainsDataset, chainNames)
 	const colorNames =
@@ -90,7 +90,7 @@ export function buildAdvancedTvlPresentation({
 		stackColors.Others = generateConsistentChartColor('Others', '#8884d8', 'protocol')
 	}
 
-	let charts: MultiSeriesChartSeriesConfig[] = []
+	let charts: Array<MultiSeriesChartSeriesConfig> = []
 	let chartOptions = DOLLAR_CHART_OPTIONS
 	let valueSymbol = '$'
 	let solidChartAreaStyle = false

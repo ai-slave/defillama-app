@@ -181,7 +181,7 @@ function useEquitiesCompaniesTableData() {
 	return { data, isLoading: isLoading || (!streamDone && data === undefined), error }
 }
 
-const EMPTY_DATA: IEquitiesCompanyApiItem[] = []
+const EMPTY_DATA: Array<IEquitiesCompanyApiItem> = []
 
 export function EquitiesCompaniesDataset() {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'marketCap', desc: true }])
@@ -256,7 +256,7 @@ export function EquitiesCompaniesDataset() {
 						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
-								const csv: CsvCell[][] = [
+								const csv: Array<Array<CsvCell>> = [
 									[
 										'Ticker',
 										'Name',

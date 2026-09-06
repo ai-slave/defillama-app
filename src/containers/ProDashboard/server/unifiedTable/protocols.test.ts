@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const {
 	anyMock,
@@ -77,7 +77,7 @@ describe('unified table metric totals cache', () => {
 		vi.useRealTimers()
 	})
 
-	it('reuses totals briefly and refreshes them after the TTL', async () => {
+	test('reuses totals briefly and refreshes them after the TTL', async () => {
 		const { fetchProtocolsTable } = await import('./protocols')
 		const tvlOptions = { ...options, baseMetricFamilies: ['tvl' as const] }
 
@@ -90,7 +90,7 @@ describe('unified table metric totals cache', () => {
 		expect(oneMock).toHaveBeenCalledTimes(2)
 	})
 
-	it('clears a rejected totals request so the next call can retry', async () => {
+	test('clears a rejected totals request so the next call can retry', async () => {
 		oneMock.mockRejectedValueOnce(new Error('temporary database failure')).mockResolvedValueOnce(totals)
 		const { fetchProtocolsTable } = await import('./protocols')
 
@@ -100,7 +100,7 @@ describe('unified table metric totals cache', () => {
 		expect(oneMock).toHaveBeenCalledTimes(2)
 	})
 
-	it('retains independent totals projections within the TTL', async () => {
+	test('retains independent totals projections within the TTL', async () => {
 		const { fetchProtocolsTable } = await import('./protocols')
 
 		await fetchProtocolsTable({ ...options, baseMetricFamilies: ['tvl'] })
@@ -110,7 +110,7 @@ describe('unified table metric totals cache', () => {
 		expect(oneMock).toHaveBeenCalledTimes(2)
 	})
 
-	it('skips the global totals query when the requested columns do not use global shares', async () => {
+	test('skips the global totals query when the requested columns do not use global shares', async () => {
 		const { fetchProtocolsTable } = await import('./protocols')
 
 		await fetchProtocolsTable({ ...options, baseMetricFamilies: ['fees', 'revenue', 'market-cap'] })
@@ -118,7 +118,7 @@ describe('unified table metric totals cache', () => {
 		expect(oneMock).not.toHaveBeenCalled()
 	})
 
-	it('maps the canonical Lens holder revenue comparison to a percentage metric', async () => {
+	test('maps the canonical Lens holder revenue comparison to a percentage metric', async () => {
 		fetchOracleMetricsMock.mockResolvedValue({
 			oracles: { Chainlink: ['example--protocol'] },
 			chainsByOracle: {},
@@ -154,7 +154,7 @@ describe('unified table metric totals cache', () => {
 		expect(result.rows[0]?.oracles).toEqual(['Chainlink'])
 	})
 
-	it('maps the first Lens metric batch while keeping incentives out of unsupported subprotocol projections', async () => {
+	test('maps the first Lens metric batch while keeping incentives out of unsupported subprotocol projections', async () => {
 		anyMock
 			.mockResolvedValueOnce([
 				{
@@ -266,7 +266,7 @@ describe('unified table metric totals cache', () => {
 		expect(String(anyMock.mock.calls[1]?.[0])).not.toContain('msp.incentive_30d')
 	})
 
-	it('uses canonical protocol and chain display names from Lens metadata', async () => {
+	test('uses canonical protocol and chain display names from Lens metadata', async () => {
 		anyMock
 			.mockResolvedValueOnce([
 				{
@@ -300,7 +300,7 @@ describe('unified table metric totals cache', () => {
 		})
 	})
 
-	it('does not request oracle membership for unrelated tables', async () => {
+	test('does not request oracle membership for unrelated tables', async () => {
 		const { fetchProtocolsTable } = await import('./protocols')
 
 		await fetchProtocolsTable(options)
@@ -308,7 +308,7 @@ describe('unified table metric totals cache', () => {
 		expect(fetchOracleMetricsMock).not.toHaveBeenCalled()
 	})
 
-	it('constructs only requested metric families and their exact ratio dependencies', async () => {
+	test('constructs only requested metric families and their exact ratio dependencies', async () => {
 		anyMock
 			.mockResolvedValueOnce([
 				{
@@ -319,8 +319,8 @@ describe('unified table metric totals cache', () => {
 					fees_1d: 0,
 					fees_annualised: 50,
 					revenue_annualised: 25,
-					mcap: 1_000,
-					fdv: 2_000,
+					mcap: 1000,
+					fdv: 2000,
 					volume_dexs_1d: 999,
 					exclude_tvl_from_parent: false
 				}
@@ -339,8 +339,8 @@ describe('unified table metric totals cache', () => {
 			fees24h: 0,
 			feesAnnualized1y: 50,
 			revenueAnnualized1y: 25,
-			mcap: 1_000,
-			fdv: 2_000,
+			mcap: 1000,
+			fdv: 2000,
 			mcaptvl: 10,
 			pf: 20,
 			ps: 40
@@ -349,7 +349,7 @@ describe('unified table metric totals cache', () => {
 		expect(metrics).not.toHaveProperty('protocolCount')
 	})
 
-	it('preserves omitted activity in a successful Lens row as unavailable', async () => {
+	test('preserves omitted activity in a successful Lens row as unavailable', async () => {
 		anyMock
 			.mockResolvedValueOnce([
 				{
@@ -407,7 +407,7 @@ describe('unified table metric totals cache', () => {
 		expect(metrics?.feesChange_1d).toBeNull()
 	})
 
-	it('exposes open interest only when that metric family is requested', async () => {
+	test('exposes open interest only when that metric family is requested', async () => {
 		const lensRows = [
 			{
 				protocol: 'perps-protocol',
@@ -428,7 +428,7 @@ describe('unified table metric totals cache', () => {
 		expect(withOpenInterest.rows[0]?.metrics.openInterest).toBe(42)
 	})
 
-	it('retains canonical parent open interest when child metric allocation is absent', async () => {
+	test('retains canonical parent open interest when child metric allocation is absent', async () => {
 		anyMock
 			.mockResolvedValueOnce([
 				{
@@ -465,7 +465,7 @@ describe('unified table metric totals cache', () => {
 		})
 	})
 
-	it('filters metric presets by canonical dataset membership without narrowing broad custom tables', async () => {
+	test('filters metric presets by canonical dataset membership without narrowing broad custom tables', async () => {
 		const { fetchProtocolsTable } = await import('./protocols')
 		const lensRows = [
 			{
@@ -502,7 +502,7 @@ describe('unified table metric totals cache', () => {
 		expect(broad.rows.map((row) => row.protocolId)).toEqual(['canonical', 'lens-only'])
 	})
 
-	it('constructs only requested optional chain metrics', async () => {
+	test('constructs only requested optional chain metrics', async () => {
 		const { fetchProtocolsTable } = await import('./protocols')
 		const chainOptions = { ...options, rowHeaders: ['chain' as const, 'protocol' as const] }
 		const canonicalChainRows = [
@@ -533,7 +533,7 @@ describe('unified table metric totals cache', () => {
 		expect(expandedMetrics.metrics).toEqual({ openInterest: 42, bridgedTvl: 100, stablesMcap: 30, stablesShare: 25 })
 	})
 
-	it('constructs sparse canonical chain metrics from requested families', async () => {
+	test('constructs sparse canonical chain metrics from requested families', async () => {
 		anyMock
 			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([])
@@ -603,7 +603,7 @@ describe('unified table metric totals cache', () => {
 		expect(ethereum.metrics).not.toHaveProperty('protocolCount')
 	})
 
-	it('maps canonical chain incentives without allocating them to protocol-chain rows', async () => {
+	test('maps canonical chain incentives without allocating them to protocol-chain rows', async () => {
 		anyMock
 			.mockResolvedValueOnce([])
 			.mockResolvedValueOnce([])
@@ -628,7 +628,7 @@ describe('unified table metric totals cache', () => {
 		})
 	})
 
-	it('shares one request scope between supplemental values and canonical membership', async () => {
+	test('shares one request scope between supplemental values and canonical membership', async () => {
 		anyMock
 			.mockResolvedValueOnce([
 				{

@@ -9,7 +9,7 @@ import { DepthCurveBody } from './DepthCurveBody'
 import { EXCHANGE_SEGMENT_LABELS, type ExchangeSegment } from './models'
 
 /** Depth exists for spot and USD perps; COIN perps carry too few venues to compare. */
-const DEPTH_SEGMENTS = ['spot', 'linear_perp'] as const satisfies readonly ExchangeSegment[]
+const DEPTH_SEGMENTS = ['spot', 'linear_perp'] as const satisfies ReadonlyArray<ExchangeSegment>
 type DepthSegment = (typeof DEPTH_SEGMENTS)[number]
 
 /** Named venues in the split view; the rest fold into one "Others" curve. */
@@ -17,7 +17,7 @@ const BREAKDOWN_VENUES = 12
 
 type DepthView = 'aggregate' | 'breakdown'
 
-export function DepthCurveChart({ rows }: { rows: DepthCurveRow[] }) {
+export function DepthCurveChart({ rows }: { rows: Array<DepthCurveRow> }) {
 	const [segment, setSegment] = React.useState<DepthSegment>('spot')
 	const [view, setView] = React.useState<DepthView>('aggregate')
 
@@ -40,7 +40,7 @@ export function DepthCurveChart({ rows }: { rows: DepthCurveRow[] }) {
 				<SegmentedControl<DepthSegment>
 					value={activeSegment}
 					onValueChange={setSegment}
-					options={(available.length ? available : DEPTH_SEGMENTS).map((option) => ({
+					options={(available.length > 0 ? available : DEPTH_SEGMENTS).map((option) => ({
 						value: option,
 						label: EXCHANGE_SEGMENT_LABELS[option]
 					}))}

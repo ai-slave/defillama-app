@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 
 const mocks = vi.hoisted(() => ({
@@ -28,13 +28,13 @@ beforeEach(() => {
 })
 
 describe('AdapterMetrics breakdown routes', () => {
-	it('ranks protocols by their latest value within seven complete days', async () => {
+	test('ranks protocols by their latest value within seven complete days', async () => {
 		const today = Math.floor(Date.now() / 86_400_000) * 86_400
 		const day = (daysAgo: number) => today - daysAgo * 86_400
 
 		mocks.fetchAdapterChainChartDataByProtocolBreakdown.mockResolvedValue([
 			[day(9), { Filler: 1 }],
-			[day(8), { Expired: 1_000 }],
+			[day(8), { Expired: 1000 }],
 			[day(7), { Filler: 1 }],
 			[day(6), { Filler: 1 }],
 			[day(5), { Changing: 900, Filler: 1 }],
@@ -42,7 +42,7 @@ describe('AdapterMetrics breakdown routes', () => {
 			[day(3), { Recent: 600, Filler: 1 }],
 			[day(2), { Changing: 400, Filler: 1 }],
 			[day(1), { Fresh: 500, Competitor: 450, Filler: 1 }],
-			[today, { Current: 2_000 }]
+			[today, { Current: 2000 }]
 		])
 
 		const { adapterMetricBreakdown } =
@@ -79,7 +79,7 @@ describe('AdapterMetrics breakdown routes', () => {
 		})
 	})
 
-	it('labels and counts grouped protocol families without calling them protocols', async () => {
+	test('labels and counts grouped protocol families without calling them protocols', async () => {
 		vi.resetModules()
 		const today = Math.floor(Date.now() / 86_400_000) * 86_400
 		mocks.fetchProtocols.mockResolvedValue({
@@ -114,7 +114,7 @@ describe('AdapterMetrics breakdown routes', () => {
 		expect(body.metadata).not.toHaveProperty('totalProtocols')
 	})
 
-	it('filters protocol-specific chain summaries by display-name chain keys', async () => {
+	test('filters protocol-specific chain summaries by display-name chain keys', async () => {
 		mocks.fetchAdapterProtocolChartDataByBreakdownType.mockResolvedValue([
 			[1, { BSC: 10, Ethereum: 50 }],
 			[2, { BSC: 30, Ethereum: 60 }]
@@ -147,7 +147,7 @@ describe('AdapterMetrics breakdown routes', () => {
 		})
 	})
 
-	it('normalizes saved legacy aliases for protocol-specific chain summary filters', async () => {
+	test('normalizes saved legacy aliases for protocol-specific chain summary filters', async () => {
 		mocks.fetchAdapterProtocolChartDataByBreakdownType.mockResolvedValue([
 			[1, { BSC: 10, Ethereum: 50 }],
 			[2, { BSC: 30, Ethereum: 60 }]
@@ -175,7 +175,7 @@ describe('AdapterMetrics breakdown routes', () => {
 		})
 	})
 
-	it('does not mutate the cached protocol category lookup with overview protocol aliases', async () => {
+	test('does not mutate the cached protocol category lookup with overview protocol aliases', async () => {
 		let overviewCalls = 0
 		mocks.fetchAdapterChainMetrics.mockImplementation(async () => {
 			overviewCalls += 1
@@ -227,7 +227,7 @@ describe('AdapterMetrics breakdown routes', () => {
 		expect(overviewCalls).toBe(2)
 	})
 
-	it.each(['include', 'exclude'] as const)(
+	test.each(['include', 'exclude'] as const)(
 		'rejects a partial selected-chain protocol aggregate in %s mode',
 		async (chainFilterMode) => {
 			mocks.fetchAdapterChainChartDataByProtocolBreakdown.mockImplementation(async ({ chain }) => {
@@ -252,7 +252,7 @@ describe('AdapterMetrics breakdown routes', () => {
 		}
 	)
 
-	it('rejects an all-protocol chain chart when a ranked chain request fails', async () => {
+	test('rejects an all-protocol chain chart when a ranked chain request fails', async () => {
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({
 			protocols: [
 				{

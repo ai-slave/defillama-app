@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { EarnPageRow, MarketTableRow } from '~/containers/Yields/data/types'
 import { joinEarnAndBorrowMarkets } from './yieldData'
 
@@ -16,7 +16,7 @@ function earnRow(id: string): EarnPageRow {
 		url: 'https://example.com',
 		category: 'Lending',
 		referenceAsset: 'ETH',
-		tvl: 7_000,
+		tvl: 7000,
 		apy: 4,
 		apyBase: 3,
 		apyReward: 1,
@@ -69,30 +69,30 @@ function marketRow(id: string): MarketTableRow {
 		collateralSymbol: 'ETH',
 		borrowSymbol: 'USDC',
 		totalSupplyUsd: 10_000,
-		availableBorrowUsd: 6_000,
-		totalBorrowUsd: 4_000,
+		availableBorrowUsd: 6000,
+		totalBorrowUsd: 4000,
 		borrowCapacityFilled: 0.4,
 		ltv: 0.8
 	}
 }
 
 describe('joinEarnAndBorrowMarkets', () => {
-	it('adds current borrow-market facts without changing earn values', () => {
+	test('adds current borrow-market facts without changing earn values', () => {
 		const rows = joinEarnAndBorrowMarkets([earnRow('pool-1')], [marketRow('pool-1')])
 		expect(rows[0]).toMatchObject({
-			tvl: 7_000,
+			tvl: 7000,
 			apy: 4,
 			apyBorrow: 5,
 			apyBaseBorrow: 6,
 			apyRewardBorrow: 1,
 			totalSupplyUsd: 10_000,
-			totalBorrowUsd: 4_000,
-			totalAvailableUsd: 6_000,
+			totalBorrowUsd: 4000,
+			totalAvailableUsd: 6000,
 			ltv: 0.8
 		})
 	})
 
-	it('keeps supply-only pools and marks borrow facts unavailable', () => {
+	test('keeps supply-only pools and marks borrow facts unavailable', () => {
 		const rows = joinEarnAndBorrowMarkets([earnRow('supply-only')], [])
 		expect(rows[0]).toMatchObject({
 			apy: 4,

@@ -13,7 +13,7 @@ const DEFAULT_COMPARE = {
 	format: 'percent' as const
 }
 
-function selectFiniteMetricSeries(data: [number, number][]): [number, number][] {
+function selectFiniteMetricSeries(data: Array<[number, number]>): Array<[number, number]> {
 	let firstInvalidIndex = -1
 	for (let index = 0; index < data.length; index++) {
 		const point = data[index]
@@ -98,11 +98,11 @@ function getWindowBounds(window: MetricWindow, reference: Dayjs): WindowBounds {
 	}
 }
 
-export function partitionMetricWindows(data: [number, number][], window: MetricWindow, reference: Dayjs) {
+export function partitionMetricWindows(data: Array<[number, number]>, window: MetricWindow, reference: Dayjs) {
 	const { currentStart, previousStart, previousEnd } = getWindowBounds(window, reference)
 	const current = currentStart === null ? data : []
-	const currentValues: number[] = []
-	const previousValues: number[] = []
+	const currentValues: Array<number> = []
+	const previousValues: Array<number> = []
 
 	for (const point of data) {
 		const [timestamp, value] = point
@@ -143,7 +143,7 @@ function resolveMovingAverageLength(window: MetricWindow, arrLength: number): nu
 }
 
 export function aggregateMetricValues(
-	values: number[],
+	values: Array<number>,
 	aggregator: MetricAggregator,
 	window: MetricWindow
 ): number | null {
@@ -184,7 +184,7 @@ export function aggregateMetricValues(
 		case 'stddev': {
 			if (values.length < 2) return null
 			const mean = values.reduce((a, b) => a + b, 0) / values.length
-			const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
+			const variance = values.reduce((sum, val) => sum + (val - mean) ** 2, 0) / values.length
 			return Math.sqrt(variance)
 		}
 		case 'first':

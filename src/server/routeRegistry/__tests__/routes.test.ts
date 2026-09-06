@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getCanonicalCexSlugsFromMetadata, resolveCexParamFromMetadata } from '~/containers/Cexs/server/routes'
 import {
 	getChainMetricSlugsFromMetadata,
@@ -114,7 +114,7 @@ function metadataFixture(): MetadataCache {
 }
 
 describe('route cache readers', () => {
-	it('resolves protocol params through display-name slugs first', () => {
+	test('resolves protocol params through display-name slugs first', () => {
 		const route = resolveProtocolParamFromMetadata('Aave-V3', metadataFixture())
 
 		expect(route).toEqual({
@@ -124,13 +124,13 @@ describe('route cache readers', () => {
 		})
 	})
 
-	it('keeps protocol overview caps and route filters in cache-backed recipes', () => {
+	test('keeps protocol overview caps and route filters in cache-backed recipes', () => {
 		const slugs = getProtocolOverviewSlugsFromMetadata(metadataFixture(), 10)
 
 		expect(slugs).toEqual(['aave-v3', 'uniswap-v3', 'child'])
 	})
 
-	it('excludes CEX metadata from generic protocol routes', () => {
+	test('excludes CEX metadata from generic protocol routes', () => {
 		const metadata = metadataFixture()
 
 		expect(resolveProtocolParamFromMetadata('Binance CEX', metadata)).toBeNull()
@@ -139,7 +139,7 @@ describe('route cache readers', () => {
 		)
 	})
 
-	it('falls back to protocol slugs when parent protocol normalizes empty', () => {
+	test('falls back to protocol slugs when parent protocol normalizes empty', () => {
 		const metadata = metadataFixture()
 		metadata.protocolMetadata.emptyParent = {
 			name: 'empty-parent',
@@ -154,13 +154,13 @@ describe('route cache readers', () => {
 		expect(slugs).not.toContain('')
 	})
 
-	it('generates feature slugs from protocol metadata flags', () => {
+	test('generates feature slugs from protocol metadata flags', () => {
 		expect(getProtocolFeatureSlugsFromMetadata(metadataFixture(), (metadata) => Boolean(metadata.dexs))).toEqual([
 			'uniswap-v3'
 		])
 	})
 
-	it('resolves chain variants to canonical names', () => {
+	test('resolves chain variants to canonical names', () => {
 		const route = resolveChainParamFromMetadata('zksync era', metadataFixture())
 
 		expect(route).toEqual({
@@ -170,7 +170,7 @@ describe('route cache readers', () => {
 		})
 	})
 
-	it('builds chain feature slugs from chain metadata flags', () => {
+	test('builds chain feature slugs from chain metadata flags', () => {
 		const metadata = metadataFixture()
 		const ethereum = metadata.chainMetadata.ethereum
 		const zkSyncEra = metadata.chainMetadata['zkSync-era']
@@ -184,7 +184,7 @@ describe('route cache readers', () => {
 		expect(getChainMetricSlugsFromMetadata(metadata, 'optionsPremiumVolume')).toEqual(['zksync-era'])
 	})
 
-	it('resolves CEX params through canonical slug or aliases', () => {
+	test('resolves CEX params through canonical slug or aliases', () => {
 		const metadata = metadataFixture()
 
 		expect(getCanonicalCexSlugsFromMetadata(metadata)).toEqual(['binance-cex'])
@@ -208,11 +208,11 @@ describe('route cache readers', () => {
 		})
 	})
 
-	it('dedupes protocol listing slugs from categories and tags', () => {
+	test('dedupes protocol listing slugs from categories and tags', () => {
 		expect(getProtocolListingSlugsFromMetadata(metadataFixture())).toEqual(['lending'])
 	})
 
-	it('resolves protocol listing params to canonical slug routes', () => {
+	test('resolves protocol listing params to canonical slug routes', () => {
 		expect(resolveProtocolListingParamFromMetadata('Lending', metadataFixture())).toEqual({
 			kind: 'category',
 			value: 'Lending',

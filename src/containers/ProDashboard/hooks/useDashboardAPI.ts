@@ -13,9 +13,9 @@ import {
 	type LiteDashboardSummary
 } from '../services/DashboardAPI'
 
-const EMPTY_DASHBOARDS: Dashboard[] = []
+const EMPTY_DASHBOARDS: Array<Dashboard> = []
 
-function parseStoredLiteDashboards(value: string): LiteDashboardSummary[] {
+function parseStoredLiteDashboards(value: string): Array<LiteDashboardSummary> {
 	let parsed: unknown
 	try {
 		parsed = JSON.parse(value)
@@ -23,7 +23,7 @@ function parseStoredLiteDashboards(value: string): LiteDashboardSummary[] {
 		return []
 	}
 	if (!Array.isArray(parsed)) return []
-	const dashboards: LiteDashboardSummary[] = []
+	const dashboards: Array<LiteDashboardSummary> = []
 	for (const entry of parsed) {
 		if (typeof entry !== 'object' || entry === null || !('id' in entry) || !('name' in entry)) continue
 		if (typeof entry.id !== 'string' || typeof entry.name !== 'string') continue
@@ -52,8 +52,8 @@ export function useGetLiteDashboards() {
 				const data = await dashboardAPI.listLiteDashboards(authorizedFetch)
 				setStorageItem('lite-dashboards', JSON.stringify(data))
 				return data
-			} catch (err) {
-				console.log('Failed to load lite dashboards:', err)
+			} catch (listError) {
+				console.log('Failed to load lite dashboards:', listError)
 				setStorageItem('lite-dashboards', '[]')
 
 				return []
@@ -87,8 +87,8 @@ export function useDashboardAPI() {
 			if (!isAuthenticated) return []
 			try {
 				return await dashboardAPI.listDashboards(authorizedFetch)
-			} catch (err) {
-				console.log('Failed to load dashboards:', err)
+			} catch (error) {
+				console.log('Failed to load dashboards:', error)
 				return []
 			}
 		},
@@ -164,11 +164,11 @@ export function useDashboardAPI() {
 			try {
 				const dashboard = await dashboardAPI.getDashboard(id, isAuthenticated ? authorizedFetch : undefined)
 				return dashboard
-			} catch (err) {
-				if (err instanceof DashboardError && err.status === 404) {
+			} catch (error) {
+				if (error instanceof DashboardError && error.status === 404) {
 					return null
 				}
-				throw err
+				throw error
 			}
 		},
 		[isAuthenticated, authorizedFetch]

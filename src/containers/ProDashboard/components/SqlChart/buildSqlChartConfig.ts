@@ -15,7 +15,7 @@ interface BuildSqlChartConfigParams {
 	chartConfig: ChartConfig
 	displayMode: 'chart' | 'table'
 	rowCap: number
-	registryTables: RegisteredTable[]
+	registryTables: Array<RegisteredTable>
 }
 
 export function buildSqlChartConfig({

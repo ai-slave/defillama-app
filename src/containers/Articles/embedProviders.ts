@@ -306,8 +306,8 @@ export function validateEmbedConfig(value: unknown): ArticleEmbedConfig | null {
 		url,
 		sourceUrl
 	}
-	if (typeof v.title === 'string' && v.title.trim().length) config.title = v.title.trim().slice(0, 240)
-	if (typeof v.caption === 'string' && v.caption.trim().length) config.caption = v.caption.trim().slice(0, 600)
+	if (typeof v.title === 'string' && v.title.trim().length > 0) config.title = v.title.trim().slice(0, 240)
+	if (typeof v.caption === 'string' && v.caption.trim().length > 0) config.caption = v.caption.trim().slice(0, 600)
 	if (isValidAspect(v.aspectRatio)) config.aspectRatio = v.aspectRatio
 	return config
 }

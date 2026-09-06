@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchRWAStats: vi.fn()
@@ -16,7 +16,7 @@ describe('RWA platform peers API', () => {
 		mocks.fetchRWAStats.mockResolvedValue({ byPlatform: {} })
 	})
 
-	it('joins the platform index and stats into a client-safe peer response', async () => {
+	test('joins the platform index and stats into a client-safe peer response', async () => {
 		const result = await rwaPlatformPeers.handle({
 			method: 'GET',
 			url: '/api/public/rwa/platform-peers',

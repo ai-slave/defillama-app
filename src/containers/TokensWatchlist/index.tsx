@@ -46,7 +46,7 @@ export interface TokenUniverseEntry {
 	symbol: string
 }
 
-export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: TokenUniverseEntry[] }) {
+export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Array<TokenUniverseEntry> }) {
 	const {
 		selectedPortfolio,
 		savedProtocols: savedTokens,
@@ -68,7 +68,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 		return map
 	}, [tokenUniverse])
 
-	const handleTokenSelection = (selectedValues: string[]) => {
+	const handleTokenSelection = (selectedValues: Array<string>) => {
 		const currentSet = new Set(savedTokenIds)
 		const newSet = new Set(selectedValues)
 		const toAdd = selectedValues.filter((id) => !currentSet.has(id))
@@ -99,7 +99,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 		enabled: savedTokenIds.length > 0
 	})
 	const rows = useMemo(() => {
-		const base = savedTokenIds.length ? (data?.rows ?? []) : []
+		const base = savedTokenIds.length > 0 ? (data?.rows ?? []) : []
 		return mergeMarketsSummary(base, marketsList)
 	}, [data?.rows, savedTokenIds.length, marketsList])
 
@@ -182,7 +182,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Tok
 								Retry
 							</Button>
 						</SurfaceBodyStatus>
-					) : hasSavedTokens && rows.length ? (
+					) : hasSavedTokens && rows.length > 0 ? (
 						<PaginatedTable
 							table={table}
 							pageSizeOptions={PAGE_SIZE_OPTIONS}
@@ -249,7 +249,7 @@ function TokensPortfolioSelection() {
 			<div className="flex flex-wrap items-center gap-2 p-2">
 				<h1 className="mr-auto heading-xs">Portfolio</h1>
 				<Menu
-					name={selectedPortfolio.length > 100 ? selectedPortfolio.substring(0, 100) + '...' : selectedPortfolio}
+					name={selectedPortfolio.length > 100 ? `${selectedPortfolio.substring(0, 100)}...` : selectedPortfolio}
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => setSelectedPortfolio(value)}

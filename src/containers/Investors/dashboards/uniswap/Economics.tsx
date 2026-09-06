@@ -38,7 +38,7 @@ interface FeeSwitchData {
 	title?: string
 	status: string
 	mechanism: string
-	schedule: Array<{ date: string; chains: string[] }>
+	schedule: Array<{ date: string; chains: Array<string> }>
 }
 
 interface FeeActivationRow {
@@ -59,7 +59,7 @@ interface EconomicsData {
 	feeSwitch: FeeSwitchData
 	uniBurnUnits: Chart
 	protocolFeesByCategory: Chart
-	feeActivation: { title?: string; rows: FeeActivationRow[] }
+	feeActivation: { title?: string; rows: Array<FeeActivationRow> }
 }
 
 const ANNUALIZE_30D = 365 / 30
@@ -169,7 +169,7 @@ const ACTIVATION_HEADERS: Array<[string, 'left' | 'right']> = [
 	['LP Fees (30d)', 'right']
 ]
 
-function FeeActivationTable({ rows }: { rows: FeeActivationRow[] }) {
+function FeeActivationTable({ rows }: { rows: Array<FeeActivationRow> }) {
 	return (
 		<div className="w-full overflow-auto rounded-lg border border-pro-cards-border">
 			<div style={{ display: 'grid', gridTemplateColumns: ACTIVATION_COLUMNS }}>
@@ -220,7 +220,7 @@ export default function Economics() {
 	// Daily LP fees: total swap fees minus the buyback-and-burn cut, from DefiLlama.
 	const lpFeesSeries = useQuery({
 		queryKey: ['uniswap-lp-fees-daily'],
-		queryFn: async (): Promise<TrendSeries[]> => {
+		queryFn: async (): Promise<Array<TrendSeries>> => {
 			const [feesDaily, holdersDaily] = await Promise.all([
 				fetchAdapterProtocolChartData({
 					adapterType: ADAPTER_TYPES.FEES,
@@ -248,7 +248,7 @@ export default function Economics() {
 	// activated; both burn views trim it so the chart starts at the first burn.
 	const burnUsdSeries = useQuery({
 		queryKey: ['uniswap-burn-usd-daily'],
-		queryFn: async (): Promise<TrendSeries[]> =>
+		queryFn: async (): Promise<Array<TrendSeries>> =>
 			trimLeadingZeros([
 				{
 					name: 'Holders Revenue',

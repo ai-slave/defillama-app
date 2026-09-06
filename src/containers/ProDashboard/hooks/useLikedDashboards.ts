@@ -4,7 +4,7 @@ import { useAuthContext } from '~/auth'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI } from '../services/DashboardAPI'
 
-const EMPTY_DASHBOARDS: Dashboard[] = []
+const EMPTY_DASHBOARDS: Array<Dashboard> = []
 
 export function useLikedDashboards() {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()

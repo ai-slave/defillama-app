@@ -32,7 +32,7 @@ export async function buildYieldsSnapshotCandidate(writer: DatasetSnapshotWriter
 			fetchExploitsFromNetwork(fetchOptions)
 		])
 
-	const failures: string[] = []
+	const failures: Array<string> = []
 	for (const [name, result] of [
 		['earn', earn],
 		['trends', trends],

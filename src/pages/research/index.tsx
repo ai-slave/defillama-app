@@ -38,15 +38,15 @@ import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 const RESEARCH_LANDING_CACHE_CONTROL = 'public, s-maxage=60'
 
 export type ResearchLandingArticles = {
-	heroReports: ArticleDocument[]
-	latest: ArticleDocument[]
-	spotlight: ArticleDocument[]
-	interviews: ArticleDocument[]
-	highlight: ArticleDocument[]
-	insights: ArticleDocument[]
-	moreReports: ArticleDocument[]
-	spotlightColumn: ArticleDocument[]
-	collections: ArticleDocument[]
+	heroReports: Array<ArticleDocument>
+	latest: Array<ArticleDocument>
+	spotlight: Array<ArticleDocument>
+	interviews: Array<ArticleDocument>
+	highlight: Array<ArticleDocument>
+	insights: Array<ArticleDocument>
+	moreReports: Array<ArticleDocument>
+	spotlightColumn: Array<ArticleDocument>
+	collections: Array<ArticleDocument>
 }
 
 type ResearchLandingPageData = {
@@ -56,7 +56,7 @@ type ResearchLandingPageData = {
 }
 
 type ArticlesPageProps = ResearchLandingPageData & {
-	newsletterItems: ResearchNewsletterItem[]
+	newsletterItems: Array<ResearchNewsletterItem>
 }
 
 async function getResearchLandingArticles(): Promise<ResearchLandingArticles> {
@@ -150,7 +150,7 @@ function ArticlesLandingInner({
 	newsletterItems
 }: {
 	initialData: ResearchLandingPageData
-	newsletterItems: ResearchNewsletterItem[]
+	newsletterItems: Array<ResearchNewsletterItem>
 }) {
 	const landingQuery = useQuery({
 		queryKey: ['research-landing'],
@@ -199,7 +199,7 @@ function ArticlesLandingInner({
 						top: '1000px',
 						zIndex: 0
 					}}
-				></div>
+				/>
 
 				<div
 					style={{
@@ -211,7 +211,7 @@ function ArticlesLandingInner({
 						top: '2300px',
 						zIndex: 0
 					}}
-				></div>
+				/>
 
 				<div
 					style={{
@@ -223,7 +223,7 @@ function ArticlesLandingInner({
 						top: '2900px',
 						zIndex: 0
 					}}
-				></div>
+				/>
 
 				<div className="relative z-1 mx-auto w-full max-w-7xl space-y-7.5 px-4 sm:px-6 lg:space-y-17.5 lg:px-8">
 					<ResearchLatest articles={landingData?.latest ?? []} initialData={landingQuery.data?.landingBanner} />

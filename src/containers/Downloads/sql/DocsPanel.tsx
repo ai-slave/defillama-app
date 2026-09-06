@@ -35,7 +35,7 @@ export function CookbookTab({ onApplyAndRun }: CookbookProps) {
 	}, [deferred])
 
 	const grouped = useMemo(() => {
-		const by = new Map<CookbookTag, CookbookSnippet[]>()
+		const by = new Map<CookbookTag, Array<CookbookSnippet>>()
 		for (const s of filtered) {
 			const arr = by.get(s.tag) ?? []
 			arr.push(s)
@@ -134,7 +134,7 @@ function Snippet({ snippet, onApplyAndRun }: { snippet: CookbookSnippet; onApply
 	)
 }
 
-function TechniqueChips({ techniques }: { techniques: TechniqueName[] }) {
+function TechniqueChips({ techniques }: { techniques: Array<TechniqueName> }) {
 	if (techniques.length === 0) return null
 	return (
 		<ul className="flex flex-wrap gap-1.5">
@@ -306,8 +306,8 @@ interface Token {
 	text: string
 }
 
-function tokenize(sql: string): Token[] {
-	const out: Token[] = []
+function tokenize(sql: string): Array<Token> {
+	const out: Array<Token> = []
 	const n = sql.length
 	let i = 0
 	while (i < n) {

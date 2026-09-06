@@ -12,7 +12,7 @@ const Toaster = React.lazy(() => import('~/components/Toast').then((m) => ({ def
 
 interface ILayoutProps extends ISEOProps {
 	children: React.ReactNode
-	tvlOptions?: { name: string; key: string }[]
+	tvlOptions?: Array<{ name: string; key: string }>
 	pageName?: Array<string>
 	announcement?: React.ReactNode
 	hideDesktopSearchLlamaAiButton?: boolean
@@ -62,7 +62,7 @@ function Layout({
 	)
 }
 
-function TvlFilters({ options }: { options: { name: string; key: string }[] }) {
+function TvlFilters({ options }: { options: Array<{ name: string; key: string }> }) {
 	const { selectedValues, setSelectedValues } = useProtocolsFilterState(options)
 
 	return (

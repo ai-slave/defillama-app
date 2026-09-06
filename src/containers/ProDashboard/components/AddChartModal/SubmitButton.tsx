@@ -2,22 +2,22 @@ import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { ChartConfig } from '../../types'
 import type { ChartBuilderConfig, ChartModeType, ChartTabType, CombinedTableType, MainTabType } from './types'
 
-const EMPTY_ARRAY: string[] = []
+const EMPTY_ARRAY: Array<string> = []
 
 interface SubmitButtonProps {
 	editItem?: DashboardItemConfig | null | undefined
 	selectedMainTab: MainTabType
 	selectedChartTab: ChartTabType
 	selectedChain: string | null
-	selectedChains: string[]
+	selectedChains: Array<string>
 	selectedProtocol: string | null
-	selectedChartTypes?: string[]
+	selectedChartTypes?: Array<string>
 	selectedYieldPool?: { configID: string; name: string; project: string; chain: string } | null
-	composerItems: ChartConfig[]
+	composerItems: Array<ChartConfig>
 	textContent: string
 	selectedTableType?: CombinedTableType
 	selectedDatasetChain?: string | null
-	selectedTokens?: string[]
+	selectedTokens?: Array<string>
 	chartBuilder?: ChartBuilderConfig
 	chartCreationMode?: 'separate' | 'combined'
 	chartMode?: ChartModeType
@@ -41,7 +41,7 @@ interface SubmitButtonProps {
 	selectedUnlocksChartType?: 'total' | 'schedule' | 'allocation' | 'locked-unlocked'
 	rwaMode?: 'overview' | 'asset'
 	selectedRwaAssetId?: string | null
-	selectedRwaAssetMetrics?: string[]
+	selectedRwaAssetMetrics?: Array<string>
 	onSubmit: () => void
 }
 

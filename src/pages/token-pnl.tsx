@@ -17,12 +17,12 @@ export const getStaticProps = withPerformanceLogging('token-pnl', async () => {
 
 const pageName = ['Token PNL']
 
-export default function TokenPnlPage({ initialTokenOptions }: { initialTokenOptions: TokenSearchResult[] }) {
+export default function TokenPnlPage({ initialTokenOptions }: { initialTokenOptions: Array<TokenSearchResult> }) {
 	return (
 		<Layout
-			title={`Token Profit & Loss (PnL) Tracker - DefiLlama`}
+			title="Token Profit & Loss (PnL) Tracker - DefiLlama"
 			description="Calculate profit and loss for any DeFi token. Track entry price, current value, and returns on DefiLlama."
-			canonicalUrl={`/token-pnl`}
+			canonicalUrl="/token-pnl"
 			pageName={pageName}
 		>
 			<TokenPnl initialTokenOptions={initialTokenOptions} />

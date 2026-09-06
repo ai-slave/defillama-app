@@ -22,8 +22,7 @@ import {
 } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
-import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { ChartPanelToolbar } from '~/ui/ChartPanel'
+import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Panel } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { getPercentChange } from '~/utils'
@@ -82,7 +81,7 @@ export function ChainsByCategory({
 	tvlChartsByChain,
 	totalTvlByDate,
 	entityQuestions
-}: IChainsByCategoryData & { entityQuestions?: string[] }) {
+}: IChainsByCategoryData & { entityQuestions?: Array<string> }) {
 	const [tvlSettings] = useLocalStorageSettingsManager('tvl')
 	const enabledTvlSettings = React.useMemo(() => TVL_SETTINGS_KEYS.filter((key) => tvlSettings[key]), [tvlSettings])
 	const enabledTvlSettingsKey = enabledTvlSettings.join(',')
@@ -264,11 +263,11 @@ export const buildChainsByCategoryChartPresentation = ({
 	tvlChartsByChain: IChainsByCategoryData['tvlChartsByChain']
 	totalTvlByDate: IChainsByCategoryData['totalTvlByDate']
 	colorsByChain: IChainsByCategoryData['colorsByChain']
-	enabledTvlSettings: readonly TvlSettingsKey[]
+	enabledTvlSettings: ReadonlyArray<TvlSettingsKey>
 }) => {
 	const recentTvlByChain: Record<string, number> = {}
 	const tvlByChain = tvlChartsByChain['tvl'] ?? {}
-	const chainNames: string[] = []
+	const chainNames: Array<string> = []
 	for (const chain in tvlByChain) {
 		chainNames.push(chain)
 	}
@@ -310,7 +309,7 @@ export const buildChainsByCategoryChartPresentation = ({
 		if (!rankedCurrentChains.has(chain)) chainSeries.push(chain)
 	}
 	const dimensionIndex = new Map(chainNames.map((chain, index) => [chain, index + 1]))
-	const chartsConfig: MultiSeriesChartSeriesConfig[] = []
+	const chartsConfig: Array<MultiSeriesChartSeriesConfig> = []
 	for (const chain of chainSeries) {
 		const yDimension = dimensionIndex.get(chain)
 		if (yDimension == null) throw new Error(`Missing chart dimension for chain ${chain}`)
@@ -423,7 +422,7 @@ export const useGroupAndFormatChains = ({
 			)
 
 		if (!showByGroup) return { showByGroup, chainsTableData: data }
-		const chainsTableData: IFormattedDataWithExtraTvl[] = []
+		const chainsTableData: Array<IFormattedDataWithExtraTvl> = []
 		for (const chain of getTopLevelGroupedChains(data, toggledChainsGroupbyParent)) {
 			const subChainsList = new Set<string>()
 			for (const group of toggledChainsGroupbyParent) {

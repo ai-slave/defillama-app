@@ -10,9 +10,9 @@ export function useChainsData(category?: string) {
 	const streamDone = useContext(StreamDoneContext)
 	const queryParams = category ? `?category=${encodeURIComponent(category)}` : ''
 
-	const query = useQuery<ChainsDatasetRow[]>({
+	const query = useQuery<Array<ChainsDatasetRow>>({
 		queryKey: getProChainsDatasetQueryKey(category),
-		queryFn: () => fetchJson<ChainsDatasetRow[]>(`/api/dynamic/chains${queryParams}`),
+		queryFn: () => fetchJson<Array<ChainsDatasetRow>>(`/api/dynamic/chains${queryParams}`),
 		enabled: streamDone,
 		staleTime: PRO_DASHBOARD_METRIC_STALE_TIME,
 		retry: 1

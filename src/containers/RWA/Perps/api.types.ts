@@ -18,14 +18,14 @@ export interface IRWAPerpsMarket {
 	cumulativeFunding: number
 	referenceAsset: string | null
 	referenceAssetGroup: string | null
-	assetClass: string[] | null
+	assetClass: Array<string> | null
 	parentPlatform: string | null
 	pair: string | null
 	marginAsset: string | null
 	settlementAsset: string | null
-	category: string[] | null
+	category: Array<string> | null
 	issuer: string | null
-	website: string[] | null
+	website: Array<string> | null
 	link: string | null
 	oracleProvider: string | null
 	description: string | null
@@ -57,8 +57,8 @@ export interface IRWAPerpsAggregateHistoricalPoint {
 	venue: string
 	referenceAsset: string | null
 	referenceAssetGroup: string | null
-	assetClass: string[] | null
-	category: string[]
+	assetClass: Array<string> | null
+	category: Array<string>
 	openInterest: number
 	volume24h: number
 	suspicious: boolean
@@ -76,11 +76,11 @@ export interface IRWAPerpsMarketChartPoint {
 }
 
 export interface IRWAPerpsListResponse {
-	contracts: string[]
-	venues: string[]
-	categories: string[]
-	assets: string[]
-	assetGroups: string[]
+	contracts: Array<string>
+	venues: Array<string>
+	categories: Array<string>
+	assets: Array<string>
+	assetGroups: Array<string>
 	total: number
 }
 
@@ -102,7 +102,7 @@ export interface IRWAPerpsStatsResponse {
 }
 
 export type IRWAPerpsBreakdownChartRow = { timestamp: number } & Record<string, number>
-export type IRWAPerpsBreakdownChartResponse = IRWAPerpsBreakdownChartRow[]
+export type IRWAPerpsBreakdownChartResponse = Array<IRWAPerpsBreakdownChartRow>
 
 export type IRWAPerpsIdMapResponse = Record<string, string>
 

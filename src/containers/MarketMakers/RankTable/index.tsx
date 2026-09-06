@@ -3,7 +3,7 @@ import * as React from 'react'
 import { Button } from '~/ui/Button'
 import { Panel, PanelHeader } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
-import { type ColumnConfig, type DisplayMode, type Threshold } from '../constants'
+import type { ColumnConfig, DisplayMode, Threshold } from '../constants'
 import { RefineButton } from '../RefineButton'
 import { StickyTable } from '../StickyTable'
 import type { LeaderboardRow } from '../types'
@@ -12,8 +12,8 @@ import { ShowAsControl } from './ShowAsControl'
 import { ThresholdSelect } from './ThresholdSelect'
 
 interface IRankTableProps {
-	rows: LeaderboardRow[]
-	columns: ColumnConfig[]
+	rows: Array<LeaderboardRow>
+	columns: Array<ColumnConfig>
 	mode: DisplayMode
 	setMode: (mode: DisplayMode) => void
 	threshold?: Threshold

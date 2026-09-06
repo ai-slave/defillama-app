@@ -8,7 +8,7 @@ export interface ApiRouteCatalogEntry {
 	kind: ApiRouteKind
 	path: ApiRoutePath
 	canonicalPath: `/api/${ApiRouteKind}/${ApiRoutePath}`
-	methods: readonly ApiRouteMethod[]
+	methods: ReadonlyArray<ApiRouteMethod>
 	cachePolicy?: ApiRouteCachePolicy
 }
 
@@ -228,7 +228,7 @@ export const allApiRoutePaths = [
 const privateApiRoutePathSet = new Set<string>(privateApiRoutePaths)
 const dynamicApiRoutePathSet = new Set<string>(dynamicApiRoutePaths)
 
-const routeMethodOverrides: Partial<Record<ApiRoutePath, readonly ApiRouteMethod[]>> = {
+const routeMethodOverrides: Partial<Record<ApiRoutePath, ReadonlyArray<ApiRouteMethod>>> = {
 	'aave/graphql': ['POST'],
 	'cex/inflows/batch': ['POST'],
 	'market-makers/cta': ['POST'],

@@ -65,7 +65,7 @@ export function fetchBridgeDayStats(
 	chain: string,
 	options?: string | number | { id?: string | number; rollingHours?: number }
 ): Promise<BridgeDayStats> {
-	const utcDayTimestamp = Math.floor(timestamp / 86400) * 86400
+	const utcDayTimestamp = Math.floor(timestamp / 86_400) * 86_400
 	const params = new URLSearchParams()
 	if (typeof options === 'string' || typeof options === 'number') {
 		params.set('id', String(options))

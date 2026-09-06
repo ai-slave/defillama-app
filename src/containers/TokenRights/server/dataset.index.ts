@@ -9,7 +9,7 @@ export function normalizeTokenRightsProtocolName(name: string): string {
 	return name.toLowerCase().replace(/ /g, '-').replace(/'/g, '')
 }
 
-export function buildTokenRightsIndexes(entries: IRawTokenRightsEntry[]): TokenRightsIndexes {
+export function buildTokenRightsIndexes(entries: Array<IRawTokenRightsEntry>): TokenRightsIndexes {
 	const byDefillamaId: Record<string, IRawTokenRightsEntry> = {}
 	const byProtocolName: Record<string, IRawTokenRightsEntry> = {}
 

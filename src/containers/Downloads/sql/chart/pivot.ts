@@ -6,7 +6,7 @@ export interface PivotOptions {
 }
 
 export interface PivotResult {
-	keys: string[]
+	keys: Array<string>
 	rows: Array<Array<number | string | null>>
 	truncatedCount: number
 }
@@ -18,7 +18,7 @@ function splitKey(v: unknown): string {
 }
 
 export function pivotRowsForSplit(
-	rows: unknown[][],
+	rows: Array<Array<unknown>>,
 	xIndex: number,
 	yIndex: number,
 	splitIndex: number,

@@ -169,9 +169,9 @@ export function useRWAAssetsList() {
 		retry: 1
 	})
 
-	const assets: RWAAssetOption[] = useMemo(() => {
+	const assets: Array<RWAAssetOption> = useMemo(() => {
 		if (!data) return []
-		const assets: RWAAssetOption[] = []
+		const assets: Array<RWAAssetOption> = []
 		for (const asset of data) {
 			if (!asset.id || !asset.ticker || asset.stablecoin || asset.governance) continue
 			assets.push({

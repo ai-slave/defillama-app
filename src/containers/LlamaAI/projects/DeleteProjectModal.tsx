@@ -21,8 +21,8 @@ export function DeleteProjectModal({ dialogStore, project, onDeleted }: DeletePr
 			toast.success('Project deleted')
 			dialogStore.hide()
 			onDeleted?.()
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to delete project')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to delete project')
 		}
 	}
 

@@ -21,9 +21,9 @@ export type UtrClaimDocument = {
 	signature?: string | null
 }
 
-export type UtrClaimDocuments = Record<UtrClaimDocumentKey, UtrClaimDocument[]>
+export type UtrClaimDocuments = Record<UtrClaimDocumentKey, Array<UtrClaimDocument>>
 export type UtrClaimFormRow = Record<string, string>
-export type UtrClaimRows = Record<ClaimDisclosureSectionId, UtrClaimFormRow[]>
+export type UtrClaimRows = Record<ClaimDisclosureSectionId, Array<UtrClaimFormRow>>
 
 export type UtrClaimDisclosures = {
 	insiderIdentities: Array<{ name: string; role: string; profileUrl: string }>
@@ -551,7 +551,7 @@ export function buildUtrClaimRequest(input: UtrClaimRequestInput): UtrClaimValid
 	const disclosures = buildDisclosures(input.rows, input.verifyMmEngagements, errors)
 	const documents = validateDocuments(input.documents, errors)
 
-	if (Object.keys(errors).length) return { payload: null, errors }
+	if (Object.keys(errors).length > 0) return { payload: null, errors }
 	return {
 		payload: {
 			coingeckoId,
@@ -578,8 +578,8 @@ export const UTR_CLAIM_FILE_ACCEPT = '.pdf,.docx,.xlsx,.txt,.md'
 export const UTR_CLAIM_MAX_FILE_BYTES = 10 * 1024 * 1024
 const UTR_CLAIM_FILE_EXTENSIONS = new Set(['pdf', 'docx', 'xlsx', 'txt', 'md'])
 
-export function validateUtrClaimFiles(files: readonly File[], existingCount: number): string | null {
-	if (!files.length) return 'Select at least one document'
+export function validateUtrClaimFiles(files: ReadonlyArray<File>, existingCount: number): string | null {
+	if (files.length === 0) return 'Select at least one document'
 	if (existingCount + files.length > 10) return 'No more than 10 documents are allowed in this section'
 	for (const file of files) {
 		const extension = file.name.split('.').at(-1)?.toLowerCase() ?? ''

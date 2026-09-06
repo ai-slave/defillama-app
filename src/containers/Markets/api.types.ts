@@ -29,7 +29,7 @@ export interface MarketCategoryTotals {
 	total_oi_usd: number | null
 }
 
-export type MarketPairsBySegment = Record<Segment, MarketPair[]>
+export type MarketPairsBySegment = Record<Segment, Array<MarketPair>>
 export type MarketTotalsBySegment = Record<Segment, MarketCategoryTotals>
 
 export interface TokenMarketsListEntry {
@@ -37,43 +37,43 @@ export interface TokenMarketsListEntry {
 	market_count: number
 	segments: Partial<Record<Segment, MarketSegmentSummary>>
 	symbol: string
-	tags: string[]
+	tags: Array<string>
 	total_oi_usd: number | null
 	total_volume_24h: number
 }
 
 export interface TokenMarketsListResponse {
 	last_updated: string
-	tokens: TokenMarketsListEntry[]
+	tokens: Array<TokenMarketsListEntry>
 }
 
 export interface TokenExchangeListingVenue {
 	slug: string
 	display_name: string
 	type: MarketVenue
-	segments: Segment[]
+	segments: Array<Segment>
 }
 
 export interface TokenExchangeListing {
 	coingecko_id: string
 	name: string
 	symbol: string
-	venues: TokenExchangeListingVenue[]
+	venues: Array<TokenExchangeListingVenue>
 }
 
 export interface TokenExchangeListingsResponse {
 	last_updated: string
-	tokens: TokenExchangeListing[]
+	tokens: Array<TokenExchangeListing>
 }
 
 export interface TokenMarketsResponse {
 	symbol: string
 	last_updated: string
-	depth_bands: number[]
+	depth_bands: Array<number>
 	exchange_count: number
 	market_count: number
 	segments: Partial<Record<Segment, MarketSegmentSummary>>
-	tags: string[]
+	tags: Array<string>
 	total_oi_usd: number | null
 	total_volume_24h: number
 	cex: MarketPairsBySegment

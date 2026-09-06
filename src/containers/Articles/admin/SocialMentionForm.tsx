@@ -58,7 +58,7 @@ export function SocialMentionForm({ mentionId }: Props) {
 	const { authorizedFetch } = useAuthContext()
 	const revalidate = useResearchLandingRevalidation()
 
-	const mentionsQuery = useQuery<SocialMention[]>({
+	const mentionsQuery = useQuery<Array<SocialMention>>({
 		queryKey: ['trusted-by-mentions'],
 		queryFn: () => listSocialMentions(authorizedFetch),
 		retry: false
@@ -124,8 +124,8 @@ export function SocialMentionForm({ mentionId }: Props) {
 			revalidate()
 			toast.success(mention ? 'Mention saved' : 'Mention created')
 			router.push('/research/admin/trusted-by')
-		} catch (err) {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to save')
+		} catch (error) {
+			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to save')
 		}
 	}
 

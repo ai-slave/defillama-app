@@ -54,7 +54,7 @@ const CAPABILITIES = [
 	{ icon: 'file-text' as const, label: 'Research Reports', sub: 'Multi-agent deep dives' }
 ]
 
-const FALLBACK_QUESTIONS: LandingQuestion[] = [
+const FALLBACK_QUESTIONS: Array<LandingQuestion> = [
 	{ text: 'Which protocols have growing TVL but declining token prices right now?', tag: 'Find Alpha' },
 	{ text: 'Build a conviction-scored trade thesis on ETH with technicals and on-chain data', tag: 'Trade Thesis' },
 	{ text: 'What are the best delta-neutral yield strategies for 10 ETH on Ethereum?', tag: 'Yield Strategy' },
@@ -66,7 +66,7 @@ const FALLBACK_QUESTIONS: LandingQuestion[] = [
 	{ text: 'Price estimate for BTC using Monte Carlo simulation and prediction markets', tag: 'Forecasting' }
 ]
 
-function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: LandingQuestion[] }) {
+function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<LandingQuestion> }) {
 	const router = useRouter()
 	const { isAuthenticated, hasActiveSubscription, loaders } = useAuthContext()
 	const signInDialogStore = Ariakit.useDialogStore()
@@ -429,7 +429,7 @@ const CATEGORY_TAGS: Record<string, string> = {
 }
 
 export const getStaticProps = withPerformanceLogging('ai', async () => {
-	let landingQuestions: LandingQuestion[] = []
+	let landingQuestions: Array<LandingQuestion> = []
 	try {
 		const res = await fetchWithPoolingOnServer(`${AI_SERVER}/suggested-questions/landing`)
 		if (res.ok) {
@@ -437,7 +437,7 @@ export const getStaticProps = withPerformanceLogging('ai', async () => {
 			if (data?.questions?.length) {
 				landingQuestions = data.questions
 			} else if (data?.categories) {
-				const cats = Object.entries(data.categories) as [string, string[]][]
+				const cats = Object.entries(data.categories) as Array<[string, Array<string>]>
 				for (const [cat, questions] of cats) {
 					const tag = CATEGORY_TAGS[cat] || cat.replace(/_/g, ' ')
 					for (const q of questions.slice(0, 2)) {
@@ -455,7 +455,7 @@ export const getStaticProps = withPerformanceLogging('ai', async () => {
 	}
 })
 
-export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestions?: LandingQuestion[] }) {
+export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestions?: Array<LandingQuestion> }) {
 	const [isVideoPlaying, setIsVideoPlaying] = useState(false)
 
 	const isClient = useIsClient()

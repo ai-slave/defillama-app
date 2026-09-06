@@ -34,7 +34,7 @@ type ChartInterval = ChartTimeGroupingWithCumulative
 type AdapterChartState = { data: Array<[number, number]> | null; isLoading: boolean; enabled: boolean }
 type UnlocksChartResponse = {
 	chartData: { documented: Array<EmissionsChartRow>; realtime: Array<EmissionsChartRow> }
-	unlockUsdChart: TokenIncentiveChartPoint[] | null
+	unlockUsdChart: Array<TokenIncentiveChartPoint> | null
 }
 
 const buildChartRowsFromTimestampRecord = (
@@ -593,7 +593,7 @@ export const useFetchProtocolChartData = ({
 			{ isLoading: isGasUsedToggled && fetchingGasUsed, label: 'Gas Used' },
 			{ isLoading: isBridgeVolumeToggled && fetchingBridgeVolume, label: 'Bridge Volume' }
 		]
-		const loadingCharts: string[] = []
+		const loadingCharts: Array<string> = []
 		const loadingChartSet = new Set(loadingCharts)
 		for (const state of loadingStates) {
 			if (!state.isLoading || loadingChartSet.has(state.label)) continue
@@ -776,7 +776,7 @@ export const useFetchProtocolChartData = ({
 			const queryParamKey = protocolCharts[chartLabel]
 			if (!queryParamKey || toggledMetrics[queryParamKey] !== 'true') return false
 			if (loadingChartSet.has(chartLabel)) return false
-			return !Object.prototype.hasOwnProperty.call(filteredCharts, chartLabel)
+			return !Object.hasOwn(filteredCharts, chartLabel)
 		})
 		return { finalCharts: filteredCharts, valueSymbol, loadingCharts, failedMetrics }
 	}, [

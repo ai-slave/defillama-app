@@ -136,7 +136,7 @@ export const getProtocolOverviewPageData = async ({
 	isCEX?: boolean
 	chainMetadata: Record<string, IChainMetadata>
 	tokenlist: Record<string, ITokenListEntry>
-	cgExchangeIdentifiers: string[]
+	cgExchangeIdentifiers: Array<string>
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	tokenDirectory?: TokenDirectory | null
 	yieldsSnapshot: YieldsSnapshot | null
@@ -176,8 +176,8 @@ export const getProtocolOverviewPageData = async ({
 					...data,
 					tokenCGData: getTokenCGData(tokenEntry, tickers, cgExchangeIdentifiers)
 				}
-			} catch (e) {
-				console.log('[HTTP]:[ERROR]:[TOKEN_CG_DATA]:', e)
+			} catch (error) {
+				console.log('[HTTP]:[ERROR]:[TOKEN_CG_DATA]:', error)
 				return data
 			}
 		}
@@ -234,11 +234,11 @@ export const getProtocolOverviewPageData = async ({
 						data: chart,
 						failed: false
 					}))
-					.catch((err): IProtocolTvlChartSeedResult => {
+					.catch((error): IProtocolTvlChartSeedResult => {
 						console.log(
 							'[HTTP]:[ERROR]:[PROTOCOL_TVL_CHART]:',
 							currentProtocolSlug,
-							err instanceof Error ? err.message : err
+							error instanceof Error ? error.message : error
 						)
 						return { data: [], failed: true }
 					})
@@ -572,7 +572,7 @@ export const getProtocolOverviewPageData = async ({
 	const hasKeyMetrics = Boolean(
 		protocolData.currentChainTvls.staking != null ||
 		protocolData.currentChainTvls.borrowed != null ||
-		raises.length ||
+		raises.length > 0 ||
 		expenses ||
 		treasury ||
 		hasFeeFamilyMetrics(feesData) ||
@@ -595,9 +595,8 @@ export const getProtocolOverviewPageData = async ({
 		protocolData.tokenCGData
 	)
 
-	const resolvedProtocolChains = protocolData.chains.length
-		? protocolData.chains
-		: (currentProtocolMetadata.chains ?? [])
+	const resolvedProtocolChains =
+		protocolData.chains.length > 0 ? protocolData.chains : (currentProtocolMetadata.chains ?? [])
 	const relationship = buildProtocolFaqRelationship({
 		protocolId,
 		protocolName: protocolData.name,
@@ -736,12 +735,12 @@ export const getProtocolOverviewPageData = async ({
 		defaultToggledCharts.unshift(primaryTvlChartLabel)
 	}
 
-	const titleMetrics: string[] = []
+	const titleMetrics: Array<string> = []
 	const chartLabelsForSeo = incomeStatement
 		? availableCharts.filter((chart) => !['Fees', 'Revenue', 'Incentives', 'Holders Revenue'].includes(chart))
 		: availableCharts
 
-	let seoDescription = `Track ${name} on DefiLlama. Including ${chartLabelsForSeo.length ? chartLabelsForSeo.join(', ') : 'key onchain and financial stats'}`
+	let seoDescription = `Track ${name} on DefiLlama. Including ${chartLabelsForSeo.length > 0 ? chartLabelsForSeo.join(', ') : 'key onchain and financial stats'}`
 
 	if (availableCharts.includes(isCEX ? 'Total Assets' : 'TVL')) {
 		titleMetrics.push(isCEX ? 'Assets' : 'TVL')
@@ -807,11 +806,11 @@ export const getProtocolOverviewPageData = async ({
 
 	const pageData: IProtocolOverviewPageData = {
 		id: protocolData.id,
-		name: name,
+		name,
 		category: resolvedCategory,
 		tags: protocolData.tags ?? null,
 		otherProtocols: protocolData.otherProtocols ?? null,
-		...(relationship.children.length
+		...(relationship.children.length > 0
 			? {
 					childProtocols: relationship.children.map((child) => ({
 						name: child.name,
@@ -891,7 +890,7 @@ export const getProtocolOverviewPageData = async ({
 						gasUsedUsd: gasUsedUsd ?? null
 					}
 				: null,
-		raises: raises.length ? raises : null,
+		raises: raises.length > 0 ? raises : null,
 		expenses: formattedExpenses,
 		tokenCGData: protocolData.tokenCGData ?? null,
 		outstandingFDV:
@@ -1025,7 +1024,7 @@ function getProtocolFaqTvlSummary(
 function getTokenCGData(
 	tokenEntry: ITokenListEntry | null,
 	tickers: NonNullable<NonNullable<CgChartResponse['data']>['coinData']>['tickers'] | undefined,
-	cgExchangeIdentifiers: string[]
+	cgExchangeIdentifiers: Array<string>
 ) {
 	if (!tokenEntry) return null
 
@@ -1156,7 +1155,7 @@ export function buildIncomeStatementMethodologies(source: IncomeStatementMethodo
 			if (text) methodology[label] = text
 			continue
 		}
-		const parts: string[] = []
+		const parts: Array<string> = []
 		for (const child of source.childProtocols) {
 			const childValue = child.methodology ? child.methodology[label] : child.breakdownMethodology?.[label]
 			if (typeof childValue === 'string') parts.push(`${child.displayName}: ${childValue}`)
@@ -1173,7 +1172,7 @@ export function buildIncomeStatementMethodologies(source: IncomeStatementMethodo
 				if (text) output[breakdownLabel] = text
 				continue
 			}
-			const parts: string[] = []
+			const parts: Array<string> = []
 			for (const child of source.childProtocols) {
 				const value = child.breakdownMethodology?.[label]
 				if (value && typeof value === 'object' && value[breakdownLabel]) {
@@ -1292,15 +1291,15 @@ async function getIncomeStatement(source: IncomeStatementSource) {
 		return {
 			data: { ...aggregates, cumulative },
 			labelsByType: finalLabelsByType,
-			methodology: methodology,
-			breakdownMethodology: breakdownMethodology,
+			methodology,
+			breakdownMethodology,
 			hasOtherTokenHolderFlows: metricTypes.has('Others Token Holder Flows'),
 			hasTokenHolderNetIncome: metricTypes.has('Token Holder Net Income'),
 			...(incomeStatement.components === undefined ? {} : { components: incomeStatement.components })
 		}
-	} catch (err) {
+	} catch (error) {
 		if (typeof window === 'undefined') {
-			throw err
+			throw error
 		}
 		return null
 	}

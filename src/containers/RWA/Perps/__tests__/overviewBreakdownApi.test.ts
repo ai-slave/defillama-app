@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { rwaPerpsOverviewBreakdown } from '~/containers/RWA/server/api'
 import { parseOverviewBreakdownRequest } from '~/pages/api/public/rwa/perps/overview-breakdown'
 import { resultBody } from '~/server/api/__tests__/resultBody'
@@ -20,7 +20,7 @@ beforeEach(() => {
 })
 
 describe('parseOverviewBreakdownRequest', () => {
-	it('accepts overview requests without a target', () => {
+	test('accepts overview requests without a target', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -36,7 +36,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	it('accepts venue-targeted requests', () => {
+	test('accepts venue-targeted requests', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -53,7 +53,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	it('accepts asset-group-targeted requests', () => {
+	test('accepts asset-group-targeted requests', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -71,7 +71,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	it('accepts asset-class-targeted requests', () => {
+	test('accepts asset-class-targeted requests', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -89,7 +89,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	it('accepts asset-class exclusion requests', () => {
+	test('accepts asset-class exclusion requests', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -106,7 +106,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	it('rejects the retired venueType query', () => {
+	test('rejects the retired venueType query', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -118,7 +118,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		).toBeNull()
 	})
 
-	it('rejects contract breakdowns and invalid target combinations', () => {
+	test('rejects contract breakdowns and invalid target combinations', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -215,7 +215,7 @@ describe('parseOverviewBreakdownRequest', () => {
 })
 
 describe('rwaPerpsOverviewBreakdown', () => {
-	it('returns serialized transformed breakdown data', async () => {
+	test('returns serialized transformed breakdown data', async () => {
 		mocks.fetchRWAPerpsOverviewBreakdownChartData.mockResolvedValue([{ timestamp: 1, Hyperliquid: 3, GMX: 5 }])
 
 		const result = await rwaPerpsOverviewBreakdown.handle({

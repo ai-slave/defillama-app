@@ -27,7 +27,7 @@ export interface ProtocolFaqChild {
 	name: string
 	href: string
 	category: string | null
-	chains: string[]
+	chains: Array<string>
 }
 
 interface ProtocolFaqToken {
@@ -52,7 +52,7 @@ export interface ProtocolFaqContext {
 		current: number | null
 		change30d: number | null
 	}
-	chains: ProtocolFaqChain[]
+	chains: Array<ProtocolFaqChain>
 	fees: {
 		fees30d: number | null
 		revenue30d: number | null
@@ -61,7 +61,7 @@ export interface ProtocolFaqContext {
 	}
 	token: ProtocolFaqToken | null
 	comparison: ProtocolFaqComparison | null
-	children: ProtocolFaqChild[]
+	children: Array<ProtocolFaqChild>
 	useChildrenQuestion: boolean
 	treasury: {
 		ownTokens: number | null
@@ -90,13 +90,13 @@ interface ProtocolFaqRelationshipInput {
 	protocolName: string
 	category: string | null
 	isParent: boolean
-	chains: string[]
+	chains: Array<string>
 	protocols: Array<{
 		name: string
 		slug?: string
 		defillamaId: string
 		category?: string
-		chains: string[]
+		chains: Array<string>
 		tvl: number | null
 		parentProtocol?: string
 		deprecated?: boolean
@@ -112,14 +112,14 @@ export function buildProtocolFaqRelationship({
 	protocols
 }: ProtocolFaqRelationshipInput): {
 	comparison: ProtocolFaqComparison | null
-	children: ProtocolFaqChild[]
+	children: Array<ProtocolFaqChild>
 	useChildrenQuestion: boolean
 } {
 	const rawChildren: Array<{
 		name: string
 		slug?: string
 		category: string | null
-		chains: string[]
+		chains: Array<string>
 		tvl: number | null
 	}> = []
 	const rows: Array<{
@@ -235,7 +235,7 @@ export function buildProtocolFaqRelationship({
 	}
 }
 
-export function buildProtocolFaq(context: ProtocolFaqContext): IProtocolFaqItem[] {
+export function buildProtocolFaq(context: ProtocolFaqContext): Array<IProtocolFaqItem> {
 	const candidates = [
 		buildTvlQuestion(context),
 		buildChainsQuestion(context),
@@ -259,7 +259,10 @@ function linkedText(value: string, href: string | null | undefined): IProtocolFa
 	return href ? { text: value, href } : { text: value }
 }
 
-function appendLinkedList(parts: IProtocolFaqAnswerPart[], items: Array<{ name: string; href?: string | null }>): void {
+function appendLinkedList(
+	parts: Array<IProtocolFaqAnswerPart>,
+	items: Array<{ name: string; href?: string | null }>
+): void {
 	for (const [index, item] of items.entries()) {
 		if (index > 0) {
 			parts.push(text(index === items.length - 1 ? (items.length === 2 ? ' and ' : ', and ') : ', '))
@@ -301,7 +304,7 @@ function buildTvlQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null 
 function buildChainsQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {
 	if (context.chains.length === 0) return null
 
-	const answer: IProtocolFaqAnswerPart[] = []
+	const answer: Array<IProtocolFaqAnswerPart> = []
 	if (context.chains.length === 1) {
 		for (const chain of context.chains) {
 			answer.push(text(`${context.name} operates on `), linkedText(chain.name, chain.href), text('.'))
@@ -338,7 +341,7 @@ function buildFeesQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null
 	const { fees30d, revenue30d, annualizedFees, annualizedRevenue } = context.fees
 	if (fees30d == null && revenue30d == null) return null
 
-	const answer: string[] = []
+	const answer: Array<string> = []
 	if (fees30d != null)
 		answer.push(
 			`Over the past 30 days, ${context.name} generated ${formatUsd(fees30d, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in fees.`
@@ -351,7 +354,7 @@ function buildFeesQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null
 		)
 	}
 	if (annualizedFees != null || annualizedRevenue != null) {
-		const annualized: string[] = []
+		const annualized: Array<string> = []
 		if (annualizedFees != null)
 			annualized.push(
 				`${formatUsd(annualizedFees, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in fees`
@@ -387,7 +390,7 @@ function buildTokenValuationQuestion(context: ProtocolFaqContext): IProtocolFaqI
 		token.maxSupply != null
 	if (!hasValuation) return null
 
-	const answer: IProtocolFaqAnswerPart[] = []
+	const answer: Array<IProtocolFaqAnswerPart> = []
 	if (token.currentPrice != null) {
 		answer.push(
 			linkedText(token.symbol, token.tokenPageRoute),
@@ -412,7 +415,7 @@ function buildTokenValuationQuestion(context: ProtocolFaqContext): IProtocolFaqI
 			)
 		)
 	if (token.circulatingSupply != null || token.totalSupply != null || token.maxSupply != null) {
-		const supply: string[] = []
+		const supply: Array<string> = []
 		if (token.circulatingSupply != null)
 			supply.push(
 				`${formatCompactNumber(token.circulatingSupply, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} circulating`
@@ -439,7 +442,7 @@ function buildTokenPerformanceQuestion(context: ProtocolFaqContext): IProtocolFa
 	const token = context.token
 	if (!token || (token.priceChange7d == null && token.priceChange30d == null && token.ath == null)) return null
 
-	const answer: string[] = []
+	const answer: Array<string> = []
 	if (token.priceChange7d != null) {
 		answer.push(
 			`${token.symbol} is ${token.priceChange7d >= 0 ? 'up' : 'down'} ${formatPercentMagnitude(token.priceChange7d)} over the past 7 days`
@@ -472,7 +475,7 @@ function buildTokenPerformanceQuestion(context: ProtocolFaqContext): IProtocolFa
 
 function buildRelationshipQuestion(context: ProtocolFaqContext): IProtocolFaqItem | null {
 	if (context.useChildrenQuestion && context.children.length > 0) {
-		const answer: IProtocolFaqAnswerPart[] = [
+		const answer: Array<IProtocolFaqAnswerPart> = [
 			text(`${context.name} is a parent protocol whose tracked products include `)
 		]
 		appendLinkedList(answer, context.children.slice(0, MAX_LINKED_CHILDREN))
@@ -489,7 +492,7 @@ function buildRelationshipQuestion(context: ProtocolFaqContext): IProtocolFaqIte
 
 	const comparison = context.comparison
 	if (!comparison) return null
-	const answer: IProtocolFaqAnswerPart[] = [
+	const answer: Array<IProtocolFaqAnswerPart> = [
 		text('Among '),
 		linkedText(`${comparison.category} protocols`, comparison.categoryHref)
 	]
@@ -582,7 +585,7 @@ function buildTreasuryQuestion(context: ProtocolFaqContext): IProtocolFaqItem | 
 	const treasury = context.treasury
 	if (!treasury || treasury.total == null) return null
 
-	const breakdown: string[] = []
+	const breakdown: Array<string> = []
 	if (treasury.stablecoins != null && treasury.stablecoins > 0) {
 		breakdown.push(
 			`${formatUsd(treasury.stablecoins, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} in stablecoins`
@@ -621,7 +624,7 @@ function buildSecurityQuestion(context: ProtocolFaqContext): IProtocolFaqItem | 
 	}
 	if (latest === null) return null
 	const latestDate = latest.date == null ? null : formatDate(latest.date, { input: 'seconds' })
-	const answer: IProtocolFaqAnswerPart[] = [
+	const answer: Array<IProtocolFaqAnswerPart> = [
 		text(`${context.name} has ${formatNumber(context.hacks.length)} recorded `),
 		linkedText(`security incident${context.hacks.length === 1 ? '' : 's'}`, '/hacks'),
 		text('.')

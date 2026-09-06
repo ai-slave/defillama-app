@@ -294,7 +294,7 @@ const ShowcaseSection = ({
 	overline: string
 	heading: string
 	description: string
-	bullets: string[]
+	bullets: Array<string>
 	reversed?: boolean
 	children: ReactNode
 }) => (
@@ -321,7 +321,7 @@ const ShowcaseSection = ({
 )
 
 type MockCell = { value: string; variant?: 'value' | 'formula'; colSpan?: number }
-type MockRow = { num: string; cells: MockCell[] }
+type MockRow = { num: string; cells: Array<MockCell> }
 
 const cellClass = (variant?: 'value' | 'formula') =>
 	variant === 'value' ? 'font-semibold text-sub-live' : variant === 'formula' ? '' : 'text-sub-text-soft'
@@ -333,15 +333,15 @@ const MockTable = ({
 	footer
 }: {
 	formulaBar?: string
-	headers?: { num?: string; labels: string[] }
-	rows: MockRow[]
+	headers?: { num?: string; labels: Array<string> }
+	rows: Array<MockRow>
 	footer?: MockRow
 }) => {
 	const colCount = headers ? headers.labels.length : rows[0].cells.length
 	const valueColTrack = colCount <= 2 ? '96px' : 'minmax(92px, 0.8fr)'
 	const gridCols =
 		colCount === 1 ? '28px minmax(0, 1fr)' : `28px repeat(${colCount - 1}, minmax(0, 1fr)) ${valueColTrack}`
-	const hasRightSeparator = (cells: MockCell[], index: number) => {
+	const hasRightSeparator = (cells: Array<MockCell>, index: number) => {
 		let occupiedColumns = 0
 		for (let i = 0; i <= index; i++) {
 			occupiedColumns += cells[i].colSpan ?? 1

@@ -18,7 +18,7 @@ export interface TrendSeries {
 	data: Pts
 }
 
-const VIEWS: { value: View; label: string }[] = [
+const VIEWS: Array<{ value: View; label: string }> = [
 	{ value: 'day', label: 'Daily' },
 	{ value: 'week', label: 'Weekly' },
 	{ value: 'month', label: 'Monthly' },
@@ -29,11 +29,11 @@ const VIEWS: { value: View; label: string }[] = [
 export type Bucket = Exclude<View, 'cumulative'>
 const BUCKET_DAYS: Record<Bucket, number> = { day: 1, week: 7, month: 28, quarter: 90 }
 
-function measureCadence(series: TrendSeries[]): Bucket {
+function measureCadence(series: Array<TrendSeries>): Bucket {
 	const timestamps = [...new Set(series.flatMap((s) => s.data.map(([timestamp]) => timestamp)))].sort((a, b) => a - b)
 	if (timestamps.length < 2) return 'day'
 	// Median gap, so a single missing period or a partial first/last bucket can't shift the verdict.
-	const gaps = timestamps.slice(1).map((timestamp, index) => (timestamp - timestamps[index]!) / 86400)
+	const gaps = timestamps.slice(1).map((timestamp, index) => (timestamp - timestamps[index]!) / 86_400)
 	gaps.sort((a, b) => a - b)
 	const median = gaps[Math.floor(gaps.length / 2)]!
 	if (median > 45) return 'quarter'
@@ -46,7 +46,7 @@ function measureCadence(series: TrendSeries[]): Bucket {
 // series can arrive daily, weekly or monthly, and a coarser bucket than the data is a sum of real
 // periods while a finer one is a relabeled lie ("Daily" over monthly points). `minBucket` raises
 // that floor for series whose finest buckets are too noisy to be worth offering.
-export function detectCadence(series: TrendSeries[], minBucket: Bucket = 'day'): Bucket {
+export function detectCadence(series: Array<TrendSeries>, minBucket: Bucket = 'day'): Bucket {
 	const measured = measureCadence(series)
 	return BUCKET_DAYS[minBucket] > BUCKET_DAYS[measured] ? minBucket : measured
 }
@@ -66,7 +66,7 @@ const CHART_OPTIONS = {
 } satisfies NonNullable<IMultiSeriesChartProps['chartOptions']>
 
 // Legend order: lifetime size desc, catch-all "Others" bucket last.
-export function orderTrendSeries(series: TrendSeries[]): TrendSeries[] {
+export function orderTrendSeries(series: Array<TrendSeries>): Array<TrendSeries> {
 	const total = (s: TrendSeries) => s.data.reduce((sum, [, value]) => sum + (value || 0), 0)
 	return [...series].sort((a, b) => {
 		const aOthers = a.name.startsWith('Others')
@@ -78,7 +78,7 @@ export function orderTrendSeries(series: TrendSeries[]): TrendSeries[] {
 
 // DefiLlama breakdown rows ([timestamp, {name: value}]) to one series per name, on the
 // union of names across all rows (a name absent from a row reads as 0), ordered for the legend.
-export function breakdownToSeries(rows: IAdapterBreakdownChartData): TrendSeries[] {
+export function breakdownToSeries(rows: IAdapterBreakdownChartData): Array<TrendSeries> {
 	const names = new Set<string>()
 	for (const [, values] of rows) {
 		for (const name of Object.keys(values)) names.add(name)
@@ -92,7 +92,7 @@ export function breakdownToSeries(rows: IAdapterBreakdownChartData): TrendSeries
 }
 
 // An ir-server Chart (parallel dates + series values) as point series for SeriesTrendChart.
-export function chartToTrendSeries(chart: Chart): TrendSeries[] {
+export function chartToTrendSeries(chart: Chart): Array<TrendSeries> {
 	return chart.series.map((series) => ({
 		name: series.name,
 		data: chart.dates.map((date, index): [number, number] => [parseDateToUnix(date), series.data[index] ?? 0])
@@ -101,7 +101,7 @@ export function chartToTrendSeries(chart: Chart): TrendSeries[] {
 
 // Drop the all-zero head shared by every series, so a metric that started recently
 // (e.g. the fee switch) doesn't render years of empty space.
-export function trimLeadingZeros(series: TrendSeries[]): TrendSeries[] {
+export function trimLeadingZeros(series: Array<TrendSeries>): Array<TrendSeries> {
 	let start = Infinity
 	for (const s of series) {
 		const first = s.data.find(([, value]) => value > 0)
@@ -113,14 +113,14 @@ export function trimLeadingZeros(series: TrendSeries[]): TrendSeries[] {
 
 // Keep the n largest series by lifetime total (all-zero series dropped), summing the
 // rest into an Others bucket. For raw DefiLlama breakdowns that list every chain.
-export function groupTopN(series: TrendSeries[], n: number): TrendSeries[] {
+export function groupTopN(series: Array<TrendSeries>, n: number): Array<TrendSeries> {
 	const withTotals = series
 		.map((s) => ({ s, total: s.data.reduce((sum, [, value]) => sum + (value || 0), 0) }))
 		.filter(({ total }) => total > 0)
 		.sort((a, b) => b.total - a.total)
 	const top = withTotals.slice(0, n).map(({ s }) => s)
 	const rest = withTotals.slice(n)
-	if (!rest.length) return top
+	if (rest.length === 0) return top
 	const others = new Map<number, number>()
 	for (const { s } of rest) {
 		for (const [timestamp, value] of s.data) others.set(timestamp, (others.get(timestamp) ?? 0) + (value || 0))
@@ -128,8 +128,8 @@ export function groupTopN(series: TrendSeries[], n: number): TrendSeries[] {
 	return [...top, { name: 'Others', data: [...others].sort((a, b) => a[0] - b[0]) }]
 }
 
-export function aggregate(series: TrendSeries[], view: View, stacked: boolean): SparseCartesianSeries[] {
-	if (!series.length) return []
+export function aggregate(series: Array<TrendSeries>, view: View, stacked: boolean): Array<SparseCartesianSeries> {
+	if (series.length === 0) return []
 	const grouping = view === 'cumulative' ? 'day' : view
 	const isCumulative = view === 'cumulative'
 	const agg = series.map((s, i) => {
@@ -180,7 +180,7 @@ export function SeriesTrendChart({
 }: {
 	title: string
 	subtitle?: string
-	series?: TrendSeries[] | undefined
+	series?: Array<TrendSeries> | undefined
 	isLoading?: boolean
 	isError?: boolean
 	valueSymbol?: string
@@ -228,7 +228,7 @@ export function SeriesTrendChart({
 				<div className="flex h-[360px] items-center justify-center text-xs text-pro-text-tertiary">
 					Failed to load data
 				</div>
-			) : !chartSeries.length ? (
+			) : chartSeries.length === 0 ? (
 				<div className="flex h-[360px] items-center justify-center text-xs text-pro-text-tertiary">No data</div>
 			) : (
 				<MultiSeriesChart

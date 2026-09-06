@@ -1,5 +1,5 @@
 import type { GetStaticPropsContext } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 
 const mocks = vi.hoisted(() => ({
@@ -99,7 +99,7 @@ describe('adapter metric chain ranking route wiring', () => {
 		mocks.getChainsByAdapterPageData.mockResolvedValue({ chains: [] })
 	})
 
-	it.each(adapterChainRankingRoutes)('pins $route builder adapter and data type', async (row) => {
+	test.each(adapterChainRankingRoutes)('pins $route builder adapter and data type', async (row) => {
 		const page = await row.loadPage()
 
 		await page.getStaticProps(staticPropsContext)
@@ -115,7 +115,7 @@ describe('adapter metric chain ranking route wiring', () => {
 		expect(mocks.getChainsByAdapterPageData).toHaveBeenCalledWith(expectedArgs)
 	})
 
-	it('keeps dailyVolume route families distinct by adapter type', () => {
+	test('keeps dailyVolume route families distinct by adapter type', () => {
 		const volumeRoutes = adapterChainRankingRoutes.filter((row) => row.dataType === ADAPTER_DATA_TYPES.DAILY_VOLUME)
 
 		expect(volumeRoutes.map((row) => row.adapterType)).toEqual([
@@ -126,7 +126,7 @@ describe('adapter metric chain ranking route wiring', () => {
 		])
 	})
 
-	it('keeps options premium volume and notional volume route data types distinct', () => {
+	test('keeps options premium volume and notional volume route data types distinct', () => {
 		const optionsRoutes = adapterChainRankingRoutes.filter((row) => row.adapterType === ADAPTER_TYPES.OPTIONS)
 
 		expect(optionsRoutes.map((row) => row.dataType)).toEqual([

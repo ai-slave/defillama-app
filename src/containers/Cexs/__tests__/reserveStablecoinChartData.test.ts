@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { StablecoinListAsset } from '~/containers/Stablecoins/api.types'
 import {
 	buildReserveStablecoinChartData,
@@ -18,11 +18,11 @@ const assets = [
 ] satisfies Array<Pick<StablecoinListAsset, 'symbol' | 'pegType' | 'pegMechanism'>>
 
 describe('buildReserveStablecoinChartData', () => {
-	it('builds zero-filled datasets in first-seen dimension order', () => {
+	test('builds zero-filled datasets in first-seen dimension order', () => {
 		const result = buildReserveStablecoinChartData(
 			[
-				[1_000, { BTC: 100, USDT: 20, DAI: 5 }],
-				[2_000, { USDC: 7, USDT: 3 }]
+				[1000, { BTC: 100, USDT: 20, DAI: 5 }],
+				[2000, { USDC: 7, USDT: 3 }]
 			],
 			assets
 		)
@@ -30,24 +30,24 @@ describe('buildReserveStablecoinChartData', () => {
 		expect(result.totalStablecoins?.dataset).toEqual({
 			dimensions: ['timestamp', TOTAL_STABLECOINS_SERIES_NAME],
 			source: [
-				[1_000, 25],
-				[2_000, 10]
+				[1000, 25],
+				[2000, 10]
 			]
 		})
 		expect(result.totalStablecoins?.charts.map((chart) => chart.name)).toEqual([TOTAL_STABLECOINS_SERIES_NAME])
 		const tokenDataset = result.stablecoinsByToken!.dataset
 		expect(tokenDataset.dimensions).toEqual(['timestamp', 'USDT', 'DAI', 'USDC'])
 		expect(tokenDataset.source).toEqual([
-			[1_000, 20, 5, 0],
-			[2_000, 3, 0, 7]
+			[1000, 20, 5, 0],
+			[2000, 3, 0, 7]
 		])
 		expect(result.stablecoinsByPegMechanism?.dataset.source).toEqual([
-			[1_000, 20, 5],
-			[2_000, 10, 0]
+			[1000, 20, 5],
+			[2000, 10, 0]
 		])
 		expect(result.stablecoinsByPegType?.dataset.source).toEqual([
-			[1_000, 25],
-			[2_000, 10]
+			[1000, 25],
+			[2000, 10]
 		])
 		expect(result.currentTotal).toBe(10)
 		expect(result.currentStablecoinCount).toBe(2)
@@ -61,31 +61,31 @@ describe('buildReserveStablecoinChartData', () => {
 		}
 	})
 
-	it('trusts unique timestamps and preserves the last duplicate-symbol definition', () => {
+	test('trusts unique timestamps and preserves the last duplicate-symbol definition', () => {
 		const result = buildReserveStablecoinChartData(
 			[
-				[1_000, { USDT: 2 }],
-				[2_000, { USDT: 4 }]
+				[1000, { USDT: 2 }],
+				[2000, { USDT: 4 }]
 			],
 			[usdtAsset, { symbol: 'USDT', pegType: 'peggedEUR', pegMechanism: 'algorithmic' }]
 		)
 
 		expect(result.totalStablecoins?.dataset.source).toEqual([
-			[1_000, 2],
-			[2_000, 4]
+			[1000, 2],
+			[2000, 4]
 		])
 		expect(result.stablecoinsByPegMechanism?.dataset.source).toEqual([
-			[1_000, 2],
-			[2_000, 4]
+			[1000, 2],
+			[2000, 4]
 		])
 		expect(result.pegTypesUnique).toEqual(['peggedEUR'])
 	})
 
-	it('uses the latest mechanism row for the pie and summary', () => {
+	test('uses the latest mechanism row for the pie and summary', () => {
 		const result = buildReserveStablecoinChartData(
 			[
-				[1_000, { USDT: 100 }],
-				[2_000, { USDT: 75, DAI: 25 }]
+				[1000, { USDT: 100 }],
+				[2000, { USDT: 75, DAI: 25 }]
 			],
 			assets
 		)
@@ -100,24 +100,24 @@ describe('buildReserveStablecoinChartData', () => {
 		])
 	})
 
-	it('keeps successful timestamps with no matched stablecoin as zero stock', () => {
+	test('keeps successful timestamps with no matched stablecoin as zero stock', () => {
 		const result = buildReserveStablecoinChartData(
 			[
-				[1_000, { USDT: 5, DAI: 2 }],
-				[2_000, { BTC: 10 }]
+				[1000, { USDT: 5, DAI: 2 }],
+				[2000, { BTC: 10 }]
 			],
 			assets
 		)
 
 		expect(result.totalStablecoins?.dataset.source).toEqual([
-			[1_000, 7],
-			[2_000, 0]
+			[1000, 7],
+			[2000, 0]
 		])
 		expect(result.stablecoinsByToken?.dataset).toEqual({
 			dimensions: ['timestamp', 'USDT', 'DAI'],
 			source: [
-				[1_000, 5, 2],
-				[2_000, 0, 0]
+				[1000, 5, 2],
+				[2000, 0, 0]
 			]
 		})
 		expect(result.currentTotal).toBe(0)
@@ -126,41 +126,41 @@ describe('buildReserveStablecoinChartData', () => {
 		expect(result.pegMechanismPieSeries).toEqual({ peers: [], limit: 10, upstreamOthersValue: 0 })
 	})
 
-	it('counts current positive holdings without shrinking historical eligibility', () => {
+	test('counts current positive holdings without shrinking historical eligibility', () => {
 		const result = buildReserveStablecoinChartData(
 			[
-				[1_000, { USDT: 5, USDC: 4, DAI: 3 }],
-				[2_000, { USDT: 2, USDC: 0 }]
+				[1000, { USDT: 5, USDC: 4, DAI: 3 }],
+				[2000, { USDT: 2, USDC: 0 }]
 			],
 			assets
 		)
 
 		expect(result.stablecoinTokensUnique).toEqual(['USDT', 'USDC', 'DAI'])
-		expect(result.stablecoinsByToken?.dataset.source[1]).toEqual([2_000, 2, 0, 0])
+		expect(result.stablecoinsByToken?.dataset.source[1]).toEqual([2000, 2, 0, 0])
 		expect(result.currentStablecoinCount).toBe(1)
 	})
 
-	it('preserves exact-case symbol matching', () => {
+	test('preserves exact-case symbol matching', () => {
 		const result = buildReserveStablecoinChartData(
 			[
-				[1_000, { usdt: 9, USDT: 2 }],
-				[2_000, { usdt: 8, USDT: 1 }]
+				[1000, { usdt: 9, USDT: 2 }],
+				[2000, { usdt: 8, USDT: 1 }]
 			],
 			assets
 		)
 
 		expect(result.stablecoinTokensUnique).toEqual(['USDT'])
 		expect(result.totalStablecoins?.dataset.source).toEqual([
-			[1_000, 2],
-			[2_000, 1]
+			[1000, 2],
+			[2000, 1]
 		])
 	})
 
-	it('distinguishes query failure from successful empty and ready data', () => {
+	test('distinguishes query failure from successful empty and ready data', () => {
 		const data = buildReserveStablecoinChartData(
 			[
-				[1_000, { USDT: 2 }],
-				[2_000, { USDT: 1 }]
+				[1000, { USDT: 2 }],
+				[2000, { USDT: 1 }]
 			],
 			assets
 		)

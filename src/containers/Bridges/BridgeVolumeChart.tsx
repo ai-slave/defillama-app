@@ -21,7 +21,7 @@ import {
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 interface BridgeVolumeChartProps {
-	data: BridgeVolumePoint[] | null | undefined
+	data: Array<BridgeVolumePoint> | null | undefined
 	height?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 	headerStart?: ReactNode

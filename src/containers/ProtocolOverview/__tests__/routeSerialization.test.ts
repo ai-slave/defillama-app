@@ -1,6 +1,6 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IAdapterProtocolOverview } from '~/containers/AdapterMetrics/types'
 import { getStaticProps as getProtocolStaticProps } from '~/pages/protocol/[protocol]'
 import { getStaticProps as getProtocolActiveLoansStaticProps } from '~/pages/protocol/active-loans/[protocol]'
@@ -116,7 +116,7 @@ vi.mock('~/utils/maxAgeForNext', () => ({
 }))
 
 vi.mock('~/utils/perf', () => ({
-	withPerformanceLogging: <T extends (...args: never[]) => Promise<object>>(_name: string, fn: T) => fn,
+	withPerformanceLogging: <T extends (...args: Array<never>) => Promise<object>>(_name: string, fn: T) => fn,
 	createRoutePhaseTimer: () => ({
 		start: () => () => undefined,
 		time: <T>(_name: string, fn: () => T) => fn(),
@@ -269,7 +269,7 @@ describe('protocol static props serialization', () => {
 		}
 	})
 
-	it('keeps the overview route result JSON serializable after adding entity questions', async () => {
+	test('keeps the overview route result JSON serializable after adding entity questions', async () => {
 		mocks.getProtocolOverviewPageData.mockResolvedValueOnce(createProtocolPageData())
 		mocks.fetchOptionalEntityQuestions.mockResolvedValueOnce({ questions: ['What is Test Protocol?'] })
 
@@ -278,7 +278,7 @@ describe('protocol static props serialization', () => {
 		expectJsonRoundTrip(result)
 	})
 
-	it('keeps the TVL route result JSON serializable and protocol-only', async () => {
+	test('keeps the TVL route result JSON serializable and protocol-only', async () => {
 		mocks.fetchProtocolOverviewMetrics.mockResolvedValueOnce({
 			name: 'Test Protocol',
 			currentChainTvls: {
@@ -302,7 +302,7 @@ describe('protocol static props serialization', () => {
 		})
 	})
 
-	it('loads and renders every stablecoin configured for a protocol', async () => {
+	test('loads and renders every stablecoin configured for a protocol', async () => {
 		mocks.fetchProtocolOverviewMetrics.mockResolvedValueOnce({
 			name: 'Test Protocol',
 			stablecoins: ['coin-a', 'coin-b'],
@@ -342,7 +342,7 @@ describe('protocol static props serialization', () => {
 		})
 	})
 
-	it('keeps zero all-time fee subtype totals and serializes the fee route result', async () => {
+	test('keeps zero all-time fee subtype totals and serializes the fee route result', async () => {
 		mocks.fetchProtocolOverviewMetrics.mockResolvedValueOnce({
 			name: 'Test Protocol',
 			currentChainTvls: {},
@@ -381,7 +381,7 @@ describe('protocol static props serialization', () => {
 		})
 	})
 
-	it.each([
+	test.each([
 		['DEX', getProtocolDexStaticProps],
 		['Options', getProtocolOptionsStaticProps]
 	])('keeps notional-only children out of the %s primary breakdown props', async (_name, getStaticProps) => {
@@ -414,7 +414,7 @@ describe('protocol static props serialization', () => {
 		expect(result).toMatchObject({ props: { protocolVersions: ['Primary V2'] } })
 	})
 
-	it('serializes active-loans props without protocol TVL toggle controls', async () => {
+	test('serializes active-loans props without protocol TVL toggle controls', async () => {
 		mocks.fetchProtocolOverviewMetrics.mockResolvedValueOnce({
 			name: 'Test Protocol',
 			parentProtocol: null,

@@ -89,7 +89,7 @@ async function fetchDenominationPriceHistory(geckoId: string): Promise<Denominat
 	return priceHistory.priceChart.length > 0 ? priceHistory : null
 }
 
-export function getNetInflowsSeries(data: BridgeOverviewVolumeChartTuple[]): Array<[number, number | null]> {
+export function getNetInflowsSeries(data: Array<BridgeOverviewVolumeChartTuple>): Array<[number, number | null]> {
 	const series: Array<[number, number | null]> = []
 	for (const [date, deposits, signedWithdrawals] of data) {
 		const netFlow = getBridgeNetFlow({
@@ -102,7 +102,7 @@ export function getNetInflowsSeries(data: BridgeOverviewVolumeChartTuple[]): Arr
 }
 
 export function buildBridgedTvlChart(
-	bridgedTvlData: ChainAssetsChartDataPoint[],
+	bridgedTvlData: Array<ChainAssetsChartDataPoint>,
 	isGovTokensEnabled: boolean | undefined
 ): Array<[number, number]> {
 	const chart: Array<[number, number]> = []
@@ -620,7 +620,7 @@ export const useFetchChainChartData = ({
 			const isTokenMetric = chartLabel === 'Token Price' || chartLabel === 'Token Mcap' || chartLabel === 'Token Volume'
 			// Token metrics are intentionally not fetched when no chain gecko id is available.
 			if (isTokenMetric && !denominationGeckoId) return false
-			return !Object.prototype.hasOwnProperty.call(charts, chartLabel)
+			return !Object.hasOwn(charts, chartLabel)
 		})
 		return {
 			finalCharts: charts,

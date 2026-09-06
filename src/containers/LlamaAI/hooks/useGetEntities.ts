@@ -15,7 +15,7 @@ export interface EntityResult {
 /**
  * Fetch entities (chains, protocols, stablecoins, categories) matching the query.
  */
-async function fetchEntities(query: string): Promise<EntityResult[]> {
+async function fetchEntities(query: string): Promise<Array<EntityResult>> {
 	// `pages` index only exposes `type` as a filterable attribute, so deprecated/subName
 	// have to be filtered out client-side after the fetch. We over-fetch to leave headroom
 	// once the unwanted hits are removed.
@@ -33,7 +33,7 @@ async function fetchEntities(query: string): Promise<EntityResult[]> {
 /**
  * Fetch coins/tokens matching the query.
  */
-export async function fetchCoins(query: string, limit: number = 10): Promise<EntityResult[]> {
+export async function fetchCoins(query: string, limit: number = 10): Promise<Array<EntityResult>> {
 	const tokens = await searchTokens(query, limit)
 
 	return tokens.map((token) => ({

@@ -56,7 +56,7 @@ const mergeWatchlists = (local: WatchlistStore | null, remote: WatchlistStore | 
 
 	const merged: WatchlistStore = { ...remote }
 	for (const [portfolio, protocols] of Object.entries(local)) {
-		merged[portfolio] = { ...(remote[portfolio] ?? {}), ...protocols }
+		merged[portfolio] = { ...remote[portfolio], ...protocols }
 	}
 
 	return merged

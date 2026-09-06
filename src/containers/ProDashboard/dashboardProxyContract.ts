@@ -17,7 +17,7 @@ import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolD
 import type { ProDashboardChartRequest } from './dataContracts'
 
 interface ProDashboardProxyContract {
-	chart: { params: { chart: ProDashboardChartRequest }; response: [number, number][] }
+	chart: { params: { chart: ProDashboardChartRequest }; response: Array<[number, number]> }
 	stablecoins: { params: { chain: string }; response: StablecoinsChartCacheValue }
 	yields: { params: { poolConfigId: string }; response: PoolHistory }
 	yieldsLendBorrow: { params: { poolConfigId: string }; response: BorrowMarketHistory }
@@ -30,11 +30,11 @@ interface ProDashboardProxyContract {
 		response: RWAPositionalChartDataset | null
 	}
 	rwaAssetChart: { params: { assetId: string }; response: IRWAAssetData['chartDataset'] }
-	rwaAssetsList: { params: Record<string, never>; response: IFetchedRWAProject[] }
+	rwaAssetsList: { params: Record<string, never>; response: Array<IFetchedRWAProject> }
 	rwaStats: { params: Record<string, never>; response: IRWAStatsResponse }
-	equitiesCompanies: { params: Record<string, never>; response: IEquitiesCompanyApiItem[] }
+	equitiesCompanies: { params: Record<string, never>; response: Array<IEquitiesCompanyApiItem> }
 	equitiesStatements: { params: { ticker: string; country: string }; response: IEquitiesStatementsResponse }
-	equitiesFilings: { params: { ticker: string; country: string }; response: IEquitiesFilingApiItem[] }
+	equitiesFilings: { params: { ticker: string; country: string }; response: Array<IEquitiesFilingApiItem> }
 	stablecoinsList: { params: Record<string, never>; response: StablecoinsListResponse }
 	stablecoinAsset: { params: { slug: string }; response: StablecoinDetailResponse | null }
 }

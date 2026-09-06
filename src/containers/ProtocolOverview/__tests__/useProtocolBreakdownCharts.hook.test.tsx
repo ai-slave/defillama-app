@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 type QueryState<T> = {
 	data: T | undefined
@@ -45,7 +45,7 @@ function Harness({
 	tokensToExclude
 }: {
 	onRender: (result: HookResult) => void
-	tokensToExclude?: string[]
+	tokensToExclude?: Array<string>
 }) {
 	onRender(
 		useProtocolBreakdownCharts({
@@ -71,7 +71,7 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 		return latest
 	}
 
-	const renderHarness = async (tokensToExclude?: string[]) => {
+	const renderHarness = async (tokensToExclude?: Array<string>) => {
 		await act(async () => {
 			root.render(
 				<Harness onRender={(result) => (latest = result)} {...(tokensToExclude ? { tokensToExclude } : {})} />
@@ -111,8 +111,8 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 		latest = null
 		mocks.result.tvlChartQueries = [
 			createQueryState([
-				[1_000, 10],
-				[2_000, 20]
+				[1000, 10],
+				[2000, 20]
 			])
 		]
 		mocks.result.chainBreakdownChartQueries = [createQueryState([])]
@@ -128,13 +128,13 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 		Reflect.deleteProperty(window, 'cancelIdleCallback')
 	})
 
-	it('retains cached source data on refetch error but clears a failed source with no data', async () => {
+	test('retains cached source data on refetch error but clears a failed source with no data', async () => {
 		await renderHarness()
 		expect(getLatest().isLoading).toBe(true)
 		await runNextIdleCallback()
 		expect(getLatest().valueDataset?.source).toEqual([
-			[1_000, 10],
-			[2_000, 20]
+			[1000, 10],
+			[2000, 20]
 		])
 
 		const cachedError = new Error('Refetch failed')
@@ -152,8 +152,8 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 		expect(idleCallbacks.size).toBe(0)
 		expect(getLatest().isLoading).toBe(false)
 		expect(getLatest().valueDataset?.source).toEqual([
-			[1_000, 10],
-			[2_000, 20]
+			[1000, 10],
+			[2000, 20]
 		])
 		expect(getLatest().errors).toEqual([{ category: 'tvl', key: undefined, error: cachedError }])
 
@@ -172,8 +172,8 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 		expect(getLatest().isLoading).toBe(true)
 		expect(idleCallbacks.size).toBe(0)
 		expect(getLatest().valueDataset?.source).toEqual([
-			[1_000, 10],
-			[2_000, 20]
+			[1000, 10],
+			[2000, 20]
 		])
 
 		const loadingQuery = mocks.result.tvlChartQueries[0]
@@ -190,21 +190,21 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 		await renderHarness()
 		expect(getLatest().isLoading).toBe(true)
 		expect(getLatest().valueDataset?.source).toEqual([
-			[1_000, 10],
-			[2_000, 20]
+			[1000, 10],
+			[2000, 20]
 		])
 		await runNextIdleCallback()
 		expect(getLatest().valueDataset).toBeNull()
 		expect(getLatest().errors).toEqual([{ category: 'tvl', key: undefined, error: cachedError }])
 	})
 
-	it('recomputes when canonical token exclusions change with unchanged query timestamps', async () => {
+	test('recomputes when canonical token exclusions change with unchanged query timestamps', async () => {
 		await renderHarness()
 		await runNextIdleCallback()
 		expect(idleCallbacks.size).toBe(0)
 		expect(getLatest().valueDataset?.source).toEqual([
-			[1_000, 10],
-			[2_000, 20]
+			[1000, 10],
+			[2000, 20]
 		])
 
 		const initialQuery = mocks.result.tvlChartQueries[0]
@@ -213,8 +213,8 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 			{
 				...initialQuery,
 				data: [
-					[1_000, 100],
-					[2_000, 200]
+					[1000, 100],
+					[2000, 200]
 				]
 			}
 		]
@@ -224,8 +224,8 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 		expect(idleCallbacks.size).toBe(1)
 		await runNextIdleCallback()
 		expect(getLatest().valueDataset?.source).toEqual([
-			[1_000, 100],
-			[2_000, 200]
+			[1000, 100],
+			[2000, 200]
 		])
 
 		const excludedQuery = mocks.result.tvlChartQueries[0]
@@ -234,8 +234,8 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 			{
 				...excludedQuery,
 				data: [
-					[1_000, 1_000],
-					[2_000, 2_000]
+					[1000, 1000],
+					[2000, 2000]
 				]
 			}
 		]
@@ -244,8 +244,8 @@ describe('useProtocolBreakdownCharts query failure semantics', () => {
 		expect(idleCallbacks.size).toBe(0)
 		expect(getLatest().isLoading).toBe(false)
 		expect(getLatest().valueDataset?.source).toEqual([
-			[1_000, 100],
-			[2_000, 200]
+			[1000, 100],
+			[2000, 200]
 		])
 	})
 })

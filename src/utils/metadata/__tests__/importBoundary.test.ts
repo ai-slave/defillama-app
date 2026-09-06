@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { collectSourceFiles } from '../../../../scripts/lib/sourceFiles'
 
 // Client entries may only reach server metadata and dataset readers through a
@@ -15,8 +15,8 @@ function toPosixRelative(filePath: string): string {
 	return path.relative(process.cwd(), filePath).split(path.sep).join('/')
 }
 
-function getStaticImportStatements(source: string): string[] {
-	const statements: string[] = []
+function getStaticImportStatements(source: string): Array<string> {
+	const statements: Array<string> = []
 	let statement: string | null = null
 
 	for (const line of source.split('\n')) {
@@ -34,8 +34,8 @@ function getStaticImportStatements(source: string): string[] {
 	return statements
 }
 
-function getStaticRuntimeImportSpecifiers(source: string): string[] {
-	const specifiers: string[] = []
+function getStaticRuntimeImportSpecifiers(source: string): Array<string> {
+	const specifiers: Array<string> = []
 
 	for (const statement of getStaticImportStatements(source)) {
 		if (/^\s*import\s+type\b/.test(statement)) continue
@@ -112,8 +112,8 @@ function resolveInternalSpecifier(fromFile: string, specifier: string): string |
 }
 
 describe('metadata artifact import boundary', () => {
-	it('keeps server metadata and dataset readers out of transitive client runtime imports', () => {
-		const errors: string[] = []
+	test('keeps server metadata and dataset readers out of transitive client runtime imports', () => {
+		const errors: Array<string> = []
 		const sourceByFile = new Map<string, string>()
 		for (const filePath of collectSourceFiles(path.join(process.cwd(), 'src'), SOURCE_EXTENSIONS)) {
 			sourceByFile.set(filePath, readFileSync(filePath, 'utf8'))
@@ -121,7 +121,7 @@ describe('metadata artifact import boundary', () => {
 
 		const visited = new Set<string>()
 
-		function visit(filePath: string, stack: string[]) {
+		function visit(filePath: string, stack: Array<string>) {
 			if (visited.has(filePath)) return
 			visited.add(filePath)
 

@@ -2,7 +2,7 @@ import { Card } from '~/ui/Card'
 import { MetadataFieldValue, MetadataSource } from './MetadataGroups'
 import type { ExchangeMetadataKpiModel } from './models'
 
-export function MetadataKpis({ kpis }: { kpis: ExchangeMetadataKpiModel[] }) {
+export function MetadataKpis({ kpis }: { kpis: Array<ExchangeMetadataKpiModel> }) {
 	if (kpis.length === 0) return null
 	return (
 		<Card as="dl" padding="none" className="grid grid-cols-2 overflow-hidden lg:grid-cols-4">

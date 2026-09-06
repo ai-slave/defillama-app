@@ -35,7 +35,7 @@ export type BridgesLargeTxsTableHandle = {
 }
 
 type BridgesLargeTxsTableProps = {
-	data: LargeTxsData[]
+	data: Array<LargeTxsData>
 	csvFileName?: string
 }
 

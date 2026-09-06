@@ -5,7 +5,7 @@ export interface IHackApiItem {
 	technique: string | null
 	/** Whole USD, not millions of USD. */
 	amount: number | null
-	chain: string[] | null
+	chain: Array<string> | null
 	bridgeHack: boolean
 	targetType: string | null
 	/** Whole USD, not millions of USD. */

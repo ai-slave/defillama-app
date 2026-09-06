@@ -28,7 +28,7 @@ type LegacyProtocolTablePresetId =
 
 interface LegacyProtocolTablePresetMigration {
 	targetPresetId: MigratedProtocolTablePresetId
-	columnOrder: readonly [string, ...string[]]
+	columnOrder: readonly [string, ...Array<string>]
 	defaultSorting: readonly [{ id: string; desc: boolean }]
 }
 

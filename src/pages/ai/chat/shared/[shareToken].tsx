@@ -36,10 +36,10 @@ interface SharedSession {
 		images?: Array<{ url: string; mimeType: string; filename?: string }>
 		// Assistant-specific fields
 		metadata?: any
-		suggestions?: any[]
-		charts?: any[]
-		chartData?: any[] | Record<string, any[]>
-		citations?: string[]
+		suggestions?: Array<any>
+		charts?: Array<any>
+		chartData?: Array<any> | Record<string, Array<any>>
+		citations?: Array<string>
 		csvExports?: Array<{ id: string; title: string; url: string; rowCount: number; filename: string }>
 	}>
 	isPublicView: true
@@ -132,7 +132,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 
 	if (isLoading || !router.isReady) {
 		return (
-			<Layout title={title} description={description} canonicalUrl={null} noIndex={true}>
+			<Layout title={title} description={description} canonicalUrl={null} noIndex>
 				<Head>
 					<meta property="og:image" content={ogImageUrl} />
 					<meta name="twitter:card" content="summary_large_image" />
@@ -157,7 +157,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 				title="Conversation Not Found - DefiLlama"
 				description="The requested conversation could not be found"
 				canonicalUrl={null}
-				noIndex={true}
+				noIndex
 			>
 				<LlamaAIMobileAppGate interactive>
 					<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
@@ -172,7 +172,7 @@ export default function SharedConversationPage({ shareToken: ssrToken, sessionTi
 	}
 
 	return (
-		<Layout title={title} description={description} canonicalUrl={null} noIndex={true} hideDesktopSearchLlamaAiButton>
+		<Layout title={title} description={description} canonicalUrl={null} noIndex hideDesktopSearchLlamaAiButton>
 			<Head>
 				<meta property="og:image" content={ogImageUrl} />
 				<meta name="twitter:card" content="summary_large_image" />

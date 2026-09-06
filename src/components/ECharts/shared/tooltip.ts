@@ -8,8 +8,8 @@ export interface EChartsTooltipItem {
 	componentSubType?: string
 	data?: unknown
 	dataIndex?: number
-	dimensionNames?: readonly string[]
-	encode?: { x?: readonly (number | string)[]; y?: readonly (number | string)[] }
+	dimensionNames?: ReadonlyArray<string>
+	encode?: { x?: ReadonlyArray<number | string>; y?: ReadonlyArray<number | string> }
 	marker?: string
 	name?: string
 	seriesName?: string
@@ -23,7 +23,7 @@ function isEChartsTooltipItem(value: unknown): value is EChartsTooltipItem {
 	return value !== null && typeof value === 'object'
 }
 
-export function normalizeTooltipItems(params: unknown): EChartsTooltipItem[] {
+export function normalizeTooltipItems(params: unknown): Array<EChartsTooltipItem> {
 	if (Array.isArray(params)) return params.filter(isEChartsTooltipItem)
 	return isEChartsTooltipItem(params) ? [params] : []
 }
@@ -98,7 +98,7 @@ export function createSignedInflowsTooltipFormatter(valueSymbol: string, hideSer
 
 		const axisValue = getTooltipAxisValue(items[0])
 		let output = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, 'daily') : ''
-		const rows: TooltipRow[] = []
+		const rows: Array<TooltipRow> = []
 		let explicitOthers: TooltipRow | null = null
 		let total = 0
 		for (const item of items) {

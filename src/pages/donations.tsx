@@ -63,7 +63,7 @@ function DonationsPage({ protocols }) {
 		<Layout
 			title="DefiLlama Affiliate Links"
 			description="DefiLlama affiliate links for protocols with referrals."
-			canonicalUrl={`/donations`}
+			canonicalUrl="/donations"
 		>
 			<Card as="section" padding="sm" className="flex flex-col gap-4">
 				<h1 className="heading-xs">Affiliate links</h1>

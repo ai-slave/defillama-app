@@ -9,7 +9,7 @@ export type Raise = Omit<RaisesApiItem, 'amount' | 'valuation'> & {
 }
 
 export interface RaisesResponse {
-	raises: Raise[]
+	raises: Array<Raise>
 }
 
 function valuationToUsd(value: string | null): number | null {

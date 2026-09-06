@@ -76,7 +76,10 @@ export function isCustomColumnId(id: string): boolean {
 	return id.startsWith('custom_')
 }
 
-export function getOrderedCustomColumnIds(columnOrder: string[], customColumns: CustomColumnDefinition[]): string[] {
+export function getOrderedCustomColumnIds(
+	columnOrder: Array<string>,
+	customColumns: Array<CustomColumnDefinition>
+): Array<string> {
 	const validCustomIds = new Set(customColumns.map((c) => c.id))
 	const idsFromOrder = columnOrder.filter((id) => isCustomColumnId(id) && validCustomIds.has(id))
 	const seen = new Set(idsFromOrder)
@@ -90,7 +93,7 @@ export function getOrderedCustomColumnIds(columnOrder: string[], customColumns: 
 	return idsFromOrder
 }
 
-export function getExpressionVariables(expression: string): string[] {
+export function getExpressionVariables(expression: string): Array<string> {
 	const expr = getParsedExpression(expression)
 	if (!expr) return []
 	return expr.variables()
@@ -104,13 +107,13 @@ export interface CompiledCustomColumn {
 }
 
 export function compileExpression(expression: string): {
-	variables: readonly (keyof ProtocolTableMetrics)[]
+	variables: ReadonlyArray<keyof ProtocolTableMetrics>
 	evaluate: (metrics: ProtocolTableMetrics) => number | null
 } {
 	const expr = getParsedExpression(expression)
 	if (!expr) return { variables: [], evaluate: () => null }
 
-	const variables: (keyof ProtocolTableMetrics)[] = []
+	const variables: Array<keyof ProtocolTableMetrics> = []
 	for (const variable of expr.variables()) {
 		if (!isProtocolTableMetricKey(variable)) return { variables: [], evaluate: () => null }
 		variables.push(variable)
@@ -137,9 +140,9 @@ export function compileExpression(expression: string): {
 }
 
 export function compileCustomColumns(
-	definitions: readonly CustomColumnDefinition[],
+	definitions: ReadonlyArray<CustomColumnDefinition>,
 	chainMetricKeys: ReadonlySet<keyof ProtocolTableMetrics>
-): CompiledCustomColumn[] {
+): Array<CompiledCustomColumn> {
 	return definitions.map((definition) => {
 		const expression = compileExpression(definition.expression)
 		return {
@@ -199,12 +202,12 @@ interface AvailableVariable {
 	format: CustomColumnDefinition['format']
 }
 
-let ALL_VARIABLES_CACHE: AvailableVariable[] | null = null
+let ALL_VARIABLES_CACHE: Array<AvailableVariable> | null = null
 
-function getAllVariables(): AvailableVariable[] {
+function getAllVariables(): Array<AvailableVariable> {
 	if (ALL_VARIABLES_CACHE) return ALL_VARIABLES_CACHE
 
-	const variables: AvailableVariable[] = []
+	const variables: Array<AvailableVariable> = []
 	for (const col of UNIFIED_TABLE_COLUMN_DICTIONARY) {
 		if (!isProtocolTableMetricKey(col.id)) continue
 		variables.push({
@@ -222,11 +225,11 @@ function getAllVariables(): AvailableVariable[] {
 }
 
 interface GetAvailableVariablesOptions {
-	groups?: string[]
-	keys?: string[]
+	groups?: Array<string>
+	keys?: Array<string>
 }
 
-export function getAvailableVariables(options?: GetAvailableVariablesOptions): AvailableVariable[] {
+export function getAvailableVariables(options?: GetAvailableVariablesOptions): Array<AvailableVariable> {
 	const all = getAllVariables()
 	if (!options) return all
 

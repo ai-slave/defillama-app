@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { parseChartBuilderCsvRequest } from './chartBuilderCsvContract'
 
 const validRequest = {
@@ -26,17 +26,17 @@ const validRequest = {
 }
 
 describe('parseChartBuilderCsvRequest', () => {
-	it('accepts the typed Chart Builder export contract', () => {
+	test('accepts the typed Chart Builder export contract', () => {
 		expect(parseChartBuilderCsvRequest(validRequest)).toEqual(validRequest)
 	})
 
-	it('rejects unsupported metrics before invoking an export source', () => {
+	test('rejects unsupported metrics before invoking an export source', () => {
 		expect(() =>
 			parseChartBuilderCsvRequest({ ...validRequest, config: { ...validRequest.config, metric: 'unknown' } })
 		).toThrow('Unsupported Chart Builder metric')
 	})
 
-	it('rejects metric and grouping combinations that Chart Builder cannot produce', () => {
+	test('rejects metric and grouping combinations that Chart Builder cannot produce', () => {
 		expect(() =>
 			parseChartBuilderCsvRequest({
 				...validRequest,
@@ -45,7 +45,7 @@ describe('parseChartBuilderCsvRequest', () => {
 		).toThrow('chain-fees can only be grouped by chain')
 	})
 
-	it('rejects invalid filter sizes and date ranges', () => {
+	test('rejects invalid filter sizes and date ranges', () => {
 		expect(() =>
 			parseChartBuilderCsvRequest({
 				...validRequest,

@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mockState = {
-	categories: ['Treasuries', 'RWA Perps'] as string[],
+	categories: ['Treasuries', 'RWA Perps'] as Array<string>,
 	overviewData: { assets: [] } as unknown
 }
 
@@ -54,7 +54,7 @@ describe('rwa category page', () => {
 		mockState.overviewData = { assets: [] }
 	})
 
-	it('omits the RWA Perps category from static paths', async () => {
+	test('omits the RWA Perps category from static paths', async () => {
 		mockState.categories = ['Treasuries', 'RWA Perps', 'Private Credit']
 
 		await expect(page.getStaticPaths()).resolves.toEqual({
@@ -63,13 +63,13 @@ describe('rwa category page', () => {
 		})
 	})
 
-	it('returns notFound for the RWA Perps category route', async () => {
+	test('returns notFound for the RWA Perps category route', async () => {
 		await expect(page.getStaticProps({ params: { category: 'rwa-perps' } } as never)).resolves.toEqual({
 			notFound: true
 		})
 	})
 
-	it('redirects noncanonical category params to the canonical slug', async () => {
+	test('redirects noncanonical category params to the canonical slug', async () => {
 		await expect(page.getStaticProps({ params: { category: 'Treasuries' } } as never)).resolves.toEqual({
 			redirect: {
 				destination: '/rwa/category/treasuries',

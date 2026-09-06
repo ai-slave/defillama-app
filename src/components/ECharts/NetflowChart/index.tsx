@@ -40,9 +40,9 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 	const { positiveData, negativeData, chains, csvSource } = useMemo(() => {
 		const data = allData[period]
 
-		const positive: number[] = []
-		const negative: number[] = []
-		const chainNames: string[] = []
+		const positive: Array<number> = []
+		const negative: Array<number> = []
+		const chainNames: Array<string> = []
 		const csvRows: Array<{ Chain: string; Inflow: number; Outflow: number; 'Net Flow': number }> = []
 		for (const item of data) {
 			const chain = capitalizeFirstLetter(item.chain)
@@ -236,7 +236,7 @@ export default function NetflowChart({ height, onReady, data: allData }: Netflow
 
 	return (
 		<div className="relative pr-5">
-			<div ref={containerRef} className="my-auto" style={heightStyle ?? { minHeight: '600px' }}></div>
+			<div ref={containerRef} className="my-auto" style={heightStyle ?? { minHeight: '600px' }} />
 			<div className="m-4 flex justify-center">
 				<TagGroup variant="default" size="md" values={flowTypes} selectedValue={period} setValue={setPeriod} />
 			</div>

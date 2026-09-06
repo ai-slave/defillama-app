@@ -27,8 +27,8 @@ export default function Pool2TVL(props: InferGetStaticPropsType<typeof getStatic
 	return (
 		<Layout
 			title="Pool2 TVL Rankings - Value Locked - DefiLlama"
-			description={`Track Pool2 TVL rankings across DeFi protocols. Compare pool2 value locked in liquidity pools and staking contracts across 7000+ protocols on 500+ chains.`}
-			canonicalUrl={`/pool2`}
+			description="Track Pool2 TVL rankings across DeFi protocols. Compare pool2 value locked in liquidity pools and staking contracts across 7000+ protocols on 500+ chains."
+			canonicalUrl="/pool2"
 			pageName={pageName}
 		>
 			<ExtraTvlByChain {...props} />

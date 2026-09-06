@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const fetchJson = vi.fn()
 
@@ -20,7 +20,7 @@ afterEach(() => {
 })
 
 describe('rwa perps api urls', () => {
-	function callsWithoutCacheVersion(): unknown[][] {
+	function callsWithoutCacheVersion(): Array<Array<unknown>> {
 		return fetchJson.mock.calls.map(([url, ...args]) => {
 			const parsed = new URL(url)
 			parsed.searchParams.delete('zz')
@@ -28,7 +28,7 @@ describe('rwa perps api urls', () => {
 		})
 	}
 
-	it('encodes contract, venue, and market ids in request paths', async () => {
+	test('encodes contract, venue, and market ids in request paths', async () => {
 		const api = await import('../api')
 
 		await api.fetchRWAPerpsCurrent(false)
@@ -73,7 +73,7 @@ describe('rwa perps api urls', () => {
 		])
 	})
 
-	it('builds funding history urls with optional query params', async () => {
+	test('builds funding history urls with optional query params', async () => {
 		const api = await import('../api')
 
 		await api.fetchRWAPerpsFundingHistory('xyz:META', { startTime: 10, endTime: 20 })
@@ -85,10 +85,10 @@ describe('rwa perps api urls', () => {
 		])
 	})
 
-	it('normalizes funding database decimals and timestamps once at the fetch boundary', async () => {
+	test('normalizes funding database decimals and timestamps once at the fetch boundary', async () => {
 		fetchJson.mockResolvedValueOnce([
 			{
-				timestamp: 1774454400,
+				timestamp: 1_774_454_400,
 				id: 'xyz:meta',
 				contract: 'xyz:META',
 				venue: 'xyz',
@@ -103,7 +103,7 @@ describe('rwa perps api urls', () => {
 
 		await expect(api.fetchRWAPerpsFundingHistory('xyz:META')).resolves.toEqual([
 			{
-				timestamp: 1774454400000,
+				timestamp: 1_774_454_400_000,
 				id: 'xyz:meta',
 				contract: 'xyz:META',
 				venue: 'xyz',

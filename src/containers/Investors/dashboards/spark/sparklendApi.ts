@@ -81,7 +81,7 @@ export function useSparklendTvlChart() {
 			}
 		}
 
-		const source = new Array<number[]>(raw.length)
+		const source = new Array<Array<number>>(raw.length)
 		const inflowSource: MultiSeriesChartDataset['source'] = []
 		for (let i = 0; i < raw.length; i++) {
 			const [timestamp, value] = raw[i]
@@ -202,9 +202,9 @@ export function useSparklendFeesCharts() {
 		let supplySideRevenueDataset: MultiSeriesChartDataset
 
 		if (areMetricsAligned([feesData, revenueData, supplySideRevenueData])) {
-			const feesSource = new Array<number[]>(feesData.length)
-			const revenueSource = new Array<number[]>(feesData.length)
-			const supplySideRevenueSource = new Array<number[]>(feesData.length)
+			const feesSource = new Array<Array<number>>(feesData.length)
+			const revenueSource = new Array<Array<number>>(feesData.length)
+			const supplySideRevenueSource = new Array<Array<number>>(feesData.length)
 			for (let i = 0; i < feesData.length; i++) {
 				const timestamp = feesData[i][0] * 1e3
 				feesSource[i] = [timestamp, feesData[i][1]]

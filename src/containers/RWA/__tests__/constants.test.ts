@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getDefaultRWAOverviewInclusion,
 	getDefaultSelectedTypes,
@@ -6,7 +6,7 @@ import {
 } from '../constants'
 
 describe('getDefaultRWAOverviewInclusion', () => {
-	it('enables stablecoins and governance by default for rwa-yield-wrapper category pages', () => {
+	test('enables stablecoins and governance by default for rwa-yield-wrapper category pages', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'rwa-yield-wrapper' })).toEqual({
 			includeStablecoins: true,
 			includeGovernance: true,
@@ -15,7 +15,7 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		})
 	})
 
-	it('enables stablecoins by default for stablecoin category pages', () => {
+	test('enables stablecoins by default for stablecoin category pages', () => {
 		for (const categorySlug of ['rwa-stablecoins', 'non-rwa-stablecoins', 'fiat-stablecoins']) {
 			expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug })).toEqual({
 				includeStablecoins: true,
@@ -26,7 +26,7 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		}
 	})
 
-	it('enables governance by default for the governance-tokens category page', () => {
+	test('enables governance by default for the governance-tokens category page', () => {
 		// every asset in this category is governance-classified, so the page
 		// would render empty with the toggle off
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'governance-tokens' })).toEqual({
@@ -37,7 +37,7 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		})
 	})
 
-	it('enables stablecoins and governance by default for other-rwas category pages', () => {
+	test('enables stablecoins and governance by default for other-rwas category pages', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'other-rwas' })).toEqual({
 			includeStablecoins: true,
 			includeGovernance: true,
@@ -46,7 +46,7 @@ describe('getDefaultRWAOverviewInclusion', () => {
 		})
 	})
 
-	it('keeps other RWA pages on the existing false defaults', () => {
+	test('keeps other RWA pages on the existing false defaults', () => {
 		expect(getDefaultRWAOverviewInclusion({ mode: 'category', categorySlug: 'private-credit' })).toEqual({
 			includeStablecoins: false,
 			includeGovernance: false,
@@ -69,7 +69,7 @@ describe('getDefaultRWAOverviewInclusion', () => {
 })
 
 describe('inferPlatformRWAOverviewInclusion', () => {
-	it('enables stablecoins when a platform only has stablecoin assets', () => {
+	test('enables stablecoins when a platform only has stablecoin assets', () => {
 		expect(
 			inferPlatformRWAOverviewInclusion([{ stablecoin: true, governance: false, onChainMcap: { total: 100 } }])
 		).toEqual({
@@ -80,7 +80,7 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		})
 	})
 
-	it('enables each classification independently when it is the majority', () => {
+	test('enables each classification independently when it is the majority', () => {
 		expect(
 			inferPlatformRWAOverviewInclusion([
 				{ stablecoin: true, governance: true, onChainMcap: { total: 40 } },
@@ -90,7 +90,7 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		).toMatchObject({ includeStablecoins: true, includeGovernance: true })
 	})
 
-	it('enables a classification that holds most market cap despite having fewer assets', () => {
+	test('enables a classification that holds most market cap despite having fewer assets', () => {
 		expect(
 			inferPlatformRWAOverviewInclusion([
 				{ stablecoin: false, governance: true, onChainMcap: { total: 100 } },
@@ -100,7 +100,7 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		).toMatchObject({ includeStablecoins: false, includeGovernance: true })
 	})
 
-	it('keeps optional classifications off on a tie when base assets remain visible', () => {
+	test('keeps optional classifications off on a tie when base assets remain visible', () => {
 		expect(
 			inferPlatformRWAOverviewInclusion([
 				{ stablecoin: true, governance: false, onChainMcap: { total: 50 } },
@@ -114,7 +114,7 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		})
 	})
 
-	it('enables present classifications when otherwise no base asset would be visible', () => {
+	test('enables present classifications when otherwise no base asset would be visible', () => {
 		expect(
 			inferPlatformRWAOverviewInclusion([
 				{ stablecoin: true, governance: false, onChainMcap: { total: 0 } },
@@ -128,7 +128,7 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		})
 	})
 
-	it('does not enable a minority classification when another classification already makes the page visible', () => {
+	test('does not enable a minority classification when another classification already makes the page visible', () => {
 		expect(
 			inferPlatformRWAOverviewInclusion([
 				{ stablecoin: true, governance: false, onChainMcap: { total: 60 } },
@@ -142,13 +142,13 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 describe('getDefaultSelectedTypes', () => {
 	const allTypes = ['Asset', 'Platform', 'Wrapper', 'Perp', 'Unknown']
 
-	it('selects asset, platform, and wrapper types by default for other-rwas and rwa-wrappers category pages', () => {
+	test('selects asset, platform, and wrapper types by default for other-rwas and rwa-wrappers category pages', () => {
 		for (const categorySlug of ['other-rwas', 'rwa-wrappers']) {
 			expect(getDefaultSelectedTypes(allTypes, 'category', categorySlug)).toEqual(['Asset', 'Platform', 'Wrapper'])
 		}
 	})
 
-	it('keeps wrapper type excluded by default for standard category pages', () => {
+	test('keeps wrapper type excluded by default for standard category pages', () => {
 		expect(getDefaultSelectedTypes(allTypes, 'category', 'private-credit')).toEqual([
 			'Asset',
 			'Platform',

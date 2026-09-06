@@ -24,7 +24,7 @@ const renderCurrency = (value: number | null) => {
 	return formatted == null ? <span className="text-pro-text-tertiary">-</span> : <>{formatted}</>
 }
 
-export const cexAnalyticsColumns: ColumnDef<CexAnalyticsSnapshotRow>[] = [
+export const cexAnalyticsColumns: Array<ColumnDef<CexAnalyticsSnapshotRow>> = [
 	{
 		header: 'CEX',
 		id: 'venue',

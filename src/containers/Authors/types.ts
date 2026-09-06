@@ -16,7 +16,7 @@ export type AuthorDashboardSummary = {
 		items?: Array<{ id?: string; kind?: string }>
 	}
 	visibility: 'public'
-	tags?: string[]
+	tags?: Array<string>
 	description?: string
 	viewCount?: number
 	likeCount?: number
@@ -41,7 +41,7 @@ export type AuthorPageResponse = {
 	featured: AuthorDashboardSummary | null
 	viewer?: { following: boolean }
 	dashboards: {
-		items: AuthorDashboardSummary[]
+		items: Array<AuthorDashboardSummary>
 		page: number
 		perPage: number
 		totalItems: number

@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { Subscription } from '~/auth/useSubscribe'
 import { SubscriptionSection } from './SubscriptionSection'
 
@@ -107,7 +107,7 @@ async function waitFor(assertion: () => void) {
 	})
 }
 
-it('shows a retry state for a failed read and recovers to the known state', async () => {
+test('shows a retry state for a failed read and recovers to the known state', async () => {
 	responses.status = () => json({ message: 'Internal error' }, 500)
 	await render()
 
@@ -124,14 +124,14 @@ it('shows a retry state for a failed read and recovers to the known state', asyn
 	expect(document.body.textContent).not.toContain("Couldn't load your subscription")
 })
 
-it('renders the free banner for a confirmed 404', async () => {
+test('renders the free banner for a confirmed 404', async () => {
 	await render()
 
 	await waitFor(() => expect(document.body.textContent).toContain('Unlock the full power'))
 	expect(document.body.textContent).not.toContain("Couldn't load your subscription")
 })
 
-it('keeps the plan visible and flags an unknown payment status when the past-due read fails', async () => {
+test('keeps the plan visible and flags an unknown payment status when the past-due read fails', async () => {
 	responses.status = () => json({ subscription: apiSubscription })
 	responses.pastDue = () => json({ message: 'Internal error' }, 500)
 	await render()
@@ -142,7 +142,7 @@ it('keeps the plan visible and flags an unknown payment status when the past-due
 	expect(document.body.textContent).not.toContain('Subscription Past Due')
 })
 
-it('keeps the upgrade success pane mounted after its own invalidations land', async () => {
+test('keeps the upgrade success pane mounted after its own invalidations land', async () => {
 	// Trial state: the auth flag and the subscription record both say trial.
 	session.isTrial = true
 	responses.status = () => json({ subscription: trialSubscription })
@@ -168,7 +168,7 @@ it('keeps the upgrade success pane mounted after its own invalidations land', as
 	expect(document.body.textContent).toContain('Upgrade Successful')
 })
 
-it('treats a failed team read as unknown billing ownership, not personal billing', async () => {
+test('treats a failed team read as unknown billing ownership, not personal billing', async () => {
 	teamState.isTeamError = true
 	responses.status = () => json({ subscription: apiSubscription })
 	await render()

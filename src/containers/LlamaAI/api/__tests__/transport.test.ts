@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import { llamaAIRequest, LlamaAITransportError, type AuthorizedFetch } from '~/containers/LlamaAI/api/transport'
 
@@ -13,7 +13,7 @@ function jsonResponse(body: unknown, init?: ResponseInit) {
 }
 
 describe('llamaAIRequest', () => {
-	it('prefixes relative paths and sends json bodies', async () => {
+	test('prefixes relative paths and sends json bodies', async () => {
 		let requestUrl = ''
 		let requestInit: RequestInit | undefined
 		const fetcher: AuthorizedFetch = async (url, init) => {
@@ -35,7 +35,7 @@ describe('llamaAIRequest', () => {
 		expect(new Headers(requestInit?.headers).get('Content-Type')).toBe('application/json')
 	})
 
-	it('throws a transport error for null auth responses and backend errors', async () => {
+	test('throws a transport error for null auth responses and backend errors', async () => {
 		await expect(llamaAIRequest(async () => null, '/example')).rejects.toMatchObject({
 			name: 'LlamaAITransportError',
 			status: 401,
@@ -51,7 +51,7 @@ describe('llamaAIRequest', () => {
 		})
 	})
 
-	it('returns null for empty responses and rejects unexpected content types', async () => {
+	test('returns null for empty responses and rejects unexpected content types', async () => {
 		const emptyFetcher: AuthorizedFetch = async () => new Response(null, { status: 204 })
 		await expect(llamaAIRequest(emptyFetcher, '/empty')).resolves.toBeNull()
 
@@ -66,7 +66,7 @@ describe('llamaAIRequest', () => {
 		await expect(llamaAIRequest(htmlFetcher, '/html')).rejects.toThrow('Unexpected LlamaAI response content type')
 	})
 
-	it('wraps invalid JSON responses with transport context', async () => {
+	test('wraps invalid JSON responses with transport context', async () => {
 		const fetcher: AuthorizedFetch = async () =>
 			new Response('{bad json', {
 				status: 200,

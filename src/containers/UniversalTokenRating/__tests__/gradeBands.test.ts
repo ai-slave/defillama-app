@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { resolveUtrGrade, resolveUtrGradeOrLabel, utrGradeColor } from '../gradeBands'
 
 const overallScale = [
@@ -22,7 +22,7 @@ const axisScale = [
 ]
 
 describe('resolveUtrGrade', () => {
-	it('uses the runtime overall scale with inclusive lower cutoffs', () => {
+	test('uses the runtime overall scale with inclusive lower cutoffs', () => {
 		expect(resolveUtrGrade(100, overallScale)).toBe('AAA')
 		expect(resolveUtrGrade(60, overallScale)).toBe('AAA')
 		expect(resolveUtrGrade(59.99, overallScale)).toBe('AA')
@@ -32,7 +32,7 @@ describe('resolveUtrGrade', () => {
 		expect(resolveUtrGrade(19.99, overallScale)).toBe('CCC')
 	})
 
-	it('uses the runtime axis scale at and immediately below each boundary', () => {
+	test('uses the runtime axis scale at and immediately below each boundary', () => {
 		expect(resolveUtrGrade(8, axisScale)).toBe('AAA')
 		expect(resolveUtrGrade(7.99, axisScale)).toBe('AA')
 		expect(resolveUtrGrade(6, axisScale)).toBe('AA')
@@ -41,7 +41,7 @@ describe('resolveUtrGrade', () => {
 		expect(resolveUtrGrade(2.99, axisScale)).toBe('CCC')
 	})
 
-	it('returns null without runtime configuration and lets explicit API grades win', () => {
+	test('returns null without runtime configuration and lets explicit API grades win', () => {
 		expect(resolveUtrGrade(60, null)).toBeNull()
 		expect(resolveUtrGrade(null, overallScale)).toBeNull()
 		expect(resolveUtrGrade(undefined, overallScale)).toBeNull()
@@ -51,7 +51,7 @@ describe('resolveUtrGrade', () => {
 })
 
 describe('utrGradeColor', () => {
-	it('resolves each grade to its own hue and null to the muted N/A style', () => {
+	test('resolves each grade to its own hue and null to the muted N/A style', () => {
 		expect(utrGradeColor('AAA').hex).toBe('#11935f')
 		expect(utrGradeColor('CCC').hex).toBe('#b23a38')
 		expect(utrGradeColor(null).text).toBe('text-tertiary')

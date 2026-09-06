@@ -58,13 +58,13 @@ export default function Airdrops({ airdrops }) {
 		<Layout
 			title="Crypto Airdrop Directory - DeFi Airdrops - DefiLlama"
 			description="Browse upcoming and past crypto airdrops across DeFi protocols on DefiLlama."
-			canonicalUrl={`/airdrop-directory`}
+			canonicalUrl="/airdrop-directory"
 		>
 			<TableWithSearch
 				data={airdrops}
 				columns={columns}
-				columnToSearch={'name'}
-				placeholder={'Search Airdrop...'}
+				columnToSearch="name"
+				placeholder="Search Airdrop..."
 				header="Airdrop Directory"
 				headingAs="h1"
 				csvFileName="airdrop-directory"

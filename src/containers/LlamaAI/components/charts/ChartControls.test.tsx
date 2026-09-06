@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { ChartControls } from './ChartControls'
 
@@ -67,7 +67,7 @@ describe('ChartControls grouping lock', () => {
 			)
 		)
 
-	it('tells the owner why W/M/Q/Y are disabled and opens the style editor', async () => {
+	test('tells the owner why W/M/Q/Y are disabled and opens the style editor', async () => {
 		const onOpenStyleEditor = vi.fn()
 		await render(model({ groupingLocked: true }), onOpenStyleEditor)
 
@@ -82,13 +82,13 @@ describe('ChartControls grouping lock', () => {
 		expect(onOpenStyleEditor).toHaveBeenCalledOnce()
 	})
 
-	it('explains the lock to viewers who cannot edit', async () => {
+	test('explains the lock to viewers who cannot edit', async () => {
 		await render(model({ groupingLocked: true }))
 		expect(container.textContent).toContain('series aggregation not set')
 		expect(container.textContent).not.toContain('Set series aggregation')
 	})
 
-	it('shows nothing extra when grouping is available', async () => {
+	test('shows nothing extra when grouping is available', async () => {
 		await render(model({}), vi.fn())
 		expect(container.querySelectorAll('button[disabled]')).toHaveLength(0)
 		expect(container.textContent).not.toContain('aggregation')

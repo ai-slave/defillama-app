@@ -1,16 +1,16 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { FEATURES_SERVER } from '~/constants'
 import { imageFigureHtml, tiptapJsonToHtml } from '~/containers/Articles/renderer/tiptapToHtml'
 import type { TiptapJson } from '~/containers/Articles/types'
 
 const MEDIA_ORIGIN = FEATURES_SERVER.replace(/\/$/, '')
 
-function doc(content: TiptapJson[]): TiptapJson {
+function doc(content: Array<TiptapJson>): TiptapJson {
 	return { type: 'doc', content }
 }
 
 describe('tiptapJsonToHtml', () => {
-	it('renders headings, paragraphs and nested lists', () => {
+	test('renders headings, paragraphs and nested lists', () => {
 		const html = tiptapJsonToHtml(
 			doc([
 				{ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Title' }] },
@@ -26,7 +26,7 @@ describe('tiptapJsonToHtml', () => {
 		expect(html).toContain('<ul><li><p>one</p></li></ul>')
 	})
 
-	it('clamps unsupported heading levels to h2', () => {
+	test('clamps unsupported heading levels to h2', () => {
 		expect(
 			tiptapJsonToHtml(doc([{ type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: 'H1' }] }]))
 		).toContain('<h2>H1</h2>')
@@ -35,7 +35,7 @@ describe('tiptapJsonToHtml', () => {
 		).toContain('<h4>H4</h4>')
 	})
 
-	it('applies inline marks inner-to-outer', () => {
+	test('applies inline marks inner-to-outer', () => {
 		const html = tiptapJsonToHtml(
 			doc([
 				{ type: 'paragraph', content: [{ type: 'text', text: 'bold', marks: [{ type: 'bold' }, { type: 'italic' }] }] }
@@ -44,12 +44,12 @@ describe('tiptapJsonToHtml', () => {
 		expect(html).toContain('<em><strong>bold</strong></em>')
 	})
 
-	it('escapes HTML special characters in text', () => {
+	test('escapes HTML special characters in text', () => {
 		const html = tiptapJsonToHtml(doc([{ type: 'paragraph', content: [{ type: 'text', text: 'a < b & c > d' }] }]))
 		expect(html).toContain('a &lt; b &amp; c &gt; d')
 	})
 
-	it('renders links and absolutizes root-relative hrefs', () => {
+	test('renders links and absolutizes root-relative hrefs', () => {
 		const html = tiptapJsonToHtml(
 			doc([
 				{
@@ -65,7 +65,7 @@ describe('tiptapJsonToHtml', () => {
 		expect(html).toContain('<a href="https://example.com">abs</a>')
 	})
 
-	it('degrades entity links to absolute DefiLlama links', () => {
+	test('degrades entity links to absolute DefiLlama links', () => {
 		const html = tiptapJsonToHtml(
 			doc([
 				{
@@ -83,7 +83,7 @@ describe('tiptapJsonToHtml', () => {
 		expect(html).toContain('<a href="https://defillama.com/protocol/aave">Aave</a>')
 	})
 
-	it('degrades charts to a captioned DefiLlama link', () => {
+	test('degrades charts to a captioned DefiLlama link', () => {
 		const html = tiptapJsonToHtml(
 			doc([
 				{
@@ -97,7 +97,7 @@ describe('tiptapJsonToHtml', () => {
 		expect(html).toContain('View on DefiLlama')
 	})
 
-	it('degrades embeds to a source link', () => {
+	test('degrades embeds to a source link', () => {
 		const html = tiptapJsonToHtml(
 			doc([
 				{
@@ -117,7 +117,7 @@ describe('tiptapJsonToHtml', () => {
 		expect(html).toContain('Watch')
 	})
 
-	it('renders citations with and without urls', () => {
+	test('renders citations with and without urls', () => {
 		expect(
 			tiptapJsonToHtml(
 				doc([
@@ -130,7 +130,7 @@ describe('tiptapJsonToHtml', () => {
 		).toContain('[2]')
 	})
 
-	it('renders tables with header and body rows', () => {
+	test('renders tables with header and body rows', () => {
 		const html = tiptapJsonToHtml(
 			doc([
 				{
@@ -154,7 +154,7 @@ describe('tiptapJsonToHtml', () => {
 		expect(html).toContain('<tbody><tr><td><p>C</p></td></tr></tbody>')
 	})
 
-	it('renders pullquote callouts as blockquotes and others as asides', () => {
+	test('renders pullquote callouts as blockquotes and others as asides', () => {
 		expect(
 			tiptapJsonToHtml(
 				doc([
@@ -179,7 +179,7 @@ describe('tiptapJsonToHtml', () => {
 		).toContain('<aside><strong>Warning</strong><p>w</p></aside>')
 	})
 
-	it('renders Q&A blocks as definition lists', () => {
+	test('renders Q&A blocks as definition lists', () => {
 		const html = tiptapJsonToHtml(
 			doc([
 				{
@@ -196,25 +196,25 @@ describe('tiptapJsonToHtml', () => {
 })
 
 describe('imageFigureHtml', () => {
-	it('absolutizes relative image sources against the media origin', () => {
+	test('absolutizes relative image sources against the media origin', () => {
 		const html = imageFigureHtml({ src: '/uploads/image/x.png', alt: 'Alt' })
 		expect(html).toContain(`<img src="${MEDIA_ORIGIN}/uploads/image/x.png" alt="Alt" />`)
 	})
 
-	it('keeps absolute sources and renders captions', () => {
+	test('keeps absolute sources and renders captions', () => {
 		const html = imageFigureHtml({ src: `${MEDIA_ORIGIN}/uploads/y.png`, headline: 'Head', credit: 'Bob' })
 		expect(html).toContain(`src="${MEDIA_ORIGIN}/uploads/y.png"`)
 		expect(html).toContain('Head')
 		expect(html).toContain('Credit: Bob')
 	})
 
-	it('returns an empty string when there is no source', () => {
+	test('returns an empty string when there is no source', () => {
 		expect(imageFigureHtml({ src: null })).toBe('')
 	})
 })
 
 describe('llamaaiChart html fallback', () => {
-	it('renders a static placeholder with the caption, never the data', () => {
+	test('renders a static placeholder with the caption, never the data', () => {
 		const html = tiptapJsonToHtml({
 			type: 'doc',
 			content: [
@@ -252,7 +252,7 @@ describe('llamaaiChart html fallback', () => {
 		expect(html).not.toContain('42')
 	})
 
-	it('renders nothing for an invalid llamaaiChart node', () => {
+	test('renders nothing for an invalid llamaaiChart node', () => {
 		const html = tiptapJsonToHtml({
 			type: 'doc',
 			content: [{ type: 'llamaaiChart', attrs: { chartConfig: 'garbage' } }]

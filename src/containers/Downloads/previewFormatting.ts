@@ -7,7 +7,7 @@ const EPOCH_TIMESTAMP = /^(?:\d{10}|\d{13})$/
 const DATE_HEADER = /(date|time|timestamp|day|unlock)/i
 const TIMESTAMP_HEADER = /time|timestamp|(?:^|[_\s-])(?:updated|created|modified|at)(?:$|[_\s-])/i
 
-export function downloadPreviewHasTime(header: string, values: string[]): boolean {
+export function downloadPreviewHasTime(header: string, values: Array<string>): boolean {
 	if (TIMESTAMP_HEADER.test(header)) return true
 	return values.slice(0, DATE_DETECTION_SAMPLE_SIZE).some((value) => parseDownloadPreviewDate(value, header)?.hasTime)
 }
@@ -22,7 +22,7 @@ export function parseDownloadPreviewDate(
 
 	if (!DATE_HEADER.test(header) || !EPOCH_TIMESTAMP.test(trimmed)) return null
 	const timestamp = Number(trimmed)
-	const timestampInMs = trimmed.length === 10 ? timestamp * 1_000 : timestamp
+	const timestampInMs = trimmed.length === 10 ? timestamp * 1000 : timestamp
 	return parseDateTimestamp(timestampInMs, { input: 'milliseconds' }) === null
 		? null
 		: { timestamp: timestampInMs, hasTime: TIMESTAMP_HEADER.test(header) }

@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createMemoryLogger } from '../logger'
 import { runChild } from '../runChild'
 
 describe('runChild', () => {
-	it('captures child output and exit code', async () => {
+	test('captures child output and exit code', async () => {
 		const logger = createMemoryLogger()
 
 		const result = await runChild(process.execPath, ['-e', "process.stdout.write('hello')"], { logger })
@@ -14,7 +14,7 @@ describe('runChild', () => {
 		expect(logger.output.join('')).toBe('hello')
 	})
 
-	it('tees stderr into the logger for failed child processes', async () => {
+	test('tees stderr into the logger for failed child processes', async () => {
 		const logger = createMemoryLogger()
 
 		const result = await runChild(
@@ -29,14 +29,14 @@ describe('runChild', () => {
 		expect(logger.output.join('')).toBe('next compiler failed')
 	})
 
-	it('returns non-zero exits', async () => {
+	test('returns non-zero exits', async () => {
 		const result = await runChild(process.execPath, ['-e', 'process.exit(4)'])
 
 		expect(result.exitCode).toBe(4)
 		expect(result.signal).toBeNull()
 	})
 
-	it('rejects when final output flushing fails', async () => {
+	test('rejects when final output flushing fails', async () => {
 		const logger = createMemoryLogger()
 		logger.flushOutput = () => {
 			throw new Error('output flush failed')

@@ -35,13 +35,13 @@ export async function createManualAlert(
 	return res.json()
 }
 
-export async function fetchAlerts(authorizedFetch: AuthorizedFetch): Promise<Alert[]> {
+export async function fetchAlerts(authorizedFetch: AuthorizedFetch): Promise<Array<Alert>> {
 	const res = await authorizedFetch(`${AI_SERVER}/alerts`)
 	if (!res) throw new Error('Not authenticated')
 	if (!res.ok) {
 		throw new Error('Failed to fetch alerts')
 	}
-	const data = (await res.json().catch(() => null)) as { alerts?: Alert[] } | null
+	const data = (await res.json().catch(() => null)) as { alerts?: Array<Alert> } | null
 	// Older alert list code treated missing 2xx envelopes as empty lists; keep that
 	// deploy-skew tolerance while still throwing on non-2xx above.
 	return Array.isArray(data?.alerts) ? data.alerts : []
@@ -50,11 +50,11 @@ export async function fetchAlerts(authorizedFetch: AuthorizedFetch): Promise<Ale
 export async function fetchAlertExecutions(
 	authorizedFetch: AuthorizedFetch,
 	alertId: string
-): Promise<AlertExecution[]> {
+): Promise<Array<AlertExecution>> {
 	const encodedAlertId = encodeURIComponent(alertId)
 	const res = await authorizedFetch(`${AI_SERVER}/alerts/${encodedAlertId}/executions`)
 	if (!res?.ok) throw new Error('Failed to fetch executions')
-	const data = (await res.json().catch(() => null)) as { executions?: AlertExecution[] } | null
+	const data = (await res.json().catch(() => null)) as { executions?: Array<AlertExecution> } | null
 	return Array.isArray(data?.executions) ? data.executions : []
 }
 

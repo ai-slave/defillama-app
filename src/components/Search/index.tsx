@@ -17,7 +17,7 @@ import { fetchJson } from '~/utils/async'
 import { findCategoryToPromote, mergePromotedCategory } from './categoryPromotion'
 
 const SEARCH_PAGE_SIZE = 20
-const EMPTY_SEARCH_ITEMS: ISearchItem[] = []
+const EMPTY_SEARCH_ITEMS: Array<ISearchItem> = []
 
 async function getDefaultSearchList() {
 	try {
@@ -142,7 +142,7 @@ function MobileSearchResults({ searchValue, onSelect }: { searchValue: string; o
 		if (error) {
 			return <p role="alert" className="flex items-center justify-center p-4 text-error">{`Error: ${error.message}`}</p>
 		}
-		if (!data.length) {
+		if (data.length === 0) {
 			return (
 				<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
 					No results found
@@ -294,7 +294,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 									role="alert"
 									className="flex items-center justify-center p-4 text-error"
 								>{`Error: ${error.message}`}</p>
-							) : !data.length ? (
+							) : data.length === 0 ? (
 								<p role="status" className="flex items-center justify-center p-4 body-sm text-tertiary">
 									No results found
 								</p>

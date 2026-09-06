@@ -134,7 +134,7 @@ export const BridgeInfo = ({
 
 	const chartTypes = (
 		isAllChains ? (['Volume', 'Tokens To', 'Tokens From'] as const) : (['Inflows', 'Tokens To', 'Tokens From'] as const)
-	) as readonly ChartType[]
+	) as ReadonlyArray<ChartType>
 	const activeTokenSeries =
 		chartType === 'Tokens To' ? tokenWithdrawals : chartType === 'Tokens From' ? tokenDeposits : null
 	const tokenColorIndex = React.useMemo(() => {

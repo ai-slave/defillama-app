@@ -6,7 +6,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 
 interface SavedQueriesPanelProps {
-	queries: QuerySavedConfig[]
+	queries: Array<QuerySavedConfig>
 	busyTaskId: string | null
 	onApply: (query: QuerySavedConfig) => void
 }

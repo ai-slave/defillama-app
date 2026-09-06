@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildEquitiesTreemap,
 	buildEquitiesTreemapLeaves,
@@ -61,7 +61,7 @@ function makeRow(overrides: Partial<IEquitiesListCompanyRow>): IEquitiesListComp
 	}
 }
 
-function getRequiredItem<T>(items: T[], index: number): T {
+function getRequiredItem<T>(items: Array<T>, index: number): T {
 	const item = items[index]
 	if (item === undefined) throw new Error(`Missing item ${index}`)
 	return item
@@ -74,14 +74,14 @@ const baseOptions = {
 } as const
 
 describe('buildEquitiesTreemap', () => {
-	it('returns empty tree for empty input', () => {
+	test('returns empty tree for empty input', () => {
 		const result = buildEquitiesTreemap([], baseOptions)
 		expect(result.treeData).toEqual([])
 		expect(result.excludedCount).toBe(0)
 		expect(result.truncatedCount).toBe(0)
 	})
 
-	it('excludes rows with null, zero or negative size metric', () => {
+	test('excludes rows with null, zero or negative size metric', () => {
 		const rows = [
 			makeRow({ ticker: 'POS', marketCap: 100 }),
 			makeRow({ ticker: 'NULL', marketCap: null }),
@@ -93,7 +93,7 @@ describe('buildEquitiesTreemap', () => {
 		expect(result.excludedCount).toBe(3)
 	})
 
-	it('sorts leaves by size metric descending', () => {
+	test('sorts leaves by size metric descending', () => {
 		const rows = [
 			makeRow({ ticker: 'SMALL', marketCap: 10 }),
 			makeRow({ ticker: 'BIG', marketCap: 1000 }),
@@ -103,7 +103,7 @@ describe('buildEquitiesTreemap', () => {
 		expect(result.treeData.map((n) => n.name)).toEqual(['BIG', 'MID', 'SMALL'])
 	})
 
-	it('keeps input order for equal sizes and treats a non-positive limit as unlimited', () => {
+	test('keeps input order for equal sizes and treats a non-positive limit as unlimited', () => {
 		const rows = [
 			makeRow({ ticker: 'FIRST', marketCap: 100 }),
 			makeRow({ ticker: 'SECOND', marketCap: 100 }),
@@ -114,7 +114,7 @@ describe('buildEquitiesTreemap', () => {
 		expect(result.truncatedCount).toBe(0)
 	})
 
-	it('applies limit after sorting and reports cut rows as truncated, not excluded', () => {
+	test('applies limit after sorting and reports cut rows as truncated, not excluded', () => {
 		const rows = [
 			makeRow({ ticker: 'A', marketCap: 1 }),
 			makeRow({ ticker: 'B', marketCap: 3 }),
@@ -126,14 +126,14 @@ describe('buildEquitiesTreemap', () => {
 		expect(result.truncatedCount).toBe(1)
 	})
 
-	it('builds leaf value as [size, colorPct]', () => {
+	test('builds leaf value as [size, colorPct]', () => {
 		const rows = [makeRow({ ticker: 'A', marketCap: 100, priceChangePercentage1d: -2.5 })]
 		const result = buildEquitiesTreemap(rows, baseOptions)
 		const leaf = result.treeData[0] as IEquitiesTreemapLeaf
 		expect(leaf.value).toEqual([100, -2.5])
 	})
 
-	it('prepares the exact loss, neutral and gain color scale on canonical leaves', () => {
+	test('prepares the exact loss, neutral and gain color scale on canonical leaves', () => {
 		const result = buildEquitiesTreemap(
 			[
 				makeRow({ ticker: 'LOSS_CAP', marketCap: 500, priceChangePercentage1d: -3 }),
@@ -153,14 +153,14 @@ describe('buildEquitiesTreemap', () => {
 		])
 	})
 
-	it('uses null color when color metric is missing', () => {
+	test('uses null color when color metric is missing', () => {
 		const rows = [makeRow({ ticker: 'A', marketCap: 100, priceChangePercentage1d: null })]
 		const result = buildEquitiesTreemap(rows, baseOptions)
 		const leaf = result.treeData[0] as IEquitiesTreemapLeaf
 		expect(leaf.value).toEqual([100, null])
 	})
 
-	it('respects selected size and color metrics', () => {
+	test('respects selected size and color metrics', () => {
 		const rows = [
 			makeRow({ ticker: 'A', marketCap: 1, revenueTTM: 500, priceChangePercentage7d: 4 }),
 			makeRow({ ticker: 'B', marketCap: 999, revenueTTM: null })
@@ -175,19 +175,19 @@ describe('buildEquitiesTreemap', () => {
 		expect(result.excludedCount).toBe(1)
 	})
 
-	it('groups leaves by sector preserving size order within groups', () => {
+	test('groups leaves by sector preserving size order within groups', () => {
 		const rows = [
 			makeRow({ ticker: 'T1', sector: 'Technology', marketCap: 100 }),
 			makeRow({ ticker: 'H1', sector: 'Healthcare', marketCap: 300 }),
 			makeRow({ ticker: 'T2', sector: 'Technology', marketCap: 200 })
 		]
 		const result = buildEquitiesTreemap(rows, { ...baseOptions, groupBy: 'sector' })
-		const groups = result.treeData as IEquitiesTreemapGroup[]
+		const groups = result.treeData as Array<IEquitiesTreemapGroup>
 		expect(groups.map((g) => g.name)).toEqual(['Healthcare', 'Technology'])
 		expect(getRequiredItem(groups, 1).children.map((c) => c.name)).toEqual(['T2', 'T1'])
 	})
 
-	it('reuses canonical leaves between flat and grouped presentation', () => {
+	test('reuses canonical leaves between flat and grouped presentation', () => {
 		const ranking = rankEquitiesTreemapRows(
 			[
 				makeRow({ ticker: 'TECH', sector: 'Technology', marketCap: 200 }),
@@ -197,7 +197,7 @@ describe('buildEquitiesTreemap', () => {
 		)
 		const leaves = buildEquitiesTreemapLeaves(ranking, 'priceChangePercentage1d')
 		const flat = groupEquitiesTreemapLeaves(leaves, 'none')
-		const grouped = groupEquitiesTreemapLeaves(leaves, 'sector') as IEquitiesTreemapGroup[]
+		const grouped = groupEquitiesTreemapLeaves(leaves, 'sector') as Array<IEquitiesTreemapGroup>
 
 		expect(flat).toBe(leaves)
 		expect(grouped.map((group) => group.name)).toEqual(['Technology', 'Healthcare'])
@@ -205,24 +205,24 @@ describe('buildEquitiesTreemap', () => {
 		expect(getRequiredItem(getRequiredItem(grouped, 1).children, 0)).toBe(getRequiredItem(leaves, 1))
 	})
 
-	it('sets group value to the sum of children sizes', () => {
+	test('sets group value to the sum of children sizes', () => {
 		const rows = [
 			makeRow({ ticker: 'T1', sector: 'Technology', marketCap: 100 }),
 			makeRow({ ticker: 'T2', sector: 'Technology', marketCap: 200 })
 		]
 		const result = buildEquitiesTreemap(rows, { ...baseOptions, groupBy: 'sector' })
-		const groups = result.treeData as IEquitiesTreemapGroup[]
+		const groups = result.treeData as Array<IEquitiesTreemapGroup>
 		expect(getRequiredItem(groups, 0).value).toEqual([300, null])
 	})
 
-	it('puts companies with empty sector into Other group', () => {
+	test('puts companies with empty sector into Other group', () => {
 		const rows = [makeRow({ ticker: 'A', sector: '', marketCap: 100 })]
 		const result = buildEquitiesTreemap(rows, { ...baseOptions, groupBy: 'sector' })
-		const groups = result.treeData as IEquitiesTreemapGroup[]
+		const groups = result.treeData as Array<IEquitiesTreemapGroup>
 		expect(groups.map((g) => g.name)).toEqual(['Other'])
 	})
 
-	it('carries tooltip fields on leaves', () => {
+	test('carries tooltip fields on leaves', () => {
 		const rows = [
 			makeRow({
 				ticker: 'NVDA',
@@ -248,7 +248,7 @@ describe('buildEquitiesTreemap', () => {
 })
 
 describe('prepareEquitiesTreemapCsv', () => {
-	it('exports the displayed leaves from grouped chart data', () => {
+	test('exports the displayed leaves from grouped chart data', () => {
 		const { leaves } = buildEquitiesTreemap(
 			[
 				makeRow({ ticker: 'BIG', name: 'Big Co', marketCap: 200, priceChangePercentage1d: 2 }),
@@ -285,7 +285,7 @@ describe('prepareEquitiesTreemapCsv', () => {
 		})
 	})
 
-	it('exports the complete eligible ranking independently of the visual company limit', () => {
+	test('exports the complete eligible ranking independently of the visual company limit', () => {
 		const ranking = rankEquitiesTreemapRows(
 			[
 				makeRow({ ticker: 'BIG', name: 'Big Co', marketCap: 200 }),

@@ -13,7 +13,7 @@ import { canonicalRouteRedirect } from '~/utils/route'
 
 interface InvestorRelationsPageProps {
 	name: string
-	otherProtocols: string[]
+	otherProtocols: Array<string>
 	category: string | null
 	metrics: IProtocolPageMetrics
 	warningBanners: ReturnType<typeof getProtocolWarningBanners>

@@ -1,16 +1,16 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { BreakdownTable, type BreakdownRowConfig } from '../BreakdownTable'
 
-const ROWS: BreakdownRowConfig[] = [
+const ROWS: Array<BreakdownRowConfig> = [
 	{ label: 'Bid & Ask Depth 50 bps (USD)', key: 'bidAskDepth50', kind: 'usd' },
 	{ label: 'Uptime %, Bid & Ask Depth 50 bps', key: 'bidAskDepth50Uptime', kind: 'percent' }
 ]
 
 describe('BreakdownTable', () => {
-	it('renders value, percentile, and rank', () => {
+	test('renders value, percentile, and rank', () => {
 		const data = {
-			bidAskDepth50: { value: 266553520, percentile: 95, rank: 2 }
+			bidAskDepth50: { value: 266_553_520, percentile: 95, rank: 2 }
 		}
 		const html = renderToStaticMarkup(<BreakdownTable title="Depth KPIs" badge="Last 30D" rows={ROWS} data={data} />)
 
@@ -21,7 +21,7 @@ describe('BreakdownTable', () => {
 		expect(html).toContain('>2<')
 	})
 
-	it('renders N/A with no fill for a missing metric or sub-value', () => {
+	test('renders N/A with no fill for a missing metric or sub-value', () => {
 		const data = {
 			bidAskDepth50: { value: null, percentile: null, rank: null }
 		}
@@ -30,7 +30,7 @@ describe('BreakdownTable', () => {
 		expect(html).toContain('N/A')
 	})
 
-	it('renders N/A when the metric key is entirely absent', () => {
+	test('renders N/A when the metric key is entirely absent', () => {
 		const html = renderToStaticMarkup(<BreakdownTable title="Depth KPIs" badge="Last 30D" rows={ROWS} data={{}} />)
 
 		expect(html).toContain('N/A')

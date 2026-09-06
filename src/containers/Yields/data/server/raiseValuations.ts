@@ -18,8 +18,8 @@ type ProtocolIdentity = { slug: string; name: string }
 // index raises by defillamaId AND lowercased name (most-recent-first, first write wins);
 // the protocols-lite parent hierarchy lets a child protocol inherit its parent's raise.
 export function buildRaiseValuationsUsd(
-	raises: Raise[],
-	protocols: ProtocolIdentity[],
+	raises: Array<Raise>,
+	protocols: Array<ProtocolIdentity>,
 	protocolsLite: Pick<ProtocolsResponse, 'protocols' | 'parentProtocols'>
 ): Map<string, number> {
 	const sorted = raises.toSorted((a, b) => b.date - a.date)
@@ -39,7 +39,7 @@ export function buildRaiseValuationsUsd(
 
 	// Protocol lookups
 	const liteByName = new Map<string, ProtocolLite>()
-	const childrenByParent = new Map<string, ProtocolLite[]>()
+	const childrenByParent = new Map<string, Array<ProtocolLite>>()
 	for (const p of liteProtocols) {
 		liteByName.set(p.name.toLowerCase(), p)
 		if (p.parentProtocol) {
@@ -92,7 +92,7 @@ export function buildRaiseValuationsUsd(
 		if (val == null) {
 			const lower = protocolName.toLowerCase()
 			for (const [pName, pVal] of valByParentName) {
-				if (lower.startsWith(pName + ' ')) {
+				if (lower.startsWith(`${pName} `)) {
 					val = pVal
 					break
 				}
@@ -108,7 +108,7 @@ export function buildRaiseValuationsUsd(
 // protocol pages' website link (ProtocolOverview prefers `referralUrl` over `url`): a
 // protocol's own referral link wins, else it inherits its parent's (e.g. GMX markets).
 export function buildReferralUrls(
-	protocols: ProtocolIdentity[],
+	protocols: Array<ProtocolIdentity>,
 	protocolsLite: Pick<ProtocolsResponse, 'protocols' | 'parentProtocols'>
 ): Map<string, string> {
 	const liteByName = new Map<string, ProtocolLite>()

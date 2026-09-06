@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useDashboardConfigFallback } from './useDashboardConfigFallback'
 
 describe('useDashboardConfigFallback', () => {
@@ -21,7 +21,7 @@ describe('useDashboardConfigFallback', () => {
 		container.remove()
 	})
 
-	it('does not fetch on the healthy stream path and fetches once after fallback is enabled', async () => {
+	test('does not fetch on the healthy stream path and fetches once after fallback is enabled', async () => {
 		const refetch = vi.fn()
 
 		function Harness({ enabled }: { enabled: boolean }) {

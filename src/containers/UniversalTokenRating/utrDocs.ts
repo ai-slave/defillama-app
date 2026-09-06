@@ -7,25 +7,25 @@ import type {
 	UtrScoringCriterionConfig
 } from './types'
 
-export type UtrDocListItem = { text: string; children?: string[]; strong?: boolean }
+export type UtrDocListItem = { text: string; children?: Array<string>; strong?: boolean }
 
 export type UtrDocBlock =
 	| { type: 'heading'; text: string }
 	| { type: 'paragraph'; text: string; lead?: string; strong?: boolean }
 	| { type: 'formula'; text: string }
-	| { type: 'bullets'; items: UtrDocListItem[] }
-	| { type: 'numbered'; items: UtrDocListItem[] }
-	| { type: 'table'; headers: string[]; rows: string[][] }
+	| { type: 'bullets'; items: Array<UtrDocListItem> }
+	| { type: 'numbered'; items: Array<UtrDocListItem> }
+	| { type: 'table'; headers: Array<string>; rows: Array<Array<string>> }
 
 export type UtrDocChapter = {
 	id: string
 	label: string
-	blocks: UtrDocBlock[]
+	blocks: Array<UtrDocBlock>
 }
 
 export const UTR_DOCS_TITLE = 'Universal Token Rating Documentation'
 
-const UTR_FIGMA_DOC_CHAPTERS: UtrDocChapter[] = [
+const UTR_FIGMA_DOC_CHAPTERS: Array<UtrDocChapter> = [
 	{
 		id: 'preface',
 		label: '1. Preface',
@@ -946,14 +946,14 @@ function formatWeight(weight: number): string {
 	})
 }
 
-function categoryWeight(criteria: UtrScoringCriterionConfig[]): number {
+function categoryWeight(criteria: Array<UtrScoringCriterionConfig>): number {
 	return criteria.reduce((total, criterion) => total + criterion.weight, 0)
 }
 
 function criteriaForApplicability(
 	category: UtrScoringCategoryConfig,
 	applicability?: 'preTge' | 'postTge'
-): UtrScoringCriterionConfig[] {
+): Array<UtrScoringCriterionConfig> {
 	if (!applicability) return category.criteria
 	return category.criteria.filter(
 		(criterion) => criterion.applicability === 'both' || criterion.applicability === applicability
@@ -961,15 +961,15 @@ function criteriaForApplicability(
 }
 
 function categoryTableBlocks(
-	categories: UtrScoringCategoryConfig[],
+	categories: Array<UtrScoringCategoryConfig>,
 	applicability?: 'preTge' | 'postTge'
-): UtrDocBlock[] {
+): Array<UtrDocBlock> {
 	const applicableCategories = categories.flatMap((category) => {
 		const criteria = criteriaForApplicability(category, applicability)
-		return criteria.length ? [{ category, criteria }] : []
+		return criteria.length > 0 ? [{ category, criteria }] : []
 	})
-	if (!applicableCategories.length) return []
-	const blocks: UtrDocBlock[] = [
+	if (applicableCategories.length === 0) return []
+	const blocks: Array<UtrDocBlock> = [
 		{
 			type: 'table',
 			headers: ['Category', 'Category Weight'],
@@ -998,7 +998,7 @@ function categoryTableBlocks(
 	return blocks
 }
 
-function unavailableCoreBlocks(axis: 'Disclosure' | 'Performance'): UtrDocBlock[] {
+function unavailableCoreBlocks(axis: 'Disclosure' | 'Performance'): Array<UtrDocBlock> {
 	return [
 		{ type: 'heading', text: 'Core Components' },
 		{
@@ -1013,7 +1013,7 @@ function unavailableCoreBlocks(axis: 'Disclosure' | 'Performance'): UtrDocBlock[
 	]
 }
 
-function disclosureCoreBlocks(config: UtrScoringConfig | null): UtrDocBlock[] {
+function disclosureCoreBlocks(config: UtrScoringConfig | null): Array<UtrDocBlock> {
 	if (!config?.disclosure.categories.length) return unavailableCoreBlocks('Disclosure')
 	return [
 		{ type: 'heading', text: 'Core Components' },
@@ -1025,7 +1025,7 @@ function disclosureCoreBlocks(config: UtrScoringConfig | null): UtrDocBlock[] {
 	]
 }
 
-function performanceCoreBlocks(config: UtrScoringConfig | null): UtrDocBlock[] {
+function performanceCoreBlocks(config: UtrScoringConfig | null): Array<UtrDocBlock> {
 	if (!config?.performance.categories.length) return unavailableCoreBlocks('Performance')
 	const postTge = categoryTableBlocks(config.performance.categories, 'postTge')
 	const preTge = categoryTableBlocks(config.performance.categories, 'preTge')
@@ -1035,12 +1035,12 @@ function performanceCoreBlocks(config: UtrScoringConfig | null): UtrDocBlock[] {
 			type: 'paragraph',
 			text: 'The Performance Axis criteria are grouped by their active pre-TGE or post-TGE applicability. Category weights are calculated from the active sub-criterion weights.'
 		},
-		...(postTge.length ? ([{ type: 'heading', text: 'Post-TGE Criteria' }, ...postTge] as UtrDocBlock[]) : []),
-		...(preTge.length ? ([{ type: 'heading', text: 'Pre-TGE Criteria' }, ...preTge] as UtrDocBlock[]) : [])
+		...(postTge.length > 0 ? ([{ type: 'heading', text: 'Post-TGE Criteria' }, ...postTge] as Array<UtrDocBlock>) : []),
+		...(preTge.length > 0 ? ([{ type: 'heading', text: 'Pre-TGE Criteria' }, ...preTge] as Array<UtrDocBlock>) : [])
 	]
 }
 
-function replaceCoreComponents(chapter: UtrDocChapter, blocks: UtrDocBlock[]): UtrDocChapter {
+function replaceCoreComponents(chapter: UtrDocChapter, blocks: Array<UtrDocBlock>): UtrDocChapter {
 	const start = chapter.blocks.findIndex((block) => block.type === 'heading' && block.text === 'Core Components')
 	const end = chapter.blocks.findIndex(
 		(block, index) => index > start && block.type === 'heading' && block.text === 'Calculation Methodology'
@@ -1057,7 +1057,7 @@ function replacePerformanceCalculationMethodology(chapter: UtrDocChapter): UtrDo
 		(block, index) => index > start && block.type === 'heading' && block.text === 'How to Interpret'
 	)
 	if (start === -1 || end === -1) return chapter
-	const blocks: UtrDocBlock[] = [
+	const blocks: Array<UtrDocBlock> = [
 		{ type: 'heading', text: 'Calculation Methodology' },
 		{
 			type: 'paragraph',
@@ -1072,7 +1072,7 @@ function replacePerformanceCalculationMethodology(chapter: UtrDocChapter): UtrDo
 	return { ...chapter, blocks: [...chapter.blocks.slice(0, start), ...blocks, ...chapter.blocks.slice(end)] }
 }
 
-function gradeRangeRows(scale: UtrGradeScaleEntry[]): string[][] {
+function gradeRangeRows(scale: Array<UtrGradeScaleEntry>): Array<Array<string>> {
 	const formatScore = (score: number) =>
 		formatNumber(score, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })
 	const sorted = [...scale].sort((a, b) => {
@@ -1099,7 +1099,7 @@ function gradingAxisBlocks(
 	header: string,
 	fallbackDescription: string,
 	axis: UtrGradingAxisConfig | null
-): UtrDocBlock[] {
+): Array<UtrDocBlock> {
 	return [
 		{ type: 'heading', text: heading },
 		{ type: 'paragraph', text: axis?.description || fallbackDescription },
@@ -1176,7 +1176,7 @@ function glossaryChapter(chapter: UtrDocChapter, config: UtrScoringConfig | null
 		'Tokenomics (Performance Category)': 'tokenomics_p',
 		'Total Market (Category)': 'total_market'
 	}
-	const describeCategories = (categories: UtrScoringCategoryConfig[]) =>
+	const describeCategories = (categories: Array<UtrScoringCategoryConfig>) =>
 		categories.map((category) => `${category.label} (${formatWeight(categoryWeight(category.criteria))})`).join(', ')
 	let heading = ''
 	return {
@@ -1218,7 +1218,7 @@ function glossaryChapter(chapter: UtrDocChapter, config: UtrScoringConfig | null
 	}
 }
 
-export function buildUtrDocChapters(config: UtrScoringConfig | null): UtrDocChapter[] {
+export function buildUtrDocChapters(config: UtrScoringConfig | null): Array<UtrDocChapter> {
 	return UTR_FIGMA_DOC_CHAPTERS.map((sourceChapter) => ({
 		...sourceChapter,
 		blocks: sourceChapter.blocks.map(modernizeBlock)

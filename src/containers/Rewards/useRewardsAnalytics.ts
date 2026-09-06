@@ -11,7 +11,7 @@ interface LinkExposure {
 
 interface RewardsAnalyticsState {
 	seen: Set<string>
-	pending: { name: string; data: LinkExposure['data']; impressionKey: string | null }[]
+	pending: Array<{ name: string; data: LinkExposure['data']; impressionKey: string | null }>
 }
 
 /** One observer per table page. The Open button, not an off-screen part of its row, owns exposure. */
@@ -129,7 +129,7 @@ export function observeRewardsLinks(
 	}
 }
 
-export function useRewardsAnalytics(mode: RewardsAnalyticsMode, rows: Row<RewardProgram>[]) {
+export function useRewardsAnalytics(mode: RewardsAnalyticsMode, rows: Array<Row<RewardProgram>>) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const analytics = useRef<RewardsAnalyticsState | null>(null)
 	useEffect(() => {

@@ -3,13 +3,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { TokenUsageSearch } from '~/pages/token-usage'
 
 const mocks = vi.hoisted(() => ({
 	router: {
 		isReady: false,
-		query: { token: 'ETH' } as { token?: string | string[] }
+		query: { token: 'ETH' } as { token?: string | Array<string> }
 	},
 	searchTokens: vi.fn().mockResolvedValue([]),
 	pushShallowQuery: vi.fn().mockResolvedValue(undefined)
@@ -59,7 +59,7 @@ describe('TokenUsageSearch', () => {
 		})
 	}
 
-	it('preserves text entered before hydration when the router becomes ready', async () => {
+	test('preserves text entered before hydration when the router becomes ready', async () => {
 		container.innerHTML = '<input id="token-usage-search-input" value="sol" />'
 		root = createRoot(container)
 
@@ -72,7 +72,7 @@ describe('TokenUsageSearch', () => {
 		expect(container.querySelector('input')?.value).toBe('sol')
 	})
 
-	it('shows the selected URL symbol after hydration when the user has not typed', async () => {
+	test('shows the selected URL symbol after hydration when the user has not typed', async () => {
 		root = createRoot(container)
 
 		await renderSearch()
@@ -84,7 +84,7 @@ describe('TokenUsageSearch', () => {
 		expect(container.querySelector('input')?.value).toBe('ETH')
 	})
 
-	it('writes the selected token symbol to the URL', async () => {
+	test('writes the selected token symbol to the URL', async () => {
 		mocks.router.isReady = true
 		mocks.router.query = {}
 		container.innerHTML = '<input id="token-usage-search-input" value="ethereum" />'

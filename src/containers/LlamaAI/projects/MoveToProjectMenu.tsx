@@ -23,8 +23,8 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 		try {
 			await move.mutateAsync({ sessionId, projectId, previousProjectId: currentProjectId })
 			toast.success(projectId ? 'Moved to project' : 'Removed from project')
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to move session')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to move session')
 		}
 	}
 

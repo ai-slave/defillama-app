@@ -55,7 +55,7 @@ function BreakdownMetric({
 }: {
 	label: string
 	total: number | null
-	segments: SegmentValue[]
+	segments: Array<SegmentValue>
 	render: (value: number | null) => ReactNode
 }) {
 	if (segments.length < 2) return <MetricRow label={label} value={render(total)} />
@@ -85,7 +85,7 @@ export function ProfileMetrics({
 	 * set, per-segment volume and open-interest rows for other segments are
 	 * hidden; global figures (total volume, depth, markets) stay untouched.
 	 */
-	countrySegments?: ExchangeSegment[] | null
+	countrySegments?: Array<ExchangeSegment> | null
 	showGlobalLabel?: boolean
 }) {
 	const segments = Object.values(profile.segments)
@@ -99,7 +99,7 @@ export function ProfileMetrics({
 		select: (segment: ExchangeProfileSegmentModel) => number | null,
 		isVisible: (segment: ExchangeSegment) => boolean = () => true
 	) => {
-		const values: SegmentValue[] = []
+		const values: Array<SegmentValue> = []
 		for (const segmentId of EXCHANGE_SEGMENTS) {
 			if (!isVisible(segmentId)) continue
 			const segment = profile.segments[segmentId]

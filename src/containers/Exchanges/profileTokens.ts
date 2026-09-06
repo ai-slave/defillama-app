@@ -9,14 +9,14 @@
 import type { ExchangeExecutionPairModel, ExchangePairModel, ExchangeProfileModel, ExchangeSegment } from './models'
 
 /** Segments carrying a normalized-volume band. COIN perps have neither, by design. */
-const NVOL_SEGMENTS: readonly ExchangeSegment[] = ['spot', 'linear_perp']
-const PERP_SEGMENTS: readonly ExchangeSegment[] = ['linear_perp', 'inverse_perp']
+const NVOL_SEGMENTS: ReadonlyArray<ExchangeSegment> = ['spot', 'linear_perp']
+const PERP_SEGMENTS: ReadonlyArray<ExchangeSegment> = ['linear_perp', 'inverse_perp']
 
 export interface ExchangeTokenRow {
 	token: string
 	geckoId: string | null
 	/** Segments this venue trades the token in, for the row's segment chips. */
-	segments: ExchangeSegment[]
+	segments: Array<ExchangeSegment>
 	marketCount: number
 	/** Highest leverage offered on any of the token's perp markets here. Null for a
 	 *  spot-only token: leverage is a property of the perp, not of the asset. */
@@ -53,7 +53,7 @@ function sum(values: Array<number | null | undefined>): number | null {
  * one market lacks depth would overstate it. The flag says whether any market fell
  * back, which is what the reader needs to know about the number.
  */
-function normalizedVolume(pairs: ExchangePairModel[]): { value: number | null; reported: boolean } {
+function normalizedVolume(pairs: Array<ExchangePairModel>): { value: number | null; reported: boolean } {
 	let reported = false
 	const values = pairs.map((pair) => {
 		const normalized = pair.normalizedVolume?.normalized
@@ -68,15 +68,15 @@ function normalizedVolume(pairs: ExchangePairModel[]): { value: number | null; r
  *  a token regardless of what it is quoted in. */
 const tokenKey = (pair: ExchangePairModel) => pair.base.toUpperCase()
 
-export function exchangeTokenRows(profile: ExchangeProfileModel): ExchangeTokenRow[] {
-	const bySegment = new Map<ExchangeSegment, Map<string, ExchangePairModel[]>>()
-	const order: string[] = []
+export function exchangeTokenRows(profile: ExchangeProfileModel): Array<ExchangeTokenRow> {
+	const bySegment = new Map<ExchangeSegment, Map<string, Array<ExchangePairModel>>>()
+	const order: Array<string> = []
 	const seen = new Set<string>()
 	const geckoIds = new Map<string, string>()
 
-	for (const segment of Object.keys(profile.segments) as ExchangeSegment[]) {
+	for (const segment of Object.keys(profile.segments) as Array<ExchangeSegment>) {
 		const pairs = profile.segments[segment]?.pairs ?? []
-		const grouped = new Map<string, ExchangePairModel[]>()
+		const grouped = new Map<string, Array<ExchangePairModel>>()
 		for (const pair of pairs) {
 			const token = tokenKey(pair)
 			if (!token) continue
@@ -95,7 +95,7 @@ export function exchangeTokenRows(profile: ExchangeProfileModel): ExchangeTokenR
 	const executionByAsset = new Map((profile.execution?.pairs ?? []).map((pair) => [pair.asset.toUpperCase(), pair]))
 
 	const rows = order.map((token) => {
-		const inSegment = (segments: readonly ExchangeSegment[]) =>
+		const inSegment = (segments: ReadonlyArray<ExchangeSegment>) =>
 			segments.flatMap((segment) => bySegment.get(segment)?.get(token) ?? [])
 		const spotPairs = inSegment(['spot'])
 		const linearPairs = inSegment(['linear_perp'])
@@ -106,7 +106,7 @@ export function exchangeTokenRows(profile: ExchangeProfileModel): ExchangeTokenR
 		return {
 			token,
 			geckoId: geckoIds.get(token) ?? null,
-			segments: (Object.keys(profile.segments) as ExchangeSegment[]).filter(
+			segments: (Object.keys(profile.segments) as Array<ExchangeSegment>).filter(
 				(segment) => (bySegment.get(segment)?.get(token)?.length ?? 0) > 0
 			),
 			marketCount: inSegment(NVOL_SEGMENTS).length + inSegment(['inverse_perp']).length,

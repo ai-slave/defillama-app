@@ -23,7 +23,7 @@ export const FUNDAMENTAL_CHART_VALUE_SYMBOLS: Record<EquitiesDimensionMetric, st
 }
 
 export function buildPriceHistoryChart(priceHistory: EquitiesPriceHistory): IEquitiesPriceHistoryChart {
-	const source: number[][] = new Array(priceHistory.length)
+	const source: Array<Array<number>> = new Array(priceHistory.length)
 	let targetIndex = priceHistory.length - 1
 	// The API is newest-first; filling backward emits chart order without a copied reverse array.
 	for (const [date, close] of priceHistory) {

@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
 import { MobileSearch } from '~/components/Search'
 import { ResearchFooter } from '~/containers/Articles/landing/ResearchFooter'
@@ -35,7 +35,7 @@ function renderWithQueryClient(element: ReactElement) {
 }
 
 describe('newsletter and media-kit split', () => {
-	it('renders the research footer as a media-kit request form with an internal newsletters link', () => {
+	test('renders the research footer as a media-kit request form with an internal newsletters link', () => {
 		const html = renderWithQueryClient(<ResearchFooter />)
 
 		expect(html).toContain('Get our media kit')
@@ -47,7 +47,7 @@ describe('newsletter and media-kit split', () => {
 		expect(html).not.toContain('/uploads/media-kit.pdf')
 	})
 
-	it('starts the newsletters page with both newsletters selected', () => {
+	test('starts the newsletters page with both newsletters selected', () => {
 		const html = renderWithQueryClient(<NewslettersPage />)
 
 		expect(html).toContain('Subscribe for onchain fundamentals and analysis from DefiLlama')
@@ -74,7 +74,7 @@ describe('newsletter and media-kit split', () => {
 		expect(html).not.toContain('We send a confirmation email before adding you to the selected list.')
 	})
 
-	it('renders a research hero subscribe button linked to the newsletters page', () => {
+	test('renders a research hero subscribe button linked to the newsletters page', () => {
 		const html = renderWithQueryClient(<ResearchHero title="Research" subtitle="Market intelligence" reports={[]} />)
 
 		expect(html).toContain('href="/newsletters"')
@@ -87,7 +87,7 @@ describe('newsletter and media-kit split', () => {
 		expect(html).not.toContain('newsletter.defillama.com')
 	})
 
-	it('renders the desktop Research search dialog trigger in the hero', () => {
+	test('renders the desktop Research search dialog trigger in the hero', () => {
 		const html = renderWithQueryClient(<ResearchHero title="Research" subtitle="Market intelligence" reports={[]} />)
 
 		expect(html).toContain('aria-label="Search DefiLlama Research and Newsletters"')
@@ -97,7 +97,7 @@ describe('newsletter and media-kit split', () => {
 		expect(html).not.toContain('href="/research?search=1"')
 	})
 
-	it('keeps the LlamaAI action before the Research search icon on mobile', () => {
+	test('keeps the LlamaAI action before the Research search icon on mobile', () => {
 		const html = renderWithQueryClient(<MobileSearch searchTrigger={<ResearchSearchDialog variant="mobile" />} />)
 
 		const llamaAiPosition = html.indexOf('href="/ai"')
@@ -107,7 +107,7 @@ describe('newsletter and media-kit split', () => {
 		expect(html).not.toContain('href="/research?search=1"')
 	})
 
-	it('uses a light border for latest article badges over cover images', () => {
+	test('uses a light border for latest article badges over cover images', () => {
 		const article = {
 			id: 'latest-article',
 			title: 'Latest research',
@@ -123,7 +123,7 @@ describe('newsletter and media-kit split', () => {
 		expect(html).toMatch(/<span class="[^"]*border-research-white[^"]*"[^>]*>INTERVIEW<\/span>/)
 	})
 
-	it('renders newsletter discovery, archive and subscription links with interviews', () => {
+	test('renders newsletter discovery, archive and subscription links with interviews', () => {
 		const newsletter = {
 			id: 'newsletter-1',
 			title: 'Weekly DeFi market structure',

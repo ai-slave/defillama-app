@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	acquire: vi.fn(),
@@ -24,7 +24,7 @@ beforeEach(() => {
 })
 
 describe('Yields v2 public API', () => {
-	it('acquires one background-refreshable snapshot for the request', async () => {
+	test('acquires one background-refreshable snapshot for the request', async () => {
 		const snapshot = { readJson: vi.fn() }
 		const response = { rows: [], total: 0, page: 2, pageSize: 10 }
 		mocks.acquire.mockResolvedValue(snapshot)
@@ -36,7 +36,7 @@ describe('Yields v2 public API', () => {
 		expect(mocks.getEarnPage).toHaveBeenCalledWith(snapshot, request.query)
 	})
 
-	it('returns an upstream error when no valid snapshot can be acquired', async () => {
+	test('returns an upstream error when no valid snapshot can be acquired', async () => {
 		mocks.acquire.mockRejectedValue(new Error('refresh failed'))
 
 		await expect(yieldsEarnDataset.handle(request)).resolves.toMatchObject({ status: 502 })

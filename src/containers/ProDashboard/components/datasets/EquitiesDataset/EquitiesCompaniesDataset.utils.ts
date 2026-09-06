@@ -36,7 +36,7 @@ type EquitiesCompanyCsvItem = Pick<
 	| 'earningsTTM'
 >
 
-export function getEquitiesCompanyCsvRow(item: EquitiesCompanyCsvItem): CsvCell[] {
+export function getEquitiesCompanyCsvRow(item: EquitiesCompanyCsvItem): Array<CsvCell> {
 	return [
 		item.ticker,
 		item.name,

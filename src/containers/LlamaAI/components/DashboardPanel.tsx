@@ -15,7 +15,7 @@ import { formatUsd } from '~/utils/numberFormat'
 interface DashboardPanelProps {
 	config: DashboardArtifact | null
 	isOpen: boolean
-	versions: DashboardArtifact[]
+	versions: Array<DashboardArtifact>
 	versionIndex: number
 	onVersionChange: (index: number) => void
 	onClose: () => void

@@ -22,7 +22,13 @@ function FaqAnswer({ text, onStartTrial }: { text: string; onStartTrial?: () => 
 	)
 }
 
-export function SubscriptionFaqBlock({ faqItems, onStartTrial }: { faqItems: FaqItem[]; onStartTrial?: () => void }) {
+export function SubscriptionFaqBlock({
+	faqItems,
+	onStartTrial
+}: {
+	faqItems: Array<FaqItem>
+	onStartTrial?: () => void
+}) {
 	const [expandedIndex, setExpandedIndex] = useState<number | null>(0)
 
 	return (

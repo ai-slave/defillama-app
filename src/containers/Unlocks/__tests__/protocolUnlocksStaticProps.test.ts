@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { fetchCoinGeckoChartMock, getProtocolEmissonsMock } = vi.hoisted(() => ({
 	fetchCoinGeckoChartMock: vi.fn(),
@@ -20,7 +20,7 @@ describe('protocol unlock static props boundary', () => {
 		vi.clearAllMocks()
 	})
 
-	it('does not present a weekly rate as a one-time unlock value', () => {
+	test('does not present a weekly rate as a one-time unlock value', () => {
 		expect(
 			calculateTotalUnlockValue({
 				tokenPrice: { price: 2 },
@@ -38,7 +38,7 @@ describe('protocol unlock static props boundary', () => {
 		).toBeNull()
 	})
 
-	it('excludes unavailable amounts while retaining a known zero', () => {
+	test('excludes unavailable amounts while retaining a known zero', () => {
 		expect(
 			calculateTotalUnlockValue({
 				tokenPrice: { price: 2 },
@@ -70,7 +70,7 @@ describe('protocol unlock static props boundary', () => {
 		).toBe(0)
 	})
 
-	it('treats a nonpositive price as unavailable', () => {
+	test('treats a nonpositive price as unavailable', () => {
 		expect(
 			calculateTotalUnlockValue({
 				tokenPrice: { price: -2 },
@@ -87,7 +87,7 @@ describe('protocol unlock static props boundary', () => {
 		).toBeNull()
 	})
 
-	it('returns canonical absence without requesting a detail outside the producer list', async () => {
+	test('returns canonical absence without requesting a detail outside the producer list', async () => {
 		const result = await getProtocolUnlocksStaticPropsData('Missing Protocol', {}, ['aave'])
 
 		expect(result).toEqual({
@@ -100,7 +100,7 @@ describe('protocol unlock static props boundary', () => {
 		expect(getProtocolEmissonsMock).not.toHaveBeenCalled()
 	})
 
-	it('throws on transient detail failure so ISR can retain its stale page', async () => {
+	test('throws on transient detail failure so ISR can retain its stale page', async () => {
 		const error = new Error('detail source unavailable')
 		getProtocolEmissonsMock.mockRejectedValue(error)
 

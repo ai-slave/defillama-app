@@ -5,7 +5,7 @@ import type { IProtocolFaqItem } from './types'
 
 const DEFAULT_OPEN_COUNT = 5
 
-export function ProtocolFaq({ items }: { items: IProtocolFaqItem[] }) {
+export function ProtocolFaq({ items }: { items: Array<IProtocolFaqItem> }) {
 	if (items.length === 0) return null
 
 	return (

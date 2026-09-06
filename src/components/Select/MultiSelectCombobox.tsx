@@ -30,8 +30,8 @@ export const MultiSelectCombobox = ({
 }: {
 	data: ReadonlyArray<MultiSelectOption>
 	placeholder: string
-	selectedValues: string[]
-	setSelectedValues: (values: string[]) => void
+	selectedValues: Array<string>
+	setSelectedValues: (values: Array<string>) => void
 	filterOptions?: boolean
 	onSearchChange?: (value: string) => void
 	isLoading?: boolean

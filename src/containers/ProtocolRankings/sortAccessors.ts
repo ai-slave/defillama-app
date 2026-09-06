@@ -98,7 +98,7 @@ export const PROTOCOL_RANKING_SORT_ACCESSORS = {
 
 export type ProtocolRankingSortKey = keyof typeof PROTOCOL_RANKING_SORT_ACCESSORS
 
-export const PROTOCOL_RANKING_SORT_KEYS = Object.keys(PROTOCOL_RANKING_SORT_ACCESSORS) as ProtocolRankingSortKey[]
+export const PROTOCOL_RANKING_SORT_KEYS = Object.keys(PROTOCOL_RANKING_SORT_ACCESSORS) as Array<ProtocolRankingSortKey>
 
 export function getProtocolRankingSortValue(
 	row: IChildProtocol,

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(() => {
 	vi.clearAllMocks()
@@ -29,7 +29,7 @@ function setupPageModule({ data }: { data: unknown }) {
 }
 
 describe('rwa perps overview page', () => {
-	it('getStaticProps returns props for the overview page', async () => {
+	test('getStaticProps returns props for the overview page', async () => {
 		const data = {
 			markets: [],
 			initialChartDataset: { source: [], dimensions: ['timestamp'] },

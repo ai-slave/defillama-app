@@ -12,7 +12,7 @@ import { useDeleteProjectFile, useDisconnectSource, useProjectFiles, useProjectS
 import type { ProjectFile, ProjectSource } from './types'
 import { PROJECT_FILE_ACCEPT, useProjectFileUpload } from './useProjectFileUpload'
 
-const EMPTY_PROJECT_SOURCES: ProjectSource[] = []
+const EMPTY_PROJECT_SOURCES: Array<ProjectSource> = []
 
 interface ProjectFilesPanelProps {
 	projectId: string
@@ -78,8 +78,8 @@ export function ProjectFilesPanel({
 		try {
 			await deleteFile.mutateAsync(file.id)
 			toast.success('File deleted')
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to delete')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to delete')
 		}
 	}
 
@@ -88,8 +88,8 @@ export function ProjectFilesPanel({
 		try {
 			await disconnect.mutateAsync(source.id)
 			toast.success('Source disconnected')
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to disconnect')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to disconnect')
 		}
 	}
 

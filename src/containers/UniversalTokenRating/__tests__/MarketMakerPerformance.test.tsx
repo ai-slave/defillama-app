@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { MarketMakerPerformance } from '../MarketMakerPerformance'
 
 describe('MarketMakerPerformance', () => {
-	it('keeps the liquidity provider section and score cards visible without data', () => {
+	test('keeps the liquidity provider section and score cards visible without data', () => {
 		const html = renderToStaticMarkup(
 			<MarketMakerPerformance
 				metrics={null}
@@ -22,7 +22,7 @@ describe('MarketMakerPerformance', () => {
 		expect(html).toContain('Market Maker Uptime / KPI Adherence')
 	})
 
-	it('renders provider summary fields from the Forgd asset payload', () => {
+	test('renders provider summary fields from the Forgd asset payload', () => {
 		const html = renderToStaticMarkup(
 			<MarketMakerPerformance
 				metrics={null}

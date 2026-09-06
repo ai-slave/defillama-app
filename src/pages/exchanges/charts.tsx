@@ -15,7 +15,7 @@ import { withPerformanceLogging } from '~/utils/perf'
 
 /** The depth curve reads four fields per venue. Passing whole directory rows would put
  *  the entire listing payload into this page's props for a chart that ignores it. */
-function depthRowsFrom(rows: ExchangeDirectoryRowModel[]): DepthCurveRow[] {
+function depthRowsFrom(rows: Array<ExchangeDirectoryRowModel>): Array<DepthCurveRow> {
 	return rows.flatMap((row) => {
 		const spot = row.segments.spot?.depthLadder ?? null
 		const perp = row.segments.linear_perp?.depthLadder ?? null
@@ -63,8 +63,8 @@ export default function ExchangeChartsPage({
 	depthRows,
 	btcExecutionRows
 }: {
-	depthRows: DepthCurveRow[]
-	btcExecutionRows: BtcExecutionRowModel[]
+	depthRows: Array<DepthCurveRow>
+	btcExecutionRows: Array<BtcExecutionRowModel>
 }) {
 	return (
 		<ExchangeAccessGate>

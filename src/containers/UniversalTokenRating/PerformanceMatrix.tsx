@@ -81,7 +81,7 @@ function scoreRow(label: string, value: number | null, hex: string, max: number)
 }
 
 export function buildMatrixOption(
-	rows: UtrLeaderboardRow[],
+	rows: Array<UtrLeaderboardRow>,
 	axisColor?: string,
 	icons: MatrixIconMap = {},
 	isDark = false,
@@ -205,7 +205,7 @@ export function PerformanceMatrix({
 	grading,
 	className = 'h-[494px] w-full'
 }: {
-	rows: UtrLeaderboardRow[]
+	rows: Array<UtrLeaderboardRow>
 	grading?: UtrGradingConfig | null
 	className?: string
 }) {
@@ -289,7 +289,7 @@ export function PerformanceMatrix({
 	useEffect(() => {
 		let cancelled = false
 		const pending = rows.filter((row) => row.iconDataUrl)
-		if (!pending.length) return
+		if (pending.length === 0) return
 		Promise.all(pending.map(async (row) => [row.asset, await circularIcon(row.iconDataUrl!)] as const)).then(
 			(entries) => {
 				if (cancelled) return

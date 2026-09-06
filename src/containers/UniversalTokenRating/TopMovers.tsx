@@ -2,8 +2,8 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { formatPercent } from '~/utils/numberFormat'
 import type { UtrTopMover } from './types'
 
-export function TopMovers({ movers }: { movers: UtrTopMover[] }) {
-	if (!movers.length) return null
+export function TopMovers({ movers }: { movers: Array<UtrTopMover> }) {
+	if (movers.length === 0) return null
 
 	return (
 		<div className="flex items-center gap-2 overflow-x-auto rounded-lg border border-subtle bg-surface px-3 py-2">

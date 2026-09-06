@@ -2,11 +2,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { ApyTriple, ApyWindows, EarnAttributes, EnrichedEarnRow, TokenKeys } from '~/containers/Yields/data/types'
 
-const state = vi.hoisted(() => ({ rows: [] as EnrichedEarnRow[], generation: 0, filter: false }))
+const state = vi.hoisted(() => ({ rows: [] as Array<EnrichedEarnRow>, generation: 0, filter: false }))
 vi.mock('~/containers/Yields/data/enrich.server', () => ({ getEnrichedEarn: async () => state.rows }))
 vi.mock('~/containers/Yields/data/snapshot', async (original) => ({
 	...(await original<typeof import('~/containers/Yields/data/snapshot')>()),
@@ -86,7 +86,7 @@ function makeRow(id: string, keys: Partial<TokenKeys>): EnrichedEarnRow {
 		chain: 'Ethereum',
 		underlying_tokens: [],
 		reward_tokens: [],
-		tvl_usd: 1_000,
+		tvl_usd: 1000,
 		apy: ZERO_APY,
 		intrinsic: null,
 		stability_30d: { base: null, base_reward: null, base_intrinsic: null, base_reward_intrinsic: null },
@@ -122,7 +122,7 @@ beforeEach(() => {
 })
 afterEach(() => vi.unstubAllGlobals())
 
-it.each(['success', 'empty', 'outage', 'sort-outage', 'no-rows-outage'] as const)(
+test.each(['success', 'empty', 'outage', 'sort-outage', 'no-rows-outage'] as const)(
 	'keeps token-page selection through a full-data %s refresh',
 	async (outcome) => {
 		const isOutage = outcome.endsWith('outage')

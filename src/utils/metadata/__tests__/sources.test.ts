@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PreIpoCompanyListItem, PreIpoSnapshot } from '~/containers/PreIPO/api.types'
 
 const { fetchEmissionsProtocolsListMock, fetchWithPoolingOnServerMock } = vi.hoisted(() => ({
@@ -15,7 +15,7 @@ const preIpoCompaniesSnapshot = {
 			description: 'AI company',
 			website: 'https://anthropic.com',
 			sector: 'Artificial Intelligence',
-			latestEstimatedValuation: 1_000,
+			latestEstimatedValuation: 1000,
 			latestRaise: 100,
 			latestFundingValuation: 900,
 			latestFundingDate: '2026-08-24',
@@ -25,7 +25,7 @@ const preIpoCompaniesSnapshot = {
 			premiumVsLatestFundingPercentage: 11.11
 		}
 	]
-} satisfies PreIpoSnapshot<PreIpoCompanyListItem[]>
+} satisfies PreIpoSnapshot<Array<PreIpoCompanyListItem>>
 
 vi.mock('~/utils/http-client', () => ({
 	fetchWithPoolingOnServer: fetchWithPoolingOnServerMock
@@ -128,7 +128,7 @@ describe('metadata source adapters', () => {
 		fetchEmissionsProtocolsListMock.mockResolvedValue(['aave'])
 	})
 
-	it('fetches metadata sources from expected public URLs with the metadata timeout', async () => {
+	test('fetches metadata sources from expected public URLs with the metadata timeout', async () => {
 		vi.stubEnv('API_KEY', '')
 		const { fetchCoreMetadataSources } = await import('../sources')
 
@@ -162,7 +162,7 @@ describe('metadata source adapters', () => {
 		})
 	})
 
-	it('keeps token directory on the public API when other metadata sources use pro API', async () => {
+	test('keeps token directory on the public API when other metadata sources use pro API', async () => {
 		vi.stubEnv('API_KEY', 'secret-key')
 		const { fetchCoreMetadataSources } = await import('../sources')
 
@@ -183,7 +183,7 @@ describe('metadata source adapters', () => {
 		expectMetadataRequest('https://pro-api.llama.fi/secret-key/pre-ipo/v1/companies-list')
 	})
 
-	it('fetches metadata sources from direct URL overrides before pro API fallbacks', async () => {
+	test('fetches metadata sources from direct URL overrides before pro API fallbacks', async () => {
 		vi.stubEnv('API_KEY', 'secret-key')
 		vi.stubEnv('BRIDGES_SERVER_URL', 'https://bridges.example.com/')
 		vi.stubEnv('DATASETS_SERVER_URL', 'https://datasets.example.com/')
@@ -212,7 +212,7 @@ describe('metadata source adapters', () => {
 		expectMetadataRequest('https://pre-ipo.example.com/v1/companies-list')
 	})
 
-	it('logs the named metadata source when an upstream request fails', async () => {
+	test('logs the named metadata source when an upstream request fails', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 		fetchWithPoolingOnServerMock.mockImplementation((url: string) => {
 			if (withoutCacheVersion(url).endsWith('/cexs')) {
@@ -228,7 +228,7 @@ describe('metadata source adapters', () => {
 		warn.mockRestore()
 	})
 
-	it('rejects instead of seeding an empty emissions directory when the protocol list fails', async () => {
+	test('rejects instead of seeding an empty emissions directory when the protocol list fails', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 		fetchEmissionsProtocolsListMock.mockRejectedValue(new Error('emissions list unavailable'))
 		const { fetchCoreMetadataSources } = await import('../sources')

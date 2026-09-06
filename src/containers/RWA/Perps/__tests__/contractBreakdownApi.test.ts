@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { rwaPerpsContractBreakdown } from '~/containers/RWA/server/api'
 import { parseContractBreakdownRequest } from '~/pages/api/public/rwa/perps/contract-breakdown'
 import { resultBody } from '~/server/api/__tests__/resultBody'
@@ -20,7 +20,7 @@ beforeEach(() => {
 })
 
 describe('parseContractBreakdownRequest', () => {
-	it('accepts overview contract requests', () => {
+	test('accepts overview contract requests', () => {
 		expect(
 			parseContractBreakdownRequest({
 				query: {
@@ -34,7 +34,7 @@ describe('parseContractBreakdownRequest', () => {
 		})
 	})
 
-	it('accepts venue, asset-group, asset-class, and asset-class exclusion targets', () => {
+	test('accepts venue, asset-group, asset-class, and asset-class exclusion targets', () => {
 		expect(
 			parseContractBreakdownRequest({
 				query: {
@@ -90,7 +90,7 @@ describe('parseContractBreakdownRequest', () => {
 		})
 	})
 
-	it('rejects invalid query params', () => {
+	test('rejects invalid query params', () => {
 		expect(
 			parseContractBreakdownRequest({
 				query: {
@@ -160,7 +160,7 @@ describe('parseContractBreakdownRequest', () => {
 })
 
 describe('rwaPerpsContractBreakdown', () => {
-	it('returns serialized transformed contract breakdown data', async () => {
+	test('returns serialized transformed contract breakdown data', async () => {
 		mocks.fetchRWAPerpsContractBreakdownChartData.mockResolvedValue([{ timestamp: 1, 'KALSHI:SPY': 4, 'HL:AAPL': 9 }])
 
 		const result = await rwaPerpsContractBreakdown.handle({

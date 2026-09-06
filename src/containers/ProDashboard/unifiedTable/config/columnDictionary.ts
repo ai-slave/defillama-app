@@ -34,11 +34,11 @@ interface ColumnDictionaryItem {
 	description?: string
 	group: MetricGroup | 'meta'
 	render: ColumnRenderType
-	tags?: string[]
+	tags?: Array<string>
 	chainGroupOnly?: boolean
 }
 
-const metaColumns: ColumnDictionaryItem[] = [
+const metaColumns: Array<ColumnDictionaryItem> = [
 	{
 		id: 'category',
 		header: 'Category',
@@ -59,7 +59,7 @@ const metaColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const tvlColumns: ColumnDictionaryItem[] = [
+const tvlColumns: Array<ColumnDictionaryItem> = [
 	{ id: 'tvl', header: 'TVL', group: 'tvl', render: 'usd' },
 	{ id: 'change1d', header: '1d Change', group: 'tvl', render: 'percent', tags: ['change'] },
 	{ id: 'change7d', header: '7d Change', group: 'tvl', render: 'percent', tags: ['change'] },
@@ -93,7 +93,7 @@ const tvlColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const volumeColumns: ColumnDictionaryItem[] = [
+const volumeColumns: Array<ColumnDictionaryItem> = [
 	{ id: 'volume24h', header: '24h Volume', group: 'volume', render: 'usd' },
 	{ id: 'volume_7d', header: '7d Volume', group: 'volume', render: 'usd' },
 	{ id: 'volume_30d', header: '30d Volume', group: 'volume', render: 'usd' },
@@ -169,7 +169,7 @@ const volumeColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const feesColumns: ColumnDictionaryItem[] = [
+const feesColumns: Array<ColumnDictionaryItem> = [
 	{ id: 'fees24h', header: '24h Fees', group: 'fees', render: 'usd' },
 	{ id: 'fees_7d', header: '7d Fees', group: 'fees', render: 'usd' },
 	{ id: 'fees_30d', header: '30d Fees', group: 'fees', render: 'usd' },
@@ -464,7 +464,7 @@ const feesColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const revenueColumns: ColumnDictionaryItem[] = [
+const revenueColumns: Array<ColumnDictionaryItem> = [
 	{ id: 'revenue24h', header: '24h Revenue', group: 'revenue', render: 'usd' },
 	{ id: 'revenue_7d', header: '7d Revenue', group: 'revenue', render: 'usd' },
 	{ id: 'revenue_30d', header: '30d Revenue', group: 'revenue', render: 'usd' },
@@ -599,7 +599,7 @@ const revenueColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const earningsColumns: ColumnDictionaryItem[] = [
+const earningsColumns: Array<ColumnDictionaryItem> = [
 	{ id: 'earnings24h', header: '24h Earnings', group: 'earnings', render: 'usd' },
 	{ id: 'earnings7d', header: '7d Earnings', group: 'earnings', render: 'usd' },
 	{ id: 'earnings30d', header: '30d Earnings', group: 'earnings', render: 'usd' },
@@ -630,7 +630,7 @@ const earningsColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const perpsColumns: ColumnDictionaryItem[] = [
+const perpsColumns: Array<ColumnDictionaryItem> = [
 	{ id: 'perpsVolume24h', header: '24h Perps Volume', group: 'perps', render: 'usd' },
 	{ id: 'perps_volume_7d', header: '7d Perps Volume', group: 'perps', render: 'usd' },
 	{ id: 'perps_volume_30d', header: '30d Perps Volume', group: 'perps', render: 'usd' },
@@ -690,7 +690,7 @@ const perpsColumns: ColumnDictionaryItem[] = [
 	{ id: 'openInterest', header: 'Open Interest', group: 'perps', render: 'usd' }
 ]
 
-const aggregatorsColumns: ColumnDictionaryItem[] = [
+const aggregatorsColumns: Array<ColumnDictionaryItem> = [
 	{
 		id: 'aggregators_volume_24h',
 		header: '24h Aggregator Volume',
@@ -788,7 +788,7 @@ const aggregatorsColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const derivativesAggregatorsColumns: ColumnDictionaryItem[] = [
+const derivativesAggregatorsColumns: Array<ColumnDictionaryItem> = [
 	{
 		id: 'derivatives_aggregators_volume_24h',
 		header: '24h Derivatives Aggregator Volume',
@@ -847,7 +847,7 @@ const derivativesAggregatorsColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const bridgeAggregatorsColumns: ColumnDictionaryItem[] = [
+const bridgeAggregatorsColumns: Array<ColumnDictionaryItem> = [
 	{
 		id: 'bridgeAggregatorVolume24h',
 		header: '24h Bridge Aggregator Volume',
@@ -894,7 +894,7 @@ const bridgeAggregatorsColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const optionsColumns: ColumnDictionaryItem[] = [
+const optionsColumns: Array<ColumnDictionaryItem> = [
 	{
 		id: 'options_volume_24h',
 		header: '24h Options Volume',
@@ -1004,7 +1004,7 @@ const optionsColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const ratioColumns: ColumnDictionaryItem[] = [
+const ratioColumns: Array<ColumnDictionaryItem> = [
 	{ id: 'mcap', header: 'Market Cap', group: 'ratios', render: 'usd' },
 	{ id: 'fdv', header: 'FDV', group: 'ratios', render: 'usd' },
 	{
@@ -1030,7 +1030,7 @@ const ratioColumns: ColumnDictionaryItem[] = [
 	}
 ]
 
-const METRIC_COLUMN_DICTIONARY: ColumnDictionaryItem[] = [
+const METRIC_COLUMN_DICTIONARY: Array<ColumnDictionaryItem> = [
 	...metaColumns,
 	...tvlColumns,
 	...volumeColumns,
@@ -1045,7 +1045,7 @@ const METRIC_COLUMN_DICTIONARY: ColumnDictionaryItem[] = [
 	...ratioColumns
 ]
 
-const filteredShareColumns: ColumnDictionaryItem[] = FILTERED_SHARE_METRIC_KEYS.map((metric) => {
+const filteredShareColumns: Array<ColumnDictionaryItem> = FILTERED_SHARE_METRIC_KEYS.map((metric) => {
 	const source = METRIC_COLUMN_DICTIONARY.find((column) => column.id === metric)
 	if (!source) throw new Error(`Missing source column for filtered share ${metric}`)
 	return {
@@ -1059,7 +1059,7 @@ const filteredShareColumns: ColumnDictionaryItem[] = FILTERED_SHARE_METRIC_KEYS.
 	}
 })
 
-export const UNIFIED_TABLE_COLUMN_DICTIONARY: ColumnDictionaryItem[] = [
+export const UNIFIED_TABLE_COLUMN_DICTIONARY: Array<ColumnDictionaryItem> = [
 	...METRIC_COLUMN_DICTIONARY,
 	...filteredShareColumns
 ]

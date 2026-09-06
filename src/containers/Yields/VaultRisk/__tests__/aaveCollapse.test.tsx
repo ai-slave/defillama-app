@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import { prerenderToNodeStream } from 'react-dom/static.node'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CollateralView } from '../components/CollateralView'
 import { ScenarioByExit } from '../components/ScenarioByExit'
 import { ScenarioDetailContent } from '../components/ScenarioDetailPanel'
@@ -13,7 +13,7 @@ import { makeCollateral, makeCoverage, makeLoss, makeScenario, makeVaultRiskData
 
 async function render(el: ReactElement): Promise<string> {
 	const { prelude } = await prerenderToNodeStream(el)
-	const chunks: Buffer[] = []
+	const chunks: Array<Buffer> = []
 	for await (const chunk of prelude) chunks.push(Buffer.from(chunk))
 	return Buffer.concat(chunks).toString('utf8')
 }
@@ -50,7 +50,7 @@ function makeFannedRow(scenarioId: keyof typeof SCENARIO_TITLE, asset: TokenRef,
 
 // Three synthetic collaterals; the family losses are hand-picked per asset so every derived
 // quantity is trivially checkable: family sum = 100+200+300 = 600, max-single = 300, count = 3.
-const ASSETS: TokenRef[] = [
+const ASSETS: Array<TokenRef> = [
 	{ chain: 'ethereum', symbol: 'AAA', address: '0x00000000000000000000000000000000000000aa' },
 	{ chain: 'ethereum', symbol: 'BBB', address: '0x00000000000000000000000000000000000000bb' },
 	{ chain: 'ethereum', symbol: 'CCC', address: '0x00000000000000000000000000000000000000cc' }
@@ -59,7 +59,7 @@ const PER_ASSET_LOSS = [100, 200, 300]
 
 function makeSyntheticAave(): VaultRiskData {
 	// Each collapsed family is fanned across the three assets with the same loss vector.
-	const fanned: VaultScenario[] = COLLAPSED_IDS.flatMap((id) =>
+	const fanned: Array<VaultScenario> = COLLAPSED_IDS.flatMap((id) =>
 		ASSETS.map((asset, i) => makeFannedRow(id, asset, PER_ASSET_LOSS[i]!))
 	)
 	// One passthrough scenario that is NOT collapsed — proves passthrough rows survive untouched
@@ -107,8 +107,8 @@ function makeSyntheticAave(): VaultRiskData {
 // asset-less row; sum semantics preserve the current headline.
 function collapseAave(vault: VaultRiskFixture): VaultRiskFixture {
 	const agg = new Set<string>(COLLAPSED_IDS)
-	const groups = new Map<string, VaultScenario[]>()
-	const passthrough: VaultScenario[] = []
+	const groups = new Map<string, Array<VaultScenario>>()
+	const passthrough: Array<VaultScenario> = []
 	for (const s of vault.vault_specific_risks) {
 		if (!agg.has(s.scenario_id)) {
 			passthrough.push(s)
@@ -118,7 +118,7 @@ function collapseAave(vault: VaultRiskFixture): VaultRiskFixture {
 		if (arr) arr.push(s)
 		else groups.set(s.scenario_id, [s])
 	}
-	const aggregated: VaultScenario[] = []
+	const aggregated: Array<VaultScenario> = []
 	for (const [, rows] of groups) {
 		const computed = rows.filter((r) => r.loss.status === 'computed')
 		const sumMax = computed.reduce((a, r) => a + (r.loss.max_usd || 0), 0)
@@ -148,7 +148,7 @@ describe('Aave collapsed scenario payload', () => {
 	const before = buildVaultRiskVM(original)
 	const after = buildVaultRiskVM(collapsed)
 
-	it('sanity: the source fixture actually carries per-asset rows for all five families', () => {
+	test('sanity: the source fixture actually carries per-asset rows for all five families', () => {
 		for (const id of COLLAPSED_IDS) {
 			const rows = original.vault.vault_specific_risks.filter((s) => s.scenario_id === id)
 			expect(rows.length).toBeGreaterThan(1)
@@ -160,7 +160,7 @@ describe('Aave collapsed scenario payload', () => {
 		}
 	})
 
-	it('headline loss is unchanged vs the previous grouped-sum semantics', () => {
+	test('headline loss is unchanged vs the previous grouped-sum semantics', () => {
 		// The deriver already summed the per-asset rows into one ScenarioVM per id, so a server-side
 		// sum must reproduce the same per-scenario loss and the same section headline exactly.
 		expect(after.scenarios.length).toBe(before.scenarios.length)
@@ -177,7 +177,7 @@ describe('Aave collapsed scenario payload', () => {
 		expect(after.headline.coverageTotalUsd).toBe(before.headline.coverageTotalUsd)
 	})
 
-	it('drops perAsset and replaces inputs with the three transparency fields', () => {
+	test('drops perAsset and replaces inputs with the three transparency fields', () => {
 		for (const id of COLLAPSED_IDS) {
 			const b = before.scenarios.find((s) => s.scenarioId === id)!
 			const a = after.scenarios.find((s) => s.scenarioId === id)!
@@ -191,7 +191,7 @@ describe('Aave collapsed scenario payload', () => {
 		}
 	})
 
-	it('scenario table still renders every family as a single row', async () => {
+	test('scenario table still renders every family as a single row', async () => {
 		const html = await render(
 			<ScenarioByExit scenarios={after.scenarios} protocol={after.protocol} supplyUsd={after.supplyUsd} />
 		)
@@ -200,7 +200,7 @@ describe('Aave collapsed scenario payload', () => {
 		expect(html).toContain('Asset listing misconfiguration')
 	})
 
-	it('expanded scenario detail does not crash without perAsset, and shows the math inputs', async () => {
+	test('expanded scenario detail does not crash without perAsset, and shows the math inputs', async () => {
 		const staleness = after.scenarios.find((s) => s.scenarioId === 'oracle-staleness')!
 		const html = await render(
 			<ScenarioDetailContent
@@ -217,7 +217,7 @@ describe('Aave collapsed scenario payload', () => {
 		expect(html).not.toContain('Loss by asset') // the per-asset breakdown is gone, cleanly
 	})
 
-	it('collateral tab still provides the per-asset detail (collateral_risks untouched)', async () => {
+	test('collateral tab still provides the per-asset detail (collateral_risks untouched)', async () => {
 		const html = await render(
 			<CollateralView
 				collateral={after.collateral}

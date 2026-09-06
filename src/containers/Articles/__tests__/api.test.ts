@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
 	ArticleApiError,
 	getSponsoredResearchReports,
@@ -27,7 +27,7 @@ describe('articles api client', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('builds discovery query parameters', async () => {
+	test('builds discovery query parameters', async () => {
 		const fetchFn = createFetchMock(
 			new Response(JSON.stringify({ items: [], page: 1, perPage: 20, totalItems: 0, totalPages: 1 }))
 		)
@@ -42,7 +42,7 @@ describe('articles api client', () => {
 		expect(url.searchParams.get('section')).toBe('report')
 	})
 
-	it('requests articles by editorial tag path and limit', async () => {
+	test('requests articles by editorial tag path and limit', async () => {
 		const fetchFn = createFetchMock(
 			new Response(JSON.stringify({ items: [], page: 1, perPage: 20, totalItems: 0, totalPages: 1 }))
 		)
@@ -54,7 +54,7 @@ describe('articles api client', () => {
 		expect(url.searchParams.get('limit')).toBe('1')
 	})
 
-	it('lists articles by topic via listArticles tags param', async () => {
+	test('lists articles by topic via listArticles tags param', async () => {
 		const fetchFn = createFetchMock(
 			new Response(JSON.stringify({ items: [], page: 1, perPage: 60, totalItems: 0, totalPages: 1 }))
 		)
@@ -68,7 +68,7 @@ describe('articles api client', () => {
 		expect(url.searchParams.get('limit')).toBe('60')
 	})
 
-	it('requests public article path metadata', async () => {
+	test('requests public article path metadata', async () => {
 		const fetchFn = createFetchMock(new Response(JSON.stringify({ items: [] })))
 
 		await listArticlePaths(fetchFn)
@@ -77,7 +77,7 @@ describe('articles api client', () => {
 		expect(url.pathname).toBe('/articles/paths')
 	})
 
-	it('posts editorial tag without body when order is omitted', async () => {
+	test('posts editorial tag without body when order is omitted', async () => {
 		const fetchFn = createFetchMock(
 			new Response(JSON.stringify({ articleId: 'article-id', tag: 'spotlight', order: 0 }))
 		)
@@ -90,7 +90,7 @@ describe('articles api client', () => {
 		expect(options?.body).toBeUndefined()
 	})
 
-	it('posts editorial tag with optional order', async () => {
+	test('posts editorial tag with optional order', async () => {
 		const fetchFn = createFetchMock(
 			new Response(JSON.stringify({ articleId: 'article-id', tag: 'spotlight', order: 2 }))
 		)
@@ -103,7 +103,7 @@ describe('articles api client', () => {
 		expect(JSON.parse(String(options?.body))).toEqual({ order: 2 })
 	})
 
-	it('patches editorial tag order for drag-and-drop', async () => {
+	test('patches editorial tag order for drag-and-drop', async () => {
 		const fetchFn = createFetchMock(
 			new Response(
 				JSON.stringify({
@@ -136,7 +136,7 @@ describe('articles api client', () => {
 		})
 	})
 
-	it('patches editorial tag metadata', async () => {
+	test('patches editorial tag metadata', async () => {
 		const fetchFn = createFetchMock(
 			new Response(
 				JSON.stringify({ articleId: 'article-id', tag: 'report-highlight', metadata: { highlightText: 'Hi' } })
@@ -151,7 +151,7 @@ describe('articles api client', () => {
 		expect(JSON.parse(String(options?.body))).toEqual({ metadata: { highlightText: 'Hi' } })
 	})
 
-	it('patches highlighted report sponsor logo', async () => {
+	test('patches highlighted report sponsor logo', async () => {
 		const fetchFn = createFetchMock(
 			new Response(
 				JSON.stringify({
@@ -180,7 +180,7 @@ describe('articles api client', () => {
 		})
 	})
 
-	it('routes publish through the local research API proxy', async () => {
+	test('routes publish through the local research API proxy', async () => {
 		const fetchFn = createFetchMock(new Response(JSON.stringify({ article: { id: 'article-id' } })))
 
 		await publishArticle('article-id', fetchFn)
@@ -191,7 +191,7 @@ describe('articles api client', () => {
 		expect(JSON.parse(options?.body as string)).toEqual({})
 	})
 
-	it('sends goLiveAt when scheduling publish', async () => {
+	test('sends goLiveAt when scheduling publish', async () => {
 		const fetchFn = createFetchMock(new Response(JSON.stringify({ article: { id: 'article-id' } })))
 
 		await publishArticle('article-id', fetchFn, { goLiveAt: '2026-06-01T09:00:00.000Z' })
@@ -201,7 +201,7 @@ describe('articles api client', () => {
 		expect(JSON.parse(options?.body as string)).toEqual({ goLiveAt: '2026-06-01T09:00:00.000Z' })
 	})
 
-	it('sends goLiveAt null when publishing immediately after schedule', async () => {
+	test('sends goLiveAt null when publishing immediately after schedule', async () => {
 		const fetchFn = createFetchMock(new Response(JSON.stringify({ article: { id: 'article-id' } })))
 
 		await publishArticle('article-id', fetchFn, { goLiveAt: null })
@@ -211,8 +211,8 @@ describe('articles api client', () => {
 		expect(JSON.parse(options?.body as string)).toEqual({ goLiveAt: null })
 	})
 
-	it('requests research landing revalidation with a nonce', async () => {
-		vi.spyOn(Date, 'now').mockReturnValue(1779199600000)
+	test('requests research landing revalidation with a nonce', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(1_779_199_600_000)
 		const fetchFn = createFetchMock(
 			new Response(
 				JSON.stringify({ cloudflare: { status: 'skipped' }, revalidateErrors: [], revalidated: ['/research'] })
@@ -226,7 +226,7 @@ describe('articles api client', () => {
 		expect(options?.method).toBe('GET')
 	})
 
-	it('requests the all-articles banner lookup path', async () => {
+	test('requests the all-articles banner lookup path', async () => {
 		const fetchFn = createFetchMock(new Response(JSON.stringify({ text: null, image: null, imageHorizontal: null })))
 
 		await getAllArticlesBanner(fetchFn)
@@ -235,7 +235,7 @@ describe('articles api client', () => {
 		expect(url.pathname).toBe('/banners/lookup/all-articles')
 	})
 
-	it('strips PocketBase creator ids from public banner and trusted-by lookups', async () => {
+	test('strips PocketBase creator ids from public banner and trusted-by lookups', async () => {
 		const bannerFetch = createFetchMock(
 			new Response(
 				JSON.stringify({
@@ -268,8 +268,8 @@ describe('articles api client', () => {
 		expect(trustedBy.mentions[0]).not.toHaveProperty('createdByPbUserId')
 	})
 
-	it('requests sponsored reports by canonical entity identity with a cache nonce', async () => {
-		vi.spyOn(Date, 'now').mockReturnValue(1786635600000)
+	test('requests sponsored reports by canonical entity identity with a cache nonce', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(1_786_635_600_000)
 		const fetchFn = createFetchMock(new Response(JSON.stringify({ sponsor: null, reports: [] })))
 
 		await getSponsoredResearchReports('chain', 'starknet', { limit: 3, fetchFn })
@@ -280,7 +280,7 @@ describe('articles api client', () => {
 		expect(url.searchParams.get('_n')).toBe('1786635600000')
 	})
 
-	it('links and unlinks a sponsored report through the researcher API', async () => {
+	test('links and unlinks a sponsored report through the researcher API', async () => {
 		const authorizedFetch = createFetchMock(new Response(JSON.stringify({ linked: true })))
 
 		await linkResearchSponsorReport('sponsor/id', 'article/id', authorizedFetch)
@@ -294,7 +294,7 @@ describe('articles api client', () => {
 		expect(unlinkOptions?.method).toBe('DELETE')
 	})
 
-	it('surfaces server errors', async () => {
+	test('surfaces server errors', async () => {
 		const fetchFn = createFetchMock(new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }))
 
 		await expect(listArticles({}, fetchFn)).rejects.toMatchObject({

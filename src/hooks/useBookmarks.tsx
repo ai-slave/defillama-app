@@ -18,7 +18,7 @@ export function useBookmarks(type: 'defi' | 'yields' | 'chains' | 'tokens') {
 		if (isSyncing.current) return
 
 		const parsedData = readAppStorage()
-		if (!Object.keys(parsedData).length) return
+		if (Object.keys(parsedData).length === 0) return
 
 		try {
 			isSyncing.current = true

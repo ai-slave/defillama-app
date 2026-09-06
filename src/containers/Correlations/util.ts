@@ -6,7 +6,7 @@
  *   when correlation is undefined (mismatched lengths, too few points, or zero variance).
  * - `toLogReturns` is the single-series variant used when only one return vector is needed.
  */
-export function pearsonCorrelationCoefficient(array1: number[], array2: number[]): number | null {
+export function pearsonCorrelationCoefficient(array1: Array<number>, array2: Array<number>): number | null {
 	if (array1.length !== array2.length || array1.length < 2) return null
 	const n = array1.length
 	let sum1 = 0
@@ -35,13 +35,13 @@ export function pearsonCorrelationCoefficient(array1: number[], array2: number[]
 	return Number.isFinite(correlation) ? correlation : null
 }
 
-export function toPairedLogReturns(prices0: number[], prices1: number[]) {
+export function toPairedLogReturns(prices0: Array<number>, prices1: Array<number>) {
 	if (prices0.length !== prices1.length || prices0.length < 2) {
-		return { returns0: [] as number[], returns1: [] as number[] }
+		return { returns0: [] as Array<number>, returns1: [] as Array<number> }
 	}
 
-	const returns0: number[] = []
-	const returns1: number[] = []
+	const returns0: Array<number> = []
+	const returns1: Array<number> = []
 
 	for (let i = 1; i < prices0.length; i++) {
 		const prev0 = prices0[i - 1]

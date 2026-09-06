@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	createMockNextApiRequest,
 	createMockNextApiResponse,
@@ -12,12 +12,12 @@ vi.mock('~/server/sql/runner', async () => {
 	const actual = await vi.importActual<typeof import('~/server/sql/runner')>('~/server/sql/runner')
 	return {
 		...actual,
-		runServerSql: (...args: unknown[]) => runServerSqlMock(...args)
+		runServerSql: (...args: Array<unknown>) => runServerSqlMock(...args)
 	}
 })
 
 vi.mock('~/containers/ProDashboard/server/auth', () => ({
-	fetchAuthenticatedUserId: (...args: unknown[]) => fetchAuthenticatedUserIdMock(...args)
+	fetchAuthenticatedUserId: (...args: Array<unknown>) => fetchAuthenticatedUserIdMock(...args)
 }))
 
 import { sqlRunHandler } from '~/containers/ProDashboard/server/sqlRunRoute'
@@ -94,33 +94,33 @@ afterEach(() => {
 })
 
 describe('/api/private/pro-dashboard/sql-run', () => {
-	it('rejects non-GET methods', async () => {
+	test('rejects non-GET methods', async () => {
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request({ method: 'POST' }), res)
 		expect(res.status).toHaveBeenCalledWith(405)
 	})
 
-	it('rejects missing params', async () => {
+	test('rejects missing params', async () => {
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request({ query: {} }), res)
 		expect(res.status).toHaveBeenCalledWith(400)
 	})
 
-	it('maps missing dashboard to 404', async () => {
+	test('maps missing dashboard to 404', async () => {
 		stubFetchRoutes({ dashboard: new Response('not found', { status: 404 }) })
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request(), res)
 		expect(res.status).toHaveBeenCalledWith(404)
 	})
 
-	it('passes 401 through for private dashboards', async () => {
+	test('passes 401 through for private dashboards', async () => {
 		stubFetchRoutes({ dashboard: new Response('unauthorized', { status: 401 }) })
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request(), res)
 		expect(res.status).toHaveBeenCalledWith(401)
 	})
 
-	it('returns 502 when the dashboard backend returns invalid JSON', async () => {
+	test('returns 502 when the dashboard backend returns invalid JSON', async () => {
 		stubFetchRoutes({ dashboard: new Response('not-json', { status: 200 }) })
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request(), res)
@@ -129,7 +129,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(runServerSqlMock).not.toHaveBeenCalled()
 	})
 
-	it('returns 404 when item is not a sql widget', async () => {
+	test('returns 404 when item is not a sql widget', async () => {
 		stubFetchRoutes({})
 		const res = createMockNextApiResponse()
 		await sqlRunHandler(request({ query: { dashboardId: 'dash-1', itemId: 'other' } }), res)
@@ -137,7 +137,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(runServerSqlMock).not.toHaveBeenCalled()
 	})
 
-	it('serves fresh stored results without executing', async () => {
+	test('serves fresh stored results without executing', async () => {
 		stubFetchRoutes({
 			storedGet: jsonResponse({ result: FRESH_SNAPSHOT, computedAt: FRESH_SNAPSHOT.computedAt })
 		})
@@ -149,7 +149,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(runServerSqlMock).not.toHaveBeenCalled()
 	})
 
-	it('bypasses a fresh stored result for an explicit refresh', async () => {
+	test('bypasses a fresh stored result for an explicit refresh', async () => {
 		stubFetchRoutes({
 			storedGet: jsonResponse({ result: FRESH_SNAPSHOT, computedAt: FRESH_SNAPSHOT.computedAt })
 		})
@@ -168,7 +168,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(responseBody(res)).toMatchObject({ rows: [[2]] })
 	})
 
-	it('does not let a read-only viewer force a SQL refresh', async () => {
+	test('does not let a read-only viewer force a SQL refresh', async () => {
 		stubFetchRoutes({
 			storedGet: jsonResponse({ result: FRESH_SNAPSHOT, computedAt: FRESH_SNAPSHOT.computedAt })
 		})
@@ -187,7 +187,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(runServerSqlMock).not.toHaveBeenCalled()
 	})
 
-	it('executes on miss, stores the snapshot, and returns it', async () => {
+	test('executes on miss, stores the snapshot, and returns it', async () => {
 		const fetchImpl = stubFetchRoutes({})
 		runServerSqlMock.mockResolvedValue({ columns: [{ name: 'x', type: 'INTEGER' }], rows: [{ x: 1 }] })
 		const res = createMockNextApiResponse()
@@ -202,7 +202,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(putCall[1]?.headers).toMatchObject({ 'x-internal-key': 'internal-key' })
 	})
 
-	it('executes when stored result is stale', async () => {
+	test('executes when stored result is stale', async () => {
 		const staleAt = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
 		stubFetchRoutes({
 			storedGet: jsonResponse({ result: { ...FRESH_SNAPSHOT, computedAt: staleAt }, computedAt: staleAt })
@@ -214,7 +214,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(responseBody(res)).toMatchObject({ rows: [[2]] })
 	})
 
-	it('falls back to stale stored result when execution fails', async () => {
+	test('falls back to stale stored result when execution fails', async () => {
 		const staleAt = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
 		const staleSnapshot = { ...FRESH_SNAPSHOT, computedAt: staleAt }
 		stubFetchRoutes({ storedGet: jsonResponse({ result: staleSnapshot, computedAt: staleAt }) })
@@ -225,7 +225,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(responseBody(res)).toMatchObject({ rows: staleSnapshot.rows, error: 'upstream exploded' })
 	})
 
-	it('returns 502 when execution fails with no stored fallback', async () => {
+	test('returns 502 when execution fails with no stored fallback', async () => {
 		stubFetchRoutes({})
 		runServerSqlMock.mockRejectedValue(new Error('boom'))
 		const res = createMockNextApiResponse()
@@ -234,7 +234,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'boom' })
 	})
 
-	it('returns 429 when the runner queue is full', async () => {
+	test('returns 429 when the runner queue is full', async () => {
 		stubFetchRoutes({})
 		runServerSqlMock.mockRejectedValue(new SqlQueueFullError())
 		const res = createMockNextApiResponse()
@@ -242,7 +242,7 @@ describe('/api/private/pro-dashboard/sql-run', () => {
 		expect(res.status).toHaveBeenCalledWith(429)
 	})
 
-	it('dedupes concurrent runs of the same query', async () => {
+	test('dedupes concurrent runs of the same query', async () => {
 		stubFetchRoutes({})
 		let resolveRun: (value: unknown) => void = () => {
 			throw new Error('SQL run resolver was not initialized')

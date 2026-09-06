@@ -59,7 +59,7 @@ export const FILTER_CATEGORIES: Array<{ key: FilterCategory; label: string }> = 
 	{ key: 'flags', label: 'Flags' }
 ]
 
-export const FILTER_CONFIGS: FilterConfig[] = [
+export const FILTER_CONFIGS: Array<FilterConfig> = [
 	{
 		id: 'tvl',
 		label: 'TVL',
@@ -605,13 +605,13 @@ export const FILTER_CONFIGS: FilterConfig[] = [
 	}
 ]
 
-export function getFiltersForProtocols(): FilterConfig[] {
+export function getFiltersForProtocols(): Array<FilterConfig> {
 	return FILTER_CONFIGS.filter((config) => config.strategies.includes('protocols'))
 }
 
-export function getFiltersByCategory(): Map<FilterCategory, FilterConfig[]> {
+export function getFiltersByCategory(): Map<FilterCategory, Array<FilterConfig>> {
 	const filters = getFiltersForProtocols()
-	const grouped = new Map<FilterCategory, FilterConfig[]>()
+	const grouped = new Map<FilterCategory, Array<FilterConfig>>()
 
 	for (const filter of filters) {
 		const existing = grouped.get(filter.category) || []

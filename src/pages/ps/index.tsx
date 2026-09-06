@@ -32,9 +32,9 @@ const pageName = ['Protocols', 'ranked by', type]
 const RevenueOnAllChains = (props: IAdapterByChainPageData) => {
 	return (
 		<Layout
-			title={`Price to Sales Ratio (P/S) Rankings - DefiLlama`}
+			title="Price to Sales Ratio (P/S) Rankings - DefiLlama"
 			description="Compare DeFi protocols by Price to Sales (P/S) ratio. Identify undervalued and overvalued protocols based on revenue multiples."
-			canonicalUrl={`/ps`}
+			canonicalUrl="/ps"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} defaultSorting={[{ id: 'pfOrPs', desc: true }]} />

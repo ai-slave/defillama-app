@@ -39,10 +39,9 @@ export function useTokensPaginatedTable(queryString: string | null, initialData:
 	})
 }
 
-export function useWatchlistTokensTable(ids: string[]) {
-	const queryString = ids.length
-		? toQueryString({ ids: ids.join(','), pageSize: String(MAX_TOKENS_TABLE_PAGE_SIZE) })
-		: null
+export function useWatchlistTokensTable(ids: Array<string>) {
+	const queryString =
+		ids.length > 0 ? toQueryString({ ids: ids.join(','), pageSize: String(MAX_TOKENS_TABLE_PAGE_SIZE) }) : null
 
 	return useQuery<TokensPageResponse>({
 		queryKey: ['tokens-watchlist', TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, queryString],

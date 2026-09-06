@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { getChartDataPrerequisite, toChartRuntimeState } from './chartRuntime'
 
 describe('classic chart runtime state', () => {
-	it('waits for streamed data before reporting a load failure', () => {
+	test('waits for streamed data before reporting a load failure', () => {
 		const refetch = vi.fn()
 		expect(
 			toChartRuntimeState({ data: undefined, isLoading: false, isError: false, refetch }, false, { status: 'ready' })
@@ -15,9 +15,9 @@ describe('classic chart runtime state', () => {
 		})
 	})
 
-	it('keeps stale chart data visible after a background refetch fails', () => {
+	test('keeps stale chart data visible after a background refetch fails', () => {
 		const refetch = vi.fn()
-		const data: [number, number][] = [[1_700_000_000, 42]]
+		const data: Array<[number, number]> = [[1_700_000_000, 42]]
 		expect(toChartRuntimeState({ data, isLoading: false, isError: true, refetch }, true, { status: 'ready' })).toEqual({
 			data,
 			isLoading: false,
@@ -27,7 +27,7 @@ describe('classic chart runtime state', () => {
 		})
 	})
 
-	it('waits for the protocol catalog and retries its failure before starting a chart source', () => {
+	test('waits for the protocol catalog and retries its failure before starting a chart source', () => {
 		const refetch = vi.fn()
 		const retryCatalog = vi.fn()
 		const query = { data: undefined, isLoading: false, isError: false, refetch }
@@ -45,7 +45,7 @@ describe('classic chart runtime state', () => {
 		})
 	})
 
-	it('keeps protocols outside canonical v2 membership unavailable without retrying their source', () => {
+	test('keeps protocols outside canonical v2 membership unavailable without retrying their source', () => {
 		const chart = {
 			id: 'legacy',
 			kind: 'chart',

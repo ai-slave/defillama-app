@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { TokenLogo } from '.'
 
 describe('TokenLogo', () => {
@@ -21,7 +21,7 @@ describe('TokenLogo', () => {
 		container.remove()
 	})
 
-	it('tries each unique source once before showing a circular, fixed-size fallback', async () => {
+	test('tries each unique source once before showing a circular, fixed-size fallback', async () => {
 		await act(async () =>
 			root.render(
 				<TokenLogo src="https://example.com/logo.png" fallbackSrc="https://example.com/fallback.png" size={32} />
@@ -46,7 +46,7 @@ describe('TokenLogo', () => {
 		expect(container.firstElementChild?.getAttribute('style')).toBe('height: 32px; width: 32px;')
 	})
 
-	it('resets the error state when the source props change', async () => {
+	test('resets the error state when the source props change', async () => {
 		await act(async () => root.render(<TokenLogo src="https://example.com/bad.png" />))
 
 		let image = container.querySelector('img')
@@ -61,7 +61,7 @@ describe('TokenLogo', () => {
 		expect(image?.classList.contains('hidden')).toBe(false)
 	})
 
-	it('skips a fallback URL that was already attempted', async () => {
+	test('skips a fallback URL that was already attempted', async () => {
 		await act(async () =>
 			root.render(<TokenLogo src="https://example.com/logo.png" fallbackSrc="https://example.com/logo.png" />)
 		)
@@ -72,7 +72,7 @@ describe('TokenLogo', () => {
 		expect(image?.getAttribute('src')).toBe('/assets/placeholder.png')
 	})
 
-	it('treats an omitted or undefined title equally and renders a present title', async () => {
+	test('treats an omitted or undefined title equally and renders a present title', async () => {
 		await act(async () => root.render(<TokenLogo src={null} />))
 		const omitted = container.innerHTML
 		await act(async () => root.render(<TokenLogo src={null} title={undefined} />))
@@ -81,7 +81,7 @@ describe('TokenLogo', () => {
 		expect(container.firstElementChild?.getAttribute('title')).toBe('Bitcoin')
 	})
 
-	it('resolves exchange logos from the canonical exchange namespace', async () => {
+	test('resolves exchange logos from the canonical exchange namespace', async () => {
 		await act(async () => root.render(<TokenLogo name="Binance" kind="exchange" />))
 
 		expect(container.querySelector('img')?.getAttribute('src')).toBe(

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getLlamaAIExternalAllowlistHosts,
 	isLlamaAIExternalLink,
@@ -6,7 +6,7 @@ import {
 } from '~/containers/LlamaAI/utils/externalLinks'
 
 describe('externalLinks', () => {
-	it('does not gate relative, internal, or trusted links', () => {
+	test('does not gate relative, internal, or trusted links', () => {
 		expect(isLlamaAIExternalLink('/protocol/aave')).toBe(false)
 		expect(isLlamaAIExternalLink('#section')).toBe(false)
 		expect(isLlamaAIExternalLink('?tab=overview')).toBe(false)
@@ -17,7 +17,7 @@ describe('externalLinks', () => {
 		expect(isLlamaAIExternalLink('https://api.llama.fi/lite/charts/Ethereum')).toBe(false)
 	})
 
-	it('gates off-domain http links unless the host is user-allowed', () => {
+	test('gates off-domain http links unless the host is user-allowed', () => {
 		expect(isLlamaAIExternalLink('https://example.com/report')).toBe(true)
 		expect(isLlamaAIExternalLink('//example.com/report')).toBe(true)
 		expect(isLlamaAIExternalLink('https://example.com/report', new Set(['example.com']))).toBe(false)
@@ -25,7 +25,7 @@ describe('externalLinks', () => {
 		expect(isLlamaAIExternalLink('not a url')).toBe(false)
 	})
 
-	it('normalizes, dedupes, and caps user allowlist hosts', () => {
+	test('normalizes, dedupes, and caps user allowlist hosts', () => {
 		const hosts = [' Example.com. ', 'example.com', '', 123, 'Sub.Example.com']
 		expect(getLlamaAIExternalAllowlistHosts(hosts)).toEqual(['example.com', 'sub.example.com'])
 
@@ -36,7 +36,7 @@ describe('externalLinks', () => {
 		expect(capped.at(-1)).toBe('host-204.example.com')
 	})
 
-	it('parses allowlist snapshots for renderer subscriptions', () => {
+	test('parses allowlist snapshots for renderer subscriptions', () => {
 		expect(parseLlamaAIExternalAllowlistSnapshot('["Example.com."]')).toEqual(new Set(['example.com']))
 		expect(parseLlamaAIExternalAllowlistSnapshot('not-json')).toEqual(new Set())
 	})

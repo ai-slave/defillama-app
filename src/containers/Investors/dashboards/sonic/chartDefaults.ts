@@ -8,11 +8,11 @@ export const CSV_ONLY_EXPORT = { csv: true, png: false } as const
 type TimeSeries = { name: string }
 
 export function multiSeriesCharts(
-	series: readonly TimeSeries[],
+	series: ReadonlyArray<TimeSeries>,
 	type: MultiSeriesChartSeriesConfig['type'],
 	stack?: string,
 	colors?: Record<string, string>
-): MultiSeriesChartSeriesConfig[] {
+): Array<MultiSeriesChartSeriesConfig> {
 	return series.map((item, index) => {
 		const color = colors?.[item.name]
 		return {
@@ -52,7 +52,7 @@ export function lastNDaysDatasetZoom(
 export function datasetChartOptions(dataLength: number, valueSymbol: string): IMultiSeriesChartProps['chartOptions'] {
 	return {
 		...createTimeSeriesChartOptions(valueSymbol),
-		...(lastNDaysDatasetZoom(dataLength) ?? {})
+		...lastNDaysDatasetZoom(dataLength)
 	}
 }
 

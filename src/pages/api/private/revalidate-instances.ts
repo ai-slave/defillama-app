@@ -3,7 +3,9 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { normalizeCachePaths } from '~/server/revalidateInstances'
 import { withApiRouteTelemetry } from '~/utils/telemetry'
 
-type ResponseData = { revalidated: string[]; revalidateErrors: { path: string; reason: string }[] } | { error: string }
+type ResponseData =
+	| { revalidated: Array<string>; revalidateErrors: Array<{ path: string; reason: string }> }
+	| { error: string }
 
 function headerValue(req: NextApiRequest, name: string): string | null {
 	const header = req.headers[name]
@@ -18,7 +20,7 @@ function secretsMatch(provided: string, expected: string): boolean {
 	return timingSafeEqual(a, b)
 }
 
-function parseBody(body: unknown): { dryRun: boolean; paths: string[] } {
+function parseBody(body: unknown): { dryRun: boolean; paths: Array<string> } {
 	if (typeof body === 'string') {
 		try {
 			const payload = JSON.parse(body) as { dryRun?: unknown; paths?: unknown }
@@ -50,8 +52,8 @@ export async function revalidateInstancesHandler(req: NextApiRequest, res: NextA
 	}
 
 	const { dryRun, paths } = parseBody(req.body)
-	const revalidated: string[] = []
-	const revalidateErrors: { path: string; reason: string }[] = []
+	const revalidated: Array<string> = []
+	const revalidateErrors: Array<{ path: string; reason: string }> = []
 
 	if (!dryRun) {
 		for (const path of paths) {

@@ -9,8 +9,8 @@ export function getBridgeNetFlow({
 	return depositUSD - withdrawUSD
 }
 
-export function normalizeBridgeVolumeResponse(chart: readonly RawBridgeVolumePoint[]): BridgeVolumeResponse {
-	const normalized: BridgeVolumePoint[] = []
+export function normalizeBridgeVolumeResponse(chart: ReadonlyArray<RawBridgeVolumePoint>): BridgeVolumeResponse {
+	const normalized: Array<BridgeVolumePoint> = []
 	for (const point of chart) {
 		normalized.push({
 			date: Number(point.date),
@@ -23,8 +23,10 @@ export function normalizeBridgeVolumeResponse(chart: readonly RawBridgeVolumePoi
 	return normalized
 }
 
-export function formatBridgeOverviewVolumeData(chart: readonly BridgeVolumePoint[]): BridgeOverviewVolumeChartPoint[] {
-	const formatted: BridgeOverviewVolumeChartPoint[] = []
+export function formatBridgeOverviewVolumeData(
+	chart: ReadonlyArray<BridgeVolumePoint>
+): Array<BridgeOverviewVolumeChartPoint> {
+	const formatted: Array<BridgeOverviewVolumeChartPoint> = []
 	for (const point of chart) {
 		const withdrawals = point.withdrawUSD
 		formatted.push({

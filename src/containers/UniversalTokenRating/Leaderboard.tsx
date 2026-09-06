@@ -66,7 +66,7 @@ function ExpandedRow({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGr
 
 type BreakdownMode = 'grade' | 'score' | 'percentile'
 
-function breakdownValue(column: BreakdownColumn, mode: BreakdownMode, gradingScale?: UtrGradeScaleEntry[] | null) {
+function breakdownValue(column: BreakdownColumn, mode: BreakdownMode, gradingScale?: Array<UtrGradeScaleEntry> | null) {
 	if (mode === 'grade')
 		return <GradeBadge score={column.score} scale={10} grade={column.grade} gradingScale={gradingScale} />
 	if (mode === 'score')
@@ -104,9 +104,9 @@ function MobileBreakdownTable({
 	gradingScale
 }: {
 	title: string
-	columns: BreakdownColumn[]
+	columns: Array<BreakdownColumn>
 	mode: BreakdownMode
-	gradingScale?: UtrGradeScaleEntry[] | null
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 }) {
 	return (
 		<div className="rounded-lg border border-subtle bg-surface">
@@ -193,7 +193,7 @@ export type UtrSortKey = (typeof SORTABLE_COLUMNS)[number]['key'] | 'rank'
 
 export type UtrSort = { key: UtrSortKey; desc: boolean }
 
-export const UTR_SORT_OPTIONS: { key: UtrSortKey; name: string }[] = [
+export const UTR_SORT_OPTIONS: Array<{ key: UtrSortKey; name: string }> = [
 	{ key: 'rank', name: 'Rank' },
 	{ key: 'overall', name: 'Overall Score' },
 	{ key: 'disclosure', name: 'Disclosure Score' },
@@ -248,7 +248,7 @@ export function Leaderboard({
 	setSort,
 	focusRequest
 }: {
-	rows: UtrLeaderboardRow[]
+	rows: Array<UtrLeaderboardRow>
 	grading?: UtrGradingConfig | null
 	sort: UtrSort
 	setSort: (updater: (prev: UtrSort) => UtrSort) => void

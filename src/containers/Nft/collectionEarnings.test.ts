@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { fetchNftCollectionsMock, fetchNftRoyaltiesMock, fetchParentCompaniesMock } = vi.hoisted(() => ({
 	fetchNftCollectionsMock: vi.fn(),
@@ -40,7 +40,7 @@ describe('NFT collection earnings behavior fixture', () => {
 		])
 	})
 
-	it('aggregates parent members in declared order and excludes their duplicate top-level rows', async () => {
+	test('aggregates parent members in declared order and excludes their duplicate top-level rows', async () => {
 		const result = await getNFTCollectionEarnings()
 		const parent = result.earnings.find((row) => row.name === 'Alpha Parent')
 
@@ -59,7 +59,7 @@ describe('NFT collection earnings behavior fixture', () => {
 		expect(result.earnings.map((row) => row.name)).toEqual(['Independent', 'Alpha Parent'])
 	})
 
-	it('normalizes identifiers, keeps first royalty data, and skips duplicate or missing parent members', async () => {
+	test('normalizes identifiers, keeps first royalty data, and skips duplicate or missing parent members', async () => {
 		const collections = [
 			{ collectionId: '0XBBB', name: 'Shared', image: 'b' },
 			{ collectionId: 'aaa', name: 'Royalty Only', image: 'a' },
@@ -123,16 +123,16 @@ describe('NFT collection earnings behavior fixture', () => {
 		expect(mintRow).toMatchObject({
 			defillamaId: '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d',
 			totalRoyaltyEarnings: 12,
-			totalMintEarnings: 1864857.028,
-			totalEarnings: 1864869.028
+			totalMintEarnings: 1_864_857.028,
+			totalEarnings: 1_864_869.028
 		})
-		expect(mintOnlyRow).toMatchObject({ totalMintEarnings: 316775940.5, totalEarnings: 316775940.5 })
+		expect(mintOnlyRow).toMatchObject({ totalMintEarnings: 316_775_940.5, totalEarnings: 316_775_940.5 })
 		expect(result.earnings.some((row) => row.name === 'No Earnings')).toBe(false)
 		expect(result.earnings.some((row) => row.name === 'Royalty Only' || row.name === 'Shared')).toBe(false)
 		expect({ collections, royalties, parents }).toEqual(originalInputs)
 	})
 
-	it('preserves encounter order when top-level earnings totals tie', async () => {
+	test('preserves encounter order when top-level earnings totals tie', async () => {
 		fetchNftCollectionsMock.mockResolvedValue([
 			{ collectionId: '0xaaa', name: 'First', image: 'a' },
 			{ collectionId: '0xbbb', name: 'Second', image: 'b' }
@@ -146,7 +146,7 @@ describe('NFT collection earnings behavior fixture', () => {
 		expect((await getNFTCollectionEarnings()).earnings.map((row) => row.name)).toEqual(['First', 'Second'])
 	})
 
-	it('returns an empty result when the required earnings request fails', async () => {
+	test('returns an empty result when the required earnings request fails', async () => {
 		fetchNftRoyaltiesMock.mockRejectedValue(new Error('unavailable'))
 		const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 

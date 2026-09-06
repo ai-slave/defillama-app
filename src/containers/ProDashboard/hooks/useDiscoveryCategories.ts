@@ -4,10 +4,10 @@ import type { Dashboard } from '../dashboardTypes'
 import { DISCOVERY_CATEGORIES, type DiscoveryCategoriesInitialData } from '../discoveryCategories'
 import { dashboardAPI } from '../services/DashboardAPI'
 
-const EMPTY_DASHBOARDS: Dashboard[] = []
+const EMPTY_DASHBOARDS: Array<Dashboard> = []
 
 interface CategoryData {
-	dashboards: Dashboard[]
+	dashboards: Array<Dashboard>
 	isLoading: boolean
 	error: Error | null
 }

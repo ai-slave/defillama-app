@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getDashboardHydrationState, isDashboardEditingLocked } from './dashboardHydrationState'
 
 const settledStream = {
@@ -9,7 +9,7 @@ const settledStream = {
 } as const
 
 describe('dashboard hydration state', () => {
-	it('keeps successful streams on the streamed data path', () => {
+	test('keeps successful streams on the streamed data path', () => {
 		expect(
 			getDashboardHydrationState({
 				...settledStream,
@@ -23,7 +23,7 @@ describe('dashboard hydration state', () => {
 		})
 	})
 
-	it('refetches the trusted config for a seeded page when the settled stream has no dashboard', () => {
+	test('refetches the trusted config for a seeded page when the settled stream has no dashboard', () => {
 		expect(
 			getDashboardHydrationState({
 				...settledStream,
@@ -37,7 +37,7 @@ describe('dashboard hydration state', () => {
 		})
 	})
 
-	it('keeps source fallbacks closed while a seeded dashboard stream is still active', () => {
+	test('keeps source fallbacks closed while a seeded dashboard stream is still active', () => {
 		expect(
 			getDashboardHydrationState({
 				...settledStream,
@@ -52,7 +52,7 @@ describe('dashboard hydration state', () => {
 		})
 	})
 
-	it('unlocks editing only after the trusted config arrives', () => {
+	test('unlocks editing only after the trusted config arrives', () => {
 		expect(
 			isDashboardEditingLocked({
 				isReadOnly: false,
@@ -75,7 +75,7 @@ describe('dashboard hydration state', () => {
 		).toBe(false)
 	})
 
-	it('opens the trusted config fallback query for a no-seed failure instead of blocking', () => {
+	test('opens the trusted config fallback query for a no-seed failure instead of blocking', () => {
 		expect(
 			getDashboardHydrationState({
 				...settledStream,
@@ -90,7 +90,7 @@ describe('dashboard hydration state', () => {
 		})
 	})
 
-	it('keeps everything pending until auth and the stream settle', () => {
+	test('keeps everything pending until auth and the stream settle', () => {
 		expect(
 			getDashboardHydrationState({
 				...settledStream,

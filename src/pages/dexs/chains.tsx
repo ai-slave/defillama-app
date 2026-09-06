@@ -32,7 +32,7 @@ const DexsByChain = (props: IChainsByAdapterPageData) => {
 		<Layout
 			title="DEX Volume by Chain - Spot Trading - DefiLlama"
 			description="Compare DEX swap volume across all blockchains. Track decentralized exchange trading activity on Ethereum, Solana, Base, Arbitrum, and 200+ chains. Real-time blockchain DEX volume rankings by chain."
-			canonicalUrl={`/dexs/chains`}
+			canonicalUrl="/dexs/chains"
 			pageName={pageName}
 		>
 			<ChainsByAdapter {...props} type={type} />

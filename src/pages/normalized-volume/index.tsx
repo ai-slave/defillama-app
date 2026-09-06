@@ -32,7 +32,7 @@ const NormalizedVolumeOnAllChains = (props: IAdapterByChainPageData) => {
 		<Layout
 			title="Normalized DEX Volume Rankings - DefiLlama"
 			description="Track normalized perp volume with suspected wash trading filtered out. Compare genuine trading activity based on liquidity and market conditions."
-			canonicalUrl={`/normalized-volume`}
+			canonicalUrl="/normalized-volume"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

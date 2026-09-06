@@ -68,8 +68,8 @@ const CHAINS_COLUMN_IDS = new Set([
 	'nftVolume_share'
 ])
 
-function normalizedList(values: string[]): string[] {
-	const result: string[] = []
+function normalizedList(values: Array<string>): Array<string> {
+	const result: Array<string> = []
 	const seen = new Set<string>()
 	for (const value of values) {
 		const normalized = value.trim()
@@ -81,8 +81,8 @@ function normalizedList(values: string[]): string[] {
 	return result
 }
 
-function normalizedChains(chains: string[]): string[] {
-	const result: string[] = []
+function normalizedChains(chains: Array<string>): Array<string> {
+	const result: Array<string> = []
 	const seen = new Set<string>()
 	for (const value of chains) {
 		const trimmed = value.trim()
@@ -119,7 +119,7 @@ function yieldsFilters(filters: YieldsFilters | undefined): YieldsFilters | unde
 }
 
 function columnSettings(
-	columnOrder: string[] | undefined,
+	columnOrder: Array<string> | undefined,
 	columnVisibility: Record<string, boolean> | undefined,
 	allowed: ReadonlySet<string>
 ) {
@@ -134,7 +134,7 @@ function columnSettings(
 	}
 	return {
 		...(order?.length ? { columnOrder: order } : {}),
-		...(visibility && Object.keys(visibility).length ? { columnVisibility: visibility } : {})
+		...(visibility && Object.keys(visibility).length > 0 ? { columnVisibility: visibility } : {})
 	}
 }
 

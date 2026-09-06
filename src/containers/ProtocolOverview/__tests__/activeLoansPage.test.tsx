@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { IProtocolPageMetrics } from '../types'
 
 const metrics = {
@@ -42,8 +42,8 @@ afterEach(() => {
 })
 
 describe('active loans protocol page', () => {
-	it('always requests the borrowed breakdown and exposes no protocol TVL controls', async () => {
-		const breakdownRequests: unknown[] = []
+	test('always requests the borrowed breakdown and exposes no protocol TVL controls', async () => {
+		const breakdownRequests: Array<unknown> = []
 		const layoutProps: Array<Record<string, unknown>> = []
 		let persistedTvlSettings: Record<string, boolean> = {
 			borrowed: false,
@@ -111,7 +111,7 @@ describe('active loans protocol page', () => {
 		}
 	})
 
-	it('reports a breakdown request failure instead of calling the missing data empty', async () => {
+	test('reports a breakdown request failure instead of calling the missing data empty', async () => {
 		vi.doMock('../useProtocolBreakdownCharts', () => ({
 			useProtocolBreakdownCharts: () => ({
 				isLoading: false,

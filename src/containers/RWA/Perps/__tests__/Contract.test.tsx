@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
 	getRWAPerpsContractChartGroup,
 	getRWAPerpsContractEnabledMetrics,
@@ -37,7 +37,7 @@ const TEST_CONTRACT: IRWAPerpsContractData = {
 	},
 	market: {
 		id: 'xyz:meta',
-		timestamp: 1775011512,
+		timestamp: 1_775_011_512,
 		contract: 'xyz:META',
 		venue: 'XYZ Exchange',
 		venueType: 'DEX',
@@ -88,21 +88,21 @@ const TEST_CONTRACT: IRWAPerpsContractData = {
 }
 
 describe('Contract helpers', () => {
-	it('links the market information venue to the venue page', () => {
+	test('links the market information venue to the venue page', () => {
 		const html = renderToStaticMarkup(<RWAPerpsContractPage contract={TEST_CONTRACT} />)
 
 		expect(html).toContain('href="/rwa/perps/venue/xyz-exchange"')
 		expect(html).toContain('XYZ Exchange')
 	})
 
-	it('renders the contract link as a right-aligned website icon when present', () => {
+	test('renders the contract link as a right-aligned website icon when present', () => {
 		const html = renderToStaticMarkup(<RWAPerpsContractPage contract={TEST_CONTRACT} />)
 
 		expect(html).toContain('href="https://app.hyperliquid.xyz/join/DEFILLAMAS"')
 		expect(html).toContain('aria-label="Open xyz:META website"')
 	})
 
-	it('warns on suspicious market detail pages', () => {
+	test('warns on suspicious market detail pages', () => {
 		const html = renderToStaticMarkup(
 			<RWAPerpsContractPage contract={{ ...TEST_CONTRACT, market: { ...TEST_CONTRACT.market, suspicious: true } }} />
 		)
@@ -110,14 +110,14 @@ describe('Contract helpers', () => {
 		expect(html).toContain('marked as suspicious and is excluded from cross-venue totals and charts')
 	})
 
-	it('normalizes invalid or missing groupBy values back to daily', () => {
+	test('normalizes invalid or missing groupBy values back to daily', () => {
 		expect(getRWAPerpsContractChartGroup(null)).toBe('daily')
 		expect(getRWAPerpsContractChartGroup('weekly')).toBe('weekly')
 		expect(getRWAPerpsContractChartGroup('cumulative')).toBe('daily')
 		expect(getRWAPerpsContractChartGroup('bad-value')).toBe('daily')
 	})
 
-	it('derives enabled metrics from URLSearchParams state', () => {
+	test('derives enabled metrics from URLSearchParams state', () => {
 		const params = new URLSearchParams({
 			oi: 'false',
 			vol24h: 'true',
@@ -127,7 +127,7 @@ describe('Contract helpers', () => {
 		expect(getRWAPerpsContractEnabledMetrics(params)).toEqual(['volume24h', 'price', 'fundingRate'])
 	})
 
-	it('builds metric and groupBy query patches for interactive controls', () => {
+	test('builds metric and groupBy query patches for interactive controls', () => {
 		expect(
 			getRWAPerpsContractMetricQueryPatch({
 				metric: { queryKey: 'funding', defaultEnabled: false },

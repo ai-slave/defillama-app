@@ -1,5 +1,5 @@
 import type { NextApiHandler, NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const {
@@ -178,7 +178,7 @@ beforeEach(() => {
 })
 
 describe('/api/private/downloads/[dataset]', () => {
-	it('returns 405 with private no-store for non-GET requests', async () => {
+	test('returns 405 with private no-store for non-GET requests', async () => {
 		const res = createMockNextApiResponse()
 
 		await datasetHandler(request({ method: 'POST', query: { dataset: 'protocols' } }), res)
@@ -190,7 +190,7 @@ describe('/api/private/downloads/[dataset]', () => {
 		expect(validateSubscriptionMock).not.toHaveBeenCalled()
 	})
 
-	it('returns preview CSV rows without auth', async () => {
+	test('returns preview CSV rows without auth', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 401,
@@ -209,7 +209,7 @@ describe('/api/private/downloads/[dataset]', () => {
 		expect(res.send).toHaveBeenCalledWith(expect.not.stringContaining('item-11'))
 	})
 
-	it('treats invalid subscriptions as preview access', async () => {
+	test('treats invalid subscriptions as preview access', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 403,
@@ -225,7 +225,7 @@ describe('/api/private/downloads/[dataset]', () => {
 		expect(res.send).toHaveBeenCalledWith(expect.not.stringContaining('item-11'))
 	})
 
-	it('returns full CSV rows for paid auth', async () => {
+	test('returns full CSV rows for paid auth', async () => {
 		const res = createMockNextApiResponse()
 
 		await datasetHandler(request({ query: { dataset: 'protocols' }, auth: 'Bearer paid' }), res)
@@ -238,7 +238,7 @@ describe('/api/private/downloads/[dataset]', () => {
 		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('item-11'))
 	})
 
-	it('loads Yields rows only through the server export builder', async () => {
+	test('loads Yields rows only through the server export builder', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 401,
@@ -256,7 +256,7 @@ describe('/api/private/downloads/[dataset]', () => {
 		expect(res.send).toHaveBeenCalledWith(expect.not.stringContaining('item-11'))
 	})
 
-	it.each([
+	test.each([
 		['perp-funding', 'https://legacy-yields.example/perps'],
 		['lsd-rates', 'https://server.example/lstRates']
 	])('loads the %s feed only inside the API route', async (dataset, upstreamUrl) => {
@@ -269,7 +269,7 @@ describe('/api/private/downloads/[dataset]', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('rejects trial full CSV downloads before fetching data', async () => {
+	test('rejects trial full CSV downloads before fetching data', async () => {
 		validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: true })
 		const res = createMockNextApiResponse()
 
@@ -282,7 +282,7 @@ describe('/api/private/downloads/[dataset]', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'CSV downloads are available only for paid users.' })
 	})
 
-	it('allows trial users to fetch chain filter options', async () => {
+	test('allows trial users to fetch chain filter options', async () => {
 		validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: true })
 		const res = createMockNextApiResponse()
 
@@ -294,7 +294,7 @@ describe('/api/private/downloads/[dataset]', () => {
 		expect(res.json).toHaveBeenCalledWith({ chains: ['Ethereum', 'Arbitrum'] })
 	})
 
-	it('returns 500 with private no-store when auth validation throws', async () => {
+	test('returns 500 with private no-store when auth validation throws', async () => {
 		const error = new Error('auth unavailable')
 		validateSubscriptionMock.mockRejectedValue(error)
 		const res = createMockNextApiResponse()
@@ -309,7 +309,7 @@ describe('/api/private/downloads/[dataset]', () => {
 })
 
 describe('/api/private/downloads/chart/[dataset]', () => {
-	it('returns preview chart CSV rows without auth', async () => {
+	test('returns preview chart CSV rows without auth', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 401,
@@ -327,7 +327,7 @@ describe('/api/private/downloads/chart/[dataset]', () => {
 		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('day-11'))
 	})
 
-	it('returns full chart CSV rows for paid auth', async () => {
+	test('returns full chart CSV rows for paid auth', async () => {
 		const res = createMockNextApiResponse()
 
 		await chartHandler(request({ query: { dataset: 'protocol-tvl-chart', param: 'aave' }, auth: 'Bearer paid' }), res)
@@ -340,7 +340,7 @@ describe('/api/private/downloads/chart/[dataset]', () => {
 		expect(res.send).toHaveBeenCalledWith(expect.stringContaining('day-11'))
 	})
 
-	it('rejects trial chart CSV downloads before fetching data', async () => {
+	test('rejects trial chart CSV downloads before fetching data', async () => {
 		validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: true })
 		const res = createMockNextApiResponse()
 
@@ -352,7 +352,7 @@ describe('/api/private/downloads/chart/[dataset]', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'CSV downloads are available only for paid users.' })
 	})
 
-	it('returns missing param errors before auth validation', async () => {
+	test('returns missing param errors before auth validation', async () => {
 		const res = createMockNextApiResponse()
 
 		await chartHandler(request({ query: { dataset: 'protocol-tvl-chart' } }), res)
@@ -365,7 +365,7 @@ describe('/api/private/downloads/chart/[dataset]', () => {
 })
 
 describe('/api/private/downloads/chart-breakdown/[slug]', () => {
-	it('returns preview breakdown CSV rows without auth', async () => {
+	test('returns preview breakdown CSV rows without auth', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 401,
@@ -390,7 +390,7 @@ describe('/api/private/downloads/chart-breakdown/[slug]', () => {
 		expect(res.end).toHaveBeenCalledOnce()
 	})
 
-	it('returns full breakdown CSV rows for paid auth', async () => {
+	test('returns full breakdown CSV rows for paid auth', async () => {
 		const res = createMockNextApiResponse()
 
 		await chartBreakdownHandler(
@@ -413,7 +413,7 @@ describe('/api/private/downloads/chart-breakdown/[slug]', () => {
 		expect(res.end).toHaveBeenCalledOnce()
 	})
 
-	it('rejects trial breakdown CSV downloads before fetching data', async () => {
+	test('rejects trial breakdown CSV downloads before fetching data', async () => {
 		validateSubscriptionMock.mockResolvedValue({ valid: true, isTrial: true })
 		const res = createMockNextApiResponse()
 

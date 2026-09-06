@@ -39,16 +39,21 @@ export interface PerpMarket {
 	dayBaseVlm?: number | null
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<PerpMarket[] | { error: string }>) {
+export default async function handler(
+	req: NextApiRequest,
+	res: NextApiResponse<Array<PerpMarket> | { error: string }>
+) {
 	if (req.method !== 'GET') {
 		res.setHeader('Allow', ['GET'])
 		return res.status(405).json({ error: 'Method Not Allowed' })
 	}
 
 	try {
-		const [meta, ctxs] = await postInfo<[{ universe: PerpAsset[] }, PerpAssetCtx[]]>({ type: 'metaAndAssetCtxs' })
+		const [meta, ctxs] = await postInfo<[{ universe: Array<PerpAsset> }, Array<PerpAssetCtx>]>({
+			type: 'metaAndAssetCtxs'
+		})
 
-		const markets: PerpMarket[] = meta.universe.map((asset, i) => {
+		const markets: Array<PerpMarket> = meta.universe.map((asset, i) => {
 			const ctx = ctxs[i]
 			const markPx = num(ctx?.markPx)
 			const prevDayPx = num(ctx?.prevDayPx)

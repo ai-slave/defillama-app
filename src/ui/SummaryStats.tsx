@@ -107,7 +107,7 @@ export interface InlineStatStripItem {
     full-width Card of `label: value` pairs above a table or chart. One rhythm
     everywhere — strip padding, 14px pairs (body-md secondary labels, label-md
     values), 24px item gaps. */
-export function InlineStatStrip({ items, className }: { items: InlineStatStripItem[]; className?: string }) {
+export function InlineStatStrip({ items, className }: { items: Array<InlineStatStripItem>; className?: string }) {
 	return (
 		<Card
 			as="dl"

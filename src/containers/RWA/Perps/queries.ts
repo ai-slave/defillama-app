@@ -85,11 +85,13 @@ function safeRatio(value: number, total: number): number {
 	return total > 0 ? value / total : 0
 }
 
-function getPrimaryAssetClass(assetClass: string[] | null): string | null {
+function getPrimaryAssetClass(assetClass: Array<string> | null): string | null {
 	return assetClass?.[0] ?? null
 }
 
-function normalizeMarketChart(points: IRWAPerpsMarketChartPoint[]): IRWAPerpsContractMarketChartPoint[] | null {
+function normalizeMarketChart(
+	points: Array<IRWAPerpsMarketChartPoint>
+): Array<IRWAPerpsContractMarketChartPoint> | null {
 	if (points.length === 0) return null
 
 	return points.map((point) => ({
@@ -99,14 +101,14 @@ function normalizeMarketChart(points: IRWAPerpsMarketChartPoint[]): IRWAPerpsCon
 }
 
 function normalizeFundingHistory(
-	points: IRWAPerpsFundingHistoryPoint[]
-): IRWAPerpsContractFundingHistoryPoint[] | null {
+	points: Array<IRWAPerpsFundingHistoryPoint>
+): Array<IRWAPerpsContractFundingHistoryPoint> | null {
 	if (points.length === 0) return null
 
 	return points
 }
 
-function resolveContractMarket(markets: IRWAPerpsMarket[], contract: string): IRWAPerpsMarket | null {
+function resolveContractMarket(markets: Array<IRWAPerpsMarket>, contract: string): IRWAPerpsMarket | null {
 	let match: IRWAPerpsMarket | null = null
 	for (const market of markets) {
 		if (market.contract !== contract) continue
@@ -122,7 +124,7 @@ function buildSnapshotBreakdownTotals<TBreakdown extends SnapshotBreakdown>({
 	key,
 	getBreakdownLabel
 }: {
-	rows: IRWAPerpsMarket[]
+	rows: Array<IRWAPerpsMarket>
 	breakdown: TBreakdown
 	key: RWAPerpsChartMetricKey
 	getBreakdownLabel: BreakdownLabelResolver<IRWAPerpsMarket, TBreakdown>
@@ -173,12 +175,12 @@ function toVenueDetailLink(venue: string) {
 	return `/rwa/perps/venue/${rwaSlug(venue)}`
 }
 
-export function sumProtocolFees24h(markets: IRWAPerpsMarket[]) {
+export function sumProtocolFees24h(markets: Array<IRWAPerpsMarket>) {
 	return sumMarketMetric(markets, 'estimatedProtocolFees24h')
 }
 
 export function sumMarketMetric(
-	markets: IRWAPerpsMarket[],
+	markets: Array<IRWAPerpsMarket>,
 	key: 'openInterest' | 'volume24h' | 'estimatedProtocolFees24h'
 ) {
 	let total = 0
@@ -188,7 +190,7 @@ export function sumMarketMetric(
 	return total
 }
 
-function sortMarketsByOpenInterest(markets: IRWAPerpsMarket[]) {
+function sortMarketsByOpenInterest(markets: Array<IRWAPerpsMarket>) {
 	return markets.toSorted((a, b) => b.openInterest - a.openInterest)
 }
 
@@ -202,7 +204,7 @@ function derivePreviousValueFromPercentChange(currentValue: number, percentChang
 }
 
 function getAggregateMarketChange24h(
-	markets: IRWAPerpsMarket[],
+	markets: Array<IRWAPerpsMarket>,
 	config: {
 		valueKey: 'openInterest' | 'volume24h'
 		changeKey: 'openInterestChange24h' | 'volume24hChange24h'
@@ -235,14 +237,14 @@ function getAggregateMarketChange24h(
 	return getPercentChange(comparableCurrent, comparablePrevious)
 }
 
-export function getAggregateOpenInterestChange24h(markets: IRWAPerpsMarket[]): number | null {
+export function getAggregateOpenInterestChange24h(markets: Array<IRWAPerpsMarket>): number | null {
 	return getAggregateMarketChange24h(markets, {
 		valueKey: 'openInterest',
 		changeKey: 'openInterestChange24h'
 	})
 }
 
-export function getAggregateVolume24hChange24h(markets: IRWAPerpsMarket[]): number | null {
+export function getAggregateVolume24hChange24h(markets: Array<IRWAPerpsMarket>): number | null {
 	return getAggregateMarketChange24h(markets, {
 		valueKey: 'volume24h',
 		changeKey: 'volume24hChange24h'
@@ -309,7 +311,7 @@ export function buildRWAPerpsOverviewSnapshotBreakdownTotals({
 	breakdown,
 	key
 }: {
-	rows: IRWAPerpsMarket[]
+	rows: Array<IRWAPerpsMarket>
 	breakdown: RWAPerpsOverviewSnapshotBreakdown
 	key: RWAPerpsChartMetricKey
 }) {
@@ -326,7 +328,7 @@ export function buildRWAPerpsVenueSnapshotBreakdownTotals({
 	breakdown,
 	key
 }: {
-	rows: IRWAPerpsMarket[]
+	rows: Array<IRWAPerpsMarket>
 	breakdown: RWAPerpsVenueSnapshotBreakdown
 	key: RWAPerpsChartMetricKey
 }) {
@@ -343,7 +345,7 @@ export function buildRWAPerpsAssetGroupSnapshotBreakdownTotals({
 	breakdown,
 	key
 }: {
-	rows: IRWAPerpsMarket[]
+	rows: Array<IRWAPerpsMarket>
 	breakdown: RWAPerpsAssetGroupSnapshotBreakdown
 	key: RWAPerpsChartMetricKey
 }) {
@@ -360,7 +362,7 @@ export function buildRWAPerpsAssetSnapshotBreakdownTotals({
 	breakdown,
 	key
 }: {
-	rows: IRWAPerpsMarket[]
+	rows: Array<IRWAPerpsMarket>
 	breakdown: RWAPerpsAssetSnapshotBreakdown
 	key: RWAPerpsChartMetricKey
 }) {
@@ -553,7 +555,7 @@ export async function getRWAPerpsVenuesOverview(): Promise<IRWAPerpsVenuesOvervi
 	}
 }
 
-export function buildRWAPerpsVenuesOverviewRows(markets: IRWAPerpsMarket[]): IRWAPerpsVenuesOverviewRow[] {
+export function buildRWAPerpsVenuesOverviewRows(markets: Array<IRWAPerpsMarket>): Array<IRWAPerpsVenuesOverviewRow> {
 	const eligibleMarkets = getRWAPerpsIncludedRows(markets, 'overview')
 	const totalOpenInterest = sumMarketMetric(eligibleMarkets, 'openInterest')
 	const totalVolume24h = sumMarketMetric(eligibleMarkets, 'volume24h')
@@ -574,7 +576,7 @@ export function buildRWAPerpsVenuesOverviewRows(markets: IRWAPerpsMarket[]): IRW
 		}
 	}
 
-	const rows: IRWAPerpsVenuesOverviewRow[] = []
+	const rows: Array<IRWAPerpsVenuesOverviewRow> = []
 	for (const [venue, bucket] of totalsByVenue) {
 		rows.push({
 			venue,
@@ -653,7 +655,9 @@ export async function getRWAPerpsAssetGroupsOverview(): Promise<IRWAPerpsAssetGr
 	}
 }
 
-export function buildRWAPerpsAssetGroupsOverviewRows(markets: IRWAPerpsMarket[]): IRWAPerpsAssetGroupsOverviewRow[] {
+export function buildRWAPerpsAssetGroupsOverviewRows(
+	markets: Array<IRWAPerpsMarket>
+): Array<IRWAPerpsAssetGroupsOverviewRow> {
 	const eligibleMarkets = getRWAPerpsIncludedRows(markets, 'assetGroup')
 	const totalOpenInterest = sumMarketMetric(eligibleMarkets, 'openInterest')
 	const totalVolume24h = sumMarketMetric(eligibleMarkets, 'volume24h')
@@ -675,7 +679,7 @@ export function buildRWAPerpsAssetGroupsOverviewRows(markets: IRWAPerpsMarket[])
 		}
 	}
 
-	const rows: IRWAPerpsAssetGroupsOverviewRow[] = []
+	const rows: Array<IRWAPerpsAssetGroupsOverviewRow> = []
 	for (const [assetGroup, bucket] of totalsByAssetGroup) {
 		rows.push({
 			assetGroup,
@@ -702,7 +706,7 @@ type RWAPerpsAssetOverviewBucket = {
 	fundingRateMax: number
 }
 
-export function buildRWAPerpsAssetsOverviewRows(markets: IRWAPerpsMarket[]): IRWAPerpsAssetsOverviewRow[] {
+export function buildRWAPerpsAssetsOverviewRows(markets: Array<IRWAPerpsMarket>): Array<IRWAPerpsAssetsOverviewRow> {
 	const totalsByAsset = new Map<string, RWAPerpsAssetOverviewBucket>()
 
 	for (const market of getRWAPerpsIncludedRows(markets, 'asset')) {
@@ -735,7 +739,7 @@ export function buildRWAPerpsAssetsOverviewRows(markets: IRWAPerpsMarket[]): IRW
 		})
 	}
 
-	const rows: IRWAPerpsAssetsOverviewRow[] = []
+	const rows: Array<IRWAPerpsAssetsOverviewRow> = []
 	for (const [asset, bucket] of totalsByAsset) {
 		rows.push({
 			asset,
@@ -771,7 +775,7 @@ export async function getRWAPerpsAssetPage({
 	activeView = getDefaultRWAPerpsChartView('asset')
 }: {
 	asset: string
-	assetLinks: IRWAPerpsNavLink[]
+	assetLinks: Array<IRWAPerpsNavLink>
 	activeView?: RWAPerpsChartView
 }): Promise<IRWAPerpsAssetPageData> {
 	const markets = await fetchRWAPerpsMarketsByAsset(asset, true)

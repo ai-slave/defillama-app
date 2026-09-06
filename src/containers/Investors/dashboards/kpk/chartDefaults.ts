@@ -45,7 +45,7 @@ export const KPK_PALETTE_LIGHT = [
 	'#b94784'
 ] as const
 
-export const kpkPalette = (isDark: boolean): readonly string[] => (isDark ? KPK_PALETTE_DARK : KPK_PALETTE_LIGHT)
+export const kpkPalette = (isDark: boolean): ReadonlyArray<string> => (isDark ? KPK_PALETTE_DARK : KPK_PALETTE_LIGHT)
 
 export const KPK_LINE_STROKE_DARK = '#e9ebf0'
 export const KPK_LINE_STROKE_LIGHT = '#1f2330'

@@ -14,7 +14,7 @@ function buildPointHallmarkMap({
 	protocolHallmarks,
 	dimensions
 }: {
-	protocolHallmarks?: RawHallmark[] | null | undefined
+	protocolHallmarks?: Array<RawHallmark> | null | undefined
 	dimensions?: HallmarkDimensions | undefined
 }): Map<number, string> {
 	const hallmarkMap = new Map<number, string>()
@@ -47,8 +47,8 @@ function buildPointHallmarkMap({
 	return hallmarkMap
 }
 
-function buildRangeHallmarksInMs(protocolHallmarks?: RawHallmark[] | null): HallmarkRange[] {
-	const rangeHallmarks: HallmarkRange[] = []
+function buildRangeHallmarksInMs(protocolHallmarks?: Array<RawHallmark> | null): Array<HallmarkRange> {
+	const rangeHallmarks: Array<HallmarkRange> = []
 
 	for (const [timestampOrRange, label] of protocolHallmarks ?? []) {
 		if (!Array.isArray(timestampOrRange) || label === '-') continue
@@ -76,9 +76,9 @@ export function buildHallmarksWithGenuineSpikes({
 	protocolHallmarks,
 	dimensions
 }: {
-	protocolHallmarks?: RawHallmark[] | null | undefined
+	protocolHallmarks?: Array<RawHallmark> | null | undefined
 	dimensions?: HallmarkDimensions | undefined
-}): HallmarkPoint[] | null {
+}): Array<HallmarkPoint> | null {
 	const hallmarkMap = buildPointHallmarkMap({ protocolHallmarks, dimensions })
 
 	if (hallmarkMap.size === 0) return null
@@ -91,14 +91,14 @@ export function buildProtocolOverviewHallmarks({
 	protocolHallmarks,
 	dimensions
 }: {
-	hacks?: Hack[] | null
-	protocolHallmarks?: RawHallmark[] | null | undefined
+	hacks?: Array<Hack> | null
+	protocolHallmarks?: Array<RawHallmark> | null | undefined
 	dimensions?: HallmarkDimensions | undefined
 }): {
-	hallmarks: HallmarkPoint[]
-	rangeHallmarks: HallmarkRange[]
+	hallmarks: Array<HallmarkPoint>
+	rangeHallmarks: Array<HallmarkRange>
 } {
-	const hallmarks: HallmarkPoint[] = []
+	const hallmarks: Array<HallmarkPoint> = []
 	for (const hack of hacks ?? []) {
 		if (hack.date == null) continue
 		hallmarks.push([hack.date, hack.classification || hack.technique || 'Exploit'])

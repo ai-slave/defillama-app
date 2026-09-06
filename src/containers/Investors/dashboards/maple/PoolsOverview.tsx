@@ -48,7 +48,7 @@ const APY_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const poolColumns: ColumnDef<PoolRow>[] = [
+const poolColumns: Array<ColumnDef<PoolRow>> = [
 	{ header: 'Pool', accessorKey: 'name', size: 220 },
 	{ header: 'Asset', accessorKey: 'asset', size: 80 },
 	{
@@ -108,7 +108,7 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 	}
 ]
 
-function PoolsTable({ data }: { data: PoolRow[] }) {
+function PoolsTable({ data }: { data: Array<PoolRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'tvlUsd', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 

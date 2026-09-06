@@ -96,14 +96,14 @@ export function inferTokenRiskCandidatesFromBorrowCapacity({
 	chainDisplayNames
 }: {
 	tokenSymbol: string | null | undefined
-	tokens: TokenRiskBorrowCapacityTokenEntry[]
+	tokens: Array<TokenRiskBorrowCapacityTokenEntry>
 	chainDisplayNames?: Map<string, string>
-}): TokenRiskCandidate[] {
+}): Array<TokenRiskCandidate> {
 	const tokenSymbolAliases = getTokenRiskSymbolAliases(tokenSymbol)
 	if (tokenSymbolAliases.size === 0) return []
 
 	const seen = new Set<string>()
-	const candidates: TokenRiskCandidate[] = []
+	const candidates: Array<TokenRiskCandidate> = []
 
 	for (const token of tokens) {
 		if (!tokenSymbolAliases.has(normalizeSymbol(token.asset.symbol))) continue
@@ -127,9 +127,9 @@ export function inferTokenRiskCandidatesFromBorrowCapacity({
 }
 
 export function indexBorrowCapacityByAssetKey(
-	tokens: TokenRiskBorrowCapacityTokenEntry[]
-): Map<string, TokenRiskBorrowCapacityTokenEntry[]> {
-	const indexedTokens = new Map<string, TokenRiskBorrowCapacityTokenEntry[]>()
+	tokens: Array<TokenRiskBorrowCapacityTokenEntry>
+): Map<string, Array<TokenRiskBorrowCapacityTokenEntry>> {
+	const indexedTokens = new Map<string, Array<TokenRiskBorrowCapacityTokenEntry>>()
 
 	for (const token of tokens) {
 		const key = buildAssetKey(token.chain, token.asset.address, token.asset.symbol)
@@ -146,9 +146,9 @@ export function indexBorrowCapacityByAssetKey(
 }
 
 export function filterTokenRiskCandidatesWithData(
-	candidates: TokenRiskCandidate[],
-	indexedTokens: Map<string, TokenRiskBorrowCapacityTokenEntry[]>
-): TokenRiskCandidate[] {
+	candidates: Array<TokenRiskCandidate>,
+	indexedTokens: Map<string, Array<TokenRiskBorrowCapacityTokenEntry>>
+): Array<TokenRiskCandidate> {
 	return candidates.filter((candidate) => {
 		const tokens = indexedTokens.get(candidate.key)
 		return Boolean(tokens && tokens.length > 0)
@@ -156,12 +156,12 @@ export function filterTokenRiskCandidatesWithData(
 }
 
 export function mergeIndexedBorrowCapacity(
-	indexedTokens: Map<string, TokenRiskBorrowCapacityTokenEntry[]>,
-	candidateKeys: string[]
-): TokenRiskBorrowCapacityTokenEntry[] {
+	indexedTokens: Map<string, Array<TokenRiskBorrowCapacityTokenEntry>>,
+	candidateKeys: Array<string>
+): Array<TokenRiskBorrowCapacityTokenEntry> {
 	if (candidateKeys.length === 0) return []
 
-	const merged: TokenRiskBorrowCapacityTokenEntry[] = []
+	const merged: Array<TokenRiskBorrowCapacityTokenEntry> = []
 
 	for (const candidateKey of candidateKeys) {
 		const tokens = indexedTokens.get(candidateKey)
@@ -235,8 +235,8 @@ function addChainBreakdown(summary: ProtocolSummaryAccumulator, row: TokenRiskEx
 
 function buildChainExposureSummaries(
 	chainBreakdowns: Map<string, ChainSummaryAccumulator>
-): TokenRiskChainExposureSummary[] {
-	const summaries: TokenRiskChainExposureSummary[] = []
+): Array<TokenRiskChainExposureSummary> {
+	const summaries: Array<TokenRiskChainExposureSummary> = []
 
 	for (const chain of chainBreakdowns.values()) {
 		summaries.push({
@@ -258,7 +258,7 @@ function buildChainExposureSummaries(
 	return summaries
 }
 
-export function buildTokenRiskProtocolSummaries(rows: TokenRiskExposureRow[]): TokenRiskProtocolSummary[] {
+export function buildTokenRiskProtocolSummaries(rows: Array<TokenRiskExposureRow>): Array<TokenRiskProtocolSummary> {
 	const grouped = new Map<string, ProtocolSummaryAccumulator>()
 
 	for (const row of rows) {
@@ -284,7 +284,7 @@ export function buildTokenRiskProtocolSummaries(rows: TokenRiskExposureRow[]): T
 		grouped.set(row.protocol, protocolSummary)
 	}
 
-	const summaries: TokenRiskProtocolSummary[] = []
+	const summaries: Array<TokenRiskProtocolSummary> = []
 
 	for (const summary of grouped.values()) {
 		summaries.push({
@@ -309,7 +309,7 @@ export function buildTokenRiskProtocolSummaries(rows: TokenRiskExposureRow[]): T
 }
 
 export function buildExposuresSection(
-	tokens: TokenRiskBorrowCapacityTokenEntry[],
+	tokens: Array<TokenRiskBorrowCapacityTokenEntry>,
 	methodologies: Pick<
 		TokenRiskBorrowCapacityMethodologies,
 		'asset' | 'collateralMaxBorrowUsdLiquidity' | 'minBadDebtAtPriceZeroUsd'

@@ -46,7 +46,7 @@ type GroupBridgeDataInput = {
 type StablecoinUsageByChainRow = GroupBridgeDataInput & {
 	bridgedPercent: number | null
 	bridgeInfo: StablecoinBridgeInfo
-	subRows?: StablecoinUsageByChainRow[]
+	subRows?: Array<StablecoinUsageByChainRow>
 }
 
 type BridgeInfo = {
@@ -56,15 +56,15 @@ type BridgeInfo = {
 type DataValue = number | null
 
 interface IGroupData {
-	[key: string]: Record<string, string[]>
+	[key: string]: Record<string, Array<string>>
 }
 
 export const calcCirculating = <T extends StablecoinCirculatingInput>(
-	filteredPeggedAssets: T[],
+	filteredPeggedAssets: Array<T>,
 	includeUnreleased?: boolean
-): StablecoinCirculatingOutput<T>[] => {
+): Array<StablecoinCirculatingOutput<T>> => {
 	const shouldIncludeUnreleased = Boolean(includeUnreleased)
-	const updatedPeggedAssets: StablecoinCirculatingOutput<T>[] = []
+	const updatedPeggedAssets: Array<StablecoinCirculatingOutput<T>> = []
 	for (const asset of filteredPeggedAssets) {
 		const unreleased = asset.unreleased ?? null
 		const pegType = asset.pegType ?? ''
@@ -91,9 +91,9 @@ export const calcCirculating = <T extends StablecoinCirculatingInput>(
 }
 
 export const useCalcCirculating = <T extends StablecoinCirculatingInput>(
-	filteredPeggedAssets: T[],
+	filteredPeggedAssets: Array<T>,
 	includeUnreleased?: boolean
-): StablecoinCirculatingOutput<T>[] => {
+): Array<StablecoinCirculatingOutput<T>> => {
 	return useMemo(
 		() => calcCirculating(filteredPeggedAssets, includeUnreleased),
 		[filteredPeggedAssets, includeUnreleased]
@@ -112,17 +112,17 @@ interface StablecoinsChainsRow {
 	change_1d: number | null
 	change_7d: number | null
 	change_1m: number | null
-	subRows?: StablecoinsChainsRow[]
+	subRows?: Array<StablecoinsChainsRow>
 }
 
 const addAvailableValue = (total: DataValue, value: DataValue): DataValue =>
 	value == null ? total : (total ?? 0) + value
 
 export const groupChainsPegged = (
-	chains: StablecoinsChainsRow[],
+	chains: Array<StablecoinsChainsRow>,
 	groupData: IGroupData,
 	groupsEnabled: Readonly<Record<string, boolean | undefined>>
-): StablecoinsChainsRow[] => {
+): Array<StablecoinsChainsRow> => {
 	// Build lookup map for O(1) access by name
 	const chainsByName = new Map<string, StablecoinsChainsRow>()
 	for (const item of chains) {
@@ -236,20 +236,23 @@ export const groupChainsPegged = (
 			finalData[item.name] = item
 		}
 	}
-	const result: StablecoinsChainsRow[] = []
+	const result: Array<StablecoinsChainsRow> = []
 	for (const name in finalData) result.push(finalData[name]!)
 	return result.sort((a, b) => (b.mcap ?? 0) - (a.mcap ?? 0))
 }
 
-export const useGroupChainsPegged = (chains: StablecoinsChainsRow[], groupData: IGroupData): StablecoinsChainsRow[] => {
+export const useGroupChainsPegged = (
+	chains: Array<StablecoinsChainsRow>,
+	groupData: IGroupData
+): Array<StablecoinsChainsRow> => {
 	const [groupsEnabled] = useLocalStorageSettingsManager('tvl_chains')
 	return useMemo(() => groupChainsPegged(chains, groupData, groupsEnabled), [chains, groupData, groupsEnabled])
 }
 
 export const groupBridgeData = (
-	chains: GroupBridgeDataInput[],
+	chains: Array<GroupBridgeDataInput>,
 	bridgeInfoObject: BridgeInfo
-): StablecoinUsageByChainRow[] => {
+): Array<StablecoinUsageByChainRow> => {
 	const finalData: Record<string, StablecoinUsageByChainRow> = {}
 	for (const parent of chains) {
 		const parentBridges = parent.bridges
@@ -330,7 +333,7 @@ export const groupBridgeData = (
 							name: bridgeAmount.sourceChain
 								? `Bridged from ${capitalizeFirstLetter(bridgeAmount.sourceChain)}`
 								: 'Bridged',
-							bridgeInfo: bridgeInfo,
+							bridgeInfo,
 							bridgedAmount: parentAmountBridged,
 							bridgedPercent: percentBridgedBreakdown,
 							circulating: parentAmountBridged,
@@ -351,7 +354,7 @@ export const groupBridgeData = (
 			}
 		}
 	}
-	const finalDataArray: (typeof finalData)[string][] = []
+	const finalDataArray: Array<(typeof finalData)[string]> = []
 	for (const key in finalData) {
 		const row = finalData[key]
 		if (row?.name) {
@@ -362,8 +365,8 @@ export const groupBridgeData = (
 }
 
 export const useGroupBridgeData = (
-	chains: GroupBridgeDataInput[],
+	chains: Array<GroupBridgeDataInput>,
 	bridgeInfoObject: BridgeInfo
-): StablecoinUsageByChainRow[] => {
+): Array<StablecoinUsageByChainRow> => {
 	return useMemo(() => groupBridgeData(chains, bridgeInfoObject), [chains, bridgeInfoObject])
 }

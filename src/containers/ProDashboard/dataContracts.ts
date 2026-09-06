@@ -4,7 +4,7 @@ import type { IChainMetadata, IProtocolMetadata } from '~/utils/metadata/types'
 export interface ProDashboardAppMetadata {
 	protocols: Record<string, IProtocolMetadata>
 	chains: Record<string, IChainMetadata>
-	pfPs: { pf: string[]; ps: string[] }
+	pfPs: { pf: Array<string>; ps: Array<string> }
 }
 
 interface ProDashboardChartRequestBase {
@@ -22,4 +22,4 @@ export type ProDashboardChartRequest = ProDashboardChartRequestBase &
 		| { subjectType: 'protocol'; protocol: string; chain?: never }
 	)
 
-export type ChartBuilderSeriesData = { series: ChartSeries[] }
+export type ChartBuilderSeriesData = { series: Array<ChartSeries> }

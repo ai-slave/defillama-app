@@ -95,8 +95,8 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			try {
 				await onUpdateTitle({ sessionId: session.sessionId, title: title.trim(), projectId: session.projectId })
 				setIsEditing(false)
-			} catch (err) {
-				console.error('Failed to update title:', err)
+			} catch (error) {
+				console.error('Failed to update title:', error)
 			}
 		}
 	}
@@ -107,8 +107,8 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			try {
 				await onDelete(session.sessionId, session.projectId)
 				setIsEditing(false)
-			} catch (err) {
-				console.error('Failed to delete session:', err)
+			} catch (error) {
+				console.error('Failed to delete session:', error)
 			}
 		}
 	}

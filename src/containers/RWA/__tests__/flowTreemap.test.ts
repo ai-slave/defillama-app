@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IRWAAssetsOverview, IRWAFlowOverviewSplitPoint } from '../api.types'
 import { getRWAFlowRotationSeriesNames } from '../flows'
 import {
@@ -11,8 +11,8 @@ import {
 const DAY = 86_400
 
 describe('RWA flow treemap', () => {
-	it('uses the latest day for daily and trailing windows for longer periods', () => {
-		const points: IRWAFlowOverviewSplitPoint[] = [
+	test('uses the latest day for daily and trailing windows for longer periods', () => {
+		const points: Array<IRWAFlowOverviewSplitPoint> = [
 			{ timestamp: 100 * DAY, Bonds: 4 },
 			{ timestamp: 106 * DAY, Bonds: 10, Credit: -2 },
 			{ timestamp: 107 * DAY, Bonds: -3 }
@@ -26,11 +26,11 @@ describe('RWA flow treemap', () => {
 		})
 	})
 
-	it('shares one flow analysis across window values and recent-flow ordering', () => {
+	test('shares one flow analysis across window values and recent-flow ordering', () => {
 		const latest = 1_800_000_000
-		const points: IRWAFlowOverviewSplitPoint[] = [
+		const points: Array<IRWAFlowOverviewSplitPoint> = [
 			{ timestamp: latest - 40 * DAY, 'No Recent Flow': 10_000 },
-			{ timestamp: latest - 20 * DAY, 'Monthly Flow': 1_000 },
+			{ timestamp: latest - 20 * DAY, 'Monthly Flow': 1000 },
 			{ timestamp: latest - 5 * DAY, 'Weekly Flow': 50 },
 			{ timestamp: latest, 'Recent Inflow': 80, 'Recent Outflow': -100 }
 		]
@@ -52,7 +52,7 @@ describe('RWA flow treemap', () => {
 		])
 	})
 
-	it('sizes by the selected metric and preserves missing flow separately from zero', () => {
+	test('sizes by the selected metric and preserves missing flow separately from zero', () => {
 		const result = buildRWAFlowTreemap({
 			flows: aggregateRWAFlowTreemapWindow([{ timestamp: 1, Bonds: 0, Credit: -20 }], 'daily'),
 			sizeRows: [
@@ -72,7 +72,7 @@ describe('RWA flow treemap', () => {
 		expect(result.excludedSizeCount).toBe(1)
 	})
 
-	it('builds asset-group, category, platform, and chain size rows with matching attribution', () => {
+	test('builds asset-group, category, platform, and chain size rows with matching attribution', () => {
 		const assets = [
 			{
 				kind: 'spot',

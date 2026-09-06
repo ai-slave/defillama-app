@@ -1,15 +1,15 @@
 export interface ParsedCsvRow {
 	id: number
-	values: string[]
+	values: Array<string>
 }
 
 export interface ParsedCsv {
-	headers: string[]
-	rows: ParsedCsvRow[]
+	headers: Array<string>
+	rows: Array<ParsedCsvRow>
 }
 
-export function parseCsvLine(line: string): string[] {
-	const fields: string[] = []
+export function parseCsvLine(line: string): Array<string> {
+	const fields: Array<string> = []
 	let i = 0
 	while (i < line.length) {
 		if (line[i] === '"') {

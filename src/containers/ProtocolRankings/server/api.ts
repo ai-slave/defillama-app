@@ -17,7 +17,7 @@ import {
 	isProtocolRankingSnapshotToken
 } from './tableData.server'
 
-function firstQueryValue(value: string | string[] | undefined): string | undefined {
+function firstQueryValue(value: string | Array<string> | undefined): string | undefined {
 	return Array.isArray(value) ? value[0] : value
 }
 

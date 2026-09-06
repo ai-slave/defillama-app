@@ -1,7 +1,7 @@
 import type { RewardLifecycle, RewardProgram, RewardsFilters, RewardType } from './types'
 
-export function getRewardsView(programs: RewardProgram[], filters: RewardsFilters) {
-	const rows: RewardProgram[] = []
+export function getRewardsView(programs: Array<RewardProgram>, filters: RewardsFilters) {
+	const rows: Array<RewardProgram> = []
 	const lifecycleCounts: Record<RewardLifecycle | 'All', number> = {
 		All: 0,
 		Live: 0,

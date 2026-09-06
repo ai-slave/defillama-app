@@ -20,7 +20,7 @@ export type ArticleSearchEntityHit = {
 	subName?: string
 }
 
-const STATIC_FALLBACK: ArticleEntitySuggestionItem[] = [
+const STATIC_FALLBACK: Array<ArticleEntitySuggestionItem> = [
 	{
 		...createArticleEntityRef({ entityType: 'metric', slug: 'protocols', label: 'All Protocols', route: '/protocols' }),
 		id: 'metric:protocols',
@@ -81,7 +81,7 @@ export function normalizeArticleEntitySearchHit(hit: ArticleSearchEntityHit): Ar
 	}
 }
 
-export function getStaticArticleEntitySuggestions(query: string, limit = 8): ArticleEntitySuggestionItem[] {
+export function getStaticArticleEntitySuggestions(query: string, limit = 8): Array<ArticleEntitySuggestionItem> {
 	const normalizedQuery = query.trim()
 	if (!normalizedQuery) return STATIC_FALLBACK.slice(0, limit)
 	return matchSorter(STATIC_FALLBACK, normalizedQuery, {
@@ -95,12 +95,12 @@ function routePathname(route: string): string {
 }
 
 export function mergeArticleEntitySuggestions(
-	primary: ArticleEntitySuggestionItem[],
-	secondary: ArticleEntitySuggestionItem[],
+	primary: Array<ArticleEntitySuggestionItem>,
+	secondary: Array<ArticleEntitySuggestionItem>,
 	limit = 24
-): ArticleEntitySuggestionItem[] {
+): Array<ArticleEntitySuggestionItem> {
 	const seen = new Set<string>()
-	const merged: ArticleEntitySuggestionItem[] = []
+	const merged: Array<ArticleEntitySuggestionItem> = []
 	for (const item of [...primary, ...secondary]) {
 		const dedupeKey = `${item.entityType}:${routePathname(item.route)}`
 		if (seen.has(dedupeKey)) continue

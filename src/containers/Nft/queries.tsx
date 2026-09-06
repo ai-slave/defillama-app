@@ -25,9 +25,9 @@ export type VolumeChartEntry = {
 	volume?: number
 }
 type NftDataResult = {
-	chart: VolumeChartEntry[]
-	collections: ExtendedNftCollection[]
-	statistics: unknown[]
+	chart: Array<VolumeChartEntry>
+	collections: Array<ExtendedNftCollection>
+	statistics: Array<unknown>
 }
 
 type ExtendedNftCollection = RawNftCollection & {
@@ -61,8 +61,8 @@ export const getNFTData = async (): Promise<NftDataResult> => {
 			collections: data,
 			statistics: []
 		}
-	} catch (e) {
-		console.log(e)
+	} catch (error) {
+		console.log(error)
 		return {
 			chart: [],
 			collections: [],
@@ -99,7 +99,7 @@ type NFTCollectionEarningsRow = {
 	name: string
 	displayName: string
 	logo: string
-	chains: string[]
+	chains: Array<string>
 	total24h: number | null
 	total7d: number | null
 	total30d: number | null
@@ -132,7 +132,7 @@ export const getNFTCollectionEarnings = async () => {
 			}
 		}
 
-		const collectionEarnings: NFTCollectionEarningsRow[] = []
+		const collectionEarnings: Array<NFTCollectionEarningsRow> = []
 		const collectionEarningsById = new Map<string, NFTCollectionEarningsRow>()
 		for (const c of collections) {
 			const collectionId = normalizeEthereumCollectionId(c.collectionId)
@@ -166,7 +166,7 @@ export const getNFTCollectionEarnings = async () => {
 				duplicateCollections.add(address)
 				return address
 			})
-			const subCollectionEarnings: NFTCollectionEarningsRow[] = []
+			const subCollectionEarnings: Array<NFTCollectionEarningsRow> = []
 			const seenCollections = new Set<string>()
 
 			let total24h = 0
@@ -210,8 +210,8 @@ export const getNFTCollectionEarnings = async () => {
 				(a, b) => b.totalEarnings - a.totalEarnings
 			)
 		}
-	} catch (err) {
-		console.log(err)
+	} catch (error) {
+		console.log(error)
 		return {
 			earnings: []
 		}
@@ -277,8 +277,8 @@ export const getNFTRoyaltyHistory = async (slug: string) => {
 		return {
 			royaltyHistory: data
 		}
-	} catch (err) {
-		console.log(err)
+	} catch (error) {
+		console.log(error)
 		return {
 			royaltyHistory: []
 		}
@@ -308,7 +308,7 @@ const filterOutlierSales = (sales: Array<[number, number]>): Array<[number, numb
 	return filtered
 }
 
-const median = (sales: number[]): number => {
+const median = (sales: Array<number>): number => {
 	if (sales.length === 0) return 0
 
 	const middle = Math.floor(sales.length / 2)
@@ -379,8 +379,8 @@ export const getNFTCollection = async (slug: string) => {
 			},
 			orderbook
 		}
-	} catch (e) {
-		console.log(e)
+	} catch (error) {
+		console.log(error)
 		return undefined
 	}
 }

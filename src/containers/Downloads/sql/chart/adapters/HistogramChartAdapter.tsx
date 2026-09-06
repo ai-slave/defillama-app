@@ -18,7 +18,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 interface HistogramChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -32,7 +32,7 @@ export function HistogramChartAdapter({ config, result, classified, onReady }: H
 	const { chartModel, chartOptions } = useMemo(() => {
 		if (!valueCol) return { chartModel: buildAlignedCartesianChartModel([], []), chartOptions: {} }
 		const configuredColors = new Map(Object.entries(config.seriesColors))
-		const values: number[] = []
+		const values: Array<number> = []
 		let min = Infinity
 		let max = -Infinity
 		for (const row of result.rows) {

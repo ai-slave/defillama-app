@@ -6,7 +6,7 @@ import { setPendingPrompt, setPendingPageContext, setPendingSuggestedFlag } from
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface Props {
-	questions: string[]
+	questions: Array<string>
 	entitySlug: string
 	entityType: 'protocol' | 'chain' | 'page'
 	entityName?: string

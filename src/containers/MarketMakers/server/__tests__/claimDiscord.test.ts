@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { sendClaimToDiscord } from '../claimDiscord'
 
 afterEach(() => {
@@ -20,7 +20,7 @@ const claim = {
 }
 
 describe('sendClaimToDiscord', () => {
-	it('posts a sanitized successful submission and waits for Discord confirmation', async () => {
+	test('posts a sanitized successful submission and waits for Discord confirmation', async () => {
 		vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', 'https://discord.com/api/webhooks/123/token?thread_id=456')
 		const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -34,7 +34,7 @@ describe('sendClaimToDiscord', () => {
 		expect(body.allowed_mentions).toEqual({ parse: [] })
 		expect(body.embeds[0]).toMatchObject({
 			title: 'UTR claim submission succeeded',
-			color: 0x22c55e
+			color: 0x22_c5_5e
 		})
 		expect(body.embeds[0].fields).toEqual(
 			expect.arrayContaining([
@@ -45,7 +45,7 @@ describe('sendClaimToDiscord', () => {
 		expect(options.body).not.toContain('must-not-leak')
 	})
 
-	it('posts unsuccessful Forgd submissions without throwing on Discord failure', async () => {
+	test('posts unsuccessful Forgd submissions without throwing on Discord failure', async () => {
 		vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', 'https://discord.com/api/webhooks/123/token')
 		const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 429 }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -57,7 +57,7 @@ describe('sendClaimToDiscord', () => {
 		const body = JSON.parse(fetchMock.mock.calls[0][1].body)
 		expect(body.embeds[0]).toMatchObject({
 			title: 'Market Maker claim submission failed',
-			color: 0xef4444
+			color: 0xef_44_44
 		})
 		expect(body.embeds[0].fields).toEqual(
 			expect.arrayContaining([
@@ -67,7 +67,7 @@ describe('sendClaimToDiscord', () => {
 		)
 	})
 
-	it('renders the camelCase payload used by the full UTR form', async () => {
+	test('renders the camelCase payload used by the full UTR form', async () => {
 		vi.stubEnv('UTR_DISCORD_WEBHOOK_URL', 'https://discord.com/api/webhooks/123/token')
 		const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -97,7 +97,7 @@ describe('sendClaimToDiscord', () => {
 		)
 	})
 
-	it('does nothing when the webhook is missing or not an official Discord webhook URL', async () => {
+	test('does nothing when the webhook is missing or not an official Discord webhook URL', async () => {
 		const fetchMock = vi.fn()
 		vi.stubGlobal('fetch', fetchMock)
 

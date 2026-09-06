@@ -2,10 +2,10 @@ import { compareSessionsByActivity } from '~/containers/LlamaAI/utils/sessionAct
 import type { ProjectChatSession } from './types'
 
 export function orderVisibleProjectSessions(
-	sessions: ProjectChatSession[] | undefined,
+	sessions: Array<ProjectChatSession> | undefined,
 	currentSessionId: string | null,
 	limit: number
-): ProjectChatSession[] {
+): Array<ProjectChatSession> {
 	if (!sessions) return []
 	const pinned = sessions.filter((s) => s.isPinned).sort(compareSessionsByActivity)
 	const unpinned = sessions.filter((s) => !s.isPinned).sort(compareSessionsByActivity)
@@ -18,10 +18,10 @@ export function orderVisibleProjectSessions(
 }
 
 export function bumpProjectSessionActivity(
-	sessions: ProjectChatSession[] | undefined,
+	sessions: Array<ProjectChatSession> | undefined,
 	sessionId: string,
 	lastActivity: string
-): ProjectChatSession[] | undefined {
+): Array<ProjectChatSession> | undefined {
 	if (!sessions?.some((session) => session.sessionId === sessionId)) return sessions
 	return sessions.map((session) => (session.sessionId === sessionId ? { ...session, lastActivity } : session))
 }

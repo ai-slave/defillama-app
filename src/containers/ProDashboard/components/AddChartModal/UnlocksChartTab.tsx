@@ -27,7 +27,7 @@ interface UnlocksChartTabProps {
 	onSelectedUnlocksProtocolChange: (protocol: string | null) => void
 	onSelectedUnlocksProtocolNameChange: (name: string | null) => void
 	onSelectedUnlocksChartTypeChange: (type: 'total' | 'schedule' | 'allocation' | 'locked-unlocked') => void
-	protocolOptions: VirtualizedSelectOption[]
+	protocolOptions: Array<VirtualizedSelectOption>
 	protocolsLoading: boolean
 }
 
@@ -40,7 +40,7 @@ const UNLOCKS_CHART_TYPES = [
 
 const EMPTY_CHART_DATA: Array<{ name: string; value: number }> = []
 const EMPTY_CHART_COLORS: Record<string, string> = {}
-const EMPTY_STACKS: string[] = []
+const EMPTY_STACKS: Array<string> = []
 const LOCKED_UNLOCKED_COLORS = {
 	Unlocked: '#0c5dff',
 	Locked: '#ff4e21'
@@ -53,7 +53,7 @@ const EMPTY_TOTAL_UNLOCKS_DATASET: MultiSeriesChartDataset = {
 }
 
 function createRandomColor() {
-	return '#' + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, '0')
+	return `#${((Math.random() * 0xff_ff_ff) << 0).toString(16).padStart(6, '0')}`
 }
 
 export function UnlocksChartTab({
@@ -69,7 +69,7 @@ export function UnlocksChartTab({
 	const [unlocksEndDate] = useState(() => Date.now() / 1000 + 30 * 24 * 60 * 60)
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
 	const [totalUnlocksColor] = useState(createRandomColor)
-	const todayHallmarks = useMemo<[number, string][]>(
+	const todayHallmarks = useMemo<Array<[number, string]>>(
 		() => [[todayTimestamp, formatUnlockDate(todayTimestamp)]],
 		[todayTimestamp]
 	)
@@ -125,7 +125,7 @@ export function UnlocksChartTab({
 	const scheduleCharts = data?.chartsConfigs.documented ?? EMPTY_SCHEDULE_CHARTS
 
 	const stacks = useMemo(() => {
-		if (scheduleCharts.length) return scheduleCharts.map((chart) => chart.name)
+		if (scheduleCharts.length > 0) return scheduleCharts.map((chart) => chart.name)
 		const categories = data?.categories.documented ?? EMPTY_STACKS
 		if (categories.length > 0) return categories
 		return EMPTY_STACKS
@@ -186,7 +186,7 @@ export function UnlocksChartTab({
 	const totalDataset = useMemo<MultiSeriesChartDataset>(() => {
 		if (selectedUnlocksChartType !== 'total') return EMPTY_TOTAL_UNLOCKS_DATASET
 		const source = scheduleDataset.source
-		if (!source.length) return EMPTY_TOTAL_UNLOCKS_DATASET
+		if (source.length === 0) return EMPTY_TOTAL_UNLOCKS_DATASET
 		const dimensions = scheduleDataset.dimensions
 		const totalSource = new Array<MultiSeriesChartDataset['source'][number]>(source.length)
 		for (let i = 0; i < source.length; i++) {

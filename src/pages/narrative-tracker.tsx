@@ -22,7 +22,7 @@ export default function CategoryPerformance(props: CategoryPerformanceProps) {
 		<Layout
 			title="Narrative Tracker - Crypto Market Trends - DefiLlama"
 			description="Track crypto narratives and market trends by sector performance. Monitor AI, DePIN, RWA, L2s, and other crypto narratives. Real-time narrative performance analytics and trend identification."
-			canonicalUrl={`/narrative-tracker`}
+			canonicalUrl="/narrative-tracker"
 			pageName={pageName}
 		>
 			<CategoryPerformanceContainer {...props} />

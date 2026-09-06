@@ -2,18 +2,18 @@ import type { MultiSeriesTimeSeriesDataset, MultiSeriesTimeSeriesRow } from './t
 
 type ColumnarSeries = {
 	name: string
-	data: readonly (number | null | undefined)[]
+	data: ReadonlyArray<number | null | undefined>
 }
 
 type SparseTupleSeries = {
 	name: string
-	data: readonly (readonly [timestamp: number, value: number | null])[]
+	data: ReadonlyArray<readonly [timestamp: number, value: number | null]>
 }
 
 export type TimestampDataset = MultiSeriesTimeSeriesDataset
 
 /** Merge independently timed series into one positional dataset; Map output is sorted once chronologically. */
-export function buildSparseTimeSeriesDataset(series: readonly SparseTupleSeries[]): TimestampDataset {
+export function buildSparseTimeSeriesDataset(series: ReadonlyArray<SparseTupleSeries>): TimestampDataset {
 	const dimensions: TimestampDataset['dimensions'] = ['timestamp', ...series.map((item) => item.name)]
 	const rows = new Map<number, MultiSeriesTimeSeriesRow>()
 	for (const [seriesIndex, item] of series.entries()) {
@@ -39,8 +39,8 @@ export function buildSparseTimeSeriesDataset(series: readonly SparseTupleSeries[
 
 /** Build canonical ECharts rows directly from the compact dates + series API shape. */
 export function buildColumnarTimeSeriesDataset(
-	dates: readonly string[],
-	series: readonly ColumnarSeries[],
+	dates: ReadonlyArray<string>,
+	series: ReadonlyArray<ColumnarSeries>,
 	toTimestampMs: (date: string) => number,
 	missingValue: number | null = null
 ): TimestampDataset {
@@ -71,7 +71,7 @@ export function buildColumnarTimeSeriesDataset(
 
 /** Build a one-series dataset without first allocating legacy tuple or date-row data. */
 export function buildTimeSeriesDataset(
-	points: readonly (readonly [number, number | null])[],
+	points: ReadonlyArray<readonly [number, number | null]>,
 	valueDimension: string,
 	timestampMultiplier: 1 | 1000
 ): TimestampDataset {
@@ -87,7 +87,7 @@ export function buildTimeSeriesDataset(
 /** Materialize only the visible dimensions, preserving legacy missing-as-zero behavior. */
 export function materializeZeroFilledDataset(
 	dataset: TimestampDataset,
-	seriesNames: readonly string[]
+	seriesNames: ReadonlyArray<string>
 ): TimestampDataset {
 	const source = new Array<MultiSeriesTimeSeriesRow>(dataset.source.length)
 	const seriesIndexes = seriesNames.map((seriesName) => dataset.dimensions.indexOf(seriesName))

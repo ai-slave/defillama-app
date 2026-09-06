@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartBuilderCsvRequest } from '~/containers/ProDashboard/chartBuilderCsvContract'
 import { buildChartBuilderCsvPayload } from './csvData'
 
 describe('buildChartBuilderCsvPayload', () => {
-	it('exports a treemap as one row per entity using the selected calculation', () => {
+	test('exports a treemap as one row per entity using the selected calculation', () => {
 		const request: ChartBuilderCsvRequest = {
 			config: {
 				metric: 'perps',

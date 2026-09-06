@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getSettingsIntentFromQuery,
 	readPendingSettingsIntent,
@@ -22,14 +22,14 @@ class MemoryStorage {
 }
 
 describe('settingsIntent', () => {
-	it('parses an authenticated Telegram login intent for the integrations tab', () => {
+	test('parses an authenticated Telegram login intent for the integrations tab', () => {
 		expect(getSettingsIntentFromQuery({ tglogin: 'telegram-token', keep: '1' })).toEqual({
 			initialState: { tab: 'integrations', tgloginToken: 'telegram-token' },
 			nextQuery: { keep: '1' }
 		})
 	})
 
-	it('stashes and consumes unauthenticated Telegram login intent after login', () => {
+	test('stashes and consumes unauthenticated Telegram login intent after login', () => {
 		const storage = new MemoryStorage()
 
 		stashSettingsIntent(storage, { tab: 'integrations', tgloginToken: 'telegram-token' })
@@ -38,7 +38,7 @@ describe('settingsIntent', () => {
 		expect(readPendingSettingsIntent(storage)).toBeNull()
 	})
 
-	it('parses an authenticated Slack login intent for the integrations tab', () => {
+	test('parses an authenticated Slack login intent for the integrations tab', () => {
 		expect(getSettingsIntentFromQuery({ slacklogin: 'slack-token', keep: '1', modal: 'settings', tab: 'app' })).toEqual(
 			{
 				initialState: { tab: 'integrations', tgloginToken: null, slackloginToken: 'slack-token' },
@@ -47,7 +47,7 @@ describe('settingsIntent', () => {
 		)
 	})
 
-	it('stashes and consumes unauthenticated Slack login intent after login', () => {
+	test('stashes and consumes unauthenticated Slack login intent after login', () => {
 		const storage = new MemoryStorage()
 
 		stashSettingsIntent(storage, { tab: 'integrations', tgloginToken: null, slackloginToken: 'slack-token' })
@@ -60,14 +60,14 @@ describe('settingsIntent', () => {
 		expect(readPendingSettingsIntent(storage)).toBeNull()
 	})
 
-	it('parses the settings modal tab intent and removes consumed query params', () => {
+	test('parses the settings modal tab intent and removes consumed query params', () => {
 		expect(getSettingsIntentFromQuery({ modal: 'settings', tab: 'integrations', chain: 'Ethereum' })).toEqual({
 			initialState: { tab: 'integrations', tgloginToken: null },
 			nextQuery: { chain: 'Ethereum' }
 		})
 	})
 
-	it('parses Slack callback intent for integrations and removes callback query params', () => {
+	test('parses Slack callback intent for integrations and removes callback query params', () => {
 		expect(
 			getSettingsIntentFromQuery({
 				slack: 'connected',
@@ -89,7 +89,7 @@ describe('settingsIntent', () => {
 		})
 	})
 
-	it('stashes and consumes unauthenticated Slack callback intent after login', () => {
+	test('stashes and consumes unauthenticated Slack callback intent after login', () => {
 		const storage = new MemoryStorage()
 
 		stashSettingsIntent(storage, {

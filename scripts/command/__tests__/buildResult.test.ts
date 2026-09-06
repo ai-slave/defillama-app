@@ -1,17 +1,17 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
 import { createBuildResult, findNextBuildId, formatDurationMs } from '../buildResult'
 
-const tempDirs: string[] = []
+const tempDirs: Array<string> = []
 
 afterEach(async () => {
 	await Promise.all(tempDirs.splice(0).map((tempDir) => fs.rm(tempDir, { force: true, recursive: true })))
 })
 
 describe('build result', () => {
-	it('formats duration and status', () => {
+	test('formats duration and status', () => {
 		const result = createBuildResult({
 			branchName: 'main',
 			buildId: 'static-id',
@@ -26,7 +26,7 @@ describe('build result', () => {
 		expect(formatDurationMs(result.durationMs)).toBe('1m 5s')
 	})
 
-	it('finds the Next build id from the build manifest path', async () => {
+	test('finds the Next build id from the build manifest path', async () => {
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'build-result-test-'))
 		tempDirs.push(projectDir)
 		await fs.mkdir(path.join(projectDir, '.next', 'static-id'), { recursive: true })
@@ -35,7 +35,7 @@ describe('build result', () => {
 		expect(await findNextBuildId(projectDir)).toBe('static-id')
 	})
 
-	it('prefers the authoritative Next BUILD_ID file', async () => {
+	test('prefers the authoritative Next BUILD_ID file', async () => {
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'build-result-test-'))
 		tempDirs.push(projectDir)
 		await fs.mkdir(path.join(projectDir, '.next', 'static-id'), { recursive: true })

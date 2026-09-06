@@ -13,7 +13,7 @@ export interface Kpi {
 interface ChartSeries {
 	name: string
 	type?: 'bar' | 'line'
-	data: number[]
+	data: Array<number>
 	stack?: string
 }
 
@@ -23,8 +23,8 @@ export interface Chart {
 	// Drives axis symbol + tooltip: 'usd' → "$", 'pct' → "%", 'rune'/'count' → none.
 	unit?: 'usd' | 'rune' | 'count' | 'pct' | string
 	// ISO YYYY-MM-DD for time series, or category labels (chain names, pool assets, months).
-	dates: string[]
-	series: ChartSeries[]
+	dates: Array<string>
+	series: Array<ChartSeries>
 }
 
 export interface Distribution {
@@ -49,7 +49,7 @@ export function parseDateToUnix(dateStr: string): number {
 		const n = parseInt(dateStr, 10)
 		return n > 1e12 ? Math.floor(n / 1000) : n
 	}
-	return Math.floor(Date.parse(dateStr.length === 10 ? dateStr + 'T00:00:00Z' : dateStr) / 1000)
+	return Math.floor(Date.parse(dateStr.length === 10 ? `${dateStr}T00:00:00Z` : dateStr) / 1000)
 }
 
 // THORChain counts its native L1 transaction fee — the "network fee", tracked by DefiLlama
@@ -79,7 +79,7 @@ function periodKeyOf(groupKey: (typeof GROUP_KEYS)[number], unixSeconds: number)
 // Cumulative series only carry points for days the chain actually reported, and ECharts renders
 // a missing value inside a stack as a drop to zero. Re-emit every series on the union calendar,
 // holding the last running total (0 before a chain's first day) so the stack stays continuous.
-export function carryForwardCumulative<T extends { points: Array<[number, number]> }>(series: T[]): T[] {
+export function carryForwardCumulative<T extends { points: Array<[number, number]> }>(series: Array<T>): Array<T> {
 	const calendar = [...new Set(series.flatMap((s) => s.points.map(([timestamp]) => timestamp)))].sort((a, b) => a - b)
 	return series.map((s) => {
 		const points: Array<[number, number]> = []

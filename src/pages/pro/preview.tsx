@@ -8,7 +8,7 @@ export default function ProPreviewPage() {
 			<Layout
 				title="DefiLlama Pro Dashboard - Preview"
 				description="Preview DefiLlama Pro dashboards. Explore custom DeFi analytics built with TVL, fees, volume, and protocol metrics."
-				canonicalUrl={`/pro/preview`}
+				canonicalUrl="/pro/preview"
 			>
 				<DemoPreview />
 			</Layout>

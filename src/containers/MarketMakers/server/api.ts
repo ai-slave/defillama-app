@@ -8,8 +8,8 @@ import { MM_CACHE_CONTROL, MM_RESULT_TTL_MS } from './constants'
 
 const MM_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/
 
-function dateParams(query: Record<string, string | string[] | undefined>) {
-	const pick = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
+function dateParams(query: Record<string, string | Array<string> | undefined>) {
+	const pick = (v: string | Array<string> | undefined) => (Array.isArray(v) ? v[0] : v)
 	return { start_date: pick(query.start_date) || undefined, end_date: pick(query.end_date) || undefined }
 }
 

@@ -17,11 +17,13 @@ import type { StablecoinVolumeChartPayload } from './volumeChart'
 
 type StablecoinMcapSeriesPoint = [number, number]
 
-const buildStablecoinMcapSeries = async (chain: string): Promise<StablecoinMcapSeriesPoint[] | null> => {
+const buildStablecoinMcapSeries = async (chain: string): Promise<Array<StablecoinMcapSeriesPoint> | null> => {
 	try {
-		return fetchJson<StablecoinMcapSeriesPoint[]>(`/api/public/stablecoins/chart?chain=${encodeURIComponent(chain)}`)
-	} catch (err) {
-		console.log(err)
+		return fetchJson<Array<StablecoinMcapSeriesPoint>>(
+			`/api/public/stablecoins/chart?chain=${encodeURIComponent(chain)}`
+		)
+	} catch (error) {
+		console.log(error)
 		return null
 	}
 }
@@ -43,7 +45,7 @@ export type StablecoinChartSeriesQuery =
 			scope: 'overview'
 			chain: string
 			chart: StablecoinOverviewChartType | null
-			filters?: Record<string, string | string[] | undefined>
+			filters?: Record<string, string | Array<string> | undefined>
 			seriesLimit?: number
 			selectionIntent?: StablecoinSeriesSelectionIntent
 			enabled?: boolean
@@ -79,7 +81,7 @@ export const buildStablecoinChartSeriesUrl = (query: StablecoinChartSeriesQuery)
 		const filters = query.filters ?? {}
 		for (const key in filters) {
 			const value = filters[key]
-			if (typeof value === 'undefined') continue
+			if (value === undefined) continue
 			if (Array.isArray(value)) {
 				for (const item of value) {
 					params.append(key, item)

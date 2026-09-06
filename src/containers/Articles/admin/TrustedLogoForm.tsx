@@ -52,7 +52,7 @@ export function TrustedLogoForm({ logoId }: Props) {
 	const { authorizedFetch } = useAuthContext()
 	const revalidate = useResearchLandingRevalidation()
 
-	const logosQuery = useQuery<TrustedLogo[]>({
+	const logosQuery = useQuery<Array<TrustedLogo>>({
 		queryKey: ['trusted-by-logos'],
 		queryFn: () => listTrustedLogos(authorizedFetch),
 		retry: false
@@ -102,8 +102,8 @@ export function TrustedLogoForm({ logoId }: Props) {
 			revalidate()
 			toast.success(logo ? 'Logo saved' : 'Logo created')
 			router.push('/research/admin/trusted-by')
-		} catch (err) {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to save')
+		} catch (error) {
+			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to save')
 		}
 	}
 

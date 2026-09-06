@@ -3,14 +3,14 @@ import type { IFormattedDataWithExtraTvlBase } from './types'
 
 export interface GroupableChain {
 	name: string
-	childGroups: Record<string, string[]> | null
+	childGroups: Record<string, Array<string>> | null
 }
 
 /** Resolve selected child membership before emitting rows so input sort order cannot duplicate a child. */
 export function getTopLevelGroupedChains<T extends GroupableChain>(
-	chains: readonly T[],
-	selectedGroups: readonly string[]
-): T[] {
+	chains: ReadonlyArray<T>,
+	selectedGroups: ReadonlyArray<string>
+): Array<T> {
 	const childNames = new Set<string>()
 	for (const chain of chains) {
 		for (const group of selectedGroups) {
@@ -53,7 +53,10 @@ export type GroupedChainTotals = Pick<IFormattedDataWithExtraTvlBase, GroupedNum
 	chainAssets: Exclude<IFormattedDataWithExtraTvlBase['chainAssets'], undefined>
 }
 
-function sumGroupedField(rows: readonly IFormattedDataWithExtraTvlBase[], field: GroupedNumberField): number | null {
+function sumGroupedField(
+	rows: ReadonlyArray<IFormattedDataWithExtraTvlBase>,
+	field: GroupedNumberField
+): number | null {
 	let total = 0
 	let hasValue = false
 	for (const row of rows) {
@@ -66,7 +69,7 @@ function sumGroupedField(rows: readonly IFormattedDataWithExtraTvlBase[], field:
 }
 
 function sumCurrentTvlContributors(
-	rows: readonly IFormattedDataWithExtraTvlBase[],
+	rows: ReadonlyArray<IFormattedDataWithExtraTvlBase>,
 	field: GroupedTvlComparisonField
 ): number | null {
 	// Compare the same measured cohort in both periods; a row without current TVL is unavailable, not zero.
@@ -82,7 +85,7 @@ function sumCurrentTvlContributors(
 	return hasContributor ? total : null
 }
 
-export function aggregateGroupedChainRows(rows: readonly IFormattedDataWithExtraTvlBase[]): GroupedChainTotals {
+export function aggregateGroupedChainRows(rows: ReadonlyArray<IFormattedDataWithExtraTvlBase>): GroupedChainTotals {
 	let chainAssets = rows[0]?.chainAssets ?? null
 	for (let index = 1; index < rows.length; index++) {
 		chainAssets = mergeChainAssetTotals(chainAssets, rows[index]?.chainAssets ?? null)

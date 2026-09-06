@@ -1,4 +1,4 @@
-export function SubscriptionTrustedBlock({ trustLogos }: { trustLogos: { src: string; alt: string }[] }) {
+export function SubscriptionTrustedBlock({ trustLogos }: { trustLogos: Array<{ src: string; alt: string }> }) {
 	return (
 		<div className="flex w-full flex-col items-center md:w-auto">
 			<div className="flex w-full flex-col items-center gap-2 text-center md:w-[448px] md:gap-4">

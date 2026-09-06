@@ -40,7 +40,7 @@ function toBookLevel(level: { px: string | number; sz: string | number; n: numbe
 	}
 }
 
-function LiveOrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] }) {
+function LiveOrderBook({ bids, asks }: { bids: Array<BookLevel>; asks: Array<BookLevel> }) {
 	const topBids = bids.slice(0, BOOK_LEVELS)
 	const topAsks = asks.slice(0, BOOK_LEVELS)
 
@@ -122,7 +122,7 @@ function LiveOrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] })
 	)
 }
 
-function LiveTradeFeed({ trades }: { trades: Trade[] }) {
+function LiveTradeFeed({ trades }: { trades: Array<Trade> }) {
 	return (
 		<div className="flex max-h-[800px] flex-col rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 shrink-0 text-sm font-medium text-pro-text-label">Recent Trades</h3>
@@ -237,8 +237,8 @@ export default function Trades() {
 	const { markets } = useHyperliquidPerps()
 	const [coin, setCoin] = useState('BTC')
 	const [nSigFigs, setNSigFigs] = useState(5)
-	const [trades, setTrades] = useState<Trade[]>([])
-	const [book, setBook] = useState<{ bids: BookLevel[]; asks: BookLevel[] }>({ bids: [], asks: [] })
+	const [trades, setTrades] = useState<Array<Trade>>([])
+	const [book, setBook] = useState<{ bids: Array<BookLevel>; asks: Array<BookLevel> }>({ bids: [], asks: [] })
 	const [now, setNow] = useState(() => Date.now())
 
 	const { book: snapshotBook } = useHyperliquidL2Book(coin, nSigFigs)
@@ -258,7 +258,7 @@ export default function Trades() {
 		setBook({ bids: snapshotBook.levels[0], asks: snapshotBook.levels[1] })
 	}, [snapshotBook])
 
-	const subs: WsSubscription[] = useMemo(
+	const subs: Array<WsSubscription> = useMemo(
 		() => [
 			{ type: 'trades', coin },
 			{ type: 'l2Book', coin, nSigFigs }
@@ -281,7 +281,7 @@ export default function Trades() {
 			setTrades((prev) => pushBounded(prev, mapped, MAX_TRADES))
 		},
 		l2Book: (message) => {
-			const levels: [HyperliquidWsBookLevel[], HyperliquidWsBookLevel[]] | undefined = message.data?.levels
+			const levels: [Array<HyperliquidWsBookLevel>, Array<HyperliquidWsBookLevel>] | undefined = message.data?.levels
 			if (!levels) return
 			setBook({
 				bids: (levels[0] ?? []).map(toBookLevel),

@@ -21,8 +21,8 @@ const pageName = ['Chains', 'ranked by', 'Bridged TVL']
 export default function Chains(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
-			title={`Bridged TVL Across All Chains - DefiLlama`}
-			description={`Track the total value of all tokens held on each blockchain network. Monitor bridged TVL across chains and compare token holdings between different blockchains on DefiLlama.`}
+			title="Bridged TVL Across All Chains - DefiLlama"
+			description="Track the total value of all tokens held on each blockchain network. Monitor bridged TVL across chains and compare token holdings between different blockchains on DefiLlama."
 			canonicalUrl="/bridged"
 			pageName={pageName}
 		>

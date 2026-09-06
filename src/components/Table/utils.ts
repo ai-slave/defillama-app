@@ -24,7 +24,7 @@ type ColumnTableInstance = {
 
 type ColumnTableColumn = {
 	id: string
-	columns?: ColumnTableColumn[]
+	columns?: Array<ColumnTableColumn>
 	getLeafColumns?: () => Array<{ id: string }>
 }
 
@@ -44,8 +44,8 @@ const getColumnOrderEntries = (columnOrders: ColumnOrdersByBreakpoint) =>
 
 type ColumnOrderEntry = ReturnType<typeof getColumnOrderEntries>[number]
 
-const getColumnOrderChangeBreakpoints = (entries: ColumnOrderEntry[]) => {
-	const breakpoints: number[] = []
+const getColumnOrderChangeBreakpoints = (entries: Array<ColumnOrderEntry>) => {
+	const breakpoints: Array<number> = []
 	let previousOrder: ColumnOrderState | null = null
 
 	for (const [size, order] of entries) {
@@ -58,7 +58,7 @@ const getColumnOrderChangeBreakpoints = (entries: ColumnOrderEntry[]) => {
 	return breakpoints
 }
 
-const getFixedColumnOrder = (entries: ColumnOrderEntry[]): ColumnOrderState | null => {
+const getFixedColumnOrder = (entries: Array<ColumnOrderEntry>): ColumnOrderState | null => {
 	if (entries.length === 0) return null
 
 	const zeroBreakpointOrder = entries.find(([size]) => size === 0)?.[1]
@@ -71,7 +71,10 @@ const getFixedColumnOrder = (entries: ColumnOrderEntry[]): ColumnOrderState | nu
 	return zeroBreakpointOrder
 }
 
-const getCurrentColumnOrderBreakpoint = (entries: ColumnOrderEntry[], defaultColumnOrder: ColumnOrderState | null) => {
+const getCurrentColumnOrderBreakpoint = (
+	entries: Array<ColumnOrderEntry>,
+	defaultColumnOrder: ColumnOrderState | null
+) => {
 	if (typeof window === 'undefined') return null
 
 	for (let i = entries.length - 1; i >= 0; i--) {
@@ -86,12 +89,12 @@ const getCurrentColumnOrderBreakpoint = (entries: ColumnOrderEntry[], defaultCol
 	return null
 }
 
-const getOrderForBreakpoint = (entries: ColumnOrderEntry[], breakpoint: number | null) => {
+const getOrderForBreakpoint = (entries: Array<ColumnOrderEntry>, breakpoint: number | null) => {
 	if (breakpoint == null) return null
 	return entries.find(([size]) => size === breakpoint)?.[1] ?? null
 }
 
-const appendLeafColumnIds = (columns: ColumnTableColumn[], columnIds: ColumnOrderState) => {
+const appendLeafColumnIds = (columns: Array<ColumnTableColumn>, columnIds: ColumnOrderState) => {
 	for (const column of columns) {
 		if (column.columns && column.columns.length > 0) {
 			appendLeafColumnIds(column.columns, columnIds)
@@ -108,14 +111,14 @@ const appendLeafColumnIds = (columns: ColumnTableColumn[], columnIds: ColumnOrde
 	}
 }
 
-const getLeafColumnIds = (columns: ColumnTableColumn[]) => {
+const getLeafColumnIds = (columns: Array<ColumnTableColumn>) => {
 	const columnIds: ColumnOrderState = []
 	appendLeafColumnIds(columns, columnIds)
 
 	return columnIds
 }
 
-export function splitArrayByFalsyValues<T extends object, K extends keyof T>(data: T[], column: K) {
+export function splitArrayByFalsyValues<T extends object, K extends keyof T>(data: Array<T>, column: K) {
 	return data.reduce(
 		(acc, curr) => {
 			const value = curr[column]
@@ -124,7 +127,7 @@ export function splitArrayByFalsyValues<T extends object, K extends keyof T>(dat
 			} else acc[0].push(curr)
 			return acc
 		},
-		[[], []] as [T[], T[]]
+		[[], []] as [Array<T>, Array<T>]
 	)
 }
 
@@ -143,7 +146,7 @@ function applyColumnOrder({ instance, order }: { instance: ColumnTableInstance; 
 }
 
 function useColumnOrderBreakpoint(
-	entries: ColumnOrderEntry[],
+	entries: Array<ColumnOrderEntry>,
 	defaultColumnOrder: ColumnOrderState | null,
 	enabled: boolean
 ) {

@@ -24,7 +24,7 @@ export default function ProtocolsMarketCaps(props: InferGetStaticPropsType<typeo
 		<Layout
 			title="Market Cap Rankings - DeFi Protocols - DefiLlama"
 			description="Track DeFi protocol market cap rankings across all chains. Compare token market capitalization for 7000+ protocols on Ethereum, Solana, Base, Arbitrum, and 500+ chains. Real-time crypto market cap analytics."
-			canonicalUrl={`/mcaps`}
+			canonicalUrl="/mcaps"
 			pageName={pageName}
 		>
 			<ProtocolsWithTokens {...props} />

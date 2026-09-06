@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import type { RWAOverviewMode } from './constants'
 
@@ -53,7 +53,7 @@ const TREEMAP_NESTED_BY_LABELS: Record<RwaTreemapNestedBy, string> = {
 	category: 'Asset Category'
 }
 
-const TIME_SERIES_BREAKDOWNS: Record<RWAOverviewMode, readonly RWAChartBreakdown[]> = {
+const TIME_SERIES_BREAKDOWNS: Record<RWAOverviewMode, ReadonlyArray<RWAChartBreakdown>> = {
 	chain: ['assetGroup', 'category', 'assetClass', 'platform'],
 	category: ['assetGroup', 'assetClass', 'platform'],
 	platform: ['assetGroup', 'assetName', 'category', 'assetClass'],
@@ -62,7 +62,7 @@ const TIME_SERIES_BREAKDOWNS: Record<RWAOverviewMode, readonly RWAChartBreakdown
 
 const NON_TIME_SERIES_BREAKDOWNS: Record<
 	RWAOverviewMode,
-	{ withChain: readonly RWAChartBreakdown[]; withoutChain: readonly RWAChartBreakdown[] }
+	{ withChain: ReadonlyArray<RWAChartBreakdown>; withoutChain: ReadonlyArray<RWAChartBreakdown> }
 > = {
 	chain: {
 		withChain: ['assetGroup', 'category', 'assetClass', 'platform', 'chain'],
@@ -96,7 +96,7 @@ const TIME_SERIES_DEFAULTS: Record<RWAOverviewMode, RWATimeSeriesChartBreakdown>
 	assetGroup: 'assetName'
 }
 
-const TREEMAP_NESTED_BY_OPTIONS: Record<RwaTreemapParentGrouping, readonly RwaTreemapNestedBy[]> = {
+const TREEMAP_NESTED_BY_OPTIONS: Record<RwaTreemapParentGrouping, ReadonlyArray<RwaTreemapNestedBy>> = {
 	chain: ['none', 'assetName'],
 	category: ['none', 'assetClass', 'assetName'],
 	assetClass: ['none', 'assetName'],
@@ -166,7 +166,7 @@ export function createRwaChartModeState(
 	}
 }
 
-export function getChartViewOptions(): readonly RWAChartOption<RWAChartView>[] {
+export function getChartViewOptions(): ReadonlyArray<RWAChartOption<RWAChartView>> {
 	return CHART_VIEW_OPTIONS
 }
 
@@ -198,7 +198,7 @@ export function getDefaultChartBreakdown(mode: RWAChartModeState, view: RWAChart
 
 export function getChartBreakdownOptions(
 	state: Pick<RWAChartState, 'mode' | 'view'>
-): RWAChartOption<RWAChartBreakdown>[] {
+): Array<RWAChartOption<RWAChartBreakdown>> {
 	return getAllowedBreakdowns(state.mode, state.view).map((key) => ({
 		key,
 		name: BREAKDOWN_LABELS[key]
@@ -211,7 +211,7 @@ export function getTreemapParentGrouping(breakdown: RWAChartBreakdown): RwaTreem
 
 export function getTreemapNestedByOptions(
 	parentGrouping: RwaTreemapParentGrouping
-): RWAChartOption<RwaTreemapNestedBy>[] {
+): Array<RWAChartOption<RwaTreemapNestedBy>> {
 	return TREEMAP_NESTED_BY_OPTIONS[parentGrouping].map((key) => ({
 		key,
 		name: TREEMAP_NESTED_BY_LABELS[key]
@@ -281,7 +281,7 @@ export function getTreemapNestedByQueryValue(state: RWAChartState): string | und
 	return state.treemapNestedBy
 }
 
-function getAllowedBreakdowns(mode: RWAChartModeState, view: RWAChartView): readonly RWAChartBreakdown[] {
+function getAllowedBreakdowns(mode: RWAChartModeState, view: RWAChartView): ReadonlyArray<RWAChartBreakdown> {
 	if (view === 'timeSeries') return TIME_SERIES_BREAKDOWNS[mode.mode]
 	const options = NON_TIME_SERIES_BREAKDOWNS[mode.mode]
 	return mode.canBreakdownByChain ? options.withChain : options.withoutChain

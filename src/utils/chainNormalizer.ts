@@ -86,7 +86,7 @@ const CHAIN_MAPPINGS: Record<string, ChainMapping> = {
 	rootstock: { display: 'Rootstock', dimensions: 'rsk', internal: 'rootstock' }
 }
 
-const DISPLAY_TO_ALIASES: Record<string, string[]> = {
+const DISPLAY_TO_ALIASES: Record<string, Array<string>> = {
 	'OP Mainnet': ['Optimism'],
 	BSC: ['Binance'],
 	'Hyperliquid L1': ['Hyperliquid'],
@@ -141,12 +141,12 @@ export function toInternalSlug(chain: string): string {
 }
 
 /** @deprecated ProDashboard metadata should stop accepting saved legacy aliases after migration. */
-export function getDisplayAliases(displayName: string): string[] {
+export function getDisplayAliases(displayName: string): Array<string> {
 	return DISPLAY_TO_ALIASES[displayName] || []
 }
 
 /** @deprecated Use explicit dataset-specific keys instead of broad chain alias matching. */
-export function buildChainMatchSet(chains: string[]): Set<string> {
+export function buildChainMatchSet(chains: Array<string>): Set<string> {
 	const set = new Set<string>()
 	for (const chain of chains) {
 		if (!chain) continue

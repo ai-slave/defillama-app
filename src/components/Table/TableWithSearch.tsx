@@ -36,7 +36,7 @@ const EMPTY_EXPANDED: ExpandedState = {}
 type CustomFiltersProp = React.ReactNode | (() => React.ReactNode)
 
 interface ITableWithSearchBaseProps<T extends RowData> {
-	data: T[]
+	data: Array<T>
 	// Each column keeps the value type inferred by createColumnHelper; TanStack erases
 	// those heterogeneous value types only when the columns enter a table together.
 	columns: TableOptions<T>['columns']
@@ -54,7 +54,7 @@ interface ITableWithSearchBaseProps<T extends RowData> {
 	embedded?: boolean
 	skipVirtualization?: boolean
 	tableLayout?: VirtualTableLayout
-	getSubRows?: (row: T) => T[] | undefined
+	getSubRows?: (row: T) => Array<T> | undefined
 	initialExpanded?: ExpandedState
 	showColumnSelect?: boolean
 	columnSelectLabel?: string
@@ -149,7 +149,7 @@ export function TableWithSearch<T extends RowData>({
 		.filter((column) => column.getIsVisible() && !column.columnDef.meta?.hidden)
 		.map((column) => column.id)
 	const setColumnOptions = React.useCallback(
-		(newOptions: string[] | ((prev: string[]) => string[])) => {
+		(newOptions: Array<string> | ((prev: Array<string>) => Array<string>)) => {
 			const resolvedOptions = typeof newOptions === 'function' ? newOptions(selectedColumns) : newOptions
 			const nextVisibility = Object.fromEntries(
 				instance.getAllLeafColumns().map((column) => [column.id, resolvedOptions.includes(column.id)])

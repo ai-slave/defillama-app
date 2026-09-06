@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { TokenSearchDialog } from '../Filters/TokenSearchDialog'
 
 const mocks = vi.hoisted(() => ({
@@ -69,7 +69,7 @@ describe('TokenSearchDialog virtualizer lifecycle', () => {
 		mocks.useVirtualizer.mockClear()
 	})
 
-	it('initializes virtual rows only when the portal content and scroll element mount', () => {
+	test('initializes virtual rows only when the portal content and scroll element mount', () => {
 		renderDialog()
 		expect(mocks.useVirtualizer).not.toHaveBeenCalled()
 

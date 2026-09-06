@@ -16,7 +16,7 @@ export interface FilterPreset {
 	strategyType?: 'protocols' | 'chains' | 'both'
 }
 
-const SIZE_PRESETS: FilterPreset[] = [
+const SIZE_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'size-large',
 		name: 'Large',
@@ -57,7 +57,7 @@ const SIZE_PRESETS: FilterPreset[] = [
 	}
 ]
 
-const REVENUE_PRESETS: FilterPreset[] = [
+const REVENUE_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'revenue-leaders',
 		name: 'Revenue Leaders',
@@ -72,7 +72,7 @@ const REVENUE_PRESETS: FilterPreset[] = [
 	}
 ]
 
-const INVESTMENT_PRESETS: FilterPreset[] = [
+const INVESTMENT_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'value-plays',
 		name: 'Value Protocols',
@@ -81,7 +81,7 @@ const INVESTMENT_PRESETS: FilterPreset[] = [
 		filters: {
 			pfRatioMin: 0,
 			pfRatioMax: 20,
-			revenue24hMin: 1_000,
+			revenue24hMin: 1000,
 			tvlMin: 10_000_000
 		},
 		tooltip: 'P/F ≤ 20, revenue ≥ $1k, TVL ≥ $10M',
@@ -103,7 +103,7 @@ const INVESTMENT_PRESETS: FilterPreset[] = [
 	}
 ]
 
-const CATEGORY_PRESETS: FilterPreset[] = [
+const CATEGORY_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'dex-leaders',
 		name: 'DEX Leaders',
@@ -133,7 +133,7 @@ const CATEGORY_PRESETS: FilterPreset[] = [
 	}
 ]
 
-const QUICK_PRESETS: FilterPreset[] = [
+const QUICK_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'active-protocols',
 		name: 'Active Protocols',
@@ -161,7 +161,7 @@ const QUICK_PRESETS: FilterPreset[] = [
 	}
 ]
 
-const GROWTH_PRESETS: FilterPreset[] = [
+const GROWTH_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'tvl-growing-weekly',
 		name: 'TVL Growing (7d)',
@@ -243,7 +243,7 @@ const GROWTH_PRESETS: FilterPreset[] = [
 	}
 ]
 
-const ACTIVITY_PRESETS: FilterPreset[] = [
+const ACTIVITY_PRESETS: Array<FilterPreset> = [
 	{
 		id: 'high-volume-24h',
 		name: 'High Volume (24h)',
@@ -320,7 +320,7 @@ const ACTIVITY_PRESETS: FilterPreset[] = [
 	}
 ]
 
-export const CORE_FILTER_PRESETS: FilterPreset[] = [
+export const CORE_FILTER_PRESETS: Array<FilterPreset> = [
 	...SIZE_PRESETS,
 	...REVENUE_PRESETS,
 	...INVESTMENT_PRESETS,

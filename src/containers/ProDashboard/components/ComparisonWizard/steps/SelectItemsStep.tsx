@@ -23,14 +23,14 @@ export function SelectItemsStep() {
 	const { protocols, chains, protocolsLoading } = useProDashboardCatalog()
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
-	const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+	const [selectedCategories, setSelectedCategories] = useState<Array<string>>([])
 	const listRef = useRef<HTMLDivElement>(null)
 
 	const { data: chainCategoriesList } = useQuery({
 		queryKey: ['pro-dashboard', 'chain-categories'],
 		queryFn: async () => {
 			const data = await fetchChainsCategories()
-			return (data?.categories as string[]) || []
+			return (data?.categories as Array<string>) || []
 		},
 		staleTime: 60 * 60 * 1000,
 		enabled: state.comparisonType === 'chains'
@@ -44,9 +44,9 @@ export function SelectItemsStep() {
 				chainCategoriesList.map(async (cat) => {
 					try {
 						const data = await fetchChainsByCategory(cat)
-						return { category: cat, chains: (data?.chainsUnique as string[]) || [] }
+						return { category: cat, chains: (data?.chainsUnique as Array<string>) || [] }
 					} catch {
-						return { category: cat, chains: [] as string[] }
+						return { category: cat, chains: [] as Array<string> }
 					}
 				})
 			)
@@ -60,7 +60,7 @@ export function SelectItemsStep() {
 		enabled: state.comparisonType === 'chains' && !!chainCategoriesList?.length
 	})
 
-	const options: Option[] = useMemo(() => {
+	const options: Array<Option> = useMemo(() => {
 		if (state.comparisonType === 'chains') {
 			return [...chains]
 				.sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
@@ -87,7 +87,7 @@ export function SelectItemsStep() {
 
 		parentsOrSolo.sort((a, b) => (b.tvl || 0) - (a.tvl || 0))
 
-		const result: Option[] = []
+		const result: Array<Option> = []
 
 		for (const parent of parentsOrSolo) {
 			result.push({
@@ -128,7 +128,7 @@ export function SelectItemsStep() {
 	const selectedCategoriesSet = useMemo(() => new Set(selectedCategories), [selectedCategories])
 
 	const filteredOptions = useMemo(() => {
-		let filtered: Option[] = options
+		let filtered: Array<Option> = options
 
 		if (selectedCategoriesSet.size > 0) {
 			if (state.comparisonType === 'chains') {

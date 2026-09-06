@@ -9,7 +9,7 @@ import { isInvestorsEnabled } from '~/containers/Investors/config'
 
 const IS_INVESTORS_SITE = isInvestorsEnabled()
 
-const ALLOWED_ORIGINS: string[] = ['https://investors.defillama.com']
+const ALLOWED_ORIGINS: Array<string> = ['https://investors.defillama.com']
 
 function isAllowedOrigin(origin: string): boolean {
 	if (ALLOWED_ORIGINS.includes(origin)) return true

@@ -5,7 +5,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import type { QueryTab } from './useSqlTabs'
 
 interface QueryTabBarProps {
-	tabs: QueryTab[]
+	tabs: Array<QueryTab>
 	activeTabId: string
 	onFocus: (id: string) => void
 	onClose: (id: string) => void

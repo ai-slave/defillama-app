@@ -66,7 +66,7 @@ export type SegmentedControlOption<T extends string> = {
 type SegmentedControlProps<T extends string> = Omit<React.ComponentProps<'div'>, 'children' | 'onChange'> & {
 	value: T | null
 	onValueChange: (value: T) => void
-	options: readonly SegmentedControlOption<T>[]
+	options: ReadonlyArray<SegmentedControlOption<T>>
 	label: string
 	leading?: React.ReactNode
 	variant: TagGroupVariant
@@ -202,7 +202,7 @@ export function SegmentedControl<T extends string>({
 	)
 }
 
-type TagGroupProps<V extends readonly string[] = readonly string[]> = React.ComponentProps<'div'> & {
+type TagGroupProps<V extends ReadonlyArray<string> = ReadonlyArray<string>> = React.ComponentProps<'div'> & {
 	selectedValue: V[number] | null
 	setValue: (value: V[number]) => void
 	values: V
@@ -210,11 +210,11 @@ type TagGroupProps<V extends readonly string[] = readonly string[]> = React.Comp
 	size: TagGroupSize
 	label?: string
 	ariaLabel?: string
-	disabledValues?: readonly V[number][]
+	disabledValues?: ReadonlyArray<V[number]>
 }
 
 /** SegmentedControl adapter for plain string-list options; labels are the capitalized values. */
-export function TagGroup<V extends readonly string[]>({
+export function TagGroup<V extends ReadonlyArray<string>>({
 	selectedValue,
 	setValue,
 	values,

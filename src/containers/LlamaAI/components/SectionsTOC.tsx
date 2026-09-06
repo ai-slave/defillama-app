@@ -3,7 +3,7 @@ import type { Message } from '~/containers/LlamaAI/types'
 
 type Section = { text: string; msgId: string }
 
-function parseSections(messages: Message[]): Section[] {
+function parseSections(messages: Array<Message>): Array<Section> {
 	for (let i = messages.length - 1; i >= 0; i--) {
 		const msg = messages[i]
 		if (msg.role !== 'assistant' || !msg.content || !msg.id) continue
@@ -22,7 +22,7 @@ export function SectionsTOC({
 	messages,
 	scrollContainerRef
 }: {
-	messages: Message[]
+	messages: Array<Message>
 	scrollContainerRef: RefObject<HTMLDivElement | null>
 }) {
 	const sections = useMemo(() => parseSections(messages), [messages])

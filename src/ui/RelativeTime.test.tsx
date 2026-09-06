@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { RelativeTime } from './RelativeTime'
 
 describe('RelativeTime', () => {
-	it('renders a deterministic absolute fallback with the exact instant during SSR', () => {
+	test('renders a deterministic absolute fallback with the exact instant during SSR', () => {
 		const html = renderToStaticMarkup(
 			<RelativeTime value="2026-07-24T16:30:00Z" prefix="Updated" className="freshness" />
 		)
@@ -13,7 +13,7 @@ describe('RelativeTime', () => {
 		expect(html).toContain('class="freshness"')
 	})
 
-	it('requires an explicit unit before formatting numeric timestamps', () => {
+	test('requires an explicit unit before formatting numeric timestamps', () => {
 		expect(renderToStaticMarkup(<RelativeTime value={1_753_371_000_000} />)).toBe('<span>-</span>')
 		expect(renderToStaticMarkup(<RelativeTime value={1_753_371_000_000} input="milliseconds" />)).toContain(
 			'Jul 24, 2025'

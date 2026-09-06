@@ -11,8 +11,8 @@ const BREAKDOWN_STALE_MS = 20 * 60 * 1000
 
 interface AdapterMetricProtocolBreakdownRequest {
 	metric: AdapterChartBuilderMetric
-	chains: string[]
-	categories: string[]
+	chains: Array<string>
+	categories: Array<string>
 	topN: number
 	groupByParent: boolean
 	chainFilterMode: 'include' | 'exclude'
@@ -61,13 +61,13 @@ export function getCachedAdapterMetricProtocolBreakdown({
 interface AdapterMetricChainBreakdownRequest {
 	protocol?: string
 	metric: AdapterChartBuilderMetric
-	chains: string[]
+	chains: Array<string>
 	topN: number
 	chainFilterMode: 'include' | 'exclude'
 	chainCategoryFilterMode: 'include' | 'exclude'
 	protocolCategoryFilterMode: 'include' | 'exclude'
-	chainCategories: string[]
-	protocolCategories: string[]
+	chainCategories: Array<string>
+	protocolCategories: Array<string>
 }
 
 export function getCachedAdapterMetricChainBreakdown({

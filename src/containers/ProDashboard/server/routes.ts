@@ -1,7 +1,7 @@
 import { FEATURES_SERVER } from '~/constants'
 import type { SitemapUrlEntry } from '~/utils/sitemapXml'
 
-const PRO_DASHBOARD_SITEMAP_LIMIT = 1_000
+const PRO_DASHBOARD_SITEMAP_LIMIT = 1000
 const PRO_DASHBOARD_SITEMAP_PAGE_SIZE = 100
 const PRO_DASHBOARD_SITEMAP_FETCH_TIMEOUT_MS = 10_000
 
@@ -13,7 +13,7 @@ type ProDashboardSearchItem = {
 }
 
 type ProDashboardSearchResponse = {
-	items?: ProDashboardSearchItem[]
+	items?: Array<ProDashboardSearchItem>
 	totalPages?: number
 }
 
@@ -36,8 +36,8 @@ async function fetchProDashboardSearchPage(params: URLSearchParams): Promise<Pro
 	}
 }
 
-export async function getProDashboardSitemapEntries(): Promise<SitemapUrlEntry[]> {
-	const entries: SitemapUrlEntry[] = []
+export async function getProDashboardSitemapEntries(): Promise<Array<SitemapUrlEntry>> {
+	const entries: Array<SitemapUrlEntry> = []
 	const seen = new Set<string>()
 	const maxPages = Math.ceil(PRO_DASHBOARD_SITEMAP_LIMIT / PRO_DASHBOARD_SITEMAP_PAGE_SIZE)
 	let page = 1

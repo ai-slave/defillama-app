@@ -7,8 +7,8 @@ export interface CSVDownloadOptions {
 }
 
 export interface DatasetCSVParams {
-	data: Record<string, unknown>[]
-	columns?: string[]
+	data: Array<Record<string, unknown>>
+	columns?: Array<string>
 	columnHeaders?: Record<string, string>
 	filename?: string
 	filenameSuffix?: string
@@ -17,7 +17,7 @@ export interface DatasetCSVParams {
 
 export function download(filename: string, text: string): void {
 	const element = document.createElement('a')
-	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text))
+	element.setAttribute('href', `data:text/plain;charset=utf-8,${encodeURIComponent(text)}`)
 	element.setAttribute('download', filename)
 
 	element.style.display = 'none'
@@ -71,7 +71,7 @@ export function addTimestampToFilename(filename: string, date: string): string {
 
 export function downloadJSON(
 	filename: string,
-	data: CsvSerializableCell[][],
+	data: Array<Array<CsvSerializableCell>>,
 	options: { addTimestamp?: boolean } = {}
 ): void {
 	try {
@@ -107,7 +107,7 @@ export type DownloadFormat = 'csv' | 'json'
 export function downloadTabular(
 	format: DownloadFormat,
 	filename: string,
-	data: CsvSerializableCell[][],
+	data: Array<Array<CsvSerializableCell>>,
 	options: { addTimestamp?: boolean } = {}
 ): void {
 	const base = filename.replace(/\.(csv|json)$/i, '')

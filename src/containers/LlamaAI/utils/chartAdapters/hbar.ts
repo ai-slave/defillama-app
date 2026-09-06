@@ -4,7 +4,7 @@ import { getNDistinctColors } from '~/utils'
 
 export interface HBarGroupedSeries {
 	name: string
-	values: number[]
+	values: Array<number>
 	color: string
 }
 
@@ -14,9 +14,9 @@ export interface AdaptedHBarChartData {
 	props: {
 		height: string
 		valueSymbol: string
-		colors?: string[]
-		logos?: string[]
-		series?: HBarGroupedSeries[]
+		colors?: Array<string>
+		logos?: Array<string>
+		series?: Array<HBarGroupedSeries>
 		valueAxisMin?: number | 'dataMin'
 		valueAxisMax?: number | 'dataMax'
 		valueAxisInterval?: number
@@ -58,7 +58,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 		if (config.series.length > 1) {
 			const xField = primarySeries.dataMapping.xField
 			const logoByCategory = buildLogoByCategory(config.axes.x)
-			const categories: string[] = []
+			const categories: Array<string> = []
 			const categoryIndex = new Map<string, number>()
 			for (const row of rawData) {
 				if (!isChartDataRow(row)) continue
@@ -118,7 +118,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 		// matched by lowercased category value rather than row index so logos can't drift off their bars
 		const logoByCategory = buildLogoByCategory(config.axes.x)
 		const chartData: Array<[string, number]> = []
-		const logos: string[] | undefined = logoByCategory ? [] : undefined
+		const logos: Array<string> | undefined = logoByCategory ? [] : undefined
 		for (const row of rawData) {
 			if (!isChartDataRow(row)) continue
 			const category = row[primarySeries.dataMapping.xField] ?? 'Unknown'
@@ -130,7 +130,7 @@ export function adaptHBarChartData(config: ChartConfiguration, rawData: ChartDat
 
 		// Distinct color per bar by default; honor an explicit per-category override from the editor.
 		const distinct = getNDistinctColors(chartData.length)
-		const colors: string[] = []
+		const colors: Array<string> = []
 		const distinctColors = distinct.values()
 		for (const [category] of chartData) {
 			const nextColor = distinctColors.next()

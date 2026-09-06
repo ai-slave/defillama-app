@@ -148,7 +148,7 @@ export default function Tokens() {
 		<Layout
 			title="DeFi Token Usage Tracker - DefiLlama"
 			description="Track how tokens are used across DeFi protocols and CEXs. View token utility, protocol integrations, and on-chain usage data."
-			canonicalUrl={`/token-usage`}
+			canonicalUrl="/token-usage"
 			pageName={pageName}
 		>
 			<Announcement notCancellable>This is not an exhaustive list</Announcement>
@@ -276,7 +276,7 @@ export default function Tokens() {
 const fetchProtocols = async (
 	tokenSymbol: string | null,
 	authorizedFetch: (url: string) => Promise<Response | null>
-): Promise<TokenUsagePageRow[] | null> => {
+): Promise<Array<TokenUsagePageRow> | null> => {
 	if (!tokenSymbol) return null
 	try {
 		const data = await fetchProtocolsByTokenClient(tokenSymbol, authorizedFetch)
@@ -428,7 +428,7 @@ export const TokenUsageSearch = () => {
 								}}
 								focusOnHover
 								hideOnClick={false}
-								setValueOnClick={true}
+								setValueOnClick
 								className={`${popoverRowWithBorderStyles} justify-start gap-4 aria-disabled:opacity-50`}
 							>
 								{tokenResult?.logo ? (

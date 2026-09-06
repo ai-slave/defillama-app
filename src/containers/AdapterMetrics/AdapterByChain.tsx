@@ -28,8 +28,8 @@ import {
 } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { FullOldViewButton } from '~/containers/AdapterMetrics/FullOldViewButton'
-import { chainCharts } from '~/containers/ChainOverview/constants'
-import { protocolCharts } from '~/containers/ProtocolOverview/constants'
+import type { chainCharts } from '~/containers/ChainOverview/constants'
+import type { protocolCharts } from '~/containers/ProtocolOverview/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { setStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
@@ -71,7 +71,7 @@ interface IProps extends IAdapterByChainPageData {
 	defaultSorting?: SortingState
 }
 
-const SUPPORTED_OLD_VIEWS: TPageType[] = [
+const SUPPORTED_OLD_VIEWS: Array<TPageType> = [
 	'DEX Volume',
 	'Perp Volume',
 	'Options Premium Volume',
@@ -79,7 +79,7 @@ const SUPPORTED_OLD_VIEWS: TPageType[] = [
 	'DEX Aggregator Volume',
 	'Bridge Aggregator Volume'
 ]
-const FEES_CHART_PAGE_TYPES: TPageType[] = ['Fees', 'Revenue', 'Holders Revenue']
+const FEES_CHART_PAGE_TYPES: Array<TPageType> = ['Fees', 'Revenue', 'Holders Revenue']
 
 const DEFAULT_SORTING: SortingState = [{ desc: true, id: 'total24h' }]
 
@@ -110,7 +110,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	const isChain = props.chain !== 'All'
 	const categoryParam = router.query.category
 	const excludeCategoryParam = router.query.excludeCategory
-	const hasCategoryParam = Object.prototype.hasOwnProperty.call(router.query, 'category')
+	const hasCategoryParam = Object.hasOwn(router.query, 'category')
 	const tableColumns =
 		props.type === 'Earnings'
 			? isChain
@@ -132,14 +132,14 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 					: props.categories
 
 		if (excludeSet.size > 0) {
-			const filteredCategories: string[] = []
+			const filteredCategories: Array<string> = []
 			for (const category of selectedCategories) {
 				if (!excludeSet.has(category)) filteredCategories.push(category)
 			}
 			selectedCategories = filteredCategories
 		}
 
-		const categoriesToFilter: string[] = []
+		const categoriesToFilter: Array<string> = []
 		for (const category of selectedCategories) {
 			const normalizedCategory = category.toLowerCase()
 			if (normalizedCategory !== 'all' && normalizedCategory !== 'none') {
@@ -147,11 +147,11 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 			}
 		}
 
-		const protocols: IProtocol[] =
+		const protocols: Array<IProtocol> =
 			props.categories.length === 0
 				? props.protocols
 				: selectedCategories.length === 0
-					? ([] as IProtocol[])
+					? ([] as Array<IProtocol>)
 					: categoriesToFilter.length > 0
 						? getProtocolsByCategory(props.protocols, categoriesToFilter)
 						: props.protocols
@@ -218,7 +218,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 	const metricName = props.type
 	const columnsKey = `columns-${props.type}`
 
-	const setColumnOptions: React.Dispatch<React.SetStateAction<string[]>> = (newOptions) => {
+	const setColumnOptions: React.Dispatch<React.SetStateAction<Array<string>>> = (newOptions) => {
 		const options = typeof newOptions === 'function' ? newOptions(selectedColumns) : newOptions
 		const optionsSet = new Set(options)
 		const ops: Record<string, boolean> = {}
@@ -229,7 +229,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 		instance.setColumnVisibility(ops)
 	}
 
-	const selectedColumns: string[] = []
+	const selectedColumns: Array<string> = []
 	for (const col of instance.getAllLeafColumns()) {
 		if (col.getIsVisible()) selectedColumns.push(col.id)
 	}
@@ -355,7 +355,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						selectedValues={selectedColumns}
 						setSelectedValues={setColumnOptions}
 						nestedMenu={false}
-						label={'Columns'}
+						label="Columns"
 						labelType="smol"
 						variant="filter-responsive"
 						size="md"
@@ -367,7 +367,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 							includeQueryKey="category"
 							excludeQueryKey="excludeCategory"
 							nestedMenu={false}
-							label={'Category'}
+							label="Category"
 							labelType="smol"
 							variant="filter-responsive"
 							size="md"
@@ -432,7 +432,7 @@ const chainChartsKeys: Partial<Record<IProps['type'], (typeof chainCharts)[keyof
 	'Perp Volume': 'perpsVolume'
 }
 
-const getColumnsOptions = <T extends { id?: string; header?: unknown }>(type: IProps['type'], columns: T[]) =>
+const getColumnsOptions = <T extends { id?: string; header?: unknown }>(type: IProps['type'], columns: Array<T>) =>
 	columns.map((column) => {
 		let headerName: string
 		if (typeof column.header === 'function') {
@@ -678,7 +678,7 @@ const reportedPerpVolumeColumn = (
 		header,
 		cell: (info) => {
 			if (info.getValue() == null) return null
-			const helpers: string[] = []
+			const helpers: Array<string> = []
 			if (info.row.original.zeroFeePerp) {
 				helpers.push('This protocol charges no fees for most of its users')
 			}

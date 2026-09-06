@@ -17,7 +17,7 @@ export function BannersListView() {
 		data: banners,
 		isLoading,
 		error
-	} = useQuery<Banner[]>({
+	} = useQuery<Array<Banner>>({
 		queryKey: ['research', 'admin', 'banners'],
 		queryFn: () => listBanners(authorizedFetch),
 		retry: false

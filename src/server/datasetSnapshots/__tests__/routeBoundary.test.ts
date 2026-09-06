@@ -1,13 +1,13 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
 const SNAPSHOT_READER = '~/server/datasetSnapshots/reader.server'
 
-async function collectSourceFiles(rootDir: string): Promise<string[]> {
+async function collectSourceFiles(rootDir: string): Promise<Array<string>> {
 	const entries = await fs.readdir(rootDir, { withFileTypes: true })
-	const files: string[] = []
+	const files: Array<string> = []
 	for (const entry of entries) {
 		const filePath = path.join(rootDir, entry.name)
 		if (entry.isDirectory()) {
@@ -28,8 +28,8 @@ function isDomainDatasetModule(filePath: string): boolean {
 }
 
 describe('dataset snapshot reader boundary', () => {
-	it('allows filesystem reads only in typed domain dataset modules', async () => {
-		const errors: string[] = []
+	test('allows filesystem reads only in typed domain dataset modules', async () => {
+		const errors: Array<string> = []
 		for (const filePath of await collectSourceFiles('src/containers')) {
 			const source = await fs.readFile(filePath, 'utf8')
 			if (source.includes(SNAPSHOT_READER) && !isDomainDatasetModule(filePath)) {

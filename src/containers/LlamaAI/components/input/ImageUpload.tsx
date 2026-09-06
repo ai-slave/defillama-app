@@ -21,7 +21,7 @@ interface TextPreview {
 
 interface ImageUploadProps {
 	disabled?: boolean
-	selectedImages: SelectedImage[]
+	selectedImages: Array<SelectedImage>
 	previewImage: string | null
 	setPreviewImage: (url: string | null) => void
 	openPastedPreview?: (preview: TextPreview | null) => void

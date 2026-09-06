@@ -9,7 +9,7 @@ export type TokenUsageSectionRow = {
 	misrepresentedTokens?: boolean
 }
 
-export function buildTokenUsageRows(data: RawProtocolTokenUsageEntry[]): TokenUsageSectionRow[] {
+export function buildTokenUsageRows(data: Array<RawProtocolTokenUsageEntry>): Array<TokenUsageSectionRow> {
 	return data.map((entry) => {
 		let amountUsd = 0
 		const amountUsdByChain = entry.amountUsd ?? {}
@@ -33,9 +33,9 @@ export function buildTokenUsageRows(data: RawProtocolTokenUsageEntry[]): TokenUs
 }
 
 export function filterTokenUsageRows(
-	rows: TokenUsageSectionRow[],
+	rows: Array<TokenUsageSectionRow>,
 	includeCentralizedExchanges: boolean
-): TokenUsageSectionRow[] {
+): Array<TokenUsageSectionRow> {
 	return rows.filter((row) => {
 		if (row.misrepresentedTokens) return false
 		if (row.category?.toLowerCase() === 'cex' && !includeCentralizedExchanges) return false

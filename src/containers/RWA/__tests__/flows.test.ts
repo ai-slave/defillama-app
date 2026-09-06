@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IRWAAssetsOverview, IRWAFlowAggregatePoint, IRWAFlowOverviewSplitPoint } from '../api.types'
 import {
 	aggregateRWAFlowRows,
@@ -25,12 +25,12 @@ const aggregatePoint = (timestampMs: number, netFlowUsd: number | null, coverage
 })
 
 describe('RWA flow chart data', () => {
-	it('keeps unknown flow distinct from a measured zero', () => {
+	test('keeps unknown flow distinct from a measured zero', () => {
 		expect(formatSignedRWAFlow(null)).toBe('-')
 		expect(formatSignedRWAFlow(0)).toBe('$0')
 	})
 
-	it('restores flow view and grouping from canonical deep links', () => {
+	test('restores flow view and grouping from canonical deep links', () => {
 		expect(parseRWAFlowQueryState('flows', 'weekly', false)).toEqual({
 			view: 'netFlows',
 			groupBy: 'weekly'
@@ -45,7 +45,7 @@ describe('RWA flow chart data', () => {
 		})
 	})
 
-	it('defaults flow vs price to weekly without changing net flow defaults', () => {
+	test('defaults flow vs price to weekly without changing net flow defaults', () => {
 		expect(parseRWAFlowQueryState('flowVsPrice', undefined, true)).toEqual({
 			view: 'flowVsPrice',
 			groupBy: 'weekly'
@@ -64,14 +64,14 @@ describe('RWA flow chart data', () => {
 		})
 	})
 
-	it('serializes flow grouping against the selected chart default', () => {
+	test('serializes flow grouping against the selected chart default', () => {
 		expect(getRWAFlowModeQueryValue('weekly', 'flowVsPrice')).toBeUndefined()
 		expect(getRWAFlowModeQueryValue('daily', 'flowVsPrice')).toBe('daily')
 		expect(getRWAFlowModeQueryValue('daily', 'netFlows')).toBeUndefined()
 		expect(getRWAFlowModeQueryValue('weekly', 'netFlows')).toBe('weekly')
 	})
 
-	it('parses every asset flow grouping and defaults unknown values to daily', () => {
+	test('parses every asset flow grouping and defaults unknown values to daily', () => {
 		expect(parseRWAFlowGrouping('weekly')).toBe('weekly')
 		expect(parseRWAFlowGrouping('monthly')).toBe('monthly')
 		expect(parseRWAFlowGrouping('quarterly')).toBe('quarterly')
@@ -80,7 +80,7 @@ describe('RWA flow chart data', () => {
 		expect(parseRWAFlowGrouping('flowVsPrice')).toBe('daily')
 	})
 
-	it('parses and serializes the flow overlay query without legacy state', () => {
+	test('parses and serializes the flow overlay query without legacy state', () => {
 		expect(parseRWAFlowOverlayMetrics([])).toEqual(['onChainMcap'])
 		expect(parseRWAFlowOverlayMetrics(['none'])).toEqual([])
 		expect(parseRWAFlowOverlayMetrics(['activeMcap', 'defiActiveTvl'])).toEqual(['activeMcap', 'defiActiveTvl'])
@@ -89,14 +89,14 @@ describe('RWA flow chart data', () => {
 		expect(getRWAFlowOverlayQueryValue(['activeMcap', 'defiActiveTvl'])).toEqual(['activeMcap', 'defiActiveTvl'])
 	})
 
-	it('drops unavailable active mcap flow overlays from options and url state', () => {
+	test('drops unavailable active mcap flow overlays from options and url state', () => {
 		const availability = { hasActiveMcapData: false }
 
 		expect(getRWAFlowOverlayOptions(availability).map(({ key }) => key)).toEqual(['onChainMcap', 'defiActiveTvl'])
 		expect(parseRWAFlowOverlayMetrics(['activeMcap', 'defiActiveTvl'], availability)).toEqual(['defiActiveTvl'])
 	})
 
-	it('renders ascending daily flows and every selected level overlay on the secondary axis', () => {
+	test('renders ascending daily flows and every selected level overlay on the secondary axis', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const onChainMcap = new Map([
@@ -138,7 +138,7 @@ describe('RWA flow chart data', () => {
 		)
 	})
 
-	it('groups measured flows by calendar period while keeping an unknown period blank', () => {
+	test('groups measured flows by calendar period while keeping an unknown period blank', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const jan31 = day(2026, 0, 31)
@@ -170,14 +170,14 @@ describe('RWA flow chart data', () => {
 		])
 	})
 
-	it('defaults an overview flow chart to the trailing requested number of days', () => {
+	test('defaults an overview flow chart to the trailing requested number of days', () => {
 		const latest = day(2026, 6, 1)
 		const points = [aggregatePoint(day(2025, 0, 1), 1), aggregatePoint(latest, 2)]
 		expect(getRWAFlowDefaultStartTimestamp(points, 365)).toBe(latest - 365 * 86_400_000)
 		expect(getRWAFlowDefaultStartTimestamp(points, undefined)).toBeUndefined()
 	})
 
-	it('carries the cumulative total across days with missing flow coverage', () => {
+	test('carries the cumulative total across days with missing flow coverage', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const jan3 = day(2026, 0, 3)
@@ -193,7 +193,7 @@ describe('RWA flow chart data', () => {
 		])
 	})
 
-	it('decomposes monthly market-cap change into net capital and price effects', () => {
+	test('decomposes monthly market-cap change into net capital and price effects', () => {
 		const points = [
 			aggregatePoint(day(2026, 0, 10), 10),
 			aggregatePoint(day(2026, 0, 31), 5),
@@ -217,7 +217,7 @@ describe('RWA flow chart data', () => {
 		})
 	})
 
-	it('decomposes flow versus price at the selected calendar grouping', () => {
+	test('decomposes flow versus price at the selected calendar grouping', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const points = [aggregatePoint(jan1, 10), aggregatePoint(jan2, 20)]
@@ -239,7 +239,7 @@ describe('RWA flow chart data', () => {
 		expect(monthly.dataset.source).toHaveLength(1)
 	})
 
-	it('attributes unmeasured periods to price and keeps cumulative bars equal to delta mcap', () => {
+	test('attributes unmeasured periods to price and keeps cumulative bars equal to delta mcap', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const jan3 = day(2026, 0, 3)
@@ -273,7 +273,7 @@ describe('RWA flow chart data', () => {
 		})
 	})
 
-	it('carries measured flows across a missing market-cap observation', () => {
+	test('carries measured flows across a missing market-cap observation', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const jan3 = day(2026, 0, 3)
@@ -301,7 +301,7 @@ describe('RWA flow chart data', () => {
 		})
 	})
 
-	it('summarizes only decomposition rows inside the visible chart range', () => {
+	test('summarizes only decomposition rows inside the visible chart range', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const jan3 = day(2026, 0, 3)
@@ -325,7 +325,7 @@ describe('RWA flow chart data', () => {
 		expect(summary?.flowDrivenPct).toBeCloseTo(100 / 6)
 	})
 
-	it('rebases cumulative decomposition summaries to the visible chart range', () => {
+	test('rebases cumulative decomposition summaries to the visible chart range', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const jan3 = day(2026, 0, 3)
@@ -349,7 +349,7 @@ describe('RWA flow chart data', () => {
 		expect(summary?.flowDrivenPct).toBeCloseTo(100 / 6)
 	})
 
-	it('builds platform tooltip summaries from matching per-asset flow and mcap rows', () => {
+	test('builds platform tooltip summaries from matching per-asset flow and mcap rows', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const assets = [
@@ -384,8 +384,8 @@ describe('RWA flow chart data', () => {
 		])
 	})
 
-	it('sums rotation series by month without treating an absent series as zero', () => {
-		const points: IRWAFlowOverviewSplitPoint[] = [
+	test('sums rotation series by month without treating an absent series as zero', () => {
+		const points: Array<IRWAFlowOverviewSplitPoint> = [
 			{ timestamp: day(2026, 0, 5) / 1e3, Bonds: 10, Credit: -5 },
 			{ timestamp: day(2026, 0, 20) / 1e3, Bonds: -3, Credit: 2 },
 			{ timestamp: day(2026, 1, 5) / 1e3, Bonds: 4 }
@@ -402,10 +402,10 @@ describe('RWA flow chart data', () => {
 		})
 	})
 
-	it('supports daily and yearly net-flow breakdowns', () => {
+	test('supports daily and yearly net-flow breakdowns', () => {
 		const jan5 = day(2026, 0, 5)
 		const dec5 = day(2026, 11, 5)
-		const points: IRWAFlowOverviewSplitPoint[] = [
+		const points: Array<IRWAFlowOverviewSplitPoint> = [
 			{ timestamp: jan5 / 1e3, Bonds: 10 },
 			{ timestamp: dec5 / 1e3, Bonds: -3 }
 		]
@@ -417,7 +417,7 @@ describe('RWA flow chart data', () => {
 		expect(buildRWAFlowRotationChart(points, 'yearly').dataset.source).toEqual([[day(2026, 0, 1), 7]])
 	})
 
-	it('carries each cumulative net-flow breakdown across missing observations', () => {
+	test('carries each cumulative net-flow breakdown across missing observations', () => {
 		const jan1 = day(2026, 0, 1)
 		const jan2 = day(2026, 0, 2)
 		const jan3 = day(2026, 0, 3)
@@ -440,11 +440,11 @@ describe('RWA flow chart data', () => {
 		})
 	})
 
-	it('orders rotation series by recent absolute net flow independently of chart frequency', () => {
+	test('orders rotation series by recent absolute net flow independently of chart frequency', () => {
 		const latest = day(2026, 2, 31)
-		const points: IRWAFlowOverviewSplitPoint[] = [
+		const points: Array<IRWAFlowOverviewSplitPoint> = [
 			{ timestamp: (latest - 40 * 86_400_000) / 1e3, 'No Recent Flow': 10_000 },
-			{ timestamp: (latest - 10 * 86_400_000) / 1e3, 'Older Big': 1_000, 'Older Small': -50 },
+			{ timestamp: (latest - 10 * 86_400_000) / 1e3, 'Older Big': 1000, 'Older Small': -50 },
 			{ timestamp: latest / 1e3, 'Recent Inflow': 80, 'Recent Outflow': -100 }
 		]
 
@@ -459,7 +459,7 @@ describe('RWA flow chart data', () => {
 		expect(monthly.charts.map((chart) => chart.name)).toEqual(expectedOrder.slice(1))
 	})
 
-	it('bounds rotation series and preserves omitted signed flows in Others', () => {
+	test('bounds rotation series and preserves omitted signed flows in Others', () => {
 		const timestamp = day(2026, 0, 1)
 		const point: IRWAFlowOverviewSplitPoint = { timestamp: timestamp / 1e3 }
 		for (let index = 0; index < 32; index++) point[`Series ${index + 1}`] = 32 - index
@@ -475,7 +475,7 @@ describe('RWA flow chart data', () => {
 		expect(completeDataset.source[0]?.slice(1)).toEqual(Array.from({ length: 32 }, (_, index) => 32 - index))
 	})
 
-	it('aggregates only the assets left by the page filters and preserves missing days', () => {
+	test('aggregates only the assets left by the page filters and preserves missing days', () => {
 		const assets = [
 			{ kind: 'spot', canonicalMarketId: 'bond-a' },
 			{ kind: 'spot', canonicalMarketId: 'bond-b' }

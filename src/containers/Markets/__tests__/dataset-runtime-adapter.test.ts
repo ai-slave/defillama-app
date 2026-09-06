@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({ readJson: vi.fn() }))
 
@@ -11,7 +11,7 @@ beforeEach(() => {
 })
 
 describe('markets dataset snapshot', () => {
-	it('checks market availability by canonical CoinGecko ID', async () => {
+	test('checks market availability by canonical CoinGecko ID', async () => {
 		mocks.readJson.mockResolvedValue({ bitcoin: true })
 		const { hasTokenMarkets } = await import('~/containers/Markets/server/dataset.server')
 
@@ -19,7 +19,7 @@ describe('markets dataset snapshot', () => {
 		expect(mocks.readJson).toHaveBeenCalledWith('markets', 'token-gecko-ids.json')
 	})
 
-	it('resolves retired CEX Markets slugs to canonical exchange profiles', async () => {
+	test('resolves retired CEX Markets slugs to canonical exchange profiles', async () => {
 		mocks.readJson.mockResolvedValue({
 			'crypto-com': { exchange: 'crypto-com', defillama_slug: 'Crypto.com' }
 		})

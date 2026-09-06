@@ -75,7 +75,7 @@ async function getChartOptionsMap(): Promise<ChartOptionsMap> {
 
 export async function resolveTableSources(
 	sql: string,
-	declaredSources: TableSource[]
+	declaredSources: Array<TableSource>
 ): Promise<Array<{ name: string; source: TableSource }>> {
 	const tables = declaredSources.map((source) => ({ name: tableNameFor(source), source }))
 	const known = new Set(tables.map((t) => t.name))
@@ -127,7 +127,7 @@ interface WorkerResponse {
 }
 
 function runWorker(
-	job: { sql: string; tables: WorkerTable[]; memoryLimit: string; threads: number },
+	job: { sql: string; tables: Array<WorkerTable>; memoryLimit: string; threads: number },
 	timeoutMs: number
 ): Promise<WorkerResponse> {
 	return new Promise((resolve, reject) => {
@@ -137,8 +137,8 @@ function runWorker(
 		})
 
 		let settled = false
-		const stdoutChunks: Buffer[] = []
-		const stderrChunks: Buffer[] = []
+		const stdoutChunks: Array<Buffer> = []
+		const stderrChunks: Array<Buffer> = []
 
 		const timer = setTimeout(() => {
 			if (settled) return
@@ -191,7 +191,7 @@ export async function runServerSql(
 
 		const jobDir = await mkdtemp(join(tmpdir(), 'sql-run-'))
 		try {
-			const workerTables: WorkerTable[] = []
+			const workerTables: Array<WorkerTable> = []
 			for (const table of tables) {
 				const csv = await fetchCsvForSource(table.source)
 				const csvPath = join(jobDir, `${table.name}.csv`)

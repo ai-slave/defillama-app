@@ -21,7 +21,7 @@ export type CompareChainAdapterRequest =
 			params: { adapterType: 'fees'; protocol: string; dataType: 'dailyRevenue' }
 	  }
 
-export function getCompareChainAdapterMetrics(selectedCharts: readonly string[]): CompareChainAdapterMetric[] {
+export function getCompareChainAdapterMetrics(selectedCharts: ReadonlyArray<string>): Array<CompareChainAdapterMetric> {
 	return COMPARE_CHAIN_ADAPTER_METRICS.filter((metric) => selectedCharts.includes(metric))
 }
 
@@ -66,7 +66,7 @@ export function mergeCompareChainSources<T extends Record<CompareChainAdapterMet
 	metricData
 }: {
 	overview: T | undefined
-	adapterMetrics: readonly CompareChainAdapterMetric[]
+	adapterMetrics: ReadonlyArray<CompareChainAdapterMetric>
 	metricData: ReadonlyArray<IAdapterChart | undefined>
 }): T | null {
 	if (!overview) return null
@@ -88,12 +88,12 @@ export function getCompareChainFailedSources({
 	metricErrors,
 	metricLabels
 }: {
-	chains: readonly string[]
-	adapterMetrics: readonly CompareChainAdapterMetric[]
+	chains: ReadonlyArray<string>
+	adapterMetrics: ReadonlyArray<CompareChainAdapterMetric>
 	overviewErrors: ReadonlyArray<unknown>
 	metricErrors: ReadonlyArray<unknown>
 	metricLabels: Readonly<Record<CompareChainAdapterMetric, string>>
-}): string[] {
+}): Array<string> {
 	const failedSources = chains.flatMap((chain, index) => (overviewErrors[index] ? [chain] : []))
 	for (let chainIndex = 0; chainIndex < chains.length; chainIndex++) {
 		const chain = chains[chainIndex]

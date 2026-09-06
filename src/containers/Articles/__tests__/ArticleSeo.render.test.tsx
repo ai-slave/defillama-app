@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { ArticleSeo } from '~/containers/Articles/ArticleSeo'
 import type { ArticleAuthorProfile, ArticleDocument } from '~/containers/Articles/types'
 
@@ -54,7 +54,7 @@ function makeArticle(): ArticleDocument {
 }
 
 describe('ArticleSeo rendered metadata', () => {
-	it('renders repeated Open Graph article author tags', () => {
+	test('renders repeated Open Graph article author tags', () => {
 		const html = renderToStaticMarkup(<ArticleSeo article={makeArticle()} />)
 		expect(html).toContain(
 			'<meta property="article:author" content="https://defillama.com/research/authors/jane-doe"/>'
@@ -64,7 +64,7 @@ describe('ArticleSeo rendered metadata', () => {
 		)
 	})
 
-	it('renders account-less guest authors in OG tags and Article JSON-LD', () => {
+	test('renders account-less guest authors in OG tags and Article JSON-LD', () => {
 		const html = renderToStaticMarkup(<ArticleSeo article={makeArticle()} />)
 		expect(html).toContain('<meta property="article:author" content="https://person-a.com"/>')
 		expect(html).toContain('"name":"Person A"')

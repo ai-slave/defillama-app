@@ -109,28 +109,28 @@ export type ProtocolTreasuryKey = 'tvl' | 'OwnTokens' | 'all'
 export type ProtocolChartCurrency = 'token' | 'raw' | 'usd'
 
 type IProtocolValueChartRawPoint = [number, number]
-export type IProtocolValueChartRaw = IProtocolValueChartRawPoint[]
+export type IProtocolValueChartRaw = Array<IProtocolValueChartRawPoint>
 type IProtocolValueChartPoint = [number, number]
-export type IProtocolValueChart = IProtocolValueChartPoint[]
+export type IProtocolValueChart = Array<IProtocolValueChartPoint>
 
 export type IProtocolChainBreakdownValue = Record<string, number>
 type IProtocolChainBreakdownChartRawPoint = [number, IProtocolChainBreakdownValue]
-export type IProtocolChainBreakdownChartRaw = IProtocolChainBreakdownChartRawPoint[]
+export type IProtocolChainBreakdownChartRaw = Array<IProtocolChainBreakdownChartRawPoint>
 type IProtocolChainBreakdownChartPoint = [number, IProtocolChainBreakdownValue]
-export type IProtocolChainBreakdownChart = IProtocolChainBreakdownChartPoint[]
+export type IProtocolChainBreakdownChart = Array<IProtocolChainBreakdownChartPoint>
 
 export type IProtocolTokenBreakdownValue = Record<string, number>
 type IProtocolTokenBreakdownChartRawPoint = [number, IProtocolTokenBreakdownValue]
-export type IProtocolTokenBreakdownChartRaw = IProtocolTokenBreakdownChartRawPoint[]
+export type IProtocolTokenBreakdownChartRaw = Array<IProtocolTokenBreakdownChartRawPoint>
 type IProtocolTokenBreakdownChartPoint = [number, IProtocolTokenBreakdownValue]
-export type IProtocolTokenBreakdownChart = IProtocolTokenBreakdownChartPoint[]
+export type IProtocolTokenBreakdownChart = Array<IProtocolTokenBreakdownChartPoint>
 
 interface IProtocolMedianApyChartPoint {
 	date: number
 	medianAPY: number
 }
 
-export type IProtocolMedianApyChart = IProtocolMedianApyChartPoint[]
+export type IProtocolMedianApyChart = Array<IProtocolMedianApyChartPoint>
 
 interface IProtocolChartParamsBase {
 	protocol: string
@@ -144,7 +144,7 @@ export type ProtocolChartSelector =
 
 export type IProtocolTvlChartParams = IProtocolChartParamsBase & {
 	key?: ProtocolTvlKey
-	tokensToExclude?: string[]
+	tokensToExclude?: Array<string>
 } & ProtocolChartSelector
 
 export type IProtocolTreasuryChartParams = IProtocolChartParamsBase & {
@@ -153,7 +153,7 @@ export type IProtocolTreasuryChartParams = IProtocolChartParamsBase & {
 
 export type IProtocolTvlTokenBreakdownChartParams = IProtocolChartParamsBase & {
 	key?: ProtocolTvlKey
-	tokensToExclude?: string[]
+	tokensToExclude?: Array<string>
 	currency?: ProtocolChartCurrency
 }
 

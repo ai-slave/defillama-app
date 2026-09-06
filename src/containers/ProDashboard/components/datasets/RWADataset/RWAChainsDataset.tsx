@@ -112,9 +112,9 @@ const getRWAChainsPaginationRowModel = getPaginationRowModel<RWAChainsTableRow>(
 
 const STALE_TIME = 5 * 60 * 1000
 
-function selectRWAChainRows(data: IRWAStatsResponse): RWAChainsTableRow[] {
+function selectRWAChainRows(data: IRWAStatsResponse): Array<RWAChainsTableRow> {
 	if (!data.byChain) return []
-	const rows: RWAChainsTableRow[] = []
+	const rows: Array<RWAChainsTableRow> = []
 	for (const chain in data.byChain) {
 		const stats = data.byChain[chain]
 		if (!stats) continue
@@ -151,7 +151,7 @@ function useRWAChainsTableData() {
 	return { data, isLoading: isLoading || (!streamDone && data === undefined), error }
 }
 
-const EMPTY_DATA: RWAChainsTableRow[] = []
+const EMPTY_DATA: Array<RWAChainsTableRow> = []
 
 export function RWAChainsDataset() {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'totalActiveMcap', desc: true }])
@@ -226,7 +226,7 @@ export function RWAChainsDataset() {
 						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
-								const csv: CsvCell[][] = [
+								const csv: Array<Array<CsvCell>> = [
 									['Chain', 'Asset Issuers', 'Asset Count', 'Active Mcap', 'Onchain Mcap', 'DeFi Active TVL']
 								]
 								for (const row of rows) {

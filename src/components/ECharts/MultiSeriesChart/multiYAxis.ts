@@ -29,7 +29,7 @@ type RenderSeries = {
 	itemStyle?: { color?: unknown }
 }
 
-export function normalizeSeriesYAxisIndices<TSeries extends RenderSeries>(series: TSeries[]) {
+export function normalizeSeriesYAxisIndices<TSeries extends RenderSeries>(series: Array<TSeries>) {
 	const sourceAxisIndexSet = new Set<number>()
 	let hasExplicitAxisIndex = false
 	for (const item of series) {
@@ -68,13 +68,13 @@ export function buildMultiYAxis({
 	valueSymbol,
 	sourceAxisIndexes
 }: {
-	series: RenderSeries[]
-	yAxis: MultiSeriesYAxisOption | MultiSeriesYAxisOption[] | undefined
-	configuredYAxis?: MultiSeriesYAxisOverride | MultiSeriesYAxisOverride[] | undefined
+	series: Array<RenderSeries>
+	yAxis: MultiSeriesYAxisOption | Array<MultiSeriesYAxisOption> | undefined
+	configuredYAxis?: MultiSeriesYAxisOverride | Array<MultiSeriesYAxisOverride> | undefined
 	expandTo100Percent: boolean | undefined
 	effectiveCharts: IMultiSeriesChartProps['charts']
 	valueSymbol: string
-	sourceAxisIndexes: number[] | null
+	sourceAxisIndexes: Array<number> | null
 }) {
 	const renderedAxisColors = new Map<number, Set<string>>()
 	const yAxisIndexToExplicitColor = new Map<number, string | undefined>()
@@ -126,7 +126,7 @@ export function buildMultiYAxis({
 	if (maxIndex < 0) return null
 
 	const isAxisArray = Array.isArray(yAxis)
-	const output: MultiSeriesYAxisOption[] = []
+	const output: Array<MultiSeriesYAxisOption> = []
 	const lastOffsetByPosition = new Map<string, number>()
 	for (let index = 0; index <= maxIndex; index++) {
 		const isPrimary = index === 0

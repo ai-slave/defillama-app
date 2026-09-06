@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	canProbeSessionAfterEmptyResponse,
 	getForegroundRecoveryIntent,
@@ -28,7 +28,7 @@ function failure(clientMutationId: string): PromptFailure {
 }
 
 describe('promptFailures', () => {
-	it('keeps failures scoped to their session and moves optimistic aliases', () => {
+	test('keeps failures scoped to their session and moves optimistic aliases', () => {
 		let state = promptFailuresReducer(new Map(), {
 			type: 'remember',
 			sessionId: 'temporary-a',
@@ -46,7 +46,7 @@ describe('promptFailures', () => {
 		expect(state.get('session-b')?.request.mutation.clientMutationId).toBe('mutation-b')
 	})
 
-	it('does not let stale settlement clear a newer failure', () => {
+	test('does not let stale settlement clear a newer failure', () => {
 		let state = promptFailuresReducer(new Map(), {
 			type: 'remember',
 			sessionId: 'session-a',
@@ -61,7 +61,7 @@ describe('promptFailures', () => {
 		expect(state.get('session-a')?.request.mutation.clientMutationId).toBe('newer')
 	})
 
-	it('clears only the confirmed mutation', () => {
+	test('clears only the confirmed mutation', () => {
 		let state = promptFailuresReducer(new Map(), {
 			type: 'remember',
 			sessionId: 'session-a',
@@ -76,7 +76,7 @@ describe('promptFailures', () => {
 		expect(state.has('session-a')).toBe(false)
 	})
 
-	it('preserves an unresolved prompt through an empty restore without duplicating it', () => {
+	test('preserves an unresolved prompt through an empty restore without duplicating it', () => {
 		const failed = failure('mutation-a')
 		const projected = projectPromptFailure([], failed)
 
@@ -84,7 +84,7 @@ describe('promptFailures', () => {
 		expect(projectPromptFailure(projected, failed)).toBe(projected)
 	})
 
-	it('recognizes the canonical user message id after mutation acceptance', () => {
+	test('recognizes the canonical user message id after mutation acceptance', () => {
 		const failed: PromptFailure = {
 			kind: 'reconnect',
 			error: 'Disconnected',
@@ -95,7 +95,7 @@ describe('promptFailures', () => {
 		expect(projectPromptFailure(restored, failed)).toBe(restored)
 	})
 
-	it('retries definite failures only by user action and reconnects ambiguous failures automatically', () => {
+	test('retries definite failures only by user action and reconnects ambiguous failures automatically', () => {
 		expect(getPromptFailurePolicy(failure('mutation-a'))).toEqual({
 			label: 'Retry',
 			automaticallyReconnect: false,
@@ -108,19 +108,19 @@ describe('promptFailures', () => {
 		})
 	})
 
-	it('does not treat an empty successful transport as mutation confirmation', () => {
+	test('does not treat an empty successful transport as mutation confirmation', () => {
 		expect(isPromptMutationConfirmed(false, false)).toBe(false)
 		expect(isPromptMutationConfirmed(true, false)).toBe(true)
 		expect(isPromptMutationConfirmed(false, true)).toBe(true)
 	})
 
-	it('does not let an unconfirmed replay attach to an older session execution', () => {
+	test('does not let an unconfirmed replay attach to an older session execution', () => {
 		expect(canProbeSessionAfterEmptyResponse(true, false)).toBe(false)
 		expect(canProbeSessionAfterEmptyResponse(true, true)).toBe(true)
 		expect(canProbeSessionAfterEmptyResponse(false, false)).toBe(true)
 	})
 
-	it('keeps definite failures idle while reconnecting only ambiguous work', () => {
+	test('keeps definite failures idle while reconnecting only ambiguous work', () => {
 		expect(
 			getForegroundRecoveryIntent({
 				hasActiveRecovery: false,

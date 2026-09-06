@@ -1,7 +1,7 @@
 // The server keeps running after the browser gives up reconnecting. Stop the active
 // reconnect UI promptly; visibility changes and the Reconnect action can attach later.
 export const RECOVERY_MAX_MS = 30_000
-export const RECOVERY_ATTEMPT_DELAYS_MS = [0, 1000, 2000, 4000, 8000, 14000] as const
+export const RECOVERY_ATTEMPT_DELAYS_MS = [0, 1000, 2000, 4000, 8000, 14_000] as const
 
 export const CONNECTIVITY_ERROR_PATTERNS = [
 	'failed to fetch',

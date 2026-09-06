@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { PreIpoCompanyListItem } from '../api.types'
 import { filterPreIpoCompanies, getPreIpoSectors } from '../overviewData'
 
-const companies: PreIpoCompanyListItem[] = [
+const companies: Array<PreIpoCompanyListItem> = [
 	{
 		id: 'anthropic',
 		name: 'Anthropic',
@@ -36,11 +36,11 @@ const companies: PreIpoCompanyListItem[] = [
 ]
 
 describe('pre-IPO overview data', () => {
-	it('returns the producer array when no filters are active', () => {
+	test('returns the producer array when no filters are active', () => {
 		expect(filterPreIpoCompanies(companies, '', null)).toBe(companies)
 	})
 
-	it('searches name, canonical ID, and sector while applying the sector filter', () => {
+	test('searches name, canonical ID, and sector while applying the sector filter', () => {
 		expect(filterPreIpoCompanies(companies, 'fusion', null)).toEqual([companies[1]])
 		const aiOnly = new Set(['Artificial Intelligence'])
 		expect(filterPreIpoCompanies(companies, 'anthropic', aiOnly)).toEqual([companies[0]])
@@ -48,7 +48,7 @@ describe('pre-IPO overview data', () => {
 		expect(filterPreIpoCompanies(companies, '', new Set())).toEqual([])
 	})
 
-	it('deduplicates and sorts sectors', () => {
+	test('deduplicates and sorts sectors', () => {
 		expect(getPreIpoSectors(companies)).toEqual(['Artificial Intelligence', 'Clean Technology'])
 	})
 })

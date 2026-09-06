@@ -35,12 +35,12 @@ const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeri
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
 
-const EMPTY_OTHER_PROTOCOLS: string[] = []
-const ACTIVE_LOANS_KEYS: ProtocolExtraTvlKey[] = ['borrowed']
+const EMPTY_OTHER_PROTOCOLS: Array<string> = []
+const ACTIVE_LOANS_KEYS: Array<ProtocolExtraTvlKey> = ['borrowed']
 
 interface ActiveLoansProtocolPageProps {
 	name: string
-	otherProtocols: string[]
+	otherProtocols: Array<string>
 	category: string | null
 	metrics: IProtocolPageMetrics
 	warningBanners: ReturnType<typeof getProtocolWarningBanners>
@@ -62,10 +62,10 @@ function MultiSeriesChartCard({
 }: {
 	title: string
 	protocolName: string
-	allSeries: string[]
+	allSeries: Array<string>
 	seriesLabel: string
 	breakdown: ProtocolBreakdownChart
-	defaultSeries?: string[]
+	defaultSeries?: Array<string>
 	aggregateOthers: boolean
 	exportSuffix: string
 	valueSymbol?: string

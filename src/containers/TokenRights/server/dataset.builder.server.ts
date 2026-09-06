@@ -9,7 +9,7 @@ import { buildTokenRightsIndexes } from './dataset.index'
 export async function buildTokenRightsDomain(writer: DatasetSnapshotWriter): Promise<void> {
 	const files = DATASET_SNAPSHOT_CONTRACT['token-rights'].files
 
-	const entries = await fetchJson<IRawTokenRightsEntry[]>(`${SERVER_URL}/token-rights`)
+	const entries = await fetchJson<Array<IRawTokenRightsEntry>>(`${SERVER_URL}/token-rights`)
 	const indexes = buildTokenRightsIndexes(entries)
 
 	await Promise.all([

@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useForkInitialPrompt } from '~/containers/LlamaAI/hooks/useForkInitialPrompt'
 
 const options = vi.hoisted(() => ({
@@ -53,7 +53,7 @@ describe('useForkInitialPrompt', () => {
 		vi.useRealTimers()
 	})
 
-	it('submits the fork prompt after restore finishes', async () => {
+	test('submits the fork prompt after restore finishes', async () => {
 		options.initialPrompt = 'continue this thread'
 		options.routeSessionId = 'session-1'
 		options.sessionId = 'session-1'
@@ -70,7 +70,7 @@ describe('useForkInitialPrompt', () => {
 		expect(options.submitPrompt).toHaveBeenCalledWith('continue this thread')
 	})
 
-	it('does not submit until the restored session matches the fork target', async () => {
+	test('does not submit until the restored session matches the fork target', async () => {
 		options.initialPrompt = 'continue this thread'
 		options.routeSessionId = 'session-1'
 		options.sessionId = 'session-2'

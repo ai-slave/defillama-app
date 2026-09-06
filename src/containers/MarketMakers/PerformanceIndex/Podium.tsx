@@ -87,7 +87,7 @@ export function Podium({
 	rows,
 	aggregated
 }: {
-	rows: PerformanceRow[]
+	rows: Array<PerformanceRow>
 	aggregated: Record<string, AggregatedMetrics>
 }) {
 	const top3 = [...rows].sort((a, b) => (b.composite ?? -Infinity) - (a.composite ?? -Infinity)).slice(0, 3)

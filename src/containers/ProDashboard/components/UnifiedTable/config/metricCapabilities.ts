@@ -9,7 +9,7 @@ for (const column of UNIFIED_TABLE_COLUMN_DICTIONARY) SUPPORTED_COLUMN_IDS.add(c
 
 export function isColumnSupported(
 	id: string,
-	rowHeaders: readonly UnifiedRowHeaderType[],
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	validCustomColumnIds?: Set<string>
 ): boolean {
 	if (isCustomColumnId(id)) {
@@ -20,16 +20,16 @@ export function isColumnSupported(
 }
 
 function filterByCapabilities(
-	ids: string[],
-	rowHeaders: readonly UnifiedRowHeaderType[],
+	ids: Array<string>,
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	validCustomColumnIds?: Set<string>
-): string[] {
+): Array<string> {
 	return ids.filter((id) => isColumnSupported(id, rowHeaders, validCustomColumnIds))
 }
 
 function pruneVisibility(
 	visibility: VisibilityState | undefined,
-	rowHeaders: readonly UnifiedRowHeaderType[],
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	validCustomColumnIds?: Set<string>
 ): VisibilityState {
 	if (!visibility) return {}
@@ -43,14 +43,14 @@ function pruneVisibility(
 
 function sanitizeSorting(
 	sorting: SortingState | undefined,
-	rowHeaders: readonly UnifiedRowHeaderType[],
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	validCustomColumnIds?: Set<string>
 ): SortingState {
 	if (!sorting) return []
 	return sorting.filter((sort) => isColumnSupported(sort.id, rowHeaders, validCustomColumnIds))
 }
 
-function getValidCustomColumnIds(customColumns?: CustomColumnDefinition[]): Set<string> {
+function getValidCustomColumnIds(customColumns?: Array<CustomColumnDefinition>): Set<string> {
 	const validIds = new Set<string>()
 	for (const column of customColumns ?? []) {
 		if (isCustomColumnId(column.id) && validateCustomColumnOnLoad(column).isValid) validIds.add(column.id)
@@ -65,13 +65,13 @@ export function sanitizeConfigColumns({
 	customColumns,
 	rowHeaders
 }: {
-	order: string[]
+	order: Array<string>
 	visibility?: VisibilityState
 	sorting?: SortingState
-	customColumns?: CustomColumnDefinition[] | undefined
-	rowHeaders: readonly UnifiedRowHeaderType[]
+	customColumns?: Array<CustomColumnDefinition> | undefined
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>
 }): {
-	order: string[]
+	order: Array<string>
 	visibility: VisibilityState
 	sorting: SortingState
 } {

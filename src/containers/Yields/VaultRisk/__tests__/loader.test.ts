@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
 
@@ -16,7 +16,7 @@ beforeEach(() => {
 })
 
 describe('hasVaultRisk', () => {
-	it('returns true on a vault-only fetch when the pool has a risk entry', async () => {
+	test('returns true on a vault-only fetch when the pool has a risk entry', async () => {
 		mocks.fetchJson.mockResolvedValue({ data: { protocol_id: null, vault_specific_risks: [] } })
 		const { hasVaultRisk } = await import('../loader')
 
@@ -26,21 +26,21 @@ describe('hasVaultRisk', () => {
 		expect(mocks.fetchJson).toHaveBeenCalledWith(`http://risk.test/v1/vault-risks/${POOL}`, expect.anything())
 	})
 
-	it('returns false when the response is not a vault fixture', async () => {
+	test('returns false when the response is not a vault fixture', async () => {
 		mocks.fetchJson.mockResolvedValue({ data: null })
 		const { hasVaultRisk } = await import('../loader')
 
 		await expect(hasVaultRisk(POOL)).resolves.toBe(false)
 	})
 
-	it('degrades to false when the fetch fails', async () => {
+	test('degrades to false when the fetch fails', async () => {
 		mocks.fetchJson.mockRejectedValue(new Error('http://risk.test: [404] Not Found'))
 		const { hasVaultRisk } = await import('../loader')
 
 		await expect(hasVaultRisk(POOL)).resolves.toBe(false)
 	})
 
-	it('rejects a non-UUID pool id without fetching', async () => {
+	test('rejects a non-UUID pool id without fetching', async () => {
 		const { hasVaultRisk } = await import('../loader')
 
 		await expect(hasVaultRisk('not-a-uuid')).resolves.toBe(false)

@@ -138,7 +138,7 @@ export function buildProtocolYAxis({
 	unlockTokenSymbol: string
 	gasUsedValueSymbol: string
 }) {
-	const finalYAxis: MultiSeriesYAxisOption[] = []
+	const finalYAxis: Array<MultiSeriesYAxisOption> = []
 	const context: AxisBuilderContext = { chartColors, chartsInSeries, unlockTokenSymbol, gasUsedValueSymbol }
 	const noOffset = allYAxis.length < 3
 

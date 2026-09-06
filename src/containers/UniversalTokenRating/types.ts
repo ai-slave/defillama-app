@@ -40,8 +40,8 @@ export type UtrLiquidityMetrics = {
 	otherVenues: number | null
 	spotDepthPct: number | null
 	spotVolumePct: number | null
-	tier1Exchanges: string[]
-	tier2Exchanges: string[]
+	tier1Exchanges: Array<string>
+	tier2Exchanges: Array<string>
 }
 
 export type UtrTokenomicsMetrics = {
@@ -66,8 +66,8 @@ export type UtrAssetMetrics = {
 }
 
 export type UtrBatchResponse = {
-	assets: UtrAssetMetrics[]
-	notFound: string[]
+	assets: Array<UtrAssetMetrics>
+	notFound: Array<string>
 }
 
 export type UtrRubricScore = {
@@ -83,8 +83,8 @@ export type UtrScores = {
 	disclosure: number | null
 	performance: number | null
 	rank: number | null
-	disclosureRubrics: UtrRubricScore[]
-	performanceRubrics: UtrRubricScore[]
+	disclosureRubrics: Array<UtrRubricScore>
+	performanceRubrics: Array<UtrRubricScore>
 }
 
 export type UtrListingStatus = 'listed' | 'pre-tge' | 'unlisted'
@@ -107,13 +107,13 @@ export type UtrLeaderboardRow = {
 	disclosureGrade?: string | null
 	performanceGrade?: string | null
 	breakdown?: {
-		disclosure: UtrCategoryBreakdown[]
-		performance: UtrCategoryBreakdown[]
+		disclosure: Array<UtrCategoryBreakdown>
+		performance: Array<UtrCategoryBreakdown>
 	}
 }
 
 export type UtrUniverse = {
-	rows: UtrLeaderboardRow[]
+	rows: Array<UtrLeaderboardRow>
 	scoredCount: number
 	totalCount: number
 }
@@ -173,7 +173,7 @@ export type UtrTopMover = {
 export type UtrMomResponse = {
 	configVersion: number
 	generatedAt: string
-	rows: { projectName: string; logoUrl: string | null; momChangePct: number | null }[]
+	rows: Array<{ projectName: string; logoUrl: string | null; momChangePct: number | null }>
 }
 
 export type UtrCriterionBreakdown = {
@@ -194,14 +194,14 @@ export type UtrCategoryBreakdown = {
 	score: number
 	grade: string
 	percentile: number
-	criteria: UtrCriterionBreakdown[]
+	criteria: Array<UtrCriterionBreakdown>
 }
 
 export type UtrAxisBreakdown = {
 	score: number
 	grade: string
 	momChangePct?: number | null
-	categories: UtrCategoryBreakdown[]
+	categories: Array<UtrCategoryBreakdown>
 }
 
 export type UtrChartSummary = {
@@ -223,7 +223,7 @@ export type UtrMarketSeriesPoint = {
 
 export type UtrMarketQualityCharts = {
 	windowDays: number
-	series: UtrMarketSeriesPoint[]
+	series: Array<UtrMarketSeriesPoint>
 	volumeMcap: UtrChartSummary
 	depthMcap: UtrChartSummary
 }
@@ -238,7 +238,7 @@ export type UtrCandlePoint = {
 
 export type UtrPricePerformanceChart = {
 	windowDays: number
-	candles: UtrCandlePoint[]
+	candles: Array<UtrCandlePoint>
 	changePct: number | null
 	greenCandles: number
 	redCandles: number
@@ -251,7 +251,7 @@ export type UtrPricePerformanceChart = {
 
 export type UtrOpenInterestChart = {
 	windowDays: number
-	venues: { exchangeId: string; avgOiUsd: number }[]
+	venues: Array<{ exchangeId: string; avgOiUsd: number }>
 	totalOiUsd: number | null
 	oiMcapRatioPct: number | null
 	criterionKey: string
@@ -262,7 +262,7 @@ export type UtrOpenInterestChart = {
 
 export type UtrFundingRateChart = {
 	windowDays: number
-	exchanges: { exchangeId: string; points: { date: string; fundingPct: number | null }[] }[]
+	exchanges: Array<{ exchangeId: string; points: Array<{ date: string; fundingPct: number | null }> }>
 	oiWeightedFundingPct: number | null
 	criterionKey: string
 	score: number | null
@@ -272,7 +272,7 @@ export type UtrFundingRateChart = {
 
 export type UtrBidAskSpreadChart = {
 	windowDays: number
-	exchanges: { exchangeId: string; points: { date: string; spreadPct: number | null }[] }[]
+	exchanges: Array<{ exchangeId: string; points: Array<{ date: string; spreadPct: number | null }> }>
 	tightestExchange: string | null
 	vwasPct: number | null
 	criterionKey: string
@@ -283,7 +283,7 @@ export type UtrBidAskSpreadChart = {
 
 export type UtrCexDexChart = {
 	windowDays: number
-	points: { date: string; cexUsd: number | null; dexUsd: number | null }[]
+	points: Array<{ date: string; cexUsd: number | null; dexUsd: number | null }>
 	cexAvgUsd: number | null
 	dexAvgUsd: number | null
 	cexSharePct: number | null
@@ -295,7 +295,7 @@ export type UtrCexDexChart = {
 
 export type UtrSpotPerpChart = {
 	windowDays: number
-	points: { date: string; spotUsd: number | null; perpsUsd: number | null }[]
+	points: Array<{ date: string; spotUsd: number | null; perpsUsd: number | null }>
 	spotAvgUsd: number | null
 	perpsAvgUsd: number | null
 	spotSharePct: number | null
@@ -378,7 +378,7 @@ export type UtrMarketMakerSeries = {
 	name: string
 	avgValue: number | null
 	avgPercentage: number | null
-	dailyBreakdown: { date: string; value: number | null; percentage: number | null }[]
+	dailyBreakdown: Array<{ date: string; value: number | null; percentage: number | null }>
 }
 
 export type UtrMarketMakerBreakdownMetric = {
@@ -389,9 +389,9 @@ export type UtrMarketMakerBreakdownMetric = {
 		marketMakersPercentage: number | null
 		allOthersPercentage: number | null
 	}
-	dailyBreakdown: UtrMarketMakerDailyBreakdown[]
+	dailyBreakdown: Array<UtrMarketMakerDailyBreakdown>
 	isOverreporting?: boolean
-	series: UtrMarketMakerSeries[]
+	series: Array<UtrMarketMakerSeries>
 }
 
 export type UtrMarketMakerPerformanceBreakdown = {
@@ -455,8 +455,8 @@ export type UtrLeaderboardApiRow = {
 	asOf: string | null
 	gradedCount: number
 	criteriaCount: number
-	disclosureCategories: UtrCategoryBreakdown[]
-	performanceCategories: UtrCategoryBreakdown[]
+	disclosureCategories: Array<UtrCategoryBreakdown>
+	performanceCategories: Array<UtrCategoryBreakdown>
 }
 
 export type UtrLeaderboardResponse = {
@@ -464,8 +464,8 @@ export type UtrLeaderboardResponse = {
 	generatedAt: string
 	scoredCount: number
 	totalCount: number
-	postTge: { rows: UtrLeaderboardApiRow[] }
-	preTge: { rows: UtrLeaderboardApiRow[] }
+	postTge: { rows: Array<UtrLeaderboardApiRow> }
+	preTge: { rows: Array<UtrLeaderboardApiRow> }
 }
 
 export type UtrLeaderboardTableApiRow = {
@@ -489,25 +489,25 @@ export type UtrLeaderboardTableApiResponse = {
 	generatedAt: string
 	scoredCount: number
 	totalCount: number
-	rows: UtrLeaderboardTableApiRow[]
+	rows: Array<UtrLeaderboardTableApiRow>
 }
 
 export type UtrCriterionDoc = {
 	key: string
 	label: string
 	definition: string | null
-	rubric: string[]
+	rubric: Array<string>
 }
 
 export type UtrCategoryDoc = {
 	key: string
 	label: string
-	criteria: UtrCriterionDoc[]
+	criteria: Array<UtrCriterionDoc>
 }
 
 export type UtrScoringDocs = {
-	disclosure: UtrCategoryDoc[]
-	performance: UtrCategoryDoc[]
+	disclosure: Array<UtrCategoryDoc>
+	performance: Array<UtrCategoryDoc>
 }
 
 export type UtrGradeScaleEntry = {
@@ -518,7 +518,7 @@ export type UtrGradeScaleEntry = {
 
 export type UtrGradingAxisConfig = {
 	description: string
-	scale: UtrGradeScaleEntry[]
+	scale: Array<UtrGradeScaleEntry>
 }
 
 export type UtrGradingConfig = {
@@ -535,13 +535,13 @@ export type UtrScoringCriterionConfig = UtrCriterionDoc & {
 	evaluationType: string | null
 	ignoreBlacklistedExchanges: boolean | null
 	expression: string | null
-	bands: unknown[]
+	bands: Array<unknown>
 }
 
 export type UtrScoringCategoryConfig = {
 	key: string
 	label: string
-	criteria: UtrScoringCriterionConfig[]
+	criteria: Array<UtrScoringCriterionConfig>
 }
 
 export type UtrScoringExchange = {
@@ -553,11 +553,11 @@ export type UtrScoringExchange = {
 export type UtrScoringConfig = {
 	version: number
 	grading: UtrGradingConfig
-	disclosure: { categories: UtrScoringCategoryConfig[] }
-	performance: { categories: UtrScoringCategoryConfig[] }
+	disclosure: { categories: Array<UtrScoringCategoryConfig> }
+	performance: { categories: Array<UtrScoringCategoryConfig> }
 	exchanges: {
-		tier1: UtrScoringExchange[]
-		tier2: UtrScoringExchange[]
+		tier1: Array<UtrScoringExchange>
+		tier2: Array<UtrScoringExchange>
 	}
 }
 
@@ -572,7 +572,7 @@ export type UtrExchangesResponse = {
 	symbol: string
 	asOf: string | null
 	configVersion: number
-	tiers: { tier: string; exchanges: UtrExchangeVenue[] }[]
+	tiers: Array<{ tier: string; exchanges: Array<UtrExchangeVenue> }>
 }
 
 export type UtrAssetResponse = {
@@ -611,7 +611,7 @@ export type UtrAssetResponse = {
 	performance: UtrAxisBreakdown | null
 	metrics: UtrSnapshotMetrics | null
 	charts: UtrAssetCharts
-	marketMakers?: UtrMarketMakerProvider[]
+	marketMakers?: Array<UtrMarketMakerProvider>
 	performanceBreakdown?: UtrMarketMakerPerformanceBreakdown | null
-	uptimeCalculations?: UtrMarketMakerUptime[]
+	uptimeCalculations?: Array<UtrMarketMakerUptime>
 }

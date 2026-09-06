@@ -1,6 +1,5 @@
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { CHART_COLORS } from '~/constants/colors'
-import { oldBlue } from '~/constants/colors'
+import { CHART_COLORS, oldBlue } from '~/constants/colors'
 import { getDominancePercent, getNDistinctColors } from '~/utils'
 import { fetchDATInstitutions, fetchDATInstitutionDetail, toUnixMsTimestamp } from './api'
 import type { IDATInstitutionsResponse } from './api.types'
@@ -121,7 +120,7 @@ export async function getDATOverviewData(): Promise<IDATOverviewPageProps> {
 		})
 	}
 
-	const institutions: IDATInstitutionOverview[] = res.institutions.map((institution) => {
+	const institutions: Array<IDATInstitutionOverview> = res.institutions.map((institution) => {
 		const metadata = res.institutionMetadata[institution.institutionId]
 		return {
 			...metadata,
@@ -154,7 +153,7 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 		return null
 	}
 
-	const finalInstitutions: IDATInstitutionOverviewByAsset[] = institutions
+	const finalInstitutions: Array<IDATInstitutionOverviewByAsset> = institutions
 		.map((institution) => {
 			const meta = res.institutionMetadata[institution.institutionId]
 			return {
@@ -222,7 +221,7 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 
 	const chartColors = getNDistinctColors(finalInstitutions.length)
 	const assetFlows = res.flows[asset] ?? []
-	const dailyFlowSource = new Array<number[]>(assetFlows.length)
+	const dailyFlowSource = new Array<Array<number>>(assetFlows.length)
 	for (let i = 0; i < assetFlows.length; i++) {
 		const [timestamp, net] = assetFlows[i]
 		dailyFlowSource[i] = [toUnixMsTimestamp(timestamp), net]
@@ -285,7 +284,7 @@ export async function getDATOverviewDataByAsset(asset: string): Promise<IDATOver
 // ── Company detail page query ───────────────────────────────────────────
 
 export function buildDATTransactionRowsByAsset(
-	transactions: IDATTransactionRow[]
+	transactions: Array<IDATTransactionRow>
 ): Map<string, Array<[number, number, number | null, number | null]>> {
 	const transactionsByAsset = new Map<string, Array<[number, number, number | null, number | null]>>()
 	const assetsToSort = new Set<string>()
@@ -308,7 +307,7 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 	const data = await fetchDATInstitutionDetail(company)
 	if (!data) return null
 
-	const transactions: IDATTransactionRow[] = data.transactions.map((transaction) => ({
+	const transactions: Array<IDATTransactionRow> = data.transactions.map((transaction) => ({
 		...transaction,
 		amount: Number(transaction.amount),
 		avg_price: transaction.avg_price == null ? null : Number(transaction.avg_price),
@@ -319,7 +318,7 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 	// when a local ordering anomaly is detected in the live response.
 	const transactionsByAsset = buildDATTransactionRowsByAsset(transactions)
 
-	const chartByAsset: IDATCompanyChartByAsset[] = []
+	const chartByAsset: Array<IDATCompanyChartByAsset> = []
 	for (const assetKey in data.assets) {
 		const assetMeta = data.assetsMeta[assetKey]
 		const transactionRows = transactionsByAsset.get(assetKey) ?? []
@@ -453,13 +452,13 @@ export async function getDATCompanyData(company: string): Promise<IDATCompanyPag
 		assetEntries.push([key, data.assets[key]])
 	}
 	assetEntries.sort((a, b) => (b[1].usdValue ?? 0) - (a[1].usdValue ?? 0))
-	const sortedAssetTickers: string[] = []
+	const sortedAssetTickers: Array<string> = []
 	for (const [asset] of assetEntries) {
 		sortedAssetTickers.push(data.assetsMeta[asset].ticker)
 	}
 
 	// Compute assets breakdown
-	const assetsBreakdownData: IDATCompanyAssetBreakdown[] = []
+	const assetsBreakdownData: Array<IDATCompanyAssetBreakdown> = []
 	for (const asset in data.assets) {
 		const { amount, cost, usdValue, avgPrice } = data.assets[asset]
 		assetsBreakdownData.push({

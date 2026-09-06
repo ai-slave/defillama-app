@@ -1,11 +1,11 @@
 import dayjs from 'dayjs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { aggregateMetricValues, partitionMetricWindows } from './useMetricData'
 
 describe('metric card aggregation', () => {
-	it('partitions current and comparison windows in one pass', () => {
+	test('partitions current and comparison windows in one pass', () => {
 		const reference = dayjs.unix(21 * 86_400)
-		const series: [number, number][] = [
+		const series: Array<[number, number]> = [
 			[6 * 86_400, 1],
 			[7 * 86_400, 2],
 			[13 * 86_400, 3],
@@ -23,12 +23,12 @@ describe('metric card aggregation', () => {
 		})
 	})
 
-	it('preserves repeated non-zero values for growth', () => {
+	test('preserves repeated non-zero values for growth', () => {
 		expect(aggregateMetricValues([5, 5], 'growth', '7d')).toBe(0)
 		expect(aggregateMetricValues([0, 5], 'growth', '7d')).toBeNull()
 	})
 
-	it('aggregates large value arrays without spreading them as function arguments', () => {
+	test('aggregates large value arrays without spreading them as function arguments', () => {
 		const values = Array.from({ length: 200_000 }, (_, index) => index)
 		expect(aggregateMetricValues(values, 'max', 'all')).toBe(199_999)
 		expect(aggregateMetricValues(values, 'min', 'all')).toBe(0)

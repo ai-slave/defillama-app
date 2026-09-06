@@ -47,7 +47,7 @@ export function buildAdapterCsvEntities(
 	base: ProtocolBreakdownBase,
 	request: ChartBuilderCsvRequest,
 	lookup: ProtocolLookup
-): AdapterCsvEntity[] {
+): Array<AdapterCsvEntity> {
 	const categories = new Set(normalizeCacheList(request.config.categories, { lowercase: true }))
 	const bounds = getTimePeriodBounds(request.timePeriod, request.customTimePeriod)
 	const byKey = new Map<string, AdapterCsvEntity>()
@@ -79,7 +79,7 @@ export async function writeAdapterMetricProtocolCsv(
 }
 
 function addDayValues(
-	values: number[],
+	values: Array<number>,
 	protocols: Record<string, number>,
 	entityIndex: Map<string, number>,
 	categories: Set<string>,
@@ -100,7 +100,7 @@ async function writeTreemap(
 	request: ChartBuilderCsvRequest,
 	base: ProtocolBreakdownBase,
 	lookup: ProtocolLookup,
-	entities: AdapterCsvEntity[],
+	entities: Array<AdapterCsvEntity>,
 	output: Writable
 ): Promise<number> {
 	const bounds = getTimePeriodBounds(request.timePeriod, request.customTimePeriod)
@@ -137,7 +137,7 @@ async function writeTimeSeries(
 	request: ChartBuilderCsvRequest,
 	base: ProtocolBreakdownBase,
 	lookup: ProtocolLookup,
-	entities: AdapterCsvEntity[],
+	entities: Array<AdapterCsvEntity>,
 	output: Writable
 ): Promise<number> {
 	const categories = new Set(normalizeCacheList(request.config.categories, { lowercase: true }))

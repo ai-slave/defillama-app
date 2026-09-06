@@ -23,7 +23,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 const GHO_TOKEN = '0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f'
 const ETH_MAIN_MARKET = '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2'
 
-const WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
+const WINDOW_OPTIONS: Array<{ value: TimeWindow; label: string }> = [
 	{ value: 'LAST_WEEK', label: '1W' },
 	{ value: 'LAST_MONTH', label: '1M' },
 	{ value: 'LAST_SIX_MONTHS', label: '6M' },
@@ -49,7 +49,7 @@ interface GHOMarketRow {
 	utilization: number
 }
 
-const ghoMarketColumns: ColumnDef<GHOMarketRow>[] = [
+const ghoMarketColumns: Array<ColumnDef<GHOMarketRow>> = [
 	{ header: 'Chain', accessorKey: 'chain', size: 120 },
 	{
 		header: 'Market Size',
@@ -96,7 +96,7 @@ const ghoMarketColumns: ColumnDef<GHOMarketRow>[] = [
 	}
 ]
 
-function GHOMarketsTable({ data }: { data: GHOMarketRow[] }) {
+function GHOMarketsTable({ data }: { data: Array<GHOMarketRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 
 	const instance = useReactTable({
@@ -134,7 +134,7 @@ export default function GHO() {
 		'borrow'
 	)
 
-	const ghoMarketRows = useMemo<GHOMarketRow[]>(
+	const ghoMarketRows = useMemo<Array<GHOMarketRow>>(
 		() =>
 			reserves
 				.filter((r) => r.symbol === 'GHO')

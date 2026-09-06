@@ -1,15 +1,15 @@
 import { flexRender } from '@tanstack/react-table'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const { DynamicPaginatedTable, paginatedTableCalls } = vi.hoisted(() => {
 	const paginatedTableCalls: Array<{
-		availablePageSizeOptions: number[]
+		availablePageSizeOptions: Array<number>
 		pageCount: number
 		pageIndex: number
 		pageSize: number
-		renderedNames: string[]
+		renderedNames: Array<string>
 		rowCount: number
 		shell: 'default' | 'none' | undefined
 	}> = []
@@ -49,14 +49,14 @@ const { DynamicPaginatedTable, paginatedTableCalls } = vi.hoisted(() => {
 	return { DynamicPaginatedTable, paginatedTableCalls }
 })
 
-var authState = {
+let authState = {
 	authorizedFetch: vi.fn(),
 	hasActiveSubscription: true,
 	isAuthenticated: true,
 	loaders: { userLoading: false }
 }
 
-var queryState: {
+let queryState: {
 	data?: any
 	error?: Error | null
 	isLoading: boolean
@@ -150,10 +150,10 @@ afterEach(() => {
 })
 
 describe('TokenUsageSection', () => {
-	it('renders token usage rows for subscribers', () => {
+	test('renders token usage rows for subscribers', () => {
 		queryState = {
 			data: [
-				{ name: 'Aave', category: 'Lending', amountUsd: 123456, slug: 'aave', logo: 'https://example.com/aave.png' }
+				{ name: 'Aave', category: 'Lending', amountUsd: 123_456, slug: 'aave', logo: 'https://example.com/aave.png' }
 			],
 			error: null,
 			isLoading: false
@@ -168,7 +168,7 @@ describe('TokenUsageSection', () => {
 		expect(paginatedTableCalls[0]?.shell).toBe('none')
 	})
 
-	it('shows a sign-in gate for unauthenticated users', () => {
+	test('shows a sign-in gate for unauthenticated users', () => {
 		authState = {
 			authorizedFetch: vi.fn(),
 			hasActiveSubscription: false,
@@ -181,7 +181,7 @@ describe('TokenUsageSection', () => {
 		expect(html).toContain('active subscription')
 	})
 
-	it('shows a subscription link for authenticated users without a subscription', () => {
+	test('shows a subscription link for authenticated users without a subscription', () => {
 		authState = {
 			authorizedFetch: vi.fn(),
 			hasActiveSubscription: false,
@@ -194,13 +194,13 @@ describe('TokenUsageSection', () => {
 		expect(html).toContain('/subscription?returnUrl=%2Ftoken%2Flink')
 	})
 
-	it('shows an empty state when no usage rows remain', () => {
+	test('shows an empty state when no usage rows remain', () => {
 		const html = renderToStaticMarkup(<TokenUsageSection tokenSymbol="link" />)
 
 		expect(html).toContain('No token usage entries found.')
 	})
 
-	it('shows the query error message when the fetch fails', () => {
+	test('shows the query error message when the fetch fails', () => {
 		queryState = {
 			data: [],
 			error: new Error('Failed to fetch token usage data'),
@@ -212,7 +212,7 @@ describe('TokenUsageSection', () => {
 		expect(html).toContain('Failed to fetch token usage data')
 	})
 
-	it('filters CEX rows unless the embedded CEX toggle is enabled', () => {
+	test('filters CEX rows unless the embedded CEX toggle is enabled', () => {
 		queryState = {
 			data: [
 				{ name: 'Aave', category: 'Lending', amountUsd: 1 },
@@ -232,7 +232,7 @@ describe('TokenUsageSection', () => {
 		expect(includeCexHtml).toContain('Binance')
 	})
 
-	it('renders paginated rows and exposes rows-per-page options', () => {
+	test('renders paginated rows and exposes rows-per-page options', () => {
 		queryState = {
 			data: Array.from({ length: 22 }, (_, index) => ({
 				name: `Protocol ${index + 1}`,
@@ -266,7 +266,7 @@ describe('TokenUsageSection', () => {
 })
 
 describe('TokenUsageSection helpers', () => {
-	it('builds table rows by summing usage amounts', () => {
+	test('builds table rows by summing usage amounts', () => {
 		expect(
 			buildTokenUsageRows([
 				{
@@ -289,7 +289,7 @@ describe('TokenUsageSection helpers', () => {
 		])
 	})
 
-	it('drops misrepresented rows and optional CEX rows from the table data', () => {
+	test('drops misrepresented rows and optional CEX rows from the table data', () => {
 		expect(
 			filterTokenUsageRows(
 				[

@@ -1,12 +1,12 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 
 const mocks = vi.hoisted(() => ({
 	presentationInputs: [] as Array<{
 		chartData: MultiSeriesTimeSeriesDataset
-		selectedChains: string[]
+		selectedChains: Array<string>
 	}>
 }))
 
@@ -41,7 +41,7 @@ vi.mock('../utils', async (importOriginal) => {
 		...actual,
 		buildChainsByAdapterChartPresentation: (input: {
 			chartData: MultiSeriesTimeSeriesDataset
-			selectedChains: string[]
+			selectedChains: Array<string>
 		}) => {
 			mocks.presentationInputs.push(input)
 			return {
@@ -69,7 +69,7 @@ describe('ChainsByAdapterChart', () => {
 		mocks.presentationInputs = []
 	})
 
-	it('passes the fetched chart dataset directly to the presentation builder', () => {
+	test('passes the fetched chart dataset directly to the presentation builder', () => {
 		renderToStaticMarkup(
 			<ChainsByAdapterChart
 				adapterType={ADAPTER_TYPES.FEES}

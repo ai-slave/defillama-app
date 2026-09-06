@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { SelectOption } from '~/components/Select/types'
 import { orderCountryOptions, resolveExchangeCountry } from '../ExchangeCountrySelect'
 import type { MasterExchangeRegionCatalogResponse } from '../master.types'
@@ -6,7 +6,7 @@ import type { MasterExchangeRegionCatalogResponse } from '../master.types'
 const option = (key: string, name: string): SelectOption => ({ key, name })
 
 describe('country dropdown ordering', () => {
-	it('pins popular countries first in fixed order, then the rest alphabetically, keeping every option', () => {
+	test('pins popular countries first in fixed order, then the rest alphabetically, keeping every option', () => {
 		const options = [
 			option('ZW', 'Zimbabwe'),
 			option('DE', 'Germany'),
@@ -43,11 +43,11 @@ describe('country URL canonicalization', () => {
 		last_updated: '2026-07-18T00:00:00Z'
 	} satisfies MasterExchangeRegionCatalogResponse
 
-	it('uppercases a syntactically valid published country', () => {
+	test('uppercases a syntactically valid published country', () => {
 		expect(resolveExchangeCountry({ country: 'de' }, catalog)).toBe('DE')
 	})
 
-	it('turns malformed, unknown, and not-yet-validated values into no selection', () => {
+	test('turns malformed, unknown, and not-yet-validated values into no selection', () => {
 		expect(resolveExchangeCountry({ country: 'germany' }, catalog)).toBeNull()
 		expect(resolveExchangeCountry({ country: 'zz' }, catalog)).toBeNull()
 		expect(resolveExchangeCountry({ country: 'de' }, null)).toBeNull()

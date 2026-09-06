@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import {
 	buildOraclesByChainDominanceData,
@@ -8,7 +8,7 @@ import {
 import type { OraclesByChainPageData } from '../types'
 
 describe('getTopMeasuredOracleProtocol', () => {
-	it('finds the largest measured TVS without depending on canonical member order', () => {
+	test('finds the largest measured TVS without depending on canonical member order', () => {
 		const protocols = [
 			{ name: 'First member', tvl: 10 },
 			{ name: 'Unmeasured member', tvl: null },
@@ -43,7 +43,7 @@ const extraTvlsEnabled = {
 }
 
 describe('buildOraclesByChainTableAndPieData', () => {
-	it('returns original table rows when extras are disabled', () => {
+	test('returns original table rows when extras are disabled', () => {
 		const result = buildOraclesByChainTableAndPieData({
 			tableData,
 			extraTvlsEnabled,
@@ -57,7 +57,7 @@ describe('buildOraclesByChainTableAndPieData', () => {
 		])
 	})
 
-	it('keeps unavailable TVS out of the pie without converting it to zero', () => {
+	test('keeps unavailable TVS out of the pie without converting it to zero', () => {
 		const unavailableTableData = [
 			{
 				name: 'Chainlink',
@@ -77,7 +77,7 @@ describe('buildOraclesByChainTableAndPieData', () => {
 		expect(result.pieSeries.peers).toEqual([])
 	})
 
-	it('adjusts table and pie tvs with enabled extra tvl settings', () => {
+	test('adjusts table and pie tvs with enabled extra tvl settings', () => {
 		const result = buildOraclesByChainTableAndPieData({
 			tableData,
 			extraTvlsEnabled,
@@ -95,7 +95,7 @@ describe('buildOraclesByChainTableAndPieData', () => {
 		expect(tableData.map(({ tvl }) => tvl)).toEqual([100, 120])
 	})
 
-	it('keeps unavailable TVS null through toggles and excludes it from pie arithmetic', () => {
+	test('keeps unavailable TVS null through toggles and excludes it from pie arithmetic', () => {
 		const result = buildOraclesByChainTableAndPieData({
 			tableData: [
 				...tableData,
@@ -113,7 +113,7 @@ describe('buildOraclesByChainTableAndPieData', () => {
 })
 
 describe('buildOraclesByChainDominanceData', () => {
-	it('uses base chart values while extra chart formatting is disabled or loading', () => {
+	test('uses base chart values while extra chart formatting is disabled or loading', () => {
 		const result = buildOraclesByChainDominanceData({
 			chartData: [{ timestamp: 1, Chainlink: 100, Pyth: 50 }],
 			oracles: ['Chainlink', 'Pyth'],
@@ -127,11 +127,11 @@ describe('buildOraclesByChainDominanceData', () => {
 
 		expect(result.dominanceDataset).toEqual({
 			dimensions: ['timestamp', 'Chainlink', 'Pyth'],
-			source: [[1_000, 100, 50]]
+			source: [[1000, 100, 50]]
 		})
 	})
 
-	it('applies extra chart breakdowns by timestamp and keeps missing extras at base tvs', () => {
+	test('applies extra chart breakdowns by timestamp and keeps missing extras at base tvs', () => {
 		const result = buildOraclesByChainDominanceData({
 			chartData: [
 				{ timestamp: 1, Chainlink: 100, Pyth: 50 },
@@ -151,8 +151,8 @@ describe('buildOraclesByChainDominanceData', () => {
 		expect(result.dominanceDataset).toEqual({
 			dimensions: ['timestamp', 'Chainlink', 'Pyth'],
 			source: [
-				[1_000, 140, 60],
-				[2_000, 0, 0]
+				[1000, 140, 60],
+				[2000, 0, 0]
 			]
 		})
 		expect(result.dominanceCharts).toEqual([
@@ -167,7 +167,7 @@ describe('buildOraclesByChainDominanceData', () => {
 		])
 	})
 
-	it('keeps absent chart measurements null while preserving explicit zero', () => {
+	test('keeps absent chart measurements null while preserving explicit zero', () => {
 		const result = buildOraclesByChainDominanceData({
 			chartData: [{ timestamp: 1, Pyth: 0 }],
 			oracles: ['Chainlink', 'Pyth'],
@@ -177,10 +177,10 @@ describe('buildOraclesByChainDominanceData', () => {
 			shouldApplyExtraTvlFormatting: false
 		})
 
-		expect(result.dominanceDataset.source).toEqual([[1_000, null, 0]])
+		expect(result.dominanceDataset.source).toEqual([[1000, null, 0]])
 	})
 
-	it('adds extra-only timestamps without zero-filling other Oracle gaps', () => {
+	test('adds extra-only timestamps without zero-filling other Oracle gaps', () => {
 		const result = buildOraclesByChainDominanceData({
 			chartData: [{ timestamp: 1, Chainlink: 100 }],
 			oracles: ['Chainlink', 'Pyth'],
@@ -193,12 +193,12 @@ describe('buildOraclesByChainDominanceData', () => {
 		})
 
 		expect(result.dominanceDataset.source).toEqual([
-			[1_000, 100, null],
-			[2_000, 20, null]
+			[1000, 100, null],
+			[2000, 20, null]
 		])
 	})
 
-	it('does not create coverage from empty extra breakdown rows', () => {
+	test('does not create coverage from empty extra breakdown rows', () => {
 		const result = buildOraclesByChainDominanceData({
 			chartData: [{ timestamp: 1, Chainlink: 100 }],
 			oracles: ['Chainlink'],
@@ -208,6 +208,6 @@ describe('buildOraclesByChainDominanceData', () => {
 			shouldApplyExtraTvlFormatting: true
 		})
 
-		expect(result.dominanceDataset.source).toEqual([[1_000, 100]])
+		expect(result.dominanceDataset.source).toEqual([[1000, 100]])
 	})
 })

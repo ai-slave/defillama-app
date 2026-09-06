@@ -7,7 +7,7 @@ export interface TokenFilterMetadataArtifact {
 		coingeckoCatalogGeneratedAt: number
 		rankingsUpdatedAt: string | null
 	}
-	tokens: Record<string, { chains: string[]; primaryChain: string | null; categories: string[] }>
+	tokens: Record<string, { chains: Array<string>; primaryChain: string | null; categories: Array<string> }>
 	categories: Array<{ id: string; label: string; description?: string }>
 }
 
@@ -24,7 +24,7 @@ export function parseTokenFilterMetadata(value: unknown): TokenFilterMetadataArt
 		| TokenFilterMetadataArtifact
 		| (Omit<TokenFilterMetadataArtifact, 'schemaVersion' | 'tokens'> & {
 				schemaVersion: 1
-				tokens: Record<string, { chains: string[]; nativeChains?: string[]; categories: string[] }>
+				tokens: Record<string, { chains: Array<string>; nativeChains?: Array<string>; categories: Array<string> }>
 		  })
 	if (artifact?.schemaVersion === TOKEN_FILTER_METADATA_SCHEMA_VERSION) return artifact
 	if (artifact?.schemaVersion !== 1) return EMPTY_TOKEN_FILTER_METADATA

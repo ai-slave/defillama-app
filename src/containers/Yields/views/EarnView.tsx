@@ -24,12 +24,12 @@ import { useYieldsServerTable } from '../useYieldsServerTable'
 import type { YieldsPaginatedTableResponse } from '../yieldsTableQuery'
 import { YieldsTabs } from '../YieldsTabs'
 
-const EMPTY_POOL_ROWS: IYieldTableRow[] = []
-const EMPTY_STRINGS: string[] = []
-type EarnRowsResponse = { rows: IYieldTableRow[] }
+const EMPTY_POOL_ROWS: Array<IYieldTableRow> = []
+const EMPTY_STRINGS: Array<string> = []
+type EarnRowsResponse = { rows: Array<IYieldTableRow> }
 
 export type EarnViewProps = EarnPageMeta & {
-	entityQuestions: string[]
+	entityQuestions: Array<string>
 	initialEarnPage: YieldsPaginatedTableResponse<IYieldTableRow>
 	initialEarnPageGeneratedAt: number
 	/**
@@ -78,7 +78,7 @@ const EarnView = ({
 	// sends both values, which the tri-state server AND-s to zero rows.
 	const single = attributeSet.has('single_exposure')
 	const multi = attributeSet.has('multi_exposure')
-	const singleAssetExposure: string | string[] | undefined =
+	const singleAssetExposure: string | Array<string> | undefined =
 		single && multi ? ['true', 'false'] : single ? 'true' : multi ? 'false' : undefined
 	const extraQuery = {
 		chain: selectedSubsetQuery(selectedChains, chainList),
@@ -149,7 +149,7 @@ const EarnView = ({
 				rightSlot={
 					<p
 						className={`hidden body-md text-secondary sm:block ${
-							serverTotal && selectedProjects.length && selectedChains.length ? '' : 'invisible'
+							serverTotal && selectedProjects.length > 0 && selectedChains.length > 0 ? '' : 'invisible'
 						}`}
 					>
 						Tracking <strong className="text-primary">{formatNumber(serverTotal)}</strong> pools across{' '}
@@ -185,10 +185,10 @@ const EarnView = ({
 				showColumns
 				apyControls={<ApyViewControls />}
 				curatedViews={<CuratedViews />}
-				tvlRange={true}
+				tvlRange
 				tvlRangeLabel="TVL"
-				apyRange={true}
-				resetFilters={true}
+				apyRange
+				resetFilters
 				resetFiltersLabel="Reset Filters"
 				prepareCsv={prepareCsv}
 				watchlist

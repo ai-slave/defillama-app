@@ -14,7 +14,7 @@ const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart'))
 interface TreemapChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -63,11 +63,11 @@ export function TreemapChartAdapter({ config, result, classified, onReady }: Tre
 }
 
 export function buildSqlTreemapNodes(
-	rows: unknown[][],
+	rows: Array<Array<unknown>>,
 	nameIndex: number,
 	valueIndex: number,
 	groupIndex: number | null
-): TreemapNode[] {
+): Array<TreemapNode> {
 	if (groupIndex != null) {
 		const grouped = new Map<string, { total: number; items: Array<{ name: string; value: number }> }>()
 		for (const row of rows) {
@@ -86,7 +86,7 @@ export function buildSqlTreemapNodes(
 			}
 		}
 
-		const nodes: TreemapNode[] = []
+		const nodes: Array<TreemapNode> = []
 		for (const [name, group] of grouped) {
 			group.items.sort((a, b) => b.value - a.value)
 			nodes.push({

@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildOracleNamesByProtocol } from '../membership'
 
 describe('buildOracleNamesByProtocol', () => {
-	it('inverts the authoritative metric membership without inferring fallback oracles', () => {
+	test('inverts the authoritative metric membership without inferring fallback oracles', () => {
 		const result = buildOracleNamesByProtocol({
 			Atlas: ['Aster Perps'],
 			Chainlink: ['Measured Protocol'],

@@ -13,7 +13,7 @@ import { AriakitSelect, type SelectOption } from '../../AriakitSelect'
 import { useComparisonWizardContext } from '../ComparisonWizardContext'
 import type { DisplayMode } from '../types'
 
-const GROUPING_OPTIONS: SelectOption<DashboardGrouping>[] = [
+const GROUPING_OPTIONS: Array<SelectOption<DashboardGrouping>> = [
 	{ value: 'day', label: 'Day' },
 	{ value: 'week', label: 'Week' },
 	{ value: 'month', label: 'Month' },
@@ -21,14 +21,14 @@ const GROUPING_OPTIONS: SelectOption<DashboardGrouping>[] = [
 	{ value: 'year', label: 'Year' }
 ]
 
-const DISPLAY_OPTIONS: SelectOption<DisplayMode>[] = [
+const DISPLAY_OPTIONS: Array<SelectOption<DisplayMode>> = [
 	{ value: 'default', label: 'Default' },
 	{ value: 'stacked', label: 'Stacked' },
 	{ value: 'cumulative', label: 'Cumulative' },
 	{ value: 'percentage', label: 'Percentage' }
 ]
 
-const AGGREGATOR_OPTIONS: SelectOption<MetricAggregator>[] = [
+const AGGREGATOR_OPTIONS: Array<SelectOption<MetricAggregator>> = [
 	{ value: 'latest', label: 'Latest' },
 	{ value: 'avg', label: 'Average' },
 	{ value: 'sum', label: 'Total' },
@@ -37,7 +37,7 @@ const AGGREGATOR_OPTIONS: SelectOption<MetricAggregator>[] = [
 	{ value: 'growth', label: 'Growth' }
 ]
 
-const WINDOW_OPTIONS: SelectOption<MetricWindow>[] = [
+const WINDOW_OPTIONS: Array<SelectOption<MetricWindow>> = [
 	{ value: '7d', label: '7d' },
 	{ value: '30d', label: '30d' },
 	{ value: '90d', label: '90d' },

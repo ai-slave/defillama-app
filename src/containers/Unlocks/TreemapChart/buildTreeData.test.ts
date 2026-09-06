@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { CalendarUnlockEvent, UnlocksData } from '~/containers/Unlocks/calendarTypes'
 import { buildUnlocksTreemapTreeData } from './buildTreeData'
 
@@ -11,12 +11,12 @@ const unlocksData: UnlocksData = {
 	'2025-12-01': { totalValue: 100, events: [event('Prior', 100)] },
 	'2026-02-01': { totalValue: 15, events: [event('Alpha', 10), event('Beta', 5)] },
 	'2026-02-20': { totalValue: 15, events: [event('Alpha', 15)] },
-	'2026-03-01': { totalValue: 40, events: [event('Beta', 40), event('Weekly Rate', 1_000, 'week')] },
+	'2026-03-01': { totalValue: 40, events: [event('Beta', 40), event('Weekly Rate', 1000, 'week')] },
 	'2027-01-01': { totalValue: 12, events: [event('Gamma', 12)] }
 }
 
 describe('buildUnlocksTreemapTreeData', () => {
-	it('builds only the selected month and aggregates protocols across its days', () => {
+	test('builds only the selected month and aggregates protocols across its days', () => {
 		const tree = buildUnlocksTreemapTreeData({
 			unlocksData,
 			timeView: 'Month',
@@ -33,7 +33,7 @@ describe('buildUnlocksTreemapTreeData', () => {
 		expect(tree[0]!.label?.formatter).toContain('{name|Alpha}')
 	})
 
-	it('builds and sorts only the requested current-year month hierarchy', () => {
+	test('builds and sorts only the requested current-year month hierarchy', () => {
 		const tree = buildUnlocksTreemapTreeData({
 			unlocksData,
 			timeView: 'Current Year',
@@ -54,7 +54,7 @@ describe('buildUnlocksTreemapTreeData', () => {
 		expect(tree[0]!.upperLabel?.fontSize).toBe(13)
 	})
 
-	it('keeps current and future years in ascending order for the all-years hierarchy', () => {
+	test('keeps current and future years in ascending order for the all-years hierarchy', () => {
 		const tree = buildUnlocksTreemapTreeData({
 			unlocksData,
 			timeView: 'All Years',
@@ -73,7 +73,7 @@ describe('buildUnlocksTreemapTreeData', () => {
 		expect(tree[0]!.children?.[0]!.upperLabel?.fontSize).toBe(12)
 	})
 
-	it('returns no nodes when the requested current year has no unlocks', () => {
+	test('returns no nodes when the requested current year has no unlocks', () => {
 		expect(
 			buildUnlocksTreemapTreeData({
 				unlocksData,
@@ -86,7 +86,7 @@ describe('buildUnlocksTreemapTreeData', () => {
 		).toEqual([])
 	})
 
-	it('preserves source order when protocol or month values tie', () => {
+	test('preserves source order when protocol or month values tie', () => {
 		const tiedData: UnlocksData = {
 			'2026-03-01': { totalValue: 10, events: [event('Zeta', 5), event('Alpha', 5)] },
 			'2026-02-01': { totalValue: 10, events: [event('Beta', 10)] }

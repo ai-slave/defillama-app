@@ -1,15 +1,15 @@
-type QueryParamValue = string | string[] | undefined
+type QueryParamValue = string | Array<string> | undefined
 
 export function getFirstQueryParam(value: QueryParamValue): string | undefined {
 	if (Array.isArray(value)) return value[0]
 	return value
 }
 
-export function getCommaSeparatedQueryParam(value: QueryParamValue): string[] {
+export function getCommaSeparatedQueryParam(value: QueryParamValue): Array<string> {
 	if (!value) return []
 
 	const values = Array.isArray(value) ? value : [value]
-	const items: string[] = []
+	const items: Array<string> = []
 
 	for (const rawValue of values) {
 		for (const item of rawValue.split(',')) {

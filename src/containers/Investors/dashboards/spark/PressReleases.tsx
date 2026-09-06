@@ -11,7 +11,7 @@ export interface ParagraphPost {
 	// Paragraph returns Unix milliseconds as a decimal string.
 	publishedAt: ApiUnixMillisecondsString
 	imageUrl?: string
-	categories?: string[]
+	categories?: Array<string>
 }
 
 function isWithinLastThreeMonths(timestamp: string): boolean {
@@ -42,7 +42,7 @@ function isFinancialReport(post: ParagraphPost): boolean {
 	return titleMatch || slugMatch || categoryMatch
 }
 
-function dedupePosts(posts: ParagraphPost[]): ParagraphPost[] {
+function dedupePosts(posts: Array<ParagraphPost>): Array<ParagraphPost> {
 	const seen = new Set<string>()
 
 	return posts.filter((post) => {
@@ -53,7 +53,7 @@ function dedupePosts(posts: ParagraphPost[]): ParagraphPost[] {
 	})
 }
 
-function renderPressReleaseCards(posts: ParagraphPost[]) {
+function renderPressReleaseCards(posts: Array<ParagraphPost>) {
 	return posts.map((post) => (
 		<a
 			key={post.id}
@@ -66,7 +66,7 @@ function renderPressReleaseCards(posts: ParagraphPost[]) {
 			{post.imageUrl && (
 				<div className="relative aspect-[2/1] w-full overflow-hidden bg-linear-to-br from-sl-accent-muted to-pro-cards-border">
 					<img src={post.imageUrl} alt={post.title} className="size-full object-cover" loading="lazy" />
-					<div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+					<div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 				</div>
 			)}
 
@@ -116,22 +116,22 @@ function renderPressReleaseCards(posts: ParagraphPost[]) {
 
 export default function PressReleases() {
 	const contentReady = useContentReady()
-	const [pressReleases, setPressReleases] = useState<ParagraphPost[]>([])
-	const [financialReports, setFinancialReports] = useState<ParagraphPost[]>([])
+	const [pressReleases, setPressReleases] = useState<Array<ParagraphPost>>([])
+	const [financialReports, setFinancialReports] = useState<Array<ParagraphPost>>([])
 	const [loading, setLoading] = useState(true)
 
 	useEffect(() => {
 		fetch('/api/public/spark/reports')
 			.then((response) => {
 				if (!response.ok) throw new Error(`Spark reports API error: ${response.status}`)
-				return readInvestorApiJson<{ items?: ParagraphPost[] }>(response)
+				return readInvestorApiJson<{ items?: Array<ParagraphPost> }>(response)
 			})
 			.then((apiData) => {
 				const posts = dedupePosts(apiData.items || [])
 
 				// Separate financial reports from regular press releases
-				const reports: ParagraphPost[] = []
-				const releases: ParagraphPost[] = []
+				const reports: Array<ParagraphPost> = []
+				const releases: Array<ParagraphPost> = []
 
 				posts.forEach((post: ParagraphPost) => {
 					if (isFinancialReport(post)) {
@@ -147,8 +147,8 @@ export default function PressReleases() {
 				setLoading(false)
 				contentReady()
 			})
-			.catch((err) => {
-				console.error('Failed to fetch press releases:', err)
+			.catch((error) => {
+				console.error('Failed to fetch press releases:', error)
 				setLoading(false)
 				contentReady()
 			})
@@ -158,7 +158,7 @@ export default function PressReleases() {
 		return (
 			<div className="flex h-96 items-center justify-center">
 				<div className="flex flex-col items-center gap-3">
-					<div className="size-8 animate-spin rounded-full border-2 border-pro-text-label border-t-transparent"></div>
+					<div className="size-8 animate-spin rounded-full border-2 border-pro-text-label border-t-transparent" />
 					<p className="text-sm text-pro-text-secondary">Loading reports and press releases...</p>
 				</div>
 			</div>
@@ -220,7 +220,7 @@ export default function PressReleases() {
 								{post.imageUrl && (
 									<div className="relative aspect-[2/1] w-full overflow-hidden">
 										<img src={post.imageUrl} alt={post.title} className="size-full object-cover" loading="lazy" />
-										<div className="absolute inset-0 bg-linear-to-t from-black/40 via-black/10 to-transparent"></div>
+										<div className="absolute inset-0 bg-linear-to-t from-black/40 via-black/10 to-transparent" />
 									</div>
 								)}
 

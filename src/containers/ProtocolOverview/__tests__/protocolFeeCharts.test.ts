@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildProtocolFeeChartPresentation } from '../protocolFeeCharts'
 
 describe('buildProtocolFeeChartPresentation', () => {
-	it('skips grouping work when no chart is selected', () => {
+	test('skips grouping work when no chart is selected', () => {
 		expect(
 			buildProtocolFeeChartPresentation({
 				fees: [[1, 100]],
@@ -14,7 +14,7 @@ describe('buildProtocolFeeChartPresentation', () => {
 		).toEqual({ dataset: { source: [], dimensions: ['timestamp'] }, charts: [] })
 	})
 
-	it('builds only the selected base fee series', () => {
+	test('builds only the selected base fee series', () => {
 		const result = buildProtocolFeeChartPresentation({
 			fees: [[1, 100]],
 			revenue: [[1, 20]],
@@ -33,7 +33,7 @@ describe('buildProtocolFeeChartPresentation', () => {
 		])
 	})
 
-	it('preserves sparse starts between cumulative fee-family lines', () => {
+	test('preserves sparse starts between cumulative fee-family lines', () => {
 		const result = buildProtocolFeeChartPresentation({
 			fees: [
 				[1, 10],
@@ -46,8 +46,8 @@ describe('buildProtocolFeeChartPresentation', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			[1_000, 10, null],
-			[2_000, 15, 3]
+			[1000, 10, null],
+			[2000, 15, 3]
 		])
 		expect(result.charts.map((chart) => chart.type)).toEqual(['line', 'line'])
 	})

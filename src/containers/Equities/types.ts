@@ -15,7 +15,7 @@ import type { EquitiesTreemapSizeMetric } from './treemapData'
 
 export interface IEquitiesPriceHistoryChart {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 }
 
 export interface IEquitiesIntradayPriceHistoryChart extends IEquitiesPriceHistoryChart {
@@ -28,9 +28,9 @@ export interface IEquitiesListCompanyRow extends IEquitiesCompanyApiItem {
 }
 
 export interface EquitiesCategoricalOptions {
-	country: string[]
-	sector: string[]
-	industry: string[]
+	country: Array<string>
+	sector: Array<string>
+	industry: Array<string>
 }
 
 export interface EquitiesTableResponse extends OffsetTablePage<IEquitiesListCompanyRow> {
@@ -66,7 +66,7 @@ export interface EquitiesTreemapResponse {
 	schemaVersion: number
 	sizeMetric: EquitiesTreemapSizeMetric
 	/** Top rows by `sizeMetric`, already limited to the market map's row cap. */
-	rows: EquitiesTreemapRow[]
+	rows: Array<EquitiesTreemapRow>
 	excludedCount: number
 	truncatedCount: number
 	/** Companies matching the filters before the size-metric eligibility check. */
@@ -88,8 +88,8 @@ export interface IEquitiesOnchainTokenRow extends IEquitiesOnchainTokenApiItem {
 }
 
 export interface IEquitiesOnchainPageData {
-	perps: IEquitiesOnchainMarketRow[]
-	tokens: IEquitiesOnchainTokenRow[]
+	perps: Array<IEquitiesOnchainMarketRow>
+	tokens: Array<IEquitiesOnchainTokenRow>
 }
 
 export interface IEquitiesStatementTableRow {
@@ -97,7 +97,7 @@ export interface IEquitiesStatementTableRow {
 	label: string
 	values: Array<number | null>
 	depth: number
-	subRows?: IEquitiesStatementTableRow[]
+	subRows?: Array<IEquitiesStatementTableRow>
 }
 
 export interface IEquityTickerPageProps {
@@ -110,8 +110,8 @@ export interface IEquityTickerPageProps {
 	priceHistory: EquitiesPriceHistory | null
 	statements: IEquitiesStatementsResponse
 	dimensions: IEquitiesDimensionsResponse
-	filings: IEquitiesFilingApiItem[] | null
-	filingForms: string[]
+	filings: Array<IEquitiesFilingApiItem> | null
+	filingForms: Array<string>
 	onchain: IEquitiesOnchainPageData | null
 	unlocksSlug: string | null
 }

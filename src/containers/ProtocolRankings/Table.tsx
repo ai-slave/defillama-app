@@ -91,7 +91,7 @@ type TablePresetSelection =
 type ChainProtocolsTableInnerProps = ChainProtocolsTableProps & {
 	selectedMetricPreset: TablePreset | null
 	selectedPeriod: TablePeriod | null
-	tablePresets: readonly TablePreset[]
+	tablePresets: ReadonlyArray<TablePreset>
 }
 
 export const ChainProtocolsTable = (props: ChainProtocolsTableProps) => {
@@ -227,7 +227,7 @@ const ChainProtocolsTableInner = ({
 		setCustomColumns(next)
 	}
 	const handleSaveCustomColumn = (def: CustomColumnDef) => {
-		let next: CustomColumnDef[]
+		let next: Array<CustomColumnDef>
 		let newColumnKey: string | undefined
 		if (customColumnModalEditIndex === null) {
 			next = [...customColumns, def]
@@ -283,7 +283,7 @@ const ChainProtocolsTableInner = ({
 		return { mergedColumns, columnVisibility, selectedColumns }
 	}, [availableColumnOptions, customColumns, columnsInStorage, presetSelection, tablePresets])
 
-	const setColumnOptions = (newColumns: string[]) => {
+	const setColumnOptions = (newColumns: Array<string>) => {
 		clearPresetSelection()
 		const allKeys = [
 			...columnOptions.map((column) => column.key),
@@ -438,9 +438,8 @@ const ChainProtocolsTableInner = ({
 							if (a === true && b === false) return 1
 							if (a === false && b === true) return -1
 							return 0
-						} else {
-							return Number(a) - Number(b)
 						}
+						return Number(a) - Number(b)
 					},
 					meta: {
 						headerClassName:
@@ -581,7 +580,7 @@ const ChainProtocolsTableInner = ({
 				selectedValues={selectedColumns}
 				setSelectedValues={setColumnOptions}
 				nestedMenu={false}
-				label={'Columns'}
+				label="Columns"
 				labelType="smol"
 				variant="filter"
 				size="md"
@@ -721,7 +720,7 @@ const TABLE_PRESET_VALUES = [
 	TABLE_PRESETS.PERPS,
 	TABLE_PRESETS.TVL
 ] as const
-const BASE_TABLE_PRESET_VALUES: readonly TablePreset[] = [
+const BASE_TABLE_PRESET_VALUES: ReadonlyArray<TablePreset> = [
 	TABLE_PRESETS.FEES,
 	TABLE_PRESETS.REVENUE,
 	TABLE_PRESETS.SPOT,
@@ -747,11 +746,11 @@ function getTablePresetSelection(metric: TablePreset | null, period: TablePeriod
 function getTablePresets(
 	protocols: Array<IProtocol>,
 	showExtendedMetrics: boolean,
-	availableActivityMetrics?: readonly string[]
-): readonly TablePreset[] {
+	availableActivityMetrics?: ReadonlyArray<string>
+): ReadonlyArray<TablePreset> {
 	if (!showExtendedMetrics) return BASE_TABLE_PRESET_VALUES
 
-	const presets: TablePreset[] = [...BASE_TABLE_PRESET_VALUES]
+	const presets: Array<TablePreset> = [...BASE_TABLE_PRESET_VALUES]
 	if (
 		availableActivityMetrics?.some((key) =>
 			['perps', 'normalizedVolume', 'activeLiquidity', 'openInterest'].includes(key)
@@ -797,7 +796,7 @@ type ExtendedActivityMetric = {
 	]
 }
 
-const EXTENDED_ACTIVITY_METRICS: readonly ExtendedActivityMetric[] = [
+const EXTENDED_ACTIVITY_METRICS: ReadonlyArray<ExtendedActivityMetric> = [
 	{
 		metricKey: 'perps',
 		label: 'Perp Volume',
@@ -1001,7 +1000,7 @@ const EXTENDED_ACTIVITY_METRICS: readonly ExtendedActivityMetric[] = [
 	}
 ]
 
-const columnOptions: ProtocolTableColumnOption[] = [
+const columnOptions: Array<ProtocolTableColumnOption> = [
 	{ name: 'Name', key: 'name' },
 	{ name: 'Category', key: 'category' },
 	{
@@ -1147,7 +1146,7 @@ const columnOptions: ProtocolTableColumnOption[] = [
 
 export function getProtocolRankingPresetColumnVisibility(
 	selection: TablePresetSelection,
-	availablePresets: readonly TablePreset[]
+	availablePresets: ReadonlyArray<TablePreset>
 ): Record<string, boolean> {
 	return Object.fromEntries(
 		columnOptions.map((column) => {
@@ -1272,7 +1271,7 @@ const columns = [
 						<ProtocolChainsHovercard chains={row.original.chains} />
 					</span>
 					{value === 'SyncDEX Finance' ? (
-						<Tooltip content={'Many users have reported issues with this protocol'}>
+						<Tooltip content="Many users have reported issues with this protocol">
 							<Icon name="alert-triangle" height={14} width={14} />
 						</Tooltip>
 					) : null}
@@ -1821,8 +1820,7 @@ const columns = [
 			})
 		],
 		meta: {
-			headerHelperText:
-				definitions.fees.common + '\n\n' + definitions.revenue.common + '\n\n' + definitions.holdersRevenue.common
+			headerHelperText: `${definitions.fees.common}\n\n${definitions.revenue.common}\n\n${definitions.holdersRevenue.common}`
 		}
 	}),
 	columnHelper.group({
@@ -1971,9 +1969,7 @@ const ProtocolTvlCell = ({ rowValues }: { rowValues: IProtocol }) => {
 		<span className="flex items-center justify-end gap-1">
 			{strike.text ? <QuestionHelper text={strike.text} /> : null}
 			{tvl.excludeParent && rowValues.childProtocols ? (
-				<QuestionHelper
-					text={"There's some internal doublecounting that is excluded from parent TVL, so sum won't match"}
-				/>
+				<QuestionHelper text="There's some internal doublecounting that is excluded from parent TVL, so sum won't match" />
 			) : null}
 			<span className={strike.struck ? 'text-tertiary' : ''}>
 				{formatUsd(tvl.default.tvl, {

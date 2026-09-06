@@ -4,15 +4,15 @@ import { isUnknownEmissionEvent } from '~/containers/Unlocks/eventAmount'
 export type UnlockHistoricalPriceProtocol = Pick<ProtocolEmission, 'gecko_id' | 'events'>
 
 export function buildUnlocksHistoricalPriceRequests(
-	protocols: UnlockHistoricalPriceProtocol[],
+	protocols: Array<UnlockHistoricalPriceProtocol>,
 	nowSec: number = Date.now() / 1000
 ): {
-	priceReqs: Record<string, number[]>
+	priceReqs: Record<string, Array<number>>
 	hasPriceRequests: boolean
 	lastPastTimestampByCoinKey: Map<string, number>
 } {
 	const weekAgoSec = nowSec - 7 * 24 * 60 * 60
-	const priceReqs: Record<string, number[]> = {}
+	const priceReqs: Record<string, Array<number>> = {}
 	let hasPriceRequests = false
 	const lastPastTimestampByCoinKey = new Map<string, number>()
 
@@ -43,11 +43,11 @@ export function buildUnlocksHistoricalPriceRequests(
 		lastPastTimestampByCoinKey.set(coinKey, lastPastEvent)
 		if (earliestEvent !== undefined && lastPastEvent === earliestEvent) continue
 
-		const anchor = Math.floor(lastPastEvent / 86400) * 86400
-		const timestamps: number[] = []
-		for (let d = 7; d >= 1; d--) timestamps.push(anchor - d * 86400)
+		const anchor = Math.floor(lastPastEvent / 86_400) * 86_400
+		const timestamps: Array<number> = []
+		for (let d = 7; d >= 1; d--) timestamps.push(anchor - d * 86_400)
 		timestamps.push(anchor)
-		for (let d = 1; d <= 7; d++) timestamps.push(anchor + d * 86400)
+		for (let d = 1; d <= 7; d++) timestamps.push(anchor + d * 86_400)
 		priceReqs[coinKey] = timestamps
 		hasPriceRequests = true
 	}

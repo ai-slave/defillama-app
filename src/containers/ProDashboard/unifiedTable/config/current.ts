@@ -131,7 +131,7 @@ export type UnifiedBooleanTableFilterKey = {
 }[keyof UnifiedTableFilters]
 
 export type UnifiedListTableFilterKey = {
-	[K in keyof UnifiedTableFilters]-?: NonNullable<UnifiedTableFilters[K]> extends string[] ? K : never
+	[K in keyof UnifiedTableFilters]-?: NonNullable<UnifiedTableFilters[K]> extends Array<string> ? K : never
 }[keyof UnifiedTableFilters]
 
 export interface ProtocolsUnifiedTableConfig {
@@ -139,18 +139,18 @@ export interface ProtocolsUnifiedTableConfig {
 	kind: 'unified-table'
 	configVersion: 3
 	strategy: 'protocols'
-	rowHeaders: UnifiedRowHeaderType[]
+	rowHeaders: Array<UnifiedRowHeaderType>
 	defaultSorting?: Array<{ id: string; desc: boolean }>
 	params?: {
-		chains?: string[]
+		chains?: Array<string>
 		category?: string | null
 	} | null
 	filters?: UnifiedTableFilters
-	columnOrder?: string[]
+	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
 	activePresetId?: string
 	colSpan?: StoredColSpan
-	customColumns?: CustomColumnDefinition[]
+	customColumns?: Array<CustomColumnDefinition>
 }
 
 export type UnifiedTableConfig = ProtocolsUnifiedTableConfig

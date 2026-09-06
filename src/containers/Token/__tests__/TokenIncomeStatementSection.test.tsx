@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 
 vi.mock('~/containers/ProtocolOverview/IncomeStatement', () => ({
@@ -27,7 +27,7 @@ const incomeStatement = {
 } satisfies NonNullable<IProtocolOverviewPageData['incomeStatement']>
 
 describe('TokenIncomeStatementSection', () => {
-	it('uses the token symbol and describes the API components', () => {
+	test('uses the token symbol and describes the API components', () => {
 		const html = renderToStaticMarkup(
 			<TokenIncomeStatementSection tokenSymbol="ARB" incomeStatement={incomeStatement} />
 		)

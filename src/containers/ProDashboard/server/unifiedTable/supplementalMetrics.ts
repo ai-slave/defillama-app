@@ -19,10 +19,10 @@ export type ProtocolSupplementalMetricResult = {
 	bridgeAggregatorVolume?: DimensionDatasetResult
 }
 
-export type ProtocolSupplementalScope = { kind: 'protocol' } | { kind: 'chain'; chains: string[] }
+export type ProtocolSupplementalScope = { kind: 'protocol' } | { kind: 'chain'; chains: Array<string> }
 
 export async function fetchProtocolSupplementalMetrics(
-	metrics: ProtocolSupplementalMetric[],
+	metrics: Array<ProtocolSupplementalMetric>,
 	scope: ProtocolSupplementalScope,
 	requestScope?: DimensionDatasetRequestScope
 ): Promise<ProtocolSupplementalMetricResult> {
@@ -93,11 +93,11 @@ const UNAVAILABLE_BRIDGE_AGGREGATOR_METRICS = {
 } satisfies ProtocolTableMetrics
 
 export function applyProtocolSupplementalMetrics(
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	parentMetrics: Record<string, ParentProtocolMetrics>,
 	supplements: ProtocolSupplementalMetricResult,
-	relationRows: ProtocolTableSourceRow[] = rows
-): { rows: ProtocolTableSourceRow[]; parentMetrics: Record<string, ParentProtocolMetrics> } {
+	relationRows: Array<ProtocolTableSourceRow> = rows
+): { rows: Array<ProtocolTableSourceRow>; parentMetrics: Record<string, ParentProtocolMetrics> } {
 	if (!supplements.earnings && !supplements.bridgeAggregatorVolume) return { rows, parentMetrics }
 
 	const childrenByParent = new Map<string, Set<string>>()
@@ -163,7 +163,7 @@ export function applyProtocolSupplementalMetrics(
 			const parent = nextParentMetrics[protocolId]
 			const childIds = childrenByParent.get(protocolId)
 			if (parent && childIds) {
-				const childProtocolIdsByChain: Record<string, string[]> = {}
+				const childProtocolIdsByChain: Record<string, Array<string>> = {}
 				for (const [chainSlug, chainChildren] of childrenByParentChain.get(protocolId) ?? []) {
 					childProtocolIdsByChain[chainSlug] = Array.from(chainChildren)
 				}

@@ -1,9 +1,9 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
-var chartSpy = vi.fn<(props: unknown) => void>()
-var rowLinksSpy = vi.fn<(props: { activeLink: string }) => void>()
+const chartSpy = vi.fn<(props: unknown) => void>()
+const rowLinksSpy = vi.fn<(props: { activeLink: string }) => void>()
 
 vi.mock('~/components/RowLinksWithDropdown', () => ({
 	RowLinksWithDropdown: (props: { activeLink: string }) => {
@@ -32,7 +32,7 @@ afterEach(() => {
 })
 
 describe('LiquidationsChainPage', () => {
-	it('renders chain summary', () => {
+	test('renders chain summary', () => {
 		const html = renderToStaticMarkup(
 			<LiquidationsChainPage
 				protocolLinks={[{ label: 'Overview', to: '/liquidations' }]}
@@ -50,7 +50,7 @@ describe('LiquidationsChainPage', () => {
 				timestamp={100}
 				positionCount={3}
 				collateralCount={4}
-				totalCollateralUsd={5000000}
+				totalCollateralUsd={5_000_000}
 				distributionChart={{ tokens: [] }}
 				chainRows={[]}
 				ownerBlockExplorers={[]}
@@ -73,7 +73,7 @@ describe('LiquidationsChainPage', () => {
 		)
 	})
 
-	it('hides the chain nav row when there is only all chains plus the active chain', () => {
+	test('hides the chain nav row when there is only all chains plus the active chain', () => {
 		renderToStaticMarkup(
 			<LiquidationsChainPage
 				protocolLinks={[{ label: 'Overview', to: '/liquidations' }]}
@@ -90,7 +90,7 @@ describe('LiquidationsChainPage', () => {
 				timestamp={100}
 				positionCount={3}
 				collateralCount={4}
-				totalCollateralUsd={5000000}
+				totalCollateralUsd={5_000_000}
 				distributionChart={{ tokens: [] }}
 				chainRows={[]}
 				ownerBlockExplorers={[]}

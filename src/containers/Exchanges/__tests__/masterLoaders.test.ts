@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	chart: vi.fn(),
@@ -46,7 +46,7 @@ beforeEach(() => {
 })
 
 describe('master page loaders', () => {
-	it('hides execution data when the optional directory source fails', async () => {
+	test('hides execution data when the optional directory source fails', async () => {
 		const directory = { venues: [] }
 		mocks.directory.mockResolvedValue(directory)
 		mocks.mapDirectory.mockReturnValue({ rows: [], executionAvailable: false })
@@ -56,7 +56,7 @@ describe('master page loaders', () => {
 		expect(mocks.mapDirectory).toHaveBeenCalledWith(directory, null)
 	})
 
-	it('preserves a successful execution source with no measured venues', async () => {
+	test('preserves a successful execution source with no measured venues', async () => {
 		const directory = { venues: [] }
 		const execution = { basket: ['BTC'], unit: 'bps', unit_note: 'Basis points.', venues: {} }
 		mocks.directory.mockResolvedValue(directory)
@@ -68,7 +68,7 @@ describe('master page loaders', () => {
 		expect(mocks.mapDirectory).toHaveBeenCalledWith(directory, execution)
 	})
 
-	it('loads and maps an exchange overview range', async () => {
+	test('loads and maps an exchange overview range', async () => {
 		const payload = { days: [1], key: ['cex_spot_volume'], series: [[100]] }
 		mocks.exchangeSeries.mockResolvedValue(payload)
 		mocks.directoryOverview.mockReturnValue({ days: [1], series: { cex_spot_volume: [100] } })
@@ -82,7 +82,7 @@ describe('master page loaders', () => {
 		expect(mocks.directoryOverview).toHaveBeenCalledWith(payload)
 	})
 
-	it('loads and maps all four research payloads concurrently', async () => {
+	test('loads and maps all four research payloads concurrently', async () => {
 		const payloads = new Map([
 			['volume', { built_at: 'volume' }],
 			['oi', { built_at: 'oi' }],
@@ -103,7 +103,7 @@ describe('master page loaders', () => {
 		for (const [part, payload] of payloads) expect(mocks.mapResearch).toHaveBeenCalledWith(part, payload)
 	})
 
-	it('rejects research generation when one primary payload fails', async () => {
+	test('rejects research generation when one primary payload fails', async () => {
 		const failure = new Error('depth unavailable')
 		mocks.chart.mockImplementation(async (part: string) => {
 			if (part === 'depth') throw failure
@@ -114,7 +114,7 @@ describe('master page loaders', () => {
 		await expect(loadMasterResearchReports()).rejects.toBe(failure)
 	})
 
-	it('loads metadata before the required index for a markets profile', async () => {
+	test('loads metadata before the required index for a markets profile', async () => {
 		mocks.metadata.mockResolvedValue({ display_name: 'Venue', profile_mode: 'markets' })
 		mocks.index.mockResolvedValue({ exchange: 'venue' })
 		mocks.mapProfile.mockReturnValue({ slug: 'venue' })
@@ -131,7 +131,7 @@ describe('master page loaders', () => {
 		)
 	})
 
-	it('keeps execution available when only ranking methodology fails', async () => {
+	test('keeps execution available when only ranking methodology fails', async () => {
 		const metadata = { display_name: 'Venue', profile_mode: 'markets' }
 		const index = { exchange: 'venue' }
 		const execution = { basket: ['BTC'], unit: 'bps', unit_note: 'Basis points.', venues: {} }
@@ -148,7 +148,7 @@ describe('master page loaders', () => {
 		expect(mocks.mapProfile).toHaveBeenCalledWith(index, metadata, { execution, ranks, methodology: null })
 	})
 
-	it('keeps ranking available when only execution fails', async () => {
+	test('keeps ranking available when only execution fails', async () => {
 		const metadata = { display_name: 'Venue', profile_mode: 'markets' }
 		const index = { exchange: 'venue' }
 		const ranks = { generated_at: '2026-08-24', last_updated: '2026-08-24', venues: {} }
@@ -165,7 +165,7 @@ describe('master page loaders', () => {
 		expect(mocks.mapProfile).toHaveBeenCalledWith(index, metadata, { execution: null, ranks, methodology })
 	})
 
-	it('maps a metadata-only profile without requesting its index', async () => {
+	test('maps a metadata-only profile without requesting its index', async () => {
 		const metadata = { display_name: 'Bitpanda', profile_mode: 'metadata-only' }
 		mocks.metadata.mockResolvedValue(metadata)
 		mocks.mapMetadataOnlyProfile.mockReturnValue({ slug: 'bitpanda', profileMode: 'metadata-only' })
@@ -180,7 +180,7 @@ describe('master page loaders', () => {
 		expect(mocks.mapProfile).not.toHaveBeenCalled()
 	})
 
-	it('keeps non-404 metadata failures fatal', async () => {
+	test('keeps non-404 metadata failures fatal', async () => {
 		const failure = new Error('[500] Unavailable')
 		mocks.metadata.mockRejectedValue(failure)
 		const { loadMasterExchangeProfile } = await import('../server/master.loaders')
@@ -190,7 +190,7 @@ describe('master page loaders', () => {
 		expect(mocks.mapProfile).not.toHaveBeenCalled()
 	})
 
-	it('classifies a metadata 404 as an unknown venue', async () => {
+	test('classifies a metadata 404 as an unknown venue', async () => {
 		mocks.metadata.mockRejectedValue(new Error('[404] Not Found'))
 		const { loadMasterExchangeProfile, MasterExchangeNotFoundError } = await import('../server/master.loaders')
 
@@ -199,7 +199,7 @@ describe('master page loaders', () => {
 		expect(mocks.mapProfile).not.toHaveBeenCalled()
 	})
 
-	it('keeps a missing required markets index fatal', async () => {
+	test('keeps a missing required markets index fatal', async () => {
 		mocks.metadata.mockResolvedValue({ display_name: 'Venue', profile_mode: 'markets' })
 		const failure = new Error('[404] Not Found')
 		mocks.index.mockRejectedValue(failure)

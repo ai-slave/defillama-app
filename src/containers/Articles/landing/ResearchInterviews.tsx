@@ -1,11 +1,12 @@
 import clsx from 'clsx'
 import Link from 'next/link'
-import React from 'react'
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articles/landing/Analytics'
 import { ReadMoreLink } from '~/containers/Articles/landing/ReadMoreLink'
-import { ResearchSectionWithSharedHeightProvider } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
-import { useSharedHeight } from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
+import {
+	ResearchSectionWithSharedHeightProvider,
+	useSharedHeight
+} from '~/containers/Articles/landing/ResearchSectionWithSharedHeight'
 import { TitleLine } from '~/containers/Articles/landing/TitleLine'
 import { articleHref } from '~/containers/Articles/landing/utils'
 import type { ArticleDocument } from '~/containers/Articles/types'
@@ -13,11 +14,11 @@ import { useMedia } from '~/hooks/useMedia'
 
 interface Props {
 	title: string
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 }
 
 interface ResearchInterviewsContentProps {
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 	pageWidget: string
 }
 

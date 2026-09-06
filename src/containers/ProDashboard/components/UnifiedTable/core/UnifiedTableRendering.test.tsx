@@ -12,7 +12,7 @@ import {
 } from '@tanstack/react-table'
 import { act, useMemo, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { StreamDoneContext } from '../../../queries'
 import type { UnifiedTableConfig } from '../../../unifiedTable/config/current'
 import type { ProtocolsUnifiedTableResponse } from '../../../unifiedTable/contracts'
@@ -93,7 +93,7 @@ const createRow = (index: number): ProtocolTableLeafRow => {
 	}
 }
 
-const columns: ColumnDef<ProtocolTableRow>[] = [
+const columns: Array<ColumnDef<ProtocolTableRow>> = [
 	{
 		id: 'name',
 		header: 'Name',
@@ -252,7 +252,7 @@ describe('UnifiedTable rendering', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it.each(['tvl', 'fees24h'])(
+	test.each(['tvl', 'fees24h'])(
 		'sorts missing %s last without losing measured zero or negative values',
 		async (columnId) => {
 			const data: ProtocolsUnifiedTableResponse = {
@@ -272,7 +272,7 @@ describe('UnifiedTable rendering', () => {
 			await act(async () =>
 				root.render(
 					<QueryClientProvider client={createQueryClient()}>
-						<StreamDoneContext.Provider value={true}>
+						<StreamDoneContext.Provider value>
 							<SortingHarness columnId={columnId} />
 						</StreamDoneContext.Provider>
 					</QueryClientProvider>
@@ -287,7 +287,7 @@ describe('UnifiedTable rendering', () => {
 		}
 	)
 
-	it('renders equal-sized page changes and resets the virtual scroll window', async () => {
+	test('renders equal-sized page changes and resets the virtual scroll window', async () => {
 		await act(async () => root.render(<TableHarness />))
 		expect(rowNames()).toEqual(Array.from({ length: 10 }, (_, index) => `Row ${index + 1}`))
 		expect(container.textContent).toContain('Page 1 of 3')
@@ -305,14 +305,14 @@ describe('UnifiedTable rendering', () => {
 		expect(virtualizer.scrollToOffset).toHaveBeenCalledWith(0, { align: 'start' })
 	})
 
-	it('renders same-cardinality data replacements from the current table snapshot', async () => {
+	test('renders same-cardinality data replacements from the current table snapshot', async () => {
 		await act(async () => root.render(<TableHarness />))
 		await act(async () => button('Reverse data').click())
 
 		expect(rowNames()).toEqual(Array.from({ length: 10 }, (_, index) => `Row ${21 - index}`))
 	})
 
-	it('confirms before duplicating an editable unified table', async () => {
+	test('confirms before duplicating an editable unified table', async () => {
 		dashboardMocks.permissions.isReadOnly = false
 
 		await act(async () =>
@@ -339,7 +339,7 @@ describe('UnifiedTable rendering', () => {
 		expect(dashboardMocks.handleDuplicateUnifiedTable).toHaveBeenCalledWith(unifiedTableConfig)
 	})
 
-	it('shows an initial query failure distinctly from an empty table and retries from the error state', async () => {
+	test('shows an initial query failure distinctly from an empty table and retries from the error state', async () => {
 		const fetchMock = vi.fn(async () => new Response('upstream unavailable', { status: 400 }))
 		vi.stubGlobal('fetch', fetchMock)
 		const queryClient = createQueryClient()
@@ -347,7 +347,7 @@ describe('UnifiedTable rendering', () => {
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={queryClient}>
-					<StreamDoneContext.Provider value={true}>
+					<StreamDoneContext.Provider value>
 						<UnifiedTable config={unifiedTableConfig} />
 					</StreamDoneContext.Provider>
 				</QueryClientProvider>
@@ -362,7 +362,7 @@ describe('UnifiedTable rendering', () => {
 		expect(fetchMock.mock.calls.length).toBeGreaterThan(attemptsBeforeRetry)
 	})
 
-	it('keeps stale table rows visible when a background refresh fails', async () => {
+	test('keeps stale table rows visible when a background refresh fails', async () => {
 		let shouldFail = false
 		vi.stubGlobal(
 			'fetch',
@@ -380,7 +380,7 @@ describe('UnifiedTable rendering', () => {
 		await act(async () =>
 			root.render(
 				<QueryClientProvider client={queryClient}>
-					<StreamDoneContext.Provider value={true}>
+					<StreamDoneContext.Provider value>
 						<UnifiedTable config={unifiedTableConfig} />
 					</StreamDoneContext.Provider>
 				</QueryClientProvider>

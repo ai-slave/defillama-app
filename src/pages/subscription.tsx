@@ -95,7 +95,7 @@ function SubscriptionContent() {
 		if (isAuthenticated && returnUrl && handledReturnUrlRef.current !== returnUrl && !loaders.userLoading) {
 			const justSignedUp = sessionStorage.getItem('just_signed_up') === 'true'
 			const accountAge = user?.created ? Date.now() - new Date(user.created).getTime() : Infinity
-			const isRecentAccount = accountAge < 10000
+			const isRecentAccount = accountAge < 10_000
 
 			if (justSignedUp) {
 				sessionStorage.removeItem('just_signed_up')

@@ -34,7 +34,7 @@ function SnapshotImage({ article }: Readonly<{ article: ArticleDocument }>) {
 }
 
 interface ResearchSpotlightProps {
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 	title: string
 }
 

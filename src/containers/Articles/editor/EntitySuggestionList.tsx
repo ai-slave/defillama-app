@@ -4,8 +4,8 @@ import type { ArticleEntitySuggestionItem } from '../entitySuggestions'
 import type { ArticleEntityType } from '../types'
 
 type Props = {
-	items: ArticleEntitySuggestionItem[]
-	recents: ArticleEntitySuggestionItem[]
+	items: Array<ArticleEntitySuggestionItem>
+	recents: Array<ArticleEntitySuggestionItem>
 	query: string
 	loading: boolean
 	command: (item: ArticleEntitySuggestionItem) => void
@@ -81,8 +81,8 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 		() => (filter === 'all' ? items : items.filter((i) => i.entityType === filter)),
 		[items, filter]
 	)
-	const flat = useMemo<ArticleEntitySuggestionItem[]>(() => {
-		const list: ArticleEntitySuggestionItem[] = []
+	const flat = useMemo<Array<ArticleEntitySuggestionItem>>(() => {
+		const list: Array<ArticleEntitySuggestionItem> = []
 		if (showRecents) list.push(...recents)
 		list.push(...filtered)
 		return list

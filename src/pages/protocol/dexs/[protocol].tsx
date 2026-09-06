@@ -51,19 +51,19 @@ type DexProtocolChartName = 'DEX Volume' | 'Notional Volume'
 interface DexProtocolPageProps {
 	name: string
 	deprecated: boolean
-	otherProtocols: string[]
+	otherProtocols: Array<string>
 	category: string | null
 	metrics: IProtocolOverviewPageData['metrics']
 	hasKeyMetrics: true
 	openSmolStatsSummaryByDefault: true
 	dexVolume: IProtocolOverviewPageData['dexVolume']
 	dexNotionalVolume: IProtocolOverviewPageData['dexNotionalVolume']
-	charts: Partial<Record<DexProtocolChartName, TimePoint[]>>
-	defaultCharts: DexProtocolChartName[]
-	protocolChains: string[]
-	protocolVersions: string[]
+	charts: Partial<Record<DexProtocolChartName, Array<TimePoint>>>
+	defaultCharts: Array<DexProtocolChartName>
+	protocolChains: Array<string>
+	protocolVersions: Array<string>
 	warningBanners: ReturnType<typeof getProtocolWarningBanners>
-	hallmarks: HallmarkPoint[] | null
+	hallmarks: Array<HallmarkPoint> | null
 	defaultChartView: LowercaseDwmcGrouping
 	seoTitle: string
 	seoDescription: string
@@ -146,7 +146,7 @@ export const getStaticProps = withPerformanceLogging<DexProtocolPageProps, { pro
 		})
 
 		const charts: DexProtocolPageProps['charts'] = {}
-		const defaultCharts: DexProtocolChartName[] = []
+		const defaultCharts: Array<DexProtocolChartName> = []
 		if (volumeData && volumeData.totalDataChart.length > 0) {
 			charts['DEX Volume'] = normalizeProtocolFlowChart(volumeData.totalDataChart)
 			defaultCharts.push('DEX Volume')
@@ -195,11 +195,11 @@ export const getStaticPaths = () => {
 
 export default function Protocols(props: DexProtocolPageProps) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
-	const [charts, setCharts] = useState<string[]>(props.defaultCharts)
+	const [charts, setCharts] = useState<Array<string>>(props.defaultCharts)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
-		const series: ProtocolFlowChartSeries[] = []
+		const series: Array<ProtocolFlowChartSeries> = []
 
 		const dexVolumePoints = props.charts['DEX Volume']
 		if (charts.includes('DEX Volume') && dexVolumePoints) {

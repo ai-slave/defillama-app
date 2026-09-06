@@ -27,7 +27,7 @@ function Stat({ value, sub }: { value: React.ReactNode; sub?: React.ReactNode })
 }
 
 // "Recorded" phrasing on the clean case — absence of evidence, not a proven zero.
-export function trackRecordSummary(incidents: HistoryIncident[]): {
+export function trackRecordSummary(incidents: Array<HistoryIncident>): {
 	label: string
 	tone: Tone
 	detail: string | null
@@ -40,7 +40,7 @@ export function trackRecordSummary(incidents: HistoryIncident[]): {
 		if (incident.usdRecovered === null) recoveryUnavailable = true
 		else totalRecovered += Math.min(incident.usdRecovered, incident.usdLost)
 	}
-	if (!incidents.length)
+	if (incidents.length === 0)
 		return {
 			label: 'No pool-level losses recorded',
 			tone: 'good',
@@ -68,7 +68,7 @@ export function trackRecordSummary(incidents: HistoryIncident[]): {
 // meaningfully under the worst case, else the worst computed scenario in that band. Null when
 // every modeled path is a total loss — then there's no smaller-loss story to tell.
 function realisticWorst(
-	scenarios: ScenarioVM[],
+	scenarios: Array<ScenarioVM>,
 	stress: Stress | null,
 	supplyUsd: number | null,
 	worstUsd: number
@@ -77,7 +77,7 @@ function realisticWorst(
 	const ceil = worstUsd > 0 ? worstUsd : supplyUsd
 	const inBand = (usd: number) => usd > supplyUsd * 0.01 && usd < ceil * 0.95
 	const anchors = (stress?.anchors ?? []).filter((a) => inBand(a.bad_debt_usd))
-	if (anchors.length) {
+	if (anchors.length > 0) {
 		const deepest = anchors.reduce((best, a) => (a.bad_debt_usd > best.bad_debt_usd ? a : best))
 		return {
 			lossUsd: deepest.bad_debt_usd,
@@ -152,15 +152,14 @@ function LossHeadline({
 				{catLabel.toLowerCase()}
 				{' reaches a total '}
 				<span className="text-primary tabular-nums">{share(worstUsd)}</span>
-				{noEscape ? ', with no warning to exit' : ''}
-				{'.'}
+				{noEscape ? ', with no warning to exit' : ''}.
 			</span>
 		</div>
 	)
 }
 
-function auditsPhrase(audits: Audit[]): string {
-	if (!audits.length) return 'no audits on record'
+function auditsPhrase(audits: Array<Audit>): string {
+	if (audits.length === 0) return 'no audits on record'
 	const latest = audits
 		.map((a) => a.date)
 		.filter(Boolean)
@@ -179,12 +178,12 @@ export function RiskVerdict({
 	incidents
 }: {
 	headline: HeadlineVM
-	scenarios: ScenarioVM[]
+	scenarios: Array<ScenarioVM>
 	stress?: Stress | null
 	supplyUsd: number | null
 	exit: ExitReadinessVM
-	audits: Audit[]
-	incidents: HistoryIncident[]
+	audits: Array<Audit>
+	incidents: Array<HistoryIncident>
 }) {
 	const worst = headline.worstCaseMaxUsd
 	const noEscape = headline.worstCaseWindow?.kind === 'no-escape'
@@ -212,8 +211,8 @@ export function RiskVerdict({
 	// failure is no-warning.
 	const escapableCount = scenarios.filter((s) => s.status === 'computed' && s.actingWindow.kind === 'window').length
 	const exitWindowLabel = exit.bestExitWindow
-		? exit.bestExitWindow.maxSec >= 86400
-			? `${Math.round(exit.bestExitWindow.maxSec / 86400)}-day`
+		? exit.bestExitWindow.maxSec >= 86_400
+			? `${Math.round(exit.bestExitWindow.maxSec / 86_400)}-day`
 			: exit.bestExitWindow.label.replace(' withdraw window', '')
 		: null
 	const exitValue = exit.poolType === 'market' && avail != null ? withdrawable : 'Via underlying markets'

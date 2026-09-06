@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { EMPTY_CANONICAL_CHAIN_METRICS } from '../../unifiedTable/contracts'
 import type { ProtocolAggregateTableRow, ProtocolChainTableRow } from '../../unifiedTable/contracts'
 import { buildProtocolTableReadModel, filterProtocolTableSourceRows, setProtocolTableFilteredShares } from './readModel'
@@ -18,7 +18,7 @@ function ratioAggregationPlan(marketCap: boolean, tvl: boolean, fees: boolean, r
 function protocol(
 	id: string,
 	tvl: number,
-	options: { parentId?: string; excludeTvlFromParent?: true; chains?: string[]; oracles?: string[] } = {}
+	options: { parentId?: string; excludeTvlFromParent?: true; chains?: Array<string>; oracles?: Array<string> } = {}
 ): ProtocolAggregateTableRow {
 	return {
 		rowType: 'protocol',
@@ -40,7 +40,7 @@ function protocol(
 }
 
 describe('protocol table read model', () => {
-	it('builds deterministic economic groups and calculates shares on demand', () => {
+	test('builds deterministic economic groups and calculates shares on demand', () => {
 		const rows = [
 			protocol('child-b', 100, { parentId: 'parent', chains: ['Zora', 'Base'], oracles: ['Zeta'] }),
 			protocol('child-a', 20, {
@@ -54,7 +54,7 @@ describe('protocol table read model', () => {
 		const model = buildProtocolTableReadModel({
 			rows,
 			rowHeaders: ['parent-protocol', 'protocol'],
-			parentMetrics: { parent: { mcap: 1_000, fdv: null, oracles: ['Parent Oracle'] } },
+			parentMetrics: { parent: { mcap: 1000, fdv: null, oracles: ['Parent Oracle'] } },
 			chainMetrics: {},
 			customColumns: []
 		})
@@ -63,7 +63,7 @@ describe('protocol table read model', () => {
 		expect(model.rows).toHaveLength(2)
 		const parent = model.rows.find((row) => row.displayName === 'parent')
 		expect(parent?.metrics.tvl).toBe(100)
-		expect(parent?.metrics.mcap).toBe(1_000)
+		expect(parent?.metrics.mcap).toBe(1000)
 		expect(parent?.chains).toEqual(['Base', 'Zora'])
 		expect(parent?.oracles).toEqual(['Alpha', 'Parent Oracle', 'Zeta'])
 		expect(parent?.filteredShares.tvl).toBeCloseTo(66.6667)
@@ -71,10 +71,10 @@ describe('protocol table read model', () => {
 
 		const searched = buildProtocolTableReadModel({
 			rows: filterProtocolTableSourceRows(rows, 'parent', {
-				parent: { mcap: 1_000, fdv: null, oracles: ['Parent Oracle'] }
+				parent: { mcap: 1000, fdv: null, oracles: ['Parent Oracle'] }
 			}),
 			rowHeaders: ['parent-protocol', 'protocol'],
-			parentMetrics: { parent: { mcap: 1_000, fdv: null, oracles: ['Parent Oracle'] } },
+			parentMetrics: { parent: { mcap: 1000, fdv: null, oracles: ['Parent Oracle'] } },
 			chainMetrics: {},
 			customColumns: []
 		})
@@ -84,9 +84,9 @@ describe('protocol table read model', () => {
 		expect(searched.rows[0]?.filteredShares.tvl).toBe(100)
 
 		const childSearch = buildProtocolTableReadModel({
-			rows: filterProtocolTableSourceRows(rows, 'child-b', { parent: { mcap: 1_000, fdv: null } }),
+			rows: filterProtocolTableSourceRows(rows, 'child-b', { parent: { mcap: 1000, fdv: null } }),
 			rowHeaders: ['parent-protocol', 'protocol'],
-			parentMetrics: { parent: { mcap: 1_000, fdv: null } },
+			parentMetrics: { parent: { mcap: 1000, fdv: null } },
 			chainMetrics: {},
 			customColumns: []
 		})
@@ -95,7 +95,7 @@ describe('protocol table read model', () => {
 		expect(childSearch.rows[0]?.filteredShares.tvl).toBe(100)
 	})
 
-	it('applies TVL exclusions only to parent groups', () => {
+	test('applies TVL exclusions only to parent groups', () => {
 		const rows = [
 			protocol('included', 100, { parentId: 'parent' }),
 			protocol('excluded', 20, { parentId: 'parent', excludeTvlFromParent: true })
@@ -117,7 +117,7 @@ describe('protocol table read model', () => {
 		expect(parent.subRows.map((row) => row.metrics.tvl)).toEqual([100, 20])
 	})
 
-	it('deduplicates a parent market cap within each overlapping category', () => {
+	test('deduplicates a parent market cap within each overlapping category', () => {
 		const dex = protocol('parent-dex', 10, { parentId: 'parent' })
 		const dexTwo = protocol('parent-dex-two', 30, { parentId: 'parent' })
 		const lending = protocol('parent-lending', 20, { parentId: 'parent' })
@@ -125,7 +125,7 @@ describe('protocol table read model', () => {
 		const model = buildProtocolTableReadModel({
 			rows: [dex, dexTwo, lending],
 			rowHeaders: ['category', 'parent-protocol', 'protocol'],
-			parentMetrics: { parent: { mcap: 1_000, fdv: 2_000 } },
+			parentMetrics: { parent: { mcap: 1000, fdv: 2000 } },
 			chainMetrics: {},
 			customColumns: []
 		})
@@ -133,20 +133,20 @@ describe('protocol table read model', () => {
 		const categoryMarketCaps = new Map(model.rows.map((category) => [category.displayName, category.metrics.mcap]))
 		expect(categoryMarketCaps).toEqual(
 			new Map([
-				['Dexs', 1_000],
-				['Lending', 1_000]
+				['Dexs', 1000],
+				['Lending', 1000]
 			])
 		)
 		for (const category of model.rows) {
 			const parent = category.nodeType === 'group' ? category.subRows[0] : undefined
-			expect(parent?.metrics.mcap).toBe(1_000)
+			expect(parent?.metrics.mcap).toBe(1000)
 		}
 	})
 
-	it('deduplicates parent market cap across children in a canonical chain group', () => {
+	test('deduplicates parent market cap across children in a canonical chain group', () => {
 		const first = protocol('parent-first', 10, { parentId: 'parent' })
 		const second = protocol('parent-second', 20, { parentId: 'parent' })
-		const rows: ProtocolChainTableRow[] = [first, second].map((row) => ({
+		const rows: Array<ProtocolChainTableRow> = [first, second].map((row) => ({
 			...row,
 			rowType: 'protocol-chain',
 			id: `${row.id}-ethereum`,
@@ -156,17 +156,17 @@ describe('protocol table read model', () => {
 		const model = buildProtocolTableReadModel({
 			rows,
 			rowHeaders: ['chain', 'protocol'],
-			parentMetrics: { parent: { mcap: 1_000, fdv: 2_000 } },
+			parentMetrics: { parent: { mcap: 1000, fdv: 2000 } },
 			chainMetrics: {
 				ethereum: { availability: 'available', metrics: EMPTY_CANONICAL_CHAIN_METRICS }
 			},
 			customColumns: []
 		})
 
-		expect(model.rows[0]?.metrics).toMatchObject({ mcap: 1_000, fdv: 2_000 })
+		expect(model.rows[0]?.metrics).toMatchObject({ mcap: 1000, fdv: 2000 })
 	})
 
-	it('uses canonical chain totals and does not produce an infinite ratio at zero TVL', () => {
+	test('uses canonical chain totals and does not produce an infinite ratio at zero TVL', () => {
 		const source = protocol('dex', 100)
 		const row: ProtocolChainTableRow = {
 			...source,
@@ -192,7 +192,7 @@ describe('protocol table read model', () => {
 		expect(model.rows[0]?.metrics.mcaptvl).toBeNull()
 	})
 
-	it('omits chain ratios when their market-cap dependency was not requested', () => {
+	test('omits chain ratios when their market-cap dependency was not requested', () => {
 		const source = protocol('dex', 100)
 		Reflect.deleteProperty(source.metrics, 'mcap')
 		const row: ProtocolChainTableRow = {
@@ -216,7 +216,7 @@ describe('protocol table read model', () => {
 		expect(model.rows[0]?.metrics).not.toHaveProperty('ps')
 	})
 
-	it('keeps requested chain ratios explicit when every source row has sparse null metrics', () => {
+	test('keeps requested chain ratios explicit when every source row has sparse null metrics', () => {
 		const source = protocol('dex', 100)
 		source.metrics = {}
 		const row: ProtocolChainTableRow = {
@@ -238,7 +238,7 @@ describe('protocol table read model', () => {
 		expect(model.rows[0]?.metrics).toMatchObject({ mcaptvl: null, pf: null, ps: null })
 	})
 
-	it('preserves zero numerators while treating zero ratio denominators as unknown', () => {
+	test('preserves zero numerators while treating zero ratio denominators as unknown', () => {
 		const source = protocol('dex', 100)
 		source.metrics.mcap = 0
 		const row: ProtocolChainTableRow = {
@@ -264,7 +264,7 @@ describe('protocol table read model', () => {
 		expect(model.rows[0]?.metrics).toMatchObject({ mcaptvl: 0, pf: 0, ps: null })
 	})
 
-	it('does not present whole-chain totals as totals for a filtered subset', () => {
+	test('does not present whole-chain totals as totals for a filtered subset', () => {
 		const source = protocol('matched-dex', 100)
 		source.metrics.fees24h = 100
 		source.metrics.fees24h7dAgo = 80
@@ -281,7 +281,7 @@ describe('protocol table read model', () => {
 			rowHeaders: ['chain', 'protocol'],
 			parentMetrics: {},
 			chainMetrics: {
-				ethereum: { availability: 'available', metrics: { ...EMPTY_CANONICAL_CHAIN_METRICS, tvl: 1_000 } }
+				ethereum: { availability: 'available', metrics: { ...EMPTY_CANONICAL_CHAIN_METRICS, tvl: 1000 } }
 			},
 			customColumns: [],
 			chainMetricScope: 'partial'
@@ -296,7 +296,7 @@ describe('protocol table read model', () => {
 		expect(chain.metrics.fees24hChange7dAgo).toBeNull()
 	})
 
-	it('uses chain economics only for canonical chain groups', () => {
+	test('uses chain economics only for canonical chain groups', () => {
 		const source = protocol('dex', 100)
 		const row: ProtocolChainTableRow = {
 			...source,
@@ -359,7 +359,7 @@ describe('protocol table read model', () => {
 		})
 	})
 
-	it('rebuilds parent totals and shares from only the source rows matching search', () => {
+	test('rebuilds parent totals and shares from only the source rows matching search', () => {
 		const rows = [
 			protocol('matched-child', 80, { parentId: 'parent' }),
 			protocol('hidden-child', 20, { parentId: 'parent' }),
@@ -384,7 +384,7 @@ describe('protocol table read model', () => {
 		expect(model.rows[0]?.filteredShares.tvl).toBe(100)
 	})
 
-	it('retains a parent ecosystem when only the parent has the selected oracle', () => {
+	test('retains a parent ecosystem when only the parent has the selected oracle', () => {
 		const rows = [
 			protocol('child-a', 80, { parentId: 'parent' }),
 			protocol('child-b', 20, { parentId: 'parent' }),
@@ -401,7 +401,7 @@ describe('protocol table read model', () => {
 		expect(filtered.map((row) => row.protocolId)).toEqual(['child-a', 'child-b'])
 	})
 
-	it('searches direct and parent-level oracle membership', () => {
+	test('searches direct and parent-level oracle membership', () => {
 		const direct = protocol('direct', 10, { oracles: ['Pyth'] })
 		const child = protocol('child', 20, { parentId: 'parent' })
 		const unrelated = protocol('unrelated', 30)
@@ -411,7 +411,7 @@ describe('protocol table read model', () => {
 		expect(filterProtocolTableSourceRows([direct, child, unrelated], 'chainlink', parentMetrics)).toEqual([child])
 	})
 
-	it('applies protocol metric filters before hierarchy, totals, and shares', () => {
+	test('applies protocol metric filters before hierarchy, totals, and shares', () => {
 		const filtered = filterRowsByConfig([protocol('included', 100), protocol('excluded', 1)], { tvlMin: 10 })
 		const model = buildProtocolTableReadModel({
 			rows: filtered,
@@ -427,7 +427,7 @@ describe('protocol table read model', () => {
 		expect(model.rows[0]?.filteredShares.tvl).toBe(100)
 	})
 
-	it('does not traverse or replace share state when no share metrics are requested', () => {
+	test('does not traverse or replace share state when no share metrics are requested', () => {
 		const model = buildProtocolTableReadModel({
 			rows: [protocol('included', 100)],
 			rowHeaders: ['category', 'protocol'],
@@ -442,19 +442,19 @@ describe('protocol table read model', () => {
 		expect(model.rows[0]?.filteredShares).toBe(shares)
 	})
 
-	it('distinguishes source filters from canonical chain-only filters', () => {
+	test('distinguishes source filters from canonical chain-only filters', () => {
 		expect(hasProtocolSubsetFilters({ tvlMin: 10 })).toBe(true)
 		expect(hasProtocolSubsetFilters({ categories: ['Dexs'] })).toBe(true)
 		expect(hasProtocolSubsetFilters({ chains: ['Ethereum'] })).toBe(false)
 		expect(hasProtocolSubsetFilters({ stablesMcapMin: 100, hasBridgedTVL: true })).toBe(false)
 	})
 
-	it('uses canonical chain metrics for filtering without replacing category-scoped chain totals', () => {
+	test('uses canonical chain metrics for filtering without replacing category-scoped chain totals', () => {
 		const baseProtocol = protocol('base-dex', 10, { chains: ['Base'] })
 		const ethereumProtocol = protocol('ethereum-dex', 20, { chains: ['Ethereum'] })
 		const ethereumLendingProtocol = protocol('ethereum-lending', 30, { chains: ['Ethereum'] })
 		ethereumLendingProtocol.category = 'Lending'
-		const sourceRows: ProtocolChainTableRow[] = [
+		const sourceRows: Array<ProtocolChainTableRow> = [
 			{
 				...baseProtocol,
 				rowType: 'protocol-chain',
@@ -484,7 +484,7 @@ describe('protocol table read model', () => {
 			},
 			ethereum: {
 				availability: 'available' as const,
-				metrics: { ...EMPTY_CANONICAL_CHAIN_METRICS, tvl: 1_000, stablesMcap: 500 }
+				metrics: { ...EMPTY_CANONICAL_CHAIN_METRICS, tvl: 1000, stablesMcap: 500 }
 			}
 		}
 		const filteredSourceRows = filterRowsByConfig(sourceRows, { stablesMcapMin: 100 }, {}, chainMetrics)
@@ -516,19 +516,19 @@ describe('protocol table read model', () => {
 		)
 	})
 
-	it('retains a protocol group when one protocol has multiple chain rows', () => {
+	test('retains a protocol group when one protocol has multiple chain rows', () => {
 		const source = protocol('multi-chain', 30, { chains: ['Base', 'Ethereum'] })
 		source.parentProtocolId = 'parent'
 		source.parentProtocolName = 'parent'
 		source.metrics.mcap = 300
-		const rows: ProtocolChainTableRow[] = [
+		const rows: Array<ProtocolChainTableRow> = [
 			{ ...source, id: 'multi-chain-base', rowType: 'protocol-chain', chain: 'Base', chains: ['Base'] },
 			{ ...source, id: 'multi-chain-ethereum', rowType: 'protocol-chain', chain: 'Ethereum', chains: ['Ethereum'] }
 		]
 		const model = buildProtocolTableReadModel({
 			rows,
 			rowHeaders: ['protocol'],
-			parentMetrics: { parent: { mcap: 1_000, fdv: null } },
+			parentMetrics: { parent: { mcap: 1000, fdv: null } },
 			chainMetrics: {},
 			customColumns: []
 		})
@@ -540,7 +540,7 @@ describe('protocol table read model', () => {
 		expect(groupedProtocol.metrics.mcap).toBe(300)
 	})
 
-	it('evaluates compiled custom columns consistently for leaves and groups', () => {
+	test('evaluates compiled custom columns consistently for leaves and groups', () => {
 		const alpha = protocol('alpha', 10)
 		alpha.metrics.fees24h = 2
 		const beta = protocol('beta', 20)
@@ -579,7 +579,7 @@ describe('protocol table read model', () => {
 		})
 	})
 
-	it('propagates sum and first custom values through nested groups without changing null semantics', () => {
+	test('propagates sum and first custom values through nested groups without changing null semantics', () => {
 		const alpha = protocol('alpha', 10, { parentId: 'parent' })
 		alpha.metrics.fees24h = null
 		const beta = protocol('beta', 20, { parentId: 'parent' })
@@ -637,12 +637,12 @@ describe('protocol table read model', () => {
 		})
 	})
 
-	it('propagates hidden chain inputs while exposing them only on chain groups', () => {
+	test('propagates hidden chain inputs while exposing them only on chain groups', () => {
 		const alpha = protocol('alpha', 10)
 		alpha.metrics.stablesMcap = 10
 		const beta = protocol('beta', 20)
 		beta.metrics.stablesMcap = 20
-		const rows: ProtocolChainTableRow[] = [alpha, beta].map((row) => ({
+		const rows: Array<ProtocolChainTableRow> = [alpha, beta].map((row) => ({
 			...row,
 			rowType: 'protocol-chain',
 			id: `${row.id}-base`,
@@ -683,7 +683,7 @@ describe('protocol table read model', () => {
 		])
 	})
 
-	it('calculates filtered shares once after group filters', () => {
+	test('calculates filtered shares once after group filters', () => {
 		const dex = protocol('dex', 10)
 		dex.metrics.fees24h = 10
 		const lender = protocol('lender', 20)

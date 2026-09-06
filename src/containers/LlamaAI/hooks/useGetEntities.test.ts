@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { searchTokens } = vi.hoisted(() => ({ searchTokens: vi.fn() }))
 
@@ -11,7 +11,7 @@ describe('fetchCoins', () => {
 		searchTokens.mockReset()
 	})
 
-	it('preserves token logos for search results', async () => {
+	test('preserves token logos for search results', async () => {
 		searchTokens.mockResolvedValue([
 			{
 				id: 'ethereum',

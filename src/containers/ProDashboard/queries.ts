@@ -49,7 +49,7 @@ function fetchChartDirect(
 	timePeriod?: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
 	dataType?: string
-): () => Promise<[number, number][]> {
+): () => Promise<Array<[number, number]>> {
 	return async () => {
 		const data =
 			itemType === 'protocol'
@@ -71,7 +71,7 @@ function fetchChartProxied(
 	authToken: string,
 	geckoId?: string | null,
 	dataType?: string
-): () => Promise<[number, number][]> {
+): () => Promise<Array<[number, number]>> {
 	return () =>
 		fetchProDashboardProxy(
 			'chart',
@@ -95,7 +95,7 @@ export function getChartQueryFn(
 	item: string,
 	geckoId?: string | null,
 	timePeriod?: TimePeriod,
-	parentMapping?: ReadonlyMap<string, readonly string[]>,
+	parentMapping?: ReadonlyMap<string, ReadonlyArray<string>>,
 	customPeriod?: CustomTimePeriod | null,
 	dataType?: string,
 	authToken?: string | null
@@ -111,7 +111,7 @@ export function getChartQueryFn(
 				return fetcher()
 			}
 
-			let direct: [number, number][] = []
+			let direct: Array<[number, number]> = []
 			let directError: unknown = null
 			try {
 				direct = await fetcher()
@@ -143,9 +143,8 @@ export function getChartQueryFn(
 
 			return Array.from(sumSeriesByTimestamp(seriesList).entries()).sort((a, b) => a[0] - b[0])
 		}
-	} else {
-		return fetcher
 	}
+	return fetcher
 }
 
 export function useProtocolsAndChains({ enabled = true, waitForStream = true } = {}) {
@@ -155,7 +154,7 @@ export function useProtocolsAndChains({ enabled = true, waitForStream = true } =
 		enabled: enabled && (!waitForStream || streamDone),
 		queryFn: async () => {
 			const [protocolCatalogSource, protocolsData, chainsData] = await Promise.all([
-				fetchJson<ProProtocolCatalogSourceRow[]>('/api/dynamic/pro-dashboard/protocol-catalog-source'),
+				fetchJson<Array<ProProtocolCatalogSourceRow>>('/api/dynamic/pro-dashboard/protocol-catalog-source'),
 				fetchProtocols(),
 				fetchChainsList()
 			])
@@ -180,13 +179,13 @@ export function useOracleNamesByProtocol() {
 }
 
 export type ProDashboardChartObserverPlan = {
-	sources: ChartConfig[]
-	sourceIndexByChart: number[]
+	sources: Array<ChartConfig>
+	sourceIndexByChart: Array<number>
 }
 
 /** React Query requires every entry in one useQueries call to have a unique key. */
-export function buildProDashboardChartObserverPlan(charts: ChartConfig[]): ProDashboardChartObserverPlan {
-	const sources: ChartConfig[] = []
+export function buildProDashboardChartObserverPlan(charts: Array<ChartConfig>): ProDashboardChartObserverPlan {
+	const sources: Array<ChartConfig> = []
 	const sourceIndexByChart = new Array<number>(charts.length)
 	const sourceIndexByKey = new Map<string, number>()
 
@@ -205,11 +204,11 @@ export function buildProDashboardChartObserverPlan(charts: ChartConfig[]): ProDa
 }
 
 function projectChartData(
-	sourceData: [number, number][],
+	sourceData: Array<[number, number]>,
 	timePeriod: TimePeriod,
 	customPeriod: CustomTimePeriod | null | undefined,
 	grouping: DashboardGrouping | null
-): [number, number][] {
+): Array<[number, number]> {
 	const relevantCustomPeriod = timePeriod === 'custom' ? customPeriod : null
 	const filtered = filterDataByTimePeriod(sourceData, timePeriod, relevantCustomPeriod)
 	return grouping ? groupData(filtered, grouping) : filtered
@@ -220,7 +219,7 @@ function getChartSourceQueryOptions(
 	streamDone: boolean,
 	prerequisite: ChartDataPrerequisite,
 	authToken: string | null | undefined,
-	parentMapping: ReadonlyMap<string, readonly string[]> | undefined
+	parentMapping: ReadonlyMap<string, ReadonlyArray<string>> | undefined
 ) {
 	const itemType = chart.subjectType
 	const item = chart.subjectType === 'protocol' ? chart.protocol : chart.chain
@@ -258,7 +257,7 @@ export function useChartData(
 	timePeriod?: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
 	authToken?: string | null,
-	parentMapping?: ReadonlyMap<string, readonly string[]>
+	parentMapping?: ReadonlyMap<string, ReadonlyArray<string>>
 ) {
 	const streamDone = useContext(StreamDoneContext)
 	const prerequisite = getChartDataPrerequisite(chart, protocolCatalog, protocolBySlug)
@@ -273,7 +272,7 @@ export function useChartData(
 			? dayjs().startOf('day').unix()
 			: null
 	const selectData = useCallback(
-		(sourceData: [number, number][]) => {
+		(sourceData: Array<[number, number]>) => {
 			// A relative period must be projected again after the UTC day boundary even when source data is unchanged.
 			void relativeBoundaryDay
 			const chartTypeDetails = getProDashboardChartTypeConfig(chart.type)
@@ -288,13 +287,13 @@ export function useChartData(
 }
 
 export function useChartsData(
-	charts: ChartConfig[],
+	charts: Array<ChartConfig>,
 	protocolCatalog: ChartDataPrerequisite,
 	protocolBySlug: Pick<ReadonlyMap<string, unknown>, 'has'>,
 	timePeriod?: TimePeriod,
 	customPeriod?: CustomTimePeriod | null,
 	authToken?: string | null,
-	parentMapping?: ReadonlyMap<string, readonly string[]>
+	parentMapping?: ReadonlyMap<string, ReadonlyArray<string>>
 ) {
 	const streamDone = useContext(StreamDoneContext)
 	const observerPlan = useMemo(() => buildProDashboardChartObserverPlan(charts), [charts])
@@ -318,7 +317,7 @@ export function useChartsData(
 			? dayjs().startOf('day').unix()
 			: null
 	const combineSourceQueries = useCallback(
-		(sourceQueries: UseQueryResult<[number, number][]>[]) => {
+		(sourceQueries: Array<UseQueryResult<Array<[number, number]>>>) => {
 			// A relative period must be projected again after the UTC day boundary even when source data is unchanged.
 			void relativeBoundaryDay
 			return charts.map((chart, chartIndex) => {

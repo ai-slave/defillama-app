@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { AbortScope } from '~/containers/LlamaAI/abortScope'
 
 describe('AbortScope', () => {
-	it('invalidates the old callback before aborting its request', async () => {
+	test('invalidates the old callback before aborting its request', async () => {
 		const scope = new AbortScope()
 		let currentDuringAbort = true
 		const first = scope.run('session-a', async (operation) => {
@@ -22,7 +22,7 @@ describe('AbortScope', () => {
 		expect(currentDuringAbort).toBe(false)
 	})
 
-	it('keeps delayed A and B restores from overwriting the final A route', async () => {
+	test('keeps delayed A and B restores from overwriting the final A route', async () => {
 		const scope = new AbortScope()
 		const releases: Array<() => void> = []
 		const state = { sessionId: '', messages: '', queue: '', attachedSessionId: '' }

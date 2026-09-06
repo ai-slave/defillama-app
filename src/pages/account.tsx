@@ -30,9 +30,9 @@ export default function Account() {
 	// re-read the affected data a bounded number of times instead of announcing
 	// the result as already applied.
 	const scheduleConfirmationReads = useCallback(
-		(queryKey: string[]) => {
+		(queryKey: Array<string>) => {
 			void queryClient.invalidateQueries({ queryKey })
-			for (const delay of [4000, 12000]) {
+			for (const delay of [4000, 12_000]) {
 				window.setTimeout(() => void queryClient.invalidateQueries({ queryKey }), delay)
 			}
 		},

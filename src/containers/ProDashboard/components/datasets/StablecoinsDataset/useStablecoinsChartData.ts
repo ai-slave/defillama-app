@@ -32,9 +32,9 @@ import type { StablecoinChartType } from '../../../types'
 interface UseStablecoinsChartDataResult {
 	chartPayload: StablecoinChartSeriesPayload
 	pieSeries: RuntimePieChartData
-	seriesNames: string[]
-	availableSeries: string[]
-	defaultSeries: string[]
+	seriesNames: Array<string>
+	availableSeries: Array<string>
+	defaultSeries: Array<string>
 	totalMcapCurrent: number | null
 	prepareCompleteCsvDataset: () => MultiSeriesChartDataset
 	isLoading: boolean
@@ -64,7 +64,7 @@ export function buildProStablecoinOverviewPayload(
 	params: IBuildStablecoinChartDataParams,
 	chart: StablecoinOverviewChartType,
 	topToken: { symbol: string; mcap: number },
-	selectedNames: string[] | null
+	selectedNames: Array<string> | null
 ): StablecoinChartSeriesPayload {
 	return buildStablecoinOverviewPayload(params, chart, topToken, {
 		selectedNames,
@@ -125,7 +125,7 @@ const buildProStablecoinPresentationResult = (
 			totalMcapCurrent = hasAggregateValue ? total : null
 		}
 	}
-	const defaultSeries: string[] = []
+	const defaultSeries: Array<string> = []
 	if (chartType === 'pie') {
 		for (const asset of rawData.pieAssets) {
 			if (asset.aggregateIncluded && asset.mcap != null && asset.mcap > 0) defaultSeries.push(asset.symbol)
@@ -271,7 +271,7 @@ export function useStablecoinChainsList() {
 			const data = authToken
 				? await fetchProDashboardProxy('stablecoinsList', {}, authToken)
 				: await fetchStablecoinAssetsApi()
-			const chains: StablecoinChainInfo[] = []
+			const chains: Array<StablecoinChainInfo> = []
 			for (const chain of data.chains) {
 				chains.push({
 					name: chain.name,

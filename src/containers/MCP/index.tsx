@@ -328,7 +328,7 @@ function ToolCategoryGroup({
 	defaultOpen
 }: {
 	label: string
-	tools: { name: string; desc: string }[]
+	tools: Array<{ name: string; desc: string }>
 	defaultOpen?: boolean
 }) {
 	const [open, setOpen] = useState(defaultOpen ?? true)
@@ -559,7 +559,7 @@ export default function MCPContainer() {
 						The quick start prompt installs these automatically. To install manually, run:
 					</p>
 					<div className="mx-auto max-w-2xl">
-						<CodeBlock label="Works with any agent">{`npx skills add DefiLlama/defillama-skills --yes`}</CodeBlock>
+						<CodeBlock label="Works with any agent">npx skills add DefiLlama/defillama-skills --yes</CodeBlock>
 					</div>
 				</div>
 			</section>

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	formatBridgesData,
 	formatChainsData,
@@ -11,17 +11,17 @@ const NOW = Date.parse('2026-07-14T12:00:00Z')
 const day = (date: string, volume: number) => ({ date: `${date}T00:00:00Z`, volume })
 
 describe('bridge volume freshness', () => {
-	it('uses yesterday as the latest complete daily bucket', () => {
+	test('uses yesterday as the latest complete daily bucket', () => {
 		const chart = [day('2026-07-12', 10), day('2026-07-13', 20), day('2026-07-14', 5)]
 		expect(getCompletedBridgeVolumePair(chart, NOW)).toEqual({ current: 20, previous: 10 })
 	})
 
-	it('counts an omitted producer day as zero activity in a rolling total', () => {
+	test('counts an omitted producer day as zero activity in a rolling total', () => {
 		const chart = [day('2026-07-11', 5), day('2026-07-13', 20), day('2026-07-14', 1)]
 		expect(getCompletedBridgeVolumeTotal(chart, 3, false, NOW)).toBe(25)
 	})
 
-	it('treats omitted recent rows in a successful sparse response as zero activity', () => {
+	test('treats omitted recent rows in a successful sparse response as zero activity', () => {
 		const chart = [day('2026-06-10', 5), day('2026-06-11', 20)]
 
 		expect(getCompletedBridgeVolumePair(chart, NOW)).toEqual({ current: 0, previous: 0 })
@@ -34,12 +34,12 @@ describe('bridge volume freshness', () => {
 		)
 	})
 
-	it('distinguishes a successful empty response from an unavailable response', () => {
+	test('distinguishes a successful empty response from an unavailable response', () => {
 		expect(getCompletedBridgeVolumeTotals([], [7], false, NOW)).toEqual(new Map([[7, 0]]))
 		expect(getCompletedBridgeVolumeTotals(null, [7], false, NOW)).toEqual(new Map([[7, null]]))
 	})
 
-	it('sums complete deposit and withdrawal volume windows', () => {
+	test('sums complete deposit and withdrawal volume windows', () => {
 		const chart = [
 			{ date: '2026-07-12T00:00:00Z', Deposits: 5, Withdrawals: -2 },
 			{ date: '2026-07-13T00:00:00Z', Deposits: 10, Withdrawals: -3 }
@@ -47,7 +47,7 @@ describe('bridge volume freshness', () => {
 		expect(getCompletedBridgeVolumeTotal(chart, 2, true, NOW)).toBe(20)
 	})
 
-	it('calculates multiple completed windows in one daily-series pass', () => {
+	test('calculates multiple completed windows in one daily-series pass', () => {
 		const chart = Array.from({ length: 30 }, (_, index) => ({
 			date: new Date(Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000).toISOString(),
 			Deposits: 10,
@@ -62,7 +62,7 @@ describe('bridge volume freshness', () => {
 		)
 	})
 
-	it('uses the latest point in a duplicated UTC day even when input is out of order', () => {
+	test('uses the latest point in a duplicated UTC day even when input is out of order', () => {
 		const chart = [
 			{ date: '2026-07-13T23:00:00Z', volume: 30 },
 			{ date: '2026-07-12T12:00:00Z', volume: 10 },
@@ -72,7 +72,7 @@ describe('bridge volume freshness', () => {
 		expect(getCompletedBridgeVolumePair(chart, NOW)).toEqual({ current: 30, previous: 10 })
 	})
 
-	it('keeps exact completed windows when a zero-activity day is omitted', () => {
+	test('keeps exact completed windows when a zero-activity day is omitted', () => {
 		const chart = Array.from({ length: 7 }, (_, index) => ({
 			date: new Date(Date.parse('2026-07-07T00:00:00Z') + index * 86_400_000).toISOString(),
 			Deposits: 10,
@@ -88,7 +88,7 @@ describe('bridge volume freshness', () => {
 		)
 	})
 
-	it('keeps explicit null volume legs unknown', () => {
+	test('keeps explicit null volume legs unknown', () => {
 		const chart = [
 			{ date: '2026-07-12T00:00:00Z', Deposits: 5, Withdrawals: -2 },
 			{ date: '2026-07-13T00:00:00Z', Deposits: null, Withdrawals: -3 }
@@ -96,7 +96,7 @@ describe('bridge volume freshness', () => {
 		expect(getCompletedBridgeVolumeTotal(chart, 2, true, NOW)).toBeNull()
 	})
 
-	it('does not present a completed daily chart point as rolling 24h data', () => {
+	test('does not present a completed daily chart point as rolling 24h data', () => {
 		const rows = formatChainsData({
 			chains: [{ name: 'Test Chain' }],
 			chartDataByChain: [[{ date: '1', depositUSD: 10, withdrawUSD: null }]],
@@ -120,7 +120,7 @@ describe('bridge volume freshness', () => {
 		])
 	})
 
-	it('indexes chain stats with the existing exact and case-insensitive matching rules', () => {
+	test('indexes chain stats with the existing exact and case-insensitive matching rules', () => {
 		const charts = Array.from({ length: 8 }, (_, index) => ({
 			date: String((NOW - (8 - index) * 86_400_000) / 1e3),
 			depositUSD: index + 1,
@@ -186,7 +186,7 @@ describe('bridge volume freshness', () => {
 		expect(inputs).toEqual(original)
 	})
 
-	it('uses only seven exact completed UTC days for a missing weekly netflow response', () => {
+	test('uses only seven exact completed UTC days for a missing weekly netflow response', () => {
 		const charts = [
 			{ date: String(Date.parse('2026-07-13T18:00:00Z') / 1e3), depositUSD: 80, withdrawUSD: 30 },
 			...Array.from({ length: 6 }, (_, index) => ({
@@ -216,7 +216,7 @@ describe('bridge volume freshness', () => {
 		})
 	})
 
-	it('treats an omitted completed UTC day as zero activity in the weekly fallback', () => {
+	test('treats an omitted completed UTC day as zero activity in the weekly fallback', () => {
 		const charts = Array.from({ length: 7 }, (_, index) => ({
 			date: String(Date.parse('2026-07-07T00:00:00Z') / 1e3 + index * 86_400),
 			depositUSD: 10,
@@ -237,8 +237,8 @@ describe('bridge volume freshness', () => {
 		})
 	})
 
-	it('uses exact completed-day volumes on the global bridge overview', () => {
-		const chart = [day('2026-07-12', 20), day('2026-07-13', 30), day('2026-07-14', 1_000)]
+	test('uses exact completed-day volumes on the global bridge overview', () => {
+		const chart = [day('2026-07-12', 20), day('2026-07-13', 30), day('2026-07-14', 1000)]
 		const { bridges } = formatBridgesData({
 			bridges: [
 				{
@@ -249,7 +249,7 @@ describe('bridge volume freshness', () => {
 					lastDailyVolume: 90,
 					dayBeforeLastVolume: 80,
 					weeklyVolume: 700,
-					monthlyVolume: 3_000,
+					monthlyVolume: 3000,
 					txsPrevDay: 10
 				}
 			],
@@ -267,7 +267,7 @@ describe('bridge volume freshness', () => {
 		})
 	})
 
-	it('derives fallback transactions from the latest completed UTC day', () => {
+	test('derives fallback transactions from the latest completed UTC day', () => {
 		const { bridges } = formatBridgesData({
 			bridges: [{ name: 'test-bridge', displayName: 'Test Bridge', chains: ['Ethereum'] }],
 			chartDataByBridge: [
@@ -284,7 +284,7 @@ describe('bridge volume freshness', () => {
 		expect(bridges[0]?.txsPrevDay).toBe(30)
 	})
 
-	it('distinguishes a sparse zero-transaction day from an unavailable chart', () => {
+	test('distinguishes a sparse zero-transaction day from an unavailable chart', () => {
 		const bridge = { name: 'test-bridge', displayName: 'Test Bridge', chains: ['Ethereum'] }
 		const successful = formatBridgesData({
 			bridges: [bridge],
@@ -303,7 +303,7 @@ describe('bridge volume freshness', () => {
 		expect(unavailable.bridges[0]?.txsPrevDay).toBeNull()
 	})
 
-	it('uses exact completed-day volumes on a chain bridge overview', () => {
+	test('uses exact completed-day volumes on a chain bridge overview', () => {
 		const chart = Array.from({ length: 30 }, (_, index) =>
 			day(new Date(Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000).toISOString().slice(0, 10), index + 1)
 		)
@@ -318,7 +318,7 @@ describe('bridge volume freshness', () => {
 					lastDailyVolume: 90,
 					dayBeforeLastVolume: 80,
 					weeklyVolume: 700,
-					monthlyVolume: 3_000,
+					monthlyVolume: 3000,
 					txsPrevDay: 10
 				}
 			],
@@ -334,7 +334,7 @@ describe('bridge volume freshness', () => {
 		})
 	})
 
-	it('keeps exact sparse totals when a longer completed window omits a zero-activity day', () => {
+	test('keeps exact sparse totals when a longer completed window omits a zero-activity day', () => {
 		const chart = Array.from({ length: 30 }, (_, index) =>
 			day(new Date(Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000).toISOString().slice(0, 10), index + 1)
 		).filter((point) => !point.date.startsWith('2026-07-10'))

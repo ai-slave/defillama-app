@@ -4,7 +4,7 @@ import { getProtocolRowMembership, getProtocolRowMembershipKey } from './unified
 import type { UnifiedRowHeaderType } from './unifiedTable/config/types'
 import { getProtocolMetricCapabilities } from './unifiedTable/protocolCapabilities'
 
-export function getUnifiedTableQueryIdentity(config: UnifiedTableConfig, rowHeaders: UnifiedRowHeaderType[]) {
+export function getUnifiedTableQueryIdentity(config: UnifiedTableConfig, rowHeaders: Array<UnifiedRowHeaderType>) {
 	const chains = new Set<string>()
 	for (const chain of config.params?.chains ?? []) {
 		const trimmed = chain.trim()
@@ -50,7 +50,10 @@ export function getUnifiedTableQueryIdentity(config: UnifiedTableConfig, rowHead
 	}
 }
 
-export function buildUnifiedTableQueryString(config: UnifiedTableConfig, rowHeaders: UnifiedRowHeaderType[]): string {
+export function buildUnifiedTableQueryString(
+	config: UnifiedTableConfig,
+	rowHeaders: Array<UnifiedRowHeaderType>
+): string {
 	const params = new URLSearchParams()
 	const { baseMetricFamilies, pointMetrics, supplementalMetrics, needsOracleMembership, rowMembershipKey } =
 		getUnifiedTableQueryIdentity(config, rowHeaders)

@@ -8,14 +8,14 @@ interface FormattedValue {
 
 interface ChartSeries {
 	name: string
-	data: number[]
+	data: Array<number>
 }
 
 interface ChartData {
 	title: string
 	// Daily IR charts use UTC calendar dates, e.g. "2026-07-18".
-	dates: ApiDate[]
-	series: ChartSeries[]
+	dates: Array<ApiDate>
+	series: Array<ChartSeries>
 }
 
 interface ChannelEntry {
@@ -30,7 +30,7 @@ interface ChannelBreakdown {
 	title: string
 	total: number
 	totalFormatted: string
-	channels: ChannelEntry[]
+	channels: Array<ChannelEntry>
 }
 
 interface BreakdownChart extends ChartData {
@@ -95,7 +95,7 @@ export type { FormattedValue, ChartData, EcosystemResponse, ChannelBreakdown, Ch
 function chartToTimeSeries(chart: ChartData): Array<{ name: string; data: Array<[number, number]> }> {
 	return chart.series.map((s) => ({
 		name: s.name,
-		data: chart.dates.map((d, i) => [Math.floor(Date.parse(d + 'T00:00:00Z') / 1000), s.data[i]] as [number, number])
+		data: chart.dates.map((d, i) => [Math.floor(Date.parse(`${d}T00:00:00Z`) / 1000), s.data[i]] as [number, number])
 	}))
 }
 

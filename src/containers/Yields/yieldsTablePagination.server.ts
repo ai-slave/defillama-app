@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { offsetTablePage } from '~/server/tablePages/offsetPage.server'
 import { prepareTableRows } from '~/server/tablePages/preparedRows.server'
 import { canonicalQuerySignature } from '~/server/tablePages/tableQuery'
@@ -34,7 +34,7 @@ export function prepareYieldsTable<Prepared>({
 		namespace: `table-pages:yields-${surface}:prepared-rows`,
 		domain: surface,
 		version: snapshot.generationId,
-		signature: canonicalQuerySignature(query as Record<string, string | string[] | undefined>, {
+		signature: canonicalQuerySignature(query as Record<string, string | Array<string> | undefined>, {
 			exclude: YIELDS_PAGING_PARAMS
 		}),
 		memory: { ttlMs: 10 * 60 * 1000, maxEntries: 8, maxBytes },
@@ -122,12 +122,12 @@ export function sortYieldsRows<TRow, SortKey extends string>({
 	defaultSort,
 	fallbackSortAccessor
 }: {
-	rows: TRow[]
+	rows: Array<TRow>
 	query: ParsedUrlQuery
 	sortAccessors?: YieldsTableSortAccessors<TRow, SortKey>
 	defaultSort?: YieldsTableSort<SortKey>
 	fallbackSortAccessor?: (row: TRow, sortBy: string) => unknown
-}): TRow[] {
+}): Array<TRow> {
 	const parsedSort = parseYieldsSort(query, defaultSort)
 	const hasParsedSortAccessor =
 		parsedSort != null && (sortAccessors?.[parsedSort.sortBy] != null || fallbackSortAccessor != null)
@@ -159,7 +159,7 @@ export function sortYieldsRows<TRow, SortKey extends string>({
  * complete set.
  */
 export function sliceYieldsPage<TRow>(
-	sortedRows: TRow[],
+	sortedRows: Array<TRow>,
 	query: ParsedUrlQuery
 ): Omit<YieldsPaginatedTableResponse<TRow>, 'medianApy'> {
 	const total = sortedRows.length
@@ -185,7 +185,7 @@ export function sliceYieldsPage<TRow>(
 }
 
 export function paginateAndSortRows<TRow, SortKey extends string>(args: {
-	rows: TRow[]
+	rows: Array<TRow>
 	query: ParsedUrlQuery
 	sortAccessors?: YieldsTableSortAccessors<TRow, SortKey>
 	defaultSort?: YieldsTableSort<SortKey>

@@ -20,7 +20,7 @@ export interface EtherfiCashTxnRow {
 	all_time_avg: number
 }
 
-export function buildEtherfiCashTransactions(rows: EtherfiCashTxnRow[]) {
+export function buildEtherfiCashTransactions(rows: Array<EtherfiCashTxnRow>) {
 	// KPIs from counter columns (same on every row)
 	const first = rows[0]
 	const kpis = first
@@ -80,9 +80,9 @@ export function buildEtherfiCashTransactions(rows: EtherfiCashTxnRow[]) {
 	const sortedWeeks = Array.from(weekMap.entries()).sort(([a], [b]) => a - b)
 	const transactionsByClassSource: MultiSeriesChartDataset['source'] = new Array(sortedWeeks.length)
 	const usersByClassSource: MultiSeriesChartDataset['source'] = new Array(sortedWeeks.length)
-	const weeklyTxnsSource = new Array<number[]>(sortedWeeks.length)
-	const weeklyUsersSource = new Array<number[]>(sortedWeeks.length)
-	const weeklyAvgSource = new Array<number[]>(sortedWeeks.length)
+	const weeklyTxnsSource = new Array<Array<number>>(sortedWeeks.length)
+	const weeklyUsersSource = new Array<Array<number>>(sortedWeeks.length)
+	const weeklyAvgSource = new Array<Array<number>>(sortedWeeks.length)
 	for (let i = 0; i < sortedWeeks.length; i++) {
 		const [timestamp, week] = sortedWeeks[i]
 		const transactionRow = new Array<number | null>(txnClasses.length + 1).fill(null)

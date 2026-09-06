@@ -7,12 +7,12 @@ export type SlackAcquisition = {
 	entry: SlackAcquisitionEntry
 }
 
-type RouterQuery = Record<string, string | string[] | undefined>
+type RouterQuery = Record<string, string | Array<string> | undefined>
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 
 const SLACK_ACQUISITION_KEY = 'slack_acquisition_source'
 
-function firstQueryValue(value: string | string[] | undefined): string | undefined {
+function firstQueryValue(value: string | Array<string> | undefined): string | undefined {
 	return Array.isArray(value) ? value[0] : value
 }
 

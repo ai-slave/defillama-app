@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { buildFinancialsViewModel, type FinancialsAPIResponse, type TimeSeriesData } from './financialsApi'
 
-function chart(title: string, name: string, data: number[] = [1, 2]): TimeSeriesData {
+function chart(title: string, name: string, data: Array<number> = [1, 2]): TimeSeriesData {
 	return { title, dates: ['2026-01-01', '2026-01-02'], series: [{ name, data }] }
 }
 
@@ -90,7 +90,7 @@ afterEach(() => {
 })
 
 describe('buildFinancialsViewModel', () => {
-	it('caches only rendered values and canonical chart models', () => {
+	test('caches only rendered values and canonical chart models', () => {
 		const response = buildResponse()
 		const result = buildFinancialsViewModel(response)
 
@@ -114,7 +114,7 @@ describe('buildFinancialsViewModel', () => {
 		expect(result.allocatedAssets).not.toHaveProperty('date')
 	})
 
-	it('preserves missing-as-zero datasets and chart presentation configs', () => {
+	test('preserves missing-as-zero datasets and chart presentation configs', () => {
 		const result = buildFinancialsViewModel(buildResponse())
 
 		expect(result.monthlyGross.dataset.source).toEqual([
@@ -133,7 +133,7 @@ describe('buildFinancialsViewModel', () => {
 		})
 	})
 
-	it('parses each aligned date array once and preserves axes, colors, order, and threshold opacity', () => {
+	test('parses each aligned date array once and preserves axes, colors, order, and threshold opacity', () => {
 		const parse = vi.spyOn(Date, 'parse')
 		const result = buildFinancialsViewModel(buildResponse())
 		const treasuryCalls = parse.mock.calls.filter(([value]) => String(value).startsWith('2030-'))

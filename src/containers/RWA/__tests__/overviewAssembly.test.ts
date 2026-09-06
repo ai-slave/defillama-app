@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { aggregateRwaMetrics } from '../overviewAssembly'
 
 describe('aggregateRwaMetrics', () => {
-	it('preserves exact numeric metric totals and selected-chain breakdowns', () => {
+	test('preserves exact numeric metric totals and selected-chain breakdowns', () => {
 		const result = aggregateRwaMetrics({
 			onChainMcapBreakdown: { Ethereum: 100.25, Solana: 50.5 },
 			activeMcapBreakdown: { Ethereum: 80.125, Solana: 20.375 },
@@ -38,7 +38,7 @@ describe('aggregateRwaMetrics', () => {
 		})
 	})
 
-	it('keeps null and missing selected-chain values at zero without marking selected-chain data', () => {
+	test('keeps null and missing selected-chain values at zero without marking selected-chain data', () => {
 		const result = aggregateRwaMetrics({
 			onChainMcapBreakdown: null,
 			activeMcapBreakdown: { Solana: 20 },
@@ -63,7 +63,7 @@ describe('aggregateRwaMetrics', () => {
 		})
 	})
 
-	it('preserves explicit zero as measured selected-chain data', () => {
+	test('preserves explicit zero as measured selected-chain data', () => {
 		const result = aggregateRwaMetrics({
 			onChainMcapBreakdown: { Ethereum: 0 },
 			activeMcapBreakdown: null,

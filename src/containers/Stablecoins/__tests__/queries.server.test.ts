@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { StablecoinListAsset } from '../api.types'
 import { buildTotalMcapPayload } from '../chartSeries'
 import {
@@ -80,7 +80,7 @@ const chainsRawFixture = (): StablecoinChainsPageInput => ({
 })
 
 describe('stablecoin server query helpers', () => {
-	it('normalizes measured bridge payloads and ignores source-only metadata', () => {
+	test('normalizes measured bridge payloads and ignores source-only metadata', () => {
 		expect(
 			normalizeStablecoinBridges({
 				celer: {
@@ -100,7 +100,7 @@ describe('stablecoin server query helpers', () => {
 		})
 	})
 
-	it('keeps duplicate display names as distinct asset-ID chart histories', () => {
+	test('keeps duplicate display names as distinct asset-ID chart histories', () => {
 		const baseAsset = {
 			name: 'USDA',
 			symbol: 'USDA',
@@ -144,10 +144,10 @@ describe('stablecoin server query helpers', () => {
 				issuanceType: 'mcap',
 				selectedChain: 'All'
 			}).dataset.source
-		).toEqual([[1_000, 125]])
+		).toEqual([[1000, 125]])
 	})
 
-	it('keeps producer-supplied histories compact without extending stale series', () => {
+	test('keeps producer-supplied histories compact without extending stale series', () => {
 		const asset = (id: string, name: string): StablecoinListAsset => ({
 			id,
 			name,
@@ -184,12 +184,12 @@ describe('stablecoin server query helpers', () => {
 				selectedChain: 'All'
 			}).dataset.source
 		).toEqual([
-			[1_000, 30],
+			[1000, 30],
 			[86_401_000, 30]
 		])
 	})
 
-	it('preserves sparse chronology and missing-versus-zero points', () => {
+	test('preserves sparse chronology and missing-versus-zero points', () => {
 		const asset = (id: string): StablecoinListAsset => ({
 			id,
 			name: id,
@@ -235,7 +235,7 @@ describe('stablecoin server query helpers', () => {
 		])
 	})
 
-	it('builds exact chain page summaries without returning chart histories', () => {
+	test('builds exact chain page summaries without returning chart histories', () => {
 		const page = buildStablecoinChainsPageSummary(chainsRawFixture(), {
 			currentTimeMs: NOW,
 			chainMetadata: {
@@ -281,7 +281,7 @@ describe('stablecoin server query helpers', () => {
 		expect(page).not.toHaveProperty('peggedChartDataByChain')
 	})
 
-	it('preserves signed zero labels and reports stale aggregate timestamps exactly', () => {
+	test('preserves signed zero labels and reports stale aggregate timestamps exactly', () => {
 		const raw = chainsRawFixture()
 		raw.aggregatedChart = [
 			aggregatePoint(40, 1000),
@@ -320,7 +320,7 @@ describe('stablecoin server query helpers', () => {
 		})
 	})
 
-	it('preserves chronology and interprets producer-pruned historical metrics as zero', () => {
+	test('preserves chronology and interprets producer-pruned historical metrics as zero', () => {
 		const raw = chainsRawFixture()
 		raw.chainChartMap.Base = [
 			chainPoint(7, undefined, { totalUnreleased: { peggedUSD: 5 } }),
@@ -341,7 +341,7 @@ describe('stablecoin server query helpers', () => {
 		expect(raw).toEqual(before)
 	})
 
-	it('builds total, bounded chain, and dominance payloads from the raw source', () => {
+	test('builds total, bounded chain, and dominance payloads from the raw source', () => {
 		const raw = chainsRawFixture()
 		const source = buildStablecoinChainsChartSource(raw)
 		const total = buildStablecoinChainsChartSeries(source, { chart: 'totalMcap' })

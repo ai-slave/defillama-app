@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildProtocolFaq, buildProtocolFaqRelationship, type ProtocolFaqContext } from '../faq'
 
 function createContext(overrides: Partial<ProtocolFaqContext> = {}): ProtocolFaqContext {
@@ -72,7 +72,7 @@ function createContext(overrides: Partial<ProtocolFaqContext> = {}): ProtocolFaq
 }
 
 describe('buildProtocolFaq', () => {
-	it('builds the ordered maximum set with crawlable internal-link parts', () => {
+	test('builds the ordered maximum set with crawlable internal-link parts', () => {
 		const items = buildProtocolFaq(createContext())
 
 		expect(items.map((item) => item.id)).toEqual([
@@ -99,7 +99,7 @@ describe('buildProtocolFaq', () => {
 		)
 	})
 
-	it('omits unavailable questions instead of filling to ten', () => {
+	test('omits unavailable questions instead of filling to ten', () => {
 		const items = buildProtocolFaq(
 			createContext({
 				tvl: { current: null, change30d: null },
@@ -129,7 +129,7 @@ describe('buildProtocolFaq', () => {
 })
 
 describe('buildProtocolFaqRelationship', () => {
-	it("aggregates the current parent's same-category children for comparisons", () => {
+	test("aggregates the current parent's same-category children for comparisons", () => {
 		const relationship = buildProtocolFaqRelationship({
 			protocolId: 'parent#aave',
 			protocolName: 'Aave',
@@ -179,7 +179,7 @@ describe('buildProtocolFaqRelationship', () => {
 		expect(relationship.comparison?.peers).toEqual([{ name: 'Compound V3', href: '/protocol/compound-v3', tvl: 5 }])
 	})
 
-	it('uses the children question for a parent spanning multiple categories', () => {
+	test('uses the children question for a parent spanning multiple categories', () => {
 		const relationship = buildProtocolFaqRelationship({
 			protocolId: 'parent#example',
 			protocolName: 'Example',
@@ -211,7 +211,7 @@ describe('buildProtocolFaqRelationship', () => {
 		expect(relationship.children.map((child) => child.name)).toEqual(['Example Lend', 'Example DEX'])
 	})
 
-	it('prioritizes same-chain products before cross-chain products', () => {
+	test('prioritizes same-chain products before cross-chain products', () => {
 		const relationship = buildProtocolFaqRelationship({
 			protocolId: 'boros',
 			protocolName: 'Boros',

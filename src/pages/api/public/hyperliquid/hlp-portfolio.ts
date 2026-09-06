@@ -2,12 +2,12 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { HLP_VAULTS, type HlpVaultKey, num, safePostInfo } from '~/utils/hyperliquid'
 
 interface RawPortfolioBucket {
-	accountValueHistory?: [number, string][]
-	pnlHistory?: [number, string][]
+	accountValueHistory?: Array<[number, string]>
+	pnlHistory?: Array<[number, string]>
 	vlm?: string
 }
 
-type RawPortfolio = [string, RawPortfolioBucket][]
+type RawPortfolio = Array<[string, RawPortfolioBucket]>
 
 export interface HlpPortfolioPoint {
 	time: number
@@ -18,7 +18,7 @@ export interface HlpPortfolioPoint {
 export interface HlpPortfolioData {
 	window: 'day' | 'week' | 'month' | 'allTime'
 	volume: number
-	points: HlpPortfolioPoint[]
+	points: Array<HlpPortfolioPoint>
 	byVaultVolume: Record<HlpVaultKey, number>
 }
 

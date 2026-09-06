@@ -8,7 +8,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { StablecoinsTableRow } from './useStablecoinsData'
 
-export const stablecoinsDatasetColumns: ColumnDef<StablecoinsTableRow>[] = [
+export const stablecoinsDatasetColumns: Array<ColumnDef<StablecoinsTableRow>> = [
 	{
 		header: 'Name',
 		id: 'name',

@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { parseNumberQueryParam, readSingleQueryValue, toQueryString } from '~/utils/routerQuery'
 
@@ -10,7 +10,7 @@ export const DEFAULT_YIELDS_TABLE_PAGE_SIZE = 50
 export const MAX_YIELDS_TABLE_PAGE_SIZE = 500
 
 export type YieldsPaginatedTableResponse<TRow> = {
-	rows: TRow[]
+	rows: Array<TRow>
 	total: number
 	page: number
 	pageSize: number
@@ -56,11 +56,11 @@ export function buildYieldsTableQueryString({
 	pageSize,
 	extraQuery
 }: {
-	query: Record<string, string | string[] | undefined>
+	query: Record<string, string | Array<string> | undefined>
 	pagination: PaginationState
 	sorting: SortingState
 	pageSize?: number | 'all'
-	extraQuery?: Record<string, string | string[] | undefined>
+	extraQuery?: Record<string, string | Array<string> | undefined>
 }) {
 	const sort = sorting[0]
 	const nextPageSize =

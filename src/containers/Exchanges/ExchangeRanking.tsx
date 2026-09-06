@@ -79,7 +79,7 @@ function SubScoreRows({
 	extra
 }: {
 	title: string
-	subs: ExchangeRankingSubModel[]
+	subs: Array<ExchangeRankingSubModel>
 	scores: Record<string, number | null> | null
 	extra?: React.ReactNode
 }) {
@@ -110,7 +110,7 @@ function RankingRow({
 	onToggle
 }: {
 	row: ExchangeRankingRowModel
-	pillars: ExchangeRankingPillarModel[]
+	pillars: Array<ExchangeRankingPillarModel>
 	ranking: ExchangeRankingModel
 	expanded: boolean
 	onToggle: () => void
@@ -194,7 +194,7 @@ function RankingRow({
 
 /** Best, typical and lowest scorer on one pillar, from the venues that were measured on
  * it. Pure data: whoever the numbers say, never an editorial pick. */
-function pillarExamples(rows: ExchangeRankingRowModel[], key: string) {
+function pillarExamples(rows: Array<ExchangeRankingRowModel>, key: string) {
 	const measured = rows
 		.filter((row) => row.components[key] != null)
 		.sort((a, b) => (b.components[key] ?? 0) - (a.components[key] ?? 0))
@@ -245,7 +245,7 @@ function PillarSection({ pillar, ranking }: { pillar: ExchangeRankingPillarModel
 							<span className="label-sm">{sub.label}</span>{' '}
 							<span className="text-tertiary">
 								{sub.weight}
-								{pillar.key === 'R' ? ' of ' + pillar.weight : ''}
+								{pillar.key === 'R' ? ` of ${pillar.weight}` : ''}
 							</span>
 							<span className="text-secondary"> — {sub.what}</span>
 						</li>

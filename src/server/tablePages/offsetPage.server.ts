@@ -13,7 +13,7 @@ export function offsetTablePage<Row>({
 	maxPageSize
 }: {
 	/** Prepared (already filtered + sorted) rows for the query. */
-	rows: Row[]
+	rows: Array<Row>
 	/** 1-based requested page. Values below 1 clamp to 1; pages past the end return no rows. */
 	page: number
 	/** Rows per page, or 'all' for the complete set (gate 'all' at the route if unwanted). */

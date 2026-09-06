@@ -1,6 +1,6 @@
 import { promisify } from 'node:util'
 import { gzip } from 'node:zlib'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const cacheMocks = vi.hoisted(() => ({
 	getCache: vi.fn(),
@@ -17,12 +17,12 @@ import { contentHashVersion, createRedisBlobStore, isContentHashVersion } from '
 
 const gzipAsync = promisify(gzip)
 
-type Payload = { chain: string; snapshot: string; rows: string[] }
+type Payload = { chain: string; snapshot: string; rows: Array<string> }
 
 const store = createRedisBlobStore<Payload>({
 	prefix: 'test-table:v1',
 	versionTtlSeconds: 14_400,
-	pointerTtlSeconds: 3_300,
+	pointerTtlSeconds: 3300,
 	lastGoodTtlSeconds: 86_400,
 	getIdentity: (payload) => ({ key: payload.chain, version: payload.snapshot })
 })
@@ -42,8 +42,8 @@ beforeEach(() => {
 })
 
 describe('createRedisBlobStore publish', () => {
-	it('writes blob first, then :latest, then :last-good', async () => {
-		const order: string[] = []
+	test('writes blob first, then :latest, then :last-good', async () => {
+		const order: Array<string> = []
 		cacheMocks.setCache.mockImplementation(async ({ Key }: { Key: string }) => (order.push(Key), true))
 		cacheMocks.setObjectCache.mockImplementation(async (key: string) => (order.push(key), true))
 
@@ -58,7 +58,7 @@ describe('createRedisBlobStore publish', () => {
 			1,
 			'test-table:v1:ethereum:latest',
 			{ version: payload.snapshot },
-			3_300
+			3300
 		)
 		expect(cacheMocks.setObjectCache).toHaveBeenNthCalledWith(
 			2,
@@ -68,7 +68,7 @@ describe('createRedisBlobStore publish', () => {
 		)
 	})
 
-	it('touches no pointer when the blob write fails, and records the failure', async () => {
+	test('touches no pointer when the blob write fails, and records the failure', async () => {
 		cacheMocks.setCache.mockResolvedValue(false)
 
 		expect(await store.publish(payload)).toBe(false)
@@ -76,7 +76,7 @@ describe('createRedisBlobStore publish', () => {
 		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
 	})
 
-	it('stops after a failed :latest write so :last-good is never rolled forward past it', async () => {
+	test('stops after a failed :latest write so :last-good is never rolled forward past it', async () => {
 		cacheMocks.setCache.mockResolvedValue(true)
 		cacheMocks.setObjectCache.mockResolvedValueOnce(false)
 
@@ -87,7 +87,7 @@ describe('createRedisBlobStore publish', () => {
 })
 
 describe('createRedisBlobStore reads', () => {
-	it('reads a version and verifies the payload claims the identity it was filed under', async () => {
+	test('reads a version and verifies the payload claims the identity it was filed under', async () => {
 		cacheMocks.getCache.mockResolvedValueOnce(await blobFor(payload))
 		expect(await store.readVersion('ethereum', payload.snapshot)).toEqual(payload)
 
@@ -98,7 +98,7 @@ describe('createRedisBlobStore reads', () => {
 		expect(await store.readVersion('ethereum', payload.snapshot)).toBeNull()
 	})
 
-	it('resolves readCurrent through :latest and readLastGood through :last-good', async () => {
+	test('resolves readCurrent through :latest and readLastGood through :last-good', async () => {
 		cacheMocks.getObjectCache.mockResolvedValueOnce({ version: payload.snapshot })
 		cacheMocks.getCache.mockResolvedValueOnce(await blobFor(payload))
 		expect(await store.readCurrent('ethereum')).toEqual(payload)
@@ -110,7 +110,7 @@ describe('createRedisBlobStore reads', () => {
 		expect(cacheMocks.getObjectCache).toHaveBeenLastCalledWith('test-table:v1:ethereum:last-good')
 	})
 
-	it('treats an expired pointer as a miss', async () => {
+	test('treats an expired pointer as a miss', async () => {
 		cacheMocks.getObjectCache.mockResolvedValue(null)
 		expect(await store.readCurrent('ethereum')).toBeNull()
 		expect(cacheMocks.getCache).not.toHaveBeenCalled()
@@ -121,39 +121,39 @@ describe('createRedisBlobStore monotonic pointers', () => {
 	const datedStore = createRedisBlobStore<Payload & { builtAt: number }>({
 		prefix: 'test-table:v1',
 		versionTtlSeconds: 14_400,
-		pointerTtlSeconds: 3_300,
+		pointerTtlSeconds: 3300,
 		lastGoodTtlSeconds: 86_400,
 		getIdentity: (value) => ({ key: value.chain, version: value.snapshot }),
 		getPublishedAt: (value) => value.builtAt
 	})
 
-	it('never moves the pointer back to an older build', async () => {
+	test('never moves the pointer back to an older build', async () => {
 		cacheMocks.setCache.mockResolvedValue(true)
 		cacheMocks.setObjectCache.mockResolvedValue(true)
-		cacheMocks.getObjectCache.mockResolvedValue({ version: 'newer-version-000000n', publishedAt: 2_000 })
+		cacheMocks.getObjectCache.mockResolvedValue({ version: 'newer-version-000000n', publishedAt: 2000 })
 
-		expect(await datedStore.publish({ ...payload, builtAt: 1_000 })).toBe(true)
+		expect(await datedStore.publish({ ...payload, builtAt: 1000 })).toBe(true)
 		// blob still stored (readable by version), pointers untouched
 		expect(cacheMocks.setCache).toHaveBeenCalledTimes(1)
 		expect(cacheMocks.setObjectCache).not.toHaveBeenCalled()
 	})
 
-	it('advances the pointer for a newer build and stamps publishedAt', async () => {
+	test('advances the pointer for a newer build and stamps publishedAt', async () => {
 		cacheMocks.setCache.mockResolvedValue(true)
 		cacheMocks.setObjectCache.mockResolvedValue(true)
 		cacheMocks.getObjectCache.mockResolvedValue({ version: 'older-version-000000o', publishedAt: 500 })
 
-		expect(await datedStore.publish({ ...payload, builtAt: 1_000 })).toBe(true)
+		expect(await datedStore.publish({ ...payload, builtAt: 1000 })).toBe(true)
 		expect(cacheMocks.setObjectCache).toHaveBeenCalledWith(
 			'test-table:v1:ethereum:latest',
-			{ version: payload.snapshot, publishedAt: 1_000 },
-			3_300
+			{ version: payload.snapshot, publishedAt: 1000 },
+			3300
 		)
 	})
 })
 
 describe('contentHashVersion', () => {
-	it('is deterministic, 20 chars, url-safe, and validated by isContentHashVersion', () => {
+	test('is deterministic, 20 chars, url-safe, and validated by isContentHashVersion', () => {
 		const version = contentHashVersion(JSON.stringify([{ id: 'aave' }]))
 		expect(version).toHaveLength(20)
 		expect(isContentHashVersion(version)).toBe(true)

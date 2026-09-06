@@ -37,7 +37,7 @@ import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
 const optionsKey = 'unlockTable'
 
-const setColumnOptions = (newOptions: string[]) => {
+const setColumnOptions = (newOptions: Array<string>) => {
 	const ops: Record<string, boolean> = {}
 	for (const col of columnOptions) {
 		ops[col.key] = newOptions.includes(col.key)
@@ -46,7 +46,7 @@ const setColumnOptions = (newOptions: string[]) => {
 }
 
 interface IUnlocksTableProps {
-	protocols: IEmission[]
+	protocols: Array<IEmission>
 	showOnlyWatchlist: boolean
 	savedProtocols: Set<string>
 }
@@ -61,7 +61,7 @@ const formatUnlockTypeLabel = (type: string) =>
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 		.join(' ')
 
-export function getUnlockTypes(protocols: IEmission[]): string[] {
+export function getUnlockTypes(protocols: Array<IEmission>): Array<string> {
 	const categories = new Set<string>()
 	for (const protocol of protocols) {
 		for (const event of protocol.events) categories.add(event.category)
@@ -72,22 +72,22 @@ export function getUnlockTypes(protocols: IEmission[]): string[] {
 export interface UnlockTableFilterOptions {
 	showOnlyWatchlist: boolean
 	savedProtocols: Set<string>
-	allUnlockTypes: string[]
-	selectedUnlockTypes: string[]
+	allUnlockTypes: Array<string>
+	selectedUnlockTypes: Array<string>
 	minUnlockValue: number | null
 	maxUnlockValue: number | null
 	minPerc: number | ''
 	maxPerc: number | ''
 }
 
-export const parseUnlockFilterValue = (value: string | string[] | undefined): number | '' => {
+export const parseUnlockFilterValue = (value: string | Array<string> | undefined): number | '' => {
 	if (typeof value !== 'string' || value === '') return ''
 	const parsed = Number(value)
 	return Number.isFinite(parsed) ? parsed : ''
 }
 
 export const filterUnlockTableProtocols = (
-	protocols: IEmission[],
+	protocols: Array<IEmission>,
 	{
 		showOnlyWatchlist,
 		savedProtocols,
@@ -98,7 +98,7 @@ export const filterUnlockTableProtocols = (
 		minPerc,
 		maxPerc
 	}: UnlockTableFilterOptions
-): IEmission[] => {
+): Array<IEmission> => {
 	const isCategoryFilterActive = selectedUnlockTypes.length !== allUnlockTypes.length
 	const isValueFilterActive = minUnlockValue !== null || maxUnlockValue !== null
 	const isPercentageFilterActive = minPerc !== '' || maxPerc !== ''
@@ -108,7 +108,7 @@ export const filterUnlockTableProtocols = (
 	if (!isAnyFilterActive) return protocols
 
 	const selectedCategories = isCategoryFilterActive ? new Set(selectedUnlockTypes) : null
-	const filteredProtocols: IEmission[] = []
+	const filteredProtocols: Array<IEmission> = []
 
 	for (const protocol of protocols) {
 		if (showOnlyWatchlist && !savedProtocols.has(protocol.name)) continue
@@ -352,12 +352,12 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 				<SelectWithCombobox
 					allValues={columnOptions}
 					selectedValues={selectedOptions}
-					setSelectedValues={(values: string[] | ((prev: string[]) => string[])) => {
+					setSelectedValues={(values: Array<string> | ((prev: Array<string>) => Array<string>)) => {
 						const newValues = typeof values === 'function' ? values(selectedOptions) : values
 						setColumnOptions(newValues)
 					}}
 					nestedMenu={false}
-					label={'Columns'}
+					label="Columns"
 					labelType="smol"
 					variant="filter-responsive"
 					size="md"
@@ -366,13 +366,13 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 				<SelectWithCombobox
 					allValues={unlockTypeOptions}
 					selectedValues={selectedUnlockTypes}
-					setSelectedValues={(values: string[] | ((prev: string[]) => string[])) => {
+					setSelectedValues={(values: Array<string> | ((prev: Array<string>) => Array<string>)) => {
 						const keys = typeof values === 'function' ? values(selectedUnlockTypes) : values
 						const isAllSelected = keys.length === unlockTypes.length
 						setQueryParam('unlockTypes', isAllSelected ? undefined : keys.join(','))
 					}}
 					nestedMenu={false}
-					label={'Next Event Types'}
+					label="Next Event Types"
 					labelType="smol"
 					variant="filter-responsive"
 					size="md"
@@ -535,7 +535,7 @@ const emissionsColumns = [
 		cell: ({ row }) => {
 			const historicalPrice = row.original.historicalPrice
 			if (historicalPrice.length === 0) {
-				return <div className="flex h-full items-center justify-end"></div>
+				return <div className="flex h-full items-center justify-end" />
 			}
 			return (
 				<div className="flex h-full items-center justify-end">
@@ -597,7 +597,7 @@ const emissionsColumns = [
 		header: 'Next 24h Unlocks',
 		cell: ({ row }) => {
 			const price = row.original.tPrice
-			if (price == null || price <= 0) return <div className="flex h-full items-center justify-end"></div>
+			if (price == null || price <= 0) return <div className="flex h-full items-center justify-end" />
 			const next24h = row.original.next24h
 			const value = next24h.total * price
 

@@ -11,7 +11,7 @@ export const PROTOCOL_EXTRA_TVL_KEYS = [
 	'borrowed',
 	'pool2',
 	'vesting'
-] as const satisfies readonly ProtocolExtraTvlKey[]
+] as const satisfies ReadonlyArray<ProtocolExtraTvlKey>
 type ProtocolExtraTvlSettings = Partial<Record<ProtocolExtraTvlKey, boolean>>
 
 export const isProtocolExtraTvlKey = (value: string): value is ProtocolExtraTvlKey => {
@@ -103,8 +103,8 @@ export function buildExtraTvlCharts(
 export function getSelectedProtocolExtraTvlKeys(
 	tvlSettings: ProtocolExtraTvlSettings,
 	currentTvlByChain: Record<string, number> | null
-): ProtocolExtraTvlKey[] {
-	const selected: ProtocolExtraTvlKey[] = []
+): Array<ProtocolExtraTvlKey> {
+	const selected: Array<ProtocolExtraTvlKey> = []
 	for (const key of PROTOCOL_EXTRA_TVL_KEYS) {
 		if (tvlSettings[key] && currentTvlByChain?.[key] != null) selected.push(key)
 	}
@@ -120,7 +120,7 @@ export function buildTvlChart({
 }: {
 	tvlChartData: IProtocolValueChart
 	extraTvlCharts: ExtraTvlChartsResult
-	selectedExtraTvls: readonly ProtocolExtraTvlKey[]
+	selectedExtraTvls: ReadonlyArray<ProtocolExtraTvlKey>
 	groupBy: ChartInterval
 	denominationPriceHistory: Record<string, number> | null
 }): Array<[number, number | null]> {

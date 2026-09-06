@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { extractLiquidationsTokenSymbols } from '../liquidations'
 
 describe('liquidations metadata helpers', () => {
-	it('extracts exact producer symbols from populated positions', () => {
+	test('extracts exact producer symbols from populated positions', () => {
 		expect(
 			extractLiquidationsTokenSymbols({
 				timestamp: 1,

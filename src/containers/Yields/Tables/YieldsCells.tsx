@@ -145,7 +145,7 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 	const tipRows: Array<{ label: string; value: number }> = []
 	if (base != null) tipRows.push({ label: 'Base', value: base })
 	if (hasPart(reward)) {
-		tipRows.push({ label: symbols.length ? `Reward · ${symbols.join(', ')}` : 'Reward', value: reward })
+		tipRows.push({ label: symbols.length > 0 ? `Reward · ${symbols.join(', ')}` : 'Reward', value: reward })
 	}
 	if (hasPart(intrinsic)) {
 		const src = row.intrinsicSourceSymbol
@@ -246,7 +246,7 @@ export function TotalApyCell({
 	value: number | null | undefined
 	parts?: TotalApyParts
 	kind?: 'supply' | 'borrow'
-	rewardSymbols?: string[]
+	rewardSymbols?: Array<string>
 	intrinsicSource?: string | null
 }) {
 	if (value == null) return <EmptyCell />
@@ -258,7 +258,7 @@ export function TotalApyCell({
 	const rewardSign: SignMode = kind === 'borrow' ? 'minus' : 'plus'
 	const symbols = (rewardSymbols ?? []).filter(Boolean)
 
-	const tipRows: SignedTipRow[] = []
+	const tipRows: Array<SignedTipRow> = []
 	const baseLabel = kind === 'borrow' ? 'Base cost' : 'Base'
 	// Inside a breakdown the base line always shows: a null base contributes 0.00% to the
 	// served total, and the rows must visibly sum to it. (The cell value itself keeps the
@@ -266,7 +266,7 @@ export function TotalApyCell({
 	if (base != null) tipRows.push({ label: baseLabel, value: base })
 	if (hasPart(reward)) {
 		tipRows.push({
-			label: symbols.length ? `Reward · ${symbols.join(', ')}` : 'Reward',
+			label: symbols.length > 0 ? `Reward · ${symbols.join(', ')}` : 'Reward',
 			value: reward,
 			signed: rewardSign
 		})
@@ -362,7 +362,7 @@ export function SignedApyCell({
 	note
 }: {
 	value: number | null | undefined
-	tooltipRows?: SignedTipRow[]
+	tooltipRows?: Array<SignedTipRow>
 	summaryLabel?: string
 	note?: string
 }) {
@@ -481,7 +481,7 @@ export function RewardApyCell({
 		.filter((icon): icon is { src: string; symbol: string | null } => icon.src != null)
 	return (
 		<span className="flex items-center justify-end gap-1.5">
-			{icons.length ? (
+			{icons.length > 0 ? (
 				<span className="flex items-center">
 					{icons.map((icon, i) => (
 						<img

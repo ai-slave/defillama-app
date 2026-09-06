@@ -31,22 +31,22 @@ const RWA_PERPS_OVERLAY_BLOCKING_FILTER_KEYS = new Set([
 
 export type RWAFilterState = {
 	isPlatformMode: boolean
-	selectedAssetNames: string[]
-	selectedTypes: string[]
-	selectedCategories: string[]
-	selectedPlatforms: string[]
-	selectedAssetGroups: string[]
-	selectedAssetClasses: string[]
-	selectedRwaClassifications: string[]
-	selectedAccessModels: string[]
-	selectedIssuers: string[]
-	selectedRedeemableStates: RWAAttributeFilterState[]
-	selectedAttestationsStates: RWAAttributeFilterState[]
-	selectedCexListedStates: RWAAttributeFilterState[]
-	selectedKycForMintRedeemStates: RWAAttributeFilterState[]
-	selectedKycAllowlistedWhitelistedToTransferHoldStates: RWAAttributeFilterState[]
-	selectedTransferableStates: RWAAttributeFilterState[]
-	selectedSelfCustodyStates: RWAAttributeFilterState[]
+	selectedAssetNames: Array<string>
+	selectedTypes: Array<string>
+	selectedCategories: Array<string>
+	selectedPlatforms: Array<string>
+	selectedAssetGroups: Array<string>
+	selectedAssetClasses: Array<string>
+	selectedRwaClassifications: Array<string>
+	selectedAccessModels: Array<string>
+	selectedIssuers: Array<string>
+	selectedRedeemableStates: Array<RWAAttributeFilterState>
+	selectedAttestationsStates: Array<RWAAttributeFilterState>
+	selectedCexListedStates: Array<RWAAttributeFilterState>
+	selectedKycForMintRedeemStates: Array<RWAAttributeFilterState>
+	selectedKycAllowlistedWhitelistedToTransferHoldStates: Array<RWAAttributeFilterState>
+	selectedTransferableStates: Array<RWAAttributeFilterState>
+	selectedSelfCustodyStates: Array<RWAAttributeFilterState>
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
@@ -62,8 +62,8 @@ export type RWAFilterState = {
 }
 
 export type RWAFilteredRowsResult = {
-	filteredAssets: RWAOverviewDisplayRow[]
-	aggregateAssets: RWAOverviewDisplayRow[]
+	filteredAssets: Array<RWAOverviewDisplayRow>
+	aggregateAssets: Array<RWAOverviewDisplayRow>
 	totalOnChainMcap: number
 	totalActiveMcap: number
 	totalOnChainDeFiActiveTvl: number
@@ -115,7 +115,9 @@ function prepareRwaFilters(filterState: RWAFilterState): PreparedRwaFilters {
 	}
 }
 
-export const parseAttributeFilterStatesParam = (param: string | string[] | undefined): RWAAttributeFilterState[] => {
+export const parseAttributeFilterStatesParam = (
+	param: string | Array<string> | undefined
+): Array<RWAAttributeFilterState> => {
 	if (!param) return [...RWA_ATTRIBUTE_FILTER_STATES]
 
 	const values = toNonEmptyArrayParam(param).map((value) => value.toLowerCase())
@@ -133,13 +135,16 @@ export const parseAttributeFilterStatesParam = (param: string | string[] | undef
 }
 
 export function resolveRWAOverviewInclusionFlag(
-	queryValue: string | string[] | undefined,
+	queryValue: string | Array<string> | undefined,
 	defaultValue: boolean
 ): boolean {
 	return queryValue != null ? isTrueQueryParam(queryValue) : defaultValue
 }
 
-export function hasActiveInclusionOverride(queryValue: string | string[] | undefined, defaultValue: boolean): boolean {
+export function hasActiveInclusionOverride(
+	queryValue: string | Array<string> | undefined,
+	defaultValue: boolean
+): boolean {
 	if (queryValue == null) return false
 	if (Array.isArray(queryValue)) return true
 	return resolveRWAOverviewInclusionFlag(queryValue, defaultValue) !== defaultValue
@@ -154,8 +159,8 @@ export function hasPerpsOverlayBlockingFiltersFromQuery(query: NextRouter['query
 }
 
 export function updateAttributeFilterStatesQueryValue(
-	values: RWAAttributeFilterState[]
-): string | string[] | undefined {
+	values: Array<RWAAttributeFilterState>
+): string | Array<string> | undefined {
 	const selectedSet = new Set<RWAAttributeFilterState>()
 	for (const value of values) {
 		if (RWA_ATTRIBUTE_FILTER_STATE_SET.has(value)) selectedSet.add(value)
@@ -169,10 +174,10 @@ export function updateAttributeFilterStatesQueryValue(
 }
 
 export function filterRwaAssetOverviewRows(
-	assets: RWAAssetOverviewRow[],
+	assets: Array<RWAAssetOverviewRow>,
 	filterState: RWAFilterState
-): RWAAssetOverviewRow[] {
-	const filteredRows: RWAAssetOverviewRow[] = []
+): Array<RWAAssetOverviewRow> {
+	const filteredRows: Array<RWAAssetOverviewRow> = []
 	const preparedFilters = prepareRwaFilters(filterState)
 
 	for (const asset of assets) {
@@ -183,9 +188,9 @@ export function filterRwaAssetOverviewRows(
 }
 
 export function filterRwaPerpsContractOverlayRows(
-	rows: RWAPerpsContractOverlayRow[],
+	rows: Array<RWAPerpsContractOverlayRow>,
 	filterState: RWAFilterState
-): RWAPerpsContractOverlayRow[] {
+): Array<RWAPerpsContractOverlayRow> {
 	if (!filterState.includeRwaPerps || filterState.hasPerpsOverlayBlockingFilters) return []
 	const preparedFilters = prepareRwaFilters(filterState)
 	return rows.filter(
@@ -194,12 +199,12 @@ export function filterRwaPerpsContractOverlayRows(
 }
 
 export function filterRwaOverviewDisplayRows(
-	assets: RWAOverviewDisplayRow[],
+	assets: Array<RWAOverviewDisplayRow>,
 	filterState: RWAFilterState
 ): RWAFilteredRowsResult {
 	const preparedFilters = prepareRwaFilters(filterState)
-	const filteredSpotRows: RWAAssetOverviewRow[] = []
-	const filteredPerpsRows: RWAPerpsContractOverlayRow[] = []
+	const filteredSpotRows: Array<RWAAssetOverviewRow> = []
+	const filteredPerpsRows: Array<RWAPerpsContractOverlayRow> = []
 	const includePerps = filterState.includeRwaPerps && !filterState.hasPerpsOverlayBlockingFilters
 	for (const asset of assets) {
 		if (asset.kind === 'spot') {
@@ -212,7 +217,7 @@ export function filterRwaOverviewDisplayRows(
 			filteredPerpsRows.push(asset)
 		}
 	}
-	const filteredAssets: RWAOverviewDisplayRow[] = [...filteredSpotRows, ...filteredPerpsRows]
+	const filteredAssets: Array<RWAOverviewDisplayRow> = [...filteredSpotRows, ...filteredPerpsRows]
 	const aggregateAssets = filterState.isPlatformMode ? filteredAssets : []
 
 	let totalOnChainMcap = 0

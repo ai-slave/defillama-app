@@ -49,7 +49,7 @@ type BaseSitemapSectionId = (typeof SITEMAP_SECTION_IDS)[number]
 
 export type SitemapSection = {
 	id: SitemapSectionId
-	entries: SitemapUrlEntry[]
+	entries: Array<SitemapUrlEntry>
 }
 
 const MAX_SITEMAP_URLS = 49_000
@@ -57,7 +57,7 @@ const SITEMAP_SECTION_CACHE_TTL_MS = 60 * 60 * 1000
 
 type SitemapSectionCache = {
 	expiresAt: number
-	sections: SitemapSection[]
+	sections: Array<SitemapSection>
 	sectionsById: Map<string, SitemapSection>
 }
 
@@ -69,7 +69,7 @@ function stripQuery(route: string): string {
 	return queryIndex === -1 ? route : route.slice(0, queryIndex)
 }
 
-function toEntries(routes: string[]): SitemapUrlEntry[] {
+function toEntries(routes: Array<string>): Array<SitemapUrlEntry> {
 	const paths = new Set<string>()
 
 	for (const route of routes) {
@@ -80,8 +80,8 @@ function toEntries(routes: string[]): SitemapUrlEntry[] {
 	return [...paths].map((path) => ({ path }))
 }
 
-function getNavRoutes(): string[] {
-	const routes: string[] = []
+function getNavRoutes(): Array<string> {
+	const routes: Array<string> = []
 
 	for (const category in defillamaPages) {
 		if (category === 'Hidden') continue
@@ -97,10 +97,10 @@ function getNavRoutes(): string[] {
 	return routes
 }
 
-function splitLargeSection(section: SitemapSection): SitemapSection[] {
+function splitLargeSection(section: SitemapSection): Array<SitemapSection> {
 	if (section.entries.length <= MAX_SITEMAP_URLS) return [section]
 
-	const sections: SitemapSection[] = []
+	const sections: Array<SitemapSection> = []
 	for (let i = 0; i < section.entries.length; i += MAX_SITEMAP_URLS) {
 		sections.push({
 			id: `${section.id}-${sections.length + 1}` as SitemapSectionId,
@@ -156,7 +156,7 @@ async function buildBaseSitemapSection(
 	}
 }
 
-async function buildAppSitemapSectionsFromCacheArtifacts(): Promise<SitemapSection[]> {
+async function buildAppSitemapSectionsFromCacheArtifacts(): Promise<Array<SitemapSection>> {
 	const metadataCache = await getMetadataCache()
 	const sections = await Promise.all(
 		SITEMAP_SECTION_IDS.map(async (sectionId) => {
@@ -211,7 +211,7 @@ async function getCachedSitemapSections(): Promise<SitemapSectionCache> {
 	return sitemapSectionCache
 }
 
-export async function buildAppSitemapSections(): Promise<SitemapSection[]> {
+export async function buildAppSitemapSections(): Promise<Array<SitemapSection>> {
 	return (await getCachedSitemapSections()).sections
 }
 

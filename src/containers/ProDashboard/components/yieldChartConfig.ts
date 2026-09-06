@@ -33,7 +33,7 @@ export const tvlApyCharts = [
 		yAxisIndex: 1,
 		valueSymbol: '$'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 export const supplyApyCharts = [
 	{
@@ -57,7 +57,7 @@ export const supplyApyCharts = [
 		color: CHART_COLORS[2],
 		stack: 'a'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 export const supplyApy7dCharts = [
 	{
@@ -66,7 +66,7 @@ export const supplyApy7dCharts = [
 		encode: { x: 0, y: 1 },
 		color: CHART_COLORS[0]
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 export const borrowApyCharts = [
 	{
@@ -90,7 +90,7 @@ export const borrowApyCharts = [
 		color: CHART_COLORS[2],
 		stack: 'a'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 export const netBorrowApyCharts = [
 	{
@@ -99,7 +99,7 @@ export const netBorrowApyCharts = [
 		encode: { x: 0, y: 1 },
 		color: CHART_COLORS[0]
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 export const percentTimeChartOptions = createTimeSeriesChartOptions('%')
 export const singlePercentTimeChartOptions = createSingleSeriesChartOptions('%')

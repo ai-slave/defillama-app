@@ -9,9 +9,9 @@ export type ProtocolFlowChartSeries = PeriodBarSeries
 
 /** Normalize stable adapter timestamps once at the server boundary. */
 export function normalizeProtocolFlowChart(
-	points: readonly (readonly [timestampSec: number, value: number])[],
+	points: ReadonlyArray<readonly [timestampSec: number, value: number]>,
 	trimBeforeFirstPositive = false
-): TimePoint[] {
+): Array<TimePoint> {
 	let startIndex = 0
 	if (trimBeforeFirstPositive) {
 		const firstPositiveIndex = points.findIndex((point) => point[1] > 0)
@@ -34,7 +34,7 @@ export function buildProtocolFlowChart({
 	series
 }: {
 	groupBy: ChartTimeGroupingWithCumulative
-	series: readonly ProtocolFlowChartSeries[]
+	series: ReadonlyArray<ProtocolFlowChartSeries>
 }) {
 	return groupBy === 'cumulative'
 		? buildTimeSeriesChart({ kind: 'cumulativeLines', series, carryForwardMissingValues: false })

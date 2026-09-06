@@ -1,10 +1,10 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { useFinalTVL } from '../helpers'
 
 let tvlSettings: Record<string, boolean> = {}
-let localStorageSettingKeys: string[] = []
+let localStorageSettingKeys: Array<string> = []
 
 vi.mock('~/contexts/LocalStorage', async (importOriginal) => {
 	const actual = await importOriginal<typeof import('~/contexts/LocalStorage')>()
@@ -58,7 +58,7 @@ beforeEach(() => {
 })
 
 describe('useFinalTVL', () => {
-	it('adds enabled protocol overview TVL suffix extras while preserving chain hyphen suffixes', () => {
+	test('adds enabled protocol overview TVL suffix extras while preserving chain hyphen suffixes', () => {
 		tvlSettings = { staking: true, pool2: true, borrowed: false }
 
 		const result = getFinalTvlResult({
@@ -83,7 +83,7 @@ describe('useFinalTVL', () => {
 		expect(result.toggleOptions.map((option) => option.key)).toEqual(['staking', 'pool2', 'borrowed'])
 	})
 
-	it('keeps disabled protocol overview TVL extras out of totals but exposes their toggle options', () => {
+	test('keeps disabled protocol overview TVL extras out of totals but exposes their toggle options', () => {
 		tvlSettings = { staking: false, borrowed: false }
 
 		const result = getFinalTvlResult({
@@ -101,7 +101,7 @@ describe('useFinalTVL', () => {
 		expect(result.toggleOptions.map((option) => option.key)).toEqual(['staking', 'borrowed'])
 	})
 
-	it('does not expose or aggregate chain-only TVL settings on protocol surfaces', () => {
+	test('does not expose or aggregate chain-only TVL settings on protocol surfaces', () => {
 		tvlSettings = { doublecounted: true, liquidstaking: true, govtokens: true }
 
 		const result = getFinalTvlResult({
@@ -119,7 +119,7 @@ describe('useFinalTVL', () => {
 		expect(result.toggleOptions).toEqual([])
 	})
 
-	it('applies TVL toggles to oracle TVS aggregation', () => {
+	test('applies TVL toggles to oracle TVS aggregation', () => {
 		tvlSettings = { staking: true, pool2: false }
 
 		const result = getFinalTvlResult({

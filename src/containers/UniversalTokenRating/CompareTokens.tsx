@@ -15,7 +15,7 @@ import type { UtrGradingConfig, UtrLeaderboardRow, UtrScoringConfig, UtrUniverse
 
 function SummaryCard({ row, grading }: { row: UtrLeaderboardRow; grading?: UtrGradingConfig | null }) {
 	const momText = formatPercentChangeText(row.scores.overallMomChangePct)
-	const rows: [string, React.ReactNode][] = [
+	const rows: Array<[string, React.ReactNode]> = [
 		['Status', <span key="status">{LISTING_STATUS_LABELS[row.listingStatus]}</span>],
 		[
 			'Grade',
@@ -170,7 +170,7 @@ export function CompareTokens({
 	const [tokenB, setTokenB] = useState<string | null>(null)
 	const tokenA = tokenAState ?? queryToken
 
-	if (!universe.rows.length) return null
+	if (universe.rows.length === 0) return null
 
 	return (
 		<div className="flex flex-col gap-4 lg:flex-row">

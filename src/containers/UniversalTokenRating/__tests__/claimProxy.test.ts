@@ -1,5 +1,5 @@
 import { Readable } from 'node:stream'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import uploadHandler from '~/pages/api/public/utr/claim/documents'
 import {
 	getUtrClaimUpstreamConfig,
@@ -14,7 +14,7 @@ afterEach(() => {
 })
 
 describe('UTR claim upstream selection', () => {
-	it('uses the existing production key and host', () => {
+	test('uses the existing production key and host', () => {
 		vi.stubEnv('API_KEY_FORGD', 'prod-key')
 		expect(getUtrClaimUpstreamConfig()).toEqual({
 			baseUrl: 'https://quant.forgd.com/api/v1/public',
@@ -24,7 +24,7 @@ describe('UTR claim upstream selection', () => {
 })
 
 describe('proxyUtrClaim', () => {
-	it('forwards the exact JSON payload and preserves a 201 response', async () => {
+	test('forwards the exact JSON payload and preserves a 201 response', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'prod-key')
 		const fetchMock = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ id: 'claim-id' }), {
@@ -49,7 +49,7 @@ describe('proxyUtrClaim', () => {
 		)
 	})
 
-	it('keeps validation errors but hides auth and upstream failures', async () => {
+	test('keeps validation errors but hides auth and upstream failures', async () => {
 		await expect(
 			mapUtrClaimUpstreamResponse(new Response(JSON.stringify({ message: 'tokenName is required' }), { status: 400 }))
 		).resolves.toEqual({ status: 400, body: { error: 'tokenName is required' } })
@@ -64,7 +64,7 @@ describe('proxyUtrClaim', () => {
 		})
 	})
 
-	it('keeps User Analytics best-effort and sends the exact claim copy', async () => {
+	test('keeps User Analytics best-effort and sends the exact claim copy', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'prod-key')
 		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'analytics-secret')
@@ -91,7 +91,7 @@ describe('proxyUtrClaim', () => {
 		})
 	})
 
-	it('waits for the Discord webhook after a successful full-form claim', async () => {
+	test('waits for the Discord webhook after a successful full-form claim', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'prod-key')
 		vi.stubEnv('USER_ANALYTICS_URL', '')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', '')
@@ -140,7 +140,7 @@ describe('UTR document proxy', () => {
 		return response
 	}
 
-	it('streams multipart with its original content headers and returns receipts', async () => {
+	test('streams multipart with its original content headers and returns receipts', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'prod-key')
 		const receipts = [
 			{
@@ -181,7 +181,7 @@ describe('UTR document proxy', () => {
 		expect(response.json).toHaveBeenCalledWith(receipts)
 	})
 
-	it('rejects a request without Content-Length before calling Forgd', async () => {
+	test('rejects a request without Content-Length before calling Forgd', async () => {
 		vi.stubGlobal('fetch', vi.fn())
 		const request = Object.assign(Readable.from(['body']), {
 			method: 'POST',

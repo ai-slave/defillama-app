@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TOKENS_HIDEABLE_COLUMN_SPECS, type TokensFilterCategory, type TokensFilterFormat } from './columnSpecs'
 import { TOKENS_NUMERIC_FILTER_FIELDS, type TokensNumericFilterField } from './types'
@@ -21,7 +21,7 @@ export interface TokensActiveFilter {
 	max: number | null
 }
 
-export const TOKENS_FILTER_CONFIGS: TokensFilterConfig[] = [
+export const TOKENS_FILTER_CONFIGS: Array<TokensFilterConfig> = [
 	{ id: 'rank', label: 'MCap Rank', format: 'number', category: 'market' },
 	...TOKENS_HIDEABLE_COLUMN_SPECS.filter((spec) => spec.format != null && spec.filterCategory != null).map((spec) => ({
 		id: spec.id as TokensNumericFilterField,
@@ -37,8 +37,8 @@ export function getTokensFilterConfig(id: TokensFilterField): TokensFilterConfig
 	return CONFIG_BY_ID.get(id)!
 }
 
-export function parseTokensFiltersFromQuery(query: ParsedUrlQuery): TokensActiveFilter[] {
-	const filters: TokensActiveFilter[] = []
+export function parseTokensFiltersFromQuery(query: ParsedUrlQuery): Array<TokensActiveFilter> {
+	const filters: Array<TokensActiveFilter> = []
 	const { rankFrom, rankTo } = parseRankRangeQueryParams(query)
 	if (rankFrom != null || rankTo != null) filters.push({ id: 'rank', min: rankFrom, max: rankTo })
 	for (const numericFilter of parseNumericFiltersQueryParams(query)) {
@@ -47,7 +47,7 @@ export function parseTokensFiltersFromQuery(query: ParsedUrlQuery): TokensActive
 	return filters
 }
 
-export function buildTokensFiltersQueryUpdate(filters: TokensActiveFilter[]): Record<string, string | undefined> {
+export function buildTokensFiltersQueryUpdate(filters: Array<TokensActiveFilter>): Record<string, string | undefined> {
 	const update: Record<string, string | undefined> = { page: undefined, rankFrom: undefined, rankTo: undefined }
 	for (const field of TOKENS_NUMERIC_FILTER_FIELDS) {
 		update[`min_${field}`] = undefined
@@ -73,7 +73,7 @@ export interface TokensFilterSorting {
 
 const DEFAULT_TABLE_SORTING: TokensFilterSorting = { id: 'marketCap', desc: true }
 
-export function getTokensFiltersDefaultSorting(filters: TokensActiveFilter[]): TokensFilterSorting | null {
+export function getTokensFiltersDefaultSorting(filters: Array<TokensActiveFilter>): TokensFilterSorting | null {
 	const last = filters[filters.length - 1]
 	if (!last) return null
 	if (last.id === 'rank') return { id: 'rank', desc: false }
@@ -86,7 +86,7 @@ function isSortingEqual(a: TokensFilterSorting | null | undefined, b: TokensFilt
 
 export function shouldApplyTokensFilterSorting(
 	currentSorting: TokensFilterSorting | undefined,
-	previousFilters: TokensActiveFilter[]
+	previousFilters: Array<TokensActiveFilter>
 ): boolean {
 	return (
 		isSortingEqual(currentSorting, DEFAULT_TABLE_SORTING) ||

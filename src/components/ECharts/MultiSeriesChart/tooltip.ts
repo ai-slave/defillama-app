@@ -24,7 +24,7 @@ export function createCategoryTooltipFormatter(valueSymbol: string) {
 		const first = items[0]!
 		const category = first.axisValue ?? first.name
 		let output = category == null ? '' : `<strong>${category}</strong><br/>`
-		const rows: LegacyTooltipRow[] = []
+		const rows: Array<LegacyTooltipRow> = []
 		for (const item of items) {
 			const name = item.seriesName
 			if (!name) continue
@@ -70,7 +70,7 @@ export function createCappedRemainderTooltipFormatter({
 
 		const axisValue = getTooltipAxisValue(items[0])
 		let output = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
-		const rows: LegacyTooltipRow[] = []
+		const rows: Array<LegacyTooltipRow> = []
 		let explicitOthers: LegacyTooltipRow | null = null
 
 		for (const item of items) {
@@ -142,7 +142,7 @@ export function createInflowsTooltipFormatter({
 
 		const axisValue = getTooltipAxisValue(items[0])
 		const chartdate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
-		const topValues: LegacyTooltipRow[] = []
+		const topValues: Array<LegacyTooltipRow> = []
 		let total = 0
 		let regularCount = 0
 		let explicitOthers: LegacyTooltipRow | null = null
@@ -206,7 +206,7 @@ function compareTooltipRows(a: TooltipValueRow, b: TooltipValueRow) {
 	return b[2] - a[2]
 }
 
-function insertTopTooltipValue(rows: TooltipValueRow[], nextRow: TooltipValueRow, limit: number) {
+function insertTopTooltipValue(rows: Array<TooltipValueRow>, nextRow: TooltipValueRow, limit: number) {
 	if (!Number.isFinite(limit) || limit <= 0) return
 
 	let insertAt = rows.length
@@ -260,9 +260,9 @@ export function createTooltipFormatter({
 		let regularCount = 0
 		let standardCount = 0
 		let hasUnavailableStandardValue = false
-		const vals: TooltipValueRow[] = []
-		const topOverrideVals: TooltipValueRow[] = []
-		const topStandardVals: TooltipValueRow[] = []
+		const vals: Array<TooltipValueRow> = []
+		const topOverrideVals: Array<TooltipValueRow> = []
+		const topStandardVals: Array<TooltipValueRow> = []
 		let othersRow: TooltipValueRow | null = null
 
 		for (const item of items) {

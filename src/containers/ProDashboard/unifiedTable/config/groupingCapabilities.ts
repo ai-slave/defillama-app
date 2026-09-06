@@ -2,17 +2,20 @@ import { COLUMN_DICTIONARY_BY_ID } from './columnDictionary'
 import type { UnifiedTableFilters } from './current'
 import type { UnifiedRowHeaderType } from './types'
 
-export function hasCanonicalChainGrouping(rowHeaders: readonly UnifiedRowHeaderType[]): boolean {
+export function hasCanonicalChainGrouping(rowHeaders: ReadonlyArray<UnifiedRowHeaderType>): boolean {
 	return rowHeaders[0] === 'chain'
 }
 
-export function isColumnAvailableForGrouping(columnId: string, rowHeaders: readonly UnifiedRowHeaderType[]): boolean {
+export function isColumnAvailableForGrouping(
+	columnId: string,
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>
+): boolean {
 	return hasCanonicalChainGrouping(rowHeaders) || COLUMN_DICTIONARY_BY_ID.get(columnId)?.chainGroupOnly !== true
 }
 
 export function sanitizeFiltersForGrouping(
 	filters: UnifiedTableFilters | undefined,
-	rowHeaders: readonly UnifiedRowHeaderType[]
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>
 ): UnifiedTableFilters | undefined {
 	if (!filters || hasCanonicalChainGrouping(rowHeaders)) return filters
 

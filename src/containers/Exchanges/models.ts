@@ -28,7 +28,7 @@ export type MicaProduct = ExchangeSegment | 'margin' | 'futures' | 'options'
 export type ExchangeEeaOrderbookOwnership =
 	| { mode: 'own' }
 	| { mode: 'shared' }
-	| { mode: 'mixed'; sharedSegments: ExchangeSegment[]; dedicatedSegments: ExchangeSegment[] }
+	| { mode: 'mixed'; sharedSegments: Array<ExchangeSegment>; dedicatedSegments: Array<ExchangeSegment> }
 
 export interface ExchangeDoubleCountNote {
 	volume?: string
@@ -47,7 +47,7 @@ export interface ExchangeDepthBand {
 	coverage: number
 }
 
-export type ExchangeDepthLadder = ExchangeDepthBand[]
+export type ExchangeDepthLadder = Array<ExchangeDepthBand>
 
 export interface ExchangeSegmentActivity {
 	marketCount: number
@@ -122,8 +122,8 @@ export interface ExchangeFiatFeeRow {
 }
 
 export interface ExchangeFiatFees {
-	onRamp: ExchangeFiatFeeRow[]
-	offRamp: ExchangeFiatFeeRow[]
+	onRamp: Array<ExchangeFiatFeeRow>
+	offRamp: Array<ExchangeFiatFeeRow>
 }
 
 export interface ExchangeDirectoryRowModel {
@@ -144,7 +144,7 @@ export interface ExchangeDirectoryRowModel {
 	parent: ExchangeParentEntity | null
 	liquidity: ExchangeLiquidityBySegment
 	segments: Partial<Record<ExchangeSegment, ExchangeSegmentActivity>>
-	sparks: Partial<Record<ExchangeSegment, number[]>>
+	sparks: Partial<Record<ExchangeSegment, Array<number>>>
 	reserves: {
 		totalUsd: number | null
 		cleanUsd: number | null
@@ -179,7 +179,7 @@ export interface ExchangeDirectoryRowModel {
 		nativeToken: string | null
 	} | null
 	funding: {
-		fiatCurrencies: string[] | null
+		fiatCurrencies: Array<string> | null
 		fiatFees: ExchangeFiatFees | null
 		hasFiatOnramp: boolean | null
 		rampCost: MicaVenueModel['rampCost']
@@ -193,9 +193,9 @@ export interface ExchangeDirectoryRowModel {
 	 * tick-level fills, not venue claims. Null for uncovered venues — never zero. */
 	execution: {
 		/** Assets behind the fill-quality figures (slippage, markout). */
-		assets: string[]
+		assets: Array<string>
 		/** Assets behind cost to trade, which is published on a narrower set. */
-		costAssets: string[]
+		costAssets: Array<string>
 		hoursCovered: number
 		costToTradeBps: number | null
 		/** The spread half of cost to trade, shown beside it. */
@@ -271,18 +271,18 @@ export interface ExchangeDirectorySummaryModel {
 }
 
 export interface ExchangeDirectoryModel {
-	rows: ExchangeDirectoryRowModel[]
+	rows: Array<ExchangeDirectoryRowModel>
 	summary: ExchangeDirectorySummaryModel
 	updatedAt: string
 	executionAvailable: boolean
 	/** The assets every measured venue covers. The published columns narrow further,
 	 *  per metric, so each stays comparable across rows. Empty when no shared asset
 	 *  exists and each row discloses its own basket instead. */
-	executionBasket: string[]
+	executionBasket: Array<string>
 	/** Assets behind the cost-to-trade column. */
-	executionCostBasket: string[]
+	executionCostBasket: Array<string>
 	/** Assets behind the slippage and markout columns. */
-	executionFillBasket: string[]
+	executionFillBasket: Array<string>
 }
 
 export interface ExchangePairModel {
@@ -348,7 +348,7 @@ export interface ExchangeProfileSegmentModel {
 		funding: boolean
 		depth: boolean
 	}
-	pairs: ExchangePairModel[]
+	pairs: Array<ExchangePairModel>
 }
 
 export type ExchangeMetadataScalarFormat = 'text' | 'number' | 'usd' | 'pct' | 'date' | 'bool' | 'link'
@@ -377,7 +377,7 @@ export interface ExchangeMetadataLink {
 	url: string
 }
 
-export type ExchangeMetadataCell = string | number | boolean | string[] | ExchangeMetadataLink | null
+export type ExchangeMetadataCell = string | number | boolean | Array<string> | ExchangeMetadataLink | null
 
 interface ExchangeMetadataFieldBase {
 	key: string
@@ -399,9 +399,9 @@ type ExchangeMetadataNonTableFieldModel = ExchangeMetadataFieldBase &
 		| { type: 'number' | 'usd' | 'pct'; value: number }
 		| { type: 'bool'; value: boolean }
 		| { type: 'badge'; value: string; tone?: ExchangeMetadataTone }
-		| { type: 'pills'; value: string[] }
+		| { type: 'pills'; value: Array<string> }
 		| { type: 'link'; value: ExchangeMetadataLink }
-		| { type: 'links'; value: ExchangeMetadataLink[] }
+		| { type: 'links'; value: Array<ExchangeMetadataLink> }
 		| { type: 'kv'; value: Array<{ label: string; value: ExchangeMetadataCell }> }
 	)
 
@@ -410,7 +410,7 @@ export type ExchangeMetadataFieldModel =
 	| (ExchangeMetadataFieldBase & {
 			type: 'table'
 			value: Array<Record<string, ExchangeMetadataCell>>
-			columns: ExchangeMetadataTableColumn[]
+			columns: Array<ExchangeMetadataTableColumn>
 	  })
 
 export type ExchangeMetadataKpiModel = ExchangeMetadataNonTableFieldModel
@@ -419,7 +419,7 @@ export interface ExchangeMetadataGroupModel {
 	key: ExchangeMetadataGroupKey
 	title: string
 	fromProofOfReserves?: boolean
-	fields: ExchangeMetadataFieldModel[]
+	fields: Array<ExchangeMetadataFieldModel>
 	source?: ExchangeMetadataSource
 }
 
@@ -463,7 +463,7 @@ export interface ExchangeRaiseModel {
 	round: string | null
 	amountUsd: number | null
 	valuationUsd: number | null
-	investors: string[]
+	investors: Array<string>
 	sourceUrl: string | null
 }
 
@@ -498,14 +498,14 @@ export interface ExchangeExecutionFeedHealth {
 /** Measured execution quality for the profile's Execution tab: tick-level fills on
  * the shared perp basket (USD perps only today). Null = venue not covered. */
 export interface ExchangeExecutionModel {
-	assets: string[]
+	assets: Array<string>
 	hoursCovered: number
 	costToTradeBps: number | null
 	realizedSlippage10kBps: number | null
 	predictedSlippage10kBps: number | null
 	markout1mBps: number | null
 	feed: ExchangeExecutionFeedHealth | null
-	pairs: ExchangeExecutionPairModel[]
+	pairs: Array<ExchangeExecutionPairModel>
 }
 
 /** The venue's quality ranking, joined with the published methodology catalog so the
@@ -549,10 +549,10 @@ export interface ExchangeRankingRowModel {
  * the same computation (matching generated_at). */
 export interface ExchangeRankingModel {
 	generatedAt: string
-	pillars: ExchangeRankingPillarModel[]
-	execSubs: ExchangeRankingSubModel[]
-	reserveSubs: ExchangeRankingSubModel[]
-	rows: ExchangeRankingRowModel[]
+	pillars: Array<ExchangeRankingPillarModel>
+	execSubs: Array<ExchangeRankingSubModel>
+	reserveSubs: Array<ExchangeRankingSubModel>
+	rows: Array<ExchangeRankingRowModel>
 	insufficient: Array<{ slug: string; name: string; kind: ExchangeVenueKind; profileHref: string }>
 }
 
@@ -595,8 +595,8 @@ export interface ExchangeProfileModel {
 	/** DefiLlama cex slug from the venue's links; input for reserve gating, not yet validated against protocol metadata. */
 	defillamaCexSlug: string | null
 	nativeToken: ExchangeNativeTokenModel | null
-	hacks: ExchangeHackModel[]
-	raises: ExchangeRaiseModel[]
+	hacks: Array<ExchangeHackModel>
+	raises: Array<ExchangeRaiseModel>
 	/** Reserve-chart availability, resolved against the protocol metadata cache at build time. */
 	reserves: ExchangeReservesModel | null
 	segments: Partial<Record<ExchangeSegment, ExchangeProfileSegmentModel>>
@@ -604,9 +604,9 @@ export interface ExchangeProfileModel {
 		website: string | null
 		referralUrl: string | null
 		twitterUrl: string | null
-		promotions: ExchangePromotionModel[]
-		kpis: ExchangeMetadataKpiModel[]
-		groups: ExchangeMetadataGroupModel[]
+		promotions: Array<ExchangePromotionModel>
+		kpis: Array<ExchangeMetadataKpiModel>
+		groups: Array<ExchangeMetadataGroupModel>
 	}
 }
 
@@ -614,7 +614,7 @@ export interface ExchangeCountryAvailabilityModel {
 	country: string
 	region: { key: string; label: string }
 	availability: ExchangeRegionStatus
-	segments: ExchangeSegment[]
+	segments: Array<ExchangeSegment>
 	note: string | null
 	source: ExchangeMetadataSource | null
 	usedFallback: boolean
@@ -631,7 +631,7 @@ export type ExchangeRegionalMetadataModel =
 
 /** Directory overview chart: full-history columnar series keyed by cex/dex/total × spot/linear_perp/inverse_perp volume and OI. */
 export interface ExchangeOverviewChartModel {
-	days: number[]
+	days: Array<number>
 	lastUpdated: string
 	series: Record<string, Array<number | null>>
 }
@@ -642,7 +642,7 @@ export interface ExchangeResearchChartModel {
 	grouping: ExchangeResearchGrouping
 	title: string
 	description: string
-	days: number[]
+	days: Array<number>
 	lines: Array<{ id: string; label: string; values: Array<number | null> }>
 	valueSymbol: '$' | '%'
 	builtAt: string | null
@@ -690,13 +690,13 @@ export interface MicaVenueModel {
 	profileHref: string
 	website: string | null
 	referralUrl: string | null
-	promotions: ExchangePromotionModel[]
+	promotions: Array<ExchangePromotionModel>
 	micaStatus: ExchangeMicaStatus | null
 	micaLicensed: boolean
 	micaMemberState: string | null
 	micaRegulator: string | null
 	licenseCount: number | null
-	products: MicaProduct[]
+	products: Array<MicaProduct>
 	marketCount: number | null
 	spotFee: { maker: number | null; taker: number | null } | null
 	perpFee: { maker: number | null; taker: number | null } | null
@@ -796,8 +796,8 @@ export interface CryptoRailRowModel {
 }
 
 export interface CryptoRailsModel {
-	deposit: CryptoRailRowModel[]
-	withdraw: CryptoRailRowModel[]
+	deposit: Array<CryptoRailRowModel>
+	withdraw: Array<CryptoRailRowModel>
 }
 
 export interface RampVariantModel {
@@ -805,7 +805,7 @@ export interface RampVariantModel {
 	status: ExchangeRegionStatus
 	note: string | null
 	countryOverrides: Partial<Record<string, { status: ExchangeRegionStatus; note: string | null }>>
-	fiatCurrencies: string[]
+	fiatCurrencies: Array<string>
 	rails: ExchangeFiatFees | null
 	cryptoRails: CryptoRailsModel | null
 	kyc: { required: boolean; short: string | null; summary: string | null } | null
@@ -829,7 +829,7 @@ export interface RampVenueModel {
 }
 
 export interface RampCatalogModel {
-	sizes: number[]
+	sizes: Array<number>
 	btcNetworkFeeBtc: number | null
-	venues: RampVenueModel[]
+	venues: Array<RampVenueModel>
 }

@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { researchUnpublishHandler } from '~/pages/api/private/research/articles/[id]/unpublish'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
@@ -31,7 +31,7 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('unpublishes through the backend, then purges public research urls', async () => {
+	test('unpublishes through the backend, then purges public research urls', async () => {
 		vi.stubEnv('CF_ZONE', 'zone')
 		vi.stubEnv('CF_PURGE_CACHE_AUTH', 'token')
 		vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://defillama.test')
@@ -83,7 +83,7 @@ describe('/api/private/research/articles/[id]/unpublish', () => {
 		})
 	})
 
-	it('unpublishes in production even when the cache purge is not configured', async () => {
+	test('unpublishes in production even when the cache purge is not configured', async () => {
 		const logger = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		vi.stubEnv('NODE_ENV', 'production')
 		const before = article()

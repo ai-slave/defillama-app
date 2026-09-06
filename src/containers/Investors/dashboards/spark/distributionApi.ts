@@ -8,8 +8,8 @@ import { createSeriesConfigs } from './chartDefaults'
 type ChartRow = { date: ApiUnixSeconds } & Record<string, number | undefined>
 
 export interface SparkDistributionChartPayload {
-	data: ChartRow[]
-	keys: string[]
+	data: Array<ChartRow>
+	keys: Array<string>
 }
 
 export interface DistributionResponse {

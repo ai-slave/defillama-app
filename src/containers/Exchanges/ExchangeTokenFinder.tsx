@@ -26,8 +26,8 @@ import {
 	withCountryParam
 } from './queryState'
 
-const SEGMENTS: ExchangeSegment[] = ['spot', 'linear_perp', 'inverse_perp']
-const EMPTY_TOKEN_LISTINGS: TokenExchangeListing[] = []
+const SEGMENTS: Array<ExchangeSegment> = ['spot', 'linear_perp', 'inverse_perp']
+const EMPTY_TOKEN_LISTINGS: Array<TokenExchangeListing> = []
 const SEGMENT_LABELS: Record<ExchangeSegment, string> = {
 	spot: 'Spot',
 	linear_perp: 'USD Perps',
@@ -38,7 +38,7 @@ interface FinderRow {
 	slug: string
 	name: string
 	volume24h: number | null
-	listings: Array<{ token: string; segments: ExchangeSegment[] }>
+	listings: Array<{ token: string; segments: Array<ExchangeSegment> }>
 }
 
 export function buildTokenFinderRows({
@@ -49,13 +49,13 @@ export function buildTokenFinderRows({
 	country,
 	catalog
 }: {
-	selectedTokens: string[]
-	tokens: TokenExchangeListing[]
+	selectedTokens: Array<string>
+	tokens: Array<TokenExchangeListing>
 	mode: TokenFinderMode
 	directory: ExchangeDirectoryModel
 	country: string | null
 	catalog: MasterExchangeRegionCatalogResponse | null
-}): FinderRow[] {
+}): Array<FinderRow> {
 	const selected = new Set(selectedTokens)
 	const directoryBySlug = new Map<string, ExchangeDirectoryModel['rows'][number]>()
 	for (const venue of directory.rows) directoryBySlug.set(venue.slug, venue)
@@ -68,7 +68,7 @@ export function buildTokenFinderRows({
 		for (const listing of token.venues) {
 			const venue = directoryBySlug.get(listing.slug)
 			if (!venue) continue
-			let availableSegments: ExchangeSegment[] | null = null
+			let availableSegments: Array<ExchangeSegment> | null = null
 			if (country && catalog) {
 				if (!venue.regional) continue
 				const availability = resolveCountryAvailability(catalog, venue.regional, country)
@@ -91,7 +91,7 @@ export function buildTokenFinderRows({
 		}
 	}
 
-	const result: FinderRow[] = []
+	const result: Array<FinderRow> = []
 	for (const [slug, row] of rows) {
 		if (mode === 'all' && row.listings.size !== selectedTokens.length) continue
 		const listings: FinderRow['listings'] = []

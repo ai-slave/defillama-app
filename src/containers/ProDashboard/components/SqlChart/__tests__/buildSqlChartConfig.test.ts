@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import type { RegisteredTable } from '~/containers/Downloads/sql/useTableRegistry'
 import { SQL_SNAPSHOT_ROW_CAP } from '../../../sqlSnapshot'
@@ -67,30 +67,30 @@ const editItem: SqlChartConfig = {
 }
 
 describe('buildSqlChartConfig', () => {
-	it('generates a sql-prefixed id for new items and keeps the edited id', () => {
+	test('generates a sql-prefixed id for new items and keeps the edited id', () => {
 		expect(buildSqlChartConfig(baseParams).id.startsWith('sql-')).toBe(true)
 		expect(buildSqlChartConfig({ ...baseParams, editItem }).id).toBe('sql-existing-1')
 	})
 
-	it('captures a fresh snapshot and filters tableSources to referenced tables when ranFresh', () => {
+	test('captures a fresh snapshot and filters tableSources to referenced tables when ranFresh', () => {
 		const config = buildSqlChartConfig(baseParams)
 		expect(config.snapshot?.rows).toEqual(result.rows)
 		expect(config.snapshot?.engine).toBe('browser')
 		expect(config.query.tableSources).toEqual([protocolsTable.source])
 	})
 
-	it('reuses the edited snapshot and tableSources when not ranFresh', () => {
+	test('reuses the edited snapshot and tableSources when not ranFresh', () => {
 		const config = buildSqlChartConfig({ ...baseParams, editItem, ranFresh: false })
 		expect(config.snapshot).toBe(editItem.snapshot)
 		expect(config.query.tableSources).toEqual(editItem.query.tableSources)
 	})
 
-	it('captures from the result when not ranFresh and the edited item has no snapshot', () => {
+	test('captures from the result when not ranFresh and the edited item has no snapshot', () => {
 		const config = buildSqlChartConfig({ ...baseParams, editItem: { ...editItem, snapshot: null }, ranFresh: false })
 		expect(config.snapshot?.rows).toEqual(result.rows)
 	})
 
-	it('truncates oversized results to the row cap', () => {
+	test('truncates oversized results to the row cap', () => {
 		const bigResult = {
 			columns: result.columns,
 			rows: Array.from({ length: SQL_SNAPSHOT_ROW_CAP + 5 }, (_, i) => [i])
@@ -101,7 +101,7 @@ describe('buildSqlChartConfig', () => {
 		expect(config.snapshot?.rowCount).toBe(SQL_SNAPSHOT_ROW_CAP + 5)
 	})
 
-	it('persists displayMode and trims sql and name', () => {
+	test('persists displayMode and trims sql and name', () => {
 		const config = buildSqlChartConfig({
 			...baseParams,
 			name: '  Padded  ',
@@ -113,12 +113,12 @@ describe('buildSqlChartConfig', () => {
 		expect(config.query.sql).toBe('SELECT * FROM protocols')
 	})
 
-	it('drops empty names and carries colSpan from the edited item', () => {
+	test('drops empty names and carries colSpan from the edited item', () => {
 		expect(buildSqlChartConfig({ ...baseParams, name: '   ' }).name).toBeUndefined()
 		expect(buildSqlChartConfig({ ...baseParams, editItem }).colSpan).toBe(2)
 	})
 
-	it('truncates the snapshot to a custom row cap and stores it', () => {
+	test('truncates the snapshot to a custom row cap and stores it', () => {
 		const bigResult = {
 			columns: result.columns,
 			rows: Array.from({ length: 300 }, (_, i) => [i])
@@ -130,9 +130,9 @@ describe('buildSqlChartConfig', () => {
 		expect(config.snapshot?.rowCount).toBe(300)
 	})
 
-	it('omits rowCap when it equals the default and clamps out-of-range values', () => {
+	test('omits rowCap when it equals the default and clamps out-of-range values', () => {
 		expect(buildSqlChartConfig(baseParams).rowCap).toBeUndefined()
 		expect(buildSqlChartConfig({ ...baseParams, rowCap: 7 }).rowCap).toBe(100)
-		expect(buildSqlChartConfig({ ...baseParams, rowCap: 999999 }).rowCap).toBe(5000)
+		expect(buildSqlChartConfig({ ...baseParams, rowCap: 999_999 }).rowCap).toBe(5000)
 	})
 })

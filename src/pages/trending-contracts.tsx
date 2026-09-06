@@ -120,7 +120,7 @@ export default function TrendingContracts() {
 		<Layout
 			title="Trending Smart Contracts by Chain - DefiLlama"
 			description="Discover trending smart contracts across blockchains. See the most active contracts in real-time on DefiLlama."
-			canonicalUrl={`/trending-contracts`}
+			canonicalUrl="/trending-contracts"
 		>
 			<Panel padding="none" className="flex-1">
 				<PanelHeader className="gap-5">

@@ -6,7 +6,7 @@ const Ecosystem = lazy(() => import('./Ecosystem'))
 const Products = lazy(() => import('./Products'))
 const Research = lazy(() => import('./Research'))
 
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'revenue', label: 'Revenue', component: Revenue, group: 'Financials' },
 	{ id: 'ecosystem', label: 'Ecosystem', component: Ecosystem, group: 'Ecosystem' },
 	{ id: 'products', label: 'Products', component: Products, group: 'Protocol' },

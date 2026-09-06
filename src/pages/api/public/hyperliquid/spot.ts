@@ -29,23 +29,28 @@ export interface SpotMarket {
 	change24hPct: number
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<SpotMarket[] | { error: string }>) {
+export default async function handler(
+	req: NextApiRequest,
+	res: NextApiResponse<Array<SpotMarket> | { error: string }>
+) {
 	if (req.method !== 'GET') {
 		res.setHeader('Allow', ['GET'])
 		return res.status(405).json({ error: 'Method Not Allowed' })
 	}
 
 	try {
-		const [meta, ctxs] = await postInfo<[{ tokens: SpotToken[]; universe: SpotPair[] }, SpotAssetCtx[]]>({
-			type: 'spotMetaAndAssetCtxs'
-		})
+		const [meta, ctxs] = await postInfo<[{ tokens: Array<SpotToken>; universe: Array<SpotPair> }, Array<SpotAssetCtx>]>(
+			{
+				type: 'spotMetaAndAssetCtxs'
+			}
+		)
 
 		const tokensByIndex = new Map(meta.tokens.map((t) => [t.index, t.name]))
 
 		const resolveName = (name: string) =>
 			name.replace(/@(\d+)/g, (_, idx) => tokensByIndex.get(Number(idx)) ?? `@${idx}`)
 
-		const markets: SpotMarket[] = meta.universe
+		const markets: Array<SpotMarket> = meta.universe
 			.map((pair, i) => {
 				const ctx = ctxs[i]
 				if (!ctx) return null

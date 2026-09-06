@@ -32,7 +32,7 @@ export interface DetailHolders extends Holders {
 	count_change_30d: number | null
 	// `balance` is the raw on-chain amount (string, scaled by `decimals`).
 	top_10_holders: {
-		holders: Holder[]
+		holders: Array<Holder>
 		decimals: number | null
 	} | null
 }
@@ -84,7 +84,7 @@ export interface PoolHistoryPoint {
 	price_per_share: number | null
 }
 
-export type PoolHistory = PoolHistoryPoint[]
+export type PoolHistory = Array<PoolHistoryPoint>
 
 export interface BorrowMarketHistoryPoint {
 	date: string
@@ -100,4 +100,4 @@ export interface BorrowMarketHistoryPoint {
 	} | null
 }
 
-export type BorrowMarketHistory = BorrowMarketHistoryPoint[]
+export type BorrowMarketHistory = Array<BorrowMarketHistoryPoint>

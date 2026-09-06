@@ -39,11 +39,11 @@ function resolveCanonicalName(value: string, options: Array<string>): string | n
 	return null
 }
 
-function getOracleChains(metrics: IOracleMetrics, oracle: string): string[] {
+function getOracleChains(metrics: IOracleMetrics, oracle: string): Array<string> {
 	const membersByChain = metrics.protocolsByOracleChain[oracle]
 	if (!membersByChain) return []
 
-	const chains: string[] = []
+	const chains: Array<string> = []
 	for (const chain of metrics.chainsByOracle[oracle] ?? []) {
 		if (membersByChain[chain] !== undefined) chains.push(chain)
 	}

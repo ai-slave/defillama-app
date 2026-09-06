@@ -10,7 +10,7 @@ import type { ArticleDocument } from '~/containers/Articles/types'
 interface ResearchWidgetWithScrollbarProps {
 	id: string
 	title: string
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 	onHeightChange?: (height: number) => void
 }
 
@@ -19,7 +19,7 @@ const DESKTOP_CONTAINER_HEIGHT = 'lg:h-(--container-height)'
 const CONTAINER_HEIGHT_VALUE = 70 * 5 + 24 * 4
 
 export function ResearchWidgetWithScrollbar({ id, title, articles, onHeightChange }: ResearchWidgetWithScrollbarProps) {
-	if (!articles.length) return null
+	if (articles.length === 0) return null
 
 	return (
 		<div id={id}>
@@ -39,7 +39,7 @@ export function ResearchWidgetWithScrollbar({ id, title, articles, onHeightChang
 }
 
 interface ResearchWidgetWithScrollbarScrollerProps {
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 	onHeightChange?: (height: number) => void
 }
 
@@ -89,7 +89,7 @@ function ResearchWidgetWithScrollbarScroller({ articles, onHeightChange }: Resea
 interface ResearchWidgetWithScrollbarWithHeightProps {
 	id: string
 	title: string
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 }
 
 export function ResearchWidgetWithScrollbarWithHeight({

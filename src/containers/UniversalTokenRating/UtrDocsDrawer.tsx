@@ -20,7 +20,7 @@ function slugify(text: string): string {
 		.replace(/^-+|-+$/g, '')
 }
 
-function chapterSubsections(chapter: UtrDocChapter): { id: string; label: string }[] {
+function chapterSubsections(chapter: UtrDocChapter): Array<{ id: string; label: string }> {
 	if (chapter.id === 'glossary' || chapter.id === 'preface') return []
 	const headings = chapter.blocks.filter((block) => block.type === 'heading')
 	if (headings.length < 2) return []
@@ -45,7 +45,7 @@ function GradeCell({ value }: { value: string }) {
 	)
 }
 
-function DocList({ ordered, items }: { ordered: boolean; items: UtrDocListItem[] }) {
+function DocList({ ordered, items }: { ordered: boolean; items: Array<UtrDocListItem> }) {
 	const List = ordered ? 'ol' : 'ul'
 	return (
 		<List className={`flex flex-col gap-1 pl-6 body-lg text-secondary ${ordered ? 'list-decimal' : 'list-disc'}`}>
@@ -65,7 +65,7 @@ function DocList({ ordered, items }: { ordered: boolean; items: UtrDocListItem[]
 	)
 }
 
-function GradeTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
+function GradeTable({ headers, rows }: { headers: Array<string>; rows: Array<Array<string>> }) {
 	const gradeIndex = headers.findIndex((header) => header === 'Grade')
 	const isWeightTable = headers.length === 2
 	return (
@@ -258,7 +258,7 @@ export function UtrDocsDrawer({
 								)
 							})}
 						</ul>
-						{subsections.length ? (
+						{subsections.length > 0 ? (
 							<ul className="flex flex-col gap-3 px-4 py-5">
 								{subsections.map((subsection) => {
 									const active =

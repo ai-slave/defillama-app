@@ -5,7 +5,7 @@ export const UTR_LEADERBOARD_PAGE_SIZE = 100
 export type UtrFocusRequest = { asset: string; nonce: number }
 
 export function resolveRequestedProjectId(
-	projects: UtrClaimProjectOption[],
+	projects: Array<UtrClaimProjectOption>,
 	requested: string | null | undefined
 ): string | null {
 	const normalized = requested?.trim().toLowerCase()
@@ -19,7 +19,7 @@ export function resolveRequestedProjectId(
 	)
 }
 
-export function findUtrSearchMatch(rows: UtrLeaderboardRow[], query: string): UtrLeaderboardRow | null {
+export function findUtrSearchMatch(rows: Array<UtrLeaderboardRow>, query: string): UtrLeaderboardRow | null {
 	const normalized = query.trim().toLowerCase()
 	if (!normalized) return null
 	const values = (row: UtrLeaderboardRow) =>
@@ -32,7 +32,7 @@ export function findUtrSearchMatch(rows: UtrLeaderboardRow[], query: string): Ut
 	)
 }
 
-export function pageForUtrAsset(rows: UtrLeaderboardRow[], asset: string): number | null {
+export function pageForUtrAsset(rows: Array<UtrLeaderboardRow>, asset: string): number | null {
 	const index = rows.findIndex((row) => row.asset === asset)
 	return index === -1 ? null : Math.floor(index / UTR_LEADERBOARD_PAGE_SIZE)
 }

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildAllocation, positionUsd } from '../allocation'
 import { buildVaultRiskVM } from '../derive'
 import type { CollateralVM } from '../types'
@@ -67,7 +67,7 @@ function coll(partial: Partial<CollateralVM>): CollateralVM {
 }
 
 describe('buildAllocation', () => {
-	it('produces a sane histogram denominator for the real morpho vault', () => {
+	test('produces a sane histogram denominator for the real morpho vault', () => {
 		const vm = morphoVm()
 		if (vm.supplyUsd == null) throw new Error('Expected known vault supply')
 		const alloc = buildAllocation(vm.collateral, vm.supplyUsd, vm.allocatedUsd, vm.idleUsd)!
@@ -85,7 +85,7 @@ describe('buildAllocation', () => {
 		else expect(alloc.unallocatedPct).toBe(0)
 	})
 
-	it('derives unallocated from the server split — NEVER from Σ exposure (min-capped by design)', () => {
+	test('derives unallocated from the server split — NEVER from Σ exposure (min-capped by design)', () => {
 		// exposures are tiny because they're min-capped; allocations fill the vault.
 		const cols = [
 			coll({ symbol: 'A', allocationUsd: 60, exposureUsd: 10 }),
@@ -96,31 +96,31 @@ describe('buildAllocation', () => {
 		expect(alloc.totalUsd).toBe(100)
 	})
 
-	it('shows a real unallocated remainder from the split, carrying known idle', () => {
+	test('shows a real unallocated remainder from the split, carrying known idle', () => {
 		const alloc = buildAllocation([coll({ symbol: 'A', allocationUsd: 60 })], 100, 60, 25)!
 		expect(Math.round(alloc.unallocatedPct)).toBe(40)
 		expect(alloc.unallocatedUsd).toBe(40)
 		expect(alloc.idleUsd).toBe(25)
 	})
 
-	it('falls back to summed positions when the feed has no split, with no fake unallocated', () => {
+	test('falls back to summed positions when the feed has no split, with no fake unallocated', () => {
 		const cols = [coll({ symbol: 'A', allocationUsd: 60 }), coll({ symbol: 'B', address: '0x1', allocationUsd: 40 })]
 		const alloc = buildAllocation(cols, 0, null, null)!
 		expect(alloc.totalUsd).toBe(100)
 		expect(alloc.unallocatedPct).toBe(0)
 	})
 
-	it('positions prefer the real allocation and fall back to exposure', () => {
+	test('positions prefer the real allocation and fall back to exposure', () => {
 		expect(positionUsd(coll({ allocationUsd: 60, exposureUsd: 10 }))).toBe(60)
 		expect(positionUsd(coll({ allocationUsd: null, exposureUsd: 10 }))).toBe(10)
 	})
 
-	it('returns null when nothing is deployed', () => {
+	test('returns null when nothing is deployed', () => {
 		expect(buildAllocation([], 100, null, null)).toBeNull()
 		expect(buildAllocation([coll({ allocationUsd: 0, exposureUsd: 0 })], 100, 0, 0)).toBeNull()
 	})
 
-	it('does not invent an allocation denominator when supply is unknown', () => {
+	test('does not invent an allocation denominator when supply is unknown', () => {
 		expect(buildAllocation([coll({ allocationUsd: 60 })], null, 60, 0)).toBeNull()
 	})
 })

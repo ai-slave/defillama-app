@@ -17,7 +17,7 @@ import {
 import { focusFirstNewItem } from '~/utils/focusFirstNewItem'
 
 interface IProps {
-	options: { label: string; to: string }[]
+	options: Array<{ label: string; to: string }>
 	name: string
 	keyPrefix?: string
 	isActive: boolean

@@ -81,7 +81,7 @@ export function cursorTablePage<Row>({
 	sortValue
 }: {
 	/** Prepared rows in a total, deterministic order (see module comment). */
-	rows: Row[]
+	rows: Array<Row>
 	/** The immutable dataset version the rows come from. */
 	version: string
 	/** hashTableQuerySignature(schema.signature(query)) — 22 chars. */

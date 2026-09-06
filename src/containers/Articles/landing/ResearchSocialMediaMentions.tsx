@@ -14,9 +14,9 @@ export interface MentionQuote {
 	x_post_id: string
 }
 
-type MentionBlock = MentionQuote[]
+type MentionBlock = Array<MentionQuote>
 
-const BLOCKS: MentionBlock[] = [
+const BLOCKS: Array<MentionBlock> = [
 	[
 		{
 			quote: 'our media partner published an in-depth look',
@@ -194,7 +194,7 @@ export const BlockContent: React.FC<{ block: MentionBlock; isEven: boolean }> = 
 }
 
 interface AutoplayCarouselProps {
-	slides: React.ReactNode[]
+	slides: Array<React.ReactNode>
 	containerClassName?: string
 	intervalMs?: number
 	showDots?: boolean
@@ -302,10 +302,11 @@ export const toMentionQuote = (mention: SocialMention): MentionQuote => ({
 	x_post_id: mention.xPostId ?? ''
 })
 
-export const ResearchSocialMediaMentions: React.FC<{ mentions?: SocialMention[] | null }> = ({ mentions }) => {
+export const ResearchSocialMediaMentions: React.FC<{ mentions?: Array<SocialMention> | null }> = ({ mentions }) => {
 	const isMobile = useMedia('(max-width: 767px)')
 
-	const blocks: MentionBlock[] = mentions && mentions.length > 0 ? chunkMentions(mentions.map(toMentionQuote)) : BLOCKS
+	const blocks: Array<MentionBlock> =
+		mentions && mentions.length > 0 ? chunkMentions(mentions.map(toMentionQuote)) : BLOCKS
 
 	const activeBlocks = blocks.filter((block) => block.some((q) => q.quote || q.username || q.x_post_id))
 
@@ -317,7 +318,7 @@ export const ResearchSocialMediaMentions: React.FC<{ mentions?: SocialMention[] 
 		</div>
 	))
 
-	const mobileSlides: React.ReactNode[] = []
+	const mobileSlides: Array<React.ReactNode> = []
 	activeBlocks.forEach((block, blockIndex) => {
 		block.forEach((q, qIndex) => {
 			if (!q.quote && !q.username && !q.x_post_id) return

@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { TokensWatchlistContainer } from '~/containers/TokensWatchlist'
 import { useTokensChartDataset, useTokensPaginatedTable, useWatchlistTokensTable } from '../queries.client'
 import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, type TokensChartResponse } from '../types'
@@ -118,7 +118,7 @@ async function shows(text: string) {
 }
 
 describe('Tokens response deployment compatibility', () => {
-	it.each([
+	test.each([
 		['table', TableProbe],
 		['watchlist', WatchlistProbe],
 		['chart', ChartProbe]
@@ -133,18 +133,18 @@ describe('Tokens response deployment compatibility', () => {
 			)
 		}
 	})
-	it('retains measured zero and successful empty responses', async () => {
+	test('retains measured zero and successful empty responses', async () => {
 		fetchJson.mockResolvedValue(page)
 		await render(<WatchlistProbe />)
 		await shows(':0')
 		expect(client.getQueryCache().getAll()[0]?.state.status).toBe('success')
 	})
-	it('accepts current chart availability with an empty dataset', async () => {
+	test('accepts current chart availability with an empty dataset', async () => {
 		fetchJson.mockResolvedValue({ ...chart, unavailableSources: ['unlocks'] })
 		await render(<ChartProbe />)
 		await shows('unlocks:0')
 	})
-	it('shows a retryable watchlist failure for an old response, then recovers without losing saved tokens', async () => {
+	test('shows a retryable watchlist failure for an old response, then recovers without losing saved tokens', async () => {
 		fetchJson.mockImplementation(async (url: string) =>
 			url === '/api/public/markets/tokens' ? { last_updated: '', tokens: [] } : { schemaVersion: 13, rows: [] }
 		)

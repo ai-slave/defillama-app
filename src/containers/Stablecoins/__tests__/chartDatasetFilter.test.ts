@@ -1,23 +1,23 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { filterStablecoinDatasetByTimePeriod } from '~/containers/ProDashboard/components/datasets/stablecoinChartUtils'
 
 describe('filterStablecoinDatasetByTimePeriod', () => {
-	it('filters canonical USD inflow rows with second-based dashboard bounds', () => {
+	test('filters canonical USD inflow rows with second-based dashboard bounds', () => {
 		const dataset = {
 			dimensions: ['timestamp', 'USD Inflows'],
 			source: [
-				[1704067200000, 10],
-				[1704153600000, -5],
-				[1704240000000, 20]
+				[1_704_067_200_000, 10],
+				[1_704_153_600_000, -5],
+				[1_704_240_000_000, 20]
 			]
 		}
 
 		expect(
 			filterStablecoinDatasetByTimePeriod(dataset, 'custom', {
 				type: 'absolute',
-				startDate: 1704153600,
-				endDate: 1704153600
+				startDate: 1_704_153_600,
+				endDate: 1_704_153_600
 			}).source
-		).toEqual([[1704153600000, -5]])
+		).toEqual([[1_704_153_600_000, -5]])
 	})
 })

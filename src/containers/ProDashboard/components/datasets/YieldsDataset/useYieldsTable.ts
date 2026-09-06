@@ -21,7 +21,7 @@ import type { ProYieldRow } from '../../../yieldData'
 import { YIELDS_COLUMN_IDS, YIELDS_COLUMN_ID_SET, yieldsDatasetColumns, type YieldColumnId } from './columns'
 import { buildYieldsFilterOptions } from './options'
 
-const ESSENTIAL_YIELDS_COLUMNS: readonly YieldColumnId[] = [
+const ESSENTIAL_YIELDS_COLUMNS: ReadonlyArray<YieldColumnId> = [
 	'pool',
 	'project',
 	'chains',
@@ -36,8 +36,8 @@ const YIELDS_COLUMN_PRESETS = {
 	borrow: ['pool', 'project', 'chains', 'apyBorrow', 'totalSupplyUsd', 'totalBorrowUsd', 'totalAvailableUsd', 'ltv'],
 	risk: ['pool', 'project', 'chains', 'tvl', 'apy', 'stabilityRating', 'ilRisk'],
 	activity: ['pool', 'project', 'chains', 'tvl', 'apy', 'volumeUsd1d']
-} satisfies Record<string, readonly YieldColumnId[]>
-const EMPTY_TABLE_DATA: ProYieldRow[] = []
+} satisfies Record<string, ReadonlyArray<YieldColumnId>>
+const EMPTY_TABLE_DATA: Array<ProYieldRow> = []
 const getYieldsCoreRowModel = getCoreRowModel<ProYieldRow>()
 const getYieldsSortedRowModel = getSortedRowModel<ProYieldRow>()
 const getYieldsFilteredRowModel = getFilteredRowModel<ProYieldRow>()
@@ -79,11 +79,11 @@ const YIELDS_CSV_HEADER_MAP: Record<YieldColumnId, string> = {
 	ltv: 'LTV'
 }
 interface UseYieldsTableOptions {
-	data: ProYieldRow[]
-	initialColumnOrder: string[] | undefined
+	data: Array<ProYieldRow>
+	initialColumnOrder: Array<string> | undefined
 	initialColumnVisibility: Record<string, boolean> | undefined
 	initialFilters: YieldsFilters | undefined
-	onColumnsChange: (columnOrder: string[], columnVisibility: Record<string, boolean>) => void
+	onColumnsChange: (columnOrder: Array<string>, columnVisibility: Record<string, boolean>) => void
 	onFiltersChange: (filters: YieldsFilters) => void
 }
 
@@ -91,7 +91,7 @@ function isYieldColumnId(id: string): id is YieldColumnId {
 	return YIELDS_COLUMN_ID_SET.has(id)
 }
 
-function getYieldColumnPreset(name: string): readonly YieldColumnId[] | undefined {
+function getYieldColumnPreset(name: string): ReadonlyArray<YieldColumnId> | undefined {
 	switch (name) {
 		case 'essential':
 			return YIELDS_COLUMN_PRESETS.essential

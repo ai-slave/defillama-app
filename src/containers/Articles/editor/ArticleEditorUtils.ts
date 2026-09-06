@@ -8,7 +8,7 @@ export function sanitizeLinkHref(raw: string): string | null {
 	if (value.startsWith('#') || value.startsWith('/') || value.startsWith('?')) return value
 	const schemeMatch = value.match(/^([a-z][a-z0-9+.-]*):/i)
 	if (schemeMatch) {
-		const scheme = (schemeMatch[1] + ':').toLowerCase()
+		const scheme = `${schemeMatch[1]}:`.toLowerCase()
 		return SAFE_LINK_SCHEMES.has(scheme) ? value : null
 	}
 	return `https://${value}`

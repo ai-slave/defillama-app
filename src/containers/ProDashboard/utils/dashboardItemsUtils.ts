@@ -29,10 +29,10 @@ export async function addItemToDashboard(
 }
 
 export function replaceDashboardItem(
-	items: DashboardItemConfig[],
+	items: Array<DashboardItemConfig>,
 	targetItemId: string,
 	replacement: DashboardItemConfig
-): DashboardItemConfig[] {
+): Array<DashboardItemConfig> {
 	const target = items.find((item) => item.id === targetItemId && item.kind === 'llamaai-chart')
 	if (!target) throw new Error('The chart repair slot no longer exists')
 	return items.map((item) =>

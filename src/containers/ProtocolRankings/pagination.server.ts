@@ -65,11 +65,11 @@ function compareRows(
 	return compareTableSortValues(getSortValue(a), getSortValue(b), order) || compareRowIds(a, b)
 }
 
-function searchRows(rows: IProtocol[], rawSearch: string): IProtocol[] {
+function searchRows(rows: Array<IProtocol>, rawSearch: string): Array<IProtocol> {
 	const search = rawSearch.trim().toLowerCase()
 	if (!search) return rows
 	const matches = (name: string) => name.toLowerCase().includes(search)
-	const filtered: IProtocol[] = []
+	const filtered: Array<IProtocol> = []
 	for (const row of rows) {
 		if (matches(row.name)) {
 			filtered.push(row)
@@ -81,14 +81,14 @@ function searchRows(rows: IProtocol[], rawSearch: string): IProtocol[] {
 	return filtered
 }
 
-function enabledTvlSettings(tvlKeys: string[]): Record<string, boolean> {
+function enabledTvlSettings(tvlKeys: Array<string>): Record<string, boolean> {
 	return Object.fromEntries(tvlKeys.map((key) => [key, true]))
 }
 
 export function getProtocolRankingRows(
 	snapshot: ProtocolRankingsSnapshotData,
 	query: ProtocolRankingQuery
-): IProtocol[] {
+): Array<IProtocol> {
 	const getSortValue = createCachedSortValueGetter(query)
 	const adjustedRows = applyProtocolTvlSettings({
 		protocols: snapshot.protocols,
@@ -117,7 +117,7 @@ export function paginateProtocolRankingRows({
 }: {
 	snapshot: ProtocolRankingsSnapshotData
 	query: ProtocolRankingQuery
-	rows: IProtocol[]
+	rows: Array<IProtocol>
 	cursor?: string | null
 	limit?: number
 }): ProtocolRankingPage {

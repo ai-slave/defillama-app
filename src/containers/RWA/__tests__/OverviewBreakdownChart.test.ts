@@ -1,7 +1,7 @@
 import { Writable } from 'node:stream'
 import { createElement, type ReactElement } from 'react'
 import { renderToPipeableStream } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartCsvSource } from '~/components/ChartExport/ChartCsvExportButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { RWAPositionalChartDataset } from '../chartDataset'
@@ -12,7 +12,7 @@ import {
 	RWAOverviewBreakdownChart
 } from '../OverviewBreakdownChart'
 
-let routerQuery: Record<string, string | string[]> = {}
+let routerQuery: Record<string, string | Array<string>> = {}
 let queryState: { data: any; isLoading: boolean; error: any } = {
 	data: null,
 	isLoading: false,
@@ -24,7 +24,7 @@ let lastTreemapProps: {
 	sizeLabel: string
 	periodLabel: string
 } | null = null
-let lastStackOptions: string[] | null = null
+let lastStackOptions: Array<string> | null = null
 let lastCsvSource: ChartCsvSource | null = null
 
 const mocks = vi.hoisted(() => ({
@@ -72,7 +72,7 @@ vi.mock('../FlowTreemapChart', () => ({
 }))
 
 vi.mock('~/components/Select/SelectWithCombobox', () => ({
-	SelectWithCombobox: ({ allValues }: { allValues: string[] }) => {
+	SelectWithCombobox: ({ allValues }: { allValues: Array<string> }) => {
 		lastStackOptions = allValues
 		return null
 	}
@@ -125,7 +125,7 @@ beforeEach(() => {
 })
 
 describe('getOverviewBreakdownRequestState', () => {
-	it('uses the platform default state when there are no query params', () => {
+	test('uses the platform default state when there are no query params', () => {
 		expect(getOverviewBreakdownRequestState({ kind: 'platform' }, 'activeMcap', {})).toEqual({
 			request: {
 				breakdown: 'platform',
@@ -138,7 +138,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		})
 	})
 
-	it('reads both inclusion flags for platforms', () => {
+	test('reads both inclusion flags for platforms', () => {
 		expect(
 			getOverviewBreakdownRequestState({ kind: 'platform' }, 'activeMcap', {
 				includeStablecoins: 'true',
@@ -156,7 +156,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		})
 	})
 
-	it('uses the same default state for categories and asset groups', () => {
+	test('uses the same default state for categories and asset groups', () => {
 		expect(getOverviewBreakdownRequestState({ kind: 'category' }, 'activeMcap', {})).toEqual({
 			request: {
 				breakdown: 'category',
@@ -180,7 +180,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		})
 	})
 
-	it('uses a non-default DeFi request when bridge TVL is excluded', () => {
+	test('uses a non-default DeFi request when bridge TVL is excluded', () => {
 		expect(getOverviewBreakdownRequestState({ kind: 'chain' }, 'defiActiveTvl', { includeBridgeTvl: 'false' })).toEqual(
 			{
 				request: {
@@ -195,7 +195,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		)
 	})
 
-	it('renders supplied total series with requested aggregate breakdown charts', async () => {
+	test('renders supplied total series with requested aggregate breakdown charts', async () => {
 		const dataset: RWAPositionalChartDataset = {
 			source: [[1, 15, 10, 5]],
 			dimensions: ['timestamp', 'Total Active Mcap', 'Ethereum', 'Solana']
@@ -224,7 +224,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		})
 	})
 
-	it('leaves category breakdown charts unchanged', async () => {
+	test('leaves category breakdown charts unchanged', async () => {
 		const dataset: RWAPositionalChartDataset = {
 			source: [[1, 10, 5]],
 			dimensions: ['timestamp', 'Treasuries', 'Credit']
@@ -245,7 +245,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(Array.from(lastChartProps?.selectedCharts ?? [])).toEqual(['Treasuries', 'Credit'])
 	})
 
-	it('caps time-series selections supplied through the URL', async () => {
+	test('caps time-series selections supplied through the URL', async () => {
 		const stacks = Array.from({ length: 35 }, (_, index) => `Platform ${index + 1}`)
 		routerQuery = { stacks }
 
@@ -263,7 +263,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(Array.from(lastChartProps?.selectedCharts ?? [])).toEqual(stacks.slice(0, 30))
 	})
 
-	it('renders net flows on overview breakdown pages', async () => {
+	test('renders net flows on overview breakdown pages', async () => {
 		routerQuery = { chartType: 'flows' }
 		queryState = {
 			data: [{ timestamp: 1, Ethereum: 10, Solana: -4 }],
@@ -285,7 +285,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(mocks.buildRWAFlowRotationChart).toHaveBeenCalled()
 	})
 
-	it('renders a sized net-flow heatmap for the selected listing entities', async () => {
+	test('renders a sized net-flow heatmap for the selected listing entities', async () => {
 		routerQuery = {
 			chartType: 'flows',
 			flowRotationView: 'heatmap',
@@ -325,7 +325,7 @@ describe('getOverviewBreakdownRequestState', () => {
 		expect(csv.rows.slice(1).map((row) => row[0])).toEqual(['Ethereum', 'Solana', 'No Coverage'])
 	})
 
-	it('slices selected stack charts to the first non-null selected value', async () => {
+	test('slices selected stack charts to the first non-null selected value', async () => {
 		routerQuery = { stacks: 'PreStocks' }
 		const dataset: RWAPositionalChartDataset = {
 			source: [
@@ -363,7 +363,7 @@ describe('getOverviewBreakdownChartDatasetForSelectedStacks', () => {
 		dimensions: ['timestamp', 'PreStocks', 'Securitize']
 	}
 
-	it('keeps the full dataset when all stacks are selected', () => {
+	test('keeps the full dataset when all stacks are selected', () => {
 		expect(
 			getOverviewBreakdownChartDatasetForSelectedStacks(
 				dataset,
@@ -373,7 +373,7 @@ describe('getOverviewBreakdownChartDatasetForSelectedStacks', () => {
 		).toBe(dataset)
 	})
 
-	it('preserves zero values after the selected stack starts', () => {
+	test('preserves zero values after the selected stack starts', () => {
 		expect(
 			getOverviewBreakdownChartDatasetForSelectedStacks(dataset, ['PreStocks'], ['PreStocks', 'Securitize']).source
 		).toEqual([
@@ -384,7 +384,7 @@ describe('getOverviewBreakdownChartDatasetForSelectedStacks', () => {
 })
 
 describe('buildOverviewBreakdownChartSeries', () => {
-	it('uses total-series styling without excluding normal series', () => {
+	test('uses total-series styling without excluding normal series', () => {
 		expect(buildOverviewBreakdownChartSeries(['timestamp', 'Total Active Mcap', 'Ethereum'])).toEqual([
 			expect.objectContaining({
 				name: 'Total Active Mcap',

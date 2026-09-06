@@ -9,7 +9,7 @@ async function roundupMarkdown(req: NextApiRequest, res: NextApiResponse) {
 
 		const data = await fetchWithPoolingOnServer('https://discordapp.com/api/channels/965023197365960734/messages', {
 			method: 'GET',
-			headers: headers,
+			headers,
 			redirect: 'follow'
 		}).then((response) => response.json())
 
@@ -23,8 +23,8 @@ async function roundupMarkdown(req: NextApiRequest, res: NextApiResponse) {
 			.join('')
 
 		return res.json(messages)
-	} catch (err) {
-		recordRouteRuntimeError(err, 'apiRoute')
+	} catch (error) {
+		recordRouteRuntimeError(error, 'apiRoute')
 		return res.status(500).json('')
 	}
 }

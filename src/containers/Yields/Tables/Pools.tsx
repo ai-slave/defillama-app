@@ -104,7 +104,7 @@ function apyHeader(query: Record<string, unknown>, label: string) {
 }
 
 function createEarnColumns(query: Record<string, unknown>, median?: EarnApyMedian) {
-	const selected = new Set(parseSelectedEarnColumns(query.column as string | string[] | undefined))
+	const selected = new Set(parseSelectedEarnColumns(query.column as string | Array<string> | undefined))
 	const columns = [
 		columnHelper.accessor('pool', {
 			id: 'pool',

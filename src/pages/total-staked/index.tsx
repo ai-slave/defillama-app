@@ -27,8 +27,8 @@ export default function TotalStaked(props: InferGetStaticPropsType<typeof getSta
 	return (
 		<Layout
 			title="Total Staked Rankings - Staking Value - DefiLlama"
-			description={`Track total staked value rankings across DeFi protocols. Compare staking TVL and value locked in staking contracts across 7000+ protocols on 500+ chains.`}
-			canonicalUrl={`/total-staked`}
+			description="Track total staked value rankings across DeFi protocols. Compare staking TVL and value locked in staking contracts across 7000+ protocols on 500+ chains."
+			canonicalUrl="/total-staked"
 			pageName={pageName}
 		>
 			<ExtraTvlByChain {...props} />

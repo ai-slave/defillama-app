@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { getEquitiesSnapshotMock, getEquitiesTablePageMock, getEquitiesTreemapPageMock } = vi.hoisted(() => ({
@@ -27,7 +27,7 @@ beforeEach(() => {
 })
 
 describe('equities api routes', () => {
-	it('serves a table page against the shared snapshot', async () => {
+	test('serves a table page against the shared snapshot', async () => {
 		const req = {
 			method: 'GET',
 			url: '/api/public/equities?page=2&search=apple',
@@ -42,7 +42,7 @@ describe('equities api routes', () => {
 		expect(res.json).toHaveBeenCalledWith({ rows: [1] })
 	})
 
-	it('serves the market map dataset from its own route', async () => {
+	test('serves the market map dataset from its own route', async () => {
 		const req = {
 			method: 'GET',
 			url: '/api/public/equities/market-map?sizeMetric=revenueTTM',
@@ -58,7 +58,7 @@ describe('equities api routes', () => {
 		expect(res.json).toHaveBeenCalledWith({ rows: [2] })
 	})
 
-	it('answers 502 when the snapshot cannot be built', async () => {
+	test('answers 502 when the snapshot cannot be built', async () => {
 		getEquitiesSnapshotMock.mockRejectedValue(new Error('upstream down'))
 		const res = createMockNextApiResponse()
 

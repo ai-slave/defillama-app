@@ -18,7 +18,7 @@ type Props = {
 export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }: Props) {
 	const initialPanel = initialConfig ?? makeEmptyPeoplePanelConfig()
 	const [label, setLabel] = useState(initialPanel.label)
-	const [items, setItems] = useState<ArticlePeoplePanelItem[]>(
+	const [items, setItems] = useState<Array<ArticlePeoplePanelItem>>(
 		initialPanel.items.length > 0 ? initialPanel.items : [makeEmptyPeoplePanelItem()]
 	)
 	const [showErrors, setShowErrors] = useState(false)

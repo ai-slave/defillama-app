@@ -89,7 +89,7 @@ export function CitationRowsTable({
 	citedCell
 }: {
 	rows?: Array<Record<string, unknown>>
-	columns?: string[]
+	columns?: Array<string>
 	citedCell?: CitedCell | null
 }) {
 	const scrollContainerRef = useRef<HTMLDivElement | null>(null)

@@ -24,7 +24,7 @@ const LENS_COLUMN: Record<ChainNativeMetric, 'chain_fees_1d' | 'chain_revenue_1d
 	'chain-revenue': 'chain_revenue_1d'
 }
 
-async function allowedCategoryChains(categories: string[]): Promise<string[]> {
+async function allowedCategoryChains(categories: Array<string>): Promise<Array<string>> {
 	if (categories.length === 0) return []
 	const names = await resolveAllowedChainNamesFromCategories(categories)
 	return Array.from(names, toInternalSlug)
@@ -41,7 +41,7 @@ export async function streamChainNativeCsv(request: ChartBuilderCsvRequest, outp
 	const { startDate, endDate } = getCsvDateBounds(request)
 	const selectedChains = normalizeLegacyChartBuilderChains(request.config.chains).map(toInternalSlug)
 	const categoryChains = await allowedCategoryChains(request.config.chainCategories ?? [])
-	const params: unknown[] = [startDate, endDate]
+	const params: Array<unknown> = [startDate, endDate]
 	let chainPredicate = ''
 	if (selectedChains.length > 0) {
 		params.push(selectedChains)

@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getLiquidationsTooltipHtml } from './chartTooltip'
 
 describe('liquidations chart tooltip', () => {
-	it('keeps the header, input order, markers, values, and total', () => {
+	test('keeps the header, input order, markers, values, and total', () => {
 		const output = getLiquidationsTooltipHtml(
 			[
 				{
@@ -32,7 +32,7 @@ describe('liquidations chart tooltip', () => {
 		expect(output).toContain('$100')
 	})
 
-	it('omits sparse, missing, and zero rows', () => {
+	test('omits sparse, missing, and zero rows', () => {
 		const output = getLiquidationsTooltipHtml(
 			[
 				{ axisValue: 2000, seriesName: 'Missing', value: [2000, null], encode: { x: [0], y: [1] } },
@@ -49,7 +49,7 @@ describe('liquidations chart tooltip', () => {
 		expect(output).toContain('2 WBTC')
 	})
 
-	it('normalizes the single tooltip item shape used by touch interactions', () => {
+	test('normalizes the single tooltip item shape used by touch interactions', () => {
 		const output = getLiquidationsTooltipHtml(
 			{ axisValue: 0.5, seriesName: 'Aave', marker: 'A', value: [0.5, 0.25], encode: { x: [0], y: [1] } },
 			'usd',

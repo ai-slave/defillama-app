@@ -5,7 +5,7 @@ import { EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { QABlockNodes } from '../editor/nodes/QABlock'
 
 function qa(question: string, answer: string, questionNumber?: string) {
@@ -47,7 +47,7 @@ describe('Q&A block question number editor', () => {
 		container.remove()
 	})
 
-	it('shows automatic numbers and saves an override on blur', async () => {
+	test('shows automatic numbers and saves an override on blur', async () => {
 		await act(async () => root.render(<EditorContent editor={editor} />))
 
 		const inputs = container.querySelectorAll<HTMLInputElement>('input[aria-label="Question number"]')
@@ -67,7 +67,7 @@ describe('Q&A block question number editor', () => {
 		expect(editor.getHTML()).toContain('data-qa-number="012"')
 	})
 
-	it('clears an override back to automatic numbering', async () => {
+	test('clears an override back to automatic numbering', async () => {
 		editor.commands.setContent({
 			type: 'doc',
 			content: [qa('First?', 'First answer.'), qa('Second?', 'Second answer.', '09')]

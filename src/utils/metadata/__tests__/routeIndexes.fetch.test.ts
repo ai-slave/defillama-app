@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { fetchMetadataJsonMock, fetchOracleMetricsMock, fetchDATInstitutionsMock, fetchStablecoinPeggedConfigApiMock } =
 	vi.hoisted(() => ({
@@ -83,7 +83,7 @@ describe('fetchMetadataRouteIndexes', () => {
 		fetchStablecoinPeggedConfigApiMock.mockResolvedValue({ Tether: 'pegged-1' })
 	})
 
-	it('fetches and builds all optional route indexes when upstreams are available', async () => {
+	test('fetches and builds all optional route indexes when upstreams are available', async () => {
 		const { fetchMetadataRouteIndexes } = await import('../routeIndexes')
 
 		await expect(fetchMetadataRouteIndexes()).resolves.toEqual({
@@ -98,7 +98,7 @@ describe('fetchMetadataRouteIndexes', () => {
 		})
 	})
 
-	it('rejects when route index upstreams fail', async () => {
+	test('rejects when route index upstreams fail', async () => {
 		fetchMetadataJsonMock.mockRejectedValue(new Error('narrative unavailable'))
 		fetchOracleMetricsMock.mockRejectedValue(new Error('oracle unavailable'))
 		fetchDATInstitutionsMock.mockRejectedValue(new Error('DAT unavailable'))

@@ -7,7 +7,7 @@ import {
 const DEFAULT_UNVERSIONED_SORTING = [{ id: 'tvl', desc: true }] as const
 
 function createHistoricalColumnVisibility(
-	columnOrder: readonly string[],
+	columnOrder: ReadonlyArray<string>,
 	customColumns: ReadonlyArray<{ id: string }>,
 	rowHeaders: UnversionedUnifiedTableConfig['rowHeaders']
 ): Record<string, boolean> {
@@ -32,7 +32,7 @@ function normalizeHistoricalSorting(
 
 export function migrateUnversionedUnifiedTable(config: UnversionedUnifiedTableConfig): UnifiedTableV1Config {
 	const hasColumnOrder = Boolean(config.columnOrder?.length)
-	const hasColumnVisibility = Boolean(config.columnVisibility && Object.keys(config.columnVisibility).length)
+	const hasColumnVisibility = Boolean(config.columnVisibility && Object.keys(config.columnVisibility).length > 0)
 	const requestedPreset = getUnversionedUnifiedTablePresetLayout(config.activePresetId)
 	const preset = requestedPreset ?? DEFAULT_UNVERSIONED_UNIFIED_TABLE_PRESET_LAYOUT
 	const usesPresetLayout = !hasColumnOrder && !hasColumnVisibility

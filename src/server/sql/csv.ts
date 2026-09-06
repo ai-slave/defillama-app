@@ -18,10 +18,10 @@ export function escapeCsvField(value: string): string {
 	return value
 }
 
-export function flattenItemsToCsv(items: any[], fields?: string[]): string {
+export function flattenItemsToCsv(items: Array<any>, fields?: Array<string>): string {
 	if (items.length === 0) return ''
 
-	let headers: string[]
+	let headers: Array<string>
 
 	if (fields && fields.length > 0) {
 		headers = fields

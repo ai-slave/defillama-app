@@ -12,7 +12,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 type BurnView = 'daily' | 'cumulative'
 
-const FAQ_ITEMS: { q: string; a: React.ReactNode }[] = [
+const FAQ_ITEMS: Array<{ q: string; a: React.ReactNode }> = [
 	{
 		q: 'What is FIP.16?',
 		a: 'FIP.16 is a Flare governance proposal passed in April 2026 that restructured FLR token economics. Key changes: annual inflation reduced from 5% to 3%, the base gas fee increased 20x (25 → 500 gwei), staking incentivized over delegation via a 5x signing weight multiplier, and the FIRE protocol introduced to aggregate and burn network revenues.'

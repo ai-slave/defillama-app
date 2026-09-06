@@ -137,7 +137,7 @@ export function ProtocolOverviewLayout({
 	}>
 	seoTitle?: string
 	seoDescription?: string
-	entityQuestions?: string[]
+	entityQuestions?: Array<string>
 }) {
 	const { user } = useAuthContext()
 

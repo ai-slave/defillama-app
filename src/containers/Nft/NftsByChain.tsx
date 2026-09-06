@@ -14,7 +14,7 @@ export interface INftChainRow {
 }
 
 interface INftsByChainProps {
-	chains: INftChainRow[]
+	chains: Array<INftChainRow>
 }
 
 export function NftsByChain({ chains }: INftsByChainProps) {
@@ -22,8 +22,8 @@ export function NftsByChain({ chains }: INftsByChainProps) {
 		<TableWithSearch
 			data={chains}
 			columns={columns}
-			placeholder={'Search protocols...'}
-			columnToSearch={'name'}
+			placeholder="Search protocols..."
+			columnToSearch="name"
 			header="Protocol Rankings"
 			headingAs="h1"
 			csvFileName="nft-chains"

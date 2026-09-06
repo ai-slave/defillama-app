@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import {
 	buildBridgeProtocolAllChainsVolumeData,
@@ -11,7 +11,7 @@ const NOW = Date.parse('2026-07-14T12:00:00Z')
 const toSeconds = (date: string) => Date.parse(`${date}T00:00:00Z`) / 1e3
 
 describe('bridge protocol chart data helpers', () => {
-	it('builds grouped all-chain average volume datasets', () => {
+	test('builds grouped all-chain average volume datasets', () => {
 		const day1 = 1_704_067_200
 		const day2 = 1_704_153_600
 		const bucket = getBucketTimestampSec(day1, 'weekly')
@@ -35,7 +35,7 @@ describe('bridge protocol chart data helpers', () => {
 		).toEqual([])
 	})
 
-	it('calculates all-chain current volume from totals or previous chart rows', () => {
+	test('calculates all-chain current volume from totals or previous chart rows', () => {
 		expect(
 			getBridgeProtocolPrevDayVolumeValue({
 				isAllChains: true,
@@ -95,7 +95,7 @@ describe('bridge protocol chart data helpers', () => {
 		).toBeNull()
 	})
 
-	it('requires exact completed-day endpoints for the previous-day change', () => {
+	test('requires exact completed-day endpoints for the previous-day change', () => {
 		const complete = [
 			{ date: toSeconds('2026-07-12'), Deposited: 5, Withdrawn: -2 },
 			{ date: toSeconds('2026-07-13'), Deposited: 10, Withdrawn: -3 },
@@ -117,7 +117,7 @@ describe('bridge protocol chart data helpers', () => {
 		).toBeNull()
 	})
 
-	it('builds non-all-chain inflow datasets without leaking all-chain volume data', () => {
+	test('builds non-all-chain inflow datasets without leaking all-chain volume data', () => {
 		const result = buildBridgeProtocolInflowsData({
 			active: true,
 			groupBy: 'daily',
@@ -126,7 +126,7 @@ describe('bridge protocol chart data helpers', () => {
 
 		expect(result).toEqual({
 			dimensions: ['timestamp', 'Deposited', 'Withdrawn'],
-			source: [[1_000, 10, -4]]
+			source: [[1000, 10, -4]]
 		})
 
 		const day1 = 1_704_067_200
@@ -151,7 +151,7 @@ describe('bridge protocol chart data helpers', () => {
 		).toEqual([])
 	})
 
-	it('keeps split legs visible but gaps derived or grouped values when a leg is unknown', () => {
+	test('keeps split legs visible but gaps derived or grouped values when a leg is unknown', () => {
 		const incomplete = [
 			{ date: 1, Deposited: 10, Withdrawn: null },
 			{ date: 2, Deposited: 20, Withdrawn: -5 }
@@ -161,8 +161,8 @@ describe('bridge protocol chart data helpers', () => {
 			buildBridgeProtocolAllChainsVolumeData({ active: true, groupBy: 'daily', volumeChartDataByChain: incomplete })
 				.source
 		).toEqual([
-			[1_000, null],
-			[2_000, 12.5]
+			[1000, null],
+			[2000, 12.5]
 		])
 		expect(
 			buildBridgeProtocolInflowsData({ active: true, groupBy: 'weekly', volumeChartDataByChain: incomplete }).source

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { paginateAndSortRows } from '../yieldsTablePagination.server'
 import { MAX_YIELDS_TABLE_PAGE_SIZE } from '../yieldsTableQuery'
 
@@ -20,7 +20,7 @@ const sortAccessors = {
 }
 
 describe('paginateAndSortRows', () => {
-	it('uses default pagination when query params are absent', () => {
+	test('uses default pagination when query params are absent', () => {
 		const rows = Array.from({ length: 60 }, (_, index) => ({ id: String(index), apy: index }))
 
 		const result = paginateAndSortRows({ rows, query: {}, sortAccessors })
@@ -30,7 +30,7 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows[0]?.id).toBe('0')
 	})
 
-	it('honors page and pageSize query params', () => {
+	test('honors page and pageSize query params', () => {
 		const rows = Array.from({ length: 12 }, (_, index) => ({ id: String(index), apy: index }))
 
 		const result = paginateAndSortRows({ rows, query: { page: '2', pageSize: '5' }, sortAccessors })
@@ -39,7 +39,7 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows.map((row) => row.id)).toEqual(['5', '6', '7', '8', '9'])
 	})
 
-	it('caps regular pageSize query params', () => {
+	test('caps regular pageSize query params', () => {
 		const rows = Array.from({ length: MAX_YIELDS_TABLE_PAGE_SIZE + 10 }, (_, index) => ({
 			id: String(index),
 			apy: index
@@ -56,7 +56,7 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows).toHaveLength(MAX_YIELDS_TABLE_PAGE_SIZE)
 	})
 
-	it('returns the full filtered set for pageSize=all', () => {
+	test('returns the full filtered set for pageSize=all', () => {
 		const rows = Array.from({ length: 12 }, (_, index) => ({ id: String(index), apy: index }))
 
 		const result = paginateAndSortRows({ rows, query: { page: '2', pageSize: 'all' }, sortAccessors })
@@ -65,7 +65,7 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows).toHaveLength(12)
 	})
 
-	it('clamps out-of-range pages to the last available page', () => {
+	test('clamps out-of-range pages to the last available page', () => {
 		const rows = Array.from({ length: 12 }, (_, index) => ({ id: String(index), apy: index }))
 
 		const result = paginateAndSortRows({ rows, query: { page: '99', pageSize: '5' }, sortAccessors })
@@ -74,8 +74,8 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows.map((row) => row.id)).toEqual(['10', '11'])
 	})
 
-	it('keeps stable ties and places missing values last', () => {
-		const rows: TestRow[] = [
+	test('keeps stable ties and places missing values last', () => {
+		const rows: Array<TestRow> = [
 			{ id: 'missing', apy: null },
 			{ id: 'first-tie', apy: 10 },
 			{ id: 'second-tie', apy: 10 },
@@ -91,8 +91,8 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows.map((row) => row.id)).toEqual(['first-tie', 'second-tie', 'low', 'missing'])
 	})
 
-	it('sorts numeric strings numerically', () => {
-		const rows: TestRow[] = [
+	test('sorts numeric strings numerically', () => {
+		const rows: Array<TestRow> = [
 			{ id: 'negative', funding: '-0.500' },
 			{ id: 'two', funding: '2.000' },
 			{ id: 'ten', funding: '10.000' }
@@ -107,8 +107,8 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows.map((row) => row.id)).toEqual(['ten', 'two', 'negative'])
 	})
 
-	it('keeps mixed numeric-string and text sorting transitive', () => {
-		const rows: TestRow[] = [
+	test('keeps mixed numeric-string and text sorting transitive', () => {
+		const rows: Array<TestRow> = [
 			{ id: 'text', funding: '85abc' },
 			{ id: 'nine', funding: '9' },
 			{ id: 'eighty', funding: '80' }
@@ -123,8 +123,8 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows.map((row) => row.id)).toEqual(['nine', 'eighty', 'text'])
 	})
 
-	it('ignores invalid sort keys when no fallback accessor is provided', () => {
-		const rows: TestRow[] = [
+	test('ignores invalid sort keys when no fallback accessor is provided', () => {
+		const rows: Array<TestRow> = [
 			{ id: 'first', apy: 1 },
 			{ id: 'second', apy: 2 }
 		]
@@ -138,8 +138,8 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows.map((row) => row.id)).toEqual(['first', 'second'])
 	})
 
-	it('uses the route default sort when the requested sort key is invalid', () => {
-		const rows: TestRow[] = [
+	test('uses the route default sort when the requested sort key is invalid', () => {
+		const rows: Array<TestRow> = [
 			{ id: 'first', nested: { score: 1 } },
 			{ id: 'second', nested: { score: 2 } }
 		]
@@ -154,8 +154,8 @@ describe('paginateAndSortRows', () => {
 		expect(result.rows.map((row) => row.id)).toEqual(['second', 'first'])
 	})
 
-	it('supports top-level fallback accessors for legacy pool sort compatibility', () => {
-		const rows: TestRow[] = [
+	test('supports top-level fallback accessors for legacy pool sort compatibility', () => {
+		const rows: Array<TestRow> = [
 			{ id: 'first', apy: 1 },
 			{ id: 'second', apy: 2 }
 		]

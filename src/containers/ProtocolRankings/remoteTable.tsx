@@ -42,7 +42,7 @@ export function buildProtocolRankingApiUrl({
 	if (query.search) params.set('search', query.search)
 	if (query.minTvl !== null) params.set('minTvl', String(query.minTvl))
 	if (query.maxTvl !== null) params.set('maxTvl', String(query.maxTvl))
-	if (query.tvlKeys.length) params.set('tvlKeys', query.tvlKeys.join(','))
+	if (query.tvlKeys.length > 0) params.set('tvlKeys', query.tvlKeys.join(','))
 	if (query.sort === 'custom' && query.customSort) {
 		params.set('customFormula', query.customSort.formula)
 		params.set('customFormat', query.customSort.formatType)
@@ -62,7 +62,7 @@ async function fetchProtocolRankingsCsv({
 	chain: string
 	query: ProtocolRankingQuery
 	snapshot: string
-	columns: ExportColumn[]
+	columns: Array<ExportColumn>
 	signal: AbortSignal
 }): Promise<Blob | null> {
 	const request = (requestedSnapshot: string) =>
@@ -113,15 +113,15 @@ export function useRemoteProtocolRankingsTable({
 }: {
 	enabled: boolean
 	chain: string
-	initialRows: IProtocol[]
+	initialRows: Array<IProtocol>
 	initialPage: ProtocolRankingInitialPage | undefined
 	nameSearch: string
 	minTvl: number | null
 	maxTvl: number | null
 	sorting: SortingState
-	customColumns: CustomColumnDef[]
+	customColumns: Array<CustomColumnDef>
 	extraTvlsEnabled: Record<TvlSettingsKey, boolean>
-	exportColumns: ExportColumn[]
+	exportColumns: Array<ExportColumn>
 	exportFilename: string
 	onRequestSettled?: (result: TablePageRequestResult) => void
 }) {

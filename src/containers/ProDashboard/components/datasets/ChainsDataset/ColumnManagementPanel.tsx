@@ -10,9 +10,9 @@ interface Column {
 interface ColumnManagementPanelProps {
 	showColumnPanel: boolean
 	setShowColumnPanel: (show: boolean) => void
-	columns: Column[]
+	columns: Array<Column>
 	columnVisibility: Record<string, boolean>
-	columnOrder: string[]
+	columnOrder: Array<string>
 	toggleColumnVisibility: (columnId: string) => void
 	moveColumnUp?: (columnId: string) => void
 	moveColumnDown?: (columnId: string) => void

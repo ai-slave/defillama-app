@@ -13,7 +13,7 @@ import { HelpDefs, HelpIcon } from './ui'
 // stability server-side. Defaults (current window, base+reward) push NO params so
 // URLs stay clean and the request stays byte-identical to the no-toggle baseline.
 
-const WINDOW_OPTIONS: { value: ApyWindow; label: string; tip: string }[] = [
+const WINDOW_OPTIONS: Array<{ value: ApyWindow; label: string; tip: string }> = [
 	{ value: 'current', label: 'Now', tip: 'Latest snapshot' },
 	{ value: 'avg_7d', label: '7d', tip: '7-day average' },
 	{ value: 'avg_30d', label: '30d', tip: '30-day average' }
@@ -34,18 +34,18 @@ const APY_HELP = (
 	/>
 )
 
-function readSingle(value: string | string[] | undefined): string | undefined {
+function readSingle(value: string | Array<string> | undefined): string | undefined {
 	return Array.isArray(value) ? value[0] : value
 }
 
 // Mirror the server's parseApyWindow default ('current').
-function decodeWindow(value: string | string[] | undefined): ApyWindow {
+function decodeWindow(value: string | Array<string> | undefined): ApyWindow {
 	const raw = readSingle(value)
 	return raw === 'avg_7d' || raw === 'avg_30d' ? raw : 'current'
 }
 
 // Mirror the server's parseApyComponents: absent → base+reward.
-function decodeComponents(value: string | string[] | undefined): { reward: boolean; intrinsic: boolean } {
+function decodeComponents(value: string | Array<string> | undefined): { reward: boolean; intrinsic: boolean } {
 	const raw = readSingle(value)
 	if (raw == null) return { reward: true, intrinsic: false }
 	const parts = raw.split(',').map((part) => part.trim())
@@ -66,10 +66,10 @@ function describeComponents(reward: boolean, intrinsic: boolean): string {
 
 function encodeComponents(reward: boolean, intrinsic: boolean): string | undefined {
 	if (reward && !intrinsic) return undefined
-	const parts: string[] = []
+	const parts: Array<string> = []
 	if (reward) parts.push('reward')
 	if (intrinsic) parts.push('intrinsic')
-	return parts.length ? parts.join(',') : 'base'
+	return parts.length > 0 ? parts.join(',') : 'base'
 }
 
 export function ApyViewControls() {

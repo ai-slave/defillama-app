@@ -23,9 +23,9 @@ const SUPPLY_HEADER_CATEGORIES = new Set(['lending', 'cdp', 'uncollateralized-le
 
 // The detail page shows the full supply APY composition (base + reward + intrinsic);
 // the new API returns every variant and the client resolves the view.
-const DETAIL_APY_COMPONENTS: ApyComponent[] = ['base', 'reward', 'intrinsic']
+const DETAIL_APY_COMPONENTS: Array<ApyComponent> = ['base', 'reward', 'intrinsic']
 // The borrow leg carries no intrinsic yield (matches the old page's base+reward fetch).
-const BORROW_APY_COMPONENTS: ApyComponent[] = ['base', 'reward']
+const BORROW_APY_COMPONENTS: Array<ApyComponent> = ['base', 'reward']
 
 async function optionalResource<T>(load: () => Promise<T>): Promise<T | null> {
 	try {
@@ -46,15 +46,15 @@ async function optionalResource<T>(load: () => Promise<T>): Promise<T | null> {
 function assetSymbols(detail: {
 	underlying_tokens?: Array<{ symbol?: string | null }> | null
 	reference_asset_symbol?: string | null
-}): string[] {
+}): Array<string> {
 	// The underlying constituents, original casing preserved; reference symbol as the
 	// single-entry fallback when the decomposition is absent.
 	const underlying = (detail.underlying_tokens ?? []).map((t) => t.symbol).filter((x): x is string => !!x)
-	if (underlying.length) return [...new Set(underlying)]
+	if (underlying.length > 0) return [...new Set(underlying)]
 	return detail.reference_asset_symbol ? [detail.reference_asset_symbol] : []
 }
 
-function rewardTokenSymbols(tokens: Array<{ symbol?: string | null }>): string[] {
+function rewardTokenSymbols(tokens: Array<{ symbol?: string | null }>): Array<string> {
 	return tokens.flatMap(({ symbol }) => (symbol ? [symbol] : []))
 }
 

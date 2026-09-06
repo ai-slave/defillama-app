@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { NextRouter } from 'next/router'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useSettingsRouteIntent } from '~/containers/LlamaAI/hooks/useSettingsRouteIntent'
 import { WEB_MOBILE_PUSH_QUERY_KEY } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 
@@ -45,7 +45,7 @@ describe('useSettingsRouteIntent', () => {
 		container.remove()
 	})
 
-	it('invalidates the mobile push preference before opening Settings from a route intent', async () => {
+	test('invalidates the mobile push preference before opening Settings from a route intent', async () => {
 		const replace = vi.fn(async () => true)
 		const router = {
 			isReady: true,

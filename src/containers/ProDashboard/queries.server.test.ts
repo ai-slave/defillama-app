@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { buildProDashboardProtocolRelations, type ProDashboardProtocolCatalog } from './protocolCatalog'
 
 const { getProtocolDataMock } = vi.hoisted(() => ({ getProtocolDataMock: vi.fn() }))
@@ -44,7 +44,7 @@ describe('fetchSingleChartData parent fallback', () => {
 		getProtocolDataMock.mockResolvedValue([])
 	})
 
-	it('sums child series when a parent has no direct adapter chart', async () => {
+	test('sums child series when a parent has no direct adapter chart', async () => {
 		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
 			if (protocol === 'aave') return []
 			if (protocol === 'aave-v2') return [[1, 10]]
@@ -62,7 +62,7 @@ describe('fetchSingleChartData parent fallback', () => {
 		])
 	})
 
-	it('rejects a partial child set instead of caching an understated parent total', async () => {
+	test('rejects a partial child set instead of caching an understated parent total', async () => {
 		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
 			if (protocol === 'aave') return []
 			if (protocol === 'aave-v2') return [[1, 10]]
@@ -74,7 +74,7 @@ describe('fetchSingleChartData parent fallback', () => {
 		).rejects.toThrow('child source failed')
 	})
 
-	it('does not turn a standalone source failure into a successful empty result', async () => {
+	test('does not turn a standalone source failure into a successful empty result', async () => {
 		getProtocolDataMock.mockRejectedValue(new Error('upstream failed'))
 
 		await expect(
@@ -87,7 +87,7 @@ describe('fetchSingleChartData parent fallback', () => {
 		).rejects.toThrow('upstream failed')
 	})
 
-	it('rejects unknown saved chart types without invoking a chart service', async () => {
+	test('rejects unknown saved chart types without invoking a chart service', async () => {
 		await expect(
 			fetchSingleChartData(
 				{ type: 'legacy-unknown', subjectType: 'protocol', protocol: 'aave' },

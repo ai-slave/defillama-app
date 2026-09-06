@@ -5,7 +5,7 @@ import { useMetricAvailability } from './hooks/useMetricAvailability'
 import type { MetricWithAvailability } from './types'
 
 interface ComparisonWizardContextValue extends UseComparisonWizardReturn {
-	availableMetrics: MetricWithAvailability[]
+	availableMetrics: Array<MetricWithAvailability>
 }
 
 const ComparisonWizardContext = createContext<ComparisonWizardContextValue | undefined>(undefined)

@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useStableCallback } from '~/hooks/useStableCallback'
 
-type DebouncedFunction<T extends (...args: any[]) => void> = ((...args: Parameters<T>) => void) & {
+type DebouncedFunction<T extends (...args: Array<any>) => void> = ((...args: Parameters<T>) => void) & {
 	cancel: () => void
 	flush: () => void
 }
 
 const normalizeDelay = (delay: number) => (Number.isFinite(delay) && delay > 0 ? delay : 0)
 
-export function useDebouncedCallback<T extends (...args: any[]) => void>(
+export function useDebouncedCallback<T extends (...args: Array<any>) => void>(
 	callback: T,
 	delay: number
 ): DebouncedFunction<T> {

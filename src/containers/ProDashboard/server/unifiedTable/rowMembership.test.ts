@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { DimensionDatasetProtocol } from '~/containers/AdapterMetrics/datasetTypes'
 import type { ProtocolAggregateTableRow, ProtocolChainTableRow } from '../../unifiedTable/contracts'
 import { filterProtocolRowsByDatasetMembership } from './rowMembership'
@@ -37,7 +37,7 @@ function datasetProtocol(overrides: Partial<DimensionDatasetProtocol>): Dimensio
 }
 
 describe('protocol row membership', () => {
-	it('uses canonical dataset membership without treating missing current activity as absence', () => {
+	test('uses canonical dataset membership without treating missing current activity as absence', () => {
 		const aaveV2 = protocolRow('aave-v2', 'aave')
 		const aaveV3 = protocolRow('aave-v3', 'aave')
 		const inactive = protocolRow('inactive', null)
@@ -57,7 +57,7 @@ describe('protocol row membership', () => {
 		])
 	})
 
-	it('scopes canonical parent membership to the dataset chain list', () => {
+	test('scopes canonical parent membership to the dataset chain list', () => {
 		const ethereum = chainRow('aave-v2', 'Ethereum', 'aave')
 		const base = chainRow('aave-v2', 'Base', 'aave')
 		const dataset = {

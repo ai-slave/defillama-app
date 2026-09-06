@@ -1,5 +1,5 @@
 import type { VisibilityState } from '@tanstack/react-table'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { EquityActiveFilter } from '../filters'
 import {
 	applyEquityFilterColumnVisibility,
@@ -15,7 +15,7 @@ const cashFilter: EquityActiveFilter = {
 }
 
 describe('equity filter column visibility', () => {
-	it('forces active filter columns visible in the table', () => {
+	test('forces active filter columns visible in the table', () => {
 		const columnVisibility: VisibilityState = {
 			cashAndCashEquivalents: false,
 			totalDebt: false
@@ -28,7 +28,7 @@ describe('equity filter column visibility', () => {
 		})
 	})
 
-	it('leaves the user-picked visibility untouched when there are no active filters', () => {
+	test('leaves the user-picked visibility untouched when there are no active filters', () => {
 		const columnVisibility: VisibilityState = {
 			cashAndCashEquivalents: false,
 			totalDebt: true
@@ -43,7 +43,7 @@ describe('equity filter column visibility', () => {
 })
 
 describe('equity filter default sorting', () => {
-	it('sorts by the latest numeric filter, descending for lower-bound filters', () => {
+	test('sorts by the latest numeric filter, descending for lower-bound filters', () => {
 		expect(
 			getEquityFilterDefaultSorting({
 				filters: [{ kind: 'numeric', id: 'marketCap', operator: '>=', value: 10_000_000_000 }, cashFilter],
@@ -52,7 +52,7 @@ describe('equity filter default sorting', () => {
 		).toEqual([{ id: 'cashAndCashEquivalents', desc: true }])
 	})
 
-	it('sorts ascending for upper-bound filters', () => {
+	test('sorts ascending for upper-bound filters', () => {
 		expect(
 			getEquityFilterDefaultSorting({
 				filters: [{ kind: 'numeric', id: 'trailingPE', operator: '<=', value: 20 }],
@@ -61,7 +61,7 @@ describe('equity filter default sorting', () => {
 		).toEqual([{ id: 'trailingPE', desc: false }])
 	})
 
-	it('falls back to preset sorting when there are no numeric filters', () => {
+	test('falls back to preset sorting when there are no numeric filters', () => {
 		const fallbackSorting = [{ id: 'marketCap', desc: true }]
 		expect(
 			getEquityFilterDefaultSorting({
@@ -71,7 +71,7 @@ describe('equity filter default sorting', () => {
 		).toBe(fallbackSorting)
 	})
 
-	it('updates managed default sorting but preserves manual sorting', () => {
+	test('updates managed default sorting but preserves manual sorting', () => {
 		const fallbackSorting = [{ id: 'marketCap', desc: true }]
 		expect(
 			shouldUpdateEquityFilterDefaultSorting({

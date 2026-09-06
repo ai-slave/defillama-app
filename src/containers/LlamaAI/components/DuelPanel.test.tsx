@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { DuelPanel } from '~/containers/LlamaAI/components/DuelPanel'
 import type { DuelArmState } from '~/containers/LlamaAI/hooks/useDuelStream'
 import type { Message } from '~/containers/LlamaAI/types'
@@ -53,13 +53,13 @@ describe('DuelPanel voting eligibility', () => {
 		]
 	}
 
-	it('does not allow voting when an arm errors after producing partial content', async () => {
+	test('does not allow voting when an arm errors after producing partial content', async () => {
 		const buttons = await render(arm(answer('partial answer'), 'Arm failed'), arm(answer()))
 
 		expect(buttons.every((button) => button.disabled)).toBe(true)
 	})
 
-	it('allows voting for completed artifact-only answers', async () => {
+	test('allows voting for completed artifact-only answers', async () => {
 		const artifactAnswer: Message = {
 			role: 'assistant',
 			generatedImages: [{ url: 'https://example.com/generated.png' }]
@@ -69,7 +69,7 @@ describe('DuelPanel voting eligibility', () => {
 		expect(buttons.every((button) => !button.disabled)).toBe(true)
 	})
 
-	it('keeps the loading placeholder until an out-of-band artifact can render', async () => {
+	test('keeps the loading placeholder until an out-of-band artifact can render', async () => {
 		const artifactAnswer: Message = {
 			role: 'assistant',
 			generatedImages: [{ url: 'https://example.com/generated.png' }]
@@ -80,7 +80,7 @@ describe('DuelPanel voting eligibility', () => {
 		expect(container.querySelector('[aria-label="Response 1 is still loading"]')).not.toBeNull()
 	})
 
-	it('does not treat tool execution progress as an answer', async () => {
+	test('does not treat tool execution progress as an answer', async () => {
 		const toolOnlyMessage = {
 			role: 'assistant',
 			toolExecutions: [{ name: 'get_protocol', executionTimeMs: 10, success: true }]

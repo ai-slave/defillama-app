@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
 import { buildRwaSnapshotPresentation, findLatestRwaSnapshotRow, hasRwaOverviewChartExportData } from './rwaSnapshot'
 
@@ -14,7 +14,7 @@ const dataset: RWAPositionalChartDataset = {
 }
 
 describe('RWA snapshot presentation', () => {
-	it('selects the latest duplicate timestamp and keeps inclusive custom boundaries', () => {
+	test('selects the latest duplicate timestamp and keeps inclusive custom boundaries', () => {
 		expect(
 			findLatestRwaSnapshotRow(dataset, 'custom', {
 				type: 'absolute',
@@ -24,7 +24,7 @@ describe('RWA snapshot presentation', () => {
 		).toEqual([3 * DAY, 6, 1, 0])
 	})
 
-	it('returns no snapshot when the latest point before the end is outside the period', () => {
+	test('returns no snapshot when the latest point before the end is outside the period', () => {
 		expect(
 			findLatestRwaSnapshotRow(dataset, 'custom', {
 				type: 'absolute',
@@ -35,7 +35,7 @@ describe('RWA snapshot presentation', () => {
 		expect(findLatestRwaSnapshotRow({ source: [], dimensions: ['timestamp'] }, 'all')).toBeNull()
 	})
 
-	it('builds only the requested sorted pie or capped hbar snapshot', () => {
+	test('builds only the requested sorted pie or capped hbar snapshot', () => {
 		expect(buildRwaSnapshotPresentation({ dataset, view: 'pie', timePeriod: 'all', breakdownLabel: 'Chain' })).toEqual({
 			view: 'pie',
 			data: [
@@ -48,7 +48,7 @@ describe('RWA snapshot presentation', () => {
 		)
 	})
 
-	it('preserves dimension order and excludes negative, zero, and missing values in treemaps', () => {
+	test('preserves dimension order and excludes negative, zero, and missing values in treemaps', () => {
 		const presentation = buildRwaSnapshotPresentation({
 			dataset,
 			view: 'treemap',
@@ -65,7 +65,7 @@ describe('RWA snapshot presentation', () => {
 		}
 	})
 
-	it('exposes exports only when the active non-pie presentation has data', () => {
+	test('exposes exports only when the active non-pie presentation has data', () => {
 		const emptyDataset: RWAPositionalChartDataset = { dimensions: ['timestamp'], source: [] }
 		expect(hasRwaOverviewChartExportData('timeSeries', dataset, null)).toBe(true)
 		expect(hasRwaOverviewChartExportData('timeSeries', emptyDataset, null)).toBe(false)

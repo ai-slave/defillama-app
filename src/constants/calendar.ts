@@ -36,4 +36,4 @@ export default [
 	['Macro', macro],
 	['Close', closes],
 	['Crypto', cryptos]
-] as [string, string[][]][]
+] as Array<[string, Array<Array<string>>]>

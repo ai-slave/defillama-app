@@ -25,12 +25,12 @@ export interface PersistedToolExecution extends Partial<ToolExecution> {
 }
 
 export interface PersistedMessageMetadata extends RestoredAlertMetadata {
-	toolExecutions?: PersistedToolExecution[]
+	toolExecutions?: Array<PersistedToolExecution>
 	thinking?: string
 	quotedText?: string
 	dashboardConfig?: {
 		dashboardName?: string
-		items?: PersistedDashboardItemConfig[]
+		items?: Array<PersistedDashboardItemConfig>
 		timePeriod?: string
 		sourceDashboardId?: string
 	}
@@ -42,9 +42,9 @@ export interface PersistedMessageMetadata extends RestoredAlertMetadata {
 	mdExports?: Array<{ id: string; title: string; url: string; filename: string }>
 	x402_cost_usd?: string
 	factCheck?: {
-		references?: unknown[]
+		references?: Array<unknown>
 	}
-	citations?: { schemaVersion?: number; citations?: unknown[] }
+	citations?: { schemaVersion?: number; citations?: Array<unknown> }
 	chartSaveContext?: { artifactRefs?: unknown }
 }
 
@@ -53,9 +53,9 @@ export interface PersistedMessage {
 	content?: string
 	charts?: unknown
 	chartData?: unknown
-	citations?: string[]
-	csvExports?: CsvExport[]
-	mdExports?: MdExport[]
+	citations?: Array<string>
+	csvExports?: Array<CsvExport>
+	mdExports?: Array<MdExport>
 	images?: Array<{
 		url: string
 		mimeType: string
@@ -71,12 +71,12 @@ export interface PersistedMessage {
 	parentId?: string
 	siblingInfo?: Message['siblingInfo']
 	timestamp?: string | number
-	savedAlertIds?: string[]
+	savedAlertIds?: Array<string>
 }
 
 export interface SharedSession {
 	session: { sessionId: string; title: string; createdAt: string; isPublic: boolean }
-	messages: SharedSessionMessage[]
+	messages: Array<SharedSessionMessage>
 	activeLeafMessageId?: string
 	isPublicView: true
 }
@@ -98,16 +98,16 @@ export interface SharedSessionMessage {
 	generatedImages?: Array<{ id?: string; url: string; size?: string; prompt?: string; revised_prompt?: string }>
 	metadata?: PersistedMessageMetadata
 	charts?: unknown
-	chartData?: unknown[] | ChartDataByKey
-	citations?: string[]
-	csvExports?: CsvExport[]
-	mdExports?: MdExport[]
-	savedAlertIds?: string[]
+	chartData?: Array<unknown> | ChartDataByKey
+	citations?: Array<string>
+	csvExports?: Array<CsvExport>
+	mdExports?: Array<MdExport>
+	savedAlertIds?: Array<string>
 }
 
 export interface SessionRestoreResult {
-	messages?: PersistedMessage[]
-	todos?: TodoItem[]
+	messages?: Array<PersistedMessage>
+	todos?: Array<TodoItem>
 	activeLeafMessageId?: string
 	pagination?: { hasMore?: boolean; cursor?: number | null; hasNewer?: boolean; newerCursor?: number | null }
 	projectId?: string | null
@@ -131,10 +131,10 @@ function mapToolExecution(tool: PersistedToolExecution): ToolExecution {
 }
 
 function stableHash(value: string): string {
-	let hash = 2166136261
+	let hash = 2_166_136_261
 	for (let i = 0; i < value.length; i++) {
 		hash ^= value.charCodeAt(i)
-		hash = Math.imul(hash, 16777619)
+		hash = Math.imul(hash, 16_777_619)
 	}
 	return (hash >>> 0).toString(36)
 }
@@ -206,7 +206,7 @@ function buildRestoredDashboard(message: PersistedMessage, index?: number): Dash
 	return artifact
 }
 
-function normalizeLegacyFactCheckRefs(refs: unknown): UnifiedCitationReference[] {
+function normalizeLegacyFactCheckRefs(refs: unknown): Array<UnifiedCitationReference> {
 	if (!Array.isArray(refs)) return []
 	return refs
 		.filter((r): r is FactCheckReference => !!r && typeof r === 'object')
@@ -233,10 +233,13 @@ function canonicalizeLegacyCitationSourceType(
 	return sourceType
 }
 
-function resolveCitationFields(metadata: PersistedMessageMetadata | undefined, urlCitations: string[] | undefined) {
+function resolveCitationFields(
+	metadata: PersistedMessageMetadata | undefined,
+	urlCitations: Array<string> | undefined
+) {
 	const envelopeCitations =
 		Array.isArray(metadata?.citations?.citations) && metadata.citations.citations.length > 0
-			? (metadata.citations.citations as UnifiedCitationReference[])
+			? (metadata.citations.citations as Array<UnifiedCitationReference>)
 			: undefined
 	const legacyFactCheck =
 		!envelopeCitations && Array.isArray(metadata?.factCheck?.references) && metadata.factCheck.references.length > 0
@@ -291,13 +294,13 @@ export function mapPersistedMessage(message: PersistedMessage, index?: number): 
 	return mapped
 }
 
-export function mapPersistedMessages(messages: PersistedMessage[] | undefined): Message[] {
+export function mapPersistedMessages(messages: Array<PersistedMessage> | undefined): Array<Message> {
 	if (!messages || messages.length === 0) return []
 	return messages.map((msg, i) => mapPersistedMessage(msg, i))
 }
 
 export function normalizeSharedChartDataByChartId(
-	charts: ChartConfiguration[] | undefined,
+	charts: Array<ChartConfiguration> | undefined,
 	chartData: SharedSessionMessage['chartData']
 ): ChartDataByKey | undefined {
 	if (!charts || charts.length === 0 || !chartData) return undefined

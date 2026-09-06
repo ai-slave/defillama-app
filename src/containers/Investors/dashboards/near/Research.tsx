@@ -87,7 +87,7 @@ function ReportCard({ source, title, url, color }: { source: string; title: stri
 		>
 			<div
 				className="flex size-10 shrink-0 items-center justify-center rounded-lg"
-				style={{ backgroundColor: color + '18' }}
+				style={{ backgroundColor: `${color}18` }}
 			>
 				<span className="text-sm font-bold" style={{ color }}>
 					{source.charAt(0)}

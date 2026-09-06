@@ -4,9 +4,9 @@ import {
 	fetchRWACategoryBreakdownChartData,
 	fetchRWAChainBreakdownChartData,
 	fetchRWAPlatformBreakdownChartData,
-	rwaUnixSecondsToMilliseconds
+	rwaUnixSecondsToMilliseconds,
+	subtractBridgeFromMetricRows
 } from '~/containers/RWA/api'
-import { subtractBridgeFromMetricRows } from '~/containers/RWA/api'
 import type {
 	IRWAChartDataByAsset,
 	IRWAChartMetricRows,
@@ -96,7 +96,7 @@ function assertNever(value: never): never {
 	throw new Error(`Unexpected value: ${String(value)}`)
 }
 
-function parseChartMetricKey(value: string | string[] | undefined): RWAChartMetricKey | null {
+function parseChartMetricKey(value: string | Array<string> | undefined): RWAChartMetricKey | null {
 	return parseEnumQueryValue(value, RWA_CHART_METRIC_KEYS)
 }
 

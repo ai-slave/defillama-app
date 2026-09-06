@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const llamaAny = vi.hoisted(() => vi.fn())
 vi.mock('~/server/db/llama', () => ({ llamaDb: { any: llamaAny } }))
@@ -54,7 +54,7 @@ const protocolRow = (protocolId: string, perpsVolume24h: number): ProtocolTableS
 describe('protocol point comparisons', () => {
 	beforeEach(() => llamaAny.mockReset().mockResolvedValue([]))
 
-	it('retains raw comparison values so grouped -100% changes remain exact', () => {
+	test('retains raw comparison values so grouped -100% changes remain exact', () => {
 		const first = comparison({ entity_id: 'first', perps_volume_7d_ago: 100, perps_volume_30d_ago: 50 })
 		const second = comparison({ entity_id: 'second', perps_volume_7d_ago: 100, perps_volume_30d_ago: 200 })
 		const data: ProtocolPointComparisonData = {
@@ -75,7 +75,7 @@ describe('protocol point comparisons', () => {
 		expect(aggregateMetrics(rows).perpsVolume24hChange30dAgo).toBe(-60)
 	})
 
-	it('applies canonical chain comparisons without constructing them from leaves', () => {
+	test('applies canonical chain comparisons without constructing them from leaves', () => {
 		const ethereum = comparison({
 			entity_id: 'ethereum',
 			chain_slug: 'ethereum',
@@ -100,7 +100,7 @@ describe('protocol point comparisons', () => {
 		})
 	})
 
-	it('clears requested chain comparisons when the canonical comparison row is missing', () => {
+	test('clears requested chain comparisons when the canonical comparison row is missing', () => {
 		const chainMetrics = applyChainPointComparisons(
 			{
 				ethereum: {
@@ -133,7 +133,7 @@ describe('protocol point comparisons', () => {
 		})
 	})
 
-	it('preserves measured zero comparison values without inventing a percentage', () => {
+	test('preserves measured zero comparison values without inventing a percentage', () => {
 		const ethereum = comparison({
 			entity_id: 'ethereum',
 			chain_slug: 'ethereum',
@@ -158,7 +158,7 @@ describe('protocol point comparisons', () => {
 		})
 	})
 
-	it('projects only the requested aggregate comparison family', async () => {
+	test('projects only the requested aggregate comparison family', async () => {
 		await fetchProtocolPointComparisons({ chainFilters: [], byChain: false, metrics: ['fees'] })
 
 		expect(llamaAny).toHaveBeenCalledOnce()
@@ -170,7 +170,7 @@ describe('protocol point comparisons', () => {
 		expect(query).not.toContain('volume_derivatives_1d')
 	})
 
-	it('uses the chain-specific column only for requested chain comparisons', async () => {
+	test('uses the chain-specific column only for requested chain comparisons', async () => {
 		await fetchProtocolPointComparisons({ chainFilters: ['base'], byChain: true, metrics: ['fees'] })
 
 		expect(llamaAny).toHaveBeenCalledTimes(2)

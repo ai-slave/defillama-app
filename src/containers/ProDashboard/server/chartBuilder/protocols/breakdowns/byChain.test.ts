@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { fetchChainChart, fetchChainsTvlOverview } from '~/containers/Chains/api'
 import { getProtocolChainBreakdownData } from './byChain'
 
@@ -14,7 +14,7 @@ describe('all-protocol TVL by chain', () => {
 		vi.mocked(fetchChainsTvlOverview).mockReset()
 	})
 
-	it('keeps the last same-day TVL snapshot', async () => {
+	test('keeps the last same-day TVL snapshot', async () => {
 		vi.mocked(fetchChainsTvlOverview).mockResolvedValue([{ name: 'Ethereum', tvl: 20 }])
 		vi.mocked(fetchChainChart).mockResolvedValue({
 			tvl: [

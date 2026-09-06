@@ -44,8 +44,8 @@ import type { Chain, Protocol } from './types'
 import { useDashboardActions } from './useDashboardActions'
 import { toPersistedDashboardItems } from './utils/dashboardUtils'
 
-const EMPTY_PROTOCOLS: Protocol[] = []
-const EMPTY_CHAINS: Chain[] = []
+const EMPTY_PROTOCOLS: Array<Protocol> = []
+const EMPTY_CHAINS: Array<Chain> = []
 const NOOP = () => {}
 
 function subscribeToClientReady(onStoreChange: () => void) {
@@ -103,13 +103,13 @@ interface ProDashboardTimeContextType {
 }
 
 interface ProDashboardCatalogContextType {
-	protocols: Protocol[]
-	chains: Chain[]
+	protocols: Array<Protocol>
+	chains: Array<Chain>
 	protocolsLoading: boolean
 	protocolCatalog: ChartDataPrerequisite
 	getChainInfo: (chainName: string) => Chain | undefined
 	getProtocolInfo: (protocolId: string) => Protocol | undefined
-	parentMapping: ReadonlyMap<string, readonly string[]>
+	parentMapping: ReadonlyMap<string, ReadonlyArray<string>>
 	protocolBySlug: ReadonlyMap<string, Protocol>
 }
 
@@ -128,7 +128,7 @@ interface ProDashboardDashboardContextType {
 	currentDashboard: Dashboard | null
 	dashboardName: string
 	dashboardVisibility: 'private' | 'public'
-	dashboardTags: string[]
+	dashboardTags: Array<string>
 	dashboardDescription: string
 	isLoadingDashboard: boolean
 	streamHasResolved: boolean
@@ -138,33 +138,33 @@ interface ProDashboardDashboardContextType {
 	autoSkipOlderSessionsForRating: () => Promise<void>
 	setDashboardName: (name: string) => void
 	setDashboardVisibility: (visibility: 'private' | 'public') => void
-	setDashboardTags: (tags: string[]) => void
+	setDashboardTags: (tags: Array<string>) => void
 	setDashboardDescription: (description: string) => void
 	deleteDashboard: (id: string) => Promise<void>
 	saveDashboard: (overrides?: {
 		dashboardName?: string
 		visibility?: 'private' | 'public'
-		tags?: string[]
+		tags?: Array<string>
 		description?: string
 		aiGenerated?: AIGeneratedData | null
-		items?: DashboardItemConfig[]
+		items?: Array<DashboardItemConfig>
 		aiUndoState?: AIUndoState | null
 	}) => Promise<void>
 	copyDashboard: () => Promise<void>
 	handleCreateDashboard: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
-		items?: DashboardItemConfig[]
+		items?: Array<DashboardItemConfig>
 		aiGenerated?: AIGeneratedData | null
 	}) => Promise<void>
 	handleGenerateDashboard: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
-		items: DashboardItemConfig[]
+		items: Array<DashboardItemConfig>
 		aiGenerationContext?: {
 			sessionId: string
 			mode: 'create' | 'iterate'
@@ -175,9 +175,9 @@ interface ProDashboardDashboardContextType {
 	handleIterateDashboard: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
-		items: DashboardItemConfig[]
+		items: Array<DashboardItemConfig>
 		aiGenerationContext?: {
 			sessionId: string
 			mode: 'create' | 'iterate'
@@ -207,7 +207,7 @@ type ProDashboardEditorActionsContextType = Omit<
 >
 
 interface ProDashboardItemsStateContextType {
-	items: DashboardItemConfig[]
+	items: Array<DashboardItemConfig>
 }
 
 interface ProDashboardUIContextType {
@@ -240,7 +240,7 @@ export function ProDashboardAPIProvider({
 	children: ReactNode
 	initialDashboardId?: string
 	initialDashboard?: Dashboard | null
-	initialItems?: DashboardItemConfig[]
+	initialItems?: Array<DashboardItemConfig>
 	hideDuplicateButton?: boolean
 	mode?: DashboardMode
 }) {
@@ -304,7 +304,7 @@ function ProDashboardAPIProviderInner({
 	mode: DashboardMode
 	initialDashboardId?: string
 	initialDashboard?: Dashboard | null
-	initialItems?: DashboardItemConfig[]
+	initialItems?: Array<DashboardItemConfig>
 	hideDuplicateButton?: boolean
 }) {
 	const queryClient = useQueryClient()
@@ -532,10 +532,10 @@ function ProDashboardAPIProviderInner({
 		async (overrides?: {
 			dashboardName?: string
 			visibility?: 'private' | 'public'
-			tags?: string[]
+			tags?: Array<string>
 			description?: string
 			aiGenerated?: AIGeneratedData | null
-			items?: DashboardItemConfig[]
+			items?: Array<DashboardItemConfig>
 			aiUndoState?: AIUndoState | null
 		}) => {
 			if (!isAuthenticated) {
@@ -681,9 +681,9 @@ function ProDashboardAPIProviderInner({
 		async (data: {
 			dashboardName: string
 			visibility: 'private' | 'public'
-			tags: string[]
+			tags: Array<string>
 			description: string
-			items?: DashboardItemConfig[]
+			items?: Array<DashboardItemConfig>
 			aiGenerated?: AIGeneratedData | null
 		}) => {
 			if (!canCreateDashboard) {
@@ -716,9 +716,9 @@ function ProDashboardAPIProviderInner({
 		async (data: {
 			dashboardName: string
 			visibility: 'private' | 'public'
-			tags: string[]
+			tags: Array<string>
 			description: string
-			items: DashboardItemConfig[]
+			items: Array<DashboardItemConfig>
 			aiGenerationContext?: {
 				sessionId: string
 				mode: 'create' | 'iterate'
@@ -752,9 +752,9 @@ function ProDashboardAPIProviderInner({
 		async (data: {
 			dashboardName: string
 			visibility: 'private' | 'public'
-			tags: string[]
+			tags: Array<string>
 			description: string
-			items: DashboardItemConfig[]
+			items: Array<DashboardItemConfig>
 			aiGenerationContext?: {
 				sessionId: string
 				mode: 'create' | 'iterate'
@@ -782,7 +782,7 @@ function ProDashboardAPIProviderInner({
 			if (dashboardId) {
 				const aiUndoState: AIUndoState | undefined = data.aiGenerationContext
 					? {
-							items: items,
+							items,
 							timestamp: new Date().toISOString(),
 							sessionId: data.aiGenerationContext.sessionId
 						}

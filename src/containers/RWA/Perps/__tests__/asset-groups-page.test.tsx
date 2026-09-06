@@ -1,5 +1,5 @@
 import type { GetStaticPropsContext } from 'next'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(() => {
 	vi.clearAllMocks()
@@ -10,7 +10,7 @@ function setupPageModule({
 	assetGroups = ['US Equities'],
 	data = { rows: [], dexRows: [], initialChartDataset: { source: [], dimensions: ['timestamp'] } }
 }: {
-	assetGroups?: string[]
+	assetGroups?: Array<string>
 	data?: unknown
 }) {
 	vi.doMock('~/utils/metadata', () => ({
@@ -50,7 +50,7 @@ function setupPageModule({
 }
 
 describe('rwa perps asset-groups page', () => {
-	it('builds asset-group links from metadata', async () => {
+	test('builds asset-group links from metadata', async () => {
 		const page = await setupPageModule({ assetGroups: ['US Equities', 'Commodities'] })
 		const context = {} as unknown as GetStaticPropsContext
 

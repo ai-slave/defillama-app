@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { areChartDataEqual, areChartsEqual } from '~/containers/LlamaAI/utils/chartComparison'
 
@@ -31,7 +31,7 @@ const chart = {
 } satisfies ChartConfiguration
 
 describe('areChartsEqual', () => {
-	it('compares the complete nested chart configuration', () => {
+	test('compares the complete nested chart configuration', () => {
 		expect(areChartsEqual([chart], [structuredClone(chart)])).toBe(true)
 		expect(
 			areChartsEqual(
@@ -54,7 +54,7 @@ describe('areChartsEqual', () => {
 })
 
 describe('areChartDataEqual', () => {
-	it('treats equivalent keyed chart payloads as equal', () => {
+	test('treats equivalent keyed chart payloads as equal', () => {
 		const rows = [{ date: '2026-01-01', value: 1 }]
 
 		expect(areChartDataEqual({ chart_1: rows }, { chart_1: rows })).toBe(true)
@@ -62,11 +62,11 @@ describe('areChartDataEqual', () => {
 		expect(areChartDataEqual({ chart_1: rows }, { chart_1: [{ date: '2026-01-01', value: 2 }] })).toBe(false)
 	})
 
-	it('compares tuple rows used by scatter and pie chart adapters', () => {
+	test('compares tuple rows used by scatter and pie chart adapters', () => {
 		expect(areChartDataEqual({ scatter: [[1, 2, 'Aave', 'aave']] }, { scatter: [[1, 2, 'Aave', 'aave']] })).toBe(true)
 	})
 
-	it('does not treat rows with different undefined keys as equal', () => {
+	test('does not treat rows with different undefined keys as equal', () => {
 		expect(areChartDataEqual({ chart_1: [{ a: undefined }] }, { chart_1: [{ b: undefined }] })).toBe(false)
 	})
 })

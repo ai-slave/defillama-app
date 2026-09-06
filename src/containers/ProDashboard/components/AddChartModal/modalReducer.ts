@@ -15,13 +15,13 @@ type ModalAction =
 	| { type: 'SET_SELECTED_MAIN_TAB'; payload: MainTabType }
 	| { type: 'SET_SELECTED_CHART_TAB'; payload: ChartTabType }
 	| { type: 'SET_CHART_MODE'; payload: ChartModeType }
-	| { type: 'SET_COMPOSER_ITEMS'; payload: SetStateAction<ChartConfig[]> }
+	| { type: 'SET_COMPOSER_ITEMS'; payload: SetStateAction<Array<ChartConfig>> }
 	| { type: 'SET_SELECTED_CHAIN'; payload: string | null }
-	| { type: 'SET_SELECTED_CHAINS'; payload: string[] }
+	| { type: 'SET_SELECTED_CHAINS'; payload: Array<string> }
 	| { type: 'SET_SELECTED_PROTOCOL'; payload: string | null }
-	| { type: 'SET_SELECTED_PROTOCOLS'; payload: string[] }
+	| { type: 'SET_SELECTED_PROTOCOLS'; payload: Array<string> }
 	| { type: 'SET_SELECTED_CHART_TYPE'; payload: string }
-	| { type: 'SET_SELECTED_CHART_TYPES'; payload: string[] }
+	| { type: 'SET_SELECTED_CHART_TYPES'; payload: Array<string> }
 	| { type: 'SET_UNIFIED_CHART_NAME'; payload: string }
 	| { type: 'SET_CHART_CREATION_MODE'; payload: 'separate' | 'combined' }
 	| { type: 'SET_TEXT_TITLE'; payload: string }
@@ -31,7 +31,7 @@ type ModalAction =
 	| { type: 'SET_SELECTED_CEX_ANALYTICS_VIEW'; payload: ModalState['selectedCexAnalyticsView'] }
 	| { type: 'SET_SELECTED_CEX_ANALYTICS_METRIC'; payload: ModalState['selectedCexAnalyticsMetric'] }
 	| { type: 'SET_SELECTED_CEX_ANALYTICS_TOP_N'; payload: number }
-	| { type: 'SET_SELECTED_TOKENS'; payload: string[] }
+	| { type: 'SET_SELECTED_TOKENS'; payload: Array<string> }
 	| { type: 'SET_INCLUDE_CEX'; payload: boolean }
 	| { type: 'SET_CHART_BUILDER_NAME'; payload: string }
 	| { type: 'SET_CHART_BUILDER'; payload: SetStateAction<ChartBuilderConfig> }
@@ -48,10 +48,10 @@ type ModalAction =
 			payload: { configID: string; name: string; project: string; chain: string } | null
 	  }
 	| { type: 'SET_SELECTED_YIELD_CHART_TYPE'; payload: ModalState['selectedYieldChartType'] }
-	| { type: 'SET_SELECTED_YIELD_CHAINS'; payload: string[] }
-	| { type: 'SET_SELECTED_YIELD_PROJECTS'; payload: string[] }
-	| { type: 'SET_SELECTED_YIELD_CATEGORIES'; payload: string[] }
-	| { type: 'SET_SELECTED_YIELD_TOKENS'; payload: string[] }
+	| { type: 'SET_SELECTED_YIELD_CHAINS'; payload: Array<string> }
+	| { type: 'SET_SELECTED_YIELD_PROJECTS'; payload: Array<string> }
+	| { type: 'SET_SELECTED_YIELD_CATEGORIES'; payload: Array<string> }
+	| { type: 'SET_SELECTED_YIELD_TOKENS'; payload: Array<string> }
 	| { type: 'SET_MIN_TVL'; payload: number | null }
 	| { type: 'SET_MAX_TVL'; payload: number | null }
 	| { type: 'SET_SELECTED_STABLECOIN_CHAIN'; payload: string }

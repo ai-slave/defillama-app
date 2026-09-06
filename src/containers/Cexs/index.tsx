@@ -23,7 +23,7 @@ type CexRow = ICex & { customRange: number | null; customRangeState: CustomRange
 
 const DEFAULT_SORTING_STATE = [{ id: 'cleanAssetsTvl', desc: true }]
 
-const getDateTimestamp = (dateString: string | string[] | undefined): number | null => {
+const getDateTimestamp = (dateString: string | Array<string> | undefined): number | null => {
 	if (!dateString || typeof dateString !== 'string') return null
 	const timestamp = Number(dateString)
 	return Number.isFinite(timestamp) ? timestamp : null
@@ -97,7 +97,7 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 	const startDate = getDateTimestamp(router.query.startDate)
 	const endDate = getDateTimestamp(router.query.endDate)
 	const customRangeCexs = useMemo(() => {
-		const requests: CexInflowsRequest[] = []
+		const requests: Array<CexInflowsRequest> = []
 		for (const cex of cexs) {
 			if (!cex.cexProtocolSlug) continue
 			requests.push({ cexProtocolSlug: cex.cexProtocolSlug, tokensToExclude: cex.tokensToExclude })
@@ -121,8 +121,8 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 		retry: false
 	})
 
-	const enrichedData = useMemo<CexRow[]>(() => {
-		const rows: CexRow[] = []
+	const enrichedData = useMemo<Array<CexRow>>(() => {
+		const rows: Array<CexRow> = []
 		for (const cex of cexs) {
 			const measurement = cex.cexProtocolSlug ? customRangeData?.[cex.cexProtocolSlug] : undefined
 			rows.push({
@@ -144,8 +144,8 @@ export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
 		<TableWithSearch<CexRow>
 			data={enrichedData}
 			columns={columns}
-			columnToSearch={'name'}
-			placeholder={'Search exchange...'}
+			columnToSearch="name"
+			placeholder="Search exchange..."
 			header={null}
 			customFilters={() => (
 				<DateFilter
@@ -332,7 +332,7 @@ const columns = [
 		header: 'Avg Leverage',
 		cell: (info) => {
 			const value = info.getValue()
-			return value != null ? roundNumber(Number(value), 2) + 'x' : null
+			return value != null ? `${roundNumber(Number(value), 2)}x` : null
 		},
 		meta: {
 			headerClassName: 'w-[130px]',

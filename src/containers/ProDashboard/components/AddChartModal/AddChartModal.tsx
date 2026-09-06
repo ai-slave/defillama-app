@@ -16,7 +16,7 @@ import { UnifiedTableTab } from './UnifiedTableTab'
 import { useComposerItemsData } from './useComposerItemsData'
 import { useModalActions } from './useModalActions'
 
-const EMPTY_CHAIN_OPTIONS: VirtualizedSelectOption[] = []
+const EMPTY_CHAIN_OPTIONS: Array<VirtualizedSelectOption> = []
 export function AddChartModal({
 	isOpen,
 	onClose,

@@ -122,7 +122,7 @@ const ICONS = {
 	)
 } as const
 
-const GROUPS: Array<{ key: string; options: ChartTypeOption[] }> = [
+const GROUPS: Array<{ key: string; options: Array<ChartTypeOption> }> = [
 	{
 		key: 'time',
 		options: [
@@ -162,7 +162,7 @@ const GROUPS: Array<{ key: string; options: ChartTypeOption[] }> = [
 interface ChartTypePickerProps {
 	value: ChartType
 	onChange: (next: ChartType) => void
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 }
 
 export function ChartTypePicker({ value, onChange, classified }: ChartTypePickerProps) {

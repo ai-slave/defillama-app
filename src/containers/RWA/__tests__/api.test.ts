@@ -1,22 +1,22 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildRWAAssetChartDataset, normalizeRWAChartMetricRows, rwaUnixSecondsToMilliseconds } from '../api'
 
 describe('RWA api timestamp normalization', () => {
-	it("converts the API's unix-second timestamps to milliseconds", () => {
+	test("converts the API's unix-second timestamps to milliseconds", () => {
 		expect(rwaUnixSecondsToMilliseconds(1_774_483_200)).toBe(1_774_483_200_000)
 	})
 })
 
 describe('RWA metric history normalization', () => {
-	it('normalizes only the requested metric and preserves sparse, zero, and negative values', () => {
+	test('normalizes only the requested metric and preserves sparse, zero, and negative values', () => {
 		expect(
 			normalizeRWAChartMetricRows(
 				{
 					activeMcap: [
-						{ timestamp: 1_000, Alpha: 0, Beta: -4 },
-						{ timestamp: 2_000, Alpha: 5 }
+						{ timestamp: 1000, Alpha: 0, Beta: -4 },
+						{ timestamp: 2000, Alpha: 5 }
 					],
-					onChainMcap: [{ timestamp: 1_000, Alpha: 100 }],
+					onChainMcap: [{ timestamp: 1000, Alpha: 100 }],
 					defiActiveTvl: [],
 					bridgeTvl: []
 				},
@@ -28,7 +28,7 @@ describe('RWA metric history normalization', () => {
 		])
 	})
 
-	it('returns an empty history when the selected metric has no rows', () => {
+	test('returns an empty history when the selected metric has no rows', () => {
 		expect(
 			normalizeRWAChartMetricRows(
 				{ activeMcap: [], onChainMcap: [], defiActiveTvl: [], bridgeTvl: [] },
@@ -37,19 +37,19 @@ describe('RWA metric history normalization', () => {
 		).toEqual([])
 	})
 
-	it('subtracts the bridge portion from defiActiveTvl when includeBridgeTvl is false', () => {
+	test('subtracts the bridge portion from defiActiveTvl when includeBridgeTvl is false', () => {
 		expect(
 			normalizeRWAChartMetricRows(
 				{
 					activeMcap: [],
 					onChainMcap: [],
 					defiActiveTvl: [
-						{ timestamp: 1_000, Alpha: 100, Beta: 40 },
-						{ timestamp: 2_000, Alpha: 10 }
+						{ timestamp: 1000, Alpha: 100, Beta: 40 },
+						{ timestamp: 2000, Alpha: 10 }
 					],
 					bridgeTvl: [
-						{ timestamp: 1_000, Alpha: 30, Beta: 30 },
-						{ timestamp: 2_000, Alpha: 0 }
+						{ timestamp: 1000, Alpha: 30, Beta: 30 },
+						{ timestamp: 2000, Alpha: 0 }
 					]
 				},
 				'defiActiveTvl',
@@ -61,13 +61,13 @@ describe('RWA metric history normalization', () => {
 		])
 	})
 
-	it('rejects an excluded history when its required bridge leg is missing', () => {
+	test('rejects an excluded history when its required bridge leg is missing', () => {
 		expect(() =>
 			normalizeRWAChartMetricRows(
 				{
 					activeMcap: [],
 					onChainMcap: [],
-					defiActiveTvl: [{ timestamp: 1_000, Alpha: 100 }]
+					defiActiveTvl: [{ timestamp: 1000, Alpha: 100 }]
 				},
 				'defiActiveTvl',
 				false
@@ -75,14 +75,14 @@ describe('RWA metric history normalization', () => {
 		).toThrow('RWA bridge TVL history is unavailable')
 	})
 
-	it('keeps defiActiveTvl unchanged when includeBridgeTvl is true (default)', () => {
+	test('keeps defiActiveTvl unchanged when includeBridgeTvl is true (default)', () => {
 		expect(
 			normalizeRWAChartMetricRows(
 				{
 					activeMcap: [],
 					onChainMcap: [],
-					defiActiveTvl: [{ timestamp: 1_000, Alpha: 100 }],
-					bridgeTvl: [{ timestamp: 1_000, Alpha: 30 }]
+					defiActiveTvl: [{ timestamp: 1000, Alpha: 100 }],
+					bridgeTvl: [{ timestamp: 1000, Alpha: 30 }]
 				},
 				'defiActiveTvl'
 			)
@@ -91,11 +91,11 @@ describe('RWA metric history normalization', () => {
 })
 
 describe('RWA asset chart construction', () => {
-	it('constructs the canonical positional history once while preserving gaps, negatives, and duplicate timestamps', () => {
+	test('constructs the canonical positional history once while preserving gaps, negatives, and duplicate timestamps', () => {
 		expect(
 			buildRWAAssetChartDataset([
 				{
-					timestamp: 1_000,
+					timestamp: 1000,
 					defiActiveTvl: null,
 					activeMcap: -2,
 					onChainMcap: 0,
@@ -103,7 +103,7 @@ describe('RWA asset chart construction', () => {
 					chains: {}
 				},
 				{
-					timestamp: 1_000,
+					timestamp: 1000,
 					defiActiveTvl: 3,
 					activeMcap: 4,
 					onChainMcap: null,

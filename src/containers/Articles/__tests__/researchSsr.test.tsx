@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	getAllArticlesBanner,
 	getArticleBanner,
@@ -153,7 +153,7 @@ function article(overrides: Partial<ArticleDocument> = {}): ArticleDocument {
 	}
 }
 
-function articleList(items: ArticleDocument[]) {
+function articleList(items: Array<ArticleDocument>) {
 	return {
 		items,
 		page: 1,
@@ -224,7 +224,7 @@ describe('research SSR data loading', () => {
 		])
 	})
 
-	it('loads landing page props for SSR and renders article content immediately', async () => {
+	test('loads landing page props for SSR and renders article content immediately', async () => {
 		const setHeader = vi.fn()
 		const result = await getResearchServerSideProps({
 			req: { method: 'GET' },
@@ -244,7 +244,7 @@ describe('research SSR data loading', () => {
 		expect(html).toContain('Research Notes newsletter')
 	})
 
-	it('keeps the interviews section when the Beehiiv feed is unavailable', async () => {
+	test('keeps the interviews section when the Beehiiv feed is unavailable', async () => {
 		vi.mocked(getResearchNewsletterItems).mockRejectedValueOnce(new Error('Beehiiv unavailable'))
 
 		const result = await getResearchServerSideProps({
@@ -262,7 +262,7 @@ describe('research SSR data loading', () => {
 		expect(html).not.toContain('Research Notes Newsletters')
 	})
 
-	it('server-renders the reports carousel centered before client measurement', () => {
+	test('server-renders the reports carousel centered before client measurement', () => {
 		const html = renderToStaticMarkup(
 			<ReportsCarousel
 				showButtons={false}
@@ -281,7 +281,7 @@ describe('research SSR data loading', () => {
 		expect(html).not.toContain('translate(calc(0px + -147px))')
 	})
 
-	it('loads section landing props for SSR and renders articles immediately', async () => {
+	test('loads section landing props for SSR and renders articles immediately', async () => {
 		const setHeader = vi.fn()
 		const result = await getSectionLandingServerSideProps({
 			params: { section: 'report' },
@@ -302,7 +302,7 @@ describe('research SSR data loading', () => {
 		expect(html).toContain('Report')
 	})
 
-	it('returns notFound for invalid section slugs', async () => {
+	test('returns notFound for invalid section slugs', async () => {
 		await expect(
 			getSectionLandingServerSideProps({
 				params: { section: 'not-a-section' },
@@ -313,7 +313,7 @@ describe('research SSR data loading', () => {
 		).resolves.toMatchObject({ notFound: true })
 	})
 
-	it('loads topic landing props for SSR and renders articles immediately', async () => {
+	test('loads topic landing props for SSR and renders articles immediately', async () => {
 		const setHeader = vi.fn()
 		const result = await getTopicLandingServerSideProps({
 			params: { topic: 'lending' },
@@ -334,7 +334,7 @@ describe('research SSR data loading', () => {
 		expect(html).toContain('lending')
 	})
 
-	it('returns notFound for invalid topic slugs', async () => {
+	test('returns notFound for invalid topic slugs', async () => {
 		await expect(
 			getTopicLandingServerSideProps({
 				params: { topic: '!!!' },
@@ -345,7 +345,7 @@ describe('research SSR data loading', () => {
 		).resolves.toMatchObject({ notFound: true })
 	})
 
-	it('safely redirects malformed encoded topic slugs to a normalized path', async () => {
+	test('safely redirects malformed encoded topic slugs to a normalized path', async () => {
 		await expect(
 			getTopicLandingServerSideProps({
 				params: { topic: '%E0%A4%A' },
@@ -361,7 +361,7 @@ describe('research SSR data loading', () => {
 		})
 	})
 
-	it('returns notFound when a topic has fewer than four articles', async () => {
+	test('returns notFound when a topic has fewer than four articles', async () => {
 		vi.mocked(listArticlesByTopic).mockResolvedValueOnce(topicArticleList(3))
 
 		await expect(
@@ -374,7 +374,7 @@ describe('research SSR data loading', () => {
 		).resolves.toMatchObject({ notFound: true })
 	})
 
-	it('redirects non-canonical topic slugs to the normalized path', async () => {
+	test('redirects non-canonical topic slugs to the normalized path', async () => {
 		await expect(
 			getTopicLandingServerSideProps({
 				params: { topic: 'Lending' },
@@ -390,7 +390,7 @@ describe('research SSR data loading', () => {
 		})
 	})
 
-	it('loads sanitized article props for SSR and renders article body immediately', async () => {
+	test('loads sanitized article props for SSR and renders article body immediately', async () => {
 		const publicArticle = article({
 			author: 'Internal Admin',
 			coAuthors: [
@@ -452,7 +452,7 @@ describe('research SSR data loading', () => {
 		expect(html).toContain('>Search</span>')
 	})
 
-	it('does not render legacy draft preview controls on the public article page', () => {
+	test('does not render legacy draft preview controls on the public article page', () => {
 		routerMock.mockReturnValue({
 			isReady: true,
 			pathname: '/research/[section]/[slug]',
@@ -466,7 +466,7 @@ describe('research SSR data loading', () => {
 		expect(html).not.toContain('Draft preview')
 	})
 
-	it('keeps the server-rendered article visible when its background refetch fails', () => {
+	test('keeps the server-rendered article visible when its background refetch fails', () => {
 		const queryClient = createQueryClient()
 		const queryKey = ['research', 'article', 'canonical-research']
 		queryClient.setQueryData(queryKey, article())
@@ -486,7 +486,7 @@ describe('research SSR data loading', () => {
 		expect(html).not.toContain("Couldn't load research")
 	})
 
-	it('returns notFound for missing articles and redirects non-canonical article urls', async () => {
+	test('returns notFound for missing articles and redirects non-canonical article urls', async () => {
 		vi.mocked(getArticleBySlug).mockResolvedValueOnce(null)
 		const notFoundSetHeader = vi.fn()
 		await expect(

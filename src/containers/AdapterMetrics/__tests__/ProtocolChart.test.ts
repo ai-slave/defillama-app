@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildAdapterProtocolBreakdownApiUrl, buildProtocolBreakdownChartPresentation } from '../ProtocolChart'
 
 const toSeconds = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day) / 1e3
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
 describe('buildProtocolBreakdownChartPresentation', () => {
-	it('returns the canonical empty tuple dataset when no series are available', () => {
+	test('returns the canonical empty tuple dataset when no series are available', () => {
 		expect(
 			buildProtocolBreakdownChartPresentation({
 				data: [[toSeconds(2024, 1, 1), { Ignored: 10 }]],
@@ -15,7 +15,7 @@ describe('buildProtocolBreakdownChartPresentation', () => {
 		).toEqual({ dataset: { dimensions: ['timestamp'], source: [] }, charts: [] })
 	})
 
-	it('keeps sparse values dense while preserving zeroes after a series begins', () => {
+	test('keeps sparse values dense while preserving zeroes after a series begins', () => {
 		const presentation = buildProtocolBreakdownChartPresentation({
 			data: [
 				[toSeconds(2024, 1, 1), { A: 0 }],
@@ -40,7 +40,7 @@ describe('buildProtocolBreakdownChartPresentation', () => {
 		])
 	})
 
-	it('sorts cumulative buckets and addresses a series named timestamp by position', () => {
+	test('sorts cumulative buckets and addresses a series named timestamp by position', () => {
 		const presentation = buildProtocolBreakdownChartPresentation({
 			data: [
 				[toSeconds(2024, 1, 2), { timestamp: 3 }],
@@ -64,7 +64,7 @@ describe('buildProtocolBreakdownChartPresentation', () => {
 })
 
 describe('buildAdapterProtocolBreakdownApiUrl', () => {
-	it('omits the dataType query parameter when it is absent', () => {
+	test('omits the dataType query parameter when it is absent', () => {
 		const url = buildAdapterProtocolBreakdownApiUrl({
 			adapterType: 'fees',
 			protocol: 'Example Protocol',

@@ -11,7 +11,7 @@ export interface RawCex {
 	auditor?: string | null
 	auditLink?: string | null
 	url?: string | null
-	ownTokens?: string[] | null
+	ownTokens?: Array<string> | null
 	currentTvl?: number
 	cleanAssetsTvl?: number
 	inflows_24h?: number
@@ -24,8 +24,8 @@ export interface RawCex {
 }
 
 export interface RawCexsResponse {
-	cexs: RawCex[]
-	cg_volume_cexs: string[]
+	cexs: Array<RawCex>
+	cg_volume_cexs: Array<string>
 }
 
 export interface RawCexInflowsTokenSnapshot {
@@ -66,7 +66,7 @@ export interface CexAnalyticsSummary {
 }
 
 export interface CexAnalyticsSnapshotResponse {
-	rows: CexAnalyticsSnapshotRow[]
+	rows: Array<CexAnalyticsSnapshotRow>
 	summary: CexAnalyticsSummary
 }
 

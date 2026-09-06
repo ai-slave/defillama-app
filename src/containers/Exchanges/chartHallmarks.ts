@@ -22,10 +22,10 @@ interface CollectionEvent {
 	date: string
 	/** Short enough to render beside a gridline. */
 	label: string
-	metrics: readonly HallmarkMetric[]
+	metrics: ReadonlyArray<HallmarkMetric>
 }
 
-const COLLECTION_EVENTS: readonly CollectionEvent[] = [
+const COLLECTION_EVENTS: ReadonlyArray<CollectionEvent> = [
 	{
 		// total_linear_perp_oi steps 49.5b -> 76.6b as our own per-pair collection replaces
 		// a third-party backfill that reached far fewer venues. The line moves because more
@@ -50,7 +50,7 @@ const COLLECTION_EVENTS: readonly CollectionEvent[] = [
 const toUnixSeconds = (date: string) => Math.floor(Date.parse(`${date}T00:00:00Z`) / 1000)
 
 /** `[unix seconds, label]` pairs for the metrics a chart is showing, oldest first. */
-export function collectionHallmarks(metrics: readonly HallmarkMetric[]): Array<[number, string]> {
+export function collectionHallmarks(metrics: ReadonlyArray<HallmarkMetric>): Array<[number, string]> {
 	if (metrics.length === 0) return []
 	return COLLECTION_EVENTS.filter((event) => event.metrics.some((metric) => metrics.includes(metric)))
 		.map((event) => [toUnixSeconds(event.date), event.label] as [number, string])
@@ -61,7 +61,7 @@ export function collectionHallmarks(metrics: readonly HallmarkMetric[]): Array<[
  * Which metric families a set of series keys belongs to, so a chart does not have to
  * restate it. Keys look like `total_linear_perp_oi` or `cex_spot_active_liquidity`.
  */
-export function hallmarkMetricsForKeys(keys: readonly string[]): HallmarkMetric[] {
+export function hallmarkMetricsForKeys(keys: ReadonlyArray<string>): Array<HallmarkMetric> {
 	const metrics = new Set<HallmarkMetric>()
 	for (const key of keys) {
 		if (key.includes('active_liquidity')) metrics.add('liquidity')

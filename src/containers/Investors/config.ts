@@ -22,22 +22,22 @@ const INVESTORS_LIVE_PROJECT_IDS = [
 	'near',
 	'thorchain',
 	'flare'
-] as const satisfies readonly InvestorsProjectId[]
-const INVESTORS_PREVIEW_PROJECT_IDS = ['kpk', 'uniswap'] as const satisfies readonly InvestorsProjectId[]
-const INVESTORS_COMING_SOON_PROJECT_IDS = ['kpk'] as const satisfies readonly InvestorsProjectId[]
+] as const satisfies ReadonlyArray<InvestorsProjectId>
+const INVESTORS_PREVIEW_PROJECT_IDS = ['kpk', 'uniswap'] as const satisfies ReadonlyArray<InvestorsProjectId>
+const INVESTORS_COMING_SOON_PROJECT_IDS = ['kpk'] as const satisfies ReadonlyArray<InvestorsProjectId>
 const INVESTORS_PREVIEW_ENABLED = process.env.NEXT_PUBLIC_INVESTORS_PREVIEW === 'true'
 const INVESTORS_DOMAIN_PROJECT_IDS = [
 	...INVESTORS_LIVE_PROJECT_IDS,
 	...(INVESTORS_PREVIEW_ENABLED ? INVESTORS_PREVIEW_PROJECT_IDS : [])
-] as const satisfies readonly InvestorsProjectId[]
-const ENTERPRISE_DOMAIN_PROJECT_IDS = ['odyssey-ecosystem'] as const satisfies readonly InvestorsProjectId[]
+] as const satisfies ReadonlyArray<InvestorsProjectId>
+const ENTERPRISE_DOMAIN_PROJECT_IDS = ['odyssey-ecosystem'] as const satisfies ReadonlyArray<InvestorsProjectId>
 
 type InvestorsSite = {
-	hosts: readonly string[]
-	projectIds: readonly InvestorsProjectId[]
-	landingProjectIds: readonly InvestorsProjectId[]
+	hosts: ReadonlyArray<string>
+	projectIds: ReadonlyArray<InvestorsProjectId>
+	landingProjectIds: ReadonlyArray<InvestorsProjectId>
 	defaultProjectId: InvestorsProjectId
-	comingSoonProjectIds: readonly InvestorsProjectId[]
+	comingSoonProjectIds: ReadonlyArray<InvestorsProjectId>
 	umamiWebsiteId: string
 }
 
@@ -88,7 +88,7 @@ export const ACTIVE_INVESTORS_SITE_ID = getActiveInvestorsSiteId()
 export const ACTIVE_INVESTORS_SITE = ACTIVE_INVESTORS_SITE_ID ? INVESTORS_SITES[ACTIVE_INVESTORS_SITE_ID] : null
 export const INVESTORS_SITE_FORCED_BY_ENV = isInvestorsSiteForcedByEnv()
 
-function getInvestorsProjects(projectIds: readonly InvestorsProjectId[] | undefined): InvestorsProject[] {
+function getInvestorsProjects(projectIds: ReadonlyArray<InvestorsProjectId> | undefined): Array<InvestorsProject> {
 	return projectIds
 		? projectIds
 				.map((projectId) => ALL_INVESTORS_PROJECTS.find((project) => project.id === projectId))
@@ -96,17 +96,17 @@ function getInvestorsProjects(projectIds: readonly InvestorsProjectId[] | undefi
 		: []
 }
 
-export const INVESTORS_PROJECTS: InvestorsProject[] = getInvestorsProjects(ACTIVE_INVESTORS_SITE?.projectIds)
-export const INVESTORS_LANDING_PROJECTS: InvestorsProject[] = getInvestorsProjects(
+export const INVESTORS_PROJECTS: Array<InvestorsProject> = getInvestorsProjects(ACTIVE_INVESTORS_SITE?.projectIds)
+export const INVESTORS_LANDING_PROJECTS: Array<InvestorsProject> = getInvestorsProjects(
 	ACTIVE_INVESTORS_SITE?.landingProjectIds ?? ACTIVE_INVESTORS_SITE?.projectIds
 )
 
-export const INVESTORS_PROTOCOL_IDS: string[] = INVESTORS_PROJECTS.map((p) => p.id)
-export const INVESTORS_LANDING_PROTOCOL_IDS: string[] = INVESTORS_LANDING_PROJECTS.map((p) => p.id)
-export const ALL_INVESTORS_PROTOCOL_IDS: string[] = ALL_INVESTORS_PROJECTS.map((p) => p.id)
+export const INVESTORS_PROTOCOL_IDS: Array<string> = INVESTORS_PROJECTS.map((p) => p.id)
+export const INVESTORS_LANDING_PROTOCOL_IDS: Array<string> = INVESTORS_LANDING_PROJECTS.map((p) => p.id)
+export const ALL_INVESTORS_PROTOCOL_IDS: Array<string> = ALL_INVESTORS_PROJECTS.map((p) => p.id)
 export const DEFAULT_INVESTORS_PROTOCOL_ID =
 	ACTIVE_INVESTORS_SITE?.defaultProjectId ?? INVESTORS_PROJECTS[0]?.id ?? null
-export const INVESTORS_COMING_SOON_PROJECTS: InvestorsProject[] = getInvestorsProjects(
+export const INVESTORS_COMING_SOON_PROJECTS: Array<InvestorsProject> = getInvestorsProjects(
 	ACTIVE_INVESTORS_SITE?.comingSoonProjectIds
 )
 export const SHOW_INVESTORS_COMING_SOON_PROJECT = INVESTORS_COMING_SOON_PROJECTS.length > 0

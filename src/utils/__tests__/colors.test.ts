@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getNDistinctColors } from '~/utils'
 
 describe('getNDistinctColors', () => {
-	it('reuses generated palettes without sharing mutable arrays', () => {
+	test('reuses generated palettes without sharing mutable arrays', () => {
 		const original = getNDistinctColors(30)
 		const expected = [...original]
 		original[0] = '#000000'

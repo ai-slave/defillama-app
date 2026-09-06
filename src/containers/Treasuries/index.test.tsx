@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { RawTreasuryProtocol } from './api.types'
 import { Treasuries } from './index'
 import { buildNetProjectTreasuryRows, buildTreasuryRows } from './queries'
@@ -9,7 +9,11 @@ import type { ITreasuryRow } from './types'
 const renderTable = vi.hoisted(() => vi.fn())
 
 vi.mock('~/components/Table/TableWithSearch', () => ({
-	TableWithSearch: (props: { columns: ColumnDef<ITreasuryRow>[]; csvFileName: string; data: ITreasuryRow[] }) => {
+	TableWithSearch: (props: {
+		columns: Array<ColumnDef<ITreasuryRow>>
+		csvFileName: string
+		data: Array<ITreasuryRow>
+	}) => {
 		renderTable(props)
 		return null
 	}
@@ -40,18 +44,18 @@ function treasury(overrides: Partial<RawTreasuryProtocol> = {}): RawTreasuryProt
 }
 
 describe('treasury table columns', () => {
-	it('keeps protocol-only metrics out of entity treasuries after switching to accessor functions', () => {
+	test('keeps protocol-only metrics out of entity treasuries after switching to accessor functions', () => {
 		renderToStaticMarkup(<Treasuries data={[{ ...row, protocolHref: null }]} entity />)
 		const entityTable = renderTable.mock.calls.at(-1)?.[0] as {
-			columns: ColumnDef<ITreasuryRow>[]
+			columns: Array<ColumnDef<ITreasuryRow>>
 			csvFileName: string
 		}
 		renderToStaticMarkup(<Treasuries data={[row]} entity={false} />)
 		const protocolTable = renderTable.mock.calls.at(-1)?.[0] as {
-			columns: ColumnDef<ITreasuryRow>[]
+			columns: Array<ColumnDef<ITreasuryRow>>
 			csvFileName: string
 		}
-		const columnIds = (columns: ColumnDef<ITreasuryRow>[]) =>
+		const columnIds = (columns: Array<ColumnDef<ITreasuryRow>>) =>
 			columns.map((column) => column.id ?? ('accessorKey' in column ? column.accessorKey : ''))
 		const entityColumnIds = columnIds(entityTable.columns)
 		const protocolColumnIds = columnIds(protocolTable.columns)
@@ -73,7 +77,7 @@ describe('treasury table columns', () => {
 })
 
 describe('Treasury page data', () => {
-	it('projects exact producer fields and separates Treasury links from Entity presentation', () => {
+	test('projects exact producer fields and separates Treasury links from Entity presentation', () => {
 		const source = treasury()
 		const treasuryRow = buildTreasuryRows([source], true)[0]
 		const entityRow = buildTreasuryRows([source], false)[0]
@@ -90,7 +94,7 @@ describe('Treasury page data', () => {
 		expect(entityRow?.protocolHref).toBeNull()
 	})
 
-	it('removes only terminal Treasury suffixes and sorts by default TVL', () => {
+	test('removes only terminal Treasury suffixes and sorts by default TVL', () => {
 		const rows = buildTreasuryRows(
 			[
 				treasury({ name: 'Internal (treasury) Label', slug: 'internal-(treasury)-label', tvl: 1 }),
@@ -105,7 +109,7 @@ describe('Treasury page data', () => {
 		])
 	})
 
-	it('treats omitted and explicit-zero OwnTokens as zero without changing signed breakdowns', () => {
+	test('treats omitted and explicit-zero OwnTokens as zero without changing signed breakdowns', () => {
 		const [omitted, explicit] = buildTreasuryRows(
 			[
 				treasury({
@@ -123,14 +127,14 @@ describe('Treasury page data', () => {
 		expect(omitted?.tokenBreakdowns.majors).toBe(-5)
 	})
 
-	it('keeps the exact three-field Net Treasury sum and producer route identity', () => {
+	test('keeps the exact three-field Net Treasury sum and producer route identity', () => {
 		const rows = buildNetProjectTreasuryRows([
-			treasury({ tokenBreakdowns: { stablecoins: 10, majors: 20, ownTokens: 1_000, others: 30 } }),
+			treasury({ tokenBreakdowns: { stablecoins: 10, majors: 20, ownTokens: 1000, others: 30 } }),
 			treasury({
 				id: '11-treasury',
 				name: 'Excluded (treasury)',
 				slug: 'excluded-(treasury)',
-				tokenBreakdowns: { stablecoins: -10, majors: 0, ownTokens: 1_000, others: 10 }
+				tokenBreakdowns: { stablecoins: -10, majors: 0, ownTokens: 1000, others: 10 }
 			})
 		])
 

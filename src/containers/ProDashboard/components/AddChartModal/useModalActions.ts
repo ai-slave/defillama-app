@@ -47,8 +47,8 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 	)
 
 	const protocolOptions = useMemo(() => {
-		const childrenByParentId = new Map<string, Protocol[]>()
-		const parentsOrSolo: Protocol[] = []
+		const childrenByParentId = new Map<string, Array<Protocol>>()
+		const parentsOrSolo: Array<Protocol> = []
 
 		for (const p of protocols) {
 			if (p.parentProtocol) {
@@ -95,7 +95,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 	)
 
 	const handleChainsChange = useCallback(
-		(values: string[]) => {
+		(values: Array<string>) => {
 			actions.setSelectedChains(values)
 		},
 		[actions]
@@ -119,7 +119,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 	)
 
 	const handleTokensChange = useCallback(
-		(tokens: string[]) => {
+		(tokens: Array<string>) => {
 			if (tokens.length <= 4) {
 				actions.setSelectedTokens(tokens)
 			}
@@ -128,7 +128,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 	)
 
 	const handleAddToComposer = useCallback(
-		(typesToAdd?: string[], options?: { entity?: string; mode?: 'chain' | 'protocol' }) => {
+		(typesToAdd?: Array<string>, options?: { entity?: string; mode?: 'chain' | 'protocol' }) => {
 			const incomingTypes = typesToAdd ?? state.selectedChartTypes
 			const uniqueChartTypes = Array.from(new Set(incomingTypes))
 			let addedCount = 0
@@ -176,7 +176,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 					})
 					if (filteredTypes.length > 0) {
 						const colorStartIndex = getNextColorIndex() + addedCount
-						const newCharts: ChartConfig[] = []
+						const newCharts: Array<ChartConfig> = []
 						for (const [idx, chartType] of filteredTypes.slice(0, remainingSlots).entries()) {
 							const color = EXTENDED_COLOR_PALETTE[(colorStartIndex + idx) % EXTENDED_COLOR_PALETTE.length]
 							const geckoId = isChainTokenChartType(chartType) ? chain?.gecko_id : undefined
@@ -215,7 +215,7 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 					})
 					if (filteredTypes.length > 0) {
 						const colorStartIndex = getNextColorIndex() + addedCount
-						const newCharts: ChartConfig[] = []
+						const newCharts: Array<ChartConfig> = []
 						for (const [idx, chartType] of filteredTypes.slice(0, remainingSlots).entries()) {
 							const color = EXTENDED_COLOR_PALETTE[(colorStartIndex + idx) % EXTENDED_COLOR_PALETTE.length]
 							const chart = createChartConfig({

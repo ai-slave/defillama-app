@@ -33,7 +33,7 @@ type ArticleMetaDialogProps = {
 	collaboratorAdding: boolean
 	collaboratorEmail: string
 	collaboratorError: string | null
-	collaborators: ArticleCollaborator[]
+	collaborators: Array<ArticleCollaborator>
 	collaboratorsLoadError: string | null
 	collaboratorsLoading: boolean
 	hasPendingEdits: boolean
@@ -100,13 +100,13 @@ export function ArticleMetaDialog({
 
 	const minScheduleLocal = toDateTimeLocal(new Date().toISOString())
 
-	const [guestRows, setGuestRows] = useState<ArticleGuestAuthor[]>(() => article.guestAuthors ?? [])
+	const [guestRows, setGuestRows] = useState<Array<ArticleGuestAuthor>>(() => article.guestAuthors ?? [])
 	const savedGuestAuthorsRef = useRef(article.guestAuthors)
 	savedGuestAuthorsRef.current = article.guestAuthors
 	useEffect(() => {
 		if (dialogOpen) setGuestRows(savedGuestAuthorsRef.current ?? [])
 	}, [dialogOpen])
-	const commitGuestAuthors = (rows: ArticleGuestAuthor[]) =>
+	const commitGuestAuthors = (rows: Array<ArticleGuestAuthor>) =>
 		updateArticle(
 			'guestAuthors',
 			rows.filter((guest) => guest.name.trim().length > 0)
@@ -123,13 +123,13 @@ export function ArticleMetaDialog({
 		commitGuestAuthors(next)
 	}
 
-	const [assetRows, setAssetRows] = useState<ArticlePageAsset[]>(() => article.pageAssets ?? [])
+	const [assetRows, setAssetRows] = useState<Array<ArticlePageAsset>>(() => article.pageAssets ?? [])
 	const savedPageAssetsRef = useRef(article.pageAssets)
 	savedPageAssetsRef.current = article.pageAssets
 	useEffect(() => {
 		if (dialogOpen) setAssetRows(savedPageAssetsRef.current ?? [])
 	}, [dialogOpen])
-	const updatePageAssets = (rows: ArticlePageAsset[]) => {
+	const updatePageAssets = (rows: Array<ArticlePageAsset>) => {
 		setAssetRows(rows)
 		updateArticle('pageAssets', rows)
 	}

@@ -14,16 +14,16 @@ import { type MatchConfig, TokenSearchDialog } from './TokenSearchDialog'
 // Match (exact/contains/set) × On (reference/pool/both) query builder, committed to
 // `tokenMatch=` / `tokenOn=` (both param-free at their defaults).
 
-function toArray(value: string | string[] | undefined): string[] {
+function toArray(value: string | Array<string> | undefined): Array<string> {
 	if (typeof value === 'string') return [value]
 	return Array.isArray(value) ? [...value] : []
 }
 
-function readMatch(value: string | string[] | undefined): TokenMatch {
+function readMatch(value: string | Array<string> | undefined): TokenMatch {
 	const v = typeof value === 'string' ? value : undefined
 	return TOKEN_MATCHES.includes(v as TokenMatch) ? (v as TokenMatch) : 'exact'
 }
-function readOn(value: string | string[] | undefined): TokenOn {
+function readOn(value: string | Array<string> | undefined): TokenOn {
 	const v = typeof value === 'string' ? value : undefined
 	return TOKEN_ONS.includes(v as TokenOn) ? (v as TokenOn) : 'reference'
 }

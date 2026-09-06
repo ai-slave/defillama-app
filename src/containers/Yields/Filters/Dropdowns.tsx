@@ -14,9 +14,9 @@ import { YieldProjects } from './Projects'
 import { ResetAllYieldFilters } from './ResetAll'
 import type { IDropdownMenusProps } from './types'
 
-const EMPTY_CHAINS: string[] = []
-const EMPTY_PROJECTS: string[] = []
-const EMPTY_CATEGORIES: string[] = []
+const EMPTY_CHAINS: Array<string> = []
+const EMPTY_PROJECTS: Array<string> = []
+const EMPTY_CATEGORIES: Array<string> = []
 
 export function YieldFilterDropdowns({
 	pathname,

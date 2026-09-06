@@ -41,7 +41,7 @@ export const getStaticProps = withPerformanceLogging('safe-harbor-agreements', a
 		dexVolumeByProtocol[protocol.name] = protocol.dexs?.total24h ?? null
 	}
 
-	const finalProtocols: SafeHarborRow[] = []
+	const finalProtocols: Array<SafeHarborRow> = []
 	for (const protocolId in safeHarborProtocols) {
 		const pmetadata = protocolMetadata[protocolId]
 		const displayName = pmetadata?.displayName
@@ -84,14 +84,14 @@ export default function SafeHarborAgreements({ protocols }: InferGetStaticPropsT
 		<Layout
 			title="Safe Harbor Agreements - DefiLlama"
 			description="Browse DeFi protocols with safe harbor agreements. Track which projects have adopted security frameworks to protect white-hat hackers."
-			canonicalUrl={`/safe-harbor-agreements`}
+			canonicalUrl="/safe-harbor-agreements"
 			pageName={pageName}
 		>
 			<TableWithSearch
 				data={protocols}
 				columns={columns}
-				placeholder={'Search protocols...'}
-				columnToSearch={'name'}
+				placeholder="Search protocols..."
+				columnToSearch="name"
 				header="Safe Harbor Agreements"
 				headingAs="h1"
 				compact
@@ -106,7 +106,7 @@ type SafeHarborRow = {
 	defillamaId: string
 	name: string
 	url: string
-	chains: string[]
+	chains: Array<string>
 	slug: string
 	logo: string
 	tvl: number | null
@@ -131,7 +131,7 @@ const columns = [
 
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
-					{row.original.chains.length ? (
+					{row.original.chains.length > 0 ? (
 						<span className="-my-2 flex flex-col">
 							<BasicLink
 								href={`/protocol/${row.original.slug}`}

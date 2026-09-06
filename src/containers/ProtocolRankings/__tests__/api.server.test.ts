@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ProtocolRankingsCanonicalSnapshot } from '../server/tableData.server'
 import { parseStructuredProtocolRankingQuery } from '../tableQuery'
 import type { IProtocol } from '../types'
@@ -44,7 +44,7 @@ describe('protocol rankings API', () => {
 		mocks.getProtocolRankingsSnapshot.mockReset()
 	})
 
-	it('normalizes GET and structured export queries through the same rules', () => {
+	test('normalizes GET and structured export queries through the same rules', () => {
 		const parsedGet = parseProtocolRankingApiQuery({
 			chain: 'All',
 			search: 'stable',
@@ -69,7 +69,7 @@ describe('protocol rankings API', () => {
 		expect(parsedGet?.query).toEqual(parsedExport)
 	})
 
-	it('returns a snapshot mismatch instead of mixing refreshed rows with an old cursor', async () => {
+	test('returns a snapshot mismatch instead of mixing refreshed rows with an old cursor', async () => {
 		mocks.getRequestedProtocolRankingsSnapshot.mockResolvedValue({ snapshot: canonical, mismatch: true })
 		const result = await protocolRankingsApi.handle({
 			method: 'GET',
@@ -84,7 +84,7 @@ describe('protocol rankings API', () => {
 		})
 	})
 
-	it('returns only the requested page from the cached canonical rows', async () => {
+	test('returns only the requested page from the cached canonical rows', async () => {
 		mocks.getRequestedProtocolRankingsSnapshot.mockResolvedValue({ snapshot: canonical, mismatch: false })
 		const result = await protocolRankingsApi.handle({
 			method: 'GET',
@@ -101,7 +101,7 @@ describe('protocol rankings API', () => {
 		})
 	})
 
-	it('slices later cursor pages from the same prepared order', async () => {
+	test('slices later cursor pages from the same prepared order', async () => {
 		// The sort-once memoization itself is covered by preparedRows.test.ts;
 		// here we only pin the observable contract: page 2 continues page 1's
 		// order under the same snapshot with no skipped or repeated rows.
@@ -125,7 +125,7 @@ describe('protocol rankings API', () => {
 		expect('serializedJson' in second && JSON.parse(second.serializedJson).rows[0].id).toBe('b')
 	})
 
-	it('rejects malformed snapshot tokens before touching the snapshot cache', async () => {
+	test('rejects malformed snapshot tokens before touching the snapshot cache', async () => {
 		const result = await protocolRankingsApi.handle({
 			method: 'GET',
 			url: '/api/public/protocol-rankings?chain=All&snapshot=not-valid',
@@ -137,7 +137,7 @@ describe('protocol rankings API', () => {
 		expect(mocks.getRequestedProtocolRankingsSnapshot).not.toHaveBeenCalled()
 	})
 
-	it('rejects oversized cursors before decoding them', async () => {
+	test('rejects oversized cursors before decoding them', async () => {
 		const cursor = 'a'.repeat(501)
 		const result = await protocolRankingsApi.handle({
 			method: 'GET',

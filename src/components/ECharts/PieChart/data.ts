@@ -2,7 +2,7 @@ import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesCh
 import { CHART_COLORS } from '~/constants/colors'
 
 type PieInputRow = Record<string, unknown>
-type RuntimePieInput = Record<string, number> | PieInputRow[] | ReadonlyMap<string, number>
+type RuntimePieInput = Record<string, number> | Array<PieInputRow> | ReadonlyMap<string, number>
 
 function isPieInputMap(data: RuntimePieInput): data is ReadonlyMap<string, number> {
 	return data instanceof Map
@@ -29,7 +29,7 @@ export function preparePieChartData({
 	sliceValue = 'value',
 	limit
 }: {
-	data: Record<string, number> | PieInputRow[]
+	data: Record<string, number> | Array<PieInputRow>
 	sliceIdentifier?: string
 	sliceValue?: string
 	limit?: number

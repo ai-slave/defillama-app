@@ -2,7 +2,7 @@
 
 import { act, Suspense } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { KpkMandates } from './api'
 
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => null }))
@@ -167,7 +167,7 @@ describe('kpk Treasury mandates tab', () => {
 		await act(async () => chip.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 	}
 
-	it('dates the headline AUM and the performance section on their own sources', async () => {
+	test('dates the headline AUM and the performance section on their own sources', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('as of Sep 2, 2026')
@@ -178,14 +178,14 @@ describe('kpk Treasury mandates tab', () => {
 		expect(container.textContent).not.toContain("today's")
 	})
 
-	it('renders each window against its own benchmark', async () => {
+	test('renders each window against its own benchmark', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('3.11%')
 		expect(container.textContent).toContain('3.52%')
 	})
 
-	it('states what the rate covers and what it leaves out, per denomination', async () => {
+	test('states what the rate covers and what it leaves out, per denomination', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('Rates cover $62m of USD defi positions')
@@ -198,14 +198,14 @@ describe('kpk Treasury mandates tab', () => {
 		expect(container.textContent).toContain('No EUR is held in ops positions.')
 	})
 
-	it('dashes the AUM of a client the treasury snapshot has yet to carry', async () => {
+	test('dashes the AUM of a client the treasury snapshot has yet to carry', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('Arbitrum DAO')
 		expect(container.querySelector('[title*="treasury snapshot yet"]')).not.toBeNull()
 	})
 
-	it('dashes a sleeve the client does not hold rather than reading it as 0%', async () => {
+	test('dashes a sleeve the client does not hold rather than reading it as 0%', async () => {
 		await renderTab()
 
 		const dydxRow = [...container.querySelectorAll('tr')].find((row) =>
@@ -217,7 +217,7 @@ describe('kpk Treasury mandates tab', () => {
 		expect(cells[5]).toBe('—')
 	})
 
-	it('footers the share column with what it actually adds up to', async () => {
+	test('footers the share column with what it actually adds up to', async () => {
 		served = {
 			...MANDATES,
 			clients: MANDATES.clients.map((client) =>
@@ -230,7 +230,7 @@ describe('kpk Treasury mandates tab', () => {
 		expect([...totalRow.children].map((cell) => cell.textContent)[2]).toBe('85.5%')
 	})
 
-	it('drops the performance section when the positions report is missing', async () => {
+	test('drops the performance section when the positions report is missing', async () => {
 		served = { ...MANDATES, yieldAsOf: null, yieldIsSample: null, denominations: [], perf: {}, ops: null }
 		await renderTab()
 

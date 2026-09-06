@@ -15,12 +15,12 @@ export const getStaticProps = withPerformanceLogging('correlation', async () => 
 	}
 })
 
-export default function Compare({ initialTokenOptions }: { initialTokenOptions: TokenSearchResult[] }) {
+export default function Compare({ initialTokenOptions }: { initialTokenOptions: Array<TokenSearchResult> }) {
 	return (
 		<Layout
-			title={`Crypto Asset Price Correlations - DefiLlama`}
+			title="Crypto Asset Price Correlations - DefiLlama"
 			description="Analyze price correlations between crypto assets. Find diversification opportunities with DefiLlama's correlation matrix."
-			canonicalUrl={`/correlation`}
+			canonicalUrl="/correlation"
 		>
 			<Correlations initialTokenOptions={initialTokenOptions} />
 		</Layout>

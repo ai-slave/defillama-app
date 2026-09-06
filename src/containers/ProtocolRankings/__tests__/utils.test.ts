@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { protocolMatchesForkFilter, toFilterProtocol, toStrikeTvl } from '../utils'
 
-const protocolMetadata = (overrides: Partial<{ displayName: string; chains: string[] }> = {}) => ({
+const protocolMetadata = (overrides: Partial<{ displayName: string; chains: Array<string> }> = {}) => ({
 	displayName: 'Protocol',
 	chains: ['Ethereum'],
 	...overrides
@@ -27,7 +27,7 @@ const liteProtocol = (overrides: Partial<ProtocolLite> = {}): ProtocolLite => ({
 })
 
 describe('ProtocolRankings filter helpers', () => {
-	it('keeps protocols with display metadata on all-chain views', () => {
+	test('keeps protocols with display metadata on all-chain views', () => {
 		expect(
 			toFilterProtocol({
 				protocolMetadata: protocolMetadata(),
@@ -37,7 +37,7 @@ describe('ProtocolRankings filter helpers', () => {
 		).toBe(true)
 	})
 
-	it('keeps protocols when either metadata or protocol data includes the selected chain', () => {
+	test('keeps protocols when either metadata or protocol data includes the selected chain', () => {
 		expect(
 			toFilterProtocol({
 				protocolMetadata: protocolMetadata({ chains: ['Optimism'] }),
@@ -47,7 +47,7 @@ describe('ProtocolRankings filter helpers', () => {
 		).toBe(true)
 	})
 
-	it('filters protocols with excluded categories, missing display names, or missing metadata chains', () => {
+	test('filters protocols with excluded categories, missing display names, or missing metadata chains', () => {
 		expect(
 			toFilterProtocol({
 				protocolMetadata: protocolMetadata(),
@@ -71,7 +71,7 @@ describe('ProtocolRankings filter helpers', () => {
 		).toBe(false)
 	})
 
-	it('matches fork filters by normalized fork names', () => {
+	test('matches fork filters by normalized fork names', () => {
 		expect(protocolMatchesForkFilter({ protocol: liteProtocol(), normalizedFork: null })).toBe(true)
 		expect(
 			protocolMatchesForkFilter({
@@ -90,16 +90,16 @@ describe('ProtocolRankings filter helpers', () => {
 })
 
 describe('ProtocolRankings TVL helpers', () => {
-	it('strikes protocol rows in categories removed from chain TVL', () => {
+	test('strikes protocol rows in categories removed from chain TVL', () => {
 		expect(toStrikeTvl(liteProtocol({ category: 'Bridge' }), {})).toBe(true)
 	})
 
-	it('strikes protocol rows that expose liquid staking or double counted TVL sections', () => {
+	test('strikes protocol rows that expose liquid staking or double counted TVL sections', () => {
 		expect(toStrikeTvl(liteProtocol(), { liquidstaking: true })).toBe(true)
 		expect(toStrikeTvl(liteProtocol(), { doublecounted: true })).toBe(true)
 	})
 
-	it('does not strike ordinary protocol rows without removed categories or extra TVL sections', () => {
+	test('does not strike ordinary protocol rows without removed categories or extra TVL sections', () => {
 		expect(toStrikeTvl(liteProtocol(), {})).toBe(false)
 	})
 })

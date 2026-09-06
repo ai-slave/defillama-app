@@ -36,14 +36,14 @@ const EXCHANGE_RATE_KINDS = new Set(['exchange-rate', 'constant'])
 // total but appears nowhere (the sUSDe case: an immutable ERC4626 exchange rate carrying
 // most of the vault's oracle exposure). Split by what the feed is: a pure on-chain
 // exchange rate has no admin at all; anything else is an honest resolver gap.
-type VendorlessGroup = { kind: 'exchange-rate' | 'unidentified'; exposureUsd: number; symbols: string[] }
+type VendorlessGroup = { kind: 'exchange-rate' | 'unidentified'; exposureUsd: number; symbols: Array<string> }
 
-function vendorlessGroups(collateral: CollateralVM[]): VendorlessGroup[] {
+function vendorlessGroups(collateral: Array<CollateralVM>): Array<VendorlessGroup> {
 	const acc = new Map<VendorlessGroup['kind'], VendorlessGroup>()
 	for (const c of collateral) {
 		if (c.oracleProviders.some(isProvenVendor) || !((c.drainableUsd ?? 0) > 0)) continue
 		const kind =
-			c.feedKinds.length && c.feedKinds.every((k) => EXCHANGE_RATE_KINDS.has(k)) ? 'exchange-rate' : 'unidentified'
+			c.feedKinds.length > 0 && c.feedKinds.every((k) => EXCHANGE_RATE_KINDS.has(k)) ? 'exchange-rate' : 'unidentified'
 		const g = acc.get(kind) ?? { kind, exposureUsd: 0, symbols: [] }
 		g.exposureUsd += c.drainableUsd ?? 0
 		g.symbols.push(c.symbol)
@@ -65,8 +65,8 @@ export function OracleDependencies({
 	poolType = 'vault'
 }: {
 	providers: OracleExposure['by_provider']
-	deps: OracleDependency[]
-	collateral?: CollateralVM[]
+	deps: Array<OracleDependency>
+	collateral?: Array<CollateralVM>
 	chain?: string
 	explorers?: BlockExplorersResponse
 	totalDrainableUsd?: number
@@ -79,7 +79,7 @@ export function OracleDependencies({
 		.sort((a, b) => b.exposure_usd - a.exposure_usd)
 	const admins = [...deps].filter((d) => d.exposure_usd > 0).sort((a, b) => b.exposure_usd - a.exposure_usd)
 	const vendorless = vendorlessGroups(collateral)
-	if (!vendors.length && !admins.length && !vendorless.length) return null
+	if (vendors.length === 0 && admins.length === 0 && vendorless.length === 0) return null
 	const adminUrl = (addr: string) =>
 		explorers
 			? (getBlockExplorerNew({
@@ -166,7 +166,7 @@ export function OracleDependencies({
 									</span>
 									{mn ? <MofNPips m={mn.m} n={mn.n} /> : null}
 								</span>
-								{o.collateral_symbols.length ? (
+								{o.collateral_symbols.length > 0 ? (
 									<span className="body-sm text-tertiary">prices {o.collateral_symbols.join(', ')}</span>
 								) : null}
 								<AddressActions
@@ -207,7 +207,7 @@ export function OracleDependencies({
 									<span className="label-md text-primary">{v.provider}</span>
 									<span className="text-tertiary">· on-chain control not resolved</span>
 								</span>
-								{v.collateral_symbols.length ? (
+								{v.collateral_symbols.length > 0 ? (
 									<span className="body-sm text-tertiary">prices {v.collateral_symbols.join(', ')}</span>
 								) : null}
 							</span>

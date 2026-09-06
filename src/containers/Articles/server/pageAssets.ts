@@ -22,9 +22,9 @@ function makeCache<T>(loader: () => Promise<T>) {
 				cache.inflight = null
 				return v
 			})
-			.catch((e) => {
+			.catch((error) => {
 				cache.inflight = null
-				throw e
+				throw error
 			})
 		return cache.inflight
 	}

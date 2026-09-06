@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { captureSnapshot, snapshotToResult, SQL_SNAPSHOT_ROW_CAP } from '../../../sqlSnapshot'
 
@@ -29,7 +29,7 @@ const jsonBackedSqlValue = (value: unknown) =>
 	})
 
 describe('captureSnapshot', () => {
-	it('keeps all rows and omits the truncated flag when under the cap', () => {
+	test('keeps all rows and omits the truncated flag when under the cap', () => {
 		const snap = captureSnapshot(resultWithRows(3), 'browser', AT)
 		expect(snap.rows).toHaveLength(3)
 		expect(snap.rowCount).toBe(3)
@@ -42,25 +42,25 @@ describe('captureSnapshot', () => {
 		expect(snap.computedAt).toBe(AT)
 	})
 
-	it('caps rows at SQL_SNAPSHOT_ROW_CAP and flags truncation while keeping the true rowCount', () => {
+	test('caps rows at SQL_SNAPSHOT_ROW_CAP and flags truncation while keeping the true rowCount', () => {
 		const snap = captureSnapshot(resultWithRows(1500), 'browser', AT)
 		expect(snap.rows).toHaveLength(SQL_SNAPSHOT_ROW_CAP)
 		expect(snap.truncated).toBe(true)
 		expect(snap.rowCount).toBe(1500)
 	})
 
-	it('treats a result exactly at the cap as not truncated', () => {
+	test('treats a result exactly at the cap as not truncated', () => {
 		const snap = captureSnapshot(resultWithRows(SQL_SNAPSHOT_ROW_CAP), 'browser', AT)
 		expect(snap.rows).toHaveLength(SQL_SNAPSHOT_ROW_CAP)
 		expect(snap.truncated).toBeUndefined()
 		expect(snap.rowCount).toBe(SQL_SNAPSHOT_ROW_CAP)
 	})
 
-	it('records the engine that produced the snapshot', () => {
+	test('records the engine that produced the snapshot', () => {
 		expect(captureSnapshot(resultWithRows(1), 'server', AT).engine).toBe('server')
 	})
 
-	it('honors a custom row cap and clamps it to the allowed range', () => {
+	test('honors a custom row cap and clamps it to the allowed range', () => {
 		const snap = captureSnapshot(resultWithRows(500), 'browser', AT, 200)
 		expect(snap.rows).toHaveLength(200)
 		expect(snap.truncated).toBe(true)
@@ -69,7 +69,7 @@ describe('captureSnapshot', () => {
 		expect(clamped.rows).toHaveLength(100)
 	})
 
-	it('normalizes BigInt and Date values so the snapshot is JSON-serializable', () => {
+	test('normalizes BigInt and Date values so the snapshot is JSON-serializable', () => {
 		const result: QueryResult = {
 			columns: [
 				{ name: 'n', type: 'BIGINT' },
@@ -82,7 +82,7 @@ describe('captureSnapshot', () => {
 		expect(() => JSON.stringify(snap)).not.toThrow()
 	})
 
-	it('normalizes nested plain records and omits undefined properties', () => {
+	test('normalizes nested plain records and omits undefined properties', () => {
 		const result: QueryResult = {
 			columns: [{ name: 'value', type: 'STRUCT' }],
 			rows: [[{ amount: 42n, values: [1, new Date('2026-06-24T00:00:00.000Z')], missing: undefined }]]
@@ -93,7 +93,7 @@ describe('captureSnapshot', () => {
 		])
 	})
 
-	it('normalizes JSON-backed LIST and STRUCT values returned by the SQL engine', () => {
+	test('normalizes JSON-backed LIST and STRUCT values returned by the SQL engine', () => {
 		const result: QueryResult = {
 			columns: [{ name: 'value', type: 'STRUCT' }],
 			rows: [
@@ -111,7 +111,7 @@ describe('captureSnapshot', () => {
 		])
 	})
 
-	it('does not invent JSON shapes for unsupported object instances', () => {
+	test('does not invent JSON shapes for unsupported object instances', () => {
 		const result: QueryResult = {
 			columns: [
 				{ name: 'map', type: 'UNKNOWN' },
@@ -125,7 +125,7 @@ describe('captureSnapshot', () => {
 })
 
 describe('snapshotToResult', () => {
-	it('round-trips columns and rows back into a QueryResult', () => {
+	test('round-trips columns and rows back into a QueryResult', () => {
 		const snap = captureSnapshot(resultWithRows(2), 'browser', AT)
 		const result = snapshotToResult(snap)
 		expect(result.columns).toEqual(snap.columns)

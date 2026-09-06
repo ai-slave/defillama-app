@@ -2,7 +2,7 @@
 
 import { act, Suspense } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { KpkVaults } from './api'
 
 // The renderer pulls in ECharts, which has no place in a table assertion.
@@ -145,7 +145,7 @@ describe('kpk Vaults tab', () => {
 		await act(async () => chip.dispatchEvent(new MouseEvent('click', { bubbles: true })))
 	}
 
-	it('renders the ledger, the vault rows and USD totals converted from $m', async () => {
+	test('renders the ledger, the vault rows and USD totals converted from $m', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('KPK USDC Prime Vault')
@@ -158,28 +158,28 @@ describe('kpk Vaults tab', () => {
 	})
 
 	// "No rebalancing agent" and "no source" must not collapse into the same cell.
-	it('marks a venue with no rebalancing agent as not applicable', async () => {
+	test('marks a venue with no rebalancing agent as not applicable', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('n/a')
 		expect(container.querySelector('[title*="no rebalancing agent"]')).not.toBeNull()
 	})
 
-	it('shows a derisking count where the venue reports one and a dash where it does not', async () => {
+	test('shows a derisking count where the venue reports one and a dash where it does not', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('1,710')
 		expect(container.querySelector('th[title*="agent-executed derisking rebalances"]')).not.toBeNull()
 	})
 
-	it('states the gross TVA with the adjusted figure and the netting rule beneath it', async () => {
+	test('states the gross TVA with the adjusted figure and the netting rule beneath it', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('adjusted, excluding Symbiotic')
 		expect(container.querySelector(`[title="${DOUBLE_COUNT_NOTE}"]`)).not.toBeNull()
 	})
 
-	it('marks the double-counted vault and nets it out of a second footer row', async () => {
+	test('marks the double-counted vault and nets it out of a second footer row', async () => {
 		await renderTab()
 
 		expect(container.textContent).toContain('†')
@@ -189,27 +189,27 @@ describe('kpk Vaults tab', () => {
 		expect(container.textContent).toContain('$750k')
 	})
 
-	it('drops the adjusted footer row for a filter that nets out nothing', async () => {
+	test('drops the adjusted footer row for a filter that nets out nothing', async () => {
 		await renderTab()
 		await clickChip('Morpho')
 
 		expect(container.textContent).not.toContain('Adjusted, excl.')
 	})
 
-	it('labels the breakdown chips with the payload titles, in payload order', async () => {
+	test('labels the breakdown chips with the payload titles, in payload order', async () => {
 		await renderTab()
 
 		expect(breakdownChips()).toEqual(['By venue', 'By chain', 'By supply asset', 'By collateral'])
 	})
 
-	it('drops a breakdown chip the payload did not send', async () => {
+	test('drops a breakdown chip the payload did not send', async () => {
 		served = { ...VAULTS, comp: { venue: VAULTS.comp.venue, chain: VAULTS.comp.chain, asset: VAULTS.comp.asset } }
 		await renderTab()
 
 		expect(breakdownChips()).toEqual(['By venue', 'By chain', 'By supply asset'])
 	})
 
-	it('filters the table by venue and recomputes the footer', async () => {
+	test('filters the table by venue and recomputes the footer', async () => {
 		await renderTab()
 		await clickChip('Gearbox')
 

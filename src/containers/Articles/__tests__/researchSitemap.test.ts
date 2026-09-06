@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ArticlePathItem } from '~/containers/Articles/api'
 import { articlePathToSitemapPath, buildResearchSitemapEntries } from '~/containers/Articles/researchSitemap'
 import { ARTICLE_SECTIONS, ARTICLE_SECTION_SLUGS } from '~/containers/Articles/types'
 import { buildSitemapXml, SITEMAP_BASE_URL } from '~/utils/sitemapXml'
 
 describe('researchSitemap', () => {
-	it('maps article paths to canonical research URLs', () => {
+	test('maps article paths to canonical research URLs', () => {
 		expect(
 			articlePathToSitemapPath({
 				slug: 'example-slug',
@@ -15,7 +15,7 @@ describe('researchSitemap', () => {
 		).toBe('research/report/example-slug')
 	})
 
-	it('returns null for unknown sections', () => {
+	test('returns null for unknown sections', () => {
 		expect(
 			articlePathToSitemapPath({
 				slug: 'example-slug',
@@ -25,7 +25,7 @@ describe('researchSitemap', () => {
 		).toBeNull()
 	})
 
-	it('includes hub, section landings and article lastmod', () => {
+	test('includes hub, section landings and article lastmod', () => {
 		const entries = buildResearchSitemapEntries([
 			{
 				slug: 'example-slug',
@@ -48,7 +48,7 @@ describe('researchSitemap', () => {
 		})
 	})
 
-	it('generates XML with loc and article lastmod only', () => {
+	test('generates XML with loc and article lastmod only', () => {
 		const xml = buildSitemapXml(
 			SITEMAP_BASE_URL,
 			buildResearchSitemapEntries([

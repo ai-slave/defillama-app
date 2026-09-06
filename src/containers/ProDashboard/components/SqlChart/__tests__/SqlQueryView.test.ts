@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { decodeDownloadConfig } from '~/containers/Downloads/urlState'
 import type { SqlChartConfig } from '../../../types'
 import { buildSqlStudioHref } from '../SqlQueryView'
 
 describe('buildSqlStudioHref', () => {
-	it('opens SQL Studio with the query, sources, and chart configuration', () => {
+	test('opens SQL Studio with the query, sources, and chart configuration', () => {
 		const config = {
 			id: 'sql-1',
 			kind: 'sql',

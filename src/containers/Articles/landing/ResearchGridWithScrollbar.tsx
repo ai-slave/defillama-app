@@ -11,7 +11,7 @@ import { useScrollerHeightFromFirstItem } from '~/hooks/useScrollerHeightFromFir
 interface ResearchGridWithScrollbarProps {
 	id: string
 	title: string
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 	pageWidget: string
 }
 
@@ -38,7 +38,7 @@ export function ResearchGridWithScrollbar({ id, title, articles, pageWidget }: R
 }
 
 interface ResearchGridScrollerProps {
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 	pageWidget: string
 	onHeightChange?: (height: number) => void
 }

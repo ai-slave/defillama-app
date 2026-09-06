@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { assignColors, chartToModel, defaultZoomOptions, zoomStartPct, type ChartData } from './api'
 
 describe('Odyssey chart API contracts', () => {
-	it('aligns date and series arrays while preserving missing observations', () => {
+	test('aligns date and series arrays while preserving missing observations', () => {
 		const chart = {
 			dates: ['2026-01-01', '2026-01-02'],
 			series: [{ name: 'TVL', data: [10], color: '#123' }]
@@ -20,7 +20,7 @@ describe('Odyssey chart API contracts', () => {
 		])
 	})
 
-	it('builds deterministic zoom and color configuration', () => {
+	test('builds deterministic zoom and color configuration', () => {
 		const dates = ['2026-01-01', '2026-02-01', '2026-03-01']
 		expect(zoomStartPct(dates, '2026-02-01')).toBe(50)
 		expect(defaultZoomOptions(50)).toEqual({

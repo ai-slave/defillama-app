@@ -45,19 +45,19 @@ export async function getLiquidationsProtocolsList(): Promise<RawProtocolsRespon
 	return readProtocols(await acquireLiquidationsSnapshot())
 }
 
-export async function getLiquidationsProtocolChainIds(protocolId: string): Promise<string[]> {
+export async function getLiquidationsProtocolChainIds(protocolId: string): Promise<Array<string>> {
 	const allResponse = await readAllLiquidations(await acquireLiquidationsSnapshot())
 	const protocolData = allResponse.data[protocolId]
 	if (!protocolData) return []
 
-	const chainIds: string[] = []
+	const chainIds: Array<string> = []
 	for (const chainId in protocolData) chainIds.push(chainId)
 	return chainIds
 }
 
 export type LiquidationsSitemapProtocolChains = Array<{
 	protocolId: string
-	chainIds: string[]
+	chainIds: Array<string>
 }>
 
 export async function getLiquidationsSitemapProtocolChains(): Promise<LiquidationsSitemapProtocolChains> {
@@ -67,7 +67,7 @@ export async function getLiquidationsSitemapProtocolChains(): Promise<Liquidatio
 
 	for (let protocolIndex = 0; protocolIndex < protocolsResponse.protocols.length; protocolIndex += 1) {
 		const protocolId = protocolsResponse.protocols[protocolIndex]!
-		const chainIds: string[] = []
+		const chainIds: Array<string> = []
 		const protocolData = allResponse.data[protocolId]
 		if (protocolData) {
 			for (const chainId in protocolData) chainIds.push(chainId)
@@ -156,7 +156,7 @@ export async function getLiquidationsChainPageData(
 	const protocolData = allResponse.data[protocolId]
 	if (!protocolData) return null
 
-	const chainIds: string[] = []
+	const chainIds: Array<string> = []
 	for (const currentChainId in protocolData) chainIds.push(currentChainId)
 	const chainId = resolveChainId(chainParam, chainIds, metadataCache.chainMetadata)
 	if (!chainId) return null

@@ -1,4 +1,4 @@
-import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
+import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import type { ChartBuilderConfig } from '~/containers/ProDashboard/types'
 
 export type AdapterChartBuilderMetric = Exclude<

@@ -10,7 +10,7 @@ export type LlamaAIRouteState =
 
 const LlamaAIRouteContext = createContext<LlamaAIRouteState>({ kind: 'unknown' })
 
-function firstString(value: string | string[] | undefined) {
+function firstString(value: string | Array<string> | undefined) {
 	if (typeof value === 'string') return value
 	return Array.isArray(value) ? value[0] : undefined
 }

@@ -3,7 +3,7 @@
 import type { ECharts, EChartsOption } from 'echarts'
 import { act, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
 	EChartsRenderVisibilityProvider,
 	usePersistentEChartsLifecycle,
@@ -16,7 +16,7 @@ describe('ECharts render visibility', () => {
 		document.body.replaceChildren()
 	})
 
-	it('restores only legend and data zoom interaction state after remounting', async () => {
+	test('restores only legend and data zoom interaction state after remounting', async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
 			callback(0)

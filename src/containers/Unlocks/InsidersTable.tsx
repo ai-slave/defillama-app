@@ -135,7 +135,7 @@ export const InsidersTable = ({
 	methodology,
 	token
 }: {
-	insiders: Insider[]
+	insiders: Array<Insider>
 	methodology: string
 	token?: string | null
 }) => {

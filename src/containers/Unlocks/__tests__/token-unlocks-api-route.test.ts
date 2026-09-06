@@ -1,5 +1,5 @@
 import type { NextApiHandler, NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const {
@@ -63,7 +63,7 @@ beforeEach(() => {
 })
 
 describe('/api/private/token-unlocks/[protocol]', () => {
-	it('returns 405 with private no-store for non-GET requests', async () => {
+	test('returns 405 with private no-store for non-GET requests', async () => {
 		const req = {
 			method: 'POST',
 			headers: {},
@@ -80,7 +80,7 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		expect(validateSubscriptionMock).not.toHaveBeenCalled()
 	})
 
-	it('authenticates before returning 400 for missing protocol params', async () => {
+	test('authenticates before returning 400 for missing protocol params', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -98,7 +98,7 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		})
 	})
 
-	it('returns auth failures before checking missing protocol params', async () => {
+	test('returns auth failures before checking missing protocol params', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 401,
@@ -119,7 +119,7 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Authentication required' })
 	})
 
-	it('returns subscription failures with private no-store', async () => {
+	test('returns subscription failures with private no-store', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 403,
@@ -142,7 +142,7 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		})
 	})
 
-	it('returns 404 with private no-store for unavailable protocols', async () => {
+	test('returns 404 with private no-store for unavailable protocols', async () => {
 		resolveProtocolParamFromMetadataMock.mockReturnValue(null)
 		const req = {
 			method: 'GET',
@@ -161,7 +161,7 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		expect(getProtocolEmissonsMock).not.toHaveBeenCalled()
 	})
 
-	it('returns unlock data with private no-store', async () => {
+	test('returns unlock data with private no-store', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -180,7 +180,7 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		expect(res.json).toHaveBeenCalledWith({ protocol: 'aave' })
 	})
 
-	it('prefers the canonical protocol route when a direct normalized slug also exists', async () => {
+	test('prefers the canonical protocol route when a direct normalized slug also exists', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -197,7 +197,7 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('falls back to a normalized emissions slug when no protocol route matches', async () => {
+	test('falls back to a normalized emissions slug when no protocol route matches', async () => {
 		resolveProtocolParamFromMetadataMock.mockReturnValue(null)
 		getProtocolEmissonsMock.mockResolvedValue({ protocol: 'nvda' })
 		const req = {
@@ -217,7 +217,7 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		expect(res.json).toHaveBeenCalledWith({ protocol: 'nvda' })
 	})
 
-	it('returns 500 with private no-store when auth validation throws', async () => {
+	test('returns 500 with private no-store when auth validation throws', async () => {
 		const error = new Error('Auth service unavailable')
 		validateSubscriptionMock.mockRejectedValue(error)
 		const req = {
@@ -235,7 +235,7 @@ describe('/api/private/token-unlocks/[protocol]', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' })
 	})
 
-	it('returns 500 instead of a false 404 when the emissions source fails', async () => {
+	test('returns 500 instead of a false 404 when the emissions source fails', async () => {
 		const error = new Error('Emissions source unavailable')
 		getProtocolEmissonsMock.mockRejectedValue(error)
 		const req = {

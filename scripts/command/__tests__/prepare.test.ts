@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { createPreparationSteps, runPreparationCommand, type PreparationStep } from '../prepare'
 import { CommandExitError } from '../timedStep'
 
 describe('preparation command', () => {
-	it('runs the production build on Bun and scopes the Node heap override to the Next child process', () => {
+	test('runs the production build on Bun and scopes the Node heap override to the Next child process', () => {
 		const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as { scripts: { build: string } }
 		const wrapper = readFileSync('scripts/command/runPreparedNext.mjs', 'utf8')
 
@@ -17,7 +17,7 @@ describe('preparation command', () => {
 		expect(wrapper).toContain('isProductionBuild && nextExitCode === 0')
 	})
 
-	it('creates default preparation steps in order', () => {
+	test('creates default preparation steps in order', () => {
 		const steps = createPreparationSteps({
 			env: { NODE_ENV: 'test' },
 			logger: { log: vi.fn() },
@@ -33,9 +33,9 @@ describe('preparation command', () => {
 		])
 	})
 
-	it('runs preparation steps in order', async () => {
-		const calls: string[] = []
-		const steps: PreparationStep[] = [
+	test('runs preparation steps in order', async () => {
+		const calls: Array<string> = []
+		const steps: Array<PreparationStep> = [
 			{
 				name: 'Metadata cache',
 				run: vi.fn(async () => {
@@ -62,9 +62,9 @@ describe('preparation command', () => {
 		expect(calls).toEqual(['metadata', 'dataset', 'robots'])
 	})
 
-	it('keeps running later preparation steps after a failure', async () => {
+	test('keeps running later preparation steps after a failure', async () => {
 		const dataset = vi.fn()
-		const steps: PreparationStep[] = [
+		const steps: Array<PreparationStep> = [
 			{
 				name: 'Metadata cache',
 				async run() {
@@ -80,7 +80,7 @@ describe('preparation command', () => {
 		expect(dataset).toHaveBeenCalledTimes(1)
 	})
 
-	it('uses the requested log prefix for build preparation', async () => {
+	test('uses the requested log prefix for build preparation', async () => {
 		const logger = { log: vi.fn() }
 
 		await runPreparationCommand({

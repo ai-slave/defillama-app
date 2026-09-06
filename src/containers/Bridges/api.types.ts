@@ -12,7 +12,7 @@ export interface RawBridgeInfo {
 	dayBeforeLastVolume: number
 	weeklyVolume: number
 	monthlyVolume: number
-	chains: string[]
+	chains: Array<string>
 	destinationChain: string
 	url?: string
 	slug?: string
@@ -26,12 +26,12 @@ export interface RawBridgeChainInfo {
 }
 
 export interface RawBridgesResponse {
-	bridges: RawBridgeInfo[]
+	bridges: Array<RawBridgeInfo>
 	dataUpdatedAt: string | null
 }
 
 export interface RawBridgesWithChainsResponse extends RawBridgesResponse {
-	chains: RawBridgeChainInfo[]
+	chains: Array<RawBridgeChainInfo>
 }
 
 export interface RawBridgeVolumePoint {
@@ -42,7 +42,7 @@ export interface RawBridgeVolumePoint {
 	withdrawTxs: number
 }
 
-export type RawBridgeVolumeResponse = RawBridgeVolumePoint[]
+export type RawBridgeVolumeResponse = Array<RawBridgeVolumePoint>
 
 export interface BridgeVolumePoint {
 	date: number
@@ -52,7 +52,7 @@ export interface BridgeVolumePoint {
 	withdrawTxs: number
 }
 
-export type BridgeVolumeResponse = BridgeVolumePoint[]
+export type BridgeVolumeResponse = Array<BridgeVolumePoint>
 
 export interface RawBridgeVolumeBySlugBridge {
 	id: number
@@ -63,12 +63,12 @@ export interface RawBridgeVolumeBySlugBridge {
 
 export interface RawBridgeVolumeBySlugResponse {
 	bridge: RawBridgeVolumeBySlugBridge
-	dailyVolumes: RawBridgeVolumePoint[]
+	dailyVolumes: Array<RawBridgeVolumePoint>
 }
 
 export interface BridgeVolumeBySlugResponse {
 	bridge: RawBridgeVolumeBySlugBridge
-	dailyVolumes: BridgeVolumePoint[]
+	dailyVolumes: Array<BridgeVolumePoint>
 }
 
 export interface RawBridgeTokenStats {
@@ -131,7 +131,7 @@ export interface RawBridgeLargeTransaction {
 	usdValue: string
 }
 
-export type RawBridgeLargeTransactionsResponse = RawBridgeLargeTransaction[]
+export type RawBridgeLargeTransactionsResponse = Array<RawBridgeLargeTransaction>
 
 export interface RawBridgeTransaction {
 	tx_hash: string
@@ -148,7 +148,7 @@ export interface RawBridgeTransaction {
 	usd_value: string | null
 }
 
-export type RawBridgeTransactionsResponse = RawBridgeTransaction[]
+export type RawBridgeTransactionsResponse = Array<RawBridgeTransaction>
 
 export interface RawBridgeTransactionsPage {
 	rows: RawBridgeTransactionsResponse
@@ -163,14 +163,14 @@ export interface RawBridgeNetflowEntry {
 	withdrawn_usd: string
 }
 
-export type RawBridgeNetflowsResponse = RawBridgeNetflowEntry[]
+export type RawBridgeNetflowsResponse = Array<RawBridgeNetflowEntry>
 export interface BridgeNetflowEntry {
 	chain: string
 	netFlow: number
 	depositedUsd: number
 	withdrawnUsd: number
 }
-export type BridgeNetflowsResponse = BridgeNetflowEntry[]
+export type BridgeNetflowsResponse = Array<BridgeNetflowEntry>
 export type BridgeNetflowPeriod = 'day' | 'week' | 'month'
 
 export interface RawBridgeTxCountInfo {
@@ -183,5 +183,5 @@ export interface RawBridgeTxCountInfo {
 }
 
 export interface RawBridgeTxCountsResponse {
-	bridges: RawBridgeTxCountInfo[]
+	bridges: Array<RawBridgeTxCountInfo>
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { fetchJsonMock, fetchCoinGeckoExchangesMock, fetchCoinGeckoSimplePriceMock } = vi.hoisted(() => ({
 	fetchJsonMock: vi.fn(),
@@ -29,7 +29,7 @@ describe('dimension adapter api telemetry', () => {
 		fetchCoinGeckoSimplePriceMock.mockReset()
 	})
 
-	it('adds dimension context to chain metric fetch telemetry', async () => {
+	test('adds dimension context to chain metric fetch telemetry', async () => {
 		fetchJsonMock.mockResolvedValue({ protocols: [], allChains: [] })
 
 		await fetchAdapterChainMetrics({
@@ -52,7 +52,7 @@ describe('dimension adapter api telemetry', () => {
 		})
 	})
 
-	it('omits absent optional request and telemetry attributes', async () => {
+	test('omits absent optional request and telemetry attributes', async () => {
 		fetchJsonMock.mockResolvedValue({ protocols: [], allChains: [] })
 
 		await fetchAdapterChainMetrics({ adapterType: ADAPTER_TYPES.DEXS, chain: 'All' })
@@ -68,7 +68,7 @@ describe('dimension adapter api telemetry', () => {
 		})
 	})
 
-	it('returns only the protocol totals needed by chain tables', async () => {
+	test('returns only the protocol totals needed by chain tables', async () => {
 		fetchJsonMock.mockResolvedValue({
 			allChains: ['Ethereum'],
 			protocols: [
@@ -96,7 +96,7 @@ describe('dimension adapter api telemetry', () => {
 		})
 	})
 
-	it('adds dimension context to chain chart fetch telemetry', async () => {
+	test('adds dimension context to chain chart fetch telemetry', async () => {
 		fetchJsonMock.mockResolvedValue([])
 
 		await fetchAdapterChainChartData({
@@ -119,14 +119,14 @@ describe('dimension adapter api telemetry', () => {
 })
 
 describe('fetchCexVolume', () => {
-	it('retains an explicit zero volume from a valid exchange', async () => {
+	test('retains an explicit zero volume from a valid exchange', async () => {
 		fetchCoinGeckoExchangesMock.mockResolvedValue([{ trust_score: 9, trade_volume_24h_btc: 0 }])
 		fetchCoinGeckoSimplePriceMock.mockResolvedValue({ bitcoin: { usd: 50_000 } })
 
 		await expect(fetchCexVolume()).resolves.toBe(0)
 	})
 
-	it('returns null when every exchange volume is absent', async () => {
+	test('returns null when every exchange volume is absent', async () => {
 		fetchCoinGeckoExchangesMock.mockResolvedValue([{ trust_score: 9 }])
 		fetchCoinGeckoSimplePriceMock.mockResolvedValue({ bitcoin: { usd: 50_000 } })
 

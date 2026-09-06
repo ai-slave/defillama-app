@@ -2,11 +2,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { EnrichedRouteRow, RouteTableRow } from '~/containers/Yields/data/types'
 
-const state = vi.hoisted(() => ({ rows: [] as EnrichedRouteRow[], generation: 0 }))
+const state = vi.hoisted(() => ({ rows: [] as Array<EnrichedRouteRow>, generation: 0 }))
 vi.mock('~/containers/Yields/data/enrich.server', () => ({ getEnrichedRoutes: async () => state.rows }))
 vi.mock('~/containers/Yields/data/snapshot', async (original) => ({
 	...(await original<typeof import('~/containers/Yields/data/snapshot')>()),
@@ -34,13 +34,13 @@ vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', () => ({
 		sortingState,
 		onSortingChange
 	}: {
-		data: RouteTableRow[]
+		data: Array<RouteTableRow>
 		initialPageIndex: number
 		sortingState: Array<{ id: string; desc: boolean }>
 		onSortingChange: (value: Array<{ id: string; desc: boolean }>) => void
 	}) => (
 		<div data-routes data-page={initialPageIndex} data-sort={JSON.stringify(sortingState)}>
-			<span data-ids>{data.map((row) => row.collateralId + ':' + row.borrowId).join(',')}</span>
+			<span data-ids>{data.map((row) => `${row.collateralId}:${row.borrowId}`).join(',')}</span>
 			<button onClick={() => onSortingChange([{ id: 'available', desc: true }])}>Sort Available</button>
 		</div>
 	)
@@ -93,13 +93,13 @@ function route(
 			reward_tokens: []
 		},
 		net_apy: { current: composition, avg_7d: composition, avg_30d: composition },
-		collateralTokenKeys: ['asset:' + collateralSymbol.toLowerCase()],
-		borrowTokenKeys: ['asset:' + borrowSymbol.toLowerCase()]
+		collateralTokenKeys: [`asset:${collateralSymbol.toLowerCase()}`],
+		borrowTokenKeys: [`asset:${borrowSymbol.toLowerCase()}`]
 	}
 }
 afterEach(() => vi.unstubAllGlobals())
 
-it.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
+test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 	'retains meme routes and recovers the requested %s page after either leg fails',
 	async (scenario) => {
 		const tab = scenario === 'borrow' || scenario === 'no-rows' ? 'borrow' : 'use'
@@ -162,7 +162,7 @@ it.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 		const root = createRoot(container)
 		const findButton = (text: string) => {
 			const b = Array.from(container.querySelectorAll('button')).find((x) => x.textContent === text)
-			if (!b) throw new Error('Missing ' + text)
+			if (!b) throw new Error(`Missing ${text}`)
 			return b
 		}
 		try {
@@ -247,7 +247,7 @@ it.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 			expect(fetch).toHaveBeenCalledTimes(6)
 			const rows = tab === 'use' || scenario === 'no-rows' ? ssr.useAsCollateral : ssr.borrowThis
 			expect(container.querySelector('[data-ids]')?.textContent).toBe(
-				scenario === 'empty' ? undefined : rows.map((row) => row.collateralId + ':' + row.borrowId).join(',')
+				scenario === 'empty' ? undefined : rows.map((row) => `${row.collateralId}:${row.borrowId}`).join(',')
 			)
 		} finally {
 			await act(async () => root.unmount())

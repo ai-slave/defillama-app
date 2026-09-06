@@ -10,5 +10,5 @@ export type CompareTokenProtocol = {
 
 export type CompareTokensPageData = {
 	coinsData: Array<IResponseCGTokenRankingsDatasetItem & { label: string; value: string }>
-	protocols: CompareTokenProtocol[]
+	protocols: Array<CompareTokenProtocol>
 }

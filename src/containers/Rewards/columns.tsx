@@ -77,7 +77,7 @@ export const columns = [
 		enableSorting: false,
 		meta: { headerClassName: 'w-[240px] min-w-[240px]' },
 		cell: ({ getValue }) =>
-			getValue().length ? (
+			getValue().length > 0 ? (
 				<div className="flex flex-wrap gap-1">
 					{getValue().map((type) => (
 						<Tag key={type}>{type}</Tag>
@@ -155,7 +155,7 @@ export function renderProgramDetails(row: Row<RewardProgram>) {
 					<dd className="mt-1 body-md text-primary">{program.referrerBenefit}</dd>
 				</div>
 			</dl>
-			{program.sources.length ? (
+			{program.sources.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-2">
 					{program.sources.map((source) => (
 						<ExternalLinkButton key={source.url} href={source.url}>

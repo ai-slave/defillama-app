@@ -14,7 +14,7 @@ export function okSerializedJson(
 		responseBytes: payload.responseBytes,
 		headers: {
 			'Content-Type': 'application/json; charset=utf-8',
-			...(headers ?? {})
+			...headers
 		}
 	}
 }

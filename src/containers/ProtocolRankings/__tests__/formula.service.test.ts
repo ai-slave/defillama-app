@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { parseCustomColumns } from '~/contexts/LocalStorage'
 import { parseProtocolTableColumnVisibility, replaceAliases, sampleProtocol } from '../customColumnsUtils'
 import { evaluateFormula, formatCustomColumnValue, getSortableValue } from '../formula.service'
 
 describe('protocol ranking custom formulas', () => {
-	it('maps public aliases to the actual ranking read-model fields', () => {
+	test('maps public aliases to the actual ranking read-model fields', () => {
 		const formula = replaceAliases('average_fees_1y + average_revenue_1y')
 
 		expect(formula).toBe('fees_monthlyAverage1y + revenue_monthlyAverage1y')
@@ -14,7 +14,7 @@ describe('protocol ranking custom formulas', () => {
 		})
 	})
 
-	it('preserves zero and boolean formula results while leaving missing variables blank', () => {
+	test('preserves zero and boolean formula results while leaving missing variables blank', () => {
 		expect(evaluateFormula('tvl_default_tvl - tvl_default_tvl', sampleProtocol)).toEqual({
 			status: 'success',
 			value: 0
@@ -24,7 +24,7 @@ describe('protocol ranking custom formulas', () => {
 		expect(evaluateFormula('missing_metric + 1', sampleProtocol)).toEqual({ status: 'missing' })
 	})
 
-	it.each(['tvl_default_tvl +', '1 / 0', 'sqrt(-1)', '[1, 2]', '{}'])(
+	test.each(['tvl_default_tvl +', '1 / 0', 'sqrt(-1)', '[1, 2]', '{}'])(
 		'returns a typed error for invalid or unsupported formula result: %s',
 		(formula) => {
 			const result = evaluateFormula(formula, sampleProtocol)
@@ -34,13 +34,13 @@ describe('protocol ranking custom formulas', () => {
 		}
 	)
 
-	it('accepts finite number, string, and boolean leaves only', () => {
+	test('accepts finite number, string, and boolean leaves only', () => {
 		expect(evaluateFormula('42', sampleProtocol)).toEqual({ status: 'success', value: 42 })
 		expect(evaluateFormula("'ready'", sampleProtocol)).toEqual({ status: 'success', value: 'ready' })
 		expect(evaluateFormula('strikeTvl', sampleProtocol)).toEqual({ status: 'success', value: true })
 	})
 
-	it('keeps null and zero distinct in formatting and sorting', () => {
+	test('keeps null and zero distinct in formatting and sorting', () => {
 		expect(formatCustomColumnValue(0, 'number')).toBe('0')
 		expect(getSortableValue(0, 'number')).toBe(0)
 		expect(getSortableValue('0', 'number')).toBe(0)
@@ -51,7 +51,7 @@ describe('protocol ranking custom formulas', () => {
 })
 
 describe('custom column storage boundary', () => {
-	it('keeps only entries with required strings and supported format enums', () => {
+	test('keeps only entries with required strings and supported format enums', () => {
 		expect(
 			parseCustomColumns([
 				{ name: 'Ratio', formula: 'mcap / tvl', formatType: 'number', determinedFormat: 'percent' },
@@ -64,7 +64,7 @@ describe('custom column storage boundary', () => {
 		).toEqual([{ name: 'Ratio', formula: 'mcap / tvl', formatType: 'number', determinedFormat: 'percent' }])
 	})
 
-	it('discards malformed roots', () => {
+	test('discards malformed roots', () => {
 		expect(parseCustomColumns(null)).toEqual([])
 		expect(parseCustomColumns({ name: 'Ratio' })).toEqual([])
 		expect(parseCustomColumns('[]')).toEqual([])
@@ -72,14 +72,14 @@ describe('custom column storage boundary', () => {
 })
 
 describe('protocol ranking column visibility storage', () => {
-	it('accepts only boolean entries from a valid saved object', () => {
+	test('accepts only boolean entries from a valid saved object', () => {
 		expect(parseProtocolTableColumnVisibility('{"tvl":true,"fees_24h":false,"name":"yes","nested":{}}')).toEqual({
 			tvl: true,
 			fees_24h: false
 		})
 	})
 
-	it('returns an empty config for invalid JSON and incompatible saved shapes', () => {
+	test('returns an empty config for invalid JSON and incompatible saved shapes', () => {
 		expect(parseProtocolTableColumnVisibility('{')).toEqual({})
 		expect(parseProtocolTableColumnVisibility('[true]')).toEqual({})
 		expect(parseProtocolTableColumnVisibility('null')).toEqual({})

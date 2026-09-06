@@ -10,13 +10,13 @@ export interface FollowingShelf {
 	author: PublicDashboardAuthor
 	dashboardCount: number
 	lastUpdated: string | null
-	dashboards: Dashboard[]
+	dashboards: Array<Dashboard>
 }
 
-type PersistedFollowingShelf = Omit<FollowingShelf, 'dashboards'> & { dashboards: PersistedDashboard[] }
+type PersistedFollowingShelf = Omit<FollowingShelf, 'dashboards'> & { dashboards: Array<PersistedDashboard> }
 
 interface DashboardPage<T> {
-	items: T[]
+	items: Array<T>
 	page: number
 	perPage: number
 	totalItems: number
@@ -25,7 +25,7 @@ interface DashboardPage<T> {
 
 interface DashboardSearchParams {
 	query: string
-	tags: string[]
+	tags: Array<string>
 	visibility: 'public' | 'private'
 	sortBy: 'popular' | 'recent' | 'likes' | 'trending'
 	timeFrame: '1d' | '7d' | '30d' | 'all'
@@ -78,13 +78,13 @@ async function requireAuthorizedResponse(
 }
 
 export type DashboardSavePayload = {
-	items: DashboardItemConfig[]
+	items: Array<DashboardItemConfig>
 	dashboardName: string
 	timePeriod?: TimePeriod
 	customTimePeriod?: CustomTimePeriod | null
 	aiUndoState?: AIUndoState | null
 	visibility?: 'private' | 'public'
-	tags?: string[]
+	tags?: Array<string>
 	description?: string
 	aiGenerated?: AIGeneratedData | null
 	copySourceDashboardId?: string
@@ -133,25 +133,25 @@ class DashboardAPIService {
 		return response.json()
 	}
 
-	async listDashboards(authorizedFetch: DashboardAuthorizedFetch): Promise<Dashboard[]> {
+	async listDashboards(authorizedFetch: DashboardAuthorizedFetch): Promise<Array<Dashboard>> {
 		const response = await requireAuthorizedResponse(authorizedFetch, `${FEATURES_SERVER}/dashboards?_=${Date.now()}`)
-		const data = await this.handleResponse<{ items: PersistedDashboard[] }>(response)
+		const data = await this.handleResponse<{ items: Array<PersistedDashboard> }>(response)
 		return data.items.map(migrateDashboardConfig)
 	}
 
-	async listLiteDashboards(authorizedFetch: DashboardAuthorizedFetch): Promise<LiteDashboardSummary[]> {
+	async listLiteDashboards(authorizedFetch: DashboardAuthorizedFetch): Promise<Array<LiteDashboardSummary>> {
 		const response = await requireAuthorizedResponse(
 			authorizedFetch,
 			`${FEATURES_SERVER}/lite/dashboards?_=${Date.now()}`
 		)
-		const data = await this.handleResponse<{ items: LiteDashboardSummary[] }>(response)
+		const data = await this.handleResponse<{ items: Array<LiteDashboardSummary> }>(response)
 		return data.items
 	}
 
 	async listDashboardsPaginated(
 		params: { page?: number; limit?: number },
 		authorizedFetch: DashboardAuthorizedFetch
-	): Promise<{ items: Dashboard[]; page: number; perPage: number; totalItems: number; totalPages: number }> {
+	): Promise<{ items: Array<Dashboard>; page: number; perPage: number; totalItems: number; totalPages: number }> {
 		const searchParams = new URLSearchParams()
 		if (params.page) searchParams.append('page', params.page.toString())
 		if (params.limit) searchParams.append('limit', params.limit.toString())
@@ -201,7 +201,7 @@ class DashboardAPIService {
 	async discoverDashboards(
 		params?: { page?: number; limit?: number },
 		authorizedFetch?: DashboardAuthorizedFetch
-	): Promise<{ items: Dashboard[]; page: number; perPage: number; totalItems: number; totalPages: number }> {
+	): Promise<{ items: Array<Dashboard>; page: number; perPage: number; totalItems: number; totalPages: number }> {
 		const queryParams = new URLSearchParams()
 		if (params?.page) queryParams.append('page', params.page.toString())
 		if (params?.limit) queryParams.append('limit', params.limit.toString())
@@ -214,7 +214,7 @@ class DashboardAPIService {
 	async searchDashboards(
 		params: {
 			query?: string
-			tags?: string[]
+			tags?: Array<string>
 			visibility?: 'public' | 'private'
 			sortBy?: 'popular' | 'recent' | 'likes' | 'trending'
 			timeFrame?: '1d' | '7d' | '30d'
@@ -223,7 +223,7 @@ class DashboardAPIService {
 		},
 		authorizedFetch?: DashboardAuthorizedFetch
 	): Promise<{
-		items: Dashboard[]
+		items: Array<Dashboard>
 		page: number
 		perPage: number
 		totalItems: number
@@ -272,7 +272,7 @@ class DashboardAPIService {
 		},
 		authorizedFetch: DashboardAuthorizedFetch
 	): Promise<{
-		items: Dashboard[]
+		items: Array<Dashboard>
 		page: number
 		perPage: number
 		totalItems: number
@@ -296,7 +296,7 @@ class DashboardAPIService {
 		},
 		authorizedFetch: DashboardAuthorizedFetch
 	): Promise<{
-		items: FollowingShelf[]
+		items: Array<FollowingShelf>
 		page: number
 		perPage: number
 		totalItems: number

@@ -20,8 +20,8 @@ export type UpcomingUnlockChartProtocol = Pick<EnrichedProtocolEmission, 'name' 
 
 export type UpcomingUnlockChartSeries = {
 	name: string
-	cliffPoints: TimePoint[]
-	linearPoints: TimePoint[]
+	cliffPoints: Array<TimePoint>
+	linearPoints: Array<TimePoint>
 }
 
 export type UpcomingUnlockValueBreakdown = {
@@ -32,7 +32,10 @@ export type UpcomingUnlockValueBreakdown = {
 	missingPriceProtocolCount: number
 }
 
-export function calculateUpcomingUnlockStatistics(protocols: UpcomingUnlockChartProtocol[], nowTimestampSec: number) {
+export function calculateUpcomingUnlockStatistics(
+	protocols: Array<UpcomingUnlockChartProtocol>,
+	nowTimestampSec: number
+) {
 	const upcomingUnlocks30d = { cliff: 0, linear: 0, unknownEventCount: 0, missingPriceProtocolCount: 0 }
 	const upcomingUnlocks7d = { cliff: 0, linear: 0, unknownEventCount: 0, missingPriceProtocolCount: 0 }
 	const thirtyDaysLaterTimestampSec = nowTimestampSec + 30 * SECONDS_PER_DAY
@@ -78,7 +81,7 @@ export function calculateUpcomingUnlockStatistics(protocols: UpcomingUnlockChart
 }
 
 type UpcomingUnlockChartOptions = {
-	series: UpcomingUnlockChartSeries[]
+	series: Array<UpcomingUnlockChartSeries>
 	groupBy: LowercaseDwmGrouping
 	viewMode: UpcomingUnlockChartViewMode
 	unlockType: UpcomingUnlockChartType
@@ -92,10 +95,10 @@ function getTotalSeriesName(unlockType: UpcomingUnlockChartType) {
 
 /** Compact raw unlock events into daily USD points before serializing page props. */
 export function buildUpcomingUnlockSeries(
-	protocols: UpcomingUnlockChartProtocol[],
+	protocols: Array<UpcomingUnlockChartProtocol>,
 	startTimestampSec: number,
 	endTimestampSec: number
-): UpcomingUnlockChartSeries[] {
+): Array<UpcomingUnlockChartSeries> {
 	const seriesByName = new Map<string, { cliffPoints: Map<number, number>; linearPoints: Map<number, number> }>()
 
 	for (const protocol of protocols) {
@@ -149,7 +152,7 @@ export function buildUpcomingUnlockSeries(
 		}
 	}
 
-	const series: UpcomingUnlockChartSeries[] = []
+	const series: Array<UpcomingUnlockChartSeries> = []
 	for (const [name, points] of seriesByName) {
 		series.push({
 			name,
@@ -160,7 +163,7 @@ export function buildUpcomingUnlockSeries(
 	return series
 }
 
-function addPoints(totalPoints: Map<number, number>, points: TimePoint[]) {
+function addPoints(totalPoints: Map<number, number>, points: Array<TimePoint>) {
 	for (const [timestamp, value] of points) {
 		totalPoints.set(timestamp, (totalPoints.get(timestamp) ?? 0) + value)
 	}

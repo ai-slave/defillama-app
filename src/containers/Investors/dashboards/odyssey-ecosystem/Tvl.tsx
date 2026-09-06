@@ -311,7 +311,7 @@ export default function Tvl() {
 				</>
 			)}
 
-			{morphoHistoryModels.length ? (
+			{morphoHistoryModels.length > 0 ? (
 				<>
 					<SectionHeader>
 						{data.morphoMarketHistory.title || 'Morpho Market · Supply / Borrow / Utilization'}

@@ -104,8 +104,8 @@ export function ReportIncorrectData({
 					setError(true)
 				}
 			})
-			.catch((err) => {
-				console.log(err)
+			.catch((submitError) => {
+				console.log(submitError)
 				setError(true)
 			})
 			.finally(() => {

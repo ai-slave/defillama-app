@@ -438,8 +438,8 @@ export const LSTOverview = ({
 											dataset={selectedBreakdownPresentation.dataset}
 											charts={selectedBreakdownPresentation.charts}
 											csvSource={selectedBreakdownPresentation.csvSource}
-											stacked={true}
-											expandTo100Percent={true}
+											stacked
+											expandTo100Percent
 											hideDefaultLegend
 											valueSymbol="%"
 											onReady={handleBreakdownReady}
@@ -509,8 +509,8 @@ export const LSTOverview = ({
 			<TableWithSearch
 				data={tokensList}
 				columns={columns}
-				columnToSearch={'name'}
-				placeholder={'Search protocols...'}
+				columnToSearch="name"
+				placeholder="Search protocols..."
 				header="Liquid Staking Protocols"
 				csvFileName="liquid-staking"
 				sortingState={DEFAULT_SORTING_STATE}

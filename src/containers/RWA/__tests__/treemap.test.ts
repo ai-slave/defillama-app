@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import type { RWAAssetOverviewRow } from '../api.types'
 import { buildCompleteRwaTreemapTreeData, buildRwaNestedTreemapTreeData, buildRwaTreemapTreeData } from '../treemap'
@@ -55,7 +55,7 @@ const baseAsset: RWAAssetOverviewRow = {
 }
 
 describe('buildRwaTreemapTreeData', () => {
-	it('aggregates duplicate labels and keeps positive-value share output stable', () => {
+	test('aggregates duplicate labels and keeps positive-value share output stable', () => {
 		const tree = buildRwaTreemapTreeData(
 			[
 				{ name: 'Beta', value: 50 },
@@ -83,7 +83,7 @@ describe('buildRwaTreemapTreeData', () => {
 		])
 	})
 
-	it('uses every filtered group when a nested presentation falls back to flat data', () => {
+	test('uses every filtered group when a nested presentation falls back to flat data', () => {
 		const tree = buildCompleteRwaTreemapTreeData({
 			nestedTreeData: [],
 			completePieData: [
@@ -98,7 +98,7 @@ describe('buildRwaTreemapTreeData', () => {
 })
 
 describe('buildRwaNestedTreemapTreeData', () => {
-	it('uses chain breakdown values directly while keeping zero rows out of the tree', () => {
+	test('uses chain breakdown values directly while keeping zero rows out of the tree', () => {
 		const tree = buildRwaNestedTreemapTreeData({
 			assets: [
 				{
@@ -164,7 +164,7 @@ describe('buildRwaNestedTreemapTreeData', () => {
 		])
 	})
 
-	it('subtracts bridge TVL from nested DeFi sizes when excluded', () => {
+	test('subtracts bridge TVL from nested DeFi sizes when excluded', () => {
 		const tree = buildRwaNestedTreemapTreeData({
 			assets: [
 				{

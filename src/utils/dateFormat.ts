@@ -54,7 +54,7 @@ const UTC_DATE_TIME_FORMATTER = new Intl.DateTimeFormat(DISPLAY_LOCALE, {
 })
 
 function fromNumericTimestamp(value: number, input: TimestampInput) {
-	return new Date(input === 'seconds' ? value * 1_000 : value)
+	return new Date(input === 'seconds' ? value * 1000 : value)
 }
 
 function validDate(date: Date) {
@@ -166,12 +166,12 @@ export function formatRelativeTime(value: DateValue, options?: RelativeTimeOptio
 	if (!Number.isFinite(now)) return null
 	const diffMs = date.getTime() - now
 	const absoluteMs = Math.abs(diffMs)
-	if (absoluteMs < 5_000) return 'just now'
+	if (absoluteMs < 5000) return 'just now'
 	if (absoluteMs >= 604_800_000) return UTC_DATE_FORMATTER.format(date)
 
 	const units =
 		absoluteMs < 60_000
-			? ([1_000, 's'] as const)
+			? ([1000, 's'] as const)
 			: absoluteMs < 3_600_000
 				? ([60_000, 'm'] as const)
 				: absoluteMs < 86_400_000

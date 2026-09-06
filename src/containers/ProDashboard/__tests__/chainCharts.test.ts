@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const {
 	fetchAdapterChainChartDataMock,
@@ -44,7 +44,7 @@ describe('fetchProChainChartData TVL', () => {
 		vi.clearAllMocks()
 	})
 
-	it('rejects a failed chain source instead of returning a cacheable empty chart', async () => {
+	test('rejects a failed chain source instead of returning a cacheable empty chart', async () => {
 		fetchChainChartMock.mockRejectedValue(new Error('chain TVL unavailable'))
 
 		await expect(fetchProChainChartData('tvl', 'Ethereum')).rejects.toThrow('chain TVL unavailable')
@@ -60,7 +60,7 @@ describe('fetchProChainChartData Bridged TVL', () => {
 		resolveChainAssetIdMock.mockResolvedValue('hyperliquid')
 	})
 
-	it('resolves saved chain names to the producer metadata ID', async () => {
+	test('resolves saved chain names to the producer metadata ID', async () => {
 		await expect(fetchProChainChartData('bridgedTvl', 'Hyperliquid L1')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(resolveChainAssetIdMock).toHaveBeenCalledWith('Hyperliquid L1')
@@ -68,7 +68,7 @@ describe('fetchProChainChartData Bridged TVL', () => {
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('hyperliquid')
 	})
 
-	it('rejects when the chain assets fetch fails so callers do not cache a fake empty chart', async () => {
+	test('rejects when the chain assets fetch fails so callers do not cache a fake empty chart', async () => {
 		fetchChainAssetsChartMock.mockRejectedValue(new Error('missing chart'))
 
 		resolveChainAssetIdMock.mockResolvedValue('base')
@@ -78,21 +78,21 @@ describe('fetchProChainChartData Bridged TVL', () => {
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('base')
 	})
 
-	it('rejects when chain metadata resolution fails', async () => {
+	test('rejects when chain metadata resolution fails', async () => {
 		resolveChainAssetIdMock.mockRejectedValue(new Error('metadata unavailable'))
 
 		await expect(fetchProChainChartData('bridgedTvl', 'Base')).rejects.toThrow('metadata unavailable')
 		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
 	})
 
-	it('returns an empty chart for empty chain inputs without fetching', async () => {
+	test('returns an empty chart for empty chain inputs without fetching', async () => {
 		await expect(fetchProChainChartData('bridgedTvl', '')).resolves.toEqual([])
 
 		expect(resolveChainAssetIdMock).not.toHaveBeenCalled()
 		expect(fetchChainAssetsChartMock).not.toHaveBeenCalled()
 	})
 
-	it('uses an already-resolved producer ID without another metadata lookup', async () => {
+	test('uses an already-resolved producer ID without another metadata lookup', async () => {
 		await expect(fetchProChainChartData('bridgedTvl', 'OP Mainnet', undefined, 'optimism')).resolves.toEqual([
 			[1_700_000_000, 42]
 		])
@@ -102,7 +102,7 @@ describe('fetchProChainChartData Bridged TVL', () => {
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith('optimism')
 	})
 
-	it('does not fetch charts for chains without the metadata capability', async () => {
+	test('does not fetch charts for chains without the metadata capability', async () => {
 		resolveChainAssetIdMock.mockResolvedValue(null)
 
 		await expect(fetchProChainChartData('bridgedTvl', 'Unknown')).resolves.toEqual([])
@@ -118,7 +118,7 @@ describe('fetchProChainChartData adapter metrics', () => {
 		fetchAdapterProtocolChartDataMock.mockResolvedValue([[1_700_000_000, 7]])
 	})
 
-	it('uses the focused chain adapter chart for options premium volume', async () => {
+	test('uses the focused chain adapter chart for options premium volume', async () => {
 		await expect(fetchProChainChartData('optionsPremium', 'Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
@@ -128,7 +128,7 @@ describe('fetchProChainChartData adapter metrics', () => {
 		})
 	})
 
-	it('uses the focused chain adapter chart for options notional volume', async () => {
+	test('uses the focused chain adapter chart for options notional volume', async () => {
 		await expect(fetchProChainChartData('optionsNotional', 'Ethereum')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
@@ -138,7 +138,7 @@ describe('fetchProChainChartData adapter metrics', () => {
 		})
 	})
 
-	it('uses the focused chain adapter chart for open interest', async () => {
+	test('uses the focused chain adapter chart for open interest', async () => {
 		await expect(fetchProChainChartData('openInterest', 'Hyperliquid L1')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
@@ -148,7 +148,7 @@ describe('fetchProChainChartData adapter metrics', () => {
 		})
 	})
 
-	it('uses chain pseudo-protocol activity instead of retired userData endpoints', async () => {
+	test('uses chain pseudo-protocol activity instead of retired userData endpoints', async () => {
 		await expect(fetchProChainChartData('activeUsers', 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
 		await expect(fetchProChainChartData('newUsers', 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
 		await expect(fetchProChainChartData('txs', 'Ethereum')).resolves.toEqual([[1_700_000_000, 7]])
@@ -170,7 +170,7 @@ describe('fetchProChainChartData adapter metrics', () => {
 		})
 	})
 
-	it('uses the chain aggregate endpoint for gas used in USD', async () => {
+	test('uses the chain aggregate endpoint for gas used in USD', async () => {
 		await expect(fetchProChainChartData('gasUsed', 'Avalanche')).resolves.toEqual([[1_700_000_000, 42]])
 
 		expect(fetchAdapterChainChartDataMock).toHaveBeenCalledWith({
@@ -183,7 +183,7 @@ describe('fetchProChainChartData adapter metrics', () => {
 })
 
 describe('fetchProChainChartData stablecoins', () => {
-	it('shares one raw chain response between concurrent supply and inflow charts', async () => {
+	test('shares one raw chain response between concurrent supply and inflow charts', async () => {
 		fetchStablecoinChartApiMock.mockResolvedValue({
 			aggregated: [
 				{ date: '1', totalCirculatingUSD: { peggedUSD: 10, peggedEUR: 5 } },

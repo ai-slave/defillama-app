@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ApyTriple, ApyWindows, EarnAttributes, EnrichedEarnRow } from '../types'
 
 // getEarnPage pulls its rows from getEnrichedEarn; mock it so the test controls the dataset.
-const getEnrichedEarn = vi.fn<() => Promise<EnrichedEarnRow[]>>()
+const getEnrichedEarn = vi.fn<() => Promise<Array<EnrichedEarnRow>>>()
 vi.mock('../enrich.server', () => ({ getEnrichedEarn: () => getEnrichedEarn() }))
 vi.mock('../snapshot', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../snapshot')>()),
@@ -70,7 +70,7 @@ beforeEach(() => {
 })
 
 describe('getEarnPage prepared-rows memoization', () => {
-	it('prepares once per (generation, filters) and slices every page from it', async () => {
+	test('prepares once per (generation, filters) and slices every page from it', async () => {
 		const rows = Array.from({ length: 120 }, (_, index) => pool(`p${index}`, 1000 - index))
 		getEnrichedEarn.mockResolvedValue(rows)
 		const snapshot = snapshotOf('gen-slices')
@@ -92,7 +92,7 @@ describe('getEarnPage prepared-rows memoization', () => {
 		expect(second.medianApy).toBe(first.medianApy)
 	})
 
-	it('re-prepares when filters change and when the generation changes', async () => {
+	test('re-prepares when filters change and when the generation changes', async () => {
 		getEnrichedEarn.mockResolvedValue([pool('a', 10), pool('b', 5)])
 		const snapshot = snapshotOf('gen-filters')
 
@@ -104,7 +104,7 @@ describe('getEarnPage prepared-rows memoization', () => {
 		expect(getEnrichedEarn).toHaveBeenCalledTimes(3)
 	})
 
-	it('signs page/pageSize out but sort in', async () => {
+	test('signs page/pageSize out but sort in', async () => {
 		getEnrichedEarn.mockResolvedValue([pool('a', 10), pool('b', 5)])
 		const snapshot = snapshotOf('gen-sort')
 
@@ -116,7 +116,7 @@ describe('getEarnPage prepared-rows memoization', () => {
 		expect(asc.rows.map((row) => row.id)).toEqual(['b', 'a'])
 	})
 
-	it('keeps the wire contract for clamped pages and pageSize=all', async () => {
+	test('keeps the wire contract for clamped pages and pageSize=all', async () => {
 		getEnrichedEarn.mockResolvedValue(Array.from({ length: 7 }, (_, index) => pool(`p${index}`, 7 - index)))
 		const snapshot = snapshotOf('gen-wire')
 

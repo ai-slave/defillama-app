@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 // One fixture with every content shape, through both pipelines. If any handling
 // regresses (drops, ordering, stripping, hydration), the inventory here breaks.
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { llamaaiMarkdownToTiptap, llamaaiSelectionToTiptap } from '../import/llamaaiToTiptap'
 
@@ -73,7 +73,7 @@ describe('kitchen sink — markdown pipeline', () => {
 	const json = JSON.stringify(blocks)
 	const types = blocks.map((b) => b.type)
 
-	it('produces the exact block inventory in source order', () => {
+	test('produces the exact block inventory in source order', () => {
 		expect(types).toEqual([
 			'heading',
 			'paragraph',
@@ -87,14 +87,14 @@ describe('kitchen sink — markdown pipeline', () => {
 		])
 	})
 
-	it('strips the pre-report preamble and every citation marker', () => {
+	test('strips the pre-report preamble and every citation marker', () => {
 		expect(json).not.toContain('preamble')
 		expect(json).not.toContain('[1]')
 		expect(json).not.toContain('【')
 		expect(json).toContain('Closing thoughts.')
 	})
 
-	it('demotes h1 and keeps formatting, links, table cells, and code', () => {
+	test('demotes h1 and keeps formatting, links, table cells, and code', () => {
 		expect(blocks.filter((block) => block.type === 'heading').map((block) => block.attrs?.level)).toEqual([2])
 		expect(json).toContain('bold')
 		expect(json).toContain('https://defillama.com/protocol/uniswap')
@@ -102,7 +102,7 @@ describe('kitchen sink — markdown pipeline', () => {
 		expect(json).toContain('SELECT 1;')
 	})
 
-	it('hydrates known charts, downsamples large ones, drops unknown artifacts silently', () => {
+	test('hydrates known charts, downsamples large ones, drops unknown artifacts silently', () => {
 		const chartBlocks = blocks.filter((b) => b.type === 'llamaaiChart')
 		expect(chartBlocks.map((block) => block.attrs?.chartConfig)).toEqual([
 			expect.objectContaining({ id: 'c1' }),
@@ -122,7 +122,7 @@ describe('kitchen sink — markdown pipeline', () => {
 		expect(json).not.toContain('img-skipped')
 	})
 
-	it('inserts uploaded images with their CMS src', () => {
+	test('inserts uploaded images with their CMS src', () => {
 		expect(json).toContain('https://cdn.llama.fi/x.png')
 	})
 })
@@ -140,7 +140,7 @@ describe('kitchen sink — selection pipeline', () => {
 	const blocks = llamaaiSelectionToTiptap(KITCHEN_SINK_DOM, charts)
 	const json = JSON.stringify(blocks)
 
-	it('produces the exact block inventory: junk gone, blocks in order', () => {
+	test('produces the exact block inventory: junk gone, blocks in order', () => {
 		expect(blocks.map((b) => b.type)).toEqual([
 			'heading',
 			'paragraph',
@@ -151,7 +151,7 @@ describe('kitchen sink — selection pipeline', () => {
 		])
 	})
 
-	it('demotes h1, unwraps wrappers, drops widgets, cleans orphan whitespace', () => {
+	test('demotes h1, unwraps wrappers, drops widgets, cleans orphan whitespace', () => {
 		expect(blocks.filter((block) => block.type === 'heading').map((block) => block.attrs?.level)).toEqual([2])
 		expect(json).toContain('today.')
 		expect(json).not.toContain('today .')
@@ -160,12 +160,12 @@ describe('kitchen sink — selection pipeline', () => {
 		expect(json).not.toContain('watermark')
 	})
 
-	it('keeps table content and code spacing byte-identical', () => {
+	test('keeps table content and code spacing byte-identical', () => {
 		expect(json).toContain('base')
 		expect(json).toContain('SELECT  1;')
 	})
 
-	it('hydrates the known chart and drops the unknown one', () => {
+	test('hydrates the known chart and drops the unknown one', () => {
 		const chartBlocks = blocks.filter((b) => b.type === 'llamaaiChart')
 		expect(chartBlocks.map((block) => block.attrs?.chartConfig)).toEqual([expect.objectContaining({ id: 'c1' })])
 	})

@@ -35,10 +35,10 @@ const ANGLE_BRACKET_URL_RE = /<(https?:\/\/[^>]+)>/g
  * Extract structured links from a string containing markdown `[label](url)` and/or
  * angle-bracket `<url>` patterns.
  */
-function parseMarkdownLinks(raw: string | undefined): ITokenRightsParsedLink[] {
+function parseMarkdownLinks(raw: string | undefined): Array<ITokenRightsParsedLink> {
 	if (!raw) return []
 
-	const links: ITokenRightsParsedLink[] = []
+	const links: Array<ITokenRightsParsedLink> = []
 	const seen = new Set<string>()
 
 	for (const match of raw.matchAll(MARKDOWN_LINK_RE)) {
@@ -72,10 +72,10 @@ const INACTIVE_TOKEN_VALUES = new Set(['', 'n/a', 'na', 'none', 'no', 'off', 'un
  *   - bare hex addresses
  *   - bare URLs / angle-bracket URLs
  */
-function parseAddresses(raw: string | undefined): ITokenRightsParsedAddress[] {
+function parseAddresses(raw: string | undefined): Array<ITokenRightsParsedAddress> {
 	if (!raw) return []
 
-	const results: ITokenRightsParsedAddress[] = []
+	const results: Array<ITokenRightsParsedAddress> = []
 	const lines = raw
 		.split('\n')
 		.map((l) => l.trim())
@@ -112,9 +112,11 @@ function parseAddresses(raw: string | undefined): ITokenRightsParsedAddress[] {
 	return results
 }
 
-function parseTokenDisplay(tokens: string[] | null | undefined): ITokenRightsTokenDisplay & { tokens: string[] } {
+function parseTokenDisplay(
+	tokens: Array<string> | null | undefined
+): ITokenRightsTokenDisplay & { tokens: Array<string> } {
 	const values = tokens ?? []
-	const displayTokens: string[] = []
+	const displayTokens: Array<string> = []
 	let fallbackToken = 'N/A'
 	let hasFallbackToken = false
 
@@ -141,7 +143,7 @@ function normalizeTokenRightsValue(value: string): string {
 
 export type TokenRightsPieTone = 'positive' | 'negative' | 'warning'
 
-export function getEquityPieTone(fundraising: string[], equityRevenueCapture: string | null): TokenRightsPieTone {
+export function getEquityPieTone(fundraising: Array<string>, equityRevenueCapture: string | null): TokenRightsPieTone {
 	if (
 		fundraising.some((value) => normalizeTokenRightsValue(value).includes('equity')) ||
 		(equityRevenueCapture !== null && normalizeTokenRightsValue(equityRevenueCapture) === 'yes')
@@ -159,7 +161,7 @@ export function getEquityPieTone(fundraising: string[], equityRevenueCapture: st
 	return 'positive'
 }
 
-function splitUtilityLabels(value: string | null): string[] {
+function splitUtilityLabels(value: string | null): Array<string> {
 	if (!value) return []
 	return value
 		.split(/[,;\n]+/)
@@ -167,8 +169,8 @@ function splitUtilityLabels(value: string | null): string[] {
 		.filter(Boolean)
 }
 
-function formatList(values: string[]): string | null {
-	const activeValues: string[] = []
+function formatList(values: Array<string>): string | null {
+	const activeValues: Array<string> = []
 	for (const value of values) {
 		if (value.trim()) activeValues.push(value)
 	}

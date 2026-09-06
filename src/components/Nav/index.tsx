@@ -19,11 +19,11 @@ type DefillamaPage = {
 	requireLlama?: boolean
 }
 
-type DefillamaPages = Record<string, DefillamaPage[]> & {
-	Main?: TNavLink[]
-	Premium?: TNavLink[]
-	Metrics: DefillamaPage[]
-	Tools: DefillamaPage[]
+type DefillamaPages = Record<string, Array<DefillamaPage>> & {
+	Main?: Array<TNavLink>
+	Premium?: Array<TNavLink>
+	Metrics: Array<DefillamaPage>
+	Tools: Array<DefillamaPage>
 	Hidden?: Array<Pick<DefillamaPage, 'name' | 'route'>>
 }
 
@@ -35,7 +35,7 @@ const premiumPages = pages.Premium ?? []
 const footerCategories = ['More', 'About Us'] as const
 const footerLinks = footerCategories.map((category) => ({
 	category,
-	pages: (pages[category] ?? []) as TNavLink[]
+	pages: (pages[category] ?? []) as Array<TNavLink>
 })) as TNavLinks
 
 // Skip "Hidden" so hidden page names (e.g. "Subscribe to DefiLlama") don't overwrite
@@ -75,7 +75,7 @@ function canonicalAiRoute(route: string): string {
 	return route === '/ai/chat' ? '/ai' : route
 }
 
-function parsePinnedMetrics(value: string): string[] {
+function parsePinnedMetrics(value: string): Array<string> {
 	try {
 		const parsed = JSON.parse(value)
 		return Array.isArray(parsed) ? parsed : []
@@ -84,7 +84,7 @@ function parsePinnedMetrics(value: string): string[] {
 	}
 }
 
-export function Nav({ tvlOptions }: { tvlOptions?: { name: string; key: string }[] }) {
+export function Nav({ tvlOptions }: { tvlOptions?: Array<{ name: string; key: string }> }) {
 	const { asPath } = useRouter()
 	const { data: liteDashboards } = useGetLiteDashboards()
 

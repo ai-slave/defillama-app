@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildTokensFiltersQueryUpdate,
 	formatTokensActiveFilter,
@@ -8,44 +8,44 @@ import {
 } from '../filters'
 
 describe('getTokensFiltersDefaultSorting', () => {
-	it('sorts by the last added filter, descending when a min is set', () => {
+	test('sorts by the last added filter, descending when a min is set', () => {
 		expect(getTokensFiltersDefaultSorting([{ id: 'revenue24h', min: 100, max: null }])).toEqual({
 			id: 'revenue24h',
 			desc: true
 		})
 	})
 
-	it('sorts ascending when only a max is set', () => {
+	test('sorts ascending when only a max is set', () => {
 		expect(getTokensFiltersDefaultSorting([{ id: 'priceChange7d', min: null, max: -5 }])).toEqual({
 			id: 'priceChange7d',
 			desc: false
 		})
 	})
 
-	it('sorts rank ascending and returns null without filters', () => {
+	test('sorts rank ascending and returns null without filters', () => {
 		expect(getTokensFiltersDefaultSorting([{ id: 'rank', min: 100, max: 500 }])).toEqual({ id: 'rank', desc: false })
 		expect(getTokensFiltersDefaultSorting([])).toBeNull()
 	})
 })
 
 describe('shouldApplyTokensFilterSorting', () => {
-	it('applies over the default marketCap sorting', () => {
+	test('applies over the default marketCap sorting', () => {
 		expect(shouldApplyTokensFilterSorting({ id: 'marketCap', desc: true }, [])).toBe(true)
 	})
 
-	it('applies when current sorting came from the previous filters', () => {
+	test('applies when current sorting came from the previous filters', () => {
 		expect(
 			shouldApplyTokensFilterSorting({ id: 'revenue24h', desc: true }, [{ id: 'revenue24h', min: 100, max: null }])
 		).toBe(true)
 	})
 
-	it('keeps a manually chosen sorting', () => {
+	test('keeps a manually chosen sorting', () => {
 		expect(shouldApplyTokensFilterSorting({ id: 'priceChange24h', desc: true }, [])).toBe(false)
 	})
 })
 
 describe('filters query round trip', () => {
-	it('serializes and parses back', () => {
+	test('serializes and parses back', () => {
 		const filters = [
 			{ id: 'rank' as const, min: 100, max: 500 },
 			{ id: 'marketCap' as const, min: 1_000_000_000, max: null }
@@ -60,7 +60,7 @@ describe('filters query round trip', () => {
 		)
 	})
 
-	it('normalizes garbage the same way the server does', () => {
+	test('normalizes garbage the same way the server does', () => {
 		expect(parseTokensFiltersFromQuery({ rankFrom: '-3', rankTo: 'abc' })).toEqual([])
 		expect(parseTokensFiltersFromQuery({ rankFrom: '500', rankTo: '100' })).toEqual([
 			{ id: 'rank', min: 100, max: 500 }
@@ -72,7 +72,7 @@ describe('filters query round trip', () => {
 })
 
 describe('formatTokensActiveFilter', () => {
-	it('formats ranges and one-sided filters', () => {
+	test('formats ranges and one-sided filters', () => {
 		expect(formatTokensActiveFilter({ id: 'rank', min: 100, max: 500 })).toBe('MCap Rank: 100 - 500')
 		expect(formatTokensActiveFilter({ id: 'marketCap', min: 1_000_000_000, max: null })).toBe('MCap ≥ $1B')
 		expect(formatTokensActiveFilter({ id: 'priceChange7d', min: null, max: -5 })).toBe('7D Change ≤ -5%')

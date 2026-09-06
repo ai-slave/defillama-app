@@ -8,10 +8,10 @@ interface CategoryCardData {
 	title: string
 	description: string
 	icon: IconName
-	tags: string[]
+	tags: Array<string>
 }
 
-export const CATEGORY_CARDS: CategoryCardData[] = [
+export const CATEGORY_CARDS: Array<CategoryCardData> = [
 	{
 		id: 'chain',
 		title: 'Protocols & Chains',

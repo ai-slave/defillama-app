@@ -45,7 +45,7 @@ export interface QueueLocalRow {
 
 export type QueueRow = QueueServerRow | QueueLocalRow
 
-const EMPTY_LOCAL_ROWS: QueueLocalRow[] = []
+const EMPTY_LOCAL_ROWS: Array<QueueLocalRow> = []
 
 export interface QueueRowStatus {
 	action: QueueAction | null
@@ -54,7 +54,7 @@ export interface QueueRowStatus {
 }
 
 export interface QueueSurface {
-	rows: QueueRow[]
+	rows: Array<QueueRow>
 	ownedEditId: string | null
 	rowStatus: Record<string, QueueRowStatus>
 	onEditStart: (id: string) => void
@@ -71,8 +71,8 @@ export interface QueueSurface {
 
 interface QueueControllerState {
 	sessionId: string | null
-	queue: QueuedMessageElement[]
-	localBySession: Record<string, QueueLocalRow[]>
+	queue: Array<QueuedMessageElement>
+	localBySession: Record<string, Array<QueueLocalRow>>
 	maxDepth: number | null
 	ownedEditId: string | null
 	rowStatus: Record<string, QueueRowStatus>
@@ -277,7 +277,7 @@ function snapshotFromError(error: unknown): QueueSnapshot | null {
 
 const PAUSED_QUEUE_REASONS = new Set(['execution_stopped', 'execution_failed', 'quota_exceeded', 'server_restarted'])
 
-function isServerQueuePaused(queue: QueuedMessageElement[]): boolean {
+function isServerQueuePaused(queue: Array<QueuedMessageElement>): boolean {
 	return queue.some((item) => item.state === 'not_sent' && PAUSED_QUEUE_REASONS.has(item.reason))
 }
 
@@ -727,7 +727,7 @@ export function useChatQueueController({
 
 	const visibleState = state.sessionId === sessionId ? state : initialState(sessionId)
 	const localRows = sessionId ? (visibleState.localBySession[sessionId] ?? EMPTY_LOCAL_ROWS) : EMPTY_LOCAL_ROWS
-	const rows = useMemo<QueueRow[]>(
+	const rows = useMemo<Array<QueueRow>>(
 		() => [...visibleState.queue.map((item): QueueServerRow => ({ ...item, kind: 'server' })), ...localRows],
 		[localRows, visibleState.queue]
 	)

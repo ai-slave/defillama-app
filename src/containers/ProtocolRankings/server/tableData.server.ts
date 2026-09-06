@@ -43,11 +43,11 @@ const SNAPSHOT_VERSION_MEMORY_OPTIONS = {
 
 export type ProtocolRankingsSnapshotData = {
 	snapshot: string
-	protocols: IProtocol[]
-	availableActivityMetrics: ProtocolRankingActivityMetricKey[]
+	protocols: Array<IProtocol>
+	availableActivityMetrics: Array<ProtocolRankingActivityMetricKey>
 }
 
-export function collectAvailableActivityMetrics(protocols: IProtocol[]): ProtocolRankingActivityMetricKey[] {
+export function collectAvailableActivityMetrics(protocols: Array<IProtocol>): Array<ProtocolRankingActivityMetricKey> {
 	return PROTOCOL_RANKING_ACTIVITY_METRIC_KEYS.filter((key) =>
 		protocols.some((protocol) => protocol[key] !== undefined)
 	)
@@ -59,7 +59,7 @@ export type ProtocolRankingsCanonicalSnapshot = ProtocolRankingsSnapshotData & {
 	// Compact summaries produced by the same source fetch let ChainOverview ISR avoid refetching adapters.
 	// They stay server-side and are not included in paginated ranking responses.
 	source: {
-		chains: string[]
+		chains: Array<string>
 		feeProtocols: Array<{ slug: string; total24h?: number | null }> | null
 		dexs: {
 			total24h: number | null

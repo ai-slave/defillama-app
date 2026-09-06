@@ -18,8 +18,8 @@ interface ProtocolTableReadModelBase {
 	displayName: string
 	logo: string | null
 	category: string | null
-	chains: string[]
-	oracles: string[]
+	chains: Array<string>
+	oracles: Array<string>
 	metrics: ProtocolTableMetrics
 	filteredShares: ProtocolTableFilteredShares
 	customValues: Record<string, number | null>
@@ -35,7 +35,7 @@ export interface ProtocolTableGroupRow extends ProtocolTableReadModelBase {
 	header: UnifiedRowHeaderType
 	groupKind: 'parent' | 'protocol' | 'chain' | 'category'
 	isSelfGroup: boolean
-	subRows: ProtocolTableRow[]
+	subRows: Array<ProtocolTableRow>
 }
 
 export type ProtocolTableRow = ProtocolTableLeafRow | ProtocolTableGroupRow

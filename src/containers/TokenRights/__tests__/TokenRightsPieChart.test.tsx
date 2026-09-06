@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { TokenRightsPieChart } from '../TokenRightsPieChart'
 
 const ACTIVE_SEGMENTS = [
@@ -12,7 +12,7 @@ const ACTIVE_SEGMENTS = [
 ] as const
 
 describe('TokenRightsPieChart', () => {
-	it('describes slice tones for assistive technology', () => {
+	test('describes slice tones for assistive technology', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsPieChart
 				segments={ACTIVE_SEGMENTS.map((segment, index) => ({

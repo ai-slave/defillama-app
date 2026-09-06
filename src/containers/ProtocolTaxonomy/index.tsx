@@ -293,7 +293,7 @@ export function getProtocolMcapTvlRatio(mcap: number | null, tvl: number | null)
 
 const perpVolumeCell = (info: CellContext<ProtocolRow, number | undefined>) => {
 	if (info.getValue() == null) return null
-	const helpers: string[] = []
+	const helpers: Array<string> = []
 	if (info.row.original.perpVolume?.zeroFeePerp) {
 		helpers.push('This protocol charges no fees for most of its users')
 	}

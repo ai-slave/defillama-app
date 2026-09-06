@@ -12,7 +12,7 @@ import {
 	getTokensTableSortingFromQuery
 } from './utils'
 
-type QueryRecord = Record<string, string | string[] | undefined>
+type QueryRecord = Record<string, string | Array<string> | undefined>
 
 const EMPTY_TOKENS_PAGE_RESPONSE: TokensPageResponse = {
 	schemaVersion: TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,

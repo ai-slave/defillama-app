@@ -1,23 +1,23 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { bannerToForm, buildPayload, validateBannerForm } from '~/containers/Articles/admin/bannerFormState'
 import type { BannerKind } from '~/containers/Articles/types'
 import { EU_COUNTRY_CODES } from '~/utils/countries'
 
 describe('BannerForm regional targeting', () => {
-	it('defaults new banners to global display', () => {
+	test('defaults new banners to global display', () => {
 		const state = bannerToForm(null)
 		expect(state.audienceMode).toBe('global')
 		expect(buildPayload({ ...state, text: 'Global banner' }).targetCountries).toEqual([])
 	})
 
-	it('requires at least one location in selected mode', () => {
+	test('requires at least one location in selected mode', () => {
 		const state = bannerToForm(null)
 		expect(validateBannerForm({ ...state, text: 'Targeted banner', audienceMode: 'selected' }).audience).toBe(
 			'Select at least one region or country'
 		)
 	})
 
-	it('includes targeting in every banner-kind payload', () => {
+	test('includes targeting in every banner-kind payload', () => {
 		const base = {
 			...bannerToForm(null),
 			audienceMode: 'selected' as const,
@@ -28,7 +28,7 @@ describe('BannerForm regional targeting', () => {
 			imageWideUrl: '/uploads/banner-wide',
 			linkUrl: 'https://example.com'
 		}
-		const kinds: BannerKind[] = ['text', 'image', 'image-horizontal', 'promo', 'image-square']
+		const kinds: Array<BannerKind> = ['text', 'image', 'image-horizontal', 'promo', 'image-square']
 
 		for (const kind of kinds) {
 			const payload = buildPayload({ ...base, kind, targetGroups: [...base.targetGroups] })

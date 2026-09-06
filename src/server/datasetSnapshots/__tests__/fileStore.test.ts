@@ -1,7 +1,7 @@
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
 import { DATASET_SNAPSHOT_CONTRACT } from '../contract'
 import {
 	getDatasetSnapshotCurrentPath,
@@ -24,7 +24,7 @@ describe('filesystem dataset snapshot store', () => {
 		if (rootDir) await rm(rootDir, { recursive: true, force: true })
 	})
 
-	it('publishes immutable versions and keeps old handles stable', async () => {
+	test('publishes immutable versions and keeps old handles stable', async () => {
 		rootDir = await mkdtemp(path.join(os.tmpdir(), 'dataset-snapshot-store-'))
 		let now = 100
 		const store = new FileDatasetSnapshotStore(rootDir, () => now)
@@ -47,7 +47,7 @@ describe('filesystem dataset snapshot store', () => {
 		})
 	})
 
-	it('leaves the current pointer untouched when building or validation fails', async () => {
+	test('leaves the current pointer untouched when building or validation fails', async () => {
 		rootDir = await mkdtemp(path.join(os.tmpdir(), 'dataset-snapshot-store-'))
 		const store = new FileDatasetSnapshotStore(rootDir)
 		await store.publish('markets', (writer) => writeMarketsArtifacts(writer, 1))
@@ -63,7 +63,7 @@ describe('filesystem dataset snapshot store', () => {
 		await expect(readFile(pointerPath, 'utf8')).resolves.toBe(before)
 	})
 
-	it('retains the current and previous versions while removing older versions and candidates', async () => {
+	test('retains the current and previous versions while removing older versions and candidates', async () => {
 		rootDir = await mkdtemp(path.join(os.tmpdir(), 'dataset-snapshot-store-'))
 		let now = 100
 		const store = new FileDatasetSnapshotStore(rootDir, () => now)
@@ -87,7 +87,7 @@ describe('filesystem dataset snapshot store', () => {
 		await expect(store.getStats('markets')).resolves.toMatchObject({ versionCount: 2 })
 	})
 
-	it('does not mistake a newer unreferenced version for the previous generation', async () => {
+	test('does not mistake a newer unreferenced version for the previous generation', async () => {
 		rootDir = await mkdtemp(path.join(os.tmpdir(), 'dataset-snapshot-store-'))
 		let now = 100
 		const store = new FileDatasetSnapshotStore(rootDir, () => now)
@@ -108,7 +108,7 @@ describe('filesystem dataset snapshot store', () => {
 		expect(await store.getCurrent('markets')).toMatchObject({ ref: { snapshotId: current.ref.snapshotId } })
 	})
 
-	it('rejects corrupt pointers and paths outside a version', async () => {
+	test('rejects corrupt pointers and paths outside a version', async () => {
 		rootDir = await mkdtemp(path.join(os.tmpdir(), 'dataset-snapshot-store-'))
 		const store = new FileDatasetSnapshotStore(rootDir)
 		const handle = await store.publish('markets', (writer) => writeMarketsArtifacts(writer, 1))
@@ -118,7 +118,7 @@ describe('filesystem dataset snapshot store', () => {
 		await expect(store.getCurrent('markets')).rejects.toThrow('markets/current.json')
 	})
 
-	it('treats a known domain schema bump as requiring a replacement generation', async () => {
+	test('treats a known domain schema bump as requiring a replacement generation', async () => {
 		rootDir = await mkdtemp(path.join(os.tmpdir(), 'dataset-snapshot-store-'))
 		const store = new FileDatasetSnapshotStore(rootDir)
 		const handle = await store.publish('yields', async (writer) => {
@@ -145,7 +145,7 @@ describe('filesystem dataset snapshot store', () => {
 		expect(versions).toEqual([replacement.ref.snapshotId])
 	})
 
-	it('refuses to replace a snapshot written by a newer schema', async () => {
+	test('refuses to replace a snapshot written by a newer schema', async () => {
 		rootDir = await mkdtemp(path.join(os.tmpdir(), 'dataset-snapshot-store-'))
 		const store = new FileDatasetSnapshotStore(rootDir)
 		const handle = await store.publish('yields', async (writer) => {

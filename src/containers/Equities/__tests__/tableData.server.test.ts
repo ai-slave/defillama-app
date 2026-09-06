@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IEquitiesCompanyApiItem } from '../api.types'
 import {
 	buildEquitiesSnapshot,
@@ -73,8 +73,8 @@ const companies = [
 ]
 
 describe('buildEquitiesSnapshot', () => {
-	it('keeps producer order, links rows, collects sorted facet options and hashes content', () => {
-		const snapshot = buildEquitiesSnapshot(companies, 1_000)
+	test('keeps producer order, links rows, collects sorted facet options and hashes content', () => {
+		const snapshot = buildEquitiesSnapshot(companies, 1000)
 		expect(snapshot.rows.map((row) => row.href)).toEqual([
 			'/equities/AAPL:US',
 			'/equities/BANK:CA',
@@ -87,15 +87,15 @@ describe('buildEquitiesSnapshot', () => {
 			industry: ['Software']
 		})
 		expect(snapshot.updatedAt).toBe('2026-09-03T10:00:00Z')
-		expect(snapshot.version).toBe(buildEquitiesSnapshot(companies, 2_000).version)
-		expect(snapshot.version).not.toBe(buildEquitiesSnapshot(companies.slice(1), 1_000).version)
+		expect(snapshot.version).toBe(buildEquitiesSnapshot(companies, 2000).version)
+		expect(snapshot.version).not.toBe(buildEquitiesSnapshot(companies.slice(1), 1000).version)
 	})
 })
 
 describe('prepareEquitiesRows', () => {
 	const rows = buildEquitiesSnapshot(companies, 0).rows
 
-	it('sorts nulls last in both directions and breaks ties on identity', () => {
+	test('sorts nulls last in both directions and breaks ties on identity', () => {
 		expect(prepareEquitiesRows(rows, getEquitiesTableQuery({ sortBy: 'volume' })).map((row) => row.ticker)).toEqual([
 			'APLE',
 			'AAPL',
@@ -107,7 +107,7 @@ describe('prepareEquitiesRows', () => {
 		).toEqual(['ZERO', 'AAPL', 'APLE', 'BANK'])
 	})
 
-	it('ranks ticker matches ahead of company-name matches while searching', () => {
+	test('ranks ticker matches ahead of company-name matches while searching', () => {
 		// APLE matches on ticker, AAPL only on its name, so APLE leads despite the smaller market cap.
 		expect(prepareEquitiesRows(rows, getEquitiesTableQuery({ search: 'ple' })).map((row) => row.ticker)).toEqual([
 			'APLE',
@@ -115,7 +115,7 @@ describe('prepareEquitiesRows', () => {
 		])
 	})
 
-	it('applies compact filters before sorting', () => {
+	test('applies compact filters before sorting', () => {
 		expect(
 			prepareEquitiesRows(rows, getEquitiesTableQuery({ filters: 'country:out:CA;marketCap:gte:100' })).map(
 				(row) => row.ticker
@@ -125,7 +125,7 @@ describe('prepareEquitiesRows', () => {
 })
 
 describe('getEquitiesTablePage', () => {
-	it('slices the prepared rows and carries snapshot facets', async () => {
+	test('slices the prepared rows and carries snapshot facets', async () => {
 		const snapshot = buildEquitiesSnapshot(companies, 0)
 		const page = await getEquitiesTablePage(snapshot, { page: '2', pageSize: '3' })
 		expect(page).toMatchObject({
@@ -143,7 +143,7 @@ describe('getEquitiesTablePage', () => {
 })
 
 describe('buildEquitiesTreemapPage', () => {
-	it('returns only map fields for eligible rows ranked by the size metric', () => {
+	test('returns only map fields for eligible rows ranked by the size metric', () => {
 		const rows = buildEquitiesSnapshot(companies, 0).rows
 		const page = buildEquitiesTreemapPage(rows, { search: '', filters: [], sizeMetric: 'volume' as never })
 		expect(page.rows.map((row) => row.ticker)).toEqual(['APLE', 'AAPL', 'ZERO'])
@@ -153,7 +153,7 @@ describe('buildEquitiesTreemapPage', () => {
 		expect(Object.keys(page.rows[0])).not.toContain('trailingPE')
 	})
 
-	it('applies search and filters before ranking', () => {
+	test('applies search and filters before ranking', () => {
 		const rows = buildEquitiesSnapshot(companies, 0).rows
 		const page = buildEquitiesTreemapPage(rows, { search: 'apple', filters: [], sizeMetric: 'marketCap' })
 		expect(page.rows.map((row) => row.ticker)).toEqual(['AAPL', 'APLE'])

@@ -117,7 +117,7 @@ export function subscriptionStatusQueryOptions({ userId, token }: { userId: stri
 		initialData: persisted?.value,
 		initialDataUpdatedAt: 0,
 		retry: 2,
-		retryDelay: (attemptIndex) => Math.min(250 * 2 ** attemptIndex, 5_000),
+		retryDelay: (attemptIndex) => Math.min(250 * 2 ** attemptIndex, 5000),
 		refetchInterval: (query) => (query.state.status === 'error' ? 30_000 : false),
 		refetchOnWindowFocus: false,
 		staleTime: 1000 * 60 * 15

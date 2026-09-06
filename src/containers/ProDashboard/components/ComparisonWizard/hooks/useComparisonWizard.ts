@@ -136,7 +136,7 @@ export function useComparisonWizard() {
 	const setStep = useCallback((step: WizardStep) => dispatch({ type: 'SET_STEP', step }), [])
 
 	const applyPreset = useCallback(
-		(comparisonType: ComparisonType, items: string[], step: WizardStep) =>
+		(comparisonType: ComparisonType, items: Array<string>, step: WizardStep) =>
 			dispatch({ type: 'APPLY_PRESET', comparisonType, items, step }),
 		[]
 	)
@@ -146,7 +146,7 @@ export function useComparisonWizard() {
 		[]
 	)
 
-	const setSelectedItems = useCallback((items: string[]) => dispatch({ type: 'SET_SELECTED_ITEMS', items }), [])
+	const setSelectedItems = useCallback((items: Array<string>) => dispatch({ type: 'SET_SELECTED_ITEMS', items }), [])
 
 	const toggleSelectedItem = useCallback(
 		(item: string, maxItems?: number) =>
@@ -158,12 +158,15 @@ export function useComparisonWizard() {
 
 	const clearMetrics = useCallback(() => dispatch({ type: 'CLEAR_METRICS' }), [])
 
-	const selectAllMetrics = useCallback((metrics: string[]) => dispatch({ type: 'SELECT_ALL_METRICS', metrics }), [])
+	const selectAllMetrics = useCallback(
+		(metrics: Array<string>) => dispatch({ type: 'SELECT_ALL_METRICS', metrics }),
+		[]
+	)
 
 	const toggleMetricForCard = useCallback((metric: string) => dispatch({ type: 'TOGGLE_METRIC_FOR_CARD', metric }), [])
 
 	const setMetricsForCards = useCallback(
-		(metrics: string[]) => dispatch({ type: 'SET_METRICS_FOR_CARDS', metrics }),
+		(metrics: Array<string>) => dispatch({ type: 'SET_METRICS_FOR_CARDS', metrics }),
 		[]
 	)
 
@@ -179,7 +182,7 @@ export function useComparisonWizard() {
 		[]
 	)
 
-	const setTags = useCallback((tags: string[]) => dispatch({ type: 'SET_TAGS', tags }), [])
+	const setTags = useCallback((tags: Array<string>) => dispatch({ type: 'SET_TAGS', tags }), [])
 
 	const addTag = useCallback((tag: string) => dispatch({ type: 'ADD_TAG', tag }), [])
 
@@ -246,9 +249,9 @@ export function useComparisonWizard() {
 			case 'select-type':
 				return state.comparisonType !== null
 			case 'select-items':
-				return state.selectedItems.length >= 1
+				return state.selectedItems.length > 0
 			case 'select-metrics':
-				return state.selectedMetrics.length >= 1
+				return state.selectedMetrics.length > 0
 			case 'preview':
 				return state.dashboardName.trim().length > 0
 			default:

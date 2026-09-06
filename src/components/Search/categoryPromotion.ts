@@ -48,8 +48,8 @@ function isNavPage(hit: CategoryPromotionHit): boolean {
  *   ("stab" keeps STAB Protocol first).
  */
 export function findCategoryToPromote<T extends CategoryPromotionHit>(
-	hits: T[],
-	categoryHits: T[],
+	hits: Array<T>,
+	categoryHits: Array<T>,
 	query: string
 ): T | null {
 	const normalizedQuery = normalize(query)
@@ -81,7 +81,7 @@ export function findCategoryToPromote<T extends CategoryPromotionHit>(
  * Moves the promoted category to the front of the page, keeping the page
  * length unchanged so infinite-scroll pagination still detects the last page.
  */
-export function mergePromotedCategory<T extends CategoryPromotionHit>(hits: T[], promoted: T | null): T[] {
+export function mergePromotedCategory<T extends CategoryPromotionHit>(hits: Array<T>, promoted: T | null): Array<T> {
 	if (!promoted) return hits
 	if (hits[0]?.route === promoted.route) return hits
 	const rest = hits.filter((hit) => hit.route !== promoted.route)

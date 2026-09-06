@@ -5,14 +5,14 @@ import type { ChatSession, FactCheckedUsage, ResearchUsage } from '~/containers/
 export const SESSIONS_QUERY_KEY = 'llamaai-sessions'
 
 export interface SessionListData {
-	sessions: ChatSession[]
+	sessions: Array<ChatSession>
 	usage: ResearchUsage | null
 	factCheckedUsage: FactCheckedUsage | null
 	alertsUsage: AlertsUsage | null
 }
 
 export interface SessionListPage {
-	sessions: ChatSession[]
+	sessions: Array<ChatSession>
 	usage: ResearchUsage | null
 	factCheckedUsage: FactCheckedUsage | null
 	alertsUsage: AlertsUsage | null
@@ -21,7 +21,7 @@ export interface SessionListPage {
 }
 
 export interface SessionListResponse {
-	sessions: ChatSession[]
+	sessions: Array<ChatSession>
 	hasMore?: boolean
 	nextOffset?: number
 	usage?: {
@@ -50,7 +50,7 @@ export function flattenSessionListData(data: SessionListInfiniteData | undefined
 	// Infinite pages can overlap after optimistic inserts, moves, or refetches.
 	// Keep the first copy because page order already encodes recency.
 	const seenSessionIds = new Set<string>()
-	const sessions: ChatSession[] = []
+	const sessions: Array<ChatSession> = []
 
 	for (const page of data.pages) {
 		for (const session of page.sessions) {
@@ -86,7 +86,7 @@ export function mergeOptimisticSessions(
 		realSessionIds.add(session.sessionId)
 	}
 
-	const optimisticSessions: ChatSession[] = []
+	const optimisticSessions: Array<ChatSession> = []
 	for (const existingPage of data.pages) {
 		for (const session of existingPage.sessions) {
 			// Keep local fake sessions visible until the backend returns the real id
@@ -140,11 +140,11 @@ export function removeSessionsFromInfiniteData(
 	if (!data) return data
 
 	let changed = false
-	const pages: SessionListPage[] = []
+	const pages: Array<SessionListPage> = []
 
 	for (const page of data.pages) {
 		let pageChanged = false
-		const sessions: ChatSession[] = []
+		const sessions: Array<ChatSession> = []
 
 		for (const session of page.sessions) {
 			if (sessionIds.has(session.sessionId)) {
@@ -169,11 +169,11 @@ export function removeSessionFromInfiniteData(
 	if (!data) return data
 
 	let changed = false
-	const pages: SessionListPage[] = []
+	const pages: Array<SessionListPage> = []
 
 	for (const page of data.pages) {
 		let pageChanged = false
-		const sessions: ChatSession[] = []
+		const sessions: Array<ChatSession> = []
 
 		for (const session of page.sessions) {
 			if (session.sessionId === sessionId) {
@@ -199,11 +199,11 @@ export function updateSessionInInfiniteData(
 	if (!data) return data
 
 	let changed = false
-	const pages: SessionListPage[] = []
+	const pages: Array<SessionListPage> = []
 
 	for (const page of data.pages) {
 		let pageChanged = false
-		const sessions: ChatSession[] = []
+		const sessions: Array<ChatSession> = []
 
 		for (const session of page.sessions) {
 			if (session.sessionId !== sessionId) {
@@ -243,11 +243,11 @@ export function moveSessionToTopInInfiniteData(
 	if (!data) return data
 
 	let movedSession: ChatSession | null = null
-	const pages: SessionListPage[] = []
+	const pages: Array<SessionListPage> = []
 
 	for (const page of data.pages) {
 		let pageChanged = false
-		const sessions: ChatSession[] = []
+		const sessions: Array<ChatSession> = []
 
 		for (const session of page.sessions) {
 			if (session.sessionId !== sessionId) {

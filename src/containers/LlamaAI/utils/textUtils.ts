@@ -21,14 +21,14 @@ function escapeHtml(str: string): string {
 	return str.replace(HTML_ESCAPE_REGEX, (char) => getOwnRegistryValue(HTML_ESCAPE_MAP, char) || char)
 }
 
-export function highlightWord(text: string, words: string[]) {
+export function highlightWord(text: string, words: Array<string>) {
 	if (typeof text !== 'string') return ''
 
 	const escapedText = escapeHtml(text)
 
 	if (!text || !Array.isArray(words) || words.length === 0) return escapedText
 
-	const escapedWords: string[] = []
+	const escapedWords: Array<string> = []
 	for (const word of words) {
 		if (!word || !word.trim()) continue
 		const escapedWord = escapeHtml(word)

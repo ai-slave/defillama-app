@@ -34,14 +34,14 @@ const REVByChain = (props: IChainsByREVPageData) => {
 		<Layout
 			title="Real Economic Value (REV) by Blockchain - DefiLlama"
 			description="Compare Real Economic Value (REV) by chain, the sum of chain fees and MEV tips. Track 24h and 30d rankings."
-			canonicalUrl={`/rev/chains`}
+			canonicalUrl="/rev/chains"
 			pageName={pageName}
 		>
 			<TableWithSearch
 				data={props.chains}
 				columns={columns}
-				placeholder={'Search chains...'}
-				columnToSearch={'name'}
+				placeholder="Search chains..."
+				columnToSearch="name"
 				header="Chain Rankings"
 				headingAs="h1"
 				rowSize={64}

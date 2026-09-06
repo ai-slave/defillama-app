@@ -5,8 +5,8 @@ import type { ComparisonEntry, PricePoint, TimelinePoint } from './types'
 const DAY_IN_SECONDS = 86_400
 
 export type TokenPnlResult = {
-	priceSeries: PricePoint[]
-	timeline: TimelinePoint[]
+	priceSeries: Array<PricePoint>
+	timeline: Array<TimelinePoint>
 	metrics: {
 		startPrice: number
 		endPrice: number
@@ -37,11 +37,11 @@ export type TokenPnlComparisonResult = Pick<
 
 export function formatPriceSeriesFromCoinsChart(
 	prices: Array<{ timestamp: number; price: number }> | undefined
-): PricePoint[] {
+): Array<PricePoint> {
 	return prices ?? []
 }
 
-export function buildAscendingPriceChartSource(series: PricePoint[], start: number, end: number) {
+export function buildAscendingPriceChartSource(series: Array<PricePoint>, start: number, end: number) {
 	const source: Array<[number, number]> = []
 	const firstPrice = series[0].price
 	const lastPrice = series[series.length - 1].price
@@ -74,13 +74,13 @@ export async function fetchPriceSeries(
 	tokenId: string,
 	start: number | null,
 	end: number | null
-): Promise<PricePoint[]> {
+): Promise<Array<PricePoint>> {
 	if (!tokenId || start == null || end == null || end <= start) return []
 	const key = `coingecko:${tokenId}`
 	const rangeSeconds = end - start
 	const intervalSeconds =
 		rangeSeconds <= 7 * DAY_IN_SECONDS ? 3600 : rangeSeconds <= 90 * DAY_IN_SECONDS ? 14_400 : DAY_IN_SECONDS
-	const span = Math.max(1, Math.min(5_000, Math.ceil(rangeSeconds / intervalSeconds)))
+	const span = Math.max(1, Math.min(5000, Math.ceil(rangeSeconds / intervalSeconds)))
 	const response = await fetchCoinsChart({
 		coin: key,
 		start,
@@ -90,7 +90,7 @@ export async function fetchPriceSeries(
 	return formatPriceSeriesFromCoinsChart(response?.coins?.[key]?.prices)
 }
 
-const calculateMaxDrawdown = (series: PricePoint[]): number => {
+const calculateMaxDrawdown = (series: Array<PricePoint>): number => {
 	if (series.length === 0) return 0
 	let peak = series[0].price
 	let maxDrawdown = 0
@@ -108,9 +108,9 @@ const calculateMaxDrawdown = (series: PricePoint[]): number => {
 
 const SECONDS_PER_YEAR = 365 * DAY_IN_SECONDS
 
-const calculateAnnualizedVolatility = (series: PricePoint[]): number => {
+const calculateAnnualizedVolatility = (series: Array<PricePoint>): number => {
 	if (series.length < 2) return 0
-	const returns: number[] = []
+	const returns: Array<number> = []
 	let totalDeltaSec = 0
 	let deltaCount = 0
 	for (let i = 1; i < series.length; i++) {
@@ -128,7 +128,7 @@ const calculateAnnualizedVolatility = (series: PricePoint[]): number => {
 	const avgIntervalSec = deltaCount > 0 ? totalDeltaSec / deltaCount : DAY_IN_SECONDS
 	const periodsPerYear = SECONDS_PER_YEAR / avgIntervalSec
 	const mean = returns.reduce((acc, value) => acc + value, 0) / returns.length
-	const variance = returns.reduce((acc, value) => acc + Math.pow(value - mean, 2), 0) / (returns.length - 1 || 1)
+	const variance = returns.reduce((acc, value) => acc + (value - mean) ** 2, 0) / (returns.length - 1 || 1)
 	const periodVol = Math.sqrt(variance)
 	return periodVol * Math.sqrt(periodsPerYear) * 100
 }
@@ -152,7 +152,7 @@ const calculateYAxisConfigFromPrices = (
 		}
 	}
 
-	const magnitude = Math.pow(10, Math.floor(Math.log10(range)))
+	const magnitude = 10 ** Math.floor(Math.log10(range))
 	const normalized = range / magnitude
 	const interval =
 		normalized <= 1 ? magnitude * 0.2 : normalized <= 2 ? magnitude * 0.5 : normalized <= 5 ? magnitude : magnitude * 2
@@ -217,9 +217,9 @@ export async function computeTokenPnl(params: {
 	const primaryColor = isPositive ? '#10b981' : '#ef4444'
 	const holdingPeriodDays = Math.max(1, Math.round((end - start) / DAY_IN_SECONDS))
 	const annualizedBase = Math.max(Number.EPSILON, 1 + percentChange / 100)
-	const annualizedReturn = (Math.pow(annualizedBase, 365 / holdingPeriodDays) - 1) * 100
+	const annualizedReturn = (annualizedBase ** (365 / holdingPeriodDays) - 1) * 100
 
-	const timeline: TimelinePoint[] = []
+	const timeline: Array<TimelinePoint> = []
 	let rangeHigh = Number.NEGATIVE_INFINITY
 	let rangeLow = Number.POSITIVE_INFINITY
 

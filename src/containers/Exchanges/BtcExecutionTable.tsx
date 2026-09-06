@@ -123,7 +123,7 @@ const columns = [
 	})
 ]
 
-export function BtcExecutionTable({ rows }: { rows: BtcExecutionRowModel[] }) {
+export function BtcExecutionTable({ rows }: { rows: Array<BtcExecutionRowModel> }) {
 	return (
 		<TableWithSearch<BtcExecutionRowModel>
 			data={rows}

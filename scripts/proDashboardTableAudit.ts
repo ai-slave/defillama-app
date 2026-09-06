@@ -17,10 +17,10 @@ type DashboardStreamData = DashboardStreamChunk extends infer Chunk
 export interface ProDashboardTableAuditResult {
 	expected: number
 	received: number
-	empty: string[]
-	missing: string[]
-	duplicate: string[]
-	unexpected: string[]
+	empty: Array<string>
+	missing: Array<string>
+	duplicate: Array<string>
+	unexpected: Array<string>
 }
 
 function sourceIdentity(source: ProDashboardTableSource) {
@@ -36,14 +36,14 @@ function isEmptyPayload(data: DashboardStreamData) {
 }
 
 export function auditProDashboardTableSources(
-	expectedSources: ProDashboardTableSource[],
-	chunks: DashboardStreamChunk[]
+	expectedSources: Array<ProDashboardTableSource>,
+	chunks: Array<DashboardStreamChunk>
 ): ProDashboardTableAuditResult {
 	const receivedCounts = new Map<string, number>()
 	const empty = new Set<string>()
 	const add = (
 		chunkType: ProDashboardTableChunkType,
-		queryKey: readonly unknown[] | string,
+		queryKey: ReadonlyArray<unknown> | string,
 		data: DashboardStreamData
 	) => {
 		const key = typeof queryKey === 'string' ? queryKey : JSON.stringify(queryKey)

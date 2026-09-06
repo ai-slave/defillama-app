@@ -45,7 +45,7 @@ function seedCell(type: NotebookCellType, source: string, extras: Partial<Notebo
 	return { ...cell, ...extras }
 }
 
-function welcomeNotebookCells(): NotebookCell[] {
+function welcomeNotebookCells(): Array<NotebookCell> {
 	return [
 		seedCell(
 			'markdown',
@@ -462,7 +462,7 @@ export interface NotebookCell {
 	runError: string | null
 	lastRun: LastRunMeta | null
 	loadingStage: string | null
-	pendingTables: PendingTable[]
+	pendingTables: Array<PendingTable>
 	dirty: boolean
 }
 
@@ -477,11 +477,11 @@ export interface QueryTab {
 	lastRun: LastRunMeta | null
 	loadingStage: string | null
 	busyTaskId: string | null
-	pendingTables: PendingTable[]
+	pendingTables: Array<PendingTable>
 	dirty: boolean
 	chartConfig?: ChartConfig
 	mode: TabMode
-	cells?: NotebookCell[]
+	cells?: Array<NotebookCell>
 	activeCellId?: string
 	cellsDirty?: boolean
 }
@@ -489,16 +489,16 @@ export interface QueryTab {
 type PersistedCell = Pick<NotebookCell, 'id' | 'type' | 'source' | 'chartConfig' | 'preferredView'>
 type PersistedTab = Pick<QueryTab, 'id' | 'title' | 'titleAuto' | 'sql' | 'chartConfig'> & {
 	mode?: TabMode
-	cells?: PersistedCell[]
+	cells?: Array<PersistedCell>
 	activeCellId?: string
 }
 interface PersistedState {
-	tabs: PersistedTab[]
+	tabs: Array<PersistedTab>
 	activeTabId: string
 }
 
 interface TabsState {
-	tabs: QueryTab[]
+	tabs: Array<QueryTab>
 	activeTabId: string
 }
 
@@ -551,7 +551,7 @@ function makeCell(type: NotebookCellType, source = ''): NotebookCell {
 	}
 }
 
-function blankNotebookTab(initialCells?: NotebookCell[], title = 'Untitled notebook'): QueryTab {
+function blankNotebookTab(initialCells?: Array<NotebookCell>, title = 'Untitled notebook'): QueryTab {
 	const cells = initialCells && initialCells.length > 0 ? initialCells : [makeCell('sql', '')]
 	return {
 		id: createId(),
@@ -573,7 +573,7 @@ function blankNotebookTab(initialCells?: NotebookCell[], title = 'Untitled noteb
 	}
 }
 
-function seedDefaultTabs(): QueryTab[] {
+function seedDefaultTabs(): Array<QueryTab> {
 	const welcome = blankNotebookTab(welcomeNotebookCells(), 'Welcome')
 	const hacks = { ...blankTab(HACKS_OVER_50M_SQL), title: 'Hacks over $50M', titleAuto: false }
 	return [welcome, hacks]
@@ -604,13 +604,13 @@ function hydrate(): TabsState {
 		const seeded = seedDefaultTabs()
 		return { tabs: seeded, activeTabId: seeded[0].id }
 	}
-	const tabs: QueryTab[] = persisted.tabs
+	const tabs: Array<QueryTab> = persisted.tabs
 		.filter((p) => p && typeof p.id === 'string' && typeof p.sql === 'string')
 		.map((p) => {
 			const mode: TabMode = p.mode === 'notebook' ? 'notebook' : 'query'
 			const cellsRaw =
 				mode === 'notebook' && Array.isArray(p.cells)
-					? (p.cells.map(hydrateCell).filter((c): c is NotebookCell => c !== null) as NotebookCell[])
+					? (p.cells.map(hydrateCell).filter((c): c is NotebookCell => c !== null) as Array<NotebookCell>)
 					: undefined
 			const cells = cellsRaw && cellsRaw.length > 0 ? cellsRaw : mode === 'notebook' ? [makeCell('sql', '')] : undefined
 			const activeCellId =
@@ -653,13 +653,13 @@ export interface OpenTabOptions {
 }
 
 export interface OpenNotebookTabOptions {
-	cells?: NotebookCell[]
+	cells?: Array<NotebookCell>
 	title?: string
 	focus?: boolean
 }
 
 export interface UseSqlTabsReturn {
-	tabs: QueryTab[]
+	tabs: Array<QueryTab>
 	activeTabId: string
 	activeTab: QueryTab
 	openTab: (options?: OpenTabOptions) => string

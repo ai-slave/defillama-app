@@ -16,7 +16,7 @@ interface TokenData {
 	}
 }
 
-const RUNE_KPIS: [string, string][] = [
+const RUNE_KPIS: Array<[string, string]> = [
 	['marketCap', 'Market Cap'],
 	['fdv', 'FDV'],
 	['mcapFdv', 'Market Cap / FDV'],
@@ -26,7 +26,7 @@ const RUNE_KPIS: [string, string][] = [
 ]
 
 // RUNE-denominated only — USD burn figures dropped per the protocol's review.
-const BURN_KPIS: [string, string][] = [
+const BURN_KPIS: Array<[string, string]> = [
 	['burnedLifetime', 'Burned (Lifetime)'],
 	['burned30d', 'Burned (30D)'],
 	['burnRate', 'Burn Rate']

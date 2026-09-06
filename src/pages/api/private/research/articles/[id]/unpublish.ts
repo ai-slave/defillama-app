@@ -41,7 +41,7 @@ function sectionPathForArticlePath(articlePath: string): string {
 	return articlePath.split('/').slice(0, 3).join('/')
 }
 
-function unpublishPurgePaths(before: ArticleDocument | null): string[] {
+function unpublishPurgePaths(before: ArticleDocument | null): Array<string> {
 	const beforePath = articlePublicPath(before)
 	const purgePaths = new Set<string>()
 	if (beforePath) {

@@ -2,9 +2,9 @@ import type { ResearchNewsletterItem, ResearchNewsletterListResponse } from '~/c
 import { cachedResult } from '~/server/api/resultCache'
 
 const DEFAULT_RESEARCH_NEWSLETTER_FEED_URL = 'https://rss.beehiiv.com/feeds/yFIFdSjo5o.xml'
-const FEED_CACHE_TTL_MS = 10 * 60 * 1_000
-const FEED_STALE_WHILE_REVALIDATE_MS = 6 * 60 * 60 * 1_000
-const FEED_FETCH_TIMEOUT_MS = 8_000
+const FEED_CACHE_TTL_MS = 10 * 60 * 1000
+const FEED_STALE_WHILE_REVALIDATE_MS = 6 * 60 * 60 * 1000
+const FEED_FETCH_TIMEOUT_MS = 8000
 const MAX_FEED_BYTES = 2 * 1024 * 1024
 const MAX_LANDING_ITEMS = 5
 
@@ -32,8 +32,8 @@ function decodeXmlEntities(value: string): string {
 			if (
 				!Number.isInteger(codePoint) ||
 				codePoint <= 0 ||
-				codePoint > 0x10ffff ||
-				(codePoint >= 0xd800 && codePoint <= 0xdfff)
+				codePoint > 0x10_ff_ff ||
+				(codePoint >= 0xd8_00 && codePoint <= 0xdf_ff)
 			) {
 				return entity
 			}
@@ -80,8 +80,8 @@ function asIsoDate(value: string | null | undefined): string | null {
 	return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }
 
-export function parseResearchNewsletterFeed(xml: string): ResearchNewsletterItem[] {
-	const items: ResearchNewsletterItem[] = []
+export function parseResearchNewsletterFeed(xml: string): Array<ResearchNewsletterItem> {
+	const items: Array<ResearchNewsletterItem> = []
 	for (const match of xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item\s*>/gi)) {
 		const itemXml = match[1]
 		if (!itemXml) continue
@@ -103,7 +103,7 @@ export function parseResearchNewsletterFeed(xml: string): ResearchNewsletterItem
 	return items
 }
 
-async function fetchResearchNewsletterItems(feedUrl: string): Promise<ResearchNewsletterItem[]> {
+async function fetchResearchNewsletterItems(feedUrl: string): Promise<Array<ResearchNewsletterItem>> {
 	const response = await fetch(feedUrl, {
 		headers: {
 			Accept: 'application/rss+xml, application/xml;q=0.9, text/xml;q=0.8',
@@ -129,7 +129,7 @@ async function fetchResearchNewsletterItems(feedUrl: string): Promise<ResearchNe
 	return parseResearchNewsletterFeed(xml)
 }
 
-function getCachedResearchNewsletterItems(): Promise<ResearchNewsletterItem[]> {
+function getCachedResearchNewsletterItems(): Promise<Array<ResearchNewsletterItem>> {
 	const feedUrl = process.env.BEEHIIV_RESEARCH_RSS_URL?.trim() || DEFAULT_RESEARCH_NEWSLETTER_FEED_URL
 
 	return cachedResult(
@@ -144,16 +144,16 @@ function getCachedResearchNewsletterItems(): Promise<ResearchNewsletterItem[]> {
 	)
 }
 
-export async function getResearchNewsletterItems(): Promise<ResearchNewsletterItem[]> {
+export async function getResearchNewsletterItems(): Promise<Array<ResearchNewsletterItem>> {
 	return (await getCachedResearchNewsletterItems()).slice(0, MAX_LANDING_ITEMS)
 }
 
-export function getResearchNewsletterArchiveItems(): Promise<ResearchNewsletterItem[]> {
+export function getResearchNewsletterArchiveItems(): Promise<Array<ResearchNewsletterItem>> {
 	return getCachedResearchNewsletterItems()
 }
 
 export function searchResearchNewsletterItems(
-	items: ResearchNewsletterItem[],
+	items: Array<ResearchNewsletterItem>,
 	query: string,
 	limit: number
 ): ResearchNewsletterListResponse {

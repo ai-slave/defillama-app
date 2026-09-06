@@ -193,7 +193,7 @@ export async function getCexAnalyticsSnapshot(): Promise<CexAnalyticsSnapshotRes
 	}
 }
 
-export async function getCexAnalyticsTotals(): Promise<CexAnalyticsTotalsPoint[]> {
+export async function getCexAnalyticsTotals(): Promise<Array<CexAnalyticsTotalsPoint>> {
 	const rows = await llamaDb.any<CexAnalyticsTotalsPoint>(`
 		SELECT
 			EXTRACT(EPOCH FROM date)::int AS date,
@@ -210,7 +210,7 @@ export async function getCexAnalyticsTotals(): Promise<CexAnalyticsTotalsPoint[]
 export async function getCexAnalyticsMarketShare(
 	metric: Metric,
 	topN: number
-): Promise<CexAnalyticsMarketSharePoint[]> {
+): Promise<Array<CexAnalyticsMarketSharePoint>> {
 	const cexNameLookup = await getCexNameLookup()
 	const rows = await llamaDb.any<DailySourceRow>(`
 		SELECT
@@ -255,7 +255,7 @@ export async function getCexAnalyticsMarketShare(
 		valuesByDate.set(row.date, dateMap)
 	}
 
-	const points: CexAnalyticsMarketSharePoint[] = []
+	const points: Array<CexAnalyticsMarketSharePoint> = []
 	// SQL rows are ordered by date, so the Map's insertion order is already chronological.
 	for (const [date, venueMap] of valuesByDate) {
 		let total = 0

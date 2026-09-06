@@ -22,7 +22,7 @@ export interface MultiChartConfig {
 	id: string
 	kind: 'multi'
 	name?: string
-	items: ChartConfig[]
+	items: Array<ChartConfig>
 	grouping?: DashboardGrouping
 	colSpan?: StoredColSpan
 	showCumulative?: boolean
@@ -129,10 +129,10 @@ export interface ChartBuilderConfig {
 		chainCategoryFilterMode: 'include' | 'exclude'
 		protocolCategoryFilterMode: 'include' | 'exclude'
 		protocol?: string
-		chains: string[]
-		chainCategories?: string[]
-		protocolCategories?: string[]
-		categories: string[]
+		chains: Array<string>
+		chainCategories?: Array<string>
+		protocolCategories?: Array<string>
+		categories: Array<string>
 		groupBy: 'protocol'
 		limit: number
 		chartType: 'stackedBar' | 'stackedArea' | 'line' | 'treemap'
@@ -299,7 +299,7 @@ export interface RWAAssetChartConfig {
 	kind: 'rwa-asset'
 	assetId: string
 	assetName: string
-	metrics: RWAOverviewChartMetric[]
+	metrics: Array<RWAOverviewChartMetric>
 	colSpan?: StoredColSpan
 }
 
@@ -308,13 +308,13 @@ export type SqlSnapshotValue =
 	| number
 	| boolean
 	| null
-	| SqlSnapshotValue[]
+	| Array<SqlSnapshotValue>
 	| { [key: string]: SqlSnapshotValue }
 
 export interface SqlSnapshot {
-	columns: { name: string; type: string }[]
+	columns: Array<{ name: string; type: string }>
 	/** New snapshots are positional; object rows remain readable for persisted legacy snapshots. */
-	rows: SqlSnapshotValue[][] | Record<string, SqlSnapshotValue>[]
+	rows: Array<Array<SqlSnapshotValue>> | Array<Record<string, SqlSnapshotValue>>
 	computedAt: string
 	rowCount: number
 	truncated?: boolean
@@ -323,7 +323,7 @@ export interface SqlSnapshot {
 
 export interface SqlQueryRecipe {
 	sql: string
-	tableSources: TableSource[]
+	tableSources: Array<TableSource>
 }
 
 export interface SqlChartConfig {
@@ -358,7 +358,7 @@ export type ChartConfig =
 	| (ChartConfigBase<ChainChartType> & Extract<ChartSubject, { subjectType: 'chain' }>)
 	| (ChartConfigBase<ProtocolChartType> & Extract<ChartSubject, { subjectType: 'protocol' }>)
 
-export function limitMultiChartItems(items: ChartConfig[]): ChartConfig[] {
+export function limitMultiChartItems(items: Array<ChartConfig>): Array<ChartConfig> {
 	return items.length > MAX_MULTI_CHART_SERIES ? items.slice(0, MAX_MULTI_CHART_SERIES) : items
 }
 
@@ -375,12 +375,12 @@ export interface YieldsFilters {
 	tvlMax?: number
 	baseApyMin?: number
 	baseApyMax?: number
-	chains?: string[]
-	protocols?: string[]
-	tokens?: string[]
+	chains?: Array<string>
+	protocols?: Array<string>
+	tokens?: Array<string>
 	hasRewards?: boolean
 	stablesOnly?: boolean
-	categories?: string[]
+	categories?: Array<string>
 }
 
 export interface StablecoinsDatasetTableConfig extends DatasetTableConfigBase {
@@ -404,22 +404,22 @@ export type CexDatasetTableConfig =
 
 export interface TokenUsageDatasetTableConfig extends DatasetTableConfigBase {
 	datasetType: 'token-usage'
-	tokenSymbols: string[]
+	tokenSymbols: Array<string>
 	includeCex: boolean
 }
 
 export interface YieldsDatasetTableConfig extends DatasetTableConfigBase {
 	datasetType: 'yields'
-	chains: string[]
+	chains: Array<string>
 	filters?: YieldsFilters
-	columnOrder?: string[]
+	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
 }
 
 export interface ChainsDatasetTableConfig extends DatasetTableConfigBase {
 	datasetType: 'chains'
 	category?: string
-	columnOrder?: string[]
+	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
 }
 
@@ -458,7 +458,7 @@ export interface Protocol {
 	logo?: string
 	slug: string
 	tvl: number
-	chains: string[]
+	chains: Array<string>
 	listedAt?: number
 	deprecated?: boolean
 	geckoId?: string | null
@@ -720,7 +720,7 @@ export const PROTOCOL_CHART_TYPES = [
 	'borrowed',
 	'pfRatio',
 	'psRatio'
-] as const satisfies readonly ProDashboardChartType[]
+] as const satisfies ReadonlyArray<ProDashboardChartType>
 
 export const CHAIN_CHART_TYPES = [
 	'tvl',
@@ -745,7 +745,7 @@ export const CHAIN_CHART_TYPES = [
 	'bridgedTvl',
 	'chainMcap',
 	'chainPrice'
-] as const satisfies readonly ProDashboardChartType[]
+] as const satisfies ReadonlyArray<ProDashboardChartType>
 
 const PROTOCOL_CHART_TYPE_SET: ReadonlySet<string> = new Set(PROTOCOL_CHART_TYPES)
 const CHAIN_CHART_TYPE_SET: ReadonlySet<string> = new Set(CHAIN_CHART_TYPES)

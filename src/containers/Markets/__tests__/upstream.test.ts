@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchJson: vi.fn(),
@@ -21,7 +21,7 @@ beforeEach(() => {
 })
 
 describe('shared markets upstream data', () => {
-	it('requests the token markets list', async () => {
+	test('requests the token markets list', async () => {
 		const upstream = await import('../server/upstream')
 
 		await upstream.fetchTokenMarketsListFromNetwork()
@@ -29,7 +29,7 @@ describe('shared markets upstream data', () => {
 		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/tokens/list.json')
 	})
 
-	it('requests canonical token exchange listings', async () => {
+	test('requests canonical token exchange listings', async () => {
 		const upstream = await import('../server/upstream')
 
 		await upstream.fetchTokenExchangeListingsFromNetwork()
@@ -37,7 +37,7 @@ describe('shared markets upstream data', () => {
 		expect(mocks.fetchJson).toHaveBeenCalledWith('https://markets.example.com/tokens/exchange-listings.json')
 	})
 
-	it('requests the exchange directory used by CEX and exchange routes', async () => {
+	test('requests the exchange directory used by CEX and exchange routes', async () => {
 		const upstream = await import('../server/upstream')
 
 		await upstream.fetchExchangeDirectoryFromNetwork()

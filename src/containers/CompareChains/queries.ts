@@ -7,9 +7,9 @@ type ChainOption = {
 	logo: string
 }
 
-export async function getCompareChainsPageData(): Promise<{ chains: ChainOption[] }> {
+export async function getCompareChainsPageData(): Promise<{ chains: Array<ChainOption> }> {
 	const pData = await fetchProtocols()
-	const chains: ChainOption[] = (pData?.chains ?? []).map((val) => ({
+	const chains: Array<ChainOption> = (pData?.chains ?? []).map((val) => ({
 		value: val,
 		label: val,
 		logo: chainIconUrl(val)

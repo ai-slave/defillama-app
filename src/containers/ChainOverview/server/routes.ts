@@ -80,7 +80,7 @@ export async function resolveChainParam(chain: string): Promise<ChainRoute | nul
 	return resolveChainParamFromMetadata(chain, await getMetadataCache())
 }
 
-export function getChainSlugsFromMetadata(metadataCache: MetadataCache): string[] {
+export function getChainSlugsFromMetadata(metadataCache: MetadataCache): Array<string> {
 	const slugs = new Set<string>()
 
 	for (const chainSlug in metadataCache.chainMetadata) {
@@ -99,7 +99,7 @@ export async function getChainStaticPaths(): Promise<Array<StaticParamPath<'chai
 	return getChainSlugsFromMetadata(await getMetadataCache()).map((chain) => ({ params: { chain } }))
 }
 
-export function getChainMetricSlugsFromMetadata(metadataCache: MetadataCache, metric: ChainMetric): string[] {
+export function getChainMetricSlugsFromMetadata(metadataCache: MetadataCache, metric: ChainMetric): Array<string> {
 	const slugs = new Set<string>()
 
 	for (const chainSlug in metadataCache.chainMetadata) {
@@ -124,8 +124,8 @@ export async function getStablecoinChainStaticPaths(limit = 11): Promise<Array<S
 		.map((chain) => ({ params: { chain } }))
 }
 
-export function getChainSitemapRoutes(metadataCache: MetadataCache): string[] {
-	const routes: string[] = []
+export function getChainSitemapRoutes(metadataCache: MetadataCache): Array<string> {
+	const routes: Array<string> = []
 
 	for (const chainSlug of getChainSlugsFromMetadata(metadataCache)) {
 		routes.push(`chain/${chainSlug}`)

@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getMetricUnitGroup, METRIC_UNIT_GROUP_SYMBOL, resolveSeriesAxisLayout } from './metricGroups'
 
 describe('getMetricUnitGroup', () => {
-	it('treats dollar metrics as the usd group', () => {
+	test('treats dollar metrics as the usd group', () => {
 		expect(getMetricUnitGroup('fees')).toBe('usd')
 		expect(getMetricUnitGroup('holdersRevenue')).toBe('usd')
 		expect(getMetricUnitGroup('revenue')).toBe('usd')
@@ -10,7 +10,7 @@ describe('getMetricUnitGroup', () => {
 		expect(getMetricUnitGroup('gasUsed')).toBe('usd')
 	})
 
-	it('classifies percent, count and ratio metrics', () => {
+	test('classifies percent, count and ratio metrics', () => {
 		expect(getMetricUnitGroup('medianApy')).toBe('percent')
 		expect(getMetricUnitGroup('txs')).toBe('count')
 		expect(getMetricUnitGroup('activeUsers')).toBe('count')
@@ -18,14 +18,14 @@ describe('getMetricUnitGroup', () => {
 		expect(getMetricUnitGroup('psRatio')).toBe('ratio')
 	})
 
-	it('falls back to usd for unknown or missing metric types', () => {
+	test('falls back to usd for unknown or missing metric types', () => {
 		expect(getMetricUnitGroup(undefined)).toBe('usd')
 		expect(getMetricUnitGroup('somethingNew')).toBe('usd')
 	})
 })
 
 describe('resolveSeriesAxisLayout', () => {
-	it('keeps two dollar metrics on a single shared axis', () => {
+	test('keeps two dollar metrics on a single shared axis', () => {
 		const layout = resolveSeriesAxisLayout([{ metricType: 'fees' }, { metricType: 'holdersRevenue' }])
 
 		expect(layout.needMultipleAxes).toBe(false)
@@ -33,7 +33,7 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.seriesAxisIndexes).toEqual([0, 0])
 	})
 
-	it('splits axes when units genuinely differ', () => {
+	test('splits axes when units genuinely differ', () => {
 		const layout = resolveSeriesAxisLayout([{ metricType: 'fees' }, { metricType: 'activeUsers' }])
 
 		expect(layout.needMultipleAxes).toBe(true)
@@ -42,7 +42,7 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.seriesAxisIndexes).toEqual([0, 1])
 	})
 
-	it('assigns same-unit series to the same axis regardless of order', () => {
+	test('assigns same-unit series to the same axis regardless of order', () => {
 		const layout = resolveSeriesAxisLayout([
 			{ metricType: 'fees' },
 			{ metricType: 'medianApy' },
@@ -54,7 +54,7 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.seriesAxisIndexes).toEqual([0, 1, 0])
 	})
 
-	it('caps the axis count at three even with four distinct unit groups', () => {
+	test('caps the axis count at three even with four distinct unit groups', () => {
 		const layout = resolveSeriesAxisLayout([
 			{ metricType: 'fees' },
 			{ metricType: 'medianApy' },
@@ -66,7 +66,7 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.seriesAxisIndexes).toEqual([0, 1, 2, 2])
 	})
 
-	it('honors explicit yAxisIndex even for same-unit series', () => {
+	test('honors explicit yAxisIndex even for same-unit series', () => {
 		const layout = resolveSeriesAxisLayout([
 			{ metricType: 'tvl', yAxisIndex: 0 },
 			{ metricType: 'tvl', yAxisIndex: 1 }
@@ -77,7 +77,7 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.seriesAxisIndexes).toEqual([0, 1])
 	})
 
-	it('assigns units to sparse explicit axis indexes', () => {
+	test('assigns units to sparse explicit axis indexes', () => {
 		const layout = resolveSeriesAxisLayout([{ metricType: 'fees' }, { metricType: 'medianApy', yAxisIndex: 2 }])
 
 		expect(layout.axisCount).toBe(3)
@@ -87,9 +87,9 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.axisUnitGroups[2]).toBe('percent')
 	})
 
-	it('uses a single axis for a single repeated metric', () => {
+	test('uses a single axis for a single repeated metric', () => {
 		const layout = resolveSeriesAxisLayout([
-			{ metricType: 'volume', magnitude: 1_000 },
+			{ metricType: 'volume', magnitude: 1000 },
 			{ metricType: 'volume', magnitude: 1_000_000 }
 		])
 
@@ -97,7 +97,7 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.axisCount).toBe(1)
 	})
 
-	it('keeps similarly scaled dollar metrics on one axis', () => {
+	test('keeps similarly scaled dollar metrics on one axis', () => {
 		const layout = resolveSeriesAxisLayout([
 			{ metricType: 'fees', magnitude: 10_000_000 },
 			{ metricType: 'holdersRevenue', magnitude: 50_000_000 }
@@ -107,7 +107,7 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.seriesAxisIndexes).toEqual([0, 0])
 	})
 
-	it('splits different dollar metrics whose magnitudes would flatten the smaller series', () => {
+	test('splits different dollar metrics whose magnitudes would flatten the smaller series', () => {
 		const layout = resolveSeriesAxisLayout([
 			{ metricType: 'tokenPrice', magnitude: 65_000 },
 			{ metricType: 'tokenVolume', magnitude: 2_300_000_000 }
@@ -118,7 +118,7 @@ describe('resolveSeriesAxisLayout', () => {
 		expect(layout.seriesAxisIndexes).toEqual([0, 1])
 	})
 
-	it('maps unit groups to display symbols', () => {
+	test('maps unit groups to display symbols', () => {
 		expect(METRIC_UNIT_GROUP_SYMBOL.usd).toBe('$')
 		expect(METRIC_UNIT_GROUP_SYMBOL.percent).toBe('%')
 		expect(METRIC_UNIT_GROUP_SYMBOL.count).toBe('')

@@ -13,9 +13,9 @@ type FilterMode = ChartBuilderConfig['config']['chainFilterMode']
 
 export interface ProtocolBreakdownRequest {
 	metric: ProtocolBreakdownMetric
-	chains: string[]
+	chains: Array<string>
 	limit?: number
-	categories?: string[]
+	categories?: Array<string>
 	groupByParent?: boolean | undefined
 	chainFilterMode?: FilterMode
 	categoryFilterMode?: FilterMode
@@ -24,11 +24,11 @@ export interface ProtocolBreakdownRequest {
 export interface ProtocolChainBreakdownRequest {
 	protocol?: string | undefined
 	metric: ChartBuilderMetric
-	chains?: string[] | undefined
+	chains?: Array<string> | undefined
 	limit?: number
 	chainFilterMode?: FilterMode
-	chainCategories?: string[] | undefined
-	protocolCategories?: string[] | undefined
+	chainCategories?: Array<string> | undefined
+	protocolCategories?: Array<string> | undefined
 	chainCategoryFilterMode?: FilterMode
 	protocolCategoryFilterMode?: FilterMode
 }

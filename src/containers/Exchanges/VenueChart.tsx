@@ -48,14 +48,14 @@ interface MetricTab {
 	// Flow metrics render as bars; point-in-time levels render as lines.
 	type: 'bar' | 'line'
 	stack?: string
-	series: MetricSeriesSpec[]
+	series: Array<MetricSeriesSpec>
 }
 
 const SEGMENT_COLORS = { spot: '#5c9cf5', linear: '#9b7cf7', inverse: '#33b38f' }
 
 // One tab per metric; each keeps spot, linear perp, and inverse perp lines separate.
 // Tabs with no data for a venue are hidden.
-const VENUE_TABS: MetricTab[] = [
+const VENUE_TABS: Array<MetricTab> = [
 	{
 		id: 'volume',
 		label: 'Volume',

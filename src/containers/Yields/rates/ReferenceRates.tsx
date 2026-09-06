@@ -69,7 +69,7 @@ function ratesForAsset(current: StablecoinRatesCurrent, asset: string): RefRateS
 	if (asset === 'all') return current.rates
 	return current.by_asset.find((b) => b.asset.toLowerCase() === asset)?.rates ?? current.rates
 }
-function seriesForAsset(history: StablecoinRatesHistory, asset: string): RefRatePoint[] {
+function seriesForAsset(history: StablecoinRatesHistory, asset: string): Array<RefRatePoint> {
 	if (asset === 'all') return history.series
 	return history.by_asset.find((b) => b.asset.toLowerCase() === asset)?.series ?? history.series
 }
@@ -85,7 +85,7 @@ const RATES_ORDER: Record<string, number> = { Supply: 0, Borrow: 1, Spread: 2 }
 
 function ratesTooltipFormatter(params: unknown): string {
 	const items = getChartTooltipItems(params)
-	if (!items.length) return ''
+	if (items.length === 0) return ''
 	const first = items[0]!
 	const ts = getChartTooltipTimestamp(first)
 	const date = Number.isFinite(ts) ? formatTooltipChartDate(ts, 'daily') : ''
@@ -102,7 +102,13 @@ function ratesTooltipFormatter(params: unknown): string {
 
 const RATES_CHART_OPTIONS = { tooltip: { formatter: ratesTooltipFormatter } }
 
-function RatesChart({ points, onReady }: { points: RefRatePoint[]; onReady?: (inst: echarts.ECharts | null) => void }) {
+function RatesChart({
+	points,
+	onReady
+}: {
+	points: Array<RefRatePoint>
+	onReady?: (inst: echarts.ECharts | null) => void
+}) {
 	const [isDark] = useDarkModeManager()
 	const spec = buildRatesChart(points, isDark)
 	if (!spec) {
@@ -193,7 +199,7 @@ const RANGE_OPTIONS = [
 	{ value: '30d', label: '', shortLabel: '30d' },
 	{ value: '90d', label: '', shortLabel: '90d' },
 	{ value: 'max', label: '', shortLabel: 'Max' }
-] as const satisfies readonly ChartGroupingOption<RateRange>[]
+] as const satisfies ReadonlyArray<ChartGroupingOption<RateRange>>
 // A loaded range covers any range of equal-or-lower rank (slice locally instead of refetching).
 const RANGE_RANK: Record<RateRange, number> = { '30d': 0, '90d': 1, max: 2 }
 type ChartStatus = 'idle' | 'loading' | 'error'
@@ -212,12 +218,12 @@ function ReferenceRatesSummary({
 	rates: RefRateSet
 	delta: { supply: number; borrow: number | null; spread: number | null } | null
 	asset: string
-	assetOptions: ChartGroupingOption<string>[]
+	assetOptions: Array<ChartGroupingOption<string>>
 	onAssetChange: (asset: string) => void
 	range: RateRange
 	onRangeChange: (range: RateRange) => void
 	chartStatus: ChartStatus
-	points: RefRatePoint[]
+	points: Array<RefRatePoint>
 }) {
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	return (
@@ -337,10 +343,10 @@ function RatesByProtocolPanel({
 	sortDir,
 	onSort
 }: {
-	assetValues: string[]
+	assetValues: Array<string>
 	asset: string
 	onAssetChange: (asset: string) => void
-	rows: CompRow[]
+	rows: Array<CompRow>
 	sortKey: CompSortKey
 	sortDir: SortDir
 	onSort: (key: CompSortKey) => void
@@ -491,7 +497,7 @@ export function ReferenceRates({
 			})
 	}
 
-	const assetOptions: ChartGroupingOption<string>[] = [
+	const assetOptions: Array<ChartGroupingOption<string>> = [
 		{ value: 'all', label: '', shortLabel: 'All' },
 		...current.assets.map((a) => ({ value: a.toLowerCase(), label: '', shortLabel: a }))
 	]

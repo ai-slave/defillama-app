@@ -22,7 +22,7 @@ export default function LSTs(props: LSTOverviewProps) {
 		<Layout
 			title="Liquid Staking (LST) Rankings - TVL & APY - DefiLlama"
 			description="Compare liquid staking protocols by staked ETH, supply APY, market share, ETH peg, and fees. Track LST growth and dominance."
-			canonicalUrl={`/lst`}
+			canonicalUrl="/lst"
 			pageName={pageName}
 		>
 			<LSTOverview {...props} />

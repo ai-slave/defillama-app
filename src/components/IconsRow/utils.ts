@@ -10,7 +10,7 @@ export const yieldsChainHref = (chain: string) => `/yields?chain=${chain}`
 export const yieldsProjectHref = (project: string) => `/yields?project=${toYieldsProjectSlug(project)}`
 
 export const toChainIconItems = (
-	chains: string[],
+	chains: Array<string>,
 	getHref?: (chain: string) => string | undefined
 ): Array<IconsRowItem> => {
 	return chains.map((chain) => ({
@@ -22,9 +22,9 @@ export const toChainIconItems = (
 }
 
 export const toTokenIconItems = (
-	tokens: string[],
+	tokens: Array<string>,
 	options?: {
-		titles?: string[]
+		titles?: Array<string>
 		getHref?: (token: string) => string | undefined
 	}
 ): Array<IconsRowItem> => {

@@ -16,12 +16,12 @@ import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
 import { useYieldsServerTable } from '../useYieldsServerTable'
 import { YieldsTabs } from '../YieldsTabs'
 
-const EMPTY_CATEGORIES: string[] = []
-const EMPTY_STRINGS: string[] = []
-const EMPTY_TOKENS: TokenOption[] = []
+const EMPTY_CATEGORIES: Array<string> = []
+const EMPTY_STRINGS: Array<string> = []
+const EMPTY_TOKENS: Array<TokenOption> = []
 const LOOPS_DEFAULT_SORT = [{ id: 'loop_apy', desc: true }]
 
-type LoopRowsResponse = { rows: LoopTableRow[] }
+type LoopRowsResponse = { rows: Array<LoopTableRow> }
 
 const LoopView = ({
 	chainList = EMPTY_STRINGS,
@@ -30,11 +30,11 @@ const LoopView = ({
 	tokens = EMPTY_TOKENS,
 	attributeIds = BORROW_ATTRIBUTE_IDS
 }: {
-	chainList?: string[]
-	projectList?: string[]
-	evmChains?: string[]
-	tokens?: TokenOption[]
-	attributeIds?: AttributeId[]
+	chainList?: Array<string>
+	projectList?: Array<string>
+	evmChains?: Array<string>
+	tokens?: Array<TokenOption>
+	attributeIds?: Array<AttributeId>
 }) => {
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
 	const normalized = useLegacyYieldsUrlNormalizer({ page: 'loop', tokens })
@@ -78,7 +78,7 @@ const LoopView = ({
 				rightSlot={
 					<p
 						className={`hidden body-md text-secondary sm:block ${
-							total && selectedProjects.length && selectedChains.length ? '' : 'invisible'
+							total && selectedProjects.length > 0 && selectedChains.length > 0 ? '' : 'invisible'
 						}`}
 					>
 						Tracking <strong className="text-primary">{formatNumber(total)}</strong> looping strategies across{' '}
@@ -90,7 +90,7 @@ const LoopView = ({
 
 			<YieldFilters
 				showSearchOnMobile
-				tokenSearch={<IncludeTokens tokens={tokens} placeholder="Search tokens" data-alwaysdisplay={true} />}
+				tokenSearch={<IncludeTokens tokens={tokens} placeholder="Search tokens" data-alwaysdisplay />}
 				chainList={chainList}
 				selectedChains={selectedChains}
 				evmChains={evmChains}
@@ -98,7 +98,7 @@ const LoopView = ({
 				selectedProjects={selectedProjects}
 				projectsLabel="Protocols"
 				attributeIds={attributeIds}
-				availableRange={true}
+				availableRange
 				apyControls={
 					<>
 						<ApyViewControls />
@@ -106,7 +106,7 @@ const LoopView = ({
 						<LoopCountSelect />
 					</>
 				}
-				resetFilters={true}
+				resetFilters
 				resetFiltersLabel="Reset Filters"
 				prepareCsv={prepareCsv}
 			/>

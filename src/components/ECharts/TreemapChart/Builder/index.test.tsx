@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
 	const instance = {
@@ -59,7 +59,7 @@ describe('BuilderTreemapChart lifecycle', () => {
 		container.remove()
 	})
 
-	it('keeps one chart instance and its subscriptions across empty and populated data', async () => {
+	test('keeps one chart instance and its subscriptions across empty and populated data', async () => {
 		const onReady = vi.fn()
 
 		await act(async () => root.render(<BuilderTreemapChart data={[]} onReady={onReady} />))

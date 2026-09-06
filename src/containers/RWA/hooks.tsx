@@ -47,11 +47,11 @@ export { resolveRWAOverviewInclusionFlag } from './filterState'
 
 type PieChartDatum = { name: string; value: number }
 
-function emptyPieChartResult(): { pieChartData: PieChartDatum[]; pieChartStackColors: Record<string, string> } {
+function emptyPieChartResult(): { pieChartData: Array<PieChartDatum>; pieChartStackColors: Record<string, string> } {
 	return { pieChartData: [], pieChartStackColors: {} }
 }
 
-export const limitRwaPieChartData = (data: PieChartDatum[], maxLabels: number): PieChartDatum[] => {
+export const limitRwaPieChartData = (data: Array<PieChartDatum>, maxLabels: number): Array<PieChartDatum> => {
 	if (data.length <= maxLabels) return data
 
 	let othersValue = 0
@@ -63,7 +63,7 @@ export const limitRwaPieChartData = (data: PieChartDatum[], maxLabels: number): 
 	return visible
 }
 
-const buildStackColors = (order: string[]): Record<string, string> => {
+const buildStackColors = (order: Array<string>): Record<string, string> => {
 	const stackColors: Record<string, string> = {}
 	for (const [index, key] of order.entries()) {
 		stackColors[key] = CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
@@ -86,7 +86,11 @@ const updateNumberRangeQuery = (
 	})
 }
 
-const updateAttributeFilterStatesQuery = (queryKey: string, values: RWAAttributeFilterState[], router: NextRouter) => {
+const updateAttributeFilterStatesQuery = (
+	queryKey: string,
+	values: Array<RWAAttributeFilterState>,
+	router: NextRouter
+) => {
 	void pushShallowQuery(router, {
 		[queryKey]: updateAttributeFilterStatesQueryValue(values)
 	})
@@ -106,15 +110,15 @@ export const useRWATableQueryParams = ({
 	defaultInclusion,
 	mode
 }: {
-	assetNames: string[]
-	types: string[]
-	categories: string[]
-	platforms: string[]
-	assetGroups: string[]
-	assetClasses: string[]
-	rwaClassifications: string[]
-	accessModels: string[]
-	issuers: string[]
+	assetNames: Array<string>
+	types: Array<string>
+	categories: Array<string>
+	platforms: Array<string>
+	assetGroups: Array<string>
+	assetClasses: Array<string>
+	rwaClassifications: Array<string>
+	accessModels: Array<string>
+	issuers: Array<string>
 	categorySlug?: string | null
 	defaultInclusion: RWAOverviewInclusionDefaults
 	mode: RWAOverviewMode
@@ -189,10 +193,10 @@ export const useRWATableQueryParams = ({
 	} = useMemo(() => {
 		// If query param is 'None', return empty array. If no param, return all (default). Otherwise parse the array.
 		const parseArrayParam = (
-			param: string | string[] | undefined,
-			allValues: string[],
+			param: string | Array<string> | undefined,
+			allValues: Array<string>,
 			validSet: Set<string>
-		): string[] => {
+		): Array<string> => {
 			if (param === 'None') return []
 			if (!param) return allValues
 			const arr = toNonEmptyArrayParam(param)
@@ -459,19 +463,19 @@ export const useRWATableQueryParams = ({
 		})
 	}
 
-	const setRedeemableStates = (values: RWAAttributeFilterState[]) =>
+	const setRedeemableStates = (values: Array<RWAAttributeFilterState>) =>
 		updateAttributeFilterStatesQuery('redeemableStates', values, router)
-	const setAttestationsStates = (values: RWAAttributeFilterState[]) =>
+	const setAttestationsStates = (values: Array<RWAAttributeFilterState>) =>
 		updateAttributeFilterStatesQuery('attestationsStates', values, router)
-	const setCexListedStates = (values: RWAAttributeFilterState[]) =>
+	const setCexListedStates = (values: Array<RWAAttributeFilterState>) =>
 		updateAttributeFilterStatesQuery('cexListedStates', values, router)
-	const setKycForMintRedeemStates = (values: RWAAttributeFilterState[]) =>
+	const setKycForMintRedeemStates = (values: Array<RWAAttributeFilterState>) =>
 		updateAttributeFilterStatesQuery('kycForMintRedeemStates', values, router)
-	const setKycAllowlistedWhitelistedToTransferHoldStates = (values: RWAAttributeFilterState[]) =>
+	const setKycAllowlistedWhitelistedToTransferHoldStates = (values: Array<RWAAttributeFilterState>) =>
 		updateAttributeFilterStatesQuery('kycAllowlistedWhitelistedToTransferHoldStates', values, router)
-	const setTransferableStates = (values: RWAAttributeFilterState[]) =>
+	const setTransferableStates = (values: Array<RWAAttributeFilterState>) =>
 		updateAttributeFilterStatesQuery('transferableStates', values, router)
-	const setSelfCustodyStates = (values: RWAAttributeFilterState[]) =>
+	const setSelfCustodyStates = (values: Array<RWAAttributeFilterState>) =>
 		updateAttributeFilterStatesQuery('selfCustodyStates', values, router)
 
 	return {
@@ -555,24 +559,24 @@ export const useFilteredRwaAssets = ({
 	minDefiActiveTvlToActiveMcapPct,
 	maxDefiActiveTvlToActiveMcapPct
 }: {
-	assets: RWAAsset[]
+	assets: Array<RWAAsset>
 	isPlatformMode: boolean
-	selectedAssetNames: string[]
-	selectedTypes: string[]
-	selectedCategories: string[]
-	selectedPlatforms: string[]
-	selectedAssetGroups: string[]
-	selectedAssetClasses: string[]
-	selectedRwaClassifications: string[]
-	selectedAccessModels: string[]
-	selectedIssuers: string[]
-	selectedRedeemableStates: RWAAttributeFilterState[]
-	selectedAttestationsStates: RWAAttributeFilterState[]
-	selectedCexListedStates: RWAAttributeFilterState[]
-	selectedKycForMintRedeemStates: RWAAttributeFilterState[]
-	selectedKycAllowlistedWhitelistedToTransferHoldStates: RWAAttributeFilterState[]
-	selectedTransferableStates: RWAAttributeFilterState[]
-	selectedSelfCustodyStates: RWAAttributeFilterState[]
+	selectedAssetNames: Array<string>
+	selectedTypes: Array<string>
+	selectedCategories: Array<string>
+	selectedPlatforms: Array<string>
+	selectedAssetGroups: Array<string>
+	selectedAssetClasses: Array<string>
+	selectedRwaClassifications: Array<string>
+	selectedAccessModels: Array<string>
+	selectedIssuers: Array<string>
+	selectedRedeemableStates: Array<RWAAttributeFilterState>
+	selectedAttestationsStates: Array<RWAAttributeFilterState>
+	selectedCexListedStates: Array<RWAAttributeFilterState>
+	selectedKycForMintRedeemStates: Array<RWAAttributeFilterState>
+	selectedKycAllowlistedWhitelistedToTransferHoldStates: Array<RWAAttributeFilterState>
+	selectedTransferableStates: Array<RWAAttributeFilterState>
+	selectedSelfCustodyStates: Array<RWAAttributeFilterState>
 	includeStablecoins: boolean
 	includeGovernance: boolean
 	includeRwaPerps: boolean
@@ -667,8 +671,8 @@ export function useRWAAssetCategoryPieChartData({
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
-	categories: string[]
-	selectedCategories: string[]
+	categories: Array<string>
+	selectedCategories: Array<string>
 	metric: RWAChartMetricKey
 	includeBridgeTvl?: boolean
 }) {
@@ -690,7 +694,7 @@ export function useRWAAssetCategoryPieChartData({
 			)
 		}
 
-		const pieChartData: PieChartDatum[] = []
+		const pieChartData: Array<PieChartDatum> = []
 		for (const [name, value] of categoryTotals) {
 			if (value > 0) pieChartData.push({ name, value })
 		}
@@ -713,8 +717,8 @@ export function useRwaCategoryAssetClassPieChartData({
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
-	assetClasses: string[]
-	selectedAssetClasses: string[]
+	assetClasses: Array<string>
+	selectedAssetClasses: Array<string>
 	metric: RWAChartMetricKey
 	includeBridgeTvl?: boolean
 }) {
@@ -738,7 +742,7 @@ export function useRwaCategoryAssetClassPieChartData({
 			}
 		}
 
-		const pieChartData: PieChartDatum[] = []
+		const pieChartData: Array<PieChartDatum> = []
 		for (const [name, value] of assetClassTotals) {
 			if (value > 0) pieChartData.push({ name, value })
 		}
@@ -760,7 +764,7 @@ export function useRwaAssetNamePieChartData({
 }: {
 	enabled: boolean
 	assets: IRWAAssetsOverview['assets']
-	selectedAssetNames: string[]
+	selectedAssetNames: Array<string>
 	metric: RWAChartMetricKey
 	includeBridgeTvl?: boolean
 }) {
@@ -789,7 +793,7 @@ export function useRwaAssetNamePieChartData({
 		if (!colorOrder.includes('Others')) colorOrder.push('Others')
 		const pieChartStackColors = buildStackColors(colorOrder)
 
-		const pieChartData: PieChartDatum[] = []
+		const pieChartData: Array<PieChartDatum> = []
 		for (const [name, value] of totals) {
 			if (value > 0) pieChartData.push({ name, value })
 		}
@@ -830,7 +834,7 @@ export function useRwaAssetGroupPieChartData({
 		if (!colorOrder.includes('Others')) colorOrder.push('Others')
 		const pieChartStackColors = buildStackColors(colorOrder)
 
-		const pieChartData: PieChartDatum[] = []
+		const pieChartData: Array<PieChartDatum> = []
 		for (const [name, value] of totalsByGroup) {
 			if (value > 0) pieChartData.push({ name, value })
 		}
@@ -874,7 +878,7 @@ export function useRwaAssetPlatformPieChartData({
 			totalsBySlug.set(key, prev)
 		}
 
-		const colorOrder: string[] = []
+		const colorOrder: Array<string> = []
 		for (const value of totalsBySlug.values()) {
 			if (value.label) {
 				colorOrder.push(value.label)
@@ -885,7 +889,7 @@ export function useRwaAssetPlatformPieChartData({
 		if (!colorOrder.includes('Others')) colorOrder.push('Others')
 		const pieChartStackColors = buildStackColors(colorOrder)
 
-		const pieChartData: PieChartDatum[] = []
+		const pieChartData: Array<PieChartDatum> = []
 		for (const { label, value } of totalsBySlug.values()) {
 			if (value > 0) pieChartData.push({ name: label || UNKNOWN, value })
 		}
@@ -953,7 +957,7 @@ export function useRwaChainBreakdownPieChartData({
 			}
 		}
 
-		const colorOrder: string[] = []
+		const colorOrder: Array<string> = []
 		for (const value of totalsBySlug.values()) {
 			if (value.label) {
 				colorOrder.push(value.label)
@@ -964,7 +968,7 @@ export function useRwaChainBreakdownPieChartData({
 		if (!colorOrder.includes('Others')) colorOrder.push('Others')
 		const pieChartStackColors = buildStackColors(colorOrder)
 
-		const pieChartData: PieChartDatum[] = []
+		const pieChartData: Array<PieChartDatum> = []
 		for (const { label, value } of totalsBySlug.values()) {
 			if (value > 0) pieChartData.push({ name: label || UNKNOWN, value })
 		}

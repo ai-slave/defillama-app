@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	filterStablecoinAssets,
 	resolveStablecoinFilterState,
@@ -38,7 +38,7 @@ const stablecoin = (overrides: Partial<FormattedStablecoinAsset>): FormattedStab
 })
 
 describe('stablecoin filter policy', () => {
-	it('uses all option keys when no filters are active', () => {
+	test('uses all option keys when no filters are active', () => {
 		const state = resolveStablecoinFilterState({})
 
 		expect(state).toEqual({
@@ -51,7 +51,7 @@ describe('stablecoin filter policy', () => {
 		})
 	})
 
-	it('normalizes include and exclude keys case-insensitively', () => {
+	test('normalizes include and exclude keys case-insensitively', () => {
 		const state = resolveStablecoinFilterState({
 			attribute: ['stable', 'YIELDBEARING'],
 			excludeAttribute: 'yieldbearing',
@@ -66,7 +66,7 @@ describe('stablecoin filter policy', () => {
 		expect(state.hasActiveFilters).toBe(true)
 	})
 
-	it('keeps legacy typo aliases for attribute filters', () => {
+	test('keeps legacy typo aliases for attribute filters', () => {
 		const state = resolveStablecoinFilterState({
 			attribute: ['deppeged', 'unknow']
 		})
@@ -74,7 +74,7 @@ describe('stablecoin filter policy', () => {
 		expect(state.selectedAttributes).toEqual(['DEPEGGED', 'UNKNOWN'])
 	})
 
-	it('treats None as an empty selected set', () => {
+	test('treats None as an empty selected set', () => {
 		const state = resolveStablecoinFilterState({
 			attribute: 'none',
 			pegtype: 'None',
@@ -86,7 +86,7 @@ describe('stablecoin filter policy', () => {
 		expect(state.selectedBackings).toEqual([])
 	})
 
-	it('filters by combined attribute, peg type, backing, and mcap range', () => {
+	test('filters by combined attribute, peg type, backing, and mcap range', () => {
 		const assets = [
 			stablecoin({ name: 'USD Coin', symbol: 'USDC', mcap: 100, pegDeviation: 0 }),
 			stablecoin({ name: 'Dai', symbol: 'DAI', pegMechanism: 'crypto-backed', mcap: 75, pegDeviation: 0 }),
@@ -104,7 +104,7 @@ describe('stablecoin filter policy', () => {
 		expect(filterStablecoinAssets(assets, state).map((asset) => asset.symbol)).toEqual(['USDC'])
 	})
 
-	it('excludes assets without mcap only when a mcap range is active', () => {
+	test('excludes assets without mcap only when a mcap range is active', () => {
 		const assets = [
 			stablecoin({ name: 'USD Coin', symbol: 'USDC', mcap: 100, pegDeviation: 0 }),
 			stablecoin({ name: 'No Cap USD', symbol: 'NOCAP', mcap: null, pegDeviation: 0 })
@@ -129,7 +129,7 @@ describe('stablecoin filter policy', () => {
 		).toEqual(['USDC'])
 	})
 
-	it('marks invalid mcap query values active without applying a range', () => {
+	test('marks invalid mcap query values active without applying a range', () => {
 		const state = resolveStablecoinFilterState({ minMcap: 'not-a-number' })
 
 		expect(state.minMcap).toBeNull()

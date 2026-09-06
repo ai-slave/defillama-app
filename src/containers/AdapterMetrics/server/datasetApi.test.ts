@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const fetchDimensionDatasetMock = vi.hoisted(() => vi.fn())
@@ -18,7 +18,7 @@ import { createAdapterMetricDatasetHandler } from './datasetApi'
 describe('adapter metric dataset API', () => {
 	beforeEach(() => fetchDimensionDatasetMock.mockReset())
 
-	it('rejects oversized chain lists before fetching the dataset', async () => {
+	test('rejects oversized chain lists before fetching the dataset', async () => {
 		const handler = createAdapterMetricDatasetHandler('fees')
 		const req = createMockNextApiRequest({
 			method: 'GET',

@@ -23,7 +23,7 @@ type ChainAssetNavigationSource = Record<string, { total: { total: number } }>
 function buildChainNavigation(
 	assets: ChainAssetNavigationSource,
 	chainMetadata: Record<string, IChainMetadata>
-): { chains: Array<{ label: string; to: string }>; chainNames: string[] } {
+): { chains: Array<{ label: string; to: string }>; chainNames: Array<string> } {
 	const assetEntries: Array<[string, number]> = []
 	for (const name in assets) {
 		const asset = assets[name]
@@ -32,7 +32,7 @@ function buildChainNavigation(
 	assetEntries.sort((left, right) => Math.trunc(right[1]) - Math.trunc(left[1]))
 
 	const chains: Array<{ label: string; to: string }> = [{ label: 'All', to: '/bridged' }]
-	const chainNames: string[] = []
+	const chainNames: Array<string> = []
 	for (const [name] of assetEntries) {
 		const chainSlug = slug(name)
 		if (!chainMetadata[chainSlug]?.chainAssets) continue

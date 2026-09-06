@@ -71,7 +71,7 @@ const registerCategoryLookupEntry = (
 
 const extendLookupWithOverviewProtocols = (
 	lookup: ProtocolCategoryLookup | null,
-	overviewProtocols: AdapterChainProtocol[]
+	overviewProtocols: Array<AdapterChainProtocol>
 ) => {
 	if (!lookup) return
 	for (const proto of overviewProtocols) {
@@ -144,11 +144,11 @@ const getProtocolCategoryLookup = async (): Promise<ProtocolCategoryLookup> => {
 async function getDimensionsProtocolChainData(
 	protocol: string,
 	metric: AdapterChartBuilderMetric,
-	chains?: string[],
+	chains?: Array<string>,
 	topN: number | null = 5,
 	chainFilterMode: 'include' | 'exclude' = 'include',
 	chainCategoryFilterMode: 'include' | 'exclude' = 'include',
-	chainCategories?: string[]
+	chainCategories?: Array<string>
 ): Promise<ProtocolChainData> {
 	const config = DIMENSIONS_API_METRIC_CONFIG[metric]
 
@@ -175,7 +175,7 @@ async function getDimensionsProtocolChainData(
 			}
 		}
 
-		const chainDataMap = new Map<string, [number, number][]>()
+		const chainDataMap = new Map<string, Array<[number, number]>>()
 
 		const chainSet = chains && chains.length > 0 ? new Set(chains) : new Set<string>()
 		let allowNamesFromCategories: Set<string> | null = null
@@ -213,7 +213,7 @@ async function getDimensionsProtocolChainData(
 			}
 		}
 
-		const series: ChartSeries[] = []
+		const series: Array<ChartSeries> = []
 		let colorIndex = 0
 
 		for (const [chain, chainSeriesData] of chainDataMap) {
@@ -245,7 +245,7 @@ async function getDimensionsProtocolChainData(
 
 		const hasOthers = othersSeries.length > 0 && othersData.some(([, v]) => v > 0)
 
-		const finalSeries: ChartSeries[] = [...alignedTopSeries]
+		const finalSeries: Array<ChartSeries> = [...alignedTopSeries]
 		if (hasOthers) {
 			finalSeries.push({
 				name: `Others (${othersSeries.length} chains)`,
@@ -275,12 +275,12 @@ async function getDimensionsProtocolChainData(
 async function getAllProtocolsTopChainsDimensionsData(
 	metric: AdapterChartBuilderMetric,
 	topN: number | null = 5,
-	chains?: string[],
+	chains?: Array<string>,
 	chainFilterMode: 'include' | 'exclude' = 'include',
 	chainCategoryFilterMode: 'include' | 'exclude' = 'include',
 	protocolCategoryFilterMode: 'include' | 'exclude' = 'include',
-	chainCategories?: string[],
-	protocolCategories?: string[]
+	chainCategories?: Array<string>,
+	protocolCategories?: Array<string>
 ): Promise<ProtocolChainData> {
 	const config = DIMENSIONS_API_METRIC_CONFIG[metric]
 
@@ -463,22 +463,22 @@ async function getAllProtocolsTopChainsDimensionsData(
 				othersCount
 			}
 		}
-	} catch (e) {
-		console.log(`Error building all-protocols ${metric} by chain:`, e)
-		throw e
+	} catch (error) {
+		console.log(`Error building all-protocols ${metric} by chain:`, error)
+		throw error
 	}
 }
 
 type AdapterMetricChainBreakdownParams = {
 	protocol?: string
 	metric: AdapterChartBuilderMetric
-	chains: string[]
+	chains: Array<string>
 	topN: number
 	chainFilterMode: 'include' | 'exclude'
 	chainCategoryFilterMode: 'include' | 'exclude'
 	protocolCategoryFilterMode: 'include' | 'exclude'
-	chainCategories: string[]
-	protocolCategories: string[]
+	chainCategories: Array<string>
+	protocolCategories: Array<string>
 }
 
 export const getAdapterMetricChainSeries = async ({
@@ -568,7 +568,7 @@ async function getCompleteAllProtocolsAdapterChainSeries(
 	if (params.chainCategories.length > 0) {
 		allowedCategoryChains = await resolveAllowedChainSlugsFromCategories(params.chainCategories)
 	}
-	const valuesByChain = new Map<string, [number, number][]>()
+	const valuesByChain = new Map<string, Array<[number, number]>>()
 	for (const [timestamp, chainValues] of payload) {
 		for (const chain in chainValues) {
 			const chainSlug = toDimensionsSlug(chain)
@@ -593,7 +593,7 @@ async function getCompleteAllProtocolsAdapterChainSeries(
 		}
 	}
 
-	const series: ChartSeries[] = []
+	const series: Array<ChartSeries> = []
 	let colorIndex = 0
 	for (const [chain, values] of valuesByChain) {
 		const data = filterOutToday(normalizeDailyPairs(values, config.dailyMode))

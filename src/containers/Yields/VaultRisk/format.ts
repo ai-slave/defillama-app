@@ -4,7 +4,7 @@ import type { GuardianRole, OracleAdmin, RiskLoss, RoleEntity } from './types'
 
 const MIN = 60
 const HOUR = 3600
-const DAY = 86400
+const DAY = 86_400
 
 // "instant" | "6 hours" | "1 day" | "7 days" — compact, rounded to the most natural unit.
 export function humanizeDuration(sec: number): string {
@@ -55,7 +55,7 @@ export function prettyProtocolSlug(slug: string): string {
 
 // Cross-protocol-trust scope copy, generated from aggregate_trust_scope so it tracks the
 // llamarisks feed automatically — never hardcode the protocol list.
-export function trustScopeTooltip(scope: string[] | undefined): string {
+export function trustScopeTooltip(scope: Array<string> | undefined): string {
 	const where = scope?.length
 		? `the ${scope.length} lending protocols in the llamarisks feed: ${scope.map(prettyProtocolSlug).join(', ')}`
 		: 'the lending protocols tracked by the llamarisks feed'

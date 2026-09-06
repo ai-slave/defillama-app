@@ -276,7 +276,7 @@ export function useEditorFlags(editor: Editor | null): EditorFlags {
 					: EMPTY_FLAGS,
 			equalityFn: (a, b) => {
 				if (!a || !b) return a === b
-				const ka = Object.keys(a) as (keyof EditorFlags)[]
+				const ka = Object.keys(a) as Array<keyof EditorFlags>
 				return ka.every((k) => a[k] === b[k])
 			}
 		}) ?? EMPTY_FLAGS

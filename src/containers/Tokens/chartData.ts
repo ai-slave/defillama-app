@@ -23,7 +23,7 @@ export function resolveTokensChartLogo(source: string): string {
 export type TokensTreemapLeaf = MarketTreemapLeaf
 
 export interface TokensTreemapGroup extends Omit<MarketTreemapGroup, 'children'> {
-	children: TokensTreemapLeaf[]
+	children: Array<TokensTreemapLeaf>
 }
 
 export type TokensTreemapNode = TokensTreemapLeaf | TokensTreemapGroup
@@ -35,8 +35,8 @@ export interface TokensTreemapOptions {
 }
 
 export interface TokensTreemapResult {
-	treeData: TokensTreemapNode[]
-	leaves: TokensTreemapLeaf[]
+	treeData: Array<TokensTreemapNode>
+	leaves: Array<TokensTreemapLeaf>
 	stablecoinsHidden: number
 }
 
@@ -45,9 +45,9 @@ export function buildTokensTreemap(
 	{ colorWindow, mapMode, universe }: TokensTreemapOptions
 ): TokensTreemapResult {
 	const priceChanges = data.priceChanges[colorWindow]
-	const leaves: TokensTreemapLeaf[] = []
-	const tokenLeaves: TokensTreemapLeaf[] = []
-	const stablecoinLeaves: TokensTreemapLeaf[] = []
+	const leaves: Array<TokensTreemapLeaf> = []
+	const tokenLeaves: Array<TokensTreemapLeaf> = []
+	const stablecoinLeaves: Array<TokensTreemapLeaf> = []
 	let tokenMarketCap = 0
 	let stablecoinMarketCap = 0
 	let stablecoinsHidden = 0
@@ -85,7 +85,7 @@ export function buildTokensTreemap(
 		return { treeData: tokenLeaves, leaves, stablecoinsHidden }
 	}
 
-	const treeData: TokensTreemapNode[] = []
+	const treeData: Array<TokensTreemapNode> = []
 	if (tokenLeaves.length > 0) treeData.push({ name: 'Tokens', value: [tokenMarketCap, null], children: tokenLeaves })
 	if (stablecoinLeaves.length > 0) {
 		treeData.push({ name: 'Stablecoins', value: [stablecoinMarketCap, null], children: stablecoinLeaves })
@@ -98,7 +98,7 @@ export function prepareTokensTreemapCsv({
 	colorWindow,
 	filename
 }: {
-	leaves: readonly TokensTreemapLeaf[]
+	leaves: ReadonlyArray<TokensTreemapLeaf>
 	colorWindow: TokensChangeWindow
 	filename: string
 }) {
@@ -117,8 +117,8 @@ export interface TokensMoverEntry {
 }
 
 export interface TokensMoversResult {
-	gainers: TokensMoverEntry[]
-	losers: TokensMoverEntry[]
+	gainers: Array<TokensMoverEntry>
+	losers: Array<TokensMoverEntry>
 }
 
 export function prepareTokensMoversCsv({
@@ -150,8 +150,8 @@ export function buildTokensMovers(
 	{ window, universe }: { window: TokensMoversWindow; universe: number }
 ): TokensMoversResult {
 	const priceChanges = data.priceChanges[window]
-	const gainers: TokensMoverEntry[] = []
-	const losers: TokensMoverEntry[] = []
+	const gainers: Array<TokensMoverEntry> = []
+	const losers: Array<TokensMoverEntry> = []
 	// The server appends all dataset arrays in lockstep; bounded indices preserve nullable gaps.
 	const rowCount = Math.min(data.marketCaps.length, universe)
 
@@ -170,7 +170,7 @@ export function buildTokensMovers(
 	return { gainers, losers }
 }
 
-function insertMover(entries: TokensMoverEntry[], entry: TokensMoverEntry, largestFirst: boolean): void {
+function insertMover(entries: Array<TokensMoverEntry>, entry: TokensMoverEntry, largestFirst: boolean): void {
 	let index = entries.length
 	while (index > 0) {
 		const previous = entries[index - 1]! // index is within this array.

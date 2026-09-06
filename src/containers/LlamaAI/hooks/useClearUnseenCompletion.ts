@@ -29,7 +29,7 @@ export function useClearUnseenCompletion(options?: UseClearUnseenCompletionOptio
 			}
 
 			if (projectId) {
-				queryClient.setQueryData<ProjectChatSession[]>(projectSessionsKey(projectId), (old) =>
+				queryClient.setQueryData<Array<ProjectChatSession>>(projectSessionsKey(projectId), (old) =>
 					old?.map((session) =>
 						session.sessionId === sessionId ? { ...session, hasUnseenCompletion: false } : session
 					)

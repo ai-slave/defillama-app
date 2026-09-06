@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { AdapterChainProtocol, IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 
@@ -122,7 +122,7 @@ beforeEach(() => {
 })
 
 describe('getCompareTokensPageData', () => {
-	it('separates adapter failure from successful zero activity and skips no-TVL children in parent TVL', async () => {
+	test('separates adapter failure from successful zero activity and skips no-TVL children in parent TVL', async () => {
 		const result = await getCompareTokensPageData()
 		const knownChild = result.protocols.find((row) => row.name === 'Known Child')
 		const nullChild = result.protocols.find((row) => row.name === 'Null Child')
@@ -133,7 +133,7 @@ describe('getCompareTokensPageData', () => {
 		expect(parent).toMatchObject({ tvl: 100, fees: 0, revenue: null })
 	})
 
-	it('keeps a parent without any measured child TVL unavailable', async () => {
+	test('keeps a parent without any measured child TVL unavailable', async () => {
 		mocks.fetchProtocols.mockResolvedValue({
 			protocols: [protocol({ name: 'Null Child', id: 'null-child', tvl: null, deprecated: true })],
 			chains: ['Ethereum'],
@@ -148,7 +148,7 @@ describe('getCompareTokensPageData', () => {
 		expect(result.protocols.find((row) => row.name === 'Suite')?.tvl).toBeNull()
 	})
 
-	it('subtracts each child TVL excluded from its synthetic parent', async () => {
+	test('subtracts each child TVL excluded from its synthetic parent', async () => {
 		mocks.fetchProtocols.mockResolvedValue({
 			protocols: [
 				protocol({
@@ -172,7 +172,7 @@ describe('getCompareTokensPageData', () => {
 		expect(result.protocols.find((row) => row.name === 'Suite')?.tvl).toBe(70)
 	})
 
-	it('keeps synthetic parent TVL unavailable when a required exclusion is unavailable', async () => {
+	test('keeps synthetic parent TVL unavailable when a required exclusion is unavailable', async () => {
 		mocks.fetchProtocols.mockResolvedValue({
 			protocols: [
 				protocol({

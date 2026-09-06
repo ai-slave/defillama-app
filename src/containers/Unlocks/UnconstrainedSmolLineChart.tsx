@@ -33,7 +33,7 @@ function smoothPath(points: Array<[number, number]>): string {
 }
 
 interface ExtraData {
-	lastEvent?: EmissionEvent[]
+	lastEvent?: Array<EmissionEvent>
 }
 
 export function UnconstrainedSmolLineChart({
@@ -213,7 +213,7 @@ function UnlockEventTooltip({
 	unlockValue,
 	stroke
 }: {
-	lastEvent: EmissionEvent[]
+	lastEvent: Array<EmissionEvent>
 	unlockValue: number
 	stroke: string
 }) {

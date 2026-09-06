@@ -13,8 +13,8 @@ interface FormattedValue {
 
 interface TimeSeriesData {
 	title: string
-	dates: ApiDate[]
-	series: Array<{ name: string; data: number[] }>
+	dates: Array<ApiDate>
+	series: Array<{ name: string; data: Array<number> }>
 }
 
 interface OverviewKpis {
@@ -52,19 +52,19 @@ export interface EcosystemAPIResponse {
 			title: string
 			current: number
 			currentFormatted: string
-			dates: ApiDate[]
-			series: Array<{ name: string; data: number[] }>
+			dates: Array<ApiDate>
+			series: Array<{ name: string; data: Array<number> }>
 		}
 	}
 	fees: {
 		feesChart: TimeSeriesData
 		kpis: OverviewKpis
-		topProtocols: TopProtocolEntry[]
+		topProtocols: Array<TopProtocolEntry>
 	}
 	dexVolume: {
 		volumeChart: TimeSeriesData
 		kpis: OverviewKpis
-		topDexes: TopProtocolEntry[]
+		topDexes: Array<TopProtocolEntry>
 	}
 	stablecoins: {
 		stablecoinChart: TimeSeriesData
@@ -79,13 +79,13 @@ export interface EcosystemAPIResponse {
 			title: string
 			total: number
 			totalFormatted: string
-			categories: AssetCategory[]
+			categories: Array<AssetCategory>
 		}
 	}
 }
 
 function parseDateToMs(dateStr: string): number {
-	return Date.parse(dateStr + 'T00:00:00Z')
+	return Date.parse(`${dateStr}T00:00:00Z`)
 }
 
 export type { AssetCategory }
@@ -102,7 +102,7 @@ export function buildEcosystemViewModel(d: EcosystemAPIResponse) {
 
 	// The aggregate is already Minted + Bridged, so stacking it would count the supply twice.
 	const stableSeries: TimeSeriesData['series'] = []
-	const stableSeriesNames: string[] = []
+	const stableSeriesNames: Array<string> = []
 	for (const series of d.stablecoins.stablecoinChart.series) {
 		if (series.name === 'Total Circulating') continue
 		stableSeries.push(series)
@@ -138,8 +138,8 @@ export function buildEcosystemViewModel(d: EcosystemAPIResponse) {
 	}
 
 	// The upstream total category is used for the KPI, not as a second pie slice.
-	const assetCategories: AssetCategory[] = []
-	const assetCategoryNames: string[] = []
+	const assetCategories: Array<AssetCategory> = []
+	const assetCategoryNames: Array<string> = []
 	for (const category of d.chainAssets.assetBreakdown.categories) {
 		if (category.name === 'total') continue
 		assetCategories.push(category)

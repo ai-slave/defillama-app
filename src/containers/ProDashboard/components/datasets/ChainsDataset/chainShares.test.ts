@@ -1,12 +1,12 @@
 import type { Table } from '@tanstack/react-table'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { buildChainShareTotals, getChainMetricShare } from './chainShares'
 import { ChainsDataset } from './index'
 
-const mocks = vi.hoisted(() => ({ data: [] as ChainsDatasetRow[], table: null as Table<ChainsDatasetRow> | null }))
+const mocks = vi.hoisted(() => ({ data: [] as Array<ChainsDatasetRow>, table: null as Table<ChainsDatasetRow> | null }))
 vi.mock('./useChainsData', () => ({ useChainsData: () => ({ data: mocks.data, isLoading: false, error: null }) }))
 vi.mock('./ChainsTableHeader', () => ({ ChainsTableHeader: () => null }))
 vi.mock('./ColumnManagementPanel', () => ({ ColumnManagementPanel: () => null }))
@@ -52,7 +52,7 @@ function chain(name: string, totalFees24h: number | null): ChainsDatasetRow {
 }
 
 describe('chain metric shares', () => {
-	it.each([true, false])('sorts signed shares with missing values last when descending=%s', (desc) => {
+	test.each([true, false])('sorts signed shares with missing values last when descending=%s', (desc) => {
 		mocks.data = [chain('Positive', 100), chain('Unknown', null), chain('Zero', 0), chain('Adjustment', -20)]
 		renderToStaticMarkup(createElement(ChainsDataset))
 		const table = mocks.table!
@@ -80,7 +80,7 @@ describe('chain metric shares', () => {
 		)
 	})
 
-	it.each([0, -10])('keeps shares unavailable when the total is %s', (total) => {
+	test.each([0, -10])('keeps shares unavailable when the total is %s', (total) => {
 		mocks.data = [chain('First', total), chain('Zero', 0), chain('Unknown', null)]
 		renderToStaticMarkup(createElement(ChainsDataset))
 		const table = mocks.table!
@@ -96,7 +96,7 @@ describe('chain metric shares', () => {
 		])
 	})
 
-	it('uses the algebraic canonical total so signed contributions sum to 100%', () => {
+	test('uses the algebraic canonical total so signed contributions sum to 100%', () => {
 		const totals = buildChainShareTotals([chain('Positive', 100), chain('Adjustment', -20), chain('Unknown', null)])
 
 		expect(totals.totalFees24h).toBe(80)
@@ -104,7 +104,7 @@ describe('chain metric shares', () => {
 		expect(getChainMetricShare(-20, totals.totalFees24h)).toBe(-25)
 	})
 
-	it('preserves measured zero and keeps null or non-positive denominators unavailable', () => {
+	test('preserves measured zero and keeps null or non-positive denominators unavailable', () => {
 		expect(getChainMetricShare(0, 10)).toBe(0)
 		expect(getChainMetricShare(null, 10)).toBeNull()
 		expect(getChainMetricShare(0, 0)).toBeNull()

@@ -20,12 +20,12 @@ export async function prepareTokensCsv({
 	sorting,
 	hiddenColumnIds
 }: {
-	query: Record<string, string | string[] | undefined>
+	query: Record<string, string | Array<string> | undefined>
 	sorting: SortingState
 	hiddenColumnIds: Set<string>
-}): Promise<{ filename: string; rows: CsvCell[][] }> {
+}): Promise<{ filename: string; rows: Array<Array<CsvCell>> }> {
 	const columns = TOKENS_CSV_COLUMNS.filter((column) => !hiddenColumnIds.has(column.id))
-	const rows: CsvCell[][] = [columns.map((column) => column.header)]
+	const rows: Array<Array<CsvCell>> = [columns.map((column) => column.header)]
 	let hasMore = true
 	let snapshotVersion = 'latest'
 

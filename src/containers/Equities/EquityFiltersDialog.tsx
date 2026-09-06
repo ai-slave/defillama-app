@@ -65,7 +65,7 @@ const CATEGORY_LABELS: Record<EquityFilterCategory, string> = EQUITY_FILTER_CATE
 	{} as Record<EquityFilterCategory, string>
 )
 
-function replaceFilter(filters: EquityDraftFilter[], nextFilter: EquityDraftFilter): EquityDraftFilter[] {
+function replaceFilter(filters: Array<EquityDraftFilter>, nextFilter: EquityDraftFilter): Array<EquityDraftFilter> {
 	const next = filters.slice()
 	const index = next.findIndex((filter) => filter.id === nextFilter.id)
 	if (index === -1) next.push(nextFilter)
@@ -73,7 +73,7 @@ function replaceFilter(filters: EquityDraftFilter[], nextFilter: EquityDraftFilt
 	return next
 }
 
-function removeFilter(filters: EquityDraftFilter[], id: string): EquityDraftFilter[] {
+function removeFilter(filters: Array<EquityDraftFilter>, id: string): Array<EquityDraftFilter> {
 	return filters.filter((filter) => filter.id !== id)
 }
 
@@ -338,7 +338,7 @@ function CategoricalFilterEditor({
 }: {
 	config: EquityCategoricalFilterConfig
 	filter: EquityDraftCategoricalFilter
-	options: string[]
+	options: Array<string>
 	onUpdate: (filter: EquityDraftFilter) => void
 	onRemove: () => void
 }) {
@@ -415,14 +415,14 @@ function ActiveFilterEditor({
 
 interface EquitiesFiltersDialogProps {
 	categoricalOptions: EquitiesCategoricalOptions
-	filters: EquityActiveFilter[]
-	onFiltersChange: (filters: EquityActiveFilter[]) => void
+	filters: Array<EquityActiveFilter>
+	onFiltersChange: (filters: Array<EquityActiveFilter>) => void
 }
 
 export function EquitiesFiltersDialog({ categoricalOptions, filters, onFiltersChange }: EquitiesFiltersDialogProps) {
 	const [open, setOpen] = useState(false)
 	const [search, setSearch] = useState('')
-	const [draftFilters, setDraftFilters] = useState<EquityDraftFilter[]>(() => activeEquityFiltersToDraft(filters))
+	const [draftFilters, setDraftFilters] = useState<Array<EquityDraftFilter>>(() => activeEquityFiltersToDraft(filters))
 	const isSmallScreen = useMedia('(max-width: 639px)')
 
 	const activeCount = countActiveEquityFilters(filters)
@@ -431,7 +431,7 @@ export function EquitiesFiltersDialog({ categoricalOptions, filters, onFiltersCh
 	const groupedAvailableFilters = useMemo(() => {
 		const activeIds = new Set(draftFilters.map((filter) => filter.id))
 		const normalizedSearch = search.trim().toLowerCase()
-		const groups = new Map<EquityFilterCategory, EquityFilterConfig[]>()
+		const groups = new Map<EquityFilterCategory, Array<EquityFilterConfig>>()
 		for (const category of EQUITY_FILTER_CATEGORIES) {
 			groups.set(category.key, [])
 		}
@@ -620,7 +620,7 @@ export function EquityActiveFilterPills({
 	filters,
 	onRemove
 }: {
-	filters: EquityActiveFilter[]
+	filters: Array<EquityActiveFilter>
 	onRemove: (id: string) => void
 }) {
 	if (filters.length === 0) return null

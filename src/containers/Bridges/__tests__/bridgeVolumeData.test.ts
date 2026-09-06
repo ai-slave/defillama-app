@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import {
 	BRIDGE_VOLUME_SPLIT_CHARTS,
@@ -7,7 +7,7 @@ import {
 } from '../bridgeVolumeData'
 
 describe('buildBridgeVolumeChartData', () => {
-	it('builds daily split volume rows in chronological order', () => {
+	test('builds daily split volume rows in chronological order', () => {
 		const result = buildBridgeVolumeChartData({
 			data: [
 				{ date: 1, depositUSD: 10, withdrawUSD: 3, depositTxs: 1, withdrawTxs: 1 },
@@ -21,13 +21,13 @@ describe('buildBridgeVolumeChartData', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Deposits', 'Withdrawals'],
 			source: [
-				[1_000, 10, -3],
-				[2_000, 20, -5]
+				[1000, 10, -3],
+				[2000, 20, -5]
 			]
 		})
 	})
 
-	it('keeps signed split bars out of ECharts large mode', () => {
+	test('keeps signed split bars out of ECharts large mode', () => {
 		expect(BRIDGE_VOLUME_SPLIT_CHARTS).toEqual([
 			{
 				type: 'bar',
@@ -48,7 +48,7 @@ describe('buildBridgeVolumeChartData', () => {
 		])
 	})
 
-	it('groups combined transaction rows by selected period', () => {
+	test('groups combined transaction rows by selected period', () => {
 		const day1 = 1_704_067_200
 		const day2 = 1_704_153_600
 		const day9 = day1 + 8 * 86_400
@@ -74,7 +74,7 @@ describe('buildBridgeVolumeChartData', () => {
 		})
 	})
 
-	it('preserves unknown volume legs and requires both for a combined value', () => {
+	test('preserves unknown volume legs and requires both for a combined value', () => {
 		const result = buildBridgeVolumeChartData({
 			data: [
 				{ date: 1, depositUSD: 10, withdrawUSD: null, depositTxs: 2, withdrawTxs: 0 },
@@ -86,25 +86,25 @@ describe('buildBridgeVolumeChartData', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			[1_000, null],
-			[2_000, null]
+			[1000, null],
+			[2000, null]
 		])
 	})
 
-	it('uses the midpoint for combined USD volume and the sum for combined transaction counts', () => {
+	test('uses the midpoint for combined USD volume and the sum for combined transaction counts', () => {
 		const data = [{ date: 1, depositUSD: 30, withdrawUSD: 10, depositTxs: 3, withdrawTxs: 2 }]
 
 		expect(
 			buildBridgeVolumeChartData({ data, timePeriod: 'daily', metricType: 'Volume', viewType: 'Combined' }).dataset
 				.source
-		).toEqual([[1_000, 20]])
+		).toEqual([[1000, 20]])
 		expect(
 			buildBridgeVolumeChartData({ data, timePeriod: 'daily', metricType: 'Transactions', viewType: 'Combined' })
 				.dataset.source
-		).toEqual([[1_000, 5]])
+		).toEqual([[1000, 5]])
 	})
 
-	it('shows a known split leg and exact transaction counts', () => {
+	test('shows a known split leg and exact transaction counts', () => {
 		const volume = buildBridgeVolumeChartData({
 			data: [{ date: 1, depositUSD: 10, withdrawUSD: null, depositTxs: 0, withdrawTxs: 0 }],
 			timePeriod: 'daily',
@@ -118,11 +118,11 @@ describe('buildBridgeVolumeChartData', () => {
 			viewType: 'Combined'
 		})
 
-		expect(volume.dataset.source).toEqual([[1_000, 10, null]])
-		expect(transactions.dataset.source).toEqual([[1_000, 2]])
+		expect(volume.dataset.source).toEqual([[1000, 10, null]])
+		expect(transactions.dataset.source).toEqual([[1000, 2]])
 	})
 
-	it('keeps empty combined datasets dimensioned for the active view', () => {
+	test('keeps empty combined datasets dimensioned for the active view', () => {
 		const result = buildBridgeVolumeChartData({
 			data: [],
 			timePeriod: 'monthly',
@@ -136,7 +136,7 @@ describe('buildBridgeVolumeChartData', () => {
 		})
 	})
 
-	it('reports the last chart date only when bridge volume data is stale', () => {
+	test('reports the last chart date only when bridge volume data is stale', () => {
 		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
 		const point = (date: string) => ({
 			date: Date.parse(`${date}T00:00:00Z`) / 1e3,

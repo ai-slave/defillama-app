@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IChainOverviewData } from '../types'
 
 const state = vi.hoisted(() => ({
@@ -60,7 +60,7 @@ beforeEach(() => {
 })
 
 describe('Chain Investor Relations tab', () => {
-	it('shows the Overview / Enterprise tab row on an IR chain', async () => {
+	test('shows the Overview / Enterprise tab row on an IR chain', async () => {
 		setupChainState({ user: { flags: { is_llama: true } }, query: {} })
 
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
@@ -75,7 +75,7 @@ describe('Chain Investor Relations tab', () => {
 		expect(markup).toContain('data-umami-event-dashboard-id="n34rr3v3nu3d4sh"')
 	})
 
-	it('renders the Enterprise view (not the Overview) when ?tab=investor-relations is set', async () => {
+	test('renders the Enterprise view (not the Overview) when ?tab=investor-relations is set', async () => {
 		setupChainState({ user: { flags: { is_llama: true } }, query: { tab: 'investor-relations' } })
 
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
@@ -87,7 +87,7 @@ describe('Chain Investor Relations tab', () => {
 		expect(markup).not.toContain('QUESTIONS-MARKER')
 	})
 
-	it('shows the Enterprise tab for a signed-out user', async () => {
+	test('shows the Enterprise tab for a signed-out user', async () => {
 		setupChainState({ user: null, query: {} })
 
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
@@ -95,7 +95,7 @@ describe('Chain Investor Relations tab', () => {
 		expect(markup).toContain('Enterprise')
 	})
 
-	it('renders the IR tab for a signed-out user when the tab query is set', async () => {
+	test('renders the IR tab for a signed-out user when the tab query is set', async () => {
 		setupChainState({ user: null, query: { tab: 'investor-relations' } })
 
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('NEAR')))
@@ -105,7 +105,7 @@ describe('Chain Investor Relations tab', () => {
 		expect(markup).toContain('Enterprise')
 	})
 
-	it('hides the Enterprise tab on a chain without an IR dashboard', async () => {
+	test('hides the Enterprise tab on a chain without an IR dashboard', async () => {
 		setupChainState({ user: { flags: { is_llama: true } }, query: {} })
 
 		const markup = renderToStaticMarkup(React.createElement(ChainOverview, chainProps('Ethereum')))

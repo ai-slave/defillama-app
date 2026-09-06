@@ -27,9 +27,9 @@ interface ChainCoreChartProps {
 }
 
 function mergeYAxisOptions(
-	domainAxes: MultiSeriesYAxisOption[],
+	domainAxes: Array<MultiSeriesYAxisOption>,
 	override: MultiSeriesChartOptions['yAxis']
-): MultiSeriesYAxisOption[] {
+): Array<MultiSeriesYAxisOption> {
 	if (!override) return domainAxes
 	if (Array.isArray(override)) return domainAxes.map((axis, index) => mergeDeep(axis, override[index] ?? {}))
 	return domainAxes.map((axis) => mergeDeep(axis, override))

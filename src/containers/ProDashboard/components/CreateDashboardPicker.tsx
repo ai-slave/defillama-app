@@ -25,14 +25,14 @@ interface CreateDashboardPickerProps {
 	onCreate: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
-		items?: DashboardItemConfig[]
+		items?: Array<DashboardItemConfig>
 	}) => void
 	comparisonPreset?: ComparisonPreset | null
 }
 
-async function fetchChainsByCategory(category: string): Promise<{ category: string; chains: string[] }> {
+async function fetchChainsByCategory(category: string): Promise<{ category: string; chains: Array<string> }> {
 	return fetchChainsByCategoryApi(category)
 		.then((data) => ({ category, chains: data.chainsUnique }))
 		.catch(() => ({ category, chains: [] }))
@@ -77,7 +77,7 @@ export function CreateDashboardPicker({ dialogStore, onCreate, comparisonPreset 
 	const handleCreateFromScratch = (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
 	}) => {
 		onCreate(data)
@@ -88,9 +88,9 @@ export function CreateDashboardPicker({ dialogStore, onCreate, comparisonPreset 
 	const handleCreateComparison = (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
-		items: DashboardItemConfig[]
+		items: Array<DashboardItemConfig>
 	}) => {
 		onCreate(data)
 		setMode('picker')
@@ -265,13 +265,13 @@ function CreateDashboardModalContent({
 	onCreate: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
 	}) => void
 }) {
 	const { hasActiveSubscription } = useAuthContext()
 	const [visibility, setVisibility] = useState<'private' | 'public'>('public')
-	const [tags, setTags] = useState<string[]>([])
+	const [tags, setTags] = useState<Array<string>>([])
 	const tagInputRef = useRef<HTMLInputElement>(null)
 	const charCountRef = useRef<HTMLSpanElement>(null)
 

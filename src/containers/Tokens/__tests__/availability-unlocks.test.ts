@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { EmissionEvent } from '~/containers/Unlocks/api.types'
 import type { EnrichedProtocolEmission } from '~/containers/Unlocks/queries'
 import { createMetadataCacheFromArtifacts, METADATA_CI_STUBS } from '~/utils/metadata/artifactContract'
@@ -10,7 +10,7 @@ vi.mock('~/containers/AdapterMetrics/api', () => ({ fetchAdapterChainMetrics: mo
 vi.mock('~/containers/TokenRights/server/dataset.server', () => ({ fetchTokenRightsEntries: mocks.rights }))
 vi.mock('~/containers/Unlocks/queries', () => ({ getAllProtocolEmissions: mocks.unlocks }))
 
-const day = 86400
+const day = 86_400
 const nowSec = 1_800_000_000
 const metadata = createMetadataCacheFromArtifacts({
 	...METADATA_CI_STUBS,
@@ -30,7 +30,7 @@ const base = {
 	nowSec
 }
 
-function emission(events: EmissionEvent[], tPrice: number | null = 2): EnrichedProtocolEmission {
+function emission(events: Array<EmissionEvent>, tPrice: number | null = 2): EnrichedProtocolEmission {
 	return {
 		name: 'Sample',
 		token: 'S',
@@ -57,8 +57,8 @@ function cliff(timestamp: number, amount: number): EmissionEvent {
 }
 
 describe('Tokens rolling unlock windows', () => {
-	it('includes old linear schedules and all future cliffs, using disjoint half-open windows', () => {
-		const events: EmissionEvent[] = [
+	test('includes old linear schedules and all future cliffs, using disjoint half-open windows', () => {
+		const events: Array<EmissionEvent> = [
 			{
 				description: 'Linear',
 				category: 'farming',
@@ -78,7 +78,7 @@ describe('Tokens rolling unlock windows', () => {
 		expect(result.rows[0]).toMatchObject({ unlock30dUsd: 620, upcomingUnlockUsd: 700 })
 		expect(result.stats).toMatchObject({ unlock30dUsd: 620, upcomingUnlockUsd: 700 })
 	})
-	it('preserves known zero, unsupported tokens, missing prices and unknown event coverage', () => {
+	test('preserves known zero, unsupported tokens, missing prices and unknown event coverage', () => {
 		const zero = buildTokensSourceRows({ ...base, unlocks: [emission([])] })
 		expect(zero.rows[0]).toMatchObject({ unlock30dUsd: 0, upcomingUnlockUsd: 0 })
 		const missing = buildTokensSourceRows({ ...base, unlocks: [] })
@@ -101,7 +101,7 @@ describe('Tokens rolling unlock windows', () => {
 })
 
 describe('Tokens source availability', () => {
-	it('keeps optional outages distinct from successful empty responses without losing core rows', async () => {
+	test('keeps optional outages distinct from successful empty responses without losing core rows', async () => {
 		const snapshot = {
 			tokens,
 			markets: base.markets,
@@ -140,7 +140,7 @@ describe('Tokens source availability', () => {
 		expect(page.unavailableSources).toContain('unlocks')
 		expect(page.statsDisplay.unlock30dUsd).toBeNull()
 	})
-	it('a single failed source leaves successful zero activity and the other totals available', () => {
+	test('a single failed source leaves successful zero activity and the other totals available', () => {
 		const result = buildTokensSourceRows({ ...base, unlocks: null })
 		expect(result.unavailableSources).toEqual(['unlocks'])
 		expect(result.stats.spotVolume24h).toBe(0)

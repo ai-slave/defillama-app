@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { RWAStatsSegmented } from '../api.types'
 import type { RWAPlatformsIndex, RWAPlatformMeta } from './api.types'
 import {
@@ -80,7 +80,7 @@ const baseMeta: RWAPlatformMeta = {
 	takeRateBasis: null,
 	revenueMix: null,
 	marginSettlementAsset: null,
-	onchainAum: 1_000,
+	onchainAum: 1000,
 	estAnnualRevenueUsd: null
 }
 
@@ -105,9 +105,9 @@ function segmented(baseAssets: number, stablecoinAssets: number, governanceAsset
 }
 
 describe('buildRWAPlatformPageData', () => {
-	it('uses raw spot assets including stablecoins and RWA Perps categories while excluding governance', () => {
+	test('uses raw spot assets including stablecoins and RWA Perps categories while excluding governance', () => {
 		const selected = meta({})
-		const assets: RWAPlatformCurrentAsset[] = [
+		const assets: Array<RWAPlatformCurrentAsset> = [
 			{
 				parentPlatform: 'Selected',
 				governance: false,
@@ -190,7 +190,7 @@ describe('buildRWAPlatformPageData', () => {
 		])
 	})
 
-	it('ranks active platform metadata by AUM and joins spot asset counts', () => {
+	test('ranks active platform metadata by AUM and joins spot asset counts', () => {
 		const selected = meta({
 			holderTotalFeeBps: 0,
 			mintFeeBps: 5,
@@ -200,7 +200,7 @@ describe('buildRWAPlatformPageData', () => {
 			pid: 2,
 			name: 'Larger',
 			slug: 'larger',
-			onchainAum: 2_000
+			onchainAum: 2000
 		})
 		const platformsIndex: RWAPlatformsIndex = {
 			generatedAt: 1,
@@ -219,7 +219,7 @@ describe('buildRWAPlatformPageData', () => {
 		expect(peers[1]?.holderTotalFeeBps).toBe(0)
 	})
 
-	it('excludes zero AUM platforms while retaining positive AUM peers', () => {
+	test('excludes zero AUM platforms while retaining positive AUM peers', () => {
 		const positive = meta({ onchainAum: 0.01 })
 		const zero = meta({ pid: 2, name: 'Zero', slug: 'zero', onchainAum: 0 })
 		const platformsIndex: RWAPlatformsIndex = {
@@ -235,7 +235,7 @@ describe('buildRWAPlatformPageData', () => {
 		expect(peers.map(({ rank, slug }) => ({ rank, slug }))).toEqual([{ rank: 1, slug: 'selected' }])
 	})
 
-	it('keeps zero AUM and returns no ratio instead of dividing by zero', () => {
+	test('keeps zero AUM and returns no ratio instead of dividing by zero', () => {
 		const selected = meta({ onchainAum: 0, estAnnualRevenueUsd: 0 })
 		const result = buildRWAPlatformPageData({
 			meta: selected,

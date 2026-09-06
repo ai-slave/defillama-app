@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 import type { IChainsByAdapterPageData } from '../types'
 
@@ -72,7 +72,7 @@ describe('ChainsByAdapter', () => {
 		mocks.tableData = []
 	})
 
-	it('uses the fetched chain totals directly', () => {
+	test('uses the fetched chain totals directly', () => {
 		const rows = renderRows({
 			type: 'App Fees',
 			adapterType: ADAPTER_TYPES.FEES,
@@ -82,7 +82,7 @@ describe('ChainsByAdapter', () => {
 		expect(rows[0]).toMatchObject(baseChain)
 	})
 
-	it('shows chart panels on app fee and holders revenue chain ranking pages', () => {
+	test('shows chart panels on app fee and holders revenue chain ranking pages', () => {
 		renderRows({
 			type: 'App Fees',
 			adapterType: ADAPTER_TYPES.FEES,
@@ -97,7 +97,7 @@ describe('ChainsByAdapter', () => {
 		expect(mocks.chartProps.map((props) => props.chartName)).toEqual(['App Fees', 'Holders Revenue'])
 	})
 
-	it('hides chart panels on chain-native fee and revenue ranking pages', () => {
+	test('hides chart panels on chain-native fee and revenue ranking pages', () => {
 		renderRows({
 			type: 'Fees',
 			adapterType: ADAPTER_TYPES.FEES,
@@ -112,7 +112,7 @@ describe('ChainsByAdapter', () => {
 		expect(mocks.chartProps).toEqual([])
 	})
 
-	it('keeps chart panels visible for non-fee chain ranking pages', () => {
+	test('keeps chart panels visible for non-fee chain ranking pages', () => {
 		renderRows({
 			type: 'DEX Volume',
 			adapterType: ADAPTER_TYPES.DEXS,

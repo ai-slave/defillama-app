@@ -22,7 +22,7 @@ const NEEDS_PROTOCOL_CATALOG_BY_ITEM_KIND = {
 	sql: false
 } satisfies Record<DashboardItemConfig['kind'], boolean>
 
-export function dashboardStreamNeedsProtocolCatalog(items: readonly DashboardItemConfig[]): boolean {
+export function dashboardStreamNeedsProtocolCatalog(items: ReadonlyArray<DashboardItemConfig>): boolean {
 	for (const item of items) {
 		if (NEEDS_PROTOCOL_CATALOG_BY_ITEM_KIND[item.kind]) return true
 	}

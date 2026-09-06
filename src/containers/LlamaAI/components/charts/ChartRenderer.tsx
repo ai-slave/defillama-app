@@ -65,11 +65,11 @@ const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 const ScatterChart = lazy(() => import('~/components/ECharts/ScatterChart'))
 
 interface ChartRendererProps {
-	charts: ChartConfiguration[]
+	charts: Array<ChartConfiguration>
 	chartData: ChartDataSeries | ChartDataByKey
 	isLoading?: boolean
 	hasError?: boolean
-	chartTypes?: string[]
+	chartTypes?: Array<string>
 	resizeTrigger?: number
 	sessionId?: string | null
 	messageId?: string
@@ -81,11 +81,11 @@ interface ChartRendererProps {
 }
 
 interface ChartRendererRuntimeProps {
-	charts: ChartConfiguration[]
+	charts: Array<ChartConfiguration>
 	chartData: ChartDataSeries | ChartDataByKey
 	isLoading: boolean
 	hasError: boolean
-	chartTypes: string[] | undefined
+	chartTypes: Array<string> | undefined
 	resizeTrigger: number
 	sessionId: string | null | undefined
 	messageId: string | undefined
@@ -347,7 +347,7 @@ interface ChartEditorSessionProps {
 	resetView: ChartStyleEditorView
 	initialBase: BasePresentationResult | null
 	initialControls: ChartRenderPlan['controls']
-	categories: string[]
+	categories: Array<string>
 	onSave: (draft: ChartConfiguration, patch: ChartStylePatch) => Promise<void>
 	onCancel: () => void
 }
@@ -587,7 +587,7 @@ function ActiveSingleChart({
 		const field = config.axes?.x?.field
 		if (!field || !Array.isArray(data)) return []
 		const seen = new Set<string>()
-		const out: string[] = []
+		const out: Array<string> = []
 		for (const row of data) {
 			if (!isChartDataRow(row)) continue
 			const v = row[field]
@@ -849,11 +849,9 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 	)
 }
 
-const ChartLoadingSpinner = () => (
-	<div className="size-4 animate-spin rounded-full border-b-2 border-ai-accent-blue"></div>
-)
+const ChartLoadingSpinner = () => <div className="size-4 animate-spin rounded-full border-b-2 border-ai-accent-blue" />
 
-const ChartLoadingPlaceholder = ({ chartTypes }: { chartTypes: string[] | undefined }) => (
+const ChartLoadingPlaceholder = ({ chartTypes }: { chartTypes: Array<string> | undefined }) => (
 	<div className="flex flex-col items-center justify-center gap-2 rounded-md border border-ai-line px-1 py-8">
 		<ChartLoadingSpinner />
 		<p className="text-ai-tertiary">

@@ -91,7 +91,7 @@ export interface IResponseCGMarketsAPI {
 	price_change_percentage_1y_in_currency?: number | null
 	roi?: CoinGeckoRoi | null
 	sparkline_in_7d?: {
-		price?: number[]
+		price?: Array<number>
 	}
 	symbol: string
 	total_supply?: number | null
@@ -140,10 +140,10 @@ export interface GeckoIdResponse {
 }
 
 export interface FetchCoinGeckoSimplePriceOptions {
-	vsCurrencies: string | string[]
-	ids?: string | string[]
-	names?: string | string[]
-	symbols?: string | string[]
+	vsCurrencies: string | Array<string>
+	ids?: string | Array<string>
+	names?: string | Array<string>
+	symbols?: string | Array<string>
 	includeTokens?: CoinGeckoIncludeTokens
 	includeMarketCap?: boolean
 	include24hrVol?: boolean
@@ -235,7 +235,7 @@ export interface CoinGeckoCoinTickerWithDepth extends CoinGeckoCoinTicker {
 }
 
 export interface FetchCoinGeckoCoinTickersByIdOptions {
-	exchangeIds?: string | string[]
+	exchangeIds?: string | Array<string>
 	includeExchangeLogo?: boolean
 	order?: CoinGeckoCoinTickersOrder
 	depth?: boolean
@@ -277,7 +277,7 @@ interface CoinGeckoCoinMarketData {
 	outstanding_token_value_usd?: number
 	market_cap_rank?: number | null
 	sparkline_7d?: {
-		price?: number[]
+		price?: Array<number>
 	}
 	[key: string]: unknown
 }
@@ -289,15 +289,15 @@ interface CoinGeckoCoinImage {
 }
 
 interface CoinGeckoCoinLinks {
-	homepage?: string[]
+	homepage?: Array<string>
 	whitepaper?: string
-	blockchain_site?: string[]
-	official_forum_url?: string[]
-	chat_url?: string[]
-	announcement_url?: string[]
+	blockchain_site?: Array<string>
+	official_forum_url?: Array<string>
+	chat_url?: Array<string>
+	announcement_url?: Array<string>
 	snapshot_url?: string
 	twitter_screen_name?: string
-	repos_url?: { github?: string[]; bitbucket?: string[] }
+	repos_url?: { github?: Array<string>; bitbucket?: Array<string> }
 	[key: string]: unknown
 }
 
@@ -314,7 +314,7 @@ export interface CoinGeckoCoinDetailBody {
 	contract_address?: string | null
 	platforms?: Record<string, string>
 	detail_platforms?: Record<string, CoinGeckoDetailPlatform>
-	categories?: string[]
+	categories?: Array<string>
 	categories_details?: Array<Record<string, unknown>>
 	image?: CoinGeckoCoinImage
 	links?: CoinGeckoCoinLinks
@@ -341,7 +341,7 @@ export interface FetchCoinGeckoCoinByIdOptions {
 }
 
 export type CoinGeckoCoinDetailResponseForOptions<TOptions = undefined> = CoinGeckoCoinDetailBody &
-	CoinGeckoConditionalField<DefaultedBooleanOption<TOptions, 'tickers', true>, 'tickers', CoinGeckoCoinTicker[]> &
+	CoinGeckoConditionalField<DefaultedBooleanOption<TOptions, 'tickers', true>, 'tickers', Array<CoinGeckoCoinTicker>> &
 	CoinGeckoConditionalField<
 		DefaultedBooleanOption<TOptions, 'marketData', true>,
 		'market_data',

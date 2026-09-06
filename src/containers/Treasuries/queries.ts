@@ -25,23 +25,23 @@ function transformTreasury(treasury: RawTreasuryProtocol, linkProtocol: boolean)
 	}
 }
 
-export function buildTreasuryRows(treasuries: RawTreasuriesResponse, linkProtocols: boolean): ITreasuryRow[] {
-	const rows: ITreasuryRow[] = []
+export function buildTreasuryRows(treasuries: RawTreasuriesResponse, linkProtocols: boolean): Array<ITreasuryRow> {
+	const rows: Array<ITreasuryRow> = []
 	for (const treasury of treasuries) rows.push(transformTreasury(treasury, linkProtocols))
 	rows.sort((a, b) => b.coreTvl - a.coreTvl)
 	return rows
 }
 
-export async function getTreasuryPageData(): Promise<ITreasuryRow[]> {
+export async function getTreasuryPageData(): Promise<Array<ITreasuryRow>> {
 	return buildTreasuryRows(await fetchTreasuries(), true)
 }
 
-export async function getEntitiesPageData(): Promise<ITreasuryRow[]> {
+export async function getEntitiesPageData(): Promise<Array<ITreasuryRow>> {
 	return buildTreasuryRows(await fetchEntities(), false)
 }
 
-export function buildNetProjectTreasuryRows(treasuries: RawTreasuriesResponse): INetProjectTreasury[] {
-	const protocols: INetProjectTreasury[] = []
+export function buildNetProjectTreasuryRows(treasuries: RawTreasuriesResponse): Array<INetProjectTreasury> {
+	const protocols: Array<INetProjectTreasury> = []
 	for (const treasury of treasuries) {
 		const { stablecoins, majors, others } = treasury.tokenBreakdowns
 		const netTreasury = stablecoins + majors + others
@@ -58,6 +58,6 @@ export function buildNetProjectTreasuryRows(treasuries: RawTreasuriesResponse): 
 	return protocols
 }
 
-export async function getNetProjectTreasuryData(): Promise<INetProjectTreasury[]> {
+export async function getNetProjectTreasuryData(): Promise<Array<INetProjectTreasury>> {
 	return buildNetProjectTreasuryRows(await fetchTreasuries())
 }

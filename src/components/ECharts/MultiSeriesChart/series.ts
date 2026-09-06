@@ -82,7 +82,7 @@ export function buildMultiSeries({
 	hallmarksMarkLine?: ReturnType<typeof buildHallmarksMarkLine> | undefined
 	chartRef?: ChartInstanceRef | undefined
 }) {
-	const output: MultiSeriesRenderSeries[] = []
+	const output: Array<MultiSeriesRenderSeries> = []
 	let hasExplicitYAxis = false
 
 	const chartConfigs = charts ?? []
@@ -155,7 +155,7 @@ export function buildMultiSeries({
 		if (series.type === 'line' && chart.hideAreaStyle) delete series.areaStyle
 		if (series.type === 'line' && chart.step != null) series.step = chart.step
 		if (series.type === 'line' && chart.lineStyle) {
-			series.lineStyle = { ...(series.lineStyle ?? {}), ...chart.lineStyle }
+			series.lineStyle = { ...series.lineStyle, ...chart.lineStyle }
 		}
 		if (chart.markLine != null) {
 			series.markLine = chart.markLine
@@ -178,7 +178,7 @@ export function buildMultiSeries({
 				series.areaStyle = hatch ? { color: hatch, opacity: 0.6 } : { ...areaStyle, opacity: 0.1 }
 			}
 			if (series.type === 'line') {
-				series.lineStyle = { ...(series.lineStyle ?? {}), type: 'dashed', width: 1.5, opacity: 0.5 }
+				series.lineStyle = { ...series.lineStyle, type: 'dashed', width: 1.5, opacity: 0.5 }
 			}
 			if (series.type === 'line') {
 				const seriesDimension = Array.isArray(chart.encode.y) ? chart.encode.y[0] : chart.encode.y

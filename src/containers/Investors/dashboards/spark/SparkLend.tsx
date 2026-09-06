@@ -16,17 +16,19 @@ import {
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const TVL_CHARTS: MultiSeriesChartSeriesConfig[] = [{ type: 'line', name: 'TVL', encode: { x: 'timestamp', y: 'TVL' } }]
-const BORROWED_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const TVL_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
+	{ type: 'line', name: 'TVL', encode: { x: 'timestamp', y: 'TVL' } }
+]
+const BORROWED_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'line', name: 'Borrowed', encode: { x: 'timestamp', y: 'Borrowed' } }
 ]
-const FEES_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const FEES_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'bar', name: 'Fees', encode: { x: 'timestamp', y: 'Fees' }, color: '#4FC3F7', stack: 'a' }
 ]
-const REVENUE_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const REVENUE_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'bar', name: 'Revenue', encode: { x: 'timestamp', y: 'Revenue' }, color: '#66BB6A', stack: 'a' }
 ]
-const SUPPLY_SIDE_REVENUE_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const SUPPLY_SIDE_REVENUE_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'bar',
 		name: 'Supply Side Revenue',
@@ -35,7 +37,7 @@ const SUPPLY_SIDE_REVENUE_CHARTS: MultiSeriesChartSeriesConfig[] = [
 		stack: 'a'
 	}
 ]
-const INFLOWS_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'bar',
 		name: 'USD Inflows',
@@ -98,7 +100,7 @@ interface PoolRow {
 	poolMeta: string | null
 }
 
-const poolColumns: ColumnDef<PoolRow>[] = [
+const poolColumns: Array<ColumnDef<PoolRow>> = [
 	{
 		header: 'Pool',
 		accessorKey: 'symbol',
@@ -144,7 +146,7 @@ const poolColumns: ColumnDef<PoolRow>[] = [
 	}
 ]
 
-function YieldPoolsTable({ data }: { data: PoolRow[] }) {
+function YieldPoolsTable({ data }: { data: Array<PoolRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'tvlUsd', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 

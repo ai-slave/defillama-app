@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { isChartConfiguration, isChartData, type ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { LLAMAAI_CHART_MAX_DATA_BYTES, downsampleChartData } from '../llamaaiChart'
 
@@ -25,11 +25,11 @@ const validConfig = {
 } satisfies ChartConfiguration
 
 describe('isChartConfiguration', () => {
-	it('accepts a plausible chart config and returns it', () => {
+	test('accepts a plausible chart config and returns it', () => {
 		expect(isChartConfiguration(validConfig)).toBe(true)
 	})
 
-	it('rejects malformed persisted configs instead of blessing partial objects', () => {
+	test('rejects malformed persisted configs instead of blessing partial objects', () => {
 		expect(isChartConfiguration(null)).toBe(false)
 		expect(isChartConfiguration('bar')).toBe(false)
 		expect(isChartConfiguration({ ...validConfig, type: 7 })).toBe(false)
@@ -39,7 +39,7 @@ describe('isChartConfiguration', () => {
 })
 
 describe('isChartData', () => {
-	it('accepts flat and keyed arrays while rejecting malformed keyed payloads', () => {
+	test('accepts flat and keyed arrays while rejecting malformed keyed payloads', () => {
 		expect(isChartData([{ ts: 1, value: 2 }])).toBe(true)
 		expect(isChartData({ chart: [{ ts: 1, value: 2 }] })).toBe(true)
 		expect(isChartData({ chart: { ts: 1, value: 2 } })).toBe(false)
@@ -47,20 +47,20 @@ describe('isChartData', () => {
 })
 
 describe('downsampleChartData', () => {
-	it('leaves small series untouched', () => {
+	test('leaves small series untouched', () => {
 		const rows = Array.from({ length: 100 }, (_, i) => ({ ts: i, value: i }))
 		expect(downsampleChartData(rows, 2000)).toBe(rows)
 	})
 
-	it('downsamples an array series to the cap, keeping first and last points', () => {
-		const rows = Array.from({ length: 10000 }, (_, i) => ({ ts: i, value: i }))
+	test('downsamples an array series to the cap, keeping first and last points', () => {
+		const rows = Array.from({ length: 10_000 }, (_, i) => ({ ts: i, value: i }))
 		const out = downsampleChartData(rows, 2000)
 		expect(out.length).toBeLessThanOrEqual(2000)
 		expect(out.at(0)?.ts).toBe(0)
 		expect(out.at(-1)?.ts).toBe(9999)
 	})
 
-	it('downsamples each series of a keyed record independently', () => {
+	test('downsamples each series of a keyed record independently', () => {
 		const data = {
 			a: Array.from({ length: 5000 }, (_, i) => ({ ts: i, value: i })),
 			b: Array.from({ length: 10 }, (_, i) => ({ ts: i, value: i }))
@@ -71,7 +71,7 @@ describe('downsampleChartData', () => {
 		expect(out.b?.length).toBe(10)
 	})
 
-	it('exports a client cap below the 512KB server backstop', () => {
+	test('exports a client cap below the 512KB server backstop', () => {
 		expect(LLAMAAI_CHART_MAX_DATA_BYTES).toBeLessThan(512 * 1024)
 	})
 })

@@ -16,7 +16,7 @@ export function activeSplit(query: ApiQuery): CsvSplit {
 	return { reward: components.includes('reward'), intrinsic: components.includes('intrinsic') }
 }
 
-export function apyHeaders(label: string, suffix: string, split: CsvSplit, withIntrinsic: boolean): string[] {
+export function apyHeaders(label: string, suffix: string, split: CsvSplit, withIntrinsic: boolean): Array<string> {
 	if (!split.reward && !split.intrinsic) return [`${label}${suffix}`]
 	const headers = [`${label} Base${suffix}`]
 	if (split.reward) headers.push(`${label} Reward${suffix}`)
@@ -32,9 +32,9 @@ export function apyValues(
 	intrinsic: number | null | undefined,
 	split: CsvSplit,
 	withIntrinsic: boolean
-): (number | null)[] {
+): Array<number | null> {
 	if (!split.reward && !split.intrinsic) return [total ?? null]
-	const values: (number | null)[] = [base ?? null]
+	const values: Array<number | null> = [base ?? null]
 	if (split.reward) values.push(reward ?? null)
 	if (split.intrinsic && withIntrinsic) values.push(intrinsic ?? null)
 	values.push(total ?? null)

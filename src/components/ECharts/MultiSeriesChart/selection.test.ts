@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildSelectedAdditiveChart, buildSelectedPercentageChart, rankSeriesByPeakAbsoluteValue } from './selection'
 
-it('ranks additive peers by peak absolute value with stable ties', () => {
+test('ranks additive peers by peak absolute value with stable ties', () => {
 	expect(
 		rankSeriesByPeakAbsoluteValue(
 			{
@@ -17,7 +17,7 @@ it('ranks additive peers by peak absolute value with stable ties', () => {
 })
 
 describe('buildSelectedAdditiveChart', () => {
-	it('keeps selected peers visible and folds only the selected tail into fixed-color Others', async () => {
+	test('keeps selected peers visible and folds only the selected tail into fixed-color Others', async () => {
 		const names = Array.from({ length: 5 }, (_, index) => `Series${index + 1}`)
 		const dataset = { dimensions: ['timestamp', ...names], source: [[1, 50, 40, 30, 20, 10]] }
 		const charts = names.map((name, index) => ({
@@ -52,7 +52,7 @@ describe('buildSelectedAdditiveChart', () => {
 		expect(await result.csvSource.prepare()).toBe(dataset)
 	})
 
-	it('keeps Others unavailable when any selected remainder member is unavailable', () => {
+	test('keeps Others unavailable when any selected remainder member is unavailable', () => {
 		const names = ['A', 'B', 'C', 'D']
 		const charts = names.map((name, index) => ({
 			type: 'line' as const,
@@ -79,7 +79,7 @@ describe('buildSelectedAdditiveChart', () => {
 		])
 	})
 
-	it('does not add Others for an explicit subset below the limit', () => {
+	test('does not add Others for an explicit subset below the limit', () => {
 		const charts = [
 			{ type: 'line' as const, name: 'A', encode: { x: 0, y: 1 } },
 			{ type: 'line' as const, name: 'B', encode: { x: 0, y: 2 } },
@@ -120,7 +120,7 @@ describe('buildSelectedPercentageChart', () => {
 		{ type: 'line' as const, name: 'Base', encode: { x: 0, y: 3 }, color: '#333333' }
 	]
 
-	it('renormalizes selected peers visually while exporting the full canonical denominator', async () => {
+	test('renormalizes selected peers visually while exporting the full canonical denominator', async () => {
 		const result = buildSelectedPercentageChart({
 			dataset,
 			charts,
@@ -148,7 +148,7 @@ describe('buildSelectedPercentageChart', () => {
 		})
 	})
 
-	it('makes a single selected peer 100% while preserving missing values', () => {
+	test('makes a single selected peer 100% while preserving missing values', () => {
 		const result = buildSelectedPercentageChart({
 			dataset,
 			charts,
@@ -162,7 +162,7 @@ describe('buildSelectedPercentageChart', () => {
 		])
 	})
 
-	it('keeps every selected share unavailable when the selected denominator is incomplete', () => {
+	test('keeps every selected share unavailable when the selected denominator is incomplete', () => {
 		const result = buildSelectedPercentageChart({
 			dataset: {
 				dimensions: ['timestamp', 'Unmeasured', 'Measured'],
@@ -179,7 +179,7 @@ describe('buildSelectedPercentageChart', () => {
 		expect(result.dataset.source).toEqual([[1, null, null]])
 	})
 
-	it('normalizes available peers while preserving missing peer gaps', () => {
+	test('normalizes available peers while preserving missing peer gaps', () => {
 		const result = buildSelectedPercentageChart({
 			dataset: {
 				dimensions: ['timestamp', 'Unmeasured', 'MeasuredA', 'MeasuredB'],
@@ -197,7 +197,7 @@ describe('buildSelectedPercentageChart', () => {
 		expect(result.dataset.source).toEqual([[1, null, 75, 25]])
 	})
 
-	it('keeps zero-valued trailing peers exactly zero when correcting rounding residue', () => {
+	test('keeps zero-valued trailing peers exactly zero when correcting rounding residue', () => {
 		const result = buildSelectedPercentageChart({
 			dataset: {
 				dimensions: ['timestamp', 'ActiveA', 'ActiveB', 'Dormant'],

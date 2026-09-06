@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { downloadCSV } from '~/utils/download'
 import type { EquitiesPriceHistory } from '../api.types'
@@ -121,7 +121,7 @@ const pageProps: IEquityTickerPageProps = {
 }
 
 describe('EquityTickerPage availability', () => {
-	it('keeps successful empty optional sources visible', () => {
+	test('keeps successful empty optional sources visible', () => {
 		expect(getAvailableEquityTabs({ hasFilings: true, hasOnchain: true, hasUnlocks: false })).toEqual([
 			'financials',
 			'overview',
@@ -131,7 +131,7 @@ describe('EquityTickerPage availability', () => {
 		])
 	})
 
-	it('hides only unavailable optional sources', () => {
+	test('hides only unavailable optional sources', () => {
 		expect(getAvailableEquityTabs({ hasFilings: false, hasOnchain: false, hasUnlocks: true })).toEqual([
 			'financials',
 			'overview',
@@ -182,14 +182,14 @@ describe('EquityTickerPage price history', () => {
 		return [...container.querySelectorAll('button')].find((element) => element.textContent === label)!
 	}
 
-	async function waitForPrices(values: number[]) {
+	async function waitForPrices(values: Array<number>) {
 		await vi.waitFor(async () => {
 			await act(async () => {})
 			expect(JSON.parse(chart()?.textContent ?? 'null')).toEqual(values)
 		})
 	}
 
-	it.each(['7D', 'MAX'])('fetches a bookmarked %s timeframe through the proxy', async (timeframe) => {
+	test.each(['7D', 'MAX'])('fetches a bookmarked %s timeframe through the proxy', async (timeframe) => {
 		router.query = { timeframe }
 		await render()
 		await waitForPrices([220, 225])
@@ -197,7 +197,7 @@ describe('EquityTickerPage price history', () => {
 		expect(fetchHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', timeframe)
 	})
 
-	it('uses generated default prices and fetches other ranges without mixing cached data', async () => {
+	test('uses generated default prices and fetches other ranges without mixing cached data', async () => {
 		const pending = Promise.withResolvers<EquitiesPriceHistory>()
 		fetchHistory.mockReturnValue(pending.promise)
 		await render()
@@ -261,7 +261,7 @@ describe('EquityTickerPage price history', () => {
 		expect(fetchHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '1M')
 	})
 
-	it.each(['empty', 'error'])(
+	test.each(['empty', 'error'])(
 		'keeps timeframe controls after an %s response without showing default data',
 		async (result) => {
 			router.query = { timeframe: 'MAX' }
@@ -287,14 +287,14 @@ describe('EquityTickerPage price history', () => {
 		}
 	)
 
-	it('recovers through the proxy when the default history failed during page generation', async () => {
+	test('recovers through the proxy when the default history failed during page generation', async () => {
 		fetchHistory.mockResolvedValue(defaultHistory)
 		await render({ ...pageProps, priceHistory: null })
 		await waitForPrices([222, 223])
 		expect(fetchHistory).toHaveBeenCalledExactlyOnceWith('NVDA', 'US', '24H')
 	})
 
-	it('keeps a successful empty default response without refetching and allows another timeframe', async () => {
+	test('keeps a successful empty default response without refetching and allows another timeframe', async () => {
 		await render({ ...pageProps, priceHistory: [] })
 		expect(container.textContent).toContain('No price history available')
 		expect(fetchHistory).not.toHaveBeenCalled()

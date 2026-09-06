@@ -169,7 +169,7 @@ export const prepareRaisesCsv = (instance: Table<Raise>) => {
 	}
 }
 
-export function RaisesTable({ raises }: { raises: Raise[] }) {
+export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ desc: true, id: 'date' }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])

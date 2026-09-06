@@ -1,15 +1,15 @@
 import type * as echarts from 'echarts/core'
 
 export interface IHBarChartProps {
-	categories: string[]
-	values: number[]
+	categories: Array<string>
+	values: Array<number>
 	title?: string
 	valueSymbol?: string
 	height?: string
 	color?: string
-	colors?: string[]
-	logos?: string[]
-	series?: Array<{ name: string; values: number[]; color: string }>
+	colors?: Array<string>
+	logos?: Array<string>
+	series?: Array<{ name: string; values: Array<number>; color: string }>
 	valueAxisMin?: number | 'dataMin'
 	valueAxisMax?: number | 'dataMax'
 	valueAxisInterval?: number

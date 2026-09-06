@@ -55,9 +55,9 @@ export function micaColumnVisibility(filter: MicaFilter): VisibilityState {
 
 /** Contractual placement: Bybit EU leads the table; every other row keeps the
  *  backend's curated registry order. Filtering and placement share one pass. */
-export function prepareMicaVenues<T extends MicaVenueModel>(rows: T[], filter: MicaFilter): T[] {
+export function prepareMicaVenues<T extends MicaVenueModel>(rows: Array<T>, filter: MicaFilter): Array<T> {
 	let pinned: T | null = null
-	const visible: T[] = []
+	const visible: Array<T> = []
 
 	for (const row of rows) {
 		if (filter === 'fiat' && !row.fiatOnramp) continue
@@ -71,7 +71,7 @@ export function prepareMicaVenues<T extends MicaVenueModel>(rows: T[], filter: M
 	return visible
 }
 
-export function MicaTable({ venues }: { venues: MicaVenueRowModel[] }) {
+export function MicaTable({ venues }: { venues: Array<MicaVenueRowModel> }) {
 	const router = useRouter()
 	const filter = getMicaFilter(router.query)
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildHistoryStrip, type HistoryIncident, type ProtocolIncidentInput } from '../components/HistoryStrip'
 import type { Audit } from '../types'
 import { makeAudit } from './factories'
@@ -37,7 +37,7 @@ function protoIncident(partial: Partial<ProtocolIncidentInput>): ProtocolInciden
 // Two firms per quarter across 2023-Q1 → 2025-Q3 (~2.5y): packed enough that clustering must
 // merge chips, and spanning years so year ticks appear.
 const auditQuarters = ['01-15', '01-22', '04-15', '04-22', '07-15', '07-22', '10-15', '10-22']
-const manyAudits: Audit[] = []
+const manyAudits: Array<Audit> = []
 for (const year of ['2023', '2024', '2025']) {
 	for (const md of auditQuarters) {
 		// keep 2025 short of Q4 so the span is ~2.5y, not a clean 3y
@@ -48,7 +48,7 @@ for (const year of ['2023', '2024', '2025']) {
 
 // Protocol-wide track record for the "own lane" tests: one loss, one made-whole, and a
 // frontend whitehat ($0 lost, funds returned → reads as recovered).
-const morphoProtoIncidents: ProtocolIncidentInput[] = [
+const morphoProtoIncidents: Array<ProtocolIncidentInput> = [
 	protoIncident({
 		date: '2024-04-01',
 		kind: 'oracle-misconfiguration',
@@ -77,7 +77,7 @@ const morphoProtoIncidents: ProtocolIncidentInput[] = [
 ]
 
 describe('buildHistoryStrip', () => {
-	it('returns null with nothing to show, renders with any one lane alone', () => {
+	test('returns null with nothing to show, renders with any one lane alone', () => {
 		expect(buildHistoryStrip([], [], [], '2026-06-01')).toBeNull()
 		expect(buildHistoryStrip([audit('2025-01-01')], [], [], '2026-06-01')?.audits).toHaveLength(1)
 		expect(buildHistoryStrip([], [incident({ usdLost: 5 })], [], '2026-06-01')?.incidents).toHaveLength(1)
@@ -85,7 +85,7 @@ describe('buildHistoryStrip', () => {
 		expect(buildHistoryStrip([], [], [protoIncident({ usdLost: 5 })], '2026-06-01')?.protocolIncidents).toHaveLength(1)
 	})
 
-	it('clusters all real morpho audits without losing any, in-bounds and chronological', () => {
+	test('clusters all real morpho audits without losing any, in-bounds and chronological', () => {
 		const vm = buildHistoryStrip(manyAudits, [], [], '2026-06-08')!
 		expect(vm.audits.reduce((a, c) => a + c.count, 0)).toBe(manyAudits.length)
 		expect(vm.audits.length).toBeLessThan(manyAudits.length) // 22 audits over ~2.5y must merge
@@ -96,10 +96,10 @@ describe('buildHistoryStrip', () => {
 			expect(vm.audits[i]!.items.length).toBe(vm.audits[i]!.count)
 		}
 		expect(vm.years.length).toBeGreaterThan(0)
-		expect(vm.years.map((y) => y.label)).toEqual([...vm.years.map((y) => y.label)].sort())
+		expect(vm.years.map((y) => y.label)).toEqual(vm.years.map((y) => y.label).sort())
 	})
 
-	it('merges same-week audits into one counted chip, keeps distant ones apart', () => {
+	test('merges same-week audits into one counted chip, keeps distant ones apart', () => {
 		const vm = buildHistoryStrip(
 			[audit('2025-12-04', 'A'), audit('2025-12-04', 'B'), audit('2023-01-01', 'C')],
 			[],
@@ -112,7 +112,7 @@ describe('buildHistoryStrip', () => {
 		expect(dec.items.map((i) => i.firm)).toEqual(['A', 'B'])
 	})
 
-	it('classifies incident tones: loss, made whole, averted', () => {
+	test('classifies incident tones: loss, made whole, averted', () => {
 		const vm = buildHistoryStrip(
 			[],
 			[
@@ -146,7 +146,7 @@ describe('buildHistoryStrip', () => {
 		expect(vm.incidents[0]!.r).toBeGreaterThan(vm.incidents[2]!.r)
 	})
 
-	it('distinguishes unavailable recovery from explicit zero recovery', () => {
+	test('distinguishes unavailable recovery from explicit zero recovery', () => {
 		const vm = buildHistoryStrip(
 			[],
 			[
@@ -172,13 +172,13 @@ describe('buildHistoryStrip', () => {
 		expect(vm.incidents[1]!.money).toContain('not recovered')
 	})
 
-	it('a lone event still gets a readable axis instead of a zero-width domain', () => {
+	test('a lone event still gets a readable axis instead of a zero-width domain', () => {
 		const vm = buildHistoryStrip([], [incident({ date: '2025-04-10', usdRecovered: 2_600_000 })], [], undefined)!
 		expect(vm.incidents[0]!.x).toBeGreaterThan(2)
 		expect(vm.incidents[0]!.x).toBeLessThan(98)
 	})
 
-	it('keeps protocol incidents in their own lane, separate from pool incidents (never summed)', () => {
+	test('keeps protocol incidents in their own lane, separate from pool incidents (never summed)', () => {
 		const vm = buildHistoryStrip(
 			[],
 			[incident({ date: '2024-06-01', usdLost: 10, title: 'pool loss' })],
@@ -199,7 +199,7 @@ describe('buildHistoryStrip', () => {
 		expect(frontend.money).toContain('before depositors lost anything')
 	})
 
-	it('renders protocol incidents even when the pool has no incidents (empty pool ≠ clean protocol)', () => {
+	test('renders protocol incidents even when the pool has no incidents (empty pool ≠ clean protocol)', () => {
 		const vm = buildHistoryStrip(manyAudits, [], morphoProtoIncidents, '2026-06-25')!
 		expect(vm.incidents).toHaveLength(0)
 		expect(vm.protocolIncidents.length).toBeGreaterThan(0)

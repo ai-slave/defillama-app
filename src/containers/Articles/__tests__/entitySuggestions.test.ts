@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getStaticArticleEntitySuggestions,
 	mergeArticleEntitySuggestions,
@@ -6,7 +6,7 @@ import {
 } from '../entitySuggestions'
 
 describe('article entity suggestions', () => {
-	it('normalizes a Meilisearch hit using its canonical route', () => {
+	test('normalizes a Meilisearch hit using its canonical route', () => {
 		expect(
 			normalizeArticleEntitySearchHit({
 				id: 'protocol_parent_aave',
@@ -26,7 +26,7 @@ describe('article entity suggestions', () => {
 		})
 	})
 
-	it('preserves subName for chain variant pages', () => {
+	test('preserves subName for chain variant pages', () => {
 		const hit = normalizeArticleEntitySearchHit({
 			id: 'chain_ethereum_protocolsByDexVolume',
 			name: 'Ethereum',
@@ -39,7 +39,7 @@ describe('article entity suggestions', () => {
 		expect(hit?.entityType).toBe('chain')
 	})
 
-	it('maps Metric, CEX and Bridge types', () => {
+	test('maps Metric, CEX and Bridge types', () => {
 		expect(
 			normalizeArticleEntitySearchHit({ id: 'metric_yields', name: 'Yields', type: 'Metric', route: '/yields' })
 				?.entityType
@@ -58,23 +58,23 @@ describe('article entity suggestions', () => {
 		).toBe('bridge')
 	})
 
-	it('rejects unsupported search result types', () => {
+	test('rejects unsupported search result types', () => {
 		expect(
 			normalizeArticleEntitySearchHit({ id: 'btc', name: 'Bitcoin', type: 'Token', route: '/token/btc' })
 		).toBeNull()
 	})
 
-	it('rejects hits missing a route', () => {
+	test('rejects hits missing a route', () => {
 		expect(normalizeArticleEntitySearchHit({ id: 'x', name: 'X', type: 'Protocol' })).toBeNull()
 	})
 
-	it('static fallback returns the curated list when query is empty', () => {
+	test('static fallback returns the curated list when query is empty', () => {
 		const items = getStaticArticleEntitySuggestions('')
 		expect(items.length).toBeGreaterThan(0)
 		expect(items.every((i) => typeof i.route === 'string' && i.route.length > 0)).toBe(true)
 	})
 
-	it('deduplicates search and static suggestions by id', () => {
+	test('deduplicates search and static suggestions by id', () => {
 		const merged = mergeArticleEntitySuggestions(
 			[
 				{

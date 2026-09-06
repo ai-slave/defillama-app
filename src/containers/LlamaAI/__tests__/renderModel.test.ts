@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartConfiguration } from '../chartTypes'
 import { parseMessageToRenderModel } from '../renderModel'
 import type { Message } from '../types'
@@ -14,7 +14,7 @@ const chart = {
 } satisfies ChartConfiguration
 
 describe('parseMessageToRenderModel', () => {
-	it('keeps a durable chart artifact ref attached to the rendered chart block', () => {
+	test('keeps a durable chart artifact ref attached to the rendered chart block', () => {
 		const artifactRef = {
 			artifactId: 'artifact-1',
 			versionId: 'version-1',

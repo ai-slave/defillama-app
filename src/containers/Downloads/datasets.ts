@@ -24,11 +24,11 @@ export interface DatasetDefinition {
 	description: string
 	category: string
 	url: string
-	fields?: string[]
+	fields?: Array<string>
 	defaultSortField?: string
-	extractItems: (json: unknown) => DatasetItem[]
+	extractItems: (json: unknown) => Array<DatasetItem>
 	chainFilterType?: 'overview' | 'protocols'
-	excludeToggles?: DatasetExcludeToggle[]
+	excludeToggles?: Array<DatasetExcludeToggle>
 }
 
 export type DatasetItem = Record<string, unknown>
@@ -37,7 +37,7 @@ function isRecord(value: unknown): value is DatasetItem {
 	return typeof value === 'object' && value != null && !Array.isArray(value)
 }
 
-function extractRecordArray(value: unknown): DatasetItem[] {
+function extractRecordArray(value: unknown): Array<DatasetItem> {
 	return Array.isArray(value) ? value.filter(isRecord) : []
 }
 
@@ -45,11 +45,11 @@ function recordField(value: unknown, field: string): unknown {
 	return isRecord(value) ? value[field] : undefined
 }
 
-function recordFieldArray(value: unknown, field: string): DatasetItem[] {
+function recordFieldArray(value: unknown, field: string): Array<DatasetItem> {
 	return extractRecordArray(recordField(value, field))
 }
 
-function recordFieldArrayOrRoot(value: unknown, field: string): DatasetItem[] {
+function recordFieldArrayOrRoot(value: unknown, field: string): Array<DatasetItem> {
 	const fieldValue = recordField(value, field)
 	return fieldValue === undefined ? extractRecordArray(value) : extractRecordArray(fieldValue)
 }
@@ -59,9 +59,9 @@ function numericField(record: DatasetItem, field: string): number | null {
 	return typeof value === 'number' ? value : null
 }
 
-const extractArray = (json: unknown): DatasetItem[] => extractRecordArray(json)
-const extractDataField = (json: unknown): DatasetItem[] => recordFieldArrayOrRoot(json, 'data')
-const extractProtocols = (json: unknown): DatasetItem[] => recordFieldArray(json, 'protocols')
+const extractArray = (json: unknown): Array<DatasetItem> => extractRecordArray(json)
+const extractDataField = (json: unknown): Array<DatasetItem> => recordFieldArrayOrRoot(json, 'data')
+const extractProtocols = (json: unknown): Array<DatasetItem> => recordFieldArray(json, 'protocols')
 
 function pctChange(current: number | null | undefined, prev: number | null | undefined): number | null {
 	if (current == null || prev == null || prev === 0) return null
@@ -87,7 +87,7 @@ function deepSumRecord(rec: unknown): number {
 	return total
 }
 
-const extractLiteProtocols = (json: unknown): DatasetItem[] => {
+const extractLiteProtocols = (json: unknown): Array<DatasetItem> => {
 	const protocols = recordFieldArray(json, 'protocols')
 	return protocols.map((protocol) => ({
 		name: protocol.name,
@@ -132,7 +132,7 @@ const overviewFields = [
 	'change_30dover30d'
 ]
 
-export const datasets: DatasetDefinition[] = [
+export const datasets: Array<DatasetDefinition> = [
 	{
 		slug: 'stablecoins',
 		name: 'Stablecoins',

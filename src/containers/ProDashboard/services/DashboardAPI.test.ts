@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildDashboardSaveRequest, dashboardAPI } from './DashboardAPI'
 
 describe('Dashboard API save contract', () => {
-	it('keeps custom periods and explicit undo-state clearing inside dashboard data', () => {
+	test('keeps custom periods and explicit undo-state clearing inside dashboard data', () => {
 		const request = buildDashboardSaveRequest({
 			id: 'dashboard/id',
 			data: {
@@ -33,8 +33,8 @@ describe('Dashboard API save contract', () => {
 		})
 	})
 
-	it('migrates fetched config in memory without issuing a persistence request', async () => {
-		const urls: string[] = []
+	test('migrates fetched config in memory without issuing a persistence request', async () => {
+		const urls: Array<string> = []
 		const authorizedFetch = async (url: string) => {
 			urls.push(url)
 			return new Response(
@@ -69,7 +69,7 @@ describe('Dashboard API save contract', () => {
 		expect(urls[0]).toContain('/dashboards/slug%2Fwith-separator?_=')
 	})
 
-	it('normalizes PocketBase timestamps returned by public dashboard search', async () => {
+	test('normalizes PocketBase timestamps returned by public dashboard search', async () => {
 		const authorizedFetch = async () =>
 			new Response(
 				JSON.stringify({

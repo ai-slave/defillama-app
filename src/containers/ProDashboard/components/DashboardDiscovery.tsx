@@ -48,7 +48,7 @@ export function DashboardDiscovery({
 }) {
 	const router = useRouter()
 	const { view, tag: tagQuery, sortBy, query, page: pageQuery, limit, timeFrame } = router.query
-	const pushProQuery = (updates: Record<string, string | number | string[] | undefined>) => {
+	const pushProQuery = (updates: Record<string, string | number | Array<string> | undefined>) => {
 		void pushShallowQuery(router, updates, '/pro')
 	}
 
@@ -129,7 +129,7 @@ export function DashboardDiscovery({
 	}
 
 	const pagesToShow = useMemo(() => {
-		let pages: number[]
+		let pages: Array<number>
 		if (selectedPage === 1) {
 			pages = [1, 2, 3]
 		} else if (selectedPage === totalPages) {
@@ -202,7 +202,7 @@ export function DashboardDiscovery({
 								selectedValues={selectedSortBy.key}
 								setSelectedValues={(value: string) => {
 									if (!isSortOptionKey(value)) return
-									const updates: Record<string, string | number | string[] | undefined> = {
+									const updates: Record<string, string | number | Array<string> | undefined> = {
 										page: undefined,
 										sortBy: value
 									}
@@ -289,7 +289,7 @@ export function DashboardDiscovery({
 									key={`pro-dashboard-tag-${tag}`}
 									onClick={() => {
 										const { tag: currentTag } = router.query
-										let nextTag: string[] | undefined
+										let nextTag: Array<string> | undefined
 										if (Array.isArray(currentTag)) {
 											const filteredTags = currentTag.filter((t) => t !== tag)
 											nextTag = filteredTags.length > 0 ? filteredTags : undefined

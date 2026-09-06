@@ -1,6 +1,6 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const {
 	DynamicLiquidationsSummaryStats,
@@ -44,14 +44,14 @@ const {
 	}
 })
 
-var authState = {
+let authState = {
 	authorizedFetch: vi.fn(),
 	hasActiveSubscription: true,
 	isAuthenticated: true,
 	loaders: { userLoading: false }
 }
 
-var queryState: {
+let queryState: {
 	data?: any
 	error?: Error | null
 	isLoading: boolean
@@ -152,7 +152,7 @@ afterEach(() => {
 })
 
 describe('TokenLiquidationsSection', () => {
-	it('renders token liquidations rows for subscribers', () => {
+	test('renders token liquidations rows for subscribers', () => {
 		queryState = {
 			data: {
 				tokenSymbol: 'wstETH',
@@ -198,7 +198,7 @@ describe('TokenLiquidationsSection', () => {
 		})
 	})
 
-	it('shows a sign-in gate for unauthenticated users', () => {
+	test('shows a sign-in gate for unauthenticated users', () => {
 		authState = {
 			authorizedFetch: vi.fn(),
 			hasActiveSubscription: false,
@@ -211,7 +211,7 @@ describe('TokenLiquidationsSection', () => {
 		expect(html).toContain('active subscription')
 	})
 
-	it('shows the query error message when the fetch fails', () => {
+	test('shows the query error message when the fetch fails', () => {
 		queryState = {
 			data: null,
 			error: new Error('Failed to fetch token liquidations data'),
@@ -223,7 +223,7 @@ describe('TokenLiquidationsSection', () => {
 		expect(html).toContain('Failed to fetch token liquidations data')
 	})
 
-	it('shows an empty state when no liquidation rows remain', () => {
+	test('shows an empty state when no liquidation rows remain', () => {
 		queryState = {
 			data: {
 				tokenSymbol: 'WSTETH',

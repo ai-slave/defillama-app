@@ -1,22 +1,22 @@
 export type UnifiedRowHeaderType = 'parent-protocol' | 'protocol' | 'chain' | 'category'
 
 export interface TableFilters {
-	protocols?: string[]
-	tokens?: string[]
-	categories?: string[]
-	excludedCategories?: string[]
-	oracles?: string[]
+	protocols?: Array<string>
+	tokens?: Array<string>
+	categories?: Array<string>
+	excludedCategories?: Array<string>
+	oracles?: Array<string>
 	apyMin?: number
 	apyMax?: number
 	tvlMin?: number
 	tvlMax?: number
 	baseApyMin?: number
 	baseApyMax?: number
-	chains?: string[]
+	chains?: Array<string>
 	hasRewards?: boolean
 	stablesOnly?: boolean
 	activeLending?: boolean
-	poolTypes?: string[]
+	poolTypes?: Array<string>
 	mcapMin?: number
 	mcapMax?: number
 	protocolAgeDaysMin?: number

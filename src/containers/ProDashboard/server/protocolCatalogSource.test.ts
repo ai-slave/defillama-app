@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const llamaQuery = vi.hoisted(() => vi.fn())
 vi.mock('~/server/db/llama', () => ({ llamaDb: { query: llamaQuery } }))
@@ -8,7 +8,7 @@ import { fetchProProtocolCatalogSourceRows } from './protocolCatalogSource'
 describe('Pro protocol catalog Lens source', () => {
 	beforeEach(() => llamaQuery.mockReset())
 
-	it('reads membership, TVL, parent policy, and canonical token metadata from Lens', async () => {
+	test('reads membership, TVL, parent policy, and canonical token metadata from Lens', async () => {
 		llamaQuery.mockResolvedValue([
 			{
 				slug: 'child',

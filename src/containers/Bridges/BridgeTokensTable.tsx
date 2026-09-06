@@ -15,7 +15,7 @@ import type { BridgeTokenTableRow } from './types'
 
 const columnHelper = createColumnHelper<BridgeTokenTableRow>()
 
-export function BridgeTokensTable({ data }: { data: BridgeTokenTableRow[] }) {
+export function BridgeTokensTable({ data }: { data: Array<BridgeTokenTableRow> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'volume', desc: true }])
 	const { data: blockExplorersData } = useBlockExplorers()
 

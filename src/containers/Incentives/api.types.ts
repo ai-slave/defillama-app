@@ -1,7 +1,7 @@
 export interface EmissionsBreakdownProtocol {
 	name: string
 	defillamaId: string
-	linked: string[]
+	linked: Array<string>
 	category: string
 	chain: string
 	emission24h: number | null
@@ -14,7 +14,7 @@ export interface EmissionsBreakdownProtocol {
 }
 
 export interface EmissionsBreakdownAggregatedResponse {
-	protocols: EmissionsBreakdownProtocol[]
+	protocols: Array<EmissionsBreakdownProtocol>
 	emission24h: number
 	emission7d: number
 	emission30d: number

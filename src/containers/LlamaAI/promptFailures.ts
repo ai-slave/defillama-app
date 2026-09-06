@@ -97,7 +97,7 @@ export function materializeFailedPrompt(request: FailedRequest): Message {
 	}
 }
 
-export function projectPromptFailure(messages: Message[], failure: PromptFailure | null): Message[] {
+export function projectPromptFailure(messages: Array<Message>, failure: PromptFailure | null): Array<Message> {
 	if (!failure || messages.some((message) => message.id === failure.request.optimisticMessageId)) return messages
 	return [...messages, materializeFailedPrompt(failure.request)]
 }

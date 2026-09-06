@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('../Drawer', () => ({ Drawer: ({ children }: { children: ReactNode }) => <div>{children}</div> }))
 vi.mock('~/components/Link', () => ({
@@ -10,7 +10,7 @@ vi.mock('~/components/Link', () => ({
 import { DocsDrawer } from '../DocsDrawer'
 
 describe('DocsDrawer', () => {
-	it('renders the four table-of-contents labels and matching section anchors', () => {
+	test('renders the four table-of-contents labels and matching section anchors', () => {
 		const html = renderToStaticMarkup(<DocsDrawer open onClose={() => {}} />)
 
 		expect(html).toContain('1. Overview')
@@ -24,7 +24,7 @@ describe('DocsDrawer', () => {
 		expect(html).toContain('id="filtering"')
 	})
 
-	it('renders the Forgd composite score grade bands', () => {
+	test('renders the Forgd composite score grade bands', () => {
 		const html = renderToStaticMarkup(<DocsDrawer open onClose={() => {}} />)
 
 		expect(html).toContain('9.50 – 10.00')

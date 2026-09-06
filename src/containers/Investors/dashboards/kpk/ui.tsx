@@ -55,7 +55,7 @@ export const signClass = (value: number | null | undefined) =>
 
 const PROSE_DUST_M = 0.0005
 
-export function andList(names: readonly string[]): string {
+export function andList(names: ReadonlyArray<string>): string {
 	if (names.length < 2) return names[0] ?? ''
 	return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
 }
@@ -64,7 +64,7 @@ export function asOfLabel(asOf: Record<string, string | null> | null | undefined
 	const legs = Object.entries(asOf ?? {})
 		.filter((leg): leg is [string, string] => !!leg[1])
 		.map(([leg, date]) => [leg, formatDate(date) ?? date] as const)
-	if (!legs.length) return ''
+	if (legs.length === 0) return ''
 	const dates = [...new Set(legs.map(([, date]) => date))]
 	return dates.length === 1 ? `as of ${dates[0]}` : legs.map(([leg, date]) => `${leg} as of ${date}`).join(', ')
 }
@@ -224,7 +224,7 @@ export function ToggleGroup<T extends string>({
 	)
 }
 
-export function RefLinks({ refs }: { refs: KpkRef[] | undefined }) {
+export function RefLinks({ refs }: { refs: Array<KpkRef> | undefined }) {
 	if (!refs?.length) return null
 	return (
 		<div className="flex flex-wrap gap-2">
@@ -263,7 +263,7 @@ export function QueryError({ label }: { label: string }) {
 /* ──────────────────────────── marks ──────────────────────────── */
 
 /** A 30-point APY history, inline beside the number it belongs to. */
-export function Spark({ values, label }: { values: number[] | undefined; label: string }) {
+export function Spark({ values, label }: { values: Array<number> | undefined; label: string }) {
 	const points = React.useMemo(() => {
 		if (!values || values.length < 2) return ''
 		const min = Math.min(...values)
@@ -404,7 +404,7 @@ export function RowLink({ href, label }: { href: string | undefined; label: stri
 }
 
 /** Zero funds lost, drawn as one unbroken line with a tick per year. */
-export function ContinuityRule({ years }: { years: number[] | undefined }) {
+export function ContinuityRule({ years }: { years: Array<number> | undefined }) {
 	if (!years?.length) return null
 	return (
 		<svg
@@ -483,19 +483,19 @@ export function DataTable<Row extends object>({
 	footer,
 	empty = 'No data'
 }: {
-	rows: Row[] | undefined
+	rows: Array<Row> | undefined
 	cols: Array<Col<Row>>
 	/**
 	 * Totals row, keyed by column key; columns without an entry render blank. Pass an
 	 * array where a total needs a second reading underneath it.
 	 */
-	footer?: FooterCells | FooterRow[]
+	footer?: FooterCells | Array<FooterRow>
 	empty?: string
 }) {
 	if (!rows) return <div className="h-24 animate-pulse rounded-sm bg-tertiary opacity-10" />
 	if (rows.length === 0) return <div className="px-2 py-4 text-xs text-pro-text-secondary">{empty}</div>
 
-	const footerRows: FooterRow[] = footer == null ? [] : Array.isArray(footer) ? footer : [{ cells: footer }]
+	const footerRows: Array<FooterRow> = footer == null ? [] : Array.isArray(footer) ? footer : [{ cells: footer }]
 
 	return (
 		<div className="overflow-x-auto">

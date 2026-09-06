@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { TokenRiskExposureRow, TokenRiskResponse } from '../tokenRisk.types'
 import { buildTokenRiskProtocolSummaries } from '../tokenRisk.utils'
 
@@ -41,7 +41,7 @@ vi.mock('../deferred/DeferredPaginatedTable', () => ({
 	)
 }))
 
-function createRiskRows(): TokenRiskExposureRow[] {
+function createRiskRows(): Array<TokenRiskExposureRow> {
 	return [
 		{
 			protocol: 'aave-v3',
@@ -68,7 +68,7 @@ function createRiskRows(): TokenRiskExposureRow[] {
 	]
 }
 
-function setRiskRows(riskData: TokenRiskResponse, rows: TokenRiskExposureRow[]) {
+function setRiskRows(riskData: TokenRiskResponse, rows: Array<TokenRiskExposureRow>) {
 	riskData.exposures.rows = rows
 	riskData.exposures.protocolSummaries = buildTokenRiskProtocolSummaries(rows)
 }
@@ -110,7 +110,7 @@ import { TokenRisksSection } from '../TokenRisksSection'
 const textFromMarkup = (html: string) => html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ')
 
 describe('TokenRisksSection', () => {
-	it('renders the combined maximum possible exposure headline from preloaded risk data', () => {
+	test('renders the combined maximum possible exposure headline from preloaded risk data', () => {
 		const html = renderToStaticMarkup(<TokenRisksSection tokenSymbol="USDC" riskData={createRiskData()} />)
 
 		expect(html).toContain('How much debt can be issued against USDC as collateral across lending protocols')
@@ -122,7 +122,7 @@ describe('TokenRisksSection', () => {
 		expect(html).not.toContain('borrowed debt')
 	})
 
-	it('shows methodology, limitations, and the exposure details disclosure', () => {
+	test('shows methodology, limitations, and the exposure details disclosure', () => {
 		const html = renderToStaticMarkup(<TokenRisksSection tokenSymbol="USDC" riskData={createRiskData()} />)
 		const text = textFromMarkup(html)
 
@@ -139,7 +139,7 @@ describe('TokenRisksSection', () => {
 		expect(html).not.toContain('Borrowed Debt|')
 	})
 
-	it('prioritizes protocols by total max borrowable', () => {
+	test('prioritizes protocols by total max borrowable', () => {
 		const html = renderToStaticMarkup(<TokenRisksSection tokenSymbol="USDC" riskData={createRiskData()} />)
 
 		expect(html.indexOf('Aave V3')).toBeLessThan(html.indexOf('Morpho Blue'))
@@ -150,7 +150,7 @@ describe('TokenRisksSection', () => {
 		expect(html).not.toContain('Unavailable bad debt if hacked')
 	})
 
-	it('uses onchain copy when multiple scoped chains are present', () => {
+	test('uses onchain copy when multiple scoped chains are present', () => {
 		const riskData = createRiskData()
 		riskData.scopeCandidates = riskData.candidates
 
@@ -159,7 +159,7 @@ describe('TokenRisksSection', () => {
 		expect(textFromMarkup(html)).toContain('onchain')
 	})
 
-	it('shows a focusable chain breakdown trigger for multi-chain protocol summaries', () => {
+	test('shows a focusable chain breakdown trigger for multi-chain protocol summaries', () => {
 		const riskData = createRiskData()
 		const [firstRow] = riskData.exposures.rows
 		if (!firstRow) throw new Error('Missing exposure fixture')
@@ -180,7 +180,7 @@ describe('TokenRisksSection', () => {
 		expect(html).toContain('2 chains')
 	})
 
-	it('returns nothing when there are no exposure rows', () => {
+	test('returns nothing when there are no exposure rows', () => {
 		const riskData = createRiskData()
 		setRiskRows(riskData, [])
 		riskData.exposures.summary = {
@@ -198,7 +198,7 @@ describe('TokenRisksSection', () => {
 		expect(html).toBe('')
 	})
 
-	it('shows partial bad-debt labels and unavailable totals when coverage is incomplete', () => {
+	test('shows partial bad-debt labels and unavailable totals when coverage is incomplete', () => {
 		const riskData = createRiskData()
 		const [firstRow, secondRow] = riskData.exposures.rows
 		if (!firstRow || !secondRow) throw new Error('Missing exposure fixtures')
@@ -228,7 +228,7 @@ describe('TokenRisksSection', () => {
 		expect(html).not.toContain('$50 (partial) bad debt if hacked')
 	})
 
-	it('omits unavailable bad-debt wording when no exposures report the metric', () => {
+	test('omits unavailable bad-debt wording when no exposures report the metric', () => {
 		const riskData = createRiskData()
 		riskData.exposures.summary.totalMinBadDebtAtPriceZeroUsd = null
 		riskData.exposures.summary.minBadDebtKnownCount = 0

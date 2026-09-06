@@ -3,7 +3,7 @@
 import { act } from 'react'
 import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ProtocolRankingInitialPage, ProtocolRankingPage } from '../tableQuery'
 import type { IProtocol } from '../types'
 
@@ -127,17 +127,17 @@ describe('Protocol Rankings hydration', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('hydrates the static TVL page before reconciling persisted client presets', async () => {
+	test('hydrates the static TVL page before reconciling persisted client presets', async () => {
 		await hydrateTable()
 
-		const hydrationErrors = consoleError.mock.calls.filter((call: unknown[]) =>
+		const hydrationErrors = consoleError.mock.calls.filter((call: Array<unknown>) =>
 			String(call[0]).toLowerCase().includes('hydration')
 		)
 		expect(hydrationErrors).toEqual([])
 		await vi.waitFor(() => expect(fetch).toHaveBeenCalledTimes(1))
 	})
 
-	it('does not toast when an automatic persisted-preset request fails', async () => {
+	test('does not toast when an automatic persisted-preset request fails', async () => {
 		vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
 
 		await hydrateTable()
@@ -146,7 +146,7 @@ describe('Protocol Rankings hydration', () => {
 		expect(toastError).not.toHaveBeenCalled()
 	})
 
-	it('toasts when a user search request fails', async () => {
+	test('toasts when a user search request fails', async () => {
 		localStorage.clear()
 		vi.mocked(fetch).mockResolvedValue({ ok: false, status: 403 } as Response)
 		await hydrateTable()
@@ -167,7 +167,7 @@ describe('Protocol Rankings hydration', () => {
 		})
 	})
 
-	it('covers stale rows while a replacement request is pending', async () => {
+	test('covers stale rows while a replacement request is pending', async () => {
 		localStorage.clear()
 		let resolveRequest: ((response: Response) => void) | undefined
 		vi.mocked(fetch).mockImplementation(
@@ -198,7 +198,7 @@ describe('Protocol Rankings hydration', () => {
 		expect(container.textContent).not.toContain('Updating rankings…')
 	})
 
-	it('keeps infinite-scroll loading in the footer without an overlay', async () => {
+	test('keeps infinite-scroll loading in the footer without an overlay', async () => {
 		localStorage.clear()
 		const paginatedPage = { ...initialPage, nextCursor: 'next', total: 2, hasMore: true }
 		vi.mocked(fetch).mockImplementation(() => new Promise<Response>(() => undefined))
@@ -211,7 +211,7 @@ describe('Protocol Rankings hydration', () => {
 		expect(container.textContent).not.toContain('Updating rankings…')
 	})
 
-	it('clears persisted ranking state and requests the default page on Reset', async () => {
+	test('clears persisted ranking state and requests the default page on Reset', async () => {
 		router.query = { minTvl: '100' }
 		localStorage.setItem('ptcfs', 'Fees')
 		localStorage.setItem('ptc', JSON.stringify({ fees_7d: true }))
@@ -234,7 +234,7 @@ describe('Protocol Rankings hydration', () => {
 		expect(vi.mocked(fetch).mock.calls.at(-1)?.[0]).not.toContain('minTvl')
 	})
 
-	it('automatically expands a parent whose child name matches search', async () => {
+	test('automatically expands a parent whose child name matches search', async () => {
 		localStorage.clear()
 		const matchingChild = { ...protocol, id: 'stable-child', name: 'Stable Child', slug: 'stable-child' }
 		const parent = {

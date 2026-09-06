@@ -15,7 +15,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 type BridgeChainsOverviewProps = {
-	allChains: string[]
+	allChains: Array<string>
 	tableData: React.ComponentProps<typeof BridgeChainsTable>['data']
 	chart: {
 		dataset: MultiSeriesChartDataset
@@ -66,7 +66,7 @@ export function BridgeChainsOverview({ allChains, tableData, chart }: BridgeChai
 					) : null}
 					<ChartExportButtons
 						chartInstance={exportChartInstance}
-						filename={`bridge-inflows-by-chain`}
+						filename="bridge-inflows-by-chain"
 						title="Bridge Inflows"
 						csvSource={presentation.csvSource}
 					/>

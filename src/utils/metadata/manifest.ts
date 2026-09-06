@@ -10,14 +10,14 @@ export type MetadataArtifactManifest = {
 	artifactVersion: typeof METADATA_ARTIFACT_VERSION
 	pulledAt: number
 	status: MetadataArtifactStatus
-	artifacts: string[]
+	artifacts: Array<string>
 }
 
-function getExpectedArtifacts(): string[] {
+function getExpectedArtifacts(): Array<string> {
 	return Object.values(METADATA_ARTIFACT_FILES)
 }
 
-function assertManifestArtifactsMatchRegistry(artifacts: unknown): string[] {
+function assertManifestArtifactsMatchRegistry(artifacts: unknown): Array<string> {
 	if (!Array.isArray(artifacts)) {
 		throw new Error('Metadata artifact manifest has invalid artifacts')
 	}

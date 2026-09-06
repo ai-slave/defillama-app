@@ -145,7 +145,7 @@ function TopGainersAndLosersTable({ data, sortingState }: { data: Array<Protocol
 export const getStaticProps = withPerformanceLogging('top-gainers-and-losers', async () => {
 	const { protocols } = await fetchProtocols()
 
-	const rows: ProtocolBaseRow[] = protocols.map((protocol) => {
+	const rows: Array<ProtocolBaseRow> = protocols.map((protocol) => {
 		const extraTvl: Record<string, ExtraTvlEntry> = {}
 		for (const key in protocol.chainTvls) {
 			if (TVL_SETTINGS_KEYS_SET.has(key)) {
@@ -223,9 +223,9 @@ export default function TopGainersLosers({ protocols }: InferGetStaticPropsType<
 
 	return (
 		<Layout
-			title={`Top Gainers and Losers - DefiLlama`}
+			title="Top Gainers and Losers - DefiLlama"
 			description="Track the top DeFi TVL gainers and losers by 24h change. Compare protocol TVL, 1d TVL change, chains, and Mcap/TVL."
-			canonicalUrl={`/top-gainers-and-losers`}
+			canonicalUrl="/top-gainers-and-losers"
 		>
 			<h1 className="heading-sm">Top Gainers and Losers</h1>
 			<Panel padding="none">

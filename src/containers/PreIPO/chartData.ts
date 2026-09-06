@@ -10,8 +10,8 @@ function utcDateTimestamp(date: string): number {
 }
 
 export function buildPreIpoValuationChart(
-	valuations: PreIpoValuation[],
-	raises: PreIpoRaise[],
+	valuations: Array<PreIpoValuation>,
+	raises: Array<PreIpoRaise>,
 	chartEndTimestamp: number
 ): PreIpoValuationChart | null {
 	if (valuations.length === 0 && raises.length === 0) return null

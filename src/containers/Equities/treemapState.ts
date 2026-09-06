@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import {
 	EQUITIES_TREEMAP_COLOR_METRICS,
@@ -11,7 +11,7 @@ import {
 export const EQUITIES_PAGE_VIEWS = ['table', 'map'] as const
 export type EquitiesPageView = (typeof EQUITIES_PAGE_VIEWS)[number]
 
-const EQUITIES_TREEMAP_GROUPS = ['sector', 'none'] as const satisfies readonly EquitiesTreemapGroupBy[]
+const EQUITIES_TREEMAP_GROUPS = ['sector', 'none'] as const satisfies ReadonlyArray<EquitiesTreemapGroupBy>
 
 export interface EquitiesTreemapState {
 	view: EquitiesPageView
@@ -34,7 +34,7 @@ export const EQUITIES_TREEMAP_QUERY_KEYS: Record<keyof EquitiesTreemapState, str
 	colorMetric: 'mapColor'
 }
 
-function normalize<T extends string>(value: string | undefined, allowed: readonly T[], fallback: T): T {
+function normalize<T extends string>(value: string | undefined, allowed: ReadonlyArray<T>, fallback: T): T {
 	return value && allowed.includes(value as T) ? (value as T) : fallback
 }
 

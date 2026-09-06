@@ -2,7 +2,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
-import type {} from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
@@ -136,7 +135,7 @@ export function RWAPlatforms({
 		assetCount: getRWAOverviewAssetCount(row),
 		hasExcludedAssets: hasExcludedRWAOverviewAssets(row, includeStablecoins, includeGovernance)
 	}))
-	const treemapSizeRows: RWAFlowTreemapSizeRow[] = data.map((row) => ({
+	const treemapSizeRows: Array<RWAFlowTreemapSizeRow> = data.map((row) => ({
 		name: row.platform,
 		activeMcap: row.activeMcap,
 		onChainMcap: row.onChainMcap,

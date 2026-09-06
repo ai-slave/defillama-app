@@ -15,7 +15,7 @@ import { parseDateToTimestampMs, type UpstreamChart } from './transform'
 
 const formatted = (value: number) => ({ value, formatted: `formatted:${value}` })
 
-function chart(dates: string[], series: UpstreamChart['series'], title?: string): UpstreamChart {
+function chart(dates: Array<string>, series: UpstreamChart['series'], title?: string): UpstreamChart {
 	return { dates, series, title }
 }
 
@@ -186,7 +186,7 @@ describe('Flare query data builders', () => {
 			name: 'FIRE - FDC',
 			wallet: '0x0ce6831DF00A6018c4d316009980DbAa6c44E525',
 			feeToken: 'FLR',
-			feesToken: 1262790.9,
+			feesToken: 1_262_790.9,
 			feesUsd: 7416.37,
 			feesUsdFormatted: '$7.4K',
 			txCount: 1

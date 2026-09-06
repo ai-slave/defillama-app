@@ -8,7 +8,7 @@ import type { ApiQuery } from '~/server/api/types'
 const RWA_FLOW_CACHE_CONTROL = 'public, s-maxage=1800, stale-while-revalidate=1800'
 const RWA_FLOW_RESULT_TTL_MS = 30 * 60 * 1000
 const FLOW_SCOPES = ['asset', 'assetGroup', 'category', 'platform', 'chain'] as const
-const OVERVIEW_SPLITS: readonly RWAFlowOverviewSplitBy[] = ['assetGroup', 'category', 'platform', 'chain']
+const OVERVIEW_SPLITS: ReadonlyArray<RWAFlowOverviewSplitBy> = ['assetGroup', 'category', 'platform', 'chain']
 const ASSET_BREAKDOWN_SCOPES = ['assetGroup', 'category', 'platform', 'chain'] as const
 
 function optionalUnixTimestamp(query: ApiQuery, name: 'start' | 'end'): string | null | undefined {

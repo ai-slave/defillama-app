@@ -21,8 +21,8 @@ export async function getPreIpoCompanyStaticPaths(): Promise<Array<StaticParamPa
 	return paths
 }
 
-export function getPreIpoSitemapRoutes(metadata: Pick<MetadataCache, 'preIpoCompanyIds'>): string[] {
-	const routes: string[] = []
+export function getPreIpoSitemapRoutes(metadata: Pick<MetadataCache, 'preIpoCompanyIds'>): Array<string> {
+	const routes: Array<string> = []
 	for (const company of metadata.preIpoCompanyIds) routes.push(`pre-ipo/${company}`)
 	return routes
 }

@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
 	const instance = {
@@ -96,7 +96,7 @@ describe('SankeyChart responsive labels', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('keeps every full mobile label visible and distributes collisions across levels', async () => {
+	test('keeps every full mobile label visible and distributes collisions across levels', async () => {
 		mocks.isSmall = true
 
 		await act(async () => root.render(<SankeyChart nodes={nodes} links={links} />))
@@ -139,7 +139,7 @@ describe('SankeyChart responsive labels', () => {
 		expect(container.querySelector('ol')).toBeNull()
 	})
 
-	it('keeps the full desktop label treatment', async () => {
+	test('keeps the full desktop label treatment', async () => {
 		await act(async () => root.render(<SankeyChart nodes={nodes} links={links} />))
 
 		const option = mocks.instance.setOption.mock.calls.at(-1)?.[0]

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { rwaOverviewBreakdown } from '~/containers/RWA/server/api'
 import { parseOverviewBreakdownRequest } from '~/pages/api/public/rwa/overview-breakdown'
 import { resultBody } from '~/server/api/__tests__/resultBody'
@@ -20,7 +20,7 @@ beforeEach(() => {
 })
 
 describe('parseOverviewBreakdownRequest', () => {
-	it('accepts platform requests when both flags are false', () => {
+	test('accepts platform requests when both flags are false', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -39,7 +39,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	it('accepts bridge exclusion with both classification flags enabled', () => {
+	test('accepts bridge exclusion with both classification flags enabled', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -59,7 +59,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	it('accepts category and asset group requests with mixed inclusion flags', () => {
+	test('accepts category and asset group requests with mixed inclusion flags', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -95,7 +95,7 @@ describe('parseOverviewBreakdownRequest', () => {
 		})
 	})
 
-	it('rejects arrays and invalid enum values', () => {
+	test('rejects arrays and invalid enum values', () => {
 		expect(
 			parseOverviewBreakdownRequest({
 				query: {
@@ -132,7 +132,7 @@ describe('parseOverviewBreakdownRequest', () => {
 })
 
 describe('rwaOverviewBreakdown', () => {
-	it('returns serialized transformed breakdown data', async () => {
+	test('returns serialized transformed breakdown data', async () => {
 		const timestampMs = 1_774_483_200_000
 		mocks.fetchRWACategoryBreakdownChartData.mockResolvedValue([{ timestamp: timestampMs, Treasuries: 42 }])
 
@@ -160,7 +160,7 @@ describe('rwaOverviewBreakdown', () => {
 		})
 	})
 
-	it('subtracts bridge TVL from excluded DeFi breakdown history', async () => {
+	test('subtracts bridge TVL from excluded DeFi breakdown history', async () => {
 		const timestampMs = 1_774_483_200_000
 		mocks.fetchRWACategoryBreakdownChartData
 			.mockResolvedValueOnce([{ timestamp: timestampMs, Treasuries: 42, Credit: 3 }])

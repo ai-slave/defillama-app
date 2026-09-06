@@ -16,18 +16,18 @@ export function YieldAttributesSelect({
 	attributeIds = EARN_ATTRIBUTE_IDS
 }: {
 	nestedMenu?: boolean
-	attributeIds?: AttributeId[]
+	attributeIds?: Array<AttributeId>
 }) {
 	const router = useRouter()
 	const { attribute } = router.query
 
-	const options: SelectOption[] = attributeIds.map((id) => {
+	const options: Array<SelectOption> = attributeIds.map((id) => {
 		const def = ATTRIBUTE_DEFS[id]
 		return { key: def.key, name: def.name, help: def.help }
 	})
 	const optionKeys = new Set(options.map((o) => o.key))
 	const attributeSet = Array.isArray(attribute) ? new Set(attribute) : null
-	const selectedAttributes: string[] = []
+	const selectedAttributes: Array<string> = []
 	for (const option of options) {
 		if (typeof attribute === 'string' ? option.key === attribute : attributeSet?.has(option.key)) {
 			selectedAttributes.push(option.key)
@@ -40,7 +40,7 @@ export function YieldAttributesSelect({
 	// filter, so we drive the `attribute` param directly (state mode) instead of the
 	// shared include/exclude-diff encoding — which would collapse "all selected" to no
 	// filter and flip large selections to an `excludeAttribute` the view can't read.
-	const setSelectedValues = (values: string[]) => {
+	const setSelectedValues = (values: Array<string>) => {
 		const prevSet = prevSelectionRef.current ?? new Set(selectedAttributes)
 		for (const attributeKey of values) {
 			if (!prevSet.has(attributeKey)) {
@@ -56,7 +56,7 @@ export function YieldAttributesSelect({
 				? [attribute]
 				: []
 		const next = [...foreign, ...values]
-		void pushYieldsQuery(router, { attribute: next.length ? next : undefined })
+		void pushYieldsQuery(router, { attribute: next.length > 0 ? next : undefined })
 	}
 
 	return (

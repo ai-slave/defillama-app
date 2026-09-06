@@ -3,7 +3,7 @@ import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { createMetricConfig } from '../../dashboardConfig/classicChartConfig'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
-import { type MetricAggregator, type MetricChartType, type MetricConfig, type MetricSubject } from '../../types'
+import type { MetricAggregator, MetricChartType, MetricConfig, MetricSubject } from '../../types'
 import { MetricCard } from '../MetricCard'
 import { MetricSentenceBuilder } from './MetricSentenceBuilder'
 

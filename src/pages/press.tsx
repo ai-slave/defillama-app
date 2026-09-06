@@ -45,8 +45,8 @@ function PressPage() {
 	return (
 		<Layout
 			title="DefiLlama in the Press - Media Coverage & Mentions"
-			description={`DefiLlama is used across a large number of media organisations, governments, and financial institutions notably by the US Treasury and the ECB.`}
-			canonicalUrl={`/press`}
+			description="DefiLlama is used across a large number of media organisations, governments, and financial institutions notably by the US Treasury and the ECB."
+			canonicalUrl="/press"
 		>
 			<PageTitleStrip title="Press & Media" />
 

@@ -101,7 +101,7 @@ const formatPercentRange = (minPercent: number | null, maxPercent: number | null
 	return `${minLabel} - ${maxLabel}`
 }
 
-const formatActiveFilterValues = (values: readonly string[]) => {
+const formatActiveFilterValues = (values: ReadonlyArray<string>) => {
 	if (values.length === 0) return 'None'
 	if (values.length <= 2) return values.join(', ')
 	return `${values[0]}, ${values[1]} + ${values.length - 2}`
@@ -132,22 +132,22 @@ type RWAFilterOptions = {
 }
 
 type RWAFilterSelections = {
-	selectedAssetNames: string[]
-	selectedTypes: string[]
-	selectedCategories: string[]
-	selectedPlatforms: string[]
-	selectedAssetGroups: string[]
-	selectedAssetClasses: string[]
-	selectedRwaClassifications: string[]
-	selectedAccessModels: string[]
-	selectedIssuers: string[]
-	selectedRedeemableStates: RWAAttributeFilterState[]
-	selectedAttestationsStates: RWAAttributeFilterState[]
-	selectedCexListedStates: RWAAttributeFilterState[]
-	selectedKycForMintRedeemStates: RWAAttributeFilterState[]
-	selectedKycAllowlistedWhitelistedToTransferHoldStates: RWAAttributeFilterState[]
-	selectedTransferableStates: RWAAttributeFilterState[]
-	selectedSelfCustodyStates: RWAAttributeFilterState[]
+	selectedAssetNames: Array<string>
+	selectedTypes: Array<string>
+	selectedCategories: Array<string>
+	selectedPlatforms: Array<string>
+	selectedAssetGroups: Array<string>
+	selectedAssetClasses: Array<string>
+	selectedRwaClassifications: Array<string>
+	selectedAccessModels: Array<string>
+	selectedIssuers: Array<string>
+	selectedRedeemableStates: Array<RWAAttributeFilterState>
+	selectedAttestationsStates: Array<RWAAttributeFilterState>
+	selectedCexListedStates: Array<RWAAttributeFilterState>
+	selectedKycForMintRedeemStates: Array<RWAAttributeFilterState>
+	selectedKycAllowlistedWhitelistedToTransferHoldStates: Array<RWAAttributeFilterState>
+	selectedTransferableStates: Array<RWAAttributeFilterState>
+	selectedSelfCustodyStates: Array<RWAAttributeFilterState>
 	minDefiActiveTvlToOnChainMcapPct: number | null
 	maxDefiActiveTvlToOnChainMcapPct: number | null
 	minActiveMcapToOnChainMcapPct: number | null
@@ -170,13 +170,13 @@ type RWAFilterActions = {
 	setIncludeRwaPerps: (value: boolean) => void
 	setIncludeCex: (value: boolean) => void
 	setIncludeBridgeTvl: (value: boolean) => void
-	setRedeemableStates: (values: RWAAttributeFilterState[]) => void
-	setAttestationsStates: (values: RWAAttributeFilterState[]) => void
-	setCexListedStates: (values: RWAAttributeFilterState[]) => void
-	setKycForMintRedeemStates: (values: RWAAttributeFilterState[]) => void
-	setKycAllowlistedWhitelistedToTransferHoldStates: (values: RWAAttributeFilterState[]) => void
-	setTransferableStates: (values: RWAAttributeFilterState[]) => void
-	setSelfCustodyStates: (values: RWAAttributeFilterState[]) => void
+	setRedeemableStates: (values: Array<RWAAttributeFilterState>) => void
+	setAttestationsStates: (values: Array<RWAAttributeFilterState>) => void
+	setCexListedStates: (values: Array<RWAAttributeFilterState>) => void
+	setKycForMintRedeemStates: (values: Array<RWAAttributeFilterState>) => void
+	setKycAllowlistedWhitelistedToTransferHoldStates: (values: Array<RWAAttributeFilterState>) => void
+	setTransferableStates: (values: Array<RWAAttributeFilterState>) => void
+	setSelfCustodyStates: (values: Array<RWAAttributeFilterState>) => void
 }
 
 type RWAOverviewFiltersProps = {
@@ -191,17 +191,17 @@ type RWAOverviewFiltersProps = {
 type RWAAttributeFilterConfig = {
 	queryKey: string
 	label: string
-	selectedStates: RWAAttributeFilterState[]
+	selectedStates: Array<RWAAttributeFilterState>
 }
 
 type RWASelectFilterConfig = {
 	enabled: boolean
 	allValues: SelectValues
-	selectedValues: string[]
+	selectedValues: Array<string>
 	includeQueryKey: string
 	excludeQueryKey: ExcludeQueryKey
 	label: string
-	defaultSelectedValues?: string[]
+	defaultSelectedValues?: Array<string>
 }
 
 type RWARangeFilterConfig = {
@@ -238,16 +238,16 @@ type RWARangeDraft = {
 }
 
 type RWAFilterDraft = {
-	activeIds: string[]
-	selectValues: Record<string, string[]>
+	activeIds: Array<string>
+	selectValues: Record<string, Array<string>>
 	ranges: Record<string, RWARangeDraft>
-	attributeStates: Record<string, RWAAttributeFilterState[]>
+	attributeStates: Record<string, Array<RWAAttributeFilterState>>
 }
 
 const toggleAttributeFilterState = (
-	selectedStates: RWAAttributeFilterState[],
+	selectedStates: Array<RWAAttributeFilterState>,
 	state: RWAAttributeFilterState
-): RWAAttributeFilterState[] => {
+): Array<RWAAttributeFilterState> => {
 	const selectedSet = new Set(selectedStates)
 	if (selectedSet.has(state)) {
 		selectedSet.delete(state)
@@ -261,7 +261,7 @@ function getRwaSelectFilters({
 	modes,
 	options,
 	selections
-}: Pick<RWAOverviewFiltersProps, 'modes' | 'options' | 'selections'>): RWASelectFilterConfig[] {
+}: Pick<RWAOverviewFiltersProps, 'modes' | 'options' | 'selections'>): Array<RWASelectFilterConfig> {
 	const defaultSelectedTypes = getDefaultSelectedTypes(
 		options.typeOptions.map((o) => o.key),
 		modes.mode,
@@ -374,12 +374,12 @@ function getRwaRangeFilters({ selections, actions }: Pick<RWAOverviewFiltersProp
 			maxQueryKey: 'maxDefiActiveTvlToActiveMcapPct',
 			onSubmitRange: actions.setDefiActiveTvlToActiveMcapPctRange
 		}
-	] satisfies RWARangeFilterConfig[]
+	] satisfies Array<RWARangeFilterConfig>
 }
 
 function getRwaAttributeFilters({
 	selections
-}: Pick<RWAOverviewFiltersProps, 'selections'>): RWAAttributeFilterConfig[] {
+}: Pick<RWAOverviewFiltersProps, 'selections'>): Array<RWAAttributeFilterConfig> {
 	return [
 		{
 			queryKey: 'redeemableStates',
@@ -419,7 +419,7 @@ function getRwaAttributeFilters({
 	]
 }
 
-function clearRwaFilterQueryKeys(router: ReturnType<typeof useRouter>, keys: readonly string[]) {
+function clearRwaFilterQueryKeys(router: ReturnType<typeof useRouter>, keys: ReadonlyArray<string>) {
 	const resetUpdates: Record<string, undefined> = {}
 	for (const key of keys) {
 		resetUpdates[key] = undefined
@@ -427,17 +427,17 @@ function clearRwaFilterQueryKeys(router: ReturnType<typeof useRouter>, keys: rea
 	void pushShallowQuery(router, resetUpdates)
 }
 
-function getSelectOptionKeys(values: SelectValues): string[] {
+function getSelectOptionKeys(values: SelectValues): Array<string> {
 	return values.map((value) => (typeof value === 'string' ? value : value.key))
 }
 
-function getDefaultSelectValues(config: RWASelectFilterConfig): string[] {
+function getDefaultSelectValues(config: RWASelectFilterConfig): Array<string> {
 	const allKeys = getSelectOptionKeys(config.allValues)
 	const validSet = new Set(allKeys)
 	return config.defaultSelectedValues?.filter((value) => validSet.has(value)) ?? allKeys
 }
 
-function isDefaultSelectSelection(config: RWASelectFilterConfig, values: string[]): boolean {
+function isDefaultSelectSelection(config: RWASelectFilterConfig, values: Array<string>): boolean {
 	const defaultSelected = getDefaultSelectValues(config)
 	const validSet = new Set(getSelectOptionKeys(config.allValues))
 	const selected = values.filter((value) => validSet.has(value))
@@ -445,7 +445,7 @@ function isDefaultSelectSelection(config: RWASelectFilterConfig, values: string[
 	return selected.length === defaultSelected.length && selected.every((value) => defaultSet.has(value))
 }
 
-function isAllSelectSelection(config: RWASelectFilterConfig, values: string[]): boolean {
+function isAllSelectSelection(config: RWASelectFilterConfig, values: Array<string>): boolean {
 	const allKeys = getSelectOptionKeys(config.allValues)
 	const validSet = new Set(allKeys)
 	const selected = values.filter((value) => validSet.has(value))
@@ -453,7 +453,7 @@ function isAllSelectSelection(config: RWASelectFilterConfig, values: string[]): 
 	return selected.length === allKeys.length && allKeys.every((value) => selectedSet.has(value))
 }
 
-function isDialogSelectFilterActive(config: RWASelectFilterConfig, values: string[]): boolean {
+function isDialogSelectFilterActive(config: RWASelectFilterConfig, values: Array<string>): boolean {
 	return !isAllSelectSelection(config, values) || !isAllSelectSelection(config, getDefaultSelectValues(config))
 }
 
@@ -464,7 +464,7 @@ function hasResettableRwaQueryParam(query: ReturnType<typeof useRouter>['query']
 	return false
 }
 
-function getRwaInclusionFilters(props: RWAOverviewFiltersProps): RWAInclusionFilterConfig[] {
+function getRwaInclusionFilters(props: RWAOverviewFiltersProps): Array<RWAInclusionFilterConfig> {
 	const defaultInclusion = props.defaultInclusion
 
 	return [
@@ -501,8 +501,8 @@ function getRwaInclusionFilters(props: RWAOverviewFiltersProps): RWAInclusionFil
 	]
 }
 
-function getRwaFilterDefinitions(props: RWAOverviewFiltersProps): RWAFilterDefinition[] {
-	const filterDefinitions: RWAFilterDefinition[] = []
+function getRwaFilterDefinitions(props: RWAOverviewFiltersProps): Array<RWAFilterDefinition> {
+	const filterDefinitions: Array<RWAFilterDefinition> = []
 
 	for (const config of getRwaSelectFilters(props)) {
 		if (config.enabled) {
@@ -532,10 +532,10 @@ function numberToDraftInput(value: number | null): string {
 }
 
 function createRwaFilterDraft(props: RWAOverviewFiltersProps): RWAFilterDraft {
-	const activeIds: string[] = []
-	const selectValues: Record<string, string[]> = {}
+	const activeIds: Array<string> = []
+	const selectValues: Record<string, Array<string>> = {}
 	const ranges: Record<string, RWARangeDraft> = {}
-	const attributeStates: Record<string, RWAAttributeFilterState[]> = {}
+	const attributeStates: Record<string, Array<RWAAttributeFilterState>> = {}
 
 	const pushActiveId = (id: string) => {
 		if (!activeIds.includes(id)) activeIds.push(id)
@@ -565,8 +565,8 @@ function createRwaFilterDraft(props: RWAOverviewFiltersProps): RWAFilterDraft {
 
 function getSelectDraftQueryUpdates(
 	config: RWASelectFilterConfig,
-	values: string[]
-): Record<string, string | string[] | undefined> {
+	values: Array<string>
+): Record<string, string | Array<string> | undefined> {
 	return getQueryUpdatesFromSelected(
 		config.includeQueryKey,
 		config.excludeQueryKey,
@@ -577,10 +577,10 @@ function getSelectDraftQueryUpdates(
 }
 
 function serializeRwaFilterDraft(
-	filterDefinitions: RWAFilterDefinition[],
+	filterDefinitions: Array<RWAFilterDefinition>,
 	draft: RWAFilterDraft
-): Record<string, string | string[] | undefined> {
-	const updates: Record<string, string | string[] | undefined> = {}
+): Record<string, string | Array<string> | undefined> {
+	const updates: Record<string, string | Array<string> | undefined> = {}
 	for (const key of DIALOG_FILTER_QUERY_KEYS) {
 		updates[key] = undefined
 	}
@@ -650,8 +650,8 @@ function getActiveSelectFilterPill(
 function getRwaActiveFilterPills(
 	props: RWAOverviewFiltersProps,
 	router: ReturnType<typeof useRouter>
-): RWAActiveFilterPill[] {
-	const activeFilters: RWAActiveFilterPill[] = []
+): Array<RWAActiveFilterPill> {
+	const activeFilters: Array<RWAActiveFilterPill> = []
 
 	for (const config of getRwaSelectFilters(props)) {
 		const pill = getActiveSelectFilterPill(config, router.query, () =>
@@ -689,7 +689,7 @@ function hasActiveRwaInclusionOverride(props: RWAOverviewFiltersProps, router: R
 	return false
 }
 
-function RWAActiveFilterPills({ pills }: { pills: RWAActiveFilterPill[] }) {
+function RWAActiveFilterPills({ pills }: { pills: Array<RWAActiveFilterPill> }) {
 	if (pills.length === 0) return null
 
 	return (
@@ -884,7 +884,7 @@ function RWAFilterBrowser({
 	draft,
 	onDraftChange
 }: {
-	filterDefinitions: RWAFilterDefinition[]
+	filterDefinitions: Array<RWAFilterDefinition>
 	draft: RWAFilterDraft
 	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
 }) {
@@ -968,7 +968,7 @@ function RWAActiveDraftFilters({
 	draft,
 	onDraftChange
 }: {
-	filterDefinitions: RWAFilterDefinition[]
+	filterDefinitions: Array<RWAFilterDefinition>
 	draft: RWAFilterDraft
 	onDraftChange: (draft: RWAFilterDraft | ((current: RWAFilterDraft) => RWAFilterDraft)) => void
 }) {

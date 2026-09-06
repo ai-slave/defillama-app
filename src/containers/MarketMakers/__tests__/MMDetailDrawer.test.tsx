@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/market-makers', push: () => {} }) }))
 vi.mock('../Drawer', () => ({
@@ -34,7 +34,7 @@ vi.mock('../client', () => ({
 			website: 'https://lhava.io',
 			imageUrl: 'https://img.example/lhava.png',
 			activeEngagementsCount: 12,
-			averageFDV: 250000000,
+			averageFDV: 250_000_000,
 			engagementOptions: ['loan_call_option', 'retainer_working_capital'],
 			services: ['Treasury Management', 'OTC Liquidation'],
 			supportedCEX: [
@@ -72,7 +72,7 @@ vi.mock('../client', () => ({
 import { MMDetailDrawer } from '../MMDetailDrawer'
 
 describe('MMDetailDrawer', () => {
-	it('renders the about section, a per-board card label and a score from the hook data', () => {
+	test('renders the about section, a per-board card label and a score from the hook data', () => {
 		const html = renderToStaticMarkup(
 			<MMDetailDrawer open onClose={() => {}} marketMakerId="lhava" range={{}} badge="Last 30-day" />
 		)
@@ -93,7 +93,7 @@ describe('MMDetailDrawer', () => {
 		expect(html).toContain('Treasury Management')
 	})
 
-	it('labels the trustIntegration score row as Trust', () => {
+	test('labels the trustIntegration score row as Trust', () => {
 		const html = renderToStaticMarkup(
 			<MMDetailDrawer open onClose={() => {}} marketMakerId="lhava" range={{}} badge="Last 30-day" />
 		)
@@ -101,7 +101,7 @@ describe('MMDetailDrawer', () => {
 		expect(html).not.toContain('Trust &amp; Integration')
 	})
 
-	it('marks each breakdown table with a data-breakdown-section anchor for focus scrolling', () => {
+	test('marks each breakdown table with a data-breakdown-section anchor for focus scrolling', () => {
 		const html = renderToStaticMarkup(
 			<MMDetailDrawer
 				open

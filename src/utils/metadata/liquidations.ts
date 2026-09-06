@@ -1,6 +1,6 @@
 import type { RawAllLiquidationsResponse } from '~/containers/LiquidationsV2/api.types'
 
-export function extractLiquidationsTokenSymbols(liquidationsResponse: RawAllLiquidationsResponse): string[] {
+export function extractLiquidationsTokenSymbols(liquidationsResponse: RawAllLiquidationsResponse): Array<string> {
 	const symbols = new Set<string>()
 
 	for (const protocolId in liquidationsResponse.data) {

@@ -24,7 +24,7 @@ import type { ChartConfig, ChartType, NumberFormat, StackMode } from './sql/char
 //   multi:      { kind:'multiMetric', paramType:'protocol', param:'aave', metrics:['tvl','fees'] }
 //               → ?k=multi&pt=protocol&pm=aave&mt=tvl,fees
 
-const DATE_PRESETS: readonly DateRangePreset[] = ['7d', '30d', '90d', '1y', 'ytd', 'all']
+const DATE_PRESETS: ReadonlyArray<DateRangePreset> = ['7d', '30d', '90d', '1y', 'ytd', 'all']
 
 // Encode column names that contain `,` or `\` so comma-joined arrays round-trip cleanly.
 function escapeItem(s: string): string {
@@ -35,12 +35,12 @@ function unescapeItem(s: string): string {
 	return s.replace(/\\,/g, ',').replace(/\\\\/g, '\\')
 }
 
-function joinEscaped(items: readonly string[]): string {
+function joinEscaped(items: ReadonlyArray<string>): string {
 	return items.map(escapeItem).join(',')
 }
 
-function splitEscaped(s: string): string[] {
-	const out: string[] = []
+function splitEscaped(s: string): Array<string> {
+	const out: Array<string> = []
 	let buf = ''
 	let i = 0
 	while (i < s.length) {
@@ -69,7 +69,7 @@ function encodeDateRange(range: DateRangeConfig): string {
 }
 
 function decodeDateRange(s: string): DateRangeConfig | null {
-	if ((DATE_PRESETS as readonly string[]).includes(s)) {
+	if ((DATE_PRESETS as ReadonlyArray<string>).includes(s)) {
 		return { kind: 'preset', preset: s as DateRangePreset }
 	}
 	const [from, to] = s.split('..')
@@ -92,7 +92,7 @@ function decodeSort(s: string): SavedSort | null {
 	return { column, dir: m[2] as 'asc' | 'desc' }
 }
 
-function firstStr(v: string | string[] | undefined): string | null {
+function firstStr(v: string | Array<string> | undefined): string | null {
 	if (Array.isArray(v)) return v[0] ?? null
 	return typeof v === 'string' ? v : null
 }
@@ -151,7 +151,7 @@ function encodeTableRef(ref: QueryTableRef): string {
 
 function decodeTableRef(s: string): QueryTableRef | null {
 	// Split on unescaped ':' only.
-	const parts: string[] = []
+	const parts: Array<string> = []
 	let buf = ''
 	let i = 0
 	while (i < s.length) {
@@ -180,7 +180,9 @@ function decodeTableRef(s: string): QueryTableRef | null {
 	}
 	return null
 }
-export function decodeDownloadConfig(query: Record<string, string | string[] | undefined>): SavedDownloadInput | null {
+export function decodeDownloadConfig(
+	query: Record<string, string | Array<string> | undefined>
+): SavedDownloadInput | null {
 	const kind = firstStr(query.k)
 	if (!kind) return null
 
@@ -265,7 +267,7 @@ export function decodeDownloadConfig(query: Record<string, string | string[] | u
 		const sql = firstStr(query.q)
 		if (!sql) return null
 		const tbls = firstStr(query.tbls)
-		const refs: QueryTableRef[] = []
+		const refs: Array<QueryTableRef> = []
 		if (tbls) {
 			for (const encoded of splitEscaped(tbls)) {
 				const ref = decodeTableRef(encoded)
@@ -361,7 +363,7 @@ function encodeChartConfig(cfg: ChartConfig): Record<string, string> {
 	return q
 }
 
-function decodeChartConfig(query: Record<string, string | string[] | undefined>): ChartConfig | undefined {
+function decodeChartConfig(query: Record<string, string | Array<string> | undefined>): ChartConfig | undefined {
 	const cv = firstStr(query.cv)
 	if (!cv) return undefined
 	const chartType = CHART_TYPE_LONG[cv]
@@ -419,7 +421,7 @@ export interface NotebookShareCell {
 
 export interface NotebookShareInput {
 	title?: string
-	cells: NotebookShareCell[]
+	cells: Array<NotebookShareCell>
 }
 
 export interface NotebookShareDecoded extends NotebookShareInput {
@@ -467,7 +469,9 @@ export function encodeNotebookShare(input: NotebookShareInput): Record<string, s
 	return { k: 'nb', n: urlSafeB64Encode(json) }
 }
 
-export function decodeNotebookShare(query: Record<string, string | string[] | undefined>): NotebookShareDecoded | null {
+export function decodeNotebookShare(
+	query: Record<string, string | Array<string> | undefined>
+): NotebookShareDecoded | null {
 	const kind = firstStr(query.k)
 	if (kind !== 'nb') return null
 	const payload = firstStr(query.n)
@@ -476,7 +480,7 @@ export function decodeNotebookShare(query: Record<string, string | string[] | un
 		const json = urlSafeB64Decode(payload)
 		const parsed = JSON.parse(json)
 		if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as any).cells)) return null
-		const cells = ((parsed as any).cells as unknown[])
+		const cells = ((parsed as any).cells as Array<unknown>)
 			.map(sanitizeShareCell)
 			.filter((c): c is NotebookShareCell => c !== null)
 		if (cells.length === 0) return null

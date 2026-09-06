@@ -171,7 +171,7 @@ function SubscriptionRow({ subscription }: { subscription: TeamSubscription }) {
 	)
 }
 
-function BillingTotals({ subscriptions }: { subscriptions: TeamSubscription[] }) {
+function BillingTotals({ subscriptions }: { subscriptions: Array<TeamSubscription> }) {
 	const totals = subscriptions.reduce(
 		(acc, sub) => {
 			if (!isRenewingSub(sub)) return acc
@@ -185,7 +185,7 @@ function BillingTotals({ subscriptions }: { subscriptions: TeamSubscription[] })
 
 	if (totals.monthly === 0 && totals.yearly === 0) return null
 
-	const rows: { label: string; value: string }[] = []
+	const rows: Array<{ label: string; value: string }> = []
 	if (totals.monthly > 0) rows.push({ label: 'Total', value: `${formatUsd(totals.monthly)}/month` })
 	if (totals.yearly > 0) rows.push({ label: 'Total', value: `${formatUsd(totals.yearly)}/year` })
 
@@ -201,7 +201,7 @@ function BillingTotals({ subscriptions }: { subscriptions: TeamSubscription[] })
 	)
 }
 
-function YearlyTip({ subscriptions }: { subscriptions: TeamSubscription[] }) {
+function YearlyTip({ subscriptions }: { subscriptions: Array<TeamSubscription> }) {
 	const monthlySubs = subscriptions.filter((sub) => isRenewingSub(sub) && sub.billingInterval === 'month')
 	if (monthlySubs.length === 0) return null
 

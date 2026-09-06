@@ -145,8 +145,8 @@ function buildFreeLimitMessage(err: UsageLimitError & { code: FreeLimitOffer['co
 	if (err.details?.resetTime) {
 		const resetMs = new Date(err.details.resetTime).getTime() - Date.now()
 		if (resetMs > 0) {
-			const hours = Math.floor(resetMs / 3600000)
-			const minutes = Math.floor((resetMs % 3600000) / 60000)
+			const hours = Math.floor(resetMs / 3_600_000)
+			const minutes = Math.floor((resetMs % 3_600_000) / 60_000)
 			const timeStr = hours >= 24 ? `${Math.floor(hours / 24)}d ${hours % 24}h` : `${hours}h ${minutes}m`
 			content += ` Resets in ${timeStr}.`
 		}
@@ -335,7 +335,7 @@ export function AgenticChat({
 		setOpen: setShouldRenderSubscribeModal
 	})
 
-	const [messages, setMessages] = useState<Message[]>([])
+	const [messages, setMessages] = useState<Array<Message>>([])
 	const [activeLeafMessageId, setActiveLeafMessageId] = useState<string | null>(null)
 	const [sessionId, setSessionId] = useState<string | null>(null)
 	const [sessionTitle, setSessionTitle] = useState<string | null>(null)
@@ -589,7 +589,7 @@ export function AgenticChat({
 		promptTransitionMode === 'landing' && hasMessages && !visibleError && !restoringSessionId && !readOnly
 	const shouldAnimateConversationTransition =
 		promptTransitionMode === 'conversation' && hasMessages && !visibleError && !restoringSessionId && !readOnly
-	const shouldStartDetachedForAnchor = typeof window !== 'undefined' && /^#msg-/.test(window.location.hash)
+	const shouldStartDetachedForAnchor = typeof window !== 'undefined' && window.location.hash.startsWith('#msg-')
 
 	useEffect(() => {
 		if (!quotedText || readOnly) return
@@ -1090,7 +1090,7 @@ export function AgenticChat({
 			}
 			if (!operation.isCurrent()) return { status: 'aborted' }
 
-			const restored: Message[] = (result.messages || []).map(mapPersistedMessage)
+			const restored: Array<Message> = (result.messages || []).map(mapPersistedMessage)
 			const projected = options?.around
 				? restored
 				: projectPromptFailure(restored, promptFailuresRef.current.get(targetSessionId) ?? null)
@@ -1337,7 +1337,7 @@ export function AgenticChat({
 	)
 
 	const handleBulkDeleteSessions = useCallback(
-		async (sessionIds: string[]) => {
+		async (sessionIds: Array<string>) => {
 			await bulkDeleteSessions(sessionIds)
 			for (const targetSessionId of sessionIds) {
 				clearPromptFailure(targetSessionId)
@@ -2220,7 +2220,7 @@ export function AgenticChat({
 					if (!operation.isCurrent() || currentSessionIdRef.current !== sessionId) return
 					setActiveLeafMessageId(result.activeLeafMessageId)
 					if (Array.isArray(result.messages)) {
-						const restored = mapPersistedMessages(result.messages as PersistedMessage[])
+						const restored = mapPersistedMessages(result.messages as Array<PersistedMessage>)
 						setMessages(projectPromptFailure(restored, promptFailuresRef.current.get(sessionId) ?? null))
 						setConversationViewResetKey((current) => current + 1)
 						dispatchDashboardPanel({ type: 'RESTORE', value: restored.flatMap((message) => message.dashboards || []) })
@@ -2773,7 +2773,7 @@ export function AgenticChat({
 							) : null}
 							{!readOnly && showShareModal ? (
 								<ShareModal
-									open={true}
+									open
 									setOpen={setShareModalOpen}
 									sessionId={effectiveSessionId}
 									messageId={shareTargetMessageId}
@@ -2935,7 +2935,7 @@ const ChatControls = memo(function ChatControls({
 
 // Selection pill with the researcher-only "Add to article" action. Charts crossed
 // by the selection are resolved against every message's chart artifacts by id.
-function ArticleSelectionPopup({ messages, onSelect }: { messages: Message[]; onSelect: (text: string) => void }) {
+function ArticleSelectionPopup({ messages, onSelect }: { messages: Array<Message>; onSelect: (text: string) => void }) {
 	const openArticleExport = useArticleExport()
 	const handleAddToArticle = useCallback(
 		(html: string) => {

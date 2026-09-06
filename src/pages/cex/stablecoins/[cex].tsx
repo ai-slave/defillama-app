@@ -10,7 +10,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-const EMPTY_OTHER_PROTOCOLS: string[] = []
+const EMPTY_OTHER_PROTOCOLS: Array<string> = []
 
 export const getStaticProps = withPerformanceLogging(
 	'cex/stablecoins/[cex]',
@@ -103,7 +103,7 @@ export default function CEXStablecoins(props: {
 			otherProtocols={props.otherProtocols}
 			metrics={props.metrics}
 			tab="stablecoins"
-			isCEX={true}
+			isCEX
 		>
 			<EntityTitleStrip
 				media={<TokenLogo name={props.name} kind="token" size={28} alt={`Logo of ${props.name}`} />}

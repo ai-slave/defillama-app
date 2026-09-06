@@ -27,7 +27,7 @@ const BridgeAggregatorsByChain = (props: IChainsByAdapterPageData) => {
 		<Layout
 			title="Bridge Aggregator Volume by Chain - DefiLlama"
 			description="Compare bridge aggregator volume across all blockchains. Track cross-chain transfers routed through aggregators on Ethereum, Solana, Base, Arbitrum, and 10+ chains. Real-time blockchain bridge routing analytics."
-			canonicalUrl={`/bridge-aggregators/chains`}
+			canonicalUrl="/bridge-aggregators/chains"
 			pageName={pageName}
 		>
 			<ChainsByAdapter {...props} type={type} />

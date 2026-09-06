@@ -1,6 +1,6 @@
 import { createTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { serializeCsv } from '~/utils/csv'
 import { useRaisesData } from './hooks'
 import type { Raise } from './model'
@@ -8,7 +8,7 @@ import { summarizeRaises } from './summary'
 import { prepareRaisesCsv, raisesColumns } from './Table'
 import { getRaisesFiltersList } from './utils'
 
-const router = vi.hoisted(() => ({ query: {} as Record<string, string | string[]> }))
+const router = vi.hoisted(() => ({ query: {} as Record<string, string | Array<string>> }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
 
 function raise(name: string, amountUsd: number | null, overrides: Partial<Raise> = {}): Raise {
@@ -29,7 +29,7 @@ function raise(name: string, amountUsd: number | null, overrides: Partial<Raise>
 	}
 }
 
-function transform(raises: Raise[], query: Record<string, string | string[]> = {}) {
+function transform(raises: Array<Raise>, query: Record<string, string | Array<string>> = {}) {
 	router.query = query
 	let result!: ReturnType<typeof useRaisesData>
 	function Probe() {
@@ -43,7 +43,7 @@ function transform(raises: Raise[], query: Record<string, string | string[]> = {
 describe('Raises filters and chart population', () => {
 	const rows = [raise('Unknown', null), raise('Zero', 0), raise('Small', 500_000), raise('Large', 2_000_000)]
 
-	it.each([
+	test.each([
 		{ query: {}, names: ['Unknown', 'Zero', 'Small', 'Large'] },
 		{ query: { maxRaised: '1000000' }, names: ['Zero', 'Small'] },
 		{ query: { minRaised: '500000' }, names: ['Small', 'Large'] },
@@ -74,7 +74,7 @@ describe('Raises filters and chart population', () => {
 		).toEqual(names)
 	})
 
-	it('preserves All and None, exact producer labels and exclusions', () => {
+	test('preserves All and None, exact producer labels and exclusions', () => {
 		const data = [
 			raise('A', 1, { leadInvestors: ['Fund', 'Other'], chains: ['Blast'], round: 'Strategic' }),
 			raise('B', 2, { leadInvestors: ['fund'], chains: ['Ethereum'], round: 'Seed' })
@@ -94,7 +94,7 @@ describe('Raises filters and chart population', () => {
 		expect(transform(data, { excludeInvestor: 'Other', excludeChain: 'Blast' }).filteredRaisesList).toEqual([data[1]])
 	})
 
-	it('keeps EOS spread over 13 months and series chronologically ordered', () => {
+	test('keeps EOS spread over 13 months and series chronologically ordered', () => {
 		const data = transform([raise('EOS', 4_200_000_000, { date: 1_527_811_200 })])
 		const amounts = data.monthlyInvestmentChart.dataset.source
 		const counts = data.fundingRoundsByMonthChart.dataset.source
@@ -108,7 +108,7 @@ describe('Raises filters and chart population', () => {
 })
 
 describe('Shared Raises CSV contract', () => {
-	it('exports raw whole USD and both dates in table sort order, with unknowns last and zero intact', () => {
+	test('exports raw whole USD and both dates in table sort order, with unknowns last and zero intact', () => {
 		const table = createTable({
 			data: [raise('Unknown', null), raise('Zero', 0), raise('Measured', 3_100_000, { valuationUsd: 300_000_000 })],
 			columns: raisesColumns,

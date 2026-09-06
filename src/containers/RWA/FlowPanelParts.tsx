@@ -139,7 +139,7 @@ function FlowVsPriceStat({
 	label: string
 	value: number | null | undefined
 	tooltip: string
-	breakdown?: RWAFlowVsPriceAssetSummary[]
+	breakdown?: Array<RWAFlowVsPriceAssetSummary>
 	valueKey: 'mcapChange' | 'netCapital' | 'price'
 }) {
 	const content = breakdown?.length ? (
@@ -178,7 +178,7 @@ export function RWAFlowVsPriceStrip({
 	breakdown
 }: {
 	summary: RWAFlowVsPriceSummary
-	breakdown?: RWAFlowVsPriceAssetSummary[]
+	breakdown?: Array<RWAFlowVsPriceAssetSummary>
 }) {
 	const flowDrivenCopy = getRWAFlowDrivenCopy(summary)
 

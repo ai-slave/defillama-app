@@ -25,7 +25,7 @@ interface StablecoinsDatasetProps {
 	chain: string
 }
 
-const EMPTY_DATA: StablecoinsTableRow[] = []
+const EMPTY_DATA: Array<StablecoinsTableRow> = []
 const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
 	'name',
 	'price',
@@ -126,7 +126,7 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
-								const csv: CsvCell[][] = [
+								const csv: Array<Array<CsvCell>> = [
 									['Stablecoin', 'Market Cap', '24h Change', '7d Change', '1m Change', 'Price', 'Chains']
 								]
 								for (const row of rows) {

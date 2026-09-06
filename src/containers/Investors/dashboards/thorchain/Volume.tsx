@@ -17,7 +17,7 @@ import {
 // switches datasets, it never aggregates (summing daily uniques would double-count
 // wallets active on several days).
 type WalletView = 'daily' | 'monthly' | 'quarterly' | 'yearly' | 'cumulative'
-const WALLET_VIEWS: { value: WalletView; label: string }[] = [
+const WALLET_VIEWS: Array<{ value: WalletView; label: string }> = [
 	{ value: 'daily', label: 'Daily' },
 	{ value: 'monthly', label: 'Monthly' },
 	{ value: 'quarterly', label: 'Quarterly' },
@@ -33,19 +33,19 @@ interface VolumeData {
 	swapCountChart: Chart
 }
 
-const VOLUME_KPIS: [string, string][] = [
+const VOLUME_KPIS: Array<[string, string]> = [
 	['volumeLifetime', 'Volume (Lifetime)'],
 	['volume30d', 'Volume (30D)'],
 	['avgDailyVolume30d', 'Avg Daily Volume (30D)']
 ]
 
-const SWAP_KPIS: [string, string][] = [
+const SWAP_KPIS: Array<[string, string]> = [
 	['allTimeSwaps', 'All-Time Swaps'],
 	['swaps30d', 'Swaps (30D)'],
 	['avgDailySwaps30d', 'Avg Daily Swaps (30D)']
 ]
 
-const TYPE_KPIS: [string, string][] = [
+const TYPE_KPIS: Array<[string, string]> = [
 	['nativeShare30d', 'Native Assets (30D)'],
 	['tradeShare30d', 'Trade Assets (30D)'],
 	['securedShare30d', 'Secured Assets (30D)']

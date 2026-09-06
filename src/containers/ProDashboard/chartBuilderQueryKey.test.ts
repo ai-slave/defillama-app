@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getChartBuilderQueryKey } from './chartBuilderQueryKey'
 import type { ChartBuilderConfig } from './types'
 
@@ -18,7 +18,7 @@ const config: ChartBuilderConfig['config'] = {
 }
 
 describe('Pro dashboard chart-builder query identity', () => {
-	it('includes each canonical filter dimension independently', () => {
+	test('includes each canonical filter dimension independently', () => {
 		expect(getChartBuilderQueryKey(config).slice(-4)).toEqual(['exclude', 'include', 'exclude', 'include'])
 	})
 })

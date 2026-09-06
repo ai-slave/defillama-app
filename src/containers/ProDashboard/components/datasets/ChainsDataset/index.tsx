@@ -25,7 +25,7 @@ import { ColumnManagementPanel } from './ColumnManagementPanel'
 import { chainsDatasetColumns } from './columns'
 import { useChainsData } from './useChainsData'
 
-const EMPTY_DATA: ChainsDatasetRow[] = []
+const EMPTY_DATA: Array<ChainsDatasetRow> = []
 const getChainsCoreRowModel = getCoreRowModel<ChainsDatasetRow>()
 const getChainsSortedRowModel = getSortedRowModel<ChainsDatasetRow>()
 const getChainsFilteredRowModel = getFilteredRowModel<ChainsDatasetRow>()
@@ -86,9 +86,9 @@ const CHAIN_COLUMN_PRESETS = {
 		'totalFees24h_share',
 		'totalAppRevenue24h_share'
 	]
-} satisfies Record<string, string[]>
+} satisfies Record<string, Array<string>>
 
-function getChainColumnPreset(preset: string): string[] | undefined {
+function getChainColumnPreset(preset: string): Array<string> | undefined {
 	switch (preset) {
 		case 'essential':
 			return CHAIN_COLUMN_PRESETS.essential
@@ -107,9 +107,9 @@ function getChainColumnPreset(preset: string): string[] | undefined {
 
 interface ChainsDatasetProps {
 	category?: string
-	columnOrder?: string[]
+	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
-	onColumnsChange?: (columnOrder: string[], columnVisibility: Record<string, boolean>) => void
+	onColumnsChange?: (columnOrder: Array<string>, columnVisibility: Record<string, boolean>) => void
 }
 
 export function ChainsDataset({

@@ -1,14 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildPreIpoValuationChart } from '../chartData'
 
 const TODAY = Date.UTC(2026, 8, 1)
 
 describe('pre-IPO valuation chart', () => {
-	it('preserves monthly valuations, nullable rounds, and same-date funding events', () => {
+	test('preserves monthly valuations, nullable rounds, and same-date funding events', () => {
 		const chart = buildPreIpoValuationChart(
 			[
-				{ date: '2025-01-01', estimatedValuation: 1_000 },
-				{ date: '2025-02-01', estimatedValuation: 2_000 }
+				{ date: '2025-01-01', estimatedValuation: 1000 },
+				{ date: '2025-02-01', estimatedValuation: 2000 }
 			],
 			[
 				{
@@ -20,7 +20,7 @@ describe('pre-IPO valuation chart', () => {
 				{
 					date: '2025-01-15',
 					amountRaised: 25,
-					valuation: 1_500,
+					valuation: 1500,
 					series: 'Series A'
 				}
 			],
@@ -29,16 +29,16 @@ describe('pre-IPO valuation chart', () => {
 
 		expect(chart).not.toBeNull()
 		expect(chart?.charts[0]?.data).toEqual([
-			[Date.UTC(2025, 0, 1), 1_000],
-			[Date.UTC(2025, 1, 1), 2_000]
+			[Date.UTC(2025, 0, 1), 1000],
+			[Date.UTC(2025, 1, 1), 2000]
 		])
 		expect(chart?.charts[1]).toMatchObject({
 			step: 'end',
 			lineStyle: { type: 'dashed' }
 		})
 		expect(chart?.charts[1]?.data).toEqual([
-			[Date.UTC(2025, 0, 15), 1_500],
-			[TODAY, 1_500]
+			[Date.UTC(2025, 0, 15), 1500],
+			[TODAY, 1500]
 		])
 		expect(chart?.charts[2]?.data).toEqual([
 			[Date.UTC(2025, 0, 15), 10],
@@ -47,7 +47,7 @@ describe('pre-IPO valuation chart', () => {
 		expect(chart?.xAxisMaxTimestamp).toBe(TODAY)
 	})
 
-	it('renders funding rounds when monthly valuations are absent', () => {
+	test('renders funding rounds when monthly valuations are absent', () => {
 		const chart = buildPreIpoValuationChart(
 			[],
 			[
@@ -79,7 +79,7 @@ describe('pre-IPO valuation chart', () => {
 		])
 	})
 
-	it('carries the last disclosed valuation through an undisclosed latest raise', () => {
+	test('carries the last disclosed valuation through an undisclosed latest raise', () => {
 		const chart = buildPreIpoValuationChart(
 			[],
 			[
@@ -95,7 +95,7 @@ describe('pre-IPO valuation chart', () => {
 		])
 	})
 
-	it('does not create gaps for undisclosed rounds between disclosed valuations', () => {
+	test('does not create gaps for undisclosed rounds between disclosed valuations', () => {
 		const chart = buildPreIpoValuationChart(
 			[],
 			[
@@ -113,7 +113,7 @@ describe('pre-IPO valuation chart', () => {
 		])
 	})
 
-	it('omits round valuation when every funding valuation is unavailable', () => {
+	test('omits round valuation when every funding valuation is unavailable', () => {
 		const chart = buildPreIpoValuationChart(
 			[],
 			[{ date: '2025-01-01', amountRaised: 10, valuation: null, series: 'Seed' }],
@@ -124,14 +124,14 @@ describe('pre-IPO valuation chart', () => {
 		expect(chart?.charts[0]?.data).toEqual([[Date.UTC(2025, 0, 1), 10]])
 	})
 
-	it('renders only monthly valuations when funding rounds are absent', () => {
-		const chart = buildPreIpoValuationChart([{ date: '2025-01-01', estimatedValuation: 1_000 }], [], TODAY)
+	test('renders only monthly valuations when funding rounds are absent', () => {
+		const chart = buildPreIpoValuationChart([{ date: '2025-01-01', estimatedValuation: 1000 }], [], TODAY)
 
 		expect(chart?.charts.map((series) => series.name)).toEqual(['Monthly valuation'])
-		expect(chart?.charts[0]?.data).toEqual([[Date.UTC(2025, 0, 1), 1_000]])
+		expect(chart?.charts[0]?.data).toEqual([[Date.UTC(2025, 0, 1), 1000]])
 	})
 
-	it('keeps future observations visible beyond today', () => {
+	test('keeps future observations visible beyond today', () => {
 		const chart = buildPreIpoValuationChart(
 			[],
 			[{ date: '2027-01-01', amountRaised: 10, valuation: 100, series: 'Seed' }],
@@ -141,7 +141,7 @@ describe('pre-IPO valuation chart', () => {
 		expect(chart?.xAxisMaxTimestamp).toBe(Date.UTC(2027, 0, 1))
 	})
 
-	it('uses the empty-chart state when valuations and funding rounds are absent', () => {
+	test('uses the empty-chart state when valuations and funding rounds are absent', () => {
 		expect(buildPreIpoValuationChart([], [], TODAY)).toBeNull()
 	})
 })

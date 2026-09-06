@@ -74,27 +74,27 @@ export type TokensDisplayTone = 'positive' | 'negative' | 'neutral'
 
 export interface TokensRightsSummary {
 	protocolName: string
-	identityTokens: string[]
-	utilityItems: string[]
+	identityTokens: Array<string>
+	utilityItems: Array<string>
 	primaryValue: string | null
 	primaryDetails: string | null
 	governance: boolean
-	governanceTokens: string[]
+	governanceTokens: Array<string>
 	treasury: boolean
-	treasuryTokens: string[]
+	treasuryTokens: Array<string>
 	revenue: boolean
-	revenueTokens: string[]
+	revenueTokens: Array<string>
 	feeSwitchStatus: string
 	buybacks: boolean
-	buybackTokens: string[]
+	buybackTokens: Array<string>
 	dividends: boolean
-	dividendTokens: string[]
+	dividendTokens: Array<string>
 	burns: boolean
 	burnsStatus: string
 	equityRevenueCapture: string
 	equityTone: TokenRightsPieTone
 	fundraisingLabel: string | null
-	associatedEntities: string[]
+	associatedEntities: Array<string>
 }
 
 export interface TokensTableRowDisplay {
@@ -158,29 +158,29 @@ export interface TokensTableRow extends TokensRowCore {
 }
 
 export interface TokensChartDataset {
-	names: string[]
-	symbols: string[]
-	logoSources: string[]
+	names: Array<string>
+	symbols: Array<string>
+	logoSources: Array<string>
 	hrefs: Array<string | null>
-	marketCaps: number[]
+	marketCaps: Array<number>
 	priceChanges: {
 		'24h': Array<number | null>
 		'7d': Array<number | null>
 		'30d': Array<number | null>
 	}
-	stablecoins: boolean[]
+	stablecoins: Array<boolean>
 }
 
 export interface TokensChartResponse extends TokensChartDataset {
 	schemaVersion: typeof TOKENS_PAGE_RESPONSE_SCHEMA_VERSION
-	unavailableSources: TokensOptionalSource[]
+	unavailableSources: Array<TokensOptionalSource>
 }
 
 export interface TokensSourceRow extends TokensRowCore {
 	searchKey: string
-	chains: string[]
+	chains: Array<string>
 	primaryChain: string | null
-	categories: string[]
+	categories: Array<string>
 }
 
 export interface TokensFilterOption {
@@ -190,7 +190,7 @@ export interface TokensFilterOption {
 }
 
 export interface TokensSortIndex {
-	rows: TokensSourceRow[]
+	rows: Array<TokensSourceRow>
 	sortBy: TokensSortBy
 	nullStart: number
 }
@@ -222,9 +222,9 @@ export type TokensOptionalSource = 'markets' | 'rights' | 'fees' | 'revenue' | '
 
 export interface TokensPageResponse {
 	snapshotVersion: string | null
-	unavailableSources: TokensOptionalSource[]
+	unavailableSources: Array<TokensOptionalSource>
 	schemaVersion: typeof TOKENS_PAGE_RESPONSE_SCHEMA_VERSION
-	rows: TokensTableRow[]
+	rows: Array<TokensTableRow>
 	total: number
 	page: number
 	pageSize: number
@@ -232,8 +232,8 @@ export interface TokensPageResponse {
 	stats: TokensPageStats
 	statsDisplay: TokensPageStatsDisplay
 	updatedAt: string | null
-	chainOptions: TokensFilterOption[]
-	categoryOptions: TokensFilterOption[]
+	chainOptions: Array<TokensFilterOption>
+	categoryOptions: Array<TokensFilterOption>
 }
 
 export interface TokensPageQuery {
@@ -244,12 +244,12 @@ export interface TokensPageQuery {
 	search: string
 	rankFrom: number | null
 	rankTo: number | null
-	numericFilters: TokensNumericFilter[]
-	chains: string[] | null
-	excludeChains: string[]
+	numericFilters: Array<TokensNumericFilter>
+	chains: Array<string> | null
+	excludeChains: Array<string>
 	nativeOnly: boolean
-	categories: string[] | null
-	excludeCategories: string[]
+	categories: Array<string> | null
+	excludeCategories: Array<string>
 }
 
 export interface TokensPageProps {

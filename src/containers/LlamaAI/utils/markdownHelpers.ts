@@ -83,7 +83,7 @@ export type ContentPart =
 	| { type: 'action'; actionLabel: string; actionMessage: string }
 
 interface ParsedContent {
-	parts: ContentPart[]
+	parts: Array<ContentPart>
 }
 
 /**
@@ -99,9 +99,9 @@ export function parseArtifactPlaceholders(content: string): ParsedContent {
 	const dashboardPlaceholderPattern = /\[DASHBOARD:([^\]]+)\]/g
 	const imagePlaceholderPattern = /\[IMAGE:([^\]]+)\]/g
 	const actionPlaceholderPattern = /\[ACTION:([^|\]]+)(?:\|([^\]]*))?\]/g
-	const parts: ContentPart[] = []
+	const parts: Array<ContentPart> = []
 
-	const allMatches: ArtifactMatch[] = []
+	const allMatches: Array<ArtifactMatch> = []
 
 	let match: RegExpExecArray | null
 	while ((match = chartPlaceholderPattern.exec(content)) !== null) {
@@ -171,7 +171,7 @@ export function parseArtifactPlaceholders(content: string): ParsedContent {
 	return { parts }
 }
 
-export function wrapLegacyUrlCitations(citations: string[]): UnifiedCitationReference[] {
+export function wrapLegacyUrlCitations(citations: Array<string>): Array<UnifiedCitationReference> {
 	return citations.map((url, i) => {
 		const safe = sanitizeUrl(url)
 		let hostname = ''
@@ -200,7 +200,7 @@ export function normalizeCitationMarkerWhitespace(text: string): string {
  * Walk every citation marker — `[1]`, `[1,3]`, `[2-4]`, `[^1]`, or `【1†…】` — expand
  * ranges/lists into individual ids, and substitute whatever `render` returns.
  */
-export function replaceCitationMarkers(text: string, render: (ids: number[]) => string): string {
+export function replaceCitationMarkers(text: string, render: (ids: Array<number>) => string): string {
 	const citationSequencePattern = String.raw`\d+(?:(?:\s*-\s*\d+)|(?:\s*,\s*\d+))*`
 	const markerRegex = new RegExp(
 		String.raw`(?:\[(?:\^\s*)?(${citationSequencePattern})\s*\]|【\s*(${citationSequencePattern})(?:\s*†[^】]*)?\s*】)`,
@@ -209,7 +209,7 @@ export function replaceCitationMarkers(text: string, render: (ids: number[]) => 
 
 	return text.replace(markerRegex, (_full: string, bracketNums?: string, modelNums?: string) => {
 		const nums = bracketNums ?? modelNums ?? ''
-		const expanded: number[] = []
+		const expanded: Array<number> = []
 		for (const part of nums.split(',').map((p) => p.trim())) {
 			if (part.includes('-')) {
 				const [start, end] = part.split('-').map((n) => parseInt(n.trim(), 10))
@@ -225,15 +225,18 @@ export function replaceCitationMarkers(text: string, render: (ids: number[]) => 
 	})
 }
 
-export function processUnifiedCitations(text: string, refsOrUrls?: UnifiedCitationReference[] | string[]): string {
+export function processUnifiedCitations(
+	text: string,
+	refsOrUrls?: Array<UnifiedCitationReference> | Array<string>
+): string {
 	if (refsOrUrls === undefined || refsOrUrls.length === 0) {
 		return normalizeCitationMarkerWhitespace(replaceCitationMarkers(text, () => ''))
 	}
 
-	const refs: UnifiedCitationReference[] =
+	const refs: Array<UnifiedCitationReference> =
 		typeof refsOrUrls[0] === 'string'
-			? wrapLegacyUrlCitations(refsOrUrls as string[])
-			: (refsOrUrls as UnifiedCitationReference[])
+			? wrapLegacyUrlCitations(refsOrUrls as Array<string>)
+			: (refsOrUrls as Array<UnifiedCitationReference>)
 
 	const idsAvailable = new Set<number>()
 	for (const r of refs) if (typeof r.id === 'number') idsAvailable.add(r.id)
@@ -283,7 +286,7 @@ interface ChartRef {
 
 const SLACK_BOLD_REGEX = /(^|[\s(•·>])\*(?!\s|\*)([^*\n]+?)\*(?=$|[\s).,:;!?•·<])/gm
 
-export function prepareAlertSummaryMarkdown(summary: string, charts: ChartRef[]): string {
+export function prepareAlertSummaryMarkdown(summary: string, charts: Array<ChartRef>): string {
 	const withCharts = summary.replace(CHART_PLACEHOLDER_REGEX, (_, chartId: string) => {
 		const chart = charts.find((c) => c.id === chartId)
 		if (!chart?.url) return ''

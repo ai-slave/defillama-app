@@ -5,7 +5,7 @@ import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartsData } from '../../queries'
 import type { ChartConfig } from '../../types'
 
-export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: TimePeriod) {
+export function useComposerItemsData(composerItems: Array<ChartConfig>, timePeriod: TimePeriod) {
 	const streamDone = useContext(StreamDoneContext)
 	const authToken = useContext(ProxyAuthTokenContext)
 	const { parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
@@ -19,7 +19,7 @@ export function useComposerItemsData(composerItems: ChartConfig[], timePeriod: T
 		parentMapping
 	)
 
-	const itemsWithData = useMemo<ChartRuntimeView[]>(() => {
+	const itemsWithData = useMemo<Array<ChartRuntimeView>>(() => {
 		return queries.map((queryResult, index) => {
 			const item = composerItems[index]
 			if (!item) throw new Error(`Missing composer chart config at index ${index}`)

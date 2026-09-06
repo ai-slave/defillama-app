@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { ProfileSectionTabs } from '../ExchangeProfile'
 
 describe('profile section tabs', () => {
-	it('associates the selected tab with the visible panel', () => {
+	test('associates the selected tab with the visible panel', () => {
 		const html = renderToStaticMarkup(
 			<ProfileSectionTabs activeTab="information" hasInformation onTabChange={() => undefined} panelId="profile-panel">
 				<p>Information content</p>
@@ -20,7 +20,7 @@ describe('profile section tabs', () => {
 		expect(panel).toContain('aria-labelledby="exchange-profile-tab-information"')
 	})
 
-	it('renders the reserves tab between markets and information only when reserves exist', () => {
+	test('renders the reserves tab between markets and information only when reserves exist', () => {
 		const withReserves = renderToStaticMarkup(
 			<ProfileSectionTabs
 				activeTab="reserves"

@@ -156,7 +156,7 @@ export function CitationDetailPanel({
 	if (isMobile) {
 		return (
 			<Ariakit.DialogProvider
-				open={true}
+				open
 				setOpen={(open) => {
 					if (!open) close()
 				}}

@@ -12,10 +12,10 @@ export async function fetchProtocolBySlug(protocolSlug: string): Promise<IProtoc
 /**
  * Fetch yield pools available to the LST dashboard.
  */
-export async function fetchYieldPools(snapshot: YieldsSnapshot): Promise<IYieldPoolApiItem[]> {
+export async function fetchYieldPools(snapshot: YieldsSnapshot): Promise<Array<IYieldPoolApiItem>> {
 	const { getEntityEarn } = await import('~/containers/Yields/data/enrich.server')
 	const rows = await getEntityEarn(snapshot)
-	const data: IYieldPoolApiItem[] = []
+	const data: Array<IYieldPoolApiItem> = []
 	for (const pool of rows) {
 		data.push({
 			project: pool.protocolSlug ?? pool.protocol,
@@ -29,8 +29,8 @@ export async function fetchYieldPools(snapshot: YieldsSnapshot): Promise<IYieldP
 }
 
 /** Fetch LST peg, symbol, and fee metadata. */
-export async function fetchLsdRates(): Promise<ILsdRateApiItem[]> {
-	return fetchJson<ILsdRateApiItem[]>(`${SERVER_URL}/lstRates`)
+export async function fetchLsdRates(): Promise<Array<ILsdRateApiItem>> {
+	return fetchJson<Array<ILsdRateApiItem>>(`${SERVER_URL}/lstRates`)
 }
 
 /**

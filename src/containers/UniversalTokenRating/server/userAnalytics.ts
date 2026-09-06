@@ -1,6 +1,6 @@
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 
-const USER_ANALYTICS_TIMEOUT_MS = 2_000
+const USER_ANALYTICS_TIMEOUT_MS = 2000
 
 export async function sendClaimToUserAnalytics(payload: Record<string, unknown>): Promise<void> {
 	const baseUrl = process.env.USER_ANALYTICS_URL?.trim()

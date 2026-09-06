@@ -24,7 +24,7 @@ export function VaultStress({
 	tunedCount,
 	onReset
 }: {
-	collateral: CollateralVM[]
+	collateral: Array<CollateralVM>
 	supplyUsd: number | null
 	poolType: PoolType
 	singleCollateral: boolean
@@ -37,7 +37,7 @@ export function VaultStress({
 	const modelable = collateral.filter(isCollateralStressModelable)
 	const ceiling = vaultDepegLossUsd(modelable, 1)
 	// Nothing the backend could model → honest gap, not a dead slider.
-	if (modelable.length < 1)
+	if (modelable.length === 0)
 		return (
 			<div className="flex flex-col gap-1 border-b border-subtle bg-surface-elevated-1 px-3 py-3 body-md">
 				<div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
@@ -86,7 +86,7 @@ export function VaultStress({
 			<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
 				<div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
 					<span className="label-md text-primary">If collateral prices drop</span>
-					<span className="body-sm text-secondary">{`per asset · no liquidations · stress estimate`}</span>
+					<span className="body-sm text-secondary">per asset · no liquidations · stress estimate</span>
 				</div>
 				{tunedCount > 0 ? (
 					<Button type="button" variant="ghost" size="md" onClick={onReset} className="-mr-2">
@@ -114,7 +114,7 @@ export function VaultStress({
 
 			{/* a single collateral IS the driver, so the breakdown is dropped — just the ceiling */}
 			<p className="body-sm text-secondary">
-				{!singleCollateral && drivers.length ? (
+				{!singleCollateral && drivers.length > 0 ? (
 					<>
 						<span className="text-secondary">Driven by </span>
 						{drivers.map((d, i) => (

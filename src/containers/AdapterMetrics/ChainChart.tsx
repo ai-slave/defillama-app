@@ -80,7 +80,7 @@ type BreakdownChartDataState =
 	| {
 			kind: 'ready'
 			chartData: MultiSeriesTimeSeriesDataset
-			protocolDimensions: string[]
+			protocolDimensions: Array<string>
 	  }
 
 function assertNever(value: never): never {
@@ -173,7 +173,7 @@ function getAdapterByChainChartKindQueryUpdate({
 }: {
 	nextChartKind: ChainsByAdapterChartKind
 	currentGroupByParam: string | undefined
-}): Record<string, string | string[] | undefined> {
+}): Record<string, string | Array<string> | undefined> {
 	return getChartKindQueryUpdate(nextChartKind, currentGroupByParam)
 }
 
@@ -269,7 +269,7 @@ export const AdapterByChainChart = ({
 
 		if (excludedProtocolsSet.size === 0) return baseSelectedProtocols
 
-		const selectedProtocols: string[] = []
+		const selectedProtocols: Array<string> = []
 		for (const protocolName of baseSelectedProtocols) {
 			if (!excludedProtocolsSet.has(protocolName)) selectedProtocols.push(protocolName)
 		}
@@ -417,7 +417,7 @@ export const AdapterByChainChart = ({
 					id: generateItemId('chart', `${chain}-${dashboardChartType}`),
 					kind: 'chart',
 					subjectType: 'chain',
-					chain: chain,
+					chain,
 					type: dashboardChartType,
 					grouping,
 					color: PRIMARY_CHART_COLOR
@@ -786,7 +786,7 @@ export const ChainsByAdapterChart = ({
 
 		if (excludedChainsSet.size === 0) return baseSelectedChains
 
-		const selectedChains: string[] = []
+		const selectedChains: Array<string> = []
 		for (const chain of baseSelectedChains) {
 			if (!excludedChainsSet.has(chain)) selectedChains.push(chain)
 		}

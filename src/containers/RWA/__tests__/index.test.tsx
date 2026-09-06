@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import { buildRwaTimeSeriesCharts } from '../index'
 
 describe('buildRwaTimeSeriesCharts', () => {
-	it('excludes renamed total series from tooltip totals without excluding rwa perps open interest', () => {
+	test('excludes renamed total series from tooltip totals without excluding rwa perps open interest', () => {
 		expect(
 			buildRwaTimeSeriesCharts({
 				dimensions: ['timestamp', 'Total Onchain Mcap', 'RWA Perps OI', 'Bonds'],

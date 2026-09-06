@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import {
 	DWMC_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmcGrouping
@@ -103,7 +103,7 @@ export function parseStablecoinChartView(value: string): StablecoinChartView | n
 	}
 }
 
-export function parseStablecoinVolumeGroupBy(value: string | string[] | undefined): LowercaseDwmcGrouping {
+export function parseStablecoinVolumeGroupBy(value: string | Array<string> | undefined): LowercaseDwmcGrouping {
 	const normalized = (Array.isArray(value) ? value[0] : value)?.toLowerCase()
 	for (const option of DWMC_GROUPING_OPTIONS_LOWERCASE) {
 		if (option.value === normalized) return option.value
@@ -308,7 +308,7 @@ function normalizeChartView(
 	return getDefaultStablecoinChartView(mode, type)
 }
 
-function getAllowedTypes(mode: StablecoinChartMode): readonly StablecoinChartType[] {
+function getAllowedTypes(mode: StablecoinChartMode): ReadonlyArray<StablecoinChartType> {
 	switch (mode.page) {
 		case 'overview':
 			return ['marketCap', 'volume', 'inflows']
@@ -320,7 +320,7 @@ function getAllowedTypes(mode: StablecoinChartMode): readonly StablecoinChartTyp
 	}
 }
 
-function getAllowedViews(mode: StablecoinChartMode, type: StablecoinChartType): readonly StablecoinChartView[] {
+function getAllowedViews(mode: StablecoinChartMode, type: StablecoinChartType): ReadonlyArray<StablecoinChartView> {
 	if (type === 'inflows') return mode.page === 'overview' ? INFLOW_VIEWS : []
 	if (type === 'volume') {
 		if (mode.page === 'overview' && mode.chain === 'chain') return CHAIN_VOLUME_VIEWS

@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { resolveProtocolCategory } from '../category'
 
 describe('resolveProtocolCategory', () => {
-	it('keeps the explicit protocol category when present', () => {
+	test('keeps the explicit protocol category when present', () => {
 		expect(
 			resolveProtocolCategory({
 				protocolData: {
@@ -18,7 +18,7 @@ describe('resolveProtocolCategory', () => {
 		).toBe('Lending')
 	})
 
-	it('uses the highest-tvl child category for parent protocols without a category', () => {
+	test('uses the highest-tvl child category for parent protocols without a category', () => {
 		expect(
 			resolveProtocolCategory({
 				protocolData: {
@@ -35,7 +35,7 @@ describe('resolveProtocolCategory', () => {
 		).toBe('Perps')
 	})
 
-	it('ignores child protocols without a category', () => {
+	test('ignores child protocols without a category', () => {
 		expect(
 			resolveProtocolCategory({
 				protocolData: {
@@ -51,7 +51,7 @@ describe('resolveProtocolCategory', () => {
 		).toBe('DEX Aggregator')
 	})
 
-	it('treats a nullable lite TVL as zero when ranking child categories', () => {
+	test('treats a nullable lite TVL as zero when ranking child categories', () => {
 		expect(
 			resolveProtocolCategory({
 				protocolData: {
@@ -67,7 +67,7 @@ describe('resolveProtocolCategory', () => {
 		).toBe('Known TVL')
 	})
 
-	it('returns null when no eligible child category exists', () => {
+	test('returns null when no eligible child category exists', () => {
 		expect(
 			resolveProtocolCategory({
 				protocolData: {

@@ -9,7 +9,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 interface MicaPageProps {
-	exchanges: MicaVenueRowModel[]
+	exchanges: Array<MicaVenueRowModel>
 }
 
 export const getStaticProps = withPerformanceLogging<MicaPageProps>('mica', async () => {
@@ -52,7 +52,7 @@ export default function MicaPage({ exchanges }: MicaPageProps) {
 				</Card>
 			) : null}
 
-			{exchanges.length ? (
+			{exchanges.length > 0 ? (
 				<MicaTable venues={exchanges} />
 			) : (
 				<Card padding="md" className="text-center body-sm text-secondary">

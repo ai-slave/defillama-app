@@ -30,9 +30,9 @@ const pageName = ['Chains', 'ranked by', type]
 const AppFeesByChain = (props: IChainsByAdapterPageData) => {
 	return (
 		<Layout
-			title={`App Fee Rankings by Blockchain - DefiLlama`}
+			title="App Fee Rankings by Blockchain - DefiLlama"
 			description="Compare app fees by chain, excluding stablecoins, liquid staking apps, and gas fees."
-			canonicalUrl={`/app-fees/chains`}
+			canonicalUrl="/app-fees/chains"
 			pageName={pageName}
 		>
 			<ChainsByAdapter {...props} type={type} />

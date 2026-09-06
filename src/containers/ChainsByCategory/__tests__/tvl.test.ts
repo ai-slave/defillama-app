@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	applyChainsTvlSettings,
 	getChainMcapTvlRatio,
@@ -7,14 +7,14 @@ import {
 } from '../tvl'
 
 describe('chains by category tvl helpers', () => {
-	it('returns only finite market-cap ratios while preserving an explicit zero market cap', () => {
+	test('returns only finite market-cap ratios while preserving an explicit zero market cap', () => {
 		expect(getChainMcapTvlRatio(0, 100)).toBe(0)
 		expect(getChainMcapTvlRatio(100, 0)).toBeNull()
 		expect(getChainMcapTvlRatio(100, null)).toBeNull()
 		expect(getChainMcapTvlRatio(null, 100)).toBeNull()
 	})
 
-	it('subtracts current doublecounted and liquid staking tvl by default', () => {
+	test('subtracts current doublecounted and liquid staking tvl by default', () => {
 		const normalized = normalizeChainsBaseTvlValue(106_854_312_810, {
 			doublecounted: 47_590_610_833,
 			liquidstaking: 34_794_501_734,
@@ -24,7 +24,7 @@ describe('chains by category tvl helpers', () => {
 		expect(normalized).toBe(46_432_562_960)
 	})
 
-	it('normalizes cosmoshub default tvl after stale doublecounted entries are removed', () => {
+	test('normalizes cosmoshub default tvl after stale doublecounted entries are removed', () => {
 		const sanitized = removeStaleChainExtraTvlEntries({
 			chainName: 'CosmosHub',
 			extraTvl: {
@@ -44,17 +44,17 @@ describe('chains by category tvl helpers', () => {
 			tvlChartsByChain: {
 				tvl: {
 					CosmosHub: {
-						1776643200000: 6_224_100
+						1_776_643_200_000: 6_224_100
 					}
 				},
 				doublecounted: {
 					CosmosHub: {
-						1736467200000: 2_170_124
+						1_736_467_200_000: 2_170_124
 					}
 				},
 				liquidstaking: {
 					CosmosHub: {
-						1776643200000: 6_085_010
+						1_776_643_200_000: 6_085_010
 					}
 				}
 			}
@@ -69,7 +69,7 @@ describe('chains by category tvl helpers', () => {
 		expect(normalized).toBe(139_090)
 	})
 
-	it('normalizes celestia default tvl to zero when base equals liquid staking tvl', () => {
+	test('normalizes celestia default tvl to zero when base equals liquid staking tvl', () => {
 		const normalized = normalizeChainsBaseTvlValue(298_257, {
 			liquidstaking: 298_257,
 			dcAndLsOverlap: 0
@@ -78,7 +78,7 @@ describe('chains by category tvl helpers', () => {
 		expect(normalized).toBe(0)
 	})
 
-	it('clamps the final independently rounded value without losing exact extra tvl restoration', () => {
+	test('clamps the final independently rounded value without losing exact extra tvl restoration', () => {
 		const doublecounted = 502_682
 		const liquidstaking = 1_499_449
 		const normalized = normalizeChainsBaseTvlValue(2_002_130, { doublecounted, liquidstaking })
@@ -97,7 +97,7 @@ describe('chains by category tvl helpers', () => {
 		expect(applyChainsTvlSettings(persistentResidual, {}, [])).toBe(0)
 	})
 
-	it('keeps rows and charts consistent when both doublecounted and liquidstaking are enabled', () => {
+	test('keeps rows and charts consistent when both doublecounted and liquidstaking are enabled', () => {
 		const normalized = normalizeChainsBaseTvlValue(150, {
 			doublecounted: 30,
 			liquidstaking: 60,
@@ -115,17 +115,17 @@ describe('chains by category tvl helpers', () => {
 		).toBe(150)
 	})
 
-	it('returns null when no base or enabled extra tvl data exists', () => {
+	test('returns null when no base or enabled extra tvl data exists', () => {
 		expect(applyChainsTvlSettings(undefined, {}, ['doublecounted'])).toBeNull()
 	})
 
-	it('distinguishes an absent selected family from a present family with a null snapshot', () => {
+	test('distinguishes an absent selected family from a present family with a null snapshot', () => {
 		expect(applyChainsTvlSettings(100, {}, ['staking'])).toBe(100)
 		expect(applyChainsTvlSettings(100, { staking: null }, ['staking'])).toBeNull()
 		expect(applyChainsTvlSettings(90, { staking: 10 }, ['staking'])).toBe(100)
 	})
 
-	it('requires a known overlap when both overlapping families are selected', () => {
+	test('requires a known overlap when both overlapping families are selected', () => {
 		expect(
 			applyChainsTvlSettings(50, { doublecounted: 20, liquidstaking: 30, dcAndLsOverlap: null }, [
 				'doublecounted',
@@ -136,7 +136,7 @@ describe('chains by category tvl helpers', () => {
 		expect(normalizeChainsBaseTvlValue(100, {})).toBe(100)
 	})
 
-	it('drops stale doublecounted snapshot entries when the chart series stopped updating', () => {
+	test('drops stale doublecounted snapshot entries when the chart series stopped updating', () => {
 		const sanitized = removeStaleChainExtraTvlEntries({
 			chainName: 'CosmosHub',
 			extraTvl: {
@@ -156,17 +156,17 @@ describe('chains by category tvl helpers', () => {
 			tvlChartsByChain: {
 				tvl: {
 					CosmosHub: {
-						1776643200000: 6_224_100
+						1_776_643_200_000: 6_224_100
 					}
 				},
 				doublecounted: {
 					CosmosHub: {
-						1736467200000: 2_170_124
+						1_736_467_200_000: 2_170_124
 					}
 				},
 				liquidstaking: {
 					CosmosHub: {
-						1776643200000: 6_085_010
+						1_776_643_200_000: 6_085_010
 					}
 				}
 			}
@@ -177,7 +177,7 @@ describe('chains by category tvl helpers', () => {
 		expect(sanitized.dcAndLsOverlap).toBeUndefined()
 	})
 
-	it('preserves non-chart extra tvl entries while sanitizing stale chart-backed entries', () => {
+	test('preserves non-chart extra tvl entries while sanitizing stale chart-backed entries', () => {
 		const sanitized = removeStaleChainExtraTvlEntries({
 			chainName: 'Ethereum',
 			extraTvl: {
@@ -191,7 +191,7 @@ describe('chains by category tvl helpers', () => {
 			tvlChartsByChain: {
 				tvl: {
 					Ethereum: {
-						1776643200000: 106_854_312_810
+						1_776_643_200_000: 106_854_312_810
 					}
 				}
 			}
@@ -200,7 +200,7 @@ describe('chains by category tvl helpers', () => {
 		expect(sanitized.excludeparent?.tvl).toBe(123)
 	})
 
-	it('keeps an extra TVL snapshot at the exact stale tolerance boundary', () => {
+	test('keeps an extra TVL snapshot at the exact stale tolerance boundary', () => {
 		const latestBaseTimestamp = 1_800_000_000_000
 		const latestExtraTimestamp = latestBaseTimestamp - 2 * 24 * 60 * 60 * 1000
 		const sanitized = removeStaleChainExtraTvlEntries({
@@ -217,7 +217,7 @@ describe('chains by category tvl helpers', () => {
 		expect(sanitized.staking?.tvl).toBe(5)
 	})
 
-	it('preserves dynamic keys while filtering only chart-backed families', () => {
+	test('preserves dynamic keys while filtering only chart-backed families', () => {
 		const latestBaseTimestamp = 1_800_000_000_000
 		const extraTvl = {
 			offers: { tvl: 7, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null },
@@ -237,7 +237,7 @@ describe('chains by category tvl helpers', () => {
 		expect(sanitized.custom?.tvl).toBe(8)
 	})
 
-	it('drops overlap when either required chart-backed snapshot is stale', () => {
+	test('drops overlap when either required chart-backed snapshot is stale', () => {
 		const sanitized = removeStaleChainExtraTvlEntries({
 			chainName: 'Overlap',
 			extraTvl: {

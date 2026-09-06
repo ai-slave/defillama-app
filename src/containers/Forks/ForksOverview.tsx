@@ -239,8 +239,8 @@ export const ForksOverview = ({
 								dataset={selectedDominance.dataset}
 								charts={selectedDominance.charts}
 								csvSource={selectedDominance.csvSource}
-								stacked={true}
-								expandTo100Percent={true}
+								stacked
+								expandTo100Percent
 								hideDefaultLegend
 								valueSymbol="%"
 								onReady={handleChartReady}

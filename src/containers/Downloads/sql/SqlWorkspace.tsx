@@ -304,7 +304,7 @@ function SqlWorkspaceInner({
 		}: {
 			tabId: string
 			taskId: string
-			tables: TableSource[]
+			tables: Array<TableSource>
 			sql: string
 		}) => {
 			const runKey = `tab:${tabId}`
@@ -377,9 +377,9 @@ function SqlWorkspaceInner({
 				updateTab(tabId, { loadingStage: null })
 				await runSqlForTab(tabId, nextSql, controller)
 				finishRun()
-			} catch (err) {
+			} catch (error) {
 				if (runControllersRef.current.get(runKey) !== controller) return
-				if (isAbortError(err) || controller.signal.aborted) {
+				if (isAbortError(error) || controller.signal.aborted) {
 					updateTab(tabId, {
 						runError: null,
 						result: null,
@@ -391,7 +391,7 @@ function SqlWorkspaceInner({
 					return
 				}
 				updateTab(tabId, {
-					runError: err instanceof Error ? err.message : String(err),
+					runError: error instanceof Error ? error.message : String(error),
 					result: null,
 					running: false
 				})
@@ -404,7 +404,7 @@ function SqlWorkspaceInner({
 
 	// --- Notebook cell execution ---
 
-	const cellViewNames = useCallback((cells: NotebookCell[]): Set<string> => {
+	const cellViewNames = useCallback((cells: Array<NotebookCell>): Set<string> => {
 		const set = new Set<string>()
 		cells.forEach((_, i) => set.add(`cell_${i + 1}`))
 		return set
@@ -462,8 +462,8 @@ function SqlWorkspaceInner({
 				try {
 					const viewSql = trimmed.replace(/;\s*$/g, '').trim()
 					await duckdb.conn.query(`CREATE OR REPLACE VIEW "${cellName}" AS (${viewSql})`)
-				} catch (viewErr) {
-					console.warn(`Failed to create view ${cellName}:`, viewErr)
+				} catch (error) {
+					console.warn(`Failed to create view ${cellName}:`, error)
 				}
 				if (runControllersRef.current.get(runKey) !== controller) return false
 				if (controller.signal.aborted) {
@@ -508,7 +508,7 @@ function SqlWorkspaceInner({
 	)
 
 	const runCellsSequential = useCallback(
-		async (tabId: string, cellIds: string[]) => {
+		async (tabId: string, cellIds: Array<string>) => {
 			for (const id of cellIds) {
 				const ok = await runSqlForCell(tabId, id)
 				if (!ok) break
@@ -695,7 +695,7 @@ function SqlWorkspaceInner({
 		if (hydratedRef.current) return
 		if (!router.isReady) return
 		if (!duckdb.conn) return
-		const rawQuery = router.query as Record<string, string | string[] | undefined>
+		const rawQuery = router.query as Record<string, string | Array<string> | undefined>
 
 		const notebookDecoded = decodeNotebookShare(rawQuery)
 		if (notebookDecoded) {
@@ -1139,7 +1139,7 @@ function EditorRunBar({
 	onCancel: () => void
 	onSave: () => void
 	sql: string
-	tables: QueryTableRef[]
+	tables: Array<QueryTableRef>
 	chartConfig: ChartConfig | undefined
 	mode: 'query' | 'notebook'
 	notebookCells: Array<{ type: 'sql' | 'markdown'; source: string; chartConfig?: ChartConfig }>
@@ -1206,7 +1206,7 @@ function SavedQueriesTab({
 	onRename,
 	busyTaskId
 }: {
-	savedQueries: QuerySavedConfig[]
+	savedQueries: Array<QuerySavedConfig>
 	onOpen: (q: QuerySavedConfig) => void
 	onDelete: (id: string) => void
 	onRename: (id: string, name: string) => void

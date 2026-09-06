@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { UnifiedTableConfig } from './unifiedTable/config/current'
 import { buildUnifiedTableStreamSourcePlan } from './unifiedTableSourcePlan'
 
-function table(id: string, columns: string[], rowHeaders: UnifiedTableConfig['rowHeaders']): UnifiedTableConfig {
+function table(id: string, columns: Array<string>, rowHeaders: UnifiedTableConfig['rowHeaders']): UnifiedTableConfig {
 	return {
 		id,
 		kind: 'unified-table',
@@ -18,7 +18,7 @@ function table(id: string, columns: string[], rowHeaders: UnifiedTableConfig['ro
 }
 
 describe('Unified Table stream source plan', () => {
-	it('keeps exact table query contracts separate for independent latency and failure boundaries', () => {
+	test('keeps exact table query contracts separate for independent latency and failure boundaries', () => {
 		const plan = buildUnifiedTableStreamSourcePlan([
 			table('fees', ['name', 'fees24h'], ['protocol']),
 			table('volume', ['name', 'volume24h'], ['category', 'protocol'])
@@ -35,7 +35,7 @@ describe('Unified Table stream source plan', () => {
 		expect(plan[1]).toMatchObject({ baseMetricFamilies: ['dex-volume'], cacheKey: expect.any(String) })
 	})
 
-	it('keeps aggregate and chain-granularity sources separate', () => {
+	test('keeps aggregate and chain-granularity sources separate', () => {
 		const plan = buildUnifiedTableStreamSourcePlan([
 			table('aggregate', ['name', 'tvl'], ['protocol']),
 			table('by-chain', ['name', 'tvl'], ['chain', 'protocol'])
@@ -45,7 +45,7 @@ describe('Unified Table stream source plan', () => {
 		expect(plan.map((source) => source.rowHeaders)).toEqual([[], ['chain']])
 	})
 
-	it('keeps preset membership separate from a broad custom table with the same metrics', () => {
+	test('keeps preset membership separate from a broad custom table with the same metrics', () => {
 		const custom = table('custom', ['name', 'fees24h'], ['protocol'])
 		const preset = { ...table('preset', ['name', 'fees24h'], ['protocol']), activePresetId: 'fees-protocols' }
 		const plan = buildUnifiedTableStreamSourcePlan([custom, preset])

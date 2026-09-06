@@ -9,11 +9,11 @@ export interface ProTreemapNode {
 }
 
 export function buildProTreemapData(
-	series: ChartSeries[],
+	series: Array<ChartSeries>,
 	valueMode: ProTreemapValueMode,
 	resolveColor: (name: string, fallback?: string) => string
-): ProTreemapNode[] {
-	const nodes: ProTreemapNode[] = []
+): Array<ProTreemapNode> {
+	const nodes: Array<ProTreemapNode> = []
 	const windowSeconds = valueMode === 'sum7d' ? 7 * 86_400 : 30 * 86_400
 	const startOfTodayUtc = Math.floor(Date.now() / 86_400_000) * 86_400
 

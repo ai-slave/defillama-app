@@ -7,7 +7,7 @@ export interface ProtocolExpenseRow {
 	name: string
 	protocol: ExpenseProtocol
 	headcount: number | null
-	sources: string[] | null
+	sources: Array<string> | null
 	sumAnnualUsdExpenses: number
 }
 
@@ -16,15 +16,15 @@ export function buildProtocolExpenseRows({
 	parentProtocols,
 	protocols
 }: {
-	expenses: IProtocolExpenses[]
-	parentProtocols: ParentProtocolLite[]
-	protocols: ProtocolLite[]
-}): ProtocolExpenseRow[] {
+	expenses: Array<IProtocolExpenses>
+	parentProtocols: Array<ParentProtocolLite>
+	protocols: Array<ProtocolLite>
+}): Array<ProtocolExpenseRow> {
 	const protocolById = new Map<string, ExpenseProtocol>()
 	for (const protocol of protocols) protocolById.set(protocol.defillamaId, protocol)
 	for (const protocol of parentProtocols) protocolById.set(protocol.id, { ...protocol, defillamaId: protocol.id })
 
-	const rows: ProtocolExpenseRow[] = []
+	const rows: Array<ProtocolExpenseRow> = []
 	for (const expense of expenses) {
 		const protocol = protocolById.get(expense.protocolId)
 		if (!protocol) throw new Error(`Protocol Expenses metadata is missing for ${expense.protocolId}`)

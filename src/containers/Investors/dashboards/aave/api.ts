@@ -53,8 +53,8 @@ export interface AaveReserve {
 	flashLoanEnabled?: boolean | null
 	supplyInfo: AaveReserveSupplyInfo
 	borrowInfo: AaveReserveBorrowInfo | null
-	incentives?: AaveIncentive[] | null
-	eModeInfo?: AaveEmodeInfo[] | null
+	incentives?: Array<AaveIncentive> | null
+	eModeInfo?: Array<AaveEmodeInfo> | null
 }
 
 export interface AaveMarket {
@@ -63,7 +63,7 @@ export interface AaveMarket {
 	chain: { chainId: number; name: string }
 	totalMarketSize: string
 	totalAvailableLiquidity: string
-	reserves: AaveReserve[]
+	reserves: Array<AaveReserve>
 }
 
 export interface FlatReserve {
@@ -91,7 +91,7 @@ export interface FlatReserve {
 	availableLiquidityUsd: number
 	rewardSupplyApr: number | null
 	rewardBorrowDiscount: number | null
-	eModeCategories: string[]
+	eModeCategories: Array<string>
 	// Rate model params
 	baseVariableBorrowRate: number | null
 	variableRateSlope1: number | null
@@ -144,8 +144,8 @@ export function num(value: string | undefined): number {
 	return parseFloat(value)
 }
 
-export function formatAaveMarkets(markets: AaveMarket[]): FlatReserve[] {
-	const reserves: FlatReserve[] = []
+export function formatAaveMarkets(markets: Array<AaveMarket>): Array<FlatReserve> {
+	const reserves: Array<FlatReserve> = []
 	for (const market of markets) {
 		for (const reserve of market.reserves) {
 			const sizeUsd = num(reserve.size.usd)
@@ -192,9 +192,9 @@ export function formatAaveMarkets(markets: AaveMarket[]): FlatReserve[] {
 	return reserves
 }
 
-export function buildAaveApyDataset(samples: APYSample[], type: 'supply' | 'borrow'): MultiSeriesChartDataset {
+export function buildAaveApyDataset(samples: Array<APYSample>, type: 'supply' | 'borrow'): MultiSeriesChartDataset {
 	const dimension = type === 'supply' ? 'Supply APY' : 'Borrow APY'
-	const source = new Array<number[]>(samples.length)
+	const source = new Array<Array<number>>(samples.length)
 	for (let i = 0; i < samples.length; i++) {
 		const sample = samples[i]
 		source[samples.length - i - 1] = [Math.floor(Date.parse(sample.date) / 1000) * 1000, pct(sample.avgRate.value)]
@@ -202,7 +202,7 @@ export function buildAaveApyDataset(samples: APYSample[], type: 'supply' | 'borr
 	return { source, dimensions: ['timestamp', dimension] }
 }
 
-function extractRewardSupplyApr(incentives?: AaveIncentive[] | null): number | null {
+function extractRewardSupplyApr(incentives?: Array<AaveIncentive> | null): number | null {
 	if (!incentives) return null
 	for (const inc of incentives) {
 		if (inc.extraSupplyApr) return pct(inc.extraSupplyApr.value)
@@ -210,7 +210,7 @@ function extractRewardSupplyApr(incentives?: AaveIncentive[] | null): number | n
 	return null
 }
 
-function extractRewardBorrowDiscount(incentives?: AaveIncentive[] | null): number | null {
+function extractRewardBorrowDiscount(incentives?: Array<AaveIncentive> | null): number | null {
 	if (!incentives) return null
 	for (const inc of incentives) {
 		if (inc.borrowAprDiscount) return pct(inc.borrowAprDiscount.value)
@@ -221,7 +221,7 @@ function extractRewardBorrowDiscount(incentives?: AaveIncentive[] | null): numbe
 export function useAaveMarkets() {
 	const query = useQuery({
 		queryKey: ['aave-markets'],
-		queryFn: () => fetchAaveQuery<{ data: { markets: AaveMarket[] } }>('markets'),
+		queryFn: () => fetchAaveQuery<{ data: { markets: Array<AaveMarket> } }>('markets'),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})
@@ -248,7 +248,7 @@ export function useAaveAPYHistory(
 	const query = useQuery({
 		queryKey: ['aave-apy-history', type, chainId, market, underlyingToken, window],
 		queryFn: () =>
-			fetchAaveQuery<{ data: Record<string, APYSample[]> }>(queryName, {
+			fetchAaveQuery<{ data: Record<string, Array<APYSample>> }>(queryName, {
 				chainId,
 				market,
 				underlyingToken,

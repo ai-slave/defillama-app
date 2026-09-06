@@ -12,7 +12,7 @@ export function adaptCandlestickData(
 		return { data, indicators }
 	}
 
-	const rows: Record<string, unknown>[] = []
+	const rows: Array<Record<string, unknown>> = []
 	for (const row of rawData) {
 		if (isChartDataRow(row)) rows.push(row)
 	}

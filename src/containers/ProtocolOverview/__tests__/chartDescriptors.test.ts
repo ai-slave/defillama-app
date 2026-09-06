@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { ADAPTER_CHART_DESCRIPTORS } from '../chartDescriptors'
 import { PROTOCOL_CHART_LABELS, protocolCharts } from '../constants'
 
@@ -108,12 +108,12 @@ const descriptorsByLabel = Object.fromEntries(
 )
 
 describe('ProtocolOverview adapter chart descriptors', () => {
-	it('keeps the typed chart-label iterator complete and unique', () => {
+	test('keeps the typed chart-label iterator complete and unique', () => {
 		expect(new Set(PROTOCOL_CHART_LABELS)).toEqual(new Set(Object.keys(protocolCharts)))
 		expect(PROTOCOL_CHART_LABELS).toHaveLength(Object.keys(protocolCharts).length)
 	})
 
-	it('maps each protocol chart label to the expected adapter request and methodology key', () => {
+	test('maps each protocol chart label to the expected adapter request and methodology key', () => {
 		expect(
 			Object.fromEntries(
 				ADAPTER_CHART_DESCRIPTORS.map(
@@ -135,13 +135,13 @@ describe('ProtocolOverview adapter chart descriptors', () => {
 		)
 	})
 
-	it('keeps the label lookup aligned with the descriptor list', () => {
+	test('keeps the label lookup aligned with the descriptor list', () => {
 		for (const descriptor of ADAPTER_CHART_DESCRIPTORS) {
 			expect(descriptorsByLabel[descriptor.label]).toBe(descriptor)
 		}
 	})
 
-	it('keeps same-data-type notional volume descriptors on separate adapters', () => {
+	test('keeps same-data-type notional volume descriptors on separate adapters', () => {
 		expect(descriptorsByLabel['DEX Notional Volume']?.chartRequest).toEqual({
 			adapterType: 'dexs',
 			dataType: 'dailyNotionalVolume'
@@ -152,7 +152,7 @@ describe('ProtocolOverview adapter chart descriptors', () => {
 		})
 	})
 
-	it('keeps fee-family descriptors on separate data types', () => {
+	test('keeps fee-family descriptors on separate data types', () => {
 		expect(descriptorsByLabel.Fees?.chartRequest).toEqual({ adapterType: 'fees' })
 		expect(descriptorsByLabel.Revenue?.chartRequest).toEqual({
 			adapterType: 'fees',
@@ -164,7 +164,7 @@ describe('ProtocolOverview adapter chart descriptors', () => {
 		})
 	})
 
-	it('keeps perp volume and perp aggregator volume on separate adapter paths', () => {
+	test('keeps perp volume and perp aggregator volume on separate adapter paths', () => {
 		expect(descriptorsByLabel['Perp Volume']?.chartRequest).toEqual({
 			adapterType: 'derivatives'
 		})
@@ -173,7 +173,7 @@ describe('ProtocolOverview adapter chart descriptors', () => {
 		})
 	})
 
-	it('keeps liquidation metrics on the liquidations adapter with separate data types', () => {
+	test('keeps liquidation metrics on the liquidations adapter with separate data types', () => {
 		expect(descriptorsByLabel['Liquidation Volume']?.chartRequest).toEqual({
 			adapterType: 'liquidations',
 			dataType: 'dailyLiquidationVolume'

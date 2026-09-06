@@ -52,7 +52,7 @@ export function buildTokenDirectoryIndexes(metadata: MetadataCache): TokenDirect
 	return { byGeckoId, protocolIdByGeckoId }
 }
 
-export function buildUniqueTokenSymbols(tokens: IResponseCGTokenRankingsDatasetItem[]): Set<string> {
+export function buildUniqueTokenSymbols(tokens: Array<IResponseCGTokenRankingsDatasetItem>): Set<string> {
 	const counts = new Map<string, number>()
 	for (const token of tokens) {
 		const symbol = token.symbol.toUpperCase()
@@ -113,7 +113,7 @@ export function buildTokenOverviewCurrentMetricsById({
 	markets,
 	metadata
 }: {
-	tokens: IResponseCGTokenRankingsDatasetItem[]
+	tokens: Array<IResponseCGTokenRankingsDatasetItem>
 	markets: TokenMarketsListResponse
 	metadata: MetadataCache
 }): Record<string, TokenOverviewCurrentMetrics> {
@@ -150,7 +150,7 @@ export function buildTokenOverviewCurrentMetricsById({
 	return currentMetricsById
 }
 
-export function buildTokenIndexById(tokens: IResponseCGTokenRankingsDatasetItem[]): Map<string, number> {
+export function buildTokenIndexById(tokens: Array<IResponseCGTokenRankingsDatasetItem>): Map<string, number> {
 	const tokenIndexById = new Map<string, number>()
 	let index = 0
 	for (const token of tokens) {

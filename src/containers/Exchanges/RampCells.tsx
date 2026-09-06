@@ -212,7 +212,7 @@ export function RampTradeValue({ row, size }: { row: RampRowModel; size: number 
 
 export function RampCurrenciesValue({ row, currency }: { row: RampRowModel; currency: string | null }) {
 	const currencies = row.variant.fiatCurrencies
-	if (!currencies.length) return DASH
+	if (currencies.length === 0) return DASH
 	const supported = currency !== null && currencies.includes(currency)
 	return (
 		<Tooltip content={currencies.join(', ')} className="justify-end">

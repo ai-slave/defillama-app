@@ -20,7 +20,7 @@ function Toggle<T extends string>({
 }: {
 	value: T
 	onChange: (v: T) => void
-	options: { id: T; label: string }[]
+	options: Array<{ id: T; label: string }>
 }) {
 	return (
 		<div className="flex w-fit items-center rounded-md border border-pro-cards-border text-pro-text-secondary">
@@ -101,7 +101,7 @@ function getPieColor(index: number): string {
 	return color
 }
 
-function sumUsd<Row>(rows: Row[] | undefined, getValue: (row: Row) => number): number {
+function sumUsd<Row>(rows: Array<Row> | undefined, getValue: (row: Row) => number): number {
 	if (!rows) return 0
 	return rows.reduce((sum, row) => sum + (getValue(row) || 0), 0)
 }
@@ -196,7 +196,7 @@ export default function Revenue() {
 							type: 'bar' as const,
 							color: '#fb923c',
 							data: (hbm.metronome || []).map(
-								(r) => [Math.floor(Date.parse(r.month + '-01T00:00:00Z') / 1000), r.totalUsd] as [number, number]
+								(r) => [Math.floor(Date.parse(`${r.month}-01T00:00:00Z`) / 1000), r.totalUsd] as [number, number]
 							)
 						},
 						{
@@ -204,7 +204,7 @@ export default function Revenue() {
 							type: 'bar' as const,
 							color: '#a78bfa',
 							data: (hbm.vesper || []).map(
-								(r) => [Math.floor(Date.parse(r.month + '-01T00:00:00Z') / 1000), r.totalUsd] as [number, number]
+								(r) => [Math.floor(Date.parse(`${r.month}-01T00:00:00Z`) / 1000), r.totalUsd] as [number, number]
 							)
 						}
 					])

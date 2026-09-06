@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { getTokensCacheControl } from '../cache.server'
 
 afterEach(() => {
@@ -6,7 +6,7 @@ afterEach(() => {
 })
 
 describe('tokens edge cache alignment', () => {
-	it('expires every token response at the same five-minute boundary without serving stale data', () => {
+	test('expires every token response at the same five-minute boundary without serving stale data', () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-07-15T10:02:30.000Z'))
 
@@ -14,7 +14,7 @@ describe('tokens edge cache alignment', () => {
 		expect(getTokensCacheControl(Date.now())).not.toContain('stale-while-revalidate')
 	})
 
-	it('does not cache a snapshot built in an earlier boundary window into the current one', () => {
+	test('does not cache a snapshot built in an earlier boundary window into the current one', () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-07-15T10:04:59.000Z'))
 		const previousWindowBuild = Date.now()

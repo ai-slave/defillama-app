@@ -4,7 +4,7 @@ import type { UtrGradeScaleEntry } from './types'
 
 function resolveGradeOrLabel(
 	score: number | null,
-	gradingScale: UtrGradeScaleEntry[] | null | undefined,
+	gradingScale: Array<UtrGradeScaleEntry> | null | undefined,
 	label?: string | null
 ) {
 	const grade = resolveUtrGradeOrLabel(score, gradingScale, label)
@@ -19,7 +19,7 @@ export function GradeBadge({
 }: {
 	score: number | null
 	scale?: UtrScoreScale
-	gradingScale?: UtrGradeScaleEntry[] | null
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 	grade?: string | null
 	className?: string
 }) {
@@ -41,7 +41,7 @@ export function GradeChip({
 }: {
 	score: number | null
 	scale?: UtrScoreScale
-	gradingScale?: UtrGradeScaleEntry[] | null
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 	grade?: string | null
 	className?: string
 }) {
@@ -66,7 +66,7 @@ export function ScoreBar({
 }: {
 	score: number | null
 	scale?: UtrScoreScale
-	gradingScale?: UtrGradeScaleEntry[] | null
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 	grade?: string | null
 	showValue?: boolean
 	className?: string

@@ -12,7 +12,7 @@ const ReadOnlySqlEditor = lazy(() =>
 	import('~/containers/Downloads/sql/Editor').then((module) => ({ default: module.Editor }))
 )
 
-const EMPTY_TABLES: RegisteredTable[] = []
+const EMPTY_TABLES: Array<RegisteredTable> = []
 const noop = () => undefined
 
 export function buildSqlStudioHref(config: SqlChartConfig): string {

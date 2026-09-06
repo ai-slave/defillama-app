@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { syncBuildArtifacts } from '../artifactSync'
 import type { BuildResult } from '../buildResult'
 import { createMemoryLogger } from '../logger'
@@ -21,7 +21,7 @@ const artifactSyncEnv = testEnv({
 })
 
 describe('artifact sync adapter', () => {
-	it('skips when requested by env', async () => {
+	test('skips when requested by env', async () => {
 		const runCommand = vi.fn()
 
 		const result = await syncBuildArtifacts({
@@ -35,7 +35,7 @@ describe('artifact sync adapter', () => {
 		expect(runCommand).not.toHaveBeenCalled()
 	})
 
-	it('skips when the artifact remote is not configured', async () => {
+	test('skips when the artifact remote is not configured', async () => {
 		const runCommand = vi.fn()
 
 		const result = await syncBuildArtifacts({
@@ -49,7 +49,7 @@ describe('artifact sync adapter', () => {
 		expect(runCommand).not.toHaveBeenCalled()
 	})
 
-	it('uploads static artifacts for successful builds', async () => {
+	test('uploads static artifacts for successful builds', async () => {
 		const runCommand = vi.fn().mockResolvedValue({ exitCode: 0, signal: null, stdoutTail: '' })
 
 		const result = await syncBuildArtifacts({
@@ -68,7 +68,7 @@ describe('artifact sync adapter', () => {
 		)
 	})
 
-	it('returns a failed result when rclone fails', async () => {
+	test('returns a failed result when rclone fails', async () => {
 		const failed = { exitCode: 1, signal: null, stdoutTail: 'nope' }
 		const runCommand = vi.fn().mockResolvedValue(failed)
 

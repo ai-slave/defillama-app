@@ -11,7 +11,7 @@ interface UpsellGateProps {
 	isTrial: boolean
 }
 
-const FEATURES: { icon: IIcon['name']; title: string; body: string }[] = [
+const FEATURES: Array<{ icon: IIcon['name']; title: string; body: string }> = [
 	{
 		icon: 'flame',
 		title: 'In-browser engine',
@@ -61,7 +61,7 @@ interface SampleRow {
 	short: string
 }
 
-const SAMPLE_ROWS: SampleRow[] = [
+const SAMPLE_ROWS: Array<SampleRow> = [
 	{ name: 'Uniswap V4', category: 'Dexs', fees_30d: 21_801_514, revenue_30d: 0, keep_ratio: 0, short: 'Uniswap V4' },
 	{
 		name: 'Ethena USDe',
@@ -120,7 +120,7 @@ interface AltRow {
 	dominance: number
 }
 
-const ALT_ROWS: AltRow[] = [
+const ALT_ROWS: Array<AltRow> = [
 	{ chain: 'Ethereum', tvl: 92_510_000_000, change_30d: 0.043, dominance: 0.611 },
 	{ chain: 'Solana', tvl: 18_240_000_000, change_30d: 0.082, dominance: 0.121 },
 	{ chain: 'BSC', tvl: 9_840_000_000, change_30d: -0.012, dominance: 0.065 },
@@ -136,7 +136,7 @@ interface TableCol<T> {
 	get: (row: T) => string | number
 }
 
-const SAMPLE_COLS: TableCol<SampleRow>[] = [
+const SAMPLE_COLS: Array<TableCol<SampleRow>> = [
 	{ name: 'name', kind: 'text', type: 'VARCHAR', width: 192, get: (r) => r.name },
 	{ name: 'category', kind: 'text', type: 'VARCHAR', width: 188, get: (r) => r.category },
 	{ name: 'fees_30d', kind: 'float', type: 'BIGINT', width: 132, get: (r) => r.fees_30d },
@@ -144,7 +144,7 @@ const SAMPLE_COLS: TableCol<SampleRow>[] = [
 	{ name: 'keep_ratio', kind: 'float', type: 'DOUBLE', width: 116, get: (r) => r.keep_ratio }
 ]
 
-const ALT_COLS: TableCol<AltRow>[] = [
+const ALT_COLS: Array<TableCol<AltRow>> = [
 	{ name: 'chain', kind: 'text', type: 'VARCHAR', width: 152, get: (r) => r.chain },
 	{ name: 'tvl', kind: 'float', type: 'BIGINT', width: 152, get: (r) => r.tvl },
 	{ name: 'change_30d', kind: 'float', type: 'DOUBLE', width: 142, get: (r) => r.change_30d },
@@ -160,7 +160,7 @@ interface TabDef {
 	dirty?: boolean
 }
 
-const TABS: TabDef[] = [
+const TABS: Array<TabDef> = [
 	{ key: 'notebook', label: 'revenue-capture.nb', kind: 'notebook' },
 	{ key: 'sql', label: 'fees-vs-revenue.sql', kind: 'sql' },
 	{ key: 'alt', label: 'chains-tvl.sql', kind: 'sql', dirty: true }
@@ -732,7 +732,7 @@ function AltQueryBody() {
 	)
 }
 
-function GridTable<T>({ rows, cols }: { rows: T[]; cols: TableCol<T>[] }) {
+function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>> }) {
 	const gridTemplate = cols.map((c) => `${c.width}px`).join(' ')
 	const totalWidth = cols.reduce((sum, c) => sum + c.width, 0)
 	return (
@@ -881,7 +881,7 @@ function formatCellValue(value: string | number): string {
 }
 
 function formatCompactUsd(n: number): string {
-	const fractionDigits = Math.abs(n) >= 1_000_000_000 ? 2 : Math.abs(n) >= 1_000 ? 1 : undefined
+	const fractionDigits = Math.abs(n) >= 1_000_000_000 ? 2 : Math.abs(n) >= 1000 ? 1 : undefined
 	return formatUsd(n, {
 		compact: true,
 		minimumFractionDigits: fractionDigits,
@@ -897,12 +897,12 @@ function formatTick(t: number): string {
 function niceCeiling(value: number): number {
 	if (value <= 0) return 1
 	const exponent = Math.floor(Math.log10(value))
-	const fraction = value / Math.pow(10, exponent)
+	const fraction = value / 10 ** exponent
 	let niceFraction: number
 	if (fraction <= 1) niceFraction = 1
 	else if (fraction <= 2) niceFraction = 2
 	else if (fraction <= 2.5) niceFraction = 2.5
 	else if (fraction <= 5) niceFraction = 5
 	else niceFraction = 10
-	return niceFraction * Math.pow(10, exponent)
+	return niceFraction * 10 ** exponent
 }

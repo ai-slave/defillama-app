@@ -4,7 +4,7 @@ import { Icon } from '~/ui/Icon'
 
 interface Props {
 	suggestedName: string
-	existingNames: string[]
+	existingNames: Array<string>
 	onSave: (name: string, replaceExisting: boolean) => void
 	onClose: () => void
 	title?: string

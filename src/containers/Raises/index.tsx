@@ -15,11 +15,11 @@ const MultiSeriesChart = React.lazy(
 ) as React.FC<IMultiSeriesChartProps>
 
 interface RaisesContainerProps {
-	raises: Raise[]
-	investors: string[]
-	rounds: string[]
-	sectors: string[]
-	chains: string[]
+	raises: Array<Raise>
+	investors: Array<string>
+	rounds: Array<string>
+	sectors: Array<string>
+	chains: Array<string>
 	investorName: string | null
 }
 

@@ -29,7 +29,7 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 
 type ChartConfigWithUndefinedColor = Omit<MultiSeriesChartSeriesConfig, 'color'> & { color?: string | undefined }
 
-const normalizeChartColors = (charts: ChartConfigWithUndefinedColor[]): MultiSeriesChartSeriesConfig[] =>
+const normalizeChartColors = (charts: Array<ChartConfigWithUndefinedColor>): Array<MultiSeriesChartSeriesConfig> =>
 	charts.map(({ color, ...chart }) => ({ ...chart, ...(color ? { color } : {}) }))
 
 const SUPPLY_APY_CHARTS = normalizeChartColors(supplyApyCharts)
@@ -99,7 +99,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 			return new Date(timestamp).toISOString().slice(0, 10)
 		}
 
-		let headers: string[]
+		let headers: Array<string>
 		let rows: Array<Array<string | number>>
 
 		switch (chartType) {

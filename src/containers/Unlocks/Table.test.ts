@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { EmissionEvent } from './api.types'
 import { filterUnlockTableProtocols, type IEmission, parseUnlockFilterValue } from './Table'
 
@@ -101,8 +101,8 @@ const options = (overrides: Partial<Parameters<typeof filterUnlockTableProtocols
 })
 
 describe('unlock table construction behavior fixture', () => {
-	it('returns the input array and rows when no filter is active', () => {
-		const alpha = protocol('Alpha', 2, 1_000, [cliff('Team', 'insiders', 1, 10)])
+	test('returns the input array and rows when no filter is active', () => {
+		const alpha = protocol('Alpha', 2, 1000, [cliff('Team', 'insiders', 1, 10)])
 		const protocols = [alpha]
 		const result = filterUnlockTableProtocols(protocols, options())
 
@@ -110,8 +110,8 @@ describe('unlock table construction behavior fixture', () => {
 		expect(result[0]).toBe(alpha)
 	})
 
-	it('retains row identity for watchlist-only and value-only filters', () => {
-		const alpha = protocol('Alpha', 2, 1_000, [cliff('Team', 'insiders', 1, 10)])
+	test('retains row identity for watchlist-only and value-only filters', () => {
+		const alpha = protocol('Alpha', 2, 1000, [cliff('Team', 'insiders', 1, 10)])
 		const beta = protocol('Beta', 1, 100, [cliff('Sale', 'privateSale', 2, 5)])
 
 		const watchlist = filterUnlockTableProtocols(
@@ -127,7 +127,7 @@ describe('unlock table construction behavior fixture', () => {
 		expect(value[1]).toBe(beta)
 	})
 
-	it('retains identity when every event survives and clones only a partially filtered row', () => {
+	test('retains identity when every event survives and clones only a partially filtered row', () => {
 		const alphaEvents: IEmission['upcomingEvent'] = [
 			cliff('Team', 'insiders', 1, 10),
 			cliff('Advisors', 'insiders', 2, 5)
@@ -136,7 +136,7 @@ describe('unlock table construction behavior fixture', () => {
 			cliff('Sale', 'privateSale', 3, 20),
 			cliff('Farm', 'farming', 4, 30)
 		]
-		const alpha = protocol('Alpha', 2, 1_000, alphaEvents)
+		const alpha = protocol('Alpha', 2, 1000, alphaEvents)
 		const beta = protocol('Beta', 1, 100, betaEvents)
 		const input = [alpha, beta]
 
@@ -149,7 +149,7 @@ describe('unlock table construction behavior fixture', () => {
 		expect(beta.upcomingEvent).toBe(betaEvents)
 	})
 
-	it('combines filters using the integrated next-24h value', () => {
+	test('combines filters using the integrated next-24h value', () => {
 		const alphaEvents: IEmission['upcomingEvent'] = [
 			linear('Team', 'insiders', 1, 10, 15),
 			cliff('Farm', 'farming', 2, 100)
@@ -158,9 +158,9 @@ describe('unlock table construction behavior fixture', () => {
 			cliff('Advisors', 'insiders', 5, 15),
 			cliff('Public', 'publicSale', 6, 10)
 		]
-		const alpha = protocol('Alpha', 2, 1_000, alphaEvents)
+		const alpha = protocol('Alpha', 2, 1000, alphaEvents)
 		const beta = protocol('Beta', 1, 100, [cliff('Sale', 'privateSale', 3, 50)])
-		const gamma = protocol('Gamma', 2, 1_000, gammaEvents)
+		const gamma = protocol('Gamma', 2, 1000, gammaEvents)
 		const inputSnapshot = structuredClone([alpha, beta, gamma])
 
 		const result = filterUnlockTableProtocols(
@@ -181,8 +181,8 @@ describe('unlock table construction behavior fixture', () => {
 		expect([alpha, beta, gamma]).toEqual(inputSnapshot)
 	})
 
-	it('keeps inclusive value and percentage boundaries', () => {
-		const exact = protocol('Exact', 2, 1_000, [cliff('Exact', 'insiders', 1, 10)])
+	test('keeps inclusive value and percentage boundaries', () => {
+		const exact = protocol('Exact', 2, 1000, [cliff('Exact', 'insiders', 1, 10)])
 
 		const result = filterUnlockTableProtocols(
 			[exact],
@@ -193,7 +193,7 @@ describe('unlock table construction behavior fixture', () => {
 		expect(result[0]).toBe(exact)
 	})
 
-	it('filters on known values while excluding rows without required market data', () => {
+	test('filters on known values while excluding rows without required market data', () => {
 		const ignoredEvents: IEmission['upcomingEvent'] = [
 			unknown('Unknown amount', 'insiders', 1),
 			cliff('Known zero', 'insiders', 2, 0),
@@ -217,7 +217,7 @@ describe('unlock table construction behavior fixture', () => {
 		).toEqual([knownSubtotalZero, knownZero])
 	})
 
-	it('normalizes malformed and non-finite numeric query values once', () => {
+	test('normalizes malformed and non-finite numeric query values once', () => {
 		expect(parseUnlockFilterValue(undefined)).toBe('')
 		expect(parseUnlockFilterValue(['1'])).toBe('')
 		expect(parseUnlockFilterValue('')).toBe('')

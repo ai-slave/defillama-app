@@ -27,7 +27,7 @@ export type HomepageUnlockChartEntry = {
 }
 
 export type HomepageUnlockSummary = {
-	chart: HomepageUnlockChartEntry[]
+	chart: Array<HomepageUnlockChartEntry>
 	total14d: number
 	cliff14d: number | null
 	linear14d: number | null
@@ -109,7 +109,7 @@ export interface IChainOverviewData {
 	allChains: Array<{ label: string; to: string }>
 	unlocks: HomepageUnlockSummary | null
 	tvlOptions: Array<{ name: string; key: string }>
-	charts: ChainChartLabels[]
+	charts: Array<ChainChartLabels>
 	description: string
 	isDataAvailable: boolean
 	datInflows: {
@@ -119,9 +119,9 @@ export interface IChainOverviewData {
 	chainStablecoins: Array<{ name: string; url: string; symbol: string | null }> | null
 	website: string | null
 	warningBanners?: Array<IChainWarningBanner>
-	entityQuestions?: string[]
+	entityQuestions?: Array<string>
 	customServerData?: Record<string, unknown>
-	sponsoredResearchReports?: SponsoredResearchReportSummary[]
+	sponsoredResearchReports?: Array<SponsoredResearchReportSummary>
 	researchSponsorEntitySlug?: string
 }
 

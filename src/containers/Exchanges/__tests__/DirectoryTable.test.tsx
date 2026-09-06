@@ -1,6 +1,6 @@
 import { createTable, flexRender, getCoreRowModel } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildDirectoryColumns } from '../directoryColumns'
 import type { ExchangeDirectoryRowModel, ExchangeSegmentActivity } from '../models'
 
@@ -74,7 +74,7 @@ function directoryCell(scope: 'spot' | 'linear_perp' | 'inverse_perp', venue: Ex
 }
 
 describe('exact segment scopes in directory columns', () => {
-	it('hides execution columns only when the execution source is unavailable', () => {
+	test('hides execution columns only when the execution source is unavailable', () => {
 		const availableIds = buildDirectoryColumns('linear_perp', true).map((column) => column.id)
 		const unavailableIds = buildDirectoryColumns('linear_perp', false).map((column) => column.id)
 
@@ -82,14 +82,14 @@ describe('exact segment scopes in directory columns', () => {
 		expect(unavailableIds).not.toEqual(expect.arrayContaining(['execCostToTrade', 'execSlippage10k', 'execMarkout1m']))
 	})
 
-	it('keeps an unmeasured venue in the available execution population', () => {
+	test('keeps an unmeasured venue in the available execution population', () => {
 		const column = buildDirectoryColumns('linear_perp', true).find((item) => item.id === 'execCostToTrade')
 		if (!column) throw new Error('Expected execution column')
 
 		expect(column.meta?.csvValue?.(row())).toBe('')
 	})
 
-	it('keeps selected-country status out of the exchange name cell', () => {
+	test('keeps selected-country status out of the exchange name cell', () => {
 		const venue = row({ selectedCountry: 'DE', selectedCountryStatus: 'restricted' })
 		const cell = directoryCell('spot', venue, 'name')
 		const html = renderToStaticMarkup(flexRender(cell.column.columnDef.cell, cell.getContext()))
@@ -98,7 +98,7 @@ describe('exact segment scopes in directory columns', () => {
 		expect(html).not.toContain('Restricted')
 	})
 
-	it('never renders a summed perp figure for a venue with both perpetual classes', () => {
+	test('never renders a summed perp figure for a venue with both perpetual classes', () => {
 		const venue = row({
 			segments: {
 				linear_perp: activity({ volume24h: 600 }),

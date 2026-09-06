@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { DIRECT_AUTH_SECRET_ENV_NAMES, DIRECT_URL_ENV_NAMES } from '../directApi'
 
 async function importHttpClientWithEnv(env: Record<string, string | undefined>) {
@@ -40,7 +40,7 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('appends the core backend secret to configured direct core API requests', async () => {
+	test('appends the core backend secret to configured direct core API requests', async () => {
 		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
 			API2_SECRET_KEY: 'core-secret',
 			SERVER_URL: 'https://core.example.com/api/'
@@ -58,7 +58,7 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 		expect(v2Url.searchParams.get('x-llama-pro-key')).toBe('core-secret')
 	})
 
-	it('appends the core backend secret to URL object direct API requests', async () => {
+	test('appends the core backend secret to URL object direct API requests', async () => {
 		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
 			API2_SECRET_KEY: 'core-secret',
 			SERVER_URL: 'https://core.example.com/api'
@@ -71,7 +71,7 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 		expect(url.searchParams.get('x-llama-pro-key')).toBe('core-secret')
 	})
 
-	it('appends direct auth for explicit V2, equities, and liquidations URL overrides', async () => {
+	test('appends direct auth for explicit V2, equities, and liquidations URL overrides', async () => {
 		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
 			API2_SECRET_KEY: 'core-secret',
 			EQUITIES_SECRET_KEY: 'equities-secret',
@@ -90,7 +90,7 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 		expect(fetchedUrl(fetchMock, 2).searchParams.get('x-llama-secret')).toBe('liquidations-secret')
 	})
 
-	it('uses the most specific direct auth match for same-origin service URLs', async () => {
+	test('uses the most specific direct auth match for same-origin service URLs', async () => {
 		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
 			API2_SECRET_KEY: 'core-secret',
 			EQUITIES_SECRET_KEY: 'equities-secret',
@@ -105,7 +105,7 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 		expect(url.searchParams.get('x-llama-pro-key')).toBeNull()
 	})
 
-	it('does not append direct auth for pro fallback or unrelated direct server URLs', async () => {
+	test('does not append direct auth for pro fallback or unrelated direct server URLs', async () => {
 		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
 			API2_SECRET_KEY: 'core-secret',
 			DATASETS_SERVER_URL: 'https://datasets.example.com'
@@ -118,7 +118,7 @@ describe('fetchWithPoolingOnServer direct API auth', () => {
 		expect(fetchedUrl(fetchMock, 1).searchParams.get('x-llama-pro-key')).toBeNull()
 	})
 
-	it('does not append direct auth without a backend secret', async () => {
+	test('does not append direct auth without a backend secret', async () => {
 		const { fetchMock, fetchWithPoolingOnServer } = await importHttpClientWithEnv({
 			SERVER_URL: 'https://core.example.com/api'
 		})

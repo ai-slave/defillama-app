@@ -6,7 +6,7 @@ export const DEFAULT_DEX_SPOT_SHARE_GROUPING: ChartTimeGrouping = 'monthly'
 
 export interface CexSpotVolumeSeries {
 	/** UTC day timestamps in seconds, aligned to `values`. */
-	days: number[]
+	days: Array<number>
 	values: Array<number | null>
 }
 

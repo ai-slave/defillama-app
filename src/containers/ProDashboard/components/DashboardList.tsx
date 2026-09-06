@@ -4,7 +4,7 @@ import { DashboardCard } from './DashboardCard'
 import { LoadingSpinner } from './LoadingSpinner'
 
 interface DashboardListProps {
-	dashboards: Dashboard[]
+	dashboards: Array<Dashboard>
 	isLoading: boolean
 	onCreateNew: () => void
 	onDeleteDashboard?: (dashboardId: string) => void

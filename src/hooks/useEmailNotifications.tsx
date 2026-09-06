@@ -19,8 +19,8 @@ export type MetricType =
 	| 'price'
 
 export interface NotificationSettings {
-	chains?: Record<string, MetricType[]>
-	protocols?: Record<string, MetricType[]>
+	chains?: Record<string, Array<MetricType>>
+	protocols?: Record<string, Array<MetricType>>
 }
 
 interface NotificationPreference {

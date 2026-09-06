@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildProtocolYAxis } from './chartYAxis'
 
 describe('protocol chart y-axis layout', () => {
-	it('keeps per-metric formatters, colors, and spacing across three axes', () => {
+	test('keeps per-metric formatters, colors, and spacing across three axes', () => {
 		const axes = buildProtocolYAxis({
 			allYAxis: [
 				['TVL', undefined],

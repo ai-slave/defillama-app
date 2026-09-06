@@ -20,8 +20,8 @@ export function useProtocolBreakdownPresentation({
 	selectionKey = 'default'
 }: {
 	breakdown: ProtocolBreakdownChart
-	availableSeries: string[]
-	defaultSeries?: string[]
+	availableSeries: Array<string>
+	defaultSeries?: Array<string>
 	aggregateOthers: boolean
 	type: 'line' | 'bar'
 	stack?: string

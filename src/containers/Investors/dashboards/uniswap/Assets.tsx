@@ -43,7 +43,7 @@ interface RwaData {
 	bySector: Chart
 	byChain: Chart
 	share: Chart | null
-	topTokens: { title?: string; rows: RwaRow[] }
+	topTokens: { title?: string; rows: Array<RwaRow> }
 }
 
 // All served by the ir-server: token breadth and categories from Dune dex.trades (with
@@ -61,7 +61,7 @@ interface AssetsData {
 	cca: {
 		kpis: Record<string, KpiT | undefined>
 		raisedChart: Chart
-		auctions: { title?: string; note?: string; rows: AuctionRow[] }
+		auctions: { title?: string; note?: string; rows: Array<AuctionRow> }
 	}
 }
 

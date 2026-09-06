@@ -7,7 +7,7 @@ export interface PricePoint {
 	price: number
 }
 
-export const usePriceCharts = (geckoIds: string[]) => {
+export const usePriceCharts = (geckoIds: Array<string>) => {
 	const data = useQueries({
 		queries: geckoIds.map((id) => ({
 			queryKey: ['price_chart', id],
@@ -21,8 +21,8 @@ export const usePriceCharts = (geckoIds: string[]) => {
 	return {
 		data: Object.fromEntries(
 			data.map((res, i) => {
-				const points: PricePoint[] =
-					res.data?.data?.prices?.reduce<PricePoint[]>((acc, point) => {
+				const points: Array<PricePoint> =
+					res.data?.data?.prices?.reduce<Array<PricePoint>>((acc, point) => {
 						const [timestamp, price] = point
 						if (Number.isFinite(timestamp) && Number.isFinite(price)) {
 							acc.push({ timestamp, price })

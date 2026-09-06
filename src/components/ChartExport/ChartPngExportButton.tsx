@@ -49,8 +49,8 @@ export type PngExportProfile = 'default' | 'scatterWithImageSymbols' | 'treemap'
 const IMAGE_EXPORT_HEIGHT = 720
 const TREEMAP_EXPORT_SIDE_PADDING = 16
 const TREEMAP_EXPORT_BOTTOM_PADDING = 16
-const TREEMAP_EXPORT_LABEL_Z = 10000
-const EXPORT_TITLE_Z = 10002
+const TREEMAP_EXPORT_LABEL_Z = 10_000
+const EXPORT_TITLE_Z = 10_002
 
 type TreemapLabelOption = NonNullable<TreemapSeriesOption['label']>
 type TreemapSeriesLevelOption = NonNullable<TreemapSeriesOption['levels']>[number]
@@ -74,7 +74,7 @@ const parsePixelValue = (value: unknown) => {
 	return null
 }
 
-function getSeriesOptions(options: EChartsOption): SeriesOption[] {
+function getSeriesOptions(options: EChartsOption): Array<SeriesOption> {
 	if (!options.series) return []
 	return Array.isArray(options.series) ? options.series : [options.series]
 }
@@ -88,8 +88,8 @@ export type TreemapViewportExportState =
 	| {
 			actionType: 'treemapZoomToNode' | 'treemapRootToNode'
 			targetNodeId?: string
-			targetNodePath?: string[]
-			targetNodeIndexPath?: number[]
+			targetNodePath?: Array<string>
+			targetNodeIndexPath?: Array<number>
 	  }
 	| { rootRect: Rect; sourceLayout: { width: number; height: number } }
 
@@ -146,10 +146,10 @@ export function sanitizeRichImagesForExport(rich: any) {
 }
 
 function applyTreemapDataExportLabels(
-	data: TreemapDataItem[],
+	data: Array<TreemapDataItem>,
 	label: TreemapExportLabelOption,
 	upperLabel: TreemapExportLabelOption
-): TreemapDataItem[] {
+): Array<TreemapDataItem> {
 	return data.map((item) => {
 		const itemLabel = item.label ?? {}
 		const itemUpperLabel = item.upperLabel ?? {}
@@ -179,8 +179,8 @@ function stripRichText(value: string): string {
 }
 
 function findTreemapDataNodeByPath(
-	data: TreemapDataItem[],
-	path: string[],
+	data: Array<TreemapDataItem>,
+	path: Array<string>,
 	seriesName: TreemapSeriesOption['name']
 ): TreemapDataItem | null {
 	if (path.length === 0) return null
@@ -205,7 +205,10 @@ function findTreemapDataNodeByPath(
 	return match
 }
 
-function findTreemapDataNodeByIndexPath(data: TreemapDataItem[], indexPath: number[]): TreemapDataItem | null {
+function findTreemapDataNodeByIndexPath(
+	data: Array<TreemapDataItem>,
+	indexPath: Array<number>
+): TreemapDataItem | null {
 	let nodes = data
 	let match: TreemapDataItem | null = null
 	for (const index of indexPath) {
@@ -235,10 +238,10 @@ export function getTreemapTargetDataRoot(series: TreemapSeriesOption, state: Tre
 	}
 }
 
-function getTreemapNodePath(node: any): string[] {
+function getTreemapNodePath(node: any): Array<string> {
 	const ancestors = node?.getAncestors?.(true)
 	if (!Array.isArray(ancestors)) return []
-	const path: string[] = []
+	const path: Array<string> = []
 	for (const ancestor of ancestors) {
 		const name = ancestor?.name
 		if (typeof name === 'string' && name) path.push(name)
@@ -246,10 +249,10 @@ function getTreemapNodePath(node: any): string[] {
 	return path
 }
 
-function getTreemapNodeIndexPath(node: any): number[] {
+function getTreemapNodeIndexPath(node: any): Array<number> {
 	const ancestors = node?.getAncestors?.(true)
 	if (!Array.isArray(ancestors)) return []
-	const indexPath: number[] = []
+	const indexPath: Array<number> = []
 	for (let index = 1; index < ancestors.length; index++) {
 		const childIndex = ancestors[index]?.getChildIndex?.()
 		if (typeof childIndex !== 'number' || childIndex < 0) return []
@@ -441,18 +444,18 @@ export function applyTreemapViewportExportState(chart: echarts.ECharts, state: T
 	return true
 }
 
-function getGraphicArray(graphic: any): any[] {
+function getGraphicArray(graphic: any): Array<any> {
 	if (!graphic) return []
 	return Array.isArray(graphic) ? graphic : [graphic]
 }
 
-function buildTreemapExportLabelGraphics(chart: echarts.ECharts, isDark: boolean): any[] {
+function buildTreemapExportLabelGraphics(chart: echarts.ECharts, isDark: boolean): Array<any> {
 	const seriesModel = getTreemapSeriesModel(chart)
 	const viewRoot = seriesModel?.getViewRoot?.()
 	const layoutInfo = seriesModel?.layoutInfo
 	if (!seriesModel || !viewRoot || !layoutInfo) return []
 
-	const graphics: any[] = []
+	const graphics: Array<any> = []
 	const baseX = Number(layoutInfo.x ?? 0)
 	const baseY = Number(layoutInfo.y ?? 0)
 	const labelFill = '#fff'
@@ -540,7 +543,7 @@ function buildTreemapExportLabelGraphics(chart: echarts.ECharts, isDark: boolean
  */
 async function getChartPngDataURL(
 	chart: echarts.ECharts,
-	opts: { pixelRatio?: number; backgroundColor?: string; excludeComponents?: string[] }
+	opts: { pixelRatio?: number; backgroundColor?: string; excludeComponents?: Array<string> }
 ): Promise<string> {
 	const { pixelRatio = 2, backgroundColor = '#ffffff', excludeComponents } = opts
 
@@ -634,10 +637,10 @@ function truncateToWidth(ctx: CanvasRenderingContext2D, text: string, maxWidth: 
 	let hi = text.length
 	while (lo < hi) {
 		const mid = (lo + hi + 1) >> 1
-		if (ctx.measureText(text.slice(0, mid) + '…').width <= maxWidth) lo = mid
+		if (ctx.measureText(`${text.slice(0, mid)}…`).width <= maxWidth) lo = mid
 		else hi = mid - 1
 	}
-	return lo > 0 ? text.slice(0, lo) + '…' : text
+	return lo > 0 ? `${text.slice(0, lo)}…` : text
 }
 
 async function composeLogoOverlay(opts: {
@@ -793,7 +796,7 @@ async function composeTreemapExportFrame(opts: {
 	return canvas.toDataURL('image/png')
 }
 
-function computeHBarLeftGridForExport(categories: string[]): number {
+function computeHBarLeftGridForExport(categories: Array<string>): number {
 	const c = document.createElement('canvas').getContext('2d')
 	if (!c) return EXPORT_HBAR_LEFT_PAD + EXPORT_HBAR_LOGO_SIZE + EXPORT_HBAR_LOGO_GAP + EXPORT_HBAR_LABEL_MAX_WIDTH + 16
 	c.font = EXPORT_HBAR_LABEL_FONT
@@ -853,7 +856,7 @@ async function loadCircularIcon(url: string): Promise<string | null> {
 
 // --- Axis scaling for export ---
 
-export function scaleXAxisForExport(xAxis: XAXisComponentOption[]): XAXisComponentOption[] {
+export function scaleXAxisForExport(xAxis: Array<XAXisComponentOption>): Array<XAXisComponentOption> {
 	return xAxis.map((axis) => {
 		const sourceLabel = axis.axisLabel ?? {}
 		// A crowded category axis rotates its labels and forces every one on (interval:0). Keep them
@@ -861,7 +864,7 @@ export function scaleXAxisForExport(xAxis: XAXisComponentOption[]): XAXisCompone
 		// labels the rotation was added to save.
 		const isRotated = typeof sourceLabel.rotate === 'number' && sourceLabel.rotate !== 0
 		const scaled = mergeDeep(axis, {
-			nameTextStyle: { ...(axis.nameTextStyle ?? {}), fontSize: EXPORT_FONT_SIZE },
+			nameTextStyle: { ...axis.nameTextStyle, fontSize: EXPORT_FONT_SIZE },
 			axisLabel: {
 				...sourceLabel,
 				fontSize: EXPORT_FONT_SIZE,
@@ -877,9 +880,9 @@ export function scaleXAxisForExport(xAxis: XAXisComponentOption[]): XAXisCompone
 }
 
 export function scaleYAxisForExport(
-	yAxis: YAXisComponentOption[],
+	yAxis: Array<YAXisComponentOption>,
 	isHorizontalBarChart: boolean
-): YAXisComponentOption[] {
+): Array<YAXisComponentOption> {
 	return yAxis.map((axis) => {
 		const sourceAxisLabel = axis.axisLabel ?? {}
 		// The on-screen axisLabel.width is a truncation cap sized for the on-screen font. Export doubles the
@@ -892,7 +895,7 @@ export function scaleYAxisForExport(
 				? Math.round((sourceAxisLabel.width * EXPORT_FONT_SIZE) / sourceLabelFontSize)
 				: sourceAxisLabel.width
 		const scaled = mergeDeep(axis, {
-			nameTextStyle: { ...(axis.nameTextStyle ?? {}), fontSize: EXPORT_FONT_SIZE },
+			nameTextStyle: { ...axis.nameTextStyle, fontSize: EXPORT_FONT_SIZE },
 			axisLabel: {
 				...sourceAxisLabel,
 				fontSize: EXPORT_FONT_SIZE,
@@ -901,8 +904,8 @@ export function scaleYAxisForExport(
 				...(scaledLabelWidth != null ? { width: scaledLabelWidth } : {})
 			},
 			axisLine: {
-				...(axis.axisLine ?? {}),
-				lineStyle: { ...(axis.axisLine?.lineStyle ?? {}), width: 2 }
+				...axis.axisLine,
+				lineStyle: { ...axis.axisLine?.lineStyle, width: 2 }
 			}
 		})
 		if (axis.offset) {
@@ -914,7 +917,7 @@ export function scaleYAxisForExport(
 		if (isHorizontalBarChart && axis.type === 'category') {
 			scaled.boundaryGap = true
 			// getOption() includes the live hover status; the export clone should not keep that shadow.
-			scaled.axisPointer = { ...(scaled.axisPointer ?? {}), status: 'hide' }
+			scaled.axisPointer = { ...scaled.axisPointer, status: 'hide' }
 		}
 		return scaled
 	})
@@ -922,7 +925,7 @@ export function scaleYAxisForExport(
 
 // --- Graphic (watermark) scaling for export ---
 
-function scaleGraphicForExport(graphic: any[]): any[] {
+function scaleGraphicForExport(graphic: Array<any>): Array<any> {
 	return graphic.map((g) => {
 		if (!g.elements) return g
 		return {
@@ -944,7 +947,7 @@ function scaleGraphicForExport(graphic: any[]): any[] {
 
 // --- Legend item collection ---
 
-function collectLegendItems(options: EChartsOption, isPieChart: boolean): string[] {
+function collectLegendItems(options: EChartsOption, isPieChart: boolean): Array<string> {
 	const legendConfig = options.legend
 	const legendArray = Array.isArray(legendConfig) ? legendConfig : legendConfig ? [legendConfig] : []
 
@@ -952,7 +955,7 @@ function collectLegendItems(options: EChartsOption, isPieChart: boolean): string
 		return legendArray[0].data.filter((item): item is string => typeof item === 'string')
 	}
 	if (isPieChart) {
-		const items: string[] = []
+		const items: Array<string> = []
 		for (const s of getSeriesOptions(options)) {
 			if (s?.type !== 'pie' || !Array.isArray(s.data)) continue
 			for (const item of s.data) {
@@ -989,7 +992,7 @@ export function buildPieExportLegendOption(
 ): LegendComponentOption {
 	const sourceWidth = parsePixelValue(sourceLegend?.width)
 	return {
-		...(sourceLegend ?? {}),
+		...sourceLegend,
 		show: true,
 		type: 'scroll',
 		orient: 'vertical',
@@ -997,7 +1000,7 @@ export function buildPieExportLegendOption(
 		right: 16,
 		...(sourceWidth != null ? { width: sourceWidth * 2 } : {}),
 		textStyle: {
-			...(sourceLegend?.textStyle ?? {}),
+			...sourceLegend?.textStyle,
 			fontSize: EXPORT_FONT_SIZE,
 			color: getChartTheme(isDark).text
 		},
@@ -1012,7 +1015,7 @@ export function buildPieExportLegendOption(
 // --- Series adjustments for export ---
 
 function adjustSeriesForExport(opts: {
-	series: SeriesOption[]
+	series: Array<SeriesOption>
 	flags: SeriesFlags
 	layout: ExportLayout
 	isDark: boolean
@@ -1020,7 +1023,7 @@ function adjustSeriesForExport(opts: {
 	expandLegend: boolean | undefined
 	exportHeight?: number
 	treemapViewportState?: TreemapViewportExportState | null
-}): SeriesOption[] {
+}): Array<SeriesOption> {
 	const { flags, layout, isDark, title, expandLegend, exportHeight, treemapViewportState } = opts
 	let series = [...opts.series]
 
@@ -1094,7 +1097,7 @@ function adjustSeriesForExport(opts: {
 				...s,
 				top: title ? 60 : 30,
 				label: {
-					...(s.label ?? {}),
+					...s.label,
 					fontSize: 18,
 					rich: {
 						name: {
@@ -1138,9 +1141,7 @@ function adjustSeriesForExport(opts: {
 			if (s?.type !== 'pie') return s
 			const existingLabelLayout = s.labelLayout
 			const nextLabelLayout =
-				typeof existingLabelLayout === 'function'
-					? existingLabelLayout
-					: { ...(existingLabelLayout ?? {}), hideOverlap: true }
+				typeof existingLabelLayout === 'function' ? existingLabelLayout : { ...existingLabelLayout, hideOverlap: true }
 			const left = parsePixelValue(s.left) ?? 0
 			const right = parsePixelValue(s.right) ?? 0
 			const drawableWidth = Math.max(1, IMAGE_EXPORT_WIDTH - left - right)
@@ -1151,8 +1152,8 @@ function adjustSeriesForExport(opts: {
 				center: [nextCenterX, nextCenterY],
 				avoidLabelOverlap: true,
 				labelLayout: nextLabelLayout,
-				label: { ...(s.label ?? {}), show: false },
-				labelLine: { ...(s.labelLine ?? {}), show: false }
+				label: { ...s.label, show: false },
+				labelLine: { ...s.labelLine, show: false }
 			}
 			return next
 		})
@@ -1191,7 +1192,7 @@ function adjustSeriesForExport(opts: {
 						color: 'rgba(255,255,255,0.85)',
 						lineHeight: 18
 					},
-					...(sourceLabel.rich ?? {})
+					...sourceLabel.rich
 				}
 			}
 			const sourceUpperLabel = s.upperLabel ?? {}
@@ -1213,7 +1214,7 @@ function adjustSeriesForExport(opts: {
 				left: TREEMAP_EXPORT_SIDE_PADDING,
 				right: TREEMAP_EXPORT_SIDE_PADDING,
 				bottom: TREEMAP_EXPORT_BOTTOM_PADDING,
-				breadcrumb: { ...(s?.breadcrumb ?? {}), show: false },
+				breadcrumb: { ...s?.breadcrumb, show: false },
 				label: exportLabel,
 				upperLabel: exportUpperLabel
 			}
@@ -1363,7 +1364,7 @@ async function renderClonedChartExport(
 
 		// Treemap labels rely on local rich-text sizing; a global boost makes them too large.
 		if (!flags.isTreemapChart) {
-			currentOptions.textStyle = { ...(currentOptions.textStyle ?? {}), fontSize: EXPORT_FONT_SIZE }
+			currentOptions.textStyle = { ...currentOptions.textStyle, fontSize: EXPORT_FONT_SIZE }
 		}
 
 		if (currentOptions.xAxis) {
@@ -1378,7 +1379,7 @@ async function renderClonedChartExport(
 			)
 		}
 		if (currentOptions.graphic) {
-			currentOptions.graphic = scaleGraphicForExport(currentOptions.graphic as any[])
+			currentOptions.graphic = scaleGraphicForExport(currentOptions.graphic as Array<any>)
 		}
 
 		const legendItems = collectLegendItems(currentOptions, flags.isPieChart)

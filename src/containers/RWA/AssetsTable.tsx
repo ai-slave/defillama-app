@@ -126,7 +126,7 @@ export function RWAAssetsTable({
 	const bridgeSuffix = includeBridgeTvl ? '' : '-without-bridge-tvl'
 	const csvFilename = `rwa-assets${chainSuffix}${bridgeSuffix}`
 
-	const setColumnOptions = (newOptions: string[] | ((prev: string[]) => string[])) => {
+	const setColumnOptions = (newOptions: Array<string> | ((prev: Array<string>) => Array<string>)) => {
 		const resolvedOptions = Array.isArray(newOptions) ? newOptions : newOptions(selectedColumns)
 		const ops = Object.fromEntries(
 			instance
@@ -155,7 +155,7 @@ export function RWAAssetsTable({
 						selectedValues={selectedColumns}
 						setSelectedValues={setColumnOptions}
 						nestedMenu={false}
-						label={'Columns'}
+						label="Columns"
 						labelType="smol"
 						variant="filter-responsive"
 						size="md"
@@ -185,7 +185,7 @@ type AssetTableRow = AssetRow & {
 export function createAssetTableRows(
 	assets: IRWAAssetsOverview['assets'],
 	flowSummary: IRWAFlowSummaryResponse | undefined
-): AssetTableRow[] {
+): Array<AssetTableRow> {
 	return assets.map((asset): AssetTableRow => {
 		const flowSummaries: AssetTableRow['flowSummaries'] = {}
 		if (asset.kind === 'spot' && flowSummary) {
@@ -847,7 +847,7 @@ function getAssetSecondaryLabel(asset: AssetRow): string {
 	}
 }
 
-function getAssetCategoryLabels(asset: AssetRow): string[] {
+function getAssetCategoryLabels(asset: AssetRow): Array<string> {
 	if (asset.category && asset.category.length > 0) {
 		return asset.category
 	}

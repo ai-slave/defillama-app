@@ -3,12 +3,12 @@ import * as React from 'react'
 import { getExtraTvlSeriesSign, getFailedExtraTvlApiKeys, shouldSubtractTvlOverlapSeries } from '~/utils/tvlOverlap'
 import { fetchForkProtocolBreakdownChart, fetchForkProtocolChart } from './api'
 
-export function useForksOverviewExtraSeries({ enabledExtraApiKeys }: { enabledExtraApiKeys: string[] }) {
+export function useForksOverviewExtraSeries({ enabledExtraApiKeys }: { enabledExtraApiKeys: Array<string> }) {
 	const extraChartQueries = useQueries({
 		queries: enabledExtraApiKeys.map((key) => ({
 			queryKey: ['forks', 'overview', 'chart', key],
 			queryFn: () => fetchForkProtocolBreakdownChart({ key }),
-			staleTime: 5 * 60 * 1_000,
+			staleTime: 5 * 60 * 1000,
 			refetchOnWindowFocus: false
 		}))
 	})
@@ -60,14 +60,14 @@ export function useForkByProtocolExtraSeries({
 	enabledExtraApiKeys,
 	protocol
 }: {
-	enabledExtraApiKeys: string[]
+	enabledExtraApiKeys: Array<string>
 	protocol: string
 }) {
 	const extraChartQueries = useQueries({
 		queries: enabledExtraApiKeys.map((key) => ({
 			queryKey: ['forks', 'protocol', 'chart', protocol, key],
 			queryFn: () => fetchForkProtocolChart({ protocol, key }),
-			staleTime: 5 * 60 * 1_000,
+			staleTime: 5 * 60 * 1000,
 			refetchOnWindowFocus: false
 		}))
 	})

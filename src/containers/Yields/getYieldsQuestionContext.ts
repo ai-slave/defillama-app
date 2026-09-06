@@ -1,11 +1,11 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 
 interface YieldsQuestionFilters {
-	chains?: string[]
-	projects?: string[]
-	tokens?: string[]
-	categories?: string[]
-	attributes?: string[]
+	chains?: Array<string>
+	projects?: Array<string>
+	tokens?: Array<string>
+	categories?: Array<string>
+	attributes?: Array<string>
 	minTvl?: number
 	maxTvl?: number
 	minApy?: number

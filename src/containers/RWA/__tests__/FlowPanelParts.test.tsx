@@ -1,15 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { formatRWAChainFlowSummary, getRWAFlowDrivenCopy } from '../FlowPanelParts'
 
 describe('RWA flow summary tooltip', () => {
-	it('formats measured zero, unpriced, and unknown as distinct states', () => {
+	test('formats measured zero, unpriced, and unknown as distinct states', () => {
 		expect(formatRWAChainFlowSummary({ status: 'measured', flow: 0, coverage: 0.5 })).toBe('$0 (50% coverage)')
 		expect(formatRWAChainFlowSummary({ status: 'measured', flow: 0, coverage: 1 })).toBe('$0')
 		expect(formatRWAChainFlowSummary({ status: 'notPriced' })).toBe('not priced')
 		expect(formatRWAChainFlowSummary({ status: 'unknown' })).toBe('unknown, not zero')
 	})
 
-	it.each([
+	test.each([
 		{
 			name: 'growth caused by inflows',
 			summary: { mcapChange: 25, netCapital: 10, price: 15, flowDrivenPct: 40 },
@@ -41,7 +41,7 @@ describe('RWA flow summary tooltip', () => {
 		})
 	})
 
-	it('describes zero measured flow as no contribution', () => {
+	test('describes zero measured flow as no contribution', () => {
 		expect(getRWAFlowDrivenCopy({ mcapChange: 25, netCapital: 0, price: 25, flowDrivenPct: 0 })).toEqual({
 			label: '0% flow-driven',
 			tooltip:

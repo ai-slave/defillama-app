@@ -6,8 +6,8 @@ export function resolveBridgeProtocolParamFromMetadata(bridge: string, metadataC
 	if (!bridgeSlug) return null
 	return metadataCache.bridgeProtocolSlugsSet.has(bridgeSlug) ? bridgeSlug : null
 }
-export function getBridgeRoutesFromMetadata(metadataCache: MetadataCache): string[] {
-	const routes: string[] = []
+export function getBridgeRoutesFromMetadata(metadataCache: MetadataCache): Array<string> {
+	const routes: Array<string> = []
 
 	for (const bridgeSlug of metadataCache.bridgeProtocolSlugs) {
 		routes.push(`bridge/${bridgeSlug}`)

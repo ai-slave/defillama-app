@@ -24,41 +24,41 @@ export interface PoolChartBar {
 	label: string
 	colorKey: ChartColorKey
 	sign?: 1 | -1
-	values: (number | null)[]
-	avg7: (number | null)[]
-	avg30: (number | null)[]
+	values: Array<number | null>
+	avg7: Array<number | null>
+	avg30: Array<number | null>
 }
 
 export interface PoolChartLine {
 	key: string
 	label: string
 	colorKey: ChartColorKey
-	values: (number | null)[]
+	values: Array<number | null>
 }
 
 export interface PoolChartNet {
 	key: string
 	label: string
 	colorKey: ChartColorKey
-	values: (number | null)[]
-	avg7: (number | null)[]
-	avg30: (number | null)[]
+	values: Array<number | null>
+	avg7: Array<number | null>
+	avg30: Array<number | null>
 }
 
 export interface PoolChartModel {
 	title: string
 	// In "net" mode components are signed/diverging and the overlay uses netLine's own averages.
 	net: boolean
-	dates: number[]
-	bars: PoolChartBar[]
+	dates: Array<number>
+	bars: Array<PoolChartBar>
 	// Dollar-magnitude series on the secondary axis (toggleable, default off). Supply: [TVL];
 	// borrow: [Borrowed, Available].
-	lines: PoolChartLine[]
+	lines: Array<PoolChartLine>
 	netLine: PoolChartNet | null
 }
 
-export function buildSupplyChart(series: PoolHistoryPoint[], tvlLabel = 'TVL'): PoolChartModel | null {
-	if (!series.length) return null
+export function buildSupplyChart(series: Array<PoolHistoryPoint>, tvlLabel = 'TVL'): PoolChartModel | null {
+	if (series.length === 0) return null
 	const dates = new Array<number>(series.length)
 	const tvl = new Array<number | null>(series.length)
 	const base = new Array<number | null>(series.length)
@@ -104,7 +104,7 @@ export function buildSupplyChart(series: PoolHistoryPoint[], tvlLabel = 'TVL'): 
 	// the total draws as the single series instead of a component breakdown.
 	const unsplit = !hasBase && !hasReward && hasTotal
 
-	const bars: PoolChartBar[] = []
+	const bars: Array<PoolChartBar> = []
 	if (hasBase)
 		bars.push({
 			key: 'base',
@@ -152,8 +152,8 @@ export function buildSupplyChart(series: PoolHistoryPoint[], tvlLabel = 'TVL'): 
 	}
 }
 
-export function buildBorrowChart(series: BorrowMarketHistoryPoint[]): PoolChartModel | null {
-	if (!series.length) return null
+export function buildBorrowChart(series: Array<BorrowMarketHistoryPoint>): PoolChartModel | null {
+	if (series.length === 0) return null
 	const dates = new Array<number>(series.length)
 	const borrowed = new Array<number | null>(series.length)
 	const available = new Array<number | null>(series.length)
@@ -195,7 +195,7 @@ export function buildBorrowChart(series: BorrowMarketHistoryPoint[]): PoolChartM
 		hasIntrinsic ||= intrinsic[index] != null
 	}
 
-	const bars: PoolChartBar[] = []
+	const bars: Array<PoolChartBar> = []
 	if (hasBase)
 		bars.push({
 			key: 'baseCost',

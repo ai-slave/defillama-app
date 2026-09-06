@@ -9,8 +9,8 @@ import type { PersistedDashboardItemConfig } from '../dashboardConfig/persisted'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import { createDashboardStreamLineParser } from '../dashboardStreamLines'
 
-const EMPTY_DASHBOARD_ITEMS: DashboardItemConfig[] = []
-const EMPTY_DASHBOARD_TAGS: string[] = []
+const EMPTY_DASHBOARD_ITEMS: Array<DashboardItemConfig> = []
+const EMPTY_DASHBOARD_TAGS: Array<string> = []
 
 type AIGeneratedHistory = Record<
 	string,
@@ -33,14 +33,14 @@ type DashboardCreatorRequest =
 			mode: 'iterate'
 			existingDashboard: {
 				dashboardName: string
-				items: DashboardItemConfig[]
+				items: Array<DashboardItemConfig>
 				aiGenerated?: AIGeneratedHistory
 			}
 	  }
 
 interface DashboardCompleteEvent {
 	type: 'dashboard_complete'
-	dashboardConfig: { items: PersistedDashboardItemConfig[] }
+	dashboardConfig: { items: Array<PersistedDashboardItemConfig> }
 	metadata?: { sessionId?: string; mode?: 'create' | 'iterate' }
 }
 
@@ -54,7 +54,7 @@ type DashboardStreamEvent = DashboardCompleteEvent | DashboardErrorEvent
 const parseDashboardStreamEvent = (line: string): DashboardStreamEvent => JSON.parse(line)
 
 async function readDashboardCreatorStream(reader: ReadableStreamDefaultReader<Uint8Array>) {
-	const completedDashboards: DashboardCompleteEvent[] = []
+	const completedDashboards: Array<DashboardCompleteEvent> = []
 	const decoder = new TextDecoder()
 	const lineParser = createDashboardStreamLineParser((line) => {
 		if (!line.startsWith('data: ')) return
@@ -90,17 +90,17 @@ interface GenerateDashboardModalProps {
 	existingDashboard?: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
-		items: DashboardItemConfig[]
+		items: Array<DashboardItemConfig>
 		aiGenerated?: AIGeneratedHistory
 	}
 	onGenerate: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
-		items: DashboardItemConfig[]
+		items: Array<DashboardItemConfig>
 		aiGenerationContext?: {
 			sessionId: string
 			mode: 'create' | 'iterate'
@@ -120,7 +120,7 @@ export function GenerateDashboardModal({
 	const { user, isAuthenticated, authorizedFetch } = useAuthContext()
 	const [isLoading, setIsLoading] = useState(false)
 	const [visibility, setVisibility] = useState<'private' | 'public'>('public')
-	const [tags, setTags] = useState<string[]>([])
+	const [tags, setTags] = useState<Array<string>>([])
 	const tagInputRef = useRef<HTMLInputElement>(null)
 	const charCountRef = useRef<HTMLSpanElement>(null)
 

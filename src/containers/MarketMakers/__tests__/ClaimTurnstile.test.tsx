@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { ClaimTurnstile, isClaimTurnstileEnabled } from '../ClaimTurnstile'
 
 vi.mock('@marsidev/react-turnstile', () => ({
@@ -17,7 +17,7 @@ afterEach(() => {
 })
 
 describe('ClaimTurnstile', () => {
-	it('uses the separate claim widget and claim action', () => {
+	test('uses the separate claim widget and claim action', () => {
 		vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', 'claim-site-key')
 
 		expect(isClaimTurnstileEnabled()).toBe(true)
@@ -28,7 +28,7 @@ describe('ClaimTurnstile', () => {
 		expect(html).toContain('data-theme="light"')
 	})
 
-	it('renders nothing when the client site key is not configured', () => {
+	test('renders nothing when the client site key is not configured', () => {
 		vi.stubEnv('NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY', '')
 
 		const html = renderToStaticMarkup(<ClaimTurnstile onVerify={() => undefined} onError={() => undefined} />)

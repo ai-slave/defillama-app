@@ -12,7 +12,7 @@ import { parseArtifactPlaceholders } from '~/containers/LlamaAI/utils/markdownHe
 export type ChartArtifactRecord = {
 	type: 'chart'
 	id: string
-	charts: ChartConfiguration[]
+	charts: Array<ChartConfiguration>
 	chartData: ChartDataByKey
 	artifactRef?: ChartArtifactRef
 }
@@ -32,7 +32,7 @@ export type AlertArtifactRecord = {
 	title: string
 	alert: AlertProposedData
 	messageId?: string
-	savedAlertIds?: string[]
+	savedAlertIds?: Array<string>
 }
 
 export type MdArtifactRecord = {
@@ -70,10 +70,10 @@ export type MessageRenderBlock =
 			type: 'markdown'
 			key: string
 			content: string
-			citations?: UnifiedCitationReference[]
-			legacyUrlCitations?: string[]
+			citations?: Array<UnifiedCitationReference>
+			legacyUrlCitations?: Array<string>
 	  }
-	| { type: 'sources'; key: string; citations: string[] }
+	| { type: 'sources'; key: string; citations: Array<string> }
 	| { type: 'chart'; key: string; artifactId: string }
 	| { type: 'csv'; key: string; artifactId: string }
 	| { type: 'md'; key: string; artifactId: string }
@@ -84,7 +84,7 @@ export type MessageRenderBlock =
 
 type ParsedRenderModel = {
 	artifactsById: ArtifactRegistry
-	blocks: MessageRenderBlock[]
+	blocks: Array<MessageRenderBlock>
 }
 
 function buildArtifactRegistry(message: Message): ArtifactRegistry {
@@ -165,7 +165,7 @@ export function parseMessageToRenderModel(
 ): ParsedRenderModel {
 	const artifactsById = buildArtifactRegistry(message)
 	const parsed = parseArtifactPlaceholders(message.content || '')
-	const blocks: MessageRenderBlock[] = []
+	const blocks: Array<MessageRenderBlock> = []
 	const usedArtifactIds = new Set<string>()
 	const { includeFallbackArtifacts = true } = options
 

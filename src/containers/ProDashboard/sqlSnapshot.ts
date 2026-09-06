@@ -52,7 +52,7 @@ export function captureSnapshot(
 	const rowCount = result.rows.length
 	const truncated = rowCount > cap
 	const inputRows = truncated ? result.rows.slice(0, cap) : result.rows
-	const rows: SqlSnapshotValue[][] = new Array(inputRows.length)
+	const rows: Array<Array<SqlSnapshotValue>> = new Array(inputRows.length)
 	for (let rowIndex = 0; rowIndex < inputRows.length; rowIndex++) {
 		const input = inputRows[rowIndex]
 		if (input === undefined) throw new Error(`Missing SQL snapshot row ${rowIndex}`)

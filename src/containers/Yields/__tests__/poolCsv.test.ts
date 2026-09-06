@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { prepareYieldPoolsCsv } from '../domain/poolCsv'
 import type { YieldPoolTableRow } from '../Tables/types'
 
@@ -19,7 +19,7 @@ const row = (overrides: Partial<YieldPoolTableRow> = {}): YieldPoolTableRow =>
 	}) as YieldPoolTableRow
 
 describe('prepareYieldPoolsCsv', () => {
-	it('default view mirrors the earn table with base+reward split', () => {
+	test('default view mirrors the earn table with base+reward split', () => {
 		const csv = prepareYieldPoolsCsv([row()])
 		expect(csv.filename).toBe('yield-pools.csv')
 		expect(csv.rows[0]).toEqual([
@@ -40,18 +40,18 @@ describe('prepareYieldPoolsCsv', () => {
 		expect(csv.rows[1]?.[2]).toBe('Lido')
 	})
 
-	it('base-only view collapses to a single APY column', () => {
+	test('base-only view collapses to a single APY column', () => {
 		const csv = prepareYieldPoolsCsv([], { apyComponents: 'base' })
 		expect(csv.rows[0]).toContain('APY')
 		expect(csv.rows[0]).not.toContain('APY Base')
 	})
 
-	it('non-Now window suffixes APY headers', () => {
+	test('non-Now window suffixes APY headers', () => {
 		const csv = prepareYieldPoolsCsv([], { apyWindow: 'avg_30d', apyComponents: 'base' })
 		expect(csv.rows[0]).toContain('APY (30d)')
 	})
 
-	it('optional columns export only when selected', () => {
+	test('optional columns export only when selected', () => {
 		const without = prepareYieldPoolsCsv([], {})
 		expect(without.rows[0]).not.toContain('1d Volume')
 		const withCols = prepareYieldPoolsCsv([], { column: ['volumeUsd1d', 'top10Pct'] })

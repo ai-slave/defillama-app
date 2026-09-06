@@ -425,7 +425,7 @@ export default function ResearchSearch() {
 				<div className="grid min-h-[280px] place-items-center py-12">
 					<ResearchLoader />
 				</div>
-			) : response.items.length ? (
+			) : response.items.length > 0 ? (
 				<>
 					<ul className="grid divide-y divide-research-heading/10 dark:divide-white/10">
 						{response.items.map((article) => (

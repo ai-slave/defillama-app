@@ -1,5 +1,5 @@
-import { type CellContext, type ColumnDef } from '@tanstack/react-table'
-import { type ReactNode } from 'react'
+import type { CellContext, ColumnDef } from '@tanstack/react-table'
+import type { ReactNode } from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
@@ -109,13 +109,13 @@ export const getUnifiedTableColumns = ({
 	columnIds,
 	earningsAreEstimated
 }: {
-	customColumns: CustomColumnDefinition[] | undefined
-	columnIds: readonly string[]
+	customColumns: Array<CustomColumnDefinition> | undefined
+	columnIds: ReadonlyArray<string>
 	earningsAreEstimated: boolean
-}): ColumnDef<ProtocolTableRow>[] => {
+}): Array<ColumnDef<ProtocolTableRow>> => {
 	const requestedColumnIds = new Set(columnIds)
 	requestedColumnIds.add('name')
-	const columns: ColumnDef<ProtocolTableRow>[] = [
+	const columns: Array<ColumnDef<ProtocolTableRow>> = [
 		{
 			id: 'name',
 			header: 'Name',
@@ -203,7 +203,7 @@ export const getUnifiedTableColumns = ({
 			},
 			cell: ({ row }) => {
 				const chains = row.original.chains
-				if (!chains.length) {
+				if (chains.length === 0) {
 					return renderDash()
 				}
 				return <IconsRow items={toChainIconItems(chains, (chain) => chainHref('/chain', chain))} />
@@ -220,7 +220,7 @@ export const getUnifiedTableColumns = ({
 			},
 			cell: ({ row }) => {
 				const oracles = row.original.oracles
-				if (!oracles.length) {
+				if (oracles.length === 0) {
 					return renderDash()
 				}
 				const visible = oracles.slice(0, 3)
@@ -267,7 +267,7 @@ export const getUnifiedTableColumns = ({
 		buildUsdMetricColumn('fdv', 'FDV')
 	]
 
-	const volumeColumns: ColumnDef<ProtocolTableRow>[] = [
+	const volumeColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildUsdMetricColumn('volume_7d', '7d Volume'),
 		buildUsdMetricColumn('volume_30d', '30d Volume'),
 		buildUsdMetricColumn('volume_90d', '90d Volume'),
@@ -283,7 +283,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('volume24hShare', '24h Chain Volume Share')
 	]
 
-	const feesColumns: ColumnDef<ProtocolTableRow>[] = [
+	const feesColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildUsdMetricColumn('fees_7d', '7d Fees'),
 		buildUsdMetricColumn('fees_30d', '30d Fees'),
 		buildUsdMetricColumn('fees_90d', '90d Fees'),
@@ -319,7 +319,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentChangeColumn('feesChangeYtd', 'YTD Fees Change')
 	]
 
-	const revenueColumns: ColumnDef<ProtocolTableRow>[] = [
+	const revenueColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildUsdMetricColumn('revenue_7d', '7d Revenue'),
 		buildUsdMetricColumn('revenue_30d', '30d Revenue'),
 		buildUsdMetricColumn('revenue_90d', '90d Revenue'),
@@ -339,7 +339,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentChangeColumn('revenueChangeYtd', 'YTD Revenue Change')
 	]
 
-	const earningsColumns: ColumnDef<ProtocolTableRow>[] = [
+	const earningsColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildUsdMetricColumn('earnings24h', earningsAreEstimated ? 'Est. 24h Earnings' : '24h Earnings'),
 		buildUsdMetricColumn('earnings7d', earningsAreEstimated ? 'Est. 7d Earnings' : '7d Earnings'),
 		buildUsdMetricColumn('earnings30d', earningsAreEstimated ? 'Est. 30d Earnings' : '30d Earnings'),
@@ -358,7 +358,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentChangeColumn('emissionsChange30dOver30d', '30d over 30d Emissions Change')
 	]
 
-	const perpsColumns: ColumnDef<ProtocolTableRow>[] = [
+	const perpsColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildUsdMetricColumn('perps_volume_7d', '7d Perps Volume'),
 		buildUsdMetricColumn('perps_volume_30d', '30d Perps Volume'),
 		buildUsdMetricColumn('perps_volume_90d', '90d Perps Volume'),
@@ -372,7 +372,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('perps_volume_dominance_24h', '24h Perps Volume Share')
 	]
 
-	const dexAggregatorColumns: ColumnDef<ProtocolTableRow>[] = [
+	const dexAggregatorColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildUsdMetricColumn('aggregators_volume_24h', '24h Aggregator Volume'),
 		buildUsdMetricColumn('aggregators_volume_7d', '7d Aggregator Volume'),
 		buildUsdMetricColumn('aggregators_volume_30d', '30d Aggregator Volume'),
@@ -388,7 +388,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('aggregators_volume_marketShare7d', '7d Aggregator Volume Share')
 	]
 
-	const derivativesAggregatorColumns: ColumnDef<ProtocolTableRow>[] = [
+	const derivativesAggregatorColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildUsdMetricColumn('derivatives_aggregators_volume_24h', '24h Derivatives Aggregator Volume'),
 		buildUsdMetricColumn('derivatives_aggregators_volume_7d', '7d Derivatives Aggregator Volume'),
 		buildUsdMetricColumn('derivatives_aggregators_volume_30d', '30d Derivatives Aggregator Volume'),
@@ -408,7 +408,7 @@ export const getUnifiedTableColumns = ({
 		)
 	]
 
-	const bridgeAggregatorColumns: ColumnDef<ProtocolTableRow>[] = [
+	const bridgeAggregatorColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildUsdMetricColumn('bridgeAggregatorVolume24h', '24h Bridge Aggregator Volume'),
 		buildUsdMetricColumn('bridgeAggregatorVolume7d', '7d Bridge Aggregator Volume'),
 		buildUsdMetricColumn('bridgeAggregatorVolume30d', '30d Bridge Aggregator Volume'),
@@ -417,7 +417,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('bridgeAggregatorVolumeDominance24h', '24h Bridge Aggregator Volume Share')
 	]
 
-	const optionsColumns: ColumnDef<ProtocolTableRow>[] = [
+	const optionsColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildUsdMetricColumn('options_volume_24h', '24h Options Volume'),
 		buildUsdMetricColumn('options_volume_7d', '7d Options Volume'),
 		buildUsdMetricColumn('options_volume_30d', '30d Options Volume'),
@@ -435,12 +435,12 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('options_volume_dominance_24h', '24h Options Volume Share')
 	]
 
-	const ratioColumns: ColumnDef<ProtocolTableRow>[] = [
+	const ratioColumns: Array<ColumnDef<ProtocolTableRow>> = [
 		buildRatioMetricColumn('mcaptvl', 'Mcap / TVL'),
 		buildRatioMetricColumn('pf', 'P/F'),
 		buildRatioMetricColumn('ps', 'P/S')
 	]
-	const filteredShareColumns: ColumnDef<ProtocolTableRow>[] = FILTERED_SHARE_METRIC_KEYS.map((metric) => {
+	const filteredShareColumns: Array<ColumnDef<ProtocolTableRow>> = FILTERED_SHARE_METRIC_KEYS.map((metric) => {
 		const id = getFilteredShareColumnId(metric)
 		return {
 			id,
@@ -488,7 +488,7 @@ export const getUnifiedTableColumns = ({
 		return dictEntry?.group === 'meta'
 	})
 
-	const columnsByGroup = new Map<MetricGroup, ColumnDef<ProtocolTableRow>[]>()
+	const columnsByGroup = new Map<MetricGroup, Array<ColumnDef<ProtocolTableRow>>>()
 
 	for (const col of allColumns) {
 		const columnId = String(col.id)
@@ -504,7 +504,7 @@ export const getUnifiedTableColumns = ({
 		}
 	}
 
-	const groupedColumns: ColumnDef<ProtocolTableRow>[] = []
+	const groupedColumns: Array<ColumnDef<ProtocolTableRow>> = []
 
 	if (nameColumn) {
 		groupedColumns.push(nameColumn)
@@ -512,7 +512,7 @@ export const getUnifiedTableColumns = ({
 
 	groupedColumns.push(...metaColumns.filter((column) => requestedColumnIds.has(String(column.id))))
 
-	const groupOrder: MetricGroup[] = [
+	const groupOrder: Array<MetricGroup> = [
 		'tvl',
 		'volume',
 		'fees',
@@ -541,7 +541,7 @@ export const getUnifiedTableColumns = ({
 		})
 	}
 
-	const validCustomColumns: ColumnDef<ProtocolTableRow>[] = []
+	const validCustomColumns: Array<ColumnDef<ProtocolTableRow>> = []
 	for (const definition of customColumns ?? []) {
 		if (!requestedColumnIds.has(definition.id) || !validateCustomColumnOnLoad(definition).isValid) continue
 		validCustomColumns.push(createCustomColumnDef({ definition }))

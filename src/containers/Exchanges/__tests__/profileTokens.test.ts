@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ExchangePairModel, ExchangeProfileModel, ExchangeSegment } from '../models'
 import { exchangeTokenRows } from '../profileTokens'
 
@@ -14,7 +14,7 @@ function pair(base: string, patch: Partial<ExchangePairModel> = {}): ExchangePai
 }
 
 function profile(
-	segments: Partial<Record<ExchangeSegment, ExchangePairModel[]>>,
+	segments: Partial<Record<ExchangeSegment, Array<ExchangePairModel>>>,
 	execution: ExchangeProfileModel['execution'] = null
 ): ExchangeProfileModel {
 	return {
@@ -24,7 +24,7 @@ function profile(
 }
 
 describe('exchangeTokenRows', () => {
-	it('groups a token across segments and keeps spot and perp figures apart', () => {
+	test('groups a token across segments and keeps spot and perp figures apart', () => {
 		const [row] = exchangeTokenRows(
 			profile({
 				spot: [pair('btc'), pair('BTC')],
@@ -46,7 +46,7 @@ describe('exchangeTokenRows', () => {
 
 	// Summing only the markets that have a normalized figure understates the token;
 	// dropping the whole group to reported because one market lacks depth overstates it.
-	it('falls back per market and flags that it did', () => {
+	test('falls back per market and flags that it did', () => {
 		const [row] = exchangeTokenRows(
 			profile({ spot: [pair('sol'), pair('sol', { normalizedVolume: null, volume24h: 40 })] })
 		)
@@ -57,7 +57,7 @@ describe('exchangeTokenRows', () => {
 		expect(clean.spotVolumeIsReported).toBe(false)
 	})
 
-	it('leaves a segment the token does not trade as absent, not zero', () => {
+	test('leaves a segment the token does not trade as absent, not zero', () => {
 		const [row] = exchangeTokenRows(profile({ spot: [pair('doge')] }))
 		expect(row.segments).toEqual(['spot'])
 		expect(row.perpActiveLiquidity).toBeNull()
@@ -66,7 +66,7 @@ describe('exchangeTokenRows', () => {
 		expect(row.perpVolumeIsReported).toBe(false)
 	})
 
-	it('attaches measured fills by asset and leaves the rest null', () => {
+	test('attaches measured fills by asset and leaves the rest null', () => {
 		const rows = exchangeTokenRows(
 			profile(
 				{ linear_perp: [pair('btc'), pair('doge')] },
@@ -88,7 +88,7 @@ describe('exchangeTokenRows', () => {
 
 	// Leverage is a property of the perp, not of the asset: a spot-only token has none,
 	// and where several perps offer it we show the highest on the venue.
-	it('takes the highest leverage across the token’s perps, and none from spot', () => {
+	test('takes the highest leverage across the token’s perps, and none from spot', () => {
 		const [perps] = exchangeTokenRows(
 			profile({
 				spot: [pair('btc', { maxLeverage: 999 })],
@@ -105,7 +105,7 @@ describe('exchangeTokenRows', () => {
 		expect(unstated.maxLeverage).toBeNull()
 	})
 
-	it('ranks the busiest token first', () => {
+	test('ranks the busiest token first', () => {
 		const rows = exchangeTokenRows(
 			profile({
 				spot: [pair('small', { normalizedVolume: { normalized: 1, activeLiquidity: 1 } as never })],

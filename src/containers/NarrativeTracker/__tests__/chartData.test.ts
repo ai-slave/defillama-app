@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildNarrativeTreemapTreeData,
 	calculateDenominatedTimeSeries,
@@ -21,7 +21,7 @@ function row(overrides: Partial<IPctChangeRow>): IPctChangeRow {
 }
 
 describe('buildNarrativeTreemapTreeData', () => {
-	it('groups rows by first-seen category while preserving child order', () => {
+	test('groups rows by first-seen category while preserving child order', () => {
 		expect(
 			buildNarrativeTreemapTreeData([
 				row({ name: 'Aave', categoryName: 'Lending', mcap: 100, returnField: 12.345 }),
@@ -47,7 +47,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 		])
 	})
 
-	it('keeps the previous blank category path for rows without a category name', () => {
+	test('keeps the previous blank category path for rows without a category name', () => {
 		expect(buildNarrativeTreemapTreeData([row({ name: 'Bitcoin', mcap: 500, returnField: null })])).toEqual([
 			{
 				value: [500, null, null, 0],
@@ -58,7 +58,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 		])
 	})
 
-	it('uses zero treemap weight for coins without market cap data', () => {
+	test('uses zero treemap weight for coins without market cap data', () => {
 		expect(buildNarrativeTreemapTreeData([row({ name: 'SpiritSwap', mcap: null, returnField: 1.23 })])).toEqual([
 			{
 				value: [0, null, null, 0],
@@ -69,7 +69,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 		])
 	})
 
-	it('keeps value-color gradients local to each sibling group', () => {
+	test('keeps value-color gradients local to each sibling group', () => {
 		const tree = buildNarrativeTreemapTreeData([
 			row({ name: 'Low', categoryName: 'Lending', returnField: -10 }),
 			row({ name: 'Mid loss', categoryName: 'Lending', returnField: -5 }),
@@ -82,7 +82,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 		expect(tree[1].children[0].value[3]).toBe(100)
 	})
 
-	it('reads the selected period directly without an intermediate row copy', () => {
+	test('reads the selected period directly without an intermediate row copy', () => {
 		const tree = buildNarrativeTreemapTreeData(
 			[
 				row({ name: 'Aave', categoryName: 'Lending', returnField: -99, change1M: 12.345 }),
@@ -97,7 +97,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 		])
 	})
 
-	it('filters coins without recalculating their full-market color intensity', () => {
+	test('filters coins without recalculating their full-market color intensity', () => {
 		const tree = buildNarrativeTreemapTreeData([
 			row({ name: 'Low', categoryName: 'Lending', mcap: 3, returnField: 10 }),
 			row({ name: 'High', categoryName: 'Lending', mcap: 7, returnField: 20 })
@@ -113,7 +113,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 		expect(tree[0].children[0].value[3]).toBe(70)
 	})
 
-	it('filters whole category nodes on the category overview', () => {
+	test('filters whole category nodes on the category overview', () => {
 		const tree = buildNarrativeTreemapTreeData([
 			row({ name: 'Lending', categoryName: 'Lending', mcap: 3 }),
 			row({ name: 'DEX', categoryName: 'DEX', mcap: 7 })
@@ -122,7 +122,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 		expect(filterNarrativeTreemapTreeData(tree, new Set(['DEX']))).toEqual([tree[1]])
 	})
 
-	it('filters overview rows by name when their category name is missing', () => {
+	test('filters overview rows by name when their category name is missing', () => {
 		const tree = buildNarrativeTreemapTreeData(
 			[row({ name: 'Lending', mcap: 3, change1M: 10 }), row({ name: 'DEX', mcap: 7, change1M: 20 })],
 			'change1M'
@@ -139,7 +139,7 @@ describe('buildNarrativeTreemapTreeData', () => {
 })
 
 describe('calculateDenominatedTimeSeries', () => {
-	it('preserves ascending input order and converts returns relative to the selected denomination', () => {
+	test('preserves ascending input order and converts returns relative to the selected denomination', () => {
 		const result = calculateDenominatedTimeSeries(
 			[
 				{ date: 1, Bitcoin: 0, DeFi: 10, Gaming: 5 },
@@ -157,7 +157,7 @@ describe('calculateDenominatedTimeSeries', () => {
 		expect(result[1].Bitcoin).toBeUndefined()
 	})
 
-	it('converts later rows when the first row lacks the selected denomination', () => {
+	test('converts later rows when the first row lacks the selected denomination', () => {
 		const rows = [
 			{ date: 1, DeFi: 10 },
 			{ date: 2, DeFi: 20, Bitcoin: 1 }
@@ -171,7 +171,7 @@ describe('calculateDenominatedTimeSeries', () => {
 		expect(result[1].Bitcoin).toBeUndefined()
 	})
 
-	it('returns the original ordered rows when no row has the selected denomination', () => {
+	test('returns the original ordered rows when no row has the selected denomination', () => {
 		const rows = [
 			{ date: 1, DeFi: 10 },
 			{ date: 2, DeFi: 20 }
@@ -180,7 +180,7 @@ describe('calculateDenominatedTimeSeries', () => {
 		expect(calculateDenominatedTimeSeries(rows, 'Bitcoin')).toBe(rows)
 	})
 
-	it('returns date-only rows when denomination performance is zero or missing for a day', () => {
+	test('returns date-only rows when denomination performance is zero or missing for a day', () => {
 		const result = calculateDenominatedTimeSeries(
 			[
 				{ date: 1, Bitcoin: 0, DeFi: 10 },

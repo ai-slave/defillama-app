@@ -24,7 +24,7 @@ const pageName = ['Earnings', 'by', 'NFTs']
 const DEFAULT_SORTING_STATE = [{ id: 'totalEarnings', desc: true }]
 type NFTCollectionEarningsRow = Awaited<ReturnType<typeof getNFTCollectionEarnings>>['earnings'][number]
 
-function getEarningsSubRows(row: NFTCollectionEarningsRow): NFTCollectionEarningsRow[] | undefined {
+function getEarningsSubRows(row: NFTCollectionEarningsRow): Array<NFTCollectionEarningsRow> | undefined {
 	return 'subRows' in row ? row.subRows : undefined
 }
 
@@ -37,15 +37,15 @@ function Earnings({ earnings }: InferGetStaticPropsType<typeof getStaticProps>) 
 		<Layout
 			title="NFT Creator Earnings & Royalties - DefiLlama"
 			description="Track NFT creator earnings and royalty revenue by collection. Compare royalty income across top NFT collections on DefiLlama."
-			canonicalUrl={`/nfts/earnings`}
+			canonicalUrl="/nfts/earnings"
 			pageName={pageName}
 		>
 			<TableWithSearch
 				data={earnings}
 				getSubRows={getEarningsSubRows}
 				columns={earningsColumns}
-				columnToSearch={'name'}
-				placeholder={'Search collections...'}
+				columnToSearch="name"
+				placeholder="Search collections..."
 				header="NFT Collection Earnings"
 				headingAs="h1"
 				csvFileName="nft-earnings"

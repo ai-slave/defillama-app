@@ -5,7 +5,7 @@
     Interpolation is deliberately a type error: a recipe must be one static
     string for the sorter to see all of it — compose already-tagged parts with
     template literals or `clsx` at the call site instead. */
-export function tw(strings: TemplateStringsArray, ...values: never[]): string {
+export function tw(strings: TemplateStringsArray, ...values: Array<never>): string {
 	void values
 	return strings[0]
 }

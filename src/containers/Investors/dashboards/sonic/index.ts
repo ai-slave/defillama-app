@@ -8,7 +8,7 @@ const YieldsEmissions = lazy(() => import('./YieldsEmissions'))
 const NetworkStats = lazy(() => import('./NetworkStats'))
 const Stablecoins = lazy(() => import('./Stablecoins'))
 
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'feem', label: 'FeeM', component: FeeM },
 	{ id: 'ecosystem', label: 'Ecosystem', component: Ecosystem },
 	{ id: 'vertical-integration', label: 'Vertical Integration', component: VerticalIntegration },

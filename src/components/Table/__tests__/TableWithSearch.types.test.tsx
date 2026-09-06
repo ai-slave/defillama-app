@@ -1,12 +1,12 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { formatNumber } from '~/utils/numberFormat'
 import { TableWithSearch } from '../TableWithSearch'
 
 interface TestRow {
 	name: string
 	amount: number
-	tags: string[]
+	tags: Array<string>
 }
 
 const columnHelper = createColumnHelper<TestRow>()
@@ -36,7 +36,7 @@ const columns = [
 ]
 
 describe('TableWithSearch column contract', () => {
-	it('accepts heterogeneous createColumnHelper columns without erasing accessor value types', () => {
+	test('accepts heterogeneous createColumnHelper columns without erasing accessor value types', () => {
 		const table = <TableWithSearch<TestRow> data={[]} columns={columns} csvFileName="test" />
 
 		expect(table.props.columns).toBe(columns)

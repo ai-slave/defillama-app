@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchJson: vi.fn(),
@@ -22,7 +22,7 @@ beforeEach(() => {
 })
 
 describe('token risk api', () => {
-	it('requests the borrow capacity snapshot', async () => {
+	test('requests the borrow capacity snapshot', async () => {
 		const api = await import('../api')
 
 		await api.getTokenRiskBorrowCapacity()

@@ -43,7 +43,7 @@ export const DEFAULT_TOKEN_PNL_TOKEN_IDS = ['bitcoin', 'ethereum', 'solana'] as 
 const DEFAULT_COMPARISON_IDS = DEFAULT_TOKEN_PNL_TOKEN_IDS
 const TOKEN_PNL_MAX_DATE_BUFFER_SECONDS = 60
 
-function buildTokenOptionMap(tokens: TokenSearchResult[]): Record<string, TokenSearchResult> {
+function buildTokenOptionMap(tokens: Array<TokenSearchResult>): Record<string, TokenSearchResult> {
 	const map: Record<string, TokenSearchResult> = {}
 	for (const token of tokens) {
 		map[token.id] = token
@@ -64,7 +64,7 @@ const dateStringToUnix = (dateString: string | null | undefined): number | null 
 	return Math.floor(timestamp / 1000)
 }
 
-const isValidDate = (dateString: string | string[] | undefined): boolean => {
+const isValidDate = (dateString: string | Array<string> | undefined): boolean => {
 	if (!dateString || typeof dateString !== 'string') return false
 	const date = new Date(+dateString * 1000)
 	return !Number.isNaN(date.getTime())
@@ -84,7 +84,7 @@ type TokenPnlContentProps = {
 	chartOptions: MultiSeriesChartOptions | undefined
 	exportChartInstance: () => echarts.ECharts | null
 	handleChartReady: (instance: echarts.ECharts | null) => void
-	comparisonData: ComparisonEntry[]
+	comparisonData: Array<ComparisonEntry>
 	selectedCoinId: string
 	selectedCoinInfo: TokenSearchResult | null
 }
@@ -254,7 +254,7 @@ const TokenPnlContent = ({
 	)
 }
 
-export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: TokenSearchResult[] }) {
+export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<TokenSearchResult> }) {
 	const router = useRouter()
 	const nowSeconds = useNowSeconds()
 	const maxSelectableDateUnix = Math.max(0, nowSeconds - TOKEN_PNL_MAX_DATE_BUFFER_SECONDS)
@@ -366,7 +366,7 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: TokenSe
 
 	const comparisonData = useMemo(
 		() =>
-			comparisonQueries.flatMap((q): ComparisonEntry[] => {
+			comparisonQueries.flatMap((q): Array<ComparisonEntry> => {
 				const d = q.data
 				if (d == null) return []
 				const coin = coinInfoMap.get(d.id)

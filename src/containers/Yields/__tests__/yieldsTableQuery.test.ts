@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildYieldsTableQueryString,
 	getYieldsTablePaginationFromQuery,
@@ -6,18 +6,18 @@ import {
 } from '../yieldsTableQuery'
 
 describe('yields table query helpers', () => {
-	it('caps parsed page sizes for regular table requests', () => {
+	test('caps parsed page sizes for regular table requests', () => {
 		expect(getYieldsTablePaginationFromQuery({ pageSize: '999999' })).toEqual({
 			pageIndex: 0,
 			pageSize: MAX_YIELDS_TABLE_PAGE_SIZE
 		})
 	})
 
-	it('caps serialized numeric page sizes but preserves CSV all requests', () => {
+	test('caps serialized numeric page sizes but preserves CSV all requests', () => {
 		expect(
 			buildYieldsTableQueryString({
 				query: {},
-				pagination: { pageIndex: 0, pageSize: 999999 },
+				pagination: { pageIndex: 0, pageSize: 999_999 },
 				sorting: []
 			})
 		).toBe(`?page=1&pageSize=${MAX_YIELDS_TABLE_PAGE_SIZE}`)
@@ -25,7 +25,7 @@ describe('yields table query helpers', () => {
 		expect(
 			buildYieldsTableQueryString({
 				query: {},
-				pagination: { pageIndex: 0, pageSize: 999999 },
+				pagination: { pageIndex: 0, pageSize: 999_999 },
 				sorting: [],
 				pageSize: 'all'
 			})

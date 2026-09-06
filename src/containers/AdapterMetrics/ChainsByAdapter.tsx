@@ -16,7 +16,6 @@ import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
-import type {} from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
@@ -48,7 +47,7 @@ interface IProps extends IChainsByAdapterPageData {
 	type: TPageType
 }
 
-const FEES_CHART_PAGE_TYPES: TPageType[] = ['Holders Revenue', 'App Fees', 'App Revenue']
+const FEES_CHART_PAGE_TYPES: Array<TPageType> = ['Holders Revenue', 'App Fees', 'App Revenue']
 
 export function ChainsByAdapter(props: IProps) {
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'total24h' }])

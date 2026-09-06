@@ -5,7 +5,7 @@ const Stats = lazy(() => import('./Stats'))
 const Trades = lazy(() => import('./Trades'))
 const Positions = lazy(() => import('./Positions'))
 
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'dashboard', label: 'Ecosystem' },
 	{ id: 'stats', label: 'Stats', component: Stats, source: 'Hyperliquid' },
 	{ id: 'trades', label: 'Trades', component: Trades, source: 'Hyperliquid' },

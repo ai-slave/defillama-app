@@ -18,10 +18,13 @@ interface VolumeChartEntry {
 
 export function keepNeededProperties<T extends object, K extends keyof T & string>(
 	protocol: T,
-	propertiesToKeep: readonly K[]
+	propertiesToKeep: ReadonlyArray<K>
 ): Pick<T, K>
-export function keepNeededProperties(protocol: object, propertiesToKeep: readonly string[]): Record<string, unknown>
-export function keepNeededProperties(protocol: object, propertiesToKeep: readonly string[]): Record<string, unknown> {
+export function keepNeededProperties(protocol: object, propertiesToKeep: ReadonlyArray<string>): Record<string, unknown>
+export function keepNeededProperties(
+	protocol: object,
+	propertiesToKeep: ReadonlyArray<string>
+): Record<string, unknown> {
 	const obj = protocol as Record<string, unknown>
 	const result: Record<string, unknown> = {}
 	for (const prop of propertiesToKeep) {
@@ -54,18 +57,18 @@ export const slug = (name: unknown = ''): string =>
 		.replace(/ /g, '-')
 		.replace(/'/g, '')
 
-const distinctColorsCache = new Map<number, readonly string[]>()
+const distinctColorsCache = new Map<number, ReadonlyArray<string>>()
 
-export function getNDistinctColors(n: number): string[] {
+export function getNDistinctColors(n: number): Array<string> {
 	if (n <= 0) {
 		return []
 	}
 	const cached = distinctColorsCache.get(n)
 	if (cached) return cached.slice()
 
-	const colors: string[] = []
+	const colors: Array<string> = []
 	const usedColors = new Set<string>()
-	const usedBuckets = new Map<string, HSL[]>()
+	const usedBuckets = new Map<string, Array<HSL>>()
 	const saturationSteps = [60, 68, 76]
 	const lightnessSteps = [40, 48, 56]
 	const minContrastRatio = 2.5
@@ -216,7 +219,7 @@ export const getDominancePercent = (value: unknown, total: unknown): number => {
 
 	const ratio = numTotal > 0 ? numValue / numTotal : 0
 
-	return Math.round(ratio * 10000) / 100
+	return Math.round(ratio * 10_000) / 100
 }
 
 export const getTokenDominance = (
@@ -227,11 +230,12 @@ export const getTokenDominance = (
 	if (!dominance) return null
 	if (dominance < 100) {
 		return formatNumber(dominance)
-	} else return 100
+	}
+	return 100
 }
 
 export const getPrevVolumeFromChart = (
-	chart: VolumeChartEntry[] | null | undefined,
+	chart: Array<VolumeChartEntry> | null | undefined,
 	daysBefore: number,
 	txs: boolean = false,
 	inflows: boolean = false
@@ -324,7 +328,7 @@ interface BatchHistoricalPrice {
 }
 
 interface BatchHistoricalCoin {
-	prices?: BatchHistoricalPrice[]
+	prices?: Array<BatchHistoricalPrice>
 	[key: string]: unknown
 }
 
@@ -333,11 +337,11 @@ interface BatchHistoricalResponse {
 }
 
 export async function batchFetchHistoricalPrices(
-	priceReqs: Record<string, number | number[]>,
+	priceReqs: Record<string, number | Array<number>>,
 	batchSize: number = 15
 ): Promise<{ results: Record<string, BatchHistoricalCoin> }> {
 	const results: Record<string, BatchHistoricalCoin> = {}
-	let batchReqs: Record<string, number | number[]> = {}
+	let batchReqs: Record<string, number | Array<number>> = {}
 	let batchCount = 0
 
 	for (const [coin, request] of Object.entries(priceReqs)) {

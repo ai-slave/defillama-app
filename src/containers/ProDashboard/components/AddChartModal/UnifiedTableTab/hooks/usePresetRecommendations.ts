@@ -4,7 +4,7 @@ import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable
 
 interface UsePresetRecommendationsProps {
 	filters: UnifiedTableFilters
-	chains: string[]
+	chains: Array<string>
 }
 
 export function usePresetRecommendations({ filters, chains }: UsePresetRecommendationsProps) {
@@ -30,7 +30,7 @@ export function usePresetRecommendations({ filters, chains }: UsePresetRecommend
 
 		const hasOracles = Boolean(filters.oracles?.length)
 
-		const CATEGORY_PRESET_MAP: Record<string, string[]> = {
+		const CATEGORY_PRESET_MAP: Record<string, Array<string>> = {
 			dexs: ['volume-protocols'],
 			'dex aggregator': ['aggregators-protocols'],
 			options: ['options-protocols'],
@@ -62,7 +62,7 @@ export function usePresetRecommendations({ filters, chains }: UsePresetRecommend
 			oracle: ['perps-protocols']
 		}
 
-		const PROTOCOL_KEYWORD_PRESETS: Array<{ keywords: string[]; presets: string[] }> = [
+		const PROTOCOL_KEYWORD_PRESETS: Array<{ keywords: Array<string>; presets: Array<string> }> = [
 			{
 				keywords: ['uniswap', 'sushi', 'balancer', 'curve', 'pancake', 'raydium', 'spooky'],
 				presets: ['volume-protocols']

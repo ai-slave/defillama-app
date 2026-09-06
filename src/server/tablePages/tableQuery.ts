@@ -92,7 +92,7 @@ export function nullableNumberField(): TableQueryField<number | null> {
  * still reject (e.g. sort keys).
  */
 export function enumField<T extends string>(
-	values: readonly T[],
+	values: ReadonlyArray<T>,
 	options: { fallback?: T; nonStringFallback?: T } = {}
 ): TableQueryField<T> {
 	const allowed = new Set<string>(values)
@@ -105,7 +105,7 @@ export function enumField<T extends string>(
 }
 
 /** Deduplicated, sorted list of allowed strings; non-arrays coerce to []. */
-export function stringSetField(options: { allow: (value: string) => boolean }): TableQueryField<string[]> {
+export function stringSetField(options: { allow: (value: string) => boolean }): TableQueryField<Array<string>> {
 	return {
 		parse: (raw) => {
 			if (!Array.isArray(raw)) return []
@@ -147,11 +147,11 @@ export function shapeOrNullField<Shape extends Record<string, unknown>>(fields: 
  * shapes; this is the escape hatch that keeps existing parsers untouched.
  */
 export function canonicalQuerySignature(
-	query: Record<string, string | string[] | undefined>,
-	options: { exclude: readonly string[] }
+	query: Record<string, string | Array<string> | undefined>,
+	options: { exclude: ReadonlyArray<string> }
 ): string {
 	const excluded = new Set(options.exclude)
-	const entries: Array<[string, string[]]> = []
+	const entries: Array<[string, Array<string>]> = []
 	for (const key of Object.keys(query).sort()) {
 		if (excluded.has(key)) continue
 		const raw = query[key]

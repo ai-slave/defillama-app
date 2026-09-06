@@ -13,7 +13,7 @@ function asMetric(v: unknown): Metric | null {
 	}
 }
 
-export function toBoardRows(payload: unknown[]): LeaderboardRow[] {
+export function toBoardRows(payload: Array<unknown>): Array<LeaderboardRow> {
 	if (!Array.isArray(payload)) return []
 	return payload.map((raw) => {
 		const o = (raw ?? {}) as Record<string, unknown>
@@ -33,7 +33,7 @@ export function toBoardRows(payload: unknown[]): LeaderboardRow[] {
 	})
 }
 
-export function selectDepthBucket(payload: unknown, threshold: Threshold): LeaderboardRow[] {
+export function selectDepthBucket(payload: unknown, threshold: Threshold): Array<LeaderboardRow> {
 	const bucket = THRESHOLD_TO_BUCKET[threshold]
 	const o = (payload ?? {}) as Record<string, unknown>
 	const arr = o[bucket]

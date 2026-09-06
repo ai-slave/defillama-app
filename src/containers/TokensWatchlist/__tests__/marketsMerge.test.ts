@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { MarketSegmentSummary, TokenMarketsListResponse } from '~/containers/Markets/api.types'
 import type { TokensTableRow } from '~/containers/Tokens/types'
 import { mergeMarketsSummary } from '../marketsMerge'
@@ -58,12 +58,12 @@ function marketsList(tokens: TokenMarketsListResponse['tokens']): TokenMarketsLi
 }
 
 describe('mergeMarketsSummary', () => {
-	it('returns base rows unchanged when the markets list is unavailable', () => {
+	test('returns base rows unchanged when the markets list is unavailable', () => {
 		const rows = [row({ id: 'bitcoin', symbol: 'BTC', marketCap: 1_000_000 })]
 		expect(mergeMarketsSummary(rows, undefined)).toBe(rows)
 	})
 
-	it('fills the highest-market-cap coin of a shared symbol and leaves duplicates empty', () => {
+	test('fills the highest-market-cap coin of a shared symbol and leaves duplicates empty', () => {
 		const rows = [
 			row({ id: 'bitcoin', symbol: 'BTC', marketCap: 1_000_000, rank: 1 }),
 			row({ id: 'wrapped-bitcoin', symbol: 'BTC', marketCap: 10_000, rank: 20 })
@@ -93,11 +93,11 @@ describe('mergeMarketsSummary', () => {
 		expect(wrapped).toMatchObject({ spotVolume24h: null, perpsVolume24h: null, openInterest24h: null })
 	})
 
-	it('does not overwrite volume values the server already computed', () => {
+	test('does not overwrite volume values the server already computed', () => {
 		const serverRow = row({
 			id: 'aave',
 			symbol: 'AAVE',
-			marketCap: 5_000,
+			marketCap: 5000,
 			spotVolume24h: 123,
 			display: { spotVolume24h: '$123' } as TokensTableRow['display']
 		})
@@ -121,7 +121,7 @@ describe('mergeMarketsSummary', () => {
 		expect(result[0]?.spotVolume24h).toBe(123)
 	})
 
-	it('leaves a canonical row empty when the markets list has no entry for its symbol', () => {
+	test('leaves a canonical row empty when the markets list has no entry for its symbol', () => {
 		const rows = [row({ id: 'obscure', symbol: 'ZZZ', marketCap: 1 })]
 		const result = mergeMarketsSummary(rows, marketsList([]))
 		expect(result[0]).toBe(rows[0])

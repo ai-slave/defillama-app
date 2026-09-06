@@ -162,7 +162,7 @@ export function buildEventRailData({
 		})
 	].sort((a, b) => a.timestamp - b.timestamp)
 
-	const events: EventRailDatum[] = sortedEvents.map((event) => {
+	const events: Array<EventRailDatum> = sortedEvents.map((event) => {
 		const palette = getEventDotPalette(event.fullText, isThemeDark, event.isRange)
 
 		return {
@@ -244,7 +244,7 @@ export function getSeriesTimeBounds(data: ReadonlyArray<readonly [number | strin
 	return { min, max }
 }
 
-export function getDatasetTimeBounds(source: MultiSeriesChartArrayRow[], timestampIndex: number) {
+export function getDatasetTimeBounds(source: Array<MultiSeriesChartArrayRow>, timestampIndex: number) {
 	let min: number | undefined
 	let max: number | undefined
 	for (let index = 0; index < source.length; index++) {
@@ -289,7 +289,7 @@ export function createEventRailSeries({
 	shouldHideDataZoom,
 	tooltipGroupBy
 }: {
-	eventRailData: EventRailDatum[]
+	eventRailData: Array<EventRailDatum>
 	eventStripYAxisIndex: number
 	hoverState: EventHoverState
 	shouldHideDataZoom: boolean
@@ -301,7 +301,7 @@ export function createEventRailSeries({
 		type: 'custom',
 		renderItem: (
 			params: { dataIndex: number },
-			api: { coord: (value: [number, number]) => number[]; getHeight: () => number }
+			api: { coord: (value: [number, number]) => Array<number>; getHeight: () => number }
 		) => {
 			const event = eventRailData[params.dataIndex]
 			if (!event) return
@@ -398,7 +398,7 @@ export function attachEventHoverHandlers({
 	getEventMarkLineShape
 }: {
 	instance: echarts.ECharts
-	eventRailData: EventRailDatum[]
+	eventRailData: Array<EventRailDatum>
 	hoverState: EventHoverState
 	getEventMarkLineShape: (eventDate: number) => { x1: number; y1: number; x2: number; y2: number } | null
 }) {

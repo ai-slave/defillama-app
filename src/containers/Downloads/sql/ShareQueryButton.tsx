@@ -9,11 +9,11 @@ import type { ChartConfig } from './chartConfig'
 
 interface ShareQueryButtonProps {
 	sql: string
-	tables: QueryTableRef[]
+	tables: Array<QueryTableRef>
 	chartConfig?: ChartConfig
 	disabled?: boolean
 	mode?: 'query' | 'notebook'
-	notebookCells?: NotebookShareCell[]
+	notebookCells?: Array<NotebookShareCell>
 	notebookTitle?: string
 }
 

@@ -1,15 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { PROTOCOL_RANKING_RESET_QUERY, PROTOCOL_RANKING_RESET_STORAGE_KEYS } from '../settings'
 import { getProtocolRankingDefaultColumnVisibility, getProtocolRankingPresetColumnVisibility } from '../Table'
 
 const primaryPresets = ['Fees', 'Revenue', 'Spot', 'Perps', 'TVL'] as const
 
 describe('Protocol Rankings period presets', () => {
-	it('keeps Reset scoped to ranking state while clearing both TVL bounds', () => {
+	test('keeps Reset scoped to ranking state while clearing both TVL bounds', () => {
 		expect(PROTOCOL_RANKING_RESET_STORAGE_KEYS).toEqual(['ptcfs', 'ptcmp', 'ptcp', 'ptc'])
 		expect(PROTOCOL_RANKING_RESET_QUERY).toEqual({ minTvl: undefined, maxTvl: undefined })
 	})
-	it('restores the compact overview and hides custom columns by default', () => {
+	test('restores the compact overview and hides custom columns by default', () => {
 		const visibility = getProtocolRankingDefaultColumnVisibility(2)
 
 		expect(visibility).toMatchObject({
@@ -31,7 +31,7 @@ describe('Protocol Rankings period presets', () => {
 		})
 	})
 
-	it.each([
+	test.each([
 		['1d', 'change_1d', 'fees_24h', 'dex_volume_24h', 'perp_volume_24h'],
 		['7d', 'change_7d', 'fees_7d', 'dex_volume_7d', 'perp_volume_7d'],
 		['1m', 'change_1m', 'fees_30d', 'dex_volume_30d', 'perp_volume_30d']
@@ -57,7 +57,7 @@ describe('Protocol Rankings period presets', () => {
 		})
 	})
 
-	it('keeps routed-volume columns opt-in within their market domains', () => {
+	test('keeps routed-volume columns opt-in within their market domains', () => {
 		const spot = getProtocolRankingPresetColumnVisibility({ type: 'metric', metric: 'Spot' }, primaryPresets)
 		const perps = getProtocolRankingPresetColumnVisibility({ type: 'metric', metric: 'Perps' }, primaryPresets)
 
@@ -69,7 +69,7 @@ describe('Protocol Rankings period presets', () => {
 		expect(perps.perp_aggregator_volume_24h).toBe(false)
 	})
 
-	it('intersects metric and period presets without snapshots from other metrics', () => {
+	test('intersects metric and period presets without snapshots from other metrics', () => {
 		const revenue30d = getProtocolRankingPresetColumnVisibility(
 			{ type: 'metric-period', metric: 'Revenue', period: '1m' },
 			primaryPresets
@@ -101,7 +101,7 @@ describe('Protocol Rankings period presets', () => {
 		})
 	})
 
-	it('keeps TVL columns within the TVL metric preset', () => {
+	test('keeps TVL columns within the TVL metric preset', () => {
 		const tvl = getProtocolRankingPresetColumnVisibility({ type: 'metric', metric: 'TVL' }, primaryPresets)
 		const tvl7d = getProtocolRankingPresetColumnVisibility(
 			{ type: 'metric-period', metric: 'TVL', period: '7d' },

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getNDistinctColors } from '~/utils'
 import type { RawNftMarketplaceVolume } from './api.types'
 import {
@@ -12,18 +12,18 @@ const row = (day: string, exchangeName: string, sum: number | null, count: numbe
 	day,
 	exchangeName,
 	sum,
-	sumUsd: sum == null ? null : sum * 2_000,
+	sumUsd: sum == null ? null : sum * 2000,
 	count
 })
 
-const buildAll = (input: RawNftMarketplaceVolume[]) => {
+const buildAll = (input: Array<RawNftMarketplaceVolume>) => {
 	const absolute = buildNFTMarketplaceChartData(input)
 	const presentation = buildNFTMarketplaceChartPresentation(absolute, absolute.availableSeries, true)
 	return { ...presentation, ...buildNFTMarketplaceRelativeChartData(presentation) }
 }
 
 describe('NFT marketplace chart data', () => {
-	it('keeps the absolute base independent from the lazily derived relative presentation', () => {
+	test('keeps the absolute base independent from the lazily derived relative presentation', () => {
 		const absolute = buildNFTMarketplaceChartData([row('2024-01-01', 'OpenSea', 1, 2), row('2024-01-01', 'Blur', 3, 4)])
 
 		expect(absolute).not.toHaveProperty('relativeVolumeDataset')
@@ -33,7 +33,7 @@ describe('NFT marketplace chart data', () => {
 		])
 	})
 
-	it('builds dense canonical datasets in ranked marketplace order', () => {
+	test('builds dense canonical datasets in ranked marketplace order', () => {
 		const input = [
 			row('2024-01-01', 'OpenSea', 1, 2),
 			row('2024-01-01', 'Blur', 3, 4),
@@ -75,7 +75,7 @@ describe('NFT marketplace chart data', () => {
 		expect(input).toEqual(before)
 	})
 
-	it('uses the same unrounded values for series and dominance totals', () => {
+	test('uses the same unrounded values for series and dominance totals', () => {
 		const absolute = buildNFTMarketplaceChartData([
 			row('2024-01-01', 'OpenSea', 1.23456, 1.23456),
 			row('2024-01-01', 'Blur', 2.34567, 2.34567)
@@ -88,7 +88,7 @@ describe('NFT marketplace chart data', () => {
 		expect(relative.relativeVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 65.52, 34.48]])
 	})
 
-	it('builds matching bar and area series with stable colors and stacks', () => {
+	test('builds matching bar and area series with stable colors and stacks', () => {
 		const result = buildAll([row('2024-01-01', 'OpenSea', 1, 2), row('2024-01-01', 'Blur', 3, 4)])
 		const colors = getNDistinctColors(2)
 
@@ -116,7 +116,7 @@ describe('NFT marketplace chart data', () => {
 		expect(JSON.parse(JSON.stringify(result))).toEqual(result)
 	})
 
-	it('keeps the latest full-millisecond duplicate after grouping timestamps to seconds', () => {
+	test('keeps the latest full-millisecond duplicate after grouping timestamps to seconds', () => {
 		const result = buildAll([
 			row('2024-01-01T00:00:00.100Z', 'OpenSea', 1, 2),
 			row('2024-01-01T00:00:00.900Z', 'OpenSea', 9, 18)
@@ -128,7 +128,7 @@ describe('NFT marketplace chart data', () => {
 		expect(result.relativeTradesDataset.source).toEqual([[Date.UTC(2024, 0, 1), 100]])
 	})
 
-	it('returns serializable empty canonical payloads', () => {
+	test('returns serializable empty canonical payloads', () => {
 		const result = buildAll([])
 
 		expect(result.absoluteVolumeDataset).toEqual({ source: [], dimensions: ['timestamp'] })
@@ -139,7 +139,7 @@ describe('NFT marketplace chart data', () => {
 		expect(result.relativeAreaCharts).toEqual([])
 	})
 
-	it('preserves legacy zero-volume behavior for nullable live API rows', () => {
+	test('preserves legacy zero-volume behavior for nullable live API rows', () => {
 		const result = buildAll([row('2024-01-01', 'OpenSea', null, 2), row('2024-01-01', 'Blur', 0, 3)])
 
 		expect(result.absoluteVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 0, 0]])
@@ -147,7 +147,7 @@ describe('NFT marketplace chart data', () => {
 		expect(result.relativeVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 0, 0]])
 	})
 
-	it('limits rendered marketplaces and aggregates every omitted value into Others', () => {
+	test('limits rendered marketplaces and aggregates every omitted value into Others', () => {
 		const marketplaces = Array.from({ length: 31 }, (_, index) => `Marketplace ${index + 1}`)
 		const result = buildAll(
 			marketplaces.map((name, index) =>
@@ -170,7 +170,7 @@ describe('NFT marketplace chart data', () => {
 		expect(csvDataset.dimensions).not.toContain('Others')
 	})
 
-	it('uses the full market denominator and retains only a real upstream Others in relative exports', () => {
+	test('uses the full market denominator and retains only a real upstream Others in relative exports', () => {
 		const canonical = buildNFTMarketplaceChartData([
 			row('2024-01-01', 'OpenSea', 60, 6),
 			row('2024-01-01', 'Blur', 30, 3),
@@ -183,7 +183,7 @@ describe('NFT marketplace chart data', () => {
 		})
 	})
 
-	it('aggregates only the selected tail and renormalizes the selected set', () => {
+	test('aggregates only the selected tail and renormalizes the selected set', () => {
 		const canonical = buildNFTMarketplaceChartData([
 			row('2024-01-01', 'OpenSea', 60, 6),
 			row('2024-01-01', 'Blur', 30, 3),
@@ -199,7 +199,7 @@ describe('NFT marketplace chart data', () => {
 		expect(relative.relativeVolumeDataset.source).toEqual([[Date.UTC(2024, 0, 1), 75, 25]])
 	})
 
-	it('keeps the upstream Others remainder only for the all-series intent', () => {
+	test('keeps the upstream Others remainder only for the all-series intent', () => {
 		const canonical = buildNFTMarketplaceChartData([
 			row('2024-01-01', 'OpenSea', 60, 6),
 			row('2024-01-01', 'Blur', 30, 3),
@@ -225,7 +225,7 @@ describe('NFT marketplace chart data', () => {
 		])
 	})
 
-	it('renders a valid remainder series when the API only returns Others', () => {
+	test('renders a valid remainder series when the API only returns Others', () => {
 		const canonical = buildNFTMarketplaceChartData([row('2024-01-01', 'Others', 10, 2)])
 		const presentation = buildNFTMarketplaceChartPresentation(canonical, [], true)
 

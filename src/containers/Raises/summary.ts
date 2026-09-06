@@ -5,7 +5,7 @@ export interface RaisesSummary {
 	undisclosedCount: number
 }
 
-export function summarizeRaises(raises: readonly Pick<Raise, 'amountUsd'>[]): RaisesSummary {
+export function summarizeRaises(raises: ReadonlyArray<Pick<Raise, 'amountUsd'>>): RaisesSummary {
 	let totalUsd = 0
 	let undisclosedCount = 0
 	for (const raise of raises) {

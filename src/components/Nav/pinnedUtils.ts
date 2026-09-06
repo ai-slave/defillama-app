@@ -14,7 +14,7 @@ const getStoredPinnedMetrics = () => {
 	}
 }
 
-export const mutatePinnedMetrics = (mutator: (currentRoutes: string[]) => string[]) => {
+export const mutatePinnedMetrics = (mutator: (currentRoutes: Array<string>) => Array<string>) => {
 	if (typeof window === 'undefined') return
 
 	const currentRoutes = getStoredPinnedMetrics()

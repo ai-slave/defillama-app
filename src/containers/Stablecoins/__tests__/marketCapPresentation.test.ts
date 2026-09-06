@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	buildStablecoinMarketCapCsvDataset,
@@ -10,8 +10,8 @@ type Row = { name: string; mcap: number | null }
 const getName = (row: Row) => row.name
 
 describe('buildStablecoinMarketCapPresentation', () => {
-	it('preserves pie ordering and consolidates slices beyond the selected limit into Others', () => {
-		const rows: Row[] = Array.from({ length: 12 }, (_, index) => ({
+	test('preserves pie ordering and consolidates slices beyond the selected limit into Others', () => {
+		const rows: Array<Row> = Array.from({ length: 12 }, (_, index) => ({
 			name: index === 2 ? 'Others' : `Token ${index}`,
 			mcap: 120 - index * 10
 		}))
@@ -66,8 +66,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 	})
 
-	it('builds horizontal-bar columns and colors only for its selected slices', () => {
-		const rows: Row[] = Array.from({ length: 10 }, (_, index) => ({ name: `Chain ${index}`, mcap: 10 - index }))
+	test('builds horizontal-bar columns and colors only for its selected slices', () => {
+		const rows: Array<Row> = Array.from({ length: 10 }, (_, index) => ({ name: `Chain ${index}`, mcap: 10 - index }))
 		const getTrackedName = vi.fn(getName)
 
 		const series = prepareStablecoinMarketCapSeries({
@@ -87,8 +87,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		expect(getTrackedName).toHaveBeenCalledTimes(10)
 	})
 
-	it('removes hbar Others at the limit and computes it from only the selected tail above the limit', () => {
-		const rows: Row[] = Array.from({ length: 11 }, (_, index) => ({ name: `Chain ${index}`, mcap: 11 - index }))
+	test('removes hbar Others at the limit and computes it from only the selected tail above the limit', () => {
+		const rows: Array<Row> = Array.from({ length: 11 }, (_, index) => ({ name: `Chain ${index}`, mcap: 11 - index }))
 		const series = prepareStablecoinMarketCapSeries({ rows, view: 'hbar', getName, getValue: (row) => row.mcap ?? 0 })
 
 		expect(
@@ -108,8 +108,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 	})
 
-	it('uses the same positive peer universe for every snapshot view', () => {
-		const rows: Row[] = [
+	test('uses the same positive peer universe for every snapshot view', () => {
+		const rows: Array<Row> = [
 			{ name: 'Alpha', mcap: 2 },
 			{ name: 'Beta', mcap: 1 },
 			{ name: 'Zero', mcap: 0 },
@@ -151,8 +151,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 	})
 
-	it('preserves the existing decimal half-boundary rounding in treemap shares', () => {
-		const rows: Row[] = [
+	test('preserves the existing decimal half-boundary rounding in treemap shares', () => {
+		const rows: Array<Row> = [
 			{ name: 'Large', mcap: 3997 },
 			{ name: 'Small', mcap: 3 }
 		]
@@ -172,8 +172,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		expect(smallSlice.value[1]).toBe(0.07)
 	})
 
-	it('renders an explicit selection without Others and keeps canonical colors', () => {
-		const rows: Row[] = Array.from({ length: 12 }, (_, index) => ({
+	test('renders an explicit selection without Others and keeps canonical colors', () => {
+		const rows: Array<Row> = Array.from({ length: 12 }, (_, index) => ({
 			name: `Token ${index}`,
 			mcap: 12 - index
 		}))
@@ -208,8 +208,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		expect(aboveLimit.chartData.at(-1)).toEqual({ name: 'Others', value: 2 })
 	})
 
-	it('renormalizes treemap shares over only the selected peers', () => {
-		const rows: Row[] = [
+	test('renormalizes treemap shares over only the selected peers', () => {
+		const rows: Array<Row> = [
 			{ name: 'Alpha', mcap: 6 },
 			{ name: 'Beta', mcap: 3 },
 			{ name: 'Gamma', mcap: 1 }
@@ -233,8 +233,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		])
 	})
 
-	it('keeps treemap remainder-free and renders every selected peer', () => {
-		const rows: Row[] = Array.from({ length: 22 }, (_, index) => ({ name: `Token ${index}`, mcap: 22 - index }))
+	test('keeps treemap remainder-free and renders every selected peer', () => {
+		const rows: Array<Row> = Array.from({ length: 22 }, (_, index) => ({ name: `Token ${index}`, mcap: 22 - index }))
 		const series = prepareStablecoinMarketCapSeries({
 			rows,
 			view: 'treemap',
@@ -260,8 +260,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		).toBeCloseTo(100, 1)
 	})
 
-	it('selects every source entity by default while rendering top N plus selected-tail Others', () => {
-		const rows: Row[] = Array.from({ length: 479 }, (_, index) => ({ name: `Chain ${index}`, mcap: 479 - index }))
+	test('selects every source entity by default while rendering top N plus selected-tail Others', () => {
+		const rows: Array<Row> = Array.from({ length: 479 }, (_, index) => ({ name: `Chain ${index}`, mcap: 479 - index }))
 		const series = prepareStablecoinMarketCapSeries({ rows, view: 'pie', getName, getValue: (row) => row.mcap ?? 0 })
 
 		expect(series.selectionSeries).toHaveLength(479)
@@ -287,8 +287,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 	})
 
-	it('coalesces duplicate display names into one selectable peer', () => {
-		const rows: Row[] = [
+	test('coalesces duplicate display names into one selectable peer', () => {
+		const rows: Array<Row> = [
 			{ name: 'USDX', mcap: 4 },
 			{ name: 'USDY', mcap: 3 },
 			{ name: 'USDX', mcap: 2 }
@@ -303,8 +303,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 	})
 
-	it('preserves first-seen canonical colors when coalesced totals tie', () => {
-		const rows: Row[] = [
+	test('preserves first-seen canonical colors when coalesced totals tie', () => {
+		const rows: Array<Row> = [
 			{ name: 'First', mcap: 2 },
 			{ name: 'Second', mcap: 4 },
 			{ name: 'First', mcap: 2 }
@@ -317,8 +317,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		})
 	})
 
-	it('filters nonpositive peers after coalescing duplicate identities', () => {
-		const rows: Row[] = [
+	test('filters nonpositive peers after coalescing duplicate identities', () => {
+		const rows: Array<Row> = [
 			{ name: 'Net Positive', mcap: 5 },
 			{ name: 'Net Positive', mcap: -3 },
 			{ name: 'Net Zero', mcap: 2 },
@@ -330,8 +330,8 @@ describe('buildStablecoinMarketCapPresentation', () => {
 		expect(series.peers.at(0)?.value).toBe(2)
 	})
 
-	it('restores upstream Others only after matching every canonical peer', () => {
-		const rows: Row[] = [
+	test('restores upstream Others only after matching every canonical peer', () => {
+		const rows: Array<Row> = [
 			{ name: 'A', mcap: 4 },
 			{ name: 'B', mcap: 3 },
 			{ name: 'Others', mcap: 2 }

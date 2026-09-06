@@ -20,7 +20,7 @@ export const computeShare = (part: number | null | undefined, total: number | nu
 	return (part / total) * 100
 }
 
-const normalizeChainList = (chains: string[]): string[] => {
+const normalizeChainList = (chains: Array<string>): Array<string> => {
 	const normalized = new Set<string>()
 	for (const chain of chains) {
 		const trimmed = chain.trim()
@@ -29,7 +29,7 @@ const normalizeChainList = (chains: string[]): string[] => {
 	return Array.from(normalized)
 }
 
-export const extractChainFilters = (config: UnifiedTableConfig): string[] =>
+export const extractChainFilters = (config: UnifiedTableConfig): Array<string> =>
 	normalizeChainList(config.params?.chains ?? [])
 
 export const formatDisplayName = (value?: string | null) => {

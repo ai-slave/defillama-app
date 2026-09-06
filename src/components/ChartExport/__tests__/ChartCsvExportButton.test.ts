@@ -1,7 +1,7 @@
 import type { ECharts } from 'echarts'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { PrepareCsv } from '~/components/CsvDownloadButton'
 
 const mocks = vi.hoisted(() => ({
@@ -54,7 +54,7 @@ async function prepareCsvFromDataset(instance: ECharts) {
 }
 
 describe('ChartCsvExportButton', () => {
-	it('uses logical display names from private ECharts dimensions', async () => {
+	test('uses logical display names from private ECharts dimensions', async () => {
 		const instance = {
 			getOption: vi.fn(() => ({
 				dataset: {
@@ -77,7 +77,7 @@ describe('ChartCsvExportButton', () => {
 		expect(instance.getOption).toHaveBeenCalledOnce()
 	})
 
-	it('exports every logical dimension even when a chart legend is hidden', async () => {
+	test('exports every logical dimension even when a chart legend is hidden', async () => {
 		const sourceRow = [Date.UTC(2024, 0, 1), 50, 100]
 		const option = {
 			dataset: {
@@ -101,7 +101,7 @@ describe('ChartCsvExportButton', () => {
 		])
 	})
 
-	it('prefers an explicit canonical dataset over the rendered chart presentation', async () => {
+	test('prefers an explicit canonical dataset over the rendered chart presentation', async () => {
 		const instance = {
 			getOption: vi.fn(() => ({
 				dataset: {
@@ -120,7 +120,7 @@ describe('ChartCsvExportButton', () => {
 		expect(instance.getOption).not.toHaveBeenCalled()
 	})
 
-	it('awaits an asynchronous dataset before reporting the export', async () => {
+	test('awaits an asynchronous dataset before reporting the export', async () => {
 		mocks.prepareCsv = undefined
 		const onExport = vi.fn()
 		renderToStaticMarkup(

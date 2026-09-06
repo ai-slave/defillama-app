@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { calendarDateKey, filterCsvByDateRange, resolveDateRange } from './csvDateFilter'
 
 afterEach(() => {
@@ -6,7 +6,7 @@ afterEach(() => {
 })
 
 describe('CSV date filters', () => {
-	it('normalizes only valid calendar dates and offset-bearing instants', () => {
+	test('normalizes only valid calendar dates and offset-bearing instants', () => {
 		expect(calendarDateKey('2026-07-24')).toBe('2026-07-24')
 		expect(calendarDateKey('2026-07-24T16:00:00Z')).toBe('2026-07-24')
 		expect(calendarDateKey('2026-07-24T00:30:00+14:00')).toBe('2026-07-23')
@@ -15,7 +15,7 @@ describe('CSV date filters', () => {
 		expect(calendarDateKey('2026-07-24garbage')).toBeNull()
 	})
 
-	it('resolves Last N days to exactly N inclusive calendar dates', () => {
+	test('resolves Last N days to exactly N inclusive calendar dates', () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date(2026, 6, 24, 12))
 
@@ -24,7 +24,7 @@ describe('CSV date filters', () => {
 		expect(resolveDateRange({ kind: 'preset', preset: '90d' })).toEqual({ from: '2026-04-26', to: '2026-07-24' })
 	})
 
-	it('keeps both inclusive endpoints when filtering CSV rows', () => {
+	test('keeps both inclusive endpoints when filtering CSV rows', () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date(2026, 6, 24, 12))
 		const csv = ['date,value', '2026-07-17,1', '2026-07-18,2', '2026-07-24T16:00:00Z,3', '2026-07-25,4'].join('\n')

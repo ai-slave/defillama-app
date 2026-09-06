@@ -1,6 +1,6 @@
-import { describe, expect, expectTypeOf, it } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 import type { ProtocolTvlKey } from '../api.types'
-import { PROTOCOL_EXTRA_TVL_KEYS, type ProtocolExtraTvlKey } from '../tvlChart'
+import type { PROTOCOL_EXTRA_TVL_KEYS, ProtocolExtraTvlKey } from '../tvlChart'
 import type { ProtocolValueChartRequest } from '../valueChartSources'
 import {
 	buildProtocolValueChartApiUrl,
@@ -9,7 +9,7 @@ import {
 } from '../valueChartSources'
 
 describe('ProtocolOverview value chart sources', () => {
-	it('uses one canonical exclusion value for URL and cache identity', () => {
+	test('uses one canonical exclusion value for URL and cache identity', () => {
 		const tokenExclusions = canonicalizeTokensToExclude(['', 'GT', ''])
 		if (!tokenExclusions) throw new Error('Expected canonical token exclusions')
 		const request = { source: 'tvl', protocol: 'gate', tokenExclusions } satisfies ProtocolValueChartRequest
@@ -29,7 +29,7 @@ describe('ProtocolOverview value chart sources', () => {
 		expect(buildProtocolValueChartApiUrl(request)).toBe(buildProtocolValueChartApiUrl(reorderedRequest))
 	})
 
-	it('treats all-empty exclusions as the omitted base request', () => {
+	test('treats all-empty exclusions as the omitted base request', () => {
 		const tokenExclusions = canonicalizeTokensToExclude(['', ''])
 		const baseRequest = { source: 'tvl', protocol: 'gate' } satisfies ProtocolValueChartRequest
 		const allEmptyRequest = {
@@ -42,7 +42,7 @@ describe('ProtocolOverview value chart sources', () => {
 		expect(buildProtocolValueChartApiUrl(allEmptyRequest)).toBe(buildProtocolValueChartApiUrl(baseRequest))
 	})
 
-	it('keeps raw and USD currency modes on token breakdown requests', () => {
+	test('keeps raw and USD currency modes on token breakdown requests', () => {
 		expect(
 			buildProtocolValueChartApiUrl({
 				source: 'tvl',
@@ -92,7 +92,7 @@ describe('ProtocolOverview value chart sources', () => {
 		? true
 		: false
 
-	it('does not type invalid source, currency, and breakdown combinations as requests', () => {
+	test('does not type invalid source, currency, and breakdown combinations as requests', () => {
 		expectTypeOf<CurrencyWithoutTokenBreakdown>().toEqualTypeOf<false>()
 		expectTypeOf<TreasuryHasExclusions>().toEqualTypeOf<false>()
 		expectTypeOf<ChainOnlyTvlKeyIsInternalRequest>().toEqualTypeOf<false>()
@@ -100,7 +100,7 @@ describe('ProtocolOverview value chart sources', () => {
 		expectTypeOf<TvlOwnTokensRequest>().toEqualTypeOf<false>()
 	})
 
-	it('keeps protocol TVL keys and the extra-key tuple exactly bounded', () => {
+	test('keeps protocol TVL keys and the extra-key tuple exactly bounded', () => {
 		type ChainOnlyTvlKey = 'doublecounted' | 'liquidstaking' | 'govtokens'
 		expectTypeOf<Extract<ProtocolTvlKey, ChainOnlyTvlKey>>().toEqualTypeOf<never>()
 		expectTypeOf<(typeof PROTOCOL_EXTRA_TVL_KEYS)[number]>().toEqualTypeOf<ProtocolExtraTvlKey>()

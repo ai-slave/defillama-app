@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 type FetchWithPoolingOnServer = (typeof import('~/utils/http-client'))['fetchWithPoolingOnServer']
 
@@ -13,7 +13,7 @@ describe('fetchProDashboardProxy', () => {
 		pooledFetchMock.mockReset()
 	})
 
-	it('serializes one exact request parameter and forwards bearer auth', async () => {
+	test('serializes one exact request parameter and forwards bearer auth', async () => {
 		pooledFetchMock.mockResolvedValue(
 			new Response(JSON.stringify({ data: { name: 'USD Coin' } }), {
 				status: 200,
@@ -38,7 +38,7 @@ describe('fetchProDashboardProxy', () => {
 		})
 	})
 
-	it('rejects non-success proxy responses without accepting an error body as data', async () => {
+	test('rejects non-success proxy responses without accepting an error body as data', async () => {
 		pooledFetchMock.mockResolvedValue(
 			new Response(JSON.stringify({ error: 'Authentication required' }), { status: 401 })
 		)

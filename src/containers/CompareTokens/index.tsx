@@ -25,7 +25,7 @@ const EMPTY_SELECTED_COINS: Record<string, IResponseCGTokenRankingsDatasetItem> 
 
 type CompareType = { label: string; value: string }
 
-const compareTypes: CompareType[] = [
+const compareTypes: Array<CompareType> = [
 	{ label: 'Mcap', value: 'mcap' },
 	{ label: 'FDV', value: 'fdv' },
 	{ label: 'TVL', value: 'tvl' },
@@ -38,8 +38,8 @@ export function CompareTokens({
 	coinsData,
 	protocols
 }: {
-	coinsData: IResponseCGTokenRankingsDatasetItem[]
-	protocols: CompareTokenProtocol[]
+	coinsData: Array<IResponseCGTokenRankingsDatasetItem>
+	protocols: Array<CompareTokenProtocol>
 }) {
 	const router = useRouter()
 	const [isModalOpen, setModalOpen] = useState(0)
@@ -103,7 +103,7 @@ export function CompareTokens({
 					<div className="relative w-full sm:max-w-[280px]">
 						{selectedCoins[0] != null ? (
 							<img
-								alt={''}
+								alt=""
 								src={geckoTokenIconUrl(selectedCoins[0].id)}
 								height={16}
 								width={16}
@@ -144,7 +144,7 @@ export function CompareTokens({
 					<div className="relative w-full sm:max-w-[280px]">
 						{selectedCoins[1] != null ? (
 							<img
-								alt={''}
+								alt=""
 								src={geckoTokenIconUrl(selectedCoins[1].id)}
 								height={16}
 								width={16}
@@ -212,10 +212,10 @@ export function CompareTokens({
 							<h2 className="flex flex-wrap items-center justify-center gap-1 text-base font-normal">
 								<span className="flex items-center gap-1">
 									<img
-										alt={''}
+										alt=""
 										src={selectedCoins[0] ? geckoTokenIconUrl(selectedCoins[0].id) : undefined}
-										height={'20px'}
-										width={'20px'}
+										height="20px"
+										width="20px"
 										loading="lazy"
 										onError={(e) => {
 											e.currentTarget.src = '/assets/placeholder.png'
@@ -227,10 +227,10 @@ export function CompareTokens({
 								<span>WITH THE {compareType.label.toUpperCase()} OF</span>
 								<span className="flex items-center gap-1">
 									<img
-										alt={''}
+										alt=""
 										src={selectedCoins[1] ? geckoTokenIconUrl(selectedCoins[1].id) : undefined}
-										height={'20px'}
-										width={'20px'}
+										height="20px"
+										width="20px"
 										loading="lazy"
 										onError={(e) => {
 											e.currentTarget.src = '/assets/placeholder.png'

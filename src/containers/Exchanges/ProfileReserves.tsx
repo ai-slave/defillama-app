@@ -20,7 +20,7 @@ function ReserveStatStrip({ profile }: { profile: ExchangeProfileModel }) {
 	const group = profile.metadata.groups.find((candidate) => candidate.key === 'proof_of_reserves')
 	if (!group) return null
 
-	const items: InlineStatStripItem[] = []
+	const items: Array<InlineStatStripItem> = []
 	for (const key of RESERVE_STAT_KEYS) {
 		const field = group.fields.find((candidate) => candidate.key === key)
 		if (!field || typeof field.value !== 'number') continue

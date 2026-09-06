@@ -8,8 +8,8 @@ function increment(counts: Map<string, number>, value: string): void {
 	counts.set(value, (counts.get(value) ?? 0) + 1)
 }
 
-function toSortedMix(counts: Map<string, number>): RWAPlatformMixRow[] {
-	const rows: RWAPlatformMixRow[] = []
+function toSortedMix(counts: Map<string, number>): Array<RWAPlatformMixRow> {
+	const rows: Array<RWAPlatformMixRow> = []
 	for (const [name, count] of counts) rows.push({ name, count })
 	rows.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
 	return rows
@@ -33,21 +33,21 @@ type RWAPlatformStats = Pick<IRWAStatsResponse, 'byPlatform'>
 export function buildRWAPlatformPeerRows(
 	platformsIndex: RWAPlatformsIndex,
 	stats: RWAPlatformStats
-): RWAPlatformPeerRow[] {
+): Array<RWAPlatformPeerRow> {
 	const assetCountsBySlug = new Map<string, number>()
 	for (const name in stats.byPlatform) {
 		const slices = stats.byPlatform[name]
 		if (!slices) continue
 		assetCountsBySlug.set(rwaSlug(name), slices.base.assetCount + slices.stablecoinsOnly.assetCount)
 	}
-	const metas: RWAPlatformMeta[] = []
+	const metas: Array<RWAPlatformMeta> = []
 	for (const slug in platformsIndex.platforms) {
 		const meta = platformsIndex.platforms[slug]
 		if (meta && meta.onchainAum > 0) metas.push(meta)
 	}
 	metas.sort((a, b) => b.onchainAum - a.onchainAum || a.name.localeCompare(b.name))
 
-	const peers: RWAPlatformPeerRow[] = []
+	const peers: Array<RWAPlatformPeerRow> = []
 	for (let index = 0; index < metas.length; index++) {
 		const meta = metas[index]
 		if (!meta) continue
@@ -81,7 +81,7 @@ export function buildRWAPlatformPageData({
 }
 
 export function buildRWAPlatformAssetSummary(
-	assets: RWAPlatformCurrentAsset[],
+	assets: Array<RWAPlatformCurrentAsset>,
 	platformSlug: string
 ): RWAPlatformAssetSummary {
 	const categoryCounts = new Map<string, number>()

@@ -9,13 +9,13 @@ interface ILink {
 }
 
 interface IRowLinksProps {
-	links: ILink[]
+	links: Array<ILink>
 	name?: string
 	activeLink?: string
 	alternativeOthersText?: string
 }
 
-const EMPTY_LINKS: ILink[] = []
+const EMPTY_LINKS: Array<ILink> = []
 const ROW_WRAP_TOLERANCE_PX = 1
 const RESIZE_DEBOUNCE_MS = 100
 const SSR_LINK_LIMIT = 20
@@ -34,7 +34,7 @@ const INITIAL_OVERFLOW_STATE: OverflowState = {
 }
 
 interface CachedLayout {
-	linkWidths: number[]
+	linkWidths: Array<number>
 	gap: number
 	containerPadding: number
 }
@@ -76,7 +76,7 @@ function overflowReducer(state: OverflowState, action: OverflowAction): Overflow
 	}
 }
 
-function finiteOr(...values: number[]): number {
+function finiteOr(...values: Array<number>): number {
 	for (const v of values) if (Number.isFinite(v)) return v
 	return 0
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ParentProtocolLite, ProtocolLite, ProtocolsResponse } from '../api.types'
 
 const mocks = vi.hoisted(() => ({
@@ -71,8 +71,8 @@ const response = ({
 	protocols,
 	parentProtocols
 }: {
-	protocols: ProtocolLite[]
-	parentProtocols: ParentProtocolLite[]
+	protocols: Array<ProtocolLite>
+	parentProtocols: Array<ParentProtocolLite>
 }): ProtocolsResponse => ({
 	protocols,
 	parentProtocols,
@@ -99,7 +99,7 @@ beforeEach(() => {
 })
 
 describe('ProtocolLists queries', () => {
-	it.each([
+	test.each([
 		['funding rounds', () => mocks.fetchRaises.mockRejectedValueOnce(new Error('raises unavailable'))],
 		['claimable airdrops', () => mocks.fetchAirdropsConfig.mockRejectedValueOnce(new Error('airdrops unavailable'))]
 	])('does not publish potential-airdrop membership when %s exclusions fail', async (_source, fail) => {
@@ -109,7 +109,7 @@ describe('ProtocolLists queries', () => {
 		await expect(getAirdropsProtocols()).rejects.toThrow('unavailable')
 	})
 
-	it.each([false, true])('sums disclosed rounds regardless of order (reversed: %s)', async (reversed) => {
+	test.each([false, true])('sums disclosed rounds regardless of order (reversed: %s)', async (reversed) => {
 		mocks.fetchProtocols.mockResolvedValue(
 			response({
 				protocols: [
@@ -139,7 +139,7 @@ describe('ProtocolLists queries', () => {
 		])
 	})
 
-	it('preserves null and zero extra TVL while grouping only canonical multi-child parents', async () => {
+	test('preserves null and zero extra TVL while grouping only canonical multi-child parents', async () => {
 		mocks.fetchProtocols.mockResolvedValue(
 			response({
 				protocols: [
@@ -201,7 +201,7 @@ describe('ProtocolLists queries', () => {
 		expect(result?.protocols.find((protocol) => protocol.name === 'Zero Protocol')?.value).toBe(0)
 	})
 
-	it('uses exact parent IDs for token metrics and keeps unknown or sole children public', async () => {
+	test('uses exact parent IDs for token metrics and keeps unknown or sole children public', async () => {
 		mocks.fetchProtocols.mockResolvedValue(
 			response({
 				protocols: [

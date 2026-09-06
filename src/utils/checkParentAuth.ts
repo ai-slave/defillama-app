@@ -17,7 +17,7 @@ const PARENT_ORIGIN = process.env.NEXT_PUBLIC_PARENT_ORIGIN ?? 'https://defillam
 /** Full URL of the bridge page served by the parent. */
 const BRIDGE_URL = `${PARENT_ORIGIN}/auth-bridge`
 
-const TIMEOUT_MS = 3_000
+const TIMEOUT_MS = 3000
 
 /**
  * Ask the parent site whether the visitor is logged in.

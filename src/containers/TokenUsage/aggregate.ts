@@ -2,7 +2,7 @@ import type { ProtocolTokenUsageData, RawProtocolTokenUsageEntry } from './api.t
 
 interface TokenUsageResponse {
 	symbol: string
-	data: readonly RawProtocolTokenUsageEntry[]
+	data: ReadonlyArray<RawProtocolTokenUsageEntry>
 }
 
 /**
@@ -11,9 +11,9 @@ interface TokenUsageResponse {
  * Number coercion and Object.values allocations.
  */
 export function aggregateProtocolTokenUsage(
-	responses: readonly TokenUsageResponse[],
+	responses: ReadonlyArray<TokenUsageResponse>,
 	includeCex: boolean
-): ProtocolTokenUsageData[] {
+): Array<ProtocolTokenUsageData> {
 	const protocols = new Map<string, ProtocolTokenUsageData>()
 
 	for (const { symbol, data } of responses) {

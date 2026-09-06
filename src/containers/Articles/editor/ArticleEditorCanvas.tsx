@@ -18,7 +18,7 @@ import { Icon } from './ArticleEditorIcon'
 
 type LinkEditState = { url: string; newTab: boolean } | null
 
-const CALLOUT_TONES: ArticleCalloutTone[] = ['note', 'data', 'warning', 'pullquote', 'bio']
+const CALLOUT_TONES: Array<ArticleCalloutTone> = ['note', 'data', 'warning', 'pullquote', 'bio']
 const CALLOUT_TONE_LABELS: Record<ArticleCalloutTone, string> = {
 	note: 'Note',
 	data: 'Data',
@@ -29,12 +29,12 @@ const CALLOUT_TONE_LABELS: Record<ArticleCalloutTone, string> = {
 
 type ArticleEditorCanvasProps = {
 	activeEntity: ActiveEntityLink | null
-	blockItems: BlockItem[]
+	blockItems: Array<BlockItem>
 	editor: Editor | null
 	flags: EditorFlags
 	linkEdit: LinkEditState
 	linkInputRef: RefObject<HTMLInputElement | null>
-	markButtons: MarkButton[]
+	markButtons: Array<MarkButton>
 	readMins: number
 	wordCount: number
 	applyLink: (raw: string, newTab: boolean) => void

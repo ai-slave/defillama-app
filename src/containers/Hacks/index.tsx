@@ -166,13 +166,13 @@ export const HacksContainer = ({
 	const maxLostVal = parseNumberQueryParam(maxLost)
 
 	const hasActiveFilters =
-		typeof chainQ !== 'undefined' ||
-		typeof excludeChain !== 'undefined' ||
-		typeof techQ !== 'undefined' ||
-		typeof excludeTech !== 'undefined' ||
-		typeof classQ !== 'undefined' ||
-		typeof excludeClass !== 'undefined' ||
-		typeof timeQ !== 'undefined' ||
+		chainQ !== undefined ||
+		excludeChain !== undefined ||
+		techQ !== undefined ||
+		excludeTech !== undefined ||
+		classQ !== undefined ||
+		excludeClass !== undefined ||
+		timeQ !== undefined ||
 		minLostVal != null ||
 		maxLostVal != null
 
@@ -181,9 +181,9 @@ export const HacksContainer = ({
 		const techIncludeNone = isParamNone(techQ)
 		const classIncludeNone = isParamNone(classQ)
 
-		const chainFilterEnabled = typeof chainQ !== 'undefined' || typeof excludeChain !== 'undefined'
-		const techFilterEnabled = typeof techQ !== 'undefined' || typeof excludeTech !== 'undefined'
-		const classFilterEnabled = typeof classQ !== 'undefined' || typeof excludeClass !== 'undefined'
+		const chainFilterEnabled = chainQ !== undefined || excludeChain !== undefined
+		const techFilterEnabled = techQ !== undefined || excludeTech !== undefined
+		const classFilterEnabled = classQ !== undefined || excludeClass !== undefined
 
 		const chainKeys = chainFilterEnabled ? new Set(selectedChains) : undefined
 		const techKeys = techFilterEnabled ? new Set(selectedTechniques) : undefined

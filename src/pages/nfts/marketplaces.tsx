@@ -76,7 +76,7 @@ function Marketplaces({
 		<Layout
 			title="NFT Marketplace Volume & Rankings - DefiLlama"
 			description="Compare NFT marketplace volume and trading activity. Track OpenSea, Blur, and other marketplaces by daily and weekly volume."
-			canonicalUrl={`/nfts/marketplaces`}
+			canonicalUrl="/nfts/marketplaces"
 			pageName={pageName}
 		>
 			<Panel padding="none">

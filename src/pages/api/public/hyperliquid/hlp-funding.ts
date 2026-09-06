@@ -28,7 +28,7 @@ export interface HlpFundingData {
 	window: '24h' | '7d' | '30d'
 	totalUsdc: number
 	byVault: Record<HlpVaultKey, number>
-	events: HlpFundingEvent[]
+	events: Array<HlpFundingEvent>
 }
 
 function normalizeWindow(window: string | undefined): '24h' | '7d' | '30d' {
@@ -36,7 +36,7 @@ function normalizeWindow(window: string | undefined): '24h' | '7d' | '30d' {
 	return '24h'
 }
 
-function mapFunding(raw: RawFundingEvent[], vault: HlpVaultKey): HlpFundingEvent[] {
+function mapFunding(raw: Array<RawFundingEvent>, vault: HlpVaultKey): Array<HlpFundingEvent> {
 	return raw
 		.filter((event) => event?.delta?.type === 'funding')
 		.map((event) => ({
@@ -61,8 +61,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
 	try {
 		const [fundingA, fundingB] = await Promise.all([
-			safePostInfo<RawFundingEvent[]>({ type: 'userFunding', user: HLP_VAULTS.A, startTime }, [], 9000),
-			safePostInfo<RawFundingEvent[]>({ type: 'userFunding', user: HLP_VAULTS.B, startTime }, [], 9000)
+			safePostInfo<Array<RawFundingEvent>>({ type: 'userFunding', user: HLP_VAULTS.A, startTime }, [], 9000),
+			safePostInfo<Array<RawFundingEvent>>({ type: 'userFunding', user: HLP_VAULTS.B, startTime }, [], 9000)
 		])
 
 		const mappedA = mapFunding(fundingA, 'A')

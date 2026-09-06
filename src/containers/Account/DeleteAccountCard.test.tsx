@@ -4,7 +4,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { DeleteAccountCard } from './DeleteAccountCard'
@@ -140,7 +140,7 @@ async function continueToConfirmation() {
 	await waitFor(() => expect(document.querySelector<HTMLInputElement>('#delete-account-confirmation')).not.toBeNull())
 }
 
-it('deletes a typed-confirmation account with the session that opened the flow', async () => {
+test('deletes a typed-confirmation account with the session that opened the flow', async () => {
 	await openDialog()
 	await continueToConfirmation()
 
@@ -165,7 +165,7 @@ it('deletes a typed-confirmation account with the session that opened the flow',
 	expect(google.revokeCredentialSharing).not.toHaveBeenCalled()
 })
 
-it('requires the email code and sends it with the final deletion request', async () => {
+test('requires the email code and sends it with the final deletion request', async () => {
 	eligibilityResponse = () => json({ ...eligibility, requiredConfirmation: otpConfirmation })
 	requestResponse = () => json({ message: 'Deletion code sent', requiredConfirmation: otpConfirmation })
 	await openDialog()
@@ -185,7 +185,7 @@ it('requires the email code and sends it with the final deletion request', async
 	expect(calls.at(-1)?.body).toEqual({ confirmation: 'DELETE', otp: '123456' })
 })
 
-it('shows team blockers without starting the destructive flow', async () => {
+test('shows team blockers without starting the destructive flow', async () => {
 	eligibilityResponse = () =>
 		json({
 			...eligibility,
@@ -204,7 +204,7 @@ it('shows team blockers without starting the destructive flow', async () => {
 	expect(calls).toHaveLength(1)
 })
 
-it('directs Apple reauthentication to the mobile app', async () => {
+test('directs Apple reauthentication to the mobile app', async () => {
 	eligibilityResponse = () => json({ ...eligibility, requiredConfirmation: appleConfirmation })
 	await openDialog()
 
@@ -213,7 +213,7 @@ it('directs Apple reauthentication to the mobile app', async () => {
 	expect(calls).toHaveLength(1)
 })
 
-it('keeps the user signed in when deletion fails', async () => {
+test('keeps the user signed in when deletion fails', async () => {
 	deleteResponse = () => json({ error: 'Failed to remove external subscriptions' }, 500)
 	await openDialog()
 	await continueToConfirmation()
@@ -229,7 +229,7 @@ it('keeps the user signed in when deletion fails', async () => {
 	expect(router.replace).not.toHaveBeenCalled()
 })
 
-it.each([
+test.each([
 	['does not report completion', { status: 'processing', deletedAt: '2026-08-30T00:00:00.000Z' }],
 	['omits the deletion time', { status: 'completed' }],
 	['returns an invalid deletion time', { status: 'completed', deletedAt: 'not-a-date' }]
@@ -249,7 +249,7 @@ it.each([
 	expect(router.replace).not.toHaveBeenCalled()
 })
 
-it('revokes Google credential sharing once after confirmed deletion', async () => {
+test('revokes Google credential sharing once after confirmed deletion', async () => {
 	const revocation = deferred<void>()
 	auth.user.authMethod = 'google'
 	google.revokeCredentialSharing.mockReturnValueOnce(revocation.promise)
@@ -269,7 +269,7 @@ it('revokes Google credential sharing once after confirmed deletion', async () =
 	await waitFor(() => expect(toaster.success).toHaveBeenCalledWith('Your account has been deleted'))
 })
 
-it('logs out after confirmed deletion when Google revocation fails', async () => {
+test('logs out after confirmed deletion when Google revocation fails', async () => {
 	const revocationError = new Error('Google is unavailable')
 	vi.spyOn(console, 'error').mockImplementation(() => undefined)
 	auth.user.authMethod = 'google'
@@ -290,7 +290,7 @@ it('logs out after confirmed deletion when Google revocation fails', async () =>
 	expect(router.replace).toHaveBeenCalledWith('/')
 })
 
-it('ignores a completed deletion response after the session changes', async () => {
+test('ignores a completed deletion response after the session changes', async () => {
 	const pendingResponse = deferred<Response>()
 	deleteResponse = () => pendingResponse.promise
 	await openDialog()
@@ -313,7 +313,7 @@ it('ignores a completed deletion response after the session changes', async () =
 	expect(google.revokeCredentialSharing).not.toHaveBeenCalled()
 })
 
-it('logs out the deleted principal after its token refreshes', async () => {
+test('logs out the deleted principal after its token refreshes', async () => {
 	const pendingResponse = deferred<Response>()
 	deleteResponse = () => pendingResponse.promise
 	await openDialog()
@@ -339,7 +339,7 @@ it('logs out the deleted principal after its token refreshes', async () => {
 	expect(router.replace).toHaveBeenCalledWith('/')
 })
 
-it('prevents duplicate deletion submissions while the request is pending', async () => {
+test('prevents duplicate deletion submissions while the request is pending', async () => {
 	const pendingResponse = deferred<Response>()
 	deleteResponse = () => pendingResponse.promise
 	await openDialog()
@@ -360,7 +360,7 @@ it('prevents duplicate deletion submissions while the request is pending', async
 	await waitFor(() => expect(auth.logout).toHaveBeenCalledOnce())
 })
 
-it('does not delete through a dialog that belongs to an older session', async () => {
+test('does not delete through a dialog that belongs to an older session', async () => {
 	await openDialog()
 	await continueToConfirmation()
 

@@ -54,9 +54,9 @@ export function createChartBuilderTooltipFormatter({
 		if (items.length === 0) return ''
 
 		const rawAxisValue = getTooltipAxisValue(items[0])
-		const axisValue = rawAxisValue < 10_000_000_000 ? rawAxisValue * 1_000 : rawAxisValue
+		const axisValue = rawAxisValue < 10_000_000_000 ? rawAxisValue * 1000 : rawAxisValue
 		const chartdate = Number.isFinite(axisValue) ? formatTooltipChartDate(axisValue, groupBy) : ''
-		const rows: ChartBuilderTooltipRow[] = []
+		const rows: Array<ChartBuilderTooltipRow> = []
 		let explicitOthers: ChartBuilderTooltipRow | null = null
 		let total = 0
 

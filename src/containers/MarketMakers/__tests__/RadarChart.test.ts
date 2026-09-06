@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildRadarOption } from '../RadarChart'
 
 describe('buildRadarOption', () => {
-	it('lists the six indicators in order each capped at 10', () => {
+	test('lists the six indicators in order each capped at 10', () => {
 		const option = buildRadarOption({
 			composite: 9,
 			tradingKpis: 8,
@@ -11,7 +11,7 @@ describe('buildRadarOption', () => {
 			uptime: 5,
 			integrationLevel: 4
 		})
-		const radar = option.radar as { indicator: { name: string; max: number }[] }
+		const radar = option.radar as { indicator: Array<{ name: string; max: number }> }
 		expect(radar.indicator.map((i) => i.name)).toEqual([
 			'Composite Score',
 			'Trading KPIs',
@@ -23,7 +23,7 @@ describe('buildRadarOption', () => {
 		expect(radar.indicator.every((i) => i.max === 10)).toBe(true)
 	})
 
-	it('maps scores into the data array in indicator order', () => {
+	test('maps scores into the data array in indicator order', () => {
 		const option = buildRadarOption({
 			composite: 9,
 			tradingKpis: 8,
@@ -32,11 +32,11 @@ describe('buildRadarOption', () => {
 			uptime: 5,
 			integrationLevel: 4
 		})
-		const series = option.series as { data: { value: number[] }[] }[]
+		const series = option.series as Array<{ data: Array<{ value: Array<number> }> }>
 		expect(series[0].data[0].value).toEqual([9, 8, 7, 6, 5, 4])
 	})
 
-	it('coerces null scores to 0 in the data array', () => {
+	test('coerces null scores to 0 in the data array', () => {
 		const option = buildRadarOption({
 			composite: null,
 			tradingKpis: null,
@@ -45,7 +45,7 @@ describe('buildRadarOption', () => {
 			uptime: null,
 			integrationLevel: null
 		})
-		const series = option.series as { data: { value: number[] }[] }[]
+		const series = option.series as Array<{ data: Array<{ value: Array<number> }> }>
 		expect(series[0].data[0].value).toEqual([0, 0, 0, 0, 0, 0])
 	})
 })

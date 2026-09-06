@@ -52,14 +52,14 @@ import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/
 const AVAILABLE_VARIABLES = getAvailableVariables()
 const AVAILABLE_VARIABLES_BY_KEY = new Map(AVAILABLE_VARIABLES.map((variable) => [variable.key, variable]))
 const SAMPLE_METRICS_BY_KEY = new Map(Object.entries(SAMPLE_METRICS))
-const EMPTY_CUSTOM_COLUMNS: CustomColumnDefinition[] = []
+const EMPTY_CUSTOM_COLUMNS: Array<CustomColumnDefinition> = []
 
 interface ColumnManagerProps {
-	rowHeaders: readonly UnifiedRowHeaderType[]
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>
 	columnOrder: ColumnOrderState
 	columnVisibility: VisibilityState
 	onChange: (columnOrder: ColumnOrderState, columnVisibility: VisibilityState) => void
-	customColumns?: CustomColumnDefinition[]
+	customColumns?: Array<CustomColumnDefinition>
 	onAddCustomColumn?: (column: CustomColumnDefinition) => void
 	onUpdateCustomColumn?: (id: string, updates: Partial<CustomColumnDefinition>) => void
 	onRemoveCustomColumn?: (id: string) => void
@@ -139,7 +139,7 @@ interface AutocompleteSuggestion {
 
 const NAME_COLUMN: ColumnMeta = { id: 'name', header: 'Name', group: 'meta' }
 
-const getColumnMeta = (id: string, customColumns?: CustomColumnDefinition[]): ColumnMeta | null => {
+const getColumnMeta = (id: string, customColumns?: Array<CustomColumnDefinition>): ColumnMeta | null => {
 	if (id === 'name') return NAME_COLUMN
 	if (id.startsWith('custom_')) {
 		const customCol = customColumns?.find((c) => c.id === id)
@@ -158,14 +158,14 @@ const getColumnMeta = (id: string, customColumns?: CustomColumnDefinition[]): Co
 }
 
 const buildAllColumns = (
-	rowHeaders: readonly UnifiedRowHeaderType[],
-	customColumns?: CustomColumnDefinition[]
-): ColumnMeta[] => {
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
+	customColumns?: Array<CustomColumnDefinition>
+): Array<ColumnMeta> => {
 	const dictionaryMetas = UNIFIED_TABLE_COLUMN_DICTIONARY.filter((column) => isColumnSupported(column.id, rowHeaders))
 		.map(({ id }) => getColumnMeta(id))
 		.filter((meta): meta is ColumnMeta => Boolean(meta))
 
-	const customMetas: ColumnMeta[] = (customColumns ?? EMPTY_CUSTOM_COLUMNS).map((col) => ({
+	const customMetas: Array<ColumnMeta> = (customColumns ?? EMPTY_CUSTOM_COLUMNS).map((col) => ({
 		id: col.id,
 		header: col.name,
 		group: 'custom'
@@ -306,7 +306,7 @@ export function ColumnManager({
 	}, [allColumns, columnVisibility])
 
 	const selectedColumns = useMemo(() => {
-		const selected: string[] = []
+		const selected: Array<string> = []
 		const addedIds = new Set<string>()
 		for (const id of columnOrder) {
 			if (id === 'name') continue
@@ -341,7 +341,7 @@ export function ColumnManager({
 		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
 	)
 
-	const applyChanges = (nextSelected: string[]) => {
+	const applyChanges = (nextSelected: Array<string>) => {
 		const nextSelectedSet = new Set(nextSelected)
 		const remaining = allColumns.map((c) => c.id).filter((id) => id !== 'name' && !nextSelectedSet.has(id))
 		const nextOrder: ColumnOrderState = ['name', ...nextSelected, ...remaining]
@@ -387,7 +387,7 @@ export function ColumnManager({
 
 	const availableVariables = AVAILABLE_VARIABLES
 
-	const autocompleteSuggestions = useMemo<AutocompleteSuggestion[]>(() => {
+	const autocompleteSuggestions = useMemo<Array<AutocompleteSuggestion>>(() => {
 		return [
 			...availableVariables.map((v) => ({
 				type: 'variable' as const,
@@ -499,7 +499,7 @@ export function ColumnManager({
 		}
 		const currentWord = newValue.slice(wordStart, cursorPos)
 
-		if (currentWord.length >= 1) {
+		if (currentWord.length > 0) {
 			setAutocompleteFilter(currentWord)
 			setShowAutocomplete(true)
 			setAutocompleteIndex(-1)
@@ -1114,7 +1114,7 @@ function SortingSection({
 }: {
 	currentSortColumn: string
 	isDescending: boolean
-	selectableColumns: ColumnMeta[]
+	selectableColumns: Array<ColumnMeta>
 	onColumnChange: (value: string) => void
 	onDirectionChange: (desc: boolean) => void
 	onReset?: (() => void) | undefined
@@ -1144,7 +1144,7 @@ function SortingSection({
 					<Popover
 						store={popover}
 						modal={false}
-						portal={true}
+						portal
 						flip={false}
 						gutter={4}
 						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg"

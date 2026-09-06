@@ -14,7 +14,7 @@ export interface MarketTreemapLeaf {
 export interface MarketTreemapGroup {
 	name: string
 	value: [number, null]
-	children: MarketTreemapLeaf[]
+	children: Array<MarketTreemapLeaf>
 }
 
 export type MarketTreemapNode = MarketTreemapLeaf | MarketTreemapGroup

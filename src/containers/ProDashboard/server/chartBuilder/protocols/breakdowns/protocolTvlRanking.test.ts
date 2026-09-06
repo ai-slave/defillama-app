@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { buildProtocolTvlRanking, fetchProtocolTvlRankingRows, type ProtocolTvlRankingRow } from './protocolTvlRanking'
 
 const { anyMock } = vi.hoisted(() => ({ anyMock: vi.fn() }))
@@ -16,7 +16,7 @@ function row(overrides: Partial<ProtocolTvlRankingRow>): ProtocolTvlRankingRow {
 	}
 }
 
-function requireMockCall(index: number): unknown[] {
+function requireMockCall(index: number): Array<unknown> {
 	const call = anyMock.mock.calls[index]
 	if (!call) throw new Error(`Expected database call ${index}`)
 	return call
@@ -27,12 +27,12 @@ describe('protocol TVL Lens ranking', () => {
 		anyMock.mockReset().mockResolvedValue([])
 	})
 
-	it('ranks parent sums while keeping parent-excluded children standalone', () => {
+	test('ranks parent sums while keeping parent-excluded children standalone', () => {
 		const result = buildProtocolTvlRanking({
 			rows: [
 				row({ protocolSlug: 'child-a', parentProtocolSlug: 'parent', tvl: 60 }),
 				row({ protocolSlug: 'child-b', parentProtocolSlug: 'parent', tvl: 50 }),
-				row({ protocolSlug: 'excluded-child', parentProtocolSlug: 'parent', tvl: 1_000, excludeTvlFromParent: true }),
+				row({ protocolSlug: 'excluded-child', parentProtocolSlug: 'parent', tvl: 1000, excludeTvlFromParent: true }),
 				row({ protocolSlug: 'standalone', tvl: 100 })
 			],
 			topN: 3,
@@ -42,13 +42,13 @@ describe('protocol TVL Lens ranking', () => {
 		})
 
 		expect(result.items).toEqual([
-			{ protocolSlug: 'excluded-child', parentProtocolSlug: null, value: 1_000, isParent: false },
+			{ protocolSlug: 'excluded-child', parentProtocolSlug: null, value: 1000, isParent: false },
 			{ protocolSlug: 'parent', parentProtocolSlug: 'parent', value: 110, isParent: true },
 			{ protocolSlug: 'standalone', parentProtocolSlug: null, value: 100, isParent: false }
 		])
 	})
 
-	it('applies canonical Lens categories before ranking and preserves excluded children as standalone rows', () => {
+	test('applies canonical Lens categories before ranking and preserves excluded children as standalone rows', () => {
 		const rows = [
 			row({ protocolSlug: 'dex', category: 'Dexs', tvl: 20, excludeTvlFromParent: true }),
 			row({ protocolSlug: 'lending', category: 'Lending', tvl: 30 })
@@ -65,7 +65,7 @@ describe('protocol TVL Lens ranking', () => {
 		expect(result.items.map((item) => item.protocolSlug)).toEqual(['dex'])
 	})
 
-	it('uses global current views for all-chain ranking', async () => {
+	test('uses global current views for all-chain ranking', async () => {
 		await fetchProtocolTvlRankingRows({ chains: ['All'], chainFilterMode: 'include' })
 		const [query, params] = requireMockCall(0)
 
@@ -74,7 +74,7 @@ describe('protocol TVL Lens ranking', () => {
 		expect(params).toEqual([])
 	})
 
-	it('expresses selected-chain include and exclusion exactly in Lens SQL', async () => {
+	test('expresses selected-chain include and exclusion exactly in Lens SQL', async () => {
 		await fetchProtocolTvlRankingRows({ chains: ['Arbitrum One'], chainFilterMode: 'include' })
 		await fetchProtocolTvlRankingRows({ chains: ['Ethereum', 'Base'], chainFilterMode: 'exclude' })
 		const [includeQuery, includeParams] = requireMockCall(0)

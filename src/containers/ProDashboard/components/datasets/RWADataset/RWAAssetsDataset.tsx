@@ -114,14 +114,14 @@ const getAssetsCoreRowModel = getCoreRowModel<RWAAssetTableRow>()
 const getAssetsSortedRowModel = getSortedRowModel<RWAAssetTableRow>()
 const getAssetsFilteredRowModel = getFilteredRowModel<RWAAssetTableRow>()
 const getAssetsPaginationRowModel = getPaginationRowModel<RWAAssetTableRow>()
-const EMPTY_DATA: RWAAssetTableRow[] = []
+const EMPTY_DATA: Array<RWAAssetTableRow> = []
 const STALE_TIME = 5 * 60 * 1000
 
 function useRWAAssetsTableData(chain?: string) {
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
 	const selectRows = useCallback(
-		(data: IFetchedRWAProject[]) =>
+		(data: Array<IFetchedRWAProject>) =>
 			chain === undefined ? buildRWAAllChainsAssetTableRows(data) : buildRWAChainAssetTableRows(data, chain),
 		[chain]
 	)

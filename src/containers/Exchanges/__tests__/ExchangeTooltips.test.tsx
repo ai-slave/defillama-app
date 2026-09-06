@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { EuAvailabilityValue } from '../ComplianceCells'
 import { MicaDepthValue } from '../MicaCells'
 import type { ExchangeEeaOrderbookOwnership, MicaVenueModel } from '../models'
@@ -50,7 +50,7 @@ function micaVenue(): MicaVenueModel {
 }
 
 describe('exchange compliance and depth tooltips', () => {
-	it.each<[ExchangeEeaOrderbookOwnership, string]>([
+	test.each<[ExchangeEeaOrderbookOwnership, string]>([
 		[{ mode: 'own' }, 'Uses dedicated regional orderbooks.'],
 		[{ mode: 'shared' }, 'Shares the global orderbook.'],
 		[
@@ -65,7 +65,7 @@ describe('exchange compliance and depth tooltips', () => {
 		expect(html).toContain(expected)
 	})
 
-	it('uses only the selected segment partial-coverage flag', () => {
+	test('uses only the selected segment partial-coverage flag', () => {
 		const venue = micaVenue()
 		const spot = renderToStaticMarkup(
 			<MicaDepthValue row={venue} product="spot" value={7} bid={3} ask={4} helperText="Spot helper" />
@@ -89,7 +89,7 @@ describe('exchange compliance and depth tooltips', () => {
 		expect(completeLinear).not.toContain('Partial coverage')
 	})
 
-	it('renders linear depth as inapplicable for an inverse-only venue', () => {
+	test('renders linear depth as inapplicable for an inverse-only venue', () => {
 		const venue = micaVenue()
 		venue.products = ['inverse_perp']
 

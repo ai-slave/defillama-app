@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getProtocolRowMembership } from './protocolRowMembership'
 
 describe('getProtocolRowMembership', () => {
-	it('gives metric presets a canonical source membership and leaves custom tables broad', () => {
+	test('gives metric presets a canonical source membership and leaves custom tables broad', () => {
 		expect(getProtocolRowMembership({ activePresetId: 'open-interest-protocols' })).toEqual({
 			kind: 'base-metric',
 			family: 'open-interest'

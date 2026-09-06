@@ -14,7 +14,7 @@ import {
 import { BasicLink } from './Link'
 
 interface IMenuProps {
-	options: string[] | string
+	options: Array<string> | string
 	name: string
 	isExternal?: boolean
 	getItemAttributes?: (value: string) => Record<string, string>

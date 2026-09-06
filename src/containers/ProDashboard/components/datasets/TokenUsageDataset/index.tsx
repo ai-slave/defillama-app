@@ -26,8 +26,8 @@ import { buildTokenUsageSummary } from './summary'
 import { type TokenOption, useTokenSearch } from './useTokenSearch'
 import { useTokenUsageData } from './useTokenUsageData'
 
-const EMPTY_TOKEN_OPTIONS: TokenOption[] = []
-const EMPTY_USAGE_DATA: ProtocolTokenUsageData[] = []
+const EMPTY_TOKEN_OPTIONS: Array<TokenOption> = []
+const EMPTY_USAGE_DATA: Array<ProtocolTokenUsageData> = []
 const getTokenUsageCoreRowModel = getCoreRowModel<ProtocolTokenUsageData>()
 const getTokenUsageSortedRowModel = getSortedRowModel<ProtocolTokenUsageData>()
 const getTokenUsagePaginationRowModel = getPaginationRowModel<ProtocolTokenUsageData>()
@@ -179,7 +179,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 
 	const downloadCSV = () => {
 		const isMultiToken = tokenSymbols.length > 1
-		const headers: CsvCell[] = ['Protocol', 'Category']
+		const headers: Array<CsvCell> = ['Protocol', 'Category']
 
 		if (isMultiToken) {
 			for (const symbol of tokenSymbols) {
@@ -188,9 +188,9 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 		}
 		headers.push('Total Amount (USD)')
 
-		const csv: CsvCell[][] = [headers]
+		const csv: Array<Array<CsvCell>> = [headers]
 		for (const row of table.getPrePaginationRowModel().rows) {
-			const data: CsvCell[] = [row.original.name, row.original.category ?? '']
+			const data: Array<CsvCell> = [row.original.name, row.original.category ?? '']
 
 			if (isMultiToken) {
 				for (const symbol of tokenSymbols) {

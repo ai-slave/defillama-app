@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { RewardsApiRecord, RewardsPopularity } from '../api.types'
 import { buildRewardsPageData } from '../queries.server'
 import { apiRecord } from './fixtures'
@@ -7,16 +7,16 @@ vi.mock('~/utils/telemetry', () => ({ recordDomainEvent: vi.fn() }))
 const rankings: RewardsPopularity = { version: 1, startAt: 0, endAt: 1, viewsByPath: {} }
 
 describe('Rewards popularity boundary', () => {
-	it('rejects a catalog served by the old producer with omitted project paths', () => {
+	test('rejects a catalog served by the old producer with omitted project paths', () => {
 		const legacy: Partial<RewardsApiRecord> = apiRecord({})
 		delete legacy.project_path
-		const entries: RewardsApiRecord[] = JSON.parse(JSON.stringify([legacy]))
+		const entries: Array<RewardsApiRecord> = JSON.parse(JSON.stringify([legacy]))
 		expect(() => buildRewardsPageData(entries, {}, { version: 1, startAt: 0, endAt: 1, viewsByPath: {} })).toThrow(
 			'Rewards catalog is missing project_path'
 		)
 	})
 
-	it('shares parent popularity without changing child navigation or CEX suppression', () => {
+	test('shares parent popularity without changing child navigation or CEX suppression', () => {
 		const { programs } = buildRewardsPageData(
 			[
 				apiRecord({ program_id: 'a', defillama_id: 'child', project_path: '/protocol/example' }),
@@ -32,7 +32,7 @@ describe('Rewards popularity boundary', () => {
 			['c', null]
 		])
 	})
-	it('orders string-ranked featured programs before the popularity-ranked catalog without returning ranks or counts', () => {
+	test('orders string-ranked featured programs before the popularity-ranked catalog without returning ranks or counts', () => {
 		const { programs } = buildRewardsPageData(
 			[
 				apiRecord({
@@ -96,7 +96,7 @@ describe('Rewards popularity boundary', () => {
 		expect(programs.every((p) => !('featuredRank' in p) && !('pageViews' in p))).toBe(true)
 	})
 
-	it('rejects invalid and duplicate featured ranks', () => {
+	test('rejects invalid and duplicate featured ranks', () => {
 		expect(() =>
 			buildRewardsPageData([apiRecord({ program_id: 'invalid', featured_rank: '0' })], {}, rankings)
 		).toThrow('Rewards program invalid has invalid featured_rank 0')

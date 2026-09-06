@@ -165,7 +165,7 @@ export function VaultRiskSection({ data, poolName, chain, explorers, standalone 
 
 	// Memoized so RiskTabs' hashchange effect doesn't re-subscribe on unrelated re-renders;
 	// above the early returns to keep hook order stable.
-	const tabs = useMemo<RiskTab[]>(() => {
+	const tabs = useMemo<Array<RiskTab>>(() => {
 		if (!vm) return []
 		return [
 			{

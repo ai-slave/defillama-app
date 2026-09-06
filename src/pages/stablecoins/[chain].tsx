@@ -15,9 +15,9 @@ type StablecoinsByChainRouteParams = {
 }
 
 type StablecoinsByChainPageProps = PeggedOverviewPageData & {
-	availableBackings: string[]
-	availablePegTypes: string[]
-	entityQuestions?: string[]
+	availableBackings: Array<string>
+	availablePegTypes: Array<string>
+	entityQuestions?: Array<string>
 	deprecated?: boolean
 }
 

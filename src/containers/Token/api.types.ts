@@ -19,7 +19,7 @@ export interface TokenRiskBorrowCapacityTokenEntry {
 	asset: TokenRiskBorrowCapacityAsset
 	chain: string
 	totals: TokenRiskBorrowCapacityTotals
-	byProtocol: TokenRiskBorrowCapacityByProtocolEntry[]
+	byProtocol: Array<TokenRiskBorrowCapacityByProtocolEntry>
 }
 
 export interface TokenRiskBorrowCapacityMethodologies {
@@ -36,5 +36,5 @@ export interface TokenRiskBorrowCapacityResponse {
 	methodologies: TokenRiskBorrowCapacityMethodologies
 	timestamp: number
 	hourlyTimestamp: number
-	tokens: TokenRiskBorrowCapacityTokenEntry[]
+	tokens: Array<TokenRiskBorrowCapacityTokenEntry>
 }

@@ -80,9 +80,9 @@ export interface AuditCluster {
 }
 
 export interface HistoryStripVM {
-	incidents: IncidentPoint[]
-	protocolIncidents: ProtocolIncidentPoint[]
-	audits: AuditCluster[]
+	incidents: Array<IncidentPoint>
+	protocolIncidents: Array<ProtocolIncidentPoint>
+	audits: Array<AuditCluster>
 	years: Array<{ x: number; label: string }>
 }
 
@@ -125,9 +125,9 @@ function moneyStory(usdLost: number, usdRecovered: number | null, madeWhole: boo
 // Pure layout, exported for tests. `nowIso` anchors the right edge deterministically so SSR
 // and client render identically; protocol incidents are sized within their own lane.
 export function buildHistoryStrip(
-	audits: Audit[],
-	incidents: HistoryIncident[],
-	protocolIncidents: ProtocolIncidentInput[],
+	audits: Array<Audit>,
+	incidents: Array<HistoryIncident>,
+	protocolIncidents: Array<ProtocolIncidentInput>,
 	nowIso?: string
 ): HistoryStripVM | null {
 	const auditTs = audits
@@ -142,7 +142,7 @@ export function buildHistoryStrip(
 		.map((i) => ({ ts: parseTs(i.date), i }))
 		.filter((e): e is { ts: number; i: ProtocolIncidentInput } => e.ts != null)
 		.sort((a, b) => a.ts - b.ts)
-	if (!auditTs.length && !incidentTs.length && !protoTs.length) return null
+	if (auditTs.length === 0 && incidentTs.length === 0 && protoTs.length === 0) return null
 
 	const all = [...auditTs.map((e) => e.ts), ...incidentTs.map((e) => e.ts), ...protoTs.map((e) => e.ts)]
 	const now = parseTs(nowIso)
@@ -156,7 +156,7 @@ export function buildHistoryStrip(
 	const x = (t: number) => 2 + ((t - min) / (max - min)) * 96
 
 	const maxUsd = Math.max(1, ...incidentTs.map((e) => Math.max(e.i.usdLost, e.i.usdRecovered ?? 0)))
-	const incidentPts: IncidentPoint[] = incidentTs.map(({ ts, i }, idx) => {
+	const incidentPts: Array<IncidentPoint> = incidentTs.map(({ ts, i }, idx) => {
 		const recovered = i.usdRecovered ?? 0
 		const averted = i.usdRecovered !== null && i.usdLost <= 0 && recovered > 0
 		const madeWhole = i.usdRecovered !== null && !averted && i.usdLost > 0 && recovered >= i.usdLost
@@ -175,7 +175,7 @@ export function buildHistoryStrip(
 	})
 
 	const maxProtoUsd = Math.max(1, ...protoTs.map((e) => Math.max(e.i.usdLost, e.i.usdRecovered)))
-	const protoPts: ProtocolIncidentPoint[] = protoTs.map(({ ts, i }, idx) => {
+	const protoPts: Array<ProtocolIncidentPoint> = protoTs.map(({ ts, i }, idx) => {
 		const averted = i.usdLost <= 0 && i.usdRecovered > 0
 		const madeWhole = i.fullyRecovered || (i.usdLost > 0 && i.usdRecovered >= i.usdLost)
 		const money = moneyStory(i.usdLost, i.usdRecovered, madeWhole)
@@ -198,7 +198,7 @@ export function buildHistoryStrip(
 	})
 
 	// Greedy clustering: an audit within CLUSTER_W of the cluster's start joins it.
-	const clusters: AuditCluster[] = []
+	const clusters: Array<AuditCluster> = []
 	let current: {
 		startX: number
 		lastX: number
@@ -448,9 +448,9 @@ export function HistoryStrip({
 	protocolIncidents = [],
 	nowIso
 }: {
-	audits: Audit[]
-	incidents: HistoryIncident[]
-	protocolIncidents?: ProtocolIncidentInput[]
+	audits: Array<Audit>
+	incidents: Array<HistoryIncident>
+	protocolIncidents?: Array<ProtocolIncidentInput>
 	nowIso?: string
 }) {
 	const [selectedKey, setSelectedKey] = useState<string | null>(null)
@@ -492,14 +492,16 @@ export function HistoryStrip({
 	const losses = vm.incidents.filter((p) => p.tone === 'loss').length
 	// Protocol-wide history stays a separate clause so an empty pool record never reads as
 	// "the protocol is clean".
-	const poolPart = vm.incidents.length
-		? `${vm.incidents.length} pool incident${vm.incidents.length === 1 ? '' : 's'}${
-				losses === 0 ? ', depositors made whole every time' : ''
-			}`
-		: 'no pool-level losses recorded'
-	const protoPart = vm.protocolIncidents.length
-		? ` · ${vm.protocolIncidents.length} protocol incident${vm.protocolIncidents.length === 1 ? '' : 's'}`
-		: ''
+	const poolPart =
+		vm.incidents.length > 0
+			? `${vm.incidents.length} pool incident${vm.incidents.length === 1 ? '' : 's'}${
+					losses === 0 ? ', depositors made whole every time' : ''
+				}`
+			: 'no pool-level losses recorded'
+	const protoPart =
+		vm.protocolIncidents.length > 0
+			? ` · ${vm.protocolIncidents.length} protocol incident${vm.protocolIncidents.length === 1 ? '' : 's'}`
+			: ''
 	const summary = `${poolPart}${protoPart} · ${auditCount} audits`
 	const toggle = (key: string) => setSelectedKey((v) => (v === key ? null : key))
 

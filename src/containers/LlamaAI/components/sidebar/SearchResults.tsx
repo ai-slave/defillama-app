@@ -21,7 +21,7 @@ export const SearchResults = memo(function SearchResults({
 	onMatchClick,
 	onSessionClick
 }: {
-	results: SearchResult[]
+	results: Array<SearchResult>
 	isSearching: boolean
 	query: string
 	onMatchClick: (sessionId: string, messageId: string) => void

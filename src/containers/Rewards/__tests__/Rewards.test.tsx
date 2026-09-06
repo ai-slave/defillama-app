@@ -1,8 +1,8 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import Rewards from '..'
 import { program } from './fixtures'
 
@@ -40,7 +40,7 @@ describe('Rewards dashboard', () => {
 	}
 	const tableRows = () => [...container.querySelectorAll('tbody tr')]
 
-	it('sorts headers locally, ignores sort URLs, and restores server order on Reset', async () => {
+	test('sorts headers locally, ignores sort URLs, and restores server order on Reset', async () => {
 		const programs = [
 			program({ programId: 'popular', protocol: 'Popular' }),
 			program({ programId: 'zero', protocol: 'Zero' }),
@@ -72,7 +72,7 @@ describe('Rewards dashboard', () => {
 		expect(order()).toEqual(['popular', 'zero', 'missing'])
 	})
 
-	it('bounds rendered rows and resets pagination after filtering', async () => {
+	test('bounds rendered rows and resets pagination after filtering', async () => {
 		const programs = Array.from({ length: 65 }, (_, i) =>
 			program({
 				programId: String(64 - i),
@@ -99,7 +99,7 @@ describe('Rewards dashboard', () => {
 		expect(tableRows()[0]?.textContent).toContain('Protocol 64')
 	})
 
-	it('shows only benefits available to users who follow the link', async () => {
+	test('shows only benefits available to users who follow the link', async () => {
 		const programs = [
 			program({
 				programId: 'referrer-only',

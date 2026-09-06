@@ -74,7 +74,7 @@ export function buildForksOverviewDisplayData({
 		tableDataByName.set(row.name, row)
 	}
 
-	const tableData: ForksOverviewDisplayRow[] = []
+	const tableData: Array<ForksOverviewDisplayRow> = []
 	for (const name of sortedChartForks) {
 		const baseRow = tableDataByName.get(name)
 		const tvl = latestData?.[name] ?? 0

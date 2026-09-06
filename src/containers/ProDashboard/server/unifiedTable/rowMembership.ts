@@ -18,7 +18,7 @@ import type { ProtocolTableSourceRow } from '~/containers/ProDashboard/unifiedTa
 import { slug } from '~/utils'
 import { toInternalSlug } from '~/utils/chainNormalizer'
 
-type ProtocolMembershipScope = { kind: 'protocol' } | { kind: 'chain'; chains: string[] }
+type ProtocolMembershipScope = { kind: 'protocol' } | { kind: 'chain'; chains: Array<string> }
 
 function getDimensionDatasetType(family: ProtocolMembershipBaseFamily): DimensionDatasetType | null {
 	switch (family) {
@@ -88,9 +88,9 @@ function toDatasetKey(protocol: DimensionDatasetProtocol): string {
 }
 
 export function filterProtocolRowsByDatasetMembership(
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	dataset: DimensionDatasetResult | null
-): ProtocolTableSourceRow[] {
+): Array<ProtocolTableSourceRow> {
 	if (dataset === null) return rows
 
 	const canonicalProtocolIds = new Set<string>()

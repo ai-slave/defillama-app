@@ -1,6 +1,6 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(() => {
 	vi.clearAllMocks()
@@ -27,7 +27,7 @@ async function loadModule() {
 }
 
 describe('LiquidationsOverview', () => {
-	it('renders overview counts', async () => {
+	test('renders overview counts', async () => {
 		const { LiquidationsOverview, chartSpy } = await loadModule()
 		const html = renderToStaticMarkup(
 			<LiquidationsOverview
@@ -36,7 +36,7 @@ describe('LiquidationsOverview', () => {
 				protocolCount={2}
 				chainCount={3}
 				positionCount={4}
-				totalCollateralUsd={5000000}
+				totalCollateralUsd={5_000_000}
 				distributionChart={{ tokens: [] }}
 				protocolRows={[]}
 				chainRows={[]}

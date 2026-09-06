@@ -10,7 +10,7 @@ const DEFAULT_DESCRIPTION = 'Community-built DefiLlama Pro dashboard.'
 const MAX_DESCRIPTION_LENGTH = 155
 const MAX_SUMMARY_ITEMS = 24
 
-type DashboardJsonLdValue = string | number | boolean | null | DashboardJsonLdValue[] | DashboardJsonLdObject
+type DashboardJsonLdValue = string | number | boolean | null | Array<DashboardJsonLdValue> | DashboardJsonLdObject
 type DashboardJsonLdObject = { [key: string]: DashboardJsonLdValue }
 
 export interface DashboardItemSummary {
@@ -24,9 +24,9 @@ export interface DashboardSeo {
 	description: string
 	canonicalPath: string
 	updated: string | null
-	tags: string[]
+	tags: Array<string>
 	itemCount: number
-	itemSummaries: DashboardItemSummary[]
+	itemSummaries: Array<DashboardItemSummary>
 	jsonLd: DashboardJsonLdObject
 }
 
@@ -37,7 +37,7 @@ export interface DashboardSeoPublicDashboard {
 		dashboardName: string
 	}
 	visibility: 'public'
-	tags: string[]
+	tags: Array<string>
 	description: string
 	viewCount?: number
 	likeCount?: number
@@ -66,7 +66,7 @@ export function toDashboardSeoPublicDashboard(dashboard: Dashboard): DashboardSe
 	}
 }
 
-function safeSameAs(author: PublicDashboardAuthor | undefined): string[] {
+function safeSameAs(author: PublicDashboardAuthor | undefined): Array<string> {
 	if (!author?.socials) return []
 	return Object.values(author.socials).filter((value): value is string => {
 		if (typeof value !== 'string') return false
@@ -196,7 +196,7 @@ function summarizeSingleItem(item: DashboardItemConfig, index: number): Dashboar
 			}
 		case 'dataset-table': {
 			const dataset = titleCaseToken(item.datasetType)
-			const chains = 'chains' in item && item.chains.length ? ` for ${item.chains.slice(0, 3).join(', ')}` : ''
+			const chains = 'chains' in item && item.chains.length > 0 ? ` for ${item.chains.slice(0, 3).join(', ')}` : ''
 			return { id, label: `${dataset} table${chains}` }
 		}
 		case 'unified-table':
@@ -254,14 +254,14 @@ function summarizeSingleItem(item: DashboardItemConfig, index: number): Dashboar
 	}
 }
 
-export function summarizeDashboardItems(items: DashboardItemConfig[] | undefined): DashboardItemSummary[] {
+export function summarizeDashboardItems(items: Array<DashboardItemConfig> | undefined): Array<DashboardItemSummary> {
 	if (!Array.isArray(items)) return []
 	return items.slice(0, MAX_SUMMARY_ITEMS).map(summarizeSingleItem)
 }
 
 function buildFallbackDescription(
 	dashboardName: string,
-	itemSummaries: DashboardItemSummary[],
+	itemSummaries: Array<DashboardItemSummary>,
 	itemCount: number
 ): string {
 	if (itemCount === 0) return DEFAULT_DESCRIPTION
@@ -302,7 +302,7 @@ export function buildDashboardSeo(dashboard: Dashboard): DashboardSeo {
 					url: authorUrl,
 					...(author.bio ? { description: author.bio } : {}),
 					...(author.avatarUrl ? { image: author.avatarUrl } : {}),
-					...(authorSameAs.length ? { sameAs: authorSameAs } : {})
+					...(authorSameAs.length > 0 ? { sameAs: authorSameAs } : {})
 				}
 			: null
 	const webPage = {
@@ -313,7 +313,7 @@ export function buildDashboardSeo(dashboard: Dashboard): DashboardSeo {
 		description,
 		...(dashboard.created ? { datePublished: dashboard.created } : {}),
 		...(updated ? { dateModified: updated } : {}),
-		...(tags.length ? { keywords: tags.join(', ') } : {}),
+		...(tags.length > 0 ? { keywords: tags.join(', ') } : {}),
 		...(authorNode ? { author: { '@id': authorNode['@id'] } } : {}),
 		isPartOf: {
 			'@type': 'WebSite',
@@ -322,7 +322,7 @@ export function buildDashboardSeo(dashboard: Dashboard): DashboardSeo {
 		}
 	}
 
-	const graph: DashboardJsonLdObject[] = [
+	const graph: Array<DashboardJsonLdObject> = [
 		webPage,
 		{
 			'@type': 'BreadcrumbList',

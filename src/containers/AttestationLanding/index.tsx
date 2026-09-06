@@ -233,7 +233,7 @@ const verificationStages = {
 	coveragePublished: 10
 } as const
 
-const verificationStageDelays = [800, 1900, 3000, 3900, 5300, 6400, 7600, 8250, 9000, 9900, 10700]
+const verificationStageDelays = [800, 1900, 3000, 3900, 5300, 6400, 7600, 8250, 9000, 9900, 10_700]
 
 const verificationActivity = [
 	'Checking custodian T-bills · read-only',
@@ -421,13 +421,13 @@ type LedgerSource = {
 	value: number
 }
 
-const assetSources: LedgerSource[] = [
+const assetSources: Array<LedgerSource> = [
 	{ label: 'Custodian T-bills', verifiedStage: verificationStages.custodianVerified, value: 271_412_008 },
 	{ label: 'Bank cash', verifiedStage: verificationStages.bankVerified, value: 118_204_551 },
 	{ label: 'Fund admin NAV', verifiedStage: verificationStages.fundAdminVerified, value: 23_227_561 }
 ]
 
-const liabilitySources: LedgerSource[] = [
+const liabilitySources: Array<LedgerSource> = [
 	{ label: 'Ethereum supply', verifiedStage: verificationStages.ethereumIndexed, value: 162_410_551 },
 	{ label: 'Base supply', verifiedStage: verificationStages.baseIndexed, value: 64_112_090 },
 	{ label: '4 more chains', verifiedStage: verificationStages.remainingChainsIndexed, value: 20_689_407 }
@@ -441,7 +441,7 @@ function AuditValue({
 	className = ''
 }: {
 	prefix: string
-	groups: string[]
+	groups: Array<string>
 	active: boolean
 	delay?: number
 	className?: string
@@ -484,7 +484,7 @@ function LedgerColumn({
 	recheckState = 'idle'
 }: {
 	label: string
-	sources: LedgerSource[]
+	sources: Array<LedgerSource>
 	stage: number
 	privateData?: boolean
 	recheckSource?: string
@@ -971,13 +971,13 @@ const proofStates: Record<ProofState, ProofStateConfig> = {
 	}
 }
 
-const proofStateOrder: ProofState[] = ['verified', 'partial', 'stale', 'unverified']
+const proofStateOrder: Array<ProofState> = ['verified', 'partial', 'stale', 'unverified']
 
 const proofStateDurations: Record<ProofState, number> = {
-	verified: 5_000,
-	partial: 5_000,
-	stale: 6_000,
-	unverified: 6_000
+	verified: 5000,
+	partial: 5000,
+	stale: 6000,
+	unverified: 6000
 }
 
 function PlaybackIcon({ isPlaying }: { isPlaying: boolean }) {

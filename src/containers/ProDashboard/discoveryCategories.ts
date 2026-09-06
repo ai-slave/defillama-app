@@ -9,7 +9,7 @@ export interface DiscoveryCategoryConfig {
 }
 
 export interface DiscoveryCategoryResponse {
-	items: Dashboard[]
+	items: Array<Dashboard>
 	page: number
 	perPage: number
 	totalItems: number
@@ -20,7 +20,7 @@ export interface DiscoveryCategoryResponse {
 export type DiscoveryCategoriesInitialData = Record<string, DiscoveryCategoryResponse>
 
 /** Public shelves shown on /pro. Audits may override `limit` without redefining the shelf semantics. */
-export const DISCOVERY_CATEGORIES: DiscoveryCategoryConfig[] = [
+export const DISCOVERY_CATEGORIES: Array<DiscoveryCategoryConfig> = [
 	{ key: 'trendingToday', title: 'Trending Today', sortBy: 'trending', timeFrame: '1d', limit: 8 },
 	{ key: 'trendingWeek', title: 'Trending This Week', sortBy: 'trending', timeFrame: '7d', limit: 8 },
 	{ key: 'popular', title: 'Most Popular', sortBy: 'popular', limit: 8 },

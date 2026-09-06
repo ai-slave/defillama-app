@@ -1,12 +1,12 @@
 // @vitest-environment happy-dom
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { scrollToPageTop } from './scrollToPageTop'
 
 describe('scrollToPageTop', () => {
 	afterEach(() => vi.restoreAllMocks())
 
-	it('resets the document scroll position', () => {
+	test('resets the document scroll position', () => {
 		const scrollTo = vi.spyOn(window, 'scrollTo')
 
 		scrollToPageTop()

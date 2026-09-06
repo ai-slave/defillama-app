@@ -2,7 +2,7 @@ import type { QueuedMessageElement } from '~/containers/LlamaAI/queue/protocol'
 import type { Message } from '~/containers/LlamaAI/types'
 
 export function materializePersistedUserMessage(
-	messages: Message[],
+	messages: Array<Message>,
 	realId: string,
 	queueItemId: string | undefined,
 	queuedItem: QueuedMessageElement | null

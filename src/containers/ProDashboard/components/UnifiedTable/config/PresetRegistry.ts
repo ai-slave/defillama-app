@@ -6,15 +6,15 @@ export interface UnifiedTablePreset {
 	id: string
 	name: string
 	description?: string
-	columnOrder: string[]
+	columnOrder: Array<string>
 	columnVisibility: VisibilityState
-	rowHeaders: UnifiedRowHeaderType[]
+	rowHeaders: Array<UnifiedRowHeaderType>
 	defaultSorting?: Array<{ id: string; desc?: boolean }>
 }
 
 const ALL_COLUMN_IDS = ['name', ...UNIFIED_TABLE_COLUMN_DICTIONARY.map((column) => column.id)]
 
-const createVisibility = (columns: string[]): VisibilityState => {
+const createVisibility = (columns: Array<string>): VisibilityState => {
 	const visible = new Set(columns)
 	visible.add('name')
 	return ALL_COLUMN_IDS.reduce<VisibilityState>((acc, id) => {
@@ -63,7 +63,7 @@ export const DEFAULT_UNIFIED_TABLE_PRESET: UnifiedTablePreset = {
 	defaultSorting: [{ id: 'tvl', desc: true }]
 }
 
-export const UNIFIED_TABLE_PRESETS: UnifiedTablePreset[] = [
+export const UNIFIED_TABLE_PRESETS: Array<UnifiedTablePreset> = [
 	DEFAULT_UNIFIED_TABLE_PRESET,
 	{
 		id: 'advanced-protocols',

@@ -60,7 +60,7 @@ function tableCellAttrs(node: TiptapJson) {
 	const colwidth = Array.isArray(colwidthRaw)
 		? colwidthRaw.filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
 		: null
-	const style = colwidth && colwidth.length ? { width: `${colwidth[0]}px` } : undefined
+	const style = colwidth && colwidth.length > 0 ? { width: `${colwidth[0]}px` } : undefined
 	return {
 		colSpan: Number.isFinite(colspan) && colspan > 1 ? colspan : undefined,
 		rowSpan: Number.isFinite(rowspan) && rowspan > 1 ? rowspan : undefined,
@@ -105,8 +105,8 @@ function horizontalBannerSecondSlot(articleId: string, blockCount: number, first
 
 type HastNode =
 	| { type: 'text'; value: string }
-	| { type: 'element'; tagName: string; properties?: { className?: string[] }; children: HastNode[] }
-	| { type: 'root'; children: HastNode[] }
+	| { type: 'element'; tagName: string; properties?: { className?: Array<string> }; children: Array<HastNode> }
+	| { type: 'root'; children: Array<HastNode> }
 
 function hastToReact(node: HastNode, key: string): ReactNode {
 	if (node.type === 'text') return node.value
@@ -416,8 +416,8 @@ function renderNode(node: TiptapJson, key: string, ctx: RenderContext): ReactNod
 
 function renderTable(node: TiptapJson, key: string, ctx: RenderContext) {
 	const rows = node.content ?? []
-	const headerRows: TiptapJson[] = []
-	const bodyRows: TiptapJson[] = []
+	const headerRows: Array<TiptapJson> = []
+	const bodyRows: Array<TiptapJson> = []
 	let inHeader = true
 	for (const row of rows) {
 		if (row.type !== 'tableRow') continue
@@ -441,7 +441,7 @@ function renderTable(node: TiptapJson, key: string, ctx: RenderContext) {
 			<table
 				className={`article-table relative z-10 w-full border-collapse text-sm ${hasColWidths ? 'table-fixed' : ''}`}
 			>
-				{headerRows.length ? (
+				{headerRows.length > 0 ? (
 					<thead className="bg-page">{headerRows.map((row, i) => renderNode(row, `${key}-thead-${i}`, ctx))}</thead>
 				) : null}
 				<tbody>{bodyRows.map((row, i) => renderNode(row, `${key}-tbody-${i}`, ctx))}</tbody>
@@ -488,10 +488,10 @@ function MetaChip({ children, href }: { children: ReactNode; href?: string }) {
 }
 
 type TocEntry = { id: string; text: string; level: number }
-type TocGroup = { id: string; text: string; children: TocEntry[] }
+type TocGroup = { id: string; text: string; children: Array<TocEntry> }
 
-function groupToc(toc: TocEntry[]): TocGroup[] {
-	const groups: TocGroup[] = []
+function groupToc(toc: Array<TocEntry>): Array<TocGroup> {
+	const groups: Array<TocGroup> = []
 	let current: TocGroup | null = null
 	for (const entry of toc) {
 		if (entry.level === 2) {
@@ -505,7 +505,7 @@ function groupToc(toc: TocEntry[]): TocGroup[] {
 	return groups
 }
 
-function collectToc(node: TiptapJson | null | undefined, out: TocEntry[]) {
+function collectToc(node: TiptapJson | null | undefined, out: Array<TocEntry>) {
 	if (!node) return
 	if (node.type === 'heading') {
 		const level = Number(node.attrs?.level) || 2
@@ -527,12 +527,12 @@ function collectToc(node: TiptapJson | null | undefined, out: TocEntry[]) {
 	for (const child of node.content ?? []) collectToc(child, out)
 }
 
-function useActiveHeading(toc: TocEntry[]): [string | null, (id: string) => void] {
+function useActiveHeading(toc: Array<TocEntry>): [string | null, (id: string) => void] {
 	const [active, setActive] = useState<string | null>(toc[0]?.id ?? null)
 
 	useEffect(() => {
 		if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return
-		if (!toc.length) return
+		if (toc.length === 0) return
 		const ids = toc.map((t) => t.id)
 		const visible = new Set<string>()
 		const observer = new IntersectionObserver(
@@ -604,7 +604,15 @@ function useReadingProgress() {
 	return progress
 }
 
-function CompactTocBar({ toc, groups, active }: { toc: TocEntry[]; groups: TocGroup[]; active: string | null }) {
+function CompactTocBar({
+	toc,
+	groups,
+	active
+}: {
+	toc: Array<TocEntry>
+	groups: Array<TocGroup>
+	active: string | null
+}) {
 	const progress = useReadingProgress()
 	const currentGroupIndex = useMemo(() => {
 		if (!active) return 0
@@ -661,7 +669,7 @@ function CompactTocBar({ toc, groups, active }: { toc: TocEntry[]; groups: TocGr
 	)
 }
 
-function ArticleToc({ toc, compactMode = false }: { toc: TocEntry[]; compactMode?: boolean }) {
+function ArticleToc({ toc, compactMode = false }: { toc: Array<TocEntry>; compactMode?: boolean }) {
 	const [active, setActive] = useActiveHeading(toc)
 	const groups = useMemo(() => groupToc(toc), [toc])
 	const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(groups.map((g) => g.id)))
@@ -849,7 +857,7 @@ export function ArticleRenderer({
 	const promoBanner = usePromoBanner(article.id)
 	const mobilePromoVisible = !!mobilePromoImageUrl(promoBanner)
 
-	const toc: TocEntry[] = []
+	const toc: Array<TocEntry> = []
 	collectToc(contentJson, toc)
 
 	const sectionLabel = article.section ? ARTICLE_SECTION_LABELS[article.section] : null

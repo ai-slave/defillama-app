@@ -41,7 +41,7 @@ function getLiquidationsTooltipValue(param: EChartsTooltipItem): number {
 
 export function getLiquidationsTooltipHtml(params: unknown, metric: LiquidationsMetric, tokenLabel: string): string {
 	const paramsList = normalizeTooltipItems(params)
-	const rows: string[] = []
+	const rows: Array<string> = []
 	let firstVisibleParam: EChartsTooltipItem | undefined
 	let total = 0
 

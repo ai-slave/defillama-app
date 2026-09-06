@@ -53,7 +53,7 @@ export const getStaticProps = withPerformanceLogging(
 		}
 
 		const data = await getChainOverviewData({
-			chain: chain,
+			chain,
 			chainMetadata: metadataCache.chainMetadata,
 			protocolMetadata: metadataCache.protocolMetadata,
 			categoriesAndTagsMetadata: metadataCache.categoriesAndTags
@@ -120,7 +120,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 
 		const toggledCharts = props.charts.filter((tchart, index) =>
 			index === 0 ? queryParams[chainCharts[tchart]] !== 'false' : queryParams[chainCharts[tchart]] === 'true'
-		) as ChainChartLabels[]
+		) as Array<ChainChartLabels>
 
 		const hasAtleasOneBarChart = toggledCharts.some((chart) => BAR_CHARTS.includes(chart))
 

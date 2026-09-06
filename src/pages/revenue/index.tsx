@@ -51,7 +51,7 @@ const RevenueOnAllChains = (props: IAdapterByChainPageData) => {
 		<Layout
 			title="Protocol Revenue Rankings - DeFi Fees Retained - DefiLlama"
 			description="Track protocol revenue, the subset of fees retained by DeFi protocols. Compare revenue from trading, lending, and staking across protocols."
-			canonicalUrl={`/revenue`}
+			canonicalUrl="/revenue"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

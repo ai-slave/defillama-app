@@ -11,12 +11,12 @@ export const RWA_ASSET_METRIC_DIMENSIONS: Record<RWAOverviewChartMetric, string>
 
 export function buildProRwaAssetChartSeries(
 	dataset: RWAPositionalChartDataset | null,
-	metrics: readonly RWAOverviewChartMetric[]
-): MultiSeriesChartSeriesConfig[] {
+	metrics: ReadonlyArray<RWAOverviewChartMetric>
+): Array<MultiSeriesChartSeriesConfig> {
 	if (!dataset) return []
 
 	const selectedDimensions = new Set(metrics.map((metric) => RWA_ASSET_METRIC_DIMENSIONS[metric]))
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 	for (let dimensionIndex = 1; dimensionIndex < dataset.dimensions.length; dimensionIndex++) {
 		const name = dataset.dimensions[dimensionIndex]
 		if (!selectedDimensions.has(name)) continue

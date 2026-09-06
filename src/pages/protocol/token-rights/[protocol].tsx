@@ -14,18 +14,18 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
-const EMPTY_OTHER_PROTOCOLS: string[] = []
+const EMPTY_OTHER_PROTOCOLS: Array<string> = []
 type TokenRightsPageProps = {
 	name: string
 	symbol: string | null
 	parentProtocol: string | null
-	otherProtocols: string[]
+	otherProtocols: Array<string>
 	category: string | null
 	metrics: IProtocolPageMetrics
-	warningBanners: IProtocolWarningBanner[]
+	warningBanners: Array<IProtocolWarningBanner>
 	toggleOptions: Array<{ name: string; key: string }>
 	tokenRightsData: ITokenRightsData
-	raises: Raise[] | null
+	raises: Array<Raise> | null
 	seoTitle: string
 	seoDescription: string
 }

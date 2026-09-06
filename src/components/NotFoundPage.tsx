@@ -5,8 +5,8 @@ export function NotFoundPage() {
 	return (
 		<Layout
 			title="Page not found - DefiLlama"
-			description={`DefiLlama is committed to providing accurate data without ads or sponsored content, as well as transparency.`}
-			canonicalUrl={`/404`}
+			description="DefiLlama is committed to providing accurate data without ads or sponsored content, as well as transparency."
+			canonicalUrl="/404"
 		>
 			<div className="isolate flex flex-1 flex-col items-center justify-center rounded-lg border border-subtle bg-surface p-1">
 				<img src="/assets/404.png" width={350} height={350} alt="Want a ride?" />

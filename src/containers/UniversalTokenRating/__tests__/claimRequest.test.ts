@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildUtrClaimRequest,
 	createEmptyUtrClaimRows,
@@ -41,7 +41,7 @@ function validInput(): UtrClaimRequestInput {
 }
 
 describe('buildUtrClaimRequest', () => {
-	it('builds the strict Forgd claim contract and keeps upload receipts verbatim', () => {
+	test('builds the strict Forgd claim contract and keeps upload receipts verbatim', () => {
 		const input = validInput()
 		input.rows.insiderIdentities = [
 			{ name: 'Alice Example', role: 'Founder', profileUrl: 'https://www.linkedin.com/in/alice' }
@@ -113,7 +113,7 @@ describe('buildUtrClaimRequest', () => {
 		expect(result.payload).not.toHaveProperty('turnstile_token')
 	})
 
-	it('turns untouched rows into empty arrays and omits empty optional fields', () => {
+	test('turns untouched rows into empty arrays and omits empty optional fields', () => {
 		const input = validInput()
 		input.coingeckoId = null
 		input.tokenTicker = ''
@@ -134,7 +134,7 @@ describe('buildUtrClaimRequest', () => {
 		expect(result.payload?.disclosures.auditors).toEqual([])
 	})
 
-	it('rejects partially filled and invalid numeric rows', () => {
+	test('rejects partially filled and invalid numeric rows', () => {
 		const input = validInput()
 		input.rows.insiderIdentities = [{}, { name: 'Alice', role: '', profileUrl: '' }]
 		input.rows.multisigWallets = [
@@ -151,7 +151,7 @@ describe('buildUtrClaimRequest', () => {
 describe('validateUtrClaimFiles', () => {
 	const file = (name: string, size: number) => ({ name, size }) as File
 
-	it('accepts supported files and enforces count, extension, and size', () => {
+	test('accepts supported files and enforces count, extension, and size', () => {
 		expect(validateUtrClaimFiles([file('evidence.pdf', 100)], 0)).toBeNull()
 		expect(validateUtrClaimFiles([file('evidence.exe', 100)], 0)).toContain('supported formats')
 		expect(validateUtrClaimFiles([file('large.pdf', 10 * 1024 * 1024 + 1)], 0)).toContain('10 MB')

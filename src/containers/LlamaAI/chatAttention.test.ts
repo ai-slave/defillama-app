@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { hasWebChatAttention, isChatSurfaceAttended } from '~/containers/LlamaAI/chatAttention'
 
 describe('chatAttention', () => {
@@ -21,25 +21,25 @@ describe('chatAttention', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('is present when the tab is visible and focused', () => {
+	test('is present when the tab is visible and focused', () => {
 		expect(hasWebChatAttention()).toBe(true)
 		expect(isChatSurfaceAttended({ uncovered: true })).toBe(true)
 	})
 
-	it('is absent when the tab is hidden', () => {
+	test('is absent when the tab is hidden', () => {
 		visibilityState = 'hidden'
 		hasFocus = false
 		expect(hasWebChatAttention()).toBe(false)
 		expect(isChatSurfaceAttended({ uncovered: true })).toBe(false)
 	})
 
-	it('is absent when the window is visible but unfocused', () => {
+	test('is absent when the window is visible but unfocused', () => {
 		hasFocus = false
 		expect(hasWebChatAttention()).toBe(false)
 		expect(isChatSurfaceAttended({ uncovered: true })).toBe(false)
 	})
 
-	it('is absent when chat chrome covers the conversation', () => {
+	test('is absent when chat chrome covers the conversation', () => {
 		expect(isChatSurfaceAttended({ uncovered: false })).toBe(false)
 	})
 })

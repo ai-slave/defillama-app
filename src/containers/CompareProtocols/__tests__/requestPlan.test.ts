@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildCompareProtocolTvlRequestPlan,
 	getCompareProtocolExtraTvlKeys,
@@ -7,14 +7,14 @@ import {
 } from '../requestPlan'
 
 describe('CompareProtocols request planning', () => {
-	it('uses the focused V2 TVL route inputs instead of the full protocol payload', () => {
+	test('uses the focused V2 TVL route inputs instead of the full protocol payload', () => {
 		expect(buildCompareProtocolTvlRequestPlan('Aave V3', 'borrowed')).toEqual({
 			protocolSlug: 'aave-v3',
 			queryKey: ['protocol-overview', 'tvl-chart', 'aave-v3', 'borrowed', undefined, undefined, undefined]
 		})
 	})
 
-	it('only plans additive individual-protocol TVL sections', () => {
+	test('only plans additive individual-protocol TVL sections', () => {
 		expect(
 			getCompareProtocolExtraTvlKeys({
 				borrowed: true,
@@ -28,7 +28,7 @@ describe('CompareProtocols request planning', () => {
 		).toEqual(['pool2', 'staking', 'borrowed', 'vesting'])
 	})
 
-	it('scopes global TVL settings to the supported comparison sections', () => {
+	test('scopes global TVL settings to the supported comparison sections', () => {
 		expect(
 			getCompareProtocolTvlSettings({
 				borrowed: true,
@@ -50,7 +50,7 @@ describe('CompareProtocols request planning', () => {
 		})
 	})
 
-	it('keeps the first occurrence of each nonblank URL selection', () => {
+	test('keeps the first occurrence of each nonblank URL selection', () => {
 		const protocolNameBySlug = new Map([
 			['aave', 'Aave'],
 			['compound', 'Compound'],

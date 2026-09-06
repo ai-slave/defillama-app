@@ -23,7 +23,7 @@ function isNormalizedEmissionEvent(event: RawEmissionEvent): event is KnownEmiss
 	return event.noOfTokens[1] !== null
 }
 
-function areNormalizedEmissionEvents(events: RawEmissionEvent[]): events is KnownEmissionEvent[] {
+function areNormalizedEmissionEvents(events: Array<RawEmissionEvent>): events is Array<KnownEmissionEvent> {
 	for (const event of events) {
 		if (!isNormalizedEmissionEvent(event)) return false
 	}
@@ -78,10 +78,10 @@ function normalizeEmissionEvent(event: RawEmissionEvent): EmissionEvent {
 	}
 }
 
-export function normalizeEmissionEvents(events: RawEmissionEvent[]): EmissionEvent[] {
+export function normalizeEmissionEvents(events: Array<RawEmissionEvent>): Array<EmissionEvent> {
 	if (areNormalizedEmissionEvents(events)) return events
 
-	const normalizedEvents: EmissionEvent[] = []
+	const normalizedEvents: Array<EmissionEvent> = []
 	for (const event of events) normalizedEvents.push(normalizeEmissionEvent(event))
 	return normalizedEvents
 }
@@ -94,15 +94,15 @@ function isNormalizedStructuredEmissionEvent(event: RawStructuredEmissionEvent):
 }
 
 function areNormalizedStructuredEmissionEvents(
-	events: RawStructuredEmissionEvent[]
-): events is StructuredEmissionEvent[] {
+	events: Array<RawStructuredEmissionEvent>
+): events is Array<StructuredEmissionEvent> {
 	for (const event of events) {
 		if (!isNormalizedStructuredEmissionEvent(event)) return false
 	}
 	return true
 }
 
-function normalizeStructuredEmissionEvents(events: RawStructuredEmissionEvent[]): StructuredEmissionEvent[] {
+function normalizeStructuredEmissionEvents(events: Array<RawStructuredEmissionEvent>): Array<StructuredEmissionEvent> {
 	if (areNormalizedStructuredEmissionEvents(events)) return events
 	const normalized = new Array<StructuredEmissionEvent>(events.length)
 	for (let eventIndex = 0; eventIndex < events.length; eventIndex++) {
@@ -127,7 +127,7 @@ function normalizeStructuredEmissionEvents(events: RawStructuredEmissionEvent[])
 
 function isNormalizedProtocolEmission(
 	value: RawProtocolEmission
-): value is RawProtocolEmission & { events: KnownEmissionEvent[]; unlockEvents: StructuredEmissionEvent[] } {
+): value is RawProtocolEmission & { events: Array<KnownEmissionEvent>; unlockEvents: Array<StructuredEmissionEvent> } {
 	return areNormalizedEmissionEvents(value.events) && areNormalizedStructuredEmissionEvents(value.unlockEvents)
 }
 
@@ -140,14 +140,14 @@ export function normalizeProtocolEmission(value: RawProtocolEmission): ProtocolE
 	}
 }
 
-export function normalizeProtocolEmissions(values: RawProtocolEmission[]): ProtocolEmission[] {
+export function normalizeProtocolEmissions(values: Array<RawProtocolEmission>): Array<ProtocolEmission> {
 	const normalized = new Array<ProtocolEmission>(values.length)
 	for (let index = 0; index < values.length; index++) normalized[index] = normalizeProtocolEmission(values[index]!)
 	return normalized
 }
 
 function isNormalizedProtocolEmissionDetail(value: RawProtocolEmissionDetail): value is RawProtocolEmissionDetail & {
-	metadata: { events: KnownEmissionEvent[]; unlockEvents: StructuredEmissionEvent[] }
+	metadata: { events: Array<KnownEmissionEvent>; unlockEvents: Array<StructuredEmissionEvent> }
 } {
 	return (
 		areNormalizedEmissionEvents(value.metadata.events) &&
@@ -184,14 +184,14 @@ export async function fetchProtocolEmission(protocolName: string): Promise<Proto
 }
 
 /** Fetch and normalize the aggregate emissions index. */
-export async function fetchAllProtocolEmissions(): Promise<ProtocolEmission[]> {
-	const response = await fetchJson<RawProtocolEmission[]>(PROTOCOL_EMISSIONS_API)
+export async function fetchAllProtocolEmissions(): Promise<Array<ProtocolEmission>> {
+	const response = await fetchJson<Array<RawProtocolEmission>>(PROTOCOL_EMISSIONS_API)
 	return normalizeProtocolEmissions(response)
 }
 
 /** Fetch the authoritative set of protocol slugs with emissions data. */
-export async function fetchEmissionsProtocolsList(options: { timeout?: number } = {}): Promise<string[]> {
-	return fetchJson<string[]>(PROTOCOL_EMISSIONS_LIST_API, {
+export async function fetchEmissionsProtocolsList(options: { timeout?: number } = {}): Promise<Array<string>> {
+	return fetchJson<Array<string>>(PROTOCOL_EMISSIONS_LIST_API, {
 		timeout: options.timeout ?? getSlowJsonTimeoutMs()
 	})
 }

@@ -15,7 +15,7 @@ const ETF_CHART_COLORS: Record<ETFAssetName, string> = {
 export function buildETFFlowChartData(
 	flows: IProcessedFlows,
 	groupBy: LowercaseDwmcGrouping,
-	assets: readonly ETFAssetName[] = ETF_ASSET_NAMES
+	assets: ReadonlyArray<ETFAssetName> = ETF_ASSET_NAMES
 ): MultiSeriesChartDataset['source'] {
 	const source: MultiSeriesChartDataset['source'] = []
 	const isCumulative = groupBy === 'cumulative'
@@ -70,7 +70,7 @@ export function buildETFChartSpec({
 }: {
 	flows: IProcessedFlows
 	groupBy: LowercaseDwmcGrouping
-	assets: ETFAssetName[]
+	assets: Array<ETFAssetName>
 }): {
 	dataset: MultiSeriesChartDataset
 	charts: NonNullable<IMultiSeriesChartProps['charts']>

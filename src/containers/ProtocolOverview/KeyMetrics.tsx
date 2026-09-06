@@ -51,7 +51,7 @@ type KeyMetricsOptionalFields = Partial<
 export interface IKeyMetricsProps extends KeyMetricsRequiredFields, KeyMetricsOptionalFields {
 	formatPrice: (value: number | null) => string | number | null
 	tvl?: number
-	tvlByChain?: [string, number][]
+	tvlByChain?: Array<[string, number]>
 	computedOracleTvs?: number | null
 	hasTvlData?: boolean
 }
@@ -85,7 +85,7 @@ interface StandardMetricConfig {
 	dataType: string
 }
 
-const STANDARD_METRICS: StandardMetricConfig[] = [
+const STANDARD_METRICS: Array<StandardMetricConfig> = [
 	{ dataProp: 'dexVolume', definitionKey: 'dexs', label: 'DEX Volume', dataType: 'DEX Volume' },
 	{
 		dataProp: 'dexNotionalVolume',
@@ -163,7 +163,7 @@ function buildStandardVolumeMetrics(
 ) {
 	const defs = definitions[definitionKey].protocol
 	const cb = data.chainBreakdown
-	const metrics: VolumeMetric[] = []
+	const metrics: Array<VolumeMetric> = []
 
 	if (data.total30d != null) {
 		metrics.push({
@@ -417,8 +417,8 @@ const buildMetrics = (
 	label: string,
 	isIncentives = false,
 	chainBreakdown?: ChainBreakdownMap
-): VolumeMetric[] => {
-	const metrics: VolumeMetric[] = []
+): Array<VolumeMetric> => {
+	const metrics: Array<VolumeMetric> = []
 	const prefix = isIncentives ? 'Incentives' : label
 	const cb = chainBreakdown ?? null
 
@@ -593,7 +593,7 @@ function Earnings(props: IKeyMetricsProps) {
 			? revenue.totalAllTime - incentivesData.emissionsAllTime
 			: null
 
-	const metrics: VolumeMetric[] = []
+	const metrics: Array<VolumeMetric> = []
 
 	if (earningsAnnualized1y != null) {
 		metrics.push({
@@ -1009,7 +1009,7 @@ const Raises = (props: IKeyMetricsProps) => {
 					</span>
 					<span className="flex flex-wrap justify-between gap-1 text-secondary">
 						<span>Round: {raise.round}</span>
-						{raise.leadInvestors.length || raise.otherInvestors.length ? (
+						{raise.leadInvestors.length > 0 || raise.otherInvestors.length > 0 ? (
 							<span>Investors: {[...raise.leadInvestors, ...raise.otherInvestors].join(', ')}</span>
 						) : null}
 					</span>

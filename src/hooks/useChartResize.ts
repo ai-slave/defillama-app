@@ -42,7 +42,7 @@ function addGlobalResizeListeners() {
 }
 
 function removeGlobalResizeListeners() {
-	if (chartElementsByInstanceRef.size !== 0) return
+	if (chartElementsByInstanceRef.size > 0) return
 	window.removeEventListener('resize', resizeCharts)
 	window.removeEventListener('chartResize', resizeCharts)
 }

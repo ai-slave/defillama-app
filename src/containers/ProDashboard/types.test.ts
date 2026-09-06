@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getProDashboardChartTypeConfig, limitMultiChartItems, MAX_MULTI_CHART_SERIES, type ChartConfig } from './types'
 
 const chart = (index: number): ChartConfig => ({
@@ -10,7 +10,7 @@ const chart = (index: number): ChartConfig => ({
 })
 
 describe('limitMultiChartItems', () => {
-	it('keeps the first configured series and reuses already-bounded arrays', () => {
+	test('keeps the first configured series and reuses already-bounded arrays', () => {
 		const bounded = Array.from({ length: MAX_MULTI_CHART_SERIES }, (_, index) => chart(index))
 		expect(limitMultiChartItems(bounded)).toBe(bounded)
 
@@ -20,7 +20,7 @@ describe('limitMultiChartItems', () => {
 })
 
 describe('getProDashboardChartTypeConfig', () => {
-	it('narrows persisted chart type strings without coercing unknown values', () => {
+	test('narrows persisted chart type strings without coercing unknown values', () => {
 		expect(getProDashboardChartTypeConfig('fees')).toMatchObject({ title: 'Fees', chartType: 'bar' })
 		expect(getProDashboardChartTypeConfig('legacy-unknown')).toBeUndefined()
 	})

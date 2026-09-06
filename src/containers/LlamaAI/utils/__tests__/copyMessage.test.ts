@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { ArtifactRegistry } from '~/containers/LlamaAI/renderModel'
 import { buildCopyHtml, buildCopyMarkdown, CSV_INLINE_ROW_LIMIT, withFetchCache } from '../copyMessage'
 
@@ -27,14 +27,14 @@ const noFetch = vi.fn(async () => {
 })
 
 describe('buildCopyMarkdown', () => {
-	it('keeps prose and inline markdown tables untouched', async () => {
+	test('keeps prose and inline markdown tables untouched', async () => {
 		const content = 'Intro\n\n| Chain | Status |\n| --- | --- |\n| Base | ✅ |\n'
 		const out = await buildCopyMarkdown(content, { artifacts: registry([]), fetchText: noFetch })
 		expect(out).toContain('| Chain | Status |')
 		expect(out).toContain('Intro')
 	})
 
-	it('replaces chart markers with a titled line instead of deleting them', async () => {
+	test('replaces chart markers with a titled line instead of deleting them', async () => {
 		const content = 'Before\n\n[CHART:c1]\n\nAfter'
 		const out = await buildCopyMarkdown(content, {
 			artifacts: registry([['c1', chartArtifact('c1', 'TVL by chain')]]),
@@ -45,7 +45,7 @@ describe('buildCopyMarkdown', () => {
 		expect(out.indexOf('📊')).toBeLessThan(out.indexOf('After'))
 	})
 
-	it('inlines small CSV artifacts as markdown tables', async () => {
+	test('inlines small CSV artifacts as markdown tables', async () => {
 		const fetchText = vi.fn(async () => 'chain,status\nBase,"live, verified"\nUnichain,pending\n')
 		const out = await buildCopyMarkdown('[CSV:t1]', {
 			artifacts: registry([['t1', csvArtifact('t1', 2)]]),
@@ -56,7 +56,7 @@ describe('buildCopyMarkdown', () => {
 		expect(out).toContain('| Base | live, verified |')
 	})
 
-	it('links large CSV artifacts instead of inlining them', async () => {
+	test('links large CSV artifacts instead of inlining them', async () => {
 		const out = await buildCopyMarkdown('[CSV:t2]', {
 			artifacts: registry([['t2', csvArtifact('t2', CSV_INLINE_ROW_LIMIT + 1)]]),
 			fetchText: noFetch
@@ -65,7 +65,7 @@ describe('buildCopyMarkdown', () => {
 		expect(noFetch).not.toHaveBeenCalled()
 	})
 
-	it('falls back to a link when the CSV fetch fails', async () => {
+	test('falls back to a link when the CSV fetch fails', async () => {
 		const out = await buildCopyMarkdown('[CSV:t3]', {
 			artifacts: registry([['t3', csvArtifact('t3', 3)]]),
 			fetchText: vi.fn(async () => {
@@ -75,7 +75,7 @@ describe('buildCopyMarkdown', () => {
 		expect(out).toContain('[Supported chains](https://files.llama.fi/t3.csv)')
 	})
 
-	it('drops interactive artifact markers entirely', async () => {
+	test('drops interactive artifact markers entirely', async () => {
 		const out = await buildCopyMarkdown('Hello [ACTION:Do it|message] world\n\n[ALERT:a1]\n\n[DASHBOARD:d1]', {
 			artifacts: registry([]),
 			fetchText: noFetch
@@ -95,7 +95,7 @@ const citationRefs = [
 ]
 
 describe('citation handling', () => {
-	it('normalizes citation markers and appends a sources section in markdown', async () => {
+	test('normalizes citation markers and appends a sources section in markdown', async () => {
 		const out = await buildCopyMarkdown('TVL rose [1] and fees fell [2-3].', {
 			artifacts: registry([]),
 			fetchText: noFetch,
@@ -107,7 +107,7 @@ describe('citation handling', () => {
 		expect(out).toContain('[3] DefiLlama data')
 	})
 
-	it('drops invalid citation ids and omits sources when nothing valid was cited', async () => {
+	test('drops invalid citation ids and omits sources when nothing valid was cited', async () => {
 		const out = await buildCopyMarkdown('Claim [9].', {
 			artifacts: registry([]),
 			fetchText: noFetch,
@@ -116,12 +116,12 @@ describe('citation handling', () => {
 		expect(out).toBe('Claim.')
 	})
 
-	it('strips citation markers entirely when the message has no references', async () => {
+	test('strips citation markers entirely when the message has no references', async () => {
 		const out = await buildCopyMarkdown('Claim [1] here.', { artifacts: registry([]), fetchText: noFetch })
 		expect(out).toBe('Claim here.')
 	})
 
-	it('renders citations as superscript links plus a sources list in HTML', async () => {
+	test('renders citations as superscript links plus a sources list in HTML', async () => {
 		const html = await buildCopyHtml('TVL rose [1].', {
 			artifacts: registry([]),
 			fetchText: noFetch,
@@ -132,7 +132,7 @@ describe('citation handling', () => {
 		expect(html).toContain('defillama.com')
 	})
 
-	it('describes data citations with metric, value, and as-of instead of the bare result name', async () => {
+	test('describes data citations with metric, value, and as-of instead of the bare result name', async () => {
 		const dataRef = {
 			id: 1,
 			sourceType: 'data' as const,
@@ -152,7 +152,7 @@ describe('citation handling', () => {
 		expect(out).not.toContain('[1] returns')
 	})
 
-	it('falls back to the label for data citations without figure metadata', async () => {
+	test('falls back to the label for data citations without figure metadata', async () => {
 		const out = await buildCopyMarkdown('Claim [1].', {
 			artifacts: registry([]),
 			fetchText: noFetch,
@@ -161,7 +161,7 @@ describe('citation handling', () => {
 		expect(out).toContain('[1] DefiLlama data: returns')
 	})
 
-	it('quotes a short excerpt for web citations when one is available', async () => {
+	test('quotes a short excerpt for web citations when one is available', async () => {
 		const out = await buildCopyMarkdown('Reported [1].', {
 			artifacts: registry([]),
 			fetchText: noFetch,
@@ -180,7 +180,7 @@ describe('citation handling', () => {
 		)
 	})
 
-	it('appends the formula for computed citations', async () => {
+	test('appends the formula for computed citations', async () => {
 		const out = await buildCopyMarkdown('Derived [1].', {
 			artifacts: registry([]),
 			fetchText: noFetch,
@@ -197,7 +197,7 @@ describe('citation handling', () => {
 		expect(out).toContain('[1] DefiLlama data: net flow = $1.2B — formula: inflow - outflow')
 	})
 
-	it('lists each cited source once even when cited repeatedly', async () => {
+	test('lists each cited source once even when cited repeatedly', async () => {
 		const out = await buildCopyMarkdown('A [1]. B [1].', {
 			artifacts: registry([]),
 			fetchText: noFetch,
@@ -208,7 +208,7 @@ describe('citation handling', () => {
 })
 
 describe('buildCopyHtml', () => {
-	it('renders markdown prose and tables as real HTML', async () => {
+	test('renders markdown prose and tables as real HTML', async () => {
 		const content = 'Some **bold** text\n\n| Chain | Status |\n| --- | --- |\n| Base | live |\n'
 		const html = await buildCopyHtml(content, { artifacts: registry([]), fetchText: noFetch })
 		expect(html).toContain('<strong>bold</strong>')
@@ -216,7 +216,7 @@ describe('buildCopyHtml', () => {
 		expect(html).toContain('<td>Base</td>')
 	})
 
-	it('embeds captured charts as images and falls back to a titled line', async () => {
+	test('embeds captured charts as images and falls back to a titled line', async () => {
 		const artifacts = registry([
 			['c1', chartArtifact('c1', 'TVL by chain')],
 			['c2', chartArtifact('c2', 'Fees by chain')]
@@ -230,7 +230,7 @@ describe('buildCopyHtml', () => {
 		expect(html).toContain('📊 Fees by chain')
 	})
 
-	it('inlines small CSVs as escaped HTML tables', async () => {
+	test('inlines small CSVs as escaped HTML tables', async () => {
 		const html = await buildCopyHtml('[CSV:t1]', {
 			artifacts: registry([['t1', csvArtifact('t1', 1)]]),
 			fetchText: vi.fn(async () => 'name,note\n"<b>Base</b>","A & B"\n')
@@ -240,7 +240,7 @@ describe('buildCopyHtml', () => {
 		expect(html).not.toContain('<b>Base</b>')
 	})
 
-	it('preserves source order across text and artifacts', async () => {
+	test('preserves source order across text and artifacts', async () => {
 		const html = await buildCopyHtml('First\n\n[CHART:c1]\n\nLast', {
 			artifacts: registry([['c1', chartArtifact('c1', 'Middle chart')]]),
 			fetchText: noFetch
@@ -249,7 +249,7 @@ describe('buildCopyHtml', () => {
 		expect(html.indexOf('Middle chart')).toBeLessThan(html.indexOf('Last'))
 	})
 
-	it('leaves citation-shaped text inside code blocks untouched', async () => {
+	test('leaves citation-shaped text inside code blocks untouched', async () => {
 		const content = 'See [1].\n\n```\nconst first = arr[1]\n```\n\nAlso inline `arr[1]` stays.'
 		const html = await buildCopyHtml(content, {
 			artifacts: registry([]),
@@ -264,7 +264,7 @@ describe('buildCopyHtml', () => {
 })
 
 describe('URL safety', () => {
-	it('drops unsafe citation URLs from sup links and sources', async () => {
+	test('drops unsafe citation URLs from sup links and sources', async () => {
 		const evil = [
 			{ id: 1, sourceType: 'web' as const, label: 'evil', url: 'javascript:alert(1)' },
 			{ id: 2, sourceType: 'web' as const, label: 'http-only', url: 'http://insecure.example/x' }
@@ -286,7 +286,7 @@ describe('URL safety', () => {
 		expect(markdown).toContain('[1] evil')
 	})
 
-	it('rewrites internal preview hosts to defillama.com like the renderer', async () => {
+	test('rewrites internal preview hosts to defillama.com like the renderer', async () => {
 		const out = await buildCopyMarkdown('Claim [1].', {
 			artifacts: registry([]),
 			fetchText: noFetch,
@@ -303,7 +303,7 @@ describe('URL safety', () => {
 		expect(out).not.toContain('preview.dl.llama.fi')
 	})
 
-	it('degrades artifact links with unsafe URLs to plain titles', async () => {
+	test('degrades artifact links with unsafe URLs to plain titles', async () => {
 		const badCsv = {
 			type: 'csv',
 			id: 't9',
@@ -323,7 +323,7 @@ describe('URL safety', () => {
 })
 
 describe('withFetchCache', () => {
-	it('fetches each URL once across both copy flavors', async () => {
+	test('fetches each URL once across both copy flavors', async () => {
 		const fetchText = vi.fn(async () => 'chain,status\nBase,live\n')
 		const cached = withFetchCache(fetchText)
 		const source = { artifacts: registry([['t1', csvArtifact('t1', 1)]]), fetchText: cached }

@@ -19,11 +19,11 @@ export type BreakdownPayloads = {
 	kpi: unknown
 }
 
-function asRows(value: unknown): Dict[] {
-	return Array.isArray(value) ? (value.filter((r) => r && typeof r === 'object') as Dict[]) : []
+function asRows(value: unknown): Array<Dict> {
+	return Array.isArray(value) ? (value.filter((r) => r && typeof r === 'object') as Array<Dict>) : []
 }
 
-function findRow(rows: Dict[], id: string | null): Dict | null {
+function findRow(rows: Array<Dict>, id: string | null): Dict | null {
 	if (id == null) return null
 	return rows.find((r) => r.marketMakerId === id) ?? null
 }

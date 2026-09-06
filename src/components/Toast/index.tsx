@@ -9,7 +9,7 @@ export function Toast() {
 	return createPortal(
 		<Toaster
 			position="top-center"
-			containerStyle={{ zIndex: 99999 }}
+			containerStyle={{ zIndex: 99_999 }}
 			toastOptions={{
 				style: {
 					background: 'var(--bg-overlay)',

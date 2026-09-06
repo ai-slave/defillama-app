@@ -10,7 +10,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { type ExcludeQueryKey } from '~/components/Select/types'
+import type { ExcludeQueryKey } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -48,7 +48,7 @@ const EMPTY_DATASET: RWAChartDataset = { source: [], dimensions: ['timestamp'] }
 const STACKS_QUERY_KEY = 'stacks'
 const EXCLUDE_STACKS_QUERY_KEY: ExcludeQueryKey = 'excludeStacks'
 
-function getLegendSeriesNames(seriesNames: string[]) {
+function getLegendSeriesNames(seriesNames: Array<string>) {
 	if (!seriesNames.includes('Total')) return seriesNames
 	return ['Total', ...seriesNames.filter((name) => name !== 'Total')]
 }
@@ -81,9 +81,9 @@ export function resolveRWAPerpsOverviewSelectedStacks({
 	selectedStacksQ,
 	excludeStacksQ
 }: {
-	stackOptions: string[]
-	selectedStacksQ: string | string[] | undefined
-	excludeStacksQ: string | string[] | undefined
+	stackOptions: Array<string>
+	selectedStacksQ: string | Array<string> | undefined
+	excludeStacksQ: string | Array<string> | undefined
 }) {
 	if (stackOptions.length === 0) return []
 
@@ -100,8 +100,8 @@ export function resolveRWAPerpsOverviewSelectedStacks({
 
 export function getRWAPerpsChartDatasetForSelectedStacks(
 	dataset: RWAChartDataset,
-	selectedStacks: string[],
-	stackOptions: string[]
+	selectedStacks: Array<string>,
+	stackOptions: Array<string>
 ): RWAChartDataset {
 	if (selectedStacks.length === stackOptions.length) return dataset
 
@@ -154,13 +154,13 @@ export function buildRWAPerpsOverviewChartSeries({
 	timeSeriesMode
 }: {
 	chartType: RWAPerpsChartMetricKey
-	stackOptions: string[]
+	stackOptions: Array<string>
 	timeSeriesMode: RWAPerpsTimeSeriesMode
 }): Array<MultiSeriesChartSeriesConfig> {
 	const seriesType: MultiSeriesChartSeriesConfig['type'] = chartType === 'volume24h' ? 'bar' : 'line'
 	const hasTotalOverlay = timeSeriesMode === 'breakdown' && chartType !== 'volume24h' && stackOptions.includes('Total')
 	const breakdownSeries = stackOptions.filter((seriesName) => !(hasTotalOverlay && seriesName === 'Total'))
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 
 	for (const [index, seriesName] of breakdownSeries.entries()) {
 		charts.push({
@@ -291,7 +291,7 @@ export function RWAPerpsOverviewChart({
 		void pushShallowQuery(router, getRWAPerpsOverviewChartTypeQueryPatch(nextChartType))
 	}
 
-	const onSelectTimeSeriesMode = (nextTimeSeriesMode: string | string[]) => {
+	const onSelectTimeSeriesMode = (nextTimeSeriesMode: string | Array<string>) => {
 		const selectedMode = getRWAPerpsOverviewTimeSeriesMode(
 			Array.isArray(nextTimeSeriesMode) ? nextTimeSeriesMode[0] : nextTimeSeriesMode
 		)

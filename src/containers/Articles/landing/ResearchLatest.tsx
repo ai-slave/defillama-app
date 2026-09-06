@@ -160,7 +160,7 @@ const SquareBannerCard = ({ banner }: { banner: Banner }) => {
 }
 
 interface ResearchLatestProps {
-	articles?: ArticleDocument[]
+	articles?: Array<ArticleDocument>
 	initialData?: BannerLookupResult | null
 }
 

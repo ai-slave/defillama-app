@@ -51,19 +51,19 @@ type OptionsProtocolChartName = 'Premium Volume' | 'Notional Volume'
 interface OptionsProtocolPageProps {
 	name: string
 	deprecated: boolean
-	otherProtocols: string[]
+	otherProtocols: Array<string>
 	category: string | null
 	metrics: IProtocolOverviewPageData['metrics']
 	hasKeyMetrics: true
 	openSmolStatsSummaryByDefault: true
 	optionsPremiumVolume: IProtocolOverviewPageData['optionsPremiumVolume']
 	optionsNotionalVolume: IProtocolOverviewPageData['optionsNotionalVolume']
-	charts: Partial<Record<OptionsProtocolChartName, TimePoint[]>>
-	defaultCharts: OptionsProtocolChartName[]
-	protocolChains: string[]
-	protocolVersions: string[]
+	charts: Partial<Record<OptionsProtocolChartName, Array<TimePoint>>>
+	defaultCharts: Array<OptionsProtocolChartName>
+	protocolChains: Array<string>
+	protocolVersions: Array<string>
 	warningBanners: ReturnType<typeof getProtocolWarningBanners>
-	hallmarks: HallmarkPoint[] | null
+	hallmarks: Array<HallmarkPoint> | null
 	defaultChartView: LowercaseDwmcGrouping
 	seoTitle: string
 	seoDescription: string
@@ -146,7 +146,7 @@ export const getStaticProps = withPerformanceLogging<OptionsProtocolPageProps, {
 		})
 
 		const charts: OptionsProtocolPageProps['charts'] = {}
-		const defaultCharts: OptionsProtocolChartName[] = []
+		const defaultCharts: Array<OptionsProtocolChartName> = []
 		if (premiumVolumeData && premiumVolumeData.totalDataChart.length > 0) {
 			charts['Premium Volume'] = normalizeProtocolFlowChart(premiumVolumeData.totalDataChart)
 			defaultCharts.push('Premium Volume')
@@ -198,11 +198,11 @@ export const getStaticPaths = () => {
 
 export default function Protocols(props: OptionsProtocolPageProps) {
 	const [groupBy, setGroupBy] = useState<LowercaseDwmcGrouping>(props.defaultChartView)
-	const [charts, setCharts] = useState<string[]>(props.defaultCharts)
+	const [charts, setCharts] = useState<Array<string>>(props.defaultCharts)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 
 	const finalCharts = useMemo(() => {
-		const series: ProtocolFlowChartSeries[] = []
+		const series: Array<ProtocolFlowChartSeries> = []
 
 		const premiumVolumePoints = props.charts['Premium Volume']
 		if (charts.includes('Premium Volume') && premiumVolumePoints) {

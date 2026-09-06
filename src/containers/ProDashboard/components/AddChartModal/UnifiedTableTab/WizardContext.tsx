@@ -6,14 +6,14 @@ import { useUnifiedTableWizard } from './hooks/useUnifiedTableWizard'
 
 interface WizardContextValue {
 	state: {
-		chains: string[]
-		rowHeaders: UnifiedRowHeaderType[]
+		chains: Array<string>
+		rowHeaders: Array<UnifiedRowHeaderType>
 		filters: UnifiedTableFilters
 		activePresetId: string
 		columnOrder: ColumnOrderState
 		columnVisibility: VisibilityState
 		sorting: SortingState
-		customColumns: CustomColumnDefinition[]
+		customColumns: Array<CustomColumnDefinition>
 	}
 	actions: ReturnType<typeof useUnifiedTableWizard>['actions']
 	derived: ReturnType<typeof useUnifiedTableWizard>['derived']

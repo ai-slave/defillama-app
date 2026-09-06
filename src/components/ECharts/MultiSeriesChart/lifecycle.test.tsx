@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
 	const instance = {
@@ -48,7 +48,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import MultiSeriesChart from '.'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from './types'
 
-const CHARTS: MultiSeriesChartSeriesConfig[] = [{ type: 'line', name: 'Value', encode: { x: 0, y: 1 } }]
+const CHARTS: Array<MultiSeriesChartSeriesConfig> = [{ type: 'line', name: 'Value', encode: { x: 0, y: 1 } }]
 const INITIAL_DATASET: MultiSeriesChartDataset = {
 	dimensions: ['timestamp', 'Value'],
 	source: [[1, 10]]
@@ -71,7 +71,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		container.remove()
 	})
 
-	it('reuses one owned instance and stable listeners across rerenders', async () => {
+	test('reuses one owned instance and stable listeners across rerenders', async () => {
 		const onReady = vi.fn()
 
 		await act(async () =>
@@ -117,7 +117,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(onReady).toHaveBeenLastCalledWith(null)
 	})
 
-	it('infers series in dimension order without assigning timestamp a color', async () => {
+	test('infers series in dimension order without assigning timestamp a color', async () => {
 		const dataset: MultiSeriesChartDataset = {
 			dimensions: ['First', 'timestamp', 'Second'],
 			source: [[10, 1, 20]]
@@ -130,7 +130,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(inferredSeries.map((item: any) => item.itemStyle.color)).toEqual([CHART_COLORS[0], CHART_COLORS[1]])
 	})
 
-	it('infers the first dimension as the x-axis for category datasets', async () => {
+	test('infers the first dimension as the x-axis for category datasets', async () => {
 		const dataset: MultiSeriesChartDataset = {
 			dimensions: ['category', 'Value'],
 			source: [['A', 10]]
@@ -143,8 +143,8 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(inferredSeries[0]).toMatchObject({ name: 'Value', encode: { x: 0, y: 1 } })
 	})
 
-	it('only emits the large-mode option for bar series', async () => {
-		const charts: MultiSeriesChartSeriesConfig[] = [
+	test('only emits the large-mode option for bar series', async () => {
+		const charts: Array<MultiSeriesChartSeriesConfig> = [
 			{ type: 'line', name: 'Value', encode: { x: 'timestamp', y: 'Value' }, large: true },
 			{ type: 'bar', name: 'Volume', encode: { x: 'timestamp', y: 'Volume' } }
 		]
@@ -160,7 +160,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(bar.large).toBe(true)
 	})
 
-	it('merges array data zoom overrides into the two default controllers by index', async () => {
+	test('merges array data zoom overrides into the two default controllers by index', async () => {
 		await act(async () =>
 			root.render(
 				<MultiSeriesChart
@@ -190,8 +190,8 @@ describe('MultiSeriesChart lifecycle', () => {
 		})
 	})
 
-	it('connects requested line gaps without changing bar gap behavior', async () => {
-		const charts: MultiSeriesChartSeriesConfig[] = [
+	test('connects requested line gaps without changing bar gap behavior', async () => {
+		const charts: Array<MultiSeriesChartSeriesConfig> = [
 			{ type: 'line', name: 'Value', encode: { x: 'timestamp', y: 'Value' }, connectNulls: true },
 			{ type: 'bar', name: 'Volume', encode: { x: 'timestamp', y: 'Volume' }, connectNulls: true }
 		]
@@ -211,8 +211,8 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(bar).not.toHaveProperty('connectNulls')
 	})
 
-	it('uses the selected series unit after a sparse y-axis remaps to the primary display axis', async () => {
-		const charts: MultiSeriesChartSeriesConfig[] = [
+	test('uses the selected series unit after a sparse y-axis remaps to the primary display axis', async () => {
+		const charts: Array<MultiSeriesChartSeriesConfig> = [
 			{
 				type: 'line',
 				name: 'Funding Rate',
@@ -235,8 +235,8 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(options.yAxis[0].axisLabel.formatter(5)).toContain('%')
 	})
 
-	it('derives axis units and colors only from selected series', async () => {
-		const charts: MultiSeriesChartSeriesConfig[] = [
+	test('derives axis units and colors only from selected series', async () => {
+		const charts: Array<MultiSeriesChartSeriesConfig> = [
 			{
 				type: 'line',
 				name: 'TVL',
@@ -279,8 +279,8 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(options.yAxis[0].axisLabel.color).toBe('#6f6f6f')
 	})
 
-	it('filters selected string-encoded series without copying dataset rows', async () => {
-		const charts: MultiSeriesChartSeriesConfig[] = [
+	test('filters selected string-encoded series without copying dataset rows', async () => {
+		const charts: Array<MultiSeriesChartSeriesConfig> = [
 			{ type: 'line', name: 'Hidden', encode: { x: 'category', y: 'Hidden' } },
 			{ type: 'line', name: 'Visible', encode: { x: 'category', y: 'Visible' } }
 		]
@@ -313,8 +313,8 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(sourceRow).toEqual(['A', 10, 20])
 	})
 
-	it('keeps numeric encodes stable when filtering hidden series', async () => {
-		const charts: MultiSeriesChartSeriesConfig[] = [
+	test('keeps numeric encodes stable when filtering hidden series', async () => {
+		const charts: Array<MultiSeriesChartSeriesConfig> = [
 			{ type: 'line', name: 'Hidden', encode: { x: 0, y: 1 } },
 			{ type: 'line', name: 'Visible', encode: { x: 0, y: 2 } }
 		]
@@ -343,7 +343,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(options.series[0].encode).toEqual({ x: 0, y: 2 })
 	})
 
-	it('finishes replacing the model before showing an always-visible tooltip', async () => {
+	test('finishes replacing the model before showing an always-visible tooltip', async () => {
 		await act(async () =>
 			root.render(
 				<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} alwaysShowTooltip exportButtons="hidden" />
@@ -375,8 +375,8 @@ describe('MultiSeriesChart lifecycle', () => {
 		)
 	})
 
-	it('derives direct-series bounds and sticky tooltip index from the visible shorter series', async () => {
-		const charts: MultiSeriesChartSeriesConfig[] = [
+	test('derives direct-series bounds and sticky tooltip index from the visible shorter series', async () => {
+		const charts: Array<MultiSeriesChartSeriesConfig> = [
 			{
 				type: 'line',
 				name: 'Short',
@@ -423,7 +423,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		})
 	})
 
-	it('removes the default zero-baseline callback from a log-scaled axis', async () => {
+	test('removes the default zero-baseline callback from a log-scaled axis', async () => {
 		await act(async () =>
 			root.render(
 				<MultiSeriesChart
@@ -441,8 +441,8 @@ describe('MultiSeriesChart lifecycle', () => {
 		expect(axis).not.toHaveProperty('min')
 	})
 
-	it('preserves a selected sparse axis configuration when remapping it to log scale', async () => {
-		const charts: MultiSeriesChartSeriesConfig[] = [
+	test('preserves a selected sparse axis configuration when remapping it to log scale', async () => {
+		const charts: Array<MultiSeriesChartSeriesConfig> = [
 			{ type: 'line', name: 'TVL', encode: { x: 'timestamp', y: 'TVL' }, yAxisIndex: 0, valueSymbol: '$' },
 			{
 				type: 'line',

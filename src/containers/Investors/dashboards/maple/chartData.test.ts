@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { MaplePool, MaplePoolWithLoans, MapleOpenTermLoan } from './api'
 import {
 	aggregateByMonth,
@@ -61,7 +61,7 @@ function mapleLoan(overrides: Partial<MapleOpenTermLoan> = {}): MapleOpenTermLoa
 }
 
 describe('Maple chart data', () => {
-	it('normalizes raw pool strings into rows, totals, and chart datasets', () => {
+	test('normalizes raw pool strings into rows, totals, and chart datasets', () => {
 		const result = buildMaplePoolsData([
 			maplePool(),
 			maplePool({
@@ -97,8 +97,8 @@ describe('Maple chart data', () => {
 		expect(result.apy.source).toEqual([['High Yield', 7.5]])
 	})
 
-	it('normalizes raw loan amounts and Unix seconds into every chart dataset', () => {
-		const pools: MaplePoolWithLoans[] = [
+	test('normalizes raw loan amounts and Unix seconds into every chart dataset', () => {
+		const pools: Array<MaplePoolWithLoans> = [
 			{
 				id: 'pool-1',
 				name: 'Blue Chip',
@@ -124,30 +124,30 @@ describe('Maple chart data', () => {
 				]
 			}
 		]
-		const result = buildMapleLoansData(pools, Date.parse('2026-03-02T00:00:00Z') / 1_000)
+		const result = buildMapleLoansData(pools, Date.parse('2026-03-02T00:00:00Z') / 1000)
 
 		expect(result.rows).toEqual([
-			expect.objectContaining({ id: 'loan-1', principal: 2_500, interestRate: 4.5, interestPaid: 125, ageDays: 29 }),
+			expect.objectContaining({ id: 'loan-1', principal: 2500, interestRate: 4.5, interestPaid: 125, ageDays: 29 }),
 			expect.objectContaining({ id: 'loan-2', principal: 500, interestRate: 12, interestPaid: 25, ageDays: 119 })
 		])
 		expect(result.totals).toEqual({
-			totalPrincipal: 3_000,
+			totalPrincipal: 3000,
 			totalInterestPaid: 150,
 			weightedAverageRate: 5.75,
 			averageAgeDays: 74
 		})
-		expect(result.principalByPool.source).toEqual([['Blue Chip', 3_000]])
+		expect(result.principalByPool.source).toEqual([['Blue Chip', 3000]])
 		expect(result.rateDistribution.source).toEqual([
-			['4-6%', 2_500],
+			['4-6%', 2500],
 			['10%+', 500]
 		])
 		expect(result.ageDistribution.source).toEqual([
-			['< 1mo', 2_500],
+			['< 1mo', 2500],
 			['3-6mo', 500]
 		])
 	})
 
-	it('aggregates deposits and withdrawals into UTC months', () => {
+	test('aggregates deposits and withdrawals into UTC months', () => {
 		const tx = (id: string, date: string, type: TxRow['type'], assetsAmount: number): TxRow => ({
 			id,
 			timestamp: Date.parse(date) / 1e3,
@@ -171,8 +171,8 @@ describe('Maple chart data', () => {
 		})
 	})
 
-	it('aggregates drip claims independently of their event type', () => {
-		const rows: DripRow[] = [
+	test('aggregates drip claims independently of their event type', () => {
+		const rows: Array<DripRow> = [
 			{ id: '1', timestamp: Date.parse('2026-01-02T00:00:00Z') / 1e3, type: 'claim', amount: 2, account: '0x1' },
 			{ id: '2', timestamp: Date.parse('2026-01-03T00:00:00Z') / 1e3, type: 'other', amount: 3, account: '0x2' }
 		]

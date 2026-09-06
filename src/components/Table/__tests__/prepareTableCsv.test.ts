@@ -1,5 +1,5 @@
 import type { Table } from '@tanstack/react-table'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { prepareTableCsv } from '../utils'
 
 type Row = { name: string; volume: number }
@@ -22,11 +22,11 @@ function tableStub(): Table<Row> {
 }
 
 describe('prepareTableCsv', () => {
-	it('exports visible columns by default', () => {
+	test('exports visible columns by default', () => {
 		expect(prepareTableCsv({ instance: tableStub(), filename: 'markets' }).rows).toEqual([['Name'], ['Example']])
 	})
 
-	it('can export columns hidden only for presentation', () => {
+	test('can export columns hidden only for presentation', () => {
 		expect(prepareTableCsv({ instance: tableStub(), filename: 'markets', includeHiddenColumns: true }).rows).toEqual([
 			['Name', 'Volume'],
 			['Example', 42]

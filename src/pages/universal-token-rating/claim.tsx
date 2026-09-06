@@ -21,7 +21,7 @@ export const getStaticProps = withPerformanceLogging('universal-token-rating/cla
 	])
 	const exchangeOptions = exchangeOptionsFromScoringConfig(scoringConfig)
 	const scoreByProject = new Map(scoreSummaries.map((summary) => [summary.arcticId, summary]))
-	const projectOptions = projects.reduce<UtrClaimProjectOption[]>((options, project) => {
+	const projectOptions = projects.reduce<Array<UtrClaimProjectOption>>((options, project) => {
 		if (project.isActive) {
 			const summary = scoreByProject.get(project.arcticId)
 			options.push({

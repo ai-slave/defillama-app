@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { SqlQueryRecipe } from '~/containers/ProDashboard/types'
 import { hashSqlQuery } from '../queryHash'
 
 describe('hashSqlQuery', () => {
-	it('is stable across source order and display-only fields', () => {
+	test('is stable across source order and display-only fields', () => {
 		const a = hashSqlQuery({
 			sql: 'SELECT 1',
 			tableSources: [
@@ -22,7 +22,7 @@ describe('hashSqlQuery', () => {
 		expect(a).toMatch(/^[a-f0-9]{64}$/)
 	})
 
-	it('changes when sql or sources change', () => {
+	test('changes when sql or sources change', () => {
 		const base = hashSqlQuery({ sql: 'SELECT 1', tableSources: [{ kind: 'dataset', slug: 'protocols' }] })
 		expect(hashSqlQuery({ sql: 'SELECT 2', tableSources: [{ kind: 'dataset', slug: 'protocols' }] })).not.toBe(base)
 		expect(hashSqlQuery({ sql: 'SELECT 1', tableSources: [{ kind: 'dataset', slug: 'yields' }] })).not.toBe(base)
@@ -31,7 +31,7 @@ describe('hashSqlQuery', () => {
 		).not.toBe(base)
 	})
 
-	it('separates execution snapshots with different row caps', () => {
+	test('separates execution snapshots with different row caps', () => {
 		const query: SqlQueryRecipe = { sql: 'SELECT 1', tableSources: [{ kind: 'dataset', slug: 'protocols' }] }
 		expect(hashSqlQuery(query, { rowCap: 100 })).not.toBe(hashSqlQuery(query, { rowCap: 500 }))
 		expect(hashSqlQuery(query)).toBe(hashSqlQuery(query, {}))

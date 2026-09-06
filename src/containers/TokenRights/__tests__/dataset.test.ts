@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IRawTokenRightsEntry } from '../api.types'
 
 const mocks = vi.hoisted(() => ({
@@ -38,7 +38,7 @@ beforeEach(() => {
 })
 
 describe('token rights dataset snapshot', () => {
-	it('reads the full dataset and indexes from their registered files', async () => {
+	test('reads the full dataset and indexes from their registered files', async () => {
 		mocks.readJson
 			.mockResolvedValueOnce([entry])
 			.mockResolvedValueOnce({ 'parent#aave': entry })
@@ -55,13 +55,13 @@ describe('token rights dataset snapshot', () => {
 		])
 	})
 
-	it('returns null for empty lookup keys without reading a snapshot', async () => {
+	test('returns null for empty lookup keys without reading a snapshot', async () => {
 		await expect(fetchTokenRightsEntryByDefillamaId('')).resolves.toBeNull()
 		await expect(fetchTokenRightsEntryByName('')).resolves.toBeNull()
 		expect(mocks.readJson).not.toHaveBeenCalled()
 	})
 
-	it('writes the full dataset and both pure indexes', async () => {
+	test('writes the full dataset and both pure indexes', async () => {
 		mocks.fetchJson.mockResolvedValue([entry])
 		mocks.writeJson.mockResolvedValue(undefined)
 

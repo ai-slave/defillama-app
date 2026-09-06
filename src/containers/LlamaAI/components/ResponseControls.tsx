@@ -22,7 +22,7 @@ import { formatNumber, formatUsd, formatFixedNumber } from '~/utils/numberFormat
 interface ResponseControlsProps {
 	messageId?: string
 	content?: string
-	copyContext?: () => { artifacts: ArtifactRegistry; citations?: UnifiedCitationReference[] }
+	copyContext?: () => { artifacts: ArtifactRegistry; citations?: Array<UnifiedCitationReference> }
 	articleExportRequest?: () => ArticleExportRequest
 	initialRating?: 'good' | 'bad' | null
 	sessionId?: string | null

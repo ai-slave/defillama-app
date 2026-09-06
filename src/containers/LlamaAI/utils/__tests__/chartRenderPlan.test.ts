@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import { adaptHBarChartData } from '~/containers/LlamaAI/utils/chartAdapters/hbar'
@@ -16,7 +16,7 @@ const state: ChartViewState = {
 }
 
 describe('LlamaAI chart render plan', () => {
-	it('keeps Cartesian config labels hidden while preserving multi-axis positions', () => {
+	test('keeps Cartesian config labels hidden while preserving multi-axis positions', () => {
 		const config = {
 			id: 'multi-axis',
 			type: 'combo',
@@ -67,7 +67,7 @@ describe('LlamaAI chart render plan', () => {
 		expect(yAxis.every((axis) => !('name' in axis))).toBe(true)
 	})
 
-	it('keeps horizontal-bar config labels out of renderer axis props', () => {
+	test('keeps horizontal-bar config labels out of renderer axis props', () => {
 		const config = {
 			id: 'hbar',
 			type: 'hbar',

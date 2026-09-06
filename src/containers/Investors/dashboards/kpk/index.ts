@@ -5,7 +5,7 @@ const Overview = lazy(() => import('./Overview'))
 const Mandates = lazy(() => import('./Mandates'))
 const Vaults = lazy(() => import('./Vaults'))
 
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'overview', label: 'Overview', component: Overview },
 	{ id: 'mandates', label: 'Treasury mandates', component: Mandates },
 	{ id: 'vaults', label: 'Vaults', component: Vaults },

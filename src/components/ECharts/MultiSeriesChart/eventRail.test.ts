@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
 	attachEventHoverHandlers,
 	type EventHoverState,
@@ -13,7 +13,7 @@ afterEach(() => {
 })
 
 describe('hallmark event-rail time bounds', () => {
-	it('reads bounds from the ends of an ascending series without re-sorting it', () => {
+	test('reads bounds from the ends of an ascending series without re-sorting it', () => {
 		const data: Array<[number, number]> = [
 			[100, 1],
 			[200, 2],
@@ -28,7 +28,7 @@ describe('hallmark event-rail time bounds', () => {
 		])
 	})
 
-	it('reads numeric and numeric-string endpoints without sorting', () => {
+	test('reads numeric and numeric-string endpoints without sorting', () => {
 		expect(getDatasetTimeBounds([[100], [200]], 0)).toEqual({ min: 100, max: 200 })
 		expect(getDatasetTimeBounds([['100'], ['200']], 0)).toEqual({ min: 100, max: 200 })
 		expect(
@@ -44,7 +44,7 @@ describe('hallmark event-rail time bounds', () => {
 		expect(getDatasetTimeBounds([], 0)).toEqual({ min: undefined, max: undefined })
 	})
 
-	it('skips invalid boundary rows without sorting the source', () => {
+	test('skips invalid boundary rows without sorting the source', () => {
 		const source = [[undefined], [100], [200], [null]]
 		const series: Array<[number | string, number] | unknown> = [undefined, ['100', 1], [200, 2], null]
 
@@ -54,11 +54,11 @@ describe('hallmark event-rail time bounds', () => {
 		expect(series).toEqual([undefined, ['100', 1], [200, 2], null])
 	})
 
-	it('replaces hover listeners, repositions an active mark line, and cancels pending cleanup', () => {
+	test('replaces hover listeners, repositions an active mark line, and cancels pending cleanup', () => {
 		vi.useFakeTimers()
-		const handlers = new Map<string, (...args: any[]) => void>()
-		const on = vi.fn((event: string, handler: (...args: any[]) => void) => handlers.set(event, handler))
-		const off = vi.fn((event: string, handler: (...args: any[]) => void) => {
+		const handlers = new Map<string, (...args: Array<any>) => void>()
+		const on = vi.fn((event: string, handler: (...args: Array<any>) => void) => handlers.set(event, handler))
+		const off = vi.fn((event: string, handler: (...args: Array<any>) => void) => {
 			if (handlers.get(event) === handler) handlers.delete(event)
 		})
 		const setOption = vi.fn()

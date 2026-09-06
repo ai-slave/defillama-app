@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const fetchJson = vi.fn()
-vi.mock('~/utils/async', () => ({ fetchJson: (...args: unknown[]) => fetchJson(...args) }))
+vi.mock('~/utils/async', () => ({ fetchJson: (...args: Array<unknown>) => fetchJson(...args) }))
 
 import { buildForgdUrl, forgdFetch } from '../client'
 
@@ -11,14 +11,14 @@ afterEach(() => {
 })
 
 describe('buildForgdUrl', () => {
-	it('joins base + path and appends only defined query params', () => {
+	test('joins base + path and appends only defined query params', () => {
 		const url = buildForgdUrl('/market-maker/leaderboard/volume', { start_date: '2026-05-30', end_date: undefined })
 		expect(url).toBe('https://quant.forgd.com/api/v1/public/market-maker/leaderboard/volume?start_date=2026-05-30')
 	})
 })
 
 describe('forgdFetch', () => {
-	it('sends the bearer key from API_KEY_FORGD as an Authorization header', async () => {
+	test('sends the bearer key from API_KEY_FORGD as an Authorization header', async () => {
 		vi.stubEnv('API_KEY_FORGD', 'pk_test_123')
 		fetchJson.mockResolvedValue({ ok: true })
 		const out = await forgdFetch('/whoami')
@@ -29,7 +29,7 @@ describe('forgdFetch', () => {
 		)
 	})
 
-	it('omits the Authorization header when API_KEY_FORGD is missing', async () => {
+	test('omits the Authorization header when API_KEY_FORGD is missing', async () => {
 		vi.stubEnv('API_KEY_FORGD', '')
 		fetchJson.mockResolvedValue({ ok: true })
 		const out = await forgdFetch('/whoami')

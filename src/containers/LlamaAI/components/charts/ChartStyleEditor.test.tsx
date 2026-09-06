@@ -2,7 +2,7 @@
 
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration, ChartStylePatch } from '~/containers/LlamaAI/chartTypes'
 import { ChartStyleEditor } from './ChartStyleEditor'
 
@@ -102,7 +102,7 @@ describe('ChartStyleEditor', () => {
 		vi.useRealTimers()
 	})
 
-	it('debounces annotation preview while keeping the saved chart unchanged', async () => {
+	test('debounces annotation preview while keeping the saved chart unchanged', async () => {
 		vi.useFakeTimers()
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		const onPreview = vi.fn()
@@ -147,7 +147,7 @@ describe('ChartStyleEditor', () => {
 		expect(container.querySelector('[data-testid="saved-annotation"]')?.textContent).toBe('hello')
 	})
 
-	it('flushes a pending text preview when the input loses focus', async () => {
+	test('flushes a pending text preview when the input loses focus', async () => {
 		vi.useFakeTimers()
 		const onPreview = vi.fn()
 		await act(async () => root.render(<EditorHarness onSave={vi.fn(async () => undefined)} onPreview={onPreview} />))
@@ -166,7 +166,7 @@ describe('ChartStyleEditor', () => {
 		expect(container.querySelector('[data-testid="preview-annotation"]')?.textContent).toBe('Updated note')
 	})
 
-	it('previews discrete chart options and added annotations immediately', async () => {
+	test('previews discrete chart options and added annotations immediately', async () => {
 		const onPreview = vi.fn()
 		await act(async () => root.render(<EditorHarness onSave={vi.fn(async () => undefined)} onPreview={onPreview} />))
 		const barButton = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
@@ -186,7 +186,7 @@ describe('ChartStyleEditor', () => {
 
 	// The backend ships metricClass 'unknown' when the model did not declare how a series aggregates.
 	// The owner resolves it here, once per y-field, and the choice is what update-chart-style persists.
-	it('lets the owner set the aggregation of unknown series, per y-field, and saves it', async () => {
+	test('lets the owner set the aggregation of unknown series, per y-field, and saves it', async () => {
 		const unknown = (name: string, value: string): ChartConfiguration['series'][number] => ({
 			...revenueSeries,
 			name,
@@ -228,7 +228,7 @@ describe('ChartStyleEditor', () => {
 		expect(patch.series?.map((series) => series.metricClass)).toEqual(['flow', 'flow', 'stock'])
 	})
 
-	it('keeps the last valid preview and disables save while series names are duplicated', async () => {
+	test('keeps the last valid preview and disables save while series names are duplicated', async () => {
 		vi.useFakeTimers()
 		const editorConfig = {
 			...config,
@@ -308,7 +308,7 @@ describe('ChartStyleEditor', () => {
 
 	const previewNames = () => container.querySelector('[data-testid="preview-series-names"]')?.textContent
 
-	it.each(['unknown', 'stock'] as const)(
+	test.each(['unknown', 'stock'] as const)(
 		'discards unsaved aggregation changes on reset from %s',
 		async (metricClass) => {
 			const editorConfig = { ...config, series: [{ ...revenueSeries, metricClass }] }
@@ -335,7 +335,7 @@ describe('ChartStyleEditor', () => {
 		}
 	)
 
-	it('moves a series up and saves the permutation in the patch', async () => {
+	test('moves a series up and saves the permutation in the patch', async () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
@@ -352,7 +352,7 @@ describe('ChartStyleEditor', () => {
 		expect(patch.series?.map((s) => s.name)).toEqual(['2 days', '11-20 days', '6-10 days', '1 day'])
 	})
 
-	it('sorts series naturally with the sort button', async () => {
+	test('sorts series naturally with the sort button', async () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
@@ -367,7 +367,7 @@ describe('ChartStyleEditor', () => {
 		expect(patch.order).toEqual([3, 1, 2, 0])
 	})
 
-	it('omits order from the patch when series were not reordered', async () => {
+	test('omits order from the patch when series were not reordered', async () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
@@ -379,7 +379,7 @@ describe('ChartStyleEditor', () => {
 		expect(patch.order).toBeUndefined()
 	})
 
-	it('resets series names and order while preserving saved aggregation by data binding', async () => {
+	test('resets series names and order while preserving saved aggregation by data binding', async () => {
 		const editorConfig = {
 			...config,
 			type: 'bar',

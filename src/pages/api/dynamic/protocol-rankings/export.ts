@@ -44,7 +44,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	if (mismatch) return res.status(409).json({ error: 'snapshot_mismatch', snapshot: snapshot.snapshot })
 
 	const rows = await loadPreparedProtocolRankingRows(chain, snapshot, query)
-	const csv = buildProtocolRankingsCsv({ rows, columns: body.columns as ProtocolRankingExportColumn[] })
+	const csv = buildProtocolRankingsCsv({ rows, columns: body.columns as Array<ProtocolRankingExportColumn> })
 	res.setHeader('Cache-Control', 'no-store')
 	res.setHeader('Content-Type', 'text/csv; charset=utf-8')
 	res.setHeader('Content-Disposition', `attachment; filename="defillama-${chain.toLowerCase()}-protocols.csv"`)

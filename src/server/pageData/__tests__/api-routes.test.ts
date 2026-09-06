@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
@@ -59,7 +59,7 @@ describe('page data chart api routes', () => {
 		vi.clearAllMocks()
 	})
 
-	it('returns cacheable categories chart data', async () => {
+	test('returns cacheable categories chart data', async () => {
 		getProtocolsCategoriesChartDataMock.mockResolvedValue({
 			chartSource: [{ timestamp: 1, Dexes: 100 }],
 			extraTvlCharts: {}
@@ -84,7 +84,7 @@ describe('page data chart api routes', () => {
 		})
 	})
 
-	it('reuses categories chart cache entries for semantically identical extra tvl params', async () => {
+	test('reuses categories chart cache entries for semantically identical extra tvl params', async () => {
 		const payload = {
 			chartSource: [{ timestamp: 1, Dexes: 100 }],
 			extraTvlCharts: {}
@@ -116,7 +116,7 @@ describe('page data chart api routes', () => {
 		expectSerializedJson(repeatedRes, payload)
 	})
 
-	it('returns cacheable chains chart data', async () => {
+	test('returns cacheable chains chart data', async () => {
 		getChainsByCategoryChartDataMock.mockResolvedValue({
 			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
 			totalTvlByDate: { tvl: { 1: 100 } }
@@ -143,7 +143,7 @@ describe('page data chart api routes', () => {
 		})
 	})
 
-	it('reuses chains chart cache entries for semantically identical extra tvl params', async () => {
+	test('reuses chains chart cache entries for semantically identical extra tvl params', async () => {
 		const payload = {
 			tvlChartsByChain: { tvl: { Ethereum: { 1: 100 } } },
 			totalTvlByDate: { tvl: { 1: 100 } }
@@ -183,7 +183,7 @@ describe('page data chart api routes', () => {
 		})
 	})
 
-	it('rejects unsupported dimension adapter chart params', async () => {
+	test('rejects unsupported dimension adapter chart params', async () => {
 		const req = {
 			method: 'GET',
 			query: { adapterType: 'bad', dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME }
@@ -197,7 +197,7 @@ describe('page data chart api routes', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'unsupported adapterType or dataType' })
 	})
 
-	it('returns cacheable dimension adapter chart data', async () => {
+	test('returns cacheable dimension adapter chart data', async () => {
 		getChainsByAdapterAllChainsMock.mockReturnValue(['Ethereum'])
 		getChainsByAdapterChartDataMock.mockResolvedValue({
 			dimensions: ['timestamp', 'Ethereum'],
@@ -230,7 +230,7 @@ describe('page data chart api routes', () => {
 		})
 	})
 
-	it('does not cache failed dimension adapter chart responses', async () => {
+	test('does not cache failed dimension adapter chart responses', async () => {
 		getChainsByAdapterAllChainsMock.mockReturnValue(['Ethereum'])
 		getChainsByAdapterChartDataMock.mockRejectedValue(new Error('upstream failed'))
 		// Distinct params from the success case above so the in-process result

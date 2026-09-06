@@ -1,7 +1,7 @@
 import { getTimeSeriesPeriodPair } from './timeSeries'
 
 export function getPrevTvlFromChart(
-	chart: [number, number][] | null | undefined,
+	chart: Array<[number, number]> | null | undefined,
 	daysBefore: number,
 	currentTimeMs: number = Date.now()
 ): number | null {

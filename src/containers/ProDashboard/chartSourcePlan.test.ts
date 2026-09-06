@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildProDashboardChartSourcePlan } from './chartSourcePlan'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { ProDashboardProtocolCatalog } from './protocolCatalog'
@@ -21,8 +21,8 @@ const catalog: ProDashboardProtocolCatalog = {
 }
 
 describe('Pro dashboard chart source planning', () => {
-	it('deduplicates equivalent chart and metric cards and carries catalog metadata', () => {
-		const items: DashboardItemConfig[] = [
+	test('deduplicates equivalent chart and metric cards and carries catalog metadata', () => {
+		const items: Array<DashboardItemConfig> = [
 			{ id: 'daily', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'aave', grouping: 'day' },
 			{
 				id: 'monthly',
@@ -53,8 +53,8 @@ describe('Pro dashboard chart source planning', () => {
 		})
 	})
 
-	it('keeps genuinely different raw data types separate', () => {
-		const items: DashboardItemConfig[] = [
+	test('keeps genuinely different raw data types separate', () => {
+		const items: Array<DashboardItemConfig> = [
 			{
 				id: 'documented',
 				kind: 'chart',
@@ -76,24 +76,24 @@ describe('Pro dashboard chart source planning', () => {
 		expect(buildProDashboardChartSourcePlan(items, catalog)).toHaveLength(2)
 	})
 
-	it('leaves metadata-dependent sources unseeded when the catalog is unavailable', () => {
-		const items: DashboardItemConfig[] = [
+	test('leaves metadata-dependent sources unseeded when the catalog is unavailable', () => {
+		const items: Array<DashboardItemConfig> = [
 			{ id: 'mcap', kind: 'chart', subjectType: 'protocol', type: 'tokenMcap', protocol: 'aave' }
 		]
 
 		expect(buildProDashboardChartSourcePlan(items, null)).toEqual([])
 	})
 
-	it('seeds protocols outside canonical Pro membership as empty', () => {
-		const items: DashboardItemConfig[] = [
+	test('seeds protocols outside canonical Pro membership as empty', () => {
+		const items: Array<DashboardItemConfig> = [
 			{ id: 'missing', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'free-protocol' }
 		]
 
 		expect(buildProDashboardChartSourcePlan(items, catalog)[0]?.skipReason).toBeDefined()
 	})
 
-	it('seeds unsupported persisted chain sources as empty instead of retrying a known-invalid API', () => {
-		const items: DashboardItemConfig[] = [
+	test('seeds unsupported persisted chain sources as empty instead of retrying a known-invalid API', () => {
+		const items: Array<DashboardItemConfig> = [
 			{ id: 'options', kind: 'chart', subjectType: 'chain', type: 'optionsPremium', chain: 'Solana' },
 			{ id: 'active', kind: 'chart', subjectType: 'chain', type: 'activeUsers', chain: 'Solana' },
 			{ id: 'new', kind: 'chart', subjectType: 'chain', type: 'newUsers', chain: 'Solana' },
@@ -121,9 +121,9 @@ describe('Pro dashboard chart source planning', () => {
 		expect(plan.map((source) => Boolean(source.skipReason))).toEqual([true, false, true, true, false])
 	})
 
-	it('attaches exact producer IDs to Bridged TVL sources for display names and legacy aliases', () => {
+	test('attaches exact producer IDs to Bridged TVL sources for display names and legacy aliases', () => {
 		const names = ['Hyperliquid', 'OP Mainnet', 'Avalanche', 'Gnosis', 'ZKsync Era']
-		const items: DashboardItemConfig[] = names.map((chain, index) => ({
+		const items: Array<DashboardItemConfig> = names.map((chain, index) => ({
 			id: `bridged-${index}`,
 			kind: 'chart',
 			subjectType: 'chain',
@@ -147,8 +147,8 @@ describe('Pro dashboard chart source planning', () => {
 		expect(plan.map(({ request }) => request.chainAssetId)).toEqual(['hyperliquid', 'optimism', 'avax', 'xdai', 'era'])
 	})
 
-	it('seeds unsupported persisted protocol sources as empty instead of calling a missing adapter', () => {
-		const items: DashboardItemConfig[] = [
+	test('seeds unsupported persisted protocol sources as empty instead of calling a missing adapter', () => {
+		const items: Array<DashboardItemConfig> = [
 			{ id: 'tvl', kind: 'chart', subjectType: 'protocol', type: 'tvl', protocol: 'huma-finance-v2' },
 			{ id: 'fees', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'huma-finance-v2' },
 			{ id: 'revenue', kind: 'chart', subjectType: 'protocol', type: 'revenue', protocol: 'huma-finance-v2' }
@@ -185,8 +185,8 @@ describe('Pro dashboard chart source planning', () => {
 		expect(plan.map((source) => Boolean(source.skipReason))).toEqual([false, true, true])
 	})
 
-	it('keeps a parent source fetchable when child metadata advertises the capability', () => {
-		const items: DashboardItemConfig[] = [
+	test('keeps a parent source fetchable when child metadata advertises the capability', () => {
+		const items: Array<DashboardItemConfig> = [
 			{ id: 'fees', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'aave' }
 		]
 		const appMetadata = {

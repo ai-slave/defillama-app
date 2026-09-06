@@ -12,11 +12,11 @@ import type {
 	ProjectWithStats
 } from './types'
 
-function getEnvelopeArray<T>(data: unknown, key: string): T[] {
+function getEnvelopeArray<T>(data: unknown, key: string): Array<T> {
 	// Partial backend rollouts can return a 2xx response before the final list
 	// envelope is present. Keep the UI empty instead of crashing on `.map`.
 	return data && typeof data === 'object' && Array.isArray((data as Record<string, unknown>)[key])
-		? ((data as Record<string, unknown>)[key] as T[])
+		? ((data as Record<string, unknown>)[key] as Array<T>)
 		: []
 }
 
@@ -24,12 +24,12 @@ export async function getProjectUsage(fetcher: AuthorizedFetch): Promise<Project
 	return llamaAIRequest<ProjectUsage>(fetcher, '/projects/usage')
 }
 
-export async function listProjectSessions(fetcher: AuthorizedFetch, id: string): Promise<ProjectChatSession[]> {
+export async function listProjectSessions(fetcher: AuthorizedFetch, id: string): Promise<Array<ProjectChatSession>> {
 	const data = await llamaAIRequest<unknown>(fetcher, `/projects/${id}/sessions`)
 	return getEnvelopeArray<ProjectChatSession>(data, 'sessions')
 }
 
-export async function listProjects(fetcher: AuthorizedFetch): Promise<ProjectWithStats[]> {
+export async function listProjects(fetcher: AuthorizedFetch): Promise<Array<ProjectWithStats>> {
 	const data = await llamaAIRequest<unknown>(fetcher, '/projects')
 	return getEnvelopeArray<ProjectWithStats>(data, 'projects')
 }
@@ -70,7 +70,7 @@ export async function listProjectFiles(
 	fetcher: AuthorizedFetch,
 	id: string,
 	opts: { limit?: number; offset?: number } = {}
-): Promise<{ files: ProjectFile[]; limit: number; offset: number }> {
+): Promise<{ files: Array<ProjectFile>; limit: number; offset: number }> {
 	const params = new URLSearchParams()
 	if (opts.limit !== undefined) params.set('limit', String(opts.limit))
 	if (opts.offset !== undefined) params.set('offset', String(opts.offset))
@@ -78,7 +78,11 @@ export async function listProjectFiles(
 	return llamaAIRequest(fetcher, `/projects/${id}/files${query ? `?${query}` : ''}`)
 }
 
-export async function uploadProjectFiles(fetcher: AuthorizedFetch, id: string, files: File[]): Promise<ImportResult> {
+export async function uploadProjectFiles(
+	fetcher: AuthorizedFetch,
+	id: string,
+	files: Array<File>
+): Promise<ImportResult> {
 	const form = new FormData()
 	for (const file of files) {
 		// Folder uploads (<input webkitdirectory> or drag-and-drop a folder) populate
@@ -130,11 +134,14 @@ export async function startGithubInstall(
 	return llamaAIRequest(fetcher, `/github/install/start${query ? `?${query}` : ''}`)
 }
 
-export async function listGithubInstallations(fetcher: AuthorizedFetch): Promise<GitHubInstallation[]> {
+export async function listGithubInstallations(fetcher: AuthorizedFetch): Promise<Array<GitHubInstallation>> {
 	return llamaAIRequest(fetcher, '/github/installations')
 }
 
-export async function listInstallationRepos(fetcher: AuthorizedFetch, installationId: number): Promise<GitHubRepo[]> {
+export async function listInstallationRepos(
+	fetcher: AuthorizedFetch,
+	installationId: number
+): Promise<Array<GitHubRepo>> {
 	const data = await llamaAIRequest<unknown>(fetcher, `/github/installations/${installationId}/repos`)
 	return getEnvelopeArray<GitHubRepo>(data, 'repos')
 }
@@ -144,8 +151,8 @@ export async function listInstallationRepoBranches(
 	installationId: number,
 	owner: string,
 	repo: string
-): Promise<GitHubBranch[]> {
-	return llamaAIRequest<GitHubBranch[]>(
+): Promise<Array<GitHubBranch>> {
+	return llamaAIRequest<Array<GitHubBranch>>(
 		fetcher,
 		`/github/installations/${installationId}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`
 	)
@@ -167,7 +174,7 @@ export async function disconnectSource(fetcher: AuthorizedFetch, projectId: stri
 	await llamaAIRequest(fetcher, `/projects/${projectId}/sources/${sourceId}`, { method: 'DELETE' })
 }
 
-export async function listProjectSources(fetcher: AuthorizedFetch, projectId: string): Promise<ProjectSource[]> {
+export async function listProjectSources(fetcher: AuthorizedFetch, projectId: string): Promise<Array<ProjectSource>> {
 	const data = await llamaAIRequest<unknown>(fetcher, `/projects/${projectId}/sources`)
 	return getEnvelopeArray<ProjectSource>(data, 'sources')
 }

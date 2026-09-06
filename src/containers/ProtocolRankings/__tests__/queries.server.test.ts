@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { AdapterMetricPeriods } from '~/containers/AdapterMetrics/api.types'
 import type { ParentProtocolLite, ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import { applyProtocolTvlSettings } from '~/containers/ProtocolLists/utils'
@@ -108,9 +108,9 @@ const protocolsResponse = ({
 	parentProtocols = [],
 	chains = []
 }: {
-	protocols: ProtocolLite[]
-	parentProtocols?: ParentProtocolLite[]
-	chains?: string[]
+	protocols: Array<ProtocolLite>
+	parentProtocols?: Array<ParentProtocolLite>
+	chains?: Array<string>
 }): ProtocolsResponse => ({ protocols, parentProtocols, chains, protocolCategories: ['Dexes', 'Lending'] })
 
 const metricRow = (defillamaId: string, totals: AdapterMetricPeriods & { monthlyAverage1y?: number | null }) => ({
@@ -138,7 +138,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		getAdapterChainOverviewMock.mockResolvedValue({
 			protocols: [
 				metricRow('child-alpha-one', { total24h: 100, total7d: 700, totalAllTime: 10_000 }),
-				metricRow('child-alpha-two', { total24h: 50, total7d: 350, totalAllTime: 5_000 })
+				metricRow('child-alpha-two', { total24h: 50, total7d: 350, totalAllTime: 5000 })
 			]
 		})
 		fetchAdapterChainMetricsMock.mockImplementation(({ dataType }: { dataType?: string }) => {
@@ -190,7 +190,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		})
 	})
 
-	it('groups multiple eligible children under the parent and preserves current TVL, extras, and null prev values', async () => {
+	test('groups multiple eligible children under the parent and preserves current TVL, extras, and null prev values', async () => {
 		getProtocolEmissionsLookupFromAggregatedMock.mockResolvedValue({
 			'Alpha Parent': {
 				emissions24h: 3,
@@ -346,7 +346,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		).toBe(true)
 	})
 
-	it('uses current Fork relationships before grouping and preserves extra-only children', async () => {
+	test('uses current Fork relationships before grouping and preserves extra-only children', async () => {
 		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
 		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
 		const forkProtocols = protocolsResponse({
@@ -434,7 +434,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(allExtra?.protocols[0]?.tvl).not.toHaveProperty('excludeParent')
 	})
 
-	it('keeps a parent emissions period unavailable when a matched child period is null', async () => {
+	test('keeps a parent emissions period unavailable when a matched child period is null', async () => {
 		getProtocolEmissionsLookupFromAggregatedMock.mockResolvedValue({
 			'child-alpha-one': {
 				emissions24h: 3,
@@ -492,7 +492,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(getProtocolEarningsValue(parent?.revenue?.total7d, parent?.emissions?.total7d)).toBe(77)
 	})
 
-	it('computes parent spot volume change from child 7d volume instead of summing percentages', async () => {
+	test('computes parent spot volume change from child 7d volume instead of summing percentages', async () => {
 		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
 		getAdapterChainOverviewMock.mockResolvedValue({
 			protocols: [
@@ -562,7 +562,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		})
 	})
 
-	it('keeps explicit deprecated zero-TVL history in exact parent comparisons', async () => {
+	test('keeps explicit deprecated zero-TVL history in exact parent comparisons', async () => {
 		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
 		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
 		fetchProtocolsMock.mockResolvedValue(
@@ -621,7 +621,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		})
 	})
 
-	it('keeps non-deprecated zero-TVL children in parent TVL change calculations', async () => {
+	test('keeps non-deprecated zero-TVL children in parent TVL change calculations', async () => {
 		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
 		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
 		fetchProtocolsMock.mockResolvedValue(
@@ -679,7 +679,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		})
 	})
 
-	it('excludes Bridge display-only TVL from a mixed parent without treating it as unknown', async () => {
+	test('excludes Bridge display-only TVL from a mixed parent without treating it as unknown', async () => {
 		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
 		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
 		fetchProtocolsMock.mockResolvedValue(
@@ -712,11 +712,11 @@ describe('getProtocolsByChain parent aggregation', () => {
 						name: 'Mixed Bridge Raw',
 						category: 'Bridge',
 						parentProtocol: 'parent#mixed',
-						tvl: 1_000,
+						tvl: 1000,
 						tvlPrevDay: 900,
 						tvlPrevWeek: 800,
 						tvlPrevMonth: 700,
-						chainTvls: { Ethereum: tvlEntry(1_000, 900, 800, 700) }
+						chainTvls: { Ethereum: tvlEntry(1000, 900, 800, 700) }
 					})
 				]
 			})
@@ -730,7 +730,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(parent?.childProtocols?.find((protocol) => protocol.name === 'Mixed Bridge')?.tvl).toBeNull()
 	})
 
-	it('keeps a parent chain TVL known when a sibling only reports non-default TVL on that chain', async () => {
+	test('keeps a parent chain TVL known when a sibling only reports non-default TVL on that chain', async () => {
 		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
 		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
 		fetchProtocolsMock.mockResolvedValue(
@@ -755,7 +755,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 						name: 'Mixed Staking Only Raw',
 						chains: ['OP Mainnet'],
 						parentProtocol: 'parent#mixed',
-						tvl: 1_000,
+						tvl: 1000,
 						tvlPrevDay: 900,
 						tvlPrevWeek: 800,
 						tvlPrevMonth: 700,
@@ -773,7 +773,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(parent?.tvlChange?.change1d).toBeCloseTo(11.11, 1)
 	})
 
-	it('keeps parent extra TVL history unknown when a present zero-current entry has unknown comparisons', async () => {
+	test('keeps parent extra TVL history unknown when a present zero-current entry has unknown comparisons', async () => {
 		fetchAdapterChainMetricsMock.mockResolvedValue({ protocols: [] })
 		getAdapterChainOverviewMock.mockResolvedValue({ protocols: [] })
 		fetchProtocolsMock.mockResolvedValue(
@@ -834,7 +834,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(withBorrowed?.tvlChange?.change1d).toBeNull()
 	})
 
-	it('keeps parent P/F null when a child fee row has only current fees and no annualized denominator', async () => {
+	test('keeps parent P/F null when a child fee row has only current fees and no annualized denominator', async () => {
 		fetchAdapterChainMetricsMock.mockImplementation(({ dataType }: { dataType?: string }) => {
 			if (dataType === 'dailyRevenue' || dataType === 'dailyHoldersRevenue') {
 				return Promise.resolve({ protocols: [] })
@@ -909,7 +909,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		})
 	})
 
-	it('keeps a single eligible child ungrouped when the chain filter leaves only one child under a parent', async () => {
+	test('keeps a single eligible child ungrouped when the chain filter leaves only one child under a parent', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				chains: ['Ethereum', 'Optimism'],
@@ -970,7 +970,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(getProtocolEmissionsLookupFromAggregatedMock).not.toHaveBeenCalled()
 	})
 
-	it('parses full hyphenated chain prefixes and only adds recognized protocol-list sections', async () => {
+	test('parses full hyphenated chain prefixes and only adds recognized protocol-list sections', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				chains: ['OP Mainnet', 'Ethereum'],
@@ -1003,7 +1003,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		})
 	})
 
-	it('preserves explicit zero and null while leaving a missing selected-chain base unavailable', async () => {
+	test('preserves explicit zero and null while leaving a missing selected-chain base unavailable', async () => {
 		const makeResponse = (chainTvls: ProtocolLite['chainTvls']) =>
 			protocolsResponse({
 				chains: ['OP Mainnet'],
@@ -1031,7 +1031,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(explicitZero?.protocols[0]?.tvl?.default).toEqual(tvlEntry(0, 0, 0, 0))
 	})
 
-	it('returns only finite ranking market-cap ratios with a positive TVL denominator', async () => {
+	test('returns only finite ranking market-cap ratios with a positive TVL denominator', async () => {
 		const makeResponse = (tvl: number, mcap: number) =>
 			protocolsResponse({
 				protocols: [
@@ -1055,7 +1055,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(negativeTvl?.protocols[0]?.mcaptvl).toBeNull()
 	})
 
-	it('keeps parent comparison TVL unknown when excludeParent comparison data is unknown', async () => {
+	test('keeps parent comparison TVL unknown when excludeParent comparison data is unknown', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				chains: ['Ethereum'],
@@ -1095,7 +1095,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(parent?.tvlChange?.change1d).toBeNull()
 	})
 
-	it('keeps children visible when their referenced parent is absent from the canonical parent list', async () => {
+	test('keeps children visible when their referenced parent is absent from the canonical parent list', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				chains: ['Ethereum'],
@@ -1123,7 +1123,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(data?.protocols.every((protocol) => protocol.childProtocols === undefined)).toBe(true)
 	})
 
-	it('keeps children visible when parent metadata is unavailable', async () => {
+	test('keeps children visible when parent metadata is unavailable', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				chains: ['Ethereum'],
@@ -1159,7 +1159,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(data?.protocols.every((protocol) => protocol.childProtocols === undefined)).toBe(true)
 	})
 
-	it('keeps a no-TVL deprecated child visible without erasing measured parent TVL', async () => {
+	test('keeps a no-TVL deprecated child visible without erasing measured parent TVL', async () => {
 		fetchProtocolsMock.mockResolvedValue(
 			protocolsResponse({
 				chains: ['Ethereum'],
@@ -1206,7 +1206,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(parent?.childProtocols?.find((protocol) => protocol.name === 'Alpha Two')?.deprecated).toBe(true)
 	})
 
-	it('keeps independently successful adapter sources when sibling metric requests fail', async () => {
+	test('keeps independently successful adapter sources when sibling metric requests fail', async () => {
 		fetchAdapterChainMetricsMock.mockImplementation(({ dataType }: { dataType?: string }) => {
 			if (dataType === 'dailyRevenue') return Promise.reject(new Error('revenue unavailable'))
 			if (dataType === 'dailyHoldersRevenue') {
@@ -1240,7 +1240,7 @@ describe('getProtocolsByChain parent aggregation', () => {
 		expect(data?.dexs).toBeNull()
 	})
 
-	it('loads extended activity metrics only when requested', async () => {
+	test('loads extended activity metrics only when requested', async () => {
 		fetchAdapterChainMetricsMock.mockImplementation(
 			({ adapterType, dataType }: { adapterType: string; dataType?: string }) => {
 				if (adapterType === 'fees') return Promise.resolve({ protocols: [] })

@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { fetchJsonMock, recordRouteRuntimeErrorMock } = vi.hoisted(() => ({
@@ -39,7 +39,7 @@ describe('/api/public/markets/[token]', () => {
 		vi.clearAllMocks()
 	})
 
-	it('caches and serves serialized token markets through the shared JSON route builder', async () => {
+	test('caches and serves serialized token markets through the shared JSON route builder', async () => {
 		fetchJsonMock.mockResolvedValueOnce({ token: 'bitcoin', markets: [] })
 		const req = {
 			method: 'GET',
@@ -61,7 +61,7 @@ describe('/api/public/markets/[token]', () => {
 		expect(secondRes.send).toHaveBeenCalledWith(JSON.stringify({ token: 'bitcoin', markets: [] }))
 	})
 
-	it('keeps upstream 404s as token not found responses', async () => {
+	test('keeps upstream 404s as token not found responses', async () => {
 		fetchJsonMock.mockRejectedValueOnce(
 			new Error('https://markets.example.com/tokens/by-id/cg-6d697373696e67.json: [404] Not Found')
 		)
@@ -79,7 +79,7 @@ describe('/api/public/markets/[token]', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Token not found' })
 	})
 
-	it.each(['categories', 'exchanges'])('does not treat the retired %s API path as a token', async (token) => {
+	test.each(['categories', 'exchanges'])('does not treat the retired %s API path as a token', async (token) => {
 		const req = {
 			method: 'GET',
 			query: { token },
@@ -94,7 +94,7 @@ describe('/api/public/markets/[token]', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Token not found' })
 	})
 
-	it('does not cache token market failures', async () => {
+	test('does not cache token market failures', async () => {
 		fetchJsonMock
 			.mockRejectedValueOnce(new Error('temporary upstream failure'))
 			.mockResolvedValueOnce({ token: 'retry-cache-test', markets: [] })

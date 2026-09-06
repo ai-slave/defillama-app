@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildSingleMetricChartDataset } from './singleMetricChart'
 
 describe('buildSingleMetricChartDataset', () => {
-	it('normalizes ascending second points directly to final millisecond rows', () => {
+	test('normalizes ascending second points directly to final millisecond rows', () => {
 		const timestampSec = 1_706_745_600
 		expect(
 			buildSingleMetricChartDataset(
@@ -23,22 +23,22 @@ describe('buildSingleMetricChartDataset', () => {
 		expect(new Date(timestampSec * 1e3).toISOString().slice(0, 10)).toBe('2024-02-01')
 	})
 
-	it('running-sums flow values without summing snapshot lines by default', () => {
-		const points: [number, number][] = [
+	test('running-sums flow values without summing snapshot lines by default', () => {
+		const points: Array<[number, number]> = [
 			[1, 10],
 			[2, -3],
 			[3, 5]
 		]
 
 		expect(buildSingleMetricChartDataset(points, 'Flow', true).source).toEqual([
-			[1_000, 10],
-			[2_000, 7],
-			[3_000, 12]
+			[1000, 10],
+			[2000, 7],
+			[3000, 12]
 		])
 		expect(buildSingleMetricChartDataset(points, 'Snapshot', false).source).toEqual([
-			[1_000, 10],
-			[2_000, -3],
-			[3_000, 5]
+			[1000, 10],
+			[2000, -3],
+			[3000, 5]
 		])
 	})
 })

@@ -22,9 +22,9 @@ export function getLinkedAdapterProtocolVersions({
 	protocolMetadata
 }: {
 	isParentProtocol: boolean
-	linkedProtocols: readonly string[] | null | undefined
+	linkedProtocols: ReadonlyArray<string> | null | undefined
 	protocolMetadata: MetadataCache['protocolMetadata']
-}): LinkedAdapterProtocolVersion[] {
+}): Array<LinkedAdapterProtocolVersion> {
 	if (!isParentProtocol || !linkedProtocols) return []
 
 	const linkedProtocolNames = new Set<string>()
@@ -33,7 +33,7 @@ export function getLinkedAdapterProtocolVersions({
 		if (linkedProtocol !== undefined) linkedProtocolNames.add(linkedProtocol)
 	}
 	if (linkedProtocolNames.size === 0) return []
-	const versions: LinkedAdapterProtocolVersion[] = []
+	const versions: Array<LinkedAdapterProtocolVersion> = []
 	for (const protocolId in protocolMetadata) {
 		if (linkedProtocolNames.size === 0) break
 		const metadata = protocolMetadata[protocolId]
@@ -49,10 +49,10 @@ export function getLinkedAdapterProtocolVersionNames({
 	versions,
 	metric
 }: {
-	versions: readonly LinkedAdapterProtocolVersion[]
+	versions: ReadonlyArray<LinkedAdapterProtocolVersion>
 	metric: AdapterProtocolVersionMetric
-}): string[] {
-	const names: string[] = []
+}): Array<string> {
+	const names: Array<string> = []
 	for (const version of versions) {
 		if (version.metadata[metric]) names.push(version.name)
 	}

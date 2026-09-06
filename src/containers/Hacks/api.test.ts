@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { fetchHacks } from './api'
 
 const fetchJsonMock = vi.hoisted(() => vi.fn())
@@ -10,7 +10,7 @@ describe('Hacks API', () => {
 		fetchJsonMock.mockReset()
 	})
 
-	it('keeps amounts in whole USD and gives them explicit domain names', async () => {
+	test('keeps amounts in whole USD and gives them explicit domain names', async () => {
 		fetchJsonMock.mockResolvedValue([
 			{
 				date: 1_740_096_000,

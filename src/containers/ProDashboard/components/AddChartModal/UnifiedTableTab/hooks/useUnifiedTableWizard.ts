@@ -19,8 +19,8 @@ import {
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
 
 type WizardAction =
-	| { type: 'SET_CHAINS'; chains: string[] }
-	| { type: 'SET_ROW_HEADERS'; rowHeaders: UnifiedRowHeaderType[] }
+	| { type: 'SET_CHAINS'; chains: Array<string> }
+	| { type: 'SET_ROW_HEADERS'; rowHeaders: Array<UnifiedRowHeaderType> }
 	| { type: 'SET_FILTERS'; filters: UnifiedTableFilters }
 	| { type: 'SET_PRESET'; presetId: string }
 	| { type: 'SET_COLUMNS'; columnOrder: ColumnOrderState; columnVisibility: VisibilityState }
@@ -30,14 +30,14 @@ type WizardAction =
 	| { type: 'REMOVE_CUSTOM_COLUMN'; id: string }
 
 interface WizardState {
-	chains: string[]
-	rowHeaders: UnifiedRowHeaderType[]
+	chains: Array<string>
+	rowHeaders: Array<UnifiedRowHeaderType>
 	filters: UnifiedTableFilters
 	activePresetId: string
 	columnOrder: ColumnOrderState
 	columnVisibility: VisibilityState
 	sorting: SortingState
-	customColumns: CustomColumnDefinition[]
+	customColumns: Array<CustomColumnDefinition>
 }
 
 const derivePreset = (presetId: string | undefined) => {
@@ -67,7 +67,7 @@ const createStateFromConfig = (config: UnifiedTableConfig, fallbackPresetId?: st
 		rowHeaders
 	})
 
-	const chains = config.params?.chains && config.params.chains.length ? [...config.params.chains] : ['All']
+	const chains = config.params?.chains && config.params.chains.length > 0 ? [...config.params.chains] : ['All']
 	const orderedCustomIds = getOrderedCustomColumnIds(sanitized.order, customColumns)
 	const orderSet = new Set(sanitized.order)
 	const mergedOrder = [...sanitized.order, ...orderedCustomIds.filter((id) => !orderSet.has(id))]
@@ -81,7 +81,7 @@ const createStateFromConfig = (config: UnifiedTableConfig, fallbackPresetId?: st
 	return {
 		chains,
 		rowHeaders,
-		filters: { ...(sanitizeFiltersForGrouping(config.filters, rowHeaders) ?? {}) },
+		filters: { ...sanitizeFiltersForGrouping(config.filters, rowHeaders) },
 		activePresetId: config.activePresetId ?? preset.id,
 		columnOrder: mergedOrder,
 		columnVisibility: mergedVisibility,
@@ -232,9 +232,9 @@ const reducer = (state: WizardState, action: WizardAction): WizardState => {
 export const useUnifiedTableWizard = (presetId?: string, existingConfig?: UnifiedTableConfig) => {
 	const [state, dispatch] = useReducer(reducer, defaultState(presetId, existingConfig))
 
-	const setChains = useCallback((chains: string[]) => dispatch({ type: 'SET_CHAINS', chains }), [])
+	const setChains = useCallback((chains: Array<string>) => dispatch({ type: 'SET_CHAINS', chains }), [])
 	const setRowHeaders = useCallback(
-		(rowHeaders: UnifiedRowHeaderType[]) => dispatch({ type: 'SET_ROW_HEADERS', rowHeaders }),
+		(rowHeaders: Array<UnifiedRowHeaderType>) => dispatch({ type: 'SET_ROW_HEADERS', rowHeaders }),
 		[]
 	)
 	const setFilters = useCallback((filters: UnifiedTableFilters) => dispatch({ type: 'SET_FILTERS', filters }), [])
@@ -257,18 +257,18 @@ export const useUnifiedTableWizard = (presetId?: string, existingConfig?: Unifie
 
 	const draftConfig = useMemo<Partial<UnifiedTableConfig>>(() => {
 		const params = {
-			chains: state.chains.length ? state.chains : ['All']
+			chains: state.chains.length > 0 ? state.chains : ['All']
 		}
 
 		const base: Partial<UnifiedTableConfig> = {
 			rowHeaders: state.rowHeaders,
 			params,
 			filters: state.filters,
-			columnOrder: state.columnOrder.length ? state.columnOrder : DEFAULT_COLUMN_ORDER,
+			columnOrder: state.columnOrder.length > 0 ? state.columnOrder : DEFAULT_COLUMN_ORDER,
 			columnVisibility: state.columnVisibility,
 			activePresetId: state.activePresetId,
 			defaultSorting: state.sorting,
-			...(state.customColumns.length ? { customColumns: state.customColumns } : {})
+			...(state.customColumns.length > 0 ? { customColumns: state.customColumns } : {})
 		}
 
 		return base

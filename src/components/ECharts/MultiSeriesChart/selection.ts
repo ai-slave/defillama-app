@@ -12,8 +12,8 @@ function readNumericValue(value: MultiSeriesChartDataset['source'][number][numbe
 /** Rank named dataset dimensions by their peak absolute value, retaining input order for ties. */
 export function rankSeriesByPeakAbsoluteValue(
 	dataset: MultiSeriesChartDataset,
-	seriesNames: readonly string[]
-): string[] {
+	seriesNames: ReadonlyArray<string>
+): Array<string> {
 	const dimensionIndex = new Map(dataset.dimensions.map((name, index) => [name, index]))
 	const rankedSeries = seriesNames.map((name, order) => ({
 		name,
@@ -33,7 +33,10 @@ export function rankSeriesByPeakAbsoluteValue(
 	return rankedSeries.sort((left, right) => right.peak - left.peak || left.order - right.order).map(({ name }) => name)
 }
 
-function resolveDimensionIndex(dimension: MultiSeriesChartSeriesConfig['encode']['x'], dimensions: string[]): number {
+function resolveDimensionIndex(
+	dimension: MultiSeriesChartSeriesConfig['encode']['x'],
+	dimensions: Array<string>
+): number {
 	const encoded = Array.isArray(dimension) ? dimension[0] : dimension
 	if (encoded === undefined) throw new Error('Chart encodes must contain at least one dimension')
 	const index = typeof encoded === 'number' ? encoded : dimensions.indexOf(encoded)
@@ -53,10 +56,10 @@ function projectPercentageChart({
 	missingValuePolicy
 }: {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	selectedCharts: ReadonlySet<string>
 	missingValuePolicy: 'require-complete' | 'sum-available'
-}): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
+}): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> } {
 	const displayedCharts = charts.filter((chart) => selectedCharts.has(chart.name))
 	const xIndex =
 		displayedCharts.length > 0 ? resolveDimensionIndex(displayedCharts[0]!.encode.x, dataset.dimensions) : 0
@@ -121,10 +124,10 @@ export function buildSelectedPercentageChart({
 	missingValuePolicy
 }: {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	selectedCharts: ReadonlySet<string>
 	missingValuePolicy: 'require-complete' | 'sum-available'
-}): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[]; csvSource: ChartCsvSource } {
+}): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig>; csvSource: ChartCsvSource } {
 	return {
 		...projectPercentageChart({ dataset, charts, selectedCharts, missingValuePolicy }),
 		csvSource: {
@@ -141,7 +144,7 @@ export function buildCompletePercentageChartDataset({
 	missingValuePolicy
 }: {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	missingValuePolicy: 'require-complete' | 'sum-available'
 }): MultiSeriesChartDataset {
 	return projectPercentageChart({
@@ -162,14 +165,14 @@ export function buildSelectedAdditiveChart({
 	includeUpstreamRemainder = false
 }: {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
-	seriesOrder: readonly string[]
+	charts: Array<MultiSeriesChartSeriesConfig>
+	seriesOrder: ReadonlyArray<string>
 	selectedCharts: ReadonlySet<string>
 	limit?: number
 	includeUpstreamRemainder?: boolean
-}): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[]; csvSource: ChartCsvSource } {
+}): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig>; csvSource: ChartCsvSource } {
 	const chartByName = new Map(charts.map((chart) => [chart.name, chart]))
-	const selectedSeries: MultiSeriesChartSeriesConfig[] = []
+	const selectedSeries: Array<MultiSeriesChartSeriesConfig> = []
 	for (const name of seriesOrder) {
 		const chart = chartByName.get(name)
 		if (name !== REMAINDER_SERIES_NAME && selectedCharts.has(name) && chart) selectedSeries.push(chart)

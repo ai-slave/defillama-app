@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
 	cancelAllQueuedMessages,
 	continueQueuedMessages,
@@ -18,7 +18,7 @@ const payload = {
 }
 
 describe('queue API', () => {
-	it('accepts only complete revisioned mutation snapshots', async () => {
+	test('accepts only complete revisioned mutation snapshots', async () => {
 		const snapshot = { sessionId: 'session-1', revision: 1, queue: [] }
 		const authorizedFetch = vi.fn(async () => jsonResponse({ snapshot, maxDepth: 3 }))
 
@@ -28,7 +28,7 @@ describe('queue API', () => {
 		await expect(queueMessage(authorizedFetch, 'session-1', payload)).rejects.toThrow('Invalid queue mutation response')
 	})
 
-	it('renews an edit with its lease identity', async () => {
+	test('renews an edit with its lease identity', async () => {
 		const snapshot = { sessionId: 'session-1', revision: 2, queue: [] }
 		const authorizedFetch = vi.fn(async () => jsonResponse({ snapshot }))
 
@@ -39,7 +39,7 @@ describe('queue API', () => {
 		)
 	})
 
-	it('uses separate acknowledged commands for Continue and Clear', async () => {
+	test('uses separate acknowledged commands for Continue and Clear', async () => {
 		const snapshot = { sessionId: 'session-1', revision: 2, queue: [] }
 		const authorizedFetch = vi.fn(async () => jsonResponse({ snapshot }))
 

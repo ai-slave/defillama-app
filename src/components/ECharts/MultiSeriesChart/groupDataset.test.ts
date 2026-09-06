@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { groupMultiSeriesBarChartDataset } from './groupDataset'
 import type { MultiSeriesTimeSeriesDataset } from './types'
 
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
 describe('groupMultiSeriesBarChartDataset', () => {
-	it('groups multi-series bar datasets by interval', () => {
+	test('groups multi-series bar datasets by interval', () => {
 		const dataset: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'A', 'B'],
 			source: [
@@ -25,7 +25,7 @@ describe('groupMultiSeriesBarChartDataset', () => {
 		expect(groupMultiSeriesBarChartDataset({ dataset, groupBy: 'daily' })).toBe(dataset)
 	})
 
-	it('groups sparse multi-series rows in one chronological dataset', () => {
+	test('groups sparse multi-series rows in one chronological dataset', () => {
 		const dataset: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'A', 'B'],
 			source: [
@@ -45,7 +45,7 @@ describe('groupMultiSeriesBarChartDataset', () => {
 		})
 	})
 
-	it('preserves negative flows when grouping multi-series bars', () => {
+	test('preserves negative flows when grouping multi-series bars', () => {
 		const dataset: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'Inflows'],
 			source: [
@@ -60,7 +60,7 @@ describe('groupMultiSeriesBarChartDataset', () => {
 		})
 	})
 
-	it('computes independent cumulative totals for sparse multi-series rows', () => {
+	test('computes independent cumulative totals for sparse multi-series rows', () => {
 		const dataset: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'A', 'B'],
 			source: [

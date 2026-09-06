@@ -18,10 +18,10 @@ import type { ProjectWithStats } from './types'
 const VISIBLE_LIMIT = 10
 const NESTED_SESSIONS_LIMIT = 5
 const LAST_SELECTED_PROJECT_KEY_PREFIX = 'llamaai:last-selected-project-id'
-const EMPTY_PROJECTS: ProjectWithStats[] = []
+const EMPTY_PROJECTS: Array<ProjectWithStats> = []
 
 interface ProjectsSidebarSectionProps {
-	sessions?: ChatSession[]
+	sessions?: Array<ChatSession>
 	currentProjectId?: string | null
 	currentSessionProjectId?: string | null
 	currentSessionId?: string | null

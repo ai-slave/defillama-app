@@ -12,7 +12,7 @@ export function sumCsvColumnsToTotal(csvText: string, sumColumnLabel: string): s
 	const dateIdx = headers.indexOf('date')
 	if (dateIdx === -1 || headers.length <= 1) return csvText
 
-	const lines: string[] = [`date,${escapeCsvField(sumColumnLabel)}`]
+	const lines: Array<string> = [`date,${escapeCsvField(sumColumnLabel)}`]
 	for (const row of rows) {
 		const date = row.values[dateIdx] ?? ''
 		if (!date) continue

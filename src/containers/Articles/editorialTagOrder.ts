@@ -8,13 +8,13 @@ export function listIndexToSortOrder(index: number, count: number): number {
 }
 
 export function buildEditorialTagReorderPayload(
-	previous: ArticleDocument[],
-	reordered: ArticleDocument[]
-): EditorialTagOrderItem[] {
+	previous: Array<ArticleDocument>,
+	reordered: Array<ArticleDocument>
+): Array<EditorialTagOrderItem> {
 	const previousOrderById = new Map(
 		previous.map((article, index) => [article.id, listIndexToSortOrder(index, previous.length)])
 	)
-	const items: EditorialTagOrderItem[] = []
+	const items: Array<EditorialTagOrderItem> = []
 
 	for (const [index, article] of reordered.entries()) {
 		const order = listIndexToSortOrder(index, reordered.length)
@@ -28,9 +28,9 @@ export function buildEditorialTagReorderPayload(
 }
 
 export function applyEditorialTagOrderPayload(
-	items: ArticleDocument[],
-	payload: EditorialTagOrderItem[]
-): ArticleDocument[] {
+	items: Array<ArticleDocument>,
+	payload: Array<EditorialTagOrderItem>
+): Array<ArticleDocument> {
 	const orderById = new Map(items.map((article, index) => [article.id, listIndexToSortOrder(index, items.length)]))
 	for (const { articleId, order } of payload) {
 		orderById.set(articleId, order)

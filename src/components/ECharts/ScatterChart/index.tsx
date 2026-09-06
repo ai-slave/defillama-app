@@ -116,7 +116,7 @@ function ScatterChart({
 			const slug = (isScatterChartPoint(point) ? point.entitySlug : undefined) ?? getPointValue(point)[3]
 			if (slug && typeof slug === 'string' && slug.toLowerCase() !== 'unknown') slugs.add(slug)
 		}
-		const pending: Promise<boolean>[] = []
+		const pending: Array<Promise<boolean>> = []
 		for (const slug of slugs) {
 			pending.push(validateIconUrl(getEntityIcon(entityType, slug)))
 		}
@@ -150,7 +150,7 @@ function ScatterChart({
 		const instance = chartRef.current
 		if (!instance) return
 
-		const series: ScatterSeriesOption[] = []
+		const series: Array<ScatterSeriesOption> = []
 		const isYieldData = chartData[0] != null && isYieldScatterChartPoint(chartData[0])
 
 		const labelConfig = {
@@ -164,7 +164,7 @@ function ScatterChart({
 		}
 
 		if (isYieldData) {
-			const pointsByProject = new Map<string, ScatterChartValue[]>()
+			const pointsByProject = new Map<string, Array<ScatterChartValue>>()
 			for (const point of chartData) {
 				if (!isYieldScatterChartPoint(point)) continue
 				if (typeof point.sigma !== 'number' || typeof point.mu !== 'number') continue
@@ -274,39 +274,25 @@ function ScatterChart({
 						? formatNumber(params.value[0], { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 						: '—'
 				return (
-					'Symbol: ' +
-					params.value[3] +
-					'<br/>' +
-					'Pool: ' +
-					params.value[4] +
-					'<br/>' +
-					'TVL: ' +
-					formatUsd(params.value[5], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }) +
-					'<br/>' +
-					'APY Spot: ' +
-					apy +
-					'%' +
-					'<br/>' +
-					'Chain: ' +
-					params.value[7] +
-					'<br/>' +
-					'Project: ' +
-					params.seriesName +
-					'<br/>' +
-					'APY Geometric Average: ' +
-					average +
-					'%' +
-					'<br/>' +
-					'APY Standard Deviation: ' +
-					deviation +
-					'%' +
-					'<br/>' +
-					'Nb of collected daily datapoints: ' +
-					params.value[2]
+					`Symbol: ${params.value[3]}<br/>` +
+					`Pool: ${params.value[4]}<br/>` +
+					`TVL: ${formatUsd(params.value[5], {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}<br/>` +
+					`APY Spot: ${apy}%` +
+					`<br/>` +
+					`Chain: ${params.value[7]}<br/>` +
+					`Project: ${params.seriesName}<br/>` +
+					`APY Geometric Average: ${average}%` +
+					`<br/>` +
+					`APY Standard Deviation: ${deviation}%` +
+					`<br/>` +
+					`Nb of collected daily datapoints: ${params.value[2]}`
 				)
-			} else {
-				return params.seriesName + ' :<br/>' + params.name
 			}
+			return `${params.seriesName} :<br/>${params.name}`
 		}
 
 		const genericTooltipFormatter = (params: ScatterTooltipParams) => {
@@ -435,7 +421,7 @@ function ScatterChart({
 				}
 			],
 			labelLayout: { hideOverlap: true },
-			series: series
+			series
 		}
 		if (title) {
 			option.title = {

@@ -4,11 +4,11 @@ import { useAuthContext } from '~/auth'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI } from '../services/DashboardAPI'
 
-const EMPTY_DASHBOARDS: Dashboard[] = []
+const EMPTY_DASHBOARDS: Array<Dashboard> = []
 
 interface SearchParams {
 	query?: string
-	tags?: string[]
+	tags?: Array<string>
 	visibility?: 'public' | 'private'
 	sortBy?: 'popular' | 'recent' | 'likes' | 'trending'
 	timeFrame?: '1d' | '7d' | '30d'

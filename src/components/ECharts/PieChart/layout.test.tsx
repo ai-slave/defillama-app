@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
 	const instance = {
@@ -64,7 +64,7 @@ describe('PieChart layout', () => {
 		container.remove()
 	})
 
-	it('applies the pie center and watermark in one layout update', async () => {
+	test('applies the pie center and watermark in one layout update', async () => {
 		await act(async () => root.render(<PieChart chartData={[{ name: 'Asset', value: 10 }]} />))
 
 		expect(mocks.instance.setOption).toHaveBeenCalledTimes(2)
@@ -73,7 +73,7 @@ describe('PieChart layout', () => {
 		expect(layoutOption.graphic[0]).toMatchObject({ id: 'defillama-watermark', type: 'image' })
 	})
 
-	it('leaves app-level resize handling to the shared chart resize hook', async () => {
+	test('leaves app-level resize handling to the shared chart resize hook', async () => {
 		await act(async () => root.render(<PieChart chartData={[{ name: 'Asset', value: 10 }]} />))
 		const callCount = mocks.instance.setOption.mock.calls.length
 
@@ -85,7 +85,7 @@ describe('PieChart layout', () => {
 		expect(mocks.instance.setOption).toHaveBeenCalledTimes(callCount)
 	})
 
-	it('recomputes pixel layout after its observed element changes size', async () => {
+	test('recomputes pixel layout after its observed element changes size', async () => {
 		await act(async () => root.render(<PieChart chartData={[{ name: 'Asset', value: 10 }]} height="360px" />))
 		const initialTop = mocks.instance.setOption.mock.calls.at(-1)?.[0].graphic[0].top
 

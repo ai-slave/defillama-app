@@ -23,7 +23,7 @@ const DEP_KIND_ORDER = [
 ]
 const SECTOR_GAP_DEG = 14
 
-function collectRefs(node: ConditionNode | undefined, out: string[]): void {
+function collectRefs(node: ConditionNode | undefined, out: Array<string>): void {
 	if (!node) return
 	if (node.op === 'leaf') {
 		if (node.ref) out.push(node.ref)
@@ -39,7 +39,7 @@ function depName(d: ExternalDependency): string {
 interface DepNode {
 	d: ExternalDependency
 	count: number
-	titles: string[]
+	titles: Array<string>
 	x: number // % within the map box
 	y: number
 }
@@ -60,13 +60,16 @@ const RY = 38
 // Math.cos/sin differ by a ULP across engines and trip React's hydration text match.
 const round3 = (n: number): number => Math.round(n * 1000) / 1000
 
-function layoutDeps(deps: ExternalDependency[], scenarios: ScenarioVM[]): { nodes: DepNode[]; sectors: SectorLabel[] } {
+function layoutDeps(
+	deps: Array<ExternalDependency>,
+	scenarios: Array<ScenarioVM>
+): { nodes: Array<DepNode>; sectors: Array<SectorLabel> } {
 	const scenarioRefs = scenarios.map((s) => {
-		const refs: string[] = []
+		const refs: Array<string> = []
 		collectRefs(s.conditions, refs)
 		return { title: s.title, refs }
 	})
-	const byKind = new Map<string, ExternalDependency[]>()
+	const byKind = new Map<string, Array<ExternalDependency>>()
 	for (const d of deps) {
 		const group = byKind.get(d.kind)
 		if (group) group.push(d)
@@ -79,8 +82,8 @@ function layoutDeps(deps: ExternalDependency[], scenarios: ScenarioVM[]): { node
 	})
 
 	const usableDeg = 360 - kinds.length * SECTOR_GAP_DEG
-	const nodes: DepNode[] = []
-	const sectors: SectorLabel[] = []
+	const nodes: Array<DepNode> = []
+	const sectors: Array<SectorLabel> = []
 	let cursor = -90 // start at 12 o'clock
 	let globalIndex = 0
 	for (const kind of kinds) {
@@ -90,7 +93,7 @@ function layoutDeps(deps: ExternalDependency[], scenarios: ScenarioVM[]): { node
 			const angle = ((cursor + (span * (i + 0.5)) / group.length) * Math.PI) / 180
 			const ring = globalIndex % 2 === 0 ? 1 : 0.74
 			globalIndex++
-			const matches = scenarioRefs.filter(({ refs }) => refs.some((ref) => ref === d.id || ref.startsWith(d.id + '.')))
+			const matches = scenarioRefs.filter(({ refs }) => refs.some((ref) => ref === d.id || ref.startsWith(`${d.id}.`)))
 			nodes.push({
 				d,
 				count: matches.length,
@@ -120,15 +123,15 @@ export function DependencyMap({
 	scenarios,
 	protocolId
 }: {
-	deps: ExternalDependency[]
-	scenarios: ScenarioVM[]
+	deps: Array<ExternalDependency>
+	scenarios: Array<ScenarioVM>
 	protocolId: string
 }) {
 	const { nodes, sectors } = useMemo(() => layoutDeps(deps, scenarios), [deps, scenarios])
 	const defaultId = useMemo(() => [...nodes].sort((a, b) => b.count - a.count)[0]?.d.id ?? null, [nodes])
 	const [selectedId, setSelectedId] = useState<string | null>(null)
 	const selected = nodes.find((n) => n.d.id === (selectedId ?? defaultId)) ?? nodes[0]
-	if (!nodes.length) return null
+	if (nodes.length === 0) return null
 
 	return (
 		<div className="flex flex-col gap-4 border-t border-subtle pt-4">
@@ -234,7 +237,7 @@ export function DependencyMap({
 						</div>
 						{selected.d.description ? <p className="body-sm text-secondary">{selected.d.description}</p> : null}
 						{selected.d.notes ? <p className="body-sm text-secondary italic">{selected.d.notes}</p> : null}
-						{selected.titles.length ? (
+						{selected.titles.length > 0 ? (
 							<div className="flex flex-col gap-1">
 								<span className="label-sm text-primary">
 									Tied to {selected.titles.length} loss scenario

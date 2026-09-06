@@ -1,7 +1,7 @@
 import type { ChartConfig, ChartSubject } from './types'
 
 export interface ChartRuntimeState {
-	data: [number, number][]
+	data: Array<[number, number]>
 	isLoading: boolean
 	hasError: boolean
 	canRetry: boolean
@@ -17,13 +17,13 @@ export type ChartDataPrerequisite =
 	| { status: 'error'; retry: () => void }
 
 interface ChartQueryResult {
-	data: [number, number][] | undefined
+	data: Array<[number, number]> | undefined
 	isLoading: boolean
 	isError: boolean
 	refetch: () => void
 }
 
-const EMPTY_CHART_DATA: [number, number][] = []
+const EMPTY_CHART_DATA: Array<[number, number]> = []
 const UNAVAILABLE_CHART_DATA = { status: 'unavailable' } as const satisfies ChartDataPrerequisite
 
 export function getChartDataPrerequisite(

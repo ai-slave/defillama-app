@@ -14,7 +14,7 @@ import { canonicalRouteRedirect } from '~/utils/route'
 interface CexAssetsPageProps {
 	name: string
 	parentProtocol: string | null
-	otherProtocols: string[]
+	otherProtocols: Array<string>
 	category: string | null
 	metrics: Pick<IProtocolPageMetrics, 'tvl' | 'stablecoins'>
 	ownToken: string | null
@@ -86,7 +86,7 @@ export default function Protocols(props: CexAssetsPageProps) {
 			otherProtocols={props.otherProtocols}
 			metrics={props.metrics as IProtocolPageMetrics}
 			tab="assets"
-			isCEX={true}
+			isCEX
 		>
 			<EntityTitleStrip
 				className="col-span-full"

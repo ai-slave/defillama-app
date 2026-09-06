@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 
 const mocks = vi.hoisted(() => ({
@@ -101,7 +101,7 @@ beforeEach(() => {
 })
 
 describe('Oracle queries', () => {
-	it('takes canonical oracle membership, order, and counts from metrics.oracles', async () => {
+	test('takes canonical oracle membership, order, and counts from metrics.oracles', async () => {
 		const data = await getOraclesListPageData()
 
 		expect(data?.oracles).toEqual(['Chainlink', 'Unmeasured Oracle'])
@@ -112,7 +112,7 @@ describe('Oracle queries', () => {
 		expect(await getOracleDetailPageData({ oracle: 'legacy-ghost' })).toBeNull()
 	})
 
-	it('treats omitted successful member measurements as zero and omits unsafe rows', async () => {
+	test('treats omitted successful member measurements as zero and omits unsafe rows', async () => {
 		const data = await getOracleDetailPageData({ oracle: 'chainlink' })
 
 		expect(data?.tvl).toBe(92)
@@ -128,7 +128,7 @@ describe('Oracle queries', () => {
 		)
 	})
 
-	it('uses exact selected-chain membership while summing available measurements', async () => {
+	test('uses exact selected-chain membership while summing available measurements', async () => {
 		const data = await getOracleDetailPageData({ oracle: 'chainlink', chain: 'ethereum' })
 		const listData = await getOraclesListPageData({ chain: 'ethereum' })
 
@@ -146,7 +146,7 @@ describe('Oracle queries', () => {
 		])
 	})
 
-	it('orders successful omitted and explicit zero measurements together', async () => {
+	test('orders successful omitted and explicit zero measurements together', async () => {
 		mocks.fetchOracleMetrics.mockResolvedValueOnce({
 			oracles: { Unknown: ['Unknown'], Zero: ['Zero'], Positive: ['Positive'] },
 			chainsByOracle: { Unknown: [], Zero: ['Ethereum'], Positive: ['Ethereum'] },
@@ -171,7 +171,7 @@ describe('Oracle queries', () => {
 		])
 	})
 
-	it('groups only matching Oracle children under their parent', async () => {
+	test('groups only matching Oracle children under their parent', async () => {
 		const aaveV2 = { ...protocol('Aave V2', 10), parentProtocol: 'parent#aave' }
 		const aaveV3 = { ...protocol('Aave V3', 20), parentProtocol: 'parent#aave' }
 		const aaveV4 = { ...protocol('Aave V4', 30), parentProtocol: 'parent#aave' }
@@ -231,7 +231,7 @@ describe('Oracle queries', () => {
 		expect(pyth?.protocolTableData[0]).not.toHaveProperty('childProtocols')
 	})
 
-	it('recognizes only known extra suffixes so hyphenated base chains remain measurements', async () => {
+	test('recognizes only known extra suffixes so hyphenated base chains remain measurements', async () => {
 		const data = await getOracleDetailPageData({ oracle: 'chainlink', chain: 'x-layer' })
 
 		expect(data?.tvl).toBe(42)

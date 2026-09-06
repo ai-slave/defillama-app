@@ -14,7 +14,7 @@ interface EntityMatch {
 interface EntityComboboxPopoverProps {
 	combobox: Ariakit.ComboboxStore
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
-	matches: EntityMatch[] | undefined
+	matches: Array<EntityMatch> | undefined
 	hasMatches: boolean
 	isTriggerOnly: boolean
 	isLoading: boolean
@@ -40,8 +40,8 @@ export function EntityComboboxPopover({
 		<Ariakit.ComboboxPopover
 			store={combobox}
 			unmountOnHide
-			portal={true}
-			flip={true}
+			portal
+			flip
 			fitViewport
 			getAnchorRect={() => {
 				const textarea = promptInputRef.current

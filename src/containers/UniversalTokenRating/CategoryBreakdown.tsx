@@ -21,7 +21,7 @@ const CATEGORY_ORDER = [
 	'tokenomics_p'
 ]
 
-export function columnsFromCategories(categories: UtrCategoryBreakdown[]): BreakdownColumn[] {
+export function columnsFromCategories(categories: Array<UtrCategoryBreakdown>): Array<BreakdownColumn> {
 	return categories
 		.map((category) => ({
 			key: category.key,
@@ -37,7 +37,7 @@ export function columnsFromCategories(categories: UtrCategoryBreakdown[]): Break
 		})
 }
 
-export function columnsFromRubrics(rubrics: UtrRubricScore[]): BreakdownColumn[] {
+export function columnsFromRubrics(rubrics: Array<UtrRubricScore>): Array<BreakdownColumn> {
 	return rubrics.map((rubric) => ({
 		key: rubric.rubric,
 		label: rubric.rubric,
@@ -75,8 +75,8 @@ export function CategoryBreakdownTable({
 	gradingScale
 }: {
 	title: string
-	columns: BreakdownColumn[]
-	gradingScale?: UtrGradeScaleEntry[] | null
+	columns: Array<BreakdownColumn>
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 }) {
 	return (
 		<div className="overflow-x-auto rounded-lg border border-subtle bg-surface">
@@ -140,9 +140,9 @@ export function CategoryBreakdownTable({
 }
 
 export function rowBreakdownColumns(row: {
-	breakdown?: { disclosure: UtrCategoryBreakdown[]; performance: UtrCategoryBreakdown[] }
-	scores: { disclosureRubrics: UtrRubricScore[]; performanceRubrics: UtrRubricScore[] }
-}): { disclosure: BreakdownColumn[]; performance: BreakdownColumn[] } {
+	breakdown?: { disclosure: Array<UtrCategoryBreakdown>; performance: Array<UtrCategoryBreakdown> }
+	scores: { disclosureRubrics: Array<UtrRubricScore>; performanceRubrics: Array<UtrRubricScore> }
+}): { disclosure: Array<BreakdownColumn>; performance: Array<BreakdownColumn> } {
 	return {
 		disclosure: row.breakdown?.disclosure.length
 			? columnsFromCategories(row.breakdown.disclosure)

@@ -24,7 +24,7 @@ const SCALE_BY_DIST = [1, 0.65, 0.5, 0.4, 0.3] as const
 
 const getScaleRatio = (dist: number) => SCALE_BY_DIST[dist] ?? 0.2
 
-const rotateArray = <T,>(arr: T[], n: number) => [...arr.slice(n), ...arr.slice(0, n)]
+const rotateArray = <T,>(arr: Array<T>, n: number) => [...arr.slice(n), ...arr.slice(0, n)]
 
 const prepareIds = (count: number, activeIndex: number) => {
 	const center = Math.floor(count / 2)
@@ -36,10 +36,10 @@ const prepareIds = (count: number, activeIndex: number) => {
 	)
 }
 
-const reorganizeByPriority = (reportsInput: ArticleDocument[]) => {
+const reorganizeByPriority = (reportsInput: Array<ArticleDocument>) => {
 	if (reportsInput.length <= 1) return reportsInput
 
-	const reorganized: ArticleDocument[] = [reportsInput[0]]
+	const reorganized: Array<ArticleDocument> = [reportsInput[0]]
 	let addToStart = false
 
 	for (let i = 1; i < reportsInput.length; i++) {
@@ -225,7 +225,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 }
 
 interface ReportsCarouselProps {
-	reports: ArticleDocument[]
+	reports: Array<ArticleDocument>
 	showButtons?: boolean
 }
 
@@ -265,7 +265,7 @@ export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
 		if (isMobile || TOTAL_COUNT < 2 || containerWidth <= 0) return null
 
 		// 1. Compute scaled widths
-		const widths: number[] = []
+		const widths: Array<number> = []
 		for (let position = 0; position < TOTAL_COUNT; position++) {
 			const dist = Math.abs(position - CENTER)
 			const scale = getScaleRatio(dist)
@@ -278,7 +278,7 @@ export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
 		const gap = TOTAL_COUNT > 1 ? freeSpace / (TOTAL_COUNT - 1) : 0
 
 		// 3. Initial centered positions (no inner margin yet)
-		const offsets: number[] = new Array(TOTAL_COUNT).fill(0)
+		const offsets: Array<number> = new Array(TOTAL_COUNT).fill(0)
 		offsets[CENTER] = 0
 
 		let currentRight = widths[CENTER] / 2

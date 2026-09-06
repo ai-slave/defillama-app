@@ -30,9 +30,9 @@ export default function UnlocksCalendar({
 }) {
 	return (
 		<Layout
-			title={`Token Unlocks Calendar - DefiLlama`}
+			title="Token Unlocks Calendar - DefiLlama"
 			description="View upcoming token unlocks on a calendar. Track vesting schedules, unlock dates, and token amounts for DeFi protocols."
-			canonicalUrl={`/unlocks/calendar`}
+			canonicalUrl="/unlocks/calendar"
 			pageName={pageName}
 		>
 			<Announcement notCancellable>

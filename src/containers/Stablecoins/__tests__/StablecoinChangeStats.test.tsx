@@ -1,10 +1,10 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { DataFreshness } from '~/ui/DataFreshness'
 import { StablecoinChangeStats } from '../StablecoinChangeStats'
 
 describe('StablecoinChangeStats', () => {
-	it('renders only periods with both valid values', () => {
+	test('renders only periods with both valid values', () => {
 		const html = renderToStaticMarkup(
 			<StablecoinChangeStats
 				stats={[
@@ -20,7 +20,7 @@ describe('StablecoinChangeStats', () => {
 		expect(html).toContain('Change (30d)')
 	})
 
-	it('hides the section when every change is invalid', () => {
+	test('hides the section when every change is invalid', () => {
 		const html = renderToStaticMarkup(
 			<StablecoinChangeStats
 				stats={[
@@ -34,7 +34,7 @@ describe('StablecoinChangeStats', () => {
 		expect(html).toBe('')
 	})
 
-	it('explains which metric is stale', () => {
+	test('explains which metric is stale', () => {
 		const html = renderToStaticMarkup(
 			<DataFreshness timestamp={Date.parse('2026-05-15T00:00:00Z') / 1e3} label="Market cap data last updated" />
 		)

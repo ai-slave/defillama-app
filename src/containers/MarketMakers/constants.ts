@@ -30,7 +30,7 @@ export function selectCellNumber(metric: Metric | null | undefined, mode: Displa
 	return metric.rank
 }
 
-export const VOLUME_COLUMNS: ColumnConfig[] = [
+export const VOLUME_COLUMNS: Array<ColumnConfig> = [
 	{
 		metricKey: 'orderFillVolumeMaker',
 		marketKey: 'orderFillVolumeMakerMarketPercentage',
@@ -52,12 +52,12 @@ export const VOLUME_COLUMNS: ColumnConfig[] = [
 	{ metricKey: 'volumeLoanUtilization', label: 'Volume Loan Utilization', kind: 'percent' }
 ]
 
-export const SPREAD_COLUMNS: ColumnConfig[] = [
+export const SPREAD_COLUMNS: Array<ColumnConfig> = [
 	{ metricKey: 'bidAskSpread', label: 'Bid-Ask Spread', kind: 'spread' },
 	{ metricKey: 'uptime', label: 'Uptime %', kind: 'percent' }
 ]
 
-export const KPI_COLUMNS: ColumnConfig[] = [
+export const KPI_COLUMNS: Array<ColumnConfig> = [
 	{ metricKey: 'bidAskDepth50', label: '0.50% Bid & Ask Depth', kind: 'percent' },
 	{ metricKey: 'bidAskDepth100', label: '1.00% Bid & Ask Depth', kind: 'percent' },
 	{ metricKey: 'bidAskDepth200', label: '2.00% Bid & Ask Depth', kind: 'percent' },
@@ -65,7 +65,7 @@ export const KPI_COLUMNS: ColumnConfig[] = [
 	{ metricKey: 'uptime', label: 'Combined Uptime', kind: 'percent' }
 ]
 
-export const DEPTH_COLUMNS: ColumnConfig[] = [
+export const DEPTH_COLUMNS: Array<ColumnConfig> = [
 	{ metricKey: 'bidDepth', marketKey: 'bidDepthMarketPercentage', label: 'Avg. Bid Depth', kind: 'usd' },
 	{ metricKey: 'askDepth', marketKey: 'askDepthMarketPercentage', label: 'Avg. Ask Depth', kind: 'usd' },
 	{ metricKey: 'bidAskDepth', marketKey: 'bidAskDepthMarketPercentage', label: 'Avg. Bid & Ask Depth', kind: 'usd' },

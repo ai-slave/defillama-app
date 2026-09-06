@@ -23,14 +23,15 @@ export function useModalState(editItem?: DashboardItemConfig | null) {
 			setSelectedMainTab: (tab: MainTabType) => dispatch({ type: 'SET_SELECTED_MAIN_TAB', payload: tab }),
 			setSelectedChartTab: (tab: ChartTabType) => dispatch({ type: 'SET_SELECTED_CHART_TAB', payload: tab }),
 			setChartMode: (mode: ChartModeType) => dispatch({ type: 'SET_CHART_MODE', payload: mode }),
-			setComposerItems: (items: React.SetStateAction<ChartConfig[]>) =>
+			setComposerItems: (items: React.SetStateAction<Array<ChartConfig>>) =>
 				dispatch({ type: 'SET_COMPOSER_ITEMS', payload: items }),
 			setSelectedChain: (chain: string | null) => dispatch({ type: 'SET_SELECTED_CHAIN', payload: chain }),
-			setSelectedChains: (chains: string[]) => dispatch({ type: 'SET_SELECTED_CHAINS', payload: chains }),
+			setSelectedChains: (chains: Array<string>) => dispatch({ type: 'SET_SELECTED_CHAINS', payload: chains }),
 			setSelectedProtocol: (protocol: string | null) => dispatch({ type: 'SET_SELECTED_PROTOCOL', payload: protocol }),
-			setSelectedProtocols: (protocols: string[]) => dispatch({ type: 'SET_SELECTED_PROTOCOLS', payload: protocols }),
+			setSelectedProtocols: (protocols: Array<string>) =>
+				dispatch({ type: 'SET_SELECTED_PROTOCOLS', payload: protocols }),
 			setSelectedChartType: (type: string) => dispatch({ type: 'SET_SELECTED_CHART_TYPE', payload: type }),
-			setSelectedChartTypes: (types: string[]) => dispatch({ type: 'SET_SELECTED_CHART_TYPES', payload: types }),
+			setSelectedChartTypes: (types: Array<string>) => dispatch({ type: 'SET_SELECTED_CHART_TYPES', payload: types }),
 			setUnifiedChartName: (name: string) => dispatch({ type: 'SET_UNIFIED_CHART_NAME', payload: name }),
 			setChartCreationMode: (mode: 'separate' | 'combined') =>
 				dispatch({ type: 'SET_CHART_CREATION_MODE', payload: mode }),
@@ -45,7 +46,7 @@ export function useModalState(editItem?: DashboardItemConfig | null) {
 				dispatch({ type: 'SET_SELECTED_CEX_ANALYTICS_METRIC', payload: metric }),
 			setSelectedCexAnalyticsTopN: (topN: number) =>
 				dispatch({ type: 'SET_SELECTED_CEX_ANALYTICS_TOP_N', payload: topN }),
-			setSelectedTokens: (tokens: string[]) => dispatch({ type: 'SET_SELECTED_TOKENS', payload: tokens }),
+			setSelectedTokens: (tokens: Array<string>) => dispatch({ type: 'SET_SELECTED_TOKENS', payload: tokens }),
 			setIncludeCex: (include: boolean) => dispatch({ type: 'SET_INCLUDE_CEX', payload: include }),
 			setChartBuilderName: (name: string) => dispatch({ type: 'SET_CHART_BUILDER_NAME', payload: name }),
 			setChartBuilder: (config: React.SetStateAction<ChartBuilderConfig>) =>
@@ -63,12 +64,14 @@ export function useModalState(editItem?: DashboardItemConfig | null) {
 				dispatch({ type: 'SET_SELECTED_YIELD_POOL', payload: pool }),
 			setSelectedYieldChartType: (chartType: ModalState['selectedYieldChartType']) =>
 				dispatch({ type: 'SET_SELECTED_YIELD_CHART_TYPE', payload: chartType }),
-			setSelectedYieldChains: (chains: string[]) => dispatch({ type: 'SET_SELECTED_YIELD_CHAINS', payload: chains }),
-			setSelectedYieldProjects: (projects: string[]) =>
+			setSelectedYieldChains: (chains: Array<string>) =>
+				dispatch({ type: 'SET_SELECTED_YIELD_CHAINS', payload: chains }),
+			setSelectedYieldProjects: (projects: Array<string>) =>
 				dispatch({ type: 'SET_SELECTED_YIELD_PROJECTS', payload: projects }),
-			setSelectedYieldCategories: (categories: string[]) =>
+			setSelectedYieldCategories: (categories: Array<string>) =>
 				dispatch({ type: 'SET_SELECTED_YIELD_CATEGORIES', payload: categories }),
-			setSelectedYieldTokens: (tokens: string[]) => dispatch({ type: 'SET_SELECTED_YIELD_TOKENS', payload: tokens }),
+			setSelectedYieldTokens: (tokens: Array<string>) =>
+				dispatch({ type: 'SET_SELECTED_YIELD_TOKENS', payload: tokens }),
 			setMinTvl: (tvl: number | null) => dispatch({ type: 'SET_MIN_TVL', payload: tvl }),
 			setMaxTvl: (tvl: number | null) => dispatch({ type: 'SET_MAX_TVL', payload: tvl }),
 			setSelectedStablecoinChain: (chain: string) =>

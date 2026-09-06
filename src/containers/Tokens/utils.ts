@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { formatPercent, formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import {
@@ -42,18 +42,18 @@ function parseOptionalRankQueryParam(value: ParsedUrlQuery[string]): number | nu
 	return parsed != null && parsed > 0 ? Math.floor(parsed) : null
 }
 
-export function parseTokenFilterValues(value: ParsedUrlQuery[string]): string[] | null {
+export function parseTokenFilterValues(value: ParsedUrlQuery[string]): Array<string> | null {
 	if (value == null) return null
 	return toNonEmptyArrayParam(value)
 }
 
 export function resolveTokenFilterValues(
-	includeValues: string[] | null,
-	excludeValues: string[],
-	allValues: string[]
-): string[] {
+	includeValues: Array<string> | null,
+	excludeValues: Array<string>,
+	allValues: Array<string>
+): Array<string> {
 	const validValues = new Set(allValues)
-	let selectedValues: string[]
+	let selectedValues: Array<string>
 	if (includeValues == null || includeValues.includes('All')) {
 		selectedValues = allValues
 	} else if (includeValues.includes('None')) {
@@ -75,9 +75,9 @@ export function resolveTokenFilterValues(
 }
 
 function getTokenFilterSelection(
-	includeValues: string[] | null,
-	excludeValues: string[],
-	allValues: string[]
+	includeValues: Array<string> | null,
+	excludeValues: Array<string>,
+	allValues: Array<string>
 ): Set<string> | null {
 	const hasExplicitInclude = includeValues != null && !includeValues.includes('All')
 	const selectedValues = resolveTokenFilterValues(includeValues, excludeValues, allValues)
@@ -92,8 +92,8 @@ export function parseRankRangeQueryParams(query: ParsedUrlQuery): { rankFrom: nu
 	return { rankFrom, rankTo }
 }
 
-export function parseNumericFiltersQueryParams(query: ParsedUrlQuery): TokensNumericFilter[] {
-	const filters: TokensNumericFilter[] = []
+export function parseNumericFiltersQueryParams(query: ParsedUrlQuery): Array<TokensNumericFilter> {
+	const filters: Array<TokensNumericFilter> = []
 	for (const field of TOKENS_NUMERIC_FILTER_FIELDS) {
 		let min = parseNumberQueryParam(query[`min_${field}`])
 		let max = parseNumberQueryParam(query[`max_${field}`])
@@ -144,8 +144,8 @@ export function getTokensTableSortingFromQuery(query: ParsedUrlQuery): SortingSt
 	return [{ id: pageQuery.sortBy, desc: pageQuery.sortDesc }]
 }
 
-function getTokensFilterQueryParams(pageQuery: TokensPageQuery): Record<string, string | string[] | undefined> {
-	const params: Record<string, string | string[] | undefined> = {
+function getTokensFilterQueryParams(pageQuery: TokensPageQuery): Record<string, string | Array<string> | undefined> {
+	const params: Record<string, string | Array<string> | undefined> = {
 		search: pageQuery.search || undefined,
 		rankFrom: pageQuery.rankFrom != null ? String(pageQuery.rankFrom) : undefined,
 		rankTo: pageQuery.rankTo != null ? String(pageQuery.rankTo) : undefined,
@@ -167,7 +167,7 @@ export function buildTokensTableQueryString({
 	pagination,
 	sorting
 }: {
-	query: Record<string, string | string[] | undefined>
+	query: Record<string, string | Array<string> | undefined>
 	pagination: PaginationState
 	sorting: SortingState
 }) {
@@ -184,7 +184,7 @@ export function buildTokensTableQueryString({
 }
 
 /** Filter-only query string shared by the market map and movers views; sort and paging do not apply there. */
-export function buildTokensChartQueryString(query: Record<string, string | string[] | undefined>): string {
+export function buildTokensChartQueryString(query: Record<string, string | Array<string> | undefined>): string {
 	return toQueryString(getTokensFilterQueryParams(getTokensPageQuery(query)))
 }
 
@@ -206,7 +206,7 @@ function compareTokenRowsAsc(a: TokensSourceRow, b: TokensSourceRow, sortBy: Tok
 	return aValue - bValue || compareString(a.id, b.id)
 }
 
-function getNullStart(rows: TokensSourceRow[], sortBy: TokensSortBy): number {
+function getNullStart(rows: Array<TokensSourceRow>, sortBy: TokensSortBy): number {
 	if (sortBy === 'name') return rows.length
 	for (let i = 0; i < rows.length; i++) {
 		if (rows[i]![sortBy] == null) return i
@@ -214,7 +214,7 @@ function getNullStart(rows: TokensSourceRow[], sortBy: TokensSortBy): number {
 	return rows.length
 }
 
-export function buildTokensSortIndexes(rows: TokensSourceRow[]): TokensSortIndexes {
+export function buildTokensSortIndexes(rows: Array<TokensSourceRow>): TokensSortIndexes {
 	const indexes = {} as TokensSortIndexes
 	for (const sortBy of TOKENS_SORT_KEYS) {
 		const sortedRows = rows.slice()
@@ -311,7 +311,7 @@ export interface TokensRowFilter {
 	requestedIds: Set<string> | null
 	rankFrom: number | null
 	rankTo: number | null
-	numericFilters: TokensNumericFilter[]
+	numericFilters: Array<TokensNumericFilter>
 	chains: Set<string> | null
 	nativeOnly: boolean
 	categories: Set<string> | null
@@ -341,7 +341,7 @@ export function matchesTokensRowFilter(row: TokensSourceRow, filter: TokensRowFi
 	return filter.search === '' || row.searchKey.includes(filter.search)
 }
 
-function countMatchingRows(rows: TokensSourceRow[], filter: TokensRowFilter): number {
+function countMatchingRows(rows: Array<TokensSourceRow>, filter: TokensRowFilter): number {
 	let total = 0
 	for (const row of rows) {
 		if (matchesTokensRowFilter(row, filter)) total++
@@ -350,11 +350,11 @@ function countMatchingRows(rows: TokensSourceRow[], filter: TokensRowFilter): nu
 }
 
 function collectSortedRows(
-	sortedRows: TokensSourceRow[],
+	sortedRows: Array<TokensSourceRow>,
 	filter: TokensRowFilter,
 	start: number,
 	end: number,
-	pageRows: TokensTableRow[]
+	pageRows: Array<TokensTableRow>
 ): void {
 	let matched = 0
 	for (const row of sortedRows) {
@@ -374,7 +374,7 @@ function collectDescendingRows(
 	filter: TokensRowFilter,
 	start: number,
 	end: number,
-	pageRows: TokensTableRow[]
+	pageRows: Array<TokensTableRow>
 ): void {
 	let matched = 0
 	let i = index.nullStart - 1
@@ -412,8 +412,8 @@ function collectPageRows(
 	filter: TokensRowFilter,
 	start: number,
 	end: number
-): TokensTableRow[] {
-	const pageRows: TokensTableRow[] = []
+): Array<TokensTableRow> {
+	const pageRows: Array<TokensTableRow> = []
 	if (sortDesc) {
 		collectDescendingRows(index, filter, start, end, pageRows)
 	} else {
@@ -436,8 +436,8 @@ function parseRequestedIds(value: ParsedUrlQuery[string]): Set<string> | null {
 
 export function buildTokensRowFilter(
 	query: ParsedUrlQuery,
-	chainOptions: TokensFilterOption[],
-	categoryOptions: TokensFilterOption[]
+	chainOptions: Array<TokensFilterOption>,
+	categoryOptions: Array<TokensFilterOption>
 ): TokensRowFilter {
 	const pageQuery = getTokensPageQuery(query)
 	const chains = getTokenFilterSelection(
@@ -462,7 +462,7 @@ export function buildTokensRowFilter(
 }
 
 export function getTokensPageFromRows(
-	rows: TokensSourceRow[],
+	rows: Array<TokensSourceRow>,
 	sortIndexes: TokensSortIndexes,
 	query: ParsedUrlQuery,
 	base: Omit<TokensPageResponse, 'schemaVersion' | 'rows' | 'total' | 'page' | 'pageSize' | 'hasMore' | 'statsDisplay'>

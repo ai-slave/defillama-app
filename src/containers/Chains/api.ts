@@ -7,8 +7,8 @@ const CHAINS_API_V2_URL = `${SERVER_URL}/chains2`
 const CHAIN_TVL_API_URL = `${V2_SERVER_URL}/chains`
 const CHART_API_URL = `${SERVER_URL}/lite/charts`
 
-export async function fetchChainsList(): Promise<ChainListItem[]> {
-	return fetchJson<ChainListItem[]>(CHAINS_API_URL)
+export async function fetchChainsList(): Promise<Array<ChainListItem>> {
+	return fetchJson<Array<ChainListItem>>(CHAINS_API_URL)
 }
 
 export async function fetchChainsCategories(): Promise<ChainsCategoriesResponse> {

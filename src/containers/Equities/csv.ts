@@ -23,11 +23,11 @@ export async function prepareEquitiesCsv({
 	sorting,
 	columns
 }: {
-	query: Record<string, string | string[] | undefined>
+	query: Record<string, string | Array<string> | undefined>
 	sorting: SortingState
-	columns: EquitiesCsvColumn[]
-}): Promise<{ filename: string; rows: CsvCell[][] }> {
-	const rows: CsvCell[][] = [columns.map((column) => column.header)]
+	columns: Array<EquitiesCsvColumn>
+}): Promise<{ filename: string; rows: Array<Array<CsvCell>> }> {
+	const rows: Array<Array<CsvCell>> = [columns.map((column) => column.header)]
 	let hasMore = true
 
 	for (let page = 1; page <= MAX_CSV_PAGES && hasMore; page++) {

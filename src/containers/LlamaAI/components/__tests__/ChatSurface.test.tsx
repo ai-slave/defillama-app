@@ -2,7 +2,7 @@
 
 import { act, createRef, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChatLandingProps } from '~/containers/LlamaAI/components/ChatLanding'
 import type { ConversationViewModel } from '~/containers/LlamaAI/components/ConversationView'
 
@@ -42,7 +42,7 @@ describe('ChatSurface landing transition vs composer focus', () => {
 		container.remove()
 	})
 
-	it('preserves ConversationView and composer focus when the landing transition ends', async () => {
+	test('preserves ConversationView and composer focus when the landing transition ends', async () => {
 		const baseProps = {
 			showLanding: false,
 			animateConversationTransition: false,
@@ -53,7 +53,7 @@ describe('ChatSurface landing transition vs composer focus', () => {
 		}
 
 		await act(async () => {
-			root.render(<ChatSurface {...baseProps} animateLandingTransition={true} />)
+			root.render(<ChatSurface {...baseProps} animateLandingTransition />)
 		})
 		expect(mountCount).toBe(1)
 		const textarea = container.querySelector('[data-testid="composer"]') as HTMLTextAreaElement
@@ -69,7 +69,7 @@ describe('ChatSurface landing transition vs composer focus', () => {
 		expect(document.activeElement).toBe(textarea)
 	})
 
-	it('keeps the shared promptInputRef attached to the conversation composer after the exit layer unmounts', async () => {
+	test('keeps the shared promptInputRef attached to the conversation composer after the exit layer unmounts', async () => {
 		// The landing and conversation composers share one promptInputRef in the real app.
 		// Unmounting the landing-exit copy must not null it (React nulls refs on unmount).
 		const promptInputRef = createRef<HTMLTextAreaElement>()
@@ -83,7 +83,7 @@ describe('ChatSurface landing transition vs composer focus', () => {
 		}
 
 		await act(async () => {
-			root.render(<ChatSurface {...baseProps} animateLandingTransition={true} />)
+			root.render(<ChatSurface {...baseProps} animateLandingTransition />)
 		})
 		const composer = container.querySelector('[data-testid="composer"]')
 		expect(promptInputRef.current).toBe(composer)

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildChainTvlChartState } from '../tvlChart'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -19,7 +19,7 @@ const BASE_SUMMARY = {
 }
 
 describe('ChainOverview TVL chart helpers', () => {
-	it('keeps empty and single zero-valued TVL series distinct', () => {
+	test('keeps empty and single zero-valued TVL series distinct', () => {
 		expect(
 			buildChainTvlChartState({
 				tvlChart: [],
@@ -42,7 +42,7 @@ describe('ChainOverview TVL chart helpers', () => {
 		).toEqual([[zeroTimestamp, 0]])
 	})
 
-	it('uses server summary values without iterating extras when no TVL extras are enabled', () => {
+	test('uses server summary values without iterating extras when no TVL extras are enabled', () => {
 		const result = buildChainTvlChartState({
 			tvlChart: TVL_CHART,
 			tvlChartSummary: {
@@ -65,7 +65,7 @@ describe('ChainOverview TVL chart helpers', () => {
 		expect(result.isGovTokensEnabled).toBeUndefined()
 	})
 
-	it('adds enabled extras, subtracts overlap, and recomputes 24h values', () => {
+	test('adds enabled extras, subtracts overlap, and recomputes 24h values', () => {
 		expect(
 			buildChainTvlChartState({
 				tvlChart: TVL_CHART,
@@ -106,7 +106,7 @@ describe('ChainOverview TVL chart helpers', () => {
 		})
 	})
 
-	it('subtracts nothing when both overlap parents are enabled but the overlap series is missing', () => {
+	test('subtracts nothing when both overlap parents are enabled but the overlap series is missing', () => {
 		expect(
 			buildChainTvlChartState({
 				tvlChart: TVL_CHART,
@@ -133,7 +133,7 @@ describe('ChainOverview TVL chart helpers', () => {
 		])
 	})
 
-	it('does not subtract overlap when only one overlap parent is enabled', () => {
+	test('does not subtract overlap when only one overlap parent is enabled', () => {
 		expect(
 			buildChainTvlChartState({
 				tvlChart: TVL_CHART,
@@ -159,7 +159,7 @@ describe('ChainOverview TVL chart helpers', () => {
 		])
 	})
 
-	it('adds gov token extras and exposes the gov token enabled flag', () => {
+	test('adds gov token extras and exposes the gov token enabled flag', () => {
 		expect(
 			buildChainTvlChartState({
 				tvlChart: TVL_CHART,

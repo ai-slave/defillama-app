@@ -25,7 +25,7 @@ export function useCexAnalyticsSnapshot(enabled = true) {
 }
 
 export function useCexAnalyticsTotals(enabled = true) {
-	return useQuery<CexAnalyticsTotalsPoint[]>({
+	return useQuery<Array<CexAnalyticsTotalsPoint>>({
 		queryKey: PRO_CEX_TOTALS_QUERY_KEY,
 		queryFn: () => fetchJson('/api/dynamic/cexs/analytics?view=totals'),
 		enabled,
@@ -35,7 +35,7 @@ export function useCexAnalyticsTotals(enabled = true) {
 }
 
 export function useCexAnalyticsMarketShare(metric: CexAnalyticsMetric, topN: number, enabled = true) {
-	return useQuery<CexAnalyticsMarketSharePoint[]>({
+	return useQuery<Array<CexAnalyticsMarketSharePoint>>({
 		queryKey: getProCexShareQueryKey(metric, topN),
 		queryFn: () => fetchJson(`/api/dynamic/cexs/analytics?view=share&metric=${metric}&topN=${topN}`),
 		enabled,

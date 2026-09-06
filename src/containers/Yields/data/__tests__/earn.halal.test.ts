@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ApyTriple, ApyWindows, EarnAttributes, EnrichedEarnRow } from '../types'
 
 // getEarnPage pulls its rows from getEnrichedEarn; mock it so the test controls the
 // dataset and exercises only the halal (protocolSlug ∈ whitelist) filter path.
-const getEnrichedEarn = vi.fn<() => Promise<EnrichedEarnRow[]>>()
+const getEnrichedEarn = vi.fn<() => Promise<Array<EnrichedEarnRow>>>()
 vi.mock('../enrich.server', () => ({ getEnrichedEarn: () => getEnrichedEarn() }))
 vi.mock('../snapshot', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../snapshot')>()),
@@ -48,7 +48,7 @@ function row(id: string, protocolSlug: string | null, overrides: Partial<Enriche
 		chain: 'Ethereum',
 		underlying_tokens: [],
 		reward_tokens: [],
-		tvl_usd: 1_000,
+		tvl_usd: 1000,
 		apy: ZERO_APY,
 		intrinsic: null,
 		stability_30d: { base: null, base_reward: null, base_intrinsic: null, base_reward_intrinsic: null },
@@ -74,7 +74,7 @@ describe('getEarnPage halal filter', () => {
 		getEnrichedEarn.mockReset()
 	})
 
-	it('keeps only whitelisted-protocol rows when halal=true', async () => {
+	test('keeps only whitelisted-protocol rows when halal=true', async () => {
 		getEnrichedEarn.mockResolvedValue([
 			row('a', 'uniswap-v2'),
 			row('b', 'aave-v3'),
@@ -87,14 +87,14 @@ describe('getEarnPage halal filter', () => {
 		expect(result.rows.map((r) => r.projectslug).sort()).toEqual(['lido', 'uniswap-v2'])
 	})
 
-	it('does not filter by whitelist when halal is absent', async () => {
+	test('does not filter by whitelist when halal is absent', async () => {
 		getEnrichedEarn.mockResolvedValue([row('a', 'uniswap-v2'), row('b', 'aave-v3'), row('c', null)])
 
 		const result = await getEarnPage({ pageSize: 'all' })
 		expect(result.rows.map((r) => r.id).sort()).toEqual(['a', 'b', 'c'])
 	})
 
-	it('composes with other filters (halal ∩ stablecoin)', async () => {
+	test('composes with other filters (halal ∩ stablecoin)', async () => {
 		getEnrichedEarn.mockResolvedValue([
 			row('halal-stable', 'uniswap-v2', { attributes: { ...ATTRIBUTES, stablecoin_only: true } }),
 			row('halal-nonstable', 'lido'),
@@ -105,7 +105,7 @@ describe('getEarnPage halal filter', () => {
 		expect(result.rows.map((r) => r.id)).toEqual(['halal-stable'])
 	})
 
-	it('does not classify unknown attributes as explicit false values', async () => {
+	test('does not classify unknown attributes as explicit false values', async () => {
 		getEnrichedEarn.mockResolvedValue([
 			row('safe', 'aave-v3'),
 			row('unknown', 'aave-v3', {

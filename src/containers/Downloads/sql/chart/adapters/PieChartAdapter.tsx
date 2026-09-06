@@ -16,7 +16,7 @@ const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 interface PieChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -82,7 +82,7 @@ export function PieChartAdapter({ config, result, classified, onReady }: PieChar
 }
 
 export function buildSqlPieData(
-	rows: unknown[][],
+	rows: Array<Array<unknown>>,
 	nameIndex: number,
 	valueIndex: number,
 	seriesColors: Record<string, string>

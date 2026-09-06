@@ -12,7 +12,7 @@ let cached: { at: number; promise: Promise<Set<string>> } | null = null
 
 async function fetchCoveredPoolIds(): Promise<Set<string>> {
 	try {
-		const body = await fetchJson<{ data: VaultRiskListItem[] }>(VAULT_RISK_API, { timeout: 10_000 })
+		const body = await fetchJson<{ data: Array<VaultRiskListItem> }>(VAULT_RISK_API, { timeout: 10_000 })
 		const ids = body.data.map((vault) => vault.pool_id)
 		return new Set(ids)
 	} catch {

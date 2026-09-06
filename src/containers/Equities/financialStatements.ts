@@ -35,17 +35,17 @@ export function buildEquitiesStatementRows(
 	statements: IEquitiesStatementsResponse,
 	statementType: EquitiesStatementOption,
 	periodType: EquitiesStatementPeriodOption
-): IEquitiesStatementTableRow[] {
+): Array<IEquitiesStatementTableRow> {
 	const section = statements[equitiesStatementSectionMap[statementType]]
 	const periodKey = equitiesStatementPeriodMap[periodType]
 	const periodData = section[periodKey]
 	const childrenMeta = section.children[periodKey]
-	const rows: IEquitiesStatementTableRow[] = []
+	const rows: Array<IEquitiesStatementTableRow> = []
 
 	let rowIndex = 0
 	for (const label of section.labels) {
 		const childLabels = childrenMeta[label]?.labels
-		let subRows: IEquitiesStatementTableRow[] | undefined
+		let subRows: Array<IEquitiesStatementTableRow> | undefined
 
 		if (childLabels && childLabels.length > 0) {
 			const childData = periodData.children[label]
@@ -90,8 +90,8 @@ export function getEquitiesStatementValue(
 	return value
 }
 
-export function getEquitiesStatementHeaders(periodEnding: string[]): EquitiesStatementHeader[] {
-	const headers: EquitiesStatementHeader[] = []
+export function getEquitiesStatementHeaders(periodEnding: Array<string>): Array<EquitiesStatementHeader> {
+	const headers: Array<EquitiesStatementHeader> = []
 	let index = 0
 	for (const date of periodEnding) {
 		headers.push({ index, periodEnding: date })
@@ -102,8 +102,10 @@ export function getEquitiesStatementHeaders(periodEnding: string[]): EquitiesSta
 	)
 }
 
-export function flattenEquitiesStatementRows(rows: IEquitiesStatementTableRow[]): IEquitiesStatementTableRow[] {
-	const flattened: IEquitiesStatementTableRow[] = []
+export function flattenEquitiesStatementRows(
+	rows: Array<IEquitiesStatementTableRow>
+): Array<IEquitiesStatementTableRow> {
+	const flattened: Array<IEquitiesStatementTableRow> = []
 	for (const row of rows) {
 		flattened.push(row)
 		if (row.subRows?.length) flattened.push(...row.subRows)

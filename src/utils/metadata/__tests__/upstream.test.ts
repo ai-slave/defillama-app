@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 describe('metadata upstream base selection', () => {
 	beforeEach(() => {
@@ -6,7 +6,7 @@ describe('metadata upstream base selection', () => {
 		vi.unstubAllEnvs()
 	})
 
-	it('uses public upstreams without an API key', async () => {
+	test('uses public upstreams without an API key', async () => {
 		vi.stubEnv('API_KEY', '')
 		const { getMetadataUpstreamBase } = await import('../upstream')
 
@@ -17,7 +17,7 @@ describe('metadata upstream base selection', () => {
 		expect(getMetadataUpstreamBase('datasets')).toBe('https://defillama-datasets.llama.fi')
 	})
 
-	it('uses pro upstreams with an API key', async () => {
+	test('uses pro upstreams with an API key', async () => {
 		vi.stubEnv('API_KEY', 'secret-key')
 		const { getMetadataUpstreamBase } = await import('../upstream')
 
@@ -28,7 +28,7 @@ describe('metadata upstream base selection', () => {
 		expect(getMetadataUpstreamBase('datasets')).toBe('https://pro-api.llama.fi/secret-key/datasets')
 	})
 
-	it('uses direct URL overrides before pro upstreams', async () => {
+	test('uses direct URL overrides before pro upstreams', async () => {
 		vi.stubEnv('API_KEY', 'secret-key')
 		vi.stubEnv('BRIDGES_SERVER_URL', 'https://bridges.example.com/')
 		vi.stubEnv('DATASETS_SERVER_URL', 'https://datasets.example.com/')

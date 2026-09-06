@@ -19,7 +19,10 @@ export const PERIOD_DIMENSION = 'Period'
  * the names first makes a segment's colour a function of the breakdown's
  * membership only.
  */
-export function compositionColors(names: readonly string[], palette: readonly string[]): Record<string, string> {
+export function compositionColors(
+	names: ReadonlyArray<string>,
+	palette: ReadonlyArray<string>
+): Record<string, string> {
 	const colors: Record<string, string> = {}
 	const sorted = [...names].sort()
 	for (let i = 0; i < sorted.length; i++) {
@@ -49,15 +52,15 @@ export interface CompositionModel {
 	/** Absolute USD. */
 	totalUsd: number
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	/** Legend/breakdown table rows, largest first — same order as the payload. */
-	rows: CompositionRow[]
+	rows: Array<CompositionRow>
 	line?: CompositionLineModel
 }
 
 export function buildComposition(
 	comp: KpkComposition,
-	palette: readonly string[],
+	palette: ReadonlyArray<string>,
 	lineColor: string
 ): CompositionModel {
 	const colors = compositionColors(
@@ -119,7 +122,7 @@ export function buildComposition(
 	}
 }
 
-export function vaultTotals(rows: readonly KpkVault[]) {
+export function vaultTotals(rows: ReadonlyArray<KpkVault>) {
 	let tva = 0
 	let interest = 0
 	let tvaAdjusted = 0

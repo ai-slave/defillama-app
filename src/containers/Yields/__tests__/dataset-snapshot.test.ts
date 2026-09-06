@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { YieldsSnapshot } from '../data/snapshot'
 import {
 	readBorrowMarkets,
@@ -14,7 +14,7 @@ import {
 import { YIELDS_SNAPSHOT_FILES } from '../data/snapshot.contract'
 
 describe('Yields v2 snapshot reader', () => {
-	it('reads every artifact through the same pinned handle', async () => {
+	test('reads every artifact through the same pinned handle', async () => {
 		const readJson = vi.fn()
 		const snapshot: YieldsSnapshot = {
 			generationId: 'test-gen',

@@ -71,7 +71,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 			}
 		}
 
-		const series: LineSeriesOption[] = [
+		const series: Array<LineSeriesOption> = [
 			{
 				name: 'Ask',
 				type: 'line',
@@ -148,7 +148,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 			tooltip: {
 				trigger: 'axis',
 				confine: true,
-				formatter: function (rawParams: unknown) {
+				formatter(rawParams: unknown) {
 					const point = normalizeTooltipItems(rawParams)[0]
 					if (!point) return ''
 					const value = Array.isArray(point.value) ? point.value : Array.isArray(point.data) ? point.data : []
@@ -178,7 +178,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 				name: 'Price',
 				type: 'log',
 				axisLabel: {
-					formatter: (value: number) => roundNumber(value, 2) + ' ETH',
+					formatter: (value: number) => `${roundNumber(value, 2)} ETH`,
 					color: chartTheme.text
 				},
 				boundaryGap: [0, 0],
@@ -231,7 +231,7 @@ export default function OrderBookChart({ height, chartData }: IOrderBookChartPro
 					filterMode: 'none'
 				}
 			],
-			series: series
+			series
 		}
 
 		instance.setOption(option, { notMerge: true })

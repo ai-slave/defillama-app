@@ -76,7 +76,7 @@ type TokensTableStyle = React.CSSProperties & {
 	'--tokens-table-min-width': string
 }
 
-export function getRankColumnWidth(rows: TokensTableRow[]): number {
+export function getRankColumnWidth(rows: Array<TokensTableRow>): number {
 	let maxDigits = 1
 	for (const row of rows) {
 		const digits = String(row.rowNumber).length
@@ -154,7 +154,7 @@ function RightsChip({ label, tone }: { label: string; tone: RightsTone }) {
 	)
 }
 
-function RightsChipList({ items, tone, wrap = false }: { items: string[]; tone: RightsTone; wrap?: boolean }) {
+function RightsChipList({ items, tone, wrap = false }: { items: Array<string>; tone: RightsTone; wrap?: boolean }) {
 	return (
 		<span className={`flex min-w-0 items-center gap-1 ${wrap ? 'flex-wrap' : 'flex-nowrap'}`}>
 			{items.map((item, index) => (
@@ -502,7 +502,7 @@ export const EXPANDABLE_TOKENS_COLUMNS = [
 ]
 
 function TokensStats({ stats }: { stats: TokensPageStatsDisplay }) {
-	const items: InlineStatStripItem[] = [
+	const items: Array<InlineStatStripItem> = [
 		{
 			label: 'MCap',
 			tooltip: 'Total market capitalization of ranked tokens. Percentage shows the market-cap-weighted 24-hour change.',
@@ -566,15 +566,15 @@ function TokensSharedControls({
 }: {
 	search: string
 	updateSearch: (search: string) => void
-	filters: TokensActiveFilter[]
-	selectedChains: string[]
+	filters: Array<TokensActiveFilter>
+	selectedChains: Array<string>
 	hasChainQuery: boolean
 	nativeOnly: boolean
-	selectedCategories: string[]
-	chainOptions: TokensFilterOption[]
-	categoryOptions: TokensFilterOption[]
-	onFiltersChange: (filters: TokensActiveFilter[]) => void
-	onChainQueryChange: (updates: Record<string, string | string[] | undefined>) => void
+	selectedCategories: Array<string>
+	chainOptions: Array<TokensFilterOption>
+	categoryOptions: Array<TokensFilterOption>
+	onFiltersChange: (filters: Array<TokensActiveFilter>) => void
+	onChainQueryChange: (updates: Record<string, string | Array<string> | undefined>) => void
 	onNativeOnlyChange: (nativeOnly: boolean) => void
 }) {
 	const searchInputRef = React.useRef<HTMLInputElement>(null)
@@ -727,13 +727,13 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		[categoryOptionIds, serverTable.pageQuery.categories, serverTable.pageQuery.excludeCategories]
 	)
 	const hasChainQuery = serverTable.pageQuery.chains !== null || serverTable.pageQuery.excludeChains.length > 0
-	const pendingFiltersRef = React.useRef<TokensActiveFilter[] | null>(null)
+	const pendingFiltersRef = React.useRef<Array<TokensActiveFilter> | null>(null)
 	React.useEffect(() => {
 		pendingFiltersRef.current = null
 	}, [router.query])
 	const currentSorting = serverTable.sorting[0]
 	const applyFilters = React.useCallback(
-		(nextFilters: TokensActiveFilter[]) => {
+		(nextFilters: Array<TokensActiveFilter>) => {
 			const previousFilters = pendingFiltersRef.current ?? filters
 			const update = buildTokensFiltersQueryUpdate(nextFilters)
 			if (shouldApplyTokensFilterSorting(currentSorting, previousFilters)) {
@@ -761,7 +761,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		[router]
 	)
 	const updateChainQuery = React.useCallback(
-		(updates: Record<string, string | string[] | undefined>) => {
+		(updates: Record<string, string | Array<string> | undefined>) => {
 			const hasNextChainFilter = updates.chains !== undefined || updates.excludeChains !== undefined
 			void pushShallowQuery(router, hasNextChainFilter ? updates : { ...updates, nativeOnly: undefined })
 		},
@@ -821,7 +821,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		(column) => column.id
 	)
 	const setSelectedColumns = React.useCallback(
-		(updater: string[] | ((old: string[]) => string[])) => {
+		(updater: Array<string> | ((old: Array<string>) => Array<string>)) => {
 			handleColumnVisibilityChange((old) => {
 				const current = HIDEABLE_COLUMNS.filter((column) => old[column.id] !== false).map((column) => column.id)
 				const next = typeof updater === 'function' ? updater(current) : updater

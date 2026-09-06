@@ -21,7 +21,7 @@ interface BurnWindow {
 interface BurnStreamState {
 	totalBurnedS: number
 	blockNumber: number
-	recentBlocks: BurnBlock[]
+	recentBlocks: Array<BurnBlock>
 	burnWindows: Record<string, BurnWindow> | null
 	connected: boolean
 }
@@ -129,7 +129,7 @@ function BurnCounter({ totalBurnedS, price }: { totalBurnedS: number; price: num
 			const elapsed = now - startTime
 			const progress = Math.min(elapsed / duration, 1)
 			// ease-out-quart
-			const eased = 1 - Math.pow(1 - progress, 4)
+			const eased = 1 - (1 - progress) ** 4
 			setDisplayValue(start + diff * eased)
 			if (progress < 1) {
 				animRef.current = requestAnimationFrame(animate)

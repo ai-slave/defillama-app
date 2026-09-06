@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
 import { getProtocolMetricCapabilities } from '../unifiedTable/protocolCapabilities'
 import { migrateDashboardConfig, migrateDashboardItemConfig } from './migrate'
@@ -233,7 +233,7 @@ const HISTORICAL_UNVERSIONED_PRESET_LAYOUTS = [
 ] as const
 
 describe('Pro dashboard config migration', () => {
-	it('makes historical chain and protocol chart subjects explicit', () => {
+	test('makes historical chain and protocol chart subjects explicit', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'chain-chart',
@@ -265,7 +265,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('normalizes historical classic metric names before constructing current configs', () => {
+	test('normalizes historical classic metric names before constructing current configs', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'activity',
@@ -295,7 +295,7 @@ describe('Pro dashboard config migration', () => {
 		).toMatchObject({ type: 'activeUsers' })
 	})
 
-	it('migrates historical subjects inside multi-charts', () => {
+	test('migrates historical subjects inside multi-charts', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'multi',
@@ -333,7 +333,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('drops unsupported classic chart and metric types at the persisted-config boundary', () => {
+	test('drops unsupported classic chart and metric types at the persisted-config boundary', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'retired-liquidity-chart',
@@ -371,7 +371,7 @@ describe('Pro dashboard config migration', () => {
 		).toMatchObject({ items: [{ id: 'valid', type: 'fees' }] })
 	})
 
-	it.each(['assetClass', 'assetName'] as const)(
+	test.each(['assetClass', 'assetName'] as const)(
 		'migrates the historical RWA %s breakdown alias to the chain breakdown',
 		(breakdown) => {
 			expect(
@@ -392,7 +392,7 @@ describe('Pro dashboard config migration', () => {
 		}
 	)
 
-	it('preserves a supported RWA overview breakdown and real RWA asset names', () => {
+	test('preserves a supported RWA overview breakdown and real RWA asset names', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'rwa-platform',
@@ -414,7 +414,7 @@ describe('Pro dashboard config migration', () => {
 		).toMatchObject({ assetName: 'Ondo US Dollar Yield' })
 	})
 
-	it.each([
+	test.each([
 		{ showSparkline: false, expected: 'none' },
 		{ showSparkline: true, expected: 'sparkline' },
 		{ showSparkline: undefined, expected: 'sparkline' }
@@ -440,7 +440,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('keeps an explicit metric chart type ahead of the historical boolean', () => {
+	test('keeps an explicit metric chart type ahead of the historical boolean', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'metric',
@@ -463,7 +463,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('removes the historical unused Chart Builder additional filters at read time', () => {
+	test('removes the historical unused Chart Builder additional filters at read time', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'builder',
@@ -503,7 +503,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('normalizes persisted top-N-only Chart Builder views without rewriting storage', () => {
+	test('normalizes persisted top-N-only Chart Builder views without rewriting storage', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'builder',
@@ -541,7 +541,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('preserves exact Chart Builder all-series views', () => {
+	test('preserves exact Chart Builder all-series views', () => {
 		const persistedConfig = {
 			id: 'builder',
 			kind: 'builder' as const,
@@ -569,7 +569,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it.each([
+	test.each([
 		{
 			legacyId: 'advanced',
 			presetId: 'advanced-protocols',
@@ -773,7 +773,7 @@ describe('Pro dashboard config migration', () => {
 		}
 	)
 
-	it('materializes the historical Essential preset for an untouched classic table', () => {
+	test('materializes the historical Essential preset for an untouched classic table', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'classic-default',
@@ -797,7 +797,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('keeps explicit classic layout and sorting ahead of preset defaults', () => {
+	test('keeps explicit classic layout and sorting ahead of preset defaults', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'classic-fees-customized',
@@ -817,7 +817,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('keeps an explicit classic column order instead of filling from a preset', () => {
+	test('keeps an explicit classic column order instead of filling from a preset', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'classic-fees-partial-layout',
@@ -835,7 +835,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('versions an existing Unified protocols table without changing its behavior', () => {
+	test('versions an existing Unified protocols table without changing its behavior', () => {
 		const config: UnversionedUnifiedTableConfig = {
 			id: 'unified-table-protocols-1',
 			kind: 'unified-table',
@@ -855,7 +855,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('materializes the selected layout for a preset-only unversioned Unified table', () => {
+	test('materializes the selected layout for a preset-only unversioned Unified table', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'unified-table-preset-only',
 			kind: 'unified-table',
@@ -896,7 +896,7 @@ describe('Pro dashboard config migration', () => {
 		expect(capabilities.supplementalMetrics).toEqual([])
 	})
 
-	it.each(HISTORICAL_UNVERSIONED_PRESET_LAYOUTS)(
+	test.each(HISTORICAL_UNVERSIONED_PRESET_LAYOUTS)(
 		'materializes the historical $id layout without reading the current preset registry',
 		({ id, columns, sortColumn }) => {
 			const migrated = migrateDashboardItemConfig({
@@ -915,7 +915,7 @@ describe('Pro dashboard config migration', () => {
 		}
 	)
 
-	it('makes an explicit unversioned column order authoritative when visibility was omitted', () => {
+	test('makes an explicit unversioned column order authoritative when visibility was omitted', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'unified-table-explicit-order',
 			kind: 'unified-table',
@@ -932,7 +932,7 @@ describe('Pro dashboard config migration', () => {
 		expect(getProtocolMetricCapabilities(migrated).baseMetricFamilies).toEqual(['tvl', 'bridged-tvl'])
 	})
 
-	it('keeps visibility-only unversioned layouts sparse', () => {
+	test('keeps visibility-only unversioned layouts sparse', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'unified-table-explicit-visibility',
 			kind: 'unified-table',
@@ -949,7 +949,7 @@ describe('Pro dashboard config migration', () => {
 		expect(getProtocolMetricCapabilities(migrated).baseMetricFamilies).toEqual(['tvl', 'fees'])
 	})
 
-	it('keeps an ordered classic custom column visible when a partial visibility map omits it', () => {
+	test('keeps an ordered classic custom column visible when a partial visibility map omits it', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'classic-partial-custom-visibility',
 			kind: 'table',
@@ -975,7 +975,7 @@ describe('Pro dashboard config migration', () => {
 		expect(getProtocolMetricCapabilities(migrated).baseMetricFamilies).toEqual(['tvl', 'fees'])
 	})
 
-	it('drops sorting that references a removed classic custom column', () => {
+	test('drops sorting that references a removed classic custom column', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'classic-removed-custom-sort',
 			kind: 'table',
@@ -998,7 +998,7 @@ describe('Pro dashboard config migration', () => {
 		expect(migrated).not.toHaveProperty('customColumns')
 	})
 
-	it('rejects inherited object properties as unknown classic column ids', () => {
+	test('rejects inherited object properties as unknown classic column ids', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'classic-prototype-column',
@@ -1014,7 +1014,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('hides custom columns omitted from an authoritative unversioned order', () => {
+	test('hides custom columns omitted from an authoritative unversioned order', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'unified-table-omitted-custom-column',
 			kind: 'unified-table',
@@ -1040,7 +1040,7 @@ describe('Pro dashboard config migration', () => {
 		expect(getProtocolMetricCapabilities(migrated).baseMetricFamilies).toEqual(['tvl'])
 	})
 
-	it('keeps an ordered unversioned custom column visible when a partial visibility map omits it', () => {
+	test('keeps an ordered unversioned custom column visible when a partial visibility map omits it', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'unified-table-partial-custom-visibility',
 			kind: 'unified-table',
@@ -1066,7 +1066,7 @@ describe('Pro dashboard config migration', () => {
 		expect(getProtocolMetricCapabilities(migrated).baseMetricFamilies).toEqual(['tvl', 'fees'])
 	})
 
-	it('materializes the rendered TVL sort when unversioned sorting is empty', () => {
+	test('materializes the rendered TVL sort when unversioned sorting is empty', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'unified-table-empty-sorting',
 			kind: 'unified-table',
@@ -1084,7 +1084,7 @@ describe('Pro dashboard config migration', () => {
 		expect(capabilities.supplementalMetrics).toEqual(['earnings'])
 	})
 
-	it.each(['removed-preset', '__proto__'])(
+	test.each(['removed-preset', '__proto__'])(
 		'normalizes unknown unversioned preset %s to the fallback preset',
 		(presetId) => {
 			expect(
@@ -1098,7 +1098,7 @@ describe('Pro dashboard config migration', () => {
 		}
 	)
 
-	it('migrates v1 period changes without conflating comparison windows', () => {
+	test('migrates v1 period changes without conflating comparison windows', () => {
 		const config: UnifiedTableV1Config = {
 			id: 'unified-table-protocols-1',
 			kind: 'unified-table',
@@ -1142,7 +1142,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('removes retired fee-distribution columns and dependent custom columns from v2 configs', () => {
+	test('removes retired fee-distribution columns and dependent custom columns from v2 configs', () => {
 		const config: UnifiedTableV2Config = {
 			id: 'unified-table-protocols-1',
 			kind: 'unified-table',
@@ -1198,7 +1198,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('repairs the pre-tableType protocols shape observed in persisted dashboards', () => {
+	test('repairs the pre-tableType protocols shape observed in persisted dashboards', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'table-solana-1',
@@ -1221,7 +1221,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('migrates classic protocol semantics and removes retired custom dependencies', () => {
+	test('migrates classic protocol semantics and removes retired custom dependencies', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'classic',
@@ -1283,7 +1283,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('preserves the semantics of an already-current config without reusing its object', () => {
+	test('preserves the semantics of an already-current config without reusing its object', () => {
 		const config: UnifiedTableConfig = {
 			id: 'unified-table-protocols-1',
 			kind: 'unified-table',
@@ -1298,7 +1298,7 @@ describe('Pro dashboard config migration', () => {
 		expect(migrated).not.toBe(config)
 	})
 
-	it('is idempotent after completing the ordered legacy-table migration', () => {
+	test('is idempotent after completing the ordered legacy-table migration', () => {
 		const persisted = {
 			id: 'classic',
 			kind: 'table' as const,
@@ -1314,7 +1314,7 @@ describe('Pro dashboard config migration', () => {
 		expect(migrateDashboardItemConfig(migrated)).toEqual(migrated)
 	})
 
-	it('keeps historical dataset repairs isolated in the read migration', () => {
+	test('keeps historical dataset repairs isolated in the read migration', () => {
 		expect(
 			migrateDashboardItemConfig({
 				id: 'old-stables',
@@ -1358,7 +1358,7 @@ describe('Pro dashboard config migration', () => {
 		})
 	})
 
-	it('migrates active and undo items in memory without changing the source record', () => {
+	test('migrates active and undo items in memory without changing the source record', () => {
 		const table: UnversionedUnifiedTableConfig = {
 			id: 'unified-table-protocols-1',
 			kind: 'unified-table',
@@ -1397,7 +1397,7 @@ describe('Pro dashboard config migration', () => {
 		expect(persisted.data.items[0]).not.toHaveProperty('configVersion')
 	})
 
-	it('migrates historical chart and metric cards in active and undo state without rewriting persisted objects', () => {
+	test('migrates historical chart and metric cards in active and undo state without rewriting persisted objects', () => {
 		const chart: PersistedChartConfig = {
 			id: 'chart',
 			kind: 'chart',
@@ -1456,7 +1456,7 @@ describe('Pro dashboard config migration', () => {
 		expect(metric).not.toHaveProperty('chartType')
 	})
 
-	it('migrates historical RWA aliases in active and undo state without rewriting persisted objects', () => {
+	test('migrates historical RWA aliases in active and undo state without rewriting persisted objects', () => {
 		const overview = {
 			id: 'rwa-overview',
 			kind: 'rwa-overview' as const,
@@ -1495,7 +1495,7 @@ describe('Pro dashboard config migration', () => {
 		expect(undoOverview.breakdown).toBe('assetName')
 	})
 
-	it('removes retired Yields-only filters from the whole dashboard without mutating persisted config', () => {
+	test('removes retired Yields-only filters from the whole dashboard without mutating persisted config', () => {
 		const retiredFilters = {
 			tvlMin: 10,
 			tokens: ['USDC'],
@@ -1544,7 +1544,7 @@ describe('Pro dashboard config migration', () => {
 		expect(table.filters).toBe(retiredFilters)
 	})
 
-	it('keeps chain metrics only on canonical chain-grouped Unified tables', () => {
+	test('keeps chain metrics only on canonical chain-grouped Unified tables', () => {
 		const base = {
 			kind: 'unified-table' as const,
 			configVersion: 3 as const,
@@ -1587,7 +1587,7 @@ describe('Pro dashboard config migration', () => {
 		expect(protocolTable.filters).toHaveProperty('hasStables', true)
 	})
 
-	it('treats a persisted null undo state as cleared without mutating the source dashboard', () => {
+	test('treats a persisted null undo state as cleared without mutating the source dashboard', () => {
 		const persisted: PersistedDashboard = {
 			id: 'dashboard-1',
 			user: 'owner-1',

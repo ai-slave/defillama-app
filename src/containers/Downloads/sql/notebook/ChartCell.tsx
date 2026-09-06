@@ -13,7 +13,7 @@ export interface ChartSourceOption {
 
 interface ChartCellProps {
 	cell: NotebookCell
-	availableSources: ChartSourceOption[]
+	availableSources: Array<ChartSourceOption>
 	onSourceChange: (sourceName: string) => void
 	onChartConfigChange: (next: ChartConfig | null) => void
 }

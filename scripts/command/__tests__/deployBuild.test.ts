@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { BuildResult } from '../buildResult'
 import { runDeployBuild } from '../deployBuild'
 import { createMemoryLogger, createTeeLogger } from '../logger'
@@ -17,7 +17,7 @@ vi.mock('~/utils/telemetry', () => ({
 	recordDomainEvent: telemetryMock.recordDomainEvent
 }))
 
-const tempDirs: string[] = []
+const tempDirs: Array<string> = []
 
 function createNow() {
 	return vi
@@ -44,7 +44,7 @@ afterEach(async () => {
 })
 
 describe('deploy build pipeline', () => {
-	it('stops before preparation when required build secrets are missing', async () => {
+	test('stops before preparation when required build secrets are missing', async () => {
 		const logger = createMemoryLogger()
 		const runPrepare = vi.fn()
 		const runNextBuild = vi.fn()
@@ -68,7 +68,7 @@ describe('deploy build pipeline', () => {
 		)
 	})
 
-	it('stops before Next when preparation fails', async () => {
+	test('stops before Next when preparation fails', async () => {
 		const runNextBuild = vi.fn()
 		const syncArtifacts = vi.fn()
 		const notify = vi.fn()
@@ -90,7 +90,7 @@ describe('deploy build pipeline', () => {
 		expect(notify).toHaveBeenCalledWith(result)
 	})
 
-	it('uploads the build log URL and mentions users after failed builds', async () => {
+	test('uploads the build log URL and mentions users after failed builds', async () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'deploy-build-test-'))
 		tempDirs.push(projectDir)
@@ -133,7 +133,7 @@ describe('deploy build pipeline', () => {
 		expect(consoleLog).toHaveBeenCalledWith('https://logs.example/get/log-id')
 	})
 
-	it('uploads Next.js failure output and exit metadata in the build log', async () => {
+	test('uploads Next.js failure output and exit metadata in the build log', async () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'deploy-build-next-fail-test-'))
 		tempDirs.push(projectDir)
@@ -172,7 +172,7 @@ describe('deploy build pipeline', () => {
 		expect(consoleLog).toHaveBeenCalledWith('https://logs.example/get/log-id')
 	})
 
-	it('keeps the build result when notification throws', async () => {
+	test('keeps the build result when notification throws', async () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		const result = await runDeployBuildTest({
 			findBuildId: vi.fn().mockResolvedValue(''),
@@ -188,7 +188,7 @@ describe('deploy build pipeline', () => {
 		expect(consoleLog).toHaveBeenCalledWith('Build notification failed:', expect.stringContaining('discord down'))
 	})
 
-	it('keeps notifying when build id lookup fails', async () => {
+	test('keeps notifying when build id lookup fails', async () => {
 		const logger = createMemoryLogger()
 		const notify = vi.fn()
 
@@ -208,7 +208,7 @@ describe('deploy build pipeline', () => {
 		expect(logger.output.join('')).toContain('Failed to resolve Next.js build ID: manifest unreadable')
 	})
 
-	it('skips artifact sync when Next fails', async () => {
+	test('skips artifact sync when Next fails', async () => {
 		const syncArtifacts = vi.fn()
 
 		const result = await runDeployBuildTest({
@@ -225,7 +225,7 @@ describe('deploy build pipeline', () => {
 		expect(syncArtifacts).not.toHaveBeenCalled()
 	})
 
-	it('syncs artifacts and notifies after a successful build', async () => {
+	test('syncs artifacts and notifies after a successful build', async () => {
 		const syncArtifacts = vi.fn()
 		const notify = vi.fn()
 
@@ -248,7 +248,7 @@ describe('deploy build pipeline', () => {
 		expect(notify).toHaveBeenCalledWith(result)
 	})
 
-	it('records a build complete telemetry marker after artifact sync', async () => {
+	test('records a build complete telemetry marker after artifact sync', async () => {
 		const syncArtifacts = vi.fn()
 
 		const result = await runDeployBuildTest({
@@ -282,7 +282,7 @@ describe('deploy build pipeline', () => {
 		expect(telemetryMock.flushTelemetry).toHaveBeenCalledWith({ runtime: 'build', timeoutMs: 2000 })
 	})
 
-	it('uses git fallback as the build commit when commit env vars are blank', async () => {
+	test('uses git fallback as the build commit when commit env vars are blank', async () => {
 		const logger = createMemoryLogger()
 
 		const result = await runDeployBuildTest({
@@ -311,7 +311,7 @@ describe('deploy build pipeline', () => {
 		)
 	})
 
-	it('records failed build telemetry markers', async () => {
+	test('records failed build telemetry markers', async () => {
 		const result = await runDeployBuildTest({
 			env: testEnv({ COOLIFY_BRANCH: 'main', SOURCE_COMMIT: 'abcdef123456' }),
 			findBuildId: vi.fn().mockResolvedValue(''),

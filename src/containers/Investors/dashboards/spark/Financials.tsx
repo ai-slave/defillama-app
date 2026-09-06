@@ -110,7 +110,7 @@ function AllocatedAssetsSection({
 	const [dimension, setDimension] = useState<AADimension>('byProtocol')
 	const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
 
-	const currentEntries: AllocatedAssetsEntry[] = allocatedAssets[dimension]
+	const currentEntries: Array<AllocatedAssetsEntry> = allocatedAssets[dimension]
 	const pieColors = useMemo(() => assignColors(currentEntries.map((e) => e.name)), [currentEntries])
 
 	const toggleRow = (idx: number) => {

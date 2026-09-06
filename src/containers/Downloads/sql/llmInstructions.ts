@@ -97,10 +97,10 @@ function gotchasSection(): string {
 
 function fixedShapesSection(): string {
 	const entries = Object.entries(CHART_COLUMN_SHAPES)
-	const fixed = entries.filter(([, shape]) => shape !== 'dynamic') as [string, readonly string[]][]
+	const fixed = entries.filter(([, shape]) => shape !== 'dynamic') as Array<[string, ReadonlyArray<string>]>
 	const dynamic = entries.filter(([, shape]) => shape === 'dynamic').map(([k]) => k)
 
-	const lines: string[] = [`## Chart shapes — exceptions to the default \`(date, value)\``, '', `### Fixed shapes`]
+	const lines: Array<string> = [`## Chart shapes — exceptions to the default \`(date, value)\``, '', `### Fixed shapes`]
 	for (const [slug, cols] of fixed) {
 		lines.push(`- \`${slug}\`: ${cols.map((c) => `\`${c}\``).join(', ')}`)
 	}
@@ -113,7 +113,7 @@ function fixedShapesSection(): string {
 }
 
 function flatCatalogSection(): string {
-	const lines: string[] = [
+	const lines: Array<string> = [
 		`## Flat datasets (${datasets.length})`,
 		`Each dataset is one table. Grain (what one row represents) is annotated per category.`
 	]
@@ -173,7 +173,7 @@ function describeFlatDataset(d: DatasetDefinition): string {
 }
 
 function timeseriesCatalogSection(): string {
-	const lines: string[] = [
+	const lines: Array<string> = [
 		`## Time-series datasets (${chartDatasets.length})`,
 		`Each entry is a **template**. The real table name substitutes the parameter — pick a valid value (protocol slug, chain slug, category, etc) to materialise one series. Grain is always "one row per date".`
 	]

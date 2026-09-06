@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { RWAAssetOverviewRow, RWAPerpsContractOverlayRow } from '../api.types'
 import {
 	filterRwaAssetOverviewRows,
@@ -105,7 +105,7 @@ const cexPerp: RWAPerpsContractOverlayRow = {
 }
 
 describe('RWA filter state', () => {
-	it('includes CEX perps only when both inclusion flags are enabled without changing spot totals', () => {
+	test('includes CEX perps only when both inclusion flags are enabled without changing spot totals', () => {
 		const rows = [baseAsset, dexPerp, cexPerp]
 		for (const [includeRwaPerps, includeCex, expectedIds, expectedOi] of [
 			[false, false, ['asset-1'], 0],
@@ -123,7 +123,7 @@ describe('RWA filter state', () => {
 		}
 	})
 
-	it('adds stablecoins and governance tokens without removing selected perps', () => {
+	test('adds stablecoins and governance tokens without removing selected perps', () => {
 		const rows = [
 			baseAsset,
 			{ ...baseAsset, id: 'stablecoin', stablecoin: true },
@@ -155,7 +155,7 @@ describe('RWA filter state', () => {
 		}
 	})
 
-	it('excludes both kinds of perps when filtering for attested assets', () => {
+	test('excludes both kinds of perps when filtering for attested assets', () => {
 		const result = filterRwaOverviewDisplayRows([{ ...baseAsset, attestations: true }, dexPerp, cexPerp], {
 			...baseFilterState,
 			includeCex: true,
@@ -166,7 +166,7 @@ describe('RWA filter state', () => {
 		expect(result.totalOpenInterest).toBe(0)
 	})
 
-	it('parses attribute filter state params', () => {
+	test('parses attribute filter state params', () => {
 		expect(parseAttributeFilterStatesParam(undefined)).toEqual(['yes', 'no', 'unknown'])
 		expect(parseAttributeFilterStatesParam('yes')).toEqual(['yes'])
 		expect(parseAttributeFilterStatesParam(['yes', 'unknown'])).toEqual(['yes', 'unknown'])
@@ -174,25 +174,25 @@ describe('RWA filter state', () => {
 		expect(parseAttributeFilterStatesParam('invalid')).toEqual(['yes', 'no', 'unknown'])
 	})
 
-	it('treats asset-only query filters as perps overlay blockers', () => {
+	test('treats asset-only query filters as perps overlay blockers', () => {
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ types: 'Asset' })).toBe(true)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ minActiveMcapToOnChainMcapPct: '10' })).toBe(true)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ kycForMintRedeemStates: 'yes' })).toBe(true)
 	})
 
-	it('does not treat shared filters or includeRwaPerps as perps overlay blockers', () => {
+	test('does not treat shared filters or includeRwaPerps as perps overlay blockers', () => {
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ categories: 'Treasuries' })).toBe(false)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ platforms: 'Ondo' })).toBe(false)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeRwaPerps: 'false' })).toBe(false)
 	})
 
-	it('allows stablecoins and governance tokens alongside perps', () => {
+	test('allows stablecoins and governance tokens alongside perps', () => {
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'false' })).toBe(false)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeStablecoins: 'true' })).toBe(false)
 		expect(hasPerpsOverlayBlockingFiltersFromQuery({ includeGovernance: 'false' })).toBe(false)
 	})
 
-	it('does not include ratio-filtered rows with a zero denominator', () => {
+	test('does not include ratio-filtered rows with a zero denominator', () => {
 		const filterState: RWAFilterState = {
 			...baseFilterState,
 			minActiveMcapToOnChainMcapPct: 1
@@ -213,7 +213,7 @@ describe('RWA filter state', () => {
 		).toEqual([])
 	})
 
-	it('subtracts bridge TVL from display values and ratio filters only when excluded', () => {
+	test('subtracts bridge TVL from display values and ratio filters only when excluded', () => {
 		const asset: RWAAssetOverviewRow = {
 			...baseAsset,
 			bridgeTvl: 10,
@@ -247,7 +247,7 @@ describe('RWA filter state', () => {
 		expect(filteredWithoutBridge).toHaveLength(0)
 	})
 
-	it('keeps suspicious assets visible but excludes them from non-platform totals', () => {
+	test('keeps suspicious assets visible but excludes them from non-platform totals', () => {
 		const suspiciousAsset = { ...baseAsset, id: 'suspicious', suspicious: true }
 		const result = filterRwaOverviewDisplayRows([baseAsset, suspiciousAsset], baseFilterState)
 
@@ -258,7 +258,7 @@ describe('RWA filter state', () => {
 		expect(result.totalIssuersCount).toBe(1)
 	})
 
-	it('includes suspicious assets in their own platform totals', () => {
+	test('includes suspicious assets in their own platform totals', () => {
 		const suspiciousAsset = { ...baseAsset, id: 'suspicious', suspicious: true, issuer: 'Issuer Two' }
 		const result = filterRwaOverviewDisplayRows([baseAsset, suspiciousAsset], {
 			...baseFilterState,

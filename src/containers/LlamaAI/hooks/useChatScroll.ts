@@ -10,7 +10,7 @@ interface PaginationState {
 interface UseChatScrollParams {
 	scrollContainerRef: RefObject<HTMLDivElement | null>
 	isStreaming: boolean
-	items: readonly unknown[]
+	items: ReadonlyArray<unknown>
 	hasMessages: boolean
 	paginationState: PaginationState
 	onLoadMoreMessages: () => void

@@ -52,18 +52,25 @@ type Step =
 	| 'mobile-alerts'
 	| 'prompts'
 
-const DESKTOP_STEPS: Step[] = ['intro', 'explore', 'alerts', 'upload', 'research', 'prompts']
-const MOBILE_STEPS: Step[] = ['intro', 'mobile-upload', 'mobile-explore', 'mobile-alerts', 'mobile-research', 'prompts']
+const DESKTOP_STEPS: Array<Step> = ['intro', 'explore', 'alerts', 'upload', 'research', 'prompts']
+const MOBILE_STEPS: Array<Step> = [
+	'intro',
+	'mobile-upload',
+	'mobile-explore',
+	'mobile-alerts',
+	'mobile-research',
+	'prompts'
+]
 
 // Variant B: short walkthrough (intro → research → prompts)
-const DESKTOP_STEPS_SHORT: Step[] = ['intro', 'research', 'prompts']
-const MOBILE_STEPS_SHORT: Step[] = ['intro', 'mobile-research', 'prompts']
+const DESKTOP_STEPS_SHORT: Array<Step> = ['intro', 'research', 'prompts']
+const MOBILE_STEPS_SHORT: Array<Step> = ['intro', 'mobile-research', 'prompts']
 
 const MOBILE_DRAWER_STEPS = new Set<Step>(['mobile-upload', 'mobile-research', 'mobile-explore', 'mobile-alerts'])
 const RESEARCH_STEPS = new Set<Step>(['research', 'mobile-research'])
 
 interface SpotlightConfig {
-	selectors: string[]
+	selectors: Array<string>
 	title: string
 	description: string
 	icon: 'layout-grid' | 'calendar-plus' | 'image-plus' | 'search' | 'plus'
@@ -208,7 +215,7 @@ export function OnboardingWalkthrough({
 		if (!isSpotlightStep || !config) return
 
 		const updateRect = () => {
-			const rects: DOMRect[] = []
+			const rects: Array<DOMRect> = []
 			for (const sel of config.selectors) {
 				const el = document.querySelector(sel)
 				if (el) rects.push(el.getBoundingClientRect())
@@ -605,7 +612,7 @@ export function OnboardingWalkthrough({
 	)
 }
 
-function ProgressFooter({ currentStep, steps, onSkip }: { currentStep: Step; steps: Step[]; onSkip: () => void }) {
+function ProgressFooter({ currentStep, steps, onSkip }: { currentStep: Step; steps: Array<Step>; onSkip: () => void }) {
 	const currentIndex = steps.indexOf(currentStep)
 
 	return (

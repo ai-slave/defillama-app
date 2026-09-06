@@ -1,5 +1,5 @@
 import type { NextApiHandler } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { fetchCexs, recordRouteRuntimeError } = vi.hoisted(() => ({
@@ -25,7 +25,7 @@ describe('/api/dynamic/cexs', () => {
 		vi.clearAllMocks()
 	})
 
-	it('keeps unavailable assets null and measured zero distinct', async () => {
+	test('keeps unavailable assets null and measured zero distinct', async () => {
 		fetchCexs.mockResolvedValue({
 			cexs: [
 				{ name: 'Unavailable' },
@@ -47,7 +47,7 @@ describe('/api/dynamic/cexs', () => {
 		])
 	})
 
-	it('returns an error when the whole CEX source fails', async () => {
+	test('returns an error when the whole CEX source fails', async () => {
 		const error = new Error('source unavailable')
 		fetchCexs.mockRejectedValue(error)
 		const req = createMockNextApiRequest({ method: 'GET' })

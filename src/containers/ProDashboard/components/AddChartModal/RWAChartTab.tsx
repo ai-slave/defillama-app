@@ -35,7 +35,7 @@ interface RWAChartTabProps {
 	selectedRwaTreemapNestedBy: string
 	selectedRwaAssetId: string | null
 	selectedRwaAssetName: string | null
-	selectedRwaAssetMetrics: RWAOverviewChartMetric[]
+	selectedRwaAssetMetrics: Array<RWAOverviewChartMetric>
 	onRwaModeChange: (mode: 'overview' | 'asset') => void
 	onSelectedRwaChainChange: (chain: string) => void
 	onSelectedRwaMetricChange: (metric: RWAOverviewChartMetric) => void
@@ -44,7 +44,7 @@ interface RWAChartTabProps {
 	onSelectedRwaTreemapNestedByChange: (nestedBy: string) => void
 	onSelectedRwaAssetIdChange: (id: string | null) => void
 	onSelectedRwaAssetNameChange: (name: string | null) => void
-	onSelectedRwaAssetMetricsChange: (metrics: RWAOverviewChartMetric[]) => void
+	onSelectedRwaAssetMetricsChange: (metrics: Array<RWAOverviewChartMetric>) => void
 }
 
 const BREAKDOWN_OPTIONS: Array<SelectOption<RWAOverviewChartBreakdown>> = [
@@ -54,7 +54,7 @@ const BREAKDOWN_OPTIONS: Array<SelectOption<RWAOverviewChartBreakdown>> = [
 	{ value: 'assetGroup', label: 'Asset Group' }
 ]
 
-const ALL_METRICS: RWAOverviewChartMetric[] = ['activeMcap', 'onChainMcap', 'defiActiveTvl']
+const ALL_METRICS: Array<RWAOverviewChartMetric> = ['activeMcap', 'onChainMcap', 'defiActiveTvl']
 
 const METRIC_LABELS: Record<RWAOverviewChartMetric, string> = {
 	activeMcap: 'Active Mcap',
@@ -218,14 +218,14 @@ function AssetControls({
 }: {
 	selectedAssetId: string | null
 	selectedAssetName: string | null
-	selectedMetrics: RWAOverviewChartMetric[]
+	selectedMetrics: Array<RWAOverviewChartMetric>
 	onAssetIdChange: (id: string | null) => void
 	onAssetNameChange: (name: string | null) => void
-	onMetricsChange: (metrics: RWAOverviewChartMetric[]) => void
+	onMetricsChange: (metrics: Array<RWAOverviewChartMetric>) => void
 }) {
 	const { assets, isLoading } = useRWAAssetsList()
 
-	const assetOptions: VirtualizedSelectOption[] = useMemo(
+	const assetOptions: Array<VirtualizedSelectOption> = useMemo(
 		() =>
 			assets.map((a) => ({
 				value: a.id,
@@ -359,7 +359,7 @@ function OverviewPreview({
 	)
 }
 
-function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: RWAOverviewChartMetric[] }) {
+function AssetPreview({ assetId, metrics }: { assetId: string | null; metrics: Array<RWAOverviewChartMetric> }) {
 	const { chartDataset, isLoading } = useRWAAssetChartData(assetId)
 	const charts = useMemo(() => buildProRwaAssetChartSeries(chartDataset, metrics), [chartDataset, metrics])
 

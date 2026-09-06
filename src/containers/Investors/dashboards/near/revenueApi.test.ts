@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { extractNearRevenueSeries, type RevenueAPIResponse } from './revenueApi'
 
-function responseWithSeries(revenueSeries: Array<{ name: string; data: number[] }>): RevenueAPIResponse {
-	const chart = (series: Array<{ name: string; data: number[] }>) => ({
+function responseWithSeries(revenueSeries: Array<{ name: string; data: Array<number> }>): RevenueAPIResponse {
+	const chart = (series: Array<{ name: string; data: Array<number> }>) => ({
 		title: 'chart',
 		dates: ['2026-07-17', '2026-07-18'],
 		series
@@ -31,7 +31,7 @@ function responseWithSeries(revenueSeries: Array<{ name: string; data: number[] 
 }
 
 describe('extractNearRevenueSeries', () => {
-	it('uses the current API Intents Revenue series and combines unequal series lengths', () => {
+	test('uses the current API Intents Revenue series and combines unequal series lengths', () => {
 		const result = extractNearRevenueSeries(
 			responseWithSeries([
 				{ name: 'Intents Revenue', data: [5, 6] },
@@ -46,7 +46,7 @@ describe('extractNearRevenueSeries', () => {
 		expect(result.dailyEmissions).toEqual([11, 12])
 	})
 
-	it('supports cached responses with the legacy wallet-level revenue series', () => {
+	test('supports cached responses with the legacy wallet-level revenue series', () => {
 		const result = extractNearRevenueSeries(
 			responseWithSeries([
 				{ name: 'fefundsadmin', data: [2, 3] },

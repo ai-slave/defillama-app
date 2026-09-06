@@ -14,13 +14,13 @@ export type ChartTimeGrouping = 'daily' | 'weekly' | 'monthly' | 'quarterly' | '
 export type ChartTimeGroupingWithCumulative = ChartTimeGrouping | 'cumulative'
 
 type MultiSeriesChartValue = string | number | null | undefined
-export type MultiSeriesChartArrayRow = MultiSeriesChartValue[]
+export type MultiSeriesChartArrayRow = Array<MultiSeriesChartValue>
 
 export type MultiSeriesChartDataset = {
 	/** Time-series rows use an ascending millisecond `timestamp`; category datasets may use another first dimension. */
-	source: MultiSeriesChartArrayRow[]
+	source: Array<MultiSeriesChartArrayRow>
 	/** Logical dimensions used by chart encodes and CSV labels. ECharts receives private internal dimensions. */
-	dimensions: string[]
+	dimensions: Array<string>
 }
 
 export type CanonicalMultiSeriesChartDataset = MultiSeriesChartDataset
@@ -29,9 +29,9 @@ export type MultiSeriesTimeSeriesRow = [timestampMs: number, ...values: Array<nu
 
 export type MultiSeriesTimeSeriesDataset = {
 	/** Ascending rows with the millisecond timestamp in the first column. */
-	source: MultiSeriesTimeSeriesRow[]
+	source: Array<MultiSeriesTimeSeriesRow>
 	/** The first dimension is `timestamp`; remaining names address numeric series columns. */
-	dimensions: [timestamp: 'timestamp', ...series: string[]]
+	dimensions: [timestamp: 'timestamp', ...series: Array<string>]
 }
 
 export type MultiSeriesChartSeriesConfig = {
@@ -41,8 +41,8 @@ export type MultiSeriesChartSeriesConfig = {
 	stack?: string
 	/** `encode.y` is the canonical dataset dimension and may differ from the display name. */
 	encode: {
-		x: number | number[] | string | string[]
-		y: number | number[] | string | string[]
+		x: number | Array<number> | string | Array<string>
+		y: number | Array<number> | string | Array<string>
 	}
 	/** Independently timed positional data. Use this when a wide union would introduce semantic null gaps. */
 	data?: Array<[timestamp: number, value: number | null]>
@@ -103,16 +103,16 @@ export type MultiSeriesChartOptions = Pick<EChartsOption, 'dataZoom' | 'graphic'
 	tooltip?: TooltipComponentOption
 	xAxis?: XAXisComponentOption
 	/** MultiSeriesChart owns a Cartesian numeric y scale; category/time y-axes are unsupported. */
-	yAxis?: MultiSeriesYAxisOverride | MultiSeriesYAxisOverride[]
+	yAxis?: MultiSeriesYAxisOverride | Array<MultiSeriesYAxisOverride>
 }
 
 export interface IMultiSeriesChartProps {
-	charts?: MultiSeriesChartSeriesConfig[]
+	charts?: Array<MultiSeriesChartSeriesConfig>
 	selectedCharts?: Set<string>
 	chartOptions?: MultiSeriesChartOptions
 	height?: string
 	groupBy?: ChartTimeGroupingWithCumulative
-	hallmarks?: [number, string][]
+	hallmarks?: Array<[number, string]>
 	rangeHallmarks?: Array<[[number, number], string]> | null
 	hallmarksInMs?: boolean
 	hallmarkStyle?: 'event-rail' | 'mark-line'
@@ -133,7 +133,7 @@ export interface IMultiSeriesChartProps {
 	title?: string
 	headingAs?: 'h1' | 'h2' | 'h3'
 	/** One logo per category dimension, rendered below a category x-axis. */
-	categoryLogos?: string[]
+	categoryLogos?: Array<string>
 	/** Maximum tooltip series rows; non-positive values disable the cap. */
 	tooltipMaxItems?: number
 	/** Adds a total for same-unit series. Per-series unit overrides are excluded. */
@@ -142,7 +142,7 @@ export interface IMultiSeriesChartProps {
 	requireCompleteTooltipTotal?: boolean
 	exportButtons?: ChartExportButtonsMode
 	logScale?: boolean
-	logEligibleYAxes?: number[]
+	logEligibleYAxes?: Array<number>
 	/** Use an explicit theme for standalone/embed callers; normal pages use the shared theme manager. */
 	isThemeDark?: boolean
 }

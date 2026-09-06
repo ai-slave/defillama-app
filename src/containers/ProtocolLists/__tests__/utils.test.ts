@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IProtocol } from '~/containers/ProtocolRankings/types'
 import type { ProtocolLiteTvlEntry } from '../api.types'
 import type { IRecentProtocol } from '../types'
@@ -38,7 +38,7 @@ const makeProtocol = (overrides: Partial<IProtocol> = {}): IProtocol => ({
 	tvl: makeProtocolTvl(),
 	tvlChange: null,
 	chains: ['Ethereum'],
-	mcap: 1_000,
+	mcap: 1000,
 	tokenPrice: null,
 	mcaptvl: null,
 	strikeTvl: false,
@@ -57,21 +57,21 @@ const makeRecentProtocol = (overrides: Partial<IRecentProtocol> = {}): IRecentPr
 	tvlPrevDay: 80,
 	tvlPrevWeek: 50,
 	tvlPrevMonth: 25,
-	mcap: 1_000,
+	mcap: 1000,
 	listedAt: 1_700_000_000,
 	defillamaId: 'recent-protocol',
 	extraTvl: {},
 	...overrides
 })
 
-function only<T>(values: T[]): T {
+function only<T>(values: Array<T>): T {
 	const value = values[0]
 	if (value === undefined) throw new Error('Expected one result')
 	return value
 }
 
 describe('ProtocolLists TVL helpers', () => {
-	it('keeps selected-chain previous snapshots unknown when one required chain snapshot is null', () => {
+	test('keeps selected-chain previous snapshots unknown when one required chain snapshot is null', () => {
 		const protocol = scopeRecentProtocolToChains({
 			protocol: makeRecentProtocol({
 				chains: ['OP Mainnet', 'Base'],
@@ -89,7 +89,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.tvlPrevMonth).toBe(90)
 	})
 
-	it('keeps selected-chain current TVL unknown when a present contribution is null', () => {
+	test('keeps selected-chain current TVL unknown when a present contribution is null', () => {
 		const protocol = scopeRecentProtocolToChains({
 			protocol: makeRecentProtocol({
 				chains: ['OP Mainnet', 'Base'],
@@ -104,7 +104,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.tvl).toBeNull()
 	})
 
-	it('keeps combined snapshots unknown when a selected declared chain has no base entry', () => {
+	test('keeps combined snapshots unknown when a selected declared chain has no base entry', () => {
 		const protocol = scopeRecentProtocolToChains({
 			protocol: makeRecentProtocol({
 				chains: ['Ethereum', 'Base'],
@@ -125,7 +125,7 @@ describe('ProtocolLists TVL helpers', () => {
 		})
 	})
 
-	it('distinguishes a sole null, explicit zero, and missing selected-chain base', () => {
+	test('distinguishes a sole null, explicit zero, and missing selected-chain base', () => {
 		const protocol = makeRecentProtocol({
 			chains: ['Ethereum'],
 			chainTvls: { Ethereum: makeTvlEntry(null) }
@@ -141,7 +141,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(scopeRecentProtocolToChains({ protocol, selectedChains: new Set(['base']) }).tvl).toBeNull()
 	})
 
-	it('preserves selected-chain zero snapshots and admits only producer-backed protocol extras', () => {
+	test('preserves selected-chain zero snapshots and admits only producer-backed protocol extras', () => {
 		const protocol = scopeRecentProtocolToChains({
 			protocol: makeRecentProtocol({
 				chains: ['OP Mainnet'],
@@ -161,7 +161,7 @@ describe('ProtocolLists TVL helpers', () => {
 		})
 	})
 
-	it('keeps nullable enabled extra snapshots unknown while persisted govtokens state is a no-op', () => {
+	test('keeps nullable enabled extra snapshots unknown while persisted govtokens state is a no-op', () => {
 		const protocol = only(
 			applyExtraTvl(
 				[
@@ -182,7 +182,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.change_1d).toBeNull()
 	})
 
-	it('treats a protocol-table govtokens-only setting as a no-op', () => {
+	test('treats a protocol-table govtokens-only setting as a no-op', () => {
 		const protocols = [makeProtocol()]
 
 		expect(
@@ -195,7 +195,7 @@ describe('ProtocolLists TVL helpers', () => {
 		).toBe(protocols)
 	})
 
-	it('adds enabled recent protocol extras while persisted classification settings are no-ops', () => {
+	test('adds enabled recent protocol extras while persisted classification settings are no-ops', () => {
 		const [protocol] = applyExtraTvl(
 			[
 				makeRecentProtocol({
@@ -216,7 +216,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.mcaptvl).toBeCloseTo(1000 / 120)
 	})
 
-	it('clamps negative recent protocol TVL values after enabled extras are applied', () => {
+	test('clamps negative recent protocol TVL values after enabled extras are applied', () => {
 		const [protocol] = applyExtraTvl(
 			[
 				makeRecentProtocol({
@@ -241,7 +241,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.mcaptvl).toBeNull()
 	})
 
-	it('returns null for non-finite recent protocol market-cap-to-tvl ratios', () => {
+	test('returns null for non-finite recent protocol market-cap-to-tvl ratios', () => {
 		const [protocol] = applyExtraTvl(
 			[
 				makeRecentProtocol({
@@ -256,7 +256,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.mcaptvl).toBeNull()
 	})
 
-	it('adds normal protocol table extras while keeping doublecounted and liquid staking non-additive', () => {
+	test('adds normal protocol table extras while keeping doublecounted and liquid staking non-additive', () => {
 		const [protocol] = applyProtocolTvlSettings({
 			protocols: [
 				makeProtocol({
@@ -281,7 +281,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.mcaptvl).toBeCloseTo(1000 / 120)
 	})
 
-	it('returns null for non-finite protocol table market-cap-to-tvl ratios', () => {
+	test('returns null for non-finite protocol table market-cap-to-tvl ratios', () => {
 		const [protocol] = applyProtocolTvlSettings({
 			protocols: [
 				makeProtocol({
@@ -300,7 +300,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.mcaptvl).toBeNull()
 	})
 
-	it('keeps market-cap ratios finite with positive denominators and preserves a zero numerator', () => {
+	test('keeps market-cap ratios finite with positive denominators and preserves a zero numerator', () => {
 		const [zeroMcap, negativeTvl] = applyProtocolTvlSettings({
 			protocols: [
 				makeProtocol({ mcap: 0, tvl: makeProtocolTvl({ default: makeTvlEntry(100) }) }),
@@ -315,7 +315,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(negativeTvl?.mcaptvl).toBeNull()
 	})
 
-	it('excludes unavailable TVL whenever a numeric min or max bound is active', () => {
+	test('excludes unavailable TVL whenever a numeric min or max bound is active', () => {
 		const protocols = [
 			makeProtocol({ name: 'Unavailable', tvl: makeProtocolTvl({ default: makeTvlEntry(null) }) }),
 			makeProtocol({ name: 'Zero', tvl: makeProtocolTvl({ default: makeTvlEntry(0) }) }),
@@ -334,7 +334,7 @@ describe('ProtocolLists TVL helpers', () => {
 		).toEqual(['Zero', 'Positive'])
 	})
 
-	it('keeps nullable additive extra fields unknown when protocol table base fields exist', () => {
+	test('keeps nullable additive extra fields unknown when protocol table base fields exist', () => {
 		const staking = {
 			tvl: 20,
 			tvlPrevDay: null,
@@ -360,7 +360,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.tvl?.default).toEqual(makeTvlEntry(120, null, 60, null))
 	})
 
-	it('keeps unknown protocol table base fields unknown even when additive extras exist', () => {
+	test('keeps unknown protocol table base fields unknown even when additive extras exist', () => {
 		const defaultTvl = {
 			tvl: 100,
 			tvlPrevDay: null,
@@ -388,7 +388,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(protocol.tvlChange?.change1m).toBeNull()
 	})
 
-	it('keeps unknown child protocol table fields unknown after enabled extras are applied', () => {
+	test('keeps unknown child protocol table fields unknown after enabled extras are applied', () => {
 		const childDefaultTvl = {
 			tvl: 70,
 			tvlPrevDay: null,
@@ -427,7 +427,7 @@ describe('ProtocolLists TVL helpers', () => {
 		expect(child?.tvlChange?.change1m).toBeNull()
 	})
 
-	it('filters child protocol rows after enabled extras are applied', () => {
+	test('filters child protocol rows after enabled extras are applied', () => {
 		const [protocol] = applyProtocolTvlSettings({
 			protocols: [
 				makeProtocol({

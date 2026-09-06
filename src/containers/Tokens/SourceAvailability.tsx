@@ -9,7 +9,7 @@ const SOURCE_NAMES: Record<TokensOptionalSource, string> = {
 	unlocks: 'Unlocks'
 }
 
-export function TokensSourceAvailability({ sources }: { sources: TokensOptionalSource[] }) {
+export function TokensSourceAvailability({ sources }: { sources: Array<TokensOptionalSource> }) {
 	if (sources.length === 0) return null
 	return (
 		<p role="status" className="px-3 py-2 body-sm text-secondary">

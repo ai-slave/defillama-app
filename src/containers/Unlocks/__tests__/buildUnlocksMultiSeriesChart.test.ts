@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildUnlocksMultiSeriesChartForDateRange } from '../buildUnlocksMultiSeriesChart'
 import type { CalendarUnlockEvent } from '../calendarTypes'
 
@@ -13,7 +13,7 @@ function unlockEvent(protocol: string, value: number, unit?: 'week'): CalendarUn
 }
 
 describe('buildUnlocksMultiSeriesChartForDateRange', () => {
-	it('builds stacked unlock bars outside ECharts large mode', () => {
+	test('builds stacked unlock bars outside ECharts large mode', () => {
 		const result = buildUnlocksMultiSeriesChartForDateRange({
 			dates: ['2026-01-01', '2026-01-02'],
 			unlocksData: {

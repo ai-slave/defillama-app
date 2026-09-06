@@ -12,7 +12,7 @@ function isSafeHttpsUrl(value: string): boolean {
 	}
 }
 
-function safeSameAs(author: PublicDashboardAuthor): string[] {
+function safeSameAs(author: PublicDashboardAuthor): Array<string> {
 	return Object.values(author.socials || {}).filter(
 		(value): value is string => typeof value === 'string' && isSafeHttpsUrl(value)
 	)
@@ -22,7 +22,7 @@ export function buildAuthorJsonLd(
 	author: PublicDashboardAuthor,
 	stats: AuthorStats,
 	totalDashboards: number
-): Record<string, unknown>[] {
+): Array<Record<string, unknown>> {
 	const url = `${SITE_ORIGIN}/authors/${author.slug}`
 	const sameAs = safeSameAs(author)
 	const avatarUrl = author.avatarUrl && isSafeHttpsUrl(author.avatarUrl) ? author.avatarUrl : null
@@ -43,7 +43,7 @@ export function buildAuthorJsonLd(
 				url,
 				...(author.bio ? { description: author.bio } : {}),
 				...(avatarUrl ? { image: avatarUrl } : {}),
-				...(sameAs.length ? { sameAs } : {}),
+				...(sameAs.length > 0 ? { sameAs } : {}),
 				interactionStatistic: [
 					{
 						'@type': 'InteractionCounter',

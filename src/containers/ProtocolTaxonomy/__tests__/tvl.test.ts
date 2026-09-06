@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	applyProtocolTaxonomyTvlSettings,
 	applyProtocolsCategoriesTvlSettings,
@@ -12,7 +12,7 @@ import type {
 	IProtocolsCategoriesTableRow
 } from '../types'
 
-function only<T>(values: T[]): T {
+function only<T>(values: Array<T>): T {
 	const value = values[0]
 	if (value === undefined) throw new Error('Expected one row')
 	return value
@@ -44,8 +44,8 @@ const makeCharts = (): IProtocolTaxonomyPageData['charts'] => ({
 	dataset: {
 		dimensions: ['timestamp', 'TVL', 'Active Loans'],
 		source: [
-			[1_000, 100, 5],
-			[2_000, 200, 10]
+			[1000, 100, 5],
+			[2000, 200, 10]
 		]
 	},
 	charts: [
@@ -102,18 +102,18 @@ const makeCategoryRow = ({
 })
 
 describe('ProtocolTaxonomy TVL helpers', () => {
-	it('returns no enabled extras when all TVL settings are disabled', () => {
+	test('returns no enabled extras when all TVL settings are disabled', () => {
 		expect(getEnabledProtocolTaxonomyTvls({ staking: false, borrowed: false })).toEqual([])
 	})
 
-	it('reuses protocol rows and charts when no TVL extras are enabled', () => {
+	test('reuses protocol rows and charts when no TVL extras are enabled', () => {
 		const protocols = [makeProtocol({ tvl: 100, extraTvls: { staking: 25 } })]
 		const charts = makeCharts()
 
 		const result = applyProtocolTaxonomyTvlSettings({
 			protocols,
 			charts,
-			extraTvlCharts: { staking: { 1_000: 25 } },
+			extraTvlCharts: { staking: { 1000: 25 } },
 			tvlSettings: {}
 		})
 
@@ -121,7 +121,7 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		expect(result.charts).toBe(charts)
 	})
 
-	it('adds enabled extra TVL to protocol rows, subrows, and chart TVL series', () => {
+	test('adds enabled extra TVL to protocol rows, subrows, and chart TVL series', () => {
 		const result = applyProtocolTaxonomyTvlSettings({
 			protocols: [
 				makeProtocol({
@@ -132,8 +132,8 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 			],
 			charts: makeCharts(),
 			extraTvlCharts: {
-				staking: { 1_000: 25, 2_000: 30 },
-				borrowed: { 1_000: 50, 2_000: 60 }
+				staking: { 1000: 25, 2000: 30 },
+				borrowed: { 1000: 50, 2000: 60 }
 			},
 			tvlSettings: { staking: true }
 		})
@@ -142,12 +142,12 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		expect(protocol.tvl).toBe(125)
 		expect(only(protocol.subRows ?? []).tvl).toBeNull()
 		expect(result.charts.dataset.source).toEqual([
-			[1_000, 125, 5],
-			[2_000, 230, 10]
+			[1000, 125, 5],
+			[2000, 230, 10]
 		])
 	})
 
-	it('ignores chain-only double counted and liquid staking settings', () => {
+	test('ignores chain-only double counted and liquid staking settings', () => {
 		const result = applyProtocolTaxonomyTvlSettings({
 			protocols: [makeProtocol({ tvl: 100 })],
 			charts: makeCharts(),
@@ -159,33 +159,33 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		expect(only(result.charts.dataset.source)[1]).toBe(100)
 	})
 
-	it('lets present-null extras poison exact periods while absent extras contribute zero', () => {
+	test('lets present-null extras poison exact periods while absent extras contribute zero', () => {
 		const result = applyProtocolTaxonomyTvlSettings({
 			protocols: [makeProtocol({ tvl: 100, extraTvls: { staking: null } })],
 			charts: makeCharts(),
-			extraTvlCharts: { staking: { 1_000: null } },
+			extraTvlCharts: { staking: { 1000: null } },
 			tvlSettings: { staking: true }
 		})
 
 		expect(only(result.finalProtocols).tvl).toBeNull()
 		expect(result.charts.dataset.source).toEqual([
-			[1_000, null, 5],
-			[2_000, 200, 10]
+			[1000, null, 5],
+			[2000, 200, 10]
 		])
 	})
 
-	it('keeps the producer Active Loans series independent from composite TVL settings', () => {
+	test('keeps the producer Active Loans series independent from composite TVL settings', () => {
 		const result = applyProtocolTaxonomyTvlSettings({
 			protocols: [makeProtocol({ tvl: 100, extraTvls: { borrowed: 50 } })],
 			charts: makeCharts(),
-			extraTvlCharts: { borrowed: { 1_000: 50, 2_000: 60 } },
+			extraTvlCharts: { borrowed: { 1000: 50, 2000: 60 } },
 			tvlSettings: { borrowed: true }
 		})
 
-		expect(result.charts.dataset.source[0]).toEqual([1_000, 150, 5])
+		expect(result.charts.dataset.source[0]).toEqual([1000, 150, 5])
 	})
 
-	it('excludes double counted and liquid staking from categories page enabled extras', () => {
+	test('excludes double counted and liquid staking from categories page enabled extras', () => {
 		expect(
 			getEnabledProtocolsCategoriesTvls({
 				staking: true,
@@ -196,18 +196,18 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		).toEqual(['staking', 'borrowed'])
 	})
 
-	it('builds canonical category charts with enabled extras', () => {
+	test('builds canonical category charts with enabled extras', () => {
 		const result = buildProtocolsCategoriesTvlCharts({
 			categories: ['Dexes', 'Lending'],
 			categoryColors: { Dexes: '#f00', Lending: '#0f0' },
-			chartSource: [{ timestamp: 1_000, Dexes: 100, Lending: 200 }],
+			chartSource: [{ timestamp: 1000, Dexes: 100, Lending: 200 }],
 			extraTvlCharts: {
 				Dexes: {
-					staking: { 1_000: 25 },
-					borrowed: { 1_000: 50 }
+					staking: { 1000: 25 },
+					borrowed: { 1000: 50 }
 				},
 				Lending: {
-					staking: { 1_000: 75 }
+					staking: { 1000: 75 }
 				}
 			},
 			enabledTvls: ['staking']
@@ -215,7 +215,7 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Dexes', 'Lending'],
-			source: [[1_000, 125, 275]]
+			source: [[1000, 125, 275]]
 		})
 		expect(result.charts).toEqual([
 			{
@@ -235,25 +235,25 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		])
 	})
 
-	it('preserves null category chart extras per timestamp without poisoning absent timestamps', () => {
+	test('preserves null category chart extras per timestamp without poisoning absent timestamps', () => {
 		const result = buildProtocolsCategoriesTvlCharts({
 			categories: ['Dexes'],
 			categoryColors: { Dexes: '#f00' },
 			chartSource: [
-				{ timestamp: 1_000, Dexes: 100 },
-				{ timestamp: 2_000, Dexes: 200 }
+				{ timestamp: 1000, Dexes: 100 },
+				{ timestamp: 2000, Dexes: 200 }
 			],
-			extraTvlCharts: { Dexes: { staking: { 1_000: null } } },
+			extraTvlCharts: { Dexes: { staking: { 1000: null } } },
 			enabledTvls: ['staking']
 		})
 
 		expect(result.dataset.source).toEqual([
-			[1_000, null],
-			[2_000, 200]
+			[1000, null],
+			[2000, 200]
 		])
 	})
 
-	it('recalculates categories table rows with enabled extras and leaves excluded extras out', () => {
+	test('recalculates categories table rows with enabled extras and leaves excluded extras out', () => {
 		const enabledTvls = getEnabledProtocolsCategoriesTvls({
 			staking: true,
 			doublecounted: true,
@@ -301,7 +301,7 @@ describe('ProtocolTaxonomy TVL helpers', () => {
 		})
 	})
 
-	it('poisons only category table periods whose enabled extra is explicitly null', () => {
+	test('poisons only category table periods whose enabled extra is explicitly null', () => {
 		const result = applyProtocolsCategoriesTvlSettings({
 			tableData: [
 				makeCategoryRow({

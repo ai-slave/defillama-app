@@ -10,7 +10,7 @@ import { formatNumber } from '~/utils/numberFormat'
 const STORAGE_KEY = 'llama-risk-position-usd'
 
 const PRESETS = [
-	{ label: '$1k', value: 1_000 },
+	{ label: '$1k', value: 1000 },
 	{ label: '$10k', value: 10_000 },
 	{ label: '$100k', value: 100_000 }
 ]

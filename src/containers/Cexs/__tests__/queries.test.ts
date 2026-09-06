@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { fetchCexs } from '../api'
 import { getCexsPageData } from '../queries'
 import { binanceCexMetadataCache } from './metadataFixture'
@@ -9,7 +9,7 @@ vi.mock('~/server/routeRegistry/common', () => ({ getMetadataCache: vi.fn(() => 
 describe('CEX page data', () => {
 	beforeEach(() => vi.resetAllMocks())
 
-	it('normalizes the CEX protocol identity and producer exclusion population once', async () => {
+	test('normalizes the CEX protocol identity and producer exclusion population once', async () => {
 		vi.mocked(fetchCexs).mockResolvedValue({
 			cexs: [
 				{
@@ -36,7 +36,7 @@ describe('CEX page data', () => {
 		expect(cexs[1]).toMatchObject({ name: 'OKX', cexProtocolSlug: 'okx', tokensToExclude: ['OKB'] })
 	})
 
-	it('keeps display coin separate when the producer has no exclusion symbol', async () => {
+	test('keeps display coin separate when the producer has no exclusion symbol', async () => {
 		vi.mocked(fetchCexs).mockResolvedValue({
 			cexs: [{ name: 'Bitrue', coin: 'BTR' }],
 			cg_volume_cexs: []
@@ -47,7 +47,7 @@ describe('CEX page data', () => {
 		expect(cexs[0]).toMatchObject({ name: 'Bitrue', coin: 'BTR', tokensToExclude: [] })
 	})
 
-	it('keeps an unknown producer slug as an unlinked CEX row', async () => {
+	test('keeps an unknown producer slug as an unlinked CEX row', async () => {
 		vi.mocked(fetchCexs).mockResolvedValue({
 			cexs: [{ name: 'New CEX', slug: 'new-cex', coinSymbol: 'NEW' }],
 			cg_volume_cexs: []

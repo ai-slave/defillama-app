@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { TVLRange } from '../TVLRange'
 
 const { capturedProps, routerState } = vi.hoisted(() => ({
@@ -36,7 +36,7 @@ describe('TVLRange', () => {
 		routerState.query = {}
 	})
 
-	it('applies page reset before delegating to a custom query updater', () => {
+	test('applies page reset before delegating to a custom query updater', () => {
 		const pushQueryUpdates = vi.fn()
 
 		renderToStaticMarkup(<TVLRange resetPageOnChange pushQueryUpdates={pushQueryUpdates} />)
@@ -49,7 +49,7 @@ describe('TVLRange', () => {
 		})
 	})
 
-	it('does not add page reset when resetPageOnChange is false', () => {
+	test('does not add page reset when resetPageOnChange is false', () => {
 		const pushQueryUpdates = vi.fn()
 
 		renderToStaticMarkup(<TVLRange pushQueryUpdates={pushQueryUpdates} />)

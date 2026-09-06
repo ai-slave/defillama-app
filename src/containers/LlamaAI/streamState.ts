@@ -48,21 +48,21 @@ export interface StreamState {
 	pendingQueueItemId: string | null
 	isCompacting: boolean
 	text: string
-	charts: ChartSet[]
-	csvExports: CsvExport[]
-	mdExports: MdExport[]
-	alerts: AlertProposedData[]
-	dashboards: DashboardArtifact[]
-	generatedImages: GeneratedImage[]
-	citations: UnifiedCitationReference[]
-	legacyUrlCitations: string[]
-	toolExecutions: ToolExecution[]
+	charts: Array<ChartSet>
+	csvExports: Array<CsvExport>
+	mdExports: Array<MdExport>
+	alerts: Array<AlertProposedData>
+	dashboards: Array<DashboardArtifact>
+	generatedImages: Array<GeneratedImage>
+	citations: Array<UnifiedCitationReference>
+	legacyUrlCitations: Array<string>
+	toolExecutions: Array<ToolExecution>
 	thinking: string
-	activeToolCalls: ToolCall[]
+	activeToolCalls: Array<ToolCall>
 	spawnProgress: Map<string, SpawnAgentStatus>
 	spawnStartTime: number
 	spawnIsResearchMode: boolean
-	todos: TodoItem[]
+	todos: Array<TodoItem>
 	todosStartTime: number
 	executionStartedAt: number
 	recovery: RecoveryState
@@ -76,15 +76,15 @@ export interface StreamState {
 export interface StreamAccumulator {
 	executionId: string | null
 	text: string
-	charts: ChartSet[]
-	csvExports: CsvExport[]
-	mdExports: MdExport[]
-	alerts: AlertProposedData[]
-	dashboards: DashboardArtifact[]
-	generatedImages: GeneratedImage[]
-	citations: UnifiedCitationReference[]
-	legacyUrlCitations: string[]
-	toolExecutions: ToolExecution[]
+	charts: Array<ChartSet>
+	csvExports: Array<CsvExport>
+	mdExports: Array<MdExport>
+	alerts: Array<AlertProposedData>
+	dashboards: Array<DashboardArtifact>
+	generatedImages: Array<GeneratedImage>
+	citations: Array<UnifiedCitationReference>
+	legacyUrlCitations: Array<string>
+	toolExecutions: Array<ToolExecution>
 	thinking: string
 	error: string | null
 	hasStartedText: boolean
@@ -113,12 +113,12 @@ export type StreamAction =
 	| { type: 'SET_RATE_LIMIT_DETAILS'; value: RateLimitDetails | null }
 	| { type: 'APPEND_TOKEN'; value: string }
 	| { type: 'APPEND_CHARTS'; value: ChartSet }
-	| { type: 'APPEND_CSV_EXPORTS'; value: CsvExport[] }
-	| { type: 'APPEND_MD_EXPORTS'; value: MdExport[] }
+	| { type: 'APPEND_CSV_EXPORTS'; value: Array<CsvExport> }
+	| { type: 'APPEND_MD_EXPORTS'; value: Array<MdExport> }
 	| { type: 'APPEND_ALERT'; value: AlertProposedData }
 	| { type: 'APPEND_DASHBOARD'; value: DashboardArtifact }
-	| { type: 'APPEND_GENERATED_IMAGES'; value: GeneratedImage[] }
-	| { type: 'MERGE_CITATIONS'; value: string[] }
+	| { type: 'APPEND_GENERATED_IMAGES'; value: Array<GeneratedImage> }
+	| { type: 'MERGE_CITATIONS'; value: Array<string> }
 	| { type: 'APPEND_TOOL_EXECUTION'; value: ToolExecution }
 	| { type: 'SET_MESSAGE_METADATA'; value: MessageMetadata }
 	| { type: 'APPEND_THINKING'; value: string }
@@ -134,7 +134,7 @@ export type StreamAction =
 	| { type: 'RESET_RECOVERY' }
 	| { type: 'SET_CONTEXT_WARNING'; value: ContextWarningPayload | null }
 	| { type: 'SET_FACT_CHECK_PHASE'; value: 'drafting' | 'verifying' | 'finalizing' | null }
-	| { type: 'SET_CITATIONS'; citations: UnifiedCitationReference[]; text?: string }
+	| { type: 'SET_CITATIONS'; citations: Array<UnifiedCitationReference>; text?: string }
 
 // Reset only the in-flight runtime fields; persistent errors are layered on top separately.
 const createEmptyRuntimeState = (): ResettableStreamState => ({
@@ -317,7 +317,7 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
 			return { ...state, spawnProgress: next }
 		}
 		case 'SET_TODOS': {
-			const todos = Array.isArray(action.value) ? (action.value as TodoItem[]) : []
+			const todos = Array.isArray(action.value) ? (action.value as Array<TodoItem>) : []
 			if (state.isStreaming && todos.length === 0 && state.todos.length > 0) return state
 			// Keep the first non-empty todo timestamp stable while later snapshots
 			// update item statuses; the elapsed timer should not restart per update.
@@ -380,7 +380,7 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
 
 // Convert the buffered stream payload into the same message shape used for restored history.
 export function buildAssistantMessage(buffer: StreamBuffer, messageId?: string): Message {
-	const nonEmpty = <T>(value: T[] | undefined) => (value && value.length > 0 ? value : undefined)
+	const nonEmpty = <T>(value: Array<T> | undefined) => (value && value.length > 0 ? value : undefined)
 
 	return {
 		role: 'assistant',

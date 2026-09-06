@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildCompareProtocolsChartData } from '../chartData'
 
 const FIRST_DAY = 1_728_000_000_000
 const SECOND_DAY = FIRST_DAY + 86_400_000
 
 describe('buildCompareProtocolsChartData', () => {
-	it('keeps independently timed V2 TVL series in chronological sparse comparison rows', () => {
+	test('keeps independently timed V2 TVL series in chronological sparse comparison rows', () => {
 		const result = buildCompareProtocolsChartData({
 			protocolCharts: [
 				{
@@ -36,7 +36,7 @@ describe('buildCompareProtocolsChartData', () => {
 		expect(result.charts.every((chart) => chart.type === 'line')).toBe(true)
 	})
 
-	it('keeps failed enabled sections as gaps while a successful empty section contributes zero', () => {
+	test('keeps failed enabled sections as gaps while a successful empty section contributes zero', () => {
 		const failed = buildCompareProtocolsChartData({
 			protocolCharts: [
 				{
@@ -62,7 +62,7 @@ describe('buildCompareProtocolsChartData', () => {
 		expect(successfulEmpty.dataset.source).toEqual([[FIRST_DAY, 100]])
 	})
 
-	it('retains selected series identity and order when a base source is unavailable', () => {
+	test('retains selected series identity and order when a base source is unavailable', () => {
 		const result = buildCompareProtocolsChartData({
 			protocolCharts: [
 				{ name: 'Unavailable', tvlChart: null, extraTvlCharts: {} },
@@ -78,7 +78,7 @@ describe('buildCompareProtocolsChartData', () => {
 		expect(result.charts.map((chart) => chart.name)).toEqual(['Unavailable', 'Available'])
 	})
 
-	it('uses additive history when the base chart succeeds empty, but not when the base request fails', () => {
+	test('uses additive history when the base chart succeeds empty, but not when the base request fails', () => {
 		const successfulEmpty = buildCompareProtocolsChartData({
 			protocolCharts: [
 				{ name: 'Additive Only', tvlChart: [], extraTvlCharts: { borrowed: [[FIRST_DAY, 7]] } },
@@ -98,7 +98,7 @@ describe('buildCompareProtocolsChartData', () => {
 		expect(failed.dataset.source).toEqual([[FIRST_DAY, null, 10]])
 	})
 
-	it('composes enabled local TVL settings from focused V2 charts', () => {
+	test('composes enabled local TVL settings from focused V2 charts', () => {
 		const result = buildCompareProtocolsChartData({
 			protocolCharts: [
 				{
@@ -113,7 +113,7 @@ describe('buildCompareProtocolsChartData', () => {
 		expect(result.dataset.source).toEqual([[FIRST_DAY, 125]])
 	})
 
-	it('keeps a protocol with no focused chart rows as an empty series', () => {
+	test('keeps a protocol with no focused chart rows as an empty series', () => {
 		const result = buildCompareProtocolsChartData({
 			protocolCharts: [
 				{

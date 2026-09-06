@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { parseResearchNewsletterFeed, searchResearchNewsletterItems } from '~/containers/Articles/newsletterFeed.server'
 
 describe('Beehiiv research newsletter feed', () => {
-	it('extracts safe card metadata and ignores full email HTML', () => {
+	test('extracts safe card metadata and ignores full email HTML', () => {
 		const xml = `<?xml version="1.0" encoding="UTF-8"?>
 			<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/">
 				<channel>
@@ -31,7 +31,7 @@ describe('Beehiiv research newsletter feed', () => {
 		])
 	})
 
-	it('drops unsafe item links and tolerates invalid optional metadata', () => {
+	test('drops unsafe item links and tolerates invalid optional metadata', () => {
 		const xml = `<rss><channel>
 			<item>
 				<title>Unsafe item</title>
@@ -57,7 +57,7 @@ describe('Beehiiv research newsletter feed', () => {
 		])
 	})
 
-	it('searches newsletter titles and descriptions case-insensitively before applying the result limit', () => {
+	test('searches newsletter titles and descriptions case-insensitively before applying the result limit', () => {
 		const items = [
 			{
 				id: 'newsletter-1',

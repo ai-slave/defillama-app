@@ -94,7 +94,7 @@ export function isCategoryIncludedInStandardRwaOverview(category: string | null 
 	return !EXCLUDED_STANDARD_RWA_CATEGORY_SLUGS.has(rwaSlug(category))
 }
 
-export function filterCategoriesForStandardRwaOverview(categories: string[]): string[] {
+export function filterCategoriesForStandardRwaOverview(categories: Array<string>): Array<string> {
 	return categories.filter((category) => isCategoryIncludedInStandardRwaOverview(category))
 }
 
@@ -158,9 +158,9 @@ export function isTypeIncludedByDefault(
 }
 
 export function getDefaultSelectedTypes(
-	allTypes: string[],
+	allTypes: Array<string>,
 	mode: RWAOverviewMode,
 	categorySlug?: string | null
-): string[] {
+): Array<string> {
 	return allTypes.filter((type) => isTypeIncludedByDefault(type, mode, categorySlug))
 }

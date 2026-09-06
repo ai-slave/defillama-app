@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { CSVDownloadButton, type CsvPayload } from '../CsvDownloadButton'
 
 const mocks = vi.hoisted(() => ({ toast: vi.fn(), download: vi.fn() }))
@@ -24,7 +24,7 @@ afterEach(() => {
 	vi.restoreAllMocks()
 })
 
-it('stops loading after a failed export, downloads nothing, and prepares again on retry', async () => {
+test('stops loading after a failed export, downloads nothing, and prepares again on retry', async () => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.spyOn(console, 'log').mockImplementation(() => {})
 	const pending = Promise.withResolvers<CsvPayload>()
@@ -58,7 +58,7 @@ it('stops loading after a failed export, downloads nothing, and prepares again o
 	}
 })
 
-it('logs custom handler failures without a toast or download and remains usable', async () => {
+test('logs custom handler failures without a toast or download and remains usable', async () => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	const log = vi.spyOn(console, 'log').mockImplementation(() => {})
 	const error = new Error('Custom export failure')

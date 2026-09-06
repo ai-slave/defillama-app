@@ -208,7 +208,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 		<Layout
 			title="Top DeFi Protocols by Chain & Category - DefiLlama"
 			description="Discover the top DeFi protocols on each blockchain by category. Compare lending, DEXs, yield, and derivatives protocols ranked by TVL across Ethereum, Solana, Base, Arbitrum, and 500+ chains."
-			canonicalUrl={`/top-protocols`}
+			canonicalUrl="/top-protocols"
 			pageName={pageName}
 		>
 			<Card padding="sm">
@@ -233,7 +233,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 							includeQueryKey="chain"
 							excludeQueryKey="excludeChain"
 							nestedMenu={false}
-							label={'Chains'}
+							label="Chains"
 							labelType="smol"
 							variant="filter-responsive"
 							size="md"
@@ -245,7 +245,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 							includeQueryKey="column"
 							excludeQueryKey="excludeColumn"
 							nestedMenu={false}
-							label={'Columns'}
+							label="Columns"
 							labelType="smol"
 							variant="filter-responsive"
 							size="md"

@@ -11,9 +11,7 @@ import type {
 	ProtocolAggregateTableRow,
 	ProtocolChainTableRow,
 	ProtocolTableMetrics,
-	ProtocolTableSourceRow
-} from '~/containers/ProDashboard/unifiedTable/contracts'
-import type {
+	ProtocolTableSourceRow,
 	CanonicalChainMetrics,
 	ChainMetrics,
 	ParentProtocolMetrics
@@ -39,7 +37,7 @@ import { applyProtocolSupplementalMetrics, fetchProtocolSupplementalMetrics } fr
 import { computeShare, derivePreviousValue, extractChainFilters, formatDisplayName, toPercent } from './utils'
 
 interface ProtocolsTableResult {
-	rows: ProtocolTableSourceRow[]
+	rows: Array<ProtocolTableSourceRow>
 	parentMetrics: Record<string, ParentProtocolMetrics>
 	chainMetrics?: Record<string, ChainMetrics>
 }
@@ -171,7 +169,7 @@ type LensMetricRow = Partial<{
 type ProjectedLensMetricColumn = Exclude<keyof LensMetricRow, 'open_interest'>
 
 const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
-	Partial<Record<ProtocolBaseMetricFamily, readonly ProjectedLensMetricColumn[]>>
+	Partial<Record<ProtocolBaseMetricFamily, ReadonlyArray<ProjectedLensMetricColumn>>>
 > = {
 	tvl: [
 		'tvl_base',
@@ -316,10 +314,10 @@ const LENS_METRIC_COLUMNS_BY_FAMILY: Readonly<
 
 const buildLensMetricProjection = (
 	alias: 'mp' | 'msp' | 'mpc' | 'mspc',
-	requestedFamilies: readonly ProtocolBaseMetricFamily[]
+	requestedFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
 ): string => {
 	const requested = new Set(requestedFamilies)
-	const projection: string[] = []
+	const projection: Array<string> = []
 	for (const family of PROTOCOL_BASE_METRIC_FAMILIES) {
 		if (family === 'incentives' && alias !== 'mp') continue
 		for (const column of LENS_METRIC_COLUMNS_BY_FAMILY[family] ?? []) {
@@ -333,7 +331,7 @@ type ProtocolAggregateRow = LensMetricRow & {
 	protocol: string
 	protocol_name: string | null
 	protocol_category: string | null
-	chain_slugs: string[] | null
+	chain_slugs: Array<string> | null
 	exclude_tvl_from_parent: boolean
 }
 
@@ -347,10 +345,10 @@ type SubProtocolChainRow = SubProtocolRow & { chain_slug: string }
 
 interface ProtocolQueryOptions {
 	config: UnifiedTableConfig
-	rowHeaders: UnifiedRowHeaderType[]
-	baseMetricFamilies: ProtocolBaseMetricFamily[]
-	pointMetrics: ProtocolPointMetric[]
-	supplementalMetrics: ProtocolSupplementalMetric[]
+	rowHeaders: Array<UnifiedRowHeaderType>
+	baseMetricFamilies: Array<ProtocolBaseMetricFamily>
+	pointMetrics: Array<ProtocolPointMetric>
+	supplementalMetrics: Array<ProtocolSupplementalMetric>
 	needsOracleMembership: boolean
 	rowMembership: ProtocolRowMembership
 }
@@ -382,7 +380,7 @@ type ProtocolMetricTotals = Partial<{
 
 function retainReferencedParentMetrics(
 	parentMetrics: Record<string, ParentProtocolMetrics>,
-	rows: readonly ProtocolTableSourceRow[]
+	rows: ReadonlyArray<ProtocolTableSourceRow>
 ): Record<string, ParentProtocolMetrics> {
 	const referencedParents = new Set<string>()
 	for (const row of rows) {
@@ -406,9 +404,9 @@ const TOTAL_DEPENDENT_METRIC_FAMILIES = new Set<ProtocolBaseMetricFamily>([
 
 const PROTOCOL_METRIC_TOTALS_TTL_MS = 5 * 60 * 1000
 const PROTOCOL_METRIC_TOTALS_CACHE_LIMIT = 16
-const buildProtocolMetricTotalsQuery = (baseMetricFamilies: readonly ProtocolBaseMetricFamily[]): string => {
+const buildProtocolMetricTotalsQuery = (baseMetricFamilies: ReadonlyArray<ProtocolBaseMetricFamily>): string => {
 	const requested = new Set(baseMetricFamilies)
-	const columns: string[] = []
+	const columns: Array<string> = []
 	const select = (family: ProtocolBaseMetricFamily, column: keyof ProtocolMetricTotals) => {
 		if (requested.has(family)) columns.push(column)
 	}
@@ -434,7 +432,7 @@ interface ProtocolMetricTotalsCacheEntry {
 const protocolMetricTotalsCache = new Map<string, ProtocolMetricTotalsCacheEntry>()
 
 function getProtocolMetricTotals(
-	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+	baseMetricFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
 ): Promise<ProtocolMetricTotals> {
 	const now = Date.now()
 	const key = baseMetricFamilies.join('|')
@@ -483,9 +481,10 @@ export async function fetchProtocolsTable(
 	const tableDataPromise = shouldExplodeByChain
 		? fetchProtocolChainTableData(chainFilters, totalsPromise, baseMetricFamilies)
 		: fetchProtocolTableData(chainFilters, totalsPromise, baseMetricFamilies)
-	const pointComparisonsPromise = options.pointMetrics.length
-		? fetchProtocolPointComparisons({ chainFilters, byChain: shouldExplodeByChain, metrics: options.pointMetrics })
-		: null
+	const pointComparisonsPromise =
+		options.pointMetrics.length > 0
+			? fetchProtocolPointComparisons({ chainFilters, byChain: shouldExplodeByChain, metrics: options.pointMetrics })
+			: null
 	const supplementalMetricsPromise = fetchProtocolSupplementalMetrics(
 		supplementalMetricRequests,
 		shouldExplodeByChain ? { kind: 'chain', chains: chainFilters } : { kind: 'protocol' },
@@ -508,7 +507,7 @@ export async function fetchProtocolsTable(
 			rowMembershipDatasetPromise
 		])
 
-	const oracleNamesByProtocolId = new Map<string, readonly string[]>()
+	const oracleNamesByProtocolId = new Map<string, ReadonlyArray<string>>()
 	if (oracleMetrics) {
 		for (const [protocolName, oracleNames] of buildOracleNamesByProtocol(oracleMetrics.oracles)) {
 			oracleNamesByProtocolId.set(slug(protocolName), oracleNames)
@@ -544,7 +543,7 @@ export async function fetchProtocolsTable(
 
 function applyParentOracleMembership(
 	parentMetrics: Record<string, ParentProtocolMetrics>,
-	oracleNamesByProtocolId: ReadonlyMap<string, readonly string[]>
+	oracleNamesByProtocolId: ReadonlyMap<string, ReadonlyArray<string>>
 ): Record<string, ParentProtocolMetrics> {
 	if (oracleNamesByProtocolId.size === 0) return parentMetrics
 	const result: Record<string, ParentProtocolMetrics> = {}
@@ -560,9 +559,9 @@ function applyParentOracleMembership(
 }
 
 async function fetchProtocolTableData(
-	chainFilters: string[],
+	chainFilters: Array<string>,
 	totalsPromise: Promise<ProtocolMetricTotals>,
-	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+	baseMetricFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
 ): Promise<ProtocolsTableResult> {
 	const [parentRows, childRows] = await Promise.all([
 		fetchProtocolAggregateRows(chainFilters, totalsPromise, baseMetricFamilies),
@@ -589,8 +588,8 @@ async function fetchProtocolTableData(
 }
 
 function buildParentMetrics(
-	parentRows: ProtocolTableSourceRow[],
-	childRows: ProtocolTableSourceRow[]
+	parentRows: Array<ProtocolTableSourceRow>,
+	childRows: Array<ProtocolTableSourceRow>
 ): Record<string, ParentProtocolMetrics> {
 	const childProtocolIdsByParent = new Map<string, Set<string>>()
 	const childProtocolIdsByParentChain = new Map<string, Map<string, Set<string>>>()
@@ -686,7 +685,7 @@ function buildParentMetrics(
 
 	const parentMetrics: Record<string, ParentProtocolMetrics> = {}
 	for (const [parentId, accumulator] of accumulators) {
-		const childProtocolIdsByChain: Record<string, string[]> = {}
+		const childProtocolIdsByChain: Record<string, Array<string>> = {}
 		for (const [chainSlug, childIds] of childProtocolIdsByParentChain.get(parentId) ?? []) {
 			childProtocolIdsByChain[chainSlug] = Array.from(childIds)
 		}
@@ -721,9 +720,9 @@ function buildParentMetrics(
 }
 
 function applyOracleMembership(
-	rows: ProtocolTableSourceRow[],
-	oracleNamesByProtocolId: ReadonlyMap<string, readonly string[]>
-): ProtocolTableSourceRow[] {
+	rows: Array<ProtocolTableSourceRow>,
+	oracleNamesByProtocolId: ReadonlyMap<string, ReadonlyArray<string>>
+): Array<ProtocolTableSourceRow> {
 	if (oracleNamesByProtocolId.size === 0) return rows
 	return rows.map((row) => {
 		const oracles = oracleNamesByProtocolId.get(row.protocolId)
@@ -732,9 +731,9 @@ function applyOracleMembership(
 }
 
 function filterRowsByCategory(
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	category: string | null | undefined
-): ProtocolTableSourceRow[] {
+): Array<ProtocolTableSourceRow> {
 	if (!category) return rows
 	const normalizedCategory = formatDisplayName(category).toLowerCase()
 	return rows.filter((row) => row.category?.toLowerCase() === normalizedCategory)
@@ -952,7 +951,7 @@ type ProtocolRowBuildOptions = ProtocolRowParentIdentity & {
 const buildBaseRow = (
 	row: ProtocolAggregateRow,
 	totals: ProtocolMetricTotals,
-	options: ProtocolRowBuildOptions & { chainSlugs: string[] | null }
+	options: ProtocolRowBuildOptions & { chainSlugs: Array<string> | null }
 ): ProtocolAggregateTableRow => {
 	const metrics = baseMetricsMapping(row, totals, options.requestedMetricFamilies)
 	const displayName = options.displayName ?? (formatDisplayName(options.slug) || options.slug)
@@ -1008,16 +1007,16 @@ const buildChainRow = (
 }
 
 const fetchProtocolAggregateRows = async (
-	chainFilters: string[],
+	chainFilters: Array<string>,
 	totalsPromise: Promise<ProtocolMetricTotals>,
-	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
-): Promise<ProtocolTableSourceRow[]> => {
+	baseMetricFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
+): Promise<Array<ProtocolTableSourceRow>> => {
 	const requestedMetricFamilies = new Set(baseMetricFamilies)
 	const includeOpenInterest = requestedMetricFamilies.has('open-interest')
-	const conditions: string[] = []
-	const values: string[][] = []
+	const conditions: Array<string> = []
+	const values: Array<Array<string>> = []
 
-	if (chainFilters.length) {
+	if (chainFilters.length > 0) {
 		conditions.push(
 			`EXISTS (
 				SELECT 1
@@ -1027,7 +1026,7 @@ const fetchProtocolAggregateRows = async (
 		)
 		values.push(chainFilters)
 	}
-	const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+	const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 	const openInterestCte = includeOpenInterest
 		? `,
 		open_interest AS (
@@ -1108,16 +1107,16 @@ const fetchProtocolAggregateRows = async (
 }
 
 const fetchSubProtocolRows = async (
-	chainFilters: string[],
+	chainFilters: Array<string>,
 	totalsPromise: Promise<ProtocolMetricTotals>,
-	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
-): Promise<ProtocolTableSourceRow[]> => {
+	baseMetricFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
+): Promise<Array<ProtocolTableSourceRow>> => {
 	const requestedMetricFamilies = new Set(baseMetricFamilies)
 	const includeOpenInterest = requestedMetricFamilies.has('open-interest')
-	const conditions: string[] = []
-	const values: string[][] = []
+	const conditions: Array<string> = []
+	const values: Array<Array<string>> = []
 
-	if (chainFilters.length) {
+	if (chainFilters.length > 0) {
 		conditions.push(
 			`EXISTS (
 				SELECT 1
@@ -1127,7 +1126,7 @@ const fetchSubProtocolRows = async (
 		)
 		values.push(chainFilters)
 	}
-	const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+	const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 	const openInterestCte = includeOpenInterest
 		? `,
 		open_interest AS (
@@ -1198,7 +1197,7 @@ const fetchSubProtocolRows = async (
 		totalsPromise
 	])
 
-	const normalizedRows: ProtocolTableSourceRow[] = []
+	const normalizedRows: Array<ProtocolTableSourceRow> = []
 	for (const row of rows) {
 		if (!row.sub_protocol || !row.protocol || row.sub_protocol === row.protocol) continue
 		normalizedRows.push(
@@ -1217,9 +1216,9 @@ const fetchSubProtocolRows = async (
 }
 
 const fetchProtocolChainTableData = async (
-	chainFilters: string[],
+	chainFilters: Array<string>,
 	totalsPromise: Promise<ProtocolMetricTotals>,
-	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+	baseMetricFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
 ): Promise<ProtocolsTableResult> => {
 	const [parentChainRows, subProtocolChainRows, chainMetrics] = await Promise.all([
 		fetchParentProtocolsByChain(chainFilters, totalsPromise, baseMetricFamilies),
@@ -1253,10 +1252,10 @@ const fetchProtocolChainTableData = async (
 }
 
 const fetchParentProtocolsByChain = async (
-	chainFilters: string[],
+	chainFilters: Array<string>,
 	totalsPromise: Promise<ProtocolMetricTotals>,
-	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
-): Promise<ProtocolChainTableRow[]> => {
+	baseMetricFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
+): Promise<Array<ProtocolChainTableRow>> => {
 	const requestedMetricFamilies = new Set(baseMetricFamilies)
 	const includeOpenInterest = requestedMetricFamilies.has('open-interest')
 	const openInterestCte = includeOpenInterest
@@ -1331,10 +1330,10 @@ const fetchParentProtocolsByChain = async (
 }
 
 const fetchSubProtocolsByChain = async (
-	chainFilters: string[],
+	chainFilters: Array<string>,
 	totalsPromise: Promise<ProtocolMetricTotals>,
-	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
-): Promise<ProtocolChainTableRow[]> => {
+	baseMetricFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
+): Promise<Array<ProtocolChainTableRow>> => {
 	const requestedMetricFamilies = new Set(baseMetricFamilies)
 	const includeOpenInterest = requestedMetricFamilies.has('open-interest')
 	const openInterestCte = includeOpenInterest
@@ -1550,7 +1549,7 @@ type ProjectedChainMetricColumn = Exclude<
 >
 
 const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
-	Partial<Record<ProtocolBaseMetricFamily, readonly ProjectedChainMetricColumn[]>>
+	Partial<Record<ProtocolBaseMetricFamily, ReadonlyArray<ProjectedChainMetricColumn>>>
 > = {
 	'protocol-count': ['protocol_count'],
 	tvl: [
@@ -1693,9 +1692,9 @@ const CHAIN_METRIC_COLUMNS_BY_FAMILY: Readonly<
 	]
 }
 
-const buildChainMetricProjection = (requestedFamilies: readonly ProtocolBaseMetricFamily[]): string[] => {
+const buildChainMetricProjection = (requestedFamilies: ReadonlyArray<ProtocolBaseMetricFamily>): Array<string> => {
 	const requested = new Set(requestedFamilies)
-	const projection: string[] = []
+	const projection: Array<string> = []
 	for (const family of PROTOCOL_BASE_METRIC_FAMILIES) {
 		for (const column of CHAIN_METRIC_COLUMNS_BY_FAMILY[family] ?? []) {
 			if (requested.has(family)) projection.push(`mc.${column}`)
@@ -1896,24 +1895,24 @@ const mapCanonicalChainMetrics = (
 }
 
 const fetchChainMetricsForGrouping = async (
-	chainFilters: string[],
+	chainFilters: Array<string>,
 	totalsPromise: Promise<ProtocolMetricTotals>,
-	baseMetricFamilies: readonly ProtocolBaseMetricFamily[]
+	baseMetricFamilies: ReadonlyArray<ProtocolBaseMetricFamily>
 ): Promise<Record<string, ChainMetrics>> => {
 	const requestedFamilies = new Set(baseMetricFamilies)
 	const includeOpenInterest = requestedFamilies.has('open-interest')
 	const includeBridgedTvl = requestedFamilies.has('bridged-tvl')
 	const includeStablecoins = requestedFamilies.has('stablecoins')
-	const conditions: string[] = []
-	const values: string[][] = []
+	const conditions: Array<string> = []
+	const values: Array<Array<string>> = []
 
 	const chainIdentity = includeOpenInterest ? 'anchor.chain' : 'mc.chain'
-	if (chainFilters.length) {
+	if (chainFilters.length > 0) {
 		conditions.push(`lower(${chainIdentity}) = ANY($${values.length + 1})`)
 		values.push(chainFilters)
 	}
 
-	const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+	const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 	const chainSource = includeOpenInterest
 		? `chain_anchor anchor
 		LEFT JOIN lens.metrics_chain_current mc ON lower(mc.chain) = anchor.chain`
@@ -1960,7 +1959,7 @@ const fetchChainMetricsForGrouping = async (
 		)`
 			: null
 	].filter((cte): cte is string => cte !== null)
-	const withClause = ctes.length ? `WITH ${ctes.join(',\n\t\t')}` : ''
+	const withClause = ctes.length > 0 ? `WITH ${ctes.join(',\n\t\t')}` : ''
 	const requestedMetricProjection = [
 		...buildChainMetricProjection(baseMetricFamilies),
 		includeOpenInterest ? 'oi.open_interest' : null,

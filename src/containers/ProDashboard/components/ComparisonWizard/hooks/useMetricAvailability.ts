@@ -5,9 +5,9 @@ import { CHAIN_CHART_TYPES, getProDashboardChartTypeConfig, PROTOCOL_CHART_TYPES
 import type { ComparisonType, MetricWithAvailability } from '../types'
 
 export function useMetricAvailability(
-	selectedItems: string[],
+	selectedItems: Array<string>,
 	comparisonType: ComparisonType | null
-): MetricWithAvailability[] {
+): Array<MetricWithAvailability> {
 	const { availableChainChartTypes, availableProtocolChartTypes, chainsByName } = useAppMetadata()
 	const { getProtocolInfo } = useProDashboardCatalog()
 

@@ -140,7 +140,7 @@ export function LlamaAIFloatingButton() {
 
 		if (!suggestedData?.categories) return FALLBACK_SUGGESTIONS
 
-		const allPrompts: string[] = []
+		const allPrompts: Array<string> = []
 		for (const prompts of Object.values(suggestedData.categories)) {
 			if (Array.isArray(prompts)) {
 				allPrompts.push(...prompts.slice(0, 2))

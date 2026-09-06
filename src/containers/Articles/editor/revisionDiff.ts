@@ -9,13 +9,13 @@ const WORD_TOKENIZE = /(\s+)/
 const MAX_WORD_DIFF_TOKENS = 4000
 
 function lcs<T>(
-	a: T[],
-	b: T[],
+	a: Array<T>,
+	b: Array<T>,
 	eq: (x: T, y: T) => boolean = (x, y) => x === y
-): { type: 'equal' | 'add' | 'remove'; index: number }[] {
+): Array<{ type: 'equal' | 'add' | 'remove'; index: number }> {
 	const n = a.length
 	const m = b.length
-	const dp: Uint32Array[] = []
+	const dp: Array<Uint32Array> = []
 	for (let i = 0; i <= n; i += 1) dp.push(new Uint32Array(m + 1))
 	for (let i = 1; i <= n; i += 1) {
 		for (let j = 1; j <= m; j += 1) {
@@ -26,7 +26,7 @@ function lcs<T>(
 			}
 		}
 	}
-	const out: { type: 'equal' | 'add' | 'remove'; index: number }[] = []
+	const out: Array<{ type: 'equal' | 'add' | 'remove'; index: number }> = []
 	let i = n
 	let j = m
 	while (i > 0 || j > 0) {
@@ -46,8 +46,8 @@ function lcs<T>(
 	return out
 }
 
-function coalesce(ops: DiffOp[]): DiffOp[] {
-	const out: DiffOp[] = []
+function coalesce(ops: Array<DiffOp>): Array<DiffOp> {
+	const out: Array<DiffOp> = []
 	for (const op of ops) {
 		const last = out[out.length - 1]
 		if (last && last.type === op.type) {
@@ -59,12 +59,12 @@ function coalesce(ops: DiffOp[]): DiffOp[] {
 	return out
 }
 
-function tokenizeWords(text: string): string[] {
+function tokenizeWords(text: string): Array<string> {
 	if (!text) return []
 	return text.split(WORD_TOKENIZE).filter((token) => token.length > 0)
 }
 
-export function diffWords(oldText: string, newText: string): DiffOp[] {
+export function diffWords(oldText: string, newText: string): Array<DiffOp> {
 	if (oldText === newText) return [{ type: 'equal', value: oldText }]
 	const oldTokens = tokenizeWords(oldText)
 	const newTokens = tokenizeWords(newText)
@@ -75,7 +75,7 @@ export function diffWords(oldText: string, newText: string): DiffOp[] {
 		]
 	}
 	const trace = lcs(oldTokens, newTokens)
-	const ops: DiffOp[] = trace.map((step) => {
+	const ops: Array<DiffOp> = trace.map((step) => {
 		if (step.type === 'equal') return { type: 'equal', value: oldTokens[step.index] }
 		if (step.type === 'add') return { type: 'add', value: newTokens[step.index] }
 		return { type: 'remove', value: oldTokens[step.index] }
@@ -87,21 +87,21 @@ export type ParagraphDiffOp =
 	| { type: 'equal'; value: string }
 	| { type: 'add'; value: string }
 	| { type: 'remove'; value: string }
-	| { type: 'modify'; before: string; after: string; words: DiffOp[] }
+	| { type: 'modify'; before: string; after: string; words: Array<DiffOp> }
 
-export function diffParagraphs(oldText: string, newText: string): ParagraphDiffOp[] {
+export function diffParagraphs(oldText: string, newText: string): Array<ParagraphDiffOp> {
 	if (oldText === newText) {
 		return oldText ? [{ type: 'equal', value: oldText }] : []
 	}
 	const oldParas = oldText.split(PARAGRAPH_SPLIT).filter((p) => p.length > 0)
 	const newParas = newText.split(PARAGRAPH_SPLIT).filter((p) => p.length > 0)
 	const trace = lcs(oldParas, newParas)
-	const draft: { type: 'equal' | 'add' | 'remove'; value: string }[] = trace.map((step) => {
+	const draft: Array<{ type: 'equal' | 'add' | 'remove'; value: string }> = trace.map((step) => {
 		if (step.type === 'equal') return { type: 'equal', value: oldParas[step.index] }
 		if (step.type === 'add') return { type: 'add', value: newParas[step.index] }
 		return { type: 'remove', value: oldParas[step.index] }
 	})
-	const out: ParagraphDiffOp[] = []
+	const out: Array<ParagraphDiffOp> = []
 	for (let k = 0; k < draft.length; k += 1) {
 		const op = draft[k]
 		const next = draft[k + 1]
@@ -128,7 +128,7 @@ export type FieldChange = {
 	kind: 'text' | 'tags' | 'status'
 }
 
-const TEXT_FIELDS: { key: string; label: string }[] = [
+const TEXT_FIELDS: Array<{ key: string; label: string }> = [
 	{ key: 'title', label: 'Title' },
 	{ key: 'subtitle', label: 'Subtitle' },
 	{ key: 'slug', label: 'Slug' },
@@ -144,7 +144,7 @@ function normalizeText(value: unknown): string | null {
 	return trimmed.length > 0 ? trimmed : null
 }
 
-function normalizeTags(value: unknown): string[] {
+function normalizeTags(value: unknown): Array<string> {
 	if (!Array.isArray(value)) return []
 	return value.filter((tag): tag is string => typeof tag === 'string')
 }
@@ -152,10 +152,10 @@ function normalizeTags(value: unknown): string[] {
 export function diffMetadata(
 	beforeSnap: Record<string, unknown> | null | undefined,
 	afterSnap: Record<string, unknown> | null | undefined
-): FieldChange[] {
+): Array<FieldChange> {
 	const before = beforeSnap ?? {}
 	const after = afterSnap ?? {}
-	const changes: FieldChange[] = []
+	const changes: Array<FieldChange> = []
 
 	for (const field of TEXT_FIELDS) {
 		const a = normalizeText(before[field.key])
@@ -187,7 +187,7 @@ export function diffMetadata(
 	return changes
 }
 
-export function diffStats(ops: ParagraphDiffOp[]): { added: number; removed: number } {
+export function diffStats(ops: Array<ParagraphDiffOp>): { added: number; removed: number } {
 	let added = 0
 	let removed = 0
 	for (const op of ops) {

@@ -16,7 +16,7 @@ const renderChange = (value: number | null) => (
 	</span>
 )
 
-export const chainsDatasetColumns: ColumnDef<ChainsDatasetRow>[] = [
+export const chainsDatasetColumns: Array<ColumnDef<ChainsDatasetRow>> = [
 	{
 		header: 'Chain',
 		accessorKey: 'name',

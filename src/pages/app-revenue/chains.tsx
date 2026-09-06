@@ -32,7 +32,7 @@ const HoldersRevenueByChain = (props: IChainsByAdapterPageData) => {
 		<Layout
 			title="App Revenue by Chain - DefiLlama"
 			description="Compare app revenue by chain, excluding stablecoins, liquid staking apps, and gas fees."
-			canonicalUrl={`/app-revenue/chains`}
+			canonicalUrl="/app-revenue/chains"
 			pageName={pageName}
 		>
 			<ChainsByAdapter {...props} type={type} />

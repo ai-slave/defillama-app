@@ -2,16 +2,16 @@ import type { TreemapNode } from '~/components/ECharts/TreemapChart/types'
 import type { TimeSeriesEntry } from './api.types'
 import type { IPctChangeRow } from './types'
 
-type NarrativeTreemapCategory = TreemapNode & { path: string; children: TreemapNode[] }
+type NarrativeTreemapCategory = TreemapNode & { path: string; children: Array<TreemapNode> }
 type NarrativeTreemapGroup = { node: NarrativeTreemapCategory; min: number; max: number }
 
-export type NarrativeTreemapTreeData = NarrativeTreemapCategory[]
+export type NarrativeTreemapTreeData = Array<NarrativeTreemapCategory>
 export type NarrativeTreemapReturnField = 'change1W' | 'change1M' | 'change1Y' | 'changeYtd' | 'returnField'
 
 export function calculateDenominatedTimeSeries(
-	data: TimeSeriesEntry[] | undefined,
+	data: Array<TimeSeriesEntry> | undefined,
 	denominatedCoin: string
-): TimeSeriesEntry[] {
+): Array<TimeSeriesEntry> {
 	const rows = data ?? []
 	if (rows.length === 0) return rows
 
@@ -24,7 +24,7 @@ export function calculateDenominatedTimeSeries(
 	}
 	if (!hasDenominatedCoin) return rows
 
-	const denominatedReturns: TimeSeriesEntry[] = []
+	const denominatedReturns: Array<TimeSeriesEntry> = []
 
 	for (const dayData of rows) {
 		const newDayData: TimeSeriesEntry = { date: dayData.date }
@@ -58,7 +58,7 @@ function safeTreemapReturn(value: number | null | undefined): number {
 }
 
 export function buildNarrativeTreemapTreeData(
-	rows: IPctChangeRow[],
+	rows: Array<IPctChangeRow>,
 	returnField: NarrativeTreemapReturnField = 'returnField'
 ): NarrativeTreemapTreeData {
 	const treeData: NarrativeTreemapTreeData = []

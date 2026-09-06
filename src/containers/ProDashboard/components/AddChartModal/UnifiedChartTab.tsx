@@ -26,24 +26,24 @@ import type { ChartTabType, ManualChartViewMode } from './types'
 import { UnlocksChartTab } from './UnlocksChartTab'
 import { YieldsChartTab } from './YieldsChartTab'
 
-const EMPTY_ARRAY: string[] = []
+const EMPTY_ARRAY: Array<string> = []
 
 interface UnifiedChartTabProps {
 	selectedChartTab: ChartTabType
-	selectedChartTypes: string[]
+	selectedChartTypes: Array<string>
 	chainOptions: Array<{ value: string; label: string }>
 	protocolOptions: Array<{ value: string; label: string; logo?: string }>
 	protocolsLoading: boolean
 	unifiedChartName: string
 	chartCreationMode: 'separate' | 'combined'
-	composerItems: ChartRuntimeView[]
+	composerItems: Array<ChartRuntimeView>
 	onChartTabChange: (tab: ChartTabType) => void
-	onChartTypesChange: (types: string[]) => void
+	onChartTypesChange: (types: Array<string>) => void
 	onBulkChartTypeChange: (nextType: string) => void
 	onUnifiedChartNameChange: (name: string) => void
 	onChartCreationModeChange: (mode: 'separate' | 'combined') => void
 	onComposerItemColorChange: (id: string, color: string) => void
-	onAddToComposer: (typesToAdd?: string[], options?: { entity?: string; mode?: 'chain' | 'protocol' }) => void
+	onAddToComposer: (typesToAdd?: Array<string>, options?: { entity?: string; mode?: 'chain' | 'protocol' }) => void
 	onRemoveFromComposer: (id: string) => void
 }
 
@@ -62,16 +62,16 @@ interface UnifiedChartTabPropsExtended extends UnifiedChartTabProps {
 			chain: string
 		} | null
 	) => void
-	selectedYieldChains?: string[]
-	selectedYieldProjects?: string[]
-	selectedYieldCategories?: string[]
-	selectedYieldTokens?: string[]
+	selectedYieldChains?: Array<string>
+	selectedYieldProjects?: Array<string>
+	selectedYieldCategories?: Array<string>
+	selectedYieldTokens?: Array<string>
 	minTvl?: number | null
 	maxTvl?: number | null
-	onSelectedYieldChainsChange?: (chains: string[]) => void
-	onSelectedYieldProjectsChange?: (projects: string[]) => void
-	onSelectedYieldCategoriesChange?: (categories: string[]) => void
-	onSelectedYieldTokensChange?: (tokens: string[]) => void
+	onSelectedYieldChainsChange?: (chains: Array<string>) => void
+	onSelectedYieldProjectsChange?: (projects: Array<string>) => void
+	onSelectedYieldCategoriesChange?: (categories: Array<string>) => void
+	onSelectedYieldTokensChange?: (tokens: Array<string>) => void
 	onMinTvlChange?: (tvl: number | null) => void
 	onMaxTvlChange?: (tvl: number | null) => void
 	selectedYieldChartType?: string
@@ -118,7 +118,7 @@ interface UnifiedChartTabPropsExtended extends UnifiedChartTabProps {
 	selectedRwaTreemapNestedBy?: string
 	selectedRwaAssetId?: string | null
 	selectedRwaAssetName?: string | null
-	selectedRwaAssetMetrics?: RWAOverviewChartMetric[]
+	selectedRwaAssetMetrics?: Array<RWAOverviewChartMetric>
 	onRwaModeChange?: (mode: 'overview' | 'asset') => void
 	onSelectedRwaChainChange?: (chain: string) => void
 	onSelectedRwaMetricChange?: (metric: RWAOverviewChartMetric) => void
@@ -127,7 +127,7 @@ interface UnifiedChartTabPropsExtended extends UnifiedChartTabProps {
 	onSelectedRwaTreemapNestedByChange?: (nestedBy: string) => void
 	onSelectedRwaAssetIdChange?: (id: string | null) => void
 	onSelectedRwaAssetNameChange?: (name: string | null) => void
-	onSelectedRwaAssetMetricsChange?: (metrics: RWAOverviewChartMetric[]) => void
+	onSelectedRwaAssetMetricsChange?: (metrics: Array<RWAOverviewChartMetric>) => void
 }
 
 export function UnifiedChartTab({
@@ -240,7 +240,7 @@ export function UnifiedChartTab({
 
 	const handleChainProtocolTabChange = (tab: 'chain' | 'protocol') => {
 		onChartTabChange(tab)
-		if (!selectedChartTypes.length || selectedChartTypes[0] !== 'tvl') {
+		if (selectedChartTypes.length === 0 || selectedChartTypes[0] !== 'tvl') {
 			onChartTypesChange(['tvl'])
 		}
 	}
@@ -272,7 +272,7 @@ export function UnifiedChartTab({
 
 	const selectedEntitiesForCurrentType = useMemo(() => {
 		if (!selectedChartTypeSingle) return []
-		const entities: string[] = []
+		const entities: Array<string> = []
 		for (const item of composerItems) {
 			if (item.type !== selectedChartTypeSingle || item.subjectType !== selectedChartTab) continue
 			entities.push(item.subjectType === 'chain' ? item.chain : item.protocol)
@@ -420,14 +420,13 @@ export function UnifiedChartTab({
 				})
 				return available.some((type) => type === selectedChartTypeSingle)
 			})
-		} else {
-			return protocolOptions.filter((protocol) => {
-				const available = availableProtocolChartTypes(protocol.value, {
-					hasGeckoId: protocolHasGeckoIdBySlug.get(protocol.value) ?? false
-				})
-				return available.some((type) => type === selectedChartTypeSingle)
-			})
 		}
+		return protocolOptions.filter((protocol) => {
+			const available = availableProtocolChartTypes(protocol.value, {
+				hasGeckoId: protocolHasGeckoIdBySlug.get(protocol.value) ?? false
+			})
+			return available.some((type) => type === selectedChartTypeSingle)
+		})
 	}, [
 		selectedChartTypeSingle,
 		selectedChartTab,

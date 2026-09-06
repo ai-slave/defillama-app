@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { TokenRiskBorrowCapacityResponse, TokenRiskBorrowCapacityTokenEntry } from '../api.types'
 
 const mocks = vi.hoisted(() => ({
@@ -35,7 +35,7 @@ beforeEach(() => {
 })
 
 describe('token risk dataset snapshot', () => {
-	it('hydrates the serialized risk index directly from the snapshot', async () => {
+	test('hydrates the serialized risk index directly from the snapshot', async () => {
 		const indexedEntry: TokenRiskBorrowCapacityTokenEntry = {
 			asset: { symbol: 'USDC', address: '0x1', priceUsd: 1 },
 			chain: 'ethereum',
@@ -56,7 +56,7 @@ describe('token risk dataset snapshot', () => {
 		expect(result.indexedTokens.get('ethereum:0x1')).toEqual([indexedEntry])
 	})
 
-	it('writes the risk snapshot through the registered contract', async () => {
+	test('writes the risk snapshot through the registered contract', async () => {
 		mocks.fetchRisk.mockResolvedValue(riskData)
 		mocks.writeJson.mockResolvedValue(undefined)
 

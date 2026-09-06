@@ -69,9 +69,8 @@ export function getSortableValue(value: FormulaValue, formatType: string): numbe
 		return Number.isFinite(numericValue) ? numericValue : null
 	} else if (formatType === 'boolean') {
 		return typeof value === 'boolean' ? value : null
-	} else {
-		return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? value : null
 	}
+	return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? value : null
 }
 
 function flattenObject(obj: object, prefix = '', result: FormulaContext = {}): FormulaContext {

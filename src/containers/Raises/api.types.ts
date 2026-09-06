@@ -4,12 +4,12 @@ export interface RaisesApiItem {
 	round: string | null
 	/** USD millions. Normalize before using in app code. */
 	amount: number | null
-	chains: string[]
+	chains: Array<string>
 	sector: string | null
 	category: string | null
 	categoryGroup: string | null
-	leadInvestors: string[]
-	otherInvestors: string[]
+	leadInvestors: Array<string>
+	otherInvestors: Array<string>
 	/** Freeform Airtable text in USD millions; nonnumeric text remains undisclosed. */
 	valuation: string | null
 	source: string
@@ -17,5 +17,5 @@ export interface RaisesApiItem {
 }
 
 export interface RaisesApiResponse {
-	raises: RaisesApiItem[]
+	raises: Array<RaisesApiItem>
 }

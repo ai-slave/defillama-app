@@ -26,7 +26,7 @@ export default function YieldsLoopingPage(data: InferGetStaticPropsType<typeof g
 		<Layout
 			title="Looping - Leveraged DeFi Yield Strategies - DefiLlama"
 			description="Discover looping (recursive leverage) strategies across DeFi lending markets — leverage, looped APY and LTV by asset."
-			canonicalUrl={`/yields/loop`}
+			canonicalUrl="/yields/loop"
 			pageName={pageName}
 		>
 			<Announcement announcementId="yields-disclaimer" version="2026-03">

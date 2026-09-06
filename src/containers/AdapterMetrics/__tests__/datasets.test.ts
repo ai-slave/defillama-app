@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IChainMetadata } from '~/utils/metadata/types'
 
 const mocks = vi.hoisted<{
@@ -65,7 +65,7 @@ describe('fetchDimensionDataset', () => {
 		mocks.metadataCache.chainMetadata = {}
 	})
 
-	it('fetches selected non-Earnings chains directly from the canonical v2 metrics route', async () => {
+	test('fetches selected non-Earnings chains directly from the canonical v2 metrics route', async () => {
 		mocks.metadataCache.chainMetadata = {
 			base: { id: 'base', name: 'Base' }
 		}
@@ -90,7 +90,7 @@ describe('fetchDimensionDataset', () => {
 		})
 	})
 
-	it('deduplicates selected chains and reports unsupported guarded chains', async () => {
+	test('deduplicates selected chains and reports unsupported guarded chains', async () => {
 		mocks.metadataCache.chainMetadata = {
 			base: { id: 'base', name: 'Base' },
 			ethereum: { id: 'ethereum', name: 'Ethereum', fees: true }
@@ -114,7 +114,7 @@ describe('fetchDimensionDataset', () => {
 		})
 	})
 
-	it('shares overlapping selected-chain requests within one dashboard request', async () => {
+	test('shares overlapping selected-chain requests within one dashboard request', async () => {
 		mocks.metadataCache.chainMetadata = {
 			base: { id: 'base', name: 'Base' },
 			ethereum: { id: 'ethereum', name: 'Ethereum' }
@@ -133,7 +133,7 @@ describe('fetchDimensionDataset', () => {
 		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledTimes(2)
 	})
 
-	it('shares one selected-chain concurrency limit across a dashboard request scope', async () => {
+	test('shares one selected-chain concurrency limit across a dashboard request scope', async () => {
 		let startedRequests = 0
 		let releaseRequests = () => {}
 		const blocked = new Promise<void>((resolve) => {
@@ -154,7 +154,7 @@ describe('fetchDimensionDataset', () => {
 		await requests
 	})
 
-	it('shares all-chain requests within one dashboard request', async () => {
+	test('shares all-chain requests within one dashboard request', async () => {
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({ protocols: [protocol('Protocol')] })
 		const requestScope = createDimensionDatasetRequestScope()
 		const options = {
@@ -169,7 +169,7 @@ describe('fetchDimensionDataset', () => {
 		expect(mocks.fetchAdapterChainMetrics).toHaveBeenCalledWith({ adapterType: 'dexs', chain: 'All' })
 	})
 
-	it('shares the canonical daily-revenue request between Revenue and Earnings datasets', async () => {
+	test('shares the canonical daily-revenue request between Revenue and Earnings datasets', async () => {
 		const revenueSource = { protocols: [protocol('Protocol')] }
 		mocks.fetchAdapterChainMetrics.mockResolvedValue(revenueSource)
 		mocks.getDimensionAdapterChainEarningsOverview.mockResolvedValue({
@@ -207,7 +207,7 @@ describe('fetchDimensionDataset', () => {
 		})
 	})
 
-	it('builds all-chain Earnings breakdowns from one canonical overview request', async () => {
+	test('builds all-chain Earnings breakdowns from one canonical overview request', async () => {
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({ protocols: [protocol('Protocol')] })
 		mocks.getDimensionAdapterChainEarningsOverview.mockResolvedValue({
 			status: 'available',
@@ -217,7 +217,7 @@ describe('fetchDimensionDataset', () => {
 					{
 						...protocol('Protocol', 270),
 						breakdown24h: { ethereum: { Protocol: 100 }, base: { Protocol: 200 } },
-						breakdown30d: { ethereum: { Protocol: 1_000 }, base: { Protocol: 2_000 } },
+						breakdown30d: { ethereum: { Protocol: 1000 }, base: { Protocol: 2000 } },
 						_emissions: { emission24h: 30, emission30d: 300 }
 					}
 				],
@@ -237,11 +237,11 @@ describe('fetchDimensionDataset', () => {
 		expect(mocks.getDimensionAdapterChainEarningsOverview).toHaveBeenCalledOnce()
 		expect(result.protocols[0]?.chainBreakdown).toMatchObject({
 			ethereum: { total24h: 90, total7d: null, total30d: 900 },
-			base: { total24h: 180, total7d: null, total30d: 1_800 }
+			base: { total24h: 180, total7d: null, total30d: 1800 }
 		})
 	})
 
-	it('preserves unavailable Earnings periods in protocol and chain rows', async () => {
+	test('preserves unavailable Earnings periods in protocol and chain rows', async () => {
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({ protocols: [protocol('Protocol')] })
 		mocks.getDimensionAdapterChainEarningsOverview.mockResolvedValue({
 			status: 'available',
@@ -277,7 +277,7 @@ describe('fetchDimensionDataset', () => {
 		})
 	})
 
-	it('builds exact available bridge-aggregator chain periods from one canonical request', async () => {
+	test('builds exact available bridge-aggregator chain periods from one canonical request', async () => {
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({
 			allChains: ['Ethereum', 'Base', 'X Layer', 'XRPL', 'Robinhood Chain', 'Vaulta'],
 			protocols: [
@@ -322,7 +322,7 @@ describe('fetchDimensionDataset', () => {
 		})
 	})
 
-	it('keeps an unavailable batched chain period null when another period identifies the chain', async () => {
+	test('keeps an unavailable batched chain period null when another period identifies the chain', async () => {
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({
 			allChains: ['Ethereum'],
 			protocols: [
@@ -347,7 +347,7 @@ describe('fetchDimensionDataset', () => {
 		expect(result.protocols[0]?.chainBreakdown?.ethereum).toMatchObject({ total24h: null, total30d: 100 })
 	})
 
-	it('keeps successful chains and their nullable periods after a partial failure', async () => {
+	test('keeps successful chains and their nullable periods after a partial failure', async () => {
 		const consoleInfo = vi.spyOn(console, 'info').mockImplementation(() => undefined)
 		mocks.metadataCache.chainMetadata = {
 			base: { id: 'base', name: 'Base' },
@@ -379,7 +379,7 @@ describe('fetchDimensionDataset', () => {
 		consoleInfo.mockRestore()
 	})
 
-	it('projects selected-chain Earnings from one global overview', async () => {
+	test('projects selected-chain Earnings from one global overview', async () => {
 		mocks.metadataCache.chainMetadata = {
 			base: { id: 'base', name: 'Base', fees: true }
 		}
@@ -425,7 +425,7 @@ describe('fetchDimensionDataset', () => {
 		expect(result.protocols[0]).toMatchObject({ total7d: null, total30d: -50, total1y: null, change_1d: null })
 	})
 
-	it('reports a selected Earnings chain missing from the authoritative map as unavailable', async () => {
+	test('reports a selected Earnings chain missing from the authoritative map as unavailable', async () => {
 		mocks.metadataCache.chainMetadata = {
 			base: { id: 'base', name: 'Base', fees: true },
 			ethereum: { id: 'ethereum', name: 'Ethereum', fees: true }
@@ -464,7 +464,7 @@ describe('fetchDimensionDataset', () => {
 		})
 	})
 
-	it('aggregates selected Earnings chains from one global source while preserving unavailable periods', async () => {
+	test('aggregates selected Earnings chains from one global source while preserving unavailable periods', async () => {
 		mocks.metadataCache.chainMetadata = {
 			base: { id: 'base', name: 'Base', fees: true },
 			ethereum: { id: 'ethereum', name: 'Ethereum', fees: true }
@@ -503,7 +503,7 @@ describe('fetchDimensionDataset', () => {
 		expect(mocks.getDimensionAdapterChainEarningsOverview).toHaveBeenCalledOnce()
 	})
 
-	it('propagates a global Earnings source failure', async () => {
+	test('propagates a global Earnings source failure', async () => {
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({ protocols: [protocol('Protocol')] })
 		mocks.getDimensionAdapterChainEarningsOverview.mockRejectedValue(new Error('emissions unavailable'))
 
@@ -517,7 +517,7 @@ describe('fetchDimensionDataset', () => {
 		).rejects.toThrow('emissions unavailable')
 	})
 
-	it('preserves nullable leaf periods while summing available selected-chain activity', async () => {
+	test('preserves nullable leaf periods while summing available selected-chain activity', async () => {
 		mocks.metadataCache.chainMetadata = {
 			base: { id: 'base', name: 'Base' },
 			ethereum: { id: 'ethereum', name: 'Ethereum' }
@@ -556,7 +556,7 @@ describe('fetchDimensionDataset', () => {
 		})
 	})
 
-	it('returns undefined for an unknown dataset spec without widening the discriminated registry', () => {
+	test('returns undefined for an unknown dataset spec without widening the discriminated registry', () => {
 		expect(getDimensionDatasetSpec('perps')?.options.adapterType).toBe('derivatives')
 		expect(getDimensionDatasetSpec('not-a-dataset')).toBeUndefined()
 	})

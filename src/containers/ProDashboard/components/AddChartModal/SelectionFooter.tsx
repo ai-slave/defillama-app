@@ -2,7 +2,7 @@ import { Icon } from '~/ui/Icon'
 import { type ChartConfig, getProDashboardChartTypeConfig, MAX_MULTI_CHART_SERIES } from '../../types'
 
 interface SelectionFooterProps {
-	composerItems: ChartConfig[]
+	composerItems: Array<ChartConfig>
 	chartCreationMode: 'separate' | 'combined'
 	unifiedChartName: string
 	onChartCreationModeChange: (mode: 'separate' | 'combined') => void

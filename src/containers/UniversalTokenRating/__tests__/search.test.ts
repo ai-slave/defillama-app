@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { findUtrSearchMatch } from '../navigation'
 import type { UtrLeaderboardRow } from '../types'
 
@@ -23,7 +23,7 @@ const row = {
 } satisfies UtrLeaderboardRow
 
 describe('findUtrSearchMatch', () => {
-	it('matches token names, tickers, assets, and datalist labels', () => {
+	test('matches token names, tickers, assets, and datalist labels', () => {
 		expect(findUtrSearchMatch([row], 'ethereum')?.asset).toBe('ethereum')
 		expect(findUtrSearchMatch([row], 'ETH')?.asset).toBe('ethereum')
 		expect(findUtrSearchMatch([row], 'Ethereum (ETH)')?.asset).toBe('ethereum')

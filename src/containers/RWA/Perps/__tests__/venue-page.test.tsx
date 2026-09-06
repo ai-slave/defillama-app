@@ -1,11 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(() => {
 	vi.clearAllMocks()
 	vi.resetModules()
 })
 
-function setupPageModule({ venues = ['xyz'], data = null }: { venues?: string[]; data?: unknown }) {
+function setupPageModule({ venues = ['xyz'], data = null }: { venues?: Array<string>; data?: unknown }) {
 	vi.doMock('~/constants', () => ({
 		SKIP_BUILD_STATIC_GENERATION: false
 	}))
@@ -43,7 +43,7 @@ function setupPageModule({ venues = ['xyz'], data = null }: { venues?: string[];
 }
 
 describe('rwa perps venue page', () => {
-	it('getStaticPaths returns venue slugs', async () => {
+	test('getStaticPaths returns venue slugs', async () => {
 		const page = await setupPageModule({ venues: ['xyz venue', 'flx'] })
 
 		await expect(page.getStaticPaths()).resolves.toEqual({
@@ -52,7 +52,7 @@ describe('rwa perps venue page', () => {
 		})
 	})
 
-	it('getStaticProps returns notFound for unknown venues', async () => {
+	test('getStaticProps returns notFound for unknown venues', async () => {
 		const page = await setupPageModule({ venues: ['xyz'] })
 
 		await expect(page.getStaticProps({ params: { venue: 'flx' } } as never)).resolves.toEqual({
@@ -60,7 +60,7 @@ describe('rwa perps venue page', () => {
 		})
 	})
 
-	it('getStaticProps returns props for a known venue', async () => {
+	test('getStaticProps returns props for a known venue', async () => {
 		const data = {
 			venue: 'xyz venue',
 			markets: [],
@@ -82,7 +82,7 @@ describe('rwa perps venue page', () => {
 		})
 	})
 
-	it('getStaticProps redirects noncanonical venue params to the canonical slug', async () => {
+	test('getStaticProps redirects noncanonical venue params to the canonical slug', async () => {
 		const page = await setupPageModule({ venues: ['xyz venue'] })
 
 		await expect(page.getStaticProps({ params: { venue: 'XYZ Venue' } } as never)).resolves.toEqual({

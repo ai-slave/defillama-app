@@ -94,7 +94,7 @@ const CHART_METRIC_Y_AXIS_INDEX: Record<ProtocolCategoryChartMetric, number> = {
 	staking: 0
 }
 
-const FALLBACK_CHART_METRICS: ProtocolCategoryChartMetric[] = ['tvl']
+const FALLBACK_CHART_METRICS: Array<ProtocolCategoryChartMetric> = ['tvl']
 const PROTOCOL_TAXONOMY_TVL_KEYS = [...PROTOCOL_LIST_ADDITIVE_TVL_KEYS, 'excludeParent'] as const
 type AdapterMetricProtocol = IAdapterChainMetrics['protocols'][number]
 type ProtocolTaxonomySource = {
@@ -102,8 +102,8 @@ type ProtocolTaxonomySource = {
 	name: string
 	logo: string | null
 	category?: string
-	tags?: string[]
-	chains: string[]
+	tags?: Array<string>
+	chains: Array<string>
 	chainTvls: Record<string, ChainTvlPoint>
 	tvl?: number | null
 	mcap: number | null
@@ -175,13 +175,13 @@ export function mergeProtocolsWithAdapterFallback({
 	category,
 	tag
 }: {
-	protocols: ProtocolLite[]
-	parentProtocols: ParentProtocolLite[]
+	protocols: Array<ProtocolLite>
+	parentProtocols: Array<ParentProtocolLite>
 	adapterProtocols: Array<AdapterMetricProtocol>
 	category: string | undefined
 	tag: string | undefined
-}): { protocols: ProtocolTaxonomySource[]; parentProtocols: ProtocolTaxonomyParent[] } {
-	const mergedProtocols: ProtocolTaxonomySource[] = []
+}): { protocols: Array<ProtocolTaxonomySource>; parentProtocols: Array<ProtocolTaxonomyParent> } {
+	const mergedProtocols: Array<ProtocolTaxonomySource> = []
 	for (const protocol of protocols) mergedProtocols.push(protocol)
 	const protocolIds = new Set<string>()
 	for (const protocol of protocols) protocolIds.add(protocol.defillamaId)
@@ -229,7 +229,7 @@ export const buildCategoryCharts = ({
 	stakingChartData
 }: {
 	effectiveCategory: string | null
-	metrics: ProtocolCategoryChartMetric[]
+	metrics: Array<ProtocolCategoryChartMetric>
 	tvlChartData: Array<[number, number | null]>
 	feesChartData: Array<[number, number]> | null
 	revenueChartData: Array<[number, number]> | null
@@ -320,7 +320,7 @@ export const buildBreakdownCharts = (
 		}
 	}
 
-	const protocolNames: string[] = []
+	const protocolNames: Array<string> = []
 	for (const [protocolName, total] of Array.from(totalByProtocol.entries()).sort((a, b) => b[1] - a[1])) {
 		if (total > 0) protocolNames.push(protocolName)
 	}
@@ -329,7 +329,7 @@ export const buildBreakdownCharts = (
 	const columnIndexByProtocol = new Map<string, number>()
 	for (const [index, protocolName] of protocolNames.entries()) columnIndexByProtocol.set(protocolName, index + 1)
 
-	const source: ProtocolTaxonomyChartRow[] = []
+	const source: Array<ProtocolTaxonomyChartRow> = []
 	for (const [timestamp, valueByProtocol] of breakdownChartData) {
 		const row: ProtocolTaxonomyChartRow = [normalizeChartTimestamp(timestamp)]
 		for (let index = 0; index < protocolNames.length; index++) row.push(null)
@@ -1189,7 +1189,7 @@ function buildProtocolsCategoriesChartData({
 }: {
 	chart: CategoriesSummaryResponse['chart']
 	categoryKeys: Array<string>
-	extraTvlTypes?: readonly string[]
+	extraTvlTypes?: ReadonlyArray<string>
 }): IProtocolsCategoriesChartData {
 	const includedExtraTvlKeys = CATEGORIES_PAGE_INCLUDED_EXTRA_TVL_KEYS.filter((key) => extraTvlTypes.includes(key))
 	const extraTvlCharts: IProtocolsCategoriesChartData['extraTvlCharts'] = {}
@@ -1234,10 +1234,10 @@ function buildProtocolsCategoriesChartData({
 export async function getProtocolsCategoriesChartData({
 	extraTvlTypes = []
 }: {
-	extraTvlTypes?: readonly string[]
+	extraTvlTypes?: ReadonlyArray<string>
 } = {}): Promise<IProtocolsCategoriesChartData> {
 	const { chart, categories } = await fetchCategoriesSummary()
-	const categoryKeys: string[] = []
+	const categoryKeys: Array<string> = []
 	for (const categoryName in categories) categoryKeys.push(categoryName)
 
 	return buildProtocolsCategoriesChartData({ chart, categoryKeys, extraTvlTypes })

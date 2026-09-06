@@ -3,7 +3,7 @@ import { pushShallowQuery } from '~/utils/routerQuery'
 import { resetYieldsPoolPageOnFilterChange } from './queryState'
 
 type QueryUpdatePrimitive = string | number | boolean
-type QueryUpdateValue = QueryUpdatePrimitive | QueryUpdatePrimitive[] | undefined
+type QueryUpdateValue = QueryUpdatePrimitive | Array<QueryUpdatePrimitive> | undefined
 
 export function pushYieldsQuery<T extends Record<string, QueryUpdateValue>>(
 	router: NextRouter,

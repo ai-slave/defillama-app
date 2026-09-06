@@ -42,7 +42,7 @@ export type ArticleSeoAuthor = {
 	name: string
 	url?: string
 	id?: string
-	sameAs?: string[]
+	sameAs?: Array<string>
 	worksForResearch?: boolean
 }
 
@@ -66,7 +66,7 @@ function authorProfileUrl(profile: ArticleAuthor): string {
 	return `${SITE_ORIGIN}/research/authors/${profile.slug}`
 }
 
-function socialUrls(profile: ArticleAuthor): string[] {
+function socialUrls(profile: ArticleAuthor): Array<string> {
 	return Object.values(profile.socials ?? {}).filter(Boolean)
 }
 
@@ -114,8 +114,8 @@ function seoAuthorKey(author: ArticleSeoAuthor): string {
 	return author.url ?? `${author.type}:${author.name}`
 }
 
-export function getArticleSeoAuthors(article: LocalArticleDocument): ArticleSeoAuthor[] {
-	const authors: ArticleSeoAuthor[] = []
+export function getArticleSeoAuthors(article: LocalArticleDocument): Array<ArticleSeoAuthor> {
+	const authors: Array<ArticleSeoAuthor> = []
 	const seen = new Set<string>()
 	const push = (author: ArticleSeoAuthor) => {
 		const key = seoAuthorKey(author)
@@ -173,7 +173,7 @@ function seoAuthorToJsonLd(author: ArticleSeoAuthor): Record<string, unknown> {
 	}
 }
 
-export function getArticleOpenGraphAuthorUrls(article: LocalArticleDocument): string[] {
+export function getArticleOpenGraphAuthorUrls(article: LocalArticleDocument): Array<string> {
 	return getArticleSeoAuthors(article)
 		.map((author) => author.url)
 		.filter((url): url is string => Boolean(url))

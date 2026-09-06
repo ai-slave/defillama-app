@@ -11,8 +11,8 @@ import type { PersistedProtocolsTableConfig, PersistedProtocolTableFilters } fro
 const DEFAULT_LEGACY_PRESET_ID = 'essential'
 
 function createHistoricalProtocolTableColumnVisibility(
-	columnOrder: readonly string[],
-	customColumns: readonly CustomColumnDefinition[]
+	columnOrder: ReadonlyArray<string>,
+	customColumns: ReadonlyArray<CustomColumnDefinition>
 ): Record<string, boolean> {
 	const visibility: Record<string, boolean> = { name: true }
 	for (const column of customColumns) visibility[column.id] = false
@@ -27,7 +27,7 @@ function migrateColumnId(id: string): string | null {
 	return policy.disposition === 'rename' ? policy.target : id
 }
 
-function expressionVariables(expression: string): string[] {
+function expressionVariables(expression: string): Array<string> {
 	return expression.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []
 }
 
@@ -37,7 +37,7 @@ function migrateExpression(expression: string): string {
 
 function migrateCustomColumns(
 	columns: NonNullable<PersistedProtocolsTableConfig['customColumns']>
-): CustomColumnDefinition[] {
+): Array<CustomColumnDefinition> {
 	const removed = new Set<string>()
 	for (const column of columns) {
 		if (!column.isValid) removed.add(column.id)
@@ -58,7 +58,7 @@ function migrateCustomColumns(
 		}
 	}
 
-	const result: CustomColumnDefinition[] = []
+	const result: Array<CustomColumnDefinition> = []
 	for (const column of columns) {
 		if (removed.has(column.id)) continue
 		result.push({
@@ -136,8 +136,8 @@ export function migrateProtocolsTable(config: PersistedProtocolsTableConfig): Pr
 		if (id.startsWith('custom_')) return customColumnIds.has(id) ? id : null
 		return migrateColumnId(id)
 	}
-	const migrateColumnOrder = (ids: readonly string[]): string[] => {
-		const migratedIds: string[] = []
+	const migrateColumnOrder = (ids: ReadonlyArray<string>): Array<string> => {
+		const migratedIds: Array<string> = []
 		for (const id of ids) {
 			const migrated = keepColumn(id)
 			if (migrated && !migratedIds.includes(migrated)) migratedIds.push(migrated)
@@ -155,7 +155,7 @@ export function migrateProtocolsTable(config: PersistedProtocolsTableConfig): Pr
 		savedColumnVisibility[migrated] = config.columnVisibility?.[id] ?? false
 		explicitVisibilityIds.add(migrated)
 	}
-	if (config.columnVisibility && Object.keys(config.columnVisibility).length) {
+	if (config.columnVisibility && Object.keys(config.columnVisibility).length > 0) {
 		for (const id of savedColumnOrder) {
 			if (!explicitVisibilityIds.has(id)) savedColumnVisibility[id] = true
 		}
@@ -165,7 +165,7 @@ export function migrateProtocolsTable(config: PersistedProtocolsTableConfig): Pr
 	const savedSorting = migratedFilters.sorting.filter(({ id }) => !id.startsWith('custom_') || customColumnIds.has(id))
 	const chains = config.chains.filter((chain) => chain.trim() && chain.toLowerCase() !== 'all')
 	const hasSavedColumnOrder = Boolean(config.columnOrder?.length)
-	const hasSavedColumnVisibility = Boolean(config.columnVisibility && Object.keys(config.columnVisibility).length)
+	const hasSavedColumnVisibility = Boolean(config.columnVisibility && Object.keys(config.columnVisibility).length > 0)
 	const hasExplicitLayout = hasSavedColumnOrder || hasSavedColumnVisibility
 	const requestedPreset = config.activePresetId
 		? getLegacyProtocolTablePresetMigration(config.activePresetId)
@@ -188,11 +188,8 @@ export function migrateProtocolsTable(config: PersistedProtocolsTableConfig): Pr
 			if (migrated) presetSorting.push({ id: migrated, desc })
 		}
 	}
-	const defaultSorting = savedSorting.length
-		? savedSorting
-		: presetSorting.length
-			? presetSorting
-			: [{ id: 'tvl', desc: true }]
+	const defaultSorting =
+		savedSorting.length > 0 ? savedSorting : presetSorting.length > 0 ? presetSorting : [{ id: 'tvl', desc: true }]
 
 	return {
 		id: config.id,
@@ -200,13 +197,13 @@ export function migrateProtocolsTable(config: PersistedProtocolsTableConfig): Pr
 		configVersion: UNIFIED_TABLE_CONFIG_VERSION,
 		strategy: 'protocols',
 		rowHeaders: ['parent-protocol', 'protocol'],
-		...(chains.length ? { params: { chains } } : {}),
-		...(Object.keys(migratedFilters.filters).length ? { filters: migratedFilters.filters } : {}),
-		...(resolvedColumnOrder.length ? { columnOrder: [...resolvedColumnOrder] } : {}),
-		...(Object.keys(resolvedColumnVisibility).length ? { columnVisibility: { ...resolvedColumnVisibility } } : {}),
-		...(defaultSorting.length ? { defaultSorting } : {}),
+		...(chains.length > 0 ? { params: { chains } } : {}),
+		...(Object.keys(migratedFilters.filters).length > 0 ? { filters: migratedFilters.filters } : {}),
+		...(resolvedColumnOrder.length > 0 ? { columnOrder: [...resolvedColumnOrder] } : {}),
+		...(Object.keys(resolvedColumnVisibility).length > 0 ? { columnVisibility: { ...resolvedColumnVisibility } } : {}),
+		...(defaultSorting.length > 0 ? { defaultSorting } : {}),
 		...(preset ? { activePresetId: preset.targetPresetId } : {}),
 		...(config.colSpan === undefined ? {} : { colSpan: config.colSpan }),
-		...(customColumns.length ? { customColumns } : {})
+		...(customColumns.length > 0 ? { customColumns } : {})
 	}
 }

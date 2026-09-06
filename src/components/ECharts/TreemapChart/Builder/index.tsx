@@ -107,7 +107,7 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 				className: 'defillama-echarts-tooltip',
 				backgroundColor: 'transparent',
 				borderWidth: 0,
-				formatter: function (rawInfo: unknown) {
+				formatter(rawInfo: unknown) {
 					const info = normalizeTreemapFormatterParams(rawInfo)
 					const rawValue = typeof info.value === 'number' ? info.value : Number(info.value ?? 0)
 					const pct = formatPercent(total > 0 ? rawValue / total : 0, {
@@ -121,7 +121,7 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 			series: [
 				{
 					type: 'treemap',
-					data: data,
+					data,
 					sort: 'desc',
 					squareRatio: 1,
 					left: 0,
@@ -135,7 +135,7 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 						show: true,
 						position: 'insideTopLeft',
 						padding: [4, 6],
-						formatter: function (rawParams: unknown) {
+						formatter(rawParams: unknown) {
 							const params = normalizeTreemapFormatterParams(rawParams)
 							const rawValue = typeof params.value === 'number' ? params.value : Number(params.value ?? 0)
 							const pct = formatPercent(total > 0 ? rawValue / total : 0, {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getUpcomingUnlockGroupByQueryValue,
 	getUpcomingUnlockTypeLabel,
@@ -8,7 +8,7 @@ import {
 } from '../upcomingUnlockChartState'
 
 describe('upcoming unlock chart URL state', () => {
-	it('uses the URL values as the complete chart state', () => {
+	test('uses the URL values as the complete chart state', () => {
 		expect(
 			parseUpcomingUnlockChartState({
 				chartUnlockType: 'linear',
@@ -18,19 +18,19 @@ describe('upcoming unlock chart URL state', () => {
 		).toEqual({ unlockType: 'linear', groupBy: 'weekly', viewMode: 'Breakdown View' })
 	})
 
-	it('defaults invalid and missing values without local state', () => {
+	test('defaults invalid and missing values without local state', () => {
 		expect(
 			parseUpcomingUnlockChartState({ chartUnlockType: 'invalid', chartGroup: 'invalid', chartView: 'invalid' })
 		).toEqual({ unlockType: 'all', groupBy: 'daily', viewMode: 'Total View' })
 	})
 
-	it('preserves existing chart URLs', () => {
+	test('preserves existing chart URLs', () => {
 		expect(
 			parseUpcomingUnlockChartState({ chartUnlockType: 'total', chartGroup: 'Weekly', chartView: 'Breakdown View' })
 		).toEqual({ unlockType: 'all', groupBy: 'weekly', viewMode: 'Breakdown View' })
 	})
 
-	it('omits defaults and serializes non-default selections', () => {
+	test('omits defaults and serializes non-default selections', () => {
 		expect(getUpcomingUnlockTypeQueryValue('all')).toBeUndefined()
 		expect(getUpcomingUnlockGroupByQueryValue('daily')).toBeUndefined()
 		expect(getUpcomingUnlockViewModeQueryValue('Total View')).toBeUndefined()
@@ -39,7 +39,7 @@ describe('upcoming unlock chart URL state', () => {
 		expect(getUpcomingUnlockViewModeQueryValue('Breakdown View')).toBe('breakdown')
 	})
 
-	it('labels the combined view as all unlocks', () => {
+	test('labels the combined view as all unlocks', () => {
 		expect(getUpcomingUnlockTypeLabel('all')).toBe('All Unlocks')
 	})
 })

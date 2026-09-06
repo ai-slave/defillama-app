@@ -47,7 +47,7 @@ function getPeriodTypeFromQueryValue(value?: string): EquitiesStatementPeriodOpt
 	return periodType ?? 'Quarterly'
 }
 
-export function getStatementHeaders(periodEnding: string[]): EquitiesStatementHeader[] {
+export function getStatementHeaders(periodEnding: Array<string>): Array<EquitiesStatementHeader> {
 	return getEquitiesStatementHeaders(periodEnding)
 }
 
@@ -61,7 +61,7 @@ function FinancialRow({
 	showExpandPlaceholder
 }: {
 	row: IEquitiesStatementTableRow
-	headers: EquitiesStatementHeader[]
+	headers: Array<EquitiesStatementHeader>
 	showExpandPlaceholder: boolean
 }) {
 	const hasSubRows = Boolean(row.subRows?.length)

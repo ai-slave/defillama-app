@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IEquitiesDimensionsResponse } from '../api.types'
 import { buildEquitiesDimensionsChart, buildIntradayPriceHistoryChart, buildPriceHistoryChart } from '../chartData'
 
@@ -34,7 +34,7 @@ const dimensions: IEquitiesDimensionsResponse = {
 }
 
 describe('equities chart data', () => {
-	it('reverses newest-first price history without sorting', () => {
+	test('reverses newest-first price history without sorting', () => {
 		expect(
 			buildPriceHistoryChart([
 				['2025-01-02', 20],
@@ -46,7 +46,7 @@ describe('equities chart data', () => {
 		])
 	})
 
-	it('reverses the newest-first API response into a chronological dataset', () => {
+	test('reverses the newest-first API response into a chronological dataset', () => {
 		expect(buildEquitiesDimensionsChart(dimensions, 'holdersRevenue', 'annual').dataset).toEqual({
 			source: [
 				[Date.parse('2024-12-31T00:00:00Z'), 35],
@@ -56,7 +56,7 @@ describe('equities chart data', () => {
 		})
 	})
 
-	it('labels shares outstanding without a currency symbol', () => {
+	test('labels shares outstanding without a currency symbol', () => {
 		const chart = buildEquitiesDimensionsChart(dimensions, 'basicSharesOutstanding', 'annual')
 		expect(chart.dataset).toEqual({
 			source: [
@@ -69,7 +69,7 @@ describe('equities chart data', () => {
 		expect(buildEquitiesDimensionsChart(dimensions, 'revenue', 'annual').charts.at(0)?.valueSymbol).toBe('$')
 	})
 
-	it('preserves measured zero in price and dimension charts', () => {
+	test('preserves measured zero in price and dimension charts', () => {
 		expect(buildPriceHistoryChart([['2025-01-01', 0]]).dataset.source).toEqual([[Date.parse('2025-01-01'), 0]])
 		expect(
 			buildEquitiesDimensionsChart(
@@ -94,7 +94,7 @@ describe('intraday price history', () => {
 		['2026-08-26T19:50:00Z', 209]
 	]
 
-	it('plots sessions as adjacent categories so closed hours are compressed out', () => {
+	test('plots sessions as adjacent categories so closed hours are compressed out', () => {
 		const chart = buildIntradayPriceHistoryChart(intraday, '7D')
 		expect(chart.dataset.dimensions).toEqual(['session', 'Close'])
 		expect(chart.dataset.source).toEqual([
@@ -105,7 +105,7 @@ describe('intraday price history', () => {
 		])
 	})
 
-	it('keeps machine timestamps for CSV export while the axis shows labels', () => {
+	test('keeps machine timestamps for CSV export while the axis shows labels', () => {
 		const chart = buildIntradayPriceHistoryChart(intraday, '7D')
 		expect(chart.csvDataset.dimensions).toEqual(['timestamp', 'Close'])
 		expect(chart.csvDataset.source).toEqual([

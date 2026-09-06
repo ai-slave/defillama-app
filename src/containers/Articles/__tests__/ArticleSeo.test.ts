@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildArticleJsonLd, getArticleOpenGraphAuthorUrls } from '~/containers/Articles/ArticleSeo'
 import type { ArticleAuthorProfile, ArticleDocument } from '~/containers/Articles/types'
 
@@ -63,7 +63,7 @@ function jsonLdAuthors(article: ArticleDocument): Array<Record<string, unknown>>
 }
 
 describe('ArticleSeo metadata authors', () => {
-	it('emits primary and co-author Person entries in Article JSON-LD', () => {
+	test('emits primary and co-author Person entries in Article JSON-LD', () => {
 		const article = makeArticle({ coAuthors: [coAuthor] })
 		const authors = jsonLdAuthors(article)
 
@@ -91,7 +91,7 @@ describe('ArticleSeo metadata authors', () => {
 		expect(JSON.stringify(buildArticleJsonLd(article))).not.toContain('pb-user')
 	})
 
-	it('emits DefiLlama Research plus visible people for brand-byline articles', () => {
+	test('emits DefiLlama Research plus visible people for brand-byline articles', () => {
 		const article = makeArticle({
 			author: 'Internal Admin',
 			brandByline: true,
@@ -113,7 +113,7 @@ describe('ArticleSeo metadata authors', () => {
 		})
 	})
 
-	it('returns repeated Open Graph article author URLs in metadata order', () => {
+	test('returns repeated Open Graph article author URLs in metadata order', () => {
 		expect(getArticleOpenGraphAuthorUrls(makeArticle({ coAuthors: [coAuthor] }))).toEqual([
 			'https://defillama.com/research/authors/jane-doe',
 			'https://defillama.com/research/authors/john-doe'
@@ -124,7 +124,7 @@ describe('ArticleSeo metadata authors', () => {
 		])
 	})
 
-	it('appends account-less guest authors with the right @type and no worksFor', () => {
+	test('appends account-less guest authors with the right @type and no worksFor', () => {
 		const article = makeArticle({
 			guestAuthors: [
 				{ name: 'Person A', type: 'Person', url: 'https://person-a.com' },
@@ -163,7 +163,7 @@ describe('ArticleSeo metadata authors', () => {
 		expect(authors[3]).not.toHaveProperty('worksFor')
 	})
 
-	it('includes guest author URLs in Open Graph metadata, skipping those without a URL', () => {
+	test('includes guest author URLs in Open Graph metadata, skipping those without a URL', () => {
 		const article = makeArticle({
 			coAuthors: [coAuthor],
 			guestAuthors: [

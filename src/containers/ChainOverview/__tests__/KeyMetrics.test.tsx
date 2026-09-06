@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { KeyMetrics } from '../KeyMetrics'
 import type { IChainOverviewData } from '../types'
 
@@ -48,7 +48,7 @@ const baseProps: React.ComponentProps<typeof KeyMetrics> = {
 const textFromMarkup = (html: string) => html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ')
 
 describe('ChainOverview KeyMetrics', () => {
-	it('renders unavailable token metrics as N/A instead of $0', () => {
+	test('renders unavailable token metrics as N/A instead of $0', () => {
 		const markup = renderToStaticMarkup(<KeyMetrics {...baseProps} />)
 		const text = textFromMarkup(markup)
 
@@ -59,7 +59,7 @@ describe('ChainOverview KeyMetrics', () => {
 		expect(text).not.toContain('$0')
 	})
 
-	it('preserves legitimate zero values for token metrics', () => {
+	test('preserves legitimate zero values for token metrics', () => {
 		const markup = renderToStaticMarkup(
 			<KeyMetrics
 				{...baseProps}
@@ -76,7 +76,7 @@ describe('ChainOverview KeyMetrics', () => {
 		expect(markup).not.toContain('N/A')
 	})
 
-	it('renders RWA active market cap when available', () => {
+	test('renders RWA active market cap when available', () => {
 		const markup = renderToStaticMarkup(<KeyMetrics {...baseProps} rwaActiveMcap={123_000_000} />)
 		const text = textFromMarkup(markup)
 
@@ -84,21 +84,21 @@ describe('ChainOverview KeyMetrics', () => {
 		expect(text).toContain('$123m')
 	})
 
-	it('hides RWA active market cap when unavailable', () => {
+	test('hides RWA active market cap when unavailable', () => {
 		const markup = renderToStaticMarkup(<KeyMetrics {...baseProps} rwaActiveMcap={0} />)
 		const text = textFromMarkup(markup)
 
 		expect(text).not.toContain('RWA Active Mcap')
 	})
 
-	it('renders the fetched fee-family totals without client-side adjustments', () => {
+	test('renders the fetched fee-family totals without client-side adjustments', () => {
 		const markup = renderToStaticMarkup(
 			<KeyMetrics
 				{...baseProps}
 				chainFees={{ total24h: 100, feesGenerated24h: null, topProtocolsChart: null, totalREV24h: 500 }}
 				chainRevenue={{ total24h: 50 }}
-				appRevenue={{ total24h: 1_200 }}
-				appFees={{ total24h: 2_000 }}
+				appRevenue={{ total24h: 1200 }}
+				appFees={{ total24h: 2000 }}
 			/>
 		)
 		const text = textFromMarkup(markup)
@@ -110,7 +110,7 @@ describe('ChainOverview KeyMetrics', () => {
 		expect(text).toContain('App Fees (24h)$2,000')
 	})
 
-	it('renders only the bridged asset sections reported by the producer', () => {
+	test('renders only the bridged asset sections reported by the producer', () => {
 		const v2Markup = renderToStaticMarkup(
 			<KeyMetrics
 				{...baseProps}

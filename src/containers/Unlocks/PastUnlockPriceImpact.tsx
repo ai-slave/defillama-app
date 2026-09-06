@@ -12,7 +12,7 @@ import type { EnrichedProtocolEmission } from './queries'
 import { TopThreeRow } from './TopThreeRow'
 
 interface PastUnlockPriceImpactProps {
-	data: EnrichedProtocolEmission[]
+	data: Array<EnrichedProtocolEmission>
 	title?: string
 	className?: string
 	initialNowSec?: number
@@ -49,7 +49,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 				geckoId?: string | null
 				impact: number
 				timestamp: number
-				unlockBreakdown: UnlockBreakdown[]
+				unlockBreakdown: Array<UnlockBreakdown>
 				cliffAmount: number
 				linearWeeklyAmount: number
 				maxSupply: number
@@ -67,7 +67,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 
 			let cliffAmount = 0
 			let linearWeeklyAmount = 0
-			const breakdown: UnlockBreakdown[] = []
+			const breakdown: Array<UnlockBreakdown> = []
 			for (const event of protocol.lastEvent) {
 				const amount = getEmissionEventAmount(event)
 				if (amount === null || amount <= 0) continue
@@ -151,7 +151,7 @@ export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
 									unmountOnHide
 									hideOnInteractOutside
 									overflowPadding={16}
-									portal={true}
+									portal
 								>
 									<span className="flex items-center justify-between gap-4">
 										<span className="flex items-center gap-2 font-medium">

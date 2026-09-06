@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import { buildCompareChainsTvlChartState } from '../tvlChart'
 
@@ -26,7 +26,7 @@ const makeExtraTvlCharts = (
 })
 
 describe('CompareChains TVL chart helper', () => {
-	it('reuses the base chart when no TVL extras are enabled', () => {
+	test('reuses the base chart when no TVL extras are enabled', () => {
 		const result = buildCompareChainsTvlChartState({
 			tvlChart: TVL_CHART,
 			tvlSettings: {},
@@ -38,7 +38,7 @@ describe('CompareChains TVL chart helper', () => {
 		expect(result.finalTvlChart).toBe(TVL_CHART)
 	})
 
-	it('adds enabled extras and subtracts overlap', () => {
+	test('adds enabled extras and subtracts overlap', () => {
 		expect(
 			buildCompareChainsTvlChartState({
 				tvlChart: TVL_CHART,
@@ -73,7 +73,7 @@ describe('CompareChains TVL chart helper', () => {
 		})
 	})
 
-	it('subtracts nothing when both overlap parents are enabled but overlap data is missing', () => {
+	test('subtracts nothing when both overlap parents are enabled but overlap data is missing', () => {
 		expect(
 			buildCompareChainsTvlChartState({
 				tvlChart: TVL_CHART,
@@ -98,7 +98,7 @@ describe('CompareChains TVL chart helper', () => {
 		])
 	})
 
-	it('does not subtract overlap when only one overlap parent is enabled', () => {
+	test('does not subtract overlap when only one overlap parent is enabled', () => {
 		expect(
 			buildCompareChainsTvlChartState({
 				tvlChart: TVL_CHART,
@@ -122,7 +122,7 @@ describe('CompareChains TVL chart helper', () => {
 		])
 	})
 
-	it('adds gov-token extras', () => {
+	test('adds gov-token extras', () => {
 		expect(
 			buildCompareChainsTvlChartState({
 				tvlChart: TVL_CHART,

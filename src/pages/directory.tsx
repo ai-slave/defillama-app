@@ -57,11 +57,11 @@ function readRecentProtocol(value: unknown): RecentProtocol | null {
 	}
 }
 
-function readRecentProtocols(raw: string): RecentProtocol[] {
+function readRecentProtocols(raw: string): Array<RecentProtocol> {
 	try {
 		const parsed: unknown = JSON.parse(raw)
 		if (!Array.isArray(parsed)) return []
-		const protocols: RecentProtocol[] = []
+		const protocols: Array<RecentProtocol> = []
 		for (const value of parsed) {
 			const protocol = readRecentProtocol(value)
 			if (protocol) protocols.push(protocol)
@@ -94,8 +94,8 @@ const saveRecent = (protocol: { name: string; logo?: string; route: string }) =>
 			.slice(0, 6)
 
 		setStorageItem(RECENTS_KEY, JSON.stringify(arr))
-	} catch (e) {
-		console.log('failed to save recent protocol', e)
+	} catch (error) {
+		console.log('failed to save recent protocol', error)
 	}
 }
 
@@ -144,7 +144,7 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 		<Layout
 			title="DeFi Protocols Directory - Official Links - DefiLlama"
 			description="Browse the official websites and links for 7000+ DeFi protocols on DefiLlama."
-			canonicalUrl={`/directory`}
+			canonicalUrl="/directory"
 		>
 			<Announcement notCancellable>
 				Search any protocol to go straight into their website, avoiding scam results from Google. Bookmark this page for
@@ -197,10 +197,10 @@ export default function Protocols({ protocols }: { protocols: Array<{ name: stri
 				</span>
 				<Ariakit.ComboboxPopover
 					sameWidth
-					open={true}
+					open
 					className={`${popoverSearchResultsSurfaceStyles} top-1 h-full max-h-[320px]`}
 				>
-					{matches.length ? (
+					{matches.length > 0 ? (
 						<Ariakit.ComboboxList ref={comboboxRef}>
 							{matches.slice(0, viewableMatches).map((option) => (
 								<Ariakit.ComboboxItem

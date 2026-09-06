@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { buildChainsByCategoryChartPresentation } from '../index'
 
 describe('chains by category chart presentation', () => {
-	it('uses a sampled latest date for both dominance and pie values', () => {
+	test('uses a sampled latest date for both dominance and pie values', () => {
 		const result = buildChainsByCategoryChartPresentation({
 			tvlChartsByChain: {
 				tvl: {
@@ -35,7 +35,7 @@ describe('chains by category chart presentation', () => {
 		expect(result.dominanceCharts.charts.map((chart) => chart.name)).toEqual(['Solana', 'Ethereum'])
 	})
 
-	it('retains an unsampled latest date for the pie without appending a dominance row', () => {
+	test('retains an unsampled latest date for the pie without appending a dominance row', () => {
 		const result = buildChainsByCategoryChartPresentation({
 			tvlChartsByChain: {
 				tvl: {
@@ -59,7 +59,7 @@ describe('chains by category chart presentation', () => {
 		expect(result.chainSeries).toEqual(['Solana', 'Ethereum'])
 	})
 
-	it('appends historical chains with no current TVL after the current-TVL ranking', () => {
+	test('appends historical chains with no current TVL after the current-TVL ranking', () => {
 		const result = buildChainsByCategoryChartPresentation({
 			tvlChartsByChain: {
 				tvl: {
@@ -78,7 +78,7 @@ describe('chains by category chart presentation', () => {
 		expect(result.dominanceCharts.charts.map((chart) => chart.name)).toEqual(['Solana', 'Ethereum', 'Historical'])
 	})
 
-	it('returns empty chart contracts when no base total series exists', () => {
+	test('returns empty chart contracts when no base total series exists', () => {
 		const result = buildChainsByCategoryChartPresentation({
 			tvlChartsByChain: {},
 			totalTvlByDate: {},

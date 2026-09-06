@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { KpkComposition, KpkVault } from './api'
 import { KPK_LINE_STROKE_DARK, KPK_PALETTE_DARK } from './chartDefaults'
 import { buildComposition as build, compositionColors, MILLION, PERIOD_DIMENSION, vaultTotals } from './transform'
@@ -42,7 +42,7 @@ function vault(overrides: Partial<KpkVault>): KpkVault {
 }
 
 describe('buildComposition', () => {
-	it('plots period labels as categories with one stacked band per segment', () => {
+	test('plots period labels as categories with one stacked band per segment', () => {
 		const model = buildComposition(comp)
 
 		expect(model.dataset.dimensions).toEqual([PERIOD_DIMENSION, 'Morpho', 'Euler'])
@@ -57,18 +57,18 @@ describe('buildComposition', () => {
 		])
 	})
 
-	it('converts $m payload values to absolute USD', () => {
+	test('converts $m payload values to absolute USD', () => {
 		const model = buildComposition(comp)
 
 		expect(model.totalUsd).toBe(30 * MILLION)
 		expect(model.rows.map((row) => row.valueUsd)).toEqual([20 * MILLION, 10 * MILLION])
 	})
 
-	it('keeps the payload order for the breakdown table', () => {
+	test('keeps the payload order for the breakdown table', () => {
 		expect(buildComposition(comp).rows.map((row) => row.name)).toEqual(['Morpho', 'Euler'])
 	})
 
-	it('carries a missing point through as a gap rather than zero', () => {
+	test('carries a missing point through as a gap rather than zero', () => {
 		const sparse: KpkComposition = {
 			...comp,
 			segments: [{ name: 'Morpho', value: 20, share: 100, series: [10, undefined as unknown as number, 20] }]
@@ -77,7 +77,7 @@ describe('buildComposition', () => {
 		expect(buildComposition(sparse).dataset.source[1]).toEqual(['Jul 26', null])
 	})
 
-	it('gives a segment the same colour whatever position it arrives in', () => {
+	test('gives a segment the same colour whatever position it arrives in', () => {
 		const reordered: KpkComposition = { ...comp, segments: [comp.segments[1], comp.segments[0]] }
 		const byName = new Map(buildComposition(comp).rows.map((row) => [row.name, row.color]))
 
@@ -86,14 +86,14 @@ describe('buildComposition', () => {
 		}
 	})
 
-	it('emits no line for a breakdown that carries none', () => {
+	test('emits no line for a breakdown that carries none', () => {
 		const model = buildComposition(comp)
 
 		expect(model.line).toBeUndefined()
 		expect(model.rows.some((row) => row.duplicate)).toBe(false)
 	})
 
-	it('adds the overlay line as an unstacked dashed series after the bands', () => {
+	test('adds the overlay line as an unstacked dashed series after the bands', () => {
 		const model = buildComposition(withLine)
 
 		expect(model.dataset.dimensions).toEqual([PERIOD_DIMENSION, 'Morpho', 'Euler', 'Adjusted TVA'])
@@ -108,7 +108,7 @@ describe('buildComposition', () => {
 		expect(overlay.excludeFromTooltipTotal).toBe(true)
 	})
 
-	it('marks the double-counted band and carries the line note for the table', () => {
+	test('marks the double-counted band and carries the line note for the table', () => {
 		const model = buildComposition(withLine)
 
 		expect(model.rows.map((row) => row.duplicate)).toEqual([undefined, true])
@@ -121,7 +121,7 @@ describe('buildComposition', () => {
 
 	// A short series would plot as a straight run to zero off the left of the chart
 	// rather than as a gap, so it is dropped whole — the footnote and footer stay.
-	it('drops a line whose series does not span the axis', () => {
+	test('drops a line whose series does not span the axis', () => {
 		const model = buildComposition({ ...withLine, line: { ...withLine.line!, series: [20] } })
 
 		expect(model.dataset.dimensions).toEqual([PERIOD_DIMENSION, 'Morpho', 'Euler'])
@@ -131,7 +131,7 @@ describe('buildComposition', () => {
 })
 
 describe('compositionColors', () => {
-	it('assigns one distinct colour per segment', () => {
+	test('assigns one distinct colour per segment', () => {
 		const colors = compositionColors(['Morpho', 'Euler', 'Gearbox'], KPK_PALETTE_DARK)
 
 		expect(Object.keys(colors)).toHaveLength(3)
@@ -140,7 +140,7 @@ describe('compositionColors', () => {
 })
 
 describe('vaultTotals', () => {
-	it('sums the rows on screen and converts to USD', () => {
+	test('sums the rows on screen and converts to USD', () => {
 		const totals = vaultTotals([
 			vault({ tva: 20.5, interest: 0.25 }),
 			vault({ tva: 9.5, interest: 0.75, venue: 'Euler' })
@@ -150,7 +150,7 @@ describe('vaultTotals', () => {
 		expect(totals.interestUsd).toBe(1 * MILLION)
 	})
 
-	it('returns zeroes for an empty filter result', () => {
+	test('returns zeroes for an empty filter result', () => {
 		expect(vaultTotals([])).toEqual({
 			tvaUsd: 0,
 			interestUsd: 0,
@@ -160,7 +160,7 @@ describe('vaultTotals', () => {
 		})
 	})
 
-	it('nets a double-counted vault out of the adjusted pair and names its venue', () => {
+	test('nets a double-counted vault out of the adjusted pair and names its venue', () => {
 		const totals = vaultTotals([
 			vault({ tva: 20, interest: 0.5 }),
 			vault({ tva: 10, interest: 0.25, venue: 'Symbiotic', doubleCounted: true })
@@ -172,7 +172,7 @@ describe('vaultTotals', () => {
 		expect(totals.duplicateVenues).toEqual(['Symbiotic'])
 	})
 
-	it('reports no duplicate venues for a filter that nets out nothing', () => {
+	test('reports no duplicate venues for a filter that nets out nothing', () => {
 		expect(vaultTotals([vault({ tva: 20, interest: 0.5 })]).duplicateVenues).toEqual([])
 	})
 })

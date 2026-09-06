@@ -32,7 +32,7 @@ export interface RewardProgram {
 	category: string | null
 	protocolHref: string | null
 	logo: string | null
-	rewardTypes: readonly RewardType[]
+	rewardTypes: ReadonlyArray<RewardType>
 	lifecycle: RewardLifecycle
 	verification: RewardVerification
 	/** Earliest known date, including programs that only specify an end date. */
@@ -43,12 +43,12 @@ export interface RewardProgram {
 	visitorBenefit: string
 	referrerBenefit: string | null
 	referralUrl: string | null
-	sources: RewardSource[]
+	sources: Array<RewardSource>
 	lastVerified: string | null
 }
 
 export interface RewardsPageProps {
-	programs: RewardProgram[]
+	programs: Array<RewardProgram>
 	analyticsMode: RewardsAnalyticsMode
 }
 
@@ -57,6 +57,6 @@ export type RewardsAnalyticsMode = 'off' | 'test' | 'production'
 export interface RewardsFilters {
 	search: string
 	lifecycle: RewardLifecycle | 'All'
-	rewardTypes: RewardType[]
+	rewardTypes: Array<RewardType>
 	hideUnverified: boolean
 }

@@ -55,7 +55,7 @@ function getRowField(row: unknown, field: string): unknown {
 	return isRecord(row) ? row[field] : undefined
 }
 
-function isTimeSeriesChart<Row>(config: ChartConfiguration, rows: Row[]): boolean {
+function isTimeSeriesChart<Row>(config: ChartConfiguration, rows: Array<Row>): boolean {
 	if (config.axes.x.type === 'time') return true
 	if (config.type === 'pie' || config.type === 'hbar') return false
 
@@ -114,7 +114,11 @@ export function getTimePeriodBounds(
 	return { start: cutoffDate.unix(), end: Infinity }
 }
 
-function filterRowsByTimePeriod<Row>(rows: Row[], timeField: string, bounds: { start: number; end: number }): Row[] {
+function filterRowsByTimePeriod<Row>(
+	rows: Array<Row>,
+	timeField: string,
+	bounds: { start: number; end: number }
+): Array<Row> {
 	return rows.filter((row) => {
 		const timestamp = parseRowTimestampSec(getRowField(row, timeField))
 		if (timestamp == null) return true
@@ -124,11 +128,11 @@ function filterRowsByTimePeriod<Row>(rows: Row[], timeField: string, bounds: { s
 
 function filterChartRows<Row>(
 	config: ChartConfiguration,
-	rows: Row[],
+	rows: Array<Row>,
 	timePeriod: TimePeriod,
 	customPeriod?: CustomTimePeriod | null
-): Row[] {
-	if (!rows.length) return rows
+): Array<Row> {
+	if (rows.length === 0) return rows
 
 	const bounds = getTimePeriodBounds(timePeriod, customPeriod)
 	if (!bounds || !isTimeSeriesChart(config, rows)) return rows
@@ -137,30 +141,30 @@ function filterChartRows<Row>(
 }
 
 export function filterLlamaAIChartPayload<Row>(
-	charts: ChartConfiguration[],
-	chartData: Row[],
+	charts: Array<ChartConfiguration>,
+	chartData: Array<Row>,
 	timePeriod: TimePeriod,
 	customPeriod?: CustomTimePeriod | null
-): Row[]
-export function filterLlamaAIChartPayload<Datasets extends Record<string, unknown[]>>(
-	charts: ChartConfiguration[],
+): Array<Row>
+export function filterLlamaAIChartPayload<Datasets extends Record<string, Array<unknown>>>(
+	charts: Array<ChartConfiguration>,
 	chartData: Datasets,
 	timePeriod: TimePeriod,
 	customPeriod?: CustomTimePeriod | null
 ): Datasets
 export function filterLlamaAIChartPayload(
-	charts: ChartConfiguration[],
-	chartData: unknown[] | Record<string, unknown[]>,
+	charts: Array<ChartConfiguration>,
+	chartData: Array<unknown> | Record<string, Array<unknown>>,
 	timePeriod: TimePeriod,
 	customPeriod?: CustomTimePeriod | null
-): unknown[] | Record<string, unknown[]> {
+): Array<unknown> | Record<string, Array<unknown>> {
 	if (Array.isArray(chartData)) {
 		const config = charts[0]
 		if (!config) return chartData
 		return filterChartRows(config, chartData, timePeriod, customPeriod)
 	}
 
-	const filtered: Record<string, unknown[]> = { ...chartData }
+	const filtered: Record<string, Array<unknown>> = { ...chartData }
 
 	for (const chart of charts) {
 		const key = chart.datasetName || chart.id

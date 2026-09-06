@@ -12,7 +12,7 @@ const REDIRECTED_PROTOCOLS_LISTING_SLUGS = new Set([
 	'bridge-aggregator'
 ])
 
-export function getProtocolListingSlugsFromMetadata(metadataCache: MetadataCache): string[] {
+export function getProtocolListingSlugsFromMetadata(metadataCache: MetadataCache): Array<string> {
 	const slugs = new Set<string>()
 	const { categories, tags, tagCategoryMap } = metadataCache.categoriesAndTags
 

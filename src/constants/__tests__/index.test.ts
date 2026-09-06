@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { DIRECT_URL_ENV_NAMES } from '~/utils/directApi'
 
 const ORIGINAL_ENV = { ...process.env }
@@ -29,13 +29,13 @@ afterEach(() => {
 })
 
 describe('PRO_API_BASE_URL', () => {
-	it('is the fixed pro API host', async () => {
+	test('is the fixed pro API host', async () => {
 		const constants = await importConstantsWithEnv({})
 
 		expect(constants.PRO_API_BASE_URL).toBe('https://pro-api.llama.fi')
 	})
 
-	it('routes server URLs through the pro API when an API key is set', async () => {
+	test('routes server URLs through the pro API when an API key is set', async () => {
 		const constants = await importConstantsWithEnv({ API_KEY: 'secret-api-key' })
 
 		expect(constants.SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/api')
@@ -46,7 +46,7 @@ describe('PRO_API_BASE_URL', () => {
 })
 
 describe('server URL constants', () => {
-	it('uses public upstreams without an API key or direct URL overrides', async () => {
+	test('uses public upstreams without an API key or direct URL overrides', async () => {
 		const constants = await importConstantsWithEnv({})
 
 		expect(constants.SERVER_URL).toBe('https://api.llama.fi')
@@ -69,7 +69,7 @@ describe('server URL constants', () => {
 		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://yields-v2.llama.fi')
 	})
 
-	it('uses direct URL overrides before pro API fallbacks', async () => {
+	test('uses direct URL overrides before pro API fallbacks', async () => {
 		const constants = await importConstantsWithEnv({
 			API_KEY: 'secret-api-key',
 			BRIDGES_SERVER_URL: 'https://bridges.example.com/',
@@ -109,7 +109,7 @@ describe('server URL constants', () => {
 		expect(constants.YIELDS_V2_SERVER_URL).toBe('https://yields.example.com')
 	})
 
-	it('uses an explicit V2 server URL override when provided', async () => {
+	test('uses an explicit V2 server URL override when provided', async () => {
 		const constants = await importConstantsWithEnv({
 			API_KEY: 'secret-api-key',
 			SERVER_URL: 'https://core.example.com/api',
@@ -122,13 +122,13 @@ describe('server URL constants', () => {
 })
 
 describe('MARKETS_SERVER_URL', () => {
-	it('derives from the pro API key', async () => {
+	test('derives from the pro API key', async () => {
 		const constants = await importConstantsWithEnv({ API_KEY: 'secret-api-key' })
 
 		expect(constants.MARKETS_SERVER_URL).toBe('https://pro-api.llama.fi/secret-api-key/markets')
 	})
 
-	it('uses the public markets URL without an API key', async () => {
+	test('uses the public markets URL without an API key', async () => {
 		const constants = await importConstantsWithEnv({})
 
 		expect(constants.MARKETS_SERVER_URL).toBe('https://markets.llama.fi')

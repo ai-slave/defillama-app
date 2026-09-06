@@ -39,11 +39,11 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 	chainDominance: 'Dominance'
 }
 
-const EMPTY_HALLMARKS: [number, string][] = []
-const TOTAL_CIRCULATING_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const EMPTY_HALLMARKS: Array<[number, string]> = []
+const TOTAL_CIRCULATING_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'line', name: 'Circulating', encode: { x: 'timestamp', y: 'Circulating' }, color: '#3e79cc' }
 ]
-const EMPTY_SERIES: string[] = []
+const EMPTY_SERIES: Array<string> = []
 
 export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardProps) {
 	const { stablecoin, stablecoinId, chartType } = config
@@ -79,7 +79,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 		}
 		return colors
 	}, [chainsUnique])
-	const chainCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
+	const chainCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			presentation.chartType === 'chainMcaps'
 				? presentation.charts.map((chart) => {
@@ -94,7 +94,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 				: [],
 		[presentation, chainColors]
 	)
-	const chainDominanceCharts = useMemo<MultiSeriesChartSeriesConfig[]>(
+	const chainDominanceCharts = useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() =>
 			presentation.chartType === 'chainDominance'
 				? presentation.charts.map((chart) => {
@@ -276,7 +276,7 @@ export function StablecoinAssetChartCard({ config }: StablecoinAssetChartCardPro
 						dataset={filteredDataset!}
 						charts={chainDominanceCharts}
 						selectedCharts={selectedCharts}
-						expandTo100Percent={true}
+						expandTo100Percent
 						chartOptions={STABLECOIN_PERCENT_CHART_OPTIONS}
 						exportButtons="hidden"
 						onReady={handleChartReady}

@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { BasicLink } from './Link'
 
 const mocks = vi.hoisted(() => ({ trackUmamiEvent: vi.fn() }))
@@ -39,7 +39,7 @@ describe('BasicLink umami events', () => {
 		container.remove()
 	})
 
-	it('tracks an internal event without rendering Umami attributes', async () => {
+	test('tracks an internal event without rendering Umami attributes', async () => {
 		await act(async () =>
 			root.render(
 				<BasicLink href="/ai" data-umami-event="llamaai-nav-link" data-umami-event-subscribed="true">
@@ -58,7 +58,7 @@ describe('BasicLink umami events', () => {
 		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith('llamaai-nav-link', { subscribed: 'true' })
 	})
 
-	it('leaves ordinary internal links untracked', async () => {
+	test('leaves ordinary internal links untracked', async () => {
 		await act(async () => root.render(<BasicLink href="/ai">Ask LlamaAI</BasicLink>))
 
 		await act(async () => container.querySelector('a')?.click())

@@ -14,7 +14,7 @@ export function ColumnsSelect({ nestedMenu }: { nestedMenu?: boolean }) {
 
 	// Drive the `column` param directly (state mode): preserve any values owned by other
 	// controls/pages, then append the current selection.
-	const setSelectedValues = (values: string[]) => {
+	const setSelectedValues = (values: Array<string>) => {
 		const prevSet = new Set(selectedColumns)
 		const nextSet = new Set(values)
 		for (const value of values) {
@@ -29,7 +29,7 @@ export function ColumnsSelect({ nestedMenu }: { nestedMenu?: boolean }) {
 				? [column]
 				: []
 		const next = [...foreign, ...values]
-		void pushYieldsQuery(router, { column: next.length ? next : undefined })
+		void pushYieldsQuery(router, { column: next.length > 0 ? next : undefined })
 	}
 
 	return (

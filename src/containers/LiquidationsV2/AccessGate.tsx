@@ -9,8 +9,8 @@ import { SurfaceBodyLoadingStatus, SurfaceBodyStatus, type StatusVariant } from 
 import type { NavLink } from './api.types'
 
 interface LiquidationsShellChromeProps {
-	protocolLinks?: NavLink[]
-	chainLinks?: NavLink[]
+	protocolLinks?: Array<NavLink>
+	chainLinks?: Array<NavLink>
 	activeProtocolLink?: string
 	activeChainLink?: string
 }

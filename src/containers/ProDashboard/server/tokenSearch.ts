@@ -23,7 +23,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			filteredTokens = allTokens.slice(0, 20)
 		}
 
-		const options: { value: string; label: string; logo: string | null; id: string; price: number | null }[] = []
+		const options: Array<{ value: string; label: string; logo: string | null; id: string; price: number | null }> = []
 		for (const token of filteredTokens) {
 			if (options.length >= 100) break
 			if (!token.symbol) continue

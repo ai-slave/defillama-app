@@ -61,11 +61,11 @@ async function getChainNativeByChainBreakdownData({
 	chainCategories
 }: {
 	metric: ChainNativeBreakdownMetric
-	chains: string[]
+	chains: Array<string>
 	topN: number
 	chainFilterMode: 'include' | 'exclude'
 	chainCategoryFilterMode: 'include' | 'exclude'
-	chainCategories: string[]
+	chainCategories: Array<string>
 }): Promise<ProtocolChainData> {
 	const config = CHAIN_NATIVE_BREAKDOWN_CONFIG[metric]
 	const overview = await fetchAdapterChainMetrics({
@@ -156,11 +156,11 @@ async function getChainNativeByChainBreakdownData({
 
 interface ChainNativeBreakdownRequest {
 	metric: ChainNativeBreakdownMetric
-	chains: string[]
+	chains: Array<string>
 	topN: number
 	chainFilterMode: 'include' | 'exclude'
 	chainCategoryFilterMode: 'include' | 'exclude'
-	chainCategories: string[]
+	chainCategories: Array<string>
 }
 
 export function getCachedChainNativeBreakdown({

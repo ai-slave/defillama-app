@@ -1,4 +1,4 @@
-import { expect, it, vi } from 'vitest'
+import { expect, test, vi } from 'vitest'
 
 vi.mock('~/utils/maxAgeForNext', () => ({
 	maxAgeForNext: () => 123
@@ -43,7 +43,7 @@ vi.mock('~/containers/ProtocolRankings/server/tableData.server', () => ({
 
 import { getStaticProps } from '~/pages/safe-harbor-agreements'
 
-it('revalidates changing Safe Harbor rankings hourly', async () => {
+test('revalidates changing Safe Harbor rankings hourly', async () => {
 	await expect(getStaticProps({} as never)).resolves.toMatchObject({
 		props: {
 			protocols: [{ name: 'Protocol', tvl: 100, fees: 10, revenue: 5, dexVolume: 20 }]

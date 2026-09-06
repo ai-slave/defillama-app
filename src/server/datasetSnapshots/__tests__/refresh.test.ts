@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { DATASET_SNAPSHOT_DOMAINS, type DatasetSnapshotDomain } from '../contract'
 import { createDatasetSnapshotRefreshCoordinator, type DatasetSnapshotAcquisition } from '../refresh.server'
 import type { DatasetSnapshotRegistration } from '../registry.server'
@@ -47,7 +47,7 @@ class FakeStore implements DatasetSnapshotStore {
 }
 
 describe('dataset snapshot refresh coordinator', () => {
-	it('returns a fresh snapshot without invoking its builder', async () => {
+	test('returns a fresh snapshot without invoking its builder', async () => {
 		const builder = vi.fn()
 		const current = handle('current', 950)
 		const store = new FakeStore(current)
@@ -61,7 +61,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		expect(builder).not.toHaveBeenCalled()
 	})
 
-	it('publishes stale snapshots once for concurrent blocking callers', async () => {
+	test('publishes stale snapshots once for concurrent blocking callers', async () => {
 		let release: () => void = () => undefined
 		const gate = new Promise<void>((resolve) => {
 			release = resolve
@@ -86,7 +86,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		expect(store.pruneVersions).toHaveBeenCalledWith('yields', 2)
 	})
 
-	it('serves the exact previous snapshot when refresh fails and throws when none exists', async () => {
+	test('serves the exact previous snapshot when refresh fails and throws when none exists', async () => {
 		const failure = new Error('upstream failed')
 		const builder = vi.fn().mockRejectedValue(failure)
 		const previous = handle('old', 1)
@@ -113,7 +113,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		await expect(emptyCoordinator.acquire('yields', 'blocking')).rejects.toBe(failure)
 	})
 
-	it('returns stale immediately while a successful background refresh publishes the next version', async () => {
+	test('returns stale immediately while a successful background refresh publishes the next version', async () => {
 		const builder = vi.fn().mockResolvedValue(undefined)
 		const previous = handle('old', 1)
 		const store = new FakeStore(previous)
@@ -132,7 +132,7 @@ describe('dataset snapshot refresh coordinator', () => {
 		expect(store.publishCount).toBe(1)
 	})
 
-	it('returns stale immediately for background refresh and applies failure backoff', async () => {
+	test('returns stale immediately for background refresh and applies failure backoff', async () => {
 		const failure = new Error('upstream failed')
 		const builder = vi.fn().mockRejectedValue(failure)
 		const previous = handle('old', 1)

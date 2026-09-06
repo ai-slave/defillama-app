@@ -122,21 +122,21 @@ export interface IEquitiesOnchainTokenApiItem {
 }
 
 export interface IEquitiesOnchainResponse {
-	perps: IEquitiesOnchainPerpApiItem[]
-	tokens: IEquitiesOnchainTokenApiItem[]
+	perps: Array<IEquitiesOnchainPerpApiItem>
+	tokens: Array<IEquitiesOnchainTokenApiItem>
 }
 
 interface IEquitiesStatementPeriodData {
-	periodEnding: string[]
+	periodEnding: Array<string>
 	values: Array<Array<number | null>>
 	children: Record<string, { values: Array<Array<number | null>> }>
 }
 
 interface IEquitiesStatementSection {
-	labels: string[]
+	labels: Array<string>
 	children: {
-		quarterly: Record<string, { labels: string[] }>
-		annual: Record<string, { labels: string[] }>
+		quarterly: Record<string, { labels: Array<string> }>
+		annual: Record<string, { labels: Array<string> }>
 	}
 	quarterly: IEquitiesStatementPeriodData
 	annual: IEquitiesStatementPeriodData

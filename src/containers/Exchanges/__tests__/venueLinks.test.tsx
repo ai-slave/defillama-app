@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ExchangeProfileModel } from '../models'
 import { ProfileIdentity } from '../ProfileIdentity'
 import { selectVenueDestination } from '../venueLinks'
@@ -29,7 +29,7 @@ function profile(
 }
 
 describe('exchange venue links', () => {
-	it('selects one referral-first destination at the model boundary', () => {
+	test('selects one referral-first destination at the model boundary', () => {
 		expect(selectVenueDestination('venue', 'https://ref.example', 'https://website.example')).toEqual({
 			url: 'https://ref.example',
 			kind: 'referral'
@@ -41,7 +41,7 @@ describe('exchange venue links', () => {
 		expect(selectVenueDestination('venue', null, null)).toBeNull()
 	})
 
-	it('uses a frontend override only for its exact public entity slug', () => {
+	test('uses a frontend override only for its exact public entity slug', () => {
 		const overrides = { 'bybit-eu': 'https://override.example/eu' }
 		expect(
 			selectVenueDestination('bybit-eu', 'https://backend.example/ref', 'https://www.bybit.eu', overrides)
@@ -56,14 +56,14 @@ describe('exchange venue links', () => {
 		})
 	})
 
-	it('ships with no standing overrides — all referrals come from the backend', () => {
+	test('ships with no standing overrides — all referrals come from the backend', () => {
 		expect(selectVenueDestination('bybit-eu', 'https://backend.example/ref', 'https://www.bybit.eu')).toEqual({
 			url: 'https://backend.example/ref',
 			kind: 'referral'
 		})
 	})
 
-	it('renders only the selected referral URL when both destinations exist', () => {
+	test('renders only the selected referral URL when both destinations exist', () => {
 		const html = renderToStaticMarkup(
 			<ProfileIdentity profile={profile('https://ref.example', 'https://website.example')} />
 		)
@@ -73,7 +73,7 @@ describe('exchange venue links', () => {
 		expect(html).not.toContain('https://website.example')
 	})
 
-	it('renders the website fallback and omits the action when neither destination exists', () => {
+	test('renders the website fallback and omits the action when neither destination exists', () => {
 		const websiteHtml = renderToStaticMarkup(<ProfileIdentity profile={profile(null, 'https://website.example')} />)
 		const missingHtml = renderToStaticMarkup(<ProfileIdentity profile={profile(null, null)} />)
 
@@ -81,7 +81,7 @@ describe('exchange venue links', () => {
 		expect(missingHtml).not.toContain('aria-label="Open Venue website"')
 	})
 
-	it('renders the primary Twitter action beside the website action', () => {
+	test('renders the primary Twitter action beside the website action', () => {
 		const html = renderToStaticMarkup(
 			<ProfileIdentity profile={profile(null, 'https://website.example', 'https://x.com/venue')} />
 		)

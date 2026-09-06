@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { getIntegrationRowResetKey } from '~/containers/LlamaAI/components/IntegrationRow'
 import {
@@ -40,7 +40,7 @@ function derive(status: TelegramStatus | null, localState: IntegrationLinkLocalS
 }
 
 describe('useIntegrationLink state helpers', () => {
-	it('renders linked with pending as awaiting Telegram confirmation', () => {
+	test('renders linked with pending as awaiting Telegram confirmation', () => {
 		expect(derive(linkedWithPending)).toEqual({
 			status: 'awaiting_tg',
 			token: 'pending-token',
@@ -49,12 +49,12 @@ describe('useIntegrationLink state helpers', () => {
 		expect(getTelegramStatusRefetchInterval(linkedWithPending)).toBe(2000)
 	})
 
-	it('renders unlinked without pending as idle and stops polling', () => {
+	test('renders unlinked without pending as idle and stops polling', () => {
 		expect(derive(unlinked)).toEqual({ status: 'idle' })
 		expect(getTelegramStatusRefetchInterval(unlinked)).toBe(false)
 	})
 
-	it('renders linked without pending as linked and stops polling', () => {
+	test('renders linked without pending as linked and stops polling', () => {
 		expect(derive(linked)).toEqual({
 			status: 'linked',
 			username: 'defillama',
@@ -63,7 +63,7 @@ describe('useIntegrationLink state helpers', () => {
 		expect(getTelegramStatusRefetchInterval(linked)).toBe(false)
 	})
 
-	it('returns to query-derived linked state after switch confirmation is cancelled', () => {
+	test('returns to query-derived linked state after switch confirmation is cancelled', () => {
 		expect(derive(linked, { status: 'idle' })).toEqual({
 			status: 'linked',
 			username: 'defillama',
@@ -71,12 +71,12 @@ describe('useIntegrationLink state helpers', () => {
 		})
 	})
 
-	it('changes the reset key when a new tglogin token arrives', () => {
+	test('changes the reset key when a new tglogin token arrives', () => {
 		expect(getIntegrationRowResetKey('first-token', linked)).not.toBe(getIntegrationRowResetKey('second-token', linked))
 		expect(getIntegrationRowResetKey(null, pending)).toBe('pending:pending-token')
 	})
 
-	it('keeps forced switch confirmation errors visible while a tglogin token is still present', () => {
+	test('keeps forced switch confirmation errors visible while a tglogin token is still present', () => {
 		expect(
 			deriveTelegramLocalState({
 				switchConfirmation: null,
@@ -92,7 +92,7 @@ describe('useIntegrationLink state helpers', () => {
 		).toEqual({ status: 'error', message: 'Switch failed' })
 	})
 
-	it('surfaces status load errors when there is no status data to render', () => {
+	test('surfaces status load errors when there is no status data to render', () => {
 		expect(
 			deriveTelegramLocalState({
 				switchConfirmation: null,

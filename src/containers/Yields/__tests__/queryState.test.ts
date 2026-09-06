@@ -1,21 +1,21 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { decodeYieldsQuery, resetYieldsPoolPageOnFilterChange, selectedSubsetQuery } from '../queryState'
 
 describe('selectedSubsetQuery', () => {
-	it('encodes all, none, and partial selections for include filters', () => {
+	test('encodes all, none, and partial selections for include filters', () => {
 		expect(selectedSubsetQuery(['Ethereum', 'Base'], ['Ethereum', 'Base'])).toBeUndefined()
 		expect(selectedSubsetQuery([], ['Ethereum', 'Base'])).toEqual(['__none__'])
 		expect(selectedSubsetQuery(['Base'], ['Ethereum', 'Base'])).toEqual(['Base'])
 	})
 
-	it('does not turn unavailable metadata into a deselect-all filter', () => {
+	test('does not turn unavailable metadata into a deselect-all filter', () => {
 		expect(selectedSubsetQuery([], [])).toBeUndefined()
 		expect(selectedSubsetQuery(['Ethereum'], [])).toEqual(['Ethereum'])
 	})
 })
 
 describe('decodeYieldsQuery', () => {
-	it('applies selection, exclusion, range, and ALL_EVM semantics consistently', () => {
+	test('applies selection, exclusion, range, and ALL_EVM semantics consistently', () => {
 		const decoded = decodeYieldsQuery(
 			{
 				project: ['Aave', 'Compound'],
@@ -42,7 +42,7 @@ describe('decodeYieldsQuery', () => {
 })
 
 describe('resetYieldsPoolPageOnFilterChange', () => {
-	it('clears table pagination only on server-paginated yield routes', () => {
+	test('clears table pagination only on server-paginated yield routes', () => {
 		expect(resetYieldsPoolPageOnFilterChange('/yields', { chain: 'Ethereum' })).toEqual({
 			chain: 'Ethereum',
 			page: undefined

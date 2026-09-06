@@ -12,12 +12,7 @@ const getServerSidePropsHandler: GetServerSideProps = async (context) => {
 
 export default function YieldPoolPage() {
 	return (
-		<Layout
-			title={`DeFi Yield Pool Chart & Analytics - DefiLlama`}
-			description={null}
-			canonicalUrl={null}
-			noIndex={true}
-		>
+		<Layout title="DeFi Yield Pool Chart & Analytics - DefiLlama" description={null} canonicalUrl={null} noIndex>
 			<></>
 		</Layout>
 	)

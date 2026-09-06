@@ -22,7 +22,7 @@ type ProtocolTvlValueRow = ProtocolTvlEntityRow & {
 type ProtocolTvlSql = {
 	entityQuery: string
 	valueQuery: string
-	params: unknown[]
+	params: Array<unknown>
 }
 
 function buildProtocolTvlSql(request: ChartBuilderCsvRequest): ProtocolTvlSql {
@@ -31,7 +31,7 @@ function buildProtocolTvlSql(request: ChartBuilderCsvRequest): ProtocolTvlSql {
 	const table = useChainRows ? 'lens.metrics_sub_protocol_by_chain_daily' : 'lens.metrics_sub_protocol_daily'
 	const { startDate, endDate } = getCsvDateBounds(request)
 	const categories = request.config.categories.map((category) => category.toLowerCase())
-	const params: unknown[] = [startDate, endDate]
+	const params: Array<unknown> = [startDate, endDate]
 	let chainPredicate = ''
 	if (useChainRows) {
 		params.push(chains)
@@ -96,7 +96,10 @@ function entityKey(row: ProtocolTvlEntityRow, groupByParent: boolean): string {
 	return `protocol:${row.sub_protocol}`
 }
 
-async function buildEntities(rows: ProtocolTvlEntityRow[], groupByParent: boolean): Promise<SnapshotCsvEntity[]> {
+async function buildEntities(
+	rows: Array<ProtocolTvlEntityRow>,
+	groupByParent: boolean
+): Promise<Array<SnapshotCsvEntity>> {
 	const parentNameBySlug = new Map<string, string>()
 	if (groupByParent) {
 		const metadata = await fetchProtocols()

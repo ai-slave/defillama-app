@@ -18,7 +18,7 @@ export interface VirtualizedSelectOption {
 
 interface AriakitVirtualizedSelectProps {
 	label: string
-	options: VirtualizedSelectOption[]
+	options: Array<VirtualizedSelectOption>
 	selectedValue: string | null
 	onChange: (option: VirtualizedSelectOption) => void
 	placeholder?: string
@@ -110,7 +110,7 @@ export function AriakitVirtualizedSelect({
 					<Popover
 						store={popover}
 						modal={false}
-						portal={true}
+						portal
 						flip={false}
 						gutter={4}
 						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-xl"

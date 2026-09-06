@@ -37,17 +37,17 @@ const SubscribeProModal = lazy(() =>
 	}))
 )
 
-const EMPTY_SAVED_PROTOCOLS: IProtocol[] = []
+const EMPTY_SAVED_PROTOCOLS: Array<IProtocol> = []
 const EMPTY_SAVED_CHAINS: IChainsByCategoryData['chains'] = []
 
-async function fetchWatchedRows<Row>(url: string, names: string[]): Promise<Row[]> {
+async function fetchWatchedRows<Row>(url: string, names: Array<string>): Promise<Array<Row>> {
 	const response = await fetch(url, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ names })
 	})
 	if (!response.ok) throw new Error(`Failed to load watchlist rows (${response.status})`)
-	const payload = (await response.json()) as { rows: Row[] }
+	const payload = (await response.json()) as { rows: Array<Row> }
 	return payload.rows
 }
 
@@ -56,9 +56,9 @@ export function DefiWatchlistContainer({
 	chainOptions: chainNames
 }: {
 	/** Parent protocol names for the add-protocol picker; rows are fetched per saved name. */
-	protocolOptions: string[]
+	protocolOptions: Array<string>
 	/** Chain names for the add-chain picker; rows are fetched per saved name. */
-	chainOptions: string[]
+	chainOptions: Array<string>
 }) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 
@@ -97,7 +97,7 @@ export function DefiWatchlistContainer({
 		return applyProtocolTvlSettings({ protocols: savedProtocolsList, extraTvlsEnabled, minTvl, maxTvl })
 	}, [savedProtocolsList, extraTvlsEnabled, minTvl, maxTvl])
 
-	const handleProtocolSelection = (selectedValues: string[]) => {
+	const handleProtocolSelection = (selectedValues: Array<string>) => {
 		const currentSet = new Set(selectedProtocolNames)
 		const newSet = new Set(selectedValues)
 
@@ -132,7 +132,7 @@ export function DefiWatchlistContainer({
 
 	const { chainsTableData } = useGroupAndFormatChains({ chains: savedChainsList, category: 'All', hideGroupBy: true })
 
-	const handleChainSelection = (selectedValues: string[]) => {
+	const handleChainSelection = (selectedValues: Array<string>) => {
 		const currentSet = new Set(selectedChainNames)
 		const newSet = new Set(selectedValues)
 		const toAdd = selectedValues.filter((name) => !currentSet.has(name))
@@ -179,7 +179,7 @@ export function DefiWatchlistContainer({
 							size="md"
 						/>
 					</div>
-					{protocolsTableData.length ? (
+					{protocolsTableData.length > 0 ? (
 						<ChainProtocolsTable protocols={protocolsTableData} useStickyHeader={false} borderless />
 					) : isLoadingProtocolRows && watchedNames.length > 0 ? (
 						<PanelLoadingStatus />
@@ -210,7 +210,7 @@ export function DefiWatchlistContainer({
 							size="md"
 						/>
 					</div>
-					{chainsTableData.length ? (
+					{chainsTableData.length > 0 ? (
 						<ChainsByCategoryTable data={chainsTableData} useStickyHeader={false} borderless showByGroup={false} />
 					) : isLoadingChainRows && watchedChainNames.length > 0 ? (
 						<PanelLoadingStatus />
@@ -227,7 +227,7 @@ export function DefiWatchlistContainer({
 	)
 }
 
-const EMPTY_ARRAY: any[] = []
+const EMPTY_ARRAY: Array<any> = []
 const smallActionButtonClassName = buttonStyles({ size: 'md' })
 const portfolioActionButtonClassName = buttonStyles({ size: 'md' })
 const smallToneActionButtonBaseClassName =
@@ -243,8 +243,8 @@ function PortfolioNotifications({
 	filteredChains = EMPTY_ARRAY
 }: {
 	selectedPortfolio: string
-	filteredProtocols?: any[]
-	filteredChains?: any[]
+	filteredProtocols?: Array<any>
+	filteredChains?: Array<any>
 }) {
 	const dialogStore = Ariakit.useDialogStore()
 	const isClient = useIsClient()
@@ -294,8 +294,8 @@ function PortfolioNotifications({
 
 	const formStore = Ariakit.useFormStore({
 		defaultValues: {
-			protocolMetrics: [] as string[],
-			chainMetrics: [] as string[]
+			protocolMetrics: [] as Array<string>,
+			chainMetrics: [] as Array<string>
 		}
 	})
 
@@ -701,7 +701,7 @@ function PortfolioSelection() {
 			<div className="flex flex-wrap items-center gap-2 p-2">
 				<h1 className="mr-auto heading-xs">Portfolio</h1>
 				<Menu
-					name={selectedPortfolio.length > 100 ? selectedPortfolio.substring(0, 100) + '...' : selectedPortfolio}
+					name={selectedPortfolio.length > 100 ? `${selectedPortfolio.substring(0, 100)}...` : selectedPortfolio}
 					key={`${selectedPortfolio}-${portfolios.length}`}
 					options={portfolios}
 					onItemClick={(value) => handleSelectPortfolio(value)}
@@ -735,13 +735,13 @@ function PortfolioSelection() {
 }
 
 type TopMoversProps = {
-	protocols: IProtocol[]
+	protocols: Array<IProtocol>
 }
 
 function TopMovers({ protocols }: TopMoversProps) {
 	const [showPositive, setShowPositive] = useState(true)
 	const [showNegative, setShowNegative] = useState(true)
-	const [selectedChains, setSelectedChains] = useState<string[]>([])
+	const [selectedChains, setSelectedChains] = useState<Array<string>>([])
 	const selectedChainsSet = useMemo(() => new Set(selectedChains), [selectedChains])
 
 	const availableChains = useMemo(() => {
@@ -756,7 +756,7 @@ function TopMovers({ protocols }: TopMoversProps) {
 
 	const topMovers = useMemo(() => {
 		const periods = ['1d', '7d', '1m']
-		const movers: Record<string, Array<{ name: string; slug?: string; change: number; chains: string[] }>> = {}
+		const movers: Record<string, Array<{ name: string; slug?: string; change: number; chains: Array<string> }>> = {}
 
 		for (const period of periods) {
 			const changeKey = `change${period}`

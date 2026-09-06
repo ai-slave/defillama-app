@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ProtocolLite, ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import type { ILsdRateApiItem, IProtocolDetailApiItem, IYieldPoolApiItem } from '../api.types'
 import { buildLstInflowsData, buildLstInflowsSeriesData } from '../chartData'
@@ -7,8 +7,8 @@ import { getLSTPageData } from '../queries'
 const mocks = vi.hoisted(() => ({
 	fetchProtocols: vi.fn<() => Promise<ProtocolsResponse>>(),
 	fetchProtocolBySlug: vi.fn<(protocolSlug: string) => Promise<IProtocolDetailApiItem>>(),
-	fetchYieldPools: vi.fn<() => Promise<IYieldPoolApiItem[]>>(),
-	fetchLsdRates: vi.fn<() => Promise<ILsdRateApiItem[]>>(),
+	fetchYieldPools: vi.fn<() => Promise<Array<IYieldPoolApiItem>>>(),
+	fetchLsdRates: vi.fn<() => Promise<Array<ILsdRateApiItem>>>(),
 	fetchEthPrice: vi.fn<() => Promise<number | null>>()
 }))
 
@@ -30,7 +30,7 @@ function protocolLite({
 }: {
 	name: string
 	category?: string
-	chains?: string[]
+	chains?: Array<string>
 }): ProtocolLite {
 	return {
 		name,
@@ -82,7 +82,7 @@ describe('getLSTPageData', () => {
 		mocks.fetchLsdRates.mockResolvedValue([])
 	})
 
-	it('preserves LST token ordering, one output population, and Lido-required history rows', async () => {
+	test('preserves LST token ordering, one output population, and Lido-required history rows', async () => {
 		const earlyDate = 1_608_249_600
 		const missingLidoDate = 1_608_422_400
 		const latestDate = 1_609_027_200
@@ -105,7 +105,7 @@ describe('getLSTPageData', () => {
 			{ project: 'rocket-pool', chain: 'Ethereum', symbol: 'RETH', apy: 2, tvlUsd: 200 },
 			{ project: 'diva', chain: 'Ethereum', symbol: 'DIVAETH', apy: 1, tvlUsd: 100 }
 		])
-		mocks.fetchEthPrice.mockResolvedValue(2_000)
+		mocks.fetchEthPrice.mockResolvedValue(2000)
 		mocks.fetchLsdRates.mockResolvedValue([
 			{
 				name: 'Lido',
@@ -189,8 +189,8 @@ describe('getLSTPageData', () => {
 		expect(inflowsChart.dataset).toEqual({
 			dimensions: ['timestamp', 'Lido', 'Rocket Pool', 'diva'],
 			source: [
-				[missingLidoDate * 1_000, undefined, 20, undefined],
-				[latestDate * 1_000, 10, 10, undefined]
+				[missingLidoDate * 1000, undefined, 20, undefined],
+				[latestDate * 1000, 10, 10, undefined]
 			]
 		})
 		expect(inflowsChart.barCharts.map(({ name, encode, stack }) => ({ name, encode, stack }))).toEqual([
@@ -215,7 +215,7 @@ describe('getLSTPageData', () => {
 		expect(resultWithoutLegacyRates).toMatchObject({ ratesAvailable: false, apyAvailable: true })
 	})
 
-	it('rejects when a required member history is unavailable', async () => {
+	test('rejects when a required member history is unavailable', async () => {
 		mocks.fetchProtocols.mockResolvedValue({
 			protocols: [protocolLite({ name: 'Lido' }), protocolLite({ name: 'Rocket Pool' })],
 			chains: ['Ethereum'],
@@ -234,7 +234,7 @@ describe('getLSTPageData', () => {
 		)
 	})
 
-	it('selects APY by exact LST symbol before largest-pool fallback', async () => {
+	test('selects APY by exact LST symbol before largest-pool fallback', async () => {
 		const latestDate = 1_609_027_200
 		mocks.fetchProtocols.mockResolvedValue({
 			protocols: [protocolLite({ name: 'Lido' })],
@@ -258,7 +258,7 @@ describe('getLSTPageData', () => {
 				fee: null
 			}
 		])
-		mocks.fetchEthPrice.mockResolvedValue(2_000)
+		mocks.fetchEthPrice.mockResolvedValue(2000)
 		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) =>
 			protocolSlug === 'lido'
 				? protocolDetail({
@@ -277,7 +277,7 @@ describe('getLSTPageData', () => {
 		expect(largestPool.tokensList[0]?.apy).toBe(3)
 	})
 
-	it('joins APY with canonical member identity instead of reconstructed casing', async () => {
+	test('joins APY with canonical member identity instead of reconstructed casing', async () => {
 		const latestDate = 1_609_027_200
 		mocks.fetchProtocols.mockResolvedValue({
 			protocols: [protocolLite({ name: 'mETH Protocol' })],
@@ -315,7 +315,7 @@ describe('getLSTPageData', () => {
 		expect(result.tokensList[0]).toMatchObject({ name: 'mETH Protocol', apy: 1.34 })
 	})
 
-	it('distinguishes successful empty optional sources from source failure', async () => {
+	test('distinguishes successful empty optional sources from source failure', async () => {
 		mocks.fetchProtocols.mockResolvedValue({
 			protocols: [],
 			chains: [],
@@ -340,7 +340,7 @@ describe('getLSTPageData', () => {
 		expect(mocks.fetchYieldPools).toHaveBeenCalledTimes(2)
 	})
 
-	it('keeps daily multi-token history summed while current ETH uses the largest token balance', async () => {
+	test('keeps daily multi-token history summed while current ETH uses the largest token balance', async () => {
 		const day = 1_700_006_400
 		mocks.fetchProtocols.mockResolvedValue({
 			protocols: [protocolLite({ name: 'Lido' })],
@@ -349,16 +349,16 @@ describe('getLSTPageData', () => {
 			protocolCategories: ['Liquid Staking']
 		})
 		mocks.fetchYieldPools.mockResolvedValue([])
-		mocks.fetchEthPrice.mockResolvedValue(2_000)
+		mocks.fetchEthPrice.mockResolvedValue(2000)
 		mocks.fetchProtocolBySlug.mockImplementation(async (protocolSlug) =>
 			protocolSlug === 'lido'
 				? protocolDetail({
 						name: 'Lido',
 						tokens: [
 							{ date: day, tokens: { WETH: 50, stETH: 5 } },
-							{ date: day + 3_600, tokens: { WETH: 60, stETH: 6 } }
+							{ date: day + 3600, tokens: { WETH: 60, stETH: 6 } }
 						],
-						tokensInUsd: [{ date: day + 3_600, tokens: { WETH: 120_000, stETH: 12_000 } }]
+						tokensInUsd: [{ date: day + 3600, tokens: { WETH: 120_000, stETH: 12_000 } }]
 					})
 				: protocolDetail({ name: 'Crypto.com Liquid Staking', chain: 'Cronos' })
 		)
@@ -368,7 +368,7 @@ describe('getLSTPageData', () => {
 		expect(result.tokensList[0]).toMatchObject({ stakedEth: 60, stakedEthInUsd: 120_000 })
 	})
 
-	it('combines Binance Ethereum and BSC balances only at Ethereum timestamps', async () => {
+	test('combines Binance Ethereum and BSC balances only at Ethereum timestamps', async () => {
 		const day1 = 1_500_000_000
 		const day2 = day1 + 86_400
 		const bscOnlyDay = day2 + 86_400
@@ -418,7 +418,7 @@ describe('getLSTPageData', () => {
 		expect(result.tokensList[0]).toMatchObject({ stakedEth: 25, stakedEthInUsd: 50_000 })
 	})
 
-	it('preserves unavailable and explicit-zero LST measurements', async () => {
+	test('preserves unavailable and explicit-zero LST measurements', async () => {
 		const latestDate = 1_609_027_200
 		mocks.fetchProtocols.mockResolvedValue({
 			protocols: [protocolLite({ name: 'Lido' })],

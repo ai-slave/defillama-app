@@ -61,9 +61,9 @@ export function CompositionSection({
 		[model?.line]
 	)
 
-	const footer = useMemo<FooterRow[] | undefined>(() => {
+	const footer = useMemo<Array<FooterRow> | undefined>(() => {
 		if (!model) return undefined
-		const rows: FooterRow[] = [{ cells: { name: 'Total', valueUsd: usd(model.totalUsd), share: pct(100, 1) } }]
+		const rows: Array<FooterRow> = [{ cells: { name: 'Total', valueUsd: usd(model.totalUsd), share: pct(100, 1) } }]
 		if (model.line) {
 			rows.push({
 				muted: true,

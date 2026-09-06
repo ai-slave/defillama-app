@@ -8,8 +8,8 @@ type RwaSnapshotView = Exclude<RWAOverviewChartView, 'timeSeries'>
 type RwaSnapshotItem = { name: string; value: number }
 
 export type RwaSnapshotPresentation =
-	| { view: 'pie'; data: RwaSnapshotItem[] }
-	| { view: 'hbar'; categories: string[]; values: number[] }
+	| { view: 'pie'; data: Array<RwaSnapshotItem> }
+	| { view: 'hbar'; categories: Array<string>; values: Array<number> }
 	| { view: 'treemap'; data: ReturnType<typeof buildRwaTreemapTreeData> }
 
 export function hasRwaOverviewChartExportData(
@@ -55,7 +55,7 @@ export function buildRwaSnapshotPresentation({
 	breakdownLabel: string
 }): RwaSnapshotPresentation {
 	const row = findLatestRwaSnapshotRow(dataset, timePeriod, customTimePeriod)
-	const items: RwaSnapshotItem[] = []
+	const items: Array<RwaSnapshotItem> = []
 	if (row) {
 		for (let dimensionIndex = 1; dimensionIndex < dataset.dimensions.length; dimensionIndex++) {
 			const value = row[dimensionIndex] as number | null | undefined

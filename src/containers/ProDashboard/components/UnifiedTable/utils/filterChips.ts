@@ -10,10 +10,10 @@ export interface ActiveFilterChip {
 	id: string
 	label: string
 	value?: string
-	clearKeys: (keyof UnifiedTableFilters)[]
+	clearKeys: Array<keyof UnifiedTableFilters>
 }
 
-const formatList = (values: string[]): string => {
+const formatList = (values: Array<string>): string => {
 	if (values.length <= 3) {
 		return values.join(', ')
 	}
@@ -28,7 +28,7 @@ const formatFilterNumber = (value: number) =>
 const formatFilterPercent = (value: number) => formatPercent(value, { input: 'percent' })
 
 const addRangeChip = (
-	chips: ActiveFilterChip[],
+	chips: Array<ActiveFilterChip>,
 	filters: UnifiedTableFilters,
 	minKey: UnifiedNumericTableFilterKey,
 	maxKey: UnifiedNumericTableFilterKey,
@@ -59,7 +59,7 @@ const addRangeChip = (
 }
 
 const addListChip = (
-	chips: ActiveFilterChip[],
+	chips: Array<ActiveFilterChip>,
 	filters: UnifiedTableFilters,
 	key: UnifiedListTableFilterKey,
 	label: string
@@ -77,7 +77,7 @@ const addListChip = (
 }
 
 const addBooleanChip = (
-	chips: ActiveFilterChip[],
+	chips: Array<ActiveFilterChip>,
 	filters: UnifiedTableFilters,
 	key: UnifiedBooleanTableFilterKey,
 	label: string
@@ -88,11 +88,11 @@ const addBooleanChip = (
 	chips.push({ id: String(key), label, clearKeys: [key] })
 }
 
-export const getActiveFilterChips = (filters?: UnifiedTableFilters): ActiveFilterChip[] => {
+export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<ActiveFilterChip> => {
 	if (!filters) {
 		return []
 	}
-	const chips: ActiveFilterChip[] = []
+	const chips: Array<ActiveFilterChip> = []
 	const clones: UnifiedTableFilters = { ...filters }
 
 	addListChip(chips, clones, 'protocols', 'Protocols')

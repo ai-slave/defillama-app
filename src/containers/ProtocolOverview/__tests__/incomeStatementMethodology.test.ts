@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IIncomeStatementApiResponse } from '../api.types'
 import { buildIncomeStatementMethodologies } from '../queries'
 
@@ -14,7 +14,7 @@ const child = (
 })
 
 describe('buildIncomeStatementMethodologies', () => {
-	it('keeps metric-level strings separate from label-level breakdown maps', () => {
+	test('keeps metric-level strings separate from label-level breakdown maps', () => {
 		expect(
 			buildIncomeStatementMethodologies({
 				methodology: { Fees: 'Parent fee methodology' },
@@ -30,7 +30,7 @@ describe('buildIncomeStatementMethodologies', () => {
 		})
 	})
 
-	it('aggregates mixed child string and object values without indexing strings as maps', () => {
+	test('aggregates mixed child string and object values without indexing strings as maps', () => {
 		expect(
 			buildIncomeStatementMethodologies({
 				methodology: null,

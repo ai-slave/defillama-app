@@ -20,7 +20,7 @@ interface CalendarDayCellProps {
 export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unlocksData, maxUnlockValue }) => {
 	const [isDarkMode] = useDarkModeManager()
 
-	if (!dayInfo.date) return <div className="h-24 w-full bg-surface opacity-40"></div>
+	if (!dayInfo.date) return <div className="h-24 w-full bg-surface opacity-40" />
 
 	const dateStr = dayInfo.date.format('YYYY-MM-DD')
 	const dayData = unlocksData[dateStr]
@@ -109,7 +109,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unloc
 					) : null}
 					{dayData.events.length > 0 ? (
 						<>
-							<div className="-mx-2 border-t border-medium"></div>
+							<div className="-mx-2 border-t border-medium" />
 							<div className="flex flex-col gap-1.5">
 								{dayData.events.map((event, index) => (
 									<div

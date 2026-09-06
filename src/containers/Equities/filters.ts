@@ -120,7 +120,7 @@ export const EQUITY_FILTER_CONFIGS = [
 	metric('totalDebt', 'balanceSheet', 'currency'),
 	metric('circulatingSupply', 'balanceSheet', 'number'),
 	metric('totalSupply', 'balanceSheet', 'number')
-] as const satisfies readonly EquityFilterConfigShape[]
+] as const satisfies ReadonlyArray<EquityFilterConfigShape>
 
 export type EquityFilterConfig = (typeof EQUITY_FILTER_CONFIGS)[number]
 export type EquityNumericFilterConfig = Extract<EquityFilterConfig, { type: 'numeric' }>
@@ -129,7 +129,7 @@ export type EquityFilterId = EquityFilterConfig['id']
 export type EquityNumericFilterId = EquityNumericFilterConfig['id']
 export type EquityCategoricalFilterId = EquityCategoricalFilterConfig['id']
 
-type NonEmptyArray<T> = [T, ...T[]]
+type NonEmptyArray<T> = [T, ...Array<T>]
 
 export type EquityActiveNumericComparisonFilter = {
 	kind: 'numeric'
@@ -177,7 +177,7 @@ export type EquityDraftCategoricalFilter = {
 	kind: 'categorical'
 	id: EquityCategoricalFilterId
 	mode: EquityCategoricalMode
-	values: string[]
+	values: Array<string>
 }
 
 export type EquityDraftFilter = EquityDraftNumericFilter | EquityDraftCategoricalFilter
@@ -215,7 +215,7 @@ export function getEquityDraftNumericOperator(filter: EquityDraftNumericFilter):
 	return filter.kind === 'numericRange' ? 'between' : filter.operator
 }
 
-function toNonEmptyArray<T>(values: T[]): NonEmptyArray<T> | null {
+function toNonEmptyArray<T>(values: Array<T>): NonEmptyArray<T> | null {
 	return values.length > 0 ? (values as NonEmptyArray<T>) : null
 }
 
@@ -230,7 +230,7 @@ export function parseEquityFilterNumber(input: string): number | undefined {
 	if (!Number.isFinite(base)) return undefined
 
 	const suffix = match[2]
-	if (suffix === 'k') return base * 1_000
+	if (suffix === 'k') return base * 1000
 	if (suffix === 'm') return base * 1_000_000
 	if (suffix === 'b') return base * 1_000_000_000
 	if (suffix === 't') return base * 1_000_000_000_000
@@ -273,7 +273,7 @@ function parseEquityCategoricalFilterSegment(
 	if (!config) return null
 	if (operator !== 'in' && operator !== 'out') return null
 
-	const values: string[] = []
+	const values: Array<string> = []
 	for (const rawPart of rawValue.split(',')) {
 		const value = decodeEquityFilterQueryValue(rawPart)?.trim()
 		if (value) values.push(value)
@@ -320,7 +320,7 @@ function parseEquityNumericFilterSegment(
 	return { kind: 'numeric', id: config.id, operator: comparisonOperator, value }
 }
 
-export function parseEquityFiltersQuery(param: string | string[] | null | undefined): EquityActiveFilter[] {
+export function parseEquityFiltersQuery(param: string | Array<string> | null | undefined): Array<EquityActiveFilter> {
 	const values = Array.isArray(param) ? param : param ? [param] : []
 	const filtersById = new Map<EquityFilterId, EquityActiveFilter>()
 
@@ -340,8 +340,8 @@ export function parseEquityFiltersQuery(param: string | string[] | null | undefi
 	return Array.from(filtersById.values())
 }
 
-export function serializeEquityFiltersQuery(filters: EquityActiveFilter[]): string | undefined {
-	const segments: string[] = []
+export function serializeEquityFiltersQuery(filters: Array<EquityActiveFilter>): string | undefined {
+	const segments: Array<string> = []
 
 	for (const filter of filters) {
 		if (filter.kind === 'categorical') {
@@ -386,8 +386,8 @@ export function draftEquityFilterToActive(filter: EquityDraftFilter): EquityActi
 		: null
 }
 
-export function draftEquityFiltersToActive(filters: EquityDraftFilter[]): EquityActiveFilter[] {
-	const activeFilters: EquityActiveFilter[] = []
+export function draftEquityFiltersToActive(filters: Array<EquityDraftFilter>): Array<EquityActiveFilter> {
+	const activeFilters: Array<EquityActiveFilter> = []
 	for (const filter of filters) {
 		const activeFilter = draftEquityFilterToActive(filter)
 		if (activeFilter) activeFilters.push(activeFilter)
@@ -395,7 +395,7 @@ export function draftEquityFiltersToActive(filters: EquityDraftFilter[]): Equity
 	return activeFilters
 }
 
-export function activeEquityFiltersToDraft(filters: EquityActiveFilter[]): EquityDraftFilter[] {
+export function activeEquityFiltersToDraft(filters: Array<EquityActiveFilter>): Array<EquityDraftFilter> {
 	// Numeric/range filters are immutable value objects and can be reused as-is; categorical
 	// filters need a defensive copy of their mutable `values` array.
 	return filters.map((filter) =>
@@ -403,11 +403,11 @@ export function activeEquityFiltersToDraft(filters: EquityActiveFilter[]): Equit
 	)
 }
 
-export function countActiveEquityFilters(filters: EquityActiveFilter[]): number {
+export function countActiveEquityFilters(filters: Array<EquityActiveFilter>): number {
 	return filters.length
 }
 
-export function countDraftEquityFilters(filters: EquityDraftFilter[]): number {
+export function countDraftEquityFilters(filters: Array<EquityDraftFilter>): number {
 	return draftEquityFiltersToActive(filters).length
 }
 
@@ -416,7 +416,7 @@ export function formatEquityFilterValue(value: number, format: EquityFilterForma
 	return formatEquitiesCompactValue(value, symbol) ?? String(value)
 }
 
-function formatValues(values: readonly string[]): string {
+function formatValues(values: ReadonlyArray<string>): string {
 	if (values.length <= 2) return values.join(', ')
 	return `${values[0]}, ${values[1]} + ${values.length - 2}`
 }
@@ -492,8 +492,8 @@ type PreparedEquityFilter =
 			valueSet: Set<string>
 	  }
 
-function prepareEquityFilters(filters: EquityActiveFilter[]): PreparedEquityFilter[] {
-	const preparedFilters: PreparedEquityFilter[] = []
+function prepareEquityFilters(filters: Array<EquityActiveFilter>): Array<PreparedEquityFilter> {
+	const preparedFilters: Array<PreparedEquityFilter> = []
 
 	for (const filter of filters) {
 		if (filter.kind === 'categorical') {
@@ -526,13 +526,13 @@ function matchesEquityFilter(company: IEquitiesListCompanyRow, preparedFilter: P
 }
 
 export function filterEquityCompanies(
-	companies: IEquitiesListCompanyRow[],
-	filters: EquityActiveFilter[]
-): IEquitiesListCompanyRow[] {
+	companies: Array<IEquitiesListCompanyRow>,
+	filters: Array<EquityActiveFilter>
+): Array<IEquitiesListCompanyRow> {
 	if (filters.length === 0) return companies
 
 	const preparedFilters = prepareEquityFilters(filters)
-	const filtered: IEquitiesListCompanyRow[] = []
+	const filtered: Array<IEquitiesListCompanyRow> = []
 
 	for (const company of companies) {
 		let matches = true

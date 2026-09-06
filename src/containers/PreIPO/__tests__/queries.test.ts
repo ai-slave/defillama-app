@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PreIpoCompanyListItem, PreIpoCompanySummary, PreIpoIntegrations } from '../api.types'
 
 type PreIpoApi = typeof import('../api')
@@ -21,7 +21,7 @@ const company = {
 	description: 'AI company',
 	website: 'https://anthropic.com',
 	sector: 'Artificial Intelligence',
-	latestEstimatedValuation: 1_000,
+	latestEstimatedValuation: 1000,
 	latestRaise: 100,
 	latestFundingValuation: 900,
 	latestFundingDate: '2026-08-24',
@@ -84,7 +84,7 @@ beforeEach(() => {
 })
 
 describe('pre-IPO page queries', () => {
-	it('passes the producer directory through without per-row copies', async () => {
+	test('passes the producer directory through without per-row copies', async () => {
 		const companies = [company]
 		api.fetchPreIpoCompanies.mockResolvedValue({
 			updatedAt: valuationDataUpdatedAt,
@@ -98,7 +98,7 @@ describe('pre-IPO page queries', () => {
 		expect(page.updatedAt).toBe(valuationDataUpdatedAt)
 	})
 
-	it('requests every required company snapshot and preserves independent freshness', async () => {
+	test('requests every required company snapshot and preserves independent freshness', async () => {
 		const { getPreIpoCompanyPageData } = await import('../queries')
 		const page = await getPreIpoCompanyPageData('anthropic')
 
@@ -114,7 +114,7 @@ describe('pre-IPO page queries', () => {
 		expect(page.marketDataUpdatedAt).toBe(marketDataUpdatedAt)
 	})
 
-	it('rejects the page when any required snapshot fails', async () => {
+	test('rejects the page when any required snapshot fails', async () => {
 		api.fetchPreIpoIntegrations.mockRejectedValue(new Error('integrations unavailable'))
 		const { getPreIpoCompanyPageData } = await import('../queries')
 

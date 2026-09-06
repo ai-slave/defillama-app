@@ -6,8 +6,8 @@ import { getTvlBreakdownData } from './breakdowns/tvl'
 const BREAKDOWN_RESULT_TTL_MS = 10 * 60 * 1000
 
 interface ProtocolTvlBreakdownRequest {
-	chains: string[]
-	categories: string[]
+	chains: Array<string>
+	categories: Array<string>
 	topN: number
 	groupByParent: boolean
 	chainFilterMode: 'include' | 'exclude'
@@ -30,11 +30,11 @@ export function getCachedProtocolTvlBreakdown({
 
 interface ProtocolTvlChainBreakdownRequest {
 	protocol?: string
-	chains: string[]
+	chains: Array<string>
 	topN: number
 	chainFilterMode: 'include' | 'exclude'
 	chainCategoryFilterMode: 'include' | 'exclude'
-	chainCategories: string[]
+	chainCategories: Array<string>
 }
 
 export function getCachedProtocolTvlChainBreakdown({

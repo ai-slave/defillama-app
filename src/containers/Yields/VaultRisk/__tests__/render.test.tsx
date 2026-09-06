@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import { prerenderToNodeStream } from 'react-dom/static.node'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CollateralView } from '../components/CollateralView'
 import { ScenarioDetailContent } from '../components/ScenarioDetailPanel'
 import { TrustPanel } from '../components/TrustPanel'
@@ -27,7 +27,7 @@ import {
 // prerenderToNodeStream fully resolves Suspense (lazy ECharts), unlike sync renderToStaticMarkup.
 async function render(el: ReactElement): Promise<string> {
 	const { prelude } = await prerenderToNodeStream(el)
-	const chunks: Buffer[] = []
+	const chunks: Array<Buffer> = []
 	for await (const chunk of prelude) chunks.push(Buffer.from(chunk))
 	return Buffer.concat(chunks).toString('utf8')
 }
@@ -69,7 +69,7 @@ function morphoData(): VaultRiskData {
 			exposure_pct: 0.2,
 			vault_market_share: 0.3
 		})
-	const scenarios: VaultScenario[] = [
+	const scenarios: Array<VaultScenario> = [
 		makeScenario({
 			id: 'sc-scb',
 			scenario_id: 'smart-contract-bug',
@@ -450,16 +450,16 @@ describe('VaultRiskSection render', () => {
 		['Aave market', aaveData]
 	]
 
-	it.each(CASES)('renders without throwing (%s)', async (_label, build) => {
+	test.each(CASES)('renders without throwing (%s)', async (_label, build) => {
 		const html = await render(<VaultRiskSection data={build()} poolName="Test Pool" chain="ethereum" />)
 		expect(html).not.toBe('')
 	})
 
-	it('returns null when there is no data', async () => {
+	test('returns null when there is no data', async () => {
 		expect(await render(<VaultRiskSection data={null} poolName="x" chain="ethereum" />)).toBe('')
 	})
 
-	it('shows an honest empty state (not blank) when a covered pool has no scenarios', async () => {
+	test('shows an honest empty state (not blank) when a covered pool has no scenarios', async () => {
 		const d = morphoData()
 		d.vault.vault_specific_risks = []
 		const html = await render(<VaultRiskSection data={d} poolName="x" chain="ethereum" />)
@@ -469,7 +469,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('morpho-blue') // protocol chip still rendered
 	})
 
-	it('contains an incomplete successful payload at the optional panel boundary', async () => {
+	test('contains an incomplete successful payload at the optional panel boundary', async () => {
 		const data = morphoData()
 		data.vault.vault_specific_risks = null as never
 
@@ -479,19 +479,19 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Coverage is rolling out across protocols')
 	})
 
-	it('VaultRiskUnmapped renders the scanning-radar loader for a pool with no record (standalone /risk page)', async () => {
+	test('VaultRiskUnmapped renders the scanning-radar loader for a pool with no record (standalone /risk page)', async () => {
 		const html = await render(<VaultRiskUnmapped poolName="KPK-USDC-PRIME" chain="ethereum" />)
 		expect(html).toContain('mapped yet') // the radar loader's headline
 		expect(html).toContain('Coverage is rolling out across protocols') // the honest "compiling" copy
 		expect(html).toContain('ethereum') // chain chip shows even with no protocol record
 	})
 
-	it('shows the protocol-wide drift banner when drift is present (compound-v3)', async () => {
+	test('shows the protocol-wide drift banner when drift is present (compound-v3)', async () => {
 		const html = await render(<VaultRiskSection data={compoundData()} poolName="x" chain="ethereum" />)
 		expect(html).toContain('affects all compound-v3 vaults')
 	})
 
-	it('renders a market pool with live exit liquidity, vault with the underlying-markets note', async () => {
+	test('renders a market pool with live exit liquidity, vault with the underlying-markets note', async () => {
 		const market = await render(<VaultRiskSection data={compoundData()} poolName="x" chain="ethereum" />)
 		expect(market).toContain('withdrawable now')
 		expect(market).toContain('% utilized')
@@ -502,7 +502,7 @@ describe('VaultRiskSection render', () => {
 		expect(vault).toContain('underlying markets')
 	})
 
-	it('collateral view leads with max loss, names ACT, and shows the oracle block (aave market)', async () => {
+	test('collateral view leads with max loss, names ACT, and shows the oracle block (aave market)', async () => {
 		const vm = buildVaultRiskVM(aaveData())
 		const html = await render(
 			<CollateralView
@@ -535,7 +535,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Per-collateral exposure ceilings are listed below')
 	})
 
-	it('keeps the vendor row when a resolved admin covers only a sliver of its exposure (managed-wrapper gap)', async () => {
+	test('keeps the vendor row when a resolved admin covers only a sliver of its exposure (managed-wrapper gap)', async () => {
 		const d = aaveData()
 		// USDe-on-Base shape: one resolved admin (the vendor Safe behind small aggregator feeds)
 		// carries dust, while most of the vendor's exposure flows through a managed wrapper whose
@@ -581,7 +581,7 @@ describe('VaultRiskSection render', () => {
 		expect(html2).not.toContain('on-chain control not resolved')
 	})
 
-	it('renders vendorless drainable exposure as explicit rows instead of dropping it (sUSDe / mHYPER shapes)', async () => {
+	test('renders vendorless drainable exposure as explicit rows instead of dropping it (sUSDe / mHYPER shapes)', async () => {
 		const d = aaveData()
 		// sUSDe shape: immutable ERC4626 exchange rate — no vendor, no admin anywhere.
 		Object.assign(d.vault.collateral_risks[0]!, {
@@ -639,7 +639,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('vendor and on-chain control not resolved')
 	})
 
-	it('aave collateral renders each bad_debt_basis distinctly (precise / approx / confident-zero / unmodeled)', async () => {
+	test('aave collateral renders each bad_debt_basis distinctly (precise / approx / confident-zero / unmodeled)', async () => {
 		const d = aaveData()
 		// confident-zero: a borrow-disabled reserve scanned to exactly $0 bad debt (oracle-drain still real)
 		Object.assign(d.vault.collateral_risks[0]!, {
@@ -716,7 +716,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('exposed') // unmodeled shows the exposure ceiling as context
 	})
 
-	it('collateral view folds per-market oracles into the accordion and gives each asset its own stress slider (morpho)', async () => {
+	test('collateral view folds per-market oracles into the accordion and gives each asset its own stress slider (morpho)', async () => {
 		const vm = buildVaultRiskVM(morphoData())
 		const html = await render(
 			<CollateralView
@@ -755,7 +755,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('separate path: an attacker borrows against a fake price')
 	})
 
-	it('leads collateral detail with the backend oracle mechanism, price-path legs, and a PT pricing tag', async () => {
+	test('leads collateral detail with the backend oracle mechanism, price-path legs, and a PT pricing tag', async () => {
 		const d = morphoData()
 		d.vault.oracle_config = d.vault.collateral_risks.map((c) => ({
 			type: 'hybrid',
@@ -792,7 +792,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Linear discount')
 	})
 
-	it('renders the resolved on-chain oracle legs (description + kind chip + vendor) when served', async () => {
+	test('renders the resolved on-chain oracle legs (description + kind chip + vendor) when served', async () => {
 		const d = morphoData()
 		d.vault.oracle_config = d.vault.collateral_risks.map((c) => ({
 			type: 'market',
@@ -850,7 +850,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain('should not render when legs are present')
 	})
 
-	it('renders the oracle full-drain detail as a drainable-now → if-forced range with the admin inline', async () => {
+	test('renders the oracle full-drain detail as a drainable-now → if-forced range with the admin inline', async () => {
 		const d = morphoData()
 		const weETH = d.vault.collateral_risks[0]!.token
 		const cbETH = d.vault.collateral_risks[1]!.token
@@ -918,7 +918,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('conditional worst case')
 	})
 
-	it('omits the controlling-admin clause on a full-drain row whose admin was not resolved this tick', async () => {
+	test('omits the controlling-admin clause on a full-drain row whose admin was not resolved this tick', async () => {
 		const d = morphoData()
 		d.vault.vault_specific_risks.push(
 			makeScenario({
@@ -947,7 +947,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain('is compromised') // …but no "controlled by" implication
 	})
 
-	it('trust panel groups vault-scoped deps and shows a pending-change countdown when queued', async () => {
+	test('trust panel groups vault-scoped deps and shows a pending-change countdown when queued', async () => {
 		const vm = buildVaultRiskVM(morphoData())
 		const html = await render(
 			<TrustPanel
@@ -966,7 +966,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain("don't put your deposit at risk")
 	})
 
-	it('trust panel renders audits + governance, and survives no explorer data', async () => {
+	test('trust panel renders audits + governance, and survives no explorer data', async () => {
 		const vm = buildVaultRiskVM(morphoData())
 		const html = await render(<TrustPanel protocol={vm.protocol} />)
 		expect(html).toContain('Audits')
@@ -975,7 +975,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Governance owner') // per-chain 5/9 rows collapsed to one role
 	})
 
-	it('titles the section with vault_name and shows the disambiguating contract address', async () => {
+	test('titles the section with vault_name and shows the disambiguating contract address', async () => {
 		const data = morphoData()
 		data.vault.vault_name = 'Steakhouse Prime USDC'
 		data.vault.vault_address = '0x00000000000000000000000000000000000000ab'
@@ -994,7 +994,7 @@ describe('VaultRiskSection render', () => {
 		expect(alone).toContain('Morpho Blue') // protocol + pool type chips stay: they're not in the header
 	})
 
-	it('sentinels fill the veto slot: listed like allocators, capability joined by role, no unguarded state', async () => {
+	test('sentinels fill the veto slot: listed like allocators, capability joined by role, no unguarded state', async () => {
 		// newer Morpho vaults appoint sentinels instead of a guardian — same veto role, several holders
 		const roles = makeVaultRoles({
 			curator: makeRoleEntity({
@@ -1035,7 +1035,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain('No veto — unguarded')
 	})
 
-	it('keys the unguarded state on guardian null AND sentinels empty', async () => {
+	test('keys the unguarded state on guardian null AND sentinels empty', async () => {
 		const roles = makeVaultRoles({
 			curator: makeRoleEntity({
 				kind: 'safe',
@@ -1050,7 +1050,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain('Sentinels')
 	})
 
-	it('reduces the scenario table to Loss / Worst case / Exit window — no column per crash depth', async () => {
+	test('reduces the scenario table to Loss / Worst case / Exit window — no column per crash depth', async () => {
 		// The served anchors carry only a handful of distinct values across a table this size, so the
 		// per-depth columns (and the drop selector that fed them) are gone; each row states its loss
 		// at the depth it was modeled at, and the full curve lives in the expanded row.
@@ -1064,7 +1064,7 @@ describe('VaultRiskSection render', () => {
 		expect(morpho).not.toContain('Collateral price-drop stress level') // the removed selector
 	})
 
-	it('leads with one loss figure bound to its cause, in % of deposit, with no interpolated loss curve', async () => {
+	test('leads with one loss figure bound to its cause, in % of deposit, with no interpolated loss curve', async () => {
 		// The loss curve was removed: over the served universe its shape is near-identical vault to
 		// vault, it splined a claim between only three modeled anchors, and it repeated both the
 		// headline above it and the VaultStress drop control below it.
@@ -1081,7 +1081,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain('role="slider"')
 	})
 
-	it('frames scenario losses as % of deposit, qualified by the crash depth each was modeled at', async () => {
+	test('frames scenario losses as % of deposit, qualified by the crash depth each was modeled at', async () => {
 		// the smart-contract-bug at full supply reads 100% of deposit; price-driven rows carry the
 		// depth as a qualifier so the figure is readable without a page-level drop selector.
 		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
@@ -1091,7 +1091,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toMatch(/At −\d+% stress/)
 	})
 
-	it('survives collateral_risks with no liquidity_scenario (API may omit it) — no blank section', async () => {
+	test('survives collateral_risks with no liquidity_scenario (API may omit it) — no blank section', async () => {
 		// Regression: the public API projection can drop collateral_risks[].liquidity_scenario. The FE must
 		// not read it unguarded (it did, and threw → the whole section fell back to the empty state).
 		const d = morphoData()
@@ -1105,7 +1105,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).not.toContain("aren't mapped yet")
 	})
 
-	it('surfaces data_gap scenarios in their own group instead of hiding them (honest about gaps)', async () => {
+	test('surfaces data_gap scenarios in their own group instead of hiding them (honest about gaps)', async () => {
 		// a data_gap scenario (no sized loss) must still appear under the "Not quantified" group rather
 		// than being silently dropped.
 		const d = aaveData()
@@ -1124,13 +1124,13 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('Wide crypto crash') // the data_gap scenario, shown
 	})
 
-	it('renders the grouped sections', async () => {
+	test('renders the grouped sections', async () => {
 		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
 		expect(html).toContain('Price-driven collateral stress') // a group header
 		expect(html).toContain('liquidation failures') // the oracle/liquidation group header (& is HTML-escaped)
 	})
 
-	it('renders protocol-wide incidents in their own labeled lane, off the pool track record (morpho)', async () => {
+	test('renders protocol-wide incidents in their own labeled lane, off the pool track record (morpho)', async () => {
 		// a Morpho pool's protocol.incidents show as Morpho-wide history, framed as "not recorded on this
 		// vault" — never folded into the pool's own losses.
 		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
@@ -1139,7 +1139,7 @@ describe('VaultRiskSection render', () => {
 		expect(html).toContain('not recorded on this vault') // the honest framing on each protocol dot
 	})
 
-	it('renders the body as a tablist with Collateral default; other panels stay in the DOM, hidden', async () => {
+	test('renders the body as a tablist with Collateral default; other panels stay in the DOM, hidden', async () => {
 		const html = await render(<VaultRiskSection data={morphoData()} poolName="x" chain="ethereum" />)
 		// an accessible tablist with the three tabs
 		expect(html).toContain('role="tablist"')

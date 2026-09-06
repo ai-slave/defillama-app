@@ -8,8 +8,8 @@ export interface MemoryEntry {
 
 export interface MemoriesResponse {
 	available: boolean
-	user: MemoryEntry[]
-	memory: MemoryEntry[]
+	user: Array<MemoryEntry>
+	memory: Array<MemoryEntry>
 	limits: { user: number; memory: number }
 }
 
@@ -21,13 +21,13 @@ export interface AgentSkill {
 	useCount: number
 	pinned: boolean
 	lastUsedAt: string | null
-	referencedSkills: string[]
+	referencedSkills: Array<string>
 }
 
 export interface SkillsResponse {
 	available: boolean
-	active: AgentSkill[]
-	archived: AgentSkill[]
+	active: Array<AgentSkill>
+	archived: Array<AgentSkill>
 }
 
 export const getMemories = (af: AuthorizedFetch) => llamaAIRequest<MemoriesResponse>(af, '/agent-home/memories')

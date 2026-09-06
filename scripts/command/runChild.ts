@@ -29,7 +29,7 @@ function appendTail(current: string, chunk: Buffer, tailLimit: number): string {
 
 export function runChild(
 	command: string,
-	args: string[],
+	args: Array<string>,
 	{ activeChildren, cwd, env = process.env, logger, tailLimit = 8192 }: RunChildOptions = {}
 ): Promise<RunChildResult> {
 	return new Promise((resolve, reject) => {

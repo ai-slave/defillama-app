@@ -31,7 +31,7 @@ const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeri
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
 const INFLOWS_TOOLTIP_FORMATTER_USD = createInflowsTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
-const EMPTY_CHART_KEYS: ProtocolExtraTvlKey[] = []
+const EMPTY_CHART_KEYS: Array<ProtocolExtraTvlKey> = []
 const USD_INFLOWS_SERIES = new Set(['USD Inflows'])
 
 const reserveExchangeIconUrl = (protocolName: string) => exchangeIconUrl(slug(protocolName.replace(/-cex$/, '')))
@@ -65,7 +65,7 @@ function ChainsChartCard({
 	breakdown
 }: {
 	protocolName: string
-	allChains: string[]
+	allChains: Array<string>
 	breakdown: ProtocolBreakdownChart
 }) {
 	const {
@@ -135,7 +135,7 @@ function TokenValuesUSDChartCard({
 	breakdown
 }: {
 	protocolName: string
-	allTokens: string[]
+	allTokens: Array<string>
 	breakdown: ProtocolBreakdownChart
 }) {
 	const {
@@ -278,8 +278,8 @@ function TokenBalancesRawChartCard({
 	breakdown
 }: {
 	protocolName: string
-	allTokens: string[]
-	defaultTokens: string[]
+	allTokens: Array<string>
+	defaultTokens: Array<string>
 	breakdown: ProtocolBreakdownChart
 }) {
 	const {
@@ -381,7 +381,7 @@ function InflowsByTokenChartCard({
 	breakdown
 }: {
 	protocolName: string
-	allTokens: string[]
+	allTokens: Array<string>
 	breakdown: ProtocolBreakdownChart
 }) {
 	const {

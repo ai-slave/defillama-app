@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	applyEditorialTagOrderPayload,
 	buildEditorialTagReorderPayload,
@@ -11,12 +11,12 @@ function article(id: string): ArticleDocument {
 }
 
 describe('editorialTagOrder', () => {
-	it('maps list index to descending sort order', () => {
+	test('maps list index to descending sort order', () => {
 		expect(listIndexToSortOrder(0, 4)).toBe(3)
 		expect(listIndexToSortOrder(3, 4)).toBe(0)
 	})
 
-	it('builds payload for adjacent swap', () => {
+	test('builds payload for adjacent swap', () => {
 		const previous = [article('A'), article('B'), article('C')]
 		const reordered = [article('B'), article('A'), article('C')]
 
@@ -28,7 +28,7 @@ describe('editorialTagOrder', () => {
 		)
 	})
 
-	it('builds payload when moving item down several positions', () => {
+	test('builds payload when moving item down several positions', () => {
 		const previous = [article('A'), article('B'), article('C'), article('D')]
 		const reordered = [article('B'), article('C'), article('D'), article('A')]
 
@@ -42,12 +42,12 @@ describe('editorialTagOrder', () => {
 		)
 	})
 
-	it('returns empty payload when order is unchanged', () => {
+	test('returns empty payload when order is unchanged', () => {
 		const items = [article('A'), article('B')]
 		expect(buildEditorialTagReorderPayload(items, items)).toEqual([])
 	})
 
-	it('applies payload to reorder cached items', () => {
+	test('applies payload to reorder cached items', () => {
 		const items = [article('A'), article('B'), article('C')]
 		const payload = [
 			{ articleId: 'A', order: 1 },

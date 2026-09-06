@@ -37,8 +37,8 @@ interface IBuildAvailableChartsParams {
 	hasGasUsed: boolean
 }
 
-export function buildAvailableCharts(params: IBuildAvailableChartsParams): ProtocolChartsLabels[] {
-	const charts: ProtocolChartsLabels[] = []
+export function buildAvailableCharts(params: IBuildAvailableChartsParams): Array<ProtocolChartsLabels> {
+	const charts: Array<ProtocolChartsLabels> = []
 	if (params.hasTvlChart) charts.push(params.isCEX ? 'Total Assets' : 'TVL')
 	if (params.hasTvsChart) charts.push('TVS')
 	if (params.hasGeckoId) {
@@ -81,7 +81,7 @@ interface IBuildDefaultToggledChartsParams {
 	protocolMetricsTvl: boolean
 	protocolTvlChartData: Array<[number, number]>
 	currentChainTvls?: Record<string, number>
-	availableCharts: ProtocolChartsLabels[]
+	availableCharts: Array<ProtocolChartsLabels>
 	category?: string | null
 }
 
@@ -93,8 +93,8 @@ export function buildDefaultToggledCharts({
 	currentChainTvls,
 	availableCharts,
 	category
-}: IBuildDefaultToggledChartsParams): ProtocolChartsLabels[] {
-	const defaultToggledCharts: ProtocolChartsLabels[] = []
+}: IBuildDefaultToggledChartsParams): Array<ProtocolChartsLabels> {
+	const defaultToggledCharts: Array<ProtocolChartsLabels> = []
 	const pushUniqueIfAvailable = (label: ProtocolChartsLabels) => {
 		if (!availableCharts.includes(label)) return
 		if (defaultToggledCharts.includes(label)) return
@@ -118,7 +118,7 @@ export function buildDefaultToggledCharts({
 
 	const categoryDefaultChart = category ? protocolCategoryConfig[category]?.defaultChart : null
 	const categoryDefaultChartLabel = categoryDefaultChart
-		? (Object.keys(protocolCharts) as ProtocolChartsLabels[]).find(
+		? (Object.keys(protocolCharts) as Array<ProtocolChartsLabels>).find(
 				(chartLabel) => protocolCharts[chartLabel] === categoryDefaultChart
 			)
 		: null

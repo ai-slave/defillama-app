@@ -7,7 +7,7 @@ import type {
 	PricingCardData
 } from '~/containers/Subscription/types'
 
-export const PLAN_ORDER: PlanKey[] = ['free', 'pro', 'api', 'enterprise']
+export const PLAN_ORDER: Array<PlanKey> = ['free', 'pro', 'api', 'enterprise']
 
 export const PLAN_META_BY_CYCLE: Record<BillingCycle, Record<PlanKey, PlanMeta>> = {
 	monthly: {
@@ -24,7 +24,7 @@ export const PLAN_META_BY_CYCLE: Record<BillingCycle, Record<PlanKey, PlanMeta>>
 	}
 }
 
-const CARD_CONTENT: Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'priceSecondary'>[] = [
+const CARD_CONTENT: Array<Omit<PricingCardData, 'priceMain' | 'priceUnit' | 'priceSecondary'>> = [
 	{
 		key: 'free',
 		title: 'Free',
@@ -164,19 +164,19 @@ const CYCLE_PRICING: Record<
 	}
 }
 
-function buildPricingCards(cycle: BillingCycle): PricingCardData[] {
+function buildPricingCards(cycle: BillingCycle): Array<PricingCardData> {
 	return CARD_CONTENT.map((card) => ({ ...card, ...CYCLE_PRICING[cycle][card.key] }))
 }
 
 export const MONTHLY_PRICING_CARDS = buildPricingCards('monthly')
 export const YEARLY_PRICING_CARDS = buildPricingCards('yearly')
 
-export const PRICING_CARDS_BY_CYCLE: Record<BillingCycle, PricingCardData[]> = {
+export const PRICING_CARDS_BY_CYCLE: Record<BillingCycle, Array<PricingCardData>> = {
 	monthly: MONTHLY_PRICING_CARDS,
 	yearly: YEARLY_PRICING_CARDS
 }
 
-export const COMPARISON_SECTIONS: ComparisonSection[] = [
+export const COMPARISON_SECTIONS: Array<ComparisonSection> = [
 	{
 		title: 'Core Data & Dashboards',
 		rows: [
@@ -402,7 +402,7 @@ export const COMPARISON_SECTIONS: ComparisonSection[] = [
 	}
 ]
 
-export const TRUST_LOGOS: { src: string; alt: string }[] = [
+export const TRUST_LOGOS: Array<{ src: string; alt: string }> = [
 	{ src: '/assets/trusts-llama/okx.svg', alt: 'OKX' },
 	{ src: '/assets/trusts-llama/coinbase.svg', alt: 'Coinbase' },
 	{ src: '/assets/trusts-llama/binance.svg', alt: 'Binance' },
@@ -430,7 +430,7 @@ export const TRUST_LOGOS: { src: string; alt: string }[] = [
 	{ src: '/assets/trusts-llama/ecb-2.svg', alt: 'European Central Bank' }
 ]
 
-export const FAQ_ITEMS: FaqItem[] = [
+export const FAQ_ITEMS: Array<FaqItem> = [
 	{
 		question: 'Can I cancel my subscription at any time?',
 		answer:

@@ -22,7 +22,7 @@ function PegPill({ ratio, bps }: { ratio: number; bps?: number }) {
 	)
 }
 
-function SynthTable({ rows }: { rows: PegRow[] }) {
+function SynthTable({ rows }: { rows: Array<PegRow> }) {
 	if (!rows?.length) return <div className="px-2 py-4 text-xs text-pro-text-secondary">No data</div>
 	return (
 		<div className="overflow-x-auto">

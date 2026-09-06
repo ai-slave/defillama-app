@@ -56,8 +56,8 @@ export interface IDATInstitutionsResponse {
 	institutions: Array<{ institutionId: number; totalUsdValue: number; totalCost: number }>
 	assets: Record<string, Array<{ institutionId: number; usdValue: number; amount: number }>>
 	totalCompanies: number
-	flows: Record<string, IDATFlowTuple[]>
-	mNAV: Record<string, Record<string, IDATMNAVTuple[]>>
+	flows: Record<string, Array<IDATFlowTuple>>
+	mNAV: Record<string, Record<string, Array<IDATMNAVTuple>>>
 }
 
 /** Single institution asset entry in the institution detail response */
@@ -116,9 +116,9 @@ export interface IDATInstitutionDetailResponse {
 	totalUsdValue: number
 	assets: Record<string, IDATInstitutionAsset>
 	assetsMeta: Record<string, IDATInstitutionAssetMeta>
-	ohlcv: IDATOHLCVTuple[]
+	ohlcv: Array<IDATOHLCVTuple>
 	assetValue: Array<[number, number]>
-	stats: IDATStatsTuple[]
-	transactions: IDATTransaction[]
+	stats: Array<IDATStatsTuple>
+	transactions: Array<IDATTransaction>
 	lastUpdated: string
 }

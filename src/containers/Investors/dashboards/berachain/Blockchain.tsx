@@ -38,7 +38,7 @@ const TRANSACTIONS_CHART = [
 		color: '#4FC3F7',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const ADDRESSES_CHARTS = [
 	{
@@ -53,7 +53,7 @@ const ADDRESSES_CHARTS = [
 		encode: { x: 0, y: 2 },
 		color: '#66BB6A'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const GAS_FEES_CHART = [
 	{
@@ -63,7 +63,7 @@ const GAS_FEES_CHART = [
 		color: '#AB47BC',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const UTILIZATION_CHART = [
 	{
@@ -72,7 +72,7 @@ const UTILIZATION_CHART = [
 		encode: { x: 0, y: 1 },
 		color: '#4FC3F7'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const CONTRACTS_CHART = [
 	{
@@ -82,7 +82,7 @@ const CONTRACTS_CHART = [
 		color: '#FFA726',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const TRANSFERS_CHART = [
 	{
@@ -92,7 +92,7 @@ const TRANSFERS_CHART = [
 		color: '#66BB6A',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const DEFAULT_CHART_OPTIONS = createChartOptions('')
 const DOLLAR_CHART_OPTIONS = createChartOptions('$')

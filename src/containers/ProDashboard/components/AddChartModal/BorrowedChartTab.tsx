@@ -46,7 +46,7 @@ interface BorrowedChartTabProps {
 	onSelectedBorrowedProtocolChange: (protocol: string | null) => void
 	onSelectedBorrowedProtocolNameChange: (name: string | null) => void
 	onSelectedBorrowedChartTypeChange: (chartType: string) => void
-	protocolOptions: VirtualizedSelectOption[]
+	protocolOptions: Array<VirtualizedSelectOption>
 	protocolsLoading: boolean
 }
 

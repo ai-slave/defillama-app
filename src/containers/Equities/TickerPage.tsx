@@ -23,7 +23,7 @@ import {
 	type PriceChartTimeframe
 } from '~/utils/priceChartTimeframes'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
-import { type EquitiesDimensionMetric, type EquitiesDimensionPeriod, type IEquitiesSummaryResponse } from './api.types'
+import type { EquitiesDimensionMetric, EquitiesDimensionPeriod, IEquitiesSummaryResponse } from './api.types'
 import {
 	buildEquitiesDimensionsChart,
 	buildIntradayPriceHistoryChart,
@@ -215,7 +215,7 @@ export function EquityTickerPage(props: IEquityTickerPageProps) {
 	const { chartInstance: priceChartInstance, handleChartReady: handlePriceChartReady } = useGetChartInstance()
 	const { chartInstance: fundamentalsChartInstance, handleChartReady: handleFundamentalsChartReady } =
 		useGetChartInstance()
-	const availableTabs = useMemo<readonly EquityTab[]>(
+	const availableTabs = useMemo<ReadonlyArray<EquityTab>>(
 		() =>
 			getAvailableEquityTabs({
 				hasFilings: props.filings !== null,

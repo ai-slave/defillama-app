@@ -3,7 +3,7 @@
 import * as Ariakit from '@ariakit/react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { SettingsModal } from '~/containers/LlamaAI/components/SettingsModal'
 import type { LlamaAISettings, LlamaAISettingsActions } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import type {
@@ -113,13 +113,13 @@ describe('SettingsModal instructions', () => {
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	}
 
-	it('derives the character count from the controlled draft', async () => {
+	test('derives the character count from the controlled draft', async () => {
 		await act(async () => change('Short'))
 
 		expect(document.body.textContent).toContain('5/500')
 	})
 
-	it('saves once when blur and dialog close happen together', async () => {
+	test('saves once when blur and dialog close happen together', async () => {
 		let resolveSave: ((accepted: boolean) => void) | null = null
 		setCustomInstructions.mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveSave = resolve)))
 		await act(async () => change('Updated instructions'))
@@ -133,7 +133,7 @@ describe('SettingsModal instructions', () => {
 		await act(async () => resolveSave?.(true))
 	})
 
-	it('submits a newer draft before an earlier save settles', async () => {
+	test('submits a newer draft before an earlier save settles', async () => {
 		let resolveFirstSave: ((accepted: boolean) => void) | null = null
 		setCustomInstructions.mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveFirstSave = resolve)))
 		await act(async () => change('First draft'))
@@ -146,7 +146,7 @@ describe('SettingsModal instructions', () => {
 		await act(async () => resolveFirstSave?.(true))
 	})
 
-	it('saves the latest draft when the dialog closes without blur', async () => {
+	test('saves the latest draft when the dialog closes without blur', async () => {
 		await act(async () => change('Escape-safe instructions'))
 		await act(async () => {
 			dialogStore.hide()
@@ -157,7 +157,7 @@ describe('SettingsModal instructions', () => {
 		expect(setCustomInstructions).toHaveBeenCalledWith('Escape-safe instructions')
 	})
 
-	it('does not replace a dirty draft with a settings refresh', async () => {
+	test('does not replace a dirty draft with a settings refresh', async () => {
 		await act(async () => change('Local draft'))
 		await act(async () =>
 			root.render(<Harness currentSettings={{ ...settings, customInstructions: 'Server refresh' }} />)
@@ -166,7 +166,7 @@ describe('SettingsModal instructions', () => {
 		expect(textarea().value).toBe('Local draft')
 	})
 
-	it('adopts a settings refresh when the draft is clean', async () => {
+	test('adopts a settings refresh when the draft is clean', async () => {
 		await act(async () =>
 			root.render(<Harness currentSettings={{ ...settings, customInstructions: 'Server refresh' }} />)
 		)
@@ -174,7 +174,7 @@ describe('SettingsModal instructions', () => {
 		expect(textarea().value).toBe('Server refresh')
 	})
 
-	it('keeps a failed save dirty and retries it', async () => {
+	test('keeps a failed save dirty and retries it', async () => {
 		setCustomInstructions.mockResolvedValueOnce(false).mockResolvedValueOnce(true)
 		await act(async () => change('Retry me'))
 		await act(async () => textarea().dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
@@ -184,7 +184,7 @@ describe('SettingsModal instructions', () => {
 		expect(setCustomInstructions).toHaveBeenCalledTimes(2)
 	})
 
-	it('clears without first saving the focused draft', async () => {
+	test('clears without first saving the focused draft', async () => {
 		await act(async () => {
 			textarea().focus()
 			change('Discard this draft')
@@ -201,7 +201,7 @@ describe('SettingsModal instructions', () => {
 		expect(setCustomInstructions).toHaveBeenCalledWith('')
 	})
 
-	it('keeps the submitted draft when reopened before props catch up', async () => {
+	test('keeps the submitted draft when reopened before props catch up', async () => {
 		let resolveSave: ((accepted: boolean) => void) | null = null
 		setCustomInstructions.mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveSave = resolve)))
 		await act(async () => change('Locally submitted'))
@@ -212,7 +212,7 @@ describe('SettingsModal instructions', () => {
 		await act(async () => resolveSave?.(true))
 	})
 
-	it('shows the mobile notification toggle only for a ready preference', async () => {
+	test('shows the mobile notification toggle only for a ready preference', async () => {
 		await act(async () =>
 			root.render(<Harness mobileNotificationPreference={{ kind: 'known', available: true, enabled: false }} />)
 		)
@@ -232,7 +232,7 @@ describe('SettingsModal instructions', () => {
 		expect(document.querySelector('button[aria-label="Mobile notifications"]')).toBeNull()
 	})
 
-	it('shows a disabled loading row while the preference query is pending', async () => {
+	test('shows a disabled loading row while the preference query is pending', async () => {
 		await act(async () => root.render(<Harness mobileNotificationPreference={{ kind: 'loading' }} />))
 		const appTab = Array.from(document.querySelectorAll('button')).find(
 			(button) => button.textContent?.trim() === 'App'
@@ -245,7 +245,7 @@ describe('SettingsModal instructions', () => {
 		expect(document.querySelector('button[aria-label="Mobile notifications"]')).toBeNull()
 	})
 
-	it('shows an inline retry when the preference query fails', async () => {
+	test('shows an inline retry when the preference query fails', async () => {
 		const retry = vi.fn()
 		await act(async () =>
 			root.render(<Harness mobileNotificationPreference={{ kind: 'error', message: 'Network unavailable', retry }} />)
@@ -265,7 +265,7 @@ describe('SettingsModal instructions', () => {
 		expect(retry).toHaveBeenCalledOnce()
 	})
 
-	it('restores the spend cap after a failed save', async () => {
+	test('restores the spend cap after a failed save', async () => {
 		actions.setSpendCapPerMessage = vi.fn(async () => false)
 		const capabilitiesTab = Array.from(document.querySelectorAll('button')).find(
 			(button) => button.textContent === 'Capabilities'

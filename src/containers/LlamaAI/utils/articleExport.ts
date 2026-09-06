@@ -23,10 +23,10 @@ export type ArticleExportRequest =
 
 export type ArticleExportInclude = {
 	text: boolean
-	chartIds: string[]
-	imageIds: string[]
+	chartIds: Array<string>
+	imageIds: Array<string>
 	/** Indices into the message's tables (source order). Omitted = include all. */
-	tableIndices?: number[]
+	tableIndices?: Array<number>
 }
 
 export type MarkdownSegment =
@@ -45,10 +45,10 @@ function titleFromPrecedingLine(line: string | undefined): string | undefined {
 
 /** Split markdown into text and GFM-table segments (tables in source order).
  * Pipe lines inside code fences are not tables. */
-export function splitMarkdownTables(markdown: string): MarkdownSegment[] {
+export function splitMarkdownTables(markdown: string): Array<MarkdownSegment> {
 	const lines = markdown.split('\n')
-	const segments: MarkdownSegment[] = []
-	let buffer: string[] = []
+	const segments: Array<MarkdownSegment> = []
+	let buffer: Array<string> = []
 	let inFence = false
 
 	const flushText = () => {
@@ -99,14 +99,14 @@ export type ArticleExportDeps = {
 	uploadImage?: (imageId: string, url: string) => Promise<LlamaAIImportImage | null>
 }
 
-export type ArticleExportResult = { blocks: TiptapJson[]; notes: string[] }
+export type ArticleExportResult = { blocks: Array<TiptapJson>; notes: Array<string> }
 
 type ChartGroup = {
 	charts: Array<{ id: string; datasetName?: string }>
-	chartData: Record<string, unknown[]> | unknown[]
+	chartData: Record<string, Array<unknown>> | Array<unknown>
 }
 
-export function chartsMapFromGroups(groups: ChartGroup[] | undefined): ArticleExportChartMap {
+export function chartsMapFromGroups(groups: Array<ChartGroup> | undefined): ArticleExportChartMap {
 	const map: ArticleExportChartMap = {}
 	for (const group of groups ?? []) {
 		for (const config of group.charts) {
@@ -123,7 +123,7 @@ export function buildMessageExportRequest(params: {
 	markdown: string
 	messageId: string
 	sessionId?: string | null
-	chartGroups?: ChartGroup[]
+	chartGroups?: Array<ChartGroup>
 	generatedImages?: Array<{ id?: string; url: string }>
 }): ArticleExportRequest {
 	const images: Record<string, { url: string }> = {}
@@ -141,9 +141,9 @@ export function buildMessageExportRequest(params: {
 }
 
 async function saveChartsToLibrary(
-	blocks: TiptapJson[],
+	blocks: Array<TiptapJson>,
 	saveChart: ArticleExportDeps['saveChart']
-): Promise<TiptapJson[]> {
+): Promise<Array<TiptapJson>> {
 	if (!saveChart) return blocks
 	return Promise.all(
 		blocks.map(async (block) => {
@@ -161,7 +161,7 @@ export async function buildExportBlocks(
 	include: ArticleExportInclude,
 	deps: ArticleExportDeps
 ): Promise<ArticleExportResult> {
-	const notes: string[] = []
+	const notes: Array<string> = []
 
 	if (request.kind === 'chart') {
 		const entry = request.charts[request.chartId]
@@ -214,8 +214,8 @@ export type SelectionSummaryItem = { icon: 'bar-chart-2' | 'file-text' | 'layout
 
 /** Itemize a selection export for the confirm dialog: prose word count, tables
  * (titled by the nearest preceding heading), and charts by id. */
-export function summarizeSelectionHtml(html: string, charts: ArticleExportChartMap): SelectionSummaryItem[] {
-	const items: SelectionSummaryItem[] = []
+export function summarizeSelectionHtml(html: string, charts: ArticleExportChartMap): Array<SelectionSummaryItem> {
+	const items: Array<SelectionSummaryItem> = []
 	const template = document.createElement('template')
 	template.innerHTML = html
 

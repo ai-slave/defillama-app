@@ -1,10 +1,10 @@
 import type { Root } from 'hast'
 import { sanitize, type Schema } from 'hast-util-sanitize'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { SANITIZE_SCHEMA } from '../sanitizeConfig'
 
 describe('SANITIZE_SCHEMA', () => {
-	it('preserves the fact-check pill dataRef property used by rehype', () => {
+	test('preserves the fact-check pill dataRef property used by rehype', () => {
 		const tree: Root = {
 			type: 'root',
 			children: [

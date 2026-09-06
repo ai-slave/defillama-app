@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { decodeActiveExecutionResponse, decodeExecutionSnapshot } from '~/containers/LlamaAI/executionProtocol'
 
 const execution = {
@@ -11,11 +11,11 @@ const execution = {
 }
 
 describe('execution protocol', () => {
-	it('decodes the canonical execution snapshot', () => {
+	test('decodes the canonical execution snapshot', () => {
 		expect(decodeExecutionSnapshot(execution)).toEqual(execution)
 	})
 
-	it('normalizes the legacy active response during rolling deployment', () => {
+	test('normalizes the legacy active response during rolling deployment', () => {
 		expect(
 			decodeActiveExecutionResponse({
 				active: true,
@@ -29,11 +29,11 @@ describe('execution protocol', () => {
 		).toEqual({ active: true, execution })
 	})
 
-	it('rejects a cursor that could produce an invalid replay offset', () => {
+	test('rejects a cursor that could produce an invalid replay offset', () => {
 		expect(() => decodeExecutionSnapshot({ ...execution, cursor: Number.NaN })).toThrow('Invalid execution snapshot')
 	})
 
-	it('rejects contradictory active state', () => {
+	test('rejects contradictory active state', () => {
 		expect(() => decodeActiveExecutionResponse({ active: true })).toThrow('Invalid active execution response')
 		expect(() => decodeActiveExecutionResponse({ active: false, execution })).toThrow(
 			'Invalid active execution response'

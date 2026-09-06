@@ -3,17 +3,17 @@ import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { formatNumber } from '~/utils/numberFormat'
 import { AriakitVirtualizedMultiSelect } from '../../AriakitVirtualizedMultiSelect'
 
-const EMPTY_CATEGORIES: string[] = []
-const EMPTY_PROTOCOLS: string[] = []
-const EMPTY_TOKENS: string[] = []
+const EMPTY_CATEGORIES: Array<string> = []
+const EMPTY_PROTOCOLS: Array<string> = []
+const EMPTY_TOKENS: Array<string> = []
 
 interface YieldsFiltersPanelProps {
 	setShowFiltersPanel: (show: boolean) => void
 	filters: YieldsFilters
 	setFilters: (filters: YieldsFilters) => void
 	availableProtocols: Array<{ value: string; label: string; logo?: string }>
-	availableTokens: string[]
-	availableCategories: string[]
+	availableTokens: Array<string>
+	availableCategories: Array<string>
 	onApplyFilters: (filters?: YieldsFilters) => void
 	onResetFilters: () => void
 	activeFilterCount: number

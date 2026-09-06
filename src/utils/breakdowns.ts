@@ -2,7 +2,7 @@ type SeriesPoint = [number, number]
 
 export interface ChartSeries {
 	name: string
-	data: SeriesPoint[]
+	data: Array<SeriesPoint>
 	color?: string
 }
 
@@ -11,11 +11,11 @@ type ProtocolBreakdownEntityMetadata =
 	| { entityType: 'protocol-family'; totalProtocolFamilies: number }
 
 export interface ProtocolBreakdownData {
-	series: ChartSeries[]
+	series: Array<ChartSeries>
 	metadata: {
 		chain: string
-		chains: string[]
-		categories: string[]
+		chains: Array<string>
+		categories: Array<string>
 		metric: string
 		topN: number
 		othersCount: number
@@ -25,11 +25,11 @@ export interface ProtocolBreakdownData {
 }
 
 export interface ProtocolChainData {
-	series: ChartSeries[]
+	series: Array<ChartSeries>
 	metadata: {
 		protocol: string
 		metric: string
-		chains: string[]
+		chains: Array<string>
 		totalChains: number
 		topN?: number
 		othersCount?: number
@@ -77,9 +77,9 @@ export const BREAKDOWN_COLOR_PALETTE = [
 
 export const toSlug = (name: string = ''): string => name?.toLowerCase().split(' ').join('-').split("'").join('')
 
-const toUtcDay = (ts: number): number => Math.floor(ts / 86400) * 86400
+const toUtcDay = (ts: number): number => Math.floor(ts / 86_400) * 86_400
 
-export const normalizeDailyPairs = (pairs: SeriesPoint[], mode: 'sum' | 'last'): SeriesPoint[] => {
+export const normalizeDailyPairs = (pairs: Array<SeriesPoint>, mode: 'sum' | 'last'): Array<SeriesPoint> => {
 	const daily = new Map<number, number>()
 	for (const [ts, v] of pairs) {
 		const day = toUtcDay(Number(ts))
@@ -89,7 +89,7 @@ export const normalizeDailyPairs = (pairs: SeriesPoint[], mode: 'sum' | 'last'):
 			daily.set(day, v || 0)
 		}
 	}
-	return Array.from(daily.entries()).sort((a, b) => a[0] - b[0]) as SeriesPoint[]
+	return Array.from(daily.entries()).sort((a, b) => a[0] - b[0]) as Array<SeriesPoint>
 }
 
 const startOfTodayUtc = (): number => {
@@ -97,12 +97,12 @@ const startOfTodayUtc = (): number => {
 	return Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000)
 }
 
-export const filterOutToday = (pairs: SeriesPoint[]): SeriesPoint[] => {
+export const filterOutToday = (pairs: Array<SeriesPoint>): Array<SeriesPoint> => {
 	const today = startOfTodayUtc()
 	return pairs.filter(([ts]) => ts < today)
 }
 
-export const sumSeriesByTimestamp = (seriesList: SeriesPoint[][]): Map<number, number> => {
+export const sumSeriesByTimestamp = (seriesList: Array<Array<SeriesPoint>>): Map<number, number> => {
 	const acc = new Map<number, number>()
 	for (const series of seriesList) {
 		for (const [ts, val] of series) {
@@ -112,15 +112,15 @@ export const sumSeriesByTimestamp = (seriesList: SeriesPoint[][]): Map<number, n
 	return acc
 }
 
-export const alignSeries = (timestamps: number[], series: SeriesPoint[]): SeriesPoint[] => {
+export const alignSeries = (timestamps: Array<number>, series: Array<SeriesPoint>): Array<SeriesPoint> => {
 	const map = new Map(series.map(([t, v]) => [t, v]))
 	return timestamps.map((t) => [t, map.get(t) || 0])
 }
 
 export const buildAlignedTopAndOthers = (
-	topSeries: ChartSeries[],
-	totalSeries: SeriesPoint[]
-): { alignedTopSeries: ChartSeries[]; othersData: SeriesPoint[]; allTimestamps: number[] } => {
+	topSeries: Array<ChartSeries>,
+	totalSeries: Array<SeriesPoint>
+): { alignedTopSeries: Array<ChartSeries>; othersData: Array<SeriesPoint>; allTimestamps: Array<number> } => {
 	const timestampSet = new Set<number>()
 	for (const s of topSeries) {
 		for (const [t] of s.data) {
@@ -140,13 +140,12 @@ export const buildAlignedTopAndOthers = (
 	const alignedTotal = alignSeries(allTimestamps, totalSeries)
 	const topSumPerTs = alignSeries(
 		allTimestamps,
-		Array.from(sumSeriesByTimestamp(alignedTopSeries.map((s) => s.data)).entries()).sort((a, b) => a[0] - b[0]) as [
-			number,
-			number
-		][]
+		Array.from(sumSeriesByTimestamp(alignedTopSeries.map((s) => s.data)).entries()).sort(
+			(a, b) => a[0] - b[0]
+		) as Array<[number, number]>
 	)
 
-	const othersData: SeriesPoint[] = allTimestamps.map((t, i) => {
+	const othersData: Array<SeriesPoint> = allTimestamps.map((t, i) => {
 		const total = alignedTotal[i]?.[1] || 0
 		const topSum = topSumPerTs[i]?.[1] || 0
 		return [t, Math.max(0, total - topSum)]

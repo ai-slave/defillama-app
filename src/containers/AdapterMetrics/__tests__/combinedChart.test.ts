@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { buildAdapterByChainCombinedChartPresentation } from '../combinedChart'
@@ -6,7 +6,7 @@ import { buildAdapterByChainCombinedChartPresentation } from '../combinedChart'
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
 describe('buildAdapterByChainCombinedChartPresentation', () => {
-	it('treats a series named timestamp as the second positional dimension', () => {
+	test('treats a series named timestamp as the second positional dimension', () => {
 		const chartData: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'timestamp'],
 			source: [[toMs(2024, 1, 1), 42]]
@@ -29,7 +29,7 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 		])
 	})
 
-	it('keeps daily data unchanged and preserves dimension, chart, and color ordering', () => {
+	test('keeps daily data unchanged and preserves dimension, chart, and color ordering', () => {
 		const chartData: MultiSeriesTimeSeriesDataset = {
 			dimensions: ['timestamp', 'Flow B', 'Open Interest', 'Flow A'],
 			source: [
@@ -69,7 +69,7 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 		])
 	})
 
-	it('groups mixed line and bar series in one dense row-major dataset', () => {
+	test('groups mixed line and bar series in one dense row-major dataset', () => {
 		const presentation = buildAdapterByChainCombinedChartPresentation({
 			chartName: 'Volume',
 			groupBy: 'weekly',
@@ -98,7 +98,7 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 		])
 	})
 
-	it('accumulates flow series while leaving sparse snapshot values unchanged', () => {
+	test('accumulates flow series while leaving sparse snapshot values unchanged', () => {
 		const presentation = buildAdapterByChainCombinedChartPresentation({
 			chartName: 'Volume',
 			groupBy: 'cumulative',
@@ -127,7 +127,7 @@ describe('buildAdapterByChainCombinedChartPresentation', () => {
 		])
 	})
 
-	it('uses last-in-bucket snapshot semantics for every series on a snapshot chart', () => {
+	test('uses last-in-bucket snapshot semantics for every series on a snapshot chart', () => {
 		const presentation = buildAdapterByChainCombinedChartPresentation({
 			chartName: 'Active Liquidity',
 			groupBy: 'monthly',

@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue } from './tooltip'
 
 describe('pool APY tooltip data', () => {
-	it('reads positional rows through their numeric ECharts encode', () => {
+	test('reads positional rows through their numeric ECharts encode', () => {
 		const [item] = getChartTooltipItems({
 			axisValue: 1_700_000_000_000,
 			data: [1_700_000_000_000, 2, 3],

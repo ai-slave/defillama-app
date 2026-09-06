@@ -20,11 +20,11 @@ const LOOP_OPTIONS = Array.from({ length: MAX_LOOP_COUNT - MIN_LOOP_COUNT + 1 },
 
 const LOOP_HELP = 'Number of recursive supply → borrow loops. Default 5.'
 
-function readSingle(value: string | string[] | undefined): string | undefined {
+function readSingle(value: string | Array<string> | undefined): string | undefined {
 	return Array.isArray(value) ? value[0] : value
 }
 
-function decodeLoopCount(value: string | string[] | undefined): number {
+function decodeLoopCount(value: string | Array<string> | undefined): number {
 	const raw = Number(readSingle(value))
 	if (!Number.isFinite(raw)) return DEFAULT_LOOP_COUNT
 	return Math.min(Math.max(Math.floor(raw), MIN_LOOP_COUNT), MAX_LOOP_COUNT)

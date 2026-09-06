@@ -1,19 +1,19 @@
 import type { Raise } from './model'
 
 export interface IRaisesFilters {
-	investors: string[]
-	rounds: string[]
-	sectors: string[]
-	chains: string[]
+	investors: Array<string>
+	rounds: Array<string>
+	sectors: Array<string>
+	chains: Array<string>
 }
 
 export interface IRaisesPageData extends IRaisesFilters {
-	raises: Raise[]
+	raises: Array<Raise>
 	investorName: string | null
 }
 
 export interface IInvestorRaisesPageData extends IRaisesFilters {
-	raises: Raise[]
+	raises: Array<Raise>
 	investorName: string
 }
 
@@ -22,7 +22,7 @@ export interface IInvestorTimespan {
 	topRound: string | null
 	deals: number
 	projects: string
-	chains: string[]
+	chains: Array<string>
 	medianAmountUsd: number | null
 }
 
@@ -35,5 +35,5 @@ export interface IInvestor {
 }
 
 export interface IInvestorsPageData {
-	investors: IInvestor[]
+	investors: Array<IInvestor>
 }

@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildChainYAxis } from './chartYAxis'
 import { chainOverviewChartColors } from './constants'
 
 describe('chain chart y-axis layout', () => {
-	it('keeps per-metric colors, formatters, and spacing across three axes', () => {
+	test('keeps per-metric colors, formatters, and spacing across three axes', () => {
 		const axes = buildChainYAxis({
 			allYAxis: [
 				['TVL', undefined],
@@ -30,12 +30,12 @@ describe('chain chart y-axis layout', () => {
 		expect(priceAxis.axisLabel).toMatchObject({ color: '#aaa' })
 		expect(usersAxis.axisLine?.lineStyle).not.toHaveProperty('opacity')
 		expect(priceAxis.axisLine?.lineStyle).not.toHaveProperty('opacity')
-		expect(usersFormatter(1_000, 0, null)).toBe('1,000')
+		expect(usersFormatter(1000, 0, null)).toBe('1,000')
 		expect(priceFormatter(5, 0, null)).toContain('$')
 		expect(axes.every((axis) => axis.alignTicks == null)).toBe(true)
 	})
 
-	it('preserves explicitly requested tick alignment', () => {
+	test('preserves explicitly requested tick alignment', () => {
 		const axes = buildChainYAxis({
 			allYAxis: [
 				['TVL', undefined],

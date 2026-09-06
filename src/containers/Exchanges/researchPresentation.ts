@@ -23,7 +23,7 @@ const LINEAR_PERPS =
 const INVERSE_PERPS =
 	'COIN perps (also called inverse perps) are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
 
-export const RESEARCH_VIEWS: Record<ExchangeResearchPart, readonly ResearchPresentation[]> = {
+export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<ResearchPresentation>> = {
 	volume: [
 		{
 			id: 'spot-exchanges',

@@ -53,14 +53,14 @@ export function parseActingWindow(loss: Pick<RiskLoss, 'window_type' | 'time_win
 }
 
 // status precedence within a fanned group: computed → data_gap → not_attributable → no_loss
-function groupStatus(rows: VaultScenario[]): RiskLoss['status'] {
+function groupStatus(rows: Array<VaultScenario>): RiskLoss['status'] {
 	if (rows.some((r) => r.loss.status === 'computed')) return 'computed'
 	if (rows.some((r) => r.loss.status === 'data_gap')) return 'data_gap'
 	if (rows.some((r) => r.loss.status === 'not_attributable')) return 'not_attributable'
 	return 'no_loss'
 }
 
-function oracleConfigByAddress(oracleConfig: OracleConfigEntry[]): Map<string, OracleConfigEntry> {
+function oracleConfigByAddress(oracleConfig: Array<OracleConfigEntry>): Map<string, OracleConfigEntry> {
 	const m = new Map<string, OracleConfigEntry>()
 	for (const o of oracleConfig) {
 		if (o.asset_address) m.set(o.asset_address.toLowerCase(), o)
@@ -73,7 +73,7 @@ function oracleConfigByAddress(oracleConfig: OracleConfigEntry[]): Map<string, O
 function isExplained(mo: MarketOracle): boolean {
 	return !!(mo.mechanism_summary || mo.legs?.length)
 }
-function marketOracleByCollateral(markets: MarketOracle[]): Map<string, MarketOracle> {
+function marketOracleByCollateral(markets: Array<MarketOracle>): Map<string, MarketOracle> {
 	const m = new Map<string, MarketOracle>()
 	for (const mo of markets) {
 		const addr = mo.collateral_asset?.address?.toLowerCase()
@@ -86,7 +86,7 @@ function marketOracleByCollateral(markets: MarketOracle[]): Map<string, MarketOr
 
 interface BuildScenariosDeps {
 	realizedByScenario: Map<string, RealizedIncident>
-	coverageVMs: CoverageVM[]
+	coverageVMs: Array<CoverageVM>
 	oracleByAddr: Map<string, OracleConfigEntry>
 }
 
@@ -103,16 +103,16 @@ function compareScenarios(a: ScenarioVM, b: ScenarioVM): number {
 	return b.lossMaxUsd - a.lossMaxUsd
 }
 
-export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps): ScenarioVM[] {
+export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps): Array<ScenarioVM> {
 	// group by scenario_id, preserving first-seen order
-	const groups = new Map<string, VaultScenario[]>()
+	const groups = new Map<string, Array<VaultScenario>>()
 	for (const s of vault.vault_specific_risks) {
 		const arr = groups.get(s.scenario_id)
 		if (arr) arr.push(s)
 		else groups.set(s.scenario_id, [s])
 	}
 
-	const out: ScenarioVM[] = []
+	const out: Array<ScenarioVM> = []
 	for (const [scenarioId, rows] of groups) {
 		const head = rows[0]!
 		const status = rows.length === 1 ? head.loss.status : groupStatus(rows)
@@ -123,7 +123,7 @@ export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps
 
 		// Sum the served per-drop curve across this scenario's markets. Absent → the row is
 		// drop-independent and the table's stress toggle skips it.
-		let lossByAnchor: AnchorLossVM[] | undefined
+		let lossByAnchor: Array<AnchorLossVM> | undefined
 		if (computedRows.some((r) => r.loss.by_anchor?.length)) {
 			const byDrop = new Map<number, number>()
 			for (const r of computedRows) {
@@ -136,7 +136,7 @@ export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps
 				.sort((a, b) => a.dropPct - b.dropPct)
 		}
 
-		let perAsset: PerAssetLossVM[] | undefined
+		let perAsset: Array<PerAssetLossVM> | undefined
 		// full-drain is a per-collateral story (drainable-now vs full-compromise, plus the feed's
 		// controlling admin) — break it out even when a single collateral is affected.
 		const fanned = rows.some((r) => r.asset)
@@ -187,7 +187,7 @@ export function buildScenarios(vault: VaultRiskFixture, deps: BuildScenariosDeps
 	return out
 }
 
-function computeSectionMaxUsd(scenarios: ScenarioVM[], collateral: CollateralVM[]): number {
+function computeSectionMaxUsd(scenarios: Array<ScenarioVM>, collateral: Array<CollateralVM>): number {
 	let max = 0
 	for (const s of scenarios) if (s.status === 'computed' && s.lossMaxUsd > max) max = s.lossMaxUsd
 	for (const c of collateral) {
@@ -197,21 +197,21 @@ function computeSectionMaxUsd(scenarios: ScenarioVM[], collateral: CollateralVM[
 	return max > 0 ? max : 1
 }
 
-export function mergeCoverage(vault: VaultRiskFixture, protocol: ProtocolRiskFixture | null): CoverageVM[] {
+export function mergeCoverage(vault: VaultRiskFixture, protocol: ProtocolRiskFixture | null): Array<CoverageVM> {
 	return dedupeCoverage([...(vault.coverage ?? []), ...(protocol?.coverage ?? [])])
 }
 
 // Same policy as the headline total (committed + names the scenario), so the scenario row
 // and the verdict never disagree.
-export function coverageForScenario(coverage: CoverageVM[], scenarioId: string): CoverageVM[] {
+export function coverageForScenario(coverage: Array<CoverageVM>, scenarioId: string): Array<CoverageVM> {
 	return coverage.filter((c) => coverageAppliesToScenario(c, scenarioId))
 }
 
-export function buildCollateral(vault: VaultRiskFixture, explorers?: BlockExplorersResponse): CollateralVM[] {
+export function buildCollateral(vault: VaultRiskFixture, explorers?: BlockExplorersResponse): Array<CollateralVM> {
 	const oracleByAddr = oracleConfigByAddress(vault.oracle_config ?? [])
 	const marketByAddr = marketOracleByCollateral(vault.market_oracles ?? [])
 	const supplyUsd = vault.pool_total_supply_usd
-	const list: CollateralVM[] = (vault.collateral_risks ?? []).map((c: CollateralRisk) => {
+	const list: Array<CollateralVM> = (vault.collateral_risks ?? []).map((c: CollateralRisk) => {
 		const oc = oracleByAddr.get(c.token.address.toLowerCase())
 		const mo = marketByAddr.get(c.token.address.toLowerCase())
 		const exposureUsd = c.exposure_usd || 0
@@ -279,7 +279,7 @@ function badDebtAtDrop(debtUsd: number, liquidationThreshold: number, drop: numb
 	return Math.min(debtUsd * Math.max(0, 1 - (1 - x) / liquidationThreshold), capAtZeroUsd)
 }
 
-function badDebtAtDropMarkets(markets: BadDebtMarketInputs[], drop: number): number {
+function badDebtAtDropMarkets(markets: Array<BadDebtMarketInputs>, drop: number): number {
 	return markets.reduce(
 		(sum, m) =>
 			sum +
@@ -304,11 +304,12 @@ export function isCollateralStressModelable(c: Pick<CollateralVM, 'badDebtAtZero
 export function collateralDepegLossUsd(c: DepegInputs, drop: number): number {
 	if (c.badDebtAtZeroUsd == null) return 0
 	const alloc = c.allocationUsd ?? Number.POSITIVE_INFINITY
-	const rawLoss = c.badDebtMarkets.length
-		? badDebtAtDropMarkets(c.badDebtMarkets, drop)
-		: c.borrowedDebtUsd != null && c.liquidationThreshold != null
-			? badDebtAtDrop(c.borrowedDebtUsd, c.liquidationThreshold, drop, c.badDebtAtZeroUsd)
-			: c.badDebtAtZeroUsd
+	const rawLoss =
+		c.badDebtMarkets.length > 0
+			? badDebtAtDropMarkets(c.badDebtMarkets, drop)
+			: c.borrowedDebtUsd != null && c.liquidationThreshold != null
+				? badDebtAtDrop(c.borrowedDebtUsd, c.liquidationThreshold, drop, c.badDebtAtZeroUsd)
+				: c.badDebtAtZeroUsd
 	return Math.min(rawLoss, alloc)
 }
 
@@ -349,20 +350,24 @@ export function isDustCollateral(c: CollateralVM): boolean {
 }
 
 // The VAULT's own bad debt at a uniform price drop, summed across modelable collateral.
-export function vaultDepegLossUsd(collateral: DepegInputs[], drop: number): number {
+export function vaultDepegLossUsd(collateral: Array<DepegInputs>, drop: number): number {
 	return collateral.reduce((sum, c) => sum + collateralDepegLossUsd(c, drop), 0)
 }
 
 // The VAULT's own bad debt when each collateral can use a different drop, e.g.
 // cbBTC −30%, wstETH 0%, cbETH −10% in the custom-by-asset UI mode.
 export function vaultDepegLossUsdAtDrops<T extends DepegInputs>(
-	collateral: T[],
+	collateral: Array<T>,
 	dropForCollateral: (c: T) => number
 ): number {
 	return collateral.reduce((sum, c) => sum + collateralDepegLossUsd(c, dropForCollateral(c)), 0)
 }
 
-export function buildHeadline(scenarios: ScenarioVM[], collateral: CollateralVM[], coverage: CoverageVM[]): HeadlineVM {
+export function buildHeadline(
+	scenarios: Array<ScenarioVM>,
+	collateral: Array<CollateralVM>,
+	coverage: Array<CoverageVM>
+): HeadlineVM {
 	const computed = scenarios.filter((s) => s.status === 'computed')
 	// Worst-case tie-breaks live in stats.ts: biggest loss, then no-escape, then least-covered.
 	const worstPick = pickWorst(
@@ -399,7 +404,7 @@ export function buildHeadline(scenarios: ScenarioVM[], collateral: CollateralVM[
 	}
 }
 
-function buildExitReadiness(vault: VaultRiskFixture, scenarios: ScenarioVM[]): ExitReadinessVM {
+function buildExitReadiness(vault: VaultRiskFixture, scenarios: Array<ScenarioVM>): ExitReadinessVM {
 	const computed = scenarios.filter((s) => s.status === 'computed')
 	const worstNoEscape = computed
 		.filter((s) => s.actingWindow.kind === 'no-escape')
@@ -437,7 +442,7 @@ export function resolveRef(ref: string, protocol: ProtocolRiskFixture | null): R
 	}
 	// stable-id rule: exact id, or `<id>.<aspect>` — ids may themselves contain dots
 	// (resolves chainlink.multisig, chainlink.node-operator-set, l2.sequencer, ...)
-	const dep = deps.find((d) => ref === d.id || ref.startsWith(d.id + '.'))
+	const dep = deps.find((d) => ref === d.id || ref.startsWith(`${d.id}.`))
 	if (dep) {
 		const aspect = ref.length > dep.id.length ? ref.slice(dep.id.length + 1) : ''
 		const name = dep.name || dep.id
@@ -472,7 +477,7 @@ export function buildVaultRiskVM(data: VaultRiskData, explorers?: BlockExplorers
 	const collateral = buildCollateral(vault, explorers)
 
 	// Pool-level track record only; protocol-wide history lives on `protocol.incidents`.
-	const realizedIncidents: RealizedIncidentVM[] = (vault.realized_incidents ?? []).flatMap((r) =>
+	const realizedIncidents: Array<RealizedIncidentVM> = (vault.realized_incidents ?? []).flatMap((r) =>
 		(r.incidents ?? []).map((i) => ({
 			date: i.date,
 			usdLost: i.usd_lost,

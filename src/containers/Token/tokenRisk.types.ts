@@ -45,22 +45,22 @@ export interface TokenRiskProtocolSummary {
 	totalCurrentMaxBorrowUsd: number
 	totalMinBadDebtAtPriceZeroUsd: number | null
 	minBadDebtAtPriceZeroCoverage: TokenRiskCoverageStatus
-	chainBreakdowns: TokenRiskChainExposureSummary[]
+	chainBreakdowns: Array<TokenRiskChainExposureSummary>
 }
 
 export interface TokenRiskExposuresSection {
 	summary: TokenRiskExposureSummary
-	rows: TokenRiskExposureRow[]
-	protocolSummaries: TokenRiskProtocolSummary[]
+	rows: Array<TokenRiskExposureRow>
+	protocolSummaries: Array<TokenRiskProtocolSummary>
 	methodologies: Pick<TokenRiskBorrowCapacityMethodologies, 'asset' | 'minBadDebtAtPriceZeroUsd'> & {
 		currentMaxBorrowUsd: string
 	}
 }
 
 export interface TokenRiskResponse {
-	candidates: TokenRiskCandidate[]
-	scopeCandidates: TokenRiskCandidate[]
+	candidates: Array<TokenRiskCandidate>
+	scopeCandidates: Array<TokenRiskCandidate>
 	selectedCandidateKey: string | null
 	exposures: TokenRiskExposuresSection
-	limitations: string[]
+	limitations: Array<string>
 }

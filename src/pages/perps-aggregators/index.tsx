@@ -32,7 +32,7 @@ const PerpsAggregatorsVolumeOnAllChains = (props: IAdapterByChainPageData) => {
 		<Layout
 			title="Perps Aggregator Rankings - Futures Routing - DefiLlama"
 			description="Track perps aggregator volume by protocol, the notional volume of leveraged trades routed through aggregators."
-			canonicalUrl={`/perps-aggregators`}
+			canonicalUrl="/perps-aggregators"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

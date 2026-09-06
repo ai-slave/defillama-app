@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ApiRequest } from '~/server/api/types'
 import { clientIp, sendClaimToUserAnalytics, validateClaimBody, validateConnectBody } from '../leads'
 
@@ -22,7 +22,7 @@ const validConnect = {
 }
 
 describe('validateConnectBody', () => {
-	it('accepts a complete valid payload and keeps whitelisted fields', () => {
+	test('accepts a complete valid payload and keeps whitelisted fields', () => {
 		const result = validateConnectBody(validConnect)
 		expect(result.ok).toBe(true)
 		if (result.ok) {
@@ -32,7 +32,7 @@ describe('validateConnectBody', () => {
 		}
 	})
 
-	it('forwards the leaderboard slug as market_maker_id', () => {
+	test('forwards the leaderboard slug as market_maker_id', () => {
 		const result = validateConnectBody(validConnect)
 		expect(result.ok).toBe(true)
 		if (result.ok) {
@@ -41,35 +41,35 @@ describe('validateConnectBody', () => {
 		}
 	})
 
-	it('rejects an unknown interest', () => {
+	test('rejects an unknown interest', () => {
 		expect(validateConnectBody({ ...validConnect, interest: 'spam' }).ok).toBe(false)
 	})
 
-	it('rejects a missing full name and a bad email', () => {
+	test('rejects a missing full name and a bad email', () => {
 		expect(validateConnectBody({ ...validConnect, full_name: '  ' }).ok).toBe(false)
 		expect(validateConnectBody({ ...validConnect, email: 'not-an-email' }).ok).toBe(false)
 	})
 
-	it('rejects a filled honeypot field regardless of length', () => {
+	test('rejects a filled honeypot field regardless of length', () => {
 		expect(validateConnectBody({ ...validConnect, hp: 'bot' }).ok).toBe(false)
 		expect(validateConnectBody({ ...validConnect, hp: 'x'.repeat(5000) }).ok).toBe(false)
 	})
 
-	it('rejects an invalid market maker id', () => {
+	test('rejects an invalid market maker id', () => {
 		expect(validateConnectBody({ ...validConnect, market_maker_id: 'bad id!' }).ok).toBe(false)
 	})
 
-	it('drops coingecko_id unless token_status is listed', () => {
+	test('drops coingecko_id unless token_status is listed', () => {
 		const result = validateConnectBody({ ...validConnect, token_status: 'pre-tge' })
 		expect(result.ok).toBe(true)
 		if (result.ok) expect(result.payload.coingecko_id).toBeNull()
 	})
 
-	it('rejects an unknown token status', () => {
+	test('rejects an unknown token status', () => {
 		expect(validateConnectBody({ ...validConnect, token_status: 'moon' }).ok).toBe(false)
 	})
 
-	it('rejects a non-object body', () => {
+	test('rejects a non-object body', () => {
 		expect(validateConnectBody(null).ok).toBe(false)
 		expect(validateConnectBody('str').ok).toBe(false)
 	})
@@ -90,7 +90,7 @@ const validClaim = {
 }
 
 describe('validateClaimBody', () => {
-	it('accepts a complete valid payload', () => {
+	test('accepts a complete valid payload', () => {
 		const result = validateClaimBody(validClaim)
 		expect(result.ok).toBe(true)
 		if (result.ok) {
@@ -99,18 +99,18 @@ describe('validateClaimBody', () => {
 		}
 	})
 
-	it('rejects when either consent is missing', () => {
+	test('rejects when either consent is missing', () => {
 		expect(validateClaimBody({ ...validClaim, alignment_consent: false }).ok).toBe(false)
 		expect(validateClaimBody({ ...validClaim, terms_consent: 'yes' }).ok).toBe(false)
 	})
 
-	it('accepts x.com and twitter.com profiles, rejects other urls', () => {
+	test('accepts x.com and twitter.com profiles, rejects other urls', () => {
 		expect(validateClaimBody({ ...validClaim, social_profile_url: 'https://x.com/test' }).ok).toBe(true)
 		expect(validateClaimBody({ ...validClaim, social_profile_url: 'https://twitter.com/test' }).ok).toBe(true)
 		expect(validateClaimBody({ ...validClaim, social_profile_url: 'https://evil.com/test' }).ok).toBe(false)
 	})
 
-	it('accepts profile urls without a protocol and normalizes them to https', () => {
+	test('accepts profile urls without a protocol and normalizes them to https', () => {
 		const result = validateClaimBody({ ...validClaim, social_profile_url: 'www.linkedin.com/in/test' })
 		expect(result.ok).toBe(true)
 		if (result.ok) expect(result.payload.social_profile_url).toBe('https://www.linkedin.com/in/test')
@@ -120,23 +120,23 @@ describe('validateClaimBody', () => {
 		if (bare.ok) expect(bare.payload.social_profile_url).toBe('https://x.com/test')
 	})
 
-	it('rejects a non-boolean has_forgd_contact', () => {
+	test('rejects a non-boolean has_forgd_contact', () => {
 		expect(validateClaimBody({ ...validClaim, has_forgd_contact: 'yes' }).ok).toBe(false)
 	})
 
-	it('drops forgd_contact_name when has_forgd_contact is false', () => {
+	test('drops forgd_contact_name when has_forgd_contact is false', () => {
 		const result = validateClaimBody({ ...validClaim, has_forgd_contact: false })
 		expect(result.ok).toBe(true)
 		if (result.ok) expect(result.payload.forgd_contact_name).toBeNull()
 	})
 
-	it('rejects a filled honeypot field', () => {
+	test('rejects a filled honeypot field', () => {
 		expect(validateClaimBody({ ...validClaim, hp: 'bot' }).ok).toBe(false)
 	})
 })
 
 describe('sendClaimToUserAnalytics', () => {
-	it('posts the validated claim when analytics is configured', async () => {
+	test('posts the validated claim when analytics is configured', async () => {
 		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com/')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'test-secret')
 		const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }))
@@ -157,7 +157,7 @@ describe('sendClaimToUserAnalytics', () => {
 		)
 	})
 
-	it('does nothing when analytics is not configured', async () => {
+	test('does nothing when analytics is not configured', async () => {
 		vi.stubEnv('USER_ANALYTICS_URL', '')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', '')
 		const fetchMock = vi.fn()
@@ -168,7 +168,7 @@ describe('sendClaimToUserAnalytics', () => {
 		expect(fetchMock).not.toHaveBeenCalled()
 	})
 
-	it('does not fail the submission when analytics rejects the copy', async () => {
+	test('does not fail the submission when analytics rejects the copy', async () => {
 		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'test-secret')
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 500 })))
@@ -177,23 +177,23 @@ describe('sendClaimToUserAnalytics', () => {
 	})
 })
 
-function requestWithHeaders(headers: Record<string, string | string[] | undefined>): ApiRequest {
+function requestWithHeaders(headers: Record<string, string | Array<string> | undefined>): ApiRequest {
 	return { method: 'POST', url: '/api/public/market-makers/lead/connect', query: {}, headers }
 }
 
 describe('clientIp', () => {
-	it('prefers edge-set headers over x-forwarded-for', () => {
+	test('prefers edge-set headers over x-forwarded-for', () => {
 		expect(clientIp(requestWithHeaders({ 'cf-connecting-ip': '1.2.3.4', 'x-forwarded-for': 'spoofed, 5.6.7.8' }))).toBe(
 			'1.2.3.4'
 		)
 		expect(clientIp(requestWithHeaders({ 'x-real-ip': '9.9.9.9', 'x-forwarded-for': 'spoofed' }))).toBe('9.9.9.9')
 	})
 
-	it('falls back to the rightmost x-forwarded-for entry, not the spoofable leftmost', () => {
+	test('falls back to the rightmost x-forwarded-for entry, not the spoofable leftmost', () => {
 		expect(clientIp(requestWithHeaders({ 'x-forwarded-for': 'spoofed, 10.0.0.1, 5.6.7.8' }))).toBe('5.6.7.8')
 	})
 
-	it('returns unknown when no ip headers are present', () => {
+	test('returns unknown when no ip headers are present', () => {
 		expect(clientIp(requestWithHeaders({}))).toBe('unknown')
 	})
 })

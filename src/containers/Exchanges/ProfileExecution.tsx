@@ -117,8 +117,8 @@ export function MarkoutHorizons({
 	)
 }
 
-function summarySentences(execution: ExchangeExecutionModel): string[] {
-	const sentences: string[] = []
+function summarySentences(execution: ExchangeExecutionModel): Array<string> {
+	const sentences: Array<string> = []
 	if (execution.costToTradeBps != null) {
 		sentences.push(
 			`A $10k market order here costs about ${executionUsd(execution.costToTradeBps)} all-in: base-tier taker fee plus spread. VIP fee tiers can lower the fee part; the slippage figures below exclude fees entirely, since venues charge fees separately after the fill.`

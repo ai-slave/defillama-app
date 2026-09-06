@@ -159,7 +159,7 @@ const bridgeChainsColumnOrders: ColumnOrdersByBreakpoint = {
 		'prevWeekNetFlow'
 	]
 }
-export function BridgeChainsTable({ data }: { data: BridgeChainTableRow[] }) {
+export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'prevDayNetFlow', desc: true }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])

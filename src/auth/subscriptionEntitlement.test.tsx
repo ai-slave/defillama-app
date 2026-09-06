@@ -4,7 +4,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider, useAuthContext } from '~/auth'
 import type { Subscription } from '~/auth/subscriptionStatus'
 import { useSubscribe } from '~/auth/useSubscribe'
@@ -16,7 +16,7 @@ vi.mock('next/router', () => ({
 	useRouter: () => ({ pathname: '/', asPath: '/', query: {}, isReady: true, replace: vi.fn() })
 }))
 
-const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4102444800 }))}.signature`
+const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
 const record = (id: string, hasActiveSubscription: boolean) => ({
 	id,
 	collectionId: '_pb_users_auth_',
@@ -50,7 +50,7 @@ let subscribeView: ReturnType<typeof useSubscribe>
 let root: Root
 let client: QueryClient
 let container: HTMLDivElement
-let statusRequests: PendingStatus[]
+let statusRequests: Array<PendingStatus>
 let statusHandler: (authorization: string | null) => Promise<Response> | Response
 
 function Probe() {
@@ -121,7 +121,7 @@ async function waitFor(assertion: () => void) {
 	})
 }
 
-it('uses canonical active access when the PocketBase projection is false and shares the response', async () => {
+test('uses canonical active access when the PocketBase projection is false and shares the response', async () => {
 	let calls = 0
 	statusHandler = () => {
 		calls += 1
@@ -138,7 +138,7 @@ it('uses canonical active access when the PocketBase projection is false and sha
 	expect(calls).toBe(1)
 })
 
-it('uses a canonical 404 when the PocketBase projection is stale true', async () => {
+test('uses a canonical 404 when the PocketBase projection is stale true', async () => {
 	await renderSession('account-a', true)
 
 	await waitFor(() => expect(document.body.textContent).toContain('No Subscription'))
@@ -148,7 +148,7 @@ it('uses a canonical 404 when the PocketBase projection is stale true', async ()
 	expect(sessionView.loaders.userLoading).toBe(false)
 })
 
-it('shows retryable unknown access after a canonical request failure', async () => {
+test('shows retryable unknown access after a canonical request failure', async () => {
 	statusHandler = () => jsonResponse({ message: 'Internal error' }, 500)
 	await renderSession('account-a', false)
 
@@ -159,7 +159,7 @@ it('shows retryable unknown access after a canonical request failure', async () 
 	expect(sessionView.loaders.userLoading).toBe(true)
 })
 
-it('does not flash the free state while canonical access is loading', async () => {
+test('does not flash the free state while canonical access is loading', async () => {
 	statusHandler = (authorization) =>
 		new Promise<Response>((resolve) => {
 			statusRequests.push({ authorization, resolve })
@@ -173,7 +173,7 @@ it('does not flash the free state while canonical access is loading', async () =
 	expect(sessionView.loaders.userLoading).toBe(true)
 })
 
-it('renders a returning subscriber as Pro on first paint while revalidating', async () => {
+test('renders a returning subscriber as Pro on first paint while revalidating', async () => {
 	persistSubscription('account-a', activeSubscription('account-a'))
 	statusHandler = (authorization) =>
 		new Promise<Response>((resolve) => {
@@ -189,7 +189,7 @@ it('renders a returning subscriber as Pro on first paint while revalidating', as
 	expect(statusRequests).toHaveLength(1)
 })
 
-it('keeps cached access visible and warns when background revalidation fails', async () => {
+test('keeps cached access visible and warns when background revalidation fails', async () => {
 	persistSubscription('account-a', activeSubscription('account-a'))
 	statusHandler = () => jsonResponse({ message: 'Internal error' }, 500)
 
@@ -204,7 +204,7 @@ it('keeps cached access visible and warns when background revalidation fails', a
 	expect(sessionView.loaders.userLoading).toBe(false)
 })
 
-it("replaces a cancelled subscriber's cached active access with a canonical 404", async () => {
+test("replaces a cancelled subscriber's cached active access with a canonical 404", async () => {
 	persistSubscription('account-a', activeSubscription('account-a'))
 	statusHandler = (authorization) =>
 		new Promise<Response>((resolve) => {
@@ -223,7 +223,7 @@ it("replaces a cancelled subscriber's cached active access with a canonical 404"
 	expect(JSON.parse(localStorage.getItem('subscription-status:account-a')!).value).toBeNull()
 })
 
-it('keeps a slow account A response from affecting account B', async () => {
+test('keeps a slow account A response from affecting account B', async () => {
 	statusHandler = (authorization) =>
 		new Promise<Response>((resolve) => {
 			statusRequests.push({ authorization, resolve })
@@ -246,7 +246,7 @@ it('keeps a slow account A response from affecting account B', async () => {
 	expect(sessionView.hasActiveSubscription).toBe(false)
 })
 
-it('disables effective entitlement on logout', async () => {
+test('disables effective entitlement on logout', async () => {
 	statusHandler = () => jsonResponse({ subscription: activeSubscription('account-a') })
 	await renderSession('account-a', false)
 	await waitFor(() => expect(sessionView.hasActiveSubscription).toBe(true))
@@ -259,7 +259,7 @@ it('disables effective entitlement on logout', async () => {
 	expect(localStorage.getItem('subscription-status:account-a')).toBeNull()
 })
 
-it('refetches the shared canonical query after cancellation', async () => {
+test('refetches the shared canonical query after cancellation', async () => {
 	let calls = 0
 	statusHandler = () => {
 		calls += 1
@@ -274,7 +274,7 @@ it('refetches the shared canonical query after cancellation', async () => {
 	await waitFor(() => expect(calls).toBe(2))
 })
 
-it("refetches the canonical query through checkout's subscription-key invalidation", async () => {
+test("refetches the canonical query through checkout's subscription-key invalidation", async () => {
 	let calls = 0
 	statusHandler = () => {
 		calls += 1

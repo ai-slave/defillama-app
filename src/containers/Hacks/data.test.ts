@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildHacksPageSummary, filterHacksRows, type HacksFilterState } from './data'
 import type { IHackRow } from './types'
 
@@ -29,7 +29,7 @@ const filters = (overrides: Partial<HacksFilterState> = {}): HacksFilterState =>
 })
 
 describe('Hacks data', () => {
-	it('keeps incident nulls unavailable while additive summaries use zero contribution', () => {
+	test('keeps incident nulls unavailable while additive summaries use zero contribution', () => {
 		const summary = buildHacksPageSummary([
 			row({ amountUsd: null, chains: ['Unknown Chain'], technique: 'Unknown', bridge: true }),
 			row({ amountUsd: 0 }),
@@ -43,7 +43,7 @@ describe('Hacks data', () => {
 		expect(summary.techniqueOptions).toContain('Unknown')
 	})
 
-	it('excludes null dates from monthly data without removing their categories', () => {
+	test('excludes null dates from monthly data without removing their categories', () => {
 		const summary = buildHacksPageSummary([
 			row({ date: null, amountUsd: 10, classification: 'Missing Date' }),
 			row({ amountUsd: 20 })
@@ -54,7 +54,7 @@ describe('Hacks data', () => {
 		expect(summary.classificationOptions).toContain('Missing Date')
 	})
 
-	it('keeps unknown losses for categorical filters and excludes them from numeric ranges', () => {
+	test('keeps unknown losses for categorical filters and excludes them from numeric ranges', () => {
 		const unknown = row({ name: 'Unknown', amountUsd: null })
 		const zero = row({ name: 'Zero', amountUsd: 0 })
 		const measured = row({ name: 'Measured', amountUsd: 10 })
@@ -65,7 +65,7 @@ describe('Hacks data', () => {
 		expect(filterHacksRows(data, filters({ minLost: 1 }))).toEqual([measured])
 	})
 
-	it('excludes unknown dates only when a time range is active', () => {
+	test('excludes unknown dates only when a time range is active', () => {
 		const unknownDate = row({ name: 'Unknown date', date: null })
 		const dated = row({ name: 'Dated' })
 
@@ -73,7 +73,7 @@ describe('Hacks data', () => {
 		expect(filterHacksRows([unknownDate, dated], filters({ since: 1_700_000_000 }))).toEqual([dated])
 	})
 
-	it('returns measured zero summaries for successful empty data', () => {
+	test('returns measured zero summaries for successful empty data', () => {
 		const summary = buildHacksPageSummary([])
 
 		expect(summary.totalHacked).toBe('$0')

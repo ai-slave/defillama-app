@@ -27,7 +27,7 @@ type BridgeSummaryChartPoint = { date: string | number; volume?: number | null; 
 interface BridgeForFormatting {
 	displayName: string
 	name: string
-	chains: string[]
+	chains: Array<string>
 	symbol?: string
 	icon?: string | null
 	last24hVolume?: number | null
@@ -42,7 +42,7 @@ interface BridgeForFormatting {
 }
 
 function getPriorBridgeTransactionCount(
-	chart: readonly BridgeSummaryChartPoint[] | null | undefined,
+	chart: ReadonlyArray<BridgeSummaryChartPoint> | null | undefined,
 	daysBefore: number,
 	currentTimeMs: number
 ): number | null {
@@ -79,7 +79,7 @@ function getBridgeDailyVolume(point: BridgeDailyVolumePoint, useDepositAndWithdr
 }
 
 export function getCompletedBridgeVolumeTotal(
-	chart: BridgeDailyVolumePoint[] | null | undefined,
+	chart: Array<BridgeDailyVolumePoint> | null | undefined,
 	days: number,
 	useDepositAndWithdrawalVolume = false,
 	currentTimeMs: number = Date.now()
@@ -92,8 +92,8 @@ export function getCompletedBridgeVolumeTotal(
 }
 
 export function getCompletedBridgeVolumeTotals(
-	chart: BridgeDailyVolumePoint[] | null | undefined,
-	days: readonly number[],
+	chart: Array<BridgeDailyVolumePoint> | null | undefined,
+	days: ReadonlyArray<number>,
 	useDepositAndWithdrawalVolume = false,
 	currentTimeMs: number = Date.now()
 ): Map<number, number | null> {
@@ -101,8 +101,8 @@ export function getCompletedBridgeVolumeTotals(
 }
 
 function getCompletedBridgeVolumeSummary(
-	chart: BridgeDailyVolumePoint[] | null | undefined,
-	days: readonly number[],
+	chart: Array<BridgeDailyVolumePoint> | null | undefined,
+	days: ReadonlyArray<number>,
 	useDepositAndWithdrawalVolume: boolean,
 	currentTimeMs: number
 ): { pair: { current: number; previous: number } | null; totals: Map<number, number | null> } {
@@ -145,7 +145,7 @@ function getCompletedBridgeVolumeSummary(
 }
 
 export function getCompletedBridgeVolumePair(
-	chart: BridgeDailyVolumePoint[] | null | undefined,
+	chart: Array<BridgeDailyVolumePoint> | null | undefined,
 	currentTimeMs: number = Date.now()
 ): { current: number; previous: number } | null {
 	return getCompletedBridgeVolumeSummary(chart, [], false, currentTimeMs).pair
@@ -160,10 +160,10 @@ export const formatBridgesData = ({
 	currentTimeMs = Date.now()
 }: {
 	chain?: string
-	bridges?: BridgeForFormatting[]
-	chartDataByBridge?: Array<BridgeSummaryChartPoint[] | null>
+	bridges?: Array<BridgeForFormatting>
+	chartDataByBridge?: Array<Array<BridgeSummaryChartPoint> | null>
 	bridgeNameToChartDataIndex?: Record<string, number>
-	bridgeProps?: readonly (keyof BridgeForFormatting & string)[]
+	bridgeProps?: ReadonlyArray<keyof BridgeForFormatting & string>
 	currentTimeMs?: number
 }) => {
 	let filteredBridges = [...bridges]
@@ -225,11 +225,11 @@ export const formatChainsData = ({
 		Pick<BridgeVolumePoint, 'depositUSD' | 'withdrawUSD'> & { date: string | number }
 	> | null>
 	chainToChartDataIndex?: Record<string, number>
-	prevDayDataByChain?: IDailyBridgeStats[]
+	prevDayDataByChain?: Array<IDailyBridgeStats>
 	netflowsDataDay?: BridgeNetflowsResponse | null
 	netflowsDataWeek?: BridgeNetflowsResponse | null
 	currentTimeMs?: number
-}): BridgeChainTableRow[] => {
+}): Array<BridgeChainTableRow> => {
 	const prevDayDataByName = new Map<string, IDailyBridgeStats>()
 	for (const item of prevDayDataByChain ?? []) {
 		if (item.name != null && !prevDayDataByName.has(item.name)) prevDayDataByName.set(item.name, item)
@@ -260,7 +260,7 @@ export const formatChainsData = ({
 		const topTokenWithdrawn = getTopTokenByUsd(totalTokensWithdrawn)
 
 		return {
-			name: name,
+			name,
 			prevDayUsdDeposits,
 			prevDayUsdWithdrawals,
 			prevWeekUsdDeposits,
@@ -307,7 +307,7 @@ function getCompletedBridgeLegTotals(
 	return { depositedUsd, withdrawnUsd, netFlow: depositedUsd - withdrawnUsd }
 }
 
-function indexBridgeNetflows(data: BridgeNetflowEntry[] | null): Map<string, BridgeNetflowEntry> {
+function indexBridgeNetflows(data: Array<BridgeNetflowEntry> | null): Map<string, BridgeNetflowEntry> {
 	const indexed = new Map<string, BridgeNetflowEntry>()
 	if (!data) return indexed
 

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { fetchProtocolsTableMock } = vi.hoisted(() => ({ fetchProtocolsTableMock: vi.fn() }))
@@ -15,7 +15,7 @@ import { buildUnifiedTableQueryString } from '../../unifiedTableQuery'
 import { parseUnifiedTableQuery, unifiedTableHandler } from './route'
 
 describe('parseUnifiedTableQuery', () => {
-	it('accepts, validates, and deduplicates canonical base metric families', () => {
+	test('accepts, validates, and deduplicates canonical base metric families', () => {
 		const parsed = parseUnifiedTableQuery({
 			strategy: 'protocols',
 			'baseMetricFamilies[]': ['open-interest', 'fees', 'open-interest']
@@ -25,13 +25,13 @@ describe('parseUnifiedTableQuery', () => {
 		expect(parsed?.needsOracleMembership).toBe(false)
 	})
 
-	it('parses an explicit oracle membership capability', () => {
+	test('parses an explicit oracle membership capability', () => {
 		expect(parseUnifiedTableQuery({ strategy: 'protocols', oracleMembership: 'true' })?.needsOracleMembership).toBe(
 			true
 		)
 	})
 
-	it('restores the full producer contract for requests from pre-capability clients', () => {
+	test('restores the full producer contract for requests from pre-capability clients', () => {
 		const parsed = parseUnifiedTableQuery({
 			strategy: 'protocols',
 			'rowHeaders[]': ['protocol', 'chain'],
@@ -48,20 +48,20 @@ describe('parseUnifiedTableQuery', () => {
 		})
 	})
 
-	it('rejects unknown base metric families', () => {
+	test('rejects unknown base metric families', () => {
 		expect(
 			parseUnifiedTableQuery({ strategy: 'protocols', 'baseMetricFamilies[]': ['open-interest', 'openInterest'] })
 		).toBeNull()
 	})
 
-	it('parses validated semantic row membership and rejects unknown values', () => {
+	test('parses validated semantic row membership and rejects unknown values', () => {
 		expect(
 			parseUnifiedTableQuery({ strategy: 'protocols', rowMembership: 'supplemental:earnings' })?.rowMembership
 		).toEqual({ kind: 'supplemental-metric', metric: 'earnings' })
 		expect(parseUnifiedTableQuery({ strategy: 'protocols', rowMembership: 'preset:anything' })).toBeNull()
 	})
 
-	it('round-trips preset membership through the public request contract', () => {
+	test('round-trips preset membership through the public request contract', () => {
 		const query = Object.fromEntries(
 			new URLSearchParams(
 				buildUnifiedTableQueryString(
@@ -86,7 +86,7 @@ describe('parseUnifiedTableQuery', () => {
 		})
 	})
 
-	it('returns legacy chain metrics without the new availability envelope', async () => {
+	test('returns legacy chain metrics without the new availability envelope', async () => {
 		fetchProtocolsTableMock.mockResolvedValueOnce({
 			rows: [],
 			parentMetrics: {},

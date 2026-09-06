@@ -144,7 +144,7 @@ export function useUploadProjectFiles(id: string) {
 	const { authorizedFetch } = useAuthContext()
 	const qc = useQueryClient()
 	return useMutation({
-		mutationFn: (files: File[]) => uploadProjectFiles(authorizedFetch, id, files),
+		mutationFn: (files: Array<File>) => uploadProjectFiles(authorizedFetch, id, files),
 		onSuccess: () => {
 			void qc.invalidateQueries({ queryKey: projectFilesKey(id) })
 			void qc.invalidateQueries({ queryKey: projectKey(id) })

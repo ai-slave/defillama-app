@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { TOKEN_PAGE_BORROW_QUERY } from '~/containers/Yields/data/tokenPageQuery'
 import { useTokenBorrowRoutes } from '../useTokenBorrowRoutes'
 
@@ -9,13 +9,13 @@ vi.mock('@tanstack/react-query', () => ({
 	useQuery: vi.fn(() => ({ data: null, error: null, isLoading: false }))
 }))
 
-function Probe({ tokenKeys }: { tokenKeys: string[] }) {
+function Probe({ tokenKeys }: { tokenKeys: Array<string> }) {
 	useTokenBorrowRoutes(tokenKeys)
 	return <div>probe</div>
 }
 
 describe('useTokenBorrowRoutes', () => {
-	it('keys the query by the resolved token option keys with shared cache settings', () => {
+	test('keys the query by the resolved token option keys with shared cache settings', () => {
 		renderToStaticMarkup(<Probe tokenKeys={['family:btc']} />)
 
 		expect(useQuery).toHaveBeenCalledWith(
@@ -29,7 +29,7 @@ describe('useTokenBorrowRoutes', () => {
 		)
 	})
 
-	it('disables the query when no token keys resolve', () => {
+	test('disables the query when no token keys resolve', () => {
 		renderToStaticMarkup(<Probe tokenKeys={[]} />)
 
 		expect(useQuery).toHaveBeenCalledWith(

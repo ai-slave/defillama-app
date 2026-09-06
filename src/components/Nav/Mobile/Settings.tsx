@@ -11,9 +11,9 @@ import {
 	popoverSurfaceStyles
 } from '~/ui/Popover'
 
-const EMPTY_FILTERS: { name: string; key: string }[] = []
+const EMPTY_FILTERS: Array<{ name: string; key: string }> = []
 
-export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: { name: string; key: string }[] }) {
+export function Settings({ tvlOptions = EMPTY_FILTERS }: { tvlOptions?: Array<{ name: string; key: string }> }) {
 	const [darkMode, toggleDarkMode] = useDarkModeManager()
 
 	const { selectedValues, setSelectedValues } = useProtocolsFilterState(tvlOptions)

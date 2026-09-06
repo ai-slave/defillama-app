@@ -10,7 +10,7 @@ export interface RawLiquidationPosition {
 }
 
 export interface RawProtocolsResponse {
-	protocols: string[]
+	protocols: Array<string>
 }
 
 export interface RawToken {
@@ -31,11 +31,11 @@ interface RawLiquidationsResponseBase<TData, TTokens> {
 }
 
 export type RawAllLiquidationsResponse = RawLiquidationsResponseBase<
-	Partial<Record<string, Record<string, RawLiquidationPosition[]>>>,
+	Partial<Record<string, Record<string, Array<RawLiquidationPosition>>>>,
 	RawMultiChainTokenMap
 >
 
-export type RawLiquidationsProtocolData = Record<string, RawLiquidationPosition[]>
+export type RawLiquidationsProtocolData = Record<string, Array<RawLiquidationPosition>>
 
 export interface NavLink {
 	label: string
@@ -95,16 +95,16 @@ export interface ProtocolChainRow extends LiquidationsChainRef {
 export interface LiquidationsDistributionChartSeries {
 	key: string
 	label: string
-	usd: number[]
-	amount: number[]
+	usd: Array<number>
+	amount: Array<number>
 	totalUsd: number
 }
 
 export type LiquidationsDistributionChartBreakdownKey = 'total' | 'protocol' | 'chain'
 
 export interface LiquidationsDistributionChartView {
-	bins: number[]
-	series: LiquidationsDistributionChartSeries[]
+	bins: Array<number>
+	series: Array<LiquidationsDistributionChartSeries>
 }
 
 export interface LiquidationsDistributionChartToken {
@@ -115,23 +115,23 @@ export interface LiquidationsDistributionChartToken {
 }
 
 export interface LiquidationsDistributionChartData {
-	tokens: LiquidationsDistributionChartToken[]
+	tokens: Array<LiquidationsDistributionChartToken>
 }
 
 export interface LiquidationsOverviewPageProps {
-	protocolLinks: NavLink[]
+	protocolLinks: Array<NavLink>
 	timestamp: number
 	protocolCount: number
 	chainCount: number
 	positionCount: number
 	totalCollateralUsd: number
 	distributionChart: LiquidationsDistributionChartData
-	protocolRows: OverviewProtocolRow[]
-	chainRows: OverviewChainRow[]
+	protocolRows: Array<OverviewProtocolRow>
+	chainRows: Array<OverviewChainRow>
 }
 
 export interface LiquidationsOverviewShell {
-	protocolLinks: NavLink[]
+	protocolLinks: Array<NavLink>
 }
 
 export interface TokenLiquidationsSectionData {
@@ -142,13 +142,13 @@ export interface TokenLiquidationsSectionData {
 	chainCount: number
 	totalCollateralUsd: number
 	distributionChart: LiquidationsDistributionChartData
-	protocolRows: OverviewProtocolRow[]
-	chainRows: OverviewChainRow[]
+	protocolRows: Array<OverviewProtocolRow>
+	chainRows: Array<OverviewChainRow>
 }
 
 export interface LiquidationsProtocolPageProps {
-	protocolLinks: NavLink[]
-	chainLinks: NavLink[]
+	protocolLinks: Array<NavLink>
+	chainLinks: Array<NavLink>
 	protocolId: string
 	protocolName: string
 	protocolSlug: string
@@ -158,21 +158,21 @@ export interface LiquidationsProtocolPageProps {
 	collateralCount: number
 	totalCollateralUsd: number
 	distributionChart: LiquidationsDistributionChartData
-	chainRows: ProtocolChainRow[]
+	chainRows: Array<ProtocolChainRow>
 	ownerBlockExplorers: BlockExplorersResponse
-	positions: LiquidationPosition[]
+	positions: Array<LiquidationPosition>
 }
 
 export interface LiquidationsProtocolShell {
-	protocolLinks: NavLink[]
-	chainLinks: NavLink[]
+	protocolLinks: Array<NavLink>
+	chainLinks: Array<NavLink>
 	protocolName: string
 	protocolSlug: string
 }
 
 export interface LiquidationsChainPageProps {
-	protocolLinks: NavLink[]
-	chainLinks: NavLink[]
+	protocolLinks: Array<NavLink>
+	chainLinks: Array<NavLink>
 	protocolId: string
 	protocolName: string
 	protocolSlug: string
@@ -184,14 +184,14 @@ export interface LiquidationsChainPageProps {
 	collateralCount: number
 	totalCollateralUsd: number
 	distributionChart: LiquidationsDistributionChartData
-	chainRows: ProtocolChainRow[]
+	chainRows: Array<ProtocolChainRow>
 	ownerBlockExplorers: BlockExplorersResponse
-	positions: LiquidationPosition[]
+	positions: Array<LiquidationPosition>
 }
 
 export interface LiquidationsChainShell {
-	protocolLinks: NavLink[]
-	chainLinks: NavLink[]
+	protocolLinks: Array<NavLink>
+	chainLinks: Array<NavLink>
 	protocolName: string
 	protocolSlug: string
 	chainName: string

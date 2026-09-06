@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { createBoundedTaskScheduler } from './taskScheduler'
 
 describe('createBoundedTaskScheduler', () => {
-	it('limits active work and settles every admitted task', async () => {
+	test('limits active work and settles every admitted task', async () => {
 		let activeTaskCount = 0
 		let maximumActiveTaskCount = 0
 		const releases: Array<() => void> = []
@@ -31,7 +31,7 @@ describe('createBoundedTaskScheduler', () => {
 		expect(activeTaskCount).toBe(0)
 	})
 
-	it('drops queued work after cancellation while allowing active work to settle', async () => {
+	test('drops queued work after cancellation while allowing active work to settle', async () => {
 		let stopped = false
 		let startedTaskCount = 0
 		const activeTask = Promise.withResolvers<void>()

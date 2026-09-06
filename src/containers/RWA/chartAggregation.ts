@@ -169,11 +169,11 @@ function buildAssetGroupMapping(
 }
 
 function aggregateMetricRows(
-	rows: RWAChartRow[],
+	rows: Array<RWAChartRow>,
 	assetToGroups: Map<string, Map<string, number>>,
 	seenGroups: Set<string>
-): RWAChartRow[] {
-	const out: RWAChartRow[] = []
+): Array<RWAChartRow> {
+	const out: Array<RWAChartRow> = []
 
 	for (const row of rows) {
 		const outRow: RWAChartRow = { timestamp: row.timestamp }
@@ -215,8 +215,8 @@ function buildAggregatedRwaDataset(
 	}
 }
 
-export function sortKeysByLatestTimestampValue(rows: RWAChartRow[], keys: Iterable<string>): string[] {
-	const arr: string[] = []
+export function sortKeysByLatestTimestampValue(rows: Array<RWAChartRow>, keys: Iterable<string>): Array<string> {
+	const arr: Array<string> = []
 	for (const key of keys) {
 		if (key) arr.push(key)
 	}

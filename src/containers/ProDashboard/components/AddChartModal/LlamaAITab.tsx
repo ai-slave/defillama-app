@@ -35,7 +35,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 			const res = await authorizedFetch(`${AI_SERVER}/charts`)
 			if (!res.ok) throw new Error('Failed to load charts')
 			const json = await res.json()
-			return json.charts as SavedChart[]
+			return json.charts as Array<SavedChart>
 		},
 		enabled: !!user,
 		staleTime: 1000 * 60 * 5

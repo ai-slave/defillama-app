@@ -16,7 +16,7 @@ export function SubscriptionPricingSection({
 	isPageStateLoading = false,
 	...callbacks
 }: {
-	pricingCards: PricingCardData[]
+	pricingCards: Array<PricingCardData>
 	billingCycle: BillingCycle
 	onBillingCycleChange: (nextBillingCycle: BillingCycle) => void
 	currentPlan?: PlanKey | null

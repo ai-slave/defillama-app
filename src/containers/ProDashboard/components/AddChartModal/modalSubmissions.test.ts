@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import { initializeFromEditItem } from './modalReducer'
 import { buildEditedDashboardItem, buildNewDashboardItems } from './modalSubmissions'
@@ -24,12 +24,12 @@ const existingMulti = {
 
 const idFactory = (kind: string, identity: string) => `${kind}:${identity}`
 
-function buildNew(state: ModalState, existingItems: readonly DashboardItemConfig[] = []) {
+function buildNew(state: ModalState, existingItems: ReadonlyArray<DashboardItemConfig> = []) {
 	return buildNewDashboardItems({ state, protocols: [], chains: [], existingItems, idFactory })
 }
 
 describe('buildEditedDashboardItem', () => {
-	it('uses Builder mode even when an edited multi still has composer items', () => {
+	test('uses Builder mode even when an edited multi still has composer items', () => {
 		const state: ModalState = {
 			...initializeFromEditItem(existingMulti),
 			chartMode: 'builder',
@@ -46,7 +46,7 @@ describe('buildEditedDashboardItem', () => {
 		})
 	})
 
-	it('preserves an edited multi and its display settings in Manual combined mode', () => {
+	test('preserves an edited multi and its display settings in Manual combined mode', () => {
 		const state = {
 			...initializeFromEditItem(existingMulti),
 			unifiedChartName: 'Updated comparison'
@@ -59,7 +59,7 @@ describe('buildEditedDashboardItem', () => {
 		})
 	})
 
-	it('does not submit stale composer items for a different Manual chart tab', () => {
+	test('does not submit stale composer items for a different Manual chart tab', () => {
 		const state: ModalState = {
 			...initializeFromEditItem(existingMulti),
 			selectedChartTab: 'advanced-tvl',
@@ -70,7 +70,7 @@ describe('buildEditedDashboardItem', () => {
 		expect(buildEditedDashboardItem({ editItem: existingMulti, state, protocols: [], chains: [] })).toBeNull()
 	})
 
-	it('preserves non-editor metric semantics only while the subject identity is unchanged', () => {
+	test('preserves non-editor metric semantics only while the subject identity is unchanged', () => {
 		const existingMetric = {
 			id: 'metric-card',
 			kind: 'metric',
@@ -102,7 +102,7 @@ describe('buildEditedDashboardItem', () => {
 		expect(changedSubject?.kind === 'metric' ? changedSubject.subject.geckoId : undefined).toBeUndefined()
 	})
 
-	it('preserves classic chart presentation and source settings on a no-op edit', () => {
+	test('preserves classic chart presentation and source settings on a no-op edit', () => {
 		const existingChart = {
 			id: 'fees-card',
 			kind: 'chart',
@@ -143,7 +143,7 @@ describe('buildEditedDashboardItem', () => {
 		).toEqual(realtimeUnlocks)
 	})
 
-	it('clears optional names and titles while retaining unrelated same-kind settings', () => {
+	test('clears optional names and titles while retaining unrelated same-kind settings', () => {
 		const multiState = { ...initializeFromEditItem(existingMulti), unifiedChartName: '   ' }
 		const multi = buildEditedDashboardItem({ editItem: existingMulti, state: multiState, protocols: [], chains: [] })
 		expect(multi).toMatchObject({ kind: 'multi', grouping: 'week', showStacked: true })
@@ -219,7 +219,7 @@ describe('buildEditedDashboardItem', () => {
 })
 
 describe('buildNewDashboardItems', () => {
-	it('builds a combined comparison with stable defaults derived from the current dashboard', () => {
+	test('builds a combined comparison with stable defaults derived from the current dashboard', () => {
 		const state: ModalState = {
 			...initializeFromEditItem(null),
 			chartMode: 'manual',
@@ -256,7 +256,7 @@ describe('buildNewDashboardItems', () => {
 		])
 	})
 
-	it('rebuilds separate composer and multi-selection charts with canonical chart defaults', () => {
+	test('rebuilds separate composer and multi-selection charts with canonical chart defaults', () => {
 		const base = {
 			...initializeFromEditItem(null),
 			chartMode: 'manual',
@@ -321,9 +321,9 @@ describe('buildNewDashboardItems', () => {
 		expect(unlocks).toMatchObject({ id: 'unlocks:aave', kind: 'chart', dataType: 'documented', geckoId: 'aave' })
 	})
 
-	it('constructs every special manual card with its persisted identity and width semantics', () => {
+	test('constructs every special manual card with its persisted identity and width semantics', () => {
 		const base = { ...initializeFromEditItem(null), chartMode: 'manual' } satisfies ModalState
-		const states: ModalState[] = [
+		const states: Array<ModalState> = [
 			{
 				...base,
 				selectedChartTab: 'yields',
@@ -400,7 +400,7 @@ describe('buildNewDashboardItems', () => {
 		])
 	})
 
-	it('creates the three CEX starter tables and rejects invalid special submissions without using stale composer state', () => {
+	test('creates the three CEX starter tables and rejects invalid special submissions without using stale composer state', () => {
 		const tableState: ModalState = {
 			...initializeFromEditItem(null),
 			selectedMainTab: 'table',
@@ -427,7 +427,7 @@ describe('buildNewDashboardItems', () => {
 		expect(buildNew(invalidState)).toEqual([])
 	})
 
-	it('constructs non-manual item kinds and returns no item for incomplete submissions', () => {
+	test('constructs non-manual item kinds and returns no item for incomplete submissions', () => {
 		const base = initializeFromEditItem(null)
 		const builder = buildNew({ ...base, chartBuilderName: ' Leaders ' })[0]
 		const text = buildNew({ ...base, selectedMainTab: 'text', textTitle: ' Note ', textContent: ' Body ' })[0]

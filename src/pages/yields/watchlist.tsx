@@ -17,9 +17,9 @@ export const getStaticProps = withPerformanceLogging('yields/watchlist', async (
 export default function Portfolio() {
 	return (
 		<Layout
-			title={`Your Saved DeFi Yield Pools - DefiLlama`}
+			title="Your Saved DeFi Yield Pools - DefiLlama"
 			description="Track your saved DeFi yield pools in one place. Monitor APY changes, TVL, and performance for your bookmarked pools on DefiLlama."
-			canonicalUrl={`/yields/watchlist`}
+			canonicalUrl="/yields/watchlist"
 		>
 			<Announcement announcementId="yields-disclaimer" version="2026-03">
 				{disclaimer}

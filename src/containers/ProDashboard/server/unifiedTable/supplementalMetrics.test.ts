@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { DimensionDatasetProtocol } from '~/containers/AdapterMetrics/datasetTypes'
 import type { ProtocolAggregateTableRow, ProtocolChainTableRow } from '../../unifiedTable/contracts'
 
@@ -45,7 +45,7 @@ function datasetProtocol(overrides: Partial<DimensionDatasetProtocol>): Dimensio
 }
 
 describe('fetchProtocolSupplementalMetrics', () => {
-	it('returns successful chain values with explicit partial coverage', async () => {
+	test('returns successful chain values with explicit partial coverage', async () => {
 		fetchDimensionDatasetMock.mockResolvedValueOnce({
 			status: 'partial',
 			protocols: [datasetProtocol({ total24h: 20 })],
@@ -61,7 +61,7 @@ describe('fetchProtocolSupplementalMetrics', () => {
 })
 
 describe('applyProtocolSupplementalMetrics', () => {
-	it('merges onto Lens membership without introducing API-only rows or copying a parent total to children', () => {
+	test('merges onto Lens membership without introducing API-only rows or copying a parent total to children', () => {
 		const rows = [protocolRow('aave-v2', 'aave'), protocolRow('aave-v3', 'aave'), protocolRow('solo', null)]
 		const result = applyProtocolSupplementalMetrics(
 			rows,
@@ -88,7 +88,7 @@ describe('applyProtocolSupplementalMetrics', () => {
 		})
 	})
 
-	it('assigns selected-chain values only to the matching protocol-chain row', () => {
+	test('assigns selected-chain values only to the matching protocol-chain row', () => {
 		const result = applyProtocolSupplementalMetrics(
 			[chainRow('protocol', 'Ethereum'), chainRow('protocol', 'Base')],
 			{},
@@ -111,7 +111,7 @@ describe('applyProtocolSupplementalMetrics', () => {
 		expect(result.rows.map((row) => row.metrics.earnings24h)).toEqual([20, 10])
 	})
 
-	it('calculates bridge aggregator dominance with canonical chain aliases', () => {
+	test('calculates bridge aggregator dominance with canonical chain aliases', () => {
 		const result = applyProtocolSupplementalMetrics(
 			[chainRow('protocol', 'OP Mainnet'), chainRow('other', 'OP Mainnet')],
 			{},
@@ -143,7 +143,7 @@ describe('applyProtocolSupplementalMetrics', () => {
 		expect(result.rows.map((row) => row.metrics.bridgeAggregatorVolumeDominance24h)).toEqual([20, 80])
 	})
 
-	it('retains successful chain supplements without publishing an incomplete aggregate', () => {
+	test('retains successful chain supplements without publishing an incomplete aggregate', () => {
 		const ethereum = chainRow('protocol', 'Ethereum')
 		const base = chainRow('protocol', 'Base')
 		const result = applyProtocolSupplementalMetrics(
@@ -168,7 +168,7 @@ describe('applyProtocolSupplementalMetrics', () => {
 		expect(result.rows.map((row) => row.metrics.earnings24h)).toEqual([20, undefined])
 	})
 
-	it('retains the full parent-child relation when supplementing a filtered row subset', () => {
+	test('retains the full parent-child relation when supplementing a filtered row subset', () => {
 		const visibleChild = protocolRow('aave-v2', 'aave')
 		const hiddenChild = protocolRow('aave-v3', 'aave')
 		const result = applyProtocolSupplementalMetrics(

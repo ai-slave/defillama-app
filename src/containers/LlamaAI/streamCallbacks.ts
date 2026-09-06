@@ -70,7 +70,7 @@ export function createAgenticCallbacks({
 	setMessageSiblingInfo?: (messageId: string, siblingInfo: Message['siblingInfo']) => void
 	deferEmptyDone?: boolean
 	onFactCheckStatus?: (status: 'drafting' | 'verifying' | 'finalizing') => void
-	onFactCheckCitations?: (refs: UnifiedCitationReference[], finalizedText?: string) => void
+	onFactCheckCitations?: (refs: Array<UnifiedCitationReference>, finalizedText?: string) => void
 	onDuelStart?: (pairId: string) => void
 	onDuelReady?: () => void
 	onArmEvent?: (event: AgenticArmEvent) => void
@@ -83,7 +83,7 @@ export function createAgenticCallbacks({
 	// One guard wraps every callback so late chunks from an aborted or superseded
 	// request cannot mutate the current chat.
 	const guard =
-		<Args extends unknown[]>(fn: (...args: Args) => void) =>
+		<Args extends Array<unknown>>(fn: (...args: Args) => void) =>
 		(...args: Args) => {
 			if (!isCurrent()) return
 			fn(...args)
@@ -146,7 +146,7 @@ export function createAgenticCallbacks({
 			buffer.toolExecutions.push(data)
 			dispatch({ type: 'APPEND_TOOL_EXECUTION', value: data })
 			if (data.name === 'todo' && data.success) {
-				const todos = (data.toolData as { todos?: TodoItem[] } | undefined)?.todos
+				const todos = (data.toolData as { todos?: Array<TodoItem> } | undefined)?.todos
 				if (Array.isArray(todos)) {
 					dispatch({ type: 'SET_TODOS', value: todos })
 				}

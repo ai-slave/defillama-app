@@ -18,9 +18,9 @@ interface ComparisonWizardProps {
 	onComplete: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
-		items: DashboardItemConfig[]
+		items: Array<DashboardItemConfig>
 	}) => void
 	comparisonPreset?: ComparisonPreset
 }
@@ -44,17 +44,17 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 		appliedPresetRef.current = true
 	}, [comparisonPreset, applyPreset])
 
-	const generateComparisonCharts = (): MultiChartConfig[] => {
+	const generateComparisonCharts = (): Array<MultiChartConfig> => {
 		const { selectedItems, selectedMetrics, comparisonType } = state
 
 		if (!comparisonType) return []
 
-		return selectedMetrics.flatMap((metric): MultiChartConfig[] => {
+		return selectedMetrics.flatMap((metric): Array<MultiChartConfig> => {
 			const chartTypeInfo = getProDashboardChartTypeConfig(metric)
 			const metricInfo = availableMetrics.find((m) => m.metric === metric)
 			const isChain = comparisonType === 'chains'
 			const isGroupable = chartTypeInfo && 'groupable' in chartTypeInfo && chartTypeInfo.groupable
-			const chartItems: ChartConfig[] = []
+			const chartItems: Array<ChartConfig> = []
 			for (const item of selectedItems) {
 				const chainMeta = isChain ? chainsByName.get(item) : undefined
 				const protocol = isChain ? undefined : getProtocolInfo(item)
@@ -97,12 +97,12 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 		})
 	}
 
-	const generateComparisonMetrics = (): MetricConfig[] => {
+	const generateComparisonMetrics = (): Array<MetricConfig> => {
 		const { selectedItems, metricsForCards, comparisonType, metricSettings } = state
 
 		if (!comparisonType || metricsForCards.length === 0) return []
 
-		const metrics: MetricConfig[] = []
+		const metrics: Array<MetricConfig> = []
 
 		for (const metricType of metricsForCards) {
 			for (const item of selectedItems) {
@@ -190,7 +190,7 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 			if (lastChart) lastChart.colSpan = 2
 		}
 
-		const items: DashboardItemConfig[] = [...metricCards, ...charts]
+		const items: Array<DashboardItemConfig> = [...metricCards, ...charts]
 		if (table) {
 			items.push(table)
 		}

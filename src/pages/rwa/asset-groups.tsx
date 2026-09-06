@@ -51,10 +51,10 @@ export default function RWAAssetGroupsPage({
 			title="RWA Asset Groups - Real World Asset Analytics - DefiLlama"
 			description="Compare RWA asset groups. Track Active Mcap, Onchain Mcap, and DeFi Active TVL across asset groups."
 			pageName={pageName}
-			canonicalUrl={`/rwa/asset-groups`}
+			canonicalUrl="/rwa/asset-groups"
 		>
 			<RWATabNav active="assetGroups" />
-			<RowLinksWithDropdown links={assetGroupLinks} activeLink={'All'} />
+			<RowLinksWithDropdown links={assetGroupLinks} activeLink="All" />
 			<RWAAssetGroups
 				assetGroups={assetGroups}
 				initialChartDataset={initialChartDataset}

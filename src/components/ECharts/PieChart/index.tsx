@@ -334,9 +334,9 @@ function PieChart({
 			itemGap: 10,
 			textStyle: {
 				color: chartTheme.text,
-				...(legendTextStyle || {})
+				...legendTextStyle
 			},
-			formatter: function (name: string) {
+			formatter(name: string) {
 				return legendLabelByName.get(String(name)) ?? String(name)
 			},
 			...legendPosition

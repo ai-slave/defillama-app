@@ -32,16 +32,13 @@ const RAMP_TO = '#86e3d2'
 function lerpHex(a: string, b: string, t: number): string {
 	const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16))
 	const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16))
-	return (
-		'#' +
-		pa
-			.map((value, i) =>
-				Math.round(value + (pb[i]! - value) * t)
-					.toString(16)
-					.padStart(2, '0')
-			)
-			.join('')
-	)
+	return `#${pa
+		.map((value, i) =>
+			Math.round(value + (pb[i]! - value) * t)
+				.toString(16)
+				.padStart(2, '0')
+		)
+		.join('')}`
 }
 
 function shortAddr(address: string): string {
@@ -128,10 +125,10 @@ export function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: n
 }
 
 export function holderDistributionShares(
-	list: Holder[],
+	list: Array<Holder>,
 	top10Pct: number | null
-): { shares: number[]; top10: number; others: number } | null {
-	const shares: number[] = []
+): { shares: Array<number>; top10: number; others: number } | null {
+	const shares: Array<number> = []
 	for (const holder of list) {
 		if (holder.share_pct === null) return null
 		shares.push(holder.share_pct)
@@ -148,8 +145,8 @@ function HolderDistribution({
 	exportTitle,
 	onReady
 }: {
-	list: Holder[]
-	colors: string[]
+	list: Array<Holder>
+	colors: Array<string>
 	top10Pct: number | null
 	poolId: string
 	exportTitle?: string
@@ -213,9 +210,9 @@ function HoldersTable({
 	active,
 	onActiveChange
 }: {
-	list: Holder[]
+	list: Array<Holder>
 	decimals: number | null
-	colors: string[]
+	colors: Array<string>
 	chain?: string | null
 	mode: HolderMode
 	onModeChange: (mode: HolderMode) => void
@@ -403,7 +400,15 @@ function HoldersTable({
 	)
 }
 
-function HolderInsights({ holders, list, tvlUsd }: { holders: DetailHolders; list: Holder[]; tvlUsd?: number | null }) {
+function HolderInsights({
+	holders,
+	list,
+	tvlUsd
+}: {
+	holders: DetailHolders
+	list: Array<Holder>
+	tvlUsd?: number | null
+}) {
 	const count = holders.count
 	const avg = holders.avg_position_usd
 	const countChange7d = holders.count_change_7d ?? null

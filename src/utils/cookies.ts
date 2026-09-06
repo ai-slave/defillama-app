@@ -90,8 +90,8 @@ const sanitizeAnnouncementTokenPart = (value: string, fallback: string): string 
 	return normalized || fallback
 }
 
-const normalizeAnnouncementTokens = (tokens: string[]): string[] => {
-	const uniqueTokens: string[] = []
+const normalizeAnnouncementTokens = (tokens: Array<string>): Array<string> => {
+	const uniqueTokens: Array<string> = []
 	const seen = new Set<string>()
 
 	for (const token of tokens) {
@@ -105,13 +105,13 @@ const normalizeAnnouncementTokens = (tokens: string[]): string[] => {
 	return uniqueTokens
 }
 
-export const createAnnouncementDismissalCSS = (tokens: string[]): string => {
+export const createAnnouncementDismissalCSS = (tokens: Array<string>): string => {
 	return normalizeAnnouncementTokens(tokens)
 		.map((token) => `.announcement-token--${token}{display:none!important;}`)
 		.join('')
 }
 
-export const syncAnnouncementDismissalStyles = (tokens: string[]): void => {
+export const syncAnnouncementDismissalStyles = (tokens: Array<string>): void => {
 	if (typeof document === 'undefined') return
 
 	const selectors = createAnnouncementDismissalCSS(tokens)
@@ -247,7 +247,7 @@ export const createAnnouncementDismissalToken = (announcementId: string, version
 export const parseDismissedAnnouncementsCookie = (
 	cookieString: string,
 	cookieName: string = ANNOUNCEMENT_DISMISSALS_COOKIE_NAME
-): string[] => {
+): Array<string> => {
 	const cookieValue = getCookieValue(cookieString, cookieName)
 	if (!cookieValue) return []
 
@@ -258,7 +258,7 @@ export const parseDismissedAnnouncementsCookie = (
 	}
 }
 
-export const getDismissedAnnouncements = (): string[] => {
+export const getDismissedAnnouncements = (): Array<string> => {
 	if (typeof document === 'undefined') return []
 
 	return parseDismissedAnnouncementsCookie(document.cookie)

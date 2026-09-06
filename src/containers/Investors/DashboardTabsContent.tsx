@@ -67,7 +67,7 @@ function ComingSoonSection({ label }: { label: string }) {
 	)
 }
 
-export const DEFAULT_TABS: DashboardTabConfig[] = [{ id: 'dashboard', label: 'Overview' }]
+export const DEFAULT_TABS: Array<DashboardTabConfig> = [{ id: 'dashboard', label: 'Overview' }]
 
 export function TabLabel({ tab }: { tab: DashboardTabConfig }) {
 	if (!tab.comingSoon) return <>{tab.label}</>
@@ -107,7 +107,7 @@ export function InvestorsContent({
 	hasCustomHeader,
 	hideDuplicateButton
 }: {
-	tabs: DashboardTabConfig[]
+	tabs: Array<DashboardTabConfig>
 	activeTab: string
 	displayName: string
 	dashboardId: string
@@ -150,7 +150,7 @@ export function CustomOnlyContent({
 	hasCustomHeader,
 	hideDuplicateButton
 }: {
-	tabs: DashboardTabConfig[]
+	tabs: Array<DashboardTabConfig>
 	activeTab: string
 	displayName: string
 	hasCustomHeader?: boolean

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildEcosystemViewModel, type EcosystemAPIResponse } from './ecosystemApi'
 
 const formattedValue = { value: 1, formatted: '$1' }
@@ -88,7 +88,7 @@ function buildResponse(): EcosystemAPIResponse {
 }
 
 describe('buildEcosystemViewModel', () => {
-	it('caches render-ready datasets, configs, KPIs, and tables without the raw chart payloads', () => {
+	test('caches render-ready datasets, configs, KPIs, and tables without the raw chart payloads', () => {
 		const response = buildResponse()
 		const result = buildEcosystemViewModel(response)
 
@@ -112,7 +112,7 @@ describe('buildEcosystemViewModel', () => {
 		expect(result).not.toHaveProperty('assetBreakdown')
 	})
 
-	it('excludes aggregate and empty stablecoin slices while reusing enriched pie rows', () => {
+	test('excludes aggregate and empty stablecoin slices while reusing enriched pie rows', () => {
 		const result = buildEcosystemViewModel(buildResponse())
 
 		expect(result.stablecoins.dataset).toEqual({
@@ -138,7 +138,7 @@ describe('buildEcosystemViewModel', () => {
 		expect(result.chainAssets).not.toHaveProperty('pieData')
 	})
 
-	it('keeps empty stablecoin histories empty without creating breakdown slices', () => {
+	test('keeps empty stablecoin histories empty without creating breakdown slices', () => {
 		const response = buildResponse()
 		response.stablecoins.stablecoinChart.dates = []
 		response.stablecoins.stablecoinChart.series = [

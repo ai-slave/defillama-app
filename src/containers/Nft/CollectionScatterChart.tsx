@@ -122,7 +122,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 			tooltip: {
 				showDelay: 0,
 				confine: true,
-				formatter: function (rawParams: unknown) {
+				formatter(rawParams: unknown) {
 					const params = normalizeTooltipItems(rawParams)[0]
 					const value = Array.isArray(params?.value) ? params.value : Array.isArray(params?.data) ? params.data : []
 					const timestamp = typeof value[0] === 'number' ? value[0] : Number(value[0])
@@ -131,39 +131,29 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					const chartdate = formatTooltipChartDate(timestamp, 'daily')
 
 					let vals =
-						chartdate +
-						'<li style="list-style:none">' +
-						params.marker +
-						params.seriesName +
-						':' +
-						'&nbsp;&nbsp;' +
-						formatNumber(amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
-						'&nbsp;' +
-						'ETH' +
-						'</li>'
+						`${chartdate}<li style="list-style:none">${params.marker}${params.seriesName}:` +
+						`&nbsp;&nbsp;${formatNumber(amount, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}&nbsp;` +
+						`ETH` +
+						`</li>`
 
 					if (params.seriesName !== 'Volume') {
 						const date = timestamp
 
 						vals +=
-							'<li style="list-style:none">' +
-							'<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ffc300;"></span>' +
-							'Moving Average:' +
-							'&nbsp;&nbsp;' +
-							findClosestChartValue(salesMedian1d, date, 1) +
-							'&nbsp;' +
-							'ETH' +
-							'</li>'
+							`<li style="list-style:none">` +
+							`<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#ffc300;"></span>` +
+							`Moving Average:` +
+							`&nbsp;&nbsp;${findClosestChartValue(salesMedian1d, date, 1)}&nbsp;` +
+							`ETH` +
+							`</li>`
 
 						vals +=
-							'<li style="list-style:none">' +
-							'<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#22c55e;"></span>' +
-							'Volume:' +
-							'&nbsp;&nbsp;' +
-							findClosestChartValue(volume, date, 1e3) +
-							'&nbsp;' +
-							'ETH' +
-							'</li>'
+							`<li style="list-style:none">` +
+							`<span style="display:inline-block;margin-right:4px;border-radius:10px;width:10px;height:10px;background-color:#22c55e;"></span>` +
+							`Volume:` +
+							`&nbsp;&nbsp;${findClosestChartValue(volume, date, 1e3)}&nbsp;` +
+							`ETH` +
+							`</li>`
 					}
 
 					return vals
@@ -198,7 +188,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					type: 'value',
 					min: 'dataMin',
 					axisLabel: {
-						formatter: (value: number) => roundNumber(value, 2) + ' ETH',
+						formatter: (value: number) => `${roundNumber(value, 2)} ETH`,
 						color: chartTheme.text
 					},
 					axisLine: {
@@ -244,7 +234,7 @@ export default function CollectionScatterChart({ height, sales, salesMedian1d, v
 					filterMode: 'none'
 				}
 			],
-			series: series
+			series
 		}
 
 		instance.setOption(option, { notMerge: true })

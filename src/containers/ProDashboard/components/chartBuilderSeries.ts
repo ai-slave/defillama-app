@@ -14,8 +14,8 @@ export const isChartBuilderSnapshotMetric = (metric: string): boolean => SNAPSHO
 
 export type ChartBuilderSeriesView = {
 	dataset: CanonicalMultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
-	seriesNames: string[]
+	charts: Array<MultiSeriesChartSeriesConfig>
+	seriesNames: Array<string>
 }
 
 /**
@@ -30,7 +30,7 @@ export function buildChartBuilderSeriesView({
 	chartType,
 	resolveColor
 }: {
-	series: ChartSeries[]
+	series: Array<ChartSeries>
 	grouping?: DashboardGrouping
 	useLastValue: boolean
 	displayAs: 'timeSeries' | 'percentage'
@@ -61,8 +61,8 @@ export function buildChartBuilderSeriesView({
 	// Every chart-builder route aligns the final top-series/Others response to one
 	// ascending timestamp vector. Walk that vector once so grouping work is shared.
 	const inputRowCount = series[0]?.data.length ?? 0
-	const source: number[][] = []
-	let row: number[] | null = null
+	const source: Array<Array<number>> = []
+	let row: Array<number> | null = null
 	let groupedTimestamp = -1
 	const pushRow = () => {
 		if (!row) return

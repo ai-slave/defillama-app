@@ -6,6 +6,6 @@ export function countryFromCode(code: string | null | undefined): { flag: string
 	const cc = code.trim().toUpperCase()
 	if (!/^[A-Z]{2}$/.test(cc)) return null
 	const name = REGION_NAMES?.of(cc) ?? cc
-	const flag = String.fromCodePoint(...[...cc].map((char) => 0x1f1e6 + char.charCodeAt(0) - 65))
+	const flag = String.fromCodePoint(...[...cc].map((char) => 0x1_f1_e6 + char.charCodeAt(0) - 65))
 	return { flag, name }
 }

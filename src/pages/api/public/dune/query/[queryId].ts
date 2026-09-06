@@ -27,7 +27,7 @@ function refreshInBackground(queryId: string) {
 			await duneCache.set(cacheKey(queryId), { data, fetchedAt: Date.now() }, REDIS_TTL_S)
 			console.log(`[dune] background REFRESH done query=${queryId}`)
 		})
-		.catch((err) => console.log(`[dune] background REFRESH failed query=${queryId}`, err))
+		.catch((error) => console.log(`[dune] background REFRESH failed query=${queryId}`, error))
 		.finally(() => refreshing.delete(queryId))
 }
 

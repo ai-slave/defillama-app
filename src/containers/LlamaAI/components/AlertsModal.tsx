@@ -115,7 +115,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 		data: alerts,
 		isLoading,
 		error: alertsError
-	} = useQuery<Alert[]>({
+	} = useQuery<Array<Alert>>({
 		queryKey: alertsQueryKey,
 		queryFn: async () => {
 			if (!authorizedFetch) return []
@@ -274,7 +274,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	}, [timezone])
 	const alertsQueryKey = [ALERTS_QUERY_KEY, user?.id ?? null]
 
-	const executionsQuery = useQuery<AlertExecution[]>({
+	const executionsQuery = useQuery<Array<AlertExecution>>({
 		queryKey: [ALERTS_QUERY_KEY, alert.id, 'executions'],
 		queryFn: async () => {
 			if (!authorizedFetch) throw new Error('Not authenticated')
@@ -316,7 +316,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			return { shouldInclude: true, value: trimmedCondition }
 		}
 
-		if (typeof alert.condition !== 'undefined') {
+		if (alert.condition !== undefined) {
 			return { shouldInclude: true, value: null }
 		}
 
@@ -327,7 +327,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		boolean,
 		Error,
 		{ alertId: string; enabled: boolean },
-		{ previous?: Alert[] }
+		{ previous?: Array<Alert> }
 	>({
 		mutationFn: async ({ alertId, enabled }: { alertId: string; enabled: boolean }) => {
 			if (!authorizedFetch) {
@@ -337,8 +337,8 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		},
 		onMutate: async ({ alertId, enabled }) => {
 			await queryClient.cancelQueries({ queryKey: alertsQueryKey })
-			const previous = queryClient.getQueryData<Alert[]>(alertsQueryKey)
-			queryClient.setQueryData(alertsQueryKey, (old: Alert[] | undefined) => {
+			const previous = queryClient.getQueryData<Array<Alert>>(alertsQueryKey)
+			queryClient.setQueryData(alertsQueryKey, (old: Array<Alert> | undefined) => {
 				if (!old) return []
 				return old.map((item) => (item.id === alertId ? { ...item, enabled } : item))
 			})
@@ -355,7 +355,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		}
 	})
 
-	const deleteAlertMutation = useMutation<string, Error, string, { previous?: Alert[] }>({
+	const deleteAlertMutation = useMutation<string, Error, string, { previous?: Array<Alert> }>({
 		mutationFn: async (alertId: string) => {
 			if (!authorizedFetch) {
 				throw new Error('Not authenticated')
@@ -364,8 +364,8 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		},
 		onMutate: async (alertId: string) => {
 			await queryClient.cancelQueries({ queryKey: alertsQueryKey })
-			const previous = queryClient.getQueryData<Alert[]>(alertsQueryKey)
-			queryClient.setQueryData(alertsQueryKey, (old: Alert[] | undefined) => {
+			const previous = queryClient.getQueryData<Array<Alert>>(alertsQueryKey)
+			queryClient.setQueryData(alertsQueryKey, (old: Array<Alert> | undefined) => {
 				if (!old) return []
 				return old.filter((item) => item.id !== alertId)
 			})
@@ -394,7 +394,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 		},
 		onSuccess: (_data, input) => {
 			const conditionUpdate = getConditionUpdate(input.condition)
-			queryClient.setQueryData(alertsQueryKey, (old: Alert[] | undefined) => {
+			queryClient.setQueryData(alertsQueryKey, (old: Array<Alert> | undefined) => {
 				if (!old) return []
 				return applyAlertUpdateToList(old, input, conditionUpdate)
 			})

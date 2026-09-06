@@ -28,7 +28,7 @@ export function useOraclesByChainExtraBreakdowns({
 	enabledExtraApiKeys,
 	chain
 }: {
-	enabledExtraApiKeys: string[]
+	enabledExtraApiKeys: Array<string>
 	chain: string | null
 }) {
 	const extraBreakdownQueries = useQueries({
@@ -38,7 +38,7 @@ export function useOraclesByChainExtraBreakdowns({
 				chain
 					? fetchOracleChainProtocolBreakdownChart({ chain, key: apiKey })
 					: fetchOracleProtocolBreakdownChart({ key: apiKey }),
-			staleTime: 5 * 60 * 1_000,
+			staleTime: 5 * 60 * 1000,
 			refetchOnWindowFocus: false
 		}))
 	})
@@ -70,7 +70,7 @@ export function useOracleOverviewExtraSeries({
 	oracle,
 	chain
 }: {
-	enabledExtraApiKeys: string[]
+	enabledExtraApiKeys: Array<string>
 	oracle: string | null
 	chain: string | null
 }) {
@@ -92,7 +92,7 @@ export function useOracleOverviewExtraSeries({
 				})
 			},
 			enabled: Boolean(oracle),
-			staleTime: 5 * 60 * 1_000,
+			staleTime: 5 * 60 * 1000,
 			refetchOnWindowFocus: false
 		}))
 	})

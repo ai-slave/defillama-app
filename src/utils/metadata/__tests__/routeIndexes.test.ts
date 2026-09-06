@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildDigitalAssetTreasuryRoutesMetadata,
 	buildNarrativeCategoriesMetadata,
@@ -7,7 +7,7 @@ import {
 } from '../routeIndexes'
 
 describe('metadata route indexes', () => {
-	it('builds narrative category ids without slugging ids', () => {
+	test('builds narrative category ids without slugging ids', () => {
 		expect(
 			buildNarrativeCategoriesMetadata([
 				{ id: 'ai-agents', name: 'AI Agents', mcap: 1, volume1D: null, nbCoins: 1 },
@@ -22,7 +22,7 @@ describe('metadata route indexes', () => {
 		})
 	})
 
-	it('builds oracle route indexes from exact chain memberships in preferred chain order', () => {
+	test('builds oracle route indexes from exact chain memberships in preferred chain order', () => {
 		expect(
 			buildOracleRoutesMetadata({
 				oracles: {
@@ -55,7 +55,7 @@ describe('metadata route indexes', () => {
 		})
 	})
 
-	it('builds DAT asset and company slugs in API display order', () => {
+	test('builds DAT asset and company slugs in API display order', () => {
 		expect(
 			buildDigitalAssetTreasuryRoutesMetadata({
 				assetMetadata: {
@@ -149,7 +149,7 @@ describe('metadata route indexes', () => {
 		})
 	})
 
-	it('dedupes DAT company routes by normalized ticker while preserving the first API value', () => {
+	test('dedupes DAT company routes by normalized ticker while preserving the first API value', () => {
 		expect(
 			buildDigitalAssetTreasuryRoutesMetadata({
 				assetMetadata: {},
@@ -206,7 +206,7 @@ describe('metadata route indexes', () => {
 		})
 	})
 
-	it('builds stablecoin pegged asset slugs from config keys', () => {
+	test('builds stablecoin pegged asset slugs from config keys', () => {
 		expect(buildStablecoinPeggedAssetSlugs({ Tether: '1', 'Curve USD': '2' })).toEqual(['tether', 'curve-usd'])
 	})
 })

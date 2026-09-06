@@ -22,8 +22,8 @@ export interface ChartCapabilities {
 	allowLabels: boolean
 	allowLogScale: boolean
 	// y-axis indices whose series are all strictly positive — log is applied only to these.
-	logEligibleYAxes: number[]
-	groupingOptions: readonly ChartViewState['grouping'][]
+	logEligibleYAxes: Array<number>
+	groupingOptions: ReadonlyArray<ChartViewState['grouping']>
 }
 
 export interface ChartControlsModel {
@@ -37,15 +37,15 @@ export interface ChartControlsModel {
 	showHallmarks: boolean
 	showLabels: boolean
 	showLogScale: boolean
-	groupingOptions: readonly ChartViewState['grouping'][]
+	groupingOptions: ReadonlyArray<ChartViewState['grouping']>
 }
 
-const GROUPING_OPTIONS: readonly ChartViewState['grouping'][] = ['day', 'week', 'month', 'quarter', 'year']
+const GROUPING_OPTIONS: ReadonlyArray<ChartViewState['grouping']> = ['day', 'week', 'month', 'quarter', 'year']
 
 // A y-axis can render on a log scale only when every plotted value on it is strictly positive.
 // Returns the axis indices that qualify; an empty result means the chart can't offer log scale.
-function getLogEligibleYAxes(adaptedChart: AdaptedLlamaAICartesianChart): number[] {
-	const valueIndexesByAxis = new Map<number, number[]>()
+function getLogEligibleYAxes(adaptedChart: AdaptedLlamaAICartesianChart): Array<number> {
+	const valueIndexesByAxis = new Map<number, Array<number>>()
 	for (const series of adaptedChart.seriesMeta) {
 		const axisIndex = series.yAxisIndex ?? 0
 		const valueIndexes = valueIndexesByAxis.get(axisIndex) ?? []
@@ -53,7 +53,7 @@ function getLogEligibleYAxes(adaptedChart: AdaptedLlamaAICartesianChart): number
 		valueIndexesByAxis.set(axisIndex, valueIndexes)
 	}
 
-	const eligible: number[] = []
+	const eligible: Array<number> = []
 	for (const [axisIndex, valueIndexes] of valueIndexesByAxis) {
 		let hasNumericValue = false
 		let allPositive = true

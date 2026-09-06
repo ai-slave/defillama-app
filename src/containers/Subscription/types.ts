@@ -13,7 +13,7 @@ export interface FeatureItem {
 
 export interface FeatureSection {
 	title: string
-	items: FeatureItem[]
+	items: Array<FeatureItem>
 }
 
 export interface PricingCardData {
@@ -25,7 +25,7 @@ export interface PricingCardData {
 	priceSecondary?: string
 	description?: string
 	includedTierText?: string
-	sections: FeatureSection[]
+	sections: Array<FeatureSection>
 	primaryCta: string
 	secondaryCta?: string
 	ctaSubtext?: string
@@ -43,7 +43,7 @@ export interface ComparisonRow {
 
 export interface ComparisonSection {
 	title: string
-	rows: ComparisonRow[]
+	rows: Array<ComparisonRow>
 }
 
 export interface PlanMeta {

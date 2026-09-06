@@ -6,7 +6,7 @@ export type GradeBand = {
 	interpretation: string
 }
 
-export const GRADE_BANDS: GradeBand[] = [
+export const GRADE_BANDS: Array<GradeBand> = [
 	{
 		min: 9.5,
 		label: 'AAA',

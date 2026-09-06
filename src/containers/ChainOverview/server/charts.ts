@@ -108,10 +108,10 @@ async function resolveCanonicalAdapterProtocolParam(
 	return null
 }
 
-const buildChainStablecoinMcapSeries = async (chain: string): Promise<StablecoinMcapSeriesPoint[] | null> => {
+const buildChainStablecoinMcapSeries = async (chain: string): Promise<Array<StablecoinMcapSeriesPoint> | null> => {
 	try {
 		const data = await getStablecoinOverviewChartSeries({ chain: chain === 'All' ? null : chain, chart: 'totalMcap' })
-		const series: StablecoinMcapSeriesPoint[] = []
+		const series: Array<StablecoinMcapSeriesPoint> = []
 		for (const point of data.dataset.source) {
 			series.push([point[0], point[1] ?? null])
 		}
@@ -260,7 +260,7 @@ export const chainCharts = defineApiRoute({
 				const data = await fetchRawBridgeVolumeByChain(canonicalChain)
 					.then((chart) => {
 						const normalizedChart = normalizeBridgeVolumeResponse(chart)
-						const volumeSeries: BridgeOverviewVolumeChartTuple[] = []
+						const volumeSeries: Array<BridgeOverviewVolumeChartTuple> = []
 						for (const volume of normalizedChart) {
 							volumeSeries.push([
 								volume.date,

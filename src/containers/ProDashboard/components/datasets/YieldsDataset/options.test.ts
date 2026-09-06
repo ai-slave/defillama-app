@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildYieldsFilterOptions, type YieldsFilterSourceRow } from './options'
 
 const row = ({
@@ -11,12 +11,12 @@ const row = ({
 	project?: string
 	projectslug?: string
 	tvl?: number | null
-	tokenSymbols?: string[]
+	tokenSymbols?: Array<string>
 	category?: string | null
 }): YieldsFilterSourceRow => ({ project, projectslug, tvl, tokenSymbols, category })
 
 describe('buildYieldsFilterOptions', () => {
-	it('returns empty option collections for empty data', () => {
+	test('returns empty option collections for empty data', () => {
 		expect(buildYieldsFilterOptions([])).toEqual({
 			availableTokens: [],
 			availableProtocols: [],
@@ -24,7 +24,7 @@ describe('buildYieldsFilterOptions', () => {
 		})
 	})
 
-	it('builds all option collections in one pass without mutating rows', () => {
+	test('builds all option collections in one pass without mutating rows', () => {
 		const input = [
 			row({ project: 'Aave', projectslug: 'aave', tvl: 10, tokenSymbols: ['USDC', 'USDC'], category: 'Lending' }),
 			row({ project: 'Aave V3', projectslug: 'aave', tvl: null, tokenSymbols: ['DAI'], category: 'Lending' }),
@@ -44,7 +44,7 @@ describe('buildYieldsFilterOptions', () => {
 		expect(input).toEqual(snapshot)
 	})
 
-	it('preserves first encounter for tied token TVL and label order for tied protocols', () => {
+	test('preserves first encounter for tied token TVL and label order for tied protocols', () => {
 		const result = buildYieldsFilterOptions([
 			row({ project: 'Zulu', projectslug: 'zulu', tvl: 10, tokenSymbols: ['FIRST'], category: 'Yield' }),
 			row({ project: 'Alpha', projectslug: 'alpha', tvl: 10, tokenSymbols: ['SECOND'], category: 'Yield' }),

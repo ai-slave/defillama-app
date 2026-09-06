@@ -25,15 +25,15 @@ import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations
 import { readYieldsDepegs, readYieldsExploits, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { DepegRow, EarnPageRow, EnrichedEarnRow, Token } from './types'
 
-function collectRewardSymbols(tokens: Token[]): string[] {
-	const symbols: string[] = []
+function collectRewardSymbols(tokens: Array<Token>): Array<string> {
+	const symbols: Array<string> = []
 	for (const token of tokens) {
 		if (token.symbol) symbols.push(token.symbol)
 	}
 	return symbols
 }
 
-function collectPoolTokenSymbols(row: EnrichedEarnRow): string[] {
+function collectPoolTokenSymbols(row: EnrichedEarnRow): Array<string> {
 	const symbols = new Set<string>()
 	for (const token of row.underlying_tokens) if (token.symbol) symbols.add(token.symbol)
 	if (row.pool_token?.symbol) symbols.add(row.pool_token.symbol)
@@ -41,10 +41,10 @@ function collectPoolTokenSymbols(row: EnrichedEarnRow): string[] {
 	return [...symbols]
 }
 
-const NO_KEYS: string[] = []
+const NO_KEYS: Array<string> = []
 
-function medianApyOf(rows: EarnPageRow[]): number | null {
-	const values: number[] = []
+function medianApyOf(rows: Array<EarnPageRow>): number | null {
+	const values: Array<number> = []
 	for (const row of rows) if (row.apy != null) values.push(row.apy)
 	if (values.length === 0) return null
 	values.sort((a, b) => a - b)
@@ -61,7 +61,7 @@ function tokenFilterInput(row: EnrichedEarnRow): TokenFilterInput {
 	}
 }
 
-type PreparedEarn = { rows: EarnPageRow[]; medianApy: number | null }
+type PreparedEarn = { rows: Array<EarnPageRow>; medianApy: number | null }
 
 export async function getEarnPage(
 	snapshot: YieldsSnapshot,
@@ -130,7 +130,7 @@ async function buildPreparedEarn(snapshot: YieldsSnapshot, query: ApiQuery): Pro
 	const minApy = parseNumber(query, 'minApy')
 	const maxApy = parseNumber(query, 'maxApy')
 
-	const pageRows: EarnPageRow[] = []
+	const pageRows: Array<EarnPageRow> = []
 	for (const row of rows) {
 		if (common.ids && !common.ids.has(row.id)) continue
 		if (common.chains && !common.chains.has(row.chain)) continue

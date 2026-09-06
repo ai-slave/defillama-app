@@ -33,7 +33,7 @@ const TopupModal = lazy(() =>
 )
 
 interface AgenticSidebarProps {
-	sessions: ChatSession[]
+	sessions: Array<ChatSession>
 	isLoading: boolean
 	loadError?: string | null
 	currentSessionId: string | null
@@ -47,7 +47,7 @@ interface AgenticSidebarProps {
 	shouldAnimate?: boolean
 	onOpenSettings?: () => void
 	hasCustomInstructions?: boolean
-	onBulkDelete?: (sessionIds: string[]) => Promise<void>
+	onBulkDelete?: (sessionIds: Array<string>) => Promise<void>
 	onPinSession?: (sessionId: string) => Promise<void>
 	onSearchMatchClick?: (sessionId: string, messageId: string) => void
 	hasMoreSessions?: boolean
@@ -288,7 +288,7 @@ export function AgenticSidebar({
 	}, [unpinnedSessions, nowMs])
 
 	const virtualItems = useMemo(() => {
-		const items: VirtualItem[] = []
+		const items: Array<VirtualItem> = []
 		if (pinnedSessions.length > 0) {
 			items.push({ type: 'header', groupName: 'Pinned', isFirst: true })
 			for (const session of pinnedSessions) {

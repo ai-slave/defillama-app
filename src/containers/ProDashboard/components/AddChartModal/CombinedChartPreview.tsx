@@ -14,7 +14,7 @@ const CHART_OPTIONS = {
 } satisfies MultiSeriesChartOptions
 
 interface CombinedChartPreviewProps {
-	composerItems: ChartRuntimeView[]
+	composerItems: Array<ChartRuntimeView>
 }
 
 const mapGroupingToGroupBy = (grouping: DashboardGrouping): 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' => {
@@ -39,7 +39,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 	}, [composerItems])
 
 	const chartView = useMemo(() => {
-		const series: MultiChartInputSeries[] = []
+		const series: Array<MultiChartInputSeries> = []
 		let colorIndex = 0
 
 		for (const item of composerItems) {
@@ -112,7 +112,7 @@ export function CombinedChartPreview({ composerItems }: CombinedChartPreviewProp
 		<div className="size-full">
 			<Suspense
 				fallback={
-					<div className="h-[450px] w-full animate-pulse rounded-md border border-pro-cards-border bg-pro-cards-bg"></div>
+					<div className="h-[450px] w-full animate-pulse rounded-md border border-pro-cards-border bg-pro-cards-bg" />
 				}
 			>
 				<MultiSeriesChart

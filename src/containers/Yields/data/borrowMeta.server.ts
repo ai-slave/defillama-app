@@ -4,23 +4,23 @@ import { readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { MetaTokenOption, YieldsMeta, TokenOption } from './types'
 
 export interface BorrowPageMeta {
-	chainList: string[]
-	projectList: string[]
-	categoryList: string[]
-	evmChains: string[]
-	collateralTokens: TokenOption[]
-	borrowTokens: TokenOption[]
+	chainList: Array<string>
+	projectList: Array<string>
+	categoryList: Array<string>
+	evmChains: Array<string>
+	collateralTokens: Array<TokenOption>
+	borrowTokens: Array<TokenOption>
 	// Attribute option ids ordered by occurrence (count-DESC) over the enriched markets.
-	attributeIds: AttributeId[]
+	attributeIds: Array<AttributeId>
 	// Protocol NAMES for the 'Majors' curated view (present in the borrow markets),
 	// resolved from the preset's protocol slugs via /v2/meta.
 }
 
 // Families before assets; within each group, occurrence-desc (markets matched), name tiebreak.
-function buildTokenOptions(meta: YieldsMeta, counts: Map<string, number>): TokenOption[] {
-	const options: TokenOption[] = []
+function buildTokenOptions(meta: YieldsMeta, counts: Map<string, number>): Array<TokenOption> {
+	const options: Array<TokenOption> = []
 	const seen = new Set<string>()
-	for (const group of [meta.tokens.families, meta.tokens.assets] as MetaTokenOption[][]) {
+	for (const group of [meta.tokens.families, meta.tokens.assets] as Array<Array<MetaTokenOption>>) {
 		const present = group.filter((option) => counts.has(option.value) && !seen.has(option.value))
 		present.sort((a, b) => (counts.get(b.value) ?? 0) - (counts.get(a.value) ?? 0) || a.symbol.localeCompare(b.symbol))
 		for (const option of present) {

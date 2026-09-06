@@ -42,10 +42,10 @@ export function useLeaderboardRows(
 	fetchPath: string,
 	range: LeaderboardRange,
 	initialData: unknown,
-	shape: (raw: unknown) => LeaderboardRow[]
+	shape: (raw: unknown) => Array<LeaderboardRow>
 ) {
 	const queryString = toQueryString(range)
-	return useQuery<unknown, Error, LeaderboardRow[]>({
+	return useQuery<unknown, Error, Array<LeaderboardRow>>({
 		queryKey: ['market-makers', fetchPath, range.start_date ?? null, range.end_date ?? null],
 		queryFn: () => fetchFreshJson<unknown>(`/api/public/market-makers/${fetchPath}${queryString}`),
 		select: shape,

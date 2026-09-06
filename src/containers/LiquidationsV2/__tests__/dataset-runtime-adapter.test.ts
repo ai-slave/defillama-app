@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { acquireDatasetSnapshot } from '~/server/datasetSnapshots/refresh.server'
 
 const mocks = vi.hoisted(() => ({ readJson: vi.fn() }))
@@ -12,7 +12,7 @@ beforeEach(() => {
 })
 
 describe('liquidations dataset snapshot', () => {
-	it('reads protocol chain ids from the all-liquidations snapshot', async () => {
+	test('reads protocol chain ids from the all-liquidations snapshot', async () => {
 		mocks.readJson.mockResolvedValue({
 			timestamp: 1,
 			data: {
@@ -29,7 +29,7 @@ describe('liquidations dataset snapshot', () => {
 		expect(mocks.readJson).toHaveBeenCalledWith('raw/all.json')
 	})
 
-	it('builds all sitemap protocol chains from one snapshot read', async () => {
+	test('builds all sitemap protocol chains from one snapshot read', async () => {
 		mocks.readJson.mockImplementation(async (file: string) => {
 			if (file === 'raw/protocols.json') return { protocols: ['aave', 'compound'] }
 			return {

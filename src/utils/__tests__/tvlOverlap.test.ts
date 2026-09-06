@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	calculateTotalWithExtraToggles,
 	getEnabledExtraTvlApiKeys,
@@ -18,7 +18,7 @@ const TVL_VALUES = {
 }
 
 describe('Oracle and Fork TVL overlap helpers', () => {
-	it('requests overlap data only when both overlap parents are enabled', () => {
+	test('requests overlap data only when both overlap parents are enabled', () => {
 		expect(
 			getEnabledExtraTvlApiKeys({
 				tvl: true,
@@ -37,7 +37,7 @@ describe('Oracle and Fork TVL overlap helpers', () => {
 		).toEqual(['dcAndLsOverlap', 'doublecounted', 'liquidstaking'])
 	})
 
-	it('keeps Fork and Oracle chart query keys limited to backend-supported keys', () => {
+	test('keeps Fork and Oracle chart query keys limited to backend-supported keys', () => {
 		expect(
 			getEnabledForkOracleExtraTvlChartApiKeys({
 				tvl: true,
@@ -49,7 +49,7 @@ describe('Oracle and Fork TVL overlap helpers', () => {
 		).toEqual(['pool2', 'staking'])
 	})
 
-	it('adds enabled extras and subtracts overlap when both overlap parents are enabled', () => {
+	test('adds enabled extras and subtracts overlap when both overlap parents are enabled', () => {
 		expect(
 			calculateTotalWithExtraToggles({
 				values: TVL_VALUES,
@@ -62,7 +62,7 @@ describe('Oracle and Fork TVL overlap helpers', () => {
 		).toBe(180)
 	})
 
-	it('does not subtract overlap when only one overlap parent is enabled', () => {
+	test('does not subtract overlap when only one overlap parent is enabled', () => {
 		expect(
 			calculateTotalWithExtraToggles({
 				values: TVL_VALUES,
@@ -74,7 +74,7 @@ describe('Oracle and Fork TVL overlap helpers', () => {
 		).toBe(130)
 	})
 
-	it('marks only overlap series negative when both overlap parents are enabled', () => {
+	test('marks only overlap series negative when both overlap parents are enabled', () => {
 		const shouldSubtractOverlapSeries = shouldSubtractTvlOverlapSeries([
 			'dcAndLsOverlap',
 			'doublecounted',
@@ -86,19 +86,19 @@ describe('Oracle and Fork TVL overlap helpers', () => {
 		expect(getExtraTvlSeriesSign({ apiKey: 'staking', shouldSubtractOverlapSeries })).toBe(1)
 	})
 
-	it('detects overlap parents from a set of enabled keys', () => {
+	test('detects overlap parents from a set of enabled keys', () => {
 		expect(shouldSubtractTvlOverlapSeries(new Set(['tvl', 'doublecounted', 'liquidstaking']))).toBe(true)
 		expect(shouldSubtractTvlOverlapSeries(new Set(['tvl', 'doublecounted']))).toBe(false)
 	})
 
-	it('keeps overlap series positive when only one overlap parent is enabled', () => {
+	test('keeps overlap series positive when only one overlap parent is enabled', () => {
 		const shouldSubtractOverlapSeries = shouldSubtractTvlOverlapSeries(['dcAndLsOverlap', 'doublecounted'])
 
 		expect(shouldSubtractOverlapSeries).toBe(false)
 		expect(getExtraTvlSeriesSign({ apiKey: 'dcAndLsOverlap', shouldSubtractOverlapSeries })).toBe(1)
 	})
 
-	it('reports only failed requests without successful data', () => {
+	test('reports only failed requests without successful data', () => {
 		expect(
 			getFailedExtraTvlApiKeys(
 				['staking', 'borrowed', 'pool2'],
@@ -111,7 +111,7 @@ describe('Oracle and Fork TVL overlap helpers', () => {
 		).toEqual(['staking'])
 	})
 
-	it('unions successful base and extra histories without filling uncovered timestamps', () => {
+	test('unions successful base and extra histories without filling uncovered timestamps', () => {
 		expect(
 			mergeBaseAndExtraTvlHistory({
 				base: [

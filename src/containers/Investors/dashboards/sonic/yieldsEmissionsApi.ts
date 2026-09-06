@@ -49,7 +49,7 @@ interface BurnData {
 
 interface YieldsEmissionsAPIResponse {
 	yields: {
-		pools: YieldPool[]
+		pools: Array<YieldPool>
 		kpis: {
 			totalPools: FormattedValue
 			totalTvl: FormattedValue
@@ -59,9 +59,9 @@ interface YieldsEmissionsAPIResponse {
 	emissions: {
 		emissionsChart: {
 			title: string
-			dates: ApiDate[]
-			categories: string[]
-			series: Array<{ name: string; data: number[] }>
+			dates: Array<ApiDate>
+			categories: Array<string>
+			series: Array<{ name: string; data: Array<number> }>
 		}
 		metadata: {
 			total: number | null
@@ -73,7 +73,7 @@ interface YieldsEmissionsAPIResponse {
 }
 
 function parseDateToMs(dateStr: string): number {
-	return Date.parse(dateStr + 'T00:00:00Z')
+	return Date.parse(`${dateStr}T00:00:00Z`)
 }
 
 export function useYieldsEmissionsData() {

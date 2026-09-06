@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { decodeQueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 
 const pending = {
@@ -11,7 +11,7 @@ const pending = {
 }
 
 describe('queue protocol', () => {
-	it('rejects the whole snapshot when a row has an impossible state shape', () => {
+	test('rejects the whole snapshot when a row has an impossible state shape', () => {
 		expect(decodeQueueSnapshot({ sessionId: 's1', revision: 1, queue: [{ ...pending, reason: 'expired' }] })).toBeNull()
 		expect(
 			decodeQueueSnapshot({ sessionId: 's1', revision: 1, queue: [{ ...pending, images: [{ id: 'image-1' }] }] })

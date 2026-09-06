@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	buildRWAPerpsOverviewChartSeries,
@@ -11,29 +11,29 @@ import {
 } from '../OverviewChart'
 
 describe('OverviewChart helpers', () => {
-	it('falls back to the default chart type for invalid query values', () => {
+	test('falls back to the default chart type for invalid query values', () => {
 		expect(getRWAPerpsOverviewChartType(undefined)).toBe('openInterest')
 		expect(getRWAPerpsOverviewChartType('invalid')).toBe('openInterest')
 		expect(getRWAPerpsOverviewChartType('markets')).toBe('markets')
 	})
 
-	it('builds the expected chart-type query patch', () => {
+	test('builds the expected chart-type query patch', () => {
 		expect(getRWAPerpsOverviewChartTypeQueryPatch('openInterest')).toEqual({ chartType: undefined })
 		expect(getRWAPerpsOverviewChartTypeQueryPatch('volume24h')).toEqual({ chartType: 'volume24h' })
 	})
 
-	it('falls back to total mode for invalid time-series mode values', () => {
+	test('falls back to total mode for invalid time-series mode values', () => {
 		expect(getRWAPerpsOverviewTimeSeriesMode(undefined)).toBe('grouped')
 		expect(getRWAPerpsOverviewTimeSeriesMode('invalid')).toBe('grouped')
 		expect(getRWAPerpsOverviewTimeSeriesMode('breakdown')).toBe('breakdown')
 	})
 
-	it('builds the expected time-series-mode query patch', () => {
+	test('builds the expected time-series-mode query patch', () => {
 		expect(getRWAPerpsOverviewTimeSeriesModeQueryPatch('grouped')).toEqual({ timeSeriesMode: undefined })
 		expect(getRWAPerpsOverviewTimeSeriesModeQueryPatch('breakdown')).toEqual({ timeSeriesMode: 'breakdown' })
 	})
 
-	it('prefers explicit selected stacks over excluded stacks and filters unknown values', () => {
+	test('prefers explicit selected stacks over excluded stacks and filters unknown values', () => {
 		expect(
 			resolveRWAPerpsOverviewSelectedStacks({
 				stackOptions: ['Meta', 'NVIDIA'],
@@ -43,7 +43,7 @@ describe('OverviewChart helpers', () => {
 		).toEqual(['NVIDIA'])
 	})
 
-	it('supports the None sentinel and exclusion-based defaults', () => {
+	test('supports the None sentinel and exclusion-based defaults', () => {
 		expect(
 			resolveRWAPerpsOverviewSelectedStacks({
 				stackOptions: ['Meta', 'NVIDIA'],
@@ -61,7 +61,7 @@ describe('OverviewChart helpers', () => {
 		).toEqual(['Meta'])
 	})
 
-	it('projects selected stack datasets after the first selected value while retaining the all-stack total', () => {
+	test('projects selected stack datasets after the first selected value while retaining the all-stack total', () => {
 		const dataset = {
 			source: [
 				{ timestamp: 1, Total: 10, PreStocks: null, Securitize: 10 },
@@ -81,7 +81,7 @@ describe('OverviewChart helpers', () => {
 		})
 	})
 
-	it('keeps only Total when every breakdown stack is deselected', () => {
+	test('keeps only Total when every breakdown stack is deselected', () => {
 		expect(
 			getRWAPerpsChartDatasetForSelectedStacks(
 				{
@@ -97,7 +97,7 @@ describe('OverviewChart helpers', () => {
 		})
 	})
 
-	it('keeps the full dataset when all stacks are selected', () => {
+	test('keeps the full dataset when all stacks are selected', () => {
 		const dataset = {
 			source: [
 				{ timestamp: 1, PreStocks: null, Securitize: 10 },
@@ -111,7 +111,7 @@ describe('OverviewChart helpers', () => {
 		).toBe(dataset)
 	})
 
-	it('builds line series without point markers for non-volume metrics', () => {
+	test('builds line series without point markers for non-volume metrics', () => {
 		const series = buildRWAPerpsOverviewChartSeries({
 			chartType: 'openInterest',
 			stackOptions: ['Meta'],
@@ -122,7 +122,7 @@ describe('OverviewChart helpers', () => {
 		expect(series[0]).not.toHaveProperty('showSymbol')
 	})
 
-	it('builds bar series for volume charts', () => {
+	test('builds bar series for volume charts', () => {
 		expect(
 			buildRWAPerpsOverviewChartSeries({
 				chartType: 'volume24h',
@@ -135,7 +135,7 @@ describe('OverviewChart helpers', () => {
 		])
 	})
 
-	it('builds a total series when the grouped dataset only exposes Total', () => {
+	test('builds a total series when the grouped dataset only exposes Total', () => {
 		expect(
 			buildRWAPerpsOverviewChartSeries({
 				chartType: 'markets',
@@ -145,7 +145,7 @@ describe('OverviewChart helpers', () => {
 		).toMatchObject([{ name: 'Total', type: 'line' }])
 	})
 
-	it('adds a plain total line ahead of the breakdown color scale for breakdown line charts', () => {
+	test('adds a plain total line ahead of the breakdown color scale for breakdown line charts', () => {
 		expect(
 			buildRWAPerpsOverviewChartSeries({
 				chartType: 'openInterest',
@@ -176,7 +176,7 @@ describe('OverviewChart helpers', () => {
 		])
 	})
 
-	it('does not add a total overlay to breakdown bar charts', () => {
+	test('does not add a total overlay to breakdown bar charts', () => {
 		expect(
 			buildRWAPerpsOverviewChartSeries({
 				chartType: 'volume24h',

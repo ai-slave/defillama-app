@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { isChartConfiguration, type ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptCartesianChartData } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import type { ChartCapabilities, ChartViewState } from '../chartCapabilities'
@@ -59,7 +59,7 @@ function getCumulativeCapability(metricClass: 'flow' | 'stock') {
 	return deriveCapabilities(config, adaptCartesianChartData(config, [{ date: Date.UTC(2026, 0, 1), value: 10 }]))
 }
 
-function getLogScaleCapability(values: number[]) {
+function getLogScaleCapability(values: Array<number>) {
 	const config = {
 		id: 'log-scale',
 		type: 'line',
@@ -93,26 +93,26 @@ function getLogScaleCapability(values: number[]) {
 }
 
 describe('chartCapabilities', () => {
-	it('offers cumulative mode for flow bars but not stock bars', () => {
+	test('offers cumulative mode for flow bars but not stock bars', () => {
 		expect(getCumulativeCapability('flow').allowCumulative).toBe(true)
 		expect(getCumulativeCapability('stock').allowCumulative).toBe(false)
 	})
 
-	it('offers log scale for positive positional chart rows', () => {
+	test('offers log scale for positive positional chart rows', () => {
 		const result = getLogScaleCapability([1, 10, 100])
 
 		expect(result.allowLogScale).toBe(true)
 		expect(result.logEligibleYAxes).toEqual([0])
 	})
 
-	it.each([0, -1])('hides log scale when a positional chart row contains %s', (value) => {
+	test.each([0, -1])('hides log scale when a positional chart row contains %s', (value) => {
 		const result = getLogScaleCapability([1, value, 100])
 
 		expect(result.allowLogScale).toBe(false)
 		expect(result.logEligibleYAxes).toEqual([])
 	})
 
-	it('hides log scale while percentage mode is active', () => {
+	test('hides log scale while percentage mode is active', () => {
 		const state = normalizeViewState({ ...baseState, percentage: true }, capabilities)
 		const controls = buildControlsModel('Chart', state, capabilities)
 
@@ -120,7 +120,7 @@ describe('chartCapabilities', () => {
 		expect(controls.showLogScale).toBe(false)
 	})
 
-	it('keeps log scale available for non-percentage charts', () => {
+	test('keeps log scale available for non-percentage charts', () => {
 		const state = normalizeViewState(baseState, capabilities)
 		const controls = buildControlsModel('Chart', state, capabilities)
 
@@ -128,7 +128,7 @@ describe('chartCapabilities', () => {
 		expect(controls.showLogScale).toBe(true)
 	})
 
-	it('disables and hides log scale while stacked mode is active', () => {
+	test('disables and hides log scale while stacked mode is active', () => {
 		const state = normalizeViewState({ ...baseState, stacked: true }, capabilities)
 		const controls = buildControlsModel('Chart', state, capabilities)
 
@@ -166,11 +166,11 @@ describe('unknown metricClass gating', () => {
 	}
 	const rows = Array.from({ length: 20 }, (_, i) => ({ date: Date.UTC(2026, 0, i + 1), value: 10 }))
 
-	it('accepts unknown in the chart contract', () => {
+	test('accepts unknown in the chart contract', () => {
 		expect(isChartConfiguration(unknownSeriesConfig())).toBe(true)
 	})
 
-	it('keeps the grouping control visible but locked on day', () => {
+	test('keeps the grouping control visible but locked on day', () => {
 		const config = unknownSeriesConfig()
 		const caps = deriveCapabilities(config, adaptCartesianChartData(config, rows))
 		expect(caps).toMatchObject({ allowGrouping: true, groupingLocked: true })
@@ -180,7 +180,7 @@ describe('unknown metricClass gating', () => {
 		expect(buildControlsModel(undefined, state, caps)).toMatchObject({ showGrouping: true, groupingLocked: true })
 	})
 
-	it('unlocks once the series class is saved', () => {
+	test('unlocks once the series class is saved', () => {
 		const config = unknownSeriesConfig()
 		config.series[0].metricClass = 'flow'
 		const caps = deriveCapabilities(config, adaptCartesianChartData(config, rows))

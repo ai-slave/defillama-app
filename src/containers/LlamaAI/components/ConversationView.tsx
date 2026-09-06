@@ -43,16 +43,16 @@ export interface ConversationViewModel {
 	draftScope: string
 	readOnly: boolean
 	isSharedView?: boolean
-	messages: Message[]
+	messages: Array<Message>
 	sessionId: string | null
 	isLlama: boolean
 	isStreaming: boolean
 	isQueuedUserMessagePending: boolean
 	isStopping?: boolean
-	activeToolCalls: ToolCall[]
+	activeToolCalls: Array<ToolCall>
 	spawnProgress: Map<string, SpawnAgentStatus>
 	spawnStartTime: number
-	todos: TodoItem[]
+	todos: Array<TodoItem>
 	todosStartTime: number
 	executionStartedAt: number
 	spawnIsResearchMode: boolean
@@ -125,7 +125,7 @@ interface ConversationViewProps {
 // submitted prompt slightly below the top edge on both mobile and desktop.
 const ACTIVE_EXCHANGE_TOP_OFFSET_PX = 12
 
-function getMessageTailSnapshot(messages: Message[]): readonly [Message | null, Message | null] {
+function getMessageTailSnapshot(messages: Array<Message>): readonly [Message | null, Message | null] {
 	return [messages.at(-2) ?? null, messages.at(-1) ?? null] as const
 }
 
@@ -231,10 +231,10 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 	hideActivity = false
 }: {
 	isStreaming: boolean
-	activeToolCalls: ToolCall[]
+	activeToolCalls: Array<ToolCall>
 	spawnProgress: Map<string, SpawnAgentStatus>
 	spawnStartTime: number
-	todos: TodoItem[]
+	todos: Array<TodoItem>
 	todosStartTime: number
 	executionStartedAt: number
 	spawnIsResearchMode: boolean
@@ -629,9 +629,9 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		(isLiveExchange ? messages[messages.length - 1]?.role === 'user' : hasTailChangedSinceMount)
 
 	const lastExchangeMessages = shouldSpaceLastExchange ? messages.slice(lastUserIndex) : []
-	const activeExchangeItems: ActiveExchangeItem[] = (() => {
+	const activeExchangeItems: Array<ActiveExchangeItem> = (() => {
 		if (!shouldSpaceLastExchange) return []
-		const items: ActiveExchangeItem[] = lastExchangeMessages.map((message, i) => ({
+		const items: Array<ActiveExchangeItem> = lastExchangeMessages.map((message, i) => ({
 			type: 'message',
 			key: message.id || `exchange-${i}`,
 			message
@@ -935,6 +935,6 @@ export function EmptyConversationErrorState({ message, onRetry }: { message: str
 	)
 }
 
-function hasStreamingCharts(charts?: ChartSet[]) {
+function hasStreamingCharts(charts?: Array<ChartSet>) {
 	return Boolean(charts && charts.length > 0)
 }

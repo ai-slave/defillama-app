@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
 
-const FAQ_ITEMS: { question: string; answer: string }[] = [
+const FAQ_ITEMS: Array<{ question: string; answer: string }> = [
 	{
 		question: 'Who is the team plan for?',
 		answer:

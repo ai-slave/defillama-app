@@ -37,7 +37,7 @@ export function ToolProgressIndicator({
 	indentForActiveTodo,
 	factCheckPhase
 }: {
-	toolCalls: ToolCall[]
+	toolCalls: Array<ToolCall>
 	thinking?: string
 	isCompacting?: boolean
 	spawnProgress?: Map<string, SpawnAgentStatus>

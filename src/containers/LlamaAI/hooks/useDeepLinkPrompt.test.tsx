@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useDeepLinkPrompt } from '~/containers/LlamaAI/hooks/useDeepLinkPrompt'
 
 const pending = vi.hoisted(() => ({
@@ -88,7 +88,7 @@ describe('useDeepLinkPrompt', () => {
 		await act(async () => root.render(<Harness />))
 	}
 
-	it('submits a pending floating-button prompt without opening the modal', async () => {
+	test('submits a pending floating-button prompt without opening the modal', async () => {
 		pending.prompt = 'from floating button'
 		pending.pageContext = { route: '/protocol/aave' }
 		pending.suggested = true
@@ -98,7 +98,7 @@ describe('useDeepLinkPrompt', () => {
 		expect(api.confirmationPrompt).toBeNull()
 	})
 
-	it('asks before running a shareable deep-link prompt', async () => {
+	test('asks before running a shareable deep-link prompt', async () => {
 		options.deepLinkPrompt = 'what is tvl'
 		await mount()
 
@@ -112,7 +112,7 @@ describe('useDeepLinkPrompt', () => {
 		expect(api.confirmationPrompt).toBeNull()
 	})
 
-	it('clears the url when the deep-link prompt is dismissed', async () => {
+	test('clears the url when the deep-link prompt is dismissed', async () => {
 		options.deepLinkPrompt = 'what is tvl'
 		await mount()
 

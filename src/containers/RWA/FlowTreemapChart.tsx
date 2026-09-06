@@ -33,7 +33,7 @@ function lerpRgb(
 	return `rgb(${Math.round(from[0] + (to[0] - from[0]) * ratio)},${Math.round(from[1] + (to[1] - from[1]) * ratio)},${Math.round(from[2] + (to[2] - from[2]) * ratio)})`
 }
 
-function getColorCap(nodes: readonly RWAFlowTreemapNode[]): number {
+function getColorCap(nodes: ReadonlyArray<RWAFlowTreemapNode>): number {
 	// Weight the percentile by tile area so tiny denominators cannot wash out the visible market.
 	const values: Array<{ value: number; weight: number }> = []
 	let totalWeight = 0
@@ -62,7 +62,7 @@ function getFlowColor(value: number | null, colorCap: number): string {
 	return value > 0 ? lerpRgb(NEUTRAL_RGB, POSITIVE_RGB, ratio) : lerpRgb(NEUTRAL_RGB, NEGATIVE_RGB, ratio)
 }
 
-export function buildRWAFlowTreemapChartData(nodes: readonly RWAFlowTreemapNode[]) {
+export function buildRWAFlowTreemapChartData(nodes: ReadonlyArray<RWAFlowTreemapNode>) {
 	const colorCap = getColorCap(nodes)
 	const data: Array<
 		Omit<RWAFlowTreemapNode, 'value'> & {
@@ -121,7 +121,7 @@ export function RWAFlowTreemapChart({
 	height = '600px',
 	onReady
 }: {
-	nodes: RWAFlowTreemapNode[]
+	nodes: Array<RWAFlowTreemapNode>
 	sizeLabel: string
 	periodLabel: string
 	excludedSizeCount?: number

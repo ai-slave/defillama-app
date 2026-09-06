@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { RewardsPopularity } from '../api.types'
 import { buildRewardsPageData } from '../queries.server'
 import { apiRecord } from './fixtures'
@@ -7,7 +7,7 @@ vi.mock('~/utils/telemetry', () => ({ recordDomainEvent: vi.fn() }))
 const rankings: RewardsPopularity = { version: 1, startAt: 0, endAt: 0, viewsByPath: {} }
 
 describe('rewards public page boundary', () => {
-	it('requires both publication and explicit public visibility, independent of lifecycle or verification', () => {
+	test('requires both publication and explicit public visibility, independent of lifecycle or verification', () => {
 		const missingVisibility = apiRecord({ program_id: 'missing' })
 		delete missingVisibility.visibility
 		const { programs } = buildRewardsPageData(
@@ -26,7 +26,7 @@ describe('rewards public page boundary', () => {
 		expect(programs.every((r) => !('publish_status' in r) && !('visibility' in r))).toBe(true)
 	})
 
-	it('preserves separate programs, metadata identity, and sources named by publisher', () => {
+	test('preserves separate programs, metadata identity, and sources named by publisher', () => {
 		const { programs } = buildRewardsPageData(
 			[
 				apiRecord({
@@ -60,7 +60,7 @@ describe('rewards public page boundary', () => {
 		})
 	})
 
-	it.each(['Live', 'Ended'] as const)('retains %s programs when the API omits the source URL', (lifecycle) => {
+	test.each(['Live', 'Ended'] as const)('retains %s programs when the API omits the source URL', (lifecycle) => {
 		const entry = apiRecord({ lifecycle })
 		delete entry.source_url
 		const { programs } = buildRewardsPageData([entry], {}, rankings)
@@ -73,7 +73,7 @@ describe('rewards public page boundary', () => {
 		})
 	})
 
-	it('retains programs when the API omits the referral URL', () => {
+	test('retains programs when the API omits the referral URL', () => {
 		const entry = apiRecord({})
 		delete entry.referral_url
 		expect(buildRewardsPageData([entry], {}, rankings).programs[0]).toMatchObject({
@@ -83,7 +83,7 @@ describe('rewards public page boundary', () => {
 		})
 	})
 
-	it('labels dates at month granularity and provides the earliest known date for local sorting', () => {
+	test('labels dates at month granularity and provides the earliest known date for local sorting', () => {
 		const [both, startOnly, endOnly, neither] = buildRewardsPageData(
 			[
 				apiRecord({ program_id: 'a-both', start_date: '2025-10-01', end_date: '2026-10-01' }),
@@ -100,7 +100,7 @@ describe('rewards public page boundary', () => {
 		expect(neither).toMatchObject({ dateRangeLabel: null, sortDate: null })
 	})
 
-	it('retains missing metadata and missing reward/date cells without inventing values', () => {
+	test('retains missing metadata and missing reward/date cells without inventing values', () => {
 		const entry = apiRecord({})
 		delete entry.reward_types
 		expect(buildRewardsPageData([entry], {}, rankings).programs[0]).toMatchObject({
@@ -114,7 +114,7 @@ describe('rewards public page boundary', () => {
 		})
 	})
 
-	it('publishes referral earnings for every program, whatever reward types it lists', () => {
+	test('publishes referral earnings for every program, whatever reward types it lists', () => {
 		const { programs } = buildRewardsPageData(
 			[
 				apiRecord({ program_id: 'points', referrer_benefit: 'Referrers earn 20% of referred points.' }),
@@ -135,7 +135,7 @@ describe('rewards public page boundary', () => {
 		])
 	})
 
-	it('serializes programs when the API omits the referrer benefit', () => {
+	test('serializes programs when the API omits the referrer benefit', () => {
 		const entry = apiRecord({})
 		delete entry.referrer_benefit
 		const { programs } = buildRewardsPageData([entry], {}, rankings)
@@ -144,7 +144,7 @@ describe('rewards public page boundary', () => {
 		expect(JSON.parse(JSON.stringify(programs))).toEqual(programs)
 	})
 
-	it('preserves the benefit audience used to choose the primary table benefit', () => {
+	test('preserves the benefit audience used to choose the primary table benefit', () => {
 		expect(
 			buildRewardsPageData([apiRecord({ benefit_audience: 'Referrer only' })], {}, rankings).programs[0]
 		).toMatchObject({
@@ -154,7 +154,7 @@ describe('rewards public page boundary', () => {
 		})
 	})
 
-	it('does not expose executable or hostless editor-entered links', () => {
+	test('does not expose executable or hostless editor-entered links', () => {
 		const { programs } = buildRewardsPageData(
 			[
 				apiRecord({

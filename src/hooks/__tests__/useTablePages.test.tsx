@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { CursorTablePage } from '~/server/tablePages/types'
 import { useTablePages } from '../useTablePages'
 
@@ -52,7 +52,7 @@ describe('useTablePages cursor mode', () => {
 	let container: HTMLDivElement
 	let root: Root
 	let latest: HookResult
-	let pending: PendingRequest[]
+	let pending: Array<PendingRequest>
 
 	const render = async (signature: string) => {
 		await act(async () => {
@@ -84,14 +84,14 @@ describe('useTablePages cursor mode', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('does not refetch the server-rendered default page', async () => {
+	test('does not refetch the server-rendered default page', async () => {
 		await render(DEFAULT_SIGNATURE)
 
 		expect(fetch).not.toHaveBeenCalled()
 		expect(latest.rows.map((item) => item.id)).toEqual(['ssr'])
 	})
 
-	it('aborts a stale replacement and accepts only the latest response', async () => {
+	test('aborts a stale replacement and accepts only the latest response', async () => {
 		await render('sig:first')
 		expect(pending).toHaveLength(1)
 		await render('sig:second')
@@ -105,7 +105,7 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.isReplacing).toBe(false)
 	})
 
-	it('replaces against the pinned version, then re-pins to the version a 409 names', async () => {
+	test('replaces against the pinned version, then re-pins to the version a 409 names', async () => {
 		await render('sig:changed')
 		expect(pending[0]?.url).toContain('version=v-initial')
 
@@ -118,7 +118,7 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.version).toBe('v-rotated')
 	})
 
-	it('replaces against the pinned version, then retries at latest on 409', async () => {
+	test('replaces against the pinned version, then retries at latest on 409', async () => {
 		await render('sig:changed')
 		expect(pending[0]?.url).toContain('version=v-initial')
 
@@ -131,7 +131,7 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.version).toBe('v-rotated')
 	})
 
-	it('appends via the cursor and dedupes rows already on screen', async () => {
+	test('appends via the cursor and dedupes rows already on screen', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())
 		expect(pending).toHaveLength(1)
@@ -143,7 +143,7 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.isLoadingMore).toBe(false)
 	})
 
-	it('recovers from an append 409 by replacing at the version the 409 names', async () => {
+	test('recovers from an append 409 by replacing at the version the 409 names', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())
 		expect(pending[0]?.url).toContain('cursor=next')
@@ -158,7 +158,7 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.version).toBe('v-rotated')
 	})
 
-	it('falls back to an unpinned replacement when the append 409 names no version', async () => {
+	test('falls back to an unpinned replacement when the append 409 names no version', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())
 
@@ -172,7 +172,7 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.version).toBe('v-rotated')
 	})
 
-	it('fails instead of adopting a heal that returns the mismatched version', async () => {
+	test('fails instead of adopting a heal that returns the mismatched version', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())
 
@@ -188,7 +188,7 @@ describe('useTablePages cursor mode', () => {
 		expect(pending).toHaveLength(2)
 	})
 
-	it('keeps a failed append recovery classified as an append failure', async () => {
+	test('keeps a failed append recovery classified as an append failure', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())
 
@@ -199,7 +199,7 @@ describe('useTablePages cursor mode', () => {
 		expect(latest.rows.map((item) => item.id)).toEqual(['ssr'])
 	})
 
-	it('exposes a failed append for explicit retry without starting another request', async () => {
+	test('exposes a failed append for explicit retry without starting another request', async () => {
 		await render(DEFAULT_SIGNATURE)
 		act(() => void latest.loadMore())
 		expect(pending).toHaveLength(1)
@@ -215,7 +215,7 @@ describe('useTablePages cursor mode', () => {
 		expect(pending).toHaveLength(2)
 	})
 
-	it('ignores loadMore while the query signature is ahead of the loaded rows', async () => {
+	test('ignores loadMore while the query signature is ahead of the loaded rows', async () => {
 		await render('sig:diverged')
 		expect(pending).toHaveLength(1)
 

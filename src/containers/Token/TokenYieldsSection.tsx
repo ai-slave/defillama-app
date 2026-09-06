@@ -33,11 +33,11 @@ const FILTER_QUERY_PARAMS = ['chain', 'excludeChain', 'minTvl', 'maxTvl', 'minAp
 const TOKEN_YIELDS_SECTION_ID = 'token-yields'
 const DEFAULT_TABLE_SORTING: SortingState = [{ id: 'tvl', desc: true }]
 const DEFAULT_TABLE_SORTING_KEY = JSON.stringify(DEFAULT_TABLE_SORTING)
-const EMPTY_YIELD_TABLE_ROWS: IYieldTableRow[] = []
+const EMPTY_YIELD_TABLE_ROWS: Array<IYieldTableRow> = []
 
-type EarnRowsResponse = { rows: IYieldTableRow[] }
+type EarnRowsResponse = { rows: Array<IYieldTableRow> }
 
-async function fetchTokenYieldRows(tokenKeys: string[]): Promise<IYieldTableRow[]> {
+async function fetchTokenYieldRows(tokenKeys: Array<string>): Promise<Array<IYieldTableRow>> {
 	const params = new URLSearchParams(TOKEN_PAGE_EARN_QUERY)
 	for (const key of tokenKeys) params.append('token', key)
 	const data = await fetchJson<EarnRowsResponse>(`${YIELD_EARN_DATASET_API}?${params.toString()}`)

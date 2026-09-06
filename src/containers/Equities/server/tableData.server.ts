@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { cachedResult } from '~/server/api/resultCache'
 import { contentHashVersion, createRedisBlobStore } from '~/server/datasetSnapshots/redisBlobStore.server'
 import { compareTableSortValues } from '~/server/tablePages/cursorPage.server'
@@ -36,7 +36,7 @@ export interface EquitiesSnapshot {
 	version: string
 	generatedAt: number
 	updatedAt: string | null
-	rows: IEquitiesListCompanyRow[]
+	rows: Array<IEquitiesListCompanyRow>
 	options: EquitiesCategoricalOptions
 }
 
@@ -53,7 +53,10 @@ const equitiesStore = createRedisBlobStore<EquitiesSnapshot>({
 	getPublishedAt: (payload) => payload.generatedAt
 })
 
-function collectUniqueValues(rows: IEquitiesCompanyApiItem[], key: 'country' | 'sector' | 'industry'): string[] {
+function collectUniqueValues(
+	rows: Array<IEquitiesCompanyApiItem>,
+	key: 'country' | 'sector' | 'industry'
+): Array<string> {
 	const values = new Set<string>()
 	for (const row of rows) {
 		if (row[key]) values.add(row[key])
@@ -61,9 +64,12 @@ function collectUniqueValues(rows: IEquitiesCompanyApiItem[], key: 'country' | '
 	return Array.from(values).sort((a, b) => a.localeCompare(b))
 }
 
-export function buildEquitiesSnapshot(companies: IEquitiesCompanyApiItem[], generatedAt: number): EquitiesSnapshot {
+export function buildEquitiesSnapshot(
+	companies: Array<IEquitiesCompanyApiItem>,
+	generatedAt: number
+): EquitiesSnapshot {
 	// The producer already writes this complete population in descending market-cap order.
-	const rows: IEquitiesListCompanyRow[] = []
+	const rows: Array<IEquitiesListCompanyRow> = []
 	for (const company of companies) {
 		rows.push({ ...company, href: `/equities/${buildEquityTickerCountrySlug(company.ticker, company.country)}` })
 	}
@@ -113,14 +119,14 @@ function compareRowIdentity(a: IEquitiesListCompanyRow, b: IEquitiesListCompanyR
 	return aId < bId ? -1 : aId > bId ? 1 : 0
 }
 
-function sortRows(rows: IEquitiesListCompanyRow[], sortBy: EquitiesSortKey, order: TablePageOrder): void {
+function sortRows(rows: Array<IEquitiesListCompanyRow>, sortBy: EquitiesSortKey, order: TablePageOrder): void {
 	rows.sort((a, b) => compareTableSortValues(a[sortBy], b[sortBy], order) || compareRowIdentity(a, b))
 }
 
-function matchesSearch(rows: IEquitiesListCompanyRow[], search: string): IEquitiesListCompanyRow[] {
+function matchesSearch(rows: Array<IEquitiesListCompanyRow>, search: string): Array<IEquitiesListCompanyRow> {
 	const normalized = search.toLowerCase()
 	if (!normalized) return rows
-	const matches: IEquitiesListCompanyRow[] = []
+	const matches: Array<IEquitiesListCompanyRow> = []
 	for (const row of rows) {
 		if (row.ticker.toLowerCase().includes(normalized) || row.name.toLowerCase().includes(normalized)) matches.push(row)
 	}
@@ -129,9 +135,9 @@ function matchesSearch(rows: IEquitiesListCompanyRow[], search: string): IEquiti
 
 /** Filter, then sort once per query; ticker matches rank ahead of company-name matches while searching. */
 export function prepareEquitiesRows(
-	rows: IEquitiesListCompanyRow[],
+	rows: Array<IEquitiesListCompanyRow>,
 	query: EquitiesTableQuery
-): IEquitiesListCompanyRow[] {
+): Array<IEquitiesListCompanyRow> {
 	const filtered = filterEquityCompanies(rows, query.filters)
 	const order: TablePageOrder = query.sortDesc ? 'desc' : 'asc'
 	const search = query.search.toLowerCase()
@@ -140,8 +146,8 @@ export function prepareEquitiesRows(
 		sortRows(sorted, query.sortBy, order)
 		return sorted
 	}
-	const tickerMatches: IEquitiesListCompanyRow[] = []
-	const nameMatches: IEquitiesListCompanyRow[] = []
+	const tickerMatches: Array<IEquitiesListCompanyRow> = []
+	const nameMatches: Array<IEquitiesListCompanyRow> = []
 	for (const row of filtered) {
 		if (row.ticker.toLowerCase().includes(search)) tickerMatches.push(row)
 		else if (row.name.toLowerCase().includes(search)) nameMatches.push(row)
@@ -196,12 +202,12 @@ function toEquitiesTreemapRow(row: IEquitiesListCompanyRow): EquitiesTreemapRow 
 }
 
 export function buildEquitiesTreemapPage(
-	rows: IEquitiesListCompanyRow[],
+	rows: Array<IEquitiesListCompanyRow>,
 	{
 		search,
 		filters,
 		sizeMetric
-	}: { search: string; filters: EquityActiveFilter[]; sizeMetric: EquitiesTreemapResponse['sizeMetric'] }
+	}: { search: string; filters: Array<EquityActiveFilter>; sizeMetric: EquitiesTreemapResponse['sizeMetric'] }
 ): EquitiesTreemapResponse {
 	const matching = matchesSearch(filterEquityCompanies(rows, filters), search)
 	const ranking = rankEquitiesTreemapRows(matching, sizeMetric, EQUITIES_TREEMAP_DEFAULT_LIMIT)

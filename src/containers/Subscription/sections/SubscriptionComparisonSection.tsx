@@ -126,7 +126,7 @@ function ComparisonPlanHead({
 const LABEL_W = { mobile: 233, desktop: 400 }
 const PLAN_W = { mobile: 132, desktop: 146 }
 
-function computeOverlayMetrics(planOrder: PlanKey[], selectedPlan: PlanKey) {
+function computeOverlayMetrics(planOrder: Array<PlanKey>, selectedPlan: PlanKey) {
 	const isMd = window.matchMedia('(min-width: 768px)').matches
 	const labelW = isMd ? LABEL_W.desktop : LABEL_W.mobile
 	const planW = isMd ? PLAN_W.desktop : PLAN_W.mobile
@@ -151,8 +151,8 @@ export function SubscriptionComparisonSection({
 	hidePlanActions = false,
 	onPlanAction
 }: {
-	planOrder: PlanKey[]
-	comparisonSections: ComparisonSection[]
+	planOrder: Array<PlanKey>
+	comparisonSections: Array<ComparisonSection>
 	billingCycle: BillingCycle
 	selectedPlan: PlanKey
 	currentPlan?: PlanKey | null

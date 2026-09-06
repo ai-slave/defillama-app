@@ -43,18 +43,18 @@ interface TopHookProjectRow {
 interface IntegrationsData {
 	kpis: Record<string, KpiT | undefined>
 	marketshareByChain: Chart
-	currentMarketshare: { title?: string; rows: MarketshareRow[] }
+	currentMarketshare: { title?: string; rows: Array<MarketshareRow> }
 	orderFlowByEntity: Chart
 	uniswapVsOther: Chart
-	orderFlowTable30d: { title?: string; rows: OrderFlowRow[] }
-	orderFlowByVersion: { title?: string; rows: OrderFlowVersionRow[] }
+	orderFlowTable30d: { title?: string; rows: Array<OrderFlowRow> }
+	orderFlowByVersion: { title?: string; rows: Array<OrderFlowVersionRow> }
 	hooks: {
 		kpis: Record<string, KpiT | undefined>
 		adoption: Chart
 		creationByCapability: Chart
 	}
 	hookVolume: Chart
-	topHookProjects: { title?: string; rows: TopHookProjectRow[] }
+	topHookProjects: { title?: string; rows: Array<TopHookProjectRow> }
 	hookCategories: Chart
 }
 

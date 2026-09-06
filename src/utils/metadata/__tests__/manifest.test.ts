@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
 import { METADATA_ARTIFACT_FILES, type CoreMetadataPayload } from '../artifactContract'
 import {
 	getMetadataManifestPath,
@@ -13,7 +13,7 @@ import {
 } from '../artifactWriter'
 import { METADATA_ARTIFACT_VERSION, createMetadataArtifactManifest, isMetadataArtifactManifestFresh } from '../manifest'
 
-const tempDirs: string[] = []
+const tempDirs: Array<string> = []
 
 const tokenEntry = {
 	symbol: 'AAVE',
@@ -81,7 +81,7 @@ afterEach(async () => {
 })
 
 describe('metadata artifact manifest', () => {
-	it('records ready artifacts after a successful publish', async () => {
+	test('records ready artifacts after a successful publish', async () => {
 		const cacheDir = await createTempDir()
 		await writeMetadataArtifacts(cacheDir, createPayload(), 'ready', 123)
 
@@ -97,7 +97,7 @@ describe('metadata artifact manifest', () => {
 		})
 	})
 
-	it('records stub artifacts without overwriting existing artifact files', async () => {
+	test('records stub artifacts without overwriting existing artifact files', async () => {
 		const cacheDir = await createTempDir()
 		await fs.writeFile(
 			path.join(cacheDir, METADATA_ARTIFACT_FILES.protocols),
@@ -115,7 +115,7 @@ describe('metadata artifact manifest', () => {
 		expect(await fs.readFile(getMetadataManifestPath(cacheDir), 'utf8')).toContain('"status": "stub"')
 	})
 
-	it('detects missing files from a ready manifest', async () => {
+	test('detects missing files from a ready manifest', async () => {
 		const cacheDir = await createTempDir()
 		await writeMetadataArtifacts(cacheDir, createPayload(), 'ready', 123)
 		const manifest = await readMetadataArtifactManifest(cacheDir)
@@ -129,7 +129,7 @@ describe('metadata artifact manifest', () => {
 		expect(await getMissingMetadataArtifacts(cacheDir, manifest)).toEqual([METADATA_ARTIFACT_FILES.cexs])
 	})
 
-	it('rejects manifests whose artifact list does not match the registry', async () => {
+	test('rejects manifests whose artifact list does not match the registry', async () => {
 		const cacheDir = await createTempDir()
 		await writeMetadataArtifacts(cacheDir, createPayload(), 'ready', 123)
 		await fs.rm(path.join(cacheDir, METADATA_ARTIFACT_FILES.narrativeCategories))
@@ -146,7 +146,7 @@ describe('metadata artifact manifest', () => {
 		await expect(readMetadataArtifactManifest(cacheDir)).rejects.toThrow(/artifact list does not match registry/)
 	})
 
-	it('rejects old artifact versions as invalid caches', async () => {
+	test('rejects old artifact versions as invalid caches', async () => {
 		const cacheDir = await createTempDir()
 		await writeMetadataArtifacts(cacheDir, createPayload(), 'ready', 123)
 		await fs.writeFile(
@@ -160,7 +160,7 @@ describe('metadata artifact manifest', () => {
 		await expect(readMetadataArtifactManifest(cacheDir)).rejects.toThrow(/version mismatch/)
 	})
 
-	it('publishes parsed JSON payloads without semantic artifact validation', async () => {
+	test('publishes parsed JSON payloads without semantic artifact validation', async () => {
 		const cacheDir = await createTempDir()
 		await writeMetadataArtifacts(cacheDir, createPayload(), 'ready', 123)
 
@@ -178,11 +178,11 @@ describe('metadata artifact manifest', () => {
 		expect(JSON.parse(await fs.readFile(path.join(cacheDir, METADATA_ARTIFACT_FILES.chains), 'utf8'))).toEqual([])
 	})
 
-	it('treats only fresh ready manifests as pull skips', () => {
-		expect(isMetadataArtifactManifestFresh(createMetadataArtifactManifest('ready', 1_000), 1_100, 500)).toBe(true)
-		expect(isMetadataArtifactManifestFresh(createMetadataArtifactManifest('stub', 1_000), 1_100, 500)).toBe(false)
-		expect(isMetadataArtifactManifestFresh(createMetadataArtifactManifest('ready', 1_000), 2_000, 500)).toBe(false)
-		expect(isMetadataArtifactManifestFresh(createMetadataArtifactManifest('ready', 2_000), 1_000, 500)).toBe(false)
-		expect(isMetadataArtifactManifestFresh(null, 1_100, 500)).toBe(false)
+	test('treats only fresh ready manifests as pull skips', () => {
+		expect(isMetadataArtifactManifestFresh(createMetadataArtifactManifest('ready', 1000), 1100, 500)).toBe(true)
+		expect(isMetadataArtifactManifestFresh(createMetadataArtifactManifest('stub', 1000), 1100, 500)).toBe(false)
+		expect(isMetadataArtifactManifestFresh(createMetadataArtifactManifest('ready', 1000), 2000, 500)).toBe(false)
+		expect(isMetadataArtifactManifestFresh(createMetadataArtifactManifest('ready', 2000), 1000, 500)).toBe(false)
+		expect(isMetadataArtifactManifestFresh(null, 1100, 500)).toBe(false)
 	})
 })

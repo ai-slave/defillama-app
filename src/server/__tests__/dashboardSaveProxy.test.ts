@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { dashboardDeleteHandler } from '~/containers/ProDashboard/server/deleteRoute'
 import { dashboardSaveHandler } from '~/containers/ProDashboard/server/saveRoute'
 import {
@@ -32,13 +32,13 @@ function callAt(fetchImpl: ReturnType<typeof vi.fn>, index: number) {
 	return call
 }
 
-function callUrl(call: unknown[]): URL {
+function callUrl(call: Array<unknown>): URL {
 	const input = call[0]
 	if (typeof input !== 'string' && !(input instanceof URL)) throw new Error('Expected a URL-compatible fetch input')
 	return new URL(input)
 }
 
-function purgeFiles(call: unknown[]): string[] {
+function purgeFiles(call: Array<unknown>): Array<string> {
 	const init = call[1]
 	if (typeof init !== 'object' || init === null || !('body' in init) || typeof init.body !== 'string') {
 		throw new Error('Expected purge request with a JSON body')
@@ -47,13 +47,13 @@ function purgeFiles(call: unknown[]): string[] {
 	if (typeof payload !== 'object' || payload === null || !('files' in payload) || !Array.isArray(payload.files)) {
 		throw new Error('Expected purge request body to contain files')
 	}
-	const files: unknown[] = payload.files
+	const files: Array<unknown> = payload.files
 	if (!files.every((file): file is string => typeof file === 'string'))
 		throw new Error('Expected purge files to be URLs')
 	return files
 }
 
-function isCloudflarePurge(call: unknown[]): boolean {
+function isCloudflarePurge(call: Array<unknown>): boolean {
 	const input = call[0]
 	return typeof input === 'string' && input.includes('api.cloudflare.com')
 }
@@ -71,7 +71,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('rejects non-POST methods without touching the backend', async () => {
+	test('rejects non-POST methods without touching the backend', async () => {
 		const fetchImpl = vi.fn()
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
@@ -82,7 +82,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(fetchImpl).not.toHaveBeenCalled()
 	})
 
-	it('creates a public dashboard and purges its urls', async () => {
+	test('creates a public dashboard and purges its urls', async () => {
 		const body = { data: { dashboardName: 'My Dash' }, visibility: 'public' }
 		const saved = { id: 'new-1', slug: 'my-dash', visibility: 'public' }
 		const fetchImpl = vi
@@ -110,7 +110,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
-	it('creates a private dashboard and purges its urls', async () => {
+	test('creates a private dashboard and purges its urls', async () => {
 		const saved = { id: 'new-2', slug: 'secret', visibility: 'private' }
 		const fetchImpl = vi
 			.fn()
@@ -126,7 +126,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
-	it('reads the previous state then purges old and new slugs on a public rename', async () => {
+	test('reads the previous state then purges old and new slugs on a public rename', async () => {
 		const before = { id: 'd1', slug: 'old-name', visibility: 'public' }
 		const saved = { id: 'd1', slug: 'new-name', visibility: 'public' }
 		const fetchImpl = vi
@@ -155,7 +155,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
-	it('purges the canonical dashboard id when an update is addressed by slug', async () => {
+	test('purges the canonical dashboard id when an update is addressed by slug', async () => {
 		const before = { id: 'canonical-id', slug: 'old-name', visibility: 'public' }
 		const saved = { id: 'canonical-id', slug: 'new-name', visibility: 'public' }
 		const fetchImpl = vi
@@ -174,7 +174,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(files).toContain('https://defillama.test/pro/new-name')
 	})
 
-	it('purges when a public dashboard is made private', async () => {
+	test('purges when a public dashboard is made private', async () => {
 		const before = { id: 'd2', slug: 'going-private', visibility: 'public' }
 		const saved = { id: 'd2', slug: 'going-private', visibility: 'private' }
 		const fetchImpl = vi
@@ -191,7 +191,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith(saved)
 	})
 
-	it('purges when a private dashboard stays private', async () => {
+	test('purges when a private dashboard stays private', async () => {
 		const before = { id: 'd3', slug: 'private-dash', visibility: 'private' }
 		const saved = { id: 'd3', slug: 'private-dash', visibility: 'private' }
 		const fetchImpl = vi
@@ -208,7 +208,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(isCloudflarePurge(lastCall(fetchImpl))).toBe(true)
 	})
 
-	it('passes backend save failures through without purging', async () => {
+	test('passes backend save failures through without purging', async () => {
 		const fetchImpl = vi.fn().mockResolvedValueOnce(dashboardResponse({ message: 'Forbidden' }, 403))
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
@@ -220,7 +220,7 @@ describe('/api/private/pro-dashboard/save', () => {
 		expect(res.json).toHaveBeenCalledWith({ message: 'Forbidden' })
 	})
 
-	it('returns 502 and does not purge when a successful backend save has invalid JSON', async () => {
+	test('returns 502 and does not purge when a successful backend save has invalid JSON', async () => {
 		const fetchImpl = vi.fn().mockResolvedValueOnce(new Response('not-json', { status: 200 }))
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
@@ -246,7 +246,7 @@ describe('/api/private/pro-dashboard/delete', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('requires a dashboard id', async () => {
+	test('requires a dashboard id', async () => {
 		const fetchImpl = vi.fn()
 		vi.stubGlobal('fetch', fetchImpl)
 		const res = createMockNextApiResponse()
@@ -257,7 +257,7 @@ describe('/api/private/pro-dashboard/delete', () => {
 		expect(fetchImpl).not.toHaveBeenCalled()
 	})
 
-	it('deletes a public dashboard and purges its urls', async () => {
+	test('deletes a public dashboard and purges its urls', async () => {
 		const before = { id: 'd9', slug: 'public-dash', visibility: 'public' }
 		const fetchImpl = vi
 			.fn()
@@ -278,7 +278,7 @@ describe('/api/private/pro-dashboard/delete', () => {
 		expect(res.json).toHaveBeenCalledWith({ message: 'Dashboard deleted' })
 	})
 
-	it('purges the canonical dashboard id when deletion is addressed by slug', async () => {
+	test('purges the canonical dashboard id when deletion is addressed by slug', async () => {
 		const before = { id: 'canonical-id', slug: 'public-dash', visibility: 'public' }
 		const fetchImpl = vi
 			.fn()
@@ -295,7 +295,7 @@ describe('/api/private/pro-dashboard/delete', () => {
 		expect(files).toContain('https://defillama.test/pro/public-dash')
 	})
 
-	it('deletes a private dashboard and purges its urls', async () => {
+	test('deletes a private dashboard and purges its urls', async () => {
 		const before = { id: 'd10', slug: 'private-dash', visibility: 'private' }
 		const fetchImpl = vi
 			.fn()
@@ -312,7 +312,7 @@ describe('/api/private/pro-dashboard/delete', () => {
 		expect(res.json).toHaveBeenCalledWith({ message: 'Dashboard deleted' })
 	})
 
-	it('passes backend delete failures through without purging', async () => {
+	test('passes backend delete failures through without purging', async () => {
 		const before = { id: 'd11', slug: 'public-dash', visibility: 'public' }
 		const fetchImpl = vi
 			.fn()

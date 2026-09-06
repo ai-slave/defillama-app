@@ -14,7 +14,7 @@ import type { IEquitiesCompanyRoute, IEquitiesOnchainResponse } from './api.type
 import { buildEquityTickerCountrySlug } from './tickerCountry'
 import type { IEquitiesOnchainPageData, IEquityTickerPageProps } from './types'
 
-function buildRwaPlatformNameLookup(platforms: string[]): Map<string, string> {
+function buildRwaPlatformNameLookup(platforms: Array<string>): Map<string, string> {
 	const lookup = new Map<string, string>()
 
 	for (const platform of platforms) {
@@ -31,7 +31,7 @@ function buildEquitiesOnchainPageData({
 }: {
 	onchain: IEquitiesOnchainResponse
 	protocolDisplayNames: Map<string, string>
-	rwaPlatforms: string[]
+	rwaPlatforms: Array<string>
 }): IEquitiesOnchainPageData {
 	const rwaPlatformNames = buildRwaPlatformNameLookup(rwaPlatforms)
 	const perps: IEquitiesOnchainPageData['perps'] = []
@@ -70,7 +70,7 @@ function buildEquitiesOnchainPageData({
 
 interface EquitiesTickerPageMetadata {
 	protocolDisplayNames: Map<string, string>
-	rwaPlatforms: string[]
+	rwaPlatforms: Array<string>
 	emissionsProtocolBySlug: Record<string, string>
 }
 
@@ -125,9 +125,9 @@ export async function getEquitiesTickerPageData(
 	}
 }
 
-export async function getEquitiesTickerPaths(limit = 50): Promise<string[]> {
+export async function getEquitiesTickerPaths(limit = 50): Promise<Array<string>> {
 	const companies = await fetchEquitiesCompaniesList().catch(() => [])
-	const paths: string[] = []
+	const paths: Array<string> = []
 	for (const company of companies) {
 		if (paths.length >= limit) break
 		paths.push(buildEquityTickerCountrySlug(company.ticker, company.country))
@@ -137,7 +137,7 @@ export async function getEquitiesTickerPaths(limit = 50): Promise<string[]> {
 
 export async function getEquitiesTickerRedirectSlug(
 	rawTicker: string,
-	companiesList?: IEquitiesCompanyRoute[]
+	companiesList?: Array<IEquitiesCompanyRoute>
 ): Promise<string | null> {
 	const lookupTicker = rawTicker.toLowerCase()
 	const companies = companiesList ?? (await fetchEquitiesCompaniesList().catch(() => []))

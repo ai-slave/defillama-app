@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { fetchDashboardConfigMock, llamaQueryMock, requireSubscriptionMock } = vi.hoisted(() => ({
@@ -24,7 +24,7 @@ beforeEach(() => {
 })
 
 describe('/api/public/pro-dashboard/dashboard-token-usage', () => {
-	it('allows only the exact Token Usage capability saved in a public dashboard', async () => {
+	test('allows only the exact Token Usage capability saved in a public dashboard', async () => {
 		fetchDashboardConfigMock.mockResolvedValue({
 			visibility: 'public',
 			data: {
@@ -58,7 +58,7 @@ describe('/api/public/pro-dashboard/dashboard-token-usage', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('rejects arbitrary symbols that are not configured by the public dashboard', async () => {
+	test('rejects arbitrary symbols that are not configured by the public dashboard', async () => {
 		fetchDashboardConfigMock.mockResolvedValue({
 			visibility: 'public',
 			data: {
@@ -86,7 +86,7 @@ describe('/api/public/pro-dashboard/dashboard-token-usage', () => {
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
 	})
 
-	it('does not turn a private dashboard config into an anonymous capability', async () => {
+	test('does not turn a private dashboard config into an anonymous capability', async () => {
 		fetchDashboardConfigMock.mockResolvedValue({
 			visibility: 'private',
 			data: {
@@ -115,7 +115,7 @@ describe('/api/public/pro-dashboard/dashboard-token-usage', () => {
 })
 
 describe('parseTokenUsageQuery', () => {
-	it('normalizes symbols and parses the CEX policy once at the Lens boundary', () => {
+	test('normalizes symbols and parses the CEX policy once at the Lens boundary', () => {
 		expect(
 			parseTokenUsageQuery({
 				'symbols[]': [' usdc ', 'USDC', 'usdt'],
@@ -124,7 +124,7 @@ describe('parseTokenUsageQuery', () => {
 		).toEqual({ tokenSymbols: ['USDC', 'USDT'], includeCex: true })
 	})
 
-	it('rejects missing symbols and ambiguous boolean values', () => {
+	test('rejects missing symbols and ambiguous boolean values', () => {
 		expect(parseTokenUsageQuery({ includeCex: 'false' })).toBeNull()
 		expect(parseTokenUsageQuery({ 'symbols[]': 'USDC', includeCex: ['true', 'false'] })).toBeNull()
 		expect(parseTokenUsageQuery({ 'symbols[]': 'USDC', includeCex: '1' })).toBeNull()
@@ -132,7 +132,7 @@ describe('parseTokenUsageQuery', () => {
 })
 
 describe('/api/dynamic/pro-dashboard/token-usage', () => {
-	it('rejects an anonymous arbitrary query before touching the warehouse', async () => {
+	test('rejects an anonymous arbitrary query before touching the warehouse', async () => {
 		requireSubscriptionMock.mockImplementation(async (_header, res) => {
 			res.status(401).json({ error: 'Authentication required' })
 			return null
@@ -151,7 +151,7 @@ describe('/api/dynamic/pro-dashboard/token-usage', () => {
 		expect(res.status).toHaveBeenCalledWith(401)
 	})
 
-	it('serves a valid request only after subscription validation', async () => {
+	test('serves a valid request only after subscription validation', async () => {
 		requireSubscriptionMock.mockResolvedValue({ valid: true })
 		llamaQueryMock.mockResolvedValue([])
 		const req = createMockNextApiRequest({

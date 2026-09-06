@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
 	const instance = {
@@ -57,7 +57,7 @@ describe('NetflowChart lifecycle', () => {
 		container.remove()
 	})
 
-	it('resizes without rebuilding options when only height changes', async () => {
+	test('resizes without rebuilding options when only height changes', async () => {
 		const onReady = vi.fn()
 
 		await act(async () => root.render(<NetflowChart data={DATA} height={500} onReady={onReady} />))

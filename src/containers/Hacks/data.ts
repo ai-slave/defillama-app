@@ -40,9 +40,12 @@ const byTotalDescThenNameAsc = (left: [string, number], right: [string, number])
 	right[1] - left[1] || left[0].localeCompare(right[0])
 
 /** Incident nulls stay unavailable; only additive aggregates give them zero contribution. */
-function buildHacksSummary(data: IHackRow[], collectFilterOptions: false): HacksDisplaySummary
-function buildHacksSummary(data: IHackRow[], collectFilterOptions: true): HacksPageSummary
-function buildHacksSummary(data: IHackRow[], collectFilterOptions: boolean): HacksDisplaySummary | HacksPageSummary {
+function buildHacksSummary(data: Array<IHackRow>, collectFilterOptions: false): HacksDisplaySummary
+function buildHacksSummary(data: Array<IHackRow>, collectFilterOptions: true): HacksPageSummary
+function buildHacksSummary(
+	data: Array<IHackRow>,
+	collectFilterOptions: boolean
+): HacksDisplaySummary | HacksPageSummary {
 	const monthlyHacks = new Map<number, number>()
 	const techniqueTotals = new Map<string, number>()
 	const chainTotals = collectFilterOptions ? new Map<string, number>() : null
@@ -115,12 +118,12 @@ function buildHacksSummary(data: IHackRow[], collectFilterOptions: boolean): Hac
 	}
 }
 
-export const buildFilteredHacksSummary = (data: IHackRow[]): HacksDisplaySummary => buildHacksSummary(data, false)
+export const buildFilteredHacksSummary = (data: Array<IHackRow>): HacksDisplaySummary => buildHacksSummary(data, false)
 
-export const buildHacksPageSummary = (data: IHackRow[]): HacksPageSummary => buildHacksSummary(data, true)
+export const buildHacksPageSummary = (data: Array<IHackRow>): HacksPageSummary => buildHacksSummary(data, true)
 
-export function filterHacksRows(data: IHackRow[], filters: HacksFilterState): IHackRow[] {
-	const filtered: IHackRow[] = []
+export function filterHacksRows(data: Array<IHackRow>, filters: HacksFilterState): Array<IHackRow> {
+	const filtered: Array<IHackRow> = []
 
 	for (const row of data) {
 		if (filters.chainKeys && (filters.chainKeys.size > 0 || filters.chainIncludeNone)) {

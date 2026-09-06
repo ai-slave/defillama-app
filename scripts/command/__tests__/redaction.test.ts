@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { createTeeLogger, createRedactedConsoleLogger } from '../logger'
 import { createSecretRedactor } from '../redaction'
 import { testEnv } from './testEnv'
 
-const tempDirs: string[] = []
+const tempDirs: Array<string> = []
 
 afterEach(async () => {
 	vi.restoreAllMocks()
@@ -14,7 +14,7 @@ afterEach(async () => {
 })
 
 describe('secret redaction', () => {
-	it('redacts secret-like env values but leaves non-secret values visible', () => {
+	test('redacts secret-like env values but leaves non-secret values visible', () => {
 		const redactor = createSecretRedactor(
 			testEnv({
 				API_KEY: 'secret-api-key',
@@ -27,7 +27,7 @@ describe('secret redaction', () => {
 		)
 	})
 
-	it('ignores inherited env values while collecting secrets', () => {
+	test('ignores inherited env values while collecting secrets', () => {
 		const env = Object.create({ API_KEY: 'inherited-secret' }) as NodeJS.ProcessEnv
 		env.LOGGER_API_KEY = 'own-secret'
 		const redactor = createSecretRedactor(env)
@@ -35,7 +35,7 @@ describe('secret redaction', () => {
 		expect(redactor('own-secret inherited-secret')).toBe('[REDACTED] inherited-secret')
 	})
 
-	it('redacts raw and encoded connection strings', () => {
+	test('redacts raw and encoded connection strings', () => {
 		const redisUrl = 'redis://cache-user:cache-password@cache.internal:6379'
 		const databaseUrl = 'postgres://db-user:db-password@db.internal/app'
 		const redactor = createSecretRedactor(testEnv({ LLAMA_DB_URL: databaseUrl, REDIS_URL: redisUrl }))
@@ -45,7 +45,7 @@ describe('secret redaction', () => {
 		)
 	})
 
-	it('redacts multiline secret values one output line at a time', () => {
+	test('redacts multiline secret values one output line at a time', () => {
 		const redactor = createSecretRedactor(
 			testEnv({ PRIVATE_KEY: 'private-key-header\nprivate-key-body\nprivate-key-footer' })
 		)
@@ -53,10 +53,10 @@ describe('secret redaction', () => {
 		expect(redactor('key=private-key-body\n')).toBe('key=[REDACTED]\n')
 	})
 
-	it('redacts terminal and file output from the tee logger', async () => {
+	test('redacts terminal and file output from the tee logger', async () => {
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'redaction-test-'))
 		tempDirs.push(projectDir)
-		const output: string[] = []
+		const output: Array<string> = []
 		const stream = {
 			write: vi.fn((chunk: string) => {
 				output.push(chunk)
@@ -80,10 +80,10 @@ describe('secret redaction', () => {
 		expect(buildLog).toBe('parent [REDACTED]\nchild [REDACTED]error [REDACTED]')
 	})
 
-	it('redacts secrets split across child output chunks', async () => {
+	test('redacts secrets split across child output chunks', async () => {
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'redaction-chunk-test-'))
 		tempDirs.push(projectDir)
-		const output: string[] = []
+		const output: Array<string> = []
 		const stream = {
 			write: vi.fn((chunk: string) => {
 				output.push(chunk)
@@ -105,10 +105,10 @@ describe('secret redaction', () => {
 		expect(await fs.readFile(logPath, 'utf8')).toBe('child [REDACTED]\n')
 	})
 
-	it('preserves arrival order across partial stdout and stderr lines', async () => {
+	test('preserves arrival order across partial stdout and stderr lines', async () => {
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'redaction-order-test-'))
 		tempDirs.push(projectDir)
-		const output: string[] = []
+		const output: Array<string> = []
 		const stream = {
 			write: vi.fn((chunk: string) => {
 				output.push(chunk)
@@ -129,10 +129,10 @@ describe('secret redaction', () => {
 		expect(output.join('')).toBe('firstsecond\n line\n')
 	})
 
-	it('truncates oversized unterminated child output and resumes at the next line', async () => {
+	test('truncates oversized unterminated child output and resumes at the next line', async () => {
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'redaction-large-line-test-'))
 		tempDirs.push(projectDir)
-		const output: string[] = []
+		const output: Array<string> = []
 		const stream = {
 			write: vi.fn((chunk: string) => {
 				output.push(chunk)
@@ -153,7 +153,7 @@ describe('secret redaction', () => {
 		expect(output.join('')).toBe('[output truncated: unterminated line exceeded 64 KiB]\nvisible\n')
 	})
 
-	it('closes after a buffered terminal write fails', async () => {
+	test('closes after a buffered terminal write fails', async () => {
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'logger-close-test-'))
 		tempDirs.push(projectDir)
 		const stream = {
@@ -172,7 +172,7 @@ describe('secret redaction', () => {
 		expect(() => logger.close()).not.toThrow()
 	})
 
-	it('delegates ephemeral build secret injection to the deployment platform', async () => {
+	test('delegates ephemeral build secret injection to the deployment platform', async () => {
 		const dockerfile = await fs.readFile(path.join(process.cwd(), 'Dockerfile'), 'utf8')
 		const secretInstruction =
 			/^\s*(?:ARG|ENV)\s+\w*(?:API_KEY|TOKEN|SECRET|PASSWORD|AUTH|WEBHOOK|PRIVATE_KEY|ACCESS_KEY|CREDENTIAL|COOKIE|DATABASE_URL|DB_URL|POSTGRES_URL|REDIS_URL|CONNECTION_STRING)\w*/im
@@ -184,7 +184,7 @@ describe('secret redaction', () => {
 		expect(dockerfile).toContain('RUN bash ./scripts/build.sh')
 	})
 
-	it('adds context to build log open failures', async () => {
+	test('adds context to build log open failures', async () => {
 		const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'logger-open-test-'))
 		tempDirs.push(projectDir)
 		const logPath = path.join(projectDir, 'build.log')
@@ -193,7 +193,7 @@ describe('secret redaction', () => {
 		expect(() => createTeeLogger({ logPath })).toThrow(`Failed to open build log for ${logPath}:`)
 	})
 
-	it('redacts notification logger output after build log capture closes', () => {
+	test('redacts notification logger output after build log capture closes', () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {})
 		const logger = createRedactedConsoleLogger(testEnv({ BUILD_STATUS_WEBHOOK: 'https://discord.example/secret' }))
 
@@ -202,7 +202,7 @@ describe('secret redaction', () => {
 		expect(consoleLog).toHaveBeenCalledWith('failed to post', '[REDACTED]')
 	})
 
-	it('keeps error stacks while redacting notification logger output', () => {
+	test('keeps error stacks while redacting notification logger output', () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => {})
 		const logger = createRedactedConsoleLogger(testEnv({ LOGGER_API_KEY: 'super-secret-key' }))
 		const error = new Error('upload failed')

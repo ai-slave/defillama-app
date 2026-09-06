@@ -131,8 +131,8 @@ export function buildRampRows(
 		currency: string | null
 		size: number
 	}
-): RampRowModel[] {
-	const rows: RampRowModel[] = []
+): Array<RampRowModel> {
+	const rows: Array<RampRowModel> = []
 	for (const venue of catalog.venues) {
 		const resolved = resolveRampVariant(venue, options.country, options.regionCatalog)
 		if (!resolved) continue
@@ -173,7 +173,7 @@ export function buildRampRows(
 /** Currencies any visible venue prices at the selected size, for the currency select.
  *  Size-aware on purpose: a currency priced only at another size would be offered,
  *  selected, and then fall back on every row — a selection that appears to do nothing. */
-export function rampCurrencyOptions(rows: RampRowModel[], size: number): string[] {
+export function rampCurrencyOptions(rows: Array<RampRowModel>, size: number): Array<string> {
 	const key = String(size)
 	const currencies = new Set<string>()
 	for (const row of rows) {

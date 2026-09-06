@@ -4,7 +4,7 @@ import type { TokenDirectoryRecord } from '~/utils/tokenDirectory'
 
 function resolveAvailableUnlockSlug(
 	candidate: string | null | undefined,
-	emissionsProtocolsList: string[]
+	emissionsProtocolsList: Array<string>
 ): string | null {
 	if (!candidate) return null
 
@@ -23,7 +23,7 @@ export function resolveTokenUnlockSlug({
 	record: TokenDirectoryRecord
 	protocolMetadata: Record<string, IProtocolMetadata>
 	chainMetadata: Record<string, IChainMetadata>
-	emissionsProtocolsList: string[]
+	emissionsProtocolsList: Array<string>
 }): string | null {
 	if (record.protocolId) {
 		const protocolEntry = protocolMetadata[record.protocolId]

@@ -10,7 +10,7 @@ import {
 } from '~/ui/Popover'
 
 interface IProps {
-	options: string[]
+	options: Array<string>
 	selectedChart: string
 	onClick: (e: any) => void
 }

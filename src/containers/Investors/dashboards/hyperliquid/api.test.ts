@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { parseHyperliquidWsMessage } from './api'
 
 describe('Hyperliquid websocket wire contracts', () => {
-	it('accepts each audited channel payload', () => {
+	test('accepts each audited channel payload', () => {
 		expect(parseHyperliquidWsMessage({ channel: 'allMids', data: { mids: { BTC: '65000.5' } } })).toEqual({
 			channel: 'allMids',
 			data: { mids: { BTC: '65000.5' } },
@@ -26,7 +26,7 @@ describe('Hyperliquid websocket wire contracts', () => {
 		).toMatchObject({ channel: 'l2Book', data: { coin: 'BTC', time: 1_784_332_800_000 } })
 	})
 
-	it('rejects unknown channels and payloads that do not match their discriminator', () => {
+	test('rejects unknown channels and payloads that do not match their discriminator', () => {
 		expect(parseHyperliquidWsMessage({ channel: 'trades', data: { mids: { BTC: '1' } } })).toBeNull()
 		expect(
 			parseHyperliquidWsMessage({

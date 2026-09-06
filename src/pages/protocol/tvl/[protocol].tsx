@@ -136,7 +136,7 @@ function ChainsChartCard({
 	exportIconUrl
 }: {
 	title: string
-	allValues: string[]
+	allValues: Array<string>
 	breakdown: ProtocolBreakdownChart
 	exportFilenameBase: string
 	exportTitle: string
@@ -205,9 +205,9 @@ function TokenLineChartCard({
 	exportIconUrl
 }: {
 	title: string
-	allValues: string[]
+	allValues: Array<string>
 	breakdown: ProtocolBreakdownChart
-	defaultValues?: string[]
+	defaultValues?: Array<string>
 	aggregateOthers: boolean
 	valueSymbol: string
 	exportFilenameBase: string
@@ -389,7 +389,7 @@ function InflowsByTokenChartCard({
 	exportIconUrl
 }: {
 	title: string
-	allValues: string[]
+	allValues: Array<string>
 	breakdown: ProtocolBreakdownChart
 	exportFilenameBase: string
 	exportTitle: string
@@ -453,7 +453,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 	const [tvlSettings] = useLocalStorageSettingsManager('tvl')
 	const protocol = slug(props.name)
 	const toggledTvlKeys = React.useMemo(() => {
-		const enabled: ProtocolExtraTvlKey[] = []
+		const enabled: Array<ProtocolExtraTvlKey> = []
 		for (const option of props.toggleOptions) {
 			if (tvlSettings[option.key]) enabled.push(option.key)
 		}
@@ -609,4 +609,4 @@ const CHART_CATEGORY_LABELS: Record<FailedQueryCategory, string> = {
 
 const USD_INFLOWS_CHARTS = [
 	{ type: 'bar', name: 'USD Inflows', encode: { x: 'timestamp', y: 'USD Inflows' }, color: oldBlue }
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>

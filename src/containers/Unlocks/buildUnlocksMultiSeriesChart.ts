@@ -12,7 +12,7 @@ export function buildUnlocksMultiSeriesChartForDateRange({
 	dates,
 	unlocksData
 }: {
-	dates: string[]
+	dates: Array<string>
 	unlocksData: UnlocksData
 }): UnlocksMultiSeriesChartResult {
 	const protocolTotals = new Map<string, number>()
@@ -37,7 +37,7 @@ export function buildUnlocksMultiSeriesChartForDateRange({
 	// Keep rendering behavior consistent with the old BarChart:
 	// if there are no protocol series, still render a 0-valued series.
 	const hasProtocolSeries = sortedProtocols.length > 0
-	const seriesNames: string[] = hasProtocolSeries ? sortedProtocols : ['Unlocks']
+	const seriesNames: Array<string> = hasProtocolSeries ? sortedProtocols : ['Unlocks']
 
 	const protocolIndex = new Map(seriesNames.map((name, index) => [name, index + 1]))
 	const source: MultiSeriesChartDataset['source'] = dates.map((dateStr) => {

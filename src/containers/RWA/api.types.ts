@@ -6,9 +6,9 @@ import type { RWAPerpsVenueType } from './Perps/api.types'
 import type { RWAPlatformAssetSummary, RWAPlatformPageData } from './PlatformPage/types'
 
 type RWANumberMap = Record<string, number>
-type RWAContractsByChain = Record<string, string[]>
+type RWAContractsByChain = Record<string, Array<string>>
 type RWATvlByChain = Record<string, Record<string, number>>
-type RWAHoldersByChain = Record<string, string[]>
+type RWAHoldersByChain = Record<string, Array<string>>
 
 export type RWAAccessModel = 'Permissioned' | 'Permissionless' | 'Non-transferable' | 'Custodial Only' | 'Unknown'
 
@@ -19,23 +19,23 @@ export interface IFetchedRWAProject {
 	ticker: string
 	assetName?: string | null
 	assetGroup?: string | null
-	website?: string[] | null
-	twitter?: string[] | null
+	website?: Array<string> | null
+	twitter?: Array<string> | null
 	docs?: string | null
 	linkedin?: string | null
 	primaryChain?: string | null
-	chain?: string[] | null
+	chain?: Array<string> | null
 	contracts?: RWAContractsByChain | null
-	category?: string[] | null
-	assetClass?: string[] | null
+	category?: Array<string> | null
+	assetClass?: Array<string> | null
 	type?: string | null
 	rwaClassification?: string | null
 	accessModel: RWAAccessModel
 	issuer?: string | null
-	issuerSourceLink?: string[] | null
-	issuerRegistryInfo?: string[] | null
+	issuerSourceLink?: Array<string> | null
+	issuerRegistryInfo?: Array<string> | null
 	isin?: string | null
-	attestationLinks?: string[] | null
+	attestationLinks?: Array<string> | null
 	attestations?: boolean | null
 	redeemable?: boolean | null
 	cexListed?: boolean | null
@@ -43,7 +43,7 @@ export interface IFetchedRWAProject {
 	kycAllowlistedWhitelistedToTransferHold?: boolean | null
 	transferable?: boolean | null
 	selfCustody?: boolean | null
-	descriptionNotes?: string[] | null
+	descriptionNotes?: Array<string> | null
 	parentPlatform?: string | null
 	stablecoin: boolean
 	governance: boolean
@@ -56,7 +56,7 @@ export interface IFetchedRWAProject {
 	activeMcap?: RWANumberMap
 	price: number | null
 	activeMcapData?: boolean | null
-	projectId?: string | string[] | null
+	projectId?: string | Array<string> | null
 	coingeckoId?: string | null
 	oracleProvider?: string | null
 	oracleProofLink?: string | null
@@ -79,7 +79,7 @@ export type RWAStatsSlice = {
 	/** Portion of defiActiveTvl from bridge/interop-category protocols. Exclude view = defiActiveTvl - bridgeTvl. Absent until server deploy. */
 	bridgeTvl?: number
 	assetCount: number
-	assetIssuers: string[]
+	assetIssuers: Array<string>
 }
 
 /** Four non-overlapping slices by asset classification (used by byChain, byCategory, byPlatform, byAssetGroup). */
@@ -136,15 +136,15 @@ export type RWAOverviewDisplayRowBase = {
 	logo?: string | null
 	ticker: string
 	primaryChain: string | null
-	chain: string[] | null
+	chain: Array<string> | null
 	price: number | null
 	openInterest: number | null
 	volume24h: number | null
 	volume30d: number | null
 	assetGroup: string | null
 	parentPlatform: string | null
-	category: string[] | null
-	assetClass: string[] | null
+	category: Array<string> | null
+	assetClass: Array<string> | null
 	accessModel: string | null
 	type: string | null
 	rwaClassification: string | null
@@ -222,24 +222,24 @@ export interface IRWAAssetsOverview {
 		onChainMcap: number
 		activeMcap: number
 		defiActiveTvl: number
-		issuers: string[]
+		issuers: Array<string>
 		stablecoins: {
 			onChainMcap: number
 			activeMcap: number
 			defiActiveTvl: number
-			issuers: string[]
+			issuers: Array<string>
 		}
 		governance: {
 			onChainMcap: number
 			activeMcap: number
 			defiActiveTvl: number
-			issuers: string[]
+			issuers: Array<string>
 		}
 		stablecoinsAndGovernance: {
 			onChainMcap: number
 			activeMcap: number
 			defiActiveTvl: number
-			issuers: string[]
+			issuers: Array<string>
 		}
 	}
 	initialChartDataset: IRWAInitialChartDataset | null
@@ -276,7 +276,7 @@ export interface IRWAChartDataByAsset {
 
 export type IRWABreakdownChartRow = { timestamp: number } & Record<string, number>
 
-export type IRWABreakdownChartResponse = IRWABreakdownChartRow[]
+export type IRWABreakdownChartResponse = Array<IRWABreakdownChartRow>
 
 export type IRWABreakdownChartParams = {
 	key?: RWAChartMetricKey | 'bridgeTvl'
@@ -311,8 +311,8 @@ export type IRWAFlowPoint = {
 	timestamp: number
 	netFlowUsd: number | null
 	netFlowByChain: Record<string, number>
-	missingChains?: string[]
-	unpricedChains?: string[]
+	missingChains?: Array<string>
+	unpricedChains?: Array<string>
 }
 
 export type IRWAFlowPointWithMcap = IRWAFlowPoint & { mcap: number | null }
@@ -321,7 +321,7 @@ export type IRWAFlowsResponse<TPoint extends IRWAFlowPoint = IRWAFlowPoint> = {
 	id: string
 	start: number
 	end: number
-	data: TPoint[]
+	data: Array<TPoint>
 	coverage: number
 }
 
@@ -332,11 +332,11 @@ export type IRWAFlowAggregatePoint = {
 }
 
 export type IRWAFlowOverviewAggregateResponse = {
-	series: IRWAFlowAggregatePoint[]
+	series: Array<IRWAFlowAggregatePoint>
 	coverage: number
 }
 
-export type IRWAFlowGroupAggregateResponse = IRWAFlowOverviewAggregateResponse & { members: string[] }
+export type IRWAFlowGroupAggregateResponse = IRWAFlowOverviewAggregateResponse & { members: Array<string> }
 
 export type RWAFlowOverviewSplitBy = 'assetGroup' | 'category' | 'platform' | 'chain'
 
@@ -399,22 +399,22 @@ export type IRWAPlatformsOverviewRow = NonNullable<IRWAStatsResponse['byPlatform
 export type IRWAAssetGroupsOverviewRow = NonNullable<IRWAStatsResponse['byAssetGroup']>[string] & { assetGroup: string }
 
 export type IRWAChainsOverview = {
-	rows: IRWAChainsOverviewRow[]
+	rows: Array<IRWAChainsOverviewRow>
 	initialChartDataset: RWAPositionalChartDataset
 }
 
 export type IRWACategoriesOverview = {
-	rows: IRWACategoriesOverviewRow[]
+	rows: Array<IRWACategoriesOverviewRow>
 	initialChartDataset: RWAPositionalChartDataset
 }
 
 export type IRWAPlatformsOverview = {
-	rows: IRWAPlatformsOverviewRow[]
+	rows: Array<IRWAPlatformsOverviewRow>
 	initialChartDataset: RWAPositionalChartDataset
 }
 
 export type IRWAAssetGroupsOverview = {
-	rows: IRWAAssetGroupsOverviewRow[]
+	rows: Array<IRWAAssetGroupsOverviewRow>
 	initialChartDataset: RWAPositionalChartDataset
 }
 
@@ -426,13 +426,13 @@ export type RWADefiTvlProtocolBreakdown = {
 
 export interface IRWAAssetData extends IRWAProject {
 	slug: string
-	defiActiveTvlByProtocolChain: RWADefiTvlProtocolBreakdown[] | null
+	defiActiveTvlByProtocolChain: Array<RWADefiTvlProtocolBreakdown> | null
 	rwaClassificationDescription: string | null
 	accessModelDescription: string | null
 	assetClassDescriptions: Record<string, string>
 	contractUrls: Record<string, Record<string, string>> | null
 	chartDataset: RWAPositionalChartDataset | null
-	yieldPools: EarnPageRow[] | null
+	yieldPools: Array<EarnPageRow> | null
 	yieldPoolsTotal: number | null
 	nativeYieldPoolId: string | null
 	nativeYieldCurrent: number | null

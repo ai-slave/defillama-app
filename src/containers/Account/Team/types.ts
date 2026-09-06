@@ -39,9 +39,9 @@ export interface Team {
 	name: string
 	isAdmin: boolean
 	subscriptionType: string | null
-	members: TeamMember[]
-	subscriptions: TeamSubscription[]
-	pendingInvites: TeamInvite[]
+	members: Array<TeamMember>
+	subscriptions: Array<TeamSubscription>
+	pendingInvites: Array<TeamInvite>
 }
 
 export type PurchaseSeatsResponse =

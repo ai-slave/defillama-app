@@ -10,7 +10,7 @@ export interface HyperliquidBookLevel {
 export interface HyperliquidL2Book {
 	coin: string
 	time: number
-	levels: [HyperliquidBookLevel[], HyperliquidBookLevel[]]
+	levels: [Array<HyperliquidBookLevel>, Array<HyperliquidBookLevel>]
 }
 
 interface RawBookLevel {
@@ -22,10 +22,10 @@ interface RawBookLevel {
 interface RawBook {
 	coin: string
 	time: number
-	levels: [RawBookLevel[], RawBookLevel[]]
+	levels: [Array<RawBookLevel>, Array<RawBookLevel>]
 }
 
-function mapLevels(levels: RawBookLevel[] = []): HyperliquidBookLevel[] {
+function mapLevels(levels: Array<RawBookLevel> = []): Array<HyperliquidBookLevel> {
 	return levels.map((level) => ({
 		px: num(level.px),
 		sz: num(level.sz),

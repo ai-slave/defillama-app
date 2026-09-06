@@ -24,7 +24,7 @@ const MICA_PRODUCT_LABELS: Record<MicaProduct, string> = {
 	options: 'Options'
 }
 
-export function micaProductLabel(products: MicaProduct[]): string {
+export function micaProductLabel(products: Array<MicaProduct>): string {
 	return products.map((product) => MICA_PRODUCT_LABELS[product]).join(' · ')
 }
 
@@ -119,7 +119,7 @@ export function PromotionGift({ promotion, venue }: { promotion: ExchangePromoti
 						{hasTerms ? <span>T&amp;Cs apply</span> : null}
 					</span>
 				</span>
-				{links.length ? (
+				{links.length > 0 ? (
 					<span className="flex flex-col border-t border-subtle">
 						{links.map((link) => (
 							<a

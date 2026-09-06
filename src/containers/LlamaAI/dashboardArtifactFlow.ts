@@ -24,18 +24,18 @@ export function buildLlamaAIChartDashboardItem(
 }
 
 export function prepareDashboardArtifactSave(
-	items: DashboardItemConfig[],
-	outcomes: DashboardArtifactOutcome[] = []
+	items: Array<DashboardItemConfig>,
+	outcomes: Array<DashboardArtifactOutcome> = []
 ): {
-	items: DashboardItemConfig[]
-	expectedItemIds: string[]
+	items: Array<DashboardItemConfig>
+	expectedItemIds: Array<string>
 	containsPremium: boolean
 	estimatedMaxCostUsd: number
 } {
 	const byItemId = new Map(outcomes.map((outcome) => [outcome.itemId, outcome]))
 	const byChartRef = new Map(outcomes.map((outcome) => [outcome.chartRef, outcome]))
 	const premiumArtifacts = new Map<string, number>()
-	const expectedItemIds: string[] = []
+	const expectedItemIds: Array<string> = []
 	const nextItems = items.map((item) => {
 		if (item.kind !== 'llamaai-chart' || typeof item.chartRef !== 'string') return item
 		expectedItemIds.push(item.id)
@@ -77,16 +77,16 @@ export function prepareDashboardArtifactSave(
 	}
 }
 
-export function prepareStoredDashboardActivation(items: DashboardItemConfig[]): {
-	expectedItemIds: string[]
+export function prepareStoredDashboardActivation(items: Array<DashboardItemConfig>): {
+	expectedItemIds: Array<string>
 	containsPremium: boolean
 	estimatedMaxCostUsd: number
 } {
-	const expectedItemIds: string[] = []
+	const expectedItemIds: Array<string> = []
 	const premiumArtifacts = new Map<string, number>()
 	for (const item of items) {
 		if (item.kind !== 'llamaai-chart') continue
-		const isV2 = Object.prototype.hasOwnProperty.call(item, 'artifactId') || typeof item.pinnedVersionId === 'string'
+		const isV2 = Object.hasOwn(item, 'artifactId') || typeof item.pinnedVersionId === 'string'
 		if (!isV2) continue
 		expectedItemIds.push(item.id)
 		if (
@@ -133,7 +133,7 @@ export async function activateDashboardArtifacts(
 			response.status
 		)
 	}
-	const result: { outcomes: DashboardArtifactOutcome[] } = await response.json()
+	const result: { outcomes: Array<DashboardArtifactOutcome> } = await response.json()
 	const activatedItemIds = result.outcomes.map((outcome) => outcome.itemId).sort()
 	if (JSON.stringify(activatedItemIds) !== JSON.stringify(plan.expectedItemIds)) {
 		throw new Error('Dashboard refresh setup did not account for every chart')

@@ -31,12 +31,12 @@ type ColumnVisibilityConfig = ColumnOrderConfig & {
 
 export function getDefaultColumnOrder(
 	config: ColumnOrderConfig,
-	rowHeaders: readonly UnifiedRowHeaderType[],
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	fallbackPreset?: UnifiedTablePreset
-): string[] {
-	let order: string[]
+): Array<string> {
+	let order: Array<string>
 
-	if (config.columnOrder && config.columnOrder.length) {
+	if (config.columnOrder && config.columnOrder.length > 0) {
 		order = [...config.columnOrder]
 	} else if (fallbackPreset) {
 		order = [...fallbackPreset.columnOrder]
@@ -57,7 +57,7 @@ export function getDefaultColumnOrder(
 
 export function getDefaultColumnVisibility(
 	config: ColumnVisibilityConfig,
-	rowHeaders: readonly UnifiedRowHeaderType[],
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	fallbackPreset?: UnifiedTablePreset,
 	includeDefaults: boolean = false
 ): VisibilityState {
@@ -66,8 +66,8 @@ export function getDefaultColumnVisibility(
 	if (includeDefaults) {
 		visibility = {
 			...DEFAULT_COLUMN_VISIBILITY,
-			...(fallbackPreset?.columnVisibility ?? {}),
-			...(config.columnVisibility ?? {})
+			...fallbackPreset?.columnVisibility,
+			...config.columnVisibility
 		}
 	} else {
 		const hasColumnVisibility = Boolean(config.columnVisibility && Object.keys(config.columnVisibility).length > 0)
@@ -102,8 +102,8 @@ export function getDefaultColumnVisibility(
 export function getDefaultRowHeaders(
 	config: UnifiedTableConfig,
 	fallbackPreset?: UnifiedTablePreset
-): UnifiedRowHeaderType[] {
-	if (config.rowHeaders && config.rowHeaders.length) {
+): Array<UnifiedRowHeaderType> {
+	if (config.rowHeaders && config.rowHeaders.length > 0) {
 		return sanitizeUnifiedTableRowHeaders(config.rowHeaders)
 	}
 
@@ -118,14 +118,14 @@ interface ApplyPresetOptions {
 	preset: UnifiedTablePreset
 	includeRowHeaderRules?: boolean
 	mergeWithDefaults?: boolean
-	customColumns?: CustomColumnDefinition[]
+	customColumns?: Array<CustomColumnDefinition>
 }
 
 export function applyPresetToConfig(options: ApplyPresetOptions): {
-	columnOrder: string[]
+	columnOrder: Array<string>
 	columnVisibility: VisibilityState
 	sorting: SortingState
-	rowHeaders: UnifiedRowHeaderType[]
+	rowHeaders: Array<UnifiedRowHeaderType>
 } {
 	const { preset, includeRowHeaderRules = true, mergeWithDefaults = true, customColumns } = options
 

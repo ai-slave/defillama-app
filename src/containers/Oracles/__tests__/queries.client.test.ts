@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildOracleProtocolChainExtraSeries } from '../queries.client'
 
 describe('buildOracleProtocolChainExtraSeries', () => {
-	it('keeps only actual selected-chain points so other chains do not create coverage', () => {
+	test('keeps only actual selected-chain points so other chains do not create coverage', () => {
 		expect(
 			buildOracleProtocolChainExtraSeries({
 				chain: 'BSC',

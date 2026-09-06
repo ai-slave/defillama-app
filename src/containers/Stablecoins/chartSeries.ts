@@ -44,9 +44,9 @@ export type StablecoinChartSummary = {
 
 export interface StablecoinChartSeriesPayload {
 	dataset: MultiSeriesTimeSeriesDataset
-	charts: MultiSeriesChartSeriesConfig[]
-	availableSeries?: string[]
-	defaultSeries?: string[]
+	charts: Array<MultiSeriesChartSeriesConfig>
+	availableSeries?: Array<string>
+	defaultSeries?: Array<string>
 	valueSymbol: string
 	stacked: boolean
 	showTotalInTooltip: boolean
@@ -55,11 +55,11 @@ export interface StablecoinChartSeriesPayload {
 }
 
 export interface StablecoinRuntimeSeries {
-	selectableSeries: string[]
-	defaultSeries: string[]
-	renderedSelectableSeries: string[]
-	fixedRemainderSeries: string[]
-	alwaysVisibleSeries: string[]
+	selectableSeries: Array<string>
+	defaultSeries: Array<string>
+	renderedSelectableSeries: Array<string>
+	fixedRemainderSeries: Array<string>
+	alwaysVisibleSeries: Array<string>
 }
 
 export function getStablecoinRuntimeSeries(
@@ -94,24 +94,24 @@ export function getStablecoinRuntimeSeries(
 }
 
 export type StablecoinBreakdownSelectionOptions = {
-	selectedNames?: string[] | null
-	excludedNames?: string[] | null
+	selectedNames?: Array<string> | null
+	excludedNames?: Array<string> | null
 	seriesLimit?: number
 }
 
 export type StablecoinSeriesSelectionIntent =
-	| { mode: 'include'; names: string[] }
-	| { mode: 'exclude'; names: string[] }
+	| { mode: 'include'; names: Array<string> }
+	| { mode: 'exclude'; names: Array<string> }
 	| null
 
 type StablecoinBreakdownSelection = {
-	availableSeries: string[]
-	defaultSeries: string[]
-	explicitSeries: string[]
-	omittedSeries: string[]
-	visibleSeries: string[]
+	availableSeries: Array<string>
+	defaultSeries: Array<string>
+	explicitSeries: Array<string>
+	omittedSeries: Array<string>
+	visibleSeries: Array<string>
 	deriveOmittedFromAggregate: boolean
-	excludedSeries: string[]
+	excludedSeries: Array<string>
 }
 
 const resolveStablecoinBreakdownSelection = ({
@@ -122,12 +122,12 @@ const resolveStablecoinBreakdownSelection = ({
 	getLatestValue,
 	defaultSeriesNames
 }: StablecoinBreakdownSelectionOptions & {
-	seriesNames: string[]
+	seriesNames: Array<string>
 	getLatestValue: (name: string) => number
-	defaultSeriesNames?: readonly string[]
+	defaultSeriesNames?: ReadonlyArray<string>
 }): StablecoinBreakdownSelection => {
 	const hasExclusionIntent = excludedNames != null
-	const uniqueNames: string[] = []
+	const uniqueNames: Array<string> = []
 	const seen = new Set<string>()
 	let hasReservedOthers = false
 	for (const name of seriesNames) {
@@ -159,7 +159,7 @@ const resolveStablecoinBreakdownSelection = ({
 
 	let explicitSeries = aggregateCandidates.slice(0, selectionLimit)
 	let omittedSeries = aggregateCandidates.slice(selectionLimit)
-	let excludedSeries: string[] = []
+	let excludedSeries: Array<string> = []
 	if (hasExclusionIntent) {
 		const excludedSet = new Set(excludedNames)
 		excludedSeries = aggregateCandidates.filter((name) => excludedSet.has(name))
@@ -211,11 +211,11 @@ const TOKEN_COLORS: Record<string, string> = {
 	Others: '#AAAAAA'
 }
 
-const TOTAL_MCAP_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const TOTAL_MCAP_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'line', name: 'Mcap', encode: { x: 0, y: 1 }, color: CHART_COLORS[0] }
 ]
 
-const TOTAL_CIRC_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const TOTAL_CIRC_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{ type: 'line', name: 'Circulating', encode: { x: 0, y: 1 }, color: CHART_COLORS[0] }
 ]
 
@@ -226,12 +226,12 @@ const USD_INFLOWS_CHART: MultiSeriesChartSeriesConfig = {
 	color: CHART_COLORS[0]
 }
 
-const USD_INFLOWS_CHARTS: MultiSeriesChartSeriesConfig[] = [USD_INFLOWS_CHART]
+const USD_INFLOWS_CHARTS: Array<MultiSeriesChartSeriesConfig> = [USD_INFLOWS_CHART]
 
 const getStablecoinSeriesColor = (name: string, index: number): string =>
 	TOKEN_COLORS[name] ?? CHART_COLORS[index % CHART_COLORS.length] ?? CHART_COLORS[0]
 
-const buildTimestampValueRows = (timestamps: readonly number[], values: readonly number[]) => {
+const buildTimestampValueRows = (timestamps: ReadonlyArray<number>, values: ReadonlyArray<number>) => {
 	const source: MultiSeriesTimeSeriesDataset['source'] = []
 	for (const [index, timestamp] of timestamps.entries()) {
 		source.push([timestamp, values[index]!])
@@ -239,8 +239,8 @@ const buildTimestampValueRows = (timestamps: readonly number[], values: readonly
 	return source
 }
 
-const getSeriesNames = (assetsOrChainsList: string[], filteredIndexes?: number[]): string[] => {
-	const names: string[] = []
+const getSeriesNames = (assetsOrChainsList: Array<string>, filteredIndexes?: Array<number>): Array<string> => {
+	const names: Array<string> = []
 	if (!filteredIndexes) {
 		for (let i = 0; i < assetsOrChainsList.length; i++) {
 			const name = assetsOrChainsList[i]
@@ -265,22 +265,22 @@ export type StablecoinCanonicalSeries = {
 }
 
 export type StablecoinCanonicalHistory = {
-	timestamps: number[]
-	totals: number[]
-	series: StablecoinCanonicalSeries[]
+	timestamps: Array<number>
+	totals: Array<number>
+	series: Array<StablecoinCanonicalSeries>
 	seriesTimestamps: Float64Array
 	seriesValues: Float64Array
-	totalPoints: StablecoinMcapPoint[]
+	totalPoints: Array<StablecoinMcapPoint>
 	topToken: { symbol: string; mcap: number }
-	aggregateSeries: string[]
+	aggregateSeries: Array<string>
 }
 
 const getStablecoinIndexes = ({
 	chartDataByAssetOrChain,
 	filteredIndexes
-}: IBuildStablecoinChartDataParams): number[] => {
+}: IBuildStablecoinChartDataParams): Array<number> => {
 	const included = filteredIndexes ? new Set(filteredIndexes) : null
-	const indexes: number[] = []
+	const indexes: Array<number> = []
 	for (let index = 0; index < chartDataByAssetOrChain.length; index++) {
 		if (included && !included.has(index)) continue
 		indexes.push(index)
@@ -392,8 +392,8 @@ export const collectCanonicalStablecoinArea = (
 
 	// Each API series is ascending, but independently timed series interleave in the shared map.
 	const timestamps = Array.from(seriesTimeline ?? totalByTimestamp.keys()).sort((a, b) => a - b)
-	const totals: number[] = []
-	const totalPoints: StablecoinMcapPoint[] = []
+	const totals: Array<number> = []
+	const totalPoints: Array<StablecoinMcapPoint> = []
 	for (const timestamp of timestamps) {
 		const total = totalByTimestamp.get(timestamp) ?? 0
 		totals.push(total)
@@ -438,7 +438,7 @@ const collectCanonicalStablecoinInflowHistory = (
 	const totalInflowsByTimestamp = new Map<number, number>()
 	const totalByTimestamp = new Map<number, number>()
 	const realTimestamps = includeSummary ? new Set<number>() : null
-	const series: StablecoinCanonicalSeries[] = []
+	const series: Array<StablecoinCanonicalSeries> = []
 	const timelineTimestamps = new Set<number>()
 	let topToken = { symbol: 'USDT', mcap: 0 }
 	const indexes = getStablecoinIndexes(params)
@@ -572,8 +572,8 @@ const buildStablecoinBreakdownDatasetFromCollection = ({
 			}
 		}
 	}
-	const othersIndex = selection.omittedSeries.length ? dimensions.length - 1 : -1
-	const accumulateSeries = (names: readonly string[]): Float64Array | null => {
+	const othersIndex = selection.omittedSeries.length > 0 ? dimensions.length - 1 : -1
+	const accumulateSeries = (names: ReadonlyArray<string>): Float64Array | null => {
 		if (names.length === 0) return null
 		const totals = new Float64Array(source.length)
 		for (const name of names) {
@@ -622,7 +622,7 @@ const buildStablecoinBreakdownDatasetFromCollection = ({
 const getStablecoinSelectionFromCollection = (
 	collection: StablecoinCanonicalHistory,
 	options?: StablecoinBreakdownSelectionOptions,
-	seriesNames: string[] = collection.series.map((series) => series.name)
+	seriesNames: Array<string> = collection.series.map((series) => series.name)
 ) => {
 	const latestValues = new Map(collection.series.map((series) => [series.name, series.latestValue]))
 	return resolveStablecoinBreakdownSelection({
@@ -646,7 +646,7 @@ export const getTopStablecoinFromLatestPoints = ({
 	'chartDataByAssetOrChain' | 'assetsOrChainsList' | 'filteredIndexes' | 'issuanceType' | 'doublecountedIds'
 >): { symbol: string; mcap: number } => {
 	const filteredIndexesSet = filteredIndexes ? new Set(filteredIndexes) : null
-	const doublecountedSet = doublecountedIds.length ? new Set(doublecountedIds) : null
+	const doublecountedSet = doublecountedIds.length > 0 ? new Set(doublecountedIds) : null
 	let topSymbol = 'USDT'
 	let topMcap = 0
 	for (let i = 0; i < chartDataByAssetOrChain.length; i++) {
@@ -665,7 +665,7 @@ export const getTopStablecoinFromLatestPoints = ({
 }
 
 export const buildStablecoinChartSummary = (
-	peggedAreaTotalData: StablecoinMcapPoint[],
+	peggedAreaTotalData: Array<StablecoinMcapPoint>,
 	topToken: { symbol: string; mcap: number }
 ): StablecoinChartSummary => {
 	const stats = getStablecoinMcapStatsFromTotals(peggedAreaTotalData)
@@ -730,7 +730,7 @@ export const buildTotalMcapPayload = (
 }
 
 type StablecoinAreaPayloadOptions = {
-	chartNames?: string[]
+	chartNames?: Array<string>
 	fillMissingValues?: boolean
 	stackName: string
 	stacked?: boolean
@@ -783,7 +783,7 @@ export const buildAreaPayload = (
 }
 
 type StablecoinDominancePayloadOptions = {
-	chartNames?: string[]
+	chartNames?: Array<string>
 	includeUnreleased?: boolean
 	stackName?: string
 	summaryTopToken?: { symbol: string; mcap: number }
@@ -860,7 +860,7 @@ const buildUsdInflowsPayloadFromCollection = (
 	const payload: StablecoinChartSeriesPayload = {
 		dataset: {
 			dimensions: ['timestamp', seriesName],
-			source: useFallback ? [[1652486400 * 1e3, 0]] : buildTimestampValueRows(collected.timestamps, collected.totals)
+			source: useFallback ? [[1_652_486_400 * 1e3, 0]] : buildTimestampValueRows(collected.timestamps, collected.totals)
 		},
 		charts: seriesName === 'Inflows' ? USD_INFLOWS_CHARTS : [{ ...USD_INFLOWS_CHART, name: seriesName }],
 		valueSymbol: '$',
@@ -891,19 +891,19 @@ const buildTokenInflowsPayloadFromCollection = (
 	if (collected.series.length === 0) {
 		collected = {
 			...collected,
-			timestamps: [1652486400 * 1e3],
+			timestamps: [1_652_486_400 * 1e3],
 			totals: [0],
 			series: [
 				{
 					name: 'USDT',
 					latestValue: 0,
-					latestVisibleTimestamp: 1652486400 * 1e3,
+					latestVisibleTimestamp: 1_652_486_400 * 1e3,
 					latestVisibleValue: 0,
 					offset: 0,
 					length: 1
 				}
 			],
-			seriesTimestamps: new Float64Array([1652486400 * 1e3]),
+			seriesTimestamps: new Float64Array([1_652_486_400 * 1e3]),
 			seriesValues: new Float64Array([0]),
 			topToken: { symbol: 'USDT', mcap: 0 },
 			aggregateSeries: ['USDT']

@@ -17,22 +17,22 @@ export interface ProProtocolCatalogSourceRow {
 }
 
 export interface ProDashboardProtocolCatalog {
-	protocols: Protocol[]
-	chains: Chain[]
+	protocols: Array<Protocol>
+	chains: Array<Chain>
 }
 
 export interface ProDashboardProtocolRelations {
 	protocolsBySlug: ReadonlyMap<string, Protocol>
-	childrenByParentId: ReadonlyMap<string, Protocol[]>
+	childrenByParentId: ReadonlyMap<string, Array<Protocol>>
 }
 
-export function buildProDashboardParentMapping(protocols: readonly Protocol[]): Map<string, string[]> {
+export function buildProDashboardParentMapping(protocols: ReadonlyArray<Protocol>): Map<string, Array<string>> {
 	const parentSlugsById = new Map<string, string>()
 	for (const protocol of protocols) {
 		if (!protocol.parentProtocol) parentSlugsById.set(protocol.id, protocol.slug)
 	}
 
-	const childrenByParentSlug = new Map<string, string[]>()
+	const childrenByParentSlug = new Map<string, Array<string>>()
 	for (const protocol of protocols) {
 		if (!protocol.parentProtocol) continue
 		const parentSlug = parentSlugsById.get(protocol.parentProtocol)
@@ -48,7 +48,7 @@ export function buildProDashboardProtocolRelations(
 	catalog: ProDashboardProtocolCatalog | null
 ): ProDashboardProtocolRelations {
 	const protocolsBySlug = new Map<string, Protocol>()
-	const childrenByParentId = new Map<string, Protocol[]>()
+	const childrenByParentId = new Map<string, Array<Protocol>>()
 	for (const protocol of catalog?.protocols ?? []) {
 		protocolsBySlug.set(protocol.slug, protocol)
 		if (!protocol.parentProtocol) continue
@@ -61,9 +61,9 @@ export function buildProDashboardProtocolRelations(
 
 /** Build the catalog shared by the initial stream and the client fallback query. */
 export function buildProDashboardProtocolCatalog(
-	sourceRows: ProProtocolCatalogSourceRow[],
+	sourceRows: Array<ProProtocolCatalogSourceRow>,
 	protocolsData: ProtocolsResponse,
-	chainsData: ChainListItem[]
+	chainsData: Array<ChainListItem>
 ): ProDashboardProtocolCatalog {
 	const metadataBySlug = new Map<string, ProtocolsResponse['protocols'][number]>()
 	for (const protocol of protocolsData.protocols) {
@@ -145,7 +145,7 @@ export function buildProDashboardProtocolCatalog(
 		})
 	}
 
-	const chains: Chain[] = chainsData.map((chain) => ({
+	const chains: Array<Chain> = chainsData.map((chain) => ({
 		name: toDisplayName(chain.name),
 		tvl: chain.tvl ?? 0,
 		gecko_id: chain.gecko_id ?? null,

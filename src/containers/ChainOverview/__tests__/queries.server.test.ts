@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChainChartResponse } from '~/containers/Chains/api.types'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
 import type { ICategoriesAndTags, IChainMetadata } from '~/utils/metadata/types'
@@ -43,7 +43,7 @@ const categoriesAndTagsMetadata = {
 } satisfies ICategoriesAndTags
 
 describe('shouldFetchChainDexs', () => {
-	it('accepts an optional phase timer without changing missing-chain results', async () => {
+	test('accepts an optional phase timer without changing missing-chain results', async () => {
 		const phaseTimer = createRoutePhaseTimer()
 
 		await expect(
@@ -58,7 +58,7 @@ describe('shouldFetchChainDexs', () => {
 		expect(phaseTimer.timings()).toEqual({})
 	})
 
-	it('skips dexs when the chain has the metadata flag but is not in the default Dexs category', () => {
+	test('skips dexs when the chain has the metadata flag but is not in the default Dexs category', () => {
 		const provenance = {
 			name: 'Provenance',
 			id: 'provenance',
@@ -74,7 +74,7 @@ describe('shouldFetchChainDexs', () => {
 		).toBe(false)
 	})
 
-	it('fetches dexs when the chain id is in the default Dexs category', () => {
+	test('fetches dexs when the chain id is in the default Dexs category', () => {
 		const ethereum = {
 			name: 'Ethereum',
 			id: 'ethereum',
@@ -90,7 +90,7 @@ describe('shouldFetchChainDexs', () => {
 		).toBe(true)
 	})
 
-	it('keeps All chains dexs enabled', () => {
+	test('keeps All chains dexs enabled', () => {
 		const allChains = {
 			name: 'All',
 			id: 'all',
@@ -108,7 +108,7 @@ describe('shouldFetchChainDexs', () => {
 })
 
 describe('shouldFetchChainPerps', () => {
-	it('skips perps when the chain has the metadata flag but is not in the Derivatives category', () => {
+	test('skips perps when the chain has the metadata flag but is not in the Derivatives category', () => {
 		const xdc = {
 			name: 'XDC',
 			id: 'xdc',
@@ -124,7 +124,7 @@ describe('shouldFetchChainPerps', () => {
 		).toBe(false)
 	})
 
-	it('fetches perps when the chain id is in the Derivatives category', () => {
+	test('fetches perps when the chain id is in the Derivatives category', () => {
 		const ethereum = {
 			name: 'Ethereum',
 			id: 'ethereum',
@@ -140,7 +140,7 @@ describe('shouldFetchChainPerps', () => {
 		).toBe(true)
 	})
 
-	it('keeps All chains perps enabled', () => {
+	test('keeps All chains perps enabled', () => {
 		const allChains = {
 			name: 'All',
 			id: 'all',
@@ -170,7 +170,7 @@ describe('getChainOverviewTvlOptions', () => {
 		dcAndLsOverlap: []
 	})
 
-	it('derives filter options only from available TVL series', () => {
+	test('derives filter options only from available TVL series', () => {
 		const options = getChainOverviewTvlOptions(makeChartData([['1', 1]]))
 
 		expect(options.map((option) => option.key)).toEqual(['staking'])
@@ -181,13 +181,13 @@ describe('getChainOverviewTvlOptions', () => {
 describe('shouldShowChainOverviewBridgedTvlChart', () => {
 	const chainAssetsMetadata = { chainAssets: true }
 
-	it('shows the historical chart for non-All chain pages with chainAssets metadata', () => {
+	test('shows the historical chart for non-All chain pages with chainAssets metadata', () => {
 		expect(shouldShowChainOverviewBridgedTvlChart({ chain: 'Base', currentChainMetadata: chainAssetsMetadata })).toBe(
 			true
 		)
 	})
 
-	it('does not show the historical chart for All chains or missing chainAssets metadata', () => {
+	test('does not show the historical chart for All chains or missing chainAssets metadata', () => {
 		expect(shouldShowChainOverviewBridgedTvlChart({ chain: 'All', currentChainMetadata: chainAssetsMetadata })).toBe(
 			false
 		)
@@ -221,25 +221,25 @@ describe('getRwaActiveMcapForChain', () => {
 		byAssetGroup: {}
 	} satisfies IRWAStatsResponse
 
-	it('resolves active market cap by RWA chain slug', () => {
+	test('resolves active market cap by RWA chain slug', () => {
 		expect(getRwaActiveMcapForChain(stats, 'XDC-Network')).toBe(90)
 	})
 
-	it('preserves zero and returns null only for missing active market cap', () => {
+	test('preserves zero and returns null only for missing active market cap', () => {
 		expect(getRwaActiveMcapForChain(stats, 'EmptyChain')).toBe(0)
 		expect(getRwaActiveMcapForChain(stats, 'Missing')).toBeNull()
 	})
 })
 
 describe('chain overview nullable aggregates', () => {
-	it('treats missing periods in a successful fee response as zero activity', () => {
+	test('treats missing periods in a successful fee response as zero activity', () => {
 		expect(sumAdapterProtocol24h([{ total24h: 0 }, { total24h: 5 }])).toBe(5)
 		expect(sumAdapterProtocol24h([{ total24h: null }, { total24h: 5 }])).toBe(5)
 		expect(sumAdapterProtocol24h([])).toBe(0)
 		expect(sumAdapterProtocol24h(null)).toBeNull()
 	})
 
-	it('adds configured REV contributions while preserving unavailable responses', () => {
+	test('adds configured REV contributions while preserving unavailable responses', () => {
 		const revProtocolSlugs = new Set(['mev-tips'])
 		expect(
 			getChainRev24h({
@@ -261,7 +261,7 @@ describe('chain overview nullable aggregates', () => {
 		expect(getChainRev24h({ chainFees24h: 10, feeProtocols: null, revProtocolSlugs: [] })).toBe(10)
 	})
 
-	it('preserves a valid zero DEX share when the denominator is known', () => {
+	test('preserves a valid zero DEX share when the denominator is known', () => {
 		expect(getDexDominance(100, 0)).toBe(0)
 		expect(getDexDominance(0, 100)).toBe(100)
 		expect(getDexDominance(0, 0)).toBeNull()
@@ -270,11 +270,11 @@ describe('chain overview nullable aggregates', () => {
 })
 
 describe('hasRwaActiveMcapChain', () => {
-	it('matches covered RWA chains by slug', () => {
+	test('matches covered RWA chains by slug', () => {
 		expect(hasRwaActiveMcapChain(['XDC Network'], 'xdc-network')).toBe(true)
 	})
 
-	it('skips missing RWA chains', () => {
+	test('skips missing RWA chains', () => {
 		expect(hasRwaActiveMcapChain(['Ethereum'], 'Solana')).toBe(false)
 		expect(hasRwaActiveMcapChain(null, 'Ethereum')).toBe(false)
 	})

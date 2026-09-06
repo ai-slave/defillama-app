@@ -98,7 +98,7 @@ function Support() {
 		<Layout
 			title="Help & Support - DefiLlama DeFi Analytics"
 			description="Get help with DefiLlama. Find answers to common questions, report issues, or reach the team via Discord and Twitter."
-			canonicalUrl={`/support`}
+			canonicalUrl="/support"
 		>
 			{userHash ? (
 				<Script
@@ -188,12 +188,7 @@ function Support() {
 
 							<div className="flex flex-col gap-1">
 								<label htmlFor="support-description">Description</label>
-								<textarea
-									id="support-description"
-									name="body"
-									required
-									className={`${inputStyles} min-h-24 w-full`}
-								></textarea>
+								<textarea id="support-description" name="body" required className={`${inputStyles} min-h-24 w-full`} />
 							</div>
 
 							<Button name="submit-btn" variant="primary" size="md" disabled={isPending} className="mt-3 w-full">

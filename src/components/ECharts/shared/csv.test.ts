@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { prepareChartCsv } from './csv'
 
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
 describe('prepareChartCsv', () => {
-	it('merges multiple series into timestamped rows', () => {
+	test('merges multiple series into timestamped rows', () => {
 		const result = prepareChartCsv(
 			{
 				TVL: [
@@ -24,7 +24,7 @@ describe('prepareChartCsv', () => {
 		expect(result.rows).toHaveLength(3) // header + 2 data rows
 	})
 
-	it('fills missing values with empty string', () => {
+	test('fills missing values with empty string', () => {
 		const result = prepareChartCsv(
 			{
 				A: [[toMs(2024, 1, 1), 10]],
@@ -44,14 +44,14 @@ describe('prepareChartCsv', () => {
 		expect(row2?.[3]).toBe(20) // B column
 	})
 
-	it('preserves explicit null gaps instead of treating them as missing cells', () => {
+	test('preserves explicit null gaps instead of treating them as missing cells', () => {
 		const timestamp = toMs(2024, 1, 1)
 		const result = prepareChartCsv({ TVL: [[timestamp, null]] }, 'null-gap.csv')
 
 		expect(result.rows[1]).toEqual([timestamp.toString(), '2024-01-01', null])
 	})
 
-	it('sorts rows chronologically', () => {
+	test('sorts rows chronologically', () => {
 		const result = prepareChartCsv(
 			{
 				A: [

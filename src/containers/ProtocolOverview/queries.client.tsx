@@ -26,7 +26,7 @@ interface IProtocolChartParamsBase {
 
 type IProtocolValueChartParams = IProtocolChartParamsBase & {
 	key?: ProtocolTvlKey
-	tokensToExclude?: string[]
+	tokensToExclude?: Array<string>
 }
 
 type IProtocolAnyBreakdownChart = IProtocolChainBreakdownChart | IProtocolTokenBreakdownChart
@@ -121,8 +121,8 @@ interface IFetchProtocolChartsByKeysCommonParams {
 
 export type IFetchProtocolChartsByKeysParams = IFetchProtocolChartsByKeysCommonParams &
 	(
-		| { source?: 'tvl'; keys: ProtocolTvlKey[]; tokensToExclude?: string[] }
-		| { source: 'treasury'; keys: ProtocolTreasuryKey[]; tokensToExclude?: never }
+		| { source?: 'tvl'; keys: Array<ProtocolTvlKey>; tokensToExclude?: Array<string> }
+		| { source: 'treasury'; keys: Array<ProtocolTreasuryKey>; tokensToExclude?: never }
 	)
 
 interface IFetchProtocolChartsByKeysResult {

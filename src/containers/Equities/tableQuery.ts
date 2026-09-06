@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { parseNumberQueryParam, readSingleQueryValue, toQueryString } from '~/utils/routerQuery'
 import type { IEquitiesCompanyApiItem } from './api.types'
@@ -59,7 +59,7 @@ const EQUITIES_SORT_KEY_SET = new Set<string>(EQUITIES_SORT_KEYS)
 const DEFAULT_SORT_KEY: EquitiesSortKey = 'marketCap'
 export const EQUITIES_DEFAULT_SORTING: SortingState = [{ id: DEFAULT_SORT_KEY, desc: true }]
 
-type QueryRecord = Record<string, string | string[] | undefined>
+type QueryRecord = Record<string, string | Array<string> | undefined>
 
 export interface EquitiesTableQuery {
 	page: number
@@ -67,7 +67,7 @@ export interface EquitiesTableQuery {
 	sortBy: EquitiesSortKey
 	sortDesc: boolean
 	search: string
-	filters: EquityActiveFilter[]
+	filters: Array<EquityActiveFilter>
 }
 
 function parsePositiveIntegerQueryParam(value: ParsedUrlQuery[string], fallback: number): number {
@@ -154,7 +154,7 @@ export function buildEquitiesTableQueryString({
 
 export function getEquitiesTreemapSizeMetricFromQuery(query: ParsedUrlQuery): EquitiesTreemapSizeMetric {
 	const raw = readSingleQueryValue(query.sizeMetric)
-	return raw && (EQUITIES_TREEMAP_SIZE_METRICS as readonly string[]).includes(raw)
+	return raw && (EQUITIES_TREEMAP_SIZE_METRICS as ReadonlyArray<string>).includes(raw)
 		? (raw as EquitiesTreemapSizeMetric)
 		: 'marketCap'
 }

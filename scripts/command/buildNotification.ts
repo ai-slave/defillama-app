@@ -30,7 +30,7 @@ function formatUserMentions(value: string | undefined): string {
 		.join(' ')
 }
 
-function firstEnvValue(env: NodeJS.ProcessEnv, keys: readonly string[]): string {
+function firstEnvValue(env: NodeJS.ProcessEnv, keys: ReadonlyArray<string>): string {
 	for (const key of keys) {
 		const value = normalize(env[key])
 		if (value) return value
@@ -59,7 +59,7 @@ function formatBuildNotificationSummary(result: BuildResult, env: NodeJS.Process
 			: `🚨 Build failed in ${formatDurationMs(result.durationMs)}`
 	summary += '\n📂 defillama-app\n'
 	if (result.branchName) {
-		summary = `🪾 ${result.branchName}\n` + summary
+		summary = `🪾 ${result.branchName}\n${summary}`
 	}
 	const deploymentName = resolveDeploymentName(env)
 	if (deploymentName) {
@@ -163,7 +163,7 @@ export async function sendBuildNotification({
 		webhookUrl,
 		{
 			allowed_mentions: { parse: ['users', 'roles'] },
-			content: `\`\`\`${'===== BUILD SUMMARY =====\n' + formatBuildNotificationSummary(result, env)}\`\`\``
+			content: `\`\`\`${`===== BUILD SUMMARY =====\n${formatBuildNotificationSummary(result, env)}`}\`\`\``
 		},
 		logger
 	)

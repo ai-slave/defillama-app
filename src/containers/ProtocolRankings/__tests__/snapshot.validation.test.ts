@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const cacheMocks = vi.hoisted(() => ({
 	getCache: vi.fn(),
@@ -57,23 +57,23 @@ function snapshot(overrides: Partial<ProtocolRankingsCanonicalSnapshot> = {}): P
 const healthyContext = { expectDexs: true, expectPerps: true, previousProtocolCount: null }
 
 describe('assertPublishableSnapshot', () => {
-	it('accepts a healthy snapshot', () => {
+	test('accepts a healthy snapshot', () => {
 		expect(() => assertPublishableSnapshot(snapshot(), healthyContext)).not.toThrow()
 	})
 
-	it('rejects an empty protocols list', () => {
+	test('rejects an empty protocols list', () => {
 		expect(() => assertPublishableSnapshot(snapshot({ protocols: [] }), healthyContext)).toThrow(
 			ProtocolRankingSnapshotValidationError
 		)
 	})
 
-	it('rejects a snapshot where every TVL is null', () => {
+	test('rejects a snapshot where every TVL is null', () => {
 		expect(() => assertPublishableSnapshot(snapshot({ protocols: [protocol('aave', null)] }), healthyContext)).toThrow(
 			/TVL/
 		)
 	})
 
-	it('rejects a row count that dropped below the ratio floor of the previous snapshot', () => {
+	test('rejects a row count that dropped below the ratio floor of the previous snapshot', () => {
 		const rows = Array.from({ length: 6 }, (_, index) => protocol(`p${index}`, 10))
 		expect(() =>
 			assertPublishableSnapshot(snapshot({ protocols: rows }), { ...healthyContext, previousProtocolCount: 10 })
@@ -83,7 +83,7 @@ describe('assertPublishableSnapshot', () => {
 		).not.toThrow()
 	})
 
-	it('rejects missing expected sources — the silent-adapter-failure case', () => {
+	test('rejects missing expected sources — the silent-adapter-failure case', () => {
 		const noDexs = snapshot({ source: { ...snapshot().source, dexs: null } })
 		expect(() => assertPublishableSnapshot(noDexs, healthyContext)).toThrow(/DEX/)
 		expect(() => assertPublishableSnapshot(noDexs, { ...healthyContext, expectDexs: false })).not.toThrow()
@@ -119,7 +119,7 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 		cacheMocks.getCache.mockResolvedValue(null)
 	})
 
-	it('publishes a healthy rebuild, blob before pointer', async () => {
+	test('publishes a healthy rebuild, blob before pointer', async () => {
 		cacheMocks.setCache.mockResolvedValue(true)
 		cacheMocks.setObjectCache.mockResolvedValue(true)
 		queriesMocks.getProtocolsByChain.mockResolvedValue({
@@ -142,7 +142,7 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 		)
 	})
 
-	it('never writes a snapshot that fails validation, and records the failure', async () => {
+	test('never writes a snapshot that fails validation, and records the failure', async () => {
 		queriesMocks.getProtocolsByChain.mockResolvedValue({
 			protocols: [],
 			chains: ['Ethereum'],
@@ -160,7 +160,7 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
 	})
 
-	it('serves :last-good when validation fails and :latest is gone', async () => {
+	test('serves :last-good when validation fails and :latest is gone', async () => {
 		const { gzipSync } = await import('node:zlib')
 		const healthy = {
 			chain: 'Base',
@@ -199,7 +199,7 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 		expect(telemetryMocks.recordRuntimeError).toHaveBeenCalledTimes(1)
 	})
 
-	it('never consults :last-good on the ordinary freshness path', async () => {
+	test('never consults :last-good on the ordinary freshness path', async () => {
 		const { gzipSync } = await import('node:zlib')
 		const current = {
 			chain: 'Tron',

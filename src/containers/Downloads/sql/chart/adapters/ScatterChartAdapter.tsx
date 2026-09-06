@@ -15,7 +15,7 @@ const ScatterChart = lazy(() => import('~/components/ECharts/ScatterChart'))
 interface ScatterChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -40,7 +40,7 @@ export function ScatterChartAdapter({ config, result, classified, onReady }: Sca
 
 	const chartData = useMemo(() => {
 		if (!xCol || !yCol) return []
-		const points: ScatterPresentationInput[] = []
+		const points: Array<ScatterPresentationInput> = []
 		for (let index = 0; index < result.rows.length; index++) {
 			const row = result.rows[index]
 			const x = readSqlNumber(row[xCol.index])
@@ -59,7 +59,7 @@ export function ScatterChartAdapter({ config, result, classified, onReady }: Sca
 	const tooltipFormatter = (params: ScatterTooltipParams) => {
 		if (!params?.value || params.value.length < 2) return ''
 		const [x, y, label] = params.value
-		const lines: string[] = []
+		const lines: Array<string> = []
 		if (label) lines.push(`<strong>${escapeSqlChartHtml(String(label))}</strong>`)
 		const group = params.data && !Array.isArray(params.data) ? params.data.groupName : undefined
 		if (group) lines.push(`Category: ${escapeSqlChartHtml(String(group))}`)

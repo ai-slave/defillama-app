@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { ResearchPromoBanner } from '../landing/ResearchPromoBanner'
 import { ArticleBannerStrip } from '../renderer/ArticleBannerStrip'
 import { ArticleImageBanner } from '../renderer/ArticleImageBanner'
@@ -11,7 +11,7 @@ const queryState = vi.hoisted(() => ({
 }))
 
 vi.mock('@tanstack/react-query', () => ({
-	useQuery: vi.fn(({ queryKey, enabled = true }: { queryKey: unknown[]; enabled?: boolean }) => ({
+	useQuery: vi.fn(({ queryKey, enabled = true }: { queryKey: Array<unknown>; enabled?: boolean }) => ({
 		data: enabled ? queryState.lookups.get(JSON.stringify(queryKey)) : undefined,
 		isLoading: false
 	}))
@@ -76,7 +76,7 @@ describe('article banners', () => {
 		queryState.lookups.clear()
 	})
 
-	it('falls back from article text to section text to all-articles text', () => {
+	test('falls back from article text to section text to all-articles text', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), emptyLookup())
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), emptyLookup())
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
@@ -111,7 +111,7 @@ describe('article banners', () => {
 		expect(articleHtml).not.toContain('Section strip')
 	})
 
-	it('changes the text banner dismissal key only when the banner is edited', () => {
+	test('changes the text banner dismissal key only when the banner is edited', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
 			...emptyLookup(),
 			text: banner({ id: 'landing-text', scope: 'landing', text: 'Landing strip' })
@@ -135,7 +135,7 @@ describe('article banners', () => {
 		expect(updatedHtml).not.toContain('announcement-token--research-banner-landing-text--2026-05-14')
 	})
 
-	it('falls back to all-articles image banners when article and section images are absent', () => {
+	test('falls back to all-articles image banners when article and section images are absent', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), emptyLookup())
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), emptyLookup())
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
@@ -154,7 +154,7 @@ describe('article banners', () => {
 		expect(html).toContain('Global image')
 	})
 
-	it('hides the all-articles text banner on an excluded article but shows it elsewhere', () => {
+	test('hides the all-articles text banner on an excluded article but shows it elsewhere', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), emptyLookup())
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), emptyLookup())
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
@@ -173,7 +173,7 @@ describe('article banners', () => {
 		expect(otherHtml).toContain('Global strip')
 	})
 
-	it('hides the all-articles image banner on an excluded article but shows it elsewhere', () => {
+	test('hides the all-articles image banner on an excluded article but shows it elsewhere', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'article', 'article-id']), emptyLookup())
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'section', 'report']), emptyLookup())
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
@@ -194,7 +194,7 @@ describe('article banners', () => {
 		expect(otherHtml).toContain('/uploads/image/global')
 	})
 
-	it('renders the landing promo banner with a disclosure link', () => {
+	test('renders the landing promo banner with a disclosure link', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
 			...emptyLookup(),
 			promo: promoBanner({ disclosureUrl: 'https://example.com/disclosure' })
@@ -208,7 +208,7 @@ describe('article banners', () => {
 		expect(html).toContain('Disclosure')
 	})
 
-	it('uses a custom disclosure label when configured', () => {
+	test('uses a custom disclosure label when configured', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
 			...emptyLookup(),
 			promo: promoBanner({ disclosureUrl: 'https://example.com/disclosure', disclosureText: 'Ad disclosure' })
@@ -217,7 +217,7 @@ describe('article banners', () => {
 		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toContain('Ad disclosure')
 	})
 
-	it('hides the disclosure link when no disclosure URL is configured', () => {
+	test('hides the disclosure link when no disclosure URL is configured', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
 			...emptyLookup(),
 			promo: promoBanner()
@@ -229,7 +229,7 @@ describe('article banners', () => {
 		expect(html).not.toContain('Disclosure')
 	})
 
-	it('hides the landing promo banner when no promo is configured or no wide image exists', () => {
+	test('hides the landing promo banner when no promo is configured or no wide image exists', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), emptyLookup())
 		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
 
@@ -240,7 +240,7 @@ describe('article banners', () => {
 		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
 	})
 
-	it('does not server-render a restricted promo before visitor country resolves', () => {
+	test('does not server-render a restricted promo before visitor country resolves', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'landing']), {
 			...emptyLookup(),
 			promo: promoBanner({ targetCountries: ['FI'] })
@@ -249,7 +249,7 @@ describe('article banners', () => {
 		expect(renderToStaticMarkup(<ResearchPromoBanner />)).toBe('')
 	})
 
-	it('renders the article promo card from the all-articles lookup', () => {
+	test('renders the article promo card from the all-articles lookup', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
 			...emptyLookup(),
 			promo: promoBanner({ disclosureUrl: 'https://example.com/disclosure' })
@@ -262,7 +262,7 @@ describe('article banners', () => {
 		expect(html).toContain('Disclosure')
 	})
 
-	it('hides the article promo card without a card image', () => {
+	test('hides the article promo card without a card image', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
 			...emptyLookup(),
 			promo: promoBanner({ imageCardUrl: null })
@@ -271,7 +271,7 @@ describe('article banners', () => {
 		expect(renderToStaticMarkup(<ArticlePromoCard articleId="article-id" />)).toBe('')
 	})
 
-	it('hides the promo card on an excluded article but shows it elsewhere', () => {
+	test('hides the promo card on an excluded article but shows it elsewhere', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
 			...emptyLookup(),
 			promo: promoBanner({ excludedArticleIds: ['article-id'] })
@@ -282,7 +282,7 @@ describe('article banners', () => {
 		expect(renderToStaticMarkup(<ArticlePromoBannerMobile articleId="article-id" />)).toBe('')
 	})
 
-	it('falls back from the mobile promo image to the card image', () => {
+	test('falls back from the mobile promo image to the card image', () => {
 		queryState.lookups.set(JSON.stringify(['research', 'banner', 'all-articles']), {
 			...emptyLookup(),
 			promo: promoBanner()

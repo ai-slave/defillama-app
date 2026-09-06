@@ -47,7 +47,7 @@ const AGE_DISTRIBUTION_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const loanColumns: ColumnDef<LoanRow>[] = [
+const loanColumns: Array<ColumnDef<LoanRow>> = [
 	{
 		header: 'Borrower',
 		accessorKey: 'borrower',
@@ -121,7 +121,7 @@ const loanColumns: ColumnDef<LoanRow>[] = [
 	}
 ]
 
-function LoansTable({ data }: { data: LoanRow[] }) {
+function LoansTable({ data }: { data: Array<LoanRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'principal', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 

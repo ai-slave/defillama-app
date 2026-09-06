@@ -13,7 +13,7 @@ import {
 } from './tableQuery'
 import type { EquitiesTableResponse } from './types'
 
-type QueryRecord = Record<string, string | string[] | undefined>
+type QueryRecord = Record<string, string | Array<string> | undefined>
 
 const EMPTY_RESPONSE: EquitiesTableResponse = {
 	schemaVersion: EQUITIES_TABLE_RESPONSE_SCHEMA_VERSION,

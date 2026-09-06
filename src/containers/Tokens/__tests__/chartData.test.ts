@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildTokensMovers,
 	buildTokensTreemap,
@@ -36,7 +36,7 @@ function row(overrides: Partial<ChartRowInput> & Pick<ChartRowInput, 'name' | 's
 	}
 }
 
-function chartData(rows: ChartRowInput[]): TokensChartDataset {
+function chartData(rows: Array<ChartRowInput>): TokensChartDataset {
 	const data: TokensChartDataset = {
 		names: [],
 		symbols: [],
@@ -67,7 +67,7 @@ const baseTreemapOptions = {
 } as const
 
 describe('buildTokensTreemap', () => {
-	it('builds canonical leaves once and groups tokens with running market-cap totals', () => {
+	test('builds canonical leaves once and groups tokens with running market-cap totals', () => {
 		const result = buildTokensTreemap(
 			chartData([
 				row({ name: 'Bitcoin', symbol: 'BTC', marketCap: 100, priceChange24h: 2, logo: '/btc.png' }),
@@ -88,7 +88,7 @@ describe('buildTokensTreemap', () => {
 		expect(stables.children[0]).toBe(result.leaves[1])
 	})
 
-	it('omits empty groups', () => {
+	test('omits empty groups', () => {
 		const result = buildTokensTreemap(
 			chartData([row({ name: 'Bitcoin', symbol: 'BTC', marketCap: 100 })]),
 			baseTreemapOptions
@@ -96,7 +96,7 @@ describe('buildTokensTreemap', () => {
 		expect(result.treeData.map((node) => node.name)).toEqual(['Tokens'])
 	})
 
-	it('hides stablecoins inside the selected universe without backfilling lower-ranked rows', () => {
+	test('hides stablecoins inside the selected universe without backfilling lower-ranked rows', () => {
 		const result = buildTokensTreemap(
 			chartData([
 				row({ name: 'Bitcoin', symbol: 'BTC', marketCap: 100 }),
@@ -110,7 +110,7 @@ describe('buildTokensTreemap', () => {
 		expect(result.stablecoinsHidden).toBe(1)
 	})
 
-	it('uses the selected change window and caps work to the selected universe', () => {
+	test('uses the selected change window and caps work to the selected universe', () => {
 		const result = buildTokensTreemap(
 			chartData([
 				row({ name: 'A', symbol: 'A', marketCap: 30, priceChange7d: 7 }),
@@ -128,7 +128,7 @@ describe('buildTokensTreemap', () => {
 })
 
 describe('tokens treemap export', () => {
-	it('proxies known icon hosts without parsing every URL', () => {
+	test('proxies known icon hosts without parsing every URL', () => {
 		expect(resolveTokensChartLogo('@bitcoin')).toBe(
 			'https://token-icons.llamao.fi/icons/tokens/gecko/bitcoin?w=48&h=48'
 		)
@@ -146,7 +146,7 @@ describe('tokens treemap export', () => {
 		expect(toExportSafeIconUrl(null)).toBe('')
 	})
 
-	it('exports the already-built leaves without reconstructing source rows', () => {
+	test('exports the already-built leaves without reconstructing source rows', () => {
 		const treemap = buildTokensTreemap(
 			chartData([row({ name: 'Bitcoin', symbol: 'BTC', marketCap: 100, priceChange24h: 2 })]),
 			baseTreemapOptions
@@ -170,20 +170,20 @@ describe('buildTokensMovers', () => {
 		row({ name: 'E', symbol: 'E', priceChange24h: -2, priceChange7d: 1 })
 	])
 
-	it('maintains bounded gainers and losers in display order', () => {
+	test('maintains bounded gainers and losers in display order', () => {
 		const result = buildTokensMovers(data, { window: '24h', universe: 100 })
 		expect(result.gainers.map((entry) => entry.name)).toEqual(['A', 'C'])
 		expect(result.losers.map((entry) => entry.name)).toEqual(['B', 'E'])
 		expect(result.gainers[0]).toMatchObject({ value: 12, href: '/token/A' })
 	})
 
-	it('reads the selected window and skips null changes', () => {
+	test('reads the selected window and skips null changes', () => {
 		const result = buildTokensMovers(data, { window: '7d', universe: 100 })
 		expect(result.gainers.map((entry) => entry.name)).toEqual(['B', 'D', 'E'])
 		expect(result.losers.map((entry) => entry.name)).toEqual(['A'])
 	})
 
-	it('respects the universe and keeps only ten entries per side', () => {
+	test('respects the universe and keeps only ten entries per side', () => {
 		const many = chartData(
 			Array.from({ length: 30 }, (_, index) =>
 				row({ name: `T${index}`, symbol: `T${index}`, priceChange24h: index + 1 })
@@ -203,7 +203,7 @@ describe('buildTokensMovers', () => {
 })
 
 describe('tokens movers export', () => {
-	it('exports the visible mover order and selected change window', () => {
+	test('exports the visible mover order and selected change window', () => {
 		const movers = buildTokensMovers(
 			chartData([
 				row({ name: 'Alpha', symbol: 'AAA', priceChange7d: 2.5 }),
@@ -226,14 +226,14 @@ describe('tokens movers export', () => {
 })
 
 describe('parseTokensChartState', () => {
-	it('returns defaults for empty or invalid queries', () => {
+	test('returns defaults for empty or invalid queries', () => {
 		expect(parseTokensChartState({})).toEqual(TOKENS_CHART_DEFAULTS)
 		expect(
 			parseTokensChartState({ view: 'nope', chartTop: '9000', colorBy: '1y', mapMode: 'x', moversWindow: '1y' })
 		).toEqual(TOKENS_CHART_DEFAULTS)
 	})
 
-	it('accepts valid values and takes the first array entry', () => {
+	test('accepts valid values and takes the first array entry', () => {
 		expect(
 			parseTokensChartState({
 				view: 'movers',

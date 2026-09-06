@@ -23,7 +23,7 @@ const columnHelper = createColumnHelper<IBridgedRow>()
 
 export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains }: BridgedTVLChainsListProps) {
 	const data = useMemo(() => {
-		const rows: IBridgedRow[] = []
+		const rows: Array<IBridgedRow> = []
 		for (const name in assets) {
 			const chainAssets = assets[name]
 			if (chainAssets === undefined) continue
@@ -48,8 +48,8 @@ export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains
 			<TableWithSearch
 				data={data}
 				columns={columns}
-				placeholder={'Search chains...'}
-				columnToSearch={'name'}
+				placeholder="Search chains..."
+				columnToSearch="name"
 				csvFileName="bridged-chains"
 				sortingState={DEFAULT_SORTING_STATE}
 			/>
@@ -114,7 +114,7 @@ const bridgedNameColumn = columnHelper.accessor('name', {
  * Columns follow the producer: a section it never reports gets no column at all, so switching the
  * producer from five sections to eight adds the new columns without leaving empty ones behind first.
  */
-export function buildBridgedColumns(rows: IBridgedRow[]) {
+export function buildBridgedColumns(rows: Array<IBridgedRow>) {
 	const reported = new Set<ChainAssetCategoryKey>()
 	for (const row of rows) {
 		for (const { id } of BRIDGED_SECTION_COLUMNS) {

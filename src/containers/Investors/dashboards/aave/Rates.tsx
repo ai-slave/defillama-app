@@ -23,7 +23,7 @@ import {
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-const WINDOW_OPTIONS: { value: TimeWindow; label: string }[] = [
+const WINDOW_OPTIONS: Array<{ value: TimeWindow; label: string }> = [
 	{ value: 'LAST_DAY', label: '1D' },
 	{ value: 'LAST_WEEK', label: '1W' },
 	{ value: 'LAST_MONTH', label: '1M' },
@@ -73,7 +73,7 @@ interface RateComparisonRow {
 	sizeUsd: number
 }
 
-const rateColumns: ColumnDef<RateComparisonRow>[] = [
+const rateColumns: Array<ColumnDef<RateComparisonRow>> = [
 	{ header: 'Chain', accessorKey: 'chain', size: 120 },
 	{ header: 'Market', accessorKey: 'market', size: 200 },
 	{
@@ -111,7 +111,7 @@ const rateColumns: ColumnDef<RateComparisonRow>[] = [
 	}
 ]
 
-function RateComparisonTable({ data }: { data: RateComparisonRow[] }) {
+function RateComparisonTable({ data }: { data: Array<RateComparisonRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 
 	const instance = useReactTable({
@@ -181,7 +181,7 @@ export default function Rates() {
 		'borrow'
 	)
 
-	const rateComparisonRows = useMemo<RateComparisonRow[]>(
+	const rateComparisonRows = useMemo<Array<RateComparisonRow>>(
 		() =>
 			sortedAssetReserves.map((r) => ({
 				chain: r.chain,

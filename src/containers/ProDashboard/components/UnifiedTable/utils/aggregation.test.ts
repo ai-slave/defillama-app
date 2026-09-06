@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ProtocolAggregateTableRow, ProtocolTableMetrics } from '../../../unifiedTable/contracts'
 import { aggregateMetrics, buildProtocolAggregationPlan } from './aggregation'
 
@@ -22,7 +22,7 @@ function protocolRow(protocolId: string, name: string, metrics: ProtocolTableMet
 }
 
 describe('aggregateMetrics fee ratios', () => {
-	it('materializes only requested metric families', () => {
+	test('materializes only requested metric families', () => {
 		const aggregationPlan = buildProtocolAggregationPlan({
 			baseMetricFamilies: ['tvl'],
 			pointMetrics: [],
@@ -30,7 +30,7 @@ describe('aggregateMetrics fee ratios', () => {
 			requestedRatioDependencies: { marketCap: false, tvl: true, fees: false, revenue: false },
 			needsOracleMembership: false
 		})
-		const result = aggregateMetrics([protocolRow('one', 'One', { tvl: 100, tvlPrevDay: 80, volume24h: 1_000 })], {
+		const result = aggregateMetrics([protocolRow('one', 'One', { tvl: 100, tvlPrevDay: 80, volume24h: 1000 })], {
 			excludeParentTvl: false,
 			aggregationPlan
 		})
@@ -40,7 +40,7 @@ describe('aggregateMetrics fee ratios', () => {
 		expect(result).not.toHaveProperty('mcap')
 	})
 
-	it('uses summed annualized fee and revenue fields for P/F and P/S', () => {
+	test('uses summed annualized fee and revenue fields for P/F and P/S', () => {
 		const rows = [
 			protocolRow('one', 'One', {
 				mcap: 12_000,
@@ -57,7 +57,7 @@ describe('aggregateMetrics fee ratios', () => {
 		expect(result.ps).toBeNull()
 	})
 
-	it('keeps P/F null when any fee-contributing row is missing annualized fees', () => {
+	test('keeps P/F null when any fee-contributing row is missing annualized fees', () => {
 		const rows = [
 			protocolRow('one', 'One', {
 				mcap: 12_000,
@@ -79,9 +79,9 @@ describe('aggregateMetrics fee ratios', () => {
 		expect(result.pf).toBeNull()
 	})
 
-	it('keeps grouped revenue monthly averages null when annualized revenue is incomplete', () => {
+	test('keeps grouped revenue monthly averages null when annualized revenue is incomplete', () => {
 		const result = aggregateMetrics([
-			protocolRow('one', 'One', { revenue_30d: 100, revenueAnnualized1y: 1_200, average_revenue_1y: 100 }),
+			protocolRow('one', 'One', { revenue_30d: 100, revenueAnnualized1y: 1200, average_revenue_1y: 100 }),
 			protocolRow('two', 'Two', { revenue_30d: 50, revenueAnnualized1y: null, average_revenue_1y: null })
 		])
 
@@ -89,7 +89,7 @@ describe('aggregateMetrics fee ratios', () => {
 		expect(result.average_revenue_1y).toBeNull()
 	})
 
-	it('does not poison annualized totals with a successful inactive row', () => {
+	test('does not poison annualized totals with a successful inactive row', () => {
 		const result = aggregateMetrics([
 			protocolRow('active', 'Active', { fees24h: 100, feesAnnualized1y: 36_500 }),
 			protocolRow('inactive', 'Inactive', {
@@ -107,7 +107,7 @@ describe('aggregateMetrics fee ratios', () => {
 })
 
 describe('aggregateMetrics changes', () => {
-	it('reconstructs and sums comparison periods instead of weighting percentages', () => {
+	test('reconstructs and sums comparison periods instead of weighting percentages', () => {
 		const result = aggregateMetrics([
 			protocolRow('one', 'One', { volume24h: 100, volumeChange_1d: 100 }),
 			protocolRow('two', 'Two', { volume24h: 100, volumeChange_1d: 0 })
@@ -117,7 +117,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.volumeChange_1d).toBeCloseTo(100 / 3)
 	})
 
-	it('keeps a grouped change null when a contributing comparison period is unavailable', () => {
+	test('keeps a grouped change null when a contributing comparison period is unavailable', () => {
 		const result = aggregateMetrics([
 			protocolRow('one', 'One', { fees24h: 100, feesChange_1d: 10 }),
 			protocolRow('two', 'Two', { fees24h: 50, feesChange_1d: null })
@@ -127,7 +127,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.feesChange_1d).toBeNull()
 	})
 
-	it('ignores a truly inactive zero row when aggregating activity changes', () => {
+	test('ignores a truly inactive zero row when aggregating activity changes', () => {
 		const result = aggregateMetrics([
 			protocolRow('active', 'Active', {
 				volume24h: 100,
@@ -146,7 +146,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.volume24hChange7dAgo).toBeNull()
 	})
 
-	it('keeps a point comparison unknown when a missing current value has an explicit previous value', () => {
+	test('keeps a point comparison unknown when a missing current value has an explicit previous value', () => {
 		const result = aggregateMetrics([
 			protocolRow('active', 'Active', { volume24h: 100, volume24h7dAgo: 80 }),
 			protocolRow('missing-current', 'Missing Current', { volume24h: null, volume24h7dAgo: 20 })
@@ -155,7 +155,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.volume24hChange7dAgo).toBeNull()
 	})
 
-	it('keeps a grouped change unknown when a zero-current row has broader activity', () => {
+	test('keeps a grouped change unknown when a zero-current row has broader activity', () => {
 		const result = aggregateMetrics([
 			protocolRow('active', 'Active', { volume24h: 100, volume_7d: 700, volumeChange_1d: 10 }),
 			protocolRow('inactive-today', 'Inactive Today', { volume24h: 0, volume_7d: 50, volumeChange_1d: null })
@@ -164,7 +164,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.volumeChange_1d).toBeNull()
 	})
 
-	it('keeps a grouped change null when an inactive current row has broader-period activity', () => {
+	test('keeps a grouped change null when an inactive current row has broader-period activity', () => {
 		const result = aggregateMetrics([
 			protocolRow('active', 'Active', { fees24h: 100, fees_7d: 700, feesChange_1d: 10 }),
 			protocolRow('inactive-today', 'Inactive Today', { fees24h: null, fees_7d: 50, feesChange_1d: null })
@@ -174,7 +174,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.feesChange_1d).toBeNull()
 	})
 
-	it('keeps a grouped change null when missing current activity has a negative broader period', () => {
+	test('keeps a grouped change null when missing current activity has a negative broader period', () => {
 		const result = aggregateMetrics([
 			protocolRow('active', 'Active', { revenue24h: 100, revenue_7d: 700, revenueChange_1d: 10 }),
 			protocolRow('missing-current', 'Missing Current', {
@@ -187,7 +187,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.revenueChange_1d).toBeNull()
 	})
 
-	it('does not treat an explicit zero broader period as missing activity', () => {
+	test('does not treat an explicit zero broader period as missing activity', () => {
 		const result = aggregateMetrics([
 			protocolRow('active', 'Active', { fees24h: 100, fees_7d: 700, feesChange_1d: 10 }),
 			protocolRow('inactive', 'Inactive', { fees24h: null, fees_7d: 0, feesChange_1d: null })
@@ -196,13 +196,13 @@ describe('aggregateMetrics changes', () => {
 		expect(result.feesChange_1d).toBeCloseTo(10)
 	})
 
-	it('reconstructs a negative comparison value when activity crosses zero', () => {
+	test('reconstructs a negative comparison value when activity crosses zero', () => {
 		const result = aggregateMetrics([protocolRow('one', 'One', { revenue24h: 50, revenueChange_1d: -150 })])
 
 		expect(result.revenueChange_1d).toBe(-150)
 	})
 
-	it('aggregates 30d holder revenue change from reconstructed comparison totals', () => {
+	test('aggregates 30d holder revenue change from reconstructed comparison totals', () => {
 		const result = aggregateMetrics([
 			protocolRow('one', 'One', { holdersRevenue30d: 100, holderRevenueChange30dOver30d: 100 }),
 			protocolRow('two', 'Two', { holdersRevenue30d: 100, holderRevenueChange30dOver30d: 0 })
@@ -212,7 +212,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.holderRevenueChange30dOver30d).toBeCloseTo(100 / 3)
 	})
 
-	it('aggregates 7d holder revenue change from reconstructed comparison totals', () => {
+	test('aggregates 7d holder revenue change from reconstructed comparison totals', () => {
 		const result = aggregateMetrics([
 			protocolRow('one', 'One', { holderRevenue_7d: 100, holderRevenueChange7dOver7d: 100 }),
 			protocolRow('two', 'Two', { holderRevenue_7d: 100, holderRevenueChange7dOver7d: 0 })
@@ -222,7 +222,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.holderRevenueChange7dOver7d).toBeCloseTo(100 / 3)
 	})
 
-	it('keeps grouped 30d holder revenue change null when a longer period proves a missing contributor', () => {
+	test('keeps grouped 30d holder revenue change null when a longer period proves a missing contributor', () => {
 		const result = aggregateMetrics([
 			protocolRow('measured', 'Measured', { holdersRevenue30d: 100, holderRevenueChange30dOver30d: 0 }),
 			protocolRow('missing', 'Missing', { holderRevenue_90d: 50 })
@@ -231,7 +231,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.holderRevenueChange30dOver30d).toBeNull()
 	})
 
-	it('aggregates long-period activity changes from reconstructed comparison totals', () => {
+	test('aggregates long-period activity changes from reconstructed comparison totals', () => {
 		const result = aggregateMetrics([
 			protocolRow('one', 'One', {
 				fees_90d: 100,
@@ -256,13 +256,13 @@ describe('aggregateMetrics changes', () => {
 		expect(result.holderRevenueChange1yOver1y).toBeCloseTo(100 / 3)
 	})
 
-	it('keeps a grouped change null when a minus 100 percent row has no reconstructable prior value', () => {
+	test('keeps a grouped change null when a minus 100 percent row has no reconstructable prior value', () => {
 		const result = aggregateMetrics([protocolRow('one', 'One', { revenue24h: 0, revenueChange_1d: -100 })])
 
 		expect(result.revenueChange_1d).toBeNull()
 	})
 
-	it('sums available source shares without inventing an all-unavailable total', () => {
+	test('sums available source shares without inventing an all-unavailable total', () => {
 		const exact = aggregateMetrics([
 			protocolRow('one', 'One', { volumeDominance_24h: 10 }),
 			protocolRow('two', 'Two', { volumeDominance_24h: 5 })
@@ -281,7 +281,7 @@ describe('aggregateMetrics changes', () => {
 		expect(unavailable.options_volume_dominance_24h).toBeNull()
 	})
 
-	it('requires a previous TVL value for every current TVL contributor', () => {
+	test('requires a previous TVL value for every current TVL contributor', () => {
 		const result = aggregateMetrics([
 			protocolRow('one', 'One', { tvl: 100, tvlPrevDay: 80 }),
 			protocolRow('two', 'Two', { tvl: 50, tvlPrevDay: null })
@@ -291,7 +291,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.change1d).toBeNull()
 	})
 
-	it('excludes parent TVL rows from both totals and change completeness', () => {
+	test('excludes parent TVL rows from both totals and change completeness', () => {
 		const excluded = protocolRow('excluded', 'Excluded', { tvl: 100, tvlPrevDay: null })
 		excluded.excludeTvlFromParent = true
 		const included = protocolRow('included', 'Included', { tvl: 50, tvlPrevDay: 25 })
@@ -303,7 +303,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.change1d).toBe(100)
 	})
 
-	it('applies parent TVL exclusion to additive TVL breakdowns', () => {
+	test('applies parent TVL exclusion to additive TVL breakdowns', () => {
 		const excluded = protocolRow('excluded', 'Excluded', { stakingTvl: 100, borrowedTvl: 50, pool2Tvl: 25 })
 		excluded.excludeTvlFromParent = true
 		const included = protocolRow('included', 'Included', { stakingTvl: 10, borrowedTvl: 20, pool2Tvl: 30 })
@@ -313,10 +313,10 @@ describe('aggregateMetrics changes', () => {
 		expect(result).toMatchObject({ stakingTvl: 10, borrowedTvl: 20, pool2Tvl: 30 })
 	})
 
-	it('uses canonical parent market metrics instead of an arbitrary child token', () => {
-		const first = protocolRow('securitize-buidl', 'BUIDL', { mcap: 4_000, fdv: 5_000 })
+	test('uses canonical parent market metrics instead of an arbitrary child token', () => {
+		const first = protocolRow('securitize-buidl', 'BUIDL', { mcap: 4000, fdv: 5000 })
 		first.parentProtocolId = 'securitize'
-		const second = protocolRow('securitize-dsf', 'DSF', { mcap: 7_000, fdv: 8_000 })
+		const second = protocolRow('securitize-dsf', 'DSF', { mcap: 7000, fdv: 8000 })
 		second.parentProtocolId = 'securitize'
 
 		const result = aggregateMetrics([first, second], {
@@ -328,8 +328,8 @@ describe('aggregateMetrics changes', () => {
 		expect(result.fdv).toBe(20_000)
 	})
 
-	it('deduplicates a protocol market value across chain rows without substituting its parent value', () => {
-		const source = protocolRow('securitize-dsf', 'DSF', { mcap: 7_000, fdv: 8_000 })
+	test('deduplicates a protocol market value across chain rows without substituting its parent value', () => {
+		const source = protocolRow('securitize-dsf', 'DSF', { mcap: 7000, fdv: 8000 })
 		source.parentProtocolId = 'securitize'
 		const rows = ['Ethereum', 'Solana'].map((chain) => ({
 			...source,
@@ -344,11 +344,11 @@ describe('aggregateMetrics changes', () => {
 			parentMetrics: { securitize: { mcap: 19_000, fdv: 20_000 } }
 		})
 
-		expect(result.mcap).toBe(7_000)
-		expect(result.fdv).toBe(8_000)
+		expect(result.mcap).toBe(7000)
+		expect(result.fdv).toBe(8000)
 	})
 
-	it('replaces incomplete child open interest with the canonical parent total', () => {
+	test('replaces incomplete child open interest with the canonical parent total', () => {
 		const first = protocolRow('gmx-v1', 'GMX V1', { openInterest: null })
 		first.parentProtocolId = 'gmx'
 		const second = protocolRow('gmx-v2', 'GMX V2', { openInterest: 40 })
@@ -375,7 +375,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.openInterest).toBe(100)
 	})
 
-	it('uses canonical parent emissions only for a complete all-chain ecosystem', () => {
+	test('uses canonical parent emissions only for a complete all-chain ecosystem', () => {
 		const first = protocolRow('aave-v2', 'Aave V2', {})
 		first.parentProtocolId = 'aave'
 		const second = protocolRow('aave-v3', 'Aave V3', {})
@@ -413,7 +413,7 @@ describe('aggregateMetrics changes', () => {
 		expect(aggregateMetrics(chainRows, { excludeParentTvl: false, parentMetrics }).emissions30d).toBeNull()
 	})
 
-	it('uses the selected-chain parent open interest without replacing a partial ecosystem', () => {
+	test('uses the selected-chain parent open interest without replacing a partial ecosystem', () => {
 		const first = protocolRow('gmx-v1', 'GMX V1', { openInterest: 20 })
 		first.parentProtocolId = 'gmx'
 		const second = protocolRow('gmx-v2', 'GMX V2', { openInterest: null })
@@ -444,7 +444,7 @@ describe('aggregateMetrics changes', () => {
 		expect(aggregateMetrics([firstEthereumRow], { excludeParentTvl: false, parentMetrics }).openInterest).toBe(20)
 	})
 
-	it('adds a canonical parent earnings supplement exactly once', () => {
+	test('adds a canonical parent earnings supplement exactly once', () => {
 		const first = protocolRow('aave-v2', 'Aave V2', {})
 		first.parentProtocolId = 'aave'
 		const second = protocolRow('aave-v3', 'Aave V3', {})
@@ -472,7 +472,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.earnings1y).toBe(36_500)
 	})
 
-	it('keeps parent earnings unknown when filters retain only part of the ecosystem', () => {
+	test('keeps parent earnings unknown when filters retain only part of the ecosystem', () => {
 		const child = protocolRow('aave-v3', 'Aave V3', {})
 		child.parentProtocolId = 'aave'
 
@@ -497,7 +497,7 @@ describe('aggregateMetrics changes', () => {
 		expect(result.earnings24h).toBeNull()
 	})
 
-	it('reuses parent membership for chain-specific earnings and bridge supplements', () => {
+	test('reuses parent membership for chain-specific earnings and bridge supplements', () => {
 		const first = protocolRow('aave-v2', 'Aave V2', {})
 		first.parentProtocolId = 'aave'
 		const second = protocolRow('aave-v3', 'Aave V3', {})

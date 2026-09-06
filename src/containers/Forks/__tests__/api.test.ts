@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('~/utils/async', () => ({ fetchJson: vi.fn() }))
 
@@ -11,7 +11,7 @@ describe('Fork API routes', () => {
 		vi.mocked(fetchJson).mockReset().mockResolvedValue([])
 	})
 
-	it('derives the protocol chart route from the canonical Fork name', async () => {
+	test('derives the protocol chart route from the canonical Fork name', async () => {
 		await fetchForkProtocolChart({ protocol: 'Aave V3', key: 'vesting' })
 
 		expect(fetchJson).toHaveBeenCalledWith(`${V2_SERVER_URL}/chart/fork/protocol/aave-v3?key=vesting`, {
@@ -19,7 +19,7 @@ describe('Fork API routes', () => {
 		})
 	})
 
-	it('omits the key query for default TVL', async () => {
+	test('omits the key query for default TVL', async () => {
 		await fetchForkProtocolBreakdownChart()
 
 		expect(fetchJson).toHaveBeenCalledWith(`${V2_SERVER_URL}/chart/fork/protocol-breakdown`, {

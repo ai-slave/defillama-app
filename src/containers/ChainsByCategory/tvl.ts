@@ -39,17 +39,17 @@ export function getChainMcapTvlRatio(mcap: number | null, tvl: number | null): n
 export function applyChainsTvlSettings(
 	baseValue: number,
 	extraValues: ChainTvlExtraValues,
-	enabledSettings: readonly TvlSettingsKey[]
+	enabledSettings: ReadonlyArray<TvlSettingsKey>
 ): number
 export function applyChainsTvlSettings(
 	baseValue: ChainTvlValue,
 	extraValues: ChainTvlExtraValues,
-	enabledSettings: readonly TvlSettingsKey[]
+	enabledSettings: ReadonlyArray<TvlSettingsKey>
 ): number | null
 export function applyChainsTvlSettings(
 	baseValue: ChainTvlValue,
 	extraValues: ChainTvlExtraValues,
-	enabledSettings: readonly TvlSettingsKey[]
+	enabledSettings: ReadonlyArray<TvlSettingsKey>
 ): number | null {
 	if (baseValue == null) return null
 	let value = baseValue

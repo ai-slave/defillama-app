@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { asTooltipDataRecord, createSignedInflowsTooltipFormatter, getTooltipDimensionValue } from './tooltip'
 
 describe('shared ECharts tooltip data access', () => {
-	it('reads object and positional rows without cloning', () => {
-		const row = { timestamp: 1767225600000, Value: 5 }
+	test('reads object and positional rows without cloning', () => {
+		const row = { timestamp: 1_767_225_600_000, Value: 5 }
 		expect(asTooltipDataRecord(row)).toBe(row)
 		expect(getTooltipDimensionValue({ data: { category: 'A' } }, 'category')).toBe('A')
 		expect(getTooltipDimensionValue({ data: ['A', 7], dimensionNames: ['category', 'Value'] }, 'Value')).toBe(7)
@@ -11,10 +11,10 @@ describe('shared ECharts tooltip data access', () => {
 })
 
 describe('shared signed-inflow tooltip', () => {
-	it('sorts losses before gains and shows the net total first', () => {
+	test('sorts losses before gains and shows the net total first', () => {
 		const output = createSignedInflowsTooltipFormatter('$')([
-			{ seriesName: 'Gain', data: { timestamp: 1767225600000, Gain: 30 } },
-			{ seriesName: 'Loss', data: { timestamp: 1767225600000, Loss: -10 } }
+			{ seriesName: 'Gain', data: { timestamp: 1_767_225_600_000, Gain: 30 } },
+			{ seriesName: 'Loss', data: { timestamp: 1_767_225_600_000, Loss: -10 } }
 		])
 
 		expect(output.indexOf('Total Inflows')).toBeLessThan(output.indexOf('Loss'))
@@ -22,8 +22,8 @@ describe('shared signed-inflow tooltip', () => {
 		expect(output).toContain('$20')
 	})
 
-	it('combines explicit and capped Others after the signed rows', () => {
-		const timestamp = 1767225600000
+	test('combines explicit and capped Others after the signed rows', () => {
+		const timestamp = 1_767_225_600_000
 		const params = Array.from({ length: 11 }, (_, index) => ({
 			seriesName: `Flow ${index}`,
 			marker: '',
@@ -36,19 +36,19 @@ describe('shared signed-inflow tooltip', () => {
 		expect(output).toContain('OOthers&nbsp;&nbsp;$16')
 	})
 
-	it('can hide a redundant single-series name', () => {
+	test('can hide a redundant single-series name', () => {
 		const output = createSignedInflowsTooltipFormatter(
 			'$',
 			true
-		)([{ seriesName: 'USD Inflows', marker: '•', data: { timestamp: 1767225600000, 'USD Inflows': 5 } }])
+		)([{ seriesName: 'USD Inflows', marker: '•', data: { timestamp: 1_767_225_600_000, 'USD Inflows': 5 } }])
 
 		expect(output).toContain('•&nbsp;&nbsp;$5')
 		expect(output).not.toContain('USD Inflows')
 		expect(output).toContain('Total Inflows')
 	})
 
-	it('keeps only the ten lowest signed values with stable ties', () => {
-		const timestamp = 1767225600000
+	test('keeps only the ten lowest signed values with stable ties', () => {
+		const timestamp = 1_767_225_600_000
 		const output = createSignedInflowsTooltipFormatter('$')(
 			[12, -5, -5, 11, 10, 9, 8, 7, 6, 5, 4, 3].map((value, index) => ({
 				seriesName: `Flow ${index}`,

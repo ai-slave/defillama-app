@@ -8,11 +8,11 @@ import { reactSelectStyles } from '../utils/reactSelectStyles'
 interface CategoryFilterModalProps {
 	isOpen: boolean
 	onClose: () => void
-	onApply: (include: string[], exclude: string[]) => void
+	onApply: (include: Array<string>, exclude: Array<string>) => void
 	onClear: () => void
-	categories: string[]
-	initialInclude: string[]
-	initialExclude: string[]
+	categories: Array<string>
+	initialInclude: Array<string>
+	initialExclude: Array<string>
 }
 
 interface CategoryOption {
@@ -42,8 +42,8 @@ export function CategoryFilterModal({
 	initialInclude,
 	initialExclude
 }: CategoryFilterModalProps) {
-	const [selectedInclude, setSelectedInclude] = React.useState<string[]>(initialInclude)
-	const [selectedExclude, setSelectedExclude] = React.useState<string[]>(initialExclude)
+	const [selectedInclude, setSelectedInclude] = React.useState<Array<string>>(initialInclude)
+	const [selectedExclude, setSelectedExclude] = React.useState<Array<string>>(initialExclude)
 
 	const categoryOptions = React.useMemo(
 		() =>

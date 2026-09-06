@@ -1,17 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { buildAdvancedTvlPresentation, orderAdvancedTvlChains } from './advancedTvlPresentation'
 
 const chainsDataset: TimestampDataset = {
 	dimensions: ['timestamp', 'Ethereum', 'Base'],
 	source: [
-		[1_000, 10, 5],
-		[2_000, 20, 30]
+		[1000, 10, 5],
+		[2000, 20, 30]
 	]
 }
 
 describe('advanced TVL presentation', () => {
-	it('orders chains by the latest value without mutating the API dimension order', () => {
+	test('orders chains by the latest value without mutating the API dimension order', () => {
 		const names = ['Ethereum', 'Base']
 
 		expect(orderAdvancedTvlChains(chainsDataset, names)).toEqual(['Base', 'Ethereum'])
@@ -28,7 +28,7 @@ describe('advanced TVL presentation', () => {
 		])
 	})
 
-	it('gives preview and saved inflow charts the same dollar semantics', () => {
+	test('gives preview and saved inflow charts the same dollar semantics', () => {
 		const presentation = buildAdvancedTvlPresentation({
 			chartType: 'tokenInflows',
 			chainsDataset,
@@ -44,7 +44,7 @@ describe('advanced TVL presentation', () => {
 		expect(presentation.stackColors.USDC).toBeTruthy()
 	})
 
-	it('keeps raw token balances unitless', () => {
+	test('keeps raw token balances unitless', () => {
 		expect(
 			buildAdvancedTvlPresentation({
 				chartType: 'tokenBalances',
@@ -55,7 +55,7 @@ describe('advanced TVL presentation', () => {
 		).toBe('')
 	})
 
-	it('reserves the established Others color without making it a selectable token', () => {
+	test('reserves the established Others color without making it a selectable token', () => {
 		const presentation = buildAdvancedTvlPresentation({
 			chartType: 'tokensPie',
 			chainsDataset,

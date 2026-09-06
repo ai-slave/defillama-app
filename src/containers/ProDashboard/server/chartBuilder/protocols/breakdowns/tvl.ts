@@ -17,7 +17,7 @@ import { processAdjustedTvl } from '~/utils/tvl'
 import { sumProtocolTvlBreakdown } from './protocolTvlBreakdown'
 import { buildProtocolTvlRanking, fetchProtocolTvlRankingRows } from './protocolTvlRanking'
 
-const fetchChainTotalTvl = async (chains: string[]): Promise<[number, number][]> => {
+const fetchChainTotalTvl = async (chains: Array<string>): Promise<Array<[number, number]>> => {
 	const isAll = chains.length === 0 || chains.some((c) => c.toLowerCase() === 'all')
 	if (isAll) {
 		const j = await fetchChainChart()
@@ -34,7 +34,7 @@ const fetchChainTotalTvl = async (chains: string[]): Promise<[number, number][]>
 	return Array.from(summed.entries()).sort((a, b) => a[0] - b[0])
 }
 
-const subtractSeries = (a: [number, number][], b: [number, number][]): [number, number][] => {
+const subtractSeries = (a: Array<[number, number]>, b: Array<[number, number]>): Array<[number, number]> => {
 	const mapA = new Map<number, number>()
 	for (const [timestamp, value] of a) mapA.set(timestamp, value)
 	for (const [t, v] of b) {
@@ -43,33 +43,33 @@ const subtractSeries = (a: [number, number][], b: [number, number][]): [number, 
 	return Array.from(mapA.entries()).sort((x, y) => x[0] - y[0])
 }
 
-const fetchAllChainTotalTvl = async (): Promise<[number, number][]> => {
+const fetchAllChainTotalTvl = async (): Promise<Array<[number, number]>> => {
 	return fetchChainTotalTvl(['all'])
 }
 
-const fetchChainTvlSingle = async (chain: string): Promise<[number, number][]> => {
+const fetchChainTvlSingle = async (chain: string): Promise<Array<[number, number]>> => {
 	const j = await fetchChainChart(chain)
 	const adjustedTvl = processAdjustedTvl(j)
 	return filterOutToday(normalizeDailyPairs(adjustedTvl, 'last'))
 }
 
-const fetchCategorySeriesAll = async (category: string): Promise<[number, number][]> => {
+const fetchCategorySeriesAll = async (category: string): Promise<Array<[number, number]>> => {
 	const j = await fetchCategoryChart({ category })
 	const tvl = j?.tvl || {}
-	const mapped: [number, number][] = []
+	const mapped: Array<[number, number]> = []
 	for (const ts in tvl) mapped.push([parseInt(ts, 10), Number(tvl[ts]) || 0])
 	return filterOutToday(normalizeDailyPairs(mapped, 'last'))
 }
 
-const fetchCategorySeriesPerChain = async (category: string, chain: string): Promise<[number, number][]> => {
+const fetchCategorySeriesPerChain = async (category: string, chain: string): Promise<Array<[number, number]>> => {
 	const j = await fetchCategoryChart({ category, chain })
 	const tvl = j?.tvl || {}
-	const mapped: [number, number][] = []
+	const mapped: Array<[number, number]> = []
 	for (const ts in tvl) mapped.push([parseInt(ts, 10), Number(tvl[ts]) || 0])
 	return filterOutToday(normalizeDailyPairs(mapped, 'last'))
 }
 
-const fetchCategoryTvl = async (chains: string[], categories: string[]): Promise<[number, number][]> => {
+const fetchCategoryTvl = async (chains: Array<string>, categories: Array<string>): Promise<Array<[number, number]>> => {
 	if (categories.length === 0) {
 		return fetchChainTotalTvl(chains)
 	}
@@ -95,8 +95,8 @@ const fetchCategoryTvl = async (chains: string[], categories: string[]): Promise
 }
 
 export const getTvlBreakdownData = async (
-	chains: string[],
-	categories: string[],
+	chains: Array<string>,
+	categories: Array<string>,
 	topN: number,
 	groupByParent: boolean = false,
 	chainFilterMode: 'include' | 'exclude' = 'include',
@@ -164,7 +164,7 @@ export const getTvlBreakdownData = async (
 			metadata: {
 				chain: displayChains.join(','),
 				chains: displayChains,
-				categories: categories,
+				categories,
 				metric: 'TVL',
 				topN,
 				...emptyEntityMetadata,
@@ -177,7 +177,7 @@ export const getTvlBreakdownData = async (
 	const protocolSeries = await mapWithConcurrency(top, 8, async (t) => {
 		const useChildrenOnly = groupByParent && !!t.parentId && categoriesFilter.length > 0
 
-		const buildSeriesForSlug = async (slug: string): Promise<[number, number][]> => {
+		const buildSeriesForSlug = async (slug: string): Promise<Array<[number, number]>> => {
 			const chart = await fetchProtocolTvlChart({ protocol: slug, breakdownType: 'chain-breakdown' })
 			return sumProtocolTvlBreakdown(chart, {
 				...(chainFilterMode === 'exclude' && hasRealExcludedChains
@@ -205,16 +205,16 @@ export const getTvlBreakdownData = async (
 		return { name: t.name, data }
 	})
 
-	let totalSeries: [number, number][]
+	let totalSeries: Array<[number, number]>
 	const hasCategories = categoriesFilter.length > 0
 	const excludedChains = selectedChains.filter((c) => c.toLowerCase() !== 'all')
 
-	const buildCategorySeriesAll = async (): Promise<[number, number][]> => {
+	const buildCategorySeriesAll = async (): Promise<Array<[number, number]>> => {
 		const perCategoryAll = await mapWithConcurrency(categoriesFilter, 8, fetchCategorySeriesAll)
 		return Array.from(sumSeriesByTimestamp(perCategoryAll).entries()).sort((a, b) => a[0] - b[0])
 	}
 
-	const buildCategorySeriesExcludingChains = async (): Promise<[number, number][]> => {
+	const buildCategorySeriesExcludingChains = async (): Promise<Array<[number, number]>> => {
 		let series = await buildCategorySeriesAll()
 		if (excludedChains.length === 0) return series
 		const excludedRequests: Array<{ category: string; chain: string }> = []
@@ -230,7 +230,7 @@ export const getTvlBreakdownData = async (
 		return subtractSeries(series, sumExcludedCatsAcrossChains)
 	}
 
-	const buildTotalSeriesForChains = async (): Promise<[number, number][]> => {
+	const buildTotalSeriesForChains = async (): Promise<Array<[number, number]>> => {
 		if (chainFilterMode === 'exclude' && hasRealExcludedChains) {
 			const allTvl = await fetchAllChainTotalTvl()
 			const excludedPerChain = await mapWithConcurrency(excludedChains, 8, fetchChainTvlSingle)
@@ -240,7 +240,7 @@ export const getTvlBreakdownData = async (
 		return fetchChainTotalTvl(isAll ? ['all'] : selectedChains)
 	}
 
-	const buildCategorySeriesWithChains = async (): Promise<[number, number][]> => {
+	const buildCategorySeriesWithChains = async (): Promise<Array<[number, number]>> => {
 		if (chainFilterMode === 'exclude' && hasRealExcludedChains) {
 			return buildCategorySeriesExcludingChains()
 		}
@@ -270,7 +270,7 @@ export const getTvlBreakdownData = async (
 	}
 	const allTimestamps = Array.from(timestampSet).sort((a, b) => a - b)
 
-	const alignedProtocolSeries: ChartSeries[] = protocolSeries.map((s, idx) => {
+	const alignedProtocolSeries: Array<ChartSeries> = protocolSeries.map((s, idx) => {
 		const color = BREAKDOWN_COLOR_PALETTE[idx % BREAKDOWN_COLOR_PALETTE.length]
 		return {
 			name: s.name,
@@ -285,7 +285,7 @@ export const getTvlBreakdownData = async (
 		Array.from(sumSeriesByTimestamp(alignedProtocolSeries.map((s) => s.data)).entries()).sort((a, b) => a[0] - b[0])
 	)
 
-	const othersData: [number, number][] = allTimestamps.map((t, i) => {
+	const othersData: Array<[number, number]> = allTimestamps.map((t, i) => {
 		const total = alignedTotal[i]?.[1] || 0
 		const topSum = topSumPerTs[i]?.[1] || 0
 		const rest = Math.max(0, total - topSum)
@@ -299,7 +299,7 @@ export const getTvlBreakdownData = async (
 		: ({ entityType: 'protocol', totalProtocols: uniqueTotal } as const)
 	const othersEntityLabel = groupByParent ? (othersCount === 1 ? 'protocol family' : 'protocol families') : 'protocols'
 
-	const series: ChartSeries[] = [...alignedProtocolSeries]
+	const series: Array<ChartSeries> = [...alignedProtocolSeries]
 	if (hasOthers) {
 		series.push({
 			name: `Others (${othersCount} ${othersEntityLabel})`,

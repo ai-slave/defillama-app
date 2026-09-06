@@ -23,7 +23,7 @@ import type { IProtocolOverviewPageData } from './types'
 const SankeyChart = lazy(() => import('~/components/ECharts/SankeyChart'))
 
 const incomeStatementGroupByOptions = ['Yearly', 'Quarterly', 'Monthly', 'Cumulative'] as const
-const EMPTY_BREAKDOWN_LABELS: string[] = []
+const EMPTY_BREAKDOWN_LABELS: Array<string> = []
 const EMPTY_BREAKDOWN_METHODOLOGY: Record<string, string> = {}
 
 type IncomeStatementGroupBy = (typeof incomeStatementGroupByOptions)[number]
@@ -505,7 +505,7 @@ export const IncomeStatement = ({
 		const pushMetric = (
 			metricLabel: string,
 			metricData: Record<string, IncomeStatementDisplayMetric>,
-			breakdownLabels: string[]
+			breakdownLabels: Array<string>
 		) => {
 			if (isCumulative) {
 				const totalHeader = tableHeaders[0]?.[0]
@@ -828,8 +828,8 @@ const IncomeStatementByLabel = ({
 	dataType: IncomeStatementDataType
 	label: string
 	methodology: string
-	tableHeaders: [string, string, number][]
-	breakdownByLabels: string[]
+	tableHeaders: Array<[string, string, number]>
+	breakdownByLabels: Array<string>
 	breakdownMethodology: Record<string, string>
 	alignWithBreakdownRows: boolean
 }) => {

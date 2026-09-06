@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { expect, it, vi } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import type { IChainOverviewData } from '../types'
 
 vi.mock('~/layout', () => ({
@@ -25,7 +25,7 @@ vi.mock('~/containers/ChainOverview/WarningBanners', () => ({
 
 import ChainPage from '../../../pages/chain/[chain]'
 
-it('renders chain warning banners directly below the announcement before layout metrics', () => {
+test('renders chain warning banners directly below the announcement before layout metrics', () => {
 	const Page = ChainPage as React.ComponentType<IChainOverviewData>
 	const props = {
 		allChains: [],

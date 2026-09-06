@@ -23,7 +23,7 @@ export function buildChainChartPresentation(chartData: ChainOverviewChartData, i
 	const allYAxis: Array<[ChainChartLabels, number | undefined]> = []
 	const chartsInSeries = new Set<ChainChartLabels>()
 	const seriesValueSymbols = new Map<string, string>()
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 
 	for (const key in chartData) {
 		if (!isChainChartLabel(key)) continue

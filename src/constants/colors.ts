@@ -2,7 +2,7 @@ export const oldBlue = '#1f67d2'
 
 export const purple = '#9333ea' // Purple color for negative values
 
-export const CHART_COLORS: [string, string, string, ...string[]] = [
+export const CHART_COLORS: [string, string, string, ...Array<string>] = [
 	oldBlue,
 	'#E91E63', // Hot Pink
 	'#4CAF50', // Green
@@ -40,4 +40,4 @@ export const CHART_COLORS: [string, string, string, ...string[]] = [
 	'#8A2BE2', // Blue Violet
 	'#D2B48C', // Tan
 	'#FF4500' // Orange Red
-] satisfies [string, string, string, ...string[]]
+] satisfies [string, string, string, ...Array<string>]

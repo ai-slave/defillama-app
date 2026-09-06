@@ -12,7 +12,7 @@ interface DashboardPaywallModalProps {
 
 const REASON_CONFIG: Record<
 	PaywallReason,
-	{ icon: IIcon['name']; title: string; description: string; features: string[] }
+	{ icon: IIcon['name']; title: string; description: string; features: Array<string> }
 > = {
 	'dashboard-limit': {
 		icon: 'layout-grid',

@@ -1,16 +1,16 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { LpPerformanceInsights } from '../LiquidityProviders'
 import { marketMakerCriterionRawPercent } from '../units'
 
 describe('liquidity provider percentage units', () => {
-	it('converts Forgd criterion raw basis points into percentage values', () => {
+	test('converts Forgd criterion raw basis points into percentage values', () => {
 		expect(marketMakerCriterionRawPercent(47.97)).toBeCloseTo(0.4797)
 		expect(marketMakerCriterionRawPercent(2723.93)).toBeCloseTo(27.2393)
 		expect(marketMakerCriterionRawPercent(null)).toBeNull()
 	})
 
-	it('keeps snapshot percentage metrics on their existing scale', () => {
+	test('keeps snapshot percentage metrics on their existing scale', () => {
 		const html = renderToStaticMarkup(
 			<LpPerformanceInsights mmDepthPct={27.2393} mmVolumePct={0.4797} avgSpreadPct={0.2966} />
 		)

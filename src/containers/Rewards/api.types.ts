@@ -8,7 +8,7 @@ export interface RewardsApiRecord {
 	project_path: string | null
 	protocol: string
 	program_name?: string
-	reward_types?: RewardType[]
+	reward_types?: Array<RewardType>
 	lifecycle: RewardLifecycle
 	verification: RewardVerification
 	publish_status: 'Draft' | 'Published' | 'Needs Review'

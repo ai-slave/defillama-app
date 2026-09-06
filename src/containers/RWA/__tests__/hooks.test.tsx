@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IRWAAssetsOverview, RWAChartMetricKey } from '../api.types'
 import { normalizeRwaAssetGroup } from '../assetGroup'
 import type { RWAChartAggregationMode } from '../chartAggregation'
@@ -33,7 +33,7 @@ vi.mock('@tanstack/react-query', () => ({
 }))
 
 vi.mock('~/utils/async', () => ({
-	fetchJson: (...args: unknown[]) => fetchJsonMock(...args)
+	fetchJson: (...args: Array<unknown>) => fetchJsonMock(...args)
 }))
 
 function createSpotAsset(
@@ -152,7 +152,7 @@ function DatasetProbe({
 	mode: RWAChartAggregationMode
 	chartAssets?: IRWAAssetsOverview['assets']
 	initialDataset?: RWAPositionalChartDataset
-	initialOpenInterestDataset?: { source: RWAChartRow[]; dimensions: string[] } | null
+	initialOpenInterestDataset?: { source: Array<RWAChartRow>; dimensions: Array<string> } | null
 	selectedMetric?: 'onChainMcap' | 'activeMcap' | 'defiActiveTvl'
 	includeStablecoins?: boolean
 	includeGovernance?: boolean
@@ -206,8 +206,8 @@ function CategoryProbe({
 }: {
 	enabled: boolean
 	chartAssets: IRWAAssetsOverview['assets']
-	categories: string[]
-	selectedCategories: string[]
+	categories: Array<string>
+	selectedCategories: Array<string>
 	metric: RWAChartMetricKey
 }) {
 	const result = useRWAAssetCategoryPieChartData({
@@ -234,7 +234,7 @@ function FilteredAssetsProbe({
 	includeRwaPerps: boolean
 	includeCex?: boolean
 	hasPerpsOverlayBlockingFilters?: boolean
-	selectedCategoryOverride?: string[]
+	selectedCategoryOverride?: Array<string>
 }) {
 	const selectedCategories = Array.from(new Set(chartAssets.flatMap((asset) => asset.category ?? [])))
 	const selectedPlatforms = Array.from(
@@ -300,7 +300,7 @@ describe('useRwaChartDataset', () => {
 	beforeEach(() => {
 		useQueryMock.mockReset()
 		fetchJsonMock.mockReset()
-		useQueryMock.mockImplementation((options: { queryKey: unknown[] }) => {
+		useQueryMock.mockImplementation((options: { queryKey: Array<unknown> }) => {
 			if (options.queryKey[0] === 'rwa-perps-open-interest-chart') {
 				return {
 					data: {
@@ -321,7 +321,7 @@ describe('useRwaChartDataset', () => {
 		fetchJsonMock.mockResolvedValue([{ timestamp: 1, 'ondo/usdy': 100, 'superstate/ustb': 80 }])
 	})
 
-	it('regroups cached ticker rows without changing the fetch key', () => {
+	test('regroups cached ticker rows without changing the fetch key', () => {
 		const categoryMarkup = renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'category' }))
 		const platformMarkup = renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'platform' }))
 		const totalMarkup = renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'total' }))
@@ -342,7 +342,7 @@ describe('useRwaChartDataset', () => {
 		})
 	})
 
-	it('changes the fetch key when inclusion flags change', () => {
+	test('changes the fetch key when inclusion flags change', () => {
 		renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'category', includeStablecoins: false }))
 		renderToStaticMarkup(React.createElement(DatasetProbe, { mode: 'category', includeStablecoins: true }))
 
@@ -358,7 +358,7 @@ describe('useRwaChartDataset', () => {
 		})
 	})
 
-	it('uses the primary category when regrouping category chart rows', () => {
+	test('uses the primary category when regrouping category chart rows', () => {
 		const multiCategoryAssets: IRWAAssetsOverview['assets'] = [
 			createSpotAsset({
 				category: ['Treasuries', 'Private Credit'],
@@ -380,9 +380,9 @@ describe('useRwaChartDataset', () => {
 		expect(markup).not.toContain('Private Credit')
 	})
 
-	it('passes the resolved inclusion flags to the asset-breakdown fetcher', async () => {
+	test('passes the resolved inclusion flags to the asset-breakdown fetcher', async () => {
 		let capturedOptions: { queryFn: () => Promise<unknown> } | undefined
-		useQueryMock.mockImplementation((options: { queryKey: unknown[]; queryFn: () => Promise<unknown> }) => {
+		useQueryMock.mockImplementation((options: { queryKey: Array<unknown>; queryFn: () => Promise<unknown> }) => {
 			if (options.queryKey[0] === 'rwa-asset-chart') {
 				capturedOptions = options
 			}
@@ -409,7 +409,7 @@ describe('useRwaChartDataset', () => {
 		)
 	})
 
-	it('returns the prerendered dataset when runtime fetching is disabled', () => {
+	test('returns the prerendered dataset when runtime fetching is disabled', () => {
 		useQueryMock.mockReturnValue({
 			data: undefined,
 			isLoading: false,
@@ -439,8 +439,8 @@ describe('useRwaChartDataset', () => {
 		})
 	})
 
-	it('uses the prerendered RWA Perps OI dataset without runtime fetching in the default state', () => {
-		useQueryMock.mockImplementation((options: { queryKey: unknown[] }) => ({
+	test('uses the prerendered RWA Perps OI dataset without runtime fetching in the default state', () => {
+		useQueryMock.mockImplementation((options: { queryKey: Array<unknown> }) => ({
 			data: undefined,
 			isLoading: false,
 			error: null,
@@ -477,7 +477,7 @@ describe('useRwaChartDataset', () => {
 		})
 	})
 
-	it('ignores cached errors from disabled queries while using complete prerendered data', () => {
+	test('ignores cached errors from disabled queries while using complete prerendered data', () => {
 		useQueryMock.mockReturnValue({
 			data: undefined,
 			isLoading: false,
@@ -506,8 +506,8 @@ describe('useRwaChartDataset', () => {
 		expect(markup).not.toContain('stale cached error')
 	})
 
-	it('retries a missing prerendered RWA Perps OI dataset without refetching the spot dataset', () => {
-		useQueryMock.mockImplementation((options: { queryKey: unknown[] }) => ({
+	test('retries a missing prerendered RWA Perps OI dataset without refetching the spot dataset', () => {
+		useQueryMock.mockImplementation((options: { queryKey: Array<unknown> }) => ({
 			data:
 				options.queryKey[0] === getRwaOpenInterestChartQueryKey(false)[0]
 					? {
@@ -542,8 +542,8 @@ describe('useRwaChartDataset', () => {
 		})
 	})
 
-	it('switches OI venue scope without refetching spot history or reusing the wrong preloaded line', async () => {
-		useQueryMock.mockImplementation((options: { queryKey: unknown[] }) => ({
+	test('switches OI venue scope without refetching spot history or reusing the wrong preloaded line', async () => {
+		useQueryMock.mockImplementation((options: { queryKey: Array<unknown> }) => ({
 			data:
 				options.queryKey[0] === 'rwa-perps-open-interest-chart'
 					? {
@@ -587,7 +587,7 @@ describe('useRwaChartDataset', () => {
 		}
 	})
 
-	it('reports a failed CEX history request instead of showing the preloaded DEX total', () => {
+	test('reports a failed CEX history request instead of showing the preloaded DEX total', () => {
 		useQueryMock.mockReturnValue({ data: undefined, isLoading: false, error: new Error('CEX history unavailable') })
 		const markup = renderToStaticMarkup(
 			<DatasetProbe
@@ -607,7 +607,7 @@ describe('useRwaChartDataset', () => {
 		expect(markup).not.toContain('RWA Perps OI')
 	})
 
-	it('does not display a preloaded OI line when filters exclude all perps', () => {
+	test('does not display a preloaded OI line when filters exclude all perps', () => {
 		const markup = renderToStaticMarkup(
 			<DatasetProbe
 				mode="category"
@@ -624,7 +624,7 @@ describe('useRwaChartDataset', () => {
 		expect(getUseQueryOptions(1)).toMatchObject({ enabled: false })
 	})
 
-	it('reuses the prerendered dataset for Total by projecting the hidden Total column', () => {
+	test('reuses the prerendered dataset for Total by projecting the hidden Total column', () => {
 		useQueryMock.mockReturnValue({
 			data: undefined,
 			isLoading: false,
@@ -654,7 +654,7 @@ describe('useRwaChartDataset', () => {
 		})
 	})
 
-	it('overlays filtered RWA Perps OI on the selected chart metric', () => {
+	test('overlays filtered RWA Perps OI on the selected chart metric', () => {
 		const markup = renderToStaticMarkup(
 			React.createElement(DatasetProbe, {
 				mode: 'category',
@@ -684,19 +684,19 @@ describe('useRwaChartDataset', () => {
 })
 
 describe('resolveRWAOverviewInclusionFlag', () => {
-	it('uses the page default when the query param is absent', () => {
+	test('uses the page default when the query param is absent', () => {
 		expect(resolveRWAOverviewInclusionFlag(undefined, true)).toBe(true)
 		expect(resolveRWAOverviewInclusionFlag(undefined, false)).toBe(false)
 	})
 
-	it('lets an explicit false query override a true page default', () => {
+	test('lets an explicit false query override a true page default', () => {
 		expect(resolveRWAOverviewInclusionFlag('false', true)).toBe(false)
 		expect(resolveRWAOverviewInclusionFlag('true', false)).toBe(true)
 	})
 })
 
 describe('hasActiveChartFilters', () => {
-	it('ignores inclusion params that resolve to the current defaults', () => {
+	test('ignores inclusion params that resolve to the current defaults', () => {
 		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_ALL_INCLUSION)).toBe(false)
 		expect(hasActiveChartFilters({ includeGovernance: 'true' }, DEFAULT_ALL_INCLUSION)).toBe(false)
 		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_STABLECOIN_INCLUSION)).toBe(false)
@@ -705,24 +705,24 @@ describe('hasActiveChartFilters', () => {
 		expect(hasActiveChartFilters({ includeCex: 'true' }, DEFAULT_INCLUSION)).toBe(false)
 	})
 
-	it('treats inclusion params as active when they override the current defaults', () => {
+	test('treats inclusion params as active when they override the current defaults', () => {
 		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
 		expect(hasActiveChartFilters({ includeGovernance: 'false' }, DEFAULT_ALL_INCLUSION)).toBe(true)
 		expect(hasActiveChartFilters({ includeStablecoins: 'false' }, DEFAULT_STABLECOIN_INCLUSION)).toBe(true)
 		expect(hasActiveChartFilters({ includeStablecoins: 'true' }, DEFAULT_INCLUSION)).toBe(true)
 	})
 
-	it('still treats non-inclusion query filters as active', () => {
+	test('still treats non-inclusion query filters as active', () => {
 		expect(hasActiveChartFilters({ minActiveMcapToOnChainMcapPct: '10' }, DEFAULT_ALL_INCLUSION)).toBe(true)
 	})
 
-	it('treats the bridge toggle as an active chart filter', () => {
+	test('treats the bridge toggle as an active chart filter', () => {
 		expect(hasActiveChartFilters({ includeBridgeTvl: 'false' }, DEFAULT_INCLUSION)).toBe(true)
 	})
 })
 
 describe('useFilteredRwaAssets', () => {
-	it('filters perps rows when the RWA Perps toggle is disabled', () => {
+	test('filters perps rows when the RWA Perps toggle is disabled', () => {
 		const chartAssets: IRWAAssetsOverview['assets'] = [
 			createSpotAsset({ onChainMcap: { total: 100, breakdown: [] } }),
 			createPerpsAsset()
@@ -740,7 +740,7 @@ describe('useFilteredRwaAssets', () => {
 		).toEqual({ kinds: ['spot'], totalOpenInterest: 0 })
 	})
 
-	it('applies shared category filters to perps overlay rows', () => {
+	test('applies shared category filters to perps overlay rows', () => {
 		const chartAssets: IRWAAssetsOverview['assets'] = [
 			createSpotAsset({ category: ['Treasuries'] }),
 			createPerpsAsset({ category: ['Treasuries'], openInterest: 5 }),
@@ -760,7 +760,7 @@ describe('useFilteredRwaAssets', () => {
 		).toEqual({ kinds: ['spot', 'perps'], totalOpenInterest: 5 })
 	})
 
-	it('hides perps overlay rows when asset-only filters are active', () => {
+	test('hides perps overlay rows when asset-only filters are active', () => {
 		const chartAssets: IRWAAssetsOverview['assets'] = [
 			createSpotAsset({ onChainMcap: { total: 100, breakdown: [] } }),
 			createPerpsAsset({ openInterest: 5 })
@@ -805,7 +805,7 @@ describe('useRwaAssetGroupPieChartData', () => {
 		}
 	]
 
-	it.each(metricCases)('groups only the selected $metric values and keeps Unknown', ({ metric, expected }) => {
+	test.each(metricCases)('groups only the selected $metric values and keeps Unknown', ({ metric, expected }) => {
 		const chartAssets: IRWAAssetsOverview['assets'] = [
 			createSpotAsset({
 				assetGroup: 'Stablecoins',
@@ -836,7 +836,7 @@ describe('useRwaAssetGroupPieChartData', () => {
 		expect(Object.keys(data)).toEqual(['pieChartData', 'pieChartStackColors'])
 	})
 
-	it('returns empty data when disabled', () => {
+	test('returns empty data when disabled', () => {
 		const data = readJsonMarkup(
 			renderToStaticMarkup(
 				React.createElement(AssetGroupProbe, { enabled: false, chartAssets: assets, metric: 'onChainMcap' })
@@ -847,7 +847,7 @@ describe('useRwaAssetGroupPieChartData', () => {
 })
 
 describe('useRWAAssetCategoryPieChartData', () => {
-	it('attributes category totals only to the primary category', () => {
+	test('attributes category totals only to the primary category', () => {
 		const chartAssets: IRWAAssetsOverview['assets'] = [
 			createSpotAsset({
 				category: ['Treasuries', 'Private Credit'],

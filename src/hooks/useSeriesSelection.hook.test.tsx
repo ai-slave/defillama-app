@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { useAllSeriesSelection, useSeriesSelection, useSeriesSelectionWithFixedRemainder } from './useSeriesSelection'
 
 type SelectionResult = ReturnType<typeof useSeriesSelection>
@@ -17,8 +17,8 @@ function SelectionHarness({
 	allowEmptySelection,
 	onRender
 }: {
-	availableSeries: string[]
-	defaultSeries?: string[]
+	availableSeries: Array<string>
+	defaultSeries?: Array<string>
 	maxSelectedSeries?: number
 	selectionKey?: string
 	storeDefaultAsIntent?: boolean
@@ -62,7 +62,7 @@ describe('useSeriesSelection', () => {
 		})
 	}
 
-	it('preserves an explicit selection while reconciling changing options', async () => {
+	test('preserves an explicit selection while reconciling changing options', async () => {
 		await renderSelection({ availableSeries: ['A', 'B'], selectionKey: 'peers' })
 		act(() => latest.setSelectedSeries(['B']))
 		expect(latest.activeSeries).toEqual(['B'])
@@ -74,7 +74,7 @@ describe('useSeriesSelection', () => {
 		expect(latest.activeSeries).toEqual(['B'])
 	})
 
-	it('establishes fresh capped defaults when the selection key changes', async () => {
+	test('establishes fresh capped defaults when the selection key changes', async () => {
 		await renderSelection({ availableSeries: ['A', 'B', 'C'], maxSelectedSeries: 2, selectionKey: 'first' })
 		act(() => latest.setSelectedSeries(['C']))
 		expect(latest.activeSeries).toEqual(['C'])
@@ -89,7 +89,7 @@ describe('useSeriesSelection', () => {
 		expect(latest.selectedCharts).toEqual(new Set(['B', 'A']))
 	})
 
-	it('keeps a newly added peer when a selection is already at its cap', async () => {
+	test('keeps a newly added peer when a selection is already at its cap', async () => {
 		await renderSelection({ availableSeries: ['A', 'B', 'C'], maxSelectedSeries: 2 })
 		expect(latest.activeSeries).toEqual(['A', 'B'])
 
@@ -97,7 +97,7 @@ describe('useSeriesSelection', () => {
 		expect(latest.activeSeries).toEqual(['A', 'C'])
 	})
 
-	it('stores a complete default as intent while preserving explicit empty and resetting stale subsets', async () => {
+	test('stores a complete default as intent while preserving explicit empty and resetting stale subsets', async () => {
 		const options = {
 			storeDefaultAsIntent: true,
 			resetToDefaultWhenStale: true,
@@ -117,7 +117,7 @@ describe('useSeriesSelection', () => {
 		expect(latest.activeSeries).toEqual(['E', 'F'])
 	})
 
-	it('does not turn an explicit subset into all intent while an unavailable peer is missing', async () => {
+	test('does not turn an explicit subset into all intent while an unavailable peer is missing', async () => {
 		const options = {
 			storeDefaultAsIntent: true,
 			resetToDefaultWhenStale: true,
@@ -143,7 +143,7 @@ function AllSelectionHarness({
 	selectionKey,
 	onRender
 }: {
-	availableSeries: string[]
+	availableSeries: Array<string>
 	selectionKey?: string
 	onRender: (result: AllSelectionResult) => void
 }) {
@@ -153,12 +153,12 @@ function AllSelectionHarness({
 }
 
 describe('useAllSeriesSelection', () => {
-	it('expands all intent, preserves subsets, removes stale values, and keeps explicit empty', async () => {
+	test('expands all intent, preserves subsets, removes stale values, and keeps explicit empty', async () => {
 		let latest: AllSelectionResult
-		let observedSeries: string[][] = []
+		let observedSeries: Array<Array<string>> = []
 		const container = document.createElement('div')
 		const root = createRoot(container)
-		const render = async (availableSeries: string[]) => {
+		const render = async (availableSeries: Array<string>) => {
 			await act(async () => {
 				root.render(
 					<AllSelectionHarness
@@ -194,11 +194,11 @@ describe('useAllSeriesSelection', () => {
 		await act(async () => root.unmount())
 	})
 
-	it('does not restore upstream Others when a subset temporarily matches the available peers', async () => {
+	test('does not restore upstream Others when a subset temporarily matches the available peers', async () => {
 		let latest: AllSelectionResult
 		const container = document.createElement('div')
 		const root = createRoot(container)
-		const render = async (availableSeries: string[]) => {
+		const render = async (availableSeries: Array<string>) => {
 			await act(async () => {
 				root.render(
 					<AllSelectionHarness
@@ -228,8 +228,8 @@ function FixedRemainderSelectionHarness({
 	allowEmptySelection,
 	onRender
 }: {
-	availableSeries: string[]
-	defaultSeries?: string[]
+	availableSeries: Array<string>
+	defaultSeries?: Array<string>
 	allowEmptySelection?: boolean
 	onRender: (result: FixedRemainderSelectionResult) => void
 }) {
@@ -256,8 +256,8 @@ describe('useSeriesSelectionWithFixedRemainder', () => {
 	})
 
 	const renderSelection = async (
-		availableSeries: string[],
-		defaultSeries?: string[],
+		availableSeries: Array<string>,
+		defaultSeries?: Array<string>,
 		allowEmptySelection?: boolean
 	) => {
 		await act(async () => {
@@ -272,7 +272,7 @@ describe('useSeriesSelectionWithFixedRemainder', () => {
 		})
 	}
 
-	it('shows a fixed remainder only for the complete default peer selection', async () => {
+	test('shows a fixed remainder only for the complete default peer selection', async () => {
 		await renderSelection(['A', 'B', 'C', 'Others'], ['A', 'B'], true)
 		expect(latest.selectableSeries).toEqual(['A', 'B', 'C'])
 		expect(latest.activeSeries).toEqual(['A', 'B'])
@@ -292,7 +292,7 @@ describe('useSeriesSelectionWithFixedRemainder', () => {
 		expect(latest.renderedCharts).toEqual(new Set(['B', 'A', 'Others']))
 	})
 
-	it('leaves ordinary peer selections unchanged when no remainder exists', async () => {
+	test('leaves ordinary peer selections unchanged when no remainder exists', async () => {
 		await renderSelection(['A', 'B'])
 		expect(latest.selectableSeries).toEqual(['A', 'B'])
 		expect(latest.renderedCharts).toEqual(new Set(['A', 'B']))
@@ -304,7 +304,7 @@ describe('useSeriesSelectionWithFixedRemainder', () => {
 		expect(latest.renderedCharts).toEqual(new Set(['A']))
 	})
 
-	it('allows an explicitly empty selection when no remainder exists', async () => {
+	test('allows an explicitly empty selection when no remainder exists', async () => {
 		await renderSelection(['A', 'B'], undefined, true)
 
 		act(() => latest.setSelectedSeries([]))
@@ -312,7 +312,7 @@ describe('useSeriesSelectionWithFixedRemainder', () => {
 		expect(latest.renderedCharts).toEqual(new Set())
 	})
 
-	it('falls back to a valid default when the last selected series becomes stale', async () => {
+	test('falls back to a valid default when the last selected series becomes stale', async () => {
 		await renderSelection(['A', 'B'], undefined, true)
 		act(() => latest.setSelectedSeries(['B']))
 

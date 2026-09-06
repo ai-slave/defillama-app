@@ -86,7 +86,7 @@ function EquityTickerCell({ row }: { row: { id: string; original: IEquitiesListC
 	)
 }
 
-const columns: ColumnDef<IEquitiesListCompanyRow>[] = [
+const columns: Array<ColumnDef<IEquitiesListCompanyRow>> = [
 	columnHelper.accessor('ticker', {
 		header: 'Ticker',
 		enableSorting: false,
@@ -599,7 +599,7 @@ const DATA_COLUMN_IDS = [
 	'employeeCount'
 ] as const
 
-const PRESET_VISIBLE_COLUMNS: Record<EquitiesPreset, readonly string[]> = {
+const PRESET_VISIBLE_COLUMNS: Record<EquitiesPreset, ReadonlyArray<string>> = {
 	'Market Cap': [
 		'country',
 		'marketCap',
@@ -713,7 +713,7 @@ function EquitiesRankingsTable({
 }: {
 	preset: EquitiesPreset
 	serverTable: EquitiesServerTable
-	filters: EquityActiveFilter[]
+	filters: Array<EquityActiveFilter>
 	sharedControls: ReactNode
 	filterPills: ReactNode
 	presetsRow: ReactNode
@@ -769,12 +769,12 @@ function EquitiesRankingsTable({
 	// The Columns picker reflects and edits the user's persisted intent, not the effective
 	// (filter-forced) visibility — so toggles here always persist and a filtered column shows
 	// unchecked even while it is force-shown in the table.
-	const selectedColumns: string[] = []
+	const selectedColumns: Array<string> = []
 	for (const column of table.getAllLeafColumns()) {
 		if (columnVisibility[column.id] !== false) selectedColumns.push(column.id)
 	}
 
-	const setColumnOptions = (newOptions: string[] | ((prev: string[]) => string[])) => {
+	const setColumnOptions = (newOptions: Array<string> | ((prev: Array<string>) => Array<string>)) => {
 		const resolvedOptions = typeof newOptions === 'function' ? newOptions(selectedColumns) : newOptions
 		startTransition(() =>
 			setColumnVisibility(() => {
@@ -788,7 +788,7 @@ function EquitiesRankingsTable({
 	}
 
 	const prepareCsv = () => {
-		const csvColumns: EquitiesCsvColumn[] = table.getVisibleLeafColumns().map((column) => ({
+		const csvColumns: Array<EquitiesCsvColumn> = table.getVisibleLeafColumns().map((column) => ({
 			id: column.id as keyof IEquitiesListCompanyRow,
 			header: typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id
 		}))
@@ -900,7 +900,7 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 
 	const currentSorting = serverTable.sorting
 	const setFilters = useCallback(
-		(nextFilters: EquityActiveFilter[]) => {
+		(nextFilters: Array<EquityActiveFilter>) => {
 			const update: Record<string, string | undefined> = {
 				[EQUITY_FILTERS_QUERY_KEY]: serializeEquityFiltersQuery(nextFilters),
 				page: undefined
@@ -987,7 +987,7 @@ export function EquitiesOverview({ initialData, initialDataGeneratedAt }: IEquit
 						{isMorePresetsManuallyOpen && !isMorePresetActive ? (
 							<Button
 								type="button"
-								aria-expanded={true}
+								aria-expanded
 								onClick={() => setIsMorePresetsManuallyOpen(false)}
 								variant="secondary"
 								size="sm"

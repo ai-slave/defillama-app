@@ -6,7 +6,7 @@ export interface WebMobilePushStatus {
 	enabled: boolean
 }
 
-export const COMPLETION_SEEN_REQUEST_TIMEOUT_MS = 2_000
+export const COMPLETION_SEEN_REQUEST_TIMEOUT_MS = 2000
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value)

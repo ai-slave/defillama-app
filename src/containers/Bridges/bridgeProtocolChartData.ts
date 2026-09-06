@@ -12,7 +12,7 @@ function addKnownBridgeProtocolLeg(left: number | null, right: number | null): n
 }
 
 export function getBridgeProtocolCompletedDayVolumes(
-	volumeChartDataByChain: BridgeVolumeChartPoint[] | null | undefined,
+	volumeChartDataByChain: Array<BridgeVolumeChartPoint> | null | undefined,
 	currentTimeMs: number = Date.now()
 ): { current: BridgeVolumeChartPoint; previous: BridgeVolumeChartPoint } | null {
 	return getTimeSeriesPeriodPair(volumeChartDataByChain, 1, (point) => point.date, {
@@ -28,7 +28,7 @@ export function buildBridgeProtocolAllChainsVolumeData({
 }: {
 	active: boolean
 	groupBy: ChartTimeGrouping
-	volumeChartDataByChain: BridgeVolumeChartPoint[] | null | undefined
+	volumeChartDataByChain: Array<BridgeVolumeChartPoint> | null | undefined
 }) {
 	const source: Array<[number, number | null]> = []
 
@@ -66,7 +66,7 @@ export function getBridgeProtocolPrevDayVolumeValue({
 	currentTimeMs = Date.now()
 }: {
 	isAllChains: boolean
-	volumeChartDataByChain: BridgeVolumeChartPoint[] | null | undefined
+	volumeChartDataByChain: Array<BridgeVolumeChartPoint> | null | undefined
 	totalDepositedUSD: number | null | undefined
 	totalWithdrawnUSD: number | null | undefined
 	dataTimestamp?: number
@@ -93,7 +93,7 @@ export function buildBridgeProtocolInflowsData({
 }: {
 	active: boolean
 	groupBy: ChartTimeGrouping
-	volumeChartDataByChain: BridgeVolumeChartPoint[] | null | undefined
+	volumeChartDataByChain: Array<BridgeVolumeChartPoint> | null | undefined
 }) {
 	const source: Array<[number, number | null, number | null]> = []
 

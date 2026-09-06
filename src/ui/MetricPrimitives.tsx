@@ -65,7 +65,7 @@ export const SubMetricRow = ({
 		extra={extra}
 		className={className}
 		valueClassName={valueClassName}
-		dashed={true}
+		dashed
 	/>
 )
 

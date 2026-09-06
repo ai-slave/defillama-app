@@ -11,7 +11,7 @@ import type { ITreasuryRow, TreasuryTokenBreakdowns } from './types'
 
 const columnHelper = createColumnHelper<ITreasuryRow>()
 
-export function Treasuries({ data, entity }: { data: ITreasuryRow[]; entity: boolean }) {
+export function Treasuries({ data, entity }: { data: Array<ITreasuryRow>; entity: boolean }) {
 	const tableColumns = useMemo(
 		() =>
 			entity
@@ -29,9 +29,9 @@ export function Treasuries({ data, entity }: { data: ITreasuryRow[]; entity: boo
 		<TableWithSearch
 			data={data}
 			columns={tableColumns}
-			columnToSearch={'name'}
-			placeholder={'Search projects...'}
-			header={'Treasuries'}
+			columnToSearch="name"
+			placeholder="Search projects..."
+			header="Treasuries"
 			headingAs="h1"
 			sortingState={sortingState}
 			csvFileName={entity ? 'entities' : 'treasuries'}
@@ -212,7 +212,7 @@ const Breakdown = ({ data }: { data: [string, number] }) => {
 			<span
 				style={{ '--color': color } as CSSProperties & Record<`--${string}`, string>}
 				className="size-4 rounded-xs bg-(--color)"
-			></span>
+			/>
 			<span className="min-w-0 break-words">{name}</span>
 		</span>
 	)
@@ -222,13 +222,13 @@ const BreakdownTooltipContent = ({
 	dominance,
 	protocolName
 }: {
-	dominance: [string, number][]
+	dominance: Array<[string, number]>
 	protocolName: string
 }) => {
 	return (
 		<span className="flex flex-col gap-1">
 			{dominance.map((dom) => (
-				<Breakdown data={dom} key={dom[0] + dom[1] + protocolName + 'tooltip-content'} />
+				<Breakdown data={dom} key={`${dom[0] + dom[1] + protocolName}tooltip-content`} />
 			))}
 		</span>
 	)

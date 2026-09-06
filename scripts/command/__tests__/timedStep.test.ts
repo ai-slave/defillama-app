@@ -1,19 +1,19 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { CommandExitError, timedStep } from '../timedStep'
 
 describe('timedStep', () => {
-	it('returns a successful timed result', async () => {
+	test('returns a successful timed result', async () => {
 		const logger = { log: vi.fn() }
-		const now = vi.fn().mockReturnValueOnce(1_000).mockReturnValueOnce(3_500)
+		const now = vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(3500)
 
 		const result = await timedStep('Example', async () => 'done', { logger, now })
 
-		expect(result).toEqual({ durationMs: 2_500, name: 'Example', status: 'success', value: 'done' })
+		expect(result).toEqual({ durationMs: 2500, name: 'Example', status: 'success', value: 'done' })
 		expect(logger.log).toHaveBeenCalledWith('[dev:prepare] Example started')
 		expect(logger.log).toHaveBeenCalledWith('[dev:prepare] Example finished in 3s')
 	})
 
-	it('captures command exit failures without running callers past the result', async () => {
+	test('captures command exit failures without running callers past the result', async () => {
 		const logger = { log: vi.fn() }
 
 		const result = await timedStep(
@@ -29,7 +29,7 @@ describe('timedStep', () => {
 		expect(logger.log).toHaveBeenCalledWith('[dev:prepare] Example error: failed')
 	})
 
-	it('logs multiline failure details so upstream URLs are visible', async () => {
+	test('logs multiline failure details so upstream URLs are visible', async () => {
 		const logger = { log: vi.fn() }
 
 		await timedStep(

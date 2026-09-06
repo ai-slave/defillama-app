@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { oldBlue, purple } from '~/constants/colors'
 import { domChartCrosshairStyles } from '~/ui/ChartTooltip'
 import { FeesGeneratedChart } from './FeesGeneratedChart'
@@ -59,7 +59,7 @@ describe('ChainOverview small charts', () => {
 		await act(async () => chart.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX, clientY: 10 })))
 	}
 
-	it('keeps empty charts empty', async () => {
+	test('keeps empty charts empty', async () => {
 		await act(async () => root.render(<SmolBarChart series={[]} />))
 		expect(container.innerHTML).toBe('')
 
@@ -73,7 +73,7 @@ describe('ChainOverview small charts', () => {
 		expect(container.innerHTML).toBe('')
 	})
 
-	it('preserves zero and negative bar rendering colors', async () => {
+	test('preserves zero and negative bar rendering colors', async () => {
 		await act(async () =>
 			root.render(
 				<SmolBarChart
@@ -92,7 +92,7 @@ describe('ChainOverview small charts', () => {
 		expect(bars[1]?.style.backgroundColor).toBe(purple)
 	})
 
-	it('preserves empty, singleton, straight, and smoothed line paths', () => {
+	test('preserves empty, singleton, straight, and smoothed line paths', () => {
 		expect(smoothPath([])).toBe('')
 		expect(smoothPath([[1, 2]])).toBe('')
 		expect(
@@ -110,7 +110,7 @@ describe('ChainOverview small charts', () => {
 		).toBe('M0,0 C1,1 4,6 6,6 C8,6 11,1 12,0')
 	})
 
-	it('moves the tooltip within one bucket without rerendering the chart', async () => {
+	test('moves the tooltip within one bucket without rerendering the chart', async () => {
 		hoverHarnessRenderCount = 0
 		await act(async () => root.render(<HoverHarness dataLength={4} />))
 		const chart = getChartContainer()
@@ -131,7 +131,7 @@ describe('ChainOverview small charts', () => {
 		expect(tooltip.textContent).toBe('1')
 	})
 
-	it('clears hover once for a zero-width container', async () => {
+	test('clears hover once for a zero-width container', async () => {
 		hoverHarnessRenderCount = 0
 		await act(async () => root.render(<HoverHarness dataLength={4} />))
 		const chart = getChartContainer()
@@ -155,7 +155,7 @@ describe('ChainOverview small charts', () => {
 		expect(tooltip.style.top).not.toContain('NaN')
 	})
 
-	it('clears outside pointers and maps the exact right edge to the final bucket', async () => {
+	test('clears outside pointers and maps the exact right edge to the final bucket', async () => {
 		await act(async () => root.render(<HoverHarness dataLength={4} />))
 		const chart = getChartContainer()
 		const tooltip = chart.firstElementChild
@@ -177,7 +177,7 @@ describe('ChainOverview small charts', () => {
 		expect(tooltip.textContent).toBe('3')
 	})
 
-	it('invalidates in-range stale hovers when each chart shrinks from four points to two', async () => {
+	test('invalidates in-range stale hovers when each chart shrinks from four points to two', async () => {
 		const hoverCases = [
 			{
 				name: 'small line chart',
@@ -292,7 +292,7 @@ describe('ChainOverview small charts', () => {
 		}
 	})
 
-	it('does not render an out-of-range stale hover after the series becomes shorter', async () => {
+	test('does not render an out-of-range stale hover after the series becomes shorter', async () => {
 		await act(async () =>
 			root.render(
 				<SmolLineChart
@@ -312,7 +312,7 @@ describe('ChainOverview small charts', () => {
 		expect(container.textContent).toBe('')
 	})
 
-	it('does not open a stale fees route after the series length changes', async () => {
+	test('does not open a stale fees route after the series length changes', async () => {
 		const open = vi.spyOn(window, 'open').mockReturnValue(null)
 		await act(async () =>
 			root.render(

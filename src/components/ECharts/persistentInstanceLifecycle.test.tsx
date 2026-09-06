@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { TreemapNode } from './TreemapChart/types'
 
 const mocks = vi.hoisted(() => {
@@ -32,7 +32,7 @@ const mocks = vi.hoisted(() => {
 	})
 	return {
 		graphic: {
-			LinearGradient: vi.fn(function (...args: unknown[]) {
+			LinearGradient: vi.fn(function (...args: Array<unknown>) {
 				return { args }
 			})
 		},
@@ -97,7 +97,7 @@ describe('persistent ECharts instances', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('reuses the candlestick instance when its data changes', async () => {
+	test('reuses the candlestick instance when its data changes', async () => {
 		const initialData: Array<[number, number, number, number, number, number]> = [[1, 10, 11, 9, 12, 100]]
 		const updatedData: Array<[number, number, number, number, number, number]> = [[2, 11, 12, 10, 13, 200]]
 		const onReady = vi.fn()
@@ -120,7 +120,7 @@ describe('persistent ECharts instances', () => {
 		expect(onReady).toHaveBeenLastCalledWith(null)
 	})
 
-	it('keeps Bollinger helper series out of the candlestick legend', async () => {
+	test('keeps Bollinger helper series out of the candlestick legend', async () => {
 		await act(async () =>
 			root.render(
 				<CandlestickChart
@@ -148,7 +148,7 @@ describe('persistent ECharts instances', () => {
 		])
 	})
 
-	it.each([
+	test.each([
 		{ name: 'line', render: (data: Array<[number, number]>) => <SparklineChart data={data} areaColor="#269f3c" /> },
 		{ name: 'bar', render: (data: Array<[number, number]>) => <BarSparkline data={data} /> }
 	])('reuses the $name sparkline instance while data remains non-empty', async ({ render }) => {
@@ -167,7 +167,7 @@ describe('persistent ECharts instances', () => {
 		expect(mocks.init).toHaveBeenCalledTimes(2)
 	})
 
-	it('keeps negative bar sparkline values inside the padded y-axis extent', async () => {
+	test('keeps negative bar sparkline values inside the padded y-axis extent', async () => {
 		await act(async () =>
 			root.render(
 				<BarSparkline
@@ -197,9 +197,9 @@ describe('persistent ECharts instances', () => {
 		expect(nonNegativeYAxis.min({ min: 0, max: 10 })).toBe(0)
 	})
 
-	it('reuses the treemap instance and its event subscriptions across data updates', async () => {
-		const initialData: TreemapNode[] = [{ name: 'Asset', path: 'Group/Asset', value: [100, null, null] }]
-		const updatedData: TreemapNode[] = [{ name: 'Asset', path: 'Group/Asset', value: [200, null, null] }]
+	test('reuses the treemap instance and its event subscriptions across data updates', async () => {
+		const initialData: Array<TreemapNode> = [{ name: 'Asset', path: 'Group/Asset', value: [100, null, null] }]
+		const updatedData: Array<TreemapNode> = [{ name: 'Asset', path: 'Group/Asset', value: [200, null, null] }]
 
 		await act(async () => root.render(<TreemapChart treeData={initialData} variant="rwa" />))
 		const instance = mocks.instances[0]
@@ -219,8 +219,8 @@ describe('persistent ECharts instances', () => {
 		expect(instance.dispose).toHaveBeenCalledOnce()
 	})
 
-	it('keeps narrative restore controls and label content while passing canonical data through', async () => {
-		const data: TreemapNode[] = [
+	test('keeps narrative restore controls and label content while passing canonical data through', async () => {
+		const data: Array<TreemapNode> = [
 			{
 				name: 'Lending',
 				path: 'Lending',
@@ -244,7 +244,7 @@ describe('persistent ECharts instances', () => {
 		).toContain('{name|Aave}')
 	})
 
-	it('reuses the horizontal bar instance and its observer subscription across data updates', async () => {
+	test('reuses the horizontal bar instance and its observer subscription across data updates', async () => {
 		await act(async () => root.render(<HBarChart categories={['A']} values={[10]} />))
 		const instance = mocks.instances[0]
 
@@ -264,7 +264,7 @@ describe('persistent ECharts instances', () => {
 		expect(instance.dispose).toHaveBeenCalledOnce()
 	})
 
-	it('shows every grouped horizontal bar series in the axis tooltip', async () => {
+	test('shows every grouped horizontal bar series in the axis tooltip', async () => {
 		await act(async () =>
 			root.render(
 				<HBarChart
@@ -289,7 +289,7 @@ describe('persistent ECharts instances', () => {
 		expect(tooltip).toContain('BUsers: $20')
 	})
 
-	it('reuses the scatter instance when its data changes', async () => {
+	test('reuses the scatter instance when its data changes', async () => {
 		await act(async () => root.render(<ScatterChart chartData={[{ projectName: 'Project', sigma: 10, mu: 20 }]} />))
 		const instance = mocks.instances[0]
 
@@ -304,7 +304,7 @@ describe('persistent ECharts instances', () => {
 		expect(instance.dispose).toHaveBeenCalledOnce()
 	})
 
-	it('updates the radar axis color when only the app theme changes', async () => {
+	test('updates the radar axis color when only the app theme changes', async () => {
 		const scores = {
 			composite: 9,
 			tradingKpis: 8,
@@ -325,7 +325,7 @@ describe('persistent ECharts instances', () => {
 		expect(instance.setOption.mock.calls.at(-1)?.[0].radar.axisName.color).toBe('#878787')
 	})
 
-	it('reuses the RWA flow treemap instance across data updates', async () => {
+	test('reuses the RWA flow treemap instance across data updates', async () => {
 		const initialNode = { name: 'A', value: [100, 1] as [number, number], netFlowUsd: 1 }
 		const updatedNode = { name: 'A', value: [200, 2] as [number, number], netFlowUsd: 2 }
 
@@ -342,7 +342,7 @@ describe('persistent ECharts instances', () => {
 		expect(instance.dispose).toHaveBeenCalledOnce()
 	})
 
-	it('groups interleaved yield scatter points in first-seen project order', async () => {
+	test('groups interleaved yield scatter points in first-seen project order', async () => {
 		await act(async () =>
 			root.render(
 				<ScatterChart

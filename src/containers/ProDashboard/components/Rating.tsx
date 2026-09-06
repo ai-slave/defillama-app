@@ -152,7 +152,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className={`flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand`}
+							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand"
 						>
 							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
 							Submit Rating
@@ -231,7 +231,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className={`flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand`}
+							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand"
 						>
 							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
 							Submit Rating

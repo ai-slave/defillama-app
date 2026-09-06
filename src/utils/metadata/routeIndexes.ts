@@ -9,19 +9,19 @@ import { fetchMetadataJson } from './http'
 import { dedupeNonEmpty } from './strings'
 
 export type NarrativeCategoriesMetadata = {
-	ids: string[]
+	ids: Array<string>
 	nameById: Record<string, string>
 }
 
 export type OracleRoutesMetadata = {
 	oracleNameBySlug: Record<string, string>
 	chainNameBySlug: Record<string, string>
-	chainSlugsByOracleSlug: Record<string, string[]>
+	chainSlugsByOracleSlug: Record<string, Array<string>>
 }
 
 export type DigitalAssetTreasuryRoutesMetadata = {
-	assetSlugs: string[]
-	companySlugs: string[]
+	assetSlugs: Array<string>
+	companySlugs: Array<string>
 }
 
 export const EMPTY_NARRATIVE_CATEGORIES: NarrativeCategoriesMetadata = {
@@ -44,7 +44,7 @@ export type RouteIndexesMetadata = {
 	narrativeCategories: NarrativeCategoriesMetadata
 	oracleRoutes: OracleRoutesMetadata
 	digitalAssetTreasuryRoutes: DigitalAssetTreasuryRoutesMetadata
-	stablecoinPeggedAssetSlugs: string[]
+	stablecoinPeggedAssetSlugs: Array<string>
 }
 
 export const EMPTY_ROUTE_INDEXES: RouteIndexesMetadata = {
@@ -54,9 +54,9 @@ export const EMPTY_ROUTE_INDEXES: RouteIndexesMetadata = {
 	stablecoinPeggedAssetSlugs: []
 }
 
-function dedupeRouteValuesBySlug(values: string[]): string[] {
+function dedupeRouteValuesBySlug(values: Array<string>): Array<string> {
 	const slugs = new Set<string>()
-	const routes: string[] = []
+	const routes: Array<string> = []
 
 	for (const value of values) {
 		const valueSlug = slug(value)
@@ -68,8 +68,8 @@ function dedupeRouteValuesBySlug(values: string[]): string[] {
 	return routes
 }
 
-export function buildNarrativeCategoriesMetadata(info: ICategoryInfoApiItem[]): NarrativeCategoriesMetadata {
-	const ids: string[] = []
+export function buildNarrativeCategoriesMetadata(info: Array<ICategoryInfoApiItem>): NarrativeCategoriesMetadata {
+	const ids: Array<string> = []
 	const nameById: Record<string, string> = {}
 
 	for (const item of info) {
@@ -92,7 +92,7 @@ export function buildOracleRoutesMetadata({
 }: Pick<IOracleMetrics, 'oracles' | 'chainsByOracle' | 'protocolsByOracleChain'>): OracleRoutesMetadata {
 	const oracleNameBySlug: Record<string, string> = {}
 	const chainNameBySlug: Record<string, string> = {}
-	const chainSlugsByOracleSlug: Record<string, string[]> = {}
+	const chainSlugsByOracleSlug: Record<string, Array<string>> = {}
 
 	for (const oracleName in oracles) {
 		const oracleSlug = slug(oracleName)
@@ -100,7 +100,7 @@ export function buildOracleRoutesMetadata({
 		oracleNameBySlug[oracleSlug] = oracleName
 
 		const membersByChain = protocolsByOracleChain[oracleName] ?? {}
-		const chainNames: string[] = []
+		const chainNames: Array<string> = []
 		for (const chainName of chainsByOracle[oracleName] ?? []) {
 			if (membersByChain[chainName] !== undefined) chainNames.push(chainName)
 		}
@@ -108,7 +108,7 @@ export function buildOracleRoutesMetadata({
 			if (!chainNames.includes(chainName)) chainNames.push(chainName)
 		}
 
-		const chainSlugs: string[] = []
+		const chainSlugs: Array<string> = []
 		for (const chainName of chainNames) {
 			const chainSlug = slug(chainName)
 			if (!chainSlug) continue
@@ -132,7 +132,7 @@ export function buildDigitalAssetTreasuryRoutesMetadata(
 		.sort(([, a], [, b]) => (b.totalUsdValue ?? 0) - (a.totalUsdValue ?? 0))
 		.map(([asset]) => slug(asset))
 
-	const companySlugs: string[] = []
+	const companySlugs: Array<string> = []
 	const includedInstitutionIds = new Set<number>()
 	for (const institution of data.institutions) {
 		includedInstitutionIds.add(institution.institutionId)
@@ -153,8 +153,8 @@ export function buildDigitalAssetTreasuryRoutesMetadata(
 	}
 }
 
-export function buildStablecoinPeggedAssetSlugs(config: Record<string, string>): string[] {
-	const assetSlugs: string[] = []
+export function buildStablecoinPeggedAssetSlugs(config: Record<string, string>): Array<string> {
+	const assetSlugs: Array<string> = []
 	for (const asset in config) assetSlugs.push(slug(asset))
 	return dedupeNonEmpty(assetSlugs)
 }
@@ -163,7 +163,7 @@ export async function fetchMetadataRouteIndexes(): Promise<RouteIndexesMetadata>
 	const [narrativeCategories, oracleRoutes, digitalAssetTreasuryRoutes, stablecoinPeggedAssetSlugs] = await Promise.all(
 		[
 			(async () =>
-				buildNarrativeCategoriesMetadata(await fetchMetadataJson<ICategoryInfoApiItem[]>(CATEGORY_INFO_API)))(),
+				buildNarrativeCategoriesMetadata(await fetchMetadataJson<Array<ICategoryInfoApiItem>>(CATEGORY_INFO_API)))(),
 			(async () => {
 				const metrics = await fetchOracleMetrics()
 				return buildOracleRoutesMetadata(metrics)

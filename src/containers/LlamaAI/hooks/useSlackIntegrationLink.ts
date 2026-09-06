@@ -22,7 +22,7 @@ export type SlackIntegrationState =
 	| { status: 'loading' }
 	| { status: 'starting' }
 	| { status: 'pending'; expiresAt: string }
-	| { status: 'linked'; workspaces: SlackLink[] }
+	| { status: 'linked'; workspaces: Array<SlackLink> }
 	| { status: 'error'; message: string }
 
 export function getSlackStatusRefetchInterval(status: SlackStatus | null | undefined) {

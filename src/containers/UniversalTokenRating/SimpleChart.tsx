@@ -25,7 +25,7 @@ export type SimpleSeries = {
 	name: string
 	type: 'line' | 'area' | 'bar'
 	color: string
-	data: SimpleSeriesPoint[]
+	data: Array<SimpleSeriesPoint>
 	stack?: string
 }
 
@@ -77,7 +77,7 @@ function toEChartsSeries(entry: SimpleSeries, yAxisIndex?: number) {
 }
 
 export function buildSeriesOption(
-	series: SimpleSeries[],
+	series: Array<SimpleSeries>,
 	axisColor?: string,
 	format: AxisFormat = 'usd',
 	yTicks?: number
@@ -116,7 +116,7 @@ export function ChartCaption({ children }: { children: ReactNode }) {
 	return <p className="-mb-2 text-center label-sm text-secondary">{children}</p>
 }
 
-export function ChartLegend({ items }: { items: { label: string; color: string }[] }) {
+export function ChartLegend({ items }: { items: Array<{ label: string; color: string }> }) {
 	return (
 		<div className="flex flex-wrap items-center gap-x-4 gap-y-1 pl-4">
 			{items.map((item) => (
@@ -129,7 +129,7 @@ export function ChartLegend({ items }: { items: { label: string; color: string }
 	)
 }
 
-export function buildCandleOption(candles: SimpleCandle[], axisColor?: string): EChartsOption {
+export function buildCandleOption(candles: Array<SimpleCandle>, axisColor?: string): EChartsOption {
 	return {
 		...baseOption(axisColor),
 		yAxis: {

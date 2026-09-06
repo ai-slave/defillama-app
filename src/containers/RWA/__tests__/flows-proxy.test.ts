@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { fetchRWAFlowAssetBreakdown, fetchRWAFlowsAssetGroup, fetchRWAFlowsOverview } from '../api'
 import {
 	useRWAAssetFlows,
@@ -16,7 +16,7 @@ vi.mock('@tanstack/react-query', () => ({
 }))
 
 vi.mock('~/utils/async', () => ({
-	fetchJson: (...args: unknown[]) => fetchJsonMock(...args)
+	fetchJson: (...args: Array<unknown>) => fetchJsonMock(...args)
 }))
 
 beforeEach(() => {
@@ -25,7 +25,7 @@ beforeEach(() => {
 })
 
 describe('RWA flow browser routes', () => {
-	it('fetches every flow scope through the local public API', async () => {
+	test('fetches every flow scope through the local public API', async () => {
 		useRWAFlowSummary()
 		useRWAAssetFlows('ondo/usdy', true)
 		useRWAFlowOverviewSplitWithFilters('assetGroup', true, false, true)
@@ -49,7 +49,7 @@ describe('RWA flow browser routes', () => {
 })
 
 describe('RWA flow proxy mapping', () => {
-	it('maps overview and scoped routes to the direct RWA upstream', () => {
+	test('maps overview and scoped routes to the direct RWA upstream', () => {
 		expect(buildRWAFlowProxyUrl({ path: ['overview'], splitBy: 'category' })).toMatch(
 			/\/rwa\/flows\/overview\?splitBy=category$/
 		)
@@ -71,7 +71,7 @@ describe('RWA flow proxy mapping', () => {
 		)
 	})
 
-	it('preserves validated asset flow parameters and encoded canonical ids', () => {
+	test('preserves validated asset flow parameters and encoded canonical ids', () => {
 		expect(
 			buildRWAFlowProxyUrl({
 				path: ['asset', 'ondo/usdy'],
@@ -82,7 +82,7 @@ describe('RWA flow proxy mapping', () => {
 		).toMatch(/\/rwa\/flows\/ondo%2Fusdy\?start=1700000000&end=1700086400&withMcap=true$/)
 	})
 
-	it('rejects unknown paths and invalid query values before fetching upstream', async () => {
+	test('rejects unknown paths and invalid query values before fetching upstream', async () => {
 		expect(buildRWAFlowProxyUrl({ path: ['leaderboard'] })).toBeNull()
 		expect(buildRWAFlowProxyUrl({ path: ['overview'], splitBy: 'issuer' })).toBeNull()
 		expect(buildRWAFlowProxyUrl({ path: ['overview'], splitBy: 'assetGroup', includeStablecoin: 'yes' })).toBeNull()
@@ -98,7 +98,7 @@ describe('RWA flow proxy mapping', () => {
 		expect(fetchJsonMock).not.toHaveBeenCalled()
 	})
 
-	it('caches and returns the serialized upstream payload', async () => {
+	test('caches and returns the serialized upstream payload', async () => {
 		fetchJsonMock.mockResolvedValue({ series: [{ timestamp: 1, netFlowUsd: 2 }] })
 		const request = {
 			method: 'GET',
@@ -120,7 +120,7 @@ describe('RWA flow proxy mapping', () => {
 })
 
 describe('RWA flow server fetchers', () => {
-	it('matches the retained aggregate and asset-breakdown API routes', async () => {
+	test('matches the retained aggregate and asset-breakdown API routes', async () => {
 		await fetchRWAFlowsOverview({
 			splitBy: 'assetGroup',
 			includeStablecoin: false,

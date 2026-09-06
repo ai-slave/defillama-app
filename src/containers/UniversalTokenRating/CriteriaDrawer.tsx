@@ -9,8 +9,8 @@ import type { UtrCriterionBreakdown, UtrCriterionDoc, UtrGradingConfig } from '.
 export type CriteriaDrawerState = {
 	title: string
 	axis: 'disclosure' | 'performance'
-	criteria: UtrCriterionBreakdown[]
-	docs: UtrCriterionDoc[]
+	criteria: Array<UtrCriterionBreakdown>
+	docs: Array<UtrCriterionDoc>
 	activeKey: string | null
 }
 
@@ -54,7 +54,7 @@ export function CriteriaDrawer({
 	onSelect: (key: string) => void
 	onClose: () => void
 }) {
-	if (!state || !state.criteria.length) return null
+	if (!state || state.criteria.length === 0) return null
 	const active = state.criteria.find((criterion) => criterion.key === state.activeKey) ?? state.criteria[0]
 	const activeIndex = state.criteria.indexOf(active)
 	const doc = state.docs.find((entry) => entry.key === active.key) ?? null

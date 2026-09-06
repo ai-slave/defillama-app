@@ -1,6 +1,6 @@
 import type { MultiSeriesTimeSeriesDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IAdapterChainMetrics, IAdapterChart, IAdapterProtocolMetrics } from './api.types'
-import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
+import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
 
 // Chain-level adapter data with chart. Metric periods retain the producer's
 // exact optionality; page read models decide where a missing period is shown as null.
@@ -65,7 +65,7 @@ export interface IAdapterByChainPageData {
 	change_1m: number | null
 	change_7dover7d: number | null
 	openInterest: number | null
-	entityQuestions?: string[]
+	entityQuestions?: Array<string>
 	activeLiquidity: number | null
 	deprecated?: boolean
 }

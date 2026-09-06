@@ -4,9 +4,9 @@ import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { ApyComponent, EntityEarnRow } from '~/containers/Yields/data/types'
 import { joinEarnAndBorrowMarkets, type ProBorrowMarketRow, type ProEarnRow, type ProYieldRow } from '../yieldData'
 
-const DEFAULT_COMPONENTS: ApyComponent[] = ['base', 'reward']
+const DEFAULT_COMPONENTS: Array<ApyComponent> = ['base', 'reward']
 
-function tokenSymbols(row: EntityEarnRow): string[] {
+function tokenSymbols(row: EntityEarnRow): Array<string> {
 	const symbols = new Set<string>()
 	for (const token of row.underlying_tokens) if (token.symbol) symbols.add(token.symbol)
 	if (row.pool_token?.symbol) symbols.add(row.pool_token.symbol)
@@ -20,17 +20,20 @@ function byTvlDesc(left: ProEarnRow, right: ProEarnRow) {
 	return right.tvl - left.tvl
 }
 
-export async function fetchProYieldsDataset(snapshot: YieldsSnapshot, chains: string[]): Promise<ProYieldRow[]> {
+export async function fetchProYieldsDataset(
+	snapshot: YieldsSnapshot,
+	chains: Array<string>
+): Promise<Array<ProYieldRow>> {
 	const [earnRows, marketRows] = await Promise.all([getEntityEarn(snapshot), getEntityMarkets(snapshot)])
 	const selectedChains = chains.length > 0 && !chains.includes('All') ? new Set(chains) : null
-	const earn: ProEarnRow[] = []
-	const markets: ProBorrowMarketRow[] = []
+	const earn: Array<ProEarnRow> = []
+	const markets: Array<ProBorrowMarketRow> = []
 
 	for (const row of earnRows) {
 		if (selectedChains && !selectedChains.has(row.chain)) continue
 		const apy = resolveApy(row.apy, row.intrinsic, 'current', DEFAULT_COMPONENTS)
 		const stabilityScore = resolveVariant(row.stability_30d, DEFAULT_COMPONENTS)
-		const rewardTokensSymbols: string[] = []
+		const rewardTokensSymbols: Array<string> = []
 		for (const token of row.reward_tokens) if (token.symbol) rewardTokensSymbols.push(token.symbol)
 		earn.push({
 			configID: row.id,

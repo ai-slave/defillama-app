@@ -29,8 +29,8 @@ type DeployBuildOptions = {
 
 const REQUIRED_DEPLOY_BUILD_ENV = ['API_KEY'] as const
 
-function getMissingDeployBuildEnv(env: NodeJS.ProcessEnv): string[] {
-	const missing: string[] = []
+function getMissingDeployBuildEnv(env: NodeJS.ProcessEnv): Array<string> {
+	const missing: Array<string> = []
 	for (const key of REQUIRED_DEPLOY_BUILD_ENV) {
 		if (!env[key]?.trim()) missing.push(key)
 	}

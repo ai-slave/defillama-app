@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { buildTokenUsageSummary } from './summary'
 
@@ -10,7 +10,7 @@ const row = (
 ): ProtocolTokenUsageData => ({ name, amountUsd, tokens, category })
 
 describe('buildTokenUsageSummary', () => {
-	it('preserves empty and one-token behavior', () => {
+	test('preserves empty and one-token behavior', () => {
 		expect(buildTokenUsageSummary([], ['usdc'])).toEqual({
 			kind: 'single',
 			totalAmount: 0,
@@ -31,7 +31,7 @@ describe('buildTokenUsageSummary', () => {
 		expect(input).toEqual(snapshot)
 	})
 
-	it.each([
+	test.each([
 		['two', ['usdc', 'dai']],
 		['three', ['usdc', 'dai', 'usdt']],
 		['four', ['usdc', 'dai', 'usdt', 'frax']]
@@ -58,7 +58,7 @@ describe('buildTokenUsageSummary', () => {
 		expect(summary.protocolOverlap?.shared).toBe(symbols.length > 1 ? 1 : 0)
 	})
 
-	it('distinguishes missing keys, present zero values, and selected-token overlap', () => {
+	test('distinguishes missing keys, present zero values, and selected-token overlap', () => {
 		const summary = buildTokenUsageSummary(
 			[
 				row('Missing DAI', 4, { usdc: 4 }),
@@ -81,7 +81,7 @@ describe('buildTokenUsageSummary', () => {
 		expect(summary.multiTokenProtocolCount).toBe(0)
 	})
 
-	it('uses Unknown categories and stable encounter order for amount ties', () => {
+	test('uses Unknown categories and stable encounter order for amount ties', () => {
 		const summary = buildTokenUsageSummary(
 			[
 				row('First', 10, { usdc: 10 }, 'Dexes'),

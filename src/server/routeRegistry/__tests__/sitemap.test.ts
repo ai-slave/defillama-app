@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	getProtocolSitemapRoutes,
 	getStandaloneProtocolSitemapRoutes
@@ -163,7 +163,7 @@ afterEach(() => {
 })
 
 describe('cache-backed sitemap sections', () => {
-	it('omits governance routes from legacy metadata while retaining token rights and unlocks', () => {
+	test('omits governance routes from legacy metadata while retaining token rights and unlocks', () => {
 		const originalMetadata = metadataCache.protocolMetadata.aave
 		const legacyMetadata = { ...originalMetadata, tokenRights: true, governance: true }
 		metadataCache.protocolMetadata.aave = legacyMetadata
@@ -179,7 +179,7 @@ describe('cache-backed sitemap sections', () => {
 		}
 	})
 
-	it('builds grouped public routes from metadata and dataset snapshots only', async () => {
+	test('builds grouped public routes from metadata and dataset snapshots only', async () => {
 		const sections = await buildAppSitemapSections()
 		const entriesBySection = new Map(
 			sections.map((section) => [section.id, section.entries.map((entry) => entry.path)])
@@ -259,13 +259,13 @@ describe('cache-backed sitemap sections', () => {
 		)
 	})
 
-	it('resolves section ids from Next page params that include the .xml suffix', async () => {
+	test('resolves section ids from Next page params that include the .xml suffix', async () => {
 		const section = await getSitemapSection('static.xml')
 
 		expect(section?.id).toBe('static')
 	})
 
-	it('serves the previous sitemap snapshot while an expired cache refresh fails', async () => {
+	test('serves the previous sitemap snapshot while an expired cache refresh fails', async () => {
 		const { getRaisesInvestorSlugsFromSnapshot } = await import('~/containers/Raises/server/routeData')
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
@@ -284,7 +284,7 @@ describe('cache-backed sitemap sections', () => {
 		warnSpy.mockRestore()
 	})
 
-	it('keeps building other sitemap sections when one cold section fails', async () => {
+	test('keeps building other sitemap sections when one cold section fails', async () => {
 		const { getRaisesInvestorSlugsFromSnapshot } = await import('~/containers/Raises/server/routeData')
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		vi.mocked(getRaisesInvestorSlugsFromSnapshot).mockRejectedValueOnce(new Error('snapshot unavailable'))

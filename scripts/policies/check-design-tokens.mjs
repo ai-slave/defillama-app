@@ -128,11 +128,11 @@ function matchImplicitBorderColor(content) {
 		for (const token of literal.matchAll(BORDER_TOKEN)) {
 			const kind = classifyBorderUtility(token[2])
 			if (kind === 'color') hasColor = true
-			else if (kind === 'width' && !/-0$/.test(token[2])) widthUtilities.push(token[1] + token[2])
+			else if (kind === 'width' && !token[2].endsWith('-0')) widthUtilities.push(token[1] + token[2])
 		}
 		if (!hasColor) found.push(...widthUtilities)
 	}
-	return found.length ? found : null
+	return found.length > 0 ? found : null
 }
 
 // Tailwind v3-era spellings that v4 only supports as deprecated compatibility.
@@ -166,7 +166,7 @@ function matchDeprecatedTailwindSpelling(content) {
 			else if (/(^|:)flex-(shrink|grow)(-|$)/.test(token)) found.push(token)
 		}
 	}
-	return found.length ? found : null
+	return found.length > 0 ? found : null
 }
 
 const NAMED_TYPOGRAPHY_UTILITY =
@@ -198,10 +198,10 @@ function matchConflictingNamedTypography(content) {
 			scopes.set(variants, scope)
 		}
 		for (const { named, raw } of scopes.values()) {
-			if (named.length > 1 || (named.length && raw.length)) found.push(named[0])
+			if (named.length > 1 || (named.length > 0 && raw.length > 0)) found.push(named[0])
 		}
 	}
-	return found.length ? found : null
+	return found.length > 0 ? found : null
 }
 
 const RULES = [
@@ -351,7 +351,7 @@ for (const file of files) {
 }
 
 if (process.argv.includes('--update')) {
-	fs.writeFileSync(BASELINE_PATH, JSON.stringify(counts, null, '\t') + '\n')
+	fs.writeFileSync(BASELINE_PATH, `${JSON.stringify(counts, null, '\t')}\n`)
 	console.log('baseline updated:', counts)
 	process.exit(0)
 }

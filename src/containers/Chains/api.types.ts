@@ -8,7 +8,7 @@ export interface ChainListItem {
 }
 
 export interface ChainsCategoriesResponse {
-	categories: string[]
+	categories: Array<string>
 }
 
 export interface ChainExtraTvlSnapshot {
@@ -39,10 +39,10 @@ export interface ChainsByCategoryChain {
 }
 
 export interface ChainsByCategoryResponse {
-	chainsUnique: string[]
-	categories: string[]
-	chainTvls: ChainsByCategoryChain[]
-	chainsGroupbyParent: Record<string, Record<string, string[]>>
+	chainsUnique: Array<string>
+	categories: Array<string>
+	chainTvls: Array<ChainsByCategoryChain>
+	chainsGroupbyParent: Record<string, Record<string, Array<string>>>
 	stackedDataset: Array<[string, Record<string, Record<string, number>>]>
 	tvlTypes: Record<string, string>
 }
@@ -50,15 +50,15 @@ export interface ChainsByCategoryResponse {
 export type ChainChartPoint = [timestamp: string | number, value: number]
 
 export interface ChainChartResponse {
-	tvl: ChainChartPoint[]
-	staking?: ChainChartPoint[]
-	borrowed?: ChainChartPoint[]
-	pool2?: ChainChartPoint[]
-	vesting?: ChainChartPoint[]
-	offers?: ChainChartPoint[]
-	doublecounted?: ChainChartPoint[]
-	liquidstaking?: ChainChartPoint[]
-	dcAndLsOverlap?: ChainChartPoint[]
+	tvl: Array<ChainChartPoint>
+	staking?: Array<ChainChartPoint>
+	borrowed?: Array<ChainChartPoint>
+	pool2?: Array<ChainChartPoint>
+	vesting?: Array<ChainChartPoint>
+	offers?: Array<ChainChartPoint>
+	doublecounted?: Array<ChainChartPoint>
+	liquidstaking?: Array<ChainChartPoint>
+	dcAndLsOverlap?: Array<ChainChartPoint>
 	/** Adapter-defined TVL sections are forwarded by the API alongside the known sections above. */
-	[section: string]: ChainChartPoint[] | undefined
+	[section: string]: Array<ChainChartPoint> | undefined
 }

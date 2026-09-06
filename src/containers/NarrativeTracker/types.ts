@@ -17,13 +17,13 @@ export interface IPctChangeRow {
 }
 
 /** Performance time series keyed by period string */
-export type PerformanceTimeSeries = Record<string, TimeSeriesEntry[]>
+export type PerformanceTimeSeries = Record<string, Array<TimeSeriesEntry>>
 
 /** Props for the CategoryPerformanceContainer */
 export interface CategoryPerformanceProps {
-	pctChanges: IPctChangeRow[]
+	pctChanges: Array<IPctChangeRow>
 	performanceTimeSeries: PerformanceTimeSeries
-	areaChartLegend: string[]
+	areaChartLegend: Array<string>
 	isCoinPage: boolean
 	categoryName?: string
 }

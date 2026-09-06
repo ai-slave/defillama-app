@@ -2,8 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
 import { fetchPfPsChartData, fetchPfPsProtocols } from './pfPsQueries'
 
-type PfPsChartResponse = [number, number][] | { error: string }
-type PfPsProtocolsResponse = { pf: string[]; ps: string[] } | { error: string }
+type PfPsChartResponse = Array<[number, number]> | { error: string }
+type PfPsProtocolsResponse = { pf: Array<string>; ps: Array<string> } | { error: string }
 
 async function handlePfPsChart(req: NextApiRequest, res: NextApiResponse<PfPsChartResponse>) {
 	if (req.method !== 'GET') {

@@ -84,11 +84,11 @@ export interface ProtocolCategoryConfig {
 	tableHeader?: string
 	searchPlaceholder?: string
 	metrics?: ProtocolCategoryMetrics
-	columns?: ProtocolCategoryColumn[]
+	columns?: Array<ProtocolCategoryColumn>
 	defaultSort?: ProtocolCategorySortableColumn
 }
 
-const DEFAULT_COLUMNS: ProtocolCategoryColumn[] = [
+const DEFAULT_COLUMNS: Array<ProtocolCategoryColumn> = [
 	'name',
 	'tvl',
 	'fees_7d',
@@ -121,7 +121,7 @@ export const PROTOCOL_TAXONOMY_BREAKDOWN_KEYS = [
 	'chain',
 	'network',
 	'custody'
-] as const satisfies readonly ProtocolTaxonomyBreakdownKey[]
+] as const satisfies ReadonlyArray<ProtocolTaxonomyBreakdownKey>
 
 export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	Dexs: {
@@ -881,11 +881,11 @@ export function getProtocolCategoryPresentation({
 	}
 }
 
-export function getProtocolCategoryChartMetrics(effectiveCategory: string | null): ProtocolCategoryChartMetric[] {
+export function getProtocolCategoryChartMetrics(effectiveCategory: string | null): Array<ProtocolCategoryChartMetric> {
 	if (!effectiveCategory) return ['tvl']
 	const m = protocolCategoryConfig[effectiveCategory]?.metrics
 	if (!m) return ['tvl']
-	const result: ProtocolCategoryChartMetric[] = []
+	const result: Array<ProtocolCategoryChartMetric> = []
 	if (m.tvl !== false) result.push('tvl')
 	if (m.fees) result.push('fees')
 	if (m.revenue) result.push('revenue')
@@ -900,7 +900,7 @@ export function getProtocolCategoryChartMetrics(effectiveCategory: string | null
 	return result.length > 0 ? result : ['tvl']
 }
 
-export function getProtocolCategoryColumns(effectiveCategory: string | null): ProtocolCategoryColumn[] {
+export function getProtocolCategoryColumns(effectiveCategory: string | null): Array<ProtocolCategoryColumn> {
 	if (!effectiveCategory) return DEFAULT_COLUMNS
 	return protocolCategoryConfig[effectiveCategory]?.columns ?? DEFAULT_COLUMNS
 }

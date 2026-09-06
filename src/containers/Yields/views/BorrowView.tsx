@@ -19,10 +19,10 @@ import { YieldsTabs } from '../YieldsTabs'
 const MARKETS_DEFAULT_SORT = [{ id: 'available_borrow', desc: true }]
 // Routes mode defaults to Net APY DESC — the mode's verdict column.
 const ROUTES_DEFAULT_SORT = [{ id: 'net_apy', desc: true }]
-const EMPTY_STRINGS: string[] = []
-const EMPTY_TOKENS: TokenOption[] = []
+const EMPTY_STRINGS: Array<string> = []
+const EMPTY_TOKENS: Array<TokenOption> = []
 
-type BorrowRowsResponse<TRow> = { rows: TRow[] }
+type BorrowRowsResponse<TRow> = { rows: Array<TRow> }
 
 const BorrowView = ({
 	chainList = EMPTY_STRINGS,
@@ -33,13 +33,13 @@ const BorrowView = ({
 	borrowTokens = EMPTY_TOKENS,
 	attributeIds = BORROW_ATTRIBUTE_IDS
 }: {
-	chainList?: string[]
-	projectList?: string[]
-	categoryList?: string[]
-	evmChains?: string[]
-	collateralTokens?: TokenOption[]
-	borrowTokens?: TokenOption[]
-	attributeIds?: AttributeId[]
+	chainList?: Array<string>
+	projectList?: Array<string>
+	categoryList?: Array<string>
+	evmChains?: Array<string>
+	collateralTokens?: Array<TokenOption>
+	borrowTokens?: Array<TokenOption>
+	attributeIds?: Array<AttributeId>
 }) => {
 	const router = useRouter()
 
@@ -102,7 +102,7 @@ const BorrowView = ({
 				rightSlot={
 					<p
 						className={`hidden body-md text-secondary sm:block ${
-							total && selectedProjects.length && selectedChains.length ? '' : 'invisible'
+							total && selectedProjects.length > 0 && selectedChains.length > 0 ? '' : 'invisible'
 						}`}
 					>
 						Tracking <strong className="text-primary">{formatNumber(total)}</strong>{' '}
@@ -126,9 +126,9 @@ const BorrowView = ({
 				selectedCategories={selectedCategories}
 				categoriesLabel="Categories"
 				attributeIds={attributeIds}
-				availableRange={true}
+				availableRange
 				apyControls={<ApyViewControls />}
-				resetFilters={true}
+				resetFilters
 				resetFiltersLabel="Reset Filters"
 				prepareCsv={prepareCsv}
 			/>
@@ -139,9 +139,9 @@ const BorrowView = ({
 				<PanelStatus variant="error">{errorMessage}</PanelStatus>
 			) : rows.length > 0 ? (
 				routesMode ? (
-					<PaginatedBorrowRoutesTable data={rows as RouteTableRow[]} {...tableProps} />
+					<PaginatedBorrowRoutesTable data={rows as Array<RouteTableRow>} {...tableProps} />
 				) : (
-					<PaginatedBorrowMarketsTable data={rows as MarketTableRow[]} {...tableProps} />
+					<PaginatedBorrowMarketsTable data={rows as Array<MarketTableRow>} {...tableProps} />
 				)
 			) : (
 				<PanelStatus variant="empty">{emptyMessage}</PanelStatus>

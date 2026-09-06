@@ -21,13 +21,8 @@ import {
 	fetchAdapterProtocolMetrics
 } from './api'
 import type { IAdapterChainMetrics } from './api.types'
-import {
-	ADAPTER_DATA_TYPE_KEYS,
-	ADAPTER_DATA_TYPES,
-	ADAPTER_TYPES,
-	getChainMetadataKey,
-	REV_PROTOCOLS
-} from './constants'
+import type { ADAPTER_TYPES } from './constants'
+import { ADAPTER_DATA_TYPE_KEYS, ADAPTER_DATA_TYPES, getChainMetadataKey, REV_PROTOCOLS } from './constants'
 import type {
 	IAdapterByChainPageData,
 	IAdapterChainOverview,
@@ -48,7 +43,7 @@ function buildChainsChartData({
 	allChains
 }: {
 	rawChartData: Array<[number, Record<string, number>]>
-	allChains: string[]
+	allChains: Array<string>
 }): MultiSeriesTimeSeriesDataset {
 	const chartDimensions: MultiSeriesTimeSeriesDataset['dimensions'] = ['timestamp', ...allChains]
 	const chainIndexes = new Map<string, number>()
@@ -85,7 +80,7 @@ export function getChainsByAdapterAllChains({
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}`
 	chainMetadata: Record<string, IChainMetadata>
-}): string[] {
+}): Array<string> {
 	const allChains: Array<string> = []
 	const sType = getChainMetadataKey(adapterType, dataType)
 	if (!sType) return allChains
@@ -108,7 +103,7 @@ export async function getChainsByAdapterChartData({
 }: {
 	adapterType: `${ADAPTER_TYPES}`
 	dataType: `${ADAPTER_DATA_TYPES}`
-	allChains: string[]
+	allChains: Array<string>
 	allowEmptyOnError?: boolean
 }): Promise<MultiSeriesTimeSeriesDataset> {
 	let rawChartData: Array<[number, Record<string, number>]>
@@ -438,7 +433,7 @@ export const getChainsByAdapterPageData = async ({
 		}
 
 		chains.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
-		const sortedAllChains: string[] = []
+		const sortedAllChains: Array<string> = []
 		for (const chain of chains) {
 			sortedAllChains.push(chain.name)
 		}

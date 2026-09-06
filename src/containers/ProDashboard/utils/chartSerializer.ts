@@ -10,7 +10,7 @@ interface ProtocolChartSerializationParams {
 	protocolId: string
 	protocolName: string
 	geckoId?: string | null
-	toggledMetrics: ProtocolChartsLabels[]
+	toggledMetrics: Array<ProtocolChartsLabels>
 	chartColors: Record<string, string>
 	groupBy: ChartTimeGroupingWithCumulative
 }
@@ -32,7 +32,7 @@ function getDashboardGrouping(groupBy: ChartTimeGroupingWithCumulative): Dashboa
 
 export function serializeProtocolChartToMultiChart(params: ProtocolChartSerializationParams): {
 	multiChart: MultiChartConfig | null
-	unsupportedMetrics: ProtocolChartsLabels[]
+	unsupportedMetrics: Array<ProtocolChartsLabels>
 } {
 	const { protocolId, protocolName, geckoId, toggledMetrics, chartColors, groupBy } = params
 
@@ -45,7 +45,7 @@ export function serializeProtocolChartToMultiChart(params: ProtocolChartSerializ
 
 	const grouping = getDashboardGrouping(groupBy)
 
-	const charts: ChartConfig[] = supported.map(({ label, dashboardType }) => {
+	const charts: Array<ChartConfig> = supported.map(({ label, dashboardType }) => {
 		return {
 			id: generateItemId('chart', `${protocolId}-${dashboardType}`),
 			kind: 'chart',
@@ -73,14 +73,14 @@ export function serializeProtocolChartToMultiChart(params: ProtocolChartSerializ
 interface ChainChartSerializationParams {
 	chainName: string
 	geckoId?: string | null
-	toggledMetrics: ChainChartLabels[]
+	toggledMetrics: Array<ChainChartLabels>
 	chartColors: Partial<Record<ChainChartLabels, string>>
 	groupBy: ChartTimeGroupingWithCumulative
 }
 
 export function serializeChainChartToMultiChart(params: ChainChartSerializationParams): {
 	multiChart: MultiChartConfig | null
-	unsupportedMetrics: ChainChartLabels[]
+	unsupportedMetrics: Array<ChainChartLabels>
 } {
 	const { chainName, geckoId, toggledMetrics, chartColors, groupBy } = params
 
@@ -97,7 +97,7 @@ export function serializeChainChartToMultiChart(params: ChainChartSerializationP
 
 	const grouping = getDashboardGrouping(groupBy)
 
-	const charts: ChartConfig[] = supported.map(({ label, dashboardType }) => {
+	const charts: Array<ChartConfig> = supported.map(({ label, dashboardType }) => {
 		return {
 			id: generateItemId('chart', `${chainName}-${dashboardType}`),
 			kind: 'chart',

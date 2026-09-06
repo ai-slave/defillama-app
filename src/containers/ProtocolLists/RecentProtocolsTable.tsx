@@ -47,7 +47,7 @@ type RecentProtocolTableRow = IRecentProtocol & {
 }
 const columnHelper = createColumnHelper<RecentProtocolTableRow>()
 
-function normaliseCategoryFilterValues(values: unknown): string[] {
+function normaliseCategoryFilterValues(values: unknown): Array<string> {
 	if (Array.isArray(values)) {
 		return values.filter((value): value is string => typeof value === 'string')
 	}
@@ -59,7 +59,7 @@ function normaliseCategoryFilterValues(values: unknown): string[] {
 	return []
 }
 
-function areCategoryFiltersEqual(current: unknown, next: string[] | undefined): boolean {
+function areCategoryFiltersEqual(current: unknown, next: Array<string> | undefined): boolean {
 	const currentValues = normaliseCategoryFilterValues(current).map((value) => value.toLowerCase())
 	const nextValues = (next ?? []).map((value) => value.toLowerCase())
 
@@ -81,7 +81,7 @@ export function RecentlyListedProtocolsTable({
 	categories,
 	forkedList
 }: {
-	data: RecentProtocolTableRow[]
+	data: Array<RecentProtocolTableRow>
 	selectedChains: Array<string>
 	selectedCategories: Array<string>
 	chainList: Array<string>
@@ -249,7 +249,7 @@ const protocolsColumns = [
 						<ProtocolChainsHovercard chains={row.original.chains} />
 					</span>
 					{value === 'SyncDEX Finance' ? (
-						<Tooltip content={'Many users have reported issues with this protocol'}>
+						<Tooltip content="Many users have reported issues with this protocol">
 							<Icon name="alert-triangle" height={14} width={14} />
 						</Tooltip>
 					) : null}
@@ -380,9 +380,7 @@ function ProtocolTvlCell({ value, rowValues }: { value: unknown; rowValues: Prot
 		<span className="flex items-center justify-end gap-1">
 			{text ? <QuestionHelper text={text} /> : null}
 			{rowValues.parentExcluded ? (
-				<QuestionHelper
-					text={"There's some internal doublecounting that is excluded from parent TVL, so sum won't match"}
-				/>
+				<QuestionHelper text="There's some internal doublecounting that is excluded from parent TVL, so sum won't match" />
 			) : null}
 			<span
 				style={{

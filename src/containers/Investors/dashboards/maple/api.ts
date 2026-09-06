@@ -82,7 +82,7 @@ export interface MaplePoolWithLoans {
 	tvlUsd: ApiNumericString
 	spotApy: ApiNumericString
 	numOpenTermLoans: ApiNumericString
-	openTermLoans: MapleOpenTermLoan[]
+	openTermLoans: Array<MapleOpenTermLoan>
 }
 
 export interface StSyrupTx {
@@ -140,26 +140,26 @@ async function fetchMapleQuery<T>(queryName: string): Promise<T> {
 export function parseWad(value: string, decimals = 27): number {
 	if (value === '0') return 0
 	const n = Number(value)
-	return n / Math.pow(10, decimals)
+	return n / 10 ** decimals
 }
 
 export function parseTokenAmount(value: string, decimals: number): number {
 	if (value === '0') return 0
-	return Number(value) / Math.pow(10, decimals)
+	return Number(value) / 10 ** decimals
 }
 
 export function parseInterestRate(value: string): number {
-	return Number(value) / 10000
+	return Number(value) / 10_000
 }
 
 export function parseFeeRate(value: string): number {
-	return Number(value) / 10000
+	return Number(value) / 10_000
 }
 
 export function useMapleActivePools() {
 	const query = useQuery({
 		queryKey: ['maple-active-pools'],
-		queryFn: () => fetchMapleQuery<{ data: { poolV2S: MaplePool[] } }>('activePools'),
+		queryFn: () => fetchMapleQuery<{ data: { poolV2S: Array<MaplePool> } }>('activePools'),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})
@@ -174,7 +174,7 @@ export function useMapleActivePools() {
 export function useMaplePoolsWithLoans() {
 	const query = useQuery({
 		queryKey: ['maple-pools-with-loans'],
-		queryFn: () => fetchMapleQuery<{ data: { poolV2S: MaplePoolWithLoans[] } }>('poolsWithLoans'),
+		queryFn: () => fetchMapleQuery<{ data: { poolV2S: Array<MaplePoolWithLoans> } }>('poolsWithLoans'),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})
@@ -189,7 +189,7 @@ export function useMaplePoolsWithLoans() {
 export function useStSyrupTxes() {
 	const query = useQuery({
 		queryKey: ['maple-st-syrup-txes'],
-		queryFn: () => fetchMapleQuery<{ data: { stSyrupTxes: StSyrupTx[] } }>('stSyrupTxes'),
+		queryFn: () => fetchMapleQuery<{ data: { stSyrupTxes: Array<StSyrupTx> } }>('stSyrupTxes'),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})
@@ -203,7 +203,7 @@ export function useStSyrupTxes() {
 export function useSyrupTxes() {
 	const query = useQuery({
 		queryKey: ['maple-syrup-txes'],
-		queryFn: () => fetchMapleQuery<{ data: { syrupTxes: SyrupTx[] } }>('syrupTxes'),
+		queryFn: () => fetchMapleQuery<{ data: { syrupTxes: Array<SyrupTx> } }>('syrupTxes'),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})
@@ -231,7 +231,7 @@ export function useSyrupGlobals() {
 export function useStSyrupState() {
 	const query = useQuery({
 		queryKey: ['maple-st-syrup-state'],
-		queryFn: () => fetchMapleQuery<{ data: { stSyrups: StSyrup[] } }>('stSyrupState'),
+		queryFn: () => fetchMapleQuery<{ data: { stSyrups: Array<StSyrup> } }>('stSyrupState'),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})
@@ -245,7 +245,7 @@ export function useStSyrupState() {
 export function useSyrupDripTxes() {
 	const query = useQuery({
 		queryKey: ['maple-syrup-drip-txes'],
-		queryFn: () => fetchMapleQuery<{ data: { syrupDripTxes: SyrupDripTx[] } }>('syrupDripTxes'),
+		queryFn: () => fetchMapleQuery<{ data: { syrupDripTxes: Array<SyrupDripTx> } }>('syrupDripTxes'),
 		staleTime: STALE_TIME,
 		refetchOnWindowFocus: false
 	})

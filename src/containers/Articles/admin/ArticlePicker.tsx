@@ -8,7 +8,7 @@ import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Icon } from '~/ui/Icon'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
-const EMPTY_ARTICLE_DOCUMENTS: ArticleDocument[] = []
+const EMPTY_ARTICLE_DOCUMENTS: Array<ArticleDocument> = []
 
 type Props = {
 	value: string | null
@@ -105,8 +105,12 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 					unmountOnHide
 					className="z-[90] flex max-h-72 flex-col overflow-auto overscroll-contain rounded-md border border-medium bg-surface py-1 text-sm shadow-xl outline-hidden"
 				>
-					{isFetching && !items.length ? <p className="p-3 text-center text-xs text-tertiary">Searching…</p> : null}
-					{!isFetching && !items.length ? <p className="p-3 text-center text-xs text-tertiary">No results</p> : null}
+					{isFetching && items.length === 0 ? (
+						<p className="p-3 text-center text-xs text-tertiary">Searching…</p>
+					) : null}
+					{!isFetching && items.length === 0 ? (
+						<p className="p-3 text-center text-xs text-tertiary">No results</p>
+					) : null}
 					{items.map((article) => (
 						<Ariakit.ComboboxItem
 							key={article.id}

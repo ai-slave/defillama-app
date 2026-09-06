@@ -47,9 +47,9 @@ function inferImageMimeType(url: string): string {
 	return 'image/jpeg'
 }
 
-function articleEntities(article: ArticleDocument): { type: string; label: string }[] {
+function articleEntities(article: ArticleDocument): Array<{ type: string; label: string }> {
 	const seen = new Set<string>()
-	const result: { type: string; label: string }[] = []
+	const result: Array<{ type: string; label: string }> = []
 	const push = (type: string, label: string) => {
 		const name = label.trim()
 		if (!name) return
@@ -153,7 +153,7 @@ function buildItem(article: ArticleDocument): string {
 	return `<item>${parts.filter(Boolean).join('')}</item>`
 }
 
-export function buildResearchRssFeed(articles: ArticleDocument[]): string {
+export function buildResearchRssFeed(articles: Array<ArticleDocument>): string {
 	const items = articles.filter((article) => Boolean(article.section))
 	const lastBuildDate = items.map(articlePubDate).find((date): date is string => Boolean(date))
 

@@ -5,14 +5,14 @@ export function formatDownloadRowCount(value: number): string {
 	const fractionDigits = value < 10_000 || value >= 1_000_000 ? 1 : 0
 	return formatCompactNumber(value, {
 		compactSuffix: 'lowercase',
-		minimumFractionDigits: value >= 1_000 ? fractionDigits : undefined,
-		maximumFractionDigits: value >= 1_000 ? fractionDigits : undefined
+		minimumFractionDigits: value >= 1000 ? fractionDigits : undefined,
+		maximumFractionDigits: value >= 1000 ? fractionDigits : undefined
 	})
 }
 
 export function formatSqlDuration(milliseconds: number): string {
-	if (milliseconds < 1_000) return `${milliseconds}ms`
-	if (milliseconds < 10_000) return `${formatFixedNumber(milliseconds / 1_000, 2)}s`
-	if (milliseconds < 60_000) return `${formatFixedNumber(milliseconds / 1_000, 1)}s`
-	return `${Math.round(milliseconds / 1_000)}s`
+	if (milliseconds < 1000) return `${milliseconds}ms`
+	if (milliseconds < 10_000) return `${formatFixedNumber(milliseconds / 1000, 2)}s`
+	if (milliseconds < 60_000) return `${formatFixedNumber(milliseconds / 1000, 1)}s`
+	return `${Math.round(milliseconds / 1000)}s`
 }

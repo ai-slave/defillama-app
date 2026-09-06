@@ -14,6 +14,6 @@ export interface RawTreasuryProtocol {
 	mcap: number | null
 }
 
-export type RawTreasuriesResponse = RawTreasuryProtocol[]
+export type RawTreasuriesResponse = Array<RawTreasuryProtocol>
 
-export type RawEntitiesResponse = RawTreasuryProtocol[]
+export type RawEntitiesResponse = Array<RawTreasuryProtocol>

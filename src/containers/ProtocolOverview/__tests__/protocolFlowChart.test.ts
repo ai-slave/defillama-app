@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildProtocolFlowChart, normalizeProtocolFlowChart, type ProtocolFlowChartSeries } from '../protocolFlowChart'
 
 describe('normalizeProtocolFlowChart', () => {
-	it('normalizes numeric API seconds and trims only when a positive point exists', () => {
+	test('normalizes numeric API seconds and trims only when a positive point exists', () => {
 		expect(
 			normalizeProtocolFlowChart(
 				[
@@ -12,7 +12,7 @@ describe('normalizeProtocolFlowChart', () => {
 				],
 				true
 			)
-		).toEqual([[3_000, 2]])
+		).toEqual([[3000, 2]])
 
 		expect(
 			normalizeProtocolFlowChart(
@@ -23,8 +23,8 @@ describe('normalizeProtocolFlowChart', () => {
 				true
 			)
 		).toEqual([
-			[1_000, 0],
-			[2_000, -1]
+			[1000, 0],
+			[2000, -1]
 		])
 	})
 })
@@ -42,7 +42,7 @@ describe('buildProtocolFlowChart', () => {
 	}
 	const series = [feeSeries]
 
-	it('sums flow buckets and renders them as bars', () => {
+	test('sums flow buckets and renders them as bars', () => {
 		const result = buildProtocolFlowChart({ groupBy: 'daily', series })
 		expect(result.dataset.source).toEqual([
 			[Date.UTC(2024, 0, 1), 5],
@@ -51,7 +51,7 @@ describe('buildProtocolFlowChart', () => {
 		expect(result.charts[0]).toMatchObject({ type: 'bar', name: 'Fees', stack: 'Fees' })
 	})
 
-	it('running-sums flows as lines without filling another sparse series', () => {
+	test('running-sums flows as lines without filling another sparse series', () => {
 		const result = buildProtocolFlowChart({
 			groupBy: 'cumulative',
 			series: [

@@ -10,7 +10,7 @@ function displayText(value: string) {
 	return value === '' ? '–' : value
 }
 
-function CryptoRailTable({ label, rows }: { label: string; rows: CryptoRailRowModel[] }) {
+function CryptoRailTable({ label, rows }: { label: string; rows: Array<CryptoRailRowModel> }) {
 	return (
 		<section className="flex flex-col gap-1.5">
 			<h4 className="label-md text-primary">{label}</h4>

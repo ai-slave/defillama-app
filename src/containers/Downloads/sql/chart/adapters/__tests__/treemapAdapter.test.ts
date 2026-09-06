@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildSqlTreemapNodes } from '../TreemapChartAdapter'
 
 describe('buildSqlTreemapNodes', () => {
-	it('aggregates executor-normalized SQL values into canonical grouped nodes', () => {
+	test('aggregates executor-normalized SQL values into canonical grouped nodes', () => {
 		expect(
 			buildSqlTreemapNodes(
 				[
@@ -28,7 +28,7 @@ describe('buildSqlTreemapNodes', () => {
 		])
 	})
 
-	it('keeps flat aggregation and value ordering at the adapter boundary', () => {
+	test('keeps flat aggregation and value ordering at the adapter boundary', () => {
 		expect(
 			buildSqlTreemapNodes(
 				[
@@ -46,7 +46,7 @@ describe('buildSqlTreemapNodes', () => {
 		])
 	})
 
-	it('keeps null names in the empty bucket', () => {
+	test('keeps null names in the empty bucket', () => {
 		expect(buildSqlTreemapNodes([[null, 10]], 0, 1, null)).toEqual([{ name: '∅', value: [10, 0, 0] }])
 	})
 })

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	normalizeChartConfigs,
 	normalizeChartDataByKey,
@@ -29,12 +29,12 @@ const chartConfig: ChartConfiguration = {
 }
 
 describe('chart payload normalization', () => {
-	it('keeps valid chart configs and drops malformed entries', () => {
+	test('keeps valid chart configs and drops malformed entries', () => {
 		expect(normalizeChartConfigs([chartConfig, { id: 'missing-shape' }, null])).toEqual([chartConfig])
 		expect(normalizeChartConfigs({ charts: [chartConfig] })).toEqual([])
 	})
 
-	it('keeps keyed chart data arrays and drops malformed entries', () => {
+	test('keeps keyed chart data arrays and drops malformed entries', () => {
 		const data = {
 			'chart-1': [{ date: 1, value: 10 }],
 			'chart-2': [{ date: 2, value: 20 }],
@@ -47,7 +47,7 @@ describe('chart payload normalization', () => {
 		})
 	})
 
-	it('ignores inherited and prototype-polluting chart data keys', () => {
+	test('ignores inherited and prototype-polluting chart data keys', () => {
 		const data = Object.create({ inherited: [{ date: 0, value: 0 }] }) as Record<string, unknown>
 		data['chart-1'] = [{ date: 1, value: 10 }]
 		data['constructor'] = [{ date: 2, value: 20 }]
@@ -59,7 +59,7 @@ describe('chart payload normalization', () => {
 		})
 	})
 
-	it('maps legacy flat chart data to the first chart dataset key', () => {
+	test('maps legacy flat chart data to the first chart dataset key', () => {
 		expect(normalizeChartDataByKey([{ date: 1, value: 10 }], [{ ...chartConfig, datasetName: 'tvl_dataset' }])).toEqual(
 			{
 				tvl_dataset: [{ date: 1, value: 10 }]
@@ -67,7 +67,7 @@ describe('chart payload normalization', () => {
 		)
 	})
 
-	it('normalizes bundled chart data defensively', () => {
+	test('normalizes bundled chart data defensively', () => {
 		const chartData = {
 			'chart-1': { config: chartConfig, data: [{ date: 1, value: 10 }], toolChain: [{ name: 'generate_chart' }] },
 			'chart-2': { config: chartConfig, data: [{ date: 2, value: 20 }], toolChain: 'legacy-bad-tool-chain' },
@@ -81,7 +81,7 @@ describe('chart payload normalization', () => {
 		})
 	})
 
-	it('ignores inherited and prototype-polluting dashboard chart-data keys', () => {
+	test('ignores inherited and prototype-polluting dashboard chart-data keys', () => {
 		const data: Record<string, unknown> = Object.create({
 			inherited: { config: chartConfig, data: [{ date: 0, value: 0 }], toolChain: [] }
 		})

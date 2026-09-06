@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { FiatFeesValue, fiatFeeSummary } from '../FiatFeesValue'
 import type { ExchangeFiatFees } from '../models'
 
@@ -19,11 +19,11 @@ const FEES: ExchangeFiatFees = {
 }
 
 describe('FiatFeesValue', () => {
-	it('summarizes exact authored on-ramp and off-ramp rows', () => {
+	test('summarizes exact authored on-ramp and off-ramp rows', () => {
 		expect(fiatFeeSummary(FEES)).toBe('1 in · 0 out')
 	})
 
-	it('renders an accessible compact disclosure and an unavailable state', () => {
+	test('renders an accessible compact disclosure and an unavailable state', () => {
 		const available = renderToStaticMarkup(<FiatFeesValue name="Venue" fees={FEES} />)
 		const missing = renderToStaticMarkup(<FiatFeesValue name="Venue" fees={null} />)
 

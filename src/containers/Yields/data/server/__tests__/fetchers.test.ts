@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const fetchJson = vi.hoisted(() => vi.fn())
 
@@ -13,13 +13,13 @@ beforeEach(() => {
 })
 
 describe('Yields v2 network fetchers', () => {
-	it('uses the standard retry count by default', async () => {
+	test('uses the standard retry count by default', async () => {
 		await fetchTrendsFromNetwork({ timeout: 1000 })
 
 		expect(fetchJson).toHaveBeenCalledWith('https://yields.example/v2/earn/trends', { timeout: 1000 }, false)
 	})
 
-	it('passes the snapshot extra-retry option separately from request options', async () => {
+	test('passes the snapshot extra-retry option separately from request options', async () => {
 		await fetchTrendsFromNetwork({ extraRetry: true, timeout: 1000 })
 
 		expect(fetchJson).toHaveBeenCalledWith('https://yields.example/v2/earn/trends', { timeout: 1000 }, true)

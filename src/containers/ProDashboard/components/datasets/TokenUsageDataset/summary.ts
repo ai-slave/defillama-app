@@ -25,8 +25,8 @@ export type TokenUsageSummary =
 	  })
 
 export function buildTokenUsageSummary(
-	rawData: ProtocolTokenUsageData[],
-	selectedSymbols: string[]
+	rawData: Array<ProtocolTokenUsageData>,
+	selectedSymbols: Array<string>
 ): TokenUsageSummary {
 	const isMultiToken = selectedSymbols.length > 1
 	const tokenStats: Record<string, { total: number; protocols: number }> | null = isMultiToken ? {} : null

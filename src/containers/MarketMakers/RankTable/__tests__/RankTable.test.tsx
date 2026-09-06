@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('~/ui/SegmentedControl', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/ui/SegmentedControl')>()),
@@ -15,12 +15,12 @@ const rows = [
 		marketMakerName: 'Lhava',
 		marketMakerImageUrl: null,
 		rank: { value: 1, percentile: 100 },
-		metrics: { orderFillVolumeTotal: { value: 1744638, percentile: 100, rank: 1 } }
+		metrics: { orderFillVolumeTotal: { value: 1_744_638, percentile: 100, rank: 1 } }
 	}
 ]
 
 describe('RankTable', () => {
-	it('renders a row per market maker', () => {
+	test('renders a row per market maker', () => {
 		const html = renderToStaticMarkup(
 			<RankTable
 				rows={rows}
@@ -33,7 +33,7 @@ describe('RankTable', () => {
 		)
 		expect(html).toContain('Lhava')
 	})
-	it('sorts by rank ascending by default', () => {
+	test('sorts by rank ascending by default', () => {
 		const unsorted = [
 			{
 				marketMakerId: 'b',
@@ -63,7 +63,7 @@ describe('RankTable', () => {
 		expect(html.indexOf('Alpha')).toBeLessThan(html.indexOf('Bravo'))
 	})
 
-	it('shows the empty state when there are no rows', () => {
+	test('shows the empty state when there are no rows', () => {
 		const html = renderToStaticMarkup(
 			<RankTable
 				rows={[]}

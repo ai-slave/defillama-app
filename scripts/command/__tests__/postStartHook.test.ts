@@ -1,9 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { runPostStartHook } from '../postStartHook'
 import { testEnv } from './testEnv'
 
 describe('post-start hook', () => {
-	it('skips the trigger when load-balancer auth is missing', async () => {
+	test('skips the trigger when load-balancer auth is missing', async () => {
 		const fetchImpl = vi.fn()
 		const result = await runPostStartHook({ env: testEnv(), fetchImpl, logger: { log: vi.fn() } })
 
@@ -11,7 +11,7 @@ describe('post-start hook', () => {
 		expect(fetchImpl).not.toHaveBeenCalled()
 	})
 
-	it('skips the trigger when the build ID is missing', async () => {
+	test('skips the trigger when the build ID is missing', async () => {
 		const fetchImpl = vi.fn()
 		const result = await runPostStartHook({
 			env: testEnv({ LB_CACHE_INVALIDATION_AUTH: 'token' }),
@@ -23,7 +23,7 @@ describe('post-start hook', () => {
 		expect(fetchImpl).not.toHaveBeenCalled()
 	})
 
-	it('sends one build trigger to the load balancer', async () => {
+	test('sends one build trigger to the load balancer', async () => {
 		const fetchImpl = vi.fn().mockResolvedValue(new Response(null, { status: 202 }))
 		const result = await runPostStartHook({
 			env: testEnv({

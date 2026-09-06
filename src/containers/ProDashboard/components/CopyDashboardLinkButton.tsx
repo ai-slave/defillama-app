@@ -51,7 +51,7 @@ export const CopyDashboardLinkButton = ({
 		return (
 			<Tooltip
 				content="Make dashboard public to share"
-				render={<button aria-disabled={true} />}
+				render={<button aria-disabled />}
 				className="flex cursor-not-allowed items-center gap-1 rounded-md border border-pro-cards-border px-1.5 py-1 text-xs text-tertiary hover:border-transparent focus-visible:border-transparent"
 			>
 				{copied ? <Icon name="check-circle" height={14} width={14} /> : <Icon name="link" height={14} width={14} />}

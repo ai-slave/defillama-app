@@ -3,7 +3,7 @@ import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
 interface PaginationProps {
-	items: React.ReactNode[]
+	items: Array<React.ReactNode>
 	startIndex?: number
 }
 

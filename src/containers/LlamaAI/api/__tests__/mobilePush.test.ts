@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import {
 	getWebMobilePushStatus,
@@ -15,7 +15,7 @@ function jsonResponse(body: unknown) {
 }
 
 describe('web mobile push API', () => {
-	it('reads and updates the web notification preference', async () => {
+	test('reads and updates the web notification preference', async () => {
 		const requests: Array<{ url: string; init?: RequestInit }> = []
 		const fetcher: AuthorizedFetch = async (url, init) => {
 			requests.push({ url, init })
@@ -33,7 +33,7 @@ describe('web mobile push API', () => {
 		})
 	})
 
-	it('marks the exact completed message seen with a keepalive request', async () => {
+	test('marks the exact completed message seen with a keepalive request', async () => {
 		let request: { url: string; init?: RequestInit } | null = null
 		const fetcher: AuthorizedFetch = async (url, init) => {
 			request = { url, init }
@@ -47,7 +47,7 @@ describe('web mobile push API', () => {
 		})
 	})
 
-	it('aborts a stalled seen request before the backend grace period expires', async () => {
+	test('aborts a stalled seen request before the backend grace period expires', async () => {
 		vi.useFakeTimers()
 		try {
 			let requestSignal: AbortSignal | null = null
@@ -59,7 +59,7 @@ describe('web mobile push API', () => {
 
 			const request = markWebCompletionSeen(fetcher, 'session-1', 'message-1')
 			const rejection = expect(request).rejects.toMatchObject({ name: 'AbortError' })
-			await vi.advanceTimersByTimeAsync(2_000)
+			await vi.advanceTimersByTimeAsync(2000)
 
 			await rejection
 			expect(requestSignal?.aborted).toBe(true)
@@ -68,7 +68,7 @@ describe('web mobile push API', () => {
 		}
 	})
 
-	it('rejects malformed backend responses', async () => {
+	test('rejects malformed backend responses', async () => {
 		const fetcher: AuthorizedFetch = async () => jsonResponse({ enabled: true })
 
 		await expect(getWebMobilePushStatus(fetcher)).rejects.toThrow('Invalid web mobile notification status')

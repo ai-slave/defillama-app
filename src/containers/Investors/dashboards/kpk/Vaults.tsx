@@ -74,12 +74,12 @@ export default function Vaults() {
 	)
 	const showAdjustedTva = data?.tvaAdjusted != null && adjustedVenues.length > 0
 
-	const footer = useMemo<FooterRow[] | undefined>(() => {
+	const footer = useMemo<Array<FooterRow> | undefined>(() => {
 		if (!totals) return undefined
-		const footerRows: FooterRow[] = [
+		const footerRows: Array<FooterRow> = [
 			{ cells: { name: 'Total', tva: usd(totals.tvaUsd), interest: usd(totals.interestUsd) } }
 		]
-		if (totals.duplicateVenues.length) {
+		if (totals.duplicateVenues.length > 0) {
 			footerRows.push({
 				muted: true,
 				title: doubleCountNote,

@@ -14,7 +14,7 @@ type InvestorDealsAccumulatorTimespan = {
 	topCategory: string | null
 	topRound: string | null
 	topAmount: number
-	amounts: number[]
+	amounts: Array<number>
 	projects: Set<string>
 	chains: Set<string>
 	deals: number
@@ -33,7 +33,7 @@ const LAST_30_DAYS_IN_MS = 30 * DAY_IN_MS
 const LAST_180_DAYS_IN_MS = 180 * DAY_IN_MS
 const LAST_1Y_IN_MS = 365 * DAY_IN_MS
 
-function calculateMedian(amounts: number[]): number | null {
+function calculateMedian(amounts: Array<number>): number | null {
 	if (amounts.length === 0) return null
 
 	// The accumulator owns this array and is finished when the median is calculated.
@@ -111,7 +111,7 @@ export async function getInvestorRaisesPageData(
 ): Promise<IInvestorRaisesPageData | { notFound: true }> {
 	const data = await fetchRaises()
 
-	const raises: Raise[] = []
+	const raises: Array<Raise> = []
 	let investorName: string | null = null
 
 	for (const raise of data.raises) {
@@ -179,7 +179,7 @@ export async function getInvestorsPageData(): Promise<IInvestorsPageData> {
 		}
 	}
 
-	const investors: IInvestor[] = []
+	const investors: Array<IInvestor> = []
 	for (const name in dealsByInvestor) {
 		// Every enumerated entry is initialized in the accumulation pass above.
 		const investor = dealsByInvestor[name]!

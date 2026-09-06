@@ -33,20 +33,20 @@ export type CoreMetadataSources = {
 	protocols: Record<string, IProtocolMetadata>
 	chains: Record<string, IChainMetadata>
 	categoriesAndTags: ICategoriesAndTags
-	chainCategories: string[]
+	chainCategories: Array<string>
 	cexsResponse: RawCexsResponse
 	rwaList: Omit<IRWAList, 'platformRoutes'>
 	rwaPlatformsIndex: RWAPlatformsIndex
 	rwaPerpsList: IRWAPerpsList
-	tokenlistArray: RawTokenListItem[]
+	tokenlistArray: Array<RawTokenListItem>
 	tokenDirectory: TokenDirectory
 	liquidationsResponse: RawAllLiquidationsResponse
 	bridgesResponse: RawBridgesWithChainsResponse
-	emissionsProtocolsList: string[]
+	emissionsProtocolsList: Array<string>
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
-	emissions: ProtocolEmission[]
-	equitiesCompanyRoutes: IEquitiesCompanyRoute[]
-	preIpoCompanyIds: string[]
+	emissions: Array<ProtocolEmission>
+	equitiesCompanyRoutes: Array<IEquitiesCompanyRoute>
+	preIpoCompanyIds: Array<string>
 	tokenFilterMetadata: TokenFilterMetadataArtifact
 }
 
@@ -100,7 +100,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		),
 		fetchNamedMetadataSource(
 			'chain categories API',
-			fetchMetadataJson<{ categories: string[] }>(`${coreApiBase}/chains2`)
+			fetchMetadataJson<{ categories: Array<string> }>(`${coreApiBase}/chains2`)
 		),
 		fetchNamedMetadataSource('CEX metadata API', fetchMetadataJson<RawCexsResponse>(`${coreApiBase}/cexs?zz=19`)),
 		fetchNamedMetadataSource(
@@ -117,7 +117,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		),
 		fetchNamedMetadataSource(
 			'token list API',
-			fetchMetadataJson<RawTokenListItem[]>(`${datasetsBase}/tokenlist/rankings.json?zz=19`)
+			fetchMetadataJson<Array<RawTokenListItem>>(`${datasetsBase}/tokenlist/rankings.json?zz=19`)
 		),
 		fetchNamedMetadataSource('token directory API', fetchMetadataJson<TokenDirectory>(TOKEN_DIRECTORY_API)),
 		fetchNamedMetadataSource(
@@ -138,7 +138,7 @@ export async function fetchCoreMetadataSources(): Promise<CoreMetadataSources> {
 		),
 		fetchNamedMetadataSource(
 			'emissions API',
-			fetchMetadataJson<RawProtocolEmission[]>(`${coreApiBase}/emissions`).then(normalizeProtocolEmissions)
+			fetchMetadataJson<Array<RawProtocolEmission>>(`${coreApiBase}/emissions`).then(normalizeProtocolEmissions)
 		),
 		fetchNamedMetadataSource('equities company routes API', fetchEquitiesCompanyRouteMetadata()),
 		fetchNamedMetadataSource('pre-IPO company routes API', fetchPreIpoCompanyIds()),

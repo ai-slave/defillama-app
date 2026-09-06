@@ -44,7 +44,7 @@ function normalizeInterval(interval: string | undefined) {
 
 export default async function handler(
 	req: NextApiRequest,
-	res: NextApiResponse<HyperliquidCandle[] | { error: string }>
+	res: NextApiResponse<Array<HyperliquidCandle> | { error: string }>
 ) {
 	if (req.method !== 'GET') {
 		res.setHeader('Allow', ['GET'])
@@ -59,7 +59,7 @@ export default async function handler(
 	const startTime = endTime - INTERVAL_TO_MS[interval] * limit
 
 	try {
-		const raw = await postInfo<RawCandle[]>(
+		const raw = await postInfo<Array<RawCandle>>(
 			{
 				type: 'candleSnapshot',
 				req: {

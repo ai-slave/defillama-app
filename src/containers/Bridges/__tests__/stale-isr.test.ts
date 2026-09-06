@@ -1,5 +1,5 @@
 import type { GetStaticPropsContext } from 'next'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { getBridgeOverviewPageDataMock, getBridgePageDatanewMock } = vi.hoisted(() => ({
 	getBridgeOverviewPageDataMock: vi.fn(),
@@ -52,7 +52,7 @@ afterEach(() => {
 })
 
 describe('Bridges stale ISR handling', () => {
-	it('rethrows a chain loader failure during stale regeneration', async () => {
+	test('rethrows a chain loader failure during stale regeneration', async () => {
 		getBridgeOverviewPageDataMock.mockRejectedValue(new Error('upstream unavailable'))
 		const context = {
 			params: { chain: 'base' },
@@ -62,7 +62,7 @@ describe('Bridges stale ISR handling', () => {
 		await expect(getBridgeChainStaticProps(context)).rejects.toThrow('upstream unavailable')
 	})
 
-	it('keeps the disabled chain fallback for an initial build failure', async () => {
+	test('keeps the disabled chain fallback for an initial build failure', async () => {
 		getBridgeOverviewPageDataMock.mockRejectedValue(new Error('upstream unavailable'))
 		const context = {
 			params: { chain: 'base' },
@@ -74,7 +74,7 @@ describe('Bridges stale ISR handling', () => {
 		})
 	})
 
-	it('rethrows missing bridge data during stale regeneration', async () => {
+	test('rethrows missing bridge data during stale regeneration', async () => {
 		getBridgePageDatanewMock.mockResolvedValue(null)
 		const context = {
 			params: { bridge: 'layerzero' },
@@ -84,7 +84,7 @@ describe('Bridges stale ISR handling', () => {
 		await expect(getBridgeStaticProps(context)).rejects.toThrow('No bridge data returned for layerzero')
 	})
 
-	it('keeps the disabled bridge fallback for an initial build failure', async () => {
+	test('keeps the disabled bridge fallback for an initial build failure', async () => {
 		getBridgePageDatanewMock.mockRejectedValue(new Error('upstream unavailable'))
 		const context = {
 			params: { bridge: 'layerzero' },

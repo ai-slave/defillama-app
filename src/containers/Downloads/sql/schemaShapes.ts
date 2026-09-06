@@ -1,4 +1,4 @@
-export type ColumnShape = readonly string[] | 'dynamic'
+export type ColumnShape = ReadonlyArray<string> | 'dynamic'
 
 export const CHART_COLUMN_SHAPES: Record<string, ColumnShape> = {
 	'bridge-volume-chart': ['date', 'depositUSD', 'withdrawUSD', 'depositTxs', 'withdrawTxs'],

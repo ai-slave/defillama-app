@@ -26,8 +26,8 @@ export const FORBIDDEN_RUNTIME_INVOCATIONS = [
 
 export function findRuntimePolicyViolations(
 	files: Array<{ content: string; filePath: string }>
-): RuntimePolicyViolation[] {
-	const violations: RuntimePolicyViolation[] = []
+): Array<RuntimePolicyViolation> {
+	const violations: Array<RuntimePolicyViolation> = []
 
 	for (const file of files) {
 		for (const forbidden of FORBIDDEN_RUNTIME_INVOCATIONS) {

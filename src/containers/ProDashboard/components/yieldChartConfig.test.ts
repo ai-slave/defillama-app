@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	borrowApyCharts,
 	borrowApyDimensions,
@@ -21,7 +21,7 @@ const chartContracts = [
 ] as const
 
 describe('Yields chart contracts', () => {
-	it.each(chartContracts)('%s series match the canonical dataset dimensions', (_name, charts, dimensions) => {
+	test.each(chartContracts)('%s series match the canonical dataset dimensions', (_name, charts, dimensions) => {
 		expect(dimensions[0]).toBe('timestamp')
 		expect(charts.map((chart) => chart.encode.x)).toEqual(charts.map(() => 0))
 		expect(charts.map((chart) => chart.encode.y)).toEqual(dimensions.slice(1).map((_dimension, index) => index + 1))

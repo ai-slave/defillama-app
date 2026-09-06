@@ -3,10 +3,10 @@ import type { TreemapValue } from './types'
 
 type TreemapPathInfo = Array<{ name?: unknown }>
 
-function getTreemapPath(treePathInfo: unknown): string[] {
+function getTreemapPath(treePathInfo: unknown): Array<string> {
 	if (!Array.isArray(treePathInfo)) return []
 
-	const treePath: string[] = []
+	const treePath: Array<string> = []
 	for (let i = 1; i < treePathInfo.length; i++) {
 		const name = treePathInfo[i]?.name
 		if (typeof name === 'string' && name.length > 0) treePath.push(name)

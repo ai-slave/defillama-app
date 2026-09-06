@@ -42,7 +42,7 @@ export const ATTRIBUTE_DEFS = {
 
 export type AttributeId = keyof typeof ATTRIBUTE_DEFS
 
-export const EARN_ATTRIBUTE_IDS: AttributeId[] = [
+export const EARN_ATTRIBUTE_IDS: Array<AttributeId> = [
 	'stablecoins',
 	'audited',
 	'no_il',
@@ -53,4 +53,4 @@ export const EARN_ATTRIBUTE_IDS: AttributeId[] = [
 	'include_meme_tokens'
 ]
 
-export const BORROW_ATTRIBUTE_IDS: AttributeId[] = ['no_protocol_token', 'audited', 'include_meme_tokens']
+export const BORROW_ATTRIBUTE_IDS: Array<AttributeId> = ['no_protocol_token', 'audited', 'include_meme_tokens']

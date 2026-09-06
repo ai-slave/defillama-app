@@ -15,26 +15,26 @@ import { getGroupedBarCharts } from './chartGrouping'
 
 export interface StablecoinVolumeChartPayload {
 	dataset: MultiSeriesTimeSeriesDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	valueSymbol: '$'
 	stacked: boolean
 	showTotalInTooltip: boolean
-	availableSeries?: string[]
+	availableSeries?: Array<string>
 }
 
 interface StablecoinVolumeChartOptions {
 	/** `null` is reserved for user-requested complete exports. */
 	limit?: number | null
 	trimIncompleteTail?: boolean
-	selectedNames?: string[] | null
-	excludedNames?: string[] | null
+	selectedNames?: Array<string> | null
+	excludedNames?: Array<string> | null
 }
 
 export type StablecoinVolumeChartSource =
-	| { chart: 'total'; data: StablecoinVolumeTotalChartPoint[] }
+	| { chart: 'total'; data: Array<StablecoinVolumeTotalChartPoint> }
 	| {
 			chart: Exclude<StablecoinVolumeChartKind, 'total'>
-			data: StablecoinVolumeBreakdownChartPoint[]
+			data: Array<StablecoinVolumeBreakdownChartPoint>
 	  }
 
 type StablecoinVolumeChartInput = StablecoinVolumeChartSource & StablecoinVolumeChartOptions
@@ -56,11 +56,11 @@ const clampLimit = (limit: number | null | undefined, seriesCount: number): numb
 }
 
 const buildCharts = (
-	names: string[],
+	names: Array<string>,
 	stacked: boolean,
 	colorIndexByName?: ReadonlyMap<string, number>
-): MultiSeriesChartSeriesConfig[] => {
-	const charts: MultiSeriesChartSeriesConfig[] = []
+): Array<MultiSeriesChartSeriesConfig> => {
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 	for (const [index, name] of names.entries()) {
 		const colorIndex = (colorIndexByName?.get(name) ?? index) % CHART_COLORS.length
 		charts.push({
@@ -94,7 +94,7 @@ const getLastCompletePointIndex = (data: StablecoinVolumeChartResponse, trimInco
 }
 
 const buildTotalVolumePayload = (
-	data: StablecoinVolumeTotalChartPoint[],
+	data: Array<StablecoinVolumeTotalChartPoint>,
 	trimIncompleteTail: boolean
 ): StablecoinVolumeChartPayload => {
 	const source: MultiSeriesTimeSeriesDataset['source'] = []
@@ -117,7 +117,7 @@ const buildTotalVolumePayload = (
 }
 
 const getLatestBreakdown = (
-	points: StablecoinVolumeBreakdownChartPoint[],
+	points: Array<StablecoinVolumeBreakdownChartPoint>,
 	lastCompletePointIndex: number
 ): Record<string, number> => {
 	for (let i = lastCompletePointIndex; i >= 0; i--) {
@@ -128,11 +128,11 @@ const getLatestBreakdown = (
 }
 
 const getRankedBreakdownKeys = (
-	points: StablecoinVolumeBreakdownChartPoint[],
+	points: Array<StablecoinVolumeBreakdownChartPoint>,
 	lastCompletePointIndex: number
-): string[] => {
+): Array<string> => {
 	const latest = getLatestBreakdown(points, lastCompletePointIndex)
-	const keys: string[] = []
+	const keys: Array<string> = []
 	const seen = new Set<string>()
 	for (const [index, point] of points.entries()) {
 		if (index > lastCompletePointIndex) break
@@ -154,7 +154,7 @@ const getRankedBreakdownKeys = (
 }
 
 const buildBreakdownVolumePayload = (
-	points: StablecoinVolumeBreakdownChartPoint[],
+	points: Array<StablecoinVolumeBreakdownChartPoint>,
 	options: StablecoinVolumeChartOptions & { chart: Exclude<StablecoinVolumeChartKind, 'total'> }
 ): StablecoinVolumeChartPayload => {
 	const lastCompletePointIndex = getLastCompletePointIndex(points, options.trimIncompleteTail === true)
@@ -206,7 +206,7 @@ const buildBreakdownVolumePayload = (
 		for (const row of source) row.length = dimensions.length
 	}
 
-	const seriesNames: string[] = []
+	const seriesNames: Array<string> = []
 	for (let i = 1; i < dimensions.length; i++) {
 		const dimension = dimensions[i]
 		if (dimension) seriesNames.push(dimension)

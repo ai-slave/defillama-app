@@ -10,7 +10,7 @@ const Economics = lazy(() => import('./Economics'))
 
 // Tabs from the partner tracker, ordered per the partner's preference (Security last). Tabs without a component render the shared
 // "Coming soon" panel until they are built.
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'overview', label: 'Overview', component: Overview },
 	{ id: 'liquidity', label: 'Liquidity Depth', component: Liquidity },
 	{ id: 'integrations', label: 'Integrations & Ecosystem', component: Integrations },

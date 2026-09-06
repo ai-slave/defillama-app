@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { SubmitButton } from '~/containers/LlamaAI/components/input/SubmitButton'
 
 vi.mock('~/ui/Icon', () => ({ Icon: () => null }))
@@ -31,7 +31,7 @@ describe('SubmitButton streaming affordances', () => {
 		container.remove()
 	})
 
-	it('shows only Stop when queueing is unavailable', async () => {
+	test('shows only Stop when queueing is unavailable', async () => {
 		await act(async () => {
 			root.render(<SubmitButton mode={{ kind: 'streaming', canQueue: false, onStop: vi.fn() }} />)
 		})
@@ -40,7 +40,7 @@ describe('SubmitButton streaming affordances', () => {
 		expect(container.textContent).not.toContain('Queue message')
 	})
 
-	it('shows Queue beside Stop when queueing is available', async () => {
+	test('shows Queue beside Stop when queueing is available', async () => {
 		await act(async () => {
 			root.render(<SubmitButton mode={{ kind: 'streaming', canQueue: true, onStop: vi.fn() }} />)
 		})
@@ -49,7 +49,7 @@ describe('SubmitButton streaming affordances', () => {
 		expect(container.textContent).toContain('Queue message')
 	})
 
-	it('blocks queue and duplicate stop actions until stopping is confirmed', async () => {
+	test('blocks queue and duplicate stop actions until stopping is confirmed', async () => {
 		await act(async () => {
 			root.render(<SubmitButton mode={{ kind: 'stopping' }} />)
 		})

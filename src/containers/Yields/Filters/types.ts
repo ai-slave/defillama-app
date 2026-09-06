@@ -22,7 +22,7 @@ export interface IDropdownMenusProps {
 	categoriesLabel?: string
 	categoryList?: Array<string>
 	selectedCategories?: Array<string>
-	attributeIds?: AttributeId[]
+	attributeIds?: Array<AttributeId>
 	tvlRange?: boolean
 	// Opt-in (/yields): trigger label override for the TVL range (defaults to 'TVL Range').
 	tvlRangeLabel?: string

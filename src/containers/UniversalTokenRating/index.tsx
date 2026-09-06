@@ -17,7 +17,7 @@ import { UtrDocsDrawer } from './UtrDocsDrawer'
 
 export type UniversalTokenRatingProps = {
 	universe: UtrUniverse
-	topMovers: UtrTopMover[]
+	topMovers: Array<UtrTopMover>
 	scoringConfig?: UtrScoringConfig | null
 }
 
@@ -29,12 +29,12 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		for (const row of universe.rows) {
 			if (row.sector) availableSectors.add(row.sector)
 		}
-		return availableSectors.size ? [...availableSectors].sort() : [...UTR_SECTORS]
+		return availableSectors.size > 0 ? [...availableSectors].sort() : [...UTR_SECTORS]
 	}, [universe.rows])
 
-	const [fdvRanges, setFdvRanges] = useState<string[]>(() => FDV_RANGES.map((range) => range.key))
-	const [sectors, setSectors] = useState<string[]>(() => sectorOptions)
-	const [listingStatuses, setListingStatuses] = useState<string[]>(() => Object.keys(LISTING_STATUS_LABELS))
+	const [fdvRanges, setFdvRanges] = useState<Array<string>>(() => FDV_RANGES.map((range) => range.key))
+	const [sectors, setSectors] = useState<Array<string>>(() => sectorOptions)
+	const [listingStatuses, setListingStatuses] = useState<Array<string>>(() => Object.keys(LISTING_STATUS_LABELS))
 	const [sort, setSort] = useState<UtrSort>({ key: 'rank', desc: false })
 	const [filtersOpen, setFiltersOpen] = useState(false)
 	const [searchQuery, setSearchQuery] = useState('')
@@ -65,7 +65,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		setFocusRequest((current) => ({ asset: match.asset, nonce: (current?.nonce ?? 0) + 1 }))
 	}
 
-	const filterChips: { key: string; label: string; onRemove: () => void }[] = []
+	const filterChips: Array<{ key: string; label: string; onRemove: () => void }> = []
 	if (fdvRanges.length !== FDV_RANGES.length) {
 		for (const range of FDV_RANGES.filter((range) => fdvRanges.includes(range.key))) {
 			filterChips.push({
@@ -122,7 +122,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 		</span>
 	)
 
-	if (!universe.rows.length) return null
+	if (universe.rows.length === 0) return null
 
 	return (
 		<div className="flex flex-col gap-2">
@@ -215,7 +215,7 @@ export function UniversalTokenRating({ universe, topMovers, scoringConfig }: Uni
 					</Button>
 				</span>
 			</div>
-			{filterChips.length ? (
+			{filterChips.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-1.5 lg:hidden">
 					{filterChips.map((chip) => (
 						<button

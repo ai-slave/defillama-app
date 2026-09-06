@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'
 import {
 	getAdvancedTvlBreakdownSources,
@@ -13,7 +13,7 @@ function requireSource<T>(source: T | undefined): T {
 }
 
 describe('borrowed TVL source selection', () => {
-	it('shares one USD token source between line and pie cards', () => {
+	test('shares one USD token source between line and pie cards', () => {
 		const line = requireSource(getBorrowedBreakdownSources('aave', 'tokenBorrowedUsd')[0])
 		const pie = requireSource(getBorrowedBreakdownSources('aave', 'tokensBorrowedPie')[0])
 
@@ -23,7 +23,7 @@ describe('borrowed TVL source selection', () => {
 		)
 	})
 
-	it('pairs the USD ranking source with the raw token source', () => {
+	test('pairs the USD ranking source with the raw token source', () => {
 		expect(getBorrowedBreakdownSources('aave', 'tokenBorrowedRaw')).toEqual([
 			{
 				kind: 'token-usd',
@@ -41,7 +41,7 @@ describe('borrowed TVL source selection', () => {
 		])
 	})
 
-	it('keeps chain, USD token and raw token cache identities distinct', () => {
+	test('keeps chain, USD token and raw token cache identities distinct', () => {
 		const chainSource = requireSource(getBorrowedBreakdownSources('aave', 'chainsBorrowed')[0])
 		const usdSource = requireSource(getBorrowedBreakdownSources('aave', 'tokenBorrowedUsd')[0])
 		const rawSource = requireSource(getBorrowedBreakdownSources('aave', 'tokenBorrowedRaw')[1])
@@ -52,7 +52,7 @@ describe('borrowed TVL source selection', () => {
 		expect(new Set([JSON.stringify(chain), JSON.stringify(usd), JSON.stringify(raw)])).toHaveLength(3)
 	})
 
-	it('suppresses borrowed token views but preserves the chain view for misrepresented protocols', () => {
+	test('suppresses borrowed token views but preserves the chain view for misrepresented protocols', () => {
 		expect(shouldSuppressBorrowedTokenBreakdown('tokenBorrowedUsd', true)).toBe(true)
 		expect(shouldSuppressBorrowedTokenBreakdown('tokensBorrowedPie', true)).toBe(true)
 		expect(shouldSuppressBorrowedTokenBreakdown('tokenBorrowedRaw', true)).toBe(true)
@@ -62,7 +62,7 @@ describe('borrowed TVL source selection', () => {
 })
 
 describe('advanced TVL source selection', () => {
-	it('uses the canonical Protocol Overview cache key for base TVL', () => {
+	test('uses the canonical Protocol Overview cache key for base TVL', () => {
 		expect(buildProtocolValueChartQueryKey({ source: 'tvl', protocol: 'aave' })).toEqual([
 			'protocol-overview',
 			'tvl-chart',
@@ -74,7 +74,7 @@ describe('advanced TVL source selection', () => {
 		])
 	})
 
-	it('requests only the breakdowns needed by a chain, USD or raw view', () => {
+	test('requests only the breakdowns needed by a chain, USD or raw view', () => {
 		expect(getAdvancedTvlBreakdownSources('aave', 'chainsTvl', {})).toEqual([
 			{ kind: 'chain', request: { protocol: 'aave', key: undefined, breakdownType: 'chain-breakdown' } }
 		])
@@ -90,7 +90,7 @@ describe('advanced TVL source selection', () => {
 		])
 	})
 
-	it('requests both token currencies only for inflow views', () => {
+	test('requests both token currencies only for inflow views', () => {
 		const sources = getAdvancedTvlBreakdownSources('aave', 'usdInflows', { staking: true })
 
 		expect(sources.map((source) => [source.kind, source.request.key])).toEqual([
@@ -101,7 +101,7 @@ describe('advanced TVL source selection', () => {
 		])
 	})
 
-	it('ignores aggregate TVL adjustment flags that are not protocol breakdowns', () => {
+	test('ignores aggregate TVL adjustment flags that are not protocol breakdowns', () => {
 		const sources = getAdvancedTvlBreakdownSources('aave', 'chainsTvl', {
 			doublecounted: true,
 			liquidstaking: true,
@@ -113,7 +113,7 @@ describe('advanced TVL source selection', () => {
 		])
 	})
 
-	it('suppresses token breakdowns but preserves TVL and chain views for misrepresented protocols', () => {
+	test('suppresses token breakdowns but preserves TVL and chain views for misrepresented protocols', () => {
 		expect(shouldSuppressAdvancedTvlTokenBreakdown('tokenValuesUsd', true)).toBe(true)
 		expect(shouldSuppressAdvancedTvlTokenBreakdown('tokenBalances', true)).toBe(true)
 		expect(shouldSuppressAdvancedTvlTokenBreakdown('tvl', true)).toBe(false)

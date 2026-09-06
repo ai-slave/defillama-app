@@ -35,7 +35,7 @@ export function SortArrow({ dir }: { dir: false | 'asc' | 'desc' }) {
 	)
 }
 
-export function StickyTable<T>({ headerGroups, rows }: { headerGroups: HeaderGroup<T>[]; rows: Row<T>[] }) {
+export function StickyTable<T>({ headerGroups, rows }: { headerGroups: Array<HeaderGroup<T>>; rows: Array<Row<T>> }) {
 	'use no memo'
 	return (
 		<div className="w-full overflow-x-auto">

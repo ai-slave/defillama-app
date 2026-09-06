@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { defaultChartConfig } from '../chartConfig'
 import {
 	classifyColumn,
@@ -11,7 +11,7 @@ import {
 import type { QueryResult } from '../exportResults'
 
 describe('inferFineKindFromArrowType', () => {
-	it('classifies common Arrow types', () => {
+	test('classifies common Arrow types', () => {
 		expect(inferFineKindFromArrowType('Int64')).toBe('int')
 		expect(inferFineKindFromArrowType('Int32')).toBe('int')
 		expect(inferFineKindFromArrowType('Float64')).toBe('float')
@@ -32,15 +32,15 @@ describe('inferFineKindFromArrowType', () => {
 })
 
 describe('coarsen', () => {
-	it('collapses int/float to number', () => {
+	test('collapses int/float to number', () => {
 		expect(coarsen('int')).toBe('number')
 		expect(coarsen('float')).toBe('number')
 	})
-	it('collapses text/bool to category', () => {
+	test('collapses text/bool to category', () => {
 		expect(coarsen('text')).toBe('category')
 		expect(coarsen('bool')).toBe('category')
 	})
-	it('preserves date and list/other', () => {
+	test('preserves date and list/other', () => {
 		expect(coarsen('date')).toBe('date')
 		expect(coarsen('list')).toBe('other')
 		expect(coarsen('other')).toBe('other')
@@ -48,13 +48,13 @@ describe('coarsen', () => {
 })
 
 describe('looksLikeISODate', () => {
-	it('matches YYYY-MM-DD and timestamps', () => {
+	test('matches YYYY-MM-DD and timestamps', () => {
 		expect(looksLikeISODate('2024-01-17')).toBe(true)
 		expect(looksLikeISODate('2024-01-17T12:34:56')).toBe(true)
 		expect(looksLikeISODate('2024-01-17T12:34:56.123Z')).toBe(true)
 		expect(looksLikeISODate('2024-01-17T12:34:56+00:00')).toBe(true)
 	})
-	it('rejects non-dates', () => {
+	test('rejects non-dates', () => {
 		expect(looksLikeISODate('hello')).toBe(false)
 		expect(looksLikeISODate('2024/01/17')).toBe(false)
 		expect(looksLikeISODate(17)).toBe(false)
@@ -63,12 +63,12 @@ describe('looksLikeISODate', () => {
 })
 
 describe('looksLikeNumericArray', () => {
-	it('true for numeric arrays', () => {
+	test('true for numeric arrays', () => {
 		expect(looksLikeNumericArray([1, 2, 3])).toBe(true)
 		expect(looksLikeNumericArray([1, null, 3])).toBe(true)
 		expect(looksLikeNumericArray([])).toBe(true)
 	})
-	it('false for non-numeric', () => {
+	test('false for non-numeric', () => {
 		expect(looksLikeNumericArray([1, 'x', 3])).toBe(false)
 		expect(looksLikeNumericArray('abc')).toBe(false)
 		expect(looksLikeNumericArray({ a: 1 })).toBe(false)
@@ -76,25 +76,25 @@ describe('looksLikeNumericArray', () => {
 })
 
 describe('classifyColumn', () => {
-	it('promotes text column of ISO dates to date', () => {
+	test('promotes text column of ISO dates to date', () => {
 		const rows = [['2024-01-17'], ['2024-01-18'], ['2024-01-19']]
 		const result = classifyColumn('Utf8', 'x', rows)
 		expect(result.fine).toBe('date')
 		expect(result.coarse).toBe('date')
 	})
-	it('keeps text column as category when any sample is not ISO', () => {
+	test('keeps text column as category when any sample is not ISO', () => {
 		const rows = [['2024-01-17'], ['not-a-date']]
 		const result = classifyColumn('Utf8', 'x', rows)
 		expect(result.fine).toBe('text')
 		expect(result.coarse).toBe('category')
 	})
-	it('detects numeric-array columns as list', () => {
+	test('detects numeric-array columns as list', () => {
 		const rows = [[[1, 2, 3]], [null]]
 		const result = classifyColumn('Map<String, Double>', 'x', rows)
 		expect(result.fine).toBe('list')
 		expect(result.coarse).toBe('other')
 	})
-	it('skips empty text samples', () => {
+	test('skips empty text samples', () => {
 		const rows = [[''], [null]]
 		const result = classifyColumn('Utf8', 'x', rows)
 		expect(result.fine).toBe('text')
@@ -102,7 +102,7 @@ describe('classifyColumn', () => {
 })
 
 describe('classifyColumns', () => {
-	it('classifies all columns of a result', () => {
+	test('classifies all columns of a result', () => {
 		const result: QueryResult = {
 			columns: [
 				{ name: 'date', type: 'Utf8' },
@@ -120,7 +120,7 @@ describe('classifyColumns', () => {
 		expect(classified[2].fine).toBe('text')
 	})
 
-	it('preserves categorical chart defaults for server DuckDB results', () => {
+	test('preserves categorical chart defaults for server DuckDB results', () => {
 		const result: QueryResult = {
 			columns: [
 				{ name: 'name', type: 'VARCHAR' },

@@ -7,7 +7,7 @@ const Tokenomics = lazy(() => import('./Tokenomics'))
 const Staking = lazy(() => import('./Staking'))
 const Network = lazy(() => import('./Network'))
 
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'overview', label: 'Overview', component: Overview },
 	{ id: 'fassets', label: 'FAssets', component: FAssets },
 	{ id: 'tokenomics', label: 'Tokenomics', component: Tokenomics },

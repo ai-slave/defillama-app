@@ -4,7 +4,7 @@ import type { SortingState } from '@tanstack/react-table'
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { RouteTableRow } from '~/containers/Yields/data/types'
 import type { TokenBorrowRoutesData } from '../types'
 
@@ -62,7 +62,7 @@ vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', () => ({
 		initialPageIndex,
 		onSortingChange
 	}: {
-		data: RouteTableRow[]
+		data: Array<RouteTableRow>
 		appearance?: string
 		initialPageSize?: number
 		initialPageIndex?: number
@@ -87,7 +87,7 @@ vi.mock('../deferred/DeferredPaginatedBorrowRoutesTable', () => ({
 }))
 
 vi.mock('../useTokenBorrowRoutes', () => ({
-	useTokenBorrowRoutes: (_tokenKeys: string[], options?: { enabled?: boolean }) =>
+	useTokenBorrowRoutes: (_tokenKeys: Array<string>, options?: { enabled?: boolean }) =>
 		options?.enabled === false
 			? { data: undefined, error: null, isLoading: false }
 			: {
@@ -154,7 +154,7 @@ function makeRouteRow(overrides: Partial<RouteTableRow> = {}): RouteTableRow {
 const hydrationBase = { tokenKeys: ['family:eth'] }
 
 describe('TokenBorrowSection', () => {
-	it('preserves the controlled table instance when sorting changes', async () => {
+	test('preserves the controlled table instance when sorting changes', async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		strategiesState.data = { useAsCollateral: [makeRouteRow()], borrowThis: [] }
 		const container = document.createElement('div')
@@ -175,7 +175,7 @@ describe('TokenBorrowSection', () => {
 		}
 	})
 
-	it('shows a loader while shared token routes are loading', () => {
+	test('shows a loader while shared token routes are loading', () => {
 		strategiesState.data = undefined
 		strategiesState.error = null
 		strategiesState.isLoading = true
@@ -187,7 +187,7 @@ describe('TokenBorrowSection', () => {
 		expect(html).toContain('Borrow ETH')
 	})
 
-	it('shows the default use-token table with pagination', () => {
+	test('shows the default use-token table with pagination', () => {
 		strategiesState.data = {
 			useAsCollateral: [makeRouteRow()],
 			borrowThis: [makeRouteRow({ collateralSymbol: 'WBTC', borrowSymbol: 'ETH', availableBorrowUsd: 250_000 })]
@@ -207,7 +207,7 @@ describe('TokenBorrowSection', () => {
 		})
 	})
 
-	it('renders prefetched routes without waiting for a client fetch', () => {
+	test('renders prefetched routes without waiting for a client fetch', () => {
 		strategiesState.data = undefined
 		strategiesState.error = null
 		strategiesState.isLoading = true
@@ -238,7 +238,7 @@ describe('TokenBorrowSection', () => {
 		expect(routesTableCalls[0]).toMatchObject({ dataLength: 1, initialPageIndex: 0, initialPageSize: 10 })
 	})
 
-	it('shows deferred pagination controls when only the first page is prefetched', () => {
+	test('shows deferred pagination controls when only the first page is prefetched', () => {
 		strategiesState.data = undefined
 		strategiesState.error = null
 		strategiesState.isLoading = false
@@ -269,17 +269,17 @@ describe('TokenBorrowSection', () => {
 		expect(html).toContain('Page 1 of 3')
 	})
 
-	it('shows an empty state when no routes exist for the selected tab', () => {
+	test('shows an empty state when no routes exist for the selected tab', () => {
 		const html = renderToStaticMarkup(<TokenBorrowSection tokenSymbol="ETH" />)
 
 		expect(html).toContain('No borrow routes found using ETH as collateral.')
 	})
 
-	it('filters routes by exact chain and available liquidity bounds', () => {
+	test('filters routes by exact chain and available liquidity bounds', () => {
 		const filtered = filterBorrowRoutes({
 			rows: [
 				makeRouteRow({ borrowSymbol: 'USDC', availableBorrowUsd: 500_000, chains: ['Ethereum'] }),
-				makeRouteRow({ borrowSymbol: 'DAI', availableBorrowUsd: 5_000, chains: ['Arbitrum'] })
+				makeRouteRow({ borrowSymbol: 'DAI', availableBorrowUsd: 5000, chains: ['Arbitrum'] })
 			],
 			selectedChains: ['Ethereum'],
 			minAvailable: '10000',
@@ -290,11 +290,11 @@ describe('TokenBorrowSection', () => {
 		expect(filtered.map((row) => row.borrowSymbol)).toEqual(['USDC'])
 	})
 
-	it('ignores non-numeric available liquidity bounds', () => {
+	test('ignores non-numeric available liquidity bounds', () => {
 		const filtered = filterBorrowRoutes({
 			rows: [
 				makeRouteRow({ borrowSymbol: 'USDC', availableBorrowUsd: null, chains: ['Ethereum'] }),
-				makeRouteRow({ borrowSymbol: 'DAI', availableBorrowUsd: 5_000, chains: ['Ethereum'] })
+				makeRouteRow({ borrowSymbol: 'DAI', availableBorrowUsd: 5000, chains: ['Ethereum'] })
 			],
 			selectedChains: ['Ethereum'],
 			minAvailable: 'not-a-number',
@@ -304,7 +304,7 @@ describe('TokenBorrowSection', () => {
 		expect(filtered).toHaveLength(2)
 	})
 
-	it('returns no rows when no chains are selected explicitly', () => {
+	test('returns no rows when no chains are selected explicitly', () => {
 		const filtered = filterBorrowRoutes({
 			rows: [makeRouteRow({ borrowSymbol: 'USDC', availableBorrowUsd: 500_000, chains: ['Ethereum'] })],
 			selectedChains: [],

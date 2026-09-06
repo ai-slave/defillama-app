@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { PriceObject } from '~/api/types'
 import type {
 	EmissionEvent,
@@ -11,25 +11,25 @@ import type {
 } from '../api.types'
 
 const fetchProtocolEmissionMock = vi.fn<(protocolName: string) => Promise<ProtocolEmissionDetail | null>>()
-const fetchAllProtocolEmissionsMock = vi.fn<() => Promise<ProtocolEmission[]>>(() => Promise.resolve([]))
+const fetchAllProtocolEmissionsMock = vi.fn<() => Promise<Array<ProtocolEmission>>>(() => Promise.resolve([]))
 const fetchCoinPricesMock = vi.fn<
-	(coins: string[], options?: { searchWidth?: string }) => Promise<Record<string, PriceObject>>
+	(coins: Array<string>, options?: { searchWidth?: string }) => Promise<Record<string, PriceObject>>
 >(() => Promise.resolve({}))
 const fetchJsonMock = vi.fn<(url: string, options?: object) => Promise<unknown>>(() => Promise.resolve([]))
 const batchFetchHistoricalPricesMock = vi.fn<
 	(
-		priceRequests: Record<string, number | number[]>,
+		priceRequests: Record<string, number | Array<number>>,
 		batchSize?: number
 	) => Promise<{ results: Record<string, { prices?: Array<{ timestamp: number; price: number }> }> }>
 >(() => Promise.resolve({ results: {} }))
 
 vi.mock('~/api/pricing', () => ({
-	fetchCoinPrices: (coins: string[], options?: { searchWidth?: string }) =>
+	fetchCoinPrices: (coins: Array<string>, options?: { searchWidth?: string }) =>
 		options === undefined ? fetchCoinPricesMock(coins) : fetchCoinPricesMock(coins, options)
 }))
 
 vi.mock('~/utils', () => ({
-	batchFetchHistoricalPrices: (priceRequests: Record<string, number | number[]>, batchSize?: number) =>
+	batchFetchHistoricalPrices: (priceRequests: Record<string, number | Array<number>>, batchSize?: number) =>
 		batchSize === undefined
 			? batchFetchHistoricalPricesMock(priceRequests)
 			: batchFetchHistoricalPricesMock(priceRequests, batchSize),
@@ -76,7 +76,10 @@ function chartPoint(timestamp: number, unlocked: number, isForecast?: boolean): 
 	}
 }
 
-function chartData(data: EmissionSeries[] = [], tokenAllocation = EMPTY_TOKEN_ALLOCATION): ProtocolEmissionChartData {
+function chartData(
+	data: Array<EmissionSeries> = [],
+	tokenAllocation = EMPTY_TOKEN_ALLOCATION
+): ProtocolEmissionChartData {
 	return { data, tokenAllocation }
 }
 
@@ -84,11 +87,11 @@ interface ProtocolDetailFixture {
 	name: string
 	geckoId?: string | null
 	token?: string
-	events?: EmissionEvent[]
-	notes?: string[]
+	events?: Array<EmissionEvent>
+	notes?: Array<string>
 	documentedData?: ProtocolEmissionChartData
 	realTimeData?: ProtocolEmissionChartData
-	categories?: Record<string, string[]>
+	categories?: Record<string, Array<string>>
 }
 
 function protocolDetail({
@@ -162,7 +165,7 @@ function protocolEmission({
 }: {
 	name: string
 	token: string
-	events?: EmissionEvent[]
+	events?: Array<EmissionEvent>
 	geckoId?: string | null
 	totalLocked?: number
 	maxSupply?: number
@@ -184,7 +187,7 @@ function protocolEmission({
 }
 
 describe('buildUnlockTypesByTimestamp', () => {
-	it('classifies an ascending event stream in one pass without mutating it', () => {
+	test('classifies an ascending event stream in one pass without mutating it', () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
 		vi.spyOn(Date, 'now').mockReturnValue(nowSec * 1000)
@@ -223,7 +226,7 @@ describe('getProtocolEmissionsPieData', () => {
 		realTimeData: chartData()
 	})
 
-	it('builds allocation data without fetching global supply metadata', async () => {
+	test('builds allocation data without fetching global supply metadata', async () => {
 		fetchProtocolEmissionMock.mockResolvedValue(detail)
 
 		const result = await getProtocolEmissionsPieData('curve-finance', false)
@@ -233,7 +236,7 @@ describe('getProtocolEmissionsPieData', () => {
 		expect(fetchAllProtocolEmissionsMock).not.toHaveBeenCalled()
 	})
 
-	it('fetches supply metadata for the locked/unlocked chart', async () => {
+	test('fetches supply metadata for the locked/unlocked chart', async () => {
 		fetchProtocolEmissionMock.mockResolvedValue(detail)
 		fetchAllProtocolEmissionsMock.mockResolvedValue([
 			protocolEmission({ name: 'Curve Finance', token: 'CRV', totalLocked: 25, maxSupply: 100 })
@@ -256,7 +259,7 @@ describe('getProtocolEmissons', () => {
 		batchFetchHistoricalPricesMock.mockClear()
 	})
 
-	it('returns the empty result without fetching protocol data when the cached emissions list misses', async () => {
+	test('returns the empty result without fetching protocol data when the cached emissions list misses', async () => {
 		const result = await getProtocolEmissons('chainlink', {
 			emissionsProtocolsList: ['aave']
 		})
@@ -266,7 +269,7 @@ describe('getProtocolEmissons', () => {
 		expect(fetchAllProtocolEmissionsMock).not.toHaveBeenCalled()
 	})
 
-	it('preserves a detail-source failure instead of returning an empty protocol result', async () => {
+	test('preserves a detail-source failure instead of returning an empty protocol result', async () => {
 		const error = new Error('detail unavailable')
 		fetchProtocolEmissionMock.mockRejectedValue(error)
 
@@ -278,7 +281,7 @@ describe('getProtocolEmissons', () => {
 		).rejects.toBe(error)
 	})
 
-	it('returns the empty result for an explicit missing detail', async () => {
+	test('returns the empty result for an explicit missing detail', async () => {
 		fetchProtocolEmissionMock.mockResolvedValue(null)
 
 		const result = await getProtocolEmissons('missing', {
@@ -289,7 +292,7 @@ describe('getProtocolEmissons', () => {
 		expect(isEmptyProtocolEmissionResult(result)).toBe(true)
 	})
 
-	it('keeps a successful detail with an empty schedule distinct from not-found', async () => {
+	test('keeps a successful detail with an empty schedule distinct from not-found', async () => {
 		fetchProtocolEmissionMock.mockResolvedValue(
 			protocolDetail({ name: 'Empty Schedule', token: 'coingecko:empty-schedule' })
 		)
@@ -305,7 +308,7 @@ describe('getProtocolEmissons', () => {
 		expect(result.chartData.documented).toEqual([])
 	})
 
-	it('skips the availability check when explicitly told the slug is already valid', async () => {
+	test('skips the availability check when explicitly told the slug is already valid', async () => {
 		fetchProtocolEmissionMock.mockResolvedValue(
 			protocolDetail({
 				name: 'Chainlink',
@@ -337,7 +340,7 @@ describe('getProtocolEmissons', () => {
 		expect(result.tokenAllocation.realtime).toEqual(EMPTY_TOKEN_ALLOCATION)
 	})
 
-	it('preserves the documented allocation split nested under bySection', async () => {
+	test('preserves the documented allocation split nested under bySection', async () => {
 		const allocation = {
 			current: { Ecosystem: 40, Team: 20 },
 			final: { Ecosystem: 50, Team: 50 },
@@ -365,7 +368,7 @@ describe('getProtocolEmissons', () => {
 		expect(result.tokenAllocation.documented).toEqual(allocation)
 	})
 
-	it('uses an empty comparison allocation when the canonical detail omits realtime data', async () => {
+	test('uses an empty comparison allocation when the canonical detail omits realtime data', async () => {
 		const allocation = {
 			current: { Team: 20, Ecosystem: 80 },
 			final: { Team: 20, Ecosystem: 80 },
@@ -393,7 +396,7 @@ describe('getProtocolEmissons', () => {
 		expect(result.tokenAllocation.realtime).toEqual(EMPTY_TOKEN_ALLOCATION)
 	})
 
-	it('uses tokenlist prices for protocol emissions without fetching current coin prices', async () => {
+	test('uses tokenlist prices for protocol emissions without fetching current coin prices', async () => {
 		fetchProtocolEmissionMock.mockResolvedValue(
 			protocolDetail({
 				name: 'Chainlink',
@@ -418,7 +421,7 @@ describe('getProtocolEmissons', () => {
 		expect(result.tokenPrice).toEqual({ price: 12.34, symbol: 'LINK' })
 	})
 
-	it('keeps the earliest actionable next event regardless of source ordering', async () => {
+	test('keeps the earliest actionable next event regardless of source ordering', async () => {
 		const nowSec = 1_800_000_000
 		vi.spyOn(Date, 'now').mockReturnValue(nowSec * 1000)
 		const unknownCliff: EmissionEvent = {
@@ -453,7 +456,7 @@ describe('getProtocolEmissons', () => {
 		expect(result.upcomingEvent).toEqual([rateStop])
 	})
 
-	it('returns renderable raw and grouped forecast sections without exposing metadata-only TBD sections', async () => {
+	test('returns renderable raw and grouped forecast sections without exposing metadata-only TBD sections', async () => {
 		fetchProtocolEmissionMock.mockResolvedValue(
 			protocolDetailV2(
 				{
@@ -506,14 +509,14 @@ describe('getAllProtocolEmissions', () => {
 		batchFetchHistoricalPricesMock.mockClear()
 	})
 
-	it('preserves an aggregate source failure instead of returning an empty list', async () => {
+	test('preserves an aggregate source failure instead of returning an empty list', async () => {
 		const error = new Error('aggregate unavailable')
 		fetchAllProtocolEmissionsMock.mockRejectedValue(error)
 
 		await expect(getAllProtocolEmissions({ getHistoricalPrices: false, tokenlist: {} })).rejects.toBe(error)
 	})
 
-	it('builds historical price requests around the latest eligible past unlock', () => {
+	test('builds historical price requests around the latest eligible past unlock', () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
 		const lastPastEvent = Math.floor((nowSec - 8 * day) / 1800) * 1800
@@ -554,7 +557,7 @@ describe('getAllProtocolEmissions', () => {
 		])
 	})
 
-	it('selects the latest known past unlock when a newer event has an unknown amount', () => {
+	test('selects the latest known past unlock when a newer event has an unknown amount', () => {
 		const nowSec = 1_700_000_000
 		const knownPastEvent = Math.floor((nowSec - 10 * 86_400) / 1800) * 1800
 		const result = buildUnlocksHistoricalPriceRequests(
@@ -571,7 +574,7 @@ describe('getAllProtocolEmissions', () => {
 		expect(result.priceReqs['coingecko:chainlink']).toBeDefined()
 	})
 
-	it('preserves the exact event timestamp while using its UTC day as the price-request anchor', () => {
+	test('preserves the exact event timestamp while using its UTC day as the price-request anchor', () => {
 		const nowSec = 1_700_000_000
 		const exactTimestamp = nowSec - 10 * 86_400 + 917
 		const result = buildUnlocksHistoricalPriceRequests(
@@ -588,7 +591,7 @@ describe('getAllProtocolEmissions', () => {
 		expect(result.priceReqs['coingecko:chainlink']?.[7]).toBe(Math.floor(exactTimestamp / 86_400) * 86_400)
 	})
 
-	it('uses tokenlist prices without fetching current coin prices', async () => {
+	test('uses tokenlist prices without fetching current coin prices', async () => {
 		const nowSec = Date.now() / 1000
 		fetchAllProtocolEmissionsMock.mockResolvedValue([
 			protocolEmission({
@@ -617,7 +620,7 @@ describe('getAllProtocolEmissions', () => {
 		})
 	})
 
-	it('keeps unknown token amounts visible at a shared upcoming timestamp', async () => {
+	test('keeps unknown token amounts visible at a shared upcoming timestamp', async () => {
 		const nowSec = 1_700_000_000
 		const upcomingTimestamp = nowSec + 3600
 		const dateNow = vi.spyOn(Date, 'now').mockReturnValue(nowSec * 1000)
@@ -641,7 +644,7 @@ describe('getAllProtocolEmissions', () => {
 		expect(result[0]?.upcomingEvent).toEqual([knownEvent, unknownEvent])
 	})
 
-	it('uses artifact historical prices without fetching historical coin prices', async () => {
+	test('uses artifact historical prices without fetching historical coin prices', async () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
 		const lastPastEvent = Math.floor((nowSec - 8 * day) / 1800) * 1800
@@ -688,7 +691,7 @@ describe('getAllProtocolEmissions', () => {
 		])
 	})
 
-	it('falls back to network historical prices when the artifact cache is empty', async () => {
+	test('falls back to network historical prices when the artifact cache is empty', async () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
 		const lastPastEvent = Math.floor((nowSec - 8 * day) / 1800) * 1800
@@ -728,7 +731,7 @@ describe('getAllProtocolEmissions', () => {
 		expect(result[0]?.historicalPrice).toEqual([[lastPastEvent * 1000, 2]])
 	})
 
-	it('falls back to network current and historical prices when cache options are omitted', async () => {
+	test('falls back to network current and historical prices when cache options are omitted', async () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
 		const lastPastEvent = Math.floor((nowSec - 8 * day) / 1800) * 1800
@@ -786,7 +789,7 @@ describe('getUnlocksCalendarStaticPropsData', () => {
 		fetchJsonMock.mockReset()
 	})
 
-	it('indexes UTC days once and applies cliff, linear, zero, and unknown amount semantics', async () => {
+	test('indexes UTC days once and applies cliff, linear, zero, and unknown amount semantics', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-08-08T12:00:00Z'))
 		fetchJsonMock.mockResolvedValue([])

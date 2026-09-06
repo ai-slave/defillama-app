@@ -46,7 +46,7 @@ const WINDOW_OPTIONS = [
 	{ value: 'daily', label: 'Daily values', shortLabel: 'Daily' },
 	{ value: '7d', label: '7-day average', shortLabel: '7d avg' },
 	{ value: '30d', label: '30-day average', shortLabel: '30d avg' }
-] as const satisfies readonly ChartGroupingOption<PoolChartWindow>[]
+] as const satisfies ReadonlyArray<ChartGroupingOption<PoolChartWindow>>
 
 // Single source for a toggleable series: its default feeds the URL override read, the picker
 // option, and getBooleanOverride, so the three can never disagree.
@@ -62,7 +62,7 @@ const RANGE_OPTIONS = [
 	{ value: '30d', label: '', shortLabel: '30d' },
 	{ value: '90d', label: '', shortLabel: '90d' },
 	{ value: 'max', label: '', shortLabel: 'Max' }
-] as const satisfies readonly ChartGroupingOption<Range>[]
+] as const satisfies ReadonlyArray<ChartGroupingOption<Range>>
 
 // A loaded range covers any range of equal-or-lower rank (slice locally instead of re-fetching).
 const RANK: Record<Range, number> = { '30d': 0, '90d': 1, max: 2 }
@@ -86,21 +86,24 @@ function buildChartInputs(
 	apyWindow: PoolChartWindow,
 	range: Range,
 	isDark: boolean
-): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[]; hasData: boolean } {
+): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig>; hasData: boolean } {
 	const resolve = (key: ChartColorKey) => CHART_PALETTE[key][isDark ? 1 : 0]
 	const total = model.dates.length
 	const start = total - rangeCount(range, total)
 	const renderedBars = model.bars.filter((b) => enabled[b.key] === true)
 	const netLine = model.net && model.netLine && enabled[model.netLine.key] === true ? model.netLine : null
 	const enabledLines = model.lines.filter((line) => enabled[line.key] === true)
-	const windowValues = (series: { values: (number | null)[]; avg7: (number | null)[]; avg30: (number | null)[] }) =>
-		apyWindow === 'daily' ? series.values : apyWindow === '7d' ? series.avg7 : series.avg30
+	const windowValues = (series: {
+		values: Array<number | null>
+		avg7: Array<number | null>
+		avg30: Array<number | null>
+	}) => (apyWindow === 'daily' ? series.values : apyWindow === '7d' ? series.avg7 : series.avg30)
 	// Rate series carry the window in their name so the tooltip, legend and CSV export can
 	// never present an averaged value under a daily label.
 	const rateSuffix = apyWindow === 'daily' ? '' : ` (${apyWindow} avg)`
 
-	const dimensions: string[] = ['timestamp']
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const dimensions: Array<string> = ['timestamp']
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 
 	for (const b of renderedBars) {
 		const dimensionIndex = dimensions.length
@@ -172,7 +175,7 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 
 	return (params: unknown) => {
 		const items = getChartTooltipItems(params)
-		if (!items.length) return ''
+		if (items.length === 0) return ''
 		const byName = new Map<string, ChartTooltipItem>()
 		for (const p of items) byName.set(p.seriesName, p)
 
@@ -287,8 +290,8 @@ export function PoolApyChart({
 			: undefined
 	const apyWindow = getPoolChartWindow(router.query[getPoolSeriesQueryKey(kind, 'window')] ?? legacyWindow)
 
-	const seriesDefs = useMemo<SeriesDef[]>(() => {
-		const defs: SeriesDef[] = []
+	const seriesDefs = useMemo<Array<SeriesDef>>(() => {
+		const defs: Array<SeriesDef> = []
 		if (currentModel.net && currentModel.netLine) {
 			const netLine = currentModel.netLine
 			defs.push({
@@ -330,7 +333,7 @@ export function PoolApyChart({
 		void pushShallowQuery(router, { [queryKey]: getBooleanOverride(!active, defaultEnabled) }, router.pathname)
 	}
 
-	const metricGroups: ChartMetricGroup[] = useMemo(() => {
+	const metricGroups: Array<ChartMetricGroup> = useMemo(() => {
 		const resolve = (key: ChartColorKey) => CHART_PALETTE[key][isDark ? 1 : 0]
 		const toOption = (def: SeriesDef): ChartMetricOption => ({
 			key: def.key,

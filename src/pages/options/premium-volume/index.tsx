@@ -34,7 +34,7 @@ const PremiumVolumeOnAllChains = (props: IAdapterByChainPageData) => {
 		<Layout
 			title="Options Premium Volume Rankings - DefiLlama"
 			description="Track options premium volume by protocol, the value paid buying and selling options on DeFi exchanges."
-			canonicalUrl={`/options/premium-volume`}
+			canonicalUrl="/options/premium-volume"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

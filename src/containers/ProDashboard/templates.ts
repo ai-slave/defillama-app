@@ -16,11 +16,11 @@ export interface DashboardTemplate {
 	name: string
 	description: string
 	type: 'chains' | 'protocols'
-	metrics: ProDashboardChartType[]
+	metrics: Array<ProDashboardChartType>
 	filter: {
 		category?: string
 		metadataFlag?: keyof DimensionProtocols
-		chainNames?: string[]
+		chainNames?: Array<string>
 		chainCategory?: string
 		excludeChainCategory?: string
 	}
@@ -29,7 +29,7 @@ export interface DashboardTemplate {
 	grouping?: 'day' | 'week' | 'month'
 }
 
-export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
+export const DASHBOARD_TEMPLATES: Array<DashboardTemplate> = [
 	{
 		id: 'top-l1-chains',
 		name: 'Top L1 Chains',
@@ -146,7 +146,7 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
 	}
 ]
 
-const TEMPLATE_TABLE_COLUMNS: Record<string, { columns: string[]; sortBy: string }> = {
+const TEMPLATE_TABLE_COLUMNS: Record<string, { columns: Array<string>; sortBy: string }> = {
 	'top-l1-chains': {
 		columns: ['name', 'tvl', 'change7d', 'fees24h', 'revenue24h', 'volume24h', 'bridgedTvl', 'stablesMcap'],
 		sortBy: 'tvl'
@@ -219,19 +219,19 @@ interface DimensionProtocol {
 }
 
 export interface DimensionProtocols {
-	perps?: DimensionProtocol[]
-	dexs?: DimensionProtocol[]
-	dexAggregators?: DimensionProtocol[]
+	perps?: Array<DimensionProtocol>
+	dexs?: Array<DimensionProtocol>
+	dexAggregators?: Array<DimensionProtocol>
 }
 
 function getSelectedItems(
 	template: DashboardTemplate,
-	protocols: Protocol[],
-	chains: Chain[],
+	protocols: Array<Protocol>,
+	chains: Array<Chain>,
 	protocolMetadata: Map<string, ProtocolMetadata>,
 	chainCategoryData?: ChainCategoryData,
 	dimensionProtocols?: DimensionProtocols
-): SelectedItem[] {
+): Array<SelectedItem> {
 	if (template.type === 'protocols') {
 		if (template.filter.metadataFlag && dimensionProtocols) {
 			const dimensionKey = template.filter.metadataFlag
@@ -263,40 +263,39 @@ function getSelectedItems(
 			.sort((a, b) => b.tvl - a.tvl)
 			.slice(0, template.count)
 			.map((p) => ({ slug: p.slug, name: p.name }))
-	} else {
-		let filteredChains = chains
-
-		if (template.filter.chainCategory && chainCategoryData) {
-			const categoryChains = chainCategoryData.chainsInCategory.get(template.filter.chainCategory)
-			if (categoryChains) {
-				filteredChains = chains.filter((c) => categoryChains.has(c.name))
-			}
-		}
-
-		if (template.filter.excludeChainCategory && chainCategoryData) {
-			const excludeChains = chainCategoryData.chainsInCategory.get(template.filter.excludeChainCategory)
-			if (excludeChains) {
-				filteredChains = filteredChains.filter((c) => !excludeChains.has(c.name))
-			}
-		}
-
-		if (template.filter.chainNames) {
-			const chainSet = new Set(template.filter.chainNames)
-			filteredChains = filteredChains.filter((c) => chainSet.has(c.name))
-		}
-
-		return filteredChains
-			.sort((a, b) => b.tvl - a.tvl)
-			.slice(0, template.count)
-			.map((c) => ({ slug: c.name, name: c.name }))
 	}
+	let filteredChains = chains
+
+	if (template.filter.chainCategory && chainCategoryData) {
+		const categoryChains = chainCategoryData.chainsInCategory.get(template.filter.chainCategory)
+		if (categoryChains) {
+			filteredChains = chains.filter((c) => categoryChains.has(c.name))
+		}
+	}
+
+	if (template.filter.excludeChainCategory && chainCategoryData) {
+		const excludeChains = chainCategoryData.chainsInCategory.get(template.filter.excludeChainCategory)
+		if (excludeChains) {
+			filteredChains = filteredChains.filter((c) => !excludeChains.has(c.name))
+		}
+	}
+
+	if (template.filter.chainNames) {
+		const chainSet = new Set(template.filter.chainNames)
+		filteredChains = filteredChains.filter((c) => chainSet.has(c.name))
+	}
+
+	return filteredChains
+		.sort((a, b) => b.tvl - a.tvl)
+		.slice(0, template.count)
+		.map((c) => ({ slug: c.name, name: c.name }))
 }
 
-function generateTemplateMetrics(template: DashboardTemplate, selectedItems: SelectedItem[]): MetricConfig[] {
+function generateTemplateMetrics(template: DashboardTemplate, selectedItems: Array<SelectedItem>): Array<MetricConfig> {
 	const primaryMetric = template.metrics[0]
 	if (!primaryMetric) return []
 
-	const metrics: MetricConfig[] = []
+	const metrics: Array<MetricConfig> = []
 	for (const item of selectedItems) {
 		const metric = createMetricConfig({
 			id: generateId('metric', `${item.slug}-${primaryMetric}`),
@@ -317,7 +316,7 @@ function generateTemplateMetrics(template: DashboardTemplate, selectedItems: Sel
 	return metrics
 }
 
-function generateTemplateTable(template: DashboardTemplate, selectedItems: SelectedItem[]): UnifiedTableConfig {
+function generateTemplateTable(template: DashboardTemplate, selectedItems: Array<SelectedItem>): UnifiedTableConfig {
 	const tableConfig = TEMPLATE_TABLE_COLUMNS[template.id] || {
 		columns: ['name', 'tvl', 'change7d', 'fees24h', 'revenue24h', 'volume24h'],
 		sortBy: 'tvl'
@@ -344,12 +343,15 @@ function generateTemplateTable(template: DashboardTemplate, selectedItems: Selec
 	}
 }
 
-function generateTemplateMultiCharts(template: DashboardTemplate, selectedItems: SelectedItem[]): MultiChartConfig[] {
+function generateTemplateMultiCharts(
+	template: DashboardTemplate,
+	selectedItems: Array<SelectedItem>
+): Array<MultiChartConfig> {
 	return template.metrics.flatMap((metric) => {
 		const chartTypeInfo = getProDashboardChartTypeConfig(metric)
 		const isGroupable = chartTypeInfo && 'groupable' in chartTypeInfo && chartTypeInfo.groupable
 
-		const chartItems: ChartConfig[] = []
+		const chartItems: Array<ChartConfig> = []
 		for (const item of selectedItems) {
 			const chartBase = {
 				id: generateId('chart', `${item.slug}-${metric}`),
@@ -381,12 +383,12 @@ function generateTemplateMultiCharts(template: DashboardTemplate, selectedItems:
 
 export function generateTemplateCharts(
 	template: DashboardTemplate,
-	protocols: Protocol[],
-	chains: Chain[],
+	protocols: Array<Protocol>,
+	chains: Array<Chain>,
 	protocolMetadata: Map<string, ProtocolMetadata>,
 	chainCategoryData?: ChainCategoryData,
 	dimensionProtocols?: DimensionProtocols
-): DashboardItemConfig[] {
+): Array<DashboardItemConfig> {
 	const selectedItems = getSelectedItems(
 		template,
 		protocols,

@@ -13,7 +13,7 @@ export async function getLiquidationsProtocolStaticPaths(): Promise<Array<Static
 
 export async function resolveLiquidationsProtocolRoute(protocol: string): Promise<{
 	protocolId: string
-	protocolIds: string[]
+	protocolIds: Array<string>
 	metadataCache: MetadataCache
 } | null> {
 	const [metadataCache, protocolsResponse] = await Promise.all([getMetadataCache(), getLiquidationsProtocolsList()])
@@ -28,7 +28,7 @@ export async function resolveLiquidationsChainParams(
 ): Promise<{
 	protocolId: string
 	chainId: string
-	protocolIds: string[]
+	protocolIds: Array<string>
 	metadataCache: MetadataCache
 } | null> {
 	const [metadataCache, protocolChains] = await Promise.all([
@@ -46,7 +46,7 @@ export async function resolveLiquidationsChainParams(
 	)
 	if (!protocolId) return null
 
-	let chainIds: string[] | undefined
+	let chainIds: Array<string> | undefined
 	for (const protocolChain of protocolChains) {
 		if (protocolChain.protocolId !== protocolId) continue
 		chainIds = protocolChain.chainIds
@@ -59,8 +59,8 @@ export async function resolveLiquidationsChainParams(
 	return { protocolId, chainId, protocolIds, metadataCache }
 }
 
-export async function getLiquidationsSitemapRoutes(metadataCache: MetadataCache): Promise<string[]> {
-	const routes: string[] = []
+export async function getLiquidationsSitemapRoutes(metadataCache: MetadataCache): Promise<Array<string>> {
+	const routes: Array<string> = []
 	const protocolChainIds = await getLiquidationsSitemapProtocolChainsFromSnapshot()
 
 	for (const { protocolId, chainIds } of protocolChainIds) {

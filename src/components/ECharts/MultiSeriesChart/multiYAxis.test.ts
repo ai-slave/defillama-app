@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildMultiYAxis, normalizeSeriesYAxisIndices } from './multiYAxis'
 import type { MultiSeriesYAxisOption } from './types'
 
@@ -15,7 +15,7 @@ function formatAxisValue(axis: MultiSeriesYAxisOption, value: number): string {
 }
 
 describe('MultiSeriesChart y-axis layout', () => {
-	it('uses a single series symbol without tinting the only axis', () => {
+	test('uses a single series symbol without tinting the only axis', () => {
 		const defaultFormatter = (value: number) => `${value} DEFAULT`
 		const axes = buildMultiYAxis({
 			series: [{ name: 'APY', itemStyle: { color: '#f00' } }],
@@ -41,7 +41,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes[0].axisLine.lineStyle).not.toHaveProperty('color')
 	})
 
-	it('preserves a caller-provided color on a single axis', () => {
+	test('preserves a caller-provided color on a single axis', () => {
 		const axes = buildMultiYAxis({
 			series: [{ name: 'Supply', itemStyle: { color: '#f00' } }],
 			yAxis: {
@@ -58,7 +58,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes[0].axisLine.lineStyle.color).toBe('#line')
 	})
 
-	it('preserves an explicitly unitless series instead of using the chart fallback symbol', () => {
+	test('preserves an explicitly unitless series instead of using the chart fallback symbol', () => {
 		const axes = buildMultiYAxis({
 			series: [{ name: 'Users', itemStyle: { color: '#f00' } }],
 			yAxis: {},
@@ -78,7 +78,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(formatAxisValue(axes[0], 5)).not.toContain('$')
 	})
 
-	it('densely remaps a selected sparse axis', () => {
+	test('densely remaps a selected sparse axis', () => {
 		const input = [renderSeries('Funding Rate', 2, '#f00')]
 		const result = normalizeSeriesYAxisIndices(input)
 
@@ -86,7 +86,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(result.series).toEqual([renderSeries('Funding Rate', 0, '#f00')])
 	})
 
-	it('keeps each configured axis formatter after dense remapping', () => {
+	test('keeps each configured axis formatter after dense remapping', () => {
 		const primaryFormatter = (value: number) => `$${value}`
 		const fundingFormatter = (value: number) => `${value}% funding`
 		const normalized = normalizeSeriesYAxisIndices([renderSeries('Funding Rate', 2, '#f00')])
@@ -118,7 +118,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes[0].axisLabel.formatter).toBe(fundingFormatter)
 	})
 
-	it('clamps only the normalized percentage axis while leaving dollar overlays unbounded', () => {
+	test('clamps only the normalized percentage axis while leaving dollar overlays unbounded', () => {
 		const normalized = normalizeSeriesYAxisIndices([
 			renderSeries('Unlocks', 0, '#00f'),
 			renderSeries('Market Cap', 2, '#0a0')
@@ -149,7 +149,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(formatAxisValue(axes[1], 25)).toContain('$')
 	})
 
-	it('does not clamp an overlay when it is the only selected display axis', () => {
+	test('does not clamp an overlay when it is the only selected display axis', () => {
 		const normalized = normalizeSeriesYAxisIndices([renderSeries('Market Cap', 2, '#0a0')])
 		const axes = buildMultiYAxis({
 			series: normalized.series,
@@ -174,7 +174,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(formatAxisValue(axes[0], 25)).toContain('$')
 	})
 
-	it('preserves axis colors, sides, and third-axis spacing', () => {
+	test('preserves axis colors, sides, and third-axis spacing', () => {
 		const series = [renderSeries('TVL', 0, '#111'), renderSeries('APY', 1, '#222'), renderSeries('Users', 2, '#333')]
 		const normalized = normalizeSeriesYAxisIndices(series)
 		const axes = buildMultiYAxis({
@@ -208,7 +208,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes.map((axis) => axis.alignTicks)).toEqual([undefined, undefined, undefined])
 	})
 
-	it('keeps two-axis labels neutral and makes the secondary series line opaque and dashed', () => {
+	test('keeps two-axis labels neutral and makes the secondary series line opaque and dashed', () => {
 		const axes = buildMultiYAxis({
 			series: [renderSeries('TVL', 0, '#111'), renderSeries('APY', 1, '#222')],
 			yAxis: {
@@ -230,7 +230,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes[1].axisLine.lineStyle).not.toHaveProperty('opacity')
 	})
 
-	it('preserves explicit tick alignment without enabling it for other axes', () => {
+	test('preserves explicit tick alignment without enabling it for other axes', () => {
 		const series = [renderSeries('TVL', 0, '#111'), renderSeries('APY', 1, '#222')]
 		const axes = buildMultiYAxis({
 			series,
@@ -248,7 +248,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes[1]).not.toHaveProperty('alignTicks')
 	})
 
-	it('does not tint a shared axis when its series use different colors', () => {
+	test('does not tint a shared axis when its series use different colors', () => {
 		const axes = buildMultiYAxis({
 			series: [renderSeries('Revenue', 1, '#111'), renderSeries('Users', 1, '#222')],
 			yAxis: {},
@@ -265,7 +265,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes[1].axisLabel).not.toHaveProperty('color')
 	})
 
-	it('keeps caller-provided axis sides and offsets', () => {
+	test('keeps caller-provided axis sides and offsets', () => {
 		const series = [renderSeries('TVL', 0, '#111'), renderSeries('APY', 1, '#222')]
 		const axes = buildMultiYAxis({
 			series,
@@ -289,7 +289,7 @@ describe('MultiSeriesChart y-axis layout', () => {
 		expect(axes.map((axis) => axis.axisLine.show)).toEqual([true, false])
 	})
 
-	it('spaces default offsets independently on each configured side', () => {
+	test('spaces default offsets independently on each configured side', () => {
 		const series = [renderSeries('TVL', 0, '#111'), renderSeries('APY', 1, '#222'), renderSeries('Users', 2, '#333')]
 		const axes = buildMultiYAxis({
 			series,

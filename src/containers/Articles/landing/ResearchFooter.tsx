@@ -9,9 +9,9 @@ const BRAND_KIT_URL = 'https://defillama.com/defillama-press-kit.zip'
 const NEWSLETTER_URL = '/newsletters'
 
 type FooterLink = { label: string; href: string; external?: boolean }
-type FooterColumnDef = { title: string; links: FooterLink[] }
+type FooterColumnDef = { title: string; links: Array<FooterLink> }
 
-const SECTION_LINKS: FooterLink[] = [
+const SECTION_LINKS: Array<FooterLink> = [
 	{ label: 'Reports', href: '/research/report' },
 	{ label: 'Spotlights', href: '/research/spotlight' },
 	{ label: 'Interviews', href: '/research/interview' },
@@ -19,7 +19,7 @@ const SECTION_LINKS: FooterLink[] = [
 	{ label: 'Roundtables', href: '/research/roundtables' }
 ]
 
-const ABOUT_LINKS: FooterLink[] = [
+const ABOUT_LINKS: Array<FooterLink> = [
 	{ label: 'Who we are', href: '/research/authors/defillama-research' },
 	{ label: 'Contact us', href: 'mailto:research@defillama.com', external: true },
 	{ label: 'Book a call', href: 'https://calendly.com/research-defillama/30min', external: true },
@@ -29,7 +29,7 @@ const ABOUT_LINKS: FooterLink[] = [
 
 // Add a new column here (or push to the arrays above) and it renders in both the
 // desktop grid and the mobile accordion automatically.
-const FOOTER_COLUMNS: FooterColumnDef[] = [
+const FOOTER_COLUMNS: Array<FooterColumnDef> = [
 	{ title: 'Sections', links: SECTION_LINKS },
 	{ title: 'About us', links: ABOUT_LINKS }
 ]
@@ -45,7 +45,7 @@ const SOCIAL_LINKS = [
 	{ name: 'rss-feed' as const, label: 'Subscribe via RSS', href: '/research/feed' }
 ]
 
-const LEGAL_LINKS: FooterLink[] = [
+const LEGAL_LINKS: Array<FooterLink> = [
 	{ label: 'Terms of Service', href: '/terms' },
 	{ label: 'Privacy Policy', href: '/privacy-policy' },
 	{ label: 'Sitemap', href: '/research/sitemap.xml', external: true }

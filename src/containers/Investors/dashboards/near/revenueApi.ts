@@ -21,7 +21,7 @@ interface Metadata {
 
 interface ChartSeries {
 	name: string
-	data: number[]
+	data: Array<number>
 	type?: 'bar' | 'line'
 	stack?: string
 }
@@ -30,8 +30,8 @@ interface ChartData {
 	title: string
 	subtitle?: string
 	// Daily IR charts use UTC calendar dates, e.g. "2026-07-18".
-	dates: ApiDate[]
-	series: ChartSeries[]
+	dates: Array<ApiDate>
+	series: Array<ChartSeries>
 }
 
 interface WalletEntry {
@@ -45,15 +45,15 @@ interface WalletEntry {
 
 interface WalletBreakdownData {
 	title: string
-	wallets: WalletEntry[]
+	wallets: Array<WalletEntry>
 	total: number
 	totalFormatted: string
 }
 
 interface SupplyChartData {
 	title: string
-	dates: ApiDate[]
-	series: ChartSeries[]
+	dates: Array<ApiDate>
+	series: Array<ChartSeries>
 }
 
 export interface RevenueAPIResponse {
@@ -105,13 +105,13 @@ function formatNear(value: number): string {
 	})} NEAR`
 }
 
-function sumLastNDays(series: number[], n: number): number {
+function sumLastNDays(series: Array<number>, n: number): number {
 	const start = Math.max(0, series.length - n)
 	return series.slice(start).reduce((sum, val) => sum + val, 0)
 }
 
-function getCumulativeData(data: number[]): number[] {
-	const cumulative: number[] = []
+function getCumulativeData(data: Array<number>): Array<number> {
+	const cumulative: Array<number> = []
 	let sum = 0
 	for (const val of data) {
 		sum += val
@@ -120,11 +120,11 @@ function getCumulativeData(data: number[]): number[] {
 	return cumulative
 }
 
-function findSeries(chart: ChartData, name: string): number[] {
+function findSeries(chart: ChartData, name: string): Array<number> {
 	return chart.series.find((series) => series.name === name)?.data ?? []
 }
 
-function sumSeries(...series: number[][]): number[] {
+function sumSeries(...series: Array<Array<number>>): Array<number> {
 	const length = Math.max(0, ...series.map((values) => values.length))
 	return Array.from({ length }, (_, index) => series.reduce((sum, values) => sum + (values[index] ?? 0), 0))
 }
@@ -225,7 +225,7 @@ export function useRevenueData() {
 		const emissionsDates = emissions.revenueVsEmissionsChart.dates
 
 		// Wallet breakdown
-		const walletBreakdown: WalletEntry[] = revenue.walletBreakdown?.wallets || []
+		const walletBreakdown: Array<WalletEntry> = revenue.walletBreakdown?.wallets || []
 
 		// Calculate actual percentage from cumulative data
 		const percentageFromCumulative = cumulativeRevenue.map((rev, i) => {

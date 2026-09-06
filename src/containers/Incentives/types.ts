@@ -34,7 +34,7 @@ export type DimensionEarningsProtocolWithEmissions = Omit<AdapterChainProtocol, 
 
 export interface DimensionEarningsOverview extends Omit<IAdapterChainOverview, 'protocols' | 'total1y'> {
 	total1y: number | null
-	protocols: DimensionEarningsProtocolWithEmissions[]
+	protocols: Array<DimensionEarningsProtocolWithEmissions>
 }
 
 export type DimensionEarningsOverviewResult =

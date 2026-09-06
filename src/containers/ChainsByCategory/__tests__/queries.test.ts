@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const {
 	fetchChainsByCategoryMock,
@@ -91,7 +91,7 @@ describe('chains by category chart data', () => {
 		fetchChainsAssetsMock.mockResolvedValue({})
 	})
 
-	it('returns only normalized base TVL by default', async () => {
+	test('returns only normalized base TVL by default', async () => {
 		const data = await getChainsByCategoryChartData({ category: 'All' })
 
 		expect(data).toEqual({
@@ -110,7 +110,7 @@ describe('chains by category chart data', () => {
 		})
 	})
 
-	it('returns only requested extra TVL chart series and their required overlap series', async () => {
+	test('returns only requested extra TVL chart series and their required overlap series', async () => {
 		const data = await getChainsByCategoryChartData({
 			category: 'All',
 			extraTvlTypes: ['staking', 'doublecounted', 'liquidstaking']
@@ -146,7 +146,7 @@ describe('chains by category chart data', () => {
 		})
 	})
 
-	it('keeps all extra TVL chart series for pages that still embed chart data', async () => {
+	test('keeps all extra TVL chart series for pages that still embed chart data', async () => {
 		fetchChainsAssetsMock.mockResolvedValue({
 			Ethereum: {
 				total: { total: 12.5 },
@@ -214,7 +214,7 @@ describe('chains by category chart data', () => {
 		expect(data.chains[0]?.bridgedTvl).toBe(12.5)
 	})
 
-	it('removes stale extra TVL entries when chart data is omitted from page props', async () => {
+	test('removes stale extra TVL entries when chart data is omitted from page props', async () => {
 		fetchChainsByCategoryMock.mockResolvedValue({
 			categories: [],
 			chainsUnique: ['CosmosHub'],
@@ -291,7 +291,7 @@ describe('chains by category chart data', () => {
 		])
 	})
 
-	it('distinguishes an absent chain group from a populated group', async () => {
+	test('distinguishes an absent chain group from a populated group', async () => {
 		fetchChainsByCategoryMock.mockResolvedValue({
 			categories: [],
 			chainsUnique: ['Example'],
@@ -317,7 +317,7 @@ describe('chains by category chart data', () => {
 		expect(withOwnGroup.chains[0]?.childGroups).toEqual({ ecosystem: ['Child'] })
 	})
 
-	it('keeps core chain rows available when auxiliary asset totals fail', async () => {
+	test('keeps core chain rows available when auxiliary asset totals fail', async () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		fetchChainsByCategoryMock.mockResolvedValue({
 			categories: [],
@@ -366,7 +366,7 @@ describe('chains by category source availability', () => {
 		})
 	})
 
-	it('uses zero activity for absent rows in successful sources, including deprecated children', async () => {
+	test('uses zero activity for absent rows in successful sources, including deprecated children', async () => {
 		const result = await getChainsByCategory({
 			chainMetadata: {
 				active: { id: 'active', name: 'Active', protocolCount: 1 },
@@ -389,7 +389,7 @@ describe('chains by category source availability', () => {
 		}
 	})
 
-	it('preserves only the failed source as unavailable', async () => {
+	test('preserves only the failed source as unavailable', async () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		fetchAdapterChainProtocolTotalsMock.mockImplementation(async ({ dataType }: { dataType?: string }) => {
 			if (dataType === 'dailyRevenue') throw new Error('revenue unavailable')

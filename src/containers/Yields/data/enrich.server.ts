@@ -73,19 +73,19 @@ function entityEnrichment(protocol: string, chain: string, maps: MetaMaps): Enti
 	}
 }
 
-function indexById<T extends { id: string }>(items: T[]): Map<string, T> {
+function indexById<T extends { id: string }>(items: Array<T>): Map<string, T> {
 	const byId = new Map<string, T>()
 	for (const item of items) byId.set(item.id, item)
 	return byId
 }
 
 let entityEarnCache: {
-	earn: EarnRow[]
+	earn: Array<EarnRow>
 	meta: YieldsMeta
-	rows: EntityEarnRow[]
+	rows: Array<EntityEarnRow>
 } | null = null
 
-export async function getEntityEarn(snapshot: YieldsSnapshot): Promise<EntityEarnRow[]> {
+export async function getEntityEarn(snapshot: YieldsSnapshot): Promise<Array<EntityEarnRow>> {
 	const [earn, meta] = await Promise.all([readEarn(snapshot), readYieldsMeta(snapshot)])
 	if (entityEarnCache?.earn === earn && entityEarnCache.meta === meta) return entityEarnCache.rows
 
@@ -96,13 +96,13 @@ export async function getEntityEarn(snapshot: YieldsSnapshot): Promise<EntityEar
 }
 
 let earnWithTokenKeysCache: {
-	earn: EarnRow[]
-	tokenKeys: TokenKeys[]
+	earn: Array<EarnRow>
+	tokenKeys: Array<TokenKeys>
 	meta: YieldsMeta
-	rows: EarnWithTokenKeysRow[]
+	rows: Array<EarnWithTokenKeysRow>
 } | null = null
 
-export async function getEarnWithTokenKeys(snapshot: YieldsSnapshot): Promise<EarnWithTokenKeysRow[]> {
+export async function getEarnWithTokenKeys(snapshot: YieldsSnapshot): Promise<Array<EarnWithTokenKeysRow>> {
 	const [earn, tokenKeys, meta] = await Promise.all([
 		readEarn(snapshot),
 		readTokenKeys(snapshot),
@@ -127,14 +127,14 @@ export async function getEarnWithTokenKeys(snapshot: YieldsSnapshot): Promise<Ea
 }
 
 let enrichedEarnCache: {
-	earn: EarnRow[]
-	trends: Trend[]
-	tokenKeys: TokenKeys[]
+	earn: Array<EarnRow>
+	trends: Array<Trend>
+	tokenKeys: Array<TokenKeys>
 	meta: YieldsMeta
-	rows: EnrichedEarnRow[]
+	rows: Array<EnrichedEarnRow>
 } | null = null
 
-export async function getEnrichedEarn(snapshot: YieldsSnapshot): Promise<EnrichedEarnRow[]> {
+export async function getEnrichedEarn(snapshot: YieldsSnapshot): Promise<Array<EnrichedEarnRow>> {
 	const [earn, trends, tokenKeys, meta] = await Promise.all([
 		readEarn(snapshot),
 		readTrends(snapshot),
@@ -152,7 +152,7 @@ export async function getEnrichedEarn(snapshot: YieldsSnapshot): Promise<Enriche
 	const maps = getMetaMaps(meta)
 	const trendsById = indexById<Trend>(trends)
 	const tokenKeysById = indexById<TokenKeys>(tokenKeys)
-	const rows: EnrichedEarnRow[] = earn.map((row) => ({
+	const rows: Array<EnrichedEarnRow> = earn.map((row) => ({
 		...row,
 		...entityEnrichment(row.protocol, row.chain, maps),
 		trend: trendsById.get(row.id) ?? null,
@@ -164,12 +164,12 @@ export async function getEnrichedEarn(snapshot: YieldsSnapshot): Promise<Enriche
 }
 
 let entityMarketsCache: {
-	markets: BorrowMarketRow[]
+	markets: Array<BorrowMarketRow>
 	meta: YieldsMeta
-	rows: EntityMarketRow[]
+	rows: Array<EntityMarketRow>
 } | null = null
 
-export async function getEntityMarkets(snapshot: YieldsSnapshot): Promise<EntityMarketRow[]> {
+export async function getEntityMarkets(snapshot: YieldsSnapshot): Promise<Array<EntityMarketRow>> {
 	const [markets, meta] = await Promise.all([readBorrowMarkets(snapshot), readYieldsMeta(snapshot)])
 	if (entityMarketsCache?.markets === markets && entityMarketsCache.meta === meta) return entityMarketsCache.rows
 
@@ -180,13 +180,13 @@ export async function getEntityMarkets(snapshot: YieldsSnapshot): Promise<Entity
 }
 
 let enrichedMarketsCache: {
-	markets: BorrowMarketRow[]
-	tokenKeys: TokenKeys[]
+	markets: Array<BorrowMarketRow>
+	tokenKeys: Array<TokenKeys>
 	meta: YieldsMeta
-	rows: EnrichedMarketRow[]
+	rows: Array<EnrichedMarketRow>
 } | null = null
 
-export async function getEnrichedMarkets(snapshot: YieldsSnapshot): Promise<EnrichedMarketRow[]> {
+export async function getEnrichedMarkets(snapshot: YieldsSnapshot): Promise<Array<EnrichedMarketRow>> {
 	const [markets, tokenKeys, meta] = await Promise.all([
 		readBorrowMarkets(snapshot),
 		readTokenKeys(snapshot),
@@ -203,7 +203,7 @@ export async function getEnrichedMarkets(snapshot: YieldsSnapshot): Promise<Enri
 	const maps = getMetaMaps(meta)
 	const tokenKeysById = indexById<TokenKeys>(tokenKeys)
 
-	const rows: EnrichedMarketRow[] = markets.map((row) => ({
+	const rows: Array<EnrichedMarketRow> = markets.map((row) => ({
 		...row,
 		...entityEnrichment(row.protocol, row.chain, maps),
 		tokenKeys: tokenKeysById.get(row.id) ?? null
@@ -214,13 +214,13 @@ export async function getEnrichedMarkets(snapshot: YieldsSnapshot): Promise<Enri
 }
 
 let enrichedRoutesCache: {
-	routes: RouteRow[]
-	tokenKeys: TokenKeys[]
+	routes: Array<RouteRow>
+	tokenKeys: Array<TokenKeys>
 	meta: YieldsMeta
-	rows: EnrichedRouteRow[]
+	rows: Array<EnrichedRouteRow>
 } | null = null
 
-export async function getEnrichedRoutes(snapshot: YieldsSnapshot): Promise<EnrichedRouteRow[]> {
+export async function getEnrichedRoutes(snapshot: YieldsSnapshot): Promise<Array<EnrichedRouteRow>> {
 	const [routes, tokenKeys, meta] = await Promise.all([
 		readBorrowRoutes(snapshot),
 		readTokenKeys(snapshot),
@@ -238,7 +238,7 @@ export async function getEnrichedRoutes(snapshot: YieldsSnapshot): Promise<Enric
 	const maps = getMetaMaps(meta)
 	const tokenKeysById = indexById<TokenKeys>(tokenKeys)
 
-	const rows: EnrichedRouteRow[] = routes.map((row: RouteRow) => ({
+	const rows: Array<EnrichedRouteRow> = routes.map((row: RouteRow) => ({
 		...row,
 		...entityEnrichment(row.protocol, row.chain, maps),
 		collateralTokenKeys: tokenKeysById.get(row.collateral.id)?.reference_asset ?? null,
@@ -250,13 +250,13 @@ export async function getEnrichedRoutes(snapshot: YieldsSnapshot): Promise<Enric
 }
 
 let enrichedLoopsCache: {
-	loops: LoopRow[]
-	tokenKeys: TokenKeys[]
+	loops: Array<LoopRow>
+	tokenKeys: Array<TokenKeys>
 	meta: YieldsMeta
-	rows: EnrichedLoopRow[]
+	rows: Array<EnrichedLoopRow>
 } | null = null
 
-export async function getEnrichedLoops(snapshot: YieldsSnapshot): Promise<EnrichedLoopRow[]> {
+export async function getEnrichedLoops(snapshot: YieldsSnapshot): Promise<Array<EnrichedLoopRow>> {
 	const [loops, tokenKeys, meta] = await Promise.all([
 		readLoops(snapshot),
 		readTokenKeys(snapshot),
@@ -274,7 +274,7 @@ export async function getEnrichedLoops(snapshot: YieldsSnapshot): Promise<Enrich
 	const maps = getMetaMaps(meta)
 	const tokenKeysById = indexById<TokenKeys>(tokenKeys)
 
-	const rows: EnrichedLoopRow[] = loops.map((row: LoopRow) => ({
+	const rows: Array<EnrichedLoopRow> = loops.map((row: LoopRow) => ({
 		...row,
 		...entityEnrichment(row.protocol, row.chain, maps),
 		tokenKeys: tokenKeysById.get(row.id) ?? null

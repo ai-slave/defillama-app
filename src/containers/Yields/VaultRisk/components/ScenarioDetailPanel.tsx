@@ -212,7 +212,7 @@ function LossBox({
 // The plausibility clause on a full-drain row: an EOA is a single key (toned danger); a
 // resolved multisig/guardian set names its threshold so the reader can judge how hard the
 // attack is. Absent admins → nothing rendered (unresolved this tick, NOT ungoverned).
-function OracleAdminNote({ admins }: { admins?: OracleAdmin[] }) {
+function OracleAdminNote({ admins }: { admins?: Array<OracleAdmin> }) {
 	if (!admins?.length) return null
 	const labels = admins.map(formatOracleAdmin)
 	const danger = admins.some((a) => a.kind === 'eoa')
@@ -367,7 +367,7 @@ function RealizedStrip({ scenario }: { scenario: ScenarioVM }) {
 }
 
 function CoverageNote({ scenario }: { scenario: ScenarioVM }) {
-	if (!scenario.coverage.length) return null
+	if (scenario.coverage.length === 0) return null
 	const noEscape = scenario.actingWindow.kind === 'no-escape'
 	return (
 		<div className="flex flex-col gap-1.5">
@@ -397,7 +397,7 @@ function WhoCanDoThis({ scenario, protocol }: { scenario: ScenarioVM; protocol: 
 	const isGov = scenario.kind === 'governance'
 	const isMultisig = scenario.kind === 'multisig'
 	if (!isGov && !isMultisig) return null
-	const parts: string[] = []
+	const parts: Array<string> = []
 	if (isGov && protocol.governance) {
 		const g = protocol.governance
 		if (g.voting_power_concentration_top10_pct != null) {
@@ -412,7 +412,7 @@ function WhoCanDoThis({ scenario, protocol }: { scenario: ScenarioVM; protocol: 
 		const ms = protocol.multisigs[0]!
 		parts.push(`a ${ms.threshold.m}-of-${ms.threshold.n} multisig`)
 	}
-	if (!parts.length) return null
+	if (parts.length === 0) return null
 	return (
 		<div className="flex flex-col gap-1.5">
 			<p className="label-sm text-primary">Who can pull the trigger</p>
@@ -467,7 +467,7 @@ function NarrativeBody({
 
 			<WhoCanDoThis scenario={scenario} protocol={protocol} />
 
-			{scenario.mitigations.length ? (
+			{scenario.mitigations.length > 0 ? (
 				<div className="flex flex-col gap-1.5">
 					<p className="label-sm text-primary">What softens it</p>
 					<ul className="list-disc space-y-1 pl-5 body-md marker:text-data-up">
@@ -482,7 +482,7 @@ function NarrativeBody({
 
 			<CoverageNote scenario={scenario} />
 
-			{scenario.evidence.length ? (
+			{scenario.evidence.length > 0 ? (
 				<div className="flex flex-col gap-1.5">
 					<p className="label-sm text-primary">Evidence</p>
 					<ul className="space-y-1">
@@ -503,7 +503,7 @@ function NarrativeBody({
 				</div>
 			) : null}
 
-			{Object.keys(scenario.inputs).length || (scenario.status === 'computed' && scenario.notes) ? (
+			{Object.keys(scenario.inputs).length > 0 || (scenario.status === 'computed' && scenario.notes) ? (
 				<Card as="details" padding="sm">
 					<summary className="flex cursor-pointer list-none items-center justify-between gap-2 body-md text-secondary">
 						<span>The math{scenario.formula ? ` · ${scenario.formula}` : ''}</span>
@@ -512,7 +512,7 @@ function NarrativeBody({
 					{scenario.status === 'computed' && scenario.notes ? (
 						<p className="mt-2 body-sm text-secondary italic">{scenario.notes}</p>
 					) : null}
-					{Object.keys(scenario.inputs).length ? (
+					{Object.keys(scenario.inputs).length > 0 ? (
 						<dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-1 sm:grid-cols-2">
 							{Object.entries(scenario.inputs).map(([k, v]) => (
 								<div key={k} className="flex justify-between gap-2 body-md">

@@ -34,7 +34,7 @@ type UnlockCurrentPrice = {
 const TOKEN_LIST_API_URL = `${DATASETS_SERVER_URL}/tokenlist/rankings.json`
 let unlockTokenlistPromise: Promise<UnlockTokenlist> | null = null
 
-function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: string[]): EmissionsDataset {
+function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: Array<string>): EmissionsDataset {
 	const source: EmissionsDataset['source'] = []
 	for (const input of chartData) {
 		const row: EmissionsDataset['source'][number] = [input.timestamp]
@@ -50,7 +50,7 @@ function buildEmissionsDataset(chartData: Array<EmissionsChartRow>, stacks: stri
 	}
 }
 
-function buildEmissionsCharts(stacks: string[], colors: Record<string, string>): EmissionsChartConfig {
+function buildEmissionsCharts(stacks: Array<string>, colors: Record<string, string>): EmissionsChartConfig {
 	const charts: EmissionsChartConfig = []
 	for (let index = 0; index < stacks.length; index++) {
 		const name = stacks[index]!
@@ -93,7 +93,7 @@ function normalizeTokenlistSymbol(value: string): string | null {
 	return value ? value.toUpperCase() : null
 }
 
-function projectUnlockTokenlist(rankings: IResponseCGTokenRankingsDatasetItem[]): UnlockTokenlist {
+function projectUnlockTokenlist(rankings: Array<IResponseCGTokenRankingsDatasetItem>): UnlockTokenlist {
 	const tokenlist: UnlockTokenlist = {}
 	for (const ranking of rankings) {
 		tokenlist[ranking.id] = {
@@ -107,7 +107,7 @@ function projectUnlockTokenlist(rankings: IResponseCGTokenRankingsDatasetItem[])
 export async function fetchUnlockTokenlistPrices(): Promise<UnlockTokenlist> {
 	if (unlockTokenlistPromise) return unlockTokenlistPromise
 
-	unlockTokenlistPromise = fetchJson<IResponseCGTokenRankingsDatasetItem[]>(TOKEN_LIST_API_URL, {
+	unlockTokenlistPromise = fetchJson<Array<IResponseCGTokenRankingsDatasetItem>>(TOKEN_LIST_API_URL, {
 		timeout: getSlowJsonTimeoutMs()
 	})
 		.then(projectUnlockTokenlist)
@@ -172,15 +172,15 @@ async function fetchCurrentUnlockPrices({
 
 function buildEmissionsSeriesAndCategories(input: ProtocolEmissionChartData | null | undefined): {
 	series: Map<number, Record<string, number | null>>
-	categories: string[]
-	tbdSections: string[]
-	forecastSections: string[]
+	categories: Array<string>
+	tbdSections: Array<string>
+	forecastSections: Array<string>
 } {
 	const series = new Map<number, Record<string, number | null>>()
-	const categories: string[] = []
+	const categories: Array<string> = []
 	const seen = new Set<string>()
-	const tbdSections: string[] = []
-	const forecastSections: string[] = []
+	const tbdSections: Array<string> = []
+	const forecastSections: Array<string> = []
 	if (!input) return { series, categories, tbdSections, forecastSections }
 
 	for (const emission of input.data) {
@@ -212,8 +212,8 @@ function buildEmissionsSeriesAndCategories(input: ProtocolEmissionChartData | nu
 	return { series, categories, tbdSections, forecastSections }
 }
 
-function seriesToChartRows(series: Map<number, Record<string, number | null>>): EmissionsChartRow[] {
-	const rows: EmissionsChartRow[] = []
+function seriesToChartRows(series: Map<number, Record<string, number | null>>): Array<EmissionsChartRow> {
+	const rows: Array<EmissionsChartRow> = []
 	for (const [timestamp, values] of series) {
 		const row: EmissionsChartRow = { timestamp: timestamp * 1e3 }
 		for (const label in values) {
@@ -226,8 +226,8 @@ function seriesToChartRows(series: Map<number, Record<string, number | null>>): 
 	return rows
 }
 
-function buildPieFromChart(chart: EmissionsChartRow[]): Array<{ name: string; value: number }> {
-	if (!chart.length) return []
+function buildPieFromChart(chart: Array<EmissionsChartRow>): Array<{ name: string; value: number }> {
+	if (chart.length === 0) return []
 	const last = chart[chart.length - 1]!
 	const pie: Array<{ name: string; value: number }> = []
 	for (const key in last) {
@@ -252,7 +252,7 @@ function buildColorsForPie(
 		const cached = baseNameCache.get(name)
 		if (cached) return cached
 
-		const visited: string[] = []
+		const visited: Array<string> = []
 		const seen = new Set<string>()
 		let current = name
 
@@ -286,7 +286,7 @@ function buildColorsForPie(
 	return colors
 }
 
-export async function getProtocolUnlockUsdChart(protocolName: string): Promise<TokenIncentiveChartPoint[] | null> {
+export async function getProtocolUnlockUsdChart(protocolName: string): Promise<Array<TokenIncentiveChartPoint> | null> {
 	const res = await fetchProtocolEmission(protocolName)
 	return res?.unlockUsdChart ?? null
 }
@@ -296,7 +296,7 @@ export async function getProtocolEmissionsCharts(protocolName: string): Promise<
 		documented: Array<EmissionsChartRow>
 		realtime: Array<EmissionsChartRow>
 	}
-	unlockUsdChart: TokenIncentiveChartPoint[] | null
+	unlockUsdChart: Array<TokenIncentiveChartPoint> | null
 }> {
 	const empty = {
 		chartData: { documented: [], realtime: [] },
@@ -328,8 +328,8 @@ interface ProtocolEmissionsScheduleData {
 		documented: EmissionsChartConfig
 		realtime: EmissionsChartConfig
 	}
-	categories: { documented: string[]; realtime: string[] }
-	hallmarks: { documented: [number, string][]; realtime: [number, string][] }
+	categories: { documented: Array<string>; realtime: Array<string> }
+	hallmarks: { documented: Array<[number, string]>; realtime: Array<[number, string]> }
 }
 
 export async function getProtocolEmissionsScheduleData(protocolName: string): Promise<ProtocolEmissionsScheduleData> {
@@ -446,7 +446,7 @@ export async function getProtocolEmissionsPieData(
 	return { pieChartData, stackColors, meta }
 }
 
-export function buildUnlockTypesByTimestamp(allEventsForProtocol: readonly EmissionEvent[]): Map<number, string> {
+export function buildUnlockTypesByTimestamp(allEventsForProtocol: ReadonlyArray<EmissionEvent>): Map<number, string> {
 	const nowSec = Math.floor(Date.now() / 1000)
 	const unlockTypes = new Map<number, string>()
 	// The emissions API contract is timestamp-ascending. Filtering preserves that
@@ -497,8 +497,8 @@ export async function getUnlocksCalendarStaticPropsData(): Promise<{
 
 		type ProtocolCalendarEntry = {
 			value: number
-			details: string[]
-			unlockTypes: string[]
+			details: Array<string>
+			unlockTypes: Array<string>
 			category?: string
 		}
 		const protocolUnlocksByDate: Record<
@@ -675,11 +675,11 @@ const getAllProtocolEmissionsWithHistory = async ({
 
 export type EnrichedProtocolEmission = Omit<ProtocolEmission, 'unlockEvents'> & {
 	unlockEvents: null
-	upcomingEvent: EmissionEvent[]
-	events: EmissionEvent[]
+	upcomingEvent: Array<EmissionEvent>
+	events: Array<EmissionEvent>
 	tPrice: number | null
 	historicalPrice: Array<[number, number]>
-	lastEvent: EmissionEvent[]
+	lastEvent: Array<EmissionEvent>
 	tSymbol: string | null
 	next24h: ProtocolEmissionNext24h
 }
@@ -720,7 +720,7 @@ export const getAllProtocolEmissions = async ({
 		}
 
 		if (hasPriceRequests) {
-			const missingPriceReqs: Record<string, number[]> = {}
+			const missingPriceReqs: Record<string, Array<number>> = {}
 			let hasMissingPriceRequests = false
 
 			for (const coin in priceReqs) {
@@ -737,7 +737,7 @@ export const getAllProtocolEmissions = async ({
 		}
 	}
 
-	const rows: EnrichedProtocolEmission[] = []
+	const rows: Array<EnrichedProtocolEmission> = []
 	for (const protocol of protocols) {
 		const geckoId = protocol.gecko_id
 		const coinKey = geckoId ? `coingecko:${geckoId}` : null
@@ -755,7 +755,7 @@ export const getAllProtocolEmissions = async ({
 			if (upcomingTimestamp === null || ts < upcomingTimestamp) upcomingTimestamp = ts
 		}
 
-		const upcomingEvent: EmissionEvent[] = []
+		const upcomingEvent: Array<EmissionEvent> = []
 		if (upcomingTimestamp !== null) {
 			for (const event of events) {
 				if (event.timestamp === upcomingTimestamp) upcomingEvent.push(event)
@@ -763,7 +763,7 @@ export const getAllProtocolEmissions = async ({
 		}
 
 		const lastPastTimestamp = coinKey ? lastPastTimestampByCoinKey.get(coinKey) : undefined
-		const lastEvent: EmissionEvent[] = []
+		const lastEvent: Array<EmissionEvent> = []
 		if (lastPastTimestamp !== undefined) {
 			for (const event of events) {
 				if (
@@ -834,8 +834,8 @@ export const getAllProtocolEmissions = async ({
 	return rows
 }
 
-const EMPTY_TBD_SECTIONS: string[] = []
-const EMPTY_FORECAST_SECTIONS: string[] = []
+const EMPTY_TBD_SECTIONS: Array<string> = []
+const EMPTY_FORECAST_SECTIONS: Array<string> = []
 
 function extractColorFromMap(res: ProtocolEmissionDetail): Record<string, string> {
 	const sections = res.componentData?.sections
@@ -890,7 +890,7 @@ export function isEmptyProtocolEmissionResult(
 export const getProtocolEmissons = async (
 	protocolName: string,
 	options?: {
-		emissionsProtocolsList?: string[]
+		emissionsProtocolsList?: Array<string>
 		skipAvailabilityCheck?: boolean
 		tokenlist?: UnlockTokenlist
 	}
@@ -962,8 +962,8 @@ export const getProtocolEmissons = async (
 	const tokenlistPrice = getTokenlistCurrentPrice(geckoId, tokenlistPrices)
 	const prices: Record<string, UnlockCurrentPrice | undefined> =
 		coinKey && !tokenlistPrice
-			? await fetchCoinPricesBatched([coinKey], { searchWidth: '4h' }).catch((err) => {
-					console.log(err)
+			? await fetchCoinPricesBatched([coinKey], { searchWidth: '4h' }).catch((error) => {
+					console.log(error)
 					return {}
 				})
 			: {}
@@ -973,7 +973,7 @@ export const getProtocolEmissons = async (
 	if (isPositiveNumber(tokenPriceData?.price)) tokenPrice.price = tokenPriceData.price
 	if (tokenPriceData?.symbol) tokenPrice.symbol = tokenPriceData.symbol
 
-	const upcomingEvent: EmissionEvent[] = []
+	const upcomingEvent: Array<EmissionEvent> = []
 	let upcomingTimestamp: number | null = null
 	for (const event of events) {
 		if (event.timestamp < nowSec) continue

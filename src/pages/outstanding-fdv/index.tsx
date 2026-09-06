@@ -28,7 +28,7 @@ export default function ProtocolsMarketCaps(props: InferGetStaticPropsType<typeo
 		<Layout
 			title="Outstanding FDV Rankings - DeFi Valuations - DefiLlama"
 			description="Track DeFi protocol outstanding FDV rankings across all chains. Compare outstanding fully diluted valuations (circulating supply only) for 7000+ protocols on Ethereum, Solana, Base, Arbitrum, and 500+ chains. Real-time crypto oFDV analytics."
-			canonicalUrl={`/outstanding-fdv`}
+			canonicalUrl="/outstanding-fdv"
 			pageName={pageName}
 		>
 			<ProtocolsWithTokens {...props} />

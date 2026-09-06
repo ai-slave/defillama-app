@@ -31,7 +31,7 @@ export interface MainSiteIrDashboard {
 	tabLabel: string
 }
 
-export const MAIN_SITE_IR_DASHBOARDS: MainSiteIrDashboard[] = [
+export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 	{
 		irProjectId: 'spark',
 		dashboardId: '9vn8xp43tdzo6gt',

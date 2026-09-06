@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ApiRequest } from '~/server/api/types'
 import { fetchJson } from '~/utils/async'
 import {
@@ -71,7 +71,7 @@ describe('fetchBridgeDayStats', () => {
 		})
 	})
 
-	it('uses UTC midnight in the request URL', async () => {
+	test('uses UTC midnight in the request URL', async () => {
 		const timestamp = Date.parse('2026-07-19T16:42:00Z') / 1000
 		const utcMidnight = Date.parse('2026-07-19T00:00:00Z') / 1000
 
@@ -87,7 +87,7 @@ describe('fetchBridgeNetflows', () => {
 		vi.mocked(fetchJson).mockReset()
 	})
 
-	it('normalizes finite nonblank numeric strings once at the API boundary', async () => {
+	test('normalizes finite nonblank numeric strings once at the API boundary', async () => {
 		vi.mocked(fetchJson).mockResolvedValue([
 			{ chain: 'Base', net_flow: '0.0', deposited_usd: '12.5', withdrawn_usd: '12.5' }
 		])
@@ -103,7 +103,7 @@ describe('fetchBridgeVolumeByChain', () => {
 		vi.mocked(fetchJson).mockReset()
 	})
 
-	it('normalizes valid chart arrays, including empty arrays', async () => {
+	test('normalizes valid chart arrays, including empty arrays', async () => {
 		const chart = [{ date: '1784678400', depositUSD: 10, withdrawUSD: 4, depositTxs: 2, withdrawTxs: 1 }]
 		vi.mocked(fetchJson).mockResolvedValueOnce(chart).mockResolvedValueOnce([]).mockResolvedValueOnce(chart)
 
@@ -120,7 +120,7 @@ describe('fetchBridgeVolumeAll', () => {
 		vi.mocked(fetchJson).mockReset()
 	})
 
-	it('normalizes a valid bridge chart array', async () => {
+	test('normalizes a valid bridge chart array', async () => {
 		const chart = [{ date: '1784678400', depositUSD: 10, withdrawUSD: 4, depositTxs: 2, withdrawTxs: 1 }]
 		vi.mocked(fetchJson).mockResolvedValue(chart)
 
@@ -135,7 +135,7 @@ describe('fetchBridgeVolumeBySlug', () => {
 		vi.mocked(fetchJson).mockReset()
 	})
 
-	it('normalizes every date in a valid slug response and preserves nullable legs', async () => {
+	test('normalizes every date in a valid slug response and preserves nullable legs', async () => {
 		const response = {
 			bridge: { id: 1, displayName: 'Across', slug: 'across', bridgeDbName: 'across' },
 			dailyVolumes: [
@@ -154,7 +154,7 @@ describe('fetchBridgeVolumeBySlug', () => {
 		})
 	})
 
-	it('preserves zero transaction counts', async () => {
+	test('preserves zero transaction counts', async () => {
 		vi.mocked(fetchJson).mockResolvedValue({
 			bridge: { id: 1, displayName: 'Across', slug: 'across', bridgeDbName: 'across' },
 			dailyVolumes: [{ date: '1784678400', depositUSD: 0, withdrawUSD: 0, depositTxs: 0, withdrawTxs: 0 }]
@@ -171,7 +171,7 @@ describe('fetchBridgeTransactionsClient', () => {
 		vi.mocked(fetchJson).mockReset()
 	})
 
-	it('versions the first-page cache key with the producer limit and forwards the opaque cursor', async () => {
+	test('versions the first-page cache key with the producer limit and forwards the opaque cursor', async () => {
 		vi.mocked(fetchJson).mockResolvedValue({ rows: [], hasMore: false })
 
 		await fetchBridgeTransactionsClient(51, 100, 200)
@@ -193,7 +193,7 @@ describe('bridge transactions API route', () => {
 		vi.clearAllMocks()
 	})
 
-	it('forwards exact cursor paging and returns normalized metadata with no-store', async () => {
+	test('forwards exact cursor paging and returns normalized metadata with no-store', async () => {
 		serverMocks.fetchWithPoolingOnServer.mockResolvedValue(
 			new Response(JSON.stringify([rawTransaction]), {
 				headers: { 'X-Has-More': 'true', 'X-Next-Cursor': 'next_cursor-2' }
@@ -215,7 +215,7 @@ describe('bridge transactions API route', () => {
 		})
 	})
 
-	it('keeps a successful empty terminal page distinct from failure', async () => {
+	test('keeps a successful empty terminal page distinct from failure', async () => {
 		serverMocks.fetchWithPoolingOnServer.mockResolvedValue(
 			new Response(JSON.stringify([]), { headers: { 'X-Has-More': 'false' } })
 		)
@@ -229,7 +229,7 @@ describe('bridge transactions API route', () => {
 		})
 	})
 
-	it('rejects missing continuation metadata as upstream failure', async () => {
+	test('rejects missing continuation metadata as upstream failure', async () => {
 		serverMocks.fetchWithPoolingOnServer.mockResolvedValue(
 			new Response(JSON.stringify([rawTransaction]), { headers: { 'X-Has-More': 'true' } })
 		)
@@ -242,14 +242,14 @@ describe('bridge transactions API route', () => {
 		expect(serverMocks.recordRouteRuntimeError).toHaveBeenCalledOnce()
 	})
 
-	it('rejects invalid route input before calling the producer', async () => {
+	test('rejects invalid route input before calling the producer', async () => {
 		await expect(
 			bridgeTransactions.handle(transactionRequest({ id: 'circle', starttimestamp: '100', endtimestamp: '200' }))
 		).resolves.toEqual({ status: 400, body: { error: 'id parameter must be a bridge id or all' } })
 		expect(serverMocks.fetchWithPoolingOnServer).not.toHaveBeenCalled()
 	})
 
-	it.each([
+	test.each([
 		{
 			query: { id: '51', starttimestamp: '100.5', endtimestamp: '200' },
 			error: 'starttimestamp and endtimestamp must be valid integer seconds'
@@ -270,7 +270,7 @@ describe('bridge transactions API route', () => {
 		expect(serverMocks.fetchWithPoolingOnServer).not.toHaveBeenCalled()
 	})
 
-	it('maps producer non-success responses to unavailable', async () => {
+	test('maps producer non-success responses to unavailable', async () => {
 		serverMocks.fetchWithPoolingOnServer.mockResolvedValue(new Response(null, { status: 503 }))
 
 		const result = await bridgeTransactions.handle(

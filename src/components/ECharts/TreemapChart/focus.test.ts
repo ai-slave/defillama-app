@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { registerTreemapFocusTracking } from './focus'
 
 describe('treemap focus tracking', () => {
-	it('tracks drilldown paths, clears on restore, and removes its listeners', () => {
+	test('tracks drilldown paths, clears on restore, and removes its listeners', () => {
 		const handlers = new Map<string, (params?: unknown) => void>()
 		const node = {
 			getId: () => 'technology/apple',

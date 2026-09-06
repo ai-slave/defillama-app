@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const fetchMock = vi.fn()
 
 vi.mock('~/utils/http-client', () => ({
-	fetchWithPoolingOnServer: (...args: unknown[]) => fetchMock(...args)
+	fetchWithPoolingOnServer: (...args: Array<unknown>) => fetchMock(...args)
 }))
 
 vi.mock('~/containers/Downloads/datasets', () => ({
@@ -34,7 +34,7 @@ vi.mock('~/containers/Downloads/chart-datasets', () => ({
 			'test-custom',
 			{
 				slug: 'test-custom',
-				customFetch: async (param: string) => [{ date: 1700000000, value: param }]
+				customFetch: async (param: string) => [{ date: 1_700_000_000, value: param }]
 			}
 		],
 		[
@@ -66,14 +66,14 @@ afterEach(() => {
 })
 
 describe('cacheKeyForSource', () => {
-	it('distinguishes datasets from chart params', () => {
+	test('distinguishes datasets from chart params', () => {
 		expect(cacheKeyForSource({ kind: 'dataset', slug: 'a' })).toBe('dataset:a')
 		expect(cacheKeyForSource({ kind: 'chart', slug: 'a', param: 'eth' })).toBe('chart:a:eth')
 	})
 })
 
 describe('fetchCsvForSource dataset path', () => {
-	it('builds csv from extracted items with curated fields', async () => {
+	test('builds csv from extracted items with curated fields', async () => {
 		fetchMock.mockResolvedValue(
 			jsonResponse({
 				protocols: [
@@ -87,14 +87,14 @@ describe('fetchCsvForSource dataset path', () => {
 		expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/protocols', { timeout: 15_000 })
 	})
 
-	it('serves repeat loads from cache within ttl', async () => {
+	test('serves repeat loads from cache within ttl', async () => {
 		fetchMock.mockResolvedValue(jsonResponse({ protocols: [{ name: 'Aave', tvl: 1 }] }))
 		await fetchCsvForSource({ kind: 'dataset', slug: 'test-protocols' })
 		await fetchCsvForSource({ kind: 'dataset', slug: 'test-protocols' })
 		expect(fetchMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('refetches after ttl expiry', async () => {
+	test('refetches after ttl expiry', async () => {
 		fetchMock.mockResolvedValue(jsonResponse({ protocols: [{ name: 'Aave', tvl: 1 }] }))
 		await fetchCsvForSource({ kind: 'dataset', slug: 'test-protocols' })
 		vi.advanceTimersByTime(11 * 60 * 1000)
@@ -102,7 +102,7 @@ describe('fetchCsvForSource dataset path', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2)
 	})
 
-	it('dedupes concurrent loads of the same source', async () => {
+	test('dedupes concurrent loads of the same source', async () => {
 		let resolveUpstream: (value: unknown) => void
 		fetchMock.mockReturnValue(
 			new Promise((resolve) => {
@@ -116,7 +116,7 @@ describe('fetchCsvForSource dataset path', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('does not cache failures', async () => {
+	test('does not cache failures', async () => {
 		fetchMock.mockResolvedValueOnce({ ok: false, status: 502 })
 		await expect(fetchCsvForSource({ kind: 'dataset', slug: 'test-protocols' })).rejects.toThrow(
 			'Upstream API returned 502'
@@ -125,40 +125,40 @@ describe('fetchCsvForSource dataset path', () => {
 		await expect(fetchCsvForSource({ kind: 'dataset', slug: 'test-protocols' })).resolves.toContain('Aave')
 	})
 
-	it('throws on unknown dataset', async () => {
+	test('throws on unknown dataset', async () => {
 		await expect(fetchCsvForSource({ kind: 'dataset', slug: 'nope' })).rejects.toThrow('Dataset "nope" not found')
 	})
 })
 
 describe('fetchCsvForSource chart path', () => {
-	it('builds csv from extracted rows with date formatting', async () => {
-		fetchMock.mockResolvedValue(jsonResponse({ rows: [{ date: 1700000000, value: 5 }] }))
+	test('builds csv from extracted rows with date formatting', async () => {
+		fetchMock.mockResolvedValue(jsonResponse({ rows: [{ date: 1_700_000_000, value: 5 }] }))
 		const csv = await fetchCsvForSource({ kind: 'chart', slug: 'test-chart', param: 'ethereum' })
 		expect(csv).toBe('date,value\r\n2023-11-14,5')
 		expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/chart/ethereum', { timeout: 15_000 })
 	})
 
-	it('uses customFetch when defined', async () => {
+	test('uses customFetch when defined', async () => {
 		const csv = await fetchCsvForSource({ kind: 'chart', slug: 'test-custom', param: 'btc' })
 		expect(csv).toContain('btc')
 		expect(fetchMock).not.toHaveBeenCalled()
 	})
 
-	it('caches per param, not per slug', async () => {
-		fetchMock.mockResolvedValue(jsonResponse({ rows: [{ date: 1700000000, value: 5 }] }))
+	test('caches per param, not per slug', async () => {
+		fetchMock.mockResolvedValue(jsonResponse({ rows: [{ date: 1_700_000_000, value: 5 }] }))
 		await fetchCsvForSource({ kind: 'chart', slug: 'test-chart', param: 'ethereum' })
 		await fetchCsvForSource({ kind: 'chart', slug: 'test-chart', param: 'solana' })
 		expect(fetchMock).toHaveBeenCalledTimes(2)
 	})
 
-	it('throws when chart returns no rows', async () => {
+	test('throws when chart returns no rows', async () => {
 		fetchMock.mockResolvedValue(jsonResponse({ rows: [] }))
 		await expect(fetchCsvForSource({ kind: 'chart', slug: 'test-chart', param: 'ethereum' })).rejects.toThrow(
 			'No data returned'
 		)
 	})
 
-	it('times out hanging customFetch upstreams', async () => {
+	test('times out hanging customFetch upstreams', async () => {
 		const pending = fetchCsvForSource({ kind: 'chart', slug: 'test-hanging', param: 'x' })
 		const assertion = expect(pending).rejects.toThrow('Upstream timeout for chart "test-hanging"')
 		await vi.advanceTimersByTimeAsync(15_001)

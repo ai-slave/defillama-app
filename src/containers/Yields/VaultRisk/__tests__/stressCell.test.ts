@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	anyHasAnchors,
 	formatDepositPct,
@@ -38,7 +38,7 @@ const CURVE = [
 ]
 
 describe('anyHasAnchors', () => {
-	it('is true only when a computed scenario carries the served per-drop curve', () => {
+	test('is true only when a computed scenario carries the served per-drop curve', () => {
 		expect(anyHasAnchors([scn({ lossByAnchor: CURVE })])).toBe(true)
 		expect(anyHasAnchors([scn({})])).toBe(false)
 		// a curve on a non-computed row does not enable the toggle
@@ -47,13 +47,13 @@ describe('anyHasAnchors', () => {
 })
 
 describe('modeledLossCell — no stress (mechanism enumeration)', () => {
-	it('shows the representative drop note from inputs.drop_pct', () => {
+	test('shows the representative drop note from inputs.drop_pct', () => {
 		const cell = modeledLossCell(scn({ inputs: { drop_pct: 30 }, lossMinUsd: 5000, lossMaxUsd: 9000 }))
 		expect(cell.note).toBe('At −30% stress')
 		expect(cell.sortUsd).toBe(5000)
 	})
 
-	it('reports $0 buffered when the modeled drop produces no loss', () => {
+	test('reports $0 buffered when the modeled drop produces no loss', () => {
 		const cell = modeledLossCell(scn({ inputs: { drop_pct: 10 }, lossMinUsd: 0, lossMaxUsd: 9000 }))
 		expect(cell.amount).toBe('$0')
 		expect(cell.note).toBe('Buffered at −10%')
@@ -64,7 +64,7 @@ describe('modeledLossCell — no stress (mechanism enumeration)', () => {
 
 // Losses are quoted as a share of the deposit; dollars are only the no-denominator fallback.
 describe('modeledLossCell — percent of deposit', () => {
-	it('formats the loss as a % of supply when a denominator is passed', () => {
+	test('formats the loss as a % of supply when a denominator is passed', () => {
 		const cell = modeledLossCell(
 			scn({ inputs: { drop_pct: 30 }, lossMinUsd: 25_000, lossMaxUsd: 90_000 }),
 			undefined,
@@ -74,85 +74,85 @@ describe('modeledLossCell — percent of deposit', () => {
 		expect(cell.sortUsd).toBe(25_000) // sorting stays in dollars
 	})
 
-	it('reads a buffered anchor as 0%, and keeps the zero flag for muted styling', () => {
+	test('reads a buffered anchor as 0%, and keeps the zero flag for muted styling', () => {
 		const row = scn({ lossByAnchor: CURVE, lossMaxUsd: 30_000, inputs: { drop_pct: 30 }, lossMinUsd: 5000 })
 		const cell = modeledLossCell(row, 10, 100_000)
 		expect(cell.amount).toBe('0%')
 		expect(cell.zero).toBe(true)
 	})
 
-	it('prices each served anchor against the deposit', () => {
+	test('prices each served anchor against the deposit', () => {
 		const row = scn({ lossByAnchor: CURVE, lossMaxUsd: 30_000, inputs: { drop_pct: 30 }, lossMinUsd: 5000 })
 		expect(modeledLossCell(row, 30, 100_000).amount).toBe('5%')
 		expect(modeledLossCell(row, 50, 100_000).amount).toBe('9%')
 		expect(modeledLossCell(row, 'worst', 100_000).amount).toBe('30%')
 	})
 
-	it('never exceeds 100% even when the modeled loss runs past pool size', () => {
+	test('never exceeds 100% even when the modeled loss runs past pool size', () => {
 		expect(modeledLossCell(scn({ lossMinUsd: 5_000_000, lossMaxUsd: 5_000_000 }), undefined, 100_000).amount).toBe(
 			'100%'
 		)
 	})
 
-	it('falls back to dollars with no denominator, so a missing supply never prints a fake percentage', () => {
+	test('falls back to dollars with no denominator, so a missing supply never prints a fake percentage', () => {
 		expect(modeledLossCell(scn({ lossMinUsd: 25_000, lossMaxUsd: 25_000 }), undefined, 0).amount).toBe('$25,000')
 	})
 })
 
 describe('lossPct', () => {
-	it('is null without a denominator, so callers fall back to dollars', () => {
+	test('is null without a denominator, so callers fall back to dollars', () => {
 		expect(lossPct(1000, 0)).toBeNull()
 	})
 
-	it('is position-independent — the same share whatever the depositor put in', () => {
+	test('is position-independent — the same share whatever the depositor put in', () => {
 		expect(lossPct(50_000, 100_000)).toBe('50%')
 	})
 })
 
 describe('worstCaseLabel', () => {
-	it('quotes the ceiling as a share of the deposit', () => {
+	test('quotes the ceiling as a share of the deposit', () => {
 		expect(worstCaseLabel(scn({ lossMinUsd: 0, lossMaxUsd: 40_000 }), 100_000)).toBe('up to 40%')
 		expect(worstCaseLabel(scn({ lossMinUsd: 40_000, lossMaxUsd: 40_000 }), 100_000)).toBe('40%')
 	})
 
-	it('names a total loss rather than printing "100%"', () => {
+	test('names a total loss rather than printing "100%"', () => {
 		expect(worstCaseLabel(scn({ lossMinUsd: 0, lossMaxUsd: 100_000 }), 100_000)).toBe('Full deposit')
 	})
 })
 
 describe('modeledLossCell — stress selected (price-driven row)', () => {
-	const row = scn({ lossByAnchor: CURVE, lossMaxUsd: 30000, inputs: { drop_pct: 30 }, lossMinUsd: 5000 })
+	const row = scn({ lossByAnchor: CURVE, lossMaxUsd: 30_000, inputs: { drop_pct: 30 }, lossMinUsd: 5000 })
 
-	it('reads the served loss at the chosen anchor', () => {
+	test('reads the served loss at the chosen anchor', () => {
 		expect(modeledLossCell(row, 30).sortUsd).toBe(5000)
 		expect(modeledLossCell(row, 50).sortUsd).toBe(9000)
 	})
 
-	it('buffers at an anchor whose served loss is zero (drop named in the header, not the subtext)', () => {
+	test('buffers at an anchor whose served loss is zero (drop named in the header, not the subtext)', () => {
 		const cell = modeledLossCell(row, 10)
 		expect(cell.amount).toBe('$0')
 		expect(cell.note).toBe('Inside liquidation buffer')
 	})
 
-	it('"worst" reads the all-to-zero ceiling (lossMaxUsd)', () => {
-		expect(modeledLossCell(row, 'worst').sortUsd).toBe(30000)
+	test('"worst" reads the all-to-zero ceiling (lossMaxUsd)', () => {
+		expect(modeledLossCell(row, 'worst').sortUsd).toBe(30_000)
 	})
 })
 
 describe('modeledLossCell — stress selected (no per-drop curve)', () => {
-	it('shows a fixed figure with no subtext (the Status column carries the type)', () => {
+	test('shows a fixed figure with no subtext (the Status column carries the type)', () => {
 		const cell = modeledLossCell(scn({ lossMinUsd: 1000, lossMaxUsd: 1000 }), 30)
 		expect(cell.sortUsd).toBe(1000)
 		expect(cell.note).toBeNull()
 	})
 
-	it('leaves a worst-case-only row as "—" with no subtext', () => {
+	test('leaves a worst-case-only row as "—" with no subtext', () => {
 		const cell = modeledLossCell(scn({ lossMinUsd: 0, lossMaxUsd: 1000 }), 30)
 		expect(cell.amount).toBe('—')
 		expect(cell.note).toBeNull()
 	})
 
-	it('"worst" shows the ceiling, never the floor, on a min<max row (oracle full-drain)', () => {
+	test('"worst" shows the ceiling, never the floor, on a min<max row (oracle full-drain)', () => {
 		// drainable-now floor 12.7m, full-compromise ceiling 124.5m: fixed at drop anchors…
 		const fullDrain = scn({ lossMinUsd: 12_700_000, lossMaxUsd: 124_500_000 })
 		expect(modeledLossCell(fullDrain, 10).sortUsd).toBe(12_700_000)
@@ -167,7 +167,7 @@ describe('modeledLossCell — stress selected (no per-drop curve)', () => {
 })
 
 describe('scenarioGroup', () => {
-	it('buckets by kind + scenario_id + status (presentation only)', () => {
+	test('buckets by kind + scenario_id + status (presentation only)', () => {
 		expect(scenarioGroup(scn({ kind: 'macro' }))).toBe('price-driven')
 		expect(scenarioGroup(scn({ kind: 'oracle-malfunction' }))).toBe('oracle-liquidation')
 		expect(scenarioGroup(scn({ kind: 'liquidity' }))).toBe('oracle-liquidation')
@@ -185,7 +185,7 @@ describe('scenarioGroup', () => {
 
 // The depositor-facing severity readout: a loss share rendered as a % of the deposit.
 describe('formatDepositPct', () => {
-	it('rounds, floors sub-1% to "<1%", and reads ≥99.5% as a clean 100%', () => {
+	test('rounds, floors sub-1% to "<1%", and reads ≥99.5% as a clean 100%', () => {
 		expect(formatDepositPct(1)).toBe('100%')
 		expect(formatDepositPct(0.997)).toBe('100%')
 		expect(formatDepositPct(0.856)).toBe('86%')
@@ -198,12 +198,12 @@ describe('formatDepositPct', () => {
 // The % is position-independent (loss socialises pro-rata); only the dollar figure scales with the
 // deposit. scaleToPosition owns that: your loss = pool loss × your share, share capped at 1.
 describe('scaleToPosition', () => {
-	it('returns the pool figure unchanged when no deposit is set or supply is unknown', () => {
+	test('returns the pool figure unchanged when no deposit is set or supply is unknown', () => {
 		expect(scaleToPosition(1_000_000, 5_000_000, null)).toBe(1_000_000)
 		expect(scaleToPosition(1_000_000, 0, 10_000)).toBe(1_000_000)
 	})
 
-	it('scales a pool loss to the depositor pro-rata, never above their deposit', () => {
+	test('scales a pool loss to the depositor pro-rata, never above their deposit', () => {
 		// $10k in a $100k pool → 10% of a $1M pool loss = $100k
 		expect(scaleToPosition(1_000_000, 100_000, 10_000)).toBe(100_000)
 		// a deposit larger than the pool can still only lose what the pool lost

@@ -3,7 +3,7 @@ export type ArticleVersion = 1
 export type ArticleStatus = 'draft' | 'published'
 export type ArticleSection = 'interview' | 'report' | 'spotlight' | 'opinion' | 'roundtables' | 'press_release'
 
-export const ARTICLE_SECTIONS: ArticleSection[] = [
+export const ARTICLE_SECTIONS: Array<ArticleSection> = [
 	'interview',
 	'report',
 	'spotlight',
@@ -63,9 +63,9 @@ export type TiptapMark = {
 export type TiptapJson = {
 	type?: string
 	attrs?: Record<string, unknown> | null
-	content?: TiptapJson[]
+	content?: Array<TiptapJson>
 	text?: string
-	marks?: TiptapMark[]
+	marks?: Array<TiptapMark>
 }
 
 export type ArticleImage = {
@@ -121,12 +121,12 @@ export type ArticleChartAnnotation = {
 }
 
 export type ArticleChartConfig = {
-	series: ArticleChartSeries[]
-	entities: ArticleChartEntity[]
+	series: Array<ArticleChartSeries>
+	entities: Array<ArticleChartEntity>
 	chartType: string
 	range?: ArticleChartRange
 	logScale?: boolean
-	annotations?: ArticleChartAnnotation[]
+	annotations?: Array<ArticleChartAnnotation>
 	caption?: string
 }
 
@@ -139,10 +139,10 @@ export type ArticleCitation = {
 
 export type ArticleExtractionResult = {
 	plainText: string
-	entities: ArticleEntityRef[]
-	charts: ArticleChartConfig[]
-	citations: ArticleCitation[]
-	embeds: ArticleEmbedConfig[]
+	entities: Array<ArticleEntityRef>
+	charts: Array<ArticleChartConfig>
+	citations: Array<ArticleCitation>
+	embeds: Array<ArticleEmbedConfig>
 }
 
 export type ArticleAuthorProfile = {
@@ -207,9 +207,9 @@ export type LocalArticleDocument = {
 	status: ArticleStatus
 	author?: string
 	authorProfile?: ArticleAuthor
-	coAuthors?: ArticleAuthor[]
-	guestAuthors?: ArticleGuestAuthor[]
-	pageAssets?: ArticlePageAsset[]
+	coAuthors?: Array<ArticleAuthor>
+	guestAuthors?: Array<ArticleGuestAuthor>
+	pageAssets?: Array<ArticlePageAsset>
 	viewerRole?: ArticleViewerRole
 
 	seoTitle?: string
@@ -223,14 +223,14 @@ export type LocalArticleDocument = {
 
 	contentJson: TiptapJson
 	plainText: string
-	entities: ArticleEntityRef[]
-	charts: ArticleChartConfig[]
-	citations: ArticleCitation[]
-	embeds: ArticleEmbedConfig[]
-	tags: string[]
-	editorialTags?: string[]
+	entities: Array<ArticleEntityRef>
+	charts: Array<ArticleChartConfig>
+	citations: Array<ArticleCitation>
+	embeds: Array<ArticleEmbedConfig>
+	tags: Array<string>
+	editorialTags?: Array<string>
 	editorialTagMetadata?: ArticleEditorialTagMetadata | null
-	interviewees?: ArticleInterviewee[]
+	interviewees?: Array<ArticleInterviewee>
 	section?: ArticleSection | null
 	displayDate?: string | null
 	goLiveAt?: string | null
@@ -293,7 +293,7 @@ export type ArticleRevision = ArticleRevisionSummary & {
 }
 
 export type ArticleRevisionListResponse = {
-	items: ArticleRevisionSummary[]
+	items: Array<ArticleRevisionSummary>
 	nextCursor: string | null
 }
 
@@ -301,7 +301,7 @@ export type ValidationResult<T> = { ok: true; value: T } | { ok: false; error: s
 
 export type BannerScope = 'landing' | 'section' | 'article' | 'all_articles'
 
-export const BANNER_SCOPES: BannerScope[] = ['landing', 'section', 'article', 'all_articles']
+export const BANNER_SCOPES: Array<BannerScope> = ['landing', 'section', 'article', 'all_articles']
 
 export const BANNER_SCOPE_LABELS: Record<BannerScope, string> = {
 	landing: 'Research landing page',
@@ -312,7 +312,7 @@ export const BANNER_SCOPE_LABELS: Record<BannerScope, string> = {
 
 export type BannerKind = 'text' | 'image' | 'image-horizontal' | 'promo' | 'image-square'
 
-export const BANNER_KINDS: BannerKind[] = ['text', 'image', 'image-horizontal', 'promo', 'image-square']
+export const BANNER_KINDS: Array<BannerKind> = ['text', 'image', 'image-horizontal', 'promo', 'image-square']
 
 export const BANNER_KIND_LABELS: Record<BannerKind, string> = {
 	text: 'Text strip',
@@ -347,8 +347,8 @@ export type Banner = {
 	disclosureText: string | null
 	disclosureUrl: string | null
 	showOnLanding: boolean
-	excludedArticleIds: string[]
-	targetCountries: string[]
+	excludedArticleIds: Array<string>
+	targetCountries: Array<string>
 	enabled: boolean
 	createdByPbUserId?: string
 	createdAt: string
@@ -371,8 +371,8 @@ export type BannerPayload = {
 	disclosureText?: string | null
 	disclosureUrl?: string | null
 	showOnLanding?: boolean
-	excludedArticleIds?: string[] | null
-	targetCountries?: string[] | null
+	excludedArticleIds?: Array<string> | null
+	targetCountries?: Array<string> | null
 	enabled?: boolean
 }
 
@@ -425,8 +425,8 @@ export type SocialMentionPayload = {
 }
 
 export type TrustedByLookupResult = {
-	logos: TrustedLogo[]
-	mentions: SocialMention[]
+	logos: Array<TrustedLogo>
+	mentions: Array<SocialMention>
 }
 
 export type ResearchSponsorEntityType = 'protocol' | 'chain' | 'cex'
@@ -464,7 +464,7 @@ export type ResearchSponsorAdminReport = ResearchSponsorArticleSearchResult & {
 }
 
 export type ResearchSponsorAdmin = ResearchSponsorSummary & {
-	reports: ResearchSponsorAdminReport[]
+	reports: Array<ResearchSponsorAdminReport>
 }
 
 export type ResearchSponsorPayload = {
@@ -475,5 +475,5 @@ export type ResearchSponsorPayload = {
 
 export type ResearchSponsorLookupResult = {
 	sponsor: ResearchSponsorSummary | null
-	reports: SponsoredResearchReportSummary[]
+	reports: Array<SponsoredResearchReportSummary>
 }

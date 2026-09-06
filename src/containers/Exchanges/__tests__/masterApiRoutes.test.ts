@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const fetchJsonMock = vi.hoisted(() => vi.fn())
 
@@ -36,7 +36,7 @@ const metadata = {
 }
 
 describe('master Exchanges API routes', () => {
-	it('keeps the exact execution symbol with token slippage', async () => {
+	test('keeps the exact execution symbol with token slippage', async () => {
 		const { masterExchangeExecutionSlippage } = await import('../server/master.api')
 		fetchJsonMock.mockResolvedValue({
 			venues: {
@@ -67,7 +67,7 @@ describe('master Exchanges API routes', () => {
 		})
 	})
 
-	it('loads global chart parts independently', async () => {
+	test('loads global chart parts independently', async () => {
 		const { masterExchangeChart } = await import('../server/master.api')
 		fetchJsonMock.mockImplementation(async (url: string) => ({ url }))
 		const request = { method: 'GET', url: '/api/public/exchanges/charts', headers: {} }
@@ -80,7 +80,7 @@ describe('master Exchanges API routes', () => {
 		expect(invalid).toEqual({ status: 400, body: { error: 'Unknown exchange chart' } })
 	})
 
-	it('loads per-venue history from its canonical series file', async () => {
+	test('loads per-venue history from its canonical series file', async () => {
 		const { masterExchangeHistory } = await import('../server/master.api')
 		fetchJsonMock.mockResolvedValue({
 			days: [1, 3],
@@ -98,7 +98,7 @@ describe('master Exchanges API routes', () => {
 		})
 	})
 
-	it('rejects invalid exchange and country URL values before fetching', async () => {
+	test('rejects invalid exchange and country URL values before fetching', async () => {
 		const { masterExchangeHistory, masterExchangeRegionalMetadata } = await import('../server/master.api')
 		const request = { method: 'GET', url: '/api/public/exchanges', headers: {} }
 
@@ -116,7 +116,7 @@ describe('master Exchanges API routes', () => {
 		expect(fetchJsonMock).not.toHaveBeenCalled()
 	})
 
-	it('omits metadata for unavailable countries and loads it for offered countries', async () => {
+	test('omits metadata for unavailable countries and loads it for offered countries', async () => {
 		const { masterExchangeRegionalMetadata } = await import('../server/master.api')
 		fetchJsonMock.mockImplementation(async (url: string) => {
 			if (url.endsWith('/exchanges/regions.json')) {

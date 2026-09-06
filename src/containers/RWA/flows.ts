@@ -30,7 +30,7 @@ export type RWAFlowOverlay =
 	| { metric: 'onChainMcap'; values: null }
 type RWAGroupedFlowOverlay = { metric: RWAFlowOverlayMetric; values: Map<number, number | null> }
 export type RWAFlowChartSelection =
-	| { view: 'netFlows'; groupBy: RWAFlowGrouping; overlays: readonly RWAFlowOverlay[] }
+	| { view: 'netFlows'; groupBy: RWAFlowGrouping; overlays: ReadonlyArray<RWAFlowOverlay> }
 	| { view: 'flowVsPrice'; groupBy: RWAFlowGrouping; mcapByTimestamp: RWAFlowOverlayValues | null }
 
 export const RWA_FLOW_OVERLAY_OPTIONS = [
@@ -60,20 +60,20 @@ export function getRWAFlowOverlayOptions(availability: RWAChartMetricAvailabilit
 }
 
 export function parseRWAFlowOverlayMetrics(
-	values: readonly string[],
+	values: ReadonlyArray<string>,
 	availability: RWAChartMetricAvailability = { hasActiveMcapData: true }
-): RWAFlowOverlayMetric[] {
+): Array<RWAFlowOverlayMetric> {
 	if (values.length === 0) return ['onChainMcap']
 	if (values.includes('none')) return []
 
-	const selected: RWAFlowOverlayMetric[] = []
+	const selected: Array<RWAFlowOverlayMetric> = []
 	for (const option of getRWAFlowOverlayOptions(availability)) {
 		if (values.includes(option.key)) selected.push(option.key)
 	}
 	return selected
 }
 
-export function getRWAFlowOverlayQueryValue(values: readonly string[]): string | string[] | undefined {
+export function getRWAFlowOverlayQueryValue(values: ReadonlyArray<string>): string | Array<string> | undefined {
 	if (values.length === 0) return 'none'
 	const metrics = parseRWAFlowOverlayMetrics(values)
 	if (metrics.length === 1 && metrics[0] === 'onChainMcap') return undefined
@@ -158,7 +158,7 @@ type RWAFlowChartSource = Array<[timestamp: number, ...values: Array<number | nu
 
 export type RWAFlowChart = {
 	dataset: Omit<MultiSeriesChartDataset, 'source'> & { source: RWAFlowChartSource }
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	groupBy: RWAFlowGrouping
 }
 
@@ -177,7 +177,7 @@ export type RWAFlowVsPriceAssetSummary = {
 
 export type RWAFlowRotationChart = {
 	dataset: MultiSeriesTimeSeriesDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	groupBy: RWAFlowGrouping
 }
 
@@ -192,16 +192,16 @@ export const RWA_FLOW_COLORS = {
 } as const
 
 export function aggregateRWAFlowRows(
-	rows: IRWAFlowAssetBreakdownRow[],
+	rows: Array<IRWAFlowAssetBreakdownRow>,
 	assets: IRWAAssetsOverview['assets']
-): IRWAFlowAggregatePoint[] {
+): Array<IRWAFlowAggregatePoint> {
 	const selectedIdSet = new Set<string>()
 	for (const asset of assets) {
 		if (asset.kind === 'spot') selectedIdSet.add(asset.canonicalMarketId)
 	}
 	const selectedIds = Array.from(selectedIdSet)
 
-	const points: IRWAFlowAggregatePoint[] = []
+	const points: Array<IRWAFlowAggregatePoint> = []
 	for (const row of rows) {
 		let netFlowUsd = 0
 		let hasFlow = false
@@ -268,14 +268,14 @@ function getRWAFlowOverlayValue(point: RWAFlowSeriesPoint, overlay: RWAFlowOverl
 	return overlay.values.get(rwaUnixSecondsToMilliseconds(point.timestamp)) ?? null
 }
 
-function getRWAFlowOverlayDimensions(overlays: readonly RWAFlowOverlay[]): string[] {
+function getRWAFlowOverlayDimensions(overlays: ReadonlyArray<RWAFlowOverlay>): Array<string> {
 	return overlays.map((overlay) => getRWAFlowOverlayOption(overlay.metric).name)
 }
 
 function buildRWAFlowOverlayCharts(
-	overlays: readonly RWAFlowOverlay[],
+	overlays: ReadonlyArray<RWAFlowOverlay>,
 	firstDimensionIndex: number
-): MultiSeriesChartSeriesConfig[] {
+): Array<MultiSeriesChartSeriesConfig> {
 	return overlays.map((overlay, index) => {
 		const option = getRWAFlowOverlayOption(overlay.metric)
 		return {
@@ -290,10 +290,10 @@ function buildRWAFlowOverlayCharts(
 }
 
 function groupRWAFlowOverlays(
-	points: readonly RWAFlowSeriesPoint[],
+	points: ReadonlyArray<RWAFlowSeriesPoint>,
 	groupBy: Exclude<ChartTimeGrouping, 'daily'>,
-	overlays: readonly RWAFlowOverlay[]
-): RWAGroupedFlowOverlay[] {
+	overlays: ReadonlyArray<RWAFlowOverlay>
+): Array<RWAGroupedFlowOverlay> {
 	const plans = overlays.map((overlay) => ({
 		overlay,
 		grouped: { metric: overlay.metric, values: new Map<number, number | null>() }
@@ -309,10 +309,10 @@ function groupRWAFlowOverlays(
 }
 
 function buildFlowPeriods(
-	points: readonly RWAFlowSeriesPoint[],
+	points: ReadonlyArray<RWAFlowSeriesPoint>,
 	groupBy: ChartTimeGrouping,
 	mcapByTimestamp?: ReadonlyMap<number, number | null>
-): FlowPeriod[] {
+): Array<FlowPeriod> {
 	const periods = new Map<number, FlowPeriod>()
 
 	for (const point of points) {
@@ -369,7 +369,7 @@ export function getRWAFlowChartOptions({
 }
 
 export function getRWAFlowDefaultStartTimestamp(
-	points: readonly RWAFlowSeriesPoint[],
+	points: ReadonlyArray<RWAFlowSeriesPoint>,
 	defaultRangeDays: number | undefined
 ): number | undefined {
 	if (defaultRangeDays == null) return undefined
@@ -379,7 +379,10 @@ export function getRWAFlowDefaultStartTimestamp(
 	return latestTimestamp > 0 ? latestTimestamp - defaultRangeDays * DAY_MS : undefined
 }
 
-function buildDailyFlowChart(points: readonly RWAFlowSeriesPoint[], overlays: readonly RWAFlowOverlay[]): RWAFlowChart {
+function buildDailyFlowChart(
+	points: ReadonlyArray<RWAFlowSeriesPoint>,
+	overlays: ReadonlyArray<RWAFlowOverlay>
+): RWAFlowChart {
 	const source: RWAFlowChartSource = []
 	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
 
@@ -425,8 +428,8 @@ function buildDailyFlowChart(points: readonly RWAFlowSeriesPoint[], overlays: re
 }
 
 function buildCumulativeFlowChart(
-	points: readonly RWAFlowSeriesPoint[],
-	overlays: readonly RWAFlowOverlay[]
+	points: ReadonlyArray<RWAFlowSeriesPoint>,
+	overlays: ReadonlyArray<RWAFlowOverlay>
 ): RWAFlowChart {
 	const source: RWAFlowChartSource = []
 	const overlayDimensions = getRWAFlowOverlayDimensions(overlays)
@@ -461,9 +464,9 @@ function buildCumulativeFlowChart(
 }
 
 function buildGroupedFlowChart(
-	points: readonly RWAFlowSeriesPoint[],
+	points: ReadonlyArray<RWAFlowSeriesPoint>,
 	groupBy: Exclude<ChartTimeGrouping, 'daily'>,
-	overlays: readonly RWAFlowOverlay[]
+	overlays: ReadonlyArray<RWAFlowOverlay>
 ): RWAFlowChart {
 	const source: RWAFlowChartSource = []
 	const groupedOverlays = groupRWAFlowOverlays(points, groupBy, overlays)
@@ -512,7 +515,7 @@ function buildGroupedFlowChart(
 }
 
 function buildFlowVsPriceChart(
-	points: readonly RWAFlowSeriesPoint[],
+	points: ReadonlyArray<RWAFlowSeriesPoint>,
 	groupBy: RWAFlowGrouping,
 	mcapByTimestamp?: ReadonlyMap<number, number | null>
 ): RWAFlowChart {
@@ -558,7 +561,7 @@ function buildFlowVsPriceChart(
 }
 
 function buildFlowVsPriceSource(
-	points: readonly RWAFlowSeriesPoint[],
+	points: ReadonlyArray<RWAFlowSeriesPoint>,
 	groupBy: RWAFlowGrouping,
 	mcapByTimestamp?: ReadonlyMap<number, number | null>
 ): RWAFlowChartSource {
@@ -607,7 +610,7 @@ export function buildRWAFlowChart({
 	points,
 	selection
 }: {
-	points: readonly RWAFlowSeriesPoint[]
+	points: ReadonlyArray<RWAFlowSeriesPoint>
 	selection: RWAFlowChartSelection
 }): RWAFlowChart {
 	if (selection.view === 'flowVsPrice') {
@@ -722,16 +725,16 @@ export function getRWAFlowVsPriceSummary(
 }
 
 export function getRWAFlowVsPriceAssetSummaries(
-	flowRows: readonly IRWAFlowAssetBreakdownRow[],
+	flowRows: ReadonlyArray<IRWAFlowAssetBreakdownRow>,
 	mcapRows: IRWAChartMetricRows,
 	assets: IRWAAssetsOverview['assets'],
 	groupBy: RWAFlowGrouping,
 	visibleRange?: RWAFlowVisibleRange | null
-): RWAFlowVsPriceAssetSummary[] {
+): Array<RWAFlowVsPriceAssetSummary> {
 	const selectedAssets: Array<{
 		key: string
 		label: string
-		points: IRWAFlowAggregatePoint[]
+		points: Array<IRWAFlowAggregatePoint>
 		mcap: Map<number, number>
 	}> = []
 	for (const asset of assets) {
@@ -757,7 +760,7 @@ export function getRWAFlowVsPriceAssetSummaries(
 		}
 	}
 
-	const summaries: RWAFlowVsPriceAssetSummary[] = []
+	const summaries: Array<RWAFlowVsPriceAssetSummary> = []
 	for (const asset of selectedAssets) {
 		const source = buildFlowVsPriceSource(asset.points, groupBy, asset.mcap)
 		const summary = summarizeRWAFlowVsPriceSource(source, groupBy, visibleRange)
@@ -770,7 +773,7 @@ export function sortRWAFlowRotationSeriesNames(
 	seriesNames: ReadonlySet<string>,
 	flow7d: ReadonlyMap<string, number>,
 	flow30d: ReadonlyMap<string, number>
-): string[] {
+): Array<string> {
 	return Array.from(seriesNames).sort((a, b) => {
 		const flow7dDifference = Math.abs(flow7d.get(b) ?? 0) - Math.abs(flow7d.get(a) ?? 0)
 		if (flow7dDifference !== 0) return flow7dDifference
@@ -779,7 +782,7 @@ export function sortRWAFlowRotationSeriesNames(
 	})
 }
 
-export function getRWAFlowRotationSeriesNames(points: readonly IRWAFlowOverviewSplitPoint[]): string[] {
+export function getRWAFlowRotationSeriesNames(points: ReadonlyArray<IRWAFlowOverviewSplitPoint>): Array<string> {
 	const seriesNames = new Set<string>()
 	const latestPoint = points[points.length - 1]
 	const latestTimestamp = latestPoint ? rwaUnixSecondsToMilliseconds(latestPoint.timestamp) : 0
@@ -803,7 +806,7 @@ export function getRWAFlowRotationSeriesNames(points: readonly IRWAFlowOverviewS
 }
 
 export function buildRWAFlowRotationChart(
-	points: readonly IRWAFlowOverviewSplitPoint[],
+	points: ReadonlyArray<IRWAFlowOverviewSplitPoint>,
 	groupBy: RWAFlowGrouping,
 	options: { allSeries?: boolean } = {}
 ): RWAFlowRotationChart {
@@ -836,7 +839,7 @@ export function buildRWAFlowRotationChart(
 
 	const allSeriesNames = sortRWAFlowRotationSeriesNames(seriesNames, flow7d, flow30d)
 	let orderedSeriesNames = allSeriesNames
-	let omittedSeriesNames: string[] = []
+	let omittedSeriesNames: Array<string> = []
 	if (!options.allSeries && allSeriesNames.length > MAX_FLOW_ROTATION_SERIES) {
 		const rankedWithoutOthers = allSeriesNames.filter((name) => name !== 'Others')
 		orderedSeriesNames = rankedWithoutOthers.slice(0, MAX_FLOW_ROTATION_SERIES - 1)

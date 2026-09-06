@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getLlamaAIChartRefreshConfirmation,
 	getLlamaAIChartOwnerNotice,
@@ -8,7 +8,7 @@ import {
 } from '../llamaAIChartSource'
 
 describe('getLlamaAIChartRefreshConfirmation', () => {
-	it('shows the stored per-chart ceiling before a premium manual refresh', () => {
+	test('shows the stored per-chart ceiling before a premium manual refresh', () => {
 		expect(
 			getLlamaAIChartRefreshConfirmation({
 				id: 'premium',
@@ -19,7 +19,7 @@ describe('getLlamaAIChartRefreshConfirmation', () => {
 		).toBe('This refresh may charge up to $0.005 to your External Data Balance. Continue?')
 	})
 
-	it('does not confirm free refreshes and still warns for older premium metadata without a ceiling', () => {
+	test('does not confirm free refreshes and still warns for older premium metadata without a ceiling', () => {
 		expect(
 			getLlamaAIChartRefreshConfirmation({ id: 'free', kind: 'llamaai-chart', artifactContainsPremium: false })
 		).toBeNull()
@@ -30,7 +30,7 @@ describe('getLlamaAIChartRefreshConfirmation', () => {
 })
 
 describe('getLlamaAIChartSource', () => {
-	it('routes V2 reads directly through the dashboard-scoped AI endpoint', () => {
+	test('routes V2 reads directly through the dashboard-scoped AI endpoint', () => {
 		expect(
 			getLlamaAIChartSource(
 				{ id: 'item-1', kind: 'llamaai-chart', artifactId: 'artifact-1', artifactStatus: 'live' },
@@ -43,7 +43,7 @@ describe('getLlamaAIChartSource', () => {
 		})
 	})
 
-	it('does not put artifact or version selectors in the read URL', () => {
+	test('does not put artifact or version selectors in the read URL', () => {
 		const source = getLlamaAIChartSource(
 			{
 				id: 'item-1',
@@ -59,7 +59,7 @@ describe('getLlamaAIChartSource', () => {
 		expect(source?.url).not.toContain('version-secret')
 	})
 
-	it('keeps legacy chart reads on the frozen legacy endpoint', () => {
+	test('keeps legacy chart reads on the frozen legacy endpoint', () => {
 		expect(
 			getLlamaAIChartSource(
 				{ id: 'legacy', kind: 'llamaai-chart', savedChartId: 'saved-1' },
@@ -72,7 +72,7 @@ describe('getLlamaAIChartSource', () => {
 		})
 	})
 
-	it('does not fetch a repair placeholder', () => {
+	test('does not fetch a repair placeholder', () => {
 		expect(
 			getLlamaAIChartSource(
 				{ id: 'broken', kind: 'llamaai-chart', artifactId: null, artifactStatus: 'needs-repair' },
@@ -84,7 +84,7 @@ describe('getLlamaAIChartSource', () => {
 })
 
 describe('getLlamaAIChartRefreshRequest', () => {
-	it('targets the authenticated artifact job endpoint with dashboard authority', () => {
+	test('targets the authenticated artifact job endpoint with dashboard authority', () => {
 		expect(
 			getLlamaAIChartRefreshRequest(
 				{ id: 'item-1', kind: 'llamaai-chart', artifactId: 'artifact-1', artifactStatus: 'live' },
@@ -97,7 +97,7 @@ describe('getLlamaAIChartRefreshRequest', () => {
 		})
 	})
 
-	it('does not refresh pinned copies, repair slots, or legacy charts', () => {
+	test('does not refresh pinned copies, repair slots, or legacy charts', () => {
 		expect(
 			getLlamaAIChartRefreshRequest(
 				{
@@ -123,7 +123,7 @@ describe('getLlamaAIChartRefreshRequest', () => {
 })
 
 describe('getLlamaAIChartOwnerNotice', () => {
-	it('shows actionable policy and failure detail only to the artifact owner', () => {
+	test('shows actionable policy and failure detail only to the artifact owner', () => {
 		const status = {
 			errorCode: 'source_shape_changed',
 			errorDetail: 'Expected a numeric value column.',
@@ -138,7 +138,7 @@ describe('getLlamaAIChartOwnerNotice', () => {
 		expect(getLlamaAIChartOwnerNotice(status, false)).toBeNull()
 	})
 
-	it('falls back to safe error codes when no detail was recorded', () => {
+	test('falls back to safe error codes when no detail was recorded', () => {
 		expect(
 			getLlamaAIChartOwnerNotice(
 				{
@@ -155,7 +155,7 @@ describe('getLlamaAIChartOwnerNotice', () => {
 })
 
 describe('isLlamaAIChartRepairNeeded', () => {
-	it('surfaces permanent failures discovered after the dashboard item was saved', () => {
+	test('surfaces permanent failures discovered after the dashboard item was saved', () => {
 		expect(isLlamaAIChartRepairNeeded('live', 'needs-repair')).toBe(true)
 		expect(isLlamaAIChartRepairNeeded('needs-repair', undefined)).toBe(true)
 		expect(isLlamaAIChartRepairNeeded('live', 'live')).toBe(false)

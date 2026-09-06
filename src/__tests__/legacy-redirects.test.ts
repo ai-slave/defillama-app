@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { getServerSideProps as getDexRedirectServerSideProps } from '~/pages/dexs/[item]'
 
 vi.mock('~/utils/telemetry', () => ({
@@ -6,7 +6,7 @@ vi.mock('~/utils/telemetry', () => ({
 }))
 
 describe('legacy redirect shims', () => {
-	it('encodes dynamic params as a single destination segment', async () => {
+	test('encodes dynamic params as a single destination segment', async () => {
 		await expect(getDexRedirectServerSideProps({ params: { item: 'foo/bar' } } as never)).resolves.toEqual({
 			redirect: {
 				destination: '/protocol/dexs/foo%2Fbar',
@@ -15,7 +15,7 @@ describe('legacy redirect shims', () => {
 		})
 	})
 
-	it('returns notFound when the dynamic param is missing', async () => {
+	test('returns notFound when the dynamic param is missing', async () => {
 		await expect(getDexRedirectServerSideProps({ params: {} } as never)).resolves.toEqual({ notFound: true })
 	})
 })

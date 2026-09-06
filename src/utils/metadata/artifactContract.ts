@@ -29,7 +29,7 @@ export type CoreMetadataPayload = {
 	protocols: Record<string, IProtocolMetadata>
 	chains: Record<string, IChainMetadata>
 	categoriesAndTags: ICategoriesAndTags
-	cexs: ICexItem[]
+	cexs: Array<ICexItem>
 	rwaList: IRWAList
 	rwaPlatformsIndex: RWAPlatformsIndex
 	rwaPerpsList: IRWAPerpsList
@@ -37,21 +37,21 @@ export type CoreMetadataPayload = {
 	tokenDirectory: TokenDirectory
 	protocolDisplayNames: Record<string, string>
 	chainDisplayNames: Record<string, string>
-	chainCategories: string[]
-	liquidationsTokenSymbols: string[]
-	emissionsProtocolsList: string[]
+	chainCategories: Array<string>
+	liquidationsTokenSymbols: Array<string>
+	emissionsProtocolsList: Array<string>
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	emissionsHistoricalPrices: IEmissionsHistoricalPrices
-	cgExchangeIdentifiers: string[]
-	bridgeProtocolSlugs: string[]
-	bridgeChainSlugs: string[]
+	cgExchangeIdentifiers: Array<string>
+	bridgeProtocolSlugs: Array<string>
+	bridgeChainSlugs: Array<string>
 	bridgeChainSlugToName: Record<string, string>
 	narrativeCategories: NarrativeCategoriesMetadata
 	oracleRoutes: OracleRoutesMetadata
 	digitalAssetTreasuryRoutes: DigitalAssetTreasuryRoutesMetadata
-	stablecoinPeggedAssetSlugs: string[]
-	equitiesCompanyRoutes: IEquitiesCompanyRoute[]
-	preIpoCompanyIds: string[]
+	stablecoinPeggedAssetSlugs: Array<string>
+	equitiesCompanyRoutes: Array<IEquitiesCompanyRoute>
+	preIpoCompanyIds: Array<string>
 	tokenFilterMetadata: TokenFilterMetadataArtifact
 }
 
@@ -76,17 +76,17 @@ export type MetadataCache = {
 	tokenDirectoryRecordByRouteSegment: TokenDirectoryRecordByRouteSegment
 	protocolDisplayNames: Map<string, string>
 	chainDisplayNames: Map<string, string>
-	chainCategories: string[]
-	liquidationsTokenSymbols: string[]
+	chainCategories: Array<string>
+	liquidationsTokenSymbols: Array<string>
 	liquidationsTokenSymbolsSet: Set<string>
-	emissionsProtocolsList: string[]
+	emissionsProtocolsList: Array<string>
 	emissionsProtocolBySlug: Record<string, string>
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	emissionsHistoricalPrices: IEmissionsHistoricalPrices
-	cgExchangeIdentifiers: string[]
-	bridgeProtocolSlugs: string[]
+	cgExchangeIdentifiers: Array<string>
+	bridgeProtocolSlugs: Array<string>
 	bridgeProtocolSlugsSet: Set<string>
-	bridgeChainSlugs: string[]
+	bridgeChainSlugs: Array<string>
 	bridgeChainSlugsSet: Set<string>
 	bridgeChainSlugToName: Record<string, string>
 	narrativeCategories: NarrativeCategoriesMetadata
@@ -95,11 +95,11 @@ export type MetadataCache = {
 	digitalAssetTreasuryRoutes: DigitalAssetTreasuryRoutesMetadata
 	digitalAssetTreasuryAssetSlugsSet: Set<string>
 	digitalAssetTreasuryCompanyRouteBySlug: Record<string, string>
-	stablecoinPeggedAssetSlugs: string[]
+	stablecoinPeggedAssetSlugs: Array<string>
 	stablecoinPeggedAssetSlugsSet: Set<string>
-	equitiesCompanyRoutes: IEquitiesCompanyRoute[]
+	equitiesCompanyRoutes: Array<IEquitiesCompanyRoute>
 	equitiesCompanySlugsSet: Set<string>
-	preIpoCompanyIds: string[]
+	preIpoCompanyIds: Array<string>
 	preIpoCompanyIdsSet: Set<string>
 	tokenFilterMetadata: TokenFilterMetadataArtifact
 }
@@ -143,7 +143,7 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 	cexs: {
 		file: 'cexs.json',
 		stub: [],
-		parse: parseArtifact<ICexItem[]>
+		parse: parseArtifact<Array<ICexItem>>
 	},
 	rwaList: {
 		file: 'rwa.json',
@@ -191,17 +191,17 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 	chainCategories: {
 		file: 'chainCategories.json',
 		stub: [],
-		parse: parseArtifact<string[]>
+		parse: parseArtifact<Array<string>>
 	},
 	liquidationsTokenSymbols: {
 		file: 'liquidationsTokenSymbols.json',
 		stub: [],
-		parse: parseArtifact<string[]>
+		parse: parseArtifact<Array<string>>
 	},
 	emissionsProtocolsList: {
 		file: 'emissionsProtocolsList.json',
 		stub: [],
-		parse: parseArtifact<string[]>
+		parse: parseArtifact<Array<string>>
 	},
 	emissionsSupplyMetrics: {
 		file: 'emissionsSupplyMetrics.json',
@@ -216,17 +216,17 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 	cgExchangeIdentifiers: {
 		file: 'cgExchangeIdentifiers.json',
 		stub: [],
-		parse: parseArtifact<string[]>
+		parse: parseArtifact<Array<string>>
 	},
 	bridgeProtocolSlugs: {
 		file: 'bridgeProtocolSlugs.json',
 		stub: [],
-		parse: parseArtifact<string[]>
+		parse: parseArtifact<Array<string>>
 	},
 	bridgeChainSlugs: {
 		file: 'bridgeChainSlugs.json',
 		stub: [],
-		parse: parseArtifact<string[]>
+		parse: parseArtifact<Array<string>>
 	},
 	bridgeChainSlugToName: {
 		file: 'bridgeChainSlugToName.json',
@@ -251,17 +251,17 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 	stablecoinPeggedAssetSlugs: {
 		file: 'stablecoinPeggedAssetSlugs.json',
 		stub: [],
-		parse: parseArtifact<string[]>
+		parse: parseArtifact<Array<string>>
 	},
 	equitiesCompanyRoutes: {
 		file: 'equitiesCompanyRoutes.json',
 		stub: [],
-		parse: parseArtifact<IEquitiesCompanyRoute[]>
+		parse: parseArtifact<Array<IEquitiesCompanyRoute>>
 	},
 	preIpoCompanyIds: {
 		file: 'preIpoCompanyIds.json',
 		stub: [],
-		parse: parseArtifact<string[]>
+		parse: parseArtifact<Array<string>>
 	},
 	tokenFilterMetadata: {
 		file: 'tokenFilters.json',
@@ -270,7 +270,7 @@ export const METADATA_ARTIFACT_REGISTRY = defineMetadataArtifactRegistry({
 	}
 })
 
-export const METADATA_ARTIFACT_KEYS = Object.keys(METADATA_ARTIFACT_REGISTRY) as MetadataArtifactKey[]
+export const METADATA_ARTIFACT_KEYS = Object.keys(METADATA_ARTIFACT_REGISTRY) as Array<MetadataArtifactKey>
 
 export const METADATA_ARTIFACT_FILES = Object.fromEntries(
 	METADATA_ARTIFACT_KEYS.map((key) => [key, METADATA_ARTIFACT_REGISTRY[key].file])
@@ -372,7 +372,7 @@ function setSlugAlias(index: Record<string, string>, value: unknown, target: str
 	if (key && !index[key]) index[key] = target
 }
 
-function createSlugLookup(values: string[]): Record<string, string> {
+function createSlugLookup(values: Array<string>): Record<string, string> {
 	const lookup: Record<string, string> = {}
 
 	for (const value of values) {
@@ -419,7 +419,7 @@ function createProtocolRouteIdBySlug(protocols: Record<string, IProtocolMetadata
 
 function createCexRouteIndexes(
 	protocols: Record<string, IProtocolMetadata>,
-	cexs: ICexItem[]
+	cexs: Array<ICexItem>
 ): {
 	routeIdBySlug: Record<string, string>
 	metadataBySlug: Record<string, ICexItem>
@@ -473,7 +473,7 @@ function createCexRouteIndexes(
 	return { routeIdBySlug, metadataBySlug }
 }
 
-function createDigitalAssetTreasuryCompanyRouteBySlug(companyRoutes: string[]): Record<string, string> {
+function createDigitalAssetTreasuryCompanyRouteBySlug(companyRoutes: Array<string>): Record<string, string> {
 	const routeBySlug: Record<string, string> = {}
 
 	for (const companyRoute of companyRoutes) {

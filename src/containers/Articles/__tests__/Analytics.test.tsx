@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useResearchSectionEngagement } from '~/containers/Articles/landing/Analytics'
 
 const mocks = vi.hoisted(() => ({
@@ -32,7 +32,7 @@ vi.mock('next/router', () => ({
 describe('research section engagement', () => {
 	let container: HTMLDivElement
 	let root: Root
-	let now = 1_000
+	let now = 1000
 	let section: 'report' | 'interview' = 'report'
 
 	function Harness() {
@@ -45,11 +45,11 @@ describe('research section engagement', () => {
 		mocks.trackUmamiEvent.mockReset()
 		mocks.routerHandlers.clear()
 		section = 'report'
-		now = 1_000
+		now = 1000
 		vi.spyOn(performance, 'now').mockImplementation(() => now)
 		Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' })
-		Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: 2_000 })
-		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1_000 })
+		Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: 2000 })
+		Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1000 })
 		Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -63,9 +63,9 @@ describe('research section engagement', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('sends maximum scroll depth and active time once when the page is left', async () => {
+	test('sends maximum scroll depth and active time once when the page is left', async () => {
 		Object.defineProperty(window, 'scrollY', { configurable: true, value: 500 })
-		now = 6_500
+		now = 6500
 
 		await act(async () => window.dispatchEvent(new Event('pagehide')))
 		mocks.routerHandlers.get('beforeHistoryChange')?.forEach((handler) => handler())
@@ -79,19 +79,19 @@ describe('research section engagement', () => {
 		})
 	})
 
-	it('pauses in the back-forward cache and resumes when restored', async () => {
-		now = 3_000
+	test('pauses in the back-forward cache and resumes when restored', async () => {
+		now = 3000
 		const cachedPageHide = new Event('pagehide')
 		Object.defineProperty(cachedPageHide, 'persisted', { value: true })
 		await act(async () => window.dispatchEvent(cachedPageHide))
 		expect(mocks.trackUmamiEvent).not.toHaveBeenCalled()
 
-		now = 5_000
+		now = 5000
 		const cachedPageShow = new Event('pageshow')
 		Object.defineProperty(cachedPageShow, 'persisted', { value: true })
 		await act(async () => window.dispatchEvent(cachedPageShow))
 
-		now = 8_000
+		now = 8000
 		await act(async () => window.dispatchEvent(new Event('pagehide')))
 		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith('research-section-engagement', {
 			page_type: 'research',
@@ -101,10 +101,10 @@ describe('research section engagement', () => {
 		})
 	})
 
-	it('subscribes only to the committed history change, not to routeChangeStart', () => {
+	test('subscribes only to the committed history change, not to routeChangeStart', () => {
 		expect([...mocks.routerHandlers.keys()]).toEqual(['beforeHistoryChange'])
 
-		now = 5_000
+		now = 5000
 		mocks.routerHandlers.get('beforeHistoryChange')?.forEach((handler) => handler())
 		expect(mocks.trackUmamiEvent).toHaveBeenCalledOnce()
 		expect(mocks.trackUmamiEvent).toHaveBeenCalledWith('research-section-engagement', {
@@ -115,7 +115,7 @@ describe('research section engagement', () => {
 		})
 	})
 
-	it('does not track engagement for other research sections', async () => {
+	test('does not track engagement for other research sections', async () => {
 		section = 'interview'
 		await act(async () => root.render(<Harness />))
 		await act(async () => window.dispatchEvent(new Event('pagehide')))

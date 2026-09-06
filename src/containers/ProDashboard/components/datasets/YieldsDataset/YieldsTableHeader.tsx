@@ -3,8 +3,8 @@ import { Icon } from '~/ui/Icon'
 import { CSVExportButton } from '../../CSVExportButton'
 
 interface YieldsTableHeaderProps {
-	chains: string[] | undefined
-	columnPresets: Record<string, readonly string[]>
+	chains: Array<string> | undefined
+	columnPresets: Record<string, ReadonlyArray<string>>
 	applyPreset: (presetName: string) => void
 	activePreset: string | null
 	showColumnPanel: boolean
@@ -17,7 +17,7 @@ interface YieldsTableHeaderProps {
 	activeFilterCount: number
 }
 
-const EMPTY_CHAINS: string[] = []
+const EMPTY_CHAINS: Array<string> = []
 
 export function YieldsTableHeader({
 	chains = EMPTY_CHAINS,

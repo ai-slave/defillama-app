@@ -111,7 +111,7 @@ export function buildChainYAxis({
 	chartsInSeries: Set<ChainChartLabels>
 	themeText: string
 }) {
-	const finalYAxis: MultiSeriesYAxisOption[] = []
+	const finalYAxis: Array<MultiSeriesYAxisOption> = []
 	const context: AxisBuilderContext = { chartColors, chartsInSeries, themeText }
 	const noOffset = allYAxis.length < 3
 

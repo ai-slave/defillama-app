@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useIdleChartComputation } from './useIdleChartComputation'
 
 describe('useIdleChartComputation', () => {
@@ -30,7 +30,7 @@ describe('useIdleChartComputation', () => {
 		container.remove()
 	})
 
-	it('defers construction and discards a stale scheduled signature', async () => {
+	test('defers construction and discards a stale scheduled signature', async () => {
 		const computeFirst = vi.fn(() => 'first')
 		const computeSecond = vi.fn(() => 'second')
 		const rendered: Array<{ value: string; isComputing: boolean }> = []

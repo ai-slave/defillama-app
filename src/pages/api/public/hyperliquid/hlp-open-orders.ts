@@ -20,7 +20,7 @@ export interface HlpOpenOrder {
 	vault: HlpVaultKey
 }
 
-function mapOrders(raw: RawOpenOrder[], vault: HlpVaultKey): HlpOpenOrder[] {
+function mapOrders(raw: Array<RawOpenOrder>, vault: HlpVaultKey): Array<HlpOpenOrder> {
 	return raw.map((order) => ({
 		coin: order.coin,
 		limitPx: num(order.limitPx),
@@ -32,7 +32,10 @@ function mapOrders(raw: RawOpenOrder[], vault: HlpVaultKey): HlpOpenOrder[] {
 	}))
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse<HlpOpenOrder[] | { error: string }>) {
+export default async function handler(
+	req: NextApiRequest,
+	res: NextApiResponse<Array<HlpOpenOrder> | { error: string }>
+) {
 	if (req.method !== 'GET') {
 		res.setHeader('Allow', ['GET'])
 		return res.status(405).json({ error: 'Method Not Allowed' })
@@ -40,8 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
 	try {
 		const [ordersA, ordersB] = await Promise.all([
-			safePostInfo<RawOpenOrder[]>({ type: 'openOrders', user: HLP_VAULTS.A }, [], 8000),
-			safePostInfo<RawOpenOrder[]>({ type: 'openOrders', user: HLP_VAULTS.B }, [], 8000)
+			safePostInfo<Array<RawOpenOrder>>({ type: 'openOrders', user: HLP_VAULTS.A }, [], 8000),
+			safePostInfo<Array<RawOpenOrder>>({ type: 'openOrders', user: HLP_VAULTS.B }, [], 8000)
 		])
 
 		const combined = [...mapOrders(ordersA, 'A'), ...mapOrders(ordersB, 'B')]

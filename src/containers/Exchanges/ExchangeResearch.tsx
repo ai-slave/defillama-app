@@ -26,7 +26,7 @@ const STALE_TIME = 6 * 60 * 60 * 1000
 // Order within a section, and the sections themselves further down, follows what
 // people actually reach for first: open interest between exchanges (who's carrying
 // the risk right now) before volume/market-share trends over time.
-const RESEARCH_SECTIONS: Array<{ title: string; description: string; charts: ExchangeResearchPart[] }> = [
+const RESEARCH_SECTIONS: Array<{ title: string; description: string; charts: Array<ExchangeResearchPart> }> = [
 	{ title: 'Activity', description: 'Traded volume and open positions across venues.', charts: ['oi', 'volume'] },
 	{
 		title: 'Liquidity',
@@ -42,9 +42,9 @@ export function ExchangeResearch({
 }: {
 	loadReport: (part: ExchangeResearchPart, range: ExchangeResearchRange) => Promise<ExchangeResearchReportModel>
 	/** Venue rows carrying only what the depth curve reads. Empty means no snapshots. */
-	depthRows?: DepthCurveRow[]
+	depthRows?: Array<DepthCurveRow>
 	/** One row per venue with a measured BTC pair. Empty means execution data is unavailable. */
-	btcExecutionRows?: BtcExecutionRowModel[]
+	btcExecutionRows?: Array<BtcExecutionRowModel>
 }) {
 	const router = useRouter()
 	const range = getResearchRange(router.query)

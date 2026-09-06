@@ -51,7 +51,7 @@ export interface TransformedTransaction {
 
 type BridgeTransactionSearchIndex = WeakMap<TransformedTransaction, string>
 
-export function createBridgeTransactionSearchIndex(rows: TransformedTransaction[]): BridgeTransactionSearchIndex {
+export function createBridgeTransactionSearchIndex(rows: Array<TransformedTransaction>): BridgeTransactionSearchIndex {
 	const index: BridgeTransactionSearchIndex = new WeakMap()
 	for (const row of rows) {
 		index.set(
@@ -82,7 +82,7 @@ export interface BridgeTransactionStats {
 }
 
 export interface BridgeTransactionResult {
-	rows: TransformedTransaction[]
+	rows: Array<TransformedTransaction>
 	stats: BridgeTransactionStats | null
 	truncated: boolean
 }
@@ -111,7 +111,7 @@ const buildBridgeTransactionRow = (tx: BridgeTransaction, timestamp: number): Tr
 }
 
 export const createBridgeTransactionCollector = ({ startTimestamp, endTimestamp }: BridgeTransactionRange) => {
-	const rows: TransformedTransaction[] = []
+	const rows: Array<TransformedTransaction> = []
 	const uniqueChains = new Set<string>()
 	let previousAcceptedTimestamp = Number.POSITIVE_INFINITY
 	let isDescending = true
@@ -122,7 +122,7 @@ export const createBridgeTransactionCollector = ({ startTimestamp, endTimestamp 
 	let unknownValueCount = 0
 
 	return {
-		addPage(transactions: BridgeTransaction[]): void {
+		addPage(transactions: Array<BridgeTransaction>): void {
 			for (const tx of transactions) {
 				const timestamp = parseTransactionTimestamp(tx.ts)
 				if (timestamp < startTimestamp || timestamp >= endTimestamp) continue
@@ -407,7 +407,7 @@ interface FetchArgs {
 
 export const fetchTransactions = async ({ bridge, startDate, endDate }: FetchArgs) => {
 	const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000)
-	const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000) + 86400
+	const endTimestamp = Math.floor(new Date(endDate).getTime() / 1000) + 86_400
 
 	if (startTimestamp >= endTimestamp) {
 		throw new Error('Invalid date range')
@@ -468,7 +468,7 @@ function EmptyState({ hasFetched }: { hasFetched: boolean }) {
 	)
 }
 
-export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }) => {
+export const BridgeTransactionsPage = ({ bridges }: { bridges: Array<RawBridgeInfo> }) => {
 	const defaultEndDate = new Date()
 	const defaultStartDate = new Date(defaultEndDate)
 	defaultStartDate.setMonth(defaultEndDate.getMonth() - 1)
@@ -483,7 +483,7 @@ export const BridgeTransactionsPage = ({ bridges }: { bridges: RawBridgeInfo[] }
 		endDate: string
 		bridgeName: string
 	} | null>(null)
-	const [selectedBridgeId, setSelectedBridgeId] = React.useState<string[]>([])
+	const [selectedBridgeId, setSelectedBridgeId] = React.useState<Array<string>>([])
 
 	const { mutate, isPending, error } = useMutation({
 		mutationFn: fetchTransactions,
@@ -724,7 +724,7 @@ const DEFAULT_PAGE_SIZE = 100
 
 type BridgeTransactionCsvCell = string | number | boolean
 
-const BRIDGE_TRANSACTION_CSV_HEADERS: BridgeTransactionCsvCell[] = [
+const BRIDGE_TRANSACTION_CSV_HEADERS: Array<BridgeTransactionCsvCell> = [
 	'Timestamp',
 	'Bridge',
 	'Chain',
@@ -737,7 +737,7 @@ const BRIDGE_TRANSACTION_CSV_HEADERS: BridgeTransactionCsvCell[] = [
 	'Transaction'
 ]
 
-export const toBridgeTransactionCsvRow = (row: TransformedTransaction): BridgeTransactionCsvCell[] => [
+export const toBridgeTransactionCsvRow = (row: TransformedTransaction): Array<BridgeTransactionCsvCell> => [
 	row.timestamp,
 	row.bridge_name,
 	row.chain,
@@ -756,7 +756,7 @@ function TransactionsTable({
 	csvFileName,
 	truncated
 }: {
-	data: TransformedTransaction[]
+	data: Array<TransformedTransaction>
 	columns: ReturnType<typeof buildBridgeColumns>
 	csvFileName: string
 	truncated: boolean
@@ -801,7 +801,7 @@ function TransactionsTable({
 
 	const prepareCsv = React.useCallback(() => {
 		const filteredRows = instance.getPrePaginationRowModel().rows
-		const rows: BridgeTransactionCsvCell[][] = new Array(filteredRows.length + 1)
+		const rows: Array<Array<BridgeTransactionCsvCell>> = new Array(filteredRows.length + 1)
 		rows[0] = BRIDGE_TRANSACTION_CSV_HEADERS
 		let outputIndex = 1
 		for (const row of filteredRows) {

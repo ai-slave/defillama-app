@@ -10,7 +10,7 @@ function displayText(value: string) {
 	return value === '' ? '–' : value
 }
 
-function FiatFeeTable({ label, rows }: { label: string; rows: ExchangeFiatFeeRow[] }) {
+function FiatFeeTable({ label, rows }: { label: string; rows: Array<ExchangeFiatFeeRow> }) {
 	return (
 		<section className="flex flex-col gap-1.5">
 			<h4 className="label-md text-primary">{label}</h4>

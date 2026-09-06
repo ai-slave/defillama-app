@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { tokenMarketsList } from '../server/api'
 
 const fetchJsonMock = vi.hoisted(() => vi.fn())
@@ -18,7 +18,7 @@ beforeEach(() => {
 })
 
 describe('token markets list response cache', () => {
-	it('serializes and reuses the final payload', async () => {
+	test('serializes and reuses the final payload', async () => {
 		fetchJsonMock.mockResolvedValueOnce({ tokens: [] })
 		const request = { method: 'GET', url: '/api/public/markets/tokens', query: {}, headers: {} }
 

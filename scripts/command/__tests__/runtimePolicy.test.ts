@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { findRuntimePolicyViolations, FORBIDDEN_RUNTIME_INVOCATIONS, NODE_RUNTIME_MAJOR } from '../runtimePolicy'
 
 const TRACKED_LAUNCHER_FILES = [
@@ -13,11 +13,11 @@ const TRACKED_LAUNCHER_FILES = [
 ]
 
 describe('runtime policy', () => {
-	it('records Node 24 as the runtime', () => {
+	test('records Node 24 as the runtime', () => {
 		expect(NODE_RUNTIME_MAJOR).toBe(24)
 	})
 
-	it('detects forbidden runtime invocations', () => {
+	test('detects forbidden runtime invocations', () => {
 		const [nextStartRuntime] = FORBIDDEN_RUNTIME_INVOCATIONS
 
 		expect(
@@ -38,7 +38,7 @@ describe('runtime policy', () => {
 		])
 	})
 
-	it('contains no forbidden runtime invocations in tracked launcher files', async () => {
+	test('contains no forbidden runtime invocations in tracked launcher files', async () => {
 		const files = await Promise.all(
 			TRACKED_LAUNCHER_FILES.map(async (filePath) => ({
 				content: await fs.readFile(path.join(process.cwd(), filePath), 'utf8'),

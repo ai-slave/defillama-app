@@ -1,11 +1,11 @@
 import { useRouter } from 'next/router'
 import { useCallback, useMemo } from 'react'
 
-function getQueryParam(value: string | string[] | undefined) {
+function getQueryParam(value: string | Array<string> | undefined) {
 	return (Array.isArray(value) ? value[0] : value) ?? ''
 }
 
-function getPageParam(value: string | string[] | undefined): number {
+function getPageParam(value: string | Array<string> | undefined): number {
 	const raw = Array.isArray(value) ? value[0] : value
 	const parsed = Number(raw)
 	return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : 1

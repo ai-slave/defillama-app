@@ -101,7 +101,7 @@ const PROTOCOL_STATS = [
 	}
 ]
 
-function parseChartDates(chart: ChartData): number[] {
+function parseChartDates(chart: ChartData): Array<number> {
 	const timestamps = new Array<number>(chart.dates.length)
 	for (let i = 0; i < chart.dates.length; i++) timestamps[i] = Date.parse(`${chart.dates[i]}T00:00:00Z`)
 	return timestamps

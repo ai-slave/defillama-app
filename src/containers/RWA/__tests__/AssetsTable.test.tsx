@@ -1,6 +1,6 @@
 import { createTable, flexRender, getCoreRowModel } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { prepareTableCsv } from '~/components/Table/utils'
 import type { IRWAAssetsOverview, IRWAFlowSummaryResponse } from '../api.types'
 import {
@@ -136,7 +136,7 @@ function createFlowSummary(): IRWAFlowSummaryResponse {
 }
 
 describe('RWAAssetsTable', () => {
-	it.each(['DEX', 'CEX'] as const)(
+	test.each(['DEX', 'CEX'] as const)(
 		'shows and exports N/A for %s perp attestations regardless of the stored flag',
 		(venueType) => {
 			for (const attestations of [true, false, null]) {
@@ -149,7 +149,7 @@ describe('RWAAssetsTable', () => {
 		}
 	)
 
-	it.each([
+	test.each([
 		[true, 'Yes', true],
 		[false, 'No', false],
 		[null, '', '']
@@ -159,7 +159,7 @@ describe('RWAAssetsTable', () => {
 		expect(result.csv).toBe(csv)
 	})
 
-	it('keeps the original metric headers when the perps toggle is off', () => {
+	test('keeps the original metric headers when the perps toggle is off', () => {
 		expect(getMetricColumnHeaders(false)).toEqual({
 			active: 'Active Marketcap',
 			onChain: 'Onchain Marketcap',
@@ -167,7 +167,7 @@ describe('RWAAssetsTable', () => {
 		})
 	})
 
-	it('uses OI in the active mcap column when the perps toggle is on', () => {
+	test('uses OI in the active mcap column when the perps toggle is on', () => {
 		expect(getMetricColumnHeaders(true)).toEqual({
 			active: 'Active Mcap or OI',
 			onChain: 'Onchain Marketcap',
@@ -183,7 +183,7 @@ describe('RWAAssetsTable', () => {
 		expect(getDefiMetricValue(createPerpsAsset())).toBeNull()
 	})
 
-	it('materializes loaded flow summaries without dropping measured zero', () => {
+	test('materializes loaded flow summaries without dropping measured zero', () => {
 		const assets = [createSpotAsset()]
 		const initialRows = createAssetTableRows(assets, undefined)
 		const loadedRows = createAssetTableRows(assets, createFlowSummary())
@@ -197,7 +197,7 @@ describe('RWAAssetsTable', () => {
 		expect(loadedRow.flowSummaries['30d']?.flow).toBe(-50)
 	})
 
-	it('calculates DeFi utilization from nullable typed metrics without coercion', () => {
+	test('calculates DeFi utilization from nullable typed metrics without coercion', () => {
 		expect(getDefiUtilization(createSpotAsset())).toBe(25)
 		expect(getDefiUtilization(createSpotAsset({ bridgeTvl: 10 }), false)).toBe(15)
 		expect(getDefiUtilization(createSpotAsset({ defiActiveTvl: { total: 0, breakdown: [] } }))).toBe(0)

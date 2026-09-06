@@ -1,4 +1,7 @@
-export function normalizeCacheList(values: readonly string[], options: { lowercase?: boolean } = {}): string[] {
+export function normalizeCacheList(
+	values: ReadonlyArray<string>,
+	options: { lowercase?: boolean } = {}
+): Array<string> {
 	const normalizedValues = new Set<string>()
 
 	for (const value of values) {
@@ -11,6 +14,6 @@ export function normalizeCacheList(values: readonly string[], options: { lowerca
 	return Array.from(normalizedValues).sort((left, right) => left.localeCompare(right))
 }
 
-export function stableCacheKey(parts: readonly unknown[]): string {
+export function stableCacheKey(parts: ReadonlyArray<unknown>): string {
 	return JSON.stringify(parts)
 }

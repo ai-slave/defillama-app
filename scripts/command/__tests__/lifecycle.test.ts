@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { installProcessLifecycle, killActiveChildren } from '../lifecycle'
 
 afterEach(() => {
@@ -6,7 +6,7 @@ afterEach(() => {
 })
 
 describe('command lifecycle', () => {
-	it('kills active children and clears the set', () => {
+	test('kills active children and clears the set', () => {
 		const child = { kill: vi.fn(() => true), killed: false }
 		const activeChildren = new Set([child])
 
@@ -16,7 +16,7 @@ describe('command lifecycle', () => {
 		expect(activeChildren.size).toBe(0)
 	})
 
-	it('keeps cleaning up when one child kill throws', () => {
+	test('keeps cleaning up when one child kill throws', () => {
 		const brokenChild = {
 			kill: vi.fn(() => {
 				throw new Error('already exited')
@@ -33,12 +33,12 @@ describe('command lifecycle', () => {
 		expect(activeChildren.size).toBe(0)
 	})
 
-	it('runs lifecycle cleanup once when a signal exits', () => {
-		const handlers = new Map<string, (...args: unknown[]) => void>()
+	test('runs lifecycle cleanup once when a signal exits', () => {
+		const handlers = new Map<string, (...args: Array<unknown>) => void>()
 		const child = { kill: vi.fn(() => true), killed: false }
 		const logger = { close: vi.fn(), flush: vi.fn(), log: vi.fn() }
 		vi.spyOn(process, 'once').mockImplementation(((event, listener) => {
-			handlers.set(String(event), listener as (...args: unknown[]) => void)
+			handlers.set(String(event), listener as (...args: Array<unknown>) => void)
 			return process
 		}) as typeof process.once)
 		vi.spyOn(process, 'off').mockImplementation((() => process) as typeof process.off)

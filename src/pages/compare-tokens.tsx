@@ -19,13 +19,13 @@ export default function Compare({
 	protocols
 }: {
 	coinsData: Array<IResponseCGMarketsAPI & { label: string; value: string }>
-	protocols: CompareTokenProtocol[]
+	protocols: Array<CompareTokenProtocol>
 }) {
 	return (
 		<Layout
 			title="Compare Crypto Tokens - Price, FDV & Market Data - DefiLlama"
 			description="Compare crypto tokens side-by-side with price, FDV, volume, and other metrics on DefiLlama."
-			canonicalUrl={`/compare-tokens`}
+			canonicalUrl="/compare-tokens"
 		>
 			<CompareTokens coinsData={coinsData} protocols={protocols} />
 		</Layout>

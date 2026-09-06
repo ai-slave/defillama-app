@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { bumpProjectSessionActivity, orderVisibleProjectSessions } from '../sessionOrdering'
 import type { ProjectChatSession } from '../types'
 
@@ -16,11 +16,11 @@ function session(overrides: Partial<ProjectChatSession> & { sessionId: string })
 }
 
 describe('orderVisibleProjectSessions', () => {
-	it('returns empty list when sessions are missing', () => {
+	test('returns empty list when sessions are missing', () => {
 		expect(orderVisibleProjectSessions(undefined, null, 5)).toEqual([])
 	})
 
-	it('sorts pinned sessions above unpinned ones', () => {
+	test('sorts pinned sessions above unpinned ones', () => {
 		const sessions = [
 			session({ sessionId: 'a' }),
 			session({ sessionId: 'b', isPinned: true, pinnedAt: '2026-07-01T00:00:00Z' }),
@@ -31,7 +31,7 @@ describe('orderVisibleProjectSessions', () => {
 		expect(result.map((s) => s.sessionId)).toEqual(['d', 'b', 'a', 'c'])
 	})
 
-	it('keeps unpinned sessions in their original order after the pinned block', () => {
+	test('keeps unpinned sessions in their original order after the pinned block', () => {
 		const sessions = [
 			session({ sessionId: 'newest' }),
 			session({ sessionId: 'older' }),
@@ -41,7 +41,7 @@ describe('orderVisibleProjectSessions', () => {
 		expect(result.map((s) => s.sessionId)).toEqual(['pinned', 'newest', 'older'])
 	})
 
-	it('slices to the limit after sorting so pins beyond the cut still surface', () => {
+	test('slices to the limit after sorting so pins beyond the cut still surface', () => {
 		const sessions = [
 			session({ sessionId: 'u1' }),
 			session({ sessionId: 'u2' }),
@@ -54,7 +54,7 @@ describe('orderVisibleProjectSessions', () => {
 		expect(result.map((s) => s.sessionId)).toEqual(['pinned-late', 'u1', 'u2', 'u3', 'u4'])
 	})
 
-	it('shows every pinned session even when pins alone exceed the limit', () => {
+	test('shows every pinned session even when pins alone exceed the limit', () => {
 		const sessions = [
 			session({ sessionId: 'p1', isPinned: true, pinnedAt: '2026-07-06T00:00:00Z' }),
 			session({ sessionId: 'p2', isPinned: true, pinnedAt: '2026-07-05T00:00:00Z' }),
@@ -67,7 +67,7 @@ describe('orderVisibleProjectSessions', () => {
 		expect(result.map((s) => s.sessionId)).toEqual(['p1', 'p2', 'p3', 'p4', 'p5', 'p6'])
 	})
 
-	it('keeps at least two recency slots when pins fill the limit', () => {
+	test('keeps at least two recency slots when pins fill the limit', () => {
 		const sessions = [
 			session({ sessionId: 'recent1' }),
 			session({ sessionId: 'recent2' }),
@@ -82,7 +82,7 @@ describe('orderVisibleProjectSessions', () => {
 		expect(result.map((s) => s.sessionId)).toEqual(['p1', 'p2', 'p3', 'p4', 'p5', 'recent1', 'recent2'])
 	})
 
-	it('appends the current session when it falls outside the visible slice', () => {
+	test('appends the current session when it falls outside the visible slice', () => {
 		const sessions = [
 			session({ sessionId: 'u1' }),
 			session({ sessionId: 'u2' }),
@@ -95,7 +95,7 @@ describe('orderVisibleProjectSessions', () => {
 		expect(result.map((s) => s.sessionId)).toEqual(['u1', 'u2', 'u3', 'u4', 'u5', 'current'])
 	})
 
-	it('returns the slice untouched when the current session is already visible', () => {
+	test('returns the slice untouched when the current session is already visible', () => {
 		const sessions = [session({ sessionId: 'u1' }), session({ sessionId: 'u2' })]
 		const result = orderVisibleProjectSessions(sessions, 'u2', 5)
 		expect(result.map((s) => s.sessionId)).toEqual(['u1', 'u2'])
@@ -103,7 +103,7 @@ describe('orderVisibleProjectSessions', () => {
 })
 
 describe('orderVisibleProjectSessions activity ordering', () => {
-	it('lifts the most recently used chat to the top of the pinned block', () => {
+	test('lifts the most recently used chat to the top of the pinned block', () => {
 		const sessions = [
 			session({
 				sessionId: 'pinned-recently',
@@ -122,7 +122,7 @@ describe('orderVisibleProjectSessions activity ordering', () => {
 		expect(result.map((s) => s.sessionId)).toEqual(['just-used', 'pinned-recently'])
 	})
 
-	it('orders unpinned sessions by activity regardless of server order', () => {
+	test('orders unpinned sessions by activity regardless of server order', () => {
 		const sessions = [
 			session({ sessionId: 'stale', lastActivity: '2026-08-01T00:00:00Z' }),
 			session({ sessionId: 'fresh', lastActivity: '2026-08-09T00:00:00Z' })
@@ -133,7 +133,7 @@ describe('orderVisibleProjectSessions activity ordering', () => {
 })
 
 describe('bumpProjectSessionActivity', () => {
-	it('stamps the bumped session with the new activity time', () => {
+	test('stamps the bumped session with the new activity time', () => {
 		const sessions = [
 			session({ sessionId: 'a', lastActivity: '2026-08-01T00:00:00Z' }),
 			session({ sessionId: 'b', lastActivity: '2026-08-02T00:00:00Z' })
@@ -143,12 +143,12 @@ describe('bumpProjectSessionActivity', () => {
 		expect(result?.find((s) => s.sessionId === 'b')?.lastActivity).toBe('2026-08-02T00:00:00Z')
 	})
 
-	it('leaves the list untouched when the session is not in it', () => {
+	test('leaves the list untouched when the session is not in it', () => {
 		const sessions = [session({ sessionId: 'a' })]
 		expect(bumpProjectSessionActivity(sessions, 'missing', '2026-08-09T00:00:00Z')).toBe(sessions)
 	})
 
-	it('returns undefined when there is no cached list', () => {
+	test('returns undefined when there is no cached list', () => {
 		expect(bumpProjectSessionActivity(undefined, 'a', '2026-08-09T00:00:00Z')).toBeUndefined()
 	})
 })

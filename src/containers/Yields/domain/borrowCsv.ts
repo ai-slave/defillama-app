@@ -6,7 +6,7 @@ import { activeSplit, apyHeaders, apyValues, windowSuffix } from './csvApy'
 // columns follow the active window (header suffix) and composition (split columns before
 // each total when reward/intrinsic are enabled).
 
-export function prepareBorrowMarketsCsv(rows: MarketTableRow[], query: ApiQuery = {}) {
+export function prepareBorrowMarketsCsv(rows: Array<MarketTableRow>, query: ApiQuery = {}) {
 	const suffix = windowSuffix(query)
 	const split = activeSplit(query)
 	const headers = [
@@ -32,7 +32,7 @@ export function prepareBorrowMarketsCsv(rows: MarketTableRow[], query: ApiQuery 
 	return { filename: 'yields-borrow-markets.csv', rows: [headers, ...csvRows] }
 }
 
-export function prepareBorrowRoutesCsv(rows: RouteTableRow[], query: ApiQuery = {}) {
+export function prepareBorrowRoutesCsv(rows: Array<RouteTableRow>, query: ApiQuery = {}) {
 	const suffix = windowSuffix(query)
 	const split = activeSplit(query)
 	const headers = [

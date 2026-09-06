@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { parseMessageToRenderModel } from '~/containers/LlamaAI/renderModel'
 import type { AlertProposedData, Message } from '~/containers/LlamaAI/types'
 import { buildRestoredAlerts, normalizeAlertProposedData } from '../restoredAlerts'
@@ -7,7 +7,7 @@ const priceTrigger = {
 	type: 'price' as const,
 	token_nk: 'coingecko:bitcoin',
 	op: 'below' as const,
-	value: 50000,
+	value: 50_000,
 	recurring: false
 }
 
@@ -17,12 +17,12 @@ const alertIntent = {
 	timezone: 'UTC'
 }
 
-function restoredAlertId(result: AlertProposedData[] | undefined) {
+function restoredAlertId(result: Array<AlertProposedData> | undefined) {
 	return result?.[0]?.alertId
 }
 
 describe('buildRestoredAlerts', () => {
-	it('uses the inline alert marker id for historical unsaved alerts', () => {
+	test('uses the inline alert marker id for historical unsaved alerts', () => {
 		const alerts = buildRestoredAlerts({
 			content: 'I can schedule that.\n\n[ALERT:aave_daily]',
 			messageId: 'message-1',
@@ -32,7 +32,7 @@ describe('buildRestoredAlerts', () => {
 		expect(restoredAlertId(alerts)).toBe('aave_daily')
 	})
 
-	it('falls back to saveable alert ids when content has no marker', () => {
+	test('falls back to saveable alert ids when content has no marker', () => {
 		const alerts = buildRestoredAlerts({
 			content: 'I can schedule that.',
 			messageId: 'message-1',
@@ -42,7 +42,7 @@ describe('buildRestoredAlerts', () => {
 		expect(restoredAlertId(alerts)).toBe('x_abc')
 	})
 
-	it('preserves telegram delivery from persisted metadata', () => {
+	test('preserves telegram delivery from persisted metadata', () => {
 		const alerts = buildRestoredAlerts({
 			content: '[ALERT:telegram_alert]',
 			messageId: 'message-1',
@@ -52,7 +52,7 @@ describe('buildRestoredAlerts', () => {
 		expect(alerts?.[0]?.alertIntent.deliveryChannel).toBe('telegram')
 	})
 
-	it('keeps legacy fallback behavior when no marker or alert id exists', () => {
+	test('keeps legacy fallback behavior when no marker or alert id exists', () => {
 		const alerts = buildRestoredAlerts({
 			content: 'I can schedule that.',
 			messageId: 'message-1',
@@ -64,7 +64,7 @@ describe('buildRestoredAlerts', () => {
 })
 
 describe('normalizeAlertProposedData', () => {
-	it('adds restored-alert defaults to partial live alert proposals', () => {
+	test('adds restored-alert defaults to partial live alert proposals', () => {
 		expect(
 			normalizeAlertProposedData({
 				alertId: 'alert-1',
@@ -93,7 +93,7 @@ describe('normalizeAlertProposedData', () => {
 		})
 	})
 
-	it('clamps invalid live alert schedule fields', () => {
+	test('clamps invalid live alert schedule fields', () => {
 		expect(
 			normalizeAlertProposedData({
 				alertId: 'alert-1',
@@ -109,7 +109,7 @@ describe('normalizeAlertProposedData', () => {
 		).toMatchObject({ hour: 23, dayOfWeek: 6 })
 	})
 
-	it('clamps invalid restored alert schedule fields', () => {
+	test('clamps invalid restored alert schedule fields', () => {
 		const alerts = buildRestoredAlerts({
 			content: '[ALERT:alert-1]',
 			messageId: 'message-1',
@@ -119,7 +119,7 @@ describe('normalizeAlertProposedData', () => {
 		expect(alerts?.[0]?.alertIntent).toMatchObject({ hour: 0, dayOfWeek: undefined })
 	})
 
-	it('carries a live price trigger through to alertIntent', () => {
+	test('carries a live price trigger through to alertIntent', () => {
 		const result = normalizeAlertProposedData({
 			alertId: 'alert-1',
 			title: 'BTC below 50000',
@@ -129,7 +129,7 @@ describe('normalizeAlertProposedData', () => {
 		expect(result.alertIntent.trigger).toEqual(priceTrigger)
 	})
 
-	it('drops a malformed live trigger instead of surfacing a broken price card', () => {
+	test('drops a malformed live trigger instead of surfacing a broken price card', () => {
 		const result = normalizeAlertProposedData({
 			alertId: 'alert-1',
 			title: 'Bad trigger',
@@ -139,7 +139,7 @@ describe('normalizeAlertProposedData', () => {
 		expect(result.alertIntent.trigger).toBeUndefined()
 	})
 
-	it('omits trigger entirely for schedule proposals, matching today’s payload shape', () => {
+	test('omits trigger entirely for schedule proposals, matching today’s payload shape', () => {
 		const result = normalizeAlertProposedData({
 			alertId: 'alert-1',
 			title: 'Daily brief',
@@ -149,7 +149,7 @@ describe('normalizeAlertProposedData', () => {
 		expect('trigger' in result.alertIntent).toBe(false)
 	})
 
-	it('carries a restored price trigger through buildRestoredAlerts', () => {
+	test('carries a restored price trigger through buildRestoredAlerts', () => {
 		const alerts = buildRestoredAlerts({
 			content: '[ALERT:price_1]',
 			messageId: 'message-1',
@@ -159,7 +159,7 @@ describe('normalizeAlertProposedData', () => {
 		expect(alerts?.[0]?.alertIntent.trigger).toEqual(priceTrigger)
 	})
 
-	it('renders schedule artifacts identically for old restored payloads without a trigger', () => {
+	test('renders schedule artifacts identically for old restored payloads without a trigger', () => {
 		const alerts = buildRestoredAlerts({
 			content: '[ALERT:schedule_1]',
 			messageId: 'message-1',
@@ -171,7 +171,7 @@ describe('normalizeAlertProposedData', () => {
 })
 
 describe('restored alert render model', () => {
-	it('renders a saved restored alert inline when the marker and saved id match', () => {
+	test('renders a saved restored alert inline when the marker and saved id match', () => {
 		const alerts = buildRestoredAlerts({
 			content: 'Done.\n\n[ALERT:foo]',
 			messageId: 'message-1',
@@ -194,7 +194,7 @@ describe('restored alert render model', () => {
 		expect(model.artifactsById.get('foo')).toMatchObject({ type: 'alert', savedAlertIds: ['foo'] })
 	})
 
-	it('keeps alert-like action buttons as prompt actions', () => {
+	test('keeps alert-like action buttons as prompt actions', () => {
 		const model = parseMessageToRenderModel({
 			role: 'assistant',
 			content: '[ACTION:Alert me daily|Alert me daily about ETH fees]'

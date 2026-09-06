@@ -20,7 +20,7 @@ export type RadarScores = {
 	integrationLevel: number | null
 }
 
-const SCORE_KEYS: (keyof RadarScores)[] = [
+const SCORE_KEYS: Array<keyof RadarScores> = [
 	'composite',
 	'tradingKpis',
 	'trustIntegration',
@@ -38,7 +38,7 @@ const INDICATORS = [
 	'Integration Level'
 ] as const
 
-function toValues(scores: RadarScores): number[] {
+function toValues(scores: RadarScores): Array<number> {
 	return SCORE_KEYS.map((key) => scores[key] ?? 0)
 }
 

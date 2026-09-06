@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { resolvePairColumns, resolvePairColumnVisibility } from '~/containers/Exchanges/PairTable'
 import type { MarketPair } from '~/containers/Markets/api.types'
 import {
@@ -72,7 +72,7 @@ function marketPair(slug: string, displayName: string, volume24h: number): Marke
 }
 
 describe('token markets rows', () => {
-	it.each([
+	test.each([
 		[
 			'spot',
 			[
@@ -144,7 +144,7 @@ describe('token markets rows', () => {
 		expect(visibleColumnIds).not.toContain('maxLeverage')
 	})
 
-	it('maps the curated exchange name and derives its canonical profile route', () => {
+	test('maps the curated exchange name and derives its canonical profile route', () => {
 		expect(toPairTableRow(marketPair('binance-us', 'Binance.US', 100), DEPTH_BANDS, 'spot')).toMatchObject({
 			baseGeckoId: 'bitcoin',
 			quoteGeckoId: 'tether',
@@ -154,14 +154,14 @@ describe('token markets rows', () => {
 		})
 	})
 
-	it('maps depth and normalized volume from the token response', () => {
-		expect(toPairTableRow(marketPair('binance', 'Binance', 1_000), DEPTH_BANDS, 'spot')).toMatchObject({
+	test('maps depth and normalized volume from the token response', () => {
+		expect(toPairTableRow(marketPair('binance', 'Binance', 1000), DEPTH_BANDS, 'spot')).toMatchObject({
 			depthBid2Usd: 200,
 			depthAsk2Usd: 400,
 			depthBidMaxDistance: 0.03,
 			depthAskMaxDistance: 0.04,
 			normalizedVolume: {
-				reported: 1_000,
+				reported: 1000,
 				normalized: 800,
 				discountFraction: 0.2,
 				status: 'covered'
@@ -169,13 +169,13 @@ describe('token markets rows', () => {
 		})
 	})
 
-	it('keeps normalized volume unavailable for inverse perps', () => {
+	test('keeps normalized volume unavailable for inverse perps', () => {
 		expect(
-			toPairTableRow(marketPair('deribit', 'Deribit', 1_000), DEPTH_BANDS, 'inverse_perp').normalizedVolume
+			toPairTableRow(marketPair('deribit', 'Deribit', 1000), DEPTH_BANDS, 'inverse_perp').normalizedVolume
 		).toBeNull()
 	})
 
-	it('prioritizes the highest-volume Bybit pair before other venues', () => {
+	test('prioritizes the highest-volume Bybit pair before other venues', () => {
 		const binance = marketPair('binance', 'Binance', 300)
 		const smallerBybit = marketPair('bybit', 'Bybit', 100)
 		const largerBybit = marketPair('bybit', 'Bybit', 200)
@@ -183,7 +183,7 @@ describe('token markets rows', () => {
 		expect(rankRowsBybitFirst([smallerBybit, binance, largerBybit])).toEqual([largerBybit, binance, smallerBybit])
 	})
 
-	it('keeps normal volume ordering when Bybit is absent', () => {
+	test('keeps normal volume ordering when Bybit is absent', () => {
 		const smaller = marketPair('coinbase', 'Coinbase', 100)
 		const larger = marketPair('binance', 'Binance', 300)
 

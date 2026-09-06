@@ -1,4 +1,4 @@
-import * as Ariakit from '@ariakit/react'
+import type * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
@@ -15,14 +15,14 @@ interface IDropdownMenusProps {
 	header: string
 	headingAs?: 'h1' | 'h2'
 	pathname?: string
-	investors: string[]
-	selectedInvestors: string[]
-	chains: string[]
-	selectedChains: string[]
-	sectors: string[]
-	selectedSectors: string[]
-	rounds: string[]
-	selectedRounds: string[]
+	investors: Array<string>
+	selectedInvestors: Array<string>
+	chains: Array<string>
+	selectedChains: Array<string>
+	sectors: Array<string>
+	selectedSectors: Array<string>
+	rounds: Array<string>
+	selectedRounds: Array<string>
 }
 
 export function RaisesFilters(props: IDropdownMenusProps) {

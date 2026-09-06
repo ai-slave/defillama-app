@@ -48,8 +48,8 @@ export interface AlertExecution {
 export interface AlertExecutionDetail extends AlertExecution {
 	alertTitle: string
 	generated_summary: string | null
-	generated_charts: { id: string; type: string; title: string; url: string }[] | null
-	citations: string[] | null
+	generated_charts: Array<{ id: string; type: string; title: string; url: string }> | null
+	citations: Array<string> | null
 }
 
 export interface AlertConfig {

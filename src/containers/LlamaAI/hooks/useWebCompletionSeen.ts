@@ -19,7 +19,7 @@ interface UseWebCompletionSeenOptions {
 	preference: WebMobilePreference
 }
 
-const SEEN_RETRY_DELAYS_MS = [750, 2_000] as const
+const SEEN_RETRY_DELAYS_MS = [750, 2000] as const
 export const PENDING_SEEN_TTL_MS = 10_000
 
 function canFlushPreference(preference: WebMobilePreference): boolean {

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { ExecutionCoordinator } from '~/containers/LlamaAI/executionCoordinator'
 import type { AgenticSSECallbacks } from '~/containers/LlamaAI/fetchAgenticResponse'
 import { runAgenticRequest } from '~/containers/LlamaAI/runAgenticRequest'
@@ -17,7 +17,7 @@ function callbacks(): AgenticSSECallbacks {
 }
 
 describe('runAgenticRequest', () => {
-	it('uses the coordinator operation for callbacks and request execution', async () => {
+	test('uses the coordinator operation for callbacks and request execution', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const onToken = vi.fn()
 		const onFinally = vi.fn()
@@ -41,7 +41,7 @@ describe('runAgenticRequest', () => {
 		expect(onFinally).toHaveBeenCalledOnce()
 	})
 
-	it('classifies request failures', async () => {
+	test('classifies request failures', async () => {
 		const cases = [
 			{ error: Object.assign(new Error('aborted'), { name: 'AbortError' }), kind: 'abort' },
 			{ error: Object.assign(new Error('upgrade'), { code: 'FREE_DAILY_LIMIT' }), kind: 'free-limit' },
@@ -70,7 +70,7 @@ describe('runAgenticRequest', () => {
 		}
 	})
 
-	it('classifies coordinator cancellation as an abort', async () => {
+	test('classifies coordinator cancellation as an abort', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const onError = vi.fn()
 		let rejectRequest!: (error: Error) => void
@@ -94,7 +94,7 @@ describe('runAgenticRequest', () => {
 		expect(onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'abort' }), expect.any(Object))
 	})
 
-	it('logs post-success handler errors without reporting a request failure', async () => {
+	test('logs post-success handler errors without reporting a request failure', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const onError = vi.fn()
 		const onFinally = vi.fn()

@@ -7,14 +7,14 @@ export function queryString(query: ApiQuery, name: string): string | undefined {
 }
 
 /** Comma-separated list param: `?chains=a,b,c` → ['a','b','c']. */
-export function queryList(query: ApiQuery, name: string): string[] {
+export function queryList(query: ApiQuery, name: string): Array<string> {
 	const value = queryString(query, name)
 	return value ? value.split(',').filter(Boolean) : []
 }
 
 export function validateQueryList(
 	name: string,
-	values: readonly string[],
+	values: ReadonlyArray<string>,
 	limits: { maxItems: number; maxItemLength: number }
 ): string | null {
 	if (values.length > limits.maxItems) return `${name} supports at most ${limits.maxItems} values`
@@ -26,9 +26,9 @@ export function validateQueryList(
 	return null
 }
 
-export function queryEnum<T extends string>(query: ApiQuery, name: string, allowed: readonly T[]): T | undefined {
+export function queryEnum<T extends string>(query: ApiQuery, name: string, allowed: ReadonlyArray<T>): T | undefined {
 	const value = queryString(query, name)
-	return value !== undefined && (allowed as readonly string[]).includes(value) ? (value as T) : undefined
+	return value !== undefined && (allowed as ReadonlyArray<string>).includes(value) ? (value as T) : undefined
 }
 
 export function queryBoolean(query: ApiQuery, name: string): boolean {

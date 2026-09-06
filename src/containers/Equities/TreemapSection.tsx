@@ -41,7 +41,7 @@ const MarketTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/
 const CHART_HEIGHT = '600px'
 const EXPORT_FILENAME = 'equities-market-map'
 const CHART_ACTION_BUTTON_CLASSNAME = buttonStyles({ size: 'md' })
-const NO_ROWS: EquitiesTreemapRow[] = []
+const NO_ROWS: Array<EquitiesTreemapRow> = []
 
 const GROUP_OPTIONS: Array<{ value: EquitiesTreemapGroupBy; label: string }> = [
 	{ value: 'sector', label: 'Sector' },
@@ -78,7 +78,7 @@ export function EquitiesTreemapSection({
 	// Static page: router.query is empty until hydration, so wait for it before asking for a filtered map.
 	const queryString = router.isReady
 		? buildEquitiesTreemapQueryString({
-				query: router.query as Record<string, string | string[] | undefined>,
+				query: router.query as Record<string, string | Array<string> | undefined>,
 				sizeMetric
 			})
 		: null

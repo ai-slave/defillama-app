@@ -78,10 +78,10 @@ export async function fetchRWAFlows(
 }
 
 export function fetchRWAFlowsOverview(): Promise<IRWAFlowOverviewAggregateResponse>
-export function fetchRWAFlowsOverview(request: IRWAFlowOverviewRequest): Promise<IRWAFlowOverviewSplitPoint[]>
+export function fetchRWAFlowsOverview(request: IRWAFlowOverviewRequest): Promise<Array<IRWAFlowOverviewSplitPoint>>
 export async function fetchRWAFlowsOverview(
 	request?: IRWAFlowOverviewRequest
-): Promise<IRWAFlowOverviewAggregateResponse | IRWAFlowOverviewSplitPoint[]> {
+): Promise<IRWAFlowOverviewAggregateResponse | Array<IRWAFlowOverviewSplitPoint>> {
 	const searchParams = new URLSearchParams()
 	if (request) {
 		searchParams.set('splitBy', request.splitBy)
@@ -89,7 +89,7 @@ export async function fetchRWAFlowsOverview(
 		searchParams.set('includeGovernance', String(request.includeGovernance))
 	}
 	const qs = searchParams.toString()
-	return fetchJson<IRWAFlowOverviewAggregateResponse | IRWAFlowOverviewSplitPoint[]>(
+	return fetchJson<IRWAFlowOverviewAggregateResponse | Array<IRWAFlowOverviewSplitPoint>>(
 		`${RWA_SERVER_URL}/flows/overview${qs ? `?${qs}` : ''}`
 	)
 }
@@ -116,11 +116,13 @@ export async function fetchRWAFlowsChain(chain: string): Promise<IRWAFlowGroupAg
 	return fetchJson<IRWAFlowGroupAggregateResponse>(`${RWA_SERVER_URL}/flows/chain/${encodeURIComponent(chain)}`)
 }
 
-export async function fetchRWAFlowAssetBreakdown(target: RWAAssetChartTarget): Promise<IRWAFlowAssetBreakdownRow[]> {
+export async function fetchRWAFlowAssetBreakdown(
+	target: RWAAssetChartTarget
+): Promise<Array<IRWAFlowAssetBreakdownRow>> {
 	if (target.kind === 'all') {
-		return fetchJson<IRWAFlowAssetBreakdownRow[]>(`${RWA_SERVER_URL}/flows/asset-breakdown`)
+		return fetchJson<Array<IRWAFlowAssetBreakdownRow>>(`${RWA_SERVER_URL}/flows/asset-breakdown`)
 	}
-	return fetchJson<IRWAFlowAssetBreakdownRow[]>(
+	return fetchJson<Array<IRWAFlowAssetBreakdownRow>>(
 		`${RWA_SERVER_URL}/flows/asset-breakdown/${target.kind}/${encodeURIComponent(target.slug)}`
 	)
 }
@@ -310,7 +312,7 @@ export async function fetchRWAAssetGroupBreakdownChartData(
  */
 export async function fetchRWAAssetChartData(assetId: string): Promise<IRWAAssetData['chartDataset']> {
 	const encodedAssetId = encodeURIComponent(assetId)
-	return fetchJson<IRWAAssetChartApiRow[]>(`${RWA_SERVER_URL}/chart/asset/${encodedAssetId}`)
+	return fetchJson<Array<IRWAAssetChartApiRow>>(`${RWA_SERVER_URL}/chart/asset/${encodedAssetId}`)
 		.then(buildRWAAssetChartDataset)
 		.catch((error) => {
 			console.error('Failed to fetch RWA asset chart data:', error)
@@ -318,7 +320,9 @@ export async function fetchRWAAssetChartData(assetId: string): Promise<IRWAAsset
 		})
 }
 
-export function buildRWAAssetChartDataset(data: IRWAAssetChartApiRow[]): NonNullable<IRWAAssetData['chartDataset']> {
+export function buildRWAAssetChartDataset(
+	data: Array<IRWAAssetChartApiRow>
+): NonNullable<IRWAAssetData['chartDataset']> {
 	const source = data.map<[number, number | null, number | null, number | null]>((item) => [
 		rwaUnixSecondsToMilliseconds(item.timestamp),
 		item.defiActiveTvl ?? null,

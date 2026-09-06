@@ -11,7 +11,7 @@ import { fetchProTokenUsageData } from './tableQueries'
 const MAX_TOKEN_SYMBOLS = 4
 
 export function parseTokenUsageQuery(query: NextApiRequest['query']): {
-	tokenSymbols: string[]
+	tokenSymbols: Array<string>
 	includeCex: boolean
 } | null {
 	const rawTokenSymbols = toRawArrayParam(query['symbols[]'])
@@ -29,7 +29,7 @@ export function parseTokenUsageQuery(query: NextApiRequest['query']): {
 }
 
 export const tokenUsageApiHandler = withSubscriptionJsonRoute<{
-	tokenSymbols: string[]
+	tokenSymbols: Array<string>
 	includeCex: boolean
 }>({
 	route: '/api/dynamic/pro-dashboard/token-usage',
@@ -40,7 +40,7 @@ export const tokenUsageApiHandler = withSubscriptionJsonRoute<{
 		res.status(400).json({ error: 'Invalid token usage query' })
 		return null
 	},
-	handler: async (_req: NextApiRequest, res: NextApiResponse<ProtocolTokenUsageData[]>, parsed) => {
+	handler: async (_req: NextApiRequest, res: NextApiResponse<Array<ProtocolTokenUsageData>>, parsed) => {
 		const data = await fetchProTokenUsageData(parsed.tokenSymbols, parsed.includeCex)
 		return res.status(200).json(data)
 	}

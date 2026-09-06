@@ -40,8 +40,7 @@ import { useActiveEntityLink, useEditorFlags, type BlockItem, type MarkButton } 
 import { CoverDetailsDialog, DeleteArticleDialog } from './ArticleEditorDialogs'
 import { ArticleEditorHeader, type ArticleEditorViewMode } from './ArticleEditorHeader'
 import { ArticleEditorPreview } from './ArticleEditorPreview'
-import { articleQueryKey, sanitizeLinkHref, slugFromTitle, useTicker } from './ArticleEditorUtils'
-import { formatArticleDate } from './ArticleEditorUtils'
+import { articleQueryKey, sanitizeLinkHref, slugFromTitle, useTicker, formatArticleDate } from './ArticleEditorUtils'
 import { ArticleMetaDialog } from './ArticleMetaDialog'
 import { ArticleTitleFields } from './ArticleTitleFields'
 import { EmbedPicker } from './EmbedPicker'
@@ -345,13 +344,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	const changeActiveEntityLink = useCallback(() => {
 		if (!editor) return
 		const label = activeEntity?.label ?? ''
-		editor
-			.chain()
-			.focus()
-			.extendMarkRange('entityLink')
-			.deleteSelection()
-			.insertContent(' @' + label)
-			.run()
+		editor.chain().focus().extendMarkRange('entityLink').deleteSelection().insertContent(` @${label}`).run()
 	}, [editor, activeEntity?.label])
 
 	const beginSlugEdit = useCallback(() => {
@@ -716,7 +709,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		try {
 			const result = await uploadCoverImage(file)
 			updateArticle('coverImage', {
-				...(article.coverImage ?? {}),
+				...article.coverImage,
 				url: result.url,
 				alt: article.coverImage?.alt || article.title
 			})
@@ -758,7 +751,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		if (!editor) return
 		const text = editor.state.doc.textBetween(0, editor.state.doc.content.size, '\n')
 		const existing = (text.match(/\[(\d+)\]/g) ?? []).map((m) => Number(m.slice(1, -1)))
-		const next = existing.length ? Math.max(...existing) + 1 : 1
+		const next = existing.length > 0 ? Math.max(...existing) + 1 : 1
 		editor
 			.chain()
 			.focus()
@@ -827,7 +820,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	const savedExactLabel = savedAt ? formatDateTime(savedAt, { timeZone: 'local' }) : null
 	const readMins = Math.max(1, Math.ceil(wordCount / 220))
 
-	const markButtons: MarkButton[] = editor
+	const markButtons: Array<MarkButton> = editor
 		? [
 				{
 					name: 'bold',
@@ -874,7 +867,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			]
 		: []
 
-	const blockItems: BlockItem[] = editor
+	const blockItems: Array<BlockItem> = editor
 		? [
 				{ label: 'Heading 2', hint: 'H2', run: () => editor.chain().focus().setNode('heading', { level: 2 }).run() },
 				{ label: 'Heading 3', hint: 'H3', run: () => editor.chain().focus().setNode('heading', { level: 3 }).run() },

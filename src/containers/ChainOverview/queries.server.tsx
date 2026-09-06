@@ -120,7 +120,7 @@ export function getRwaActiveMcapForChain(rwaStats: IRWAStatsResponse | null, cha
 	return null
 }
 
-export function sumAdapterProtocol24h(rows: readonly { total24h?: number | null }[] | null): number | null {
+export function sumAdapterProtocol24h(rows: ReadonlyArray<{ total24h?: number | null }> | null): number | null {
 	if (rows === null) return null
 	let total = 0
 	for (const row of rows) {
@@ -135,7 +135,7 @@ export function getChainRev24h({
 	revProtocolSlugs
 }: {
 	chainFees24h: number | null
-	feeProtocols: readonly { slug: string; total24h?: number | null }[] | null
+	feeProtocols: ReadonlyArray<{ slug: string; total24h?: number | null }> | null
 	revProtocolSlugs: Iterable<string>
 }): number | null {
 	if (chainFees24h == null) return null
@@ -153,7 +153,7 @@ export function getDexDominance(cexVolume: number | null, dexVolume: number | nu
 	return total > 0 ? roundNumber((dexVolume / total) * 100, 2) : null
 }
 
-export function hasRwaActiveMcapChain(rwaChains: string[] | null | undefined, chainName: string): boolean {
+export function hasRwaActiveMcapChain(rwaChains: Array<string> | null | undefined, chainName: string): boolean {
 	const chainSlug = rwaSlug(chainName)
 	for (const chain of rwaChains ?? []) {
 		if (rwaSlug(chain) === chainSlug) return true
@@ -205,7 +205,7 @@ export async function getChainOverviewData({
 	chainMetadata: Record<string, IChainMetadata>
 	protocolMetadata: Record<string, IProtocolMetadata>
 	categoriesAndTagsMetadata: ICategoriesAndTags
-	rwaChainsForActiveMcap?: string[] | null
+	rwaChainsForActiveMcap?: Array<string> | null
 	tokenDirectory?: TokenDirectory | null
 	phaseTimer?: RoutePhaseTimer
 	researchSponsorEntitySlug?: string
@@ -422,7 +422,7 @@ export async function getChainOverviewData({
 					chain === 'All'
 						? getETFData().then((data) => {
 								const recentFlows: Array<[number, number]> = []
-								const recentDates: string[] = []
+								const recentDates: Array<string> = []
 								for (const date in data.flows) {
 									if (recentDates.length === 14) recentDates.shift()
 									recentDates.push(date)
@@ -553,7 +553,7 @@ export async function getChainOverviewData({
 			revProtocolSlugs: REV_PROTOCOLS[slug(currentChainMetadata.name)] ?? []
 		})
 
-		const charts: ChainChartLabels[] = []
+		const charts: Array<ChainChartLabels> = []
 
 		if (chartData) {
 			charts.push('TVL')
@@ -657,7 +657,7 @@ export async function getChainOverviewData({
 			rwaActiveMcap,
 			chainFees: {
 				total24h: chainFees?.total24h ?? null,
-				feesGenerated24h: feesGenerated24h,
+				feesGenerated24h,
 				topProtocolsChart:
 					topProtocolsByFeesChart && topProtocolsByFeesChart.length > 0 ? topProtocolsByFeesChart : null,
 				totalREV24h: chainREV
@@ -735,7 +735,7 @@ interface IDATInflow {
 
 function getUTCTimestamp(timestamp: number) {
 	// Round to nearest day boundary (midnight UTC)
-	const msPerDay = 86400000 // 24 * 60 * 60 * 1000
+	const msPerDay = 86_400_000 // 24 * 60 * 60 * 1000
 	return Math.round(timestamp / msPerDay) * msPerDay
 }
 

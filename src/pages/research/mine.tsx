@@ -22,7 +22,7 @@ type SectionFilter = ArticleSection | 'all'
 
 const FETCH_LIMIT = 100
 const PAGE_SIZE = 12
-const EMPTY_ARTICLES: ArticleDocument[] = []
+const EMPTY_ARTICLES: Array<ArticleDocument> = []
 
 const SORT_LABELS: Record<SortKey, string> = {
 	updated: 'Recently updated',
@@ -241,7 +241,7 @@ function MyArticlesContent() {
 							className="rounded-md border border-medium bg-surface py-1.5 pr-2 pl-2.5 text-sm text-primary focus:border-link/50 focus:outline-hidden"
 							aria-label="Sort"
 						>
-							{(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
+							{(Object.keys(SORT_LABELS) as Array<SortKey>).map((k) => (
 								<option key={k} value={k}>
 									{SORT_LABELS[k]}
 								</option>

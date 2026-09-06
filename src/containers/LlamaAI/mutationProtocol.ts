@@ -1,7 +1,7 @@
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 
 export interface AgenticMutationEnvelope {
-	readonly blockedSkills?: readonly string[]
+	readonly blockedSkills?: ReadonlyArray<string>
 	readonly clientMutationId: string
 	readonly customInstructions?: string
 	readonly editMessageId?: string
@@ -48,7 +48,7 @@ export class AgenticMutationReconcileError extends Error {
 }
 
 export function createAgenticMutationEnvelope(args: {
-	blockedSkills?: string[]
+	blockedSkills?: Array<string>
 	clientMutationId: string
 	customInstructions?: string
 	editMessageId?: string

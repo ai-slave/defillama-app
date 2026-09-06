@@ -25,7 +25,7 @@ type ProtocolLabel = {
 			color: '#fff'
 			align: 'center'
 			lineHeight: number
-			padding: number[]
+			padding: Array<number>
 		}
 		value: {
 			fontSize: number
@@ -51,7 +51,7 @@ export type UnlocksTreemapNode = {
 	iconUrl?: string
 	label?: ProtocolLabel
 	upperLabel?: UpperLabel
-	children?: UnlocksTreemapNode[]
+	children?: Array<UnlocksTreemapNode>
 }
 
 type MonthInfo = {
@@ -92,8 +92,8 @@ function addEvents(month: MonthInfo, events: UnlocksData[string]['events'], year
 	}
 }
 
-function buildProtocolNodes(protocols: Record<string, number>): UnlocksTreemapNode[] {
-	const nodes: UnlocksTreemapNode[] = []
+function buildProtocolNodes(protocols: Record<string, number>): Array<UnlocksTreemapNode> {
+	const nodes: Array<UnlocksTreemapNode> = []
 	for (const protocol in protocols) {
 		const value = protocols[protocol]!
 		const iconUrl = tokenIconUrl(protocol)
@@ -146,8 +146,8 @@ function getMonth(year: YearInfo, monthName: string): MonthInfo {
 	return month
 }
 
-function buildMonthNodes(year: YearInfo, inkColor: string, fontSize: number): UnlocksTreemapNode[] {
-	const monthNodes: UnlocksTreemapNode[] = []
+function buildMonthNodes(year: YearInfo, inkColor: string, fontSize: number): Array<UnlocksTreemapNode> {
+	const monthNodes: Array<UnlocksTreemapNode> = []
 	for (const [monthName, month] of year.months) {
 		monthNodes.push({
 			name: monthName,
@@ -180,7 +180,7 @@ export function buildUnlocksTreemapTreeData({
 	selectedYear: string
 	selectedMonth: string
 	isDark: boolean
-}): UnlocksTreemapNode[] {
+}): Array<UnlocksTreemapNode> {
 	if (timeView === 'Month') {
 		const month: MonthInfo = { protocols: createProtocolTotals(), value: 0 }
 		for (const date in unlocksData) {
@@ -199,7 +199,7 @@ export function buildUnlocksTreemapTreeData({
 			const month = getMonth(year, MONTH_NAMES[date.slice(5, 7)]!)
 			addEvents(month, unlocksData[date]!.events, year)
 		}
-		return year.months.size ? buildMonthNodes(year, getChartTheme(isDark).ink(1), 13) : []
+		return year.months.size > 0 ? buildMonthNodes(year, getChartTheme(isDark).ink(1), 13) : []
 	}
 
 	const years = new Map<string, YearInfo>()
@@ -217,9 +217,9 @@ export function buildUnlocksTreemapTreeData({
 		addEvents(month, unlocksData[date]!.events, year)
 	}
 
-	if (!years.size) return []
+	if (years.size === 0) return []
 	const inkColor = getChartTheme(isDark).ink(1)
-	const yearNodes: UnlocksTreemapNode[] = []
+	const yearNodes: Array<UnlocksTreemapNode> = []
 	for (const [yearName, year] of years) {
 		yearNodes.push({
 			name: yearName,

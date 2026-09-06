@@ -64,7 +64,7 @@ export function maxSizeForFile(file: File) {
 interface UseImageUploadOptions {
 	maxImages?: number
 	maxSizeBytes?: number
-	droppedFiles?: File[] | null
+	droppedFiles?: Array<File> | null
 	clearDroppedFiles?: () => void
 }
 
@@ -74,7 +74,7 @@ export function useImageUpload({
 	droppedFiles,
 	clearDroppedFiles
 }: UseImageUploadOptions = {}) {
-	const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([])
+	const [selectedImages, setSelectedImages] = useState<Array<SelectedImage>>([])
 	const [isDragging, setIsDragging] = useState(false)
 	const [previewImage, setPreviewImage] = useState<string | null>(null)
 	const [pastedPreview, setPastedPreview] = useState<{ content: string; filename: string; isPasted?: boolean } | null>(
@@ -82,7 +82,7 @@ export function useImageUpload({
 	)
 	const dragCounterRef = useRef(0)
 	const fileInputRef = useRef<HTMLInputElement>(null)
-	const selectedImagesRef = useRef<SelectedImage[]>([])
+	const selectedImagesRef = useRef<Array<SelectedImage>>([])
 	const pastedCounterRef = useRef(0)
 	const attachmentCounterRef = useRef(0)
 
@@ -99,9 +99,9 @@ export function useImageUpload({
 	}, [])
 
 	const addImages = useCallback(
-		(files: File[]) => {
-			const rejected: { type: 'size' | 'format'; file: File }[] = []
-			const valid: File[] = []
+		(files: Array<File>) => {
+			const rejected: Array<{ type: 'size' | 'format'; file: File }> = []
+			const valid: Array<File> = []
 			for (const f of files) {
 				if (!isAcceptedFile(f)) {
 					rejected.push({ type: 'format', file: f })
@@ -120,7 +120,7 @@ export function useImageUpload({
 						...new Set(sizeRejected.map((r) => Math.round((maxSizeBytes ?? maxSizeForFile(r.file)) / (1024 * 1024))))
 					]
 					queueMicrotask(() => {
-						const limitsText = uniqueMBs.join('MB, ') + 'MB'
+						const limitsText = `${uniqueMBs.join('MB, ')}MB`
 						errorToast({
 							title: 'File too large',
 							description:
@@ -144,7 +144,7 @@ export function useImageUpload({
 
 			if (valid.length === 0) return
 
-			const newImages: SelectedImage[] = []
+			const newImages: Array<SelectedImage> = []
 			for (const file of valid) {
 				try {
 					const url = isImageType(file.type) ? URL.createObjectURL(file) : ''
@@ -166,7 +166,7 @@ export function useImageUpload({
 			let addedBytes = 0
 			let countLimitHit = false
 			let totalSizeLimitHit = false
-			const acceptedImages: SelectedImage[] = []
+			const acceptedImages: Array<SelectedImage> = []
 
 			for (const img of newImages) {
 				if (selected.length + acceptedImages.length >= maxImages) {
@@ -265,7 +265,7 @@ export function useImageUpload({
 			const files = Array.from(e.clipboardData.items)
 				.map((item) => item.getAsFile())
 				.filter((file): file is File => Boolean(file))
-			if (files.length) {
+			if (files.length > 0) {
 				trackUmamiEvent('llamaai-file-paste')
 				addImages(files)
 			}
@@ -353,7 +353,7 @@ export function useImageUpload({
 			dragCounterRef.current = 0
 			setIsDragging(false)
 			const files = Array.from(e.dataTransfer.files)
-			if (files.length) {
+			if (files.length > 0) {
 				trackUmamiEvent('llamaai-file-upload', { method: 'drag_and_drop', count: files.length })
 				addImages(files)
 			}

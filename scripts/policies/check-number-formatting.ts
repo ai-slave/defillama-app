@@ -44,7 +44,7 @@ const fixedFormattingFiles = new Set([
 	'src/server/datasetSnapshots/publish.server.ts'
 ])
 
-const violations: string[] = []
+const violations: Array<string> = []
 
 const numericDisplayFormatters = new Set(['formatNumber', 'formatCompactNumber', 'formatFixedNumber', 'formatRatio'])
 const optionFormatters = new Set(['formatNumber', 'formatCompactNumber', 'formatUsd', 'formatRatio', 'formatPercent'])
@@ -170,7 +170,7 @@ for (const file of policyTargetFiles(root, sourceRoot)) {
 				if (literalOption(options, 'compactSuffix') === 'uppercase') {
 					report(options, `${formatter} redundantly uses the default uppercase compact suffix`)
 				}
-				if (Number(literalOption(options, 'minimumCompactValue')) === 1_000) {
+				if (Number(literalOption(options, 'minimumCompactValue')) === 1000) {
 					report(options, `${formatter} redundantly uses the default compact threshold of 1,000`)
 				}
 				if (
@@ -234,7 +234,7 @@ for (const file of policyTargetFiles(root, sourceRoot)) {
 	}
 }
 
-if (violations.length) {
+if (violations.length > 0) {
 	console.error(`Number formatting policy violations:\n${violations.map((violation) => `- ${violation}`).join('\n')}`)
 	process.exit(1)
 }

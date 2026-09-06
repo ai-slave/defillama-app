@@ -17,7 +17,7 @@ import { DIRECTORY_ALL_SEGMENTS, type DirectoryScope } from './queryState'
  * sum overlapping tails; where only one series reaches back that far, its value
  * carries through. Length = the longer of the two.
  */
-export function sumSparks(base: number[], add: number[]): number[] {
+export function sumSparks(base: Array<number>, add: Array<number>): Array<number> {
 	const length = Math.max(base.length, add.length)
 	const result = new Array<number>(length)
 	for (let offset = 1; offset <= length; offset++) {
@@ -53,21 +53,21 @@ export function combineNormalizedVolume(
 export type DirectoryKind = 'all' | ExchangeVenueKind
 
 /** The segments a scope covers: itself, or spot + USD perps for the merged view. */
-export function scopeSegments(scope: DirectoryScope): readonly ExchangeSegment[] {
+export function scopeSegments(scope: DirectoryScope): ReadonlyArray<ExchangeSegment> {
 	return scope === 'all' ? DIRECTORY_ALL_SEGMENTS : [scope]
 }
 
 export function filterDirectoryRows(
-	rows: ExchangeDirectoryRowModel[],
+	rows: Array<ExchangeDirectoryRowModel>,
 	filters: {
 		kind: DirectoryKind
 		scope: DirectoryScope
 		country?: string | null
 		catalog?: MasterExchangeRegionCatalogResponse | null
 	}
-): ExchangeDirectoryRowModel[] {
+): Array<ExchangeDirectoryRowModel> {
 	const segments = scopeSegments(filters.scope)
-	const result: ExchangeDirectoryRowModel[] = []
+	const result: Array<ExchangeDirectoryRowModel> = []
 	for (const row of rows) {
 		if (filters.kind !== 'all' && row.kind !== filters.kind) continue
 		// Tracked venues must have tracked activity in the scope; a regional
@@ -118,7 +118,7 @@ export function activityForScope(
 	return row.segments[scope] ?? null
 }
 
-export function sparklineForScope(row: ExchangeDirectoryRowModel, scope: ExchangeSegment): number[] {
+export function sparklineForScope(row: ExchangeDirectoryRowModel, scope: ExchangeSegment): Array<number> {
 	return row.sparks[scope] ?? []
 }
 
@@ -129,7 +129,7 @@ export function normalizedVolumeForScope(
 	return row.normalizedVolume?.[scope] ?? null
 }
 
-export type DirectoryTreeRow = ExchangeDirectoryRowModel & { subRows?: ExchangeDirectoryRowModel[] }
+export type DirectoryTreeRow = ExchangeDirectoryRowModel & { subRows?: Array<ExchangeDirectoryRowModel> }
 
 /** A synthetic brand segment keeps only fields that remain valid after aggregation. */
 function brandSegmentActivity(activity: ExchangeSegmentActivity): ExchangeSegmentActivity {
@@ -202,7 +202,10 @@ function addSegmentActivity(base: ExchangeSegmentActivity, added: ExchangeSegmen
  * open interest, depth, normalized volume, and the volume trend all follow this
  * one rule; coin counts are distinct-coin figures and are not additive.
  */
-function brandRow(parent: ExchangeDirectoryRowModel, children: ExchangeDirectoryRowModel[]): ExchangeDirectoryRowModel {
+function brandRow(
+	parent: ExchangeDirectoryRowModel,
+	children: Array<ExchangeDirectoryRowModel>
+): ExchangeDirectoryRowModel {
 	const segments: ExchangeDirectoryRowModel['segments'] = {}
 	const sparks: ExchangeDirectoryRowModel['sparks'] = {}
 	const normalizedVolume: Record<ExchangeSegment, ExchangeNormalizedVolume | null> = {
@@ -266,10 +269,10 @@ function brandRow(parent: ExchangeDirectoryRowModel, children: ExchangeDirectory
  * first child row with its own unmodified figures. Parents without children
  * render exactly as before.
  */
-export function nestDirectoryRows(rows: ExchangeDirectoryRowModel[]): DirectoryTreeRow[] {
+export function nestDirectoryRows(rows: Array<ExchangeDirectoryRowModel>): Array<DirectoryTreeRow> {
 	const slugs = new Set(rows.map((row) => row.slug))
-	const childrenByParent = new Map<string, ExchangeDirectoryRowModel[]>()
-	const topLevel: ExchangeDirectoryRowModel[] = []
+	const childrenByParent = new Map<string, Array<ExchangeDirectoryRowModel>>()
+	const topLevel: Array<ExchangeDirectoryRowModel> = []
 	for (const row of rows) {
 		const parentSlug = row.parent?.slug
 		if (parentSlug && slugs.has(parentSlug)) {
@@ -295,7 +298,7 @@ export function nestDirectoryRows(rows: ExchangeDirectoryRowModel[]): DirectoryT
  */
 export function describeChildLiquidity(row: ExchangeDirectoryRowModel): string | null {
 	if (!row.parent) return null
-	const parts: string[] = []
+	const parts: Array<string> = []
 	for (const segment of EXCHANGE_SEGMENTS) {
 		const relation = row.liquidity[segment]
 		if (!relation) continue

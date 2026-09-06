@@ -22,10 +22,10 @@ export function MarketOracleTable({
 	markets,
 	explorers
 }: {
-	markets: MarketOracle[]
+	markets: Array<MarketOracle>
 	explorers?: BlockExplorersResponse
 }) {
-	if (!markets.length) return null
+	if (markets.length === 0) return null
 	const rows = [...markets].sort(
 		(a, b) => (b.allocation_usd ?? 0) - (a.allocation_usd ?? 0) || (b.lltv ?? 0) - (a.lltv ?? 0)
 	)

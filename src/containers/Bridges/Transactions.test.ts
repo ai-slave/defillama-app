@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { fetchBridgeTransactionsClientMock } = vi.hoisted(() => ({
 	fetchBridgeTransactionsClientMock: vi.fn()
@@ -46,7 +46,7 @@ const range = {
 describe('bridge transaction construction behavior fixture', () => {
 	beforeEach(() => vi.clearAllMocks())
 
-	it('uses the opaque cursor and preserves same-second events with repeated hashes', async () => {
+	test('uses the opaque cursor and preserves same-second events with repeated hashes', async () => {
 		const boundary = unix('2026-01-20T03:47:25.000Z')
 		fetchBridgeTransactionsClientMock
 			.mockResolvedValueOnce({
@@ -88,7 +88,7 @@ describe('bridge transaction construction behavior fixture', () => {
 		expect(result.truncated).toBe(false)
 	})
 
-	it('normalizes typed USD strings once while preserving null and measured zero', () => {
+	test('normalizes typed USD strings once while preserving null and measured zero', () => {
 		const collector = createBridgeTransactionCollector(range)
 		collector.addPage([
 			{ ...transaction('missing', range.startTimestamp + 4), usd_value: null },
@@ -117,7 +117,7 @@ describe('bridge transaction construction behavior fixture', () => {
 		})
 	})
 
-	it('sorts once after an order anomaly and retains equal-time encounter order', () => {
+	test('sorts once after an order anomaly and retains equal-time encounter order', () => {
 		const collector = createBridgeTransactionCollector(range)
 		const timestamp = range.startTimestamp + 100
 		collector.addPage([
@@ -135,7 +135,7 @@ describe('bridge transaction construction behavior fixture', () => {
 		])
 	})
 
-	it('does not sort an already descending multi-page stream', () => {
+	test('does not sort an already descending multi-page stream', () => {
 		const collector = createBridgeTransactionCollector(range)
 		collector.addPage([transaction('first', range.startTimestamp + 3), transaction('second', range.startTimestamp + 2)])
 		collector.addPage([transaction('third', range.startTimestamp + 1)])
@@ -149,20 +149,20 @@ describe('bridge transaction construction behavior fixture', () => {
 		expect(result.rows.map((row) => row.tx_hash)).toEqual(['first', 'second', 'third'])
 	})
 
-	it('returns a successful empty result without truncation', async () => {
+	test('returns a successful empty result without truncation', async () => {
 		fetchBridgeTransactionsClientMock.mockResolvedValueOnce({ rows: [], hasMore: false })
 
 		await expect(fetchTransactions(args)).resolves.toEqual({ rows: [], stats: null, truncated: false })
 		expect(fetchBridgeTransactionsClientMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('keeps a first-page request failure unavailable', async () => {
+	test('keeps a first-page request failure unavailable', async () => {
 		fetchBridgeTransactionsClientMock.mockRejectedValueOnce(new Error('upstream unavailable'))
 
 		await expect(fetchTransactions(args)).rejects.toThrow('upstream unavailable')
 	})
 
-	it('stops after one exact 10,000-row terminal page', async () => {
+	test('stops after one exact 10,000-row terminal page', async () => {
 		const page = Array.from({ length: 10_000 }, (_, index) => transaction(`0x${index}`, range.endTimestamp - index - 1))
 		fetchBridgeTransactionsClientMock.mockResolvedValueOnce({ rows: page, hasMore: false })
 
@@ -174,7 +174,7 @@ describe('bridge transaction construction behavior fixture', () => {
 		expect(result.truncated).toBe(false)
 	})
 
-	it('rejects continuation without a cursor', async () => {
+	test('rejects continuation without a cursor', async () => {
 		fetchBridgeTransactionsClientMock.mockResolvedValueOnce({
 			rows: [transaction('first', range.startTimestamp + 1)],
 			hasMore: true
@@ -183,7 +183,7 @@ describe('bridge transaction construction behavior fixture', () => {
 		await expect(fetchTransactions(args)).rejects.toThrow('missing its continuation cursor')
 	})
 
-	it('keeps a later-page failure unavailable instead of returning partial rows', async () => {
+	test('keeps a later-page failure unavailable instead of returning partial rows', async () => {
 		fetchBridgeTransactionsClientMock
 			.mockResolvedValueOnce({
 				rows: [transaction('first', range.startTimestamp + 2)],
@@ -195,7 +195,7 @@ describe('bridge transaction construction behavior fixture', () => {
 		await expect(fetchTransactions(args)).rejects.toThrow('upstream unavailable')
 	})
 
-	it('reports truncation after the approved 50-page limit', async () => {
+	test('reports truncation after the approved 50-page limit', async () => {
 		for (let page = 0; page < 50; page++) {
 			fetchBridgeTransactionsClientMock.mockResolvedValueOnce({
 				rows: [transaction(`page-${page}`, range.endTimestamp - page - 1)],
@@ -211,7 +211,7 @@ describe('bridge transaction construction behavior fixture', () => {
 		expect(result.truncated).toBe(true)
 	})
 
-	it('keeps the selected end day and excludes exact next midnight', () => {
+	test('keeps the selected end day and excludes exact next midnight', () => {
 		const collector = createBridgeTransactionCollector(range)
 		collector.addPage([
 			{ ...transaction('last-millisecond', range.endTimestamp - 1), ts: '2026-01-31T23:59:59.999Z' },
@@ -222,7 +222,7 @@ describe('bridge transaction construction behavior fixture', () => {
 		expect(collector.finish(false).rows.map((row) => row.tx_hash)).toEqual(['last-millisecond'])
 	})
 
-	it('projects exact table values to CSV, including null and zero USD', () => {
+	test('projects exact table values to CSV, including null and zero USD', () => {
 		const collector = createBridgeTransactionCollector(range)
 		collector.addPage([{ ...transaction('missing', range.startTimestamp + 2), usd_value: null }])
 		collector.addPage([{ ...transaction('zero', range.startTimestamp + 1), usd_value: '0' }])
@@ -234,7 +234,7 @@ describe('bridge transaction construction behavior fixture', () => {
 		])
 	})
 
-	it('searches the indexed transaction values case-insensitively', () => {
+	test('searches the indexed transaction values case-insensitively', () => {
 		const collector = createBridgeTransactionCollector(range)
 		collector.addPage([
 			{

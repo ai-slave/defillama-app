@@ -52,14 +52,14 @@ export function TodoChecklistPanel({
 	isLive = false,
 	interrupted = false
 }: {
-	todos: TodoItem[]
+	todos: Array<TodoItem>
 	startTime?: number
 	isLive?: boolean
 	interrupted?: boolean
 }) {
 	const orderedTodos = useMemo(() => {
 		const seen = new Set<string>()
-		const out: TodoItem[] = []
+		const out: Array<TodoItem> = []
 		for (const item of todos) {
 			if (seen.has(item.id)) continue
 			seen.add(item.id)
@@ -122,7 +122,7 @@ export function TodoChecklistPanel({
 
 export function deriveTodosFromToolExecutions(
 	toolExecutions: Array<{ name?: string; success?: boolean; error?: string; toolData?: unknown }> | undefined
-): TodoItem[] {
+): Array<TodoItem> {
 	if (!toolExecutions || toolExecutions.length === 0) return []
 	for (let i = toolExecutions.length - 1; i >= 0; i--) {
 		const exec = toolExecutions[i]
@@ -130,7 +130,7 @@ export function deriveTodosFromToolExecutions(
 		if (exec.success !== true || exec.error) continue
 		const data = exec.toolData as { todos?: unknown } | undefined
 		if (!data || !Array.isArray(data.todos)) continue
-		const valid: TodoItem[] = []
+		const valid: Array<TodoItem> = []
 		for (const raw of data.todos) {
 			if (!raw || typeof raw !== 'object') continue
 			const item = raw as Partial<TodoItem>

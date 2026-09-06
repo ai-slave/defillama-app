@@ -54,7 +54,7 @@ const columns = [
 	})
 ]
 
-export function FundingRoundsTable({ companyName, raises }: { companyName: string; raises: PreIpoRaise[] }) {
+export function FundingRoundsTable({ companyName, raises }: { companyName: string; raises: Array<PreIpoRaise> }) {
 	if (raises.length === 0) {
 		return (
 			<Panel padding="none">

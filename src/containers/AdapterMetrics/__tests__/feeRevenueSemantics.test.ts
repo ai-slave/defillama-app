@@ -1,7 +1,7 @@
 import type { GetStaticPropsContext } from 'next'
 import { createElement, type ComponentType } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { feeRevenueMetrics } from '~/metrics/feesRevenue'
 import defillamaPages from '~/public/pages.json'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
@@ -119,7 +119,7 @@ describe('fees and revenue page semantics', () => {
 		mocks.getChainsByREVPageData.mockResolvedValue({ chains: [] })
 	})
 
-	it('keeps every fees/revenue chain ranking page represented in the registry', () => {
+	test('keeps every fees/revenue chain ranking page represented in the registry', () => {
 		const pagesJsonRoutes = defillamaPages.Metrics.filter(
 			(page) => page.category === 'Fees & Revenue' && page.tab === 'Chains'
 		).map((page) => page.route)
@@ -128,7 +128,7 @@ describe('fees and revenue page semantics', () => {
 		expect([...pagesJsonRoutes].sort()).toEqual([...registryRoutes].sort())
 	})
 
-	it.each(feeRevenueMetricRegistry)('pins public page glossary semantics for $label', (metric) => {
+	test.each(feeRevenueMetricRegistry)('pins public page glossary semantics for $label', (metric) => {
 		const matchingPages = defillamaPages.Metrics.filter((page) => page.route === metric.ranking.route)
 
 		expect(matchingPages).toHaveLength(1)
@@ -144,7 +144,7 @@ describe('fees and revenue page semantics', () => {
 		}
 	})
 
-	it.each(rankingPageRows)('pins $route ranking page data builder semantics', async (row) => {
+	test.each(rankingPageRows)('pins $route ranking page data builder semantics', async (row) => {
 		const page = await row.loadPage()
 		const ranking = row.metric.ranking
 
@@ -184,7 +184,7 @@ describe('fees and revenue page semantics', () => {
 		}
 	})
 
-	it('keeps fee/revenue ranking layouts free of metric filter controls', async () => {
+	test('keeps fee/revenue ranking layouts free of metric filter controls', async () => {
 		for (const row of rankingPageRows) {
 			const page = await row.loadPage()
 			const Page = page.default as unknown as ComponentType<Record<string, unknown>>
@@ -205,7 +205,7 @@ describe('fees and revenue page semantics', () => {
 		}
 	})
 
-	it('keeps holders revenue ranking layouts free of TVL filters', async () => {
+	test('keeps holders revenue ranking layouts free of TVL filters', async () => {
 		const page = await import('~/pages/holders-revenue/chains')
 		const Page = page.default as unknown as ComponentType<Record<string, unknown>>
 

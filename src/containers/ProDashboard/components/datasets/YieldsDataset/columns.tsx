@@ -110,7 +110,7 @@ export const yieldsDatasetColumns: TableOptions<ProYieldRow>['columns'] = [
 		cell: ({ row }) => (
 			<span className="flex items-center justify-end gap-1">
 				<PercentCell value={row.original.apyReward} />
-				{row.original.rewardTokensSymbols.length ? (
+				{row.original.rewardTokensSymbols.length > 0 ? (
 					<span className="text-xs text-secondary">({row.original.rewardTokensSymbols.join(', ')})</span>
 				) : null}
 			</span>

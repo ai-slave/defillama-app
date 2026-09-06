@@ -7,7 +7,7 @@ interface PendingTask {
 export function createBoundedTaskScheduler(concurrency: number, isStopped: () => boolean) {
 	let activeTaskCount = 0
 	let pendingTaskIndex = 0
-	const pendingTasks: PendingTask[] = []
+	const pendingTasks: Array<PendingTask> = []
 	const takePendingTask = () => {
 		const task = pendingTasks[pendingTaskIndex]
 		if (task) {

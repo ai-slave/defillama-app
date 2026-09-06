@@ -18,7 +18,7 @@ const MAX_SYMBOL = 40
 interface BubbleChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -82,7 +82,7 @@ export function BubbleChartAdapter({ config, result, classified, onReady }: Bubb
 
 	const tooltipFormatter = (params: ScatterTooltipParams) => {
 		const [x, y, label, size] = params?.value ?? []
-		const lines: string[] = []
+		const lines: Array<string> = []
 		if (label) lines.push(`<strong>${escapeSqlChartHtml(String(label))}</strong>`)
 		const group = params.data && !Array.isArray(params.data) ? params.data.groupName : undefined
 		if (group) lines.push(`Category: ${escapeSqlChartHtml(String(group))}`)

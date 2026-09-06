@@ -20,7 +20,7 @@ import type { ModalState } from './types'
 export function buildDatasetTableSelections(
 	state: ModalState,
 	previous: DatasetTableConfig | null
-): NewDatasetTableSelection[] {
+): Array<NewDatasetTableSelection> {
 	switch (state.selectedTableType) {
 		case 'protocols':
 			return []
@@ -106,9 +106,9 @@ export type DashboardItemIdFactory = (kind: string, identity: string) => string
 
 interface BuildNewDashboardItemsInput {
 	state: ModalState
-	protocols: readonly Protocol[]
-	chains: readonly Chain[]
-	existingItems: readonly DashboardItemConfig[]
+	protocols: ReadonlyArray<Protocol>
+	chains: ReadonlyArray<Chain>
+	existingItems: ReadonlyArray<DashboardItemConfig>
 	idFactory: DashboardItemIdFactory
 }
 
@@ -192,7 +192,7 @@ function buildNewComparisonItems({
 	chains,
 	existingItems,
 	idFactory
-}: BuildNewDashboardItemsInput): DashboardItemConfig[] {
+}: BuildNewDashboardItemsInput): Array<DashboardItemConfig> {
 	if (state.composerItems.length > 0) {
 		if (state.chartCreationMode === 'combined') {
 			let existingMultiCount = 0
@@ -213,7 +213,7 @@ function buildNewComparisonItems({
 			]
 		}
 
-		const items: DashboardItemConfig[] = []
+		const items: Array<DashboardItemConfig> = []
 		for (const chart of state.composerItems) {
 			const item =
 				chart.subjectType === 'chain'
@@ -241,7 +241,7 @@ function buildNewComparisonItems({
 	}
 
 	if (state.chartCreationMode !== 'separate' || state.selectedChartTypes.length === 0) return []
-	const items: DashboardItemConfig[] = []
+	const items: Array<DashboardItemConfig> = []
 	if (state.selectedChartTab === 'chain' && state.selectedChain) {
 		const chain = chains.find((item) => item.name === state.selectedChain)
 		for (const chartType of state.selectedChartTypes) {
@@ -271,7 +271,7 @@ function buildNewComparisonItems({
 	return items
 }
 
-function buildNewManualChart(input: BuildNewDashboardItemsInput): DashboardItemConfig[] {
+function buildNewManualChart(input: BuildNewDashboardItemsInput): Array<DashboardItemConfig> {
 	const { state, protocols, idFactory } = input
 	switch (state.selectedChartTab) {
 		case 'yields':
@@ -430,7 +430,7 @@ function buildNewManualChart(input: BuildNewDashboardItemsInput): DashboardItemC
 	}
 }
 
-export function buildNewDashboardItems(input: BuildNewDashboardItemsInput): DashboardItemConfig[] {
+export function buildNewDashboardItems(input: BuildNewDashboardItemsInput): Array<DashboardItemConfig> {
 	const { state, idFactory } = input
 	switch (state.selectedMainTab) {
 		case 'charts':
@@ -512,8 +512,8 @@ export function buildNewDashboardItems(input: BuildNewDashboardItemsInput): Dash
 interface BuildEditedDashboardItemInput {
 	editItem: DashboardItemConfig
 	state: ModalState
-	protocols: readonly Protocol[]
-	chains: readonly Chain[]
+	protocols: ReadonlyArray<Protocol>
+	chains: ReadonlyArray<Chain>
 }
 
 function getEditableGrouping(item: DashboardItemConfig): DashboardGrouping | undefined {

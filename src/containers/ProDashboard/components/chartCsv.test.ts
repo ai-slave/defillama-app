@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { prepareProChartCsv } from './chartCsv'
 
 describe('prepareProChartCsv', () => {
-	it('exports every canonical time-series dimension', () => {
+	test('exports every canonical time-series dimension', () => {
 		expect(
 			prepareProChartCsv(
 				{
@@ -24,7 +24,7 @@ describe('prepareProChartCsv', () => {
 		})
 	})
 
-	it('preserves category datasets without treating the first column as a date', () => {
+	test('preserves category datasets without treating the first column as a date', () => {
 		expect(
 			prepareProChartCsv(
 				{

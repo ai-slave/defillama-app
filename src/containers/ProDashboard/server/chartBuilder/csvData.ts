@@ -14,7 +14,7 @@ import { getCompleteStablecoinChainSeries } from './stablecoinData'
 
 const DEFAULT_SERIES_COLOR = '#3e61cc'
 
-function getScopedSeries(request: ChartBuilderCsvRequest, series: ChartSeries[]): ChartSeries[] {
+function getScopedSeries(request: ChartBuilderCsvRequest, series: Array<ChartSeries>): Array<ChartSeries> {
 	const { timePeriod, customTimePeriod } = request
 	if (timePeriod === 'all') return series
 	return series.map((item) => ({
@@ -23,7 +23,7 @@ function getScopedSeries(request: ChartBuilderCsvRequest, series: ChartSeries[])
 	}))
 }
 
-async function getCompleteChainSeries(request: ChartBuilderCsvRequest): Promise<ChartSeries[]> {
+async function getCompleteChainSeries(request: ChartBuilderCsvRequest): Promise<Array<ChartSeries>> {
 	const { config } = request
 	const chains = normalizeLegacyChartBuilderChains(config.chains)
 	const chainCategories = normalizeCacheList(config.chainCategories ?? [])
@@ -62,7 +62,7 @@ async function getCompleteChainSeries(request: ChartBuilderCsvRequest): Promise<
 	).series
 }
 
-export async function getCompleteChartBuilderSeries(request: ChartBuilderCsvRequest): Promise<ChartSeries[]> {
+export async function getCompleteChartBuilderSeries(request: ChartBuilderCsvRequest): Promise<Array<ChartSeries>> {
 	const { config } = request
 	const chains = normalizeLegacyChartBuilderChains(config.chains)
 	const categories = normalizeCacheList(config.categories, { lowercase: true })
@@ -81,7 +81,7 @@ export async function getCompleteChartBuilderSeries(request: ChartBuilderCsvRequ
 	return getScopedSeries(request, series)
 }
 
-export function buildChartBuilderCsvPayload(request: ChartBuilderCsvRequest, series: ChartSeries[]): CsvPayload {
+export function buildChartBuilderCsvPayload(request: ChartBuilderCsvRequest, series: Array<ChartSeries>): CsvPayload {
 	const { config } = request
 	if (config.chartType === 'treemap') {
 		const treemapMode = isChartBuilderSnapshotMetric(config.metric) ? 'latest' : (config.treemapValue ?? 'latest')

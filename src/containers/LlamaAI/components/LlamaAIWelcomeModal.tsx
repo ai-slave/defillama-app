@@ -29,7 +29,7 @@ export function LlamaAIWelcomeModal({ isOpen, onClose }: LlamaAIWelcomeModalProp
 							<span
 								className="absolute block size-24.5 shrink-0"
 								style={{ background: 'linear-gradient(90deg, #FEE2AD 0%, #FEE2AD 100%)', filter: 'blur(32px)' }}
-							></span>
+							/>
 							<img
 								src="/assets/llamaai/llama-ai.svg"
 								alt="LlamaAI"

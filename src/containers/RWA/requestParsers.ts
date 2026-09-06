@@ -1,12 +1,15 @@
 export function parseEnumQueryValue<T extends string>(
-	value: string | string[] | undefined,
-	allowedValues: readonly T[]
+	value: string | Array<string> | undefined,
+	allowedValues: ReadonlyArray<T>
 ): T | null {
 	if (Array.isArray(value) || value == null) return null
 	return allowedValues.includes(value as T) ? (value as T) : null
 }
 
-export function parseBooleanQueryFlag(value: string | string[] | undefined, defaultValue?: boolean): boolean | null {
+export function parseBooleanQueryFlag(
+	value: string | Array<string> | undefined,
+	defaultValue?: boolean
+): boolean | null {
 	if (value == null) return defaultValue ?? null
 	if (Array.isArray(value)) return null
 	if (value === 'true') return true
@@ -14,7 +17,7 @@ export function parseBooleanQueryFlag(value: string | string[] | undefined, defa
 	return null
 }
 
-export function parseOptionalStringTarget(value: string | string[] | undefined): string | null | undefined {
+export function parseOptionalStringTarget(value: string | Array<string> | undefined): string | null | undefined {
 	if (value == null) return undefined
 	if (Array.isArray(value)) return null
 	const trimmed = value.trim()

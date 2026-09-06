@@ -58,7 +58,7 @@ function ChartTypeSelect({
 	onChange
 }: {
 	value: string
-	options: string[]
+	options: Array<string>
 	onChange: (next: string) => void
 }) {
 	const labelFor = (key: string) => CHART_TYPES[key as keyof typeof CHART_TYPES]?.title || key
@@ -112,10 +112,10 @@ function MultiPreview({
 	annotations,
 	height
 }: {
-	series: ArticleChartSeries[]
+	series: Array<ArticleChartSeries>
 	range: ArticleChartRange
 	logScale: boolean
-	annotations: ArticleChartAnnotation[]
+	annotations: Array<ArticleChartAnnotation>
 	height: number
 }) {
 	const authToken = useContext(ProxyAuthTokenContext)
@@ -141,7 +141,7 @@ function MultiPreview({
 				undefined,
 				authToken
 			),
-			select: (data: [number, number][]) => filterDataByTimePeriod(data, range as TimePeriod),
+			select: (data: Array<[number, number]>) => filterDataByTimePeriod(data, range as TimePeriod),
 			staleTime: 1000 * 60 * 5,
 			gcTime: 1000 * 60 * 30,
 			refetchOnWindowFocus: false
@@ -154,7 +154,7 @@ function MultiPreview({
 	const chartModel = useMemo(() => {
 		const chartSeries = series
 			.map((s, i) => {
-				const data = queries[i]?.data as [number, number][] | undefined
+				const data = queries[i]?.data as Array<[number, number]> | undefined
 				if (!data || data.length === 0) return null
 				const meta = CHART_TYPES[s.chartType as keyof typeof CHART_TYPES]
 				const type: 'line' | 'bar' = meta?.chartType === 'bar' ? 'bar' : 'line'
@@ -240,11 +240,13 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 	const initialLastChain = [...initialSeries].reverse().find((s) => s.entityType === 'chain')
 	const [tab, setTab] = useState<ArticleChartEntityType>(initialFirstSeries?.entityType ?? 'protocol')
 	const [query, setQuery] = useState('')
-	const [series, setSeries] = useState<ArticleChartSeries[]>(() => initialSeries.map((s) => ({ ...s })))
+	const [series, setSeries] = useState<Array<ArticleChartSeries>>(() => initialSeries.map((s) => ({ ...s })))
 	const [caption, setCaption] = useState(normalizedInitialConfig?.caption ?? '')
 	const [range, setRange] = useState<ArticleChartRange>(normalizedInitialConfig?.range ?? 'all')
 	const [logScale, setLogScale] = useState(normalizedInitialConfig?.logScale ?? false)
-	const [annotations, setAnnotations] = useState<ArticleChartAnnotation[]>(normalizedInitialConfig?.annotations ?? [])
+	const [annotations, setAnnotations] = useState<Array<ArticleChartAnnotation>>(
+		normalizedInitialConfig?.annotations ?? []
+	)
 	const [protocolMetric, setProtocolMetric] = useState<string>(initialLastProtocol?.chartType ?? DEFAULT_METRIC)
 	const [chainMetric, setChainMetric] = useState<string>(initialLastChain?.chartType ?? DEFAULT_METRIC)
 	const { data: catalog, isLoading: catalogLoading } = useProtocolsAndChains()
@@ -256,7 +258,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 		else setChainMetric(next)
 	}
 
-	const entities = useMemo<Entity[]>(() => {
+	const entities = useMemo<Array<Entity>>(() => {
 		if (!catalog) return []
 		if (tab === 'protocol') {
 			return (catalog.protocols || [])

@@ -1,6 +1,6 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildMatrixOption, PerformanceMatrix } from '../PerformanceMatrix'
 import { areMatrixIconsReady } from '../performanceMatrixIcons'
 import type { UtrGradingConfig, UtrLeaderboardRow } from '../types'
@@ -54,7 +54,7 @@ function row(grade?: string | null): UtrLeaderboardRow {
 }
 
 describe('buildMatrixOption', () => {
-	it('colors points and tooltip bars from runtime grade thresholds', () => {
+	test('colors points and tooltip bars from runtime grade thresholds', () => {
 		const option = buildMatrixOption([{ ...row(null), claimed: false }], undefined, {}, false, grading) as any
 
 		expect(option.animation).toBe(false)
@@ -65,19 +65,19 @@ describe('buildMatrixOption', () => {
 		expect(tooltip).toContain('/universal-token-rating/claim?token=example')
 	})
 
-	it('uses an explicit API grade before deriving from the score', () => {
+	test('uses an explicit API grade before deriving from the score', () => {
 		const option = buildMatrixOption([row('B')], undefined, {}, false, grading) as any
 
 		expect(option.series[0].data[0].itemStyle.color).toBe('#b96d39')
 	})
 
-	it('uses neutral colors when scoring configuration and explicit grades are unavailable', () => {
+	test('uses neutral colors when scoring configuration and explicit grades are unavailable', () => {
 		const option = buildMatrixOption([row(null)], undefined, {}, false, null) as any
 
 		expect(option.series[0].data[0].itemStyle.color).toBe('#8a8a8a')
 	})
 
-	it('waits for every available token icon before the first chart render', () => {
+	test('waits for every available token icon before the first chart render', () => {
 		const withIcon = { ...row(null), iconDataUrl: 'data:image/png;base64,example' }
 
 		expect(areMatrixIconsReady([withIcon], {})).toBe(false)
@@ -85,7 +85,7 @@ describe('buildMatrixOption', () => {
 		expect(areMatrixIconsReady([withIcon], { example: null })).toBe(true)
 	})
 
-	it('renders a resolved icon instead of the temporary circle fallback', () => {
+	test('renders a resolved icon instead of the temporary circle fallback', () => {
 		const option = buildMatrixOption(
 			[row(null)],
 			undefined,
@@ -97,7 +97,7 @@ describe('buildMatrixOption', () => {
 		expect(option.series[0].data[0].symbol).toBe('image://data:image/png;base64,rounded')
 	})
 
-	it('shows an accessible loading state until the chart is ready', () => {
+	test('shows an accessible loading state until the chart is ready', () => {
 		const html = renderToStaticMarkup(createElement(PerformanceMatrix, { rows: [row(null)], grading }))
 
 		expect(html).toContain('role="status"')

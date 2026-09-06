@@ -60,7 +60,7 @@ interface ChatExecutionOwnerOptions {
 	dispatch: StreamDispatch
 	executionCoordinator: ExecutionCoordinator
 	getCurrentSessionId: () => string | null
-	getServerQueue: () => QueuedMessageElement[]
+	getServerQueue: () => Array<QueuedMessageElement>
 	onSettled: (sessionId: string) => void
 	replaceUserMessageId: (messageId: string, queueItemId?: string) => void
 	setPaginationError: (error: string | null) => void

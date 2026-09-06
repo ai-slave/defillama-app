@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PriceChartTimeframe } from '~/utils/priceChartTimeframes'
 import type {
 	EquitiesPriceHistory,
@@ -13,10 +13,10 @@ import type {
 import { getEquitiesTickerPageData } from '../queries'
 
 const mocks = vi.hoisted(() => ({
-	fetchEquitiesCompanies: vi.fn<() => Promise<IEquitiesCompanyApiItem[]>>(),
+	fetchEquitiesCompanies: vi.fn<() => Promise<Array<IEquitiesCompanyApiItem>>>(),
 	fetchEquitiesCompaniesList: vi.fn(),
 	fetchEquitiesDimensions: vi.fn<(ticker: string, country: string) => Promise<IEquitiesDimensionsResponse>>(),
-	fetchEquitiesFilings: vi.fn<(ticker: string, country: string) => Promise<IEquitiesFilingApiItem[]>>(),
+	fetchEquitiesFilings: vi.fn<(ticker: string, country: string) => Promise<Array<IEquitiesFilingApiItem>>>(),
 	fetchEquitiesMetadata: vi.fn<(ticker: string, country: string) => Promise<IEquitiesMetadataResponse>>(),
 	fetchEquitiesOnchain: vi.fn<(ticker: string, country: string) => Promise<IEquitiesOnchainResponse>>(),
 	fetchEquitiesPriceHistory:
@@ -135,7 +135,7 @@ beforeEach(() => {
 })
 
 describe('getEquitiesTickerPageData', () => {
-	it('fetches only the default 24H price history for page generation', async () => {
+	test('fetches only the default 24H price history for page generation', async () => {
 		const priceHistory: EquitiesPriceHistory = [
 			['2026-08-27T13:35:00Z', 223],
 			['2026-08-27T13:30:00Z', 222]
@@ -148,7 +148,7 @@ describe('getEquitiesTickerPageData', () => {
 		expect(result?.priceHistory).toEqual(priceHistory)
 	})
 
-	it('derives an unlocks slug from a lowercased ticker present in emissions metadata', async () => {
+	test('derives an unlocks slug from a lowercased ticker present in emissions metadata', async () => {
 		const result = await getEquitiesTickerPageData('NVDA', 'US', {
 			protocolDisplayNames: new Map(),
 			rwaPlatforms: [],
@@ -158,7 +158,7 @@ describe('getEquitiesTickerPageData', () => {
 		expect(result?.unlocksSlug).toBe('nvda')
 	})
 
-	it('omits the unlocks slug when the ticker is absent from emissions metadata', async () => {
+	test('omits the unlocks slug when the ticker is absent from emissions metadata', async () => {
 		const result = await getEquitiesTickerPageData('NVDA', 'US', {
 			protocolDisplayNames: new Map(),
 			rwaPlatforms: [],
@@ -168,7 +168,7 @@ describe('getEquitiesTickerPageData', () => {
 		expect(result?.unlocksSlug).toBeNull()
 	})
 
-	it('keeps successful empty optional sources available', async () => {
+	test('keeps successful empty optional sources available', async () => {
 		const result = await getEquitiesTickerPageData('NVDA', 'US', {
 			protocolDisplayNames: new Map(),
 			rwaPlatforms: [],
@@ -181,7 +181,7 @@ describe('getEquitiesTickerPageData', () => {
 		expect(mocks.fetchEquitiesOnchain).toHaveBeenCalledWith('NVDA', 'US')
 	})
 
-	it('preserves populated optional data and maps on-chain display names', async () => {
+	test('preserves populated optional data and maps on-chain display names', async () => {
 		mocks.fetchEquitiesFilings.mockResolvedValue([
 			{
 				filingDate: '2026-08-20',
@@ -255,7 +255,7 @@ describe('getEquitiesTickerPageData', () => {
 		})
 	})
 
-	it('promotes only the highest-volume Bybit pair without mutating the API response', async () => {
+	test('promotes only the highest-volume Bybit pair without mutating the API response', async () => {
 		const onchain: IEquitiesOnchainResponse = {
 			perps: [
 				market('Bybit small', 10, 'bybit'),
@@ -283,7 +283,7 @@ describe('getEquitiesTickerPageData', () => {
 		expect(onchain.perps.map(({ pair }) => pair)).toEqual(['Bybit small', 'Binance', 'Bybit large', 'Ostium', 'Zero'])
 	})
 
-	it('orders markets by descending volume with missing values last when Bybit is absent', async () => {
+	test('orders markets by descending volume with missing values last when Bybit is absent', async () => {
 		mocks.fetchEquitiesOnchain.mockResolvedValue({
 			perps: [market('Ostium', null, 'ostium'), market('Zero', 0, 'other'), market('Binance', 300, 'binance')],
 			tokens: []
@@ -294,7 +294,7 @@ describe('getEquitiesTickerPageData', () => {
 		expect(result?.onchain?.perps.map(({ pair }) => pair)).toEqual(['Binance', 'Zero', 'Ostium'])
 	})
 
-	it.each([null, 0])('keeps Bybit first by default even when its volume is %s', async (volume) => {
+	test.each([null, 0])('keeps Bybit first by default even when its volume is %s', async (volume) => {
 		mocks.fetchEquitiesOnchain.mockResolvedValue({
 			perps: [
 				market('Ostium', null, 'ostium'),
@@ -310,7 +310,7 @@ describe('getEquitiesTickerPageData', () => {
 		expect(result?.onchain?.perps.map(({ pair }) => pair)).toEqual(['Bybit', 'Binance', 'Ostium', 'Bybit missing'])
 	})
 
-	it('keeps filings and on-chain data available when price history fails', async () => {
+	test('keeps filings and on-chain data available when price history fails', async () => {
 		mocks.fetchEquitiesPriceHistory.mockRejectedValue(new Error('prices unavailable'))
 
 		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
@@ -322,7 +322,7 @@ describe('getEquitiesTickerPageData', () => {
 		expect(result?.onchain).toEqual({ perps: [], tokens: [] })
 	})
 
-	it('keeps price and on-chain data available when filings fail', async () => {
+	test('keeps price and on-chain data available when filings fail', async () => {
 		mocks.fetchEquitiesFilings.mockRejectedValue(new Error('filings unavailable'))
 
 		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
@@ -334,7 +334,7 @@ describe('getEquitiesTickerPageData', () => {
 		expect(result?.onchain).toEqual({ perps: [], tokens: [] })
 	})
 
-	it('keeps price and filings data available when on-chain data fails', async () => {
+	test('keeps price and filings data available when on-chain data fails', async () => {
 		mocks.fetchEquitiesOnchain.mockRejectedValue(new Error('on-chain unavailable'))
 
 		const result = await getEquitiesTickerPageData('NVDA', 'US', pageMetadata)
@@ -345,19 +345,19 @@ describe('getEquitiesTickerPageData', () => {
 		expect(result?.onchain).toBeNull()
 	})
 
-	it('keeps required statement failure page-atomic', async () => {
+	test('keeps required statement failure page-atomic', async () => {
 		mocks.fetchEquitiesStatements.mockRejectedValue(new Error('statements unavailable'))
 
 		await expect(getEquitiesTickerPageData('NVDA', 'US', pageMetadata)).resolves.toBeNull()
 	})
 
-	it('keeps required dimensions failure page-atomic', async () => {
+	test('keeps required dimensions failure page-atomic', async () => {
 		mocks.fetchEquitiesDimensions.mockRejectedValue(new Error('dimensions unavailable'))
 
 		await expect(getEquitiesTickerPageData('NVDA', 'US', pageMetadata)).resolves.toBeNull()
 	})
 
-	it.each([
+	test.each([
 		['summary', () => mocks.fetchEquitiesSummary.mockRejectedValue(new Error('summary unavailable'))],
 		['metadata', () => mocks.fetchEquitiesMetadata.mockRejectedValue(new Error('metadata unavailable'))]
 	])('keeps required %s request failure page-atomic', async (_source, rejectRequest) => {

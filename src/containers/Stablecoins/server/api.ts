@@ -63,7 +63,7 @@ export const stablecoinMcapChart = defineApiRoute({
 				chain: resolvedChain.chain,
 				chart: 'totalMcap'
 			})
-			const series: StablecoinMcapSeriesPoint[] = []
+			const series: Array<StablecoinMcapSeriesPoint> = []
 			for (const row of payload.dataset.source) {
 				const timestamp = row[0]
 				const mcap = row[1]
@@ -81,7 +81,7 @@ export const stablecoinMcapChart = defineApiRoute({
 // /api/public/stablecoins/chart-series
 // ---------------------------------------------------------------------------
 
-const parseLimit = (value: string | string[] | undefined): number | undefined => {
+const parseLimit = (value: string | Array<string> | undefined): number | undefined => {
 	const raw = Array.isArray(value) ? value[0] : value
 	if (!raw) return undefined
 	const parsed = Math.trunc(Number(raw))
@@ -89,7 +89,7 @@ const parseLimit = (value: string | string[] | undefined): number | undefined =>
 }
 
 const parseSeriesSelectionIntent = (
-	query: Record<string, string | string[] | undefined>
+	query: Record<string, string | Array<string> | undefined>
 ): StablecoinSeriesSelectionIntent | 'invalid' => {
 	const includes = isTruthyQueryParam(query.include) || isTruthyQueryParam(query.selected)
 	const excludes = isTruthyQueryParam(query.exclude)

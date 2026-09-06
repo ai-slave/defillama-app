@@ -13,7 +13,7 @@ export function singleSeriesDataset(chart: ChartData, dimension: string): MultiS
 	}
 }
 
-export function aggregateBreakdown(chart: BreakdownChart, topN: number): { name: string; value: number }[] {
+export function aggregateBreakdown(chart: BreakdownChart, topN: number): Array<{ name: string; value: number }> {
 	const totals = chart.series.map((series) => ({
 		name: series.name,
 		value: series.data.reduce((sum, value) => sum + (value ?? 0), 0)
@@ -26,7 +26,7 @@ export function aggregateBreakdown(chart: BreakdownChart, topN: number): { name:
 	return top
 }
 
-export function channelsToBars(breakdown: ChannelBreakdown): { categories: string[]; values: number[] } {
+export function channelsToBars(breakdown: ChannelBreakdown): { categories: Array<string>; values: Array<number> } {
 	const sorted = breakdown.channels.toSorted((a, b) => b.fees - a.fees)
 	return {
 		categories: sorted.map((channel) => channel.referral || 'unknown'),
@@ -45,7 +45,7 @@ export function lastSeriesValue(chart: ChartData | undefined, seriesName: string
 	return undefined
 }
 
-export function timeframeStartIndex(dates: string[], timeframe: Timeframe): number {
+export function timeframeStartIndex(dates: Array<string>, timeframe: Timeframe): number {
 	if (timeframe === 'ytd') {
 		const yearStart = `${new Date().getUTCFullYear()}-01-01`
 		const index = dates.findIndex((date) => date >= yearStart)
@@ -70,7 +70,11 @@ export function timeframeStartIndex(dates: string[], timeframe: Timeframe): numb
 	return Math.max(0, dates.length - count)
 }
 
-export function filterTimeSeries(dates: string[], series: number[], timeframe: Timeframe): Array<[number, number]> {
+export function filterTimeSeries(
+	dates: Array<string>,
+	series: Array<number>,
+	timeframe: Timeframe
+): Array<[number, number]> {
 	const start = timeframeStartIndex(dates, timeframe)
 	const result = new Array<[number, number]>(dates.length - start)
 	for (let index = start; index < dates.length; index++) {
@@ -80,8 +84,8 @@ export function filterTimeSeries(dates: string[], series: number[], timeframe: T
 }
 
 export function aggregateTimeSeries(
-	dates: string[],
-	series: number[],
+	dates: Array<string>,
+	series: Array<number>,
 	timeframe: Timeframe,
 	aggregation: Aggregation
 ): Array<[number, number]> {

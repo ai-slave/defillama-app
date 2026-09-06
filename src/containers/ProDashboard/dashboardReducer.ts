@@ -3,28 +3,28 @@ import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
 
 export interface DashboardState {
-	items: DashboardItemConfig[]
+	items: Array<DashboardItemConfig>
 	timePeriod: TimePeriod
 	customTimePeriod: CustomTimePeriod | null
 	dashboardName: string
 	dashboardId: string | null
 	currentDashboard: Dashboard | null
 	dashboardVisibility: 'private' | 'public'
-	dashboardTags: string[]
+	dashboardTags: Array<string>
 	dashboardDescription: string
 	showGenerateDashboardModal: boolean
 	showIterateDashboardModal: boolean
 }
 
 export type DashboardAction =
-	| { type: 'SET_ITEMS'; payload: DashboardItemConfig[] }
+	| { type: 'SET_ITEMS'; payload: Array<DashboardItemConfig> }
 	| { type: 'SET_TIME_PERIOD'; payload: TimePeriod }
 	| { type: 'SET_CUSTOM_TIME_PERIOD'; payload: CustomTimePeriod | null }
 	| { type: 'SET_DASHBOARD_NAME'; payload: string }
 	| { type: 'SET_DASHBOARD_ID'; payload: string | null }
 	| { type: 'SET_CURRENT_DASHBOARD'; payload: SetStateAction<Dashboard | null> }
 	| { type: 'SET_DASHBOARD_VISIBILITY'; payload: 'private' | 'public' }
-	| { type: 'SET_DASHBOARD_TAGS'; payload: string[] }
+	| { type: 'SET_DASHBOARD_TAGS'; payload: Array<string> }
 	| { type: 'SET_DASHBOARD_DESCRIPTION'; payload: string }
 	| { type: 'SET_SHOW_GENERATE_DASHBOARD_MODAL'; payload: boolean }
 	| { type: 'SET_SHOW_ITERATE_DASHBOARD_MODAL'; payload: boolean }
@@ -60,7 +60,7 @@ function stateFromDashboard(dashboard: Dashboard): DashboardState {
 }
 
 export function initDashboardState(
-	arg?: string | { dashboardId?: string; items?: DashboardItemConfig[]; dashboard?: Dashboard | null }
+	arg?: string | { dashboardId?: string; items?: Array<DashboardItemConfig>; dashboard?: Dashboard | null }
 ): DashboardState {
 	if (typeof arg === 'object' && arg !== null) {
 		if (arg.dashboard?.data?.items && Array.isArray(arg.dashboard.data.items)) {

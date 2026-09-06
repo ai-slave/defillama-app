@@ -9,7 +9,7 @@ import type { ArticleDocument } from '~/containers/Articles/types'
 
 interface ResearchSpotlightColumnProps {
 	title: string
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 	sharedHeight?: number
 }
 
@@ -93,7 +93,7 @@ export function ResearchSpotlightColumn({ title, articles, sharedHeight }: Resea
 
 interface ResearchSpotlightColumnWithHeightProps {
 	title: string
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 }
 
 export function ResearchSpotlightColumnWithHeight({ title, articles }: ResearchSpotlightColumnWithHeightProps) {

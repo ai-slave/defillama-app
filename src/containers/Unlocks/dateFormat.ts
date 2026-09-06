@@ -6,11 +6,11 @@ function pad(value: number): string {
 
 /** Preserves the compact UTC label used by unlock schedules and the legacy calendar page. */
 export function formatUnlockDate(timestampSeconds: number): string {
-	const date = new Date(timestampSeconds * 1_000)
+	const date = new Date(timestampSeconds * 1000)
 	return `${pad(date.getUTCDate())} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`
 }
 
 export function formatUnlockTime(timestampSeconds: number): string {
-	const date = new Date(timestampSeconds * 1_000)
+	const date = new Date(timestampSeconds * 1000)
 	return `${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`
 }

@@ -1,8 +1,8 @@
 import { resolveExchangeByDefillamaCexSlug, type CexExchangeSlugIndex } from '~/containers/Markets/server/dataset.index'
 import type { ICex } from './types'
 
-export function attachExchangeProfileSlugs(cexs: ICex[], index: CexExchangeSlugIndex): ICex[] {
-	const result: ICex[] = []
+export function attachExchangeProfileSlugs(cexs: Array<ICex>, index: CexExchangeSlugIndex): Array<ICex> {
+	const result: Array<ICex> = []
 	for (const cex of cexs) {
 		if (!cex.cexProtocolSlug) {
 			result.push(cex)

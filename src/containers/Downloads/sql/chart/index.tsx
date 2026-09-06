@@ -17,7 +17,7 @@ import { TreemapChartAdapter } from './adapters/TreemapChartAdapter'
 interface ChartRouterProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 

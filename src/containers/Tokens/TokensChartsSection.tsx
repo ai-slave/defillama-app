@@ -269,16 +269,16 @@ function MoversChart({
 	title: string
 	titleClassName: string
 	className?: string
-	entries: TokensMoverEntry[]
+	entries: Array<TokensMoverEntry>
 	color: string
 }) {
 	const router = useRouter()
 	const entriesRef = React.useRef(entries)
 	entriesRef.current = entries
 	const chartData = React.useMemo(() => {
-		const categories: string[] = []
-		const values: number[] = []
-		const logos: string[] = []
+		const categories: Array<string> = []
+		const values: Array<number> = []
+		const logos: Array<string> = []
 		for (const entry of entries) {
 			categories.push(entry.name)
 			values.push(entry.value)

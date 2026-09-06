@@ -74,11 +74,11 @@ export interface RawChainAssetsChartDataPoint {
 	data: { total: string } & Partial<Record<Exclude<ChainAssetCategoryKey, 'total'>, string>>
 }
 
-export type RawChainAssetsChartResponse = RawChainAssetsChartDataPoint[]
+export type RawChainAssetsChartResponse = Array<RawChainAssetsChartDataPoint>
 
 export interface ChainAssetsChartDataPoint {
 	timestamp: number
 	data: { total: number } & Partial<Record<Exclude<ChainAssetCategoryKey, 'total'>, number>>
 }
 
-export type ChainAssetsChartResponse = ChainAssetsChartDataPoint[]
+export type ChainAssetsChartResponse = Array<ChainAssetsChartDataPoint>

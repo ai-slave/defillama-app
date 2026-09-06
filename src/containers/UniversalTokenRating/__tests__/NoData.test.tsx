@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({
@@ -17,11 +17,11 @@ import { CantFindTokenBanner } from '../TokenPage'
 import { TopMovers } from '../TopMovers'
 
 describe('UTR empty states', () => {
-	it('hides Top Movers when MoM data is unavailable', () => {
+	test('hides Top Movers when MoM data is unavailable', () => {
 		expect(renderToStaticMarkup(<TopMovers movers={[]} />)).toBe('')
 	})
 
-	it('keeps explicit mover signs while using canonical percent formatting', () => {
+	test('keeps explicit mover signs while using canonical percent formatting', () => {
 		const html = renderToStaticMarkup(
 			<TopMovers
 				movers={[
@@ -35,7 +35,7 @@ describe('UTR empty states', () => {
 		expect(html).toContain('-1.23%')
 	})
 
-	it('keeps available fundraising metadata without empty cards', () => {
+	test('keeps available fundraising metadata without empty cards', () => {
 		const html = renderToStaticMarkup(<PreTgePerformance hasFundraising lastRound="Strategic" />)
 
 		expect(html).toContain('Strategic')
@@ -43,11 +43,11 @@ describe('UTR empty states', () => {
 		expect(html).not.toContain('Total Amount Fundraised')
 	})
 
-	it('hides pre-TGE performance when no metrics are available', () => {
+	test('hides pre-TGE performance when no metrics are available', () => {
 		expect(renderToStaticMarkup(<PreTgePerformance hasFundraising={null} lastRound={null} />)).toBe('')
 	})
 
-	it('links the missing-token CTA to the UTR application form without account-creation copy', () => {
+	test('links the missing-token CTA to the UTR application form without account-creation copy', () => {
 		const html = renderToStaticMarkup(<CantFindTokenBanner />)
 
 		expect(html).toContain('Apply for UTR')
@@ -56,7 +56,7 @@ describe('UTR empty states', () => {
 		expect(html).not.toContain('Create an account')
 	})
 
-	it('uses the API scored count instead of the number of rendered rows', () => {
+	test('uses the API scored count instead of the number of rendered rows', () => {
 		const html = renderToStaticMarkup(
 			<UniversalTokenRating
 				universe={{

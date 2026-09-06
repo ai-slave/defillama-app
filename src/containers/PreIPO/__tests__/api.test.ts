@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const fetchJson = vi.fn()
 
@@ -22,7 +22,7 @@ function calledUrl(index: number): URL {
 }
 
 describe('pre-IPO API URLs', () => {
-	it('fetches the company directory without unsupported query parameters', async () => {
+	test('fetches the company directory without unsupported query parameters', async () => {
 		const api = await import('../api')
 		await api.fetchPreIpoCompanies()
 
@@ -31,7 +31,7 @@ describe('pre-IPO API URLs', () => {
 		expect(url.search).toBe('')
 	})
 
-	it('uses the canonical company on every detail endpoint', async () => {
+	test('uses the canonical company on every detail endpoint', async () => {
 		const api = await import('../api')
 		await api.fetchPreIpoCompanySummary('anthropic')
 		await api.fetchPreIpoValuations('anthropic')

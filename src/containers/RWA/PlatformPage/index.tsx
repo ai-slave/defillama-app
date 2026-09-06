@@ -59,7 +59,7 @@ function Prose({ children }: { children: string }) {
 /** Expandable detail group, initially open so its information is visible. */
 function Disclosure({ title, children }: { title: string; children: React.ReactNode }) {
 	return (
-		<details open={true} className="group/disclosure flex flex-col border-t border-subtle py-2">
+		<details open className="group/disclosure flex flex-col border-t border-subtle py-2">
 			<summary className="flex cursor-pointer items-center gap-1 label-md text-secondary hover:text-primary">
 				{title}
 				<Icon
@@ -160,7 +160,7 @@ function LinkRow({ meta }: { meta: RWAPlatformMeta }) {
 }
 
 /** External document pills, grouped by kind (several prospectuses collapse into a menu). */
-function DocumentLinks({ groups }: { groups: Array<{ label: string; urls: string[] }> }) {
+function DocumentLinks({ groups }: { groups: Array<{ label: string; urls: Array<string> }> }) {
 	if (groups.length === 0) return null
 	return (
 		<div className="flex flex-wrap gap-1.5">
@@ -177,8 +177,8 @@ function DocumentLinks({ groups }: { groups: Array<{ label: string; urls: string
 	)
 }
 
-function collectLinkGroups(entries: ReadonlyArray<readonly [string, string[] | null]>) {
-	const groups: Array<{ label: string; urls: string[] }> = []
+function collectLinkGroups(entries: ReadonlyArray<readonly [string, Array<string> | null]>) {
+	const groups: Array<{ label: string; urls: Array<string> }> = []
 	for (const [label, urls] of entries) {
 		if (urls && urls.length > 0) groups.push({ label, urls })
 	}
@@ -205,7 +205,7 @@ export function RWAPlatformHeader({
 	data: RWAPlatformPageData
 	includeBridgeTvl: boolean
 	/** Filter-dependent aggregates, shown as their own group under Key Metrics. */
-	listedTotals: RWAPlatformListedTotal[]
+	listedTotals: Array<RWAPlatformListedTotal>
 }) {
 	const { meta } = data
 	const displayedDefiActiveTvl = includeBridgeTvl ? data.defiActiveTvl : data.defiActiveTvl - data.bridgeTvl
@@ -286,7 +286,7 @@ export function RWAPlatformHeader({
 
 /* Every row is rendered: the mix owns a full panel now, and a truncated list
    with a "+12 more" count the reader cannot open is a dead end. */
-function MixList({ rows }: { rows: RWAPlatformMixRow[] }) {
+function MixList({ rows }: { rows: Array<RWAPlatformMixRow> }) {
 	const maxCount = rows[0]?.count ?? 0
 	return (
 		<div className="flex flex-col gap-1.5">

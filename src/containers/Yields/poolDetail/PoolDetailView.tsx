@@ -19,7 +19,7 @@ export interface ApyBreakdown {
 	base: number | null
 	reward: number | null
 	intrinsic: number | null
-	rewardTokens: string[]
+	rewardTokens: Array<string>
 	intrinsicSource: string | null
 }
 
@@ -34,7 +34,7 @@ export interface PoolMetric {
 export interface PoolSide {
 	apyLabel: string
 	apy: ApyBreakdown
-	metrics: PoolMetric[]
+	metrics: Array<PoolMetric>
 }
 
 export interface StabilityInfo {
@@ -65,12 +65,12 @@ export interface PoolDetailViewProps {
 		poolTokenAddress: string | null
 		url: string | null
 		protocolName: string
-		assets: string[]
+		assets: Array<string>
 	}
 }
 
 function apyParts(apy: ApyBreakdown, kind: ApyKind) {
-	const parts: { key: string; label: string; value: string; strong: boolean }[] = []
+	const parts: Array<{ key: string; label: string; value: string; strong: boolean }> = []
 	if (apy.base != null) {
 		parts.push({
 			key: 'base',
@@ -81,7 +81,7 @@ function apyParts(apy: ApyBreakdown, kind: ApyKind) {
 	}
 	if (hasPart(apy.reward)) {
 		const sign = kind === 'borrow' ? '−' : '+'
-		const syms = apy.rewardTokens.length ? ` · ${apy.rewardTokens.join(', ')}` : ''
+		const syms = apy.rewardTokens.length > 0 ? ` · ${apy.rewardTokens.join(', ')}` : ''
 		parts.push({
 			key: 'reward',
 			label: `Reward${syms}`,
@@ -109,7 +109,7 @@ function SideBlock({ side, kind, children }: { side: PoolSide; kind: ApyKind; ch
 	const apyValue = side.apy.total == null ? '—' : formatPercent(side.apy.total, YIELD_PERCENT_OPTIONS)
 	return (
 		<>
-			{parts.length ? (
+			{parts.length > 0 ? (
 				<MetricSection label={side.apyLabel} value={apyValue} valueClassName={VALUE_CLS}>
 					{parts.map((p) => (
 						<SubMetricRow

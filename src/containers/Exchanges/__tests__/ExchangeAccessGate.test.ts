@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { resolveExchangeAccessState } from '../ExchangeAccessGate'
 
 describe('resolveExchangeAccessState', () => {
-	it('waits for client-side authentication to resolve', () => {
+	test('waits for client-side authentication to resolve', () => {
 		expect(
 			resolveExchangeAccessState({ isClient: false, isLoading: false, isAuthenticated: true, isLlama: true })
 		).toBe('loading')
@@ -11,13 +11,13 @@ describe('resolveExchangeAccessState', () => {
 		)
 	})
 
-	it('authorizes only authenticated llama users', () => {
+	test('authorizes only authenticated llama users', () => {
 		expect(resolveExchangeAccessState({ isClient: true, isLoading: false, isAuthenticated: true, isLlama: true })).toBe(
 			'authorized'
 		)
 	})
 
-	it.each([
+	test.each([
 		{ isAuthenticated: false, isLlama: false },
 		{ isAuthenticated: false, isLlama: true },
 		{ isAuthenticated: true, isLlama: false }

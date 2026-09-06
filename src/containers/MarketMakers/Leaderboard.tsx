@@ -16,7 +16,7 @@ interface ILeaderboardProps {
 	active: string
 	title: string
 	subtitle: string
-	columns: ColumnConfig[]
+	columns: Array<ColumnConfig>
 	initialData: unknown
 	fetchPath: 'depth' | 'volume' | 'spread' | 'kpi'
 	hasThreshold?: boolean
@@ -35,7 +35,7 @@ export function Leaderboard({
 	const badge = timeframeBadge(timeframe)
 	const [mode, setMode] = useState<DisplayMode>(DISPLAY_MODES[0])
 	const [threshold, setThreshold] = useState<Threshold>(THRESHOLDS[0])
-	const shape = useMemo<(raw: unknown) => LeaderboardRow[]>(
+	const shape = useMemo<(raw: unknown) => Array<LeaderboardRow>>(
 		() =>
 			hasThreshold ? (raw) => selectDepthBucket(raw, threshold) : (raw) => toBoardRows(Array.isArray(raw) ? raw : []),
 		[hasThreshold, threshold]

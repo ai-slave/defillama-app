@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { DashboardSeoSummary } from '../components/DashboardSeoSummary'
 import { ProDashboardLoader } from '../components/ProDashboardLoader'
 import type { Dashboard } from '../dashboardTypes'
@@ -62,7 +62,7 @@ describe('pro dashboard SEO shell', () => {
 		}
 	} satisfies Dashboard
 
-	it('builds plain-text metadata and structured data for a public dashboard', () => {
+	test('builds plain-text metadata and structured data for a public dashboard', () => {
 		const seo = buildDashboardSeo(dashboard)
 
 		expect(seo.title).toBe('Revenue Watchlist - DefiLlama Pro Dashboard')
@@ -95,7 +95,7 @@ describe('pro dashboard SEO shell', () => {
 		})
 	})
 
-	it('prefers the dashboard slug for canonical url and structured data', () => {
+	test('prefers the dashboard slug for canonical url and structured data', () => {
 		const seo = buildDashboardSeo({ ...dashboard, slug: 'revenue-watchlist' })
 
 		expect(seo.canonicalPath).toBe('/pro/revenue-watchlist')
@@ -110,7 +110,7 @@ describe('pro dashboard SEO shell', () => {
 		expect(toDashboardSeoPublicDashboard({ ...dashboard, slug: 'revenue-watchlist' }).slug).toBe('revenue-watchlist')
 	})
 
-	it('renders a visible semantic summary for the initial HTML', () => {
+	test('renders a visible semantic summary for the initial HTML', () => {
 		const seo = buildDashboardSeo(dashboard)
 		const html = renderToStaticMarkup(<DashboardSeoSummary dashboard={dashboard} seo={seo} />)
 
@@ -129,7 +129,7 @@ describe('pro dashboard SEO shell', () => {
 		expect(html).toContain('ethereum')
 	})
 
-	it('compacts dashboard SEO props without raw owner ids', () => {
+	test('compacts dashboard SEO props without raw owner ids', () => {
 		const compact = toDashboardSeoPublicDashboard(dashboard)
 
 		expect(compact.author).toEqual(
@@ -143,14 +143,14 @@ describe('pro dashboard SEO shell', () => {
 		expect(compact).not.toHaveProperty('collectionName')
 	})
 
-	it('keeps the loader heading opt-in for headingless SEO shell fallbacks', () => {
+	test('keeps the loader heading opt-in for headingless SEO shell fallbacks', () => {
 		expect(renderToStaticMarkup(<ProDashboardLoader />)).not.toContain('<h1')
 		expect(renderToStaticMarkup(<ProDashboardLoader heading="Loading dashboard" />)).toMatch(
 			/<h1(?:\s[^>]*)?>Loading dashboard<\/h1>/
 		)
 	})
 
-	it('falls back honestly for empty public dashboards', () => {
+	test('falls back honestly for empty public dashboards', () => {
 		const emptyDashboard = {
 			...dashboard,
 			tags: [],
@@ -166,7 +166,7 @@ describe('pro dashboard SEO shell', () => {
 		expect(html).toContain('This public dashboard does not have any items yet.')
 	})
 
-	it('omits unavailable summary links so public dashboard props stay serializable', () => {
+	test('omits unavailable summary links so public dashboard props stay serializable', () => {
 		const dashboardWithAllChains = {
 			...dashboard,
 			data: {
@@ -188,7 +188,7 @@ describe('pro dashboard SEO shell', () => {
 		expect(hasNestedUndefined(seo)).toBe(false)
 	})
 
-	it('converts markdown and raw html to plain text before SEO rendering', () => {
+	test('converts markdown and raw html to plain text before SEO rendering', () => {
 		expect(markdownToPlainText('## Hello <script>alert(1)</script> [world](/x) `code`')).toBe(
 			'Hello alert(1) world code'
 		)

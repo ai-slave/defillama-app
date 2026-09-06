@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import { createStreamBuffer, type StreamDispatch } from '~/containers/LlamaAI/streamState'
 
@@ -26,7 +26,7 @@ function setupCallbacks(isCurrent = true, deferEmptyDone = false) {
 }
 
 describe('createAgenticCallbacks', () => {
-	it('ignores stale request events', () => {
+	test('ignores stale request events', () => {
 		const { appendMessage, buffer, callbacks, dispatch, notify } = setupCallbacks(false)
 
 		callbacks.onToken('hello')
@@ -38,7 +38,7 @@ describe('createAgenticCallbacks', () => {
 		expect(notify).not.toHaveBeenCalled()
 	})
 
-	it('updates buffer and dispatches live stream actions', () => {
+	test('updates buffer and dispatches live stream actions', () => {
 		const { appendMessage, buffer, callbacks, currentMessageIdRef, dispatch, notify, onCompletion } = setupCallbacks()
 
 		callbacks.onToken('[REPORT_START]hello')
@@ -63,7 +63,7 @@ describe('createAgenticCallbacks', () => {
 		expect(onCompletion).toHaveBeenCalledWith('assistant-1')
 	})
 
-	it('commits the assistant message only once when done fires twice', () => {
+	test('commits the assistant message only once when done fires twice', () => {
 		const { appendMessage, callbacks, notify, onCompletion } = setupCallbacks()
 
 		callbacks.onToken('hello')
@@ -75,7 +75,7 @@ describe('createAgenticCallbacks', () => {
 		expect(onCompletion).toHaveBeenCalledOnce()
 	})
 
-	it('writes unified fact-check refs into buffer.citations without altering text', () => {
+	test('writes unified fact-check refs into buffer.citations without altering text', () => {
 		const { buffer, callbacks, dispatch } = setupCallbacks()
 
 		callbacks.onToken('plain prose')
@@ -90,7 +90,7 @@ describe('createAgenticCallbacks', () => {
 		})
 	})
 
-	it('swaps buffer text to finalized [n] string when response is present', () => {
+	test('swaps buffer text to finalized [n] string when response is present', () => {
 		const { buffer, callbacks, dispatch } = setupCallbacks()
 
 		callbacks.onToken('plain prose')
@@ -108,7 +108,7 @@ describe('createAgenticCallbacks', () => {
 		})
 	})
 
-	it('defers empty done events when requested', () => {
+	test('defers empty done events when requested', () => {
 		const { appendMessage, callbacks, dispatch, notify, onCompletion } = setupCallbacks(true, true)
 
 		callbacks.onDone()
@@ -120,7 +120,7 @@ describe('createAgenticCallbacks', () => {
 		expect(onCompletion).not.toHaveBeenCalled()
 	})
 
-	it('reports the canonical user message id after materializing it', () => {
+	test('reports the canonical user message id after materializing it', () => {
 		const replaceLocalUserMessageId = vi.fn()
 		const onUserMessageIdObserved = vi.fn()
 		const callbacks = createAgenticCallbacks({
@@ -141,7 +141,7 @@ describe('createAgenticCallbacks', () => {
 		expect(onUserMessageIdObserved).toHaveBeenCalledWith('user-message-1')
 	})
 
-	it('preserves explicit zero spawn start timestamps', () => {
+	test('preserves explicit zero spawn start timestamps', () => {
 		const { callbacks, dispatch } = setupCallbacks()
 
 		callbacks.onSpawnProgress({ agentId: 'agent-1', status: 'started', startedAt: 0 })

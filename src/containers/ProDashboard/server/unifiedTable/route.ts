@@ -31,9 +31,9 @@ const MAX_CHAIN_NAME_LENGTH = 200
 
 interface ParsedUnifiedTableQuery {
 	config: UnifiedTableConfig
-	baseMetricFamilies: ProtocolBaseMetricFamily[]
-	pointMetrics: ProtocolPointMetric[]
-	supplementalMetrics: ProtocolSupplementalMetric[]
+	baseMetricFamilies: Array<ProtocolBaseMetricFamily>
+	pointMetrics: Array<ProtocolPointMetric>
+	supplementalMetrics: Array<ProtocolSupplementalMetric>
 	needsOracleMembership: boolean
 	rowMembership: ProtocolRowMembership
 	usesLegacyContract: boolean

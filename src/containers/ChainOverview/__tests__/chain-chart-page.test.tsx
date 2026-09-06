@@ -1,11 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
 import ChainChartPage from '~/pages/chart/chain/[chain]'
 
 const mocks = vi.hoisted(() => ({
 	routerState: {
-		query: {} as Record<string, string | string[]>,
+		query: {} as Record<string, string | Array<string>>,
 		isReady: true
 	},
 	useFetchChainChartData: vi.fn()
@@ -87,7 +87,7 @@ describe('chart/chain/[chain]', () => {
 		})
 	})
 
-	it('passes chain overview extra TVL charts through to the chart data hook', () => {
+	test('passes chain overview extra TVL charts through to the chart data hook', () => {
 		const extraTvlCharts = makeExtraTvlCharts({
 			staking: {
 				'1700000000': 12
@@ -104,7 +104,7 @@ describe('chart/chain/[chain]', () => {
 		expect(mocks.useFetchChainChartData.mock.calls[0][0].extraTvlCharts).toBe(extraTvlCharts)
 	})
 
-	it('passes empty extra TVL chart buckets through without substituting undefined', () => {
+	test('passes empty extra TVL chart buckets through without substituting undefined', () => {
 		const extraTvlCharts = makeExtraTvlCharts()
 
 		renderToStaticMarkup(<ChainChartPage {...createProps(extraTvlCharts)} />)
@@ -112,7 +112,7 @@ describe('chart/chain/[chain]', () => {
 		expect(mocks.useFetchChainChartData.mock.calls[0][0].extraTvlCharts).toBe(extraTvlCharts)
 	})
 
-	it('passes TVL include query params through to the chart data hook', () => {
+	test('passes TVL include query params through to the chart data hook', () => {
 		mocks.routerState.query = {
 			include_staking_in_tvl: 'yes',
 			include_pool2_in_tvl: 'false'

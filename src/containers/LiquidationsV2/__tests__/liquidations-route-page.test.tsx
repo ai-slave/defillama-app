@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('~/constants', async (importOriginal) => ({
 	...(await importOriginal<typeof import('~/constants')>()),
@@ -55,7 +55,7 @@ beforeEach(() => {
 })
 
 describe('liquidations SSG routes', () => {
-	it('returns minimal shell props for the overview page', async () => {
+	test('returns minimal shell props for the overview page', async () => {
 		await expect(overviewPage.getStaticProps({} as never)).resolves.toEqual(
 			expect.objectContaining({
 				props: expect.objectContaining({
@@ -68,7 +68,7 @@ describe('liquidations SSG routes', () => {
 		)
 	})
 
-	it('returns minimal shell props for the protocol page', async () => {
+	test('returns minimal shell props for the protocol page', async () => {
 		await expect(protocolPage.getStaticProps({ params: { protocol: 'sky' } } as never)).resolves.toEqual(
 			expect.objectContaining({
 				props: {
@@ -85,20 +85,20 @@ describe('liquidations SSG routes', () => {
 		expect(mockedGetLiquidationsProtocolsList).toHaveBeenCalledOnce()
 	})
 
-	it('returns notFound for an invalid protocol slug', async () => {
+	test('returns notFound for an invalid protocol slug', async () => {
 		await expect(protocolPage.getStaticProps({ params: { protocol: 'bad' } } as never)).resolves.toEqual({
 			notFound: true
 		})
 	})
 
-	it('returns all protocol paths and enables blocking fallback', async () => {
+	test('returns all protocol paths and enables blocking fallback', async () => {
 		await expect(protocolPage.getStaticPaths()).resolves.toEqual({
 			paths: [{ params: { protocol: 'makerdao' } }],
 			fallback: 'blocking'
 		})
 	})
 
-	it('returns minimal shell props for the chain page', async () => {
+	test('returns minimal shell props for the chain page', async () => {
 		await expect(
 			chainPage.getStaticProps({ params: { protocol: 'sky', chain: 'arbitrum-one' } } as never)
 		).resolves.toEqual(
@@ -123,7 +123,7 @@ describe('liquidations SSG routes', () => {
 		expect(mockedGetLiquidationsProtocolsList).not.toHaveBeenCalled()
 	})
 
-	it('returns notFound for an invalid chain slug', async () => {
+	test('returns notFound for an invalid chain slug', async () => {
 		await expect(
 			chainPage.getStaticProps({ params: { protocol: 'sky', chain: 'bad-chain' } } as never)
 		).resolves.toEqual({

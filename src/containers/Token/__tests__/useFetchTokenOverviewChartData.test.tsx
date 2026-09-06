@@ -2,7 +2,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { PriceChartTimeframe } from '~/utils/priceChartTimeframes'
 import type { TokenOverviewData } from '../tokenOverview'
 import { useFetchTokenOverviewChartData } from '../useFetchTokenOverviewChartData'
@@ -31,7 +31,7 @@ const overview: TokenOverviewData = {
 	treasury: null,
 	raises: null,
 	outstandingFDV: null,
-	rawChartData: { 'Token Price': [[1_000, 100]] }
+	rawChartData: { 'Token Price': [[1000, 100]] }
 }
 
 function ChartDataProbe({ timeframe }: { timeframe: PriceChartTimeframe }) {
@@ -75,12 +75,12 @@ describe('useFetchTokenOverviewChartData', () => {
 		})
 	}
 
-	it('uses only 24H page data and isolates proxy results by timeframe', async () => {
+	test('uses only 24H page data and isolates proxy results by timeframe', async () => {
 		const rangeRequest = Promise.withResolvers<{ data: { prices: Array<[number, number]> } }>()
 		fetchJsonMock.mockReturnValue(rangeRequest.promise)
 
 		await render('24H')
-		expect(JSON.parse(container.textContent ?? '')).toEqual({ 'Token Price': [[1_000, 100]] })
+		expect(JSON.parse(container.textContent ?? '')).toEqual({ 'Token Price': [[1000, 100]] })
 		expect(fetchJsonMock).not.toHaveBeenCalled()
 
 		await render('7D')
@@ -94,7 +94,7 @@ describe('useFetchTokenOverviewChartData', () => {
 		})
 
 		await render('24H')
-		expect(JSON.parse(container.textContent ?? '')).toEqual({ 'Token Price': [[1_000, 100]] })
+		expect(JSON.parse(container.textContent ?? '')).toEqual({ 'Token Price': [[1000, 100]] })
 		expect(fetchJsonMock).toHaveBeenCalledTimes(1)
 	})
 })

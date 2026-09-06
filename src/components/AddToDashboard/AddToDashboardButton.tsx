@@ -19,7 +19,7 @@ interface AddToDashboardButtonProps {
 	chartConfig: DashboardChartConfig | null
 	multiChart?: MultiChartConfig | null
 	llamaAIChart?: LlamaAIChartInput | null
-	unsupportedMetrics?: string[]
+	unsupportedMetrics?: Array<string>
 	variant?: 'button' | 'icon'
 	className?: string
 	smol?: boolean

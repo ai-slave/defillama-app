@@ -36,7 +36,7 @@ function getMagnitudeRatio(magnitude: number, range: AxisMagnitudeRange) {
 	return 1
 }
 
-function addMagnitude(ranges: AxisMagnitudeRange[], axisIndex: number, magnitude: number | undefined) {
+function addMagnitude(ranges: Array<AxisMagnitudeRange>, axisIndex: number, magnitude: number | undefined) {
 	if (magnitude === undefined) return
 	const range = ranges[axisIndex]
 	if (!range) return
@@ -55,11 +55,11 @@ export interface SeriesAxisLayout {
 	needMultipleAxes: boolean
 	axisCount: number
 	axisUnitGroups: Array<MetricUnitGroup | undefined>
-	seriesAxisIndexes: number[]
+	seriesAxisIndexes: Array<number>
 }
 
-export function resolveSeriesAxisLayout(series: SeriesAxisInput[]): SeriesAxisLayout {
-	const distinctUnitGroups: MetricUnitGroup[] = []
+export function resolveSeriesAxisLayout(series: Array<SeriesAxisInput>): SeriesAxisLayout {
+	const distinctUnitGroups: Array<MetricUnitGroup> = []
 	const unitGroupIndex = new Map<MetricUnitGroup, number>()
 	const normalizedSeries: Array<{
 		unitGroup: MetricUnitGroup
@@ -91,7 +91,7 @@ export function resolveSeriesAxisLayout(series: SeriesAxisInput[]): SeriesAxisLa
 	const hasExplicitAxisIndex = maxExplicitAxisIndex > 0
 	if (hasExplicitAxisIndex) {
 		const axisCount = Math.min(Math.max(distinctUnitGroups.length, maxExplicitAxisIndex + 1, 2), MAX_Y_AXES)
-		const seriesAxisIndexes: number[] = []
+		const seriesAxisIndexes: Array<number> = []
 		const axisUnitGroups = new Array<MetricUnitGroup | undefined>(axisCount)
 		for (const item of normalizedSeries) {
 			const axisIndex = Math.min(
@@ -111,7 +111,7 @@ export function resolveSeriesAxisLayout(series: SeriesAxisInput[]): SeriesAxisLa
 		max: undefined as number | undefined
 	}))
 	const metricAxisIndexes = new Map<string, number>()
-	const seriesAxisIndexes: number[] = []
+	const seriesAxisIndexes: Array<number> = []
 
 	for (const item of normalizedSeries) {
 		const fallbackAxisIndex = Math.min(unitGroupIndex.get(item.unitGroup) ?? 0, MAX_Y_AXES - 1)

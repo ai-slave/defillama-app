@@ -10,7 +10,7 @@ function selectedColumns(query: ApiQuery): Set<string> {
 
 // Mirrors the earn table: the fixed visible columns, the APY block following the active
 // window/composition, and the optional Columns-dropdown columns only when selected.
-export function prepareYieldPoolsCsv(rows: YieldPoolTableRow[], query: ApiQuery = {}) {
+export function prepareYieldPoolsCsv(rows: Array<YieldPoolTableRow>, query: ApiQuery = {}) {
 	const suffix = windowSuffix(query)
 	const split = activeSplit(query)
 	const columns = selectedColumns(query)

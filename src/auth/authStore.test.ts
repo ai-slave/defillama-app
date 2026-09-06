@@ -1,12 +1,12 @@
 // @vitest-environment happy-dom
 // @vitest-environment-options {"url":"https://defillama.com"}
 
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { POCKETBASE_URL } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { getAuthStoreSnapshot, getServerSnapshot, refreshSession, subscribeToAuthStore } from './authStore'
 
-const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4102444800 }))}.signature`
+const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
 const record = (id: string) => ({ id, collectionId: '_pb_users_auth_', collectionName: 'users' })
 
 function jsonResponse(body: unknown, status = 200) {
@@ -37,8 +37,8 @@ afterEach(() => {
 	localStorage.clear()
 })
 
-it('writes the cookie before notifying subscribers and reuses snapshots', () => {
-	const observed: string[] = []
+test('writes the cookie before notifying subscribers and reuses snapshots', () => {
+	const observed: Array<string> = []
 	const unsubscribe = subscribeToAuthStore(() => {
 		const current = getAuthStoreSnapshot()
 		if (current.isValid) {
@@ -66,7 +66,7 @@ it('writes the cookie before notifying subscribers and reuses snapshots', () => 
 	expect(observed).toHaveLength(3)
 })
 
-it('commits a refresh that resolves while its session is still current', async () => {
+test('commits a refresh that resolves while its session is still current', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
 	const { pending, fetchMock } = stubRefreshEndpoint()
 
@@ -80,7 +80,7 @@ it('commits a refresh that resolves while its session is still current', async (
 	expect(new Headers(requestConfig.headers).get('Authorization')).toBe(token('account-a'))
 })
 
-it('discards a refresh that resolves after logout', async () => {
+test('discards a refresh that resolves after logout', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
 	const { pending } = stubRefreshEndpoint()
 
@@ -93,7 +93,7 @@ it('discards a refresh that resolves after logout', async () => {
 	expect(pb.authStore.isValid).toBe(false)
 })
 
-it('discards a refresh that resolves after switching to another account', async () => {
+test('discards a refresh that resolves after switching to another account', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
 	const { pending } = stubRefreshEndpoint()
 

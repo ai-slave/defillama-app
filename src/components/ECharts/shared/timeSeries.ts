@@ -25,7 +25,7 @@ type FormatterInput = {
 export const getBucketTimestampSec = (timestampSec: number, groupBy: ChartTimeGrouping): number => {
 	switch (groupBy) {
 		case 'daily':
-			return Math.floor(timestampSec / 86400) * 86400
+			return Math.floor(timestampSec / 86_400) * 86_400
 		case 'weekly':
 			return lastDayOfWeek(timestampSec)
 		case 'monthly':

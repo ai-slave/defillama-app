@@ -26,7 +26,7 @@ export default function YieldsBorrowPage(data: InferGetStaticPropsType<typeof ge
 		<Layout
 			title="Borrow Markets - Best DeFi Borrow Rates - DefiLlama"
 			description="Compare borrow rates, supply APY, LTV and available liquidity across DeFi lending markets, and find optimal collateral to borrow routes."
-			canonicalUrl={`/yields/borrow`}
+			canonicalUrl="/yields/borrow"
 			pageName={pageName}
 		>
 			<Announcement announcementId="yields-disclaimer" version="2026-03">

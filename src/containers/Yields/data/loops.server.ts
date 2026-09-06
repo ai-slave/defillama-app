@@ -22,7 +22,7 @@ import type { ApyComponent, ApyWindow, EnrichedLoopRow, LoopTableRow, Token } fr
 type LoopSortKey = 'loop_apy' | 'available_borrow' | 'supply_apy' | 'borrow_apy' | 'ltv' | 'loop_ltv'
 
 // Non-empty reward-token symbols for a leg (drops nullish/blank symbols).
-function tokenSymbols(tokens: Token[] | null | undefined): string[] {
+function tokenSymbols(tokens: Array<Token> | null | undefined): Array<string> {
 	return (tokens ?? []).map((token) => token.symbol ?? '').filter(Boolean)
 }
 
@@ -33,7 +33,7 @@ function tokenSymbols(tokens: Token[] | null | undefined): string[] {
 function toLoopTableRow(
 	row: EnrichedLoopRow,
 	window: ApyWindow,
-	components: ApyComponent[],
+	components: Array<ApyComponent>,
 	loopCount: number
 ): LoopTableRow {
 	// Resolve both legs once so the totals and the per-leg components stay from the exact same
@@ -88,7 +88,7 @@ export async function getLoopsPage(
 	return sliceYieldsPage(prepared, query)
 }
 
-async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Promise<LoopTableRow[]> {
+async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Promise<Array<LoopTableRow>> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -109,7 +109,7 @@ async function buildPreparedLoops(snapshot: YieldsSnapshot, query: ApiQuery): Pr
 	const maxAvailable = parseNumber(query, 'maxAvailable')
 	const matchesToken = createTokensMatcher(common.tokens)
 
-	const pageRows: LoopTableRow[] = []
+	const pageRows: Array<LoopTableRow> = []
 	for (const row of rows) {
 		if (common.chains && !common.chains.has(row.chain)) continue
 		if (common.projects && !common.projects.has(row.protocol)) continue

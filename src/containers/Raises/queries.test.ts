@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Raise } from './model'
 import { getInvestorRaisesPageData, getInvestorsPageData, getRaisesPageData } from './queries'
 
@@ -30,7 +30,7 @@ describe('Raises queries', () => {
 	})
 	afterEach(() => vi.useRealTimers())
 
-	it('keeps whole-USD values in page and investor aggregates', async () => {
+	test('keeps whole-USD values in page and investor aggregates', async () => {
 		fetchRaisesMock.mockResolvedValue({
 			raises: [
 				raise({ name: 'A', amountUsd: 3_000_000, leadInvestors: ['Fund'] }),
@@ -44,7 +44,7 @@ describe('Raises queries', () => {
 		expect(investorsPage.investors[0]?.allTime.medianAmountUsd).toBe(4_000_000)
 	})
 
-	it.each([
+	test.each([
 		{ amounts: [null], median: null },
 		{ amounts: [0, null], median: 0 },
 		{ amounts: [9, 1, 5, null], median: 5 },
@@ -58,7 +58,7 @@ describe('Raises queries', () => {
 		expect(investors[0]?.last30d.medianAmountUsd).toBeNull()
 	})
 
-	it('counts one investor once per round, preserves case, and keeps separate rounds', async () => {
+	test('counts one investor once per round, preserves case, and keeps separate rounds', async () => {
 		const first = raise({ name: 'A', amountUsd: 10, leadInvestors: ['Fund', 'Fund'], otherInvestors: ['Fund', 'fund'] })
 		const second = raise({ name: 'B', amountUsd: 5, category: 'CeFi', round: 'Series A', leadInvestors: ['Fund'] })
 		fetchRaisesMock.mockResolvedValue({ raises: [first, second] })
@@ -73,13 +73,13 @@ describe('Raises queries', () => {
 		expect(await getInvestorRaisesPageData('missing-fund')).toEqual({ notFound: true })
 	})
 
-	it('includes each rolling cutoff and excludes the second before it', async () => {
+	test('includes each rolling cutoff and excludes the second before it', async () => {
 		vi.useFakeTimers({ toFake: ['Date'] })
 		vi.setSystemTime(new Date('2026-08-26T00:00:00Z'))
 		const now = Date.now() / 1000
-		const rows: Raise[] = []
+		const rows: Array<Raise> = []
 		for (const days of [30, 180, 365]) {
-			for (const offset of [0, -1]) rows.push(raise({ date: now - days * 86400 + offset, leadInvestors: ['Fund'] }))
+			for (const offset of [0, -1]) rows.push(raise({ date: now - days * 86_400 + offset, leadInvestors: ['Fund'] }))
 		}
 		fetchRaisesMock.mockResolvedValue({ raises: rows })
 		const { investors } = await getInvestorsPageData()
@@ -91,7 +91,7 @@ describe('Raises queries', () => {
 		})
 	})
 
-	it('keeps successful empty data separate from source failure', async () => {
+	test('keeps successful empty data separate from source failure', async () => {
 		fetchRaisesMock.mockResolvedValue({ raises: [] })
 		expect(await getRaisesPageData()).toEqual({
 			raises: [],

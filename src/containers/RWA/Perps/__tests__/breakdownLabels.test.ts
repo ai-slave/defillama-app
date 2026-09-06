@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	UNKNOWN_BREAKDOWN_LABEL,
 	getRWAPerpsAssetGroupBreakdownLabel,
@@ -21,22 +21,22 @@ const baseRow = {
 }
 
 describe('breakdownLabels', () => {
-	it('normalizes empty labels to the shared unknown bucket', () => {
+	test('normalizes empty labels to the shared unknown bucket', () => {
 		expect(normalizeRWAPerpsBreakdownLabel('')).toBe(UNKNOWN_BREAKDOWN_LABEL)
 		expect(normalizeRWAPerpsBreakdownLabel(null)).toBe(UNKNOWN_BREAKDOWN_LABEL)
 		expect(normalizeRWAPerpsBreakdownLabel(undefined)).toBe(UNKNOWN_BREAKDOWN_LABEL)
 	})
 
-	it('falls back to the coin suffix when reference asset is missing', () => {
+	test('falls back to the coin suffix when reference asset is missing', () => {
 		expect(getRWAPerpsBaseAssetBreakdownLabel({ contract: 'xyz:META', referenceAsset: null })).toBe('META')
 	})
 
-	it('falls back to unknown when the coin label is also missing', () => {
+	test('falls back to unknown when the coin label is also missing', () => {
 		expect(getRWAPerpsContractBreakdownLabel({ contract: '' })).toBe(UNKNOWN_BREAKDOWN_LABEL)
 		expect(getRWAPerpsAssetGroupBreakdownLabel({ referenceAssetGroup: null })).toBe(UNKNOWN_BREAKDOWN_LABEL)
 	})
 
-	it('resolves overview, venue, and shared labels consistently', () => {
+	test('resolves overview, venue, and shared labels consistently', () => {
 		expect(getRWAPerpsSharedBreakdownLabel(baseRow, 'venue')).toBe('xyz')
 		expect(getRWAPerpsSharedBreakdownLabel(baseRow, 'assetGroup')).toBe('Equities')
 		expect(getRWAPerpsOverviewBreakdownLabel(baseRow, 'baseAsset')).toBe('Meta')

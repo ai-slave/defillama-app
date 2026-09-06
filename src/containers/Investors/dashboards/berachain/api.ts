@@ -41,11 +41,11 @@ export function useHoneyRevenueData() {
 }
 
 export interface BerachainIncomeServerData {
-	chainFees: [number, number][]
-	bexRevenue: [number, number][]
-	bexVolume: [number, number][]
-	bendFees: [number, number][]
-	bendRevenue: [number, number][]
+	chainFees: Array<[number, number]>
+	bexRevenue: Array<[number, number]>
+	bexVolume: Array<[number, number]>
+	bendFees: Array<[number, number]>
+	bendRevenue: Array<[number, number]>
 }
 
 export async function fetchBerachainIncomeServerData(): Promise<BerachainIncomeServerData> {
@@ -75,17 +75,17 @@ export async function fetchBerachainIncomeServerData(): Promise<BerachainIncomeS
 	return { chainFees, bexRevenue, bexVolume, bendFees, bendRevenue }
 }
 
-type TimestampRow = [timestamp: number, ...values: number[]]
+type TimestampRow = [timestamp: number, ...values: Array<number>]
 
-function buildTimeSeries(data: [number, number][]) {
-	const source: TimestampRow[] = []
+function buildTimeSeries(data: Array<[number, number]>) {
+	const source: Array<TimestampRow> = []
 	for (const [timestamp, value] of data) {
 		source.push([timestamp * 1000, value])
 	}
 	return source
 }
 
-function buildMonthlyAndCumulative(daily: TimestampRow[], seriesCount: number) {
+function buildMonthlyAndCumulative(daily: Array<TimestampRow>, seriesCount: number) {
 	const monthMap = new Map<number, TimestampRow>()
 	const totals = new Array<number>(seriesCount).fill(0)
 
@@ -118,7 +118,7 @@ function buildMonthlyAndCumulative(daily: TimestampRow[], seriesCount: number) {
 	}
 }
 
-function buildCumulative(daily: TimestampRow[], seriesCount: number) {
+function buildCumulative(daily: Array<TimestampRow>, seriesCount: number) {
 	const totals = new Array<number>(seriesCount).fill(0)
 
 	const cumulative = new Array<TimestampRow>(daily.length)
@@ -134,7 +134,7 @@ function buildCumulative(daily: TimestampRow[], seriesCount: number) {
 	return cumulative
 }
 
-function mergeSeries(series: Array<[number, number][]>) {
+function mergeSeries(series: Array<Array<[number, number]>>) {
 	const dateMap = new Map<number, TimestampRow>()
 
 	for (const [seriesIndex, data] of series.entries()) {
@@ -153,7 +153,7 @@ function mergeSeries(series: Array<[number, number][]>) {
 	return Array.from(dateMap.values()).sort((a, b) => a[0] - b[0])
 }
 
-function datasetView(source: TimestampRow[], allKeys: string[], selectedKeys: string[] = allKeys) {
+function datasetView(source: Array<TimestampRow>, allKeys: Array<string>, selectedKeys: Array<string> = allKeys) {
 	if (selectedKeys === allKeys) return { source, dimensions: ['timestamp', ...allKeys] }
 	const indexes = selectedKeys.map((key) => {
 		const index = allKeys.indexOf(key)

@@ -17,14 +17,14 @@ function ms(date: string): number {
 
 export interface RatesChartSpec {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 }
 
-export function buildRatesChart(points: RefRatePoint[], isDark = true): RatesChartSpec | null {
-	if (!points.length) return null
+export function buildRatesChart(points: Array<RefRatePoint>, isDark = true): RatesChartSpec | null {
+	if (points.length === 0) return null
 	const theme = isDark ? 1 : 0
 	const source = points.map((p) => [ms(p.date), p.rates.supply.apy, p.rates.borrow.apy, p.rates.spread.apy])
-	const charts: MultiSeriesChartSeriesConfig[] = [
+	const charts: Array<MultiSeriesChartSeriesConfig> = [
 		{
 			type: 'line',
 			name: 'Supply',

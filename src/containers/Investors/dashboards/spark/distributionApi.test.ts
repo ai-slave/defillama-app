@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildDistributionViewModel,
 	buildSparkCumulativeBarAsLineChart,
@@ -7,7 +7,7 @@ import {
 } from './distributionApi'
 
 describe('Spark distribution chart construction', () => {
-	it('zero-fills sparse series without coercing numeric values', () => {
+	test('zero-fills sparse series without coercing numeric values', () => {
 		const result = buildSparkDistributionChart(
 			{
 				keys: ['USDS', 'USDC'],
@@ -29,7 +29,7 @@ describe('Spark distribution chart construction', () => {
 		})
 	})
 
-	it('keeps snapshot line values unchanged instead of accumulating them', () => {
+	test('keeps snapshot line values unchanged instead of accumulating them', () => {
 		const result = buildSparkDistributionChart(
 			{
 				keys: ['TVL'],
@@ -51,7 +51,7 @@ describe('Spark distribution chart construction', () => {
 		expect(result.charts).toMatchObject([{ type: 'line', name: 'TVL', stack: 'a', encode: { x: 0, y: 1 } }])
 	})
 
-	it('cumulates flow values once and emits chronological line rows', () => {
+	test('cumulates flow values once and emits chronological line rows', () => {
 		const result = buildSparkCumulativeBarAsLineChart({
 			keys: ['Revenue', 'Costs'],
 			data: [
@@ -75,7 +75,7 @@ describe('Spark distribution chart construction', () => {
 		])
 	})
 
-	it('renames the upstream undefined key without changing its values', () => {
+	test('renames the upstream undefined key without changing its values', () => {
 		const result = buildSparkDistributionChart(
 			{ keys: ['undefined'], data: [{ date: 1, undefined: 7 }] },
 			'bar',
@@ -89,8 +89,8 @@ describe('Spark distribution chart construction', () => {
 		})
 	})
 
-	it('builds the six cached views without retaining raw charts or metadata', () => {
-		const payload = (key: string, values: number[]) => ({
+	test('builds the six cached views without retaining raw charts or metadata', () => {
+		const payload = (key: string, values: Array<number>) => ({
 			keys: [key],
 			data: values.map((value, index) => ({ date: index + 1, [key]: value }))
 		})

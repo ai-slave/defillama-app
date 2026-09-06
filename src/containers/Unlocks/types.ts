@@ -10,7 +10,7 @@ import type {
 } from './api.types'
 
 interface ProtocolEmissionResultFields {
-	chartData: { documented: EmissionsChartRow[]; realtime: EmissionsChartRow[] }
+	chartData: { documented: Array<EmissionsChartRow>; realtime: Array<EmissionsChartRow> }
 	pieChartData: {
 		documented: Array<{ name: string; value: number }>
 		realtime: Array<{ name: string; value: number }>
@@ -24,26 +24,26 @@ interface ProtocolEmissionResultFields {
 		documented: EmissionsChartConfig
 		realtime: EmissionsChartConfig
 	}
-	notes: string[]
-	events: EmissionEvent[]
+	notes: Array<string>
+	events: Array<EmissionEvent>
 	geckoId: string | null
-	upcomingEvent: EmissionEvent[]
+	upcomingEvent: Array<EmissionEvent>
 	tokenAllocation: {
 		documented: TokenAllocationSplit
 		realtime: TokenAllocationSplit
 	}
 	futures: { openInterest?: number; fundingRate?: number }
-	categories: { documented: string[]; realtime: string[] }
-	categoriesBreakdown: Record<string, string[]> | null
+	categories: { documented: Array<string>; realtime: Array<string> }
+	categoriesBreakdown: Record<string, Array<string>> | null
 	hallmarks: {
 		documented: Array<[number, string]>
 		realtime: Array<[number, string]>
 	}
 	tokenPrice: { price?: number; symbol?: string }
-	unlockUsdChart: TokenIncentiveChartPoint[] | null
-	tbdSections: string[]
-	forecastSections: string[]
-	insiders: { methodology: string; addresses: Insider[] }
+	unlockUsdChart: Array<TokenIncentiveChartPoint> | null
+	tbdSections: Array<string>
+	forecastSections: Array<string>
+	insiders: { methodology: string; addresses: Array<Insider> }
 }
 
 export interface EmptyProtocolEmissionResult extends ProtocolEmissionResultFields {

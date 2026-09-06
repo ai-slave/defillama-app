@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { fetchTastyMetrics } from '../tastyMetrics'
 
 describe('fetchTastyMetrics', () => {
-	it('passes an abort signal to the Tasty request', async () => {
+	test('passes an abort signal to the Tasty request', async () => {
 		const fetchFn = vi.fn().mockResolvedValue(new Response(JSON.stringify([])))
 
 		await fetchTastyMetrics({
@@ -21,7 +21,7 @@ describe('fetchTastyMetrics', () => {
 		)
 	})
 
-	it('returns empty metrics when the Tasty response is not ok', async () => {
+	test('returns empty metrics when the Tasty response is not ok', async () => {
 		const result = await fetchTastyMetrics({
 			endAt: 2,
 			env: { TASTY_API_URL: 'https://tasty.test' },
@@ -33,7 +33,7 @@ describe('fetchTastyMetrics', () => {
 		expect(result).toEqual({ tastyMetrics: {}, trendingRoutes: [] })
 	})
 
-	it('returns empty metrics when the Tasty request fails', async () => {
+	test('returns empty metrics when the Tasty request fails', async () => {
 		const result = await fetchTastyMetrics({
 			endAt: 2,
 			env: { TASTY_API_URL: 'https://tasty.test' },

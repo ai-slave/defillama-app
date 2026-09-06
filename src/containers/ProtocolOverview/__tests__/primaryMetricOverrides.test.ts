@@ -1,21 +1,21 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getProtocolPrimaryMetricOverride } from '../primaryMetricOverrides'
 
 describe('getProtocolPrimaryMetricOverride', () => {
-	it('uses 30-day perp volume for StableJack', () => {
+	test('uses 30-day perp volume for StableJack', () => {
 		expect(
 			getProtocolPrimaryMetricOverride({
 				name: 'StableJack',
 				perpVolume: {
-					total24h: 2_000,
+					total24h: 2000,
 					total7d: 14_000,
 					total30d: 68_290,
 					total1y: null,
 					annualized1y: null,
 					totalAllTime: 100_000,
 					chainBreakdown: {
-						Avalanche: { total24h: 500, total7d: 3_500, total30d: 8_290, totalAllTime: 20_000 },
-						Arbitrum: { total24h: 1_500, total7d: 10_500, total30d: 60_000, totalAllTime: 80_000 }
+						Avalanche: { total24h: 500, total7d: 3500, total30d: 8290, totalAllTime: 20_000 },
+						Arbitrum: { total24h: 1500, total7d: 10_500, total30d: 60_000, totalAllTime: 80_000 }
 					}
 				}
 			})
@@ -26,21 +26,21 @@ describe('getProtocolPrimaryMetricOverride', () => {
 			value: 68_290,
 			valueByChain: [
 				['Arbitrum', 60_000],
-				['Avalanche', 8_290]
+				['Avalanche', 8290]
 			]
 		})
 	})
 
-	it('leaves protocols without an override on their existing primary metric', () => {
+	test('leaves protocols without an override on their existing primary metric', () => {
 		expect(getProtocolPrimaryMetricOverride({ name: 'Aave', perpVolume: null })).toBeNull()
 	})
 
-	it('falls back to the existing primary metric when override data is unavailable', () => {
+	test('falls back to the existing primary metric when override data is unavailable', () => {
 		expect(
 			getProtocolPrimaryMetricOverride({
 				name: 'StableJack',
 				perpVolume: {
-					total24h: 2_000,
+					total24h: 2000,
 					total7d: 14_000,
 					total30d: null,
 					total1y: null,

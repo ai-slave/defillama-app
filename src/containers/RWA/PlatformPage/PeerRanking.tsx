@@ -18,8 +18,8 @@ function formatBps(value: number): string {
 	return `${formatNumber(value)} bps`
 }
 
-export function fetchRWAPlatformPeers(): Promise<RWAPlatformPeerRow[]> {
-	return fetchJson<RWAPlatformPeerRow[]>('/api/public/rwa/platform-peers')
+export function fetchRWAPlatformPeers(): Promise<Array<RWAPlatformPeerRow>> {
+	return fetchJson<Array<RWAPlatformPeerRow>>('/api/public/rwa/platform-peers')
 }
 
 export function PeerRanking({

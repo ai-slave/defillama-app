@@ -14,7 +14,7 @@ import { TokenSearchDialog } from './TokenSearchDialog'
 // either side flips the page into routes mode. They share the token search dialog
 // (GROUPS / ASSETS sections) but keep their fixed role — no Match / On query builder.
 
-function readSingle(value: string | string[] | undefined): string | null {
+function readSingle(value: string | Array<string> | undefined): string | null {
 	if (typeof value === 'string') return value
 	return Array.isArray(value) ? (value[0] ?? null) : null
 }
@@ -47,7 +47,7 @@ function TokenSearchField({
 	queryKey: 'collateralToken' | 'borrowToken'
 	label: string
 	placeholder: string
-	tokens: TokenOption[]
+	tokens: Array<TokenOption>
 }) {
 	const router = useRouter()
 	const [open, setOpen] = useState(false)
@@ -113,8 +113,8 @@ export function BorrowTokenPickers({
 	collateralTokens,
 	borrowTokens
 }: {
-	collateralTokens: TokenOption[]
-	borrowTokens: TokenOption[]
+	collateralTokens: Array<TokenOption>
+	borrowTokens: Array<TokenOption>
 }) {
 	const router = useRouter()
 	const collateral = readSingle(router.query.collateralToken)

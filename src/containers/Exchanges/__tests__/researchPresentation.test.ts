@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getResearchPresentation, RESEARCH_VIEWS, resolveResearchView } from '../researchPresentation'
 
 describe('research chart presentation', () => {
-	it('keeps view metadata aligned with metric semantics', () => {
+	test('keeps view metadata aligned with metric semantics', () => {
 		expect(getResearchPresentation('volume', 'spot-exchanges')).toMatchObject({
 			id: 'spot-exchanges',
 			metric: 'volume',
@@ -47,7 +47,7 @@ describe('research chart presentation', () => {
 		})
 	})
 
-	it('labels segment views with the exact vocabulary: Spot | USD Perps | COIN Perps', () => {
+	test('labels segment views with the exact vocabulary: Spot | USD Perps | COIN Perps', () => {
 		for (const part of ['volume', 'depth', 'nvol'] as const) {
 			const labels = RESEARCH_VIEWS[part].map((view) => view.label)
 			expect(labels).toContain('Spot')
@@ -64,7 +64,7 @@ describe('research chart presentation', () => {
 		}
 	})
 
-	it('keeps URL-selected views within the metric that supports them', () => {
+	test('keeps URL-selected views within the metric that supports them', () => {
 		expect(resolveResearchView('depth', 'btc-depth')).toBe('btc-depth')
 		expect(resolveResearchView('nvol', 'survival-inverse-exchanges')).toBe('survival-inverse-exchanges')
 		expect(resolveResearchView('volume', 'btc-depth')).toBe('spot-exchanges')

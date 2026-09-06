@@ -39,8 +39,8 @@ async function fetchCoinPricesGetBatch(
 				const url = `${coinsPricesApiUrl}/current/${batch.join(',')}${queryString ? `?${queryString}` : ''}`
 				const response = await fetchJson<CoinsPricesResponse>(url)
 				return response.coins ?? {}
-			} catch (err) {
-				recordRuntimeError(err, 'outboundFetch', {
+			} catch (error) {
+				recordRuntimeError(error, 'outboundFetch', {
 					target: `${coinsPricesApiUrl}/current`,
 					coin_count: batch.length,
 					first_coin: batch[0],
@@ -81,7 +81,7 @@ export async function fetchCoinPrices(
 		return fetchCoinPricesGetBatch(coins, options)
 	}
 
-	const batchSize = 100000
+	const batchSize = 100_000
 	const batches: Array<Array<string>> = []
 	for (let i = 0; i < coins.length; i += batchSize) {
 		batches.push(coins.slice(i, i + batchSize))

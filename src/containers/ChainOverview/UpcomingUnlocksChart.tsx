@@ -9,7 +9,13 @@ import { useSmolChartHover } from './useSmolChartHover'
 const BAR_COLOR = getChainOverviewPaletteColor(0)
 const HOVERED_BAR_COLOR = getChainOverviewPaletteColor(1)
 
-export function UpcomingUnlocksChart({ data, className }: { data: HomepageUnlockChartEntry[]; className?: string }) {
+export function UpcomingUnlocksChart({
+	data,
+	className
+}: {
+	data: Array<HomepageUnlockChartEntry>
+	className?: string
+}) {
 	const { containerRef, tooltipRef, hoveredIndex, onMouseMove, onMouseLeave } = useSmolChartHover(data.length)
 
 	const maxVal = useMemo(() => Math.max(...data.map((d) => d.total)) || 1, [data])

@@ -27,8 +27,8 @@ export interface CellVirtualTable {
 }
 
 export interface CompletionContext {
-	tables: RegisteredTable[]
-	cellTables?: CellVirtualTable[]
+	tables: Array<RegisteredTable>
+	cellTables?: Array<CellVirtualTable>
 }
 
 export function registerSqlCompletions(
@@ -81,7 +81,7 @@ export function registerSqlCompletions(
 				return { suggestions: [] }
 			}
 
-			const suggestions: import('monaco-editor').languages.CompletionItem[] = []
+			const suggestions: Array<import('monaco-editor').languages.CompletionItem> = []
 			const loadedDatasetSlugs = new Set(
 				ctx.tables.filter((t) => t.source.kind === 'dataset').map((t) => t.source.kind === 'dataset' && t.source.slug)
 			)
@@ -236,7 +236,7 @@ export function registerSqlHovers(
 			// Notebook cell match.
 			const cellHit = ctx.cellTables?.find((t) => t.name.toLowerCase() === identifier.toLowerCase())
 			if (cellHit) {
-				const lines: string[] = [`**${cellHit.name}**  \nnotebook cell output`]
+				const lines: Array<string> = [`**${cellHit.name}**  \nnotebook cell output`]
 				if (cellHit.hasRun) {
 					lines.push(`${formatNumber(cellHit.rowCount)} rows · ${cellHit.columns.length} columns`)
 					if (cellHit.columns.length > 0) {
@@ -382,7 +382,7 @@ export function matchTableRef(tableName: string): TableRefMatch | null {
 		let best: { def: ChartDatasetDefinition; paramIdentifier: string } | null = null
 		for (const c of chartDatasets) {
 			const slugId = identifierize(c.slug)
-			if (rest.startsWith(slugId + '_')) {
+			if (rest.startsWith(`${slugId}_`)) {
 				const paramIdentifier = rest.slice(slugId.length + 1)
 				if (paramIdentifier && (!best || slugId.length > identifierize(best.def.slug).length)) {
 					best = { def: c, paramIdentifier }
@@ -407,7 +407,7 @@ export function matchTableRef(tableName: string): TableRefMatch | null {
  * `PIVOT x`, and `UNPIVOT x` (plus quoted forms). Doesn't handle subqueries or CTE name
  * resolution — good enough to find which known datasets the user is referencing.
  */
-export function extractTableRefs(sql: string): string[] {
+export function extractTableRefs(sql: string): Array<string> {
 	const refs = new Set<string>()
 	// Strip comments first so we don't match inside them.
 	const stripped = sql.replace(/--[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '')

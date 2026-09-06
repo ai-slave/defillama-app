@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { rwaPerpsMarketBreakdown } from '~/containers/RWA/server/api'
 import { parseMarketBreakdownRequest } from '~/pages/api/public/rwa/perps/market-breakdown'
 import { resultBody } from '~/server/api/__tests__/resultBody'
@@ -20,7 +20,7 @@ beforeEach(() => {
 })
 
 describe('parseMarketBreakdownRequest', () => {
-	it('accepts every bounded backend target', () => {
+	test('accepts every bounded backend target', () => {
 		expect(
 			parseMarketBreakdownRequest({
 				query: {
@@ -101,7 +101,7 @@ describe('parseMarketBreakdownRequest', () => {
 		})
 	})
 
-	it('rejects invalid metrics and conflicting targets', () => {
+	test('rejects invalid metrics and conflicting targets', () => {
 		expect(
 			parseMarketBreakdownRequest({
 				query: {
@@ -153,7 +153,7 @@ describe('parseMarketBreakdownRequest', () => {
 })
 
 describe('rwaPerpsMarketBreakdown', () => {
-	it('returns serialized transformed market breakdown data', async () => {
+	test('returns serialized transformed market breakdown data', async () => {
 		mocks.fetchRWAPerpsMarketBreakdownChartData.mockResolvedValue([{ timestamp: 1, 'alpha:aapl': 4, 'beta:aapl': 9 }])
 
 		const result = await rwaPerpsMarketBreakdown.handle({

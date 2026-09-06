@@ -438,18 +438,18 @@ function loadPopular() {
 
 // xmur3 + mulberry32 — small, deterministic, no deps.
 function rngFromSeed(seed) {
-	let h = 1779033703 ^ seed.length
+	let h = 1_779_033_703 ^ seed.length
 	for (let i = 0; i < seed.length; i++) {
-		h = Math.imul(h ^ seed.charCodeAt(i), 3432918353)
+		h = Math.imul(h ^ seed.charCodeAt(i), 3_432_918_353)
 		h = (h << 13) | (h >>> 19)
 	}
 	let s = (h ^= h >>> 16) >>> 0
 	return () => {
 		s |= 0
-		s = (s + 0x6d2b79f5) | 0
+		s = (s + 0x6d_2b_79_f5) | 0
 		let t = Math.imul(s ^ (s >>> 15), 1 | s)
 		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-		return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+		return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296
 	}
 }
 
@@ -501,8 +501,8 @@ async function main() {
 		let candidates
 		try {
 			candidates = await getSource(t.source)
-		} catch (err) {
-			process.stderr.write(`source ${t.source} failed: ${err.message}\n`)
+		} catch (error) {
+			process.stderr.write(`source ${t.source} failed: ${error.message}\n`)
 			continue
 		}
 		const pattern = t.pattern
@@ -517,13 +517,13 @@ async function main() {
 		for (const value of sampled) urls.push(`${BASE_URL}${templateToUrl(pattern, value)}`)
 	}
 
-	process.stdout.write(urls.join('\n') + '\n')
+	process.stdout.write(`${urls.join('\n')}\n`)
 	process.stderr.write(
 		`emitted ${urls.length} URLs (${STANDALONE.length} standalone, ${urls.length - STANDALONE.length} dynamic samples) seed=${SEED}\n`
 	)
 }
 
-main().catch((err) => {
-	process.stderr.write(`fatal: ${err && err.stack ? err.stack : err}\n`)
+main().catch((error) => {
+	process.stderr.write(`fatal: ${error && error.stack ? error.stack : error}\n`)
 	process.exit(1)
 })

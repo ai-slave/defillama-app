@@ -22,13 +22,13 @@ export interface DimensionDatasetProtocol extends MetricPeriodFields {
 	logo?: string
 	slug?: string
 	parentProtocol?: string | null
-	chains: string[]
+	chains: Array<string>
 	chainBreakdown?: Record<string, DimensionDatasetProtocol & { chain: string }>
 }
 
 export type DimensionDatasetResult<T = DimensionDatasetProtocol> =
-	| { status: 'complete'; protocols: T[] }
-	| { status: 'partial'; protocols: T[]; unavailableChains: string[] }
+	| { status: 'complete'; protocols: Array<T> }
+	| { status: 'partial'; protocols: Array<T>; unavailableChains: Array<string> }
 
 export const DIMENSION_DATASET_PUBLIC_ROUTE = {
 	dexs: 'dexs',

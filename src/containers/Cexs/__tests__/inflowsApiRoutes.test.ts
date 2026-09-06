@@ -1,5 +1,5 @@
 import type { NextApiHandler, NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 import { binanceCexMetadataCache } from './metadataFixture'
 
@@ -41,7 +41,7 @@ beforeEach(() => {
 })
 
 describe('/api/private/cex/inflows', () => {
-	it('returns 405 with private no-store for non-GET requests', async () => {
+	test('returns 405 with private no-store for non-GET requests', async () => {
 		const req = {
 			method: 'POST',
 			headers: {},
@@ -59,7 +59,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns auth failures before checking missing query params', async () => {
+	test('returns auth failures before checking missing query params', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 401,
@@ -81,7 +81,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns existing missing parameter errors after successful auth', async () => {
+	test('returns existing missing parameter errors after successful auth', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -98,7 +98,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns existing numeric parameter errors after successful auth', async () => {
+	test('returns existing numeric parameter errors after successful auth', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -115,7 +115,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('rejects a single inflow interval of exactly one hour', async () => {
+	test('rejects a single inflow interval of exactly one hour', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -130,7 +130,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('rejects repeated tokensToExclude query parameters', async () => {
+	test('rejects repeated tokensToExclude query parameters', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -145,7 +145,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('authenticates before revealing unknown CEX slugs', async () => {
+	test('authenticates before revealing unknown CEX slugs', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 403,
@@ -167,7 +167,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Active subscription required' })
 	})
 
-	it('does not fetch inflows for unknown CEX slugs after successful auth', async () => {
+	test('does not fetch inflows for unknown CEX slugs after successful auth', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -184,7 +184,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'CEX not found' })
 	})
 
-	it('returns CEX inflows with private no-store after successful auth', async () => {
+	test('returns CEX inflows with private no-store after successful auth', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -203,7 +203,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(res.json).toHaveBeenCalledWith({ outflows: 1 })
 	})
 
-	it('passes through upstream error status with private no-store', async () => {
+	test('passes through upstream error status with private no-store', async () => {
 		fetchWithPoolingOnServerMock.mockResolvedValue(new Response(null, { status: 502 }))
 		const req = {
 			method: 'GET',
@@ -222,7 +222,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Upstream API returned 502' })
 	})
 
-	it('returns the route-specific 500 body when auth validation throws', async () => {
+	test('returns the route-specific 500 body when auth validation throws', async () => {
 		const error = new Error('Auth service unavailable')
 		validateSubscriptionMock.mockRejectedValue(error)
 		const req = {
@@ -241,7 +241,7 @@ describe('/api/private/cex/inflows', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns the route-specific 500 body when fetching inflows throws', async () => {
+	test('returns the route-specific 500 body when fetching inflows throws', async () => {
 		const error = new Error('Upstream unavailable')
 		fetchWithPoolingOnServerMock.mockRejectedValue(error)
 		const req = {
@@ -261,7 +261,7 @@ describe('/api/private/cex/inflows', () => {
 })
 
 describe('/api/private/cex/inflows/batch', () => {
-	it('returns 405 with private no-store for non-POST requests', async () => {
+	test('returns 405 with private no-store for non-POST requests', async () => {
 		const req = {
 			method: 'GET',
 			headers: {},
@@ -279,7 +279,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns auth failures before checking invalid bodies', async () => {
+	test('returns auth failures before checking invalid bodies', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 401,
@@ -301,7 +301,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns existing numeric parameter errors after successful auth', async () => {
+	test('returns existing numeric parameter errors after successful auth', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -318,7 +318,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('rejects a non-object request body after successful auth', async () => {
+	test('rejects a non-object request body after successful auth', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -334,7 +334,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('rejects a batch inflow interval of exactly one hour', async () => {
+	test('rejects a batch inflow interval of exactly one hour', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -353,7 +353,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns existing empty CEX array errors after successful auth', async () => {
+	test('returns existing empty CEX array errors after successful auth', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -370,7 +370,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns existing CEX slug shape errors after successful auth', async () => {
+	test('returns existing CEX slug shape errors after successful auth', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -387,7 +387,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('requires exact string-array token exclusions', async () => {
+	test('requires exact string-array token exclusions', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -406,7 +406,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('rejects more than 100 batch entries', async () => {
+	test('rejects more than 100 batch entries', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -425,7 +425,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('rejects aliases that resolve to the same CEX protocol', async () => {
+	test('rejects aliases that resolve to the same CEX protocol', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -447,7 +447,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('authenticates before revealing unknown CEX slugs', async () => {
+	test('authenticates before revealing unknown CEX slugs', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 403,
@@ -469,7 +469,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Active subscription required' })
 	})
 
-	it('does not fetch batch inflows for unknown CEX slugs after successful auth', async () => {
+	test('does not fetch batch inflows for unknown CEX slugs after successful auth', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -486,7 +486,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'CEX not found' })
 	})
 
-	it('returns batch CEX inflows with private no-store after successful auth', async () => {
+	test('returns batch CEX inflows with private no-store after successful auth', async () => {
 		const req = {
 			method: 'POST',
 			headers: { authorization: 'Bearer ok' },
@@ -515,7 +515,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(res.json).toHaveBeenCalledWith({ outflows: 1 })
 	})
 
-	it('passes through batch upstream error status with private no-store', async () => {
+	test('passes through batch upstream error status with private no-store', async () => {
 		fetchWithPoolingOnServerMock.mockResolvedValue(new Response(null, { status: 502 }))
 		const req = {
 			method: 'POST',
@@ -540,7 +540,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Upstream API returned 502' })
 	})
 
-	it('returns the batch route-specific 500 body when auth validation throws', async () => {
+	test('returns the batch route-specific 500 body when auth validation throws', async () => {
 		const error = new Error('Auth service unavailable')
 		validateSubscriptionMock.mockRejectedValue(error)
 		const req = {
@@ -559,7 +559,7 @@ describe('/api/private/cex/inflows/batch', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns the batch route-specific 500 body when fetching inflows throws', async () => {
+	test('returns the batch route-specific 500 body when fetching inflows throws', async () => {
 		const error = new Error('Upstream unavailable')
 		fetchWithPoolingOnServerMock.mockRejectedValue(error)
 		const req = {

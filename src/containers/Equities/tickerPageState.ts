@@ -10,7 +10,7 @@ export function getAvailableEquityTabs({
 	hasFilings: boolean
 	hasOnchain: boolean
 	hasUnlocks: boolean
-}): EquityTab[] {
+}): Array<EquityTab> {
 	return EQUITY_TABS.filter((tab) => {
 		if (tab === 'unlocks') return hasUnlocks
 		if (tab === 'filings') return hasFilings

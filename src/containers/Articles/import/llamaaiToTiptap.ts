@@ -41,9 +41,9 @@ function demoteH1Html(html: string): string {
 	return html.replace(/<(\/?)h1([\s>])/gi, '<$1h2$2')
 }
 
-function htmlToBlocks(html: string): TiptapJson[] {
+function htmlToBlocks(html: string): Array<TiptapJson> {
 	const doc = generateJSON(demoteH1Html(html), articleExtensions()) as TiptapJson
-	return (doc.content as TiptapJson[]) ?? []
+	return (doc.content as Array<TiptapJson>) ?? []
 }
 
 export function buildLlamaAIChartNode(config: unknown, data: unknown): TiptapJson | null {
@@ -73,10 +73,10 @@ function articleImageNode(image: LlamaAIImportImage): TiptapJson {
 	}
 }
 
-export function llamaaiMarkdownToTiptap(markdown: string, opts: LlamaAIImportOptions): TiptapJson[] {
+export function llamaaiMarkdownToTiptap(markdown: string, opts: LlamaAIImportOptions): Array<TiptapJson> {
 	const withoutCitations = processUnifiedCitations(markdown)
 	const { parts } = parseArtifactPlaceholders(withoutCitations)
-	const blocks: TiptapJson[] = []
+	const blocks: Array<TiptapJson> = []
 	for (const part of parts) {
 		if (part.type === 'text') {
 			if (!part.content.trim()) continue
@@ -166,8 +166,8 @@ function cleanOrphanWhitespace(container: HTMLElement): void {
 	}
 }
 
-function hydrateChartNodes(nodes: TiptapJson[], charts: Record<string, LlamaAIImportChart>): TiptapJson[] {
-	const out: TiptapJson[] = []
+function hydrateChartNodes(nodes: Array<TiptapJson>, charts: Record<string, LlamaAIImportChart>): Array<TiptapJson> {
+	const out: Array<TiptapJson> = []
 	for (const node of nodes) {
 		if (node.type === 'llamaaiChart') {
 			if (node.attrs?.chartConfig) {
@@ -182,7 +182,7 @@ function hydrateChartNodes(nodes: TiptapJson[], charts: Record<string, LlamaAIIm
 			continue
 		}
 		if (Array.isArray(node.content)) {
-			out.push({ ...node, content: hydrateChartNodes(node.content as TiptapJson[], charts) })
+			out.push({ ...node, content: hydrateChartNodes(node.content as Array<TiptapJson>, charts) })
 		} else {
 			out.push(node)
 		}
@@ -190,7 +190,7 @@ function hydrateChartNodes(nodes: TiptapJson[], charts: Record<string, LlamaAIIm
 	return out
 }
 
-export function llamaaiSelectionToTiptap(html: string, charts: Record<string, LlamaAIImportChart>): TiptapJson[] {
+export function llamaaiSelectionToTiptap(html: string, charts: Record<string, LlamaAIImportChart>): Array<TiptapJson> {
 	const template = document.createElement('template')
 	template.innerHTML = html
 

@@ -35,7 +35,7 @@ export function RecentProtocols({
 	const maxTvl = parseNumberQueryParam(maxTvlQuery)
 
 	const toHideForkedProtocols = hideForks === 'true'
-	const hasCategoryParam = Object.prototype.hasOwnProperty.call(router.query, 'category')
+	const hasCategoryParam = Object.hasOwn(router.query, 'category')
 
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 
@@ -72,7 +72,7 @@ export function RecentProtocols({
 		// TVL range should work with min-only, max-only, or both.
 		const isValidTvlRange = minTvl != null || maxTvl != null
 
-		const filteredProtocols: IRecentProtocol[] = []
+		const filteredProtocols: Array<IRecentProtocol> = []
 
 		for (const protocol of protocols) {
 			// filter out forked protocols

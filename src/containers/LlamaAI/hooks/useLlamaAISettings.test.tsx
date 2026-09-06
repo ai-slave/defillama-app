@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	LLAMA_AI_ENABLE_MEMORY_KEY,
 	LLAMA_AI_SETTINGS_QUERY_KEY,
@@ -67,7 +67,7 @@ describe('useLlamaAISettings', () => {
 		})
 	}
 
-	it('serializes saves across remount and keeps the preceding accepted value', async () => {
+	test('serializes saves across remount and keeps the preceding accepted value', async () => {
 		let resolveFirstSave: ((response: Response) => void) | null = null
 		let putCount = 0
 		mocks.authorizedFetch.mockImplementation((_url: string, init?: RequestInit) => {
@@ -110,7 +110,7 @@ describe('useLlamaAISettings', () => {
 		expect(mocks.storage.get(LLAMA_AI_ENABLE_MEMORY_KEY)).toBe('false')
 	})
 
-	it('ignores a settings query that predates a successful save', async () => {
+	test('ignores a settings query that predates a successful save', async () => {
 		let resolveSettingsQuery: ((response: Response) => void) | null = null
 		mocks.authorizedFetch.mockImplementation((_url: string, init?: RequestInit) => {
 			if (init?.method === 'PUT') return Promise.resolve(new Response(null, { status: 200 }))

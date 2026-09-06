@@ -46,8 +46,8 @@ function extractRow(el: Element): MetricRow | null {
 	return { label, value }
 }
 
-function extractRows(container: HTMLDivElement): MetricRow[] {
-	const rows: MetricRow[] = []
+function extractRows(container: HTMLDivElement): Array<MetricRow> {
+	const rows: Array<MetricRow> = []
 	const children = Array.from(container.children)
 
 	for (const el of children) {

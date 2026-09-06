@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { RWAStatsSegmented } from '../api.types'
 import {
 	formatRWAOverviewUsd,
@@ -41,7 +41,7 @@ const row: RWAStatsSegmented = {
 }
 
 describe('getRWAOverviewTableData', () => {
-	it('excludes stablecoins and governance by default', () => {
+	test('excludes stablecoins and governance by default', () => {
 		expect(getRWAOverviewTableData(row, getRWAOverviewInclusion(false, false))).toEqual({
 			onChainMcap: 100,
 			activeMcap: 90,
@@ -51,7 +51,7 @@ describe('getRWAOverviewTableData', () => {
 		})
 	})
 
-	it('subtracts bridge TVL when excluded', () => {
+	test('subtracts bridge TVL when excluded', () => {
 		const bridgeRow: RWAStatsSegmented = {
 			...row,
 			base: { ...row.base, bridgeTvl: 20 },
@@ -61,7 +61,7 @@ describe('getRWAOverviewTableData', () => {
 		expect(getRWAOverviewTableData(bridgeRow, getRWAOverviewInclusion(true, false, false)).defiActiveTvl).toBe(79)
 	})
 
-	it('includes stablecoins only', () => {
+	test('includes stablecoins only', () => {
 		expect(getRWAOverviewTableData(row, getRWAOverviewInclusion(true, false))).toEqual({
 			onChainMcap: 160,
 			activeMcap: 140,
@@ -71,7 +71,7 @@ describe('getRWAOverviewTableData', () => {
 		})
 	})
 
-	it('includes governance only', () => {
+	test('includes governance only', () => {
 		expect(getRWAOverviewTableData(row, getRWAOverviewInclusion(false, true))).toEqual({
 			onChainMcap: 170,
 			activeMcap: 150,
@@ -81,7 +81,7 @@ describe('getRWAOverviewTableData', () => {
 		})
 	})
 
-	it('includes all buckets when both flags are on', () => {
+	test('includes all buckets when both flags are on', () => {
 		expect(getRWAOverviewTableData(row, getRWAOverviewInclusion(true, true))).toEqual({
 			onChainMcap: 190,
 			activeMcap: 165,
@@ -93,31 +93,31 @@ describe('getRWAOverviewTableData', () => {
 })
 
 describe('fixed RWA overview asset counts', () => {
-	it('adds a bridge exclusion suffix to CSV names', () => {
+	test('adds a bridge exclusion suffix to CSV names', () => {
 		expect(getRWAOverviewCsvFileName('rwa-chains', getRWAOverviewInclusion(false, false))).toBe('rwa-chains')
 		expect(getRWAOverviewCsvFileName('rwa-chains', getRWAOverviewInclusion(true, false, false))).toBe(
 			'rwa-chains-stablecoins-without-bridge-tvl'
 		)
 	})
 
-	it('distinguishes a filtered zero from a genuine zero', () => {
+	test('distinguishes a filtered zero from a genuine zero', () => {
 		expect(formatRWAOverviewUsd(0, true)).toBe('-')
 		expect(formatRWAOverviewUsd(0, false)).toBe('$0')
 		expect(formatRWAOverviewUsd(1_000_000, true)).toBe('$1m')
 	})
 
-	it('counts every asset classification', () => {
+	test('counts every asset classification', () => {
 		expect(getRWAOverviewAssetCount(row)).toBe(10)
 	})
 
-	it('detects assets excluded by the current toggles', () => {
+	test('detects assets excluded by the current toggles', () => {
 		expect(hasExcludedRWAOverviewAssets(row, false, false)).toBe(true)
 		expect(hasExcludedRWAOverviewAssets(row, true, false)).toBe(true)
 		expect(hasExcludedRWAOverviewAssets(row, false, true)).toBe(true)
 		expect(hasExcludedRWAOverviewAssets(row, true, true)).toBe(false)
 	})
 
-	it('does not mark empty optional classifications as excluded', () => {
+	test('does not mark empty optional classifications as excluded', () => {
 		const baseOnlyRow: RWAStatsSegmented = {
 			...row,
 			stablecoinsOnly: { ...row.stablecoinsOnly, assetCount: 0 },

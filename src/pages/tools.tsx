@@ -26,7 +26,7 @@ export default function Tools() {
 		<Layout
 			title="DeFi Analytics & Research Tools - DefiLlama"
 			description="Explore DeFi analytics tools: token comparisons, correlation matrix, borrow optimizer, and more. Free open-source research tools on DefiLlama."
-			canonicalUrl={`/tools`}
+			canonicalUrl="/tools"
 		>
 			<Card padding="sm" className="flex flex-col gap-2">
 				<h1 className="heading-sm">Tools</h1>

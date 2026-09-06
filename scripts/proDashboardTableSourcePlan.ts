@@ -37,19 +37,19 @@ export interface ProDashboardTableSource {
 }
 
 export interface ProDashboardTableSourcePlan {
-	streamSources: ProDashboardTableSource[]
+	streamSources: Array<ProDashboardTableSource>
 }
 
-function serializedKey(queryKey: readonly unknown[]) {
+function serializedKey(queryKey: ReadonlyArray<unknown>) {
 	return JSON.stringify(queryKey)
 }
 
-export function buildProDashboardTableSourcePlan(items: DashboardItemConfig[]): ProDashboardTableSourcePlan {
+export function buildProDashboardTableSourcePlan(items: Array<DashboardItemConfig>): ProDashboardTableSourcePlan {
 	const streamSources = new Map<string, ProDashboardTableSource>()
 	const addKey = (chunkType: ProDashboardTableChunkType, key: string) => {
 		streamSources.set(`${chunkType}:${key}`, { chunkType, key })
 	}
-	const add = (chunkType: ProDashboardTableChunkType, queryKey: readonly unknown[]) =>
+	const add = (chunkType: ProDashboardTableChunkType, queryKey: ReadonlyArray<unknown>) =>
 		addKey(chunkType, serializedKey(queryKey))
 
 	for (const source of buildTokenUsageSourcePlan(items)) {

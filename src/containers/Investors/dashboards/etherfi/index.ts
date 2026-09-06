@@ -4,7 +4,7 @@ import type { DashboardTabConfig } from '../../dashboardTypes'
 const CreditCard = lazy(() => import('./CreditCard'))
 const CashTransactions = lazy(() => import('./CashTransactions'))
 
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'dashboard', label: 'Overview' },
 	{ id: 'card-usage', label: 'Credit Card', component: CreditCard, source: 'DefiLlama' },
 	{ id: 'cash-transactions', label: 'Cash Transactions', component: CashTransactions, source: 'Dune' }

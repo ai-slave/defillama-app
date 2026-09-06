@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const fetchJsonMock = vi.hoisted(() => vi.fn())
 
@@ -17,18 +17,18 @@ describe('homepage unlocks summary', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('parses a valid homepage unlocks summary', async () => {
+	test('parses a valid homepage unlocks summary', async () => {
 		const { projectHomepageUnlocksSummary } = await import('../homepageUnlocks.server')
 
 		expect(
 			projectHomepageUnlocksSummary({
 				schemaVersion: 1,
-				generatedAtSec: 1779292800,
+				generatedAtSec: 1_779_292_800,
 				windowDays: 14,
 				total14d: 100,
 				chart: [
 					{
-						date: 1779292800000,
+						date: 1_779_292_800_000,
 						total: 100,
 						breakdown: [{ token: 'ETH', value: 100, pct: '100.00' }]
 					}
@@ -40,11 +40,11 @@ describe('homepage unlocks summary', () => {
 			linear14d: null,
 			unknownEventCount: null,
 			missingPriceProtocolCount: null,
-			generatedAtSec: 1779292800,
+			generatedAtSec: 1_779_292_800,
 			priceSnapshotAtSec: null,
 			chart: [
 				{
-					date: 1779292800000,
+					date: 1_779_292_800_000,
 					total: 100,
 					cliff: null,
 					linear: null,
@@ -56,10 +56,10 @@ describe('homepage unlocks summary', () => {
 		})
 	})
 
-	it('projects the typed v2 breakdown and coverage metadata', async () => {
+	test('projects the typed v2 breakdown and coverage metadata', async () => {
 		const { projectHomepageUnlocksSummary } = await import('../homepageUnlocks.server')
 		const chartDay = {
-			date: 1779292800000,
+			date: 1_779_292_800_000,
 			cliff: 40,
 			linear: 60,
 			total: 100,
@@ -71,8 +71,8 @@ describe('homepage unlocks summary', () => {
 		expect(
 			projectHomepageUnlocksSummary({
 				schemaVersion: 2,
-				generatedAtSec: 1779292800,
-				priceSnapshotAtSec: 1779292800,
+				generatedAtSec: 1_779_292_800,
+				priceSnapshotAtSec: 1_779_292_800,
 				windowDays: 14,
 				chart: [chartDay],
 				totals: {
@@ -91,12 +91,12 @@ describe('homepage unlocks summary', () => {
 			linear14d: 60,
 			unknownEventCount: 1,
 			missingPriceProtocolCount: 0,
-			generatedAtSec: 1779292800,
-			priceSnapshotAtSec: 1779292800
+			generatedAtSec: 1_779_292_800,
+			priceSnapshotAtSec: 1_779_292_800
 		})
 	})
 
-	it('returns null when the homepage unlocks artifact fetch fails', async () => {
+	test('returns null when the homepage unlocks artifact fetch fails', async () => {
 		const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 		fetchJsonMock.mockRejectedValue(new Error('not found'))
 		const { fetchHomepageUnlocksSummary } = await import('../homepageUnlocks.server')

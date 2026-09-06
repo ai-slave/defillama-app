@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const {
@@ -112,7 +112,7 @@ beforeEach(() => {
 })
 
 describe('/api/public/protocols/charts', () => {
-	it('rejects retired governance chart requests without fetching upstream data', async () => {
+	test('rejects retired governance chart requests without fetching upstream data', async () => {
 		const req = createRequest({ kind: 'governance', apis: JSON.stringify(['https://example.com/governance']) })
 		const res = createMockNextApiResponse()
 
@@ -123,7 +123,7 @@ describe('/api/public/protocols/charts', () => {
 		expect(fetchJsonMock).not.toHaveBeenCalled()
 	})
 
-	it('rejects the retired governance POST transport', async () => {
+	test('rejects the retired governance POST transport', async () => {
 		const req = createRequest({})
 		req.method = 'POST'
 		req.body = { kind: 'governance', apis: ['https://example.com/governance'] }
@@ -136,7 +136,7 @@ describe('/api/public/protocols/charts', () => {
 		expect(fetchJsonMock).not.toHaveBeenCalled()
 	})
 
-	it.each([
+	test.each([
 		{
 			label: 'TVL value chart',
 			kind: 'tvl',
@@ -214,7 +214,7 @@ describe('/api/public/protocols/charts', () => {
 		expect(res.json).toHaveBeenCalledWith([])
 	})
 
-	it('does not fetch TVL or treasury charts for unknown protocols', async () => {
+	test('does not fetch TVL or treasury charts for unknown protocols', async () => {
 		resolveProtocolParamMock.mockReturnValue(null)
 		resolveCexParamMock.mockReturnValue(null)
 		const req = createRequest({ kind: 'treasury', protocol: 'missing', key: 'OwnTokens' })
@@ -228,7 +228,7 @@ describe('/api/public/protocols/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
-	it.each([
+	test.each([
 		['tvl', { key: 'doublecounted' }, 'Invalid tvl key: doublecounted'],
 		['tvl', { key: 'liquidstaking' }, 'Invalid tvl key: liquidstaking'],
 		['tvl', { key: 'govtokens' }, 'Invalid tvl key: govtokens'],
@@ -248,7 +248,7 @@ describe('/api/public/protocols/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error })
 	})
 
-	it('falls back to CEX route cache entries for protocol chart requests', async () => {
+	test('falls back to CEX route cache entries for protocol chart requests', async () => {
 		resolveProtocolParamMock.mockReturnValue(null)
 		resolveCexParamMock.mockReturnValue({
 			canonicalSlug: 'binance',
@@ -268,7 +268,7 @@ describe('/api/public/protocols/charts', () => {
 		expect(res.json).toHaveBeenCalledWith([])
 	})
 
-	it('preserves nullable NFT marketplace volume without changing legitimate zeroes', async () => {
+	test('preserves nullable NFT marketplace volume without changing legitimate zeroes', async () => {
 		fetchNftMarketplaceVolumesMock.mockResolvedValue([
 			{ day: '2026-07-16', exchangeName: 'OpenSea', sumUsd: null },
 			{ day: '2026-07-17', exchangeName: 'OpenSea', sumUsd: 0 },
@@ -286,7 +286,7 @@ describe('/api/public/protocols/charts', () => {
 		])
 	})
 
-	it.each([
+	test.each([
 		['median-apy', 'aave-v3'],
 		['bridge-volume', 'Stargate'],
 		['oracle-chart', 'Chainlink'],
@@ -301,7 +301,7 @@ describe('/api/public/protocols/charts', () => {
 		expect(res.json).toHaveBeenCalledWith([])
 	})
 
-	it.each([
+	test.each([
 		['median-apy', 'aave-v3', () => fetchJsonMock.mockRejectedValueOnce(new Error('median failed'))],
 		['bridge-volume', 'Stargate', () => fetchBridgeVolumeBySlugMock.mockRejectedValueOnce(new Error('bridge failed'))],
 		['oracle-chart', 'Chainlink', () => fetchOracleProtocolChartMock.mockRejectedValueOnce(new Error('oracle failed'))],

@@ -30,8 +30,8 @@ export function buildProtocolRankingsCsv({
 	rows,
 	columns
 }: {
-	rows: IProtocol[]
-	columns: ProtocolRankingExportColumn[]
+	rows: Array<IProtocol>
+	columns: Array<ProtocolRankingExportColumn>
 }): string {
 	const safeColumns = columns
 		.filter(

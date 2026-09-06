@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { BorrowMarketDetail, PoolDetail } from '~/containers/Yields/poolDetail/types'
 import { getServerSideProps } from '~/pages/yields/pool/[pool]'
 
@@ -145,7 +145,7 @@ function marketFixture(): BorrowMarketDetail {
 		loan_to_value: 0.75,
 		total_supply_usd: 5,
 		total_borrow_usd: 5,
-		available_borrow_usd: 100480,
+		available_borrow_usd: 100_480,
 		supply_apy: { current: zero, avg_7d: zero, avg_30d: zero },
 		borrow_cost_apy: { current: cost, avg_7d: cost, avg_30d: cost },
 		intrinsic: { supply: null, borrow: null },
@@ -159,7 +159,7 @@ function marketHistoryFixture() {
 		{
 			date: '2026-06-01',
 			total_borrow_usd: 5,
-			available_borrow_usd: 100480,
+			available_borrow_usd: 100_480,
 			borrow_cost_apy: { avg_1d: cost, avg_7d: cost, avg_30d: cost },
 			intrinsic: null
 		}
@@ -178,7 +178,7 @@ describe('YieldPoolPage', () => {
 		hasVaultRiskMock.mockResolvedValue(false)
 	})
 
-	it('returns not found when no pool id is provided', async () => {
+	test('returns not found when no pool id is provided', async () => {
 		const res = { setHeader: vi.fn() }
 
 		const result = await getServerSideProps(pageContext(undefined, res))
@@ -189,7 +189,7 @@ describe('YieldPoolPage', () => {
 		expect(res.setHeader).not.toHaveBeenCalled()
 	})
 
-	it('returns not found when both the earn and borrow-market detail endpoints 404', async () => {
+	test('returns not found when both the earn and borrow-market detail endpoints 404', async () => {
 		const poolId = '79e042b5-e55d-4a4e-b0b0-6661a570470b'
 		const res = { setHeader: vi.fn() }
 		fetchPoolDetailMock.mockRejectedValue(new ApiError(404, `/v2/earn/${poolId}`))
@@ -205,7 +205,7 @@ describe('YieldPoolPage', () => {
 		expect(res.setHeader).not.toHaveBeenCalled()
 	})
 
-	it('propagates an invalid-id 400 instead of classifying it as not found', async () => {
+	test('propagates an invalid-id 400 instead of classifying it as not found', async () => {
 		const poolId = 'invalid-id'
 		const error = new ApiError(400, `/v2/earn/${poolId}`)
 		fetchPoolDetailMock.mockRejectedValue(error)
@@ -214,7 +214,7 @@ describe('YieldPoolPage', () => {
 		expect(fetchBorrowMarketDetailMock).not.toHaveBeenCalled()
 	})
 
-	it('falls back to the borrow-market detail for a borrow-only market', async () => {
+	test('falls back to the borrow-market detail for a borrow-only market', async () => {
 		const poolId = '4cb40f0a-65df-431b-be1a-da0ab66a04a9'
 		const res = { setHeader: vi.fn() }
 		fetchPoolDetailMock.mockRejectedValue(new ApiError(404, `/v2/earn/${poolId}`))
@@ -247,7 +247,7 @@ describe('YieldPoolPage', () => {
 		expect(props.borrow.apy.base).toBe(4.3)
 		expect(props.borrow.metrics).toEqual([
 			{ label: 'Total borrowed', value: 5 },
-			{ label: 'Available', value: 100480 },
+			{ label: 'Available', value: 100_480 },
 			{ label: 'Max LTV', value: 0.75, format: 'ltv' }
 		])
 		// Borrow-only markets have no supply history or stability, but do carry a borrow chart.
@@ -262,7 +262,7 @@ describe('YieldPoolPage', () => {
 		expect(res.setHeader).toHaveBeenCalled()
 	})
 
-	it('builds detail props for a valid pool, joining slug/category/audit from meta', async () => {
+	test('builds detail props for a valid pool, joining slug/category/audit from meta', async () => {
 		const poolId = '79e042b5-e55d-4a4e-b0b0-6661a570470b'
 		const res = { setHeader: vi.fn() }
 		fetchPoolDetailMock.mockResolvedValue(detailFixture())

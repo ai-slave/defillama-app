@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { llamaAny, metadata } = vi.hoisted(() => ({
 	llamaAny: vi.fn(),
@@ -14,7 +14,7 @@ describe('getCexAnalyticsSnapshot', () => {
 		metadata.cexs = []
 	})
 
-	it('preserves unavailable stock metrics instead of inventing zero', async () => {
+	test('preserves unavailable stock metrics instead of inventing zero', async () => {
 		llamaAny.mockResolvedValue([
 			{
 				loaded_at: '2026-01-01T00:00:00Z',
@@ -34,7 +34,7 @@ describe('getCexAnalyticsSnapshot', () => {
 		expect(result.summary).toMatchObject({ totalOpenInterest: null, totalCleanTvl: null })
 	})
 
-	it('sums known zero and positive stock metrics while ignoring missing contributors', async () => {
+	test('sums known zero and positive stock metrics while ignoring missing contributors', async () => {
 		llamaAny.mockResolvedValue([
 			{
 				loaded_at: '2026-01-01T00:00:00Z',
@@ -63,7 +63,7 @@ describe('getCexAnalyticsSnapshot', () => {
 		expect(result.summary).toMatchObject({ totalOpenInterest: 5, totalCleanTvl: 6 })
 	})
 
-	it('reports the latest source timestamp for the snapshot', async () => {
+	test('reports the latest source timestamp for the snapshot', async () => {
 		llamaAny.mockResolvedValue([
 			{
 				loaded_at: '2026-01-01T00:00:00Z',
@@ -91,7 +91,7 @@ describe('getCexAnalyticsSnapshot', () => {
 		expect(result.summary.loadedAt).toBe('2026-02-01T00:00:00Z')
 	})
 
-	it('combines canonical venue aliases before selecting market-share leaders', async () => {
+	test('combines canonical venue aliases before selecting market-share leaders', async () => {
 		metadata.cexs = [{ name: 'Binance', slug: 'binance' }]
 		llamaAny.mockResolvedValue([
 			{ date: 1, venue: 'binance', spotVolume: 6, derivativesVolume: 0 },

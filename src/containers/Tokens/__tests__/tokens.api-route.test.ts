@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { getTokensPageSnapshotMock, getTokensChartSnapshotMock, getTokensCacheControlMock } = vi.hoisted(() => ({
@@ -35,7 +35,7 @@ afterEach(() => {
 })
 
 describe('tokens api route', () => {
-	it('serves paginated token rows with CDN cache headers', async () => {
+	test('serves paginated token rows with CDN cache headers', async () => {
 		const req = {
 			method: 'GET',
 			url: '/api/public/tokens?page=2&pageSize=50&search=ethena',
@@ -52,7 +52,7 @@ describe('tokens api route', () => {
 		expect(res.json).toHaveBeenCalledWith(tokensPageResponse)
 	})
 
-	it('serves the filtered market map dataset from its own route', async () => {
+	test('serves the filtered market map dataset from its own route', async () => {
 		const req = {
 			method: 'GET',
 			url: '/api/public/tokens/market-map?categories=governance',

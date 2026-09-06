@@ -25,7 +25,7 @@ export function buildProtocolChartPresentation({
 	const axisIndexByType = new Map<ProtocolChartsLabels, number>()
 	const allYAxis: Array<[ProtocolChartsLabels, number | undefined]> = []
 	const chartsInSeries = new Set<ProtocolChartsLabels>()
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 	const markArea: LineSeriesOption['markArea'] | undefined = rangeHallmarks?.length
 		? {
 				itemStyle: { color: isThemeDark ? 'rgba(15, 52, 105, 0.4)' : 'rgba(70, 130, 180, 0.3)' },

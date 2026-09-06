@@ -18,7 +18,7 @@ function insertChainIntoOverviewUrl(baseUrl: string, chain: string): string {
 	return url.toString()
 }
 
-function extractChainsForDataset(dataset: DatasetDefinition, json: unknown): string[] {
+function extractChainsForDataset(dataset: DatasetDefinition, json: unknown): Array<string> {
 	if (dataset.chainFilterType === 'overview') {
 		const allChains = recordField(json, 'allChains')
 		if (!Array.isArray(allChains)) return []
@@ -75,7 +75,7 @@ function pctChange(current: number | null | undefined, prev: number | null | und
 	return ((current - prev) / prev) * 100
 }
 
-function filterProtocolsByChain(items: DatasetItem[], chain: string): DatasetItem[] {
+function filterProtocolsByChain(items: Array<DatasetItem>, chain: string): Array<DatasetItem> {
 	return items
 		.filter((item) => {
 			const chains = item.chains

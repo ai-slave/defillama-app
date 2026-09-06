@@ -4,11 +4,11 @@ import type { SortingState } from '@tanstack/react-table'
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 
-var queryState: {
-	data: IYieldTableRow[] | undefined
+let queryState: {
+	data: Array<IYieldTableRow> | undefined
 	error?: Error | null
 	isLoading: boolean
 } = {
@@ -17,17 +17,17 @@ var queryState: {
 	isLoading: false
 }
 
-var yieldsQueryState = {
-	selectedChains: [] as string[],
+let yieldsQueryState = {
+	selectedChains: [] as Array<string>,
 	minTvl: null as number | null,
 	maxTvl: null as number | null,
 	minApy: null as number | null,
 	maxApy: null as number | null
 }
 
-var routerState = {
+let routerState = {
 	pathname: '/token/[token]',
-	query: {} as Record<string, string | string[]>,
+	query: {} as Record<string, string | Array<string>>,
 	push: vi.fn()
 }
 
@@ -200,7 +200,7 @@ function makeHydration(overrides: Partial<import('../types').TokenYieldsHydratio
 }
 
 describe('TokenYieldsSection', () => {
-	it('preserves the controlled table instance when sorting changes', async () => {
+	test('preserves the controlled table instance when sorting changes', async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		queryState = { data: [makeYieldRow()], error: null, isLoading: false }
 		const container = document.createElement('div')
@@ -221,7 +221,7 @@ describe('TokenYieldsSection', () => {
 		}
 	})
 
-	it('renders the yields filter controls and paginated table (no token/column filters)', () => {
+	test('renders the yields filter controls and paginated table (no token/column filters)', () => {
 		queryState = {
 			data: [makeYieldRow()],
 			error: null,
@@ -244,7 +244,7 @@ describe('TokenYieldsSection', () => {
 		})
 	})
 
-	it('renders prefetched rows without waiting for a client fetch', () => {
+	test('renders prefetched rows without waiting for a client fetch', () => {
 		queryState = {
 			data: undefined,
 			error: null,
@@ -261,7 +261,7 @@ describe('TokenYieldsSection', () => {
 		})
 	})
 
-	it('shows deferred pagination controls when only the first page is prefetched', () => {
+	test('shows deferred pagination controls when only the first page is prefetched', () => {
 		queryState = {
 			data: undefined,
 			error: null,
@@ -274,7 +274,7 @@ describe('TokenYieldsSection', () => {
 		expect(html).toContain('Page 1 of 3')
 	})
 
-	it('delegates the background loading status to the table while filters trigger a full fetch', () => {
+	test('delegates the background loading status to the table while filters trigger a full fetch', () => {
 		queryState = {
 			data: undefined,
 			error: null,
@@ -293,7 +293,7 @@ describe('TokenYieldsSection', () => {
 		})
 	})
 
-	it('ignores null APYs when computing the average', () => {
+	test('ignores null APYs when computing the average', () => {
 		queryState = {
 			data: [
 				makeYieldRow(),
@@ -302,7 +302,7 @@ describe('TokenYieldsSection', () => {
 					project: 'Lido',
 					projectslug: 'lido',
 					configID: 'pool-2',
-					tvl: 900000,
+					tvl: 900_000,
 					apy: null
 				})
 			],
@@ -315,7 +315,7 @@ describe('TokenYieldsSection', () => {
 		expect(html).toContain('Tracking 2 pools, average APY 5.10%')
 	})
 
-	it('shows a loader while data is loading', () => {
+	test('shows a loader while data is loading', () => {
 		queryState = {
 			data: undefined,
 			error: null,
@@ -327,7 +327,7 @@ describe('TokenYieldsSection', () => {
 		expect(html).toContain('Loading')
 	})
 
-	it('shows an error state when the fetch fails', () => {
+	test('shows an error state when the fetch fails', () => {
 		queryState = {
 			data: [],
 			error: new Error('Failed to fetch yields data'),
@@ -339,13 +339,13 @@ describe('TokenYieldsSection', () => {
 		expect(html).toContain('Failed to fetch yields data')
 	})
 
-	it('shows an empty state when no pools match the token', () => {
+	test('shows an empty state when no pools match the token', () => {
 		const html = renderToStaticMarkup(<TokenYieldsSection />)
 
 		expect(html).toContain('No yield pools found.')
 	})
 
-	it('shows the filtered empty state when selectors remove all rows', () => {
+	test('shows the filtered empty state when selectors remove all rows', () => {
 		queryState = {
 			data: [makeYieldRow()],
 			error: null,
@@ -353,7 +353,7 @@ describe('TokenYieldsSection', () => {
 		}
 		yieldsQueryState = {
 			...yieldsQueryState,
-			minTvl: 2000000
+			minTvl: 2_000_000
 		}
 
 		const html = renderToStaticMarkup(<TokenYieldsSection />)
@@ -362,7 +362,7 @@ describe('TokenYieldsSection', () => {
 		expect(yieldsTableCalls).toHaveLength(0)
 	})
 
-	it('does not show reset filters when only column visibility query params are active', () => {
+	test('does not show reset filters when only column visibility query params are active', () => {
 		queryState = {
 			data: [makeYieldRow()],
 			error: null,
@@ -380,7 +380,7 @@ describe('TokenYieldsSection', () => {
 		expect(html).not.toContain('Reset filters')
 	})
 
-	it('shows reset filters when a real filter query param is active', () => {
+	test('shows reset filters when a real filter query param is active', () => {
 		queryState = {
 			data: [makeYieldRow()],
 			error: null,

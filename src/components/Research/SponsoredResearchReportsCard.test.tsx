@@ -3,7 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { SponsoredResearchReportSummary } from '~/containers/Articles/types'
 import { SponsoredResearchReportsCard } from './SponsoredResearchReportsCard'
 
@@ -24,7 +24,7 @@ vi.mock('next/link', () => ({
 
 vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: mocks.trackUmamiEvent }))
 
-const reports: SponsoredResearchReportSummary[] = [
+const reports: Array<SponsoredResearchReportSummary> = [
 	{
 		id: 'spotlight-id',
 		title: 'How Starknet Is Reimagining Privacy',
@@ -68,13 +68,13 @@ describe('SponsoredResearchReportsCard', () => {
 		container.remove()
 	})
 
-	it('renders nothing when no published reports are available', () => {
+	test('renders nothing when no published reports are available', () => {
 		expect(
 			renderToStaticMarkup(<SponsoredResearchReportsCard reports={[]} entityType="chain" entitySlug="starknet" />)
 		).toBe('')
 	})
 
-	it('renders multiple report sections and tracks the sponsor identity', async () => {
+	test('renders multiple report sections and tracks the sponsor identity', async () => {
 		const html = renderToStaticMarkup(
 			<SponsoredResearchReportsCard reports={reports} entityType="chain" entitySlug="starknet" layout="grid" />
 		)

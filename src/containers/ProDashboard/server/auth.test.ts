@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const fetchWithPoolingOnServer = vi.hoisted(() => vi.fn())
 
@@ -11,7 +11,7 @@ describe('fetchAuthenticatedUserId', () => {
 		fetchWithPoolingOnServer.mockReset()
 	})
 
-	it('returns the user id only after PocketBase validates the token', async () => {
+	test('returns the user id only after PocketBase validates the token', async () => {
 		fetchWithPoolingOnServer.mockResolvedValue({
 			ok: true,
 			json: async () => ({ record: { id: 'owner-1' } })
@@ -24,7 +24,7 @@ describe('fetchAuthenticatedUserId', () => {
 		)
 	})
 
-	it('does not trust an unvalidated token', async () => {
+	test('does not trust an unvalidated token', async () => {
 		fetchWithPoolingOnServer.mockResolvedValue({ ok: false })
 
 		await expect(fetchAuthenticatedUserId('invalid-token')).resolves.toBeNull()

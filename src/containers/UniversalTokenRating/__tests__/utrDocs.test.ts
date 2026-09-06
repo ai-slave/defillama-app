@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { UtrScoringConfig } from '../types'
 import { buildUtrDocChapters } from '../utrDocs'
 
@@ -102,7 +102,7 @@ function chapterText(configValue: UtrScoringConfig | null): string {
 }
 
 describe('buildUtrDocChapters', () => {
-	it('builds all seven Figma chapters with live grading ranges and interpretations', () => {
+	test('builds all seven Figma chapters with live grading ranges and interpretations', () => {
 		const chapters = buildUtrDocChapters(config)
 		const text = JSON.stringify(chapters)
 
@@ -124,7 +124,7 @@ describe('buildUtrDocChapters', () => {
 		expect(text).not.toContain('TVS')
 	})
 
-	it('uses API order, dynamic category totals, and pre/post-TGE applicability groups', () => {
+	test('uses API order, dynamic category totals, and pre/post-TGE applicability groups', () => {
 		const text = chapterText(config)
 
 		expect(text).toContain('Dynamic Team Label')
@@ -144,7 +144,7 @@ describe('buildUtrDocChapters', () => {
 		expect(text).toContain('fully diluted valuation is at least $2.5 billion')
 	})
 
-	it('keeps prose but marks dynamic tables unavailable when configuration cannot be loaded', () => {
+	test('keeps prose but marks dynamic tables unavailable when configuration cannot be loaded', () => {
 		const chapters = buildUtrDocChapters(null)
 		const text = JSON.stringify(chapters)
 

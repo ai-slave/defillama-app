@@ -8,7 +8,7 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect, safeDecodeURIComponent } from '~/utils/route'
 
-function resolveCanonicalContract(contractParam: string, contracts: string[]): string | null {
+function resolveCanonicalContract(contractParam: string, contracts: Array<string>): string | null {
 	const normalizedContractParam = contractParam.toLowerCase()
 
 	for (const contract of contracts) {

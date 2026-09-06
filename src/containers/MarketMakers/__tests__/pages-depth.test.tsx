@@ -1,14 +1,14 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const forgdFetch = vi.fn()
-vi.mock('~/containers/MarketMakers/server/client', () => ({ forgdFetch: (...a: unknown[]) => forgdFetch(...a) }))
+vi.mock('~/containers/MarketMakers/server/client', () => ({ forgdFetch: (...a: Array<unknown>) => forgdFetch(...a) }))
 
 import { getStaticProps } from '~/pages/market-makers/depth'
 
 afterEach(() => forgdFetch.mockReset())
 
 describe('depth page getStaticProps', () => {
-	it('returns the bucketed payload untransformed', async () => {
+	test('returns the bucketed payload untransformed', async () => {
 		forgdFetch.mockResolvedValue({
 			depth50: [],
 			depth100: [],
@@ -21,7 +21,7 @@ describe('depth page getStaticProps', () => {
 				}
 			]
 		})
-		const res = (await (getStaticProps as any)({})) as { props: { payload: { depth200: unknown[] } } }
+		const res = (await (getStaticProps as any)({})) as { props: { payload: { depth200: Array<unknown> } } }
 		expect(res.props.payload.depth200).toHaveLength(1)
 	})
 })

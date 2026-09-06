@@ -71,7 +71,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 
 	const isLoading = baseResults.some((r) => r.isLoading) || extraResults.some((r) => r.isLoading)
 	const failedSources = React.useMemo(() => {
-		const failed: string[] = []
+		const failed: Array<string> = []
 		for (const [protocolIndex, protocol] of selectedProtocols.entries()) {
 			if (baseResults[protocolIndex]?.error) failed.push(`${protocol} - TVL`)
 		}
@@ -85,7 +85,7 @@ export function CompareProtocols({ protocols, protocolsList }: CompareProtocolsP
 	}, [baseResults, extraResults, selectedProtocols, extraTvlKeys])
 
 	const { dataset, charts } = React.useMemo(() => {
-		const protocolCharts: CompareProtocolTvlCharts[] = []
+		const protocolCharts: Array<CompareProtocolTvlCharts> = []
 		for (const [protocolIndex, protocolName] of selectedProtocols.entries()) {
 			const tvlChart = baseResults[protocolIndex]?.data ?? null
 			const extraTvlCharts: CompareProtocolTvlCharts['extraTvlCharts'] = {}

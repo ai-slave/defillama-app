@@ -39,7 +39,7 @@ const RANGE_LABEL: Record<ArticleChartRange, string> = {
 	all: 'All time'
 }
 
-function lastValue(data: [number, number][] | undefined): number | null {
+function lastValue(data: Array<[number, number]> | undefined): number | null {
 	if (!data || data.length === 0) return null
 	const last = data[data.length - 1]
 	return Array.isArray(last) ? last[1] : null
@@ -50,9 +50,9 @@ function seriesDisplayName(s: ArticleChartSeries) {
 	return meta?.title ? `${s.name} ${meta.title}` : s.name
 }
 
-function uniqueChartTypeTitles(series: ArticleChartSeries[]) {
+function uniqueChartTypeTitles(series: Array<ArticleChartSeries>) {
 	const seen = new Set<string>()
-	const out: string[] = []
+	const out: Array<string> = []
 	for (const s of series) {
 		if (seen.has(s.chartType)) continue
 		seen.add(s.chartType)
@@ -99,7 +99,7 @@ export function ArticleChartBlock({
 				undefined,
 				authToken
 			),
-			select: (data: [number, number][]) => filterDataByTimePeriod(data, timePeriod),
+			select: (data: Array<[number, number]>) => filterDataByTimePeriod(data, timePeriod),
 			staleTime: 1000 * 60 * 5,
 			gcTime: 1000 * 60 * 30,
 			refetchOnWindowFocus: false
@@ -112,7 +112,7 @@ export function ArticleChartBlock({
 	const chartModel = useMemo(() => {
 		const chartSeries = series
 			.map((s, i) => {
-				const data = queries[i]?.data as [number, number][] | undefined
+				const data = queries[i]?.data as Array<[number, number]> | undefined
 				if (!data || data.length === 0) return null
 				const meta = CHART_TYPES[s.chartType as keyof typeof CHART_TYPES]
 				const seriesType: 'line' | 'bar' = meta?.chartType === 'bar' ? 'bar' : 'line'
@@ -131,7 +131,7 @@ export function ArticleChartBlock({
 	}, [queries, series])
 
 	const primaryLatest = useMemo(() => {
-		const data = queries[0]?.data as [number, number][] | undefined
+		const data = queries[0]?.data as Array<[number, number]> | undefined
 		return lastValue(data)
 	}, [queries])
 
@@ -144,7 +144,7 @@ export function ArticleChartBlock({
 
 	const uniqueEntities = useMemo(() => {
 		const seen = new Set<string>()
-		const out: ArticleChartSeries[] = []
+		const out: Array<ArticleChartSeries> = []
 		for (const s of series) {
 			const key = `${s.entityType}:${s.slug}`
 			if (seen.has(key)) continue

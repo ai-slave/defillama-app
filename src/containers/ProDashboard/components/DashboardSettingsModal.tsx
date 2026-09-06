@@ -10,17 +10,17 @@ interface DashboardSettingsModalProps {
 	onClose: () => void
 	dashboardName: string
 	visibility: 'private' | 'public'
-	tags: string[]
+	tags: Array<string>
 	description: string
 	dashboardId: string | null
 	onDashboardNameChange: (name: string) => void
 	onVisibilityChange: (visibility: 'private' | 'public') => void
-	onTagsChange: (tags: string[]) => void
+	onTagsChange: (tags: Array<string>) => void
 	onDescriptionChange: (description: string) => void
 	onSave: (overrides?: {
 		dashboardName?: string
 		visibility?: 'private' | 'public'
-		tags?: string[]
+		tags?: Array<string>
 		description?: string
 	}) => void
 	onDelete?: (dashboardId: string) => Promise<void>

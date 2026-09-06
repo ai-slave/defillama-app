@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import {
 	mapPersistedMessage,
@@ -45,7 +45,7 @@ const dashboardItem = {
 } satisfies DashboardItemConfig
 
 describe('messageMappers', () => {
-	it('restores safe chart artifact refs for direct save after process loss', () => {
+	test('restores safe chart artifact refs for direct save after process loss', () => {
 		const mapped = mapPersistedMessage({
 			role: 'assistant',
 			charts: [chart],
@@ -73,7 +73,7 @@ describe('messageMappers', () => {
 		})
 	})
 
-	it('restores persisted dashboard chart data from message metadata', () => {
+	test('restores persisted dashboard chart data from message metadata', () => {
 		const message: PersistedMessage = {
 			role: 'assistant',
 			content: 'Dashboard ready',
@@ -120,7 +120,7 @@ describe('messageMappers', () => {
 		])
 	})
 
-	it('restores bundled dashboard preview data after reload without top-level chart fields', () => {
+	test('restores bundled dashboard preview data after reload without top-level chart fields', () => {
 		const mapped = mapPersistedMessage({
 			role: 'assistant',
 			content: 'Dashboard ready',
@@ -151,7 +151,7 @@ describe('messageMappers', () => {
 		})
 	})
 
-	it('uses deterministic restored dashboard ids when message id is missing', () => {
+	test('uses deterministic restored dashboard ids when message id is missing', () => {
 		const message: PersistedMessage = {
 			role: 'assistant',
 			content: 'Dashboard ready',
@@ -171,7 +171,7 @@ describe('messageMappers', () => {
 		expect(first.dashboards?.[0]?.id).toMatch(/^dashboard_restored_fallback_/)
 	})
 
-	it('maps shared flat chart data to the first chart dataset key', () => {
+	test('maps shared flat chart data to the first chart dataset key', () => {
 		const message: SharedSessionMessage = {
 			role: 'assistant',
 			content: 'Chart',
@@ -191,7 +191,7 @@ describe('messageMappers', () => {
 		})
 	})
 
-	it('maps owned legacy flat chart data to the first chart dataset key', () => {
+	test('maps owned legacy flat chart data to the first chart dataset key', () => {
 		const message: PersistedMessage = {
 			role: 'assistant',
 			content: 'Chart',
@@ -206,7 +206,7 @@ describe('messageMappers', () => {
 		})
 	})
 
-	it('preserves restored dashboard items with missing chart refs', () => {
+	test('preserves restored dashboard items with missing chart refs', () => {
 		const message: PersistedMessage = {
 			role: 'assistant',
 			content: 'Dashboard ready',
@@ -230,7 +230,7 @@ describe('messageMappers', () => {
 		})
 	})
 
-	it('preserves legacy toolName-only executions from restored messages', () => {
+	test('preserves legacy toolName-only executions from restored messages', () => {
 		const mapped = mapPersistedMessage({
 			role: 'assistant',
 			content: 'Done',
@@ -242,7 +242,7 @@ describe('messageMappers', () => {
 		expect(mapped.toolExecutions?.[0]).toMatchObject({ name: 'search', toolName: 'search', success: true })
 	})
 
-	it('canonicalizes legacy fact check source type aliases from restored messages', () => {
+	test('canonicalizes legacy fact check source type aliases from restored messages', () => {
 		const mapped = mapPersistedMessage({
 			role: 'assistant',
 			content: 'Done',
@@ -264,7 +264,7 @@ describe('messageMappers', () => {
 		expect(mapped.legacyUrlCitations).toBeUndefined()
 	})
 
-	it('prefers the restored citations envelope over legacy fact check references', () => {
+	test('prefers the restored citations envelope over legacy fact check references', () => {
 		const mapped = mapPersistedMessage({
 			role: 'assistant',
 			content: 'Done',
@@ -284,11 +284,11 @@ describe('messageMappers', () => {
 		expect(mapped.legacyUrlCitations).toBeUndefined()
 	})
 
-	it('keeps empty persisted lists empty', () => {
+	test('keeps empty persisted lists empty', () => {
 		expect(mapPersistedMessages(undefined)).toEqual([])
 	})
 
-	it('preserves epoch timestamps and drops invalid persisted timestamps', () => {
+	test('preserves epoch timestamps and drops invalid persisted timestamps', () => {
 		expect(
 			mapPersistedMessage({
 				role: 'assistant',

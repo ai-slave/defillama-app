@@ -101,8 +101,8 @@ function formsEqual(a: FormState, b: FormState): boolean {
 
 type CompletenessCheck = { label: string; done: boolean }
 
-function profileCompleteness(state: FormState): { percent: number; missing: string[] } {
-	const checks: CompletenessCheck[] = [
+function profileCompleteness(state: FormState): { percent: number; missing: Array<string> } {
+	const checks: Array<CompletenessCheck> = [
 		{
 			label: 'Add your name',
 			done: !!state.displayName.trim() && !DEFAULT_AUTHOR_NAME_RE.test(state.displayName.trim())
@@ -135,7 +135,7 @@ function ProfileCompletenessMeter({ state }: { state: FormState }) {
 					style={{ width: `${percent}%` }}
 				/>
 			</div>
-			{missing.length ? (
+			{missing.length > 0 ? (
 				<ul className="grid gap-1">
 					{missing.map((label) => (
 						<li key={label} className="flex items-center gap-1.5 text-xs text-sub-text-muted">

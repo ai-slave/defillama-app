@@ -14,9 +14,9 @@ interface LensProtocolCatalogRow {
 	exclude_tvl_from_parent: boolean
 }
 
-export async function fetchProProtocolCatalogSourceRows(): Promise<ProProtocolCatalogSourceRow[]> {
+export async function fetchProProtocolCatalogSourceRows(): Promise<Array<ProProtocolCatalogSourceRow>> {
 	const { llamaDb } = await import('~/server/db/llama')
-	const rows = await llamaDb.query<LensProtocolCatalogRow[]>(`
+	const rows = await llamaDb.query<Array<LensProtocolCatalogRow>>(`
 		SELECT
 			p.slug,
 			p.name,
@@ -45,7 +45,7 @@ export async function fetchProProtocolCatalogSourceRows(): Promise<ProProtocolCa
 	}))
 }
 
-type ProtocolCatalogSourceResponse = ProProtocolCatalogSourceRow[] | { error: string }
+type ProtocolCatalogSourceResponse = Array<ProProtocolCatalogSourceRow> | { error: string }
 
 export async function protocolCatalogSourceHandler(
 	req: NextApiRequest,

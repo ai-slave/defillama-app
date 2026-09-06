@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { shouldShowLiveTodoChecklist } from '~/containers/LlamaAI/components/ConversationView'
 
 describe('shouldShowLiveTodoChecklist', () => {
-	it('hides restored todos when no run is active', () => {
+	test('hides restored todos when no run is active', () => {
 		expect(
 			shouldShowLiveTodoChecklist({
 				todoCount: 3,
@@ -15,7 +15,7 @@ describe('shouldShowLiveTodoChecklist', () => {
 		).toBe(false)
 	})
 
-	it('shows todos while a run is active', () => {
+	test('shows todos while a run is active', () => {
 		expect(
 			shouldShowLiveTodoChecklist({
 				todoCount: 3,

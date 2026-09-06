@@ -21,13 +21,13 @@ const normalizeSlug = (value: string | null | undefined): string =>
 const EMISSIONS_HISTORICAL_PRICES_BATCH_SIZE = 50
 
 async function fetchEmissionsHistoricalPrices(
-	emissions: UnlockHistoricalPriceProtocol[]
+	emissions: Array<UnlockHistoricalPriceProtocol>
 ): Promise<IEmissionsHistoricalPrices> {
 	const { priceReqs, hasPriceRequests } = buildUnlocksHistoricalPriceRequests(emissions)
 	if (!hasPriceRequests) return {}
 
 	const prices: IEmissionsHistoricalPrices = {}
-	let batchReqs: Record<string, number[]> = {}
+	let batchReqs: Record<string, Array<number>> = {}
 	let batchCount = 0
 
 	for (const [coin, requests] of Object.entries(priceReqs)) {
@@ -47,7 +47,7 @@ async function fetchEmissionsHistoricalPrices(
 	return prices
 }
 
-async function fetchEmissionsHistoricalPriceBatch(coins: Record<string, number[]>) {
+async function fetchEmissionsHistoricalPriceBatch(coins: Record<string, Array<number>>) {
 	const response = await fetchMetadataJson<{ coins?: IEmissionsHistoricalPrices }>(
 		`${COINS_SERVER_URL}/pro/prices/historical`,
 		{

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	createDatasetSnapshotManifest,
 	createDatasetSnapshotPointer,
@@ -8,7 +8,7 @@ import {
 } from '../contract'
 
 describe('dataset snapshot contract', () => {
-	it('creates matching domain manifests and current pointers', () => {
+	test('creates matching domain manifests and current pointers', () => {
 		const manifest = createDatasetSnapshotManifest('yields', 'snapshot-1', 123)
 		expect(manifest).toEqual({
 			domain: 'yields',
@@ -25,14 +25,14 @@ describe('dataset snapshot contract', () => {
 		})
 	})
 
-	it('rejects unknown domains, stale schemas, and unsafe snapshot ids', () => {
+	test('rejects unknown domains, stale schemas, and unsafe snapshot ids', () => {
 		const manifest = createDatasetSnapshotManifest('yields', 'snapshot-1')
 		expect(() => parseDatasetSnapshotManifest({ ...manifest, domain: 'yields-v2' })).toThrow('unknown domain')
 		expect(() => parseDatasetSnapshotManifest({ ...manifest, schemaVersion: 1 })).toThrow('schema mismatch for yields')
 		expect(() => parseDatasetSnapshotManifest({ ...manifest, snapshotId: '../escape' })).toThrow('invalid snapshotId')
 	})
 
-	it('allows replacement of older contracts but refuses to overwrite newer ones', () => {
+	test('allows replacement of older contracts but refuses to overwrite newer ones', () => {
 		const manifest = createDatasetSnapshotManifest('yields', 'snapshot-1')
 		const pointer = createDatasetSnapshotPointer(manifest)
 

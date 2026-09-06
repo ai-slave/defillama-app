@@ -6,7 +6,7 @@ import type { SearchResult } from '~/containers/LlamaAI/types'
 export function useSemanticSearch() {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()
 	const [query, setQuery] = useState('')
-	const [results, setResults] = useState<SearchResult[]>([])
+	const [results, setResults] = useState<Array<SearchResult>>([])
 	const [isSearching, setIsSearching] = useState(false)
 	const abortRef = useRef<AbortController | null>(null)
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -36,8 +36,8 @@ export function useSemanticSearch() {
 				if (!controller.signal.aborted) {
 					setResults(data.results ?? [])
 				}
-			} catch (err: any) {
-				if (err?.name !== 'AbortError') {
+			} catch (error: any) {
+				if (error?.name !== 'AbortError') {
 					setResults([])
 				}
 			} finally {

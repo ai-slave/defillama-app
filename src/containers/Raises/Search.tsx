@@ -15,7 +15,7 @@ import {
 } from '~/ui/Popover'
 import { slug } from '~/utils'
 
-export function RaisesSearch({ list }: { list?: string[] }) {
+export function RaisesSearch({ list }: { list?: Array<string> }) {
 	const [searchValue, setSearchValue] = useState('')
 	const matches = useMemo(() => {
 		if (!searchValue) return list || []
@@ -73,7 +73,7 @@ export function RaisesSearch({ list }: { list?: string[] }) {
 					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />
 					</Ariakit.PopoverDismiss>
-					{matches.length ? (
+					{matches.length > 0 ? (
 						<Ariakit.ComboboxList ref={comboboxRef}>
 							{matches.slice(0, viewableMatches).map((option: string) => (
 								<Row key={option} name={option} setOpen={setOpen} />

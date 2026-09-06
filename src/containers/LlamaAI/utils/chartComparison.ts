@@ -8,7 +8,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * Compare two string arrays for equality.
  * Used for memoization comparisons in chart rendering.
  */
-export function areStringArraysEqual(a?: string[], b?: string[]): boolean {
+export function areStringArraysEqual(a?: Array<string>, b?: Array<string>): boolean {
 	if (a === b) return true
 	if (!a || !b) return false
 	if (a.length !== b.length) return false
@@ -43,7 +43,10 @@ export function areChartConfigsEqual(a: ChartConfiguration, b: ChartConfiguratio
 }
 
 /** Compare complete chart configurations so nested style and capability changes reach the renderer. */
-export function areChartsEqual(a: ChartConfiguration[] | undefined, b: ChartConfiguration[] | undefined): boolean {
+export function areChartsEqual(
+	a: Array<ChartConfiguration> | undefined,
+	b: Array<ChartConfiguration> | undefined
+): boolean {
 	if (a === b) return true
 	if (!a || !b) return false
 	if (a.length !== b.length) return false

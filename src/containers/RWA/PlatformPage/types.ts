@@ -20,9 +20,9 @@ export type RWAPlatformPeerRow = {
 export type RWAPlatformAssetSummary = {
 	assetCount: number
 	chainCount: number
-	categoryMix: RWAPlatformMixRow[]
-	assetClassMix: RWAPlatformMixRow[]
-	chainMix: RWAPlatformMixRow[]
+	categoryMix: Array<RWAPlatformMixRow>
+	assetClassMix: Array<RWAPlatformMixRow>
+	chainMix: Array<RWAPlatformMixRow>
 	dominantAccessModel: RWAPlatformMixRow | null
 	attestedAssetCount: number
 	defiActiveTvl: number

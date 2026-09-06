@@ -1,26 +1,26 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IRawTokenRightsEntry } from '../api.types'
 import { getEquityPieTone, parseTokenRightsEntry } from '../utils'
 
 describe('getEquityPieTone', () => {
-	it('uses red when fundraising contains equity or equity captures revenue', () => {
+	test('uses red when fundraising contains equity or equity captures revenue', () => {
 		expect(getEquityPieTone(['Equity', 'Unknown'], null)).toBe('negative')
 		expect(getEquityPieTone([], 'Yes')).toBe('negative')
 	})
 
-	it('uses yellow when fundraising is unknown or empty', () => {
+	test('uses yellow when fundraising is unknown or empty', () => {
 		expect(getEquityPieTone(['Unknown'], 'No')).toBe('warning')
 		expect(getEquityPieTone([], 'No')).toBe('warning')
 	})
 
-	it('uses green for known non-equity fundraising without equity revenue capture', () => {
+	test('uses green for known non-equity fundraising without equity revenue capture', () => {
 		expect(getEquityPieTone(['Token Sale'], 'No')).toBe('positive')
 		expect(getEquityPieTone(['Token Sale', 'Unknown'], 'No')).toBe('positive')
 	})
 })
 
 describe('parseTokenRightsEntry', () => {
-	it('treats omitted and null buybacks values as inactive', () => {
+	test('treats omitted and null buybacks values as inactive', () => {
 		const entry: IRawTokenRightsEntry = {
 			'Protocol Name': 'Aave',
 			Token: ['AAVE'],
@@ -53,7 +53,7 @@ describe('parseTokenRightsEntry', () => {
 		})
 	})
 
-	it('omits the updated label when the producer omits Last Updated', () => {
+	test('omits the updated label when the producer omits Last Updated', () => {
 		const entry: IRawTokenRightsEntry = {
 			'Protocol Name': 'Aave',
 			Token: ['AAVE'],

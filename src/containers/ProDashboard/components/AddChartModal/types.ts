@@ -55,20 +55,20 @@ export type CombinedTableType =
 export type ChartBuilderConfig = StoredChartBuilderConfig['config']
 export type ChartBuilderUpdate = Omit<Partial<ChartBuilderConfig>, 'protocol' | 'protocolCategories'> & {
 	protocol?: string | undefined
-	protocolCategories?: string[] | undefined
+	protocolCategories?: Array<string> | undefined
 }
 
 export interface ModalState {
 	selectedMainTab: MainTabType
 	selectedChartTab: ChartTabType
 	chartMode: ChartModeType
-	composerItems: ChartConfig[]
+	composerItems: Array<ChartConfig>
 	selectedChain: string | null
-	selectedChains: string[]
-	selectedProtocols: string[]
+	selectedChains: Array<string>
+	selectedProtocols: Array<string>
 	selectedProtocol: string | null
 	selectedChartType: string
-	selectedChartTypes: string[]
+	selectedChartTypes: Array<string>
 	unifiedChartName: string
 	chartCreationMode: 'separate' | 'combined'
 	textTitle: string
@@ -78,7 +78,7 @@ export interface ModalState {
 	selectedCexAnalyticsView: CexAnalyticsView | 'starter'
 	selectedCexAnalyticsMetric: CexAnalyticsMetric
 	selectedCexAnalyticsTopN: number
-	selectedTokens: string[]
+	selectedTokens: Array<string>
 	includeCex: boolean
 	chartBuilderName: string
 	chartBuilder: ChartBuilderConfig
@@ -92,10 +92,10 @@ export interface ModalState {
 	metricChartType: MetricChartType
 	selectedYieldPool: { configID: string; name: string; project: string; chain: string } | null
 	selectedYieldChartType: YieldChartType
-	selectedYieldChains: string[]
-	selectedYieldProjects: string[]
-	selectedYieldCategories: string[]
-	selectedYieldTokens: string[]
+	selectedYieldChains: Array<string>
+	selectedYieldProjects: Array<string>
+	selectedYieldCategories: Array<string>
+	selectedYieldTokens: Array<string>
 	minTvl: number | null
 	maxTvl: number | null
 	selectedStablecoinChain: string
@@ -124,5 +124,5 @@ export interface ModalState {
 	selectedRwaTreemapNestedBy: string
 	selectedRwaAssetId: string | null
 	selectedRwaAssetName: string | null
-	selectedRwaAssetMetrics: RWAOverviewChartMetric[]
+	selectedRwaAssetMetrics: Array<RWAOverviewChartMetric>
 }

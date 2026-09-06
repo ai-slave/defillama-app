@@ -5,12 +5,12 @@ import type { SelectOption, SelectTriggerSize } from '~/components/Select/types'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
 
-const EMPTY_ARRAY: string[] = []
+const EMPTY_ARRAY: Array<string> = []
 
 interface IFiltersByChainProps {
-	chainList: string[]
-	selectedChains: string[]
-	evmChains?: string[]
+	chainList: Array<string>
+	selectedChains: Array<string>
+	evmChains?: Array<string>
 	nestedMenu?: boolean
 	size?: SelectTriggerSize
 }
@@ -27,12 +27,13 @@ export function FilterByChain({
 	const prevSelectionRef = useRef<Set<string> | null>(null)
 	const evmChainsSet = new Set(evmChains ?? EMPTY_ARRAY)
 	const isEvmChain = (c: string) => evmChainsSet.has(c) || evmChainsSet.has(c.toLowerCase())
-	const pushFilterQuery = (updates: Record<string, string | string[] | undefined>) => pushYieldsQuery(router, updates)
+	const pushFilterQuery = (updates: Record<string, string | Array<string> | undefined>) =>
+		pushYieldsQuery(router, updates)
 
 	// Add ALL_EVM as the first option in the chain list. It's a synthetic group option, so
 	// its emitted value / URL param stays 'ALL_EVM' (unchanged); only the display label is
 	// humanised to 'All EVM' via the {key,name} option form.
-	const chainListWithSpecial: SelectOption[] = [
+	const chainListWithSpecial: Array<SelectOption> = [
 		{ key: 'ALL_EVM', name: 'All EVM' },
 		...chainList.map((chainName) => ({ key: chainName, name: chainName }))
 	]
@@ -50,12 +51,12 @@ export function FilterByChain({
 	}
 
 	// Custom handler for ALL_EVM select/deselect
-	const handleValuesChange = (newValues: string[]) => {
+	const handleValuesChange = (newValues: Array<string>) => {
 		const prevValues = displaySelectedChains
 		const prevHadAllEvm = prevValues.includes('ALL_EVM')
 		const newHasAllEvm = newValues.includes('ALL_EVM')
 
-		let finalValues: string[]
+		let finalValues: Array<string>
 
 		const justAddedAllEvm = !prevHadAllEvm && newHasAllEvm
 		const prevChainsWithoutAllEvm = new Set<string>()

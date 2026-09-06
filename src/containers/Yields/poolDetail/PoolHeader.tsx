@@ -55,7 +55,7 @@ export function PoolMetaInfo({
 	chain: DetailChain
 	poolTokenAddress?: string | null
 	url?: string | null
-	assets?: string[]
+	assets?: Array<string>
 	actions?: React.ReactNode
 }) {
 	const { data: blockExplorers } = useBlockExplorers()

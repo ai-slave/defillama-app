@@ -10,7 +10,7 @@ interface Logo {
 	link: string
 }
 
-const TRUSTED_BY_LOGOS: Logo[] = [
+const TRUSTED_BY_LOGOS: Array<Logo> = [
 	{ id: 1, name: 'Arbitrum', logo: '/assets/research/partners/arbitrum.webp', link: 'https://arbitrum.io/' },
 	{ id: 2, name: 'Bybit', logo: '/assets/research/partners/bybit.webp', link: 'https://www.bybit.com/' },
 	{ id: 3, name: 'KPK', logo: '/assets/research/partners/kpk.webp', link: 'https://kpk.io/' },
@@ -55,8 +55,8 @@ const renderLogo = (item: Logo) => (
 	</Link>
 )
 
-const getMobileItems = (items: React.ReactNode[]): React.ReactNode[] => {
-	const mobileItems: React.ReactNode[] = []
+const getMobileItems = (items: Array<React.ReactNode>): Array<React.ReactNode> => {
+	const mobileItems: Array<React.ReactNode> = []
 	for (let i = 0; i < items.length; i += 2) {
 		const slideItems = items.slice(i, i + 2)
 		mobileItems.push(
@@ -80,7 +80,7 @@ const toLogo = (logo: TrustedLogo, index: number): Logo => ({
 })
 
 interface LogosCarouselProps {
-	items: React.ReactNode[]
+	items: Array<React.ReactNode>
 	speed?: number
 }
 
@@ -160,7 +160,7 @@ const LogosCarousel: React.FC<LogosCarouselProps> = ({ items, speed = SPEED_PX_P
 	)
 }
 
-export const ResearchTrustedByCarousel: React.FC<{ logos?: TrustedLogo[] | null }> = ({ logos }) => {
+export const ResearchTrustedByCarousel: React.FC<{ logos?: Array<TrustedLogo> | null }> = ({ logos }) => {
 	const isMobile = useMedia('(max-width: 1023px)')
 
 	const trustedByItems = logos && logos.length > 0 ? logos.map(toLogo) : TRUSTED_BY_LOGOS

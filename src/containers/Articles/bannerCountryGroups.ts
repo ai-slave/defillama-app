@@ -17,7 +17,10 @@ export const BANNER_COUNTRY_OPTIONS = ISO_COUNTRY_CODES.map((country) => ({
 	selectedLabel: country
 })).sort((left, right) => left.label.localeCompare(right.label))
 
-export function expandBannerCountrySelection(groups: BannerCountryGroupId[], countries: string[]): string[] {
+export function expandBannerCountrySelection(
+	groups: Array<BannerCountryGroupId>,
+	countries: Array<string>
+): Array<string> {
 	const expanded = new Set(countries.map((country) => country.trim().toUpperCase()).filter(Boolean))
 	for (const group of BANNER_COUNTRY_GROUPS) {
 		if (!groups.includes(group.id)) continue
@@ -26,12 +29,12 @@ export function expandBannerCountrySelection(groups: BannerCountryGroupId[], cou
 	return Array.from(expanded)
 }
 
-export function collapseBannerCountrySelection(targetCountries: string[]): {
-	groups: BannerCountryGroupId[]
-	countries: string[]
+export function collapseBannerCountrySelection(targetCountries: Array<string>): {
+	groups: Array<BannerCountryGroupId>
+	countries: Array<string>
 } {
 	const remaining = new Set(targetCountries.map((country) => country.trim().toUpperCase()).filter(Boolean))
-	const groups: BannerCountryGroupId[] = []
+	const groups: Array<BannerCountryGroupId> = []
 
 	for (const group of BANNER_COUNTRY_GROUPS) {
 		if (!group.countries.every((country) => remaining.has(country))) continue
@@ -42,7 +45,7 @@ export function collapseBannerCountrySelection(targetCountries: string[]): {
 	return { groups, countries: Array.from(remaining) }
 }
 
-export function bannerAudienceLabel(targetCountries: string[] | null | undefined): string {
+export function bannerAudienceLabel(targetCountries: Array<string> | null | undefined): string {
 	if (!targetCountries?.length) return 'Global audience'
 	const selection = collapseBannerCountrySelection(targetCountries)
 	const labels = selection.groups.map(

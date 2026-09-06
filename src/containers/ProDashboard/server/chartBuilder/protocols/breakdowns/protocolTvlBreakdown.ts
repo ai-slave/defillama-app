@@ -25,7 +25,7 @@ function includesChain(chain: string, filter: ProtocolTvlChainFilter): boolean {
 export function sumProtocolTvlBreakdown(
 	chart: IProtocolChainBreakdownChart | null,
 	filter: ProtocolTvlChainFilter = {}
-): [number, number][] {
+): Array<[number, number]> {
 	if (!chart?.length) return []
 
 	const series = new Array<[number, number]>(chart.length)
@@ -53,8 +53,8 @@ export function buildTopProtocolChainSeries({
 	topN: number
 	filter?: ProtocolTvlChainFilter
 }): {
-	series: ChartSeries[]
-	chains: string[]
+	series: Array<ChartSeries>
+	chains: Array<string>
 	totalChains: number
 	topN: number
 	othersCount: number
@@ -77,7 +77,7 @@ export function buildTopProtocolChainSeries({
 	const selectedCount = Math.min(Math.max(0, topN), rankedChains.length)
 	const selectedChains = rankedChains.slice(0, selectedCount)
 	const selectedSet = new Set(selectedChains)
-	const pointsByChain = new Map<string, [number, number][]>()
+	const pointsByChain = new Map<string, Array<[number, number]>>()
 	for (const chain of selectedChains) pointsByChain.set(chain, new Array(chart.length))
 
 	const othersData = new Array<[number, number]>(chart.length)
@@ -102,7 +102,7 @@ export function buildTopProtocolChainSeries({
 		rowIndex++
 	}
 
-	const series: ChartSeries[] = []
+	const series: Array<ChartSeries> = []
 	let colorIndex = 0
 	for (const chain of selectedChains) {
 		const data = pointsByChain.get(chain)

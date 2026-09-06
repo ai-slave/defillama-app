@@ -32,7 +32,7 @@ interface SavedDownloadBase {
 export interface DatasetSavedConfig extends SavedDownloadBase {
 	kind: 'dataset'
 	slug: string
-	columns: string[]
+	columns: Array<string>
 	sort?: SavedSort
 	chain?: string
 	exclude?: Record<string, boolean>
@@ -42,9 +42,9 @@ export interface DatasetSavedConfig extends SavedDownloadBase {
 export interface ChartSavedConfig extends SavedDownloadBase {
 	kind: 'chart'
 	slug: string
-	params: string[]
-	paramLabels?: string[]
-	columns?: string[]
+	params: Array<string>
+	paramLabels?: Array<string>
+	columns?: Array<string>
 	sort?: SavedSort
 	dateRange?: DateRangeConfig
 	categoryBreakdown?: { category: string }
@@ -55,14 +55,14 @@ export interface MultiMetricSavedConfig extends SavedDownloadBase {
 	paramType: SavedParamType
 	param: string
 	paramLabel?: string
-	metrics: string[]
+	metrics: Array<string>
 	dateRange?: DateRangeConfig
 }
 
 export interface QuerySavedConfig extends SavedDownloadBase {
 	kind: 'query'
 	sql: string
-	tables: QueryTableRef[]
+	tables: Array<QueryTableRef>
 	chartConfig?: ChartConfig
 }
 
@@ -91,7 +91,7 @@ export function generatePresetId(): string {
 
 export interface DatasetExtractInput {
 	slug: string
-	headers: string[]
+	headers: Array<string>
 	selectedColumns: Set<number> | null
 	sort?: { index: number; direction: SavedSortDir } | null
 	chain?: string | null
@@ -122,7 +122,7 @@ export function extractDatasetConfig(input: DatasetExtractInput): DatasetInput {
 
 export interface ChartExtractInput {
 	slug: string
-	headers: string[]
+	headers: Array<string>
 	selectedParams: Array<{ label: string; value: string }>
 	selectedColumns: Set<number> | null
 	sort?: { index: number; direction: SavedSortDir } | null
@@ -164,7 +164,7 @@ export interface MultiMetricExtractInput {
 	paramType: SavedParamType
 	param: string
 	paramLabel?: string
-	metrics: string[]
+	metrics: Array<string>
 	dateRange?: DateRangeConfig | null
 }
 
@@ -182,7 +182,7 @@ export function extractMultiMetricConfig(input: MultiMetricExtractInput): MultiM
 
 export interface QueryExtractInput {
 	sql: string
-	tables: QueryTableRef[]
+	tables: Array<QueryTableRef>
 	chartConfig?: ChartConfig
 }
 
@@ -216,16 +216,16 @@ export interface AppliedDatasetConfig {
 	chain: string | null
 	exclude: Record<string, boolean>
 	rowLimit: number | null
-	missingColumns: string[]
+	missingColumns: Array<string>
 	missingSortColumn: string | null
 }
 
-export function applyDatasetConfig(config: DatasetSavedConfig, headers: string[]): AppliedDatasetConfig {
+export function applyDatasetConfig(config: DatasetSavedConfig, headers: Array<string>): AppliedDatasetConfig {
 	const headerToIndex = new Map<string, number>()
 	headers.forEach((h, i) => headerToIndex.set(h, i))
 
 	const selected = new Set<number>()
-	const missingColumns: string[] = []
+	const missingColumns: Array<string> = []
 	for (const col of config.columns) {
 		const idx = headerToIndex.get(col)
 		if (idx === undefined) {
@@ -266,20 +266,20 @@ export interface AppliedChartConfig {
 	params: Array<{ label: string; value: string }>
 	selectedColumns: Set<number> | null
 	sort: { index: number; direction: SavedSortDir } | null
-	missingParams: string[]
-	missingColumns: string[]
+	missingParams: Array<string>
+	missingColumns: Array<string>
 	missingSortColumn: string | null
 }
 
 export function applyChartParams(
 	config: ChartSavedConfig,
 	options: Array<{ label: string; value: string }>
-): { params: Array<{ label: string; value: string }>; missingParams: string[] } {
+): { params: Array<{ label: string; value: string }>; missingParams: Array<string> } {
 	const optionByValue = new Map<string, { label: string; value: string }>()
 	for (const opt of options) optionByValue.set(opt.value, opt)
 
 	const params: Array<{ label: string; value: string }> = []
-	const missingParams: string[] = []
+	const missingParams: Array<string> = []
 	for (const value of config.params) {
 		const opt = optionByValue.get(value)
 		if (opt) params.push(opt)
@@ -290,18 +290,18 @@ export function applyChartParams(
 
 export function applyChartColumnsAndSort(
 	config: ChartSavedConfig,
-	headers: string[]
+	headers: Array<string>
 ): {
 	selectedColumns: Set<number> | null
 	sort: { index: number; direction: SavedSortDir } | null
-	missingColumns: string[]
+	missingColumns: Array<string>
 	missingSortColumn: string | null
 } {
 	const headerToIndex = new Map<string, number>()
 	headers.forEach((h, i) => headerToIndex.set(h, i))
 
 	let selectedColumns: Set<number> | null = null
-	const missingColumns: string[] = []
+	const missingColumns: Array<string> = []
 	if (config.columns && config.columns.length > 0) {
 		const selected = new Set<number>()
 		for (const col of config.columns) {
@@ -332,9 +332,9 @@ export function applyChartColumnsAndSort(
 export interface AppliedMultiMetricConfig {
 	paramType: SavedParamType
 	param: { label: string; value: string } | null
-	metrics: string[]
+	metrics: Array<string>
 	missingParam: boolean
-	missingMetrics: string[]
+	missingMetrics: Array<string>
 }
 
 export function applyMultiMetricConfig(
@@ -343,8 +343,8 @@ export function applyMultiMetricConfig(
 	validMetricSlugs: Set<string>
 ): AppliedMultiMetricConfig {
 	const opt = paramOptions.find((o) => o.value === config.param) ?? null
-	const metrics: string[] = []
-	const missingMetrics: string[] = []
+	const metrics: Array<string> = []
+	const missingMetrics: Array<string> = []
 	for (const slug of config.metrics) {
 		if (validMetricSlugs.has(slug)) metrics.push(slug)
 		else missingMetrics.push(slug)
@@ -362,7 +362,7 @@ export function applyMultiMetricConfig(
 
 const MAX_LISTED_ITEMS = 3
 
-function formatListWithOverflow(items: string[], max: number = MAX_LISTED_ITEMS): string {
+function formatListWithOverflow(items: Array<string>, max: number = MAX_LISTED_ITEMS): string {
 	if (items.length === 0) return ''
 	if (items.length <= max) return items.join(', ')
 	return `${items.slice(0, max).join(', ')} +${items.length - max}`
@@ -438,7 +438,7 @@ function prettyMetricName(slug: string): string {
 		.trim()
 }
 
-function chartParamDisplayLabels(config: Pick<ChartSavedConfig, 'params' | 'paramLabels'>): string[] {
+function chartParamDisplayLabels(config: Pick<ChartSavedConfig, 'params' | 'paramLabels'>): Array<string> {
 	if (config.paramLabels && config.paramLabels.length === config.params.length) {
 		return config.paramLabels
 	}
@@ -448,7 +448,7 @@ function chartParamDisplayLabels(config: Pick<ChartSavedConfig, 'params' | 'para
 export function defaultPresetName(config: SavedDownloadInput, datasetLabel?: string): string {
 	if (config.kind === 'dataset') {
 		const base = datasetLabel ?? config.slug
-		const modifiers: string[] = []
+		const modifiers: Array<string> = []
 		if (config.chain) modifiers.push(config.chain)
 		// List columns when the user picked a small subset; otherwise the name stays clean.
 		if (config.columns.length > 0 && config.columns.length <= MAX_LISTED_ITEMS) {
@@ -461,7 +461,7 @@ export function defaultPresetName(config: SavedDownloadInput, datasetLabel?: str
 	}
 	if (config.kind === 'chart') {
 		const base = datasetLabel ?? config.slug
-		const parts: string[] = []
+		const parts: Array<string> = []
 		if (config.categoryBreakdown) {
 			parts.push(`${config.categoryBreakdown.category} (all)`)
 		} else if (config.params.length > 0) {
@@ -483,7 +483,7 @@ export function defaultPresetName(config: SavedDownloadInput, datasetLabel?: str
 	}
 	// multiMetric
 	const who = config.paramLabel ?? config.param
-	const parts: string[] = []
+	const parts: Array<string> = []
 	if (config.metrics.length > 0) parts.push(formatListWithOverflow(config.metrics.map(prettyMetricName)))
 	if (config.dateRange) parts.push(formatDateRangeShort(config.dateRange))
 	return parts.length > 0 ? `${who} — ${parts.join(' · ')}` : who
@@ -491,7 +491,7 @@ export function defaultPresetName(config: SavedDownloadInput, datasetLabel?: str
 
 export function describeSavedConfig(config: SavedDownload): string {
 	if (config.kind === 'dataset') {
-		const parts: string[] = []
+		const parts: Array<string> = []
 		// Only note column count when it's big enough that the name couldn't fit it.
 		if (config.columns.length > MAX_LISTED_ITEMS) {
 			parts.push(`${config.columns.length} cols`)
@@ -510,7 +510,7 @@ export function describeSavedConfig(config: SavedDownload): string {
 		return parts.join(' · ')
 	}
 	if (config.kind === 'chart') {
-		const parts: string[] = []
+		const parts: Array<string> = []
 		if (config.categoryBreakdown) {
 			parts.push('category breakdown')
 		} else if (config.params.length > MAX_LISTED_ITEMS) {
@@ -525,7 +525,7 @@ export function describeSavedConfig(config: SavedDownload): string {
 		return parts.join(' · ')
 	}
 	if (config.kind === 'query') {
-		const parts: string[] = []
+		const parts: Array<string> = []
 		const tableCount = config.tables.length
 		if (tableCount > 0) parts.push(`${tableCount} table${tableCount === 1 ? '' : 's'}`)
 		const lineCount = config.sql.split('\n').filter((l) => l.trim()).length
@@ -533,7 +533,7 @@ export function describeSavedConfig(config: SavedDownload): string {
 		return parts.join(' · ')
 	}
 	// multiMetric — name lists metrics; only show count when it overflowed.
-	const parts: string[] = []
+	const parts: Array<string> = []
 	if (config.metrics.length > MAX_LISTED_ITEMS) {
 		parts.push(`${config.metrics.length} metrics combined`)
 	}
@@ -542,7 +542,7 @@ export function describeSavedConfig(config: SavedDownload): string {
 }
 // --- Recents dedup: compare configs by their "shape" (ignoring id/name/timestamps) ---
 
-function sortedArray(arr: string[]): string[] {
+function sortedArray(arr: Array<string>): Array<string> {
 	return arr.toSorted()
 }
 
@@ -589,6 +589,6 @@ export function sameSavedConfigShape(a: SavedDownload, b: SavedDownload): boolea
 	return false
 }
 
-function sortedTableRefs(refs: QueryTableRef[]): string[] {
+function sortedTableRefs(refs: Array<QueryTableRef>): Array<string> {
 	return refs.map((r) => (r.kind === 'dataset' ? `d:${r.slug}` : `c:${r.slug}:${r.param}`)).sort()
 }

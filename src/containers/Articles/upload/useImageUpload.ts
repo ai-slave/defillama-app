@@ -54,7 +54,7 @@ async function fileToBase64(file: File): Promise<string> {
 	const buf = await file.arrayBuffer()
 	const bytes = new Uint8Array(buf)
 	let binary = ''
-	const chunkSize = 0x8000
+	const chunkSize = 0x80_00
 	for (let i = 0; i < bytes.length; i += chunkSize) {
 		binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
 	}

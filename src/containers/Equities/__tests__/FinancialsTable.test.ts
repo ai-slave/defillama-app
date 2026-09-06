@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IEquitiesStatementsResponse } from '../api.types'
 import { getStatementHeaders } from '../FinancialsTable'
 import { buildEquitiesStatementRows, getEquitiesStatementValue } from '../financialStatements'
@@ -11,7 +11,7 @@ const statementSection = {
 }
 
 describe('equities financials statement headers', () => {
-	it('orders periodEnding values from newest to oldest', () => {
+	test('orders periodEnding values from newest to oldest', () => {
 		expect(getStatementHeaders(['1984-03-31', '1984-09-30', '1984-06-30'])).toEqual([
 			{ index: 1, periodEnding: '1984-09-30' },
 			{ index: 2, periodEnding: '1984-06-30' },
@@ -19,7 +19,7 @@ describe('equities financials statement headers', () => {
 		])
 	})
 
-	it('keeps all required sections present when one has no periods', () => {
+	test('keeps all required sections present when one has no periods', () => {
 		const emptySection = {
 			...statementSection,
 			quarterly: { periodEnding: [], values: [[]], children: {} },
@@ -36,7 +36,7 @@ describe('equities financials statement headers', () => {
 		])
 	})
 
-	it('keeps parent and child values aligned with sorted headers', () => {
+	test('keeps parent and child values aligned with sorted headers', () => {
 		const incomeStatement = {
 			labels: ['Revenue'],
 			children: {
@@ -68,7 +68,7 @@ describe('equities financials statement headers', () => {
 		expect(getEquitiesStatementValue(row, newestHeader)).toBeNull()
 	})
 
-	it('rejects malformed producer row and cell alignment', () => {
+	test('rejects malformed producer row and cell alignment', () => {
 		const missingParentRow: IEquitiesStatementsResponse = {
 			incomeStatement: {
 				...statementSection,

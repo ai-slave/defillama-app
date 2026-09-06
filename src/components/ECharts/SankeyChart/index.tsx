@@ -51,7 +51,7 @@ function createMobileLabelLayout(
 	nodes: ISankeyChartProps['nodes'],
 	getChartSize: () => { width: number; height: number }
 ) {
-	let placedLabels: LabelRect[] = []
+	let placedLabels: Array<LabelRect> = []
 	const seenNodeIndexes = new Set<number>()
 
 	return (params: LabelLayoutOptionCallbackParams) => {
@@ -249,7 +249,7 @@ function SankeyChart({
 					const description = nodeMetadata.descriptions[params.name]
 					if (description && !isSmall) {
 						// Truncate description to ~50 chars for display under label
-						const truncatedDesc = description.length > 50 ? description.slice(0, 47) + '...' : description
+						const truncatedDesc = description.length > 50 ? `${description.slice(0, 47)}...` : description
 						return `{name|${params.name}: ${valueWithPercent}}\n{desc|${truncatedDesc}}`
 					}
 					return `${params.name}: ${valueWithPercent}`

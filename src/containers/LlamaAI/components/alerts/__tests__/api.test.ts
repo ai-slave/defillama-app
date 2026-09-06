@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { AuthorizedFetch } from '~/containers/LlamaAI/api/transport'
 import {
 	createManualAlert,
@@ -18,21 +18,21 @@ function jsonResponse(body: unknown, init?: ResponseInit) {
 }
 
 describe('alerts API wrappers', () => {
-	it('returns typed envelope fields directly', async () => {
+	test('returns typed envelope fields directly', async () => {
 		const alerts = [{ id: 'alert-1', title: 'Alert' }]
 		const fetcher: AuthorizedFetch = async () => jsonResponse({ alerts })
 
 		await expect(fetchAlerts(fetcher)).resolves.toEqual(alerts)
 	})
 
-	it('treats missing or malformed 2xx envelopes as empty lists', async () => {
+	test('treats missing or malformed 2xx envelopes as empty lists', async () => {
 		const fetcher: AuthorizedFetch = async () => jsonResponse({})
 
 		await expect(fetchAlerts(fetcher)).resolves.toEqual([])
 		await expect(fetchAlertExecutions(fetcher, 'alert-1')).resolves.toEqual([])
 	})
 
-	it('still throws on non-2xx responses', async () => {
+	test('still throws on non-2xx responses', async () => {
 		const fetcher: AuthorizedFetch = async () => jsonResponse({ error: 'nope' }, { status: 500 })
 
 		await expect(fetchAlerts(fetcher)).rejects.toThrow('Failed to fetch alerts')
@@ -41,7 +41,7 @@ describe('alerts API wrappers', () => {
 })
 
 describe('createManualAlert', () => {
-	it('posts the body to /alerts and returns the created id', async () => {
+	test('posts the body to /alerts and returns the created id', async () => {
 		const fetcher = vi.fn(async () => jsonResponse({ id: 'alert-123' })) as unknown as AuthorizedFetch
 		const body = {
 			title: 'AAVE price alert',
@@ -66,7 +66,7 @@ describe('createManualAlert', () => {
 		)
 	})
 
-	it('throws when not authenticated', async () => {
+	test('throws when not authenticated', async () => {
 		const fetcher: AuthorizedFetch = async () => null
 
 		await expect(
@@ -78,7 +78,7 @@ describe('createManualAlert', () => {
 		).rejects.toThrow('Not authenticated')
 	})
 
-	it('throws the server error message on non-2xx responses', async () => {
+	test('throws the server error message on non-2xx responses', async () => {
 		const fetcher: AuthorizedFetch = async () => jsonResponse({ error: 'bad trigger' }, { status: 400 })
 
 		await expect(
@@ -90,7 +90,7 @@ describe('createManualAlert', () => {
 		).rejects.toThrow('bad trigger')
 	})
 
-	it('falls back to a generic error message when the response body is not JSON', async () => {
+	test('falls back to a generic error message when the response body is not JSON', async () => {
 		const fetcher: AuthorizedFetch = async () => new Response('not json', { status: 500 })
 
 		await expect(
@@ -104,7 +104,7 @@ describe('createManualAlert', () => {
 })
 
 describe('updateAlert', () => {
-	it('updates price settings and delivery atomically in one request', async () => {
+	test('updates price settings and delivery atomically in one request', async () => {
 		const fetcher = vi.fn(async () => jsonResponse({ ok: true })) as unknown as AuthorizedFetch
 		const input = {
 			alertId: 'alert-1',
@@ -142,7 +142,7 @@ describe('updateAlert', () => {
 		)
 	})
 
-	it('keeps schedule updates trigger-free', async () => {
+	test('keeps schedule updates trigger-free', async () => {
 		const fetcherMock = vi.fn(async (_url: string, _options?: RequestInit) => jsonResponse({ ok: true }))
 		const fetcher: AuthorizedFetch = fetcherMock
 
@@ -162,7 +162,7 @@ describe('updateAlert', () => {
 		expect(JSON.parse(init.body as string)).not.toHaveProperty('trigger')
 	})
 
-	it('fails the combined price edit as one request', async () => {
+	test('fails the combined price edit as one request', async () => {
 		const fetcher = vi.fn(async () =>
 			jsonResponse({ error: 'invalid delivery' }, { status: 400 })
 		) as unknown as AuthorizedFetch

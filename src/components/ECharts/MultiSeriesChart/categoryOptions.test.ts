@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createCategoryTooltipFormatter } from './tooltip'
 
 describe('category chart tooltip', () => {
-	it('keeps the category header and reads object-row values', () => {
+	test('keeps the category header and reads object-row values', () => {
 		const formatter = createCategoryTooltipFormatter('$')
 		const tooltip = formatter([
 			{
@@ -18,7 +18,7 @@ describe('category chart tooltip', () => {
 		expect(tooltip).toContain('$1,250')
 	})
 
-	it('preserves negative values and omits legacy zero rows', () => {
+	test('preserves negative values and omits legacy zero rows', () => {
 		const formatter = createCategoryTooltipFormatter('%')
 		const tooltip = formatter([
 			{ axisValue: 'Bucket', seriesName: 'Loss', data: { Loss: -2.5 } },

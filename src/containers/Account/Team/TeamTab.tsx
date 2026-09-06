@@ -11,7 +11,7 @@ import { TeamMemberView } from './TeamMemberView'
 import { TeamSeatsCard } from './TeamSeatsCard'
 import { useTeam } from './useTeam'
 
-const getQueryParam = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value)
+const getQueryParam = (value: string | Array<string> | undefined) => (Array.isArray(value) ? value[0] : value)
 
 export function TeamTab() {
 	const router = useRouter()

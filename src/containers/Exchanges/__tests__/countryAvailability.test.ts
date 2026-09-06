@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { resolveCountryAvailability } from '../countryAvailability'
 import type { MasterExchangeRegionCatalogResponse, MasterExchangeRegionManifestResponse } from '../master.types'
 
@@ -56,7 +56,7 @@ const manifest = {
 } satisfies MasterExchangeRegionManifestResponse
 
 describe('country availability resolver', () => {
-	it('uses the exact variant and its effective country override', () => {
+	test('uses the exact variant and its effective country override', () => {
 		expect(resolveCountryAvailability(catalog, manifest, 'DE')).toEqual({
 			country: 'DE',
 			region: { key: 'eea', label: 'EU / EEA' },
@@ -68,7 +68,7 @@ describe('country availability resolver', () => {
 		})
 	})
 
-	it('falls back to global for a data-driven region key', () => {
+	test('falls back to global for a data-driven region key', () => {
 		expect(resolveCountryAvailability(catalog, manifest, 'NZ')).toMatchObject({
 			region: { key: 'oceania', label: 'Oceania' },
 			availability: 'leaving',
@@ -79,7 +79,7 @@ describe('country availability resolver', () => {
 		})
 	})
 
-	it('guarantees unavailable countries expose no segments', () => {
+	test('guarantees unavailable countries expose no segments', () => {
 		expect(resolveCountryAvailability(catalog, manifest, 'US')).toMatchObject({
 			availability: 'unavailable',
 			segments: [],
@@ -87,7 +87,7 @@ describe('country availability resolver', () => {
 		})
 	})
 
-	it('does not let a restricted override reopen an unavailable variant', () => {
+	test('does not let a restricted override reopen an unavailable variant', () => {
 		expect(resolveCountryAvailability(catalog, manifest, 'CA')).toMatchObject({
 			availability: 'unavailable',
 			segments: [],

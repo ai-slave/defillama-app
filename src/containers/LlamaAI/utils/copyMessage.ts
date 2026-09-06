@@ -23,7 +23,7 @@ export interface CopyMessageSource {
 	artifacts: ArtifactRegistry
 	fetchText: (url: string) => Promise<string>
 	captureChart?: (chartId: string) => Promise<string | null>
-	citations?: UnifiedCitationReference[]
+	citations?: Array<UnifiedCitationReference>
 }
 
 function escapeHtml(value: string): string {
@@ -61,9 +61,9 @@ function htmlLink(title: string, url: string): string {
 }
 
 // Minimal CSV parser: quoted fields with embedded commas/newlines and "" escapes.
-function parseCsv(text: string): string[][] {
-	const rows: string[][] = []
-	let row: string[] = []
+function parseCsv(text: string): Array<Array<string>> {
+	const rows: Array<Array<string>> = []
+	let row: Array<string> = []
 	let field = ''
 	let inQuotes = false
 	for (let i = 0; i < text.length; i++) {
@@ -97,7 +97,7 @@ function parseCsv(text: string): string[][] {
 	return rows
 }
 
-function csvToMarkdownTable(rows: string[][]): string {
+function csvToMarkdownTable(rows: Array<Array<string>>): string {
 	const header = rows[0]
 	if (!header) return ''
 	const escapeCell = (cell: string) => cell.replaceAll('|', '\\|').replaceAll('\n', ' ')
@@ -110,7 +110,7 @@ function csvToMarkdownTable(rows: string[][]): string {
 	return lines.join('\n')
 }
 
-function csvToHtmlTable(rows: string[][]): string {
+function csvToHtmlTable(rows: Array<Array<string>>): string {
 	const header = rows[0]
 	if (!header) return ''
 	const body = rows.slice(1)
@@ -127,7 +127,7 @@ function chartTitle(artifacts: ArtifactRegistry, chartId: string): string {
 	return record.charts[0]?.title || 'Chart'
 }
 
-type CsvResolution = { kind: 'table'; rows: string[][] } | { kind: 'link'; title: string; url: string } | null
+type CsvResolution = { kind: 'table'; rows: Array<Array<string>> } | { kind: 'link'; title: string; url: string } | null
 
 async function resolveCsv(source: CopyMessageSource, csvId: string): Promise<CsvResolution> {
 	const record = source.artifacts.get(csvId)
@@ -172,7 +172,7 @@ function citationState(source: CopyMessageSource) {
 			})
 		)
 	const citedRefs = () => {
-		const refs: UnifiedCitationReference[] = []
+		const refs: Array<UnifiedCitationReference> = []
 		for (const id of [...cited].sort((a, b) => a - b)) {
 			const ref = byId.get(id)
 			if (ref) refs.push(ref)
@@ -212,7 +212,7 @@ function citationUrl(ref: UnifiedCitationReference): string | null {
 	return raw ? normalizeSourceUrl(raw) : null
 }
 
-function sourcesMarkdown(refs: UnifiedCitationReference[]): string {
+function sourcesMarkdown(refs: Array<UnifiedCitationReference>): string {
 	const lines = refs.map((ref) => {
 		const url = citationUrl(ref)
 		return `[${ref.id}] ${describeCitation(ref)}${url ? ` — ${url}` : ''}`
@@ -220,7 +220,7 @@ function sourcesMarkdown(refs: UnifiedCitationReference[]): string {
 	return `**Sources**\n\n${lines.join('\n')}`
 }
 
-function sourcesHtml(refs: UnifiedCitationReference[]): string {
+function sourcesHtml(refs: Array<UnifiedCitationReference>): string {
 	const lines = refs
 		.map((ref) => {
 			const url = citationUrl(ref)
@@ -261,13 +261,13 @@ function citationsToHtmlLinks(html: string, refs: Map<number, UnifiedCitationRef
 	return out
 }
 
-function contentParts(content: string): ContentPart[] {
+function contentParts(content: string): Array<ContentPart> {
 	return parseArtifactPlaceholders(content).parts
 }
 
 export async function buildCopyMarkdown(content: string, source: CopyMessageSource): Promise<string> {
 	const citations = citationState(source)
-	const pieces: string[] = []
+	const pieces: Array<string> = []
 	for (const part of contentParts(content)) {
 		switch (part.type) {
 			case 'text': {
@@ -318,7 +318,7 @@ export async function buildCopyHtml(content: string, source: CopyMessageSource):
 	const citations = citationState(source)
 	const refsById = new Map<number, UnifiedCitationReference>()
 	for (const ref of source.citations ?? []) if (typeof ref.id === 'number') refsById.set(ref.id, ref)
-	const pieces: string[] = []
+	const pieces: Array<string> = []
 	for (const part of contentParts(content)) {
 		switch (part.type) {
 			case 'text': {

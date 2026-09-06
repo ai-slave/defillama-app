@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('~/public/definitions', () => ({
 	definitions: {
@@ -29,7 +29,7 @@ import { getColumnsForCategory, getProtocolMcapTvlRatio } from '../index'
 const getHeader = (column: { header?: unknown }) => column.header
 
 describe('getColumnsForCategory', () => {
-	it('uses Spot Volume headers for Interface dex columns', () => {
+	test('uses Spot Volume headers for Interface dex columns', () => {
 		const headers = getColumnsForCategory('Interface').map(getHeader)
 		expect(headers).toContain('Spot Volume 24h')
 		expect(headers).toContain('Spot Volume 7d')
@@ -37,7 +37,7 @@ describe('getColumnsForCategory', () => {
 		expect(headers).toContain('Perp Volume 24h')
 	})
 
-	it('uses category-aware dex headers for prediction markets and crypto card issuers', () => {
+	test('uses category-aware dex headers for prediction markets and crypto card issuers', () => {
 		const predictionHeaders = getColumnsForCategory('Prediction Market').map(getHeader)
 		expect(predictionHeaders).toContain('Prediction Volume 24h')
 		expect(predictionHeaders).toContain('Prediction Volume 7d')
@@ -49,7 +49,7 @@ describe('getColumnsForCategory', () => {
 		expect(paymentHeaders).toContain('Payment Volume 30d')
 	})
 
-	it('requires positive TVL for market-cap ratios while preserving zero market cap', () => {
+	test('requires positive TVL for market-cap ratios while preserving zero market cap', () => {
 		expect(getProtocolMcapTvlRatio(0, 10)).toBe(0)
 		expect(getProtocolMcapTvlRatio(10, 0)).toBeUndefined()
 		expect(getProtocolMcapTvlRatio(10, null)).toBeUndefined()

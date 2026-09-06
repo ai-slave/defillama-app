@@ -13,7 +13,7 @@ const CandlestickChart = lazy(() => import('~/components/ECharts/CandlestickChar
 interface CandlestickChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 
@@ -27,7 +27,7 @@ export function CandlestickChartAdapter({ config, result, classified, onReady }:
 		const lowIndex = classified.find((column) => column.name === mapping.low)?.index ?? -1
 		const highIndex = classified.find((column) => column.name === mapping.high)?.index ?? -1
 		const volumeIndex = mapping.volume ? (classified.find((column) => column.name === mapping.volume)?.index ?? -1) : -1
-		const out: CandlestickPoint[] = []
+		const out: Array<CandlestickPoint> = []
 		for (const row of result.rows) {
 			const ts = readSqlTimestampMs(row[tsIndex])
 			const open = readSqlNumber(row[openIndex])

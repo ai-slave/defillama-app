@@ -3,12 +3,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { YieldsPaginatedTableResponse } from '../yieldsTableQuery'
 
 const routerMock = vi.hoisted(() => ({
 	isReady: true,
-	query: {} as Record<string, string | string[] | undefined>,
+	query: {} as Record<string, string | Array<string> | undefined>,
 	push: vi.fn(),
 	replace: vi.fn(),
 	pathname: '/yields'
@@ -77,7 +77,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		container.remove()
 	})
 
-	it('renders the seeded default view without fetching', async () => {
+	test('renders the seeded default view without fetching', async () => {
 		await render()
 
 		expect(latest.rows.map((row) => row.id)).toEqual(['seeded-1', 'seeded-2'])
@@ -87,7 +87,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(fetchJson).not.toHaveBeenCalled()
 	})
 
-	it('never shows seeded rows under a filtered URL - loading, then fresh data', async () => {
+	test('never shows seeded rows under a filtered URL - loading, then fresh data', async () => {
 		routerMock.query = { minApy: '5' }
 		let resolve: (value: YieldsPaginatedTableResponse<Row>) => void = () => {}
 		fetchJson.mockImplementation(() => new Promise((r) => (resolve = r)))
@@ -112,7 +112,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(latest.rowsQuery.isFetching).toBe(false)
 	})
 
-	it('drops the seed when a parameterized fetch fails instead of showing unfiltered rows', async () => {
+	test('drops the seed when a parameterized fetch fails instead of showing unfiltered rows', async () => {
 		routerMock.query = { minApy: '5' }
 		fetchJson.mockRejectedValue(new Error('upstream down'))
 
@@ -132,7 +132,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(latest.isLoading).toBe(false)
 	})
 
-	it('renders seeded rows before the router is ready, still without fetching', async () => {
+	test('renders seeded rows before the router is ready, still without fetching', async () => {
 		routerMock.isReady = false
 
 		await render()

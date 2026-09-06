@@ -45,8 +45,8 @@ export function getBridgeOverviewSummaryTotals({
 	currentTimeMs
 }: {
 	selectedChain: string
-	bridges: BridgeOverviewSummaryRow[] | null | undefined
-	chainVolumeData: BridgeOverviewVolumeChartPoint[]
+	bridges: Array<BridgeOverviewSummaryRow> | null | undefined
+	chainVolumeData: Array<BridgeOverviewVolumeChartPoint>
 	currentTimeMs?: number
 }): BridgeOverviewSummaryTotals {
 	if (selectedChain !== 'All') {
@@ -132,7 +132,7 @@ export function buildBridgeOverviewActiveChart({
 }: {
 	selectedChain: string
 	chartType: BridgeOverviewChartType
-	chainVolumeData: BridgeOverviewVolumeChartPoint[]
+	chainVolumeData: Array<BridgeOverviewVolumeChartPoint>
 	bridgeStatsCurrentDay?: BridgeDailyTokenStats | null
 	tokenPieSeries?: RuntimePieChartData | null
 }): BridgeOverviewActiveChart {

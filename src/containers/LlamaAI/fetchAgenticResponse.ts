@@ -77,20 +77,20 @@ export class AgenticExecutionChangedError extends Error {
 
 export interface AgenticSSECallbacks {
 	onToken: (content: string) => void
-	onCharts: (charts: ChartConfiguration[], chartData: ChartDataByKey, artifactRefs?: ChartArtifactRefs) => void
-	onGeneratedImages?: (images: GeneratedImage[]) => void
+	onCharts: (charts: Array<ChartConfiguration>, chartData: ChartDataByKey, artifactRefs?: ChartArtifactRefs) => void
+	onGeneratedImages?: (images: Array<GeneratedImage>) => void
 	onProgress: (toolName: string, isPremium?: boolean) => void
 	onSpawnProgress: (data: SpawnProgressData) => void
 	onSessionId: (sessionId: string, startedAt?: number) => void
-	onCitations: (citations: string[]) => void
+	onCitations: (citations: Array<string>) => void
 	onFactCheckStatus?: (status: 'drafting' | 'verifying' | 'finalizing') => void
-	onFactCheckCitations?: (refs: UnifiedCitationReference[], finalizedText?: string) => void
-	onCsvExport?: (exports: CsvExport[]) => void
-	onMdExport?: (exports: MdExport[]) => void
+	onFactCheckCitations?: (refs: Array<UnifiedCitationReference>, finalizedText?: string) => void
+	onCsvExport?: (exports: Array<CsvExport>) => void
+	onMdExport?: (exports: Array<MdExport>) => void
 	onAlertProposed?: (data: AlertProposedData) => void
 	onDashboard?: (dashboard: DashboardArtifact) => void
 	onToolExecution?: (data: ToolExecution) => void
-	onTodos?: (todos: TodoItem[]) => void
+	onTodos?: (todos: Array<TodoItem>) => void
 	onMessageMetadata?: (data: MessageMetadata) => void
 	onThinking?: (content: string) => void
 	onCompaction?: (data: { status: 'started' | 'completed'; messagesBefore: number; messagesAfter?: number }) => void
@@ -157,7 +157,7 @@ interface DashboardEvent {
 	dashboard_id?: string
 	dashboardConfig?: {
 		dashboardName?: unknown
-		items?: PersistedDashboardItemConfig[]
+		items?: Array<PersistedDashboardItemConfig>
 		timePeriod?: unknown
 		sourceDashboardId?: unknown
 	}
@@ -167,7 +167,7 @@ interface DashboardEvent {
 		dashboard_id?: string
 		dashboardConfig?: {
 			dashboardName?: unknown
-			items?: PersistedDashboardItemConfig[]
+			items?: Array<PersistedDashboardItemConfig>
 			timePeriod?: unknown
 			sourceDashboardId?: unknown
 		}
@@ -200,8 +200,8 @@ interface FactCheckStatusEvent {
 
 interface FactCheckCitationsEvent {
 	type: 'fact_check_citations'
-	citations?: UnifiedCitationReference[]
-	sources?: UnifiedCitationReference[]
+	citations?: Array<UnifiedCitationReference>
+	sources?: Array<UnifiedCitationReference>
 	response?: string
 	sessionId: string
 }
@@ -272,7 +272,7 @@ interface ResponseEndEvent {
 interface DuelStartEvent {
 	type: 'duel_start'
 	pairId: string
-	arms?: string[]
+	arms?: Array<string>
 }
 
 // Emitted only once both answers are confirmed persisted; until then neither can be resolved
@@ -363,7 +363,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
-function normalizeArray<T>(value: unknown, isItem: (item: unknown) => item is T): T[] {
+function normalizeArray<T>(value: unknown, isItem: (item: unknown) => item is T): Array<T> {
 	return Array.isArray(value) ? value.filter(isItem) : []
 }
 
@@ -420,10 +420,10 @@ function dashboardItemsHash(items: DashboardArtifact['items']): string {
 		return [item.kind, item.kind === 'llamaai-chart' ? (item.chartRef ?? item.savedChartId ?? item.id) : item.id]
 	})
 	const serialized = JSON.stringify(normalized)
-	let hash = 0xcbf29ce484222325n
+	let hash = 0xcb_f2_9c_e4_84_22_23_25n
 	for (let i = 0; i < serialized.length; i++) {
 		hash ^= BigInt(serialized.charCodeAt(i))
-		hash = BigInt.asUintN(64, hash * 0x100000001b3n)
+		hash = BigInt.asUintN(64, hash * 0x1_00_00_00_01_b3n)
 	}
 	return hash.toString(16).padStart(16, '0')
 }
@@ -893,22 +893,22 @@ export async function checkActiveExecution(
 			throw new Error(await getResponseErrorMessage(res, `Failed to check active execution (${statusLabel})`))
 		}
 		return decodeActiveExecutionResponse(await res.json())
-	} catch (err) {
-		if (!abortSignal.aborted) console.error('[llama-ai] [checkActiveExecution] failed:', getErrorMessage(err))
+	} catch (error) {
+		if (!abortSignal.aborted) console.error('[llama-ai] [checkActiveExecution] failed:', getErrorMessage(error))
 		const status =
-			typeof err === 'object' && err !== null
-				? 'status' in err && typeof err.status === 'number'
-					? err.status
-					: 'response' in err &&
-						  typeof err.response === 'object' &&
-						  err.response !== null &&
-						  'status' in err.response &&
-						  typeof err.response.status === 'number'
-						? err.response.status
+			typeof error === 'object' && error !== null
+				? 'status' in error && typeof error.status === 'number'
+					? error.status
+					: 'response' in error &&
+						  typeof error.response === 'object' &&
+						  error.response !== null &&
+						  'status' in error.response &&
+						  typeof error.response.status === 'number'
+						? error.response.status
 						: null
 				: null
 		if (status === 404) return { active: false, execution: null }
-		throw err
+		throw error
 	}
 }
 
@@ -938,9 +938,7 @@ export async function resumeAgenticStream({
 	if (expectedMessageId) params.set('expectedMessageId', expectedMessageId)
 	const query = params.toString()
 	const url = `${AI_SERVER}/agentic/stream/${encodeURIComponent(sessionId)}${query ? `?${query}` : ''}`
-	const res = await fetchFn(url, {
-		...(abortSignal === undefined ? {} : { signal: abortSignal })
-	})
+	const res = await fetchFn(url, abortSignal === undefined ? {} : { signal: abortSignal })
 
 	if (!res.ok) {
 		if (res.status === 409) {

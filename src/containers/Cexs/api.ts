@@ -13,7 +13,7 @@ export async function fetchCexs(): Promise<RawCexsResponse> {
 	return fetchJson<RawCexsResponse>(CEXS_API_URL)
 }
 export async function fetchCexInflowsBatchProxy(
-	cexs: CexInflowsRequest[],
+	cexs: Array<CexInflowsRequest>,
 	startTime: number,
 	endTime: number,
 	authorizedFetch: (url: string, options?: RequestInit) => Promise<Response | null>

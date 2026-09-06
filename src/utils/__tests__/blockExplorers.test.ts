@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { findBlockExplorerChain, getBlockExplorerNew } from '../blockExplorers'
 
 const blockExplorers = [
 	{
 		displayName: 'Arbitrum',
 		llamaChainId: 'arbitrum',
-		evmChainId: 42161,
+		evmChainId: 42_161,
 		blockExplorers: [{ name: 'Arbiscan', url: 'https://arbiscan.io' }]
 	},
 	{
@@ -17,17 +17,17 @@ const blockExplorers = [
 ]
 
 describe('findBlockExplorerChain', () => {
-	it('prefers llama chain id matches before falling back to display name', () => {
+	test('prefers llama chain id matches before falling back to display name', () => {
 		expect(
 			findBlockExplorerChain(blockExplorers, { chainId: 'arbitrum', chainName: 'Arbitrum One' })?.llamaChainId
 		).toBe('arbitrum')
 	})
 
-	it('falls back to the display name when no chain id match exists', () => {
+	test('falls back to the display name when no chain id match exists', () => {
 		expect(findBlockExplorerChain(blockExplorers, { chainName: 'Ethereum' })?.llamaChainId).toBe('ethereum')
 	})
 
-	it('normalizes whitespace and underscores in chain identifiers', () => {
+	test('normalizes whitespace and underscores in chain identifiers', () => {
 		expect(
 			findBlockExplorerChain(blockExplorers, { chainId: 'arbitrum', chainName: 'Arbitrum_One' })?.llamaChainId
 		).toBe('arbitrum')
@@ -35,7 +35,7 @@ describe('findBlockExplorerChain', () => {
 })
 
 describe('getBlockExplorerNew', () => {
-	it('builds an address url from explicit chain context', () => {
+	test('builds an address url from explicit chain context', () => {
 		expect(
 			getBlockExplorerNew({
 				apiResponse: blockExplorers,

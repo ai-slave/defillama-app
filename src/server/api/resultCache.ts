@@ -82,10 +82,10 @@ export function parseCachedJsonResult<T>(payload: CachedJsonPayload<T>): T {
 }
 
 function hashCacheKey(key: string): string {
-	let hash = 0x811c9dc5
+	let hash = 0x81_1c_9d_c5
 	for (let i = 0; i < key.length; i++) {
 		hash ^= key.charCodeAt(i)
-		hash = Math.imul(hash, 0x01000193)
+		hash = Math.imul(hash, 0x01_00_01_93)
 	}
 	return (hash >>> 0).toString(36)
 }

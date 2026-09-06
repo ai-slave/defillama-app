@@ -5,7 +5,7 @@ import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 
-const ranksBySortedRows = new WeakMap<readonly Row<ProtocolTokenUsageData>[], ReadonlyMap<string, number>>()
+const ranksBySortedRows = new WeakMap<ReadonlyArray<Row<ProtocolTokenUsageData>>, ReadonlyMap<string, number>>()
 
 function getSortedRowIndex(table: Table<ProtocolTokenUsageData>, rowId: string): number {
 	const sortedRows = table.getSortedRowModel().rows
@@ -21,10 +21,10 @@ function getSortedRowIndex(table: Table<ProtocolTokenUsageData>, rowId: string):
 	return index
 }
 
-export const getColumns = (tokenSymbols: string[]): ColumnDef<ProtocolTokenUsageData>[] => {
+export const getColumns = (tokenSymbols: Array<string>): Array<ColumnDef<ProtocolTokenUsageData>> => {
 	const isMultiToken = tokenSymbols.length > 1
 
-	const baseColumns: ColumnDef<ProtocolTokenUsageData>[] = [
+	const baseColumns: Array<ColumnDef<ProtocolTokenUsageData>> = [
 		{
 			header: 'Protocol',
 			accessorKey: 'name',

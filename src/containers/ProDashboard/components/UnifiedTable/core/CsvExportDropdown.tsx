@@ -14,7 +14,7 @@ const EXPORT_LEVEL_LABELS: Record<CsvExportLevel, string> = {
 }
 
 interface CsvExportDropdownProps {
-	rowHeaders: UnifiedRowHeaderType[]
+	rowHeaders: Array<UnifiedRowHeaderType>
 	onExport: (level: CsvExportLevel) => void
 	isLoading: boolean
 	disabled: boolean
@@ -24,7 +24,7 @@ export function CsvExportDropdown({ rowHeaders, onExport, isLoading, disabled }:
 	const [isOpen, setIsOpen] = useState(false)
 	const dropdownRef = useRef<HTMLDivElement>(null)
 
-	const exportOptions: CsvExportLevel[] = [
+	const exportOptions: Array<CsvExportLevel> = [
 		'all',
 		...rowHeaders.filter((header): header is Exclude<UnifiedRowHeaderType, 'protocol'> => header !== 'protocol')
 	]

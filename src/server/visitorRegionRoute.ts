@@ -5,7 +5,7 @@ import { EU_COUNTRY_CODE_SET } from '~/utils/countries'
 export type VisitorAudience = 'eu' | 'rest' | 'unknown'
 
 const VISITOR_REGION_CACHE_CONTROL = 'private, no-store, max-age=0'
-export function readCloudflareCountry(value: string | string[] | undefined): string | null {
+export function readCloudflareCountry(value: string | Array<string> | undefined): string | null {
 	const raw = Array.isArray(value) ? value[0] : value
 	const country = raw?.trim().toUpperCase()
 

@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { StablecoinRuntimeSeries } from '../chartSeries'
 import { prepareStablecoinMarketCapSeries, type StablecoinMarketCapSeries } from '../marketCapPresentation'
 import { useStablecoinChartSelection, useStablecoinSelectionIntent } from '../useStablecoinChartSelection'
@@ -77,7 +77,7 @@ describe('useStablecoinChartSelection', () => {
 		})
 	}
 
-	it('shares explicit snapshot selection without letting the treemap cap truncate ranked views', async () => {
+	test('shares explicit snapshot selection without letting the treemap cap truncate ranked views', async () => {
 		const rows = Array.from({ length: 22 }, (_, index) => ({ name: `Token ${index}`, value: 22 - index }))
 		const prepare = (view: StablecoinMarketCapSeries['kind']) =>
 			prepareStablecoinMarketCapSeries({ rows, view, getName: (row) => row.name, getValue: (row) => row.value })
@@ -108,7 +108,7 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.activeSeries).toEqual([])
 	})
 
-	it('keeps every explicit treemap peer without a presentation cap', async () => {
+	test('keeps every explicit treemap peer without a presentation cap', async () => {
 		const rows = Array.from({ length: 22 }, (_, index) => ({ name: `Token ${index}`, value: 22 - index }))
 		const prepare = (view: StablecoinMarketCapSeries['kind']) =>
 			prepareStablecoinMarketCapSeries({ rows, view, getName: (row) => row.name, getValue: (row) => row.value })
@@ -124,7 +124,7 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.activeSeries).toEqual(['Token 20', 'Token 21'])
 	})
 
-	it('keeps duplicate symbols distinct while excluding only double-counted peers by default', async () => {
+	test('keeps duplicate symbols distinct while excluding only double-counted peers by default', async () => {
 		const [canonicalLabel, doubleCountedLabel, reservedLabel] = buildUniqueStablecoinChartLabels(
 			[
 				{ id: '1', name: 'Canonical USX', symbol: 'USX', gecko_id: 'canonical-usx' },
@@ -165,7 +165,7 @@ describe('useStablecoinChartSelection', () => {
 		expect(filteredSeries.selectionSeries).toEqual([doubleCountedLabel])
 	})
 
-	it('preserves runtime selection and fixed-remainder behavior across snapshot views', async () => {
+	test('preserves runtime selection and fixed-remainder behavior across snapshot views', async () => {
 		const runtimeSeries: RuntimeSeries = {
 			selectableSeries: ['A', 'B', 'C'],
 			defaultSeries: ['A', 'B', 'C'],
@@ -216,7 +216,7 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.renderedCharts).toEqual(new Set())
 	})
 
-	it('selects every default peer while rendering a bounded breakdown plus Others', async () => {
+	test('selects every default peer while rendering a bounded breakdown plus Others', async () => {
 		const runtimeSeries: RuntimeSeries = {
 			selectableSeries: ['A', 'B', 'C', 'D'],
 			defaultSeries: ['A', 'B', 'C', 'D'],
@@ -230,7 +230,7 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.renderedCharts).toEqual(new Set(['A', 'B', 'C', 'D', 'Others']))
 	})
 
-	it('carries an explicit select-all intent into a larger peer universe', async () => {
+	test('carries an explicit select-all intent into a larger peer universe', async () => {
 		const runtimeSeries: RuntimeSeries = {
 			selectableSeries: ['A', 'B'],
 			defaultSeries: ['A', 'B'],
@@ -254,8 +254,8 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.activeSeries).toEqual(['A', 'B', 'C'])
 	})
 
-	it('establishes the full default when route scope changes and the old selection is stale', async () => {
-		const prepare = (names: string[]) =>
+	test('establishes the full default when route scope changes and the old selection is stale', async () => {
+		const prepare = (names: Array<string>) =>
 			prepareStablecoinMarketCapSeries({
 				rows: names.map((name, index) => ({ name, value: names.length - index })),
 				view: 'pie',
@@ -269,8 +269,8 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.activeSeries).toEqual(['C', 'D', 'E'])
 	})
 
-	it('uses the active default without erasing same-scope include intent when peers temporarily disappear', async () => {
-		const prepare = (names: string[]) =>
+	test('uses the active default without erasing same-scope include intent when peers temporarily disappear', async () => {
+		const prepare = (names: Array<string>) =>
 			prepareStablecoinMarketCapSeries({
 				rows: names.map((name, index) => ({ name, value: names.length - index })),
 				view: 'pie',
@@ -290,8 +290,8 @@ describe('useStablecoinChartSelection', () => {
 		expect(latest.activeSeries).toEqual([])
 	})
 
-	it('preserves exclusions across views with different peer inventories', async () => {
-		const prepare = (names: string[]) =>
+	test('preserves exclusions across views with different peer inventories', async () => {
+		const prepare = (names: Array<string>) =>
 			prepareStablecoinMarketCapSeries({
 				rows: names.map((name, index) => ({ name, value: names.length - index })),
 				view: 'pie',

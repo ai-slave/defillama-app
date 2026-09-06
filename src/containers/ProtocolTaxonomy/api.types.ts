@@ -16,7 +16,7 @@ export type CategoryOrTagChartResponse = Partial<Record<CategoryOrTagChartSectio
 
 export type CategoriesSummaryResponse = {
 	chart: Record<string, Record<string, CategoryOrTagChartMetrics>>
-	categories: Record<string, string[]>
+	categories: Record<string, Array<string>>
 }
 
 /** Ascending `[unixSeconds, valueBySeriesName]` rows, as served by the card issuer breakdown charts. */

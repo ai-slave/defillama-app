@@ -1,6 +1,6 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const { DynamicUnlocksCharts, unlocksChartsCalls } = vi.hoisted(() => {
 	const unlocksChartsCalls: Array<{ hideTokenStats?: boolean; protocolName: string }> = []
@@ -12,14 +12,14 @@ const { DynamicUnlocksCharts, unlocksChartsCalls } = vi.hoisted(() => {
 	return { DynamicUnlocksCharts, unlocksChartsCalls }
 })
 
-var authState = {
+let authState = {
 	authorizedFetch: vi.fn(),
 	hasActiveSubscription: true,
 	isAuthenticated: true,
 	loaders: { userLoading: false }
 }
 
-var queryState: {
+let queryState: {
 	data?: any
 	error?: Error | null
 	isLoading: boolean
@@ -96,11 +96,11 @@ describe('TokenUnlocksSection', () => {
 		vi.clearAllMocks()
 	})
 
-	it('renders nothing when the token page has no resolved unlock slug', () => {
+	test('renders nothing when the token page has no resolved unlock slug', () => {
 		expect(renderToStaticMarkup(<TokenUnlocksSection resolvedUnlocksSlug={null} />)).toBe('')
 	})
 
-	it('shows a loader while auth or unlocks data is loading', () => {
+	test('shows a loader while auth or unlocks data is loading', () => {
 		queryState = {
 			data: null,
 			error: null,
@@ -113,7 +113,7 @@ describe('TokenUnlocksSection', () => {
 		expect(html).toContain('Unlocks')
 	})
 
-	it('shows a sign-in gate for unauthenticated users', () => {
+	test('shows a sign-in gate for unauthenticated users', () => {
 		authState = {
 			authorizedFetch: vi.fn(),
 			hasActiveSubscription: false,
@@ -127,7 +127,7 @@ describe('TokenUnlocksSection', () => {
 		expect(html).toContain('Unlocks')
 	})
 
-	it('shows a subscription link for authenticated users without a subscription', () => {
+	test('shows a subscription link for authenticated users without a subscription', () => {
 		authState = {
 			authorizedFetch: vi.fn(),
 			hasActiveSubscription: false,
@@ -142,7 +142,7 @@ describe('TokenUnlocksSection', () => {
 		expect(html).toContain('Unlocks')
 	})
 
-	it('shows the query error message when the unlock fetch fails', () => {
+	test('shows the query error message when the unlock fetch fails', () => {
 		queryState = {
 			data: null,
 			error: new Error('Failed to fetch token unlocks'),
@@ -155,7 +155,7 @@ describe('TokenUnlocksSection', () => {
 		expect(html).toContain('Unlocks')
 	})
 
-	it('renders the shared unlock charts for subscribers when data is available', () => {
+	test('renders the shared unlock charts for subscribers when data is available', () => {
 		queryState = {
 			data: { categories: { documented: ['Team'], realtime: [] }, events: [] },
 			error: null,

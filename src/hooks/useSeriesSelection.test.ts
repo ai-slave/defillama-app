@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { boundSeriesSelection, reconcileSeriesSelection } from './useSeriesSelection'
 
 describe('reconcileSeriesSelection', () => {
-	it('uses stable defaults before the user makes a selection', () => {
+	test('uses stable defaults before the user makes a selection', () => {
 		expect(
 			reconcileSeriesSelection({
 				availableSeries: ['Ethereum', 'Solana', 'Base'],
@@ -12,7 +12,7 @@ describe('reconcileSeriesSelection', () => {
 		).toEqual(['Solana', 'Ethereum'])
 	})
 
-	it('preserves explicit selection order and removes stale names', () => {
+	test('preserves explicit selection order and removes stale names', () => {
 		expect(
 			reconcileSeriesSelection({
 				availableSeries: ['Ethereum', 'Base', 'Arbitrum'],
@@ -21,7 +21,7 @@ describe('reconcileSeriesSelection', () => {
 		).toEqual(['Base', 'Ethereum'])
 	})
 
-	it('does not silently select newly available series after user interaction', () => {
+	test('does not silently select newly available series after user interaction', () => {
 		expect(
 			reconcileSeriesSelection({
 				availableSeries: ['Ethereum', 'Solana', 'Base'],
@@ -30,7 +30,7 @@ describe('reconcileSeriesSelection', () => {
 		).toEqual(['Ethereum', 'Solana'])
 	})
 
-	it('falls back to one valid default instead of returning a blank selection', () => {
+	test('falls back to one valid default instead of returning a blank selection', () => {
 		expect(
 			reconcileSeriesSelection({
 				availableSeries: ['Ethereum', 'Base'],
@@ -40,7 +40,7 @@ describe('reconcileSeriesSelection', () => {
 		).toEqual(['Base'])
 	})
 
-	it('deduplicates values and applies the configured cap', () => {
+	test('deduplicates values and applies the configured cap', () => {
 		expect(
 			reconcileSeriesSelection({
 				availableSeries: ['A', 'A', 'B', 'C'],
@@ -50,7 +50,7 @@ describe('reconcileSeriesSelection', () => {
 		).toEqual(['C', 'B'])
 	})
 
-	it('can restore the complete capped default when an explicit selection becomes stale', () => {
+	test('can restore the complete capped default when an explicit selection becomes stale', () => {
 		expect(
 			reconcileSeriesSelection({
 				availableSeries: ['C', 'D', 'E'],
@@ -64,7 +64,7 @@ describe('reconcileSeriesSelection', () => {
 })
 
 describe('boundSeriesSelection', () => {
-	it('keeps a newly selected tail series when the visible selection is at its cap', () => {
+	test('keeps a newly selected tail series when the visible selection is at its cap', () => {
 		const displayed = Array.from({ length: 30 }, (_, index) => `Series ${index}`)
 		expect(boundSeriesSelection(displayed, [...displayed, 'Series 40'], 30)).toEqual([
 			...displayed.slice(0, 29),

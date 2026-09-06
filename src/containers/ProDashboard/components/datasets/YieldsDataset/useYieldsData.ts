@@ -8,7 +8,7 @@ import type { YieldsPaginatedTableResponse } from '~/containers/Yields/yieldsTab
 import { fetchJson } from '~/utils/async'
 import { joinEarnAndBorrowMarkets, type ProYieldRow } from '../../../yieldData'
 
-export async function fetchProYieldsData(chains: string[] = []): Promise<ProYieldRow[]> {
+export async function fetchProYieldsData(chains: Array<string> = []): Promise<Array<ProYieldRow>> {
 	const params = new URLSearchParams({ pageSize: 'all', includeMemeTokens: 'true' })
 	for (const chain of chains) if (chain !== 'All') params.append('chain', chain)
 
@@ -20,7 +20,7 @@ export async function fetchProYieldsData(chains: string[] = []): Promise<ProYiel
 	return joinEarnAndBorrowMarkets(earn.rows, markets.rows)
 }
 
-export function useYieldsData(chains?: string[]) {
+export function useYieldsData(chains?: Array<string>) {
 	const streamDone = useContext(StreamDoneContext)
 	const selectedChains = chains ?? []
 

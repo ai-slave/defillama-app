@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getProDashboardChartSourceQueryKey } from './chartSource'
 import { buildProDashboardChartObserverPlan, filterDataByTimePeriod } from './queries'
 
-const data: [number, number][] = [
+const data: Array<[number, number]> = [
 	[10, 1],
 	[20, 2],
 	[20, 3],
@@ -11,7 +11,7 @@ const data: [number, number][] = [
 ]
 
 describe('filterDataByTimePeriod', () => {
-	it('slices ascending data with inclusive bounds and duplicate timestamps', () => {
+	test('slices ascending data with inclusive bounds and duplicate timestamps', () => {
 		expect(
 			filterDataByTimePeriod(data, 'custom', {
 				type: 'absolute',
@@ -25,7 +25,7 @@ describe('filterDataByTimePeriod', () => {
 		])
 	})
 
-	it('reuses the source for all-time and full-range selections', () => {
+	test('reuses the source for all-time and full-range selections', () => {
 		expect(filterDataByTimePeriod(data, 'all')).toBe(data)
 		expect(
 			filterDataByTimePeriod(data, 'custom', {
@@ -36,7 +36,7 @@ describe('filterDataByTimePeriod', () => {
 		).toBe(data)
 	})
 
-	it('returns an empty slice when the selected period has no rows', () => {
+	test('returns an empty slice when the selected period has no rows', () => {
 		expect(
 			filterDataByTimePeriod(data, 'custom', {
 				type: 'absolute',
@@ -48,7 +48,7 @@ describe('filterDataByTimePeriod', () => {
 })
 
 describe('Pro dashboard chart query identities', () => {
-	it('shares a metric card with the equivalent raw chart source', () => {
+	test('shares a metric card with the equivalent raw chart source', () => {
 		expect(
 			getProDashboardChartSourceQueryKey({
 				type: 'chainPrice',
@@ -59,7 +59,7 @@ describe('Pro dashboard chart query identities', () => {
 		).toEqual(['pro-dashboard', 'chart-source', 'chainPrice', 'chain', 'Ethereum', 'ethereum', null])
 	})
 
-	it('keeps only source-relevant metadata in the key', () => {
+	test('keeps only source-relevant metadata in the key', () => {
 		const fees = getProDashboardChartSourceQueryKey({
 			type: 'fees',
 			subjectType: 'protocol',
@@ -78,7 +78,7 @@ describe('Pro dashboard chart query identities', () => {
 		expect(tokenPrice[5]).toBe('aave')
 	})
 
-	it('canonicalizes the default unlock source while keeping realtime separate', () => {
+	test('canonicalizes the default unlock source while keeping realtime separate', () => {
 		const omitted = getProDashboardChartSourceQueryKey({
 			type: 'unlocks',
 			subjectType: 'protocol',
@@ -103,7 +103,7 @@ describe('Pro dashboard chart query identities', () => {
 })
 
 describe('Pro dashboard chart observer planning', () => {
-	it('observes each raw source once while preserving every card mapping', () => {
+	test('observes each raw source once while preserving every card mapping', () => {
 		const plan = buildProDashboardChartObserverPlan([
 			{ id: 'daily', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'aave', grouping: 'day' },
 			{ id: 'monthly', kind: 'chart', subjectType: 'protocol', type: 'fees', protocol: 'aave', grouping: 'month' },

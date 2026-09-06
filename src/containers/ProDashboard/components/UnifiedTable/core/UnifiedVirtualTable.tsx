@@ -10,9 +10,9 @@ import { Tooltip } from '~/ui/Tooltip'
 import type { ProtocolTableRow } from '../types'
 
 interface UnifiedVirtualTableProps {
-	rows: Row<ProtocolTableRow>[]
-	headerGroups: HeaderGroup<ProtocolTableRow>[]
-	visibleLeafColumns: Column<ProtocolTableRow, unknown>[]
+	rows: Array<Row<ProtocolTableRow>>
+	headerGroups: Array<HeaderGroup<ProtocolTableRow>>
+	visibleLeafColumns: Array<Column<ProtocolTableRow, unknown>>
 	totalTableWidth: number
 	pageIndex: number
 	pageSize: number
@@ -70,7 +70,7 @@ export function UnifiedVirtualTable({
 			>
 				{headerGroups.map((headerGroup) => {
 					const headers = headerGroup.headers
-					if (!headers.length) {
+					if (headers.length === 0) {
 						return null
 					}
 

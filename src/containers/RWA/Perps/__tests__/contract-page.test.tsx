@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { IRWAPerpsContractData } from '../types'
 
 afterEach(() => {
@@ -11,7 +11,7 @@ function setupPageModule({
 	contracts = ['xyz:META'],
 	contractData = null
 }: {
-	contracts?: string[]
+	contracts?: Array<string>
 	contractData?: unknown
 }) {
 	vi.doMock('~/constants', () => ({
@@ -67,7 +67,7 @@ const TEST_CONTRACT: IRWAPerpsContractData = {
 	},
 	market: {
 		id: 'xyz:meta',
-		timestamp: 1775011512,
+		timestamp: 1_775_011_512,
 		contract: 'xyz:META',
 		venue: 'xyz',
 		venueType: 'DEX',
@@ -118,7 +118,7 @@ const TEST_CONTRACT: IRWAPerpsContractData = {
 }
 
 describe('rwa perps contract page', () => {
-	it('getStaticPaths returns raw contract identifiers without slug conversion', async () => {
+	test('getStaticPaths returns raw contract identifiers without slug conversion', async () => {
 		const page = await setupPageModule({ contracts: ['xyz:META', 'km:NVDA'] })
 
 		await expect(page.getStaticPaths()).resolves.toEqual({
@@ -127,7 +127,7 @@ describe('rwa perps contract page', () => {
 		})
 	})
 
-	it('getStaticProps returns notFound for unknown contracts', async () => {
+	test('getStaticProps returns notFound for unknown contracts', async () => {
 		const page = await setupPageModule({ contracts: ['xyz:META'] })
 
 		await expect(page.getStaticProps({ params: { contract: 'xyz:TSLA' } } as never)).resolves.toEqual({
@@ -135,7 +135,7 @@ describe('rwa perps contract page', () => {
 		})
 	})
 
-	it('getStaticProps returns props for a known contract', async () => {
+	test('getStaticProps returns props for a known contract', async () => {
 		const page = await setupPageModule({ contracts: ['xyz:META'], contractData: TEST_CONTRACT })
 
 		await expect(page.getStaticProps({ params: { contract: 'xyz:META' } } as never)).resolves.toEqual({
@@ -144,7 +144,7 @@ describe('rwa perps contract page', () => {
 		})
 	})
 
-	it('getStaticProps keeps lowercase API contracts as canonical', async () => {
+	test('getStaticProps keeps lowercase API contracts as canonical', async () => {
 		const lowercaseContract = {
 			...TEST_CONTRACT,
 			contract: {
@@ -166,7 +166,7 @@ describe('rwa perps contract page', () => {
 		})
 	})
 
-	it('getStaticProps redirects lowercase contract params to the canonical contract', async () => {
+	test('getStaticProps redirects lowercase contract params to the canonical contract', async () => {
 		const page = await setupPageModule({ contracts: ['xyz:META'], contractData: TEST_CONTRACT })
 
 		await expect(page.getStaticProps({ params: { contract: 'xyz:meta' } } as never)).resolves.toEqual({
@@ -177,7 +177,7 @@ describe('rwa perps contract page', () => {
 		})
 	})
 
-	it('getStaticProps redirects encoded lowercase contract params to the canonical contract', async () => {
+	test('getStaticProps redirects encoded lowercase contract params to the canonical contract', async () => {
 		const page = await setupPageModule({ contracts: ['xyz:META'], contractData: TEST_CONTRACT })
 
 		await expect(page.getStaticProps({ params: { contract: 'xyz%3ameta' } } as never)).resolves.toEqual({
@@ -188,7 +188,7 @@ describe('rwa perps contract page', () => {
 		})
 	})
 
-	it('getStaticProps redirects slugified contract params to the canonical contract', async () => {
+	test('getStaticProps redirects slugified contract params to the canonical contract', async () => {
 		const page = await setupPageModule({ contracts: ['xyz:META'], contractData: TEST_CONTRACT })
 
 		await expect(page.getStaticProps({ params: { contract: 'xyz-meta' } } as never)).resolves.toEqual({
@@ -199,7 +199,7 @@ describe('rwa perps contract page', () => {
 		})
 	})
 
-	it('getStaticProps returns notFound for ambiguous slugified contract params', async () => {
+	test('getStaticProps returns notFound for ambiguous slugified contract params', async () => {
 		const page = await setupPageModule({ contracts: ['xyz:META', 'xyz META'], contractData: TEST_CONTRACT })
 
 		await expect(page.getStaticProps({ params: { contract: 'xyz-meta' } } as never)).resolves.toEqual({
@@ -207,7 +207,7 @@ describe('rwa perps contract page', () => {
 		})
 	})
 
-	it('uses the raw contract identifier in the SEO title', async () => {
+	test('uses the raw contract identifier in the SEO title', async () => {
 		const page = await setupPageModule({ contracts: ['xyz:META'], contractData: TEST_CONTRACT })
 
 		const element = page.default({ contract: TEST_CONTRACT, canonicalContract: 'xyz:META' } as never) as ReactElement<{

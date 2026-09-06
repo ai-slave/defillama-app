@@ -4,9 +4,9 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 
 export function getGroupedBarCharts(
-	charts: MultiSeriesChartSeriesConfig[],
+	charts: Array<MultiSeriesChartSeriesConfig>,
 	groupBy: ChartTimeGroupingWithCumulative
-): MultiSeriesChartSeriesConfig[] {
+): Array<MultiSeriesChartSeriesConfig> {
 	if (groupBy !== 'cumulative') return charts
 
 	return charts.map((chart) => {

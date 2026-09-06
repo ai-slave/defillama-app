@@ -2,7 +2,7 @@
 
 import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 
@@ -50,7 +50,7 @@ describe('ApiUsageBreakdown', () => {
 		vi.useRealTimers()
 	})
 
-	it('passes positional rows and numeric encodes to MultiSeriesChart', async () => {
+	test('passes positional rows and numeric encodes to MultiSeriesChart', async () => {
 		const routes = { a: 7, b: 6, c: 5, d: 4, e: 3, f: 2, g: 1 }
 		await act(async () => {
 			root.render(

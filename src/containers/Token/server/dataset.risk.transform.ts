@@ -3,18 +3,18 @@ import { indexBorrowCapacityByAssetKey } from '~/containers/Token/tokenRisk.util
 
 export type IndexedTokenRiskBorrowCapacity = {
 	data: TokenRiskBorrowCapacityResponse
-	indexedTokens: Map<string, TokenRiskBorrowCapacityTokenEntry[]>
+	indexedTokens: Map<string, Array<TokenRiskBorrowCapacityTokenEntry>>
 }
 
 export type IndexedBorrowCapacitySnapshot = {
 	data: TokenRiskBorrowCapacityResponse
-	indexedTokens: Record<string, TokenRiskBorrowCapacityTokenEntry[]>
+	indexedTokens: Record<string, Array<TokenRiskBorrowCapacityTokenEntry>>
 }
 
 export function buildIndexedBorrowCapacitySnapshot(
 	data: TokenRiskBorrowCapacityResponse
 ): IndexedBorrowCapacitySnapshot {
-	const indexedTokens: Record<string, TokenRiskBorrowCapacityTokenEntry[]> = {}
+	const indexedTokens: Record<string, Array<TokenRiskBorrowCapacityTokenEntry>> = {}
 	for (const [assetKey, tokens] of indexBorrowCapacityByAssetKey(data.tokens)) {
 		indexedTokens[assetKey] = tokens
 	}

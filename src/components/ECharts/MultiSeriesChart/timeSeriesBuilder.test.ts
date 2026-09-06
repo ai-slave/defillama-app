@@ -1,17 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildTimeSeriesChart } from './timeSeriesBuilder'
 
 const toMs = (year: number, month: number, day: number) => Date.UTC(year, month - 1, day)
 
 describe('buildTimeSeriesChart', () => {
-	it('returns an empty chart spec for empty series input', () => {
+	test('returns an empty chart spec for empty series input', () => {
 		expect(buildTimeSeriesChart({ kind: 'periodBars', groupBy: 'weekly', series: [] })).toEqual({
 			dataset: { source: [], dimensions: ['timestamp'] },
 			charts: []
 		})
 	})
 
-	it('sums values for periodBars buckets', () => {
+	test('sums values for periodBars buckets', () => {
 		expect(
 			buildTimeSeriesChart({
 				kind: 'periodBars',
@@ -50,7 +50,7 @@ describe('buildTimeSeriesChart', () => {
 		})
 	})
 
-	it('keeps the last value for periodLines buckets', () => {
+	test('keeps the last value for periodLines buckets', () => {
 		expect(
 			buildTimeSeriesChart({
 				kind: 'periodLines',
@@ -84,7 +84,7 @@ describe('buildTimeSeriesChart', () => {
 		})
 	})
 
-	it('builds cumulative lines without bucketting timestamps', () => {
+	test('builds cumulative lines without bucketting timestamps', () => {
 		expect(
 			buildTimeSeriesChart({
 				kind: 'cumulativeLines',
@@ -120,7 +120,7 @@ describe('buildTimeSeriesChart', () => {
 		})
 	})
 
-	it('fills missing series values with null in dense rows', () => {
+	test('fills missing series values with null in dense rows', () => {
 		expect(
 			buildTimeSeriesChart({
 				kind: 'periodBars',
@@ -169,7 +169,7 @@ describe('buildTimeSeriesChart', () => {
 		})
 	})
 
-	it('keeps mixed sparse line buckets independent while retaining the last value per series', () => {
+	test('keeps mixed sparse line buckets independent while retaining the last value per series', () => {
 		expect(
 			buildTimeSeriesChart({
 				kind: 'periodLines',
@@ -203,7 +203,7 @@ describe('buildTimeSeriesChart', () => {
 		])
 	})
 
-	it('preserves input order for dimensions and charts', () => {
+	test('preserves input order for dimensions and charts', () => {
 		const result = buildTimeSeriesChart({
 			kind: 'periodBars',
 			groupBy: 'daily',
@@ -227,7 +227,7 @@ describe('buildTimeSeriesChart', () => {
 		expect(result.charts.map((item) => item.name)).toEqual(['Second', 'First'])
 	})
 
-	it('sums duplicate timestamps before applying cumulative totals', () => {
+	test('sums duplicate timestamps before applying cumulative totals', () => {
 		expect(
 			buildTimeSeriesChart({
 				kind: 'cumulativeLines',
@@ -249,7 +249,7 @@ describe('buildTimeSeriesChart', () => {
 		])
 	})
 
-	it('carries cumulative totals across shared timestamps so lines do not gap', () => {
+	test('carries cumulative totals across shared timestamps so lines do not gap', () => {
 		expect(
 			buildTimeSeriesChart({
 				kind: 'cumulativeLines',
@@ -276,7 +276,7 @@ describe('buildTimeSeriesChart', () => {
 		])
 	})
 
-	it('throws for duplicate series names', () => {
+	test('throws for duplicate series names', () => {
 		expect(() =>
 			buildTimeSeriesChart({
 				kind: 'periodBars',
@@ -289,7 +289,7 @@ describe('buildTimeSeriesChart', () => {
 		).toThrow('Duplicate series name "A" is not allowed')
 	})
 
-	it('does not mutate input series or point tuples', () => {
+	test('does not mutate input series or point tuples', () => {
 		const points = [
 			[toMs(2024, 1, 1), 2],
 			[toMs(2024, 1, 1), 3],

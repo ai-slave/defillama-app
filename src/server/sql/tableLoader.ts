@@ -100,9 +100,9 @@ function withUpstreamTimeout<T>(promise: Promise<T>, label: string): Promise<T> 
 				clearTimeout(timer)
 				resolve(value)
 			},
-			(err) => {
+			(error) => {
 				clearTimeout(timer)
-				reject(err)
+				reject(error)
 			}
 		)
 	})

@@ -36,7 +36,7 @@ export interface ScatterTooltipParams {
 }
 
 export interface IScatterChartProps {
-	chartData: ScatterChartDatum[]
+	chartData: Array<ScatterChartDatum>
 	title?: string
 	xAxisLabel?: string
 	yAxisLabel?: string

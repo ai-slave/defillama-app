@@ -44,7 +44,7 @@ export function identifierize(s: string): string {
 }
 
 export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOptions) {
-	const [tables, setTables] = useState<RegisteredTable[]>([])
+	const [tables, setTables] = useState<Array<RegisteredTable>>([])
 	const [loading, setLoading] = useState<string | null>(null)
 	const [error, setError] = useState<string | null>(null)
 
@@ -95,9 +95,9 @@ export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOpti
 					return [...without, entry]
 				})
 				return entry
-			} catch (err) {
-				if (isAbortError(err) || signal?.aborted) return null
-				setError(err instanceof Error ? err.message : String(err))
+			} catch (loadError) {
+				if (isAbortError(loadError) || signal?.aborted) return null
+				setError(loadError instanceof Error ? loadError.message : String(loadError))
 				return null
 			} finally {
 				setLoading(null)
@@ -111,8 +111,8 @@ export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOpti
 			if (!conn) return
 			try {
 				await conn.query(`DROP TABLE IF EXISTS "${name}"`)
-			} catch (err) {
-				console.error(`Failed to drop table ${name}:`, err)
+			} catch (dropError) {
+				console.error(`Failed to drop table ${name}:`, dropError)
 			}
 			setTables((prev) => prev.filter((t) => t.name !== name))
 		},
@@ -160,7 +160,7 @@ async function fetchCsvFor(
 	source: TableSource,
 	authorizedFetch: AuthorizedFetch,
 	signal?: AbortSignal
-): Promise<{ csvText: string; columns: string[] }> {
+): Promise<{ csvText: string; columns: Array<string> }> {
 	const url =
 		source.kind === 'dataset'
 			? `/api/private/downloads/${encodeURIComponent(source.slug)}`
@@ -205,9 +205,9 @@ async function withAbort<T>(promise: Promise<T>, signal?: AbortSignal, onAbort?:
 				signal.removeEventListener('abort', onSignalAbort)
 				resolve(value)
 			},
-			(err) => {
+			(error) => {
 				signal.removeEventListener('abort', onSignalAbort)
-				reject(err)
+				reject(error)
 			}
 		)
 	})
@@ -221,7 +221,7 @@ async function safeJson(resp: Response): Promise<any> {
 	}
 }
 
-function inferColumns(source: TableSource, csvText: string): string[] {
+function inferColumns(source: TableSource, csvText: string): Array<string> {
 	// Prefer the curated `fields` array when available — matches what the CSV endpoint emitted
 	// and preserves the intended column order.
 	if (source.kind === 'dataset') {
@@ -234,8 +234,8 @@ function inferColumns(source: TableSource, csvText: string): string[] {
 	return parseCsvHeader(firstLine)
 }
 
-function parseCsvHeader(line: string): string[] {
-	const fields: string[] = []
+function parseCsvHeader(line: string): Array<string> {
+	const fields: Array<string> = []
 	let i = 0
 	while (i < line.length) {
 		if (line[i] === '"') {

@@ -15,7 +15,7 @@ export function safeDecodeURIComponent(value: string): string {
 	}
 }
 
-export function getSingleRouteParam(value: string | string[] | null | undefined): string | null {
+export function getSingleRouteParam(value: string | Array<string> | null | undefined): string | null {
 	return typeof value === 'string' && value.length > 0 ? value : null
 }
 

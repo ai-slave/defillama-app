@@ -51,7 +51,7 @@ function dashboardUpdatedAt(dashboard: AuthorDashboardSummary): string | null {
 	return dashboard.editedAt || dashboard.updated || dashboard.created || null
 }
 
-export function fallbackAuthorStats(dashboards: AuthorDashboardSummary[]): AuthorStats {
+export function fallbackAuthorStats(dashboards: Array<AuthorDashboardSummary>): AuthorStats {
 	let totalViews = 0
 	let totalLikes = 0
 	for (const dashboard of dashboards) {
@@ -61,7 +61,7 @@ export function fallbackAuthorStats(dashboards: AuthorDashboardSummary[]): Autho
 	return { totalViews, totalLikes, followerCount: 0 }
 }
 
-function mostViewedDashboard(dashboards: AuthorDashboardSummary[]): AuthorDashboardSummary | null {
+function mostViewedDashboard(dashboards: Array<AuthorDashboardSummary>): AuthorDashboardSummary | null {
 	let top: AuthorDashboardSummary | null = null
 	for (const dashboard of dashboards) {
 		if (!top || (dashboard.viewCount ?? 0) > (top.viewCount ?? 0)) top = dashboard
@@ -230,7 +230,7 @@ function DashboardCard({ dashboard }: { dashboard: AuthorDashboardSummary }) {
 				<div className="grid content-start gap-3">
 					<p className="line-clamp-4 text-sm leading-6 text-secondary">{dashboardDescription(dashboard)}</p>
 
-					{tags.length ? (
+					{tags.length > 0 ? (
 						<ul className="flex flex-wrap gap-1.5" aria-label="Dashboard tags">
 							{tags.map((tag) => (
 								<li key={tag} className="rounded-md border border-medium bg-page px-2 py-1 text-[11px] text-secondary">
@@ -267,7 +267,7 @@ function FeaturedDashboardCard({ dashboard }: { dashboard: AuthorDashboardSummar
 						{dashboardName(dashboard)}
 					</h2>
 					<p className="line-clamp-3 max-w-3xl text-sm leading-6 text-secondary">{dashboardDescription(dashboard)}</p>
-					{tags.length ? (
+					{tags.length > 0 ? (
 						<ul className="flex flex-wrap gap-1.5" aria-label="Dashboard tags">
 							{tags.map((tag) => (
 								<li key={tag} className="rounded-md border border-medium bg-page px-2 py-1 text-[11px] text-secondary">
@@ -522,7 +522,8 @@ export function AuthorProfileView({
 	const stats = view.stats ?? fallbackAuthorStats(dashboards.items)
 	const socials = socialEntries(author)
 	const featured =
-		view.featured ?? (dashboards.page === 1 && dashboards.items.length ? mostViewedDashboard(dashboards.items) : null)
+		view.featured ??
+		(dashboards.page === 1 && dashboards.items.length > 0 ? mostViewedDashboard(dashboards.items) : null)
 	const showFeatured = dashboards.page === 1 && !!featured
 	const gridItems = showFeatured
 		? dashboards.items.filter((dashboard) => dashboard.id !== featured.id)
@@ -549,7 +550,7 @@ export function AuthorProfileView({
 					<SortControl sort={sort} nav={nav} />
 				</div>
 
-				{gridItems.length ? (
+				{gridItems.length > 0 ? (
 					<div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 						{gridItems.map((dashboard) => (
 							<DashboardCard key={dashboard.id} dashboard={dashboard} />

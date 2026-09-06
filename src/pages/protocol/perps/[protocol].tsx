@@ -44,17 +44,17 @@ const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChar
 interface PerpsProtocolPageProps {
 	name: string
 	deprecated: boolean
-	otherProtocols: string[]
+	otherProtocols: Array<string>
 	category: string | null
 	metrics: IProtocolOverviewPageData['metrics']
 	hasKeyMetrics: true
 	openSmolStatsSummaryByDefault: true
 	perpVolume: NonNullable<IProtocolOverviewPageData['perpVolume']>
-	chart: TimePoint[]
-	protocolChains: string[]
-	protocolVersions: string[]
+	chart: Array<TimePoint>
+	protocolChains: Array<string>
+	protocolVersions: Array<string>
 	warningBanners: ReturnType<typeof getProtocolWarningBanners>
-	hallmarks: HallmarkPoint[] | null
+	hallmarks: Array<HallmarkPoint> | null
 	defaultChartView: LowercaseDwmcGrouping
 	seoTitle: string
 	seoDescription: string

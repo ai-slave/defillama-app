@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ParentProtocolLite, ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import { getFastJsonTimeoutMs } from '~/utils/async'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
@@ -151,7 +151,7 @@ describe('getProtocolOverviewPageData', () => {
 		formatAdapterData.mockClear()
 	})
 
-	it('looks up sponsored reports by the canonical protocol page identity', async () => {
+	test('looks up sponsored reports by the canonical protocol page identity', async () => {
 		const report = {
 			id: 'report-id',
 			title: 'Canonical report',
@@ -193,7 +193,7 @@ describe('getProtocolOverviewPageData', () => {
 		})
 	})
 
-	it('excludes child protocols from their parent protocol competitors', async () => {
+	test('excludes child protocols from their parent protocol competitors', async () => {
 		fetchProtocolOverviewMetrics.mockResolvedValueOnce({
 			id: 'parent#arcus',
 			name: 'Arcus',
@@ -260,7 +260,7 @@ describe('getProtocolOverviewPageData', () => {
 		])
 	})
 
-	it('uses the same ordered peers for the competitors card and FAQ', async () => {
+	test('uses the same ordered peers for the competitors card and FAQ', async () => {
 		fetchProtocolOverviewMetrics.mockResolvedValueOnce({
 			id: 'boros',
 			name: 'Boros',
@@ -332,7 +332,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(faqPeers).toEqual(data.competitors?.map((peer) => peer.name) ?? [])
 	})
 
-	it('distinguishes absent TVL capability from successful empty and explicit-zero TVL responses', async () => {
+	test('distinguishes absent TVL capability from successful empty and explicit-zero TVL responses', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 		const request = {
 			protocolId: 'test-protocol',
@@ -389,7 +389,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(zero.currentTvlByChain).toStrictEqual({ Ethereum: 0 })
 	})
 
-	it('shows key metrics for period-only and zero adapter values but hides unavailable adapter data', async () => {
+	test('shows key metrics for period-only and zero adapter values but hides unavailable adapter data', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 		const request = {
 			protocolId: 'test-protocol',
@@ -429,7 +429,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect((await getProtocolOverviewPageData(request)).hasKeyMetrics).toBe(false)
 	})
 
-	it('retains a successful activity summary when every metric is explicit zero', async () => {
+	test('retains a successful activity summary when every metric is explicit zero', async () => {
 		fetchAdapterProtocolMetrics.mockResolvedValue({ total24h: 0 })
 		const { getProtocolOverviewPageData } = await import('../queries')
 
@@ -458,7 +458,7 @@ describe('getProtocolOverviewPageData', () => {
 		})
 	})
 
-	it('keeps native gas usage separate from its USD cost', async () => {
+	test('keeps native gas usage separate from its USD cost', async () => {
 		fetchAdapterProtocolMetrics.mockImplementation(({ dataType }: { dataType?: string }) =>
 			Promise.resolve({
 				total24h: dataType === 'dailyGasUsed' ? 398_354 : dataType === 'dailyGasUsedUsd' ? 28_520 : null
@@ -498,7 +498,7 @@ describe('getProtocolOverviewPageData', () => {
 		})
 	})
 
-	it('default-toggles secondary charts without server-prefetching their series', async () => {
+	test('default-toggles secondary charts without server-prefetching their series', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 
 		const data = await getProtocolOverviewPageData({
@@ -520,7 +520,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(fetchAdapterProtocolChartData).not.toHaveBeenCalled()
 	})
 
-	it('default-toggles seeded primary chart data', async () => {
+	test('default-toggles seeded primary chart data', async () => {
 		fetchProtocolTvlChart.mockResolvedValueOnce([
 			[1_700_000_000_000, 10],
 			[1_700_086_400_000, 12]
@@ -549,7 +549,7 @@ describe('getProtocolOverviewPageData', () => {
 		})
 	})
 
-	it('keeps configured TVS available while seeding only a nonempty exact producer array', async () => {
+	test('keeps configured TVS available while seeding only a nonempty exact producer array', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 
 		const emptyData = await getProtocolOverviewPageData({
@@ -587,7 +587,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(populatedData.initialMultiSeriesChartData.TVS).toEqual([[1_700_000_000_000, 42]])
 	})
 
-	it('aggregates every consumer measurement for an oracle provider', async () => {
+	test('aggregates every consumer measurement for an oracle provider', async () => {
 		fetchOracleMetrics.mockResolvedValueOnce({
 			oracles: { Chainlink: ['Chainlink', 'Aave'] },
 			chainsByOracle: { Chainlink: ['Ethereum', 'Arbitrum'] },
@@ -619,7 +619,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(data.oracleTvs).toEqual({ Ethereum: 20, Arbitrum: 5 })
 	})
 
-	it('treats an omitted canonical Oracle member as zero contribution', async () => {
+	test('treats an omitted canonical Oracle member as zero contribution', async () => {
 		fetchOracleMetrics.mockResolvedValueOnce({
 			oracles: { Chainlink: ['Measured', 'Missing'] },
 			chainsByOracle: { Chainlink: ['Ethereum'] },
@@ -646,7 +646,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(data.oracleTvs).toEqual({ Ethereum: 10 })
 	})
 
-	it('preserves extra-only Oracle measurements while default TVS is zero', async () => {
+	test('preserves extra-only Oracle measurements while default TVS is zero', async () => {
 		fetchOracleMetrics.mockResolvedValueOnce({
 			oracles: { Chainlink: ['Extra Only'] },
 			chainsByOracle: { Chainlink: ['Ethereum'] },
@@ -671,7 +671,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(data.oracleTvs).toEqual({ 'Ethereum-staking': 5 })
 	})
 
-	it('preserves Oracle identity when its optional measurement request fails', async () => {
+	test('preserves Oracle identity when its optional measurement request fails', async () => {
 		fetchOracleMetrics.mockRejectedValueOnce(new Error('oracle metrics unavailable'))
 		const { getProtocolOverviewPageData } = await import('../queries')
 
@@ -695,18 +695,18 @@ describe('getProtocolOverviewPageData', () => {
 		})
 	})
 
-	it('constructs token FAQ data from the shared token market summary', async () => {
+	test('constructs token FAQ data from the shared token market summary', async () => {
 		getTokenMarketSummaryByGeckoId.mockResolvedValueOnce({
 			symbol: 'TEST',
 			marketCapRank: 10,
 			currentPrice: 2,
 			priceChange7d: 2,
 			priceChange30d: 3,
-			marketCap: 1_000,
-			fdv: 2_000,
+			marketCap: 1000,
+			fdv: 2000,
 			circulatingSupply: 500,
-			totalSupply: 1_000,
-			maxSupply: 1_000,
+			totalSupply: 1000,
+			maxSupply: 1000,
 			ath: 5,
 			athDate: '2026-01-01T00:00:00Z'
 		})
@@ -741,7 +741,7 @@ describe('getProtocolOverviewPageData', () => {
 		})
 	})
 
-	it('does not load token FAQ data when FAQs are disabled', async () => {
+	test('does not load token FAQ data when FAQs are disabled', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 
 		await getProtocolOverviewPageData({
@@ -762,7 +762,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(getTokenMarketSummaryByGeckoId).not.toHaveBeenCalled()
 	})
 
-	it('builds protocol page data when the primary TVL chart seed fails', async () => {
+	test('builds protocol page data when the primary TVL chart seed fails', async () => {
 		const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
 		fetchProtocolTvlChart.mockRejectedValueOnce(new Error('chart timeout'))
 		try {
@@ -793,7 +793,7 @@ describe('getProtocolOverviewPageData', () => {
 		}
 	})
 
-	it('builds protocol page data when optional treasury data fails', async () => {
+	test('builds protocol page data when optional treasury data fails', async () => {
 		fetchTreasuries.mockRejectedValueOnce(new Error('treasury timeout'))
 		const { getProtocolOverviewPageData } = await import('../queries')
 
@@ -814,7 +814,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(optionalPageData).toHaveBeenCalledWith('protocol:test-protocol:treasury', expect.any(Function), null)
 	})
 
-	it('keeps a present all-zero Treasury distinct from an absent Treasury', async () => {
+	test('keeps a present all-zero Treasury distinct from an absent Treasury', async () => {
 		fetchTreasuries.mockResolvedValueOnce([
 			{
 				id: 'test-protocol-treasury',
@@ -845,7 +845,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(data.treasury).toEqual({ majors: 0, stablecoins: 0, ownTokens: 0, others: 0, total: 0 })
 	})
 
-	it('preserves signed expense categories and missing optional metadata', async () => {
+	test('preserves signed expense categories and missing optional metadata', async () => {
 		fetchProtocolExpenses.mockResolvedValueOnce([
 			{
 				protocolId: 'test-protocol',
@@ -882,7 +882,7 @@ describe('getProtocolOverviewPageData', () => {
 		})
 	})
 
-	it('builds protocol page data when optional yields data fails', async () => {
+	test('builds protocol page data when optional yields data fails', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 
 		const data = await getProtocolOverviewPageData({
@@ -902,7 +902,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(optionalPageData).toHaveBeenCalledWith('protocol:test-protocol:yields', expect.any(Function), null)
 	})
 
-	it('builds protocol page data without optional Yields enrichment when no snapshot is available', async () => {
+	test('builds protocol page data without optional Yields enrichment when no snapshot is available', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 
 		const data = await getProtocolOverviewPageData({
@@ -923,7 +923,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(optionalPageData).not.toHaveBeenCalledWith('protocol:test-protocol:yields', expect.any(Function), null)
 	})
 
-	it('fetches token income statements from the token endpoint', async () => {
+	test('fetches token income statements from the token endpoint', async () => {
 		const response = {
 			components: [
 				{ name: 'Hyperliquid', id: 'chain#hyperliquid', protocolType: 'chain', module: 'hyperliquid' },
@@ -965,7 +965,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(response).toEqual(original)
 	})
 
-	it('calculates outstanding FDV from cached emissions supply metrics', async () => {
+	test('calculates outstanding FDV from cached emissions supply metrics', async () => {
 		const { getProtocolOverviewPageData } = await import('../queries')
 
 		const data = await getProtocolOverviewPageData({
@@ -1012,7 +1012,7 @@ describe('getProtocolOverviewPageData', () => {
 		expect(data.outstandingFDV).toBe(1000)
 	})
 
-	it.each([
+	test.each([
 		{ adjustedSupply: 0, currentPrice: 2 },
 		{ adjustedSupply: 500, currentPrice: 0 }
 	])('preserves zero at the outstanding FDV boundary', async ({ adjustedSupply, currentPrice }) => {
@@ -1090,8 +1090,8 @@ const expenseParentProtocol = {
 } satisfies ParentProtocolLite
 
 describe('Protocol Expenses rows', () => {
-	it('joins child and parent identities and sums signed whole-USD categories', () => {
-		const expenses: IProtocolExpenses[] = [
+	test('joins child and parent identities and sums signed whole-USD categories', () => {
+		const expenses: Array<IProtocolExpenses> = [
 			{
 				protocolId: '10',
 				headcount: 0,
@@ -1131,12 +1131,12 @@ describe('Protocol Expenses rows', () => {
 		])
 	})
 
-	it('keeps a successful empty population empty', () => {
+	test('keeps a successful empty population empty', () => {
 		expect(buildProtocolExpenseRows({ expenses: [], protocols: [expenseProtocol], parentProtocols: [] })).toEqual([])
 	})
 
-	it('fails page construction when producer identity has no protocol metadata', () => {
-		const expenses: IProtocolExpenses[] = [
+	test('fails page construction when producer identity has no protocol metadata', () => {
+		const expenses: Array<IProtocolExpenses> = [
 			{
 				protocolId: 'missing',
 				annualUsdCost: { operations: 1 },

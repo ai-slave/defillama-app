@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import type { DirectoryKind } from './modelHelpers'
 import type { ExchangeResearchView, ExchangeSegment } from './models'
@@ -14,7 +14,7 @@ export type DirectoryColumnGroup = 'activity' | 'transparency' | 'fees' | 'fundi
  */
 export type DirectoryScope = 'all' | ExchangeSegment
 /** The segments the `all` view merges, in render order. */
-export const DIRECTORY_ALL_SEGMENTS = ['spot', 'linear_perp'] as const satisfies readonly ExchangeSegment[]
+export const DIRECTORY_ALL_SEGMENTS = ['spot', 'linear_perp'] as const satisfies ReadonlyArray<ExchangeSegment>
 export type DirectoryOverviewTab = 'total' | ExchangeSegment
 export type ExchangeResearchPart = 'volume' | 'oi' | 'depth' | 'nvol'
 /** Chart windows, in the order the control renders them. */
@@ -70,10 +70,10 @@ export function getResearchRange(query: ParsedUrlQuery): ExchangeResearchRange {
 	return RESEARCH_RANGES.find((range) => range === value) ?? DEFAULT_RESEARCH_RANGE
 }
 
-export function getTokenFinderTokens(query: ParsedUrlQuery): string[] {
+export function getTokenFinderTokens(query: ParsedUrlQuery): Array<string> {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.tokenFinderTokens])
 	if (!value) return []
-	const tokens: string[] = []
+	const tokens: Array<string> = []
 	for (const valuePart of value.split(',')) {
 		const token = valuePart.trim().toLowerCase()
 		if (token && !tokens.includes(token)) tokens.push(token)
@@ -147,7 +147,7 @@ export function getRampCurrency(query: ParsedUrlQuery): string | null {
 }
 
 /** Order size on /ramp, in USD. Validated against the sizes the producer published. */
-export function getRampSize(query: ParsedUrlQuery, sizes: number[]): number {
+export function getRampSize(query: ParsedUrlQuery, sizes: Array<number>): number {
 	const value = Number(readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.rampSize]))
 	return sizes.includes(value) ? value : (sizes[0] ?? 1000)
 }

@@ -218,7 +218,7 @@ const unlockedPieChartStackColors = {
 	Locked: '#ff4e21'
 }
 
-const sortPieChartDataDesc = <T extends { name: string; value: number }>(items: T[]) =>
+const sortPieChartDataDesc = <T extends { name: string; value: number }>(items: Array<T>) =>
 	items.toSorted((a, b) => b.value - a.value || a.name.localeCompare(b.name))
 
 const getDesktopPieLegendPosition = (itemsCount: number) =>
@@ -226,8 +226,8 @@ const getDesktopPieLegendPosition = (itemsCount: number) =>
 		? { right: 12, top: 'middle' as const, orient: 'vertical' as const }
 		: { right: 12, top: 12, bottom: 12, orient: 'vertical' as const }
 
-const groupByKey = <T, K>(items: T[], getKey: (item: T) => K): Map<K, T[]> => {
-	const grouped = new Map<K, T[]>()
+const groupByKey = <T, K>(items: Array<T>, getKey: (item: T) => K): Map<K, Array<T>> => {
+	const grouped = new Map<K, Array<T>>()
 	for (const item of items) {
 		const key = getKey(item)
 		const existing = grouped.get(key)
@@ -311,7 +311,7 @@ function TokenStats({
 	symbol: string | null | undefined
 }) {
 	const withSymbol = (amount: string) => (symbol ? `${amount} ${symbol}` : amount)
-	const items: InlineStatStripItem[] = []
+	const items: Array<InlineStatStripItem> = []
 	if (tokenCircSupply != null) {
 		items.push({
 			label: 'Circ. Supply',
@@ -407,7 +407,7 @@ function TokenAllocationBars({
 	)
 }
 
-function SourcesNotesSection({ notes, futures }: { notes: string[]; futures: ProtocolEmissionResult['futures'] }) {
+function SourcesNotesSection({ notes, futures }: { notes: Array<string>; futures: ProtocolEmissionResult['futures'] }) {
 	if (notes.length === 0 && futures.openInterest == null && futures.fundingRate == null) return null
 	return (
 		<div className="flex flex-wrap gap-2 *:flex-1">
@@ -456,7 +456,7 @@ const ChartContainer = ({
 
 	const dataTypeParam = readSingleQueryValue(router.query.dataType)
 	const dataType: DataType =
-		dataTypeParam && (DATA_TYPES as readonly string[]).includes(dataTypeParam)
+		dataTypeParam && (DATA_TYPES as ReadonlyArray<string>).includes(dataTypeParam)
 			? (dataTypeParam as DataType)
 			: 'documented'
 
@@ -470,7 +470,7 @@ const ChartContainer = ({
 
 	const timeGroupingParam = readSingleQueryValue(router.query.groupBy)
 	const timeGrouping: TimeGrouping =
-		timeGroupingParam && (TIME_GROUPINGS as readonly string[]).includes(timeGroupingParam)
+		timeGroupingParam && (TIME_GROUPINGS as ReadonlyArray<string>).includes(timeGroupingParam)
 			? (timeGroupingParam as TimeGrouping)
 			: 'D'
 
@@ -582,7 +582,7 @@ const ChartContainer = ({
 	const chartData = useMemo(() => {
 		// Keep chart data independent from the price query unless an overlay is enabled.
 		// This prevents the schedule chart from re-rendering when price data finishes loading.
-		const filtered: EmissionsChartRow[] = []
+		const filtered: Array<EmissionsChartRow> = []
 		for (const chartItem of rawChartData) {
 			let nextItem = chartItem
 			if (isPriceActive || isMcapActive) {
@@ -657,7 +657,7 @@ const ChartContainer = ({
 		if (!hasFinalAllocation) {
 			return []
 		}
-		const result: { name: string; value: number }[] = []
+		const result: Array<{ name: string; value: number }> = []
 		for (const name in finalAllocation) {
 			const value = finalAllocation[name]!
 			if (value > 0) {

@@ -10,7 +10,7 @@ export type ArticlePeoplePanelItem = {
 
 export type ArticlePeoplePanelConfig = {
 	label: string
-	items: ArticlePeoplePanelItem[]
+	items: Array<ArticlePeoplePanelItem>
 }
 
 export function normalizePeopleHref(value: string): string {
@@ -44,7 +44,7 @@ export function validateArticlePeoplePanel(value: unknown): ArticlePeoplePanelCo
 	if (!value || typeof value !== 'object') return null
 	const raw = value as Record<string, unknown>
 	const itemsRaw = Array.isArray(raw.items) ? raw.items : []
-	const items: ArticlePeoplePanelItem[] = []
+	const items: Array<ArticlePeoplePanelItem> = []
 	for (const entry of itemsRaw) {
 		if (!entry || typeof entry !== 'object') continue
 		const e = entry as Record<string, unknown>

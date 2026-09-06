@@ -15,7 +15,7 @@ export const PI_COMPOSITE_SCORE_INTRO =
 export const PI_GRADE_SUMMARY =
 	'Grades provide a more intuitive representation of overall performance. While the Composite Score offers greater precision, the letter grade groups market makers into broad performance tiers, making it easier to benchmark counterparties at a glance. Because grades are derived solely from the Composite Score, changes in grade occur only when a market maker’s composite score crosses a defined threshold. Each of the underlying metrics used to calculate Composite Scores are described below.'
 
-export const PI_COMPONENT_SECTIONS: { title: string; paragraphs: string[] }[] = [
+export const PI_COMPONENT_SECTIONS: Array<{ title: string; paragraphs: Array<string> }> = [
 	{
 		title: 'Trust',
 		paragraphs: [

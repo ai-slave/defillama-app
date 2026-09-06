@@ -4,8 +4,8 @@ export interface ChartTooltipItem {
 	axisValue: unknown
 	data: unknown
 	dataIndex?: number
-	dimensionNames?: readonly string[]
-	encode?: { x?: readonly (number | string)[]; y?: readonly (number | string)[] }
+	dimensionNames?: ReadonlyArray<string>
+	encode?: { x?: ReadonlyArray<number | string>; y?: ReadonlyArray<number | string> }
 	marker: string
 	name: string
 	seriesName: string
@@ -24,7 +24,7 @@ function toTooltipItem(value: unknown): ChartTooltipItem | null {
 		axisValue: value.axisValue,
 		data: value.data,
 		...(typeof value.dataIndex === 'number' ? { dataIndex: value.dataIndex } : {}),
-		...(Array.isArray(value.dimensionNames) ? { dimensionNames: value.dimensionNames as string[] } : {}),
+		...(Array.isArray(value.dimensionNames) ? { dimensionNames: value.dimensionNames as Array<string> } : {}),
 		...(encode
 			? {
 					encode: {
@@ -40,9 +40,9 @@ function toTooltipItem(value: unknown): ChartTooltipItem | null {
 	}
 }
 
-export function getChartTooltipItems(params: unknown): ChartTooltipItem[] {
+export function getChartTooltipItems(params: unknown): Array<ChartTooltipItem> {
 	const values = Array.isArray(params) ? params : params == null ? [] : [params]
-	const items: ChartTooltipItem[] = []
+	const items: Array<ChartTooltipItem> = []
 
 	for (const value of values) {
 		const item = toTooltipItem(value)

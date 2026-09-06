@@ -119,7 +119,7 @@ interface Report {
 	author?: string
 	comingSoon?: boolean
 	description: string
-	topics: string[]
+	topics: Array<string>
 	image?: string
 	spotlightHref?: string
 	spotlightTitle?: string

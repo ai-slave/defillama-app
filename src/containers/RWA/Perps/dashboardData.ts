@@ -46,7 +46,7 @@ export function buildRWAPerpsTimeSeriesDatasetForRows({
 	seriesKey = 'contract'
 }: {
 	dataset: RWAChartDataset
-	rows: IRWAPerpsMarket[]
+	rows: Array<IRWAPerpsMarket>
 	breakdown: RWAPerpsTimeSeriesBreakdownForMode
 	seriesKey?: 'contract' | 'id'
 }): RWAChartDataset {
@@ -80,7 +80,10 @@ export function buildRWAPerpsTimeSeriesDatasetForRows({
 	return dimensions.length > 1 ? { source, dimensions } : EMPTY_DATASET
 }
 
-export function getRWAPerpsIncludedRows(markets: IRWAPerpsMarket[], mode: RWAPerpsChartMode): IRWAPerpsMarket[] {
+export function getRWAPerpsIncludedRows(
+	markets: Array<IRWAPerpsMarket>,
+	mode: RWAPerpsChartMode
+): Array<IRWAPerpsMarket> {
 	if (mode === 'venue' || !markets.some((market) => market.suspicious)) return markets
 	return markets.filter((market) => !market.suspicious)
 }
@@ -91,14 +94,14 @@ export function buildRWAPerpsTimeSeriesCharts({
 	timeSeriesMode
 }: {
 	metric: 'openInterest' | 'volume24h' | 'markets'
-	dimensions: string[]
+	dimensions: Array<string>
 	timeSeriesMode: 'grouped' | 'breakdown'
 }): Array<MultiSeriesChartSeriesConfig> {
 	const seriesType: MultiSeriesChartSeriesConfig['type'] = metric === 'volume24h' ? 'bar' : 'line'
 	const seriesKeys = dimensions.filter((dimension) => dimension !== 'timestamp')
 	const hasTotalOverlay = timeSeriesMode === 'breakdown' && metric !== 'volume24h' && seriesKeys.includes('Total')
 	const breakdownSeries = seriesKeys.filter((seriesName) => !(hasTotalOverlay && seriesName === 'Total'))
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 
 	for (const [index, seriesName] of breakdownSeries.entries()) {
 		charts.push({

@@ -27,13 +27,13 @@ export type RWAFlowTreemapNode = {
 }
 
 export type RWAFlowTreemapResult = {
-	nodes: RWAFlowTreemapNode[]
+	nodes: Array<RWAFlowTreemapNode>
 	excludedSizeCount: number
 }
 
 export type RWAFlowTreemapWindowData = {
 	flows: Map<string, number>
-	orderedNames: string[]
+	orderedNames: Array<string>
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -84,7 +84,7 @@ export function getRWAFlowTreemapSizeLabel(sizeMetric: RWAFlowTreemapSizeMetric)
 }
 
 export function buildRWAFlowTreemapWindowData(
-	points: readonly IRWAFlowOverviewSplitPoint[],
+	points: ReadonlyArray<IRWAFlowOverviewSplitPoint>,
 	groupBy: RWAFlowGrouping
 ): RWAFlowTreemapWindowData {
 	const seriesNames = new Set<string>()
@@ -135,7 +135,7 @@ export function buildRWAFlowTreemapWindowData(
 }
 
 export function aggregateRWAFlowTreemapWindow(
-	points: readonly IRWAFlowOverviewSplitPoint[],
+	points: ReadonlyArray<IRWAFlowOverviewSplitPoint>,
 	groupBy: RWAFlowGrouping
 ): Map<string, number> {
 	const latestPoint = points[points.length - 1]
@@ -170,11 +170,11 @@ export function buildRWAFlowTreemap({
 	selectedNames
 }: {
 	flows: ReadonlyMap<string, number>
-	sizeRows: readonly RWAFlowTreemapSizeRow[]
+	sizeRows: ReadonlyArray<RWAFlowTreemapSizeRow>
 	sizeMetric: RWAFlowTreemapSizeMetric
 	selectedNames?: ReadonlySet<string>
 }): RWAFlowTreemapResult {
-	const nodes: RWAFlowTreemapNode[] = []
+	const nodes: Array<RWAFlowTreemapNode> = []
 	let excludedSizeCount = 0
 
 	for (const row of sizeRows) {
@@ -232,7 +232,7 @@ export function buildRWAFlowTreemapSizeRowsFromAssets(
 	assets: IRWAAssetsOverview['assets'],
 	splitBy: RWAFlowOverviewSplitBy,
 	includeBridgeTvl = true
-): RWAFlowTreemapSizeRow[] {
+): Array<RWAFlowTreemapSizeRow> {
 	const rows = new Map<string, MutableSizeRow>()
 
 	for (const asset of assets) {
@@ -271,7 +271,7 @@ export function prepareRWAFlowTreemapCsv({
 	groupBy,
 	filename
 }: {
-	nodes: readonly RWAFlowTreemapNode[]
+	nodes: ReadonlyArray<RWAFlowTreemapNode>
 	sizeMetric: RWAFlowTreemapSizeMetric
 	groupBy: RWAFlowGrouping
 	filename: string

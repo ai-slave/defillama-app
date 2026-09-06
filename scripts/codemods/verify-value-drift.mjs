@@ -120,10 +120,10 @@ function resolve(text, mode) {
 		const isDark = variants.includes('dark:')
 		if (mode === 'dark' ? false : isDark) continue // in light mode skip dark: tokens
 		if (mode === 'dark' && isDark) {
-			out[variants.replace(/dark:/, '') + '|' + prop] = rgb // dark: token overrides base in dark
+			out[`${variants.replace(/dark:/, '')}|${prop}`] = rgb // dark: token overrides base in dark
 			continue
 		}
-		const key = variants + '|' + prop
+		const key = `${variants}|${prop}`
 		if (!(key in out) || mode === 'light') out[key] = out[key] ?? rgb
 		if (mode === 'dark' && !(key in out)) out[key] = rgb
 		out[key] = out[key] ?? rgb
@@ -184,12 +184,12 @@ for (const file of changed) {
 			for (const t of text.split(/\s+/)) {
 				const m = t.match(UTIL)
 				if (!m) continue
-				map[m[1] + '|' + m[2]] = m[3]
+				map[`${m[1]}|${m[2]}`] = m[3]
 			}
 			const issues = []
 			for (const [k, v] of Object.entries(map)) {
 				const mm = k.match(/^(hover:|focus:|focus-visible:|active:)\|(.+)$/)
-				if (mm && map['|' + mm[2]] === v) issues.push(k)
+				if (mm && map[`|${mm[2]}`] === v) issues.push(k)
 			}
 			return issues
 		}

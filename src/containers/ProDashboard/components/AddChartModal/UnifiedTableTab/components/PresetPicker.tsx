@@ -8,7 +8,7 @@ export function PresetPicker({
 }: {
 	activePresetId: string
 	onSelect: (presetId: string) => void
-	presets?: UnifiedTablePreset[]
+	presets?: Array<UnifiedTablePreset>
 }) {
 	const presetList = presets ?? UNIFIED_TABLE_PRESETS
 

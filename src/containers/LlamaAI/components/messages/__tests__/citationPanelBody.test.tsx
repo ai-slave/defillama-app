@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { PillBody } from '../CitationPill'
 
@@ -40,20 +40,20 @@ describe('PillBody — web citation without a bound url', () => {
 	// The panel is the ONLY way to reach these links: the pill renders "Click to see the source →"
 	// instead of a direct anchor precisely because the ref has no url of its own. An empty body
 	// makes every searched source unreachable.
-	it('renders the searched sources so the panel is never empty', () => {
+	test('renders the searched sources so the panel is never empty', () => {
 		expect(html).not.toBe('')
 		expect(html).toContain('https://protos.com/cap-labs-slashes-stabledrop/')
 		expect(html).toContain('https://thedefiant.io/cap-founder-apologises/')
 	})
 
-	it('keeps each source labelled so the list is readable', () => {
+	test('keeps each source labelled so the list is readable', () => {
 		expect(html).toContain('Cap Labs slashes Stabledrop rewards')
 		expect(html).toContain('Cap founder apologises for airdrop cut')
 	})
 
 	// The title is the thing a reader scans; a separate 12px "Open source" line under it reads as
 	// decoration, so the headline itself has to be the click target.
-	it('makes each source title the link, not a separate line under it', () => {
+	test('makes each source title the link, not a separate line under it', () => {
 		const anchors = [...html.matchAll(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/g)].map((m) => ({
 			href: m[1],
 			text: m[2]
@@ -67,12 +67,12 @@ describe('PillBody — web citation without a bound url', () => {
 
 	// web_search rows carry a ~1,500-char snippet; without it the panel is a wall of blue titles
 	// with nothing to judge relevance by.
-	it('shows each source snippet and domain, not just the title', () => {
+	test('shows each source snippet and domain, not just the title', () => {
 		expect(html).toContain('cUSD supply/TVL dropped from $80M to $57M')
 		expect(html).toContain('protos.com')
 	})
 
-	it('still exposes a link when a source arrives without a title', () => {
+	test('still exposes a link when a source arrives without a title', () => {
 		const untitled = {
 			...unboundWebSearch,
 			sources: [{ id: 1, sourceType: 'web', label: '', url: 'https://protos.com/untitled/' }]
@@ -84,7 +84,7 @@ describe('PillBody — web citation without a bound url', () => {
 })
 
 describe('PillBody — web citation with a bound url', () => {
-	it('still renders the direct link view', () => {
+	test('still renders the direct link view', () => {
 		const bound: UnifiedCitationReference = {
 			id: 3,
 			sourceType: 'web',

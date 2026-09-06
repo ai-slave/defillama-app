@@ -9,7 +9,10 @@ import { formatNumber, formatUsd } from '~/utils/numberFormat'
 import type { PurchaseSeatsResponse, TeamSubscription } from './types'
 import { useTeam } from './useTeam'
 
-function getExistingInterval(subscriptions: TeamSubscription[], type: 'api' | 'llamafeed'): 'month' | 'year' | null {
+function getExistingInterval(
+	subscriptions: Array<TeamSubscription>,
+	type: 'api' | 'llamafeed'
+): 'month' | 'year' | null {
 	const existing = subscriptions.find(
 		(sub) => sub.type === type && (sub.status === undefined || sub.status === 'active')
 	)

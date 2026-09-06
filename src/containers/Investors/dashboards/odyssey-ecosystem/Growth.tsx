@@ -81,7 +81,7 @@ function TabBtns({
 }: {
 	active: string
 	onChange: (v: string) => void
-	options: { id: string; label: string }[]
+	options: Array<{ id: string; label: string }>
 }) {
 	return (
 		<div className="mb-3 flex flex-wrap gap-1">
@@ -103,7 +103,7 @@ function TabBtns({
 }
 
 function dailyToPairs(
-	rows: LooprDailyRow[] | undefined,
+	rows: Array<LooprDailyRow> | undefined,
 	metric: 'active_users' | 'active_positions'
 ): Array<[number, number | null]> {
 	if (!rows) return []
@@ -128,10 +128,10 @@ export default function Growth() {
 	const [spendVenue, setSpendVenue] = useState('aerodrome')
 
 	const looprTotalDatasets = useMemo(() => {
-		const activeAccounts: number[][] = []
-		const activePositions: number[][] = []
-		const cumulativeAccounts: number[][] = []
-		const cumulativePositions: number[][] = []
+		const activeAccounts: Array<Array<number>> = []
+		const activePositions: Array<Array<number>> = []
+		const cumulativeAccounts: Array<Array<number>> = []
+		const cumulativePositions: Array<Array<number>> = []
 		for (const row of loopr?.total ?? []) {
 			const timestamp = Date.parse(`${row.day}T00:00:00Z`)
 			activeAccounts.push([timestamp, row.active_users])
@@ -284,7 +284,7 @@ export default function Growth() {
 
 			<SectionHeader>Loopr · Daily Activity (Combined)</SectionHeader>
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-				{isLoading || !looprTotalDatasets.activeAccounts.source.length ? (
+				{isLoading || looprTotalDatasets.activeAccounts.source.length === 0 ? (
 					<ChartSkeleton title="Active Accounts" />
 				) : (
 					<ChartCard title="Active Accounts" subtitle="Owner-deduped across chains">
@@ -297,7 +297,7 @@ export default function Growth() {
 						/>
 					</ChartCard>
 				)}
-				{isLoading || !looprTotalDatasets.activePositions.source.length ? (
+				{isLoading || looprTotalDatasets.activePositions.source.length === 0 ? (
 					<ChartSkeleton title="Active Positions" />
 				) : (
 					<ChartCard title="Active Positions" subtitle="Combined open positions">

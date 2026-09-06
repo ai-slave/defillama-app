@@ -12,20 +12,20 @@ interface NetworkData {
 
 // Layout per the protocol's review: nodes & operators first, then the bonded stack
 // (USD / RUNE / vs circulating supply / vs TVL), then protocol-owned liquidity.
-const NODES_KPIS: [string, string][] = [
+const NODES_KPIS: Array<[string, string]> = [
 	['activeNodes', 'Active Nodes'],
 	['nodeOperators', 'Node Operators'],
 	['bondingApy', 'Bonding APR']
 ]
 
-const BONDED_KPIS: [string, string][] = [
+const BONDED_KPIS: Array<[string, string]> = [
 	['totalBonded', 'Bonded (USD)'],
 	['bondedRune', 'Bonded (RUNE)'],
 	['bondedToCirculating', 'Bonded / Circulating Supply'],
 	['bondedToTvl', 'Bonded / TVL']
 ]
 
-const POL_KPIS: [string, string][] = [
+const POL_KPIS: Array<[string, string]> = [
 	['polValue', 'Protocol-Owned Liquidity (USD)'],
 	['polRune', 'Protocol-Owned Liquidity (RUNE)'],
 	['polShareOfTvl', 'Protocol-Owned Liquidity / TVL']
@@ -39,7 +39,7 @@ export default function Network() {
 
 	const { kpis, bond } = data
 	const polChart = data.polCharts?.[polView]
-	const POL_VIEWS: { value: PolView; label: string }[] = [
+	const POL_VIEWS: Array<{ value: PolView; label: string }> = [
 		{ value: 'rune', label: 'RUNE' },
 		{ value: 'usd', label: 'USD' }
 	]

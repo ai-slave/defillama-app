@@ -9,7 +9,7 @@ interface AirdropEntry {
 	isActive?: boolean
 }
 
-export type AirdropsResult = Array<[string, AirdropEntry[]]>
+export type AirdropsResult = Array<[string, Array<AirdropEntry>]>
 
 export async function airdropsEligibilityCheck({ addresses }: { addresses: Array<string> }): Promise<AirdropsResult> {
 	try {
@@ -52,8 +52,8 @@ export async function airdropsEligibilityCheck({ addresses }: { addresses: Array
 		])
 
 		return allAirdrops
-	} catch (e) {
-		console.error(e)
+	} catch (error) {
+		console.error(error)
 		throw new Error('There was an error fetching your data')
 	}
 }

@@ -28,7 +28,7 @@ export default function DataDefinitions() {
 		<Layout
 			title="DeFi Data Definitions & Metrics Glossary - DefiLlama"
 			description="Glossary of DeFi metrics including TVL, Fees, Revenue, FDV, DEX Volume, Holders Revenue, App Fees, and REV."
-			canonicalUrl={`/data-definitions`}
+			canonicalUrl="/data-definitions"
 		>
 			<PageTitleStrip title="Data Definitions" />
 

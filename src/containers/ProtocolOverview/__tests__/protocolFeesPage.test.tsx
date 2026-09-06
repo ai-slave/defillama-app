@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import ProtocolFeesPage from '~/pages/protocol/fees/[protocol]'
 import type { IProtocolPageMetrics } from '../types'
 
@@ -70,9 +70,9 @@ const fees: ProtocolFeesPageProps['fees'] = {
 	total24h: 10,
 	total7d: 70,
 	total30d: 300,
-	total1y: 3_600,
-	annualized1y: 3_650,
-	totalAllTime: 1_000,
+	total1y: 3600,
+	annualized1y: 3650,
+	totalAllTime: 1000,
 	methodology: null,
 	methodologyURL: null,
 	defaultChartView: 'daily',
@@ -80,7 +80,7 @@ const fees: ProtocolFeesPageProps['fees'] = {
 }
 
 describe('protocol fees page breakdown panels', () => {
-	it('renders a multi-chain revenue breakdown without requiring multiple revenue versions', () => {
+	test('renders a multi-chain revenue breakdown without requiring multiple revenue versions', () => {
 		const props: ProtocolFeesPageProps = {
 			name: 'Test Protocol',
 			deprecated: false,

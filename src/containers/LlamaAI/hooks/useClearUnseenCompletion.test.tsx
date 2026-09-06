@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChatAttention } from '~/containers/LlamaAI/chatAttention'
 import {
 	createSessionListInfiniteData,
@@ -84,7 +84,7 @@ describe('useClearUnseenCompletion', () => {
 	}
 
 	function projectUnseen(sessionId = 'session-1') {
-		const data = queryClient.getQueryData<ProjectChatSession[]>(projectSessionsKey('project-1'))
+		const data = queryClient.getQueryData<Array<ProjectChatSession>>(projectSessionsKey('project-1'))
 		return data?.find((session) => session.sessionId === sessionId)?.hasUnseenCompletion
 	}
 
@@ -137,13 +137,13 @@ describe('useClearUnseenCompletion', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('clears the attended session when the user is looking at it', () => {
+	test('clears the attended session when the user is looking at it', () => {
 		expect(unseen('session-1')).toBe(false)
 		expect(projectUnseen('session-1')).toBe(false)
 		expect(unseen('session-2')).toBe(true)
 	})
 
-	it('holds the badge while the tab is hidden', async () => {
+	test('holds the badge while the tab is hidden', async () => {
 		mocks.visibilityState = 'hidden'
 		mocks.hasFocus = false
 		queryClient.setQueryData(
@@ -166,7 +166,7 @@ describe('useClearUnseenCompletion', () => {
 		expect(unseen()).toBe(true)
 	})
 
-	it('holds the badge while chat chrome covers the conversation', async () => {
+	test('holds the badge while chat chrome covers the conversation', async () => {
 		mocks.uncovered = false
 		queryClient.setQueryData(
 			[SESSIONS_QUERY_KEY, 'user-1'],
@@ -188,7 +188,7 @@ describe('useClearUnseenCompletion', () => {
 		expect(unseen()).toBe(true)
 	})
 
-	it('clears the badge when the user returns focus to the attended chat', async () => {
+	test('clears the badge when the user returns focus to the attended chat', async () => {
 		mocks.visibilityState = 'hidden'
 		mocks.hasFocus = false
 		queryClient.setQueryData(
@@ -216,7 +216,7 @@ describe('useClearUnseenCompletion', () => {
 		expect(unseen()).toBe(false)
 	})
 
-	it('still clears on an explicit sidebar click', async () => {
+	test('still clears on an explicit sidebar click', async () => {
 		mocks.hasUnseenCompletion = false
 		mocks.sessionId = null
 		queryClient.setQueryData(
@@ -240,7 +240,7 @@ describe('useClearUnseenCompletion', () => {
 		expect(unseen('session-2')).toBe(false)
 	})
 
-	it('still clears on an explicit sidebar click with no attention options', async () => {
+	test('still clears on an explicit sidebar click with no attention options', async () => {
 		function ClickHarness() {
 			result = useClearUnseenCompletion()
 			return null
@@ -267,7 +267,7 @@ describe('useClearUnseenCompletion', () => {
 		expect(unseen('session-2')).toBe(false)
 	})
 
-	it('clears again after a refetch restores the unseen flag', async () => {
+	test('clears again after a refetch restores the unseen flag', async () => {
 		expect(unseen()).toBe(false)
 
 		mocks.hasUnseenCompletion = false

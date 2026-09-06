@@ -21,7 +21,7 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 			if (cooldownUntil && currentTime >= cooldownUntil) setCooldownUntil(null)
 		}
 		tick()
-		const id = window.setInterval(tick, cooldownUntil ? 1_000 : 60_000)
+		const id = window.setInterval(tick, cooldownUntil ? 1000 : 60_000)
 		return () => window.clearInterval(id)
 	}, [cooldownUntil])
 

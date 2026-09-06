@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createProtocolsUnifiedTableResponse, type ProtocolAggregateTableRow } from './contracts'
 
 const row: ProtocolAggregateTableRow = {
@@ -19,7 +19,7 @@ const row: ProtocolAggregateTableRow = {
 }
 
 describe('protocol Unified Table response', () => {
-	it('omits unavailable row metrics from the wire shape without dropping zero or row discriminants', () => {
+	test('omits unavailable row metrics from the wire shape without dropping zero or row discriminants', () => {
 		const input = structuredClone(row)
 		const response = createProtocolsUnifiedTableResponse({ rows: [input], parentMetrics: {} })
 

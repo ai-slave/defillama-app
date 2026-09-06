@@ -29,21 +29,21 @@ interface ProjectedBreakdown {
 	title: string
 	total: number
 	totalFormatted: string
-	series: PieSeriesItem[]
+	series: Array<PieSeriesItem>
 }
 
 interface TimeSeriesItem {
 	name: string
-	data: number[]
+	data: Array<number>
 }
 
 interface TimeSeriesData {
 	title: string
 	// Returns are monthly YYYY-MM; the remaining Spark charts are daily YYYY-MM-DD.
-	dates: ApiDateOrMonth[]
-	series: TimeSeriesItem[]
-	products?: string[]
-	chains?: string[]
+	dates: Array<ApiDateOrMonth>
+	series: Array<TimeSeriesItem>
+	products?: Array<string>
+	chains?: Array<string>
 }
 
 interface AllocatedAssetsEntry {
@@ -55,10 +55,10 @@ interface AllocatedAssetsEntry {
 }
 
 interface AllocatedAssetsHistorical {
-	dates: ApiDate[]
-	byProtocol: TimeSeriesItem[]
-	byNetwork: TimeSeriesItem[]
-	byAsset: TimeSeriesItem[]
+	dates: Array<ApiDate>
+	byProtocol: Array<TimeSeriesItem>
+	byNetwork: Array<TimeSeriesItem>
+	byAsset: Array<TimeSeriesItem>
 }
 
 interface AllocatedAssetsAPIData {
@@ -66,9 +66,9 @@ interface AllocatedAssetsAPIData {
 	total: number
 	totalFormatted: string
 	date: ApiDate
-	byProtocol: AllocatedAssetsEntry[]
-	byNetwork: AllocatedAssetsEntry[]
-	byAsset: AllocatedAssetsEntry[]
+	byProtocol: Array<AllocatedAssetsEntry>
+	byNetwork: Array<AllocatedAssetsEntry>
+	byAsset: Array<AllocatedAssetsEntry>
 	historical: AllocatedAssetsHistorical
 }
 
@@ -90,13 +90,13 @@ interface TreasuryData extends TimeSeriesData {
 interface BuybackSeriesItem {
 	name: string
 	type: 'bar' | 'line'
-	data: number[]
+	data: Array<number>
 }
 
 interface BuybacksData {
 	title: string
-	dates: ApiDate[]
-	series: BuybackSeriesItem[]
+	dates: Array<ApiDate>
+	series: Array<BuybackSeriesItem>
 }
 
 interface QuarterlyReport {
@@ -110,9 +110,9 @@ export interface FinancialsAPIResponse {
 		projectName: string
 		updatedAt: ApiIsoTimestamp
 		links: Record<string, string>
-		quarterlyReports?: QuarterlyReport[]
+		quarterlyReports?: Array<QuarterlyReport>
 	}
-	kpis: KpiItem[]
+	kpis: Array<KpiItem>
 	treasuryKpis: {
 		totalAssets: FormattedValue
 		buybackThreshold: FormattedValue
@@ -144,13 +144,13 @@ function parseDateToUnix(date: string) {
 	return Date.parse(date.length === 7 ? `${date}-01T00:00:00Z` : `${date}T00:00:00Z`) / 1000
 }
 
-function parseDatesToMilliseconds(dates: readonly string[]) {
+function parseDatesToMilliseconds(dates: ReadonlyArray<string>) {
 	const timestamps = new Array<number>(dates.length)
 	for (let i = 0; i < dates.length; i++) timestamps[i] = parseDateToUnix(dates[i]) * 1e3
 	return timestamps
 }
 
-function seriesNames(series: readonly { name: string }[]) {
+function seriesNames(series: ReadonlyArray<{ name: string }>) {
 	const names = new Array<string>(series.length)
 	for (let i = 0; i < series.length; i++) names[i] = series[i].name
 	return names
@@ -213,7 +213,7 @@ function buildBuybacksModel(chart: BuybacksData): CartesianChartModel {
 type TimeSeriesChart = ReturnType<typeof buildTimeSeriesChart>
 
 export interface FinancialsViewModel {
-	kpis: KpiItem[]
+	kpis: Array<KpiItem>
 	treasuryKpis: FinancialsAPIResponse['treasuryKpis']
 	buybackKpis: FinancialsAPIResponse['buybackKpis']
 	projectedBreakdown: ProjectedBreakdown
@@ -231,7 +231,7 @@ export interface FinancialsViewModel {
 	savingsTvl: TimeSeriesChart
 	treasuryModel: CartesianChartModel
 	buybacksModel: CartesianChartModel
-	quarterlyReports?: QuarterlyReport[]
+	quarterlyReports?: Array<QuarterlyReport>
 }
 
 export function buildFinancialsViewModel(response: FinancialsAPIResponse): FinancialsViewModel {

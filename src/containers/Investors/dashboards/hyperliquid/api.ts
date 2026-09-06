@@ -13,7 +13,7 @@ import { readInvestorApiJson, type ApiUnixMilliseconds } from '../../api.types'
 
 const HL_WS = 'wss://api.hyperliquid.xyz/ws'
 const HEARTBEAT_TIMEOUT_MS = 20_000
-const HEARTBEAT_CHECK_MS = 5_000
+const HEARTBEAT_CHECK_MS = 5000
 
 export interface WsSubscription {
 	type: string
@@ -42,11 +42,11 @@ export interface HyperliquidWsBookLevel {
 
 interface HyperliquidWsDataMap {
 	allMids: { mids: Record<string, string> }
-	trades: HyperliquidWsTrade[]
+	trades: Array<HyperliquidWsTrade>
 	l2Book: {
 		coin: string
 		time: ApiUnixMilliseconds
-		levels: [HyperliquidWsBookLevel[], HyperliquidWsBookLevel[]]
+		levels: [Array<HyperliquidWsBookLevel>, Array<HyperliquidWsBookLevel>]
 	}
 }
 
@@ -109,7 +109,7 @@ export function parseHyperliquidWsMessage(value: unknown): HyperliquidWsMessage 
 			data: {
 				coin: value.data.coin,
 				time: value.data.time,
-				levels: value.data.levels as [HyperliquidWsBookLevel[], HyperliquidWsBookLevel[]]
+				levels: value.data.levels as [Array<HyperliquidWsBookLevel>, Array<HyperliquidWsBookLevel>]
 			},
 			isSnapshot
 		}
@@ -122,16 +122,16 @@ function subscriptionKey(subscription: WsSubscription) {
 	return JSON.stringify(sortedEntries)
 }
 
-function toSubscriptionMap(subscriptions: WsSubscription[]) {
+function toSubscriptionMap(subscriptions: Array<WsSubscription>) {
 	return new Map(subscriptions.map((sub) => [subscriptionKey(sub), sub]))
 }
 
-export function pushBounded<T>(prev: T[], incoming: T[] | T, limit: number): T[] {
+export function pushBounded<T>(prev: Array<T>, incoming: Array<T> | T, limit: number): Array<T> {
 	const next = Array.isArray(incoming) ? [...incoming, ...prev] : [incoming, ...prev]
 	return next.length <= limit ? next : next.slice(0, limit)
 }
 
-export function useHyperliquidWs(subscriptions: WsSubscription[], onMessage: (msg: unknown) => void) {
+export function useHyperliquidWs(subscriptions: Array<WsSubscription>, onMessage: (msg: unknown) => void) {
 	const [isConnected, setIsConnected] = useState(false)
 	const wsRef = useRef<WebSocket | null>(null)
 	const subsRef = useRef(subscriptions)
@@ -152,7 +152,7 @@ export function useHyperliquidWs(subscriptions: WsSubscription[], onMessage: (ms
 	}, [])
 
 	const syncSubscriptions = useCallback(
-		(ws: WebSocket, nextSubs: WsSubscription[]) => {
+		(ws: WebSocket, nextSubs: Array<WsSubscription>) => {
 			const prevMap = prevSubsRef.current
 			const nextMap = toSubscriptionMap(nextSubs)
 
@@ -257,7 +257,7 @@ export function useHyperliquidWs(subscriptions: WsSubscription[], onMessage: (ms
 }
 
 export function useHyperliquidWsChannels(
-	subscriptions: WsSubscription[],
+	subscriptions: Array<WsSubscription>,
 	handlers: Partial<{
 		[K in keyof HyperliquidWsDataMap]: (message: HyperliquidWsMessage<K>) => void
 	}>
@@ -294,9 +294,9 @@ async function fetchJson<T>(url: string): Promise<T> {
 }
 
 export function useHyperliquidPerps() {
-	const query = useQuery<PerpMarket[]>({
+	const query = useQuery<Array<PerpMarket>>({
 		queryKey: ['hl-perps'],
-		queryFn: () => fetchJson<PerpMarket[]>('/api/public/hyperliquid/perps'),
+		queryFn: () => fetchJson<Array<PerpMarket>>('/api/public/hyperliquid/perps'),
 		staleTime: 60_000,
 		refetchOnWindowFocus: false
 	})
@@ -305,9 +305,9 @@ export function useHyperliquidPerps() {
 }
 
 export function useHyperliquidSpot() {
-	const query = useQuery<SpotMarket[]>({
+	const query = useQuery<Array<SpotMarket>>({
 		queryKey: ['hl-spot'],
-		queryFn: () => fetchJson<SpotMarket[]>('/api/public/hyperliquid/spot'),
+		queryFn: () => fetchJson<Array<SpotMarket>>('/api/public/hyperliquid/spot'),
 		staleTime: 60_000,
 		refetchOnWindowFocus: false
 	})
@@ -316,9 +316,9 @@ export function useHyperliquidSpot() {
 }
 
 export function useHyperliquidPredictedFundings() {
-	const query = useQuery<PredictedFunding[]>({
+	const query = useQuery<Array<PredictedFunding>>({
 		queryKey: ['hl-predicted-fundings'],
-		queryFn: () => fetchJson<PredictedFunding[]>('/api/public/hyperliquid/predicted-fundings'),
+		queryFn: () => fetchJson<Array<PredictedFunding>>('/api/public/hyperliquid/predicted-fundings'),
 		staleTime: 60_000,
 		refetchOnWindowFocus: false
 	})
@@ -366,9 +366,9 @@ export function useHyperliquidHlpPositions() {
 }
 
 export function useHyperliquidHlpOpenOrders() {
-	const query = useQuery<HlpOpenOrder[]>({
+	const query = useQuery<Array<HlpOpenOrder>>({
 		queryKey: ['hl-hlp-open-orders'],
-		queryFn: () => fetchJson<HlpOpenOrder[]>('/api/public/hyperliquid/hlp-open-orders'),
+		queryFn: () => fetchJson<Array<HlpOpenOrder>>('/api/public/hyperliquid/hlp-open-orders'),
 		staleTime: 30_000,
 		refetchInterval: 30_000,
 		refetchOnWindowFocus: false

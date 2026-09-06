@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { getStaticProps as getCexStaticProps } from '~/pages/cex/[cex]'
 import { getStaticProps as getCexAssetsStaticProps } from '~/pages/cex/assets/[cex]'
 import { getStaticProps as getCexStablecoinsStaticProps } from '~/pages/cex/stablecoins/[cex]'
@@ -54,7 +54,7 @@ describe('CEX routes', () => {
 		vi.clearAllMocks()
 	})
 
-	it('renders the legacy pages even when the venue has an exchange profile', async () => {
+	test('renders the legacy pages even when the venue has an exchange profile', async () => {
 		const overview = await getCexStaticProps({ params: { cex: 'crypto-com' } } as never)
 		expect(overview).toMatchObject({ props: { name: 'crypto-com' }, revalidate: 123 })
 
@@ -71,7 +71,7 @@ describe('CEX routes', () => {
 		})
 	})
 
-	it('redirects CEX aliases to canonical slugs', async () => {
+	test('redirects CEX aliases to canonical slugs', async () => {
 		await expect(getCexStaticProps({ params: { cex: 'Crypto.com' } } as never)).resolves.toEqual({
 			redirect: { destination: '/cex/crypto-com', permanent: true }
 		})
@@ -83,7 +83,7 @@ describe('CEX routes', () => {
 		})
 	})
 
-	it('keeps a metadata-only CEX route valid without list presentation metadata', () => {
+	test('keeps a metadata-only CEX route valid without list presentation metadata', () => {
 		const metadataCache = {
 			...cryptoComCexMetadataCache,
 			cexRouteIdBySlug: { ...cryptoComCexMetadataCache.cexRouteIdBySlug, websea: 'websea' },

@@ -14,7 +14,7 @@ export const rwaSlug = (input = ''): string => {
 		.replace(TRAILING_DASH_REGEX, '')
 }
 
-export function findByRwaSlug<T extends string>(input: string, values: T[]): T | null {
+export function findByRwaSlug<T extends string>(input: string, values: Array<T>): T | null {
 	const inputSlug = rwaSlug(input)
 
 	for (const value of values) {
@@ -24,7 +24,7 @@ export function findByRwaSlug<T extends string>(input: string, values: T[]): T |
 	return null
 }
 
-export function resolveCanonicalRwaSlug(input: string, values: string[]): string | null {
+export function resolveCanonicalRwaSlug(input: string, values: Array<string>): string | null {
 	const value = findByRwaSlug(input, values)
 	return value ? rwaSlug(value) : null
 }

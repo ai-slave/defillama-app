@@ -46,14 +46,14 @@ export interface CookbookSnippet {
 	blurb: string
 	sql: string
 	tag: CookbookTag
-	techniques: TechniqueName[]
+	techniques: Array<TechniqueName>
 }
 
 export type CookbookTag = 'Time series' | 'Joins' | 'Reshape' | 'Distributions'
 
-export const COOKBOOK_TAGS: CookbookTag[] = ['Time series', 'Joins', 'Reshape', 'Distributions']
+export const COOKBOOK_TAGS: Array<CookbookTag> = ['Time series', 'Joins', 'Reshape', 'Distributions']
 
-export const COOKBOOK_SNIPPETS: CookbookSnippet[] = [
+export const COOKBOOK_SNIPPETS: Array<CookbookSnippet> = [
 	{
 		tag: 'Time series',
 		title: 'Top 3 protocols per chain',
@@ -204,11 +204,11 @@ LIMIT 25`
 
 export interface ShortcutEntry {
 	action: string
-	keys: string[]
+	keys: Array<string>
 	note?: string
 }
 
-export const SHORTCUTS: ShortcutEntry[] = [
+export const SHORTCUTS: Array<ShortcutEntry> = [
 	{ action: 'Run query', keys: ['⌘', '↵'], note: 'Missing tables auto-load first.' },
 	{ action: 'Trigger completions', keys: ['Ctrl', 'Space'] },
 	{ action: 'Toggle line comment', keys: ['⌘', '/'] },
@@ -224,7 +224,7 @@ export interface DialectTip {
 	body: string
 }
 
-export const DIALECT_TIPS: DialectTip[] = [
+export const DIALECT_TIPS: Array<DialectTip> = [
 	{
 		title: 'Case-insensitive identifiers',
 		body: 'Unquoted names are case-insensitive. Once you quote a camelCase column (e.g. "totalRevenue24h"), you must keep quoting it — LlamaSQL treats quoted names as exact.'

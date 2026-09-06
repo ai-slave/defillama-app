@@ -201,7 +201,7 @@ export function DATCompany(props: IDATCompanyPageProps) {
 						{props.max_mNAV != null ? (
 							<MetricRow
 								label="Max mNAV"
-								tooltip={`Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)`}
+								tooltip="Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)"
 								value={formatCompactNumber(props.max_mNAV, {
 									minimumCompactValue: 1_000_000,
 									compactSuffix: 'lowercase'
@@ -474,52 +474,49 @@ const chartOptions = {
 			const timestampNum =
 				typeof timestamp === 'number' ? timestamp : typeof timestamp === 'string' ? Number(timestamp) : undefined
 			let val =
-				dayjs(timestampNum).format('MMM D, YYYY') +
-				'<li style="list-style:none">' +
-				`${label}:` +
-				'&nbsp;&nbsp;' +
-				'<span style="font-weight:600;">' +
-				formatCompactNumber(Math.abs(deltaValue), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }) +
-				'&nbsp;' +
-				(seriesName ?? '') +
-				'</span>' +
-				'</li>'
+				`${dayjs(timestampNum).format('MMM D, YYYY')}<li style="list-style:none">${label}:&nbsp;&nbsp;` +
+				`<span style="font-weight:600;">${formatCompactNumber(Math.abs(deltaValue), {
+					minimumCompactValue: 1_000_000,
+					compactSuffix: 'lowercase'
+				})}&nbsp;${seriesName ?? ''}</span>` +
+				`</li>`
 
 			if (avgPrice != null) {
 				val +=
-					'<li style="list-style:none">' +
+					`<li style="list-style:none">` +
 					`Cost basis per unit:` +
-					'&nbsp;&nbsp;' +
-					'<span style="font-weight:600;">' +
-					formatUsd(Number(avgPrice), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }) +
-					'</span>' +
-					'</li>'
+					`&nbsp;&nbsp;` +
+					`<span style="font-weight:600;">${formatUsd(Number(avgPrice), {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}</span>` +
+					`</li>`
 			}
 
 			if (usdValue != null) {
 				val +=
-					'<li style="list-style:none">' +
-					`${valueLabel}:` +
-					'&nbsp;&nbsp;' +
-					'<span style="font-weight:600;">' +
-					formatUsd(Number(usdValue), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }) +
-					'</span>' +
-					'</li>'
+					`<li style="list-style:none">${valueLabel}:&nbsp;&nbsp;` +
+					`<span style="font-weight:600;">${formatUsd(Number(usdValue), {
+						compact: true,
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					})}</span>` +
+					`</li>`
 			}
 
 			val +=
-				'<li style="list-style:none">' +
+				`<li style="list-style:none">` +
 				`Holdings till date:` +
-				'&nbsp;&nbsp;' +
-				'<span style="font-weight:600;">' +
-				formatCompactNumber(typeof holdings === 'number' ? holdings : Number(holdings ?? 0), {
-					minimumCompactValue: 1_000_000,
-					compactSuffix: 'lowercase'
-				}) +
-				'&nbsp;' +
-				(seriesName ?? '') +
-				'</span>' +
-				'</li>'
+				`&nbsp;&nbsp;` +
+				`<span style="font-weight:600;">${formatCompactNumber(
+					typeof holdings === 'number' ? holdings : Number(holdings ?? 0),
+					{
+						minimumCompactValue: 1_000_000,
+						compactSuffix: 'lowercase'
+					}
+				)}&nbsp;${seriesName ?? ''}</span>` +
+				`</li>`
 			return val
 		}
 	}

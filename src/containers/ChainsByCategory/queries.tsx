@@ -50,7 +50,7 @@ function buildChainsByCategoryChartData({
 	stackedDataset: ChainsByCategoryResponse['stackedDataset']
 	tvlTypes: ChainsByCategoryResponse['tvlTypes']
 	sampledChart: boolean | undefined
-	extraTvlTypes: readonly string[]
+	extraTvlTypes: ReadonlyArray<string>
 }): IChainsByCategoryChartData {
 	let chartDataset = stackedDataset
 	if (sampledChart) {
@@ -175,7 +175,7 @@ export async function getChainsByCategoryChartData({
 }: {
 	category: string
 	sampledChart?: boolean
-	extraTvlTypes?: readonly string[]
+	extraTvlTypes?: ReadonlyArray<string>
 }): Promise<IChainsByCategoryChartData> {
 	const { stackedDataset, tvlTypes } = await fetchChainsByCategory(category)
 	return buildChainsByCategoryChartData({

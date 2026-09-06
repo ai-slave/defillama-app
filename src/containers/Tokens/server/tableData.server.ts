@@ -17,7 +17,7 @@ import { buildTokenIndexById, buildTokenOverviewCurrentMetricsById, EMPTY_MARKET
 interface SharedTokensMarketSnapshot {
 	version: string
 	generatedAt: number
-	tokens: IResponseCGTokenRankingsDatasetItem[]
+	tokens: Array<IResponseCGTokenRankingsDatasetItem>
 	markets: TokenMarketsListResponse | null
 	currentMetricsById: Record<string, TokenOverviewCurrentMetrics>
 }

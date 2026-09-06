@@ -49,11 +49,11 @@ const chainChartCategories = {
 	Activity: ['Active Addresses', 'New Addresses', 'Transactions'],
 	Fundraising: ['Raises'],
 	Development: ['Core Developers', 'Devs Commits']
-} as const satisfies Record<string, readonly ChainChartLabels[]>
+} as const satisfies Record<string, ReadonlyArray<ChainChartLabels>>
 
 type ChainChartCategory = keyof typeof chainChartCategories
 
-const chainChartCategoryOrder: ChainChartCategory[] = [
+const chainChartCategoryOrder: Array<ChainChartCategory> = [
 	'Core',
 	'Revenue',
 	'Volume',
@@ -78,8 +78,8 @@ interface ChainChartPanelProps {
 	chainTokenInfo: IChainOverviewData['chainTokenInfo']
 	metadata: IChainOverviewData['metadata']
 	chain: string
-	toggledCharts: ChainChartLabels[]
-	denominations: string[]
+	toggledCharts: Array<ChainChartLabels>
+	denominations: Array<string>
 	denomination: string
 	hasBarChart: boolean
 	groupBy: ChartTimeGroupingWithCumulative
@@ -87,7 +87,7 @@ interface ChainChartPanelProps {
 	finalCharts: ChainOverviewChartData
 	valueSymbol: string
 	isFetchingChartData: boolean
-	failedMetrics: ChainChartLabels[]
+	failedMetrics: Array<ChainChartLabels>
 	darkMode: boolean
 }
 
@@ -121,7 +121,7 @@ export function ChainChartPanel({
 
 	const { multiChart, unsupportedMetrics } = useMemo(() => {
 		if (!metadata?.name) {
-			const emptyUnsupportedMetrics: ChainChartLabels[] = []
+			const emptyUnsupportedMetrics: Array<ChainChartLabels> = []
 			return { multiChart: null, unsupportedMetrics: emptyUnsupportedMetrics }
 		}
 
@@ -149,7 +149,7 @@ export function ChainChartPanel({
 		void pushShallowQuery(router, { groupBy: newGroupBy })
 	}
 
-	const allMetricOptions = useMemo<ChainMetricOption[]>(() => {
+	const allMetricOptions = useMemo<Array<ChainMetricOption>>(() => {
 		return charts.map((chart) => ({
 			id: chart,
 			label: getChainMetricLabel(chart, chainTokenInfo?.token_symbol),
@@ -170,7 +170,7 @@ export function ChainChartPanel({
 	const categoryByMetric = CHAIN_CATEGORY_BY_METRIC
 
 	const groupedFilteredOptions = useMemo(() => {
-		const groups = new Map<ChainChartCategory | 'Other', ChainMetricOption[]>()
+		const groups = new Map<ChainChartCategory | 'Other', Array<ChainMetricOption>>()
 		const order: Array<ChainChartCategory | 'Other'> = [...chainChartCategoryOrder, 'Other']
 		for (const key of order) groups.set(key, [])
 
@@ -351,7 +351,7 @@ export function ChainChartPanel({
 						<input
 							type="checkbox"
 							value={tchart}
-							checked={true}
+							checked
 							onChange={() => {
 								void pushShallowQuery(router, {
 									[chainCharts[tchart]]: getQueryValueOnRemove(charts[0] === tchart)

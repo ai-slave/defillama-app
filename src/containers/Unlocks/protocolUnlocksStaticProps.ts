@@ -52,7 +52,7 @@ export function getEventCountdown(timestamp: number | null | undefined): string 
 export async function getProtocolUnlocksStaticPropsData(
 	protocolParam: string,
 	tokenlist: Record<string, ITokenListEntry>,
-	emissionsProtocolsList: string[]
+	emissionsProtocolsList: Array<string>
 ) {
 	const normalizedName = slug(protocolParam)
 	if (!emissionsProtocolsList.includes(normalizedName)) {

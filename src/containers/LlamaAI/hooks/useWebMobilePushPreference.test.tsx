@@ -3,7 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	useWebMobilePushPreference,
 	WEB_MOBILE_PUSH_QUERY_KEY,
@@ -84,7 +84,7 @@ describe('useWebMobilePushPreference', () => {
 		await vi.waitFor(() => expect(result.preference.kind).toBe(kind))
 	}
 
-	it('returns loading while the query is pending without data', async () => {
+	test('returns loading while the query is pending without data', async () => {
 		mocks.getStatus.mockReturnValue(new Promise(() => undefined))
 
 		await renderHook()
@@ -92,7 +92,7 @@ describe('useWebMobilePushPreference', () => {
 		expect(result.preference).toEqual({ kind: 'loading' })
 	})
 
-	it('returns error with a retry when the query fails', async () => {
+	test('returns error with a retry when the query fails', async () => {
 		mocks.getStatus.mockRejectedValueOnce(new Error('Network unavailable'))
 		await renderHook()
 		await waitForPreference('error')
@@ -105,7 +105,7 @@ describe('useWebMobilePushPreference', () => {
 		await vi.waitFor(() => expect(result.preference).toEqual({ kind: 'known', available: true, enabled: false }))
 	})
 
-	it('keeps a known preference when a background refetch fails', async () => {
+	test('keeps a known preference when a background refetch fails', async () => {
 		await renderHook()
 		await waitForPreference('known')
 		mocks.getStatus.mockRejectedValueOnce(new Error('Refetch unavailable'))
@@ -116,7 +116,7 @@ describe('useWebMobilePushPreference', () => {
 		expect(result.preference).toEqual({ kind: 'known', available: true, enabled: true })
 	})
 
-	it('keeps available and enabled as independent fields', async () => {
+	test('keeps available and enabled as independent fields', async () => {
 		mocks.getStatus.mockResolvedValue({ available: false, enabled: true })
 
 		await renderHook()
@@ -125,7 +125,7 @@ describe('useWebMobilePushPreference', () => {
 		expect(result.preference).toEqual({ kind: 'known', available: false, enabled: true })
 	})
 
-	it('returns signed-out without starting a preference query', async () => {
+	test('returns signed-out without starting a preference query', async () => {
 		mocks.userId = null
 		mocks.isAuthenticated = false
 
@@ -135,7 +135,7 @@ describe('useWebMobilePushPreference', () => {
 		expect(mocks.getStatus).not.toHaveBeenCalled()
 	})
 
-	it('applies storage updates only for the current user', async () => {
+	test('applies storage updates only for the current user', async () => {
 		mocks.getStatus.mockResolvedValue({ available: true, enabled: false })
 		await renderHook()
 		await vi.waitFor(() => expect(result.preference).toEqual({ kind: 'known', available: true, enabled: false }))
@@ -169,7 +169,7 @@ describe('useWebMobilePushPreference', () => {
 		await vi.waitFor(() => expect(result.preference).toEqual({ kind: 'known', available: true, enabled: true }))
 	})
 
-	it('updates the user-keyed cache and localStorage after setEnabled succeeds', async () => {
+	test('updates the user-keyed cache and localStorage after setEnabled succeeds', async () => {
 		await renderHook()
 		await waitForPreference('known')
 
@@ -185,7 +185,7 @@ describe('useWebMobilePushPreference', () => {
 		})
 	})
 
-	it('refetches when the settings-open handler invalidates the preference query', async () => {
+	test('refetches when the settings-open handler invalidates the preference query', async () => {
 		await renderHook()
 		await waitForPreference('known')
 		expect(mocks.getStatus).toHaveBeenCalledOnce()
@@ -195,7 +195,7 @@ describe('useWebMobilePushPreference', () => {
 		expect(mocks.getStatus).toHaveBeenCalledTimes(2)
 	})
 
-	it('does not apply a mutation result after the request user changes', async () => {
+	test('does not apply a mutation result after the request user changes', async () => {
 		let resolveMutation: ((status: { available: boolean; enabled: boolean }) => void) | null = null
 		mocks.setEnabled.mockReturnValueOnce(new Promise((resolve) => (resolveMutation = resolve)))
 		await renderHook()
@@ -220,7 +220,7 @@ describe('useWebMobilePushPreference', () => {
 		expect(window.localStorage.getItem(WEB_MOBILE_PUSH_SYNC_STORAGE_KEY)).toBeNull()
 	})
 
-	it('applies a mutation result after the same user token refreshes', async () => {
+	test('applies a mutation result after the same user token refreshes', async () => {
 		let resolveMutation: ((status: { available: boolean; enabled: boolean }) => void) | null = null
 		mocks.setEnabled.mockReturnValueOnce(new Promise((resolve) => (resolveMutation = resolve)))
 		await renderHook()
@@ -246,7 +246,7 @@ describe('useWebMobilePushPreference', () => {
 		})
 	})
 
-	it('does not apply a mutation result after the auth session becomes invalid', async () => {
+	test('does not apply a mutation result after the auth session becomes invalid', async () => {
 		let resolveMutation: ((status: { available: boolean; enabled: boolean }) => void) | null = null
 		mocks.setEnabled.mockReturnValueOnce(new Promise((resolve) => (resolveMutation = resolve)))
 		await renderHook()

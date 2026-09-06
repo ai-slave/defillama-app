@@ -14,7 +14,7 @@ const TABS = [
 
 type YieldsTabId = (typeof TABS)[number]['id']
 
-function readSingle(value: string | string[] | undefined): string | undefined {
+function readSingle(value: string | Array<string> | undefined): string | undefined {
 	return Array.isArray(value) ? value[0] : value
 }
 

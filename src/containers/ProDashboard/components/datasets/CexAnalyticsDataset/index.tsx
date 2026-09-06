@@ -41,7 +41,7 @@ import { useCexAnalyticsMarketShare, useCexAnalyticsSnapshot, useCexAnalyticsTot
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const EMPTY_ROWS: CexAnalyticsSnapshotRow[] = []
+const EMPTY_ROWS: Array<CexAnalyticsSnapshotRow> = []
 const CEX_COLUMN_ORDER: ColumnOrderState = [
 	'venue',
 	'spotVolume24h',
@@ -85,7 +85,7 @@ const SHARE_PALETTE = [
 	'#577590',
 	'#94a3b8'
 ] as const
-const SPOT_VS_DERIVATIVES_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const SPOT_VS_DERIVATIVES_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'bar',
 		name: 'Spot',
@@ -153,7 +153,7 @@ function DatasetState({
 }
 
 function filterTimeSeriesRows<T extends { date: number }>(
-	rows: T[],
+	rows: Array<T>,
 	timePeriod: ReturnType<typeof useProDashboardTime>['timePeriod'],
 	customTimePeriod: ReturnType<typeof useProDashboardTime>['customTimePeriod']
 ) {
@@ -299,7 +299,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
-								const csv: CsvCell[][] = [
+								const csv: Array<Array<CsvCell>> = [
 									[
 										'CEX',
 										'Spot 24h',
@@ -358,7 +358,7 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 	)
 }
 
-function SpotVsDerivativesChart({ data }: { data: CexAnalyticsTotalsPoint[] }) {
+function SpotVsDerivativesChart({ data }: { data: Array<CexAnalyticsTotalsPoint> }) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const filtered = useMemo(
 		() => filterTimeSeriesRows(data, timePeriod, customTimePeriod),
@@ -401,7 +401,7 @@ function VenueMarketShareChart({
 	metric,
 	topN
 }: {
-	data: CexAnalyticsMarketSharePoint[]
+	data: Array<CexAnalyticsMarketSharePoint>
 	metric: CexAnalyticsMetric
 	topN: number
 }) {
@@ -414,7 +414,7 @@ function VenueMarketShareChart({
 
 	const { dataset, charts } = useMemo(() => {
 		const byDate = new Map<number, Map<string, number>>()
-		const order: string[] = []
+		const order: Array<string> = []
 		const seenVenues = new Set<string>()
 		for (const point of filtered) {
 			if (!seenVenues.has(point.venue)) {
@@ -440,7 +440,7 @@ function VenueMarketShareChart({
 			}
 			source[rowIndex++] = row
 		}
-		const charts: MultiSeriesChartSeriesConfig[] = []
+		const charts: Array<MultiSeriesChartSeriesConfig> = []
 		for (const [index, venue] of order.entries()) {
 			const color = SHARE_PALETTE[index % SHARE_PALETTE.length]
 			if (!color) throw new Error('CEX market-share palette must not be empty')

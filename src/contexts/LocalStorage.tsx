@@ -158,10 +158,10 @@ export const isCustomColumnFormat = (value: unknown): value is CustomColumnDef['
 const isDeterminedCustomColumnFormat = (value: unknown): value is NonNullable<CustomColumnDef['determinedFormat']> =>
 	value === 'number' || value === 'usd' || value === 'percent' || value === 'string' || value === 'boolean'
 
-export function parseCustomColumns(value: unknown): CustomColumnDef[] {
+export function parseCustomColumns(value: unknown): Array<CustomColumnDef> {
 	if (!Array.isArray(value)) return []
 
-	const columns: CustomColumnDef[] = []
+	const columns: Array<CustomColumnDef> = []
 	for (const entry of value) {
 		if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) continue
 		if (!('name' in entry) || !('formula' in entry) || !('formatType' in entry)) continue
@@ -196,11 +196,11 @@ export type LlamaAIWalkthroughState = 'idle' | 'armed' | 'completed'
 
 export type AppStorage = SettingsStore & {
 	[YIELDS_SAVED_FILTERS]?: YieldSavedFilters
-	[CUSTOM_COLUMNS]?: CustomColumnDef[]
+	[CUSTOM_COLUMNS]?: Array<CustomColumnDef>
 	[LLAMA_AI_WALKTHROUGH_STATE]?: LlamaAIWalkthroughState
 	[LLAMA_AI_LANDING_VISITED]?: boolean
-	[EXTERNAL_LINK_ALLOWLIST]?: string[]
-	[ONBOARDING_INTENT]?: string[]
+	[EXTERNAL_LINK_ALLOWLIST]?: Array<string>
+	[ONBOARDING_INTENT]?: Array<string>
 	[PRO_DASHBOARD_ITEMS]?: unknown
 	[DEFI_WATCHLIST]?: WatchlistStore
 	[YIELDS_WATCHLIST]?: WatchlistStore
@@ -210,8 +210,8 @@ export type AppStorage = SettingsStore & {
 	[YIELDS_SELECTED_PORTFOLIO]?: string
 	[CHAINS_SELECTED_PORTFOLIO]?: string
 	[TOKENS_SELECTED_PORTFOLIO]?: string
-	[SAVED_DOWNLOADS]?: SavedDownload[]
-	[RECENT_DOWNLOADS]?: SavedDownload[]
+	[SAVED_DOWNLOADS]?: Array<SavedDownload>
+	[RECENT_DOWNLOADS]?: Array<SavedDownload>
 }
 
 const CHAINS_CATEGORY_GROUP_KEYS = CHAINS_CATEGORY_GROUP_SETTINGS.map((g) => g.key)
@@ -352,22 +352,22 @@ type TSETTINGTYPE =
 	| 'dimension_chart_interval'
 	| 'compare_chains'
 
-function getSettingKeys<T extends TSETTINGTYPE>(type: T): KeysFor<T>[] {
+function getSettingKeys<T extends TSETTINGTYPE>(type: T): Array<KeysFor<T>> {
 	switch (type) {
 		case 'tvl':
-			return TVL_SETTINGS_KEYS as KeysFor<T>[]
+			return TVL_SETTINGS_KEYS as Array<KeysFor<T>>
 		case 'tvl_chains':
-			return CHAINS_CATEGORY_GROUP_KEYS as KeysFor<T>[]
+			return CHAINS_CATEGORY_GROUP_KEYS as Array<KeysFor<T>>
 		case 'nfts':
-			return NFT_SETTINGS_KEYS as KeysFor<T>[]
+			return NFT_SETTINGS_KEYS as Array<KeysFor<T>>
 		case 'bridges':
-			return BRIDGES_SETTINGS_KEYS as KeysFor<T>[]
+			return BRIDGES_SETTINGS_KEYS as Array<KeysFor<T>>
 		default:
-			return [] as KeysFor<T>[]
+			return [] as Array<KeysFor<T>>
 	}
 }
 
-function computeSettingsSnapshot<T extends TSETTINGTYPE>(keys: KeysFor<T>[], isClient: boolean): string {
+function computeSettingsSnapshot<T extends TSETTINGTYPE>(keys: Array<KeysFor<T>>, isClient: boolean): string {
 	let urlParams: URLSearchParams | null = null
 	if (isClient) {
 		urlParams = new URLSearchParams(window.location.search)
@@ -499,7 +499,7 @@ export function useWatchlistManager(type: 'defi' | 'yields' | 'chains' | 'tokens
 		const watchlist = wl ?? { [DEFAULT_PORTFOLIO_NAME]: {} }
 		const selectedPortfolio = sp ?? DEFAULT_PORTFOLIO_NAME
 
-		const portfolios: string[] = []
+		const portfolios: Array<string> = []
 		for (const portfolioName in watchlist) {
 			portfolios.push(portfolioName)
 		}
@@ -513,7 +513,7 @@ export function useWatchlistManager(type: 'defi' | 'yields' | 'chains' | 'tokens
 				const currentWatchlist = (currentStore[watchlistKey as keyof AppStorage] as WatchlistStore | undefined) ?? {
 					[DEFAULT_PORTFOLIO_NAME]: {}
 				}
-				const newWatchlist = { ...currentWatchlist, [name]: { ...(currentWatchlist[name] ?? {}) } }
+				const newWatchlist = { ...currentWatchlist, [name]: { ...currentWatchlist[name] } }
 				writeAppStorage({
 					...currentStore,
 					[watchlistKey]: newWatchlist,
@@ -615,7 +615,7 @@ export function useCustomColumns() {
 		}
 	}, [snapshot])
 
-	function setCustomColumns(cols: CustomColumnDef[]) {
+	function setCustomColumns(cols: Array<CustomColumnDef>) {
 		writeAppStorage({ ...readAppStorage(), [CUSTOM_COLUMNS]: cols })
 	}
 
@@ -653,18 +653,18 @@ export function useSavedDownloads() {
 
 	const savedDownloads = useMemo(() => {
 		try {
-			return JSON.parse(snapshot) as SavedDownload[]
+			return JSON.parse(snapshot) as Array<SavedDownload>
 		} catch {
-			return [] as SavedDownload[]
+			return [] as Array<SavedDownload>
 		}
 	}, [snapshot])
 
-	function setList(next: SavedDownload[]) {
+	function setList(next: Array<SavedDownload>) {
 		writeAppStorage({ ...readAppStorage(), [SAVED_DOWNLOADS]: next })
 	}
 
 	function saveDownload(config: SavedDownload, options?: { replaceByName?: boolean }) {
-		const current = (readAppStorage()[SAVED_DOWNLOADS] as SavedDownload[] | undefined) ?? []
+		const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
 		if (options?.replaceByName) {
 			const without = current.filter((c) => c.name !== config.name)
 			setList([config, ...without])
@@ -674,13 +674,13 @@ export function useSavedDownloads() {
 	}
 
 	function updateDownload(id: string, patch: Partial<SavedDownload>) {
-		const current = (readAppStorage()[SAVED_DOWNLOADS] as SavedDownload[] | undefined) ?? []
+		const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
 		const next = current.map((c) => (c.id === id ? ({ ...c, ...patch } as SavedDownload) : c))
 		setList(next)
 	}
 
 	function deleteDownload(id: string) {
-		const current = (readAppStorage()[SAVED_DOWNLOADS] as SavedDownload[] | undefined) ?? []
+		const current = (readAppStorage()[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
 		setList(current.filter((c) => c.id !== id))
 	}
 
@@ -715,25 +715,25 @@ export function useRecentDownloads() {
 
 	const recentDownloads = useMemo(() => {
 		try {
-			return JSON.parse(snapshot) as SavedDownload[]
+			return JSON.parse(snapshot) as Array<SavedDownload>
 		} catch {
-			return [] as SavedDownload[]
+			return [] as Array<SavedDownload>
 		}
 	}, [snapshot])
 
-	function setList(next: SavedDownload[]) {
+	function setList(next: Array<SavedDownload>) {
 		writeAppStorage({ ...readAppStorage(), [RECENT_DOWNLOADS]: next })
 	}
 
 	function recordRecent(config: SavedDownload) {
 		const store = readAppStorage()
-		const currentRecents = (store[RECENT_DOWNLOADS] as SavedDownload[] | undefined) ?? []
+		const currentRecents = (store[RECENT_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
 		const dedupedRecents = currentRecents.filter((c) => !sameSavedConfigShape(c, config))
 		const nextRecents = [config, ...dedupedRecents].slice(0, MAX_RECENT_DOWNLOADS)
 
 		// Every real download flows through recordRecent, so use it to bump lastRunAt
 		// on any saved preset whose shape matches — handles saved/recent/ad-hoc uniformly.
-		const currentSaved = (store[SAVED_DOWNLOADS] as SavedDownload[] | undefined) ?? []
+		const currentSaved = (store[SAVED_DOWNLOADS] as Array<SavedDownload> | undefined) ?? []
 		const now = Date.now()
 		let savedChanged = false
 		const nextSaved = currentSaved.map((s) => {

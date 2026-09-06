@@ -2,21 +2,21 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 type TestChartRow = Array<number | null>
 type TestChartSeries = {
 	name: string
 	type?: string
-	data?: TestChartRow[]
+	data?: Array<TestChartRow>
 	encode?: { y: number | string }
 	markArea?: { data: Array<Array<{ name?: string; xAxis: number }>> }
 	connectNulls?: boolean
 	yAxisIndex?: number
 }
 type TestChartOption = {
-	series: TestChartSeries[]
-	dataset: { dimensions: string[]; source: TestChartRow[] }
+	series: Array<TestChartSeries>
+	dataset: { dimensions: Array<string>; source: Array<TestChartRow> }
 	yAxis: Array<{
 		alignTicks?: boolean
 		axisLabel?: { formatter?: (value: number) => string }
@@ -60,7 +60,7 @@ function getSeries(option: TestChartOption, name: string): TestChartSeries {
 	return series
 }
 
-function readPoints(option: TestChartOption, name: string): TestChartRow[] {
+function readPoints(option: TestChartOption, name: string): Array<TestChartRow> {
 	const series = getSeries(option, name)
 	if (series.data) return series.data
 	if (series.encode === undefined) throw new Error(`Missing ${name} chart encode`)
@@ -87,29 +87,29 @@ describe('ProtocolOverview chart renderer contract', () => {
 	})
 
 	afterEach(async () => {
-		if (container.childNodes.length) await act(async () => root.unmount())
+		if (container.childNodes.length > 0) await act(async () => root.unmount())
 		container.remove()
 	})
 
-	it('preserves sparse series, range annotations, event rail, and metric units', async () => {
+	test('preserves sparse series, range annotations, event rail, and metric units', async () => {
 		await act(async () =>
 			root.render(
 				<ProtocolChart
 					chartData={{
 						TVL: [
-							[1_000, 10],
-							[3_000, 12]
+							[1000, 10],
+							[3000, 12]
 						],
 						Fees: [
-							[1_000, 2],
-							[2_000, 3]
+							[1000, 2],
+							[2000, 3]
 						],
-						'Gas Used': [[2_000, 100]],
-						Unlocks: [[3_000, 7]]
+						'Gas Used': [[2000, 100]],
+						Unlocks: [[3000, 7]]
 					}}
 					chartColors={{ TVL: '#111', Fees: '#222', 'Gas Used': '#333', Unlocks: '#444' }}
-					hallmarks={[[2_000, 'Upgrade']]}
-					rangeHallmarks={[[[1_000, 3_000], 'Migration']]}
+					hallmarks={[[2000, 'Upgrade']]}
+					rangeHallmarks={[[[1000, 3000], 'Migration']]}
 					unlockTokenSymbol="TOKEN"
 					gasUsedValueSymbol="GAS"
 					isThemeDark={false}
@@ -119,15 +119,15 @@ describe('ProtocolOverview chart renderer contract', () => {
 
 		const option = getLastOption()
 		expect(readPoints(option, 'TVL')).toEqual([
-			[1_000, 10],
-			[3_000, 12]
+			[1000, 10],
+			[3000, 12]
 		])
 		expect(readPoints(option, 'Fees')).toEqual([
-			[1_000, 2],
-			[2_000, 3]
+			[1000, 2],
+			[2000, 3]
 		])
 		expect(getSeries(option, 'Fees').type).toBe('bar')
-		expect(getSeries(option, 'TVL').markArea?.data).toEqual([[{ name: 'Migration', xAxis: 1_000 }, { xAxis: 3_000 }]])
+		expect(getSeries(option, 'TVL').markArea?.data).toEqual([[{ name: 'Migration', xAxis: 1000 }, { xAxis: 3000 }]])
 		expect(option.series.at(-1)?.name).toBe('Events')
 		const gasAxis = option.yAxis.find((axis) => axis.axisLabel?.formatter?.(5)?.includes('GAS'))
 		const unlockAxis = option.yAxis.find((axis) => axis.axisLabel?.formatter?.(5)?.includes('TOKEN'))
@@ -135,18 +135,18 @@ describe('ProtocolOverview chart renderer contract', () => {
 		expect(unlockAxis).toBeTruthy()
 	})
 
-	it('keeps supplied cumulative values unchanged and switches flow bars to lines', async () => {
+	test('keeps supplied cumulative values unchanged and switches flow bars to lines', async () => {
 		await act(async () =>
 			root.render(
 				<ProtocolChart
 					chartData={{
 						TVL: [
-							[1_000, 10],
-							[2_000, 12]
+							[1000, 10],
+							[2000, 12]
 						],
 						Fees: [
-							[1_000, 2],
-							[2_000, 5]
+							[1000, 2],
+							[2000, 5]
 						]
 					}}
 					chartColors={{ TVL: '#111', Fees: '#222' }}
@@ -160,28 +160,28 @@ describe('ProtocolOverview chart renderer contract', () => {
 
 		const option = getLastOption()
 		expect(readPoints(option, 'TVL')).toEqual([
-			[1_000, 10],
-			[2_000, 12]
+			[1000, 10],
+			[2000, 12]
 		])
 		expect(readPoints(option, 'Fees')).toEqual([
-			[1_000, 2],
-			[2_000, 5]
+			[1000, 2],
+			[2000, 5]
 		])
 		expect(getSeries(option, 'Fees').type).toBe('line')
 		expect(option.yAxis.every((axis) => axis.alignTicks == null)).toBe(true)
 	})
 
-	it('keeps explicit null observations as line gaps without injecting other series timestamps', async () => {
+	test('keeps explicit null observations as line gaps without injecting other series timestamps', async () => {
 		await act(async () =>
 			root.render(
 				<ProtocolChart
 					chartData={{
 						TVL: [
-							[1_000, 10],
-							[2_500, null],
-							[3_000, 12]
+							[1000, 10],
+							[2500, null],
+							[3000, 12]
 						],
-						Fees: [[2_000, 5]]
+						Fees: [[2000, 5]]
 					}}
 					chartColors={{ TVL: '#111', Fees: '#222' }}
 					hallmarks={null}
@@ -194,22 +194,22 @@ describe('ProtocolOverview chart renderer contract', () => {
 		const option = getLastOption()
 		const tvlSeries = getSeries(option, 'TVL')
 		expect(tvlSeries.data).toEqual([
-			[1_000, 10],
-			[2_500, null],
-			[3_000, 12]
+			[1000, 10],
+			[2500, null],
+			[3000, 12]
 		])
 		expect(tvlSeries.connectNulls).toBeUndefined()
 		expect(option.dataset.source).toEqual([])
 	})
 
-	it('omits data zoom when explicitly hidden', async () => {
+	test('omits data zoom when explicitly hidden', async () => {
 		await act(async () =>
 			root.render(
 				<ProtocolChart
 					chartData={{
 						TVL: [
-							[1_000, 10],
-							[2_000, 12]
+							[1000, 10],
+							[2000, 12]
 						]
 					}}
 					chartColors={{ TVL: '#111' }}
@@ -223,30 +223,30 @@ describe('ProtocolOverview chart renderer contract', () => {
 		expect(getLastOption()).not.toHaveProperty('dataZoom')
 	})
 
-	it('scales price and valuation axes while keeping volume and TVL zero-based', async () => {
+	test('scales price and valuation axes while keeping volume and TVL zero-based', async () => {
 		await act(async () =>
 			root.render(
 				<ProtocolChart
 					chartData={{
 						'Token Price': [
-							[1_000, 77_000],
-							[2_000, 78_000]
+							[1000, 77_000],
+							[2000, 78_000]
 						],
 						'Token Volume': [
-							[1_000, 2_000],
-							[2_000, 3_000]
+							[1000, 2000],
+							[2000, 3000]
 						],
 						Mcap: [
-							[1_000, 1_500_000],
-							[2_000, 1_600_000]
+							[1000, 1_500_000],
+							[2000, 1_600_000]
 						],
 						FDV: [
-							[1_000, 1_800_000],
-							[2_000, 1_900_000]
+							[1000, 1_800_000],
+							[2000, 1_900_000]
 						],
 						TVL: [
-							[1_000, 500_000],
-							[2_000, 600_000]
+							[1000, 500_000],
+							[2000, 600_000]
 						]
 					}}
 					chartColors={{ 'Token Price': '#111', 'Token Volume': '#222', Mcap: '#333', FDV: '#444' }}
@@ -271,11 +271,11 @@ describe('ProtocolOverview chart renderer contract', () => {
 		expect(getSeries(option, 'Mcap').yAxisIndex).not.toBe(getSeries(option, 'TVL').yAxisIndex)
 	})
 
-	it('omits data zoom when every series has only one independently timed point', async () => {
+	test('omits data zoom when every series has only one independently timed point', async () => {
 		await act(async () =>
 			root.render(
 				<ProtocolChart
-					chartData={{ TVL: [[1_000, 10]], Fees: [[2_000, 5]] }}
+					chartData={{ TVL: [[1000, 10]], Fees: [[2000, 5]] }}
 					chartColors={{ TVL: '#111', Fees: '#222' }}
 					hallmarks={null}
 					rangeHallmarks={null}
@@ -286,19 +286,19 @@ describe('ProtocolOverview chart renderer contract', () => {
 		expect(getLastOption()).not.toHaveProperty('dataZoom')
 	})
 
-	it('keeps range hallmarks when the first series is a bar', async () => {
+	test('keeps range hallmarks when the first series is a bar', async () => {
 		await act(async () =>
 			root.render(
 				<ProtocolChart
 					chartData={{
 						Fees: [
-							[1_000, 2],
-							[2_000, 3]
+							[1000, 2],
+							[2000, 3]
 						]
 					}}
 					chartColors={{ Fees: '#222' }}
 					hallmarks={null}
-					rangeHallmarks={[[[1_000, 2_000], 'Migration']]}
+					rangeHallmarks={[[[1000, 2000], 'Migration']]}
 					isThemeDark={false}
 				/>
 			)

@@ -10,7 +10,7 @@ interface ChartTabProps {
 	chartMode: ChartModeType
 	onChartModeChange: (mode: ChartModeType) => void
 	selectedChartTab: ChartTabType
-	selectedChartTypes: string[]
+	selectedChartTypes: Array<string>
 	selectedYieldPool?: {
 		configID: string
 		name: string
@@ -22,9 +22,9 @@ interface ChartTabProps {
 	protocolsLoading: boolean
 	unifiedChartName: string
 	chartCreationMode: 'separate' | 'combined'
-	composerItems: ChartRuntimeView[]
+	composerItems: Array<ChartRuntimeView>
 	onChartTabChange: (tab: ChartTabType) => void
-	onChartTypesChange: (types: string[]) => void
+	onChartTypesChange: (types: Array<string>) => void
 	onBulkChartTypeChange: (nextType: string) => void
 	onSelectedYieldPoolChange?: (
 		pool: {
@@ -34,16 +34,16 @@ interface ChartTabProps {
 			chain: string
 		} | null
 	) => void
-	selectedYieldChains?: string[]
-	selectedYieldProjects?: string[]
-	selectedYieldCategories?: string[]
-	selectedYieldTokens?: string[]
+	selectedYieldChains?: Array<string>
+	selectedYieldProjects?: Array<string>
+	selectedYieldCategories?: Array<string>
+	selectedYieldTokens?: Array<string>
 	minTvl?: number | null
 	maxTvl?: number | null
-	onSelectedYieldChainsChange?: (chains: string[]) => void
-	onSelectedYieldProjectsChange?: (projects: string[]) => void
-	onSelectedYieldCategoriesChange?: (categories: string[]) => void
-	onSelectedYieldTokensChange?: (tokens: string[]) => void
+	onSelectedYieldChainsChange?: (chains: Array<string>) => void
+	onSelectedYieldProjectsChange?: (projects: Array<string>) => void
+	onSelectedYieldCategoriesChange?: (categories: Array<string>) => void
+	onSelectedYieldTokensChange?: (tokens: Array<string>) => void
 	onMinTvlChange?: (tvl: number | null) => void
 	onMaxTvlChange?: (tvl: number | null) => void
 	selectedYieldChartType?: string
@@ -90,7 +90,7 @@ interface ChartTabProps {
 	selectedRwaTreemapNestedBy?: string
 	selectedRwaAssetId?: string | null
 	selectedRwaAssetName?: string | null
-	selectedRwaAssetMetrics?: RWAOverviewChartMetric[]
+	selectedRwaAssetMetrics?: Array<RWAOverviewChartMetric>
 	onRwaModeChange?: (mode: 'overview' | 'asset') => void
 	onSelectedRwaChainChange?: (chain: string) => void
 	onSelectedRwaMetricChange?: (metric: RWAOverviewChartMetric) => void
@@ -99,11 +99,11 @@ interface ChartTabProps {
 	onSelectedRwaTreemapNestedByChange?: (nestedBy: string) => void
 	onSelectedRwaAssetIdChange?: (id: string | null) => void
 	onSelectedRwaAssetNameChange?: (name: string | null) => void
-	onSelectedRwaAssetMetricsChange?: (metrics: RWAOverviewChartMetric[]) => void
+	onSelectedRwaAssetMetricsChange?: (metrics: Array<RWAOverviewChartMetric>) => void
 	onUnifiedChartNameChange: (name: string) => void
 	onChartCreationModeChange: (mode: 'separate' | 'combined') => void
 	onComposerItemColorChange: (id: string, color: string) => void
-	onAddToComposer: (types?: string[], options?: { entity?: string; mode?: 'chain' | 'protocol' }) => void
+	onAddToComposer: (types?: Array<string>, options?: { entity?: string; mode?: 'chain' | 'protocol' }) => void
 	onRemoveFromComposer: (id: string) => void
 	chartBuilder: ChartBuilderConfig
 	chartBuilderName: string

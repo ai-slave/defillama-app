@@ -1,5 +1,5 @@
 import { PassThrough } from 'node:stream'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartBuilderCsvRequest } from '~/containers/ProDashboard/chartBuilderCsvContract'
 import type { ProtocolBreakdownBase, ProtocolLookup } from './breakdowns/protocolSeries'
 import { writeAdapterMetricProtocolCsv } from './csv'
@@ -49,7 +49,7 @@ async function renderCsv(exportRequest: ChartBuilderCsvRequest, base: ProtocolBr
 }
 
 describe('writeAdapterMetricProtocolCsv', () => {
-	it('keeps protocols that exist only in older history and never emits Others', async () => {
+	test('keeps protocols that exist only in older history and never emits Others', async () => {
 		const csv = await renderCsv(request(), {
 			chainsArray: ['all'],
 			metricName: 'perps volume',
@@ -65,7 +65,7 @@ describe('writeAdapterMetricProtocolCsv', () => {
 		expect(csv.split('\n')).toEqual(['Date,Current Protocol,Ended Protocol', '1970-01-02,0,5', '1970-01-03,10,0'])
 	})
 
-	it('uses the final snapshot in a grouped open-interest period', async () => {
+	test('uses the final snapshot in a grouped open-interest period', async () => {
 		const csv = await renderCsv(
 			{
 				...request(),

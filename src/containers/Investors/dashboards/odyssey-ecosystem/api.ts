@@ -37,8 +37,8 @@ export interface Series {
 
 export interface ChartData {
 	// IR-server chart builders normalize calendar axes to UTC YYYY-MM-DD.
-	dates: ApiDate[]
-	series: Series[]
+	dates: Array<ApiDate>
+	series: Array<Series>
 }
 
 /* ──────────────────────────── chart helpers ──────────────────────────── */
@@ -62,7 +62,7 @@ export function chartToModel(c: ChartData | undefined): CartesianChartModel {
 	)
 }
 
-export function zoomStartPct(dates: string[] | undefined, fromDate: string): number {
+export function zoomStartPct(dates: Array<string> | undefined, fromDate: string): number {
 	if (!dates || dates.length < 2) return 0
 	const idx = dates.findIndex((d) => d >= fromDate)
 	if (idx <= 0) return 0
@@ -79,7 +79,7 @@ export function defaultZoomOptions(start: number) {
 	}
 }
 
-export function assignColors(names: string[]): Record<string, string> {
+export function assignColors(names: Array<string>): Record<string, string> {
 	const colors = {}
 	const sorted = names.toSorted()
 	for (let i = 0; i < sorted.length; i++) {
@@ -155,7 +155,7 @@ export interface MorphoMarketHistory {
 	chain: string
 	name: string
 	source?: string
-	series: MorphoMarketHistoryPoint[]
+	series: Array<MorphoMarketHistoryPoint>
 }
 
 export interface TvlResponse {
@@ -170,16 +170,16 @@ export interface TvlResponse {
 			avgUtilization: FormattedValue
 			idleLiquidity: FormattedValue
 		}
-		vaults: MorphoVault[]
-		marketsByChain: Array<{ chain: string; markets: MorphoMarket[] }>
+		vaults: Array<MorphoVault>
+		marketsByChain: Array<{ chain: string; markets: Array<MorphoMarket> }>
 	}
 	morphoMarketHistory?: {
 		title?: string
 		subtitle?: string
-		markets: MorphoMarketHistory[]
+		markets: Array<MorphoMarketHistory>
 	}
-	synthLpTvl?: { title?: string; subtitle?: string; pools: PoolRow[] }
-	metbasis?: { title?: string; subtitle?: string; totalUsd?: number; totalFormatted?: string; pools: PoolRow[] }
+	synthLpTvl?: { title?: string; subtitle?: string; pools: Array<PoolRow> }
+	metbasis?: { title?: string; subtitle?: string; totalUsd?: number; totalFormatted?: string; pools: Array<PoolRow> }
 	kpis: {
 		total: FormattedValue & { label?: string }
 		metronome: FormattedValue
@@ -353,11 +353,11 @@ export interface IncentivesResponse {
 	weeklyHistoryChart: ChartData
 	weeklyPoolCharts: Record<string, ChartData>
 	epochTables: {
-		aerodrome: EpochRow[]
-		velodrome: EpochRow[]
-		votemarket: EpochRow[]
-		merkl: SpendWindowRow[]
-		lithos: SpendWindowRow[]
+		aerodrome: Array<EpochRow>
+		velodrome: Array<EpochRow>
+		votemarket: Array<EpochRow>
+		merkl: Array<SpendWindowRow>
+		lithos: Array<SpendWindowRow>
 	}
 	gauges: {
 		aerodrome: Array<{ pool: string; tvl: string; apy: string }>
@@ -408,8 +408,8 @@ export interface YieldsResponse {
 			underlyingApyPct?: number
 		}>
 	}
-	vesperApy: { pools: VesperPool[] }
-	lpApyHistory: Record<string, { venue: string; pools: LpApyPool[] }>
+	vesperApy: { pools: Array<VesperPool> }
+	lpApyHistory: Record<string, { venue: string; pools: Array<LpApyPool> }>
 	lpPools: { rows: Array<{ venue: string; chain: string; pool: string; tvl: string; apy: string; apyPct: number }> }
 	kpis: {
 		topLooperApy: (FormattedValue & { label?: string }) | null
@@ -501,9 +501,9 @@ interface TokenPriceBlock {
 
 export interface GrowthResponse {
 	loopr: {
-		chains: Record<string, LooprDailyRow[]>
-		total: LooprDailyRow[]
-		byStrategy: LooprStrategy[]
+		chains: Record<string, Array<LooprDailyRow>>
+		total: Array<LooprDailyRow>
+		byStrategy: Array<LooprStrategy>
 	}
 	tokenPrices: { MET: TokenPriceBlock; VSP: TokenPriceBlock }
 	marketComparison: {
@@ -548,7 +548,7 @@ export interface PegRow {
 	spotPrice: number
 	expectedPrice: number
 	pegRatio: number
-	depth: PegDepthRow[]
+	depth: Array<PegDepthRow>
 	kyberSupported: boolean
 }
 
@@ -574,8 +574,8 @@ export interface PegsResponse {
 			worstDeviationBps: number
 		}
 	>
-	rows: PegRow[]
-	supplyCaps: PegSupplyCap[]
+	rows: Array<PegRow>
+	supplyCaps: Array<PegSupplyCap>
 	bridgeInCaps?: Array<PegSupplyCap & { capType?: string }>
 	bridgeOutCaps?: Array<PegSupplyCap & { capType?: string }>
 }

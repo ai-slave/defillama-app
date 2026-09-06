@@ -65,7 +65,7 @@ export async function publishDatasetSnapshots({
 	const results = await Promise.allSettled(
 		DATASET_SNAPSHOT_DOMAINS.map((domain) => publishDatasetSnapshotDomain(domain, store))
 	)
-	const failures: string[] = []
+	const failures: Array<string> = []
 	let published = 0
 	let reused = 0
 	let stale = 0

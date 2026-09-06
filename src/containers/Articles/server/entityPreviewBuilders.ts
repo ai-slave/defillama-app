@@ -34,9 +34,9 @@ function makeCache<T>(loader: () => Promise<T>) {
 				cache.inflight = null
 				return v
 			})
-			.catch((e) => {
+			.catch((error) => {
 				cache.inflight = null
-				throw e
+				throw error
 			})
 		return cache.inflight
 	}
@@ -59,8 +59,8 @@ const pctChange = (now?: number | null, prev?: number | null): number | null => 
 
 export async function buildProtocolPreview(slug: string): Promise<EntityPreviewProtocol | null> {
 	const data: any = await getProtocols()
-	const list: any[] = Array.isArray(data?.protocols) ? data.protocols : Array.isArray(data) ? data : []
-	const parents: any[] = Array.isArray(data?.parentProtocols) ? data.parentProtocols : []
+	const list: Array<any> = Array.isArray(data?.protocols) ? data.protocols : Array.isArray(data) ? data : []
+	const parents: Array<any> = Array.isArray(data?.parentProtocols) ? data.parentProtocols : []
 	const target = slug.toLowerCase()
 	const match = list.find(
 		(p: any) =>
@@ -106,8 +106,8 @@ export async function buildProtocolPreview(slug: string): Promise<EntityPreviewP
 export async function buildChainPreview(slug: string): Promise<EntityPreviewChain | null> {
 	const [chains, byCat] = await Promise.all([getChains(), getChainsByCategory()])
 	const target = slug.toLowerCase()
-	const match: any = (chains as any[]).find((c) => slugify(String(c.name)) === target)
-	const richList: any[] = Array.isArray((byCat as any)?.chainTvls) ? (byCat as any).chainTvls : []
+	const match: any = (chains as Array<any>).find((c) => slugify(String(c.name)) === target)
+	const richList: Array<any> = Array.isArray((byCat as any)?.chainTvls) ? (byCat as any).chainTvls : []
 	const rich = richList.find((c: any) => slugify(String(c.name)) === target)
 	if (!match && !rich) return null
 	const name = match?.name ?? rich?.name
@@ -124,7 +124,7 @@ export async function buildChainPreview(slug: string): Promise<EntityPreviewChai
 
 export async function buildStablecoinPreview(slug: string): Promise<EntityPreviewStablecoin | null> {
 	const data: any = await getStablecoins()
-	const list: any[] = Array.isArray(data?.peggedAssets) ? data.peggedAssets : Array.isArray(data) ? data : []
+	const list: Array<any> = Array.isArray(data?.peggedAssets) ? data.peggedAssets : Array.isArray(data) ? data : []
 	const target = slug.toLowerCase()
 	const match = list.find(
 		(s: any) =>
@@ -157,7 +157,7 @@ export async function buildStablecoinPreview(slug: string): Promise<EntityPrevie
 
 export async function buildCategoryPreview(slug: string): Promise<EntityPreviewCategory | null> {
 	const data: any = await getProtocols()
-	const list: any[] = Array.isArray(data?.protocols) ? data.protocols : Array.isArray(data) ? data : []
+	const list: Array<any> = Array.isArray(data?.protocols) ? data.protocols : Array.isArray(data) ? data : []
 	const target = slug.toLowerCase()
 	const matches = list.filter((p: any) => typeof p.category === 'string' && slugify(p.category) === target)
 	if (matches.length === 0) return null
@@ -176,7 +176,7 @@ export async function buildCategoryPreview(slug: string): Promise<EntityPreviewC
 
 export async function buildCexPreview(slug: string): Promise<EntityPreviewCex | null> {
 	const data: any = await getCexs()
-	const list: any[] = Array.isArray(data) ? data : Array.isArray((data as any)?.cexs) ? (data as any).cexs : []
+	const list: Array<any> = Array.isArray(data) ? data : Array.isArray((data as any)?.cexs) ? (data as any).cexs : []
 	const target = slug.toLowerCase()
 	const match = list.find(
 		(c: any) =>
@@ -195,7 +195,7 @@ export async function buildCexPreview(slug: string): Promise<EntityPreviewCex | 
 
 export async function buildBridgePreview(slug: string): Promise<EntityPreviewBridge | null> {
 	const data: any = await getBridges()
-	const list: any[] = Array.isArray(data?.bridges) ? data.bridges : Array.isArray(data) ? data : []
+	const list: Array<any> = Array.isArray(data?.bridges) ? data.bridges : Array.isArray(data) ? data : []
 	const target = slug.toLowerCase()
 	const match = list.find(
 		(b: any) =>

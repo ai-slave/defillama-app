@@ -34,7 +34,7 @@ const RevenueOnAllChains = (props: IAdapterByChainPageData) => {
 		<Layout
 			title="Holders Revenue Rankings - DefiLlama"
 			description="Track holder revenue by protocol from buyback and burn, fee burning, and distributions to stakers."
-			canonicalUrl={`/holders-revenue`}
+			canonicalUrl="/holders-revenue"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

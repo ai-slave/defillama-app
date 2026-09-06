@@ -1,5 +1,5 @@
-import { readFileSync } from 'fs'
-import { join } from 'path'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
 type FetchLike = typeof fetch
 
@@ -25,7 +25,7 @@ function resolveNextBuildId(env: NodeJS.ProcessEnv): string | null {
 
 export type CloudflarePurgeResult =
 	| { reason: string; status: 'skipped' }
-	| { status: 'purged'; urls: string[] }
+	| { status: 'purged'; urls: Array<string> }
 	| { reason: string; status: 'failed' }
 
 function siteUrlFromEnv(env: NodeJS.ProcessEnv): string {
@@ -41,7 +41,7 @@ export function normalizeResearchCachePath(value: unknown): string | null {
 	return path
 }
 
-export function normalizeResearchCachePaths(values: unknown): string[] {
+export function normalizeResearchCachePaths(values: unknown): Array<string> {
 	const input = Array.isArray(values) ? values : []
 	const paths = new Set<string>()
 	for (const value of input) {
@@ -51,7 +51,7 @@ export function normalizeResearchCachePaths(values: unknown): string[] {
 	return Array.from(paths).slice(0, 50)
 }
 
-export function researchPathsToUrls(paths: string[], env: NodeJS.ProcessEnv = process.env): string[] {
+export function researchPathsToUrls(paths: Array<string>, env: NodeJS.ProcessEnv = process.env): Array<string> {
 	const siteUrl = siteUrlFromEnv(env)
 	const urls = new Set<string>()
 	for (const path of paths) {
@@ -70,7 +70,7 @@ export function dashboardPathsToUrls(
 	keys: DashboardPurgeKeys,
 	env: NodeJS.ProcessEnv = process.env,
 	buildId: string | null = null
-): string[] {
+): Array<string> {
 	const siteUrl = siteUrlFromEnv(env)
 	const distinctKeys = new Set([keys.id, keys.slug, keys.previousSlug].filter((key): key is string => !!key))
 	const urls = new Set<string>()
@@ -85,7 +85,7 @@ export function dashboardPathsToUrls(
 }
 
 async function purgeCloudflareUrls(
-	urls: string[],
+	urls: Array<string>,
 	label: string,
 	{ env = process.env, fetchImpl = fetch, logger = console }: PurgeCloudflareOptions = {}
 ): Promise<CloudflarePurgeResult> {
@@ -124,7 +124,7 @@ async function purgeCloudflareUrls(
 }
 
 export async function purgeCloudflareResearchUrls(
-	paths: string[],
+	paths: Array<string>,
 	{ env = process.env, fetchImpl = fetch, logger = console }: PurgeCloudflareOptions = {}
 ): Promise<CloudflarePurgeResult> {
 	const urls = researchPathsToUrls(paths, env)

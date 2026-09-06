@@ -65,9 +65,9 @@ function validateAnnotation(value: unknown): ArticleChartAnnotation | null {
 	return { date: new Date(ts).toISOString(), label: label.slice(0, 80) }
 }
 
-function deriveLegacyEntities(series: ArticleChartSeries[]): ArticleChartEntity[] {
+function deriveLegacyEntities(series: Array<ArticleChartSeries>): Array<ArticleChartEntity> {
 	const seen = new Set<string>()
-	const out: ArticleChartEntity[] = []
+	const out: Array<ArticleChartEntity> = []
 	for (const s of series) {
 		const key = `${s.entityType}:${s.slug}`
 		if (seen.has(key)) continue
@@ -82,7 +82,7 @@ function deriveLegacyEntities(series: ArticleChartSeries[]): ArticleChartEntity[
 	return out
 }
 
-function deriveLegacyChartType(series: ArticleChartSeries[]): string {
+function deriveLegacyChartType(series: Array<ArticleChartSeries>): string {
 	const counts = new Map<string, number>()
 	for (const s of series) counts.set(s.chartType, (counts.get(s.chartType) ?? 0) + 1)
 	let best = series[0].chartType
@@ -96,9 +96,9 @@ function deriveLegacyChartType(series: ArticleChartSeries[]): string {
 	return best
 }
 
-function dedupeSeries(series: ArticleChartSeries[]): ArticleChartSeries[] {
+function dedupeSeries(series: Array<ArticleChartSeries>): Array<ArticleChartSeries> {
 	const seen = new Set<string>()
-	const unique: ArticleChartSeries[] = []
+	const unique: Array<ArticleChartSeries> = []
 	for (const item of series) {
 		// This is the same identity enforced by the editor; persisted JSON still needs a runtime guard.
 		const key = `${item.entityType}:${item.slug}:${item.chartType}`
@@ -118,7 +118,7 @@ export function validateArticleChartConfig(value: unknown): ArticleChartConfig |
 			? candidate.chartType.trim()
 			: undefined
 
-	let series: ArticleChartSeries[] = []
+	let series: Array<ArticleChartSeries> = []
 	if (Array.isArray(candidate.series)) {
 		series = candidate.series
 			.map((entry) => validateSeries(entry, legacyChartType))

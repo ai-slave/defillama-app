@@ -119,7 +119,7 @@ function UpcomingUnlockMetric({ days, values }: { days: 7 | 30; values: Upcoming
 	)
 }
 
-function UpcomingUnlockVolumeChart({ series }: { series: UpcomingUnlockChartSeries[] }) {
+function UpcomingUnlockVolumeChart({ series }: { series: Array<UpcomingUnlockChartSeries> }) {
 	const router = useRouter()
 	const { groupBy: timePeriod, unlockType, viewMode } = parseUpcomingUnlockChartState(router.query)
 	const unlockTypeLabel = getUpcomingUnlockTypeLabel(unlockType)
@@ -272,8 +272,8 @@ export default function Protocols({
 	unlockChartSeries,
 	generatedAtSec
 }: {
-	data: EnrichedProtocolEmission[]
-	unlockChartSeries: UpcomingUnlockChartSeries[]
+	data: Array<EnrichedProtocolEmission>
+	unlockChartSeries: Array<UpcomingUnlockChartSeries>
 	generatedAtSec: number
 }) {
 	const { savedProtocols } = useWatchlistManager('defi')
@@ -291,7 +291,7 @@ export default function Protocols({
 		<Layout
 			title="Token Unlocks & Vesting Schedules - DefiLlama"
 			description="Track upcoming token unlocks and vesting schedules for 500+ DeFi protocols. Monitor unlock dates, amounts, and price impact. Real-time token unlock calendar with 7-day and 30-day unlock analytics."
-			canonicalUrl={`/unlocks`}
+			canonicalUrl="/unlocks"
 			pageName={pageName}
 		>
 			<Announcement notCancellable>

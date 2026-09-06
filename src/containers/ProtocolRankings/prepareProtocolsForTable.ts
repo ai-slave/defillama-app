@@ -9,7 +9,7 @@ export function prepareProtocolsForTable({
 	maxTvl,
 	suppressTvlStrike
 }: {
-	protocols: IProtocol[]
+	protocols: Array<IProtocol>
 	extraTvlsEnabled: Record<TvlSettingsKey, boolean>
 	minTvl: number | null
 	maxTvl: number | null

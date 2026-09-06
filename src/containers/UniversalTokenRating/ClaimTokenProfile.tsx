@@ -78,7 +78,7 @@ function CellInput({
 				className={`${inputStyles} w-full cursor-pointer`}
 				aria-label={column.label}
 				value={value}
-				disabled={column.optionSource != null && !options.length}
+				disabled={column.optionSource != null && options.length === 0}
 				onChange={(event) => onChange(event.target.value)}
 			>
 				<option value="" />
@@ -120,13 +120,13 @@ function CellInput({
 
 function sectionWithOptions(
 	section: ClaimTableSection,
-	marketMakerOptions: UtrClaimMarketMakerOption[],
-	exchangeOptions: UtrClaimExchangeOption[]
+	marketMakerOptions: Array<UtrClaimMarketMakerOption>,
+	exchangeOptions: Array<UtrClaimExchangeOption>
 ): ClaimTableSection {
 	return {
 		...section,
 		columns: section.columns.map((column) => {
-			let options: ClaimSelectOption[] | undefined
+			let options: Array<ClaimSelectOption> | undefined
 			if (column.optionSource === 'marketMakers') {
 				options = marketMakerOptions.map(({ marketMakerId, marketMakerName }) => ({
 					value: marketMakerId,
@@ -151,15 +151,15 @@ function InlineTableSection({
 	onChange
 }: {
 	section: ClaimTableSection
-	rows: UtrClaimFormRow[]
+	rows: Array<UtrClaimFormRow>
 	error: string | null
-	onChange: (rows: UtrClaimFormRow[]) => void
+	onChange: (rows: Array<UtrClaimFormRow>) => void
 }) {
 	return (
 		<div className="flex flex-col gap-3">
 			<h3 className="heading-xs">{section.title}</h3>
 			{section.description ? <p className="body-sm text-secondary">{section.description}</p> : null}
-			{rows.length ? (
+			{rows.length > 0 ? (
 				<div className="overflow-x-auto rounded-lg border border-subtle">
 					<table className="w-full border-collapse body-sm">
 						<thead>
@@ -242,7 +242,7 @@ function AttachDocuments({
 	id: string
 	receipts: UtrClaimDocuments[UtrClaimDocumentKey]
 	status: UploadStatus
-	onFiles: (files: File[]) => void
+	onFiles: (files: Array<File>) => void
 	onRemove: (index: number) => void
 	onClearError: () => void
 }) {
@@ -267,7 +267,7 @@ function AttachDocuments({
 						onChange={(event) => {
 							const files = Array.from(event.target.files ?? [])
 							event.target.value = ''
-							if (files.length) onFiles(files)
+							if (files.length > 0) onFiles(files)
 						}}
 					/>
 					{status.pending ? 'Uploading…' : 'Attach Documents'}
@@ -275,7 +275,7 @@ function AttachDocuments({
 				</label>
 				<span className="body-sm text-tertiary">{ATTACH_HINT}</span>
 			</div>
-			{receipts.length ? (
+			{receipts.length > 0 ? (
 				<div className="flex flex-wrap gap-2">
 					{receipts.map((receipt, index) => (
 						<span
@@ -336,9 +336,9 @@ export function ClaimTokenProfile({
 	scoringConfig
 }: {
 	variant?: 'claim' | 'join'
-	projects?: UtrClaimProjectOption[]
-	exchangeOptions?: UtrClaimExchangeOption[]
-	marketMakerOptions?: UtrClaimMarketMakerOption[]
+	projects?: Array<UtrClaimProjectOption>
+	exchangeOptions?: Array<UtrClaimExchangeOption>
+	marketMakerOptions?: Array<UtrClaimMarketMakerOption>
 	scoringConfig?: UtrScoringConfig | null
 }) {
 	const [token, setToken] = useState<string>(variant === 'claim' ? (projects[0]?.arcticId ?? '') : '')
@@ -415,7 +415,7 @@ export function ClaimTokenProfile({
 	const hasPendingUpload = Object.values(uploadStatuses).some((status) => status.pending)
 	const hasUploadError = Object.values(uploadStatuses).some((status) => status.error)
 
-	const uploadDocuments = async (key: UtrClaimDocumentKey, files: File[]) => {
+	const uploadDocuments = async (key: UtrClaimDocumentKey, files: Array<File>) => {
 		const validationError = validateUtrClaimFiles(files, documents[key].length)
 		if (validationError) {
 			setUploadStatuses((current) => ({ ...current, [key]: { pending: false, error: validationError } }))
@@ -510,10 +510,10 @@ export function ClaimTokenProfile({
 										className={`${inputStyles} min-w-64 flex-1 cursor-pointer`}
 										aria-label="Token to claim"
 										value={token}
-										disabled={!projects.length}
+										disabled={projects.length === 0}
 										onChange={(event) => setToken(event.target.value)}
 									>
-										{projects.length ? null : <option value="">Token list unavailable</option>}
+										{projects.length > 0 ? null : <option value="">Token list unavailable</option>}
 										{projects.map((project) => (
 											<option key={project.arcticId} value={project.arcticId}>
 												{project.projectName} ({project.symbol})

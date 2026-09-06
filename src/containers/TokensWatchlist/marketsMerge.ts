@@ -32,9 +32,9 @@ function sumPerpSegments(entry: MarketsListEntry, key: 'volume_24h' | 'oi_usd'):
  * server already computed (unique-symbol coins) are never overwritten.
  */
 export function mergeMarketsSummary(
-	baseRows: TokensTableRow[],
+	baseRows: Array<TokensTableRow>,
 	marketsList: TokenMarketsListResponse | undefined
-): TokensTableRow[] {
+): Array<TokensTableRow> {
 	if (!marketsList || baseRows.length === 0) return baseRows
 
 	const entryBySymbol = new Map<string, MarketsListEntry>()

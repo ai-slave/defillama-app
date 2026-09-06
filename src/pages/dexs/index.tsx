@@ -65,7 +65,7 @@ const DexsVolumeOnAllChains = ({ cexSpotVolume, cexSpotVenueCount, ...props }: D
 		<Layout
 			title="DEX Volume Rankings - Trading Activity - DefiLlama"
 			description="Track DEX swap volume and trading activity across all decentralized exchanges. Compare 24h and 7-day volume on Uniswap, Curve, PancakeSwap, and 500+ spot DEXs. Real-time DEX volume rankings by protocol and chain."
-			canonicalUrl={`/dexs`}
+			canonicalUrl="/dexs"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type}>

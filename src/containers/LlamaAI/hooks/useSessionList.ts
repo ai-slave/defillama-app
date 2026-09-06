@@ -67,10 +67,10 @@ export function useSessionList() {
 		getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextOffset : undefined),
 		enabled: isAuthenticated && !!user,
 		refetchOnWindowFocus: true,
-		staleTime: 10000,
+		staleTime: 10_000,
 		refetchInterval: (query) => {
 			const sessions = query.state.data?.pages.flatMap((page) => page.sessions) ?? []
-			return sessions.some(isAwaitingTitle) ? 15000 : false
+			return sessions.some(isAwaitingTitle) ? 15_000 : false
 		}
 	})
 
@@ -87,7 +87,7 @@ export function useSessionList() {
 			}
 
 			if (projectId) {
-				queryClient.setQueryData<ProjectChatSession[]>(projectSessionsKey(projectId), (old) =>
+				queryClient.setQueryData<Array<ProjectChatSession>>(projectSessionsKey(projectId), (old) =>
 					bumpProjectSessionActivity(old, sessionId, lastActivity)
 				)
 			}

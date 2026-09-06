@@ -92,8 +92,8 @@ const DatasetTableCard = lazy(() =>
 	}))
 )
 
-const STORED_COL_SPANS = [0.5, 1, 1.5, 2] as const satisfies readonly StoredColSpan[]
-const METRIC_COL_SPANS = [0.5, 1] as const satisfies readonly StoredColSpan[]
+const STORED_COL_SPANS = [0.5, 1, 1.5, 2] as const satisfies ReadonlyArray<StoredColSpan>
+const METRIC_COL_SPANS = [0.5, 1] as const satisfies ReadonlyArray<StoredColSpan>
 const COL_SPAN_CLASS_MAP: Record<1 | 2 | 3 | 4, string> = {
 	1: 'lg:col-span-1',
 	2: 'lg:col-span-2',
@@ -112,7 +112,7 @@ const getEffectiveColSpan = (span?: StoredColSpan): 1 | 2 | 3 | 4 => {
 	return 4
 }
 
-type StoredColSpanOptions = readonly [StoredColSpan, ...StoredColSpan[]]
+type StoredColSpanOptions = readonly [StoredColSpan, ...Array<StoredColSpan>]
 
 const getPreviousStoredColSpan = (
 	span: StoredColSpan,
@@ -404,7 +404,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: {
-				distance: isSmallScreen ? 999999 : 5
+				distance: isSmallScreen ? 999_999 : 5
 			}
 		}),
 		useSensor(KeyboardSensor)
@@ -563,8 +563,8 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 								strokeLinecap="round"
 								strokeLinejoin="round"
 							>
-								<line x1="12" y1="5" x2="12" y2="19"></line>
-								<line x1="5" y1="12" x2="19" y2="12"></line>
+								<line x1="12" y1="5" x2="12" y2="19" />
+								<line x1="5" y1="12" x2="19" y2="12" />
 							</svg>
 							<span className="text-lg font-medium">Add Item</span>
 						</button>

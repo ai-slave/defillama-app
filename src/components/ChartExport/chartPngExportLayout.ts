@@ -24,7 +24,7 @@ export interface ExportLayout {
 
 export function computeExportLayout(opts: {
 	title: string | undefined
-	legendItems: string[]
+	legendItems: Array<string>
 	shouldShowLegend: boolean
 	hasIcon: boolean
 	expandLegend: boolean | undefined

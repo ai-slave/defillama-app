@@ -6,11 +6,11 @@ import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { getIntegrationRowResetKey, IntegrationRow } from '~/containers/LlamaAI/components/IntegrationRow'
 import { SlackIntegrationRow } from '~/containers/LlamaAI/components/SlackIntegrationRow'
 import { useAgentHomeData } from '~/containers/LlamaAI/hooks/useAgentHomeData'
-import {
-	type EffortOption,
-	type LlamaAISettings,
-	type LlamaAISettingsActions,
-	type ModelOption
+import type {
+	EffortOption,
+	LlamaAISettings,
+	LlamaAISettingsActions,
+	ModelOption
 } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import {
 	isWebMobileToggleVisible,
@@ -43,8 +43,8 @@ interface SettingsModalProps {
 	dialogStore: Ariakit.DialogStore
 	settings: LlamaAISettings
 	actions: LlamaAISettingsActions
-	availableModels?: ModelOption[]
-	availableEfforts?: EffortOption[]
+	availableModels?: Array<ModelOption>
+	availableEfforts?: Array<EffortOption>
 	telegramStatus?: TelegramStatus | null
 	isSettingsLoading?: boolean
 	initialState?: SettingsInitialState | null
@@ -882,7 +882,7 @@ function MemoryList({
 	onDelete,
 	deleting
 }: {
-	entries: MemoryEntry[] | undefined
+	entries: Array<MemoryEntry> | undefined
 	isLoading: boolean
 	emptyText: string
 	onDelete: (id: string) => void

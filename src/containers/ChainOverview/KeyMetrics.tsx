@@ -393,11 +393,11 @@ function RaisesSection({ chainRaises }: { chainRaises: IChainOverviewData['chain
 					</span>
 					<span className="flex flex-wrap justify-between gap-1 body-md text-secondary">
 						<span>Round: {raise.round}</span>
-						{raise.leadInvestors.length || raise.otherInvestors.length ? (
+						{raise.leadInvestors.length > 0 || raise.otherInvestors.length > 0 ? (
 							<span>
 								Investors:{' '}
 								{raise.leadInvestors.concat(raise.otherInvestors).map((i, index, arr) => (
-									<Fragment key={'raised from ' + i}>
+									<Fragment key={`raised from ${i}`}>
 										<a href={`/raises/${slug(i)}`}>{i}</a>
 										{index < arr.length - 1 ? ', ' : ''}
 									</Fragment>

@@ -7,7 +7,7 @@ export type ArticleBylineAuthorEntry = {
 	href: string | null
 }
 
-export function getArticleBylineAuthorEntries(article: LocalArticleDocument): ArticleBylineAuthorEntry[] | null {
+export function getArticleBylineAuthorEntries(article: LocalArticleDocument): Array<ArticleBylineAuthorEntry> | null {
 	const coAuthors = (article.coAuthors ?? []).map((profile) => ({
 		name: profile.displayName,
 		href: `/research/authors/${profile.slug}`
@@ -68,8 +68,8 @@ export const RESEARCH_LANDING_COLLECTIONS_FETCH_LIMIT = Object.values(RESEARCH_L
 	0
 )
 
-export function chunkMentions<T>(mentions: T[]): T[][] {
-	const blocks: T[][] = []
+export function chunkMentions<T>(mentions: Array<T>): Array<Array<T>> {
+	const blocks: Array<Array<T>> = []
 	for (let i = 0; i < mentions.length; i += 3) {
 		blocks.push(mentions.slice(i, i + 3))
 	}
@@ -77,11 +77,11 @@ export function chunkMentions<T>(mentions: T[]): T[][] {
 }
 
 export function takeUniqueArticles<T extends { id: string }>(
-	articles: T[],
+	articles: Array<T>,
 	excludedIds: ReadonlySet<string>,
 	limit: number
-): T[] {
-	const result: T[] = []
+): Array<T> {
+	const result: Array<T> = []
 	for (const article of articles) {
 		if (excludedIds.has(article.id)) continue
 		result.push(article)

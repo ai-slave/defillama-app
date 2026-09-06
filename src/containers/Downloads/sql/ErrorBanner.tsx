@@ -16,7 +16,7 @@ const FAMILY_LABEL: Record<ErrorFamily, string> = {
 	other: 'Query error'
 }
 
-const FAMILY_HINTS: Record<ErrorFamily, string[]> = {
+const FAMILY_HINTS: Record<ErrorFamily, Array<string>> = {
 	table: [
 		'Identifiers must match a known dataset exactly — auto-load only kicks in for recognized slugs.',
 		'Browse the Schema tab for the right name, or pick a time-series param there (ts_<slug>_<param>).'
@@ -50,7 +50,7 @@ const FAMILY_HINTS: Record<ErrorFamily, string[]> = {
 interface ErrorAnalysis {
 	family: ErrorFamily
 	offendingIdentifier?: string
-	suggestions: string[]
+	suggestions: Array<string>
 }
 
 const KNOWN_DATASET_IDENTIFIERS = datasets.map((d) => identifierize(d.slug))
@@ -63,7 +63,7 @@ export function ErrorBanner({
 	density = 'comfortable'
 }: {
 	error: string
-	loadedTables: RegisteredTable[]
+	loadedTables: Array<RegisteredTable>
 	onJump: (line: number, col?: number) => void
 	onApplyFix: (oldIdentifier: string, newIdentifier: string) => void
 	density?: 'comfortable' | 'compact'
@@ -154,7 +154,7 @@ export function ErrorBanner({
 	)
 }
 
-export function analyzeError(error: string, loadedTables: RegisteredTable[]): ErrorAnalysis {
+export function analyzeError(error: string, loadedTables: Array<RegisteredTable>): ErrorAnalysis {
 	if (/^Could not auto-load table|^Could not load /i.test(error)) {
 		return { family: 'load', suggestions: [] }
 	}

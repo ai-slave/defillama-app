@@ -39,8 +39,8 @@ import type {
 } from './types'
 import { formatBridgesData, formatChainsData } from './utils'
 
-function prepareBridgeNetflowChartData(data: BridgeNetflowsResponse): BridgeNetflowChartPoint[] {
-	const nonZeroData: BridgeNetflowChartPoint[] = []
+function prepareBridgeNetflowChartData(data: BridgeNetflowsResponse): Array<BridgeNetflowChartPoint> {
+	const nonZeroData: Array<BridgeNetflowChartPoint> = []
 	for (const item of data) {
 		if (item.netFlow === 0) continue
 		nonZeroData.push({ chain: item.chain, value: item.netFlow })
@@ -155,16 +155,16 @@ export function buildVolumeDataByChain({
 	chains,
 	destinationChain
 }: {
-	volume: BridgeVolumePoint[][]
-	chains: string[]
+	volume: Array<Array<BridgeVolumePoint>>
+	chains: Array<string>
 	destinationChain: string
 }): BridgePageData['volumeDataByChain'] {
 	const volumeDataByChain: BridgePageData['volumeDataByChain'] = {}
 	const volumeOnAllChains = new Map<number, BridgeVolumeChartPoint>()
-	const normalizeDailyBridgePoints = (points: BridgeVolumeChartPoint[]): BridgeVolumeChartPoint[] => {
-		const normalized: BridgeVolumeChartPoint[] = []
+	const normalizeDailyBridgePoints = (points: Array<BridgeVolumeChartPoint>): Array<BridgeVolumeChartPoint> => {
+		const normalized: Array<BridgeVolumeChartPoint> = []
 		for (const point of points) {
-			const utcDay = Math.floor(point.date / 86400) * 86400
+			const utcDay = Math.floor(point.date / 86_400) * 86_400
 			const last = normalized[normalized.length - 1]
 			if (last?.date === utcDay) {
 				last.Deposited = addKnownBridgeLeg(last.Deposited, point.Deposited)
@@ -186,7 +186,7 @@ export function buildVolumeDataByChain({
 		if (chain === undefined) continue
 		const chainVolume = volume[index]
 		if (!chainVolume) throw new Error(`Missing bridge volume response for ${chain}`)
-		const chartData: BridgeVolumeChartPoint[] = []
+		const chartData: Array<BridgeVolumeChartPoint> = []
 
 		for (const item of chainVolume) {
 			const date = item.date
@@ -271,7 +271,7 @@ export function buildTableDataByChain({
 	chainsList
 }: {
 	prevDayDataByChain: Record<string, BridgeDayStats>
-	chainsList: string[]
+	chainsList: Array<string>
 }): BridgePageData['tableDataByChain'] {
 	const tableDataByChain: BridgePageData['tableDataByChain'] = {}
 
@@ -410,7 +410,7 @@ export const getBridges = () => fetchBridges(true).then(({ bridges, chains }) =>
 const getChainVolumeData = async (chain: string, chainCoingeckoIds: LlamaConfigResponse['chainCoingeckoIds']) => {
 	if (chain) {
 		if (chainCoingeckoIds[chain]) {
-			const chart: BridgeVolumePoint[] = await fetchOrFallback(() => fetchBridgeVolumeByChain(chain), {
+			const chart: Array<BridgeVolumePoint> = await fetchOrFallback(() => fetchBridgeVolumeByChain(chain), {
 				context: `fetchBridgeVolumeByChain(${chain})`,
 				throwOnFailure: true,
 				onFailureError: () => new Error(`bridge volume for chain ${chain} is broken`)
@@ -419,19 +419,19 @@ const getChainVolumeData = async (chain: string, chainCoingeckoIds: LlamaConfigR
 			// i.e., a withdrawal from the chain. Will eventually change that.
 			const formattedChart = formatBridgeOverviewVolumeData(chart)
 			return { formatted: formattedChart, raw: chart }
-		} else return { formatted: null, raw: [] }
-	} else {
-		const chart: BridgeVolumePoint[] = await fetchBridgeVolumeAll()
-		// The chart renders the raw response; summary cards consume only this lightweight projection.
-		return {
-			formatted: chart.map((point) => ({
-				date: point.date,
-				volume: getBridgeGrossVolume(point),
-				Deposits: null,
-				Withdrawals: null
-			})),
-			raw: chart
 		}
+		return { formatted: null, raw: [] }
+	}
+	const chart: Array<BridgeVolumePoint> = await fetchBridgeVolumeAll()
+	// The chart renders the raw response; summary cards consume only this lightweight projection.
+	return {
+		formatted: chart.map((point) => ({
+			date: point.date,
+			volume: getBridgeGrossVolume(point),
+			Deposits: null,
+			Withdrawals: null
+		})),
+		raw: chart
 	}
 }
 
@@ -601,7 +601,7 @@ export async function getBridgeChainsPageData() {
 		import('~/utils/metadata').then((m) => m.default)
 	])
 
-	let chartDataByChain: Array<BridgeVolumePoint[] | null> = []
+	let chartDataByChain: Array<Array<BridgeVolumePoint> | null> = []
 	const chainToChartDataIndex: Record<string, number> = {}
 	chartDataByChain = await Promise.all(
 		chains.map(async (chain, i) => {
@@ -624,7 +624,7 @@ export async function getBridgeChainsPageData() {
 
 	const currentTimestamp = Math.floor(new Date().getTime() / 1000 / 3600) * 3600
 	// 25 hours behind current time, gives 1 hour for BRIDGEDAYSTATS to update, may change this
-	const prevDayTimestamp = currentTimestamp - 86400 - 3600
+	const prevDayTimestamp = currentTimestamp - 86_400 - 3600
 
 	let netflowsDataDay = null
 	let netflowsDataWeek = null
@@ -633,8 +633,8 @@ export async function getBridgeChainsPageData() {
 			fetchBridgeNetflows('day').catch(() => null),
 			fetchBridgeNetflows('week').catch(() => null)
 		])
-	} catch (e) {
-		console.log('Failed to fetch netflows data:', e)
+	} catch (error) {
+		console.log('Failed to fetch netflows data:', error)
 	}
 
 	let prevDayDataByChain: Array<BridgeDayStats & { name: string }> = []
@@ -711,7 +711,7 @@ export function buildBridgeChainsMultiSeriesChart({
 	chains
 }: {
 	chartRows: Map<number, Map<string, number | null>>
-	chains: string[]
+	chains: Array<string>
 }): {
 	dataset: MultiSeriesChartDataset
 	charts: NonNullable<IMultiSeriesChartProps['charts']>

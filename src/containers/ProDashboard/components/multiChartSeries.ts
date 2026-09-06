@@ -8,14 +8,14 @@ import {
 export type MultiChartInputSeries = {
 	name: string
 	baseType: 'bar' | 'area' | 'line' | undefined
-	data: [number, number][]
+	data: Array<[number, number]>
 	color: string
 	metricType: string
 }
 
 export type MultiChartSeriesView = {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	solidChartAreaStyle: boolean
 }
 
@@ -28,8 +28,8 @@ function getSeriesMagnitude(data: MultiChartInputSeries['data']): number | undef
 	return magnitude > 0 ? magnitude : undefined
 }
 
-export function buildMultiChartCsvRows({ dataset, charts }: MultiChartSeriesView): string[][] {
-	const rows = new Array<string[]>(dataset.source.length + 1)
+export function buildMultiChartCsvRows({ dataset, charts }: MultiChartSeriesView): Array<Array<string>> {
+	const rows = new Array<Array<string>>(dataset.source.length + 1)
 	rows[0] = ['Date', ...charts.map((chart) => chart.name)]
 	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
 		const sourceRow = dataset.source[rowIndex]
@@ -52,7 +52,7 @@ export function buildMultiChartSeriesView({
 	showPercentage,
 	stackSeries
 }: {
-	series: MultiChartInputSeries[]
+	series: Array<MultiChartInputSeries>
 	showCumulative: boolean
 	showPercentage: boolean
 	stackSeries: boolean

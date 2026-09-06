@@ -19,9 +19,9 @@ const pageName = ['Bridge Transactions']
 export default function BridgeTransactions({ bridges }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
-			title={`Bridge Transactions - DefiLlama`}
+			title="Bridge Transactions - DefiLlama"
 			description="Download cross-chain bridge transaction data by protocol and time period. Export bridge transfer records for analysis on DefiLlama."
-			canonicalUrl={`/bridge-transactions`}
+			canonicalUrl="/bridge-transactions"
 			pageName={pageName}
 		>
 			<BridgeTransactionsPage bridges={bridges} />

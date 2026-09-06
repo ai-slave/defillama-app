@@ -1,7 +1,7 @@
 import type { ChartBuilderConfig } from './types'
 
 /** This identity is shared by saved cards and server-stream cache seeding. */
-export function getChartBuilderQueryKey(config: ChartBuilderConfig['config']): readonly unknown[] {
+export function getChartBuilderQueryKey(config: ChartBuilderConfig['config']): ReadonlyArray<unknown> {
 	return [
 		'pro-dashboard',
 		'chartBuilder',

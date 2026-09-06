@@ -51,7 +51,7 @@ function BackingType({
 	availableBackings
 }: {
 	nestedMenu: boolean
-	availableBackings: StablecoinFilterKey[]
+	availableBackings: Array<StablecoinFilterKey>
 }) {
 	const router = useRouter()
 	const { backing, excludeBacking } = router.query
@@ -85,7 +85,13 @@ function BackingType({
 	)
 }
 
-function PegType({ nestedMenu, availablePegTypes }: { nestedMenu: boolean; availablePegTypes: StablecoinFilterKey[] }) {
+function PegType({
+	nestedMenu,
+	availablePegTypes
+}: {
+	nestedMenu: boolean
+	availablePegTypes: Array<StablecoinFilterKey>
+}) {
 	const router = useRouter()
 	const { pegtype, excludePegtype } = router.query
 
@@ -151,7 +157,7 @@ function ResetAllStablecoinFilters({ pathname, nestedMenu }: { pathname: string;
 	const router = useRouter()
 
 	let hasActiveQueryFilters = false
-	const chartQuery: Record<string, string | string[]> = {}
+	const chartQuery: Record<string, string | Array<string>> = {}
 	for (const key in router.query) {
 		const value = router.query[key]
 		if (key === 'chain' || value === undefined) continue
@@ -185,8 +191,8 @@ function PeggedFiltersDropdowns({
 }: {
 	pathname: string
 	nestedMenu?: boolean
-	availableBackings: StablecoinFilterKey[]
-	availablePegTypes: StablecoinFilterKey[]
+	availableBackings: Array<StablecoinFilterKey>
+	availablePegTypes: Array<StablecoinFilterKey>
 }) {
 	return (
 		<>
@@ -201,8 +207,8 @@ function PeggedFiltersDropdowns({
 
 export function PeggedFilters(props: {
 	pathname: string
-	availableBackings: StablecoinFilterKey[]
-	availablePegTypes: StablecoinFilterKey[]
+	availableBackings: Array<StablecoinFilterKey>
+	availablePegTypes: Array<StablecoinFilterKey>
 }) {
 	return (
 		<Card padding="sm" className="flex flex-col gap-2">

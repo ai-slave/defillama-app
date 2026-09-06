@@ -18,8 +18,8 @@ type SnapshotValueRow = {
 
 interface SnapshotCsvQuery<Row extends SnapshotValueRow> {
 	query: string
-	params: unknown[]
-	entities: SnapshotCsvEntity[]
+	params: Array<unknown>
+	entities: Array<SnapshotCsvEntity>
 	getEntityKey: (row: Row) => string
 	grouping: DashboardGrouping
 	displayAs: 'timeSeries' | 'percentage'
@@ -42,10 +42,10 @@ export function getCsvDateBounds(request: ChartBuilderCsvRequest): {
 }
 
 function timestampFromIsoDate(date: string): number {
-	return Math.floor(Date.parse(`${date}T00:00:00Z`) / 1_000)
+	return Math.floor(Date.parse(`${date}T00:00:00Z`) / 1000)
 }
 
-function csvRow(date: string, values: Array<number | undefined>, percentage: boolean): CsvCell[] {
+function csvRow(date: string, values: Array<number | undefined>, percentage: boolean): Array<CsvCell> {
 	return [date, ...(percentage ? percentageValues(values) : values)]
 }
 
@@ -112,7 +112,7 @@ export async function streamSnapshotCsv<Row extends SnapshotValueRow>({
 		}
 	}
 
-	const queryStream = new QueryStream(query, params, { batchSize: 1_000 })
+	const queryStream = new QueryStream(query, params, { batchSize: 1000 })
 	await llamaDb.stream(queryStream, (stream) => {
 		stream.on('data', (row: Row) => {
 			stream.pause()

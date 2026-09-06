@@ -8,7 +8,7 @@ import pb, { type AuthModel } from '~/utils/pocketbase'
 
 export type NewsletterKey = 'newsletter' | 'research'
 
-export const NEWSLETTERS: { key: NewsletterKey; label: string; description: string }[] = [
+export const NEWSLETTERS: Array<{ key: NewsletterKey; label: string; description: string }> = [
 	{ key: 'newsletter', label: 'DefiLlama Newsletter', description: 'Onchain data insights, DeFi tips, and new tools.' },
 	{ key: 'research', label: 'Research Notes', description: 'In-depth research reports and analysis.' }
 ]
@@ -20,7 +20,7 @@ const NEWSLETTER_LABELS: Record<NewsletterKey, string> = {
 
 interface SubscribeArgs {
 	email: string
-	newsletters: NewsletterKey[]
+	newsletters: Array<NewsletterKey>
 }
 
 interface MediaKitArgs {

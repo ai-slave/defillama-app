@@ -63,7 +63,7 @@ const DRIP_CLAIMS_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const txColumns: ColumnDef<TxRow>[] = [
+const txColumns: Array<ColumnDef<TxRow>> = [
 	{
 		header: 'Date',
 		id: 'timestamp',
@@ -111,7 +111,7 @@ const txColumns: ColumnDef<TxRow>[] = [
 	}
 ]
 
-const dripColumns: ColumnDef<DripRow>[] = [
+const dripColumns: Array<ColumnDef<DripRow>> = [
 	{
 		header: 'Date',
 		id: 'timestamp',
@@ -152,7 +152,7 @@ const dripColumns: ColumnDef<DripRow>[] = [
 	}
 ]
 
-function TxTable({ data }: { data: TxRow[] }) {
+function TxTable({ data }: { data: Array<TxRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'timestamp', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
@@ -179,7 +179,7 @@ function TxTable({ data }: { data: TxRow[] }) {
 	)
 }
 
-function DripTable({ data }: { data: DripRow[] }) {
+function DripTable({ data }: { data: Array<DripRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'timestamp', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
@@ -246,7 +246,7 @@ export default function SyrupActivity() {
 		}
 	}, [globals, stSyrupState, globalsLoading, stStateLoading])
 
-	const txRows = useMemo<TxRow[]>(() => {
+	const txRows = useMemo<Array<TxRow>>(() => {
 		return stSyrupTxes.map((tx) => ({
 			id: tx.id,
 			timestamp: parseInt(tx.timestamp),
@@ -256,7 +256,7 @@ export default function SyrupActivity() {
 		}))
 	}, [stSyrupTxes])
 
-	const dripRows = useMemo<DripRow[]>(() => {
+	const dripRows = useMemo<Array<DripRow>>(() => {
 		return dripTxes.map((tx) => ({
 			id: tx.id,
 			timestamp: parseInt(tx.timestamp),

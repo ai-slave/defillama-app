@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createDatasetTableConfig } from './datasetTableConfig'
 import { migrateDashboardItemConfig } from './migrate'
 
 describe('dataset table runtime config', () => {
-	it('canonicalizes duplicate chains and the All selection before source planning', () => {
+	test('canonicalizes duplicate chains and the All selection before source planning', () => {
 		expect(
 			createDatasetTableConfig({
 				id: 'yields',
@@ -20,7 +20,7 @@ describe('dataset table runtime config', () => {
 		).toEqual([])
 	})
 
-	it('migrates historical dimension aliases before deduplicating selected chains', () => {
+	test('migrates historical dimension aliases before deduplicating selected chains', () => {
 		expect(
 			createDatasetTableConfig({
 				id: 'legacy-chains',
@@ -30,7 +30,7 @@ describe('dataset table runtime config', () => {
 		).toEqual(['OP Mainnet', 'Gnosis', 'ZKsync Era', 'Hyperliquid L1'])
 	})
 
-	it('normalizes CEX Top N and token symbol limits at the config boundary', () => {
+	test('normalizes CEX Top N and token symbol limits at the config boundary', () => {
 		const marketShare = createDatasetTableConfig({
 			id: 'cex',
 			datasetType: 'cex-analytics',
@@ -49,7 +49,7 @@ describe('dataset table runtime config', () => {
 		expect(tokenUsage.tokenSymbols).toEqual(['USDC', 'USDT', 'DAI', 'FRAX'])
 	})
 
-	it('re-sanitizes already-current runtime configs on every dashboard read', () => {
+	test('re-sanitizes already-current runtime configs on every dashboard read', () => {
 		const current = createDatasetTableConfig({
 			id: 'yields',
 			datasetType: 'yields',

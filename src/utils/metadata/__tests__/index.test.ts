@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { CoreMetadataPayload } from '../artifactContract'
 
 const { bootArtifactsMock, fetchCoreMetadataMock, recordDomainEventMock, runOutsideRouteTelemetryMock } = vi.hoisted(
@@ -141,7 +141,7 @@ describe('metadata refresh', () => {
 		runOutsideRouteTelemetryMock.mockImplementation((run: () => unknown) => run())
 	})
 
-	it('applies an empty token directory refresh payload directly', async () => {
+	test('applies an empty token directory refresh payload directly', async () => {
 		const { applyMetadataRefresh, createMetadataCacheFromArtifacts } = await import('../artifactContract')
 		const existingDirectory = {
 			aave: {
@@ -161,7 +161,7 @@ describe('metadata refresh', () => {
 		expect(metadata.tokenDirectory).toEqual({})
 	})
 
-	it('applies empty protocol metadata refresh payloads directly', async () => {
+	test('applies empty protocol metadata refresh payloads directly', async () => {
 		const { applyMetadataRefresh, createMetadataCacheFromArtifacts } = await import('../artifactContract')
 		const existingProtocols = {
 			'parent#aave': {
@@ -191,7 +191,7 @@ describe('metadata refresh', () => {
 		expect(metadata.protocolDisplayNames.size).toBe(0)
 	})
 
-	it('replaces the token directory when refresh returns token data', async () => {
+	test('replaces the token directory when refresh returns token data', async () => {
 		const { applyMetadataRefresh, createMetadataCacheFromArtifacts } = await import('../artifactContract')
 		const refreshedDirectory = {
 			morpho: {
@@ -222,7 +222,7 @@ describe('metadata refresh', () => {
 		expect(metadata.tokenDirectory).toEqual(refreshedDirectory)
 	})
 
-	it('starts a background refresh without blocking and dedupes concurrent callers', async () => {
+	test('starts a background refresh without blocking and dedupes concurrent callers', async () => {
 		const refreshedProtocols = {
 			'parent#morpho': {
 				name: 'morpho',
@@ -258,7 +258,7 @@ describe('metadata refresh', () => {
 		expect(fetchCoreMetadataMock).toHaveBeenCalledTimes(1)
 	}, 15_000)
 
-	it('detaches every background refresh caller from active route telemetry', async () => {
+	test('detaches every background refresh caller from active route telemetry', async () => {
 		fetchCoreMetadataMock.mockResolvedValue(createMetadataPayload())
 		const metadataModule = await import('../index')
 
@@ -269,12 +269,12 @@ describe('metadata refresh', () => {
 		expect(fetchCoreMetadataMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('records successful metadata refresh telemetry', async () => {
+	test('records successful metadata refresh telemetry', async () => {
 		vi.spyOn(Date, 'now')
-			.mockReturnValueOnce(1_000)
-			.mockReturnValueOnce(1_000)
-			.mockReturnValueOnce(1_250)
-			.mockReturnValue(1_250)
+			.mockReturnValueOnce(1000)
+			.mockReturnValueOnce(1000)
+			.mockReturnValueOnce(1250)
+			.mockReturnValue(1250)
 		fetchCoreMetadataMock.mockResolvedValue(createMetadataPayload())
 		const metadataModule = await import('../index')
 
@@ -293,13 +293,13 @@ describe('metadata refresh', () => {
 		)
 	})
 
-	it('records failed metadata refresh telemetry', async () => {
+	test('records failed metadata refresh telemetry', async () => {
 		const error = new Error('metadata failed')
 		vi.spyOn(Date, 'now')
-			.mockReturnValueOnce(1_000)
-			.mockReturnValueOnce(1_000)
-			.mockReturnValueOnce(1_400)
-			.mockReturnValue(1_400)
+			.mockReturnValueOnce(1000)
+			.mockReturnValueOnce(1000)
+			.mockReturnValueOnce(1400)
+			.mockReturnValue(1400)
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		fetchCoreMetadataMock.mockRejectedValue(error)
 		const metadataModule = await import('../index')
@@ -322,7 +322,7 @@ describe('metadata refresh', () => {
 		consoleErrorSpy.mockRestore()
 	})
 
-	it('applies the refresh cooldown after failed refreshes', async () => {
+	test('applies the refresh cooldown after failed refreshes', async () => {
 		vi.stubEnv('NODE_ENV', 'production')
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		fetchCoreMetadataMock.mockRejectedValue(new Error('metadata failed'))
@@ -336,7 +336,7 @@ describe('metadata refresh', () => {
 		consoleErrorSpy.mockRestore()
 	})
 
-	it('applies refresh payloads without semantic artifact validation', async () => {
+	test('applies refresh payloads without semantic artifact validation', async () => {
 		vi.stubEnv('NODE_ENV', 'production')
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		fetchCoreMetadataMock.mockResolvedValue(
@@ -356,7 +356,7 @@ describe('metadata refresh', () => {
 		consoleErrorSpy.mockRestore()
 	})
 
-	it('skips refresh in local development without an API key', async () => {
+	test('skips refresh in local development without an API key', async () => {
 		vi.stubEnv('NODE_ENV', 'development')
 		vi.stubEnv('API_KEY', '')
 		const metadataModule = await import('../index')
@@ -367,9 +367,9 @@ describe('metadata refresh', () => {
 		expect(fetchCoreMetadataMock).not.toHaveBeenCalled()
 	})
 
-	it('runs the runtime refresh loop with initial and per-fetch jitter', async () => {
+	test('runs the runtime refresh loop with initial and per-fetch jitter', async () => {
 		vi.useFakeTimers()
-		vi.setSystemTime(1_000)
+		vi.setSystemTime(1000)
 		vi.stubEnv('NODE_ENV', 'production')
 		bootArtifactsMock.mockReturnValue({
 			manifest: {
@@ -400,9 +400,9 @@ describe('metadata refresh', () => {
 		expect(metadataModule.getMetadataRefreshStatus().jitteredRefreshAttempts).toBe(1)
 	})
 
-	it('does not start the runtime refresh loop in tests', async () => {
+	test('does not start the runtime refresh loop in tests', async () => {
 		vi.useFakeTimers()
-		vi.setSystemTime(1_000)
+		vi.setSystemTime(1000)
 		bootArtifactsMock.mockReturnValue({ manifest: null, payload: createMetadataPayload() })
 		fetchCoreMetadataMock.mockResolvedValue(createMetadataPayload())
 

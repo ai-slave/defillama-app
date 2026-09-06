@@ -65,7 +65,7 @@ function parseRgbColor(base: string): RgbColor | null {
 }
 
 interface SparklineChartProps {
-	data?: PrimitiveSparklinePoint[]
+	data?: Array<PrimitiveSparklinePoint>
 	color?: string
 	areaColor?: string
 	className?: string
@@ -91,7 +91,7 @@ function SparklineChartRenderer({
 
 	const seriesData = useMemo(() => {
 		if (!data) return []
-		const points: PrimitiveSparklinePoint[] = []
+		const points: Array<PrimitiveSparklinePoint> = []
 		for (const [timestamp, value] of data) {
 			points.push([timestamp * 1000, value])
 		}

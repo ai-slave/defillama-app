@@ -4,12 +4,12 @@
 // ProtocolRiskResponse = protocol payload.
 
 export type VaultRiskResponse = {
-	vault_specific_risks: {
-		oracle_admins?: OracleAdmin[] | undefined
+	vault_specific_risks: Array<{
+		oracle_admins?: Array<OracleAdmin> | undefined
 		loss: {
-			realized?: { date: string; usd_lost: number; usd_recovered?: number; post_mortem_url?: string }[] | undefined
+			realized?: Array<{ date: string; usd_lost: number; usd_recovered?: number; post_mortem_url?: string }> | undefined
 			notes?: string | undefined
-			by_anchor?: { drop_pct: 10 | 30 | 50; loss_usd: number }[] | undefined
+			by_anchor?: Array<{ drop_pct: 10 | 30 | 50; loss_usd: number }> | undefined
 			inputs?: Record<string, number> | undefined
 			formula?: string | undefined
 			min_usd: number
@@ -20,26 +20,26 @@ export type VaultRiskResponse = {
 			basis: 'derived' | 'manual'
 		}
 		conditions: ConditionTree
-		mitigations: string[]
-		evidence: Evidence[]
+		mitigations: Array<string>
+		evidence: Array<Evidence>
 		asset?: { symbol: string; address: string; chain: string } | undefined
 		id: string
 		scenario_id: string
 		title: string
 		kind: RiskKind
 		description: string
-	}[]
-	collateral_risks: {
+	}>
+	collateral_risks: Array<{
 		token_listing_id: string | null
-		feed_kinds?: string[] | undefined
-		oracle_addresses: string[]
-		oracle_providers: string[]
-		oracle_types?: OracleType[] | undefined
+		feed_kinds?: Array<string> | undefined
+		oracle_addresses: Array<string>
+		oracle_providers: Array<string>
+		oracle_types?: Array<OracleType> | undefined
 		aggregate_trust_usd: number
 		vault_count: number
 		oracle_type: OracleType
 		drainable_usd?: number | undefined
-		bad_debt_markets?: { bad_debt_at_zero_usd: number; lltv: number | null }[] | undefined
+		bad_debt_markets?: Array<{ bad_debt_at_zero_usd: number; lltv: number | null }> | undefined
 		bad_debt_basis?: 'position-scan' | 'market-wide' | 'unmodeled' | undefined
 		liquidation_threshold: number | null
 		collateral_borrowed_debt_usd: number | null
@@ -51,8 +51,8 @@ export type VaultRiskResponse = {
 		vault_market_share: number | null
 		exposure_usd: number
 		exposure_pct: number | null
-	}[]
-	market_oracles: {
+	}>
+	market_oracles: Array<{
 		source_attribution?: { value: string } | undefined
 		attribution:
 			| 'market_exact'
@@ -62,12 +62,12 @@ export type VaultRiskResponse = {
 			| 'zero_lltv_no_oracle'
 			| 'unclassified'
 		oracle_instance: string | null
-		legs?: OracleLeg[] | undefined
+		legs?: Array<OracleLeg> | undefined
 		pt_pricing?: OraclePtPricing | undefined
 		quote_leg?: string | undefined
 		base_leg?: string | undefined
 		mechanism_summary?: string | undefined
-		oracle_providers: string[]
+		oracle_providers: Array<string>
 		feed_kind: string | null
 		api_oracle_type?: string | null | undefined
 		lltv: number | null
@@ -78,18 +78,23 @@ export type VaultRiskResponse = {
 		collateral_asset: { symbol: string; address: string; chain: string } | null
 		loan_asset: { symbol: string; chain: string } | null
 		allocation_usd: number | null
-	}[]
+	}>
 	oracle_exposure: {
-		by_provider: { exposure_usd: number; exposure_pct: number | null; collateral_symbols: string[]; provider: string }[]
+		by_provider: Array<{
+			exposure_usd: number
+			exposure_pct: number | null
+			collateral_symbols: Array<string>
+			provider: string
+		}>
 	}
 	stress: {
-		anchors: {
+		anchors: Array<{
 			drop_pct: number
 			bad_debt_usd: number
-			by_collateral: { symbol: string; address: string; bad_debt_usd: number }[]
-		}[]
+			by_collateral: Array<{ symbol: string; address: string; bad_debt_usd: number }>
+		}>
 	}
-	external_dependencies: {
+	external_dependencies: Array<{
 		source_url?: string | undefined
 		notes?: string | undefined
 		id: string
@@ -97,45 +102,50 @@ export type VaultRiskResponse = {
 		name: string
 		description: string
 		relevance: 'governance' | 'principal' | 'rewards' | 'ui'
-	}[]
-	coverage: {
+	}>
+	coverage: Array<{
 		description?: string | undefined
 		access: 'instant' | 'gov_vote' | 'discretionary'
 		access_time_sec: number | null
-		applies_to: string[]
+		applies_to: Array<string>
 		priority: number
 		cap_usd_excl_own_tokens?: number | undefined
 		kind: string
 		cap_usd: number
-	}[]
-	oracle_config: {
+	}>
+	oracle_config: Array<{
 		deviation_threshold?: number | undefined
 		heartbeat_sec?: number | undefined
 		source_attribution: { value: string }
-		legs?: OracleLeg[] | undefined
+		legs?: Array<OracleLeg> | undefined
 		pt_pricing?: OraclePtPricing | undefined
 		quote_leg?: string | undefined
 		base_leg?: string | undefined
 		mechanism_summary?: string | undefined
 		feed_kind?: string | undefined
-		provider?: string[] | undefined
+		provider?: Array<string> | undefined
 		asset_symbol: string
 		asset_address: string
 		chain: string
 		instance: string
 		oracle_address: string
 		type: OracleType
-	}[]
-	oracle_dependencies: {
-		vendors: string[]
-		collateral_symbols: string[]
+	}>
+	oracle_dependencies: Array<{
+		vendors: Array<string>
+		collateral_symbols: Array<string>
 		exposure_usd: number
 		exposure_pct: number | null
 		multisig?: string | undefined
 		admin_address: string
 		admin_kind: 'safe' | 'guardian-set' | 'contract' | 'eoa'
-	}[]
-	realized_incidents: { scenario_id: string; title: string; description: string; incidents: RealizedIncidentOut[] }[]
+	}>
+	realized_incidents: Array<{
+		scenario_id: string
+		title: string
+		description: string
+		incidents: Array<RealizedIncidentOut>
+	}>
 	freshness: FreshnessMetadata
 	allocated_usd?: number | null | undefined
 	idle_usd?: number | null | undefined
@@ -146,11 +156,11 @@ export type VaultRiskResponse = {
 				owner: RoleEntity | null
 				curator: RoleEntity | null
 				guardian: RoleEntity | null
-				sentinels: RoleEntity[]
+				sentinels: Array<RoleEntity>
 				pending_owner: RoleEntity | null
 				timelock_sec: number | null
-				allocators: RoleEntity[]
-				pending_changes: PendingChange[]
+				allocators: Array<RoleEntity>
+				pending_changes: Array<PendingChange>
 		  }
 		| null
 		| undefined
@@ -200,10 +210,10 @@ export type ProtocolRiskResponse = {
 		top10_clears_quorum: boolean | null
 		voting_power_concentration_top10_pct: number | null
 	}
-	multisigs: {
+	multisigs: Array<{
 		rotation_procedure?: { value: string } | undefined
 		depositor_impact?: { reaches_principal: boolean; gate: string; summary: { value: string } } | undefined
-		signers: { identity?: { value: string } | undefined; address: string }[]
+		signers: Array<{ identity?: { value: string } | undefined; address: string }>
 		powers: { value: string }
 		address: string
 		chain: string
@@ -211,8 +221,8 @@ export type ProtocolRiskResponse = {
 		role_label: string
 		kind: 'safe' | 'eoa' | 'contract'
 		threshold: { m: number; n: number }
-	}[]
-	audits: {
+	}>
+	audits: Array<{
 		report: { value: string }
 		firm: string
 		date: string
@@ -222,8 +232,8 @@ export type ProtocolRiskResponse = {
 		findings: { critical: number | null; high: number | null; resolved: number | null }
 		findings_status: FindingsStatus
 		matches_deployed: boolean | null
-	}[]
-	external_dependencies: {
+	}>
+	external_dependencies: Array<{
 		source_url?: string | undefined
 		notes?: string | undefined
 		id: string
@@ -231,20 +241,20 @@ export type ProtocolRiskResponse = {
 		name: string
 		description: string
 		relevance: 'governance' | 'principal' | 'rewards' | 'ui'
-	}[]
-	coverage: {
+	}>
+	coverage: Array<{
 		description?: string | undefined
 		access: 'instant' | 'gov_vote' | 'discretionary'
 		access_time_sec: number | null
-		applies_to: string[]
+		applies_to: Array<string>
 		priority: number
 		cap_usd_excl_own_tokens?: number | undefined
 		kind: string
 		cap_usd: number
-	}[]
-	role_capabilities: RoleCapability[]
-	incidents: ProtocolIncident[]
-	aggregate_trust_scope: string[]
+	}>
+	role_capabilities: Array<RoleCapability>
+	incidents: Array<ProtocolIncident>
+	aggregate_trust_scope: Array<string>
 	freshness: FreshnessMetadata
 	protocol_id: string
 }
@@ -252,8 +262,8 @@ export type ProtocolRiskResponse = {
 export type PoolRiskTier = {
 	tier: RiskBand
 	relative_band: RiskBand
-	capped_by: string[]
-	facts: RiskFact[]
+	capped_by: Array<string>
+	facts: Array<RiskFact>
 	limited_data: boolean
 }
 
@@ -265,8 +275,8 @@ export type OracleAdmin = {
 }
 
 export type ConditionTree =
-	| { op: 'and'; children: ConditionTree[] }
-	| { op: 'or'; children: ConditionTree[] }
+	| { op: 'and'; children: Array<ConditionTree> }
+	| { op: 'or'; children: Array<ConditionTree> }
 	| { op: 'leaf'; description: string; ref?: string; notes?: string }
 
 export type Evidence = {
@@ -310,9 +320,9 @@ export type RealizedIncidentOut = {
 
 export type FreshnessMetadata = {
 	last_run: string
-	sources: SourcePointer[]
-	drift?: DriftEntry[]
-	stale?: DriftEntry[]
+	sources: Array<SourcePointer>
+	drift?: Array<DriftEntry>
+	stale?: Array<DriftEntry>
 }
 
 export type RoleEntity = {

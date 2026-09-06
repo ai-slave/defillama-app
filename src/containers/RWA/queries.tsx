@@ -75,7 +75,7 @@ type RWAAssetsOverviewParams = {
 /** Transpose the raw chain → protocol → tvl map into per-protocol rows with their chain splits, sorted desc. */
 export function buildRwaDefiTvlProtocolChainBreakdown(
 	breakdown: Record<string, Record<string, number>>
-): RWADefiTvlProtocolBreakdown[] | null {
+): Array<RWADefiTvlProtocolBreakdown> | null {
 	const chainsByProtocol = new Map<string, Map<string, number>>()
 	for (const [chain, protocols] of Object.entries(breakdown)) {
 		for (const [protocol, value] of Object.entries(protocols)) {
@@ -87,7 +87,7 @@ export function buildRwaDefiTvlProtocolChainBreakdown(
 			chains.set(chain, (chains.get(chain) ?? 0) + value)
 		}
 	}
-	const rows: RWADefiTvlProtocolBreakdown[] = []
+	const rows: Array<RWADefiTvlProtocolBreakdown> = []
 	for (const [protocol, chains] of chainsByProtocol) {
 		let total = 0
 		const byChain = [...chains.entries()].sort((a, b) => b[1] - a[1])
@@ -143,7 +143,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		})
 		const [data, perpsMarkets, prefetchedChartData, openInterestChartRows]: [
 			Array<IFetchedRWAProject>,
-			IRWAPerpsMarket[],
+			Array<IRWAPerpsMarket>,
 			IRWAChartDataByAsset | null | undefined,
 			IRWAPerpsBreakdownChartResponse | null
 		] = await Promise.all([
@@ -629,7 +629,7 @@ export async function getRWAAssetsOverview(params: RWAAssetsOverviewParams): Pro
 		})
 		const defaultAggregateAssets =
 			mode === 'platform' ? defaultFilteredAssets : defaultFilteredAssets.filter((asset) => asset.suspicious !== true)
-		const defaultFilteredPerpsRows: RWAPerpsContractOverlayRow[] = []
+		const defaultFilteredPerpsRows: Array<RWAPerpsContractOverlayRow> = []
 		for (const asset of defaultAggregateAssets) {
 			if (asset.kind === 'perps' && asset.venueType !== 'CEX') defaultFilteredPerpsRows.push(asset)
 		}
@@ -746,7 +746,7 @@ export async function getRWAChainsOverview(): Promise<IRWAChainsOverview> {
 		fetchRWAChainBreakdownChartData({ key: 'activeMcap' })
 	])
 
-	const rows: IRWAChainsOverviewRow[] = []
+	const rows: Array<IRWAChainsOverviewRow> = []
 	for (const [chain, stats] of Object.entries(data.byChain)) {
 		rows.push({
 			...stats,
@@ -771,7 +771,7 @@ export async function getRWACategoriesOverview(): Promise<IRWACategoriesOverview
 		fetchRWACategoryBreakdownChartData({ key: 'activeMcap', includeStablecoin: false, includeGovernance: false })
 	])
 
-	const rows: IRWACategoriesOverviewRow[] = []
+	const rows: Array<IRWACategoriesOverviewRow> = []
 	for (const [category, stats] of Object.entries(data.byCategory)) {
 		if (!isCategoryIncludedInStandardRwaOverview(category)) continue
 		rows.push({
@@ -797,7 +797,7 @@ export async function getRWAPlatformsOverview(): Promise<IRWAPlatformsOverview> 
 		fetchRWAPlatformBreakdownChartData({ key: 'activeMcap', includeStablecoin: false, includeGovernance: false })
 	])
 
-	const rows: IRWAPlatformsOverviewRow[] = []
+	const rows: Array<IRWAPlatformsOverviewRow> = []
 	for (const [platform, stats] of Object.entries(data.byPlatform)) {
 		rows.push({
 			...stats,
@@ -822,7 +822,7 @@ export async function getRWAAssetGroupsOverview(): Promise<IRWAAssetGroupsOvervi
 		fetchRWAAssetGroupBreakdownChartData({ key: 'activeMcap', includeStablecoin: false, includeGovernance: false })
 	])
 
-	const rows: IRWAAssetGroupsOverviewRow[] = []
+	const rows: Array<IRWAAssetGroupsOverviewRow> = []
 	for (const [assetGroup, stats] of Object.entries(data.byAssetGroup)) {
 		rows.push({
 			assetGroup: normalizeRwaAssetGroup(assetGroup),
@@ -913,8 +913,8 @@ export async function getRWAAssetData({
 		if (yieldsSnapshot) {
 			try {
 				yieldMatch = await getRWAYieldPools(yieldsSnapshot, data)
-			} catch (err) {
-				console.log('[HTTP]:[ERROR]:[RWA_YIELD]:', assetId, err instanceof Error ? err.message : '')
+			} catch (error) {
+				console.log('[HTTP]:[ERROR]:[RWA_YIELD]:', assetId, error instanceof Error ? error.message : '')
 			}
 		}
 

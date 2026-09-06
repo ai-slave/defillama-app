@@ -7,13 +7,13 @@ export type TreemapNode = {
 	value: TreemapValue
 	path?: string
 	itemStyle?: { color?: string }
-	children?: TreemapNode[]
+	children?: Array<TreemapNode>
 }
 
 export type TreemapVariant = 'narrative' | 'rwa'
 
 export interface TreemapChartProps {
-	treeData: TreemapNode[]
+	treeData: Array<TreemapNode>
 	variant: TreemapVariant
 	colorMode?: 'value' | 'categorical'
 	height?: string

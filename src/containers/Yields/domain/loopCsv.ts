@@ -2,7 +2,7 @@ import type { ApiQuery } from '~/server/api/types'
 import type { LoopTableRow } from '../data/types'
 import { activeSplit, apyHeaders, apyValues, windowSuffix } from './csvApy'
 
-export function prepareLoopsCsv(rows: LoopTableRow[], query: ApiQuery = {}) {
+export function prepareLoopsCsv(rows: Array<LoopTableRow>, query: ApiQuery = {}) {
 	const suffix = windowSuffix(query)
 	const split = activeSplit(query)
 	const headers = [

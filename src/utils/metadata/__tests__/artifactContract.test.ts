@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	METADATA_ARTIFACT_KEYS,
 	METADATA_ARTIFACT_FILES,
@@ -72,7 +72,7 @@ function createPayload(overrides: Partial<CoreMetadataPayload> = {}): CoreMetada
 }
 
 describe('metadata artifact contract', () => {
-	it('declares a registry entry for every payload key', () => {
+	test('declares a registry entry for every payload key', () => {
 		expect(METADATA_ARTIFACT_KEYS.toSorted()).toEqual(Object.keys(createPayload()).toSorted())
 
 		for (const key of METADATA_ARTIFACT_KEYS) {
@@ -83,7 +83,7 @@ describe('metadata artifact contract', () => {
 		}
 	})
 
-	it('lists every generated artifact filename once', () => {
+	test('lists every generated artifact filename once', () => {
 		const artifactFiles = Object.values(METADATA_ARTIFACT_FILES)
 		expect(new Set(artifactFiles).size).toBe(artifactFiles.length)
 		expect(
@@ -93,7 +93,7 @@ describe('metadata artifact contract', () => {
 		).toEqual(artifactFiles.toSorted())
 	})
 
-	it('provides CI stubs for every generated artifact', () => {
+	test('provides CI stubs for every generated artifact', () => {
 		expect(
 			getMetadataArtifactEntries(METADATA_CI_STUBS)
 				.map(([file]) => file)
@@ -101,7 +101,7 @@ describe('metadata artifact contract', () => {
 		).toEqual(Object.values(METADATA_ARTIFACT_FILES).toSorted())
 	})
 
-	it('creates runtime metadata lookups from artifact payloads', () => {
+	test('creates runtime metadata lookups from artifact payloads', () => {
 		const metadata = createMetadataCacheFromArtifacts(createPayload())
 
 		expect(metadata.protocolMetadata['parent#aave']).toMatchObject({ displayName: 'Aave' })
@@ -125,7 +125,7 @@ describe('metadata artifact contract', () => {
 		expect(metadata.preIpoCompanyIdsSet.has('anthropic')).toBe(true)
 	})
 
-	it('applies refresh payloads directly', () => {
+	test('applies refresh payloads directly', () => {
 		const metadata = createMetadataCacheFromArtifacts(createPayload())
 
 		applyMetadataRefresh(
@@ -148,7 +148,7 @@ describe('metadata artifact contract', () => {
 		expect(metadata.stablecoinPeggedAssetSlugsSet.has('usd-coin')).toBe(true)
 	})
 
-	it('rebuilds chain display-name fallbacks during refresh', () => {
+	test('rebuilds chain display-name fallbacks during refresh', () => {
 		const metadata = createMetadataCacheFromArtifacts(createPayload())
 
 		applyMetadataRefresh(
@@ -166,7 +166,7 @@ describe('metadata artifact contract', () => {
 		expect(metadata.chainDisplayNames.get('arbitrum')).toBe('Arbitrum One')
 	})
 
-	it('allows smaller but valid refresh payloads', () => {
+	test('allows smaller but valid refresh payloads', () => {
 		const payload = createPayload({
 			chains: {}
 		})
@@ -174,7 +174,7 @@ describe('metadata artifact contract', () => {
 		expect(validateCoreMetadataPayload(payload).chains).toEqual({})
 	})
 
-	it('accepts backend-owned artifact shapes without revalidating them', () => {
+	test('accepts backend-owned artifact shapes without revalidating them', () => {
 		const payload = createPayload({
 			chains: [] as unknown as CoreMetadataPayload['chains']
 		})
@@ -182,7 +182,7 @@ describe('metadata artifact contract', () => {
 		expect(validateCoreMetadataPayload(payload).chains).toEqual([])
 	})
 
-	it('accepts nested backend-owned fields without revalidating them', () => {
+	test('accepts nested backend-owned fields without revalidating them', () => {
 		const payload = createPayload({
 			tokenDirectory: {
 				aave: { name: 'Aave' }
@@ -200,7 +200,7 @@ describe('metadata artifact contract', () => {
 })
 
 describe('routes for renamed protocols', () => {
-	it('resolves a protocol by a name it used to have', () => {
+	test('resolves a protocol by a name it used to have', () => {
 		const metadata = createMetadataCacheFromArtifacts(
 			createPayload({
 				protocols: {
@@ -213,7 +213,7 @@ describe('routes for renamed protocols', () => {
 		expect(metadata.protocolRouteIdBySlug.aave).toBe('parent#aave')
 	})
 
-	it('resolves an exchange by every name it used to have', () => {
+	test('resolves an exchange by every name it used to have', () => {
 		const metadata = createMetadataCacheFromArtifacts(
 			createPayload({
 				protocols: {
@@ -229,7 +229,7 @@ describe('routes for renamed protocols', () => {
 
 	// setSlugAlias is first-wins, so registering previous names in the same pass as current
 	// ones would hand the route to whichever protocol object key order reached first.
-	it('never lets an abandoned name outrank the protocol that carries it now', () => {
+	test('never lets an abandoned name outrank the protocol that carries it now', () => {
 		const renamed = { name: 'new-name', displayName: 'New Name', previousNames: ['Shared'], tvl: true }
 		const current = { name: 'shared', displayName: 'Shared', tvl: true }
 
@@ -243,7 +243,7 @@ describe('routes for renamed protocols', () => {
 		}
 	})
 
-	it('never lets an abandoned exchange name outrank the exchange that carries it now', () => {
+	test('never lets an abandoned exchange name outrank the exchange that carries it now', () => {
 		const renamed = { name: 'new-exchange', displayName: 'New Exchange', previousNames: ['Shared'], cex: true }
 		const current = { name: 'shared', displayName: 'Shared', cex: true }
 
@@ -259,7 +259,7 @@ describe('routes for renamed protocols', () => {
 })
 
 describe('token filter schema compatibility', () => {
-	it('converts legacy native chains only at the artifact boundary', () => {
+	test('converts legacy native chains only at the artifact boundary', () => {
 		const artifact = METADATA_ARTIFACT_REGISTRY.tokenFilterMetadata.parse({
 			...createPayload().tokenFilterMetadata,
 			schemaVersion: 1,
@@ -274,7 +274,7 @@ describe('token filter schema compatibility', () => {
 		expect(artifact.tokens.missing.primaryChain).toBeNull()
 	})
 
-	it('preserves schema 2 primary chains and rejects unsupported schemas', () => {
+	test('preserves schema 2 primary chains and rejects unsupported schemas', () => {
 		const parse = METADATA_ARTIFACT_REGISTRY.tokenFilterMetadata.parse
 		const artifact = createPayload().tokenFilterMetadata
 		expect(parse(artifact)).toBe(artifact)

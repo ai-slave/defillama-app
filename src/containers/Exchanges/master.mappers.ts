@@ -127,8 +127,8 @@ function deriveEeaOrderbookOwnership(
 	venue: Pick<MasterVenueCore, 'scope' | 'liquidity'>
 ): ExchangeEeaOrderbookOwnership | null {
 	if (!isEeaRegionalScope(venue.scope)) return null
-	const sharedSegments: ExchangeSegment[] = []
-	const dedicatedSegments: ExchangeSegment[] = []
+	const sharedSegments: Array<ExchangeSegment> = []
+	const dedicatedSegments: Array<ExchangeSegment> = []
 	for (const segment of MASTER_SEGMENTS) {
 		const relation = venue.liquidity[segment]
 		if (relation?.mode === 'shared') sharedSegments.push(segment)
@@ -198,7 +198,7 @@ function mapNormalizedVolume(nvol: MasterSegmentNormalizedVolume | null): Exchan
 
 /** Zip the wire's parallel arrays into one band per entry — keeping three arrays in
  *  step is exactly the kind of alignment bug a chart shows silently. */
-export function mapDepthLadder(ladder: MasterDepthLadder | null, bands: number[]): ExchangeDepthLadder | null {
+export function mapDepthLadder(ladder: MasterDepthLadder | null, bands: Array<number>): ExchangeDepthLadder | null {
 	if (!ladder) return null
 	if (ladder.bid_usd.length !== bands.length || ladder.ask_usd.length !== bands.length) {
 		throw new Error(
@@ -213,7 +213,7 @@ export function mapDepthLadder(ladder: MasterDepthLadder | null, bands: number[]
 	}))
 }
 
-function median(values: number[]): number | null {
+function median(values: Array<number>): number | null {
 	if (values.length === 0) return null
 	const sorted = [...values].sort((a, b) => a - b)
 	const middle = Math.floor(sorted.length / 2)
@@ -242,7 +242,7 @@ const METRIC_BASKETS = {
 	// Fixed, not the current top of the collected basket: a self-ranking list would
 	// change what the column means whenever listings rotate. Widen it deliberately.
 	fill: ['BTC', 'ETH', 'SOL', 'HYPE', 'BNB']
-} as const satisfies Record<string, readonly string[]>
+} as const satisfies Record<string, ReadonlyArray<string>>
 
 /**
  * The assets EVERY measured venue covers. The listing publishes cost, slippage and
@@ -255,10 +255,10 @@ const METRIC_BASKETS = {
  * Empty (no venue measured, or no asset common to all) → callers keep the venue's
  * own aggregate and disclose each row's basket instead.
  */
-export function commonExecutionBasket(execution: MasterExecutionQualityResponse | null): string[] {
+export function commonExecutionBasket(execution: MasterExecutionQualityResponse | null): Array<string> {
 	const venues = Object.values(execution?.venues ?? {})
 	if (venues.length === 0) return []
-	let shared: string[] | null = null
+	let shared: Array<string> | null = null
 	for (const venue of venues) {
 		const own = new Set(venue.assets)
 		shared = shared === null ? [...venue.assets] : shared.filter((asset) => own.has(asset))
@@ -277,14 +277,14 @@ export function commonExecutionBasket(execution: MasterExecutionQualityResponse 
  * missing one of the five would otherwise be medianed over four while its peers use
  * five.
  */
-function basketFor(metric: keyof typeof METRIC_BASKETS, common: string[]): string[] {
+function basketFor(metric: keyof typeof METRIC_BASKETS, common: Array<string>): Array<string> {
 	return METRIC_BASKETS[metric].filter((asset) => common.includes(asset))
 }
 
 /** One row's displayed execution figures, each metric over its own stated basket. */
 function directoryExecution(
 	metrics: MasterExecutionVenueMetrics | null,
-	basket: string[]
+	basket: Array<string>
 ): ExchangeDirectoryRowModel['execution'] {
 	if (!metrics) return null
 	if (basket.length === 0) {
@@ -310,8 +310,9 @@ function directoryExecution(
 	const fillPairs = pairsFor('fill')
 	if (costPairs.length === 0 && fillPairs.length === 0) return null
 
-	const over = (pairs: MasterExecutionPairMetrics[]) => (pick: (pair: MasterExecutionPairMetrics) => number | null) =>
-		median(pairs.map(pick).filter((value): value is number => value != null))
+	const over =
+		(pairs: Array<MasterExecutionPairMetrics>) => (pick: (pair: MasterExecutionPairMetrics) => number | null) =>
+			median(pairs.map(pick).filter((value): value is number => value != null))
 	const overCost = over(costPairs)
 	// Slippage and markout share one basket: both are fill quality, and splitting them
 	// would put two scopes side by side for no gain.
@@ -323,7 +324,7 @@ function directoryExecution(
 		costAssets: costPairs.map((pair) => pair.asset),
 		// The weakest pair bounds the row: claiming the deepest pair's coverage for a
 		// basket median would overstate what the number rests on.
-		hoursCovered: allPairs.length ? Math.min(...allPairs.map((pair) => pair.hours_covered)) : 0,
+		hoursCovered: allPairs.length > 0 ? Math.min(...allPairs.map((pair) => pair.hours_covered)) : 0,
 		costToTradeBps: overCost((pair) => pair.cost_to_trade_bps),
 		effectiveSpreadBps: overCost((pair) => pair.effective_spread_bps),
 		realizedSlippage10kBps: overFill((pair) => pair.realized_slippage_bps_10k),
@@ -339,8 +340,8 @@ function mapDirectoryVenue(
 	venue: MasterDirectoryVenue,
 	venuesBySlug: Map<string, MasterDirectoryVenue>,
 	execution: MasterExecutionQualityResponse | null,
-	depthBands: number[],
-	executionBasket: string[]
+	depthBands: Array<number>,
+	executionBasket: Array<string>
 ): ExchangeDirectoryRowModel {
 	const executionMetrics = execution?.venues[venue.slug] ?? null
 	const segments: ExchangeDirectoryRowModel['segments'] = {}
@@ -489,7 +490,7 @@ function byQualityRank(a: ExchangeDirectoryRowModel, b: ExchangeDirectoryRowMode
 /** Cross-venue perp OI is not part of DirectoryTotals; sum venues within one
  * exact segment while excluding shared-book segments exactly as the backend's
  * own totals do. Linear and inverse totals are never combined. */
-function directoryOpenInterest(venues: MasterDirectoryVenue[], segment: MasterSegment): number | null {
+function directoryOpenInterest(venues: Array<MasterDirectoryVenue>, segment: MasterSegment): number | null {
 	let total = 0
 	let observed = false
 	for (const venue of venues) {
@@ -560,11 +561,11 @@ export function mapMasterDirectory(
  * the directory (same join key: venue slug), so this never re-derives that.
  */
 export function mapBtcExecutionTable(
-	directoryRows: ExchangeDirectoryRowModel[],
+	directoryRows: Array<ExchangeDirectoryRowModel>,
 	execution: MasterExecutionQualityResponse | null
-): BtcExecutionRowModel[] {
+): Array<BtcExecutionRowModel> {
 	if (!execution) return []
-	const rows: BtcExecutionRowModel[] = []
+	const rows: Array<BtcExecutionRowModel> = []
 	for (const row of directoryRows) {
 		const btc = execution.venues[row.slug]?.pairs.BTC
 		if (!btc) continue
@@ -622,7 +623,7 @@ function capturedBookUsd(pair: MasterExchangePair): number | null {
 
 export function mapExchangePair(
 	pair: MasterExchangePair,
-	depthBands: number[],
+	depthBands: Array<number>,
 	segment: ExchangeSegment
 ): ExchangePairModel {
 	const twoPercentIndex = depthBands.indexOf(0.02)
@@ -693,7 +694,7 @@ export function mapExchangePair(
 /** Per-pair coverage is binary per band: its own book either reached that far or it
  *  didn't, so `min(bid, ask) reach >= band` gives 1 or 0 in the same shape the
  *  venue-level volume-weighted coverage uses. */
-function pairCoverage(pair: MasterExchangePair, depthBands: number[]): number[] {
+function pairCoverage(pair: MasterExchangePair, depthBands: Array<number>): Array<number> {
 	if (pair.depth_bid_max_dist == null || pair.depth_ask_max_dist == null) return depthBands.map(() => 0)
 	const reach = Math.min(pair.depth_bid_max_dist, pair.depth_ask_max_dist)
 	return depthBands.map((band) => (reach >= band ? 1 : 0))
@@ -717,7 +718,7 @@ function mapMetadataGroup(group: MasterMetadataGroup): ExchangeMetadataGroupMode
 	}
 }
 
-function twitterUrl(groups: MasterMetadataGroup[]): string | null {
+function twitterUrl(groups: Array<MasterMetadataGroup>): string | null {
 	for (const group of groups) {
 		if (group.key !== 'links') continue
 		for (const field of group.fields) {
@@ -850,7 +851,7 @@ function mapProfileExecution(
 ): ExchangeExecutionModel | null {
 	const venue = execution?.venues[slug]
 	if (!venue) return null
-	const pairs: ExchangeExecutionPairModel[] = []
+	const pairs: Array<ExchangeExecutionPairModel> = []
 	for (const asset of execution.basket) {
 		const pair = venue.pairs[asset]
 		if (pair) pairs.push(mapExecutionPair(pair))
@@ -889,7 +890,7 @@ export function mapExchangeRanking(
 	if (methodology.ranks_generated_at !== ranks.generated_at) return null
 	const rowsBySlug = new Map<string, ExchangeDirectoryRowModel>()
 	for (const row of directory.rows) rowsBySlug.set(row.slug, row)
-	const rows: ExchangeRankingRowModel[] = []
+	const rows: Array<ExchangeRankingRowModel> = []
 	for (const slug in ranks.venues) {
 		const entry = ranks.venues[slug]
 		const venue = rowsBySlug.get(slug)
@@ -1090,11 +1091,11 @@ const CHART_SEGMENTS = [
 	{ metric: 'spot', reported: 'reported_spot', label: 'Spot' },
 	{ metric: 'linear_perp', reported: 'reported_linear_perp', label: 'USD Perps' },
 	{ metric: 'inverse_perp', reported: 'reported_inverse_perp', label: 'COIN Perps' }
-] as const satisfies readonly ChartSegmentSpec[]
+] as const satisfies ReadonlyArray<ChartSegmentSpec>
 
 const PERP_CHART_SEGMENTS = CHART_SEGMENTS.filter((spec) => spec.metric !== 'spot')
 
-function aggregateResearchSeries(series: NullableSeries[], dayCount: number): Array<number | null> {
+function aggregateResearchSeries(series: Array<NullableSeries>, dayCount: number): Array<number | null> {
 	const aggregated = new Array<number | null>(dayCount)
 	for (let index = 0; index < dayCount; index++) {
 		let total = 0
@@ -1137,7 +1138,7 @@ export interface DecodedChartExchange {
 }
 
 /** Decode one canonical compact chart payload without retaining a second transport shape. */
-export function decodeMasterChart(response: MasterChartColumnarResponse): DecodedChartExchange[] {
+export function decodeMasterChart(response: MasterChartColumnarResponse): Array<DecodedChartExchange> {
 	if (response.types.length !== response.exchanges.length || response.series.length !== response.exchanges.length) {
 		throw new Error('Chart type and series axes do not match the exchange axis')
 	}
@@ -1152,7 +1153,7 @@ export function decodeMasterChart(response: MasterChartColumnarResponse): Decode
 			}
 		}
 	}
-	const exchanges: DecodedChartExchange[] = new Array(response.exchanges.length)
+	const exchanges: Array<DecodedChartExchange> = new Array(response.exchanges.length)
 	for (let exchangeIndex = 0; exchangeIndex < response.exchanges.length; exchangeIndex++) {
 		const metrics: Partial<Record<MasterChartMetric, Array<number | null>>> = {}
 		const exchange = response.exchanges[exchangeIndex]
@@ -1196,10 +1197,10 @@ interface ResearchSeriesItem {
 }
 
 function exchangeSeriesItems(
-	exchanges: DecodedChartExchange[],
+	exchanges: Array<DecodedChartExchange>,
 	select: (exchange: DecodedChartExchange) => Array<number | null> | null
-): ResearchSeriesItem[] {
-	const items: ResearchSeriesItem[] = []
+): Array<ResearchSeriesItem> {
+	const items: Array<ResearchSeriesItem> = []
 	for (const exchange of exchanges) {
 		const values = select(exchange)
 		if (values === null || !values.some((value) => value !== null)) continue
@@ -1210,8 +1211,8 @@ function exchangeSeriesItems(
 
 function topExchangeLines<T extends ResearchSeriesItem>(
 	response: MasterChartColumnarResponse,
-	items: T[],
-	otherValues: (other: T[]) => Array<number | null>
+	items: Array<T>,
+	otherValues: (other: Array<T>) => Array<number | null>
 ): ExchangeResearchChartModel['lines'] {
 	const lastDay = response.days.length - 1
 	items.sort((a, b) => {
@@ -1234,7 +1235,7 @@ function topExchangeLines<T extends ResearchSeriesItem>(
 }
 
 function summedOther(dayCount: number) {
-	return (items: ResearchSeriesItem[]) =>
+	return (items: Array<ResearchSeriesItem>) =>
 		aggregateResearchSeries(
 			items.map((item) => item.values),
 			dayCount
@@ -1243,9 +1244,9 @@ function summedOther(dayCount: number) {
 
 /** One line per venue type × exact segment (e.g. "CEX · USD Perps"); segments stay separate. */
 function typeSegmentLines(
-	exchanges: DecodedChartExchange[],
+	exchanges: Array<DecodedChartExchange>,
 	dayCount: number,
-	specs: readonly ChartSegmentSpec[]
+	specs: ReadonlyArray<ChartSegmentSpec>
 ): ExchangeResearchChartModel['lines'] {
 	const lines: ExchangeResearchChartModel['lines'] = []
 	for (const kind of ['cex', 'dex'] as const) {
@@ -1269,7 +1270,7 @@ function typeSegmentLines(
 }
 
 /** One line per exact segment across all exchanges; perpetual classes stay separate lines. */
-function segmentLines(exchanges: DecodedChartExchange[], dayCount: number): ExchangeResearchChartModel['lines'] {
+function segmentLines(exchanges: Array<DecodedChartExchange>, dayCount: number): ExchangeResearchChartModel['lines'] {
 	const lines: ExchangeResearchChartModel['lines'] = []
 	for (const spec of CHART_SEGMENTS) {
 		const series: Array<Array<number | null>> = []
@@ -1304,11 +1305,11 @@ interface SurvivalSeriesItem extends ResearchSeriesItem {
 
 function survivalExchangeLines(
 	response: MasterChartColumnarResponse,
-	exchanges: DecodedChartExchange[],
+	exchanges: Array<DecodedChartExchange>,
 	spec: ChartSegmentSpec
 ): ExchangeResearchChartModel['lines'] {
 	const dayCount = response.days.length
-	const items: SurvivalSeriesItem[] = []
+	const items: Array<SurvivalSeriesItem> = []
 	for (const exchange of exchanges) {
 		const normalized = metricSeries(exchange, spec.metric)
 		const reported = metricSeries(exchange, spec.reported)
@@ -1350,7 +1351,7 @@ export function mapMasterResearchReport(
 			)
 		)
 	})
-	const typeView = (view: ExchangeResearchView, specs: readonly ChartSegmentSpec[]) => ({
+	const typeView = (view: ExchangeResearchView, specs: ReadonlyArray<ChartSegmentSpec>) => ({
 		id: view,
 		label: getResearchPresentation(part, view).label,
 		chart: researchChart(part, response, view, typeSegmentLines(decoded, dayCount, specs))
@@ -1446,7 +1447,7 @@ function micaMarketCount(venue: MasterMicaVenue): number | null {
 	return sumNullable(MASTER_SEGMENTS.map((segment) => venue.metrics[segment]?.market_count ?? null))
 }
 
-export function mapMasterMica(response: MasterMicaResponse): MicaVenueModel[] {
+export function mapMasterMica(response: MasterMicaResponse): Array<MicaVenueModel> {
 	return response.exchanges
 		.filter((venue) => venue.mica_licensed === true && venue.eu_status === 'available')
 		.map((venue) => {

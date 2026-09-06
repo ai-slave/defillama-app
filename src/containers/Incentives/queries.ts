@@ -19,14 +19,14 @@ import type {
 const INCENTIVES_METHODOLOGY =
 	'Tokens allocated to users through liquidity mining or incentive schemes, typically as part of governance or reward mechanisms.'
 
-type NonEmptyArray<T> = [T, ...T[]]
+type NonEmptyArray<T> = [T, ...Array<T>]
 
 function resolveInternalChainName(displayChain: string, chainNameMap: Record<string, string>) {
 	return chainNameMap[displayChain] ?? null
 }
 
 function groupProtocolsByParent<T extends { parentProtocol?: string | null; defillamaId: string }>(
-	protocols: T[]
+	protocols: Array<T>
 ): Map<string, NonEmptyArray<T>> {
 	const protocolGroups = new Map<string, NonEmptyArray<T>>()
 
@@ -41,7 +41,7 @@ function groupProtocolsByParent<T extends { parentProtocol?: string | null; defi
 }
 
 function mergeBreakdowns(
-	protocols: readonly AdapterChainProtocol[],
+	protocols: ReadonlyArray<AdapterChainProtocol>,
 	breakdownField: 'breakdown24h' | 'breakdown30d',
 	totalField: 'total24h' | 'total30d'
 ): AdapterBreakdown | null {
@@ -334,12 +334,12 @@ function calculateDimensionProtocolEarnings(
 }
 
 function buildDimensionEarningsProtocols(
-	data: { protocols: AdapterChainProtocol[] },
+	data: { protocols: Array<AdapterChainProtocol> },
 	emissionsData: EmissionsBreakdownAggregatedResponse
-): DimensionEarningsProtocolWithEmissions[] {
+): Array<DimensionEarningsProtocolWithEmissions> {
 	const protocolGroups = groupProtocolsByParent(data.protocols)
 	const emissionIndex = buildDimensionEmissionIndex(emissionsData)
-	const processedData: DimensionEarningsProtocolWithEmissions[] = []
+	const processedData: Array<DimensionEarningsProtocolWithEmissions> = []
 
 	for (const [_parentKey, protocolVersions] of protocolGroups) {
 		const emissions = findMatchedEmissionForDimensionProtocol(protocolVersions, emissionIndex)

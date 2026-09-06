@@ -5,7 +5,7 @@ const PoolsOverview = lazy(() => import('./PoolsOverview'))
 const Loans = lazy(() => import('./Loans'))
 const SyrupActivity = lazy(() => import('./SyrupActivity'))
 
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'dashboard', label: 'Overview' },
 	{ id: 'pools', label: 'Pools Overview', component: PoolsOverview, source: 'Maple Finance' },
 	{ id: 'loans', label: 'Loans', component: Loans, source: 'Maple Finance' },

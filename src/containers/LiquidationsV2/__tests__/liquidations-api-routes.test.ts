@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const {
@@ -53,7 +53,7 @@ beforeEach(() => {
 })
 
 describe('liquidations api routes', () => {
-	it('returns 405 for non-GET overview requests', async () => {
+	test('returns 405 for non-GET overview requests', async () => {
 		const req = { method: 'POST', headers: {} } as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -65,7 +65,7 @@ describe('liquidations api routes', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Method Not Allowed' })
 	})
 
-	it('returns 400 for missing protocol route params before auth', async () => {
+	test('returns 400 for missing protocol route params before auth', async () => {
 		const req = { method: 'GET', headers: {}, query: {} } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -77,7 +77,7 @@ describe('liquidations api routes', () => {
 		expect(mockedValidateSubscription).not.toHaveBeenCalled()
 	})
 
-	it('returns 400 for missing chain route params before auth', async () => {
+	test('returns 400 for missing chain route params before auth', async () => {
 		const req = {
 			method: 'GET',
 			headers: {},
@@ -93,7 +93,7 @@ describe('liquidations api routes', () => {
 		expect(mockedValidateSubscription).not.toHaveBeenCalled()
 	})
 
-	it('returns 400 for missing token route params before auth', async () => {
+	test('returns 400 for missing token route params before auth', async () => {
 		const req = { method: 'GET', headers: {}, query: {} } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -105,7 +105,7 @@ describe('liquidations api routes', () => {
 		expect(mockedValidateSubscription).not.toHaveBeenCalled()
 	})
 
-	it('returns 403 for unauthorized protocol requests', async () => {
+	test('returns 403 for unauthorized protocol requests', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer bad' },
@@ -125,7 +125,7 @@ describe('liquidations api routes', () => {
 		expect(mockedGetLiquidationsProtocolPageData).not.toHaveBeenCalled()
 	})
 
-	it('lets one snapshot-backed builder resolve protocol routes', async () => {
+	test('lets one snapshot-backed builder resolve protocol routes', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -145,7 +145,7 @@ describe('liquidations api routes', () => {
 		})
 	})
 
-	it('returns overview data for authorized requests', async () => {
+	test('returns overview data for authorized requests', async () => {
 		const req = { method: 'GET', headers: { authorization: 'Bearer ok' }, query: {} } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 		mockedGetLiquidationsOverviewPageData.mockResolvedValue({
@@ -172,7 +172,7 @@ describe('liquidations api routes', () => {
 		)
 	})
 
-	it('returns chain data for authorized requests', async () => {
+	test('returns chain data for authorized requests', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -214,7 +214,7 @@ describe('liquidations api routes', () => {
 		)
 	})
 
-	it('returns token liquidations for authorized requests', async () => {
+	test('returns token liquidations for authorized requests', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -249,7 +249,7 @@ describe('liquidations api routes', () => {
 		)
 	})
 
-	it('returns 404 when token liquidations are missing', async () => {
+	test('returns 404 when token liquidations are missing', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -264,7 +264,7 @@ describe('liquidations api routes', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Token liquidations not found' })
 	})
 
-	it('does not substitute a differently cased token symbol', async () => {
+	test('does not substitute a differently cased token symbol', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -279,7 +279,7 @@ describe('liquidations api routes', () => {
 		expect(mockedGetTokenLiquidationsSectionData).not.toHaveBeenCalled()
 	})
 
-	it('returns a 500 json error when overview auth validation throws', async () => {
+	test('returns a 500 json error when overview auth validation throws', async () => {
 		const req = { method: 'GET', headers: { authorization: 'Bearer bad' }, query: {} } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 		mockedValidateSubscription.mockRejectedValue(new Error('Auth service unavailable'))
@@ -290,7 +290,7 @@ describe('liquidations api routes', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch liquidations overview data' })
 	})
 
-	it('returns a 500 json error when protocol auth validation throws', async () => {
+	test('returns a 500 json error when protocol auth validation throws', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer bad' },
@@ -305,7 +305,7 @@ describe('liquidations api routes', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch liquidations protocol data' })
 	})
 
-	it('returns a 500 json error when chain auth validation throws', async () => {
+	test('returns a 500 json error when chain auth validation throws', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer bad' },
@@ -320,7 +320,7 @@ describe('liquidations api routes', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to fetch liquidations chain data' })
 	})
 
-	it('returns a 500 json error when token auth validation throws', async () => {
+	test('returns a 500 json error when token auth validation throws', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer bad' },

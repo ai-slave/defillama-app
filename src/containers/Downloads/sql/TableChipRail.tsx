@@ -17,10 +17,10 @@ export interface PendingTable {
 }
 
 interface TableChipRailProps {
-	tables: RegisteredTable[]
+	tables: Array<RegisteredTable>
 	onBrowseSchema: () => void
 	onRemove: (name: string) => void
-	pending?: PendingTable[]
+	pending?: Array<PendingTable>
 	totalSchemaCount: number
 }
 

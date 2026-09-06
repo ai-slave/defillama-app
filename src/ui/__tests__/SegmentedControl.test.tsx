@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { SegmentedControl, segmentedControlTabIds } from '../SegmentedControl'
 
 const OPTIONS = [
@@ -31,34 +31,34 @@ function buttonMarkup(html: string, label: string) {
 }
 
 describe('SegmentedControl', () => {
-	it('gives the first enabled option the tab stop when no value is selected', () => {
+	test('gives the first enabled option the tab stop when no value is selected', () => {
 		const html = renderControl({ disabled: ['previous'] })
 
 		expect(buttonMarkup(html, 'Previous')).toContain('tabindex="-1"')
 		expect(buttonMarkup(html, 'Next')).toContain('tabindex="0"')
 	})
 
-	it('keeps the selected enabled option as the only tab stop', () => {
+	test('keeps the selected enabled option as the only tab stop', () => {
 		const html = renderControl({ value: 'next' })
 
 		expect(buttonMarkup(html, 'Previous')).toContain('tabindex="-1"')
 		expect(buttonMarkup(html, 'Next')).toContain('tabindex="0"')
 	})
 
-	it('does not create a tab stop when every option is disabled', () => {
+	test('does not create a tab stop when every option is disabled', () => {
 		const html = renderControl({ disabled: ['previous', 'next'] })
 
 		expect(html).not.toContain('tabindex="0"')
 	})
 
-	it('chooses radio semantics by default', () => {
+	test('chooses radio semantics by default', () => {
 		const html = renderControl({ value: 'next' })
 
 		expect(html).toContain('role="radiogroup"')
 		expect(buttonMarkup(html, 'Next')).toContain('aria-checked="true"')
 	})
 
-	it('names and addresses the selected panel under tabs semantics', () => {
+	test('names and addresses the selected panel under tabs semantics', () => {
 		const html = renderToStaticMarkup(
 			<SegmentedControl
 				value="next"
@@ -82,7 +82,7 @@ describe('SegmentedControl', () => {
 		expect(buttonMarkup(html, 'Previous')).not.toContain('aria-controls')
 	})
 
-	it('refuses tabs semantics without a panel id to point at', () => {
+	test('refuses tabs semantics without a panel id to point at', () => {
 		expect(() =>
 			renderToStaticMarkup(
 				<SegmentedControl
@@ -98,7 +98,7 @@ describe('SegmentedControl', () => {
 		).toThrow(/panelIdPrefix/)
 	})
 
-	it('anchors optional tooltip content around the complete button', () => {
+	test('anchors optional tooltip content around the complete button', () => {
 		const html = renderToStaticMarkup(
 			<SegmentedControl
 				value="daily"

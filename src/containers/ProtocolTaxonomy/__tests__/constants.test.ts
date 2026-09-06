@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getProtocolCategoryChartMetricLabel,
 	getProtocolCategoryChartMetrics,
@@ -9,7 +9,7 @@ import {
 } from '../constants'
 
 describe('ProtocolTaxonomy constants', () => {
-	it('keeps Interface perp-first while enabling dex volume columns and metrics', () => {
+	test('keeps Interface perp-first while enabling dex volume columns and metrics', () => {
 		expect(protocolCategoryConfig.Interface?.defaultChart).toBe('perpVolume')
 		expect(getProtocolCategoryChartMetrics('Interface')).toEqual(['tvl', 'dexVolume', 'perpVolume'])
 		expect(getProtocolCategoryColumns('Interface')).toEqual([
@@ -32,7 +32,7 @@ describe('ProtocolTaxonomy constants', () => {
 		expect(getProtocolCategoryDefaultSort('Interface')).toBe('perp_volume_24h')
 	})
 
-	it('resolves category-aware dex volume labels for chart and table surfaces', () => {
+	test('resolves category-aware dex volume labels for chart and table surfaces', () => {
 		expect(getProtocolCategoryDexVolumeLabel('Dexs')).toBe('DEX Volume')
 		expect(getProtocolCategoryDexVolumeLabel('DEX Aggregator')).toBe('DEX Aggregator Volume')
 		expect(getProtocolCategoryDexVolumeLabel('Prediction Market')).toBe('Prediction Volume')
@@ -41,14 +41,14 @@ describe('ProtocolTaxonomy constants', () => {
 		expect(getProtocolCategoryChartMetricLabel('dexVolume', 'Interface')).toBe('Spot Volume')
 	})
 
-	it('uses revenue without TVL for Physical TCG while preserving normal category TVL', () => {
+	test('uses revenue without TVL for Physical TCG while preserving normal category TVL', () => {
 		expect(getProtocolCategoryChartMetrics('Physical TCG')).toEqual(['revenue'])
 		expect(getProtocolCategoryChartMetrics('Services')).toEqual(['tvl', 'revenue'])
 		expect(getProtocolCategoryChartMetrics('Onchain Capital Allocator')).toEqual(['tvl', 'fees'])
 		expect(getProtocolCategoryChartMetrics('Yield')).toEqual(['tvl'])
 	})
 
-	it('keeps every configured default sort backed by a visible category column', () => {
+	test('keeps every configured default sort backed by a visible category column', () => {
 		for (const category in protocolCategoryConfig) {
 			const defaultSort = protocolCategoryConfig[category]?.defaultSort
 			if (defaultSort) expect(getProtocolCategoryColumns(category)).toContain(defaultSort)

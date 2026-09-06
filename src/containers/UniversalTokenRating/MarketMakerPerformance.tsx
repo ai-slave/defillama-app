@@ -53,8 +53,8 @@ function CriterionCards({
 	gradingScale,
 	onOpen
 }: {
-	criteria: UtrCriterionBreakdown[]
-	gradingScale?: UtrGradeScaleEntry[] | null
+	criteria: Array<UtrCriterionBreakdown>
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 	onOpen: (criterion: UtrCriterionBreakdown) => void
 }) {
 	return (
@@ -103,7 +103,7 @@ function EmptyState() {
 	)
 }
 
-function PerformanceSummary({ providers }: { providers: UtrMarketMakerProvider[] }) {
+function PerformanceSummary({ providers }: { providers: Array<UtrMarketMakerProvider> }) {
 	return (
 		<Panel padding="none">
 			<PanelHeader>
@@ -167,8 +167,8 @@ function selectBreakdownMetric(
 	return breakdown?.volume?.[volumeSide] ?? null
 }
 
-function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit): SimpleSeries[] {
-	const providerSeries: SimpleSeries[] = metric.series.map((entry, index) => ({
+function breakdownSeries(metric: UtrMarketMakerBreakdownMetric, unit: ValueUnit): Array<SimpleSeries> {
+	const providerSeries: Array<SimpleSeries> = metric.series.map((entry, index) => ({
 		name: entry.name,
 		type: 'bar',
 		stack: 'providers',
@@ -362,7 +362,7 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 	)
 }
 
-function UptimeCalculations({ rows }: { rows: UtrMarketMakerUptime[] }) {
+function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 	const [mode, setMode] = useState<'comparison' | 'breakdown'>('comparison')
 	const [providerName, setProviderName] = useState(rows[0]?.name ?? '')
 	const provider = rows.find((entry) => entry.name === providerName) ?? rows[0] ?? null
@@ -488,23 +488,24 @@ export function MarketMakerPerformance({
 	onOpenCriterion
 }: {
 	metrics: UtrSnapshotMetrics | null
-	providers: UtrMarketMakerProvider[]
+	providers: Array<UtrMarketMakerProvider>
 	breakdown: UtrMarketMakerPerformanceBreakdown | null
-	uptimeCalculations: UtrMarketMakerUptime[]
-	criteria: UtrCriterionBreakdown[]
-	gradingScale?: UtrGradeScaleEntry[] | null
+	uptimeCalculations: Array<UtrMarketMakerUptime>
+	criteria: Array<UtrCriterionBreakdown>
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 	onOpenCriterion: (criterion: UtrCriterionBreakdown) => void
 }) {
 	const providerSpreads = providers.flatMap((provider) => (provider.avgSpread == null ? [] : [provider.avgSpread]))
-	const avgProviderSpread = providerSpreads.length
-		? providerSpreads.reduce((total, value) => total + value, 0) / providerSpreads.length
-		: metrics?.vwasBps == null
-			? null
-			: metrics.vwasBps / 100
+	const avgProviderSpread =
+		providerSpreads.length > 0
+			? providerSpreads.reduce((total, value) => total + value, 0) / providerSpreads.length
+			: metrics?.vwasBps == null
+				? null
+				: metrics.vwasBps / 100
 	const hasData = Boolean(
-		providers.length ||
+		providers.length > 0 ||
 		breakdown ||
-		uptimeCalculations.length ||
+		uptimeCalculations.length > 0 ||
 		metrics?.mmDepthPct != null ||
 		metrics?.mmVolumePct != null ||
 		metrics?.mmUptimePct != null ||
@@ -523,10 +524,10 @@ export function MarketMakerPerformance({
 							mmVolumePct={metrics?.mmVolumePct ?? null}
 							avgSpreadPct={avgProviderSpread}
 						/>
-						{providers.length ? <PerformanceSummary providers={providers} /> : <EmptyState />}
+						{providers.length > 0 ? <PerformanceSummary providers={providers} /> : <EmptyState />}
 					</div>
 					{breakdown ? <PerformanceBreakdown breakdown={breakdown} /> : null}
-					{uptimeCalculations.length ? <UptimeCalculations rows={uptimeCalculations} /> : null}
+					{uptimeCalculations.length > 0 ? <UptimeCalculations rows={uptimeCalculations} /> : null}
 				</>
 			) : (
 				<EmptyState />

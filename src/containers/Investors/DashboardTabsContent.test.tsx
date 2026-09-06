@@ -2,7 +2,7 @@
 
 import { act, type ReactNode, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const events = vi.hoisted(() => ({ mount: vi.fn(), unmount: vi.fn() }))
 
@@ -37,7 +37,7 @@ function CustomTab({ label }: { label: string }) {
 const FIRST_TAB = () => <CustomTab label="first" />
 const SECOND_TAB = () => <CustomTab label="second" />
 
-const INVESTOR_TABS: DashboardTabConfig[] = [
+const INVESTOR_TABS: Array<DashboardTabConfig> = [
 	{ id: 'dashboard', label: 'Overview' },
 	{ id: 'first', label: 'First', component: FIRST_TAB },
 	{ id: 'second', label: 'Second', component: SECOND_TAB }
@@ -60,7 +60,7 @@ describe('DashboardTabsContent', () => {
 		container.remove()
 	})
 
-	it('unmounts an inactive investor dashboard tab instead of keeping it hidden', async () => {
+	test('unmounts an inactive investor dashboard tab instead of keeping it hidden', async () => {
 		await act(async () =>
 			root.render(
 				<InvestorsContent
@@ -104,8 +104,8 @@ describe('DashboardTabsContent', () => {
 		expect(events.unmount).toHaveBeenCalledWith('first')
 	})
 
-	it('unmounts custom-only Pro dashboard tabs when a component tab becomes active', async () => {
-		const tabs: DashboardTabConfig[] = [
+	test('unmounts custom-only Pro dashboard tabs when a component tab becomes active', async () => {
+		const tabs: Array<DashboardTabConfig> = [
 			{ id: 'pro', label: 'Pro', proDashboardId: 'pro-dashboard' },
 			{ id: 'first', label: 'First', component: FIRST_TAB }
 		]

@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartTimeGroupingWithCumulative } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IProtocolMedianApyChart } from '../api.types'
 import { protocolCharts } from '../constants'
@@ -191,7 +191,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		mocks.useFetchProtocolTVLChart.mockImplementation(
 			(options) => tvlQueryResults[options.key ?? 'base'] ?? DISABLED_TVL_QUERY
 		)
-		mocks.useQueries.mockImplementation(({ queries }: { queries: QueryOptions[] }) =>
+		mocks.useQueries.mockImplementation(({ queries }: { queries: Array<QueryOptions> }) =>
 			queries.map((options) => mocks.useQuery(options))
 		)
 		mocks.useQuery.mockImplementation((options: QueryOptions) => {
@@ -202,7 +202,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		})
 	})
 
-	it('keeps client-only chart queries disabled during SSR hydration', () => {
+	test('keeps client-only chart queries disabled during SSR hydration', () => {
 		mocks.isClient = false
 		probeProps = {
 			...feeProps,
@@ -219,7 +219,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(perpVolumeQuery.enabled).toBe(false)
 	})
 
-	it('keeps prefetched chart data visible during SSR hydration', () => {
+	test('keeps prefetched chart data visible during SSR hydration', () => {
 		mocks.isClient = false
 		probeProps = {
 			...feeProps,
@@ -235,7 +235,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.loadingCharts).toEqual([])
 	})
 
-	it('creates protocol TVL observers only for the base chart and protocol-valid extra keys', () => {
+	test('creates protocol TVL observers only for the base chart and protocol-valid extra keys', () => {
 		probeProps = {
 			...feeProps,
 			currentTvlByChain: {
@@ -276,7 +276,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		)
 	})
 
-	it('distinguishes a cold extra error from successful empty and cached-error composite TVL data', () => {
+	test('distinguishes a cold extra error from successful empty and cached-error composite TVL data', () => {
 		const baseChart: Array<[number, number]> = [
 			[timestamp, 100],
 			[timestamp + 86_400, 110]
@@ -337,7 +337,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
-	it('registers successful empty TVL-family charts without reporting them as failures', () => {
+	test('registers successful empty TVL-family charts without reporting them as failures', () => {
 		probeProps = {
 			...feeProps,
 			currentTvlByChain: { staking: 1, borrowed: 1 },
@@ -365,7 +365,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
-	it('distinguishes successful empty, cold failure, and retained cached TVS data', () => {
+	test('distinguishes successful empty, cold failure, and retained cached TVS data', () => {
 		probeProps = {
 			...feeProps,
 			toggledMetrics: makeToggledMetrics({ tvs: 'true' }),
@@ -393,7 +393,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
-	it('keeps USD Inflows loading while its required composite TVL source loads', () => {
+	test('keeps USD Inflows loading while its required composite TVL source loads', () => {
 		probeProps = {
 			...feeProps,
 			metrics: { ...baseMetrics, tvl: true, inflows: true },
@@ -408,7 +408,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
-	it('keeps primary TVL loading while an enabled composite-only staking source loads', () => {
+	test('keeps primary TVL loading while an enabled composite-only staking source loads', () => {
 		probeProps = {
 			...feeProps,
 			currentTvlByChain: { staking: 1 },
@@ -428,7 +428,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
-	it('keeps fee-family charts visible from their base queries', () => {
+	test('keeps fee-family charts visible from their base queries', () => {
 		renderToStaticMarkup(<Probe />)
 
 		expect(mocks.lastResult?.finalCharts.Fees).toEqual([[timestampMs, 100]])
@@ -437,7 +437,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
-	it('builds FDV chart points by applying token supply to price history', () => {
+	test('builds FDV chart points by applying token supply to price history', () => {
 		probeProps = {
 			...feeProps,
 			geckoId: 'test-token',
@@ -472,7 +472,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		])
 	})
 
-	it('keeps absent optional CoinGecko series unavailable when prices exist', () => {
+	test('keeps absent optional CoinGecko series unavailable when prices exist', () => {
 		probeProps = {
 			...feeProps,
 			geckoId: 'test-token',
@@ -496,7 +496,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.failedMetrics).toEqual(['Mcap', 'Token Volume'])
 	})
 
-	it('fetches descriptor-driven liquidation charts', () => {
+	test('fetches descriptor-driven liquidation charts', () => {
 		probeProps = {
 			...feeProps,
 			metrics: { ...baseMetrics, collateralLiquidated: true },
@@ -517,7 +517,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.failedMetrics).toEqual([])
 	})
 
-	it('preserves numeric median APY without parsing or zero fallback', () => {
+	test('preserves numeric median APY without parsing or zero fallback', () => {
 		probeProps = {
 			...feeProps,
 			metrics: { ...baseMetrics, yields: true },
@@ -534,7 +534,7 @@ describe('ProtocolOverview chart metric semantics', () => {
 		expect(mocks.lastResult?.finalCharts['Median APY']).toEqual([[timestampMs, -2.5]])
 	})
 
-	it('keeps cumulative fee-family charts in selected denomination units', () => {
+	test('keeps cumulative fee-family charts in selected denomination units', () => {
 		const secondTimestamp = timestamp + 86_400
 		const secondTimestampMs = timestampMs + 86_400_000
 		probeProps = {

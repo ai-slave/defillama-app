@@ -45,7 +45,7 @@ const GenerateDashboardModal = lazy(() =>
 
 const PUBLIC_PRO_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600'
 const PRIVATE_PRO_CACHE_CONTROL = 'private, no-cache, no-store, must-revalidate'
-const DISCOVERY_FETCH_TIMEOUT_MS = 3_000
+const DISCOVERY_FETCH_TIMEOUT_MS = 3000
 
 type ProPageProps = {
 	initialDiscoveryCategories: DiscoveryCategoriesInitialData
@@ -174,7 +174,7 @@ function ProPageContent({ initialDiscoveryCategories }: ProPageProps) {
 			<Layout
 				title="DefiLlama Pro - Advanced DeFi Analytics Dashboard"
 				description="Build custom no-code DeFi dashboards with DefiLlama Pro. Combine TVL, fees, volume, and protocol metrics into personalized analytics views."
-				canonicalUrl={`/pro`}
+				canonicalUrl="/pro"
 			>
 				<ProDashboardLoader heading="Custom Dashboards" />
 			</Layout>
@@ -185,7 +185,7 @@ function ProPageContent({ initialDiscoveryCategories }: ProPageProps) {
 		<Layout
 			title="DefiLlama Pro - Advanced DeFi Analytics Dashboard"
 			description="Build custom no-code DeFi dashboards with DefiLlama Pro. Combine TVL, fees, volume, and protocol metrics into personalized analytics views."
-			canonicalUrl={`/pro`}
+			canonicalUrl="/pro"
 		>
 			<ProContent
 				hasActiveSubscription={hasActiveSubscription}
@@ -202,7 +202,7 @@ type ProTab = (typeof tabs)[number]
 const tabClassName =
 	'label-md relative shrink-0 cursor-pointer px-3 py-2 whitespace-nowrap text-secondary hover:text-primary focus-visible:text-primary data-[active=true]:text-primary after:absolute after:bottom-0 after:left-1 after:right-1 after:h-0.5 after:rounded-t-xs after:bg-brand after:opacity-0 data-[active=true]:after:opacity-100'
 
-function getDashboardPagesToShow(selectedPage: number, totalPages: number): number[] {
+function getDashboardPagesToShow(selectedPage: number, totalPages: number): Array<number> {
 	if (totalPages < 1) return []
 	const clampedSelectedPage = Math.max(1, Math.min(selectedPage, totalPages))
 	const pagesToShow =
@@ -380,23 +380,22 @@ function ProContent({
 					) : null}
 				</div>
 				<div className="ml-auto flex flex-wrap justify-end gap-2">
-					{
-						<button
-							type="button"
-							onClick={
-								!isAuthenticated
-									? () => router.push('/pro/preview')
-									: hasActiveSubscription
-										? () => setShowGenerateDashboardModal(true)
-										: () => showPaywall('llamaai')
-							}
-							data-umami-event="dashboard-llamaai-generate"
-							className="flex items-center gap-1 rounded-md pro-btn-primary px-4 py-2"
-						>
-							<Icon name="sparkles" height={16} width={16} />
-							Generate with LlamaAI
-						</button>
-					}
+					<button
+						type="button"
+						onClick={
+							!isAuthenticated
+								? () => router.push('/pro/preview')
+								: hasActiveSubscription
+									? () => setShowGenerateDashboardModal(true)
+									: () => showPaywall('llamaai')
+						}
+						data-umami-event="dashboard-llamaai-generate"
+						className="flex items-center gap-1 rounded-md pro-btn-primary px-4 py-2"
+					>
+						<Icon name="sparkles" height={16} width={16} />
+						Generate with LlamaAI
+					</button>
+
 					<button
 						type="button"
 						onClick={

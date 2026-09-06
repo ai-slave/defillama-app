@@ -1,17 +1,17 @@
 export interface IChainTvl {
 	[type: string]: {
-		tvl: { date: number; totalLiquidityUSD: number }[]
+		tvl: Array<{ date: number; totalLiquidityUSD: number }>
 		tokensInUsd?: Array<{ date: number; tokens: { [token: string]: number } }>
 		tokens?: Array<{ date: number; tokens: { [token: string]: number } }>
 	}
 }
 
 export interface LlamaConfigResponse {
-	protocols: LlamaConfigProtocol[]
-	parentProtocols: LlamaConfigParentProtocol[]
+	protocols: Array<LlamaConfigProtocol>
+	parentProtocols: Array<LlamaConfigParentProtocol>
 	chainCoingeckoIds: Record<string, LlamaChainConfig>
-	treasuries: LlamaConfigProtocol[]
-	entities: LlamaConfigEntity[]
+	treasuries: Array<LlamaConfigProtocol>
+	entities: Array<LlamaConfigEntity>
 	chainKeyToLabelMap: Record<string, string>
 }
 
@@ -29,13 +29,13 @@ interface LlamaConfigBaseProtocol {
 	gecko_id?: string | null
 	cmcId?: string | null
 	category?: string
-	chains?: string[]
+	chains?: Array<string>
 	module?: string
 	twitter?: string | null
-	audit_links?: string[]
-	github?: string[]
-	stablecoins?: string[]
-	warningBanners?: LlamaConfigWarningBanner[]
+	audit_links?: Array<string>
+	github?: Array<string>
+	stablecoins?: Array<string>
+	warningBanners?: Array<LlamaConfigWarningBanner>
 	deadUrl?: boolean
 	deprecated?: boolean
 	rugged?: boolean
@@ -45,23 +45,23 @@ interface LlamaConfigBaseProtocol {
 interface LlamaConfigProtocol extends LlamaConfigBaseProtocol {
 	category: string
 	chain: string
-	chains: string[]
+	chains: Array<string>
 	module: string
 	misrepresentedTokens?: boolean
 	tvlCodePath?: string | null
 	parentProtocol?: string
 	treasury?: string | null
 	dimensions?: LlamaConfigDimensions
-	tags?: string[]
+	tags?: Array<string>
 	methodology?: string
 	language?: string
 	hallmarks?: Array<[number, string]>
-	tokensExcludedFromParent?: Record<string, string[]>
-	previousNames?: string[]
-	forkedFrom?: string[]
-	forkedFromIds?: string[]
-	oracles?: string[]
-	oraclesBreakdown?: LlamaConfigOracleBreakdown[]
+	tokensExcludedFromParent?: Record<string, Array<string>>
+	previousNames?: Array<string>
+	forkedFrom?: Array<string>
+	forkedFromIds?: Array<string>
+	oracles?: Array<string>
+	oraclesBreakdown?: Array<LlamaConfigOracleBreakdown>
 	assetToken?: string
 	openSource?: boolean
 	listedAt?: number
@@ -73,7 +73,7 @@ interface LlamaConfigParentProtocol extends LlamaConfigBaseProtocol {
 	url: string
 	description: string
 	logo: string
-	chains: string[]
+	chains: Array<string>
 	treasury?: string
 }
 
@@ -87,7 +87,7 @@ interface LlamaConfigEntity extends LlamaConfigBaseProtocol {
 	chain: string
 	gecko_id: null
 	cmcId: null
-	chains: string[]
+	chains: Array<string>
 	misrepresentedTokens: boolean
 	tvlCodePath: string
 }
@@ -96,19 +96,19 @@ interface LlamaChainConfig {
 	geckoId?: string | null
 	symbol?: string | null
 	cmcId?: string | null
-	categories?: string[] | null
+	categories?: Array<string> | null
 	chainId?: number | string
 	chainid?: number
-	github?: string[] | null
+	github?: Array<string> | null
 	twitter?: string | null
 	url?: string | null
 	dimensions?: LlamaConfigDimensions
 	deadUrl?: boolean
-	stablecoins?: string[]
-	warningBanners?: LlamaConfigWarningBanner[]
+	stablecoins?: Array<string>
+	warningBanners?: Array<LlamaConfigWarningBanner>
 	parent?: {
 		chain: string
-		types: string[]
+		types: Array<string>
 		da?: string
 	}
 }
@@ -130,7 +130,7 @@ interface LlamaConfigWarningBanner {
 interface LlamaConfigOracleBreakdown {
 	name: string
 	type: string
-	proof: string[]
+	proof: Array<string>
 }
 
 export interface PriceObject {
@@ -151,7 +151,7 @@ interface CoinChartPricePoint {
 }
 
 interface CoinChartEntry {
-	prices?: CoinChartPricePoint[]
+	prices?: Array<CoinChartPricePoint>
 }
 
 export interface CoinsChartResponse {
@@ -163,8 +163,8 @@ export interface SearchQuery {
 	limit: number
 	offset: number
 	q: string
-	filter?: Array<string | string[]>
-	sort?: string[]
+	filter?: Array<string | Array<string>>
+	sort?: Array<string>
 }
 
 interface BlockExplorerLink {
@@ -176,7 +176,7 @@ export interface BlockExplorersChain {
 	displayName: string
 	llamaChainId: string | null
 	evmChainId: number | null
-	blockExplorers: BlockExplorerLink[]
+	blockExplorers: Array<BlockExplorerLink>
 }
 
-export type BlockExplorersResponse = BlockExplorersChain[]
+export type BlockExplorersResponse = Array<BlockExplorersChain>

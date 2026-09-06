@@ -21,7 +21,7 @@ export type ForkBreakdownChartData = Array<{ timestamp: number } & Record<string
 
 // - /forks page data
 export interface ForkOverviewPageData {
-	forks: string[]
+	forks: Array<string>
 	forkLinks: Array<ForkLink>
 	forkColors: Record<string, string>
 	tableData: Array<ForkTableDataRow>

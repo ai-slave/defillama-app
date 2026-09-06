@@ -92,7 +92,7 @@ const CATEGORY_LOGO_BOTTOM_GAP = 10
 const EMPTY_CHART_OPTIONS: NonNullable<IMultiSeriesChartProps['chartOptions']> = {}
 
 type ResolvedMultiSeriesChartOptions = Omit<MultiSeriesChartOptions, 'yAxis'> & {
-	yAxis?: MultiSeriesYAxisOption | MultiSeriesYAxisOption[]
+	yAxis?: MultiSeriesYAxisOption | Array<MultiSeriesYAxisOption>
 }
 
 function mergeOption<T>(base: T | undefined, override: T): T {
@@ -200,7 +200,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const categoryLogosFrameRef = useRef<number | null>(null)
 	const categoryLogosLayoutRef = useRef<{
 		categoryValues: Array<string | number | null | undefined>
-		categoryLogos: string[]
+		categoryLogos: Array<string>
 		gridBottom: number
 		logoBg: string
 	} | null>(null)
@@ -268,7 +268,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			}
 		}
 
-		const dataZoom: DataZoomComponentOption[] = [
+		const dataZoom: Array<DataZoomComponentOption> = [
 			{ type: 'inside', start: 0, end: 100 },
 			{
 				start: 0,
@@ -475,7 +475,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	)
 	const logEligibleYAxes = useMemo(() => {
 		if (!sourceAxisIndexes || !props.logEligibleYAxes) return props.logEligibleYAxes
-		const denseIndexes: number[] = []
+		const denseIndexes: Array<number> = []
 		for (const sourceIndex of props.logEligibleYAxes) {
 			const denseIndex = sourceAxisIndexes.indexOf(sourceIndex)
 			if (denseIndex >= 0) denseIndexes.push(denseIndex)

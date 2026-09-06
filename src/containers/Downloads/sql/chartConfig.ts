@@ -30,10 +30,10 @@ export interface CandlestickMapping {
 export interface ChartConfig {
 	chartType: ChartType
 	xCol: string | null
-	yCols: string[]
+	yCols: Array<string>
 	splitByCol: string | null
 	stackMode: StackMode
-	rightAxisCols: string[]
+	rightAxisCols: Array<string>
 	seriesKinds: Record<string, 'line' | 'bar'>
 	seriesColors: Record<string, string>
 	numberFormat: NumberFormat
@@ -46,13 +46,13 @@ export const MAX_AUTO_SERIES = 8
 export const SPLIT_TOP_N = 20
 const BAR_CATEGORY_THRESHOLD = 12
 
-export function chooseDefaultChartType(classified: ClassifiedColumn[]): ChartType {
+export function chooseDefaultChartType(classified: Array<ClassifiedColumn>): ChartType {
 	const dates = classified.filter((c) => c.coarse === 'date')
 	const numbers = classified.filter((c) => c.coarse === 'number')
 	const categories = classified.filter((c) => c.coarse === 'category')
 
-	if (dates.length >= 1 && numbers.length >= 1) return 'line'
-	if (categories.length >= 1 && numbers.length >= 1) {
+	if (dates.length > 0 && numbers.length > 0) return 'line'
+	if (categories.length > 0 && numbers.length > 0) {
 		return categories.length > BAR_CATEGORY_THRESHOLD ? 'hbar' : 'bar'
 	}
 	if (numbers.length >= 2 && categories.length === 0 && dates.length === 0) return 'scatter'
@@ -60,7 +60,7 @@ export function chooseDefaultChartType(classified: ClassifiedColumn[]): ChartTyp
 	return 'bar'
 }
 
-export function canUseChartType(type: ChartType, classified: ClassifiedColumn[]): boolean {
+export function canUseChartType(type: ChartType, classified: Array<ClassifiedColumn>): boolean {
 	const numbers = classified.filter((c) => c.coarse === 'number').length
 	const categories = classified.filter((c) => c.coarse === 'category').length
 	const dates = classified.filter((c) => c.coarse === 'date').length
@@ -97,7 +97,7 @@ const OHLC_NAMES = {
 	volume: /^volume|vol$/i
 }
 
-function guessCandlestickMapping(classified: ClassifiedColumn[]): CandlestickMapping | undefined {
+function guessCandlestickMapping(classified: Array<ClassifiedColumn>): CandlestickMapping | undefined {
 	const dates = classified.filter((c) => c.coarse === 'date')
 	const numbers = classified.filter((c) => c.coarse === 'number')
 	if (dates.length === 0 || numbers.length < 4) return undefined
@@ -110,7 +110,7 @@ function guessCandlestickMapping(classified: ClassifiedColumn[]): CandlestickMap
 	return { ts: dates[0].name, open, close, low, high, volume }
 }
 
-export function defaultChartConfig(classified: ClassifiedColumn[]): ChartConfig {
+export function defaultChartConfig(classified: Array<ClassifiedColumn>): ChartConfig {
 	const chartType = chooseDefaultChartType(classified)
 	const dates = classified.filter((c) => c.coarse === 'date')
 	const categories = classified.filter((c) => c.coarse === 'category')
@@ -138,10 +138,10 @@ export function defaultChartConfig(classified: ClassifiedColumn[]): ChartConfig 
 	}
 }
 
-export function migrateChartConfig(prev: ChartConfig, classified: ClassifiedColumn[]): ChartConfig {
+export function migrateChartConfig(prev: ChartConfig, classified: Array<ClassifiedColumn>): ChartConfig {
 	const names = new Set(classified.map((c) => c.name))
 	const pickIfExists = (n: string | null) => (n && names.has(n) ? n : null)
-	const filterExisting = (xs: string[]) => xs.filter((n) => names.has(n))
+	const filterExisting = (xs: Array<string>) => xs.filter((n) => names.has(n))
 
 	const stillValid =
 		canUseChartType(prev.chartType, classified) &&

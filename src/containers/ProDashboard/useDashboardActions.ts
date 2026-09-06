@@ -25,8 +25,8 @@ type AutoSaveOverrides = {
 	customTimePeriod?: CustomTimePeriod | null
 }
 
-type AutoSaveFunction = (items: DashboardItemConfig[], overrides?: AutoSaveOverrides) => void
-type DashboardItemsFactory = (existingItems: readonly DashboardItemConfig[]) => DashboardItemConfig[]
+type AutoSaveFunction = (items: Array<DashboardItemConfig>, overrides?: AutoSaveOverrides) => void
+type DashboardItemsFactory = (existingItems: ReadonlyArray<DashboardItemConfig>) => Array<DashboardItemConfig>
 
 function cloneUnifiedTableFilters(filters: UnifiedTableFilters): UnifiedTableFilters {
 	const clone: UnifiedTableFilters = {}
@@ -82,7 +82,7 @@ export function useDashboardActions(
 	}, [items])
 
 	const dispatchItemsAndSave = useCallback(
-		(updater: SetStateAction<DashboardItemConfig[]>) => {
+		(updater: SetStateAction<Array<DashboardItemConfig>>) => {
 			if (!hasHydratedRef.current) {
 				return
 			}
@@ -112,7 +112,7 @@ export function useDashboardActions(
 			if (isReadOnlyUntilDashboardLoaded) return
 
 			const resolvedSorting =
-				configOverrides?.defaultSorting && configOverrides.defaultSorting.length
+				configOverrides?.defaultSorting && configOverrides.defaultSorting.length > 0
 					? configOverrides.defaultSorting
 					: DEFAULT_UNIFIED_TABLE_SORTING
 
@@ -237,7 +237,7 @@ export function useDashboardActions(
 	)
 
 	const handleChartsReordered = useCallback(
-		(newCharts: DashboardItemConfig[]) => {
+		(newCharts: Array<DashboardItemConfig>) => {
 			if (isReadOnlyUntilDashboardLoaded) return
 
 			dispatchItemsAndSave(newCharts)
@@ -425,7 +425,7 @@ export function useDashboardActions(
 	)
 
 	const setDashboardTags = useCallback(
-		(tags: string[]) => {
+		(tags: Array<string>) => {
 			dispatch({ type: 'SET_DASHBOARD_TAGS', payload: tags })
 		},
 		[dispatch]
@@ -453,7 +453,7 @@ export function useDashboardActions(
 	)
 
 	const setItems = useCallback(
-		(newItems: DashboardItemConfig[]) => {
+		(newItems: Array<DashboardItemConfig>) => {
 			dispatch({ type: 'SET_ITEMS', payload: newItems })
 		},
 		[dispatch]

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { DIRECT_AUTH_SECRET_ENV_NAMES, DIRECT_URL_ENV_NAMES, getDirectUrlEnv, withDirectApiAuth } from '../directApi'
 
 function stubDirectEnv(env: Record<string, string | undefined>) {
@@ -26,7 +26,7 @@ describe('direct API helpers', () => {
 		vi.unstubAllEnvs()
 	})
 
-	it('normalizes direct URL env values and treats whitespace-only values as missing', () => {
+	test('normalizes direct URL env values and treats whitespace-only values as missing', () => {
 		stubDirectEnv({
 			DATASETS_SERVER_URL: '   ',
 			SERVER_URL: ' https://core.example.com/api/// '
@@ -36,7 +36,7 @@ describe('direct API helpers', () => {
 		expect(getDirectUrlEnv('SERVER_URL')).toBe('https://core.example.com/api')
 	})
 
-	it('chooses the most specific same-origin auth base', () => {
+	test('chooses the most specific same-origin auth base', () => {
 		stubDirectEnv({
 			API2_SECRET_KEY: 'core-secret',
 			EQUITIES_SECRET_KEY: 'equities-secret',
@@ -51,7 +51,7 @@ describe('direct API helpers', () => {
 		expect(url.searchParams.get('view')).toBe('compact')
 	})
 
-	it('falls back from the equities secret to the core API secret', () => {
+	test('falls back from the equities secret to the core API secret', () => {
 		stubDirectEnv({
 			API2_SECRET_KEY: 'core-secret',
 			EQUITIES_SERVER_URL: 'https://equities.example.com/v1'
@@ -62,7 +62,7 @@ describe('direct API helpers', () => {
 		expect(url.searchParams.get('x-llama-equity-secret')).toBe('core-secret')
 	})
 
-	it('handles URL inputs and replaces an existing direct auth query param', () => {
+	test('handles URL inputs and replaces an existing direct auth query param', () => {
 		stubDirectEnv({
 			API2_SECRET_KEY: 'fresh-secret',
 			SERVER_URL: 'https://core.example.com/api'
@@ -76,7 +76,7 @@ describe('direct API helpers', () => {
 		expect(asUrl(output).searchParams.get('view')).toBe('compact')
 	})
 
-	it('handles Request inputs without dropping request metadata', async () => {
+	test('handles Request inputs without dropping request metadata', async () => {
 		stubDirectEnv({
 			LIQUIDATIONS_SECRET_KEY: 'liquidations-secret',
 			LIQUIDATIONS_SERVER_URL_V2: 'https://liquidations.example.com'
@@ -96,7 +96,7 @@ describe('direct API helpers', () => {
 		await expect((output as Request).text()).resolves.toBe('body')
 	})
 
-	it('leaves invalid, relative, and unconfigured URLs unchanged', () => {
+	test('leaves invalid, relative, and unconfigured URLs unchanged', () => {
 		stubDirectEnv({
 			API2_SECRET_KEY: 'core-secret',
 			SERVER_URL: 'https://core.example.com/api'
@@ -109,7 +109,7 @@ describe('direct API helpers', () => {
 		)
 	})
 
-	it('leaves configured direct URLs unchanged when the matching backend secret is missing', () => {
+	test('leaves configured direct URLs unchanged when the matching backend secret is missing', () => {
 		stubDirectEnv({
 			SERVER_URL: 'https://core.example.com/api'
 		})

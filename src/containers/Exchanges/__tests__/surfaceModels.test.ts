@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { DirectoryHeader } from '../DirectoryHeader'
 import { micaDepthDetail, micaProductLabel } from '../MicaCells'
 import { prepareMicaVenues } from '../MicaTable'
@@ -50,7 +50,7 @@ function micaVenue(patch: Partial<MicaVenueModel> = {}): MicaVenueModel {
 }
 
 describe('surface model selection', () => {
-	it.each([
+	test.each([
 		['spot', ['spot', 'fiat']],
 		['perp', ['linear', 'both']],
 		['fiat', ['fiat']]
@@ -83,18 +83,18 @@ describe('surface model selection', () => {
 		expect(prepareMicaVenues(rows, filter).map((row) => row.exchange)).toEqual(expected)
 	})
 
-	it('labels inverse perpetual support without claiming linear perps', () => {
+	test('labels inverse perpetual support without claiming linear perps', () => {
 		expect(micaProductLabel(['inverse_perp'])).toBe('COIN perps')
 		expect(micaProductLabel(['linear_perp', 'inverse_perp'])).toBe('Perps · COIN perps')
 	})
 
-	it('labels every canonical MiCA product in stable wire order', () => {
+	test('labels every canonical MiCA product in stable wire order', () => {
 		expect(micaProductLabel(['spot', 'margin', 'linear_perp', 'inverse_perp', 'futures', 'options'])).toBe(
 			'Spot · Margin · Perps · COIN perps · Futures · Options'
 		)
 	})
 
-	it('selects active promotions by date and priority', () => {
+	test('selects active promotions by date and priority', () => {
 		const venue = micaVenue({
 			promotions: [
 				{
@@ -137,7 +137,7 @@ describe('surface model selection', () => {
 		expect(selectActivePromotion(venue.promotions, '2026-08-01')?.label).toBe('Standard')
 	})
 
-	it('summarizes chart endpoints for assistive technology without inventing missing values', () => {
+	test('summarizes chart endpoints for assistive technology without inventing missing values', () => {
 		const label = researchChartAriaLabel({
 			metric: 'volume',
 			segment: 'spot',
@@ -158,13 +158,13 @@ describe('surface model selection', () => {
 		expect(label).toContain('Missing: no observations')
 	})
 
-	it('formats survival fractions as percentages without changing null or observed zero semantics', () => {
+	test('formats survival fractions as percentages without changing null or observed zero semantics', () => {
 		expect(researchChartDisplayValue(0.625, '%')).toBe(62.5)
 		expect(researchChartDisplayValue(0, '%')).toBe(0)
 		expect(researchChartDisplayValue(25, '$')).toBe(25)
 	})
 
-	it('uses canonical directory totals instead of recreating them from venue groups', () => {
+	test('uses canonical directory totals instead of recreating them from venue groups', () => {
 		const html = renderToStaticMarkup(
 			DirectoryHeader({
 				summary: {
@@ -189,19 +189,19 @@ describe('surface model selection', () => {
 		expect(html).not.toContain('$1k')
 	})
 
-	it('keeps a zero-only venue history series visible', () => {
+	test('keeps a zero-only venue history series visible', () => {
 		expect(hasObservedHistory([0, 0])).toBe(true)
 		expect(hasObservedHistory([null, null])).toBe(false)
 		expect(hasObservedHistory(undefined)).toBe(false)
 	})
 
-	it('provides eight distinct exchange colors plus a distinct neutral Other color', () => {
+	test('provides eight distinct exchange colors plus a distinct neutral Other color', () => {
 		expect(RESEARCH_SERIES_PALETTE).toHaveLength(9)
 		expect(new Set(RESEARCH_SERIES_PALETTE).size).toBe(9)
 		expect(researchSeriesColor('other', 8)).toBe(RESEARCH_SERIES_PALETTE[8])
 	})
 
-	it('keeps observed one-sided zero depth visible in MiCA details', () => {
+	test('keeps observed one-sided zero depth visible in MiCA details', () => {
 		expect(micaDepthDetail(0, 9, false)).toBe('$0 bid\n$9 ask')
 		expect(micaDepthDetail(9, 0, true)).toBe('$9 bid\n$0 ask\nPartial coverage')
 		expect(micaDepthDetail(null, 9, false)).toBeNull()

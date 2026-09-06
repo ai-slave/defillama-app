@@ -26,7 +26,7 @@ type ProtocolMetadata = ProDashboardAppMetadata['protocols'][string]
 // These are the same capability flags used by the Pro chart picker. Persisted
 // dashboards can outlive a protocol adapter, so the stream must not call an API
 // that current metadata already says the protocol does not expose.
-const PROTOCOL_SOURCE_FLAGS: Partial<Record<ProDashboardChartType, readonly (keyof ProtocolMetadata)[]>> = {
+const PROTOCOL_SOURCE_FLAGS: Partial<Record<ProDashboardChartType, ReadonlyArray<keyof ProtocolMetadata>>> = {
 	tvl: ['tvl'],
 	volume: ['dexs'],
 	fees: ['fees'],
@@ -51,7 +51,7 @@ const PROTOCOL_SOURCE_FLAGS: Partial<Record<ProDashboardChartType, readonly (key
 }
 
 function buildProtocolMetadataBySlug(appMetadata: ProDashboardAppMetadata | null) {
-	const protocolsBySlug = new Map<string, ProtocolMetadata[]>()
+	const protocolsBySlug = new Map<string, Array<ProtocolMetadata>>()
 	const protocols = appMetadata?.protocols
 	if (!protocols) return protocolsBySlug
 	for (const protocolId in protocols) {
@@ -68,8 +68,8 @@ function buildProtocolMetadataBySlug(appMetadata: ProDashboardAppMetadata | null
 
 function getUnsupportedProtocolSourceReason(
 	request: ProDashboardChartRequest,
-	protocolsBySlug: Map<string, ProtocolMetadata[]>,
-	childrenByParentSlug: ReadonlyMap<string, string[]>
+	protocolsBySlug: Map<string, Array<ProtocolMetadata>>,
+	childrenByParentSlug: ReadonlyMap<string, Array<string>>
 ): string | undefined {
 	if (!request.protocol || protocolsBySlug.size === 0) return undefined
 	const protocolSlug = request.protocol.toLowerCase()
@@ -159,10 +159,10 @@ function toMetricRequest(
 
 /** Build each network source once, then seed every card through its shared query key. */
 export function buildProDashboardChartSourcePlan(
-	items: DashboardItemConfig[],
+	items: Array<DashboardItemConfig>,
 	catalog: ProDashboardProtocolCatalog | null,
 	appMetadata: ProDashboardAppMetadata | null = null
-): ProDashboardChartSourcePlanEntry[] {
+): Array<ProDashboardChartSourcePlanEntry> {
 	const protocolsBySlug = new Map<string, ProDashboardProtocolCatalog['protocols'][number]>()
 	for (const protocol of catalog?.protocols ?? []) protocolsBySlug.set(protocol.slug, protocol)
 	const chainsByName = new Map<string, ProDashboardProtocolCatalog['chains'][number]>()

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { filterChartDatasetByTimePeriod } from './filterChartDataset'
 
 const dataset = {
@@ -11,7 +11,7 @@ const dataset = {
 }
 
 describe('filterChartDatasetByTimePeriod', () => {
-	it('uses inclusive second-based custom bounds on millisecond rows', () => {
+	test('uses inclusive second-based custom bounds on millisecond rows', () => {
 		const filtered = filterChartDatasetByTimePeriod(dataset, 'custom', {
 			type: 'absolute',
 			startDate: 1_704_153_600,
@@ -22,7 +22,7 @@ describe('filterChartDatasetByTimePeriod', () => {
 		expect(filtered.source[0]).toBe(dataset.source[1])
 	})
 
-	it('returns the original dataset when all rows remain', () => {
+	test('returns the original dataset when all rows remain', () => {
 		expect(filterChartDatasetByTimePeriod(dataset, 'all')).toBe(dataset)
 	})
 })

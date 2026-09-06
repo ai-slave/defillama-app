@@ -6,7 +6,7 @@ import { toPersistedDashboardItems } from './utils/dashboardUtils'
 const initialRenderDashboards = new WeakSet<Dashboard>()
 
 type InitialDashboardData = {
-	items: DashboardItemConfig[]
+	items: Array<DashboardItemConfig>
 	dashboardName: string
 	timePeriod?: TimePeriod
 	customTimePeriod?: CustomTimePeriod | null
@@ -18,7 +18,7 @@ export interface DashboardInitialRenderPayload {
 	ownerId?: string
 	data: InitialDashboardData
 	visibility: 'private' | 'public'
-	tags?: string[]
+	tags?: Array<string>
 	description?: string
 	viewCount?: number
 	likeCount?: number
@@ -33,11 +33,11 @@ export type PublicDashboardInitialRenderPayload = Omit<
 	'visibility' | 'ownerId' | 'tags' | 'description'
 > & {
 	visibility: 'public'
-	tags: string[]
+	tags: Array<string>
 	description: string
 }
 
-function initialRenderItems(items: DashboardItemConfig[]): DashboardItemConfig[] {
+function initialRenderItems(items: Array<DashboardItemConfig>): Array<DashboardItemConfig> {
 	return toPersistedDashboardItems(items).map((item) => {
 		if (item.kind !== 'llamaai-chart' || !item.inlineChartData) return item
 		const { inlineChartData: _inlineChartData, ...config } = item

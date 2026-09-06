@@ -57,8 +57,8 @@ export function EmailOtpForm({
 		try {
 			await verifyOtp(trimmed)
 			onVerified?.()
-		} catch (err: any) {
-			setError(err?.message || 'Invalid or expired code')
+		} catch (verifyError: any) {
+			setError(verifyError?.message || 'Invalid or expired code')
 		}
 	}
 

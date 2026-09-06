@@ -10,7 +10,7 @@ import type { EarnPageRow, RouteTableRow } from '../types'
 // that actually exist).
 const WRAPPER_PREFIXES = ['w', 'st', 'cb', 'r', 't'] as const
 
-function dedupe(values: string[]): string[] {
+function dedupe(values: Array<string>): Array<string> {
 	return Array.from(new Set(values))
 }
 
@@ -25,7 +25,7 @@ function buildWrappedVariants(symbol: string): Set<string> {
 // /v2/meta vocabulary. ASSET options only — a token page is about that specific token,
 // so family options (which sweep in wrapped/staked variants) are deliberately not used.
 // Direct symbol match first; else the asset options matching a common wrapped variant.
-export async function resolveTokenOptionKeys(snapshot: YieldsSnapshot, symbol: string): Promise<string[]> {
+export async function resolveTokenOptionKeys(snapshot: YieldsSnapshot, symbol: string): Promise<Array<string>> {
 	const normalized = symbol.trim().toLowerCase()
 	if (!normalized) return []
 
@@ -41,10 +41,10 @@ export async function resolveTokenOptionKeys(snapshot: YieldsSnapshot, symbol: s
 
 export interface TokenBorrowRoutes {
 	// Routes where the page token is used AS COLLATERAL (borrowing something else).
-	useAsCollateral: RouteTableRow[]
+	useAsCollateral: Array<RouteTableRow>
 	// Routes where the page token is the BORROWED asset (against other collateral).
-	borrowThis: RouteTableRow[]
-	tokenKeys: string[]
+	borrowThis: Array<RouteTableRow>
+	tokenKeys: Array<string>
 }
 
 // Produce the borrow routes for the token page's two tabs by reusing the shared
@@ -60,8 +60,8 @@ export async function getTokenBorrowRoutes(snapshot: YieldsSnapshot, symbol: str
 }
 
 export interface TokenEarnRows {
-	rows: EarnPageRow[]
-	tokenKeys: string[]
+	rows: Array<EarnPageRow>
+	tokenKeys: Array<string>
 }
 
 // Produce the earn rows for the token page's yields section by reusing the shared

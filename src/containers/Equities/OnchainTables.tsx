@@ -255,7 +255,13 @@ function EmptyState({ children }: { children: React.ReactNode }) {
 	)
 }
 
-export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOnchainMarketRow[]; ticker: string }) {
+export function EquitiesMarketsTable({
+	markets,
+	ticker
+}: {
+	markets: Array<IEquitiesOnchainMarketRow>
+	ticker: string
+}) {
 	const router = useRouter()
 	const activeVenue = getMarketVenueFromQuery(readSingleQueryValue(router.query.marketVenue))
 
@@ -336,7 +342,7 @@ export function EquitiesMarketsTable({ markets, ticker }: { markets: IEquitiesOn
 	)
 }
 
-export function EquitiesTokensTable({ tokens, ticker }: { tokens: IEquitiesOnchainTokenRow[]; ticker: string }) {
+export function EquitiesTokensTable({ tokens, ticker }: { tokens: Array<IEquitiesOnchainTokenRow>; ticker: string }) {
 	const table = useReactTable({
 		defaultColumn: { sortUndefined: 'last' },
 		data: tokens,

@@ -15,9 +15,9 @@ export interface ProtocolTvlStreamSource {
 }
 
 export function buildProtocolTvlStreamSourcePlan(
-	items: readonly DashboardItemConfig[],
+	items: ReadonlyArray<DashboardItemConfig>,
 	catalog: ProDashboardProtocolCatalog | null
-): ProtocolTvlStreamSource[] {
+): Array<ProtocolTvlStreamSource> {
 	const misrepresentedProtocols = new Set<string>()
 	for (const protocol of catalog?.protocols ?? []) {
 		if (protocol.misrepresentedTokens) misrepresentedProtocols.add(protocol.slug)
@@ -44,7 +44,7 @@ export function buildProtocolTvlStreamSourcePlan(
 		}
 	}
 
-	const plan: ProtocolTvlStreamSource[] = []
+	const plan: Array<ProtocolTvlStreamSource> = []
 	for (const source of sources.values()) plan.push(source)
 	return plan
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const fetchJsonMock = vi.hoisted(() => vi.fn())
 
@@ -11,7 +11,7 @@ import { normalizeChainsAssetTotalsResponse } from './normalizers'
 const rawCategory = (total: string, breakdown: Record<string, string> = {}) => ({ total, breakdown })
 
 describe('chain asset totals projection', () => {
-	it('normalizes totals without carrying token breakdowns into list page data', () => {
+	test('normalizes totals without carrying token breakdowns into list page data', () => {
 		const response = {
 			timestamp: 1_800_000_000,
 			Ethereum: {
@@ -32,7 +32,7 @@ describe('chain asset totals projection', () => {
 })
 
 describe('eight-section producer payloads', () => {
-	it('normalizes stablecoins, rwa and lst alongside the original five', () => {
+	test('normalizes stablecoins, rwa and lst alongside the original five', () => {
 		const response = {
 			timestamp: 1_800_000_000,
 			Ethereum: {
@@ -67,7 +67,7 @@ describe('fetchChainAssetsDetail', () => {
 		fetchJsonMock.mockReset()
 	})
 
-	it('normalizes the selected breakdown and projects navigation totals', async () => {
+	test('normalizes the selected breakdown and projects navigation totals', async () => {
 		const response = {
 			timestamp: 1_800_000_000,
 			Ethereum: {
@@ -100,7 +100,7 @@ describe('fetchChainAssetsFlows1d', () => {
 		fetchJsonMock.mockReset()
 	})
 
-	it('normalizes every represented flow category and preserves zero', async () => {
+	test('normalizes every represented flow category and preserves zero', async () => {
 		fetchJsonMock.mockResolvedValue({
 			Base: {
 				total: { perc: '0', raw: '0' },
@@ -124,7 +124,7 @@ describe('fetchChainAssetsChart', () => {
 		fetchJsonMock.mockReset()
 	})
 
-	it('keeps producer timestamps in seconds and normalizes every string section including zero', async () => {
+	test('keeps producer timestamps in seconds and normalizes every string section including zero', async () => {
 		fetchJsonMock.mockResolvedValue([
 			{ timestamp: 1_700_000_000, data: { total: '42.5', ownTokens: '0', canonical: '30' } },
 			{ timestamp: 1_700_086_400, data: { total: '0' } }

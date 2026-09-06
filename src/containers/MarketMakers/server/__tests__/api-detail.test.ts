@@ -1,14 +1,14 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const forgdFetch = vi.fn()
-vi.mock('../client', () => ({ forgdFetch: (...a: unknown[]) => forgdFetch(...a) }))
+vi.mock('../client', () => ({ forgdFetch: (...a: Array<unknown>) => forgdFetch(...a) }))
 
 import { marketMakerBreakdown } from '../api'
 
 afterEach(() => forgdFetch.mockReset())
 
 describe('marketMakerBreakdown route', () => {
-	it('forwards the id and dates and reuses the serialized detail payload', async () => {
+	test('forwards the id and dates and reuses the serialized detail payload', async () => {
 		forgdFetch.mockResolvedValue({ marketMakerId: 'lhava' })
 		const request = {
 			method: 'GET',
@@ -28,7 +28,7 @@ describe('marketMakerBreakdown route', () => {
 		expect(forgdFetch).toHaveBeenCalledTimes(1)
 	})
 
-	it('rejects an invalid market maker id with 400 and never calls forgd', async () => {
+	test('rejects an invalid market maker id with 400 and never calls forgd', async () => {
 		const res = await marketMakerBreakdown.handle({
 			method: 'GET',
 			url: '/api/public/market-makers/breakdown/bad%20id',

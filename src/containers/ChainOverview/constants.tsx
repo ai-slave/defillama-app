@@ -52,7 +52,7 @@ export const yAxisByChart: {
 	'Token Volume': 'Token Volume'
 }
 
-export const BAR_CHARTS: ChainChartLabels[] = [
+export const BAR_CHARTS: Array<ChainChartLabels> = [
 	feeRevenueMetrics.chainFees.label,
 	feeRevenueMetrics.chainRevenue.label,
 	'DEXs Volume',
@@ -70,7 +70,7 @@ export const BAR_CHARTS: ChainChartLabels[] = [
 	'Token Volume'
 ]
 
-export const DISABLED_CUMULATIVE_CHARTS: ChainChartLabels[] = ['Core Developers', 'Devs Commits']
+export const DISABLED_CUMULATIVE_CHARTS: Array<ChainChartLabels> = ['Core Developers', 'Devs Commits']
 
 export function getChainOverviewPaletteColor(index: number): string {
 	const color = CHART_COLORS[index]

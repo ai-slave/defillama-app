@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { YIELDS_SNAPSHOT_FILES } from '../data/snapshot.contract'
 
 const fetchers = vi.hoisted(() => ({
@@ -52,7 +52,7 @@ beforeEach(() => {
 })
 
 describe('Yields v2 snapshot builder', () => {
-	it('writes all nine endpoint responses while allowing empty optional feeds', async () => {
+	test('writes all nine endpoint responses while allowing empty optional feeds', async () => {
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await buildYieldsSnapshotCandidate({ writeJson })
@@ -63,7 +63,7 @@ describe('Yields v2 snapshot builder', () => {
 		expect(writeJson.mock.calls.map(([path]) => path)).toEqual(Object.values(YIELDS_SNAPSHOT_FILES))
 	})
 
-	it('does not write a partial candidate when an endpoint fails', async () => {
+	test('does not write a partial candidate when an endpoint fails', async () => {
 		fetchers.borrowRoutes.mockRejectedValueOnce(new Error('upstream failed'))
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
@@ -73,7 +73,7 @@ describe('Yields v2 snapshot builder', () => {
 		expect(writeJson).not.toHaveBeenCalled()
 	})
 
-	it('reports every failed endpoint', async () => {
+	test('reports every failed endpoint', async () => {
 		fetchers.trends.mockRejectedValueOnce(new Error('trends unavailable'))
 		fetchers.meta.mockRejectedValueOnce(new Error('meta unavailable'))
 		const writeJson = vi.fn().mockResolvedValue(undefined)
@@ -84,7 +84,7 @@ describe('Yields v2 snapshot builder', () => {
 		expect(writeJson).not.toHaveBeenCalled()
 	})
 
-	it.each([
+	test.each([
 		['earn', fetchers.earn],
 		['trends', fetchers.trends],
 		['borrow markets', fetchers.borrowMarkets],
@@ -101,7 +101,7 @@ describe('Yields v2 snapshot builder', () => {
 		expect(writeJson).not.toHaveBeenCalled()
 	})
 
-	it('rejects empty core metadata', async () => {
+	test('rejects empty core metadata', async () => {
 		fetchers.meta.mockResolvedValueOnce({ ...validMeta(), chains: [] })
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
@@ -109,7 +109,7 @@ describe('Yields v2 snapshot builder', () => {
 		expect(writeJson).not.toHaveBeenCalled()
 	})
 
-	it('rejects a generation whose default earn view is entirely hidden', async () => {
+	test('rejects a generation whose default earn view is entirely hidden', async () => {
 		fetchers.meta.mockResolvedValueOnce({ ...validMeta(), meme_pool_ids: ['earn'] })
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 

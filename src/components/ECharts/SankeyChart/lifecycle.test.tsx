@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
 	const instance = {
@@ -83,7 +83,7 @@ describe('SankeyChart lifecycle', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('defers initialization until a hidden tab becomes visible and uses the latest data', async () => {
+	test('defers initialization until a hidden tab becomes visible and uses the latest data', async () => {
 		const onReady = vi.fn()
 		const initialNodes = [{ name: 'Revenue' }, { name: 'Protocol' }]
 
@@ -129,7 +129,7 @@ describe('SankeyChart lifecycle', () => {
 		expect(mocks.instance.setOption).toHaveBeenCalledOnce()
 	})
 
-	it('defers option updates while an initialized chart is hidden', async () => {
+	test('defers option updates while an initialized chart is hidden', async () => {
 		width = 640
 		height = 360
 

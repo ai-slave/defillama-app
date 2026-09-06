@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const acquireDatasetSnapshot = vi.hoisted(() => vi.fn())
 
@@ -11,7 +11,7 @@ describe('Yields snapshot acquisition', () => {
 		vi.clearAllMocks()
 	})
 
-	it('keeps strict acquisition for core Yields consumers', async () => {
+	test('keeps strict acquisition for core Yields consumers', async () => {
 		const handle = {
 			ref: { snapshotId: 'gen-1', createdAt: 1_700_000_000_000 },
 			readJson: vi.fn().mockResolvedValue('artifact')
@@ -26,7 +26,7 @@ describe('Yields snapshot acquisition', () => {
 		expect(acquireDatasetSnapshot).toHaveBeenCalledWith('yields', 'background')
 	})
 
-	it('returns null when an optional consumer cannot acquire Yields', async () => {
+	test('returns null when an optional consumer cannot acquire Yields', async () => {
 		const error = new Error('snapshot unavailable')
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		acquireDatasetSnapshot.mockRejectedValueOnce(error)

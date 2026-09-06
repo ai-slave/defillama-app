@@ -115,7 +115,7 @@ export function getChainMetadataKey(
 export const LINE_DIMENSIONS = new Set(['Open Interest', 'Active Liquidity'])
 
 // MEV/REV adapters folded into chain REV aggregations
-export const REV_PROTOCOLS: Readonly<Record<string, readonly string[]>> = {
+export const REV_PROTOCOLS: Readonly<Record<string, ReadonlyArray<string>>> = {
 	ethereum: ['flashbots', 'eden-relay'],
 	solana: ['jito-mev-tips', 'bloxroute'],
 	arbitrum: ['arbitrum-timeboost'],

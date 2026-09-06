@@ -15,7 +15,7 @@ export function timeSeriesChartOptions(
 ): IMultiSeriesChartProps['chartOptions'] {
 	return {
 		...createTimeSeriesChartOptions(valueSymbol),
-		...(lastNDaysZoom(dataLength) ?? {})
+		...lastNDaysZoom(dataLength)
 	}
 }
 

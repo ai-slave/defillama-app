@@ -35,7 +35,7 @@ const ALL_CATEGORY = 'All'
 
 type DownloadGroup<T extends { category: string; description: string; name: string }> = {
 	category: string
-	items: T[]
+	items: Array<T>
 }
 
 const ALL_DATASETS_BY_CATEGORY = datasetCategories.map((category) => ({
@@ -582,7 +582,7 @@ function RecentDownloadsStrip({
 	onRun,
 	onClear
 }: {
-	recents: SavedDownload[]
+	recents: Array<SavedDownload>
 	onRun: (preset: SavedDownload) => void
 	onClear: () => void
 }) {
@@ -662,7 +662,7 @@ function SavedDownloadsContent({
 	onRename,
 	onDelete
 }: {
-	savedDownloads: SavedDownload[]
+	savedDownloads: Array<SavedDownload>
 	onRun: (preset: SavedDownload) => void
 	onRename: (id: string, name: string) => void
 	onDelete: (id: string) => void
@@ -672,7 +672,7 @@ function SavedDownloadsContent({
 
 	const otherNames = useMemo(() => {
 		if (!renamingPreset) return []
-		const names: string[] = []
+		const names: Array<string> = []
 		for (const preset of savedDownloads) {
 			if (preset.id !== renamingPreset.id) names.push(preset.name)
 		}

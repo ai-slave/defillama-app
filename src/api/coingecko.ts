@@ -34,7 +34,11 @@ function createCoinGeckoUrl(pathname: string): URL {
 	return new URL(pathname.replace(/^\//, ''), `${COINGECKO_API_BASE_URL}/`)
 }
 
-function setQueryParam(url: URL, key: string, value: string | number | boolean | string[] | undefined | null): void {
+function setQueryParam(
+	url: URL,
+	key: string,
+	value: string | number | boolean | Array<string> | undefined | null
+): void {
 	if (value === undefined || value === null) return
 	if (Array.isArray(value)) {
 		if (value.length === 0) return
@@ -54,12 +58,12 @@ async function fetchAllPaginatedCoinGeckoResults<T>({
 	breakOnPartialPage = true,
 	maxPages
 }: {
-	fetchPage: (page: number) => Promise<T[]>
+	fetchPage: (page: number) => Promise<Array<T>>
 	pageSize: number
 	breakOnPartialPage?: boolean
 	maxPages: number
-}): Promise<T[]> {
-	const results: T[] = []
+}): Promise<Array<T>> {
+	const results: Array<T> = []
 	const safeMaxPages = Math.max(1, maxPages)
 	let terminated = false
 
@@ -92,7 +96,7 @@ async function fetchAllPaginatedCoinGeckoResults<T>({
  * This is not a direct CoinGecko API call.
  */
 export async function fetchCoinGeckoTokensListFromDataset(): Promise<Array<IResponseCGTokenRankingsDatasetItem>> {
-	return fetchJson<IResponseCGTokenRankingsDatasetItem[]>(TOKEN_LIST_API_URL)
+	return fetchJson<Array<IResponseCGTokenRankingsDatasetItem>>(TOKEN_LIST_API_URL)
 }
 
 /**
@@ -102,7 +106,7 @@ export async function fetchCoinGeckoTokensListFromDataset(): Promise<Array<IResp
 export async function fetchCoinGeckoExchanges({
 	perPage = COINGECKO_EXCHANGES_MAX_PAGE_SIZE,
 	maxPages = 1000
-}: FetchCoinGeckoExchangesOptions = {}): Promise<CoinGeckoExchange[]> {
+}: FetchCoinGeckoExchangesOptions = {}): Promise<Array<CoinGeckoExchange>> {
 	const pageSize = Math.min(Math.max(1, perPage), COINGECKO_EXCHANGES_MAX_PAGE_SIZE)
 
 	return fetchAllPaginatedCoinGeckoResults<CoinGeckoExchange>({
@@ -112,7 +116,7 @@ export async function fetchCoinGeckoExchanges({
 			const url = createCoinGeckoUrl('/exchanges')
 			setQueryParam(url, 'per_page', pageSize)
 			setQueryParam(url, 'page', page)
-			return fetchCoinGeckoJson<CoinGeckoExchange[]>(url.pathname, url)
+			return fetchCoinGeckoJson<Array<CoinGeckoExchange>>(url.pathname, url)
 		}
 	})
 }
@@ -121,11 +125,11 @@ export async function fetchCoinGeckoExchanges({
 export async function fetchCoinGeckoCoinsList({
 	includePlatform = false,
 	status = 'active'
-}: FetchCoinGeckoCoinsListOptions = {}): Promise<CoinGeckoCoinListItem[]> {
+}: FetchCoinGeckoCoinsListOptions = {}): Promise<Array<CoinGeckoCoinListItem>> {
 	const url = createCoinGeckoUrl('/coins/list')
 	setQueryParam(url, 'include_platform', includePlatform)
 	setQueryParam(url, 'status', status)
-	return fetchCoinGeckoJson<CoinGeckoCoinListItem[]>(url.pathname, url)
+	return fetchCoinGeckoJson<Array<CoinGeckoCoinListItem>>(url.pathname, url)
 }
 /** Fetch CoinGecko simple prices by ids, names, or symbols. */
 export async function fetchCoinGeckoSimplePrice({

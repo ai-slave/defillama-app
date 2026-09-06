@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(() => {
 	vi.clearAllMocks()
@@ -20,7 +20,7 @@ function setupPageModule() {
 }
 
 describe('exchange profile route slugs', () => {
-	it('matches event names only through the canonical DefiLlama CEX slug', async () => {
+	test('matches event names only through the canonical DefiLlama CEX slug', async () => {
 		const { page } = setupPageModule()
 		const { matchesDefillamaCex } = await page
 
@@ -29,7 +29,7 @@ describe('exchange profile route slugs', () => {
 		expect(matchesDefillamaCex('Coinbase Pro', 'coinbase')).toBe(false)
 	})
 
-	it('derives the native token 24h change from canonical price history', async () => {
+	test('derives the native token 24h change from canonical price history', async () => {
 		const { page } = setupPageModule()
 		const { nativeTokenChange24h } = await page
 
@@ -41,7 +41,7 @@ describe('exchange profile route slugs', () => {
 		expect(nativeTokenChange24h(110, null, { coins: {} })).toBeNull()
 	})
 
-	it('returns notFound for a noncanonical slug without loading a profile', async () => {
+	test('returns notFound for a noncanonical slug without loading a profile', async () => {
 		const { loadProfile, page } = setupPageModule()
 
 		await expect((await page).getStaticProps({ params: { slug: 'coinbase.eu' } } as never)).resolves.toEqual({
@@ -50,7 +50,7 @@ describe('exchange profile route slugs', () => {
 		expect(loadProfile).not.toHaveBeenCalled()
 	})
 
-	it('loads an exact canonical lowercase slug unchanged', async () => {
+	test('loads an exact canonical lowercase slug unchanged', async () => {
 		const { loadProfile, page } = setupPageModule()
 
 		await expect((await page).getStaticProps({ params: { slug: 'coinbase' } } as never)).resolves.toMatchObject({
@@ -60,7 +60,7 @@ describe('exchange profile route slugs', () => {
 		expect(loadProfile).toHaveBeenCalledWith('coinbase')
 	})
 
-	it('gates the rendered exchange profile', async () => {
+	test('gates the rendered exchange profile', async () => {
 		const { page } = setupPageModule()
 		const pageModule = await page
 		const { ExchangeAccessGate } = await import('../ExchangeAccessGate')

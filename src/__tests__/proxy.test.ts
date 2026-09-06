@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { AB_GROUP_COOKIE_NAME, AB_VISITOR_COOKIE_NAME, getABGroup, isABVisitorId } from '~/utils/abTesting'
 
 function stubProxyEnv(allowedOrigins = '', investorsSite = '', investorsPreview = '') {
@@ -51,7 +51,7 @@ afterEach(() => {
 })
 
 describe('api proxy CORS', () => {
-	it('allows same-origin API POST requests with an Origin header', async () => {
+	test('allows same-origin API POST requests with an Origin header', async () => {
 		const { proxy } = await loadProxy()
 
 		const response = proxy(apiRequest('https://defillama.com'))
@@ -60,7 +60,7 @@ describe('api proxy CORS', () => {
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://defillama.com')
 	})
 
-	it('allows configured cross-origin API requests', async () => {
+	test('allows configured cross-origin API requests', async () => {
 		const { proxy } = await loadProxy('https://integrator.example')
 
 		const response = proxy(apiRequest('https://integrator.example'))
@@ -69,7 +69,7 @@ describe('api proxy CORS', () => {
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://integrator.example')
 	})
 
-	it('denies unconfigured cross-origin API requests', async () => {
+	test('denies unconfigured cross-origin API requests', async () => {
 		const { proxy } = await loadProxy('https://integrator.example')
 
 		const response = proxy(apiRequest('https://unknown.example'))
@@ -78,7 +78,7 @@ describe('api proxy CORS', () => {
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull()
 	})
 
-	it('allows any origin for canonical public API requests without varying by Origin', async () => {
+	test('allows any origin for canonical public API requests without varying by Origin', async () => {
 		const { proxy } = await loadProxy('https://integrator.example')
 
 		const response = proxy(apiRequest('https://unknown.example', 'GET', '/api/public/protocols/charts'))
@@ -88,7 +88,7 @@ describe('api proxy CORS', () => {
 		expect(response.headers.get('Vary') ?? '').not.toContain('Origin')
 	})
 
-	it('keeps configured-origin CORS for private and dynamic API requests', async () => {
+	test('keeps configured-origin CORS for private and dynamic API requests', async () => {
 		const { proxy } = await loadProxy('https://integrator.example')
 
 		const privateResponse = proxy(apiRequest('https://unknown.example', 'GET', '/api/private/token-usage/BTC'))
@@ -102,7 +102,7 @@ describe('api proxy CORS', () => {
 		expect(dynamicResponse.headers.get('Access-Control-Allow-Origin')).toBeNull()
 	})
 
-	it('handles preflight for public, private, and dynamic API groups', async () => {
+	test('handles preflight for public, private, and dynamic API groups', async () => {
 		const { proxy } = await loadProxy('https://integrator.example')
 
 		const publicResponse = proxy(apiRequest('https://unknown.example', 'OPTIONS', '/api/public/protocols/charts'))
@@ -124,7 +124,7 @@ describe('api proxy CORS', () => {
 })
 
 describe('a/b assignment', () => {
-	it('assigns a stable 50/50 group cookie to new main-site visitors', async () => {
+	test('assigns a stable 50/50 group cookie to new main-site visitors', async () => {
 		const { proxy } = await loadProxy()
 		const response = proxy(pageRequest('https://defillama.com/chains'))
 		const visitorCookie = response.cookies.get(AB_VISITOR_COOKIE_NAME)
@@ -137,7 +137,7 @@ describe('a/b assignment', () => {
 		expect(response.headers.get('Cache-Control')).toBe('private, no-store')
 	})
 
-	it('keeps an existing valid assignment without resetting cookies', async () => {
+	test('keeps an existing valid assignment without resetting cookies', async () => {
 		const { proxy } = await loadProxy()
 		const visitorId = '00000000-0000-4000-8000-000000000009'
 		const response = proxy(
@@ -149,7 +149,7 @@ describe('a/b assignment', () => {
 		expect(response.headers.get('Cache-Control')).toBeNull()
 	})
 
-	it('does not assign groups on investor hosts or API requests', async () => {
+	test('does not assign groups on investor hosts or API requests', async () => {
 		const { proxy } = await loadProxy()
 		const investorResponse = proxy(pageRequest('https://investors.defillama.com/'))
 		const apiResponse = proxy(apiRequest('https://defillama.com'))
@@ -158,7 +158,7 @@ describe('a/b assignment', () => {
 		expect(apiResponse.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
 	})
 
-	it('does not assign groups to non-HTML requests', async () => {
+	test('does not assign groups to non-HTML requests', async () => {
 		const { proxy } = await loadProxy()
 		const response = proxy(pageRequest('https://defillama.com/chains', undefined, '*/*'))
 
@@ -168,7 +168,7 @@ describe('a/b assignment', () => {
 })
 
 describe('investors proxy routing', () => {
-	it('keeps investor routes in the unconditional matcher list', async () => {
+	test('keeps investor routes in the unconditional matcher list', async () => {
 		const { config } = await loadProxy()
 
 		expect(config.matcher).toEqual(
@@ -191,7 +191,7 @@ describe('investors proxy routing', () => {
 		)
 	})
 
-	it('rewrites investor routes for requests that do not accept HTML', async () => {
+	test('rewrites investor routes for requests that do not accept HTML', async () => {
 		const { proxy } = await loadProxy('', 'enterprise')
 
 		const response = proxy(pageRequest('https://enterprise.defillama.com/', undefined, '*/*'))
@@ -199,7 +199,7 @@ describe('investors proxy routing', () => {
 		expect(rewriteUrl(response)).toBe('https://enterprise.defillama.com/investors')
 	})
 
-	it('keeps the enterprise root on the landing page', async () => {
+	test('keeps the enterprise root on the landing page', async () => {
 		const { proxy } = await loadProxy('', 'enterprise')
 
 		const response = proxy(pageRequest('https://enterprise.defillama.com/'))
@@ -207,7 +207,7 @@ describe('investors proxy routing', () => {
 		expect(rewriteUrl(response)).toBe('https://enterprise.defillama.com/investors')
 	})
 
-	it('serves only active projects locally on the enterprise domain', async () => {
+	test('serves only active projects locally on the enterprise domain', async () => {
 		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('enterprise', 'true')
 
 		for (const projectId of investorsConfig.INVESTORS_PROTOCOL_IDS) {
@@ -231,7 +231,7 @@ describe('investors proxy routing', () => {
 		}
 	})
 
-	it('serves active investor projects on the investors domain without preview projects', async () => {
+	test('serves active investor projects on the investors domain without preview projects', async () => {
 		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors')
 
 		const rootResponse = proxy(pageRequest('https://investors.defillama.com/'))
@@ -259,7 +259,7 @@ describe('investors proxy routing', () => {
 		}
 	})
 
-	it('serves preview investor projects on the investors domain when preview is enabled', async () => {
+	test('serves preview investor projects on the investors domain when preview is enabled', async () => {
 		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors', 'true')
 
 		expect(investorsConfig.INVESTORS_PROTOCOL_IDS).toEqual([
@@ -281,7 +281,7 @@ describe('investors proxy routing', () => {
 })
 
 describe('investors landing links', () => {
-	it('uses separate umami website ids for investors and enterprise domains', async () => {
+	test('uses separate umami website ids for investors and enterprise domains', async () => {
 		const investorsConfig = await loadInvestorsConfig('investors')
 		const enterpriseConfig = await loadInvestorsConfig('enterprise')
 
@@ -289,7 +289,7 @@ describe('investors landing links', () => {
 		expect(enterpriseConfig.ACTIVE_INVESTORS_SITE?.umamiWebsiteId).toBe('1c194e22-d31d-4816-b803-8074419f1b3e')
 	})
 
-	it('shows investor-domain dashboards as external enterprise cards', async () => {
+	test('shows investor-domain dashboards as external enterprise cards', async () => {
 		const config = await loadInvestorsConfig('enterprise')
 		const [investorsHost] = config.INVESTORS_SITES.investors.hosts
 		if (!investorsHost) throw new Error('Investors site host is required')
@@ -313,7 +313,7 @@ describe('investors landing links', () => {
 		}
 	})
 
-	it('keeps investor-domain landing cards local', async () => {
+	test('keeps investor-domain landing cards local', async () => {
 		const config = await loadInvestorsConfig('investors')
 		const investorDomainProjectIds = [...config.INVESTORS_SITES.investors.projectIds]
 		const investorDomainLandingProjectIds = [...config.INVESTORS_SITES.investors.landingProjectIds]
@@ -327,7 +327,7 @@ describe('investors landing links', () => {
 		}
 	})
 
-	it('keeps coming-soon projects on the investors landing page but not routable as dashboards', async () => {
+	test('keeps coming-soon projects on the investors landing page but not routable as dashboards', async () => {
 		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors')
 
 		expect(investorsConfig.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['kpk'])
@@ -346,7 +346,7 @@ describe('investors landing links', () => {
 		}
 	})
 
-	it('keeps preview investor dashboards available while showing only preview ones in coming-soon cards', async () => {
+	test('keeps preview investor dashboards available while showing only preview ones in coming-soon cards', async () => {
 		const config = await loadInvestorsConfig('investors', 'true')
 
 		expect(config.INVESTORS_PROTOCOL_IDS).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare', 'kpk', 'uniswap'])

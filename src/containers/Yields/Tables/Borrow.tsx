@@ -19,9 +19,9 @@ import {
 // Net-APY breakdown for an unleveraged route: each leg split into its resolved-view components
 // (Supply − Borrow cost = Net). Borrow reward offsets cost so it reads as a positive contribution;
 // borrow base cost + borrow intrinsic are the negatives.
-function routeNetRows(row: RouteTableRow): SignedTipRow[] {
+function routeNetRows(row: RouteTableRow): Array<SignedTipRow> {
 	const { supplyApyBase, supplyApyReward, supplyApyIntrinsic, borrowApyBase, borrowApyReward, borrowApyIntrinsic } = row
-	const rows: SignedTipRow[] = []
+	const rows: Array<SignedTipRow> = []
 	if (supplyApyBase != null) rows.push({ label: 'Supply base', value: supplyApyBase, signed: 'plus' })
 	if (hasPart(supplyApyReward)) rows.push({ label: 'Supply reward', value: supplyApyReward, signed: 'plus' })
 	if (hasPart(supplyApyIntrinsic)) rows.push({ label: 'Supply intrinsic', value: supplyApyIntrinsic, signed: 'plus' })
@@ -209,16 +209,17 @@ const routeColumns = [
 			// Unleveraged route: Supply − Borrow cost = Net. The breakdown splits each leg into its
 			// resolved-view components; a defensive fallback shows leg totals if no split is present.
 			const legRows = routeNetRows(row.original)
-			const tooltipRows: SignedTipRow[] = legRows.length
-				? legRows
-				: [
-						...(row.original.supplyApy != null
-							? [{ label: 'Supply', value: row.original.supplyApy, signed: 'plus' as const }]
-							: []),
-						...(row.original.borrowApy != null
-							? [{ label: 'Borrow cost', value: row.original.borrowApy, signed: 'minus' as const }]
-							: [])
-					]
+			const tooltipRows: Array<SignedTipRow> =
+				legRows.length > 0
+					? legRows
+					: [
+							...(row.original.supplyApy != null
+								? [{ label: 'Supply', value: row.original.supplyApy, signed: 'plus' as const }]
+								: []),
+							...(row.original.borrowApy != null
+								? [{ label: 'Borrow cost', value: row.original.borrowApy, signed: 'minus' as const }]
+								: [])
+						]
 			return <SignedApyCell value={row.original.netApy} summaryLabel="Net" tooltipRows={tooltipRows} />
 		},
 		meta: {

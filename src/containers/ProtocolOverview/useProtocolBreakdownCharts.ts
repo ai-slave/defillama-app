@@ -11,7 +11,7 @@ import { canonicalizeTokensToExclude } from './valueChartSources'
 
 type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 type BreakdownPoint = [number, Record<string, number>]
-export type ProtocolBreakdownChart = BreakdownPoint[]
+export type ProtocolBreakdownChart = Array<BreakdownPoint>
 type AggregatedValueChart = Array<[number, number | null]>
 type BuiltTokenInflows = {
 	tokenInflows: ProtocolBreakdownChart
@@ -28,7 +28,7 @@ interface IUseProtocolBreakdownChartsCommonParams {
 	inflows?: boolean
 	/** Build derived inflow datasets when the page renders them. */
 	computeInflows?: boolean
-	chainsUnique?: string[]
+	chainsUnique?: Array<string>
 	/** Minimum positive latest USD value included in the token pie. */
 	tokenPieMinimumValue?: number
 }
@@ -36,8 +36,8 @@ interface IUseProtocolBreakdownChartsCommonParams {
 type ProtocolTreasuryExtraKey = Extract<ProtocolTreasuryKey, 'OwnTokens'>
 type IUseProtocolBreakdownChartsParams = IUseProtocolBreakdownChartsCommonParams &
 	(
-		| { source?: 'tvl'; keys: ProtocolExtraTvlKey[]; tokensToExclude?: string[] }
-		| { source: 'treasury'; keys: ProtocolTreasuryExtraKey[]; tokensToExclude?: never }
+		| { source?: 'tvl'; keys: Array<ProtocolExtraTvlKey>; tokensToExclude?: Array<string> }
+		| { source: 'treasury'; keys: Array<ProtocolTreasuryExtraKey>; tokensToExclude?: never }
 	)
 
 export type FailedQueryCategory = 'tvl' | 'chain-breakdown' | 'token-breakdown-usd' | 'token-breakdown-raw'
@@ -51,12 +51,12 @@ interface IFailedChartQuery {
 
 interface IUseProtocolBreakdownChartsResult {
 	isLoading: boolean
-	errors: IFailedChartQuery[]
-	chainsUnique: string[]
-	tokensUnique: string[]
-	rawTokensUnique: string[]
-	inflowTokensUnique: string[]
-	defaultRawTokens: string[]
+	errors: Array<IFailedChartQuery>
+	chainsUnique: Array<string>
+	tokensUnique: Array<string>
+	rawTokensUnique: Array<string>
+	inflowTokensUnique: Array<string>
+	defaultRawTokens: Array<string>
 	chainBreakdown: ProtocolBreakdownChart | null
 	valueDataset: TimestampDataset | null
 	valueCharts: MultiSeriesCharts
@@ -81,8 +81,8 @@ type PreparedExtraChart<T> = {
 const prepareExtraCharts = <T>(
 	charts: Array<Array<[number, T]> | null | undefined>,
 	baseLatestTimestamp: number | null
-): { charts: PreparedExtraChart<T>[]; alignedLatestTimestamp: number | null } | null => {
-	const prepared: PreparedExtraChart<T>[] = []
+): { charts: Array<PreparedExtraChart<T>>; alignedLatestTimestamp: number | null } | null => {
+	const prepared: Array<PreparedExtraChart<T>> = []
 	let alignedLatestTimestamp = baseLatestTimestamp
 	for (const chart of charts) {
 		if (chart == null) return null
@@ -197,7 +197,7 @@ const aggregateBreakdownCharts = (
 	return result
 }
 
-const buildBreakdownKeys = (breakdown: ProtocolBreakdownChart | null | undefined): string[] => {
+const buildBreakdownKeys = (breakdown: ProtocolBreakdownChart | null | undefined): Array<string> => {
 	if (!breakdown?.length) return []
 
 	let latestPoint: Record<string, number> | null = null
@@ -217,10 +217,10 @@ const buildBreakdownKeys = (breakdown: ProtocolBreakdownChart | null | undefined
 const buildPeakValueKeys = (
 	breakdown: ProtocolBreakdownChart | null | undefined,
 	eligibleKeys?: ReadonlySet<string>
-): string[] => {
+): Array<string> => {
 	if (!breakdown?.length) return []
 	const peakByKey = new Map<string, number>()
-	const order: string[] = []
+	const order: Array<string> = []
 	for (const [, values] of breakdown) {
 		for (const key in values) {
 			const rawValue = values[key]
@@ -247,7 +247,7 @@ const buildPeakValueKeys = (
 const buildRawTokenKeysByPeakUsd = (
 	rawBreakdown: ProtocolBreakdownChart | null | undefined,
 	usdBreakdown: ProtocolBreakdownChart | null | undefined
-): { available: string[]; defaults: string[] } => {
+): { available: Array<string>; defaults: Array<string> } => {
 	if (!rawBreakdown?.length) return { available: [], defaults: [] }
 	const rawPeakByKey = new Map<string, number>()
 	for (const [, values] of rawBreakdown) {
@@ -294,7 +294,7 @@ export function buildCompleteProtocolBreakdownDataset({
 	fillMissingWithZero
 }: {
 	breakdown: ProtocolBreakdownChart | null | undefined
-	availableSeries: readonly string[]
+	availableSeries: ReadonlyArray<string>
 	includeUpstreamOthers: boolean
 	fillMissingWithZero: boolean
 }): TimestampDataset | null {
@@ -332,8 +332,8 @@ export const buildProtocolBreakdownPresentation = ({
 	stack
 }: {
 	breakdown: ProtocolBreakdownChart | null | undefined
-	availableSeries: readonly string[]
-	activeSeries: readonly string[]
+	availableSeries: ReadonlyArray<string>
+	activeSeries: ReadonlyArray<string>
 	aggregateOthers: boolean
 	includeUpstreamOthers?: boolean
 	fillMissingWithZero?: boolean
@@ -408,8 +408,8 @@ export const buildProtocolBreakdownPresentation = ({
 
 const buildProjectedBreakdownDataset = (
 	breakdown: ProtocolBreakdownChart | null | undefined,
-	seriesNames: string[],
-	remainderNames: readonly string[],
+	seriesNames: Array<string>,
+	remainderNames: ReadonlyArray<string>,
 	fillMissingWithZero: boolean
 ): TimestampDataset | null => {
 	if (!breakdown?.length) return null
@@ -508,7 +508,7 @@ const buildTokenInflowsFromChartPairs = (
 	const pairCount = Math.max(tokenBreakdownUsdCharts.length, tokenBreakdownRawCharts.length)
 	if (pairCount === 0) return null
 
-	const sources: PreparedTokenInflowSource[] = []
+	const sources: Array<PreparedTokenInflowSource> = []
 	for (let i = 0; i < pairCount; i++) {
 		const usdChart = tokenBreakdownUsdCharts[i]
 		const rawChart = tokenBreakdownRawCharts[i]
@@ -768,8 +768,8 @@ const collectFailedQueries = (
 		queries: Array<{ isError: boolean; error: Error | null }>
 		keys: Array<string | undefined>
 	}>
-): IFailedChartQuery[] => {
-	const failed: IFailedChartQuery[] = []
+): Array<IFailedChartQuery> => {
+	const failed: Array<IFailedChartQuery> = []
 	for (const { category, queries, keys } of queryGroups) {
 		for (const [index, query] of queries.entries()) {
 			if (query.isError && query.error) {

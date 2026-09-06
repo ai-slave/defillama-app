@@ -25,7 +25,7 @@ type ProtocolChartUrlParams = {
 	protocol: string
 } & ProtocolChartSelector &
 	(
-		| { namespace: 'tvl'; key?: ProtocolTvlKey; tokensToExclude?: string[] }
+		| { namespace: 'tvl'; key?: ProtocolTvlKey; tokensToExclude?: Array<string> }
 		| { namespace: 'treasury'; key?: ProtocolTreasuryKey; tokensToExclude?: never }
 	)
 
@@ -82,7 +82,7 @@ export async function fetchProtocolTvlChart(
 		namespace: 'tvl'
 		protocol: string
 		key?: ProtocolTvlKey
-		tokensToExclude?: string[]
+		tokensToExclude?: Array<string>
 	} = {
 		namespace: 'tvl',
 		protocol: params.protocol,
@@ -156,6 +156,6 @@ export const fetchProtocolTvlTokenBreakdownChart = (
 ): Promise<IProtocolTokenBreakdownChart> => fetchProtocolTvlChart({ ...params, breakdownType: 'token-breakdown' })
 
 /** Fetch protocol expense entries from the public expenses dataset. */
-export async function fetchProtocolExpenses(): Promise<IProtocolExpenses[]> {
-	return fetchJson<IProtocolExpenses[]>('https://api.llama.fi/_internal/operational-costs/expenses')
+export async function fetchProtocolExpenses(): Promise<Array<IProtocolExpenses>> {
+	return fetchJson<Array<IProtocolExpenses>>('https://api.llama.fi/_internal/operational-costs/expenses')
 }

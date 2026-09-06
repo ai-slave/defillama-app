@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { fetchProtocolOverviewMetrics, fetchProtocolTreasuryChart, fetchProtocolTvlChart } from '../api'
 import type { IProtocolMetricsV2Api } from '../api.types'
 
@@ -43,7 +43,7 @@ describe('ProtocolOverview API chart fetchers', () => {
 		fetchJsonMock.mockReset()
 	})
 
-	it('fetches and normalizes TVL value charts from the TVL namespace', async () => {
+	test('fetches and normalizes TVL value charts from the TVL namespace', async () => {
 		fetchJsonMock.mockResolvedValue([
 			[1, 10],
 			[2, 20]
@@ -60,7 +60,7 @@ describe('ProtocolOverview API chart fetchers', () => {
 		])
 	})
 
-	it('preserves an empty successful chart and lets upstream failures reject', async () => {
+	test('preserves an empty successful chart and lets upstream failures reject', async () => {
 		fetchJsonMock.mockResolvedValueOnce([])
 		await expect(fetchProtocolTvlChart({ protocol: 'aave' })).resolves.toEqual([])
 
@@ -68,7 +68,7 @@ describe('ProtocolOverview API chart fetchers', () => {
 		await expect(fetchProtocolTvlChart({ protocol: 'aave' })).rejects.toThrow('upstream unavailable')
 	})
 
-	it('canonicalizes empty, duplicate, and reordered direct TVL exclusions', async () => {
+	test('canonicalizes empty, duplicate, and reordered direct TVL exclusions', async () => {
 		fetchJsonMock.mockResolvedValue([])
 
 		await fetchProtocolTvlChart({ protocol: 'aave', tokensToExclude: ['', 'MNT', 'GT', 'MNT', ''] })
@@ -83,7 +83,7 @@ describe('ProtocolOverview API chart fetchers', () => {
 		expect(urls[2]).not.toContain('tokensToExclude')
 	})
 
-	it('keeps embedded hack amounts in whole USD and gives them explicit domain names', async () => {
+	test('keeps embedded hack amounts in whole USD and gives them explicit domain names', async () => {
 		const metrics = {
 			...standaloneMetricsFixture,
 			raises: [
@@ -130,7 +130,7 @@ describe('ProtocolOverview API chart fetchers', () => {
 		expect(result.raises?.[0]).not.toHaveProperty('valuation')
 	})
 
-	it('preserves parent and child identity, explicit nulls, and zero chain values', async () => {
+	test('preserves parent and child identity, explicit nulls, and zero chain values', async () => {
 		const parentFixture = {
 			id: 'parent#aave',
 			name: 'Aave',
@@ -215,7 +215,7 @@ describe('ProtocolOverview API chart fetchers', () => {
 		expect(childWithoutRegistrySlug).not.toHaveProperty('parentProtocolSlug')
 	})
 
-	it('fetches and normalizes TVL chain breakdown charts from the TVL namespace', async () => {
+	test('fetches and normalizes TVL chain breakdown charts from the TVL namespace', async () => {
 		fetchJsonMock.mockResolvedValue([
 			[1, { Ethereum: 10 }],
 			[2, { Ethereum: 20 }]
@@ -236,7 +236,7 @@ describe('ProtocolOverview API chart fetchers', () => {
 		])
 	})
 
-	it('fetches and normalizes treasury token breakdown charts from the treasury namespace', async () => {
+	test('fetches and normalizes treasury token breakdown charts from the treasury namespace', async () => {
 		fetchJsonMock.mockResolvedValue([
 			[1, { MKR: 10 }],
 			[2, { MKR: 20 }]

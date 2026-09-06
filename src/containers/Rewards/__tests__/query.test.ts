@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { readRewardsQuery, serializeRewardsQuery } from '../query'
 
 describe('rewards URL state', () => {
-	it('omits defaults and restores shared filters', () => {
+	test('omits defaults and restores shared filters', () => {
 		expect(serializeRewardsQuery(readRewardsQuery({}))).toEqual({
 			status: undefined,
 			reward: undefined,
@@ -21,7 +21,7 @@ describe('rewards URL state', () => {
 		})
 		expect(serializeRewardsQuery(selection)).toEqual(shared)
 	})
-	it('ignores invalid URL values, deduplicates rewards, and preserves valid zero-count choices', () => {
+	test('ignores invalid URL values, deduplicates rewards, and preserves valid zero-count choices', () => {
 		expect(
 			readRewardsQuery({
 				status: 'invalid',

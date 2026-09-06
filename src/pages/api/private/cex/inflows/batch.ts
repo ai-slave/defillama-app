@@ -30,7 +30,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		return res.status(413).json({ error: 'cexs must contain at most 100 entries' })
 	}
 
-	const cexRequests: Array<{ cexProtocolSlug: string; tokensToExclude: string[] }> = []
+	const cexRequests: Array<{ cexProtocolSlug: string; tokensToExclude: Array<string> }> = []
 	for (const cex of body.cexs) {
 		if (!cex || typeof cex !== 'object') {
 			return res.status(400).json({ error: 'cexs must include protocol slugs and token exclusions' })
@@ -52,7 +52,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		import('~/utils/metadata'),
 		import('~/containers/Cexs/server/routes')
 	])
-	const protocols: Array<{ protocol: string; tokensToExclude: string[] }> = []
+	const protocols: Array<{ protocol: string; tokensToExclude: Array<string> }> = []
 	const seenProtocolIds = new Set<string>()
 	for (const cex of cexRequests) {
 		const cexRoute = resolveCexParamFromMetadata(cex.cexProtocolSlug, metadataCache)

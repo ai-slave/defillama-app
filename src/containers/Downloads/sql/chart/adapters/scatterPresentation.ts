@@ -26,9 +26,9 @@ export interface ScatterPresentationPoint extends ScatterChartPoint {
 }
 
 export function buildScatterPresentation(
-	points: ScatterPresentationInput[],
+	points: Array<ScatterPresentationInput>,
 	seriesColors: Record<string, string>
-): ScatterPresentationPoint[] {
+): Array<ScatterPresentationPoint> {
 	const groupCounts = new Map<string, number>()
 	for (const point of points) {
 		if (!point.group) continue

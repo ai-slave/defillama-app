@@ -88,10 +88,10 @@ const ROW_HEADER_LABELS: Record<UnifiedRowHeaderType, string> = {
 interface RowGroupingOption {
 	id: string
 	label: string
-	headers: UnifiedRowHeaderType[]
+	headers: Array<UnifiedRowHeaderType>
 }
 
-const PROTOCOL_GROUPING_OPTIONS: RowGroupingOption[] = [
+const PROTOCOL_GROUPING_OPTIONS: Array<RowGroupingOption> = [
 	{ id: 'parent-protocol', label: 'Protocol Group › Protocol', headers: ['parent-protocol', 'protocol'] },
 	{ id: 'protocol-only', label: 'Protocol only', headers: ['protocol'] },
 	{ id: 'category-protocol', label: 'Category › Protocol', headers: ['category', 'parent-protocol', 'protocol'] },
@@ -105,16 +105,16 @@ const PROTOCOL_GROUPING_OPTIONS: RowGroupingOption[] = [
 
 const PROTOCOL_GROUPING_OPTION_MAP = new Map(PROTOCOL_GROUPING_OPTIONS.map((option) => [option.id, option]))
 const PROTOCOL_GROUPING_HEADERS = PROTOCOL_GROUPING_OPTIONS.map(({ id, label }) => ({ id, label }))
-const EMPTY_COLUMN_ORDER: string[] = []
+const EMPTY_COLUMN_ORDER: Array<string> = []
 const EMPTY_COLUMN_VISIBILITY: VisibilityState = {}
-const EMPTY_CUSTOM_COLUMNS: CustomColumnDefinition[] = []
-const EMPTY_CHAINS: string[] = []
+const EMPTY_CUSTOM_COLUMNS: Array<CustomColumnDefinition> = []
+const EMPTY_CHAINS: Array<string> = []
 
 type ConfigOverrides = Omit<Partial<UnifiedTableConfig>, 'filters'> & {
 	filters?: UnifiedTableFilters | undefined
 }
 
-const rowHeadersMatch = (a: UnifiedRowHeaderType[], b: UnifiedRowHeaderType[]) => {
+const rowHeadersMatch = (a: Array<UnifiedRowHeaderType>, b: Array<UnifiedRowHeaderType>) => {
 	if (a.length !== b.length) return false
 	for (let i = 0; i < a.length; i++) {
 		if (a[i] !== b[i]) return false
@@ -138,7 +138,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 	const canEditGrouping = !isReadOnly && PROTOCOL_GROUPING_OPTIONS.length > 0
 	const { columnOrder, columnVisibility, customColumns } = config
 	const selectedGroupingId = useMemo(() => {
-		if (!PROTOCOL_GROUPING_OPTIONS.length) {
+		if (PROTOCOL_GROUPING_OPTIONS.length === 0) {
 			return undefined
 		}
 		const match = PROTOCOL_GROUPING_OPTIONS.find((option) => rowHeadersMatch(option.headers, resolvedRowHeaders))
@@ -261,7 +261,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 			if (!canEditFilters) {
 				return
 			}
-			const currentFilters: UnifiedTableFilters = { ...(configuredFilters ?? {}) }
+			const currentFilters: UnifiedTableFilters = { ...configuredFilters }
 			let changed = false
 			for (const key of chip.clearKeys) {
 				if (key in currentFilters) {
@@ -272,7 +272,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 			if (!changed) {
 				return
 			}
-			const nextFilters = Object.keys(currentFilters).length ? currentFilters : undefined
+			const nextFilters = Object.keys(currentFilters).length > 0 ? currentFilters : undefined
 			persistConfigChanges(nextFilters ? { filters: nextFilters } : { filters: undefined })
 		},
 		[canEditFilters, configuredFilters, persistConfigChanges]
@@ -321,9 +321,9 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 		const insertIndex = nameIndex >= 0 ? nameIndex + 1 : 0
 		const headers = [...columnHeaders.slice(0, insertIndex), 'Chain', ...columnHeaders.slice(insertIndex)]
 		const customColumnsById = new Map((config.customColumns ?? []).map((column) => [column.id, column]))
-		const csvRows: string[][] = [headers]
+		const csvRows: Array<Array<string>> = [headers]
 		const appendLeafRow = (row: Extract<ProtocolTableRow, { nodeType: 'leaf' }>) => {
-			const rowData: string[] = []
+			const rowData: Array<string> = []
 			for (let index = 0; index <= leafColumns.length; index++) {
 				if (index === insertIndex) rowData.push(row.chain ?? '')
 				const column = leafColumns[index]
@@ -333,7 +333,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 		}
 		const appendLeafRows = (rows: ReturnType<(typeof table)['getPreExpandedRowModel']>['rows']) => {
 			for (const row of rows) {
-				if (row.original.nodeType === 'group' && row.subRows.length) appendLeafRows(row.subRows)
+				if (row.original.nodeType === 'group' && row.subRows.length > 0) appendLeafRows(row.subRows)
 				else if (row.original.nodeType === 'leaf') appendLeafRow(row.original)
 			}
 		}
@@ -343,13 +343,13 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 	}, [config.customColumns, unifiedTable.table])
 
 	const handleCsvClick = useCallback(() => {
-		if (!unifiedTable.leafRows.length) return
+		if (unifiedTable.leafRows.length === 0) return
 		handleExportClick()
 	}, [handleExportClick, unifiedTable.leafRows.length])
 
 	const handleExportAtLevel = useCallback(
 		(level: CsvExportLevel) => {
-			if (!unifiedTable.leafRows.length) return
+			if (unifiedTable.leafRows.length === 0) return
 
 			const table = unifiedTable.table
 			const leafColumns = table.getAllLeafColumns().filter((column) => column.getIsVisible())
@@ -360,7 +360,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 			}
 
 			const groupedRows = getRowsAtGroupLevel(table, level)
-			if (!groupedRows.length) {
+			if (groupedRows.length === 0) {
 				handleExportClick()
 				return
 			}
@@ -381,7 +381,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 	const title = 'Protocols overview'
 	const scopeDescription = useMemo(() => {
 		const selectedChains = (config.params?.chains ?? EMPTY_CHAINS).filter((value): value is string => Boolean(value))
-		if (!selectedChains.length || selectedChains.includes('All')) {
+		if (selectedChains.length === 0 || selectedChains.includes('All')) {
 			return 'Scope: All chains'
 		}
 		if (selectedChains.length <= 3) {
@@ -390,7 +390,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 		return `Scope: ${selectedChains.length} chains`
 	}, [config.params?.chains])
 	const rowHeadersSummary = useMemo(() => {
-		if (!resolvedRowHeaders.length) {
+		if (resolvedRowHeaders.length === 0) {
 			return null
 		}
 		const labels = resolvedRowHeaders.map((header) => ROW_HEADER_LABELS[header] ?? header)
@@ -420,7 +420,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 				onCsvExport={handleCsvClick}
 				onCsvExportLevel={handleExportAtLevel}
 				rowHeaders={resolvedRowHeaders}
-				isExportDisabled={!unifiedTable.leafRows.length}
+				isExportDisabled={unifiedTable.leafRows.length === 0}
 				isLoading={unifiedTable.isLoading}
 				onSearchChange={setSearchTerm}
 				filterChips={filterChips}
@@ -462,7 +462,7 @@ function UnifiedTable({ config, onEdit }: UnifiedTableProps) {
 						pageIndex={unifiedTable.pageIndex}
 						pageSize={unifiedTable.pageSize}
 					/>
-					{!unifiedTable.leafRows.length ? (
+					{unifiedTable.leafRows.length === 0 ? (
 						<div className="pointer-events-none absolute inset-0 z-5 flex items-center justify-center bg-linear-to-b from-transparent via-pro-cards-bg/90 to-pro-cards-bg">
 							<div className="pointer-events-auto rounded-md border border-pro-cards-border bg-pro-cards-bg px-4 py-3 text-sm text-pro-text-secondary">
 								No rows match your scope or filters.

@@ -17,8 +17,8 @@ import { Icon } from '~/ui/Icon'
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
 
 type ReorderableEditorialTagListProps = {
-	items: ArticleDocument[]
-	onReorder: (items: EditorialTagOrderItem[]) => void
+	items: Array<ArticleDocument>
+	onReorder: (items: Array<EditorialTagOrderItem>) => void
 	onRemove: (articleId: string) => void
 	pending: boolean
 	reorderPending: boolean

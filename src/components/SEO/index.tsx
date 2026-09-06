@@ -81,7 +81,7 @@ export const LinkPreviewCard = ({
 			resolvedValueHeader = 'Market Cap'
 		} else if (unlockPage) {
 			if (unlockAmount !== '$0') {
-				resolvedValueHeader = 'Next Unlock | ' + unlockAmount
+				resolvedValueHeader = `Next Unlock | ${unlockAmount}`
 			} else {
 				resolvedValueHeader = `Next Unlock`
 			}
@@ -141,7 +141,7 @@ export interface ISEOProps {
 	description: string | null | undefined
 	canonicalUrl: string | null | undefined
 	noIndex?: boolean
-	jsonLd?: Record<string, unknown> | Record<string, unknown>[]
+	jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>
 }
 
 function stringifyJsonLd(jsonLd: ISEOProps['jsonLd']): string {

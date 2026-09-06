@@ -17,7 +17,7 @@ type PreparationOptions = {
 	now?: () => number
 	prefix?: string
 	repoRoot?: string
-	steps?: PreparationStep[]
+	steps?: Array<PreparationStep>
 }
 
 type PreparationResult = {
@@ -50,7 +50,7 @@ export function createPreparationSteps({
 	logger = console,
 	prefix = '[dev:prepare]',
 	repoRoot = process.cwd()
-}: Omit<PreparationOptions, 'now' | 'steps'> = {}): PreparationStep[] {
+}: Omit<PreparationOptions, 'now' | 'steps'> = {}): Array<PreparationStep> {
 	const stepLogger = createStepLogger(logger, prefix)
 
 	return [

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { BlockExplorersResponse } from '~/api/types'
 import type {
 	LiquidationPosition,
@@ -34,7 +34,7 @@ const blockExplorers: BlockExplorersResponse = [
 	{
 		displayName: 'Arbitrum',
 		llamaChainId: 'arbitrum',
-		evmChainId: 42161,
+		evmChainId: 42_161,
 		blockExplorers: [{ name: 'Arbiscan', url: 'https://arbiscan.io' }]
 	},
 	{
@@ -103,7 +103,7 @@ const chartPosition = (
 })
 
 describe('LiquidationsV2 pure queries', () => {
-	it('builds overview data and preserves the approved partial snapshot projection', () => {
+	test('builds overview data and preserves the approved partial snapshot projection', () => {
 		const data = buildLiquidationsOverviewPageData(protocolsResponse, allResponse, metadata)
 		expect(data).toMatchObject({ protocolCount: 2, chainCount: 3, positionCount: 3, totalCollateralUsd: 6000 })
 
@@ -119,7 +119,7 @@ describe('LiquidationsV2 pure queries', () => {
 		})
 	})
 
-	it('uses producer ids as canonical routes and accepts display aliases', () => {
+	test('uses producer ids as canonical routes and accepts display aliases', () => {
 		const lookup = createProtocolMetadataLookup(metadata.protocolMetadata)
 		expect(resolveProtocolId('aave-v3', protocolsResponse.protocols, lookup)).toBe('aave-v3')
 		expect(resolveProtocolId('Aave V3', protocolsResponse.protocols, lookup)).toBe('aave-v3')
@@ -154,7 +154,7 @@ describe('LiquidationsV2 pure queries', () => {
 		expect(protocol.ownerBlockExplorers.map((entry) => entry.llamaChainId)).toEqual(['arbitrum', 'ethereum'])
 	})
 
-	it('aggregates a token alias family in one snapshot while keeping exact visibility', () => {
+	test('aggregates a token alias family in one snapshot while keeping exact visibility', () => {
 		const response: RawAllLiquidationsResponse = {
 			...allResponse,
 			tokens: {
@@ -185,7 +185,7 @@ describe('LiquidationsV2 pure queries', () => {
 		expect(hasTokenLiquidationsData('WBTC', protocolsResponse, btcOnly)).toBe(false)
 	})
 
-	it('requires the exact Token-page symbol before expanding its alias family', () => {
+	test('requires the exact Token-page symbol before expanding its alias family', () => {
 		const data = buildTokenLiquidationsSectionData('wstETH', protocolsResponse, allResponse, metadata)
 
 		expect(data).toMatchObject({ tokenSymbol: 'wstETH', positionCount: 3, totalCollateralUsd: 6000 })
@@ -195,7 +195,7 @@ describe('LiquidationsV2 pure queries', () => {
 		expect(buildTokenLiquidationsSectionData('wsteth', protocolsResponse, allResponse, metadata)).toBeNull()
 	})
 
-	it('preserves alias-merge row order and maximum dimension counts', () => {
+	test('preserves alias-merge row order and maximum dimension counts', () => {
 		const response: RawAllLiquidationsResponse = {
 			...allResponse,
 			tokens: {
@@ -227,7 +227,7 @@ describe('LiquidationsV2 pure queries', () => {
 		expect(data?.chainRows.find((row) => row.id === 'arbitrum')?.protocolCount).toBe(1)
 	})
 
-	it('preserves producer casing as distinct Liquidations-page identity', () => {
+	test('preserves producer casing as distinct Liquidations-page identity', () => {
 		const response: RawAllLiquidationsResponse = {
 			...allResponse,
 			data: {
@@ -243,7 +243,7 @@ describe('LiquidationsV2 pure queries', () => {
 		expect(data.distributionChart.tokens.map((token) => token.key)).toEqual(['usdt', 'USDT'])
 	})
 
-	it('builds exact id-keyed chart series and keeps zero liquidation price', () => {
+	test('builds exact id-keyed chart series and keeps zero liquidation price', () => {
 		const input = [
 			chartPosition('TOKEN-A', 0, 1, 100, 'alpha', 'Alpha', 'chain-two', 'Chain Two'),
 			chartPosition('TOKEN-A', 2, 2, 100, 'beta', 'Beta', 'chain-one', 'Chain One'),
@@ -280,7 +280,7 @@ describe('LiquidationsV2 pure queries', () => {
 		expect(input).toEqual(snapshot)
 	})
 
-	it('returns an empty chart only for an empty producer population', () => {
+	test('returns an empty chart only for an empty producer population', () => {
 		expect(buildLiquidationsDistributionChart([])).toEqual({ tokens: [] })
 	})
 })

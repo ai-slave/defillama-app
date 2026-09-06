@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildBorrowChart, buildSupplyChart } from './poolCharts'
 import type { BorrowMarketHistoryPoint, PoolHistoryPoint } from './types'
 
@@ -7,8 +7,8 @@ function apy(base: number | null, reward: number | null, total: number | null) {
 }
 
 describe('pool chart models', () => {
-	it('preserves supply component gaps and dollar magnitudes', () => {
-		const series: PoolHistoryPoint[] = [
+	test('preserves supply component gaps and dollar magnitudes', () => {
+		const series: Array<PoolHistoryPoint> = [
 			{
 				date: '2026-01-01',
 				tvl_usd: 100,
@@ -37,8 +37,8 @@ describe('pool chart models', () => {
 		expect(model?.lines[0]?.values).toEqual([100, null])
 	})
 
-	it('preserves borrow components, net averages, and liquidity series', () => {
-		const series: BorrowMarketHistoryPoint[] = [
+	test('preserves borrow components, net averages, and liquidity series', () => {
+		const series: Array<BorrowMarketHistoryPoint> = [
 			{
 				date: '2026-01-01',
 				total_borrow_usd: 40,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CEXS_PAGE_METADATA } from '~/pages/cexs'
 import { EXCHANGES_PAGE_METADATA } from '~/pages/exchanges'
 import { EXCHANGE_RESEARCH_PAGE_METADATA } from '~/pages/exchanges/charts'
@@ -7,7 +7,7 @@ import { MICA_PAGE_METADATA } from '~/pages/mica'
 import { RAMP_PAGE_METADATA } from '~/pages/ramp'
 
 describe('Exchanges page metadata', () => {
-	it('uses the shared Exchanges product breadcrumb with route-specific identity', () => {
+	test('uses the shared Exchanges product breadcrumb with route-specific identity', () => {
 		expect([
 			EXCHANGES_PAGE_METADATA.pageName,
 			CEXS_PAGE_METADATA.pageName,

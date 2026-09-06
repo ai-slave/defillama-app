@@ -3,7 +3,7 @@ import { fetchCategoryCoinPrices, fetchCategoryInfo, fetchCategoryPerformance, f
 import type { ICategoryInfoApiItem, PriceEntry, TimeSeriesEntry } from './api.types'
 import type { CategoryPerformanceProps, IPctChangeRow, PerformanceTimeSeries } from './types'
 
-export async function getCategoryInfo(): Promise<ICategoryInfoApiItem[]> {
+export async function getCategoryInfo(): Promise<Array<ICategoryInfoApiItem>> {
 	return fetchCategoryInfo()
 }
 
@@ -49,7 +49,7 @@ export async function getCategoryPerformance(): Promise<CategoryPerformanceProps
 
 	const [performanceEntries, info] = await Promise.all([
 		Promise.all(
-			periods.map(async (period): Promise<[string, TimeSeriesEntry[]]> => [
+			periods.map(async (period): Promise<[string, Array<TimeSeriesEntry>]> => [
 				period,
 				await fetchCategoryPerformance(period)
 			])
@@ -59,7 +59,7 @@ export async function getCategoryPerformance(): Promise<CategoryPerformanceProps
 
 	const performanceTimeSeries: PerformanceTimeSeries = Object.fromEntries(performanceEntries)
 
-	const pctChanges: IPctChangeRow[] = info.map((i) => ({
+	const pctChanges: Array<IPctChangeRow> = info.map((i) => ({
 		...i,
 		change1W: getCumulativeChangeOfPeriod(performanceTimeSeries, '7', i.name),
 		change1M: getCumulativeChangeOfPeriod(performanceTimeSeries, '30', i.name),
@@ -76,11 +76,11 @@ export async function getCategoryPerformance(): Promise<CategoryPerformanceProps
 }
 
 export function calculateCumulativePercentageChange(
-	data: PriceEntry[],
+	data: Array<PriceEntry>,
 	mapping: Record<string, string>,
 	timeframe: number | 'ytd',
 	currentTimeMs: number = Date.now()
-): TimeSeriesEntry[] {
+): Array<TimeSeriesEntry> {
 	// The API groups rows by coin and orders each coin's timestamps ascending.
 	// Keep those streams intact instead of globally sorting the full response.
 	const groupedData = new Map<string, Array<{ timestamp: number; price: number }>>()
@@ -147,7 +147,7 @@ export async function getCoinPerformance(categoryId: string): Promise<CategoryPe
 		ytd: tsYtd
 	}
 
-	const pctChanges: IPctChangeRow[] = coinInfo.map((i) => ({
+	const pctChanges: Array<IPctChangeRow> = coinInfo.map((i) => ({
 		...i,
 		change1W: getCumulativeChangeOfPeriod(performanceTimeSeries, '7', i.name),
 		change1M: getCumulativeChangeOfPeriod(performanceTimeSeries, '30', i.name),
@@ -159,7 +159,7 @@ export async function getCoinPerformance(categoryId: string): Promise<CategoryPe
 		pctChanges,
 		performanceTimeSeries,
 		areaChartLegend: (() => {
-			const legend: string[] = []
+			const legend: Array<string> = []
 			for (const i of coinInfo) {
 				if (i.name !== 'Bitcoin' && i.name !== 'Ethereum' && i.name !== 'Solana') legend.push(i.name)
 			}

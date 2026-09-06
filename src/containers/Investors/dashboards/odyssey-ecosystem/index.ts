@@ -13,7 +13,7 @@ const Pegs = lazy(() => import('./Pegs'))
 // Kept as a constant because the tab list is static config (can't await the metadata fetch).
 const OCTAV_TREASURY_URL = 'https://metronome.octav.fi/app/Treasury?board=overview'
 
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'tvl', label: 'TVL', component: Tvl },
 	{ id: 'revenue', label: 'Revenue', component: Revenue },
 	{ id: 'incentives', label: 'Incentives', component: Incentives },

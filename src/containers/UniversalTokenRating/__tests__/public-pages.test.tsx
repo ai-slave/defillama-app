@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => <>{children}</> }))
 vi.mock('~/containers/UniversalTokenRating', () => ({
@@ -28,7 +28,7 @@ function renderPage(Page: unknown, props: Record<string, unknown> = {}) {
 }
 
 describe('public UTR pages', () => {
-	it('renders every route without an auth or preview access gate', () => {
+	test('renders every route without an auth or preview access gate', () => {
 		const universe = { rows: [], scoredCount: 0, totalCount: 0 }
 
 		expect(renderPage(UniversalTokenRatingPage, { universe, topMovers: [], scoringConfig: null })).toContain(

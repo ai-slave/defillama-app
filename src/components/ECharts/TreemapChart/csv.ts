@@ -2,9 +2,9 @@ import type { ChartCsvDataset } from '~/components/ChartExport/ChartCsvExportBut
 import type { TreemapNode } from './types'
 
 /** Flatten treemap leaves once; parent nodes are presentation totals, not additional rows. */
-export function buildTreemapCsvDataset(treeData: readonly TreemapNode[]): ChartCsvDataset {
+export function buildTreemapCsvDataset(treeData: ReadonlyArray<TreemapNode>): ChartCsvDataset {
 	const source: Array<[path: string, name: string, value: number]> = []
-	const visit = (node: TreemapNode, parentNames: readonly string[]) => {
+	const visit = (node: TreemapNode, parentNames: ReadonlyArray<string>) => {
 		const names = [...parentNames, node.name]
 		if (node.children?.length) {
 			for (const child of node.children) visit(child, names)

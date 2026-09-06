@@ -60,7 +60,7 @@ interface PromptInputProps {
 	researchUsage?: ResearchUsage | null
 	factCheckedUsage?: FactCheckedUsage | null
 	onFactCheckedGated?: () => void
-	droppedFiles?: File[] | null
+	droppedFiles?: Array<File> | null
 	clearDroppedFiles?: () => void
 	externalDragging?: boolean
 	onOpenAlerts?: () => void
@@ -285,7 +285,7 @@ export function PromptInput({
 	}, [])
 
 	const prepareImagesForSubmit = useCallback(async (imagesToSend: Array<{ file: File; isPasted?: boolean }>) => {
-		const imagePromises: Promise<{ data: string; mimeType: string; filename: string; isPasted?: boolean }>[] = []
+		const imagePromises: Array<Promise<{ data: string; mimeType: string; filename: string; isPasted?: boolean }>> = []
 		for (let i = 0; i < imagesToSend.length; i++) {
 			const file = imagesToSend[i].file
 			imagePromises.push(

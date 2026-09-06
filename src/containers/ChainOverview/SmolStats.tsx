@@ -54,7 +54,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									</p>
 								) : null}
 							</div>
-							<UpcomingUnlocksChart data={unlocks.chart} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
+							<UpcomingUnlocksChart data={unlocks.chart} className="my-auto h-[53px] md:h-[132px] xl:h-[53px]" />
 						</Card>
 					) : null}
 					{dexsChart && dexsChart.length > 0 ? (
@@ -81,7 +81,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									</p>
 								) : null}
 							</div>
-							<SmolBarChart series={dexsChart} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
+							<SmolBarChart series={dexsChart} className="my-auto h-[53px] md:h-[132px] xl:h-[53px]" />
 						</Card>
 					) : null}
 					{etfs && etfs.length > 0 ? (
@@ -108,7 +108,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 									</p>
 								) : null}
 							</div>
-							<SmolBarChart series={etfs} className={'my-auto h-[53px] md:h-[132px] xl:h-[53px]'} />
+							<SmolBarChart series={etfs} className="my-auto h-[53px] md:h-[132px] xl:h-[53px]" />
 						</Card>
 					) : null}
 					{datInflows && datInflows.chart.length > 0 ? (
@@ -134,7 +134,7 @@ export const SmolStats = (props: IChainOverviewData) => {
 							</div>
 							<SmolBarChart
 								series={datInflows.chart}
-								className={'my-auto h-[53px] md:h-[132px] xl:h-[156px]'}
+								className="my-auto h-[53px] md:h-[132px] xl:h-[156px]"
 								groupBy="weekly"
 							/>
 						</Card>

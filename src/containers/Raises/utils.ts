@@ -5,7 +5,7 @@ import type { IRaisesFilters } from './types'
 type RaiseFilterItem = Pick<Raise, 'leadInvestors' | 'otherInvestors' | 'round' | 'category' | 'chains' | 'amountUsd'>
 
 type GetRaisesFiltersListArgs = {
-	raises: RaiseFilterItem[]
+	raises: Array<RaiseFilterItem>
 	investorName?: string | null
 }
 

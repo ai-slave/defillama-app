@@ -17,9 +17,9 @@ const LEGACY_TOKEN_SPECIALS: Record<string, string | null> = {
 // Shared symbol→option-key resolution. `bySymbol` is lowercased symbol → option key
 // (built from the served vocabulary on the server, or from the page's TokenOption[] on
 // the client). Values already carrying a `prefix:` are option keys and pass through.
-export function normalizeLegacyTokenList(tokens: string[], bySymbol: Map<string, string>): string[] {
+export function normalizeLegacyTokenList(tokens: Array<string>, bySymbol: Map<string, string>): Array<string> {
 	if (tokens.every((value) => value.includes(':'))) return tokens
-	const normalized: string[] = []
+	const normalized: Array<string> = []
 	for (const value of tokens) {
 		if (value.includes(':')) {
 			normalized.push(value)
@@ -37,7 +37,7 @@ export function normalizeLegacyTokenList(tokens: string[], bySymbol: Map<string,
 	return normalized
 }
 
-export function normalizeLegacyTokens(tokens: string[], meta: YieldsMeta): string[] {
+export function normalizeLegacyTokens(tokens: Array<string>, meta: YieldsMeta): Array<string> {
 	if (tokens.every((value) => value.includes(':'))) return tokens
 	const bySymbol = new Map<string, string>()
 	for (const family of meta.tokens.families) bySymbol.set(family.symbol.toLowerCase(), family.value)
@@ -49,7 +49,7 @@ export function normalizeLegacyTokens(tokens: string[], meta: YieldsMeta): strin
 // Client counterpart: the page's token search vocabulary is served as `[name, value]`
 // tuples (value = `asset:*` / `family:*` option key). Assets win over families for a
 // shared symbol, mirroring normalizeLegacyTokens.
-export function tokenBySymbolFromOptions(tokens: readonly TokenOption[]): Map<string, string> {
+export function tokenBySymbolFromOptions(tokens: ReadonlyArray<TokenOption>): Map<string, string> {
 	const bySymbol = new Map<string, string>()
 	for (const [name, value] of tokens) if (value.startsWith('family:')) bySymbol.set(name.toLowerCase(), value)
 	for (const [name, value] of tokens) if (value.startsWith('asset:')) bySymbol.set(name.toLowerCase(), value)
@@ -70,7 +70,7 @@ export function legacySortBy(sortBy: string | undefined): string | undefined {
 
 // v1 filtered protocols via `project=`; the rebuilt pages emit `protocol=`. The server
 // reads `protocol` canonically with `project` as a legacy fallback for direct API hits.
-export function legacyProtocolParam(query: ApiQuery): string | string[] | undefined {
+export function legacyProtocolParam(query: ApiQuery): string | Array<string> | undefined {
 	return query.protocol ?? query.project
 }
 
@@ -81,7 +81,7 @@ export function legacyProtocolParam(query: ApiQuery): string | string[] | undefi
 
 export type LegacyYieldsPage = 'earn' | 'borrow' | 'loop'
 
-type LegacyQuery = Record<string, string | string[] | undefined>
+type LegacyQuery = Record<string, string | Array<string> | undefined>
 
 // Dead v1 `attribute=` values dropped at normalize (million_dollar is handled separately →
 // minTvl); everything else — including the live vocabulary — is kept as-is.
@@ -124,22 +124,22 @@ const DEAD_PARAMS = [
 	'excludeAttribute'
 ]
 
-function asList(value: string | string[] | undefined): string[] {
+function asList(value: string | Array<string> | undefined): Array<string> {
 	if (typeof value === 'string') return [value]
 	return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : []
 }
 
-function sameList(a: string[], b: string[]): boolean {
+function sameList(a: Array<string>, b: Array<string>): boolean {
 	if (a.length !== b.length) return false
 	for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false
 	return true
 }
 
-function isTrue(value: string | string[] | undefined): boolean {
+function isTrue(value: string | Array<string> | undefined): boolean {
 	return (Array.isArray(value) ? value[0] : value) === 'true'
 }
 
-function packList(values: string[]): string | string[] {
+function packList(values: Array<string>): string | Array<string> {
 	return values.length === 1 ? values[0]! : values
 }
 
@@ -174,7 +174,7 @@ export function canonicalizeLegacyYieldsQuery(
 	// attribute=million_dollar → minTvl floor; map renamed attributes; drop dead values; keep the rest.
 	if (next.attribute !== undefined) {
 		const attributes = asList(next.attribute)
-		const kept: string[] = []
+		const kept: Array<string> = []
 		let million = false
 		let attributesChanged = false
 		for (const attribute of attributes) {

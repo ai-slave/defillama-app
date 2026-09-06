@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { UnifiedTableConfig } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { useUnifiedTableWizard } from './useUnifiedTableWizard'
 
@@ -11,7 +11,7 @@ function Probe({ config }: { config?: UnifiedTableConfig }) {
 }
 
 describe('useUnifiedTableWizard normalization', () => {
-	it('hydrates persisted edit state and draft config with the same canonical headers and sorting', () => {
+	test('hydrates persisted edit state and draft config with the same canonical headers and sorting', () => {
 		const sorting = [{ id: 'fees24h', desc: false }]
 		const config: UnifiedTableConfig = {
 			id: 'persisted',
@@ -31,7 +31,7 @@ describe('useUnifiedTableWizard normalization', () => {
 		expect(captured?.derived.draftConfig.defaultSorting).toBe(captured?.state.sorting)
 	})
 
-	it('creates preview state with canonical preset headers', () => {
+	test('creates preview state with canonical preset headers', () => {
 		renderToStaticMarkup(<Probe />)
 
 		expect(captured?.state.rowHeaders.at(-1)).toBe('protocol')

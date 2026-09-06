@@ -28,7 +28,7 @@ export default function ActiveLoans(props: InferGetStaticPropsType<typeof getSta
 		<Layout
 			title="Active Loans Rankings - DeFi Lending Analytics - DefiLlama"
 			description="Track active loans across DeFi lending protocols. Compare active loan value in Aave, Compound, MakerDAO, and 100+ lending protocols on Ethereum, Solana, Base, and all major chains."
-			canonicalUrl={`/active-loans`}
+			canonicalUrl="/active-loans"
 			pageName={pageName}
 		>
 			<ExtraTvlByChain {...props} />

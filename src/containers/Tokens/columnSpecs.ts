@@ -24,7 +24,7 @@ export interface TokensColumnSpec {
 
 export const NAME_COLUMN_WIDTH = 184
 
-export const TOKENS_HIDEABLE_COLUMN_SPECS: TokensColumnSpec[] = [
+export const TOKENS_HIDEABLE_COLUMN_SPECS: Array<TokensColumnSpec> = [
 	{
 		id: 'price',
 		header: 'Price',

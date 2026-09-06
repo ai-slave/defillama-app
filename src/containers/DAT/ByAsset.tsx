@@ -321,7 +321,7 @@ function MNAVChart({
 }: {
 	title: string
 	data: IDATOverviewDataByAssetProps['mNAVRealizedChart']
-	institutionsNames: string[]
+	institutionsNames: Array<string>
 	metadata: IDATOverviewDataByAssetProps['metadata']
 }) {
 	const {

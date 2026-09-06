@@ -13,19 +13,19 @@ export interface IExtraTvlProtocolRow {
 	logo: string | null
 	slug: string
 	category: string | null
-	chains: string[]
+	chains: Array<string>
 	deprecated?: boolean
 	value: number | null
 	change_1m: number | null
-	subRows?: IExtraTvlProtocolRow[]
+	subRows?: Array<IExtraTvlProtocolRow>
 }
 
 export interface IExtraTvlByChainPageData {
-	protocols: IExtraTvlProtocolRow[]
+	protocols: Array<IExtraTvlProtocolRow>
 	chain: string
 	chains: Array<{ label: string; to: string }>
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	totalValue: number
 	change24h: number | null
 	metric: ExtraTvlMetric
@@ -42,17 +42,17 @@ export interface ITokenMetricProtocolRow {
 	logo: string | null
 	slug: string
 	category: string | null
-	chains: string[]
+	chains: Array<string>
 	deprecated?: boolean
 	value: number | null
-	subRows?: ITokenMetricProtocolRow[]
+	subRows?: Array<ITokenMetricProtocolRow>
 }
 
 export interface IProtocolsWithTokensByChainPageData {
-	protocols: ITokenMetricProtocolRow[]
+	protocols: Array<ITokenMetricProtocolRow>
 	chain: string
 	chains: Array<{ label: string; to: string }>
-	categories: string[]
+	categories: Array<string>
 	type: TokenMetricType
 }
 
@@ -73,7 +73,7 @@ export interface IRecentProtocol {
 	logo: string | null
 	url: string
 	category: string
-	chains: string[]
+	chains: Array<string>
 	chainTvls: Record<string, TvlEntry>
 	tvl: number | null
 	tvlPrevDay: number | null
@@ -83,7 +83,7 @@ export interface IRecentProtocol {
 	listedAt: number
 	defillamaId: string
 	deprecated?: boolean
-	forkedFrom?: string[]
+	forkedFrom?: Array<string>
 	/** Finite protocol-list TVL sections extracted from chainTvls. */
 	extraTvl: Partial<Record<ProtocolListAdditiveTvlKey, TvlEntry>>
 	/** Only present on airdrops page. */
@@ -91,9 +91,9 @@ export interface IRecentProtocol {
 }
 
 export interface IRecentProtocolsPageData {
-	protocols: IRecentProtocol[]
-	chainList: string[]
-	categories: string[]
+	protocols: Array<IRecentProtocol>
+	chainList: Array<string>
+	categories: Array<string>
 	forkedList: Record<string, boolean>
 	claimableAirdrops?: Array<{ name: string; page: string; title?: string }>
 }

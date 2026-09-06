@@ -10,8 +10,8 @@ import { RESEARCH_NEWSLETTER_ARCHIVE_URL, type ResearchNewsletterItem } from '~/
 import type { ArticleDocument } from '~/containers/Articles/types'
 
 interface ResearchNewslettersProps {
-	newsletters: ResearchNewsletterItem[]
-	interviews: ArticleDocument[]
+	newsletters: Array<ResearchNewsletterItem>
+	interviews: Array<ArticleDocument>
 }
 
 interface NewsletterCardProps {

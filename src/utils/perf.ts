@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import type { GetStaticProps, GetStaticPropsContext, GetStaticPropsResult } from 'next'
 import {
 	attachCacheJitterMeta,
@@ -73,7 +73,7 @@ export const withPerformanceLogging = <T extends { [key: string]: any }, P exten
 		const run = async () =>
 			runPerformanceLoggedStaticProps(filename, getStaticPropsFunction, context, requestPath, options)
 		const attributes = {
-			...(staticRouteTelemetryAttributes(context.params) ?? {}),
+			...staticRouteTelemetryAttributes(context.params),
 			...(context.revalidateReason ? { revalidate_reason: context.revalidateReason } : null)
 		}
 		return withStaticRouteTelemetry(filename, run, attributes, requestPath)
@@ -158,7 +158,7 @@ type FetchOverCacheOptions = RequestInit & { ttl?: string | number; silent?: boo
 
 export const fetchOverCache = async (url: RequestInfo | URL, options?: FetchOverCacheOptions): Promise<Response> => {
 	const start = Date.now()
-	const cacheKey = 'defillama-cache:' + url.toString().replace(/^https?:\/\//, '')
+	const cacheKey = `defillama-cache:${url.toString().replace(/^https?:\/\//, '')}`
 	const cache = REDIS_URL ? await getCache(cacheKey) : null
 
 	if (process.env.NODE_ENV === 'development') {
@@ -218,12 +218,12 @@ export const fetchOverCache = async (url: RequestInfo | URL, options?: FetchOver
 					'Content-Type': ContentType
 				})
 			}
-		} catch (err) {
-			recordRuntimeError(err, 'outboundFetch', { url: String(url), duration_ms: Date.now() - start, status: 504 })
+		} catch (error) {
+			recordRuntimeError(error, 'outboundFetch', { url: String(url), duration_ms: Date.now() - start, status: 504 })
 			StatusCode = 504
 			responseInit = {
 				status: StatusCode,
-				statusText: 'Gateway Timeout after ' + timeout + 'ms',
+				statusText: `Gateway Timeout after ${timeout}ms`,
 				headers: new Headers({
 					'Content-Type': 'text/plain'
 				})

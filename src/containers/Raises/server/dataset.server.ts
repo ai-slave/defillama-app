@@ -5,7 +5,7 @@ import { DATASET_SNAPSHOT_CONTRACT } from '~/server/datasetSnapshots/contract'
 import { datasetSnapshotReader } from '~/server/datasetSnapshots/reader.server'
 import { findRaisesByDefillamaId } from './dataset.transform'
 
-export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<Raise[]> {
+export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<Array<Raise>> {
 	const response = await fetchRaises()
 	return findRaisesByDefillamaId(response, defillamaId)
 }

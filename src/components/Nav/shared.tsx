@@ -49,7 +49,7 @@ export function LinkToPage({
 	isOld?: boolean
 }) {
 	const cleanAsPath = asPath.split('/?')[0].split('?')[0]
-	const isActive = isOld ? route === cleanAsPath : cleanAsPath === route || cleanAsPath.startsWith(route + '/')
+	const isActive = isOld ? route === cleanAsPath : cleanAsPath === route || cleanAsPath.startsWith(`${route}/`)
 	const isExternal = route.startsWith('http')
 
 	return (

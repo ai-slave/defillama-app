@@ -33,11 +33,11 @@ function dateRangeLabel(start: string | undefined, end: string | undefined) {
 }
 
 export function buildRewardsPageData(
-	entries: RewardsApiRecord[],
+	entries: Array<RewardsApiRecord>,
 	metadata: Record<string, IProtocolMetadata>,
 	popularity: RewardsPopularity
 ): Pick<RewardsPageProps, 'programs'> {
-	const programs: RewardProgram[] = []
+	const programs: Array<RewardProgram> = []
 	const missingMetadata = new Set<string>()
 	const featuredRankByProgramId = new Map<string, number>()
 	const programIdByFeaturedRank = new Map<number, string>()
@@ -67,7 +67,7 @@ export function buildRewardsPageData(
 		const protocol = metadata[entry.defillama_id]
 		if (!protocol) missingMetadata.add(entry.defillama_id)
 		const name = protocol?.displayName ?? protocol?.name ?? entry.protocol
-		const sources: RewardSource[] = []
+		const sources: Array<RewardSource> = []
 		for (const value of entry.source_url?.split('|') ?? []) {
 			const source = publicHttpUrl(value)
 			if (source && !sources.some((existing) => existing.url === source.url)) sources.push(source)
@@ -116,7 +116,7 @@ export function buildRewardsPageData(
 			a.programId.localeCompare(b.programId)
 		)
 	})
-	if (missingMetadata.size) {
+	if (missingMetadata.size > 0) {
 		recordDomainEvent('rewards.missing_metadata', 'warn', 'rewards', 'Rewards programs missing protocol metadata', {
 			defillama_ids: [...missingMetadata]
 		})
@@ -126,7 +126,7 @@ export function buildRewardsPageData(
 
 export async function getRewardsPageData(): Promise<RewardsPageProps> {
 	const [entries, { default: metadata }, popularity] = await Promise.all([
-		fetchJson<RewardsApiRecord[]>(`${SERVER_URL}/rewards`),
+		fetchJson<Array<RewardsApiRecord>>(`${SERVER_URL}/rewards`),
 		import('~/utils/metadata'),
 		fetchJson<RewardsPopularity>(`${DATASETS_SERVER_URL}/rewards-popularity.json`)
 	])

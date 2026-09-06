@@ -39,7 +39,7 @@ export interface OverviewAPIResponse {
 			valueLockedInDefiUsd: FormattedValue
 		}
 	}
-	protocolRankings?: ProtocolRankingEntry[]
+	protocolRankings?: Array<ProtocolRankingEntry>
 }
 
 export interface NetworkAPIResponse {
@@ -73,8 +73,8 @@ interface DistributionChart {
 	title?: string
 	subtitle?: string
 	tooltip?: string
-	labels: string[]
-	series: { name: string; data: number[] }[]
+	labels: Array<string>
+	series: Array<{ name: string; data: Array<number> }>
 }
 
 export interface FAssetsAPIResponse {
@@ -114,8 +114,8 @@ export interface FirePoolAPI {
 	liveSince?: string
 	feesChart?: UpstreamChart
 	fdcRewardsChart?: UpstreamChart
-	wallets?: FirePoolWallet[]
-	revenueSources?: { section: string; name: string; totalUsd: number; formatted: string }[]
+	wallets?: Array<FirePoolWallet>
+	revenueSources?: Array<{ section: string; name: string; totalUsd: number; formatted: string }>
 	kpis?: {
 		totalCollectedUsd: FormattedValue
 		collected30dUsd: FormattedValue
@@ -172,7 +172,7 @@ export interface TokenomicsAPIResponse {
 	}
 }
 
-const DAILY_BURN_CHART: MultiSeriesChartSeriesConfig[] = [
+const DAILY_BURN_CHART: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'bar',
 		name: 'Daily Burn',
@@ -182,7 +182,7 @@ const DAILY_BURN_CHART: MultiSeriesChartSeriesConfig[] = [
 	}
 ]
 
-const CUMULATIVE_BURN_CHART: MultiSeriesChartSeriesConfig[] = [
+const CUMULATIVE_BURN_CHART: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'line',
 		name: 'Cumulative Burn',
@@ -191,7 +191,7 @@ const CUMULATIVE_BURN_CHART: MultiSeriesChartSeriesConfig[] = [
 	}
 ]
 
-const PER_EPOCH_CHART: MultiSeriesChartSeriesConfig[] = [
+const PER_EPOCH_CHART: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'bar',
 		name: 'Per Epoch',
@@ -202,7 +202,7 @@ const PER_EPOCH_CHART: MultiSeriesChartSeriesConfig[] = [
 ]
 
 const BURN_VS_EMIT_SERIES = ['FLR Emitted', 'FLR Burned', 'Net Inflation'] as const
-const BURN_VS_EMIT_CHARTS: MultiSeriesChartSeriesConfig[] = [
+const BURN_VS_EMIT_CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'bar',
 		name: 'FLR Emitted',
@@ -256,8 +256,8 @@ function buildTvlChart(chart: UpstreamChart, fallbackTitle: string) {
 }
 
 export function buildFlareOverviewData(data: OverviewAPIResponse) {
-	const stableSeries: UpstreamSeries[] = []
-	const stableChartConfigs: MultiSeriesChartSeriesConfig[] = []
+	const stableSeries: Array<UpstreamSeries> = []
+	const stableChartConfigs: Array<MultiSeriesChartSeriesConfig> = []
 	for (const series of data.stablecoins.stablecoinChart.series) {
 		if (/total/i.test(series.name)) continue
 		stableSeries.push(series)
@@ -320,7 +320,7 @@ function buildNetworkChart(chart: UpstreamChart, fallbackName: string, color: st
 				color,
 				stack: 'a'
 			}
-		] satisfies MultiSeriesChartSeriesConfig[]
+		] satisfies Array<MultiSeriesChartSeriesConfig>
 	}
 }
 
@@ -396,7 +396,7 @@ export function buildFlareFAssetsData(data: FAssetsAPIResponse) {
 	const locked = data.lockedOverTimeChart
 	// FXRP units (Flare vs. all networks) since the Sept-2026 Dune dashboard
 	// migration — the old dual USD/FXRP-unit shape no longer applies.
-	const lockedSeries: UpstreamSeries[] = locked?.series ?? []
+	const lockedSeries: Array<UpstreamSeries> = locked?.series ?? []
 
 	let lockedChart = null
 	if (locked && lockedSeries.length > 0) {
@@ -591,7 +591,7 @@ export function buildFlareTokenomicsData(data: TokenomicsAPIResponse) {
 		cumulativeBurnSource.push([timestamp, cumulativeBurn?.data[i] ?? 0])
 	}
 
-	const perEpochSeries: UpstreamSeries[] = []
+	const perEpochSeries: Array<UpstreamSeries> = []
 	for (const series of emissions.emissionsChart.series) {
 		if (series.name === 'Per Epoch') perEpochSeries.push(series)
 	}
@@ -604,7 +604,7 @@ export function buildFlareTokenomicsData(data: TokenomicsAPIResponse) {
 		else if (series.name === BURN_VS_EMIT_SERIES[1] && !burnedSeries) burnedSeries = series
 		else if (series.name === BURN_VS_EMIT_SERIES[2] && !netInflationSeries) netInflationSeries = series
 	}
-	const burnVsEmitSeries: UpstreamSeries[] = []
+	const burnVsEmitSeries: Array<UpstreamSeries> = []
 	if (emittedSeries) burnVsEmitSeries.push(emittedSeries)
 	if (burnedSeries) burnVsEmitSeries.push(burnedSeries)
 	if (netInflationSeries) burnVsEmitSeries.push(netInflationSeries)

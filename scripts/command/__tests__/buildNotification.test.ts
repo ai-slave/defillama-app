@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { sendBuildNotification } from '../buildNotification'
 import type { BuildResult } from '../buildResult'
 import { testEnv } from './testEnv'
@@ -6,7 +6,7 @@ import { testEnv } from './testEnv'
 const failedBuild: BuildResult = {
 	branchName: 'main',
 	buildId: 'id',
-	durationMs: 1_000,
+	durationMs: 1000,
 	exitCode: 1,
 	logPath: 'build.log',
 	startedAt: '2026-01-01T00:00:00.000Z',
@@ -14,7 +14,7 @@ const failedBuild: BuildResult = {
 }
 
 describe('build notification adapter', () => {
-	it('skips when requested by env', async () => {
+	test('skips when requested by env', async () => {
 		const fetchImpl = vi.fn()
 
 		const result = await sendBuildNotification({
@@ -28,7 +28,7 @@ describe('build notification adapter', () => {
 		expect(fetchImpl).not.toHaveBeenCalled()
 	})
 
-	it('posts summary, build log URL, and failure mentions', async () => {
+	test('posts summary, build log URL, and failure mentions', async () => {
 		const fetchImpl = vi
 			.fn()
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
@@ -56,7 +56,7 @@ describe('build notification adapter', () => {
 		expect(fetchImpl.mock.calls[0][1]?.body).toContain('URL: https://core.example')
 	})
 
-	it('uses Coolify identifiers when no custom deployment name is set', async () => {
+	test('uses Coolify identifiers when no custom deployment name is set', async () => {
 		const fetchImpl = vi.fn().mockResolvedValue(new Response('', { status: 200 }))
 
 		await sendBuildNotification({
@@ -72,7 +72,7 @@ describe('build notification adapter', () => {
 		expect(fetchImpl.mock.calls[0][1]?.body).toContain('Deployment: defillama-app-core')
 	})
 
-	it('keeps notification successful when build-log upload fails', async () => {
+	test('keeps notification successful when build-log upload fails', async () => {
 		const fetchImpl = vi
 			.fn()
 			.mockResolvedValueOnce(new Response('', { status: 200 }))
@@ -95,7 +95,7 @@ describe('build notification adapter', () => {
 		expect(fetchImpl).toHaveBeenCalledTimes(3)
 	})
 
-	it('keeps notification successful when webhook posting throws', async () => {
+	test('keeps notification successful when webhook posting throws', async () => {
 		const fetchImpl = vi.fn().mockRejectedValueOnce(new Error('network down'))
 
 		const result = await sendBuildNotification({

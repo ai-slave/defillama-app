@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { fetchJson } from '~/utils/async'
 import {
 	fetchBridgeDayStats,
@@ -53,7 +53,7 @@ beforeEach(() => {
 })
 
 describe('getBridgeChainNetInflows', () => {
-	it('returns the latest completed UTC-day net flow without fetching bridge overview data', async () => {
+	test('returns the latest completed UTC-day net flow without fetching bridge overview data', async () => {
 		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { XDC: ['xdc-network'] } })
 		vi.mocked(fetchBridgeVolumeByChain).mockResolvedValue([
 			{ date: Date.parse('2026-04-27T00:00:00Z') / 1e3, depositUSD: 12, withdrawUSD: 3, depositTxs: 1, withdrawTxs: 1 },
@@ -67,7 +67,7 @@ describe('getBridgeChainNetInflows', () => {
 		expect(fetchBridgeVolumeByChain).toHaveBeenCalledWith('XDC')
 	})
 
-	it.each([
+	test.each([
 		{ label: 'negative', depositUSD: 5, withdrawUSD: 12, expected: -7 },
 		{ label: 'zero', depositUSD: 5, withdrawUSD: 5, expected: 0 },
 		{ label: 'deposit-only', depositUSD: 5, withdrawUSD: null, expected: null },
@@ -84,7 +84,7 @@ describe('getBridgeChainNetInflows', () => {
 		})
 	})
 
-	it.each([
+	test.each([
 		{ label: 'empty', chart: [] },
 		{
 			label: 'without the latest completed day',
@@ -107,7 +107,7 @@ describe('getBridgeChainNetInflows', () => {
 		})
 	})
 
-	it('does not add another retry layer when a bridge request fails', async () => {
+	test('does not add another retry layer when a bridge request fails', async () => {
 		const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined)
 		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { XDC: ['xdc-network'] } })
 		vi.mocked(fetchBridgeVolumeByChain).mockRejectedValue(new Error('bridge request failed'))
@@ -120,7 +120,7 @@ describe('getBridgeChainNetInflows', () => {
 })
 
 describe('getBridgeOverviewPageData', () => {
-	it('projects global raw volume into the summary series', async () => {
+	test('projects global raw volume into the summary series', async () => {
 		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: {} })
 		const bridgesResponse: RawBridgesWithChainsResponse = {
 			dataUpdatedAt: '2026-07-28T16:00:00.000Z',
@@ -152,7 +152,7 @@ describe('getBridgeOverviewPageData', () => {
 		expect(result.rawBridgeVolumeData).toHaveLength(2)
 	})
 
-	it('fetches per-bridge volume only for bridges that support the selected chain', async () => {
+	test('fetches per-bridge volume only for bridges that support the selected chain', async () => {
 		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { Base: ['base'] } })
 		const bridgesResponse: RawBridgesWithChainsResponse = {
 			dataUpdatedAt: '2026-07-28T16:00:00.000Z',
@@ -215,7 +215,7 @@ describe('getBridgeOverviewPageData', () => {
 		expect(result.bridgeNames).toEqual(['Base Bridge'])
 	})
 
-	it('preserves the large-transaction chain perspective on selected-chain pages', async () => {
+	test('preserves the large-transaction chain perspective on selected-chain pages', async () => {
 		vi.mocked(fetchJson).mockResolvedValue({ chainCoingeckoIds: { Base: ['base'] } })
 		const bridgesResponse: RawBridgesWithChainsResponse = {
 			dataUpdatedAt: '2026-08-24T00:00:00.000Z',
@@ -271,7 +271,7 @@ describe('getBridgeOverviewPageData', () => {
 })
 
 describe('buildVolumeDataByChain', () => {
-	it('sorts staggered per-chain rows in the all-chain series', () => {
+	test('sorts staggered per-chain rows in the all-chain series', () => {
 		const result = buildVolumeDataByChain({
 			volume: [
 				[{ date: 200_000, depositUSD: 20, withdrawUSD: 2, depositTxs: 1, withdrawTxs: 1 }],
@@ -286,17 +286,17 @@ describe('buildVolumeDataByChain', () => {
 		expect(allChains.map(({ date }) => date)).toEqual([86_400, 172_800])
 	})
 
-	it('falls back to tracked chain volume when the destination-chain series is empty', () => {
+	test('falls back to tracked chain volume when the destination-chain series is empty', () => {
 		const result = buildVolumeDataByChain({
 			volume: [[{ date: 1_783_382_400, depositUSD: 100, withdrawUSD: 20, depositTxs: 2, withdrawTxs: 1 }], []],
 			chains: ['Ethereum', 'Robinhood Chain'],
 			destinationChain: 'Robinhood Chain'
 		})
 
-		expect(result['All Chains']).toEqual([{ date: 1783382400, Deposited: 100, Withdrawn: -20 }])
+		expect(result['All Chains']).toEqual([{ date: 1_783_382_400, Deposited: 100, Withdrawn: -20 }])
 	})
 
-	it('preserves missing legs through per-chain and all-chain aggregation', () => {
+	test('preserves missing legs through per-chain and all-chain aggregation', () => {
 		const result = buildVolumeDataByChain({
 			volume: [
 				[{ date: 1_783_382_400, depositUSD: 100, withdrawUSD: null, depositTxs: 1, withdrawTxs: 0 }],
@@ -312,7 +312,7 @@ describe('buildVolumeDataByChain', () => {
 })
 
 describe('buildTableDataByChain token series', () => {
-	it('preserves null USD values through aggregate totals and detail rows', () => {
+	test('preserves null USD values through aggregate totals and detail rows', () => {
 		const stats: BridgeDayStats = {
 			date: 1,
 			totalDepositedUSD: null,
@@ -343,7 +343,7 @@ describe('buildTableDataByChain token series', () => {
 		})
 	})
 
-	it('keeps a known-null deposit unknown when the same token and address also withdraw', () => {
+	test('keeps a known-null deposit unknown when the same token and address also withdraw', () => {
 		const stats: BridgeDayStats = {
 			date: 1,
 			...REQUIRED_DAY_TOTALS,
@@ -360,7 +360,7 @@ describe('buildTableDataByChain token series', () => {
 		})
 	})
 
-	it('keeps missing day stats distinct from a known-empty successful day', () => {
+	test('keeps missing day stats distinct from a known-empty successful day', () => {
 		const emptyStats: BridgeDayStats = {
 			date: 1,
 			...REQUIRED_DAY_TOTALS,
@@ -383,7 +383,7 @@ describe('buildTableDataByChain token series', () => {
 		expect(result.Missing).toBeUndefined()
 	})
 
-	it('keeps same-symbol contract identities distinct in tables and token selectors', () => {
+	test('keeps same-symbol contract identities distinct in tables and token selectors', () => {
 		const ethereum: BridgeDayStats = {
 			date: 1,
 			...REQUIRED_DAY_TOTALS,
@@ -417,7 +417,7 @@ describe('buildTableDataByChain token series', () => {
 		})
 	})
 
-	it('sums exact producer identities while keeping distinct same-symbol identities separate', () => {
+	test('sums exact producer identities while keeping distinct same-symbol identities separate', () => {
 		const stats = (
 			symbol: string,
 			usdValue: number,
@@ -473,7 +473,7 @@ describe('buildTableDataByChain token series', () => {
 		})
 	})
 
-	it('rejects conflicting nonempty symbols for the same producer identity', () => {
+	test('rejects conflicting nonempty symbols for the same producer identity', () => {
 		const stats = (symbol: string): BridgeDayStats => ({
 			date: 1,
 			...REQUIRED_DAY_TOTALS,

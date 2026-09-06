@@ -5,7 +5,7 @@ import { UTR_SORT_OPTIONS, type UtrSort, type UtrSortKey } from './Leaderboard'
 
 export type FilterOption = { key: string; name: string }
 
-function toggleValue(values: string[], value: string): string[] {
+function toggleValue(values: Array<string>, value: string): Array<string> {
 	return values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value]
 }
 
@@ -16,8 +16,8 @@ function FilterSection({
 	onToggle
 }: {
 	title: string
-	options: FilterOption[]
-	selected: string[]
+	options: Array<FilterOption>
+	selected: Array<string>
 	onToggle: (key: string) => void
 }) {
 	return (
@@ -61,15 +61,15 @@ export function MobileFiltersDrawer({
 }: {
 	open: boolean
 	onClose: () => void
-	fdvOptions: FilterOption[]
-	fdvRanges: string[]
-	setFdvRanges: (values: string[]) => void
-	sectorOptions: FilterOption[]
-	sectors: string[]
-	setSectors: (values: string[]) => void
-	statusOptions: FilterOption[]
-	listingStatuses: string[]
-	setListingStatuses: (values: string[]) => void
+	fdvOptions: Array<FilterOption>
+	fdvRanges: Array<string>
+	setFdvRanges: (values: Array<string>) => void
+	sectorOptions: Array<FilterOption>
+	sectors: Array<string>
+	setSectors: (values: Array<string>) => void
+	statusOptions: Array<FilterOption>
+	listingStatuses: Array<string>
+	setListingStatuses: (values: Array<string>) => void
 	sort: UtrSort
 	setSort: (sort: UtrSort) => void
 	onReset: () => void

@@ -24,10 +24,10 @@ const MultiSeriesChart = React.lazy(
 
 function buildDataset(langs: Record<string, Record<string, number>>): {
 	dataset: CanonicalMultiSeriesChartDataset
-	keys: string[]
+	keys: Array<string>
 } {
 	const keysSet = new Set<string>()
-	const entries: [string, Record<string, number>][] = []
+	const entries: Array<[string, Record<string, number>]> = []
 	for (const date in langs) {
 		const tvlByLang = langs[date]
 		entries.push([date, tvlByLang])
@@ -36,7 +36,7 @@ function buildDataset(langs: Record<string, Record<string, number>>): {
 	entries.sort((a, b) => Number(a[0]) - Number(b[0]))
 	const keys = Array.from(keysSet)
 
-	const source = new Array<number[]>(entries.length)
+	const source = new Array<Array<number>>(entries.length)
 	for (let i = 0; i < entries.length; i++) {
 		const [date, tvlByLang] = entries[i]
 		const row = new Array<number>(keys.length + 1)
@@ -50,7 +50,11 @@ function buildDataset(langs: Record<string, Record<string, number>>): {
 	return { dataset: { source, dimensions: ['timestamp', ...keys] }, keys }
 }
 
-function buildCharts(keys: string[], colors: Record<string, string>, stack?: string): MultiSeriesChartSeriesConfig[] {
+function buildCharts(
+	keys: Array<string>,
+	colors: Record<string, string>,
+	stack?: string
+): Array<MultiSeriesChartSeriesConfig> {
 	return keys.map((name) => ({
 		type: 'line' as const,
 		name,
@@ -102,9 +106,9 @@ const pageName = ['TVL', 'by', 'Smart Contract Languages']
 export default function Protocols({ tvlDataset, tvlCharts, dominanceCharts, osDataset, osCharts }) {
 	return (
 		<Layout
-			title={`DeFi Programming Languages by TVL - DefiLlama`}
-			description={`TVL breakdown by smart contract programming languages. Track which languages power the most value in DeFi - Solidity, Rust, Move, and more. Real-time language dominance analytics.`}
-			canonicalUrl={`/languages`}
+			title="DeFi Programming Languages by TVL - DefiLlama"
+			description="TVL breakdown by smart contract programming languages. Track which languages power the most value in DeFi - Solidity, Rust, Move, and more. Real-time language dominance analytics."
+			canonicalUrl="/languages"
 			pageName={pageName}
 		>
 			<PageTitleStrip title="Breakdown by Smart Contract Languages" />
@@ -137,7 +141,7 @@ function LanguageSeriesChart({
 	expandTo100Percent
 }: {
 	dataset: CanonicalMultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	title: string
 	label: 'Language' | 'Source'
 	stacked?: boolean

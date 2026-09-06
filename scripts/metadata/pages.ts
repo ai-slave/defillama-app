@@ -14,7 +14,7 @@ type DefillamaPage = {
 	[key: string]: unknown
 }
 
-export type DefillamaPages = Record<string, DefillamaPage[]>
+export type DefillamaPages = Record<string, Array<DefillamaPage>>
 
 const TOP_CATEGORIES = [
 	'Combined Metrics',
@@ -60,7 +60,7 @@ export function buildPagesWithTastyMetrics(
 export function buildTrendingPages(
 	defillamaPages: DefillamaPages,
 	trendingRoutes: TastyMetricsResult['trendingRoutes']
-): DefillamaPage[] {
+): Array<DefillamaPage> {
 	return trendingRoutes
 		.filter(([route]) => !isExcludedTrendingRoute(route))
 		.slice(0, 5)
@@ -84,7 +84,7 @@ export function buildTrendingPages(
 export async function writePagesAndTrendingIfNeeded(
 	repoRoot: string,
 	finalDefillamaPages: DefillamaPages,
-	trendingPages: DefillamaPage[]
+	trendingPages: Array<DefillamaPage>
 ): Promise<void> {
 	await fs.writeFile(path.join(repoRoot, 'public', 'pages.json'), JSON.stringify(finalDefillamaPages, null, 2))
 
@@ -116,7 +116,10 @@ function buildRouteLabel(route: string): string {
 	return `${prefix}: ${capitalize(parts[parts.length - 1] ?? '')}`
 }
 
-function groupAndSortByCategory(items: DefillamaPage[], tastyMetrics: Record<string, number>): DefillamaPage[] {
+function groupAndSortByCategory(
+	items: Array<DefillamaPage>,
+	tastyMetrics: Record<string, number>
+): Array<DefillamaPage> {
 	const grouped: Record<string, number> = {}
 	for (const item of items) {
 		const category = item.category || 'Others'
@@ -128,7 +131,7 @@ function groupAndSortByCategory(items: DefillamaPage[], tastyMetrics: Record<str
 		.sort((a, b) => b[1] - a[1])
 		.map(([category]) => category)
 
-	const pagesByGroup: DefillamaPage[] = []
+	const pagesByGroup: Array<DefillamaPage> = []
 	for (const categoryName of [...TOP_CATEGORIES, ...otherCategories, 'Others']) {
 		const pages = items
 			.filter((item) => (item.category || 'Others') === categoryName)

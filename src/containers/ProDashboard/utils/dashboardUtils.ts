@@ -1,7 +1,7 @@
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 
 /** Remove transient data that must never cross the dashboard persistence boundary. */
-export function toPersistedDashboardItems(items: DashboardItemConfig[]): DashboardItemConfig[] {
+export function toPersistedDashboardItems(items: Array<DashboardItemConfig>): Array<DashboardItemConfig> {
 	return items.map((item) => {
 		if (item.kind === 'sql') {
 			const { snapshot: _snapshot, ...sqlConfigToSave } = item

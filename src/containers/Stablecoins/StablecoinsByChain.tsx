@@ -48,7 +48,7 @@ import { filterStablecoinAssets, resolveStablecoinFilterState } from '~/containe
 import { PeggedFilters } from '~/containers/Stablecoins/Filters'
 import { useCalcCirculating } from '~/containers/Stablecoins/hooks'
 import { useStablecoinChartSeriesData, useStablecoinVolumeChartData } from '~/containers/Stablecoins/queries.client'
-import { type FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
+import type { FormattedStablecoinAsset } from '~/containers/Stablecoins/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { DataFreshness } from '~/ui/DataFreshness'
@@ -75,13 +75,13 @@ const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as Re
 const HBarChart = React.lazy(() => import('~/components/ECharts/HBarChart')) as React.FC<IHBarChartProps>
 const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
-const EMPTY_CHAINS: string[] = []
+const EMPTY_CHAINS: Array<string> = []
 const UNRELEASED_QUERY_KEY = 'unreleased'
 const EMPTY_PIE_DATA: IPieChartProps['chartData'] = []
-const EMPTY_HBAR_CATEGORIES: string[] = []
-const EMPTY_HBAR_VALUES: number[] = []
+const EMPTY_HBAR_CATEGORIES: Array<string> = []
+const EMPTY_HBAR_VALUES: Array<number> = []
 const EMPTY_TREEMAP_DATA: TreemapChartProps['treeData'] = []
-const EMPTY_SERIES: string[] = []
+const EMPTY_SERIES: Array<string> = []
 const EMPTY_RUNTIME_SERIES = {
 	selectableSeries: EMPTY_SERIES,
 	defaultSeries: EMPTY_SERIES,
@@ -98,12 +98,12 @@ type MultiSeriesChartState =
 
 interface StablecoinsByChainProps {
 	selectedChain?: string
-	chains?: string[]
-	filteredPeggedAssets: FormattedStablecoinAsset[]
-	availableBackings: string[]
-	availablePegTypes: string[]
+	chains?: Array<string>
+	filteredPeggedAssets: Array<FormattedStablecoinAsset>
+	availableBackings: Array<string>
+	availablePegTypes: Array<string>
 	defaultChartData: StablecoinChartSeriesPayload
-	entityQuestions?: string[]
+	entityQuestions?: Array<string>
 	deprecated?: boolean
 }
 
@@ -647,9 +647,9 @@ function MultiSeriesChartPanel({
 	)
 }
 
-function handleRouting(selectedChain: string, queryParams: Record<string, string | string[] | undefined>) {
+function handleRouting(selectedChain: string, queryParams: Record<string, string | Array<string> | undefined>) {
 	const { chain: _chain, ...filters } = queryParams
-	const queryParts: string[] = []
+	const queryParts: Array<string> = []
 	for (const filter in filters) {
 		const value = filters[filter]
 		if (Array.isArray(value)) {

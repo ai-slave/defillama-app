@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(() => {
 	vi.clearAllMocks()
@@ -19,7 +19,7 @@ function setupPageModule({
 	assetData = TEST_ASSET,
 	yieldsSnapshot = { readJson: vi.fn() }
 }: {
-	canonicalMarketIds?: string[]
+	canonicalMarketIds?: Array<string>
 	idMap?: Record<string, string>
 	assetData?: unknown
 	yieldsSnapshot?: unknown
@@ -62,7 +62,7 @@ function setupPageModule({
 }
 
 describe('rwa asset page', () => {
-	it('getStaticProps resolves an exact canonical asset param', async () => {
+	test('getStaticProps resolves an exact canonical asset param', async () => {
 		const page = await setupPageModule()
 
 		await expect(page.getStaticProps({ params: { asset: 'USDE' } } as never)).resolves.toEqual({
@@ -71,7 +71,7 @@ describe('rwa asset page', () => {
 		})
 	})
 
-	it('keeps the asset page when the optional Yields snapshot is unavailable', async () => {
+	test('keeps the asset page when the optional Yields snapshot is unavailable', async () => {
 		const page = await setupPageModule({ yieldsSnapshot: null })
 		const { getRWAAssetData } = await import('~/containers/RWA/queries')
 
@@ -81,7 +81,7 @@ describe('rwa asset page', () => {
 		expect(getRWAAssetData).toHaveBeenCalledWith({ assetId: 'asset-1', yieldsSnapshot: null })
 	})
 
-	it('getStaticProps redirects lowercase asset params to the canonical asset', async () => {
+	test('getStaticProps redirects lowercase asset params to the canonical asset', async () => {
 		const page = await setupPageModule()
 
 		await expect(page.getStaticProps({ params: { asset: 'usde' } } as never)).resolves.toEqual({
@@ -92,7 +92,7 @@ describe('rwa asset page', () => {
 		})
 	})
 
-	it('getStaticProps redirects mixed-case punctuation asset params to the exact canonical asset', async () => {
+	test('getStaticProps redirects mixed-case punctuation asset params to the exact canonical asset', async () => {
 		const page = await setupPageModule({ idMap: { 'USDf-Falcon': 'asset-1' }, assetData: TEST_ASSET })
 
 		await expect(page.getStaticProps({ params: { asset: 'usdf-falcon' } } as never)).resolves.toEqual({
@@ -103,7 +103,7 @@ describe('rwa asset page', () => {
 		})
 	})
 
-	it('getStaticProps resolves canonical asset ids through differently-cased idMap keys', async () => {
+	test('getStaticProps resolves canonical asset ids through differently-cased idMap keys', async () => {
 		const page = await setupPageModule({
 			canonicalMarketIds: ['USDf-Falcon'],
 			idMap: { 'usdf-falcon': 'asset-1' },
@@ -116,7 +116,7 @@ describe('rwa asset page', () => {
 		})
 	})
 
-	it('getStaticProps returns notFound when a canonical asset has no detail id', async () => {
+	test('getStaticProps returns notFound when a canonical asset has no detail id', async () => {
 		const page = await setupPageModule({
 			canonicalMarketIds: ['USDf-Falcon'],
 			idMap: {},
@@ -128,7 +128,7 @@ describe('rwa asset page', () => {
 		})
 	})
 
-	it('getStaticProps returns notFound for unknown asset params', async () => {
+	test('getStaticProps returns notFound for unknown asset params', async () => {
 		const page = await setupPageModule()
 
 		await expect(page.getStaticProps({ params: { asset: 'unknown' } } as never)).resolves.toEqual({
@@ -136,7 +136,7 @@ describe('rwa asset page', () => {
 		})
 	})
 
-	it('uses the canonical-cased asset slug in the canonical URL', async () => {
+	test('uses the canonical-cased asset slug in the canonical URL', async () => {
 		const page = await setupPageModule()
 
 		const element = page.default({ asset: TEST_ASSET, canonicalMarketId: 'USDE' } as never) as ReactElement<{

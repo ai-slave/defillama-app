@@ -1,5 +1,5 @@
 export function createDashboardStreamLineParser(onLine: (line: string) => void) {
-	let fragments: string[] = []
+	let fragments: Array<string> = []
 
 	return {
 		push(chunk: string): void {

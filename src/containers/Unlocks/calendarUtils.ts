@@ -5,13 +5,13 @@ import type { DayInfo } from './calendarTypes'
 
 dayjs.extend(isBetween)
 
-export const generateCalendarDays = (date: Dayjs): DayInfo[] => {
+export const generateCalendarDays = (date: Dayjs): Array<DayInfo> => {
 	const startOfMonth = date.startOf('month')
 	const endOfMonth = date.endOf('month')
 	const startDay = startOfMonth.day()
 	const daysInMonth = endOfMonth.date()
 
-	const days: DayInfo[] = []
+	const days: Array<DayInfo> = []
 
 	const prevMonth = date.subtract(1, 'month')
 	const prevMonthEnd = prevMonth.endOf('month').date()
@@ -41,16 +41,16 @@ export const generateCalendarDays = (date: Dayjs): DayInfo[] => {
 	return days
 }
 
-export const generateWeekDays = (date: Dayjs): DayInfo[] => {
+export const generateWeekDays = (date: Dayjs): Array<DayInfo> => {
 	const startOfWeek = date.startOf('week')
-	const days: DayInfo[] = []
+	const days: Array<DayInfo> = []
 
 	for (let i = 0; i < 7; i++) {
 		const day = startOfWeek.add(i, 'day')
 		const isCurrentMonth = day.isSame(date, 'month')
 		days.push({
 			date: day,
-			isCurrentMonth: isCurrentMonth
+			isCurrentMonth
 		})
 	}
 	return days

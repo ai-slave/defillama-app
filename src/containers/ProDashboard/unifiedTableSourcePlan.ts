@@ -3,25 +3,27 @@ import type { UnifiedTableConfig } from './unifiedTable/config/current'
 import { sanitizeUnifiedTableRowHeaders } from './unifiedTable/config/layoutPolicy'
 import type { ProtocolRowMembership } from './unifiedTable/config/protocolRowMembership'
 import type { UnifiedRowHeaderType } from './unifiedTable/config/types'
-import {
-	type ProtocolBaseMetricFamily,
-	type ProtocolPointMetric,
-	type ProtocolSupplementalMetric
+import type {
+	ProtocolBaseMetricFamily,
+	ProtocolPointMetric,
+	ProtocolSupplementalMetric
 } from './unifiedTable/protocolCapabilities'
 import { getUnifiedTableQueryIdentity } from './unifiedTableQuery'
 
 export interface UnifiedTableStreamSource {
 	config: UnifiedTableConfig
-	rowHeaders: UnifiedRowHeaderType[]
-	baseMetricFamilies: ProtocolBaseMetricFamily[]
-	pointMetrics: ProtocolPointMetric[]
-	supplementalMetrics: ProtocolSupplementalMetric[]
+	rowHeaders: Array<UnifiedRowHeaderType>
+	baseMetricFamilies: Array<ProtocolBaseMetricFamily>
+	pointMetrics: Array<ProtocolPointMetric>
+	supplementalMetrics: Array<ProtocolSupplementalMetric>
 	needsOracleMembership: boolean
 	rowMembership: ProtocolRowMembership
 	cacheKey: string
 }
 
-export function buildUnifiedTableStreamSourcePlan(items: readonly DashboardItemConfig[]): UnifiedTableStreamSource[] {
+export function buildUnifiedTableStreamSourcePlan(
+	items: ReadonlyArray<DashboardItemConfig>
+): Array<UnifiedTableStreamSource> {
 	const sources = new Map<string, UnifiedTableStreamSource>()
 
 	for (const item of items) {

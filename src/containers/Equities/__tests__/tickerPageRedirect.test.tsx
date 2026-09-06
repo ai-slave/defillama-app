@@ -1,5 +1,5 @@
 import type { GetStaticPropsContext } from 'next'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(() => {
 	vi.clearAllMocks()
@@ -61,7 +61,7 @@ function setupPageModule({
 }
 
 describe('equities ticker page routing', () => {
-	it('loads canonical ticker-country slugs', async () => {
+	test('loads canonical ticker-country slugs', async () => {
 		const setup = setupPageModule({})
 		const page = await setup.page
 
@@ -85,7 +85,7 @@ describe('equities ticker page routing', () => {
 		expect(setup.getEquitiesTickerRedirectSlug).not.toHaveBeenCalled()
 	})
 
-	it('redirects noncanonical ticker-country slugs to backend-provided casing', async () => {
+	test('redirects noncanonical ticker-country slugs to backend-provided casing', async () => {
 		const setup = setupPageModule({})
 		const page = await setup.page
 
@@ -101,7 +101,7 @@ describe('equities ticker page routing', () => {
 		expect(setup.getEquitiesTickerRedirectSlug).not.toHaveBeenCalled()
 	})
 
-	it('redirects lowercase dotted ticker aliases to backend-provided ticker-country casing', async () => {
+	test('redirects lowercase dotted ticker aliases to backend-provided ticker-country casing', async () => {
 		const setup = setupPageModule({
 			routes: [{ ticker: 'BRK.A', country: 'US' }],
 			pageData: { ticker: 'BRK.A', country: 'US', slug: 'BRK.A:US', name: 'Berkshire Hathaway Inc.' }
@@ -120,7 +120,7 @@ describe('equities ticker page routing', () => {
 		expect(setup.getEquitiesTickerRedirectSlug).not.toHaveBeenCalled()
 	})
 
-	it('redirects old ticker-only slugs when uniquely resolvable', async () => {
+	test('redirects old ticker-only slugs when uniquely resolvable', async () => {
 		const setup = setupPageModule({ redirectSlug: 'NVDA:US' })
 		const page = await setup.page
 
@@ -141,7 +141,7 @@ describe('equities ticker page routing', () => {
 		expect(setup.getEquitiesTickerPageData).not.toHaveBeenCalled()
 	})
 
-	it('404s old ticker-only slugs when they are ambiguous or unknown', async () => {
+	test('404s old ticker-only slugs when they are ambiguous or unknown', async () => {
 		const setup = setupPageModule({ redirectSlug: null })
 		const page = await setup.page
 
@@ -150,7 +150,7 @@ describe('equities ticker page routing', () => {
 		).resolves.toEqual({ notFound: true })
 	})
 
-	it('404s unknown ticker-country slugs before loading page data', async () => {
+	test('404s unknown ticker-country slugs before loading page data', async () => {
 		const setup = setupPageModule({})
 		const page = await setup.page
 

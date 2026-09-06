@@ -10,7 +10,7 @@ interface MetadataGroupPresentation {
 	icon: IconName
 }
 
-export const METADATA_GROUP_ORDER: ExchangeMetadataGroupKey[] = [
+export const METADATA_GROUP_ORDER: Array<ExchangeMetadataGroupKey> = [
 	'identity',
 	'links',
 	'security',

@@ -39,7 +39,7 @@ const UTILIZATION_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const reserveColumns: ColumnDef<FlatReserve>[] = [
+const reserveColumns: Array<ColumnDef<FlatReserve>> = [
 	{ header: 'Asset', accessorKey: 'symbol', size: 100 },
 	{ header: 'Chain', accessorKey: 'chain', size: 100 },
 	{
@@ -143,7 +143,7 @@ const reserveColumns: ColumnDef<FlatReserve>[] = [
 
 const PAGE_SIZE = 15
 
-function ReservesTable({ data }: { data: FlatReserve[] }) {
+function ReservesTable({ data }: { data: Array<FlatReserve> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 	const [page, setPage] = useState(0)
 

@@ -75,7 +75,7 @@ const ACTIVE_LIQUIDITY: Record<'spot' | 'linear_perp', SeriesSpec> = {
 // axis. Liquidity shares this tab rather than getting its own: reported volume is read
 // against the liquidity backing it, and splitting them made that comparison a click.
 // COIN perps carry no liquidity line because no band is computed for them.
-const TAB_SERIES: Record<DirectoryOverviewTab, SeriesSpec[]> = {
+const TAB_SERIES: Record<DirectoryOverviewTab, Array<SeriesSpec>> = {
 	total: [
 		{ key: 'total_spot_volume', label: 'Spot volume', color: '#5c9cf5', type: 'bar', stack: 'volume' },
 		{ key: 'total_linear_perp_volume', label: 'USD perp volume', color: '#9b7cf7', type: 'bar', stack: 'volume' },
@@ -120,7 +120,7 @@ interface ResolvedSeries {
 	values: Array<number | null>
 }
 
-function overviewAriaLabel(chart: ExchangeOverviewChartModel, resolved: ResolvedSeries[]): string {
+function overviewAriaLabel(chart: ExchangeOverviewChartModel, resolved: Array<ResolvedSeries>): string {
 	const parts = resolved.map(({ spec, values }) => {
 		const last = values.findLastIndex((value) => value != null)
 		const value = values[last]

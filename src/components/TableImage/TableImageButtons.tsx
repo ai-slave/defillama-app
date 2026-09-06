@@ -46,9 +46,9 @@ export function useTableImageWatermark(): [boolean, () => void] {
 	return [enabled, () => setTableImageWatermark(!enabled)]
 }
 
-export function readTableRows(table: HTMLTableElement | null): string[][] {
+export function readTableRows(table: HTMLTableElement | null): Array<Array<string>> {
 	if (!table) return []
-	const rows: string[][] = []
+	const rows: Array<Array<string>> = []
 	for (const row of Array.from(table.querySelectorAll('tr'))) {
 		const cells = Array.from(row.querySelectorAll('th, td'))
 		if (cells.length === 0) continue

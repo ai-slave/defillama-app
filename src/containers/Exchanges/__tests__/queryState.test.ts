@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getDirectoryOverviewTab,
 	getDirectoryQueryState,
@@ -15,7 +15,7 @@ import {
 } from '../queryState'
 
 describe('Exchanges URL query state', () => {
-	it('uses canonical defaults when parameters are absent or invalid', () => {
+	test('uses canonical defaults when parameters are absent or invalid', () => {
 		expect(getDirectoryQueryState({})).toEqual({
 			scope: 'all',
 			kind: 'all',
@@ -45,7 +45,7 @@ describe('Exchanges URL query state', () => {
 		expect(getResearchRange({ range: '90d' })).toBe('90d')
 	})
 
-	it('reads directory and overview selections directly from the first query value', () => {
+	test('reads directory and overview selections directly from the first query value', () => {
 		expect(
 			getDirectoryQueryState({
 				scope: ['inverse_perp', 'spot'],
@@ -59,7 +59,7 @@ describe('Exchanges URL query state', () => {
 		expect(getDirectoryOverviewTab({ chartView: 'perp' })).toBe('total')
 	})
 
-	it('reads MiCA and profile selections from their route-specific parameters', () => {
+	test('reads MiCA and profile selections from their route-specific parameters', () => {
 		expect(getMicaFilter({ product: 'fiat' })).toBe('fiat')
 		expect(getProfileTab({ section: 'information' })).toBe('information')
 		expect(getProfileTab({ section: 'reserves' })).toBe('reserves')
@@ -72,7 +72,7 @@ describe('Exchanges URL query state', () => {
 		expect(getResearchRange({ range: '90d' })).toBe('90d')
 	})
 
-	it('carries the country selection onto links between country-aware pages', () => {
+	test('carries the country selection onto links between country-aware pages', () => {
 		expect(withCountryParam('/exchanges', 'DE')).toBe('/exchanges?country=de')
 		expect(withCountryParam('/exchange/binance?section=information', 'DE')).toBe(
 			'/exchange/binance?section=information&country=de'
@@ -80,7 +80,7 @@ describe('Exchanges URL query state', () => {
 		expect(withCountryParam('/mica', null)).toBe('/mica')
 	})
 
-	it('keeps each research chart selection independent', () => {
+	test('keeps each research chart selection independent', () => {
 		const query = {
 			volumeView: 'linear-perp-exchanges',
 			oiView: 'open-interest-inverse-exchanges',

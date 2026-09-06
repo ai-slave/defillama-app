@@ -3,7 +3,7 @@ import { TVL_SETTINGS } from '~/contexts/LocalStorage'
 export const DC_AND_LS_OVERLAP_API_KEY = 'dcAndLsOverlap'
 const FORK_ORACLE_EXTRA_TVL_CHART_API_KEYS = new Set(['staking', 'borrowed', 'pool2', 'vesting', 'all', 'OwnTokens'])
 
-type EnabledTvlKeys = readonly string[] | ReadonlySet<string>
+type EnabledTvlKeys = ReadonlyArray<string> | ReadonlySet<string>
 
 function hasEnabledTvlKey(enabledKeys: EnabledTvlKeys, key: string): boolean {
 	return 'has' in enabledKeys ? enabledKeys.has(key) : enabledKeys.includes(key)
@@ -13,8 +13,8 @@ function hasEnabledTvlOverlap(extraTvlsEnabled: Record<string, boolean>): boolea
 	return !!extraTvlsEnabled[TVL_SETTINGS.DOUBLE_COUNT] && !!extraTvlsEnabled[TVL_SETTINGS.LIQUID_STAKING]
 }
 
-export function getEnabledExtraTvlApiKeys(extraTvlsEnabled: Record<string, boolean>): string[] {
-	const apiKeys: string[] = []
+export function getEnabledExtraTvlApiKeys(extraTvlsEnabled: Record<string, boolean>): Array<string> {
+	const apiKeys: Array<string> = []
 	for (const [settingKey, enabled] of Object.entries(extraTvlsEnabled)) {
 		if (!enabled || settingKey.toLowerCase() === 'tvl') continue
 		apiKeys.push(settingKey)
@@ -27,8 +27,8 @@ export function getEnabledExtraTvlApiKeys(extraTvlsEnabled: Record<string, boole
 	return apiKeys.toSorted((a, b) => a.localeCompare(b))
 }
 
-export function getEnabledForkOracleExtraTvlChartApiKeys(extraTvlsEnabled: Record<string, boolean>): string[] {
-	const apiKeys: string[] = []
+export function getEnabledForkOracleExtraTvlChartApiKeys(extraTvlsEnabled: Record<string, boolean>): Array<string> {
+	const apiKeys: Array<string> = []
 	for (const [settingKey, enabled] of Object.entries(extraTvlsEnabled)) {
 		if (!enabled || settingKey.toLowerCase() === 'tvl' || !FORK_ORACLE_EXTRA_TVL_CHART_API_KEYS.has(settingKey)) {
 			continue
@@ -59,8 +59,8 @@ export function getExtraTvlSeriesSign({
 export function getFailedExtraTvlApiKeys<T>(
 	enabledApiKeys: ReadonlyArray<string>,
 	queries: ReadonlyArray<{ data: T | undefined; isError: boolean }>
-): string[] {
-	const failedApiKeys: string[] = []
+): Array<string> {
+	const failedApiKeys: Array<string> = []
 	for (let index = 0; index < queries.length; index++) {
 		const query = queries[index]
 		const apiKey = enabledApiKeys[index]

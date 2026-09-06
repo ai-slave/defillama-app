@@ -27,7 +27,7 @@ const DexAggregatorsByChain = (props: IChainsByAdapterPageData) => {
 		<Layout
 			title="DEX Aggregator Volume by Chain - DefiLlama"
 			description="Compare DEX aggregator volume across all blockchains. Track swap routing activity on Ethereum, Solana, Base, Arbitrum, and 100+ chains. Real-time blockchain DEX aggregator analytics by chain."
-			canonicalUrl={`/dex-aggregators/chains`}
+			canonicalUrl="/dex-aggregators/chains"
 			pageName={pageName}
 		>
 			<ChainsByAdapter {...props} type={type} />

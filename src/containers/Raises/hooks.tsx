@@ -8,11 +8,11 @@ import type { Raise } from './model'
 import type { RaisesSummary } from './summary'
 
 interface UseRaisesDataParams {
-	raises: Raise[]
-	investors: string[]
-	rounds: string[]
-	sectors: string[]
-	chains: string[]
+	raises: Array<Raise>
+	investors: Array<string>
+	rounds: Array<string>
+	sectors: Array<string>
+	chains: Array<string>
 }
 
 export function useRaisesData({ raises, investors, rounds, sectors, chains }: UseRaisesDataParams) {
@@ -41,7 +41,7 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 		const excludeSectorsSet = parseExcludeParam(excludeSector)
 
 		// Build selectedInvestors
-		let selectedInvestors: string[]
+		let selectedInvestors: Array<string>
 		if (investor) {
 			if (typeof investor === 'string') {
 				selectedInvestors = investor === 'All' ? [...investors] : investor === 'None' ? [] : [investor]
@@ -56,7 +56,7 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 			excludeInvestorsSet.size > 0 ? selectedInvestors.filter((i) => !excludeInvestorsSet.has(i)) : selectedInvestors
 
 		// Build selectedRounds and filter out excludes inline
-		let selectedRounds: string[]
+		let selectedRounds: Array<string>
 		if (round) {
 			if (typeof round === 'string') {
 				selectedRounds = round === 'All' ? [...rounds] : round === 'None' ? [] : [round]
@@ -69,7 +69,7 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 		selectedRounds = excludeRoundsSet.size > 0 ? selectedRounds.filter((r) => !excludeRoundsSet.has(r)) : selectedRounds
 
 		// Build selectedSectors and filter out excludes inline
-		let selectedSectors: string[]
+		let selectedSectors: Array<string>
 		if (sector) {
 			if (typeof sector === 'string') {
 				selectedSectors = sector === 'All' ? [...sectors] : sector === 'None' ? [] : [sector]
@@ -83,7 +83,7 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 			excludeSectorsSet.size > 0 ? selectedSectors.filter((s) => !excludeSectorsSet.has(s)) : selectedSectors
 
 		// Build selectedChains
-		let selectedChains: string[]
+		let selectedChains: Array<string>
 		if (chain) {
 			if (typeof chain === 'string') {
 				selectedChains = chain === 'All' ? [...chains] : chain === 'None' ? [] : [chain]
@@ -123,7 +123,7 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 		const selectedRoundsSet = isRoundsFilterActive ? new Set(selectedRounds) : null
 		const selectedSectorsSet = isSectorsFilterActive ? new Set(selectedSectors) : null
 
-		const filteredRaisesList: Raise[] = []
+		const filteredRaisesList: Array<Raise> = []
 		let undisclosedCount = 0
 		for (const raise of raises) {
 			if (selectedInvestorsSet) {
@@ -209,10 +209,10 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 			}
 		}
 
-		const finalMonthlyInvestment: [number, number][] = []
+		const finalMonthlyInvestment: Array<[number, number]> = []
 		const finalRaisesByCategory = []
 		const finalInvestmentByRounds = []
-		const finalFundingRoundsByMonth: [number, number][] = []
+		const finalFundingRoundsByMonth: Array<[number, number]> = []
 		let totalAmountRaised = 0
 
 		// These loops enumerate only buckets initialized in the row pass above.
@@ -235,7 +235,7 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 		}
 		finalFundingRoundsByMonth.sort((a, b) => a[0] - b[0])
 
-		const monthlyInvestmentChart: { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } = {
+		const monthlyInvestmentChart: { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> } = {
 			dataset: {
 				source: finalMonthlyInvestment,
 				dimensions: ['timestamp', 'Funding Amount']
@@ -251,21 +251,22 @@ export function useRaisesData({ raises, investors, rounds, sectors, chains }: Us
 			]
 		}
 
-		const fundingRoundsByMonthChart: { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } = {
-			dataset: {
-				source: finalFundingRoundsByMonth,
-				dimensions: ['timestamp', 'Funding Rounds']
-			},
-			charts: [
-				{
-					type: 'bar',
-					name: 'Funding Rounds',
-					encode: { x: 0, y: 1 },
-					color: CHART_COLORS[0],
-					stack: 'Funding Rounds'
-				}
-			]
-		}
+		const fundingRoundsByMonthChart: { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> } =
+			{
+				dataset: {
+					source: finalFundingRoundsByMonth,
+					dimensions: ['timestamp', 'Funding Rounds']
+				},
+				charts: [
+					{
+						type: 'bar',
+						name: 'Funding Rounds',
+						encode: { x: 0, y: 1 },
+						color: CHART_COLORS[0],
+						stack: 'Funding Rounds'
+					}
+				]
+			}
 
 		const fundingSummary: RaisesSummary = {
 			totalUsd:

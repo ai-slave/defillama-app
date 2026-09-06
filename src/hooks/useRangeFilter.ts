@@ -21,8 +21,8 @@ export function useRangeFilter(minKey: string, maxKey: string) {
 		void pushShallowQuery(router, { [minKey]: undefined, [maxKey]: undefined })
 	}
 
-	const minRaw = readSingleQueryValue(router.query[minKey] as string | string[] | undefined)
-	const maxRaw = readSingleQueryValue(router.query[maxKey] as string | string[] | undefined)
+	const minRaw = readSingleQueryValue(router.query[minKey] as string | Array<string> | undefined)
+	const maxRaw = readSingleQueryValue(router.query[maxKey] as string | Array<string> | undefined)
 	const minNum = typeof minRaw === 'string' && minRaw !== '' ? Number(minRaw) : null
 	const maxNum = typeof maxRaw === 'string' && maxRaw !== '' ? Number(maxRaw) : null
 	const min = minNum !== null && Number.isFinite(minNum) ? minNum : null

@@ -28,7 +28,7 @@ type SocialKind = {
 	placeholder: string
 }
 
-const PRESET_SOCIALS: SocialKind[] = [
+const PRESET_SOCIALS: Array<SocialKind> = [
 	{ id: 'twitter', label: 'Twitter / X', placeholder: 'https://x.com/yourhandle' },
 	{ id: 'github', label: 'GitHub', placeholder: 'https://github.com/yourhandle' },
 	{ id: 'farcaster', label: 'Farcaster', placeholder: 'https://warpcast.com/yourhandle' },
@@ -296,8 +296,8 @@ export function AuthorProfileForm() {
 			} else {
 				toast.success('Saved')
 			}
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to save')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to save')
 		}
 	}
 

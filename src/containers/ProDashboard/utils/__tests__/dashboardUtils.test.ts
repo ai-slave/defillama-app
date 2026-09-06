@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { SqlChartConfig } from '../../types'
 import { toPersistedDashboardItems } from '../dashboardUtils'
 
@@ -30,7 +30,7 @@ const sqlItem: SqlChartConfig = {
 }
 
 describe('dashboard item boundary', () => {
-	it('strips SQL snapshots but keeps query and render config', () => {
+	test('strips SQL snapshots but keeps query and render config', () => {
 		const [cleaned] = toPersistedDashboardItems([sqlItem])
 		if (cleaned?.kind !== 'sql') throw new Error('Expected a SQL dashboard item')
 		expect(cleaned.snapshot).toBeUndefined()
@@ -40,7 +40,7 @@ describe('dashboard item boundary', () => {
 		expect(cleaned.id).toBe('sql-1')
 	})
 
-	it('leaves SQL items without snapshots untouched', () => {
+	test('leaves SQL items without snapshots untouched', () => {
 		const { snapshot: _snapshot, ...noSnapshot } = sqlItem
 		const [cleaned] = toPersistedDashboardItems([noSnapshot])
 		expect(cleaned).toEqual(noSnapshot)

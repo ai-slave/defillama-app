@@ -15,7 +15,7 @@ import type { SqlCellHandle } from './SqlCell'
 
 interface NotebookViewProps {
 	tab: QueryTab
-	loadedTables: RegisteredTable[]
+	loadedTables: Array<RegisteredTable>
 	canRun: boolean
 	onCellSourceChange: (cellId: string, source: string) => void
 	onCellFocus: (cellId: string) => void
@@ -63,8 +63,8 @@ export function NotebookView({
 
 	const cellRefs = useRef(new Map<string, SqlCellHandle | null>())
 
-	const cellTables = useMemo<CellVirtualTable[]>(() => {
-		const out: CellVirtualTable[] = []
+	const cellTables = useMemo<Array<CellVirtualTable>>(() => {
+		const out: Array<CellVirtualTable> = []
 		cells.forEach((cell, i) => {
 			if (cell.type !== 'sql') return
 			const name = `cell_${i + 1}`
@@ -116,8 +116,8 @@ export function NotebookView({
 	)
 
 	const chartSourcesByCellId = useMemo(() => {
-		const out: Record<string, ChartSourceOption[]> = {}
-		const allSources: ChartSourceOption[] = cells
+		const out: Record<string, Array<ChartSourceOption>> = {}
+		const allSources: Array<ChartSourceOption> = cells
 			.map((c, i) => {
 				if (c.type !== 'sql') return null
 				return {

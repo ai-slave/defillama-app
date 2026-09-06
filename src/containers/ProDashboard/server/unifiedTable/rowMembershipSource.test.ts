@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { fetchDimensionDatasetMock, requestScope } = vi.hoisted(() => ({
 	fetchDimensionDatasetMock: vi.fn(),
@@ -22,7 +22,7 @@ describe('protocol row membership source', () => {
 		fetchDimensionDatasetMock.mockReset().mockResolvedValue({ status: 'complete', protocols: [] })
 	})
 
-	it('uses the canonical open-interest adapter contract for selected-chain membership', async () => {
+	test('uses the canonical open-interest adapter contract for selected-chain membership', async () => {
 		await fetchProtocolRowMembershipDataset(
 			{ kind: 'base-metric', family: 'open-interest' },
 			{ kind: 'chain', chains: ['Ethereum'] }
@@ -40,7 +40,7 @@ describe('protocol row membership source', () => {
 		)
 	})
 
-	it('rejects a partial membership instead of publishing an incomplete table', async () => {
+	test('rejects a partial membership instead of publishing an incomplete table', async () => {
 		fetchDimensionDatasetMock.mockResolvedValueOnce({
 			status: 'partial',
 			protocols: [],

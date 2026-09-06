@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '../constants'
 
 const { fetchJsonMock, fetchProtocolsMock } = vi.hoisted(() => ({
@@ -128,7 +128,7 @@ describe('chains by adapter page data', () => {
 		fetchProtocolsMock.mockResolvedValue({ protocols: [], parentProtocols: [] })
 	})
 
-	it('builds chain rankings from the requested base metric only', async () => {
+	test('builds chain rankings from the requested base metric only', async () => {
 		const data = await getChainsByAdapterPageData({
 			adapterType: ADAPTER_TYPES.DEXS,
 			dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME,
@@ -143,7 +143,7 @@ describe('chains by adapter page data', () => {
 		])
 	})
 
-	it('uses adapter type to disambiguate overloaded daily volume metadata', async () => {
+	test('uses adapter type to disambiguate overloaded daily volume metadata', async () => {
 		const dexData = await getChainsByAdapterPageData({
 			adapterType: ADAPTER_TYPES.DEXS,
 			dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME,
@@ -167,7 +167,7 @@ describe('chains by adapter page data', () => {
 		])
 	})
 
-	it('retains explicit zero supplemental metrics in chain ranking rows', async () => {
+	test('retains explicit zero supplemental metrics in chain ranking rows', async () => {
 		const derivatives = await getChainsByAdapterPageData({
 			adapterType: ADAPTER_TYPES.PERPS,
 			dataType: ADAPTER_DATA_TYPES.DAILY_VOLUME,
@@ -211,7 +211,7 @@ describe('chains by adapter page data', () => {
 		])
 	})
 
-	it('builds the chart data shape used by the page', async () => {
+	test('builds the chart data shape used by the page', async () => {
 		fetchJsonMock.mockResolvedValue([
 			[1, { Ethereum: 10, Optimism: 5, Unknown: 999 }],
 			[2, { Ethereum: 20 }]
@@ -232,7 +232,7 @@ describe('chains by adapter page data', () => {
 		})
 	})
 
-	it('throws chart fetch failures by default and can explicitly tolerate them', async () => {
+	test('throws chart fetch failures by default and can explicitly tolerate them', async () => {
 		fetchJsonMock.mockRejectedValue(new Error('upstream failed'))
 
 		await expect(
@@ -253,7 +253,7 @@ describe('chains by adapter page data', () => {
 		).resolves.toEqual({ dimensions: ['timestamp', 'Ethereum'], source: [] })
 	})
 
-	it('uses protocol revenue methodology and falls back to revenue methodology', async () => {
+	test('uses protocol revenue methodology and falls back to revenue methodology', async () => {
 		fetchJsonMock.mockImplementation((url: string) => {
 			if (new URL(url).pathname.includes('/chart/')) return Promise.resolve([])
 			return Promise.resolve(
@@ -287,7 +287,7 @@ describe('chains by adapter page data', () => {
 		expect(protocolsByName.get('Revenue Fallback Method')?.methodology).toBe('Fallback revenue')
 	})
 
-	it('uses chain fee metadata to qualify chain-native rankings with one base request', async () => {
+	test('uses chain fee metadata to qualify chain-native rankings with one base request', async () => {
 		fetchJsonMock.mockResolvedValue(
 			adapterMetricsResponse({
 				protocols: [
@@ -326,7 +326,7 @@ describe('chains by adapter page data', () => {
 		])
 	})
 
-	it('uses chain revenue metadata and excludes app-only chains', async () => {
+	test('uses chain revenue metadata and excludes app-only chains', async () => {
 		fetchJsonMock.mockResolvedValue(
 			adapterMetricsResponse({
 				protocols: [
@@ -347,7 +347,7 @@ describe('chains by adapter page data', () => {
 		expect(data.chains.map((chain) => chain.name)).toEqual(['Sui'])
 	})
 
-	it('keeps REV requests paired with their chain when one protocol request fails', async () => {
+	test('keeps REV requests paired with their chain when one protocol request fails', async () => {
 		fetchJsonMock.mockImplementation((url: string) => {
 			const pathname = new URL(url).pathname
 			if (pathname.endsWith('/chain/ethereum')) {

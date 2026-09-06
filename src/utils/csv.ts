@@ -1,11 +1,11 @@
 import type { CsvCell } from './csvCell'
 
 export type CsvSerializableCell = CsvCell | object
-export type CsvData = CsvSerializableCell[][] | string
+export type CsvData = Array<Array<CsvSerializableCell>> | string
 
 const CSV_FORMULA_PREFIX_REGEX = /^[=+\-@\t\r\n＝＋－＠]/u
 
-export function serializeCsvRow(row: readonly CsvSerializableCell[]): string {
+export function serializeCsvRow(row: ReadonlyArray<CsvSerializableCell>): string {
 	return row
 		.map((cell) => {
 			if (cell == null) return ''

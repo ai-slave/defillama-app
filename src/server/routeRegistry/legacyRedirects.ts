@@ -706,4 +706,4 @@ export const legacyRedirects = [
 		destination: '/rwa',
 		permanent: true
 	}
-] satisfies LegacyRedirect[]
+] satisfies Array<LegacyRedirect>

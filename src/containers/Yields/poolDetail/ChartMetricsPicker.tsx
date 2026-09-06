@@ -18,19 +18,19 @@ export interface ChartMetricOption {
 
 export interface ChartMetricGroup {
 	label: string
-	options: ChartMetricOption[]
+	options: Array<ChartMetricOption>
 }
 
 export function ChartMetricsPicker({
 	groups,
 	onToggle
 }: {
-	groups: ChartMetricGroup[]
+	groups: Array<ChartMetricGroup>
 	onToggle: (option: ChartMetricOption) => void
 }) {
 	const dialogStore = Ariakit.useDialogStore()
 	const options = groups.flatMap((group) => group.options)
-	if (!options.length) return null
+	if (options.length === 0) return null
 	const selected = options.filter((option) => option.active)
 
 	return (

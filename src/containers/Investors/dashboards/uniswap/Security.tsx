@@ -25,8 +25,8 @@ interface AuditReport {
 interface VoteTurnoutData {
 	title?: string
 	note?: string
-	labels: string[]
-	series: Array<{ name: string; data: number[] }>
+	labels: Array<string>
+	series: Array<{ name: string; data: Array<number> }>
 	rows: Array<{ id: number; title: string; date: string; voters: number }>
 }
 
@@ -34,7 +34,7 @@ interface SecurityData {
 	kpis: Record<string, KpiT | undefined>
 	auditsByFirm: { title?: string; rows: Array<{ firm: string; count: number }> }
 	auditsByRepo: { title?: string; rows: Array<{ repo: string; count: number }> }
-	auditReports: AuditReport[]
+	auditReports: Array<AuditReport>
 	voteTurnout: VoteTurnoutData
 	delegatedUni: Chart
 }
@@ -152,7 +152,7 @@ function reportRank(version: string): number {
 	return version ? 4 - Number(version.slice(1)) : 4
 }
 
-function sortReports(reports: AuditReport[]): Array<AuditReport & { version: string }> {
+function sortReports(reports: Array<AuditReport>): Array<AuditReport & { version: string }> {
 	return reports
 		.map((report) => ({ ...report, version: reportVersion(report) }))
 		.sort(
@@ -164,7 +164,7 @@ function sortReports(reports: AuditReport[]): Array<AuditReport & { version: str
 const REPORT_COLUMNS = 'minmax(150px,1.2fr) minmax(70px,0.5fr) minmax(200px,2fr) minmax(130px,1fr)'
 const REPORT_HEADERS = ['Product', 'Version', 'Report', 'Firm']
 
-function AuditReportsTable({ reports }: { reports: AuditReport[] }) {
+function AuditReportsTable({ reports }: { reports: Array<AuditReport> }) {
 	const sorted = sortReports(reports)
 	return (
 		<div className="w-full overflow-auto rounded-lg border border-pro-cards-border" style={{ maxHeight: '480px' }}>

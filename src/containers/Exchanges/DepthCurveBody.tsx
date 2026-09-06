@@ -37,7 +37,7 @@ export const DEPTH_COLORS = [
 	'#8c8c8c'
 ]
 
-export function DepthCurveBody({ entries }: { entries: DepthCurveEntry[] }) {
+export function DepthCurveBody({ entries }: { entries: Array<DepthCurveEntry> }) {
 	const dataset = React.useMemo(() => depthCurveDataset(entries), [entries])
 	const ariaLabel = React.useMemo(() => depthCurveAriaLabel(entries), [entries])
 	const charts = React.useMemo(

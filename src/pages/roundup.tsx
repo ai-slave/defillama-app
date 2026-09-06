@@ -8,9 +8,9 @@ import { withPerformanceLogging } from '~/utils/perf'
 export default function Roundup({ messages, date }: { messages: Array<string | Array<string>>; date: string }) {
 	return (
 		<Layout
-			title={`Llama News Round-Up - DefiLlama`}
+			title="Llama News Round-Up - DefiLlama"
 			description="Daily DeFi news roundup curated by the DefiLlama team. Stay updated on protocol launches, governance changes, and market developments."
-			canonicalUrl={`/roundup`}
+			canonicalUrl="/roundup"
 		>
 			<Announcement notCancellable>
 				Get the roundup delivered for free by subscribing on{' '}
@@ -53,7 +53,7 @@ export const getStaticProps = withPerformanceLogging('roundup', async () => {
 
 	const response = await fetchWithPoolingOnServer('https://discordapp.com/api/channels/965023197365960734/messages', {
 		method: 'GET',
-		headers: headers,
+		headers,
 		redirect: 'follow'
 	})
 
@@ -140,7 +140,7 @@ export const getStaticProps = withPerformanceLogging('roundup', async () => {
 	return {
 		props: {
 			messages: formattedMessages,
-			date: date
+			date
 		},
 		revalidate: maxAgeForNext([22])
 	}

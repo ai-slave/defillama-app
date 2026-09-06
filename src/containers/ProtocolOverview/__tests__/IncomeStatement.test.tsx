@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { IncomeStatement } from '../IncomeStatement'
 import type { IProtocolOverviewPageData } from '../types'
 
@@ -18,7 +18,7 @@ vi.mock('~/ui/Tooltip', () => ({
 }))
 
 describe('IncomeStatement presentation', () => {
-	it('renders metrics from the explicit period values object when by-label is absent', () => {
+	test('renders metrics from the explicit period values object when by-label is absent', () => {
 		const incomeStatement = {
 			data: {
 				monthly: {},
@@ -48,7 +48,7 @@ describe('IncomeStatement presentation', () => {
 		expect(markup).toContain('$0')
 	})
 
-	it('renders a breakdown comparison when the previous value is zero', () => {
+	test('renders a breakdown comparison when the previous value is zero', () => {
 		const incomeStatement = {
 			data: {
 				monthly: {},
@@ -83,7 +83,7 @@ describe('IncomeStatement presentation', () => {
 		expect(markup).toContain('compared to previous quarter total fees')
 	})
 
-	it('renders globally known by-label omissions as zero in the table and comparison', () => {
+	test('renders globally known by-label omissions as zero in the table and comparison', () => {
 		const incomeStatement = {
 			data: {
 				monthly: {},

@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 import { isSelectionInLlamaProse } from '../TextSelectionPopup'
 
 function select(anchorNode: Node, focusNode: Node): Selection {
@@ -25,25 +25,25 @@ describe('isSelectionInLlamaProse', () => {
 		`
 	})
 
-	it('accepts a selection inside a single prose block', () => {
+	test('accepts a selection inside a single prose block', () => {
 		const p1 = document.getElementById('p1')!.firstChild!
 		expect(isSelectionInLlamaProse(select(p1, p1))).toBe(true)
 	})
 
-	it('accepts a selection spanning two prose blocks across an artifact (the flaky case)', () => {
+	test('accepts a selection spanning two prose blocks across an artifact (the flaky case)', () => {
 		const p1 = document.getElementById('p1')!.firstChild!
 		const p2 = document.getElementById('p2')!.firstChild!
 		expect(isSelectionInLlamaProse(select(p1, p2))).toBe(true)
 	})
 
-	it('accepts a selection that starts in prose but ends on a chart or logo (drag past text)', () => {
+	test('accepts a selection that starts in prose but ends on a chart or logo (drag past text)', () => {
 		const p1 = document.getElementById('p1')!.firstChild!
 		const chart = document.querySelector('[data-chart-id]')!
 		expect(isSelectionInLlamaProse(select(p1, chart))).toBe(true)
 		expect(isSelectionInLlamaProse(select(chart, p1))).toBe(true)
 	})
 
-	it('accepts a selection whose endpoints are both on widgets but which sweeps prose between them', () => {
+	test('accepts a selection whose endpoints are both on widgets but which sweeps prose between them', () => {
 		const chart = document.querySelector('[data-chart-id]')!
 		const message = document.querySelector('.message')!
 		const selection = window.getSelection()!
@@ -55,12 +55,12 @@ describe('isSelectionInLlamaProse', () => {
 		expect(isSelectionInLlamaProse(selection)).toBe(true)
 	})
 
-	it('rejects a selection entirely outside prose', () => {
+	test('rejects a selection entirely outside prose', () => {
 		const p3 = document.getElementById('p3')!.firstChild!
 		expect(isSelectionInLlamaProse(select(p3, p3))).toBe(false)
 	})
 
-	it('rejects selections inside editable surfaces', () => {
+	test('rejects selections inside editable surfaces', () => {
 		const p4 = document.getElementById('p4')!.firstChild!
 		expect(isSelectionInLlamaProse(select(p4, p4))).toBe(false)
 	})

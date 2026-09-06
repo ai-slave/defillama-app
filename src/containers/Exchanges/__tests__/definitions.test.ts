@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { exchangeDefinitions } from '../definitions'
 import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from '../directoryColumns'
 
@@ -7,7 +7,7 @@ function columnsById(columns: ReturnType<typeof buildDirectoryColumns>) {
 }
 
 describe('Exchanges definitions', () => {
-	it('keeps every directory column label and header helper tied to its definition', () => {
+	test('keeps every directory column label and header helper tied to its definition', () => {
 		const columns = buildDirectoryColumns('spot', true)
 		const byId = columnsById(columns)
 		const definitions: Record<string, { label: string; description: string }> = exchangeDefinitions.directory
@@ -29,7 +29,7 @@ describe('Exchanges definitions', () => {
 	// Cost to trade and fill quality are published on different baskets on purpose, so a
 	// column can only be compared DOWN the table, not across a row. Each header helper
 	// has to name its own scope or a reader has no way to know that.
-	it('each execution column states the basket it is measured on', () => {
+	test('each execution column states the basket it is measured on', () => {
 		const byId = columnsById(buildDirectoryColumns('linear_perp', true, ['BTC', 'ETH'], ['BTC', 'ETH', 'SOL']))
 		const definitions: Record<string, { label: string; description: string }> = exchangeDefinitions.directory
 		const helper = (id: string) =>
@@ -42,7 +42,7 @@ describe('Exchanges definitions', () => {
 		expect(helper('execCostToTrade')).not.toBe(helper('execSlippage10k'))
 	})
 
-	it('falls back to naming each venue’s own perps when nothing is shared', () => {
+	test('falls back to naming each venue’s own perps when nothing is shared', () => {
 		const byId = columnsById(buildDirectoryColumns('linear_perp', true, [], []))
 		for (const id of EXECUTION_COLUMN_IDS) {
 			expect(String(byId[id]?.meta?.headerHelperText)).toContain('own covered perps')

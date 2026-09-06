@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { type FollowingShelf, dashboardAPI } from '../services/DashboardAPI'
 
-const EMPTY_SHELVES: FollowingShelf[] = []
+const EMPTY_SHELVES: Array<FollowingShelf> = []
 
 export function useFollowingAuthors() {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()

@@ -53,10 +53,10 @@ export async function getAuthorBySlug(
 	return parseResponse<AuthorPageResponse>(response)
 }
 
-export async function getTopAuthors(limit?: number, fetcher: FetchLike = fetch): Promise<TopAuthorEntry[]> {
+export async function getTopAuthors(limit?: number, fetcher: FetchLike = fetch): Promise<Array<TopAuthorEntry>> {
 	const qs = limit ? `?limit=${limit}` : ''
 	const response = await fetcher(authorUrl(`/authors/top${qs}`))
-	const data = await parseResponse<{ items: TopAuthorEntry[] }>(response)
+	const data = await parseResponse<{ items: Array<TopAuthorEntry> }>(response)
 	return Array.isArray(data.items) ? data.items : []
 }
 

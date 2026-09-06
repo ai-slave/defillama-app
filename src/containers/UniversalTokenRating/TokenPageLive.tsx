@@ -96,7 +96,7 @@ function disclosureCategoryTitle(entry: { key: string; label: string }): string 
 	return DISCLOSURE_CATEGORY_TITLES[entry.key] ?? entry.label
 }
 
-function withDisclosureTitles(criteria: UtrCriterionBreakdown[]): UtrCriterionBreakdown[] {
+function withDisclosureTitles(criteria: Array<UtrCriterionBreakdown>): Array<UtrCriterionBreakdown> {
 	return criteria.map((criterion) => ({
 		...criterion,
 		label: DISCLOSURE_CRITERION_TITLES[criterion.key] ?? criterion.label
@@ -151,12 +151,18 @@ function summaryFooter(summary: UtrChartSummary | null | undefined) {
 	}
 }
 
-function hasAnyValue(...values: unknown[]): boolean {
+function hasAnyValue(...values: Array<unknown>): boolean {
 	return values.some((value) => value != null)
 }
 
-function VenueList({ title, venues }: { title: string; venues: { displayName: string; logoUrl: string | null }[] }) {
-	if (!venues.length) return null
+function VenueList({
+	title,
+	venues
+}: {
+	title: string
+	venues: Array<{ displayName: string; logoUrl: string | null }>
+}) {
+	if (venues.length === 0) return null
 	return (
 		<div className="flex flex-col gap-2">
 			<h4 className="label-md text-primary">{title}</h4>
@@ -316,7 +322,7 @@ function AboutDrawer({
 					/>
 				</div>
 				<VenueList title="CEX where listed" venues={cexVenues} />
-				{cexVenues.length && dexVenues.length ? <div className="border-t border-subtle" /> : null}
+				{cexVenues.length > 0 && dexVenues.length > 0 ? <div className="border-t border-subtle" /> : null}
 				<VenueList title="DEX where listed" venues={dexVenues} />
 			</div>
 		</Drawer>
@@ -348,7 +354,7 @@ export function TokenPageLive({
 		title: string,
 		axis: 'disclosure' | 'performance',
 		categoryKey: string,
-		criteria: UtrCriterionBreakdown[],
+		criteria: Array<UtrCriterionBreakdown>,
 		activeKey: string | null
 	) => setCriteriaDrawer({ title, axis, criteria, docs: docsFor(axis, categoryKey), activeKey })
 
@@ -475,7 +481,7 @@ export function TokenPageLive({
 	const visibleFootprintCharts = footprintCharts.filter((entry) => {
 		const chart = entry.chart
 		if (!chart) return false
-		if (chart.points.length) return true
+		if (chart.points.length > 0) return true
 		return 'cexAvgUsd' in chart
 			? hasAnyValue(chart.cexAvgUsd, chart.dexAvgUsd, chart.cexSharePct)
 			: hasAnyValue(chart.spotAvgUsd, chart.perpsAvgUsd, chart.spotSharePct)
@@ -593,7 +599,7 @@ export function TokenPageLive({
 
 			<ClaimProfileBanner asset={asset.coingeckoId ?? asset.arcticId} />
 
-			{disclosureCategories.length ? (
+			{disclosureCategories.length > 0 ? (
 				<>
 					<h2 className="heading-sm">Disclosures Overview</h2>
 					<Panel padding="none">
@@ -1138,7 +1144,7 @@ export function TokenPageLive({
 																? 'N/A'
 																: `${formatCompactNumber(legacy.tokenomics.maxSupply)} ${asset.symbol.toUpperCase()}`
 														]
-													] as [string, string][]
+													] as Array<[string, string]>
 												).map(([label, value]) => (
 													<div key={label} className="flex flex-col gap-2 bg-surface px-4 py-4">
 														<span className="body-sm text-tertiary">{label}</span>

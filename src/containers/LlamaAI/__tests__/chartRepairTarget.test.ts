@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildChartRepairHref, parseChartRepairTarget } from '../chartRepairTarget'
 
 describe('chart repair target', () => {
-	it('validates the browser handoff before allowing a generated chart to replace a dashboard slot', () => {
+	test('validates the browser handoff before allowing a generated chart to replace a dashboard slot', () => {
 		expect(parseChartRepairTarget('{"dashboardId":"dashboard-1","itemId":"item-1"}')).toEqual({
 			dashboardId: 'dashboard-1',
 			itemId: 'item-1'
@@ -11,7 +11,7 @@ describe('chart repair target', () => {
 		expect(parseChartRepairTarget('not-json')).toBeNull()
 	})
 
-	it('opens a confirmation-gated LlamaAI prompt without putting internal artifact IDs in the URL', () => {
+	test('opens a confirmation-gated LlamaAI prompt without putting internal artifact IDs in the URL', () => {
 		const href = buildChartRepairHref('Protocol revenue', 'source_shape_changed')
 		expect(href).toContain('/ai/chat?prompt=')
 		expect(decodeURIComponent(href)).toContain('Protocol revenue')

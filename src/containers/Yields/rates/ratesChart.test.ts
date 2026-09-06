@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { RefRatePoint } from './fetch'
 import { buildRatesChart } from './ratesChart'
 
 describe('buildRatesChart', () => {
-	it('maps typed rate values and null gaps without coercion', () => {
-		const points: RefRatePoint[] = [
+	test('maps typed rate values and null gaps without coercion', () => {
+		const points: Array<RefRatePoint> = [
 			{
 				date: '2026-01-01',
 				rates: {

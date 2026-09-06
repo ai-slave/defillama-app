@@ -2,10 +2,9 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { QueueChips } from '~/containers/LlamaAI/components/QueueChips'
-import type { QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
-import type { QueueServerRow } from '~/containers/LlamaAI/hooks/useChatQueueController'
+import type { QueueSurface, QueueServerRow } from '~/containers/LlamaAI/hooks/useChatQueueController'
 
 vi.mock('~/ui/Icon', () => ({
 	Icon: ({ name, ...props }: { name: string }) => <svg data-icon={name} {...props} />
@@ -66,7 +65,7 @@ describe('QueueChips', () => {
 		)
 	}
 
-	it('keeps an in-flight local row non-interactive', async () => {
+	test('keeps an in-flight local row non-interactive', async () => {
 		await render(
 			surface({
 				rows: [
@@ -84,7 +83,7 @@ describe('QueueChips', () => {
 		expect(container.querySelector('button')).toBeNull()
 	})
 
-	it('preserves the chip node when the server confirms an optimistic row', async () => {
+	test('preserves the chip node when the server confirms an optimistic row', async () => {
 		await render(
 			surface({
 				rows: [
@@ -105,7 +104,7 @@ describe('QueueChips', () => {
 		expect(container.textContent).not.toContain('Adding…')
 	})
 
-	it('offers one Continue action for a paused queue', async () => {
+	test('offers one Continue action for a paused queue', async () => {
 		const onContinue = vi.fn()
 		await render(
 			surface({
@@ -126,7 +125,7 @@ describe('QueueChips', () => {
 		expect(onContinue).toHaveBeenCalledOnce()
 	})
 
-	it('keeps Retry clear available after an ambiguous Clear failure', async () => {
+	test('keeps Retry clear available after an ambiguous Clear failure', async () => {
 		const onClear = vi.fn()
 		await render(
 			surface({
@@ -154,7 +153,7 @@ describe('QueueChips', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('waits for the editing snapshot before rendering the editor', async () => {
+	test('waits for the editing snapshot before rendering the editor', async () => {
 		const onEditStart = vi.fn()
 		const initial = surface({ rows: [pending()], onEditStart })
 		await render(initial)
@@ -173,7 +172,7 @@ describe('QueueChips', () => {
 		expect((container.querySelector('textarea') as HTMLTextAreaElement).value).toContain('TVL')
 	})
 
-	it('does not expose another client editing reservation', async () => {
+	test('does not expose another client editing reservation', async () => {
 		await render(
 			surface({
 				rows: [pending({ state: 'editing', editLeaseId: 'lease-1', editExpiresAt: 'later' })]
@@ -185,7 +184,7 @@ describe('QueueChips', () => {
 		expect(container.querySelector('button')).toBeNull()
 	})
 
-	it('keeps a rejected edit copyable after another client takes the lease', async () => {
+	test('keeps a rejected edit copyable after another client takes the lease', async () => {
 		await render(
 			surface({
 				rows: [pending({ state: 'editing', editLeaseId: 'lease-2', editExpiresAt: 'later' })],
@@ -200,7 +199,7 @@ describe('QueueChips', () => {
 		expect(container.querySelector('button')).toBeNull()
 	})
 
-	it('submits the uncontrolled edit draft', async () => {
+	test('submits the uncontrolled edit draft', async () => {
 		const onEditSave = vi.fn()
 		const onEditDraftChange = vi.fn()
 		await render(
@@ -220,7 +219,7 @@ describe('QueueChips', () => {
 		expect(onEditSave).toHaveBeenCalledWith('q1', 'edited follow up')
 	})
 
-	it('describes only an owned head reservation as paused', async () => {
+	test('describes only an owned head reservation as paused', async () => {
 		const editing = pending({ state: 'editing', editLeaseId: 'lease-1', editExpiresAt: 'later' })
 		await render(surface({ ownedEditId: 'q1', rows: [editing] }))
 		expect(container.textContent).toContain('Queue paused while you edit')
@@ -229,7 +228,7 @@ describe('QueueChips', () => {
 		expect(container.textContent).not.toContain('Queue paused while you edit')
 	})
 
-	it('shows row-scoped mutation state without disabling other rows', async () => {
+	test('shows row-scoped mutation state without disabling other rows', async () => {
 		await render(
 			surface({
 				rows: [pending({ id: 'q1' }), pending({ id: 'q2' })],
@@ -247,7 +246,7 @@ describe('QueueChips', () => {
 		expect(secondDismiss.disabled).toBe(false)
 	})
 
-	it('retries expired image prompts without the old image-loss warning', async () => {
+	test('retries expired image prompts without the old image-loss warning', async () => {
 		const onRetry = vi.fn()
 		await render(
 			surface({
@@ -271,7 +270,7 @@ describe('QueueChips', () => {
 		expect(container.querySelector('[aria-label="Edit"]')).toBeNull()
 	})
 
-	it('preserves a rejected edit for copying without retrying the original text', async () => {
+	test('preserves a rejected edit for copying without retrying the original text', async () => {
 		await render(
 			surface({
 				rows: [pending({ state: 'not_sent', reason: 'edit_expired', message: 'original text' })],
@@ -287,7 +286,7 @@ describe('QueueChips', () => {
 		expect((container.querySelector('[aria-label="Retry"]') as HTMLButtonElement).disabled).toBe(true)
 	})
 
-	it('unblocks the paused queue when the quota reset time arrives', async () => {
+	test('unblocks the paused queue when the quota reset time arrives', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-08-21T10:00:00.000Z'))
 		await render(
@@ -299,11 +298,11 @@ describe('QueueChips', () => {
 		) as HTMLButtonElement
 		expect(continueButton.disabled).toBe(true)
 
-		await act(async () => vi.advanceTimersByTime(1_100))
+		await act(async () => vi.advanceTimersByTime(1100))
 		expect(continueButton.disabled).toBe(false)
 	})
 
-	it('marks later pending rows as blocked by an editing head', async () => {
+	test('marks later pending rows as blocked by an editing head', async () => {
 		await render(
 			surface({
 				rows: [pending({ state: 'editing', editLeaseId: 'lease-1', editExpiresAt: 'later' }), pending({ id: 'q2' })]

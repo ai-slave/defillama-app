@@ -4,11 +4,11 @@ import type { CustomTimePeriod, TimePeriod } from './dashboardTypes'
 export type TimePeriodBounds = { start: number; end: number } | null
 
 export function filterDataByTimePeriod(
-	data: [number, number][],
+	data: Array<[number, number]>,
 	timePeriod: TimePeriod,
 	customPeriod?: CustomTimePeriod | null
-): [number, number][] {
-	if (!data.length) return data
+): Array<[number, number]> {
+	if (data.length === 0) return data
 	const bounds = getTimePeriodBounds(timePeriod, customPeriod)
 	if (!bounds) return data
 

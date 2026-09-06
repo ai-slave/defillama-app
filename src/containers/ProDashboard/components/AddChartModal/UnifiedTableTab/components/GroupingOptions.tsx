@@ -4,7 +4,7 @@ import { Icon } from '~/ui/Icon'
 
 type IconName = ComponentProps<typeof Icon>['name']
 
-const PROTOCOL_ROW_HEADER_ORDER: UnifiedRowHeaderType[] = ['chain', 'category', 'parent-protocol']
+const PROTOCOL_ROW_HEADER_ORDER: Array<UnifiedRowHeaderType> = ['chain', 'category', 'parent-protocol']
 
 const GROUPING_ICON_BY_KEY: Partial<Record<UnifiedRowHeaderType, IconName>> = {
 	chain: 'chain',
@@ -36,13 +36,13 @@ const GROUPING_OPTIONS = PROTOCOL_ROW_HEADER_ORDER.map((header) => ({
 }))
 
 interface GroupingOptionsProps {
-	rowHeaders: UnifiedRowHeaderType[]
+	rowHeaders: Array<UnifiedRowHeaderType>
 	onToggleRowHeader: (header: UnifiedRowHeaderType) => void
 }
 
 export function GroupingOptions({ rowHeaders, onToggleRowHeader }: GroupingOptionsProps) {
 	const groupingSummary = useMemo(() => {
-		const labels = rowHeaders.length ? rowHeaders : PROTOCOL_ROW_HEADER_ORDER
+		const labels = rowHeaders.length > 0 ? rowHeaders : PROTOCOL_ROW_HEADER_ORDER
 
 		return labels.map((header) => formatGroupingLabel(header)).join(' → ')
 	}, [rowHeaders])

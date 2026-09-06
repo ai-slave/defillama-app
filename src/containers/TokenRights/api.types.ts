@@ -1,33 +1,33 @@
 // Raw shape returned by https://api.llama.fi/token-rights (one entry per protocol)
 export interface IRawTokenRightsEntry {
 	'Protocol Name': string
-	Token: string[]
-	'Token Type'?: string[]
+	Token: Array<string>
+	'Token Type'?: Array<string>
 	'Brief description'?: string
 	Utility?: string
 	'Governance Details (Summary)'?: string
-	'Governance Decisions': string[]
+	'Governance Decisions': Array<string>
 	'Governance details'?: string
 	'Governance Links'?: string
-	'Treasury Decisions': string[]
+	'Treasury Decisions': Array<string>
 	'Treasury Details'?: string
-	'Revenue Decisions': string[]
+	'Revenue Decisions': Array<string>
 	'Revenue Details'?: string
 	'Fee Switch Status': string
 	'Fee Switch Details'?: string
 	'Economic Rights (Summary)'?: string
-	Buybacks?: string[] | null
+	Buybacks?: Array<string> | null
 	'Buyback Details'?: string
-	Dividends: string[]
+	Dividends: Array<string>
 	'Dividends Details'?: string
 	Burns: string
 	'Burn Details'?: string
 	'Economic Links'?: string
 	'Value Accrual'?: string
 	'Value Accrual Details'?: string
-	Fundraising?: string[]
+	Fundraising?: Array<string>
 	'Raise Details'?: string
-	'Associated Entities'?: string[]
+	'Associated Entities'?: Array<string>
 	'Equity Revenue Capture'?: string
 	'Equity Statement'?: string
 	'Ownership Links'?: string

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { validateSubscriptionMock } = vi.hoisted(() => ({
@@ -16,7 +16,7 @@ beforeEach(() => {
 })
 
 describe('requireSubscription', () => {
-	it('returns valid subscription auth without writing a response', async () => {
+	test('returns valid subscription auth without writing a response', async () => {
 		const auth = { valid: true, isTrial: false }
 		const res = createMockNextApiResponse()
 		validateSubscriptionMock.mockResolvedValue(auth)
@@ -28,7 +28,7 @@ describe('requireSubscription', () => {
 		expect(res.json).not.toHaveBeenCalled()
 	})
 
-	it('sends the subscription failure response and returns null', async () => {
+	test('sends the subscription failure response and returns null', async () => {
 		const res = createMockNextApiResponse()
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
@@ -43,7 +43,7 @@ describe('requireSubscription', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Active subscription required' })
 	})
 
-	it('lets validation errors bubble to the caller', async () => {
+	test('lets validation errors bubble to the caller', async () => {
 		const error = new Error('Auth service unavailable')
 		const res = createMockNextApiResponse()
 		validateSubscriptionMock.mockRejectedValue(error)

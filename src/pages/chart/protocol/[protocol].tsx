@@ -125,7 +125,7 @@ export default function ProtocolChartPage(props: IProtocolOverviewPageData) {
 	const { finalCharts, valueSymbol, loadingCharts } = useFetchProtocolChartData({
 		...props,
 		toggledMetrics,
-		groupBy: groupBy,
+		groupBy,
 		tvlSettings
 	})
 	const hasVisibleCharts = Object.keys(finalCharts).length > 0

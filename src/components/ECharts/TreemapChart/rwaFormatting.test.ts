@@ -1,13 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { formatRwaTreemapBoxLabel, formatRwaTreemapTooltip, formatRwaUpperLabel } from './rwaFormatting'
 
 describe('rwa treemap formatting', () => {
-	it('keeps flat box and upper labels name-only', () => {
+	test('keeps flat box and upper labels name-only', () => {
 		expect(formatRwaTreemapBoxLabel({ name: 'Tesla' })).toBe('Tesla')
 		expect(formatRwaUpperLabel({ name: 'Tesla' })).toBe('Tesla')
 	})
 
-	it('formats flat-node tooltips with share of total only', () => {
+	test('formats flat-node tooltips with share of total only', () => {
 		const tooltip = formatRwaTreemapTooltip({
 			info: {
 				name: 'Tesla',
@@ -24,7 +24,7 @@ describe('rwa treemap formatting', () => {
 		expect(tooltip).not.toContain('Share of Parent')
 	})
 
-	it('formats nested-node tooltips with explicit parent and total shares', () => {
+	test('formats nested-node tooltips with explicit parent and total shares', () => {
 		const tooltip = formatRwaTreemapTooltip({
 			info: {
 				name: 'xyz:META',
@@ -42,7 +42,7 @@ describe('rwa treemap formatting', () => {
 		expect(tooltip).toContain('Share of Total: 44.44%<br>')
 	})
 
-	it('keeps the canonical tuple fallback for incomplete ECharts events', () => {
+	test('keeps the canonical tuple fallback for incomplete ECharts events', () => {
 		const tooltip = formatRwaTreemapTooltip({
 			info: { name: 'RWA' },
 			valueLabel: 'Market Cap',

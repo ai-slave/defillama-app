@@ -54,20 +54,20 @@ interface CustomAggregationState {
 	sumValues: Readonly<Partial<Record<string, number | null>>>
 }
 
-type NonEmptyRows = [ProtocolTableSourceRow, ...ProtocolTableSourceRow[]]
+type NonEmptyRows = [ProtocolTableSourceRow, ...Array<ProtocolTableSourceRow>]
 type CustomAggregationStore = Map<ProtocolTableRow, CustomAggregationState>
 
 export interface BuildProtocolTableReadModelOptions extends Pick<ReadModelSources, 'parentMetrics' | 'chainMetrics'> {
-	rows: ProtocolTableSourceRow[]
-	rowHeaders: UnifiedRowHeaderType[]
-	customColumns: readonly CustomColumnDefinition[]
+	rows: Array<ProtocolTableSourceRow>
+	rowHeaders: Array<UnifiedRowHeaderType>
+	customColumns: ReadonlyArray<CustomColumnDefinition>
 	chainMetricScope?: ReadModelSources['chainMetricScope']
 	aggregationPlan?: ProtocolAggregationPlan
 }
 
 export interface ProtocolTableReadModel {
-	rows: ProtocolTableRow[]
-	leaves: ProtocolTableLeafRow[]
+	rows: Array<ProtocolTableRow>
+	leaves: Array<ProtocolTableLeafRow>
 }
 
 function rowMatchesSearch(
@@ -89,10 +89,10 @@ function rowMatchesSearch(
 }
 
 export function filterProtocolTableSourceRows(
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	searchTerm: string,
 	parentMetrics: Readonly<Record<string, ParentProtocolMetrics>>
-): ProtocolTableSourceRow[] {
+): Array<ProtocolTableSourceRow> {
 	const term = searchTerm.trim().toLowerCase()
 	if (!term) return rows
 	return rows.filter((row) => rowMatchesSearch(row, term, parentMetrics))
@@ -151,10 +151,10 @@ function getGroupIdentity(row: ProtocolTableSourceRow, header: UnifiedRowHeaderT
 	}
 }
 
-function collectMetadata(rows: readonly ProtocolTableSourceRow[]): {
+function collectMetadata(rows: ReadonlyArray<ProtocolTableSourceRow>): {
 	category: string | null
-	chains: string[]
-	oracles: string[]
+	chains: Array<string>
+	oracles: Array<string>
 } {
 	const chains = new Set<string>()
 	const oracles = new Set<string>()
@@ -200,7 +200,7 @@ function mergeCanonicalChainMetrics(
 
 function buildLeafCustomValues(
 	row: ProtocolTableSourceRow,
-	columns: readonly CompiledCustomColumn[]
+	columns: ReadonlyArray<CompiledCustomColumn>
 ): { customValues: Record<string, number | null>; customAggregation: CustomAggregationState } {
 	const evaluatedValues: Record<string, number | null> = {}
 	const sumValues: Partial<Record<string, number | null>> = {}
@@ -228,9 +228,9 @@ function buildLeafCustomValues(
 }
 
 function mergeCustomAggregation(
-	children: readonly ProtocolTableRow[],
+	children: ReadonlyArray<ProtocolTableRow>,
 	store: CustomAggregationStore,
-	columns: readonly CompiledCustomColumn[]
+	columns: ReadonlyArray<CompiledCustomColumn>
 ): CustomAggregationState {
 	const sumValues: Record<string, number | null> = {}
 	for (const column of columns) if (column.aggregation === 'sum') sumValues[column.id] = null
@@ -258,7 +258,7 @@ function buildGroupCustomValues({
 	header,
 	aggregation
 }: {
-	columns: readonly CompiledCustomColumn[]
+	columns: ReadonlyArray<CompiledCustomColumn>
 	metrics: ProtocolTableMetrics
 	header: UnifiedRowHeaderType
 	aggregation: CustomAggregationState
@@ -276,7 +276,7 @@ function buildGroupCustomValues({
 
 function buildLeaf(
 	row: ProtocolTableSourceRow,
-	customColumns: readonly CompiledCustomColumn[],
+	customColumns: ReadonlyArray<CompiledCustomColumn>,
 	customAggregations: CustomAggregationStore | null
 ): ProtocolTableLeafRow {
 	const custom = customAggregations ? { ...buildLeafCustomValues(row, customColumns), store: customAggregations } : null
@@ -303,10 +303,10 @@ function buildGroup({
 	identity: GroupIdentity
 	header: UnifiedRowHeaderType
 	rows: NonEmptyRows
-	children: ProtocolTableRow[]
+	children: Array<ProtocolTableRow>
 	path: string
 	sources: ReadModelSources
-	customColumns: readonly CompiledCustomColumn[]
+	customColumns: ReadonlyArray<CompiledCustomColumn>
 	customAggregations: CustomAggregationStore | null
 }): ProtocolTableGroupRow {
 	const metadata = collectMetadata(rows)
@@ -380,18 +380,18 @@ function buildLevel({
 	customAggregations,
 	leaves
 }: {
-	rows: ProtocolTableSourceRow[]
-	rowHeaders: UnifiedRowHeaderType[]
+	rows: Array<ProtocolTableSourceRow>
+	rowHeaders: Array<UnifiedRowHeaderType>
 	depth: number
 	path: string
 	sources: ReadModelSources
-	customColumns: readonly CompiledCustomColumn[]
+	customColumns: ReadonlyArray<CompiledCustomColumn>
 	customAggregations: CustomAggregationStore | null
-	leaves: ProtocolTableLeafRow[]
-}): ProtocolTableRow[] {
+	leaves: Array<ProtocolTableLeafRow>
+}): Array<ProtocolTableRow> {
 	const header = rowHeaders[depth]
 	if (!header) {
-		const result: ProtocolTableLeafRow[] = []
+		const result: Array<ProtocolTableLeafRow> = []
 		for (const row of rows) {
 			const leaf = buildLeaf(row, customColumns, customAggregations)
 			leaves.push(leaf)
@@ -408,7 +408,7 @@ function buildLevel({
 		else groups.set(identity.key, { identity, rows: [row] })
 	}
 
-	const result: ProtocolTableRow[] = []
+	const result: Array<ProtocolTableRow> = []
 	for (const group of groups.values()) {
 		const groupPath = `${path}/${group.identity.key}`
 		const children = buildLevel({
@@ -448,8 +448,8 @@ function buildLevel({
 }
 
 export function setProtocolTableFilteredShares(
-	rows: ProtocolTableRow[],
-	metricKeys: readonly FilteredShareMetricKey[] = FILTERED_SHARE_METRIC_KEYS
+	rows: Array<ProtocolTableRow>,
+	metricKeys: ReadonlyArray<FilteredShareMetricKey> = FILTERED_SHARE_METRIC_KEYS
 ): void {
 	if (metricKeys.length === 0) return
 
@@ -477,8 +477,8 @@ export function setProtocolTableFilteredShares(
 	for (const row of rows) visit(row)
 }
 
-export function collectProtocolTableLeaves(rows: ProtocolTableRow[]): ProtocolTableLeafRow[] {
-	const leaves: ProtocolTableLeafRow[] = []
+export function collectProtocolTableLeaves(rows: Array<ProtocolTableRow>): Array<ProtocolTableLeafRow> {
+	const leaves: Array<ProtocolTableLeafRow> = []
 	const visit = (row: ProtocolTableRow): void => {
 		if (row.nodeType === 'leaf') leaves.push(row)
 		else for (const child of row.subRows) visit(child)
@@ -496,7 +496,7 @@ export function buildProtocolTableReadModel({
 	chainMetricScope,
 	aggregationPlan = FULL_PROTOCOL_AGGREGATION_PLAN
 }: BuildProtocolTableReadModelOptions): ProtocolTableReadModel {
-	const leaves: ProtocolTableLeafRow[] = []
+	const leaves: Array<ProtocolTableLeafRow> = []
 	const compiledCustomColumns = compileCustomColumns(customColumns, CHAIN_METRIC_KEYS)
 	const customAggregations: CustomAggregationStore | null = compiledCustomColumns.length > 0 ? new Map() : null
 	const readRows = buildLevel({

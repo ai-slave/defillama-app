@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { normalizeSqlResultRows } from '../../resultNormalization'
 import { escapeSqlChartHtml, readSqlNumber, readSqlTimestampMs } from '../rowValues'
 
 describe('SQL chart row values', () => {
-	it('normalizes numbers and dates once before chart readers enter hot loops', () => {
+	test('normalizes numbers and dates once before chart readers enter hot loops', () => {
 		const result = normalizeSqlResultRows({
 			columns: [
 				{ name: 'integer', type: 'BIGINT' },
@@ -19,7 +19,7 @@ describe('SQL chart row values', () => {
 		expect(readSqlTimestampMs(result.rows[0][2])).toBe(1_704_067_200_000)
 	})
 
-	it('preserves unsafe integers exactly instead of feeding rounded values to charts', () => {
+	test('preserves unsafe integers exactly instead of feeding rounded values to charts', () => {
 		const unsafe = '9007199254740993'
 		const result = normalizeSqlResultRows({
 			columns: [{ name: 'value', type: 'BIGINT' }],
@@ -31,7 +31,7 @@ describe('SQL chart row values', () => {
 		expect(readSqlNumber(true, true)).toBe(1)
 	})
 
-	it('escapes SQL labels embedded in tooltip markup', () => {
+	test('escapes SQL labels embedded in tooltip markup', () => {
 		expect(escapeSqlChartHtml('<A&B>')).toBe('&lt;A&amp;B&gt;')
 	})
 })

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
 import { createSignInFlowStore, type GoogleLinkChallenge } from './signInFlowStore'
 
 function challenge(overrides: Partial<GoogleLinkChallenge> = {}): GoogleLinkChallenge {
@@ -16,7 +16,7 @@ function challenge(overrides: Partial<GoogleLinkChallenge> = {}): GoogleLinkChal
 describe('sign-in flow', () => {
 	beforeEach(() => window.sessionStorage.clear())
 
-	it('resumes the same Google challenge after using another method', () => {
+	test('resumes the same Google challenge after using another method', () => {
 		const store = createSignInFlowStore()
 		const pendingChallenge = challenge()
 		store.dispatch({ challenge: pendingChallenge, kind: 'googleLinkRequired' })
@@ -28,7 +28,7 @@ describe('sign-in flow', () => {
 		expect(store.getSnapshot()).toEqual({ challenge: pendingChallenge, kind: 'googleLink' })
 	})
 
-	it('restores the latest resent challenge when the dialog reopens', () => {
+	test('restores the latest resent challenge when the dialog reopens', () => {
 		const store = createSignInFlowStore()
 		const resentChallenge = challenge({ challengeToken: 'resent-token' })
 		store.dispatch({ challenge: challenge(), kind: 'googleLinkRequired' })
@@ -40,7 +40,7 @@ describe('sign-in flow', () => {
 		})
 	})
 
-	it('ignores an expired challenge when the dialog reopens', () => {
+	test('ignores an expired challenge when the dialog reopens', () => {
 		const store = createSignInFlowStore()
 		const now = Date.now()
 		store.dispatch({
@@ -55,7 +55,7 @@ describe('sign-in flow', () => {
 		expect(window.sessionStorage.getItem('google-link-challenge')).toBeNull()
 	})
 
-	it('clears the challenge after authentication', () => {
+	test('clears the challenge after authentication', () => {
 		const store = createSignInFlowStore()
 		store.dispatch({ challenge: challenge(), kind: 'googleLinkRequired' })
 		store.dispatch({ kind: 'authenticated' })

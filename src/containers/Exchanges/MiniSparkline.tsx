@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { formatFixedNumber } from '~/utils/numberFormat'
 
-function sparklinePoints(values: number[], width: number, height: number): string {
+function sparklinePoints(values: Array<number>, width: number, height: number): string {
 	if (values.length < 2) return ''
 	const min = Math.min(...values)
 	const max = Math.max(...values)
@@ -15,7 +15,7 @@ function sparklinePoints(values: number[], width: number, height: number): strin
 		.join(' ')
 }
 
-export function MiniSparkline({ values, label }: { values: number[]; label: string }) {
+export function MiniSparkline({ values, label }: { values: Array<number>; label: string }) {
 	const points = React.useMemo(() => sparklinePoints(values, 112, 32), [values])
 	if (!points) return <span className="text-tertiary">–</span>
 	return (

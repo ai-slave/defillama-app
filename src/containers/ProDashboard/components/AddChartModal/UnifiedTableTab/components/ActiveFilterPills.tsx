@@ -7,7 +7,7 @@ export interface FilterPill {
 }
 
 interface ActiveFilterPillsProps {
-	pills: FilterPill[]
+	pills: Array<FilterPill>
 }
 
 export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {

@@ -1,9 +1,9 @@
 import { createRef } from 'react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createOwnedRef } from '~/containers/LlamaAI/utils/ownedRef'
 
 describe('createOwnedRef', () => {
-	it('attaches and detaches a single node', () => {
+	test('attaches and detaches a single node', () => {
 		const target = createRef<string>()
 		const bind = createOwnedRef(target)
 
@@ -14,7 +14,7 @@ describe('createOwnedRef', () => {
 		expect(target.current).toBe(null)
 	})
 
-	it('does not clear the target when a stale binder detaches after another node took over', () => {
+	test('does not clear the target when a stale binder detaches after another node took over', () => {
 		// Two composers briefly coexist (landing-exit copy + conversation composer).
 		const target = createRef<string>()
 		const bindExitCopy = createOwnedRef(target)

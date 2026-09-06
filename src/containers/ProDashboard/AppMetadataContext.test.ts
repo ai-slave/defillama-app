@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IChainMetadata } from '~/utils/metadata/types'
 import { getAvailableChainChartTypes } from './appMetadataChartTypes'
 import { buildProtocolMetadataIndex } from './AppMetadataContext'
 
 describe('buildProtocolMetadataIndex', () => {
-	it('merges duplicate protocol entries without losing true capabilities or chains', () => {
+	test('merges duplicate protocol entries without losing true capabilities or chains', () => {
 		const index = buildProtocolMetadataIndex({
 			one: { name: 'aave', displayName: 'Aave', chains: ['Ethereum'], fees: false, revenue: true },
 			two: { name: 'aave', chains: ['Base'], fees: true, revenue: false }
@@ -17,7 +17,7 @@ describe('buildProtocolMetadataIndex', () => {
 		expect(record?.builderMetrics.has('revenue')).toBe(true)
 	})
 
-	it('does not claim chain-only metrics are protocol capabilities', () => {
+	test('does not claim chain-only metrics are protocol capabilities', () => {
 		const record = buildProtocolMetadataIndex({ one: { name: 'aave', fees: true } }).get('aave')
 
 		expect(record?.builderMetrics.has('chain-fees')).toBe(false)
@@ -26,7 +26,7 @@ describe('buildProtocolMetadataIndex', () => {
 })
 
 describe('Pro dashboard chain chart availability', () => {
-	it('exposes canonical adapter metrics when chain metadata advertises them', () => {
+	test('exposes canonical adapter metrics when chain metadata advertises them', () => {
 		const flags = { name: 'Avalanche', gasUsed: true, openInterest: true } as IChainMetadata
 
 		expect(getAvailableChainChartTypes(flags)).toContain('gasUsed')

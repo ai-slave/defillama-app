@@ -32,8 +32,8 @@ export interface FeeMLeaderboardEntry {
 
 interface TimeSeriesData {
 	title: string
-	dates: ApiDate[]
-	series: Array<{ name: string; data: number[] }>
+	dates: Array<ApiDate>
+	series: Array<{ name: string; data: Array<number> }>
 }
 
 export interface FeeMAPIResponse {
@@ -45,13 +45,13 @@ export interface FeeMAPIResponse {
 	}
 	feem: {
 		globalKpis: FeeMGlobalKpis
-		leaderboard: FeeMLeaderboardEntry[]
+		leaderboard: Array<FeeMLeaderboardEntry>
 		dailyStats: TimeSeriesData
 	}
 }
 
 function parseDateToUnix(dateStr: string): number {
-	return Math.floor(Date.parse(dateStr + 'T00:00:00Z') / 1000)
+	return Math.floor(Date.parse(`${dateStr}T00:00:00Z`) / 1000)
 }
 
 export function buildFeeMViewModel({ feem }: FeeMAPIResponse) {

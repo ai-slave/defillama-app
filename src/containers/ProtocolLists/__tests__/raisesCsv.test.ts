@@ -1,5 +1,5 @@
 import { createTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { prepareTableCsv } from '~/components/Table/utils'
 import type { RaisesSummary } from '~/containers/Raises/summary'
 import { airdropsColumns, type RecentlyListedProtocolsTable } from '../RecentProtocolsTable'
@@ -31,7 +31,7 @@ function row(name: string, raiseSummary: RaisesSummary): Row {
 }
 
 describe('Potential Airdrops funding export', () => {
-	it('sorts and exports disclosed subtotals with unknown-round counts, preserving zero', () => {
+	test('sorts and exports disclosed subtotals with unknown-round counts, preserving zero', () => {
 		const table = createTable({
 			data: [
 				row('Unknown', { totalUsd: null, undisclosedCount: 2 }),

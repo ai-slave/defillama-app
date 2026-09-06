@@ -1,11 +1,11 @@
 import { spawnSync } from 'node:child_process'
 import { promises as fs } from 'node:fs'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 
 // The App Router `server-only` marker is blocked repo-wide by
 // eslint/no-restricted-imports in .oxlintrc.json.
 describe('dataset snapshot Pages Router compatibility', () => {
-	it('does not change React package resolution for Bun preparation commands', async () => {
+	test('does not change React package resolution for Bun preparation commands', async () => {
 		const commandFiles = [
 			'package.json',
 			'scripts/build.sh',
@@ -19,7 +19,7 @@ describe('dataset snapshot Pages Router compatibility', () => {
 		expect(invalid).toEqual([])
 	})
 
-	it('loads the Yields builder with ordinary React resolution', () => {
+	test('loads the Yields builder with ordinary React resolution', () => {
 		const result = spawnSync(
 			'bun',
 			['-e', "await import('./src/containers/Yields/server/dataset.builder.server.ts')"],

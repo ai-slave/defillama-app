@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import Router from 'next/router'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DragOverlay, ImageUpload } from '~/containers/LlamaAI/components/input/ImageUpload'
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
@@ -28,7 +27,7 @@ interface ProjectLandingProps {
 	projectId: string
 	tier: ProjectTier
 	initialTab?: 'chats' | 'sources'
-	sessionList?: ChatSession[]
+	sessionList?: Array<ChatSession>
 	onSubmit: (
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
@@ -136,18 +135,19 @@ export function ProjectLanding({
 		const trimmed = prompt.trim()
 		const imagesToSend = [...imageUpload.selectedImages]
 		if ((!trimmed && imagesToSend.length === 0) || isStreaming) return
-		const images = imagesToSend.length
-			? await Promise.all(
-					imagesToSend.map(({ file, isPasted }) =>
-						fileToBase64(file).then((data) => ({
-							data,
-							mimeType: file.type,
-							filename: file.name,
-							...(isPasted ? { isPasted: true } : {})
-						}))
+		const images =
+			imagesToSend.length > 0
+				? await Promise.all(
+						imagesToSend.map(({ file, isPasted }) =>
+							fileToBase64(file).then((data) => ({
+								data,
+								mimeType: file.type,
+								filename: file.name,
+								...(isPasted ? { isPasted: true } : {})
+							}))
+						)
 					)
-				)
-			: undefined
+				: undefined
 		const accepted = await Promise.resolve(onSubmit(trimmed, undefined, images))
 		if (accepted === false) return
 		setPrompt('')
@@ -171,8 +171,8 @@ export function ProjectLanding({
 		try {
 			await updateSessionTitle({ sessionId: session.sessionId, title: next, projectId })
 			setRenamingSessionId(null)
-		} catch (err) {
-			console.error('Failed to rename session:', err)
+		} catch (error) {
+			console.error('Failed to rename session:', error)
 		} finally {
 			setActingSessionId(null)
 		}
@@ -183,8 +183,8 @@ export function ProjectLanding({
 		setActingSessionId(session.sessionId)
 		try {
 			await deleteSession(session.sessionId, projectId)
-		} catch (err) {
-			console.error('Failed to delete session:', err)
+		} catch (error) {
+			console.error('Failed to delete session:', error)
 		} finally {
 			setActingSessionId(null)
 		}

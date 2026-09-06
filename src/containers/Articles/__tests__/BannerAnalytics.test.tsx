@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ArticleBannerStrip } from '../renderer/ArticleBannerStrip'
 import { ArticleImageBanner } from '../renderer/ArticleImageBanner'
 import { ArticleImageBannerHorizontal } from '../renderer/ArticleImageBannerHorizontal'
@@ -19,7 +19,7 @@ vi.mock('~/utils/analytics/umami', () => ({
 }))
 
 vi.mock('@tanstack/react-query', () => ({
-	useQuery: vi.fn(({ queryKey, enabled = true }: { queryKey: unknown[]; enabled?: boolean }) => ({
+	useQuery: vi.fn(({ queryKey, enabled = true }: { queryKey: Array<unknown>; enabled?: boolean }) => ({
 		data: enabled ? mocks.lookups.get(JSON.stringify(queryKey)) : undefined,
 		isLoading: false
 	}))
@@ -35,7 +35,7 @@ vi.mock('~/auth', () => ({
 
 /** Lets a test decide when the observed sentinel enters the viewport. */
 class FakeIntersectionObserver {
-	static instances: FakeIntersectionObserver[] = []
+	static instances: Array<FakeIntersectionObserver> = []
 	private targets = new Set<Element>()
 
 	constructor(private readonly callback: IntersectionObserverCallback) {
@@ -54,7 +54,7 @@ class FakeIntersectionObserver {
 		this.targets.clear()
 	}
 
-	takeRecords(): IntersectionObserverEntry[] {
+	takeRecords(): Array<IntersectionObserverEntry> {
 		return []
 	}
 
@@ -99,7 +99,7 @@ const banner = (overrides: Partial<Banner>): Banner => ({
 	...overrides
 })
 
-const key = (...parts: string[]) => JSON.stringify(['research', 'banner', ...parts])
+const key = (...parts: Array<string>) => JSON.stringify(['research', 'banner', ...parts])
 
 function expectedPayload(eventName: string, widgetLabel: string) {
 	return [
@@ -169,7 +169,7 @@ describe('article banner analytics', () => {
 		expect(mocks.trackUmamiEvent).toHaveBeenLastCalledWith(...expectedPayload('widget_click', widgetLabel))
 	}
 
-	it('reports the sidebar image banner as an impression once and a click', async () => {
+	test('reports the sidebar image banner as an impression once and a click', async () => {
 		mocks.lookups.set(key('article', 'article-id'), emptyLookup())
 		mocks.lookups.set(key('section', 'report'), emptyLookup())
 		mocks.lookups.set(key('all-articles'), {
@@ -181,7 +181,7 @@ describe('article banner analytics', () => {
 		await expectImpressionOnceAndClick('DefiLlama Research article image banner')
 	})
 
-	it('reports the in-body image banner under the same label as the sidebar one', async () => {
+	test('reports the in-body image banner under the same label as the sidebar one', async () => {
 		mocks.lookups.set(key('article', 'article-id'), emptyLookup())
 		mocks.lookups.set(key('section', 'report'), emptyLookup())
 		mocks.lookups.set(key('all-articles'), {
@@ -193,7 +193,7 @@ describe('article banner analytics', () => {
 		await expectImpressionOnceAndClick('DefiLlama Research article image banner')
 	})
 
-	it('reports the promo frame as an impression once and a click', async () => {
+	test('reports the promo frame as an impression once and a click', async () => {
 		mocks.lookups.set(key('all-articles'), {
 			...emptyLookup(),
 			promo: banner({ type: 'promo', imageCardUrl: '/uploads/promo/card' })
@@ -203,7 +203,7 @@ describe('article banner analytics', () => {
 		await expectImpressionOnceAndClick('DefiLlama Research article promo banner')
 	})
 
-	it('reports top bar clicks with a label per scope and never an impression', async () => {
+	test('reports top bar clicks with a label per scope and never an impression', async () => {
 		mocks.lookups.set(key('landing'), { ...emptyLookup(), text: banner({ text: 'Landing strip' }) })
 		await render(<ArticleBannerStrip scope="landing" />)
 		await enterViewport()
@@ -225,7 +225,7 @@ describe('article banner analytics', () => {
 		)
 	})
 
-	it('does not track clicks on the section top bar', async () => {
+	test('does not track clicks on the section top bar', async () => {
 		mocks.lookups.set(key('section', 'report'), { ...emptyLookup(), text: banner({ text: 'Section strip' }) })
 		await render(<ArticleBannerStrip scope="section" section="report" />)
 		await clickLink()

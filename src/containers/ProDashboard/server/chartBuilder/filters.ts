@@ -1,7 +1,7 @@
 import { normalizeCacheList } from '~/server/api/cacheKey'
 import { toDisplayName } from '~/utils/chainNormalizer'
 
-export function normalizeLegacyChartBuilderChains(rawChains: readonly string[]): string[] {
+export function normalizeLegacyChartBuilderChains(rawChains: ReadonlyArray<string>): Array<string> {
 	const chains = normalizeCacheList(rawChains)
 	if (chains.some((chain) => chain.toLowerCase() === 'all')) return []
 

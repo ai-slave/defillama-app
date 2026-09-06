@@ -1,7 +1,7 @@
 import { parseNumberQueryParam } from '~/utils/routerQuery'
 import type { FormattedStablecoinAsset } from './utils'
 
-type QueryParamInput = string | string[] | undefined | null
+type QueryParamInput = string | Array<string> | undefined | null
 
 type StablecoinFilterableItem = Pick<
 	FormattedStablecoinAsset,
@@ -27,15 +27,15 @@ export type StablecoinFilterQuery = {
 }
 
 export type StablecoinFilterState = {
-	selectedAttributes: string[]
-	selectedPegTypes: string[]
-	selectedBackings: string[]
+	selectedAttributes: Array<string>
+	selectedPegTypes: Array<string>
+	selectedBackings: Array<string>
 	minMcap: number | null
 	maxMcap: number | null
 	hasActiveFilters: boolean
 }
 
-export const stablecoinAttributeOptions: StablecoinFilterOption[] = [
+export const stablecoinAttributeOptions: Array<StablecoinFilterOption> = [
 	{
 		name: 'Stable',
 		key: 'STABLE',
@@ -68,7 +68,7 @@ export const stablecoinAttributeOptions: StablecoinFilterOption[] = [
 	}
 ]
 
-export const stablecoinBackingOptions: StablecoinFilterOption[] = [
+export const stablecoinBackingOptions: Array<StablecoinFilterOption> = [
 	{
 		name: 'Fiat',
 		key: 'FIATSTABLES',
@@ -89,7 +89,7 @@ export const stablecoinBackingOptions: StablecoinFilterOption[] = [
 	}
 ]
 
-export const stablecoinPegTypeOptions: StablecoinFilterOption[] = [
+export const stablecoinPegTypeOptions: Array<StablecoinFilterOption> = [
 	{
 		name: 'USD',
 		key: 'PEGGEDUSD',
@@ -301,11 +301,11 @@ export const resolveSelectedStablecoinFilterKeys = ({
 	includeParam: QueryParamInput
 	excludeParam: QueryParamInput
 	options: ReadonlyArray<StablecoinFilterOption>
-}): string[] => {
+}): Array<string> => {
 	const optionKeyByLower = getOptionKeyByLower(options)
 	const allKeys = options.map((option) => option.key)
 	const rawIncludes = Array.isArray(includeParam) ? includeParam : includeParam ? [includeParam] : []
-	let selected: string[]
+	let selected: Array<string>
 
 	if (rawIncludes.length === 0) {
 		selected = allKeys
@@ -360,7 +360,7 @@ const stablecoinBackingOptionsByKey = getFilterOptionMap(stablecoinBackingOption
 
 const matchesAnySelectedOption = (
 	asset: StablecoinFilterableItem,
-	selectedKeys: string[],
+	selectedKeys: Array<string>,
 	optionsByKey: Map<string, StablecoinFilterOption>
 ): boolean => {
 	if (selectedKeys.length === 0) return false
@@ -386,11 +386,11 @@ export const matchesStablecoinFilters = (asset: StablecoinFilterableItem, state:
 }
 
 export const filterStablecoinAssets = <T extends StablecoinFilterableItem>(
-	assets: T[],
+	assets: Array<T>,
 	state: StablecoinFilterState
-): T[] => {
+): Array<T> => {
 	if (!state.hasActiveFilters) return assets
-	const filtered: T[] = []
+	const filtered: Array<T> = []
 	for (const asset of assets) {
 		if (matchesStablecoinFilters(asset, state)) filtered.push(asset)
 	}

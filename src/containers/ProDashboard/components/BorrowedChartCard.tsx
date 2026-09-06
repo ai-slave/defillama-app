@@ -28,7 +28,7 @@ const EMPTY_DATASET: TimestampDataset = {
 	source: [],
 	dimensions: ['timestamp']
 }
-const EMPTY_CHARTS: MultiSeriesChartSeriesConfig[] = []
+const EMPTY_CHARTS: Array<MultiSeriesChartSeriesConfig> = []
 const HIDDEN_EXPORTS = 'hidden' as const
 const DOLLAR_CHART_OPTIONS = {
 	...BORROWED_CHART_OPTIONS,

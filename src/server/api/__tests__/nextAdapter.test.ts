@@ -1,13 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { toNextHandler } from '../nextAdapter'
 
 function createResponse() {
-	const headers = new Map<string, number | string | string[]>()
+	const headers = new Map<string, number | string | Array<string>>()
 	let res!: NextApiResponse & { body?: unknown }
 	res = {
 		statusCode: 200,
-		setHeader: vi.fn((name: string, value: number | string | string[]) => {
+		setHeader: vi.fn((name: string, value: number | string | Array<string>) => {
 			headers.set(name.toLowerCase(), value)
 			return res
 		}),
@@ -39,7 +39,7 @@ const request = {
 } as NextApiRequest
 
 describe('toNextHandler', () => {
-	it('sets a JSON content type for serialized JSON responses', async () => {
+	test('sets a JSON content type for serialized JSON responses', async () => {
 		const { headers, res } = createResponse()
 		const handler = toNextHandler({
 			route: '/api/test',
@@ -56,7 +56,7 @@ describe('toNextHandler', () => {
 		expect(res.send).toHaveBeenCalledWith('{"ok":true}')
 	})
 
-	it('keeps an explicit content type on serialized JSON responses', async () => {
+	test('keeps an explicit content type on serialized JSON responses', async () => {
 		const { headers, res } = createResponse()
 		const handler = toNextHandler({
 			route: '/api/test',

@@ -3,7 +3,6 @@ import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
-import type {} from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
@@ -115,14 +114,14 @@ export function RWAChains({
 	initialChartDataset,
 	page
 }: {
-	chains: IRWAChainsOverviewRow[]
+	chains: Array<IRWAChainsOverviewRow>
 	initialChartDataset: RWAPositionalChartDataset
 	page: RWAOverviewPage
 }) {
 	const router = useRouter()
-	const stablecoinsQ = router.query.includeStablecoins as string | string[] | undefined
-	const governanceQ = router.query.includeGovernance as string | string[] | undefined
-	const bridgeTvlQ = router.query.includeBridgeTvl as string | string[] | undefined
+	const stablecoinsQ = router.query.includeStablecoins as string | Array<string> | undefined
+	const governanceQ = router.query.includeGovernance as string | Array<string> | undefined
+	const bridgeTvlQ = router.query.includeBridgeTvl as string | Array<string> | undefined
 	const includeStablecoins = stablecoinsQ != null ? isTrueQueryParam(stablecoinsQ) : false
 	const includeGovernance = governanceQ != null ? isTrueQueryParam(governanceQ) : false
 	const includeBridgeTvl = bridgeTvlQ != null ? isTrueQueryParam(bridgeTvlQ) : true
@@ -152,7 +151,7 @@ export function RWAChains({
 			hasExcludedAssets: hasExcludedRWAOverviewAssets(row, includeStablecoins, includeGovernance)
 		}
 	})
-	const treemapSizeRows: RWAFlowTreemapSizeRow[] = data.map((row) => ({
+	const treemapSizeRows: Array<RWAFlowTreemapSizeRow> = data.map((row) => ({
 		name: row.chain,
 		activeMcap: row.totalActiveMcap,
 		onChainMcap: row.totalOnChainMcap,

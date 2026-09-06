@@ -9,7 +9,7 @@ import { useScrollerHeightFromFirstItem } from '~/hooks/useScrollerHeightFromFir
 
 interface ResearchCollectionsProps {
 	title: string
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 }
 
 const pageWidget = 'DefiLlama Research Collections widget'

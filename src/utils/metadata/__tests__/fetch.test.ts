@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 type MetadataFetchOptions = {
 	method: 'POST'
@@ -123,7 +123,7 @@ describe('fetchCoreMetadata', () => {
 		})
 	})
 
-	it('returns the core metadata payload shape from upstream sources', async () => {
+	test('returns the core metadata payload shape from upstream sources', async () => {
 		fetchCoreMetadataSourcesMock.mockResolvedValue(createCoreMetadataSources())
 		const { fetchCoreMetadata } = await import('../fetch')
 
@@ -153,7 +153,7 @@ describe('fetchCoreMetadata', () => {
 		expect(fetchMetadataJsonMock).not.toHaveBeenCalled()
 	})
 
-	it('merges legacy and metadata-only RWA platform routes by canonical slug', async () => {
+	test('merges legacy and metadata-only RWA platform routes by canonical slug', async () => {
 		fetchCoreMetadataSourcesMock.mockResolvedValue(
 			createCoreMetadataSources({
 				rwaList: {
@@ -194,7 +194,7 @@ describe('fetchCoreMetadata', () => {
 		})
 	})
 
-	it('precomputes emissions historical prices with a 6h POST', async () => {
+	test('precomputes emissions historical prices with a 6h POST', async () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
 		const lastPastEvent = nowSec - 8 * day
@@ -243,7 +243,7 @@ describe('fetchCoreMetadata', () => {
 		})
 	})
 
-	it('batches emissions historical price precomputes', async () => {
+	test('batches emissions historical price precomputes', async () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
 		const lastPastEvent = nowSec - 8 * day
@@ -287,7 +287,7 @@ describe('fetchCoreMetadata', () => {
 		})
 	})
 
-	it('fails metadata generation when emissions historical prices fail', async () => {
+	test('fails metadata generation when emissions historical prices fail', async () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000
 		const lastPastEvent = nowSec - 8 * day

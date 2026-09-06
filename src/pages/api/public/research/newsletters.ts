@@ -13,7 +13,7 @@ const MAX_QUERY_LENGTH = 200
 
 type ResponseData = ResearchNewsletterListResponse | { error: string }
 
-function getQueryParam(value: string | string[] | undefined): string {
+function getQueryParam(value: string | Array<string> | undefined): string {
 	if (Array.isArray(value)) return value[0] ?? ''
 	return value ?? ''
 }

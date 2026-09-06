@@ -71,6 +71,6 @@ export type PreIpoTokenIssuerIntegration = {
 }
 
 export type PreIpoIntegrations = {
-	perps: PreIpoPerpIntegration[]
-	tokenIssuers: PreIpoTokenIssuerIntegration[]
+	perps: Array<PreIpoPerpIntegration>
+	tokenIssuers: Array<PreIpoTokenIssuerIntegration>
 }

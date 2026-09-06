@@ -48,7 +48,7 @@ type MultiSeriesCharts = NonNullable<IMultiSeriesChartProps['charts']>
 
 interface TreasuryPageProps {
 	name: string
-	otherProtocols: string[]
+	otherProtocols: Array<string>
 	category: string | null
 	metrics: IProtocolPageMetrics
 	warningBanners: ReturnType<typeof getProtocolWarningBanners>
@@ -171,9 +171,9 @@ function TokensMultiSeriesChartCard({
 }: {
 	title: string
 	protocolName: string
-	allTokens: string[]
+	allTokens: Array<string>
 	breakdown: ProtocolBreakdownChart
-	defaultTokens?: string[]
+	defaultTokens?: Array<string>
 	aggregateOthers: boolean
 	exportSuffix: string
 	valueSymbol?: string

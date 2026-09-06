@@ -36,9 +36,9 @@ export type ArticleApiValidationError = {
 
 export class ArticleApiError extends Error {
 	status: number
-	validationErrors?: ArticleApiValidationError[]
+	validationErrors?: Array<ArticleApiValidationError>
 
-	constructor(message: string, status: number, validationErrors?: ArticleApiValidationError[]) {
+	constructor(message: string, status: number, validationErrors?: Array<ArticleApiValidationError>) {
 		super(message)
 		this.name = 'ArticleApiError'
 		this.status = status
@@ -48,7 +48,7 @@ export class ArticleApiError extends Error {
 }
 
 export type ArticleListResponse = {
-	items: ArticleDocument[]
+	items: Array<ArticleDocument>
 	page: number
 	perPage: number
 	totalItems: number
@@ -57,7 +57,7 @@ export type ArticleListResponse = {
 
 export type ArticleAuthorResponse = {
 	author: ArticlePublicAuthorProfile
-	articles: ArticleDocument[]
+	articles: Array<ArticleDocument>
 }
 
 export type ArticlePathItem = {
@@ -67,7 +67,7 @@ export type ArticlePathItem = {
 }
 
 export type ArticlePathsResponse = {
-	items: ArticlePathItem[]
+	items: Array<ArticlePathItem>
 }
 
 function articleUrl(path: string) {
@@ -127,7 +127,7 @@ async function parseResponse<T>(response: Response | null): Promise<T> {
 		const details = data && typeof data === 'object' ? data.details : null
 		const validationErrors =
 			details && typeof details === 'object' && Array.isArray(details.errors)
-				? (details.errors as ArticleApiValidationError[])
+				? (details.errors as Array<ArticleApiValidationError>)
 				: undefined
 		throw new ArticleApiError(message, response.status, validationErrors)
 	}
@@ -145,7 +145,7 @@ export async function listArticles(
 		limit?: number
 		skip?: number
 		query?: string
-		tags?: string[]
+		tags?: Array<string>
 		entityType?: string
 		entitySlug?: string
 		section?: ArticleSection
@@ -167,14 +167,14 @@ export async function listArticles(
 }
 
 export type ArticleSectionListResponse = {
-	sections: { section: ArticleSection; items: ArticleDocument[] }[]
+	sections: Array<{ section: ArticleSection; items: Array<ArticleDocument> }>
 }
 
 export type { EditorialTagOrderItem } from './editorialTagOrder'
 export { applyEditorialTagOrderPayload, buildEditorialTagReorderPayload } from './editorialTagOrder'
 
 export type ArticleByTagResponse = {
-	items: ArticleDocument[]
+	items: Array<ArticleDocument>
 }
 
 export async function listArticleSections(
@@ -205,15 +205,15 @@ export async function listArticlesByTopic(
 }
 
 export type ResearchLandingBuckets = {
-	heroReports: ArticleDocument[]
-	latest: ArticleDocument[]
-	spotlight: ArticleDocument[]
-	interviews: ArticleDocument[]
-	highlight: ArticleDocument[]
-	insights: ArticleDocument[]
-	moreReportsCandidates: ArticleDocument[]
-	spotlightColumnCandidates: ArticleDocument[]
-	collectionsCandidates: ArticleDocument[]
+	heroReports: Array<ArticleDocument>
+	latest: Array<ArticleDocument>
+	spotlight: Array<ArticleDocument>
+	interviews: Array<ArticleDocument>
+	highlight: Array<ArticleDocument>
+	insights: Array<ArticleDocument>
+	moreReportsCandidates: Array<ArticleDocument>
+	spotlightColumnCandidates: Array<ArticleDocument>
+	collectionsCandidates: Array<ArticleDocument>
 }
 
 export async function getResearchLanding(
@@ -272,9 +272,9 @@ export async function setEditorialTag(
 
 export async function reorderEditorialTag(
 	tag: string,
-	items: EditorialTagOrderItem[],
+	items: Array<EditorialTagOrderItem>,
 	authorizedFetch: AuthorizedFetch
-): Promise<{ tag: string; items: EditorialTagOrderItem[] }> {
+): Promise<{ tag: string; items: Array<EditorialTagOrderItem> }> {
 	return parseResponse(
 		await authorizedFetch(articleUrl(`/articles/editorial-tags/${encodeURIComponent(tag)}/order`), {
 			method: 'PATCH',
@@ -542,8 +542,8 @@ export async function updateMyAuthorProfile(
 export async function listCollaborators(
 	articleId: string,
 	authorizedFetch: AuthorizedFetch
-): Promise<ArticleCollaborator[]> {
-	const data = await parseResponse<{ collaborators: ArticleCollaborator[] }>(
+): Promise<Array<ArticleCollaborator>> {
+	const data = await parseResponse<{ collaborators: Array<ArticleCollaborator> }>(
 		await authorizedFetch(articleUrl(`/articles/${encodeURIComponent(articleId)}/collaborators`))
 	)
 	return data.collaborators
@@ -611,8 +611,8 @@ export async function transferOwnership(
 	return data.article
 }
 
-export async function listBanners(authorizedFetch: AuthorizedFetch): Promise<Banner[]> {
-	const data = await parseResponse<{ banners: Banner[] }>(await authorizedFetch(articleUrl('/banners')))
+export async function listBanners(authorizedFetch: AuthorizedFetch): Promise<Array<Banner>> {
+	const data = await parseResponse<{ banners: Array<Banner> }>(await authorizedFetch(articleUrl('/banners')))
 	return data.banners.map(normalizeBannerTargeting)
 }
 
@@ -672,7 +672,7 @@ function sanitizePublicBanner(banner: Banner | null): Banner | null {
 }
 
 function normalizeBannerTargeting(banner: Banner): Banner {
-	const targetCountries: string[] = []
+	const targetCountries: Array<string> = []
 	const seenCountries = new Set<string>()
 	if (Array.isArray(banner.targetCountries)) {
 		for (const value of banner.targetCountries) {
@@ -751,8 +751,8 @@ export async function getTrustedBySection(fetchFn: FetchLike = fetch): Promise<T
 	}
 }
 
-export async function listTrustedLogos(authorizedFetch: AuthorizedFetch): Promise<TrustedLogo[]> {
-	const data = await parseResponse<{ logos: TrustedLogo[] }>(
+export async function listTrustedLogos(authorizedFetch: AuthorizedFetch): Promise<Array<TrustedLogo>> {
+	const data = await parseResponse<{ logos: Array<TrustedLogo> }>(
 		await authorizedFetch(articleUrl('/research/trusted-by/logos'))
 	)
 	return data.logos
@@ -793,8 +793,11 @@ export async function deleteTrustedLogo(id: string, authorizedFetch: AuthorizedF
 	)
 }
 
-export async function reorderTrustedLogos(ids: string[], authorizedFetch: AuthorizedFetch): Promise<TrustedLogo[]> {
-	const data = await parseResponse<{ logos: TrustedLogo[] }>(
+export async function reorderTrustedLogos(
+	ids: Array<string>,
+	authorizedFetch: AuthorizedFetch
+): Promise<Array<TrustedLogo>> {
+	const data = await parseResponse<{ logos: Array<TrustedLogo> }>(
 		await authorizedFetch(articleUrl('/research/trusted-by/logos/order'), {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
@@ -804,8 +807,8 @@ export async function reorderTrustedLogos(ids: string[], authorizedFetch: Author
 	return data.logos
 }
 
-export async function listSocialMentions(authorizedFetch: AuthorizedFetch): Promise<SocialMention[]> {
-	const data = await parseResponse<{ mentions: SocialMention[] }>(
+export async function listSocialMentions(authorizedFetch: AuthorizedFetch): Promise<Array<SocialMention>> {
+	const data = await parseResponse<{ mentions: Array<SocialMention> }>(
 		await authorizedFetch(articleUrl('/research/trusted-by/mentions'))
 	)
 	return data.mentions
@@ -846,8 +849,11 @@ export async function deleteSocialMention(id: string, authorizedFetch: Authorize
 	)
 }
 
-export async function reorderSocialMentions(ids: string[], authorizedFetch: AuthorizedFetch): Promise<SocialMention[]> {
-	const data = await parseResponse<{ mentions: SocialMention[] }>(
+export async function reorderSocialMentions(
+	ids: Array<string>,
+	authorizedFetch: AuthorizedFetch
+): Promise<Array<SocialMention>> {
+	const data = await parseResponse<{ mentions: Array<SocialMention> }>(
 		await authorizedFetch(articleUrl('/research/trusted-by/mentions/order'), {
 			method: 'PATCH',
 			headers: { 'Content-Type': 'application/json' },
@@ -869,8 +875,8 @@ export async function getSponsoredResearchReports(
 	return parseResponse(await (options.fetchFn ?? fetch)(articleUrlWithCacheNonce(path)))
 }
 
-export async function listResearchSponsors(authorizedFetch: AuthorizedFetch): Promise<ResearchSponsorAdmin[]> {
-	const data = await parseResponse<{ sponsors: ResearchSponsorAdmin[] }>(
+export async function listResearchSponsors(authorizedFetch: AuthorizedFetch): Promise<Array<ResearchSponsorAdmin>> {
+	const data = await parseResponse<{ sponsors: Array<ResearchSponsorAdmin> }>(
 		await authorizedFetch(articleUrl('/research/sponsors'))
 	)
 	return data.sponsors
@@ -880,11 +886,11 @@ export async function searchResearchSponsorArticles(
 	query: string,
 	authorizedFetch: AuthorizedFetch,
 	limit = 20
-): Promise<ResearchSponsorArticleSearchResult[]> {
+): Promise<Array<ResearchSponsorArticleSearchResult>> {
 	const search = new URLSearchParams()
 	appendSearchParam(search, 'q', query)
 	appendSearchParam(search, 'limit', limit)
-	const data = await parseResponse<{ articles: ResearchSponsorArticleSearchResult[] }>(
+	const data = await parseResponse<{ articles: Array<ResearchSponsorArticleSearchResult> }>(
 		await authorizedFetch(articleUrl(`/research/sponsors/articles?${search}`))
 	)
 	return data.articles

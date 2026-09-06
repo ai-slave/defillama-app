@@ -8,7 +8,7 @@ import {
 	useReactTable
 } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ProtocolAggregateTableRow } from '../../../unifiedTable/contracts'
 import { buildProtocolTableReadModel } from '../readModel'
 import type { ProtocolTableRow } from '../types'
@@ -20,7 +20,7 @@ function protocol(
 		category = null,
 		chains = ['Base'],
 		oracles = []
-	}: { category?: string | null; chains?: string[]; oracles?: string[] } = {}
+	}: { category?: string | null; chains?: Array<string>; oracles?: Array<string> } = {}
 ): ProtocolAggregateTableRow {
 	return {
 		rowType: 'protocol',
@@ -41,7 +41,7 @@ function protocol(
 }
 
 describe('Unified Table CSV export', () => {
-	it('reads all filtered rows before pagination', () => {
+	test('reads all filtered rows before pagination', () => {
 		const rows = buildProtocolTableReadModel({
 			rows: [protocol('Alpha'), protocol('Beta'), protocol('Gamma')],
 			rowHeaders: ['protocol'],
@@ -49,7 +49,7 @@ describe('Unified Table CSV export', () => {
 			chainMetrics: {},
 			customColumns: []
 		}).rows
-		const columns: ColumnDef<ProtocolTableRow>[] = [{ id: 'name', accessorKey: 'displayName', header: 'Protocol' }]
+		const columns: Array<ColumnDef<ProtocolTableRow>> = [{ id: 'name', accessorKey: 'displayName', header: 'Protocol' }]
 		const rendered: { table?: Table<ProtocolTableRow> } = {}
 
 		function Probe() {
@@ -80,7 +80,7 @@ describe('Unified Table CSV export', () => {
 		expect(csv.data).toEqual([['Alpha'], ['Beta'], ['Gamma']])
 	})
 
-	it('exports expanded hierarchies once and preserves visible metadata', () => {
+	test('exports expanded hierarchies once and preserves visible metadata', () => {
 		const rows = buildProtocolTableReadModel({
 			rows: [
 				protocol('Alpha', { category: 'Dexes', chains: ['Base'], oracles: ['Chainlink'] }),
@@ -91,7 +91,7 @@ describe('Unified Table CSV export', () => {
 			chainMetrics: {},
 			customColumns: []
 		}).rows
-		const columns: ColumnDef<ProtocolTableRow>[] = [
+		const columns: Array<ColumnDef<ProtocolTableRow>> = [
 			{ id: 'name', accessorKey: 'displayName', header: 'Name' },
 			{ id: 'category', accessorKey: 'category', header: 'Category' },
 			{ id: 'chains', accessorKey: 'chains', header: 'Chains' },

@@ -21,7 +21,7 @@ interface IRWAPerpsContractInfo {
 	link: string | null
 	oracleProvider: string | null
 	description: string | null
-	categories: string[]
+	categories: Array<string>
 }
 
 export interface IRWAPerpsContractFundingHistoryPoint {
@@ -37,8 +37,8 @@ export type IRWAPerpsContractMarketChartPoint = IRWAPerpsMarketChartPoint
 export interface IRWAPerpsContractData {
 	contract: IRWAPerpsContractInfo
 	market: IRWAPerpsMarket
-	marketChart: IRWAPerpsContractMarketChartPoint[] | null
-	fundingHistory: IRWAPerpsContractFundingHistoryPoint[] | null
+	marketChart: Array<IRWAPerpsContractMarketChartPoint> | null
+	fundingHistory: Array<IRWAPerpsContractFundingHistoryPoint> | null
 }
 
 export type RWAPerpsChartMetricKey = 'openInterest' | 'volume24h' | 'markets'
@@ -102,7 +102,7 @@ export interface IRWAPerpsMarketBreakdownRequest extends IRWAPerpsChartScope<RWA
 }
 
 export interface IRWAPerpsOverviewPageData {
-	markets: IRWAPerpsMarket[]
+	markets: Array<IRWAPerpsMarket>
 	initialChartDataset: RWAChartDataset
 	totals: {
 		openInterest: number
@@ -117,9 +117,9 @@ export interface IRWAPerpsOverviewPageData {
 
 export interface IRWAPerpsVenuePageData {
 	venue: string
-	markets: IRWAPerpsMarket[]
+	markets: Array<IRWAPerpsMarket>
 	initialChartDataset: RWAChartDataset
-	venueLinks: IRWAPerpsNavLink[]
+	venueLinks: Array<IRWAPerpsNavLink>
 	totals: {
 		openInterest: number
 		openInterestChange24h: number | null
@@ -132,9 +132,9 @@ export interface IRWAPerpsVenuePageData {
 
 export interface IRWAPerpsAssetGroupPageData {
 	assetGroup: string
-	markets: IRWAPerpsMarket[]
+	markets: Array<IRWAPerpsMarket>
 	initialChartDataset: RWAChartDataset
-	assetGroupLinks: IRWAPerpsNavLink[]
+	assetGroupLinks: Array<IRWAPerpsNavLink>
 	totals: {
 		openInterest: number
 		openInterestChange24h: number | null
@@ -147,9 +147,9 @@ export interface IRWAPerpsAssetGroupPageData {
 
 export interface IRWAPerpsAssetPageData {
 	asset: string
-	markets: IRWAPerpsMarket[]
+	markets: Array<IRWAPerpsMarket>
 	initialChartDataset: RWAChartDataset
-	assetLinks: IRWAPerpsNavLink[]
+	assetLinks: Array<IRWAPerpsNavLink>
 	totals: {
 		openInterest: number
 		openInterestChange24h: number | null
@@ -170,8 +170,8 @@ export interface IRWAPerpsVenuesOverviewRow {
 }
 
 export interface IRWAPerpsVenuesOverview {
-	rows: IRWAPerpsVenuesOverviewRow[]
-	dexRows: IRWAPerpsVenuesOverviewRow[]
+	rows: Array<IRWAPerpsVenuesOverviewRow>
+	dexRows: Array<IRWAPerpsVenuesOverviewRow>
 	initialChartDataset: RWAChartDataset
 }
 
@@ -185,14 +185,14 @@ export interface IRWAPerpsAssetGroupsOverviewRow {
 }
 
 export interface IRWAPerpsAssetGroupsOverview {
-	rows: IRWAPerpsAssetGroupsOverviewRow[]
-	dexRows: IRWAPerpsAssetGroupsOverviewRow[]
+	rows: Array<IRWAPerpsAssetGroupsOverviewRow>
+	dexRows: Array<IRWAPerpsAssetGroupsOverviewRow>
 	initialChartDataset: RWAChartDataset
 }
 
 export interface IRWAPerpsAssetsOverviewRow {
 	asset: string
-	assetGroups: string[]
+	assetGroups: Array<string>
 	openInterest: number
 	volume24h: number
 	markets: number
@@ -204,7 +204,7 @@ export interface IRWAPerpsAssetsOverviewRow {
 }
 
 export interface IRWAPerpsAssetsOverview {
-	rows: IRWAPerpsAssetsOverviewRow[]
-	dexRows: IRWAPerpsAssetsOverviewRow[]
+	rows: Array<IRWAPerpsAssetsOverviewRow>
+	dexRows: Array<IRWAPerpsAssetsOverviewRow>
 	initialChartDataset: RWAChartDataset | null
 }

@@ -54,26 +54,26 @@ interface TrendFields {
 	id: string
 	start_date: string
 	end_date: string
-	intrinsic?: (number | null)[]
+	intrinsic?: Array<number | null>
 }
 
 // An unattributable total never appears alongside the component series.
 export type Trend = TrendFields &
 	(
-		| { total: (number | null)[]; base?: never; reward?: never }
-		| { base: (number | null)[]; reward?: (number | null)[]; total?: never }
+		| { total: Array<number | null>; base?: never; reward?: never }
+		| { base: Array<number | null>; reward?: Array<number | null>; total?: never }
 	)
 
 export interface TokenKeys {
 	id: string
-	pool_token?: string[]
-	reference_asset?: string[]
-	borrow_token?: string[]
+	pool_token?: Array<string>
+	reference_asset?: Array<string>
+	borrow_token?: Array<string>
 	// Whole-set membership for the reference target: option keys the pool's ENTIRE
 	// reference token set belongs to (the exact_any test). `reference_asset` above
 	// only records options that *some* reference token belongs to, so strict Exact
 	// matching consults this field instead. Absent when no option covers the whole set.
-	reference_asset_exact?: string[]
+	reference_asset_exact?: Array<string>
 }
 
 export interface MetaChain {
@@ -107,15 +107,15 @@ export interface MetaTokenOption {
 export type TokenOption = [name: string, value: string]
 
 export interface YieldsMeta {
-	chains: MetaChain[]
-	protocols: MetaProtocol[]
-	categories: MetaCategory[]
-	tokens: { families: MetaTokenOption[]; assets: MetaTokenOption[] }
+	chains: Array<MetaChain>
+	protocols: Array<MetaProtocol>
+	categories: Array<MetaCategory>
+	tokens: { families: Array<MetaTokenOption>; assets: Array<MetaTokenOption> }
 	// Editorial halal whitelist, served as current protocol slugs (id-keyed at the source).
-	halal: string[]
+	halal: Array<string>
 	// Pools involving warehouse-classified meme tokens — a UI-level classification
 	// (default-hidden noise), served once here instead of as a per-row flag.
-	meme_pool_ids: string[]
+	meme_pool_ids: Array<string>
 }
 
 export interface EarnAttributes {
@@ -142,8 +142,8 @@ export interface EarnRow {
 	url: string | null
 	protocol: string
 	chain: string
-	underlying_tokens: Token[]
-	reward_tokens: Token[]
+	underlying_tokens: Array<Token>
+	reward_tokens: Array<Token>
 	tvl_usd: number | null
 	apy: ApyWindows
 	intrinsic: IntrinsicApy | null
@@ -165,7 +165,7 @@ export interface BorrowMarketRow {
 	url: string | null
 	collateral_token: Token | null
 	borrow_token: Token | null
-	reward_tokens: Token[]
+	reward_tokens: Array<Token>
 	loan_to_value: number | null
 	total_supply_usd: number | null
 	total_borrow_usd: number | null
@@ -184,7 +184,7 @@ export interface RouteLegCollateral {
 	total_supply_usd: number | null
 	apy: ApyWindows
 	intrinsic: IntrinsicApy | null
-	reward_tokens: Token[]
+	reward_tokens: Array<Token>
 }
 
 export interface RouteLegBorrow {
@@ -196,7 +196,7 @@ export interface RouteLegBorrow {
 	available_borrow_usd: number | null
 	cost_apy: ApyWindows
 	intrinsic: IntrinsicApy | null
-	reward_tokens: Token[]
+	reward_tokens: Array<Token>
 }
 
 export interface RouteRow {
@@ -226,7 +226,7 @@ export interface LoopRow {
 	intrinsic: IntrinsicApy | null
 	// Per-leg reward tokens (supply/borrow) carried on the raw blob — surfaced as symbols for the
 	// supply/borrow leg tooltips.
-	reward_tokens: { supply: Token[]; borrow: Token[] }
+	reward_tokens: { supply: Array<Token>; borrow: Array<Token> }
 }
 
 // Entity facts joined on from /v2/meta (rows only carry plain name strings).
@@ -245,7 +245,7 @@ export type EnrichedEarnRow = EarnWithTokenKeysRow & { trend: Trend | null }
 export type EntityMarketRow = BorrowMarketRow & EntityEnrichment
 export type EnrichedMarketRow = EntityMarketRow & { tokenKeys: TokenKeys | null }
 export type EnrichedRouteRow = RouteRow &
-	EntityEnrichment & { collateralTokenKeys: string[] | null; borrowTokenKeys: string[] | null }
+	EntityEnrichment & { collateralTokenKeys: Array<string> | null; borrowTokenKeys: Array<string> | null }
 export type EnrichedLoopRow = LoopRow & EntityEnrichment & { tokenKeys: TokenKeys | null }
 
 // Response row for the earn table route. Legacy APY percentage changes, realised 7d IL,
@@ -262,7 +262,7 @@ export interface EarnPageRow {
 	project: string
 	airdrop: boolean
 	raiseValuationUsd: number | null
-	chains: [string, ...string[]]
+	chains: [string, ...Array<string>]
 	url: string
 	category: string | null
 	referenceAsset: string | null
@@ -275,7 +275,7 @@ export interface EarnPageRow {
 	apyMean30d: number | null
 	apyRewardRaw: number | null
 	rewardTokens: Array<{ address: string; symbol: string | null }>
-	rewardTokensSymbols: string[]
+	rewardTokensSymbols: Array<string>
 	intrinsicSourceSymbol: string | null
 	volumeUsd1d: number | null
 	pricePerShare: number | null
@@ -293,7 +293,7 @@ export interface EarnPageRow {
 	pegDeviation?: number
 	pegTokenSymbol?: string
 	stablecoin: boolean | null
-	tokenSymbols: string[]
+	tokenSymbols: Array<string>
 	singleAssetExposure: boolean | null
 	ilRisk: boolean | null
 	// Optional so other EarnPageRow producers can omit it.
@@ -320,7 +320,7 @@ export interface MarketTableRow {
 	raiseValuationUsd: number | null
 	hasRiskData?: boolean
 	chain: string
-	chains: string[]
+	chains: Array<string>
 	supplyApy: number | null
 	borrowApy: number | null
 	// Per-leg resolved-view APY components (view-consistent with supplyApy/borrowApy totals): the
@@ -336,8 +336,8 @@ export interface MarketTableRow {
 	borrowIntrinsicSourceSymbol: string | null
 	// Reward-token symbols per leg (shown in the supply/borrow leg tooltips). Markets carry a single
 	// pool-level reward set, mirrored onto both legs — a leg only surfaces them when it has reward APY.
-	supplyRewardTokensSymbols: string[]
-	borrowRewardTokensSymbols: string[]
+	supplyRewardTokensSymbols: Array<string>
+	borrowRewardTokensSymbols: Array<string>
 	collateralSymbol: string | null
 	borrowSymbol: string | null
 	totalSupplyUsd: number | null
@@ -366,7 +366,7 @@ export interface RouteTableRow {
 	raiseValuationUsd: number | null
 	hasRiskData?: boolean
 	chain: string
-	chains: string[]
+	chains: Array<string>
 	collateralSymbol: string | null
 	borrowSymbol: string | null
 	supplyApy: number | null
@@ -382,8 +382,8 @@ export interface RouteTableRow {
 	borrowApyReward: number | null
 	borrowApyIntrinsic: number | null
 	borrowIntrinsicSourceSymbol: string | null
-	supplyRewardTokensSymbols: string[]
-	borrowRewardTokensSymbols: string[]
+	supplyRewardTokensSymbols: Array<string>
+	borrowRewardTokensSymbols: Array<string>
 	availableBorrowUsd: number | null
 	totalBorrowUsd: number | null
 	borrowCapacityFilled: number | null
@@ -412,7 +412,7 @@ export interface LoopTableRow {
 	raiseValuationUsd: number | null
 	hasRiskData?: boolean
 	chain: string
-	chains: string[]
+	chains: Array<string>
 	leverage: number | null
 	supplyApy: number | null
 	borrowApy: number | null
@@ -426,8 +426,8 @@ export interface LoopTableRow {
 	supplyIntrinsicSourceSymbol: string | null
 	borrowApyBase: number | null
 	borrowApyReward: number | null
-	supplyRewardTokensSymbols: string[]
-	borrowRewardTokensSymbols: string[]
+	supplyRewardTokensSymbols: Array<string>
+	borrowRewardTokensSymbols: Array<string>
 	availableBorrowUsd: number | null
 	totalBorrowUsd: number | null
 	borrowCapacityFilled: number | null

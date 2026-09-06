@@ -1,5 +1,5 @@
 import { QueryClient, QueryObserver } from '@tanstack/react-query'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import { initDashboardState } from './dashboardReducer'
 import type { Dashboard } from './dashboardTypes'
@@ -12,7 +12,7 @@ import {
 import type { ChartConfig } from './types'
 import { buildDashboardSeo } from './utils/seo'
 
-function dashboard(items: DashboardItemConfig[]): Dashboard {
+function dashboard(items: Array<DashboardItemConfig>): Dashboard {
 	return {
 		id: 'dashboard-1',
 		slug: 'public-dashboard',
@@ -47,7 +47,7 @@ function dashboard(items: DashboardItemConfig[]): Dashboard {
 }
 
 describe('dashboard initial render payload', () => {
-	it('keeps public render config while excluding ownership, AI history, and source data', () => {
+	test('keeps public render config while excluding ownership, AI history, and source data', () => {
 		const chart: ChartConfig = {
 			id: 'chart-1',
 			kind: 'chart',
@@ -110,7 +110,7 @@ describe('dashboard initial render payload', () => {
 		expect(payload).not.toHaveProperty('collectionName')
 	})
 
-	it('includes verified owner identity for edit hydration without editor history', () => {
+	test('includes verified owner identity for edit hydration without editor history', () => {
 		const payload = toOwnerDashboardInitialRenderPayload(dashboard([]))
 
 		expect(payload.ownerId).toBe('owner-1')
@@ -125,7 +125,7 @@ describe('dashboard initial render payload', () => {
 		)
 	})
 
-	it('makes dashboard shell config available synchronously before stream data arrives', () => {
+	test('makes dashboard shell config available synchronously before stream data arrives', () => {
 		const payload = toPublicDashboardInitialRenderPayload(
 			dashboard([
 				{
@@ -145,7 +145,7 @@ describe('dashboard initial render payload', () => {
 		expect(state.currentDashboard?.id).toBe('dashboard-1')
 	})
 
-	it('marks recreated initial render dashboards as untrusted without marking API records', () => {
+	test('marks recreated initial render dashboards as untrusted without marking API records', () => {
 		const source = dashboard([])
 		const payload = toOwnerDashboardInitialRenderPayload(source)
 		const firstHydration = hydrateDashboardInitialRenderPayload(payload)
@@ -156,7 +156,7 @@ describe('dashboard initial render payload', () => {
 		expect(isDashboardInitialRenderHydration(source)).toBe(false)
 	})
 
-	it('preserves an existing trusted query cache entry when initial render data is provided', () => {
+	test('preserves an existing trusted query cache entry when initial render data is provided', () => {
 		const queryClient = new QueryClient()
 		const queryKey = ['pro-dashboard', 'dashboard', 'dashboard-1', true, 'owner-1'] as const
 		const trustedDashboard = dashboard([])
@@ -177,8 +177,8 @@ describe('dashboard initial render payload', () => {
 		queryClient.clear()
 	})
 
-	it('keeps a representative 24-item __NEXT_DATA__ config payload bounded', () => {
-		const items: DashboardItemConfig[] = Array.from({ length: 24 }, (_, index) => ({
+	test('keeps a representative 24-item __NEXT_DATA__ config payload bounded', () => {
+		const items: Array<DashboardItemConfig> = Array.from({ length: 24 }, (_, index) => ({
 			id: `builder-${index}`,
 			kind: 'builder',
 			name: `Protocol revenue comparison ${index}`,

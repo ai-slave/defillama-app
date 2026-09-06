@@ -18,10 +18,10 @@ export type BannerFormState = {
 	scope: BannerScope
 	section: ArticleSection | ''
 	articleId: string | null
-	excludedArticleIds: string[]
+	excludedArticleIds: Array<string>
 	audienceMode: AudienceMode
-	targetGroups: BannerCountryGroupId[]
-	targetCountries: string[]
+	targetGroups: Array<BannerCountryGroupId>
+	targetCountries: Array<string>
 	text: string
 	linkUrl: string
 	linkLabel: string

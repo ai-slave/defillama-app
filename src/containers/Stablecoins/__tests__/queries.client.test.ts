@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildStablecoinChartSeriesUrl, buildStablecoinVolumeChartUrl } from '../queries.client'
 
 describe('buildStablecoinChartSeriesUrl', () => {
-	it('encodes overview filters and skips undefined values', () => {
+	test('encodes overview filters and skips undefined values', () => {
 		const url = buildStablecoinChartSeriesUrl({
 			scope: 'overview',
 			chain: 'All',
@@ -22,7 +22,7 @@ describe('buildStablecoinChartSeriesUrl', () => {
 		)
 	})
 
-	it('encodes unreleased asset chart requests', () => {
+	test('encodes unreleased asset chart requests', () => {
 		expect(
 			buildStablecoinChartSeriesUrl({
 				scope: 'asset',
@@ -33,7 +33,7 @@ describe('buildStablecoinChartSeriesUrl', () => {
 		).toBe('/api/public/stablecoins/chart-series?scope=asset&chart=totalCirc&stablecoin=tether&unreleased=true')
 	})
 
-	it('encodes an explicit bounded runtime selection', () => {
+	test('encodes an explicit bounded runtime selection', () => {
 		expect(
 			buildStablecoinChartSeriesUrl({
 				scope: 'overview',
@@ -47,7 +47,7 @@ describe('buildStablecoinChartSeriesUrl', () => {
 		)
 	})
 
-	it('encodes an exclusion without serializing the full selected universe', () => {
+	test('encodes an exclusion without serializing the full selected universe', () => {
 		expect(
 			buildStablecoinChartSeriesUrl({
 				scope: 'chains',
@@ -59,19 +59,19 @@ describe('buildStablecoinChartSeriesUrl', () => {
 })
 
 describe('buildStablecoinVolumeChartUrl', () => {
-	it('encodes global volume requests', () => {
+	test('encodes global volume requests', () => {
 		expect(buildStablecoinVolumeChartUrl({ scope: 'global', chart: 'chain', limit: 10 })).toBe(
 			'/api/public/stablecoins/volume-chart?scope=global&chart=chain&limit=10'
 		)
 	})
 
-	it('requests every volume series only for a complete export', () => {
+	test('requests every volume series only for a complete export', () => {
 		expect(buildStablecoinVolumeChartUrl({ scope: 'global', chart: 'token', allSeries: true })).toBe(
 			'/api/public/stablecoins/volume-chart?scope=global&chart=token&all=true'
 		)
 	})
 
-	it('encodes compact volume exclusions', () => {
+	test('encodes compact volume exclusions', () => {
 		expect(
 			buildStablecoinVolumeChartUrl({
 				scope: 'global',
@@ -81,13 +81,13 @@ describe('buildStablecoinVolumeChartUrl', () => {
 		).toBe('/api/public/stablecoins/volume-chart?scope=global&chart=token&limit=20&exclude=true&series=USDT')
 	})
 
-	it('encodes chain scoped volume requests without dimension filters', () => {
+	test('encodes chain scoped volume requests without dimension filters', () => {
 		expect(buildStablecoinVolumeChartUrl({ scope: 'chain', chain: 'Ethereum', chart: 'token' })).toBe(
 			'/api/public/stablecoins/volume-chart?scope=chain&chart=token&limit=20&chain=Ethereum'
 		)
 	})
 
-	it('encodes token scoped volume requests without fallback filters', () => {
+	test('encodes token scoped volume requests without fallback filters', () => {
 		expect(buildStablecoinVolumeChartUrl({ scope: 'token', token: 'USDT', chart: 'chain' })).toBe(
 			'/api/public/stablecoins/volume-chart?scope=token&chart=chain&limit=20&token=USDT'
 		)

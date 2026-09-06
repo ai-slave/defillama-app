@@ -91,14 +91,14 @@ export function EquitiesFilingsTable({
 	filings,
 	filingForms
 }: {
-	filings: IEquitiesFilingApiItem[]
-	filingForms: string[]
+	filings: Array<IEquitiesFilingApiItem>
+	filingForms: Array<string>
 }) {
 	const [selectedForm, setSelectedForm] = useState<string>('All')
 
 	const filteredFilings = useMemo(() => {
 		if (selectedForm === 'All') return filings
-		const matchingFilings: IEquitiesFilingApiItem[] = []
+		const matchingFilings: Array<IEquitiesFilingApiItem> = []
 		for (const filing of filings) {
 			if (filing.form === selectedForm) matchingFilings.push(filing)
 		}

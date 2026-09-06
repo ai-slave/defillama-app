@@ -43,7 +43,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 					if (
 						sample &&
 						Array.isArray(sample[columnIndex]) &&
-						(sample[columnIndex] as any[]).every((v) => v == null || typeof v === 'number')
+						(sample[columnIndex] as Array<any>).every((v) => v == null || typeof v === 'number')
 					) {
 						kind = 'list'
 					}
@@ -123,7 +123,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 										>
 											{isList ? (
 												<Suspense fallback={<span className="text-[10px] text-pro-text-tertiary">…</span>}>
-													<SparklineChart data={toSparklineData(value as unknown[])} height={20} />
+													<SparklineChart data={toSparklineData(value as Array<unknown>)} height={20} />
 												</Suspense>
 											) : (
 												<span className="truncate">
@@ -147,7 +147,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 	)
 }
 
-function toSparklineData(values: unknown[]): Array<[number, number]> {
+function toSparklineData(values: Array<unknown>): Array<[number, number]> {
 	const data: Array<[number, number]> = []
 	for (let index = 0; index < values.length; index++) {
 		const value = values[index]
@@ -186,7 +186,12 @@ function cellToTitle(value: unknown): string {
 	return formatted.length > 60 ? formatted : ''
 }
 
-function estimateColumnWidth(header: string, rows: unknown[][], columnIndex: number, kind: ColumnKind): number {
+function estimateColumnWidth(
+	header: string,
+	rows: Array<Array<unknown>>,
+	columnIndex: number,
+	kind: ColumnKind
+): number {
 	const sample = rows.slice(0, 40)
 	let max = header.length + 3
 	for (const row of sample) {

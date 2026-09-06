@@ -15,7 +15,7 @@ interface ProtocolAvailability {
 // does not expose historical annualized1y values.
 const ROLLING_30D_ANNUALIZATION_FACTOR = 12
 
-export async function fetchPfPsChartData(protocol: string, type: 'pf' | 'ps'): Promise<[number, number][]> {
+export async function fetchPfPsChartData(protocol: string, type: 'pf' | 'ps'): Promise<Array<[number, number]>> {
 	const rows = await llamaDb.any<ChartDataPoint>(
 		`
 		WITH base AS (
@@ -60,7 +60,7 @@ export async function fetchPfPsChartData(protocol: string, type: 'pf' | 'ps'): P
 	return series
 }
 
-export async function fetchPfPsProtocols(): Promise<{ pf: string[]; ps: string[] }> {
+export async function fetchPfPsProtocols(): Promise<{ pf: Array<string>; ps: Array<string> }> {
 	const rows = await llamaDb.any<ProtocolAvailability>(
 		`
 		SELECT
@@ -75,8 +75,8 @@ export async function fetchPfPsProtocols(): Promise<{ pf: string[]; ps: string[]
 		`
 	)
 
-	const pf: string[] = []
-	const ps: string[] = []
+	const pf: Array<string> = []
+	const ps: Array<string> = []
 
 	for (const row of rows) {
 		if (row.has_pf) pf.push(row.protocol)

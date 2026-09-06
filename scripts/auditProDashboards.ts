@@ -32,8 +32,8 @@ interface CachedResponse {
 }
 
 interface ParsedStream {
-	chunks: DashboardStreamChunk[]
-	issues: AuditIssue[]
+	chunks: Array<DashboardStreamChunk>
+	issues: Array<AuditIssue>
 }
 
 interface DashboardAuditResult {
@@ -45,18 +45,18 @@ interface DashboardAuditResult {
 	chartConsumers: number
 	expectedChartSources: number
 	receivedChartSources: number
-	emptyChartSources: string[]
-	missingChartSources: string[]
-	duplicateChartSources: string[]
+	emptyChartSources: Array<string>
+	missingChartSources: Array<string>
+	duplicateChartSources: Array<string>
 	expectedTableSources: number
 	receivedTableSources: number
-	emptyTableSources: string[]
-	missingTableSources: string[]
-	duplicateTableSources: string[]
-	unexpectedTableSources: string[]
+	emptyTableSources: Array<string>
+	missingTableSources: Array<string>
+	duplicateTableSources: Array<string>
+	unexpectedTableSources: Array<string>
 	chunkTypes: Record<string, number>
 	durationMs: number
-	issues: AuditIssue[]
+	issues: Array<AuditIssue>
 }
 
 interface AuditReport {
@@ -73,7 +73,7 @@ interface AuditReport {
 		expectedTableSources: number
 		receivedTableSources: number
 	}
-	dashboards: DashboardAuditResult[]
+	dashboards: Array<DashboardAuditResult>
 }
 
 interface CliOptions {
@@ -90,7 +90,7 @@ function parseBoolean(value: string | undefined): boolean {
 	return value === '1' || value === 'true'
 }
 
-function parseCliOptions(argv: string[]): CliOptions {
+function parseCliOptions(argv: Array<string>): CliOptions {
 	const values = new Map<string, string>()
 	for (const arg of argv) {
 		if (!arg.startsWith('--')) continue
@@ -151,8 +151,8 @@ function createCachedFetch(cacheDir: string, reuseCache: boolean) {
 }
 
 function parseStream(body: string): ParsedStream {
-	const chunks: DashboardStreamChunk[] = []
-	const issues: AuditIssue[] = []
+	const chunks: Array<DashboardStreamChunk> = []
+	const issues: Array<AuditIssue> = []
 	for (const [index, lineValue] of body.split('\n').entries()) {
 		const line = lineValue.trim()
 		if (!line) continue
@@ -171,13 +171,13 @@ function parseStream(body: string): ParsedStream {
 	return { chunks, issues }
 }
 
-function countItemKinds(items: DashboardItemConfig[]): Record<string, number> {
+function countItemKinds(items: Array<DashboardItemConfig>): Record<string, number> {
 	const counts: Record<string, number> = {}
 	for (const item of items) counts[item.kind] = (counts[item.kind] ?? 0) + 1
 	return counts
 }
 
-function countChartConsumers(items: DashboardItemConfig[]): number {
+function countChartConsumers(items: Array<DashboardItemConfig>): number {
 	let count = 0
 	for (const item of items) {
 		if (item.kind === 'chart' || item.kind === 'metric') count++
@@ -186,7 +186,7 @@ function countChartConsumers(items: DashboardItemConfig[]): number {
 	return count
 }
 
-function expectedChunkTypes(items: DashboardItemConfig[]): Set<string> {
+function expectedChunkTypes(items: Array<DashboardItemConfig>): Set<string> {
 	const expected = new Set<string>(['dashboard', 'done'])
 	if (dashboardStreamNeedsProtocolCatalog(items)) expected.add('protocolsAndChains')
 	if (countChartConsumers(items) > 0) expected.add('appMetadata')
@@ -236,10 +236,10 @@ function expectedChunkTypes(items: DashboardItemConfig[]): Set<string> {
 }
 
 async function runWithConcurrency<T, R>(
-	items: T[],
+	items: Array<T>,
 	concurrency: number,
 	worker: (item: T) => Promise<R>
-): Promise<R[]> {
+): Promise<Array<R>> {
 	const results = new Array<R>(items.length)
 	const queue = items.entries()
 	const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
@@ -266,7 +266,7 @@ async function auditDashboard({
 	cachedFetch: ReturnType<typeof createCachedFetch>
 }): Promise<DashboardAuditResult> {
 	const startedAt = performance.now()
-	const issues: AuditIssue[] = []
+	const issues: Array<AuditIssue> = []
 	const dashboardKey = dashboardUrlKey(dashboardSummary)
 	const streamUrl = `${baseUrl}/api/dynamic/pro-dashboard/${encodeURIComponent(dashboardKey)}/stream`
 	const response = await cachedFetch(streamUrl).catch((error) => {
@@ -332,7 +332,7 @@ async function auditDashboard({
 
 	const sourcePlan = buildProDashboardChartSourcePlan(items, catalog, appMetadata)
 	const receivedCounts = new Map<string, number>()
-	const emptyChartSources: string[] = []
+	const emptyChartSources: Array<string> = []
 	for (const chunk of parsed.chunks) {
 		if (chunk.type !== 'chartData') continue
 		const key = JSON.stringify(chunk.queryKey)

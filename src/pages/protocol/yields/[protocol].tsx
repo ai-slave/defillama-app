@@ -20,8 +20,8 @@ import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 
 const EMPTY_TOGGLE_OPTIONS = []
-const EMPTY_POOL_ROWS: IYieldTableRow[] = []
-const EMPTY_CHAINS: string[] = []
+const EMPTY_POOL_ROWS: Array<IYieldTableRow> = []
+const EMPTY_CHAINS: Array<string> = []
 export const getStaticProps = withPerformanceLogging(
 	'protocol/yields/[protocol]',
 	async ({ params }: GetStaticPropsContext<{ protocol: string }>) => {
@@ -72,11 +72,11 @@ export const getStaticProps = withPerformanceLogging(
 		// set to v2 protocol names via the yields meta. Slugs with no v2 yield pools are
 		// absent from the meta and drop out (a tiny name list ships to the client, which
 		// fetches the rows itself).
-		let protocolNames: string[] = []
+		let protocolNames: Array<string> = []
 		// Chains present for THIS protocol's pools (drives the tab's Chains dropdown options),
 		// ordered by pool count; evmChains is the EVM subset (the shared dropdown's "All EVM").
-		let chainList: string[] = []
-		let evmChains: string[] = []
+		let chainList: Array<string> = []
+		let evmChains: Array<string> = []
 		const [{ acquireYieldsSnapshot, readYieldsMeta }, { getEntityEarn }] = await Promise.all([
 			import('~/containers/Yields/server/dataset.server'),
 			import('~/containers/Yields/data/enrich.server')
@@ -151,9 +151,9 @@ function ProtocolYieldsTab({
 	chainList,
 	evmChains
 }: {
-	protocolNames: string[]
-	chainList: string[]
-	evmChains: string[]
+	protocolNames: Array<string>
+	chainList: Array<string>
+	evmChains: Array<string>
 }) {
 	const hasProtocols = protocolNames.length > 0
 
@@ -200,12 +200,12 @@ function ProtocolYieldsTab({
 					chainList={chainList}
 					selectedChains={selectedChains}
 					evmChains={evmChains}
-					tvlRange={true}
+					tvlRange
 					tvlRangeLabel="TVL"
-					apyRange={true}
+					apyRange
 					showColumns
 					saveView={false}
-					resetFilters={true}
+					resetFilters
 					pathname={resolvedPathname}
 				/>
 			</div>
@@ -244,4 +244,4 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 	)
 }
 
-const EMPTY_POOL_NAMES: string[] = []
+const EMPTY_POOL_NAMES: Array<string> = []

@@ -21,20 +21,20 @@ function createPreIpoCompanyUrl(baseUrl: string, company: string): string {
 	return url.toString()
 }
 
-export function fetchPreIpoCompanies(): Promise<PreIpoSnapshot<PreIpoCompanyListItem[]>> {
-	return fetchJson<PreIpoSnapshot<PreIpoCompanyListItem[]>>(PRE_IPO_COMPANIES_LIST_API)
+export function fetchPreIpoCompanies(): Promise<PreIpoSnapshot<Array<PreIpoCompanyListItem>>> {
+	return fetchJson<PreIpoSnapshot<Array<PreIpoCompanyListItem>>>(PRE_IPO_COMPANIES_LIST_API)
 }
 
 export function fetchPreIpoCompanySummary(company: string): Promise<PreIpoSnapshot<PreIpoCompanySummary>> {
 	return fetchJson<PreIpoSnapshot<PreIpoCompanySummary>>(createPreIpoCompanyUrl(PRE_IPO_SUMMARY_API, company))
 }
 
-export function fetchPreIpoRaises(company: string): Promise<PreIpoSnapshot<PreIpoRaise[]>> {
-	return fetchJson<PreIpoSnapshot<PreIpoRaise[]>>(createPreIpoCompanyUrl(PRE_IPO_RAISES_API, company))
+export function fetchPreIpoRaises(company: string): Promise<PreIpoSnapshot<Array<PreIpoRaise>>> {
+	return fetchJson<PreIpoSnapshot<Array<PreIpoRaise>>>(createPreIpoCompanyUrl(PRE_IPO_RAISES_API, company))
 }
 
-export function fetchPreIpoValuations(company: string): Promise<PreIpoSnapshot<PreIpoValuation[]>> {
-	return fetchJson<PreIpoSnapshot<PreIpoValuation[]>>(createPreIpoCompanyUrl(PRE_IPO_VALUATIONS_API, company))
+export function fetchPreIpoValuations(company: string): Promise<PreIpoSnapshot<Array<PreIpoValuation>>> {
+	return fetchJson<PreIpoSnapshot<Array<PreIpoValuation>>>(createPreIpoCompanyUrl(PRE_IPO_VALUATIONS_API, company))
 }
 
 export function fetchPreIpoIntegrations(company: string): Promise<PreIpoSnapshot<PreIpoIntegrations>> {

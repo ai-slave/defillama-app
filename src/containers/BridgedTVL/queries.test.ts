@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchChainAssetsDetail: vi.fn(),
@@ -22,7 +22,7 @@ describe('getBridgedTVLByChain', () => {
 		vi.clearAllMocks()
 	})
 
-	it('preserves integer presentation ordering ties without loading list-only flows', async () => {
+	test('preserves integer presentation ordering ties without loading list-only flows', async () => {
 		mocks.fetchChainAssetsDetail.mockResolvedValue({
 			chainData: asset(10.2),
 			totals: { Alpha: asset(10.2), Beta: asset(10.9) }
@@ -46,7 +46,7 @@ describe('getBridgedTVLByChain', () => {
 		expect(result).not.toHaveProperty('assets')
 	})
 
-	it('keeps required list data when the optional flow request fails', async () => {
+	test('keeps required list data when the optional flow request fails', async () => {
 		mocks.fetchChainsAssetTotals.mockResolvedValue({ Alpha: asset(10) })
 		mocks.fetchChainAssetsFlows1d.mockRejectedValue(new Error('invalid 24-hour flow payload'))
 
@@ -61,7 +61,7 @@ describe('getBridgedTVLByChain', () => {
 })
 
 describe('reconcileChainAssetFlowKeys', () => {
-	it('maps display, spaced, and alias-id keys to asset display names', () => {
+	test('maps display, spaced, and alias-id keys to asset display names', () => {
 		const assets = { Base: asset(1), 'OP Mainnet': asset(2), 'Chain With Spaces': asset(3) }
 		const flows = {
 			base: { total: { perc: 1, raw: 1 } },

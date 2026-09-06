@@ -57,7 +57,7 @@ function syncFromStorage(key: string) {
 
 function pruneStoredDrafts(keepKey: string) {
 	if (typeof window === 'undefined') return
-	let keys: string[]
+	let keys: Array<string>
 	try {
 		keys = Object.keys(window.localStorage).filter((key) => key.startsWith(`${LLAMA_AI_PROMPT_DRAFT_KEY}:`))
 	} catch {

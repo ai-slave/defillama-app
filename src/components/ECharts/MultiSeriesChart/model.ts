@@ -18,15 +18,15 @@ export type SparseCartesianSeries = CartesianSeriesSpec & {
 }
 
 type AlignedCartesianSeries = CartesianSeriesSpec & {
-	values: readonly (number | null | undefined)[]
+	values: ReadonlyArray<number | null | undefined>
 }
 
 export type CartesianChartModel = {
 	dataset: CanonicalMultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 }
 
-function buildCharts(series: readonly CartesianSeriesSpec[]): MultiSeriesChartSeriesConfig[] {
+function buildCharts(series: ReadonlyArray<CartesianSeriesSpec>): Array<MultiSeriesChartSeriesConfig> {
 	return series.map((item, seriesIndex) => {
 		const chart: MultiSeriesChartSeriesConfig = {
 			type: item.type,
@@ -46,9 +46,9 @@ function buildCharts(series: readonly CartesianSeriesSpec[]): MultiSeriesChartSe
 }
 
 function buildIndependentCharts(
-	series: readonly SparseCartesianSeries[],
+	series: ReadonlyArray<SparseCartesianSeries>,
 	timestampMultiplier: 1 | 1000
-): MultiSeriesChartSeriesConfig[] {
+): Array<MultiSeriesChartSeriesConfig> {
 	const charts = buildCharts(series)
 	for (const [seriesIndex, item] of series.entries()) {
 		const input = item.data
@@ -66,11 +66,11 @@ function buildIndependentCharts(
 }
 
 function alignIndependentStackGroups(
-	series: readonly SparseCartesianSeries[],
-	charts: MultiSeriesChartSeriesConfig[],
+	series: ReadonlyArray<SparseCartesianSeries>,
+	charts: Array<MultiSeriesChartSeriesConfig>,
 	timestampMultiplier: 1 | 1000
 ) {
-	const indexesByStack = new Map<string, number[]>()
+	const indexesByStack = new Map<string, Array<number>>()
 	for (const [seriesIndex, item] of series.entries()) {
 		const stack = item.stack
 		if (!stack) continue
@@ -108,7 +108,7 @@ function alignIndependentStackGroups(
 	}
 }
 
-function assertUniqueSeriesNames(series: readonly CartesianSeriesSpec[]) {
+function assertUniqueSeriesNames(series: ReadonlyArray<CartesianSeriesSpec>) {
 	const names = new Set<string>()
 	for (const item of series) {
 		if (names.has(item.name)) throw new Error(`Duplicate series name "${item.name}" is not allowed`)
@@ -118,8 +118,8 @@ function assertUniqueSeriesNames(series: readonly CartesianSeriesSpec[]) {
 
 /** Build rows directly from aligned columns without allocating intermediate point tuples. */
 export function buildAlignedCartesianChartModel(
-	xValues: readonly (number | string)[],
-	series: readonly AlignedCartesianSeries[],
+	xValues: ReadonlyArray<number | string>,
+	series: ReadonlyArray<AlignedCartesianSeries>,
 	options: { xDimension?: string; timestampMultiplier?: 1 | 1000 } = {}
 ): CartesianChartModel {
 	const xDimension = options.xDimension ?? 'timestamp'
@@ -147,7 +147,7 @@ export function buildAlignedCartesianChartModel(
  * Already-aligned inputs retain the compact row-major representation.
  */
 export function buildSparseCartesianChartModel(
-	series: readonly SparseCartesianSeries[],
+	series: ReadonlyArray<SparseCartesianSeries>,
 	options: { xDimension?: string; timestampMultiplier?: 1 | 1000 } = {}
 ): CartesianChartModel {
 	const xDimension = options.xDimension ?? 'timestamp'

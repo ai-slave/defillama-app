@@ -24,7 +24,7 @@ import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 
 const LAST_TARGET_KEY = 'llamaai-last-article-target'
-const EMPTY_ARTICLE_DOCUMENTS: ArticleDocument[] = []
+const EMPTY_ARTICLE_DOCUMENTS: Array<ArticleDocument> = []
 
 interface AddToArticleModalProps {
 	dialogStore: Ariakit.DialogStore

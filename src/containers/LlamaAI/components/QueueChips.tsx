@@ -33,8 +33,8 @@ function formatResetIn(resetTime: string | null | undefined, now: number): strin
 	if (!resetTime) return null
 	const ms = new Date(resetTime).getTime() - now
 	if (ms <= 0) return null
-	const hours = Math.floor(ms / 3600000)
-	const minutes = Math.floor((ms % 3600000) / 60000)
+	const hours = Math.floor(ms / 3_600_000)
+	const minutes = Math.floor((ms % 3_600_000) / 60_000)
 	return hours >= 24 ? `${Math.floor(hours / 24)}d ${hours % 24}h` : `${hours}h ${minutes}m`
 }
 

@@ -1,13 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { PoolHistory } from '~/containers/Yields/poolDetail/types'
 import { extractYieldsV2HistoryRows } from '../chart-datasets'
 
 describe('extractYieldsV2HistoryRows', () => {
-	it('flattens every served supply APY window without inventing change metrics', () => {
+	test('flattens every served supply APY window without inventing change metrics', () => {
 		const history: PoolHistory = [
 			{
 				date: '2026-01-02',
-				tvl_usd: 1_000,
+				tvl_usd: 1000,
 				apy: {
 					avg_1d: { base: 3, reward: 1, total: 4 },
 					avg_7d: { base: 2.5, reward: 1, total: 3.5 },
@@ -22,7 +22,7 @@ describe('extractYieldsV2HistoryRows', () => {
 
 		expect(extractYieldsV2HistoryRows(history)[0]).toEqual({
 			date: '2026-01-02',
-			tvlUsd: 1_000,
+			tvlUsd: 1000,
 			supplyApy: 4,
 			supplyApyBase: 3,
 			supplyApyReward: 1,

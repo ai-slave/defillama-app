@@ -5,7 +5,7 @@ import type { ArticleEntityType } from '~/containers/Articles/types'
 import { jitterCacheControlHeader } from '~/utils/maxAgeForNext'
 import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
 
-const getQueryParam = (value: string | string[] | undefined): string => {
+const getQueryParam = (value: string | Array<string> | undefined): string => {
 	if (Array.isArray(value)) return value[0] ?? ''
 	return value ?? ''
 }

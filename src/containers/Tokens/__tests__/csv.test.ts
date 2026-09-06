@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { TokensTableRow } from '../types'
 import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION } from '../types'
 
@@ -65,7 +65,7 @@ function row(overrides: Partial<TokensTableRow>): TokensTableRow {
 	}
 }
 
-function pageResponse(rows: TokensTableRow[], hasMore: boolean) {
+function pageResponse(rows: Array<TokensTableRow>, hasMore: boolean) {
 	return {
 		schemaVersion: TOKENS_PAGE_RESPONSE_SCHEMA_VERSION,
 		snapshotVersion: 'snapshot-123456789012',
@@ -75,7 +75,7 @@ function pageResponse(rows: TokensTableRow[], hasMore: boolean) {
 }
 
 describe('prepareTokensCsv', () => {
-	it('fetches pages until hasMore is false and respects hidden columns', async () => {
+	test('fetches pages until hasMore is false and respects hidden columns', async () => {
 		fetchJson.mockReset()
 		fetchJson
 			.mockResolvedValueOnce(pageResponse([row({ rowNumber: 1 })], true))
@@ -98,7 +98,7 @@ describe('prepareTokensCsv', () => {
 		expect(rows[2]?.[1]).toBe('Ethereum (ETH)')
 	})
 
-	it('carries table query params into the export requests', async () => {
+	test('carries table query params into the export requests', async () => {
 		fetchJson.mockReset()
 		fetchJson.mockResolvedValueOnce(pageResponse([], false))
 
@@ -128,7 +128,7 @@ describe('prepareTokensCsv', () => {
 		})
 	})
 
-	it('throws instead of silently returning a partial csv', async () => {
+	test('throws instead of silently returning a partial csv', async () => {
 		fetchJson.mockReset()
 		fetchJson.mockResolvedValueOnce({ schemaVersion: -1, rows: [], hasMore: false })
 
@@ -136,7 +136,7 @@ describe('prepareTokensCsv', () => {
 			prepareTokensCsv({ query: {}, sorting: [{ id: 'marketCap', desc: true }], hiddenColumnIds: new Set() })
 		).rejects.toThrow('unexpected response schema')
 	})
-	it('rejects a changed snapshot rather than combining pages', async () => {
+	test('rejects a changed snapshot rather than combining pages', async () => {
 		fetchJson.mockReset()
 		fetchJson
 			.mockResolvedValueOnce(pageResponse([row({})], true))
@@ -145,7 +145,7 @@ describe('prepareTokensCsv', () => {
 			'snapshot changed'
 		)
 	})
-	it('exports measured zero as zero and unavailable values as blank', async () => {
+	test('exports measured zero as zero and unavailable values as blank', async () => {
 		fetchJson.mockReset()
 		fetchJson.mockResolvedValueOnce(pageResponse([row({ unlock30dUsd: 0, upcomingUnlockUsd: null })], false))
 		const { rows } = await prepareTokensCsv({ query: {}, sorting: [], hiddenColumnIds: new Set() })

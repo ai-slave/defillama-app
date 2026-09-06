@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 import { observeRewardsLinks } from '../useRewardsAnalytics'
 
@@ -21,7 +21,7 @@ class TestObserver implements IntersectionObserver {
 	disconnect() {
 		this.targets.clear()
 	}
-	takeRecords(): IntersectionObserverEntry[] {
+	takeRecords(): Array<IntersectionObserverEntry> {
 		return []
 	}
 	intersect(target: Element, intersectionRatio: number) {
@@ -44,7 +44,7 @@ class TestObserver implements IntersectionObserver {
 	}
 }
 
-let observers: TestObserver[] = []
+let observers: Array<TestObserver> = []
 const track = vi.fn()
 
 function createState(): Parameters<typeof observeRewardsLinks>[2] {
@@ -88,7 +88,7 @@ describe('Rewards link analytics', () => {
 	}
 	const data = { program_id: 'contest', project_path: '/protocol/example' }
 
-	it('requires continuous half-visible exposure in the foreground and cleans up pending dwell', () => {
+	test('requires continuous half-visible exposure in the foreground and cleans up pending dwell', () => {
 		cleanup = observeRewardsLinks(container, 'test', createState())
 		intersect(0.4)
 		vi.advanceTimersByTime(1500)
@@ -114,7 +114,7 @@ describe('Rewards link analytics', () => {
 		expect(track).toHaveBeenCalledTimes(1)
 	})
 
-	it('records every click but one impression across remounts, including immediate and middle clicks', () => {
+	test('records every click but one impression across remounts, including immediate and middle clicks', () => {
 		cleanup = observeRewardsLinks(container, 'test', createState())
 		click()
 		click()
@@ -135,7 +135,7 @@ describe('Rewards link analytics', () => {
 		expect(track.mock.calls.filter(([event]) => event === 'rewards-test-outbound-click')).toHaveLength(4)
 	})
 
-	it('retains impressions across row changes when the tracker loads after ten seconds', () => {
+	test('retains impressions across row changes when the tracker loads after ten seconds', () => {
 		delete window.umami
 		const state = createState()
 		cleanup = observeRewardsLinks(container, 'test', state)
@@ -154,7 +154,7 @@ describe('Rewards link analytics', () => {
 		expect(window.sessionStorage.getItem('rewards-test:impression:contest')).toBe('1')
 	})
 
-	it('flushes every early click once, even after the table replaces its observed rows', () => {
+	test('flushes every early click once, even after the table replaces its observed rows', () => {
 		delete window.umami
 		const state = createState()
 		cleanup = observeRewardsLinks(container, 'test', state)
@@ -178,7 +178,7 @@ describe('Rewards link analytics', () => {
 		expect(track).toHaveBeenCalledTimes(5)
 	})
 
-	it('does not flush after unmount or permanently suppress an unsent impression', () => {
+	test('does not flush after unmount or permanently suppress an unsent impression', () => {
 		delete window.umami
 		cleanup = observeRewardsLinks(container, 'test', createState())
 		click()
@@ -193,7 +193,7 @@ describe('Rewards link analytics', () => {
 		expect(track).toHaveBeenCalledExactlyOnceWith('rewards-test-program-impression', data)
 	})
 
-	it('ignores source links and cancelled navigation', () => {
+	test('ignores source links and cancelled navigation', () => {
 		cleanup = observeRewardsLinks(container, 'test', createState())
 		const source = document.createElement('a')
 		container.appendChild(source)
@@ -203,7 +203,7 @@ describe('Rewards link analytics', () => {
 		expect(track).not.toHaveBeenCalled()
 	})
 
-	it('does not send events when off or when production tracking runs on localhost', () => {
+	test('does not send events when off or when production tracking runs on localhost', () => {
 		cleanup = observeRewardsLinks(container, 'off', createState())
 		click()
 		cleanup()

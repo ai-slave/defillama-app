@@ -123,7 +123,7 @@ function makeProtocolColumns(valueLabel: string) {
 	]
 }
 
-function ProtocolTable({ data, valueLabel }: { data: TopProtocolEntry[]; valueLabel: string }) {
+function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; valueLabel: string }) {
 	const columns = useMemo(() => makeProtocolColumns(valueLabel), [valueLabel])
 
 	const table = useReactTable({
@@ -212,7 +212,7 @@ function AssetBreakdownSection({
 	totalFormatted,
 	title
 }: {
-	categories: AssetCategory[]
+	categories: Array<AssetCategory>
 	pieColors: Record<string, string>
 	totalFormatted: string
 	title: string

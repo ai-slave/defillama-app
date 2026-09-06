@@ -205,7 +205,7 @@ export function ScenarioByExit({
 	protocol,
 	supplyUsd
 }: {
-	scenarios: ScenarioVM[]
+	scenarios: Array<ScenarioVM>
 	protocol: ProtocolRiskFixture | null
 	supplyUsd: number | null
 }) {
@@ -232,11 +232,11 @@ export function ScenarioByExit({
 		const visible = scenarios.filter(isDisplayedScenario)
 		return SCENARIO_GROUPS.map((g) => ({
 			...g,
-			rows: [...visible.filter((s) => scenarioGroup(s) === g.key)].sort(cmp)
+			rows: visible.filter((s) => scenarioGroup(s) === g.key).sort(cmp)
 		})).filter((g) => g.rows.length)
 	}, [scenarios, sortKey, sortDir])
 
-	if (!groups.length) return null
+	if (groups.length === 0) return null
 
 	const onSort = (k: SortKey) => {
 		if (k === sortKey) {

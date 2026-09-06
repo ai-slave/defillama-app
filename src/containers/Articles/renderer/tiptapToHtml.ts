@@ -98,17 +98,16 @@ export function imageFigureHtml(image: FeedImageInput): string {
 	const linkHref = absolutize(image.href, SITE_ORIGIN)
 	const media = linkHref ? `<a href="${escapeAttr(linkHref)}">${imgTag}</a>` : imgTag
 
-	const captionLines: string[] = []
+	const captionLines: Array<string> = []
 	if (image.headline?.trim()) captionLines.push(image.headline.trim())
 	if (image.caption?.trim()) captionLines.push(image.caption.trim())
-	const creditBits: string[] = []
+	const creditBits: Array<string> = []
 	if (image.credit?.trim()) creditBits.push(`Credit: ${image.credit.trim()}`)
 	if (image.copyright?.trim()) creditBits.push(`© ${image.copyright.trim()}`)
-	if (creditBits.length) captionLines.push(creditBits.join(' · '))
+	if (creditBits.length > 0) captionLines.push(creditBits.join(' · '))
 
-	const figcaption = captionLines.length
-		? `<figcaption>${captionLines.map(escapeHtml).join('<br />')}</figcaption>`
-		: ''
+	const figcaption =
+		captionLines.length > 0 ? `<figcaption>${captionLines.map(escapeHtml).join('<br />')}</figcaption>` : ''
 	return `<figure>${media}${figcaption}</figure>`
 }
 
@@ -191,8 +190,8 @@ function cellAttrs(node: TiptapJson): string {
 
 function renderTable(node: TiptapJson): string {
 	const rows = node.content ?? []
-	const headerRows: TiptapJson[] = []
-	const bodyRows: TiptapJson[] = []
+	const headerRows: Array<TiptapJson> = []
+	const bodyRows: Array<TiptapJson> = []
 	let inHeader = true
 	for (const row of rows) {
 		if (row.type !== 'tableRow') continue
@@ -204,7 +203,7 @@ function renderTable(node: TiptapJson): string {
 			bodyRows.push(row)
 		}
 	}
-	const thead = headerRows.length ? `<thead>${headerRows.map(renderNode).join('')}</thead>` : ''
+	const thead = headerRows.length > 0 ? `<thead>${headerRows.map(renderNode).join('')}</thead>` : ''
 	const tbody = `<tbody>${bodyRows.map(renderNode).join('')}</tbody>`
 	return `<table>${thead}${tbody}</table>`
 }

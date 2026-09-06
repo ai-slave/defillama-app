@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { rwaAssetBreakdown } from '~/containers/RWA/server/api'
 import {
 	buildAssetBreakdownUrl,
@@ -24,7 +24,7 @@ beforeEach(() => {
 })
 
 describe('parseAssetBreakdownRequest', () => {
-	it('rejects requests when inclusion flags are omitted', () => {
+	test('rejects requests when inclusion flags are omitted', () => {
 		expect(
 			parseAssetBreakdownRequest({
 				query: {
@@ -35,7 +35,7 @@ describe('parseAssetBreakdownRequest', () => {
 		).toBeNull()
 	})
 
-	it('accepts explicit true and false inclusion flags', () => {
+	test('accepts explicit true and false inclusion flags', () => {
 		expect(
 			parseAssetBreakdownRequest({
 				query: {
@@ -55,7 +55,7 @@ describe('parseAssetBreakdownRequest', () => {
 		})
 	})
 
-	it('accepts all-target requests when no route target is present', () => {
+	test('accepts all-target requests when no route target is present', () => {
 		expect(
 			parseAssetBreakdownRequest({
 				query: {
@@ -73,7 +73,7 @@ describe('parseAssetBreakdownRequest', () => {
 		})
 	})
 
-	it('rejects arrays, blanks, invalid enums, and multiple route targets', () => {
+	test('rejects arrays, blanks, invalid enums, and multiple route targets', () => {
 		expect(
 			parseAssetBreakdownRequest({
 				query: {
@@ -134,7 +134,7 @@ describe('parseAssetBreakdownRequest', () => {
 })
 
 describe('rwaAssetBreakdown', () => {
-	it('returns serialized normalized rows for the requested metric', async () => {
+	test('returns serialized normalized rows for the requested metric', async () => {
 		mocks.fetchJson.mockResolvedValue({
 			onChainMcap: [
 				{ timestamp: 1, Alpha: 10 },
@@ -165,7 +165,7 @@ describe('rwaAssetBreakdown', () => {
 		])
 	})
 
-	it('subtracts bridge rows for the excluded DeFi TVL cache variant', async () => {
+	test('subtracts bridge rows for the excluded DeFi TVL cache variant', async () => {
 		mocks.fetchJson.mockResolvedValue({
 			defiActiveTvl: [{ timestamp: 3, Alpha: 20, Beta: 5 }],
 			bridgeTvl: [{ timestamp: 3, Alpha: 7 }]
@@ -188,7 +188,7 @@ describe('rwaAssetBreakdown', () => {
 })
 
 describe('buildAssetBreakdownUrl', () => {
-	it('forwards both inclusion flags to the upstream asset-breakdown endpoint', () => {
+	test('forwards both inclusion flags to the upstream asset-breakdown endpoint', () => {
 		expect(
 			buildAssetBreakdownUrl({
 				target: { kind: 'category', slug: 'rwa-yield-wrapper' },
@@ -200,7 +200,7 @@ describe('buildAssetBreakdownUrl', () => {
 		).toContain('/chart/category/rwa-yield-wrapper/asset-breakdown?includeStablecoin=false&includeGovernance=true')
 	})
 
-	it('uses the category asset-breakdown endpoint for other-rwas category data', () => {
+	test('uses the category asset-breakdown endpoint for other-rwas category data', () => {
 		expect(
 			buildAssetBreakdownUrl({
 				target: { kind: 'category', slug: 'other-rwas' },
@@ -214,7 +214,7 @@ describe('buildAssetBreakdownUrl', () => {
 })
 
 describe('normalizeAssetBreakdownRows', () => {
-	it('normalizes timestamps from the ascending API response', () => {
+	test('normalizes timestamps from the ascending API response', () => {
 		expect(
 			normalizeAssetBreakdownRows([
 				{ timestamp: 1, alpha: 10 },

@@ -57,10 +57,10 @@ export async function sleep(ms: number): Promise<void> {
 }
 
 export async function mapWithConcurrency<Item, Result>(
-	items: readonly Item[],
+	items: ReadonlyArray<Item>,
 	limit: number,
 	worker: (item: Item, index: number) => Promise<Result>
-): Promise<Result[]> {
+): Promise<Array<Result>> {
 	if (!Number.isInteger(limit) || limit < 1) throw new Error('Concurrency limit must be a positive integer')
 	const results = new Array<Result>(items.length)
 	const entries = items.entries()
@@ -279,8 +279,8 @@ async function fetchJsonWithRetries<T = any>(
 			}
 
 			return res.json()
-		} catch (err) {
-			lastErr = normalizeError(err)
+		} catch (error) {
+			lastErr = normalizeError(error)
 			// Common case: API returned HTML (starts with "<") but we tried to parse JSON.
 			// We don't have the body here, but the SyntaxError message is a strong signal.
 			if (/unexpected token\s*</i.test(lastErr.message)) {

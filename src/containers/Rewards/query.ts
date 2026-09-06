@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { isTrueQueryParam, readSingleQueryValue, toNonEmptyArrayParam } from '~/utils/routerQuery'
 import { LIFECYCLES, REWARD_TYPES } from './types'
 
@@ -15,7 +15,7 @@ export function readRewardsQuery(query: ParsedUrlQuery) {
 export function serializeRewardsQuery(query: ReturnType<typeof readRewardsQuery>) {
 	return {
 		status: query.lifecycle === 'All' ? undefined : query.lifecycle,
-		reward: query.rewardTypes.length ? query.rewardTypes : undefined,
+		reward: query.rewardTypes.length > 0 ? query.rewardTypes : undefined,
 		hideUnverified: query.hideUnverified ? 'true' : undefined
 	}
 }

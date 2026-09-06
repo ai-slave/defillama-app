@@ -30,7 +30,7 @@ const AUTHOR_CACHE_CONTROL = 'public, s-maxage=60'
 const AUTHOR_QUERY_STALE_TIME = 60_000
 const AUTHOR_NO_STORE = 'no-store'
 const DEFILLAMA_RESEARCH_ARTICLE_LIMIT = 12
-const EMPTY_ARTICLES: ArticleDocument[] = []
+const EMPTY_ARTICLES: Array<ArticleDocument> = []
 const shortDateFormatter = new Intl.DateTimeFormat('en', {
 	month: 'short',
 	day: 'numeric'
@@ -47,7 +47,7 @@ function formatYear(value: string | null) {
 	return new Date(value).getFullYear().toString()
 }
 
-function getAuthorPageArticles(slug: string, articles: ArticleDocument[]) {
+function getAuthorPageArticles(slug: string, articles: Array<ArticleDocument>) {
 	if (slug === DEFILLAMA_RESEARCH_SLUG) return articles.slice(0, DEFILLAMA_RESEARCH_ARTICLE_LIMIT)
 	return articles.filter((article) => article.brandByline !== true)
 }
@@ -254,7 +254,7 @@ function ResearchArticleListRow({
 	)
 }
 
-function ResearchArticleColumn({ articles }: { articles: ArticleDocument[] }) {
+function ResearchArticleColumn({ articles }: { articles: Array<ArticleDocument> }) {
 	return (
 		<ol>
 			{articles.map((article, index) => (
@@ -264,7 +264,7 @@ function ResearchArticleColumn({ articles }: { articles: ArticleDocument[] }) {
 	)
 }
 
-function ResearchArticleLists({ articles }: { articles: ArticleDocument[] }) {
+function ResearchArticleLists({ articles }: { articles: Array<ArticleDocument> }) {
 	const leftColumn = articles.filter((_, index) => index % 2 === 0)
 	const rightColumn = articles.filter((_, index) => index % 2 === 1)
 
@@ -304,7 +304,7 @@ function ResearchArticleLists({ articles }: { articles: ArticleDocument[] }) {
 	)
 }
 
-function DefillamaResearchContent({ articles }: { articles: ArticleDocument[] }) {
+function DefillamaResearchContent({ articles }: { articles: Array<ArticleDocument> }) {
 	return (
 		<div className="relative isolate col-span-full overflow-x-clip overflow-y-hidden bg-surface-elevated-1 text-research-heading dark:text-research-ink lg:dark:bg-black">
 			<ResearchAuthorBackground />
@@ -349,8 +349,8 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 		if (archiveFilter === 'all') return rest
 		return rest.filter((article) => article.section === archiveFilter)
 	}, [rest, archiveFilter])
-	const archiveTabs: ArchiveFilter[] = useMemo(() => {
-		const tabs: ArchiveFilter[] = ['all']
+	const archiveTabs: Array<ArchiveFilter> = useMemo(() => {
+		const tabs: Array<ArchiveFilter> = ['all']
 		for (const [section] of sectionCounts) tabs.push(section)
 		return tabs
 	}, [sectionCounts])
@@ -386,8 +386,8 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 
 	const { author } = data
 	const totalMinutes = articles.reduce((sum, article) => sum + readingMinutes(article), 0)
-	const firstYear = articles.length ? formatYear(articles[articles.length - 1]?.publishedAt) : null
-	const latestYear = articles.length ? formatYear(articles[0]?.publishedAt) : null
+	const firstYear = articles.length > 0 ? formatYear(articles[articles.length - 1]?.publishedAt) : null
+	const latestYear = articles.length > 0 ? formatYear(articles[0]?.publishedAt) : null
 	const yearsLabel =
 		firstYear && latestYear ? (firstYear === latestYear ? firstYear : `${firstYear}-${latestYear}`) : null
 
@@ -504,7 +504,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 							</section>
 						) : null}
 
-						{rest.length ? (
+						{rest.length > 0 ? (
 							<section className="grid gap-4">
 								<div className="flex items-baseline justify-between gap-2 border-b border-medium pb-3">
 									<h2 className="text-sm font-semibold tracking-[0.16em] text-tertiary uppercase">Archive</h2>
@@ -588,7 +588,7 @@ function AuthorContent({ slug, initialData }: { slug: string; initialData: Artic
 	)
 }
 
-function buildDefillamaResearchJsonLd(articles: ArticleDocument[]) {
+function buildDefillamaResearchJsonLd(articles: Array<ArticleDocument>) {
 	return [
 		{
 			'@context': 'https://schema.org',

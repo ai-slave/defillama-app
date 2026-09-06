@@ -12,13 +12,13 @@ interface FormattedValue {
 
 interface ChartSeries {
 	name: string
-	data: number[]
+	data: Array<number>
 }
 
 interface ChartData {
 	title: string
-	dates: ApiDate[]
-	series: ChartSeries[]
+	dates: Array<ApiDate>
+	series: Array<ChartSeries>
 }
 
 interface TopToken {
@@ -55,7 +55,7 @@ interface BlockchainAPIResponse {
 		blockUtilization: ChartData
 		contractDeployments: ChartData
 		tokenTransfers: ChartData
-		topTokens: TopToken[]
+		topTokens: Array<TopToken>
 	}
 }
 

@@ -15,7 +15,7 @@ export async function getCompareTokensPageData(): Promise<CompareTokensPageData>
 		protocolCategories: []
 	}
 	const [coinsData, tvlProtocols, feesData, revenueData]: [
-		IResponseCGTokenRankingsDatasetItem[],
+		Array<IResponseCGTokenRankingsDatasetItem>,
 		ProtocolsResponse,
 		IAdapterChainMetrics | null,
 		IAdapterChainMetrics | null
@@ -68,7 +68,7 @@ export async function getCompareTokensPageData(): Promise<CompareTokensPageData>
 	for (const protocol of revenueData?.protocols ?? []) {
 		revenueByProtocolId.set(protocol.defillamaId, protocol.total24h ?? 0)
 	}
-	const llamaProtocols: CompareTokenProtocol[] = []
+	const llamaProtocols: Array<CompareTokenProtocol> = []
 	for (const protocol of tvlProtocols.protocols) {
 		const fees = feesData === null ? null : (feesByProtocolId.get(protocol.defillamaId) ?? 0)
 		const revenue = revenueData === null ? null : (revenueByProtocolId.get(protocol.defillamaId) ?? 0)
@@ -97,7 +97,7 @@ export async function getCompareTokensPageData(): Promise<CompareTokensPageData>
 		})
 	}
 
-	const parentRows: CompareTokenProtocol[] = []
+	const parentRows: Array<CompareTokenProtocol> = []
 	for (const parentId in parentProtocols) {
 		const parentProtocol = parentProtocols[parentId]
 		if (!parentProtocol?.hasChild) continue

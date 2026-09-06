@@ -26,20 +26,20 @@ const TOKEN_BORROW_SECTION_ID = 'token-borrow'
 // `net_apy` is the routes table column id.
 const DEFAULT_BORROW_TABLE_SORTING: SortingState = [{ id: 'net_apy', desc: true }]
 const DEFAULT_BORROW_TABLE_SORTING_KEY = JSON.stringify(DEFAULT_BORROW_TABLE_SORTING)
-const EMPTY_ROUTE_TABLE_ROWS: RouteTableRow[] = []
+const EMPTY_ROUTE_TABLE_ROWS: Array<RouteTableRow> = []
 
 type BorrowTabKey = 'use' | 'borrow'
 type BorrowTabFilters = {
-	selectedChains: string[] | null
+	selectedChains: Array<string> | null
 	minAvailable: string
 	maxAvailable: string
 }
 
-function getBorrowChainList(rows: RouteTableRow[]) {
+function getBorrowChainList(rows: Array<RouteTableRow>) {
 	return [...new Set(rows.map((row) => row.chains[0]).filter((chain): chain is string => Boolean(chain)))].sort()
 }
 
-function getSelectedChains(selectedChains: string[] | null, availableChains: string[]) {
+function getSelectedChains(selectedChains: Array<string> | null, availableChains: Array<string>) {
 	return selectedChains == null ? availableChains : selectedChains.filter((chain) => availableChains.includes(chain))
 }
 
@@ -170,7 +170,7 @@ export function TokenBorrowSection({
 	const maxAvailable = activeFilters.maxAvailable
 
 	const setSelectedChains = React.useCallback(
-		(value: React.SetStateAction<string[] | null>) => {
+		(value: React.SetStateAction<Array<string> | null>) => {
 			setFiltersByTab((prev) => ({
 				...prev,
 				[activeTab]: {

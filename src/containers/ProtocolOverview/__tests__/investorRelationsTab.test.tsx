@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { IProtocolPageMetrics } from '../types'
 
 const metrics: IProtocolPageMetrics = {
@@ -80,7 +80,7 @@ afterEach(() => {
 })
 
 describe('Protocol Investor Relations tab', () => {
-	it('preserves Token Rights but ignores the retired governance flag in cached metrics', async () => {
+	test('preserves Token Rights but ignores the retired governance flag in cached metrics', async () => {
 		setupLayoutMocks(null)
 		const { ProtocolOverviewLayout } = await import('../Layout')
 		const cachedMetrics = { ...metrics, tokenRights: true, governance: true }
@@ -96,7 +96,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).not.toContain('>Governance<')
 	})
 
-	it('shows the Enterprise tab on an IR protocol', async () => {
+	test('shows the Enterprise tab on an IR protocol', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -116,7 +116,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).toContain('data-umami-event-dashboard-id="9vn8xp43tdzo6gt"')
 	})
 
-	it('shows the Enterprise tab for a signed-out user', async () => {
+	test('shows the Enterprise tab for a signed-out user', async () => {
 		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -131,7 +131,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).toContain('href="/protocol/investor-relations/spark"')
 	})
 
-	it('hides the Enterprise tab on a protocol without an IR dashboard', async () => {
+	test('hides the Enterprise tab on a protocol without an IR dashboard', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -146,7 +146,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).not.toContain('investor-relations')
 	})
 
-	it('suppresses the external IR announcement banner for is_llama users on Spark', async () => {
+	test('suppresses the external IR announcement banner for is_llama users on Spark', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -161,7 +161,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).not.toContain('investors.defillama.com/spark')
 	})
 
-	it('suppresses the external IR announcement banner for a signed-out user on Spark', async () => {
+	test('suppresses the external IR announcement banner for a signed-out user on Spark', async () => {
 		setupLayoutMocks(null)
 
 		const { ProtocolOverviewLayout } = await import('../Layout')
@@ -176,7 +176,7 @@ describe('Protocol Investor Relations tab', () => {
 		expect(markup).not.toContain('investors.defillama.com/spark')
 	})
 
-	it('labels the IR tab "Enterprise" for odyssey', async () => {
+	test('labels the IR tab "Enterprise" for odyssey', async () => {
 		setupLayoutMocks({ flags: { is_llama: true } })
 
 		const { ProtocolOverviewLayout } = await import('../Layout')

@@ -17,8 +17,8 @@ async function fetchData<T>(url: string, label: string): Promise<T | null> {
 	try {
 		const body = await fetchJson<{ data: T }>(url, { timeout: FETCH_TIMEOUT_MS })
 		return body.data
-	} catch (err) {
-		const msg = err instanceof Error ? err.message : String(err)
+	} catch (error) {
+		const msg = error instanceof Error ? error.message : String(error)
 		if (!/\[404\]/.test(msg)) console.warn(`[vault-risk] fetch ${label} failed:`, msg)
 		return null
 	}

@@ -6,7 +6,7 @@ import type { IProtocolOverviewPageData } from './types'
 
 type ToggleOption = { name: string; key: ProtocolExtraTvlKey }
 
-const pushToggleOption = (toggleOptions: ToggleOption[], option: ToggleOption) => {
+const pushToggleOption = (toggleOptions: Array<ToggleOption>, option: ToggleOption) => {
 	if (!toggleOptions.some((item) => item.key === option.key)) {
 		toggleOptions.push(option)
 	}
@@ -21,7 +21,7 @@ const aggregateTvlByChain = ({
 	source: Record<string, number>
 	destination: Record<string, number>
 	extraTvlsEnabled: Record<string, boolean>
-	toggleOptions: ToggleOption[]
+	toggleOptions: Array<ToggleOption>
 }): number => {
 	let total = 0
 	for (const chain in source) {
@@ -74,7 +74,7 @@ export const useFinalTVL = (props: Pick<IProtocolOverviewPageData, 'currentTvlBy
 
 	return useMemo(() => {
 		const tvlByChainMap: Record<string, number> = {}
-		const toggleOptions: ToggleOption[] = []
+		const toggleOptions: Array<ToggleOption> = []
 		const oracleTvsByChainMap: Record<string, number> = {}
 
 		const tvl = props.currentTvlByChain

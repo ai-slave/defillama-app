@@ -12,7 +12,7 @@ import type { MetricAggregator, MetricChartType, MetricConfig, MetricWindow } fr
 import { getProDashboardChartTypeConfig } from '../types'
 import { getItemIconUrl } from '../utils'
 
-const EMPTY_CHART_SERIES: [number, number][] = []
+const EMPTY_CHART_SERIES: Array<[number, number]> = []
 const VOLUME_METRIC_TYPES = new Set([
 	'volume',
 	'perps',

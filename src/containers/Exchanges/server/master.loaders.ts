@@ -9,8 +9,7 @@ import {
 	mapMasterRamps,
 	mapMasterResearchReport
 } from '../master.mappers'
-import type { MasterChartPart } from '../master.types'
-import type { MasterExchangeMetadataResponse, MasterExecutionQualityResponse } from '../master.types'
+import type { MasterChartPart, MasterExchangeMetadataResponse, MasterExecutionQualityResponse } from '../master.types'
 import type {
 	ExchangeDirectoryModel,
 	ExchangeOverviewChartModel,
@@ -69,7 +68,7 @@ export async function loadMasterExchangeOverview(range: ExchangeResearchRange): 
 	return mapMasterDirectoryOverview(await fetchMasterExchangeSeriesFromNetwork(range))
 }
 
-export async function loadMasterMicaVenues(): Promise<MicaVenueModel[]> {
+export async function loadMasterMicaVenues(): Promise<Array<MicaVenueModel>> {
 	return mapMasterMica(await fetchMasterMicaFromNetwork())
 }
 

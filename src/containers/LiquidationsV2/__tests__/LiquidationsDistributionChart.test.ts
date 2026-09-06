@@ -1,6 +1,6 @@
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { LiquidationsDistributionChartData } from '../api.types'
 import {
 	buildLiquidationsChartExportDataset,
@@ -109,7 +109,7 @@ const chart: LiquidationsDistributionChartData = {
 }
 
 describe('LiquidationsDistributionChart helpers', () => {
-	it('keeps the population note left of the snapshot below the chart', () => {
+	test('keeps the population note left of the snapshot below the chart', () => {
 		const html = renderToStaticMarkup(React.createElement(LiquidationsDistributionChartFooter, { timestamp: 1 }))
 
 		expect(html).toContain('justify-between')
@@ -117,27 +117,27 @@ describe('LiquidationsDistributionChart helpers', () => {
 		expect(html.indexOf('Positions with at least $100k collateral.')).toBeLessThan(html.indexOf('Snapshot Thu'))
 	})
 
-	it('defaults to the top collateral token when no query param is present', () => {
+	test('defaults to the top collateral token when no query param is present', () => {
 		expect(resolveLiquidationsChartTokenKey(chart, undefined)).toBe('WBTC')
 	})
 
-	it('supports exact and slugged token query params', () => {
+	test('supports exact and slugged token query params', () => {
 		expect(resolveLiquidationsChartTokenKey(chart, 'ethereum:eth')).toBe('ethereum:eth')
 		expect(resolveLiquidationsChartTokenKey(chart, 'ethereum-eth')).toBe('ethereum:eth')
 	})
 
-	it('falls back to the top collateral token when the query param is invalid', () => {
+	test('falls back to the top collateral token when the query param is invalid', () => {
 		expect(resolveLiquidationsChartTokenKey(chart, 'not-a-token')).toBe('WBTC')
 	})
 
-	it('filters the chart down to the selected token', () => {
+	test('filters the chart down to the selected token', () => {
 		expect(getLiquidationsChartView(chart, 'ethereum:eth', 'total')).toEqual({
 			bins: [0, 10, 20],
 			series: [chart.tokens[1]!.breakdowns.total.series[0]]
 		})
 	})
 
-	it('trims empty price bins around the selected token', () => {
+	test('trims empty price bins around the selected token', () => {
 		expect(
 			getLiquidationsChartView(
 				{
@@ -182,11 +182,11 @@ describe('LiquidationsDistributionChart helpers', () => {
 		})
 	})
 
-	it('returns the selected breakdown for a token', () => {
+	test('returns the selected breakdown for a token', () => {
 		expect(getLiquidationsChartView(chart, 'WBTC', 'protocol')).toEqual(chart.tokens[0]!.breakdowns.protocol)
 	})
 
-	it('builds cumulative liquidation totals from right to left across price buckets', () => {
+	test('builds cumulative liquidation totals from right to left across price buckets', () => {
 		expect(
 			buildCumulativeLiquidationsChartView({
 				bins: [0, 10, 20],
@@ -228,7 +228,7 @@ describe('LiquidationsDistributionChart helpers', () => {
 		})
 	})
 
-	it('exports only visible series with the selected metric', () => {
+	test('exports only visible series with the selected metric', () => {
 		const view = chart.tokens[0]!.breakdowns.protocol
 		expect(buildLiquidationsChartExportDataset(view, 'amount', new Set(['Aave']))).toEqual({
 			dimensions: ['liqPrice', 'Aave'],
@@ -244,7 +244,7 @@ describe('LiquidationsDistributionChart helpers', () => {
 		})
 	})
 
-	it('normalizes metric and breakdown query state', () => {
+	test('normalizes metric and breakdown query state', () => {
 		expect(getLiquidationsChartMetric(undefined)).toBe('usd')
 		expect(getLiquidationsChartMetric('amount')).toBe('amount')
 		expect(getLiquidationsChartMode(undefined)).toBe('cumulative')
@@ -259,7 +259,7 @@ describe('LiquidationsDistributionChart helpers', () => {
 		expect(getLiquidationsChartBreakdownMode(undefined, ['total', 'chain'], 'protocol')).toBe('total')
 	})
 
-	it('drops default chart state from query patches', () => {
+	test('drops default chart state from query patches', () => {
 		expect(getLiquidationsChartMetricQueryPatch('usd')).toEqual({ metric: undefined })
 		expect(getLiquidationsChartMetricQueryPatch('amount')).toEqual({ metric: 'amount' })
 		expect(getLiquidationsChartModeQueryPatch('cumulative')).toEqual({ view: undefined })

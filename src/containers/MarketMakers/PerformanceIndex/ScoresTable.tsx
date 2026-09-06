@@ -5,7 +5,7 @@ import { buildPerformanceColumns } from './columns'
 import type { PerformanceRow } from './types'
 
 interface IScoresTableProps {
-	rows: PerformanceRow[]
+	rows: Array<PerformanceRow>
 	onSelectMM: (marketMakerId: string, marketMakerName: string) => void
 }
 

@@ -43,7 +43,7 @@ async function fetchRaisesWithShortCache(): Promise<RaisesResponse> {
 	return raisesCache.value
 }
 
-export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<Raise[]> {
+export async function fetchRaisesByDefillamaId(defillamaId: string): Promise<Array<Raise>> {
 	if (!defillamaId) {
 		return []
 	}

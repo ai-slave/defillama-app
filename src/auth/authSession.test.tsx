@@ -4,11 +4,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider, useAuthContext } from '~/auth'
 import pb from '~/utils/pocketbase'
 
-const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4102444800 }))}.signature`
+const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
 const record = (id: string) => ({ id, collectionId: '_pb_users_auth_', collectionName: 'users' })
 
 function jsonResponse(body: unknown, status = 200) {
@@ -24,7 +24,7 @@ function Probe() {
 let root: Root
 let client: QueryClient
 let container: HTMLDivElement
-let refreshCalls: { authorization: string | null; resolve: (response: Response) => void }[]
+let refreshCalls: Array<{ authorization: string | null; resolve: (response: Response) => void }>
 
 beforeEach(() => {
 	refreshCalls = []
@@ -71,7 +71,7 @@ async function render() {
 
 const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
 
-it('fills a token-only session from the refresh and keeps it signed in', async () => {
+test('fills a token-only session from the refresh and keeps it signed in', async () => {
 	pb.authStore.save(token('account-a'))
 	await render()
 
@@ -85,7 +85,7 @@ it('fills a token-only session from the refresh and keeps it signed in', async (
 	expect(sessionView.user?.id).toBe('account-a')
 })
 
-it('stays signed out when a refresh resolves after logout', async () => {
+test('stays signed out when a refresh resolves after logout', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
 	await render()
 
@@ -101,7 +101,7 @@ it('stays signed out when a refresh resolves after logout', async () => {
 	expect(sessionView.user).toBeNull()
 })
 
-it('keeps the newer session when an older refresh resolves late', async () => {
+test('keeps the newer session when an older refresh resolves late', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
 	await render()
 
@@ -122,7 +122,7 @@ it('keeps the newer session when an older refresh resolves late', async () => {
 	expect(sessionView.user?.id).toBe('account-b')
 })
 
-it('keeps the newer session when an older refresh fails with 401', async () => {
+test('keeps the newer session when an older refresh fails with 401', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
 	await render()
 
@@ -145,7 +145,7 @@ it('keeps the newer session when an older refresh fails with 401', async () => {
 	expect(sessionView.user?.id).toBe('account-b')
 })
 
-it('clears the session when its own refresh fails with 401', async () => {
+test('clears the session when its own refresh fails with 401', async () => {
 	pb.authStore.save(token('account-a'), record('account-a'))
 	await render()
 

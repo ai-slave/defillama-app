@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { TokenDirectory } from '~/utils/tokenDirectory'
 
 afterEach(() => {
@@ -20,7 +20,7 @@ function setupPageModule({
 	holdersRevenueFails?: boolean
 	holdersRevenueProtocols?: Array<Record<string, unknown>>
 	tokensJson?: TokenDirectory
-	tokenRightsEntries?: unknown[]
+	tokenRightsEntries?: Array<unknown>
 	protocolMetadata?: Record<string, unknown>
 } = {}) {
 	vi.doMock('next/link', () => ({
@@ -121,7 +121,7 @@ function tokenRightsListItem(overrides: Record<string, unknown>) {
 }
 
 describe('token rights page', () => {
-	it('builds table rows with rights, pending fee switch, and holders revenue', async () => {
+	test('builds table rows with rights, pending fee switch, and holders revenue', async () => {
 		const page = await setupPageModule({
 			chainMetadata: {
 				ethereum: { name: 'Ethereum', id: 'ethereum', gecko_id: 'ethereum' }
@@ -185,7 +185,7 @@ describe('token rights page', () => {
 		})
 	}, 30_000)
 
-	it('uses resolved metadata for deprecated rows', async () => {
+	test('uses resolved metadata for deprecated rows', async () => {
 		const page = await setupPageModule({
 			protocolMetadata: {
 				'182': { displayName: 'Lido', gecko_id: 'lido-dao', deprecated: true }
@@ -203,7 +203,7 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('uses child protocol holders revenue for parent token-rights rows', async () => {
+	test('uses child protocol holders revenue for parent token-rights rows', async () => {
 		const page = await setupPageModule({
 			tokenRightsEntries: [
 				tokenRightsEntry({
@@ -228,7 +228,7 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('prefers direct holders revenue over summed child protocol revenue', async () => {
+	test('prefers direct holders revenue over summed child protocol revenue', async () => {
 		const page = await setupPageModule({
 			tokenRightsEntries: [
 				tokenRightsEntry({
@@ -253,7 +253,7 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('keeps a direct measured zero instead of replacing it with child revenue', async () => {
+	test('keeps a direct measured zero instead of replacing it with child revenue', async () => {
 		const page = await setupPageModule({
 			tokenRightsEntries: [
 				tokenRightsEntry({
@@ -279,7 +279,7 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('skips entries without metadata and keeps metadata rows without a token route', async () => {
+	test('skips entries without metadata and keeps metadata rows without a token route', async () => {
 		const page = await setupPageModule({
 			chainMetadata: {
 				ethereum: { name: 'Ethereum', id: 'ethereum', gecko_id: 'ethereum' }
@@ -306,7 +306,7 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('keeps the directory available when holders revenue fails', async () => {
+	test('keeps the directory available when holders revenue fails', async () => {
 		const page = await setupPageModule({
 			holdersRevenueFails: true,
 			protocolMetadata: {
@@ -323,7 +323,7 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('keeps holders revenue available for a successful empty response', async () => {
+	test('keeps holders revenue available for a successful empty response', async () => {
 		const page = await setupPageModule({
 			protocolMetadata: {
 				'182': { displayName: 'Lido', gecko_id: 'lido-dao' }
@@ -339,7 +339,7 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('routes chain entries when the metadata cache key differs from the chain id', async () => {
+	test('routes chain entries when the metadata cache key differs from the chain id', async () => {
 		const page = await setupPageModule({
 			chainMetadata: {
 				'plume-mainnet': { name: 'Plume Mainnet', id: 'plume_mainnet' }
@@ -363,7 +363,7 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('routes protocol entries from token directory ids without a gecko id', async () => {
+	test('routes protocol entries from token directory ids without a gecko id', async () => {
 		const page = await setupPageModule({
 			protocolMetadata: {
 				'7161': { displayName: 'Backpack SOL' }
@@ -387,7 +387,7 @@ describe('token rights page', () => {
 		})
 	})
 
-	it('routes cex entries when the token rights name matches a cex slug', async () => {
+	test('routes cex entries when the token rights name matches a cex slug', async () => {
 		const page = await setupPageModule({
 			cexs: [{ name: 'Backpack', slug: 'backpack' }],
 			tokensJson: {
@@ -412,7 +412,7 @@ describe('token rights page', () => {
 		expect(flushTelemetry).not.toHaveBeenCalled()
 	})
 
-	it('renders cex entries as text when the matching token has no page route', async () => {
+	test('renders cex entries as text when the matching token has no page route', async () => {
 		const page = await setupPageModule({
 			cexs: [{ name: 'Backpack', slug: 'backpack' }],
 			tokensJson: {
@@ -436,7 +436,7 @@ describe('token rights page', () => {
 		expect(flushTelemetry).not.toHaveBeenCalled()
 	})
 
-	it('filters rows by multiple selected filters and token search', async () => {
+	test('filters rows by multiple selected filters and token search', async () => {
 		const page = await setupPageModule()
 		const rows = [
 			tokenRightsListItem({
@@ -476,7 +476,7 @@ describe('token rights page', () => {
 		expect(page.filterTokenRightsRows(rows, ['feeSwitchOn'], 'axl')).toEqual([])
 	})
 
-	it('counts stats from filtered rows', async () => {
+	test('counts stats from filtered rows', async () => {
 		const page = await setupPageModule()
 		const stats = page.getTokenRightsStats([
 			tokenRightsListItem({ feeSwitchStatus: 'ON', hasBuybacks: true, hasDividends: false }),

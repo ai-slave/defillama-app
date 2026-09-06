@@ -9,7 +9,7 @@ import type { BridgeVolumePoint } from '~/containers/Bridges/api.types'
 import type { Hack } from '~/containers/Hacks/model'
 import type { Raise } from '~/containers/Raises/model'
 import type { IncomeStatementMetric, IProtocolMetricsV2 } from './api.types'
-import { protocolCharts, type ProtocolChartsLabels } from './constants'
+import type { protocolCharts, ProtocolChartsLabels } from './constants'
 
 export interface IProtocolPageMetrics {
 	tvl: boolean
@@ -52,7 +52,7 @@ export interface IProtocolFaqAnswerPart {
 export interface IProtocolFaqItem {
 	id: string
 	question: string
-	answer: IProtocolFaqAnswerPart[]
+	answer: Array<IProtocolFaqAnswerPart>
 }
 
 interface IAdapterOverview {
@@ -94,7 +94,7 @@ export interface IProtocolOverviewPageData {
 		name: string
 		href: string
 		category: string | null
-		chains: string[]
+		chains: Array<string>
 	}>
 	deprecated?: boolean
 	chains: Array<string> | null
@@ -144,7 +144,7 @@ export interface IProtocolOverviewPageData {
 		upcoming?: { timestamp: number; amount: number }
 	} | null
 	yields: { noOfPoolsTracked: number | null; averageAPY: number | null } | null
-	articles: SponsoredResearchReportSummary[] | null
+	articles: Array<SponsoredResearchReportSummary> | null
 	users?: {
 		activeUsers: number | null
 		newUsers: number | null
@@ -195,7 +195,7 @@ export interface IProtocolOverviewPageData {
 	hacks: Array<Hack>
 	chartDenominations: Array<{ symbol: string; geckoId?: string | null }>
 	chartColors: Record<string, string>
-	availableCharts: ProtocolChartsLabels[]
+	availableCharts: Array<ProtocolChartsLabels>
 	hallmarks: Array<[number, string]>
 	rangeHallmarks: Array<[[number, number], string]>
 	geckoId: string | null
@@ -221,11 +221,11 @@ export interface IProtocolOverviewPageData {
 	defaultChartView?: ChartTimeGrouping
 	seoTitle: string
 	seoDescription: string
-	defaultToggledCharts: ProtocolChartsLabels[]
+	defaultToggledCharts: Array<ProtocolChartsLabels>
 	isOracleProtocol: boolean
 	oracleTvs: Record<string, number> | null
-	entityQuestions?: string[]
-	faqItems?: IProtocolFaqItem[]
+	entityQuestions?: Array<string>
+	faqItems?: Array<IProtocolFaqItem>
 	treasuryMethodologyUrl?: string | null
 }
 

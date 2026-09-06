@@ -47,16 +47,16 @@ function parseNumberWithAbbreviation(input: string): number | undefined {
 	if (numStr === undefined) return undefined
 	const base = parseFloat(numStr)
 	if (Number.isNaN(base)) return undefined
-	if (suffix === 'k') return base * 1_000
+	if (suffix === 'k') return base * 1000
 	if (suffix === 'm') return base * 1_000_000
 	if (suffix === 'b') return base * 1_000_000_000
 	return base
 }
 
-function filtersToActiveFilters(filters: UnifiedTableFilters | undefined): ActiveFilter[] {
+function filtersToActiveFilters(filters: UnifiedTableFilters | undefined): Array<ActiveFilter> {
 	if (!filters) return []
 
-	const result: ActiveFilter[] = []
+	const result: Array<ActiveFilter> = []
 	const relevantConfigs = getFiltersForProtocols()
 
 	for (const config of relevantConfigs) {
@@ -105,7 +105,7 @@ function filtersToActiveFilters(filters: UnifiedTableFilters | undefined): Activ
 }
 
 function activeFilterToTableFilters(
-	activeFilters: ActiveFilter[],
+	activeFilters: Array<ActiveFilter>,
 	existingFilters: UnifiedTableFilters | undefined
 ): UnifiedTableFilters {
 	const result: UnifiedTableFilters = { ...existingFilters }
@@ -182,7 +182,7 @@ const CATEGORY_LABELS: Record<FilterCategory, string> = {
 }
 
 const FILTERS_BY_CATEGORY = getFiltersByCategory()
-const EMPTY_CATEGORY_FILTERS: FilterConfig[] = []
+const EMPTY_CATEGORY_FILTERS: Array<FilterConfig> = []
 
 function buildDisplayValue(filter: ActiveFilter): string {
 	const { config, operator, value, minValue, maxValue } = filter
@@ -541,7 +541,7 @@ function FilterItemEditor({ filter, onUpdate, onRemove, isEditing, onStartEdit, 
 export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) {
 	const [search, setSearch] = useState('')
 	const [expandedCategories, setExpandedCategories] = useState<Set<FilterCategory>>(new Set(['metrics', 'flags']))
-	const [pendingFilters, setPendingFilters] = useState<ActiveFilter[]>([])
+	const [pendingFilters, setPendingFilters] = useState<Array<ActiveFilter>>([])
 	const [editingFilterId, setEditingFilterId] = useState<string | null>(null)
 
 	const savedFilters = useMemo(() => filtersToActiveFilters(filters), [filters])
@@ -557,7 +557,7 @@ export function FilterBuilder({ filters, onFiltersChange }: FilterBuilderProps) 
 
 	const filteredCategories = useMemo(() => {
 		const searchLower = search.toLowerCase()
-		const result: Array<{ category: FilterCategory; label: string; filters: FilterConfig[] }> = []
+		const result: Array<{ category: FilterCategory; label: string; filters: Array<FilterConfig> }> = []
 
 		for (const { key, label } of FILTER_CATEGORIES) {
 			const categoryFilters = filtersByCategory.get(key) ?? EMPTY_CATEGORY_FILTERS

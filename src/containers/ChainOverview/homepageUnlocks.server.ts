@@ -48,7 +48,7 @@ export function projectHomepageUnlocksSummary(
 	value: HomepageUnlocksSummary
 ): NonNullable<IChainOverviewData['unlocks']> {
 	if (value.schemaVersion === 1) {
-		const chart: HomepageUnlockChartEntry[] = value.chart.map((day) => ({
+		const chart: Array<HomepageUnlockChartEntry> = value.chart.map((day) => ({
 			...day,
 			cliff: null,
 			linear: null,

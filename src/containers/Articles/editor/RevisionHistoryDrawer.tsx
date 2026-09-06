@@ -30,7 +30,7 @@ type Props = {
 type FilterKey = 'all' | 'edits' | 'publishes' | 'pending' | 'restores'
 type ViewMode = 'preview' | 'diff'
 type BaseMode = 'previous' | 'live' | 'pending'
-const EMPTY_ARTICLE_REVISIONS: ArticleRevisionSummary[] = []
+const EMPTY_ARTICLE_REVISIONS: Array<ArticleRevisionSummary> = []
 
 const EVENT_LABELS: Record<ArticleRevisionEventType, string> = {
 	create: 'Created',
@@ -355,7 +355,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 	const filtered = useMemo(() => items.filter((entry) => FILTER_MATCH[filter](entry.eventType)), [items, filter])
 
 	const grouped = useMemo(() => {
-		const groups: { key: string; label: string; items: ArticleRevisionSummary[] }[] = []
+		const groups: Array<{ key: string; label: string; items: Array<ArticleRevisionSummary> }> = []
 		for (const entry of filtered) {
 			const day = formatDayKey(entry.createdAt)
 			const last = groups[groups.length - 1]
@@ -372,7 +372,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		const c: Record<FilterKey, number> = { all: 0, publishes: 0, pending: 0, edits: 0, restores: 0 }
 		for (const entry of items) {
 			c.all += 1
-			for (const key of Object.keys(FILTER_MATCH) as FilterKey[]) {
+			for (const key of Object.keys(FILTER_MATCH) as Array<FilterKey>) {
 				if (key === 'all') continue
 				if (FILTER_MATCH[key](entry.eventType)) c[key] += 1
 			}
@@ -484,7 +484,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		if (viewMode !== 'diff') return
 		if (baseAvailability[baseMode]) return
 		const fallback: BaseMode | null =
-			(['previous', 'live', 'pending'] as BaseMode[]).find((mode) => baseAvailability[mode]) ?? null
+			(['previous', 'live', 'pending'] as Array<BaseMode>).find((mode) => baseAvailability[mode]) ?? null
 		if (fallback && fallback !== baseMode) setBaseMode(fallback)
 	}, [viewMode, baseMode, baseAvailability])
 
@@ -559,7 +559,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				<div className="grid min-h-0 flex-1 grid-cols-[360px_1fr]">
 					<aside className="flex min-h-0 flex-col border-r border-medium">
 						<div className="flex flex-wrap items-center gap-1 border-b border-medium px-3 py-2">
-							{(Object.keys(FILTER_LABELS) as FilterKey[]).map((key) => {
+							{(Object.keys(FILTER_LABELS) as Array<FilterKey>).map((key) => {
 								const isActive = filter === key
 								return (
 									<button
@@ -913,7 +913,7 @@ function PreviewSpecimenHeader({
 
 			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-medium bg-page/50 px-7 py-2.5">
 				<div className="inline-flex items-center gap-px rounded-md border border-medium bg-surface p-0.5 font-jetbrains text-[10px] tracking-[0.16em] uppercase">
-					{(['preview', 'diff'] as ViewMode[]).map((mode) => {
+					{(['preview', 'diff'] as Array<ViewMode>).map((mode) => {
 						const isActive = viewMode === mode
 						return (
 							<button
@@ -938,7 +938,7 @@ function PreviewSpecimenHeader({
 							compare against
 						</span>
 						<div className="flex items-center gap-px rounded-md border border-medium bg-surface p-0.5">
-							{(['previous', 'live', 'pending'] as BaseMode[]).map((mode) => {
+							{(['previous', 'live', 'pending'] as Array<BaseMode>).map((mode) => {
 								const enabled = !!baseAvailability[mode]
 								const isActive = baseMode === mode
 								return (
@@ -1006,7 +1006,11 @@ function DiffPane({
 	base: ArticleRevision | null
 	baseMode: BaseMode
 	baseAvailable: boolean
-	diff: { paragraphs: ParagraphDiffOp[]; metadata: FieldChange[]; stats: { added: number; removed: number } } | null
+	diff: {
+		paragraphs: Array<ParagraphDiffOp>
+		metadata: Array<FieldChange>
+		stats: { added: number; removed: number }
+	} | null
 }) {
 	if (!selected) {
 		return (
@@ -1073,7 +1077,7 @@ function DiffPane({
 	)
 }
 
-function MetadataDiffSection({ changes }: { changes: FieldChange[] }) {
+function MetadataDiffSection({ changes }: { changes: Array<FieldChange> }) {
 	return (
 		<section className="mb-8 grid gap-2">
 			<header className="flex items-baseline justify-between gap-2">
@@ -1112,7 +1116,7 @@ function MetaValue({ value, tone }: { value: string | null; tone: 'add' | 'remov
 	)
 }
 
-function BodyDiffSection({ ops }: { ops: ParagraphDiffOp[] }) {
+function BodyDiffSection({ ops }: { ops: Array<ParagraphDiffOp> }) {
 	return (
 		<section className="grid gap-3">
 			<header>

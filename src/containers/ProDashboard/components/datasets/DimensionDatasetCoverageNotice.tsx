@@ -1,4 +1,4 @@
-export function DimensionDatasetCoverageNotice({ unavailableChains }: { unavailableChains: string[] }) {
+export function DimensionDatasetCoverageNotice({ unavailableChains }: { unavailableChains: Array<string> }) {
 	if (unavailableChains.length === 0) return null
 
 	return (

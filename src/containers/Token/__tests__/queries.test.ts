@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { getTokenRiskBorrowCapacity } from '../api'
 import { getTokenRiskData, resetTokenRiskBorrowRoutesCache } from '../queries'
 
@@ -117,7 +117,7 @@ beforeEach(() => {
 })
 
 describe('getTokenRiskData', () => {
-	it('builds token risk exposure data from the borrow capacity payload', async () => {
+	test('builds token risk exposure data from the borrow capacity payload', async () => {
 		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
 		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
 
@@ -197,7 +197,7 @@ describe('getTokenRiskData', () => {
 		)
 	})
 
-	it('groups native and wrapped symbol aliases across chains', async () => {
+	test('groups native and wrapped symbol aliases across chains', async () => {
 		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
 		mockedGetTokenRiskBorrowCapacity.mockResolvedValue({
 			...createBorrowCapacityResponse(),
@@ -298,7 +298,7 @@ describe('getTokenRiskData', () => {
 					asset: {
 						symbol: 'WBTC',
 						address: '0xBtc',
-						priceUsd: 100000
+						priceUsd: 100_000
 					},
 					chain: 'ethereum',
 					totals: {
@@ -351,7 +351,7 @@ describe('getTokenRiskData', () => {
 		expect(payload?.exposures.summary.chainCount).toBe(3)
 	})
 
-	it('infers token candidates from borrow capacity symbols', async () => {
+	test('infers token candidates from borrow capacity symbols', async () => {
 		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
 		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
 
@@ -374,7 +374,7 @@ describe('getTokenRiskData', () => {
 		)
 	})
 
-	it('returns null when the token symbol has no borrow capacity rows', async () => {
+	test('returns null when the token symbol has no borrow capacity rows', async () => {
 		const mockedGetTokenRiskBorrowCapacity = vi.mocked(getTokenRiskBorrowCapacity)
 		mockedGetTokenRiskBorrowCapacity.mockResolvedValue(createBorrowCapacityResponse() as never)
 

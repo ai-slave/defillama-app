@@ -16,7 +16,7 @@ const newsletterDetails: Record<
 		eyebrow: string
 		description: string
 		bestFor: string
-		bullets: string[]
+		bullets: Array<string>
 		logo: {
 			src: string
 			darkSrc?: string

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	CHAIN_NATIVE_BREAKDOWN_METRICS,
 	getProtocolChainBreakdownRoute,
@@ -30,7 +30,7 @@ beforeEach(() => {
 })
 
 describe('breakdown route partitioning', () => {
-	it('rejects oversized chart-builder fan-out before fetching upstream data', async () => {
+	test('rejects oversized chart-builder fan-out before fetching upstream data', async () => {
 		const { adapterMetricBreakdown } =
 			await import('~/containers/ProDashboard/server/chartBuilder/adapterMetrics/routes')
 		const chains = Array.from({ length: 51 }, (_, index) => `Chain ${index}`).join(',')
@@ -49,7 +49,7 @@ describe('breakdown route partitioning', () => {
 		expect(mocks.fetchAdapterChainMetrics).not.toHaveBeenCalled()
 	})
 
-	it('rejects category resolution when any requested category is incomplete', async () => {
+	test('rejects category resolution when any requested category is incomplete', async () => {
 		mocks.fetchChainsByCategory.mockImplementation(async (category: string) => {
 			if (category === 'EVM') return { chainsUnique: ['Ethereum'] }
 			throw new Error('category source failed')
@@ -60,7 +60,7 @@ describe('breakdown route partitioning', () => {
 		await expect(resolveAllowedChainNamesFromCategories(['EVM', 'Rollups'])).rejects.toThrow('category source failed')
 	})
 
-	it('routes by-chain metrics to their owning domains', () => {
+	test('routes by-chain metrics to their owning domains', () => {
 		expect(getProtocolChainBreakdownRoute('tvl')).toBe(
 			'/api/public/pro-dashboard/chart-builder/protocols/breakdowns/by-chain/tvl'
 		)
@@ -81,7 +81,7 @@ describe('breakdown route partitioning', () => {
 		)
 	})
 
-	it('keeps by-chain metric sets explicit by purpose', () => {
+	test('keeps by-chain metric sets explicit by purpose', () => {
 		expect(Array.from(CHAIN_NATIVE_BREAKDOWN_METRICS).toSorted()).toEqual(['chain-fees', 'chain-revenue'])
 		expect(Array.from(PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS).toSorted()).toEqual([
 			'chain-fees',
@@ -102,7 +102,7 @@ describe('breakdown route partitioning', () => {
 		])
 	})
 
-	it('rejects concrete protocols for chain-native by-chain breakdowns', async () => {
+	test('rejects concrete protocols for chain-native by-chain breakdowns', async () => {
 		const { chainNativeByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/chains')
 
 		await expect(
@@ -118,7 +118,7 @@ describe('breakdown route partitioning', () => {
 		})
 	})
 
-	it('rejects concrete protocols for stablecoin by-chain breakdowns', async () => {
+	test('rejects concrete protocols for stablecoin by-chain breakdowns', async () => {
 		const { stablecoinByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/stablecoins')
 
 		await expect(
@@ -134,7 +134,7 @@ describe('breakdown route partitioning', () => {
 		})
 	})
 
-	it('filters chain-native breakdown categories against overview row slugs, not Dimensions aliases', async () => {
+	test('filters chain-native breakdown categories against overview row slugs, not Dimensions aliases', async () => {
 		mocks.fetchChainsByCategory.mockResolvedValue({ chainsUnique: ['OP Mainnet'] })
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({
 			protocols: [
@@ -166,7 +166,7 @@ describe('breakdown route partitioning', () => {
 		})
 	})
 
-	it('normalizes saved legacy chain aliases for chain-native breakdown filters', async () => {
+	test('normalizes saved legacy chain aliases for chain-native breakdown filters', async () => {
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({
 			protocols: [
 				{ name: 'OP Mainnet', slug: 'op-mainnet', protocolType: 'chain', total24h: 30 },
@@ -204,7 +204,7 @@ describe('breakdown route partitioning', () => {
 		})
 	})
 
-	it('matches chain-native category filters by overview row names when slugs differ', async () => {
+	test('matches chain-native category filters by overview row names when slugs differ', async () => {
 		mocks.fetchChainsByCategory.mockResolvedValue({ chainsUnique: ['Abbrev Chain'] })
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({
 			protocols: [

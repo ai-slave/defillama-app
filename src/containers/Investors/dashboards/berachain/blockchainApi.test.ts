@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildBlockchainViewModel, type BlockchainAPIResponse } from './blockchainApi'
 
 function buildResponse(): BlockchainAPIResponse {
@@ -75,7 +75,7 @@ function buildResponse(): BlockchainAPIResponse {
 }
 
 describe('buildBlockchainViewModel', () => {
-	it('builds the chart datasets once and excludes raw chart payloads from the cached model', () => {
+	test('builds the chart datasets once and excludes raw chart payloads from the cached model', () => {
 		const response = buildResponse()
 		const result = buildBlockchainViewModel(response)
 
@@ -90,7 +90,7 @@ describe('buildBlockchainViewModel', () => {
 		expect(result).not.toHaveProperty('tokenTransfers')
 	})
 
-	it('preserves the selected series, UTC dates, zero-fill, and shared activity source', () => {
+	test('preserves the selected series, UTC dates, zero-fill, and shared activity source', () => {
 		const result = buildBlockchainViewModel(buildResponse())
 		const { chartDatasets } = result
 

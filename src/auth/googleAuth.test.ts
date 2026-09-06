@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { readGoogleAuthResult } from '~/auth'
 
 describe('readGoogleAuthResult', () => {
-	it('accepts authenticated sessions and preserves new-account state', () => {
+	test('accepts authenticated sessions and preserves new-account state', () => {
 		expect(
 			readGoogleAuthResult({
 				isNew: true,
@@ -18,7 +18,7 @@ describe('readGoogleAuthResult', () => {
 		})
 	})
 
-	it('treats link confirmation sessions as existing accounts', () => {
+	test('treats link confirmation sessions as existing accounts', () => {
 		expect(
 			readGoogleAuthResult({
 				kind: 'authenticated',
@@ -28,7 +28,7 @@ describe('readGoogleAuthResult', () => {
 		).toMatchObject({ isNew: false, kind: 'authenticated' })
 	})
 
-	it('accepts link-verification challenges', () => {
+	test('accepts link-verification challenges', () => {
 		expect(
 			readGoogleAuthResult({
 				challengeToken: 'challenge-token',
@@ -39,7 +39,7 @@ describe('readGoogleAuthResult', () => {
 		).toMatchObject({ challengeToken: 'challenge-token', kind: 'link_verification_required' })
 	})
 
-	it('rejects malformed server responses', () => {
+	test('rejects malformed server responses', () => {
 		expect(() => readGoogleAuthResult({ kind: 'authenticated', token: '' })).toThrow('Invalid Google sign-in response')
 		expect(() => readGoogleAuthResult({ kind: 'link_verification_required' })).toThrow(
 			'Invalid Google sign-in response'

@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { runSiteNavigationCommand } from '../siteNavigationCommand'
 
-const tempDirs: string[] = []
+const tempDirs: Array<string> = []
 
 async function createRepoRoot(): Promise<string> {
 	const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'site-navigation-command-test-'))
@@ -28,9 +28,9 @@ afterEach(async () => {
 })
 
 describe('site navigation command', () => {
-	it('writes pages and trending data from Tasty metrics', async () => {
+	test('writes pages and trending data from Tasty metrics', async () => {
 		const repoRoot = await createRepoRoot()
-		const now = 1_000
+		const now = 1000
 
 		await runSiteNavigationCommand({
 			fetchMetrics: vi.fn().mockResolvedValue({
@@ -60,13 +60,13 @@ describe('site navigation command', () => {
 		])
 	})
 
-	it('keeps site navigation publishing successful when Tasty metrics fail', async () => {
+	test('keeps site navigation publishing successful when Tasty metrics fail', async () => {
 		const repoRoot = await createRepoRoot()
 
 		await runSiteNavigationCommand({
 			fetchMetrics: vi.fn().mockRejectedValue(new Error('metrics failed')),
 			logger: { log: vi.fn() },
-			now: 1_000,
+			now: 1000,
 			repoRoot
 		})
 
@@ -78,20 +78,20 @@ describe('site navigation command', () => {
 		})
 	})
 
-	it('skips recently published site navigation data', async () => {
+	test('skips recently published site navigation data', async () => {
 		const repoRoot = await createRepoRoot()
 		const fetchMetrics = vi.fn()
 		const logger = { log: vi.fn() }
 		await fs.mkdir(path.join(repoRoot, '.cache', 'site-navigation'), { recursive: true })
 		await fs.writeFile(
 			path.join(repoRoot, '.cache', 'site-navigation', 'manifest.json'),
-			JSON.stringify({ artifactVersion: 1, publishedAt: 1_000 })
+			JSON.stringify({ artifactVersion: 1, publishedAt: 1000 })
 		)
 
 		await runSiteNavigationCommand({
 			fetchMetrics,
 			logger,
-			now: 1_000 + 60 * 60 * 1000,
+			now: 1000 + 60 * 60 * 1000,
 			repoRoot
 		})
 
@@ -99,7 +99,7 @@ describe('site navigation command', () => {
 		expect(logger.log).toHaveBeenCalledWith('[dev:prepare] Site navigation: recently published; skipping refresh')
 	})
 
-	it('retries within the ttl after publishing without Tasty metrics', async () => {
+	test('retries within the ttl after publishing without Tasty metrics', async () => {
 		const repoRoot = await createRepoRoot()
 		const fetchMetrics = vi
 			.fn()
@@ -113,13 +113,13 @@ describe('site navigation command', () => {
 		await runSiteNavigationCommand({
 			fetchMetrics,
 			logger,
-			now: 1_000,
+			now: 1000,
 			repoRoot
 		})
 		await runSiteNavigationCommand({
 			fetchMetrics,
 			logger,
-			now: 2_000,
+			now: 2000,
 			repoRoot
 		})
 

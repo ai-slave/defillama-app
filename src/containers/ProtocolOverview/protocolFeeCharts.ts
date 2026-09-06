@@ -7,7 +7,7 @@ import { CHART_COLORS } from '~/constants/colors'
 import { getGroupedTimestampSec } from './chartSeries.utils'
 
 export type ProtocolFeeChartSeries = Array<[number, number]>
-type ProtocolFeeChartRow = [timestamp: number, ...(number | null)[]]
+type ProtocolFeeChartRow = [timestamp: number, ...Array<number | null>]
 
 const FEE_CHART_DEFINITIONS = [
 	{ key: 'fees', name: 'Fees', color: CHART_COLORS[0] },
@@ -18,7 +18,7 @@ const FEE_CHART_DEFINITIONS = [
 const EMPTY_FEE_CHART_PRESENTATION = {
 	dataset: { source: [], dimensions: ['timestamp'] },
 	charts: []
-} satisfies { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] }
+} satisfies { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> }
 
 function groupChart(chart: ProtocolFeeChartSeries, groupBy: ChartTimeGroupingWithCumulative): ProtocolFeeChartSeries {
 	const grouped = new Map<number, number>()
@@ -54,16 +54,16 @@ export function buildProtocolFeeChartPresentation({
 	fees: ProtocolFeeChartSeries
 	revenue: ProtocolFeeChartSeries
 	holdersRevenue: ProtocolFeeChartSeries
-	selectedCharts: readonly string[]
+	selectedCharts: ReadonlyArray<string>
 	groupBy: ChartTimeGroupingWithCumulative
-}): { dataset: MultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
+}): { dataset: MultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> } {
 	const selected = new Set(selectedCharts)
 	const selectedDefinitions = FEE_CHART_DEFINITIONS.filter((definition) => selected.has(definition.name))
 	if (selectedDefinitions.length === 0) return EMPTY_FEE_CHART_PRESENTATION
 
 	const rowsByTimestamp = new Map<number, ProtocolFeeChartRow>()
 	const dimensions = ['timestamp', ...selectedDefinitions.map((definition) => definition.name)]
-	const charts: MultiSeriesChartSeriesConfig[] = selectedDefinitions.map((definition, index) => ({
+	const charts: Array<MultiSeriesChartSeriesConfig> = selectedDefinitions.map((definition, index) => ({
 		type: groupBy === 'cumulative' ? 'line' : 'bar',
 		name: definition.name,
 		encode: { x: 0, y: index + 1 },

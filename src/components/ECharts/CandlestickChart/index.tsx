@@ -88,7 +88,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		const priceBottom = volumeBottom + VOLUME_HEIGHT + 20
 		const showLegend = overlays.length > 0 || panels.length > 0
 
-		const grids: GridComponentOption[] = [
+		const grids: Array<GridComponentOption> = [
 			{
 				left: 48,
 				bottom: priceBottom,
@@ -103,7 +103,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 			}
 		]
 
-		const xAxes: XAXisComponentOption[] = [
+		const xAxes: Array<XAXisComponentOption> = [
 			{
 				type: 'time',
 				boundaryGap: [0, 0],
@@ -132,7 +132,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 			}
 		]
 
-		const yAxes: YAXisComponentOption[] = [
+		const yAxes: Array<YAXisComponentOption> = [
 			{
 				scale: true,
 				splitArea: {
@@ -451,7 +451,7 @@ function CandleStickAndVolumeChart({ data, height, indicators = EMPTY_INDICATORS
 		)
 	}, [series, data, defaultChartSettings])
 
-	return <div ref={containerRef} style={{ height: height ?? `${chartHeight}px` }}></div>
+	return <div ref={containerRef} style={{ height: height ?? `${chartHeight}px` }} />
 }
 
 export default withEChartsRenderVisibility(CandleStickAndVolumeChart)

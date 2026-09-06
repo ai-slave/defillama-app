@@ -264,7 +264,7 @@ export function ChartCard({
 	 * the chart underneath. Reserving lines by hand can't do this: which subtitle wraps, and into how
 	 * many lines, changes with the viewport, the title beside it and the next copy edit.
 	 */
-	subtitles?: string[] | undefined
+	subtitles?: Array<string> | undefined
 	value?: string | undefined
 	/** Optional header-right control (e.g. a Daily/Cumulative toggle). */
 	control?: React.ReactNode
@@ -313,7 +313,7 @@ export function SegToggle<T extends string>({
 	value,
 	onChange
 }: {
-	options: { value: T; label: string }[]
+	options: Array<{ value: T; label: string }>
 	value: T
 	onChange: (v: T) => void
 }) {
@@ -430,7 +430,7 @@ export function TimeAreaCard({
 	title?: string
 	subtitle?: string
 	/** Every subtitle this card's control can swap in; see ChartCard. */
-	subtitles?: string[]
+	subtitles?: Array<string>
 	value?: string | undefined
 	valueSymbol?: string
 	stacked?: boolean
@@ -473,7 +473,8 @@ export function TimeAreaCard({
 			}
 		}
 	}, [chart, stacked, level, multipleSeries, resolvedValueSymbol, zoomLastPoints])
-	if (!chart.series.length) return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
+	if (chart.series.length === 0)
+		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
 		<ChartCard
 			title={title ?? chart.title ?? ''}

@@ -28,7 +28,7 @@ const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeri
 const GROUPING_QUERY_KEY = 'spotShareGroupBy'
 const CHART_TITLE = 'DEX Share of Spot Volume'
 const EMPTY_DATASET: MultiSeriesTimeSeriesDataset = { dimensions: ['timestamp', 'DEX Share'], source: [] }
-const CHARTS: MultiSeriesChartSeriesConfig[] = [
+const CHARTS: Array<MultiSeriesChartSeriesConfig> = [
 	{
 		type: 'line',
 		name: 'DEX Share',

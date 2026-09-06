@@ -52,9 +52,9 @@ export function useRWAFlowOverviewSplitWithFilters(
 	const searchParams = new URLSearchParams({ splitBy })
 	searchParams.set('includeStablecoin', String(includeStablecoin))
 	searchParams.set('includeGovernance', String(includeGovernance))
-	return useQuery<IRWAFlowOverviewSplitPoint[]>({
+	return useQuery<Array<IRWAFlowOverviewSplitPoint>>({
 		queryKey: ['rwa-flows', 'overview-split', splitBy, includeStablecoin, includeGovernance],
-		queryFn: () => fetchJson<IRWAFlowOverviewSplitPoint[]>(`${RWA_FLOWS_API}/overview?${searchParams.toString()}`),
+		queryFn: () => fetchJson<Array<IRWAFlowOverviewSplitPoint>>(`${RWA_FLOWS_API}/overview?${searchParams.toString()}`),
 		staleTime: RWA_FLOWS_STALE_TIME,
 		refetchOnWindowFocus: false,
 		retry: 1,
@@ -63,11 +63,12 @@ export function useRWAFlowOverviewSplitWithFilters(
 }
 
 export function useRWAFlowAssetBreakdown(target: RWAFlowScope, enabled: boolean) {
-	return useQuery<IRWAFlowAssetBreakdownRow[]>({
+	return useQuery<Array<IRWAFlowAssetBreakdownRow>>({
 		queryKey: ['rwa-flows', 'asset-breakdown', target.kind, target.kind === 'overview' ? 'all' : target.slug],
 		queryFn: () => {
-			if (target.kind === 'overview') return fetchJson<IRWAFlowAssetBreakdownRow[]>(`${RWA_FLOWS_API}/asset-breakdown`)
-			return fetchJson<IRWAFlowAssetBreakdownRow[]>(
+			if (target.kind === 'overview')
+				return fetchJson<Array<IRWAFlowAssetBreakdownRow>>(`${RWA_FLOWS_API}/asset-breakdown`)
+			return fetchJson<Array<IRWAFlowAssetBreakdownRow>>(
 				`${RWA_FLOWS_API}/asset-breakdown/${target.kind}/${encodeURIComponent(target.slug)}`
 			)
 		},

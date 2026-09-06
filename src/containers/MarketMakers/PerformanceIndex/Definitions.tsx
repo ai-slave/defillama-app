@@ -1,7 +1,7 @@
 import { Card } from '~/ui/Card'
 import { GRADE_SCALE_SUMMARY } from '../gradeBands'
 
-const DEFINITIONS: { term: string; description: string }[] = [
+const DEFINITIONS: Array<{ term: string; description: string }> = [
 	{
 		term: 'Grade',
 		description: `A simplified letter rating that reflects a market maker’s overall standing on the leaderboard. Grades are derived from the composite score and are designed to make performance easier to interpret without relying solely on individual numerical scores. ${GRADE_SCALE_SUMMARY}`

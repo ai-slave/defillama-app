@@ -91,7 +91,7 @@ function LiquidationsDistributionChartCard({
 	tokenOptions,
 	chartInstanceRef
 }: {
-	availableSeries: string[]
+	availableSeries: Array<string>
 	breakdownOptions: Array<{ key: BreakdownMode; name: string }>
 	chartOptions: NonNullable<IMultiSeriesChartProps['chartOptions']>
 	chartState: LiquidationsChartState
@@ -108,9 +108,9 @@ function LiquidationsDistributionChartCard({
 	setChartMode: (mode: ChartMode) => void
 	setMetric: (metric: Metric) => void
 	selectedCharts: Set<string>
-	selectedSeries: string[]
+	selectedSeries: Array<string>
 	setSelectedToken: (token: string) => void
-	setSelectedSeries: React.Dispatch<React.SetStateAction<string[]>>
+	setSelectedSeries: React.Dispatch<React.SetStateAction<Array<string>>>
 	timestamp: number
 	title: string | undefined
 	iconUrl: string | undefined
@@ -535,7 +535,7 @@ export function LiquidationsDistributionChart({
 		return chartState.mode === 'cumulative' ? buildCumulativeLiquidationsChartView(baseView) : baseView
 	}, [chart, chartState.breakdownMode, chartState.mode, chartState.token])
 	const availableSeries = React.useMemo(() => {
-		const labels: string[] = []
+		const labels: Array<string> = []
 		const seen = new Set<string>()
 		for (const series of selectedChartView.series) {
 			if (seen.has(series.label)) continue

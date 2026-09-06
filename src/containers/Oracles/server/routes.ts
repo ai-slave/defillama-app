@@ -1,7 +1,7 @@
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 
-export function getOracleSitemapRoutes(metadataCache: MetadataCache): string[] {
-	const routes: string[] = []
+export function getOracleSitemapRoutes(metadataCache: MetadataCache): Array<string> {
+	const routes: Array<string> = []
 	const { oracleNameBySlug, chainSlugsByOracleSlug, chainNameBySlug } = metadataCache.oracleRoutes
 
 	for (const oracleSlug in oracleNameBySlug) {

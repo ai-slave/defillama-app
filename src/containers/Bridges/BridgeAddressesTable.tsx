@@ -16,7 +16,7 @@ import type { BridgeAddressTableRow } from './types'
 
 const columnHelper = createColumnHelper<BridgeAddressTableRow>()
 
-export function BridgeAddressesTable({ data }: { data: BridgeAddressTableRow[] }) {
+export function BridgeAddressesTable({ data }: { data: Array<BridgeAddressTableRow> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'withdrawn', desc: true }])
 	const { data: blockExplorersData } = useBlockExplorers()
 

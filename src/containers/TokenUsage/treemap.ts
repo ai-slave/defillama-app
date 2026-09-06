@@ -7,7 +7,7 @@ export type TokenUsageTreemapNode = {
 	selectorKey?: string
 	value: [number, number, number]
 	itemStyle?: { color?: string }
-	children?: TokenUsageTreemapNode[]
+	children?: Array<TokenUsageTreemapNode>
 }
 
 export interface TokenUsageTreemapRow {
@@ -43,7 +43,11 @@ function hexToRgb(hex: string): [red: number, green: number, blue: number] {
 
 const CHART_COLOR_RGB = new Array<[number, number, number] | undefined>(CHART_COLORS.length)
 
-function deriveChildColors(parentColor: string, [red, green, blue]: [number, number, number], count: number): string[] {
+function deriveChildColors(
+	parentColor: string,
+	[red, green, blue]: [number, number, number],
+	count: number
+): Array<string> {
 	if (count <= 1) return [parentColor]
 
 	const colors = new Array<string>(count)
@@ -60,10 +64,10 @@ function deriveChildColors(parentColor: string, [red, green, blue]: [number, num
 // Builds a category -> protocol treemap tree from token usage rows.
 // Parent nodes are categories; children are the protocols within each category.
 export function buildTokenUsageTreemapTreeData(
-	rows: TokenUsageTreemapRow[],
+	rows: Array<TokenUsageTreemapRow>,
 	rootLabel = 'Token Usage'
-): TokenUsageTreemapNode[] {
-	if (!rows.length) return []
+): Array<TokenUsageTreemapNode> {
+	if (rows.length === 0) return []
 
 	const parentToChildTotals = new Map<string, Map<string, number>>()
 
@@ -135,8 +139,8 @@ export function buildTokenUsageTreemapTreeData(
 }
 
 export function getTokenUsageTreemapProtocolOptions(
-	treeData: TokenUsageTreemapNode[]
-): TokenUsageTreemapProtocolOption[] {
+	treeData: Array<TokenUsageTreemapNode>
+): Array<TokenUsageTreemapProtocolOption> {
 	const nameCounts = new Map<string, number>()
 	for (const category of treeData) {
 		for (const protocol of category.children ?? []) {
@@ -144,7 +148,7 @@ export function getTokenUsageTreemapProtocolOptions(
 		}
 	}
 
-	const protocols: TokenUsageTreemapProtocolOption[] = []
+	const protocols: Array<TokenUsageTreemapProtocolOption> = []
 	for (const category of treeData) {
 		for (const protocol of category.children ?? []) {
 			protocols.push({
@@ -158,21 +162,21 @@ export function getTokenUsageTreemapProtocolOptions(
 
 /** Filter canonical protocol leaves and recompute only the visible-set shares. */
 export function filterTokenUsageTreemapTreeData(
-	treeData: TokenUsageTreemapNode[],
+	treeData: Array<TokenUsageTreemapNode>,
 	selectedProtocolKeys: ReadonlySet<string>
-): TokenUsageTreemapNode[] {
+): Array<TokenUsageTreemapNode> {
 	let protocolCount = 0
 	for (const category of treeData) protocolCount += category.children?.length ?? 0
 	if (selectedProtocolKeys.size === protocolCount) return treeData
 
 	const selectedCategories: Array<{
 		category: TokenUsageTreemapNode
-		children: TokenUsageTreemapNode[]
+		children: Array<TokenUsageTreemapNode>
 		total: number
 	}> = []
 	let selectedTotal = 0
 	for (const category of treeData) {
-		const children: TokenUsageTreemapNode[] = []
+		const children: Array<TokenUsageTreemapNode> = []
 		let categoryTotal = 0
 		for (const protocol of category.children ?? []) {
 			if (!selectedProtocolKeys.has(protocol.selectorKey ?? protocol.path)) continue
@@ -201,13 +205,13 @@ export function filterTokenUsageTreemapTreeData(
 	return filteredTree
 }
 
-export function getTokenUsageTreemapTotal(treeData: TokenUsageTreemapNode[]): number {
+export function getTokenUsageTreemapTotal(treeData: Array<TokenUsageTreemapNode>): number {
 	let total = 0
 	for (const category of treeData) total += category.value[0]
 	return total
 }
 
-export function prepareTokenUsageTreemapCsv(treeData: TokenUsageTreemapNode[], filename: string) {
+export function prepareTokenUsageTreemapCsv(treeData: Array<TokenUsageTreemapNode>, filename: string) {
 	const rows: Array<Array<string | number>> = [
 		['Protocol', 'Category', 'Amount', 'Category Share (%)', 'Total Share (%)']
 	]

@@ -10,7 +10,7 @@ interface DiscoverySectionProps {
 	icon: IIcon['name']
 	iconBg?: string
 	iconColor?: string
-	dashboards: Dashboard[]
+	dashboards: Array<Dashboard>
 	isLoading: boolean
 	seeAllHref: string
 	onTagClick: (tag: string) => void

@@ -21,7 +21,7 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { getQueryUpdatesFromSelected } from '~/components/Select/query'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { type ExcludeQueryKey } from '~/components/Select/types'
+import type { ExcludeQueryKey } from '~/components/Select/types'
 import { selectTriggerStyles } from '~/components/Select/types'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
@@ -144,13 +144,13 @@ type RWAPerpsMarketFilterDefinition = {
 	label: string
 	includeQueryKey: string
 	excludeQueryKey: ExcludeQueryKey
-	getValues: (market: IRWAPerpsMarket) => string[]
+	getValues: (market: IRWAPerpsMarket) => Array<string>
 	hideWhenHardScoped?: boolean
 }
 
 type RWAPerpsMarketFilterState = RWAPerpsMarketFilterDefinition & {
-	options: string[]
-	selectedValues: string[]
+	options: Array<string>
+	selectedValues: Array<string>
 	selectedValuesSet: ReadonlySet<string>
 	active: boolean
 	enabled: boolean
@@ -161,7 +161,7 @@ type RWAPerpsTimeSeriesRequest =
 	| ({ source: 'contract-breakdown' } & IRWAPerpsContractBreakdownRequest)
 	| ({ source: 'overview-breakdown' } & IRWAPerpsOverviewBreakdownRequest)
 
-const PERPS_MARKET_FILTER_DEFINITIONS: RWAPerpsMarketFilterDefinition[] = [
+const PERPS_MARKET_FILTER_DEFINITIONS: Array<RWAPerpsMarketFilterDefinition> = [
 	{
 		id: 'venue',
 		label: d.venue.label,
@@ -234,8 +234,8 @@ const PERPS_MARKET_FILTER_QUERY_KEYS = PERPS_MARKET_FILTER_DEFINITIONS.flatMap((
 ])
 
 type RWAPerpsFilterDraft = {
-	activeIds: string[]
-	selectValues: Record<string, string[]>
+	activeIds: Array<string>
+	selectValues: Record<string, Array<string>>
 }
 
 type RWAPerpsActiveFilterPill = {
@@ -1103,12 +1103,15 @@ const assetColumnVisibility: VisibilityState = {
 	baseAssetGroup: false
 }
 
-function getLegendSeriesNames(seriesNames: string[]) {
+function getLegendSeriesNames(seriesNames: Array<string>) {
 	if (!seriesNames.includes('Total')) return seriesNames
 	return ['Total', ...seriesNames.filter((name) => name !== 'Total')]
 }
 
-function getRWAPerpsFilterOptions(markets: IRWAPerpsMarket[], getValues: (market: IRWAPerpsMarket) => string[]) {
+function getRWAPerpsFilterOptions(
+	markets: Array<IRWAPerpsMarket>,
+	getValues: (market: IRWAPerpsMarket) => Array<string>
+) {
 	const openInterestByValue = new Map<string, number>()
 
 	for (const market of markets) {
@@ -1127,9 +1130,9 @@ function getSelectedRWAPerpsFilterValues({
 	includeQuery,
 	excludeQuery
 }: {
-	allValues: string[]
-	includeQuery: string | string[] | undefined
-	excludeQuery: string | string[] | undefined
+	allValues: Array<string>
+	includeQuery: string | Array<string> | undefined
+	excludeQuery: string | Array<string> | undefined
 }) {
 	const validSet = new Set(allValues)
 	const excluded = parseExcludeParam(excludeQuery)
@@ -1138,7 +1141,11 @@ function getSelectedRWAPerpsFilterValues({
 	return excluded.size > 0 ? baseSelection.filter((value) => !excluded.has(value)) : baseSelection
 }
 
-function isRWAPerpsFilterActive(selectedValues: string[], selectedValuesSet: ReadonlySet<string>, allValues: string[]) {
+function isRWAPerpsFilterActive(
+	selectedValues: Array<string>,
+	selectedValuesSet: ReadonlySet<string>,
+	allValues: Array<string>
+) {
 	if (selectedValues.length !== allValues.length) return true
 
 	return allValues.some((value) => !selectedValuesSet.has(value))
@@ -1149,10 +1156,10 @@ function getRWAPerpsMarketFilterStates({
 	query,
 	hideAssetClass
 }: {
-	markets: IRWAPerpsMarket[]
-	query: Record<string, string | string[] | undefined>
+	markets: Array<IRWAPerpsMarket>
+	query: Record<string, string | Array<string> | undefined>
 	hideAssetClass: boolean
-}): RWAPerpsMarketFilterState[] {
+}): Array<RWAPerpsMarketFilterState> {
 	return PERPS_MARKET_FILTER_DEFINITIONS.map((definition) => {
 		const options = getRWAPerpsFilterOptions(markets, definition.getValues)
 		const selectedValues = getSelectedRWAPerpsFilterValues({
@@ -1180,13 +1187,13 @@ function matchesRWAPerpsMarketFilter(market: IRWAPerpsMarket, filter: RWAPerpsMa
 	return false
 }
 
-function formatPerpsActiveFilterValues(values: readonly string[]) {
+function formatPerpsActiveFilterValues(values: ReadonlyArray<string>) {
 	if (values.length === 0) return 'None'
 	if (values.length <= 2) return values.join(', ')
 	return `${values[0]}, ${values[1]} + ${values.length - 2}`
 }
 
-function clearRWAPerpsFilterQueryKeys(router: ReturnType<typeof useRouter>, keys: readonly string[]) {
+function clearRWAPerpsFilterQueryKeys(router: ReturnType<typeof useRouter>, keys: ReadonlyArray<string>) {
 	const resetUpdates: Record<string, undefined> = {}
 	for (const key of keys) {
 		resetUpdates[key] = undefined
@@ -1194,16 +1201,16 @@ function clearRWAPerpsFilterQueryKeys(router: ReturnType<typeof useRouter>, keys
 	void pushShallowQuery(router, resetUpdates)
 }
 
-function isAllPerpsFilterSelection(filter: RWAPerpsMarketFilterState, values: string[]): boolean {
+function isAllPerpsFilterSelection(filter: RWAPerpsMarketFilterState, values: Array<string>): boolean {
 	const validSet = new Set(filter.options)
 	const selected = values.filter((value) => validSet.has(value))
 	const selectedSet = new Set(selected)
 	return selected.length === filter.options.length && filter.options.every((value) => selectedSet.has(value))
 }
 
-function createRWAPerpsFilterDraft(filters: RWAPerpsMarketFilterState[]): RWAPerpsFilterDraft {
-	const activeIds: string[] = []
-	const selectValues: Record<string, string[]> = {}
+function createRWAPerpsFilterDraft(filters: Array<RWAPerpsMarketFilterState>): RWAPerpsFilterDraft {
+	const activeIds: Array<string> = []
+	const selectValues: Record<string, Array<string>> = {}
 
 	for (const filter of filters) {
 		selectValues[filter.id] = filter.selectedValues.slice()
@@ -1234,8 +1241,8 @@ function removeRWAPerpsDraftFilter(draft: RWAPerpsFilterDraft, id: string): RWAP
 
 function getRWAPerpsSelectDraftQueryUpdates(
 	filter: RWAPerpsMarketFilterState,
-	values: string[]
-): Record<string, string | string[] | undefined> {
+	values: Array<string>
+): Record<string, string | Array<string> | undefined> {
 	return getQueryUpdatesFromSelected(
 		filter.includeQueryKey,
 		filter.excludeQueryKey,
@@ -1246,10 +1253,10 @@ function getRWAPerpsSelectDraftQueryUpdates(
 }
 
 function serializeRWAPerpsFilterDraft(
-	filters: RWAPerpsMarketFilterState[],
+	filters: Array<RWAPerpsMarketFilterState>,
 	draft: RWAPerpsFilterDraft
-): Record<string, string | string[] | undefined> {
-	const updates: Record<string, string | string[] | undefined> = {}
+): Record<string, string | Array<string> | undefined> {
+	const updates: Record<string, string | Array<string> | undefined> = {}
 	for (const key of PERPS_MARKET_FILTER_QUERY_KEYS) {
 		updates[key] = undefined
 	}
@@ -1292,8 +1299,8 @@ function getRWAPerpsActiveFilterPill(
 	}
 }
 
-function getRWAPerpsActiveFilterPills(filters: RWAPerpsMarketFilterState[], router: ReturnType<typeof useRouter>) {
-	const activeFilters: RWAPerpsActiveFilterPill[] = []
+function getRWAPerpsActiveFilterPills(filters: Array<RWAPerpsMarketFilterState>, router: ReturnType<typeof useRouter>) {
+	const activeFilters: Array<RWAPerpsActiveFilterPill> = []
 
 	for (const filter of filters) {
 		const pill = getRWAPerpsActiveFilterPill(filter, router.query, () =>
@@ -1312,7 +1319,7 @@ function hasResettableRWAPerpsFilterQueryParam(query: ReturnType<typeof useRoute
 	return includeForex
 }
 
-function RWAPerpsActiveFilterPills({ pills }: { pills: RWAPerpsActiveFilterPill[] }) {
+function RWAPerpsActiveFilterPills({ pills }: { pills: Array<RWAPerpsActiveFilterPill> }) {
 	if (pills.length === 0) return null
 
 	return (
@@ -1349,7 +1356,7 @@ function RWAPerpsMarketFilters({
 	onToggleIncludeCex,
 	onToggleIncludeForex
 }: {
-	filters: RWAPerpsMarketFilterState[]
+	filters: Array<RWAPerpsMarketFilterState>
 	showForexToggle: boolean
 	includeForex: boolean
 	includeCex: boolean
@@ -1406,7 +1413,7 @@ function RWAPerpsFiltersDialog({
 	selectedFilterCount,
 	hasActiveFilterPills
 }: {
-	filters: RWAPerpsMarketFilterState[]
+	filters: Array<RWAPerpsMarketFilterState>
 	selectedFilterCount: number
 	hasActiveFilterPills: boolean
 }) {
@@ -1483,7 +1490,7 @@ function RWAPerpsFilterBrowser({
 	draft,
 	onDraftChange
 }: {
-	filters: RWAPerpsMarketFilterState[]
+	filters: Array<RWAPerpsMarketFilterState>
 	draft: RWAPerpsFilterDraft
 	onDraftChange: (draft: RWAPerpsFilterDraft | ((current: RWAPerpsFilterDraft) => RWAPerpsFilterDraft)) => void
 }) {
@@ -1529,7 +1536,7 @@ function RWAPerpsActiveDraftFilters({
 	draft,
 	onDraftChange
 }: {
-	filters: RWAPerpsMarketFilterState[]
+	filters: Array<RWAPerpsMarketFilterState>
 	draft: RWAPerpsFilterDraft
 	onDraftChange: (draft: RWAPerpsFilterDraft | ((current: RWAPerpsFilterDraft) => RWAPerpsFilterDraft)) => void
 }) {
@@ -2126,7 +2133,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 	const timeSeriesFilename = `${filenameBase}-time-series-${chartState.metric}-${chartState.breakdown}-${chartState.timeSeriesMode}`
 	const nonTimeSeriesFilename = `${filenameBase}-${chartState.view}-${chartState.metric}-${chartState.breakdown}`
 
-	const onSelectView = (value: string | string[]) => {
+	const onSelectView = (value: string | Array<string>) => {
 		const selectedView = Array.isArray(value) ? value[0] : value
 		if (!selectedView) return
 		const nextState = setRWAPerpsChartView(chartState, selectedView)
@@ -2139,7 +2146,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		})
 	}
 
-	const onSelectBreakdown = (value: string | string[]) => {
+	const onSelectBreakdown = (value: string | Array<string>) => {
 		const selectedBreakdown = Array.isArray(value) ? value[0] : value
 		if (!selectedBreakdown) return
 		if (chartState.view === 'timeSeries') {
@@ -2169,7 +2176,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 		})
 	}
 
-	const onSelectTreemapNestedBy = (value: string | string[]) => {
+	const onSelectTreemapNestedBy = (value: string | Array<string>) => {
 		const selectedNestedBy = Array.isArray(value) ? value[0] : value
 		if (!selectedNestedBy) return
 		const nextState = setRWAPerpsTreemapNestedBy(chartState, selectedNestedBy)

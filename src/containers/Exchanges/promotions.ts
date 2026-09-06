@@ -5,8 +5,8 @@ interface ExchangePromotionLink {
 	href: string
 }
 
-export function promotionLinks(promotion: ExchangePromotionModel): ExchangePromotionLink[] {
-	const links: ExchangePromotionLink[] = []
+export function promotionLinks(promotion: ExchangePromotionModel): Array<ExchangePromotionLink> {
+	const links: Array<ExchangePromotionLink> = []
 	if (promotion.url) links.push({ label: 'Campaign page', href: promotion.url })
 	if (promotion.termsUrl && promotion.termsUrl !== promotion.url) {
 		links.push({ label: 'Terms', href: promotion.termsUrl })
@@ -17,7 +17,10 @@ export function promotionLinks(promotion: ExchangePromotionModel): ExchangePromo
 	return links
 }
 
-export function activePromotions(promotions: ExchangePromotionModel[], asOfDate: string): ExchangePromotionModel[] {
+export function activePromotions(
+	promotions: Array<ExchangePromotionModel>,
+	asOfDate: string
+): Array<ExchangePromotionModel> {
 	return promotions
 		.filter((promotion) => {
 			if (promotion.startsAt && promotion.startsAt > asOfDate) return false
@@ -33,7 +36,7 @@ export function activePromotions(promotions: ExchangePromotionModel[], asOfDate:
 }
 
 export function selectActivePromotion(
-	promotions: ExchangePromotionModel[],
+	promotions: Array<ExchangePromotionModel>,
 	asOfDate: string
 ): ExchangePromotionModel | null {
 	return activePromotions(promotions, asOfDate)[0] ?? null

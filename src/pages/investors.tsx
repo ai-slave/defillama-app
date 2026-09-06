@@ -201,7 +201,7 @@ const GRID_CELLS = [
 ] as const
 
 const STAMP_COUNT = 8
-const STAMP_CYCLE_MS = 14000
+const STAMP_CYCLE_MS = 14_000
 const GRID_COLS = 34
 const GRID_ROWS = 13
 
@@ -211,7 +211,7 @@ function isStaticCell(col: number, row: number): boolean {
 	return GRID_CELLS.some((cell) => cell.left === col * 48 && cell.top === row * 48)
 }
 
-const CENTER_RING_CELLS: [number, number][] = []
+const CENTER_RING_CELLS: Array<[number, number]> = []
 for (let row = 2; row <= 7; row++) {
 	CENTER_RING_CELLS.push([8, row], [9, row], [24, row], [25, row])
 }
@@ -239,8 +239,8 @@ function randomStampPosition(): { left: number; top: number } {
 	}
 }
 
-function useStampCells(): StampCell[] {
-	const [cells, setCells] = useState<StampCell[]>([])
+function useStampCells(): Array<StampCell> {
+	const [cells, setCells] = useState<Array<StampCell>>([])
 
 	useEffect(() => {
 		const delays = Array.from(
@@ -249,7 +249,7 @@ function useStampCells(): StampCell[] {
 		)
 		setCells(delays.map((delay) => ({ ...randomStampPosition(), delay: `${delay / 1000}s` })))
 
-		const timers: ReturnType<typeof setTimeout>[] = []
+		const timers: Array<ReturnType<typeof setTimeout>> = []
 		delays.forEach((delay, i) => {
 			const moveCell = () =>
 				setCells((prev) => prev.map((cell, j) => (j === i ? { ...cell, ...randomStampPosition() } : cell)))
@@ -341,7 +341,7 @@ function Backdrop() {
 type LandingCardContent = {
 	icon: ReactNode
 	description: string
-	tags: readonly string[]
+	tags: ReadonlyArray<string>
 	accent: string
 	hoverClass: string
 }

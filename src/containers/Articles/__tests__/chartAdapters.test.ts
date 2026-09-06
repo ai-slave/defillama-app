@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { validateArticleChartConfig } from '../chartAdapters'
 
 describe('validateArticleChartConfig', () => {
-	it('accepts a single-series protocol chart config', () => {
+	test('accepts a single-series protocol chart config', () => {
 		expect(
 			validateArticleChartConfig({
 				series: [{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'fees' }]
@@ -14,7 +14,7 @@ describe('validateArticleChartConfig', () => {
 		})
 	})
 
-	it('accepts a chain series with optional fields', () => {
+	test('accepts a chain series with optional fields', () => {
 		expect(
 			validateArticleChartConfig({
 				series: [{ entityType: 'chain', slug: 'Ethereum', name: 'Ethereum', geckoId: 'ethereum', chartType: 'tvl' }],
@@ -32,7 +32,7 @@ describe('validateArticleChartConfig', () => {
 		})
 	})
 
-	it('accepts multiple series mixing entity types and chart types up to the cap', () => {
+	test('accepts multiple series mixing entity types and chart types up to the cap', () => {
 		const config = validateArticleChartConfig({
 			series: [
 				{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'tvl' },
@@ -45,7 +45,7 @@ describe('validateArticleChartConfig', () => {
 		expect(config?.chartType).toBeDefined()
 	})
 
-	it('deduplicates persisted series by the identity enforced in the editor', () => {
+	test('deduplicates persisted series by the identity enforced in the editor', () => {
 		const config = validateArticleChartConfig({
 			series: [
 				{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'tvl' },
@@ -56,7 +56,7 @@ describe('validateArticleChartConfig', () => {
 		expect(config?.series).toEqual([{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'tvl' }])
 	})
 
-	it('migrates legacy entities + chartType into series', () => {
+	test('migrates legacy entities + chartType into series', () => {
 		const config = validateArticleChartConfig({
 			entities: [
 				{ entityType: 'protocol', slug: 'aave', name: 'Aave' },
@@ -72,7 +72,7 @@ describe('validateArticleChartConfig', () => {
 		expect(config?.entities).toHaveLength(2)
 	})
 
-	it('falls back series chartType to legacy chartType when missing', () => {
+	test('falls back series chartType to legacy chartType when missing', () => {
 		const config = validateArticleChartConfig({
 			series: [{ entityType: 'protocol', slug: 'aave', name: 'Aave' }],
 			chartType: 'fees'
@@ -80,7 +80,7 @@ describe('validateArticleChartConfig', () => {
 		expect(config?.series).toEqual([{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'fees' }])
 	})
 
-	it('rejects unknown entity types inside the series array', () => {
+	test('rejects unknown entity types inside the series array', () => {
 		expect(
 			validateArticleChartConfig({
 				series: [{ entityType: 'stablecoin', slug: 'usdc', name: 'USDC', chartType: 'tvl' }]
@@ -88,7 +88,7 @@ describe('validateArticleChartConfig', () => {
 		).toBeNull()
 	})
 
-	it('falls back name to slug when missing', () => {
+	test('falls back name to slug when missing', () => {
 		expect(
 			validateArticleChartConfig({
 				series: [{ entityType: 'protocol', slug: 'aave', chartType: 'tvl' }]
@@ -100,7 +100,7 @@ describe('validateArticleChartConfig', () => {
 		})
 	})
 
-	it('drops invalid annotations and rejects malformed dates', () => {
+	test('drops invalid annotations and rejects malformed dates', () => {
 		const config = validateArticleChartConfig({
 			series: [{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'tvl' }],
 			annotations: [
@@ -113,7 +113,7 @@ describe('validateArticleChartConfig', () => {
 		expect(config?.annotations?.[0].label).toBe('V3 launch')
 	})
 
-	it('returns null when neither series nor legacy entities are valid', () => {
+	test('returns null when neither series nor legacy entities are valid', () => {
 		expect(
 			validateArticleChartConfig({
 				series: [],

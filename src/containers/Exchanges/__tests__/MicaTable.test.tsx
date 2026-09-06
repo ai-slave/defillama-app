@@ -1,6 +1,6 @@
 import { createTable, flexRender, getCoreRowModel } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { RampCostValue } from '../MicaCells'
 import { MICA_COLUMNS } from '../micaColumns'
 import { micaColumnVisibility, prepareMicaVenues } from '../MicaTable'
@@ -68,7 +68,7 @@ const RAMP_COST: NonNullable<MicaVenueRowModel['rampCost']> = {
 		halfSpreadFraction: 0.0005,
 		btcWithdrawalFeeBtc: 0.00002,
 		btcNetworkFeeBtc: 0.00002,
-		btcPriceUsd: 120000
+		btcPriceUsd: 120_000
 	}
 }
 
@@ -107,7 +107,7 @@ function renderMicaCell(venue: MicaVenueRowModel, id: string) {
 }
 
 describe('contractual Bybit EU placement', () => {
-	it('pins bybit-eu to the first row while keeping the curated backend order otherwise', () => {
+	test('pins bybit-eu to the first row while keeping the curated backend order otherwise', () => {
 		const rows = [
 			micaVenue({ exchange: 'coinbase', name: 'Coinbase' }),
 			micaVenue({ exchange: 'bybit-eu', name: 'Bybit EU' }),
@@ -125,7 +125,7 @@ describe('contractual Bybit EU placement', () => {
 })
 
 describe('product column presets', () => {
-	it('hides unrelated product columns while leaving them available for user overrides', () => {
+	test('hides unrelated product columns while leaving them available for user overrides', () => {
 		expect(micaColumnVisibility('all')).toEqual({
 			micaStatus: false,
 			fiatOnramp: false
@@ -157,7 +157,7 @@ describe('product column presets', () => {
 })
 
 describe('mica table columns', () => {
-	it('presents only the curated column set, in the legacy /mica order', () => {
+	test('presents only the curated column set, in the legacy /mica order', () => {
 		const columns = MICA_COLUMNS
 		expect(columns.map((column) => column.id)).toEqual([
 			'name',
@@ -179,7 +179,7 @@ describe('mica table columns', () => {
 		expect(micaCell(venue, 'offRampCost').getValue()).toBe(4.9)
 	})
 
-	it('right-aligns the trade cell so the CTA lines up with or without a promo gift', () => {
+	test('right-aligns the trade cell so the CTA lines up with or without a promo gift', () => {
 		const tradeColumn = MICA_COLUMNS.find((column) => column.id === 'venueActions')!
 		expect(tradeColumn.meta?.align).toBe('end')
 
@@ -192,7 +192,7 @@ describe('mica table columns', () => {
 		expect(promoted.indexOf('promotion')).toBeLessThan(promoted.indexOf('data-umami-event-placement="trade"'))
 	})
 
-	it('does not link exchange names to gated profile pages', () => {
+	test('does not link exchange names to gated profile pages', () => {
 		const venue = micaVenue({ website: null, profileHref: '/exchange/venue' })
 		const html = renderMicaCell(venue, 'name')
 
@@ -201,7 +201,7 @@ describe('mica table columns', () => {
 		expect(html).not.toContain('<a')
 	})
 
-	it('keeps authored external exchange destinations', () => {
+	test('keeps authored external exchange destinations', () => {
 		const venue = micaVenue({
 			website: 'https://example.com',
 			profileHref: '/exchange/venue'
@@ -214,12 +214,12 @@ describe('mica table columns', () => {
 })
 
 describe('€1k ramp cost cells', () => {
-	it('renders an em-dash when ramp cost data is absent', () => {
+	test('renders an em-dash when ramp cost data is absent', () => {
 		const html = renderToStaticMarkup(<RampCostValue row={micaVenue()} direction="onRamp" />)
 		expect(html).toContain('–')
 	})
 
-	it('renders the euro total badge with an accessible breakdown trigger when populated', () => {
+	test('renders the euro total badge with an accessible breakdown trigger when populated', () => {
 		const venue = micaVenue({
 			exchange: 'bybit-eu',
 			name: 'Bybit EU',

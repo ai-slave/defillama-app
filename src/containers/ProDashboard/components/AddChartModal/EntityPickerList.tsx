@@ -15,8 +15,8 @@ interface EntityOption {
 
 interface EntityPickerListProps {
 	mode: 'chain' | 'protocol'
-	entities: EntityOption[]
-	selectedEntities: string[]
+	entities: Array<EntityOption>
+	selectedEntities: Array<string>
 	onToggle: (value: string) => void
 	onClear: () => void
 	isLoading?: boolean
@@ -40,7 +40,7 @@ export function EntityPickerList({
 
 		const rankedEntities = matchSorter(entities, searchQuery, { keys: ['label'] })
 		const rankedValues = new Set(rankedEntities.map((entity) => entity.value))
-		const childrenByVisibleParent = new Map<string, EntityOption[]>()
+		const childrenByVisibleParent = new Map<string, Array<EntityOption>>()
 
 		for (const entity of rankedEntities) {
 			if (!entity.isChild || !entity.parentValue || !rankedValues.has(entity.parentValue)) continue
@@ -51,7 +51,7 @@ export function EntityPickerList({
 
 		if (childrenByVisibleParent.size === 0) return rankedEntities
 
-		const groupedEntities: EntityOption[] = []
+		const groupedEntities: Array<EntityOption> = []
 		const addedValues = new Set<string>()
 
 		for (const entity of rankedEntities) {

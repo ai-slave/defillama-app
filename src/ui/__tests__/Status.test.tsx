@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { PanelLoadingStatus, SurfaceBodyLoadingStatus } from '../Status'
 
 describe('loading statuses', () => {
-	it('renders the contextual label with the default indicator', () => {
+	test('renders the contextual label with the default indicator', () => {
 		const panel = renderToStaticMarkup(<PanelLoadingStatus label="Loading borrow markets" />)
 		const surface = renderToStaticMarkup(<SurfaceBodyLoadingStatus label="Loading saved pools" />)
 
@@ -11,7 +11,7 @@ describe('loading statuses', () => {
 		expect(surface).toContain('Loading saved pools')
 	})
 
-	it('keeps the contextual label available to assistive technology with custom content', () => {
+	test('keeps the contextual label available to assistive technology with custom content', () => {
 		const html = renderToStaticMarkup(
 			<PanelLoadingStatus label="Loading routes">
 				<span>Custom spinner</span>

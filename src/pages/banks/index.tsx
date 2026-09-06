@@ -67,7 +67,7 @@ const banksTableColumns = [
 	})
 ]
 
-const tableData: BankRow[] = data.banks.map((bank) => ({
+const tableData: Array<BankRow> = data.banks.map((bank) => ({
 	...(bank as unknown as BankRow),
 	date: new Date(String(bank['4'])).getTime() / 1e3
 }))
@@ -97,7 +97,7 @@ const Banks = () => {
 		<Layout
 			title="Historical Bank Failures Database - DefiLlama"
 			description="Historical US bank failures database with closing dates, assets at failure, and inflation-adjusted annual totals."
-			canonicalUrl={'/banks'}
+			canonicalUrl="/banks"
 		>
 			<ChartPanel className="relative col-span-2">
 				<React.Suspense fallback={<ChartPanelExportShellFallback />}>
@@ -114,7 +114,7 @@ const Banks = () => {
 				data={tableData}
 				columns={banksTableColumns}
 				placeholder="Search banks..."
-				columnToSearch={'1'}
+				columnToSearch="1"
 				csvFileName="banks"
 				sortingState={DEFAULT_SORTING_STATE}
 			/>

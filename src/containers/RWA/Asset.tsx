@@ -445,7 +445,7 @@ const ChainBadge = ({
 	chain: string
 	isPrimary?: boolean
 	showPrimaryStyle?: boolean
-	contracts?: string[]
+	contracts?: Array<string>
 	contractUrls?: Record<string, string>
 }) => {
 	return (
@@ -533,7 +533,7 @@ export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
 
 	const displayPools = asset.yieldPools ?? []
 
-	const chartDimensions: readonly string[] = asset.chartDataset?.dimensions ?? []
+	const chartDimensions: ReadonlyArray<string> = asset.chartDataset?.dimensions ?? []
 	const assetChartDataset = asset.chartDataset
 	const timeSeriesCharts =
 		chartDimensions.length > 0

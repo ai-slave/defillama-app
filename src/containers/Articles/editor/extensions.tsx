@@ -97,7 +97,7 @@ function ChartCaptionEditor({
 	onChange
 }: {
 	config: ArticleChartConfig
-	uniqueEntityNames: string[]
+	uniqueEntityNames: Array<string>
 	chartLabel: string
 	onChange: (caption: string) => void
 }) {
@@ -159,7 +159,7 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 	const chartTypeSet = new Set(config.series?.map((s) => s.chartType) ?? [])
 	const uniqueEntityNames = useMemo(() => {
 		const seen = new Set<string>()
-		const out: string[] = []
+		const out: Array<string> = []
 		for (const s of config.series ?? []) {
 			const key = `${s.entityType}:${s.slug}`
 			if (seen.has(key)) continue
@@ -269,7 +269,7 @@ function CalloutNodeView({ node, updateAttributes }: NodeViewProps) {
 			<div className="mb-2 flex items-center justify-between gap-2">
 				<span className={`text-xs font-medium ${styles.tone}`}>{calloutToneLabels[tone]}</span>
 				<div className="flex rounded-sm border border-medium p-0.5">
-					{(['note', 'data', 'warning', 'pullquote', 'bio'] as ArticleCalloutTone[]).map((value) => {
+					{(['note', 'data', 'warning', 'pullquote', 'bio'] as Array<ArticleCalloutTone>).map((value) => {
 						const active = value === tone
 						return (
 							<button

@@ -63,7 +63,7 @@ export interface AdaptedLlamaAICartesianChart {
 	hasHallmarks: boolean
 	groupingPolicy: 'always' | 'never'
 	defaultExportKind: 'cartesian'
-	seriesMeta: LlamaAICartesianSeriesMeta[]
+	seriesMeta: Array<LlamaAICartesianSeriesMeta>
 }
 
 const MONTH_NAME_TO_INDEX = {
@@ -195,7 +195,7 @@ function inferTimeSeriesAxis(
 		}
 	}
 
-	const rawValues: string[] = []
+	const rawValues: Array<string> = []
 	let hasNonStringValue = false
 	for (const row of rawData) {
 		if (!isChartDataRow(row)) continue
@@ -292,7 +292,7 @@ const getNumericTooltipValueFromParams = (
 
 export const createCategoryTooltipFormatter = (
 	valueSymbol: string,
-	charts: LlamaAICartesianSeriesConfig[] = []
+	charts: Array<LlamaAICartesianSeriesConfig> = []
 ): ((params: unknown) => string) => {
 	const symbolBySeries = new Map<string, string>()
 	const valueIndexBySeries = new Map<string, number>()
@@ -302,7 +302,7 @@ export const createCategoryTooltipFormatter = (
 	}
 
 	return (params: unknown) => {
-		const items: Record<string, unknown>[] = []
+		const items: Array<Record<string, unknown>> = []
 		for (const item of Array.isArray(params) ? params : [params]) {
 			if (isChartDataRow(item)) items.push(item)
 		}
@@ -361,8 +361,8 @@ export function adaptCartesianChartData(
 
 		const rowsByX = new Map<string | number, LlamaAICartesianDatasetRow>()
 		const categoryOrderKey = new Map<string | number, number>()
-		const charts: LlamaAICartesianSeriesConfig[] = []
-		const seriesMeta: LlamaAICartesianSeriesMeta[] = []
+		const charts: Array<LlamaAICartesianSeriesConfig> = []
+		const seriesMeta: Array<LlamaAICartesianSeriesMeta> = []
 		const runtimeSeries: Array<{
 			baseType: 'line' | 'area' | 'bar'
 			xField: string
@@ -470,7 +470,7 @@ export function adaptCartesianChartData(
 						return aOrder - bOrder
 					})
 				: []
-		const datasetSource: LlamaAICartesianDatasetRow[] = []
+		const datasetSource: Array<LlamaAICartesianDatasetRow> = []
 		if (axisType === 'time') {
 			const entries = Array.from(rowsByX.entries()).sort(([a], [b]) => Number(a) - Number(b))
 			for (const [, row] of entries) datasetSource.push(row)
@@ -501,7 +501,7 @@ export function adaptCartesianChartData(
 				...(crowded ? { axisLabel: { interval: 0, rotate: 35, hideOverlap: false } } : {})
 			}
 			if (crowded) {
-				chartOptions.grid = { ...(chartOptions.grid ?? {}), bottom: Math.min(44 + maxLabelLength * 3, 120) }
+				chartOptions.grid = { ...chartOptions.grid, bottom: Math.min(44 + maxLabelLength * 3, 120) }
 			}
 			chartOptions.tooltip = {
 				formatter: createCategoryTooltipFormatter(config.valueSymbol ?? '', charts)
@@ -509,7 +509,7 @@ export function adaptCartesianChartData(
 		}
 
 		const primaryAxisSymbol = config.axes.yAxes?.[0]?.valueSymbol ?? config.valueSymbol ?? ''
-		if (config.axes.yAxes.length) {
+		if (config.axes.yAxes.length > 0) {
 			chartOptions.yAxis = config.axes.yAxes.map((axis) => {
 				const valueSymbol = axis.valueSymbol ?? config.valueSymbol ?? ''
 
@@ -531,7 +531,7 @@ export function adaptCartesianChartData(
 			}
 		}
 
-		let categoryLogos: string[] | undefined
+		let categoryLogos: Array<string> | undefined
 		if (axisType === 'category') {
 			// matched by lowercased category value, not index — categoryOrder is de-duplicated while backend
 			// logo data is per-row, so index matching attaches logos to the wrong categories.

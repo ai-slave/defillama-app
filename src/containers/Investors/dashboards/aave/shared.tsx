@@ -18,7 +18,7 @@ export function InvestorsTable<T extends RowData>({
 	overrideRows
 }: {
 	instance: Table<T>
-	overrideRows?: import('@tanstack/react-table').Row<T>[]
+	overrideRows?: Array<import('@tanstack/react-table').Row<T>>
 }) {
 	const columns = instance.getVisibleLeafColumns()
 	const gridTemplateColumns = columns.map((col) => `${col.getSize() ?? 100}fr`).join(' ')
@@ -147,7 +147,7 @@ export function WindowToggle({
 	value,
 	onChange
 }: {
-	options: { value: string; label: string }[]
+	options: Array<{ value: string; label: string }>
 	value: string
 	onChange: (v: string) => void
 }) {

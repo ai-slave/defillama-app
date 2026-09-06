@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { EmissionEvent } from '../api.types'
 import {
 	buildUpcomingUnlockChart,
@@ -30,7 +30,7 @@ function linear(timestamp: number, previousRate: number, newRate: number, rateDu
 	}
 }
 
-const protocols: UpcomingUnlockChartProtocol[] = [
+const protocols: Array<UpcomingUnlockChartProtocol> = [
 	{
 		name: 'Zeta',
 		tPrice: 2,
@@ -46,7 +46,7 @@ const protocols: UpcomingUnlockChartProtocol[] = [
 describe('buildUpcomingUnlockChart', () => {
 	const series = buildUpcomingUnlockSeries(protocols, day(1), day(10))
 
-	it('compacts one-time cliffs', () => {
+	test('compacts one-time cliffs', () => {
 		expect(series).toEqual([
 			{
 				name: 'Zeta',
@@ -61,7 +61,7 @@ describe('buildUpcomingUnlockChart', () => {
 		])
 	})
 
-	it('spreads the new weekly rate across active days and adds same-day cliffs', () => {
+	test('spreads the new weekly rate across active days and adds same-day cliffs', () => {
 		const result = buildUpcomingUnlockSeries(
 			[
 				{
@@ -86,7 +86,7 @@ describe('buildUpcomingUnlockChart', () => {
 		])
 	})
 
-	it('prorates partial days and stops at the declared linear duration', () => {
+	test('prorates partial days and stops at the declared linear duration', () => {
 		const result = buildUpcomingUnlockSeries(
 			[
 				{
@@ -111,7 +111,7 @@ describe('buildUpcomingUnlockChart', () => {
 		])
 	})
 
-	it('keeps adjacent linear intervals separate without double-counting their boundary', () => {
+	test('keeps adjacent linear intervals separate without double-counting their boundary', () => {
 		const result = buildUpcomingUnlockSeries(
 			[
 				{
@@ -136,7 +136,7 @@ describe('buildUpcomingUnlockChart', () => {
 		])
 	})
 
-	it('includes the remaining current day while keeping the exact start and end bounds', () => {
+	test('includes the remaining current day while keeping the exact start and end bounds', () => {
 		const startTimestampSec = day(1) + 60 * 60
 		const bounded = buildUpcomingUnlockSeries(
 			[
@@ -171,7 +171,7 @@ describe('buildUpcomingUnlockChart', () => {
 		])
 	})
 
-	it('prorates both partial boundary days of the chart interval', () => {
+	test('prorates both partial boundary days of the chart interval', () => {
 		const result = buildUpcomingUnlockSeries(
 			[{ name: 'Boundaries', tPrice: 7, events: [linear(day(1), 0, 7, 10)] }],
 			day(1) + 12 * 60 * 60,
@@ -190,7 +190,7 @@ describe('buildUpcomingUnlockChart', () => {
 		])
 	})
 
-	it('builds one unstacked total series and sums values by period', () => {
+	test('builds one unstacked total series and sums values by period', () => {
 		const result = buildUpcomingUnlockChart({
 			series,
 			groupBy: 'weekly',
@@ -212,7 +212,7 @@ describe('buildUpcomingUnlockChart', () => {
 		])
 	})
 
-	it('builds alphabetized stacked protocol series without total data', () => {
+	test('builds alphabetized stacked protocol series without total data', () => {
 		const result = buildUpcomingUnlockChart({
 			series,
 			groupBy: 'daily',
@@ -231,7 +231,7 @@ describe('buildUpcomingUnlockChart', () => {
 		])
 	})
 
-	it('filters total and protocol views by unlock type', () => {
+	test('filters total and protocol views by unlock type', () => {
 		const typedSeries = buildUpcomingUnlockSeries(
 			[
 				{
@@ -267,7 +267,7 @@ describe('buildUpcomingUnlockChart', () => {
 })
 
 describe('calculateUpcomingUnlockStatistics', () => {
-	it('combines cliffs with linear flow already active at the start of each window', () => {
+	test('combines cliffs with linear flow already active at the start of each window', () => {
 		const nowTimestampSec = day(2)
 		const result = calculateUpcomingUnlockStatistics(
 			[
@@ -298,9 +298,9 @@ describe('calculateUpcomingUnlockStatistics', () => {
 		})
 	})
 
-	it('matches the chart total across the same exact rolling interval', () => {
+	test('matches the chart total across the same exact rolling interval', () => {
 		const nowTimestampSec = day(1) + 6 * 60 * 60
-		const data: UpcomingUnlockChartProtocol[] = [
+		const data: Array<UpcomingUnlockChartProtocol> = [
 			{
 				name: 'Boundaries',
 				tPrice: 7,

@@ -11,11 +11,11 @@ export type SlashCommandItem = {
 	description: string
 	icon: string
 	group: string
-	keywords?: string[]
+	keywords?: Array<string>
 	action: (editor: Editor, range: Range) => void
 }
 
-const ALL_ITEMS: SlashCommandItem[] = [
+const ALL_ITEMS: Array<SlashCommandItem> = [
 	{
 		id: 'h2',
 		title: 'Heading 2',
@@ -258,7 +258,7 @@ const ALL_ITEMS: SlashCommandItem[] = [
 		action: (editor, range) => {
 			const text = editor.state.doc.textBetween(0, editor.state.doc.content.size, '\n')
 			const existing = (text.match(/\[(\d+)\]/g) ?? []).map((m) => Number(m.slice(1, -1)))
-			const next = existing.length ? Math.max(...existing) + 1 : 1
+			const next = existing.length > 0 ? Math.max(...existing) + 1 : 1
 			editor
 				.chain()
 				.focus()
@@ -269,7 +269,7 @@ const ALL_ITEMS: SlashCommandItem[] = [
 	}
 ]
 
-function filterItems(query: string): SlashCommandItem[] {
+function filterItems(query: string): Array<SlashCommandItem> {
 	const q = query.trim()
 	if (!q) return ALL_ITEMS
 	return matchSorter(ALL_ITEMS, q, {
@@ -281,8 +281,8 @@ function filterItems(query: string): SlashCommandItem[] {
 const SLASH_KEY = new PluginKey('articleSlashCommand')
 
 type FloatingHost = {
-	mount: (props: SuggestionProps<SlashCommandItem, SlashCommandItem>, items: SlashCommandItem[]) => void
-	updateProps: (props: SuggestionProps<SlashCommandItem, SlashCommandItem>, items: SlashCommandItem[]) => void
+	mount: (props: SuggestionProps<SlashCommandItem, SlashCommandItem>, items: Array<SlashCommandItem>) => void
+	updateProps: (props: SuggestionProps<SlashCommandItem, SlashCommandItem>, items: Array<SlashCommandItem>) => void
 	keyDown: (props: SuggestionKeyDownProps) => boolean
 	destroy: () => void
 }

@@ -6,7 +6,7 @@ type TokenPageSectionNavItem = {
 	label: string
 }
 
-export function TokenPageSectionNav({ sections }: { sections: TokenPageSectionNavItem[] }) {
+export function TokenPageSectionNav({ sections }: { sections: Array<TokenPageSectionNavItem> }) {
 	const [activeSectionId, setActiveSectionId] = useState(sections[0]?.id ?? '')
 	const observerEntries = useRef(new Map<string, IntersectionObserverEntry>())
 	const navRef = useRef<HTMLElement | null>(null)

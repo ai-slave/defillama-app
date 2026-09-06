@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type {
 	StablecoinChartResponse,
 	StablecoinListAsset,
@@ -47,7 +47,7 @@ function build(chainData: StablecoinChartResponse) {
 }
 
 describe('buildStablecoinsChartCacheValue', () => {
-	it('maps chart-response double-count IDs to asset indexes', () => {
+	test('maps chart-response double-count IDs to asset indexes', () => {
 		const result = build(chartData)
 
 		expect(result.doublecountedIds).toEqual([0])
@@ -55,7 +55,7 @@ describe('buildStablecoinsChartCacheValue', () => {
 		expect(result.pieAssets).toEqual([{ symbol: 'ONE', mcap: 10, aggregateIncluded: false }])
 	})
 
-	it('keeps producer-supplied histories compact without extending stale series', () => {
+	test('keeps producer-supplied histories compact without extending stale series', () => {
 		const currentAsset: StablecoinListAsset = {
 			...baseAsset,
 			id: 'asset-2',
@@ -91,12 +91,12 @@ describe('buildStablecoinsChartCacheValue', () => {
 				selectedChain: 'All'
 			}).dataset.source
 		).toEqual([
-			[1_000, 30],
+			[1000, 30],
 			[86_401_000, 30]
 		])
 	})
 
-	it('keeps ended history but removes it from current snapshots while preserving active zero', () => {
+	test('keeps ended history but removes it from current snapshots while preserving active zero', () => {
 		const endedAsset = { ...baseAsset, deadFrom: '2026-01-01' }
 		const zeroAsset: StablecoinListAsset = {
 			...baseAsset,
@@ -137,7 +137,7 @@ describe('buildStablecoinsChartCacheValue', () => {
 		expect(rows.map((row) => row.mcap)).toEqual([null, 0])
 	})
 
-	it('constructs table rows from a shared baseline without changing values', () => {
+	test('constructs table rows from a shared baseline without changing values', () => {
 		const rows = buildStablecoinsTableData({
 			baseline: { peggedData, priceData: [], rateData: [], peggedConfig },
 			chainData: chartData,
@@ -157,7 +157,7 @@ describe('buildStablecoinsChartCacheValue', () => {
 		})
 	})
 
-	it('keeps unavailable price and change metrics null instead of inventing $1 and 0%', () => {
+	test('keeps unavailable price and change metrics null instead of inventing $1 and 0%', () => {
 		const unknownMetrics = {
 			...baseAsset,
 			price: null,
@@ -179,7 +179,7 @@ describe('buildStablecoinsChartCacheValue', () => {
 		expect(rows[0]).toMatchObject({ price: null, change_1d: null, change_7d: null, change_1m: null })
 	})
 
-	it('keeps duplicate display names tied to their stable asset IDs', () => {
+	test('keeps duplicate display names tied to their stable asset IDs', () => {
 		const duplicatePeggedData: StablecoinsListResponse = {
 			...peggedData,
 			peggedAssets: [
@@ -229,6 +229,6 @@ describe('buildStablecoinsChartCacheValue', () => {
 				issuanceType: 'mcap',
 				selectedChain: 'All'
 			}).dataset.source
-		).toEqual([[1_000, 125]])
+		).toEqual([[1000, 125]])
 	})
 })

@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { normalizeLocalArticleDocument } from '../document'
 import { extractQAPairs } from '../extractors'
 
 const now = '2026-05-01T10:00:00.000Z'
 
 describe('local article documents', () => {
-	it('normalizes metadata and extracts article primitives', () => {
+	test('normalizes metadata and extracts article primitives', () => {
 		const result = normalizeLocalArticleDocument(
 			{
 				title: 'Aave fees after the exploit',
@@ -66,7 +66,7 @@ describe('local article documents', () => {
 		expect(result.value.citations).toEqual([{ id: '1', label: '1', url: 'https://example.com/source' }])
 	})
 
-	it('rejects dashboard embed nodes', () => {
+	test('rejects dashboard embed nodes', () => {
 		const result = normalizeLocalArticleDocument({
 			title: 'Dashboard embed',
 			contentJson: {
@@ -78,7 +78,7 @@ describe('local article documents', () => {
 		expect(result.ok).toBe(false)
 	})
 
-	it('normalizes interviewees and strips empty entries', () => {
+	test('normalizes interviewees and strips empty entries', () => {
 		const result = normalizeLocalArticleDocument(
 			{
 				title: 'An interview',
@@ -103,7 +103,7 @@ describe('local article documents', () => {
 		])
 	})
 
-	it('extracts Q&A pairs from content', () => {
+	test('extracts Q&A pairs from content', () => {
 		const pairs = extractQAPairs({
 			type: 'doc',
 			content: [
@@ -136,7 +136,7 @@ describe('local article documents', () => {
 		expect(pairs).toEqual([{ question: 'What changed?', answer: 'A lot. In particular fees.' }])
 	})
 
-	it('flattens nested Q&A blocks while normalizing article content', () => {
+	test('flattens nested Q&A blocks while normalizing article content', () => {
 		const result = normalizeLocalArticleDocument({
 			title: 'Nested interview',
 			contentJson: {
@@ -195,7 +195,7 @@ describe('local article documents', () => {
 		])
 	})
 
-	it('preserves existing createdAt while updating updatedAt', () => {
+	test('preserves existing createdAt while updating updatedAt', () => {
 		const result = normalizeLocalArticleDocument(
 			{
 				title: 'Draft',

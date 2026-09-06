@@ -6,7 +6,7 @@ import { formatIsoDate } from '~/utils/dateFormat'
 import { formatPercent } from '~/utils/numberFormat'
 
 export interface ChartExportModel {
-	csvRows: CsvCell[][]
+	csvRows: Array<Array<CsvCell>>
 	csvFilename: string
 	pngProfile: PngExportProfile
 }
@@ -45,7 +45,7 @@ function buildCartesianCsvRows(
 	const seriesKeys = dims.filter((dim) => dim !== xKey)
 
 	if (adaptedChart.isTimeChart) {
-		const csvRows: CsvCell[][] = [['Timestamp', 'Date', ...seriesKeys]]
+		const csvRows: Array<Array<CsvCell>> = [['Timestamp', 'Date', ...seriesKeys]]
 		for (const row of rows) {
 			const timestamp = row[0]
 			const seconds = normalizeTimestampToSeconds(timestamp)
@@ -59,7 +59,7 @@ function buildCartesianCsvRows(
 	}
 
 	const categoryHeader = config.axes.x.label || 'Category'
-	const csvRows: CsvCell[][] = [[categoryHeader, ...seriesKeys]]
+	const csvRows: Array<Array<CsvCell>> = [[categoryHeader, ...seriesKeys]]
 	for (const row of rows) {
 		csvRows.push([toCsvCell(row[0]), ...seriesKeys.map((_, index) => toCsvCell(row[index + 1]))])
 	}
@@ -79,7 +79,7 @@ export function buildExportModel(config: ChartConfiguration, adaptedChart: Adapt
 		case 'pie': {
 			const pieData = adaptedChart.props.chartData ?? []
 			const total = pieData.reduce((sum, item) => sum + item.value, 0)
-			const csvRows: CsvCell[][] = [['Name', 'Value', 'Percentage']]
+			const csvRows: Array<Array<CsvCell>> = [['Name', 'Value', 'Percentage']]
 			for (const item of pieData) {
 				csvRows.push([item.name, item.value, formatChartPercent(item.value, total)])
 			}
@@ -90,7 +90,7 @@ export function buildExportModel(config: ChartConfiguration, adaptedChart: Adapt
 			}
 		}
 		case 'scatter': {
-			const csvRows: CsvCell[][] = [
+			const csvRows: Array<Array<CsvCell>> = [
 				[adaptedChart.props.xAxisLabel || 'X', adaptedChart.props.yAxisLabel || 'Y', 'Entity']
 			]
 			for (const point of adaptedChart.props.chartData ?? []) {
@@ -105,7 +105,7 @@ export function buildExportModel(config: ChartConfiguration, adaptedChart: Adapt
 		}
 		case 'hbar': {
 			const groupedSeries = adaptedChart.props.series
-			const csvRows: CsvCell[][] = []
+			const csvRows: Array<Array<CsvCell>> = []
 			if (groupedSeries) {
 				csvRows.push(['Category', ...groupedSeries.map((series) => series.name)])
 				for (const [index, [category]] of adaptedChart.data.entries()) {

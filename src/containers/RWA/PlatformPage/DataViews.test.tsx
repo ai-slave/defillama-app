@@ -10,13 +10,13 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { RWAPlatformMeta } from './api.types'
 import type { RWAPlatformPageData } from './types'
 
 const mocks = vi.hoisted(() => ({
 	push: vi.fn(),
-	query: {} as Record<string, string | string[] | undefined>,
+	query: {} as Record<string, string | Array<string> | undefined>,
 	peerRankingMounted: vi.fn(),
 	assetsTableMounted: vi.fn()
 }))
@@ -52,7 +52,7 @@ const meta = {
 	slug: 'ondo',
 	description: PROFILE_COPY,
 	logo: null,
-	onchainAum: 1_000,
+	onchainAum: 1000,
 	issuer: 'Ondo Finance Inc.',
 	foundersParsed: [],
 	milestones: [],
@@ -116,7 +116,7 @@ describe('RWA platform data views', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('mounts the peer ranking only once the peers view is requested', async () => {
+	test('mounts the peer ranking only once the peers view is requested', async () => {
 		await render()
 
 		expect(mocks.assetsTableMounted).toHaveBeenCalled()
@@ -128,7 +128,7 @@ describe('RWA platform data views', () => {
 		expect(mocks.peerRankingMounted).toHaveBeenCalled()
 	})
 
-	it('keeps the profile copy in the document while another view is showing', async () => {
+	test('keeps the profile copy in the document while another view is showing', async () => {
 		await render()
 		expect(container.textContent).toContain(PROFILE_COPY)
 
@@ -137,7 +137,7 @@ describe('RWA platform data views', () => {
 		expect(container.textContent).toContain(PROFILE_COPY)
 	})
 
-	it('uses a referral link for Website when available instead of showing it as a reference', async () => {
+	test('uses a referral link for Website when available instead of showing it as a reference', async () => {
 		await render({
 			...data,
 			meta: {
@@ -152,7 +152,7 @@ describe('RWA platform data views', () => {
 		expect(container.textContent).not.toContain('Reference')
 	})
 
-	it('keeps the official Website link when no referral is available', async () => {
+	test('keeps the official Website link when no referral is available', async () => {
 		await render({
 			...data,
 			meta: { ...meta, website: ['https://official.example'], refLinks: null } as RWAPlatformMeta
@@ -162,7 +162,7 @@ describe('RWA platform data views', () => {
 		expect(website?.getAttribute('href')).toBe('https://official.example')
 	})
 
-	it('hides Llama Grade attestation without hiding other attestation details', async () => {
+	test('hides Llama Grade attestation without hiding other attestation details', async () => {
 		await render({
 			...data,
 			meta: {
@@ -177,7 +177,7 @@ describe('RWA platform data views', () => {
 		expect(container.textContent).not.toContain('Llama-grade attestation')
 	})
 
-	it('does not show an empty attestation group for Llama Grade alone', async () => {
+	test('does not show an empty attestation group for Llama Grade alone', async () => {
 		await render({
 			...data,
 			meta: { ...meta, llamaGradeAttestation: true } as RWAPlatformMeta
@@ -186,7 +186,7 @@ describe('RWA platform data views', () => {
 		expect(container.textContent).not.toContain('Attestations & milestones')
 	})
 
-	it('expands the information disclosures by default', async () => {
+	test('expands the information disclosures by default', async () => {
 		await render({
 			...data,
 			meta: {
@@ -201,7 +201,7 @@ describe('RWA platform data views', () => {
 		expect(disclosures.every((disclosure) => disclosure.open)).toBe(true)
 	})
 
-	it('publishes the selected view through ?view= and clears it for the default view', async () => {
+	test('publishes the selected view through ?view= and clears it for the default view', async () => {
 		await render()
 		await selectView('Information')
 		expect(mocks.push.mock.calls[0]?.[0]?.query).toMatchObject({ view: 'information' })
@@ -212,14 +212,14 @@ describe('RWA platform data views', () => {
 		expect(mocks.push.mock.calls[1]?.[0]?.query).not.toHaveProperty('view')
 	})
 
-	it('falls back to the assets view when the requested mix has no rows', async () => {
+	test('falls back to the assets view when the requested mix has no rows', async () => {
 		mocks.query = { view: 'mix' }
 		await render({ ...data, categoryMix: [] })
 
 		expect(mocks.assetsTableMounted).toHaveBeenCalled()
 	})
 
-	it('resolves unknown view names to the default view', () => {
+	test('resolves unknown view names to the default view', () => {
 		expect(parseRWAPlatformDataView(undefined)).toBe('assets')
 		expect(parseRWAPlatformDataView('nope')).toBe('assets')
 		expect(parseRWAPlatformDataView('peers')).toBe('peers')

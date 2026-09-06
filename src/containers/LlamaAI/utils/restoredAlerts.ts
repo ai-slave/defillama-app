@@ -20,8 +20,8 @@ export type PersistedAlertIntent = {
 export type RestoredAlertMetadata = {
 	alertIntent?: PersistedAlertIntent
 	savedAlertId?: string
-	savedAlertIds?: string[]
-	saveableAlertIds?: string[]
+	savedAlertIds?: Array<string>
+	saveableAlertIds?: Array<string>
 	deliveryChannel?: 'email' | 'telegram' | 'slack'
 }
 
@@ -37,7 +37,7 @@ function normalizeDeliveryChannel(value: unknown): 'email' | 'telegram' | 'slack
 	return value === 'email' || value === 'telegram' || value === 'slack' ? value : undefined
 }
 
-function getStringValue(...values: unknown[]): string | null {
+function getStringValue(...values: Array<unknown>): string | null {
 	for (const value of values) {
 		if (typeof value === 'string') return value
 	}
@@ -144,8 +144,8 @@ export function buildRestoredAlerts({
 	content?: string
 	messageId?: string
 	metadata?: RestoredAlertMetadata
-	savedAlertIds?: string[]
-}): AlertProposedData[] | undefined {
+	savedAlertIds?: Array<string>
+}): Array<AlertProposedData> | undefined {
 	if (!metadata?.alertIntent) return undefined
 	const persistedAlertId =
 		getFirstAlertMarkerId(content) ||

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'node:events'
 import type { NextApiRequest } from 'next'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 const httpRequestMock = vi.hoisted(() => vi.fn())
 
@@ -37,7 +37,7 @@ function request(overrides: Partial<NextApiRequest> = {}): NextApiRequest {
 }
 
 describe('revalidate instance helpers', () => {
-	it('normalizes any root-relative path and rejects absolute/protocol-relative urls', () => {
+	test('normalizes any root-relative path and rejects absolute/protocol-relative urls', () => {
 		expect(
 			normalizeCachePaths([
 				'/research',
@@ -51,7 +51,7 @@ describe('revalidate instance helpers', () => {
 		).toEqual(['/research', '/protocol/aave', '/pro/123'])
 	})
 
-	it('parses, trims, and dedupes the instance list', () => {
+	test('parses, trims, and dedupes the instance list', () => {
 		expect(
 			revalidateInstancesFromEnv({
 				...process.env,
@@ -61,7 +61,7 @@ describe('revalidate instance helpers', () => {
 		).toEqual(['https://a.internal', 'https://b.internal'])
 	})
 
-	it('is disabled without a secret', async () => {
+	test('is disabled without a secret', async () => {
 		const fetchImpl = vi.fn()
 		const result = await fanoutRevalidate(['/research'], {
 			env: { ...process.env, REVALIDATE_HOST_HEADER: '', REVALIDATE_INSTANCES: 'https://a.internal' },
@@ -72,7 +72,7 @@ describe('revalidate instance helpers', () => {
 		expect(fetchImpl).not.toHaveBeenCalled()
 	})
 
-	it('is disabled without configured instances', async () => {
+	test('is disabled without configured instances', async () => {
 		const fetchImpl = vi.fn()
 		const result = await fanoutRevalidate(['/research'], {
 			env: { ...process.env, REVALIDATE_HOST_HEADER: '', REVALIDATE_SECRET: 'shhh' },
@@ -83,7 +83,7 @@ describe('revalidate instance helpers', () => {
 		expect(fetchImpl).not.toHaveBeenCalled()
 	})
 
-	it('posts the secret header and paths to every instance worker endpoint', async () => {
+	test('posts the secret header and paths to every instance worker endpoint', async () => {
 		const fetchImpl = vi
 			.fn()
 			.mockImplementation(
@@ -111,7 +111,7 @@ describe('revalidate instance helpers', () => {
 		expect(fetchImpl.mock.calls[1][0]).toBe('https://b.internal/api/private/revalidate-instances')
 	})
 
-	it('can check fanout readiness without asking peers to revalidate', async () => {
+	test('can check fanout readiness without asking peers to revalidate', async () => {
 		const fetchImpl = vi.fn().mockResolvedValue(new Response(JSON.stringify({ revalidated: [], revalidateErrors: [] })))
 
 		const result = await checkRevalidateFanoutReady(['/research'], {
@@ -126,7 +126,7 @@ describe('revalidate instance helpers', () => {
 		expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual({ dryRun: true, paths: ['/research'] })
 	})
 
-	it('sends the configured host header for IP-targeted Coolify instances', async () => {
+	test('sends the configured host header for IP-targeted Coolify instances', async () => {
 		let requestBody = ''
 		httpRequestMock.mockImplementation((_url, _options, callback) => {
 			const req = new EventEmitter() as EventEmitter & {
@@ -169,7 +169,7 @@ describe('revalidate instance helpers', () => {
 		expect(JSON.parse(requestBody)).toEqual({ paths: ['/research'] })
 	})
 
-	it('marks an invalid peer response as failed', async () => {
+	test('marks an invalid peer response as failed', async () => {
 		const fetchImpl = vi.fn().mockResolvedValue(new Response('not json', { status: 200 }))
 
 		const result = await fanoutRevalidate(['/research'], {
@@ -183,7 +183,7 @@ describe('revalidate instance helpers', () => {
 		])
 	})
 
-	it('marks a failing instance as failed without rejecting the others', async () => {
+	test('marks a failing instance as failed without rejecting the others', async () => {
 		const fetchImpl = vi
 			.fn()
 			.mockResolvedValueOnce(new Response('boom', { status: 500, statusText: 'Internal Server Error' }))
@@ -209,7 +209,7 @@ describe('revalidate instance helpers', () => {
 		)
 	})
 
-	it('marks a thrown/aborted instance as failed', async () => {
+	test('marks a thrown/aborted instance as failed', async () => {
 		const fetchImpl = vi
 			.fn()
 			.mockRejectedValueOnce(new Error('aborted'))
@@ -227,7 +227,7 @@ describe('revalidate instance helpers', () => {
 		expect(result.instances[1].status).toBe('revalidated')
 	})
 
-	it('requires configuration when strict fanout is enabled', () => {
+	test('requires configuration when strict fanout is enabled', () => {
 		expect(() =>
 			assertRevalidateFanoutSucceeded({ instances: [], status: 'disabled' }, ['/research'], { requireConfigured: true })
 		).toThrow('Cross-instance revalidation is not configured')
@@ -238,7 +238,7 @@ describe('revalidate instance helpers', () => {
 })
 
 describe('/api/private/revalidate-instances', () => {
-	it('authenticates dry-run requests without revalidating paths', async () => {
+	test('authenticates dry-run requests without revalidating paths', async () => {
 		vi.stubEnv('REVALIDATE_SECRET', 'shhh')
 		const res = createMockNextApiResponse()
 
@@ -250,7 +250,7 @@ describe('/api/private/revalidate-instances', () => {
 		vi.unstubAllEnvs()
 	})
 
-	it('returns 500 when any path revalidation fails', async () => {
+	test('returns 500 when any path revalidation fails', async () => {
 		vi.stubEnv('REVALIDATE_SECRET', 'shhh')
 		const res = createMockNextApiResponse()
 		res.revalidate.mockRejectedValueOnce(new Error('missing page'))

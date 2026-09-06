@@ -44,7 +44,7 @@ interface TokenRightsListItem {
 	logo: string
 	href: string | null
 	deprecated?: boolean
-	tokens: string[]
+	tokens: Array<string>
 	holdersRevenue24h: number | null
 	governanceRights: [boolean, boolean, boolean]
 	economicRights: [boolean, boolean, boolean]
@@ -130,15 +130,15 @@ export const getStaticProps = withPerformanceLogging('token-rights', async () =>
 		chainMetadata: Record<string, IChainMetadata>
 		protocolMetadata: Record<string, IProtocolMetadata>
 		tokenDirectory: TokenDirectory
-		cexs: ICexItem[]
+		cexs: Array<ICexItem>
 	}
 	const holdersRevenueAvailable = holdersRevenueResult.status === 'available'
 	const holdersRevenueByDefillamaId = holdersRevenueAvailable
 		? buildHoldersRevenueByDefillamaId(holdersRevenueResult.data.protocols)
 		: {}
 
-	const protocols: TokenRightsListItem[] = []
-	const skippedEntries: SkippedTokenRightsEntry[] = []
+	const protocols: Array<TokenRightsListItem> = []
+	const skippedEntries: Array<SkippedTokenRightsEntry> = []
 
 	for (const entry of entries) {
 		const resolved = resolveTokenRightsListItem(entry, {
@@ -182,7 +182,7 @@ function resolveTokenRightsListItem(
 		chainMetadata: Record<string, IChainMetadata>
 		protocolMetadata: Record<string, IProtocolMetadata>
 		tokenDirectory: TokenDirectory
-		cexs: ICexItem[]
+		cexs: Array<ICexItem>
 		holdersRevenueByDefillamaId: Record<string, number>
 	}
 ): TokenRightsLinkResolution {
@@ -350,7 +350,7 @@ function isInactiveValue(value: string): boolean {
 	)
 }
 
-function hasActiveTokens(tokens: string[] | undefined | null): boolean {
+function hasActiveTokens(tokens: Array<string> | undefined | null): boolean {
 	if (!tokens || tokens.length === 0) return false
 
 	for (const token of tokens) {
@@ -375,7 +375,7 @@ function findTokenRightsMetadata(
 	name: string,
 	chainMetadata: Record<string, IChainMetadata>,
 	protocolMetadata: Record<string, IProtocolMetadata>,
-	cexs: ICexItem[]
+	cexs: Array<ICexItem>
 ): TokenRightsMetadataMatch | null {
 	const chain = chainMetadata[defillamaId]
 	if (chain) return { source: 'chain', metadata: chain }
@@ -410,7 +410,7 @@ function getMetadataDisplayName(metadataMatch: TokenRightsMetadataMatch): string
 	return metadataMatch.metadata.name ?? null
 }
 
-function reportSkippedTokenRightsEntries(skippedEntries: SkippedTokenRightsEntry[]): void {
+function reportSkippedTokenRightsEntries(skippedEntries: Array<SkippedTokenRightsEntry>): void {
 	if (skippedEntries.length === 0) return
 
 	recordDomainEvent(
@@ -426,7 +426,7 @@ function reportSkippedTokenRightsEntries(skippedEntries: SkippedTokenRightsEntry
 	)
 }
 
-function countSkippedTokenRightsReasons(skippedEntries: SkippedTokenRightsEntry[]): Record<string, number> {
+function countSkippedTokenRightsReasons(skippedEntries: Array<SkippedTokenRightsEntry>): Record<string, number> {
 	const counts: Record<string, number> = {}
 	for (const entry of skippedEntries) {
 		counts[entry.reason] = (counts[entry.reason] ?? 0) + 1
@@ -438,10 +438,10 @@ function TokenRightsPage({
 	protocols,
 	holdersRevenueAvailable
 }: {
-	protocols: TokenRightsListItem[]
+	protocols: Array<TokenRightsListItem>
 	holdersRevenueAvailable: boolean
 }) {
-	const [activeFilters, setActiveFilters] = useState<TokenRightsFilter[]>([])
+	const [activeFilters, setActiveFilters] = useState<Array<TokenRightsFilter>>([])
 	const [searchValue, setSearchValue] = useState('')
 	const [sorting, setSorting] = useState<SortingState>(holdersRevenueAvailable ? DEFAULT_TOKEN_RIGHTS_SORTING : [])
 	const deferredSearchValue = useDeferredValue(searchValue)
@@ -550,10 +550,10 @@ function TokenRightsPage({
 }
 
 export function filterTokenRightsRows(
-	protocols: TokenRightsListItem[],
-	activeFilters: TokenRightsFilter[],
+	protocols: Array<TokenRightsListItem>,
+	activeFilters: Array<TokenRightsFilter>,
 	searchValue: string
-): TokenRightsListItem[] {
+): Array<TokenRightsListItem> {
 	const normalizedSearch = searchValue.trim()
 	const source = normalizedSearch
 		? matchSorter(protocols, normalizedSearch, {
@@ -561,7 +561,7 @@ export function filterTokenRightsRows(
 				threshold: matchSorter.rankings.CONTAINS
 			})
 		: protocols
-	const filtered: TokenRightsListItem[] = []
+	const filtered: Array<TokenRightsListItem> = []
 
 	for (const protocol of source) {
 		let matchesFilters = true
@@ -585,7 +585,7 @@ export function filterTokenRightsRows(
 	return filtered
 }
 
-export function getTokenRightsStats(protocols: TokenRightsListItem[]) {
+export function getTokenRightsStats(protocols: Array<TokenRightsListItem>) {
 	let feeSwitchOn = 0
 	let buybacks = 0
 	let dividends = 0
@@ -599,7 +599,7 @@ export function getTokenRightsStats(protocols: TokenRightsListItem[]) {
 	return { feeSwitchOn, buybacks, dividends }
 }
 
-function getLatestUpdatedMonth(protocols: TokenRightsListItem[]): string | null {
+function getLatestUpdatedMonth(protocols: Array<TokenRightsListItem>): string | null {
 	let latestTime = 0
 
 	for (const protocol of protocols) {
@@ -735,7 +735,7 @@ const columns = [
 	})
 ]
 
-function TokenPills({ tokens }: { tokens: string[] }) {
+function TokenPills({ tokens }: { tokens: Array<string> }) {
 	return (
 		<div className="flex flex-wrap gap-1.5">
 			{tokens.map((token) => (

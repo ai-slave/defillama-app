@@ -1,11 +1,11 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { IncludeTokens } from '../Filters/IncludeTokens'
 import type { MatchConfig } from '../Filters/TokenSearchDialog'
 
 interface DialogProps {
-	selectedValues: string[]
+	selectedValues: Array<string>
 	onToggle: (value: string, wasSelected: boolean) => void
 	onClear: () => void
 	match?: MatchConfig
@@ -13,13 +13,13 @@ interface DialogProps {
 
 const mocks = vi.hoisted(() => ({
 	router: {
-		query: {} as Record<string, string | string[] | undefined>
+		query: {} as Record<string, string | Array<string> | undefined>
 	},
 	pushYieldsQuery: vi.fn(),
 	dialogProps: undefined as DialogProps | undefined,
 	state: {
 		cursor: 0,
-		values: [] as unknown[]
+		values: [] as Array<unknown>
 	}
 }))
 
@@ -81,7 +81,7 @@ describe('IncludeTokens match configuration', () => {
 		mocks.state.values = [true]
 	})
 
-	it('keeps dormant settings local and commits both with the first token', () => {
+	test('keeps dormant settings local and commits both with the first token', () => {
 		let dialog = renderFilter()
 
 		dialog.match!.onModeChange('contains')
@@ -100,7 +100,7 @@ describe('IncludeTokens match configuration', () => {
 		})
 	})
 
-	it('updates active settings immediately and clears their URL state with the last token', () => {
+	test('updates active settings immediately and clears their URL state with the last token', () => {
 		mocks.router.query = { token: 'ETH', tokenMatch: 'contains', tokenOn: 'pool' }
 		let dialog = renderFilter()
 

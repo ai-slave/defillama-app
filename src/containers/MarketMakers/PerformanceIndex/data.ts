@@ -13,7 +13,7 @@ export type AggregatedMetrics = {
 }
 
 export type PerformanceIndexProps = {
-	performanceRows: PerformanceRow[]
+	performanceRows: Array<PerformanceRow>
 	aggregated: Record<string, AggregatedMetrics>
 }
 
@@ -70,7 +70,7 @@ function toAggregated(raw: Record<string, unknown>): AggregatedMetrics {
 	}
 }
 
-function asArray(payload: unknown): Record<string, unknown>[] {
+function asArray(payload: unknown): Array<Record<string, unknown>> {
 	if (!Array.isArray(payload)) return []
 	return payload.map((row) => (row && typeof row === 'object' ? (row as Record<string, unknown>) : {}))
 }

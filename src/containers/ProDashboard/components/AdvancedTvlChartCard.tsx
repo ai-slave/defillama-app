@@ -38,7 +38,7 @@ const EMPTY_DATASET: TimestampDataset = {
 	source: [],
 	dimensions: ['timestamp']
 }
-const EMPTY_STACKS: string[] = []
+const EMPTY_STACKS: Array<string> = []
 const EMPTY_BREAKDOWN: ProtocolBreakdownChart = []
 const HIDDEN_EXPORTS = 'hidden' as const
 const selectBasicTvlDataset = (data: IProtocolValueChart | null) => buildTimeSeriesDataset(data ?? [], 'TVL', 1)

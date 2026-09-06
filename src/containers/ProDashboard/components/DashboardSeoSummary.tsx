@@ -69,7 +69,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 					) : null}
 					<p className="mt-2 max-w-3xl text-sm leading-6 text-pro-text-form">{seo.description}</p>
 
-					{seo.tags.length ? (
+					{seo.tags.length > 0 ? (
 						<ul aria-label="Dashboard tags" className="mt-4 flex flex-wrap gap-1.5">
 							{seo.tags.map((tag) => (
 								<li
@@ -107,7 +107,7 @@ export function DashboardSeoSummary({ dashboard, seo }: { dashboard: DashboardSe
 						{formatNumber(seo.itemCount ?? 0)} {seo.itemCount === 1 ? 'item' : 'items'}
 					</p>
 				</div>
-				{visibleSummaries.length ? (
+				{visibleSummaries.length > 0 ? (
 					<ul className="grid gap-x-7 text-sm md:grid-cols-2">
 						{visibleSummaries.map((item, index) => (
 							<li

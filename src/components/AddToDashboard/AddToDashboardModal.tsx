@@ -30,15 +30,15 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
 import type { DashboardChartConfig, LlamaAIChartInput } from './addToDashboardContract'
 
-const EMPTY_DASHBOARDS: LiteDashboardSummary[] = []
-const EMPTY_UNSUPPORTED_METRICS: string[] = []
+const EMPTY_DASHBOARDS: Array<LiteDashboardSummary> = []
+const EMPTY_UNSUPPORTED_METRICS: Array<string> = []
 type AddToDashboardSubmitType = 'new-dashboard' | 'existing-dashboard'
 
 interface AddToDashboardModalProps {
 	dialogStore: Ariakit.DialogStore
 	chartConfig: DashboardChartConfig | null
 	llamaAIChart?: LlamaAIChartInput | null
-	unsupportedMetrics?: string[]
+	unsupportedMetrics?: Array<string>
 }
 
 function getConfigName(config: DashboardChartConfig | null, llamaAIChart?: LlamaAIChartInput | null): string {

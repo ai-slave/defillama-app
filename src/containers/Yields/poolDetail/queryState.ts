@@ -1,7 +1,7 @@
 import { readSingleQueryValue } from '~/utils/routerQuery'
 import type { PoolHistoryRange } from './types'
 
-type QueryValue = string | string[] | undefined
+type QueryValue = string | Array<string> | undefined
 
 export type HolderMode = 'share' | 'balance'
 export type PoolChartKind = 'supply' | 'borrow'

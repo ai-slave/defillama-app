@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import {
 	computedSummaryLabel,
@@ -20,7 +20,7 @@ const panelRef = (over: Partial<UnifiedCitationReference>) =>
 	({ id: 1, label: 'x', ...over }) as UnifiedCitationReference
 
 describe('citationHeadline', () => {
-	it('headlines a search-result set with its query, never the loose value beside the marker', () => {
+	test('headlines a search-result set with its query, never the loose value beside the marker', () => {
 		// `value` is scraped from the prose next to the marker, so for a whole-search citation it is
 		// an unrelated token — it rendered as a giant "$0" above the list of articles.
 		const searchSet = panelRef({
@@ -32,17 +32,17 @@ describe('citationHeadline', () => {
 		expect(citationHeadline(searchSet)).toBe('Web search: EigenLayer slashing adoption')
 	})
 
-	it('still headlines a figure-bearing data citation with the figure', () => {
+	test('still headlines a figure-bearing data citation with the figure', () => {
 		expect(citationHeadline(panelRef({ sourceType: 'data', value: '$328.6M', rows: [{ tvl: 1 }] }))).toBe('$328.6M')
 	})
 
-	it('keeps the value for a web citation bound to one article', () => {
+	test('keeps the value for a web citation bound to one article', () => {
 		expect(citationHeadline(panelRef({ sourceType: 'web', value: '$4.2M', url: 'https://protos.com/a' }))).toBe('$4.2M')
 	})
 })
 
 describe('panelViewFor', () => {
-	it('falls back to the data view for web/x refs that carry sources instead of their own url', () => {
+	test('falls back to the data view for web/x refs that carry sources instead of their own url', () => {
 		// web_search citations that could not be bound to one result row have no url of their own —
 		// their links live in `sources`, which only the data view renders. Routing them to the web
 		// view left the detail panel blank and the sources unreachable.
@@ -54,17 +54,17 @@ describe('panelViewFor', () => {
 		expect(panelViewFor(panelRef({ sourceType: 'x', rows: [{ text: 'gm' }] }))).toBe('data')
 	})
 
-	it('keeps the link view when the ref has its own url', () => {
+	test('keeps the link view when the ref has its own url', () => {
 		expect(panelViewFor(panelRef({ sourceType: 'web', url: 'https://protos.com' }))).toBe('web')
 		expect(panelViewFor(panelRef({ sourceType: 'x', url: 'https://x.com/a/1' }))).toBe('x')
 	})
 
-	it('renders nothing rather than an empty data view when there is no payload at all', () => {
+	test('renders nothing rather than an empty data view when there is no payload at all', () => {
 		expect(panelViewFor(panelRef({ sourceType: 'web' }))).toBe(null)
 		expect(panelViewFor(panelRef({ sourceType: 'unknown' }))).toBe(null)
 	})
 
-	it('passes every other source type straight through', () => {
+	test('passes every other source type straight through', () => {
 		for (const t of ['data', 'computed', 'tool', 'file'] as const) {
 			expect(panelViewFor(panelRef({ sourceType: t }))).toBe(t)
 		}
@@ -72,31 +72,31 @@ describe('panelViewFor', () => {
 })
 
 describe('metricLabel', () => {
-	it('labels ratios and identity metrics', () => {
+	test('labels ratios and identity metrics', () => {
 		expect(metricLabel('pf_ratio')).toBe('P/F ratio (market cap ÷ annualized fees)')
 		expect(metricLabel('mcap')).toBe('market cap')
 		expect(metricLabel('tvl_base')).toBe('total value locked')
 	})
-	it('composes base + time window', () => {
+	test('composes base + time window', () => {
 		expect(metricLabel('fees_30d')).toBe('fees (30 days)')
 		expect(metricLabel('fees_365d')).toBe('fees (1 year)')
 		expect(metricLabel('app_fees_7d')).toBe('app fees (7 days)')
 		expect(metricLabel('volume_derivatives_30d')).toBe('derivatives (perps) volume (30 days)')
 		expect(metricLabel('chain_holder_revenue_30d')).toBe('chain holder revenue (30 days)')
 	})
-	it('handles pct_change as a change label', () => {
+	test('handles pct_change as a change label', () => {
 		expect(metricLabel('tvl_base_30d_pct_change')).toBe('total value locked change (30 days)')
 		expect(metricLabel('mcap_7d_pct_change')).toBe('market cap change (7 days)')
 		expect(metricLabel('tvl_30d_pct')).toBe('total value locked change (30 days)')
 	})
-	it('does not greedy-split multi-word bases', () => {
+	test('does not greedy-split multi-word bases', () => {
 		expect(metricLabel('volume_options_notional')).toBe('options notional volume')
 		expect(metricLabel('fdv_outstanding')).toBe('FDV (outstanding supply)')
 	})
 })
 
 describe('describeFigure', () => {
-	it('names the metric and entity from the cited row', () => {
+	test('names the metric and entity from the cited row', () => {
 		const ref = {
 			id: 1,
 			sourceType: 'data',
@@ -111,7 +111,7 @@ describe('describeFigure', () => {
 		)
 	})
 
-	it('keeps digit-bearing entity names', () => {
+	test('keeps digit-bearing entity names', () => {
 		const ref = {
 			id: 1,
 			sourceType: 'data',
@@ -126,36 +126,36 @@ describe('describeFigure', () => {
 		)
 	})
 
-	it('returns null when there is no field', () => {
+	test('returns null when there is no field', () => {
 		const ref = { id: 1, sourceType: 'computed', label: 'Calculated' } as UnifiedCitationReference
 		expect(describeFigure(ref, null)).toBeNull()
 	})
 })
 
 describe('sanitizeExcerpt', () => {
-	it('returns empty for non-strings', () => {
+	test('returns empty for non-strings', () => {
 		expect(sanitizeExcerpt(undefined)).toBe('')
 		expect(sanitizeExcerpt(null)).toBe('')
 		expect(sanitizeExcerpt(42)).toBe('')
 	})
 
-	it('strips a leading bracketed prefix', () => {
+	test('strips a leading bracketed prefix', () => {
 		expect(sanitizeExcerpt('[posted Jun 3] Aave hit a new high')).toBe('Aave hit a new high')
 	})
 
-	it('strips multiple leading bracket groups', () => {
+	test('strips multiple leading bracket groups', () => {
 		expect(sanitizeExcerpt('[a] [b]   real text')).toBe('real text')
 	})
 
-	it('strips a trailing bare URL', () => {
+	test('strips a trailing bare URL', () => {
 		expect(sanitizeExcerpt('Read more here https://t.co/abc123')).toBe('Read more here')
 	})
 
-	it('collapses whitespace', () => {
+	test('collapses whitespace', () => {
 		expect(sanitizeExcerpt('a\n\n  b\t c')).toBe('a b c')
 	})
 
-	it('clamps to the max length with an ellipsis on a word boundary', () => {
+	test('clamps to the max length with an ellipsis on a word boundary', () => {
 		const long = 'word '.repeat(100).trim()
 		const out = sanitizeExcerpt(long, 20)
 		expect(out.length).toBeLessThanOrEqual(21)
@@ -163,21 +163,21 @@ describe('sanitizeExcerpt', () => {
 		expect(out).not.toContain('  ')
 	})
 
-	it('leaves clean short text untouched', () => {
+	test('leaves clean short text untouched', () => {
 		expect(sanitizeExcerpt('A clean tweet.')).toBe('A clean tweet.')
 	})
 })
 
 describe('domainFromUrl', () => {
-	it('extracts a bare domain and drops www', () => {
+	test('extracts a bare domain and drops www', () => {
 		expect(domainFromUrl('https://www.example.com/path?q=1')).toBe('example.com')
 	})
 
-	it('handles urls without a scheme', () => {
+	test('handles urls without a scheme', () => {
 		expect(domainFromUrl('blog.defillama.com/post')).toBe('blog.defillama.com')
 	})
 
-	it('returns null for empty or non-string input', () => {
+	test('returns null for empty or non-string input', () => {
 		expect(domainFromUrl('')).toBeNull()
 		expect(domainFromUrl(undefined)).toBeNull()
 		expect(domainFromUrl(123)).toBeNull()
@@ -185,77 +185,77 @@ describe('domainFromUrl', () => {
 })
 
 describe('xHandleLabel', () => {
-	it('keeps an existing handle', () => {
+	test('keeps an existing handle', () => {
 		expect(xHandleLabel('@defillama')).toBe('@defillama')
 	})
 
-	it('prefixes a bare handle', () => {
+	test('prefixes a bare handle', () => {
 		expect(xHandleLabel('defillama')).toBe('@defillama')
 	})
 
-	it('normalizes extra leading @', () => {
+	test('normalizes extra leading @', () => {
 		expect(xHandleLabel('@@x')).toBe('@x')
 	})
 
-	it('returns null for empty input', () => {
+	test('returns null for empty input', () => {
 		expect(xHandleLabel('')).toBeNull()
 		expect(xHandleLabel(undefined)).toBeNull()
 	})
 })
 
 describe('friendlyToolName', () => {
-	it('prefers the provided label', () => {
+	test('prefers the provided label', () => {
 		expect(friendlyToolName({ sourceType: 'tool', label: 'Onchain call' } as UnifiedCitationReference)).toBe(
 			'Onchain call'
 		)
 	})
 
-	it('falls back to a humanized tool name', () => {
+	test('falls back to a humanized tool name', () => {
 		expect(
 			friendlyToolName({ sourceType: 'tool', label: '', toolName: 'call_contract' } as UnifiedCitationReference)
 		).toBe('Calling contract')
 	})
 
-	it('falls back to Tool when nothing is available', () => {
+	test('falls back to Tool when nothing is available', () => {
 		expect(friendlyToolName({ sourceType: 'tool', label: '' } as UnifiedCitationReference)).toBe('Tool')
 	})
 })
 
 describe('isPrivacySentinel', () => {
-	it('matches the sentinel', () => {
+	test('matches the sentinel', () => {
 		expect(isPrivacySentinel('[value omitted — sensitive]')).toBe(true)
 		expect(isPrivacySentinel('  [value omitted — sensitive]  ')).toBe(true)
 	})
 
-	it('does not match other text', () => {
+	test('does not match other text', () => {
 		expect(isPrivacySentinel('some value')).toBe(false)
 		expect(isPrivacySentinel(undefined)).toBe(false)
 	})
 })
 
 describe('toolArgRows', () => {
-	it('humanizes keys and formats values', () => {
+	test('humanizes keys and formats values', () => {
 		expect(toolArgRows({ chain_id: 1, address: '0xabc' })).toEqual([
 			{ key: 'Chain Id', value: '1' },
 			{ key: 'Address', value: '0xabc' }
 		])
 	})
 
-	it('drops empty values', () => {
+	test('drops empty values', () => {
 		expect(toolArgRows({ a: '', b: null, c: 'x' })).toEqual([{ key: 'C', value: 'x' }])
 	})
 
-	it('joins arrays', () => {
+	test('joins arrays', () => {
 		expect(toolArgRows({ ids: ['a', 'b'] })).toEqual([{ key: 'Ids', value: 'a, b' }])
 	})
 
-	it('returns empty for missing args', () => {
+	test('returns empty for missing args', () => {
 		expect(toolArgRows(undefined)).toEqual([])
 	})
 })
 
 describe('computedSummaryLabel', () => {
-	it('pluralizes by source count', () => {
+	test('pluralizes by source count', () => {
 		expect(
 			computedSummaryLabel({ sourceType: 'computed', sources: [{}, {}] } as unknown as UnifiedCitationReference)
 		).toBe('Calculated from 2 sources')
@@ -264,19 +264,19 @@ describe('computedSummaryLabel', () => {
 		)
 	})
 
-	it('returns null with no sources', () => {
+	test('returns null with no sources', () => {
 		expect(computedSummaryLabel({ sourceType: 'computed' } as UnifiedCitationReference)).toBeNull()
 	})
 })
 
 describe('verification flags', () => {
-	it('flags only quantitative mismatch', () => {
+	test('flags only quantitative mismatch', () => {
 		expect(shouldFlagMismatch({ claimType: 'quantitative', valueMatch: 'mismatch' } as any)).toBe(true)
 		expect(shouldFlagMismatch({ claimType: 'quantitative', valueMatch: 'unverified' } as any)).toBe(false)
 		expect(shouldFlagMismatch({ claimType: 'qualitative', valueMatch: 'mismatch' } as any)).toBe(false)
 		expect(shouldFlagMismatch(undefined)).toBe(false)
 	})
-	it('flags only quantitative unverified', () => {
+	test('flags only quantitative unverified', () => {
 		expect(shouldFlagUnverified({ claimType: 'quantitative', valueMatch: 'unverified' } as any)).toBe(true)
 		expect(shouldFlagUnverified({ claimType: 'quantitative', valueMatch: 'match' } as any)).toBe(false)
 		expect(shouldFlagUnverified({ claimType: 'qualitative', valueMatch: 'unverified' } as any)).toBe(false)

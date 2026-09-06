@@ -52,7 +52,7 @@ interface SupportedChart {
 }
 
 // Supported charts configuration
-const supportedCharts: SupportedChart[] = [
+const supportedCharts: Array<SupportedChart> = [
 	{ id: 'tvl', name: 'TVL', key: 'tvlChart', type: 'line', timestampUnit: 'milliseconds' },
 	{ id: 'volume', name: 'DEXs Volume', key: 'dexVolumeChart', type: 'bar', timestampUnit: 'seconds' },
 	{ id: 'chainFees', name: 'Chain Fees', key: 'chainFeesChart', type: 'bar', timestampUnit: 'seconds' },
@@ -70,7 +70,7 @@ type ChainDataResult = {
 type CompareResult = {
 	data: Array<ChainDataResult | null>
 	isLoading: boolean
-	failedChains: string[]
+	failedChains: Array<string>
 }
 
 const getChainData = async (chain: string): Promise<ChainDataResult> => {
@@ -96,7 +96,13 @@ const getAdapterMetricData = (request: CompareChainAdapterRequest) => {
 	}
 }
 
-const useCompare = ({ chains = [], selectedCharts }: { chains?: string[]; selectedCharts: readonly string[] }) => {
+const useCompare = ({
+	chains = [],
+	selectedCharts
+}: {
+	chains?: Array<string>
+	selectedCharts: ReadonlyArray<string>
+}) => {
 	const adapterMetrics = React.useMemo(() => getCompareChainAdapterMetrics(selectedCharts), [selectedCharts])
 	const overviewQueries = React.useMemo(
 		() =>
@@ -167,11 +173,11 @@ type CompareChainChartData = Pick<
 > & { tvlChart: Array<[number, number]> | null }
 
 export const buildCompareChainsChartData = (
-	chainsData: CompareChainChartData[],
-	selectedCharts: string[]
+	chainsData: Array<CompareChainChartData>,
+	selectedCharts: Array<string>
 ): {
 	dataset: MultiSeriesTimeSeriesDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	showTotalInTooltip: boolean
 } => {
 	if (chainsData.length === 0) {
@@ -180,8 +186,8 @@ export const buildCompareChainsChartData = (
 
 	const colors = getNDistinctColors(selectedCharts.length * chainsData.length)
 	let colorIndex = 0
-	const seriesNames: string[] = []
-	const seriesConfigs: MultiSeriesChartSeriesConfig[] = []
+	const seriesNames: Array<string> = []
+	const seriesConfigs: Array<MultiSeriesChartSeriesConfig> = []
 	const seriesData: Array<{ entries: Array<[number, number]>; dateInMs: boolean; dimensionIndex: number }> = []
 	const displayedMetricKinds = new Set<SupportedChart['key']>()
 
@@ -242,7 +248,7 @@ export function buildCompareChainsTvlCharts(
 ): Record<string, CompareChainsTvlChartState> {
 	const charts: Record<string, CompareChainsTvlChartState> = {}
 	for (const chainData of data) {
-		if (!chainData.chainOverviewData.tvlChart.length) continue
+		if (chainData.chainOverviewData.tvlChart.length === 0) continue
 		charts[chainData.chain] = buildCompareChainsTvlChartState({
 			tvlChart: chainData.chainOverviewData.tvlChart,
 			tvlSettings,
@@ -252,7 +258,7 @@ export function buildCompareChainsTvlCharts(
 	return charts
 }
 
-const updateRoute = (key: string, val: string | string[], router: NextRouter) => {
+const updateRoute = (key: string, val: string | Array<string>, router: NextRouter) => {
 	void router.push(
 		{
 			query: {
@@ -298,7 +304,7 @@ const ChartFilters = () => {
 	)
 }
 
-export function CompareChains({ chains }: { chains: ChainOption[] }) {
+export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 	const [tvlSettings] = useLocalStorageSettingsManager('tvl')
 	const { selectedValues: selectedChartFilters } = useChainsChartFilterState()
 
@@ -348,7 +354,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 						data={chains}
 						placeholder="Select Chains..."
 						selectedValues={selectedChainValues}
-						setSelectedValues={(values: string[]) => {
+						setSelectedValues={(values: Array<string>) => {
 							updateRoute('chains', values, router)
 						}}
 					/>
@@ -408,7 +414,7 @@ export function CompareChains({ chains }: { chains: ChainOption[] }) {
 	)
 }
 
-function FailedCompareChainsPopover({ failedChains }: { failedChains: string[] }) {
+function FailedCompareChainsPopover({ failedChains }: { failedChains: Array<string> }) {
 	return <FailedDataPopover items={failedChains} ariaLabel="Show failed chain APIs" />
 }
 

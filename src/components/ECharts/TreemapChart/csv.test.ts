@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildTreemapCsvDataset } from './csv'
 
 describe('buildTreemapCsvDataset', () => {
-	it('exports every leaf once without duplicating parent totals', () => {
+	test('exports every leaf once without duplicating parent totals', () => {
 		expect(
 			buildTreemapCsvDataset([
 				{

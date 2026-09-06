@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import nextConfig from '../../../../next.config'
 import {
 	getStaticGenerationConfig,
@@ -9,7 +9,7 @@ import {
 import type { DatasetSnapshotDomain } from '../contract'
 import { DATASET_SNAPSHOT_ROUTE_DOMAINS, getDatasetSnapshotTraceIncludes } from '../traceIncludes'
 
-const SNAPSHOT_ENTRY_IMPORTS: Array<{ importPath: string; domains: DatasetSnapshotDomain[] }> = [
+const SNAPSHOT_ENTRY_IMPORTS: Array<{ importPath: string; domains: Array<DatasetSnapshotDomain> }> = [
 	{ importPath: '~/containers/Yields/server/dataset.server', domains: ['yields'] },
 	{ importPath: '~/containers/Yields/server/api', domains: ['yields'] },
 	{ importPath: '~/containers/LiquidationsV2/server/dataset.server', domains: ['liquidations'] },
@@ -26,8 +26,8 @@ const SNAPSHOT_ENTRY_IMPORTS: Array<{ importPath: string; domains: DatasetSnapsh
 	{ importPath: '~/server/routeRegistry/sitemap', domains: ['markets', 'liquidations', 'raises'] }
 ]
 
-async function collectPageFiles(rootDir: string): Promise<string[]> {
-	const files: string[] = []
+async function collectPageFiles(rootDir: string): Promise<Array<string>> {
+	const files: Array<string> = []
 	for (const entry of await fs.readdir(rootDir, { withFileTypes: true })) {
 		const filePath = path.join(rootDir, entry.name)
 		if (entry.isDirectory()) files.push(...(await collectPageFiles(filePath)))
@@ -65,14 +65,14 @@ function tracedDomainsForRoute(route: string): Set<DatasetSnapshotDomain> {
 }
 
 describe('dataset snapshot output tracing', () => {
-	it('limits Vercel static-generation concurrency without changing other builds', () => {
+	test('limits Vercel static-generation concurrency without changing other builds', () => {
 		expect(getStaticGenerationConfig('1')).toEqual({
 			staticGenerationMaxConcurrency: VERCEL_STATIC_GENERATION_MAX_CONCURRENCY
 		})
 		expect(getStaticGenerationConfig(undefined)).toBeUndefined()
 	})
 
-	it('permanently redirects the retired Markets page to Exchanges', async () => {
+	test('permanently redirects the retired Markets page to Exchanges', async () => {
 		const redirects = await nextConfig.redirects?.()
 
 		expect(redirects).toContainEqual({
@@ -82,7 +82,7 @@ describe('dataset snapshot output tracing', () => {
 		})
 	})
 
-	it('assigns composed and transitive consumers every domain they require', () => {
+	test('assigns composed and transitive consumers every domain they require', () => {
 		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/token/*']).toEqual([
 			'markets',
 			'liquidations',
@@ -97,7 +97,7 @@ describe('dataset snapshot output tracing', () => {
 		expect(DATASET_SNAPSHOT_ROUTE_DOMAINS['/sitemap.xml']).toEqual(['markets', 'liquidations', 'raises'])
 	})
 
-	it('never attaches the complete snapshot tree to every route', () => {
+	test('never attaches the complete snapshot tree to every route', () => {
 		const includes = getDatasetSnapshotTraceIncludes()
 		expect(includes['/*']).toBeUndefined()
 		expect(includes['/yields']).toEqual([
@@ -111,7 +111,7 @@ describe('dataset snapshot output tracing', () => {
 		expect(nextConfig.outputFileTracingIncludes?.['/yields']).toEqual(includes['/yields'])
 	})
 
-	it('does not trace Yields snapshots into routes that never read them', () => {
+	test('does not trace Yields snapshots into routes that never read them', () => {
 		const includes = getDatasetSnapshotTraceIncludes()
 
 		expect(includes['/yields/watchlist']).toBeUndefined()
@@ -119,8 +119,8 @@ describe('dataset snapshot output tracing', () => {
 		expect(includes['/yields/borrow/*']).toBeUndefined()
 	})
 
-	it('covers every page and API that imports a snapshot entry module', async () => {
-		const missing: string[] = []
+	test('covers every page and API that imports a snapshot entry module', async () => {
+		const missing: Array<string> = []
 		for (const filePath of await collectPageFiles('src/pages')) {
 			const source = await fs.readFile(filePath, 'utf8')
 			const route = pageFileToRoute(filePath)

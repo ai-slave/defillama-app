@@ -35,12 +35,12 @@ interface CustomColumnState {
 	formatType: CustomColumnDef['formatType']
 	submissionError: string | null
 	showSuggestions: boolean
-	suggestions: FormulaSuggestion[]
+	suggestions: Array<FormulaSuggestion>
 	highlighted: number
 	fieldWarning: string | null
 }
 
-function getFilteredSuggestions(word: string): FormulaSuggestion[] {
+function getFilteredSuggestions(word: string): Array<FormulaSuggestion> {
 	const wordLower = word.toLowerCase()
 	const functionMatches = AVAILABLE_FUNCTIONS.filter((f) => f.name.toLowerCase().startsWith(wordLower))
 	const fieldMatches = AVAILABLE_FIELDS.filter((f) => f.toLowerCase().startsWith(wordLower))
@@ -124,7 +124,7 @@ export function CustomColumnModal({
 			const wordStart = match ? beforeCursor.length - word.length : beforeCursor.length
 			let newFormula
 			if (item.type === 'function' || item.type === 'operator') {
-				newFormula = beforeCursor.slice(0, wordStart) + item.name + '()' + afterCursor
+				newFormula = `${beforeCursor.slice(0, wordStart) + item.name}()${afterCursor}`
 				setTimeout(() => {
 					if (inputRef.current) {
 						const pos = wordStart + item.name.length + 1

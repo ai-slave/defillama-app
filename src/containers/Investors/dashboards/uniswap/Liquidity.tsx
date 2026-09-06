@@ -32,7 +32,7 @@ interface LiquidityData {
 	tvlTotal: Chart
 	tvlByChain: Chart
 	tvlByVersion: Chart
-	topPools: { title?: string; rows: TopPoolRow[] }
+	topPools: { title?: string; rows: Array<TopPoolRow> }
 	activeLps: Chart
 	/** Null until the ir-server serving this deployment ships the LP breakdowns. */
 	activeLpsByVersion: Chart | null
@@ -138,7 +138,7 @@ const POOL_HEADERS: Array<[string, 'left' | 'right']> = [
 	['% of TVL', 'right']
 ]
 
-function TopPoolsTable({ rows }: { rows: TopPoolRow[] }) {
+function TopPoolsTable({ rows }: { rows: Array<TopPoolRow> }) {
 	return (
 		<div className="w-full overflow-auto rounded-lg border border-pro-cards-border">
 			<div style={{ display: 'grid', gridTemplateColumns: POOL_COLUMNS }}>
@@ -200,7 +200,7 @@ export default function Liquidity() {
 		chain: data.activeLpsByChain,
 		version: data.activeLpsByVersion
 	}
-	const lpOptions = (Object.keys(LP_VIEWS) as LpView[])
+	const lpOptions = (Object.keys(LP_VIEWS) as Array<LpView>)
 		.filter((view) => lpCharts[view])
 		.map((view) => ({ value: view, label: LP_VIEWS[view].label }))
 	const resolvedLpView: LpView = lpCharts[lpView] ? lpView : 'all'

@@ -21,7 +21,7 @@ const yieldsColumnMetadata: Record<YieldColumnId, { name: string; description: s
 	ltv: { name: 'LTV', description: 'Maximum loan-to-value ratio' }
 }
 
-const columnGroups: Array<{ title: string; columns: YieldColumnId[] }> = [
+const columnGroups: Array<{ title: string; columns: Array<YieldColumnId> }> = [
 	{ title: 'Pool', columns: ['pool', 'project', 'chains', 'tvl'] },
 	{ title: 'Supply APY', columns: ['apy', 'apyBase', 'apyReward', 'apyMean30d', 'stabilityRating'] },
 	{ title: 'Pool Facts', columns: ['volumeUsd1d', 'ilRisk'] },
@@ -34,7 +34,7 @@ interface YieldsColumnManagementPanelProps {
 	searchTerm: string
 	setSearchTerm: (term: string) => void
 	currentColumns: Record<string, boolean>
-	columnOrder: string[]
+	columnOrder: Array<string>
 	toggleColumnVisibility: (columnKey: string, isVisible: boolean) => void
 	moveColumnUp: (columnKey: string) => void
 	moveColumnDown: (columnKey: string) => void
@@ -43,7 +43,7 @@ interface YieldsColumnManagementPanelProps {
 type ColumnButtonProps = {
 	columnKey: YieldColumnId
 	currentColumns: Record<string, boolean>
-	columnOrder: string[]
+	columnOrder: Array<string>
 	toggleColumnVisibility: (columnKey: string, isVisible: boolean) => void
 } & (
 	| {
@@ -191,7 +191,7 @@ export function YieldsColumnManagementPanel({
 					<div className="max-h-64 space-y-3 overflow-y-auto">
 						{columnGroups.map((group) => {
 							const columns = group.columns.filter((key) => filteredColumnSet.has(key))
-							if (!columns.length) return null
+							if (columns.length === 0) return null
 							return (
 								<div key={group.title}>
 									<p className="mb-1 label-sm text-tertiary">{group.title}</p>

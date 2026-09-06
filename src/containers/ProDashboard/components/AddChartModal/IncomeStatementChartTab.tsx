@@ -12,7 +12,7 @@ interface IncomeStatementChartTabProps {
 	selectedIncomeStatementProtocolName: string | null
 	onSelectedIncomeStatementProtocolChange: (protocol: string | null) => void
 	onSelectedIncomeStatementProtocolNameChange: (name: string | null) => void
-	protocolOptions: VirtualizedSelectOption[]
+	protocolOptions: Array<VirtualizedSelectOption>
 	protocolsLoading: boolean
 }
 

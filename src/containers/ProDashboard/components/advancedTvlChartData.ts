@@ -12,8 +12,8 @@ import type { AdvancedTvlChartType } from '../types'
 export interface AdvancedTvlChartData {
 	dataset: TimestampDataset | null
 	breakdown: ProtocolBreakdownChart | null
-	seriesNames: string[]
-	defaultSeriesNames: string[]
+	seriesNames: Array<string>
+	defaultSeriesNames: Array<string>
 	pieSeries: RuntimePieChartData
 }
 
@@ -53,7 +53,7 @@ function excludeBinanceCexInflowPoints(
 
 export function buildAdvancedTvlChartData(
 	chartType: AdvancedTvlChartType,
-	sources: ProtocolTvlBreakdownSource[],
+	sources: Array<ProtocolTvlBreakdownSource>,
 	breakdowns: Array<ProtocolValueBreakdownChart | null | undefined>,
 	protocolName: string
 ): AdvancedTvlChartData {

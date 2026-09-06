@@ -64,7 +64,7 @@ export function buildCompareProtocolsChartData({
 	protocolCharts,
 	extraTvlEnabled
 }: {
-	protocolCharts: CompareProtocolTvlCharts[]
+	protocolCharts: Array<CompareProtocolTvlCharts>
 	extraTvlEnabled: Parameters<typeof getCompareProtocolTvlSettings>[0]
 }) {
 	const tvlSettings = getCompareProtocolTvlSettings(extraTvlEnabled)
@@ -83,7 +83,7 @@ export function buildCompareProtocolsChartData({
 	}
 
 	const source = Array.from(rowMap.values()).sort((a, b) => a[0] - b[0])
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 	for (const [index, protocolName] of seriesNames.entries()) {
 		const color = distinctColors[index]
 		if (color === undefined) throw new Error(`Compare protocol palette is missing color ${index}`)

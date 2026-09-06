@@ -39,8 +39,8 @@ export interface EditorHandle {
 	getStatementAtCursor: () => string | null
 }
 
-function collectStatementSemicolons(sql: string): number[] {
-	const out: number[] = []
+function collectStatementSemicolons(sql: string): Array<number> {
+	const out: Array<number> = []
 	let inSingle = false
 	let inDouble = false
 	let inLineComment = false
@@ -125,7 +125,7 @@ interface EditorProps {
 	value: string
 	onChange: (next: string) => void
 	onRun: () => void
-	tables: RegisteredTable[]
+	tables: Array<RegisteredTable>
 	height?: string | number
 	readOnly?: boolean
 	fitContentHeight?: boolean
@@ -244,7 +244,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 			const hovers = registerSqlHovers(monaco, contextRef)
 
 			ensureActiveStmtStyles()
-			let decorationIds: string[] = []
+			let decorationIds: Array<string> = []
 			const updateActiveStmt = () => {
 				const model = editor.getModel?.()
 				const position = editor.getPosition?.()

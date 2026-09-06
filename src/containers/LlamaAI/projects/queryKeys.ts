@@ -6,6 +6,6 @@ export const projectFilesKey = (id: string) => ['projects', id, 'files'] as cons
 export const projectSessionsKey = (id: string) => ['projects', id, 'sessions'] as const
 export const projectSourcesKey = (id: string) => ['projects', id, 'sources'] as const
 
-export function isProjectSessionsQueryKey(queryKey: readonly unknown[]) {
+export function isProjectSessionsQueryKey(queryKey: ReadonlyArray<unknown>) {
 	return queryKey[0] === 'projects' && queryKey[2] === 'sessions'
 }

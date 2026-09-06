@@ -35,17 +35,17 @@ export const DATASET_SNAPSHOT_ROUTE_DOMAINS = {
 	'/api/private/token-liquidations/*': ['liquidations'],
 	'/sitemap.xml': ['markets', 'liquidations', 'raises'],
 	'/sitemap/*': ['markets', 'liquidations', 'raises']
-} as const satisfies Record<string, readonly DatasetSnapshotDomain[]>
+} as const satisfies Record<string, ReadonlyArray<DatasetSnapshotDomain>>
 
-function getDomainTraceIncludes(domain: DatasetSnapshotDomain): string[] {
+function getDomainTraceIncludes(domain: DatasetSnapshotDomain): Array<string> {
 	const domainRoot = `./.cache/dataset-snapshots/${domain}`
 	return [`${domainRoot}/current.json`, `${domainRoot}/versions/**/*`]
 }
 
-export function getDatasetSnapshotTraceIncludes(): Record<string, string[]> {
-	const includes: Record<string, string[]> = {}
+export function getDatasetSnapshotTraceIncludes(): Record<string, Array<string>> {
+	const includes: Record<string, Array<string>> = {}
 	for (const [route, domains] of Object.entries(DATASET_SNAPSHOT_ROUTE_DOMAINS) as Array<
-		[string, readonly DatasetSnapshotDomain[]]
+		[string, ReadonlyArray<DatasetSnapshotDomain>]
 	>) {
 		includes[route] = domains.flatMap(getDomainTraceIncludes)
 	}

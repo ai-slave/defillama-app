@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ApiRequest } from '~/server/api/types'
 import { sendClaimToDiscord } from '../claimDiscord'
 import { isClaimTurnstileEnabled, verifyClaimTurnstile } from '../claimTurnstile'
@@ -62,7 +62,7 @@ afterEach(() => {
 })
 
 describe('leadClaim', () => {
-	it('skips CAPTCHA when the server secret is not configured and still sends the webhook', async () => {
+	test('skips CAPTCHA when the server secret is not configured and still sends the webhook', async () => {
 		isClaimTurnstileEnabledMock.mockReturnValue(false)
 		forgdPostMock.mockResolvedValue({ status: 'received', request_id: 'request-disabled' })
 		const claimWithoutCaptcha: Record<string, unknown> = { ...validClaim }
@@ -78,7 +78,7 @@ describe('leadClaim', () => {
 		})
 	})
 
-	it('forwards a validated claim only after CAPTCHA succeeds and strips the token', async () => {
+	test('forwards a validated claim only after CAPTCHA succeeds and strips the token', async () => {
 		verifyClaimTurnstileMock.mockResolvedValue({ ok: true })
 		forgdPostMock.mockResolvedValue({ status: 'received', request_id: 'request-1' })
 
@@ -97,7 +97,7 @@ describe('leadClaim', () => {
 		)
 	})
 
-	it('does not contact Forgd or User Analytics when CAPTCHA is invalid', async () => {
+	test('does not contact Forgd or User Analytics when CAPTCHA is invalid', async () => {
 		vi.stubEnv('USER_ANALYTICS_URL', 'https://analytics.example.com')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', 'analytics-secret')
 		const fetchMock = vi.fn()
@@ -115,7 +115,7 @@ describe('leadClaim', () => {
 		expect(sendClaimToDiscordMock).not.toHaveBeenCalled()
 	})
 
-	it('fails closed when CAPTCHA verification is unavailable', async () => {
+	test('fails closed when CAPTCHA verification is unavailable', async () => {
 		verifyClaimTurnstileMock.mockResolvedValue({ ok: false, reason: 'unavailable' })
 
 		const result = await leadClaim.handle(claimRequest(validClaim, '192.0.2.12'))
@@ -125,7 +125,7 @@ describe('leadClaim', () => {
 		expect(sendClaimToDiscordMock).not.toHaveBeenCalled()
 	})
 
-	it('notifies Discord when a CAPTCHA-validated UTR submission fails in Forgd', async () => {
+	test('notifies Discord when a CAPTCHA-validated UTR submission fails in Forgd', async () => {
 		vi.stubEnv('USER_ANALYTICS_URL', '')
 		vi.stubEnv('UTR_CLAIMS_SHARED_SECRET', '')
 		verifyClaimTurnstileMock.mockResolvedValue({ ok: true })
@@ -143,7 +143,7 @@ describe('leadClaim', () => {
 		)
 	})
 
-	it('does not consume a CAPTCHA token when local claim validation fails', async () => {
+	test('does not consume a CAPTCHA token when local claim validation fails', async () => {
 		const result = await leadClaim.handle(claimRequest({ ...validClaim, organization_email: 'invalid' }, '192.0.2.13'))
 
 		expect(result.status).toBe(400)
@@ -154,7 +154,7 @@ describe('leadClaim', () => {
 })
 
 describe('leadConnect', () => {
-	it('keeps the connect flow independent from claim CAPTCHA', async () => {
+	test('keeps the connect flow independent from claim CAPTCHA', async () => {
 		forgdPostMock.mockResolvedValue({ status: 'received', request_id: 'request-2' })
 
 		const result = await leadConnect.handle({

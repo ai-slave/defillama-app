@@ -10,7 +10,7 @@ interface ChartTypeOption {
 }
 
 interface ChartTypePillsProps {
-	chartTypes: ChartTypeOption[]
+	chartTypes: Array<ChartTypeOption>
 	selectedType: string | null
 	onSelect: (type: string) => void
 	isLoading?: boolean
@@ -25,7 +25,7 @@ const PROTOCOL_GROUPS = [
 	['Token', ['tokenMcap', 'tokenPrice', 'tokenVolume']],
 	['DeFi', ['medianApy', 'borrowed']],
 	['Ratios', ['pfRatio', 'psRatio']]
-] as const satisfies ReadonlyArray<readonly [string, readonly string[]]>
+] as const satisfies ReadonlyArray<readonly [string, ReadonlyArray<string>]>
 
 const CHAIN_GROUPS = [
 	['Value', ['tvl', 'bridgedTvl']],
@@ -35,7 +35,7 @@ const CHAIN_GROUPS = [
 	['Activity', ['txs', 'activeUsers', 'newUsers', 'gasUsed']],
 	['Stablecoins', ['stablecoins', 'stablecoinInflows']],
 	['Native Token', ['chainMcap', 'chainPrice']]
-] as const satisfies ReadonlyArray<readonly [string, readonly string[]]>
+] as const satisfies ReadonlyArray<readonly [string, ReadonlyArray<string>]>
 
 export function ChartTypePills({
 	chartTypes,
@@ -55,10 +55,10 @@ export function ChartTypePills({
 	const groups = mode === 'chain' ? CHAIN_GROUPS : PROTOCOL_GROUPS
 
 	const groupedOptions = useMemo(() => {
-		const result: Array<{ group: string; options: ChartTypeOption[] }> = []
+		const result: Array<{ group: string; options: Array<ChartTypeOption> }> = []
 
 		for (const [groupName, typeIds] of groups) {
-			const options: ChartTypeOption[] = []
+			const options: Array<ChartTypeOption> = []
 			for (const id of typeIds) {
 				const chartType = chartTypeMap.get(id)
 				if (chartType) {

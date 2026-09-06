@@ -2,7 +2,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
-import type {} from '~/components/Table/utils'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
@@ -110,7 +109,7 @@ export function RWACategories({
 	initialChartDataset,
 	page
 }: {
-	categories: IRWACategoriesOverviewRow[]
+	categories: Array<IRWACategoriesOverviewRow>
 	initialChartDataset: RWAPositionalChartDataset
 	page: RWAOverviewPage
 }) {
@@ -137,7 +136,7 @@ export function RWACategories({
 		category: row.category,
 		...getRWAOverviewTableData(row, inclusion)
 	}))
-	const treemapSizeRows: RWAFlowTreemapSizeRow[] = data.map((row) => ({
+	const treemapSizeRows: Array<RWAFlowTreemapSizeRow> = data.map((row) => ({
 		name: row.category,
 		activeMcap: row.activeMcap,
 		onChainMcap: row.onChainMcap,

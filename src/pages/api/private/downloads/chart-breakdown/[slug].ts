@@ -17,7 +17,7 @@ function timestampToIsoDate(ts: number): string {
 	return new Date(ms).toISOString().slice(0, 10)
 }
 
-function buildWideCsv(headers: string[], rows: Array<Record<string, string>>): string {
+function buildWideCsv(headers: Array<string>, rows: Array<Record<string, string>>): string {
 	const lines = [serializeCsvRow(headers)]
 	for (const row of rows) {
 		lines.push(serializeCsvRow(headers.map((header) => row[header] ?? '')))
@@ -29,7 +29,7 @@ async function buildDimensionBreakdownCsv(
 	adapterType: string,
 	dataType: string | undefined,
 	category: string
-): Promise<{ headers: string[]; rows: Array<Record<string, string>> } | null> {
+): Promise<{ headers: Array<string>; rows: Array<Record<string, string>> } | null> {
 	// Dimension category breakdowns need a join: protocol-breakdown supplies the
 	// values, while overview metadata supplies protocol categories.
 	const dtQs = dataType ? `dataType=${encodeURIComponent(dataType)}` : ''

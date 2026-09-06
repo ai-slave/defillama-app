@@ -155,7 +155,7 @@ export async function resolveProtocolParam(protocol: string): Promise<ProtocolRo
 	return resolveProtocolParamFromMetadata(protocol, await getMetadataCache())
 }
 
-export function getProtocolOverviewSlugsFromMetadata(metadataCache: MetadataCache, limit: number): string[] {
+export function getProtocolOverviewSlugsFromMetadata(metadataCache: MetadataCache, limit: number): Array<string> {
 	const slugs = new Set<string>()
 
 	for (const protocolId in metadataCache.protocolMetadata) {
@@ -184,7 +184,7 @@ export function getProtocolOverviewSlugsFromMetadata(metadataCache: MetadataCach
 	return [...slugs].slice(0, limit)
 }
 
-export async function getProtocolOverviewStaticPaths(limit = 35): Promise<string[]> {
+export async function getProtocolOverviewStaticPaths(limit = 35): Promise<Array<string>> {
 	const metadataCache = await getMetadataCache()
 	return getProtocolOverviewSlugsFromMetadata(metadataCache, limit).map((protocolSlug) => `/protocol/${protocolSlug}`)
 }
@@ -192,7 +192,7 @@ export async function getProtocolOverviewStaticPaths(limit = 35): Promise<string
 export function getProtocolFeatureSlugsFromMetadata(
 	metadataCache: MetadataCache,
 	hasMetric: (metadata: IProtocolMetadata) => boolean
-): string[] {
+): Array<string> {
 	const slugs = new Set<string>()
 
 	for (const protocolId in metadataCache.protocolMetadata) {
@@ -207,12 +207,15 @@ export function getProtocolFeatureSlugsFromMetadata(
 	return [...slugs]
 }
 
-export function getProtocolMetricSlugsFromMetadata(metadataCache: MetadataCache, metric: ProtocolMetric): string[] {
+export function getProtocolMetricSlugsFromMetadata(
+	metadataCache: MetadataCache,
+	metric: ProtocolMetric
+): Array<string> {
 	return getProtocolFeatureSlugsFromMetadata(metadataCache, (metadata) => Boolean(metadata[metric]))
 }
 
-export function getProtocolSitemapRoutes(metadataCache: MetadataCache): string[] {
-	const routes: string[] = []
+export function getProtocolSitemapRoutes(metadataCache: MetadataCache): Array<string> {
+	const routes: Array<string> = []
 
 	for (const protocolId in metadataCache.protocolMetadata) {
 		const metadata = metadataCache.protocolMetadata[protocolId]
@@ -235,10 +238,10 @@ export function getProtocolSitemapRoutes(metadataCache: MetadataCache): string[]
 
 export function getStandaloneProtocolSitemapRoutes(
 	metadataCache: MetadataCache
-): Record<'unlocks' | 'forks', string[]> {
+): Record<'unlocks' | 'forks', Array<string>> {
 	const routes = {
-		unlocks: [] as string[],
-		forks: [] as string[]
+		unlocks: [] as Array<string>,
+		forks: [] as Array<string>
 	}
 
 	for (const routeDef of standaloneProtocolRoutes) {

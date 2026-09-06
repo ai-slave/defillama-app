@@ -85,7 +85,7 @@ export function SimpleTable<Row extends object>({
 	cols,
 	empty = 'No data'
 }: {
-	rows: Row[] | undefined
+	rows: Array<Row> | undefined
 	cols: Array<Col<Row>>
 	empty?: string
 }) {

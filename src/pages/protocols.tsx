@@ -30,7 +30,7 @@ export const getStaticProps = withPerformanceLogging('protocols', async () => {
 		categoriesAndTagsMetadata: metadataCache.categoriesAndTags
 	})
 
-	const protocols: IProtocol[] = snapshot.protocols.map((protocol) => ({
+	const protocols: Array<IProtocol> = snapshot.protocols.map((protocol) => ({
 		...toBaseRow(protocol),
 		...(protocol.childProtocols ? { childProtocols: protocol.childProtocols.map(toBaseRow) } : {})
 	}))
@@ -48,7 +48,7 @@ export default function Protocols({ protocols }: InferGetStaticPropsType<typeof 
 		<Layout
 			title="DeFi Protocol Rankings - TVL & Revenue - DefiLlama"
 			description="Complete directory of 7000+ DeFi protocols ranked by TVL, fees, and revenue. Track protocol metrics across Ethereum, Solana, Base, Arbitrum and all major chains. Filter by category, chain, and performance."
-			canonicalUrl={`/protocols`}
+			canonicalUrl="/protocols"
 			tvlOptions={protocolTvlOptions}
 		>
 			<ChainProtocolsTable protocols={protocols} headingAs="h1" />

@@ -10,7 +10,7 @@ import { LINE_DIMENSIONS } from './constants'
 
 export type CombinedChartPresentation = {
 	dataset: MultiSeriesTimeSeriesDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 }
 
 type SeriesDefinition = {
@@ -49,7 +49,7 @@ export function buildAdapterByChainCombinedChartPresentation({
 
 	const isCumulative = groupBy === 'cumulative'
 	const isSnapshotChart = LINE_DIMENSIONS.has(chartName)
-	const seriesDefinitions: SeriesDefinition[] = []
+	const seriesDefinitions: Array<SeriesDefinition> = []
 	for (let index = 0; index < dimensions.length; index++) {
 		const dimension = dimensions[index]
 		if (dimension === undefined) continue
@@ -62,7 +62,7 @@ export function buildAdapterByChainCombinedChartPresentation({
 		})
 	}
 
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 	for (let index = 0; index < seriesDefinitions.length; index++) {
 		const series = seriesDefinitions[index]
 		if (series === undefined) continue

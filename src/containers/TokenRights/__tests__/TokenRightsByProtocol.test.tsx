@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { Raise } from '~/containers/Raises/model'
 import type { IRawTokenRightsEntry } from '../api.types'
 import { TokenRightsByProtocol } from '../TokenRightsByProtocol'
@@ -48,11 +48,11 @@ const baseTokenRightsEntry: IRawTokenRightsEntry = {
 const baseTokenRightsData = parseTokenRightsEntry(baseTokenRightsEntry)
 
 describe('TokenRightsByProtocol', () => {
-	it.each([
+	test.each([
 		{ amounts: [2_500_000, null, 14_000_000], total: '$16.5m' },
 		{ amounts: [null, null], total: 'Undisclosed' }
 	])('shows funding coverage for $amounts', ({ amounts, total }) => {
-		const raises: Raise[] = amounts.map((amountUsd) => ({
+		const raises: Array<Raise> = amounts.map((amountUsd) => ({
 			date: 1_737_331_200,
 			name: 'Test Protocol',
 			round: 'Seed',
@@ -77,7 +77,7 @@ describe('TokenRightsByProtocol', () => {
 		)
 		expect(html.replace(/<[^>]*>/g, '')).toContain(`${total} total`)
 	})
-	it('shows measured zero separately from an undisclosed funding round', () => {
+	test('shows measured zero separately from an undisclosed funding round', () => {
 		const round: Raise = {
 			date: 1_737_331_200,
 			name: 'Test Protocol',
@@ -106,7 +106,7 @@ describe('TokenRightsByProtocol', () => {
 		expect(rows.find((row) => row.includes('Series A'))).toContain('—')
 	})
 
-	it('renders the overview view by default with a details toggle', () => {
+	test('renders the overview view by default with a details toggle', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol name="Test Protocol" symbol="TEST" raises={null} tokenRightsData={baseTokenRightsData} />
 		)
@@ -118,7 +118,7 @@ describe('TokenRightsByProtocol', () => {
 		expect(html).not.toContain('Governance Rights')
 	})
 
-	it('filters inactive token labels from overview identity pills', () => {
+	test('filters inactive token labels from overview identity pills', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
 				name="Test Protocol"
@@ -133,7 +133,7 @@ describe('TokenRightsByProtocol', () => {
 		expect(html).not.toContain('N/A')
 	})
 
-	it('shows primary value accrual details without rendering N/A as the primary value', () => {
+	test('shows primary value accrual details without rendering N/A as the primary value', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
 				name="Test Protocol"
@@ -153,7 +153,7 @@ describe('TokenRightsByProtocol', () => {
 		expect(html).not.toContain('tracking-wider uppercase">N/A</span>')
 	})
 
-	it('hides the primary value accrual card when primary value and details are absent', () => {
+	test('hides the primary value accrual card when primary value and details are absent', () => {
 		const { 'Value Accrual Details': _details, ...entry } = baseTokenRightsEntry
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
@@ -170,7 +170,7 @@ describe('TokenRightsByProtocol', () => {
 		expect(html).not.toContain('Primary Value Accrual')
 	})
 
-	it('still shows the primary value accrual card when details exist and the primary value is null', () => {
+	test('still shows the primary value accrual card when details exist and the primary value is null', () => {
 		const { 'Value Accrual': _valueAccrual, ...entry } = baseTokenRightsEntry
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
@@ -186,7 +186,7 @@ describe('TokenRightsByProtocol', () => {
 		expect(html).toContain('Value accrues via buybacks.')
 	})
 
-	it('renders the embedded token page header variant', () => {
+	test('renders the embedded token page header variant', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
 				name="Test Protocol"
@@ -200,7 +200,7 @@ describe('TokenRightsByProtocol', () => {
 		expect(html).toContain('Token Rights and Value Accrual')
 	})
 
-	it('marks value accrual active when either dividends or buybacks accrue value', () => {
+	test('marks value accrual active when either dividends or buybacks accrue value', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol name="Test Protocol" symbol="TEST" raises={null} tokenRightsData={baseTokenRightsData} />
 		)
@@ -208,7 +208,7 @@ describe('TokenRightsByProtocol', () => {
 		expect(html).toContain('Value Accrual: positive')
 	})
 
-	it('keeps dividend and buyback pie segments inactive when neither mechanism accrues value', () => {
+	test('keeps dividend and buyback pie segments inactive when neither mechanism accrues value', () => {
 		const html = renderToStaticMarkup(
 			<TokenRightsByProtocol
 				name="Test Protocol"

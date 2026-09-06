@@ -457,7 +457,7 @@ export function VirtualTable<T extends RowData>({
 			const headers = headerGroup.headers.filter(
 				(header) => !rowSpannedHeaderIds.has(header.id) && !header.column.columnDef.meta?.hidden
 			)
-			if (!headers.length) {
+			if (headers.length === 0) {
 				return null
 			}
 			return (

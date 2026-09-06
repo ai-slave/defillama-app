@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import {
 	buildExportBlocks,
@@ -36,7 +36,7 @@ const charts = {
 }
 
 describe('buildExportBlocks — chart export', () => {
-	it('produces one chart node and stamps the saved chart id', async () => {
+	test('produces one chart node and stamps the saved chart id', async () => {
 		const saveChart = vi.fn().mockResolvedValue('saved_123')
 		const { blocks } = await buildExportBlocks(
 			{ kind: 'chart', chartId: 'c1', charts },
@@ -52,7 +52,7 @@ describe('buildExportBlocks — chart export', () => {
 		expect(saveChart).toHaveBeenCalledWith('c1')
 	})
 
-	it('keeps the node with null savedChartId when saving to the library fails', async () => {
+	test('keeps the node with null savedChartId when saving to the library fails', async () => {
 		const saveChart = vi.fn().mockRejectedValue(new Error('boom'))
 		const { blocks, notes } = await buildExportBlocks(
 			{ kind: 'chart', chartId: 'c1', charts },
@@ -67,7 +67,7 @@ describe('buildExportBlocks — chart export', () => {
 describe('buildExportBlocks — message export', () => {
 	const markdown = 'Intro paragraph.\n\n[CHART:c1]\n\n[CHART:c2]\n\n[IMAGE:img1]'
 
-	it('respects include flags: unchecked text and charts are dropped', async () => {
+	test('respects include flags: unchecked text and charts are dropped', async () => {
 		const { blocks } = await buildExportBlocks(
 			{ kind: 'message', markdown, charts, images: { img1: { url: 'https://x/y.png' } } },
 			{ text: false, chartIds: ['c2'], imageIds: [] },
@@ -81,7 +81,7 @@ describe('buildExportBlocks — message export', () => {
 		])
 	})
 
-	it('uploads included images and notes the ones that fail', async () => {
+	test('uploads included images and notes the ones that fail', async () => {
 		const uploadImage = vi.fn().mockResolvedValueOnce(null)
 		const { blocks, notes } = await buildExportBlocks(
 			{ kind: 'message', markdown, charts, images: { img1: { url: 'https://x/y.png' } } },
@@ -93,7 +93,7 @@ describe('buildExportBlocks — message export', () => {
 		expect(notes).toHaveLength(1)
 	})
 
-	it('stamps saved ids on every included chart node', async () => {
+	test('stamps saved ids on every included chart node', async () => {
 		const saveChart = vi.fn(async (id: string) => `saved_${id}`)
 		const { blocks } = await buildExportBlocks(
 			{ kind: 'message', markdown, charts },
@@ -105,7 +105,7 @@ describe('buildExportBlocks — message export', () => {
 })
 
 describe('buildExportBlocks — selection export', () => {
-	it('runs the DOM pipeline and splices charts', async () => {
+	test('runs the DOM pipeline and splices charts', async () => {
 		const { blocks } = await buildExportBlocks(
 			{ kind: 'selection', html: '<p>Look:</p><div data-chart-id="c1"></div>', charts },
 			{ text: true, chartIds: ['c1'], imageIds: [] },
@@ -116,7 +116,7 @@ describe('buildExportBlocks — selection export', () => {
 })
 
 describe('buildMessageExportRequest', () => {
-	it('flattens chart groups into an id-keyed map, resolving keyed and flat data', () => {
+	test('flattens chart groups into an id-keyed map, resolving keyed and flat data', () => {
 		const request = buildMessageExportRequest({
 			markdown: 'x [CHART:c1]',
 			messageId: 'm1',
@@ -139,14 +139,14 @@ describe('buildMessageExportRequest', () => {
 })
 
 describe('splitMarkdownTables', () => {
-	it('splits text and tables, counting data rows', () => {
+	test('splits text and tables, counting data rows', () => {
 		const md = 'Intro.\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n\nOutro.\n\n| x |\n| --- |\n| 9 |'
 		const segments = splitMarkdownTables(md)
 		expect(segments.map((s) => s.kind)).toEqual(['text', 'table', 'text', 'table'])
 		expect(segments.filter((segment) => segment.kind === 'table').map((segment) => segment.rows)).toEqual([2, 1])
 	})
 
-	it('ignores pipe lines inside code fences', () => {
+	test('ignores pipe lines inside code fences', () => {
 		const md = 'Text.\n\n```\n| not | a table |\n| --- | --- |\n```'
 		const segments = splitMarkdownTables(md)
 		expect(segments.every((s) => s.kind === 'text')).toBe(true)
@@ -156,7 +156,7 @@ describe('splitMarkdownTables', () => {
 describe('buildExportBlocks — table include control', () => {
 	const markdown = 'Intro.\n\n| a |\n| --- |\n| 1 |\n\n[CHART:c1]\n\n| b |\n| --- |\n| 2 |\n\nOutro.'
 
-	it('excludes an unticked table while keeping the rest in order', async () => {
+	test('excludes an unticked table while keeping the rest in order', async () => {
 		const { blocks } = await buildExportBlocks(
 			{ kind: 'message', markdown, charts },
 			{ text: true, chartIds: ['c1'], imageIds: [], tableIndices: [1] },
@@ -166,7 +166,7 @@ describe('buildExportBlocks — table include control', () => {
 		expect(JSON.stringify(blocks)).not.toContain('"text":"a"')
 	})
 
-	it('keeps ticked tables and chart placeholders even when text is excluded', async () => {
+	test('keeps ticked tables and chart placeholders even when text is excluded', async () => {
 		const { blocks } = await buildExportBlocks(
 			{ kind: 'message', markdown, charts },
 			{ text: false, chartIds: ['c1'], imageIds: [], tableIndices: [0, 1] },
@@ -175,7 +175,7 @@ describe('buildExportBlocks — table include control', () => {
 		expect(blocks.map((b) => b.type)).toEqual(['table', 'llamaaiChart', 'table'])
 	})
 
-	it('defaults to including all tables when tableIndices is omitted', async () => {
+	test('defaults to including all tables when tableIndices is omitted', async () => {
 		const { blocks } = await buildExportBlocks(
 			{ kind: 'message', markdown, charts },
 			{ text: true, chartIds: ['c1'], imageIds: [] },
@@ -186,13 +186,13 @@ describe('buildExportBlocks — table include control', () => {
 })
 
 describe('table titles', () => {
-	it('takes the immediately preceding heading as the markdown table title', () => {
+	test('takes the immediately preceding heading as the markdown table title', () => {
 		const md = '### Top 5 fee days\n\n| a |\n| --- |\n| 1 |\n\nProse.\n\n| b |\n| --- |\n| 2 |'
 		const tables = splitMarkdownTables(md).filter((s) => s.kind === 'table')
 		expect(tables.map((table) => table.title)).toEqual(['Top 5 fee days', undefined])
 	})
 
-	it('accepts a bold-only line as a title and strips emphasis from headings', () => {
+	test('accepts a bold-only line as a title and strips emphasis from headings', () => {
 		const md = '**Fee comparison:**\n\n| a |\n| --- |\n| 1 |\n\n## **Top days**\n\n| b |\n| --- |\n| 2 |'
 		const tables = splitMarkdownTables(md).filter((s) => s.kind === 'table')
 		expect(tables.map((table) => table.title)).toEqual(['Fee comparison', 'Top days'])
@@ -200,7 +200,7 @@ describe('table titles', () => {
 })
 
 describe('summarizeSelectionHtml', () => {
-	it('itemizes text, titled tables, and charts', () => {
+	test('itemizes text, titled tables, and charts', () => {
 		const html =
 			'<p>Uniswap leads all fee rankings today.</p><h3>Top 5 fee days</h3><div><table><tbody><tr><td>1</td></tr><tr><td>2</td></tr></tbody></table></div><div data-chart-id="c1"></div>'
 		const items = summarizeSelectionHtml(html, charts)
@@ -211,7 +211,7 @@ describe('summarizeSelectionHtml', () => {
 		])
 	})
 
-	it('falls back to row counts and flags unresolvable charts', () => {
+	test('falls back to row counts and flags unresolvable charts', () => {
 		const html = '<table><tbody><tr><td>1</td></tr></tbody></table><div data-chart-id="nope"></div>'
 		const items = summarizeSelectionHtml(html, {})
 		expect(items.map((i) => i.label)).toEqual(['Table · 1 row', 'Chart · nope (no data — will be skipped)'])

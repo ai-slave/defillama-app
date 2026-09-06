@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { hashTableQuerySignature, prepareTableRows } from '../preparedRows.server'
 
 // cachedResult keeps global per-namespace state; every test uses its own
@@ -9,7 +9,7 @@ const nextNamespace = () => `table-pages:test-${namespaceCounter++}:prepared-row
 const memory = { ttlMs: 60_000, maxEntries: 8 }
 
 describe('prepareTableRows', () => {
-	it('prepares once per (domain, version, signature) and serves repeats from memory', async () => {
+	test('prepares once per (domain, version, signature) and serves repeats from memory', async () => {
 		const namespace = nextNamespace()
 		const prepare = vi.fn(async () => ['a', 'b'])
 		const args = { namespace, domain: 'ethereum', version: 'v1', signature: 'sig-a', memory, prepare }
@@ -19,7 +19,7 @@ describe('prepareTableRows', () => {
 		expect(prepare).toHaveBeenCalledTimes(1)
 	})
 
-	it('keys separately by signature, version, and domain', async () => {
+	test('keys separately by signature, version, and domain', async () => {
 		const namespace = nextNamespace()
 		const prepare = vi.fn(async () => ['rows'])
 		const base = { namespace, domain: 'ethereum', version: 'v1', signature: 'sig-a', memory, prepare }
@@ -32,10 +32,10 @@ describe('prepareTableRows', () => {
 		expect(prepare).toHaveBeenCalledTimes(4)
 	})
 
-	it('coalesces concurrent callers onto one preparation', async () => {
+	test('coalesces concurrent callers onto one preparation', async () => {
 		const namespace = nextNamespace()
-		let resolve: (rows: string[]) => void = () => {}
-		const prepare = vi.fn(() => new Promise<string[]>((r) => (resolve = r)))
+		let resolve: (rows: Array<string>) => void = () => {}
+		const prepare = vi.fn(() => new Promise<Array<string>>((r) => (resolve = r)))
 		const args = { namespace, domain: 'all', version: 'v1', signature: 'sig', memory, prepare }
 
 		const [first, second] = [prepareTableRows(args), prepareTableRows(args)]
@@ -47,10 +47,10 @@ describe('prepareTableRows', () => {
 		expect(prepare).toHaveBeenCalledTimes(1)
 	})
 
-	it('does not cache failed preparations', async () => {
+	test('does not cache failed preparations', async () => {
 		const namespace = nextNamespace()
 		const prepare = vi
-			.fn<() => Promise<string[]>>()
+			.fn<() => Promise<Array<string>>>()
 			.mockRejectedValueOnce(new Error('upstream down'))
 			.mockResolvedValueOnce(['recovered'])
 		const args = { namespace, domain: 'all', version: 'v1', signature: 'sig', memory, prepare }
@@ -61,7 +61,7 @@ describe('prepareTableRows', () => {
 })
 
 describe('hashTableQuerySignature', () => {
-	it('is fixed-width, url-safe, and collision-distinct for different signatures', () => {
+	test('is fixed-width, url-safe, and collision-distinct for different signatures', () => {
 		const a = hashTableQuerySignature('{"sort":"tvl"}')
 		const b = hashTableQuerySignature('{"sort":"fees"}')
 		expect(a).toHaveLength(22)

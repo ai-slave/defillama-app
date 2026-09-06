@@ -46,8 +46,8 @@ export async function readValidMetadataArtifactManifest(cacheDir: string): Promi
 export async function getMissingMetadataArtifacts(
 	cacheDir: string,
 	_manifest: MetadataArtifactManifest
-): Promise<string[]> {
-	const missingArtifacts: string[] = []
+): Promise<Array<string>> {
+	const missingArtifacts: Array<string> = []
 
 	for (const key of METADATA_ARTIFACT_KEYS) {
 		const artifact = METADATA_ARTIFACT_REGISTRY[key]

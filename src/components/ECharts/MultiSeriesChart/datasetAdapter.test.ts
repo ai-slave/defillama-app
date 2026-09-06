@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { prepareMultiSeriesDataset } from './datasetAdapter'
 
 describe('prepareMultiSeriesDataset', () => {
-	it('passes positional rows through and assigns private ECharts dimensions', () => {
-		const source = [[1_000, 2, 3]]
+	test('passes positional rows through and assigns private ECharts dimensions', () => {
+		const source = [[1000, 2, 3]]
 		const prepared = prepareMultiSeriesDataset({ dimensions: ['timestamp', 'A', 'B'], source }, [
 			{ type: 'line', name: 'A', encode: { x: 0, y: 1 } },
 			{ type: 'line', name: 'B', encode: { x: 0, y: 2 } }
@@ -21,10 +21,10 @@ describe('prepareMultiSeriesDataset', () => {
 		])
 	})
 
-	it('keeps every logical dimension available to CSV while filtering rendered series', () => {
+	test('keeps every logical dimension available to CSV while filtering rendered series', () => {
 		const source = [
-			[1_000, 2, 3],
-			[2_000, 4, 5]
+			[1000, 2, 3],
+			[2000, 4, 5]
 		]
 		const prepared = prepareMultiSeriesDataset(
 			{
@@ -50,8 +50,8 @@ describe('prepareMultiSeriesDataset', () => {
 		])
 	})
 
-	it('keeps numeric positions and source identity when display labels are duplicated', () => {
-		const source = [[1_000, 2, 3]]
+	test('keeps numeric positions and source identity when display labels are duplicated', () => {
+		const source = [[1000, 2, 3]]
 		const prepared = prepareMultiSeriesDataset({ dimensions: ['timestamp', 'timestamp', 'B'], source }, [
 			{ type: 'line', name: 'timestamp', encode: { x: 0, y: 1 } }
 		])

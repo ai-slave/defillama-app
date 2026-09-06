@@ -28,7 +28,7 @@ export function useFetchTokenOverviewChartData({
 }: {
 	geckoId: string | null
 	overview: TokenOverviewData
-	activeCharts: TokenOverviewChartLabel[]
+	activeCharts: Array<TokenOverviewChartLabel>
 	timeframe: PriceChartTimeframe
 	enabled: boolean
 }) {

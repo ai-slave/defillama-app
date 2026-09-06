@@ -8,13 +8,13 @@ export function buildProtocolBreakdownChartConfigs({
 	stack,
 	hideAreaStyle = false
 }: {
-	seriesNames: string[]
+	seriesNames: Array<string>
 	dimensions?: Array<string | number>
 	type: MultiSeriesChartSeriesConfig['type']
 	colors?: Record<string, string>
 	stack?: string
 	hideAreaStyle?: boolean
-}): MultiSeriesChartSeriesConfig[] {
+}): Array<MultiSeriesChartSeriesConfig> {
 	const dimensionIndex = dimensions ? new Map(dimensions.map((name, index) => [name, index])) : null
 	const charts = new Array<MultiSeriesChartSeriesConfig>(seriesNames.length)
 	let index = 0

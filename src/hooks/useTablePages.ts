@@ -32,7 +32,7 @@ export type TablePageRequestResult = {
 }
 
 type ClientState<Row, Page extends CursorTablePage<Row>> = Omit<Page, 'rows'> & {
-	rows: Row[]
+	rows: Array<Row>
 	loadedQuerySignature: string
 	isReplacing: boolean
 	isLoadingMore: boolean
@@ -41,7 +41,13 @@ type ClientState<Row, Page extends CursorTablePage<Row>> = Omit<Page, 'rows'> & 
 }
 
 type ClientAction<Row, Page extends CursorTablePage<Row>> =
-	| { type: 'source-change'; request: number; rows: Row[]; page: Omit<Page, 'rows'>; defaultQuerySignature: string }
+	| {
+			type: 'source-change'
+			request: number
+			rows: Array<Row>
+			page: Omit<Page, 'rows'>
+			defaultQuerySignature: string
+	  }
 	| { type: 'replace-start'; request: number }
 	| { type: 'append-start'; request: number }
 	| { type: 'success'; request: number; mode: 'replace' | 'append'; page: Page; querySignature: string }
@@ -129,7 +135,7 @@ export function useTablePages<Row, Page extends CursorTablePage<Row>>({
 	enabled?: boolean
 	/** Identity of the server-rendered payload (e.g. `${chain}:${version}`); a change resets to it. */
 	sourceKey: string
-	initialRows: Row[]
+	initialRows: Array<Row>
 	initialPage: Omit<Page, 'rows'>
 	/** Canonical signature of the CURRENT query (schema.signature). */
 	querySignature: string

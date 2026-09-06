@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { DATASET_SNAPSHOT_DOMAINS } from '../contract'
 import { publishDatasetSnapshotDomain, publishDatasetSnapshots } from '../publish.server'
 import type { DatasetSnapshotHandle, DatasetSnapshotStore } from '../store'
@@ -9,7 +9,7 @@ const current: DatasetSnapshotHandle = {
 }
 
 describe('dataset snapshot publisher', () => {
-	it('reuses a domain that is still fresh', async () => {
+	test('reuses a domain that is still fresh', async () => {
 		const store: DatasetSnapshotStore = {
 			getCurrent: vi.fn().mockResolvedValue(current),
 			publish: vi.fn()
@@ -19,7 +19,7 @@ describe('dataset snapshot publisher', () => {
 		expect(store.publish).not.toHaveBeenCalled()
 	})
 
-	it('keeps a compatible stale snapshot when publication fails', async () => {
+	test('keeps a compatible stale snapshot when publication fails', async () => {
 		const error = new Error('upstream failed')
 		const store: DatasetSnapshotStore = {
 			getCurrent: vi.fn().mockResolvedValue(current),
@@ -32,7 +32,7 @@ describe('dataset snapshot publisher', () => {
 		})
 	})
 
-	it('attempts every domain while preserving independently successful publications', async () => {
+	test('attempts every domain while preserving independently successful publications', async () => {
 		const store: DatasetSnapshotStore = {
 			getCurrent: vi.fn().mockResolvedValue(null),
 			publish: vi.fn(async (domain) => {
@@ -47,7 +47,7 @@ describe('dataset snapshot publisher', () => {
 		expect(store.publish).toHaveBeenCalledTimes(DATASET_SNAPSHOT_DOMAINS.length)
 	})
 
-	it('prunes successful domains and logs aggregate storage diagnostics', async () => {
+	test('prunes successful domains and logs aggregate storage diagnostics', async () => {
 		const logger = { log: vi.fn() }
 		const store: DatasetSnapshotStore = {
 			getCurrent: vi.fn().mockResolvedValue(current),
@@ -63,7 +63,7 @@ describe('dataset snapshot publisher', () => {
 		expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('1.0 MiB, 12 artifacts, 2 versions'))
 	})
 
-	it('does not turn maintenance failures into publication failures', async () => {
+	test('does not turn maintenance failures into publication failures', async () => {
 		const logger = { log: vi.fn() }
 		const store: DatasetSnapshotStore = {
 			getCurrent: vi.fn().mockResolvedValue(current),
@@ -77,7 +77,7 @@ describe('dataset snapshot publisher', () => {
 		expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('size diagnostics unavailable'))
 	})
 
-	it('reports stale retention without failing the aggregate preparation step', async () => {
+	test('reports stale retention without failing the aggregate preparation step', async () => {
 		const logger = { log: vi.fn() }
 		const store: DatasetSnapshotStore = {
 			getCurrent: vi.fn().mockResolvedValue(current),

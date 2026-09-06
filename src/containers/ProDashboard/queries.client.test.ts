@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { getProtocolDataMock } = vi.hoisted(() => ({ getProtocolDataMock: vi.fn() }))
 
@@ -12,13 +12,13 @@ describe('getChartQueryFn protocol fallback', () => {
 		getProtocolDataMock.mockReset()
 	})
 
-	it('preserves a standalone source error for React Query retries and error UI', async () => {
+	test('preserves a standalone source error for React Query retries and error UI', async () => {
 		getProtocolDataMock.mockRejectedValue(new Error('upstream failed'))
 
 		await expect(getChartQueryFn('fees', 'protocol', 'standalone')()).rejects.toThrow('upstream failed')
 	})
 
-	it('recovers a parent source failure by summing successful children', async () => {
+	test('recovers a parent source failure by summing successful children', async () => {
 		getProtocolDataMock.mockImplementation(async (_type: string, protocol: string) => {
 			if (protocol === 'parent') throw new Error('no parent adapter')
 			if (protocol === 'child-a') return [[1, 10]]

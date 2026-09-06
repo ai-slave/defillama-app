@@ -232,7 +232,7 @@ function ProDashboardContent() {
 		refetchOnWindowFocus: false
 	})
 
-	const timePeriods: { value: TimePeriod; label: string }[] = [
+	const timePeriods: Array<{ value: TimePeriod; label: string }> = [
 		{ value: '30d', label: '30d' },
 		{ value: '90d', label: '90d' },
 		{ value: '365d', label: '365d' },

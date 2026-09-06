@@ -49,10 +49,10 @@ interface ISelectWithComboboxBase {
 	onEditCustomColumn?: (idx: number) => void
 	onDeleteCustomColumn?: (idx: number) => void
 	portal?: boolean
-	onValuesChange?: (values: string[], label: string) => void
-	defaultSelectedValues?: string[]
+	onValuesChange?: (values: Array<string>, label: string) => void
+	defaultSelectedValues?: Array<string>
 	resetPageOnQueryChange?: boolean
-	pushQueryUpdates?: (updates: Record<string, string | string[] | undefined>) => void
+	pushQueryUpdates?: (updates: Record<string, string | Array<string> | undefined>) => void
 	unmountOnHide?: boolean
 	popoverClassName?: string
 	popoverWrapperClassName?: string
@@ -66,7 +66,7 @@ interface ISelectWithComboboxBase {
 interface ISelectWithComboboxUrlParams extends ISelectWithComboboxBase {
 	includeQueryKey: string
 	excludeQueryKey: ExcludeQueryKey
-	defaultSelectedValues?: string[]
+	defaultSelectedValues?: Array<string>
 	setSelectedValues?: never
 }
 
@@ -147,7 +147,7 @@ export function SelectWithCombobox({
 		[isStringValue]
 	)
 	const setSelectedValuesFromState = React.useCallback(
-		(values: string[]) => {
+		(values: Array<string>) => {
 			if (setSelectedValuesProp) {
 				setSelectedValuesProp(values)
 			}
@@ -159,8 +159,8 @@ export function SelectWithCombobox({
 	const getAllKeys = React.useCallback(() => allValues.map((v) => (typeof v === 'string' ? v : v.key)), [allValues])
 
 	// If includeQueryKey is provided, use URL-based functions; otherwise derive from setSelectedValues
-	const setSelectedValues: (values: string[]) => void = includeQueryKey
-		? (values: string[]) =>
+	const setSelectedValues: (values: Array<string>) => void = includeQueryKey
+		? (values: Array<string>) =>
 				updateQueryFromSelected(router, includeQueryKey, excludeQueryKey, getAllKeys(), values, defaultSelectedValues, {
 					resetPage: resetPageOnQueryChange,
 					pushQueryUpdates
@@ -190,7 +190,7 @@ export function SelectWithCombobox({
 		: (value: string) => setSelectedValuesFromState([value])
 	const providerValue = singleSelect ? (selectedValues[0] ?? '') : selectedValues
 	const normalizeNextValues = React.useCallback(
-		(values: string[] | string) => {
+		(values: Array<string> | string) => {
 			if (singleSelect) {
 				if (typeof values === 'string') return values ? [values] : []
 				return values.slice(0, 1)

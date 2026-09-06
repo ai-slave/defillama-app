@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IProtocolChainBreakdownChart } from '~/containers/ProtocolOverview/api.types'
 import { buildTopProtocolChainSeries, sumProtocolTvlBreakdown } from './protocolTvlBreakdown'
 
@@ -9,20 +9,20 @@ const chart: IProtocolChainBreakdownChart = [
 ]
 
 describe('focused protocol TVL breakdown construction', () => {
-	it('sums included and excluded chains directly from the V2 rows', () => {
+	test('sums included and excluded chains directly from the V2 rows', () => {
 		expect(sumProtocolTvlBreakdown(chart, { includeChains: new Set(['Arbitrum', 'Base']) })).toEqual([
-			[1_000, 4],
-			[2_000, 13],
-			[3_000, 13]
+			[1000, 4],
+			[2000, 13],
+			[3000, 13]
 		])
 		expect(sumProtocolTvlBreakdown(chart, { excludeChains: new Set(['Ethereum']) })).toEqual([
-			[1_000, 4],
-			[2_000, 13],
-			[3_000, 13]
+			[1000, 4],
+			[2000, 13],
+			[3000, 13]
 		])
 	})
 
-	it('ranks by each chain latest value and reconciles sparse rows into Others', () => {
+	test('ranks by each chain latest value and reconciles sparse rows into Others', () => {
 		const result = buildTopProtocolChainSeries({ chart, topN: 1 })
 
 		expect(result.chains).toEqual(['Ethereum', 'Base', 'Arbitrum'])
@@ -30,23 +30,23 @@ describe('focused protocol TVL breakdown construction', () => {
 			{
 				name: 'Ethereum',
 				data: [
-					[1_000, 10],
-					[2_000, 12],
-					[3_000, 14]
+					[1000, 10],
+					[2000, 12],
+					[3000, 14]
 				]
 			},
 			{
 				name: 'Others (2 chains)',
 				data: [
-					[1_000, 4],
-					[2_000, 13],
-					[3_000, 13]
+					[1000, 4],
+					[2000, 13],
+					[3000, 13]
 				]
 			}
 		])
 	})
 
-	it('combines explicit and category filters before ranking', () => {
+	test('combines explicit and category filters before ranking', () => {
 		const result = buildTopProtocolChainSeries({
 			chart,
 			topN: 5,
@@ -61,9 +61,9 @@ describe('focused protocol TVL breakdown construction', () => {
 		const [baseSeries] = result.series
 		if (!baseSeries) throw new Error('Expected the Base series')
 		expect(baseSeries.data).toEqual([
-			[1_000, 0],
-			[2_000, 8],
-			[3_000, 7]
+			[1000, 0],
+			[2000, 8],
+			[3000, 7]
 		])
 	})
 })

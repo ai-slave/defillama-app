@@ -1,7 +1,7 @@
 import type { ComponentType, ReactNode } from 'react'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('~/layout', () => ({ default: ({ children }: { children: ReactNode }) => <>{children}</> }))
 vi.mock('~/containers/MarketMakers/PerformanceIndex', () => ({
@@ -26,7 +26,7 @@ function renderPage(Page: unknown, props: Record<string, unknown> = {}) {
 }
 
 describe('public Market Makers pages', () => {
-	it('renders every route without an auth or preview access gate', () => {
+	test('renders every route without an auth or preview access gate', () => {
 		expect(renderPage(MarketMakersPerformanceIndex)).toContain('Performance Index')
 		expect(renderPage(MarketMakersDocumentationPage)).toContain('Documentation')
 		expect(renderPage(DepthLeaderboard)).toContain('Depth Leaderboard')

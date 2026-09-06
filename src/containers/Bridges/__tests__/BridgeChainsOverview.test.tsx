@@ -2,11 +2,11 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { BridgeChainsOverview } from '../BridgeChainsOverview'
 
 const mocks = vi.hoisted(() => ({
-	selectedCharts: vi.fn<(values: string[]) => void>()
+	selectedCharts: vi.fn<(values: Array<string>) => void>()
 }))
 
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
@@ -22,9 +22,9 @@ vi.mock('~/components/Select/SelectWithCombobox', () => ({
 		selectedValues,
 		setSelectedValues
 	}: {
-		allValues: string[]
-		selectedValues: string[]
-		setSelectedValues: (values: string[]) => void
+		allValues: Array<string>
+		selectedValues: Array<string>
+		setSelectedValues: (values: Array<string>) => void
 	}) => (
 		<button type="button" onClick={() => setSelectedValues(selectedValues.filter((name) => name !== allValues[0]))}>
 			Remove chain 1
@@ -66,7 +66,7 @@ describe('BridgeChainsOverview selection wiring', () => {
 		container.remove()
 	})
 
-	it('shows all selection intent as top 30 plus Others and removes Others at 30 selected chains', async () => {
+	test('shows all selection intent as top 30 plus Others and removes Others at 30 selected chains', async () => {
 		const allChains = Array.from({ length: 31 }, (_, index) => `Chain ${index + 1}`)
 		const charts = allChains.map((name) => ({
 			type: 'line' as const,

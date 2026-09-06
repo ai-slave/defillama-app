@@ -15,25 +15,25 @@ export function buildEmissionProjectionModel({
 	seriesTbdSections,
 	seriesForecastSections
 }: {
-	chartSections: string[]
-	categoriesBreakdown: Record<string, string[]> | null
+	chartSections: Array<string>
+	categoriesBreakdown: Record<string, Array<string>> | null
 	sectionMetadata: Record<string, ProjectionSectionMetadata> | undefined
-	seriesTbdSections: string[]
-	seriesForecastSections: string[]
+	seriesTbdSections: Array<string>
+	seriesForecastSections: Array<string>
 }): {
-	categoriesBreakdown: Record<string, string[]> | null
-	tbdSections: string[]
-	forecastSections: string[]
+	categoriesBreakdown: Record<string, Array<string>> | null
+	tbdSections: Array<string>
+	forecastSections: Array<string>
 } {
 	const chartSectionByLowerName = new Map<string, string>()
 	for (const section of chartSections) chartSectionByLowerName.set(section.toLowerCase(), section)
 
-	let groupedSections: Record<string, string[]> | null = null
+	let groupedSections: Record<string, Array<string>> | null = null
 	const groupBySection = new Map<string, string>()
 	if (categoriesBreakdown) {
 		groupedSections = {}
 		for (const group in categoriesBreakdown) {
-			const sections: string[] = []
+			const sections: Array<string> = []
 			for (const section of categoriesBreakdown[group]!) {
 				const chartSection = chartSectionByLowerName.get(section.toLowerCase())
 				if (!chartSection) continue
@@ -44,8 +44,8 @@ export function buildEmissionProjectionModel({
 		}
 	}
 
-	const tbdSections: string[] = []
-	const forecastSections: string[] = []
+	const tbdSections: Array<string> = []
+	const forecastSections: Array<string> = []
 	const projectionBySection = new Map<string, Projection>()
 	for (const section of seriesForecastSections) projectionBySection.set(section.toLowerCase(), 'forecast')
 	for (const section of seriesTbdSections) projectionBySection.set(section.toLowerCase(), 'tbd')
@@ -94,9 +94,9 @@ export function buildEmissionProjectionModel({
 }
 
 export function processGroupedChartData(
-	chartData: EmissionsChartRow[],
-	categoriesBreakdown: Record<string, string[]>
-): EmissionsChartRow[] {
+	chartData: Array<EmissionsChartRow>,
+	categoriesBreakdown: Record<string, Array<string>>
+): Array<EmissionsChartRow> {
 	const result = new Array<EmissionsChartRow>(chartData.length)
 
 	for (let i = 0; i < chartData.length; i++) {
@@ -128,7 +128,7 @@ export function processGroupedChartData(
 	return result
 }
 
-export function sortStacksByVolatility(stacks: string[], chartData: EmissionsChartRow[]): string[] {
+export function sortStacksByVolatility(stacks: Array<string>, chartData: Array<EmissionsChartRow>): Array<string> {
 	if (chartData.length < 2) return stacks
 
 	const volatility: Record<string, number> = {}

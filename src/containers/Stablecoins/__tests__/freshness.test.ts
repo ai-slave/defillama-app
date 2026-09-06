@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { StablecoinListAsset } from '../api.types'
 import {
 	formatPeggedAssetsData,
@@ -15,7 +15,7 @@ const point = (date: string, mcap: number) => ({
 })
 
 describe('stablecoin change freshness', () => {
-	it('validates each period independently without requiring intermediate days', () => {
+	test('validates each period independently without requiring intermediate days', () => {
 		const chart = [point('2026-06-14', 70), point('2026-07-07', 80), point('2026-07-13', 90), point('2026-07-14', 100)]
 
 		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', undefined, { currentTimeMs: NOW })).toBe(90)
@@ -23,14 +23,14 @@ describe('stablecoin change freshness', () => {
 		expect(getPrevStablecoinTotalFromChart(chart, 30, 'mcap', undefined, { currentTimeMs: NOW })).toBe(70)
 	})
 
-	it('hides only the period whose exact comparison endpoint is missing', () => {
+	test('hides only the period whose exact comparison endpoint is missing', () => {
 		const chart = [point('2026-06-13', 60), point('2026-06-15', 70), point('2026-07-13', 90), point('2026-07-14', 100)]
 
 		expect(getPrevStablecoinTotalFromChart(chart, 1, 'mcap', undefined, { currentTimeMs: NOW })).toBe(90)
 		expect(getPrevStablecoinTotalFromChart(chart, 30, 'mcap', undefined, { currentTimeMs: NOW })).toBeNull()
 	})
 
-	it('keeps the current total but nulls all changes when the latest point is stale', () => {
+	test('keeps the current total but nulls all changes when the latest point is stale', () => {
 		const totals = [
 			{ date: String(Math.floor(Date.parse('2026-06-13T00:00:00Z') / 1e3)), Mcap: 80 },
 			{ date: String(Math.floor(Date.parse('2026-07-13T00:00:00Z') / 1e3)), Mcap: 100 },
@@ -54,7 +54,7 @@ describe('stablecoin change freshness', () => {
 		})
 	})
 
-	it('accepts the previous UTC day during publication rollover without treating the synthetic point as current', () => {
+	test('accepts the previous UTC day during publication rollover without treating the synthetic point as current', () => {
 		const chart = [
 			point('2026-06-14', 70),
 			point('2026-07-07', 80),
@@ -84,13 +84,13 @@ describe('stablecoin change freshness', () => {
 		})
 	})
 
-	it('does not fall back to yesterday when today exists but its comparison endpoint is missing', () => {
+	test('does not fall back to yesterday when today exists but its comparison endpoint is missing', () => {
 		const chart = [point('2026-07-07', 80), point('2026-07-14', 90), point('2026-07-15', 100)]
 
 		expect(getPrevStablecoinTotalFromChart(chart, 7, 'mcap', undefined, { currentTimeMs: ROLLOVER_NOW })).toBeNull()
 	})
 
-	it('keeps chain changes available from the previous UTC day', () => {
+	test('keeps chain changes available from the previous UTC day', () => {
 		const chainPoint = (date: string, mcap: number) => ({
 			date: String(point(date, mcap).date),
 			totalCirculatingUSD: { peggedUSD: mcap }
@@ -109,7 +109,7 @@ describe('stablecoin change freshness', () => {
 		})
 	})
 
-	it('makes ended current market caps unavailable without affecting deprecated active assets', () => {
+	test('makes ended current market caps unavailable without affecting deprecated active assets', () => {
 		const asset: StablecoinListAsset = {
 			id: 'ended',
 			name: 'Ended USD',
@@ -147,7 +147,7 @@ describe('stablecoin change freshness', () => {
 		expect(rows[2]).toMatchObject({ deprecated: true, mcap: 25 })
 	})
 
-	it('hides the monthly peg deviation when a daily price snapshot is missing', () => {
+	test('hides the monthly peg deviation when a daily price snapshot is missing', () => {
 		const asset: StablecoinListAsset = {
 			id: '1',
 			name: 'Test USD',
@@ -184,7 +184,7 @@ describe('stablecoin change freshness', () => {
 		expect(incomplete.pegDeviation_1m).toBeNull()
 	})
 
-	it('uses the producer BRL ticker for real-pegged assets', () => {
+	test('uses the producer BRL ticker for real-pegged assets', () => {
 		const asset: StablecoinListAsset = {
 			id: 'real',
 			name: 'Brazilian Real',

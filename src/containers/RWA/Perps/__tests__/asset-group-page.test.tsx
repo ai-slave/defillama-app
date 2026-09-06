@@ -1,11 +1,17 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(() => {
 	vi.clearAllMocks()
 	vi.resetModules()
 })
 
-function setupPageModule({ assetGroups = ['US Equities'], data = null }: { assetGroups?: string[]; data?: unknown }) {
+function setupPageModule({
+	assetGroups = ['US Equities'],
+	data = null
+}: {
+	assetGroups?: Array<string>
+	data?: unknown
+}) {
 	vi.doMock('~/constants', () => ({
 		SKIP_BUILD_STATIC_GENERATION: false
 	}))
@@ -43,7 +49,7 @@ function setupPageModule({ assetGroups = ['US Equities'], data = null }: { asset
 }
 
 describe('rwa perps asset-group page', () => {
-	it('getStaticPaths slugifies known asset groups', async () => {
+	test('getStaticPaths slugifies known asset groups', async () => {
 		const page = await setupPageModule({ assetGroups: ['US Equities', 'Commodities'] })
 
 		await expect(page.getStaticPaths()).resolves.toEqual({
@@ -52,7 +58,7 @@ describe('rwa perps asset-group page', () => {
 		})
 	})
 
-	it('getStaticProps returns notFound for an unknown asset group', async () => {
+	test('getStaticProps returns notFound for an unknown asset group', async () => {
 		const page = await setupPageModule({ assetGroups: ['US Equities'] })
 
 		await expect(page.getStaticProps({ params: { assetGroup: 'private-credit' } } as never)).resolves.toEqual({
@@ -60,7 +66,7 @@ describe('rwa perps asset-group page', () => {
 		})
 	})
 
-	it('getStaticProps returns props for a known asset group slug', async () => {
+	test('getStaticProps returns props for a known asset group slug', async () => {
 		const data = {
 			assetGroup: 'US Equities',
 			markets: [],
@@ -82,7 +88,7 @@ describe('rwa perps asset-group page', () => {
 		})
 	})
 
-	it('getStaticProps redirects noncanonical asset group params to the canonical slug', async () => {
+	test('getStaticProps redirects noncanonical asset group params to the canonical slug', async () => {
 		const page = await setupPageModule({ assetGroups: ['US Equities'] })
 
 		await expect(page.getStaticProps({ params: { assetGroup: 'US Equities' } } as never)).resolves.toEqual({

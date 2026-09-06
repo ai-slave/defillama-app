@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchJson: vi.fn(),
@@ -19,7 +19,7 @@ beforeEach(() => {
 })
 
 describe('master Exchanges upstream', () => {
-	it('uses only current master cache-file paths', async () => {
+	test('uses only current master cache-file paths', async () => {
 		const upstream = await import('../server/master.upstream')
 		const cases = [
 			[upstream.fetchMasterDirectoryFromNetwork, 'https://markets.example.com/exchanges/directory.json'],

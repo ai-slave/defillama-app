@@ -9,7 +9,7 @@ import { withPerformanceLogging } from '~/utils/perf'
 
 export const getStaticProps = withPerformanceLogging('market-makers/kpi', async () => {
 	const range = timeframeToRange(DEFAULT_TIMEFRAME, new Date())
-	const payload = await forgdFetch<unknown[]>('/market-maker/leaderboard/kpi', range).catch(() => null)
+	const payload = await forgdFetch<Array<unknown>>('/market-maker/leaderboard/kpi', range).catch(() => null)
 	return { props: { rows: payload }, revalidate: maxAgeForNext([22]) }
 })
 

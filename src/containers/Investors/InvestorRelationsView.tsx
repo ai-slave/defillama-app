@@ -13,7 +13,7 @@ function PillStrip({
 	activeTab,
 	onSelect
 }: {
-	tabs: DashboardTabConfig[]
+	tabs: Array<DashboardTabConfig>
 	activeTab: string
 	onSelect: (id: string) => void
 }) {
@@ -87,7 +87,7 @@ export function InvestorRelationsView({
 	entityName: string
 	customServerData?: Record<string, unknown>
 }) {
-	const [tabs, setTabs] = useState<DashboardTabConfig[] | null>(null)
+	const [tabs, setTabs] = useState<Array<DashboardTabConfig> | null>(null)
 	const [HeaderComponent, setHeaderComponent] = useState<DashboardModule['header'] | null>(null)
 	const [activeTab, setActiveTab] = useState<string | null>(null)
 

@@ -12,7 +12,7 @@ export interface SelectOption<TValue extends string = string> {
 
 interface AriakitSelectProps<TValue extends string> {
 	label?: string
-	options: readonly SelectOption<TValue>[]
+	options: ReadonlyArray<SelectOption<TValue>>
 	selectedValue: TValue | null
 	onChange: (option: SelectOption<TValue>) => void
 	placeholder?: string
@@ -64,7 +64,7 @@ export function AriakitSelect<TValue extends string>({
 					<Popover
 						store={popover}
 						modal={false}
-						portal={true}
+						portal
 						flip={false}
 						gutter={4}
 						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-lg"

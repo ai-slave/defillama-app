@@ -70,8 +70,8 @@ function CreateProjectForm({
 				toast.success('Project created')
 			}
 			dialogStore.hide()
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to save project')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to save project')
 		}
 	}
 

@@ -28,7 +28,7 @@ const normalizeSearchValue = (value: string) =>
 		.replace(/\p{Diacritic}/gu, '')
 		.toLowerCase()
 
-export function createLiquidationPositionSearchIndex(rows: LiquidationPosition[]): LiquidationPositionSearchIndex {
+export function createLiquidationPositionSearchIndex(rows: Array<LiquidationPosition>): LiquidationPositionSearchIndex {
 	const index: LiquidationPositionSearchIndex = new WeakMap()
 	for (const row of rows) {
 		index.set(
@@ -42,14 +42,14 @@ export function createLiquidationPositionSearchIndex(rows: LiquidationPosition[]
 }
 
 export function filterLiquidationPositions(
-	rows: LiquidationPosition[],
+	rows: Array<LiquidationPosition>,
 	searchIndex: LiquidationPositionSearchIndex,
 	searchValue: string
-): LiquidationPosition[] {
+): Array<LiquidationPosition> {
 	const searchTerm = normalizeSearchValue(searchValue.trim())
 	if (!searchTerm) return rows
 
-	const filtered: LiquidationPosition[] = []
+	const filtered: Array<LiquidationPosition> = []
 	for (const row of rows) {
 		if (searchIndex.get(row)!.includes(searchTerm)) filtered.push(row)
 	}
@@ -313,7 +313,7 @@ export function LiquidationsProtocolsTable({
 	rows,
 	embedded = false,
 	leadingControls = null
-}: { rows: OverviewProtocolRow[] } & LiquidationsTableProps) {
+}: { rows: Array<OverviewProtocolRow> } & LiquidationsTableProps) {
 	return (
 		<TableWithSearch
 			data={rows}
@@ -333,7 +333,7 @@ export function LiquidationsOverviewChainsTable({
 	rows,
 	embedded = false,
 	leadingControls = null
-}: { rows: OverviewChainRow[] } & LiquidationsTableProps) {
+}: { rows: Array<OverviewChainRow> } & LiquidationsTableProps) {
 	return (
 		<TableWithSearch
 			data={rows}
@@ -353,7 +353,7 @@ export function LiquidationsProtocolChainsTable({
 	rows,
 	embedded = false,
 	leadingControls = null
-}: { rows: ProtocolChainRow[] } & LiquidationsTableProps) {
+}: { rows: Array<ProtocolChainRow> } & LiquidationsTableProps) {
 	return (
 		<TableWithSearch
 			data={rows}
@@ -376,7 +376,7 @@ export function LiquidationsPositionsTable({
 	embedded = false,
 	leadingControls = null
 }: {
-	rows: LiquidationPosition[]
+	rows: Array<LiquidationPosition>
 	ownerBlockExplorers: BlockExplorersResponse
 	header: string
 } & LiquidationsTableProps) {

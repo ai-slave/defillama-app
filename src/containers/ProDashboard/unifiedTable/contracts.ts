@@ -213,8 +213,8 @@ interface ProtocolTableSourceRowBase {
 	displayName: string
 	logo: string
 	category: string | null
-	chains: string[]
-	oracles: string[]
+	chains: Array<string>
+	oracles: Array<string>
 	parentProtocolId: string | null
 	parentProtocolName: string | null
 	parentProtocolLogo: string | null
@@ -420,17 +420,17 @@ export type ChainMetrics =
 export interface ParentProtocolMetrics {
 	mcap: number | null
 	fdv: number | null
-	oracles?: string[]
+	oracles?: Array<string>
 	supplements?: {
 		openInterest?: {
-			childProtocolIds: string[]
-			childProtocolIdsByChain: Record<string, string[]>
+			childProtocolIds: Array<string>
+			childProtocolIdsByChain: Record<string, Array<string>>
 			metrics: Pick<ProtocolTableMetrics, 'openInterest'>
 			metricsByChain: Record<string, Pick<ProtocolTableMetrics, 'openInterest'>>
 		}
 		earnings?: {
-			childProtocolIds: string[]
-			childProtocolIdsByChain: Record<string, string[]>
+			childProtocolIds: Array<string>
+			childProtocolIdsByChain: Record<string, Array<string>>
 			metrics: Pick<ProtocolTableMetrics, 'earnings24h' | 'earnings7d' | 'earnings30d' | 'earnings1y'>
 			metricsByChain: Record<
 				string,
@@ -438,7 +438,7 @@ export interface ParentProtocolMetrics {
 			>
 		}
 		incentives?: {
-			childProtocolIds: string[]
+			childProtocolIds: Array<string>
 			metrics: Pick<
 				ProtocolTableMetrics,
 				| 'emissions24h'
@@ -456,8 +456,8 @@ export interface ParentProtocolMetrics {
 			>
 		}
 		bridgeAggregatorVolume?: {
-			childProtocolIds: string[]
-			childProtocolIdsByChain: Record<string, string[]>
+			childProtocolIds: Array<string>
+			childProtocolIdsByChain: Record<string, Array<string>>
 			metrics: Pick<
 				ProtocolTableMetrics,
 				| 'bridgeAggregatorVolume24h'
@@ -487,7 +487,7 @@ export interface ParentProtocolMetrics {
 
 export interface ProtocolsUnifiedTableResponse {
 	strategy: 'protocols'
-	rows: ProtocolTableSourceRow[]
+	rows: Array<ProtocolTableSourceRow>
 	parentMetrics: Record<string, ParentProtocolMetrics>
 	chainMetrics?: Record<string, ChainMetrics>
 }
@@ -502,13 +502,13 @@ export interface LegacyChainMetrics {
 }
 
 export interface LegacyProtocolsUnifiedTableResponse {
-	rows: ProtocolTableSourceRow[]
+	rows: Array<ProtocolTableSourceRow>
 	chainMetrics?: Record<string, LegacyChainMetrics>
 }
 
 /** Keep pre-capability clients working while deployed tabs and cached bundles age out. */
 export function createLegacyProtocolsUnifiedTableResponse(data: {
-	rows: ProtocolTableSourceRow[]
+	rows: Array<ProtocolTableSourceRow>
 	chainMetrics?: Record<string, ChainMetrics>
 }): LegacyProtocolsUnifiedTableResponse {
 	if (!data.chainMetrics) return { rows: data.rows }
@@ -531,7 +531,7 @@ export function createLegacyProtocolsUnifiedTableResponse(data: {
 }
 
 export function createProtocolsUnifiedTableResponse(data: {
-	rows: ProtocolTableSourceRow[]
+	rows: Array<ProtocolTableSourceRow>
 	parentMetrics: Record<string, ParentProtocolMetrics>
 	chainMetrics?: Record<string, ChainMetrics>
 }): ProtocolsUnifiedTableResponse {

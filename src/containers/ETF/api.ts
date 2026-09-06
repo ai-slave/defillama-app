@@ -5,13 +5,13 @@ import type { IETFFlowApiItem, IETFSnapshotApiItem } from './api.types'
 /**
  * Fetch ETF snapshot data.
  */
-export async function fetchETFSnapshot(): Promise<IETFSnapshotApiItem[]> {
-	return fetchJson<IETFSnapshotApiItem[]>(`${ETF_SERVER_URL}/snapshot`)
+export async function fetchETFSnapshot(): Promise<Array<IETFSnapshotApiItem>> {
+	return fetchJson<Array<IETFSnapshotApiItem>>(`${ETF_SERVER_URL}/snapshot`)
 }
 
 /**
  * Fetch ETF flow time series data.
  */
-export async function fetchETFFlows(): Promise<IETFFlowApiItem[]> {
-	return fetchJson<IETFFlowApiItem[]>(`${ETF_SERVER_URL}/flows`)
+export async function fetchETFFlows(): Promise<Array<IETFFlowApiItem>> {
+	return fetchJson<Array<IETFFlowApiItem>>(`${ETF_SERVER_URL}/flows`)
 }

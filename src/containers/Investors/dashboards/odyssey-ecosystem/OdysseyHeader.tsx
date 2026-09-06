@@ -27,10 +27,10 @@ interface NavLink {
 }
 
 // Live URLs come from metadata (links.* / debankBundles.*); static URLs are fallbacks until it loads.
-function buildLinks(meta: ReturnType<typeof useMetadata>['data']): NavLink[] {
+function buildLinks(meta: ReturnType<typeof useMetadata>['data']): Array<NavLink> {
 	const links = meta?.links ?? {}
 	const debank = meta?.debankBundles ?? {}
-	const items: NavLink[] = [
+	const items: Array<NavLink> = [
 		{
 			label: 'Odyssey',
 			url: links.odyssey ?? 'https://odyssey.finance',

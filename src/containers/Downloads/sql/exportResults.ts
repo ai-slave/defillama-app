@@ -5,7 +5,7 @@ import { classifyColumns } from './columnKind'
 
 export interface QueryResult {
 	columns: Array<{ name: string; type: string }>
-	rows: unknown[][]
+	rows: Array<Array<unknown>>
 }
 
 // LlamaSQL/Arrow results contain native types that the CSV writer can't round-trip directly.
@@ -18,9 +18,9 @@ export function exportQueryResult(result: QueryResult, format: DownloadFormat, f
 		downloadTabular(format, filename, [result.columns.map((c) => c.name)], { addTimestamp: true })
 		return
 	}
-	const header: CsvSerializableCell[] = result.columns.map((c) => c.name)
+	const header: Array<CsvSerializableCell> = result.columns.map((c) => c.name)
 	const columnKinds = classifyColumns(result)
-	const data: CsvSerializableCell[][] = result.rows.map((row) =>
+	const data: Array<Array<CsvSerializableCell>> = result.rows.map((row) =>
 		result.columns.map((_, index) => toCell(row[index], columnKinds[index].fine === 'date'))
 	)
 	downloadTabular(format, filename, [header, ...data], { addTimestamp: true })

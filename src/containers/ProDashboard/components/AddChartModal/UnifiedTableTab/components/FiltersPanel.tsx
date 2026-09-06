@@ -6,16 +6,16 @@ import { useOracleNamesByProtocol } from '~/containers/ProDashboard/queries'
 import type { UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { getItemIconUrl } from '~/containers/ProDashboard/utils'
 
-const EMPTY_CATEGORIES: string[] = []
-const EMPTY_PROTOCOLS: string[] = []
-const EMPTY_ORACLES: string[] = []
+const EMPTY_CATEGORIES: Array<string> = []
+const EMPTY_PROTOCOLS: Array<string> = []
+const EMPTY_ORACLES: Array<string> = []
 const ALL_CHAINS_SELECTION = ['All']
 
 interface FiltersPanelProps {
-	chains: string[]
+	chains: Array<string>
 	filters: UnifiedTableFilters
 	availableChains: Array<{ label: string; value: string }>
-	onChainsChange: (chains: string[]) => void
+	onChainsChange: (chains: Array<string>) => void
 	onFiltersChange: (filters: UnifiedTableFilters) => void
 }
 
@@ -91,7 +91,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 
 	const handleMultiSelectChange = (
 		key: 'categories' | 'excludedCategories' | 'protocols' | 'oracles',
-		values: string[]
+		values: Array<string>
 	) => {
 		const next: UnifiedTableFilters = { ...filters }
 		if (values.length === 0) {
@@ -102,7 +102,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 		onFiltersChange(next)
 	}
 
-	const handleCategoryMultiSelectChange = (values: string[]) => {
+	const handleCategoryMultiSelectChange = (values: Array<string>) => {
 		const key = categoryMode === 'include' ? 'categories' : 'excludedCategories'
 		const next: UnifiedTableFilters = { ...filters }
 		if (values.length === 0) {
@@ -113,7 +113,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 		onFiltersChange(next)
 	}
 
-	const handleChainMultiSelectChange = (values: string[]) => {
+	const handleChainMultiSelectChange = (values: Array<string>) => {
 		if (values.length === 0) {
 			onChainsChange(['All'])
 			return
@@ -131,7 +131,7 @@ export function FiltersPanel({ chains, filters, availableChains, onChainsChange,
 			}
 
 			const filtered = values.filter((value) => value !== 'All')
-			onChainsChange(filtered.length ? filtered : ['All'])
+			onChainsChange(filtered.length > 0 ? filtered : ['All'])
 			return
 		}
 

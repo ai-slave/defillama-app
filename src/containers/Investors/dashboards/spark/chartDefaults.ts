@@ -21,12 +21,12 @@ export const UNITLESS_CHART_OPTIONS = chartOptions('', false)
 export const UNITLESS_STACKED_SCROLL_CHART_OPTIONS = chartOptions('', true)
 
 export function createSeriesConfigs(
-	names: readonly string[],
+	names: ReadonlyArray<string>,
 	type: MultiSeriesChartSeriesConfig['type'],
 	colors?: Record<string, string>,
 	stack?: string,
 	firstColor?: string
-): MultiSeriesChartSeriesConfig[] {
+): Array<MultiSeriesChartSeriesConfig> {
 	const charts = new Array<MultiSeriesChartSeriesConfig>(names.length)
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]

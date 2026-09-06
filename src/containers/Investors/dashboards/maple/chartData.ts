@@ -47,7 +47,7 @@ const AGE_BUCKETS = [
 	{ label: '1y+', min: 365, max: Infinity }
 ]
 
-export function buildMaplePoolsData(pools: MaplePool[]) {
+export function buildMaplePoolsData(pools: Array<MaplePool>) {
 	const rows = pools
 		.map((pool): PoolRow => {
 			const totalAssets = Number(pool.totalAssets)
@@ -107,8 +107,8 @@ export function buildMaplePoolsData(pools: MaplePool[]) {
 	}
 }
 
-export function buildMapleLoansData(pools: MaplePoolWithLoans[], nowSec: number) {
-	const rows: LoanRow[] = []
+export function buildMapleLoansData(pools: Array<MaplePoolWithLoans>, nowSec: number) {
+	const rows: Array<LoanRow> = []
 	for (const pool of pools) {
 		for (const loan of pool.openTermLoans) {
 			const fundingDate = Number(loan.fundingDate)
@@ -153,7 +153,7 @@ export function buildMapleLoansData(pools: MaplePoolWithLoans[], nowSec: number)
 		if (ageIndex >= 0) agePrincipal[ageIndex] += loan.principal
 	}
 
-	const bucketDataset = (buckets: typeof RATE_BUCKETS, values: number[]): MultiSeriesChartDataset => ({
+	const bucketDataset = (buckets: typeof RATE_BUCKETS, values: Array<number>): MultiSeriesChartDataset => ({
 		dimensions: ['Name', 'Principal'],
 		source: buckets.flatMap((bucket, index) => (values[index] > 0 ? [[bucket.label, values[index]]] : []))
 	})
@@ -198,7 +198,7 @@ export function monthTimestampMs(ts: number): number {
 	return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)
 }
 
-export function aggregateByMonth(txes: TxRow[]): MultiSeriesChartDataset {
+export function aggregateByMonth(txes: Array<TxRow>): MultiSeriesChartDataset {
 	const map = new Map<number, { deposits: number; withdrawals: number }>()
 
 	for (const tx of txes) {
@@ -218,7 +218,7 @@ export function aggregateByMonth(txes: TxRow[]): MultiSeriesChartDataset {
 	return { dimensions: ['timestamp', 'Deposits', 'Withdrawals'], source }
 }
 
-export function aggregateDripByMonth(txes: DripRow[]): MultiSeriesChartDataset {
+export function aggregateDripByMonth(txes: Array<DripRow>): MultiSeriesChartDataset {
 	const map = new Map<number, number>()
 
 	for (const tx of txes) {

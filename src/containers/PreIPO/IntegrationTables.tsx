@@ -179,7 +179,13 @@ const issuerColumns = [
 	})
 ]
 
-export function PerpetualMarketsTable({ companyName, perps }: { companyName: string; perps: PreIpoPerpIntegration[] }) {
+export function PerpetualMarketsTable({
+	companyName,
+	perps
+}: {
+	companyName: string
+	perps: Array<PreIpoPerpIntegration>
+}) {
 	if (perps.length === 0) {
 		return <EmptyIntegrationTable title="Perpetual Markets" message="No perpetual markets available." />
 	}
@@ -201,7 +207,7 @@ export function TokenIssuersTable({
 	tokenIssuers
 }: {
 	companyName: string
-	tokenIssuers: PreIpoTokenIssuerIntegration[]
+	tokenIssuers: Array<PreIpoTokenIssuerIntegration>
 }) {
 	if (tokenIssuers.length === 0) {
 		return <EmptyIntegrationTable title="Token Issuers" message="No token issuer markets available." />

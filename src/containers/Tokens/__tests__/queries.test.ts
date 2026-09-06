@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import type { IAdapterChainMetrics } from '~/containers/AdapterMetrics/api.types'
 import type { MarketSegmentSummary, TokenMarketsListResponse } from '~/containers/Markets/api.types'
@@ -69,7 +69,7 @@ function tokenFilterMetadata(
 }
 
 describe('fetchTokensSourceRows', () => {
-	it('retains complete schedules including earlier-starting linear emissions', async () => {
+	test('retains complete schedules including earlier-starting linear emissions', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-08-23T12:00:00Z'))
 		const nowSec = Math.floor(Date.now() / 1000)
@@ -91,7 +91,7 @@ describe('fetchTokensSourceRows', () => {
 })
 
 describe('buildTokenFilterOptions', () => {
-	it('orders options by aggregate token market cap with deterministic ties', () => {
+	test('orders options by aggregate token market cap with deterministic ties', () => {
 		const rows = [
 			{ marketCap: 100, chains: ['ethereum'], categories: ['stablecoins', 'rwa'] },
 			{ marketCap: 80, chains: ['solana'], categories: ['rwa'] },
@@ -181,7 +181,7 @@ function tokenRightsEntry(overrides: Partial<IRawTokenRightsEntry>): IRawTokenRi
 }
 
 describe('buildTokensChartDataset', () => {
-	it('projects the market-cap index into a compact deterministic chart contract', () => {
+	test('projects the market-cap index into a compact deterministic chart contract', () => {
 		const result = buildTokensSourceRows({
 			tokens: [
 				{ id: 'beta', name: 'Beta', symbol: 'b', market_cap: 100, price_change_percentage_24h: 2 },
@@ -243,7 +243,7 @@ describe('buildTokensChartDataset', () => {
 })
 
 describe('buildTokenMarketSummary', () => {
-	it('combines ranking-period fields with the current shared token snapshot', () => {
+	test('combines ranking-period fields with the current shared token snapshot', () => {
 		const summary = buildTokenMarketSummary(
 			{
 				id: 'aave',
@@ -285,9 +285,9 @@ describe('buildTokenMarketSummary', () => {
 })
 
 describe('buildTokensSourceRows', () => {
-	it('precomputes token rows from tokenlist, markets, adapter metrics, unlocks, and rights data', () => {
+	test('precomputes token rows from tokenlist, markets, adapter metrics, unlocks, and rights data', () => {
 		const nowSec = 1_800_000_000
-		const tokens: IResponseCGTokenRankingsDatasetItem[] = [
+		const tokens: Array<IResponseCGTokenRankingsDatasetItem> = [
 			{
 				id: 'ethena',
 				name: 'Ethena',
@@ -473,8 +473,8 @@ describe('buildTokensSourceRows', () => {
 			spotVolume24h: 100,
 			perpsVolume24h: 250,
 			openInterest24h: 325,
-			unlock30dUsd: 20 + ((10 * 10) / 604800) * 2,
-			upcomingUnlockUsd: 200 + ((10 * (604800 - 10)) / 604800) * 2
+			unlock30dUsd: 20 + ((10 * 10) / 604_800) * 2,
+			upcomingUnlockUsd: 200 + ((10 * (604_800 - 10)) / 604_800) * 2
 		})
 
 		const ethena = result.rows[0]
@@ -495,8 +495,8 @@ describe('buildTokensSourceRows', () => {
 			revenue24h: 22,
 			holdersRevenue24h: 5.5,
 			trsPercent: 25,
-			unlock30dUsd: 20 + ((10 * 10) / 604800) * 2,
-			upcomingUnlockUsd: 200 + ((10 * (604800 - 10)) / 604800) * 2
+			unlock30dUsd: 20 + ((10 * 10) / 604_800) * 2,
+			upcomingUnlockUsd: 200 + ((10 * (604_800 - 10)) / 604_800) * 2
 		})
 		expect(ethena.rights).toMatchObject({
 			protocolName: 'Ethena',
@@ -533,7 +533,7 @@ describe('buildTokensSourceRows', () => {
 		})
 	})
 
-	it('uses the shared snapshot metrics even when local metadata would derive another value', () => {
+	test('uses the shared snapshot metrics even when local metadata would derive another value', () => {
 		const result = buildTokensSourceRows({
 			tokens: [{ id: 'shared', name: 'Shared', symbol: 'shr', current_price: 1, market_cap: 100 }],
 			markets: { last_updated: '', tokens: [] },
@@ -573,7 +573,7 @@ describe('buildTokensSourceRows', () => {
 		})
 	})
 
-	it('reads exact CoinGecko filter memberships and flags stablecoins', () => {
+	test('reads exact CoinGecko filter memberships and flags stablecoins', () => {
 		const tokens = [
 			{ id: 'Tether', name: 'Tether', symbol: 'usdt', current_price: 1, market_cap: 100 },
 			{ id: 'ethena', name: 'Ethena', symbol: 'ena', current_price: 1, market_cap: 50 }
@@ -601,7 +601,7 @@ describe('buildTokensSourceRows', () => {
 		expect(flagged.rows.map((row) => row.primaryChain)).toEqual(['ethereum', null])
 	})
 
-	it('links rights to the protocol page when no token-directory route exists', () => {
+	test('links rights to the protocol page when no token-directory route exists', () => {
 		const result = buildTokensSourceRows({
 			tokens: [
 				{
@@ -647,7 +647,7 @@ describe('buildTokensSourceRows', () => {
 		})
 	})
 
-	it('keeps same-symbol token rows on their canonical token directory routes', () => {
+	test('keeps same-symbol token rows on their canonical token directory routes', () => {
 		const result = buildTokensSourceRows({
 			tokens: [
 				{
@@ -696,7 +696,7 @@ describe('buildTokensSourceRows', () => {
 		expect(result.rows.map((row) => row.href)).toEqual(['/token/DATA', '/token/Streamr'])
 	})
 
-	it('prioritizes explicit parent metrics and treats inactive children as zero activity', () => {
+	test('prioritizes explicit parent metrics and treats inactive children as zero activity', () => {
 		const result = buildTokensSourceRows({
 			tokens: [
 				{
@@ -752,7 +752,7 @@ describe('buildTokensSourceRows', () => {
 		})
 	})
 
-	it('paints buyback and dividend pie slices by shared structural value accrual', () => {
+	test('paints buyback and dividend pie slices by shared structural value accrual', () => {
 		const metadata = {
 			tokenDirectory: {
 				buybacks: {
@@ -830,7 +830,7 @@ describe('buildTokensSourceRows', () => {
 		expect(noAccrual).toMatchObject({ buybacks: false, dividends: false, equityTone: 'warning' })
 	})
 
-	it('does not join symbol-only market metrics when multiple tokens share the symbol', () => {
+	test('does not join symbol-only market metrics when multiple tokens share the symbol', () => {
 		const result = buildTokensSourceRows({
 			tokens: [
 				{

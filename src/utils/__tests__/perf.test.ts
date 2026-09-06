@@ -1,5 +1,5 @@
 import type { GetStaticPropsContext } from 'next'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { jitterStaticPropsCacheSeconds, readCacheJitterMeta } from '../maxAgeForNext'
 
 describe('withPerformanceLogging', () => {
@@ -10,7 +10,7 @@ describe('withPerformanceLogging', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('jitters numeric getStaticProps revalidate values on props results', async () => {
+	test('jitters numeric getStaticProps revalidate values on props results', async () => {
 		vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '1200')
 		vi.stubEnv('NEXT_BUILD_ID', 'build-a')
 		const { withPerformanceLogging } = await import('../perf')
@@ -27,7 +27,7 @@ describe('withPerformanceLogging', () => {
 		expect(readCacheJitterMeta(result)).toEqual({ cache_jitter_seconds: expected.offsetSeconds })
 	})
 
-	it('jitters numeric getStaticProps revalidate values on notFound results', async () => {
+	test('jitters numeric getStaticProps revalidate values on notFound results', async () => {
 		vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '1200')
 		vi.stubEnv('NEXT_BUILD_ID', 'build-a')
 		const { withPerformanceLogging } = await import('../perf')
@@ -44,7 +44,7 @@ describe('withPerformanceLogging', () => {
 		expect(readCacheJitterMeta(result)).toEqual({ cache_jitter_seconds: expected.offsetSeconds })
 	})
 
-	it('can skip numeric getStaticProps revalidate jitter', async () => {
+	test('can skip numeric getStaticProps revalidate jitter', async () => {
 		vi.stubEnv('NEXT_STATIC_REVALIDATE_JITTER_SECONDS', '1200')
 		vi.stubEnv('NEXT_BUILD_ID', 'build-a')
 		const { withPerformanceLogging } = await import('../perf')
@@ -63,7 +63,7 @@ describe('withPerformanceLogging', () => {
 		expect(readCacheJitterMeta(result)).toBeUndefined()
 	})
 
-	it('records Next revalidation reasons on static route telemetry', async () => {
+	test('records Next revalidation reasons on static route telemetry', async () => {
 		vi.stubEnv('OPS_TELEMETRY_URL', 'test-ingest-url')
 		vi.stubEnv('OPS_TELEMETRY_TOKEN', 'secret')
 		vi.stubEnv('OPS_TELEMETRY_BATCH_SIZE', '100')
@@ -99,7 +99,7 @@ describe('withPerformanceLogging', () => {
 		}
 	})
 
-	it('stops retrying transient page build failures once the cumulative budget is exceeded', async () => {
+	test('stops retrying transient page build failures once the cumulative budget is exceeded', async () => {
 		vi.stubEnv('PAGE_BUILD_MAX_RETRIES', '3')
 		vi.stubEnv('PAGE_BUILD_RETRY_BUDGET_MS', '1')
 		const { withPerformanceLogging } = await import('../perf')
@@ -116,7 +116,7 @@ describe('withPerformanceLogging', () => {
 		expect(calls).toBe(1)
 	})
 
-	it('logs final page build failures in development', async () => {
+	test('logs final page build failures in development', async () => {
 		vi.stubEnv('NODE_ENV', 'development')
 		vi.stubEnv('PAGE_BUILD_MAX_RETRIES', '1')
 		const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
@@ -136,7 +136,7 @@ describe('withPerformanceLogging', () => {
 		)
 	})
 
-	it('records route phase timings as route telemetry attributes', async () => {
+	test('records route phase timings as route telemetry attributes', async () => {
 		vi.stubEnv('OPS_TELEMETRY_URL', 'test-ingest-url')
 		vi.stubEnv('OPS_TELEMETRY_TOKEN', 'secret')
 		vi.stubEnv('OPS_TELEMETRY_BATCH_SIZE', '100')

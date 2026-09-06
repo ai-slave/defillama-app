@@ -22,7 +22,7 @@ export function DialogForm({
 		<Ariakit.Dialog
 			open={open}
 			onClose={() => setOpen(false)}
-			modal={true}
+			modal
 			initialFocus={inputRef}
 			className={`${dialogSurfaceStyles} [--dialog-width:480px]`}
 			portal

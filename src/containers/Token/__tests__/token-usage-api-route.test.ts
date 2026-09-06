@@ -1,5 +1,5 @@
 import type { NextApiHandler, NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { fetchWithPoolingOnServerMock, recordRouteRuntimeErrorMock, validateSubscriptionMock } = vi.hoisted(() => ({
@@ -34,7 +34,7 @@ beforeEach(() => {
 })
 
 describe('/api/private/token-usage/[symbol]', () => {
-	it('returns 405 with private no-store for non-GET requests', async () => {
+	test('returns 405 with private no-store for non-GET requests', async () => {
 		const req = { method: 'POST', headers: {}, query: { symbol: 'eth' } } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -48,7 +48,7 @@ describe('/api/private/token-usage/[symbol]', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns auth failures before checking missing symbol params', async () => {
+	test('returns auth failures before checking missing symbol params', async () => {
 		validateSubscriptionMock.mockResolvedValue({
 			valid: false,
 			status: 401,
@@ -66,7 +66,7 @@ describe('/api/private/token-usage/[symbol]', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns 400 for missing symbols after successful auth', async () => {
+	test('returns 400 for missing symbols after successful auth', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -83,7 +83,7 @@ describe('/api/private/token-usage/[symbol]', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns token usage data with private no-store', async () => {
+	test('returns token usage data with private no-store', async () => {
 		const req = {
 			method: 'GET',
 			headers: { authorization: 'Bearer ok' },
@@ -100,7 +100,7 @@ describe('/api/private/token-usage/[symbol]', () => {
 		expect(res.json).toHaveBeenCalledWith({ protocols: ['aave'] })
 	})
 
-	it('passes through upstream error status and status text', async () => {
+	test('passes through upstream error status and status text', async () => {
 		fetchWithPoolingOnServerMock.mockResolvedValue(new Response(null, { status: 404, statusText: 'Not Found' }))
 		const req = {
 			method: 'GET',
@@ -117,7 +117,7 @@ describe('/api/private/token-usage/[symbol]', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Not Found' })
 	})
 
-	it('returns the route-specific 500 body when auth validation throws', async () => {
+	test('returns the route-specific 500 body when auth validation throws', async () => {
 		const error = new Error('Auth service unavailable')
 		validateSubscriptionMock.mockRejectedValue(error)
 		const req = {
@@ -136,7 +136,7 @@ describe('/api/private/token-usage/[symbol]', () => {
 		expect(fetchWithPoolingOnServerMock).not.toHaveBeenCalled()
 	})
 
-	it('returns the route-specific 500 body when fetching token usage throws', async () => {
+	test('returns the route-specific 500 body when fetching token usage throws', async () => {
 		const error = new Error('Upstream unavailable')
 		fetchWithPoolingOnServerMock.mockRejectedValue(error)
 		const req = {

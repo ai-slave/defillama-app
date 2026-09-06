@@ -18,22 +18,22 @@ const encodeSlug = (slug: string): string => encodeURIComponent(slug)
 /**
  * Fetch all tracked NFT collections.
  */
-export async function fetchNftCollections(): Promise<RawNftCollection[]> {
-	return fetchJson<RawNftCollection[]>(`${NFT_SERVER_URL}/collections`, { timeout: 60_000 })
+export async function fetchNftCollections(): Promise<Array<RawNftCollection>> {
+	return fetchJson<Array<RawNftCollection>>(`${NFT_SERVER_URL}/collections`, { timeout: 60_000 })
 }
 
 /**
  * Fetch aggregate NFT volume data.
  */
-export async function fetchNftVolumes(): Promise<RawNftVolume[]> {
-	return fetchJson<RawNftVolume[]>(`${NFT_SERVER_URL}/volume`, { timeout: 60_000 })
+export async function fetchNftVolumes(): Promise<Array<RawNftVolume>> {
+	return fetchJson<Array<RawNftVolume>>(`${NFT_SERVER_URL}/volume`, { timeout: 60_000 })
 }
 
 /**
  * Fetch metadata for a single NFT collection.
  */
-export async function fetchNftCollection(slug: string): Promise<RawCollectionDetail[]> {
-	return fetchJson<RawCollectionDetail[]>(`${NFT_SERVER_URL}/collection/${encodeSlug(slug)}`)
+export async function fetchNftCollection(slug: string): Promise<Array<RawCollectionDetail>> {
+	return fetchJson<Array<RawCollectionDetail>>(`${NFT_SERVER_URL}/collection/${encodeSlug(slug)}`)
 }
 
 /**
@@ -49,43 +49,43 @@ export async function fetchNftCollectionSales(slug: string): Promise<Array<[numb
 /**
  * Fetch current stats for a single NFT collection.
  */
-export async function fetchNftCollectionStats(slug: string): Promise<RawCollectionStats[]> {
-	return fetchJson<RawCollectionStats[]>(`${NFT_SERVER_URL}/stats/${encodeSlug(slug)}`)
+export async function fetchNftCollectionStats(slug: string): Promise<Array<RawCollectionStats>> {
+	return fetchJson<Array<RawCollectionStats>>(`${NFT_SERVER_URL}/stats/${encodeSlug(slug)}`)
 }
 
 /**
  * Fetch floor-price history for a single NFT collection.
  */
-export async function fetchNftCollectionFloorHistory(slug: string): Promise<RawFloorHistoryEntry[]> {
-	return fetchJson<RawFloorHistoryEntry[]>(`${NFT_SERVER_URL}/floorHistory/${encodeSlug(slug)}`)
+export async function fetchNftCollectionFloorHistory(slug: string): Promise<Array<RawFloorHistoryEntry>> {
+	return fetchJson<Array<RawFloorHistoryEntry>>(`${NFT_SERVER_URL}/floorHistory/${encodeSlug(slug)}`)
 }
 
 /**
  * Fetch orderbook entries for a single NFT collection.
  */
-export async function fetchNftCollectionOrderbook(slug: string): Promise<RawOrderbookEntry[]> {
-	return fetchJson<RawOrderbookEntry[]>(`${NFT_SERVER_URL}/orderbook/${encodeSlug(slug)}`)
+export async function fetchNftCollectionOrderbook(slug: string): Promise<Array<RawOrderbookEntry>> {
+	return fetchJson<Array<RawOrderbookEntry>>(`${NFT_SERVER_URL}/orderbook/${encodeSlug(slug)}`)
 }
 
 /**
  * Fetch aggregate stats for NFT marketplaces.
  */
-export async function fetchNftMarketplaceStats(): Promise<RawNftMarketplaceStats[]> {
-	return fetchJson<RawNftMarketplaceStats[]>(`${NFT_SERVER_URL}/exchangeStats`)
+export async function fetchNftMarketplaceStats(): Promise<Array<RawNftMarketplaceStats>> {
+	return fetchJson<Array<RawNftMarketplaceStats>>(`${NFT_SERVER_URL}/exchangeStats`)
 }
 
 /**
  * Fetch trading volume data for NFT marketplaces.
  */
-export async function fetchNftMarketplaceVolumes(): Promise<RawNftMarketplaceVolume[]> {
-	return fetchJson<RawNftMarketplaceVolume[]>(`${NFT_SERVER_URL}/exchangeVolume`, { timeout: 60_000 })
+export async function fetchNftMarketplaceVolumes(): Promise<Array<RawNftMarketplaceVolume>> {
+	return fetchJson<Array<RawNftMarketplaceVolume>>(`${NFT_SERVER_URL}/exchangeVolume`, { timeout: 60_000 })
 }
 
 /**
  * Fetch royalty rates across NFT collections.
  */
-export async function fetchNftRoyalties(): Promise<RawRoyalty[]> {
-	return fetchJson<RawRoyalty[]>(`${NFT_SERVER_URL}/royalties`)
+export async function fetchNftRoyalties(): Promise<Array<RawRoyalty>> {
+	return fetchJson<Array<RawRoyalty>>(`${NFT_SERVER_URL}/royalties`)
 }
 
 /**
@@ -98,13 +98,13 @@ export async function fetchNftRoyaltyHistory(slug: string): Promise<Array<[numbe
 /**
  * Fetch royalty details for a single NFT collection.
  */
-export async function fetchNftRoyalty(slug: string): Promise<RawRoyalty[]> {
-	return fetchJson<RawRoyalty[]>(`${NFT_SERVER_URL}/royalty/${encodeSlug(slug)}`)
+export async function fetchNftRoyalty(slug: string): Promise<Array<RawRoyalty>> {
+	return fetchJson<Array<RawRoyalty>>(`${NFT_SERVER_URL}/royalty/${encodeSlug(slug)}`)
 }
 
 /**
  * Fetch parent-company mappings for NFT projects.
  */
-export async function fetchParentCompanies(): Promise<RawParentCompany[]> {
-	return fetchJson<RawParentCompany[]>('https://api.llama.fi/_internal/nfts/parent-companies')
+export async function fetchParentCompanies(): Promise<Array<RawParentCompany>> {
+	return fetchJson<Array<RawParentCompany>>('https://api.llama.fi/_internal/nfts/parent-companies')
 }

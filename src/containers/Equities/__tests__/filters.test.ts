@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	draftEquityFiltersToActive,
 	filterEquityCompanies,
@@ -60,8 +60,8 @@ function company(overrides: Partial<IEquitiesListCompanyRow>): IEquitiesListComp
 }
 
 describe('filterEquityCompanies', () => {
-	it('applies numeric filters as AND conditions', () => {
-		const filters: EquityActiveFilter[] = [
+	test('applies numeric filters as AND conditions', () => {
+		const filters: Array<EquityActiveFilter> = [
 			{ kind: 'numeric', id: 'marketCap', operator: '>=', value: 10_000_000_000 },
 			{ kind: 'numeric', id: 'trailingPE', operator: '<', value: 20 },
 			{ kind: 'numeric', id: 'holdersYield', operator: '>', value: 3 }
@@ -77,8 +77,8 @@ describe('filterEquityCompanies', () => {
 		expect(filterEquityCompanies(companies, filters).map((row) => row.ticker)).toEqual(['PASS'])
 	})
 
-	it('supports categorical include and exclude filters', () => {
-		const filters: EquityActiveFilter[] = [
+	test('supports categorical include and exclude filters', () => {
+		const filters: Array<EquityActiveFilter> = [
 			{ kind: 'categorical', id: 'sector', mode: 'include', values: ['Technology'] },
 			{ kind: 'categorical', id: 'industry', mode: 'exclude', values: ['Hardware'] }
 		]
@@ -92,16 +92,16 @@ describe('filterEquityCompanies', () => {
 		expect(filterEquityCompanies(companies, filters).map((row) => row.ticker)).toEqual(['SOFT'])
 	})
 
-	it('excludes rows with null numeric values when that metric is filtered', () => {
-		const filters: EquityActiveFilter[] = [{ kind: 'numeric', id: 'trailingPE', operator: '<', value: 20 }]
+	test('excludes rows with null numeric values when that metric is filtered', () => {
+		const filters: Array<EquityActiveFilter> = [{ kind: 'numeric', id: 'trailingPE', operator: '<', value: 20 }]
 
 		const companies = [company({ ticker: 'VALUED', trailingPE: 15 }), company({ ticker: 'MISSING', trailingPE: null })]
 
 		expect(filterEquityCompanies(companies, filters).map((row) => row.ticker)).toEqual(['VALUED'])
 	})
 
-	it('normalizes draft filters into valid applied filters', () => {
-		const filters: EquityDraftFilter[] = [
+	test('normalizes draft filters into valid applied filters', () => {
+		const filters: Array<EquityDraftFilter> = [
 			{ kind: 'numericRange', id: 'marketCap', minValue: 1_000_000_000, maxValue: 500_000_000 },
 			{ kind: 'numericRange', id: 'trailingPE', maxValue: 20 },
 			{ kind: 'categorical', id: 'sector', mode: 'include', values: [] },
@@ -117,8 +117,8 @@ describe('filterEquityCompanies', () => {
 })
 
 describe('equity filter query encoding', () => {
-	it('round-trips active filters through the compact query format', () => {
-		const filters: EquityActiveFilter[] = [
+	test('round-trips active filters through the compact query format', () => {
+		const filters: Array<EquityActiveFilter> = [
 			{ kind: 'categorical', id: 'country', mode: 'include', values: ['US', 'CA'] },
 			{ kind: 'categorical', id: 'sector', mode: 'exclude', values: ['Financial Services'] },
 			{ kind: 'numeric', id: 'marketCap', operator: '>=', value: 10_000_000_000 },
@@ -134,7 +134,7 @@ describe('equity filter query encoding', () => {
 		expect(parseEquityFiltersQuery(query)).toEqual(filters)
 	})
 
-	it('parses repeated filter query params and URL-encoded delimiter characters', () => {
+	test('parses repeated filter query params and URL-encoded delimiter characters', () => {
 		expect(parseEquityFiltersQuery(['country:in:US', 'industry:in:Oil%2C%20Gas%3A%20E%26P;marketCap:gte:10b'])).toEqual(
 			[
 				{ kind: 'categorical', id: 'country', mode: 'include', values: ['US'] },
@@ -144,7 +144,7 @@ describe('equity filter query encoding', () => {
 		)
 	})
 
-	it('ignores invalid query filters and lets later duplicate filters win', () => {
+	test('ignores invalid query filters and lets later duplicate filters win', () => {
 		expect(
 			parseEquityFiltersQuery(
 				[
@@ -163,15 +163,15 @@ describe('equity filter query encoding', () => {
 		])
 	})
 
-	it('keeps duplicate filters in their first position while applying the latest value', () => {
+	test('keeps duplicate filters in their first position while applying the latest value', () => {
 		expect(parseEquityFiltersQuery('trailingPE:gte:1;marketCap:gte:100;trailingPE:lte:50')).toEqual([
 			{ kind: 'numeric', id: 'trailingPE', operator: '<=', value: 50 },
 			{ kind: 'numeric', id: 'marketCap', operator: '>=', value: 100 }
 		])
 	})
 
-	it('round-trips numeric filters that serialize with exponent notation', () => {
-		const filters: EquityActiveFilter[] = [
+	test('round-trips numeric filters that serialize with exponent notation', () => {
+		const filters: Array<EquityActiveFilter> = [
 			{ kind: 'numeric', id: 'currentPrice', operator: '>=', value: 1e-7 },
 			{ kind: 'numericRange', id: 'marketCap', minValue: 1e21, maxValue: 2e21 }
 		]
@@ -179,7 +179,7 @@ describe('equity filter query encoding', () => {
 		expect(parseEquityFiltersQuery(serializeEquityFiltersQuery(filters))).toEqual(filters)
 	})
 
-	it('omits the query param when no filters are active', () => {
+	test('omits the query param when no filters are active', () => {
 		expect(serializeEquityFiltersQuery([])).toBeUndefined()
 		expect(parseEquityFiltersQuery(undefined)).toEqual([])
 	})

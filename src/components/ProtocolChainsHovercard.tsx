@@ -3,7 +3,7 @@ import { Hovercard } from '~/ui/Hovercard'
 
 /** "N chains" label that reveals the full chain list (logo + name per row)
     in a hovercard. Replaces the per-file ProtocolChainsComponent copies. */
-export function ProtocolChainsHovercard({ chains, className }: { chains: string[]; className?: string }) {
+export function ProtocolChainsHovercard({ chains, className }: { chains: Array<string>; className?: string }) {
 	if (chains.length === 0) return null
 
 	return (

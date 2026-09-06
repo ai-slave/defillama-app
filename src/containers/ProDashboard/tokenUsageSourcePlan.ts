@@ -3,20 +3,20 @@ import type { DashboardItemConfig } from './dashboardItemConfig'
 import { getProTokenUsageQueryKey, normalizeProTokenSymbols } from './tableQueryKeys'
 
 export interface TokenUsageSource {
-	tokenSymbols: string[]
+	tokenSymbols: Array<string>
 	includeCex: boolean
 	cacheKey: string
 }
 
 export type TokenUsageStreamData = {
 	key: string
-	data: ProtocolTokenUsageData[]
+	data: Array<ProtocolTokenUsageData>
 }
 
-export function buildTokenUsageSourcePlan(items: DashboardItemConfig[]): TokenUsageSource[] {
+export function buildTokenUsageSourcePlan(items: Array<DashboardItemConfig>): Array<TokenUsageSource> {
 	const sources = new Map<string, TokenUsageSource>()
 	for (const item of items) {
-		if (item.kind !== 'dataset-table' || item.datasetType !== 'token-usage' || !item.tokenSymbols.length) continue
+		if (item.kind !== 'dataset-table' || item.datasetType !== 'token-usage' || item.tokenSymbols.length === 0) continue
 		const config = {
 			tokenSymbols: normalizeProTokenSymbols(item.tokenSymbols),
 			includeCex: item.includeCex

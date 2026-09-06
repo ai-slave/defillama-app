@@ -23,22 +23,22 @@ import type { StoredColSpan } from './colSpan'
 
 /** Snapshot of the shared filter bag read by the original table implementations. */
 export interface UnifiedTableV1Filters {
-	protocols?: string[]
-	tokens?: string[]
-	categories?: string[]
-	excludedCategories?: string[]
-	oracles?: string[]
+	protocols?: Array<string>
+	tokens?: Array<string>
+	categories?: Array<string>
+	excludedCategories?: Array<string>
+	oracles?: Array<string>
 	apyMin?: number
 	apyMax?: number
 	tvlMin?: number
 	tvlMax?: number
 	baseApyMin?: number
 	baseApyMax?: number
-	chains?: string[]
+	chains?: Array<string>
 	hasRewards?: boolean
 	stablesOnly?: boolean
 	activeLending?: boolean
-	poolTypes?: string[]
+	poolTypes?: Array<string>
 	mcapMin?: number
 	mcapMax?: number
 	protocolAgeDaysMin?: number
@@ -141,22 +141,22 @@ export interface UnifiedTableV1Filters {
 
 /** Snapshot of the protocol filters persisted by Unified Table v2 and early v3 configs. */
 export interface PersistedUnifiedTableV3Filters {
-	protocols?: string[]
-	tokens?: string[]
-	categories?: string[]
-	excludedCategories?: string[]
-	oracles?: string[]
+	protocols?: Array<string>
+	tokens?: Array<string>
+	categories?: Array<string>
+	excludedCategories?: Array<string>
+	oracles?: Array<string>
 	apyMin?: number
 	apyMax?: number
 	tvlMin?: number
 	tvlMax?: number
 	baseApyMin?: number
 	baseApyMax?: number
-	chains?: string[]
+	chains?: Array<string>
 	hasRewards?: boolean
 	stablesOnly?: boolean
 	activeLending?: boolean
-	poolTypes?: string[]
+	poolTypes?: Array<string>
 	mcapMin?: number
 	mcapMax?: number
 	protocolAgeDaysMin?: number
@@ -286,12 +286,12 @@ interface PersistedUnifiedTableConfigBase {
 	strategy: 'protocols'
 	rowHeaders: Array<'parent-protocol' | 'protocol' | 'chain' | 'category'>
 	defaultSorting?: Array<{ id: string; desc: boolean }>
-	params?: { chains?: string[]; category?: string | null } | null
-	columnOrder?: string[]
+	params?: { chains?: Array<string>; category?: string | null } | null
+	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
 	activePresetId?: string
 	colSpan?: StoredColSpan
-	customColumns?: PersistedUnifiedTableCustomColumn[]
+	customColumns?: Array<PersistedUnifiedTableCustomColumn>
 }
 
 export interface UnifiedTableV1Config extends PersistedUnifiedTableConfigBase {
@@ -314,19 +314,19 @@ export interface UnversionedUnifiedTableConfig {
 	kind: 'unified-table'
 	rowHeaders: Array<'parent-protocol' | 'protocol' | 'chain' | 'category'>
 	defaultSorting?: Array<{ id: string; desc?: boolean }>
-	params?: { chains?: string[]; category?: string | null } | null
+	params?: { chains?: Array<string>; category?: string | null } | null
 	filters?: UnifiedTableV1Filters
-	columnOrder?: string[]
+	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
 	activePresetId?: string
 	colSpan?: StoredColSpan
-	customColumns?: PersistedUnifiedTableCustomColumn[]
+	customColumns?: Array<PersistedUnifiedTableCustomColumn>
 }
 
 export interface PersistedProtocolTableFilters extends UnifiedTableV1Filters {
 	sortBy?: string
 	sortOrder?: 'asc' | 'desc'
-	tokenSymbols?: string[]
+	tokenSymbols?: Array<string>
 }
 
 interface PersistedProtocolsTableConfigBase {
@@ -334,7 +334,7 @@ interface PersistedProtocolsTableConfigBase {
 	kind: 'table'
 	colSpan?: StoredColSpan
 	filters?: PersistedProtocolTableFilters
-	columnOrder?: string[]
+	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
 	customColumns?: Array<{
 		id: string
@@ -345,13 +345,13 @@ interface PersistedProtocolsTableConfigBase {
 	}>
 	activePresetId?: string
 	datasetChain?: string
-	tokenSymbols?: string[]
+	tokenSymbols?: Array<string>
 	includeCex?: boolean
 }
 
 export interface PersistedProtocolsTableConfig extends PersistedProtocolsTableConfigBase {
 	tableType: 'protocols'
-	chains: string[]
+	chains: Array<string>
 }
 
 export interface ProtocolsTableConfigWithoutTableType extends PersistedProtocolsTableConfigBase {
@@ -411,7 +411,7 @@ export interface PersistedMultiChartConfig {
 	id: string
 	kind: 'multi'
 	name?: string
-	items: PersistedChartConfig[]
+	items: Array<PersistedChartConfig>
 	grouping?: DashboardGrouping
 	colSpan?: StoredColSpan
 	showCumulative?: boolean
@@ -475,7 +475,7 @@ type PersistedJsonValue =
 	| number
 	| boolean
 	| null
-	| PersistedJsonValue[]
+	| Array<PersistedJsonValue>
 	| { [key: string]: PersistedJsonValue }
 
 /** Frozen Chart Builder contract read from saved dashboards; migration produces the current runtime config. */
@@ -510,10 +510,10 @@ export interface PersistedChartBuilderConfig {
 		chainCategoryFilterMode?: 'include' | 'exclude'
 		protocolCategoryFilterMode?: 'include' | 'exclude'
 		protocol?: string
-		chains: string[]
-		chainCategories?: string[]
-		protocolCategories?: string[]
-		categories: string[]
+		chains: Array<string>
+		chainCategories?: Array<string>
+		protocolCategories?: Array<string>
+		categories: Array<string>
 		groupBy: 'protocol'
 		limit: number
 		chartType: 'stackedBar' | 'stackedArea' | 'line' | 'treemap'
@@ -534,13 +534,13 @@ export interface PersistedDatasetTableConfig {
 	kind: 'table'
 	tableType: 'dataset'
 	datasetType?: PersistedDatasetType
-	chains?: string[]
+	chains?: Array<string>
 	colSpan?: StoredColSpan
 	filters?: UnifiedTableV1Filters
-	columnOrder?: string[]
+	columnOrder?: Array<string>
 	columnVisibility?: Record<string, boolean>
 	datasetChain?: string
-	tokenSymbols?: string[]
+	tokenSymbols?: Array<string>
 	includeCex?: boolean
 	cexAnalyticsView?: CexAnalyticsView | 'efficiency'
 	cexAnalyticsMetric?: CexAnalyticsMetric
@@ -560,8 +560,8 @@ export type PersistedProtocolMetricDatasetType =
 	| 'bridge-aggregators'
 
 export interface PersistedProtocolMetricDatasetFilters {
-	categories?: string[]
-	excludedCategories?: string[]
+	categories?: Array<string>
+	excludedCategories?: Array<string>
 }
 
 type PersistedFilterableProtocolMetricDatasetType = 'revenue' | 'holders-revenue' | 'earnings'
@@ -575,7 +575,7 @@ export type PersistedProtocolMetricDatasetTableConfig = {
 		id: string
 		kind: 'dataset-table'
 		datasetType: DatasetType
-		chains: string[]
+		chains: Array<string>
 		colSpan?: StoredColSpan
 	} & (DatasetType extends PersistedFilterableProtocolMetricDatasetType
 		? { filters?: PersistedProtocolMetricDatasetFilters }
@@ -616,18 +616,18 @@ export interface PersistedDashboard {
 	slug?: string
 	user?: string
 	data: {
-		items: PersistedDashboardItemConfig[]
+		items: Array<PersistedDashboardItemConfig>
 		dashboardName: string
 		timePeriod?: TimePeriod
 		customTimePeriod?: CustomTimePeriod | null
 		aiUndoState?: {
-			items: PersistedDashboardItemConfig[]
+			items: Array<PersistedDashboardItemConfig>
 			timestamp: string
 			sessionId: string
 		} | null
 	}
 	visibility?: 'private' | 'public'
-	tags?: string[]
+	tags?: Array<string>
 	description?: string
 	viewCount?: number
 	likeCount?: number

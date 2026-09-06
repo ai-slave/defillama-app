@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptHBarChartData } from '~/containers/LlamaAI/utils/chartAdapters/hbar'
 import { buildExportModel } from '~/containers/LlamaAI/utils/chartExportModel'
 
 describe('chartExportModel', () => {
-	it('exports every grouped horizontal-bar series as its own CSV column', () => {
+	test('exports every grouped horizontal-bar series as its own CSV column', () => {
 		const config = {
 			id: 'market-rates',
 			type: 'hbar',

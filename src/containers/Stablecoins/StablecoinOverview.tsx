@@ -81,7 +81,7 @@ const ASSET_CHART_MODE = { page: 'asset' } as const
 const ASSET_CHART_TYPE_OPTIONS = getStablecoinChartTypeOptions(ASSET_CHART_MODE)
 const UNRELEASED_QUERY_KEY = 'unreleased'
 const INFO_ACTION_STYLES = buttonStyles({ size: 'md' })
-const EMPTY_SERIES: string[] = []
+const EMPTY_SERIES: Array<string> = []
 const EMPTY_RUNTIME_SERIES = {
 	selectableSeries: EMPTY_SERIES,
 	defaultSeries: EMPTY_SERIES,
@@ -100,7 +100,7 @@ export default function PeggedContainer(props: PeggedAssetPageProps) {
 	return (
 		<>
 			<LinkPreviewCard
-				stablePage={true}
+				stablePage
 				cardName={props.peggedAssetData.name}
 				token={props.peggedAssetData.name}
 				logo={peggedAssetIconUrl(props.peggedAssetData.name)}
@@ -206,10 +206,10 @@ export const PeggedAssetInfo = ({
 	const onUnreleasedToggle = React.useCallback(() => {
 		const nextValue = !includeUnreleased
 		setIncludeUnreleased(nextValue)
-		const nextQuery: Record<string, string | string[]> = {}
+		const nextQuery: Record<string, string | Array<string>> = {}
 		for (const key in router.query) {
 			const value = router.query[key]
-			if (typeof value === 'undefined' || key === UNRELEASED_QUERY_KEY) continue
+			if (value === undefined || key === UNRELEASED_QUERY_KEY) continue
 			if (typeof value === 'string' || Array.isArray(value)) nextQuery[key] = value
 		}
 		if (nextValue) nextQuery[UNRELEASED_QUERY_KEY] = 'true'

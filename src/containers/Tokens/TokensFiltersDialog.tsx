@@ -32,7 +32,7 @@ interface TokensDraftFilter {
 	maxInput: string
 }
 
-function activeFiltersToDraft(filters: TokensActiveFilter[]): TokensDraftFilter[] {
+function activeFiltersToDraft(filters: Array<TokensActiveFilter>): Array<TokensDraftFilter> {
 	return filters.map((filter) => ({
 		id: filter.id,
 		minInput: filter.min != null ? String(filter.min) : '',
@@ -40,8 +40,8 @@ function activeFiltersToDraft(filters: TokensActiveFilter[]): TokensDraftFilter[
 	}))
 }
 
-function draftFiltersToActive(drafts: TokensDraftFilter[]): TokensActiveFilter[] {
-	const filters: TokensActiveFilter[] = []
+function draftFiltersToActive(drafts: Array<TokensDraftFilter>): Array<TokensActiveFilter> {
+	const filters: Array<TokensActiveFilter> = []
 	for (const draft of drafts) {
 		const min = parseEquityFilterNumber(draft.minInput) ?? null
 		const max = parseEquityFilterNumber(draft.maxInput) ?? null
@@ -132,12 +132,12 @@ export function TokensFiltersDialog({
 	filters,
 	onFiltersChange
 }: {
-	filters: TokensActiveFilter[]
-	onFiltersChange: (filters: TokensActiveFilter[]) => void
+	filters: Array<TokensActiveFilter>
+	onFiltersChange: (filters: Array<TokensActiveFilter>) => void
 }) {
 	const [open, setOpen] = useState(false)
 	const [search, setSearch] = useState('')
-	const [draftFilters, setDraftFilters] = useState<TokensDraftFilter[]>(() => activeFiltersToDraft(filters))
+	const [draftFilters, setDraftFilters] = useState<Array<TokensDraftFilter>>(() => activeFiltersToDraft(filters))
 	const isSmallScreen = useMedia('(max-width: 639px)')
 
 	const handleOpenChange = (nextOpen: boolean) => {
@@ -164,7 +164,7 @@ export function TokensFiltersDialog({
 	const groupedAvailableFilters = useMemo(() => {
 		const activeIds = new Set(draftFilters.map((draft) => draft.id))
 		const normalizedSearch = search.trim().toLowerCase()
-		const groups = new Map<TokensFilterCategory, TokensFilterConfig[]>()
+		const groups = new Map<TokensFilterCategory, Array<TokensFilterConfig>>()
 		for (const category of TOKENS_FILTER_CATEGORIES) {
 			groups.set(category.key, [])
 		}
@@ -332,7 +332,7 @@ export function TokensActiveFilterPills({
 	filters,
 	onRemove
 }: {
-	filters: TokensActiveFilter[]
+	filters: Array<TokensActiveFilter>
 	onRemove: (id: TokensFilterField) => void
 }) {
 	if (filters.length === 0) return null

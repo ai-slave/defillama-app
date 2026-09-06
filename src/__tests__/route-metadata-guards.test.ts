@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
@@ -240,7 +240,7 @@ beforeEach(() => {
 })
 
 describe('route metadata guards', () => {
-	it('chain cache API returns 404 before cache lookup or heavy fetch for invalid chains', async () => {
+	test('chain cache API returns 404 before cache lookup or heavy fetch for invalid chains', async () => {
 		const res = createMockNextApiResponse()
 
 		await chainCacheHandler({ query: { chain: 'bad-chain' } } as unknown as NextApiRequest, res)
@@ -250,7 +250,7 @@ describe('route metadata guards', () => {
 		expect(fetchChainMock).not.toHaveBeenCalled()
 	})
 
-	it('chain cache API canonicalizes valid chain params for cache and fetch', async () => {
+	test('chain cache API canonicalizes valid chain params for cache and fetch', async () => {
 		const res = createMockNextApiResponse()
 
 		await chainCacheHandler({ query: { chain: 'eThEReum' } } as unknown as NextApiRequest, res)
@@ -261,7 +261,7 @@ describe('route metadata guards', () => {
 		expect(res.send).toHaveBeenCalledWith(JSON.stringify({ chainOverviewData: null }))
 	})
 
-	it('chain cache API returns cached canonical responses without fetching', async () => {
+	test('chain cache API returns cached canonical responses without fetching', async () => {
 		const res = createMockNextApiResponse()
 		metadataCache.chainMetadata.polygon = { name: 'Polygon', id: 'polygon' }
 		metadataCache.chainRouteKeyBySlug.polygon = 'polygon'
@@ -276,7 +276,7 @@ describe('route metadata guards', () => {
 		expect(setObjectCacheMock).not.toHaveBeenCalled()
 	})
 
-	it('chain cache API unwraps legacy object-cache entries', async () => {
+	test('chain cache API unwraps legacy object-cache entries', async () => {
 		const res = createMockNextApiResponse()
 		metadataCache.chainMetadata.arbitrum = { name: 'Arbitrum', id: 'arbitrum' }
 		metadataCache.chainRouteKeyBySlug.arbitrum = 'arbitrum'
@@ -291,14 +291,14 @@ describe('route metadata guards', () => {
 		expect(setObjectCacheMock).not.toHaveBeenCalled()
 	})
 
-	it('narrative category route returns notFound before performance fetch for indexed invalid ids', async () => {
+	test('narrative category route returns notFound before performance fetch for indexed invalid ids', async () => {
 		await expect(narrativePage.getStaticProps({ params: { category: 'bad' } } as never)).resolves.toEqual({
 			notFound: true
 		})
 		expect(getCoinPerformanceMock).not.toHaveBeenCalled()
 	})
 
-	it('narrative getStaticPaths uses cached category ids when available', async () => {
+	test('narrative getStaticPaths uses cached category ids when available', async () => {
 		await expect(narrativePage.getStaticPaths()).resolves.toEqual({
 			paths: [{ params: { category: 'ai' } }],
 			fallback: 'blocking'
@@ -306,7 +306,7 @@ describe('route metadata guards', () => {
 		expect(getCategoryInfoMock).not.toHaveBeenCalled()
 	})
 
-	it('oracle routes return notFound before page-data fetches for invalid params', async () => {
+	test('oracle routes return notFound before page-data fetches for invalid params', async () => {
 		await expect(oraclePage.getStaticProps({ params: { oracle: 'bad' } } as never)).resolves.toEqual({
 			notFound: true
 		})
@@ -320,7 +320,7 @@ describe('route metadata guards', () => {
 		expect(getOraclesListPageDataMock).not.toHaveBeenCalled()
 	})
 
-	it('oracle routes resolve indexed slugs to canonical names', async () => {
+	test('oracle routes resolve indexed slugs to canonical names', async () => {
 		await oraclePage.getStaticProps({ params: { oracle: 'chainlink' } } as never)
 		await oracleChainPage.getStaticProps({ params: { oracle: 'chainlink', chain: 'ethereum' } } as never)
 		await oraclesByChainPage.getStaticProps({ params: { chain: 'ethereum' } } as never)
@@ -330,7 +330,7 @@ describe('route metadata guards', () => {
 		expect(getOraclesListPageDataMock).toHaveBeenCalledWith({ chain: 'Ethereum' })
 	})
 
-	it('DAT routes return notFound before data fetches for indexed invalid slugs', async () => {
+	test('DAT routes return notFound before data fetches for indexed invalid slugs', async () => {
 		await expect(datAssetPage.getStaticProps({ params: { asset: 'bad' } } as never)).resolves.toEqual({
 			notFound: true
 		})
@@ -341,7 +341,7 @@ describe('route metadata guards', () => {
 		expect(getDATCompanyDataMock).not.toHaveBeenCalled()
 	})
 
-	it('DAT routes redirect noncanonical params before data fetches', async () => {
+	test('DAT routes redirect noncanonical params before data fetches', async () => {
 		await expect(datAssetPage.getStaticProps({ params: { asset: 'Bitcoin' } } as never)).resolves.toEqual({
 			redirect: {
 				destination: '/digital-asset-treasuries/bitcoin',
@@ -358,7 +358,7 @@ describe('route metadata guards', () => {
 		expect(getDATCompanyDataMock).not.toHaveBeenCalled()
 	})
 
-	it('DAT company route does not redirect away from the metadata slug when detail ticker differs', async () => {
+	test('DAT company route does not redirect away from the metadata slug when detail ticker differs', async () => {
 		getDATCompanyDataMock.mockResolvedValueOnce({ name: 'Strategy', ticker: 'MSTR.US' })
 
 		const result = await datCompanyPage.getStaticProps({ params: { company: 'MSTR' } } as never)
@@ -374,7 +374,7 @@ describe('route metadata guards', () => {
 		expect(getDATCompanyDataMock).toHaveBeenCalledWith('mstr')
 	})
 
-	it('DAT getStaticPaths uses blocking fallback so canonical redirects can run', async () => {
+	test('DAT getStaticPaths uses blocking fallback so canonical redirects can run', async () => {
 		metadataCache.digitalAssetTreasuryRoutes = {
 			assetSlugs: Array.from({ length: 12 }, (_, index) => `asset-${index + 1}`),
 			companySlugs: Array.from({ length: 12 }, (_, index) => `COMPANY-${index + 1}`)
@@ -393,7 +393,7 @@ describe('route metadata guards', () => {
 		})
 	})
 
-	it('protocol route redirects noncanonical aliases before page data fetches', async () => {
+	test('protocol route redirects noncanonical aliases before page data fetches', async () => {
 		await expect(protocolPage.getStaticProps({ params: { protocol: 'aave-v3' } } as never)).resolves.toEqual({
 			redirect: {
 				destination: '/protocol/aave',
@@ -404,7 +404,7 @@ describe('route metadata guards', () => {
 		expect(fetchEntityQuestionsMock).not.toHaveBeenCalled()
 	})
 
-	it('protocol route keeps structural CEX redirects permanent', async () => {
+	test('protocol route keeps structural CEX redirects permanent', async () => {
 		metadataCache.protocolMetadata.binance = {
 			name: 'binance-cex',
 			displayName: 'Binance CEX',
@@ -425,7 +425,7 @@ describe('route metadata guards', () => {
 		expect(fetchEntityQuestionsMock).not.toHaveBeenCalled()
 	})
 
-	it('chain route resolver redirects valid case aliases to the canonical display slug', () => {
+	test('chain route resolver redirects valid case aliases to the canonical display slug', () => {
 		const chainRoute = resolveChainParamFromMetadata('Ethereum', metadataCache)
 
 		expect(chainRoute?.canonicalSlug).toBe('ethereum')
@@ -434,7 +434,7 @@ describe('route metadata guards', () => {
 		expect(getChainRouteRedirectDestination('ethereum', chainRoute, 'chain')).toBe(null)
 	})
 
-	it('protocol feature resolver redirects valid aliases and preserves CEX feature redirects', () => {
+	test('protocol feature resolver redirects valid aliases and preserves CEX feature redirects', () => {
 		metadataCache.protocolMetadata.binance = {
 			name: 'binance-cex',
 			displayName: 'Binance CEX',
@@ -479,14 +479,14 @@ describe('route metadata guards', () => {
 		).toBe(null)
 	})
 
-	it('stablecoin route returns notFound before data fetch for indexed invalid slugs', async () => {
+	test('stablecoin route returns notFound before data fetch for indexed invalid slugs', async () => {
 		await expect(stablecoinPage.getStaticProps({ params: { peggedasset: 'bad' } } as never)).resolves.toEqual({
 			notFound: true
 		})
 		expect(getStablecoinAssetPageDataMock).not.toHaveBeenCalled()
 	})
 
-	it('stablecoin getStaticPaths uses cached slugs while preserving one pre-rendered path', async () => {
+	test('stablecoin getStaticPaths uses cached slugs while preserving one pre-rendered path', async () => {
 		metadataCache.stablecoinPeggedAssetSlugs = ['tether', 'usd-coin']
 
 		await expect(stablecoinPage.getStaticPaths({} as never)).resolves.toEqual({

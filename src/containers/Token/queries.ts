@@ -43,7 +43,7 @@ export function downgradeTokenPageDataError<T>(
 	return fallback
 }
 
-function getBorrowRouteChainList(rows: RouteTableRow[]): string[] {
+function getBorrowRouteChainList(rows: Array<RouteTableRow>): Array<string> {
 	const chains = new Set<string>()
 	for (const row of rows) {
 		const chain = row.chains[0]
@@ -52,7 +52,10 @@ function getBorrowRouteChainList(rows: RouteTableRow[]): string[] {
 	return Array.from(chains).toSorted()
 }
 
-export function buildInitialYieldsSnapshot(yieldsRows: IYieldTableRow[], tokenKeys: string[]): TokenYieldsHydration {
+export function buildInitialYieldsSnapshot(
+	yieldsRows: Array<IYieldTableRow>,
+	tokenKeys: Array<string>
+): TokenYieldsHydration {
 	const chainList = new Set<string>()
 	for (const row of yieldsRows) {
 		const chain = row.chains[0]
@@ -70,7 +73,7 @@ export function buildInitialYieldsSnapshot(yieldsRows: IYieldTableRow[], tokenKe
 
 export function buildInitialBorrowRoutesSnapshot(
 	routes: TokenBorrowRoutesData | null,
-	tokenKeys: string[]
+	tokenKeys: Array<string>
 ): TokenBorrowRoutesHydration | null {
 	if (!routes) return null
 
@@ -118,8 +121,8 @@ export function getTokenPageSections({
 	borrowRoutesSnapshot: ReturnType<typeof buildInitialBorrowRoutesSnapshot>
 	issuer: TokenIssuer | null
 	overview: TokenOverviewData
-}): TokenPageSection[] {
-	const sections: TokenPageSection[] = [
+}): Array<TokenPageSection> {
+	const sections: Array<TokenPageSection> = [
 		{
 			id: 'token-overview',
 			label: 'Overview',

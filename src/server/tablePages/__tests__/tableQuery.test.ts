@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	canonicalQuerySignature,
 	defineTableQuery,
@@ -10,7 +10,7 @@ import {
 } from '../tableQuery'
 
 describe('canonicalQuerySignature', () => {
-	it('signs identically across key order and excluded paging params', () => {
+	test('signs identically across key order and excluded paging params', () => {
 		const a = canonicalQuerySignature(
 			{ chain: ['Base', 'Ethereum'], minApy: '5', page: '3', pageSize: '50' },
 			{ exclude: ['page', 'pageSize'] }
@@ -22,13 +22,13 @@ describe('canonicalQuerySignature', () => {
 		expect(a).toBe(b)
 	})
 
-	it('keeps repeated-value order significant - parsers may read only the first value', () => {
+	test('keeps repeated-value order significant - parsers may read only the first value', () => {
 		const tvlFirst = canonicalQuerySignature({ sortBy: ['tvl', 'apy'] }, { exclude: [] })
 		const apyFirst = canonicalQuerySignature({ sortBy: ['apy', 'tvl'] }, { exclude: [] })
 		expect(tvlFirst).not.toBe(apyFirst)
 	})
 
-	it('distinguishes real filter differences; absent params drop but empty strings sign', () => {
+	test('distinguishes real filter differences; absent params drop but empty strings sign', () => {
 		const base = canonicalQuerySignature({ minApy: '5' }, { exclude: [] })
 		expect(canonicalQuerySignature({ minApy: '7' }, { exclude: [] })).not.toBe(base)
 		expect(canonicalQuerySignature({ minApy: '5', chain: undefined }, { exclude: [] })).toBe(base)
@@ -47,7 +47,7 @@ type Query = {
 	sort: (typeof SORT_KEYS)[number]
 	order: 'asc' | 'desc'
 	customSort: { formula: string; formatType: string } | null
-	tvlKeys: string[]
+	tvlKeys: Array<string>
 }
 
 const schema = defineTableQuery<Query>({
@@ -74,7 +74,7 @@ const schema = defineTableQuery<Query>({
 const DEFAULTS: Query = { search: '', minTvl: null, sort: 'tvl', order: 'desc', customSort: null, tvlKeys: [] }
 
 describe('defineTableQuery', () => {
-	it('coerces missing fields to declared defaults and keeps valid values', () => {
+	test('coerces missing fields to declared defaults and keeps valid values', () => {
 		expect(schema.normalize({})).toEqual(DEFAULTS)
 		expect(
 			schema.normalize({
@@ -94,18 +94,18 @@ describe('defineTableQuery', () => {
 		})
 	})
 
-	it('rejects malformed values and unsatisfied cross-field rules', () => {
+	test('rejects malformed values and unsatisfied cross-field rules', () => {
 		expect(schema.normalize({ minTvl: '100' })).toBeNull()
 		expect(schema.normalize({ sort: 'unknown' })).toBeNull()
 		expect(schema.normalize({ sort: 'custom' })).toBeNull()
 		expect(schema.normalize({ sort: 'custom', customSort: { formula: '' } })).toBeNull()
 	})
 
-	it('drops customSort when the sort is not custom', () => {
+	test('drops customSort when the sort is not custom', () => {
 		expect(schema.normalize({ sort: 'tvl', customSort: { formula: 'x', formatType: 'number' } })).toEqual(DEFAULTS)
 	})
 
-	it('signs caller-built queries through refine, matching their normalized form', () => {
+	test('signs caller-built queries through refine, matching their normalized form', () => {
 		// A hand-built query that violates the cross-field rule (customSort set
 		// while sort is not custom) must sign identically to the normalized query.
 		const raw = { ...DEFAULTS, customSort: { formula: 'x', formatType: 'number' } } as Query
@@ -115,14 +115,14 @@ describe('defineTableQuery', () => {
 		)
 	})
 
-	it('signature ignores undeclared keys and canonicalizes declared ones', () => {
+	test('signature ignores undeclared keys and canonicalizes declared ones', () => {
 		const withUiState = { ...DEFAULTS, metric: 'Fees', period: '7d' } as Query
 		expect(schema.signature(withUiState)).toBe(schema.signature(DEFAULTS))
 		expect(schema.signature({ ...DEFAULTS, search: '  UNI ' })).toBe(schema.signature({ ...DEFAULTS, search: 'uni' }))
 		expect(schema.signature({ ...DEFAULTS, minTvl: 5 })).not.toBe(schema.signature(DEFAULTS))
 	})
 
-	it('is stable across field declaration order, not input order', () => {
+	test('is stable across field declaration order, not input order', () => {
 		const a = schema.normalize({ minTvl: 1, search: 'a' })
 		const b = schema.normalize({ search: 'a', minTvl: 1 })
 		expect(a && schema.signature(a)).toBe(b && schema.signature(b))

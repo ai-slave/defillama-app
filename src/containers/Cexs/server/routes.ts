@@ -31,7 +31,7 @@ export function resolveCexParamFromMetadata(cex: string, metadataCache: Metadata
 	}
 }
 
-export function getCanonicalCexSlugsFromMetadata(metadataCache: MetadataCache): string[] {
+export function getCanonicalCexSlugsFromMetadata(metadataCache: MetadataCache): Array<string> {
 	const slugs = new Set<string>()
 	for (const protocolId in metadataCache.protocolMetadata) {
 		const metadata = metadataCache.protocolMetadata[protocolId]
@@ -47,7 +47,7 @@ export async function getCexStaticPaths(limit = 10): Promise<Array<StaticParamPa
 		.map((cex) => ({ params: { cex } }))
 }
 
-export function getCexSitemapRoutes(metadataCache: MetadataCache): string[] {
+export function getCexSitemapRoutes(metadataCache: MetadataCache): Array<string> {
 	const routes = new Set<string>()
 	const cexSlugs = getCanonicalCexSlugsFromMetadata(metadataCache)
 

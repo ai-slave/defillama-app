@@ -25,7 +25,7 @@ type TreemapFormatterParams = {
 	name?: unknown
 }
 
-type CanonicalTreemapSeriesOption = Omit<TreemapSeriesOption, 'data'> & { data: TreemapNode[] }
+type CanonicalTreemapSeriesOption = Omit<TreemapSeriesOption, 'data'> & { data: Array<TreemapNode> }
 type TreemapOption = ComposeOption<
 	CanonicalTreemapSeriesOption | GraphicComponentOption | ToolboxComponentOption | TooltipComponentOption
 >
@@ -136,7 +136,7 @@ function TreemapChart({
 					if (!isTreemapFormatterParams(rawInfo)) return ''
 					const info = rawInfo
 					const treePathInfo = Array.isArray(info.treePathInfo) ? info.treePathInfo : []
-					const treePath: string[] = []
+					const treePath: Array<string> = []
 					for (let i = 1; i < treePathInfo.length; i++) {
 						const name = treePathInfo[i]!.name
 						if (typeof name === 'string') treePath.push(name)
@@ -149,9 +149,8 @@ function TreemapChart({
 								`Return: ${formatPercent(info.value[1], { input: 'percent' })}<br>`,
 								`Market Cap: ${formatUsd(info.value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
 							].join('')
-						} else {
-							return ''
 						}
+						return ''
 					}
 
 					return formatRwaTreemapTooltip({

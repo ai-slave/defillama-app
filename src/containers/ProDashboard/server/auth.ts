@@ -1,4 +1,4 @@
-import type { IncomingMessage } from 'http'
+import type { IncomingMessage } from 'node:http'
 import { POCKETBASE_URL } from '~/constants'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 

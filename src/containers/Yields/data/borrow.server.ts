@@ -41,7 +41,7 @@ export function deriveBorrowCapacityFilled(
 }
 
 // Non-empty reward-token symbols for a leg (drops nullish/blank symbols).
-function tokenSymbols(tokens: Token[] | null | undefined): string[] {
+function tokenSymbols(tokens: Array<Token> | null | undefined): Array<string> {
 	return (tokens ?? []).map((token) => token.symbol ?? '').filter(Boolean)
 }
 
@@ -49,7 +49,7 @@ type MarketSortKey = 'available_borrow' | 'total_borrow' | 'supply_apy' | 'borro
 type RouteSortKey = 'net_apy' | 'available_borrow' | 'total_borrow' | 'supply_apy' | 'borrow_apy' | 'ltv'
 
 // Map an enriched borrow-market row to the flat markets-table row.
-function toMarketTableRow(row: EnrichedMarketRow, window: ApyWindow, components: ApyComponent[]): MarketTableRow {
+function toMarketTableRow(row: EnrichedMarketRow, window: ApyWindow, components: Array<ApyComponent>): MarketTableRow {
 	const label = row.display.label ?? row.collateral_token?.symbol ?? ''
 	// Resolve both legs once so totals + per-leg components come from the same view.
 	const supply = resolveApy(row.supply_apy, row.intrinsic.supply, window, components)
@@ -92,7 +92,7 @@ function toMarketTableRow(row: EnrichedMarketRow, window: ApyWindow, components:
 }
 
 // Map an enriched route (collateral → borrow leg pair) to the flat routes-table row.
-function toRouteTableRow(row: EnrichedRouteRow, window: ApyWindow, components: ApyComponent[]): RouteTableRow {
+function toRouteTableRow(row: EnrichedRouteRow, window: ApyWindow, components: Array<ApyComponent>): RouteTableRow {
 	const collateralSymbol = row.collateral.token?.symbol ?? null
 	const borrowSymbol = row.borrow.token?.symbol ?? null
 	// Resolve both legs once so totals + per-leg components come from the same view.
@@ -139,7 +139,7 @@ function toRouteTableRow(row: EnrichedRouteRow, window: ApyWindow, components: A
 function decorateRouteTableRow(
 	row: EnrichedRouteRow,
 	window: ApyWindow,
-	components: ApyComponent[],
+	components: Array<ApyComponent>,
 	depegByPool: Map<string, DepegRow>,
 	raiseValuationsUsd: Map<string, number>,
 	referralUrls: Map<string, string>,
@@ -193,7 +193,7 @@ export async function getBorrowMarketsPage(
 	return sliceYieldsPage(prepared, query)
 }
 
-async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQuery): Promise<MarketTableRow[]> {
+async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQuery): Promise<Array<MarketTableRow>> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -215,7 +215,7 @@ async function buildPreparedBorrowMarkets(snapshot: YieldsSnapshot, query: ApiQu
 	const minAvailable = parseNumber(query, 'minAvailable')
 	const maxAvailable = parseNumber(query, 'maxAvailable')
 
-	const pageRows: MarketTableRow[] = []
+	const pageRows: Array<MarketTableRow> = []
 	for (const row of rows) {
 		if (common.chains && !common.chains.has(row.chain)) continue
 		if (common.projects && !common.projects.has(row.protocol)) continue
@@ -276,7 +276,7 @@ export async function getBorrowRoutesPage(
 	return sliceYieldsPage(prepared, query)
 }
 
-async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQuery): Promise<RouteTableRow[]> {
+async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQuery): Promise<Array<RouteTableRow>> {
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -298,7 +298,7 @@ async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQue
 	const minAvailable = parseNumber(query, 'minAvailable')
 	const maxAvailable = parseNumber(query, 'maxAvailable')
 
-	const pageRows: RouteTableRow[] = []
+	const pageRows: Array<RouteTableRow> = []
 	for (const row of rows) {
 		if (common.chains && !common.chains.has(row.chain)) continue
 		if (common.projects && !common.projects.has(row.protocol)) continue
@@ -325,7 +325,7 @@ async function buildPreparedBorrowRoutes(snapshot: YieldsSnapshot, query: ApiQue
 	})
 }
 
-export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, tokenKeys: string[]) {
+export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, tokenKeys: Array<string>) {
 	const [rows, depegs, raiseValuationsUsd, referralUrls, riskCovered] = await Promise.all([
 		getEnrichedRoutes(snapshot),
 		readYieldsDepegs(snapshot),
@@ -340,8 +340,8 @@ export async function getBorrowRoutesForTokenKeys(snapshot: YieldsSnapshot, toke
 		? null
 		: new Set((await readYieldsMeta(snapshot)).meme_pool_ids)
 	const matchesToken = createTokensMatcher(tokenKeys)
-	const useAsCollateral: RouteTableRow[] = []
-	const borrowThis: RouteTableRow[] = []
+	const useAsCollateral: Array<RouteTableRow> = []
+	const borrowThis: Array<RouteTableRow> = []
 
 	for (const row of rows) {
 		if (memePoolIds && (memePoolIds.has(row.collateral.id) || memePoolIds.has(row.borrow.id))) continue

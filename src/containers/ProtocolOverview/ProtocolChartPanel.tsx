@@ -108,7 +108,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const { finalCharts, valueSymbol, loadingCharts, failedMetrics } = useFetchProtocolChartData({
 		...props,
 		toggledMetrics,
-		groupBy: groupBy,
+		groupBy,
 		tvlSettings
 	})
 	const chartRenderModel = useMemo(
@@ -142,8 +142,8 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const isClient = useIsClient()
 	const shouldShowEnabledEventsChip = toggledMetrics.events === 'true'
 
-	const allMetricOptions = useMemo<ProtocolMetricOption[]>(() => {
-		const options: ProtocolMetricOption[] = props.availableCharts.map((chart) => ({
+	const allMetricOptions = useMemo<Array<ProtocolMetricOption>>(() => {
+		const options: Array<ProtocolMetricOption> = props.availableCharts.map((chart) => ({
 			id: chart,
 			label: getProtocolMetricLabel(chart, props.token?.symbol),
 			active: toggledMetrics[protocolCharts[chart]] === 'true',
@@ -175,7 +175,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 	const categoryByMetric = PROTOCOL_CATEGORY_BY_METRIC
 
 	const groupedFilteredOptions = useMemo(() => {
-		const groups: Record<ProtocolChartCategory | 'Annotations' | 'Other', ProtocolMetricOption[]> = {
+		const groups: Record<ProtocolChartCategory | 'Annotations' | 'Other', Array<ProtocolMetricOption>> = {
 			Core: [],
 			Token: [],
 			Revenue: [],
@@ -388,7 +388,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 						<input
 							type="checkbox"
 							value={tchart}
-							checked={true}
+							checked
 							onChange={() => {
 								void pushShallowQuery(router, {
 									[protocolCharts[tchart]]: getQueryValueOnRemove(defaultEnabledCharts[tchart] === true) ?? undefined
@@ -418,7 +418,7 @@ export function ProtocolChartPanel(props: IProtocolOverviewPageData) {
 						<input
 							type="checkbox"
 							value="events"
-							checked={true}
+							checked
 							onChange={() => {
 								void pushShallowQuery(router, {
 									events: toggledMetrics.events === 'true' ? (getQueryValueOnRemove(true) ?? undefined) : 'true'

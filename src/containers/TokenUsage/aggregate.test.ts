@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { aggregateProtocolTokenUsage } from './aggregate'
 
 describe('aggregateProtocolTokenUsage', () => {
-	it('aggregates chain values and repeated protocol rows without allocating chain breakdowns', () => {
+	test('aggregates chain values and repeated protocol rows without allocating chain breakdowns', () => {
 		const result = aggregateProtocolTokenUsage(
 			[
 				{
@@ -32,7 +32,7 @@ describe('aggregateProtocolTokenUsage', () => {
 		expect(result[0]).not.toHaveProperty('amountUsdByChain')
 	})
 
-	it('skips misleading token data and filters CEX rows before aggregation', () => {
+	test('skips misleading token data and filters CEX rows before aggregation', () => {
 		const response = [
 			{
 				symbol: 'USDC',
@@ -55,7 +55,7 @@ describe('aggregateProtocolTokenUsage', () => {
 		])
 	})
 
-	it('preserves one-through-four-token totals and protocol encounter order', () => {
+	test('preserves one-through-four-token totals and protocol encounter order', () => {
 		const symbols = ['USDC', 'USDT', 'DAI', 'FRAX']
 		const responses = symbols.map((symbol, tokenIndex) => ({
 			symbol,

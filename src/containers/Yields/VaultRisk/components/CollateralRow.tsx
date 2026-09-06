@@ -20,7 +20,7 @@ const DETAIL_LABEL = 'label-md text-primary'
 // Proven feed vendor(s), or the honest gap ("no live feed") on a hardcoded oracle.
 function oracleVendorLabel(c: CollateralVM): string | null {
 	const provs = [...new Set(c.oracleProviders.filter(isProvenVendor))]
-	if (provs.length) return provs.join(' / ')
+	if (provs.length > 0) return provs.join(' / ')
 	if (c.oracleType === 'hardcoded') return 'no live feed'
 	return null
 }
@@ -64,7 +64,7 @@ function legSide(slot: string): string {
 
 // The resolved on-chain legs the oracle reads, in order. `kind` is a classification, not a
 // severity, so its chip stays neutral.
-function OracleLegs({ legs }: { legs: OracleLeg[] }) {
+function OracleLegs({ legs }: { legs: Array<OracleLeg> }) {
 	return (
 		<div className="flex flex-col gap-1">
 			{legs.map((leg, i) => {
@@ -218,11 +218,12 @@ function DepegWhatIf({
 			? poolLoss * Math.min(1, position / supplyUsd)
 			: null
 	const capUsd = c.allocationUsd ?? c.badDebtAtZeroUsd ?? 0
-	const method = c.badDebtMarkets.length
-		? `Uses ${c.badDebtMarkets.length} market LLTV curve${c.badDebtMarkets.length === 1 ? '' : 's'}`
-		: c.borrowedDebtUsd != null && c.liquidationThreshold != null
-			? `Uses borrowed debt ${formatUsd(c.borrowedDebtUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} and liquidation threshold ${Math.round(c.liquidationThreshold * 100)}%`
-			: 'Uses modeled all-to-zero bad-debt ceiling'
+	const method =
+		c.badDebtMarkets.length > 0
+			? `Uses ${c.badDebtMarkets.length} market LLTV curve${c.badDebtMarkets.length === 1 ? '' : 's'}`
+			: c.borrowedDebtUsd != null && c.liquidationThreshold != null
+				? `Uses borrowed debt ${formatUsd(c.borrowedDebtUsd, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} and liquidation threshold ${Math.round(c.liquidationThreshold * 100)}%`
+				: 'Uses modeled all-to-zero bad-debt ceiling'
 	return (
 		<span className="flex flex-col gap-1 text-secondary">
 			<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -293,8 +294,8 @@ export function CollateralRow({
 	stressDrop: number
 	tuned: boolean
 	onStressDropChange?: (drop: number) => void
-	trustScope?: string[]
-	markets: MarketOracle[]
+	trustScope?: Array<string>
+	markets: Array<MarketOracle>
 }) {
 	const badge = oracleBadge(c.oracleType)
 	const tone = toneClasses(badge.tone)
@@ -323,7 +324,7 @@ export function CollateralRow({
 				urlType: 'token'
 			})
 		: null
-	const oracleAddrs = c.oracleAddresses.length ? c.oracleAddresses : oc?.oracle_address ? [oc.oracle_address] : []
+	const oracleAddrs = c.oracleAddresses.length > 0 ? c.oracleAddresses : oc?.oracle_address ? [oc.oracle_address] : []
 	const oracleChain = oc?.chain ?? c.chain
 	const oracleExplorerUrl = (addr: string): string | null =>
 		explorers
@@ -431,13 +432,13 @@ export function CollateralRow({
 
 			<div className="grid gap-x-8 gap-y-6 border-t border-subtle p-3 body-md sm:grid-cols-2 sm:p-4">
 				<div className="flex min-w-0 flex-col gap-4">
-					<h4 className={DETAIL_LABEL}>{"What it's made of"}</h4>
+					<h4 className={DETAIL_LABEL}>What it&apos;s made of</h4>
 
 					<div className="flex flex-col gap-2.5 text-secondary">
 						<span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
 							<span className="text-primary">{badge.label}</span>
 							{vendor ? <span className="text-primary">· {vendor}</span> : null}
-							{c.feedKinds.length ? <span className="text-tertiary">({c.feedKinds.join(', ')})</span> : null}
+							{c.feedKinds.length > 0 ? <span className="text-tertiary">({c.feedKinds.join(', ')})</span> : null}
 							{c.ptPricing ? <PtPricingChip pricing={c.ptPricing} /> : null}
 						</span>
 
@@ -461,7 +462,7 @@ export function CollateralRow({
 							</span>
 						) : null}
 
-						{!rowMarkets.length && oracleAddrs.length ? (
+						{rowMarkets.length === 0 && oracleAddrs.length > 0 ? (
 							<span className="flex flex-col gap-1.5">
 								{oracleAddrs.map((addr) => (
 									<AddressActions
@@ -475,7 +476,7 @@ export function CollateralRow({
 						) : null}
 					</div>
 
-					{rowMarkets.length ? (
+					{rowMarkets.length > 0 ? (
 						<div className="flex flex-col gap-2 border-t border-subtle pt-3">
 							<span className="label-sm text-secondary">{`Markets this collateral backs · ${rowMarkets.length}`}</span>
 							<ul className="flex flex-col gap-1.5 text-secondary">

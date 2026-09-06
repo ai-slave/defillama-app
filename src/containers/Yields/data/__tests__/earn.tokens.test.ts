@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	createTokenFilterMatcher,
 	parseTokenMatch,
@@ -11,7 +11,7 @@ import type { ApyTriple, ApyWindows, EarnAttributes, EnrichedEarnRow, TokenKeys 
 
 // getEarnPage pulls rows from getEnrichedEarn; mock it so the integration cases
 // exercise only the token Match × On filter path.
-const getEnrichedEarn = vi.fn<() => Promise<EnrichedEarnRow[]>>()
+const getEnrichedEarn = vi.fn<() => Promise<Array<EnrichedEarnRow>>>()
 vi.mock('../enrich.server', () => ({ getEnrichedEarn: () => getEnrichedEarn() }))
 vi.mock('../snapshot', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../snapshot')>()),
@@ -50,7 +50,7 @@ function input(over: Partial<TokenFilterInput> = {}): TokenFilterInput {
 	}
 }
 
-function matchesTokenFilter(tokens: string[], match: TokenMatch, on: TokenOn, value: TokenFilterInput) {
+function matchesTokenFilter(tokens: Array<string>, match: TokenMatch, on: TokenOn, value: TokenFilterInput) {
 	return createTokenFilterMatcher(tokens, match, on)(value)
 }
 
@@ -72,12 +72,12 @@ const stEthPool = input({
 })
 
 describe('matchesTokenFilter', () => {
-	it('no filter: empty selection with non-contains modes keeps every row', () => {
+	test('no filter: empty selection with non-contains modes keeps every row', () => {
 		expect(matchesTokenFilter([], 'exact', 'reference', wethUsdcPair)).toBe(true)
 		expect(matchesTokenFilter([], 'set', 'reference', wethUsdcPair)).toBe(true)
 	})
 
-	it('exact/reference: master exact_any — a selected option must contain the WHOLE reference set', () => {
+	test('exact/reference: master exact_any — a selected option must contain the WHOLE reference set', () => {
 		// stETH references only ETH, so its whole set belongs to family:eth / asset:eth.
 		expect(matchesTokenFilter(['family:eth'], 'exact', 'reference', stEthPool)).toBe(true)
 		expect(matchesTokenFilter(['asset:eth'], 'exact', 'reference', stEthPool)).toBe(true)
@@ -85,7 +85,7 @@ describe('matchesTokenFilter', () => {
 		expect(matchesTokenFilter(['asset:steth'], 'exact', 'reference', stEthPool)).toBe(false)
 	})
 
-	it('exact/reference: a WETH-USDC pair does NOT match family:eth or a single asset (the bug fix)', () => {
+	test('exact/reference: a WETH-USDC pair does NOT match family:eth or a single asset (the bug fix)', () => {
 		// exact_any rejects these because neither family:eth nor asset:weth contains the
 		// whole {weth, usdc} set.
 		expect(matchesTokenFilter(['family:eth'], 'exact', 'reference', wethUsdcPair)).toBe(false)
@@ -93,13 +93,13 @@ describe('matchesTokenFilter', () => {
 		expect(matchesTokenFilter(['family:stablecoins'], 'exact', 'reference', wethUsdcPair)).toBe(false)
 	})
 
-	it('exact/pool: single-token pool — whole-set membership reduces to presence', () => {
+	test('exact/pool: single-token pool — whole-set membership reduces to presence', () => {
 		expect(matchesTokenFilter(['asset:steth'], 'exact', 'pool', stEthPool)).toBe(true)
 		expect(matchesTokenFilter(['family:eth'], 'exact', 'pool', stEthPool)).toBe(true)
 		expect(matchesTokenFilter(['asset:eth'], 'exact', 'pool', stEthPool)).toBe(false)
 	})
 
-	it('exact/both: reference and pool targets tested separately, then OR-ed', () => {
+	test('exact/both: reference and pool targets tested separately, then OR-ed', () => {
 		expect(matchesTokenFilter(['asset:eth'], 'exact', 'both', stEthPool)).toBe(true) // via reference
 		expect(matchesTokenFilter(['asset:steth'], 'exact', 'both', stEthPool)).toBe(true) // via pool
 		expect(matchesTokenFilter(['asset:xyz'], 'exact', 'both', stEthPool)).toBe(false)
@@ -107,7 +107,7 @@ describe('matchesTokenFilter', () => {
 		expect(matchesTokenFilter(['family:eth'], 'exact', 'both', wethUsdcPair)).toBe(false)
 	})
 
-	it('set/reference: exact asset-set equality, families ignored', () => {
+	test('set/reference: exact asset-set equality, families ignored', () => {
 		// Exactly {weth, usdc} → match the pair
 		expect(matchesTokenFilter(['asset:weth', 'asset:usdc'], 'set', 'reference', wethUsdcPair)).toBe(true)
 		// Order independent
@@ -118,7 +118,7 @@ describe('matchesTokenFilter', () => {
 		expect(matchesTokenFilter(['asset:weth'], 'set', 'reference', wethUsdcPair)).toBe(false)
 	})
 
-	it('set/reference: a lone family selection means the family contains the whole reference set', () => {
+	test('set/reference: a lone family selection means the family contains the whole reference set', () => {
 		// stETH's whole reference set is all-ETH-family → family:eth set-matches.
 		expect(matchesTokenFilter(['family:eth'], 'set', 'reference', stEthPool)).toBe(true)
 		// The WETH-USDC pair is not entirely one family → no set match.
@@ -126,11 +126,11 @@ describe('matchesTokenFilter', () => {
 		expect(matchesTokenFilter(['family:stablecoins'], 'set', 'reference', wethUsdcPair)).toBe(false)
 	})
 
-	it('set: a single-asset pool matches its lone asset', () => {
+	test('set: a single-asset pool matches its lone asset', () => {
 		expect(matchesTokenFilter(['asset:eth'], 'set', 'reference', stEthPool)).toBe(true)
 	})
 
-	it('set/reference: mixed asset+family falls back to asset-only equality (residual gap)', () => {
+	test('set/reference: mixed asset+family falls back to asset-only equality (residual gap)', () => {
 		// asset:weth + family:eth on the pair → asset-only equality compares {weth} vs {weth,usdc}
 		// → no match. The family constraint itself is not independently verified (documented gap).
 		expect(matchesTokenFilter(['asset:weth', 'family:eth'], 'set', 'reference', wethUsdcPair)).toBe(false)
@@ -138,12 +138,12 @@ describe('matchesTokenFilter', () => {
 		expect(matchesTokenFilter(['asset:eth', 'family:eth'], 'set', 'reference', stEthPool)).toBe(true)
 	})
 
-	it('set/pool: asset-set equality against the held token', () => {
+	test('set/pool: asset-set equality against the held token', () => {
 		expect(matchesTokenFilter(['asset:steth'], 'set', 'pool', stEthPool)).toBe(true)
 		expect(matchesTokenFilter(['asset:eth'], 'set', 'pool', stEthPool)).toBe(false)
 	})
 
-	it('contains: master contains_any — any selected option key present in the target', () => {
+	test('contains: master contains_any — any selected option key present in the target', () => {
 		expect(matchesTokenFilter(['family:eth'], 'contains', 'reference', wethUsdcPair)).toBe(true)
 		expect(matchesTokenFilter(['asset:weth'], 'contains', 'reference', wethUsdcPair)).toBe(true)
 		// Held token is not a reference key.
@@ -151,7 +151,7 @@ describe('matchesTokenFilter', () => {
 		expect(matchesTokenFilter(['asset:steth'], 'contains', 'pool', stEthPool)).toBe(true)
 	})
 
-	it('contains: presence of any selected option key in the target (contains_any)', () => {
+	test('contains: presence of any selected option key in the target (contains_any)', () => {
 		expect(matchesTokenFilter(['asset:weth'], 'contains', 'reference', wethUsdcPair)).toBe(true)
 		expect(matchesTokenFilter(['family:eth'], 'contains', 'reference', wethUsdcPair)).toBe(true)
 		expect(matchesTokenFilter(['asset:xyz'], 'contains', 'reference', wethUsdcPair)).toBe(false)
@@ -163,17 +163,17 @@ describe('matchesTokenFilter', () => {
 })
 
 describe('token param parsing', () => {
-	it('defaults when absent', () => {
+	test('defaults when absent', () => {
 		expect(parseTokenMatch({})).toBe('exact')
 		expect(parseTokenOn({})).toBe('reference')
 	})
 
-	it('reads valid values', () => {
+	test('reads valid values', () => {
 		expect(parseTokenMatch({ tokenMatch: 'set' })).toBe('set')
 		expect(parseTokenOn({ tokenOn: 'pool' })).toBe('pool')
 	})
 
-	it('falls back to defaults on unknown/invalid values', () => {
+	test('falls back to defaults on unknown/invalid values', () => {
 		expect(parseTokenMatch({ tokenMatch: 'fuzzy' })).toBe('exact')
 		expect(parseTokenOn({ tokenOn: 'sideways' })).toBe('reference')
 	})
@@ -203,7 +203,7 @@ function row(id: string, keys: Partial<TokenKeys>, over: Partial<EnrichedEarnRow
 		chain: 'Ethereum',
 		underlying_tokens: [],
 		reward_tokens: [],
-		tvl_usd: 1_000,
+		tvl_usd: 1000,
 		apy: ZERO_APY,
 		intrinsic: null,
 		stability_30d: { base: null, base_reward: null, base_intrinsic: null, base_reward_intrinsic: null },
@@ -244,7 +244,7 @@ const steth = row(
 describe('getEarnPage token filter', () => {
 	beforeEach(() => getEnrichedEarn.mockReset())
 
-	it('default exact/reference (master exact_any): family:eth keeps only the all-ETH-family pool', async () => {
+	test('default exact/reference (master exact_any): family:eth keeps only the all-ETH-family pool', async () => {
 		getEnrichedEarn.mockResolvedValue([pair, ethTriple, steth])
 		const res = await getEarnPage({ token: 'family:eth', pageSize: 'all' })
 		// The pair and triple no longer match — their whole reference set isn't all-ETH-family.
@@ -252,7 +252,7 @@ describe('getEarnPage token filter', () => {
 		expect(res.rows[0]!.tokenSymbols).toEqual(['stETH', 'ETH'])
 	})
 
-	it('exposes structured pool attributes without deriving them from display labels', async () => {
+	test('exposes structured pool attributes without deriving them from display labels', async () => {
 		getEnrichedEarn.mockResolvedValue([
 			row(
 				'pool',
@@ -272,13 +272,13 @@ describe('getEarnPage token filter', () => {
 		})
 	})
 
-	it('contains (contains_any) keeps every pool whose reference includes family:eth', async () => {
+	test('contains (contains_any) keeps every pool whose reference includes family:eth', async () => {
 		getEnrichedEarn.mockResolvedValue([pair, ethTriple, steth])
 		const res = await getEarnPage({ token: 'family:eth', tokenMatch: 'contains', pageSize: 'all' })
 		expect(res.rows.map((r) => r.id).sort()).toEqual(['pair', 'steth', 'triple'])
 	})
 
-	it('set matches only the exact pair, excluding the 3-asset pool', async () => {
+	test('set matches only the exact pair, excluding the 3-asset pool', async () => {
 		getEnrichedEarn.mockResolvedValue([pair, ethTriple, steth])
 		const res = await getEarnPage({
 			token: ['asset:weth', 'asset:usdc'],
@@ -288,19 +288,19 @@ describe('getEarnPage token filter', () => {
 		expect(res.rows.map((r) => r.id)).toEqual(['pair'])
 	})
 
-	it('on=pool matches the held token, not the reference', async () => {
+	test('on=pool matches the held token, not the reference', async () => {
 		getEnrichedEarn.mockResolvedValue([pair, steth])
 		const res = await getEarnPage({ token: 'asset:steth', tokenOn: 'pool', pageSize: 'all' })
 		expect(res.rows.map((r) => r.id)).toEqual(['steth'])
 	})
 
-	it('contains keeps rows whose target holds any selected option key', async () => {
+	test('contains keeps rows whose target holds any selected option key', async () => {
 		getEnrichedEarn.mockResolvedValue([pair, steth])
 		const res = await getEarnPage({ token: 'asset:steth', tokenMatch: 'contains', tokenOn: 'pool', pageSize: 'all' })
 		expect(res.rows.map((r) => r.id)).toEqual(['steth'])
 	})
 
-	it('invalid mode params fall back to the default exact/reference (exact_any) behavior', async () => {
+	test('invalid mode params fall back to the default exact/reference (exact_any) behavior', async () => {
 		getEnrichedEarn.mockResolvedValue([pair, ethTriple, steth])
 		const res = await getEarnPage({
 			token: 'family:eth',

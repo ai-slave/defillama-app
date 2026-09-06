@@ -2,12 +2,12 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { RaisesTotal } from './RaisesTotal'
 import { summarizeRaises } from './summary'
 
 describe('fundraising totals', () => {
-	it.each([
+	test.each([
 		{ amounts: [2_500_000, 14_000_000], totalUsd: 16_500_000, undisclosedCount: 0, text: '$16.5m' },
 		{ amounts: [2_500_000, null, 14_000_000], totalUsd: 16_500_000, undisclosedCount: 1, text: '$16.5m' },
 		{ amounts: [null, null], totalUsd: null, undisclosedCount: 2, text: 'Undisclosed' },
@@ -25,7 +25,7 @@ describe('fundraising totals', () => {
 		}
 	)
 
-	it.each([
+	test.each([
 		{ undisclosedCount: 1, interaction: 'focus' },
 		{ undisclosedCount: 2, interaction: 'focus' },
 		{ undisclosedCount: 1, interaction: 'touch' }

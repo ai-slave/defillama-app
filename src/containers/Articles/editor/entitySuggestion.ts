@@ -5,12 +5,15 @@ import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@
 import type { ArticleEntitySuggestionItem } from '../entitySuggestions'
 import { EntitySuggestionList, type EntitySuggestionListHandle } from './EntitySuggestionList'
 
-type SuggestionResponse = { entities?: ArticleEntitySuggestionItem[] }
+type SuggestionResponse = { entities?: Array<ArticleEntitySuggestionItem> }
 
 const ARTICLE_ENTITY_SUGGESTION_KEY = new PluginKey('articleEntitySuggestion')
-const EMPTY_ITEMS: ArticleEntitySuggestionItem[] = []
+const EMPTY_ITEMS: Array<ArticleEntitySuggestionItem> = []
 
-async function fetchEntitySuggestions(query: string, signal?: AbortSignal): Promise<ArticleEntitySuggestionItem[]> {
+async function fetchEntitySuggestions(
+	query: string,
+	signal?: AbortSignal
+): Promise<Array<ArticleEntitySuggestionItem>> {
 	try {
 		const response = await fetch(`/api/public/research/entities/search?q=${encodeURIComponent(query)}`, { signal })
 		if (!response.ok) return EMPTY_ITEMS
@@ -25,7 +28,7 @@ async function fetchEntitySuggestions(query: string, signal?: AbortSignal): Prom
 const RECENTS_KEY = 'articleEntityRecents'
 const RECENTS_LIMIT = 5
 
-function loadRecents(): ArticleEntitySuggestionItem[] {
+function loadRecents(): Array<ArticleEntitySuggestionItem> {
 	if (typeof window === 'undefined') return []
 	try {
 		const raw = window.localStorage.getItem(RECENTS_KEY)
@@ -53,14 +56,14 @@ function saveRecent(item: ArticleEntitySuggestionItem) {
 type FloatingHost = {
 	mount: (
 		props: SuggestionProps<ArticleEntitySuggestionItem, ArticleEntitySuggestionItem>,
-		items: ArticleEntitySuggestionItem[],
-		recents: ArticleEntitySuggestionItem[],
+		items: Array<ArticleEntitySuggestionItem>,
+		recents: Array<ArticleEntitySuggestionItem>,
 		loading: boolean
 	) => void
 	updateProps: (
 		props: SuggestionProps<ArticleEntitySuggestionItem, ArticleEntitySuggestionItem>,
-		items: ArticleEntitySuggestionItem[],
-		recents: ArticleEntitySuggestionItem[],
+		items: Array<ArticleEntitySuggestionItem>,
+		recents: Array<ArticleEntitySuggestionItem>,
 		loading: boolean
 	) => void
 	keyDown: (props: SuggestionKeyDownProps) => boolean
@@ -195,8 +198,8 @@ export const ArticleEntitySuggestion = Extension.create({
 					let host: FloatingHost | null = null
 					let latestController: AbortController | null = null
 					let latestProps: SuggestionProps<ArticleEntitySuggestionItem, ArticleEntitySuggestionItem> | null = null
-					let latestItems: ArticleEntitySuggestionItem[] = []
-					let recents: ArticleEntitySuggestionItem[] = []
+					let latestItems: Array<ArticleEntitySuggestionItem> = []
+					let recents: Array<ArticleEntitySuggestionItem> = []
 					let loading = false
 
 					const refetch = (props: SuggestionProps<ArticleEntitySuggestionItem, ArticleEntitySuggestionItem>) => {

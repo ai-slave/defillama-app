@@ -18,7 +18,7 @@ import { LoadingSpinner } from './LoadingSpinner'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const EMPTY_STACKS: string[] = []
+const EMPTY_STACKS: Array<string> = []
 const EMPTY_DATASET: MultiSeriesChartDataset = { source: [], dimensions: ['timestamp'] }
 
 interface UnlocksScheduleCardProps {
@@ -31,7 +31,7 @@ export function UnlocksScheduleCard({ config }: UnlocksScheduleCardProps) {
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const [todayTimestamp] = useState(() => Math.floor(Date.now() / 1000))
-	const todayHallmarks = useMemo<[number, string][]>(
+	const todayHallmarks = useMemo<Array<[number, string]>>(
 		() => [[todayTimestamp, formatUnlockDate(todayTimestamp)]],
 		[todayTimestamp]
 	)

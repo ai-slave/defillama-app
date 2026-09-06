@@ -1,9 +1,9 @@
 import { recordRouteRuntimeError } from '~/utils/telemetry'
 
-const DISCORD_TIMEOUT_MS = 2_000
-const DISCORD_FIELD_VALUE_LIMIT = 1_024
-const SUCCESS_COLOR = 0x22c55e
-const FAILURE_COLOR = 0xef4444
+const DISCORD_TIMEOUT_MS = 2000
+const DISCORD_FIELD_VALUE_LIMIT = 1024
+const SUCCESS_COLOR = 0x22_c5_5e
+const FAILURE_COLOR = 0xef_44_44
 
 type ClaimPayload = Record<string, unknown>
 

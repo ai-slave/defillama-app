@@ -7,7 +7,7 @@ export type EntityPreviewProtocol = {
 	change7d?: number | null
 	change30d?: number | null
 	category?: string | null
-	chains?: string[]
+	chains?: Array<string>
 	mcap?: number | null
 	logo?: string | null
 }
@@ -50,7 +50,7 @@ export type EntityPreviewBridge = {
 	kind: 'bridge'
 	volume24h?: number | null
 	volume7d?: number | null
-	chains?: string[]
+	chains?: Array<string>
 	destinationChain?: string | null
 }
 
@@ -61,7 +61,7 @@ export type EntityPreviewHack = {
 	returnedFundsUsd?: number | null
 	classification?: string | null
 	technique?: string | null
-	chains?: string[]
+	chains?: Array<string>
 	targetType?: string | null
 	bridgeHack?: boolean
 }

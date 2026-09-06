@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	getProtocolChainBreakdownData: vi.fn(),
@@ -20,7 +20,7 @@ beforeEach(() => {
 })
 
 describe('ProtocolOverview TVL chart-builder breakdown routes', () => {
-	it('normalizes saved legacy chain aliases for protocol TVL breakdowns', async () => {
+	test('normalizes saved legacy chain aliases for protocol TVL breakdowns', async () => {
 		const { protocolTvlBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/protocols')
 
 		await protocolTvlBreakdown.handle({
@@ -40,7 +40,7 @@ describe('ProtocolOverview TVL chart-builder breakdown routes', () => {
 		)
 	})
 
-	it('normalizes saved legacy chain aliases for protocol TVL by-chain breakdowns', async () => {
+	test('normalizes saved legacy chain aliases for protocol TVL by-chain breakdowns', async () => {
 		const { protocolTvlByChainBreakdown } = await import('~/containers/ProDashboard/server/chartBuilder/protocols')
 
 		await protocolTvlByChainBreakdown.handle({

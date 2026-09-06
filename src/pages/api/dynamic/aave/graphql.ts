@@ -8,7 +8,7 @@ import * as duneCache from '~/utils/dune-cache'
 const AAVE_GRAPHQL_URL = 'https://api.v3.aave.com/graphql'
 
 const CHAIN_IDS = [
-	1, 42161, 43114, 8453, 56, 100, 59144, 10, 137, 534352, 146, 324, 9745, 5000, 57073, 1868, 4326, 42220, 1088
+	1, 42_161, 43_114, 8453, 56, 100, 59_144, 10, 137, 534_352, 146, 324, 9745, 5000, 57_073, 1868, 4326, 42_220, 1088
 ]
 const VALID_CHAIN_IDS = new Set(CHAIN_IDS)
 const VALID_WINDOWS = new Set(['LAST_DAY', 'LAST_WEEK', 'LAST_MONTH', 'LAST_SIX_MONTHS', 'LAST_YEAR'])
@@ -113,7 +113,7 @@ function fetchWithCurl(query: string): Promise<unknown> {
 		const tmpFile = join(tmpdir(), `aave-gql-${Date.now()}-${Math.random().toString(36).slice(2)}.json`)
 		writeFileSync(tmpFile, payload)
 
-		const chunks: Buffer[] = []
+		const chunks: Array<Buffer> = []
 		const proc = spawn('curl', [
 			'-s',
 			'-X',
@@ -136,8 +136,8 @@ function fetchWithCurl(query: string): Promise<unknown> {
 			if (code !== 0) return reject(new Error(`curl exited with code ${code}`))
 			try {
 				resolve(JSON.parse(Buffer.concat(chunks).toString()))
-			} catch (e) {
-				reject(e)
+			} catch (error) {
+				reject(error)
 			}
 		})
 

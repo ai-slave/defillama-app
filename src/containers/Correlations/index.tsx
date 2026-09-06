@@ -99,7 +99,7 @@ const isPeriod = (value: string): value is Period => {
 	return PERIODS.includes(value as Period)
 }
 
-const bucketPointsByTime = (points: PricePoint[], fromTimestamp: number) => {
+const bucketPointsByTime = (points: Array<PricePoint>, fromTimestamp: number) => {
 	const buckets = new Map<number, number>()
 	for (const point of points) {
 		if (point.timestamp < fromTimestamp) continue
@@ -117,10 +117,10 @@ interface CorrelationData {
 }
 
 interface CorrelationsProps {
-	initialTokenOptions: TokenSearchResult[]
+	initialTokenOptions: Array<TokenSearchResult>
 }
 
-function buildTokenOptionMap(tokens: TokenSearchResult[]): Record<string, TokenSearchResult> {
+function buildTokenOptionMap(tokens: Array<TokenSearchResult>): Record<string, TokenSearchResult> {
 	const map = {}
 	for (const token of tokens) {
 		map[token.id] = token
@@ -135,7 +135,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 	const [tokenOptionsById, setTokenOptionsById] = useState<Record<string, TokenSearchResult>>(() =>
 		buildTokenOptionMap(initialTokenOptions)
 	)
-	const queryCoins = useMemo<string[]>(() => {
+	const queryCoins = useMemo<Array<string>>(() => {
 		const coinQuery = router.query.coin
 		if (!coinQuery) return []
 		const coins = Array.isArray(coinQuery) ? coinQuery : coinQuery.split(',')
@@ -143,7 +143,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 	}, [router.query.coin])
 	const missingQueryCoinIds = useMemo(() => {
 		if (!isReady || queryCoins.length === 0) return []
-		const missingIds: string[] = []
+		const missingIds: Array<string> = []
 		for (const coinId of queryCoins) {
 			if (!tokenOptionsById[coinId]) missingIds.push(coinId)
 		}
@@ -229,8 +229,8 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 				const bucketed1 = bucketedSeriesById.get(id1)!
 				const [smallerSeries, largerSeries] =
 					bucketed0.size <= bucketed1.size ? [bucketed0, bucketed1] : [bucketed1, bucketed0]
-				const prices0: number[] = []
-				const prices1: number[] = []
+				const prices0: Array<number> = []
+				const prices1: Array<number> = []
 
 				for (const [timestamp, price] of smallerSeries.entries()) {
 					const otherPrice = largerSeries.get(timestamp)

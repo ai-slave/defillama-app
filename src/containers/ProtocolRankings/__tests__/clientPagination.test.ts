@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createTablePagesReducer } from '~/hooks/useTablePages'
 import { DEFAULT_PROTOCOL_RANKING_QUERY, protocolRankingQuery, type ProtocolRankingPage } from '../tableQuery'
 import type { IProtocol } from '../types'
@@ -26,7 +26,7 @@ const initialState = {
 	activeRequest: 0
 }
 
-function page(rows: IProtocol[], overrides: Partial<RankingPage> = {}): RankingPage {
+function page(rows: Array<IProtocol>, overrides: Partial<RankingPage> = {}): RankingPage {
 	return {
 		rows,
 		nextCursor: null,
@@ -40,7 +40,7 @@ function page(rows: IProtocol[], overrides: Partial<RankingPage> = {}): RankingP
 }
 
 describe('protocol ranking client request ordering', () => {
-	it('retains rows during replacement and accepts only the latest response', () => {
+	test('retains rows during replacement and accepts only the latest response', () => {
 		const firstStarted = reducer(initialState, { type: 'replace-start', request: 1 })
 		expect(firstStarted.rows.map((item) => item.id)).toEqual(['ssr'])
 		expect(firstStarted.isReplacing).toBe(true)
@@ -65,7 +65,7 @@ describe('protocol ranking client request ordering', () => {
 		expect(latest.isReplacing).toBe(false)
 	})
 
-	it('dedupes appended rows on id ?? slug', () => {
+	test('dedupes appended rows on id ?? slug', () => {
 		const loading = reducer(initialState, { type: 'append-start', request: 1 })
 		const appended = reducer(loading, {
 			type: 'success',
@@ -79,7 +79,7 @@ describe('protocol ranking client request ordering', () => {
 		expect(appended.nextCursor).toBe('next-2')
 	})
 
-	it('accepts a refreshed static first page without remounting table state', () => {
+	test('accepts a refreshed static first page without remounting table state', () => {
 		const refreshed = reducer(initialState, {
 			type: 'source-change',
 			request: 1,
@@ -103,7 +103,7 @@ describe('protocol ranking client request ordering', () => {
 		})
 	})
 
-	it('keeps an incremental failure idle until an explicit retry', () => {
+	test('keeps an incremental failure idle until an explicit retry', () => {
 		const loading = reducer(initialState, { type: 'append-start', request: 1 })
 		const failed = reducer(loading, { type: 'failed', request: 1, mode: 'append' })
 

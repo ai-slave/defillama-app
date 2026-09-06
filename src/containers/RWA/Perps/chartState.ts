@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import {
 	DWM_GROUPING_OPTIONS_LOWERCASE,
 	type LowercaseDwmGrouping
@@ -119,25 +119,25 @@ const TIME_SERIES_BREAKDOWNS = {
 	venue: ['assetGroup', 'baseAsset', 'contract', 'assetClass'],
 	assetGroup: ['baseAsset', 'venue', 'assetClass', 'contract'],
 	asset: ['venue', 'contract']
-} as const satisfies Record<RWAPerpsChartMode, readonly RWAPerpsTimeSeriesBreakdown[]>
+} as const satisfies Record<RWAPerpsChartMode, ReadonlyArray<RWAPerpsTimeSeriesBreakdown>>
 
 const NON_TIME_SERIES_BREAKDOWNS = {
 	overview: ['assetGroup', 'baseAsset', 'venue', 'assetClass', 'contract'],
 	venue: ['assetGroup', 'baseAsset', 'contract', 'assetClass'],
 	assetGroup: ['baseAsset', 'venue', 'assetClass', 'contract'],
 	asset: ['venue', 'contract']
-} as const satisfies Record<RWAPerpsChartMode, readonly RWAPerpsNonTimeSeriesBreakdown[]>
+} as const satisfies Record<RWAPerpsChartMode, ReadonlyArray<RWAPerpsNonTimeSeriesBreakdown>>
 
 const TREEMAP_BREAKDOWNS = {
 	overview: ['assetGroup', 'baseAsset', 'venue', 'assetClass', 'contract'],
 	venue: ['assetGroup', 'baseAsset', 'assetClass', 'contract'],
 	assetGroup: ['baseAsset', 'venue', 'assetClass', 'contract'],
 	asset: ['venue', 'contract']
-} as const satisfies Record<RWAPerpsChartMode, readonly RWAPerpsTreemapBreakdown[]>
+} as const satisfies Record<RWAPerpsChartMode, ReadonlyArray<RWAPerpsTreemapBreakdown>>
 
 const TREEMAP_NESTED_BY_OPTIONS: Record<
 	RWAPerpsChartMode,
-	Partial<Record<RWAPerpsTreemapBreakdown, readonly RWAPerpsTreemapNestedBy[]>>
+	Partial<Record<RWAPerpsTreemapBreakdown, ReadonlyArray<RWAPerpsTreemapNestedBy>>>
 > = {
 	overview: {
 		venue: ['none', 'assetClass', 'baseAsset', 'contract'],
@@ -314,7 +314,7 @@ export function getRWAPerpsChartBreakdownOptions({
 	labels
 }: Pick<RWAPerpsChartState, 'mode' | 'view'> & {
 	labels: RWAPerpsChartLabels
-}): RWAPerpsChartOption<RWAPerpsChartBreakdown>[] {
+}): Array<RWAPerpsChartOption<RWAPerpsChartBreakdown>> {
 	const options =
 		view === 'timeSeries'
 			? TIME_SERIES_BREAKDOWNS[mode]
@@ -328,7 +328,7 @@ export function getRWAPerpsTreemapNestedByOptions(
 	mode: RWAPerpsChartMode,
 	breakdown: RWAPerpsTreemapBreakdown,
 	labels: RWAPerpsChartLabels
-): RWAPerpsChartOption<RWAPerpsTreemapNestedBy>[] {
+): Array<RWAPerpsChartOption<RWAPerpsTreemapNestedBy>> {
 	const options = TREEMAP_NESTED_BY_OPTIONS[mode][breakdown]
 	assert(options, `Missing RWA perps treemap nested-by options for ${mode}/${breakdown}`)
 	return options.map((key) => ({
@@ -354,7 +354,7 @@ export function parseRWAPerpsChartState(
 	})
 }
 
-export function parseRWAPerpsVolumeGroupBy(value: string | string[] | null | undefined): LowercaseDwmGrouping {
+export function parseRWAPerpsVolumeGroupBy(value: string | Array<string> | null | undefined): LowercaseDwmGrouping {
 	const normalizedValue = (Array.isArray(value) ? value[0] : value)?.toLowerCase()
 	for (const option of DWM_GROUPING_OPTIONS_LOWERCASE) {
 		if (option.value === normalizedValue) return option.value
@@ -507,7 +507,7 @@ function createRWAPerpsChartStateForMode<TMode extends RWAPerpsChartMode>(
 	}
 }
 
-function getAllowedBreakdowns(mode: RWAPerpsChartMode, view: RWAPerpsChartView): readonly RWAPerpsChartBreakdown[] {
+function getAllowedBreakdowns(mode: RWAPerpsChartMode, view: RWAPerpsChartView): ReadonlyArray<RWAPerpsChartBreakdown> {
 	if (view === 'timeSeries') return TIME_SERIES_BREAKDOWNS[mode]
 	if (view === 'treemap') return TREEMAP_BREAKDOWNS[mode]
 	return NON_TIME_SERIES_BREAKDOWNS[mode]
@@ -586,7 +586,10 @@ function normalizeTreemapNestedBy(
 	return defaultNestedBy
 }
 
-function findOption<TValue extends string>(value: string | undefined, options: readonly TValue[]): TValue | undefined {
+function findOption<TValue extends string>(
+	value: string | undefined,
+	options: ReadonlyArray<TValue>
+): TValue | undefined {
 	for (const option of options) {
 		if (option === value) return option
 	}

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { IKeyMetricsProps } from '../KeyMetrics'
 import type { IProtocolPageMetrics } from '../types'
 
@@ -71,7 +71,7 @@ const baseProps = {
 }
 
 describe('KeyMetrics', () => {
-	it('renders chain rows for fee breakdown metrics', async () => {
+	test('renders chain rows for fee breakdown metrics', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			fees: {
@@ -106,12 +106,12 @@ describe('KeyMetrics', () => {
 		expect(markup.indexOf('Base')).toBeLessThan(markup.indexOf('Ethereum'))
 	})
 
-	it('does not repeat StableJack perp volume after promoting it to the primary metric', async () => {
+	test('does not repeat StableJack perp volume after promoting it to the primary metric', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			name: 'StableJack',
 			perpVolume: {
-				total24h: 2_000,
+				total24h: 2000,
 				total7d: 14_000,
 				total30d: 68_290,
 				total1y: null,
@@ -124,7 +124,7 @@ describe('KeyMetrics', () => {
 		expect(markup).not.toContain('Perp Volume 30d')
 	})
 
-	it('renders liquidation adapter summaries like other standard adapter metrics', async () => {
+	test('renders liquidation adapter summaries like other standard adapter metrics', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			liquidationVolume: {
@@ -169,7 +169,7 @@ describe('KeyMetrics', () => {
 		expect(markup).toContain('$20')
 	})
 
-	it('renders a zero outstanding FDV instead of treating it as unavailable', async () => {
+	test('renders a zero outstanding FDV instead of treating it as unavailable', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			outstandingFDV: 0,
@@ -187,7 +187,7 @@ describe('KeyMetrics', () => {
 		expect(markup).toContain('$0')
 	})
 
-	it('shows measured zero metrics without invalid percentages and retains valid positive shares', async () => {
+	test('shows measured zero metrics without invalid percentages and retains valid positive shares', async () => {
 		const tokenCGData = {
 			price: { current: null, ath: null, athDate: null, atl: null, atlDate: null },
 			marketCap: { current: 0 },
@@ -221,7 +221,7 @@ describe('KeyMetrics', () => {
 		expect(positiveMarkup).toContain('10% of total')
 	})
 
-	it('shows the disclosed subtotal with mixed funding amounts and preserves the explicit-zero round', async () => {
+	test('shows the disclosed subtotal with mixed funding amounts and preserves the explicit-zero round', async () => {
 		const raise = (date: number, amountUsd: number | null) => ({
 			date,
 			name: 'Gauntlet',
@@ -246,7 +246,7 @@ describe('KeyMetrics', () => {
 		expect(markup).toContain('$0')
 	})
 
-	it('uses canonical TVL availability for an Oracle secondary zero TVL row', async () => {
+	test('uses canonical TVL availability for an Oracle secondary zero TVL row', async () => {
 		const availableMarkup = await renderKeyMetrics({
 			...baseProps,
 			isOracleProtocol: true,
@@ -273,7 +273,7 @@ describe('KeyMetrics', () => {
 		expect(unavailableMarkup).not.toContain('Total Value Locked')
 	})
 
-	it('shows actual 30d fees and revenue when annualized values are available', async () => {
+	test('shows actual 30d fees and revenue when annualized values are available', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			fees: {
@@ -306,7 +306,7 @@ describe('KeyMetrics', () => {
 		expect(markup).not.toContain('$500')
 	})
 
-	it('does not use an annualized fee value when observed periods are missing', async () => {
+	test('does not use an annualized fee value when observed periods are missing', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			fees: {
@@ -324,7 +324,7 @@ describe('KeyMetrics', () => {
 		expect(markup).not.toContain('$3500')
 	})
 
-	it('does not annualize 30d fees when no annualized value is available', async () => {
+	test('does not annualize 30d fees when no annualized value is available', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			fees: {
@@ -344,7 +344,7 @@ describe('KeyMetrics', () => {
 		expect(markup).not.toContain('$1220')
 	})
 
-	it('does not render fee rows for unavailable base periods', async () => {
+	test('does not render fee rows for unavailable base periods', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			fees: {
@@ -366,7 +366,7 @@ describe('KeyMetrics', () => {
 		expect(markup).not.toContain('$0')
 	})
 
-	it('labels incentives as observed 1y or 30d run-rate, not annualized', async () => {
+	test('labels incentives as observed 1y or 30d run-rate, not annualized', async () => {
 		const oneYearMarkup = await renderKeyMetrics({
 			...baseProps,
 			incentives: {
@@ -398,7 +398,7 @@ describe('KeyMetrics', () => {
 		expect(runRateMarkup).not.toContain('Incentives (Annualized)')
 	})
 
-	it('calculates and labels annualized earnings', async () => {
+	test('calculates and labels annualized earnings', async () => {
 		const markup = await renderKeyMetrics({
 			...baseProps,
 			revenue: {

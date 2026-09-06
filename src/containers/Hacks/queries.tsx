@@ -10,7 +10,7 @@ import type { IHacksPageData, IHackRow, IProtocolTotalValueLostInHacksByProtocol
 
 export async function getHacksPageData(): Promise<IHacksPageData> {
 	const hacks = await fetchHacks()
-	const data: IHackRow[] = []
+	const data: Array<IHackRow> = []
 
 	for (const hack of hacks) {
 		data.push({

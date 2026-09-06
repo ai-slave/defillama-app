@@ -47,14 +47,20 @@ const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
 	const dataset = React.useMemo<MultiSeriesChartDataset>(
 		() => ({
 			source: generateFakeChartData(
-				chart.type === 'tvl' ? 50000000 : chart.type === 'volume' ? 10000000 : chart.type === 'fees' ? 500000 : 2000000,
+				chart.type === 'tvl'
+					? 50_000_000
+					: chart.type === 'volume'
+						? 10_000_000
+						: chart.type === 'fees'
+							? 500_000
+							: 2_000_000,
 				chart.type === 'tvl' ? 0.05 : 0.15
 			),
 			dimensions: ['timestamp', 'Value']
 		}),
 		[chart.type]
 	)
-	const charts = React.useMemo<MultiSeriesChartSeriesConfig[]>(
+	const charts = React.useMemo<Array<MultiSeriesChartSeriesConfig>>(
 		() => [
 			{
 				type: chartTypeDetails.chartType === 'bar' ? 'bar' : 'line',
@@ -110,13 +116,13 @@ const normalizeDemoBaseType = (chartType: string): MultiChartInputSeries['baseTy
 
 const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 	const chartView = React.useMemo(() => {
-		const series: MultiChartInputSeries[] = multi.items.map((item, index) => {
+		const series: Array<MultiChartInputSeries> = multi.items.map((item, index) => {
 			const fakeData = generateFakeChartData(
-				30000000 + index * 10000000, // Different base values for each series
+				30_000_000 + index * 10_000_000, // Different base values for each series
 				0.08
 			)
 
-			const data: [number, number][] = fakeData.map((row, rowIndex) => {
+			const data: Array<[number, number]> = fakeData.map((row, rowIndex) => {
 				const timestamp = row[0]
 				const value = row[1]
 				if (typeof timestamp !== 'number' || typeof value !== 'number') {
@@ -179,7 +185,7 @@ const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
 	)
 }
 
-const demoCharts: ChartConfig[] = [
+const demoCharts: Array<ChartConfig> = [
 	{
 		id: 'demo-ethereum-tvl',
 		kind: 'chart',
@@ -265,7 +271,7 @@ const demoCharts: ChartConfig[] = [
 	}
 ]
 
-const demoMultiCharts: MultiChartConfig[] = [
+const demoMultiCharts: Array<MultiChartConfig> = [
 	{
 		id: 'demo-multi-chain-tvl',
 		kind: 'multi',
@@ -597,7 +603,7 @@ export const DemoPreview = () => {
 					</div>
 				))}
 
-				<div className={`col-span-2 rounded-md border border-pro-cards-border bg-pro-cards-bg`}>
+				<div className="col-span-2 rounded-md border border-pro-cards-border bg-pro-cards-bg">
 					<UnifiedTable
 						config={{
 							id: 'demo-ethereum-protocols',

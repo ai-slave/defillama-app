@@ -2,7 +2,7 @@ import { isRemovedLegacyProtocolTableColumn } from '../../../dashboardConfig/leg
 import type { UnifiedTableV2Config } from '../../../dashboardConfig/persisted'
 import { UNIFIED_TABLE_CONFIG_VERSION, type UnifiedTableConfig, type UnifiedTableFilters } from '../current'
 
-function expressionVariables(expression: string): string[] {
+function expressionVariables(expression: string): Array<string> {
 	return expression.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []
 }
 

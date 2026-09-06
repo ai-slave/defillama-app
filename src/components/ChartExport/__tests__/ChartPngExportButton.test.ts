@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
 	applyTreemapViewportExportState,
 	buildPieExportLegendOption,
@@ -11,7 +11,7 @@ import {
 } from '../ChartPngExportButton'
 
 describe('pie PNG export legend', () => {
-	it('keeps the legend vertical and on the right like the rendered pie chart', () => {
+	test('keeps the legend vertical and on the right like the rendered pie chart', () => {
 		const formatter = (name: string) => name
 		const legend = buildPieExportLegendOption(
 			{ data: ['Kalshi', 'Polymarket'], width: 200, formatter },
@@ -34,7 +34,7 @@ describe('pie PNG export legend', () => {
 })
 
 describe('mutateAndWaitForChartRender', () => {
-	it('subscribes before a mutation emits rendered synchronously', async () => {
+	test('subscribes before a mutation emits rendered synchronously', async () => {
 		let rendered: (() => void) | null = null
 		const chart = {
 			on: vi.fn((_event: string, handler: () => void) => {
@@ -52,7 +52,7 @@ describe('mutateAndWaitForChartRender', () => {
 })
 
 describe('sanitizeRichImagesForExport', () => {
-	it('converts readable canvases to data URLs and removes tainted canvases without mutating the source', () => {
+	test('converts readable canvases to data URLs and removes tainted canvases without mutating the source', () => {
 		const safeCanvas = { toDataURL: () => 'data:image/png;base64,safe' }
 		const taintedCanvas = {
 			toDataURL: () => {
@@ -75,7 +75,7 @@ describe('sanitizeRichImagesForExport', () => {
 })
 
 describe('treemap viewport export', () => {
-	it('uses an index path to distinguish duplicate sibling names in a focused export', () => {
+	test('uses an index path to distinguish duplicate sibling names in a focused export', () => {
 		const first = { name: 'Duplicate', value: 1 }
 		const second = { name: 'Duplicate', value: 2, children: [{ name: 'Target', value: 2 }] }
 		expect(
@@ -90,7 +90,7 @@ describe('treemap viewport export', () => {
 		).toEqual({ name: 'Duplicate', data: second.children })
 	})
 
-	it('resolves a stashed focus path against clone-local node ids before dispatching', () => {
+	test('resolves a stashed focus path against clone-local node ids before dispatching', () => {
 		const sourceSeries = { id: 'source', getData: () => ({ tree: { root: {} } }) }
 		const originalChart = {
 			__llamaTreemapFocusNode: { id: 'source-node', path: ['All', 'Technology'] },
@@ -124,25 +124,25 @@ describe('treemap viewport export', () => {
 })
 
 describe('scaleXAxisForExport', () => {
-	it('keeps every rotated category label in the export instead of re-hiding overlaps', () => {
+	test('keeps every rotated category label in the export instead of re-hiding overlaps', () => {
 		const [scaled] = scaleXAxisForExport([
 			{ type: 'category', axisLabel: { interval: 0, rotate: 35, hideOverlap: false } }
 		])
 		expect(scaled.axisLabel).toMatchObject({ interval: 0, rotate: 35, hideOverlap: false, fontSize: 24 })
 	})
 
-	it('hides overlaps for a normal (non-rotated) axis', () => {
+	test('hides overlaps for a normal (non-rotated) axis', () => {
 		const [scaled] = scaleXAxisForExport([{ type: 'category', axisLabel: {} }])
 		expect(scaled.axisLabel.hideOverlap).toBe(true)
 	})
 
-	it('uses native ECharts formatting and hides overlapping time-axis labels', () => {
+	test('uses native ECharts formatting and hides overlapping time-axis labels', () => {
 		const [scaled] = scaleXAxisForExport([{ type: 'time', axisLabel: {} }])
 		expect(scaled.axisLabel.formatter).toBeUndefined()
 		expect(scaled.axisLabel.hideOverlap).toBe(true)
 	})
 
-	it('preserves an explicit time-axis formatter', () => {
+	test('preserves an explicit time-axis formatter', () => {
 		const formatter = () => 'custom'
 		const [scaled] = scaleXAxisForExport([{ type: 'time', axisLabel: { formatter } }])
 		expect(scaled.axisLabel.formatter).toBe(formatter)
@@ -153,7 +153,7 @@ import { BASE_TOP_PADDING, computeExportLayout, EXPORT_HALLMARK_LABEL_RESERVE } 
 
 describe('scaleYAxisForExport', () => {
 	// EXPORT_FONT_SIZE = 24; on-screen category labels use the ECharts default 12px font.
-	it('hides the cloned hbar hover shadow without mutating the live axis state', () => {
+	test('hides the cloned hbar hover shadow without mutating the live axis state', () => {
 		const axis = {
 			type: 'category' as const,
 			axisPointer: {
@@ -170,7 +170,7 @@ describe('scaleYAxisForExport', () => {
 		expect(axis.axisPointer.status).toBe('show')
 	})
 
-	it('preserves an explicit axis pointer outside hbar exports', () => {
+	test('preserves an explicit axis pointer outside hbar exports', () => {
 		const [scaled] = scaleYAxisForExport(
 			[{ type: 'category', axisPointer: { type: 'shadow', status: 'show', value: 2 } }],
 			false
@@ -179,7 +179,7 @@ describe('scaleYAxisForExport', () => {
 		expect(scaled.axisPointer).toMatchObject({ type: 'shadow', status: 'show', value: 2 })
 	})
 
-	it('scales the category-label width cap by the font ratio so the doubled export font keeps the same visible length', () => {
+	test('scales the category-label width cap by the font ratio so the doubled export font keeps the same visible length', () => {
 		// horizontal bar y-axis: venue names truncated to 120px at 12px on screen ("Bybit.eu (MiCA)" fits)
 		const [scaled] = scaleYAxisForExport([{ type: 'category', axisLabel: { width: 120, overflow: 'truncate' } }], true)
 		// 120 * 24 / 12 = 240 → same character capacity at the doubled font
@@ -187,20 +187,20 @@ describe('scaleYAxisForExport', () => {
 		expect(scaled.axisLabel.fontSize).toBe(24)
 	})
 
-	it('honors an explicit on-screen label fontSize when computing the ratio', () => {
+	test('honors an explicit on-screen label fontSize when computing the ratio', () => {
 		const [scaled] = scaleYAxisForExport([{ axisLabel: { width: 120, fontSize: 16 } }], true)
 		// 120 * 24 / 16 = 180
 		expect(scaled.axisLabel.width).toBe(180)
 	})
 
-	it('leaves a value axis (no width cap) uncapped', () => {
+	test('leaves a value axis (no width cap) uncapped', () => {
 		const [scaled] = scaleYAxisForExport([{ type: 'value', axisLabel: {} }], false)
 		expect(scaled.axisLabel.width).toBeUndefined()
 	})
 })
 
 describe('computeExportLayout', () => {
-	it('reserves legend space for a single exported metric', () => {
+	test('reserves legend space for a single exported metric', () => {
 		const layout = computeExportLayout({
 			title: 'Polymarket',
 			legendItems: ['Revenue'],
@@ -214,7 +214,7 @@ describe('computeExportLayout', () => {
 		expect(layout.gridTop).toBeGreaterThan(layout.legendTop)
 	})
 
-	it('does not reserve legend space when there are no legend items', () => {
+	test('does not reserve legend space when there are no legend items', () => {
 		const layout = computeExportLayout({
 			title: 'Polymarket',
 			legendItems: [],
@@ -226,7 +226,7 @@ describe('computeExportLayout', () => {
 		expect(layout.hasLegend).toBe(false)
 	})
 
-	it('reserves a row for hallmark labels on a legend-less chart so they are not clipped', () => {
+	test('reserves a row for hallmark labels on a legend-less chart so they are not clipped', () => {
 		const base = {
 			title: undefined,
 			legendItems: [],
@@ -241,7 +241,7 @@ describe('computeExportLayout', () => {
 		expect(with_.gridTop).toBe(BASE_TOP_PADDING + EXPORT_HALLMARK_LABEL_RESERVE)
 	})
 
-	it('keeps the taller header reserve when a title already clears the hallmark row', () => {
+	test('keeps the taller header reserve when a title already clears the hallmark row', () => {
 		const base = {
 			title: 'Pump.fun Daily Fees',
 			legendItems: ['Daily Fees'],
@@ -253,7 +253,7 @@ describe('computeExportLayout', () => {
 		expect(computeExportLayout({ ...base, hasMarkLineHallmarks: true }).gridTop).toBe(computeExportLayout(base).gridTop)
 	})
 
-	it('reserves one row no matter how many hallmarks there are — they share a single label row', () => {
+	test('reserves one row no matter how many hallmarks there are — they share a single label row', () => {
 		const layout = (hasMarkLineHallmarks: boolean) =>
 			computeExportLayout({
 				title: undefined,
@@ -269,19 +269,19 @@ describe('computeExportLayout', () => {
 })
 
 describe('getChartExportIconFetchUrl', () => {
-	it('routes protocol icons through the protocol icon API', () => {
+	test('routes protocol icons through the protocol icon API', () => {
 		expect(getChartExportIconFetchUrl('https://icons.llamao.fi/icons/protocols/aave?w=48&h=48')).toBe(
 			'/api/public/protocol-icon?slug=aave'
 		)
 	})
 
-	it('routes chain icons through the chain icon API', () => {
+	test('routes chain icons through the chain icon API', () => {
 		expect(getChartExportIconFetchUrl('https://icons.llamao.fi/icons/chains/rsz_ethereum?w=48&h=48')).toBe(
 			'/api/public/chain-icon?slug=ethereum'
 		)
 	})
 
-	it('falls back to the generic icon proxy for other allowed icon URLs', () => {
+	test('falls back to the generic icon proxy for other allowed icon URLs', () => {
 		const url = 'https://token-icons.llamao.fi/icons/tokens/gecko/ethereum?w=48&h=48'
 		expect(getChartExportIconFetchUrl(url)).toBe(`/api/public/icon-proxy?url=${encodeURIComponent(url)}`)
 	})

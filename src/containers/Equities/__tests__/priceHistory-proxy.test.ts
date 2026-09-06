@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { fetchEquitiesPriceHistoryFromProxy } from '../priceHistoryClient'
 import { buildEquitiesPriceHistoryUpstreamUrl } from '../server/priceHistory.api'
 
@@ -14,7 +14,7 @@ function upstreamUrl(query: Parameters<typeof buildEquitiesPriceHistoryUpstreamU
 }
 
 describe('equities price history proxy mapping', () => {
-	it('preserves the requested identity and timeframe through both proxy URL builders', async () => {
+	test('preserves the requested identity and timeframe through both proxy URL builders', async () => {
 		const query = { ticker: 'BRK.B', country: 'US', timeframe: 'MAX' } as const
 		fetchJsonMock.mockResolvedValue([])
 		await fetchEquitiesPriceHistoryFromProxy(query.ticker, query.country, query.timeframe)
@@ -31,7 +31,7 @@ describe('equities price history proxy mapping', () => {
 		expect(Object.fromEntries(upstream.searchParams)).toMatchObject(query)
 	})
 
-	it.each([
+	test.each([
 		['24H', '1D'],
 		['7D', '1W']
 	])('maps the public %s timeframe to the equities backend %s timeframe', (timeframe, upstreamTimeframe) => {
@@ -40,12 +40,12 @@ describe('equities price history proxy mapping', () => {
 		expect(upstream.searchParams.get('timeframe')).toBe(upstreamTimeframe)
 	})
 
-	it('rejects requests missing a ticker or country', () => {
+	test('rejects requests missing a ticker or country', () => {
 		expect(buildEquitiesPriceHistoryUpstreamUrl({ country: 'US', timeframe: '24H' })).toBeNull()
 		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', timeframe: '24H' })).toBeNull()
 	})
 
-	it('rejects unsupported or missing timeframes', () => {
+	test('rejects unsupported or missing timeframes', () => {
 		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', country: 'US', timeframe: '10Y' })).toBeNull()
 		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', country: 'US', timeframe: '1D' })).toBeNull()
 		expect(buildEquitiesPriceHistoryUpstreamUrl({ ticker: 'NVDA', country: 'US', timeframe: '1W' })).toBeNull()

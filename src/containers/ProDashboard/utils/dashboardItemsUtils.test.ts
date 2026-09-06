@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { replaceDashboardItem } from './dashboardItemsUtils'
 
 describe('replaceDashboardItem', () => {
-	it('replaces one broken chart while preserving its durable slot identity and layout', () => {
+	test('replaces one broken chart while preserving its durable slot identity and layout', () => {
 		const items = [
 			{ id: 'before', kind: 'text' as const, content: 'before' },
 			{
@@ -35,7 +35,7 @@ describe('replaceDashboardItem', () => {
 		})
 	})
 
-	it('refuses a stale target instead of silently appending a duplicate chart', () => {
+	test('refuses a stale target instead of silently appending a duplicate chart', () => {
 		expect(() =>
 			replaceDashboardItem([], 'missing', {
 				id: 'generated-id',

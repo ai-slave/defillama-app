@@ -21,38 +21,38 @@ export interface RWAPlatformMeta {
 	slug: string
 	description: string | null
 	logo: string | null
-	category: string[] | null
-	platformType: string[] | null
+	category: Array<string> | null
+	platformType: Array<string> | null
 	accessModel: string | null
 	primaryChain: string | null
-	chain: string[] | null
-	chains: string[]
+	chain: Array<string> | null
+	chains: Array<string>
 	parentPlatform: string | null
-	website: string[] | null
+	website: Array<string> | null
 	twitter: string | null
 	docs: string | null
 	linkedin: string | null
 	discord: string | null
 	telegram: string | null
 	rwaGithub: string | null
-	refLinks: string[] | null
+	refLinks: Array<string> | null
 	issuer: string | null
-	issuerSourceLink: string[] | null
+	issuerSourceLink: Array<string> | null
 	issuerRegistryInfo: string | null
 	foundedYear: number | null
 	headquarters: string | null
 	founders: string | null
-	foundersParsed: RWAPlatformFounder[]
+	foundersParsed: Array<RWAPlatformFounder>
 	regulatoryStatus: string | null
 	keyMilestones: string | null
-	milestones: RWAPlatformMilestone[]
+	milestones: Array<RWAPlatformMilestone>
 	entityStructureNotes: string | null
 	delisted: boolean | null
 	suspicious: boolean | null
 	suspiciousReason: string | null
 	oracleProvider: string | null
-	oracleProofLink: string[] | null
-	attestationLinks: string[] | null
+	oracleProofLink: Array<string> | null
+	attestationLinks: Array<string> | null
 	dateOfLastAttestation: string | null
 	attestationFrequency: string | null
 	llamaGradeAttestation: boolean | null
@@ -71,11 +71,11 @@ export interface RWAPlatformMeta {
 	perpMakerFeeBps: number | null
 	perpTakerFeeBps: number | null
 	perpFundingRetentionPct: number | null
-	prospectusUrl: string[] | null
-	feeScheduleUrl: string[] | null
-	issuerDocsUrl: string[] | null
-	tcsUrl: string[] | null
-	governanceWhitepaperUrl: string[] | null
+	prospectusUrl: Array<string> | null
+	feeScheduleUrl: Array<string> | null
+	issuerDocsUrl: Array<string> | null
+	tcsUrl: Array<string> | null
+	governanceWhitepaperUrl: Array<string> | null
 	revenueConfidence: RWAPlatformRevenueConfidence | null
 	feeLastVerified: string | null
 	feeWaiverEndDate: string | null
@@ -85,7 +85,7 @@ export interface RWAPlatformMeta {
 	subsidyRebateArrangements: string | null
 	takeRateBasis: string | null
 	revenueMix: string | null
-	marginSettlementAsset: string[] | null
+	marginSettlementAsset: Array<string> | null
 	onchainAum: number
 	estAnnualRevenueUsd: number | null
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { fetchJsonMock } = vi.hoisted(() => ({ fetchJsonMock: vi.fn() }))
 
@@ -24,19 +24,19 @@ beforeEach(() => {
 })
 
 describe('stablecoin volume API fetchers', () => {
-	it('resolves chain display names to metadata ids for scoped volume routes', async () => {
+	test('resolves chain display names to metadata ids for scoped volume routes', async () => {
 		await fetchStablecoinChainVolumeChartApi('zkSync Era', 'token', chainMetadata)
 
 		expect(fetchJsonMock).toHaveBeenCalledWith(expect.stringContaining('/chart/volume/chain/era/token-breakdown'))
 	})
 
-	it('uses global volume routes', async () => {
+	test('uses global volume routes', async () => {
 		await fetchStablecoinVolumeChartApi('currency')
 
 		expect(fetchJsonMock).toHaveBeenCalledWith(expect.stringContaining('/chart/volume/currency-breakdown'))
 	})
 
-	it('preserves token symbols for scoped token routes', async () => {
+	test('preserves token symbols for scoped token routes', async () => {
 		await fetchStablecoinTokenVolumeChartApi('USDT', 'chain')
 
 		expect(fetchJsonMock).toHaveBeenCalledWith(expect.stringContaining('/chart/volume/token/USDT/chain-breakdown'))
@@ -44,7 +44,7 @@ describe('stablecoin volume API fetchers', () => {
 })
 
 describe('stablecoin API normalization', () => {
-	it('normalizes the producer peg-mechanism typo while preserving lifecycle metadata', async () => {
+	test('normalizes the producer peg-mechanism typo while preserving lifecycle metadata', async () => {
 		const response = {
 			peggedAssets: [
 				{
@@ -73,7 +73,7 @@ describe('stablecoin API normalization', () => {
 		})
 	})
 
-	it('normalizes numeric price strings once while preserving explicit zero', async () => {
+	test('normalizes numeric price strings once while preserving explicit zero', async () => {
 		const response = [
 			{ date: 1, prices: { tether: '1.001', zero: '0', numeric: 2 } }
 		] satisfies RawStablecoinPricesResponse
@@ -84,7 +84,7 @@ describe('stablecoin API normalization', () => {
 		])
 	})
 
-	it('normalizes detail metadata without copying its historical arrays', async () => {
+	test('normalizes detail metadata without copying its historical arrays', async () => {
 		const tokens: RawStablecoinDetailResponse['tokens'] = [{ date: 1, circulating: { peggedUSD: 10 } }]
 		const chainBalances: RawStablecoinDetailResponse['chainBalances'] = { Ethereum: { tokens } }
 		const response = {

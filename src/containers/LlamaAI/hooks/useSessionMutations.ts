@@ -19,7 +19,7 @@ import { getErrorMessage } from '~/utils/error'
 
 type SwitchActiveLeafResponse = {
 	activeLeafMessageId: string
-	messages?: unknown[]
+	messages?: Array<unknown>
 	pagination?: {
 		hasMore?: boolean
 		cursor?: number | null
@@ -29,8 +29,8 @@ type SwitchActiveLeafResponse = {
 }
 
 type SessionRestoreResponse = {
-	messages?: unknown[]
-	conversationHistory?: unknown[]
+	messages?: Array<unknown>
+	conversationHistory?: Array<unknown>
 	hasMore?: boolean
 	nextCursor?: number | null
 	totalMessages?: number
@@ -44,7 +44,7 @@ type SessionRestoreResponse = {
 	queueRevision?: number
 }
 
-function getSessionRestoreMessages(result: SessionRestoreResponse | null | undefined): unknown[] {
+function getSessionRestoreMessages(result: SessionRestoreResponse | null | undefined): Array<unknown> {
 	// PR #2299 renamed conversationHistory to messages; old restore payloads
 	// and malformed 2xx envelopes must normalize before callers map them.
 	return Array.isArray(result?.messages)
@@ -125,7 +125,7 @@ export function useSessionMutations() {
 
 	const prependProjectSession = useCallback(
 		(projectId: string, session: ProjectChatSession) => {
-			queryClient.setQueryData<ProjectChatSession[]>(projectSessionsKey(projectId), (old) => {
+			queryClient.setQueryData<Array<ProjectChatSession>>(projectSessionsKey(projectId), (old) => {
 				const sessions = old?.filter((item) => item.sessionId !== session.sessionId) ?? []
 				return [session, ...sessions]
 			})
@@ -135,7 +135,7 @@ export function useSessionMutations() {
 
 	const removeProjectSession = useCallback(
 		(projectId: string, sessionId: string) => {
-			queryClient.setQueryData<ProjectChatSession[]>(projectSessionsKey(projectId), (old) =>
+			queryClient.setQueryData<Array<ProjectChatSession>>(projectSessionsKey(projectId), (old) =>
 				old?.filter((item) => item.sessionId !== sessionId)
 			)
 		},
@@ -151,7 +151,7 @@ export function useSessionMutations() {
 			}
 
 			if (projectId) {
-				queryClient.setQueryData<ProjectChatSession[]>(projectSessionsKey(projectId), (old) =>
+				queryClient.setQueryData<Array<ProjectChatSession>>(projectSessionsKey(projectId), (old) =>
 					old?.map((session) =>
 						session.sessionId === previousSessionId
 							? { ...session, sessionId: nextSessionId, isOptimistic: false }
@@ -309,7 +309,7 @@ export function useSessionMutations() {
 	})
 
 	const bulkDeleteSessionsMutation = useMutation({
-		mutationFn: async (sessionIds: string[]) => {
+		mutationFn: async (sessionIds: Array<string>) => {
 			try {
 				await llamaAIRequest(authorizedFetch, '/user/sessions/bulk', {
 					method: 'DELETE',

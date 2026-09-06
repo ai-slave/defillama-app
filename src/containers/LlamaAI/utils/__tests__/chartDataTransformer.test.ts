@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { AdaptedLlamaAICartesianChart } from '~/containers/LlamaAI/utils/chartAdapters/cartesian'
 import type { ChartCapabilities, ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
 import { ChartDataTransformer } from '../chartDataTransformer'
@@ -197,7 +197,7 @@ function makeLegacyTimestampChart(): AdaptedLlamaAICartesianChart {
 }
 
 describe('ChartDataTransformer', () => {
-	it('reuses canonical data when no view transform is active', () => {
+	test('reuses canonical data when no view transform is active', () => {
 		const chart = makeAscendingBarChart()
 		const transformed = ChartDataTransformer.applyViewState(chart, { ...viewState, percentage: false }, capabilities)
 
@@ -205,7 +205,7 @@ describe('ChartDataTransformer', () => {
 		expect(transformed.props.dataset.source).toBe(chart.props.dataset.source)
 	})
 
-	it('reuses canonical rows when stacking changes only series presentation', () => {
+	test('reuses canonical rows when stacking changes only series presentation', () => {
 		const chart = makeMixedAxisChart('time')
 		const transformed = ChartDataTransformer.applyViewState(
 			chart,
@@ -218,7 +218,7 @@ describe('ChartDataTransformer', () => {
 		expect(transformed.props.charts).not.toBe(chart.props.charts)
 	})
 
-	it('keeps the configured series order when stacking instead of re-sorting by magnitude', () => {
+	test('keeps the configured series order when stacking instead of re-sorting by magnitude', () => {
 		const chart = makeMixedAxisChart('time')
 		const transformed = ChartDataTransformer.applyViewState(
 			chart,
@@ -231,7 +231,7 @@ describe('ChartDataTransformer', () => {
 		expect(transformed.seriesMeta.map((series) => series.name)).toEqual(['Primary A', 'Primary B', 'Secondary'])
 	})
 
-	it('keeps the configured series order for the stacked percentage view', () => {
+	test('keeps the configured series order for the stacked percentage view', () => {
 		const chart = makeMixedAxisChart('time')
 		const transformed = ChartDataTransformer.applyViewState(
 			chart,
@@ -244,7 +244,7 @@ describe('ChartDataTransformer', () => {
 		expect(transformed.seriesMeta.map((series) => series.name)).toEqual(['Primary A', 'Primary B', 'Secondary'])
 	})
 
-	it('delegates time tooltip formatting while preserving per-series symbols', () => {
+	test('delegates time tooltip formatting while preserving per-series symbols', () => {
 		const transformed = ChartDataTransformer.applyViewState(makeMixedAxisChart('time'), viewState, capabilities)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
@@ -259,7 +259,7 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
-	it('keeps secondary-axis symbols in percentage tooltips for category charts', () => {
+	test('keeps secondary-axis symbols in percentage tooltips for category charts', () => {
 		const transformed = ChartDataTransformer.applyViewState(makeMixedAxisChart('category'), viewState, capabilities)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
@@ -284,7 +284,7 @@ describe('ChartDataTransformer', () => {
 		expect(tooltip).toContain('Secondary: $5')
 	})
 
-	it('preserves chronological order while grouping an ascending dataset', () => {
+	test('preserves chronological order while grouping an ascending dataset', () => {
 		const transformed = ChartDataTransformer.applyViewState(
 			makeAscendingBarChart(),
 			{ ...viewState, grouping: 'month', percentage: false },
@@ -299,7 +299,7 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
-	it('preserves chronological order while accumulating an ascending dataset', () => {
+	test('preserves chronological order while accumulating an ascending dataset', () => {
 		const transformed = ChartDataTransformer.applyViewState(
 			makeAscendingBarChart(),
 			{ ...viewState, cumulative: true, percentage: false },
@@ -314,7 +314,7 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
-	it('sums flow buckets and keeps the latest stock snapshot in one pass', () => {
+	test('sums flow buckets and keeps the latest stock snapshot in one pass', () => {
 		const chart = makeAscendingBarChart()
 		chart.props.dataset.dimensions.push('TVL')
 		chart.props.dataset.source = [
@@ -357,7 +357,7 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
-	it('accumulates flow bars without changing stock bars', () => {
+	test('accumulates flow bars without changing stock bars', () => {
 		const chart = makeAscendingBarChart()
 		chart.props.dataset.dimensions.push('TVL')
 		chart.props.dataset.source = [
@@ -405,7 +405,7 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
-	it('keeps a line-only cumulative view identical to daily values', () => {
+	test('keeps a line-only cumulative view identical to daily values', () => {
 		const chart = makeMixedAxisChart('time')
 		chart.props.dataset.source = [
 			[Date.UTC(2026, 0, 1), 20, 30, 5],
@@ -423,7 +423,7 @@ describe('ChartDataTransformer', () => {
 		expect(transformed.props.charts).toEqual(chart.props.charts)
 	})
 
-	it('groups then accumulates flow buckets without mutating a deeply frozen adapted chart', () => {
+	test('groups then accumulates flow buckets without mutating a deeply frozen adapted chart', () => {
 		const chart = makeAscendingBarChart()
 		chart.props.dataset.source.push([Date.UTC(2026, 3, 1), 40])
 		chart.rowCount = chart.props.dataset.source.length
@@ -451,7 +451,7 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
-	it('normalizes negative, missing, and zero percentage buckets without mutating input', () => {
+	test('normalizes negative, missing, and zero percentage buckets without mutating input', () => {
 		const chart = makeMixedAxisChart('time')
 		chart.props.dataset.source = [
 			[Date.UTC(2026, 0, 1), -20, 30, 5],
@@ -485,7 +485,7 @@ describe('ChartDataTransformer', () => {
 		expect(chart.props.dataset.source[0]?.[1]).toBe(-20)
 	})
 
-	it('groups legacy string timestamps and skips malformed timestamps', () => {
+	test('groups legacy string timestamps and skips malformed timestamps', () => {
 		const transformed = ChartDataTransformer.applyViewState(
 			makeLegacyTimestampChart(),
 			{ ...viewState, grouping: 'month', percentage: false },
@@ -501,7 +501,7 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
-	it('applies cumulative view to legacy string timestamps and skips malformed timestamps', () => {
+	test('applies cumulative view to legacy string timestamps and skips malformed timestamps', () => {
 		const transformed = ChartDataTransformer.applyViewState(
 			makeLegacyTimestampChart(),
 			{ ...viewState, cumulative: true, percentage: false },
@@ -517,7 +517,7 @@ describe('ChartDataTransformer', () => {
 		])
 	})
 
-	it('leaves log-axis policy to the renderer', () => {
+	test('leaves log-axis policy to the renderer', () => {
 		const chart = makeMixedAxisChart('time')
 		chart.props.chartOptions = { yAxis: [{ min: 0 }, { min: 0 }] } as any
 
@@ -528,7 +528,7 @@ describe('ChartDataTransformer', () => {
 		)
 		if (transformed.chartType !== 'cartesian') throw new Error('Expected cartesian chart')
 
-		const yAxis = transformed.props.chartOptions?.yAxis as unknown as any[]
+		const yAxis = transformed.props.chartOptions?.yAxis as unknown as Array<any>
 
 		expect(yAxis).toEqual([{ min: 0 }, { min: 0 }])
 	})

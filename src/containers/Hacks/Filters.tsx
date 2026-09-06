@@ -16,19 +16,19 @@ interface HacksFiltersProps {
 	chainOptions: Array<string>
 	techniqueOptions: Array<string>
 	classificationOptions: Array<string>
-	selectedChains: string[]
-	selectedTechniques: string[]
-	selectedClassifications: string[]
+	selectedChains: Array<string>
+	selectedTechniques: Array<string>
+	selectedClassifications: Array<string>
 }
 
 interface FiltersInnerProps {
 	chainOptions: Array<string>
 	techniqueOptions: Array<string>
 	classificationOptions: Array<string>
-	selectedChains: string[]
-	selectedTechniques: string[]
-	selectedClassifications: string[]
-	timeOptions: TimeLabelKey[]
+	selectedChains: Array<string>
+	selectedTechniques: Array<string>
+	selectedClassifications: Array<string>
+	timeOptions: Array<TimeLabelKey>
 	selectedTimeLabel: TimeLabelKey
 	setSelectedTime: (label: TimeLabelKey) => void
 	minLostVal: number | null
@@ -51,7 +51,7 @@ const TIME_LABEL_TO_KEY = {
 type TimeLabelKey = keyof typeof TIME_LABEL_TO_KEY
 type TimeValueKey = (typeof TIME_LABEL_TO_KEY)[TimeLabelKey]
 
-const defaultTimeOptions: TimeLabelKey[] = ['All', '7D', '30D', '90D', '1Y']
+const defaultTimeOptions: Array<TimeLabelKey> = ['All', '7D', '30D', '90D', '1Y']
 function buildKeyToLabel(): Record<TimeValueKey, TimeLabelKey> {
 	const result: Partial<Record<TimeValueKey, TimeLabelKey>> = {}
 	for (const label of defaultTimeOptions) {
@@ -88,10 +88,10 @@ export function HacksFilters({
 	}
 
 	const hasActiveFilters =
-		typeof chain !== 'undefined' ||
-		typeof tech !== 'undefined' ||
-		typeof classQ !== 'undefined' ||
-		typeof time !== 'undefined' ||
+		chain !== undefined ||
+		tech !== undefined ||
+		classQ !== undefined ||
+		time !== undefined ||
 		minLostVal != null ||
 		maxLostVal != null
 

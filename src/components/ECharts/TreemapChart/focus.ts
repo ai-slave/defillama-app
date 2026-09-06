@@ -1,6 +1,6 @@
 import type * as echarts from 'echarts/core'
 
-type TreemapFocusNode = { id: string; path?: string[]; indexPath?: number[] }
+type TreemapFocusNode = { id: string; path?: Array<string>; indexPath?: Array<number> }
 
 const TREEMAP_FOCUS_NODE_KEY = '__llamaTreemapFocusNode'
 const LEGACY_TREEMAP_FOCUS_NODE_ID_KEY = '__llamaTreemapFocusNodeId'
@@ -15,7 +15,7 @@ interface TreemapTreeNode {
 	name?: string
 	getId?: () => unknown
 	getChildIndex?: () => number
-	getAncestors?: (includeSelf: boolean) => TreemapTreeNode[]
+	getAncestors?: (includeSelf: boolean) => Array<TreemapTreeNode>
 }
 
 type TreemapGlobalModel = {
@@ -55,8 +55,8 @@ export function registerTreemapFocusTracking(instance: echarts.ECharts) {
 		if (typeof nodeId !== 'string' || !nodeId) return
 
 		const ancestors = node?.getAncestors?.(true)
-		const path: string[] = []
-		const indexPath: number[] = []
+		const path: Array<string> = []
+		const indexPath: Array<number> = []
 		if (Array.isArray(ancestors)) {
 			for (let index = 0; index < ancestors.length; index++) {
 				const ancestor = ancestors[index]

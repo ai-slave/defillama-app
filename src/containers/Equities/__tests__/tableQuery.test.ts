@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildEquitiesTableQueryString,
 	buildEquitiesTreemapQueryString,
@@ -9,7 +9,7 @@ import {
 } from '../tableQuery'
 
 describe('getEquitiesTableQuery', () => {
-	it('falls back to the first market-cap page for empty or invalid input', () => {
+	test('falls back to the first market-cap page for empty or invalid input', () => {
 		expect(getEquitiesTableQuery({})).toEqual({
 			page: 1,
 			pageSize: 50,
@@ -26,7 +26,7 @@ describe('getEquitiesTableQuery', () => {
 		})
 	})
 
-	it('parses paging, sort, trimmed search and compact filters', () => {
+	test('parses paging, sort, trimmed search and compact filters', () => {
 		expect(
 			getEquitiesTableQuery({
 				page: '3',
@@ -49,7 +49,7 @@ describe('getEquitiesTableQuery', () => {
 		})
 	})
 
-	it('signs on order-changing fields only, case-insensitively for search', () => {
+	test('signs on order-changing fields only, case-insensitively for search', () => {
 		const a = getEquitiesTableQuery({ page: '1', search: 'Apple', filters: 'country:in:US' })
 		const b = getEquitiesTableQuery({ page: '7', pageSize: '100', search: 'apple', filters: 'country:in:US' })
 		expect(getEquitiesTableQuerySignature(a)).toBe(getEquitiesTableQuerySignature(b))
@@ -60,7 +60,7 @@ describe('getEquitiesTableQuery', () => {
 })
 
 describe('getEquitiesTableSortingFromQuery', () => {
-	it('uses the preset sort when the URL has no valid sortBy', () => {
+	test('uses the preset sort when the URL has no valid sortBy', () => {
 		const preset = [{ id: 'earningsTTM', desc: true }]
 		expect(getEquitiesTableSortingFromQuery({}, preset)).toBe(preset)
 		expect(getEquitiesTableSortingFromQuery({ sortBy: 'ticker' }, preset)).toBe(preset)
@@ -71,7 +71,7 @@ describe('getEquitiesTableSortingFromQuery', () => {
 })
 
 describe('buildEquitiesTableQueryString', () => {
-	it('omits defaults and canonicalizes the filters param', () => {
+	test('omits defaults and canonicalizes the filters param', () => {
 		expect(
 			buildEquitiesTableQueryString({
 				query: { rankBy: 'earnings', view: 'table', search: '', filters: ['country:in:US', 'bogus:zz:1'] },
@@ -97,7 +97,7 @@ describe('buildEquitiesTableQueryString', () => {
 })
 
 describe('market map query', () => {
-	it('carries filters and a non-default size metric only', () => {
+	test('carries filters and a non-default size metric only', () => {
 		expect(buildEquitiesTreemapQueryString({ query: { page: '4', sortBy: 'volume' }, sizeMetric: 'marketCap' })).toBe(
 			''
 		)

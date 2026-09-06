@@ -42,7 +42,7 @@ function findEntityTermOccurrences(value: string, term: string) {
 	return matches
 }
 
-function resolveSelectedEntities(value: string, entities: SelectedEntity[]) {
+function resolveSelectedEntities(value: string, entities: Array<SelectedEntity>) {
 	const occurrencesByTerm = new Map<string, Array<{ start: number; end: number }>>()
 	const occurrenceIndexByTerm = new Map<string, number>()
 
@@ -66,7 +66,7 @@ function resolveSelectedEntities(value: string, entities: SelectedEntity[]) {
 export function useEntityCombobox({ promptInputRef, currentValue, applyPromptEdit }: UseEntityComboboxOptions) {
 	const [isTriggerOnly, setIsTriggerOnly] = useState(false)
 	const [searchTerm, setSearchTerm] = useState('')
-	const [selectedEntities, setSelectedEntities] = useState<SelectedEntity[]>([])
+	const [selectedEntities, setSelectedEntities] = useState<Array<SelectedEntity>>([])
 	const isComposingRef = useRef(false)
 
 	const combobox = Ariakit.useComboboxStore()

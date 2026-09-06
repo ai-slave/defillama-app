@@ -4,13 +4,13 @@ import { readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { TokenOption } from './types'
 
 export interface EarnPageMeta {
-	chainList: string[]
-	projectList: string[]
-	categoryList: string[]
-	evmChains: string[]
-	tokens: TokenOption[]
+	chainList: Array<string>
+	projectList: Array<string>
+	categoryList: Array<string>
+	evmChains: Array<string>
+	tokens: Array<TokenOption>
 	// Canonical attribute option order used by the Earn filters.
-	attributeIds: AttributeId[]
+	attributeIds: Array<AttributeId>
 }
 
 // Filter vocabulary for the /yields page, derived entirely from the earn dataset +
@@ -40,7 +40,7 @@ export async function getEarnPageMeta(snapshot: YieldsSnapshot): Promise<EarnPag
 	}
 
 	// Families before assets; within each group, occurrence-desc (rows matched), name tiebreak.
-	const tokens: TokenOption[] = []
+	const tokens: Array<TokenOption> = []
 	const seenTokenValues = new Set<string>()
 	for (const group of [meta.tokens.families, meta.tokens.assets]) {
 		const present = group.filter((option) => tokenCounts.has(option.value) && !seenTokenValues.has(option.value))

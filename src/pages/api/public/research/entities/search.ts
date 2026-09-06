@@ -10,9 +10,9 @@ import {
 import { buildChainPreview, buildProtocolPreview } from '~/containers/Articles/server/entityPreviewBuilders'
 import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
 
-type ResponseData = { entities: ArticleEntitySuggestionItem[] } | { error: string }
+type ResponseData = { entities: Array<ArticleEntitySuggestionItem> } | { error: string }
 
-const getQueryParam = (value: string | string[] | undefined): string => {
+const getQueryParam = (value: string | Array<string> | undefined): string => {
 	if (Array.isArray(value)) return value[0] ?? ''
 	return value ?? ''
 }

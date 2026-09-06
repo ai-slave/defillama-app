@@ -64,17 +64,17 @@ export interface ChartArtifactRef {
 export type ChartArtifactRefs = Record<string, ChartArtifactRef>
 export type DashboardChartData = Record<
 	string,
-	{ config: ChartConfiguration; data: ChartDataSeries; toolChain: unknown[] }
+	{ config: ChartConfiguration; data: ChartDataSeries; toolChain: Array<unknown> }
 >
 
 export interface DashboardArtifact {
 	id: string
 	dashboardName: string
-	items: DashboardItemConfig[]
+	items: Array<DashboardItemConfig>
 	timePeriod?: string
 	sourceDashboardId?: string
 	chartData?: DashboardChartData
-	artifactOutcomes?: DashboardArtifactOutcome[]
+	artifactOutcomes?: Array<DashboardArtifactOutcome>
 }
 
 export interface DashboardArtifactOutcome {
@@ -89,7 +89,7 @@ export interface DashboardArtifactOutcome {
 }
 
 export type JsonPrimitive = string | number | boolean | null
-export type JsonValue = JsonPrimitive | JsonObject | JsonValue[]
+export type JsonValue = JsonPrimitive | JsonObject | Array<JsonValue>
 
 export interface JsonObject {
 	[key: string]: JsonValue
@@ -100,7 +100,7 @@ export interface ToolExecution {
 	executionTimeMs: number
 	success: boolean
 	error?: string
-	resultPreview?: JsonObject[]
+	resultPreview?: Array<JsonObject>
 	resultCount?: number
 	resultId?: string
 	sqlQuery?: string
@@ -130,11 +130,11 @@ export interface AlertIntent {
 
 export interface SuggestedQuestionsResponse {
 	categories: {
-		find_alpha: string[]
-		analytics: string[]
-		speculative_guidance: string[]
-		learn: string[]
-		research_report: string[]
+		find_alpha: Array<string>
+		analytics: Array<string>
+		speculative_guidance: Array<string>
+		learn: Array<string>
+		research_report: Array<string>
 	}
 	metadata: {
 		generatedAt: string
@@ -149,7 +149,7 @@ export interface LandingQuestion {
 }
 
 export interface LandingQuestionsResponse {
-	questions: LandingQuestion[]
+	questions: Array<LandingQuestion>
 	metadata?: {
 		generatedAt: string
 		cacheExpiresAt: string
@@ -158,7 +158,7 @@ export interface LandingQuestionsResponse {
 }
 
 export interface EntityQuestionsResponse {
-	questions: string[]
+	questions: Array<string>
 	suggestGlobal: boolean
 	entityNotFound?: boolean
 	metadata?: {
@@ -200,14 +200,14 @@ export interface FreeLimitOffer {
 export interface Message {
 	role: 'user' | 'assistant'
 	content?: string
-	charts?: Array<{ charts: ChartConfiguration[]; chartData: ChartDataByKey; artifactRefs?: ChartArtifactRefs }>
-	csvExports?: CsvExport[]
+	charts?: Array<{ charts: Array<ChartConfiguration>; chartData: ChartDataByKey; artifactRefs?: ChartArtifactRefs }>
+	csvExports?: Array<CsvExport>
 	mdExports?: Array<{ id: string; title: string; url: string; filename: string }>
-	citations?: UnifiedCitationReference[]
-	legacyUrlCitations?: string[]
-	alerts?: AlertProposedData[]
-	savedAlertIds?: string[]
-	dashboards?: DashboardArtifact[]
+	citations?: Array<UnifiedCitationReference>
+	legacyUrlCitations?: Array<string>
+	alerts?: Array<AlertProposedData>
+	savedAlertIds?: Array<string>
+	dashboards?: Array<DashboardArtifact>
 	images?: Array<{
 		url: string
 		mimeType: string
@@ -216,7 +216,7 @@ export interface Message {
 		textContent?: string
 		size?: number
 	}>
-	generatedImages?: GeneratedImage[]
+	generatedImages?: Array<GeneratedImage>
 	id?: string
 	parentId?: string
 	siblingInfo?: {
@@ -225,7 +225,7 @@ export interface Message {
 		siblings: Array<{ messageId: string; leafMessageId: string }>
 	}
 	timestamp?: number
-	toolExecutions?: ToolExecution[]
+	toolExecutions?: Array<ToolExecution>
 	thinking?: string
 	quotedText?: string
 	messageMetadata?: MessageMetadata
@@ -233,7 +233,7 @@ export interface Message {
 }
 
 export interface ChartSet {
-	charts: ChartConfiguration[]
+	charts: Array<ChartConfiguration>
 	chartData: ChartDataByKey
 	artifactRefs?: ChartArtifactRefs
 }
@@ -279,7 +279,7 @@ export interface SearchResult {
 	session_id: string
 	session_title: string | null
 	last_activity: string | null
-	matches: SearchMatch[]
+	matches: Array<SearchMatch>
 }
 
 export type AgenticAnswerMode = 'quick' | 'fact_checked' | 'research'
@@ -291,7 +291,7 @@ export interface FactCheckReference {
 	detail?: string
 	checked?: string
 	asOf?: string
-	evidence?: string[]
+	evidence?: Array<string>
 	sourceType?: string
 }
 
@@ -304,11 +304,11 @@ export interface UnifiedCitationReference {
 	formula?: string
 	asOf?: string
 	resultId?: string
-	sql?: string[]
-	code?: string[]
+	sql?: Array<string>
+	code?: Array<string>
 	rows?: Array<Record<string, unknown>>
 	rowCount?: number
-	columns?: string[]
+	columns?: Array<string>
 	field?: string
 	rowIndex?: number
 	url?: string
@@ -320,7 +320,7 @@ export interface UnifiedCitationReference {
 	fileUrl?: string
 	locator?: string
 	excerpt?: string
-	sources?: UnifiedCitationReference[]
+	sources?: Array<UnifiedCitationReference>
 	verification?: {
 		claimType: 'quantitative' | 'qualitative'
 		grounded: boolean
@@ -329,7 +329,7 @@ export interface UnifiedCitationReference {
 	}
 	detail?: string
 	checked?: string
-	evidence?: string[]
+	evidence?: Array<string>
 	rows_omitted?: boolean
 }
 

@@ -9,7 +9,7 @@ interface TypeOption {
 	icon: 'chain' | 'protocol'
 }
 
-const TYPE_OPTIONS: TypeOption[] = [
+const TYPE_OPTIONS: Array<TypeOption> = [
 	{
 		type: 'chains',
 		title: 'Compare Chains',

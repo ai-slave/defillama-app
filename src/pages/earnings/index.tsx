@@ -34,7 +34,7 @@ const EarningsOnAllChains = (props: IAdapterByChainPageData) => {
 		<Layout
 			title="DeFi Earnings & Net Profit Rankings - DefiLlama"
 			description="Track DeFi protocol earnings and net profit rankings. Compare sustainable earnings (revenue minus incentives) across 500+ protocols. Real-time earnings analytics showing true profitability after token incentives."
-			canonicalUrl={`/earnings`}
+			canonicalUrl="/earnings"
 			pageName={pageName}
 		>
 			<AdapterByChain {...props} type={type} />

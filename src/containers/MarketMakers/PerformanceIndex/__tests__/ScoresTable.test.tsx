@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { ScoresTable } from '../ScoresTable'
 import type { PerformanceRow } from '../types'
 
-const rows: PerformanceRow[] = [
+const rows: Array<PerformanceRow> = [
 	{
 		marketMakerId: 'lhava',
 		marketMakerName: 'Lhava',
@@ -16,7 +16,7 @@ const rows: PerformanceRow[] = [
 		integrationLevel: 3,
 		integrationStatus: 'full',
 		activeEngagementsCount: 12,
-		medianEngagementsFdv: 250000000
+		medianEngagementsFdv: 250_000_000
 	},
 	{
 		marketMakerId: 'wintermute',
@@ -49,37 +49,37 @@ const rows: PerformanceRow[] = [
 ]
 
 describe('ScoresTable', () => {
-	it('renders a row per market maker with its name', () => {
+	test('renders a row per market maker with its name', () => {
 		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
 		expect(html).toContain('Lhava')
 		expect(html).toContain('Wintermute')
 		expect(html).toContain('GSR')
 	})
 
-	it('formats numeric scores to two decimals', () => {
+	test('formats numeric scores to two decimals', () => {
 		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
 		expect(html).toContain('10.00')
 		expect(html).toContain('9.50')
 	})
 
-	it('renders <5.00 for a composite below 5', () => {
+	test('renders <5.00 for a composite below 5', () => {
 		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
 		expect(html).toContain('&lt;5.00')
 	})
 
-	it('renders N/A for a null score', () => {
+	test('renders N/A for a null score', () => {
 		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
 		expect(html).toContain('N/A')
 	})
 
-	it('renders the integration badge labels', () => {
+	test('renders the integration badge labels', () => {
 		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
 		expect(html).toContain('Full')
 		expect(html).toContain('Partial')
 		expect(html).toContain('None')
 	})
 
-	it('renders a Grade column between Market Maker and Composite Score', () => {
+	test('renders a Grade column between Market Maker and Composite Score', () => {
 		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
 		const order = ['Market Maker', 'Grade', 'Composite Score', 'Trading KPIs', 'Trust', 'Coverage &amp; Capabilities']
 		const positions = order.map((label) => html.indexOf(label))
@@ -87,7 +87,7 @@ describe('ScoresTable', () => {
 		expect([...positions].sort((a, b) => a - b)).toEqual(positions)
 	})
 
-	it('derives the grade from the composite score', () => {
+	test('derives the grade from the composite score', () => {
 		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
 		expect(html).toContain('>AAA</span>')
 		expect(html).toContain('text-success')
@@ -97,7 +97,7 @@ describe('ScoresTable', () => {
 		expect(html).toContain('text-error')
 	})
 
-	it('labels the trustIntegration column Trust', () => {
+	test('labels the trustIntegration column Trust', () => {
 		const html = renderToStaticMarkup(<ScoresTable rows={rows} onSelectMM={() => {}} />)
 		expect(html).not.toContain('Trust &amp; Integration')
 	})

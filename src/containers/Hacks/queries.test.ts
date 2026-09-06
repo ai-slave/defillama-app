@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { hydrateMetadataCache, METADATA_CI_STUBS, type CoreMetadataPayload } from '~/utils/metadata/artifactContract'
 import type { Hack } from './model'
 import { getHacksPageData, getTotalValueLostInHacksByProtocol } from './queries'
@@ -53,7 +53,7 @@ describe('Hacks queries', () => {
 		fetchHacksMock.mockReset()
 	})
 
-	it('uses whole USD and zero contribution for unknown aggregate values', async () => {
+	test('uses whole USD and zero contribution for unknown aggregate values', async () => {
 		fetchHacksMock.mockResolvedValue([
 			hack({ amountUsd: 10_000_000, returnedFundsUsd: 2_000_000 }),
 			hack({ amountUsd: null, returnedFundsUsd: null }),
@@ -73,7 +73,7 @@ describe('Hacks queries', () => {
 		])
 	})
 
-	it('sorts unknown dates last and excludes them from monthly history', async () => {
+	test('sorts unknown dates last and excludes them from monthly history', async () => {
 		fetchHacksMock.mockResolvedValue([
 			hack({ name: 'Unknown date', date: null, amountUsd: 5 }),
 			hack({ name: 'Dated', date: 1_704_067_200, amountUsd: 10 })
@@ -86,7 +86,7 @@ describe('Hacks queries', () => {
 		expect(page.monthlyHacksChartData.dataset.source).toHaveLength(1)
 	})
 
-	it('uses current metadata identity instead of historical target labels', async () => {
+	test('uses current metadata identity instead of historical target labels', async () => {
 		fetchHacksMock.mockResolvedValue([
 			hack({ amountUsd: 10, targetType: 'CEX' }),
 			hack({ amountUsd: null, targetType: 'DeFi Protocol' }),
@@ -111,7 +111,7 @@ describe('Hacks queries', () => {
 		expect(protocols.filter((item) => item.name === 'Duplicate').map((item) => item.totalHackedUsd)).toEqual([2, 1])
 	})
 
-	it('does not replace an unresolved authoritative identity with a same-name route', async () => {
+	test('does not replace an unresolved authoritative identity with a same-name route', async () => {
 		fetchHacksMock.mockResolvedValue([hack({ defillamaId: 'chain#missing', name: 'Protocol', amountUsd: 10 })])
 
 		const { protocols } = await getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })
@@ -121,7 +121,7 @@ describe('Hacks queries', () => {
 		])
 	})
 
-	it('preserves producer order when protocol totals are equal', async () => {
+	test('preserves producer order when protocol totals are equal', async () => {
 		fetchHacksMock.mockResolvedValue([
 			hack({ defillamaId: 'duplicate-b', name: 'Zulu', amountUsd: 10 }),
 			hack({ defillamaId: 'duplicate-a', name: 'Alpha', amountUsd: 10 })
@@ -132,7 +132,7 @@ describe('Hacks queries', () => {
 		expect(protocols.map((item) => item.slug)).toEqual(['zulu', 'alpha'])
 	})
 
-	it('preserves negative net loss when returned funds exceed measured losses', async () => {
+	test('preserves negative net loss when returned funds exceed measured losses', async () => {
 		fetchHacksMock.mockResolvedValue([
 			hack({ defillamaId: 'refund', amountUsd: 197_000_000, returnedFundsUsd: 240_000_000 })
 		])
@@ -144,7 +144,7 @@ describe('Hacks queries', () => {
 		expect((protocol?.totalHackedUsd ?? 0) - (protocol?.returnedFundsUsd ?? 0)).toBe(-43_000_000)
 	})
 
-	it('keeps successful empty separate from source failure', async () => {
+	test('keeps successful empty separate from source failure', async () => {
 		fetchHacksMock.mockResolvedValueOnce([])
 		await expect(getTotalValueLostInHacksByProtocol({ metadataCache: metadataFixture() })).resolves.toEqual({
 			protocols: []

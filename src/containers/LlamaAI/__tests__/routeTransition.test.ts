@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	isSameAgenticRouteTransition,
 	shouldSkipCurrentSessionRouteRestore,
@@ -6,7 +6,7 @@ import {
 } from '../routeTransition'
 
 describe('routeTransition', () => {
-	it('maps page routes to chat transitions and ignores unknown routes', () => {
+	test('maps page routes to chat transitions and ignores unknown routes', () => {
 		expect(toAgenticRouteTransition({ kind: 'chat-new' }, (id) => id)).toEqual({ kind: 'new-chat' })
 		expect(
 			toAgenticRouteTransition({ kind: 'chat-session', sessionId: 'alias-1', aroundMessageId: 'message-a' }, (id) =>
@@ -20,7 +20,7 @@ describe('routeTransition', () => {
 		expect(toAgenticRouteTransition({ kind: 'unknown' }, (id) => id)).toBeNull()
 	})
 
-	it('compares new-chat and project transitions by kind and identity', () => {
+	test('compares new-chat and project transitions by kind and identity', () => {
 		expect(isSameAgenticRouteTransition({ kind: 'new-chat' }, { kind: 'new-chat' })).toBe(true)
 		expect(
 			isSameAgenticRouteTransition(
@@ -37,7 +37,7 @@ describe('routeTransition', () => {
 		expect(isSameAgenticRouteTransition({ kind: 'new-chat' }, { kind: 'project', projectId: 'project-1' })).toBe(false)
 	})
 
-	it('treats different route transition kinds as different', () => {
+	test('treats different route transition kinds as different', () => {
 		expect(
 			isSameAgenticRouteTransition(
 				{ kind: 'session', sessionId: 'session-1' },
@@ -46,7 +46,7 @@ describe('routeTransition', () => {
 		).toBe(false)
 	})
 
-	it('treats message anchors as part of session route identity', () => {
+	test('treats message anchors as part of session route identity', () => {
 		expect(
 			isSameAgenticRouteTransition(
 				{ kind: 'session', sessionId: 'session-1', aroundMessageId: 'message-a' },
@@ -62,7 +62,7 @@ describe('routeTransition', () => {
 		).toBe(true)
 	})
 
-	it('skips redundant current-session restores without anchors', () => {
+	test('skips redundant current-session restores without anchors', () => {
 		expect(
 			shouldSkipCurrentSessionRouteRestore(
 				{ kind: 'session', sessionId: 'session-1' },
@@ -72,13 +72,13 @@ describe('routeTransition', () => {
 		).toBe(true)
 	})
 
-	it('does not skip restore without a previous transition', () => {
+	test('does not skip restore without a previous transition', () => {
 		expect(shouldSkipCurrentSessionRouteRestore({ kind: 'session', sessionId: 'session-1' }, null, 'session-1')).toBe(
 			false
 		)
 	})
 
-	it('does not skip restore for a different current session', () => {
+	test('does not skip restore for a different current session', () => {
 		expect(
 			shouldSkipCurrentSessionRouteRestore(
 				{ kind: 'session', sessionId: 'session-1' },
@@ -88,7 +88,7 @@ describe('routeTransition', () => {
 		).toBe(false)
 	})
 
-	it('restores when removing a same-session message anchor', () => {
+	test('restores when removing a same-session message anchor', () => {
 		expect(
 			shouldSkipCurrentSessionRouteRestore(
 				{ kind: 'session', sessionId: 'session-1' },
@@ -98,7 +98,7 @@ describe('routeTransition', () => {
 		).toBe(false)
 	})
 
-	it('restores when adding a same-session message anchor', () => {
+	test('restores when adding a same-session message anchor', () => {
 		expect(
 			shouldSkipCurrentSessionRouteRestore(
 				{ kind: 'session', sessionId: 'session-1', aroundMessageId: 'message-a' },

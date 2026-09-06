@@ -10,7 +10,7 @@ export type CandlestickPoint = [
 ]
 
 export interface ICandlestickChartProps {
-	data: CandlestickPoint[]
+	data: Array<CandlestickPoint>
 	height?: string
 	onReady?: (instance: echarts.ECharts | null) => void
 	indicators?: Array<{

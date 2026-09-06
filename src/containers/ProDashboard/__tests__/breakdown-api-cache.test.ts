@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	getTvlBreakdownData: vi.fn(),
@@ -28,7 +28,7 @@ beforeEach(() => {
 })
 
 describe('Pro Dashboard final breakdown response caches', () => {
-	it('serializes and reuses the protocol TVL breakdown', async () => {
+	test('serializes and reuses the protocol TVL breakdown', async () => {
 		mocks.getTvlBreakdownData.mockResolvedValue({ series: [{ name: 'Aave', data: [[1, 2]] }] })
 		const request = {
 			method: 'GET',
@@ -45,7 +45,7 @@ describe('Pro Dashboard final breakdown response caches', () => {
 		expect(mocks.getTvlBreakdownData).toHaveBeenCalledTimes(1)
 	})
 
-	it('serializes and reuses the protocol TVL by-chain breakdown', async () => {
+	test('serializes and reuses the protocol TVL by-chain breakdown', async () => {
 		mocks.getProtocolChainBreakdownData.mockResolvedValue({ series: [{ name: 'Ethereum', data: [[1, 2]] }] })
 		const request = {
 			method: 'GET',
@@ -62,7 +62,7 @@ describe('Pro Dashboard final breakdown response caches', () => {
 		expect(mocks.getProtocolChainBreakdownData).toHaveBeenCalledTimes(1)
 	})
 
-	it('serializes and reuses the chain-native by-chain breakdown', async () => {
+	test('serializes and reuses the chain-native by-chain breakdown', async () => {
 		mocks.fetchAdapterChainMetrics.mockResolvedValue({
 			protocols: [
 				{

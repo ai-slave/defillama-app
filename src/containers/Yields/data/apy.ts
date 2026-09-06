@@ -23,7 +23,7 @@ export function resolveApy(
 	apyWindows: ApyWindows,
 	intrinsic: IntrinsicApy | null,
 	window: ApyWindow,
-	components: ApyComponent[]
+	components: Array<ApyComponent>
 ): ResolvedApy {
 	const triple: ApyTriple = apyWindows[window]
 	const base = triple.base
@@ -50,14 +50,14 @@ export function resolveApy(
 // Composition key shared by every composition-keyed object (stability, route
 // net_apy): the parts included in the active view — `base`, `base_reward`,
 // `base_intrinsic`, or `base_reward_intrinsic`.
-function compositionKey(components: ApyComponent[]): keyof CompositionValues {
+function compositionKey(components: Array<ApyComponent>): keyof CompositionValues {
 	const rewardPart = components.includes('reward') ? 'base_reward' : 'base'
 	return components.includes('intrinsic') ? `${rewardPart}_intrinsic` : rewardPart
 }
 
 // Variant map resolver for stability and route net_apy: the server always emits
 // all four composition sets, so this is a direct index by the active composition.
-export function resolveVariant<T>(variantMap: Record<keyof CompositionValues, T>, components: ApyComponent[]): T {
+export function resolveVariant<T>(variantMap: Record<keyof CompositionValues, T>, components: Array<ApyComponent>): T {
 	return variantMap[compositionKey(components)]
 }
 
@@ -65,7 +65,7 @@ export function resolveVariant<T>(variantMap: Record<keyof CompositionValues, T>
 // `total` for unsplit pools, else `base` — plus the reward and intrinsic series
 // when toggled (an absent series contributes 0). A null in the spine marks a gap
 // and stays null.
-export function collapseTrend(trend: Trend | null, components: ApyComponent[]): (number | null)[] | null {
+export function collapseTrend(trend: Trend | null, components: Array<ApyComponent>): Array<number | null> | null {
 	if (!trend) return null
 	const spine = 'total' in trend ? trend.total : trend.base
 	const reward = components.includes('reward') && 'reward' in trend ? (trend.reward ?? null) : null
@@ -74,7 +74,7 @@ export function collapseTrend(trend: Trend | null, components: ApyComponent[]): 
 	// A point exists when ANY toggled series reports a value that day (unreported
 	// components contribute 0); it is a gap only when every toggled series is null —
 	// so a reward-only pool draws its reward line, and its base-only view draws nothing.
-	const out: (number | null)[] = new Array(spine.length)
+	const out: Array<number | null> = new Array(spine.length)
 	for (let i = 0; i < spine.length; i++) {
 		const primary = spine[i] ?? null
 		const rewardPart = reward?.[i] ?? null
@@ -105,7 +105,7 @@ export function computeLoopApy(
 	row: LoopApyInputs,
 	loopCount: number,
 	window: ApyWindow,
-	components: ApyComponent[]
+	components: Array<ApyComponent>
 ): number | null {
 	const isCanonicalView = window === 'current' && components.includes('reward') && !components.includes('intrinsic')
 	if (isCanonicalView && loopCount === row.loop_apy.loop_count) {
@@ -119,7 +119,7 @@ export function computeLoopApy(
 	const borrowTotal = resolveApy(row.borrow_cost_apy, null, window, components).total
 	if (supplyTotal == null || borrowTotal == null) return null
 
-	const m = (1 - Math.pow(ltv, loopCount + 1)) / (1 - ltv)
+	const m = (1 - ltv ** (loopCount + 1)) / (1 - ltv)
 	return supplyTotal * m - borrowTotal * (m - 1)
 }
 

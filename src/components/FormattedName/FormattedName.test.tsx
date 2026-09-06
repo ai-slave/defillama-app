@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { FormattedName } from '.'
 
 describe('FormattedName', () => {
-	it('renders a bare ellipsized span without a character limit', () => {
+	test('renders a bare ellipsized span without a character limit', () => {
 		const html = renderToStaticMarkup(<FormattedName text="Uniswap" />)
 
 		expect(html).toContain('Uniswap')
@@ -12,7 +12,7 @@ describe('FormattedName', () => {
 		expect(html).not.toContain('cursor-pointer')
 	})
 
-	it('renders a tooltip only when text exceeds maxCharacters', () => {
+	test('renders a tooltip only when text exceeds maxCharacters', () => {
 		const withLimit = renderToStaticMarkup(<FormattedName text="A very long protocol name" maxCharacters={5} />)
 		const withoutLimit = renderToStaticMarkup(<FormattedName text="A very long protocol name" />)
 
@@ -21,13 +21,13 @@ describe('FormattedName', () => {
 		expect(withoutLimit).not.toContain('cursor-pointer')
 	})
 
-	it('marks link text via data-link', () => {
+	test('marks link text via data-link', () => {
 		const html = renderToStaticMarkup(<FormattedName text="Uniswap" link />)
 
 		expect(html).toContain('data-link="true"')
 	})
 
-	it('renders nothing for empty text', () => {
+	test('renders nothing for empty text', () => {
 		expect(renderToStaticMarkup(<FormattedName text="" />)).toBe('')
 	})
 })

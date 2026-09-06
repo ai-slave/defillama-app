@@ -10,7 +10,7 @@ const Unlocks = lazy(() => import('./Unlocks'))
 
 // Liquidity lives on Overview; native fees/revenue/income come from DefiLlama adapters,
 // unlocks from server-side emissions (see serverData.ts).
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'overview', label: 'Overview', component: Overview },
 	{ id: 'financials', label: 'Financials', component: Financials },
 	{ id: 'volume', label: 'Volume', component: Volume },

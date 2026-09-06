@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { fetchAdapterChainChartDataByChainBreakdown } from '~/containers/AdapterMetrics/api'
 import { getCompleteAdapterMetricChainSeries } from './chainSeries'
 
@@ -12,7 +12,7 @@ describe('getCompleteAdapterMetricChainSeries', () => {
 		vi.mocked(fetchAdapterChainChartDataByChainBreakdown).mockReset()
 	})
 
-	it('aligns sparse historical chain series before returning the complete export universe', async () => {
+	test('aligns sparse historical chain series before returning the complete export universe', async () => {
 		vi.mocked(fetchAdapterChainChartDataByChainBreakdown).mockResolvedValue([
 			[86_400, { Ethereum: 5 }],
 			[172_800, { Solana: 7 }]
@@ -46,7 +46,7 @@ describe('getCompleteAdapterMetricChainSeries', () => {
 		])
 	})
 
-	it.each([
+	test.each([
 		['perps', 14],
 		['open-interest', 9]
 	] as const)('uses the %s metric daily aggregation contract', async (metric, expected) => {

@@ -53,15 +53,17 @@ function createEquitiesUrl(
 /**
  * Fetch the live market summary for all companies.
  */
-export async function fetchEquitiesCompanies(): Promise<IEquitiesCompanyApiItem[]> {
-	return fetchJson<IEquitiesCompanyApiItem[]>(createEquitiesUrl(EQUITIES_COMPANIES_API, { countries: 'US' }))
+export async function fetchEquitiesCompanies(): Promise<Array<IEquitiesCompanyApiItem>> {
+	return fetchJson<Array<IEquitiesCompanyApiItem>>(createEquitiesUrl(EQUITIES_COMPANIES_API, { countries: 'US' }))
 }
 
 /**
  * Fetch the lightweight identity list for all synced companies.
  */
-export async function fetchEquitiesCompaniesList(): Promise<IEquitiesCompanyListApiItem[]> {
-	return fetchJson<IEquitiesCompanyListApiItem[]>(createEquitiesUrl(EQUITIES_COMPANIES_LIST_API, { countries: 'US' }))
+export async function fetchEquitiesCompaniesList(): Promise<Array<IEquitiesCompanyListApiItem>> {
+	return fetchJson<Array<IEquitiesCompanyListApiItem>>(
+		createEquitiesUrl(EQUITIES_COMPANIES_LIST_API, { countries: 'US' })
+	)
 }
 
 /**
@@ -105,8 +107,8 @@ export async function fetchEquitiesMetadata(ticker: string, country: string): Pr
 /**
  * Fetch SEC filings for a company ticker.
  */
-export async function fetchEquitiesFilings(ticker: string, country: string): Promise<IEquitiesFilingApiItem[]> {
-	return fetchJson<IEquitiesFilingApiItem[]>(createEquitiesUrl(EQUITIES_FILINGS_API, { ticker, country }))
+export async function fetchEquitiesFilings(ticker: string, country: string): Promise<Array<IEquitiesFilingApiItem>> {
+	return fetchJson<Array<IEquitiesFilingApiItem>>(createEquitiesUrl(EQUITIES_FILINGS_API, { ticker, country }))
 }
 
 /**

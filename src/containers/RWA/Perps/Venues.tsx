@@ -2,7 +2,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
-import type {} from '~/components/Table/utils'
 import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { Card } from '~/ui/Card'
@@ -106,8 +105,8 @@ export function RWAPerpsVenuesOverview({
 	dexVenues,
 	initialChartDataset
 }: {
-	venues: IRWAPerpsVenuesOverviewRow[]
-	dexVenues: IRWAPerpsVenuesOverviewRow[]
+	venues: Array<IRWAPerpsVenuesOverviewRow>
+	dexVenues: Array<IRWAPerpsVenuesOverviewRow>
 	initialChartDataset: RWAChartDataset
 }) {
 	const router = useRouter()

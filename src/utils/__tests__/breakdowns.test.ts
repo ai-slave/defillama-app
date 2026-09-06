@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { normalizeDailyPairs } from '../breakdowns'
 
 describe('normalizeDailyPairs', () => {
 	const firstDay = 86_400
 
-	it('sums same-day flow observations', () => {
+	test('sums same-day flow observations', () => {
 		expect(
 			normalizeDailyPairs(
 				[
@@ -16,7 +16,7 @@ describe('normalizeDailyPairs', () => {
 		).toEqual([[firstDay, 10]])
 	})
 
-	it('keeps the last same-day stock observation', () => {
+	test('keeps the last same-day stock observation', () => {
 		expect(
 			normalizeDailyPairs(
 				[

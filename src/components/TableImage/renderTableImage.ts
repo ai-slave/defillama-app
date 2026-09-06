@@ -1,5 +1,5 @@
 export type TableImageInput = {
-	rows: string[][]
+	rows: Array<Array<string>>
 	columnWidths?: Array<number | null>
 	title?: string
 	isDark: boolean
@@ -57,7 +57,7 @@ const WATERMARK_OPACITY = 0.3
 
 const NUMERIC = /^[-+]?[$€£¥]?\s?-?[\d,.]+\s?[%KMBTkmbt]?\+?$/
 
-function isNumericColumn(rows: string[][], col: number): boolean {
+function isNumericColumn(rows: Array<Array<string>>, col: number): boolean {
 	let seen = 0
 	for (let r = 1; r < rows.length; r++) {
 		const value = rows[r]?.[col]?.trim()
@@ -68,10 +68,10 @@ function isNumericColumn(rows: string[][], col: number): boolean {
 	return seen > 0
 }
 
-function wrapCell(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+function wrapCell(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): Array<string> {
 	if (!text) return ['']
 	const words = text.split(/\s+/)
-	const lines: string[] = []
+	const lines: Array<string> = []
 	let line = ''
 
 	for (const word of words) {
@@ -84,16 +84,16 @@ function wrapCell(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
 		line = word
 	}
 	if (line) lines.push(line)
-	return lines.length ? lines : ['']
+	return lines.length > 0 ? lines : ['']
 }
 
 function resolveColumnWidths(
 	ctx: CanvasRenderingContext2D,
-	rows: string[][],
+	rows: Array<Array<string>>,
 	columnCount: number,
 	stored?: Array<number | null>
-): number[] {
-	const natural: number[] = []
+): Array<number> {
+	const natural: Array<number> = []
 	for (let c = 0; c < columnCount; c++) {
 		let widest = 0
 		for (let r = 0; r < rows.length; r++) {

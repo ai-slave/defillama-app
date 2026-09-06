@@ -20,7 +20,10 @@ function getLatestTvlByFork(chartData: IForkProtocolBreakdownChart): Partial<Rec
 	return latestTvlByFork
 }
 
-function sortForksByLatestTvl(forkNames: string[], latestTvlByFork: Partial<Record<string, number>>): string[] {
+function sortForksByLatestTvl(
+	forkNames: Array<string>,
+	latestTvlByFork: Partial<Record<string, number>>
+): Array<string> {
 	return forkNames.toSorted((a, b) => (latestTvlByFork[b] ?? 0) - (latestTvlByFork[a] ?? 0))
 }
 
@@ -32,7 +35,7 @@ export async function getForksListPageData(): Promise<ForkOverviewPageData | nul
 			fetchProtocols(),
 			fetchForkProtocolBreakdownChart()
 		])
-		const forkNames: string[] = []
+		const forkNames: Array<string> = []
 		for (const forkName in metrics) forkNames.push(forkName)
 		const latestTvlByFork = getLatestTvlByFork(chartData)
 		const sortedForks = sortForksByLatestTvl(forkNames, latestTvlByFork)
@@ -96,7 +99,7 @@ export async function getForksByProtocolPageData({ fork }: { fork: string }): Pr
 		if (!route?.metadata.forks) return { status: 'not-found' }
 
 		const metrics = await fetchForkMetrics()
-		const forkNames: string[] = []
+		const forkNames: Array<string> = []
 		for (const forkName in metrics) {
 			forkNames.push(forkName)
 		}

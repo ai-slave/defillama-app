@@ -27,7 +27,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		return res.status(400).json({ error: 'Invalid rows request' })
 	}
 
-	const wanted = new Set(names as string[])
+	const wanted = new Set(names as Array<string>)
 	const { snapshot } = await loadProtocolRankingSnapshot('All', null)
 	const rows =
 		wanted.size === 0

@@ -28,7 +28,7 @@ export function parseUtrGrade(value: string | null | undefined): UtrGradeLabel |
 
 export function resolveUtrGrade(
 	score: number | null | undefined,
-	scale: UtrGradeScaleEntry[] | null | undefined
+	scale: Array<UtrGradeScaleEntry> | null | undefined
 ): UtrGradeLabel | null {
 	if (score == null || Number.isNaN(score) || !scale?.length) return null
 	let fallback: UtrGradeLabel | null = null
@@ -47,7 +47,7 @@ export function resolveUtrGrade(
 
 export function resolveUtrGradeOrLabel(
 	score: number | null | undefined,
-	scale: UtrGradeScaleEntry[] | null | undefined,
+	scale: Array<UtrGradeScaleEntry> | null | undefined,
 	explicitGrade?: string | null
 ): UtrGradeLabel | null {
 	return explicitGrade == null ? resolveUtrGrade(score, scale) : parseUtrGrade(explicitGrade)

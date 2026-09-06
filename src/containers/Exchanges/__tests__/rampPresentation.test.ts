@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { mapMasterRamps } from '../master.mappers'
 import type { MasterExchangeRegionCatalogResponse, MasterRampsResponse } from '../master.types'
 import type { RampCatalogModel, RampVariantModel } from '../models'
@@ -87,7 +87,7 @@ function variant(patch: Record<string, unknown> = {}) {
 				taker_fee: 0.001,
 				btc_withdrawal_fee_btc: 0.00002,
 				btc_network_fee_btc: 0.000002,
-				btc_price_usd: 100000,
+				btc_price_usd: 100_000,
 				half_spread_pct: 0.0001
 			}
 		},
@@ -131,7 +131,7 @@ function catalog(patch: Partial<MasterRampsResponse> = {}): RampCatalogModel {
 }
 
 describe('mapMasterRamps', () => {
-	it('maps legs, rails and assumptions into the model shape', () => {
+	test('maps legs, rails and assumptions into the model shape', () => {
 		const model = catalog()
 		const eur = model.venues[0].variants.global?.cost.EUR?.['1000']
 		expect(eur?.currency).toBe('EUR')
@@ -149,7 +149,7 @@ describe('mapMasterRamps', () => {
 describe('resolveRampVariant', () => {
 	const venue = () => catalog().venues[0]
 
-	it('prefers the exact region record and reports the fallback otherwise', () => {
+	test('prefers the exact region record and reports the fallback otherwise', () => {
 		const german = resolveRampVariant(venue(), 'DE', REGION_CATALOG)
 		expect(german?.usedFallback).toBe(true) // no eea record authored → global applies
 		const american = resolveRampVariant(venue(), 'US', REGION_CATALOG)
@@ -157,7 +157,7 @@ describe('resolveRampVariant', () => {
 		expect(american?.status).toBe('unavailable')
 	})
 
-	it('lets a country carve-out override the region status', () => {
+	test('lets a country carve-out override the region status', () => {
 		const restricted = mapMasterRamps(
 			response({
 				exchanges: [
@@ -179,7 +179,7 @@ describe('resolveRampVariant', () => {
 describe('buildRampRows', () => {
 	const base = { country: null, regionCatalog: REGION_CATALOG, size: 1000 }
 
-	it('prices the selected currency and totals the round trip', () => {
+	test('prices the selected currency and totals the round trip', () => {
 		const [row] = buildRampRows(catalog(), { ...base, currency: 'EUR' })
 		expect(row.cost?.currency).toBe('EUR')
 		expect(row.costIsFallback).toBe(false)
@@ -189,13 +189,13 @@ describe('buildRampRows', () => {
 		expect(row.tradeCostUsd).toBeCloseTo(1.1, 6)
 	})
 
-	it('falls back to the cheapest priced currency and flags it', () => {
+	test('falls back to the cheapest priced currency and flags it', () => {
 		const [row] = buildRampRows(catalog(), { ...base, currency: 'CHF' })
 		expect(row.costIsFallback).toBe(true)
 		expect(row.cost?.currency).toBe('EUR') // €0 deposit beats the £0.50 one
 	})
 
-	it('falls back off a half-priced currency to one that prices the whole trip', () => {
+	test('falls back off a half-priced currency to one that prices the whole trip', () => {
 		// GBP has a deposit rail but no withdrawal rail, so its round trip is unknown
 		// while EUR's is complete — the EUR answer wins, labelled as a fallback.
 		const [row] = buildRampRows(catalog(), { ...base, currency: 'GBP' })
@@ -204,7 +204,7 @@ describe('buildRampRows', () => {
 		expect(row.roundTripUsd).toBeCloseTo(5.4, 6)
 	})
 
-	it('keeps the requested currency when nothing prices the whole trip', () => {
+	test('keeps the requested currency when nothing prices the whole trip', () => {
 		const gbpOnly = mapMasterRamps(
 			response({
 				exchanges: [
@@ -240,7 +240,7 @@ describe('buildRampRows', () => {
 		expect(row.cost?.onRamp.totalUsd).toBeCloseTo(3.6, 6)
 	})
 
-	it('keeps a country-blocked venue visible but last', () => {
+	test('keeps a country-blocked venue visible but last', () => {
 		const rows = buildRampRows(
 			mapMasterRamps(
 				response({
@@ -255,17 +255,17 @@ describe('buildRampRows', () => {
 })
 
 describe('currency selection', () => {
-	it('offers only currencies with a priced rail', () => {
+	test('offers only currencies with a priced rail', () => {
 		const rows = buildRampRows(catalog(), { country: null, regionCatalog: REGION_CATALOG, currency: null, size: 1000 })
 		expect(rampCurrencyOptions(rows, 1000)).toEqual(['EUR', 'GBP'])
 	})
 
-	it('omits currencies priced only at another order size', () => {
+	test('omits currencies priced only at another order size', () => {
 		const rows = buildRampRows(catalog(), { country: null, regionCatalog: REGION_CATALOG, currency: null, size: 1000 })
 		expect(rampCurrencyOptions(rows, 10_000)).toEqual([])
 	})
 
-	it('prices the USD default against the cheapest complete rail when a venue has no USD one', () => {
+	test('prices the USD default against the cheapest complete rail when a venue has no USD one', () => {
 		const [row] = buildRampRows(catalog(), {
 			country: null,
 			regionCatalog: REGION_CATALOG,
@@ -278,13 +278,13 @@ describe('currency selection', () => {
 })
 
 describe('variant model', () => {
-	it('normalizes a null fiat currency list to an empty one', () => {
+	test('normalizes a null fiat currency list to an empty one', () => {
 		const us = catalog().venues[0].variants.us as RampVariantModel
 		expect(us.fiatCurrencies).toEqual([])
 		expect(us.rails).toBeNull()
 	})
 
-	it('leaves crypto rails null when the venue publishes no route', () => {
+	test('leaves crypto rails null when the venue publishes no route', () => {
 		const noRoutes = mapMasterRamps(
 			response({
 				exchanges: [
@@ -316,14 +316,14 @@ describe('no country selected', () => {
 			} as Partial<MasterRampsResponse>)
 		).venues[0]
 
-	it('shows the record that has rails, not the empty global one', () => {
+	test('shows the record that has rails, not the empty global one', () => {
 		const resolved = resolveRampVariant(regionalOnly(), null, REGION_CATALOG)
 		expect(resolved?.variant.region).toBe('eea')
 		expect(resolved?.status).toBe('available')
 		expect(resolved?.usedFallback).toBe(false)
 	})
 
-	it('still resolves the global record once a country is chosen', () => {
+	test('still resolves the global record once a country is chosen', () => {
 		const resolved = resolveRampVariant(regionalOnly(), 'US', REGION_CATALOG)
 		expect(resolved?.variant.region).toBe('global')
 		expect(resolved?.status).toBe('unavailable')

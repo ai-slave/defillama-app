@@ -1,8 +1,8 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { expect, it } from 'vitest'
+import { expect, test } from 'vitest'
 import { InlineStatStrip } from '../SummaryStats'
 
-it('makes metric definitions keyboard accessible without adding stops to plain labels', () => {
+test('makes metric definitions keyboard accessible without adding stops to plain labels', () => {
 	const html = renderToStaticMarkup(
 		<InlineStatStrip
 			items={[

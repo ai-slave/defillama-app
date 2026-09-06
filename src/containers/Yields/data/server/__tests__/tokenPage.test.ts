@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 const meta = {
 	chains: [],
@@ -30,24 +30,24 @@ const snapshot = {} as never
 const resolveTokenOptionKeys = (symbol: string) => resolveTokenOptionKeysFromSnapshot(snapshot, symbol)
 
 describe('resolveTokenOptionKeys', () => {
-	it('resolves to the direct asset option — never a family (a token page is about that token)', async () => {
+	test('resolves to the direct asset option — never a family (a token page is about that token)', async () => {
 		await expect(resolveTokenOptionKeys('BTC')).resolves.toEqual(['asset:btc'])
 		await expect(resolveTokenOptionKeys('ETH')).resolves.toEqual(['asset:eth'])
 		await expect(resolveTokenOptionKeys('USDC')).resolves.toEqual(['asset:usdc'])
 	})
 
-	it('is case-insensitive', async () => {
+	test('is case-insensitive', async () => {
 		await expect(resolveTokenOptionKeys('btc')).resolves.toEqual(['asset:btc'])
 	})
 
-	it('falls back to wrapped-variant asset options when neither family nor direct asset match', async () => {
+	test('falls back to wrapped-variant asset options when neither family nor direct asset match', async () => {
 		// only WBAR exists, matched via the `w` wrapper prefix
 		await expect(resolveTokenOptionKeys('BAR')).resolves.toEqual(['asset:wbar'])
 		// only FOO.e exists, matched via the `.e` suffix
 		await expect(resolveTokenOptionKeys('FOO')).resolves.toEqual(['asset:foo.e'])
 	})
 
-	it('returns no keys for an unknown symbol or blank input', async () => {
+	test('returns no keys for an unknown symbol or blank input', async () => {
 		await expect(resolveTokenOptionKeys('NOPE')).resolves.toEqual([])
 		await expect(resolveTokenOptionKeys('   ')).resolves.toEqual([])
 	})

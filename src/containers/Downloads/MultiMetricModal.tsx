@@ -45,7 +45,7 @@ export interface ParamOption {
 	isChild?: boolean
 }
 
-const EMPTY_PARAM_OPTIONS: ParamOption[] = []
+const EMPTY_PARAM_OPTIONS: Array<ParamOption> = []
 
 export type ParamType = 'protocol' | 'chain'
 
@@ -69,7 +69,11 @@ interface MultiMetricModalProps {
 	onConfigChange?: (config: SavedDownloadInput) => void
 }
 
-function resolveDatasetValue(paramValue: string, paramType: ParamType, datasetOptions: ParamOption[]): string | null {
+function resolveDatasetValue(
+	paramValue: string,
+	paramType: ParamType,
+	datasetOptions: Array<ParamOption>
+): string | null {
 	if (paramType === 'protocol') {
 		// All protocol datasets share the toSlug(p.name) convention.
 		return datasetOptions.find((o) => o.value === paramValue)?.value ?? null
@@ -131,7 +135,7 @@ export function MultiMetricModal({
 	const { recordRecent } = useRecentDownloads()
 	const [paramType, setParamType] = useState<ParamType>(initialConfig?.paramType ?? 'protocol')
 	const [param, setParam] = useState<ParamOption | null>(null)
-	const [selectedMetrics, setSelectedMetrics] = useState<string[]>([])
+	const [selectedMetrics, setSelectedMetrics] = useState<Array<string>>([])
 	const [activeMetric, setActiveMetric] = useState<string | null>(null)
 	const [dateRange, setDateRange] = useState<DateRangeConfig | null>(initialConfig?.dateRange ?? null)
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
@@ -321,7 +325,7 @@ export function MultiMetricModal({
 				return
 			}
 			readyWithSlug.sort((a, b) => metricSortWeight(a.slug) - metricSortWeight(b.slug))
-			const ready: CsvItem[] = readyWithSlug
+			const ready: Array<CsvItem> = readyWithSlug
 			const merged = combineCsvsWide(ready, dateRange)
 			if (merged.length <= 1) {
 				toast.error('No rows to download')
@@ -369,7 +373,7 @@ export function MultiMetricModal({
 			const payload = filterCsvByDateRange(data, dateRange)
 			// Format toggle needs 2D array; parse the filtered CSV string once.
 			const parsed = parseCsv(payload)
-			const rows2D: string[][] = [parsed.headers, ...parsed.rows.map((r) => r.values)]
+			const rows2D: Array<Array<string>> = [parsed.headers, ...parsed.rows.map((r) => r.values)]
 			downloadTabular(format, filename, rows2D, { addTimestamp: true })
 			toast.success(`Downloaded ${filename}`)
 
@@ -751,8 +755,8 @@ function ParamPickerEmpty({
 }: {
 	paramType: ParamType
 	onChangeParamType: (next: ParamType) => void
-	options: ParamOption[]
-	suggestions: ParamOption[]
+	options: Array<ParamOption>
+	suggestions: Array<ParamOption>
 	onSelect: (opt: ParamOption) => void
 }) {
 	const popoverStore = Ariakit.usePopoverStore()
@@ -939,7 +943,7 @@ function PreviewTable({
 	parsed,
 	isPreview
 }: {
-	parsed: { headers: string[]; rows: ParsedCsvRow[] }
+	parsed: { headers: Array<string>; rows: Array<ParsedCsvRow> }
 	isPreview: boolean
 }) {
 	const { headers, rows } = parsed
@@ -1033,7 +1037,7 @@ function PreviewTable({
 }
 
 interface MetricsSidebarProps {
-	selectedMetrics: ChartDatasetDefinition[]
+	selectedMetrics: Array<ChartDatasetDefinition>
 	csvQueries: ReadonlyArray<CsvQueryStatus>
 	activeMetric: string | null
 	onSetActive: (slug: string) => void
@@ -1180,8 +1184,8 @@ function ParamPickerPopover({
 }: {
 	paramType: ParamType
 	value: ParamOption | null
-	protocolOptions: ParamOption[]
-	chainOptions: ParamOption[]
+	protocolOptions: Array<ParamOption>
+	chainOptions: Array<ParamOption>
 	onChange: (opt: ParamOption) => void
 	onChangeParamType: (next: ParamType) => void
 }) {
@@ -1281,8 +1285,8 @@ function MetricMultiPickerPopover({
 	onSelectAll,
 	maxSelections
 }: {
-	metrics: ChartDatasetDefinition[]
-	selected: string[]
+	metrics: Array<ChartDatasetDefinition>
+	selected: Array<string>
 	onToggle: (slug: string) => void
 	onClearAll: () => void
 	onSelectAll: () => void
@@ -1297,7 +1301,7 @@ function MetricMultiPickerPopover({
 		const filtered = deferred
 			? metrics.filter((m) => m.name.toLowerCase().includes(deferred) || m.category.toLowerCase().includes(deferred))
 			: metrics
-		const groups = new Map<string, ChartDatasetDefinition[]>()
+		const groups = new Map<string, Array<ChartDatasetDefinition>>()
 		for (const m of filtered) {
 			const arr = groups.get(m.category) ?? []
 			arr.push(m)

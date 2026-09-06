@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildProtocolTaxonomyGroupedCharts } from '../chartGrouping'
 import type { IProtocolTaxonomyPageData } from '../types'
 
@@ -22,7 +22,7 @@ function makeCharts(): IProtocolTaxonomyPageData['charts'] {
 }
 
 describe('buildProtocolTaxonomyGroupedCharts', () => {
-	it('groups bar and line series while preserving sparse null values', () => {
+	test('groups bar and line series while preserving sparse null values', () => {
 		const result = buildProtocolTaxonomyGroupedCharts({ charts: makeCharts(), groupBy: 'daily' })
 
 		expect(result.hasBarCharts).toBe(true)
@@ -37,7 +37,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		expect(result.charts.charts.map((series) => series.type)).toEqual(['bar', 'line'])
 	})
 
-	it('returns original chart behavior and hasBarCharts false when no series started as bars', () => {
+	test('returns original chart behavior and hasBarCharts false when no series started as bars', () => {
 		const charts = makeCharts()
 		charts.charts = [{ type: 'line', name: 'TVL', encode: { x: 0, y: 2 } }]
 
@@ -47,7 +47,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		expect(result.hasBarCharts).toBe(false)
 	})
 
-	it('keeps cumulative bars unavailable after a missing required point', () => {
+	test('keeps cumulative bars unavailable after a missing required point', () => {
 		const result = buildProtocolTaxonomyGroupedCharts({ charts: makeCharts(), groupBy: 'cumulative' })
 
 		expect(result.hasBarCharts).toBe(true)
@@ -55,7 +55,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		expect(result.charts.dataset.source.map((row) => row[1])).toEqual([10, null, null])
 	})
 
-	it('starts cumulative bars at their first measurement independent of input order', () => {
+	test('starts cumulative bars at their first measurement independent of input order', () => {
 		const ordered = makeCharts()
 		ordered.dataset.source = [
 			[toMs(2024, 1, 1), null, 100],
@@ -80,7 +80,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		).toEqual(expected)
 	})
 
-	it('does not poison the first weekly bucket when a bar starts mid-bucket', () => {
+	test('does not poison the first weekly bucket when a bar starts mid-bucket', () => {
 		const charts = makeCharts()
 		charts.dataset.source = [
 			[toMs(2024, 1, 15), null, 100],
@@ -92,7 +92,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		])
 	})
 
-	it('sums bars but keeps the last line snapshot in weekly buckets', () => {
+	test('sums bars but keeps the last line snapshot in weekly buckets', () => {
 		const charts = makeCharts()
 		charts.dataset.source = [
 			[toMs(2024, 1, 15), 10, 100],
@@ -108,7 +108,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		])
 	})
 
-	it('keeps a later unavailable line snapshot independent of input order', () => {
+	test('keeps a later unavailable line snapshot independent of input order', () => {
 		const ordered = makeCharts()
 		ordered.dataset.source = [
 			[toMs(2024, 1, 15), 10, 100],
@@ -125,7 +125,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		])
 	})
 
-	it('keeps a grouped bar unavailable when any bucket contribution is unavailable', () => {
+	test('keeps a grouped bar unavailable when any bucket contribution is unavailable', () => {
 		const ordered = makeCharts()
 		ordered.dataset.source = [
 			[toMs(2024, 1, 15), 10, 100],
@@ -147,7 +147,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		)
 	})
 
-	it('is independent of input order for grouped and cumulative output', () => {
+	test('is independent of input order for grouped and cumulative output', () => {
 		const charts = makeCharts()
 		charts.dataset.source = [
 			[toMs(2024, 1, 22), 7, 130],
@@ -169,13 +169,13 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		])
 	})
 
-	it('never accumulates line snapshots in cumulative mode', () => {
+	test('never accumulates line snapshots in cumulative mode', () => {
 		const result = buildProtocolTaxonomyGroupedCharts({ charts: makeCharts(), groupBy: 'cumulative' })
 
 		expect(result.charts.dataset.source.map((row) => row[2])).toEqual([100, 120, null])
 	})
 
-	it('preserves an explicit all-null timestamp between valid rows', () => {
+	test('preserves an explicit all-null timestamp between valid rows', () => {
 		const charts = makeCharts()
 		charts.dataset.source = [
 			[toMs(2024, 1, 1), 10, 100],
@@ -188,7 +188,7 @@ describe('buildProtocolTaxonomyGroupedCharts', () => {
 		expect(result.charts.dataset.source).toEqual(charts.dataset.source)
 	})
 
-	it('returns the original chart object and hasBarCharts false when bar series have no numeric values', () => {
+	test('returns the original chart object and hasBarCharts false when bar series have no numeric values', () => {
 		const charts = makeCharts()
 		charts.dataset.source = [
 			[toMs(2024, 1, 1), null, 100],

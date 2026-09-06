@@ -2,7 +2,7 @@
 
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
 	const instances: Array<{
@@ -76,7 +76,7 @@ describe('LlamaAI ECharts visibility', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('recreates scatter and candlestick canvases while preserving parent and chart interaction state', async () => {
+	test('recreates scatter and candlestick canvases while preserving parent and chart interaction state', async () => {
 		await act(async () => root.render(<Harness visible />))
 		expect(mocks.init).toHaveBeenCalledTimes(2)
 

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { AI_SERVER } from '~/constants'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import {
@@ -36,11 +36,11 @@ const chartConfig: ChartConfiguration = {
 	dataTransformation: { timeField: 'timestamp', metrics: ['tvl'] }
 }
 
-function encodeSseEvents(events: string[]) {
+function encodeSseEvents(events: Array<string>) {
 	return events.map((event) => `data: ${event}\n\n`).join('')
 }
 
-function sseReader(...events: string[]) {
+function sseReader(...events: Array<string>) {
 	const encoder = new TextEncoder()
 	const stream = new ReadableStream<Uint8Array>({
 		start(controller) {
@@ -51,7 +51,7 @@ function sseReader(...events: string[]) {
 	return stream.getReader()
 }
 
-function sseResponse(events: string[], init?: ResponseInit) {
+function sseResponse(events: Array<string>, init?: ResponseInit) {
 	return new Response(encodeSseEvents(events), {
 		...init,
 		headers: {
@@ -108,7 +108,7 @@ function callbacks(): AgenticSSECallbacks {
 }
 
 describe('parseSSEStream', () => {
-	it('dispatches event sequences and follows the backend replay cursor', async () => {
+	test('dispatches event sequences and follows the backend replay cursor', async () => {
 		const cb = callbacks()
 		const eventCounter = { count: 0 }
 
@@ -145,7 +145,7 @@ describe('parseSSEStream', () => {
 		expect(cb.onDone).toHaveBeenCalledOnce()
 	})
 
-	it('reports streams that end without done', async () => {
+	test('reports streams that end without done', async () => {
 		const cb = callbacks()
 
 		const result = await parseSSEStream(sseReader(JSON.stringify({ type: 'response_chunk', content: 'partial' })), cb)
@@ -155,7 +155,7 @@ describe('parseSSEStream', () => {
 		expect(cb.onDone).not.toHaveBeenCalled()
 	})
 
-	it('applies queue wait snapshots without advancing the execution replay cursor', async () => {
+	test('applies queue wait snapshots without advancing the execution replay cursor', async () => {
 		const cb = callbacks()
 		const eventCounter = { count: 4 }
 
@@ -179,7 +179,7 @@ describe('parseSSEStream', () => {
 		expect(cb.onQueueUpdated).toHaveBeenCalledWith({ sessionId: 'session-1', revision: 3, queue: [] })
 	})
 
-	it('does not advance the replay cursor for unindexed preamble events', async () => {
+	test('does not advance the replay cursor for unindexed preamble events', async () => {
 		const cb = callbacks()
 		const eventCounter = { count: 4 }
 
@@ -196,7 +196,7 @@ describe('parseSSEStream', () => {
 		expect(eventCounter.count).toBe(4)
 	})
 
-	it('uses local event counting for legacy streams without authoritative cursors', async () => {
+	test('uses local event counting for legacy streams without authoritative cursors', async () => {
 		const cb = callbacks()
 		const eventCounter = { count: 2 }
 		const fetchFn = vi.fn<MockFetch>(async () =>
@@ -221,7 +221,7 @@ describe('parseSSEStream', () => {
 		expect(eventCounter.count).toBe(4)
 	})
 
-	it('passes queue revision and fired-item identity to the coordinator', async () => {
+	test('passes queue revision and fired-item identity to the coordinator', async () => {
 		const cb = callbacks()
 		const queued = {
 			id: 'queue-1',
@@ -248,7 +248,7 @@ describe('parseSSEStream', () => {
 		expect(cb.onUserMessageId).toHaveBeenCalledWith('message-1', 'queue-1')
 	})
 
-	it('preserves editing queue items from the stream snapshot', async () => {
+	test('preserves editing queue items from the stream snapshot', async () => {
 		const cb = callbacks()
 		const editing = {
 			id: 'queue-1',
@@ -273,7 +273,7 @@ describe('parseSSEStream', () => {
 		})
 	})
 
-	it('preserves nested dashboard chart payloads', async () => {
+	test('preserves nested dashboard chart payloads', async () => {
 		const cb = callbacks()
 		const chartData = {
 			'chart-1': {
@@ -321,7 +321,7 @@ describe('parseSSEStream', () => {
 		})
 	})
 
-	it('normalizes malformed optional SSE fields instead of aborting the stream', async () => {
+	test('normalizes malformed optional SSE fields instead of aborting the stream', async () => {
 		const cb = callbacks()
 
 		const result = await parseSSEStream(
@@ -403,7 +403,7 @@ describe('parseSSEStream', () => {
 		)
 	})
 
-	it('uses dashboard item identity, not item count, for fallback ids', async () => {
+	test('uses dashboard item identity, not item count, for fallback ids', async () => {
 		const cb = callbacks()
 
 		await parseSSEStream(
@@ -433,7 +433,7 @@ describe('parseSSEStream', () => {
 })
 
 describe('fetchAgenticResponse', () => {
-	it('captures a mutation envelope independently from mutable composer inputs', () => {
+	test('captures a mutation envelope independently from mutable composer inputs', () => {
 		const entities = [{ term: 'Ethereum', slug: 'ethereum', type: 'chain' }]
 		const pageContext = { entitySlug: 'ethereum', entityType: 'chain' as const, route: '/chain/ethereum' }
 		const mutation = createAgenticMutationEnvelope({
@@ -454,7 +454,7 @@ describe('fetchAgenticResponse', () => {
 		expect(mutation).not.toHaveProperty('mode')
 	})
 
-	it('preserves safe chart artifact refs from the stream for direct save', async () => {
+	test('preserves safe chart artifact refs from the stream for direct save', async () => {
 		const cb = callbacks()
 		await parseSSEStream(
 			sseReader(
@@ -490,7 +490,7 @@ describe('fetchAgenticResponse', () => {
 		)
 	})
 
-	it('posts the agentic request and dispatches the streamed response contract', async () => {
+	test('posts the agentic request and dispatches the streamed response contract', async () => {
 		const cb = callbacks()
 		const eventCounter = { count: 0 }
 		const fetchFn = vi.fn<MockFetch>(async () =>
@@ -604,7 +604,7 @@ describe('fetchAgenticResponse', () => {
 		expect(cb.onDone).toHaveBeenCalledOnce()
 	})
 
-	it('turns a successful stream without done into a reconnectable failure unless aborted', async () => {
+	test('turns a successful stream without done into a reconnectable failure unless aborted', async () => {
 		const cb = callbacks()
 		const fetchFn = vi.fn<MockFetch>(async () =>
 			sseResponse([JSON.stringify({ type: 'response_chunk', content: 'partial' })])
@@ -643,7 +643,7 @@ describe('fetchAgenticResponse', () => {
 		).resolves.toBeUndefined()
 	})
 
-	it('preserves backend limit error details', async () => {
+	test('preserves backend limit error details', async () => {
 		const freeLimitFetch = vi.fn<MockFetch>(async () =>
 			jsonResponse(
 				{
@@ -703,7 +703,7 @@ describe('fetchAgenticResponse', () => {
 		})
 	})
 
-	it('returns typed mutation reconciliation details', async () => {
+	test('returns typed mutation reconciliation details', async () => {
 		const fetchFn = vi.fn<MockFetch>(async () =>
 			jsonResponse(
 				{
@@ -735,7 +735,7 @@ describe('fetchAgenticResponse', () => {
 		})
 	})
 
-	it('automatically retries a pending mutation with the same envelope', async () => {
+	test('automatically retries a pending mutation with the same envelope', async () => {
 		const fetchFn = vi
 			.fn<MockFetch>()
 			.mockResolvedValueOnce(
@@ -768,7 +768,7 @@ describe('fetchAgenticResponse', () => {
 		expect(fetchFn.mock.calls[1]?.[1]?.body).toBe(fetchFn.mock.calls[0]?.[1]?.body)
 	})
 
-	it('returns pending to the UI when automatic reconciliation reaches its limit', async () => {
+	test('returns pending to the UI when automatic reconciliation reaches its limit', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(0)
 		const fetchFn = vi.fn<MockFetch>(async () =>
@@ -806,7 +806,7 @@ describe('fetchAgenticResponse', () => {
 		}
 	})
 
-	it('distinguishes a held wait ending from a dropped execution stream', async () => {
+	test('distinguishes a held wait ending from a dropped execution stream', async () => {
 		const expiredFetch = vi.fn<MockFetch>(async () =>
 			sseResponse([
 				JSON.stringify({
@@ -856,7 +856,7 @@ describe('fetchAgenticResponse', () => {
 		).resolves.toBe('not_found')
 	})
 
-	it('pins replay to the discovered execution identity', async () => {
+	test('pins replay to the discovered execution identity', async () => {
 		const execution = {
 			cursor: 0,
 			hasResult: false,
@@ -880,7 +880,7 @@ describe('fetchAgenticResponse', () => {
 		expect(fetchFn.mock.calls[0]?.[0]).toContain('expectedMessageId=message-1')
 	})
 
-	it('requires the terminal queue snapshot before confirming Stop', async () => {
+	test('requires the terminal queue snapshot before confirming Stop', async () => {
 		const snapshot = { sessionId: 'session-1', revision: 2, queue: [] }
 		const confirmedFetch = vi.fn<MockFetch>(async () => jsonResponse({ stopped: true, active: false, snapshot }))
 		await expect(stopAgenticExecution('session-1', confirmedFetch as unknown as typeof fetch)).resolves.toEqual({

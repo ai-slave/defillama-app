@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { TOKENS_PAGE_RESPONSE_SCHEMA_VERSION, type TokensSourceRow } from '../types'
 import {
 	buildTokensChartQueryString,
@@ -60,7 +60,7 @@ const basePage = {
 	categoryOptions: []
 }
 
-function getPage(rows: TokensSourceRow[], query: Record<string, string | string[]>) {
+function getPage(rows: Array<TokensSourceRow>, query: Record<string, string | Array<string>>) {
 	const chains = new Set<string>()
 	const categories = new Set<string>()
 	for (const item of rows) {
@@ -75,7 +75,7 @@ function getPage(rows: TokensSourceRow[], query: Record<string, string | string[
 }
 
 describe('token filter query values', () => {
-	it('preserves canonical IDs and resolves include and exclude selections', () => {
+	test('preserves canonical IDs and resolves include and exclude selections', () => {
 		const allValues = ['ethereum', 'solana', 'bsc']
 		expect(resolveTokenFilterValues(null, [], allValues)).toEqual(allValues)
 		expect(resolveTokenFilterValues(['solana'], [], allValues)).toEqual(['solana'])
@@ -86,7 +86,7 @@ describe('token filter query values', () => {
 })
 
 describe('getTokensPageQuery', () => {
-	it('normalizes invalid query params to defaults', () => {
+	test('normalizes invalid query params to defaults', () => {
 		expect(
 			getTokensPageQuery({
 				page: '0',
@@ -114,7 +114,7 @@ describe('getTokensPageQuery', () => {
 		})
 	})
 
-	it('caps oversized page sizes and accepts supported sort params', () => {
+	test('caps oversized page sizes and accepts supported sort params', () => {
 		expect(
 			getTokensPageQuery({
 				page: '3',
@@ -142,7 +142,7 @@ describe('getTokensPageQuery', () => {
 		})
 	})
 
-	it('parses the rank range, swapping inverted bounds and dropping garbage', () => {
+	test('parses the rank range, swapping inverted bounds and dropping garbage', () => {
 		expect(getTokensPageQuery({ rankFrom: '500', rankTo: '100' })).toMatchObject({ rankFrom: 100, rankTo: 500 })
 		expect(getTokensPageQuery({ rankFrom: 'abc', rankTo: '-3' })).toMatchObject({ rankFrom: null, rankTo: null })
 		expect(getTokensPageQuery({ rankFrom: '10.9' })).toMatchObject({ rankFrom: 10, rankTo: null })
@@ -157,7 +157,7 @@ describe('getTokensPageFromRows', () => {
 		row({ id: 'curve', name: 'Curve', symbol: 'CRV', marketCap: 800 })
 	]
 
-	it('filters by rank range and sorts within it', () => {
+	test('filters by rank range and sorts within it', () => {
 		const rankedRows = [
 			row({ id: 'first', name: 'First', symbol: 'F', rank: 1, priceChange7d: 1, marketCap: 1000 }),
 			row({ id: 'second', name: 'Second', symbol: 'S', rank: 150, priceChange7d: 9, marketCap: 900 }),
@@ -176,7 +176,7 @@ describe('getTokensPageFromRows', () => {
 		expect(result.rows.map((item) => item.rank)).toEqual([150, 300])
 	})
 
-	it('filters by search before sorting and pagination', () => {
+	test('filters by search before sorting and pagination', () => {
 		const result = getPage(rows, {
 			search: 'uni',
 			sortBy: 'marketCap',
@@ -188,7 +188,7 @@ describe('getTokensPageFromRows', () => {
 		expect(result.hasMore).toBe(false)
 	})
 
-	it('formats prices with meaningful precision and other USD values compactly', () => {
+	test('formats prices with meaningful precision and other USD values compactly', () => {
 		const result = getPage(
 			[
 				row({ id: 'near-dollar', name: 'Near Dollar', symbol: 'NEAR', price: 0.9992, marketCap: 61_853.24 }),
@@ -201,7 +201,7 @@ describe('getTokensPageFromRows', () => {
 		expect(result.rows[1]?.display).toMatchObject({ price: '$0.00001234', marketCap: '$1K' })
 	})
 
-	it('ignores stale category params', () => {
+	test('ignores stale category params', () => {
 		const result = getPage(rows, {
 			category: 'dexs',
 			sortBy: 'marketCap',
@@ -212,7 +212,7 @@ describe('getTokensPageFromRows', () => {
 		expect(result.total).toBe(4)
 	})
 
-	it('sorts deterministically and slices the requested page', () => {
+	test('sorts deterministically and slices the requested page', () => {
 		const result = getPage(rows, {
 			sortBy: 'marketCap',
 			sortDesc: 'false',
@@ -228,7 +228,7 @@ describe('getTokensPageFromRows', () => {
 		expect(result.hasMore).toBe(false)
 	})
 
-	it('keeps missing numeric sort values last when sorting descending', () => {
+	test('keeps missing numeric sort values last when sorting descending', () => {
 		const rowsWithMissingValue = [...rows, row({ id: 'no-market-cap', name: 'No Market Cap', symbol: 'NONE' })]
 		const result = getPage(rowsWithMissingValue, {
 			sortBy: 'marketCap',
@@ -238,7 +238,7 @@ describe('getTokensPageFromRows', () => {
 		expect(result.rows.map((item) => item.id)).toEqual(['uniswap', 'ethena', 'aave', 'curve', 'no-market-cap'])
 	})
 
-	it('filters to the requested ids (case-insensitive) for the watchlist', () => {
+	test('filters to the requested ids (case-insensitive) for the watchlist', () => {
 		const result = getPage(rows, {
 			ids: 'AAVE,Uniswap',
 			sortBy: 'marketCap',
@@ -249,7 +249,7 @@ describe('getTokensPageFromRows', () => {
 		expect(result.total).toBe(2)
 	})
 
-	it('combines the ids filter with search', () => {
+	test('combines the ids filter with search', () => {
 		const result = getPage(rows, {
 			ids: 'aave,uniswap',
 			search: 'uni',
@@ -260,14 +260,14 @@ describe('getTokensPageFromRows', () => {
 		expect(result.total).toBe(1)
 	})
 
-	it('returns nothing when an ids param is present but empty', () => {
+	test('returns nothing when an ids param is present but empty', () => {
 		const result = getPage(rows, { ids: '', pageSize: '20' })
 
 		expect(result.rows).toEqual([])
 		expect(result.total).toBe(0)
 	})
 
-	it('applies numeric min/max filters and drops rows with missing values', () => {
+	test('applies numeric min/max filters and drops rows with missing values', () => {
 		const rowsWithChange = [
 			row({ id: 'up', name: 'Up', symbol: 'UP', marketCap: 900, priceChange7d: 25 }),
 			row({ id: 'down', name: 'Down', symbol: 'DOWN', marketCap: 800, priceChange7d: -30 }),
@@ -283,7 +283,7 @@ describe('getTokensPageFromRows', () => {
 		expect(swapped.rows.map((item) => item.id)).toEqual(['up', 'flat'])
 	})
 
-	it('combines numeric filters with rank range', () => {
+	test('combines numeric filters with rank range', () => {
 		const ranked = [
 			row({ id: 'a', name: 'A', symbol: 'A', rank: 1, marketCap: 1000, revenue24h: 50 }),
 			row({ id: 'b', name: 'B', symbol: 'B', rank: 2, marketCap: 900, revenue24h: 5 }),
@@ -294,12 +294,12 @@ describe('getTokensPageFromRows', () => {
 		expect(result.rows.map((item) => item.id)).toEqual(['a'])
 	})
 
-	it('ignores unknown filter fields', () => {
+	test('ignores unknown filter fields', () => {
 		const result = getPage(rows, { min_notAField: '5', pageSize: '20' })
 		expect(result.total).toBe(4)
 	})
 
-	it('uses OR within filter families and AND between chains and categories', () => {
+	test('uses OR within filter families and AND between chains and categories', () => {
 		const filterRows = [
 			row({
 				id: 'ethereum-rwa',
@@ -341,7 +341,7 @@ describe('getTokensPageFromRows', () => {
 		expect(deselected.total).toBe(0)
 	})
 
-	it('matches selected chains against primary chains only when requested', () => {
+	test('matches selected chains against primary chains only when requested', () => {
 		const filterRows = [
 			row({
 				id: 'chainlink',
@@ -383,7 +383,7 @@ describe('getTokensPageFromRows', () => {
 		])
 	})
 
-	it('returns no rows for a present unknown-only category and keeps memberships internal', () => {
+	test('returns no rows for a present unknown-only category and keeps memberships internal', () => {
 		const filterRows = [
 			row({
 				id: 'rwa-stable',
@@ -404,7 +404,7 @@ describe('getTokensPageFromRows', () => {
 })
 
 describe('buildTokensChartQueryString', () => {
-	it('keeps only filters so map and movers share one dataset across sort and paging', () => {
+	test('keeps only filters so map and movers share one dataset across sort and paging', () => {
 		expect(
 			buildTokensChartQueryString({
 				page: '3',

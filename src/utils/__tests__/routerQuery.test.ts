@@ -1,5 +1,5 @@
 import type { NextRouter } from 'next/router'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { pushShallowQuery } from '../routerQuery'
 
 function createRouter(pathname: string, asPath: string, query: NextRouter['query']): NextRouter {
@@ -12,7 +12,7 @@ function createRouter(pathname: string, asPath: string, query: NextRouter['query
 }
 
 describe('pushShallowQuery', () => {
-	it('omits a dynamic segment after resolving the current pathname', async () => {
+	test('omits a dynamic segment after resolving the current pathname', async () => {
 		const router = createRouter('/equities/[ticker]', '/equities/AAPL:US', {
 			ticker: 'AAPL:US',
 			tab: 'overview'
@@ -30,7 +30,7 @@ describe('pushShallowQuery', () => {
 		)
 	})
 
-	it('omits every segment from a resolved multi-segment route', async () => {
+	test('omits every segment from a resolved multi-segment route', async () => {
 		const router = createRouter('/liquidations/[protocol]/[chain]', '/liquidations/aave/ethereum', {
 			protocol: 'aave',
 			chain: 'ethereum'
@@ -48,7 +48,7 @@ describe('pushShallowQuery', () => {
 		)
 	})
 
-	it('keeps dynamic segments when a route template needs them for interpolation', async () => {
+	test('keeps dynamic segments when a route template needs them for interpolation', async () => {
 		const router = createRouter('/yields/pool/[pool]', '/yields/pool/ethereum-aave', {
 			pool: 'ethereum-aave',
 			range: '1y'
@@ -66,7 +66,7 @@ describe('pushShallowQuery', () => {
 		)
 	})
 
-	it('preserves query state on static routes', async () => {
+	test('preserves query state on static routes', async () => {
 		const router = createRouter('/equities', '/equities', { rankBy: 'market-cap' })
 
 		await pushShallowQuery(router, { view: 'treemap' })
@@ -81,7 +81,7 @@ describe('pushShallowQuery', () => {
 		)
 	})
 
-	it('omits catch-all segment arrays from resolved paths', async () => {
+	test('omits catch-all segment arrays from resolved paths', async () => {
 		const router = createRouter('/research/[[...slug]]', '/research/defi/stablecoins', {
 			slug: ['defi', 'stablecoins']
 		})

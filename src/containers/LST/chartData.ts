@@ -50,8 +50,8 @@ export function buildLstBreakdownChartData({
 	tokens,
 	lsdColors
 }: {
-	areaChartData: LSTHistoryRow[]
-	tokens: string[]
+	areaChartData: Array<LSTHistoryRow>
+	tokens: Array<string>
 	lsdColors: Record<string, string>
 }) {
 	const source: Array<Array<number | undefined>> = []
@@ -102,7 +102,7 @@ export function buildLstInflowsSeriesData({
 	barChartStacks
 }: {
 	inflowsData: Array<[number, Map<string, number>]>
-	tokens: string[]
+	tokens: Array<string>
 	lsdColors: Record<string, string>
 	barChartStacks: Record<string, string>
 }) {
@@ -174,10 +174,10 @@ export function buildActiveLstChartData({
 	barChartStacks
 }: {
 	view: 'breakdown' | 'inflows'
-	areaChartData: LSTHistoryRow[]
+	areaChartData: Array<LSTHistoryRow>
 	inflowsChartData: InflowsChartData
 	groupBy: ChartTimeGroupingWithCumulative
-	tokens: string[]
+	tokens: Array<string>
 	lsdColors: Record<string, string>
 	barChartStacks: Record<string, string>
 }) {

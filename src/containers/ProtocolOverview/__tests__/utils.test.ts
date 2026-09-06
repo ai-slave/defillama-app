@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { getProtocolWarningBanners } from '../utils'
 
 const protocolData = {
@@ -11,7 +11,7 @@ describe('getProtocolWarningBanners', () => {
 		vi.useRealTimers()
 	})
 
-	it('keeps unbounded and future warnings while excluding expired warnings', () => {
+	test('keeps unbounded and future warnings while excluding expired warnings', () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-07-30T00:00:00Z'))
 

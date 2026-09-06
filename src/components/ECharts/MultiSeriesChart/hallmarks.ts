@@ -3,7 +3,7 @@ export function buildHallmarksMarkLine({
 	textColor,
 	dateInMs = false
 }: {
-	hallmarks: [number, string][]
+	hallmarks: Array<[number, string]>
 	textColor: string
 	dateInMs?: boolean
 }) {

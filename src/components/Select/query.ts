@@ -11,14 +11,14 @@ import type { ExcludeQueryKey } from './types'
 export const getQueryUpdatesFromSelected = (
 	includeKey: string,
 	excludeKey: ExcludeQueryKey,
-	allKeys: string[],
+	allKeys: Array<string>,
 	// 'None' is a sentinel meaning "nothing selected" — keep it explicit in the type
-	values: string[] | string | 'None' | null,
-	defaultSelectedValues?: string[]
-): Record<string, string | string[] | undefined> => {
-	const updates: Record<string, string | string[] | undefined> = {}
+	values: Array<string> | string | 'None' | null,
+	defaultSelectedValues?: Array<string>
+): Record<string, string | Array<string> | undefined> => {
+	const updates: Record<string, string | Array<string> | undefined> = {}
 
-	const setOrDelete = (key: string, value: string | string[] | null) => {
+	const setOrDelete = (key: string, value: string | Array<string> | null) => {
 		updates[key] = value === null ? undefined : value
 	}
 
@@ -102,13 +102,13 @@ export const updateQueryFromSelected = (
 	router: NextRouter,
 	includeKey: string,
 	excludeKey: ExcludeQueryKey,
-	allKeys: string[],
+	allKeys: Array<string>,
 	// 'None' is a sentinel meaning "nothing selected" — keep it explicit in the type
-	values: string[] | string | 'None' | null,
-	defaultSelectedValues?: string[],
+	values: Array<string> | string | 'None' | null,
+	defaultSelectedValues?: Array<string>,
 	options?: {
 		resetPage?: boolean
-		pushQueryUpdates?: (updates: Record<string, string | string[] | undefined>) => void
+		pushQueryUpdates?: (updates: Record<string, string | Array<string> | undefined>) => void
 	}
 ) => {
 	const updates = getQueryUpdatesFromSelected(includeKey, excludeKey, allKeys, values, defaultSelectedValues)

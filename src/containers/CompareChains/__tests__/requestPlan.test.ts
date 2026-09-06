@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildCompareChainAdapterQueryKey,
 	buildCompareChainAdapterRequest,
@@ -10,12 +10,12 @@ import {
 } from '../requestPlan'
 
 describe('CompareChains request planning', () => {
-	it('keeps the overview identity stable as selected metrics change', () => {
+	test('keeps the overview identity stable as selected metrics change', () => {
 		expect(buildCompareChainOverviewQueryKey('Ethereum')).toEqual(['compare-chains', 'overview', 'Ethereum'])
 		expect(buildCompareChainOverviewQueryKey('Ethereum')).toEqual(['compare-chains', 'overview', 'Ethereum'])
 	})
 
-	it('uses one canonical source identity for every selected metric', () => {
+	test('uses one canonical source identity for every selected metric', () => {
 		expect(getCompareChainAdapterMetrics(['chainRevenueChart', 'tvlChart', 'dexVolumeChart'])).toEqual([
 			'dexVolumeChart',
 			'chainRevenueChart'
@@ -34,7 +34,7 @@ describe('CompareChains request planning', () => {
 		])
 	})
 
-	it('maps each metric to its only compatible endpoint contract', () => {
+	test('maps each metric to its only compatible endpoint contract', () => {
 		expect(buildCompareChainAdapterRequest('Arbitrum One', 'dexVolumeChart')).toEqual({
 			metric: 'dexVolumeChart',
 			endpoint: 'chain',
@@ -52,7 +52,7 @@ describe('CompareChains request planning', () => {
 		})
 	})
 
-	it('preserves overview data when one adapter source fails', () => {
+	test('preserves overview data when one adapter source fails', () => {
 		const overview = {
 			chain: 'Ethereum',
 			dexVolumeChart: null,
@@ -86,7 +86,7 @@ describe('CompareChains request planning', () => {
 		).toEqual(['Ethereum - Chain Fees'])
 	})
 
-	it('stays loading while any selected metric or fee detail source is pending', () => {
+	test('stays loading while any selected metric or fee detail source is pending', () => {
 		const completedOverview = [{ isLoading: false }, { isLoading: false }]
 
 		expect(hasPendingCompareChainSources(completedOverview, [{ isLoading: true }], [])).toBe(true)

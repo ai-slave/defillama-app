@@ -96,7 +96,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		authToken,
 		parentMapping
 	)
-	const runtimeItems = useMemo<ChartRuntimeView[]>(
+	const runtimeItems = useMemo<Array<ChartRuntimeView>>(
 		() =>
 			chartQueries.map((query, index) => {
 				const item = limitedItems[index]
@@ -110,9 +110,9 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	)
 
 	const { validItems, failedItems, loadingItems } = useMemo(() => {
-		const validItems: ChartRuntimeView[] = []
-		const failedItems: ChartRuntimeView[] = []
-		const loadingItems: ChartRuntimeView[] = []
+		const validItems: Array<ChartRuntimeView> = []
+		const failedItems: Array<ChartRuntimeView> = []
+		const loadingItems: Array<ChartRuntimeView> = []
 		for (const item of runtimeItems) {
 			if (isLoadedMultiChartItem(item)) validItems.push(item)
 			else if (item.isLoading) loadingItems.push(item)
@@ -132,8 +132,8 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 	const colorContext = useMemo(() => {
 		const uniqueChains = new Set<string>()
 		const uniqueProtocols = new Set<string>()
-		const itemIdsByProtocol = new Map<string, string[]>()
-		const itemIdsByChain = new Map<string, string[]>()
+		const itemIdsByProtocol = new Map<string, Array<string>>()
+		const itemIdsByChain = new Map<string, Array<string>>()
 		let onlyChains = true
 		let onlyProtocols = true
 
@@ -192,7 +192,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 			return `${item.subjectType}_${subject}_${item.type}`
 		}
 
-		const series: MultiChartInputSeries[] = validItems.map((cfg, index) => {
+		const series: Array<MultiChartInputSeries> = validItems.map((cfg, index) => {
 			const data = cfg.data
 			const meta = getProDashboardChartTypeConfig(cfg.type)
 			const name = cfg.subjectType === 'protocol' ? getProtocolInfo(cfg.protocol)?.name || cfg.protocol : cfg.chain
@@ -360,7 +360,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 		}
 	}, [allCountMetrics, allPercentMetrics, allRatioMetrics, hasMultipleUnitGroups, seriesCount, showPercentage])
 
-	const groupingOptions: DashboardGrouping[] = ['day', 'week', 'month', 'quarter', 'year']
+	const groupingOptions: Array<DashboardGrouping> = ['day', 'week', 'month', 'quarter', 'year']
 
 	return (
 		<div className="flex min-h-[402px] flex-col p-1 md:min-h-[418px]">
@@ -493,7 +493,7 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 
 			{isPrimaryLoading ? (
 				<div className="flex flex-1 flex-col items-center justify-center">
-					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-brand"></div>
+					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-brand" />
 					<p className="text-sm text-pro-text-form">Loading charts...</p>
 				</div>
 			) : !hasAnyData ? (

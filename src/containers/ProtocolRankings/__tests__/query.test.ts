@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	DEFAULT_PROTOCOL_RANKING_QUERY,
 	parseStructuredProtocolRankingQuery,
@@ -6,7 +6,7 @@ import {
 } from '../tableQuery'
 
 describe('protocol ranking query contract', () => {
-	it('parses the structured export query without flattening arrays or custom sort state', () => {
+	test('parses the structured export query without flattening arrays or custom sort state', () => {
 		expect(
 			parseStructuredProtocolRankingQuery({
 				...DEFAULT_PROTOCOL_RANKING_QUERY,
@@ -22,7 +22,7 @@ describe('protocol ranking query contract', () => {
 		})
 	})
 
-	it('rejects malformed structured values and excludes UI-only preset state from signatures', () => {
+	test('rejects malformed structured values and excludes UI-only preset state from signatures', () => {
 		expect(parseStructuredProtocolRankingQuery({ ...DEFAULT_PROTOCOL_RANKING_QUERY, minTvl: '100' })).toBeNull()
 		expect(parseStructuredProtocolRankingQuery({ ...DEFAULT_PROTOCOL_RANKING_QUERY, sort: 'unknown' })).toBeNull()
 		const withUiPresetState = { ...DEFAULT_PROTOCOL_RANKING_QUERY, metric: 'Fees', period: '7d' }

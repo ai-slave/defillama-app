@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { mergeChainAssetTotals } from '../chainAssetTotals'
 import { aggregateGroupedChainRows, getTopLevelGroupedChains } from '../grouping'
 import type { IFormattedDataWithExtraTvlBase } from '../types'
 
-const chain = (name: string, children: string[] = []) => ({
+const chain = (name: string, children: Array<string> = []) => ({
 	name,
-	childGroups: children.length ? { ecosystem: children } : null
+	childGroups: children.length > 0 ? { ecosystem: children } : null
 })
 
 describe('chains by category grouping', () => {
@@ -47,14 +47,14 @@ describe('chains by category grouping', () => {
 		}
 	})
 
-	it.each([
+	test.each([
 		[chain('Parent', ['Child']), chain('Child')],
 		[chain('Child'), chain('Parent', ['Child'])]
 	])('emits a grouped child only through its parent regardless of input order', (...chains) => {
 		expect(getTopLevelGroupedChains(chains, ['ecosystem']).map(({ name }) => name)).toEqual(['Parent'])
 	})
 
-	it('precomputes every selected child in a live-shaped multi-parent fixture', () => {
+	test('precomputes every selected child in a live-shaped multi-parent fixture', () => {
 		const chains = [
 			chain('L2 Child A'),
 			chain('Parachain Child A'),
@@ -73,7 +73,7 @@ describe('chains by category grouping', () => {
 		])
 	})
 
-	it('preserves optional asset-category presence and explicit zero while summing groups', () => {
+	test('preserves optional asset-category presence and explicit zero while summing groups', () => {
 		const base = {
 			total: { total: 10 },
 			canonical: { total: 8 },
@@ -94,7 +94,7 @@ describe('chains by category grouping', () => {
 		})
 	})
 
-	it('carries the v2-only sections through a merge with a chain that reports only five', () => {
+	test('carries the v2-only sections through a merge with a chain that reports only five', () => {
 		const eightSection = {
 			total: { total: 100 },
 			canonical: { total: 10 },
@@ -118,7 +118,7 @@ describe('chains by category grouping', () => {
 		})
 	})
 
-	it.each([
+	test.each([
 		'mcap',
 		'stablesMcap',
 		'activeUsers24h',
@@ -138,7 +138,7 @@ describe('chains by category grouping', () => {
 		expect(aggregateGroupedChainRows([parent, child])[field]).toBeNull()
 	})
 
-	it('uses current TVL contributors for grouped comparison periods', () => {
+	test('uses current TVL contributors for grouped comparison periods', () => {
 		const parent = row('Parent')
 		Object.assign(parent, { tvl: 100, tvlPrevDay: 80, tvlPrevWeek: 70, tvlPrevMonth: 60 })
 		const unavailable = row('Unavailable')
@@ -154,7 +154,7 @@ describe('chains by category grouping', () => {
 		})
 	})
 
-	it('keeps explicit zero TVL and all-unavailable TVL distinct', () => {
+	test('keeps explicit zero TVL and all-unavailable TVL distinct', () => {
 		const zero = row('Zero')
 		const unavailable = row('Unavailable')
 		Object.assign(unavailable, { tvl: null, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null })
@@ -174,7 +174,7 @@ describe('chains by category grouping', () => {
 		})
 	})
 
-	it('does not add per-chain protocol counts that may contain the same protocol', () => {
+	test('does not add per-chain protocol counts that may contain the same protocol', () => {
 		const parent = row('Parent')
 		parent.protocols = 10
 		const child = row('Child')
@@ -183,7 +183,7 @@ describe('chains by category grouping', () => {
 		expect(aggregateGroupedChainRows([parent, child]).protocols).toBeNull()
 	})
 
-	it('preserves known asset totals when a child asset record is missing', () => {
+	test('preserves known asset totals when a child asset record is missing', () => {
 		const parent = row('Parent')
 		const child = row('Child')
 		expect(aggregateGroupedChainRows([parent, child])).toMatchObject({

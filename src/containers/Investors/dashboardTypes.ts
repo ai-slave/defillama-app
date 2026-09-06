@@ -24,6 +24,6 @@ export interface DashboardTabConfig {
 }
 
 export interface DashboardModule {
-	tabs: DashboardTabConfig[]
+	tabs: Array<DashboardTabConfig>
 	header?: LazyExoticComponent<ComponentType>
 }

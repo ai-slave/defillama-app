@@ -21,7 +21,7 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 		<Layout
 			title="Recently Listed DeFi Protocols - DefiLlama"
 			description="Discover the newest DeFi protocols listed on DefiLlama with TVL, chain, and category data."
-			canonicalUrl={`/recent`}
+			canonicalUrl="/recent"
 			pageName={pageName}
 		>
 			<RecentProtocols {...props} />

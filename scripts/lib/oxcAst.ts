@@ -11,8 +11,8 @@ export function isNode(value: unknown): value is AstNode {
 }
 
 /** Depth-first visit of every node. `ancestors` is the path from the root, nearest last. */
-export function walkAst(node: AstNode, visit: (node: AstNode, ancestors: readonly AstNode[]) => void): void {
-	const ancestors: AstNode[] = []
+export function walkAst(node: AstNode, visit: (node: AstNode, ancestors: ReadonlyArray<AstNode>) => void): void {
+	const ancestors: Array<AstNode> = []
 	function step(current: AstNode) {
 		visit(current, ancestors)
 		ancestors.push(current)

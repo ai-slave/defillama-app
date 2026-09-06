@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getSelectOptionLabel } from '../SelectWithCombobox'
 
 const OPTIONS = [
@@ -8,11 +8,11 @@ const OPTIONS = [
 ]
 
 describe('SelectWithCombobox trigger values', () => {
-	it('shows the authored option label for a single selection', () => {
+	test('shows the authored option label for a single selection', () => {
 		expect(getSelectOptionLabel(OPTIONS, 'all')).toBe('All')
 	})
 
-	it('keeps string option labels unchanged', () => {
+	test('keeps string option labels unchanged', () => {
 		expect(getSelectOptionLabel(['All', 'CEX'], 'CEX')).toBe('CEX')
 	})
 })

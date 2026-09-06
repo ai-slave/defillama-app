@@ -52,12 +52,12 @@ export default function RWAPlatformsPage({
 	return (
 		<Layout
 			title="RWA Platforms - Real World Asset Analytics - DefiLlama"
-			description={`Discover RWA platforms that enable the issuance, custody, trading, or management of tokenized real-world assets across blockchains.`}
+			description="Discover RWA platforms that enable the issuance, custody, trading, or management of tokenized real-world assets across blockchains."
 			pageName={pageName}
-			canonicalUrl={`/rwa/platforms`}
+			canonicalUrl="/rwa/platforms"
 		>
 			<RWATabNav active="platforms" />
-			<RowLinksWithDropdown links={platformLinks} activeLink={'All'} />
+			<RowLinksWithDropdown links={platformLinks} activeLink="All" />
 			<RWAPlatforms platforms={platforms} initialChartDataset={initialChartDataset} />
 		</Layout>
 	)

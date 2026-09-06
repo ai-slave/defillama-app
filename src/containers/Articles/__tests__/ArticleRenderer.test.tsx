@@ -1,11 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { normalizeLocalArticleDocument } from '../document'
 import { ArticleRenderer } from '../renderer/ArticleRenderer'
 
 describe('ArticleRenderer', () => {
-	it('renders visible co-authors in the article byline', () => {
+	test('renders visible co-authors in the article byline', () => {
 		const normalized = normalizeLocalArticleDocument({
 			title: 'Aave fees after the exploit',
 			status: 'published',
@@ -54,8 +54,8 @@ describe('ArticleRenderer', () => {
 		expect(html).toContain('/research/authors/john-doe')
 	})
 
-	it('uses fixed table layout only when a table carries stored column widths', () => {
-		const table = (colwidth: number[] | null) => ({
+	test('uses fixed table layout only when a table carries stored column widths', () => {
+		const table = (colwidth: Array<number> | null) => ({
 			type: 'table',
 			content: [
 				{
@@ -102,7 +102,7 @@ describe('ArticleRenderer', () => {
 		expect(untouched).not.toContain('table-fixed')
 	})
 
-	it('links the DefiLlama Research brand byline to the research author page', () => {
+	test('links the DefiLlama Research brand byline to the research author page', () => {
 		const normalized = normalizeLocalArticleDocument({
 			title: 'Market structure report',
 			status: 'published',
@@ -130,7 +130,7 @@ describe('ArticleRenderer', () => {
 		expect(html).not.toContain('href="/research"')
 	})
 
-	it('renders custom article primitives without the editor', () => {
+	test('renders custom article primitives without the editor', () => {
 		const normalized = normalizeLocalArticleDocument({
 			title: 'Aave fees after the exploit',
 			subtitle: 'A local research draft',
@@ -188,7 +188,7 @@ describe('ArticleRenderer', () => {
 		expect(html).not.toContain('ProseMirror')
 	})
 
-	it('flattens nested Q&A blocks before rendering published content', () => {
+	test('flattens nested Q&A blocks before rendering published content', () => {
 		const normalized = normalizeLocalArticleDocument({
 			id: 'nested-interview',
 			title: 'Nested interview',
@@ -253,7 +253,7 @@ describe('ArticleRenderer', () => {
 		expect(html).not.toMatch(/data-article-qa-answer="true"[^>]*>(?:(?!<\/dd>)[\s\S])*<dl data-article-qa="true"/)
 	})
 
-	it('renders an editor-defined Q&A question number', () => {
+	test('renders an editor-defined Q&A question number', () => {
 		const normalized = normalizeLocalArticleDocument({
 			id: 'custom-question-number',
 			title: 'Numbered interview',
@@ -321,7 +321,7 @@ describe('llamaaiChart figure captions', () => {
 		}
 	})
 
-	function renderWithCharts(nodes: unknown[]) {
+	function renderWithCharts(nodes: Array<unknown>) {
 		const normalized = normalizeLocalArticleDocument(
 			{
 				title: 'Chart article',
@@ -347,13 +347,13 @@ describe('llamaaiChart figure captions', () => {
 		)
 	}
 
-	it('renders no figcaption or figure number when the author wrote no caption', () => {
+	test('renders no figcaption or figure number when the author wrote no caption', () => {
 		const html = renderWithCharts([chartNode('')])
 		expect(html).not.toContain('Figure 1')
 		expect(html).not.toContain('Source')
 	})
 
-	it('numbers only captioned charts, so published numbering has no gaps', () => {
+	test('numbers only captioned charts, so published numbering has no gaps', () => {
 		const html = renderWithCharts([chartNode(''), chartNode('Weekly fees by chain')])
 		expect(html).toContain('Figure 1.')
 		expect(html).toContain('Weekly fees by chain')

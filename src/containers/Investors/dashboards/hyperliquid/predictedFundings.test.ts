@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildPredictedFundings } from '~/pages/api/public/hyperliquid/predicted-fundings'
 
 describe('buildPredictedFundings', () => {
-	it('uses each venue settlement interval from the live API contract', () => {
+	test('uses each venue settlement interval from the live API contract', () => {
 		const [result] = buildPredictedFundings([
 			[
 				'BTC',

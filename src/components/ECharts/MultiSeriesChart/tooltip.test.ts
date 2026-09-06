@@ -1,21 +1,21 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createCappedRemainderTooltipFormatter, createInflowsTooltipFormatter, createTooltipFormatter } from './tooltip'
 
 function tooltipItem(name: string, value: number | null) {
 	return {
 		seriesName: name,
 		marker: '•',
-		data: { timestamp: 1767225600000, [name]: value }
+		data: { timestamp: 1_767_225_600_000, [name]: value }
 	}
 }
 
 describe('MultiSeriesChart tooltip', () => {
-	it('reads encoded positional values in inflow tooltips', () => {
+	test('reads encoded positional values in inflow tooltips', () => {
 		const output = createInflowsTooltipFormatter({ valueSymbol: '$' })([
 			{
 				seriesName: 'Selected',
-				data: [1700000000000, 111, 222],
-				value: [1700000000000, 111, 222],
+				data: [1_700_000_000_000, 111, 222],
+				value: [1_700_000_000_000, 111, 222],
 				encode: { x: [0], y: [2] }
 			}
 		])
@@ -24,8 +24,8 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(output).not.toContain('$111')
 	})
 
-	it('reconciles explicit and capped inflow remainder values once', () => {
-		const timestamp = 1700000000000
+	test('reconciles explicit and capped inflow remainder values once', () => {
+		const timestamp = 1_700_000_000_000
 		const output = createInflowsTooltipFormatter({ valueSymbol: '$', topN: 2 })([
 			{ seriesName: 'Protocol A', marker: 'A', data: { timestamp, 'Protocol A': 70 } },
 			{ seriesName: 'Others', marker: 'O', data: { timestamp, Others: 5 } },
@@ -38,7 +38,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(output).toContain('Total Inflows&nbsp;&nbsp;$105')
 	})
 
-	it('keeps a true single-series inflow tooltip compact', () => {
+	test('keeps a true single-series inflow tooltip compact', () => {
 		const output = createInflowsTooltipFormatter({ valueSymbol: '$' })([tooltipItem('Protocol', 70)])
 
 		expect(output).toContain('Protocol&nbsp;&nbsp;$70')
@@ -46,7 +46,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(output).not.toContain('Others')
 	})
 
-	it('reconciles a capped high-cardinality tooltip and omits zero rows', () => {
+	test('reconciles a capped high-cardinality tooltip and omits zero rows', () => {
 		const formatter = createCappedRemainderTooltipFormatter({ valueSymbol: '$', maxItems: 3 })
 		const tooltip = formatter([
 			tooltipItem('Pool A', 0),
@@ -64,7 +64,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(tooltip).toContain('Others&nbsp;&nbsp;$3')
 	})
 
-	it('does not fold a user-defined Others series into the hidden tail', () => {
+	test('does not fold a user-defined Others series into the hidden tail', () => {
 		const formatter = createCappedRemainderTooltipFormatter({
 			valueSymbol: '$',
 			maxItems: 3,
@@ -82,7 +82,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(tooltip).not.toContain('Others&nbsp;&nbsp;$120')
 	})
 
-	it('reconciles a caller-declared aggregate with the capped tail once', () => {
+	test('reconciles a caller-declared aggregate with the capped tail once', () => {
 		const formatter = createCappedRemainderTooltipFormatter({
 			valueSymbol: '$',
 			maxItems: 3,
@@ -100,7 +100,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(tooltip).not.toContain('Other&nbsp;&nbsp;$100')
 	})
 
-	it('keeps Others last and visually separates it from ordinary series', () => {
+	test('keeps Others last and visually separates it from ordinary series', () => {
 		const formatter = createTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 		const tooltip = formatter([
 			tooltipItem('Others', 100),
@@ -114,7 +114,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(tooltip).toContain('border-top:1px solid')
 	})
 
-	it('reserves a capped tooltip slot for Others and reports only hidden regular series', () => {
+	test('reserves a capped tooltip slot for Others and reports only hidden regular series', () => {
 		const formatter = createTooltipFormatter({ groupBy: 'daily', valueSymbol: '$', maxItems: 3 })
 		const tooltip = formatter([
 			tooltipItem('Protocol A', 10),
@@ -132,7 +132,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(tooltip.indexOf('Others')).toBeGreaterThan(tooltip.indexOf('+2 more'))
 	})
 
-	it('shows a reconciled total when regular rows are capped', () => {
+	test('shows a reconciled total when regular rows are capped', () => {
 		const formatter = createTooltipFormatter({
 			groupBy: 'daily',
 			valueSymbol: '$',
@@ -150,7 +150,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(tooltip.indexOf('Total')).toBeLessThan(tooltip.indexOf('Marketplace C'))
 	})
 
-	it('requires complete same-unit series only when the caller opts in', () => {
+	test('requires complete same-unit series only when the caller opts in', () => {
 		const items = [tooltipItem('Available', 10), tooltipItem('Unavailable', null)]
 		const legacyTooltip = createTooltipFormatter({
 			groupBy: 'daily',
@@ -169,7 +169,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(exactTooltip).not.toContain('Total:')
 	})
 
-	it('does not add aggregate spacing when Others is the only value row', () => {
+	test('does not add aggregate spacing when Others is the only value row', () => {
 		const formatter = createTooltipFormatter({ groupBy: 'daily', valueSymbol: '$' })
 		const tooltip = formatter([tooltipItem('Others', 100)])
 
@@ -177,7 +177,7 @@ describe('MultiSeriesChart tooltip', () => {
 		expect(tooltip).not.toContain('border-top')
 	})
 
-	it('formats mixed axes with their per-series symbols', () => {
+	test('formats mixed axes with their per-series symbols', () => {
 		const formatter = createTooltipFormatter({
 			groupBy: 'daily',
 			valueSymbol: '',

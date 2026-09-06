@@ -21,7 +21,7 @@ interface IPage {
 	name: string
 	route: string
 	description: string
-	tags?: string[]
+	tags?: Array<string>
 	tab?: string
 	totalTrackedKey?: string
 }
@@ -30,7 +30,7 @@ const trending = [{ category: 'Trending', metrics: trendingPages as Array<IPage>
 
 const metricsByCategory = trending.concat(
 	Object.entries(
-		defillamaPages.Metrics.reduce<Record<string, IPage[]>>((acc, metric) => {
+		defillamaPages.Metrics.reduce<Record<string, Array<IPage>>>((acc, metric) => {
 			const category = metric.category || 'Others'
 			acc[category] = acc[category] || []
 			acc[category].push({
@@ -441,7 +441,7 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 					unmountOnHide={false}
 					hideOnInteractOutside
 				>
-					<Metrics canDismiss={true} hasScrolledToCategoryRef={hasScrolledToCategoryRef} />
+					<Metrics canDismiss hasScrolledToCategoryRef={hasScrolledToCategoryRef} />
 				</Ariakit.Dialog>
 			</Ariakit.DialogProvider>
 		</>

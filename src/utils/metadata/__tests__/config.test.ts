@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import {
 	getMetadataCacheDir,
 	getMetadataCacheMaxAgeMs,
@@ -15,7 +15,7 @@ describe('metadata cache config', () => {
 		vi.unstubAllEnvs()
 	})
 
-	it('uses default cache config values', () => {
+	test('uses default cache config values', () => {
 		expect(getMetadataCacheDir('/repo')).toBe(path.resolve('/repo', '.cache/app-metadata'))
 		expect(getMetadataCacheMaxAgeMs()).toBe(60 * 60 * 1000)
 		expect(getMetadataCacheRetryMs()).toBe(60 * 60 * 1000)
@@ -24,7 +24,7 @@ describe('metadata cache config', () => {
 		expect(getMetadataFetchTimeoutMs()).toBe(180_000)
 	})
 
-	it('disables the runtime refresh loop in tests and builds', () => {
+	test('disables the runtime refresh loop in tests and builds', () => {
 		vi.stubEnv('NODE_ENV', 'production')
 		expect(shouldStartMetadataRuntimeRefreshLoop()).toBe(true)
 

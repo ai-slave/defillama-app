@@ -1,7 +1,7 @@
 import { getMetadataCache, type StaticParamPath } from '~/server/routeRegistry/common'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 
-function dedupeSlugs(slugs: string[]): string[] {
+function dedupeSlugs(slugs: Array<string>): Array<string> {
 	return [...new Set(slugs)]
 }
 
@@ -19,8 +19,8 @@ export async function getDATAssetStaticPaths(): Promise<Array<StaticParamPath<'a
 		.map((asset) => ({ params: { asset } }))
 }
 
-export function getDATSitemapRoutes(metadataCache: MetadataCache): string[] {
-	const routes: string[] = []
+export function getDATSitemapRoutes(metadataCache: MetadataCache): Array<string> {
+	const routes: Array<string> = []
 
 	for (const companySlug of metadataCache.digitalAssetTreasuryRoutes.companySlugs) {
 		routes.push(`digital-asset-treasury/${companySlug}`)

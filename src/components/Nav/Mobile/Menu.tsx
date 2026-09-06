@@ -89,7 +89,7 @@ export function Menu({
 														key={`mobile-nav-old-${pageName}-${pageRoute}`}
 														asPath={asPath}
 														onClick={handleClose}
-														isOld={true}
+														isOld
 													/>
 												))}
 											</div>

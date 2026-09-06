@@ -13,9 +13,9 @@ import type { ProDashboardAppMetadata, ProDashboardChartRequest } from './dataCo
 import {
 	buildProDashboardProtocolCatalog,
 	type ProDashboardProtocolCatalog,
-	type ProDashboardProtocolRelations
+	type ProDashboardProtocolRelations,
+	type ProProtocolCatalogSourceRow
 } from './protocolCatalog'
-import type { ProProtocolCatalogSourceRow } from './protocolCatalog'
 import { filterDataByTimePeriod } from './queries'
 import { createServerAuthorizedFetch } from './server/auth'
 import { fetchPfPsChartData, fetchPfPsProtocols } from './server/pfPsQueries'
@@ -53,7 +53,7 @@ export async function fetchDashboardConfigWithStatus(
 }
 
 export async function fetchProtocolsAndChains(
-	protocolCatalogSourcePromise?: Promise<ProProtocolCatalogSourceRow[]>,
+	protocolCatalogSourcePromise?: Promise<Array<ProProtocolCatalogSourceRow>>,
 	protocolsDataPromise: Promise<ProtocolsResponse> = fetchProtocols()
 ): Promise<ProDashboardProtocolCatalog | null> {
 	try {
@@ -92,7 +92,7 @@ export async function fetchAppMetadata(): Promise<ProDashboardAppMetadata | null
 	}
 }
 
-export function extractYieldsItems(items: DashboardItemConfig[]): YieldsChartConfig[] {
+export function extractYieldsItems(items: Array<DashboardItemConfig>): Array<YieldsChartConfig> {
 	return items.filter((item): item is YieldsChartConfig => item.kind === 'yields')
 }
 
@@ -117,7 +117,7 @@ export async function fetchSingleChartData(
 	timePeriod: TimePeriod,
 	customTimePeriod: CustomTimePeriod | null,
 	protocolRelations?: ProDashboardProtocolRelations
-): Promise<[number, number][]> {
+): Promise<Array<[number, number]>> {
 	if (!isProDashboardChartType(chart.type)) return []
 	const itemType = chart.subjectType
 	const item = chart.subjectType === 'protocol' ? chart.protocol : chart.chain
@@ -143,7 +143,7 @@ export async function fetchSingleChartData(
 	const parent = protocolRelations?.protocolsBySlug.get(item)
 	const children = parent ? (protocolRelations?.childrenByParentId.get(parent.id) ?? []) : []
 
-	let data: [number, number][]
+	let data: Array<[number, number]>
 	try {
 		data = await fetchProtocol(item, chart.geckoId)
 	} catch (error) {

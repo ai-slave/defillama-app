@@ -6,7 +6,7 @@ import type { EnrichedProtocolEmission } from './queries'
 import { TopThreeRow } from './TopThreeRow'
 
 interface TopUnlocksProps {
-	data: EnrichedProtocolEmission[]
+	data: Array<EnrichedProtocolEmission>
 	period: number
 	title?: string
 	className?: string

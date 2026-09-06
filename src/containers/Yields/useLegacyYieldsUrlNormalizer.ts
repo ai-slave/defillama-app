@@ -13,7 +13,7 @@ export function useLegacyYieldsUrlNormalizer({
 	tokens
 }: {
 	page: LegacyYieldsPage
-	tokens: readonly TokenOption[]
+	tokens: ReadonlyArray<TokenOption>
 }): boolean {
 	const router = useRouter()
 	const tokenBySymbol = React.useMemo(() => tokenBySymbolFromOptions(tokens), [tokens])

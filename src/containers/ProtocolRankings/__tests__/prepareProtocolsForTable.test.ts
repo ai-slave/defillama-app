@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { TvlSettingsKey } from '~/contexts/LocalStorage'
 import { prepareProtocolsForTable } from '../prepareProtocolsForTable'
 import type { IChildProtocol, IProtocol, ProtocolRankingTvlEntry, ProtocolRankingTvls } from '../types'
@@ -45,7 +45,7 @@ const settings: Record<TvlSettingsKey, boolean> = {
 }
 
 describe('prepareProtocolsForTable', () => {
-	it('applies scoped TVL settings once and suppresses only strike presentation', () => {
+	test('applies scoped TVL settings once and suppresses only strike presentation', () => {
 		const protocol: IProtocol = {
 			...child('Parent'),
 			tvl: tvl(100),

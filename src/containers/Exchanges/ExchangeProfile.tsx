@@ -244,7 +244,7 @@ export function visibleProfileTabs(
 	hasInformation: boolean,
 	hasHistory: boolean,
 	hasExecution = false
-): ProfileTab[] {
+): Array<ProfileTab> {
 	return [
 		'markets',
 		...(hasExecution ? (['execution'] as const) : []),

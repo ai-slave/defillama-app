@@ -57,8 +57,7 @@ import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolTvlChart } from '~/containers/ProtocolOverview/api'
 import { getProtocolIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'
-import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
-import type { IRWABreakdownChartResponse } from '~/containers/RWA/api.types'
+import type { IFetchedRWAProject, IRWABreakdownChartResponse } from '~/containers/RWA/api.types'
 import {
 	fetchStablecoinAssetsApi,
 	fetchStablecoinChartApi,
@@ -152,7 +151,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		writeQueue = writeQueue.then(async () => {
 			if (streamEnded || res.destroyed) return
 			try {
-				if (!res.write(JSON.stringify(chunk) + '\n') && !res.destroyed) await waitForDrain()
+				if (!res.write(`${JSON.stringify(chunk)}\n`) && !res.destroyed) await waitForDrain()
 			} catch {
 				stopStream()
 			}
@@ -262,7 +261,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 				rateData,
 				peggedConfig
 			})))
-		let rwaAssetsTablePromise: Promise<IFetchedRWAProject[]> | null = null
+		let rwaAssetsTablePromise: Promise<Array<IFetchedRWAProject>> | null = null
 		const getRwaAssetsTable = () =>
 			(rwaAssetsTablePromise ??= import('~/containers/RWA/api').then(({ fetchRWAActiveTVLs }) =>
 				withTimeout(fetchRWAActiveTVLs(), 10_000)
@@ -290,20 +289,20 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 		const claimedStreamSources = new Set<string>()
 		const claimedUnifiedTableCacheKeys = new Set<string>()
 		const dimensionDatasetRequestScope = createDimensionDatasetRequestScope()
-		const claimStreamSource = (kind: string, key: readonly unknown[]) => {
+		const claimStreamSource = (kind: string, key: ReadonlyArray<unknown>) => {
 			const sourceKey = `${kind}:${JSON.stringify(key)}`
 			if (claimedStreamSources.has(sourceKey)) return false
 			claimedStreamSources.add(sourceKey)
 			return true
 		}
 
-		const streamPromises: Promise<unknown>[] = [
+		const streamPromises: Array<Promise<unknown>> = [
 			...(needsProtocolCatalog ? [sourceScheduler.schedule(async () => void (await getProtocolsAndChains()))] : []),
 			...(needsAppMetadata ? [sourceScheduler.schedule(async () => void (await getAppMetadata()))] : [])
 		]
 		if (!isStreamStopped()) {
 			const scheduleSource = (run: () => Promise<void>) => sourceScheduler.schedule(run)
-			const phase2Promises: Promise<unknown>[] = []
+			const phase2Promises: Array<Promise<unknown>> = []
 			type DatasetType = DatasetTableConfig['datasetType']
 			type DatasetConfigFor<T extends DatasetType> = DatasetTableConfig extends infer Config
 				? Config extends DatasetTableConfig
@@ -312,8 +311,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 						: never
 					: never
 				: never
-			const tableItems: DatasetTableConfig[] = []
-			const classicChartItems: DashboardItemConfig[] = []
+			const tableItems: Array<DatasetTableConfig> = []
+			const classicChartItems: Array<DashboardItemConfig> = []
 			for (const item of items) {
 				if (item.kind === 'dataset-table') tableItems.push(item)
 				else if (item.kind === 'chart' || (item.kind === 'multi' && item.items.length > 0) || item.kind === 'metric') {
@@ -324,7 +323,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 				tableItems.filter((item): item is DatasetConfigFor<T> => item.datasetType === datasetType)
 			// Chart and metric cards share the same raw source and observer-local presentation.
 			if (classicChartItems.length > 0) {
-				const chartSourcePromises: Promise<void>[] = []
+				const chartSourcePromises: Array<Promise<void>> = []
 				const planChartSources = scheduleSource(async () => {
 					const [catalog, appMetadata] = await Promise.all([getProtocolsAndChains(), getAppMetadata()])
 					if (isStreamStopped()) return
@@ -424,7 +423,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 				(item) => item.kind === 'advanced-borrowed' || (item.kind === 'advanced-tvl' && item.chartType !== 'tvl')
 			)
 			if (protocolTvlItems.length > 0) {
-				const protocolTvlSourcePromises: Promise<void>[] = []
+				const protocolTvlSourcePromises: Array<Promise<void>> = []
 				const planProtocolTvlSources = scheduleSource(async () => {
 					const catalog = await getProtocolsAndChains()
 					if (isStreamStopped()) return
@@ -794,7 +793,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			}
 
 			// Yields dataset tables
-			const yieldsTableSources: Array<{ cacheKey: string; chains: string[] }> = []
+			const yieldsTableSources: Array<{ cacheKey: string; chains: Array<string> }> = []
 			for (const item of getTableItems('yields')) {
 				const cacheKey = JSON.stringify(getProYieldsDatasetQueryKey(item.chains))
 				if (claimStreamSource('yields-dataset', [cacheKey])) {

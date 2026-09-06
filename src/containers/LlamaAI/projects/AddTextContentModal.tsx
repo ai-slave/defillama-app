@@ -35,8 +35,8 @@ export function AddTextContentModal({ dialogStore, projectId }: AddTextContentMo
 			}
 			toast.success('Added')
 			dialogStore.hide()
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to add file')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to add file')
 		}
 	}
 

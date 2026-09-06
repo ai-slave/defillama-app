@@ -1,10 +1,10 @@
 import type { GetStaticPropsContext } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mockState = {
-	chains: ['Arbitrum One'] as string[],
-	platforms: ['Ondo Finance'] as string[],
-	assetGroups: ['US Treasuries'] as string[],
+	chains: ['Arbitrum One'] as Array<string>,
+	platforms: ['Ondo Finance'] as Array<string>,
+	assetGroups: ['US Treasuries'] as Array<string>,
 	overviewData: { assets: [{ id: 'asset-1' }] } as unknown
 }
 
@@ -64,7 +64,7 @@ describe('rwa group route canonical redirects', () => {
 		mockState.overviewData = { assets: [{ id: 'asset-1' }] }
 	})
 
-	it('redirects noncanonical asset group params to the canonical slug', async () => {
+	test('redirects noncanonical asset group params to the canonical slug', async () => {
 		await expect(
 			assetGroupPage.getStaticProps({
 				params: { assetGroup: 'US Treasuries' }
@@ -77,7 +77,7 @@ describe('rwa group route canonical redirects', () => {
 		})
 	})
 
-	it('redirects noncanonical chain params to the canonical slug', async () => {
+	test('redirects noncanonical chain params to the canonical slug', async () => {
 		await expect(chainPage.getStaticProps({ params: { chain: 'Arbitrum One' } } as never)).resolves.toEqual({
 			redirect: {
 				destination: '/rwa/chain/arbitrum-one',
@@ -86,7 +86,7 @@ describe('rwa group route canonical redirects', () => {
 		})
 	})
 
-	it('redirects noncanonical platform params to the canonical slug', async () => {
+	test('redirects noncanonical platform params to the canonical slug', async () => {
 		await expect(
 			platformPage.getStaticProps({
 				params: { platform: 'Ondo Finance' }
@@ -99,7 +99,7 @@ describe('rwa group route canonical redirects', () => {
 		})
 	})
 
-	it('keeps the legacy platform page when the platform metadata is absent', async () => {
+	test('keeps the legacy platform page when the platform metadata is absent', async () => {
 		const context: GetStaticPropsContext<{ platform: string }> = {
 			params: { platform: 'ondo-finance' }
 		}

@@ -10,7 +10,7 @@ export type ResearchNewsletterItem = {
 }
 
 export type ResearchNewsletterListResponse = {
-	items: ResearchNewsletterItem[]
+	items: Array<ResearchNewsletterItem>
 	totalItems: number
 }
 

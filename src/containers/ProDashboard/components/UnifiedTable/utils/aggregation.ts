@@ -25,7 +25,7 @@ const computeMarketCapToAnnualizedMetricRatio = (
 	return marketCap / annualizedMetric
 }
 
-const hasMetricContributor = (metrics: ProtocolTableMetrics, keys: readonly (keyof ProtocolTableMetrics)[]) => {
+const hasMetricContributor = (metrics: ProtocolTableMetrics, keys: ReadonlyArray<keyof ProtocolTableMetrics>) => {
 	for (const key of keys) {
 		const value = metrics[key]
 		if (value != null && value !== 0) return true
@@ -51,7 +51,7 @@ interface PercentChangeDefinition {
 	family: ProtocolBaseMetricFamily | ProtocolSupplementalMetric
 	changeKey: keyof ProtocolTableMetrics
 	currentKey: keyof ProtocolTableMetrics
-	broaderPeriodKeys: readonly (keyof ProtocolTableMetrics)[]
+	broaderPeriodKeys: ReadonlyArray<keyof ProtocolTableMetrics>
 }
 
 interface PreviousValueChangeDefinition {
@@ -61,7 +61,7 @@ interface PreviousValueChangeDefinition {
 	previousKey: keyof ProtocolTableMetrics
 }
 
-const PERCENT_CHANGE_DEFINITIONS: readonly PercentChangeDefinition[] = [
+const PERCENT_CHANGE_DEFINITIONS: ReadonlyArray<PercentChangeDefinition> = [
 	{ family: 'dex-volume', changeKey: 'volumeChange_1d', currentKey: 'volume24h', broaderPeriodKeys: ['volume_7d'] },
 	{
 		family: 'dex-volume',
@@ -287,7 +287,7 @@ const PERCENT_CHANGE_DEFINITIONS: readonly PercentChangeDefinition[] = [
 	}
 ]
 
-const POINT_CHANGE_DEFINITIONS: readonly PreviousValueChangeDefinition[] = [
+const POINT_CHANGE_DEFINITIONS: ReadonlyArray<PreviousValueChangeDefinition> = [
 	{ family: 'dex-volume', changeKey: 'volume24hChange7dAgo', currentKey: 'volume24h', previousKey: 'volume24h7dAgo' },
 	{ family: 'dex-volume', changeKey: 'volume24hChange30dAgo', currentKey: 'volume24h', previousKey: 'volume24h30dAgo' },
 	{ family: 'fees', changeKey: 'fees24hChange7dAgo', currentKey: 'fees24h', previousKey: 'fees24h7dAgo' },
@@ -350,7 +350,7 @@ const POINT_CHANGE_DEFINITIONS: readonly PreviousValueChangeDefinition[] = [
 	}
 ]
 
-const TVL_CHANGE_DEFINITIONS: readonly PreviousValueChangeDefinition[] = [
+const TVL_CHANGE_DEFINITIONS: ReadonlyArray<PreviousValueChangeDefinition> = [
 	{ changeKey: 'change1d', currentKey: 'tvl', previousKey: 'tvlPrevDay' },
 	{ changeKey: 'change7d', currentKey: 'tvl', previousKey: 'tvlPrevWeek' },
 	{ changeKey: 'change1m', currentKey: 'tvl', previousKey: 'tvlPrevMonth' },
@@ -448,8 +448,8 @@ interface ParentRowMembership {
 }
 
 interface ParentSupplement<MetricKey extends keyof ProtocolTableMetrics> {
-	childProtocolIds: string[]
-	childProtocolIdsByChain: Record<string, string[]>
+	childProtocolIds: Array<string>
+	childProtocolIdsByChain: Record<string, Array<string>>
 	metrics: Pick<ProtocolTableMetrics, MetricKey>
 	metricsByChain: Record<string, Pick<ProtocolTableMetrics, MetricKey>>
 }
@@ -459,7 +459,7 @@ function mergeParentSupplementTotals<MetricKey extends keyof ProtocolTableMetric
 	rowsByParent: ReadonlyMap<string, ParentRowMembership>,
 	parentMetrics: Readonly<Record<string, ParentProtocolMetrics>>,
 	getSupplement: (parent: ParentProtocolMetrics) => ParentSupplement<MetricKey> | undefined,
-	keys: readonly MetricKey[]
+	keys: ReadonlyArray<MetricKey>
 ): void {
 	const invalidKeys = new Set<MetricKey>()
 
@@ -488,7 +488,7 @@ function mergeParentSupplementTotals<MetricKey extends keyof ProtocolTableMetric
 
 function applyParentSupplements(
 	aggregated: ProtocolTableMetrics,
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	parentMetrics: Readonly<Record<string, ParentProtocolMetrics>>,
 	includeEarnings: boolean,
 	includeBridgeAggregatorVolume: boolean
@@ -557,7 +557,7 @@ function applyParentSupplements(
 
 function applyCanonicalParentOpenInterest(
 	aggregated: ProtocolTableMetrics,
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	parentMetrics: Readonly<Record<string, ParentProtocolMetrics>>
 ): void {
 	type ParentOpenInterestMembership = ParentRowMembership & { allocatedOpenInterest: number }
@@ -590,7 +590,7 @@ function applyCanonicalParentOpenInterest(
 
 function applyCanonicalParentIncentives(
 	aggregated: ProtocolTableMetrics,
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	parentMetrics: Readonly<Record<string, ParentProtocolMetrics>>
 ): boolean {
 	const keys = [
@@ -767,13 +767,13 @@ const SUM_METRIC_KEYS_BY_BASE_FAMILY = {
 	'bridged-tvl': ['bridgedTvl'],
 	stablecoins: ['stablesMcap'],
 	'protocol-count': []
-} as const satisfies Record<ProtocolBaseMetricFamily, readonly (keyof ProtocolTableMetrics)[]>
+} as const satisfies Record<ProtocolBaseMetricFamily, ReadonlyArray<keyof ProtocolTableMetrics>>
 
 const SUM_METRIC_KEYS_BY_SUPPLEMENT = {
 	earnings: ['earnings24h', 'earnings7d', 'earnings30d', 'earnings1y'],
 	'bridge-aggregator-volume': ['bridgeAggregatorVolume24h', 'bridgeAggregatorVolume7d', 'bridgeAggregatorVolume30d']
-} as const satisfies Record<ProtocolSupplementalMetric, readonly (keyof ProtocolTableMetrics)[]>
-const FEE_ANNUALIZED_CONTRIBUTOR_KEYS: readonly (keyof ProtocolTableMetrics)[] = [
+} as const satisfies Record<ProtocolSupplementalMetric, ReadonlyArray<keyof ProtocolTableMetrics>>
+const FEE_ANNUALIZED_CONTRIBUTOR_KEYS: ReadonlyArray<keyof ProtocolTableMetrics> = [
 	'fees24h',
 	'fees_7d',
 	'fees_30d',
@@ -784,7 +784,7 @@ const FEE_ANNUALIZED_CONTRIBUTOR_KEYS: readonly (keyof ProtocolTableMetrics)[] =
 	'cumulativeFees',
 	'feesAnnualized1y'
 ]
-const REVENUE_ANNUALIZED_CONTRIBUTOR_KEYS: readonly (keyof ProtocolTableMetrics)[] = [
+const REVENUE_ANNUALIZED_CONTRIBUTOR_KEYS: ReadonlyArray<keyof ProtocolTableMetrics> = [
 	'revenue24h',
 	'revenue_7d',
 	'revenue_30d',
@@ -796,7 +796,7 @@ const REVENUE_ANNUALIZED_CONTRIBUTOR_KEYS: readonly (keyof ProtocolTableMetrics)
 	'revenueAnnualized1y'
 ]
 const ADDITIVE_SHARE_METRIC_KEYS_BY_BASE_FAMILY: Readonly<
-	Partial<Record<ProtocolBaseMetricFamily, readonly (keyof ProtocolTableMetrics)[]>>
+	Partial<Record<ProtocolBaseMetricFamily, ReadonlyArray<keyof ProtocolTableMetrics>>>
 > = {
 	tvl: ['tvlShare'],
 	'dex-volume': ['volumeDominance_24h', 'volumeMarketShare7d', 'volume24hShare'],
@@ -807,10 +807,10 @@ const ADDITIVE_SHARE_METRIC_KEYS_BY_BASE_FAMILY: Readonly<
 }
 
 export interface ProtocolAggregationPlan {
-	sumMetricKeys: readonly (keyof ProtocolTableMetrics)[]
-	percentChangeDefinitions: readonly PercentChangeDefinition[]
-	pointChangeDefinitions: readonly PreviousValueChangeDefinition[]
-	additiveShareMetricKeys: readonly (keyof ProtocolTableMetrics)[]
+	sumMetricKeys: ReadonlyArray<keyof ProtocolTableMetrics>
+	percentChangeDefinitions: ReadonlyArray<PercentChangeDefinition>
+	pointChangeDefinitions: ReadonlyArray<PreviousValueChangeDefinition>
+	additiveShareMetricKeys: ReadonlyArray<keyof ProtocolTableMetrics>
 	includeTvlChanges: boolean
 	includeFeesAnnualized: boolean
 	includeRevenueAnnualized: boolean
@@ -836,8 +836,8 @@ export function buildProtocolAggregationPlan(capabilities: ProtocolMetricCapabil
 		...capabilities.pointMetrics,
 		...capabilities.supplementalMetrics
 	])
-	const sumMetricKeys: (keyof ProtocolTableMetrics)[] = []
-	const additiveShareMetricKeys: (keyof ProtocolTableMetrics)[] = []
+	const sumMetricKeys: Array<keyof ProtocolTableMetrics> = []
+	const additiveShareMetricKeys: Array<keyof ProtocolTableMetrics> = []
 	for (const family of capabilities.baseMetricFamilies) {
 		sumMetricKeys.push(...SUM_METRIC_KEYS_BY_BASE_FAMILY[family])
 		additiveShareMetricKeys.push(...(ADDITIVE_SHARE_METRIC_KEYS_BY_BASE_FAMILY[family] ?? []))
@@ -912,7 +912,7 @@ export const FULL_PROTOCOL_AGGREGATION_PLAN = buildProtocolAggregationPlan({
 })
 
 export function aggregateMetrics(
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	options: AggregateMetricsOptions = { excludeParentTvl: false }
 ): ProtocolTableMetrics {
 	const plan = options.aggregationPlan ?? FULL_PROTOCOL_AGGREGATION_PLAN

@@ -63,7 +63,7 @@ export function migrateDashboardItemConfig(config: PersistedDashboardItemConfig)
 		case 'chart':
 			return migrateChartSubject(config)
 		case 'multi': {
-			const items: ChartConfig[] = []
+			const items: Array<ChartConfig> = []
 			for (const item of config.items) {
 				const migrated = migrateChartSubject(item)
 				if (migrated) items.push(migrated)
@@ -115,8 +115,8 @@ export function migrateDashboardItemConfig(config: PersistedDashboardItemConfig)
 	}
 }
 
-export function migrateDashboardItems(items: readonly PersistedDashboardItemConfig[]): DashboardItemConfig[] {
-	const migratedItems: DashboardItemConfig[] = []
+export function migrateDashboardItems(items: ReadonlyArray<PersistedDashboardItemConfig>): Array<DashboardItemConfig> {
+	const migratedItems: Array<DashboardItemConfig> = []
 	for (const item of items) {
 		const migrated = migrateDashboardItemConfig(item)
 		if (migrated) migratedItems.push(migrated)

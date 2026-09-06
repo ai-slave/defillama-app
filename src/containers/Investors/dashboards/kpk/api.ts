@@ -39,7 +39,7 @@ export interface KpkCompositionSegment {
 	/** Percent of the breakdown total. */
 	share: number
 	/** One point per entry in `months`, $m. */
-	series: number[]
+	series: Array<number>
 	/**
 	 * This band's assets are also counted inside another band of the same
 	 * breakdown. `line` nets it out; the table marks it.
@@ -51,7 +51,7 @@ export interface KpkCompositionLine {
 	name: string
 	note: string
 	value: number
-	series: number[]
+	series: Array<number>
 }
 
 /** The stacked-area payload every breakdown on every tab uses. */
@@ -63,8 +63,8 @@ export interface KpkComposition {
 	 * Period labels — `"Sept 25"` on the monthly breakdowns, `"3 Oct 25"` on the
 	 * daily ones. Not dates; the chart plots them as categories.
 	 */
-	months: string[]
-	segments: KpkCompositionSegment[]
+	months: Array<string>
+	segments: Array<KpkCompositionSegment>
 	line?: KpkCompositionLine
 }
 
@@ -78,7 +78,7 @@ export interface KpkMetadata {
 	tagline: string
 	asOf: ApiDate
 	updatedAt: ApiIsoTimestamp
-	notes: string[]
+	notes: Array<string>
 	links: Partial<Record<KpkLinkKey, string>>
 }
 
@@ -115,9 +115,9 @@ export interface KpkOverview {
 	doubleCountNote: string | null
 	deployedOnchain: KpkLedgerFact
 	rebalancing: KpkLedgerFact
-	fundsLost: { value: number; since: number; years: number[] }
+	fundsLost: { value: number; since: number; years: Array<number> }
 	comp: Record<KpkOverviewCompKey, KpkComposition>
-	refs: KpkRef[]
+	refs: Array<KpkRef>
 }
 
 export const useKpkOverview = () => useTab<KpkOverview>('overview')
@@ -175,7 +175,7 @@ export interface KpkMandatePerf {
 	benchLabel: string
 	/** Annual excess return at the 30-day spread, $m. */
 	excess: number
-	windows: KpkMandateWindow[]
+	windows: Array<KpkMandateWindow>
 	scope: KpkMandateScope
 }
 
@@ -192,7 +192,7 @@ export interface KpkMandateOps {
 	pctOfTvl: number
 	/** $m */
 	defiUsd: number
-	buckets: KpkOpsBucket[]
+	buckets: Array<KpkOpsBucket>
 	coveragePct: number
 	/** $m */
 	unresolvedUsd: number
@@ -217,13 +217,13 @@ export interface KpkMandates {
 	deployedOnchain?: string
 	deployedOnchainUsd?: number
 	/** Empty when the positions report is unavailable, which hides the performance section. */
-	denominations: string[]
+	denominations: Array<string>
 	comp: Record<string, KpkComposition>
 	perf: Record<string, KpkMandatePerf>
 	ops: KpkMandateOps | null
-	clients: KpkMandateClient[]
+	clients: Array<KpkMandateClient>
 	totals: { aum: number; weightedDeployedPct: number | null; excess: number | null }
-	refs: KpkRef[]
+	refs: Array<KpkRef>
 }
 
 export const useKpkMandates = () => useTab<KpkMandates>('mandates')
@@ -256,7 +256,7 @@ export interface KpkVault {
 	liq?: number
 	bench?: number
 	benchName?: string
-	apyHistory?: number[]
+	apyHistory?: Array<number>
 	url?: string
 	spreadBps: number | null
 	belowTarget: boolean
@@ -272,7 +272,7 @@ export interface KpkVaults {
 	/** $m, net of every `doubleCounted` vault. Absent where nothing is netted out. */
 	tvaAdjusted?: number
 	count: number
-	venues: string[]
+	venues: Array<string>
 	rebalancingVolume: string
 	rebalancingVolumeUsd: number
 	rebalancingActions: number
@@ -284,11 +284,11 @@ export interface KpkVaults {
 	/** Last day sampled by the composition chart, `YYYY-MM-DD`. */
 	compAsOf: ApiDate
 	compTotal: number
-	list: KpkVault[]
+	list: Array<KpkVault>
 	doubleCountNote?: string
 	totals: { tva: number; interest: number; tvaAdjusted?: number; interestAdjusted?: number }
 	riskDisclaimer: string
-	refs: KpkRef[]
+	refs: Array<KpkRef>
 }
 
 export const useKpkVaults = () => useTab<KpkVaults>('vaults')

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ProtocolAggregateTableRow } from '../../../unifiedTable/contracts'
 import { filterRowsByConfig, hasProtocolSubsetFilters } from './dataFilters'
 
@@ -25,7 +25,7 @@ function protocolRow(protocolId: string): ProtocolAggregateTableRow {
 }
 
 describe('protocol age filters', () => {
-	it('keeps protocols inside the configured rolling age range', () => {
+	test('keeps protocols inside the configured rolling age range', () => {
 		const rows = [protocolRow('new'), protocolRow('boundary'), protocolRow('old'), protocolRow('unknown')]
 		const listedAtById: Record<string, number | undefined> = {
 			new: NOW_SECONDS - 30 * DAY_IN_SECONDS,
@@ -47,7 +47,7 @@ describe('protocol age filters', () => {
 		expect(result.map((row) => row.protocolId)).toEqual(['new', 'boundary'])
 	})
 
-	it('supports a minimum age and clamps future listing timestamps to zero days', () => {
+	test('supports a minimum age and clamps future listing timestamps to zero days', () => {
 		const rows = [protocolRow('future'), protocolRow('mature')]
 		const result = filterRowsByConfig(
 			rows,
@@ -64,7 +64,7 @@ describe('protocol age filters', () => {
 		expect(result.map((row) => row.protocolId)).toEqual(['mature'])
 	})
 
-	it('marks age constraints as protocol subset filters', () => {
+	test('marks age constraints as protocol subset filters', () => {
 		expect(hasProtocolSubsetFilters({ protocolAgeDaysMax: 90 })).toBe(true)
 	})
 })

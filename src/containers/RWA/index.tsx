@@ -54,7 +54,7 @@ import {
 	setTreemapNestedBy,
 	type RWAChartState
 } from './chartState'
-import { type RWAOverviewMode } from './constants'
+import type { RWAOverviewMode } from './constants'
 import { definitions } from './definitions'
 import { RWAOverviewFilters } from './Filters'
 import { RWAFlowVsPriceStrip } from './FlowPanelParts'
@@ -108,7 +108,11 @@ const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ defa
 type RWAOverviewChartMetric = RWAChartState['metric'] | 'flows' | 'flowVsPrice'
 
 const EMPTY_CHART_STACK_COLORS: Record<string, string> = {}
-const EMPTY_HBAR_PRESENTATION = { categories: [] as string[], values: [] as number[], colors: [] as string[] }
+const EMPTY_HBAR_PRESENTATION = {
+	categories: [] as Array<string>,
+	values: [] as Array<number>,
+	colors: [] as Array<string>
+}
 
 export const RWAOverview = (props: IRWAAssetsOverview) => {
 	const rankedFilterValues = useMemo(
@@ -373,7 +377,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 		() => getRwaTotalMetricByTimestamp(flowDefiActiveTvlDataset, 'defiActiveTvl'),
 		[flowDefiActiveTvlDataset]
 	)
-	const flowOverlays = useMemo<RWAFlowOverlay[]>(
+	const flowOverlays = useMemo<Array<RWAFlowOverlay>>(
 		() =>
 			selectedFlowOverlayMetrics.map((metric) => ({
 				metric,
@@ -673,7 +677,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 			<Select
 				allValues={flowOverlayOptions}
 				selectedValues={selectedFlowOverlayMetrics}
-				setSelectedValues={(values: string[]) => {
+				setSelectedValues={(values: Array<string>) => {
 					void pushShallowQuery(router, { flowOverlays: getRWAFlowOverlayQueryValue(values) })
 				}}
 				label="Overlays"
@@ -877,7 +881,7 @@ export const RWAOverview = (props: IRWAAssetsOverview) => {
 	/* Platform pages already headline the platform's own AUM and DeFi TVL, so the
 	   same aggregates recomputed over the *filtered* asset set join the identity
 	   card as their own group rather than competing as a row of big cards. */
-	const platformListedTotals: RWAPlatformListedTotal[] = [
+	const platformListedTotals: Array<RWAPlatformListedTotal> = [
 		{
 			// Names the scope the money rows below are summed over: without it the
 			// group's numbers silently disagree with the platform's own asset count.
@@ -1360,7 +1364,7 @@ const pieChartLegendPosition = {
 	left: 'center',
 	top: 'bottom',
 	orient: 'horizontal',
-	formatter: function (name: string) {
+	formatter(name: string) {
 		return name
 	}
 } as const

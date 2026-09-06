@@ -104,7 +104,7 @@ export default function Protocol({
 	return (
 		<Layout title={seoTitle} description={seoDescription} canonicalUrl={`/unlocks/${canonicalProtocol}`}>
 			<LinkPreviewCard
-				unlockPage={true}
+				unlockPage
 				cardName={emissions.name}
 				logo={tokenIconUrl(emissions.name)}
 				unlockAmount={

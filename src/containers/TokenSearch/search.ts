@@ -57,7 +57,7 @@ function toTokenSearchResult(hit: TokenSearchHit, fallbackRank: number): TokenSe
 	}
 }
 
-export async function searchTokens(query: string, limit = TOKEN_SEARCH_LIMIT): Promise<TokenSearchResult[]> {
+export async function searchTokens(query: string, limit = TOKEN_SEARCH_LIMIT): Promise<Array<TokenSearchResult>> {
 	const hits = await searchApi<TokenSearchHit>({
 		indexUid: 'pages',
 		limit,
@@ -74,21 +74,21 @@ export async function searchTokens(query: string, limit = TOKEN_SEARCH_LIMIT): P
 		(a, b) => (a.mcapRank || Number.MAX_SAFE_INTEGER) - (b.mcapRank || Number.MAX_SAFE_INTEGER)
 	)
 
-	const tokens: TokenSearchResult[] = []
+	const tokens: Array<TokenSearchResult> = []
 	for (const hit of sortedHits) {
 		tokens.push(toTokenSearchResult(hit, tokens.length + 1))
 	}
 	return tokens
 }
 
-async function hydrateTokenSearchOptionsByIdQuery(ids: string[]): Promise<TokenSearchResult[]> {
+async function hydrateTokenSearchOptionsByIdQuery(ids: Array<string>): Promise<Array<TokenSearchResult>> {
 	const results = await Promise.all(
 		ids.map((id) => {
 			const geckoId = getGeckoIdFromSearchId(id)
 			return searchTokens(TOKEN_ID_SEARCH_ALIASES[geckoId] ?? geckoId, 10)
 		})
 	)
-	const tokens: TokenSearchResult[] = []
+	const tokens: Array<TokenSearchResult> = []
 	for (const [index, id] of ids.entries()) {
 		const geckoId = getGeckoIdFromSearchId(id)
 		const token = results[index]?.find((result) => result.id === geckoId)
@@ -97,7 +97,7 @@ async function hydrateTokenSearchOptionsByIdQuery(ids: string[]): Promise<TokenS
 	return tokens
 }
 
-export async function hydrateTokenSearchOptionsByIds(ids: readonly string[]): Promise<TokenSearchResult[]> {
+export async function hydrateTokenSearchOptionsByIds(ids: ReadonlyArray<string>): Promise<Array<TokenSearchResult>> {
 	const normalizedIds = Array.from(new Set(ids.map(getGeckoIdFromSearchId).filter(Boolean)))
 	if (normalizedIds.length === 0) return []
 
@@ -109,7 +109,9 @@ export async function hydrateTokenSearchOptionsByIds(ids: readonly string[]): Pr
 	})
 }
 
-export function mergeTokenSearchResults(...tokenLists: Array<readonly TokenSearchResult[]>): TokenSearchResult[] {
+export function mergeTokenSearchResults(
+	...tokenLists: Array<ReadonlyArray<TokenSearchResult>>
+): Array<TokenSearchResult> {
 	const tokensById = new Map<string, TokenSearchResult>()
 	for (const tokens of tokenLists) {
 		for (const token of tokens) {
@@ -119,7 +121,7 @@ export function mergeTokenSearchResults(...tokenLists: Array<readonly TokenSearc
 	return Array.from(tokensById.values())
 }
 
-export async function getInitialTokenSearchOptions(ids: readonly string[] = []): Promise<TokenSearchResult[]> {
+export async function getInitialTokenSearchOptions(ids: ReadonlyArray<string> = []): Promise<Array<TokenSearchResult>> {
 	const [topTokens, selectedTokens] = await Promise.all([searchTokens(''), hydrateTokenSearchOptionsByIds(ids)])
 	return mergeTokenSearchResults(topTokens, selectedTokens)
 }

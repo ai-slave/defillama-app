@@ -15,11 +15,11 @@ import { buildTopProtocolChainSeries } from './protocolTvlBreakdown'
 
 async function getTvlProtocolChainData(
 	protocol: string,
-	chains?: string[],
+	chains?: Array<string>,
 	topN: number = 5,
 	chainFilterMode: 'include' | 'exclude' = 'include',
 	chainCategoryFilterMode: 'include' | 'exclude' = 'include',
-	chainCategories?: string[]
+	chainCategories?: Array<string>
 ): Promise<ProtocolChainData> {
 	try {
 		const chart = await fetchProtocolTvlChart({ protocol, breakdownType: 'chain-breakdown' })
@@ -62,10 +62,10 @@ async function getTvlProtocolChainData(
 
 async function getAllProtocolsTopChainsTvlData(
 	topN: number = 5,
-	chains?: string[],
+	chains?: Array<string>,
 	chainFilterMode: 'include' | 'exclude' = 'include',
 	chainCategoryFilterMode: 'include' | 'exclude' = 'include',
-	chainCategories?: string[]
+	chainCategories?: Array<string>
 ): Promise<ProtocolChainData> {
 	try {
 		const allChains = await fetchChainsTvlOverview()
@@ -98,7 +98,7 @@ async function getAllProtocolsTopChainsTvlData(
 			mapWithConcurrency(pickedNames, 8, (name) => fetchChainChart(name).then((data) => ({ name, data })))
 		])
 
-		const topSeriesRaw: ChartSeries[] = []
+		const topSeriesRaw: Array<ChartSeries> = []
 		let colorIndex = 0
 		for (const chainResponse of chainResponses) {
 			const { name, data: j } = chainResponse
@@ -160,20 +160,20 @@ async function getAllProtocolsTopChainsTvlData(
 				othersCount
 			}
 		}
-	} catch (e) {
-		console.log('Error building all-protocols TVL by chain:', e)
-		throw e
+	} catch (error) {
+		console.log('Error building all-protocols TVL by chain:', error)
+		throw error
 	}
 }
 
 type ProtocolChainBreakdownParams = {
 	protocol?: string
 	metric: string
-	chains: string[]
+	chains: Array<string>
 	topN: number
 	chainFilterMode: 'include' | 'exclude'
 	chainCategoryFilterMode: 'include' | 'exclude'
-	chainCategories: string[]
+	chainCategories: Array<string>
 }
 
 export const getProtocolChainBreakdownData = async ({
@@ -188,7 +188,7 @@ export const getProtocolChainBreakdownData = async ({
 	const isProtocolAll = !protocol || protocol.toLowerCase() === 'all'
 
 	if (metric !== 'tvl') {
-		throw new Error('Unsupported ProtocolOverview by-chain metric: ' + metric)
+		throw new Error(`Unsupported ProtocolOverview by-chain metric: ${metric}`)
 	}
 
 	if (isProtocolAll) {

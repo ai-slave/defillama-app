@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ApyTriple, ApyWindows, EarnAttributes, EnrichedEarnRow } from '../types'
 
 // getEarnPage pulls its rows from getEnrichedEarn; mock it so the test controls the dataset.
-const getEnrichedEarn = vi.fn<() => Promise<EnrichedEarnRow[]>>()
+const getEnrichedEarn = vi.fn<() => Promise<Array<EnrichedEarnRow>>>()
 vi.mock('../enrich.server', () => ({ getEnrichedEarn: () => getEnrichedEarn() }))
 vi.mock('../snapshot', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../snapshot')>()),
@@ -49,7 +49,7 @@ function row(id: string, apyTotal: number | null, overrides: Partial<EnrichedEar
 		chain: 'Ethereum',
 		underlying_tokens: [],
 		reward_tokens: [],
-		tvl_usd: 1_000,
+		tvl_usd: 1000,
 		apy: apyOf(apyTotal),
 		intrinsic: null,
 		stability_30d: { base: null, base_reward: null, base_intrinsic: null, base_reward_intrinsic: null },
@@ -75,7 +75,7 @@ describe('getEarnPage medianApy', () => {
 		getEnrichedEarn.mockReset()
 	})
 
-	it('is the median of the FULL filtered set, not the returned page', async () => {
+	test('is the median of the FULL filtered set, not the returned page', async () => {
 		getEnrichedEarn.mockResolvedValue([row('a', 1), row('b', 2), row('c', 3), row('d', 4), row('e', 5)])
 
 		const result = await getEarnPage({ pageSize: '2' })
@@ -83,7 +83,7 @@ describe('getEarnPage medianApy', () => {
 		expect(result.medianApy).toBe(3)
 	})
 
-	it('follows the active filters', async () => {
+	test('follows the active filters', async () => {
 		getEnrichedEarn.mockResolvedValue([
 			row('eth-1', 1),
 			row('eth-2', 2),
@@ -97,7 +97,7 @@ describe('getEarnPage medianApy', () => {
 		expect(result.medianApy).toBe(20)
 	})
 
-	it('averages the middle pair for an even count and skips null APYs', async () => {
+	test('averages the middle pair for an even count and skips null APYs', async () => {
 		getEnrichedEarn.mockResolvedValue([row('a', 1), row('b', 3), row('c', 6), row('d', 10), row('null', null)])
 
 		const result = await getEarnPage({ pageSize: 'all' })
@@ -105,7 +105,7 @@ describe('getEarnPage medianApy', () => {
 		expect(result.medianApy).toBe(4.5)
 	})
 
-	it('is null when no filtered row has an APY', async () => {
+	test('is null when no filtered row has an APY', async () => {
 		getEnrichedEarn.mockResolvedValue([row('a', null)])
 
 		const result = await getEarnPage({ pageSize: 'all' })

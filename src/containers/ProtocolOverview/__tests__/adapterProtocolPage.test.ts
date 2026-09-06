@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 import { getLinkedAdapterProtocolVersionNames, getLinkedAdapterProtocolVersions } from '../adapterProtocolPage'
 
@@ -12,7 +12,7 @@ const protocolMetadata: MetadataCache['protocolMetadata'] = {
 }
 
 describe('adapter protocol version discovery', () => {
-	it('discovers linked children once in metadata order and derives finite metric groups', () => {
+	test('discovers linked children once in metadata order and derives finite metric groups', () => {
 		const versions = getLinkedAdapterProtocolVersions({
 			isParentProtocol: true,
 			linkedProtocols: ['Swap', 'Swap V4', 'Swap V3', 'Swap V2', 'Swap V4'],
@@ -24,7 +24,7 @@ describe('adapter protocol version discovery', () => {
 		expect(getLinkedAdapterProtocolVersionNames({ versions, metric: 'revenue' })).toEqual(['Swap V2'])
 	})
 
-	it('keeps notional-only children out of a primary DEX version group', () => {
+	test('keeps notional-only children out of a primary DEX version group', () => {
 		const versions = getLinkedAdapterProtocolVersions({
 			isParentProtocol: true,
 			linkedProtocols: ['Swap', 'Swap V2', 'Swap Notional'],
@@ -34,7 +34,7 @@ describe('adapter protocol version discovery', () => {
 		expect(getLinkedAdapterProtocolVersionNames({ versions, metric: 'dexs' })).toEqual([])
 	})
 
-	it('does not manufacture versions for a child protocol or missing linked data', () => {
+	test('does not manufacture versions for a child protocol or missing linked data', () => {
 		expect(
 			getLinkedAdapterProtocolVersions({
 				isParentProtocol: false,

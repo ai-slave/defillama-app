@@ -50,7 +50,7 @@ function hasChainAssetTableValue(value: number | undefined): value is number {
 
 const optionsKey = 'chains-overview-table-columns'
 
-const setColumnOptions = (newOptions: string[]) => {
+const setColumnOptions = (newOptions: Array<string>) => {
 	const ops = Object.fromEntries(columnOptions.map((col) => [col.key, newOptions.includes(col.key)]))
 	setStorageItem(optionsKey, JSON.stringify(ops))
 }
@@ -87,7 +87,7 @@ export function ChainsByCategoryTable({
 
 	const instance = useReactTable({
 		data,
-		columns: columns,
+		columns,
 		state: {
 			sorting,
 			expanded,
@@ -154,7 +154,7 @@ export function ChainsByCategoryTable({
 								selectedValues={selectedAggregateTypes}
 								setSelectedValues={setAggrOptions}
 								nestedMenu={false}
-								label={'Group Chains'}
+								label="Group Chains"
 								labelType="smol"
 								variant="filter-responsive"
 								size="md"
@@ -165,7 +165,7 @@ export function ChainsByCategoryTable({
 							selectedValues={selectedColumns}
 							setSelectedValues={setColumnOptions}
 							nestedMenu={false}
-							label={'Columns'}
+							label="Columns"
 							labelType="smol"
 							variant="filter-responsive"
 							size="md"

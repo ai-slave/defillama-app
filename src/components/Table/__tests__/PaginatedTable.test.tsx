@@ -1,7 +1,7 @@
 import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table'
 import { cloneElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { PaginatedTable } from '../PaginatedTable'
 
 vi.mock('~/ui/Icon', () => ({
@@ -72,14 +72,14 @@ function TestTable({
 }
 
 describe('PaginatedTable', () => {
-	it('hides pagination controls when there are ten or fewer rows', () => {
+	test('hides pagination controls when there are ten or fewer rows', () => {
 		const html = renderToStaticMarkup(<TestTable rowCount={10} />)
 
 		expect(html).not.toContain('Page 1 of')
 		expect(html).not.toContain('Rows per page')
 	})
 
-	it('keeps configured rows-per-page options available for paginated tables', () => {
+	test('keeps configured rows-per-page options available for paginated tables', () => {
 		const html = renderToStaticMarkup(<TestTable rowCount={11} />)
 
 		expect(html).toContain('Page 1 of 2')
@@ -87,7 +87,7 @@ describe('PaginatedTable', () => {
 		expect(html).toContain('<option value="50">50</option>')
 	})
 
-	it('applies optional footer styling only when pagination is rendered', () => {
+	test('applies optional footer styling only when pagination is rendered', () => {
 		const paginatedHtml = renderToStaticMarkup(<TestTable rowCount={11} paginationClassName="pagination-panel" />)
 		const shortTableHtml = renderToStaticMarkup(<TestTable rowCount={10} paginationClassName="pagination-panel" />)
 
@@ -95,7 +95,7 @@ describe('PaginatedTable', () => {
 		expect(shortTableHtml).not.toContain('pagination-panel')
 	})
 
-	it('renders the sticky header mirror only when explicitly enabled', () => {
+	test('renders the sticky header mirror only when explicitly enabled', () => {
 		const defaultHtml = renderToStaticMarkup(<TestTable rowCount={11} />)
 		const stickyHtml = renderToStaticMarkup(<TestTable rowCount={11} stickyHeader />)
 
@@ -104,7 +104,7 @@ describe('PaginatedTable', () => {
 		expect(stickyHtml).toContain('translateX(var(--paginated-header-scroll-left, 0px))')
 	})
 
-	it('keeps one interactive control set on the presentational sticky mirror', () => {
+	test('keeps one interactive control set on the presentational sticky mirror', () => {
 		const html = renderToStaticMarkup(<TestTable rowCount={1} stickyHeader />)
 
 		expect(html).toContain('data-sticky-header-mirror="true"')
@@ -114,21 +114,21 @@ describe('PaginatedTable', () => {
 		expect(html).not.toContain('<thead aria-hidden="true"')
 	})
 
-	it('shows rows-per-page when at least two valid options remain', () => {
+	test('shows rows-per-page when at least two valid options remain', () => {
 		const html = renderToStaticMarkup(<TestTable rowCount={20} />)
 
 		expect(html).toContain('Page 1 of 2')
 		expect(html).toContain('Rows per page')
 	})
 
-	it('keeps the current page size available when it is not in configured options', () => {
+	test('keeps the current page size available when it is not in configured options', () => {
 		const html = renderToStaticMarkup(<TestTable rowCount={20} initialPageSize={15} />)
 
 		expect(html).toContain('Rows per page')
 		expect(html).toContain('<option value="15" selected="">15</option>')
 	})
 
-	it('marks sortable headers as disabled when interactions are disabled', () => {
+	test('marks sortable headers as disabled when interactions are disabled', () => {
 		const enabledHtml = renderToStaticMarkup(<TestTable rowCount={20} />)
 		const disabledHtml = renderToStaticMarkup(<TestTable rowCount={20} interactionDisabled />)
 

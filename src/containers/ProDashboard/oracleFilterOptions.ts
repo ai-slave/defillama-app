@@ -7,9 +7,9 @@ export interface OracleFilterOption {
 }
 
 export function buildOracleFilterOptions(
-	protocols: readonly Protocol[],
+	protocols: ReadonlyArray<Protocol>,
 	oracleNamesByProtocol: OracleNamesByProtocol
-): OracleFilterOption[] {
+): Array<OracleFilterOption> {
 	const childOraclesByParent = new Map<string, Set<string>>()
 	for (const protocol of protocols) {
 		if (!protocol.parentProtocol) continue

@@ -23,7 +23,7 @@ export function getUtcStartOfDay(timestampMs: number): number {
 }
 
 export function findTimeSeriesPointNear<T>(
-	series: readonly T[] | null | undefined,
+	series: ReadonlyArray<T> | null | undefined,
 	targetTimestampMs: number,
 	getTimestamp: (point: T) => TimestampValue,
 	toleranceMs: number = DEFAULT_TIME_SERIES_TOLERANCE_MS
@@ -50,7 +50,7 @@ export function findTimeSeriesPointNear<T>(
 }
 
 export function getFreshTimeSeriesCurrentPoint<T>(
-	series: readonly T[] | null | undefined,
+	series: ReadonlyArray<T> | null | undefined,
 	getTimestamp: (point: T) => TimestampValue,
 	options: TimeSeriesLookupOptions = {}
 ): T | null {
@@ -76,7 +76,7 @@ export function getFreshTimeSeriesCurrentPoint<T>(
 }
 
 export function getTimeSeriesPeriodPair<T>(
-	series: readonly T[] | null | undefined,
+	series: ReadonlyArray<T> | null | undefined,
 	daysBefore: number,
 	getTimestamp: (point: T) => TimestampValue,
 	options: TimeSeriesLookupOptions = {}
@@ -99,18 +99,18 @@ export function getTimeSeriesPeriodPair<T>(
 }
 
 export function getCompleteTimeSeriesDailyWindow<T>(
-	series: readonly T[] | null | undefined,
+	series: ReadonlyArray<T> | null | undefined,
 	days: number,
 	getTimestamp: (point: T) => TimestampValue,
 	options: TimeSeriesLookupOptions = {}
-): T[] | null {
+): Array<T> | null {
 	if (!Number.isInteger(days) || days <= 0) return null
 
 	const current = getFreshTimeSeriesCurrentPoint(series, getTimestamp, options)
 	if (!current) return null
 
 	const currentTimestamp = toUnixMsTimestamp(getTimestamp(current))
-	const points: T[] = []
+	const points: Array<T> = []
 	for (let day = 0; day < days; day++) {
 		const point = findTimeSeriesPointNear(series, currentTimestamp - day * DAY_MS, getTimestamp, options.toleranceMs)
 		if (!point) return null

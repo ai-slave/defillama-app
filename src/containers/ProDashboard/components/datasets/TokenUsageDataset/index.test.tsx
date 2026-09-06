@@ -2,11 +2,11 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 
 const mocks = vi.hoisted(() => ({
-	data: [] as ProtocolTokenUsageData[],
+	data: [] as Array<ProtocolTokenUsageData>,
 	downloadCSV: vi.fn(),
 	refetch: vi.fn()
 }))
@@ -48,7 +48,7 @@ describe('TokenUsageDataset CSV export', () => {
 		mocks.downloadCSV.mockReset()
 		mocks.refetch.mockReset()
 		mocks.data = [
-			{ name: 'Excluded', category: 'Other', amountUsd: 1_000, tokens: { usdc: 1_000 } },
+			{ name: 'Excluded', category: 'Other', amountUsd: 1000, tokens: { usdc: 1000 } },
 			...Array.from({ length: 12 }, (_, index) => {
 				const amountUsd = index + 1
 				return {
@@ -66,7 +66,7 @@ describe('TokenUsageDataset CSV export', () => {
 		container.remove()
 	})
 
-	it('exports every filtered row in sorted order before pagination', async () => {
+	test('exports every filtered row in sorted order before pagination', async () => {
 		await act(async () =>
 			root.render(
 				<TokenUsageDataset

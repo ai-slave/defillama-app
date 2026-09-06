@@ -165,7 +165,7 @@ export function SegmentedToggle<T extends string>({
 }: {
 	value: T
 	onChange: (next: T) => void
-	options: { value: T; label: string }[]
+	options: Array<{ value: T; label: string }>
 	disabled?: boolean
 }) {
 	return (

@@ -27,7 +27,7 @@ const OptionsPremiumVolumeByChain = (props: IChainsByAdapterPageData) => {
 		<Layout
 			title="Options Premium Volume by Chain - DefiLlama"
 			description="Compare options premium volume by chain, the value paid buying and selling options on DeFi exchanges."
-			canonicalUrl={`/options/premium-volume/chains`}
+			canonicalUrl="/options/premium-volume/chains"
 			pageName={pageName}
 		>
 			<ChainsByAdapter {...props} type={type} />

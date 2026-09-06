@@ -5,7 +5,7 @@ import Financials from './Financials'
 const PressReleases = lazy(() => import('./PressReleases'))
 const DistributionRewards = lazy(() => import('./DistributionRewards'))
 
-export const tabs: DashboardTabConfig[] = [
+export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'financials', label: 'Financials', component: Financials },
 	{ id: 'dashboard', label: 'Overview' },
 	{ id: 'distribution-rewards', label: 'Distribution Rewards', component: DistributionRewards },

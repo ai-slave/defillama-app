@@ -16,7 +16,7 @@ interface EndTrialModalProps {
 	title?: string
 	description?: string
 	benefitsTitle?: string
-	benefits?: string[]
+	benefits?: Array<string>
 	confirmLabel?: string
 	secondaryHref?: string
 	secondaryLabel?: string

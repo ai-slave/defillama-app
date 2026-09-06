@@ -100,7 +100,7 @@ const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: Calend
 
 interface UpcomingEventProps {
 	timestamp: number
-	event: EmissionEvent[]
+	event: Array<EmissionEvent>
 	price: number | null | undefined
 	symbol: string | null | undefined
 	mcap: number | null | undefined
@@ -191,7 +191,7 @@ export const UpcomingEvent = ({
 }: UpcomingEventProps) => {
 	const tokenSymbol = symbol ? symbol.toUpperCase() : ''
 	const { currentUnlockBreakdown, eventSummaries, calendarTokenValue } = useMemo(() => {
-		const breakdown: UnlockBreakdown[] = []
+		const breakdown: Array<UnlockBreakdown> = []
 		let hasCliffUnlock = false
 		let hasCliffBurn = false
 		let hasLinearUnlock = false
@@ -235,7 +235,7 @@ export const UpcomingEvent = ({
 			const usdValue = price != null && price > 0 ? amount * price : null
 			const percentage = maxSupply != null && maxSupply > 0 ? (amount / maxSupply) * 100 : null
 			const percentageFloat = usdValue !== null && mcap != null && mcap > 0 ? (usdValue / mcap) * 100 : null
-			const endTime = unlockType === 'linear' ? eventTimestamp + emissionEvent.rateDurationDays * 86400 : null
+			const endTime = unlockType === 'linear' ? eventTimestamp + emissionEvent.rateDurationDays * 86_400 : null
 
 			breakdown.push({
 				name: eventName,
@@ -251,7 +251,7 @@ export const UpcomingEvent = ({
 			})
 		}
 
-		const eventSummaries: EventSummary[] = []
+		const eventSummaries: Array<EventSummary> = []
 		if (hasCliffUnlock) {
 			const usdValue = price != null && price > 0 ? cliffUnlockAmount * price : null
 			eventSummaries.push({
@@ -326,10 +326,10 @@ export const UpcomingEvent = ({
 	const [nowMs, setNowMs] = useState(() => Date.now())
 	const nowSec = nowMs / 1e3
 	const timeLeft = Math.max(0, timestamp - nowMs / 1e3)
-	const days = Math.floor(timeLeft / 86400)
-	const hours = Math.floor((timeLeft - 86400 * days) / 3600)
-	const minutes = Math.floor((timeLeft - 86400 * days - 3600 * hours) / 60)
-	const seconds = Math.floor(timeLeft - 86400 * days - 3600 * hours - minutes * 60)
+	const days = Math.floor(timeLeft / 86_400)
+	const hours = Math.floor((timeLeft - 86_400 * days) / 3600)
+	const minutes = Math.floor((timeLeft - 86_400 * days - 3600 * hours) / 60)
+	const seconds = Math.floor(timeLeft - 86_400 * days - 3600 * hours - minutes * 60)
 
 	const onCountdownTick = useEffectEvent(() => {
 		setNowMs(Date.now())
@@ -555,7 +555,7 @@ export const UpcomingEvent = ({
 					unmountOnHide
 					hideOnInteractOutside
 					overflowPadding={16}
-					portal={true}
+					portal
 				>
 					<span className="flex items-center justify-between gap-4">
 						<span className="flex items-center gap-2 font-medium">

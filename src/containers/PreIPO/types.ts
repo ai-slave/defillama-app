@@ -2,19 +2,19 @@ import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/co
 import type { PreIpoCompanyListItem, PreIpoCompanySummary, PreIpoIntegrations, PreIpoRaise } from './api.types'
 
 export type PreIpoOverviewPageProps = {
-	companies: PreIpoCompanyListItem[]
+	companies: Array<PreIpoCompanyListItem>
 	updatedAt: string
 }
 
 export type PreIpoValuationChart = {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	xAxisMaxTimestamp: number
 }
 
 export type PreIpoCompanyPageProps = {
 	summary: PreIpoCompanySummary
-	raises: PreIpoRaise[]
+	raises: Array<PreIpoRaise>
 	integrations: PreIpoIntegrations
 	chart: PreIpoValuationChart | null
 	valuationDataUpdatedAt: string

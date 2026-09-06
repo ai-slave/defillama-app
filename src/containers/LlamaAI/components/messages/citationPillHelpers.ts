@@ -153,10 +153,10 @@ export function parseRefParts(str: unknown): { num: number; halfStep: number } |
 	const mult = suffix === '%' ? 1 : (unitMultiplier ?? 1)
 	const parsed = parseFloat(numericText)
 	const signed = m[1] === '-' && parsed > 0 ? -parsed : parsed
-	const num = signed * Math.pow(10, exp) * mult
+	const num = signed * 10 ** exp * mult
 	if (!Number.isFinite(num)) return null
 	const decimals = (numericText.split('.')[1] || '').length
-	const halfStep = (Math.pow(10, -decimals) * Math.pow(10, exp) * mult) / 2
+	const halfStep = (10 ** -decimals * 10 ** exp * mult) / 2
 	return { num, halfStep }
 }
 
@@ -199,7 +199,7 @@ function getCachedParsedCell(rows: Array<Record<string, unknown>>, row: Record<s
 
 export function findCitedCell(
 	rows: Array<Record<string, unknown>> | undefined,
-	columns: string[] | undefined,
+	columns: Array<string> | undefined,
 	ref: CitedCellRef
 ): CitedCell | null {
 	if (!rows || rows.length === 0) return null
@@ -288,7 +288,7 @@ export function formatDateValue(v: unknown): string | null {
 	return null
 }
 
-export function citedRowDate(row: Record<string, unknown> | undefined, cols: string[]): string | null {
+export function citedRowDate(row: Record<string, unknown> | undefined, cols: Array<string>): string | null {
 	if (!row) return null
 	for (const c of DATE_COLS) {
 		if (cols.includes(c) || c in row) {
@@ -414,7 +414,7 @@ function parseMetricField(field: string): ParsedMetric {
 	}
 	let window: string | null = null
 	for (const tok of WINDOW_TOKENS) {
-		if (f.endsWith('_' + tok)) {
+		if (f.endsWith(`_${tok}`)) {
 			window = tok
 			f = f.slice(0, -(tok.length + 1))
 			break
@@ -568,11 +568,10 @@ export function sanitizeExcerpt(text: unknown, maxLength = 200): string {
 	}
 	out = out.replace(BARE_URL_RE, '').trim()
 	if (out.length > maxLength) {
-		out =
-			out
-				.slice(0, maxLength)
-				.replace(/\s+\S*$/, '')
-				.trim() + '…'
+		out = `${out
+			.slice(0, maxLength)
+			.replace(/\s+\S*$/, '')
+			.trim()}…`
 	}
 	return out
 }
@@ -611,7 +610,7 @@ export interface ToolArgRow {
 	value: string
 }
 
-export function toolArgRows(args: Record<string, unknown> | undefined): ToolArgRow[] {
+export function toolArgRows(args: Record<string, unknown> | undefined): Array<ToolArgRow> {
 	if (!args || typeof args !== 'object') return []
 	return Object.entries(args)
 		.filter(([, v]) => v != null && v !== '')

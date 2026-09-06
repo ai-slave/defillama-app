@@ -40,7 +40,7 @@ function isRecord(value: unknown): value is JsonRecord {
 	return typeof value === 'object' && value != null && !Array.isArray(value)
 }
 
-function recordArray(value: unknown, field: string): JsonRecord[] {
+function recordArray(value: unknown, field: string): Array<JsonRecord> {
 	if (!isRecord(value) || !Array.isArray(value[field])) return []
 	return value[field].filter(isRecord)
 }
@@ -69,7 +69,7 @@ function groupProtocolOptions(
 	json: unknown,
 	sortValue: (protocol: JsonRecord) => number,
 	labelFn: (protocol: JsonRecord) => string
-): ProtocolOption[] {
+): Array<ProtocolOption> {
 	const protocols = recordArray(json, 'protocols')
 	const parentProtocols = recordArray(json, 'parentProtocols')
 
@@ -77,7 +77,7 @@ function groupProtocolOptions(
 
 	// Aggregate child sort values per parent
 	const parentTotals = new Map<string, number>()
-	const childrenByParentId = new Map<string, JsonRecord[]>()
+	const childrenByParentId = new Map<string, Array<JsonRecord>>()
 
 	for (const protocol of filtered) {
 		const parentId = stringValue(protocol.parentProtocol)
@@ -91,7 +91,7 @@ function groupProtocolOptions(
 
 	// Build synthetic parent entries from the parentProtocols array
 	const matchedParentIds = new Set<string>()
-	const syntheticParents: JsonRecord[] = []
+	const syntheticParents: Array<JsonRecord> = []
 	for (const parent of parentProtocols) {
 		const parentId = stringValue(parent.id)
 		if (parentId == null || !childrenByParentId.has(parentId)) continue
@@ -106,8 +106,8 @@ function groupProtocolOptions(
 	}
 
 	// Children whose parent isn't in parentProtocols (e.g. overview APIs) — treat as top-level
-	const soloProtocols: JsonRecord[] = []
-	const orphanedChildren: JsonRecord[] = []
+	const soloProtocols: Array<JsonRecord> = []
+	const orphanedChildren: Array<JsonRecord> = []
 	for (const protocol of filtered) {
 		const parentId = stringValue(protocol.parentProtocol)
 		if (!parentId) soloProtocols.push(protocol)
@@ -122,7 +122,7 @@ function groupProtocolOptions(
 			(typeof a._syntheticTvl === 'number' ? a._syntheticTvl : sortValue(a))
 	)
 
-	const options: ProtocolOption[] = []
+	const options: Array<ProtocolOption> = []
 	for (const parent of parentsOrSolo) {
 		const name = stringValue(parent.name)
 		if (!name) continue
@@ -151,14 +151,14 @@ function groupProtocolOptions(
 	return options
 }
 
-const extractOverviewProtocolOptions = (json: unknown): ProtocolOption[] =>
+const extractOverviewProtocolOptions = (json: unknown): Array<ProtocolOption> =>
 	groupProtocolOptions(
 		json,
 		(p) => Number(p.total24h) || 0,
 		(p) => stringValue(p.displayName) ?? stringValue(p.name) ?? ''
 	)
 
-const extractLiteProtocolOptions = (json: unknown): ProtocolOption[] =>
+const extractLiteProtocolOptions = (json: unknown): Array<ProtocolOption> =>
 	groupProtocolOptions(
 		json,
 		(p) => Number(p.tvlUsd ?? p.tvl) || 0,
@@ -176,7 +176,7 @@ function sumBorrowedTvl(chainTvls: unknown): number {
 	return total
 }
 
-const extractActiveLoansProtocolOptions = (json: unknown): ProtocolOption[] => {
+const extractActiveLoansProtocolOptions = (json: unknown): Array<ProtocolOption> => {
 	const protocols = recordArray(json, 'protocols')
 	const withBorrowed = protocols.filter((protocol) => sumBorrowedTvl(protocol.chainTvls) > 0)
 	const parentIdsWithBorrowed = new Set<string>()
@@ -231,7 +231,7 @@ const extractLiteChartRows = (json: unknown): Array<Record<string, unknown>> => 
 		return rows
 	}
 	if (isRecord(json)) {
-		const metrics: string[] = []
+		const metrics: Array<string> = []
 		for (const key in json) {
 			if (json[key] && typeof json[key] === 'object') metrics.push(key)
 		}
@@ -431,7 +431,7 @@ function makeDimensionCategoryChart(opts: {
 	}
 }
 
-export const chartDatasets: ChartDatasetDefinition[] = [
+export const chartDatasets: Array<ChartDatasetDefinition> = [
 	{
 		slug: 'rwa-category-chart',
 		name: 'RWA by Category',
@@ -1046,7 +1046,7 @@ export const chartDatasets: ChartDatasetDefinition[] = [
 		paramLabel: 'Pool',
 		optionsUrl: `${YIELDS_V2_SERVER_URL}/v2/earn`,
 		extractOptions: (json) => {
-			const pools = (json as { data?: EarnRow[] }).data ?? []
+			const pools = (json as { data?: Array<EarnRow> }).data ?? []
 			return pools
 				.filter((pool) => pool.display.label)
 				.sort((a, b) => (b.tvl_usd ?? 0) - (a.tvl_usd ?? 0))
@@ -1090,7 +1090,7 @@ export type ChartOptionsMap = Record<
 >
 
 export async function fetchAllChartOptions(): Promise<ChartOptionsMap> {
-	const urlToDatasets = new Map<string, ChartDatasetDefinition[]>()
+	const urlToDatasets = new Map<string, Array<ChartDatasetDefinition>>()
 	for (const dataset of chartDatasets) {
 		const existing = urlToDatasets.get(dataset.optionsUrl) ?? []
 		existing.push(dataset)

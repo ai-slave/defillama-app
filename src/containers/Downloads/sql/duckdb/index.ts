@@ -9,10 +9,10 @@ let dbPromise: Promise<DuckDBHandle> | null = null
 
 export function getDuckDB(): Promise<DuckDBHandle> {
 	if (!dbPromise) {
-		dbPromise = loadDuckDB().catch((err) => {
+		dbPromise = loadDuckDB().catch((error) => {
 			// Reset on failure so retrying the switch tries again fresh.
 			dbPromise = null
-			throw err
+			throw error
 		})
 	}
 	return dbPromise

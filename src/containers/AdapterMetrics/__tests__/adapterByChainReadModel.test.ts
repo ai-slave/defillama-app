@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildAdapterByChainReadModel } from '../adapterByChainReadModel'
 import type { IAdapterChainMetrics } from '../api.types'
 import { ADAPTER_TYPES } from '../constants'
@@ -14,9 +14,9 @@ function protocol(overrides: Partial<AdapterProtocol> = {}): AdapterProtocol {
 		total14dto7d: 60,
 		total60dto30d: 250,
 		total30d: 300,
-		total1y: 3_600,
-		annualized1y: 3_600,
-		totalAllTime: 5_000,
+		total1y: 3600,
+		annualized1y: 3600,
+		totalAllTime: 5000,
 		average1y: 10,
 		monthlyAverage1y: 300,
 		change_1d: 100,
@@ -47,7 +47,7 @@ function protocol(overrides: Partial<AdapterProtocol> = {}): AdapterProtocol {
 	}
 }
 
-function overview(protocols: AdapterProtocol[]): IAdapterChainOverview {
+function overview(protocols: Array<AdapterProtocol>): IAdapterChainOverview {
 	return {
 		breakdown24h: null,
 		breakdown30d: null,
@@ -60,8 +60,8 @@ function overview(protocols: AdapterProtocol[]): IAdapterChainOverview {
 		total14dto7d: 60,
 		total60dto30d: 250,
 		total30d: 300,
-		total1y: 3_600,
-		annualized1y: 3_600,
+		total1y: 3600,
+		annualized1y: 3600,
 		change_1d: 100,
 		change_7d: 20,
 		change_1m: 10,
@@ -69,7 +69,7 @@ function overview(protocols: AdapterProtocol[]): IAdapterChainOverview {
 		change_30dover30d: 20,
 		total7DaysAgo: 8,
 		total30DaysAgo: 7,
-		totalAllTime: 5_000,
+		totalAllTime: 5000,
 		protocols,
 		totalDataChart: []
 	}
@@ -83,7 +83,7 @@ function buildReadModel({
 	normalizedVolumeData = null,
 	adapterType = ADAPTER_TYPES.DEXS
 }: {
-	protocols: AdapterProtocol[]
+	protocols: Array<AdapterProtocol>
 	protocolsData?: Parameters<typeof buildAdapterByChainReadModel>[0]['protocolsData']
 	openInterestData?: IAdapterChainOverview | null
 	activeLiquidityData?: IAdapterChainOverview | null
@@ -104,7 +104,7 @@ function buildReadModel({
 }
 
 describe('buildAdapterByChainReadModel', () => {
-	it('returns an empty read model for an empty protocol response', () => {
+	test('returns an empty read model for an empty protocol response', () => {
 		expect(buildReadModel({ protocols: [] })).toEqual({
 			protocols: [],
 			categories: [],
@@ -113,7 +113,7 @@ describe('buildAdapterByChainReadModel', () => {
 		})
 	})
 
-	it('omits optional presentation fields when their values are absent', () => {
+	test('omits optional presentation fields when their values are absent', () => {
 		const [result] = buildReadModel({ protocols: [protocol()] }).protocols
 
 		expect(result).toBeDefined()
@@ -126,7 +126,7 @@ describe('buildAdapterByChainReadModel', () => {
 		expect(result).not.toHaveProperty('normalizedVolume24h')
 	})
 
-	it('keeps input order when protocol totals are tied', () => {
+	test('keeps input order when protocol totals are tied', () => {
 		const result = buildReadModel({
 			protocols: [
 				protocol({ name: 'Protocol A', displayName: 'Protocol A', slug: 'protocol-a' }),
@@ -137,7 +137,7 @@ describe('buildAdapterByChainReadModel', () => {
 		expect(result.protocols.map(({ name }) => name)).toEqual(['Protocol A', 'Protocol B'])
 	})
 
-	it('preserves nullable activity and API changes in a successful adapter listing', () => {
+	test('preserves nullable activity and API changes in a successful adapter listing', () => {
 		const result = buildReadModel({
 			protocols: [
 				protocol({
@@ -166,7 +166,7 @@ describe('buildAdapterByChainReadModel', () => {
 		})
 	})
 
-	it('keeps a parent annualized total null when a contributing child is missing it', () => {
+	test('keeps a parent annualized total null when a contributing child is missing it', () => {
 		const result = buildReadModel({
 			protocols: [
 				protocol({
@@ -191,7 +191,7 @@ describe('buildAdapterByChainReadModel', () => {
 		expect(result.protocols[0]).toMatchObject({ name: 'Parent', total24h: 20, annualized1y: null })
 	})
 
-	it('does not let an inactive normalized child hide an active parent annualized total', () => {
+	test('does not let an inactive normalized child hide an active parent annualized total', () => {
 		const result = buildReadModel({
 			protocols: [
 				protocol({
@@ -222,10 +222,10 @@ describe('buildAdapterByChainReadModel', () => {
 			]
 		})
 
-		expect(result.protocols[0]).toMatchObject({ name: 'Parent', total24h: 10, annualized1y: 3_600 })
+		expect(result.protocols[0]).toMatchObject({ name: 'Parent', total24h: 10, annualized1y: 3600 })
 	})
 
-	it('sums parent annualized data when every contributing child provides it', () => {
+	test('sums parent annualized data when every contributing child provides it', () => {
 		const result = buildReadModel({
 			protocols: [
 				protocol({
@@ -234,7 +234,7 @@ describe('buildAdapterByChainReadModel', () => {
 					slug: 'child-a',
 					parentProtocol: 'Parent',
 					linkedProtocols: ['Parent', 'Child A'],
-					annualized1y: 3_600
+					annualized1y: 3600
 				}),
 				protocol({
 					name: 'Child B',
@@ -242,15 +242,15 @@ describe('buildAdapterByChainReadModel', () => {
 					slug: 'child-b',
 					parentProtocol: 'Parent',
 					linkedProtocols: ['Parent', 'Child B'],
-					annualized1y: 2_400
+					annualized1y: 2400
 				})
 			]
 		})
 
-		expect(result.protocols[0]).toMatchObject({ name: 'Parent', annualized1y: 6_000 })
+		expect(result.protocols[0]).toMatchObject({ name: 'Parent', annualized1y: 6000 })
 	})
 
-	it('renames a single linked child without inventing a child collection', () => {
+	test('renames a single linked child without inventing a child collection', () => {
 		const result = buildReadModel({
 			protocols: [
 				protocol({
@@ -272,7 +272,7 @@ describe('buildAdapterByChainReadModel', () => {
 		expect(result.protocols[0]).not.toHaveProperty('childProtocols')
 	})
 
-	it('uses canonical supplemental totals while retaining protocol-row metrics', () => {
+	test('uses canonical supplemental totals while retaining protocol-row metrics', () => {
 		const protocols = [
 			protocol({ name: 'Protocol A', displayName: 'Protocol A', slug: 'protocol-a' }),
 			protocol({ name: 'Protocol B', displayName: 'Protocol B', slug: 'protocol-b' })
@@ -302,7 +302,7 @@ describe('buildAdapterByChainReadModel', () => {
 		})
 	})
 
-	it('does not turn a null canonical supplemental total into a partial row sum', () => {
+	test('does not turn a null canonical supplemental total into a partial row sum', () => {
 		const openInterestData = {
 			...overview([protocol({ total24h: 10 })]),
 			total24h: null
@@ -311,7 +311,7 @@ describe('buildAdapterByChainReadModel', () => {
 		expect(buildReadModel({ protocols: [protocol()], openInterestData }).openInterest).toBeNull()
 	})
 
-	it('retains zero-valued optional supplemental metrics', () => {
+	test('retains zero-valued optional supplemental metrics', () => {
 		const protocols = [protocol()]
 		const zeroMetrics = { ...overview([protocol({ total24h: 0 })]), total24h: 0 }
 		const result = buildReadModel({
@@ -325,7 +325,7 @@ describe('buildAdapterByChainReadModel', () => {
 		expect(result.protocols[0]).toMatchObject({ openInterest: 0, activeLiquidity: 0, normalizedVolume24h: 0 })
 	})
 
-	it('caps perp normalized volume at reported volume while preserving lower values', () => {
+	test('caps perp normalized volume at reported volume while preserving lower values', () => {
 		const protocols = [
 			protocol({ name: 'Higher', displayName: 'Higher', slug: 'higher', total24h: 100 }),
 			protocol({ name: 'Lower', displayName: 'Lower', slug: 'lower', total24h: 100 }),
@@ -348,7 +348,7 @@ describe('buildAdapterByChainReadModel', () => {
 		expect(result.protocols.find(({ name }) => name === 'Unavailable')).not.toHaveProperty('normalizedVolume24h')
 	})
 
-	it('sums capped normalized volume for parent perp rows', () => {
+	test('sums capped normalized volume for parent perp rows', () => {
 		const protocols = [
 			protocol({
 				name: 'Child A',

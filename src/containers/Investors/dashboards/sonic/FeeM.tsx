@@ -85,7 +85,7 @@ const TREEMAP_COLORS = [
 	'#26de81'
 ]
 
-function FeeMTreemap({ leaderboard }: { leaderboard: FeeMLeaderboardEntry[] }) {
+function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry> }) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const [isDark] = useDarkModeManager()

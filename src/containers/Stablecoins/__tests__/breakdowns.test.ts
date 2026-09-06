@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { StablecoinChartPoint } from '~/containers/Stablecoins/api.types'
 import { resultBody } from '~/server/api/__tests__/resultBody'
 
@@ -27,7 +27,7 @@ const point = (date: number, value: number): StablecoinChartPoint => ({
 	totalCirculatingUSD: { peggedUSD: value }
 })
 
-function mockAggregate(value = 1_000) {
+function mockAggregate(value = 1000) {
 	mocks.fetchStablecoinChartAllApi.mockResolvedValue({
 		aggregated: [point(86_400, value), point(172_800, value)],
 		breakdown: {},
@@ -57,7 +57,7 @@ async function fetchBreakdown(query: Record<string, string>) {
 }
 
 describe('stablecoin breakdown routes', () => {
-	it('starts the aggregate chart fetch before waiting on dominance data', async () => {
+	test('starts the aggregate chart fetch before waiting on dominance data', async () => {
 		let resolveDominance: (value: unknown) => void = () => {}
 		mocks.fetchStablecoinDominanceAllApi.mockReturnValue(
 			new Promise((resolve) => {
@@ -96,7 +96,7 @@ describe('stablecoin breakdown routes', () => {
 		})
 	})
 
-	it('filters stablecoin dominance chains by exact display names', async () => {
+	test('filters stablecoin dominance chains by exact display names', async () => {
 		mockAggregate()
 		mockDominance({
 			Gnosis: 40,
@@ -117,7 +117,7 @@ describe('stablecoin breakdown routes', () => {
 		})
 	})
 
-	it('keeps stablecoin chain-id aliases working for saved chart-builder configs', async () => {
+	test('keeps stablecoin chain-id aliases working for saved chart-builder configs', async () => {
 		mockAggregate()
 		mockDominance({
 			Gnosis: 40,
@@ -138,7 +138,7 @@ describe('stablecoin breakdown routes', () => {
 		})
 	})
 
-	it('excludes stablecoin dominance chains by exact display name', async () => {
+	test('excludes stablecoin dominance chains by exact display name', async () => {
 		mockAggregate()
 		mockDominance({
 			Gnosis: 40,
@@ -160,7 +160,7 @@ describe('stablecoin breakdown routes', () => {
 		})
 	})
 
-	it('applies stablecoin dominance category filters with display names', async () => {
+	test('applies stablecoin dominance category filters with display names', async () => {
 		mockAggregate()
 		mockDominance({
 			Gnosis: 40,
@@ -182,7 +182,7 @@ describe('stablecoin breakdown routes', () => {
 		})
 	})
 
-	it('calculates filtered Others from the filtered chains only', async () => {
+	test('calculates filtered Others from the filtered chains only', async () => {
 		mockAggregate()
 		mockDominance({
 			Gnosis: 40,
@@ -216,7 +216,7 @@ describe('stablecoin breakdown routes', () => {
 		})
 	})
 
-	it('keeps the last stablecoin supply snapshot when multiple points share a UTC day', async () => {
+	test('keeps the last stablecoin supply snapshot when multiple points share a UTC day', async () => {
 		mocks.fetchStablecoinChartAllApi.mockResolvedValue({
 			aggregated: [point(86_401, 70), point(86_402, 90)],
 			breakdown: {},

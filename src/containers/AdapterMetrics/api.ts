@@ -10,7 +10,7 @@ import type {
 	IAdapterChart,
 	IAdapterProtocolMetrics
 } from './api.types'
-import { ADAPTER_TYPES, ADAPTER_DATA_TYPES } from './constants'
+import type { ADAPTER_TYPES, ADAPTER_DATA_TYPES } from './constants'
 
 interface AdapterChainMetricsRequest {
 	adapterType: `${ADAPTER_TYPES}`

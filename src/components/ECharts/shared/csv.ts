@@ -3,7 +3,7 @@ import { formatIsoDate } from '~/utils/dateFormat'
 /** Merge named series into one chronological CSV matrix. */
 export function prepareChartCsv(data: Record<string, Array<[string | number, number | null]>>, filename: string) {
 	const rows: Array<Array<string | number | null>> = []
-	const charts: string[] = []
+	const charts: Array<string> = []
 	const valuesByDate = new Map<string, Map<string, number | null>>()
 	for (const [chartName, chartData] of Object.entries(data)) {
 		charts.push(chartName)

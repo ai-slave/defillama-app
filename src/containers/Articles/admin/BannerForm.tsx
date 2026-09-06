@@ -150,8 +150,8 @@ export function BannerForm({ banner }: Props) {
 			if (!banner && saved?.id) {
 				router.push(`/research/admin/banners/${saved.id}`)
 			}
-		} catch (err) {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to save')
+		} catch (error) {
+			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to save')
 		}
 	}
 
@@ -163,8 +163,8 @@ export function BannerForm({ banner }: Props) {
 			revalidateLanding()
 			toast.success('Banner deleted')
 			router.push('/research/admin/banners')
-		} catch (err) {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to delete')
+		} catch (error) {
+			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to delete')
 		}
 	}
 
@@ -736,7 +736,7 @@ function PromoPreview({ banner }: { banner: Banner }) {
 	const disclosure = banner.disclosureUrl ? (
 		<span className="text-xs text-secondary underline">{banner.disclosureText || 'Disclosure'}</span>
 	) : null
-	const slots: { label: string; imageUrl: string | null; widthClass: string; placeholder: string }[] = [
+	const slots: Array<{ label: string; imageUrl: string | null; widthClass: string; placeholder: string }> = [
 		{
 			label: 'Landing (desktop)',
 			imageUrl: banner.showOnLanding ? banner.imageWideUrl : null,

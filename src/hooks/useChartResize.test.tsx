@@ -3,7 +3,7 @@
 import type * as echarts from 'echarts/core'
 import { act, useRef } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useChartResize } from './useChartResize'
 
 type FakeChart = {
@@ -78,7 +78,7 @@ describe('useChartResize', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('uses one listener pair to resize every live chart instance', async () => {
+	test('uses one listener pair to resize every live chart instance', async () => {
 		const addListener = vi.spyOn(window, 'addEventListener')
 		const first = { isDisposed: vi.fn(() => false), resize: vi.fn() }
 		const second = { isDisposed: vi.fn(() => false), resize: vi.fn() }
@@ -101,7 +101,7 @@ describe('useChartResize', () => {
 		expect(second.resize).toHaveBeenCalledTimes(2)
 	})
 
-	it('uses one element observer and resizes only the chart whose container changed', async () => {
+	test('uses one element observer and resizes only the chart whose container changed', async () => {
 		const first = { isDisposed: vi.fn(() => false), resize: vi.fn() }
 		const second = { isDisposed: vi.fn(() => false), resize: vi.fn() }
 		const firstElementResize = vi.fn()
@@ -141,7 +141,7 @@ describe('useChartResize', () => {
 		expect(observerDisconnect).toHaveBeenCalledOnce()
 	})
 
-	it('waits to resize an observed chart until its hidden container becomes visible', async () => {
+	test('waits to resize an observed chart until its hidden container becomes visible', async () => {
 		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
 		const onElementResize = vi.fn()
 		const onElementVisibilityChange = vi.fn()
@@ -176,7 +176,7 @@ describe('useChartResize', () => {
 		expect(onElementVisibilityChange).toHaveBeenLastCalledWith(true)
 	})
 
-	it('globally resizes visible observed charts but skips hidden containers', async () => {
+	test('globally resizes visible observed charts but skips hidden containers', async () => {
 		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
 		await act(async () => root.render(<ChartHarness instance={instance} observeElement />))
 		const element = container.querySelector('div')!
@@ -193,7 +193,7 @@ describe('useChartResize', () => {
 		expect(instance.resize).toHaveBeenCalledTimes(2)
 	})
 
-	it('moves observation to a chart element recreated after an empty render', async () => {
+	test('moves observation to a chart element recreated after an empty render', async () => {
 		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
 		await act(async () => root.render(<ChartHarness instance={instance} observeElement />))
 		const firstElement = container.querySelector('div')!
@@ -216,7 +216,7 @@ describe('useChartResize', () => {
 		expect(instance.resize).toHaveBeenCalledOnce()
 	})
 
-	it('skips disposed instances', async () => {
+	test('skips disposed instances', async () => {
 		const instance = { isDisposed: vi.fn(() => true), resize: vi.fn() }
 		await act(async () => root.render(<ChartHarness instance={instance} />))
 
@@ -225,7 +225,7 @@ describe('useChartResize', () => {
 		expect(instance.resize).not.toHaveBeenCalled()
 	})
 
-	it('removes the shared listener pair after the last chart unregisters', async () => {
+	test('removes the shared listener pair after the last chart unregisters', async () => {
 		const removeListener = vi.spyOn(window, 'removeEventListener')
 		const instance = { isDisposed: vi.fn(() => false), resize: vi.fn() }
 		await act(async () => root.render(<ChartHarness instance={instance} />))

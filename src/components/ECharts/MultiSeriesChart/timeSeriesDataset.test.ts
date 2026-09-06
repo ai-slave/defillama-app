@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	buildColumnarTimeSeriesDataset,
 	buildSparseTimeSeriesDataset,
@@ -9,35 +9,35 @@ import {
 } from './timeSeriesDataset'
 
 describe('timeSeriesDataset', () => {
-	it('merges independently timed sparse series once and sorts shared Map output', () => {
+	test('merges independently timed sparse series once and sorts shared Map output', () => {
 		expect(
 			buildSparseTimeSeriesDataset([
 				{
 					name: 'TVL',
 					data: [
-						[3_000, 12],
-						[5_000, null]
+						[3000, 12],
+						[5000, null]
 					]
 				},
 				{
 					name: 'Fees',
 					data: [
-						[1_000, 2],
-						[3_000, 3]
+						[1000, 2],
+						[3000, 3]
 					]
 				}
 			])
 		).toEqual({
 			dimensions: ['timestamp', 'TVL', 'Fees'],
 			source: [
-				[1_000, null, 2],
-				[3_000, 12, 3],
-				[5_000, null, null]
+				[1000, null, 2],
+				[3000, 12, 3],
+				[5000, null, null]
 			]
 		})
 	})
 
-	it('builds columnar data directly into canonical rows', () => {
+	test('builds columnar data directly into canonical rows', () => {
 		const dataset = buildColumnarTimeSeriesDataset(
 			['2026-01-01', '2026-01-02'],
 			[
@@ -50,13 +50,13 @@ describe('timeSeriesDataset', () => {
 		expect(dataset).toEqual({
 			dimensions: ['timestamp', 'Fees', 'Revenue'],
 			source: [
-				[1767225600000, 10, 4],
-				[1767312000000, null, null]
+				[1_767_225_600_000, 10, 4],
+				[1_767_312_000_000, null, null]
 			]
 		})
 	})
 
-	it('does not mutate columnar dates or series', () => {
+	test('does not mutate columnar dates or series', () => {
 		const dates = ['2026-01-01', '2026-01-02'] as const
 		const series = [
 			{ name: 'Fees', data: [10, undefined] },
@@ -69,7 +69,7 @@ describe('timeSeriesDataset', () => {
 		expect({ dates, series }).toEqual(before)
 	})
 
-	it('rejects duplicate display dimensions', () => {
+	test('rejects duplicate display dimensions', () => {
 		expect(() =>
 			buildColumnarTimeSeriesDataset(
 				['2026-01-01'],
@@ -82,7 +82,7 @@ describe('timeSeriesDataset', () => {
 		).toThrow('Duplicate series name')
 	})
 
-	it('fills declared missing values without revalidating numeric API values', () => {
+	test('fills declared missing values without revalidating numeric API values', () => {
 		const dataset = buildColumnarTimeSeriesDataset(
 			['2026-01-01', '2026-01-02', '2026-01-03'],
 			[{ name: 'Fees', data: [undefined, Number.NaN, Number.POSITIVE_INFINITY] }],
@@ -93,26 +93,26 @@ describe('timeSeriesDataset', () => {
 		expect(dataset.source.map((row) => row[1])).toEqual([0, Number.NaN, Number.POSITIVE_INFINITY])
 	})
 
-	it('materializes only visible series and zero-fills sparse rows', () => {
+	test('materializes only visible series and zero-fills sparse rows', () => {
 		const input: TimestampDataset = {
 			dimensions: ['timestamp', 'A', 'B', 'Hidden'],
 			source: [
-				[1_000, 2, undefined, 9],
-				[2_000, undefined, 3, 8]
+				[1000, 2, undefined, 9],
+				[2000, undefined, 3, 8]
 			]
 		}
 
 		expect(materializeZeroFilledDataset(input, ['A', 'B'])).toEqual({
 			dimensions: ['timestamp', 'A', 'B'],
 			source: [
-				[1_000, 2, 0],
-				[2_000, 0, 3]
+				[1000, 2, 0],
+				[2000, 0, 3]
 			]
 		})
-		expect(input.source[0]).toEqual([1_000, 2, undefined, 9])
+		expect(input.source[0]).toEqual([1000, 2, undefined, 9])
 	})
 
-	it('converts second timestamps once and preserves null values', () => {
+	test('converts second timestamps once and preserves null values', () => {
 		expect(
 			buildTimeSeriesDataset(
 				[
@@ -131,7 +131,7 @@ describe('timeSeriesDataset', () => {
 		})
 	})
 
-	it('slices duplicate boundaries inclusively without copying row objects', () => {
+	test('slices duplicate boundaries inclusively without copying row objects', () => {
 		const dataset = buildTimeSeriesDataset(
 			[
 				[10, 1],

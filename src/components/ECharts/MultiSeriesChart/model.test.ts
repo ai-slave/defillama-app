@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildAlignedCartesianChartModel, buildSparseCartesianChartModel } from './model'
 
 describe('cartesian chart models', () => {
-	it('builds aligned rows without intermediate tuples', () => {
+	test('builds aligned rows without intermediate tuples', () => {
 		const model = buildAlignedCartesianChartModel(
 			[2, 3],
 			[
@@ -26,7 +26,7 @@ describe('cartesian chart models', () => {
 		expect(model.charts[0]).toEqual({ type: 'line', name: 'TVL', encode: { x: 0, y: 1 } })
 	})
 
-	it('keeps independently timed series positional so sibling timestamps do not create line gaps', () => {
+	test('keeps independently timed series positional so sibling timestamps do not create line gaps', () => {
 		const model = buildSparseCartesianChartModel([
 			{ name: 'A', type: 'line', connectNulls: true, data: [[3, 30]] },
 			{
@@ -49,7 +49,7 @@ describe('cartesian chart models', () => {
 		expect(model.charts[0].connectNulls).toBe(true)
 	})
 
-	it('retains explicit null line points while omitting sibling-only timestamps', () => {
+	test('retains explicit null line points while omitting sibling-only timestamps', () => {
 		const model = buildSparseCartesianChartModel([
 			{
 				name: 'TVL',
@@ -71,7 +71,7 @@ describe('cartesian chart models', () => {
 		expect(model.charts[1].data).toEqual([[2000, 5]])
 	})
 
-	it('aligns mismatched calendars within a stack without changing unrelated lines', () => {
+	test('aligns mismatched calendars within a stack without changing unrelated lines', () => {
 		const model = buildSparseCartesianChartModel([
 			{
 				name: 'A',
@@ -119,7 +119,7 @@ describe('cartesian chart models', () => {
 		])
 	})
 
-	it('keeps explicit and missing stacked-line values as gaps on the stack calendar', () => {
+	test('keeps explicit and missing stacked-line values as gaps on the stack calendar', () => {
 		const model = buildSparseCartesianChartModel([
 			{
 				name: 'A',
@@ -140,7 +140,7 @@ describe('cartesian chart models', () => {
 		])
 	})
 
-	it('uses the same canonical output for already aligned sparse series', () => {
+	test('uses the same canonical output for already aligned sparse series', () => {
 		const model = buildSparseCartesianChartModel([
 			{
 				name: 'A',
@@ -165,7 +165,7 @@ describe('cartesian chart models', () => {
 		])
 	})
 
-	it('preserves category insertion order', () => {
+	test('preserves category insertion order', () => {
 		const model = buildSparseCartesianChartModel(
 			[
 				{
@@ -185,7 +185,7 @@ describe('cartesian chart models', () => {
 		])
 	})
 
-	it('uses positional encodes so display names never become ECharts keys', () => {
+	test('uses positional encodes so display names never become ECharts keys', () => {
 		const model = buildAlignedCartesianChartModel(['A'], [{ name: 'constructor', type: 'bar', values: [2] }], {
 			xDimension: 'bin',
 			timestampMultiplier: 1

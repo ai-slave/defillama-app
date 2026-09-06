@@ -6,7 +6,7 @@ import type { AggregatedMetrics } from './data'
 type PickMode = 'max' | 'min'
 
 function leader(
-	rows: AggregatedMetrics[],
+	rows: Array<AggregatedMetrics>,
 	select: (row: AggregatedMetrics) => number | null | undefined,
 	pick: PickMode
 ): AggregatedMetrics | null {

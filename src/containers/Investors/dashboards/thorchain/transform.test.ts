@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IProtocolOverviewPageData } from '~/containers/ProtocolOverview/types'
 import { addNetworkFeeToIncomeStatement, carryForwardCumulative, chartToDataset, sumDailySeries } from './transform'
 
 describe('chartToDataset', () => {
-	it('skips category labels while keeping aligned time-series values', () => {
+	test('skips category labels while keeping aligned time-series values', () => {
 		const dataset = chartToDataset({
 			dates: ['Total', '2026-01-01'],
 			series: [{ name: 'Revenue', data: [10, 20] }]
@@ -15,7 +15,7 @@ describe('chartToDataset', () => {
 		})
 	})
 
-	it('rejects a time-series value missing from a parallel series', () => {
+	test('rejects a time-series value missing from a parallel series', () => {
 		expect(() =>
 			chartToDataset({
 				dates: ['2026-01-01'],
@@ -26,7 +26,7 @@ describe('chartToDataset', () => {
 })
 
 describe('sumDailySeries', () => {
-	it('adds overlapping days and keeps the union sorted', () => {
+	test('adds overlapping days and keeps the union sorted', () => {
 		expect(
 			sumDailySeries([
 				[
@@ -43,7 +43,7 @@ describe('sumDailySeries', () => {
 })
 
 describe('carryForwardCumulative', () => {
-	it('holds each series flat across days it did not report, and at 0 before its first', () => {
+	test('holds each series flat across days it did not report, and at 0 before its first', () => {
 		expect(
 			carryForwardCumulative([
 				{
@@ -125,7 +125,7 @@ describe('addNetworkFeeToIncomeStatement', () => {
 		return period
 	}
 
-	it('adds the fee to every period bucket without mutating the source', () => {
+	test('adds the fee to every period bucket without mutating the source', () => {
 		const source = statement()
 		const merged = addNetworkFeeToIncomeStatement(source, [[JAN_15_2026, 10]])
 		if (!merged) throw new Error('Expected merged income statement')
@@ -148,7 +148,7 @@ describe('addNetworkFeeToIncomeStatement', () => {
 		expect(getPeriod(source, 'monthly', '2026-01').values['Gross Protocol Revenue']?.value).toBe(100)
 	})
 
-	it('fills in a by-label map on lines that arrive as a bare total', () => {
+	test('fills in a by-label map on lines that arrive as a bare total', () => {
 		const source = statement()
 		getPeriod(source, 'monthly', '2026-01').values['Gross Profit'] = { value: 40 }
 
@@ -161,8 +161,8 @@ describe('addNetworkFeeToIncomeStatement', () => {
 		})
 	})
 
-	it('drops days outside the periods the statement covers', () => {
-		const merged = addNetworkFeeToIncomeStatement(statement(), [[JAN_15_2026 - 365 * 86400, 10]])
+	test('drops days outside the periods the statement covers', () => {
+		const merged = addNetworkFeeToIncomeStatement(statement(), [[JAN_15_2026 - 365 * 86_400, 10]])
 		if (!merged) throw new Error('Expected merged income statement')
 		expect(getPeriod(merged, 'monthly', '2026-01').values['Gross Protocol Revenue']?.value).toBe(100)
 	})

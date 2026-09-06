@@ -16,7 +16,7 @@ import {
 } from '~/ui/Popover'
 
 interface IProps {
-	options: ISearchItem[]
+	options: Array<ISearchItem>
 	currentChain: string
 	handleClick: React.Dispatch<any>
 }

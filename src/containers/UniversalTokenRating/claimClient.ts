@@ -32,7 +32,7 @@ function isDocumentReceipt(value: unknown): value is UtrClaimDocument {
 	)
 }
 
-export async function uploadUtrClaimDocuments(files: readonly File[]): Promise<UtrClaimDocument[]> {
+export async function uploadUtrClaimDocuments(files: ReadonlyArray<File>): Promise<Array<UtrClaimDocument>> {
 	const body = new FormData()
 	for (const file of files) body.append('file', file)
 	const response = await fetch('/api/public/utr/claim/documents', { method: 'POST', body })

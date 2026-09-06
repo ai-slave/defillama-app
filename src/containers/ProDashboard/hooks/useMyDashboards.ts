@@ -6,7 +6,7 @@ import { pushShallowQuery } from '~/utils/routerQuery'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI } from '../services/DashboardAPI'
 
-const EMPTY_DASHBOARDS: Dashboard[] = []
+const EMPTY_DASHBOARDS: Array<Dashboard> = []
 
 interface UseMyDashboardsParams {
 	page: number

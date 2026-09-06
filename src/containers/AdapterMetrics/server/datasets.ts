@@ -29,8 +29,8 @@ type DimensionDatasetAllSourceProtocol = IAdapterChainOverview['protocols'][numb
 }
 
 interface DimensionDatasetAllSource {
-	allChains: string[]
-	protocols: DimensionDatasetAllSourceProtocol[]
+	allChains: Array<string>
+	protocols: Array<DimensionDatasetAllSourceProtocol>
 }
 
 type DimensionDatasetRequestScheduler = <Result>(request: () => Promise<Result>) => Promise<Result>
@@ -165,7 +165,7 @@ function sumAvailableBreakdownValues(breakdown: AdapterBreakdown | null | undefi
 
 function buildDimensionToInternalChainMap(
 	chainNameMap: Readonly<Record<string, string>>,
-	canonicalDisplayChains: readonly string[],
+	canonicalDisplayChains: ReadonlyArray<string>,
 	dimensionChains: ReadonlySet<string>
 ): Record<string, string> {
 	type Candidate = { canonical: string | null; fallback: string | null; ambiguousFallback: boolean }
@@ -298,9 +298,9 @@ function projectSelectedEarningsDataset({
 	unavailableChains,
 	withChainBreakdown
 }: {
-	protocols: DimensionDatasetProtocol[]
-	selectedChains: SelectedEarningsChain[]
-	unavailableChains: string[]
+	protocols: Array<DimensionDatasetProtocol>
+	selectedChains: Array<SelectedEarningsChain>
+	unavailableChains: Array<string>
 	withChainBreakdown: boolean
 }): DimensionDatasetResult {
 	const selectedProtocols = new Map<string, DimensionDatasetProtocol>()
@@ -324,7 +324,7 @@ function projectSelectedEarningsDataset({
 		}
 	}
 
-	const projectedProtocols: DimensionDatasetProtocol[] = []
+	const projectedProtocols: Array<DimensionDatasetProtocol> = []
 	for (const protocol of selectedProtocols.values()) projectedProtocols.push(protocol)
 	projectedProtocols.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
 	return unavailableChains.length > 0
@@ -336,7 +336,7 @@ interface DimensionDatasetOptions {
 	adapterType: `${ADAPTER_TYPES}`
 	route: string
 	metricName: string
-	chains?: string[]
+	chains?: Array<string>
 	dataType?: `${ADAPTER_DATA_TYPES}` | 'dailyEarnings'
 	chainGuard?: keyof IChainMetadata
 	withChainBreakdown?: boolean
@@ -348,7 +348,7 @@ export async function fetchDimensionDataset(
 ): Promise<DimensionDatasetResult> {
 	const { adapterType, chains, dataType, chainGuard, withChainBreakdown } = options
 	const isEarnings = dataType === ADAPTER_DATA_TYPES.DAILY_EARNINGS
-	const chainList: string[] = []
+	const chainList: Array<string> = []
 	const selectedChains = new Set<string>()
 	for (const chain of chains ?? []) {
 		const identity = chain.trim().toLowerCase()
@@ -406,7 +406,7 @@ export async function fetchDimensionDataset(
 			}
 			dimensionToInternalChain = buildDimensionToInternalChainMap(chainNameMap, data.allChains, dimensionChains)
 		}
-		const protocols: DimensionDatasetProtocol[] = []
+		const protocols: Array<DimensionDatasetProtocol> = []
 		for (const sourceProtocol of data.protocols) {
 			const protocol = toDimensionDatasetProtocol(sourceProtocol, dataType)
 			if (withChainBreakdown) {
@@ -430,8 +430,8 @@ export async function fetchDimensionDataset(
 			import('~/utils/metadata').then((m) => m.default),
 			getDimensionChainNameMap()
 		])
-		const selectedEarningsChains: SelectedEarningsChain[] = []
-		const unavailableChains: string[] = []
+		const selectedEarningsChains: Array<SelectedEarningsChain> = []
+		const unavailableChains: Array<string> = []
 		for (const chainName of chainList) {
 			const chainData = metadataCache.chainMetadata[slug(chainName)]
 			if (!chainData || (chainGuard && !chainData[chainGuard]) || !chainNameMap?.[chainData.name]) {
@@ -471,7 +471,7 @@ export async function fetchDimensionDataset(
 
 	const metadataCache = await import('~/utils/metadata').then((m) => m.default)
 	const allProtocolsMap = new Map<string, DimensionDatasetProtocol>()
-	const unavailableChains: string[] = []
+	const unavailableChains: Array<string> = []
 	const chainResults = await mapWithConcurrency(chainList, 8, async (chainName) => {
 		const chainSlug = slug(chainName)
 		const chainData = metadataCache.chainMetadata[chainSlug]
@@ -525,7 +525,7 @@ export async function fetchDimensionDataset(
 		}
 	}
 
-	const protocols: DimensionDatasetProtocol[] = []
+	const protocols: Array<DimensionDatasetProtocol> = []
 	for (const protocol of allProtocolsMap.values()) protocols.push(protocol)
 
 	const sortedProtocols = protocols.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))

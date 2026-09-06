@@ -17,9 +17,9 @@ interface SectionConfig {
 }
 
 const TRENDING_TAGS = ['DeFi', 'NFT', 'L2', 'Stablecoins', 'DEX', 'Lending', 'Bridges', 'Staking']
-const EMPTY_DASHBOARDS: Dashboard[] = []
+const EMPTY_DASHBOARDS: Array<Dashboard> = []
 
-const SECTIONS: SectionConfig[] = [
+const SECTIONS: Array<SectionConfig> = [
 	{
 		key: 'trendingToday',
 		title: 'Trending Today',

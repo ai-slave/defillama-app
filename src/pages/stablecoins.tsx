@@ -9,9 +9,9 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 
 type StablecoinsPageProps = PeggedOverviewPageData & {
-	availableBackings: string[]
-	availablePegTypes: string[]
-	entityQuestions?: string[]
+	availableBackings: Array<string>
+	availablePegTypes: Array<string>
+	entityQuestions?: Array<string>
 }
 
 export const getStaticProps: GetStaticProps<StablecoinsPageProps> = withPerformanceLogging('stablecoins', async () => {
@@ -82,8 +82,8 @@ export default function StablecoinsPage({
 }: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
-			title={`Stablecoin Market Cap Chart, Supply & Peg Data - DefiLlama`}
-			description={`Track the total stablecoin market cap, circulating supply, prices, inflows, and peg stability across all stablecoins. Explore stablecoin market charts and analytics with transparent data from DefiLlama.`}
+			title="Stablecoin Market Cap Chart, Supply & Peg Data - DefiLlama"
+			description="Track the total stablecoin market cap, circulating supply, prices, inflows, and peg stability across all stablecoins. Explore stablecoin market charts and analytics with transparent data from DefiLlama."
 			canonicalUrl="/stablecoins"
 			pageName={pageName}
 		>

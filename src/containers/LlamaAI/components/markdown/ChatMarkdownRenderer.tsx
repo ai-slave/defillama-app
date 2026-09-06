@@ -414,7 +414,7 @@ function CodeBlock({ children, node: _node, className, ...props }: MarkdownPrePr
 	)
 }
 
-export function SourcesList({ citations, isStreaming = false }: { citations: string[]; isStreaming?: boolean }) {
+export function SourcesList({ citations, isStreaming = false }: { citations: Array<string>; isStreaming?: boolean }) {
 	const sourceEntries = useMemo(() => {
 		const seen = new Map<string, number>()
 		const unique: Array<{ normalizedUrl: string; citationNumber: number }> = []
@@ -429,7 +429,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: str
 		return unique
 	}, [citations])
 
-	if (!citations.length || isStreaming) {
+	if (citations.length === 0 || isStreaming) {
 		return null
 	}
 
@@ -495,8 +495,8 @@ export function ChatMarkdownRenderer({
 	messageId
 }: {
 	content: string
-	citations?: UnifiedCitationReference[]
-	legacyUrlCitations?: string[]
+	citations?: Array<UnifiedCitationReference>
+	legacyUrlCitations?: Array<string>
 	advancedProvenance?: boolean
 	isStreaming?: boolean
 	hackerMode?: boolean
@@ -513,7 +513,7 @@ export function ChatMarkdownRenderer({
 		() => parseLlamaAIExternalAllowlistSnapshot(externalAllowlistSnapshot),
 		[externalAllowlistSnapshot]
 	)
-	const renderCitationRefs: UnifiedCitationReference[] | undefined = useMemo(() => {
+	const renderCitationRefs: Array<UnifiedCitationReference> | undefined = useMemo(() => {
 		if (citations && citations.length > 0) return citations
 		if (legacyUrlCitations && legacyUrlCitations.length > 0) return wrapLegacyUrlCitations(legacyUrlCitations)
 		if (legacyUrlCitations && legacyUrlCitations.length === 0) return []

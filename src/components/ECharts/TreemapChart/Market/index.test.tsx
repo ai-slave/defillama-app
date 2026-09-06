@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { EquitiesTreemapNode, IEquitiesTreemapLeaf } from '~/containers/Equities/treemapData'
 
 const mocks = vi.hoisted(() => {
@@ -51,7 +51,7 @@ vi.mock('~/utils/icons', () => ({
 
 import MarketTreemapChart from '.'
 
-function makeTreeData(size: number): EquitiesTreemapNode[] {
+function makeTreeData(size: number): Array<EquitiesTreemapNode> {
 	return [
 		{
 			name: 'TEST',
@@ -84,14 +84,14 @@ describe('MarketTreemapChart lifecycle', () => {
 		container.remove()
 	})
 
-	it('reuses the existing ECharts instance across prop updates', async () => {
+	test('reuses the existing ECharts instance across prop updates', async () => {
 		const onReady = vi.fn()
 		const firstTreeData = makeTreeData(100)
 		await act(async () => {
 			root.render(
 				<MarketTreemapChart
 					treeData={firstTreeData}
-					leaves={firstTreeData as IEquitiesTreemapLeaf[]}
+					leaves={firstTreeData as Array<IEquitiesTreemapLeaf>}
 					sizeLabel="Market Cap"
 					colorLabel="Price 1D"
 					onReady={onReady}
@@ -127,7 +127,7 @@ describe('MarketTreemapChart lifecycle', () => {
 			root.render(
 				<MarketTreemapChart
 					treeData={nextTreeData}
-					leaves={nextTreeData as IEquitiesTreemapLeaf[]}
+					leaves={nextTreeData as Array<IEquitiesTreemapLeaf>}
 					sizeLabel="Revenue"
 					colorLabel="Price 7D"
 					onReady={onReady}
@@ -142,13 +142,13 @@ describe('MarketTreemapChart lifecycle', () => {
 		expect(mocks.instance.setOption.mock.calls.at(-1)?.[1]).toEqual({ notMerge: true })
 	})
 
-	it('reuses canvas-decorated leaves when only the grouping changes', async () => {
-		const leaves = makeTreeData(100) as IEquitiesTreemapLeaf[]
+	test('reuses canvas-decorated leaves when only the grouping changes', async () => {
+		const leaves = makeTreeData(100) as Array<IEquitiesTreemapLeaf>
 		await act(async () => {
 			root.render(<MarketTreemapChart treeData={leaves} leaves={leaves} sizeLabel="Market Cap" colorLabel="Price 1D" />)
 		})
 		const flatLeaf = mocks.instance.setOption.mock.calls.at(-1)?.[0].series[0].data[0]
-		const groupedTree: EquitiesTreemapNode[] = [{ name: 'Technology', value: [100, null], children: leaves }]
+		const groupedTree: Array<EquitiesTreemapNode> = [{ name: 'Technology', value: [100, null], children: leaves }]
 
 		await act(async () => {
 			root.render(
@@ -161,14 +161,14 @@ describe('MarketTreemapChart lifecycle', () => {
 		expect(mocks.init).toHaveBeenCalledOnce()
 	})
 
-	it('keeps the opposite edge: it releases the chart and ready callback on unmount', async () => {
+	test('keeps the opposite edge: it releases the chart and ready callback on unmount', async () => {
 		const onReady = vi.fn()
 		const treeData = makeTreeData(100)
 		await act(async () => {
 			root.render(
 				<MarketTreemapChart
 					treeData={treeData}
-					leaves={treeData as IEquitiesTreemapLeaf[]}
+					leaves={treeData as Array<IEquitiesTreemapLeaf>}
 					sizeLabel="Market Cap"
 					colorLabel="Price 1D"
 					onReady={onReady}

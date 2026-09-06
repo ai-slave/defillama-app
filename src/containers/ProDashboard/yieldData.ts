@@ -46,7 +46,10 @@ export type ProYieldRow = ProEarnRow & {
 	ltv: number | null
 }
 
-export function joinEarnAndBorrowMarkets(earnRows: ProEarnRow[], marketRows: ProBorrowMarketRow[]): ProYieldRow[] {
+export function joinEarnAndBorrowMarkets(
+	earnRows: Array<ProEarnRow>,
+	marketRows: Array<ProBorrowMarketRow>
+): Array<ProYieldRow> {
 	const marketById = new Map<string, ProBorrowMarketRow>()
 	for (const market of marketRows) marketById.set(market.id, market)
 	return earnRows.map((row) => {

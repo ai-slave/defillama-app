@@ -32,7 +32,7 @@ const targets = process.argv
 const COLOR_UTIL =
 	/^((?:[\w[\]()&>~.*/=-]+:)*)(text|bg|border-[trblxyse]|border|from|to|via|fill|stroke|ring|outline|decoration|accent|caret|divide|shadow|placeholder)-((?:\[#[0-9a-fA-F]+\](?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:\[(?:rgba?|hsla?|oklch)\([^\]]*\)\])|(?:\(--[a-z0-9-]+\)(?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:(?:black|white)(?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}(?:\/(?:[\d.]+|\[[^\]]+\]))?)|(?:(?:ai|sub|pro|sl)-[a-z0-9-]+(?:\/(?:[\d.]+|\[[^\]]+\]))?))$/
 
-const lcHex = (k) => k.replace(/\[#([0-9a-fA-F]+)\]/g, (_, h) => '[#' + h.toLowerCase() + ']')
+const lcHex = (k) => k.replace(/\[#([0-9a-fA-F]+)\]/g, (_, h) => `[#${h.toLowerCase()}]`)
 const report = new Map() // unmapped token -> count
 
 function rewriteClassList(text) {
@@ -50,7 +50,7 @@ function rewriteClassList(text) {
 		return { i, variants: m[1], prop: m[2], value: m[3] }
 	})
 	const items = parsed.filter(Boolean)
-	if (!items.length) return null
+	if (items.length === 0) return null
 
 	const out = [...tokens]
 	const consumed = new Set()
@@ -112,7 +112,7 @@ function rewriteClassList(text) {
 		consumed.add(it.i)
 	}
 
-	if (!consumed.size) return null
+	if (consumed.size === 0) return null
 	// collapse doubled whitespace left by removed tokens
 	return out
 		.join('')
@@ -148,7 +148,7 @@ function processFile(file) {
 		ts.forEachChild(node, visit)
 	}
 	visit(sf)
-	if (!edits.length) return 0
+	if (edits.length === 0) return 0
 	let outSrc = source
 	for (const e of edits.sort((a, b) => b.start - a.start)) {
 		outSrc = outSrc.slice(0, e.start) + e.text + outSrc.slice(e.end)
@@ -176,7 +176,7 @@ for (const target of targets) {
 	}
 }
 console.log(`${write ? 'rewrote' : 'would rewrite'} ${total} literals in ${filesChanged} files`)
-if (report.size) {
+if (report.size > 0) {
 	console.log('\nunmapped color tokens:')
 	for (const [t, n] of [...report.entries()].sort((a, b) => b[1] - a[1])) console.log(` ${n}\t${t}`)
 }

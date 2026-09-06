@@ -26,9 +26,9 @@ function forgdUtrHeaders(): Record<string, string> | undefined {
 	return key ? { Authorization: `Bearer ${key}` } : undefined
 }
 
-export async function fetchUtrProjects(): Promise<UtrProject[]> {
+export async function fetchUtrProjects(): Promise<Array<UtrProject>> {
 	try {
-		return await fetchJson<UtrProject[]>(`${FORGD_HOST}/api/utr/projects`, {
+		return await fetchJson<Array<UtrProject>>(`${FORGD_HOST}/api/utr/projects`, {
 			timeout: 30_000,
 			headers: forgdUtrHeaders()
 		})
@@ -37,9 +37,9 @@ export async function fetchUtrProjects(): Promise<UtrProject[]> {
 	}
 }
 
-export async function fetchUtrDisclosureScoreSummaries(): Promise<UtrDisclosureScoreSummary[]> {
+export async function fetchUtrDisclosureScoreSummaries(): Promise<Array<UtrDisclosureScoreSummary>> {
 	try {
-		return await fetchJson<UtrDisclosureScoreSummary[]>(`${FORGD_HOST}/api/utr/projects/disclosure-scores`, {
+		return await fetchJson<Array<UtrDisclosureScoreSummary>>(`${FORGD_HOST}/api/utr/projects/disclosure-scores`, {
 			timeout: 30_000,
 			headers: forgdUtrHeaders()
 		})
@@ -48,8 +48,8 @@ export async function fetchUtrDisclosureScoreSummaries(): Promise<UtrDisclosureS
 	}
 }
 
-export async function fetchUtrBatchMetrics(assets: string[]): Promise<UtrBatchResponse | null> {
-	if (!assets.length) return null
+export async function fetchUtrBatchMetrics(assets: Array<string>): Promise<UtrBatchResponse | null> {
+	if (assets.length === 0) return null
 	try {
 		return await fetchJson<UtrBatchResponse>(
 			`${FORGD_HOST}/api/utr?assets=${encodeURIComponent(assets.slice(0, 100).join(','))}`,
@@ -99,7 +99,7 @@ function finiteNumber(value: unknown, fallback = 0): number {
 	return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
 
-function normalizeCategories(value: unknown): UtrScoringCategoryConfig[] {
+function normalizeCategories(value: unknown): Array<UtrScoringCategoryConfig> {
 	if (!isRecord(value) || !Array.isArray(value.categories)) return []
 	return value.categories.flatMap((rawCategory) => {
 		if (!isRecord(rawCategory)) return []
@@ -205,15 +205,15 @@ export async function fetchUtrScoringConfig(): Promise<UtrScoringConfig | null> 
 	}
 }
 
-export function exchangeOptionsFromScoringConfig(config: UtrScoringConfig | null): UtrClaimExchangeOption[] {
+export function exchangeOptionsFromScoringConfig(config: UtrScoringConfig | null): Array<UtrClaimExchangeOption> {
 	return config
 		? [...config.exchanges.tier1, ...config.exchanges.tier2].map(({ id, displayName }) => ({ id, displayName }))
 		: []
 }
 
-export async function fetchUtrClaimMarketMakerOptions(): Promise<UtrClaimMarketMakerOption[]> {
+export async function fetchUtrClaimMarketMakerOptions(): Promise<Array<UtrClaimMarketMakerOption>> {
 	try {
-		const payload = await forgdFetch<unknown[]>('/market-maker/leaderboard/performance')
+		const payload = await forgdFetch<Array<unknown>>('/market-maker/leaderboard/performance')
 		if (!Array.isArray(payload)) return []
 		const options = new Map<string, UtrClaimMarketMakerOption>()
 		for (const row of payload) {
@@ -255,7 +255,7 @@ export function fetchUtrLeaderboardStrict(): Promise<UtrLeaderboardResponse> {
 	})
 }
 
-function withEmptyCriteria(categories: UtrCategoryBreakdown[]): UtrCategoryBreakdown[] {
+function withEmptyCriteria(categories: Array<UtrCategoryBreakdown>): Array<UtrCategoryBreakdown> {
 	return categories.map((category) => ({ ...category, criteria: category.criteria ?? [] }))
 }
 
@@ -302,13 +302,13 @@ export async function fetchIconDataUrl(coingeckoId: string): Promise<string | nu
 	}
 }
 
-async function withIconDataUrls(rows: UtrLeaderboardRow[]): Promise<UtrLeaderboardRow[]> {
+async function withIconDataUrls(rows: Array<UtrLeaderboardRow>): Promise<Array<UtrLeaderboardRow>> {
 	return Promise.all(
 		rows.map(async (row) => (row.coingeckoId ? { ...row, iconDataUrl: await fetchIconDataUrl(row.coingeckoId) } : row))
 	)
 }
 
-export function leaderboardRowsFromResponse(leaderboard: UtrLeaderboardResponse): UtrLeaderboardRow[] {
+export function leaderboardRowsFromResponse(leaderboard: UtrLeaderboardResponse): Array<UtrLeaderboardRow> {
 	const postRows = leaderboard.postTge.rows.map(rowFromLeaderboardApiRow)
 	const preRows = leaderboard.preTge.rows.map(rowFromLeaderboardApiRow).map((row) => ({
 		...row,
@@ -320,7 +320,7 @@ export function leaderboardRowsFromResponse(leaderboard: UtrLeaderboardResponse)
 export async function fetchUtrUniverseWithLive(): Promise<UtrUniverse> {
 	const leaderboard = await fetchUtrLeaderboard()
 	const leaderboardRows = leaderboard ? leaderboardRowsFromResponse(leaderboard) : []
-	if (leaderboard && leaderboardRows.length) {
+	if (leaderboard && leaderboardRows.length > 0) {
 		const rows = await withIconDataUrls(leaderboardRows)
 		return { rows, scoredCount: leaderboard.scoredCount, totalCount: leaderboard.totalCount }
 	}

@@ -1,12 +1,12 @@
 interface UnversionedUnifiedTablePresetLayout {
 	readonly id: string
-	readonly columnOrder: readonly string[]
+	readonly columnOrder: ReadonlyArray<string>
 	readonly defaultSorting: ReadonlyArray<{ id: string; desc: boolean }>
 }
 
 const createPresetLayout = (
 	id: string,
-	columnOrder: readonly string[],
+	columnOrder: ReadonlyArray<string>,
 	defaultSortColumn: string
 ): UnversionedUnifiedTablePresetLayout => ({
 	id,

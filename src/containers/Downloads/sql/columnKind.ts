@@ -42,13 +42,13 @@ export function looksLikeNumericArray(value: unknown): boolean {
 export function classifyColumn(
 	typeString: string | undefined,
 	name: string,
-	rows: unknown[][],
+	rows: Array<Array<unknown>>,
 	index = 0
 ): ClassifiedColumn {
 	let fine = inferFineKindFromArrowType(typeString)
 
 	if (fine === 'text') {
-		const sample: unknown[] = []
+		const sample: Array<unknown> = []
 		for (const row of rows) {
 			const v = row[index]
 			if (v != null && v !== '') {
@@ -73,6 +73,6 @@ export function classifyColumn(
 	return { index, name, fine, coarse: coarsen(fine) }
 }
 
-export function classifyColumns(result: QueryResult): ClassifiedColumn[] {
+export function classifyColumns(result: QueryResult): Array<ClassifiedColumn> {
 	return result.columns.map((c, index) => classifyColumn(c.type, c.name, result.rows, index))
 }

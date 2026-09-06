@@ -5,7 +5,7 @@ import type { StablecoinListAsset } from '~/containers/Stablecoins/api.types'
 
 type ChartSpec = {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 }
 
 export type StablecoinBreakdownPoint = {
@@ -20,10 +20,10 @@ export interface ReserveStablecoinChartData {
 	stablecoinsByPegType: ChartSpec | null
 	stablecoinsByToken: ChartSpec | null
 	pegMechanismPieSeries: RuntimePieChartData
-	stablecoinBreakdown: StablecoinBreakdownPoint[]
-	stablecoinTokensUnique: string[]
-	pegTypesUnique: string[]
-	pegMechanismsUnique: string[]
+	stablecoinBreakdown: Array<StablecoinBreakdownPoint>
+	stablecoinTokensUnique: Array<string>
+	pegTypesUnique: Array<string>
+	pegMechanismsUnique: Array<string>
 	currentTotal: number | null
 	currentStablecoinCount: number
 }
@@ -36,7 +36,7 @@ export type ReserveStablecoinViewState =
 
 export const TOTAL_STABLECOINS_SERIES_NAME = 'Total Stablecoins'
 
-function buildLineChartSpec(source: MultiSeriesChartDataset['source'], names: string[]): ChartSpec | null {
+function buildLineChartSpec(source: MultiSeriesChartDataset['source'], names: Array<string>): ChartSpec | null {
 	if (source.length <= 1 || names.length === 0) return null
 	return {
 		dataset: { source, dimensions: ['timestamp', ...names] },
@@ -75,7 +75,10 @@ function fillOmittedStockValues(source: MultiSeriesChartDataset['source'], dimen
 	}
 }
 
-function buildPegMechanismSummary(latestRow: MultiSeriesChartDataset['source'][number] | undefined, names: string[]) {
+function buildPegMechanismSummary(
+	latestRow: MultiSeriesChartDataset['source'][number] | undefined,
+	names: Array<string>
+) {
 	if (!latestRow) {
 		return {
 			stablecoinBreakdown: [],
@@ -92,7 +95,7 @@ function buildPegMechanismSummary(latestRow: MultiSeriesChartDataset['source'][n
 		}
 	}
 
-	const stablecoinBreakdown: StablecoinBreakdownPoint[] = []
+	const stablecoinBreakdown: Array<StablecoinBreakdownPoint> = []
 	for (let i = 0; i < names.length; i++) {
 		const name = names[i]!
 		const value = latestRow[i + 1] as number | undefined
@@ -130,9 +133,9 @@ export function buildReserveStablecoinChartData(
 		pegMechanismMap.set(asset.symbol, asset.pegMechanism)
 	}
 
-	const stablecoinTokensUnique: string[] = []
-	const pegTypesUnique: string[] = []
-	const pegMechanismsUnique: string[] = []
+	const stablecoinTokensUnique: Array<string> = []
+	const pegTypesUnique: Array<string> = []
+	const pegMechanismsUnique: Array<string> = []
 	const tokenIndex = new Map<string, number>()
 	const pegTypeIndex = new Map<string, number>()
 	const pegMechanismIndex = new Map<string, number>()

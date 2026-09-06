@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { isClaimTurnstileEnabled, verifyClaimTurnstile } from '../claimTurnstile'
 
 afterEach(() => {
@@ -7,7 +7,7 @@ afterEach(() => {
 })
 
 describe('verifyClaimTurnstile', () => {
-	it('rejects a missing or oversized token without calling Cloudflare', async () => {
+	test('rejects a missing or oversized token without calling Cloudflare', async () => {
 		vi.stubEnv('CLAIMS_TURNSTILE_SECRET_KEY', 'claim-secret')
 		const fetchMock = vi.fn()
 		vi.stubGlobal('fetch', fetchMock)
@@ -21,7 +21,7 @@ describe('verifyClaimTurnstile', () => {
 		expect(fetchMock).not.toHaveBeenCalled()
 	})
 
-	it('validates the claim action and sends the trusted client ip', async () => {
+	test('validates the claim action and sends the trusted client ip', async () => {
 		vi.stubEnv('CLAIMS_TURNSTILE_SECRET_KEY', 'claim-secret')
 		const fetchMock = vi
 			.fn()
@@ -42,7 +42,7 @@ describe('verifyClaimTurnstile', () => {
 		expect(requestBody.get('remoteip')).toBe('192.0.2.2')
 	})
 
-	it('rejects a valid token issued for another action', async () => {
+	test('rejects a valid token issued for another action', async () => {
 		vi.stubEnv('CLAIMS_TURNSTILE_SECRET_KEY', 'claim-secret')
 		vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ success: true, action: 'signup' })))
 
@@ -52,7 +52,7 @@ describe('verifyClaimTurnstile', () => {
 		})
 	})
 
-	it('distinguishes invalid challenges from unavailable verification', async () => {
+	test('distinguishes invalid challenges from unavailable verification', async () => {
 		vi.stubEnv('CLAIMS_TURNSTILE_SECRET_KEY', 'claim-secret')
 		vi.stubGlobal(
 			'fetch',
@@ -77,7 +77,7 @@ describe('verifyClaimTurnstile', () => {
 		})
 	})
 
-	it('reports unavailable if verification is called without a configured secret', async () => {
+	test('reports unavailable if verification is called without a configured secret', async () => {
 		vi.stubEnv('CLAIMS_TURNSTILE_SECRET_KEY', '')
 		const fetchMock = vi.fn()
 		vi.stubGlobal('fetch', fetchMock)

@@ -40,7 +40,7 @@ export default function YieldsRatesPage({ current, history, initialRange }: Rate
 		<Layout
 			title="Stablecoin Reference Rates - DefiLlama"
 			description="Market-size weighted supply and borrow benchmark rates for major stablecoins across the largest DeFi lending markets, with per-asset and per-protocol breakdowns."
-			canonicalUrl={`/yields/rates`}
+			canonicalUrl="/yields/rates"
 			pageName={pageName}
 		>
 			<Announcement announcementId="yields-disclaimer" version="2026-03">

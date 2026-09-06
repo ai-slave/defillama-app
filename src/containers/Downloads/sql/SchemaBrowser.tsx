@@ -31,7 +31,7 @@ const FILTER_LABELS: Record<FilterKind, string> = {
 
 export interface SchemaBrowserProps {
 	chartOptionsMap: ChartOptionsMap
-	loadedTables: RegisteredTable[]
+	loadedTables: Array<RegisteredTable>
 	onLoad: (source: TableSource) => Promise<RegisteredTable | null>
 	onReplaceSql: (snippet: string) => void
 	onInsertAtCursor: (text: string) => void
@@ -69,7 +69,9 @@ export function SchemaBrowser({
 	const [filter, setFilter] = useState<FilterKind>('all')
 	const deferred = useDeferredValue(search)
 
-	const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set(getStorageJSON<string[]>(COLLAPSED_KEY, [])))
+	const [collapsed, setCollapsed] = useState<Set<string>>(
+		() => new Set(getStorageJSON<Array<string>>(COLLAPSED_KEY, []))
+	)
 
 	const toggleCollapsed = useCallback((category: string) => {
 		setCollapsed((prev) => {
@@ -81,8 +83,8 @@ export function SchemaBrowser({
 		})
 	}, [])
 
-	const allEntries = useMemo<SchemaEntry[]>(() => {
-		const out: SchemaEntry[] = []
+	const allEntries = useMemo<Array<SchemaEntry>>(() => {
+		const out: Array<SchemaEntry> = []
 		for (const d of datasets) {
 			out.push({
 				kind: 'flat',
@@ -118,7 +120,7 @@ export function SchemaBrowser({
 				? (e.dataset.fields ?? []).join(' ')
 				: columnShapeFor(e.slug) === 'dynamic'
 					? ''
-					: (columnShapeFor(e.slug) as readonly string[]).join(' ')
+					: (columnShapeFor(e.slug) as ReadonlyArray<string>).join(' ')
 		return matchSorter(list, deferred, {
 			keys: [toName, 'description', 'category', toDataFields],
 			threshold: matchSorter.rankings.CONTAINS
@@ -126,13 +128,13 @@ export function SchemaBrowser({
 	}, [allEntries, deferred, filter])
 
 	const grouped = useMemo(() => {
-		const byCategory = new Map<string, SchemaEntry[]>()
+		const byCategory = new Map<string, Array<SchemaEntry>>()
 		for (const e of filtered) {
 			const arr = byCategory.get(e.category) ?? []
 			arr.push(e)
 			byCategory.set(e.category, arr)
 		}
-		const ordered: string[] = []
+		const ordered: Array<string> = []
 		const seen = new Set<string>()
 		for (const c of [...datasetCategories, ...chartDatasetCategories]) {
 			if (byCategory.has(c) && !seen.has(c)) {
@@ -236,7 +238,7 @@ function BrowserHeader({
 					aria-label="Dataset kind"
 					className="inline-flex items-center gap-0.5 rounded-md border border-subtle bg-surface p-0.5"
 				>
-					{(Object.keys(FILTER_LABELS) as FilterKind[]).map((k) => {
+					{(Object.keys(FILTER_LABELS) as Array<FilterKind>).map((k) => {
 						const active = filter === k
 						return (
 							<button
@@ -294,7 +296,7 @@ function CategorySection({
 	loading
 }: {
 	category: string
-	items: SchemaEntry[]
+	items: Array<SchemaEntry>
 	collapsed: boolean
 	onToggle: () => void
 	loadedByKey: Map<string, RegisteredTable>

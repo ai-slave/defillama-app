@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import {
 	buildBridgeOverviewActiveChart,
@@ -13,7 +13,7 @@ const chainVolumeData = [
 ]
 
 describe('buildBridgeOverviewActiveChart', () => {
-	it('builds net flow from the production raw bridge-volume contract', () => {
+	test('builds net flow from the production raw bridge-volume contract', () => {
 		const formatted = formatBridgeOverviewVolumeData(
 			normalizeBridgeVolumeResponse([
 				{ date: '1', depositUSD: 10, withdrawUSD: 4, depositTxs: 2, withdrawTxs: 1 },
@@ -32,14 +32,14 @@ describe('buildBridgeOverviewActiveChart', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Net Flow'],
 				source: [
-					[1_000, 6],
-					[2_000, null]
+					[1000, 6],
+					[2000, null]
 				]
 			}
 		})
 	})
 
-	it('sums the completed bridge rows for global summary totals', () => {
+	test('sums the completed bridge rows for global summary totals', () => {
 		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
 		const aggregate = Array.from({ length: 30 }, (_, index) => ({
 			date: (Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000) / 1e3,
@@ -60,7 +60,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 		).toEqual({ dayTotalVolume: 5, weekTotalVolume: 50, monthTotalVolume: 500 })
 	})
 
-	it('keeps active bridge totals when another successful bridge has no completed activity', () => {
+	test('keeps active bridge totals when another successful bridge has no completed activity', () => {
 		expect(
 			getBridgeOverviewSummaryTotals({
 				selectedChain: 'All',
@@ -74,15 +74,13 @@ describe('buildBridgeOverviewActiveChart', () => {
 		).toEqual({ dayTotalVolume: 5, weekTotalVolume: 20, monthTotalVolume: 80 })
 	})
 
-	it('uses normalized chain-wide aggregate totals on a chain overview', () => {
+	test('uses normalized chain-wide aggregate totals on a chain overview', () => {
 		const currentTimeMs = Date.parse('2026-07-14T12:00:00Z')
-		const aggregate = [
-			...Array.from({ length: 30 }, (_, index) => ({
-				date: (Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000) / 1e3,
-				Deposits: 10,
-				Withdrawals: -2
-			}))
-		]
+		const aggregate = Array.from({ length: 30 }, (_, index) => ({
+			date: (Date.parse('2026-06-14T00:00:00Z') + index * 86_400_000) / 1e3,
+			Deposits: 10,
+			Withdrawals: -2
+		}))
 
 		expect(
 			getBridgeOverviewSummaryTotals({
@@ -94,7 +92,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 		).toEqual({ dayTotalVolume: 6, weekTotalVolume: 42, monthTotalVolume: 180 })
 	})
 
-	it('skips derived construction for overview and raw volume views', () => {
+	test('skips derived construction for overview and raw volume views', () => {
 		for (const [selectedChain, chartType] of [
 			['All', 'Net Flow'],
 			['Ethereum', 'Bridge Volume']
@@ -103,7 +101,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 		}
 	})
 
-	it('builds the selected time-series view with unchanged values', () => {
+	test('builds the selected time-series view with unchanged values', () => {
 		expect(
 			buildBridgeOverviewActiveChart({ selectedChain: 'Ethereum', chartType: 'Net Flow', chainVolumeData })
 		).toEqual({
@@ -111,8 +109,8 @@ describe('buildBridgeOverviewActiveChart', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Net Flow'],
 				source: [
-					[1_000, 6],
-					[2_000, 0]
+					[1000, 6],
+					[2000, 0]
 				]
 			}
 		})
@@ -124,8 +122,8 @@ describe('buildBridgeOverviewActiveChart', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Inflows', 'Outflows'],
 				source: [
-					[1_000, (10 / 14) * 100, (4 / 14) * 100],
-					[2_000, null, null]
+					[1000, (10 / 14) * 100, (4 / 14) * 100],
+					[2000, null, null]
 				]
 			}
 		})
@@ -137,14 +135,14 @@ describe('buildBridgeOverviewActiveChart', () => {
 			dataset: {
 				dimensions: ['timestamp', 'Deposits', 'Withdrawals'],
 				source: [
-					[1_000, 10, -4],
-					[2_000, 0, 0]
+					[1000, 10, -4],
+					[2000, 0, 0]
 				]
 			}
 		})
 	})
 
-	it('distinguishes unavailable token stats from a known-empty token map', () => {
+	test('distinguishes unavailable token stats from a known-empty token map', () => {
 		expect(
 			buildBridgeOverviewActiveChart({
 				selectedChain: 'Ethereum',
@@ -164,7 +162,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 		expect(knownEmpty.series.peers).toEqual([])
 	})
 
-	it('preserves exact token identities and limits only the selected token direction', () => {
+	test('preserves exact token identities and limits only the selected token direction', () => {
 		const totalTokensDeposited = Object.fromEntries(
 			Array.from({ length: 12 }, (_, index) => [
 				`deposit-${index}`,
@@ -192,7 +190,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 		expect(chartData.at(-1)).toEqual({ name: 'Others', value: 3 })
 	})
 
-	it('builds the selected token direction when the opposite direction is known empty', () => {
+	test('builds the selected token direction when the opposite direction is known empty', () => {
 		const result = buildBridgeOverviewActiveChart({
 			selectedChain: 'Ethereum',
 			chartType: '24h Tokens Deposited',
@@ -207,7 +205,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 		expect(buildRuntimePieChartPresentation({ series: result.series }).chartData).toEqual([{ name: 'USDC', value: 10 }])
 	})
 
-	it('does not render a partial token pie when any USD value is unknown', () => {
+	test('does not render a partial token pie when any USD value is unknown', () => {
 		expect(
 			buildBridgeOverviewActiveChart({
 				selectedChain: 'Ethereum',
@@ -224,7 +222,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 		).toBeNull()
 	})
 
-	it('keeps a source Others slice at the end', () => {
+	test('keeps a source Others slice at the end', () => {
 		const result = buildBridgeOverviewActiveChart({
 			selectedChain: 'Ethereum',
 			chartType: '24h Tokens Deposited',
@@ -245,7 +243,7 @@ describe('buildBridgeOverviewActiveChart', () => {
 		])
 	})
 
-	it('preserves integer-like symbol ordering when values tie', () => {
+	test('preserves integer-like symbol ordering when values tie', () => {
 		const result = buildBridgeOverviewActiveChart({
 			selectedChain: 'Ethereum',
 			chartType: '24h Tokens Deposited',

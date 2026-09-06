@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getDeprecatedChainNames,
 	getDeprecatedChainsByName,
@@ -13,12 +13,12 @@ const chainMetadata: Record<string, IChainMetadata> = {
 }
 
 describe('deprecated chain metadata helpers', () => {
-	it('checks deprecated state by display name', () => {
+	test('checks deprecated state by display name', () => {
 		expect(isDeprecatedChain(chainMetadata, 'ZKsync Lite')).toBe(true)
 		expect(isDeprecatedChain(chainMetadata, 'Ethereum')).toBe(false)
 	})
 
-	it('builds deprecated lookup records from metadata and selected chain names', () => {
+	test('builds deprecated lookup records from metadata and selected chain names', () => {
 		expect(getDeprecatedChainNames(chainMetadata)).toEqual({
 			'ZKsync Lite': true,
 			'SX Network': true

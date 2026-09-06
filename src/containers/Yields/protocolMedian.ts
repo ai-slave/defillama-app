@@ -11,7 +11,7 @@ export interface ProtocolMedianHistoryPoint {
 	pools: number
 }
 
-export async function fetchProtocolMedianHistory(protocol: string): Promise<ProtocolMedianHistoryPoint[]> {
+export async function fetchProtocolMedianHistory(protocol: string): Promise<Array<ProtocolMedianHistoryPoint>> {
 	const response = await fetchJson<ProtocolMedianHistoryResponse>(
 		getYieldsHistoryUrl(`/v2/protocol-median/${encodeURIComponent(protocol)}/history`)
 	)

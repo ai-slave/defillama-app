@@ -114,8 +114,8 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 			})
 			toast.success(`Connected ${repo.full_name}`)
 			dialogStore.hide()
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Failed to connect repository')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to connect repository')
 		}
 	}
 
@@ -132,8 +132,8 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 				return
 			}
 			window.location.href = safeInstallUrl
-		} catch (err) {
-			toast.error(err instanceof Error ? err.message : 'Could not start GitHub install')
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Could not start GitHub install')
 			setInstalling(false)
 		}
 	}

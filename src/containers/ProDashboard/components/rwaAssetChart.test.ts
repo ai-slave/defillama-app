@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
 import { buildProRwaAssetChartSeries } from './rwaAssetChart'
@@ -9,7 +9,7 @@ describe('Pro RWA asset chart series', () => {
 		source: [[1, 2, 3, 4]]
 	}
 
-	it('uses canonical dataset order and visible-series colors for the default metrics', () => {
+	test('uses canonical dataset order and visible-series colors for the default metrics', () => {
 		const source = dataset.source
 
 		expect(buildProRwaAssetChartSeries(dataset, ['activeMcap', 'onChainMcap', 'defiActiveTvl'])).toEqual([
@@ -35,7 +35,7 @@ describe('Pro RWA asset chart series', () => {
 		expect(dataset.source).toBe(source)
 	})
 
-	it('restarts colors for one- and two-metric subsets without projecting rows', () => {
+	test('restarts colors for one- and two-metric subsets without projecting rows', () => {
 		expect(buildProRwaAssetChartSeries(dataset, ['activeMcap'])).toEqual([
 			{
 				type: 'line',

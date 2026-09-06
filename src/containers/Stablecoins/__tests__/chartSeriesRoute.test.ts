@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { getAssetMock, getChainsMock, getOverviewMock } = vi.hoisted(() => ({
@@ -37,7 +37,7 @@ beforeEach(() => {
 })
 
 describe('/api/public/stablecoins/chart-series', () => {
-	it('passes overview filters to the server chart builder', async () => {
+	test('passes overview filters to the server chart builder', async () => {
 		const req = {
 			method: 'GET',
 			query: {
@@ -74,7 +74,7 @@ describe('/api/public/stablecoins/chart-series', () => {
 		expect(res.json).toHaveBeenCalledWith(payload)
 	})
 
-	it('accepts lowercase all as the overview aggregate chain', async () => {
+	test('accepts lowercase all as the overview aggregate chain', async () => {
 		const req = {
 			method: 'GET',
 			query: { scope: 'overview', chain: 'all', chart: 'totalMcap' }
@@ -100,7 +100,7 @@ describe('/api/public/stablecoins/chart-series', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('passes an explicit series selection to the bounded chart builder', async () => {
+	test('passes an explicit series selection to the bounded chart builder', async () => {
 		const req = {
 			method: 'GET',
 			query: {
@@ -121,7 +121,7 @@ describe('/api/public/stablecoins/chart-series', () => {
 		)
 	})
 
-	it('passes a compact exclusion to the bounded chart builder', async () => {
+	test('passes a compact exclusion to the bounded chart builder', async () => {
 		const req = {
 			method: 'GET',
 			query: {
@@ -139,7 +139,7 @@ describe('/api/public/stablecoins/chart-series', () => {
 		expect(getOverviewMock).toHaveBeenCalledWith(expect.objectContaining({ excludedNames: ['USDT'] }))
 	})
 
-	it('preserves an empty exclusion as an explicit select-all intent', async () => {
+	test('preserves an empty exclusion as an explicit select-all intent', async () => {
 		const req = {
 			method: 'GET',
 			query: {
@@ -156,7 +156,7 @@ describe('/api/public/stablecoins/chart-series', () => {
 		expect(getOverviewMock).toHaveBeenCalledWith(expect.objectContaining({ excludedNames: [] }))
 	})
 
-	it('returns 404 when an asset chart is missing', async () => {
+	test('returns 404 when an asset chart is missing', async () => {
 		getAssetMock.mockResolvedValue(null)
 		const req = {
 			method: 'GET',
@@ -170,7 +170,7 @@ describe('/api/public/stablecoins/chart-series', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'stablecoin not found' })
 	})
 
-	it('passes unreleased state to chains chart builder', async () => {
+	test('passes unreleased state to chains chart builder', async () => {
 		const req = {
 			method: 'GET',
 			query: { scope: 'chains', chart: 'dominance', unreleased: 'true' }

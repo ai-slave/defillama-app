@@ -76,7 +76,7 @@ const getProtocolBreakdownMetric = (metric: BuilderMetric): ProtocolBreakdownMet
 	}
 }
 
-async function fetchChartBuilderSeries(config: ChartBuilderConfig['config']): Promise<ChartSeries[]> {
+async function fetchChartBuilderSeries(config: ChartBuilderConfig['config']): Promise<Array<ChartSeries>> {
 	if (config.mode === 'protocol') {
 		const data = await fetchProtocolChainBreakdownData({
 			protocol: config.protocol,
@@ -138,7 +138,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		hasCustomSeriesColors = true
 		break
 	}
-	const groupingOptions: DashboardGrouping[] = ['day', 'week', 'month', 'quarter', 'year']
+	const groupingOptions: Array<DashboardGrouping> = ['day', 'week', 'month', 'quarter', 'year']
 	const chainFilterMode = config.chainFilterMode
 	const categoryFilterMode = config.categoryFilterMode
 	const chainCategoryFilterMode = config.chainCategoryFilterMode
@@ -158,7 +158,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 
 	const streamDone = useContext(StreamDoneContext)
 	const selectChartData = useCallback(
-		(data: { series: ChartSeries[] }) => {
+		(data: { series: Array<ChartSeries> }) => {
 			if (!timePeriod || timePeriod === 'all') return data
 			return {
 				series: data.series.map((series) => ({
@@ -272,11 +272,11 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		mutationFn: async () => {
 			const fileName = `${builder.name || config.metric}_${config.chains.join(
 				'-'
-			)}_${config.categories.length > 0 ? config.categories.join('-') + '_' : ''}${
-				config.chainCategories && config.chainCategories.length > 0 ? config.chainCategories.join('-') + '_' : ''
+			)}_${config.categories.length > 0 ? `${config.categories.join('-')}_` : ''}${
+				config.chainCategories && config.chainCategories.length > 0 ? `${config.chainCategories.join('-')}_` : ''
 			}${
 				config.protocolCategories && config.protocolCategories.length > 0
-					? config.protocolCategories.join('-') + '_'
+					? `${config.protocolCategories.join('-')}_`
 					: ''
 			}${new Date().toISOString().split('T')[0]}.csv`
 			const response = await authorizedFetch('/api/private/pro-dashboard/chart-builder-csv', {
@@ -556,7 +556,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 					</div>
 				) : null}
 				{(() => {
-					const parts: string[] = []
+					const parts: Array<string> = []
 					if (config.mode === 'protocol') {
 						const protoName = config.protocol
 							? getProtocolInfo(config.protocol)?.name || config.protocol
@@ -604,7 +604,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 			{/* A disabled React Query is not "loading", but remains pending until the stream seeds its cache. */}
 			{isChartDataPending ? (
 				<div className="flex flex-1 flex-col items-center justify-center">
-					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-brand"></div>
+					<div className="mx-auto mb-2 size-8 animate-spin rounded-full border-b-2 border-brand" />
 					<p className="text-sm text-pro-text-form">Loading chart...</p>
 				</div>
 			) : hasRenderableData ? (
@@ -627,7 +627,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 												? 'yearly'
 												: 'daily'
 							}
-							hideDataZoom={true}
+							hideDataZoom
 							hideDefaultLegend={false}
 							solidChartAreaStyle={config.chartType === 'stackedArea'}
 							exportButtons="hidden"

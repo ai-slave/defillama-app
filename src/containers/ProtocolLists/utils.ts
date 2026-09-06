@@ -183,11 +183,11 @@ export const applyProtocolTvlSettings = ({
 	minTvl,
 	maxTvl
 }: {
-	protocols: IProtocol[]
+	protocols: Array<IProtocol>
 	extraTvlsEnabled: Record<string, boolean>
 	minTvl: number | null
 	maxTvl: number | null
-}): IProtocol[] => {
+}): Array<IProtocol> => {
 	const nullTvlEntry: MutableTvlEntry = { tvl: null, tvlPrevDay: null, tvlPrevWeek: null, tvlPrevMonth: null }
 	// Use for..in loop instead of Object.values() for better performance
 	let shouldModifyTvl = minTvl !== null || maxTvl !== null
@@ -202,7 +202,7 @@ export const applyProtocolTvlSettings = ({
 
 	if (!shouldModifyTvl) return protocols
 
-	const final: IProtocol[] = []
+	const final: Array<IProtocol> = []
 	const passesTvlBounds = (tvl: number | null): boolean => {
 		if (minTvl === null && maxTvl === null) return true
 		if (tvl === null) return false

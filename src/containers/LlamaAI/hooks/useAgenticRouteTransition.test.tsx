@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useAgenticRouteTransition } from '~/containers/LlamaAI/hooks/useAgenticRouteTransition'
 import type { LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
 
@@ -64,7 +64,7 @@ describe('useAgenticRouteTransition', () => {
 		await act(async () => root.render(<Harness />))
 	}
 
-	it('opens a new chat once for the same route', async () => {
+	test('opens a new chat once for the same route', async () => {
 		expect(mocksApi.onNewChat).toHaveBeenCalledOnce()
 
 		await rerender()
@@ -74,7 +74,7 @@ describe('useAgenticRouteTransition', () => {
 		expect(mocksApi.onClearChat).not.toHaveBeenCalled()
 	})
 
-	it('opens a session and does not restore the same session twice', async () => {
+	test('opens a session and does not restore the same session twice', async () => {
 		mocks.route = { kind: 'chat-session', sessionId: 'session-1' }
 		await rerender()
 
@@ -87,14 +87,14 @@ describe('useAgenticRouteTransition', () => {
 		expect(mocksApi.onOpenSession).toHaveBeenCalledOnce()
 	})
 
-	it('passes a message anchor when opening a session', async () => {
+	test('passes a message anchor when opening a session', async () => {
 		mocks.route = { kind: 'chat-session', sessionId: 'session-1', aroundMessageId: 'message-a' }
 		await rerender()
 
 		expect(mocksApi.onOpenSession).toHaveBeenCalledWith('session-1', 'message-a')
 	})
 
-	it('clears the chat on project and project-list routes', async () => {
+	test('clears the chat on project and project-list routes', async () => {
 		mocks.route = { kind: 'project-list' }
 		await rerender()
 		expect(mocksApi.onClearChat).toHaveBeenCalledOnce()
@@ -104,7 +104,7 @@ describe('useAgenticRouteTransition', () => {
 		expect(mocksApi.onClearChat).toHaveBeenCalledTimes(2)
 	})
 
-	it('clears the chat when the same project URL is clicked again', async () => {
+	test('clears the chat when the same project URL is clicked again', async () => {
 		mocks.route = { kind: 'project', projectId: 'project-1', initialTab: 'chats' }
 		await rerender()
 		expect(mocksApi.onClearChat).toHaveBeenCalledOnce()
@@ -114,7 +114,7 @@ describe('useAgenticRouteTransition', () => {
 		expect(mocksApi.onClearChat).toHaveBeenCalledTimes(2)
 	})
 
-	it('does not treat a project-home signal as a reset on a chat route', async () => {
+	test('does not treat a project-home signal as a reset on a chat route', async () => {
 		mocks.projectHomeSignal = 1
 		await rerender()
 
@@ -122,7 +122,7 @@ describe('useAgenticRouteTransition', () => {
 		expect(mocksApi.onNewChat).toHaveBeenCalledOnce()
 	})
 
-	it('does not run route side effects in read-only or shared views', async () => {
+	test('does not run route side effects in read-only or shared views', async () => {
 		await act(async () => root.unmount())
 		mocksApi.onNewChat.mockReset()
 		mocks.readOnly = true

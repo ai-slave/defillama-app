@@ -21,13 +21,13 @@ const STABLECOIN_BASE_STALE_MS = 20 * 60 * 1000
 
 interface StablecoinChainCandidate {
 	name: string
-	data: [number, number][]
+	data: Array<[number, number]>
 	lastValue: number
 }
 
 interface StablecoinByChainBase {
-	candidates: StablecoinChainCandidate[]
-	totalPairs: [number, number][]
+	candidates: Array<StablecoinChainCandidate>
+	totalPairs: Array<[number, number]>
 }
 
 // Pegged-assets chart dates are Unix-second strings and USD totals are flat peg-type maps.
@@ -46,7 +46,7 @@ async function getStablecoinByChainBaseData(): Promise<StablecoinByChainBase> {
 				timeApiRoutePhase('stablecoin_fetch_aggregate', () => fetchStablecoinChartAllApi()),
 				timeApiRoutePhase('stablecoin_fetch_dominance', () => fetchStablecoinDominanceAllApi())
 			])
-			const candidates: StablecoinChainCandidate[] = []
+			const candidates: Array<StablecoinChainCandidate> = []
 			const candidateStartedAt = Date.now()
 
 			for (const chainName in dominanceJson.chainChartMap) {
@@ -68,11 +68,11 @@ async function getStablecoinByChainBaseData(): Promise<StablecoinByChainBase> {
 }
 
 interface StablecoinChainBreakdownRequest {
-	chains: string[]
+	chains: Array<string>
 	topN: number | null
 	chainFilterMode: 'include' | 'exclude'
 	chainCategoryFilterMode: 'include' | 'exclude'
-	chainCategories: string[]
+	chainCategories: Array<string>
 	includeHistoricalSeries?: boolean
 }
 
@@ -93,7 +93,7 @@ async function getStablecoinByChainBreakdownData({
 					resolveAllowedChainNamesFromCategories(chainCategories)
 				)
 			: null
-	const candidates: StablecoinChainCandidate[] = []
+	const candidates: Array<StablecoinChainCandidate> = []
 	for (const candidate of base.candidates) {
 		if (!includeHistoricalSeries && candidate.lastValue <= 0) continue
 		if (includeSet) {
@@ -124,7 +124,7 @@ async function getStablecoinByChainBreakdownData({
 
 	candidates.sort((a, b) => b.lastValue - a.lastValue)
 	const picked = topN === null ? candidates : candidates.slice(0, Math.min(topN, candidates.length))
-	const pickedSeries: ChartSeries[] = picked.map((entry, index) => {
+	const pickedSeries: Array<ChartSeries> = picked.map((entry, index) => {
 		const color = BREAKDOWN_COLOR_PALETTE[index % BREAKDOWN_COLOR_PALETTE.length]
 		return { name: entry.name, data: entry.data, ...(color === undefined ? {} : { color }) }
 	})
@@ -141,7 +141,7 @@ async function getStablecoinByChainBreakdownData({
 	}
 	const { alignedTopSeries, othersData, allTimestamps } = buildAlignedTopAndOthers(pickedSeries, scopedTotalPairs)
 	const othersCount = Math.max(0, candidates.length - picked.length)
-	const finalSeries: ChartSeries[] = [...alignedTopSeries]
+	const finalSeries: Array<ChartSeries> = [...alignedTopSeries]
 	if (scopedTotalPairs.length > 0 && allTimestamps.length > 0 && othersCount > 0) {
 		let hasOthers = false
 		for (const [, value] of othersData) {

@@ -22,7 +22,7 @@ interface QueueItemBase {
 	client: 'web' | 'mobile'
 	projectId?: string
 	customInstructions?: string
-	blockedSkills?: string[]
+	blockedSkills?: Array<string>
 	queuedAt: string
 }
 
@@ -35,7 +35,7 @@ export type QueuedMessageElement =
 export interface QueueSnapshot {
 	sessionId: string
 	revision: number
-	queue: QueuedMessageElement[]
+	queue: Array<QueuedMessageElement>
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

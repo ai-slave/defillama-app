@@ -54,6 +54,24 @@ baseline. Approximate counts from the Phase 0 measurement.
 Review: read the diff for anything that is not one of the transformations above. Typecheck and the full
 test suite run in CI.
 
+### Fixer hazards found while running Phase 1
+
+- `-D <rule>` on the CLI resets the rule's options to defaults. Running `array-type` that way converted
+  to `T[]`. Drive single-rule fixes through a temporary config that extends `.oxlintrc.json`.
+- `unicorn/prefer-set-has` rewrites the initializer to `new Set(...)` but not the array type annotation.
+  Excluded from autofix; it is a Phase 2 manual fix.
+- `unicorn/catch-error-name` also renames promise rejection handler parameters. A shorthand object key
+  built from the parameter (`(reason) => ({ reason })`) changes meaning, and a renamed parameter can
+  shadow an outer `error`. `no-shadow` caught 12 of these; the test suite caught the shorthand one.
+- `typescript/no-useless-empty-export` removed the `export {}` that makes a `.d.ts` a module, which
+  silently dropped its `declare global` block. The rule is now off for `**/*.d.ts`.
+- `vitest/consistent-test-it` renames `it(...)` calls but not the `import { it } from 'vitest'`
+  specifier. A follow-up script rewrote the imports; without it every test file would fail at runtime.
+- `react/jsx-curly-brace-presence` can unwrap a string containing an apostrophe into an unescaped
+  entity. One site; fixed with `&apos;`.
+- tsgo keeps an incremental `tsconfig.vitest.tsbuildinfo`; delete it when a typecheck result looks
+  stale after reverting a file.
+
 ## Phase 2: mechanical manual fixes, by directory
 
 Each bucket has one right answer per site but needs a human to read the site.

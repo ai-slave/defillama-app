@@ -94,7 +94,7 @@ export function BridgedTVLByChain({
 		const breakdown = category?.breakdown
 		const pieSeries = prepareRuntimePieChartData({ data: breakdown ?? EMPTY_CHAIN_ASSET_BREAKDOWN, limit: 10 })
 
-		const tableData: BridgedChainRow[] = []
+		const tableData: Array<BridgedChainRow> = []
 		if (breakdown) {
 			for (const name in breakdown) {
 				const value = breakdown[name]
@@ -164,7 +164,7 @@ export function BridgedTVLByChain({
 				<SummaryStatsCard gap="sm">
 					<h1 className="mb-3 flex items-center gap-2 heading-sm">
 						<TokenLogo name={chain} kind="chain" size={24} alt={`Logo of ${chain}`} />
-						<FormattedName text={chainName + ' Bridged TVL'} fontWeight={700} />
+						<FormattedName text={`${chainName} Bridged TVL`} fontWeight={700} />
 						{deprecated ? <DeprecatedEntityText /> : null}
 					</h1>
 

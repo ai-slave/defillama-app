@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildArticleAnnotationMarkLine } from '../articleAnnotationMarkLine'
 
 describe('article annotation mark lines', () => {
-	it('preserves annotation-list order and alphabetic labels', () => {
+	test('preserves annotation-list order and alphabetic labels', () => {
 		const markLine = buildArticleAnnotationMarkLine([
 			{ date: '2025-03-01', label: 'Later event' },
 			{ date: '2025-01-01', label: 'Earlier event' }
@@ -17,7 +17,7 @@ describe('article annotation mark lines', () => {
 		expect(markLine.data).toEqual([{ xAxis: Date.parse('2025-03-01') }, { xAxis: Date.parse('2025-01-01') }])
 	})
 
-	it('omits mark-line configuration when there are no annotations', () => {
+	test('omits mark-line configuration when there are no annotations', () => {
 		expect(buildArticleAnnotationMarkLine([])).toBeUndefined()
 	})
 })

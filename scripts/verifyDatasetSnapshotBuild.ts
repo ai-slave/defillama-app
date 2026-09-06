@@ -19,8 +19,8 @@ async function pathExists(filePath: string): Promise<boolean> {
 	}
 }
 
-async function collectFiles(rootDir: string): Promise<string[]> {
-	const files: string[] = []
+async function collectFiles(rootDir: string): Promise<Array<string>> {
+	const files: Array<string> = []
 	for (const entry of await fs.readdir(rootDir, { withFileTypes: true })) {
 		const filePath = path.join(rootDir, entry.name)
 		if (entry.isDirectory()) files.push(...(await collectFiles(filePath)))
@@ -34,7 +34,7 @@ async function main(): Promise<void> {
 	const browserDir = path.join(projectDir, '.next', 'static')
 	if (!(await pathExists(browserDir))) throw new Error('Expected .next/static; run this guard after next build')
 
-	const leaks: string[] = []
+	const leaks: Array<string> = []
 	for (const filePath of await collectFiles(browserDir)) {
 		if (!TEXT_BUNDLE_EXTENSIONS.has(path.extname(filePath))) continue
 		const source = await fs.readFile(filePath, 'utf8').catch(() => '')

@@ -3,7 +3,7 @@ import path from 'node:path'
 import { createSecretRedactor } from './redaction'
 
 export type LogLike = {
-	log: (...args: unknown[]) => void
+	log: (...args: Array<unknown>) => void
 }
 
 export type CommandLogger = LogLike & {
@@ -157,7 +157,7 @@ function formatLogArg(arg: unknown): string {
 	return arg instanceof Error ? (arg.stack ?? arg.message) : String(arg)
 }
 
-function formatLogLine(args: unknown[]): string {
+function formatLogLine(args: Array<unknown>): string {
 	return `${args.map(formatLogArg).join(' ')}\n`
 }
 
@@ -170,8 +170,8 @@ export function createRedactedConsoleLogger(env: NodeJS.ProcessEnv = process.env
 	}
 }
 
-export function createMemoryLogger(): CommandLogger & { output: string[] } {
-	const output: string[] = []
+export function createMemoryLogger(): CommandLogger & { output: Array<string> } {
+	const output: Array<string> = []
 	const write = (chunk: Buffer | string) => {
 		output.push(typeof chunk === 'string' ? chunk : chunk.toString('utf8'))
 	}

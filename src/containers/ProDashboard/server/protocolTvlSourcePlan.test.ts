@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildProtocolValueChartQueryKey } from '~/containers/ProtocolOverview/valueChartSources'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { ProDashboardProtocolCatalog } from '../protocolCatalog'
@@ -13,8 +13,8 @@ const catalog: ProDashboardProtocolCatalog = {
 }
 
 describe('buildProtocolTvlStreamSourcePlan', () => {
-	it('skips unsafe token sources while preserving both chain views', () => {
-		const items: DashboardItemConfig[] = [
+	test('skips unsafe token sources while preserving both chain views', () => {
+		const items: Array<DashboardItemConfig> = [
 			{
 				id: 'borrowed-token',
 				kind: 'advanced-borrowed',
@@ -53,8 +53,8 @@ describe('buildProtocolTvlStreamSourcePlan', () => {
 		])
 	})
 
-	it('seeds the same deduplicated USD and raw keys consumed by raw borrowed charts', () => {
-		const items: DashboardItemConfig[] = [
+	test('seeds the same deduplicated USD and raw keys consumed by raw borrowed charts', () => {
+		const items: Array<DashboardItemConfig> = [
 			{
 				id: 'raw',
 				kind: 'advanced-borrowed',
@@ -87,8 +87,8 @@ describe('buildProtocolTvlStreamSourcePlan', () => {
 		}
 	})
 
-	it('keeps sources enabled when catalog metadata is unavailable', () => {
-		const items: DashboardItemConfig[] = [
+	test('keeps sources enabled when catalog metadata is unavailable', () => {
+		const items: Array<DashboardItemConfig> = [
 			{
 				id: 'raw',
 				kind: 'advanced-borrowed',

@@ -5,7 +5,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 
 type Props = {
-	reports: SponsoredResearchReportSummary[] | null | undefined
+	reports: Array<SponsoredResearchReportSummary> | null | undefined
 	entityType: ResearchSponsorEntityType
 	entitySlug: string
 	layout?: 'stacked' | 'grid'

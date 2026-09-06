@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildCompleteStablecoinAssetCsvDataset, buildStablecoinAssetPresentation } from './useStablecoinAssetChartData'
 
 const day = 86_400
@@ -19,7 +19,7 @@ const rawData = {
 }
 
 describe('buildStablecoinAssetPresentation', () => {
-	it('constructs only the requested canonical history presentation', () => {
+	test('constructs only the requested canonical history presentation', () => {
 		const total = buildStablecoinAssetPresentation(rawData, 'totalCirc')
 		const area = buildStablecoinAssetPresentation(rawData, 'chainMcaps')
 		const dominance = buildStablecoinAssetPresentation(rawData, 'chainDominance')
@@ -50,7 +50,7 @@ describe('buildStablecoinAssetPresentation', () => {
 		}
 	})
 
-	it('builds a pie from the latest sparse point inside the active period', () => {
+	test('builds a pie from the latest sparse point inside the active period', () => {
 		const secondDate = firstDate + day
 		const result = buildStablecoinAssetPresentation(rawData, 'chainPie', {
 			start: firstDate,
@@ -68,7 +68,7 @@ describe('buildStablecoinAssetPresentation', () => {
 		})
 	})
 
-	it('renormalizes dominance to the selected chain set', () => {
+	test('renormalizes dominance to the selected chain set', () => {
 		const result = buildStablecoinAssetPresentation(rawData, 'chainDominance', null, {
 			selectedNames: ['Ethereum']
 		})
@@ -83,7 +83,7 @@ describe('buildStablecoinAssetPresentation', () => {
 		expect(completeCsvDataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Base'])
 	})
 
-	it('returns an empty snapshot when the active period has no points', () => {
+	test('returns an empty snapshot when the active period has no points', () => {
 		expect(
 			buildStablecoinAssetPresentation(rawData, 'chainPie', {
 				start: firstDate - 2 * day,

@@ -67,7 +67,7 @@ export interface QueueMessagePayload {
 	client: 'web' | 'mobile'
 	projectId?: string
 	customInstructions?: string
-	blockedSkills?: string[]
+	blockedSkills?: Array<string>
 }
 
 export async function queueMessage(

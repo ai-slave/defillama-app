@@ -2,7 +2,7 @@ import { fetchCexs } from './api'
 import type { ICex } from './types'
 
 interface CexsPageData {
-	cexs: ICex[]
+	cexs: Array<ICex>
 }
 
 export async function getCexsPageData(): Promise<CexsPageData> {
@@ -11,11 +11,11 @@ export async function getCexsPageData(): Promise<CexsPageData> {
 		import('./server/routes')
 	])
 	const [data, metadataCache] = await Promise.all([fetchCexs(), getMetadataCache()])
-	const cexs: ICex[] = []
+	const cexs: Array<ICex> = []
 
 	for (const c of data.cexs) {
 		const cexRoute = c.slug ? resolveCexParamFromMetadata(c.slug, metadataCache) : null
-		const tokensToExclude: string[] = []
+		const tokensToExclude: Array<string> = []
 		if (c.coinSymbol) tokensToExclude.push(c.coinSymbol)
 		if (c.ownTokens) {
 			for (const token of c.ownTokens) {

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { addRouteTelemetryAttributesMock } = vi.hoisted(() => ({
 	addRouteTelemetryAttributesMock: vi.fn()
@@ -16,7 +16,7 @@ describe('dimension adapter route telemetry', () => {
 		addRouteTelemetryAttributesMock.mockReset()
 	})
 
-	it('adds shared dimension chain route attributes', () => {
+	test('adds shared dimension chain route attributes', () => {
 		addDimensionChainRouteTelemetry({
 			adapterType: ADAPTER_TYPES.FEES,
 			chain: 'Litecoin',
@@ -34,7 +34,7 @@ describe('dimension adapter route telemetry', () => {
 		})
 	})
 
-	it('omits data_type when the route does not define one', () => {
+	test('omits data_type when the route does not define one', () => {
 		addDimensionChainRouteTelemetry({
 			adapterType: ADAPTER_TYPES.FEES,
 			chain: 'Ethereum',

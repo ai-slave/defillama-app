@@ -62,7 +62,7 @@ export function filterCsvByDateRange(csv: string, range: DateRangeConfig | null 
 	const dateIdx = headers.indexOf('date')
 	if (dateIdx === -1) return csv
 
-	const kept: string[] = [headerLine]
+	const kept: Array<string> = [headerLine]
 	for (let i = 1; i < lines.length; i++) {
 		const line = lines[i]
 		if (!line.trim()) continue
@@ -82,14 +82,14 @@ export function filterCsvByDateRange(csv: string, range: DateRangeConfig | null 
  * where rows have already been parsed — cheaper than re-parsing.
  */
 export function filterParsedRowsByDateRange<T extends ParsedCsvRow>(
-	rows: readonly T[],
+	rows: ReadonlyArray<T>,
 	dateColIndex: number,
 	range: DateRangeConfig | null | undefined
-): T[] {
+): Array<T> {
 	const window = resolveDateRange(range)
 	if (!window) return rows.slice()
 	if (dateColIndex < 0) return rows.slice()
-	const result: T[] = []
+	const result: Array<T> = []
 	for (const row of rows) {
 		const value = row.values[dateColIndex]
 		if (!value) continue

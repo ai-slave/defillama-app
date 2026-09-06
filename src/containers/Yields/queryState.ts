@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { parseExcludeParam, parseNumberQueryParam } from '~/utils/routerQuery'
 
 export interface DecodeYieldsQueryContext {
@@ -13,10 +13,10 @@ export interface DecodeYieldsQueryContext {
 }
 
 export interface DecodedYieldsQuery {
-	selectedProjects: string[]
-	selectedChains: string[]
-	selectedAttributes: string[]
-	selectedCategories: string[]
+	selectedProjects: Array<string>
+	selectedChains: Array<string>
+	selectedAttributes: Array<string>
+	selectedCategories: Array<string>
 	minTvl: number | null
 	maxTvl: number | null
 	minApy: number | null
@@ -24,9 +24,9 @@ export interface DecodedYieldsQuery {
 }
 
 type QueryUpdatePrimitive = string | number | boolean
-type QueryUpdateValue = QueryUpdatePrimitive | QueryUpdatePrimitive[] | undefined
+type QueryUpdateValue = QueryUpdatePrimitive | Array<QueryUpdatePrimitive> | undefined
 
-export function selectedSubsetQuery(selected: string[], all: string[]): string[] | undefined {
+export function selectedSubsetQuery(selected: Array<string>, all: Array<string>): Array<string> | undefined {
 	// An empty vocabulary means page metadata is unavailable, not that the user
 	// explicitly deselected every known option. Preserve explicit URL selections,
 	// but let a selection-less request recover through the unfiltered dataset API.
@@ -35,19 +35,19 @@ export function selectedSubsetQuery(selected: string[], all: string[]): string[]
 	return selected.length === 0 ? ['__none__'] : selected
 }
 
-function toQueryArray(value: ParsedUrlQuery[string]): string[] {
+function toQueryArray(value: ParsedUrlQuery[string]): Array<string> {
 	if (typeof value === 'string') return [value]
 	return Array.isArray(value) ? [...value] : []
 }
 
 function decodeQuerySelection(
 	queryValue: ParsedUrlQuery[string],
-	allValues?: string[],
+	allValues?: Array<string>,
 	excludeValue?: ParsedUrlQuery[string]
-): string[] {
+): Array<string> {
 	if (!allValues) return []
 
-	let selectedValues: string[]
+	let selectedValues: Array<string>
 	if (queryValue) {
 		if (typeof queryValue === 'string') {
 			selectedValues = queryValue === 'All' ? [...allValues] : queryValue === 'None' ? [] : [queryValue]
@@ -61,7 +61,7 @@ function decodeQuerySelection(
 	const excludedSet = parseExcludeParam(excludeValue)
 	if (excludedSet.size === 0) return selectedValues
 
-	const filteredValues: string[] = []
+	const filteredValues: Array<string> = []
 	for (const value of selectedValues) {
 		if (!excludedSet.has(value)) filteredValues.push(value)
 	}
@@ -84,7 +84,7 @@ export function decodeYieldsQuery(
 	const selectedProjects = decodeQuerySelection(query[projectQueryKey], projectList, query[excludeProjectQueryKey])
 	const selectedCategories = decodeQuerySelection(query.category, categoryList, query.excludeCategory)
 
-	let selectedChains: string[] = []
+	let selectedChains: Array<string> = []
 	if (chainList) {
 		const isEvmChain = (chain: string) => evmChainsSet.has(chain) || evmChainsSet.has(chain.toLowerCase())
 		if (query.chain) {
@@ -118,7 +118,7 @@ export function decodeYieldsQuery(
 
 		const excludedChainSet = parseExcludeParam(query.excludeChain)
 		if (excludedChainSet.size > 0) {
-			const filteredChains: string[] = []
+			const filteredChains: Array<string> = []
 			for (const chain of selectedChains) {
 				if (!excludedChainSet.has(chain)) filteredChains.push(chain)
 			}
@@ -126,7 +126,7 @@ export function decodeYieldsQuery(
 		}
 	}
 
-	const selectedAttributes: string[] = []
+	const selectedAttributes: Array<string> = []
 	const excludedAttributeSet = parseExcludeParam(query.excludeAttribute)
 	for (const attribute of toQueryArray(query.attribute)) {
 		if (!excludedAttributeSet.has(attribute)) selectedAttributes.push(attribute)

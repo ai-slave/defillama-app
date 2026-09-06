@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildBridgedColumns } from './BridgedTVLChainsList'
 import type { IBridgedRow } from './types'
 
-function columnIds(rows: IBridgedRow[]): string[] {
+function columnIds(rows: Array<IBridgedRow>): Array<string> {
 	return buildBridgedColumns(rows).map((column) => column.id ?? '')
 }
 
@@ -19,11 +19,11 @@ const fiveSectionRow: IBridgedRow = {
 }
 
 describe('bridged chains columns', () => {
-	it('renders no column for a section the producer never reports', () => {
+	test('renders no column for a section the producer never reports', () => {
 		expect(columnIds([fiveSectionRow])).toEqual(['name', 'total', 'native', 'canonical', 'ownTokens', 'thirdParty'])
 	})
 
-	it('adds the v2-only columns once the producer reports them, keeping the original order first', () => {
+	test('adds the v2-only columns once the producer reports them, keeping the original order first', () => {
 		const eightSectionRow: IBridgedRow = {
 			...fiveSectionRow,
 			stablecoins: category,
@@ -44,7 +44,7 @@ describe('bridged chains columns', () => {
 		])
 	})
 
-	it('keeps a column reported by only one chain during a partial rollout', () => {
+	test('keeps a column reported by only one chain during a partial rollout', () => {
 		const rwaOnly: IBridgedRow = { ...fiveSectionRow, name: 'Base', rwa: category }
 
 		expect(columnIds([fiveSectionRow, rwaOnly])).toContain('rwa')

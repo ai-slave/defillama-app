@@ -2,12 +2,12 @@ import type { MultiSeriesChartArrayRow, MultiSeriesChartDataset, MultiSeriesChar
 
 type PreparedMultiSeriesDataset = {
 	dimensions: Array<{ name: string; displayName?: string }>
-	logicalDimensions: string[]
-	source: MultiSeriesChartArrayRow[]
-	charts: MultiSeriesChartSeriesConfig[]
+	logicalDimensions: Array<string>
+	source: Array<MultiSeriesChartArrayRow>
+	charts: Array<MultiSeriesChartSeriesConfig>
 }
 
-function buildDimensionIndex(dimensions: string[]): Map<string, number> {
+function buildDimensionIndex(dimensions: Array<string>): Map<string, number> {
 	const index = new Map<string, number>()
 	for (const [dimensionIndex, dimension] of dimensions.entries()) {
 		// String encodes have always selected the first matching display label.
@@ -19,7 +19,7 @@ function buildDimensionIndex(dimensions: string[]): Map<string, number> {
 function dimensionIndexes(
 	encoded: MultiSeriesChartSeriesConfig['encode']['x'],
 	dimensionIndex: Map<string, number> | undefined
-): number[] {
+): Array<number> {
 	const values = Array.isArray(encoded) ? encoded : [encoded]
 	return values.map((value) => (typeof value === 'number' ? value : (dimensionIndex?.get(value) ?? -1)))
 }
@@ -41,7 +41,7 @@ function usesOnlyNumericEncodes(chart: MultiSeriesChartSeriesConfig) {
 /** Assign private ECharts dimensions without copying history when only series visibility changes. */
 export function prepareMultiSeriesDataset(
 	dataset: MultiSeriesChartDataset,
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 ): PreparedMultiSeriesDataset {
 	const allNumericEncodes = charts.every(usesOnlyNumericEncodes)
 	const dimensionIndex = allNumericEncodes ? undefined : buildDimensionIndex(dataset.dimensions)

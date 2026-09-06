@@ -11,10 +11,10 @@ export function getChartBuilderSeriesLimit(query: ApiQuery, fallback: number): n
 }
 
 interface ChartBuilderFilters {
-	chains?: readonly string[]
-	categories?: readonly string[]
-	chainCategories?: readonly string[]
-	protocolCategories?: readonly string[]
+	chains?: ReadonlyArray<string>
+	categories?: ReadonlyArray<string>
+	chainCategories?: ReadonlyArray<string>
+	protocolCategories?: ReadonlyArray<string>
 	protocol?: string | undefined
 }
 
@@ -46,7 +46,10 @@ export function validateChartBuilderFilters({
 	return null
 }
 
-export function validateCategoryChainFanOut(categories: readonly string[], chains: readonly string[]): string | null {
+export function validateCategoryChainFanOut(
+	categories: ReadonlyArray<string>,
+	chains: ReadonlyArray<string>
+): string | null {
 	return categories.length * Math.max(chains.length, 1) > MAX_CATEGORY_CHAIN_REQUESTS
 		? `categories and chains may require at most ${MAX_CATEGORY_CHAIN_REQUESTS} upstream requests`
 		: null

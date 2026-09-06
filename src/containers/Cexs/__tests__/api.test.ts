@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchJson: vi.fn(),
@@ -21,7 +21,7 @@ beforeEach(() => {
 })
 
 describe('cex api', () => {
-	it('requests exchange inflows through the batch proxy', async () => {
+	test('requests exchange inflows through the batch proxy', async () => {
 		const api = await import('../api')
 		const response = {
 			'binance-cex': { outflows: 100, oldTokens: { tvl: {} }, currentTokens: { tvl: {} } }
@@ -48,7 +48,7 @@ describe('cex api', () => {
 		})
 	})
 
-	it('keeps a failed batch unavailable without issuing per-exchange requests', async () => {
+	test('keeps a failed batch unavailable without issuing per-exchange requests', async () => {
 		const api = await import('../api')
 		const authorizedFetch = vi
 			.fn()
@@ -69,7 +69,7 @@ describe('cex api', () => {
 		expect(authorizedFetch).toHaveBeenCalledTimes(1)
 	})
 
-	it('splits more than 100 CEXs and merges every successful batch', async () => {
+	test('splits more than 100 CEXs and merges every successful batch', async () => {
 		const api = await import('../api')
 		const cexs = Array.from({ length: 101 }, (_, index) => ({
 			cexProtocolSlug: `cex-${index}`,
@@ -104,7 +104,7 @@ describe('cex api', () => {
 		})
 	})
 
-	it('keeps all chunked inflows unavailable when one batch fails', async () => {
+	test('keeps all chunked inflows unavailable when one batch fails', async () => {
 		const api = await import('../api')
 		const cexs = Array.from({ length: 101 }, (_, index) => ({
 			cexProtocolSlug: `cex-${index}`,

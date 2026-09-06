@@ -90,7 +90,7 @@ function parseNumericValue(value: string): number | null {
 	return Number.isFinite(parsed) ? parsed : null
 }
 
-function detectColumnKind(header: string, values: string[]): ColumnKind {
+function detectColumnKind(header: string, values: Array<string>): ColumnKind {
 	const sample = values.filter((v) => v.trim()).slice(0, COLUMN_DETECTION_SAMPLE_SIZE)
 	if (sample.length === 0) return 'text'
 	const numericMatches = sample.filter((v) => parseNumericValue(v) !== null).length
@@ -106,7 +106,7 @@ function detectColumnKind(header: string, values: string[]): ColumnKind {
 	return 'text'
 }
 
-function getColumnWidth(header: string, kind: ColumnKind, values: string[], isFirst: boolean): number {
+function getColumnWidth(header: string, kind: ColumnKind, values: Array<string>, isFirst: boolean): number {
 	const sampleMaxLength = values
 		.slice(0, COLUMN_WIDTH_SAMPLE_SIZE)
 		.reduce((max, v) => Math.max(max, v.length), header.length)
@@ -149,13 +149,17 @@ function getInitialSortDirection(kind: ColumnKind): SortDirection {
 	return kind === 'text' ? 'asc' : 'desc'
 }
 
-function buildSelectedCsvRows(columns: ColumnMeta[], selected: Set<number>, rows: PreviewRow[]): string[][] {
+function buildSelectedCsvRows(
+	columns: Array<ColumnMeta>,
+	selected: Set<number>,
+	rows: Array<PreviewRow>
+): Array<Array<string>> {
 	const active = columns.filter((c) => selected.has(c.index))
 	if (active.length === 0) return []
 	return [active.map((c) => c.header), ...rows.map((row) => active.map((c) => row.values[c.index] ?? ''))]
 }
 
-function buildTsvString(columns: ColumnMeta[], selected: Set<number>, rows: PreviewRow[]): string {
+function buildTsvString(columns: Array<ColumnMeta>, selected: Set<number>, rows: Array<PreviewRow>): string {
 	const active = columns.filter((c) => selected.has(c.index))
 	if (active.length === 0) return ''
 	const header = active.map((c) => c.header).join('\t')
@@ -370,7 +374,7 @@ export function ChartDatasetModal({
 	}, [sumModeActive, rawCsvQueries, sumColumnLabel])
 
 	const { headers, rows } = useMemo(() => {
-		if (!csvText) return { headers: [] as string[], rows: [] as PreviewRow[] }
+		if (!csvText) return { headers: [] as Array<string>, rows: [] as Array<PreviewRow> }
 		return parseCsv(csvText)
 	}, [csvText])
 
@@ -385,7 +389,7 @@ export function ChartDatasetModal({
 		const optionBySlug = new Map<string, ParamOption>()
 		for (const opt of options) optionBySlug.set(opt.value, opt)
 
-		const chipsFromCsv: ParamOption[] = []
+		const chipsFromCsv: Array<ParamOption> = []
 		for (const h of headers) {
 			if (h === 'date') continue
 			const slug = toSlug(h)
@@ -699,7 +703,7 @@ export function ChartDatasetModal({
 	}, [isCategoryMode])
 
 	const handleAddMultipleParams = useCallback(
-		(opts: ParamOption[]) => {
+		(opts: Array<ParamOption>) => {
 			setSelectedParams((prev) => {
 				const existing = new Set(prev.map((p) => p.value))
 				const toAdd = opts.filter((o) => !existing.has(o.value))
@@ -845,7 +849,7 @@ export function ChartDatasetModal({
 				}
 				const rowsForDownload = filterParsedRowsByDateRange(parsed.rows, parsedDateIdx, dateRange)
 				const outHeader = ['date', parsed.headers[parsedColIdx]]
-				const allRows: string[][] = [outHeader]
+				const allRows: Array<Array<string>> = [outHeader]
 				for (const r of rowsForDownload) {
 					const date = r.values[parsedDateIdx] ?? ''
 					const value = r.values[parsedColIdx] ?? ''
@@ -886,7 +890,7 @@ export function ChartDatasetModal({
 			}
 			const filename = `${dataset.slug}_${param.value}.${format}`
 
-			let downloadedHeaders: string[] | null = null
+			let downloadedHeaders: Array<string> | null = null
 			let downloadedCols: Set<number> | null = null
 			let downloadedSort: SortState | null = null
 
@@ -908,7 +912,7 @@ export function ChartDatasetModal({
 					toast.error('No rows to download')
 					return
 				}
-				const allRows: string[][] = [
+				const allRows: Array<Array<string>> = [
 					parsed.headers,
 					...rowsForDownload.map((r) => parsed.headers.map((_, i) => r.values[i] ?? ''))
 				]
@@ -1602,10 +1606,10 @@ function PlaceholderRows({
 	rows,
 	cols
 }: {
-	columnMeta: ColumnMeta[]
+	columnMeta: Array<ColumnMeta>
 	gridTemplate: string
 	tableWidth: number
-	rows: PreviewRow[]
+	rows: Array<PreviewRow>
 	cols: Set<number>
 }) {
 	if (rows.length === 0) return null
@@ -1745,7 +1749,7 @@ function MultiOptionPickerPopover({
 	selected: Array<ParamOption>
 	onToggle: (option: ParamOption) => void
 	onClearAll: () => void
-	onAddMultiple: (options: ParamOption[]) => void
+	onAddMultiple: (options: Array<ParamOption>) => void
 	maxSelections: number
 }) {
 	const popoverStore = Ariakit.usePopoverStore()
@@ -1867,7 +1871,7 @@ function ColumnPickerPopover({
 	onToggle,
 	onToggleAll
 }: {
-	columns: ColumnMeta[]
+	columns: Array<ColumnMeta>
 	selected: Set<number>
 	allSelected: boolean
 	onToggle: (index: number) => void

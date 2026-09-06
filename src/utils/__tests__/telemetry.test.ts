@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 import { fetchJson } from '../async'
 import { fetchWithPoolingOnServer } from '../http-client'
@@ -48,7 +48,7 @@ function sentBatches(fetchMock: ReturnType<typeof vi.fn>) {
 		.map(([, init]) => JSON.parse(String((init as RequestInit).body)))
 }
 
-function sentEvents(fetchMock: ReturnType<typeof vi.fn>): TelemetryEvent[] {
+function sentEvents(fetchMock: ReturnType<typeof vi.fn>): Array<TelemetryEvent> {
 	const batches = sentBatches(fetchMock)
 	return batches.flatMap((batch) => batch.events)
 }
@@ -84,7 +84,7 @@ describe('telemetry client', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('drops oldest queued events when the queue cap is exceeded', async () => {
+	test('drops oldest queued events when the queue cap is exceeded', async () => {
 		vi.stubEnv('OPS_TELEMETRY_QUEUE_MAX', '3')
 		const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -109,7 +109,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('uses the Coolify source commit as the producer service version', async () => {
+	test('uses the Coolify source commit as the producer service version', async () => {
 		vi.stubEnv('GITHUB_SHA', 'github-sha')
 		vi.stubEnv('SOURCE_COMMIT', 'coolify-sha')
 		const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 204 }))
@@ -128,7 +128,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('skips blank source commit env vars in producer service version fallback', async () => {
+	test('skips blank source commit env vars in producer service version fallback', async () => {
 		vi.stubEnv('GITHUB_SHA', 'github-sha')
 		vi.stubEnv('SOURCE_COMMIT', '')
 		const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 204 }))
@@ -142,7 +142,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('uses the configured telemetry target id on emitted events', async () => {
+	test('uses the configured telemetry target id on emitted events', async () => {
 		vi.stubEnv('OPS_TELEMETRY_TARGET_ID', 'defillama-ayo3')
 		const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -155,7 +155,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('reuses the idempotency key for retries and opens the circuit after failures', async () => {
+	test('reuses the idempotency key for retries and opens the circuit after failures', async () => {
 		const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => new Response(null, { status: 500 }))
 		vi.stubGlobal('fetch', fetchMock)
 
@@ -183,7 +183,7 @@ describe('telemetry client', () => {
 		expect(telemetryTest.circuitOpenUntil()).toBeGreaterThan(Date.now())
 	})
 
-	it('creates unique static route traces and page build finish ticks', async () => {
+	test('creates unique static route traces and page build finish ticks', async () => {
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
 
@@ -220,7 +220,7 @@ describe('telemetry client', () => {
 		expect(ticks[1]).toMatchObject({ parent_span_id: routes[1].span_id, route: '/second' })
 	})
 
-	it('records static notFound results as successful 404s with reasons', async () => {
+	test('records static notFound results as successful 404s with reasons', async () => {
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
 
@@ -262,7 +262,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('merges dimension route attributes into failed route and runtime telemetry', async () => {
+	test('merges dimension route attributes into failed route and runtime telemetry', async () => {
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
 
@@ -308,7 +308,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('marks large page build finish gaps', async () => {
+	test('marks large page build finish gaps', async () => {
 		vi.useFakeTimers()
 		vi.setSystemTime(new Date('2026-04-27T00:00:00.000Z'))
 		vi.stubEnv('OPS_TELEMETRY_LARGE_PAGE_BUILD_GAP_MS', '30000')
@@ -323,12 +323,12 @@ describe('telemetry client', () => {
 		const ticks = sentEvents(fetchMock).filter((event) => event.type === 'page_build_finish_tick')
 		expect(ticks[1]).toMatchObject({
 			route: '/second',
-			gap_ms: 31000,
+			gap_ms: 31_000,
 			attributes: { large_gap: true }
 		})
 	})
 
-	it('records server-side props telemetry with request path, status, props size, and errors', async () => {
+	test('records server-side props telemetry with request path, status, props size, and errors', async () => {
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
 
@@ -401,7 +401,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('sanitizes server-side props request paths, params, and query attributes', async () => {
+	test('sanitizes server-side props request paths, params, and query attributes', async () => {
 		vi.stubEnv('API_KEY', 'ssr-secret')
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -428,7 +428,7 @@ describe('telemetry client', () => {
 		expect(JSON.stringify(route)).not.toContain('abcdefghijklmnopqrstuvwxyz123456')
 	})
 
-	it('redacts connection strings from error messages and stacks', async () => {
+	test('redacts connection strings from error messages and stacks', async () => {
 		const redisUrl = 'redis://cache-user:cache-password@cache.internal:6379'
 		vi.stubEnv('REDIS_URL', redisUrl)
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
@@ -454,7 +454,7 @@ describe('telemetry client', () => {
 		expect(JSON.stringify(events)).not.toContain('cache-password')
 	})
 
-	it('redacts secrets from domain event attributes at the queue boundary', async () => {
+	test('redacts secrets from domain event attributes at the queue boundary', async () => {
 		const redisUrl = 'redis://cache-user:cache-password@cache.internal:6379'
 		vi.stubEnv('REDIS_URL', redisUrl)
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
@@ -476,7 +476,7 @@ describe('telemetry client', () => {
 		expect(JSON.stringify(events)).not.toContain('cache-password')
 	})
 
-	it('records API route JSON, send, write/end byte counts, status, and errors', async () => {
+	test('records API route JSON, send, write/end byte counts, status, and errors', async () => {
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
 
@@ -518,7 +518,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('sanitizes API request paths and query attributes', async () => {
+	test('sanitizes API request paths and query attributes', async () => {
 		vi.stubEnv('API_KEY', 'route-secret')
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -538,7 +538,7 @@ describe('telemetry client', () => {
 		expect(JSON.stringify(route)).not.toContain('route-secret')
 	})
 
-	it('records domain events on the active route trace', async () => {
+	test('records domain events on the active route trace', async () => {
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
 
@@ -564,7 +564,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('records build and metadata marker domain events outside route traces', async () => {
+	test('records build and metadata marker domain events outside route traces', async () => {
 		const fetchMock = vi.fn(async () => new Response(null, { status: 204 }))
 		vi.stubGlobal('fetch', fetchMock)
 
@@ -596,7 +596,7 @@ describe('telemetry client', () => {
 		)
 	})
 
-	it('links outbound fetch events to the active route span', async () => {
+	test('links outbound fetch events to the active route span', async () => {
 		const fetchMock = vi.fn(async (url: string) => {
 			if (url === 'https://api.llama.fi/test') {
 				return new Response('{"ok":true}', {
@@ -645,7 +645,7 @@ describe('telemetry client', () => {
 		expect(outbound).not.toHaveProperty('apiGroup')
 	})
 
-	it('records custom outbound telemetry attributes', async () => {
+	test('records custom outbound telemetry attributes', async () => {
 		const fetchMock = vi.fn(async (url: string) => {
 			if (url === 'https://api.llama.fi/v2/chart/dexs/chain/litecoin?dataType=dailyVolume') {
 				return new Response('[]', {
@@ -694,7 +694,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('does not record malformed outbound content-length values as response bytes', async () => {
+	test('does not record malformed outbound content-length values as response bytes', async () => {
 		const responseHeadersByUrl = new Map([
 			['https://api.llama.fi/negative-length', '-1'],
 			['https://api.llama.fi/decimal-length', '1.5'],
@@ -735,7 +735,7 @@ describe('telemetry client', () => {
 		}
 	})
 
-	it('resolves relative server fetch URLs before pooling and telemetry', async () => {
+	test('resolves relative server fetch URLs before pooling and telemetry', async () => {
 		vi.stubEnv('SITE_URL', 'https://defillama.test')
 		const fetchMock = vi.fn(async (url: string) => {
 			if (url === 'https://defillama.test/api/test?x=1') return new Response('{}', { status: 200 })
@@ -765,7 +765,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('propagates caller abort signals through server fetch timeouts', async () => {
+	test('propagates caller abort signals through server fetch timeouts', async () => {
 		const controller = new AbortController()
 		const fetchState: { signal?: AbortSignal } = {}
 		const fetchMock = vi.fn(
@@ -792,7 +792,7 @@ describe('telemetry client', () => {
 		expect(signal.aborted).toBe(true)
 	})
 
-	it('passes an already-aborted caller signal to fetch as aborted', async () => {
+	test('passes an already-aborted caller signal to fetch as aborted', async () => {
 		const controller = new AbortController()
 		controller.abort()
 		const fetchMock = vi.fn(async (_url: string, init: RequestInit) => {
@@ -809,7 +809,7 @@ describe('telemetry client', () => {
 		).rejects.toThrow('Aborted')
 	})
 
-	it('records sanitized POST bodies for own server requests', async () => {
+	test('records sanitized POST bodies for own server requests', async () => {
 		vi.stubEnv('API_KEY', 'llama-secret')
 		vi.stubEnv('CG_KEY', 'coingecko-secret')
 		const fetchMock = vi.fn(async (url: string) => {
@@ -858,7 +858,7 @@ describe('telemetry client', () => {
 		expect(JSON.stringify(outbound)).not.toContain('coingecko-secret')
 	})
 
-	it('records request attributes when an own server POST fails before a response', async () => {
+	test('records request attributes when an own server POST fails before a response', async () => {
 		vi.stubEnv('API_KEY', 'failed-secret')
 		const fetchMock = vi.fn(async (url: string) => {
 			if (url === process.env.OPS_TELEMETRY_URL) return new Response(null, { status: 204 })
@@ -902,7 +902,7 @@ describe('telemetry client', () => {
 		expect(JSON.stringify(outbound)).not.toContain('failed-secret')
 	})
 
-	it('records timeout failures as outbound events without duplicating outbound runtime errors', async () => {
+	test('records timeout failures as outbound events without duplicating outbound runtime errors', async () => {
 		const fetchMock = vi.fn(async (url: string) => {
 			if (url === process.env.OPS_TELEMETRY_URL) return new Response(null, { status: 204 })
 			throw new DOMException('The operation was aborted.', 'AbortError')
@@ -932,7 +932,7 @@ describe('telemetry client', () => {
 		expect(events).not.toContainEqual(expect.objectContaining({ type: 'runtime_error', phase: 'outboundFetch' }))
 	})
 
-	it('redacts JSON body keys before truncating large request bodies', async () => {
+	test('redacts JSON body keys before truncating large request bodies', async () => {
 		vi.stubEnv('OPS_TELEMETRY_REQUEST_BODY_MAX_BYTES', '80')
 		const fetchMock = vi.fn(async (url: string) => {
 			if (url.startsWith('https://api.llama.fi/')) return new Response('{}', { status: 200 })
@@ -971,7 +971,7 @@ describe('telemetry client', () => {
 		expect(JSON.stringify(outbound)).not.toContain('also-not-in-env-secret')
 	})
 
-	it('links outbound spans from static, SSR, and API route contexts', async () => {
+	test('links outbound spans from static, SSR, and API route contexts', async () => {
 		const fetchMock = vi.fn(async (url: string) => {
 			if (url.startsWith('https://api.llama.fi/')) return new Response('{}', { status: 200 })
 			return new Response(null, { status: 204 })
@@ -1004,7 +1004,7 @@ describe('telemetry client', () => {
 		}
 	})
 
-	it('does not link outbound spans started outside route telemetry', async () => {
+	test('does not link outbound spans started outside route telemetry', async () => {
 		const fetchMock = vi.fn(async (url: string) => {
 			if (url.startsWith('https://api.llama.fi/')) return new Response('{}', { status: 200 })
 			return new Response(null, { status: 204 })
@@ -1028,7 +1028,7 @@ describe('telemetry client', () => {
 		})
 	})
 
-	it('records retry attempt metadata for each outbound fetch attempt', async () => {
+	test('records retry attempt metadata for each outbound fetch attempt', async () => {
 		let upstreamCalls = 0
 		const fetchMock = vi.fn(async (url: string) => {
 			if (url === 'https://api.llama.fi/retry') {
@@ -1053,7 +1053,7 @@ describe('telemetry client', () => {
 		expect(outbound.map((event) => event.status)).toEqual(['http_error', 'success'])
 	})
 
-	it('records the singleflight leader role on outbound fetch telemetry', async () => {
+	test('records the singleflight leader role on outbound fetch telemetry', async () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT', '1')
 		vi.stubEnv('SERVER_FETCH_JSON_TIMEOUT_MS', '1000')
 		let upstreamCalls = 0

@@ -158,6 +158,13 @@
 			}
 		},
 		{
+			// `export {}` is what makes a declaration file a module, so its `declare global` block applies.
+			"files": ["**/*.d.ts"],
+			"rules": {
+				"typescript/no-useless-empty-export": "off"
+			}
+		},
+		{
 			// Test harnesses reassign module variables and define helpers inline on purpose.
 			"files": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
 			"rules": {

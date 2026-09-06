@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { IChainOverviewData } from '../types'
 
 function setupStatsMocks(asPath = '/chain/ethereum') {
@@ -86,7 +86,7 @@ afterEach(() => {
 })
 
 describe('ChainOverview Stats header', () => {
-	it('renders the chain website link before the bookmark', async () => {
+	test('renders the chain website link before the bookmark', async () => {
 		setupStatsMocks()
 
 		const { Stats } = await import('../Stats')
@@ -101,7 +101,7 @@ describe('ChainOverview Stats header', () => {
 		expect(markup.indexOf('aria-label="Open Ethereum website"')).toBeLessThan(markup.indexOf('BOOKMARK'))
 	})
 
-	it('uses the configured gas token for chain names with spaces', async () => {
+	test('uses the configured gas token for chain names with spaces', async () => {
 		const { useFetchChainChartData } = setupStatsMocks('/chain/zksync-era')
 		const { Stats } = await import('../Stats')
 
@@ -118,7 +118,7 @@ describe('ChainOverview Stats header', () => {
 		)
 	})
 
-	it.each([
+	test.each([
 		['WEEKLY', 'weekly'],
 		['hourly', 'daily']
 	])('normalizes the %s chart grouping to %s', async (groupByParam, expectedGroupBy) => {

@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ExchangePromotionModel } from '../models'
 import { ProfilePromotions } from '../ProfilePromotions'
 
@@ -19,7 +19,7 @@ function promotion(patch: Partial<ExchangePromotionModel> = {}): ExchangePromoti
 }
 
 describe('profile promotion disclosures', () => {
-	it('renders distinct campaign, terms, and source links', () => {
+	test('renders distinct campaign, terms, and source links', () => {
 		const html = renderToStaticMarkup(<ProfilePromotions promotions={[promotion()]} asOfDate="2026-07-15" />)
 
 		expect(html).toContain('href="https://example.com/campaign"')
@@ -30,7 +30,7 @@ describe('profile promotion disclosures', () => {
 		expect(html).toContain('>Source<')
 	})
 
-	it('renders one campaign action when all disclosures use the same URL', () => {
+	test('renders one campaign action when all disclosures use the same URL', () => {
 		const url = 'https://example.com/offer'
 		const html = renderToStaticMarkup(
 			<ProfilePromotions promotions={[promotion({ url, termsUrl: url, sourceUrl: url })]} asOfDate="2026-07-15" />

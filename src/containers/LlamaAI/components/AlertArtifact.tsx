@@ -64,7 +64,7 @@ interface AlertArtifactProps {
 	alertId: string
 	alertIntent: AlertIntent
 	messageId?: string
-	savedAlertIds?: string[]
+	savedAlertIds?: Array<string>
 	defaultTitle?: string
 	prompt?: string
 }

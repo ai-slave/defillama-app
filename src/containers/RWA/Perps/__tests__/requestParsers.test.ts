@@ -1,14 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { parseChartMetricKey, parseOptionalTarget } from '../requestParsers'
 
 describe('parseChartMetricKey', () => {
-	it('accepts the supported metric keys', () => {
+	test('accepts the supported metric keys', () => {
 		expect(parseChartMetricKey('openInterest')).toBe('openInterest')
 		expect(parseChartMetricKey('volume24h')).toBe('volume24h')
 		expect(parseChartMetricKey('markets')).toBe('markets')
 	})
 
-	it('rejects unsupported values', () => {
+	test('rejects unsupported values', () => {
 		expect(parseChartMetricKey(undefined)).toBeNull()
 		expect(parseChartMetricKey(['openInterest'])).toBeNull()
 		expect(parseChartMetricKey('activeMcap')).toBeNull()
@@ -16,15 +16,15 @@ describe('parseChartMetricKey', () => {
 })
 
 describe('parseOptionalTarget', () => {
-	it('trims valid string values', () => {
+	test('trims valid string values', () => {
 		expect(parseOptionalTarget(' xyz ')).toBe('xyz')
 	})
 
-	it('returns undefined for missing values', () => {
+	test('returns undefined for missing values', () => {
 		expect(parseOptionalTarget(undefined)).toBeUndefined()
 	})
 
-	it('rejects arrays and blank strings', () => {
+	test('rejects arrays and blank strings', () => {
 		expect(parseOptionalTarget(['xyz'])).toBeNull()
 		expect(parseOptionalTarget('   ')).toBeNull()
 	})

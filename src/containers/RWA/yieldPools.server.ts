@@ -7,7 +7,7 @@ import type { IFetchedRWAProject } from './api.types'
 export interface RWAYieldResult {
 	// DeFi opportunities: earn pools INVOLVING this asset (excludes the issuer's own
 	// native-yield pool, which is split out below). Rows are the shared earn-table shape.
-	yieldPools: EarnPageRow[] | null
+	yieldPools: Array<EarnPageRow> | null
 	yieldPoolsTotal: number | null
 	// The asset's own tokenized-yield pool (issued by its DeFiLlama protocol): id feeds the
 	// native-yield history chart, current base APY feeds the "Native Yield" stat.
@@ -71,7 +71,7 @@ export async function getRWAYieldPools(snapshot: YieldsSnapshot, asset: IFetched
 	// highest-TVL one. All issuer pools are kept out of the DeFi opportunities list; only the
 	// primary one drives the native-yield chart/stat.
 	let nativePool: EarnPageRow | null = null
-	const defiPools: EarnPageRow[] = []
+	const defiPools: Array<EarnPageRow> = []
 	for (const row of rows) {
 		if (issuerSlugs.size > 0 && row.projectslug != null && issuerSlugs.has(row.projectslug)) {
 			if (nativePool == null) nativePool = row

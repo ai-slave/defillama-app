@@ -34,7 +34,7 @@ const TOTAL_REVENUE_CHARTS = [
 		color: '#EF5350',
 		stack: 'Total'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const BERACHAIN_MONTHLY_CHARTS = [
 	{
@@ -44,7 +44,7 @@ const BERACHAIN_MONTHLY_CHARTS = [
 		color: '#4FC3F7',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const CHAIN_FEES_CHART = [
 	{
@@ -53,7 +53,7 @@ const CHAIN_FEES_CHART = [
 		encode: { x: 0, y: 1 },
 		color: '#4FC3F7'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const BEX_MONTHLY_CHART = [
 	{
@@ -63,7 +63,7 @@ const BEX_MONTHLY_CHART = [
 		color: '#66BB6A',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const BEX_CUMULATIVE_CHART = [
 	{
@@ -72,7 +72,7 @@ const BEX_CUMULATIVE_CHART = [
 		encode: { x: 0, y: 1 },
 		color: '#66BB6A'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const BEND_MONTHLY_CHARTS = [
 	{
@@ -89,7 +89,7 @@ const BEND_MONTHLY_CHARTS = [
 		color: '#EF5350',
 		stack: 'a'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const BEND_FEES_CHART = [
 	{
@@ -98,7 +98,7 @@ const BEND_FEES_CHART = [
 		encode: { x: 0, y: 1 },
 		color: '#AB47BC'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const BEND_REVENUE_CHART = [
 	{
@@ -107,7 +107,7 @@ const BEND_REVENUE_CHART = [
 		encode: { x: 0, y: 1 },
 		color: '#EF5350'
 	}
-] satisfies MultiSeriesChartSeriesConfig[]
+] satisfies Array<MultiSeriesChartSeriesConfig>
 
 const DOLLAR_CHART_OPTIONS = createChartOptions('$')
 const STACKED_DOLLAR_CHART_OPTIONS = createChartOptions('$', true)

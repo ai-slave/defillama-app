@@ -63,7 +63,7 @@ export default function Overview() {
 	const totalVolumeChart: Chart | null = useMemo(() => {
 		const c = vol?.volumeChart
 		if (!c) return null
-		const total: number[] = []
+		const total: Array<number> = []
 		for (const [index, date] of c.dates.entries()) {
 			let value = 0
 			for (const series of c.series) {

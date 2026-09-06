@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { StreamDoneContext } from '../queries'
 import type { ChartBuilderConfig } from '../types'
 import { ChartBuilderCard } from './ChartBuilderCard'
@@ -80,14 +80,14 @@ function renderCard(queryClient: QueryClient) {
 }
 
 describe('ChartBuilderCard streamed loading state', () => {
-	it('shows loading before the stream has provided a cache entry', () => {
+	test('shows loading before the stream has provided a cache entry', () => {
 		const html = renderCard(new QueryClient())
 
 		expect(html).toContain('Loading chart...')
 		expect(html).not.toContain('No data available')
 	})
 
-	it('shows no data after the stream provides a completed empty result', () => {
+	test('shows no data after the stream provides a completed empty result', () => {
 		const queryClient = new QueryClient()
 		queryClient.setQueryData(queryKey, { series: [] })
 		const html = renderCard(queryClient)

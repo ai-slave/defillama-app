@@ -1,6 +1,6 @@
 import type { ECharts } from 'echarts'
 import * as echarts from 'echarts/core'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import { getChartTheme } from '../shared/chartTheme'
 import { buildMultiSeries } from './series'
@@ -18,7 +18,7 @@ function requireLineSeries(series: ReturnType<typeof buildMultiSeries>[number] |
 }
 
 describe('MultiSeriesChart series construction', () => {
-	it('brightens emphasized series without dimming their peers', () => {
+	test('brightens emphasized series without dimming their peers', () => {
 		const series = buildMultiSeries({
 			charts: [
 				{ name: 'First', type: 'bar', stack: 'total', encode: { x: 'timestamp', y: 'First' } },
@@ -36,7 +36,7 @@ describe('MultiSeriesChart series construction', () => {
 		expect(series[1]?.blur).toBeUndefined()
 	})
 
-	it('keeps line emphasis local to visible point symbols', () => {
+	test('keeps line emphasis local to visible point symbols', () => {
 		const series = requireLineSeries(
 			buildMultiSeries({
 				charts: [{ name: 'Line', type: 'line', encode: { x: 'timestamp', y: 'Line' } }],
@@ -52,7 +52,7 @@ describe('MultiSeriesChart series construction', () => {
 		expect(series.blur).toBeUndefined()
 	})
 
-	it('keeps stacked bars out of ECharts large mode and normalizes explicit axes', () => {
+	test('keeps stacked bars out of ECharts large mode and normalizes explicit axes', () => {
 		const series = buildMultiSeries({
 			charts: [
 				{ name: 'Bars', type: 'bar', stack: 'total', encode: { x: 'timestamp', y: 'Bars' } },
@@ -68,7 +68,7 @@ describe('MultiSeriesChart series construction', () => {
 		expect(series[1]).toMatchObject({ yAxisIndex: 1 })
 	})
 
-	it('uses TBD presentation when inconsistent external metadata marks both projection states', () => {
+	test('uses TBD presentation when inconsistent external metadata marks both projection states', () => {
 		const series = requireLineSeries(
 			buildMultiSeries({
 				charts: [
@@ -90,7 +90,7 @@ describe('MultiSeriesChart series construction', () => {
 		expect(series.endLabel).toMatchObject({ formatter: 'TBD', offset: [-40, 10] })
 	})
 
-	it('styles forecast series and hides only end labels that are too short to fit', () => {
+	test('styles forecast series and hides only end labels that are too short to fit', () => {
 		const chartRef: { current: ECharts | null } = {
 			current: {
 				isDisposed: () => false,
@@ -124,7 +124,7 @@ describe('MultiSeriesChart series construction', () => {
 		expect(formatter({ value: [0, 8] } as never)).toBe('Forecast')
 	})
 
-	it('keeps fallback colors stable when an earlier series is filtered out', () => {
+	test('keeps fallback colors stable when an earlier series is filtered out', () => {
 		const series = requireSeries(
 			buildMultiSeries({
 				charts: [
@@ -141,7 +141,7 @@ describe('MultiSeriesChart series construction', () => {
 		expect(series.itemStyle).toMatchObject({ color: CHART_COLORS[1] })
 	})
 
-	it('passes a typed step mode to line series', () => {
+	test('passes a typed step mode to line series', () => {
 		const series = requireLineSeries(
 			buildMultiSeries({
 				charts: [{ name: 'Rounds', type: 'line', encode: { x: 0, y: 1 }, step: 'end' }],

@@ -12,7 +12,7 @@ echarts.use([BarChart, GridComponent, CanvasRenderer])
 type PrimitiveBarPoint = [number, number]
 
 interface BarSparklineProps {
-	data?: PrimitiveBarPoint[]
+	data?: Array<PrimitiveBarPoint>
 	className?: string
 	height?: number | string
 	focusable?: boolean
@@ -29,8 +29,8 @@ function BarSparklineRenderer({ data, className, height = 48, focusable, maxBars
 	useChartResize(chartRef, containerRef)
 
 	const chartData = useMemo(() => {
-		const xAxisData: number[] = []
-		const bars: Array<{ value: number; itemStyle: { color: string; borderRadius: number[] } }> = []
+		const xAxisData: Array<number> = []
+		const bars: Array<{ value: number; itemStyle: { color: string; borderRadius: Array<number> } }> = []
 		if (!data?.length) return { xAxisData, bars }
 
 		const step = data.length > maxBars ? Math.ceil(data.length / maxBars) : 1

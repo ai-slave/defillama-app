@@ -42,10 +42,10 @@ export const EDITORIAL_TAGS: Record<EditorialTagSlug, EditorialTagDefinition> = 
 	}
 }
 
-export const EDITORIAL_TAG_LIST: EditorialTagDefinition[] = Object.values(EDITORIAL_TAGS)
+export const EDITORIAL_TAG_LIST: Array<EditorialTagDefinition> = Object.values(EDITORIAL_TAGS)
 
 export function isEditorialTagSlug(value: unknown): value is EditorialTagSlug {
-	return typeof value === 'string' && Object.prototype.hasOwnProperty.call(EDITORIAL_TAGS, value)
+	return typeof value === 'string' && Object.hasOwn(EDITORIAL_TAGS, value)
 }
 
 export function isEditorialTagReorderable(slug: EditorialTagSlug): boolean {

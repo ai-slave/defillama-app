@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 // Route pages pull enriched rows from enrich.server; mock it so the tests
 // control the dataset and can count preparations.
@@ -29,7 +29,7 @@ import { getLoopsPage } from '../loops.server'
 const snapshotOf = (generationId: string) => ({ generationId }) as never
 
 describe('borrow and loops prepared-rows memoization', () => {
-	it('prepares borrow markets once per generation+filters and slices pages from it', async () => {
+	test('prepares borrow markets once per generation+filters and slices pages from it', async () => {
 		getEnrichedMarkets.mockResolvedValue([])
 		const snapshot = snapshotOf('markets-gen')
 
@@ -41,7 +41,7 @@ describe('borrow and loops prepared-rows memoization', () => {
 		expect(second).toMatchObject({ page: 1, total: 0 })
 	})
 
-	it('prepares loops once per generation+filters and slices pages from it', async () => {
+	test('prepares loops once per generation+filters and slices pages from it', async () => {
 		getEnrichedLoops.mockResolvedValue([])
 		const snapshot = snapshotOf('loops-gen')
 

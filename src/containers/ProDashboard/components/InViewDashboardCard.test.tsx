@@ -2,14 +2,14 @@
 
 import { act, useEffect, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { withEChartsRenderVisibility } from '~/components/ECharts/renderVisibility'
 import { DASHBOARD_CARD_ROOT_MARGIN, InViewDashboardCard } from './InViewDashboardCard'
 
 describe('InViewDashboardCard', () => {
 	let container: HTMLDivElement
 	let root: Root
-	let observers: MockIntersectionObserver[]
+	let observers: Array<MockIntersectionObserver>
 
 	class MockIntersectionObserver implements IntersectionObserver {
 		readonly root = null
@@ -34,7 +34,7 @@ describe('InViewDashboardCard', () => {
 
 		disconnect() {}
 
-		takeRecords(): IntersectionObserverEntry[] {
+		takeRecords(): Array<IntersectionObserverEntry> {
 			return []
 		}
 
@@ -68,7 +68,7 @@ describe('InViewDashboardCard', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('defers the card until it is near, then keeps card state mounted while suspending its renderer', async () => {
+	test('defers the card until it is near, then keeps card state mounted while suspending its renderer', async () => {
 		const queryStarted = vi.fn()
 		const mounted = vi.fn()
 		const unmounted = vi.fn()
@@ -121,7 +121,7 @@ describe('InViewDashboardCard', () => {
 		expect(container.textContent).toBe('USDTChart renderer')
 	})
 
-	it('bounds mounted renderers while scrolling a 24-card dashboard', async () => {
+	test('bounds mounted renderers while scrolling a 24-card dashboard', async () => {
 		let activeRenderers = 0
 		let peakRenderers = 0
 		const Renderer = withEChartsRenderVisibility(function Renderer({ index }: { index: number }) {

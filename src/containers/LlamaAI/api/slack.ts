@@ -23,7 +23,7 @@ export type SlackChannel = {
 
 export type SlackPending = { expiresAt: string }
 
-export type SlackStatus = { links: SlackLink[]; pending: SlackPending | null }
+export type SlackStatus = { links: Array<SlackLink>; pending: SlackPending | null }
 
 export type SlackLinkStartResponse = {
 	state: 'pending'
@@ -53,10 +53,10 @@ export const consumeSlackLogin = (af: AuthorizedFetch, token: string) =>
 	llamaAIRequest<SlackLoginConsumeResponse>(af, '/slack/login/consume', { method: 'POST', json: { token } })
 
 export const listSlackWorkspaces = (af: AuthorizedFetch) =>
-	llamaAIRequest<{ workspaces: SlackLink[] }>(af, '/slack/workspaces')
+	llamaAIRequest<{ workspaces: Array<SlackLink> }>(af, '/slack/workspaces')
 
 export const listSlackChannels = (af: AuthorizedFetch, teamId: string) =>
-	llamaAIRequest<{ channels: SlackChannel[] }>(af, `/slack/channels?team_id=${encodeURIComponent(teamId)}`)
+	llamaAIRequest<{ channels: Array<SlackChannel> }>(af, `/slack/channels?team_id=${encodeURIComponent(teamId)}`)
 
 export const unlinkSlackWorkspace = (af: AuthorizedFetch, teamId: string) =>
 	llamaAIRequest<{ unlinked: true }>(af, `/slack/links/${encodeURIComponent(teamId)}`, { method: 'DELETE' })

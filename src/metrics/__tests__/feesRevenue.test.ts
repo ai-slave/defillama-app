@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { feeRevenueMetrics, shouldFetchChainOverviewFeeRevenueMetric } from '~/metrics/feesRevenue'
 import {
@@ -7,7 +7,7 @@ import {
 } from '~/metrics/routeSemantics'
 
 describe('fee/revenue metric semantics', () => {
-	it('keeps ranking route semantics in the shared registry', () => {
+	test('keeps ranking route semantics in the shared registry', () => {
 		expect(feeRevenueMetrics.chainFees.ranking).toMatchObject({
 			route: '/fees/chains',
 			name: 'Fees by Chain',
@@ -45,11 +45,11 @@ describe('fee/revenue metric semantics', () => {
 		expect(feeRevenueMetrics.rev.ranking).not.toHaveProperty('dataType')
 	})
 
-	it('keeps REV out of ChainOverview chart semantics', () => {
+	test('keeps REV out of ChainOverview chart semantics', () => {
 		expect(feeRevenueMetrics.rev).not.toHaveProperty('chainOverview')
 	})
 
-	it('keeps chain-native fees and revenue on adapter protocol chart paths', () => {
+	test('keeps chain-native fees and revenue on adapter protocol chart paths', () => {
 		expect(
 			getFeeRevenueChainChartApiParams({
 				metric: feeRevenueMetrics.chainFees,
@@ -77,7 +77,7 @@ describe('fee/revenue metric semantics', () => {
 		})
 	})
 
-	it('keeps app fees and app revenue on adapter chain chart paths', () => {
+	test('keeps app fees and app revenue on adapter chain chart paths', () => {
 		expect(
 			getFeeRevenueChainChartApiParams({
 				metric: feeRevenueMetrics.appFees,
@@ -103,7 +103,7 @@ describe('fee/revenue metric semantics', () => {
 		})
 	})
 
-	it('maps each metric to the metadata flag that gates server fetching', () => {
+	test('maps each metric to the metadata flag that gates server fetching', () => {
 		expect(
 			shouldFetchChainOverviewFeeRevenueMetric({
 				metric: feeRevenueMetrics.chainFees,
@@ -134,7 +134,7 @@ describe('fee/revenue metric semantics', () => {
 		).toBe(true)
 	})
 
-	it('does not fetch app aggregation metrics for the All chain overview', () => {
+	test('does not fetch app aggregation metrics for the All chain overview', () => {
 		expect(
 			shouldFetchChainOverviewFeeRevenueMetric({
 				metric: feeRevenueMetrics.appFees,
@@ -151,7 +151,7 @@ describe('fee/revenue metric semantics', () => {
 		).toBe(false)
 	})
 
-	it('maps only chain-native fees and revenue to adapter protocol chain fallback semantics', () => {
+	test('maps only chain-native fees and revenue to adapter protocol chain fallback semantics', () => {
 		expect(
 			getChainNativeFeeRevenueMetricForAdapterProtocol({
 				adapterType: ADAPTER_TYPES.FEES,

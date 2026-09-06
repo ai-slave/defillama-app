@@ -73,7 +73,7 @@ export const DATASET_SNAPSHOT_CONTRACT = {
 
 export type DatasetSnapshotDomain = keyof typeof DATASET_SNAPSHOT_CONTRACT
 
-export const DATASET_SNAPSHOT_DOMAINS = Object.keys(DATASET_SNAPSHOT_CONTRACT) as DatasetSnapshotDomain[]
+export const DATASET_SNAPSHOT_DOMAINS = Object.keys(DATASET_SNAPSHOT_CONTRACT) as Array<DatasetSnapshotDomain>
 
 export type DatasetSnapshotRef = {
 	domain: DatasetSnapshotDomain

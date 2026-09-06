@@ -24,12 +24,12 @@ const CHAIN_TO_DASHBOARD_CHART_TYPE: Record<ChainChartLabels, ChainChartType | n
 	'Token Volume': null
 }
 
-export function getSupportedChainCharts(labels: ChainChartLabels[]) {
+export function getSupportedChainCharts(labels: Array<ChainChartLabels>) {
 	return labels
 		.map((label) => ({ label, dashboardType: CHAIN_TO_DASHBOARD_CHART_TYPE[label] }))
 		.filter((x): x is { label: ChainChartLabels; dashboardType: ChainChartType } => x.dashboardType !== null)
 }
 
-export function getUnsupportedChainCharts(labels: ChainChartLabels[]): ChainChartLabels[] {
+export function getUnsupportedChainCharts(labels: Array<ChainChartLabels>): Array<ChainChartLabels> {
 	return labels.filter((label) => CHAIN_TO_DASHBOARD_CHART_TYPE[label] === null)
 }

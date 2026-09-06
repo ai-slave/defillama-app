@@ -31,7 +31,7 @@ export const FILTERED_SHARE_METRIC_KEYS = [
 	'options_volume_24h',
 	'options_volume_7d',
 	'options_volume_30d'
-] as const satisfies readonly (keyof ProtocolTableMetrics)[]
+] as const satisfies ReadonlyArray<keyof ProtocolTableMetrics>
 
 export type FilteredShareMetricKey = (typeof FILTERED_SHARE_METRIC_KEYS)[number]
 export type FilteredShareColumnId = `${typeof FILTERED_SHARE_COLUMN_PREFIX}${FilteredShareMetricKey}`

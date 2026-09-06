@@ -83,7 +83,7 @@ export interface PerAssetLossVM {
 	oracleType?: OracleType
 	heartbeatSec?: number
 	deviationThreshold?: number
-	oracleAdmins?: OracleAdmin[] // controllers of this collateral's feed (full-drain rows)
+	oracleAdmins?: Array<OracleAdmin> // controllers of this collateral's feed (full-drain rows)
 }
 
 export interface AnchorLossVM {
@@ -99,20 +99,20 @@ export interface ScenarioVM {
 	status: LossStatus
 	lossMinUsd: number
 	lossMaxUsd: number // depositor-facing, capped at pool supply
-	lossByAnchor?: AnchorLossVM[] // per-drop loss curve; price-driven scenarios only
+	lossByAnchor?: Array<AnchorLossVM> // per-drop loss curve; price-driven scenarios only
 	rawLossMaxUsd?: number // the uncapped market-wide ceiling, when it exceeded supply
 	cappedAtSupply?: boolean
 	magnitudePct: number // lossMaxUsd / sectionMaxUsd, 0 for non-computed
 	actingWindow: ActingWindowVM
-	perAsset?: PerAssetLossVM[] // grouped fanned scenarios
+	perAsset?: Array<PerAssetLossVM> // grouped fanned scenarios
 	conditions: ConditionNode
-	mitigations: string[]
-	evidence: Evidence[]
+	mitigations: Array<string>
+	evidence: Array<Evidence>
 	inputs: Record<string, number>
 	formula?: string
 	notes?: string // the pipeline's own methodology caveats — always surfaced
 	realized?: RealizedIncident // matched by scenario_id
-	coverage: CoverageVM[]
+	coverage: Array<CoverageVM>
 }
 
 export interface CoverageVM {
@@ -122,7 +122,7 @@ export interface CoverageVM {
 	rawCapUsd: number
 	excludesOwnTokens: boolean
 	accessTimeSec: number | null
-	appliesTo: string[]
+	appliesTo: Array<string>
 	description?: string
 	priority: number
 }
@@ -148,14 +148,14 @@ export interface CollateralVM {
 	exposurePct: number | null // exposureUsd / vault TVL (0–1)
 	// Provenance/context only. Served losses are ALREADY vault pro-rata; never re-multiply.
 	vaultMarketShare: number | null
-	oracleProviders: string[] // proven vendor(s); ['unverified'] = neutral; [] = no live feed
-	oracleAddresses: string[]
-	feedKinds: string[]
+	oracleProviders: Array<string> // proven vendor(s); ['unverified'] = neutral; [] = no live feed
+	oracleAddresses: Array<string>
+	feedKinds: Array<string>
 	// Backend-resolved oracle explanation; all null when not yet derived.
 	oracleMechanism: string | null // preferred over derived copy
 	oracleBaseLeg: string | null
 	oracleQuoteLeg: string | null
-	oracleLegs: OracleLeg[] | null // richest breakdown; null → fall back to base/quote
+	oracleLegs: Array<OracleLeg> | null // richest breakdown; null → fall back to base/quote
 	ptPricing: PtPricing | null // null = not a PT (or unresolved)
 	magnitudePct: number
 	oracleConfig?: OracleConfigEntry
@@ -206,15 +206,15 @@ export interface VaultRiskVM {
 	headline: HeadlineVM
 	riskTier: RiskTier | null
 	exitReadiness: ExitReadinessVM
-	scenarios: ScenarioVM[]
-	collateral: CollateralVM[]
-	coverage: CoverageVM[]
-	realizedIncidents: RealizedIncidentVM[]
+	scenarios: Array<ScenarioVM>
+	collateral: Array<CollateralVM>
+	coverage: Array<CoverageVM>
+	realizedIncidents: Array<RealizedIncidentVM>
 	stress: Stress | null
-	marketOracles: MarketOracle[]
-	oracleDependencies: OracleDependency[]
+	marketOracles: Array<MarketOracle>
+	oracleDependencies: Array<OracleDependency>
 	oracleExposure: OracleExposure | null
-	vaultExternalDependencies: ExternalDependency[]
+	vaultExternalDependencies: Array<ExternalDependency>
 	freshness: Freshness
 	lastUpdatedTs: number | null
 	stale: boolean

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	createRwaChartModeState,
 	getChartBreakdownOptions,
@@ -11,12 +11,12 @@ import {
 } from '../chartState'
 
 describe('parseRwaChartState', () => {
-	it('normalizes legacy hbar query values', () => {
+	test('normalizes legacy hbar query values', () => {
 		const state = parseRwaChartState({ chartView: 'bar' }, createRwaChartModeState('chain', false, null))
 		expect(state.view).toBe('hbar')
 	})
 
-	it('falls back to the chain time-series default when the query value is invalid', () => {
+	test('falls back to the chain time-series default when the query value is invalid', () => {
 		const state = parseRwaChartState(
 			{ timeSeriesChartBreakdown: 'assetName' },
 			createRwaChartModeState('chain', false, null)
@@ -28,7 +28,7 @@ describe('parseRwaChartState', () => {
 		})
 	})
 
-	it('keeps a valid category time-series breakdown', () => {
+	test('keeps a valid category time-series breakdown', () => {
 		const state = parseRwaChartState(
 			{ timeSeriesChartBreakdown: 'platform' },
 			createRwaChartModeState('category', true, null)
@@ -40,7 +40,7 @@ describe('parseRwaChartState', () => {
 		})
 	})
 
-	it('uses asset group as the non-time-series default where supported', () => {
+	test('uses asset group as the non-time-series default where supported', () => {
 		expect(parseRwaChartState({ chartView: 'pie' }, createRwaChartModeState('chain', false, null)).breakdown).toBe(
 			'assetGroup'
 		)
@@ -52,12 +52,12 @@ describe('parseRwaChartState', () => {
 		)
 	})
 
-	it('keeps asset name as the asset-group page non-time-series default', () => {
+	test('keeps asset name as the asset-group page non-time-series default', () => {
 		const state = parseRwaChartState({ chartView: 'pie' }, createRwaChartModeState('assetGroup', true, null))
 		expect(state.breakdown).toBe('assetName')
 	})
 
-	it('accepts asset-group treemap nesting by category', () => {
+	test('accepts asset-group treemap nesting by category', () => {
 		const state = parseRwaChartState(
 			{
 				chartView: 'treemap',
@@ -76,7 +76,7 @@ describe('parseRwaChartState', () => {
 })
 
 describe('chartState options', () => {
-	it('matches the current time-series breakdown matrix', () => {
+	test('matches the current time-series breakdown matrix', () => {
 		expect(getDefaultChartBreakdown(createRwaChartModeState('chain', false, null), 'timeSeries')).toBe('assetGroup')
 		expect(getDefaultChartBreakdown(createRwaChartModeState('category', true, null), 'timeSeries')).toBe('assetGroup')
 		expect(getDefaultChartBreakdown(createRwaChartModeState('platform', true, null), 'timeSeries')).toBe('assetGroup')
@@ -85,7 +85,7 @@ describe('chartState options', () => {
 		)
 	})
 
-	it('defaults public equities time series to platform while keeping explicit choices', () => {
+	test('defaults public equities time series to platform while keeping explicit choices', () => {
 		const mode = createRwaChartModeState('assetGroup', true, 'public-equities')
 		const defaultState = parseRwaChartState({}, mode)
 		const assetNameState = parseRwaChartState({ timeSeriesChartBreakdown: 'assetName' }, mode)
@@ -95,7 +95,7 @@ describe('chartState options', () => {
 		expect(assetNameState.breakdown).toBe('assetName')
 	})
 
-	it('adds chain only when the mode allows it', () => {
+	test('adds chain only when the mode allows it', () => {
 		const withChain = getChartBreakdownOptions({
 			mode: createRwaChartModeState('category', true, null),
 			view: 'pie'
@@ -109,7 +109,7 @@ describe('chartState options', () => {
 		expect(withoutChain.map(({ key }) => key)).not.toContain('chain')
 	})
 
-	it('includes asset category as an asset-group treemap nested option', () => {
+	test('includes asset category as an asset-group treemap nested option', () => {
 		expect(getTreemapNestedByOptions('assetGroup').map(({ key }) => key)).toEqual([
 			'none',
 			'assetClass',
@@ -123,22 +123,22 @@ describe('chart metric availability', () => {
 	const mode = createRwaChartModeState('platform', true, null)
 	const noActiveMcap = { hasActiveMcapData: false }
 
-	it('offers all three metrics and defaults to active mcap when it is tracked', () => {
+	test('offers all three metrics and defaults to active mcap when it is tracked', () => {
 		expect(getChartMetricOptions().map(({ key }) => key)).toEqual(['activeMcap', 'onChainMcap', 'defiActiveTvl'])
 		expect(parseRwaChartState({}, mode).metric).toBe('activeMcap')
 	})
 
-	it('drops active mcap and normalizes its default and stale query value to onchain mcap', () => {
+	test('drops active mcap and normalizes its default and stale query value to onchain mcap', () => {
 		expect(getChartMetricOptions(noActiveMcap).map(({ key }) => key)).toEqual(['onChainMcap', 'defiActiveTvl'])
 		expect(parseRwaChartState({}, mode, noActiveMcap).metric).toBe('onChainMcap')
 		expect(parseRwaChartState({ chartType: 'activeMcap' }, mode, noActiveMcap).metric).toBe('onChainMcap')
 	})
 
-	it('still honours the other metrics from the query string', () => {
+	test('still honours the other metrics from the query string', () => {
 		expect(parseRwaChartState({ chartType: 'defiActiveTvl' }, mode, noActiveMcap).metric).toBe('defiActiveTvl')
 	})
 
-	it('omits the effective default from the url and keeps non-defaults explicit', () => {
+	test('omits the effective default from the url and keeps non-defaults explicit', () => {
 		expect(getChartMetricQueryValue('activeMcap')).toBeUndefined()
 		expect(getChartMetricQueryValue('onChainMcap')).toBe('onChainMcap')
 		expect(getChartMetricQueryValue('onChainMcap', noActiveMcap)).toBeUndefined()

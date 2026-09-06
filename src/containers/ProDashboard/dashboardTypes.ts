@@ -24,7 +24,7 @@ export interface AISessionData {
 export type AIGeneratedData = Record<string, AISessionData>
 
 export interface AIUndoState {
-	items: DashboardItemConfig[]
+	items: Array<DashboardItemConfig>
 	timestamp: string
 	sessionId: string
 }
@@ -36,14 +36,14 @@ export interface Dashboard {
 	slug?: string
 	user?: string
 	data: {
-		items: DashboardItemConfig[]
+		items: Array<DashboardItemConfig>
 		dashboardName: string
 		timePeriod?: TimePeriod
 		customTimePeriod?: CustomTimePeriod | null
 		aiUndoState?: AIUndoState
 	}
 	visibility?: 'private' | 'public'
-	tags?: string[]
+	tags?: Array<string>
 	description?: string
 	viewCount?: number
 	likeCount?: number

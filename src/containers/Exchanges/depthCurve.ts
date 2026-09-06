@@ -49,9 +49,9 @@ export interface DepthCurveEntry {
 
 export interface DepthCurveDataset {
 	source: Array<Array<string | number | null>>
-	dimensions: string[]
+	dimensions: Array<string>
 	/** Series names in dataset column order; one per entry, so one per legend item. */
-	series: string[]
+	series: Array<string>
 }
 
 const OTHERS_LABEL = 'Others'
@@ -69,7 +69,11 @@ export function bandLabel(band: number, side: 'bid' | 'ask'): string {
  * spot rows, and counting both would double that liquidity. Same rule the backend
  * applies to every cross-venue total.
  */
-export function depthCurveVenues(rows: DepthCurveRow[], segment: ExchangeSegment, limit?: number): DepthCurveVenue[] {
+export function depthCurveVenues(
+	rows: Array<DepthCurveRow>,
+	segment: ExchangeSegment,
+	limit?: number
+): Array<DepthCurveVenue> {
 	const venues: Array<DepthCurveVenue & { size: number }> = []
 	for (const row of rows) {
 		if (row.liquidity?.[segment]?.mode === 'shared') continue
@@ -111,7 +115,7 @@ export const isMeasured = (point: ExchangeDepthLadder[number] | undefined) =>
  * A band no contributing book reached is still marked unmeasured, so a venue whose
  * every book stops at 1% ends its curve there rather than running flat to 25%.
  */
-export function sumLadders(ladders: ExchangeDepthLadder[]): ExchangeDepthLadder | null {
+export function sumLadders(ladders: Array<ExchangeDepthLadder>): ExchangeDepthLadder | null {
 	const bands = ladders[0]
 	if (!bands?.length) return null
 	const carried = ladders.map(() => ({ bidUsd: null as number | null, askUsd: null as number | null, seen: false }))
@@ -137,7 +141,7 @@ export function sumLadders(ladders: ExchangeDepthLadder[]): ExchangeDepthLadder 
 }
 
 /** Every venue's book added together, as one curve. */
-export function aggregateEntries(venues: DepthCurveVenue[]): DepthCurveEntry[] {
+export function aggregateEntries(venues: Array<DepthCurveVenue>): Array<DepthCurveEntry> {
 	const summed = sumLadders(venues.map((venue) => venue.ladder))
 	return summed ? [{ name: 'All exchanges', ladder: summed }] : []
 }
@@ -147,10 +151,12 @@ export function aggregateEntries(venues: DepthCurveVenue[]): DepthCurveEntry[] {
  * rather than dropped, so the chart still accounts for the whole book and no venue
  * silently disappears.
  */
-export function venueEntries(venues: DepthCurveVenue[], limit: number): DepthCurveEntry[] {
-	const entries: DepthCurveEntry[] = venues.slice(0, limit).map((venue) => ({ name: venue.name, ladder: venue.ladder }))
+export function venueEntries(venues: Array<DepthCurveVenue>, limit: number): Array<DepthCurveEntry> {
+	const entries: Array<DepthCurveEntry> = venues
+		.slice(0, limit)
+		.map((venue) => ({ name: venue.name, ladder: venue.ladder }))
 	const tail = venues.slice(limit)
-	const others = tail.length ? sumLadders(tail.map((venue) => venue.ladder)) : null
+	const others = tail.length > 0 ? sumLadders(tail.map((venue) => venue.ladder)) : null
 	if (others) entries.push({ name: `${OTHERS_LABEL} (${tail.length})`, ladder: others })
 	return entries
 }
@@ -164,7 +170,7 @@ export function venueEntries(venues: DepthCurveVenue[], limit: number): DepthCur
  * anchoring there is both true and what makes each curve a continuous line that dips to
  * the origin and rises again, rather than two pieces with a step between them.
  */
-export function depthCurveDataset(entries: DepthCurveEntry[]): DepthCurveDataset | null {
+export function depthCurveDataset(entries: Array<DepthCurveEntry>): DepthCurveDataset | null {
 	const bands = entries[0]?.ladder
 	if (!bands?.length) return null
 	const series = entries.map((entry) => entry.name)
@@ -196,8 +202,8 @@ export function depthCurveDataset(entries: DepthCurveEntry[]): DepthCurveDataset
 }
 
 /** Text equivalent for the canvas: the widest fully measured point on each curve. */
-export function depthCurveAriaLabel(entries: DepthCurveEntry[]): string {
-	const summaries: string[] = []
+export function depthCurveAriaLabel(entries: Array<DepthCurveEntry>): string {
+	const summaries: Array<string> = []
 	for (const entry of entries) {
 		const widest = entry.ladder.findLast((point) => isMeasured(point) && (point.bidUsd != null || point.askUsd != null))
 		if (!widest) {

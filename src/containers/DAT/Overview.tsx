@@ -49,7 +49,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 			}
 		}
 
-		const series: IDATOverviewFlowSeries[] = []
+		const series: Array<IDATOverviewFlowSeries> = []
 		for (const name in dailyFlowsByAsset) {
 			series.push(dailyFlowsByAsset[name])
 		}
@@ -69,7 +69,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 
 	return (
 		<>
-			<RowLinksWithDropdown links={allAssets} activeLink={'All'} />
+			<RowLinksWithDropdown links={allAssets} activeLink="All" />
 			<ChartPanel className="col-span-2">
 				<ChartPanelToolbar className="justify-end">
 					<h1 className="mr-auto heading-xs">DAT Inflows by Asset</h1>
@@ -324,13 +324,13 @@ function AssetTooltipContent({
 	assetBreakdown,
 	protocolName
 }: {
-	assetBreakdown: BreakdownData[]
+	assetBreakdown: Array<BreakdownData>
 	protocolName: string
 }) {
 	return (
 		<span className="flex flex-col gap-4">
 			{assetBreakdown.map((breakdown) => (
-				<Breakdown data={breakdown} key={breakdown.name + breakdown.usdValue + protocolName + 'tooltip-content'} />
+				<Breakdown data={breakdown} key={`${breakdown.name + breakdown.usdValue + protocolName}tooltip-content`} />
 			))}
 		</span>
 	)

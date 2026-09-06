@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getRankedRwaFilterValues } from '../rankedFilterValues'
 
 describe('getRankedRwaFilterValues', () => {
-	it('derives every filter key list in ranked option order without mutation', () => {
+	test('derives every filter key list in ranked option order without mutation', () => {
 		const options = {
 			typeOptions: [
 				{ key: 'Fund', name: 'Fund' },

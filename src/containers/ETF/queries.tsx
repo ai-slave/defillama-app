@@ -13,7 +13,7 @@ export async function getETFData(): Promise<ETFOverviewProps> {
 
 	const lastUpdated = maxDate == null ? 'N/A' : (formatDate(maxDate, { input: 'milliseconds' }) ?? 'N/A')
 
-	const processedSnapshot: IETFSnapshotRow[] = snapshot
+	const processedSnapshot: Array<IETFSnapshotRow> = snapshot
 		.map((i) => ({
 			...i,
 			chain: [capitalize(i.asset)]
@@ -22,7 +22,7 @@ export async function getETFData(): Promise<ETFOverviewProps> {
 
 	const processedFlows: IProcessedFlows = {}
 	for (const { gecko_id, day, total_flow_usd } of flows) {
-		const timestamp = Math.floor(new Date(day).getTime() / 1000 / 86400) * 86400
+		const timestamp = Math.floor(new Date(day).getTime() / 1000 / 86_400) * 86_400
 		processedFlows[timestamp] = {
 			...processedFlows[timestamp],
 			date: timestamp,

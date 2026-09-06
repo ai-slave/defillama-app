@@ -12,10 +12,10 @@ export type ProtocolTaxonomyBreakdownKey = 'protocol' | 'chain' | 'network' | 'c
 
 export interface ProtocolTaxonomyCharts {
 	dataset: {
-		source: ProtocolTaxonomyChartRow[]
-		dimensions: [timestamp: 'timestamp', ...series: string[]]
+		source: Array<ProtocolTaxonomyChartRow>
+		dimensions: [timestamp: 'timestamp', ...series: Array<string>]
 	}
-	charts: ProtocolTaxonomyChartSeries[]
+	charts: Array<ProtocolTaxonomyChartSeries>
 }
 
 interface IProtocolMetricTotals {
@@ -56,7 +56,7 @@ interface IProtocolByCategory {
 }
 
 interface IProtocolByCategoryWithSubRows extends IProtocolByCategory {
-	subRows?: IProtocolByCategory[]
+	subRows?: Array<IProtocolByCategory>
 }
 
 export interface IProtocolTaxonomyPageData {

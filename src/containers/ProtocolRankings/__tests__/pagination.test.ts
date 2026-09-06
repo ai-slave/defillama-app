@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { TableCursorError } from '~/server/tablePages/cursorPage.server'
 import { getProtocolRankingRows, paginateProtocolRankingRows } from '../pagination.server'
 import type { ProtocolRankingsSnapshotData } from '../server/tableData.server'
@@ -52,12 +52,12 @@ function row(id: string, name: string, tvl: number, fees30d = 0, children?: IPro
 	}
 }
 
-function snapshot(version: string, protocols: IProtocol[]): ProtocolRankingsSnapshotData {
+function snapshot(version: string, protocols: Array<IProtocol>): ProtocolRankingsSnapshotData {
 	return { snapshot: version, protocols, availableActivityMetrics: [] }
 }
 
 describe('protocol ranking pagination', () => {
-	it('uses the protocol id as a deterministic tie-breaker without duplicates', () => {
+	test('uses the protocol id as a deterministic tie-breaker without duplicates', () => {
 		const data = snapshot('stable', [row('c', 'C', 10), row('a', 'A', 10), row('b', 'B', 10), row('d', 'D', 9)])
 		const first = queryProtocolRankingSnapshot({
 			snapshot: data,
@@ -76,7 +76,7 @@ describe('protocol ranking pagination', () => {
 		expect(new Set([...first.rows, ...second.rows].map((item) => item.id)).size).toBe(4)
 	})
 
-	it('sorts and searches the complete snapshot, not the first page', () => {
+	test('sorts and searches the complete snapshot, not the first page', () => {
 		const protocols = Array.from({ length: 80 }, (_, index) =>
 			row(
 				`p-${index.toString().padStart(2, '0')}`,
@@ -95,7 +95,7 @@ describe('protocol ranking pagination', () => {
 		expect(page.rows[0]?.id).toBe('p-73')
 	})
 
-	it('rejects a cursor from a different snapshot or query', () => {
+	test('rejects a cursor from a different snapshot or query', () => {
 		const first = queryProtocolRankingSnapshot({
 			snapshot: snapshot('old', [row('a', 'A', 2), row('b', 'B', 1)]),
 			query: DEFAULT_PROTOCOL_RANKING_QUERY,
@@ -120,7 +120,7 @@ describe('protocol ranking pagination', () => {
 		).toThrow(TableCursorError)
 	})
 
-	it('rejects a cursor whose cached-order offset was altered', () => {
+	test('rejects a cursor whose cached-order offset was altered', () => {
 		const data = snapshot('stable', [row('a', 'A', 2), row('b', 'B', 1)])
 		const first = queryProtocolRankingSnapshot({
 			snapshot: data,
@@ -141,7 +141,7 @@ describe('protocol ranking pagination', () => {
 		).toThrow(TableCursorError)
 	})
 
-	it('ships sorted children with their parent and narrows children for a child-name search', () => {
+	test('ships sorted children with their parent and narrows children for a child-name search', () => {
 		const alpha = row('alpha', 'Alpha Child', 4)
 		const beta = row('beta', 'Beta Child', 3)
 		const parent = row('parent', 'Parent', 7, 0, [beta, alpha])
@@ -159,7 +159,7 @@ describe('protocol ranking pagination', () => {
 		expect(searched.rows[0]?.childProtocols?.map((child) => child.id)).toEqual(['beta'])
 	})
 
-	it('uses a compact query hash in cursors for long custom formulas', () => {
+	test('uses a compact query hash in cursors for long custom formulas', () => {
 		const formula = `${'1+'.repeat(249)}1`
 		const page = queryProtocolRankingSnapshot({
 			snapshot: snapshot('custom', [row('a', 'A', 2), row('b', 'B', 1)]),

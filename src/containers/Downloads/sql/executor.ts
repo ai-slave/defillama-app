@@ -16,13 +16,13 @@ import {
 
 export interface ExecutorCtx {
 	conn: AsyncDuckDBConnection | null
-	loadedTables: RegisteredTable[]
+	loadedTables: Array<RegisteredTable>
 	loadSource: (source: TableSource, signal?: AbortSignal) => Promise<RegisteredTable | null>
 	chartOptionsMap: ChartOptionsMap
 }
 
 export interface ExecutorCallbacks {
-	onPendingChange?: (pending: PendingTable[]) => void
+	onPendingChange?: (pending: Array<PendingTable>) => void
 	onLoadingStage?: (stage: string | null) => void
 }
 
@@ -40,11 +40,11 @@ interface AutoLoadStep {
 const KNOWN_DATASET_IDENTIFIERS = new Set(datasets.map((d) => identifierize(d.slug)))
 
 function buildAutoLoadPlan(
-	missingRefs: string[],
+	missingRefs: Array<string>,
 	chartOptionsMap: ChartOptionsMap,
 	extraKnown: ReadonlySet<string>
-): AutoLoadStep[] {
-	const steps: AutoLoadStep[] = []
+): Array<AutoLoadStep> {
+	const steps: Array<AutoLoadStep> = []
 	for (const ref of missingRefs) {
 		if (extraKnown.has(ref)) continue
 		const match = matchTableRef(ref)
@@ -83,11 +83,11 @@ function buildAutoLoadPlan(
 async function runWithFreshLoadRetry(conn: AsyncDuckDBConnection, sql: string, justLoaded: boolean): Promise<any> {
 	try {
 		return await conn.query(sql)
-	} catch (err) {
-		if (!justLoaded) throw err
-		const msg = err instanceof Error ? err.message : String(err)
+	} catch (error) {
+		if (!justLoaded) throw error
+		const msg = error instanceof Error ? error.message : String(error)
 		const transient = /function signature mismatch/i.test(msg)
-		if (!transient) throw err
+		if (!transient) throw error
 		await new Promise((resolve) => setTimeout(resolve, 60))
 		return await conn.query(sql)
 	}
@@ -134,7 +134,12 @@ export async function runSql(
 			callbacks.onPendingChange?.(plan.map((p) => ({ key: p.key, name: p.name, label: p.label, status: 'pending' })))
 		}
 
-		let pending: PendingTable[] = plan.map((p) => ({ key: p.key, name: p.name, label: p.label, status: 'pending' }))
+		let pending: Array<PendingTable> = plan.map((p) => ({
+			key: p.key,
+			name: p.name,
+			label: p.label,
+			status: 'pending'
+		}))
 
 		for (const [index, step] of plan.entries()) {
 			if (signal?.aborted) {
@@ -177,9 +182,9 @@ export async function runSql(
 							signal.removeEventListener('abort', onAbort)
 							resolve(value)
 						},
-						(err) => {
+						(error) => {
 							signal.removeEventListener('abort', onAbort)
-							reject(err)
+							reject(error)
 						}
 					)
 					if (signal.aborted) onAbort()
@@ -188,7 +193,7 @@ export async function runSql(
 
 		const columns = arrow.schema.fields.map((f: any) => ({ name: f.name, type: String(f.type) }))
 		const arrowRows = arrow.toArray()
-		const rows = new Array<unknown[]>(arrowRows.length)
+		const rows = new Array<Array<unknown>>(arrowRows.length)
 		for (let rowIndex = 0; rowIndex < arrowRows.length; rowIndex++) {
 			const input = arrowRows[rowIndex]
 			const row = new Array<unknown>(columns.length)
@@ -205,10 +210,10 @@ export async function runSql(
 			durationMs,
 			justLoaded: plan.length > 0
 		}
-	} catch (err) {
+	} catch (error) {
 		callbacks.onLoadingStage?.(null)
-		if (isAbortError(err) || signal?.aborted) return cancelled()
-		return { ok: false, error: err instanceof Error ? err.message : String(err) }
+		if (isAbortError(error) || signal?.aborted) return cancelled()
+		return { ok: false, error: error instanceof Error ? error.message : String(error) }
 	}
 }
 

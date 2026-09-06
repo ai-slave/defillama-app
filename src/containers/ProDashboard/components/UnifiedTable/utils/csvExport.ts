@@ -9,10 +9,10 @@ import { isCustomColumnId } from './customColumns'
 export function getRowsAtGroupLevel(
 	table: Table<ProtocolTableRow>,
 	level: UnifiedRowHeaderType
-): Row<ProtocolTableRow>[] {
-	const result: Row<ProtocolTableRow>[] = []
+): Array<Row<ProtocolTableRow>> {
+	const result: Array<Row<ProtocolTableRow>> = []
 
-	const collectRows = (rows: Row<ProtocolTableRow>[]) => {
+	const collectRows = (rows: Array<Row<ProtocolTableRow>>) => {
 		for (const row of rows) {
 			if (row.original.nodeType === 'group') {
 				if (row.original.header === level) {
@@ -103,12 +103,12 @@ export function buildGroupedCsvData({
 	level,
 	customColumns
 }: {
-	rows: Row<ProtocolTableRow>[]
-	columns: Column<ProtocolTableRow>[]
+	rows: Array<Row<ProtocolTableRow>>
+	columns: Array<Column<ProtocolTableRow>>
 	percentColumns: Set<string>
 	level: UnifiedRowHeaderType
-	customColumns: readonly CustomColumnDefinition[]
-}): { headers: string[]; data: string[][] } {
+	customColumns: ReadonlyArray<CustomColumnDefinition>
+}): { headers: Array<string>; data: Array<Array<string>> } {
 	const groupHeader = GROUP_LEVEL_HEADERS[level]
 	const customColumnsById = new Map(customColumns.map((column) => [column.id, column]))
 	const columnHeaders = columns.map((column) => {
@@ -131,7 +131,7 @@ export function buildGroupedCsvData({
 
 	const data = rows.map((row) => {
 		const display = row.original
-		const rowData: string[] = []
+		const rowData: Array<string> = []
 		for (let index = 0; index <= columns.length; index++) {
 			if (index === insertIndex) rowData.push(display.displayName)
 			const column = columns[index]

@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { UtrGradingConfig, UtrLeaderboardRow } from '../types'
 
 vi.mock('../PerformanceMatrix', () => ({
@@ -55,7 +55,7 @@ const row: UtrLeaderboardRow = {
 }
 
 describe('Leaderboard', () => {
-	it('returns the page that contains a searched asset', () => {
+	test('returns the page that contains a searched asset', () => {
 		const rows = Array.from({ length: 205 }, (_, index) => ({ ...row, asset: `asset-${index}` }))
 		expect(pageForUtrAsset(rows, 'asset-0')).toBe(0)
 		expect(pageForUtrAsset(rows, 'asset-100')).toBe(1)
@@ -63,7 +63,7 @@ describe('Leaderboard', () => {
 		expect(pageForUtrAsset(rows, 'missing')).toBeNull()
 	})
 
-	it('renders the API grade after Protocol without a Status or pin column', () => {
+	test('renders the API grade after Protocol without a Status or pin column', () => {
 		const html = renderToStaticMarkup(
 			<Leaderboard rows={[row]} grading={grading} sort={{ key: 'rank', desc: false }} setSort={() => undefined} />
 		)

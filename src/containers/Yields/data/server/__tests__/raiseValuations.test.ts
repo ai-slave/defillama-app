@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ParentProtocolLite, ProtocolLite } from '~/containers/ProtocolLists/api.types'
 import type { Raise } from '~/containers/Raises/model'
 import { buildRaiseValuationsUsd } from '../raiseValuations'
@@ -48,7 +48,7 @@ function parent(id: string, name: string): ParentProtocolLite {
 }
 
 describe('buildRaiseValuationsUsd', () => {
-	it('matches by direct defillamaId (tier 1)', () => {
+	test('matches by direct defillamaId (tier 1)', () => {
 		const raises = [raise({ date: 1, defillamaId: '111', valuationUsd: 25_000_000 })]
 		const protocols = [{ slug: 'morpho-blue', name: 'Morpho Blue' }]
 		const lite = {
@@ -59,7 +59,7 @@ describe('buildRaiseValuationsUsd', () => {
 		expect(map.get('morpho-blue')).toBe(25_000_000)
 	})
 
-	it('inherits a parent protocol raise for a child (tier 2 via parentProtocol id)', () => {
+	test('inherits a parent protocol raise for a child (tier 2 via parentProtocol id)', () => {
 		// The raise is keyed to the PARENT's defillamaId; the child protocol has no raise of its own
 		// but points at that parent via parentProtocol — tier 2 resolves it.
 		const raises = [raise({ date: 1, defillamaId: 'parent#1', valuationUsd: 40_000_000 })]
@@ -72,7 +72,7 @@ describe('buildRaiseValuationsUsd', () => {
 		expect(map.get('aave-v3')).toBe(40_000_000)
 	})
 
-	it('matches "name starts with parent name" via a child raise (tier 4)', () => {
+	test('matches "name starts with parent name" via a child raise (tier 4)', () => {
 		// Parent "Aave" (>= 4 chars) resolves its valuation from a sibling child's defillamaId, then
 		// "Aave Lend" matches because it starts with "Aave ".
 		const raises = [raise({ date: 1, defillamaId: '999', valuationUsd: 15_000_000 })]
@@ -85,14 +85,14 @@ describe('buildRaiseValuationsUsd', () => {
 		expect(map.get('aave-lend')).toBe(15_000_000)
 	})
 
-	it('falls back to an exact name → raise-name match (tier 3)', () => {
+	test('falls back to an exact name → raise-name match (tier 3)', () => {
 		const raises = [raise({ date: 1, name: 'Acme Protocol', valuationUsd: 12_000_000 })]
 		const protocols = [{ slug: 'acme-protocol', name: 'Acme Protocol' }]
 		const map = buildRaiseValuationsUsd(raises, protocols, noLite)
 		expect(map.get('acme-protocol')).toBe(12_000_000)
 	})
 
-	it('matches "name starts with parent name" (tier 4)', () => {
+	test('matches "name starts with parent name" (tier 4)', () => {
 		const raises = [raise({ date: 1, name: 'Phantom', valuationUsd: 8_000_000 })]
 		const protocols = [{ slug: 'phantom-sol', name: 'Phantom SOL' }]
 		const lite = {
@@ -104,7 +104,7 @@ describe('buildRaiseValuationsUsd', () => {
 		expect(map.get('phantom-sol')).toBe(8_000_000)
 	})
 
-	it('keeps the most recent raise (date desc, first write wins)', () => {
+	test('keeps the most recent raise (date desc, first write wins)', () => {
 		const raises = [
 			raise({ date: 100, name: 'Acme', valuationUsd: 50_000_000 }),
 			raise({ date: 200, name: 'Acme', valuationUsd: 90_000_000 })
@@ -114,7 +114,7 @@ describe('buildRaiseValuationsUsd', () => {
 		expect(map.get('acme')).toBe(90_000_000)
 	})
 
-	it('ignores non-finite / non-positive valuations and leaves unmatched protocols unset', () => {
+	test('ignores non-finite / non-positive valuations and leaves unmatched protocols unset', () => {
 		const raises = [
 			raise({ date: 1, name: 'ZeroCo', valuationUsd: 0 }),
 			raise({ date: 1, name: 'NanCo', valuationUsd: Number.NaN })

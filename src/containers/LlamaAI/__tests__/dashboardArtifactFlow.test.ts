@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
 	activateDashboardArtifacts,
 	activateDashboardArtifactsWithConfirmation,
@@ -9,7 +9,7 @@ import {
 } from '../dashboardArtifactFlow'
 
 describe('prepareDashboardArtifactSave', () => {
-	it('offers durable live and snapshot charts but never broken or public read-only artifacts', () => {
+	test('offers durable live and snapshot charts but never broken or public read-only artifacts', () => {
 		const ref = {
 			artifactId: 'artifact-1',
 			versionId: 'version-1',
@@ -22,7 +22,7 @@ describe('prepareDashboardArtifactSave', () => {
 		expect(canAddChartArtifactToDashboard(ref, true)).toBe(false)
 	})
 
-	it('builds a direct dashboard item from the durable artifact ref without legacy chart saving', () => {
+	test('builds a direct dashboard item from the durable artifact ref without legacy chart saving', () => {
 		expect(
 			buildLlamaAIChartDashboardItem(
 				{
@@ -49,7 +49,7 @@ describe('prepareDashboardArtifactSave', () => {
 		})
 	})
 
-	it('persists every custom chart as a V2 ref and keeps broken slots repairable', () => {
+	test('persists every custom chart as a V2 ref and keeps broken slots repairable', () => {
 		const result = prepareDashboardArtifactSave(
 			[
 				{ id: 'item-live', kind: 'llamaai-chart', chartRef: 'chart-live' },
@@ -101,7 +101,7 @@ describe('prepareDashboardArtifactSave', () => {
 		})
 	})
 
-	it('deduplicates repeated references to the same billed artifact', () => {
+	test('deduplicates repeated references to the same billed artifact', () => {
 		const outcome = {
 			chartRef: 'chart-1',
 			artifactId: 'artifact-1',
@@ -125,7 +125,7 @@ describe('prepareDashboardArtifactSave', () => {
 })
 
 describe('prepareStoredDashboardActivation', () => {
-	it('accounts for every stored V2 chart while billing each premium artifact once', () => {
+	test('accounts for every stored V2 chart while billing each premium artifact once', () => {
 		const result = prepareStoredDashboardActivation([
 			{
 				id: 'item-a',
@@ -161,7 +161,7 @@ describe('prepareStoredDashboardActivation', () => {
 		})
 	})
 
-	it('does not reauthorize existing premium spend unless a new ceiling is explicitly confirmed', async () => {
+	test('does not reauthorize existing premium spend unless a new ceiling is explicitly confirmed', async () => {
 		const authorizedFetch = vi.fn().mockResolvedValue(
 			new Response(
 				JSON.stringify({
@@ -186,7 +186,7 @@ describe('prepareStoredDashboardActivation', () => {
 		)
 	})
 
-	it('requires the activation response to account for the complete authority set', async () => {
+	test('requires the activation response to account for the complete authority set', async () => {
 		const authorizedFetch = vi.fn().mockResolvedValue(
 			new Response(JSON.stringify({ outcomes: [{ itemId: 'item-a' }] }), {
 				status: 200,
@@ -200,7 +200,7 @@ describe('prepareStoredDashboardActivation', () => {
 		)
 	})
 
-	it('confirms and retries exactly once only when the server requires a higher premium ceiling', async () => {
+	test('confirms and retries exactly once only when the server requires a higher premium ceiling', async () => {
 		const authorizedFetch = vi
 			.fn()
 			.mockResolvedValueOnce(

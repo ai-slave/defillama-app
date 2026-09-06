@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import type { IRWAAssetsOverview } from '../api.types'
 import {
@@ -13,7 +13,7 @@ import {
 } from '../chartAggregation'
 
 describe('buildRwaCanonicalMetricDataset', () => {
-	it('writes the final metric total directly while preserving sparse, zero, and negative series values', () => {
+	test('writes the final metric total directly while preserving sparse, zero, and negative series values', () => {
 		expect(
 			buildRwaCanonicalMetricDataset(
 				{
@@ -35,7 +35,7 @@ describe('buildRwaCanonicalMetricDataset', () => {
 		})
 	})
 
-	it('produces a JSON-safe server-prop dataset for sparse aggregate series', () => {
+	test('produces a JSON-safe server-prop dataset for sparse aggregate series', () => {
 		const result = buildRwaCanonicalMetricDataset(
 			{
 				dimensions: ['timestamp', 'Alpha', 'Beta'],
@@ -155,7 +155,7 @@ const assets: IRWAAssetsOverview['assets'] = [
 ]
 
 describe('aggregateRwaMetricData', () => {
-	it('aggregates all asset series into a single Total series when total mode is selected', () => {
+	test('aggregates all asset series into a single Total series when total mode is selected', () => {
 		expect(
 			aggregateRwaMetricData(
 				assets,
@@ -174,7 +174,7 @@ describe('aggregateRwaMetricData', () => {
 		})
 	})
 
-	it('aggregates platform series for scalar and missing parentPlatform values', () => {
+	test('aggregates platform series for scalar and missing parentPlatform values', () => {
 		expect(
 			aggregateRwaMetricData(
 				assets,
@@ -193,14 +193,14 @@ describe('aggregateRwaMetricData', () => {
 		})
 	})
 
-	it('preserves an explicitly measured zero in an asset series', () => {
+	test('preserves an explicitly measured zero in an asset series', () => {
 		expect(aggregateRwaMetricData(assets, [{ timestamp: 1, 'ondo/usdy': 0 }], 'assetName')).toEqual({
 			source: [{ timestamp: 1, Alpha: 0 }],
 			dimensions: ['timestamp', 'Alpha']
 		})
 	})
 
-	it('buckets missing assetGroup values into Unknown instead of dropping them', () => {
+	test('buckets missing assetGroup values into Unknown instead of dropping them', () => {
 		expect(
 			aggregateRwaMetricData(
 				[
@@ -234,7 +234,7 @@ describe('aggregateRwaMetricData', () => {
 })
 
 describe('appendRwaChartDatasetTotal', () => {
-	it('adds a Total column and promotes it to the first visible series dimension', () => {
+	test('adds a Total column and promotes it to the first visible series dimension', () => {
 		expect(
 			appendRwaChartDatasetTotal({
 				source: [
@@ -254,7 +254,7 @@ describe('appendRwaChartDatasetTotal', () => {
 })
 
 describe('buildRwaOpenInterestDataset', () => {
-	it('collapses filtered perps contracts into a single RWA Perps OI line', () => {
+	test('collapses filtered perps contracts into a single RWA Perps OI line', () => {
 		expect(
 			buildRwaOpenInterestDataset(
 				[
@@ -279,7 +279,7 @@ describe('buildRwaOpenInterestDataset', () => {
 		})
 	})
 
-	it('preserves all-zero RWA Perps OI series when the source contains real zero values', () => {
+	test('preserves all-zero RWA Perps OI series when the source contains real zero values', () => {
 		expect(
 			buildRwaOpenInterestDataset([createPerpsAsset({ contract: 'xyz:alpha' })], {
 				source: [
@@ -297,7 +297,7 @@ describe('buildRwaOpenInterestDataset', () => {
 		})
 	})
 
-	it('omits prelaunch and gap timestamps without selected-contract measurements', () => {
+	test('omits prelaunch and gap timestamps without selected-contract measurements', () => {
 		expect(
 			buildRwaOpenInterestDataset([createPerpsAsset({ contract: 'xyz:alpha' })], {
 				source: [
@@ -319,7 +319,7 @@ describe('buildRwaOpenInterestDataset', () => {
 })
 
 describe('mergeRwaChartDatasets', () => {
-	it('merges a spot chart dataset with the RWA Perps OI overlay line', () => {
+	test('merges a spot chart dataset with the RWA Perps OI overlay line', () => {
 		expect(
 			mergeRwaChartDatasets(
 				{
@@ -339,7 +339,7 @@ describe('mergeRwaChartDatasets', () => {
 })
 
 describe('RWA chart series color reservation', () => {
-	it('orders Total first and RWA Perps OI second', () => {
+	test('orders Total first and RWA Perps OI second', () => {
 		expect(sortRwaChartSeriesLabels(['Treasuries', 'RWA Perps OI', 'Total Active Mcap', 'Credit'])).toEqual([
 			'Total Active Mcap',
 			'RWA Perps OI',
@@ -348,13 +348,13 @@ describe('RWA chart series color reservation', () => {
 		])
 	})
 
-	it('keeps CHART_COLORS[0] and CHART_COLORS[1] reserved for Total and RWA Perps OI', () => {
+	test('keeps CHART_COLORS[0] and CHART_COLORS[1] reserved for Total and RWA Perps OI', () => {
 		expect(CHART_COLORS[getRwaReservedSeriesColorSlot('Total Active Mcap') ?? -1]).toBe(CHART_COLORS[0])
 		expect(CHART_COLORS[getRwaReservedSeriesColorSlot('RWA Perps OI') ?? -1]).toBe(CHART_COLORS[1])
 		expect(getRwaReservedSeriesColorSlot('Treasuries')).toBeNull()
 	})
 
-	it('starts non-reserved series at CHART_COLORS[2] even when only RWA Perps OI is present', () => {
+	test('starts non-reserved series at CHART_COLORS[2] even when only RWA Perps OI is present', () => {
 		expect(getRwaChartSeriesColorSlots(['Treasuries', 'RWA Perps OI'])).toEqual({
 			'RWA Perps OI': 1,
 			Treasuries: 2

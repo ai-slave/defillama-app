@@ -42,8 +42,8 @@ const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, ProtocolCha
 }
 
 export function getSupportedProtocolCharts(
-	labels: ProtocolChartsLabels[]
-): { label: ProtocolChartsLabels; dashboardType: ProtocolChartType }[] {
+	labels: Array<ProtocolChartsLabels>
+): Array<{ label: ProtocolChartsLabels; dashboardType: ProtocolChartType }> {
 	return labels
 		.map((label) => ({
 			label,
@@ -54,6 +54,6 @@ export function getSupportedProtocolCharts(
 		)
 }
 
-export function getUnsupportedProtocolCharts(labels: ProtocolChartsLabels[]): ProtocolChartsLabels[] {
+export function getUnsupportedProtocolCharts(labels: Array<ProtocolChartsLabels>): Array<ProtocolChartsLabels> {
 	return labels.filter((label) => PROTOCOL_TO_DASHBOARD_CHART_TYPE[label] === null)
 }

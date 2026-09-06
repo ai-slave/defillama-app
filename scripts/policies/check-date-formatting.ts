@@ -107,8 +107,8 @@ function isDayjsExpression(node: ts.Expression, bindings: ReadonlySet<string>): 
 	return false
 }
 
-function scanSource(relative: string, file: string, source: string): string[] {
-	const violations: string[] = []
+function scanSource(relative: string, file: string, source: string): Array<string> {
+	const violations: Array<string> = []
 	const sourceFile = ts.createSourceFile(
 		file,
 		source,
@@ -279,7 +279,7 @@ if (process.argv.includes('--self-test')) {
 		const actual = scanSource(`src/policy-self-test/${name}.tsx`, `${name}.tsx`, source).length > 0
 		return actual !== violation
 	})
-	if (failures.length) {
+	if (failures.length > 0) {
 		console.error(`Date formatting policy self-test failed: ${failures.map(({ name }) => name).join(', ')}`)
 		process.exit(1)
 	}
@@ -292,7 +292,7 @@ const violations = policyTargetFiles(root, sourceRoot).flatMap((file) => {
 	return scanSource(relative, file, fs.readFileSync(file, 'utf8'))
 })
 
-if (violations.length) {
+if (violations.length > 0) {
 	console.error(`Date formatting policy violations:\n${violations.map((violation) => `- ${violation}`).join('\n')}`)
 	process.exit(1)
 }

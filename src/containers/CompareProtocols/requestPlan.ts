@@ -22,11 +22,11 @@ export function getCompareProtocolExtraTvlKeys(extraTvlEnabled: Partial<Record<T
 }
 
 export function normalizeCompareProtocolSelection(
-	protocolQuery: string | string[] | undefined,
+	protocolQuery: string | Array<string> | undefined,
 	protocolNameBySlug: ReadonlyMap<string, string>
-): string[] {
+): Array<string> {
 	const values = typeof protocolQuery === 'string' ? [protocolQuery] : (protocolQuery ?? [])
-	const selected: string[] = []
+	const selected: Array<string> = []
 	const seen = new Set<string>()
 	for (const value of values) {
 		const protocol = value.trim()

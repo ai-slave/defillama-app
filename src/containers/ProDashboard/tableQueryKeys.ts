@@ -1,12 +1,12 @@
 import type { CexAnalyticsMetric } from '~/containers/Cexs/api.types'
 
-function sortedListKey(values: string[]) {
+function sortedListKey(values: Array<string>) {
 	if (values.length < 2) return values[0] ?? ''
 	return values.toSorted().join(',')
 }
 
-export function normalizeProTokenSymbols(tokenSymbols: string[]) {
-	const normalized: string[] = []
+export function normalizeProTokenSymbols(tokenSymbols: Array<string>) {
+	const normalized: Array<string> = []
 	const seen = new Set<string>()
 	for (const token of tokenSymbols) {
 		const symbol = token.trim().toUpperCase()
@@ -28,7 +28,7 @@ export const getProEquitiesStatementsCacheKey = (ticker: string) =>
 export const getProEquitiesFilingsCacheKey = (ticker: string) =>
 	['pro-dashboard', 'equities-filings-table', ticker] as const
 
-export function getProTokenUsageQueryKey(tokenSymbols: string[], includeCex: boolean) {
+export function getProTokenUsageQueryKey(tokenSymbols: Array<string>, includeCex: boolean) {
 	return ['pro-dashboard', 'token-usage', normalizeProTokenSymbols(tokenSymbols).toSorted(), includeCex] as const
 }
 
@@ -38,7 +38,7 @@ export const getProCexShareQueryKey = (metric: CexAnalyticsMetric, topN: number)
 export const getProChainsDatasetQueryKey = (category?: string) =>
 	['pro-dashboard', 'chains-overview', category || 'all'] as const
 
-export const getProYieldsDatasetQueryKey = (chains: string[]) =>
+export const getProYieldsDatasetQueryKey = (chains: Array<string>) =>
 	['pro-dashboard', 'yields-v2', chains.includes('All') ? '' : sortedListKey(chains)] as const
 
 export const getProStablecoinsTableQueryKey = (chain: string) =>

@@ -40,16 +40,16 @@ export function CollateralView({
 	oracleExposure = null,
 	chain
 }: {
-	collateral: CollateralVM[]
+	collateral: Array<CollateralVM>
 	explorers?: BlockExplorersResponse
 	protocolId: string
 	poolType: PoolType
 	supplyUsd?: number | null
 	allocatedUsd?: number | null
 	idleUsd?: number | null
-	trustScope?: string[]
-	marketOracles?: MarketOracle[]
-	oracleDependencies?: OracleDependency[]
+	trustScope?: Array<string>
+	marketOracles?: Array<MarketOracle>
+	oracleDependencies?: Array<OracleDependency>
 	oracleExposure?: OracleExposure | null
 	chain?: string
 }) {
@@ -80,7 +80,7 @@ export function CollateralView({
 	)
 	const totalDrainableUsd = useMemo(() => collateral.reduce((sum, c) => sum + (c.drainableUsd ?? 0), 0), [collateral])
 
-	if (!collateral.length) return null
+	if (collateral.length === 0) return null
 	const note = pooledMarketNote(protocolId, poolType)
 	const isMarket = poolType === 'market'
 	// A one-collateral market needs none of the multi-asset chrome (toggle, "driven by" split).

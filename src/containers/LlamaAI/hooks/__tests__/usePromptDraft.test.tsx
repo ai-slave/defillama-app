@@ -2,7 +2,7 @@
 
 import { act, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
 	LLAMA_AI_PROMPT_DRAFT_KEY,
 	movePromptDraft,
@@ -70,7 +70,7 @@ describe('usePromptDraft', () => {
 		container.remove()
 	})
 
-	it('restores a saved prompt draft when the composer mounts', async () => {
+	test('restores a saved prompt draft when the composer mounts', async () => {
 		writeDraft(SCOPE, 'Compare ETH and SOL revenue')
 
 		await act(async () => {
@@ -80,7 +80,7 @@ describe('usePromptDraft', () => {
 		expect(container.textContent).toBe('Compare ETH and SOL revenue')
 	})
 
-	it('keeps each chat draft in its own slot', async () => {
+	test('keeps each chat draft in its own slot', async () => {
 		writeDraft(SCOPE, 'draft for alpha')
 		writeDraft(OTHER_SCOPE, 'draft for beta')
 
@@ -95,7 +95,7 @@ describe('usePromptDraft', () => {
 		expect(container.textContent).toBe('draft for beta')
 	})
 
-	it('shows an empty composer in a chat that has no draft, leaving the other chat untouched', async () => {
+	test('shows an empty composer in a chat that has no draft, leaving the other chat untouched', async () => {
 		writeDraft(SCOPE, 'unsent message in alpha')
 
 		await act(async () => {
@@ -106,7 +106,7 @@ describe('usePromptDraft', () => {
 		expect(readDraft(SCOPE)).toBe('unsent message in alpha')
 	})
 
-	it('does not leak a draft written in one scope into another', async () => {
+	test('does not leak a draft written in one scope into another', async () => {
 		let updateDraft: (nextDraft: string) => void = () => undefined
 
 		await act(async () => {
@@ -126,7 +126,7 @@ describe('usePromptDraft', () => {
 		expect(readDraft(OTHER_SCOPE)).toBeNull()
 	})
 
-	it('adopts a legacy unscoped draft once, then clears the legacy key', async () => {
+	test('adopts a legacy unscoped draft once, then clears the legacy key', async () => {
 		localStorage.setItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'written before scoping existed')
 
 		await act(async () => {
@@ -137,7 +137,7 @@ describe('usePromptDraft', () => {
 		expect(localStorage.getItem(LLAMA_AI_PROMPT_DRAFT_KEY)).toBeNull()
 	})
 
-	it('does not let a legacy draft overwrite an existing scoped draft', async () => {
+	test('does not let a legacy draft overwrite an existing scoped draft', async () => {
 		writeDraft(SCOPE, 'current draft')
 		localStorage.setItem(LLAMA_AI_PROMPT_DRAFT_KEY, 'stale legacy draft')
 
@@ -148,7 +148,7 @@ describe('usePromptDraft', () => {
 		expect(container.textContent).toBe('current draft')
 	})
 
-	it('prunes drafts older than the retention window', async () => {
+	test('prunes drafts older than the retention window', async () => {
 		const ancient = Date.now() - 8 * 24 * 60 * 60 * 1000
 		writeDraft('session:ancient', 'forgotten', ancient)
 		let updateDraft: (nextDraft: string) => void = () => undefined
@@ -169,7 +169,7 @@ describe('usePromptDraft', () => {
 		expect(readDraft(SCOPE)).toBe('fresh')
 	})
 
-	it('caps how many drafts are retained', async () => {
+	test('caps how many drafts are retained', async () => {
 		for (let index = 0; index < 40; index++) {
 			writeDraft(`session:old-${index}`, `draft ${index}`, Date.now() - (40 - index) * 1000)
 		}
@@ -192,7 +192,7 @@ describe('usePromptDraft', () => {
 		expect(readDraft(SCOPE)).toBe('newest')
 	})
 
-	it('debounces persistence until typing pauses', async () => {
+	test('debounces persistence until typing pauses', async () => {
 		let updateDraft: (nextDraft: string) => void = () => undefined
 
 		await act(async () => {
@@ -218,7 +218,7 @@ describe('usePromptDraft', () => {
 		expect(container.textContent).toBe('Show me stablecoin inflows')
 	})
 
-	it('removes a cleared draft immediately and cancels pending persistence', async () => {
+	test('removes a cleared draft immediately and cancels pending persistence', async () => {
 		writeDraft(SCOPE, 'Existing draft')
 		let updateDraft: (nextDraft: string) => void = () => undefined
 
@@ -243,7 +243,7 @@ describe('usePromptDraft', () => {
 		expect(container.textContent).toBe('')
 	})
 
-	it('flushes pending persistence when the composer unmounts', async () => {
+	test('flushes pending persistence when the composer unmounts', async () => {
 		let updateDraft: (nextDraft: string) => void = () => undefined
 
 		await act(async () => {
@@ -263,7 +263,7 @@ describe('usePromptDraft', () => {
 		expect(readDraft(SCOPE)).toBe('Persist before leaving')
 	})
 
-	it('preserves the caret when editing in the middle of the draft', async () => {
+	test('preserves the caret when editing in the middle of the draft', async () => {
 		writeDraft(SCOPE, 'hello world')
 
 		await act(async () => {
@@ -284,7 +284,7 @@ describe('usePromptDraft', () => {
 		expect(textarea.selectionEnd).toBe(6)
 	})
 
-	it('updates when another consumer changes the same scope', async () => {
+	test('updates when another consumer changes the same scope', async () => {
 		await act(async () => {
 			root.render(<DraftProbe onDraft={() => undefined} />)
 		})
@@ -300,7 +300,7 @@ describe('usePromptDraft', () => {
 		expect(container.textContent).toBe('Draft from another composer')
 	})
 
-	it('moves an in-memory draft when a temporary session receives its real id', async () => {
+	test('moves an in-memory draft when a temporary session receives its real id', async () => {
 		let updateDraft: (nextDraft: string) => void = () => undefined
 		await act(async () => {
 			root.render(

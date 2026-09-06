@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { parseSync } from 'oxc-parser'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { type AstNode, identifierName, isNode, lineOf, walkAst } from '../../../../scripts/lib/oxcAst'
 import { collectSourceFiles } from '../../../../scripts/lib/sourceFiles'
 
@@ -9,7 +9,7 @@ const SRC_DIR = path.join(process.cwd(), 'src')
 const TABLE_USAGE_PATTERN =
 	/components\/Table\/(Table|TableWithSearch)['"]|<VirtualTable\b|<TableWithSearch\b|\b\w+TableWrapper\b|<\w+TableWrapper\b/
 
-function sourceFiles(): string[] {
+function sourceFiles(): Array<string> {
 	return collectSourceFiles(SRC_DIR, ['.ts', '.tsx']).filter(
 		(file) => !file.includes(`${path.sep}containers${path.sep}ProDashboard${path.sep}`)
 	)
@@ -23,7 +23,7 @@ function propertyName(prop: AstNode): string | undefined {
 }
 
 function getObjectProperty(node: AstNode, property: string): AstNode | undefined {
-	for (const prop of node.properties as AstNode[]) {
+	for (const prop of node.properties as Array<AstNode>) {
 		if (prop.type !== 'Property' || (prop.computed as boolean)) continue
 		if (propertyName(prop) === property) return isNode(prop.value) ? prop.value : prop
 	}
@@ -51,8 +51,8 @@ function compactNodeText(source: string, node: AstNode | undefined): string {
 }
 
 describe('VirtualTable column sizing', () => {
-	it('keeps shared VirtualTable leaf columns explicitly CSS-sized through headerClassName', () => {
-		const failures: string[] = []
+	test('keeps shared VirtualTable leaf columns explicitly CSS-sized through headerClassName', () => {
+		const failures: Array<string> = []
 
 		for (const file of sourceFiles()) {
 			const source = readFileSync(file, 'utf8')
@@ -71,7 +71,7 @@ describe('VirtualTable column sizing', () => {
 				const method = identifierName(node.callee.property)
 				if (method !== 'accessor' && method !== 'display') return
 
-				const callArguments = node.arguments as AstNode[]
+				const callArguments = node.arguments as Array<AstNode>
 				const config = callArguments[callArguments.length - 1]
 				if (!config || config.type !== 'ObjectExpression') return
 				// Hidden export-only columns never participate in table layout.

@@ -191,8 +191,8 @@ export class FileDatasetSnapshotStore implements DatasetSnapshotStore {
 		const current = await this.getCurrent(domain)
 		if (!current) return
 
-		const publishedVersions: DatasetSnapshotRef[] = []
-		const incompatibleVersions: string[] = []
+		const publishedVersions: Array<DatasetSnapshotRef> = []
+		const incompatibleVersions: Array<string> = []
 		for (const entry of entries) {
 			if (!entry.isDirectory() || entry.name.startsWith('.candidate-')) continue
 			try {

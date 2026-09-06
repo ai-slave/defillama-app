@@ -18,7 +18,7 @@ export const MobileNav = ({
 	pinnedPages: Array<TNavLink>
 	userDashboards: Array<TNavLink>
 	footerLinks: TNavLinks
-	tvlOptions?: { name: string; key: string }[]
+	tvlOptions?: Array<{ name: string; key: string }>
 	oldMetricLinks: Array<TOldNavLink>
 	asPath: string
 }) => {

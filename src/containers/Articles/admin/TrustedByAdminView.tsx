@@ -54,20 +54,20 @@ export function TrustedByAdminView() {
 	const revalidate = useResearchLandingRevalidation()
 	const [showFullPreview, setShowFullPreview] = useState(false)
 
-	const logosQuery = useQuery<TrustedLogo[]>({
+	const logosQuery = useQuery<Array<TrustedLogo>>({
 		queryKey: ['trusted-by-logos'],
 		queryFn: () => listTrustedLogos(authorizedFetch),
 		retry: false
 	})
 
-	const mentionsQuery = useQuery<SocialMention[]>({
+	const mentionsQuery = useQuery<Array<SocialMention>>({
 		queryKey: ['trusted-by-mentions'],
 		queryFn: () => listSocialMentions(authorizedFetch),
 		retry: false
 	})
 
 	const reorderLogosMutation = useMutation({
-		mutationFn: (ids: string[]) => reorderTrustedLogos(ids, authorizedFetch),
+		mutationFn: (ids: Array<string>) => reorderTrustedLogos(ids, authorizedFetch),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['trusted-by-logos'] })
 			revalidate()
@@ -102,7 +102,7 @@ export function TrustedByAdminView() {
 	})
 
 	const reorderMentionsMutation = useMutation({
-		mutationFn: (ids: string[]) => reorderSocialMentions(ids, authorizedFetch),
+		mutationFn: (ids: Array<string>) => reorderSocialMentions(ids, authorizedFetch),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['trusted-by-mentions'] })
 			revalidate()

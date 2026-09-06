@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('~/containers/ProtocolLists/api', () => ({ fetchProtocols: vi.fn() }))
 vi.mock('~/containers/ProtocolRankings/queries.server', () => ({
@@ -25,7 +25,7 @@ import { fetchForkMetrics, fetchForkProtocolBreakdownChart } from '../api'
 import { getForksByProtocolPageData, getForksListPageData } from '../queries'
 
 describe('getForksListPageData', () => {
-	it('treats omitted current default TVL as zero', async () => {
+	test('treats omitted current default TVL as zero', async () => {
 		vi.mocked(fetchForkMetrics).mockResolvedValueOnce({ Omitted: [], Explicit: [] })
 		vi.mocked(fetchProtocols).mockResolvedValueOnce({
 			protocols: [],
@@ -51,7 +51,7 @@ describe('getForksListPageData', () => {
 		])
 	})
 
-	it('counts current Fork relationships even when the metrics cache has no measurement', async () => {
+	test('counts current Fork relationships even when the metrics cache has no measurement', async () => {
 		const protocol = {
 			name: 'Unmeasured Fork',
 			symbol: 'FORK',
@@ -95,7 +95,7 @@ describe('getForksByProtocolPageData', () => {
 		vi.mocked(getProtocolsByChain).mockResolvedValue(null)
 	})
 
-	it('resolves a route slug to the producer canonical Fork identity', async () => {
+	test('resolves a route slug to the producer canonical Fork identity', async () => {
 		const result = await getForksByProtocolPageData({ fork: 'aave-v3' })
 
 		expect(result).toEqual({
@@ -114,20 +114,20 @@ describe('getForksByProtocolPageData', () => {
 		expect(getProtocolsByChain).toHaveBeenCalledWith(expect.objectContaining({ fork: 'Aave V3' }))
 	})
 
-	it('returns not-found from metadata before requesting producer data', async () => {
+	test('returns not-found from metadata before requesting producer data', async () => {
 		await expect(getForksByProtocolPageData({ fork: 'unknown-fork' })).resolves.toEqual({ status: 'not-found' })
 		expect(fetchForkMetrics).not.toHaveBeenCalled()
 		expect(fetchForkProtocolBreakdownChart).not.toHaveBeenCalled()
 	})
 
-	it('keeps metadata and producer identity drift unavailable', async () => {
+	test('keeps metadata and producer identity drift unavailable', async () => {
 		vi.mocked(fetchForkMetrics).mockResolvedValue({ Curve: ['Convex'] })
 
 		await expect(getForksByProtocolPageData({ fork: 'aave-v3' })).resolves.toEqual({ status: 'unavailable' })
 		expect(fetchForkProtocolBreakdownChart).not.toHaveBeenCalled()
 	})
 
-	it('keeps a metadata-valid all-extra Fork available with empty default history', async () => {
+	test('keeps a metadata-valid all-extra Fork available with empty default history', async () => {
 		vi.mocked(fetchForkProtocolBreakdownChart).mockResolvedValue([{ timestamp: 1, Curve: 10 }])
 
 		const result = await getForksByProtocolPageData({ fork: 'aave-v3' })
@@ -138,7 +138,7 @@ describe('getForksByProtocolPageData', () => {
 		})
 	})
 
-	it('keeps a required source failure distinct from not-found', async () => {
+	test('keeps a required source failure distinct from not-found', async () => {
 		vi.mocked(fetchForkProtocolBreakdownChart).mockRejectedValue(new Error('source unavailable'))
 
 		await expect(getForksByProtocolPageData({ fork: 'Aave V3' })).resolves.toEqual({ status: 'unavailable' })

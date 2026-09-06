@@ -6,7 +6,9 @@ import { useCallback, useEffect, useRef } from 'react'
     component (react-hooks/rules-of-hooks), so callbacks that escape into
     timers, cleanup callbacks, or other hooks use this instead. Not safe
     to call during render. */
-export function useStableCallback<Args extends unknown[], R>(callback: (...args: Args) => R): (...args: Args) => R {
+export function useStableCallback<Args extends Array<unknown>, R>(
+	callback: (...args: Args) => R
+): (...args: Args) => R {
 	const ref = useRef(callback)
 	useEffect(() => {
 		ref.current = callback

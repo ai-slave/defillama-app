@@ -25,7 +25,7 @@ type SectionFilter = {
 	itemLabel: string
 }
 
-const SECTION_FILTERS: SectionFilter[] = [
+const SECTION_FILTERS: Array<SectionFilter> = [
 	{ value: null, label: 'All types', itemLabel: 'Content' },
 	{ value: 'report', label: 'Reports', itemLabel: 'Report' },
 	{ value: 'interview', label: 'Interviews', itemLabel: 'Interview' },
@@ -76,7 +76,7 @@ type ResearchSearchItem = {
 }
 
 type ResearchSearchResponse = {
-	items: ResearchSearchItem[]
+	items: Array<ResearchSearchItem>
 	totalItems: number
 }
 

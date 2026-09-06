@@ -1,12 +1,12 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
 import { METADATA_ARTIFACT_FILES, type CoreMetadataPayload } from '../artifactContract'
 import { loadMetadataArtifactsFromDisk } from '../artifacts'
 import { writeMetadataArtifacts } from '../artifactWriter'
 
-const tempDirs: string[] = []
+const tempDirs: Array<string> = []
 
 function createPayload(): CoreMetadataPayload {
 	return {
@@ -57,7 +57,7 @@ afterEach(async () => {
 })
 
 describe('metadata artifact loader', () => {
-	it('loads generated artifacts from disk through the registry', async () => {
+	test('loads generated artifacts from disk through the registry', async () => {
 		const cacheDir = await createTempDir()
 		await writeMetadataArtifacts(cacheDir, createPayload(), 'ready', 123)
 
@@ -69,7 +69,7 @@ describe('metadata artifact loader', () => {
 		expect(artifacts.payload.rwaPlatformsIndex).toEqual({ generatedAt: 0, byPid: {}, platforms: {} })
 	})
 
-	it('loads parsed JSON artifacts without semantic validation', async () => {
+	test('loads parsed JSON artifacts without semantic validation', async () => {
 		const cacheDir = await createTempDir()
 		await writeMetadataArtifacts(cacheDir, createPayload(), 'ready', 123)
 		await fs.writeFile(path.join(cacheDir, METADATA_ARTIFACT_FILES.chains), JSON.stringify([]))

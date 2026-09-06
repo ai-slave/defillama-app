@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChainChartLabels } from '../constants'
 
 const mocks = vi.hoisted(() => ({
@@ -70,7 +70,7 @@ function Probe({
 	chainGeckoId = null,
 	tvlChart = []
 }: {
-	toggledCharts: ChainChartLabels[]
+	toggledCharts: Array<ChainChartLabels>
 	denomination?: string
 	chainGeckoId?: string | null
 	tvlChart?: Array<[number, number]>
@@ -107,23 +107,23 @@ describe('ChainOverview chart metric semantics', () => {
 		})
 	})
 
-	it.each(feeRevenueChartRows)('builds the current $label chart API URL', ({ label, expectedUrl }) => {
+	test.each(feeRevenueChartRows)('builds the current $label chart API URL', ({ label, expectedUrl }) => {
 		renderToStaticMarkup(<Probe toggledCharts={[label]} />)
 
 		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
 		expect(mocks.fetchJson).toHaveBeenCalledWith(expectedUrl)
 	})
 
-	it.each(activityChartRows)('builds the current $label chart API URL', ({ label, expectedUrl }) => {
+	test.each(activityChartRows)('builds the current $label chart API URL', ({ label, expectedUrl }) => {
 		renderToStaticMarkup(<Probe toggledCharts={[label]} />)
 
 		expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
 		expect(mocks.fetchJson).toHaveBeenCalledWith(expectedUrl)
 	})
 
-	it('uses the chain fee series directly', () => {
+	test('uses the chain fee series directly', () => {
 		const timestamp = Date.UTC(2024, 0, 1) / 1e3
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => {
 			if (options.queryKey[1] === 'chain-fees') {
 				return { data: [[timestamp, 100]], isLoading: false }
 			}
@@ -136,10 +136,10 @@ describe('ChainOverview chart metric semantics', () => {
 		expect(mocks.fetchJson).not.toHaveBeenCalled()
 	})
 
-	it('keeps USD values and symbols when a requested denomination has no chain gecko id', () => {
+	test('keeps USD values and symbols when a requested denomination has no chain gecko id', () => {
 		const timestamp = Date.UTC(2024, 0, 1)
 		renderToStaticMarkup(
-			<Probe toggledCharts={['TVL', 'Token Price']} denomination="ETH" tvlChart={[[timestamp, 2_000]]} />
+			<Probe toggledCharts={['TVL', 'Token Price']} denomination="ETH" tvlChart={[[timestamp, 2000]]} />
 		)
 
 		const priceHistoryQuery = mocks.useQuery.mock.calls
@@ -147,14 +147,14 @@ describe('ChainOverview chart metric semantics', () => {
 			.find((options) => options.queryKey[1] === 'price-history')
 		expect(priceHistoryQuery).toMatchObject({ enabled: false, queryFn: mocks.skipToken })
 		expect(mocks.fetchJson).not.toHaveBeenCalled()
-		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 2_000]])
+		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 2000]])
 		expect(mocks.lastResult?.valueSymbol).toBe('$')
 		expect(mocks.lastResult?.failedMetrics).not.toContain('Token Price')
 	})
 
-	it('keeps USD values and symbols when the denomination price query fails', () => {
+	test('keeps USD values and symbols when the denomination price query fails', () => {
 		const timestamp = Date.UTC(2024, 0, 1)
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => {
 			if (options.queryKey[1] === 'price-history') {
 				return { data: undefined, isLoading: false, error: new Error('price history unavailable') }
 			}
@@ -162,16 +162,16 @@ describe('ChainOverview chart metric semantics', () => {
 		})
 
 		renderToStaticMarkup(
-			<Probe toggledCharts={['TVL']} denomination="ETH" chainGeckoId="ethereum" tvlChart={[[timestamp, 2_000]]} />
+			<Probe toggledCharts={['TVL']} denomination="ETH" chainGeckoId="ethereum" tvlChart={[[timestamp, 2000]]} />
 		)
 
-		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 2_000]])
+		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 2000]])
 		expect(mocks.lastResult?.valueSymbol).toBe('$')
 	})
 
-	it('keeps USD values and symbols when denomination price history is empty', () => {
+	test('keeps USD values and symbols when denomination price history is empty', () => {
 		const timestamp = Date.UTC(2024, 0, 1)
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => {
 			if (options.queryKey[1] === 'price-history') {
 				return {
 					data: {
@@ -188,17 +188,17 @@ describe('ChainOverview chart metric semantics', () => {
 		})
 
 		renderToStaticMarkup(
-			<Probe toggledCharts={['TVL']} denomination="ETH" chainGeckoId="ethereum" tvlChart={[[timestamp, 2_000]]} />
+			<Probe toggledCharts={['TVL']} denomination="ETH" chainGeckoId="ethereum" tvlChart={[[timestamp, 2000]]} />
 		)
 
-		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 2_000]])
+		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 2000]])
 		expect(mocks.lastResult?.valueSymbol).toBe('$')
 	})
 
-	it('keeps an all-zero token price chart in USD without enabling denomination conversion', () => {
+	test('keeps an all-zero token price chart in USD without enabling denomination conversion', () => {
 		const timestamp = Date.UTC(2024, 0, 1)
 		const zeroPriceHistory = buildDenominationPriceHistory({ prices: [[timestamp, 0]] })
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => {
 			if (options.queryKey[1] === 'price-history') return { data: zeroPriceHistory, isLoading: false }
 			return { data: null, isLoading: false }
 		})
@@ -208,24 +208,24 @@ describe('ChainOverview chart metric semantics', () => {
 				toggledCharts={['TVL', 'Token Price']}
 				denomination="ETH"
 				chainGeckoId="ethereum"
-				tvlChart={[[timestamp, 2_000]]}
+				tvlChart={[[timestamp, 2000]]}
 			/>
 		)
 
-		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 2_000]])
+		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 2000]])
 		expect(mocks.lastResult?.finalCharts['Token Price']).toEqual([[timestamp, 0]])
 		expect(mocks.lastResult?.valueSymbol).toBe('$')
 	})
 
-	it('converts values and exposes the requested symbol when denomination history is usable', () => {
+	test('converts values and exposes the requested symbol when denomination history is usable', () => {
 		const timestamp = Date.UTC(2024, 0, 1)
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => {
 			if (options.queryKey[1] === 'price-history') {
 				return {
 					data: {
-						conversionPrices: { [timestamp]: 2_000 },
+						conversionPrices: { [timestamp]: 2000 },
 						canConvert: true,
-						priceChart: [[timestamp, 2_000]],
+						priceChart: [[timestamp, 2000]],
 						mcaps: undefined,
 						volumes: undefined
 					},
@@ -236,29 +236,29 @@ describe('ChainOverview chart metric semantics', () => {
 		})
 
 		renderToStaticMarkup(
-			<Probe toggledCharts={['TVL']} denomination="ETH" chainGeckoId="ethereum" tvlChart={[[timestamp, 2_000]]} />
+			<Probe toggledCharts={['TVL']} denomination="ETH" chainGeckoId="ethereum" tvlChart={[[timestamp, 2000]]} />
 		)
 
 		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 1]])
 		expect(mocks.lastResult?.valueSymbol).toBe('ETH')
 	})
 
-	it('converts denomination-aware values without converting intrinsically USD series', () => {
+	test('converts denomination-aware values without converting intrinsically USD series', () => {
 		const timestamp = Date.UTC(2024, 0, 1)
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => {
 			if (options.queryKey[1] === 'price-history') {
 				return {
 					data: {
-						conversionPrices: { [timestamp]: 2_000 },
+						conversionPrices: { [timestamp]: 2000 },
 						canConvert: true,
-						priceChart: [[timestamp, 2_000]],
-						mcaps: [[timestamp, 3_000]],
-						volumes: [[timestamp, 4_000]]
+						priceChart: [[timestamp, 2000]],
+						mcaps: [[timestamp, 3000]],
+						volumes: [[timestamp, 4000]]
 					},
 					isLoading: false
 				}
 			}
-			if (options.queryKey[1] === 'raises') return { data: [[timestamp, 5_000]], isLoading: false }
+			if (options.queryKey[1] === 'raises') return { data: [[timestamp, 5000]], isLoading: false }
 			return { data: null, isLoading: false }
 		})
 
@@ -267,30 +267,30 @@ describe('ChainOverview chart metric semantics', () => {
 				toggledCharts={['TVL', 'Token Price', 'Token Mcap', 'Token Volume', 'Raises']}
 				denomination="ETH"
 				chainGeckoId="ethereum"
-				tvlChart={[[timestamp, 2_000]]}
+				tvlChart={[[timestamp, 2000]]}
 			/>
 		)
 
 		expect(mocks.lastResult?.valueSymbol).toBe('ETH')
 		expect(mocks.lastResult?.finalCharts).toMatchObject({
 			TVL: [[timestamp, 1]],
-			'Token Price': [[timestamp, 2_000]],
-			'Token Mcap': [[timestamp, 3_000]],
-			'Token Volume': [[timestamp, 4_000]],
-			Raises: [[timestamp, 5_000]]
+			'Token Price': [[timestamp, 2000]],
+			'Token Mcap': [[timestamp, 3000]],
+			'Token Volume': [[timestamp, 4000]],
+			Raises: [[timestamp, 5000]]
 		})
 	})
 
-	it('keeps zero price observations while using only positive dates for conversion', () => {
+	test('keeps zero price observations while using only positive dates for conversion', () => {
 		const zeroTimestamp = Date.UTC(2024, 0, 1)
 		const positiveTimestamp = Date.UTC(2024, 0, 2)
 		const priceHistory = buildDenominationPriceHistory({
 			prices: [
 				[zeroTimestamp, 0],
-				[positiveTimestamp, 2_000]
+				[positiveTimestamp, 2000]
 			]
 		})
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => {
 			if (options.queryKey[1] === 'price-history') return { data: priceHistory, isLoading: false }
 			return { data: null, isLoading: false }
 		})
@@ -301,8 +301,8 @@ describe('ChainOverview chart metric semantics', () => {
 				denomination="ETH"
 				chainGeckoId="ethereum"
 				tvlChart={[
-					[zeroTimestamp, 2_000],
-					[positiveTimestamp, 2_000]
+					[zeroTimestamp, 2000],
+					[positiveTimestamp, 2000]
 				]}
 			/>
 		)
@@ -313,21 +313,21 @@ describe('ChainOverview chart metric semantics', () => {
 		])
 		expect(mocks.lastResult?.finalCharts['Token Price']).toEqual([
 			[zeroTimestamp, 0],
-			[positiveTimestamp, 2_000]
+			[positiveTimestamp, 2000]
 		])
 		expect(mocks.lastResult?.valueSymbol).toBe('ETH')
 	})
 
-	it('keeps null gaps for dates missing from otherwise usable denomination history', () => {
+	test('keeps null gaps for dates missing from otherwise usable denomination history', () => {
 		const timestamp = Date.UTC(2024, 0, 1)
 		const otherTimestamp = Date.UTC(2024, 0, 2)
-		mocks.useQuery.mockImplementation((options: { queryKey: unknown[] }) => {
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => {
 			if (options.queryKey[1] === 'price-history') {
 				return {
 					data: {
-						conversionPrices: { [otherTimestamp]: 2_000 },
+						conversionPrices: { [otherTimestamp]: 2000 },
 						canConvert: true,
-						priceChart: [[otherTimestamp, 2_000]],
+						priceChart: [[otherTimestamp, 2000]],
 						mcaps: undefined,
 						volumes: undefined
 					},
@@ -338,7 +338,7 @@ describe('ChainOverview chart metric semantics', () => {
 		})
 
 		renderToStaticMarkup(
-			<Probe toggledCharts={['TVL']} denomination="ETH" chainGeckoId="ethereum" tvlChart={[[timestamp, 2_000]]} />
+			<Probe toggledCharts={['TVL']} denomination="ETH" chainGeckoId="ethereum" tvlChart={[[timestamp, 2000]]} />
 		)
 
 		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, null]])

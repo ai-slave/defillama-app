@@ -23,8 +23,8 @@ const ARTIFACT_REMOTE_ENV_KEYS = [
 	'RCLONE_CONFIG_ARTIFACTS_ENDPOINT'
 ] as const
 
-function getMissingArtifactRemoteEnv(env: NodeJS.ProcessEnv): string[] {
-	const missing: string[] = []
+function getMissingArtifactRemoteEnv(env: NodeJS.ProcessEnv): Array<string> {
+	const missing: Array<string> = []
 	for (const key of ARTIFACT_REMOTE_ENV_KEYS) {
 		if (!env[key]?.trim()) missing.push(key)
 	}

@@ -4,18 +4,18 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AUTH_SERVER } from '~/constants'
 import pb from '~/utils/pocketbase'
 import { SwitchToEmailModal } from './SwitchToEmailModal'
 
-const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4102444800 }))}.signature`
+const token = (id: string) => `e30.${btoa(JSON.stringify({ id, exp: 4_102_444_800 }))}.signature`
 const record = (id: string) => ({ id, collectionId: '_pb_users_auth_', collectionName: 'users' })
 
 let root: Root
 let client: QueryClient
 let container: HTMLDivElement
-let confirmCalls: { authorization: string | null; resolve: (response: Response) => void }[]
+let confirmCalls: Array<{ authorization: string | null; resolve: (response: Response) => void }>
 
 beforeEach(() => {
 	confirmCalls = []
@@ -89,7 +89,7 @@ async function renderModalAtConfirmStep() {
 	await settle()
 }
 
-it('saves the switched session while it is still the current one', async () => {
+test('saves the switched session while it is still the current one', async () => {
 	pb.authStore.save(token('wallet-user'), record('wallet-user'))
 	await renderModalAtConfirmStep()
 
@@ -107,7 +107,7 @@ it('saves the switched session while it is still the current one', async () => {
 	expect(document.body.textContent).toContain('Switch Successful!')
 })
 
-it('does not overwrite a newer session with a late confirmation', async () => {
+test('does not overwrite a newer session with a late confirmation', async () => {
 	pb.authStore.save(token('wallet-user'), record('wallet-user'))
 	await renderModalAtConfirmStep()
 

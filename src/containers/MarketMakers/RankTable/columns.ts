@@ -12,7 +12,7 @@ import { MetricCell } from './MetricCell'
 const columnHelper = createColumnHelper<LeaderboardRow>()
 
 interface IBuildRankColumns {
-	columns: ColumnConfig[]
+	columns: Array<ColumnConfig>
 	mode: DisplayMode
 	rowCount: number
 	onSelectMM: (marketMakerId: string, marketMakerName: string) => void

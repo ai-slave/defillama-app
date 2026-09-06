@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { FOREGROUND_RECOVERY_POLL_MS, useForegroundRecovery } from '~/containers/LlamaAI/hooks/useForegroundRecovery'
 import type { PromptFailure } from '~/containers/LlamaAI/promptFailures'
 
@@ -86,7 +86,7 @@ describe('useForegroundRecovery', () => {
 		await act(async () => root.render(<Harness />))
 	}
 
-	it('resumes an active recovery when the tab becomes visible', async () => {
+	test('resumes an active recovery when the tab becomes visible', async () => {
 		mocks.hasActiveRecovery = true
 		await rerender()
 
@@ -100,7 +100,7 @@ describe('useForegroundRecovery', () => {
 		expect(mocksApi.onProbeSession).not.toHaveBeenCalled()
 	})
 
-	it('replays a reconnectable prompt when coming back online', async () => {
+	test('replays a reconnectable prompt when coming back online', async () => {
 		mocks.promptFailure = reconnectFailure()
 		await rerender()
 
@@ -112,7 +112,7 @@ describe('useForegroundRecovery', () => {
 		expect(mocksApi.onResumeRecovery).not.toHaveBeenCalled()
 	})
 
-	it('probes the session when a generic error is visible', async () => {
+	test('probes the session when a generic error is visible', async () => {
 		mocks.hasGenericError = true
 		await rerender()
 
@@ -123,7 +123,7 @@ describe('useForegroundRecovery', () => {
 		expect(mocksApi.onProbeSession).toHaveBeenCalledWith('session-1')
 	})
 
-	it('polls for a completed result after recovery exhausts', async () => {
+	test('polls for a completed result after recovery exhausts', async () => {
 		mocks.hasGenericError = true
 		await rerender()
 
@@ -134,7 +134,7 @@ describe('useForegroundRecovery', () => {
 		expect(mocksApi.onProbeSession).toHaveBeenCalledWith('session-1')
 	})
 
-	it('does not poll while the tab is hidden', async () => {
+	test('does not poll while the tab is hidden', async () => {
 		mocks.hasGenericError = true
 		await rerender()
 		Object.defineProperty(document, 'hidden', { configurable: true, value: true })

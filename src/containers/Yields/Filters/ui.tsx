@@ -20,7 +20,7 @@ export function HelpIcon({ content, label }: { content: ReactNode; label?: strin
 	)
 }
 
-export function HelpDefs({ items }: { items: { id: string; term: ReactNode; def: ReactNode }[] }) {
+export function HelpDefs({ items }: { items: Array<{ id: string; term: ReactNode; def: ReactNode }> }) {
 	return (
 		<dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2">
 			{items.map((it) => (

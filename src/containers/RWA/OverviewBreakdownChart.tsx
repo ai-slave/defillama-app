@@ -1,4 +1,4 @@
-import type { ParsedUrlQuery } from 'querystring'
+import type { ParsedUrlQuery } from 'node:querystring'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useMemo } from 'react'
@@ -11,7 +11,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { type ExcludeQueryKey } from '~/components/Select/types'
+import type { ExcludeQueryKey } from '~/components/Select/types'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
@@ -166,7 +166,7 @@ function fetchOverviewBreakdownDataset(request: RWAOverviewBreakdownRouteRequest
 	return fetchJson<RWAPositionalChartDataset>(`/api/public/rwa/overview-breakdown?${searchParams.toString()}`)
 }
 
-export function buildOverviewBreakdownChartSeries(dimensions: string[]): Array<MultiSeriesChartSeriesConfig> {
+export function buildOverviewBreakdownChartSeries(dimensions: Array<string>): Array<MultiSeriesChartSeriesConfig> {
 	const seriesDimensions = sortRwaChartSeriesLabels(dimensions.filter((dimension) => dimension !== 'timestamp'))
 	const colorSlots = getRwaChartSeriesColorSlots(seriesDimensions)
 
@@ -193,8 +193,8 @@ export function buildOverviewBreakdownChartSeries(dimensions: string[]): Array<M
 
 export function getOverviewBreakdownChartDatasetForSelectedStacks(
 	dataset: MultiSeriesChartDataset,
-	selectedStacks: string[],
-	stackOptions: string[]
+	selectedStacks: Array<string>,
+	stackOptions: Array<string>
 ): MultiSeriesChartDataset {
 	if (selectedStacks.length === 0 || selectedStacks.length === stackOptions.length) return dataset
 	const selectedDimensionIndexes = selectedStacks.map((stack) => dataset.dimensions.indexOf(stack))
@@ -222,7 +222,7 @@ export function RWAOverviewBreakdownChart({
 	page: RWAOverviewPage
 	initialChartDataset: RWAPositionalChartDataset
 	stackLabel: string
-	treemapSizeRows?: RWAFlowTreemapSizeRow[]
+	treemapSizeRows?: Array<RWAFlowTreemapSizeRow>
 }) {
 	const router = useRouter()
 	const chartTypeQuery = readSingleQueryValue(router.query.chartType)
@@ -301,7 +301,8 @@ export function RWAOverviewBreakdownChart({
 	const selectedStacks = useMemo(() => {
 		if (stackOptions.length === 0) return []
 		const availableStacks = new Set(stackOptions)
-		const limitTimeSeries = (values: string[]) => (isFlowHeatmap ? values : values.slice(0, MAX_VISIBLE_TIME_SERIES))
+		const limitTimeSeries = (values: Array<string>) =>
+			isFlowHeatmap ? values : values.slice(0, MAX_VISIBLE_TIME_SERIES)
 		if (selectedStacksQ === 'None') return []
 		if (selectedStacksQ != null) {
 			return limitTimeSeries(toNonEmptyArrayParam(selectedStacksQ).filter((stack) => availableStacks.has(stack)))

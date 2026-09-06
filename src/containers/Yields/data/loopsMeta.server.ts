@@ -4,12 +4,12 @@ import { readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { TokenOption } from './types'
 
 export interface LoopsPageMeta {
-	chainList: string[]
-	projectList: string[]
-	evmChains: string[]
-	tokens: TokenOption[]
+	chainList: Array<string>
+	projectList: Array<string>
+	evmChains: Array<string>
+	tokens: Array<TokenOption>
 	// Attribute option ids ordered by occurrence (count-DESC) over the enriched loops.
-	attributeIds: AttributeId[]
+	attributeIds: Array<AttributeId>
 }
 
 // Filter vocabulary for the /yields/loop page, derived entirely from the enriched
@@ -56,7 +56,7 @@ export async function getLoopsPageMeta(snapshot: YieldsSnapshot): Promise<LoopsP
 	}
 
 	// Families before assets; within each group, occurrence-desc (loops matched), name tiebreak.
-	const tokens: TokenOption[] = []
+	const tokens: Array<TokenOption> = []
 	const seenTokenValues = new Set<string>()
 	for (const group of [meta.tokens.families, meta.tokens.assets]) {
 		const present = group.filter((option) => tokenCounts.has(option.value) && !seenTokenValues.has(option.value))

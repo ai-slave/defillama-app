@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { processAdjustedProtocolTvl, processAdjustedTvl, type ProtocolChainTvls } from '../tvl'
 
-const toUtcDay = (timestamp: number) => Math.floor(timestamp / 86400) * 86400
+const toUtcDay = (timestamp: number) => Math.floor(timestamp / 86_400) * 86_400
 
 describe('TVL adjustment helpers', () => {
-	it('subtracts doublecounted and liquid staking TVL while adding their overlap', () => {
+	test('subtracts doublecounted and liquid staking TVL while adding their overlap', () => {
 		expect(
 			processAdjustedTvl({
 				tvl: [
@@ -21,23 +21,23 @@ describe('TVL adjustment helpers', () => {
 		])
 	})
 
-	it('derives adjusted protocol TVL without adding normal extra TVL sections', () => {
+	test('derives adjusted protocol TVL without adding normal extra TVL sections', () => {
 		const timestamp = 1_700_000_000
 		const adjusted = processAdjustedProtocolTvl({
 			Ethereum: { tvl: [{ date: timestamp, totalLiquidityUSD: 100 }] },
 			'Ethereum-doublecounted': { tvl: [{ date: timestamp, totalLiquidityUSD: 30 }] },
 			'Ethereum-liquidstaking': { tvl: [{ date: timestamp, totalLiquidityUSD: 60 }] },
 			'Ethereum-dcAndLsOverlap': { tvl: [{ date: timestamp, totalLiquidityUSD: 10 }] },
-			'Ethereum-staking': { tvl: [{ date: timestamp, totalLiquidityUSD: 1_000 }] },
-			'Ethereum-pool2': { tvl: [{ date: timestamp, totalLiquidityUSD: 2_000 }] },
-			'Ethereum-borrowed': { tvl: [{ date: timestamp, totalLiquidityUSD: 3_000 }] },
-			'Ethereum-vesting': { tvl: [{ date: timestamp, totalLiquidityUSD: 4_000 }] }
+			'Ethereum-staking': { tvl: [{ date: timestamp, totalLiquidityUSD: 1000 }] },
+			'Ethereum-pool2': { tvl: [{ date: timestamp, totalLiquidityUSD: 2000 }] },
+			'Ethereum-borrowed': { tvl: [{ date: timestamp, totalLiquidityUSD: 3000 }] },
+			'Ethereum-vesting': { tvl: [{ date: timestamp, totalLiquidityUSD: 4000 }] }
 		})
 
 		expect(adjusted).toEqual([[toUtcDay(timestamp), 20]])
 	})
 
-	it('keeps chain-scoped adjusted protocol TVL separate from unscoped adjustment keys', () => {
+	test('keeps chain-scoped adjusted protocol TVL separate from unscoped adjustment keys', () => {
 		const timestamp = 1_700_000_000
 		const chainTvls: ProtocolChainTvls = {
 			Ethereum: { tvl: [{ date: timestamp, totalLiquidityUSD: 100 }] },
@@ -45,19 +45,19 @@ describe('TVL adjustment helpers', () => {
 			'Ethereum-doublecounted': { tvl: [{ date: timestamp, totalLiquidityUSD: 30 }] },
 			'Ethereum-liquidstaking': { tvl: [{ date: timestamp, totalLiquidityUSD: 60 }] },
 			'Ethereum-dcAndLsOverlap': { tvl: [{ date: timestamp, totalLiquidityUSD: 10 }] },
-			doublecounted: { tvl: [{ date: timestamp, totalLiquidityUSD: 1_000 }] },
-			liquidstaking: { tvl: [{ date: timestamp, totalLiquidityUSD: 1_000 }] },
-			dcAndLsOverlap: { tvl: [{ date: timestamp, totalLiquidityUSD: 1_000 }] }
+			doublecounted: { tvl: [{ date: timestamp, totalLiquidityUSD: 1000 }] },
+			liquidstaking: { tvl: [{ date: timestamp, totalLiquidityUSD: 1000 }] },
+			dcAndLsOverlap: { tvl: [{ date: timestamp, totalLiquidityUSD: 1000 }] }
 		}
 
 		expect(processAdjustedProtocolTvl(chainTvls, { includeChains: ['Ethereum'] })).toEqual([[toUtcDay(timestamp), 20]])
 		expect(processAdjustedProtocolTvl(chainTvls, { excludeChains: ['Polygon'] })).toEqual([[toUtcDay(timestamp), 20]])
 	})
 
-	it('filters out current UTC day adjusted protocol TVL points', () => {
+	test('filters out current UTC day adjusted protocol TVL points', () => {
 		const today = new Date()
 		const todayTimestamp = Math.floor(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()) / 1000)
-		const yesterdayTimestamp = todayTimestamp - 86400
+		const yesterdayTimestamp = todayTimestamp - 86_400
 
 		expect(
 			processAdjustedProtocolTvl({

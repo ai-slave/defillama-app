@@ -7,7 +7,7 @@ import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { getNDistinctColors } from '~/utils'
 
-const ALL_TYPES: ChartConfiguration['type'][] = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
+const ALL_TYPES: Array<ChartConfiguration['type']> = ['line', 'area', 'bar', 'hbar', 'combo', 'pie', 'scatter']
 const SERIES_TYPES = ['line', 'bar', 'area'] as const
 const METRIC_CLASS_OPTIONS = [
 	{ value: 'flow', label: 'Sum per period' },
@@ -16,7 +16,7 @@ const METRIC_CLASS_OPTIONS = [
 
 // Only offer type swaps the current data shape can actually render — otherwise the chart says
 // "no data available" (e.g. scatter needs a numeric x; pie/hbar need categories).
-function compatibleTypes(xType: string | undefined): ChartConfiguration['type'][] {
+function compatibleTypes(xType: string | undefined): Array<ChartConfiguration['type']> {
 	return ALL_TYPES.filter((t) => {
 		if (t === 'scatter') return xType === 'value'
 		if (t === 'pie' || t === 'hbar') return xType === 'category'
@@ -37,7 +37,7 @@ interface ChartStyleEditorProps {
 	config: ChartConfiguration
 	original: ChartConfiguration
 	caps: EditorCaps
-	categories?: string[]
+	categories?: Array<string>
 	view: ChartStyleEditorView
 	resetView: ChartStyleEditorView
 	onPreview: (draft: ChartConfiguration, view: ChartStyleEditorView) => void
@@ -47,7 +47,7 @@ interface ChartStyleEditorProps {
 
 const clone = (config: ChartConfiguration): ChartConfiguration => structuredClone(config)
 
-const LEGEND_TYPES: ChartConfiguration['type'][] = ['line', 'area', 'bar', 'combo']
+const LEGEND_TYPES: Array<ChartConfiguration['type']> = ['line', 'area', 'bar', 'combo']
 
 const toDateInput = (unixSeconds: number): string => {
 	const d = new Date(unixSeconds * 1000)
@@ -55,11 +55,11 @@ const toDateInput = (unixSeconds: number): string => {
 }
 const fromDateInput = (value: string): number => Math.floor(new Date(`${value}T00:00:00Z`).getTime() / 1000)
 
-const identityOrder = (length: number): number[] => Array.from({ length }, (_, i) => i)
+const identityOrder = (length: number): Array<number> => Array.from({ length }, (_, i) => i)
 
-function reorderByPositions<T>(items: readonly T[], positions: readonly number[]): T[] | null {
+function reorderByPositions<T>(items: ReadonlyArray<T>, positions: ReadonlyArray<number>): Array<T> | null {
 	if (items.length !== positions.length) return null
-	const reordered: T[] = []
+	const reordered: Array<T> = []
 	for (const position of positions) {
 		const item = items[position]
 		if (item === undefined) return null
@@ -73,14 +73,14 @@ const seriesKey = (s: ChartConfiguration['series'][number]): string => JSON.stri
 
 // Express `target`'s series order as indices into `base`'s series (what the server currently holds).
 // Falls back to identity when the two configs don't describe the same series set.
-function orderRelativeTo(target: ChartConfiguration, base: ChartConfiguration): number[] {
+function orderRelativeTo(target: ChartConfiguration, base: ChartConfiguration): Array<number> {
 	if (target.series.length !== base.series.length) return identityOrder(target.series.length)
-	const pool = new Map<string, number[]>()
+	const pool = new Map<string, Array<number>>()
 	for (const [index, s] of base.series.entries()) {
 		const key = seriesKey(s)
 		pool.set(key, [...(pool.get(key) ?? []), index])
 	}
-	const out: number[] = []
+	const out: Array<number> = []
 	for (const s of target.series) {
 		const index = pool.get(seriesKey(s))?.shift()
 		if (index === undefined) return identityOrder(target.series.length)
@@ -89,7 +89,7 @@ function orderRelativeTo(target: ChartConfiguration, base: ChartConfiguration): 
 	return out
 }
 
-function toPatch(c: ChartConfiguration, view: ChartStyleEditorView, order?: number[]): ChartStylePatch {
+function toPatch(c: ChartConfiguration, view: ChartStyleEditorView, order?: Array<number>): ChartStylePatch {
 	const yAxes: NonNullable<ChartStylePatch['yAxes']> = []
 	for (const axis of c.axes.yAxes) {
 		const patchAxis: NonNullable<ChartStylePatch['yAxes']>[number] = {
@@ -128,7 +128,7 @@ function toPatch(c: ChartConfiguration, view: ChartStyleEditorView, order?: numb
 	if (c.seriesColors !== undefined) patch.seriesColors = c.seriesColors
 	if (c.hallmarkStyle !== undefined) patch.hallmarkStyle = c.hallmarkStyle
 	if (c.hallmarks !== undefined) {
-		const hallmarks: [number, string][] = []
+		const hallmarks: Array<[number, string]> = []
 		for (const hallmark of c.hallmarks) hallmarks.push([hallmark[0], hallmark[1] ?? ''])
 		patch.hallmarks = hallmarks
 	}
@@ -141,7 +141,7 @@ function isSeriesType(value: string): value is (typeof SERIES_TYPES)[number] {
 	return value === 'line' || value === 'bar' || value === 'area'
 }
 
-function updateItemAt<T>(items: T[], targetIndex: number, update: (item: T) => void): void {
+function updateItemAt<T>(items: Array<T>, targetIndex: number, update: (item: T) => void): void {
 	for (const [index, item] of items.entries()) {
 		if (index !== targetIndex) continue
 		update(item)
@@ -181,7 +181,7 @@ export function ChartStyleEditor({
 	// The editor owns this config-only draft. Keystrokes rerender the form, never SingleChart or its dataset pipeline.
 	const [draft, setDraft] = useState<ChartConfiguration>(() => config)
 	// Draft render order expressed as indices into `config.series` — what update-chart-style permutes.
-	const [seriesOrder, setSeriesOrder] = useState<number[]>(() => identityOrder(config.series?.length ?? 0))
+	const [seriesOrder, setSeriesOrder] = useState<Array<number>>(() => identityOrder(config.series?.length ?? 0))
 	const [draftView, setDraftView] = useState<ChartStyleEditorView>(() => ({ ...view }))
 	const [saving, setSaving] = useState(false)
 	const [error, setError] = useState<string | null>(null)
@@ -240,7 +240,7 @@ export function ChartStyleEditor({
 	}
 
 	// `positions[i]` = current draft position of the series that lands at position i.
-	const reorderSeries = (positions: number[]) => {
+	const reorderSeries = (positions: Array<number>) => {
 		const next = clone(draft)
 		const reorderedSeries = reorderByPositions(next.series, positions)
 		const reorderedSeriesOrder = reorderByPositions(seriesOrder, positions)
@@ -284,7 +284,7 @@ export function ChartStyleEditor({
 	const canLegend = LEGEND_TYPES.includes(draft.type) && (draft.series?.length ?? 0) > 1
 
 	const problems = useMemo(() => {
-		const out: string[] = []
+		const out: Array<string> = []
 		if (!draft.title.trim()) out.push('Title cannot be empty')
 		const seriesNameProblem = getSeriesNameProblem(draft.series)
 		if (seriesNameProblem) out.push(seriesNameProblem)
@@ -307,8 +307,8 @@ export function ChartStyleEditor({
 		setError(null)
 		try {
 			await onSave(draft, toPatch(draft, draftView, seriesOrder))
-		} catch (e) {
-			setError(e instanceof Error ? e.message : 'Save failed')
+		} catch (saveError) {
+			setError(saveError instanceof Error ? saveError.message : 'Save failed')
 		} finally {
 			setSaving(false)
 		}
@@ -389,7 +389,7 @@ export function ChartStyleEditor({
 									value={draft.seriesColors?.[cat] ?? categoryPalette[i] ?? '#2563eb'}
 									onChange={(e) =>
 										update((d) => {
-											d.seriesColors = { ...(d.seriesColors ?? {}), [cat]: e.target.value }
+											d.seriesColors = { ...d.seriesColors, [cat]: e.target.value }
 										}, 'immediate')
 									}
 									className={swatch}

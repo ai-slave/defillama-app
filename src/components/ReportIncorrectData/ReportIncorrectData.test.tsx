@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ReportIncorrectData, type ReportSubject } from '.'
 
 const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
@@ -49,7 +49,7 @@ async function submitReport(dataType: string) {
 }
 
 describe('ReportIncorrectData', () => {
-	it('shows exchange fields and submits the canonical exchange subject', async () => {
+	test('shows exchange fields and submits the canonical exchange subject', async () => {
 		await openReport({ type: 'exchange', name: 'Binance.US', slug: 'binance-us' })
 
 		expect(document.body.textContent).toContain('Exchange')
@@ -61,7 +61,7 @@ describe('ReportIncorrectData', () => {
 		expect(payload).not.toHaveProperty('protocol')
 	})
 
-	it('preserves protocol choices without sending the lending presentation hint', async () => {
+	test('preserves protocol choices without sending the lending presentation hint', async () => {
 		await openReport({ type: 'protocol', name: 'Aave', isLending: true })
 
 		expect(document.body.textContent).toContain('Protocol')

@@ -91,7 +91,7 @@ function useChartSource(usageStats: ApiUsageStats | null | undefined) {
 	// The stats are sparse (days without requests are omitted) while the chart and the
 	// "Last N days" label cover the full window, so the average uses the window too.
 	const averageRequests = useMemo(() => {
-		if (!sortedStats.length || windowDays <= 0) return 0
+		if (sortedStats.length === 0 || windowDays <= 0) return 0
 		return Math.round(totalRequests / windowDays)
 	}, [sortedStats.length, totalRequests, windowDays])
 	const routeSeries = useMemo(() => {
@@ -112,15 +112,15 @@ function useChartSource(usageStats: ApiUsageStats | null | undefined) {
 function useChartData(
 	sortedStats: ApiUsageStats['stats'],
 	windowDays: number,
-	routeSeries: string[],
-	selectedRoutes: string[],
+	routeSeries: Array<string>,
+	selectedRoutes: Array<string>,
 	colors: ChartColors
 ) {
 	const { dataset, charts } = useMemo<{
 		dataset: MultiSeriesChartDataset
 		charts: IMultiSeriesChartProps['charts']
 	}>(() => {
-		if (!sortedStats.length) {
+		if (sortedStats.length === 0) {
 			return { dataset: { source: [], dimensions: ['date'] }, charts: [] }
 		}
 

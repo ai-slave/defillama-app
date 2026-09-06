@@ -90,7 +90,7 @@ export function useThorchainDefs(): Record<string, string> {
 	return data?.definitions ?? {}
 }
 
-const DAY = 86400
+const DAY = 86_400
 
 export interface SeriesKpis {
 	lifetime: KpiT
@@ -99,7 +99,7 @@ export interface SeriesKpis {
 	d7: KpiT
 }
 
-function windowKpi(series: [number, number][], days?: number): KpiT {
+function windowKpi(series: Array<[number, number]>, days?: number): KpiT {
 	const lastPoint = series[series.length - 1]
 	if (!lastPoint) throw new Error('Expected a non-empty adapter series')
 	const last = lastPoint[0]
@@ -114,7 +114,7 @@ function windowKpi(series: [number, number][], days?: number): KpiT {
 // Trailing-window USD sums of a DefiLlama daily series, fetched once and cached by `key`. The
 // Overview and Financials KPIs share these cache keys so the same metric reads identical numbers
 // in both tabs (single source — DefiLlama — instead of mixing in the ir-server's own totals).
-export function useAdapterSeries(key: string, fetcher: () => Promise<[number, number][]>) {
+export function useAdapterSeries(key: string, fetcher: () => Promise<Array<[number, number]>>) {
 	return useQuery<SeriesKpis | null>({
 		queryKey: ['thorchain-adapter-series', key],
 		queryFn: async () => {
@@ -153,7 +153,7 @@ function paletteColor(index: number): string {
 	return color
 }
 
-const colorMap = (names: string[]): Record<string, string> =>
+const colorMap = (names: Array<string>): Record<string, string> =>
 	Object.fromEntries(names.map((n, i) => [n, paletteColor(i)]))
 
 const THREE_MONTHS = 90
@@ -333,7 +333,7 @@ export function SegToggle<T extends string>({
 	value,
 	onChange
 }: {
-	options: { value: T; label: string }[]
+	options: Array<{ value: T; label: string }>
 	value: T
 	onChange: (v: T) => void
 }) {
@@ -397,7 +397,8 @@ export function TimeAreaCard({
 			}
 		}
 	}, [chart, fullRange, resolvedValueSymbol])
-	if (!chart.series.length) return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
+	if (chart.series.length === 0)
+		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
 			<MultiSeriesChart
@@ -441,11 +442,12 @@ export function TimeBarCard({
 			})),
 			chartOptions: {
 				...createTimeSeriesChartOptions(resolvedValueSymbol),
-				...(lastNDaysZoom(dataset.source.length) ?? {})
+				...lastNDaysZoom(dataset.source.length)
 			}
 		}
 	}, [chart, resolvedValueSymbol])
-	if (!chart.series.length) return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
+	if (chart.series.length === 0)
+		return <PlaceholderCard title={chart.title ?? ''} subtitle={subtitle} note="empty series" />
 	return (
 		<ChartCard title={chart.title ?? ''} subtitle={subtitle ?? chart.subtitle} value={value} control={control}>
 			<MultiSeriesChart

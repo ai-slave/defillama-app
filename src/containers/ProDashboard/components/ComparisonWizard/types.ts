@@ -7,7 +7,7 @@ export type DisplayMode = 'default' | 'stacked' | 'cumulative' | 'percentage'
 
 export type ComparisonPreset = {
 	comparisonType: ComparisonType
-	items: string[]
+	items: Array<string>
 }
 
 export interface MetricSettings {
@@ -20,12 +20,12 @@ export interface MetricSettings {
 export interface ComparisonWizardState {
 	step: WizardStep
 	comparisonType: ComparisonType | null
-	selectedItems: string[]
-	selectedMetrics: string[]
-	metricsForCards: string[]
+	selectedItems: Array<string>
+	selectedMetrics: Array<string>
+	metricsForCards: Array<string>
 	dashboardName: string
 	visibility: 'private' | 'public'
-	tags: string[]
+	tags: Array<string>
 	description: string
 	grouping: DashboardGrouping
 	displayMode: DisplayMode
@@ -45,19 +45,19 @@ export interface MetricWithAvailability {
 
 export type WizardAction =
 	| { type: 'SET_STEP'; step: WizardStep }
-	| { type: 'APPLY_PRESET'; comparisonType: ComparisonType; items: string[]; step: WizardStep }
+	| { type: 'APPLY_PRESET'; comparisonType: ComparisonType; items: Array<string>; step: WizardStep }
 	| { type: 'SET_COMPARISON_TYPE'; comparisonType: ComparisonType }
-	| { type: 'SET_SELECTED_ITEMS'; items: string[] }
+	| { type: 'SET_SELECTED_ITEMS'; items: Array<string> }
 	| { type: 'TOGGLE_SELECTED_ITEM'; item: string; maxItems?: number }
 	| { type: 'TOGGLE_METRIC'; metric: string }
 	| { type: 'CLEAR_METRICS' }
-	| { type: 'SELECT_ALL_METRICS'; metrics: string[] }
+	| { type: 'SELECT_ALL_METRICS'; metrics: Array<string> }
 	| { type: 'TOGGLE_METRIC_FOR_CARD'; metric: string }
-	| { type: 'SET_METRICS_FOR_CARDS'; metrics: string[] }
+	| { type: 'SET_METRICS_FOR_CARDS'; metrics: Array<string> }
 	| { type: 'SET_METRIC_SETTINGS'; settings: Partial<MetricSettings> }
 	| { type: 'SET_DASHBOARD_NAME'; name: string }
 	| { type: 'SET_VISIBILITY'; visibility: 'private' | 'public' }
-	| { type: 'SET_TAGS'; tags: string[] }
+	| { type: 'SET_TAGS'; tags: Array<string> }
 	| { type: 'ADD_TAG'; tag: string }
 	| { type: 'REMOVE_TAG'; tag: string }
 	| { type: 'SET_DESCRIPTION'; description: string }
@@ -66,7 +66,7 @@ export type WizardAction =
 	| { type: 'SET_INCLUDE_TABLE'; include: boolean }
 	| { type: 'RESET' }
 
-export const WIZARD_STEPS: WizardStep[] = ['select-type', 'select-items', 'select-metrics', 'preview']
+export const WIZARD_STEPS: Array<WizardStep> = ['select-type', 'select-items', 'select-metrics', 'preview']
 
 export const getStepIndex = (step: WizardStep): number => WIZARD_STEPS.indexOf(step)
 

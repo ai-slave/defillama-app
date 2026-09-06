@@ -31,7 +31,7 @@ export function GradeFooter({
 }: {
 	score: number | null
 	grade?: string | null
-	gradingScale?: UtrGradeScaleEntry[] | null
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 	percentile?: number | null
 	divider?: boolean
 }) {
@@ -107,7 +107,7 @@ export function GradeFooterColumns({
 }: {
 	score: number | null
 	grade?: string | null
-	gradingScale?: UtrGradeScaleEntry[] | null
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 	percentile?: number | null
 }) {
 	const percentileLabel = formatPercentile(percentile)
@@ -148,7 +148,7 @@ export function GradeFooterStacked({
 }: {
 	score: number | null
 	grade?: string | null
-	gradingScale?: UtrGradeScaleEntry[] | null
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 	percentile?: number | null
 }) {
 	const percentileLabel = formatPercentile(percentile)
@@ -213,7 +213,7 @@ export function CardDivider() {
 	return <div className="-mx-4 border-t border-subtle" />
 }
 
-export function KvTable({ rows }: { rows: [ReactNode, ReactNode][] }) {
+export function KvTable({ rows }: { rows: Array<[ReactNode, ReactNode]> }) {
 	return (
 		<div className="flex flex-col rounded-lg border border-subtle">
 			{rows.map(([label, value], index) => (
@@ -243,7 +243,7 @@ export function MetricCard({
 	badge?: ReactNode
 	score: number | null
 	grade?: string | null
-	gradingScale?: UtrGradeScaleEntry[] | null
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 	percentile?: number | null
 	onOpen?: () => void
 	children: ReactNode
@@ -276,7 +276,7 @@ export function TickScoreStrip({
 	label: string
 	score: number | null
 	gradeLabel?: string | null
-	gradingScale?: UtrGradeScaleEntry[] | null
+	gradingScale?: Array<UtrGradeScaleEntry> | null
 }) {
 	const grade = resolveUtrGradeOrLabel(score, gradingScale, gradeLabel ?? undefined)
 	const color = utrGradeColor(grade)

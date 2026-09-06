@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { parseAmount } from '../components/PositionControl'
 
 describe('parseAmount', () => {
-	it('parses plain, formatted, and suffixed amounts', () => {
+	test('parses plain, formatted, and suffixed amounts', () => {
 		expect(parseAmount('10000')).toBe(10_000)
 		expect(parseAmount('10,000')).toBe(10_000)
 		expect(parseAmount('$10,000')).toBe(10_000)
@@ -12,7 +12,7 @@ describe('parseAmount', () => {
 		expect(parseAmount('0.5k')).toBe(500)
 	})
 
-	it('rejects junk, zero, and negatives', () => {
+	test('rejects junk, zero, and negatives', () => {
 		expect(parseAmount('')).toBeNull()
 		expect(parseAmount('abc')).toBeNull()
 		expect(parseAmount('10kk')).toBeNull()

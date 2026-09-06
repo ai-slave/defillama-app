@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChatSession, ResearchUsage } from '~/containers/LlamaAI/types'
 import {
 	flattenSessionListData,
@@ -30,7 +30,7 @@ function session(sessionId: string, title = sessionId): ChatSession {
 	}
 }
 
-function page(sessions: ChatSession[], nextOffset?: number): SessionListPage {
+function page(sessions: Array<ChatSession>, nextOffset?: number): SessionListPage {
 	return {
 		sessions,
 		usage,
@@ -41,7 +41,7 @@ function page(sessions: ChatSession[], nextOffset?: number): SessionListPage {
 	}
 }
 
-function data(pages: SessionListPage[]): SessionListInfiniteData {
+function data(pages: Array<SessionListPage>): SessionListInfiniteData {
 	return {
 		pages,
 		pageParams: pages.map((_, index) => index * 200)
@@ -49,7 +49,7 @@ function data(pages: SessionListPage[]): SessionListInfiniteData {
 }
 
 describe('sessionListCache', () => {
-	it('maps the sessions response page contract', () => {
+	test('maps the sessions response page contract', () => {
 		const first = session('first')
 		const result = mapSessionListPage({
 			sessions: [first],
@@ -70,7 +70,7 @@ describe('sessionListCache', () => {
 		})
 	})
 
-	it('flattens appended pages and keeps the first duplicate session', () => {
+	test('flattens appended pages and keeps the first duplicate session', () => {
 		const first = session('first', 'First')
 		const duplicate = session('first', 'Duplicate')
 		const second = session('second', 'Second')
@@ -81,7 +81,7 @@ describe('sessionListCache', () => {
 		expect(result.usage).toBe(usage)
 	})
 
-	it('keeps optimistic sessions ahead of the first fetched page until the real session appears', () => {
+	test('keeps optimistic sessions ahead of the first fetched page until the real session appears', () => {
 		const fake = { ...session('fake'), isOptimistic: true }
 		const first = session('first')
 
@@ -92,7 +92,7 @@ describe('sessionListCache', () => {
 		expect(replaced.sessions).toEqual([{ ...fake, isOptimistic: false }])
 	})
 
-	it('prepends fake sessions to the first page', () => {
+	test('prepends fake sessions to the first page', () => {
 		const fake = { ...session('fake'), isOptimistic: true }
 		const existing = session('existing')
 
@@ -101,7 +101,7 @@ describe('sessionListCache', () => {
 		expect(flattenSessionListData(result).sessions).toEqual([fake, existing])
 	})
 
-	it('removes deleted sessions across loaded pages', () => {
+	test('removes deleted sessions across loaded pages', () => {
 		const first = session('first')
 		const second = session('second')
 		const third = session('third')
@@ -114,7 +114,7 @@ describe('sessionListCache', () => {
 		expect(flattenSessionListData(result).sessions).toEqual([first])
 	})
 
-	it('removes a failed optimistic session across loaded pages', () => {
+	test('removes a failed optimistic session across loaded pages', () => {
 		const first = session('first')
 		const fake = { ...session('fake'), isOptimistic: true }
 		const second = session('second')
@@ -124,7 +124,7 @@ describe('sessionListCache', () => {
 		expect(flattenSessionListData(result).sessions).toEqual([first, second])
 	})
 
-	it('updates matching sessions across loaded pages', () => {
+	test('updates matching sessions across loaded pages', () => {
 		const first = session('first')
 		const second = session('second')
 
@@ -137,7 +137,7 @@ describe('sessionListCache', () => {
 		expect(flattenSessionListData(result).sessions).toEqual([first, { ...second, title: 'Updated', isPinned: true }])
 	})
 
-	it('moves a loaded session to the first position', () => {
+	test('moves a loaded session to the first position', () => {
 		const first = session('first')
 		const second = session('second')
 		const third = session('third')

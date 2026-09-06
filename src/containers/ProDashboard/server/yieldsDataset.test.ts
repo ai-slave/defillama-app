@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { getEntityEarn, getEntityMarkets } from '~/containers/Yields/data/enrich.server'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import type { EntityEarnRow } from '~/containers/Yields/data/types'
@@ -54,12 +54,12 @@ describe('fetchProYieldsDataset', () => {
 		vi.mocked(getEntityMarkets).mockResolvedValue([])
 	})
 
-	it('treats All as the unfiltered dataset', async () => {
+	test('treats All as the unfiltered dataset', async () => {
 		const rows = await fetchProYieldsDataset(snapshot, ['All'])
 		expect(rows.map((row) => row.configID)).toEqual(['pool-Ethereum', 'pool-Base'])
 	})
 
-	it('still applies specific chain filters', async () => {
+	test('still applies specific chain filters', async () => {
 		const rows = await fetchProYieldsDataset(snapshot, ['Base'])
 		expect(rows.map((row) => row.configID)).toEqual(['pool-Base'])
 	})

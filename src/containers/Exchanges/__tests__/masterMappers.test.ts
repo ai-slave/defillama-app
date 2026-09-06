@@ -1,5 +1,5 @@
 import { isSerializableProps } from 'next/dist/lib/is-serializable-props'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	decodeMasterChart,
 	mapBtcExecutionTable,
@@ -121,7 +121,7 @@ function venueCore(slug: string, patch: Partial<MasterVenueCore> = {}): MasterVe
 }
 
 const RAMP_COST: MasterRampCost = {
-	notional_usd: 1_000,
+	notional_usd: 1000,
 	pair: 'btc/eur',
 	on_ramp: {
 		fiat_fee_usd: 1,
@@ -257,13 +257,13 @@ function totals(patch: Partial<MasterDirectoryTotals> = {}): MasterDirectoryTota
 		spot_volume_24h: 500,
 		linear_perp_volume_24h: 600,
 		inverse_perp_volume_24h: 100,
-		total_trading_volume_24h: 1_200,
+		total_trading_volume_24h: 1200,
 		reserves_usd: 900,
 		...patch
 	}
 }
 
-function directoryResponse(venues: MasterDirectoryVenue[]): MasterDirectoryResponse {
+function directoryResponse(venues: Array<MasterDirectoryVenue>): MasterDirectoryResponse {
 	return {
 		venues,
 		depth_bands: [0.02],
@@ -345,7 +345,7 @@ function pair(patch: Partial<MasterExchangePair> = {}): MasterExchangePair {
 		mark_price: 60_300,
 		index_price: 60_000,
 		price_change_24h: 0.02,
-		volume_24h: 1_000,
+		volume_24h: 1000,
 		volume_prev_24h: 800,
 		oi: 2,
 		oi_usd: 120_000,
@@ -370,7 +370,7 @@ function pair(patch: Partial<MasterExchangePair> = {}): MasterExchangePair {
 		depth_bid_max_dist: 0.03,
 		depth_ask_max_dist: 0.04,
 		nvol: {
-			reported: 1_000,
+			reported: 1000,
 			normalized: 700,
 			active_liquidity: 350,
 			active_liquidity_measured: 350,
@@ -494,7 +494,7 @@ function micaVenue(patch: Partial<MasterMicaVenue> = {}): MasterMicaVenue {
 }
 
 describe('master directory mapper', () => {
-	it('orders ranked venues by quality score and rank before volume-ranked unscored venues', () => {
+	test('orders ranked venues by quality score and rank before volume-ranked unscored venues', () => {
 		const withVolume = (slug: string, totalTradingVolume: number) => {
 			const venue = directoryVenue()
 			return directoryVenue({
@@ -509,10 +509,10 @@ describe('master directory mapper', () => {
 
 		const rows = mapMasterDirectory(
 			directoryResponse([
-				withVolume('unranked-smaller', 1_000),
+				withVolume('unranked-smaller', 1000),
 				withQuality('lower-score', 80, 1, 10_000),
 				withQuality('score-tie-rank-two', 90, 2, 100),
-				withVolume('unranked-larger', 2_000),
+				withVolume('unranked-larger', 2000),
 				withQuality('score-tie-rank-one', 90, 1, 50)
 			])
 		).rows
@@ -527,7 +527,7 @@ describe('master directory mapper', () => {
 		expect(required(rows[0]).quality).toMatchObject({ score: 90, rank: 1 })
 	})
 
-	it('uses canonical totals and preserves nullable segment observations and enriched metadata', () => {
+	test('uses canonical totals and preserves nullable segment observations and enriched metadata', () => {
 		const base = directoryVenue()
 		const mapped = mapMasterDirectory(
 			directoryResponse([
@@ -539,7 +539,7 @@ describe('master directory mapper', () => {
 		const row = mapped.rows[0]
 
 		expect(mapped.summary).toMatchObject({
-			totalVolume24h: 1_200,
+			totalVolume24h: 1200,
 			spotVolume24h: 500,
 			linearPerpVolume24h: 600,
 			inversePerpVolume24h: 100,
@@ -580,7 +580,7 @@ describe('master directory mapper', () => {
 		})
 	})
 
-	it('excludes shared-book segments from the aggregate open interest', () => {
+	test('excludes shared-book segments from the aggregate open interest', () => {
 		const summary = mapMasterDirectory(
 			directoryResponse([
 				directoryVenue(),
@@ -596,7 +596,7 @@ describe('master directory mapper', () => {
 		expect(summary.inversePerpOpenInterestUsd).toBeNull()
 	})
 
-	it('maps the parent entity and per-segment liquidity relations for child venues', () => {
+	test('maps the parent entity and per-segment liquidity relations for child venues', () => {
 		const parentEntity = {
 			slug: 'venue',
 			name: 'Venue',
@@ -627,7 +627,7 @@ describe('master directory mapper', () => {
 		})
 	})
 
-	it('splits the single backend website destination into referral and official actions', () => {
+	test('splits the single backend website destination into referral and official actions', () => {
 		const row = required(
 			mapMasterDirectory(
 				directoryResponse([
@@ -647,14 +647,14 @@ describe('master directory mapper', () => {
 		expect(row.secondaryUrl).toBeNull()
 	})
 
-	it('uses the canonical profile route for a listed metadata-only venue', () => {
+	test('uses the canonical profile route for a listed metadata-only venue', () => {
 		const row = required(mapMasterDirectory(directoryResponse([directoryVenue({ tracked: false })])).rows[0])
 		expect(row.profileHref).toBe('/exchange/venue')
 		expect(row.secondaryUrl).toBeNull()
 		expect(row.reservesHref).toBe('/exchange/venue?section=reserves')
 	})
 
-	it('derives EEA and global relations only when both entities are directory-listed', () => {
+	test('derives EEA and global relations only when both entities are directory-listed', () => {
 		const eeaScope: MasterEntityScope = { kind: 'regional', regions: ['eea'] }
 		const globalEntity = {
 			slug: 'venue',
@@ -694,7 +694,7 @@ describe('master directory mapper', () => {
 		})
 	})
 
-	it('omits a related EEA entity that is not a directory row', () => {
+	test('omits a related EEA entity that is not a directory row', () => {
 		const legalEntity = {
 			slug: 'legal-eu',
 			name: 'Legal EU',
@@ -709,7 +709,7 @@ describe('master directory mapper', () => {
 		expect(venue.related.euEntity).toBeNull()
 	})
 
-	it('derives own, shared, and mixed EEA orderbook ownership from exact segment relations', () => {
+	test('derives own, shared, and mixed EEA orderbook ownership from exact segment relations', () => {
 		const eeaScope: MasterEntityScope = { kind: 'regional', regions: ['eea'] }
 		const rows = mapMasterDirectory(
 			directoryResponse([
@@ -747,7 +747,7 @@ describe('master directory mapper', () => {
 		})
 	})
 
-	it('preserves nullable totals instead of fabricating empty-group zeroes', () => {
+	test('preserves nullable totals instead of fabricating empty-group zeroes', () => {
 		const response = directoryResponse([directoryVenue()])
 		response.totals.spot_volume_24h = null
 		response.totals.linear_perp_volume_24h = 0
@@ -760,7 +760,7 @@ describe('master directory mapper', () => {
 		expect(summary.volumeByKind.dex).toEqual({ spot: null, linearPerp: null, inversePerp: null, total: null })
 	})
 
-	it('distinguishes an unavailable execution source from an unmeasured venue', () => {
+	test('distinguishes an unavailable execution source from an unmeasured venue', () => {
 		const unavailable = mapMasterDirectory(directoryResponse([directoryVenue()]), null)
 		const successfulEmpty: MasterExecutionQualityResponse = {
 			basket: ['BTC'],
@@ -775,7 +775,7 @@ describe('master directory mapper', () => {
 		expect(required(unmeasured.rows[0]).execution).toBeNull()
 	})
 
-	it('maps the exact execution measurement without transport defaults', () => {
+	test('maps the exact execution measurement without transport defaults', () => {
 		const measured = mapMasterDirectory(directoryResponse([directoryVenue()]), executionResponse())
 
 		expect(measured.executionAvailable).toBe(true)
@@ -798,7 +798,7 @@ describe('master directory mapper', () => {
 		})
 	})
 
-	it('maps per-segment normalized volume without inventing an aggregate perp column', () => {
+	test('maps per-segment normalized volume without inventing an aggregate perp column', () => {
 		const row = required(
 			mapMasterDirectory(
 				directoryResponse([
@@ -838,7 +838,7 @@ describe('master directory mapper', () => {
 		})
 	})
 
-	it('preserves nullable nested directory fields', () => {
+	test('preserves nullable nested directory fields', () => {
 		const venue = directoryVenue({
 			reserves: { ...directoryVenue().reserves!, source_url: null },
 			fees: { ...directoryVenue().fees!, spot: null },
@@ -855,7 +855,7 @@ describe('master directory mapper', () => {
 		expect(row.compliance).toMatchObject({ euStatus: null, kyc: null, mica: { licensed: true } })
 	})
 
-	it('keeps linear and inverse perp fees separate without borrowing across classes', () => {
+	test('keeps linear and inverse perp fees separate without borrowing across classes', () => {
 		const linearFee = { maker: 0.0002, taker: 0.0005 }
 		const inverseFee = { maker: 0.0001, taker: 0.0004 }
 		const rows = mapMasterDirectory(
@@ -875,13 +875,13 @@ describe('master directory mapper', () => {
 		expect(inverseOnly?.fees).toMatchObject({ linearPerp: null, inversePerp: inverseFee })
 	})
 
-	it('requires a capability block for every present segment', () => {
+	test('requires a capability block for every present segment', () => {
 		expect(() => mapMasterDirectory(directoryResponse([directoryVenue({ capabilities: {} })]))).toThrow(
 			'Missing spot capabilities for venue'
 		)
 	})
 
-	it('produces directory props accepted by the Pages Router serializer', () => {
+	test('produces directory props accepted by the Pages Router serializer', () => {
 		expect(
 			isSerializableProps('/exchanges', 'getStaticProps', {
 				directory: mapMasterDirectory(directoryResponse([directoryVenue()]))
@@ -889,7 +889,7 @@ describe('master directory mapper', () => {
 		).toBe(true)
 	})
 
-	it('indexes columnar history, skips unsupported null columns, and fails on misalignment', () => {
+	test('indexes columnar history, skips unsupported null columns, and fails on misalignment', () => {
 		// Built from the key axis, not a hand-counted list: the two must stay the same
 		// length, and a fixture that pins a count silently rots when a metric is added.
 		const observed: Partial<Record<(typeof MASTER_AGGREGATE_SERIES_KEYS)[number], Array<number | null>>> = {
@@ -920,7 +920,7 @@ describe('master directory mapper', () => {
 })
 
 describe('BTC execution table mapper', () => {
-	it('reads the BTC pair directly (not a basket median) and skips venues with no measured BTC pair', () => {
+	test('reads the BTC pair directly (not a basket median) and skips venues with no measured BTC pair', () => {
 		const rows = mapMasterDirectory(
 			directoryResponse([
 				directoryVenue({ slug: 'venue', rank: { score: 90, rank: 1, tier: 'A', segments: {}, components: {} } }),
@@ -950,7 +950,7 @@ describe('BTC execution table mapper', () => {
 		})
 	})
 
-	it('returns nothing when execution data is unavailable, and sorts by rank when it is', () => {
+	test('returns nothing when execution data is unavailable, and sorts by rank when it is', () => {
 		const rows = mapMasterDirectory(directoryResponse([directoryVenue()])).rows
 		expect(mapBtcExecutionTable(rows, null)).toEqual([])
 
@@ -989,7 +989,7 @@ describe('execution basket', () => {
 		}
 	}
 
-	it('restricts every venue to the assets all of them cover', () => {
+	test('restricts every venue to the assets all of them cover', () => {
 		const directory = mapMasterDirectory(
 			directoryResponse([directoryVenue({ slug: 'deep' }), directoryVenue({ slug: 'thin' })]),
 			unevenExecution()
@@ -1007,10 +1007,10 @@ describe('execution basket', () => {
 	// Cost is published on BTC/ETH, fill quality on the top five. Both narrow to what
 	// every measured venue covers, so each column still compares like for like down the
 	// table even though the two describe different markets.
-	it('measures cost on a narrower basket than fill quality', () => {
+	test('measures cost on a narrower basket than fill quality', () => {
 		const base = executionResponse()
 		const btc = required(required(base.venues.venue).pairs.BTC)
-		const withAssets = (assets: string[]) => ({
+		const withAssets = (assets: Array<string>) => ({
 			...required(base.venues.venue),
 			assets,
 			pair_count: assets.length,
@@ -1047,7 +1047,7 @@ describe('execution basket', () => {
 		expect(row.execution?.realizedSlippage10kBps).toBe(1)
 	})
 
-	it('widens to the full shared basket once every venue covers it', () => {
+	test('widens to the full shared basket once every venue covers it', () => {
 		const execution = unevenExecution()
 		execution.venues.thin = required(execution.venues.deep)
 		const directory = mapMasterDirectory(
@@ -1058,7 +1058,7 @@ describe('execution basket', () => {
 		expect(directory.rows[0]?.execution?.costToTradeBps).toBe(22) // median(4, 40)
 	})
 
-	it('reports the weakest pair’s coverage, not the strongest', () => {
+	test('reports the weakest pair’s coverage, not the strongest', () => {
 		const execution = unevenExecution()
 		execution.venues.thin = required(execution.venues.deep)
 		execution.venues.deep = {
@@ -1072,7 +1072,7 @@ describe('execution basket', () => {
 		expect(directory.rows[0]?.execution?.hoursCovered).toBe(80)
 	})
 
-	it('falls back to each venue’s own aggregate when no asset is shared', () => {
+	test('falls back to each venue’s own aggregate when no asset is shared', () => {
 		const execution = unevenExecution()
 		execution.venues.thin = { ...required(execution.venues.thin), assets: ['SOL'], pairs: {} }
 		const directory = mapMasterDirectory(
@@ -1085,7 +1085,7 @@ describe('execution basket', () => {
 })
 
 describe('depth ladders', () => {
-	it('zips a pair ladder onto the band axis and marks bands the book did not reach', () => {
+	test('zips a pair ladder onto the band axis and marks bands the book did not reach', () => {
 		// Fixture book reaches min(0.03, 0.04) = ±3%, so both ±0.5% and ±2% are measured.
 		const ladder = required(
 			required(mapMasterProfile(indexResponse(), metadataResponse()).segments.linear_perp).pairs[0]
@@ -1096,7 +1096,7 @@ describe('depth ladders', () => {
 		])
 	})
 
-	it('a band beyond the pair reach is uncovered, and an unknown reach never counts as covered', () => {
+	test('a band beyond the pair reach is uncovered, and an unknown reach never counts as covered', () => {
 		const shallow = indexResponse()
 		shallow.segments.linear_perp!.pairs = [pair({ depth_bid_max_dist: 0.01, depth_ask_max_dist: 0.01 })]
 		const bands = required(
@@ -1112,7 +1112,7 @@ describe('depth ladders', () => {
 		expect(unknownBands?.map((entry) => entry.coverage)).toEqual([0, 0])
 	})
 
-	it('a ladder that does not align to the band axis is rejected rather than mis-plotted', () => {
+	test('a ladder that does not align to the band axis is rejected rather than mis-plotted', () => {
 		const misaligned = indexResponse()
 		misaligned.segments.linear_perp!.pairs = [pair({ depth_ask_usd: [12] })]
 		expect(() => mapMasterProfile(misaligned, metadataResponse())).toThrow(/does not match depth_bands|for 2 bands/)
@@ -1120,7 +1120,7 @@ describe('depth ladders', () => {
 
 	// Displayed active liquidity is the observed figure, so the share is bounded by the
 	// captured book — the extrapolated figure never reaches a surface.
-	it('active-liquidity share is measured against the whole captured book', () => {
+	test('active-liquidity share is measured against the whole captured book', () => {
 		const covered = indexResponse()
 		covered.segments.linear_perp!.pairs = [
 			pair({ nvol: { ...required(pair().nvol), active_liquidity: 999, active_liquidity_measured: 22 } })
@@ -1139,7 +1139,7 @@ describe('depth ladders', () => {
 })
 
 describe('master profile mapper', () => {
-	it('keeps per-segment capabilities, canonical links, null volume, and pair reference prices', () => {
+	test('keeps per-segment capabilities, canonical links, null volume, and pair reference prices', () => {
 		const profile = mapMasterProfile(indexResponse(), metadataResponse())
 		const linear = profile.segments.linear_perp!
 		const inverse = profile.segments.inverse_perp!
@@ -1180,7 +1180,7 @@ describe('master profile mapper', () => {
 		expect(mappedPair.basis).toBeCloseTo(0.005)
 	})
 
-	it('omits optional profile sections for source failure and unmeasured venues', () => {
+	test('omits optional profile sections for source failure and unmeasured venues', () => {
 		const execution: MasterExecutionQualityResponse = {
 			basket: ['BTC'],
 			unit: 'bps',
@@ -1210,7 +1210,7 @@ describe('master profile mapper', () => {
 		expect(unmeasured.quality).toBeNull()
 	})
 
-	it('maps exact profile execution pairs in the producer basket order', () => {
+	test('maps exact profile execution pairs in the producer basket order', () => {
 		const profile = mapMasterProfile(indexResponse(), metadataResponse(), {
 			execution: executionResponse(),
 			ranks: null,
@@ -1239,7 +1239,7 @@ describe('master profile mapper', () => {
 		])
 	})
 
-	it('maps profile ranking when ranks and methodology describe the same generation', () => {
+	test('maps profile ranking when ranks and methodology describe the same generation', () => {
 		const profile = mapMasterProfile(indexResponse(), metadataResponse(), {
 			execution: null,
 			ranks: qualityRanks(),
@@ -1255,7 +1255,7 @@ describe('master profile mapper', () => {
 		expect(profile.segments.linear_perp).toBeDefined()
 	})
 
-	it('omits ranking when methodology describes a different rank generation', () => {
+	test('omits ranking when methodology describes a different rank generation', () => {
 		const profile = mapMasterProfile(indexResponse(), metadataResponse(), {
 			execution: null,
 			ranks: qualityRanks('2026-08-24'),
@@ -1266,7 +1266,7 @@ describe('master profile mapper', () => {
 		expect(profile.segments.linear_perp).toBeDefined()
 	})
 
-	it('omits ranking when a scored component is absent from matching methodology', () => {
+	test('omits ranking when a scored component is absent from matching methodology', () => {
 		const ranks = qualityRanks()
 		const venue = ranks.venues.venue
 		if (!venue) throw new Error('Expected ranked venue fixture')
@@ -1281,7 +1281,7 @@ describe('master profile mapper', () => {
 		expect(profile.segments.linear_perp).toBeDefined()
 	})
 
-	it('surfaces a backend referral destination as the profile referral action', () => {
+	test('surfaces a backend referral destination as the profile referral action', () => {
 		const metadata = metadataResponse()
 		metadata.links = {
 			...metadata.links,
@@ -1293,7 +1293,7 @@ describe('master profile mapper', () => {
 		expect(profile.metadata.website).toBeNull()
 	})
 
-	it('maps a metadata-only profile without manufacturing market segments', () => {
+	test('maps a metadata-only profile without manufacturing market segments', () => {
 		const metadata = metadataResponse()
 		metadata.slug = 'bitpanda'
 		metadata.display_name = 'Bitpanda'
@@ -1310,7 +1310,7 @@ describe('master profile mapper', () => {
 		})
 	})
 
-	it('promotes the primary Twitter link without selecting staff accounts', () => {
+	test('promotes the primary Twitter link without selecting staff accounts', () => {
 		const metadata = metadataResponse()
 		metadata.groups.push({
 			key: 'links',
@@ -1332,7 +1332,7 @@ describe('master profile mapper', () => {
 		expect(mapMasterMetadataOnlyProfile(metadata).metadata.twitterUrl).toBe('https://x.com/venue')
 	})
 
-	it.each([
+	test.each([
 		['missing mark', { mark_price: null }],
 		['missing index', { index_price: null }],
 		['zero index', { index_price: 0 }]
@@ -1342,7 +1342,7 @@ describe('master profile mapper', () => {
 		expect(required(mapMasterProfile(index, metadataResponse()).segments.linear_perp!.pairs[0]).basis).toBeNull()
 	})
 
-	it('requires metadata and keeps metadata-backed props serializable', () => {
+	test('requires metadata and keeps metadata-backed props serializable', () => {
 		expect(
 			isSerializableProps('/exchange/[slug]', 'getStaticProps', {
 				profile: mapMasterProfile(indexResponse(), metadataResponse())
@@ -1352,7 +1352,7 @@ describe('master profile mapper', () => {
 })
 
 describe('canonical research charts', () => {
-	it('preserves separate metric columns, an absent column, and observed zero', () => {
+	test('preserves separate metric columns, an absent column, and observed zero', () => {
 		const response: MasterChartColumnarResponse<'volume'> = {
 			days: [1, 2],
 			key: ['spot', 'linear_perp', 'inverse_perp', 'spot_mkts', 'linear_perp_mkts', 'inverse_perp_mkts'],
@@ -1374,7 +1374,7 @@ describe('canonical research charts', () => {
 		])
 	})
 
-	it('rejects columnar chart axes that are not aligned', () => {
+	test('rejects columnar chart axes that are not aligned', () => {
 		const response: MasterChartColumnarResponse<'volume'> = {
 			days: [1, 2],
 			key: ['spot', 'linear_perp', 'inverse_perp', 'spot_mkts', 'linear_perp_mkts', 'inverse_perp_mkts'],
@@ -1399,7 +1399,7 @@ describe('canonical research charts', () => {
 		).toThrow('BTC depth columns do not match the day axis')
 	})
 
-	it('keeps top venues plus Other and groups the same rows by venue type', () => {
+	test('keeps top venues plus Other and groups the same rows by venue type', () => {
 		const response: MasterChartColumnarResponse<'oi'> = {
 			days: [1, 2],
 			key: ['linear_perp', 'inverse_perp'],
@@ -1444,7 +1444,7 @@ describe('canonical research charts', () => {
 		])
 	})
 
-	it('keeps linear and inverse perpetual columns separate: no view ever renders their sum', () => {
+	test('keeps linear and inverse perpetual columns separate: no view ever renders their sum', () => {
 		const response: MasterChartColumnarResponse<'volume'> = {
 			days: [1, 2],
 			key: ['spot', 'linear_perp', 'inverse_perp', 'spot_mkts', 'linear_perp_mkts', 'inverse_perp_mkts'],
@@ -1491,7 +1491,7 @@ describe('canonical research charts', () => {
 		}
 	})
 
-	it('groups normalized volume by exact segment without losing observed zero', () => {
+	test('groups normalized volume by exact segment without losing observed zero', () => {
 		const response: MasterChartColumnarResponse<'nvol'> = {
 			days: [1, 2],
 			key: [
@@ -1524,7 +1524,7 @@ describe('canonical research charts', () => {
 		])
 	})
 
-	it('keeps the three BTC depth segments as separate presentation lines', () => {
+	test('keeps the three BTC depth segments as separate presentation lines', () => {
 		const response: MasterChartColumnarResponse<'depth'> = {
 			days: [1, 2],
 			key: ['spot', 'linear_perp', 'inverse_perp'],
@@ -1556,7 +1556,7 @@ describe('canonical research charts', () => {
 		])
 	})
 
-	it('shows BTC vs Alt open interest first, with Alt as the cross-exchange total minus BTC', () => {
+	test('shows BTC vs Alt open interest first, with Alt as the cross-exchange total minus BTC', () => {
 		const response: MasterChartColumnarResponse<'oi'> = {
 			days: [1, 2],
 			key: ['linear_perp', 'inverse_perp'],
@@ -1591,7 +1591,7 @@ describe('canonical research charts', () => {
 		])
 	})
 
-	it('computes survival ratios per exchange and leaves non-positive or absent denominators unavailable', () => {
+	test('computes survival ratios per exchange and leaves non-positive or absent denominators unavailable', () => {
 		const response: MasterChartColumnarResponse<'nvol'> = {
 			days: [1, 2, 3],
 			key: [
@@ -1626,7 +1626,7 @@ describe('canonical research charts', () => {
 		expect(linearChart.lines).toEqual([{ id: 'covered', label: 'covered', values: [0.5, null, null] }])
 	})
 
-	it('calculates Other survival from aggregate normalized and reported volume instead of summing ratios', () => {
+	test('calculates Other survival from aggregate normalized and reported volume instead of summing ratios', () => {
 		const exchanges = Array.from({ length: 10 }, (_, index) => `venue-${index + 1}`)
 		const response: MasterChartColumnarResponse<'nvol'> = {
 			days: [1],
@@ -1661,7 +1661,7 @@ describe('canonical research charts', () => {
 })
 
 describe('MiCA contract', () => {
-	it('qualifies MiCA rows as licensed and EU-available', () => {
+	test('qualifies MiCA rows as licensed and EU-available', () => {
 		const rows = mapMasterMica({
 			last_updated: '2026-07-14T00:00:00Z',
 			exchanges: [
@@ -1673,7 +1673,7 @@ describe('MiCA contract', () => {
 		expect(rows.map((row) => row.exchange)).toEqual(['qualified'])
 	})
 
-	it('maps per-segment fees, metrics, products, and the backend destination link', () => {
+	test('maps per-segment fees, metrics, products, and the backend destination link', () => {
 		const row = required(
 			mapMasterMica({
 				last_updated: '2026-07-14T00:00:00Z',
@@ -1720,7 +1720,7 @@ describe('MiCA contract', () => {
 		})
 	})
 
-	it('preserves consolidated Coinbase and Kraken EEA futures products', () => {
+	test('preserves consolidated Coinbase and Kraken EEA futures products', () => {
 		const rows = mapMasterMica({
 			last_updated: '2026-07-14T00:00:00Z',
 			exchanges: [
@@ -1758,7 +1758,7 @@ describe('MiCA contract', () => {
 		])
 	})
 
-	it('preserves nullable KYC and fee facts', () => {
+	test('preserves nullable KYC and fee facts', () => {
 		const row = required(
 			mapMasterMica({
 				last_updated: '2026-07-14T00:00:00Z',
@@ -1778,7 +1778,7 @@ describe('MiCA contract', () => {
 		expect(row.perpFee).toBeNull()
 	})
 
-	it('preserves segment-specific depth coverage and authored ramp costs', () => {
+	test('preserves segment-specific depth coverage and authored ramp costs', () => {
 		const row = required(
 			mapMasterMica({
 				last_updated: '2026-07-14T00:00:00Z',
@@ -1839,7 +1839,7 @@ describe('MiCA contract', () => {
 		})
 	})
 
-	it('keeps spot and linear depth coverage independent in both directions', () => {
+	test('keeps spot and linear depth coverage independent in both directions', () => {
 		const rows = mapMasterMica({
 			last_updated: '2026-07-14T00:00:00Z',
 			exchanges: [
@@ -1880,7 +1880,7 @@ describe('MiCA contract', () => {
 		])
 	})
 
-	it('preserves linear and inverse perpetual product classes and aggregate market counts', () => {
+	test('preserves linear and inverse perpetual product classes and aggregate market counts', () => {
 		const rows = mapMasterMica({
 			last_updated: '2026-07-14T00:00:00Z',
 			exchanges: [

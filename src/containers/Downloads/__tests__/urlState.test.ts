@@ -1,11 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { SavedDownloadInput } from '../savedDownloads'
 import type { ChartConfig } from '../sql/chartConfig'
 import { buildShareUrl, decodeDownloadConfig, encodeDownloadConfig } from '../urlState'
 
 function roundtrip<T extends Parameters<typeof encodeDownloadConfig>[0]>(input: T): SavedDownloadInput | null {
 	const encoded = encodeDownloadConfig(input)
-	const asQuery = Object.fromEntries(Object.entries(encoded).map(([k, v]) => [k, v as string | string[] | undefined]))
+	const asQuery = Object.fromEntries(
+		Object.entries(encoded).map(([k, v]) => [k, v as string | Array<string> | undefined])
+	)
 	return decodeDownloadConfig(asQuery)
 }
 
@@ -22,7 +24,7 @@ describe('chart-config URL round-trip', () => {
 		numberFormat: 'auto'
 	}
 
-	it('round-trips a minimal line chart', () => {
+	test('round-trips a minimal line chart', () => {
 		const decoded = roundtrip({ kind: 'query', sql: 'SELECT 1', tables: [], chartConfig: baseCfg })
 		expect(decoded?.kind).toBe('query')
 		if (decoded?.kind !== 'query') throw new Error('wrong kind')
@@ -31,7 +33,7 @@ describe('chart-config URL round-trip', () => {
 		expect(decoded.chartConfig?.yCols).toEqual(['tvl'])
 	})
 
-	it('round-trips split-by + stack', () => {
+	test('round-trips split-by + stack', () => {
 		const decoded = roundtrip({
 			kind: 'query',
 			sql: 'SELECT 1',
@@ -43,7 +45,7 @@ describe('chart-config URL round-trip', () => {
 		expect(decoded.chartConfig?.stackMode).toBe('stacked')
 	})
 
-	it('round-trips per-series kinds + colors + right axis', () => {
+	test('round-trips per-series kinds + colors + right axis', () => {
 		const decoded = roundtrip({
 			kind: 'query',
 			sql: 'SELECT 1',
@@ -62,7 +64,7 @@ describe('chart-config URL round-trip', () => {
 		expect(decoded.chartConfig?.rightAxisCols).toEqual(['fees'])
 	})
 
-	it('round-trips number format', () => {
+	test('round-trips number format', () => {
 		const decoded = roundtrip({
 			kind: 'query',
 			sql: 'SELECT 1',
@@ -73,7 +75,7 @@ describe('chart-config URL round-trip', () => {
 		expect(decoded.chartConfig?.numberFormat).toBe('currency')
 	})
 
-	it('round-trips type-specific mapping via cjs', () => {
+	test('round-trips type-specific mapping via cjs', () => {
 		const decoded = roundtrip({
 			kind: 'query',
 			sql: 'SELECT 1',
@@ -88,7 +90,7 @@ describe('chart-config URL round-trip', () => {
 		expect(decoded.chartConfig?.candlestick).toEqual({ ts: 'date', open: 'o', close: 'c', low: 'l', high: 'h' })
 	})
 
-	it('leaves URL params empty for defaults', () => {
+	test('leaves URL params empty for defaults', () => {
 		const encoded = encodeDownloadConfig({ kind: 'query', sql: 'SELECT 1', tables: [], chartConfig: baseCfg })
 		expect(encoded.cs).toBeUndefined()
 		expect(encoded.csb).toBeUndefined()
@@ -96,7 +98,7 @@ describe('chart-config URL round-trip', () => {
 		expect(encoded.cv).toBe('ln')
 	})
 
-	it('buildShareUrl embeds chart params', () => {
+	test('buildShareUrl embeds chart params', () => {
 		const url = buildShareUrl('https://x.test', '/downloads', {
 			kind: 'query',
 			sql: 'SELECT 1',

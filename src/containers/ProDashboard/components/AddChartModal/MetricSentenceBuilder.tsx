@@ -59,9 +59,9 @@ interface MetricSentenceBuilderProps {
 	metricProtocol: string | null
 	metricWindow: MetricWindow
 	chartType: MetricChartType
-	availableMetricTypes: string[]
-	chains: Chain[]
-	protocols: Protocol[]
+	availableMetricTypes: Array<string>
+	chains: Array<Chain>
+	protocols: Array<Protocol>
 	onAggregatorChange: (value: MetricAggregator) => void
 	onMetricTypeChange: (value: string) => void
 	onSubjectTypeChange: (value: 'chain' | 'protocol') => void
@@ -209,8 +209,8 @@ export function MetricSentenceBuilder({
 	)
 
 	const protocolOptions = useMemo(() => {
-		const childrenByParentId = new Map<string, Protocol[]>()
-		const parentsOrSolo: Protocol[] = []
+		const childrenByParentId = new Map<string, Array<Protocol>>()
+		const parentsOrSolo: Array<Protocol> = []
 
 		for (const protocol of protocols) {
 			if (protocol.parentProtocol) {

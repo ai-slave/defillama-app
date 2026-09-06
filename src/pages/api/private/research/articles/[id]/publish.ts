@@ -43,7 +43,7 @@ function sectionPathForArticlePath(articlePath: string): string {
 	return articlePath.split('/').slice(0, 3).join('/')
 }
 
-function publishPurgePaths(before: ArticleDocument | null, after: ArticleDocument): string[] {
+function publishPurgePaths(before: ArticleDocument | null, after: ArticleDocument): Array<string> {
 	const beforePath = articlePublicPath(before)
 	const afterPath = articlePublicPath(after)
 	const purgePaths = new Set<string>()

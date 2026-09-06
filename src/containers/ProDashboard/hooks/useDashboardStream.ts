@@ -211,13 +211,13 @@ export function useDashboardStream(
 				if (!abortController.signal.aborted) {
 					setState((s) => (s.isDone ? s : { ...s, isStreaming: false, isDone: true }))
 				}
-			} catch (err) {
+			} catch (error) {
 				if (abortController.signal.aborted) return
 				setState((s) => ({
 					...s,
 					isStreaming: false,
 					isDone: true,
-					error: err instanceof Error ? err.message : 'Stream failed'
+					error: error instanceof Error ? error.message : 'Stream failed'
 				}))
 			}
 		}

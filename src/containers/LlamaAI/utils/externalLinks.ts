@@ -22,9 +22,9 @@ function isTrustedExternalHostname(hostname: string): boolean {
 	return false
 }
 
-export function getLlamaAIExternalAllowlistHosts(stored: unknown): string[] {
+export function getLlamaAIExternalAllowlistHosts(stored: unknown): Array<string> {
 	if (!Array.isArray(stored)) return []
-	const hosts: string[] = []
+	const hosts: Array<string> = []
 	const seen = new Set<string>()
 	for (const host of stored) {
 		if (typeof host !== 'string') continue

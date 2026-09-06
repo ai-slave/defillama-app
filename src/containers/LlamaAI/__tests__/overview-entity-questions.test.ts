@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchEntityQuestions: vi.fn(),
@@ -24,7 +24,7 @@ import { fetchOptionalEntityQuestions } from '~/containers/LlamaAI/entityQuestio
 describe('fetchOptionalEntityQuestions', () => {
 	beforeEach(() => vi.clearAllMocks())
 
-	it('uses the entity-specific cache key and strict API mode', async () => {
+	test('uses the entity-specific cache key and strict API mode', async () => {
 		mocks.fetchEntityQuestions.mockResolvedValueOnce({ questions: ['Question'], suggestGlobal: false })
 
 		await expect(fetchOptionalEntityQuestions('Ethereum', 'chain', 'ethereum')).resolves.toEqual({
@@ -38,7 +38,7 @@ describe('fetchOptionalEntityQuestions', () => {
 		expect(mocks.fetchEntityQuestions).toHaveBeenCalledWith('Ethereum', 'chain', undefined, { throwOnError: true })
 	})
 
-	it('returns an empty optional payload when the API fails', async () => {
+	test('returns an empty optional payload when the API fails', async () => {
 		mocks.fetchEntityQuestions.mockRejectedValueOnce(new Error('questions unavailable'))
 
 		await expect(fetchOptionalEntityQuestions('aave', 'protocol', 'aave')).resolves.toEqual({

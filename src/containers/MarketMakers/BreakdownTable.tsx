@@ -27,8 +27,8 @@ type Sort = { key: SortKey; dir: 'asc' | 'desc' }
 
 const THRESHOLDS = [50, 100, 200] as const
 
-function depthRows(): BreakdownRowConfig[] {
-	const rows: BreakdownRowConfig[] = []
+function depthRows(): Array<BreakdownRowConfig> {
+	const rows: Array<BreakdownRowConfig> = []
 	for (const t of THRESHOLDS) {
 		rows.push(
 			{ label: `Bid Depth ${t} bps (USD)`, key: `bidDepth${t}`, kind: 'usd' },
@@ -52,9 +52,9 @@ function depthRows(): BreakdownRowConfig[] {
 	return rows
 }
 
-export const DEPTH_ROWS: BreakdownRowConfig[] = depthRows()
+export const DEPTH_ROWS: Array<BreakdownRowConfig> = depthRows()
 
-export const VOLUME_ROWS: BreakdownRowConfig[] = [
+export const VOLUME_ROWS: Array<BreakdownRowConfig> = [
 	{ label: 'Maker Fill Volume (USD)', key: 'volumeMaker', kind: 'usd' },
 	{ label: 'Taker Fill Volume (USD)', key: 'volumeTaker', kind: 'usd' },
 	{ label: 'Maker & Taker Fill Volume (USD)', key: 'volumeTotal', kind: 'usd' },
@@ -66,12 +66,12 @@ export const VOLUME_ROWS: BreakdownRowConfig[] = [
 	{ label: 'Loan Utilization (Maker & Taker Fill Volume)', key: 'volumeTotalLoanUtilization', kind: 'percent' }
 ]
 
-export const SPREAD_ROWS: BreakdownRowConfig[] = [
+export const SPREAD_ROWS: Array<BreakdownRowConfig> = [
 	{ label: 'Volume Weighted Bid-Ask Spread (%)', key: 'bidAskSpread', kind: 'percent' },
 	{ label: 'Uptime %, Bid-Ask Spread (%)', key: 'spreadUptime', kind: 'percent' }
 ]
 
-export const KPI_ROWS: BreakdownRowConfig[] = [
+export const KPI_ROWS: Array<BreakdownRowConfig> = [
 	{ label: '0.50% Bid & Ask Depth Adherence', key: 'bidAskDepth50', kind: 'percent' },
 	{ label: '1.00% Bid & Ask Depth Adherence', key: 'bidAskDepth100', kind: 'percent' },
 	{ label: '2.00% Bid & Ask Depth Adherence', key: 'bidAskDepth200', kind: 'percent' },
@@ -146,7 +146,7 @@ export function BreakdownTable({
 }: {
 	title: string
 	badge: string
-	rows: BreakdownRowConfig[]
+	rows: Array<BreakdownRowConfig>
 	data: Dict
 	sectionKey?: string
 }) {
@@ -222,12 +222,12 @@ export function BreakdownTableSkeleton({ title, rowCount }: { title: string; row
 	)
 }
 
-const BREAKDOWN_SECTIONS: {
+const BREAKDOWN_SECTIONS: Array<{
 	title: string
-	rows: BreakdownRowConfig[]
+	rows: Array<BreakdownRowConfig>
 	skeletonKey: keyof typeof BREAKDOWN_SKELETON_ROWS
 	dataKey: keyof BreakdownSections
-}[] = [
+}> = [
 	{ title: 'Depth KPIs', rows: DEPTH_ROWS, skeletonKey: 'depth', dataKey: 'depth' },
 	{ title: 'Volume KPIs', rows: VOLUME_ROWS, skeletonKey: 'volume', dataKey: 'volume' },
 	{ title: 'Spread KPIs', rows: SPREAD_ROWS, skeletonKey: 'spread', dataKey: 'spread' },

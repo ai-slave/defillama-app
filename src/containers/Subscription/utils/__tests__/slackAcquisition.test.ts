@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import {
 	applySlackAcquisitionFromQuery,
 	persistSlackAcquisitionIfFirst,
@@ -22,7 +22,7 @@ class MemoryStorage {
 }
 
 describe('slackAcquisition', () => {
-	it('stores and consumes valid Slack acquisition query params', () => {
+	test('stores and consumes valid Slack acquisition query params', () => {
 		const storage = new MemoryStorage()
 
 		applySlackAcquisitionFromQuery({ from: 'slack', entry: 'dm' }, storage)
@@ -31,7 +31,7 @@ describe('slackAcquisition', () => {
 		expect(readSlackAcquisition(storage)).toBeNull()
 	})
 
-	it('defaults unknown Slack entries to mention', () => {
+	test('defaults unknown Slack entries to mention', () => {
 		const storage = new MemoryStorage()
 
 		applySlackAcquisitionFromQuery({ from: 'slack', entry: 'unknown' }, storage)
@@ -39,7 +39,7 @@ describe('slackAcquisition', () => {
 		expect(readSlackAcquisition(storage)).toEqual({ source: 'slack', entry: 'mention' })
 	})
 
-	it('clears stored acquisition when the query source is not Slack', () => {
+	test('clears stored acquisition when the query source is not Slack', () => {
 		const storage = new MemoryStorage()
 
 		applySlackAcquisitionFromQuery({ from: 'slack', entry: 'apphome' }, storage)
@@ -48,7 +48,7 @@ describe('slackAcquisition', () => {
 		expect(readSlackAcquisition(storage)).toBeNull()
 	})
 
-	it('persists signup source only when user settings do not already have one', async () => {
+	test('persists signup source only when user settings do not already have one', async () => {
 		const fetch = vi
 			.fn()
 			.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ settings: {} }) })
@@ -66,7 +66,7 @@ describe('slackAcquisition', () => {
 		})
 	})
 
-	it('skips persistence when signup source already exists', async () => {
+	test('skips persistence when signup source already exists', async () => {
 		const fetch = vi.fn().mockResolvedValueOnce({
 			ok: true,
 			json: () => Promise.resolve({ settings: { signup_source: { source: 'stripe' } } })

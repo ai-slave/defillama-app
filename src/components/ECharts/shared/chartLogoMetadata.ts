@@ -1,8 +1,8 @@
 import type { ECharts } from 'echarts'
 
 export type ChartLogoMetadata =
-	| { kind: 'cartesian-x'; logos: string[]; categoryValues: unknown[] }
-	| { kind: 'hbar'; logos: string[]; categories: string[] }
+	| { kind: 'cartesian-x'; logos: Array<string>; categoryValues: Array<unknown> }
+	| { kind: 'hbar'; logos: Array<string>; categories: Array<string> }
 
 /**
  * Export code cannot recover HTML logo overlays from the canvas. Renderers attach

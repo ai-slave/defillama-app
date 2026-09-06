@@ -5,7 +5,7 @@ import { formatNumber } from '~/utils/numberFormat'
 export type TriggerType = 'schedule' | 'price'
 export type PriceOp = 'above' | 'below'
 
-export const ALERT_PROMPT_SUGGESTIONS: { label: string; prompt: string }[] = [
+export const ALERT_PROMPT_SUGGESTIONS: Array<{ label: string; prompt: string }> = [
 	{ label: 'Hyperliquid health', prompt: 'Hyperliquid TVL, fees, and 7d change' },
 	{ label: 'Top revenue growers', prompt: 'Top 5 protocols by 7-day revenue growth' },
 	{ label: 'Market pulse', prompt: 'Daily DeFi market pulse: TVL, DEX volume, stablecoins' },

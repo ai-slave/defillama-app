@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { mapWithConcurrency } from '../async'
 
 const jsonResponse = (value: unknown) =>
@@ -8,7 +8,7 @@ const jsonResponse = (value: unknown) =>
 	})
 
 describe('mapWithConcurrency', () => {
-	it('bounds active work and preserves input order', async () => {
+	test('bounds active work and preserves input order', async () => {
 		let active = 0
 		let maxActive = 0
 		const results = await mapWithConcurrency([1, 2, 3, 4, 5], 2, async (value) => {
@@ -32,7 +32,7 @@ describe('fetchJson singleflight', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('shares concurrent safe public GET JSON requests when enabled', async () => {
+	test('shares concurrent safe public GET JSON requests when enabled', async () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT', '1')
 		vi.stubEnv('SERVER_FETCH_JSON_TIMEOUT_MS', '1000')
 		const fetchMock = vi.fn(
@@ -51,7 +51,7 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('does not singleflight unsafe requests', async () => {
+	test('does not singleflight unsafe requests', async () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT', '1')
 		const fetchMock = vi.fn(async () => jsonResponse({ ok: true }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -67,7 +67,7 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(4)
 	})
 
-	it('bypasses sharing when the waiter cap is reached', async () => {
+	test('bypasses sharing when the waiter cap is reached', async () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT', '1')
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT_MAX_WAITERS', '0')
 		const fetchMock = vi.fn(
@@ -81,7 +81,7 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2)
 	})
 
-	it('times out followers without cancelling the leader request', async () => {
+	test('times out followers without cancelling the leader request', async () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT', '1')
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT_WAIT_MS', '5')
 		vi.stubEnv('SERVER_FETCH_JSON_TIMEOUT_MS', '1000')
@@ -97,7 +97,7 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('lets followers wait for the caller timeout by default', async () => {
+	test('lets followers wait for the caller timeout by default', async () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT', '1')
 		const fetchMock = vi.fn(
 			() => new Promise<Response>((resolve) => setTimeout(() => resolve(jsonResponse({ ok: true })), 30))
@@ -115,7 +115,7 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('does not share requests with different timeout budgets', async () => {
+	test('does not share requests with different timeout budgets', async () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT', '1')
 		const fetchMock = vi.fn(async () => jsonResponse({ ok: true }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -129,7 +129,7 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2)
 	})
 
-	it('does not singleflight Request inputs', async () => {
+	test('does not singleflight Request inputs', async () => {
 		vi.stubEnv('SERVER_FETCH_JSON_SINGLEFLIGHT', '1')
 		const fetchMock = vi.fn(async () => jsonResponse({ ok: true }))
 		vi.stubGlobal('fetch', fetchMock)
@@ -143,7 +143,7 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(2)
 	})
 
-	it('does not retry non-retryable 4xx responses', async () => {
+	test('does not retry non-retryable 4xx responses', async () => {
 		const fetchMock = vi.fn(async () => new Response('missing', { status: 404 }))
 		vi.stubGlobal('fetch', fetchMock)
 		const { fetchJson } = await import('../async')
@@ -152,7 +152,7 @@ describe('fetchJson singleflight', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('keeps the 60s default timeout for browser fetchJson calls', async () => {
+	test('keeps the 60s default timeout for browser fetchJson calls', async () => {
 		vi.useFakeTimers()
 		vi.stubGlobal('window', {})
 		let firstSignal: AbortSignal | undefined
@@ -175,14 +175,14 @@ describe('fetchJson singleflight', () => {
 
 		await vi.advanceTimersByTimeAsync(35_000)
 		expect(firstSignal?.aborted).toBe(true)
-		await vi.advanceTimersByTimeAsync(2_000)
+		await vi.advanceTimersByTimeAsync(2000)
 
 		await expect(request).resolves.toEqual({ ok: true })
 		expect(fetchMock).toHaveBeenCalledTimes(2)
 		vi.useRealTimers()
 	})
 
-	it('reads the fast and slow JSON timeouts from env with defaults', async () => {
+	test('reads the fast and slow JSON timeouts from env with defaults', async () => {
 		const { getFastJsonTimeoutMs, getSlowJsonTimeoutMs } = await import('../async')
 
 		expect(getFastJsonTimeoutMs()).toBe(10_000)

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { DefillamaPages } from '../../metadata/pages'
 import {
 	buildGeneratedCatalogSections,
@@ -11,7 +11,7 @@ import {
 	normalizeSiteUrl
 } from '../llms'
 
-const tempDirs: string[] = []
+const tempDirs: Array<string> = []
 
 const samplePages: DefillamaPages = {
 	Metrics: [
@@ -99,7 +99,7 @@ afterEach(async () => {
 })
 
 describe('llms artifact generation', () => {
-	it('writes llms.txt and llms-full.txt under public', async () => {
+	test('writes llms.txt and llms-full.txt under public', async () => {
 		const repoRoot = await createRepoRoot(samplePages)
 		const logger = { log: vi.fn() }
 
@@ -122,13 +122,13 @@ describe('llms artifact generation', () => {
 		)
 	})
 
-	it('normalizes site URLs with trailing slashes', () => {
+	test('normalizes site URLs with trailing slashes', () => {
 		expect(normalizeSiteUrl('https://defillama.com/')).toBe('https://defillama.com')
 		expect(normalizeSiteUrl('https://defillama.com///')).toBe('https://defillama.com')
 		expect(normalizeSiteUrl(undefined)).toBe('https://defillama.com')
 	})
 
-	it('excludes hidden, external, and private routes from the generated dashboard catalog', () => {
+	test('excludes hidden, external, and private routes from the generated dashboard catalog', () => {
 		const full = buildLlmsFullTxt({ pages: samplePages, siteUrl: 'https://defillama.com' })
 		const catalogSections = buildGeneratedCatalogSections(samplePages)
 
@@ -147,7 +147,7 @@ describe('llms artifact generation', () => {
 		expect(full).not.toContain('Hidden Subscription')
 	})
 
-	it('renders deterministic short and full files', () => {
+	test('renders deterministic short and full files', () => {
 		const firstShort = buildLlmsTxt({ pages: samplePages, siteUrl: 'https://defillama.com' })
 		const secondShort = buildLlmsTxt({ pages: samplePages, siteUrl: 'https://defillama.com' })
 		const firstFull = buildLlmsFullTxt({ pages: samplePages, siteUrl: 'https://defillama.com' })
@@ -157,7 +157,7 @@ describe('llms artifact generation', () => {
 		expect(firstFull).toBe(secondFull)
 	})
 
-	it('falls back when pages.json is missing', async () => {
+	test('falls back when pages.json is missing', async () => {
 		const repoRoot = await createRepoRoot()
 
 		await generateLlmsArtifacts({ logger: { log: vi.fn() }, repoRoot })

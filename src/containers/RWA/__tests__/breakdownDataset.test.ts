@@ -1,9 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { toOverviewBreakdownChartDataset, toRwaPositionalChartDataset } from '../breakdownDataset'
 
 describe('rwa breakdownDataset', () => {
 	for (const rows of [null, []] as Array<Parameters<typeof toRwaPositionalChartDataset>[0]>) {
-		it(`returns an empty positional dataset when receiving ${JSON.stringify(rows)}`, () => {
+		test(`returns an empty positional dataset when receiving ${JSON.stringify(rows)}`, () => {
 			expect(toRwaPositionalChartDataset(rows)).toEqual({
 				source: [],
 				dimensions: ['timestamp']
@@ -11,22 +11,22 @@ describe('rwa breakdownDataset', () => {
 		})
 	}
 
-	it('keeps server row order while building the dataset', () => {
+	test('keeps server row order while building the dataset', () => {
 		expect(
 			toRwaPositionalChartDataset([
-				{ timestamp: 1774569600000, Ethereum: 130 },
-				{ timestamp: 1774483200000, Solana: 120 }
+				{ timestamp: 1_774_569_600_000, Ethereum: 130 },
+				{ timestamp: 1_774_483_200_000, Solana: 120 }
 			])
 		).toEqual({
 			source: [
-				[1774569600000, 130, null],
-				[1774483200000, null, 120]
+				[1_774_569_600_000, 130, null],
+				[1_774_483_200_000, null, 120]
 			],
 			dimensions: ['timestamp', 'Ethereum', 'Solana']
 		})
 	})
 
-	it('uses JSON-safe nulls for sparse server-prop cells', () => {
+	test('uses JSON-safe nulls for sparse server-prop cells', () => {
 		const dataset = toRwaPositionalChartDataset([
 			{ timestamp: 1, Ethereum: 10 },
 			{ timestamp: 2, Solana: 20 }
@@ -35,7 +35,7 @@ describe('rwa breakdownDataset', () => {
 		expect(JSON.parse(JSON.stringify(dataset))).toEqual(dataset)
 	})
 
-	it('keeps single-row input unchanged and builds the expected dataset', () => {
+	test('keeps single-row input unchanged and builds the expected dataset', () => {
 		const singleRow = [{ timestamp: 1_774_489_600_000, Ethereum: 120 }]
 
 		expect(toRwaPositionalChartDataset(singleRow)).toEqual({
@@ -44,26 +44,26 @@ describe('rwa breakdownDataset', () => {
 		})
 	})
 
-	it('preserves zero values returned by the backend', () => {
+	test('preserves zero values returned by the backend', () => {
 		expect(
 			toRwaPositionalChartDataset([
-				{ timestamp: 1_000, PreStocks: 0, Securitize: 10 },
-				{ timestamp: 2_000, PreStocks: 0, Securitize: 11 },
-				{ timestamp: 3_000, PreStocks: 12, Securitize: 12 },
-				{ timestamp: 4_000, PreStocks: 0, Securitize: 13 }
+				{ timestamp: 1000, PreStocks: 0, Securitize: 10 },
+				{ timestamp: 2000, PreStocks: 0, Securitize: 11 },
+				{ timestamp: 3000, PreStocks: 12, Securitize: 12 },
+				{ timestamp: 4000, PreStocks: 0, Securitize: 13 }
 			])
 		).toEqual({
 			source: [
-				[1_000, 0, 10],
-				[2_000, 0, 11],
-				[3_000, 12, 12],
-				[4_000, 0, 13]
+				[1000, 0, 10],
+				[2000, 0, 11],
+				[3000, 12, 12],
+				[4000, 0, 13]
 			],
 			dimensions: ['timestamp', 'PreStocks', 'Securitize']
 		})
 	})
 
-	it('adds overview totals only for the requested aggregate pages', () => {
+	test('adds overview totals only for the requested aggregate pages', () => {
 		const rows = [{ timestamp: 1, Ethereum: 10, Solana: 5 }]
 
 		const aggregate = toOverviewBreakdownChartDataset(rows, {

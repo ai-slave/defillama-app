@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiRequest, createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { addTelemetryMock, recordRuntimeErrorMock, requireSubscriptionMock, fetchPoolHistoryMock } = vi.hoisted(() => ({
@@ -26,7 +26,7 @@ vi.mock('~/utils/telemetry', () => ({
 
 import { dashboardFetchHandler } from './fetchRoute'
 
-function request(query: Record<string, string | string[] | undefined>, method = 'GET') {
+function request(query: Record<string, string | Array<string> | undefined>, method = 'GET') {
 	return createMockNextApiRequest({ method, query, headers: { authorization: 'Bearer token' } })
 }
 
@@ -38,7 +38,7 @@ describe('/api/private/pro-dashboard/fetch', () => {
 		fetchPoolHistoryMock.mockReset()
 	})
 
-	it('rejects unsupported methods before checking subscription', async () => {
+	test('rejects unsupported methods before checking subscription', async () => {
 		const res = createMockNextApiResponse()
 
 		await dashboardFetchHandler(request({}, 'POST'), res)
@@ -47,7 +47,7 @@ describe('/api/private/pro-dashboard/fetch', () => {
 		expect(requireSubscriptionMock).not.toHaveBeenCalled()
 	})
 
-	it.each([
+	test.each([
 		{ query: {}, error: 'Missing request' },
 		{ query: { request: ['{}'] }, error: 'Missing request' },
 		{ query: { request: '{' }, error: 'Invalid request JSON' }
@@ -61,7 +61,7 @@ describe('/api/private/pro-dashboard/fetch', () => {
 		expect(recordRuntimeErrorMock).not.toHaveBeenCalled()
 	})
 
-	it('dispatches a valid request, preserves private caching, and records response telemetry', async () => {
+	test('dispatches a valid request, preserves private caching, and records response telemetry', async () => {
 		const data = { points: [[1, 2]] }
 		fetchPoolHistoryMock.mockResolvedValue(data)
 		const res = createMockNextApiResponse()
@@ -80,7 +80,7 @@ describe('/api/private/pro-dashboard/fetch', () => {
 		})
 	})
 
-	it('records valid-request dispatch failures against the discriminated request type', async () => {
+	test('records valid-request dispatch failures against the discriminated request type', async () => {
 		fetchPoolHistoryMock.mockRejectedValue(new Error('upstream failed'))
 		const res = createMockNextApiResponse()
 		const serialized = JSON.stringify({ type: 'yields', params: { poolConfigId: 'pool-1' } })

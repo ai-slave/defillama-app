@@ -35,7 +35,7 @@ interface PresenceFilterConfig {
 	matches: (row: MetricRow) => boolean
 }
 
-const SOURCE_RANGE_FILTERS: readonly RangeFilterConfig[] = [
+const SOURCE_RANGE_FILTERS: ReadonlyArray<RangeFilterConfig> = [
 	{ minKey: 'tvlMin', maxKey: 'tvlMax', getValue: (row) => row.metrics.tvl },
 	{ minKey: 'mcapMin', maxKey: 'mcapMax', getValue: (row) => row.metrics.mcap },
 	{ minKey: 'volumeDex24hMin', maxKey: 'volumeDex24hMax', getValue: (row) => row.metrics.volume24h },
@@ -169,11 +169,11 @@ const SOURCE_RANGE_FILTERS: readonly RangeFilterConfig[] = [
 	}
 ]
 
-const READ_MODEL_RANGE_FILTERS: readonly RangeFilterConfig[] = [
+const READ_MODEL_RANGE_FILTERS: ReadonlyArray<RangeFilterConfig> = [
 	{ minKey: 'protocolCountMin', maxKey: 'protocolCountMax', getValue: (row) => row.metrics.protocolCount }
 ]
 
-const CHAIN_RANGE_FILTERS: readonly RangeFilterConfig[] = [
+const CHAIN_RANGE_FILTERS: ReadonlyArray<RangeFilterConfig> = [
 	{ minKey: 'tvlShareMin', maxKey: 'tvlShareMax', getValue: (row) => row.metrics.tvlShare },
 	{ minKey: 'stablesMcapMin', maxKey: 'stablesMcapMax', getValue: (row) => row.metrics.stablesMcap },
 	{ minKey: 'bridgedTvlMin', maxKey: 'bridgedTvlMax', getValue: (row) => row.metrics.bridgedTvl }
@@ -181,7 +181,7 @@ const CHAIN_RANGE_FILTERS: readonly RangeFilterConfig[] = [
 
 const isPositive = (value: number | null | undefined) => value != null && value > 0
 
-const SOURCE_PRESENCE_FILTERS: readonly PresenceFilterConfig[] = [
+const SOURCE_PRESENCE_FILTERS: ReadonlyArray<PresenceFilterConfig> = [
 	{ key: 'hasPerps', matches: (row) => isPositive(row.metrics.perpsVolume24h) },
 	{ key: 'hasOptions', matches: (row) => isPositive(row.metrics.options_volume_24h) },
 	{ key: 'hasOpenInterest', matches: (row) => isPositive(row.metrics.openInterest) },
@@ -198,17 +198,17 @@ const SOURCE_PRESENCE_FILTERS: readonly PresenceFilterConfig[] = [
 	{ key: 'hasMcapTVLRatio', matches: (row) => row.metrics.mcaptvl != null }
 ]
 
-const CHAIN_PRESENCE_FILTERS: readonly PresenceFilterConfig[] = [
+const CHAIN_PRESENCE_FILTERS: ReadonlyArray<PresenceFilterConfig> = [
 	{ key: 'hasBridgedTVL', matches: (row) => isPositive(row.metrics.bridgedTvl) },
 	{ key: 'hasStables', matches: (row) => isPositive(row.metrics.stablesMcap) }
 ]
 
 function applyMetricFilters<Row extends MetricRow>(
-	rows: Row[],
+	rows: Array<Row>,
 	filters: UnifiedTableFilters,
-	rangeConfigs: readonly RangeFilterConfig[],
-	presenceConfigs: readonly PresenceFilterConfig[]
-): Row[] {
+	rangeConfigs: ReadonlyArray<RangeFilterConfig>,
+	presenceConfigs: ReadonlyArray<PresenceFilterConfig>
+): Array<Row> {
 	if (!hasRequestedRange(filters, rangeConfigs) && !hasRequestedPresence(filters, presenceConfigs)) return rows
 	return rows.filter((row) => matchesMetricFilters(row, filters, rangeConfigs, presenceConfigs))
 }
@@ -216,8 +216,8 @@ function applyMetricFilters<Row extends MetricRow>(
 function matchesMetricFilters(
 	row: MetricRow,
 	filters: UnifiedTableFilters,
-	rangeConfigs: readonly RangeFilterConfig[],
-	presenceConfigs: readonly PresenceFilterConfig[]
+	rangeConfigs: ReadonlyArray<RangeFilterConfig>,
+	presenceConfigs: ReadonlyArray<PresenceFilterConfig>
 ): boolean {
 	for (const { minKey, maxKey, getValue } of rangeConfigs) {
 		const minValue = filters[minKey]
@@ -233,11 +233,11 @@ function matchesMetricFilters(
 	return true
 }
 
-function hasRequestedRange(filters: UnifiedTableFilters, configs: readonly RangeFilterConfig[]): boolean {
+function hasRequestedRange(filters: UnifiedTableFilters, configs: ReadonlyArray<RangeFilterConfig>): boolean {
 	return configs.some(({ minKey, maxKey }) => filters[minKey] !== undefined || filters[maxKey] !== undefined)
 }
 
-function hasRequestedPresence(filters: UnifiedTableFilters, configs: readonly PresenceFilterConfig[]): boolean {
+function hasRequestedPresence(filters: UnifiedTableFilters, configs: ReadonlyArray<PresenceFilterConfig>): boolean {
 	return configs.some(({ key }) => filters[key] === true)
 }
 
@@ -256,12 +256,12 @@ export function hasProtocolSubsetFilters(filters?: UnifiedTableFilters): boolean
 }
 
 export function filterRowsByConfig(
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	filters?: UnifiedTableFilters,
 	parentMetrics: Readonly<Record<string, ParentProtocolMetrics>> = {},
 	chainMetrics: Readonly<Record<string, ChainMetrics>> = {},
 	context: ProtocolFilterContext = {}
-): ProtocolTableSourceRow[] {
+): Array<ProtocolTableSourceRow> {
 	if (!filters) return rows
 
 	const protocolSet = new Set<string>()
@@ -360,9 +360,9 @@ export function filterRowsByConfig(
 }
 
 export function filterReadModelRowsByConfig(
-	rows: ProtocolTableRow[],
+	rows: Array<ProtocolTableRow>,
 	filters?: UnifiedTableFilters
-): ProtocolTableRow[] {
+): Array<ProtocolTableRow> {
 	if (!filters) return rows
 	return applyMetricFilters(rows, filters, READ_MODEL_RANGE_FILTERS, [])
 }

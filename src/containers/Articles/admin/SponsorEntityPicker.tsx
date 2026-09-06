@@ -29,7 +29,7 @@ export function SponsorEntityPicker({
 	const [searchValue, setSearchValue] = useState('')
 	const query = searchValue.trim()
 
-	const { data, isFetching } = useQuery<{ entities: ArticleEntitySuggestionItem[] }>({
+	const { data, isFetching } = useQuery<{ entities: Array<ArticleEntitySuggestionItem> }>({
 		queryKey: ['research', 'admin', 'sponsor-entities', query],
 		queryFn: async () => {
 			const response = await fetch(`/api/public/research/entities/search?q=${encodeURIComponent(query)}`)

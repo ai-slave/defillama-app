@@ -40,7 +40,7 @@ function SignersPopover({
 	chain: string
 	explorers?: BlockExplorersResponse
 }) {
-	if (!signers.length) return <MofNPips m={m} n={n} />
+	if (signers.length === 0) return <MofNPips m={m} n={n} />
 	return (
 		<Ariakit.PopoverProvider>
 			<Ariakit.PopoverDisclosure
@@ -77,11 +77,11 @@ function SignersPopover({
 interface GovGroup {
 	role: string
 	rep: Multisig
-	chains: string[]
+	chains: Array<string>
 }
 
-function groupMultisigsByRole(multisigs: Multisig[] | undefined, poolChain?: string): GovGroup[] {
-	const byRole = new Map<string, Multisig[]>()
+function groupMultisigsByRole(multisigs: Array<Multisig> | undefined, poolChain?: string): Array<GovGroup> {
+	const byRole = new Map<string, Array<Multisig>>()
 	for (const ms of multisigs ?? []) {
 		const key = ms.role || ms.address
 		const arr = byRole.get(key)
@@ -109,7 +109,7 @@ function groupMultisigsByRole(multisigs: Multisig[] | undefined, poolChain?: str
 		.slice(0, 6)
 }
 
-function ChainsBadge({ chains }: { chains: string[] }) {
+function ChainsBadge({ chains }: { chains: Array<string> }) {
 	if (chains.length < 2) return null
 	return (
 		<Tooltip
@@ -161,7 +161,7 @@ function MultisigGroupRow({ group, explorers }: { group: GovGroup; explorers?: B
 	)
 }
 
-export function AuditsBlock({ audits }: { audits: Audit[] }) {
+export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 	const critical = audits.reduce((a, x) => a + (x.findings?.critical ?? 0), 0)
 	const high = audits.reduce((a, x) => a + (x.findings?.high ?? 0), 0)
 	const resolved = audits.reduce((a, x) => a + (x.findings?.resolved ?? 0), 0)
@@ -230,7 +230,7 @@ export function GovernanceBlock({
 }) {
 	const g = protocol.governance
 	const govGroups = groupMultisigsByRole(protocol.multisigs, chain)
-	const day = (s: number) => Math.round(s / 86400)
+	const day = (s: number) => Math.round(s / 86_400)
 	const timelock =
 		g && (g.execution_delay_max_sec ?? 0) > 0
 			? g.execution_delay_min_sec === g.execution_delay_max_sec
@@ -255,10 +255,10 @@ export function GovernanceBlock({
 							: 'The people and processes that can change this protocol under you.'}
 					</p>
 				</div>
-				{!vaultScoped && govGroups.length ? <ReachLegend /> : null}
+				{!vaultScoped && govGroups.length > 0 ? <ReachLegend /> : null}
 			</div>
 
-			{govGroups.length ? (
+			{govGroups.length > 0 ? (
 				<div className="flex flex-col divide-y divide-(--border-subtle)">
 					{govGroups.map((group) => (
 						<MultisigGroupRow key={group.role} group={group} {...(explorers ? { explorers } : {})} />

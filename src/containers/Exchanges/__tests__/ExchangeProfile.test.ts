@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { ExchangeProfile, resolveProfileSegment, visibleProfileTabs } from '../ExchangeProfile'
 import {
 	ExchangeRegionalInformation,
@@ -20,7 +20,7 @@ vi.mock('next/router', () => ({
 	useRouter: () => ({ isReady: false, query: {} })
 }))
 
-function profile(slug: string, segments: ExchangeSegment[]): ExchangeProfileModel {
+function profile(slug: string, segments: Array<ExchangeSegment>): ExchangeProfileModel {
 	return {
 		slug,
 		name: slug,
@@ -62,7 +62,7 @@ function profile(slug: string, segments: ExchangeSegment[]): ExchangeProfileMode
 }
 
 describe('profile navigation segment resolution', () => {
-	it('replaces a stale segment selection when navigation reuses the dynamic route', () => {
+	test('replaces a stale segment selection when navigation reuses the dynamic route', () => {
 		// A perps-only venue's selection carried onto a spot-only venue must not stick.
 		const previousSelection = resolveProfileSegment(profile('perps', ['linear_perp']), 'linear_perp')
 		const nextSelection = resolveProfileSegment(profile('spot', ['spot']), previousSelection)
@@ -72,7 +72,7 @@ describe('profile navigation segment resolution', () => {
 		expect(nextSelection).toBe('all')
 	})
 
-	it('lands on the rollup with no selection, and honours one the venue can serve', () => {
+	test('lands on the rollup with no selection, and honours one the venue can serve', () => {
 		expect(resolveProfileSegment(profile('spot', ['spot']), null)).toBe('all')
 		expect(resolveProfileSegment(profile('both', ['spot', 'linear_perp']), 'linear_perp')).toBe('linear_perp')
 		// A venue with no markets at all has nothing to show, not even the rollup.
@@ -81,7 +81,7 @@ describe('profile navigation segment resolution', () => {
 })
 
 describe('profile section navigation', () => {
-	it('orders primary information before historical events', () => {
+	test('orders primary information before historical events', () => {
 		expect(visibleProfileTabs(true, true, true)).toEqual(['markets', 'reserves', 'information', 'history'])
 	})
 })
@@ -103,7 +103,7 @@ describe('profile country view states', () => {
 		const base = {
 			country: 'DE',
 			region: { key: 'eea', label: 'EU / EEA' },
-			segments: availability === 'unavailable' ? ([] as []) : (['spot'] as ExchangeSegment[]),
+			segments: availability === 'unavailable' ? ([] as []) : (['spot'] as Array<ExchangeSegment>),
 			note: null,
 			source: null,
 			usedFallback: false
@@ -112,7 +112,7 @@ describe('profile country view states', () => {
 		return { ...base, availability, metadata: profile('regional', []).metadata }
 	}
 
-	it('represents global, loading, and error without regional metadata', () => {
+	test('represents global, loading, and error without regional metadata', () => {
 		expect(resolveProfileCountryView(null, query())).toEqual({ status: 'global' })
 		expect(resolveProfileCountryView('DE', query({ isLoading: true }))).toEqual({
 			status: 'loading',
@@ -124,7 +124,7 @@ describe('profile country view states', () => {
 		})
 	})
 
-	it.each(['available', 'restricted', 'leaving', 'unavailable'] as const)(
+	test.each(['available', 'restricted', 'leaving', 'unavailable'] as const)(
 		'represents the %s response as its own discriminated state',
 		(availability) => {
 			const view = resolveProfileCountryView('DE', query({ data: regional(availability) }))
@@ -132,7 +132,7 @@ describe('profile country view states', () => {
 		}
 	)
 
-	it('uses regional information only for offered regional states', () => {
+	test('uses regional information only for offered regional states', () => {
 		const baseProfile = profile('venue', ['spot'])
 		const regionalData = regional('restricted')
 		if (regionalData.availability !== 'restricted') throw new Error('Expected restricted fixture')
@@ -156,7 +156,7 @@ describe('profile country view states', () => {
 })
 
 describe('regional information presentation', () => {
-	it('explains when the exchange is unavailable instead of leaving the Information panel empty', () => {
+	test('explains when the exchange is unavailable instead of leaving the Information panel empty', () => {
 		const exchange = profile('binance', ['spot'])
 		exchange.name = 'Binance'
 		exchange.metadata.groups = [{ key: 'regulation', title: 'Regulation', fields: [] }]
@@ -187,7 +187,7 @@ describe('regional information presentation', () => {
 		expect(html).not.toContain('Binance.com is blocked for US persons.')
 	})
 
-	it('labels globally documented groups that have no country-specific details', () => {
+	test('labels globally documented groups that have no country-specific details', () => {
 		const exchange = profile('backpack', ['spot'])
 		exchange.name = 'Backpack'
 		exchange.metadata.groups = [{ key: 'regulation', title: 'Regulation', fields: [] }]
@@ -219,7 +219,7 @@ describe('regional information presentation', () => {
 		expect(html).toContain('does not necessarily mean the feature is unavailable')
 	})
 
-	it('prompts for a country when global funding details are not published', () => {
+	test('prompts for a country when global funding details are not published', () => {
 		const exchange = profile('backpack', ['spot'])
 		exchange.name = 'Backpack'
 		exchange.metadata.groups = [{ key: 'regulation', title: 'Regulation', fields: [] }]
@@ -235,7 +235,7 @@ describe('regional information presentation', () => {
 		expect(html).toContain('Select a country to view available deposit and withdrawal methods.')
 	})
 
-	it('does not add a funding fallback when the report publishes that section', () => {
+	test('does not add a funding fallback when the report publishes that section', () => {
 		const exchange = profile('venue', ['spot'])
 		exchange.metadata.groups = [{ key: 'funding', title: 'Funding', fields: [] }]
 		const html = renderToStaticMarkup(
@@ -251,7 +251,7 @@ describe('regional information presentation', () => {
 })
 
 describe('metadata-only profile presentation', () => {
-	it('renders entity metadata without mounting history or markets UI', () => {
+	test('renders entity metadata without mounting history or markets UI', () => {
 		const metadataOnly = profile('coinbase', [])
 		metadataOnly.name = 'Coinbase'
 		metadataOnly.profileMode = 'metadata-only'
@@ -305,7 +305,7 @@ describe('metadata-only profile presentation', () => {
 })
 
 describe('exchange history presentation', () => {
-	it('shows aggregate totals and expandable hack and raise records', () => {
+	test('shows aggregate totals and expandable hack and raise records', () => {
 		const exchange = profile('venue', ['spot'])
 		exchange.hacks = [
 			{ date: 1_700_000_000, name: 'Venue', amountUsd: 2_000_000, technique: 'Hot wallet', returnedFundsUsd: 0 }
@@ -329,7 +329,7 @@ describe('exchange history presentation', () => {
 		expect(html).toContain('Series A')
 	})
 
-	it('distinguishes no recorded hacks from hacks with an unknown loss amount', () => {
+	test('distinguishes no recorded hacks from hacks with an unknown loss amount', () => {
 		const exchange = profile('venue', ['spot'])
 		exchange.raises = [
 			{

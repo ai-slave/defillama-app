@@ -46,8 +46,8 @@ export function getLlamaAIChartSource(
 	config: LlamaAIChartConfig,
 	dashboardId: string | null,
 	aiServer: string
-): { url: string; key: unknown[] } | null {
-	if (Object.prototype.hasOwnProperty.call(config, 'artifactId')) {
+): { url: string; key: Array<unknown> } | null {
+	if (Object.hasOwn(config, 'artifactId')) {
 		if (!config.artifactId || !dashboardId || config.artifactStatus === 'needs-repair') return null
 		return {
 			url: `${aiServer}/chart-artifacts/dashboards/${encodeURIComponent(dashboardId)}/items/${encodeURIComponent(config.id)}`,

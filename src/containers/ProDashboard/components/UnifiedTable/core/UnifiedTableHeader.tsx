@@ -17,17 +17,17 @@ interface UnifiedTableHeaderProps {
 	onDuplicate?: (() => void) | undefined
 	onCsvExport?: (() => void) | undefined
 	onCsvExportLevel?: ((level: CsvExportLevel) => void) | undefined
-	rowHeaders?: UnifiedRowHeaderType[]
+	rowHeaders?: Array<UnifiedRowHeaderType>
 	isExportDisabled?: boolean
 	isLoading?: boolean
 	onSearchChange: (value: string) => void
-	filterChips: ActiveFilterChip[]
+	filterChips: Array<ActiveFilterChip>
 	onFilterRemove?: ((chip: ActiveFilterChip) => void) | undefined
 	onClearFilters?: (() => void) | undefined
 	filtersEditable?: boolean
 	activeFilterCount: number
 	onFiltersClick?: (() => void) | undefined
-	groupingOptions?: GroupingOption[]
+	groupingOptions?: Array<GroupingOption>
 	selectedGroupingId?: string | undefined
 	onGroupingChange?: ((optionId: string) => void) | undefined
 }

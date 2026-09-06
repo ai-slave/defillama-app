@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildChainAssetIdIndex } from './chainAssetIds'
 
 describe('buildChainAssetIdIndex', () => {
-	it('indexes metadata keys, producer IDs, display names, and saved aliases', () => {
+	test('indexes metadata keys, producer IDs, display names, and saved aliases', () => {
 		const index = buildChainAssetIdIndex({
 			'hyperliquid-l1': { id: 'hyperliquid', name: 'Hyperliquid L1', chainAssets: true },
 			'op-mainnet': { id: 'optimism', name: 'OP Mainnet', chainAssets: true },
@@ -19,7 +19,7 @@ describe('buildChainAssetIdIndex', () => {
 		expect(index.get('zksync')).toBe('era')
 	})
 
-	it('does not expose chains without the chain-assets capability', () => {
+	test('does not expose chains without the chain-assets capability', () => {
 		const index = buildChainAssetIdIndex({
 			ethereum: { id: 'ethereum', name: 'Ethereum' }
 		})

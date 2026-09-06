@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { ExecutionCoordinator, waitForAbortableDelay } from '~/containers/LlamaAI/executionCoordinator'
 
 function deferred() {
@@ -10,7 +10,7 @@ function deferred() {
 }
 
 describe('ExecutionCoordinator', () => {
-	it('invalidates and aborts the previous operation before starting another', async () => {
+	test('invalidates and aborts the previous operation before starting another', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const firstDone = deferred()
 		let firstCurrentAfterAbort = true
@@ -33,7 +33,7 @@ describe('ExecutionCoordinator', () => {
 		await Promise.all([first, second])
 	})
 
-	it('shares one operation for concurrent attachment signals', async () => {
+	test('shares one operation for concurrent attachment signals', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const done = deferred()
 		const execute = vi.fn(async () => done.promise)
@@ -46,7 +46,7 @@ describe('ExecutionCoordinator', () => {
 		await Promise.all([first, second])
 	})
 
-	it('runs a requested attachment after a different intent settles', async () => {
+	test('runs a requested attachment after a different intent settles', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const promptDone = deferred()
 		const resume = vi.fn(async () => 'attached' as const)
@@ -61,7 +61,7 @@ describe('ExecutionCoordinator', () => {
 		expect(resume).toHaveBeenCalledOnce()
 	})
 
-	it('does not start a waiting intent after the session is invalidated', async () => {
+	test('does not start a waiting intent after the session is invalidated', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const promptDone = deferred()
 		const resume = vi.fn(async () => {})
@@ -76,7 +76,7 @@ describe('ExecutionCoordinator', () => {
 		expect(resume).not.toHaveBeenCalled()
 	})
 
-	it('invalidates a waiter after the current operation has just settled', async () => {
+	test('invalidates a waiter after the current operation has just settled', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const promptDone = deferred()
 		const resume = vi.fn(async () => {})
@@ -91,7 +91,7 @@ describe('ExecutionCoordinator', () => {
 		expect(resume).not.toHaveBeenCalled()
 	})
 
-	it('adopts a real session id without replacing the running operation', async () => {
+	test('adopts a real session id without replacing the running operation', async () => {
 		const coordinator = new ExecutionCoordinator()
 		const done = deferred()
 		let observedSessionId: string | null = null
@@ -110,7 +110,7 @@ describe('ExecutionCoordinator', () => {
 		expect(observedSessionId).toBe('real')
 	})
 
-	it('releases ownership when an operation throws before its first await', async () => {
+	test('releases ownership when an operation throws before its first await', async () => {
 		const coordinator = new ExecutionCoordinator()
 
 		await expect(
@@ -122,7 +122,7 @@ describe('ExecutionCoordinator', () => {
 		await coordinator.ensure('session-a', 'resume', async () => {})
 	})
 
-	it('aborts a retry delay without waiting for its timer', async () => {
+	test('aborts a retry delay without waiting for its timer', async () => {
 		vi.useFakeTimers()
 		try {
 			const controller = new AbortController()

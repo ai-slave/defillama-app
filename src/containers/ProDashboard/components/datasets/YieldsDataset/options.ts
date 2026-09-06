@@ -1,14 +1,14 @@
 import type { ProYieldRow } from '../../../yieldData'
 
 export interface YieldsFilterOptions {
-	availableTokens: string[]
+	availableTokens: Array<string>
 	availableProtocols: Array<{ value: string; label: string }>
-	availableCategories: string[]
+	availableCategories: Array<string>
 }
 
 export type YieldsFilterSourceRow = Pick<ProYieldRow, 'project' | 'projectslug' | 'tvl' | 'tokenSymbols' | 'category'>
 
-export function buildYieldsFilterOptions(data: readonly YieldsFilterSourceRow[]): YieldsFilterOptions {
+export function buildYieldsFilterOptions(data: ReadonlyArray<YieldsFilterSourceRow>): YieldsFilterOptions {
 	const tokenTvl = new Map<string, number>()
 	const protocols = new Map<string, { value: string; label: string; tvl: number }>()
 	const categories = new Set<string>()

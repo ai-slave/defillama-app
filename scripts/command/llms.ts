@@ -25,7 +25,7 @@ type LlmsLink = {
 }
 
 type LlmsSection = {
-	links: LlmsLink[]
+	links: Array<LlmsLink>
 	title: string
 }
 
@@ -54,7 +54,7 @@ const IMPORTANT_NOTES = [
 	'DefiLlama is an analytics and data source, not financial advice.'
 ]
 
-const CORE_DASHBOARD_LINKS: LlmsLink[] = [
+const CORE_DASHBOARD_LINKS: Array<LlmsLink> = [
 	{
 		title: 'Metrics index',
 		url: '/metrics',
@@ -108,7 +108,7 @@ const CORE_DASHBOARD_LINKS: LlmsLink[] = [
 	}
 ]
 
-const METHODOLOGY_LINKS: LlmsLink[] = [
+const METHODOLOGY_LINKS: Array<LlmsLink> = [
 	{
 		title: 'Data definitions',
 		url: '/data-definitions',
@@ -137,7 +137,7 @@ const METHODOLOGY_LINKS: LlmsLink[] = [
 	}
 ]
 
-const DEVELOPER_LINKS: LlmsLink[] = [
+const DEVELOPER_LINKS: Array<LlmsLink> = [
 	{
 		title: 'DefiLlama API docs',
 		url: 'https://api-docs.defillama.com',
@@ -191,7 +191,7 @@ const DEVELOPER_LINKS: LlmsLink[] = [
 	}
 ]
 
-const ANALYST_LINKS: LlmsLink[] = [
+const ANALYST_LINKS: Array<LlmsLink> = [
 	{
 		title: 'DefiLlama Sheets',
 		url: '/sheets',
@@ -225,7 +225,7 @@ const ANALYST_LINKS: LlmsLink[] = [
 	}
 ]
 
-const SUPPORT_LINKS: LlmsLink[] = [
+const SUPPORT_LINKS: Array<LlmsLink> = [
 	{
 		title: 'Report incorrect data',
 		url: '/report-error',
@@ -258,7 +258,7 @@ const SUPPORT_LINKS: LlmsLink[] = [
 	}
 ]
 
-const OPTIONAL_LINKS: LlmsLink[] = [
+const OPTIONAL_LINKS: Array<LlmsLink> = [
 	{
 		title: 'DefiLlama Research',
 		url: '/research',
@@ -373,7 +373,7 @@ const METRIC_DEFINITIONS = [
 	}
 ]
 
-const FULL_EXTRA_SECTIONS: LlmsSection[] = [
+const FULL_EXTRA_SECTIONS: Array<LlmsSection> = [
 	{
 		title: 'Market activity dashboards',
 		links: [
@@ -467,7 +467,7 @@ function toAbsoluteUrl(siteUrl: string, url: string): string {
 	return `${siteUrl}${route}`
 }
 
-function renderLinkList(siteUrl: string, links: LlmsLink[]): string {
+function renderLinkList(siteUrl: string, links: Array<LlmsLink>): string {
 	return links
 		.map((link) => {
 			const description = link.description ? `: ${link.description}` : ''
@@ -480,11 +480,11 @@ function renderSection(siteUrl: string, section: LlmsSection): string {
 	return `## ${section.title}\n\n${renderLinkList(siteUrl, section.links)}`
 }
 
-function renderNotes(notes: string[]): string {
+function renderNotes(notes: Array<string>): string {
 	return notes.map((note) => `- ${note}`).join('\n')
 }
 
-function joinBlocks(blocks: string[]): string {
+function joinBlocks(blocks: Array<string>): string {
 	return blocks
 		.map((block) => block.trim())
 		.filter(Boolean)
@@ -512,15 +512,15 @@ function getPageDescription(page: LlmsPage, groupName: string): string {
 	return parts.filter(Boolean).join(' ')
 }
 
-export function buildGeneratedCatalogSections(pages: DefillamaPages): LlmsSection[] {
-	const sections: LlmsSection[] = []
+export function buildGeneratedCatalogSections(pages: DefillamaPages): Array<LlmsSection> {
+	const sections: Array<LlmsSection> = []
 	const seenRoutes = new Set<string>()
 
 	for (const groupName of GENERATED_PAGE_GROUPS) {
 		const groupPages = pages[groupName] ?? []
-		const links: LlmsLink[] = []
+		const links: Array<LlmsLink> = []
 
-		for (const page of groupPages as LlmsPage[]) {
+		for (const page of groupPages as Array<LlmsPage>) {
 			if (!page.name || !page.route || !isGeneratedCatalogRouteAllowed(page.route)) continue
 			const dedupeKey = `${page.name}:${page.route}`
 			if (seenRoutes.has(dedupeKey)) continue
@@ -541,7 +541,7 @@ export function buildGeneratedCatalogSections(pages: DefillamaPages): LlmsSectio
 }
 
 export function buildLlmsTxt({ siteUrl }: { pages: DefillamaPages; siteUrl: string }): string {
-	const sections: LlmsSection[] = [
+	const sections: Array<LlmsSection> = [
 		{
 			title: 'Core dashboards',
 			links: CORE_DASHBOARD_LINKS
@@ -592,7 +592,7 @@ export function buildLlmsTxt({ siteUrl }: { pages: DefillamaPages; siteUrl: stri
 
 export function buildLlmsFullTxt({ pages, siteUrl }: { pages: DefillamaPages; siteUrl: string }): string {
 	const generatedCatalogSections = buildGeneratedCatalogSections(pages)
-	const sections: LlmsSection[] = [
+	const sections: Array<LlmsSection> = [
 		{
 			title: 'Core dashboards',
 			links: CORE_DASHBOARD_LINKS

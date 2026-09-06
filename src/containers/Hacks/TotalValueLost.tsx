@@ -71,10 +71,10 @@ const columns = [
 	})
 ]
 
-const columnIds: string[] = columns.map((c) => c.id).filter((id): id is string => id != null)
+const columnIds: Array<string> = columns.map((c) => c.id).filter((id): id is string => id != null)
 
 export function TotalValueLostContainer({ protocols }: IProtocolTotalValueLostInHacksByProtocol) {
-	const [selectedColumns, setSelectedColumns] = React.useState<string[]>([
+	const [selectedColumns, setSelectedColumns] = React.useState<Array<string>>([
 		'Name',
 		'Total Hacked',
 		'Returned Funds',

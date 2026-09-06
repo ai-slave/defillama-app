@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildProtocolRankingsCsv } from '../export.server'
 import type { IProtocol } from '../types'
 
@@ -17,7 +17,7 @@ const protocol = {
 } satisfies IProtocol
 
 describe('protocol ranking full CSV export', () => {
-	it('exports the full server query with selected and custom columns safely', () => {
+	test('exports the full server query with selected and custom columns safely', () => {
 		const csv = buildProtocolRankingsCsv({
 			rows: [protocol],
 			columns: [

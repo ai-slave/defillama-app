@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	getBooleanOverride,
 	getHolderMode,
@@ -12,7 +12,7 @@ import {
 } from './queryState'
 
 describe('pool detail query state', () => {
-	it('parses periods and holder modes with canonical defaults', () => {
+	test('parses periods and holder modes with canonical defaults', () => {
 		expect(getPoolHistoryRange('30d')).toBe('30d')
 		expect(getPoolHistoryRange(['90d', '30d'])).toBe('90d')
 		expect(getPoolHistoryRange('invalid')).toBe('max')
@@ -20,7 +20,7 @@ describe('pool detail query state', () => {
 		expect(getHolderMode('invalid')).toBe('share')
 	})
 
-	it('uses explicit series overrides and otherwise preserves each series default', () => {
+	test('uses explicit series overrides and otherwise preserves each series default', () => {
 		expect(getSeriesVisibility(undefined, true)).toBe(true)
 		expect(getSeriesVisibility(undefined, false)).toBe(false)
 		expect(getSeriesVisibility('false', true)).toBe(false)
@@ -28,7 +28,7 @@ describe('pool detail query state', () => {
 		expect(getSeriesVisibility('invalid', true)).toBe(true)
 	})
 
-	it('removes default selections from the URL and retains non-default overrides', () => {
+	test('removes default selections from the URL and retains non-default overrides', () => {
 		expect(getBooleanOverride(true, true)).toBeUndefined()
 		expect(getBooleanOverride(false, true)).toBe('false')
 		expect(getBooleanOverride(true, false)).toBe('true')
@@ -38,12 +38,12 @@ describe('pool detail query state', () => {
 		expect(getHolderModeQueryValue('balance')).toBe('balance')
 	})
 
-	it('names supply and borrow series independently', () => {
+	test('names supply and borrow series independently', () => {
 		expect(getPoolSeriesQueryKey('supply', 'daily')).toBe('supplyDaily')
 		expect(getPoolSeriesQueryKey('borrow', 'window')).toBe('borrowWindow')
 	})
 
-	it('resolves the chart smoothing window with daily as the silent default', () => {
+	test('resolves the chart smoothing window with daily as the silent default', () => {
 		expect(getPoolChartWindow(undefined)).toBe('daily')
 		expect(getPoolChartWindow('7d')).toBe('7d')
 		expect(getPoolChartWindow('30d')).toBe('30d')

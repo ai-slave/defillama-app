@@ -22,13 +22,13 @@ export function TrustPanel({
 }: {
 	protocol: ProtocolRiskFixture | null
 	explorers?: BlockExplorersResponse
-	incidents?: HistoryIncident[]
+	incidents?: Array<HistoryIncident>
 	nowIso?: string
 	chain?: string
 	poolType?: PoolType
-	scenarios?: ScenarioVM[]
+	scenarios?: Array<ScenarioVM>
 	vaultRoles?: VaultRoles | null
-	vaultDependencies?: ExternalDependency[]
+	vaultDependencies?: Array<ExternalDependency>
 }) {
 	if (!protocol) return null
 	const audits = protocol.audits ?? []
@@ -40,7 +40,7 @@ export function TrustPanel({
 
 	// Protocol-wide incident history — a separate lane from this vault's own realized
 	// incidents; never summed with it.
-	const protocolIncidents: ProtocolIncidentInput[] = (protocol.incidents ?? []).map((i) => ({
+	const protocolIncidents: Array<ProtocolIncidentInput> = (protocol.incidents ?? []).map((i) => ({
 		date: i.date,
 		kind: i.kind,
 		classification: i.classification,
@@ -55,7 +55,7 @@ export function TrustPanel({
 
 	// Prefer the vault-scoped, relevance-tagged list; only principal dependencies surface —
 	// governance/rewards/ui ones are context, not a deposit-loss path.
-	const deps = vaultDependencies.length ? vaultDependencies : (protocol.external_dependencies ?? [])
+	const deps = vaultDependencies.length > 0 ? vaultDependencies : (protocol.external_dependencies ?? [])
 	const hasRelevance = deps.some((d) => d.relevance)
 	const principalDeps = hasRelevance ? deps.filter((d) => (d.relevance ?? 'principal') === 'principal') : deps
 
@@ -141,7 +141,7 @@ export function TrustPanel({
 				</div>
 			)}
 
-			{principalDeps.length ? (
+			{principalDeps.length > 0 ? (
 				<DependencyMap deps={principalDeps} scenarios={scenarios} protocolId={protocol.protocol_id} />
 			) : null}
 		</div>

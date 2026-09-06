@@ -48,10 +48,10 @@ export default function RWAChainsPage({
 			title="RWA by Chain - Real World Assets Analytics - DefiLlama"
 			description="Compare RWA adoption across blockchains. Track Active Mcap, Onchain Mcap, and DeFi Active TVL by chain."
 			pageName={pageName}
-			canonicalUrl={`/rwa/chains`}
+			canonicalUrl="/rwa/chains"
 		>
 			<RWATabNav active="chains" />
-			<RowLinksWithDropdown links={chainLinks} activeLink={'All'} />
+			<RowLinksWithDropdown links={chainLinks} activeLink="All" />
 			<RWAChains chains={chains} initialChartDataset={initialChartDataset} page={{ kind: 'chain' }} />
 		</Layout>
 	)

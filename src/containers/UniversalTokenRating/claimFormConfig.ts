@@ -18,7 +18,7 @@ export type ClaimColumn = {
 	key: string
 	label: string
 	type: ClaimFieldType
-	options?: readonly ClaimSelectOption[]
+	options?: ReadonlyArray<ClaimSelectOption>
 	optionSource?: 'marketMakers' | 'exchanges'
 	linkedNameKey?: 'marketMakerName' | 'exchangeName'
 	placeholder?: string
@@ -28,7 +28,7 @@ export type ClaimTableSection = {
 	id: ClaimDisclosureSectionId
 	title: string
 	description?: string
-	columns: ClaimColumn[]
+	columns: Array<ClaimColumn>
 }
 
 export type ClaimBlock = {
@@ -36,7 +36,7 @@ export type ClaimBlock = {
 	title: string
 	documentKey: 'teamOrg' | 'tokenomics' | 'legal' | 'serviceProviders'
 	documentDescription?: string
-	sections: ClaimTableSection[]
+	sections: Array<ClaimTableSection>
 	additionalDocumentSection?: {
 		key: 'treasuryCashFlows'
 		title: string
@@ -66,7 +66,7 @@ const YES_NO = [
 	{ value: 'false', label: 'No' }
 ]
 
-export const CLAIM_BLOCKS: ClaimBlock[] = [
+export const CLAIM_BLOCKS: Array<ClaimBlock> = [
 	{
 		id: 'team',
 		title: 'Team & Organizational Structure',

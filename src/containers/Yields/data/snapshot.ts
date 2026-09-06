@@ -10,27 +10,27 @@ export interface YieldsSnapshot {
 	readJson<T>(relativePath: string): Promise<T>
 }
 
-export function readEarn(snapshot: YieldsSnapshot): Promise<EarnRow[]> {
+export function readEarn(snapshot: YieldsSnapshot): Promise<Array<EarnRow>> {
 	return snapshot.readJson(YIELDS_SNAPSHOT_FILES.earn)
 }
 
-export function readTrends(snapshot: YieldsSnapshot): Promise<Trend[]> {
+export function readTrends(snapshot: YieldsSnapshot): Promise<Array<Trend>> {
 	return snapshot.readJson(YIELDS_SNAPSHOT_FILES.trends)
 }
 
-export function readBorrowMarkets(snapshot: YieldsSnapshot): Promise<BorrowMarketRow[]> {
+export function readBorrowMarkets(snapshot: YieldsSnapshot): Promise<Array<BorrowMarketRow>> {
 	return snapshot.readJson(YIELDS_SNAPSHOT_FILES.borrowMarkets)
 }
 
-export function readBorrowRoutes(snapshot: YieldsSnapshot): Promise<RouteRow[]> {
+export function readBorrowRoutes(snapshot: YieldsSnapshot): Promise<Array<RouteRow>> {
 	return snapshot.readJson(YIELDS_SNAPSHOT_FILES.borrowRoutes)
 }
 
-export function readLoops(snapshot: YieldsSnapshot): Promise<LoopRow[]> {
+export function readLoops(snapshot: YieldsSnapshot): Promise<Array<LoopRow>> {
 	return snapshot.readJson(YIELDS_SNAPSHOT_FILES.loops)
 }
 
-export function readTokenKeys(snapshot: YieldsSnapshot): Promise<TokenKeys[]> {
+export function readTokenKeys(snapshot: YieldsSnapshot): Promise<Array<TokenKeys>> {
 	return snapshot.readJson(YIELDS_SNAPSHOT_FILES.tokenKeys)
 }
 
@@ -38,10 +38,10 @@ export function readYieldsMeta(snapshot: YieldsSnapshot): Promise<YieldsMeta> {
 	return snapshot.readJson(YIELDS_SNAPSHOT_FILES.meta)
 }
 
-export function readYieldsDepegs(snapshot: YieldsSnapshot): Promise<DepegRow[]> {
+export function readYieldsDepegs(snapshot: YieldsSnapshot): Promise<Array<DepegRow>> {
 	return snapshot.readJson(YIELDS_SNAPSHOT_FILES.depegs)
 }
 
-export function readYieldsExploits(snapshot: YieldsSnapshot): Promise<string[]> {
+export function readYieldsExploits(snapshot: YieldsSnapshot): Promise<Array<string>> {
 	return snapshot.readJson(YIELDS_SNAPSHOT_FILES.exploits)
 }

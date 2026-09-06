@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createOverviewTooltipFormatter } from './overviewTooltip'
 
 describe('overview tooltip', () => {
-	it('preserves series order, renders known zeroes, and uses gas and unlock units', () => {
+	test('preserves series order, renders known zeroes, and uses gas and unlock units', () => {
 		const output = createOverviewTooltipFormatter({
 			valueSymbol: '$',
 			unlockTokenSymbol: 'TOKEN',
@@ -44,7 +44,7 @@ describe('overview tooltip', () => {
 		expect(output).toContain('TOKEN')
 	})
 
-	it('keeps the Mcap to TVL derived row', () => {
+	test('keeps the Mcap to TVL derived row', () => {
 		const output = createOverviewTooltipFormatter({ valueSymbol: '$', unlockTokenSymbol: '' })([
 			{ axisValue: 1_700_000_000_000, seriesName: 'TVL', value: [1_700_000_000_000, 10], encode: { y: [1] } },
 			{ axisValue: 1_700_000_000_000, seriesName: 'Mcap', value: [1_700_000_000_000, 25], encode: { y: [1] } }
@@ -53,7 +53,7 @@ describe('overview tooltip', () => {
 		expect(output).toContain('2.50')
 	})
 
-	it('renders a zero Mcap ratio when TVL is positive', () => {
+	test('renders a zero Mcap ratio when TVL is positive', () => {
 		const output = createOverviewTooltipFormatter({ valueSymbol: '$', unlockTokenSymbol: '' })([
 			{ axisValue: 1_700_000_000_000, seriesName: 'TVL', value: [1_700_000_000_000, 10], encode: { y: [1] } },
 			{ axisValue: 1_700_000_000_000, seriesName: 'Mcap', value: [1_700_000_000_000, 0], encode: { y: [1] } }
@@ -61,7 +61,7 @@ describe('overview tooltip', () => {
 		expect(output).toContain('Mcap/TVL&nbsp;&nbsp;0.00')
 	})
 
-	it.each([0, -10])('does not derive Mcap/TVL for non-positive TVL %s', (tvl) => {
+	test.each([0, -10])('does not derive Mcap/TVL for non-positive TVL %s', (tvl) => {
 		const output = createOverviewTooltipFormatter({ valueSymbol: '$', unlockTokenSymbol: '' })([
 			{ axisValue: 1_700_000_000_000, seriesName: 'TVL', value: [1_700_000_000_000, tvl], encode: { y: [1] } },
 			{ axisValue: 1_700_000_000_000, seriesName: 'Mcap', value: [1_700_000_000_000, 25], encode: { y: [1] } }
@@ -69,7 +69,7 @@ describe('overview tooltip', () => {
 		expect(output).not.toContain('Mcap/TVL')
 	})
 
-	it('renders more than ten heterogeneous metrics independently with their own units', () => {
+	test('renders more than ten heterogeneous metrics independently with their own units', () => {
 		const timestamp = 1_700_000_000_000
 		const seriesValueSymbols = new Map<string, string>()
 		const items = Array.from({ length: 12 }, (_, index) => {
@@ -97,7 +97,7 @@ describe('overview tooltip', () => {
 		expect(output).not.toContain('Others')
 	})
 
-	it('renders an actual Others series only as its independent value', () => {
+	test('renders an actual Others series only as its independent value', () => {
 		const timestamp = 1_700_000_000_000
 		const output = createOverviewTooltipFormatter({
 			valueSymbol: 'ETH',

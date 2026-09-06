@@ -9,11 +9,11 @@ export const displayChainName = (slug: string): string => {
 	const normalized = slug.toLowerCase().replace(/_/g, '-')
 	return normalized
 		.split('-')
-		.map((part) => (part.length ? part.charAt(0).toUpperCase() + part.slice(1) : part))
+		.map((part) => (part.length > 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part))
 		.join(' ')
 }
 
-export async function resolveAllowedChainNamesFromCategories(categories: string[]): Promise<Set<string>> {
+export async function resolveAllowedChainNamesFromCategories(categories: Array<string>): Promise<Set<string>> {
 	if (categories.length === 0) return new Set()
 	const responses = await mapWithConcurrency(categories, 8, fetchChainsByCategory)
 	const names = new Set<string>()
@@ -23,7 +23,7 @@ export async function resolveAllowedChainNamesFromCategories(categories: string[
 	return names
 }
 
-export async function resolveAllowedChainSlugsFromCategories(categories: string[]): Promise<Set<string>> {
+export async function resolveAllowedChainSlugsFromCategories(categories: Array<string>): Promise<Set<string>> {
 	const names = await resolveAllowedChainNamesFromCategories(categories)
 	const slugs = new Set<string>()
 	for (const name of names) {

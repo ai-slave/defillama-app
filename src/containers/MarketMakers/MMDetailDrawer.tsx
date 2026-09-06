@@ -19,7 +19,7 @@ import { ConnectDialog } from './ConnectDialog'
 import { countryFromCode } from './country'
 import { Drawer } from './Drawer'
 import { roundPercentile } from './format'
-import { type RadarScores } from './RadarChart'
+import type { RadarScores } from './RadarChart'
 import { forgdCtaPrimaryButtonStyles, forgdCtaSecondaryButtonStyles } from './styles'
 
 const RadarChart = dynamic(() => import('./RadarChart').then((mod) => mod.RadarChart), {
@@ -57,7 +57,7 @@ function scrollParentOf(el: HTMLElement): HTMLElement | null {
 }
 
 function easeInOutCubic(t: number): number {
-	return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+	return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2
 }
 
 function animateScrollTo(target: HTMLElement, duration: number): () => void {
@@ -95,7 +95,7 @@ function integrationLabel(status: string | null): string {
 	return INTEGRATION_LABEL[(status ?? 'none') as 'full' | 'partial' | 'none'] ?? INTEGRATION_LABEL.none
 }
 
-const SCORE_ROWS: { key: keyof RadarScores; label: string }[] = [
+const SCORE_ROWS: Array<{ key: keyof RadarScores; label: string }> = [
 	{ key: 'composite', label: 'Composite Score' },
 	{ key: 'tradingKpis', label: 'Trading KPIs' },
 	{ key: 'trustIntegration', label: 'Trust' },
@@ -104,7 +104,7 @@ const SCORE_ROWS: { key: keyof RadarScores; label: string }[] = [
 	{ key: 'integrationLevel', label: 'Integration Level' }
 ]
 
-const BOARD_CARDS: { rankKey: string; label: string; suffix: string; icon: IconName }[] = [
+const BOARD_CARDS: Array<{ rankKey: string; label: string; suffix: string; icon: IconName }> = [
 	{ rankKey: 'aggregatedRank', label: 'Aggregated Leaderboard', suffix: 'across all major KPIs.', icon: 'layers' },
 	{ rankKey: 'depthRank', label: 'Depth Leaderboard', suffix: 'for liquidity provision.', icon: 'bar-chart-2' },
 	{ rankKey: 'volumeRank', label: 'Volume Leaderboard', suffix: 'for trade volume.', icon: 'activity' },
@@ -128,7 +128,7 @@ function toScores(performance: Dict): RadarScores {
 	}
 }
 
-function stringList(value: unknown): string[] {
+function stringList(value: unknown): Array<string> {
 	if (!Array.isArray(value)) return []
 	return value
 		.map((item) => (typeof item === 'string' ? item : asStr(asDict(item).name)))
@@ -148,7 +148,7 @@ function titleCaseSlug(slug: string): string {
 		.join(' ')
 }
 
-function engagementOptionLabels(value: unknown): string[] {
+function engagementOptionLabels(value: unknown): Array<string> {
 	if (!Array.isArray(value)) return []
 	return value
 		.filter((slug): slug is string => typeof slug === 'string' && slug.length > 0)
@@ -157,9 +157,9 @@ function engagementOptionLabels(value: unknown): string[] {
 
 type Venue = { key: string; name: string; icon: string | null }
 
-function venueList(value: unknown): Venue[] {
+function venueList(value: unknown): Array<Venue> {
 	if (!Array.isArray(value)) return []
-	const venues: Venue[] = []
+	const venues: Array<Venue> = []
 	for (const item of value) {
 		const o = asDict(item)
 		const name = asStr(o.label)
@@ -189,7 +189,7 @@ function WebsiteButton({ href, name }: { href: string; name: string }) {
 	)
 }
 
-function BadgeRow({ title, items }: { title: string; items: string[] }) {
+function BadgeRow({ title, items }: { title: string; items: Array<string> }) {
 	if (items.length === 0) return null
 	return (
 		<section className="flex flex-col gap-2">
@@ -205,7 +205,7 @@ function BadgeRow({ title, items }: { title: string; items: string[] }) {
 	)
 }
 
-function VenueSection({ title, venues }: { title: string; venues: Venue[] }) {
+function VenueSection({ title, venues }: { title: string; venues: Array<Venue> }) {
 	if (venues.length === 0) return null
 	return (
 		<section className="flex flex-col gap-2">
@@ -224,7 +224,7 @@ function VenueSection({ title, venues }: { title: string; venues: Venue[] }) {
 	)
 }
 
-function BulletList({ title, items }: { title: string; items: string[] }) {
+function BulletList({ title, items }: { title: string; items: Array<string> }) {
 	if (items.length === 0) return null
 	return (
 		<section className="flex flex-col gap-2">

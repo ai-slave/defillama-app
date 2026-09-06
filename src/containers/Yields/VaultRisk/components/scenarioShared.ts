@@ -49,12 +49,12 @@ export function scenarioHasDetail(s: ScenarioVM): boolean {
 	return Boolean(
 		s.oneLiner ||
 		s.conditions ||
-		s.mitigations.length ||
-		s.evidence.length ||
+		s.mitigations.length > 0 ||
+		s.evidence.length > 0 ||
 		s.perAsset?.length ||
 		s.realized ||
-		s.coverage.length ||
-		Object.keys(s.inputs).length
+		s.coverage.length > 0 ||
+		Object.keys(s.inputs).length > 0
 	)
 }
 
@@ -86,7 +86,7 @@ export interface ModeledLossCell {
 export type StressSel = 10 | 30 | 50 | 'worst'
 
 // True when the backend serves the per-drop curve; absent on older fixtures → toggle hidden.
-export function anyHasAnchors(scenarios: ScenarioVM[]): boolean {
+export function anyHasAnchors(scenarios: Array<ScenarioVM>): boolean {
 	return scenarios.some((s) => s.status === 'computed' && (s.lossByAnchor?.length ?? 0) > 0)
 }
 

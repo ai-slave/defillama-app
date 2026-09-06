@@ -1,4 +1,4 @@
-import { type SortingState, type VisibilityState } from '@tanstack/react-table'
+import type { SortingState, VisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -40,7 +40,7 @@ const GROUP_OPTIONS = [
 	{ value: 'compliance', label: 'Compliance' }
 ] as const
 
-const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, string[]> = {
+const GROUP_COLUMN_IDS: Record<DirectoryColumnGroup, Array<string>> = {
 	// Render order lives in buildDirectoryColumns; this is only the visible set.
 	// Active liquidity replaces the fixed ±2% depth here — same fact, band scaled to
 	// the day's volatility. depth2Usd stays available through the column selector.
@@ -111,7 +111,7 @@ const MERGED_ONLY_COLUMN_IDS = [
 // show in that scope alone. Liquidity follows the same rule: active liquidity needs a
 // normalized-volume band, which exists for spot and USD perps, so COIN perps show the
 // fixed ±2% depth instead of a column of dashes.
-const SCOPE_HIDDEN_COLUMN_IDS: Record<DirectoryScope, string[]> = {
+const SCOPE_HIDDEN_COLUMN_IDS: Record<DirectoryScope, Array<string>> = {
 	// The merged view drops every scope-bound column (they have no segment to read)
 	// and every COIN-perp column: that segment is out of scope here by design.
 	all: [
@@ -182,13 +182,13 @@ export function DirectoryTable({
 	executionFillBasket,
 	onCountryChange
 }: {
-	rows: ExchangeDirectoryRowModel[]
+	rows: Array<ExchangeDirectoryRowModel>
 	country: string | null
 	catalog: MasterExchangeRegionCatalogResponse | null
 	catalogFailed: boolean
 	executionAvailable: boolean
-	executionCostBasket: string[]
-	executionFillBasket: string[]
+	executionCostBasket: Array<string>
+	executionFillBasket: Array<string>
 	onCountryChange: (country: string | null) => void
 }) {
 	const router = useRouter()

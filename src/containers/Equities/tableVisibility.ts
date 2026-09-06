@@ -6,7 +6,7 @@ export function applyEquityFilterColumnVisibility({
 	filters
 }: {
 	columnVisibility: VisibilityState
-	filters: EquityActiveFilter[]
+	filters: Array<EquityActiveFilter>
 }): VisibilityState {
 	const effectiveVisibility: VisibilityState = { ...columnVisibility, searchPriority: false }
 	for (const filter of filters) {
@@ -15,7 +15,7 @@ export function applyEquityFilterColumnVisibility({
 	return effectiveVisibility
 }
 
-function getDefaultSortingFilter(filters: EquityActiveFilter[]): EquityActiveFilter | null {
+function getDefaultSortingFilter(filters: Array<EquityActiveFilter>): EquityActiveFilter | null {
 	return filters.findLast((filter) => filter.kind !== 'categorical') ?? null
 }
 
@@ -28,7 +28,7 @@ export function getEquityFilterDefaultSorting({
 	filters,
 	fallbackSorting
 }: {
-	filters: EquityActiveFilter[]
+	filters: Array<EquityActiveFilter>
 	fallbackSorting: SortingState
 }): SortingState {
 	const filter = getDefaultSortingFilter(filters)
@@ -50,7 +50,7 @@ export function shouldUpdateEquityFilterDefaultSorting({
 	fallbackSorting
 }: {
 	currentSorting: SortingState
-	previousFilters: EquityActiveFilter[]
+	previousFilters: Array<EquityActiveFilter>
 	fallbackSorting: SortingState
 }): boolean {
 	return (

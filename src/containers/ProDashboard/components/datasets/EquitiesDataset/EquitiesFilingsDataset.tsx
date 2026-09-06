@@ -121,7 +121,7 @@ function useEquitiesFilingsData(ticker: string) {
 	}
 }
 
-const EMPTY_DATA: IEquitiesFilingApiItem[] = []
+const EMPTY_DATA: Array<IEquitiesFilingApiItem> = []
 
 export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'filingDate', desc: true }])
@@ -147,7 +147,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 	const filteredData = useMemo(() => {
 		if (!data) return EMPTY_DATA
 		if (selectedForm === 'All') return data
-		const matchingFilings: IEquitiesFilingApiItem[] = []
+		const matchingFilings: Array<IEquitiesFilingApiItem> = []
 		for (const filing of data) {
 			if (filing.form === selectedForm) matchingFilings.push(filing)
 		}
@@ -244,7 +244,7 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 						<CSVExportButton
 							onClick={() => {
 								const rows = instance.getFilteredRowModel().rows
-								const csv: CsvCell[][] = [['Filing Date', 'Report Date', 'Form', 'Description', 'URL']]
+								const csv: Array<Array<CsvCell>> = [['Filing Date', 'Report Date', 'Form', 'Description', 'URL']]
 								for (const row of rows) {
 									const item = row.original
 									csv.push([

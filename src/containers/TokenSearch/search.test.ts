@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const searchApiMock = vi.hoisted(() => vi.fn())
 
@@ -13,23 +13,23 @@ beforeEach(() => {
 })
 
 describe('token search id normalization', () => {
-	it('converts Meili token ids to bare CoinGecko ids', () => {
+	test('converts Meili token ids to bare CoinGecko ids', () => {
 		expect(getGeckoIdFromSearchId('coingecko_binancecoin:token')).toBe('binancecoin')
 		expect(getGeckoIdFromSearchId('coingecko_binancecoin_token')).toBe('binancecoin')
 		expect(getGeckoIdFromSearchId('coingecko:bitcoin:token')).toBe('bitcoin')
 	})
 
-	it('leaves existing bare CoinGecko ids usable for direct route hydration', () => {
+	test('leaves existing bare CoinGecko ids usable for direct route hydration', () => {
 		expect(getGeckoIdFromSearchId('solana')).toBe('solana')
 		expect(getTokenSearchFallback('coingecko:ethereum:token').id).toBe('ethereum')
 	})
 
-	it('uses readable fallback names for URL-selected tokens', () => {
+	test('uses readable fallback names for URL-selected tokens', () => {
 		expect(getTokenSearchFallback('bitcoin').name).toBe('Bitcoin')
 		expect(getTokenSearchFallback('render-token').name).toBe('Render Token')
 	})
 
-	it('uses aliases only to search display metadata for legacy CoinGecko ids', async () => {
+	test('uses aliases only to search display metadata for legacy CoinGecko ids', async () => {
 		searchApiMock.mockResolvedValueOnce([
 			{
 				id: 'coingecko_binancecoin_token',

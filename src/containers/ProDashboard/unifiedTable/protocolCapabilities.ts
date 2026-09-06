@@ -46,9 +46,9 @@ export interface RequestedProtocolRatioDependencies {
 }
 
 export interface ProtocolMetricCapabilities {
-	baseMetricFamilies: ProtocolBaseMetricFamily[]
-	pointMetrics: ProtocolPointMetric[]
-	supplementalMetrics: ProtocolSupplementalMetric[]
+	baseMetricFamilies: Array<ProtocolBaseMetricFamily>
+	pointMetrics: Array<ProtocolPointMetric>
+	supplementalMetrics: Array<ProtocolSupplementalMetric>
 	requestedRatioDependencies: RequestedProtocolRatioDependencies
 	needsOracleMembership: boolean
 }
@@ -217,8 +217,8 @@ const BASE_METRIC_FAMILY_BY_COLUMN_ID = {
 
 const BASE_METRIC_FILTER_DEPENDENCIES: ReadonlyArray<{
 	family: ProtocolBaseMetricFamily
-	numericKeys?: readonly UnifiedNumericTableFilterKey[]
-	booleanKeys?: readonly UnifiedBooleanTableFilterKey[]
+	numericKeys?: ReadonlyArray<UnifiedNumericTableFilterKey>
+	booleanKeys?: ReadonlyArray<UnifiedBooleanTableFilterKey>
 }> = [
 	{
 		family: 'tvl',
@@ -377,7 +377,7 @@ const POINT_METRIC_BY_COLUMN_ID = {
 
 const POINT_METRIC_FILTER_DEPENDENCIES: ReadonlyArray<{
 	metric: ProtocolPointMetric
-	keys: readonly UnifiedNumericTableFilterKey[]
+	keys: ReadonlyArray<UnifiedNumericTableFilterKey>
 }> = [
 	{
 		metric: 'dex-volume',
@@ -407,7 +407,7 @@ const EARNINGS_METRICS = new Set<string>([
 	'earnings7d',
 	'earnings30d',
 	'earnings1y'
-] as const satisfies readonly (keyof ProtocolTableMetrics)[])
+] as const satisfies ReadonlyArray<keyof ProtocolTableMetrics>)
 const BRIDGE_AGGREGATOR_METRICS = new Set<string>([
 	'bridgeAggregatorVolume24h',
 	'bridgeAggregatorVolume7d',
@@ -415,7 +415,7 @@ const BRIDGE_AGGREGATOR_METRICS = new Set<string>([
 	'bridgeAggregatorVolumeChange1d',
 	'bridgeAggregatorVolume24hChange7dAgo',
 	'bridgeAggregatorVolumeDominance24h'
-] as const satisfies readonly (keyof ProtocolTableMetrics)[])
+] as const satisfies ReadonlyArray<keyof ProtocolTableMetrics>)
 
 function isBaseMetricColumnId(columnId: string): columnId is keyof typeof BASE_METRIC_FAMILY_BY_COLUMN_ID {
 	return Object.hasOwn(BASE_METRIC_FAMILY_BY_COLUMN_ID, columnId)
@@ -457,7 +457,7 @@ function addColumnBaseMetricFamily(metrics: Set<ProtocolBaseMetricFamily>, colum
 	if (metricId === 'ps') metrics.add('revenue')
 }
 
-function expressionVariables(expression: string): string[] {
+function expressionVariables(expression: string): Array<string> {
 	return expression.match(/[A-Za-z_][A-Za-z0-9_]*/g) ?? []
 }
 

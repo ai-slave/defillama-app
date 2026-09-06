@@ -6,9 +6,9 @@ import { buildTokenUsageSourcePlan, type TokenUsageStreamData } from '../tokenUs
 import { formatDisplayName } from './unifiedTable/utils'
 
 export async function fetchProTokenUsageData(
-	tokenSymbols: string[],
+	tokenSymbols: Array<string>,
 	includeCex: boolean
-): Promise<ProtocolTokenUsageData[]> {
+): Promise<Array<ProtocolTokenUsageData>> {
 	type TokenUsageRow = {
 		protocol: string
 		name: string
@@ -16,7 +16,7 @@ export async function fetchProTokenUsageData(
 		symbol: string
 		amount_usd: number
 	}
-	const rows = await llamaDb.query<TokenUsageRow[]>(
+	const rows = await llamaDb.query<Array<TokenUsageRow>>(
 		`
 			SELECT
 				t.sub_protocol AS protocol,
@@ -56,12 +56,12 @@ export async function fetchProTokenUsageData(
 }
 
 export async function streamProTokenUsageData(
-	items: DashboardItemConfig[],
-	claimSource: (kind: string, key: readonly unknown[]) => boolean,
+	items: Array<DashboardItemConfig>,
+	claimSource: (kind: string, key: ReadonlyArray<unknown>) => boolean,
 	schedule: (run: () => Promise<void>) => Promise<void>,
 	onData: (data: TokenUsageStreamData) => Promise<void>
 ): Promise<void> {
-	const requests: Promise<void>[] = []
+	const requests: Array<Promise<void>> = []
 	for (const source of buildTokenUsageSourcePlan(items)) {
 		if (!claimSource('table-token-usage', [source.cacheKey])) continue
 		requests.push(

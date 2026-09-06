@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ProtocolEmission, RawProtocolEmission, RawProtocolEmissionDetail } from '../api.types'
 
 const mocks = vi.hoisted(() => ({
@@ -45,7 +45,7 @@ beforeEach(() => {
 })
 
 describe('unlocks api', () => {
-	it('fetches protocol emission details from the datasets endpoint', async () => {
+	test('fetches protocol emission details from the datasets endpoint', async () => {
 		const rawDetail = {
 			name: 'Chainlink',
 			gecko_id: 'chainlink',
@@ -152,7 +152,7 @@ describe('unlocks api', () => {
 		expect(result.metadata.unlockEvents[0]?.linearAllocations[0]?.endTimestamp).toBe(300)
 	})
 
-	it('preserves a failed detail request as a failure', async () => {
+	test('preserves a failed detail request as a failure', async () => {
 		const error = new Error('upstream unavailable')
 		mocks.fetchWithPoolingOnServer.mockRejectedValue(error)
 
@@ -162,7 +162,7 @@ describe('unlocks api', () => {
 		expect(mocks.fetchWithPoolingOnServer).toHaveBeenCalledTimes(1)
 	})
 
-	it('returns null only for a missing protocol detail', async () => {
+	test('returns null only for a missing protocol detail', async () => {
 		mocks.fetchWithPoolingOnServer.mockResolvedValue(jsonResponse(404, {}))
 
 		const api = await import('../api')
@@ -170,7 +170,7 @@ describe('unlocks api', () => {
 		await expect(api.fetchProtocolEmission('missing')).resolves.toBeNull()
 	})
 
-	it('throws for a non-not-found HTTP response', async () => {
+	test('throws for a non-not-found HTTP response', async () => {
 		mocks.fetchWithPoolingOnServer.mockResolvedValue(jsonResponse(503, {}))
 
 		const api = await import('../api')
@@ -178,7 +178,7 @@ describe('unlocks api', () => {
 		await expect(api.fetchProtocolEmission('chainlink')).rejects.toThrow('request failed: 503')
 	})
 
-	it('normalizes numeric-string event timestamps once at the list API boundary', async () => {
+	test('normalizes numeric-string event timestamps once at the list API boundary', async () => {
 		const aggregateFields = {
 			sources: [],
 			protocolId: 'chainlink',
@@ -288,7 +288,7 @@ describe('unlocks api', () => {
 		expect(result[0]?.unlockEvents[0]?.linearAllocations[0]?.endTimestamp).toBe(400)
 	})
 
-	it('preserves a failed aggregate request as a failure', async () => {
+	test('preserves a failed aggregate request as a failure', async () => {
 		const error = new Error('Failed to fetch')
 		mocks.fetchJson.mockRejectedValue(error)
 
@@ -297,7 +297,7 @@ describe('unlocks api', () => {
 		await expect(api.fetchAllProtocolEmissions()).rejects.toBe(error)
 	})
 
-	it('keeps a successful empty aggregate distinct from failure', async () => {
+	test('keeps a successful empty aggregate distinct from failure', async () => {
 		mocks.fetchJson.mockResolvedValue([])
 
 		const api = await import('../api')
@@ -305,7 +305,7 @@ describe('unlocks api', () => {
 		await expect(api.fetchAllProtocolEmissions()).resolves.toEqual([])
 	})
 
-	it('preserves a failed protocol-list request as a failure', async () => {
+	test('preserves a failed protocol-list request as a failure', async () => {
 		const error = new Error('metadata unavailable')
 		mocks.fetchJson.mockRejectedValue(error)
 

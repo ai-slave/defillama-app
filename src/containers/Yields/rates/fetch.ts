@@ -29,17 +29,17 @@ export interface RefRateAssetSet extends Omit<RefRateSet, 'supply'> {
 }
 
 export interface RefRateCompositionSides {
-	supply: RefRateProtocol[]
-	borrow: RefRateProtocol[]
+	supply: Array<RefRateProtocol>
+	borrow: Array<RefRateProtocol>
 }
 
 export interface StablecoinRatesCurrent {
-	assets: string[]
+	assets: Array<string>
 	rates: RefRateSet
-	by_asset: { asset: string; rates: RefRateAssetSet }[]
+	by_asset: Array<{ asset: string; rates: RefRateAssetSet }>
 	composition: {
 		by_protocol: RefRateCompositionSides
-		by_asset: { asset: string; by_protocol: RefRateCompositionSides }[]
+		by_asset: Array<{ asset: string; by_protocol: RefRateCompositionSides }>
 	}
 }
 
@@ -49,10 +49,10 @@ export interface RefRatePoint {
 }
 
 export interface StablecoinRatesHistory {
-	assets: string[]
+	assets: Array<string>
 	range: RateRange
-	series: RefRatePoint[]
-	by_asset: { asset: string; series: RefRatePoint[] }[]
+	series: Array<RefRatePoint>
+	by_asset: Array<{ asset: string; series: Array<RefRatePoint> }>
 }
 
 export class ApiError extends Error {
@@ -68,7 +68,7 @@ export class ApiError extends Error {
 }
 
 async function getJson<T>(url: string, init?: RequestInit): Promise<T> {
-	const res = await fetch(url, { ...init, headers: { Accept: 'application/json', ...(init?.headers ?? {}) } })
+	const res = await fetch(url, { ...init, headers: { Accept: 'application/json', ...init?.headers } })
 	if (!res.ok) throw new ApiError(res.status, url)
 	const body = (await res.json()) as { data: T }
 	return body.data

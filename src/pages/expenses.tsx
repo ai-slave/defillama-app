@@ -40,17 +40,17 @@ function isDeprecatedProtocol(
 export default function Protocols(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
-			title={`Protocol Expense Rankings - DefiLlama`}
+			title="Protocol Expense Rankings - DefiLlama"
 			description="Track DeFi protocol expenses and token incentive costs. Compare operational spending across protocols to evaluate sustainability."
-			canonicalUrl={`/expenses`}
+			canonicalUrl="/expenses"
 			pageName={pageName}
 		>
 			<TableWithSearch
 				data={props.expenses}
 				columns={columns}
-				columnToSearch={'name'}
-				placeholder={'Search protocol...'}
-				header={'Protocol Expenses'}
+				columnToSearch="name"
+				placeholder="Search protocol..."
+				header="Protocol Expenses"
 				headingAs="h1"
 				csvFileName="protocol-expenses"
 				sortingState={DEFAULT_SORTING_STATE}

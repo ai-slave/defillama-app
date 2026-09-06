@@ -68,14 +68,14 @@ export const TOKEN_PAGE_COLUMN_ORDER = [
 // OI and funding are perp-only; spot gets everything else.
 const SPOT_HIDDEN_COLUMNS = new Set<string>(['openInterestUsd', 'openInterestChange24h', 'fundingRate8h'])
 
-export const TOKEN_PAGE_VISIBLE_COLUMNS: Record<Segment, readonly string[]> = {
+export const TOKEN_PAGE_VISIBLE_COLUMNS: Record<Segment, ReadonlyArray<string>> = {
 	spot: TOKEN_PAGE_COLUMN_ORDER.filter((id) => !SPOT_HIDDEN_COLUMNS.has(id)),
 	linear_perp: TOKEN_PAGE_COLUMN_ORDER,
 	// Normalized volume has no inverse-perp equivalent, so it would only render N/A.
 	inverse_perp: TOKEN_PAGE_COLUMN_ORDER.filter((id) => id !== 'normalizedVolume')
 }
 
-export function toPairTableRow(row: MarketPair, depthBands: number[], segment: Segment): PairTableRow {
+export function toPairTableRow(row: MarketPair, depthBands: Array<number>, segment: Segment): PairTableRow {
 	return {
 		...mapExchangePair(row, depthBands, segment),
 		venue: row.display_name,
@@ -84,7 +84,7 @@ export function toPairTableRow(row: MarketPair, depthBands: number[], segment: S
 	}
 }
 
-function sumPairMetrics(rows: MarketPair[]) {
+function sumPairMetrics(rows: Array<MarketPair>) {
 	let volume = 0
 	let volumePrev = 0
 	let hasVolumePrev = false
@@ -125,14 +125,14 @@ const byVolumeDesc = (a: MarketPair, b: MarketPair) => (b.volume_24h ?? 0) - (a.
  *  token's spot pairs never compete with its perp pairs for the top spot.
  *  Only applies while no column sort is active; clicking a header sorts all rows evenly.
  *  Exported for testing. */
-export function rankRowsBybitFirst(rows: MarketPair[]): MarketPair[] {
+export function rankRowsBybitFirst(rows: Array<MarketPair>): Array<MarketPair> {
 	const topBybit = rows.filter((row) => row.slug === 'bybit').sort(byVolumeDesc)[0]
 	if (!topBybit) return [...rows].sort(byVolumeDesc)
 	const rest = rows.filter((row) => row !== topBybit)
 	return [topBybit, ...rest.sort(byVolumeDesc)]
 }
 
-function getCategoryRows(data: TokenMarketsResponse, venue: VenueTabId, category: Segment): MarketPair[] {
+function getCategoryRows(data: TokenMarketsResponse, venue: VenueTabId, category: Segment): Array<MarketPair> {
 	if (venue === 'dex') return data.dex[category] ?? []
 	if (venue === 'cex') return rankRowsBybitFirst(data.cex[category] ?? [])
 	const dexRows = data.dex[category] ?? []
@@ -154,15 +154,23 @@ function getCategoryTotals(data: TokenMarketsResponse, venue: VenueTabId, catego
 	return data.totals[venue as MarketVenue]?.[category] ?? EMPTY_TOTALS
 }
 
-function getAvailableCategories(data: TokenMarketsResponse, venue: VenueTabId): Segment[] {
-	const categories: Segment[] = []
+function getAvailableCategories(data: TokenMarketsResponse, venue: VenueTabId): Array<Segment> {
+	const categories: Array<Segment> = []
 	for (const tab of CATEGORY_TABS) {
 		if (getCategoryRows(data, venue, tab.id).length > 0) categories.push(tab.id)
 	}
 	return categories
 }
 
-function HeaderStrip({ rows, totals, showOi }: { rows: MarketPair[]; totals: MarketCategoryTotals; showOi: boolean }) {
+function HeaderStrip({
+	rows,
+	totals,
+	showOi
+}: {
+	rows: Array<MarketPair>
+	totals: MarketCategoryTotals
+	showOi: boolean
+}) {
 	const metrics = sumPairMetrics(rows)
 
 	return (
@@ -299,13 +307,13 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 
 	const availableCategoriesByVenue = useMemo(() => {
 		if (!data) {
-			return { dex: [], cex: [], all: [] } as Record<VenueTabId, Segment[]>
+			return { dex: [], cex: [], all: [] } as Record<VenueTabId, Array<Segment>>
 		}
 		return {
 			dex: getAvailableCategories(data, 'dex'),
 			cex: getAvailableCategories(data, 'cex'),
 			all: getAvailableCategories(data, 'all')
-		} as Record<VenueTabId, Segment[]>
+		} as Record<VenueTabId, Array<Segment>>
 	}, [data])
 
 	const visibleVenueTabs = useMemo(

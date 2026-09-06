@@ -41,7 +41,7 @@ const CHART_TYPE_LABELS: Record<string, string> = {
 	tokenInflows: 'Token Inflows'
 }
 
-const EMPTY_HALLMARKS: [number, string][] = []
+const EMPTY_HALLMARKS: Array<[number, string]> = []
 const SERIES_SELECTION_CHARTS = new Set<StablecoinsChartConfig['chartType']>([
 	'tokenMcaps',
 	'dominance',

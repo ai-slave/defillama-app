@@ -1,11 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { calculateCumulativePercentageChange, getCumulativeChangeOfPeriod } from '../queries'
 
 const NOW = Date.parse('2026-07-14T12:00:00Z')
 const seconds = (date: string) => Date.parse(`${date}T00:00:00Z`) / 1e3
 
 describe('narrative performance freshness', () => {
-	it('returns a category change only when both period endpoints are present and current', () => {
+	test('returns a category change only when both period endpoints are present and current', () => {
 		const performance = {
 			'30': [
 				{ date: seconds('2026-06-14'), DeFi: 0 },
@@ -17,7 +17,7 @@ describe('narrative performance freshness', () => {
 		expect(getCumulativeChangeOfPeriod(performance, '30', 'DeFi', NOW)).toBe(12)
 	})
 
-	it('does not use day 29 or day 31 as a 30-day narrative baseline', () => {
+	test('does not use day 29 or day 31 as a 30-day narrative baseline', () => {
 		const performance = {
 			'30': [
 				{ date: seconds('2026-06-13'), DeFi: 0 },
@@ -29,7 +29,7 @@ describe('narrative performance freshness', () => {
 		expect(getCumulativeChangeOfPeriod(performance, '30', 'DeFi', NOW)).toBeNull()
 	})
 
-	it('requires the selected category on the comparison endpoint', () => {
+	test('requires the selected category on the comparison endpoint', () => {
 		const performance = {
 			'30': [
 				{ date: seconds('2026-06-14'), Other: 0 },
@@ -40,7 +40,7 @@ describe('narrative performance freshness', () => {
 		expect(getCumulativeChangeOfPeriod(performance, '30', 'DeFi', NOW)).toBeNull()
 	})
 
-	it('builds sparse coin return series from exact fresh endpoints', () => {
+	test('builds sparse coin return series from exact fresh endpoints', () => {
 		const result = calculateCumulativePercentageChange(
 			[
 				['coin', '2026-06-14T00:00:00Z', 100],
@@ -59,7 +59,7 @@ describe('narrative performance freshness', () => {
 		])
 	})
 
-	it('omits a coin when its current or exact comparison price is missing', () => {
+	test('omits a coin when its current or exact comparison price is missing', () => {
 		const result = calculateCumulativePercentageChange(
 			[
 				['missing-target', '2026-06-15T00:00:00Z', 100],

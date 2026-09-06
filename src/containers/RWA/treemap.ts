@@ -13,13 +13,16 @@ export type RwaTreemapNode = {
 	path: string
 	value: [number, number | null, number | null]
 	itemStyle?: { color?: string }
-	children?: RwaTreemapNode[]
+	children?: Array<RwaTreemapNode>
 }
 
 const TREEMAP_COLORS = CHART_COLORS
 type RWAAsset = IRWAAssetsOverview['assets'][number]
 
-export const buildRwaTreemapTreeData = (pieData: RwaPieChartDatum[], breakdownLabel: string): RwaTreemapNode[] => {
+export const buildRwaTreemapTreeData = (
+	pieData: Array<RwaPieChartDatum>,
+	breakdownLabel: string
+): Array<RwaTreemapNode> => {
 	const totalsByLabel = new Map<string, number>()
 	for (const item of pieData) {
 		const value = item.value
@@ -29,7 +32,7 @@ export const buildRwaTreemapTreeData = (pieData: RwaPieChartDatum[], breakdownLa
 		totalsByLabel.set(label, (totalsByLabel.get(label) ?? 0) + value)
 	}
 
-	const data: RwaPieChartDatum[] = []
+	const data: Array<RwaPieChartDatum> = []
 	let total = 0
 	for (const [name, value] of totalsByLabel.entries()) {
 		data.push({ name, value })
@@ -40,7 +43,7 @@ export const buildRwaTreemapTreeData = (pieData: RwaPieChartDatum[], breakdownLa
 
 	const rootLabel = breakdownLabel || 'Breakdown'
 	// Assign colors in value-descending order so the biggest block gets CHART_COLORS[0].
-	const children: RwaTreemapNode[] = []
+	const children: Array<RwaTreemapNode> = []
 	for (const [index, item] of data.entries()) {
 		const sharePct = total > 0 ? roundNumber((item.value / total) * 100, 2) : 0
 		const color = TREEMAP_COLORS[index] ?? createGeneratedColor(index - TREEMAP_COLORS.length)
@@ -60,10 +63,10 @@ export function buildCompleteRwaTreemapTreeData({
 	completePieData,
 	breakdownLabel
 }: {
-	nestedTreeData: RwaTreemapNode[]
-	completePieData: RwaPieChartDatum[]
+	nestedTreeData: Array<RwaTreemapNode>
+	completePieData: Array<RwaPieChartDatum>
 	breakdownLabel: string
-}): RwaTreemapNode[] {
+}): Array<RwaTreemapNode> {
 	return nestedTreeData.length > 0 ? nestedTreeData : buildRwaTreemapTreeData(completePieData, breakdownLabel)
 }
 
@@ -90,7 +93,7 @@ const getRwaMetricBreakdownByChain = (
 	asset: RWAAsset,
 	metric: RWAChartMetric,
 	includeBridgeTvl: boolean
-): RwaMetricByChainRow[] => {
+): Array<RwaMetricByChainRow> => {
 	const breakdown =
 		metric === 'activeMcap'
 			? asset.activeMcap?.breakdown
@@ -121,7 +124,7 @@ const getRwaMetricBreakdownByChain = (
 	return Array.from(totalsBySlug.values()).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label))
 }
 
-const normalizeLabels = (values: Array<string | null | undefined>): string[] => {
+const normalizeLabels = (values: Array<string | null | undefined>): Array<string> => {
 	const out = new Set<string>()
 	for (const value of values) {
 		const label = typeof value === 'string' ? sanitizeTreemapLabel(value.trim()) : ''
@@ -131,7 +134,7 @@ const normalizeLabels = (values: Array<string | null | undefined>): string[] => 
 	return Array.from(out)
 }
 
-const normalizeLabelsBySlug = (values: Array<string | null | undefined>, fallback: string): string[] => {
+const normalizeLabelsBySlug = (values: Array<string | null | undefined>, fallback: string): Array<string> => {
 	const bySlug = new Map<string, string>()
 
 	for (const value of values) {
@@ -150,7 +153,7 @@ const normalizeLabelsBySlug = (values: Array<string | null | undefined>, fallbac
 const getAssetGroupsByGrouping = (
 	asset: RWAAsset,
 	grouping: RwaTreemapParentGrouping | RwaTreemapNestedBy
-): string[] => {
+): Array<string> => {
 	switch (grouping) {
 		case 'none':
 			return []
@@ -221,7 +224,7 @@ const createGeneratedColor = (index: number): string => {
  * biggest, most visually dominant groups) always land ~137.5° apart on the
  * color wheel — guaranteeing distinct hue families for their child shades.
  */
-const buildHueSpacedColorMap = (labels: string[]): Record<string, string> => {
+const buildHueSpacedColorMap = (labels: Array<string>): Record<string, string> => {
 	const unique = Array.from(new Set(labels))
 	if (unique.length === 0) return {}
 
@@ -264,7 +267,7 @@ const hexToHsl = (hex: string): [number, number, number] => {
  * Children share the parent's hue family but spread across a wide lightness
  * range with slight hue shifts, producing clearly distinct blocks per group.
  */
-const deriveChildShades = (parentHex: string, count: number): string[] => {
+const deriveChildShades = (parentHex: string, count: number): Array<string> => {
 	if (count <= 0) return []
 	if (count === 1) return [parentHex]
 
@@ -276,7 +279,7 @@ const deriveChildShades = (parentHex: string, count: number): string[] => {
 	const maxL = 65
 	// Keep saturation vivid so the hue stays recognisable at every lightness.
 	const childS = Math.max(55, Math.min(85, s))
-	const shades: string[] = []
+	const shades: Array<string> = []
 
 	for (let i = 0; i < count; i++) {
 		const ratio = count > 1 ? i / (count - 1) : 0.5
@@ -312,7 +315,7 @@ export const buildRwaNestedTreemapTreeData = ({
 	parentGrouping: RwaTreemapParentGrouping
 	childGrouping: RwaTreemapNestedBy
 	includeBridgeTvl?: boolean
-}): RwaTreemapNode[] => {
+}): Array<RwaTreemapNode> => {
 	if (childGrouping === 'none') return []
 
 	const nestedTotals = new Map<string, Map<string, number>>()
@@ -380,12 +383,12 @@ export const buildRwaNestedTreemapTreeData = ({
 	const resolvedRootLabel = rootLabel || getRwaTreemapGroupingLabel(parentGrouping)
 	const parentColorMap = buildHueSpacedColorMap(parentRows.map((row) => row.parentLabel))
 
-	const parentNodes: RwaTreemapNode[] = parentRows.map((row) => {
+	const parentNodes: Array<RwaTreemapNode> = parentRows.map((row) => {
 		const parentPath = `${resolvedRootLabel}/${row.parentLabel}`
 		const parentSharePct = roundNumber((row.parentTotal / total) * 100, 2)
 		const parentColor = parentColorMap[row.parentLabel] ?? TREEMAP_COLORS[0]
 		const childShades = deriveChildShades(parentColor, row.childRows.length)
-		const childNodes: RwaTreemapNode[] = row.childRows.map(([childLabel, childTotal], childIndex) => {
+		const childNodes: Array<RwaTreemapNode> = row.childRows.map(([childLabel, childTotal], childIndex) => {
 			const childSharePct = roundNumber((childTotal / row.parentTotal) * 100, 2)
 			const childShareOfTotalPct = roundNumber((childTotal / total) * 100, 2)
 			return {

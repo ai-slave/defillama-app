@@ -19,8 +19,8 @@ import type { MarketTreemapGroup, MarketTreemapLeaf, MarketTreemapNode } from '.
 echarts.use([TooltipComponent, ToolboxComponent, EChartTreemap, CanvasRenderer, GraphicComponent, LabelLayout])
 
 export interface MarketTreemapChartProps {
-	treeData: MarketTreemapNode[]
-	leaves: MarketTreemapLeaf[]
+	treeData: Array<MarketTreemapNode>
+	leaves: Array<MarketTreemapLeaf>
 	sizeLabel: string
 	colorLabel: string
 	valueSymbol?: string
@@ -138,7 +138,7 @@ function pickLeafLabel(
 	return ''
 }
 
-function readPercentChange(values: unknown[]): number | null | undefined {
+function readPercentChange(values: Array<unknown>): number | null | undefined {
 	const value = values[1]
 	if (value === null) return null
 	return typeof value === 'number' ? value : undefined
@@ -273,11 +273,11 @@ type PreparedMarketTreemapLeaf = MarketTreemapLeaf & {
 }
 
 type PreparedMarketTreemapGroup = Omit<MarketTreemapGroup, 'children'> & {
-	children: PreparedMarketTreemapLeaf[]
+	children: Array<PreparedMarketTreemapLeaf>
 }
 
 type PreparedMarketTreemapNode = PreparedMarketTreemapLeaf | PreparedMarketTreemapGroup
-type MarketTreemapSeriesOption = Omit<TreemapSeriesOption, 'data'> & { data: PreparedMarketTreemapNode[] }
+type MarketTreemapSeriesOption = Omit<TreemapSeriesOption, 'data'> & { data: Array<PreparedMarketTreemapNode> }
 type MarketTreemapOption = ComposeOption<
 	MarketTreemapSeriesOption | GraphicComponentOption | ToolboxComponentOption | TooltipComponentOption
 >
@@ -377,7 +377,7 @@ export default function MarketTreemapChart({
 	// Canvas-backed rich text is the only runtime decoration. Keep it stable when
 	// the same canonical leaves are merely regrouped.
 	const preparedLeaves = useMemo(() => {
-		const ordered: PreparedMarketTreemapLeaf[] = []
+		const ordered: Array<PreparedMarketTreemapLeaf> = []
 		const byIconKey = new Map<number, PreparedMarketTreemapLeaf>()
 		for (const leaf of leaves) {
 			if (byIconKey.has(leaf.iconKey)) throw new Error(`Duplicate market treemap icon key ${leaf.iconKey}`)
@@ -389,10 +389,10 @@ export default function MarketTreemapChart({
 	}, [leaves, scheduleIconRefresh])
 	const chartDataTree = useMemo(() => {
 		if (treeData === leaves) return preparedLeaves.ordered
-		const prepared: PreparedMarketTreemapNode[] = []
+		const prepared: Array<PreparedMarketTreemapNode> = []
 		for (const node of treeData) {
 			if ('children' in node) {
-				const children: PreparedMarketTreemapLeaf[] = []
+				const children: Array<PreparedMarketTreemapLeaf> = []
 				for (const child of node.children) {
 					const preparedChild = preparedLeaves.byIconKey.get(child.iconKey)
 					if (!preparedChild) throw new Error(`Unknown market treemap icon key ${child.iconKey}`)
@@ -514,7 +514,7 @@ export default function MarketTreemapChart({
 					},
 					// Needs the LabelLayout feature in echarts.use or it is silently ignored.
 					// Center via dy: treemap pins the box to the full cell; x/y would lag on roam.
-					labelLayout: function (params: TreemapLabelLayoutParams) {
+					labelLayout(params: TreemapLabelLayoutParams) {
 						if (typeof params?.text !== 'string' || !params.text.startsWith('{')) return {}
 						const rect = params.rect
 						if (!rect) return {}

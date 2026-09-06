@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildFeeMViewModel, type FeeMAPIResponse } from './feemApi'
 
 function buildResponse(): FeeMAPIResponse {
@@ -48,7 +48,7 @@ function buildResponse(): FeeMAPIResponse {
 }
 
 describe('buildFeeMViewModel', () => {
-	it('caches only the KPIs, leaderboard, title, and canonical chart model', () => {
+	test('caches only the KPIs, leaderboard, title, and canonical chart model', () => {
 		const response = buildResponse()
 		const result = buildFeeMViewModel(response)
 
@@ -66,7 +66,7 @@ describe('buildFeeMViewModel', () => {
 		expect(result).not.toHaveProperty('dailyStats')
 	})
 
-	it('preserves series order, UTC-second timestamps, axes, colors, and area styles', () => {
+	test('preserves series order, UTC-second timestamps, axes, colors, and area styles', () => {
 		const result = buildFeeMViewModel(buildResponse())
 		const firstTimestamp = Date.UTC(2026, 6, 16)
 		const secondTimestamp = Date.UTC(2026, 6, 17)
@@ -104,7 +104,7 @@ describe('buildFeeMViewModel', () => {
 		expect(result.dailyStatsLength).toBe(2)
 	})
 
-	it('preserves chart configs when the daily history is empty', () => {
+	test('preserves chart configs when the daily history is empty', () => {
 		const response = buildResponse()
 		response.feem.dailyStats.dates = []
 		response.feem.dailyStats.series = [{ name: 'Transactions', data: [] }]

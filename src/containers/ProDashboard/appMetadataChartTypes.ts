@@ -4,7 +4,7 @@ import { isChainDashboardChartType, type ChainChartType } from './types'
 export function getAvailableChainChartTypes(
 	flags: IChainMetadata | undefined,
 	opts?: { hasGeckoId?: boolean }
-): ChainChartType[] {
+): Array<ChainChartType> {
 	if (!flags) return []
 	const types = new Set<string>()
 	types.add('tvl')

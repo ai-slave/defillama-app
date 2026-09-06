@@ -34,7 +34,7 @@ import type {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function sortCategoriesByTvl(categoryTvlMap: Map<string, number>): string[] {
+function sortCategoriesByTvl(categoryTvlMap: Map<string, number>): Array<string> {
 	return Array.from(categoryTvlMap.entries())
 		.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
 		.map(([category]) => category)
@@ -58,7 +58,7 @@ function extractExtraTvl(protocol: ProtocolLite): Partial<Record<ProtocolListAdd
 export async function getRecentProtocols(): Promise<IRecentProtocolsPageData> {
 	const { protocols, chains } = await fetchProtocols()
 
-	const recentProtocols: IRecentProtocol[] = []
+	const recentProtocols: Array<IRecentProtocol> = []
 	const forkedList: Record<string, boolean> = {}
 	const categoryTvlMap = new Map<string, number>()
 
@@ -148,7 +148,7 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 		}
 	}
 
-	const airdropsProtocols: IRecentProtocol[] = []
+	const airdropsProtocols: Array<IRecentProtocol> = []
 	const forkedList: Record<string, boolean> = {}
 	const categoryTvlMap = new Map<string, number>()
 
@@ -180,7 +180,7 @@ export async function getAirdropsProtocols(): Promise<IRecentProtocolsPageData> 
 			tvlPrevWeek: protocol.tvlPrevWeek,
 			tvlPrevMonth: protocol.tvlPrevMonth,
 			mcap: protocol.mcap,
-			listedAt: protocol.listedAt ?? 1624728920,
+			listedAt: protocol.listedAt ?? 1_624_728_920,
 			defillamaId: protocol.defillamaId,
 			...(protocol.deprecated !== undefined ? { deprecated: protocol.deprecated } : {}),
 			...(isForkedProtocol ? { forkedFrom: protocol.forkedFrom } : {}),
@@ -230,15 +230,15 @@ export async function getExtraTvlByChain({
 	const config = EXTRA_TVL_CONFIG[metric]
 
 	const [{ protocols, parentProtocols }, chart, chainsList]: [
-		{ protocols: ProtocolLite[]; parentProtocols: ParentProtocolLite[] },
+		{ protocols: Array<ProtocolLite>; parentProtocols: Array<ParentProtocolLite> },
 		Array<[number, number]> | null,
-		string[]
+		Array<string>
 	] = await Promise.all([
 		fetchProtocols(),
 		fetchChainChart(chain)
 			.then((data) => data?.[config.chartKey]?.map((item): [number, number] => [+item[0] * 1e3, item[1]]) ?? [])
-			.catch((err) => {
-				recordRuntimeError(err, 'pageBuild', {
+			.catch((error) => {
+				recordRuntimeError(error, 'pageBuild', {
 					event: 'extraTvlByChain',
 					status: 'chart-failed',
 					chain,
@@ -253,8 +253,8 @@ export async function getExtraTvlByChain({
 					chainData.extraTvl?.[config.chartKey] !== undefined ? [chainData.name] : []
 				)
 			)
-			.catch((err) => {
-				recordRuntimeError(err, 'pageBuild', {
+			.catch((error) => {
+				recordRuntimeError(error, 'pageBuild', {
 					event: 'extraTvlByChain',
 					status: 'chains-list-failed',
 					chain,
@@ -267,7 +267,7 @@ export async function getExtraTvlByChain({
 
 	if (!chart || chart.length === 0) return null
 
-	const finalProtocols: IExtraTvlProtocolRow[] = []
+	const finalProtocols: Array<IExtraTvlProtocolRow> = []
 	const parentChildren: Record<string, Array<{ row: IExtraTvlProtocolRow; prevMonthValue: number | null }>> = {}
 	const parentProtocolsMap = new Map(parentProtocols.map((parentProtocol) => [parentProtocol.id, parentProtocol]))
 
@@ -320,7 +320,7 @@ export async function getExtraTvlByChain({
 			for (const child of childrenWithPrevMonth) finalProtocols.push(child.row)
 			continue
 		}
-		const children: IExtraTvlProtocolRow[] = []
+		const children: Array<IExtraTvlProtocolRow> = []
 		let totalValue: number | null = 0
 		let totalPrevMonth: number | null = 0
 		const categorySet = new Set<string>()
@@ -394,15 +394,15 @@ function buildTokenMetricProtocols({
 	getValue,
 	getParentValue
 }: {
-	protocols: ProtocolLite[]
-	parentProtocols: ParentProtocolLite[]
+	protocols: Array<ProtocolLite>
+	parentProtocols: Array<ParentProtocolLite>
 	protocolMetadata: Record<string, IProtocolMetadata>
 	getValue: (protocol: ProtocolLite) => number | null
 	getParentValue: (parent: ParentProtocolLite) => number | null
-}): { finalProtocols: ITokenMetricProtocolRow[]; categories: Set<string> } {
+}): { finalProtocols: Array<ITokenMetricProtocolRow>; categories: Set<string> } {
 	const parentProtocolsMap = new Map(parentProtocols.map((p) => [p.id, p]))
-	const finalProtocols: ITokenMetricProtocolRow[] = []
-	const parentChildren: Record<string, ITokenMetricProtocolRow[]> = {}
+	const finalProtocols: Array<ITokenMetricProtocolRow> = []
+	const parentChildren: Record<string, Array<ITokenMetricProtocolRow>> = {}
 	const categories = new Set<string>()
 
 	for (const protocol of protocols) {
@@ -460,13 +460,13 @@ function buildTokenMetricProtocols({
 	return { finalProtocols, categories }
 }
 
-function filterAndSort(protocols: ITokenMetricProtocolRow[], chain: string): ITokenMetricProtocolRow[] {
+function filterAndSort(protocols: Array<ITokenMetricProtocolRow>, chain: string): Array<ITokenMetricProtocolRow> {
 	return protocols
 		.filter((p) => p.value != null && (chain === 'All' || p.chains.includes(chain)))
 		.sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
 }
 
-function buildChainLinks(chains: string[], basePath: string): Array<{ label: string; to: string }> {
+function buildChainLinks(chains: Array<string>, basePath: string): Array<{ label: string; to: string }> {
 	return [{ label: 'All', to: basePath }, ...chains.map((c) => ({ label: c, to: `${basePath}/chain/${slug(c)}` }))]
 }
 
@@ -504,8 +504,8 @@ export async function getProtocolsFDVsByChain({
 	protocolMetadata: Record<string, IProtocolMetadata>
 }): Promise<IProtocolsWithTokensByChainPageData | null> {
 	const [{ protocols, chains, parentProtocols }, tokenList]: [
-		{ protocols: ProtocolLite[]; chains: string[]; parentProtocols: ParentProtocolLite[] },
-		IResponseCGMarketsAPI[]
+		{ protocols: Array<ProtocolLite>; chains: Array<string>; parentProtocols: Array<ParentProtocolLite> },
+		Array<IResponseCGMarketsAPI>
 	] = await Promise.all([fetchProtocols(), fetchCoinGeckoTokensListFromDataset()])
 
 	const tokenListMap = new Map(tokenList.map((t) => [t.id, t]))

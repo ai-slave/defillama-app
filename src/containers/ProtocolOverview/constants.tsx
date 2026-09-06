@@ -105,11 +105,11 @@ export const protocolChartCategories = {
 	Liquidations: ['Liquidation Volume', 'Collateral Liquidated'],
 	Bridge: ['Bridge Deposits', 'Bridge Withdrawals'],
 	Activity: ['Active Addresses', 'New Addresses', 'Transactions', 'Gas Used', 'Tweets']
-} as const satisfies Record<string, readonly ProtocolChartsLabels[]>
+} as const satisfies Record<string, ReadonlyArray<ProtocolChartsLabels>>
 
 export type ProtocolChartCategory = keyof typeof protocolChartCategories
 
-export const protocolChartCategoryOrder: ProtocolChartCategory[] = [
+export const protocolChartCategoryOrder: Array<ProtocolChartCategory> = [
 	'Core',
 	'Token',
 	'Revenue',
@@ -119,11 +119,11 @@ export const protocolChartCategoryOrder: ProtocolChartCategory[] = [
 	'Activity'
 ]
 
-export const PROTOCOL_CHART_LABELS: ProtocolChartsLabels[] = protocolChartCategoryOrder.flatMap(
+export const PROTOCOL_CHART_LABELS: Array<ProtocolChartsLabels> = protocolChartCategoryOrder.flatMap(
 	(category) => protocolChartCategories[category]
 )
 
-export const BAR_CHARTS: ProtocolChartsLabels[] = [
+export const BAR_CHARTS: Array<ProtocolChartsLabels> = [
 	'DEX Volume',
 	'Perp Volume',
 	'Fees',

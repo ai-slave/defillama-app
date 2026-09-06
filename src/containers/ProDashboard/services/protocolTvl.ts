@@ -44,19 +44,22 @@ export type ProtocolTvlBreakdownSource =
 // Advanced TVL cards compose individual protocol sections exposed by the breakdown API.
 // Aggregate/table adjustment flags such as doublecounted, liquidstaking and govtokens
 // are intentionally not breakdown sources here.
-const SUPPORTED_EXTRA_TVL_KEYS: SupportedProtocolTvlKey[] = ['pool2', 'staking', 'borrowed', 'vesting']
+const SUPPORTED_EXTRA_TVL_KEYS: Array<SupportedProtocolTvlKey> = ['pool2', 'staking', 'borrowed', 'vesting']
 
 export type BorrowedBreakdownSource =
 	| { kind: 'chain'; request: ProtocolTvlChainBreakdownRequest & { key: 'borrowed' } }
 	| { kind: 'token-usd'; request: ProtocolTvlTokenUsdBreakdownRequest & { key: 'borrowed' } }
 	| { kind: 'token-raw'; request: ProtocolTvlTokenRawBreakdownRequest & { key: 'borrowed' } }
 
-export function getBorrowedBreakdownSources(protocol: string, chartType: BorrowedChartType): BorrowedBreakdownSource[] {
+export function getBorrowedBreakdownSources(
+	protocol: string,
+	chartType: BorrowedChartType
+): Array<BorrowedBreakdownSource> {
 	if (chartType === 'chainsBorrowed') {
 		return [{ kind: 'chain', request: { protocol, key: 'borrowed', breakdownType: 'chain-breakdown' } }]
 	}
 
-	const sources: BorrowedBreakdownSource[] = [
+	const sources: Array<BorrowedBreakdownSource> = [
 		{ kind: 'token-usd', request: { protocol, key: 'borrowed', breakdownType: 'token-breakdown' } }
 	]
 	if (chartType === 'tokenBorrowedRaw') {
@@ -86,7 +89,7 @@ export function getAdvancedTvlBreakdownSources(
 	protocol: string,
 	chartType: AdvancedTvlChartType,
 	extraTvlsEnabled: Record<string, boolean>
-): ProtocolTvlBreakdownSource[] {
+): Array<ProtocolTvlBreakdownSource> {
 	if (chartType === 'tvl') return []
 
 	const keys: Array<SupportedProtocolTvlKey | undefined> = [undefined]
@@ -94,7 +97,7 @@ export function getAdvancedTvlBreakdownSources(
 		if (extraTvlsEnabled[key]) keys.push(key)
 	}
 
-	const sources: ProtocolTvlBreakdownSource[] = []
+	const sources: Array<ProtocolTvlBreakdownSource> = []
 	for (const key of keys) {
 		const requestKey = key === undefined ? {} : { key }
 		if (chartType === 'chainsTvl') {

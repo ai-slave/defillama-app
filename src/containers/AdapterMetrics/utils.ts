@@ -21,13 +21,13 @@ export type NormalizedVolumeData = { total24h: number | null }
 export function getProtocolsByCategory(
 	protocols: IAdapterByChainPageData['protocols'],
 	categoriesToFilter: Array<string>
-): IProtocol[] {
-	const final: IProtocol[] = []
+): Array<IProtocol> {
+	const final: Array<IProtocol> = []
 	const categorySet = new Set(categoriesToFilter)
 
 	for (const protocol of protocols) {
 		if (protocol.childProtocols) {
-			const childProtocols: IProtocol[] = []
+			const childProtocols: Array<IProtocol> = []
 			for (const childProtocol of protocol.childProtocols) {
 				if (childProtocol.category && categorySet.has(childProtocol.category)) {
 					childProtocols.push(childProtocol)
@@ -55,8 +55,8 @@ export function getProtocolsByCategory(
 }
 
 /** Leaf `name`s for breakdown filter: parents with children are omitted; children are included recursively. */
-export function leafProtocolNamesFromTableRows(protocols: IProtocol[]): string[] {
-	const leafProtocols: IProtocol[] = []
+export function leafProtocolNamesFromTableRows(protocols: Array<IProtocol>): Array<string> {
+	const leafProtocols: Array<IProtocol> = []
 	const walk = (protocol: IProtocol) => {
 		if (protocol.childProtocols && protocol.childProtocols.length > 0) {
 			for (const childProtocol of protocol.childProtocols) {
@@ -72,7 +72,7 @@ export function leafProtocolNamesFromTableRows(protocols: IProtocol[]): string[]
 	}
 	leafProtocols.sort((a, b) => (b.total24h ?? 0) - (a.total24h ?? 0))
 
-	const names: string[] = []
+	const names: Array<string> = []
 	for (const protocol of leafProtocols) {
 		names.push(protocol.name)
 	}
@@ -94,10 +94,10 @@ export function getCategoryProtocolNameFilterForChart({
 	excludeCategoryParam,
 	hasCategoryParam
 }: {
-	categories: string[]
-	protocols: IProtocol[]
-	categoryParam: string | string[] | undefined
-	excludeCategoryParam: string | string[] | undefined
+	categories: Array<string>
+	protocols: Array<IProtocol>
+	categoryParam: string | Array<string> | undefined
+	excludeCategoryParam: string | Array<string> | undefined
 	hasCategoryParam: boolean
 }): CategoryProtocolNameFilter {
 	const excludeSet = parseExcludeParam(excludeCategoryParam)
@@ -112,14 +112,14 @@ export function getCategoryProtocolNameFilterForChart({
 				: categories
 
 	if (excludeSet.size > 0) {
-		const filteredCategories: string[] = []
+		const filteredCategories: Array<string> = []
 		for (const category of selectedCategories) {
 			if (!excludeSet.has(category)) filteredCategories.push(category)
 		}
 		selectedCategories = filteredCategories
 	}
 
-	const categoriesToFilter: string[] = []
+	const categoriesToFilter: Array<string> = []
 	for (const category of selectedCategories) {
 		const normalizedCategory = category.toLowerCase()
 		if (normalizedCategory !== 'all' && normalizedCategory !== 'none') {
@@ -210,11 +210,11 @@ export function buildAdapterByChainChartDataset({
 
 export type ProtocolBreakdownNormalization = {
 	canonicalBySeriesName: Record<string, string>
-	aliasesByCanonicalName: Record<string, string[]>
+	aliasesByCanonicalName: Record<string, Array<string>>
 	signature: string
 }
 
-export function buildProtocolBreakdownNormalization(protocols: IProtocol[]): ProtocolBreakdownNormalization {
+export function buildProtocolBreakdownNormalization(protocols: Array<IProtocol>): ProtocolBreakdownNormalization {
 	const canonicalBySeriesName = new Map<string, string>()
 	const aliasesByCanonicalName = new Map<string, Set<string>>()
 
@@ -240,11 +240,11 @@ export function buildProtocolBreakdownNormalization(protocols: IProtocol[]): Pro
 	}
 
 	const canonicalEntries = Array.from(canonicalBySeriesName.entries()).toSorted((a, b) => a[0].localeCompare(b[0]))
-	const aliasEntries: Array<[string, string[]]> = Array.from(aliasesByCanonicalName.entries())
+	const aliasEntries: Array<[string, Array<string>]> = Array.from(aliasesByCanonicalName.entries())
 		.toSorted((a, b) => a[0].localeCompare(b[0]))
 		.map(([canonicalName, aliases]) => [canonicalName, Array.from(aliases).toSorted((a, b) => a.localeCompare(b))])
 	const canonicalRecord: Record<string, string> = Object.fromEntries(canonicalEntries)
-	const aliasesRecord: Record<string, string[]> = Object.fromEntries(aliasEntries)
+	const aliasesRecord: Record<string, Array<string>> = Object.fromEntries(aliasEntries)
 
 	return {
 		canonicalBySeriesName: canonicalRecord,
@@ -261,7 +261,7 @@ export function normalizeProtocolBreakdownChartData({
 	normalization: ProtocolBreakdownNormalization
 }): {
 	chartData: MultiSeriesTimeSeriesDataset
-	protocolDimensions: string[]
+	protocolDimensions: Array<string>
 } {
 	const protocolTotals = new Map<string, number>()
 
@@ -275,7 +275,7 @@ export function normalizeProtocolBreakdownChartData({
 		}
 	}
 
-	const protocolDimensions: string[] = []
+	const protocolDimensions: Array<string> = []
 	for (const [name] of Array.from(protocolTotals.entries()).toSorted((a, b) => b[1] - a[1])) {
 		protocolDimensions.push(name)
 	}
@@ -361,7 +361,7 @@ type ChainsByAdapterBarPresentation = {
 	kind: 'bar'
 	csvSource: ChartCsvSource
 	dataset: MultiSeriesTimeSeriesDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	valueMode: ChainsByAdapterValueMode
 	barLayout: ChainsByAdapterBarLayout
 	showTotalInTooltip: boolean
@@ -372,20 +372,20 @@ type ChainsByAdapterDominancePresentation = {
 	kind: 'dominance'
 	csvSource: ChartCsvSource
 	dataset: MultiSeriesTimeSeriesDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	groupBy: ChartTimeGroupingWithCumulative
 }
 
 type ChainsByAdapterTreemapPresentation = {
 	kind: 'treemap'
 	csvSource: ChartCsvSource
-	data: ChainsByAdapterLatestValueDatum[]
+	data: Array<ChainsByAdapterLatestValueDatum>
 }
 
 type ChainsByAdapterHBarPresentation = {
 	kind: 'hbar'
 	csvSource: ChartCsvSource
-	data: ChainsByAdapterLatestValueDatum[]
+	data: Array<ChainsByAdapterLatestValueDatum>
 }
 
 export type ChainsByAdapterChartPresentation =
@@ -412,7 +412,7 @@ const MAX_TREEMAP_ITEMS = 100
 const MAX_CHAINS_BY_ADAPTER_HBAR_ITEMS = 9
 const MIN_COMPLETE_DAILY_GAP_MS = 23 * 60 * 60 * 1000
 
-function getPaletteColor(colors: string[], index: number): string {
+function getPaletteColor(colors: Array<string>, index: number): string {
 	const color = colors[index]
 	if (color === undefined) throw new Error(`Generated palette is missing color ${index}`)
 	return color
@@ -509,15 +509,15 @@ function createRankedSeriesUniverse({
 	canonicalColorBySeriesName
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	selectedNames: string[]
+	selectedNames: Array<string>
 	rankingScores?: Map<string, number>
 	tieBreakByDatasetOrder?: boolean
 	canonicalColorBySeriesName?: Map<string, string>
 }) {
 	const entityTotals = new Map<string, number>()
 	const dimensionIndexes = getSeriesDimensionIndexes(chartData)
-	const selectedSeriesNames: string[] = []
-	const selectedDimensionIndexes: number[] = []
+	const selectedSeriesNames: Array<string> = []
+	const selectedDimensionIndexes: Array<number> = []
 	for (const name of selectedNames) {
 		const dimensionIndex = dimensionIndexes.get(name)
 		if (dimensionIndex === undefined) continue
@@ -559,11 +559,11 @@ function createRankedSeriesUniverse({
 }
 
 function createChainSeriesUniverseFromRankedNames(
-	rankedEntityNames: string[],
+	rankedEntityNames: Array<string>,
 	canonicalColorBySeriesName?: Map<string, string>
 ) {
-	const topEntityNames: string[] = []
-	const otherEntityNames: string[] = []
+	const topEntityNames: Array<string> = []
+	const otherEntityNames: Array<string> = []
 	for (let index = 0; index < rankedEntityNames.length; index++) {
 		const entity = rankedEntityNames[index]
 		if (entity === undefined) continue
@@ -599,7 +599,7 @@ function createChainSeriesUniverseFromRankedNames(
 }
 
 const canonicalSeriesColorsCache = new WeakMap<MultiSeriesTimeSeriesDataset, Map<string, Map<string, string>>>()
-const canonicalSeriesOrderCache = new WeakMap<MultiSeriesTimeSeriesDataset, Map<string, string[]>>()
+const canonicalSeriesOrderCache = new WeakMap<MultiSeriesTimeSeriesDataset, Map<string, Array<string>>>()
 
 function getCachedCanonicalSeriesColors(chartData: MultiSeriesTimeSeriesDataset, cacheKey: string) {
 	return canonicalSeriesColorsCache.get(chartData)?.get(cacheKey)
@@ -612,7 +612,7 @@ function getCachedCanonicalSeriesOrder(chartData: MultiSeriesTimeSeriesDataset, 
 function cacheCanonicalSeriesColors(
 	chartData: MultiSeriesTimeSeriesDataset,
 	cacheKey: string,
-	rankedEntityNames: string[],
+	rankedEntityNames: Array<string>,
 	topColorBySeriesName: Map<string, string>
 ) {
 	const colorBySeriesName = new Map(topColorBySeriesName)
@@ -646,7 +646,7 @@ function createStableColorChainSeriesUniverse({
 	tieBreakByDatasetOrder = false
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	selectedNames: string[]
+	selectedNames: Array<string>
 	tieBreakByDatasetOrder?: boolean
 }) {
 	const cacheKey = tieBreakByDatasetOrder ? 'chains:dataset-order' : 'chains:totals-order'
@@ -682,7 +682,7 @@ function createStableColorChainSeriesUniverse({
 			})
 }
 
-function hasEveryDatasetSeriesSelected(chartData: MultiSeriesTimeSeriesDataset, selectedNames: string[]): boolean {
+function hasEveryDatasetSeriesSelected(chartData: MultiSeriesTimeSeriesDataset, selectedNames: Array<string>): boolean {
 	const selectedSet = new Set(selectedNames)
 	for (let index = 1; index < chartData.dimensions.length; index++) {
 		const dimension = chartData.dimensions[index]
@@ -696,10 +696,10 @@ function getOrderedSelectedSeriesNames({
 	selectedNames
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	selectedNames: string[]
+	selectedNames: Array<string>
 }) {
 	const selectedSet = new Set(selectedNames)
-	const selectedSeriesNames: string[] = []
+	const selectedSeriesNames: Array<string> = []
 	for (let index = 1; index < chartData.dimensions.length; index++) {
 		const dimension = chartData.dimensions[index]
 		if (dimension !== undefined && selectedSet.has(dimension)) selectedSeriesNames.push(dimension)
@@ -722,14 +722,14 @@ function orderSelectedNamesByRankingScores({
 	rankingScores
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	selectedNames: string[]
+	selectedNames: Array<string>
 	rankingScores?: Map<string, number>
 }) {
 	const selectedSeriesNames = getOrderedSelectedSeriesNames({ chartData, selectedNames })
 	const totals = new Map<string, number>()
 	const dimensionIndexes = getSeriesDimensionIndexes(chartData)
-	const namesWithDimensions: string[] = []
-	const selectedDimensionIndexes: number[] = []
+	const namesWithDimensions: Array<string> = []
+	const selectedDimensionIndexes: Array<number> = []
 	for (const name of selectedSeriesNames) {
 		const dimensionIndex = dimensionIndexes.get(name)
 		if (dimensionIndex === undefined) continue
@@ -800,9 +800,9 @@ function buildGroupedFlowDataset({
 	relative
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	topEntityNames: string[]
-	otherEntityNames: string[]
-	seriesNames: string[]
+	topEntityNames: Array<string>
+	otherEntityNames: Array<string>
+	seriesNames: Array<string>
 	groupBy: ChartTimeGroupingWithCumulative
 	relative: boolean
 }): MultiSeriesTimeSeriesDataset {
@@ -819,7 +819,7 @@ function buildGroupedFlowDataset({
 		const dimensionIndex = dimensionIndexes.get(name)
 		if (dimensionIndex !== undefined) topEntityIndexes.push([outputIndex, dimensionIndex])
 	}
-	const otherEntityIndexes: number[] = []
+	const otherEntityIndexes: Array<number> = []
 	if (otherEntitySet) {
 		for (const name of otherEntityNames) {
 			const dimensionIndex = dimensionIndexes.get(name)
@@ -827,7 +827,7 @@ function buildGroupedFlowDataset({
 		}
 	}
 	const otherEntityIndexSet = new Set(otherEntityIndexes)
-	const complementEntityIndexes: number[] = []
+	const complementEntityIndexes: Array<number> = []
 	for (let index = 1; index < chartData.dimensions.length; index++) {
 		if (!otherEntityIndexSet.has(index)) complementEntityIndexes.push(index)
 	}
@@ -951,9 +951,9 @@ function buildBarPresentation({
 	state
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	topEntityNames: string[]
-	otherEntityNames: string[]
-	topSeriesNames: string[]
+	topEntityNames: Array<string>
+	otherEntityNames: Array<string>
+	topSeriesNames: Array<string>
 	topColorBySeriesName: Map<string, string>
 	state: ChainsByAdapterBarState
 }): ChainsByAdapterBarPresentation {
@@ -998,9 +998,9 @@ function buildDominancePresentation({
 	state
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	topEntityNames: string[]
-	otherEntityNames: string[]
-	topSeriesNames: string[]
+	topEntityNames: Array<string>
+	otherEntityNames: Array<string>
+	topSeriesNames: Array<string>
 	topColorBySeriesName: Map<string, string>
 	state: ChainsByAdapterDominanceState
 }): ChainsByAdapterDominancePresentation {
@@ -1035,8 +1035,8 @@ function buildRankedLatestValues({
 	selectedNames,
 	latestRows
 }: {
-	selectedNames: string[]
-	latestRows: BreakdownLatestValueRow[]
+	selectedNames: Array<string>
+	latestRows: Array<BreakdownLatestValueRow>
 }) {
 	const latestValuesByName = new Map<string, number>()
 	for (const row of latestRows) {
@@ -1059,7 +1059,7 @@ function buildRankedLatestValues({
 }
 
 const latestValueSeriesColorsCache = new WeakMap<MultiSeriesTimeSeriesDataset, Map<string, Map<string, string>>>()
-let latestValueColors: string[] | null = null
+let latestValueColors: Array<string> | null = null
 
 function getLatestValueSeriesColors({
 	chartData,
@@ -1099,8 +1099,8 @@ function decorateLatestValues(
 	values: Array<{ name: string; value: number }>,
 	total: number,
 	colorBySeriesName: Map<string, string>
-): ChainsByAdapterLatestValueDatum[] {
-	const data: ChainsByAdapterLatestValueDatum[] = []
+): Array<ChainsByAdapterLatestValueDatum> {
+	const data: Array<ChainsByAdapterLatestValueDatum> = []
 	for (const item of values) {
 		data.push({
 			...item,
@@ -1121,16 +1121,16 @@ function buildTreemapPresentation({
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
 	cacheKey: string
-	selectedNames: string[]
-	latestRows: BreakdownLatestValueRow[]
-}): ChainsByAdapterLatestValueDatum[] {
+	selectedNames: Array<string>
+	latestRows: Array<BreakdownLatestValueRow>
+}): Array<ChainsByAdapterLatestValueDatum> {
 	const { values, total } = buildRankedLatestValues({ selectedNames, latestRows })
 	const colorBySeriesName = getLatestValueSeriesColors({ chartData, cacheKey })
 	return decorateLatestValues(values, total, colorBySeriesName)
 }
 
-function buildNullLatestRows(selectedNames: string[]): BreakdownLatestValueRow[] {
-	const rows: BreakdownLatestValueRow[] = []
+function buildNullLatestRows(selectedNames: Array<string>): Array<BreakdownLatestValueRow> {
+	const rows: Array<BreakdownLatestValueRow> = []
 	for (const name of selectedNames) {
 		rows.push({ name, total24h: null })
 	}
@@ -1142,12 +1142,12 @@ function buildCumulativeLatestValueRowsFromChartData({
 	selectedNames
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	selectedNames: string[]
-}): BreakdownLatestValueRow[] {
+	selectedNames: Array<string>
+}): Array<BreakdownLatestValueRow> {
 	const totals = new Map<string, number>()
 	const pointCounts = new Map<string, number>()
-	const selectedSeriesNames: string[] = []
-	const selectedDimensionIndexes: number[] = []
+	const selectedSeriesNames: Array<string> = []
+	const selectedDimensionIndexes: Array<number> = []
 	const dimensionIndexes = getSeriesDimensionIndexes(chartData)
 	for (const name of selectedNames) {
 		const dimensionIndex = dimensionIndexes.get(name)
@@ -1168,7 +1168,7 @@ function buildCumulativeLatestValueRowsFromChartData({
 		}
 	}
 
-	const rows: BreakdownLatestValueRow[] = []
+	const rows: Array<BreakdownLatestValueRow> = []
 	for (const name of selectedNames) {
 		rows.push({
 			name,
@@ -1184,16 +1184,16 @@ function buildLatestValueRowsFromChartData({
 	groupBy
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	selectedNames: string[]
+	selectedNames: Array<string>
 	groupBy: ChartTimeGroupingWithCumulative
-}): BreakdownLatestValueRow[] {
+}): Array<BreakdownLatestValueRow> {
 	if (groupBy === 'daily') {
 		const sourceRow = getEffectiveDailyLatestRow(chartData)
 		if (!sourceRow) {
 			return buildNullLatestRows(selectedNames)
 		}
 
-		const rows: BreakdownLatestValueRow[] = []
+		const rows: Array<BreakdownLatestValueRow> = []
 		const dimensionIndexes = getSeriesDimensionIndexes(chartData)
 		for (const name of selectedNames) {
 			const dimensionIndex = dimensionIndexes.get(name)
@@ -1220,8 +1220,8 @@ function buildLatestValueRowsFromChartData({
 	const cutoffMs = latestTsMs - windowMs
 	const sums = new Map<string, number>()
 	const pointCounts = new Map<string, number>()
-	const selectedSeriesNames: string[] = []
-	const selectedDimensionIndexes: number[] = []
+	const selectedSeriesNames: Array<string> = []
+	const selectedDimensionIndexes: Array<number> = []
 	const dimensionIndexes = getSeriesDimensionIndexes(chartData)
 	for (const name of selectedNames) {
 		const dimensionIndex = dimensionIndexes.get(name)
@@ -1246,7 +1246,7 @@ function buildLatestValueRowsFromChartData({
 		}
 	}
 
-	const rows: BreakdownLatestValueRow[] = []
+	const rows: Array<BreakdownLatestValueRow> = []
 	for (const name of selectedNames) {
 		rows.push({
 			name,
@@ -1303,9 +1303,9 @@ function buildHBarPresentation({
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
 	cacheKey: string
-	selectedNames: string[]
-	latestRows: BreakdownLatestValueRow[]
-}): ChainsByAdapterLatestValueDatum[] {
+	selectedNames: Array<string>
+	latestRows: Array<BreakdownLatestValueRow>
+}): Array<ChainsByAdapterLatestValueDatum> {
 	const { values: rankedValues, total } = buildRankedLatestValues({ selectedNames, latestRows })
 
 	if (rankedValues.length <= MAX_CHAINS_BY_ADAPTER_HBAR_ITEMS) {
@@ -1330,7 +1330,7 @@ export function buildChainsByAdapterChartPresentation({
 	state
 }: {
 	chartData: IChainsByAdapterPageData['chartData']
-	selectedChains: string[]
+	selectedChains: Array<string>
 	state: ChainsByAdapterChartState
 }): ChainsByAdapterChartPresentation {
 	switch (state.chartKind) {
@@ -1428,7 +1428,7 @@ function createProtocolBreakdownSeriesUniverse({
 	canonicalColorBySeriesName
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	protocolNames: string[]
+	protocolNames: Array<string>
 	state: ChainsByAdapterBarState | ChainsByAdapterDominanceState
 	canonicalColorBySeriesName?: Map<string, string>
 }) {
@@ -1451,7 +1451,7 @@ function createProtocolBreakdownSeriesUniverse({
 }
 
 function createProtocolSeriesUniverseFromRankedNames(
-	orderedSeriesNames: string[],
+	orderedSeriesNames: Array<string>,
 	canonicalColorBySeriesName?: Map<string, string>
 ) {
 	const shouldAggregateOthers = orderedSeriesNames.length > MAX_PROTOCOL_BREAKDOWN_SERIES
@@ -1489,7 +1489,7 @@ function createStableColorProtocolSeriesUniverse({
 	state
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	protocolNames: string[]
+	protocolNames: Array<string>
 	state: ChainsByAdapterBarState | ChainsByAdapterDominanceState
 }) {
 	const cacheKey = `protocols:${state.chartKind}:${state.groupBy}`
@@ -1531,7 +1531,7 @@ export function buildAdapterByChainBreakdownPresentation({
 	state
 }: {
 	chartData: MultiSeriesTimeSeriesDataset
-	selectedProtocols: string[]
+	selectedProtocols: Array<string>
 	state: ChainsByAdapterBarState | ChainsByAdapterDominanceState
 }): ChainsByAdapterBarPresentation | ChainsByAdapterDominancePresentation {
 	const { topEntityNames, otherEntityNames, topSeriesNames, topColorBySeriesName } =
@@ -1569,7 +1569,7 @@ export function buildAdapterByChainLatestValuePresentation({
 	chartData
 }: {
 	chartKind: 'treemap' | 'hbar'
-	selectedProtocols: string[]
+	selectedProtocols: Array<string>
 	groupBy: ChartTimeGroupingWithCumulative
 	chartData: MultiSeriesTimeSeriesDataset
 }): ChainsByAdapterTreemapPresentation | ChainsByAdapterHBarPresentation {

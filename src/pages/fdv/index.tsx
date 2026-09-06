@@ -24,7 +24,7 @@ export default function ProtocolsFdv(props: InferGetStaticPropsType<typeof getSt
 		<Layout
 			title="FDV Rankings - Fully Diluted Valuation - DefiLlama"
 			description="Track DeFi protocol FDV rankings across all chains. Compare fully diluted valuations for 7000+ protocols on Ethereum, Solana, Base, Arbitrum, and 500+ chains. Real-time crypto FDV analytics and token valuation data."
-			canonicalUrl={`/fdv`}
+			canonicalUrl="/fdv"
 			pageName={pageName}
 		>
 			<ProtocolsWithTokens {...props} />

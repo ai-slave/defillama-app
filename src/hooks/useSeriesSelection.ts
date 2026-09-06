@@ -1,9 +1,9 @@
 import * as React from 'react'
 
 interface ReconcileSeriesSelectionOptions {
-	availableSeries: readonly string[]
-	selectedSeries: readonly string[] | null
-	defaultSeries?: readonly string[]
+	availableSeries: ReadonlyArray<string>
+	selectedSeries: ReadonlyArray<string> | null
+	defaultSeries?: ReadonlyArray<string>
 	maxSelectedSeries?: number
 	allowEmptySelection?: boolean
 	resetToDefaultWhenStale?: boolean
@@ -11,8 +11,8 @@ interface ReconcileSeriesSelectionOptions {
 
 const FIXED_REMAINDER_SERIES_NAME = 'Others'
 
-const uniqueSeries = (series: readonly string[]): string[] => {
-	const unique: string[] = []
+const uniqueSeries = (series: ReadonlyArray<string>): Array<string> => {
+	const unique: Array<string> = []
 	const seen = new Set<string>()
 	for (const name of series) {
 		if (!name || seen.has(name)) continue
@@ -29,7 +29,7 @@ export function reconcileSeriesSelection({
 	maxSelectedSeries,
 	allowEmptySelection = false,
 	resetToDefaultWhenStale = false
-}: ReconcileSeriesSelectionOptions): string[] {
+}: ReconcileSeriesSelectionOptions): Array<string> {
 	const available = uniqueSeries(availableSeries)
 	if (available.length === 0) return []
 	if (allowEmptySelection && selectedSeries?.length === 0) return []
@@ -37,7 +37,7 @@ export function reconcileSeriesSelection({
 	const availableSet = new Set(available)
 	const limit = Math.min(available.length, Math.max(1, maxSelectedSeries ?? available.length))
 	const preferred = selectedSeries ?? defaultSeries
-	const reconciled: string[] = []
+	const reconciled: Array<string> = []
 	const selectedSet = new Set<string>()
 	for (const name of preferred) {
 		if (reconciled.length >= limit) break
@@ -64,7 +64,7 @@ export function reconcileSeriesSelection({
 	return allowEmptySelection || firstAvailable === undefined ? [] : [firstAvailable]
 }
 
-const selectionsEqual = (left: readonly string[], right: readonly string[]): boolean => {
+const selectionsEqual = (left: ReadonlyArray<string>, right: ReadonlyArray<string>): boolean => {
 	if (left.length !== right.length) return false
 	for (let index = 0; index < left.length; index++) {
 		if (left[index] !== right[index]) return false
@@ -72,7 +72,7 @@ const selectionsEqual = (left: readonly string[], right: readonly string[]): boo
 	return true
 }
 
-const selectionsMatch = (left: readonly string[], right: readonly string[]): boolean => {
+const selectionsMatch = (left: ReadonlyArray<string>, right: ReadonlyArray<string>): boolean => {
 	if (left.length !== right.length) return false
 	const rightSet = new Set(right)
 	for (const name of left) {
@@ -81,7 +81,11 @@ const selectionsMatch = (left: readonly string[], right: readonly string[]): boo
 	return true
 }
 
-export function boundSeriesSelection(current: readonly string[], next: string[], limit: number): string[] {
+export function boundSeriesSelection(
+	current: ReadonlyArray<string>,
+	next: Array<string>,
+	limit: number
+): Array<string> {
 	if (next.length <= limit) return next
 	const addedSeries = next.filter((name) => !current.includes(name))
 	if (addedSeries.length === 1) {
@@ -105,7 +109,7 @@ export function useSeriesSelection({
 	selectionKey?: string
 	storeDefaultAsIntent?: boolean
 }) {
-	const [selectionState, setSelectionState] = React.useState<{ key: string; values: string[] } | null>(null)
+	const [selectionState, setSelectionState] = React.useState<{ key: string; values: Array<string> } | null>(null)
 	const selectedSeries = selectionState?.key === selectionKey ? selectionState.values : null
 	const activeSeries = React.useMemo(
 		() =>
@@ -135,7 +139,7 @@ export function useSeriesSelection({
 		})
 	}, [allowEmptySelection, availableSeries, defaultSeries, maxSelectedSeries, resetToDefaultWhenStale, selectionKey])
 
-	const setSelectedSeries = React.useCallback<React.Dispatch<React.SetStateAction<string[]>>>(
+	const setSelectedSeries = React.useCallback<React.Dispatch<React.SetStateAction<Array<string>>>>(
 		(next) => {
 			setSelectionState((current) => {
 				const currentSelection = reconcileSeriesSelection({
@@ -196,10 +200,10 @@ export function useAllSeriesSelection({
 	availableSeries,
 	selectionKey = 'default'
 }: {
-	availableSeries: readonly string[]
+	availableSeries: ReadonlyArray<string>
 	selectionKey?: string
 }) {
-	const [selectionState, setSelectionState] = React.useState<{ key: string; values: string[] | null } | null>(null)
+	const [selectionState, setSelectionState] = React.useState<{ key: string; values: Array<string> | null } | null>(null)
 	const currentSelection = selectionState?.key === selectionKey ? selectionState.values : null
 	const activeSeries = React.useMemo(() => {
 		if (currentSelection?.length) {
@@ -225,7 +229,7 @@ export function useAllSeriesSelection({
 	}, [availableSeries, selectionKey])
 
 	const setSelectedSeries = React.useCallback(
-		(values: string[]) => {
+		(values: Array<string>) => {
 			const selected = new Set(values)
 			const selectsAll = availableSeries.length > 0 && availableSeries.every((name) => selected.has(name))
 			setSelectionState({ key: selectionKey, values: selectsAll ? null : values })

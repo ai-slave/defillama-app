@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 vi.mock('../api', () => ({
 	getOwnedArticle: vi.fn(),
@@ -22,7 +22,7 @@ describe('appendBlocksToArticle', () => {
 		mockUpdate.mockReset()
 	})
 
-	it('appends blocks at the end of the existing doc and passes every other field through', async () => {
+	test('appends blocks at the end of the existing doc and passes every other field through', async () => {
 		const existing = {
 			id: 'a1',
 			title: 'Weekly Alpha #3',
@@ -47,7 +47,7 @@ describe('appendBlocksToArticle', () => {
 		expect(saved.section).toBe('markets')
 	})
 
-	it('handles a draft with empty content', async () => {
+	test('handles a draft with empty content', async () => {
 		mockGetOwned.mockResolvedValue({ id: 'a2', title: 'x', slug: 'x', contentJson: { type: 'doc' } })
 		mockUpdate.mockImplementation(async (_id, article) => article)
 
@@ -61,7 +61,7 @@ describe('appendBlocksToArticle', () => {
 describe('createArticleWithBlocks', () => {
 	beforeEach(() => mockCreate.mockReset())
 
-	it('creates a draft whose content is exactly the imported blocks', async () => {
+	test('creates a draft whose content is exactly the imported blocks', async () => {
 		mockCreate.mockImplementation(async (article) => ({ ...article, id: 'new1' }))
 
 		const result = await createArticleWithBlocks('Uniswap fee report', newBlocks, authorizedFetch)
@@ -74,7 +74,7 @@ describe('createArticleWithBlocks', () => {
 		expect(result.id).toBe('new1')
 	})
 
-	it('falls back to the default title when the given title is blank', async () => {
+	test('falls back to the default title when the given title is blank', async () => {
 		mockCreate.mockImplementation(async (article) => ({ ...article, id: 'new2' }))
 		await createArticleWithBlocks('   ', newBlocks, authorizedFetch)
 		expect(mockCreate.mock.calls[0][0].title).toBe('Untitled research')

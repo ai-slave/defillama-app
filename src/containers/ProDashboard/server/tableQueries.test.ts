@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import type { TokenUsageDatasetTableConfig } from '../types'
 
@@ -21,8 +21,8 @@ describe('token usage table server data', () => {
 		llamaQuery.mockResolvedValue([])
 	})
 
-	it('queries normalized token symbols once and deduplicates matching configs', async () => {
-		const chunks: Array<{ key: string; data: ProtocolTokenUsageData[] }> = []
+	test('queries normalized token symbols once and deduplicates matching configs', async () => {
+		const chunks: Array<{ key: string; data: Array<ProtocolTokenUsageData> }> = []
 		await streamProTokenUsageData(
 			[tokenUsageTable, { ...tokenUsageTable, id: 'duplicate', tokenSymbols: ['usdt', 'usdc'] }],
 			() => true,
@@ -41,14 +41,14 @@ describe('token usage table server data', () => {
 		expect(chunks).toHaveLength(1)
 	})
 
-	it('constructs canonical protocol totals from Lens token components', async () => {
+	test('constructs canonical protocol totals from Lens token components', async () => {
 		llamaQuery.mockResolvedValue([
 			{
 				protocol: 'sky-lending',
 				name: 'Sky Lending',
 				category: 'lending',
 				symbol: 'USDC',
-				amount_usd: 4_000
+				amount_usd: 4000
 			},
 			{
 				protocol: 'sky-lending',
@@ -65,14 +65,14 @@ describe('token usage table server data', () => {
 			{
 				name: 'Sky Lending',
 				category: 'Lending',
-				amountUsd: 4_500,
+				amountUsd: 4500,
 				logo: 'https://icons.llamao.fi/icons/protocols/sky-lending?w=48&h=48',
-				tokens: { USDC: 4_000, USDT: 500 }
+				tokens: { USDC: 4000, USDT: 500 }
 			}
 		])
 	})
 
-	it('does not create a legacy protocol source for Unified tables', async () => {
+	test('does not create a legacy protocol source for Unified tables', async () => {
 		await streamProTokenUsageData(
 			[
 				{

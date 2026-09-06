@@ -35,7 +35,7 @@ export interface AdapterChainProtocol extends AdapterMetricPeriods {
 	module: string | null
 	category: string | null
 	logo: string
-	chains: string[]
+	chains: Array<string>
 	protocolType: string
 	methodologyURL: string | null
 	methodology: AdapterMethodology
@@ -44,7 +44,7 @@ export interface AdapterChainProtocol extends AdapterMetricPeriods {
 	latestFetchIsOk?: boolean
 	parentProtocol?: string
 	slug: string
-	linkedProtocols?: string[] | null
+	linkedProtocols?: Array<string> | null
 	id: string
 	doublecounted?: boolean | null
 }
@@ -54,9 +54,9 @@ export interface IAdapterChainMetrics extends AdapterMetricPeriods {
 	breakdown30d?: AdapterBreakdown | null
 	chain?: string | null
 	category?: string
-	allCategories?: string[]
-	allChains: string[]
-	protocols: AdapterChainProtocol[]
+	allCategories?: Array<string>
+	allChains: Array<string>
+	protocols: Array<AdapterChainProtocol>
 }
 
 export interface AdapterChainProtocolTotals {
@@ -68,7 +68,7 @@ export interface AdapterChainProtocolTotals {
 }
 
 export interface AdapterChainProtocolTotalsResponse {
-	protocols: AdapterChainProtocolTotals[]
+	protocols: Array<AdapterChainProtocolTotals>
 }
 
 export interface AdapterProtocolChild {
@@ -94,35 +94,35 @@ export interface IAdapterProtocolMetrics extends AdapterMetricPeriods {
 	module: string | null
 	category: string | null
 	logo: string
-	chains: string[]
+	chains: Array<string>
 	protocolType: string
 	methodologyURL: string | null
 	methodology: AdapterMethodology
 	breakdownMethodology?: AdapterBreakdownMethodology | null
 	parentProtocol?: string | null
 	slug: string
-	linkedProtocols?: string[] | null
+	linkedProtocols?: Array<string> | null
 	id: string
 	doublecounted?: boolean | null
 	disabled?: boolean | null
 	gecko_id?: string | null
 	description?: string | null
 	url?: string | null
-	github?: string[] | null
+	github?: Array<string> | null
 	treasury?: string | null
 	cmcId?: string | null
 	defaultChartView?: ChartTimeGrouping | null
 	hasLabelBreakdown?: boolean | null
 	twitter?: string | null
-	stablecoins?: string[] | null
+	stablecoins?: Array<string> | null
 	symbol?: string | null
 	address?: string | null
 	hallmarks?: Array<[number, string]> | null
 	wrongLiquidity?: boolean
-	forkedFrom?: string[] | null
+	forkedFrom?: Array<string> | null
 	audits?: string | null
-	audit_links?: string[] | null
-	childProtocols?: AdapterProtocolChild[] | null
+	audit_links?: Array<string> | null
+	childProtocols?: Array<AdapterProtocolChild> | null
 	chainBreakdown?: Record<string, AdapterChainBreakdown> | null
 }
 

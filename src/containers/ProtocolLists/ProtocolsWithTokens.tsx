@@ -21,7 +21,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 	const router = useRouter()
 
 	const { category, excludeCategory } = router.query
-	const hasCategoryParam = Object.prototype.hasOwnProperty.call(router.query, 'category')
+	const hasCategoryParam = Object.hasOwn(router.query, 'category')
 
 	const { selectedCategories, protocols } = useMemo(() => {
 		const excludeSet = parseExcludeParam(excludeCategory)
@@ -64,8 +64,8 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 				data={protocols}
 				getSubRows={(row) => row.subRows}
 				columns={columns}
-				placeholder={'Search protocols...'}
-				columnToSearch={'name'}
+				placeholder="Search protocols..."
+				columnToSearch="name"
 				compact
 				customFilters={() => (
 					<>
@@ -76,7 +76,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 								includeQueryKey="category"
 								excludeQueryKey="excludeCategory"
 								nestedMenu={false}
-								label={'Category'}
+								label="Category"
 								labelType="smol"
 								variant="filter-responsive"
 								size="md"
@@ -94,8 +94,8 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 function getProtocolsByCategory(
 	protocols: IProtocolsWithTokensByChainPageData['protocols'],
 	categoriesToFilter: Array<string>
-): ITokenMetricProtocolRow[] {
-	const final: ITokenMetricProtocolRow[] = []
+): Array<ITokenMetricProtocolRow> {
+	const final: Array<ITokenMetricProtocolRow> = []
 	const categoriesToFilterSet = new Set(categoriesToFilter)
 
 	for (const protocol of protocols) {
@@ -104,7 +104,7 @@ function getProtocolsByCategory(
 				categoriesToFilterSet.has(childProtocol.category ?? '')
 			)
 
-			if (childProtocols.length) {
+			if (childProtocols.length > 0) {
 				final.push({
 					...protocol,
 					subRows: childProtocols
@@ -177,7 +177,7 @@ function defaultColumns(type: TokenMetricType) {
 
 						<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />
 
-						{row.original.chains.length ? (
+						{row.original.chains.length > 0 ? (
 							<span className="-my-2 flex flex-col">
 								<span className="flex items-center gap-1 overflow-hidden">
 									<BasicLink
@@ -296,7 +296,7 @@ const outstandingFdvColumns = [
 ]
 
 function getMetricNameAndColumns(type: TokenMetricType): {
-	columns: ColumnDef<ITokenMetricProtocolRow>[]
+	columns: Array<ColumnDef<ITokenMetricProtocolRow>>
 	sortingState: SortingState
 } {
 	switch (type) {

@@ -36,7 +36,7 @@ function ChangeValue({ stat, prominent = false }: { stat: StablecoinChangeStat; 
 	)
 }
 
-export function StablecoinChangeStats({ stats }: { stats: StablecoinChangeStat[] }) {
+export function StablecoinChangeStats({ stats }: { stats: Array<StablecoinChangeStat> }) {
 	const validStats = stats.filter(
 		(stat): stat is StablecoinChangeStat & { percent: string; absolute: string } =>
 			stat.percent != null && stat.absolute != null

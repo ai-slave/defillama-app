@@ -68,7 +68,7 @@ function renderUrlEntry(baseUrl: string, entry: SitemapUrlEntry): string {
     `
 }
 
-export function buildSitemapXml(baseUrl: string, entries: SitemapUrlEntry[]): string {
+export function buildSitemapXml(baseUrl: string, entries: Array<SitemapUrlEntry>): string {
 	const deduped = new Map<string, SitemapUrlEntry>()
 	for (const entry of entries) {
 		const normalizedPath = normalizeSitemapRoute(entry.path)
@@ -101,7 +101,7 @@ function renderSitemapIndexEntry(baseUrl: string, entry: SitemapIndexEntry): str
     `
 }
 
-export function buildSitemapIndexXml(baseUrl: string, entries: SitemapIndexEntry[]): string {
+export function buildSitemapIndexXml(baseUrl: string, entries: Array<SitemapIndexEntry>): string {
 	const deduped = new Map<string, SitemapIndexEntry>()
 	for (const entry of entries) {
 		const normalizedPath = normalizeSitemapRoute(entry.path)

@@ -6,7 +6,7 @@ import { fetchEthPrice, fetchLsdRates, fetchProtocolBySlug, fetchYieldPools } fr
 import type { ILsdRateApiItem } from './api.types'
 import type { ILSTPeg, ILSTTokenRow, InflowsChartData, LSTHistoryRow, LSTOverviewProps } from './types'
 
-const roundDate = (ts: number): number => Math.floor(ts / 86400) * 86400
+const roundDate = (ts: number): number => Math.floor(ts / 86_400) * 86_400
 
 function getETHValue(obj: Record<string, number>): number {
 	let eth = 0
@@ -58,7 +58,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<L
 		fetchEthPrice()
 	])
 
-	const members: LSTMember[] = []
+	const members: Array<LSTMember> = []
 	for (const protocol of protocols) {
 		if (
 			protocol.category === 'Liquid Staking' &&
@@ -121,8 +121,8 @@ export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<L
 	const PRICE_DIFF_THRESHOLD = 0.01
 
 	// --- Build historicData and group by date + name ---
-	const historicByDate = new Map<number, HistoricEntry[]>()
-	const historicByName = new Map<string, HistoricEntry[]>()
+	const historicByDate = new Map<number, Array<HistoricEntry>>()
+	const historicByName = new Map<string, Array<HistoricEntry>>()
 
 	for (const { member, protocol } of chartData) {
 		const tokensArray =
@@ -160,12 +160,12 @@ export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<L
 	}
 
 	// --- areaChartData (canonical absolute ETH values; selection determines the percentage denominator) ---
-	const areaChartData: LSTHistoryRow[] = []
+	const areaChartData: Array<LSTHistoryRow> = []
 	const sortedHistoricEntries = Array.from(historicByDate.entries()).sort(([a], [b]) => a - b)
 	for (const [date, dayData] of sortedHistoricEntries) {
 		let data = dayData
 		// dedupe on the 27th of august (lido duplicated)
-		if (date === 1630022400) {
+		if (date === 1_630_022_400) {
 			const seenNames = new Set<string>()
 			data = []
 			for (const item of dayData) {
@@ -182,7 +182,7 @@ export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<L
 			row[item.name] = item.value
 		}
 		// skip days after Dec 2020 that are missing lido data
-		if (date > 1608321600 && !hasLido) continue
+		if (date > 1_608_321_600 && !hasLido) continue
 		areaChartData.push(row)
 	}
 
@@ -216,8 +216,8 @@ export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<L
 		const lastTokenRecord = p.tokens.at(-1)
 		if (!lastTokenRecord) continue
 		const lastDate = lastTokenRecord.date
-		const offset7d = roundDate(lastDate - 7 * 86400)
-		const offset30d = roundDate(lastDate - 30 * 86400)
+		const offset7d = roundDate(lastDate - 7 * 86_400)
+		const offset30d = roundDate(lastDate - 30 * 86_400)
 
 		const lastTokens = lastTokenRecord.tokens
 		let lastTokensInUsd: Record<string, number> | null = null
@@ -312,8 +312,8 @@ export async function getLSTPageData(snapshot: YieldsSnapshot | null): Promise<L
 		}
 	}
 
-	const tokensList: ILSTTokenRow[] = []
-	const tokens: string[] = []
+	const tokensList: Array<ILSTTokenRow> = []
+	const tokens: Array<string> = []
 	for (const p of tokenTvls) {
 		const lsd = ratesByName.get(p.name)
 		const pegInfo = lsd?.type === 'rebase' ? rebase : lsd?.type === 'accruing' ? valueAccruing : null

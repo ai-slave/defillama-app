@@ -270,7 +270,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		staleTime: 5 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: 3,
-		retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000)
+		retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30_000)
 	})
 
 	const loginMutation = useMutation({
@@ -455,12 +455,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 				uri: window.location.origin,
 				version: '1',
 				chainId: 1,
-				nonce: nonce,
-				issuedAt: issuedAt
+				nonce,
+				issuedAt
 			})
 
 			const signature = await signMessageFunction({
-				message: message,
+				message,
 				account: address as `0x${string}`
 			})
 
@@ -631,12 +631,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 				uri: window.location.origin,
 				version: '1',
 				chainId: 1,
-				nonce: nonce,
-				issuedAt: issuedAt
+				nonce,
+				issuedAt
 			})
 
 			const signature = await signMessageFunction({
-				message: message,
+				message,
 				account: address as `0x${string}`
 			})
 

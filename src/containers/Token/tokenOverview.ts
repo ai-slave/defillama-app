@@ -27,7 +27,7 @@ export interface TokenOverviewRaise {
 	round: string | null
 	amountUsd: number | null
 	source?: string
-	investors: string[]
+	investors: Array<string>
 }
 
 export interface TokenOverviewMarketData {
@@ -70,7 +70,7 @@ export interface TokenOverviewData {
 	symbol: string
 	marketData: TokenOverviewMarketData
 	treasury: TokenOverviewTreasury | null
-	raises: TokenOverviewRaise[] | null
+	raises: Array<TokenOverviewRaise> | null
 	outstandingFDV: number | null
 	rawChartData: TokenOverviewRawChartData
 }
@@ -81,12 +81,12 @@ type TokenOverviewDataSource =
 	  }
 	| {
 			kind: 'prefetched'
-			raises: Raise[] | null
+			raises: Array<Raise> | null
 			treasury: RawTreasuriesResponse[number] | null
 	  }
 
-export const TOKEN_OVERVIEW_DEFAULT_CHARTS: TokenOverviewChartLabel[] = ['Token Price']
-export const TOKEN_OVERVIEW_ALL_CHARTS: TokenOverviewChartLabel[] = ['Token Price', 'Token Volume', 'Mcap', 'FDV']
+export const TOKEN_OVERVIEW_DEFAULT_CHARTS: Array<TokenOverviewChartLabel> = ['Token Price']
+export const TOKEN_OVERVIEW_ALL_CHARTS: Array<TokenOverviewChartLabel> = ['Token Price', 'Token Volume', 'Mcap', 'FDV']
 
 const emptyMarketData: TokenOverviewMarketData = {
 	currentPrice: null,
@@ -291,7 +291,7 @@ function calculateMarketValue(price: number | null, supply: number | null): numb
 function buildTokenMarketData(
 	tokenEntry: ITokenListEntry | null,
 	tickers: CgChartTickers,
-	cgExchangeIdentifiers: string[],
+	cgExchangeIdentifiers: Array<string>,
 	currentMetrics: TokenOverviewCurrentMetrics | null,
 	marketDataFallback: TokenOverviewMarketData = emptyMarketData,
 	currentPriceTimestamp: number | null = null,
@@ -396,7 +396,7 @@ function buildTreasurySummary(
 	}
 }
 
-function buildRaisesSummary(raises: Raise[] | null): TokenOverviewRaise[] | null {
+function buildRaisesSummary(raises: Array<Raise> | null): Array<TokenOverviewRaise> | null {
 	if (!raises?.length) return null
 
 	return [...raises]
@@ -417,7 +417,7 @@ export function buildTokenOverviewRawChartData({
 }: {
 	chart: CgChartResponse | null
 	totalSupply: number | null
-	includeCharts?: TokenOverviewChartLabel[]
+	includeCharts?: Array<TokenOverviewChartLabel>
 }): TokenOverviewRawChartData {
 	const includedCharts = new Set(includeCharts)
 	const priceSeries = normalizeChartPointsToMs(chart?.data?.prices)
@@ -454,11 +454,11 @@ export async function getTokenOverviewData({
 	geckoId: string | null
 	tokenEntry: ITokenListEntry | null
 	protocolMetadata: IProtocolMetadata | null
-	cgExchangeIdentifiers: string[]
+	cgExchangeIdentifiers: Array<string>
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	currentMetrics?: TokenOverviewCurrentMetrics | null
 	source: TokenOverviewDataSource
-	prefetchedCharts?: TokenOverviewChartLabel[]
+	prefetchedCharts?: Array<TokenOverviewChartLabel>
 }): Promise<TokenOverviewData> {
 	const chainDefiLlamaId = record.chainId ? `chain#${record.chainId.toLowerCase()}` : null
 	const protocolDefiLlamaId = record.protocolId ?? protocolMetadata?.name ?? null
@@ -495,7 +495,7 @@ export async function getTokenOverviewData({
 		source.kind === 'prefetched'
 			? Promise.resolve(source.raises)
 			: raisesDefiLlamaId
-				? fetchRaisesByDefillamaId(raisesDefiLlamaId).catch((): Raise[] => [])
+				? fetchRaisesByDefillamaId(raisesDefiLlamaId).catch((): Array<Raise> => [])
 				: Promise.resolve(null),
 		source.kind === 'prefetched'
 			? Promise.resolve(source.treasury)

@@ -4,11 +4,11 @@ export const RWA_OPEN_INTEREST_SERIES_LABEL = 'RWA Perps OI'
 
 export type RWAChartSeriesValue = number | null | undefined
 export type RWAChartRow = { timestamp: number } & Record<string, RWAChartSeriesValue>
-export type RWAChartDataset = { source: RWAChartRow[]; dimensions: string[] }
+export type RWAChartDataset = { source: Array<RWAChartRow>; dimensions: Array<string> }
 export type RWAIndependentChartSeries = { name: string; data: Array<[number, number | null]> }
 export type RWAPositionalChartDataset = MultiSeriesTimeSeriesDataset & {
 	/** RWA Perps overlays have an independent calendar and are mirrored into renderer chart configs. */
-	independentSeries?: RWAIndependentChartSeries[]
+	independentSeries?: Array<RWAIndependentChartSeries>
 }
 export type RwaNamedValue = { name: string; value: number }
 
@@ -137,7 +137,7 @@ export function buildRwaChartDatasetTotal({
 }): RWAChartDataset {
 	if (dataset.source.length === 0) return emptyChartDataset()
 
-	const seriesDimensions: string[] = []
+	const seriesDimensions: Array<string> = []
 	for (const dimension of dataset.dimensions) {
 		const includeSeries = isSeriesDimension
 			? isSeriesDimension(dimension)
@@ -183,13 +183,13 @@ export function appendRwaChartDatasetTotal(dataset: RWAChartDataset): RWAChartDa
 }
 
 export function limitRwaHorizontalBarData(
-	items: readonly RwaNamedValue[],
+	items: ReadonlyArray<RwaNamedValue>,
 	{ maxBars = RWA_MAX_HORIZONTAL_BARS, sort = false }: { maxBars?: number; sort?: boolean } = {}
-): RwaNamedValue[] {
+): Array<RwaNamedValue> {
 	const normalizedMaxBars = Number.isFinite(maxBars) ? Math.floor(maxBars) : RWA_MAX_HORIZONTAL_BARS
 	const effectiveMaxBars = Math.max(1, normalizedMaxBars)
 	let othersValue = 0
-	const withoutOthers: RwaNamedValue[] = []
+	const withoutOthers: Array<RwaNamedValue> = []
 	for (const item of items) {
 		const value = item.value
 		if (value <= 0) continue
@@ -220,7 +220,7 @@ export function isRwaTotalSeriesLabel(label: string): boolean {
 	return label.startsWith('Total ')
 }
 
-export function sortRwaChartSeriesLabels(labels: string[]): string[] {
+export function sortRwaChartSeriesLabels(labels: Array<string>): Array<string> {
 	const totalSeries = labels.filter(isRwaTotalSeriesLabel)
 	const hasOpenInterestSeries = labels.includes(RWA_OPEN_INTEREST_SERIES_LABEL)
 	const otherSeries = labels.filter(
@@ -236,7 +236,7 @@ export function getRwaReservedSeriesColorSlot(label: string): number | null {
 	return null
 }
 
-export function getRwaChartSeriesColorSlots(labels: string[]): Record<string, number> {
+export function getRwaChartSeriesColorSlots(labels: Array<string>): Record<string, number> {
 	const colorSlots: Record<string, number> = {}
 	let nextNonReservedColorSlot = 2
 

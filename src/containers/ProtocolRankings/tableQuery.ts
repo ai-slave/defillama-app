@@ -33,16 +33,16 @@ export type ProtocolRankingQuery = {
 	sort: ProtocolRankingSortKey | 'custom'
 	order: ProtocolRankingOrder
 	customSort: { formula: string; formatType: string } | null
-	tvlKeys: string[]
+	tvlKeys: Array<string>
 }
 
 export type ProtocolRankingPage<Row> = {
-	rows: Row[]
+	rows: Array<Row>
 	nextCursor: string | null
 	snapshot: string
 	total: number
 	hasMore: boolean
-	availableActivityMetrics: ProtocolRankingActivityMetricKey[]
+	availableActivityMetrics: Array<ProtocolRankingActivityMetricKey>
 }
 
 export type ProtocolRankingInitialPage = Omit<ProtocolRankingPage<never>, 'rows'>

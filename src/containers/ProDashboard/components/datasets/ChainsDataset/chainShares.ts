@@ -17,7 +17,7 @@ export const CHAIN_SHARE_METRICS: ReadonlyArray<{ key: ChainShareMetricKey; name
 	{ key: 'nftVolume', name: 'NFT Volume % Share' }
 ]
 
-export function buildChainShareTotals(rows: ChainsDatasetRow[] | undefined): Record<ChainShareMetricKey, number> {
+export function buildChainShareTotals(rows: Array<ChainsDatasetRow> | undefined): Record<ChainShareMetricKey, number> {
 	const totals: Record<ChainShareMetricKey, number> = {
 		tvl: 0,
 		stablesMcap: 0,

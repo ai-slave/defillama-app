@@ -4,9 +4,10 @@ import {
 	getSortedRowModel,
 	type PaginationState,
 	type SortingState,
-	useReactTable
+	useReactTable,
+	type ColumnDef,
+	type Table
 } from '@tanstack/react-table'
-import type { ColumnDef, Table } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
@@ -155,7 +156,7 @@ function PortfolioTrend({
 	)
 }
 
-const positionColumns: ColumnDef<HlpPosition>[] = [
+const positionColumns: Array<ColumnDef<HlpPosition>> = [
 	{
 		header: 'Coin',
 		accessorKey: 'coin',
@@ -246,7 +247,7 @@ const positionColumns: ColumnDef<HlpPosition>[] = [
 	}
 ]
 
-const fillColumns: ColumnDef<HlpFill>[] = [
+const fillColumns: Array<ColumnDef<HlpFill>> = [
 	{
 		header: 'Time',
 		id: 'time',
@@ -319,7 +320,7 @@ const fillColumns: ColumnDef<HlpFill>[] = [
 	}
 ]
 
-const openOrderColumns: ColumnDef<HlpOpenOrder>[] = [
+const openOrderColumns: Array<ColumnDef<HlpOpenOrder>> = [
 	{
 		header: 'Time',
 		id: 'timestamp',
@@ -378,8 +379,8 @@ function DataTable<T>({
 	pageSize
 }: {
 	title: string
-	data: T[]
-	columns: ColumnDef<T>[]
+	data: Array<T>
+	columns: Array<ColumnDef<T>>
 	defaultSort: SortingState
 	pageSize: number
 }) {
@@ -506,7 +507,7 @@ export default function Positions() {
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-wrap items-center gap-2">
 				<div className="text-xs font-medium tracking-wide text-pro-text-label">Vault:</div>
-				{(['All', 'A', 'B'] as VaultFilter[]).map((value) => (
+				{(['All', 'A', 'B'] as Array<VaultFilter>).map((value) => (
 					<button
 						key={value}
 						onClick={() => setVaultFilter(value)}

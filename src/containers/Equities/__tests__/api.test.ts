@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const fetchJson = vi.fn()
 
@@ -22,7 +22,7 @@ function getCalledUrl(index: number): URL {
 }
 
 describe('equities api urls', () => {
-	it('adds ticker and country to ticker-specific endpoints', async () => {
+	test('adds ticker and country to ticker-specific endpoints', async () => {
 		const api = await import('../api')
 
 		await api.fetchEquitiesSummary('AAPL', 'US')
@@ -42,7 +42,7 @@ describe('equities api urls', () => {
 		expect(getCalledUrl(2).searchParams.get('timeframe')).toBe('1M')
 	})
 
-	it('adds canonical ticker and country to the on-chain endpoint', async () => {
+	test('adds canonical ticker and country to the on-chain endpoint', async () => {
 		const api = await import('../api')
 
 		await api.fetchEquitiesOnchain('AAPL', 'US')
@@ -53,7 +53,7 @@ describe('equities api urls', () => {
 		expect(onchainUrl.searchParams.get('country')).toBe('US')
 	})
 
-	it('keeps companies as a list request', async () => {
+	test('keeps companies as a list request', async () => {
 		const api = await import('../api')
 
 		await api.fetchEquitiesCompanies()
@@ -65,7 +65,7 @@ describe('equities api urls', () => {
 		expect(url.searchParams.has('country')).toBe(false)
 	})
 
-	it('keeps companies-list as a lightweight list request', async () => {
+	test('keeps companies-list as a lightweight list request', async () => {
 		const api = await import('../api')
 
 		await api.fetchEquitiesCompaniesList()

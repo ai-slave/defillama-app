@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ProjectInstructionsEditor } from './ProjectInstructionsEditor'
 
 const updateProject = vi.fn<(body: { custom_instructions: string | null }) => Promise<void>>()
@@ -48,7 +48,7 @@ describe('ProjectInstructionsEditor', () => {
 		textarea.dispatchEvent(new Event('input', { bubbles: true }))
 	}
 
-	it('does not submit a changed-then-restored draft without a pending save', async () => {
+	test('does not submit a changed-then-restored draft without a pending save', async () => {
 		const textarea = await render('project-1', 'Saved instructions')
 
 		await act(async () => change(textarea, 'Changed instructions'))
@@ -63,7 +63,7 @@ describe('ProjectInstructionsEditor', () => {
 		expect(refreshed.value).toBe('Server refresh')
 	})
 
-	it('preserves a dirty draft when fresh project data arrives', async () => {
+	test('preserves a dirty draft when fresh project data arrives', async () => {
 		const textarea = await render('project-1', 'Original')
 		await act(async () => change(textarea, 'Local draft'))
 
@@ -73,7 +73,7 @@ describe('ProjectInstructionsEditor', () => {
 		expect(container.textContent).toContain('Unsaved')
 	})
 
-	it('adopts fresh project data when the draft is clean', async () => {
+	test('adopts fresh project data when the draft is clean', async () => {
 		await render('project-1', 'Original')
 
 		const refreshed = await render('project-1', 'Server refresh')
@@ -82,7 +82,7 @@ describe('ProjectInstructionsEditor', () => {
 		expect(container.textContent).not.toContain('Unsaved')
 	})
 
-	it('saves the trimmed draft on blur', async () => {
+	test('saves the trimmed draft on blur', async () => {
 		const textarea = await render('project-1', 'Original')
 		await act(async () => change(textarea, '  Updated instructions  '))
 		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
@@ -91,7 +91,7 @@ describe('ProjectInstructionsEditor', () => {
 		expect(updateProject).toHaveBeenCalledWith({ custom_instructions: 'Updated instructions' })
 	})
 
-	it('submits a newer draft while an earlier save is pending', async () => {
+	test('submits a newer draft while an earlier save is pending', async () => {
 		let resolveFirstSave: (() => void) | null = null
 		updateProject.mockImplementationOnce(() => new Promise<void>((resolve) => (resolveFirstSave = resolve)))
 		const textarea = await render('project-1', 'Original')
@@ -109,7 +109,7 @@ describe('ProjectInstructionsEditor', () => {
 		})
 	})
 
-	it('restores the saved value after a different draft starts saving', async () => {
+	test('restores the saved value after a different draft starts saving', async () => {
 		let resolveFirstSave: (() => void) | null = null
 		updateProject.mockImplementationOnce(() => new Promise<void>((resolve) => (resolveFirstSave = resolve)))
 		const textarea = await render('project-1', 'Original')
@@ -129,7 +129,7 @@ describe('ProjectInstructionsEditor', () => {
 		})
 	})
 
-	it('preserves a focused edit when an earlier save is acknowledged', async () => {
+	test('preserves a focused edit when an earlier save is acknowledged', async () => {
 		let resolveFirstSave: (() => void) | null = null
 		updateProject.mockImplementationOnce(() => new Promise<void>((resolve) => (resolveFirstSave = resolve)))
 		const textarea = await render('project-1', 'Original')

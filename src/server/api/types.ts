@@ -8,14 +8,14 @@
  * model and stay framework-native.
  */
 
-export type ApiQuery = Record<string, string | string[] | undefined>
+export type ApiQuery = Record<string, string | Array<string> | undefined>
 
 export type ApiRequest = {
 	method: string
 	/** Path + query string as received, e.g. `/api/public/chains/charts?chain=base` */
 	url: string
 	query: ApiQuery
-	headers: Record<string, string | string[] | undefined>
+	headers: Record<string, string | Array<string> | undefined>
 	/** Parsed JSON body for POST handlers; undefined for GET. */
 	body?: unknown
 }
@@ -41,7 +41,7 @@ export type ApiRouteDefinition = {
 	/** Telemetry route name, e.g. `/api/public/chains/charts`. */
 	route: string
 	/** Allowed methods; requests with other methods get a 405. Default ['GET']. */
-	methods?: string[]
+	methods?: Array<string>
 	/**
 	 * Cache-Control applied to 2xx responses that did not set their own.
 	 * Jittered per-URL via jitterCacheControlHeader. Non-2xx responses are

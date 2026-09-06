@@ -22,9 +22,9 @@ interface SavedChartListItem {
 	frozen?: boolean
 }
 
-function parseSavedChartList(value: unknown): SavedChartListItem[] {
+function parseSavedChartList(value: unknown): Array<SavedChartListItem> {
 	if (!isChartDataRow(value) || !Array.isArray(value.charts)) return []
-	const charts: SavedChartListItem[] = []
+	const charts: Array<SavedChartListItem> = []
 	for (const chart of value.charts) {
 		if (!isChartDataRow(chart)) continue
 		if (typeof chart.id !== 'string' || typeof chart.title !== 'string' || typeof chart.created_at !== 'string')

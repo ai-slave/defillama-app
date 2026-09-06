@@ -36,7 +36,7 @@ type Metric =
 type View = 'day' | 'month' | 'quarter' | 'cumulative'
 type Pts = Array<[number, number]>
 
-const VIEWS: { value: View; label: string }[] = [
+const VIEWS: Array<{ value: View; label: string }> = [
 	{ value: 'day', label: 'Daily' },
 	{ value: 'month', label: 'Monthly' },
 	{ value: 'quarter', label: 'Quarterly' },
@@ -64,7 +64,7 @@ function getPaletteColor(index: number): string {
 	throw new Error('THORChain chart palette must not be empty')
 }
 
-function pairChartDatesWithValues(dates: string[], values: Array<number | null | undefined>): Pts {
+function pairChartDatesWithValues(dates: Array<string>, values: Array<number | null | undefined>): Pts {
 	const points: Pts = []
 	for (const [index, date] of dates.entries()) {
 		points.push([parseDateToUnix(date), values.at(index) ?? 0])
@@ -72,8 +72,8 @@ function pairChartDatesWithValues(dates: string[], values: Array<number | null |
 	return points
 }
 
-function aggregate(series: RawSeries[], view: View, stacked: boolean): SparseCartesianSeries[] {
-	if (!series.length) return []
+function aggregate(series: Array<RawSeries>, view: View, stacked: boolean): Array<SparseCartesianSeries> {
+	if (series.length === 0) return []
 	const grouping = view === 'cumulative' ? 'day' : view
 	const isCumulative = view === 'cumulative'
 	const agg = series.map((s, i) => {
@@ -150,7 +150,7 @@ function TrendCard({
 				<div className="flex h-[360px] items-center justify-center text-xs text-pro-text-tertiary">
 					Failed to load data
 				</div>
-			) : !chartSeries.length ? (
+			) : chartSeries.length === 0 ? (
 				<div className="flex h-[360px] items-center justify-center text-xs text-pro-text-tertiary">No data</div>
 			) : (
 				<MultiSeriesChart
@@ -185,7 +185,7 @@ export function ChainBreakdownChart({
 	limit?: number
 }) {
 	const [view, setView] = useState<View>('day')
-	const { data, isLoading, isError } = useQuery<{ series: RawSeries[] }>({
+	const { data, isLoading, isError } = useQuery<{ series: Array<RawSeries> }>({
 		queryKey: ['thorchain-breakdown', protocol, metric, limit],
 		queryFn: () => fetchProtocolChainBreakdownData({ protocol, metric, limit }),
 		...QUERY_OPTS
@@ -277,8 +277,8 @@ export function ApiTrendChart({
 // series is the bar (left axis) and second the line (right axis).
 export function DualAxisChart({ chart, subtitle }: { chart?: Chart | null; subtitle?: string }) {
 	const model = useMemo(() => {
-		if (!chart?.dates?.length || !chart.series.length) return undefined
-		const series: SparseCartesianSeries[] = chart.series.map((s, i) => ({
+		if (!chart?.dates?.length || chart.series.length === 0) return undefined
+		const series: Array<SparseCartesianSeries> = chart.series.map((s, i) => ({
 			name: s.name,
 			type: s.type === 'bar' ? 'bar' : 'line',
 			color: i % 2 === 0 ? THOR_TEAL : GOLD,

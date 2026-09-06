@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { getBucketTimestampSec } from '~/components/ECharts/shared/timeSeries'
 import {
 	buildActiveLstChartData,
@@ -8,7 +8,7 @@ import {
 } from '../chartData'
 
 describe('LST chart data helpers', () => {
-	it('constructs only the selected view model', () => {
+	test('constructs only the selected view model', () => {
 		const common = {
 			areaChartData: [{ date: 1, Lido: 100 }],
 			inflowsChartData: { 1: { Lido: -5 } },
@@ -20,7 +20,7 @@ describe('LST chart data helpers', () => {
 
 		expect(buildActiveLstChartData({ ...common, view: 'breakdown' })).toMatchObject({
 			kind: 'breakdown',
-			data: { dataset: { source: [[1_000, 100]] } }
+			data: { dataset: { source: [[1000, 100]] } }
 		})
 		expect(buildActiveLstChartData({ ...common, view: 'inflows' })).toMatchObject({
 			kind: 'inflows',
@@ -28,7 +28,7 @@ describe('LST chart data helpers', () => {
 		})
 	})
 
-	it('builds cumulative inflows by token', () => {
+	test('builds cumulative inflows by token', () => {
 		const result = buildLstInflowsData({
 			inflowsChartData: {
 				1: { Lido: 10, RocketPool: 5 },
@@ -55,7 +55,7 @@ describe('LST chart data helpers', () => {
 		])
 	})
 
-	it('carries cumulative token totals across independently timed protocol histories', () => {
+	test('carries cumulative token totals across independently timed protocol histories', () => {
 		const result = buildLstInflowsData({
 			inflowsChartData: {
 				1: { Lido: 10 },
@@ -84,7 +84,7 @@ describe('LST chart data helpers', () => {
 		])
 	})
 
-	it('groups non-cumulative inflows by selected period', () => {
+	test('groups non-cumulative inflows by selected period', () => {
 		const day1 = 1_704_067_200
 		const day2 = 1_704_153_600
 		const bucket = getBucketTimestampSec(day1, 'weekly')
@@ -107,7 +107,7 @@ describe('LST chart data helpers', () => {
 		])
 	})
 
-	it('builds breakdown and inflow datasets with stable token chart configs', () => {
+	test('builds breakdown and inflow datasets with stable token chart configs', () => {
 		const tokens = ['Lido', 'RocketPool']
 		const lsdColors = { Lido: '#111', RocketPool: '#222' }
 
@@ -119,7 +119,7 @@ describe('LST chart data helpers', () => {
 			})
 		).toEqual({
 			dataset: {
-				source: [[1_000, 75, 25]],
+				source: [[1000, 75, 25]],
 				dimensions: ['timestamp', 'Lido', 'RocketPool']
 			},
 			charts: [
@@ -150,7 +150,7 @@ describe('LST chart data helpers', () => {
 		})
 
 		expect(inflowsSeriesData.dataset).toEqual({
-			source: [[1_000, 10, -1]],
+			source: [[1000, 10, -1]],
 			dimensions: ['timestamp', 'Lido', 'RocketPool']
 		})
 		expect(inflowsSeriesData.barCharts).toEqual([
@@ -187,7 +187,7 @@ describe('LST chart data helpers', () => {
 		])
 	})
 
-	it('keeps sparse token rows sparse instead of materializing false zeroes', () => {
+	test('keeps sparse token rows sparse instead of materializing false zeroes', () => {
 		const inflowsData = [
 			[1, new Map([['Lido', 10]])],
 			[2, new Map([['RocketPool', 5]])]
@@ -200,8 +200,8 @@ describe('LST chart data helpers', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			[1_000, 10, undefined],
-			[2_000, undefined, 5]
+			[1000, 10, undefined],
+			[2000, undefined, 5]
 		])
 		for (const chart of [...result.barCharts, ...result.cumulativeCharts]) {
 			expect(chart.encode.y).toBeGreaterThan(0)

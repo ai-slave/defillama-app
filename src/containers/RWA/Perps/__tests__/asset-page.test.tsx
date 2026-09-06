@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
 afterEach(() => {
 	vi.clearAllMocks()
@@ -8,7 +8,7 @@ afterEach(() => {
 async function setupPageModule({
 	assets = ['S&P 500 Index'],
 	data = null
-}: { assets?: string[]; data?: unknown } = {}) {
+}: { assets?: Array<string>; data?: unknown } = {}) {
 	const getRWAPerpsAssetPage = vi.fn().mockResolvedValue(data)
 	vi.doMock('~/constants', () => ({
 		SKIP_BUILD_STATIC_GENERATION: false
@@ -49,7 +49,7 @@ async function setupPageModule({
 }
 
 describe('rwa perps asset page', () => {
-	it('getStaticPaths slugifies known assets', async () => {
+	test('getStaticPaths slugifies known assets', async () => {
 		const { page } = await setupPageModule({ assets: ['S&P 500 Index', 'Gold'] })
 
 		await expect(page.getStaticPaths()).resolves.toEqual({
@@ -58,14 +58,14 @@ describe('rwa perps asset page', () => {
 		})
 	})
 
-	it('returns notFound before fetching an unknown asset', async () => {
+	test('returns notFound before fetching an unknown asset', async () => {
 		const { page, getRWAPerpsAssetPage } = await setupPageModule()
 
 		await expect(page.getStaticProps({ params: { asset: 'gold' } } as never)).resolves.toEqual({ notFound: true })
 		expect(getRWAPerpsAssetPage).not.toHaveBeenCalled()
 	})
 
-	it('uses cached metadata for canonical identity and navigation', async () => {
+	test('uses cached metadata for canonical identity and navigation', async () => {
 		const data = { asset: 'S&P 500 Index' }
 		const { page, getRWAPerpsAssetPage } = await setupPageModule({ assets: ['S&P 500 Index', 'Gold'], data })
 
@@ -84,7 +84,7 @@ describe('rwa perps asset page', () => {
 		})
 	})
 
-	it('redirects noncanonical asset params', async () => {
+	test('redirects noncanonical asset params', async () => {
 		const { page, getRWAPerpsAssetPage } = await setupPageModule()
 
 		await expect(page.getStaticProps({ params: { asset: 'S&P 500 Index' } } as never)).resolves.toEqual({

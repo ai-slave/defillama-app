@@ -2,7 +2,7 @@
 
 import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { adaptChartData } from '~/containers/LlamaAI/utils/chartAdapter'
 import type { ChartViewState } from '~/containers/LlamaAI/utils/chartCapabilities'
@@ -24,7 +24,7 @@ vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({
 	ChartPngExportButton: () => <button type="button" data-testid="chart-export" />
 }))
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({
-	default: ({ charts, hallmarks }: { charts?: Array<{ type: string }>; hallmarks?: [number, string][] }) => (
+	default: ({ charts, hallmarks }: { charts?: Array<{ type: string }>; hallmarks?: Array<[number, string]> }) => (
 		<div
 			data-testid="cartesian"
 			data-series-types={charts?.map((chart) => chart.type).join(',')}
@@ -240,7 +240,7 @@ describe('ChartRenderer', () => {
 		vi.unstubAllGlobals()
 	})
 
-	it('preserves selection intent while deriving a fallback for missing charts', async () => {
+	test('preserves selection intent while deriving a fallback for missing charts', async () => {
 		const chartA = makeChart('a')
 		const chartB = makeChart('b')
 		const chartC = makeChart('c')
@@ -266,7 +266,7 @@ describe('ChartRenderer', () => {
 		expect(getActiveChartId()).toBe('c')
 	})
 
-	it('constructs only the active tab while retaining inactive chart controls', async () => {
+	test('constructs only the active tab while retaining inactive chart controls', async () => {
 		const chartA = { ...makeCartesianChart('A'), id: 'a' }
 		const chartB = { ...makeCartesianChart('B'), id: 'b' }
 		await act(async () => root.render(<ChartRenderer charts={[chartA, chartB]} chartData={chartData} />))
@@ -287,7 +287,7 @@ describe('ChartRenderer', () => {
 		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-log')).toBe('true')
 	})
 
-	it('keeps persisted keyed chart data isolated while activating tabs', async () => {
+	test('keeps persisted keyed chart data isolated while activating tabs', async () => {
 		const chartA = { ...makeCartesianChart('A'), id: 'a', datasetName: 'dataset-a' }
 		const chartB = { ...makeCartesianChart('B'), id: 'b', datasetName: 'dataset-b' }
 		const dataA = [chartData[0]]
@@ -303,7 +303,7 @@ describe('ChartRenderer', () => {
 		expect(adaptChartData).toHaveBeenLastCalledWith(chartB, dataB)
 	})
 
-	it('reuses base adaptation for view changes and rebuilds it for config and data changes', async () => {
+	test('reuses base adaptation for view changes and rebuilds it for config and data changes', async () => {
 		const transformSpy = vi.spyOn(ChartDataTransformer, 'applyViewState')
 		const config = makeCartesianChart()
 		await act(async () => root.render(<ChartRenderer charts={[config]} chartData={chartData} />))
@@ -339,7 +339,7 @@ describe('ChartRenderer', () => {
 		transformSpy.mockRestore()
 	})
 
-	it('keeps adaptation failures inside the chart and retries after base data changes', async () => {
+	test('keeps adaptation failures inside the chart and retries after base data changes', async () => {
 		const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
 		vi.mocked(adaptChartData).mockImplementationOnce(() => {
 			throw new Error('Adapter failed')
@@ -357,7 +357,7 @@ describe('ChartRenderer', () => {
 		consoleErrorSpy.mockRestore()
 	})
 
-	it('lets promoted date categories resolve aggregation and retain it after save and reset', async () => {
+	test('lets promoted date categories resolve aggregation and retain it after save and reset', async () => {
 		const config = makeCartesianChart()
 		config.axes.x.type = 'category'
 		config.series[0].metricClass = 'unknown'
@@ -381,7 +381,7 @@ describe('ChartRenderer', () => {
 		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-grouping')).toBe('month')
 	})
 
-	it.each(['category', 'time'] as const)('hides aggregation for a non-groupable %s chart', async (axisType) => {
+	test.each(['category', 'time'] as const)('hides aggregation for a non-groupable %s chart', async (axisType) => {
 		const config = axisType === 'category' ? makeCategoryChart() : makeCartesianChart()
 		if (axisType === 'time') config.displayOptions.supportsGrouping = false
 		config.series[0].metricClass = 'unknown'
@@ -392,7 +392,7 @@ describe('ChartRenderer', () => {
 		expect(document.querySelector('[aria-label$="aggregation"]')).toBeNull()
 	})
 
-	it('previews a discrete series option without changing the applied chart', async () => {
+	test('previews a discrete series option without changing the applied chart', async () => {
 		const config = makeCartesianChart()
 		await act(async () =>
 			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
@@ -411,7 +411,7 @@ describe('ChartRenderer', () => {
 		expect(chartsAfter[1]?.getAttribute('data-series-types')).toBe('bar,line')
 	})
 
-	it('shows the first draft annotation while keeping the applied chart unchanged', async () => {
+	test('shows the first draft annotation while keeping the applied chart unchanged', async () => {
 		const config = makeCartesianChart()
 		await act(async () =>
 			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
@@ -429,7 +429,7 @@ describe('ChartRenderer', () => {
 		expect(previewHallmarks).toEqual([[expect.any(Number), 'Preview note']])
 	})
 
-	it('keeps editor drafts out of the applied chart and discards them on cancel', async () => {
+	test('keeps editor drafts out of the applied chart and discards them on cancel', async () => {
 		const config = makeCartesianChart()
 		await act(async () =>
 			root.render(<ChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={() => undefined} />)
@@ -452,7 +452,7 @@ describe('ChartRenderer', () => {
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
 	})
 
-	it('keeps reset local until save applies the original defaults', async () => {
+	test('keeps reset local until save applies the original defaults', async () => {
 		const config = makeCartesianChart()
 		config.displayOptions = { ...config.displayOptions!, defaultStacked: true }
 		await act(async () =>
@@ -474,7 +474,7 @@ describe('ChartRenderer', () => {
 		expect(container.querySelector('[data-testid="chart-controls"]')?.getAttribute('data-stacked')).toBe('true')
 	})
 
-	it('keeps saved configuration and view changes when the editor closes', async () => {
+	test('keeps saved configuration and view changes when the editor closes', async () => {
 		const onLocalStyleSave = vi.fn()
 		const config = makeCartesianChart()
 		await act(async () =>
@@ -533,7 +533,7 @@ describe('ChartRenderer', () => {
 		expect(document.querySelector<HTMLInputElement>('[aria-label="Chart title"]')?.value).toBe(config.title)
 	})
 
-	it('rebuilds adaptation for a nested configuration change', async () => {
+	test('rebuilds adaptation for a nested configuration change', async () => {
 		const config = makeCartesianChart()
 		await act(async () => root.render(<ChartRenderer charts={[config]} chartData={chartData} />))
 		expect(adaptChartData).toHaveBeenCalledTimes(1)

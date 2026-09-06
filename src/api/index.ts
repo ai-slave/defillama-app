@@ -12,7 +12,9 @@ export async function searchApi<T = Record<string, unknown>>(query: SearchQuery)
 }
 
 /** Run several queries in one multi-search request; returns hits per query, in order. */
-export async function multiSearchApi<T = Record<string, unknown>>(queries: SearchQuery[]): Promise<Array<Array<T>>> {
+export async function multiSearchApi<T = Record<string, unknown>>(
+	queries: Array<SearchQuery>
+): Promise<Array<Array<T>>> {
 	return fetchJson(SEARCH_API_URL, {
 		method: 'POST',
 		headers: {

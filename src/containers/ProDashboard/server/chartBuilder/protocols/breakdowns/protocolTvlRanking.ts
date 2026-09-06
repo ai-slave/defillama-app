@@ -26,7 +26,7 @@ type ProtocolTvlRankingSourceRow = {
 
 type RankingScope = 'global' | 'include' | 'exclude'
 
-function resolveRankingScope(chains: string[], chainFilterMode: 'include' | 'exclude'): RankingScope {
+function resolveRankingScope(chains: Array<string>, chainFilterMode: 'include' | 'exclude'): RankingScope {
 	const hasAll = chains.length === 0 || chains.some((chain) => chain.toLowerCase() === 'all')
 	const hasSelectedChains = chains.some((chain) => chain.toLowerCase() !== 'all')
 	if (chainFilterMode === 'exclude' && hasSelectedChains) return 'exclude'
@@ -137,11 +137,11 @@ export async function fetchProtocolTvlRankingRows({
 	chains,
 	chainFilterMode
 }: {
-	chains: string[]
+	chains: Array<string>
 	chainFilterMode: 'include' | 'exclude'
-}): Promise<ProtocolTvlRankingRow[]> {
+}): Promise<Array<ProtocolTvlRankingRow>> {
 	const scope = resolveRankingScope(chains, chainFilterMode)
-	const selectedChains: string[] = []
+	const selectedChains: Array<string> = []
 	for (const chain of chains) {
 		if (chain.toLowerCase() !== 'all') selectedChains.push(toInternalSlug(chain))
 	}
@@ -165,12 +165,12 @@ export function buildProtocolTvlRanking({
 	categories,
 	categoryFilterMode
 }: {
-	rows: ProtocolTvlRankingRow[]
+	rows: Array<ProtocolTvlRankingRow>
 	topN: number
 	groupByParent: boolean
-	categories: string[]
+	categories: Array<string>
 	categoryFilterMode: 'include' | 'exclude'
-}): { items: ProtocolTvlRankingItem[]; totalEntities: number; eligibleRows: ProtocolTvlRankingRow[] } {
+}): { items: Array<ProtocolTvlRankingItem>; totalEntities: number; eligibleRows: Array<ProtocolTvlRankingRow> } {
 	const categorySet = new Set(categories.map((category) => category.toLowerCase()))
 	const eligibleRows = rows.filter((row) => {
 		const category = row.category?.toLowerCase() ?? ''

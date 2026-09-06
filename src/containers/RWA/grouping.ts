@@ -2,7 +2,7 @@ export type WeightedGroup = { value: string; weight: number }
 export type RWAParentPlatform = string | null | undefined
 export const UNKNOWN_PLATFORM = 'Unknown'
 
-export const toUniqueNonEmptyValues = (values: Array<string> | null | undefined): string[] => {
+export const toUniqueNonEmptyValues = (values: Array<string> | null | undefined): Array<string> => {
 	if (!values || values.length === 0) return []
 	const out = new Set<string>()
 	for (const value of values) {
@@ -13,7 +13,7 @@ export const toUniqueNonEmptyValues = (values: Array<string> | null | undefined)
 	return Array.from(out)
 }
 
-export const computeWeightedGroups = (values: Array<string> | null | undefined): WeightedGroup[] => {
+export const computeWeightedGroups = (values: Array<string> | null | undefined): Array<WeightedGroup> => {
 	const groups = toUniqueNonEmptyValues(values)
 	if (groups.length === 0) return []
 	const weight = 1 / groups.length

@@ -1,7 +1,7 @@
 import { purgeCloudflareResearchUrls, type CloudflarePurgeResult } from '~/server/cloudflarePurge'
 
 export type ScheduledResearchCacheUpdate = {
-	purgePaths: string[]
+	purgePaths: Array<string>
 	status: 'scheduled'
 }
 
@@ -10,7 +10,7 @@ type ResearchCacheOptions = {
 }
 
 export async function purgeResearchCaches(
-	purgePaths: string[],
+	purgePaths: Array<string>,
 	{ logger = console }: ResearchCacheOptions = {}
 ): Promise<CloudflarePurgeResult> {
 	const cloudflare = await purgeCloudflareResearchUrls(purgePaths)
@@ -21,7 +21,7 @@ export async function purgeResearchCaches(
 }
 
 export function scheduleResearchCachePurge(
-	purgePaths: string[],
+	purgePaths: Array<string>,
 	{ logger = console }: ResearchCacheOptions = {}
 ): ScheduledResearchCacheUpdate {
 	purgeResearchCaches(purgePaths, { logger }).catch((error) => {

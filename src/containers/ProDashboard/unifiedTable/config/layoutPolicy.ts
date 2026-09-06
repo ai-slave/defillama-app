@@ -6,19 +6,19 @@ export const DEFAULT_UNIFIED_TABLE_SORTING: UnifiedTableSorting = [{ id: 'tvl', 
 export const DEFAULT_UNIFIED_TABLE_ROW_HEADERS = [
 	'parent-protocol',
 	'protocol'
-] as const satisfies readonly UnifiedRowHeaderType[]
+] as const satisfies ReadonlyArray<UnifiedRowHeaderType>
 
 const UNIFIED_TABLE_ROW_HEADERS = [
 	'chain',
 	'category',
 	'parent-protocol',
 	'protocol'
-] as const satisfies readonly UnifiedRowHeaderType[]
+] as const satisfies ReadonlyArray<UnifiedRowHeaderType>
 
 export function sanitizeUnifiedTableRowHeaders(
-	rowHeaders: readonly UnifiedRowHeaderType[] | undefined
-): UnifiedRowHeaderType[] {
-	const unique: UnifiedRowHeaderType[] = []
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType> | undefined
+): Array<UnifiedRowHeaderType> {
+	const unique: Array<UnifiedRowHeaderType> = []
 	const provided = rowHeaders?.length ? rowHeaders : DEFAULT_UNIFIED_TABLE_ROW_HEADERS
 
 	for (const header of provided) {
@@ -41,7 +41,7 @@ export function sanitizeUnifiedTableRowHeaders(
 }
 
 export function createUnifiedTableColumnVisibility(
-	columnOrder: readonly string[],
+	columnOrder: ReadonlyArray<string>,
 	customColumns: ReadonlyArray<{ id: string }>,
 	columnVisibility?: Readonly<Record<string, boolean>>
 ): Record<string, boolean> {
@@ -59,7 +59,7 @@ export function normalizeUnifiedTableSorting(
 }
 
 export function applyUnifiedTableRowHeaderVisibility(
-	rowHeaders: readonly UnifiedRowHeaderType[],
+	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	baseVisibility: Readonly<Record<string, boolean>>
 ): Record<string, boolean> {
 	const visibility = { ...baseVisibility }

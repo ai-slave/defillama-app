@@ -33,10 +33,10 @@ export type LSTHistoryRow = { date: number } & Record<string, number>
 
 /** Props for the LSTOverview component */
 export interface LSTOverviewProps {
-	areaChartData: LSTHistoryRow[]
+	areaChartData: Array<LSTHistoryRow>
 	pieSeries: RuntimePieChartData
-	tokensList: ILSTTokenRow[]
-	tokens: string[]
+	tokensList: Array<ILSTTokenRow>
+	tokens: Array<string>
 	stakedEthSum: number
 	stakedEthInUsdSum: number | null
 	lsdColors: Record<string, string>

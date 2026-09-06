@@ -2,7 +2,7 @@ export interface ICex {
 	name: string
 	cexProtocolSlug?: string
 	exchangeProfileSlug?: string
-	tokensToExclude: string[]
+	tokensToExclude: Array<string>
 	coin?: string
 	coinSymbol?: string
 	walletsLink?: string
@@ -24,5 +24,5 @@ export interface ICex {
 
 export interface CexInflowsRequest {
 	cexProtocolSlug: string
-	tokensToExclude: string[]
+	tokensToExclude: Array<string>
 }

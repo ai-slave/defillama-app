@@ -1,6 +1,6 @@
 import { toDisplayName } from '~/utils/chainNormalizer'
-import type { UnversionedUnifiedTableConfig } from '../persisted'
 import type {
+	UnversionedUnifiedTableConfig,
 	PersistedProtocolMetricDatasetFilters,
 	PersistedProtocolMetricDatasetTableConfig,
 	PersistedProtocolMetricDatasetType
@@ -30,8 +30,8 @@ export function isPersistedProtocolMetricDatasetTable(config: {
 	return isPersistedProtocolMetricDatasetType(config.datasetType)
 }
 
-function normalizeList(values: readonly string[]): string[] {
-	const normalized: string[] = []
+function normalizeList(values: ReadonlyArray<string>): Array<string> {
+	const normalized: Array<string> = []
 	const seen = new Set<string>()
 	for (const value of values) {
 		const trimmed = value.trim()
@@ -43,8 +43,8 @@ function normalizeList(values: readonly string[]): string[] {
 	return normalized
 }
 
-function normalizeChains(values: readonly string[]): string[] {
-	const normalized: string[] = []
+function normalizeChains(values: ReadonlyArray<string>): Array<string> {
+	const normalized: Array<string> = []
 	const seen = new Set<string>()
 	for (const value of values) {
 		const trimmed = value.trim()
@@ -62,7 +62,7 @@ function normalizeChains(values: readonly string[]): string[] {
 interface ProtocolMetricDatasetTableMigrationInput {
 	id: string
 	datasetType: PersistedProtocolMetricDatasetType
-	chains?: readonly string[]
+	chains?: ReadonlyArray<string>
 	filters?: PersistedProtocolMetricDatasetFilters
 	colSpan?: UnversionedUnifiedTableConfig['colSpan']
 }
@@ -84,12 +84,12 @@ export function migrateProtocolMetricDatasetTable(
 		id: config.id,
 		kind: 'unified-table',
 		rowHeaders: ['parent-protocol', 'protocol'],
-		...(chains.length ? { params: { chains } } : {}),
-		...(categories.length || excludedCategories.length
+		...(chains.length > 0 ? { params: { chains } } : {}),
+		...(categories.length > 0 || excludedCategories.length > 0
 			? {
 					filters: {
-						...(categories.length ? { categories } : {}),
-						...(excludedCategories.length ? { excludedCategories } : {})
+						...(categories.length > 0 ? { categories } : {}),
+						...(excludedCategories.length > 0 ? { excludedCategories } : {})
 					}
 				}
 			: {}),

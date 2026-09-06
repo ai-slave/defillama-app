@@ -2,12 +2,12 @@
 
 import { act, createElement, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { RWA_FILTERS_TEST_UTILS, RWAOverviewFilters } from '../Filters'
 import { useRWATableQueryParams } from '../hooks'
 
 const routerMock = vi.hoisted(() => ({
-	query: {} as Record<string, string | string[] | undefined>,
+	query: {} as Record<string, string | Array<string> | undefined>,
 	push: vi.fn()
 }))
 
@@ -117,7 +117,7 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 }
 
 describe('RWA overview filter dialog helpers', () => {
-	it('marks non-all default select filters active on a clean page', () => {
+	test('marks non-all default select filters active on a clean page', () => {
 		const props = makeProps()
 		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
 		const definitions = RWA_FILTERS_TEST_UTILS.getRwaFilterDefinitions(props as any)
@@ -127,7 +127,7 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(definitions.filter((definition) => definition.kind === 'select').length).toBeGreaterThan(0)
 	})
 
-	it('serializes a removed default select filter as all values', () => {
+	test('serializes a removed default select filter as all values', () => {
 		const props = makeProps()
 		const definitions = RWA_FILTERS_TEST_UTILS.getRwaFilterDefinitions(props as any)
 		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
@@ -139,7 +139,7 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(updates.excludeTypes).toBeUndefined()
 	})
 
-	it('marks changed select filters active and serializes them with the shared include/exclude rules', () => {
+	test('marks changed select filters active and serializes them with the shared include/exclude rules', () => {
 		const props = makeProps({
 			selections: {
 				selectedPlatforms: ['Ondo', 'Maple']
@@ -154,7 +154,7 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(updates.excludePlatforms).toBe('Centrifuge')
 	})
 
-	it('seeds a newly added select filter with current values instead of an empty None selection', () => {
+	test('seeds a newly added select filter with current values instead of an empty None selection', () => {
 		const props = makeProps()
 		const definitions = RWA_FILTERS_TEST_UTILS.getRwaFilterDefinitions(props as any)
 		const draft = RWA_FILTERS_TEST_UTILS.createRwaFilterDraft(props as any)
@@ -169,7 +169,7 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(updates.excludePlatforms).toBeUndefined()
 	})
 
-	it('does not serialize None for a Types filter whose default selection is empty', () => {
+	test('does not serialize None for a Types filter whose default selection is empty', () => {
 		const props = makeProps({
 			modes: {
 				mode: 'category',
@@ -199,7 +199,7 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(updates.excludeTypes).toBeUndefined()
 	})
 
-	it('keeps reset enabled for hidden filter, chart, and flow params', () => {
+	test('keeps reset enabled for hidden filter, chart, and flow params', () => {
 		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ types: 'Asset' })).toBe(true)
 		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ chartView: 'treemap' })).toBe(true)
 		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({ timeSeriesChartBreakdown: 'total' })).toBe(true)
@@ -217,7 +217,7 @@ describe('RWA overview filter dialog helpers', () => {
 		expect(RWA_FILTERS_TEST_UTILS.hasResettableRwaQueryParam({})).toBe(false)
 	})
 
-	it('does not render an active pill for an empty or stale exclude query', () => {
+	test('does not render an active pill for an empty or stale exclude query', () => {
 		const props = makeProps()
 		const router = { query: { excludePlatforms: 'Bogus' } }
 		const pills = RWA_FILTERS_TEST_UTILS.getRwaActiveFilterPills(props as any, router as any)
@@ -276,7 +276,7 @@ describe('RWA overview inclusion controls', () => {
 		container.remove()
 	})
 
-	it('reveals CEX only with perps and clears its selection when perps are switched off', async () => {
+	test('reveals CEX only with perps and clears its selection when perps are switched off', async () => {
 		await render()
 		expect(checkbox('includeCex')).toBeNull()
 		await click('includeRwaPerps')
@@ -291,7 +291,7 @@ describe('RWA overview inclusion controls', () => {
 		expect(checkbox('includeCex')!.checked).toBe(false)
 	})
 
-	it('restores inclusion from the URL and lets Reset filters clear both boxes', async () => {
+	test('restores inclusion from the URL and lets Reset filters clear both boxes', async () => {
 		routerMock.query = { includeRwaPerps: 'true', includeCex: 'true' }
 		await render()
 		expect(checkbox('includeRwaPerps')!.checked).toBe(true)
@@ -306,7 +306,7 @@ describe('RWA overview inclusion controls', () => {
 		expect(checkbox('includeCex')).toBeNull()
 	})
 
-	it('follows back/forward query changes without retaining a stale CEX selection', async () => {
+	test('follows back/forward query changes without retaining a stale CEX selection', async () => {
 		await render()
 		routerMock.query = { includeRwaPerps: 'true', includeCex: 'true' }
 		await render()

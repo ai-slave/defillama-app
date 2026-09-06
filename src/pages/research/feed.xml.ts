@@ -8,8 +8,12 @@ const HYDRATION_CONCURRENCY = 6
 
 function ResearchFeed() {}
 
-async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
-	const results: R[] = new Array(items.length)
+async function mapWithConcurrency<T, R>(
+	items: Array<T>,
+	limit: number,
+	fn: (item: T) => Promise<R>
+): Promise<Array<R>> {
+	const results: Array<R> = new Array(items.length)
 	let cursor = 0
 	const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
 		while (cursor < items.length) {
@@ -21,7 +25,7 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T)
 	return results
 }
 
-async function loadFeedArticles(): Promise<ArticleDocument[]> {
+async function loadFeedArticles(): Promise<Array<ArticleDocument>> {
 	const list = await listArticles({ sort: 'newest', limit: RESEARCH_FEED_ITEM_COUNT })
 	return mapWithConcurrency(list.items, HYDRATION_CONCURRENCY, async (item) => {
 		try {
@@ -34,7 +38,7 @@ async function loadFeedArticles(): Promise<ArticleDocument[]> {
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ res }) => {
-	let articles: ArticleDocument[] = []
+	let articles: Array<ArticleDocument> = []
 
 	try {
 		articles = await loadFeedArticles()

@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
-import { type ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
+import type { ChartOptionsMap } from '~/containers/Downloads/chart-datasets'
 import {
 	defaultPresetName,
 	extractQueryConfig,
@@ -129,7 +129,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 	const registryTables = registry.tables
 
 	const applyQuery = useCallback(
-		async (taskId: string, title: string, nextSql: string, tables?: TableSource[], overwriteName?: boolean) => {
+		async (taskId: string, title: string, nextSql: string, tables?: Array<TableSource>, overwriteName?: boolean) => {
 			if (running || savePending || busyTaskId) return
 			setSql(nextSql)
 			setName((prev) => (overwriteName ? title : prev.trim() ? prev : title))

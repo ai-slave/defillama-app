@@ -42,16 +42,16 @@ interface YieldsChartTabProps {
 	) => void
 	selectedYieldChartType: string
 	onSelectedYieldChartTypeChange: (chartType: string) => void
-	selectedYieldChains: string[]
-	selectedYieldProjects: string[]
-	selectedYieldCategories: string[]
-	selectedYieldTokens: string[]
+	selectedYieldChains: Array<string>
+	selectedYieldProjects: Array<string>
+	selectedYieldCategories: Array<string>
+	selectedYieldTokens: Array<string>
 	minTvl: number | null
 	maxTvl: number | null
-	onSelectedYieldChainsChange: (chains: string[]) => void
-	onSelectedYieldProjectsChange: (projects: string[]) => void
-	onSelectedYieldCategoriesChange: (categories: string[]) => void
-	onSelectedYieldTokensChange: (tokens: string[]) => void
+	onSelectedYieldChainsChange: (chains: Array<string>) => void
+	onSelectedYieldProjectsChange: (projects: Array<string>) => void
+	onSelectedYieldCategoriesChange: (categories: Array<string>) => void
+	onSelectedYieldTokensChange: (tokens: Array<string>) => void
 	onMinTvlChange: (tvl: number | null) => void
 	onMaxTvlChange: (tvl: number | null) => void
 }
@@ -114,7 +114,7 @@ const yieldsChartUiReducer = (state: YieldsChartUiState, action: YieldsChartUiAc
 	}
 }
 
-const EMPTY_YIELDS_DATA: ProYieldRow[] = []
+const EMPTY_YIELDS_DATA: Array<ProYieldRow> = []
 
 export function YieldsChartTab({
 	selectedYieldPool,
@@ -475,7 +475,7 @@ export function YieldsChartTab({
 							<Popover
 								store={chainPopover}
 								modal={false}
-								portal={true}
+								portal
 								gutter={4}
 								flip={false}
 								className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-xl"
@@ -585,7 +585,7 @@ export function YieldsChartTab({
 							<Popover
 								store={projectPopover}
 								modal={false}
-								portal={true}
+								portal
 								gutter={4}
 								flip={false}
 								className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-xl"
@@ -695,7 +695,7 @@ export function YieldsChartTab({
 							<Popover
 								store={tokenPopover}
 								modal={false}
-								portal={true}
+								portal
 								gutter={4}
 								flip={false}
 								className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-xl"

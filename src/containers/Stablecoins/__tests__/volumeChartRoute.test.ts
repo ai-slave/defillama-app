@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const { fetchGlobalMock, fetchChainMock, fetchTokenMock } = vi.hoisted(() => ({
@@ -35,8 +35,8 @@ vi.mock('~/containers/Stablecoins/api', async (importOriginal) => {
 import handler from '~/pages/api/public/stablecoins/volume-chart'
 
 const volumeData = [
-	[1609459200, 100],
-	[1609545600, 125]
+	[1_609_459_200, 100],
+	[1_609_545_600, 125]
 ]
 
 beforeEach(() => {
@@ -47,7 +47,7 @@ beforeEach(() => {
 })
 
 describe('/api/public/stablecoins/volume-chart', () => {
-	it('uses global volume fetchers', async () => {
+	test('uses global volume fetchers', async () => {
 		const req = { method: 'GET', query: { scope: 'global', chart: 'token' } } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -58,10 +58,10 @@ describe('/api/public/stablecoins/volume-chart', () => {
 		expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ valueSymbol: '$' }))
 	})
 
-	it('returns every series only when a complete export requests it', async () => {
+	test('returns every series only when a complete export requests it', async () => {
 		const names = Array.from({ length: 55 }, (_, index) => `token-${index + 1}`)
 		fetchGlobalMock.mockResolvedValueOnce([
-			[1609459200, Object.fromEntries(names.map((name, index) => [name, names.length - index]))]
+			[1_609_459_200, Object.fromEntries(names.map((name, index) => [name, names.length - index]))]
 		])
 		const req = {
 			method: 'GET',
@@ -76,7 +76,7 @@ describe('/api/public/stablecoins/volume-chart', () => {
 		)
 	})
 
-	it('uses chain scoped volume fetchers', async () => {
+	test('uses chain scoped volume fetchers', async () => {
 		const req = {
 			method: 'GET',
 			query: { scope: 'chain', chain: 'zkSync Era', chart: 'currency' }
@@ -89,7 +89,7 @@ describe('/api/public/stablecoins/volume-chart', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('returns 404 for unknown chain params before fetching scoped volume data', async () => {
+	test('returns 404 for unknown chain params before fetching scoped volume data', async () => {
 		const req = {
 			method: 'GET',
 			query: { scope: 'chain', chain: 'Bad Chain', chart: 'currency' }
@@ -103,7 +103,7 @@ describe('/api/public/stablecoins/volume-chart', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'chain not found' })
 	})
 
-	it('uses token scoped volume fetchers', async () => {
+	test('uses token scoped volume fetchers', async () => {
 		const req = { method: 'GET', query: { scope: 'token', token: 'USDT', chart: 'chain' } } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -113,7 +113,7 @@ describe('/api/public/stablecoins/volume-chart', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('rejects unsupported scope and chart combinations', async () => {
+	test('rejects unsupported scope and chart combinations', async () => {
 		const res = createMockNextApiResponse()
 		await handler(
 			{
@@ -128,7 +128,7 @@ describe('/api/public/stablecoins/volume-chart', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'unsupported chain volume chart' })
 	})
 
-	it('rejects unsupported global volume charts', async () => {
+	test('rejects unsupported global volume charts', async () => {
 		const req = { method: 'GET', query: { scope: 'global', chart: 'unsupported' } } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 
@@ -139,7 +139,7 @@ describe('/api/public/stablecoins/volume-chart', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'unsupported global volume chart' })
 	})
 
-	it('rejects unsupported token volume charts', async () => {
+	test('rejects unsupported token volume charts', async () => {
 		const req = {
 			method: 'GET',
 			query: { scope: 'token', token: 'USDC', chart: 'currency' }
@@ -153,7 +153,7 @@ describe('/api/public/stablecoins/volume-chart', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'unsupported token volume chart' })
 	})
 
-	it('rejects unknown scopes', async () => {
+	test('rejects unknown scopes', async () => {
 		const req = { method: 'GET', query: { scope: 'bogus', chart: 'total' } } as unknown as NextApiRequest
 		const res = createMockNextApiResponse()
 

@@ -9,7 +9,7 @@ interface UseAutoSaveOptions {
 	dashboardId: string | null
 	dashboardName: string
 	dashboardVisibility: 'private' | 'public'
-	dashboardTags: string[]
+	dashboardTags: Array<string>
 	dashboardDescription: string
 	timePeriod: TimePeriod
 	customTimePeriod: CustomTimePeriod | null
@@ -20,17 +20,17 @@ interface UseAutoSaveOptions {
 	updateDashboard: (params: {
 		id: string
 		data: {
-			items: DashboardItemConfig[]
+			items: Array<DashboardItemConfig>
 			dashboardName: string
 			timePeriod?: TimePeriod
 			customTimePeriod?: CustomTimePeriod | null
 			visibility: 'private' | 'public'
-			tags: string[]
+			tags: Array<string>
 			description: string
 			aiGenerated?: AIGeneratedData | null
 		}
 	}) => Promise<Dashboard>
-	toPersistedDashboardItems: (items: DashboardItemConfig[]) => DashboardItemConfig[]
+	toPersistedDashboardItems: (items: Array<DashboardItemConfig>) => Array<DashboardItemConfig>
 	isFreeUser: boolean
 	mode?: 'view' | 'edit'
 	delay?: number
@@ -44,12 +44,12 @@ interface AutoSaveOverrides {
 interface PendingSaveData {
 	dashboardId: string
 	data: {
-		items: DashboardItemConfig[]
+		items: Array<DashboardItemConfig>
 		dashboardName: string
 		timePeriod?: TimePeriod
 		customTimePeriod?: CustomTimePeriod | null
 		visibility: 'private' | 'public'
-		tags: string[]
+		tags: Array<string>
 		description: string
 		aiGenerated?: AIGeneratedData | null
 	}
@@ -110,7 +110,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 		}
 	}, [])
 
-	const autoSave = useCallback((newItems: DashboardItemConfig[], overrides?: AutoSaveOverrides) => {
+	const autoSave = useCallback((newItems: Array<DashboardItemConfig>, overrides?: AutoSaveOverrides) => {
 		const {
 			dashboardId,
 			isAuthenticated,

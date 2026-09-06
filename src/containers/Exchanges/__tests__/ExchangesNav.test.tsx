@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('~/ui/Tooltip', async () => {
 	const { cloneElement } = await import('react')
@@ -54,7 +54,7 @@ const renderNav = (activePage: (typeof PAGES)[number]['id']) =>
 	renderToStaticMarkup(<ExchangesNav activePage={activePage} />)
 
 describe('Exchanges top-level navigation', () => {
-	it.each(PAGES)('marks only the $label page as current and keeps its identity stable', (page) => {
+	test.each(PAGES)('marks only the $label page as current and keeps its identity stable', (page) => {
 		const html = renderNav(page.id)
 		const currentLink = html.match(/<a[^>]*aria-current="page"[^>]*>[^<]*<\/a>/)?.[0]
 
@@ -66,7 +66,7 @@ describe('Exchanges top-level navigation', () => {
 		expect(html).toContain(`>${page.description}</p>`)
 	})
 
-	it('uses real route links and exposes descriptions only as inactive-link tooltips', () => {
+	test('uses real route links and exposes descriptions only as inactive-link tooltips', () => {
 		const selected = PAGES[0]
 		const html = renderNav(selected.id)
 
@@ -85,7 +85,7 @@ describe('Exchanges top-level navigation', () => {
 		expect(html).not.toContain('role="tablist"')
 	})
 
-	it('preserves country only between country-aware pages', () => {
+	test('preserves country only between country-aware pages', () => {
 		const html = renderToStaticMarkup(<ExchangesNav activePage="exchanges" country="DE" />)
 
 		expect(html).toContain('href="/exchanges?country=de"')

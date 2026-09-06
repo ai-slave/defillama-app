@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { ClaimTokenProfile } from '../ClaimTokenProfile'
 import { resolveRequestedProjectId } from '../navigation'
 
@@ -37,14 +37,14 @@ function renderClaim(props: Parameters<typeof ClaimTokenProfile>[0]) {
 }
 
 describe('ClaimTokenProfile', () => {
-	it('resolves claim links by Arctic id, CoinGecko id, name, or ticker', () => {
+	test('resolves claim links by Arctic id, CoinGecko id, name, or ticker', () => {
 		expect(resolveRequestedProjectId(projects, 'ethereum')).toBe(projects[0].arcticId)
 		expect(resolveRequestedProjectId(projects, 'ETH')).toBe(projects[0].arcticId)
 		expect(resolveRequestedProjectId(projects, 'project-pre')).toBe('project-pre')
 		expect(resolveRequestedProjectId(projects, 'missing')).toBeNull()
 	})
 
-	it('renders live project options and disclosure coverage', () => {
+	test('renders live project options and disclosure coverage', () => {
 		const html = renderClaim({
 			projects,
 			exchangeOptions: [
@@ -72,14 +72,14 @@ describe('ClaimTokenProfile', () => {
 		expect(html).not.toContain('Selini')
 	})
 
-	it('renders an unavailable state without falling back to mock tokens', () => {
+	test('renders an unavailable state without falling back to mock tokens', () => {
 		const html = renderClaim({ projects: [] })
 
 		expect(html).toContain('Token list unavailable')
 		expect(html).not.toContain('Abeezee (ABC)')
 	})
 
-	it('uses the Forgd reference language for the join variant', () => {
+	test('uses the Forgd reference language for the join variant', () => {
 		const html = renderClaim({ variant: 'join' })
 
 		expect(html).toContain('Join the Universal Token Rating profile')

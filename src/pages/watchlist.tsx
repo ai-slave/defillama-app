@@ -56,7 +56,7 @@ export default function Portfolio({
 		<Layout
 			title="Watchlist - Track DeFi Protocols, Chains & Tokens - DefiLlama"
 			description="Create your personalized DeFi watchlist to track favorite protocols, chains, and tokens. Monitor TVL changes, APY rates, price movements, and the markets your tokens trade on in one dashboard."
-			canonicalUrl={`/watchlist`}
+			canonicalUrl="/watchlist"
 			tvlOptions={isTokensTab ? undefined : tvlOptions}
 		>
 			{isTokensTab ? (

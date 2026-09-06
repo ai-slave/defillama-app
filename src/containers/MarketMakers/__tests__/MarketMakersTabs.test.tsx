@@ -1,12 +1,12 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ asPath: '/market-makers', push: () => {} }) }))
 
 import { MarketMakersTabs } from '../MarketMakersTabs'
 
 describe('MarketMakersTabs', () => {
-	it('renders all six section links inline (no Others dropdown) with the active one marked', () => {
+	test('renders all six section links inline (no Others dropdown) with the active one marked', () => {
 		const html = renderToStaticMarkup(<MarketMakersTabs active="Volume" />)
 		expect(html).toContain('Performance Index')
 		expect(html).toContain('KPI Adherence')

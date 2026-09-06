@@ -82,7 +82,7 @@ export default function UnlocksTreemapChart({ unlocksData, height = '600px', fil
 					const pathNames = (info.treePathInfo ?? []).flatMap((item) => (item.name ? [item.name] : [])).slice(0, -1)
 
 					let pathDisplay = pathNames.join(' > ')
-					if (timeView === 'Month' && !pathNames.length) {
+					if (timeView === 'Month' && pathNames.length === 0) {
 						pathDisplay = ''
 					} else if (pathDisplay) {
 						pathDisplay += ' > '

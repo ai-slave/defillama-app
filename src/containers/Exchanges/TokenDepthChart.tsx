@@ -33,8 +33,8 @@ export type TokenDepthPair = ExchangePairModel & { venue?: string | null; venueS
  * One entry per venue: all of its USD perp books for the token, added band by band,
  * with the measured book — and only that book — discounted by its own fills.
  */
-export function tokenDepthVenues(pairs: TokenDepthPair[], slippage: VenueSlippage = {}): DepthCurveVenue[] {
-	const byVenue = new Map<string, { name: string; ladders: ExchangeDepthLadder[] }>()
+export function tokenDepthVenues(pairs: Array<TokenDepthPair>, slippage: VenueSlippage = {}): Array<DepthCurveVenue> {
+	const byVenue = new Map<string, { name: string; ladders: Array<ExchangeDepthLadder> }>()
 	for (const pair of pairs) {
 		if (!pair.depthLadder?.length) continue
 		const slug = pair.venueSlug ?? pair.venue
@@ -70,7 +70,7 @@ export function TokenDepthChart({
 	symbol
 }: {
 	/** Every USD perp market for the token, regardless of the table's current tabs. */
-	pairs: TokenDepthPair[]
+	pairs: Array<TokenDepthPair>
 	/** Venues and the exact market symbol whose fills discount that venue's book. */
 	slippage?: VenueSlippage
 	symbol: string

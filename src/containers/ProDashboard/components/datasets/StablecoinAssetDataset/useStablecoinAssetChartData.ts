@@ -40,15 +40,15 @@ type StablecoinAssetPresentation =
 	| {
 			chartType: 'chainMcaps' | 'chainDominance'
 			dataset: MultiSeriesChartDataset
-			charts: MultiSeriesChartSeriesConfig[]
-			availableSeries: string[]
+			charts: Array<MultiSeriesChartSeriesConfig>
+			availableSeries: Array<string>
 			totalCirculating: number | null
 	  }
 	| { chartType: 'chainPie'; pieSeries: RuntimePieChartData; totalCirculating: number | null }
 
 interface UseStablecoinAssetChartDataResult {
 	presentation: StablecoinAssetPresentation
-	chainsUnique: string[]
+	chainsUnique: Array<string>
 	stablecoinName: string
 	stablecoinSymbol: string
 	isInactive: boolean
@@ -294,7 +294,7 @@ export function useStablecoinAssetsList() {
 			const data = authToken
 				? await fetchProDashboardProxy('stablecoinsList', {}, authToken)
 				: await fetchStablecoinAssetsApi()
-			const assets: StablecoinAssetInfo[] = []
+			const assets: Array<StablecoinAssetInfo> = []
 			for (const asset of data.peggedAssets) {
 				const mcap = sumStablecoinPegBalances(asset.circulating)
 				const isInactive = isInactiveStablecoin(asset)

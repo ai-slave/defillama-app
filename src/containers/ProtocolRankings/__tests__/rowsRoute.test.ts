@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import type { IProtocol } from '../types'
 
 const mocks = vi.hoisted(() => ({ loadProtocolRankingSnapshot: vi.fn() }))
@@ -9,7 +9,7 @@ vi.mock('~/utils/telemetry', () => ({
 
 import handler from '~/pages/api/dynamic/protocol-rankings/rows'
 
-function row(name: string, children?: string[]): IProtocol {
+function row(name: string, children?: Array<string>): IProtocol {
 	return {
 		id: name,
 		name,
@@ -53,30 +53,30 @@ function call(body: unknown, method = 'POST') {
 }
 
 describe('protocol rankings rows route', () => {
-	it('returns rows for watched parent names and parents of watched children', async () => {
+	test('returns rows for watched parent names and parents of watched children', async () => {
 		const res = await call({ names: ['Lido', 'Uniswap V2'] })
 
 		expect(res.statusCode).toBe(200)
-		const { rows, snapshot: version } = res.payload as { rows: IProtocol[]; snapshot: string }
+		const { rows, snapshot: version } = res.payload as { rows: Array<IProtocol>; snapshot: string }
 		expect(rows.map((item) => item.name)).toEqual(['Lido', 'Uniswap Labs'])
 		expect(version).toBe(snapshot.snapshot)
 		expect(res.headers['Cache-Control']).toBe('no-store')
 	})
 
-	it('returns an empty set for an empty watchlist without filtering', async () => {
+	test('returns an empty set for an empty watchlist without filtering', async () => {
 		const res = await call({ names: [] })
 		expect(res.statusCode).toBe(200)
-		expect((res.payload as { rows: IProtocol[] }).rows).toEqual([])
+		expect((res.payload as { rows: Array<IProtocol> }).rows).toEqual([])
 	})
 
-	it('rejects malformed bodies and oversized name lists', async () => {
+	test('rejects malformed bodies and oversized name lists', async () => {
 		expect((await call({})).statusCode).toBe(400)
 		expect((await call({ names: 'Lido' })).statusCode).toBe(400)
 		expect((await call({ names: [1, 2] })).statusCode).toBe(400)
 		expect((await call({ names: Array.from({ length: 501 }, (_, index) => `p${index}`) })).statusCode).toBe(400)
 	})
 
-	it('rejects non-POST methods', async () => {
+	test('rejects non-POST methods', async () => {
 		const res = await call({ names: ['Lido'] }, 'GET')
 		expect(res.statusCode).toBe(405)
 		expect(res.headers.Allow).toBe('POST')

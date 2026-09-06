@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { selectDepthBucket, toBoardRows } from '../shape'
 
 describe('toBoardRows', () => {
-	it('lifts identity fields and groups metric triples', () => {
+	test('lifts identity fields and groups metric triples', () => {
 		const rows = toBoardRows([
 			{
 				marketMakerId: 'flowdesk',
@@ -26,10 +26,10 @@ describe('selectDepthBucket', () => {
 		depth100: [],
 		depth200: []
 	}
-	it('selects the 0.5% bucket', () => {
+	test('selects the 0.5% bucket', () => {
 		expect(selectDepthBucket(payload, '0.5%')[0].marketMakerId).toBe('a')
 	})
-	it('returns an empty array for an empty bucket', () => {
+	test('returns an empty array for an empty bucket', () => {
 		expect(selectDepthBucket(payload, '1%')).toEqual([])
 	})
 })

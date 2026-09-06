@@ -119,7 +119,7 @@ function ChartRenderer({
 		return <p className="flex flex-1 items-center justify-center text-pro-text-form">No data available</p>
 	}
 
-	const todayHallmarks: [number, string][] | undefined =
+	const todayHallmarks: Array<[number, string]> | undefined =
 		type === 'unlocks' ? [[todayTimestamp, formatUnlockDate(todayTimestamp)]] : undefined
 
 	return (
@@ -140,7 +140,7 @@ function ChartRenderer({
 	)
 }
 
-const groupingOptions: DashboardGrouping[] = ['day', 'week', 'month', 'quarter', 'year']
+const groupingOptions: Array<DashboardGrouping> = ['day', 'week', 'month', 'quarter', 'year']
 
 export function ChartCard({ chart }: ChartCardProps) {
 	const { getChainInfo, getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()

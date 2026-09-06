@@ -10,33 +10,33 @@ export interface ITokenRightsParsedAddress {
 }
 
 export interface ITokenRightsTokenDisplay {
-	displayTokens: string[]
+	displayTokens: Array<string>
 	fallbackToken: string
 }
 
 interface ITokenRightsTokenDetails extends ITokenRightsTokenDisplay {
-	tokens: string[]
+	tokens: Array<string>
 	details: string | null
 }
 
 interface ITokenRightsOverview {
 	protocolName: string
-	tokens: string[]
-	identityTokens: string[]
-	tokenTypes: string[]
+	tokens: Array<string>
+	identityTokens: Array<string>
+	tokenTypes: Array<string>
 	description: string
 	utility: string | null
-	utilityItems: string[]
+	utilityItems: Array<string>
 	lastUpdated: string | null
 	lastUpdatedLabel: string | null
 }
 
 interface ITokenRightsGovernance {
 	summary: string
-	decisionTokens: string[]
+	decisionTokens: Array<string>
 	decisionTokenDisplay: ITokenRightsTokenDisplay
 	details: string | null
-	links: ITokenRightsParsedLink[]
+	links: Array<ITokenRightsParsedLink>
 }
 
 interface ITokenRightsDecisions {
@@ -48,7 +48,7 @@ interface ITokenRightsEconomic {
 	summary: string | null
 	feeSwitchStatus: string
 	feeSwitchDetails: string | null
-	links: ITokenRightsParsedLink[]
+	links: Array<ITokenRightsParsedLink>
 }
 
 interface ITokenRightsValueAccrual {
@@ -60,20 +60,20 @@ interface ITokenRightsValueAccrual {
 }
 
 interface ITokenRightsAlignment {
-	fundraising: string[]
+	fundraising: Array<string>
 	fundraisingLabel: string | null
 	raiseDetails: string | null
-	associatedEntities: string[]
+	associatedEntities: Array<string>
 	equityRevenueCapture: string | null
 	equityStatement: string | null
 	ipAndBrand: string | null
 	domain: string | null
-	links: ITokenRightsParsedLink[]
+	links: Array<ITokenRightsParsedLink>
 }
 
 interface ITokenRightsResources {
-	addresses: ITokenRightsParsedAddress[]
-	reports: ITokenRightsParsedLink[]
+	addresses: Array<ITokenRightsParsedAddress>
+	reports: Array<ITokenRightsParsedLink>
 }
 
 export interface ITokenRightsData {

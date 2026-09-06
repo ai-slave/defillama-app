@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildAaveApyDataset, formatAaveMarkets, type AaveMarket, type AaveReserve } from './api'
 
 function reserve(overrides: Partial<AaveReserve> = {}): AaveReserve {
@@ -38,8 +38,8 @@ function reserve(overrides: Partial<AaveReserve> = {}): AaveReserve {
 }
 
 describe('Aave dashboard data contracts', () => {
-	it('formats API reserves and filters insignificant markets', () => {
-		const markets: AaveMarket[] = [
+	test('formats API reserves and filters insignificant markets', () => {
+		const markets: Array<AaveMarket> = [
 			{
 				name: 'Core',
 				address: '0xmarket',
@@ -72,7 +72,7 @@ describe('Aave dashboard data contracts', () => {
 		])
 	})
 
-	it('converts newest-first APY samples to an ascending, named dataset', () => {
+	test('converts newest-first APY samples to an ascending, named dataset', () => {
 		const samples = [
 			{ date: '2026-01-02T00:00:00Z', avgRate: { value: '0.04' } },
 			{ date: '2026-01-01T00:00:00Z', avgRate: { value: '0.03' } }

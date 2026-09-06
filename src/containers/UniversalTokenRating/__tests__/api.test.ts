@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { ApiRequest } from '~/server/api/types'
 import { createUtrLeaderboardApi } from '../api'
 import type { UtrLeaderboardApiRow, UtrLeaderboardResponse } from '../types'
@@ -67,7 +67,7 @@ afterEach(() => {
 })
 
 describe('UTR leaderboard API', () => {
-	it('fails closed when the inbound API key is not configured', async () => {
+	test('fails closed when the inbound API key is not configured', async () => {
 		const fetchLeaderboard = vi.fn(async () => leaderboard)
 		const result = await createUtrLeaderboardApi(fetchLeaderboard).handle(request())
 
@@ -75,7 +75,7 @@ describe('UTR leaderboard API', () => {
 		expect(fetchLeaderboard).not.toHaveBeenCalled()
 	})
 
-	it('rejects missing and incorrect bearer credentials before loading data', async () => {
+	test('rejects missing and incorrect bearer credentials before loading data', async () => {
 		vi.stubEnv('UTR_LEADERBOARD_API_KEY', 'utr_test_secret')
 		const fetchLeaderboard = vi.fn(async () => leaderboard)
 		const route = createUtrLeaderboardApi(fetchLeaderboard)
@@ -85,7 +85,7 @@ describe('UTR leaderboard API', () => {
 		expect(fetchLeaderboard).not.toHaveBeenCalled()
 	})
 
-	it('returns the normalized rows shown by the leaderboard table', async () => {
+	test('returns the normalized rows shown by the leaderboard table', async () => {
 		vi.stubEnv('UTR_LEADERBOARD_API_KEY', 'utr_test_secret')
 		const result = await createUtrLeaderboardApi(async () => leaderboard).handle(request('Bearer utr_test_secret'))
 
@@ -122,7 +122,7 @@ describe('UTR leaderboard API', () => {
 		expect(JSON.stringify(result.body)).not.toContain('iconDataUrl')
 	})
 
-	it('returns 502 instead of an empty leaderboard when Forgd fails', async () => {
+	test('returns 502 instead of an empty leaderboard when Forgd fails', async () => {
 		vi.stubEnv('UTR_LEADERBOARD_API_KEY', 'utr_test_secret')
 		const result = await createUtrLeaderboardApi(async () => {
 			throw new Error('Forgd unavailable')

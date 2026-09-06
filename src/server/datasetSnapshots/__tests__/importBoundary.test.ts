@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { parseSync } from 'oxc-parser'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { type AstNode, identifierName, isNode, walkAst, lineOf } from '../../../../scripts/lib/oxcAst'
 import { collectSourceFiles } from '../../../../scripts/lib/sourceFiles'
 
@@ -44,7 +44,7 @@ function isPageFile(filePath: string): boolean {
 
 const FUNCTION_NODE_TYPES = new Set(['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'])
 
-function isInsideFunction(ancestors: readonly AstNode[]): boolean {
+function isInsideFunction(ancestors: ReadonlyArray<AstNode>): boolean {
 	return ancestors.some((node) => FUNCTION_NODE_TYPES.has(node.type))
 }
 
@@ -70,7 +70,7 @@ function collectPageDataHandlerNames(program: AstNode): Set<string> {
 	walkAst(program, (node) => {
 		if (node.type !== 'ExportNamedDeclaration' || !isNode(node.declaration)) return
 		if (node.declaration.type !== 'VariableDeclaration') return
-		for (const declaration of node.declaration.declarations as AstNode[]) {
+		for (const declaration of node.declaration.declarations as Array<AstNode>) {
 			const name = identifierName(declaration.id)
 			if (!name || !PAGE_DATA_FUNCTIONS.has(name) || !isNode(declaration.init)) continue
 			const initializer = unwrapExpression(declaration.init)
@@ -80,7 +80,7 @@ function collectPageDataHandlerNames(program: AstNode): Set<string> {
 				continue
 			}
 			if (initializer.type === 'CallExpression') {
-				for (const argument of initializer.arguments as AstNode[]) {
+				for (const argument of initializer.arguments as Array<AstNode>) {
 					const argumentName = identifierName(argument)
 					if (argumentName) handlerNames.add(argumentName)
 				}
@@ -91,7 +91,7 @@ function collectPageDataHandlerNames(program: AstNode): Set<string> {
 	return handlerNames
 }
 
-function isExportedInStack(ancestors: readonly AstNode[], index: number): boolean {
+function isExportedInStack(ancestors: ReadonlyArray<AstNode>, index: number): boolean {
 	for (let i = index; i >= 0; i--) {
 		if (ancestors[i].type === 'ExportNamedDeclaration') return true
 		if (ancestors[i].type === 'VariableDeclaration') continue
@@ -101,7 +101,7 @@ function isExportedInStack(ancestors: readonly AstNode[], index: number): boolea
 	return false
 }
 
-function isInsideExportedPageDataFunction(ancestors: readonly AstNode[], handlerNames: Set<string>): boolean {
+function isInsideExportedPageDataFunction(ancestors: ReadonlyArray<AstNode>, handlerNames: Set<string>): boolean {
 	for (let i = ancestors.length - 1; i >= 0; i--) {
 		const current = ancestors[i]
 
@@ -121,8 +121,8 @@ function isInsideExportedPageDataFunction(ancestors: readonly AstNode[], handler
 }
 
 describe('dataset snapshot import boundary', () => {
-	it('keeps server snapshot imports inside page data functions and API handlers', () => {
-		const errors: string[] = []
+	test('keeps server snapshot imports inside page data functions and API handlers', () => {
+		const errors: Array<string> = []
 		const files = SCAN_ROOTS.flatMap((root) => collectSourceFiles(root, SOURCE_EXTENSIONS)).filter(isScannedFile)
 
 		for (const filePath of files) {

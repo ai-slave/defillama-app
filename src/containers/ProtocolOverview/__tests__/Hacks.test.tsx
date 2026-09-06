@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { Hack } from '../../Hacks/model'
 import { Hacks } from '../AdditionalInfo'
 
@@ -19,10 +19,10 @@ const hack = (overrides: Partial<Hack> = {}): Hack => ({
 	...overrides
 })
 
-const renderHacks = (hacks: Hack[]) => renderToStaticMarkup(<Hacks id="1599" name="Aave V3" hacks={hacks} />)
+const renderHacks = (hacks: Array<Hack>) => renderToStaticMarkup(<Hacks id="1599" name="Aave V3" hacks={hacks} />)
 
 describe('ProtocolOverview Hacks', () => {
-	it('renders measured zero while leaving unavailable values absent', () => {
+	test('renders measured zero while leaving unavailable values absent', () => {
 		const zeroMarkup = renderHacks([hack({ date: 0, amountUsd: 0, returnedFundsUsd: 0 })])
 		expect(zeroMarkup).toContain('Date:')
 		expect(zeroMarkup).toContain('Amount:')

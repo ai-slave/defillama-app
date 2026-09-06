@@ -26,10 +26,10 @@ export function useDuckDB(): UseDuckDBResult {
 				setConn(handle.conn)
 				setStatus('ready')
 			})
-			.catch((err: unknown) => {
+			.catch((initError: unknown) => {
 				if (cancelled) return
 				setStatus('error')
-				setError(err instanceof Error ? err.message : String(err))
+				setError(initError instanceof Error ? initError.message : String(initError))
 			})
 		return () => {
 			cancelled = true

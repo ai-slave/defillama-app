@@ -7,7 +7,7 @@ import { LineBarChart } from './LineBarChart'
 interface AreaChartAdapterProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 }
 

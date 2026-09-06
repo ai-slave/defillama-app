@@ -2,7 +2,7 @@
 
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { EquitiesMarketsTable, EquitiesTokensTable } from '../OnchainTables'
 import type { IEquitiesOnchainMarketRow, IEquitiesOnchainTokenRow } from '../types'
 
@@ -19,7 +19,7 @@ vi.mock('~/components/Link', () => ({
 	BasicLink: ({ children }: { children: React.ReactNode }) => <span>{children}</span>
 }))
 
-const markets: IEquitiesOnchainMarketRow[] = [100, null, 0, 10].map((value, index) => ({
+const markets: Array<IEquitiesOnchainMarketRow> = [100, null, 0, 10].map((value, index) => ({
 	pair: `market-${index}`,
 	contractSlug: `contract-${index}`,
 	price: value,
@@ -33,7 +33,7 @@ const markets: IEquitiesOnchainMarketRow[] = [100, null, 0, 10].map((value, inde
 	updatedAt: '2026-08-27T00:00:00Z'
 }))
 
-const tokens: IEquitiesOnchainTokenRow[] = [100, null, 0, 10].map((value, index) => ({
+const tokens: Array<IEquitiesOnchainTokenRow> = [100, null, 0, 10].map((value, index) => ({
 	assetSlug: `token-${index}`,
 	issuer: 'Issuer',
 	issuerRwaPlatformSlug: 'issuer',
@@ -42,7 +42,7 @@ const tokens: IEquitiesOnchainTokenRow[] = [100, null, 0, 10].map((value, index)
 	activeMarketcap: value
 }))
 
-const mixedVenueMarkets: IEquitiesOnchainMarketRow[] = ['CEX', 'DEX', 'CEX'].map((exchangeType, index) => ({
+const mixedVenueMarkets: Array<IEquitiesOnchainMarketRow> = ['CEX', 'DEX', 'CEX'].map((exchangeType, index) => ({
 	...markets[0]!,
 	pair: `${exchangeType}-${index}`,
 	exchangeType: exchangeType as IEquitiesOnchainMarketRow['exchangeType']
@@ -71,7 +71,7 @@ describe('equities onchain table sorting', () => {
 		await act(async () => button.click())
 	}
 
-	it.each(['24h Volume', 'Price', 'Open Interest', 'Funding APR'])(
+	test.each(['24h Volume', 'Price', 'Open Interest', 'Funding APR'])(
 		'keeps missing market %s last in both directions, preserving zero and negative values',
 		async (header) => {
 			await act(async () => root.render(<EquitiesMarketsTable markets={markets} ticker="NVDA" />))
@@ -93,8 +93,8 @@ describe('equities onchain table sorting', () => {
 		}
 	)
 
-	it('preserves the supplied default order and lets column sorting override it', async () => {
-		const rows: IEquitiesOnchainMarketRow[] = [
+	test('preserves the supplied default order and lets column sorting override it', async () => {
+		const rows: Array<IEquitiesOnchainMarketRow> = [
 			{ ...markets[0], pair: 'Bybit large', rwaPlatformSlug: 'bybit', volume24h: 200 },
 			{ ...markets[0], pair: 'Binance', rwaPlatformSlug: 'binance', volume24h: 300 },
 			{ ...markets[0], pair: 'Bybit small', rwaPlatformSlug: 'bybit', volume24h: 10 },
@@ -119,8 +119,8 @@ describe('equities onchain table sorting', () => {
 		expect(container.querySelector('thead svg.text-brand')).toBeNull()
 	})
 
-	it('paginates the supplied default order and sorts missing values last on demand', async () => {
-		const rows: IEquitiesOnchainMarketRow[] = [
+	test('paginates the supplied default order and sorts missing values last on demand', async () => {
+		const rows: Array<IEquitiesOnchainMarketRow> = [
 			{ ...markets[0], pair: 'Bybit', rwaPlatformSlug: 'bybit', volume24h: null },
 			...Array.from({ length: 12 }, (_, index) => ({ ...markets[0], pair: `market-${index}`, volume24h: 100 - index }))
 		]
@@ -134,7 +134,7 @@ describe('equities onchain table sorting', () => {
 		expect(rowNames()).not.toContain('Bybit')
 	})
 
-	it.each(['Active Market Cap', 'Price'])('keeps missing token %s last in both directions', async (header) => {
+	test.each(['Active Market Cap', 'Price'])('keeps missing token %s last in both directions', async (header) => {
 		await act(async () => root.render(<EquitiesTokensTable tokens={tokens} ticker="NVDA" />))
 		expect(rowNames()).toEqual(['token-0', 'token-3', 'token-2', 'token-1'])
 
@@ -170,7 +170,7 @@ describe('equities markets venue filter', () => {
 	const venueButton = (label: string) =>
 		[...container.querySelectorAll<HTMLButtonElement>('button')].find((button) => button.textContent === label)
 
-	it('shows every market with per-venue counts by default', async () => {
+	test('shows every market with per-venue counts by default', async () => {
 		await render()
 		expect(rowPairs()).toHaveLength(3)
 		expect(venueButton('All (3)')).toBeTruthy()
@@ -178,19 +178,19 @@ describe('equities markets venue filter', () => {
 		expect(venueButton('DEX (1)')).toBeTruthy()
 	})
 
-	it('filters to the venue named by the query param', async () => {
+	test('filters to the venue named by the query param', async () => {
 		routerMock.query = { marketVenue: 'dex' }
 		await render()
 		expect(rowPairs()).toEqual(['DEX-1'])
 	})
 
-	it('pushes the venue into the URL so a filtered view is shareable', async () => {
+	test('pushes the venue into the URL so a filtered view is shareable', async () => {
 		await render()
 		await act(async () => venueButton('CEX (2)')!.click())
 		expect(routerMock.push.mock.calls[0][0].query.marketVenue).toBe('cex')
 	})
 
-	it('disables a venue with no markets instead of offering an empty table', async () => {
+	test('disables a venue with no markets instead of offering an empty table', async () => {
 		await act(async () =>
 			root.render(<EquitiesMarketsTable markets={[{ ...markets[0]!, exchangeType: 'CEX' }]} ticker="NVDA" />)
 		)

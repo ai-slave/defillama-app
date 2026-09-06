@@ -5,7 +5,7 @@ import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetr
 
 const MAX_IDS = 20
 
-const getQueryParam = (value: string | string[] | undefined): string => {
+const getQueryParam = (value: string | Array<string> | undefined): string => {
 	if (Array.isArray(value)) return value[0] ?? ''
 	return value ?? ''
 }

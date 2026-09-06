@@ -39,7 +39,7 @@ export function buildLogoByCategory(x: ChartConfiguration['axes']['x']): Map<str
 			if (!map.has(label)) map.set(label, logoUrlForKey(entityType, v))
 		}
 	}
-	return map.size ? map : undefined
+	return map.size > 0 ? map : undefined
 }
 
 export const getChartColor = (seriesIndex: number): string =>

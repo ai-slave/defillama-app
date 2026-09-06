@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import type { IRWAPerpsMarket } from '../api.types'
 import { buildRWAPerpsTreemapTreeData } from '../treemap'
@@ -10,7 +10,7 @@ function defined<T>(value: T | undefined): T {
 
 const baseMarket: IRWAPerpsMarket = {
 	id: 'xyz:meta',
-	timestamp: 1775011512,
+	timestamp: 1_775_011_512,
 	contract: 'xyz:META',
 	venue: 'xyz',
 	venueType: 'DEX',
@@ -58,7 +58,7 @@ const baseMarket: IRWAPerpsMarket = {
 }
 
 describe('buildRWAPerpsTreemapTreeData', () => {
-	it('builds overview nested tree data by venue -> asset class', () => {
+	test('builds overview nested tree data by venue -> asset class', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -94,7 +94,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['Stock Perp', 'Commodity Perp'])
 	})
 
-	it('builds overview nested tree data by venue -> contract', () => {
+	test('builds overview nested tree data by venue -> contract', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -126,7 +126,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['flx:NVDA'])
 	})
 
-	it('builds a flat overview treemap without parent wrapper nodes when nested grouping is none', () => {
+	test('builds a flat overview treemap without parent wrapper nodes when nested grouping is none', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -144,7 +144,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		])
 	})
 
-	it('builds overview nested tree data by asset class -> contract', () => {
+	test('builds overview nested tree data by asset class -> contract', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -178,7 +178,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['xyz:NVDA', 'xyz:META'])
 	})
 
-	it('builds overview nested tree data by reference asset -> contract', () => {
+	test('builds overview nested tree data by reference asset -> contract', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -197,7 +197,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['xyz:META', 'flx:META'])
 	})
 
-	it('builds overview nested tree data by asset group -> base asset', () => {
+	test('builds overview nested tree data by asset group -> base asset', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -231,7 +231,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['NVIDIA', 'Meta'])
 	})
 
-	it('builds venue detail nested trees by asset class -> contract', () => {
+	test('builds venue detail nested trees by asset class -> contract', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'venue',
 			markets: [
@@ -275,7 +275,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['xyz:NVDA', 'xyz:META'])
 	})
 
-	it('builds venue detail nested trees by reference asset -> contract', () => {
+	test('builds venue detail nested trees by reference asset -> contract', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'venue',
 			markets: [
@@ -295,7 +295,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['xyz:META', 'xyz:META-2'])
 	})
 
-	it('builds venue detail nested trees by asset group -> base asset', () => {
+	test('builds venue detail nested trees by asset group -> base asset', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'venue',
 			markets: [
@@ -322,7 +322,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(defined(tree[0]).children?.map((child) => child.name)).toEqual(['Meta', 'NVIDIA'])
 	})
 
-	it('uses the asset-group page label as the asset-group detail root', () => {
+	test('uses the asset-group page label as the asset-group detail root', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'assetGroup',
 			scopeLabel: 'Equities',
@@ -335,7 +335,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		expect(tree).toEqual([expect.objectContaining({ name: 'Meta', path: 'Equities/Meta' })])
 	})
 
-	it('keeps markets metric as numeric counts in flat trees', () => {
+	test('keeps markets metric as numeric counts in flat trees', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'venue',
 			markets: [
@@ -355,7 +355,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		])
 	})
 
-	it('keeps non-positive typed metric values out of flat trees', () => {
+	test('keeps non-positive typed metric values out of flat trees', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -390,7 +390,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		])
 	})
 
-	it('builds a flat overview treemap for contract parent grouping', () => {
+	test('builds a flat overview treemap for contract parent grouping', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -422,7 +422,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		])
 	})
 
-	it('keeps a stable root label for flat base-asset treemaps', () => {
+	test('keeps a stable root label for flat base-asset treemaps', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -440,7 +440,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		])
 	})
 
-	it('keeps nested share semantics explicit in the value tuple', () => {
+	test('keeps nested share semantics explicit in the value tuple', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [
@@ -484,7 +484,7 @@ describe('buildRWAPerpsTreemapTreeData', () => {
 		})
 	})
 
-	it('uses the same fallback bucket labels as the non-treemap breakdowns', () => {
+	test('uses the same fallback bucket labels as the non-treemap breakdowns', () => {
 		const tree = buildRWAPerpsTreemapTreeData({
 			mode: 'overview',
 			markets: [

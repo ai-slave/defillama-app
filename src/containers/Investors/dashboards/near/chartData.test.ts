@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	aggregateBreakdown,
 	aggregateTimeSeries,
@@ -10,7 +10,7 @@ import {
 } from './chartData'
 
 describe('NEAR chart data', () => {
-	it('uses API series values under the configured chart dimension', () => {
+	test('uses API series values under the configured chart dimension', () => {
 		const chart = {
 			title: 'Transactions',
 			dates: ['2026-01-01', '2026-01-02'],
@@ -25,7 +25,7 @@ describe('NEAR chart data', () => {
 		})
 	})
 
-	it('groups breakdowns and referral channels deterministically', () => {
+	test('groups breakdowns and referral channels deterministically', () => {
 		const breakdown = {
 			title: 'Tokens',
 			dates: ['2026-01-01'],
@@ -54,7 +54,7 @@ describe('NEAR chart data', () => {
 		expect(lastSeriesValue({ ...breakdown, series: [{ name: 'A', data: [1, Number.NaN, 4] }] }, 'A')).toBe(4)
 	})
 
-	it('filters daily values and aggregates weekly values in seconds', () => {
+	test('filters daily values and aggregates weekly values in seconds', () => {
 		const dates = ['2026-01-05', '2026-01-06', '2026-01-12']
 		const values = [1, 2, 4]
 		expect(filterTimeSeries(dates, values, '7d')).toEqual(
@@ -66,7 +66,7 @@ describe('NEAR chart data', () => {
 		])
 	})
 
-	it('starts YTD at January 1 instead of estimating a trailing day count', () => {
+	test('starts YTD at January 1 instead of estimating a trailing day count', () => {
 		const year = new Date().getUTCFullYear()
 		expect(timeframeStartIndex([`${year - 1}-12-31`, `${year}-01-01`, `${year}-01-02`], 'ytd')).toBe(1)
 	})

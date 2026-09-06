@@ -1,4 +1,4 @@
-export const CANONICAL_TOKEN_ALIASES: Record<string, readonly string[]> = {
+export const CANONICAL_TOKEN_ALIASES: Record<string, ReadonlyArray<string>> = {
 	btc: [
 		'btc',
 		'wbtc',
@@ -64,7 +64,7 @@ const ALIAS_TO_CANONICAL = (() => {
 	return map
 })()
 
-export function getAliasGroup(symbol: string): string[] {
+export function getAliasGroup(symbol: string): Array<string> {
 	const lower = symbol.trim().toLowerCase()
 	const canonical = ALIAS_TO_CANONICAL.get(lower) ?? lower
 	const group = CANONICAL_TOKEN_ALIASES[canonical]

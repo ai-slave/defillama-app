@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const getProtocolIncomeStatementMock = vi.hoisted(() => vi.fn())
 
@@ -21,7 +21,7 @@ beforeEach(() => {
 })
 
 describe('income statement serialized response cache', () => {
-	it('isolates legacy and v2 wire shapes while sharing normalized computation', async () => {
+	test('isolates legacy and v2 wire shapes while sharing normalized computation', async () => {
 		const normalized = {
 			data: {
 				monthly: {
@@ -114,7 +114,7 @@ describe('income statement serialized response cache', () => {
 		expect(getProtocolIncomeStatementMock).toHaveBeenCalledTimes(1)
 	})
 
-	it('rejects unsupported response versions before computing data', async () => {
+	test('rejects unsupported response versions before computing data', async () => {
 		const result = await incomeStatement.handle({
 			method: 'GET',
 			url: '/api/public/income-statement?protocol=Serialized%20Cache%20Protocol&version=3',

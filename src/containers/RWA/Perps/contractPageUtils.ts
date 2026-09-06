@@ -30,7 +30,7 @@ export interface RWAPerpsContractChartMetricConfig {
 	valueSymbol?: string
 }
 
-export const RWA_PERPS_CONTRACT_CHART_METRICS: readonly RWAPerpsContractChartMetricConfig[] = [
+export const RWA_PERPS_CONTRACT_CHART_METRICS: ReadonlyArray<RWAPerpsContractChartMetricConfig> = [
 	{
 		key: 'openInterest',
 		label: d.openInterest.label,
@@ -115,7 +115,7 @@ export type MetricSectionData = {
 	label: string
 	value: string
 	tooltip?: string
-	children: MetricRowData[]
+	children: Array<MetricRowData>
 }
 
 export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContractData): {
@@ -124,7 +124,7 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 	fees: MetricSectionData
 	tradingParameters: MetricSectionData
 	marketReference: MetricSectionData
-	pointInTimeRows: MetricRowData[]
+	pointInTimeRows: Array<MetricRowData>
 } {
 	const maxLeverage = formatMaybeNumber(contractData.market.maxLeverage)
 	const pair = formatTextValue(contractData.market.pair)
@@ -270,7 +270,7 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 	}
 }
 
-export function buildRWAPerpsContractInfoRows(contractData: IRWAPerpsContractData): MetricRowData[] {
+export function buildRWAPerpsContractInfoRows(contractData: IRWAPerpsContractData): Array<MetricRowData> {
 	const marketTimestampMs = contractData.market.timestamp * 1e3
 	const baseAsset = formatTextValue(contractData.contract.baseAsset)
 	const assetClass = formatTextValue(contractData.contract.assetClass)
@@ -356,7 +356,7 @@ function getFundingHistoryMetricValue(
 
 type ChartSpec = {
 	dataset: MultiSeriesChartDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 }
 
 export function buildRWAPerpsContractChartSpec({
@@ -365,10 +365,10 @@ export function buildRWAPerpsContractChartSpec({
 	groupBy,
 	enabledMetrics
 }: {
-	marketPoints: IRWAPerpsContractMarketChartPoint[] | null
-	fundingHistory: IRWAPerpsContractFundingHistoryPoint[] | null
+	marketPoints: Array<IRWAPerpsContractMarketChartPoint> | null
+	fundingHistory: Array<IRWAPerpsContractFundingHistoryPoint> | null
 	groupBy: ChartTimeGrouping
-	enabledMetrics: RWAPerpsContractChartMetricKey[]
+	enabledMetrics: Array<RWAPerpsContractChartMetricKey>
 }): ChartSpec {
 	type FundingMetricKey = Extract<RWAPerpsContractChartMetricKey, 'fundingRate' | 'premium'>
 
@@ -377,7 +377,7 @@ export function buildRWAPerpsContractChartSpec({
 	// Maps retain the last duplicate selection, matching the prior dimension-index behavior.
 	const marketMetrics = new Map<RWAPerpsContractChartMetricKey, Array<[number, number | null]>>()
 	const fundingMetrics = new Map<FundingMetricKey, Array<[number, number | null]>>()
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 
 	for (const metricKey of enabledMetrics) {
 		const metric = RWA_PERPS_CONTRACT_CHART_METRICS.find((item) => item.key === metricKey)

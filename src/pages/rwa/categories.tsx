@@ -46,12 +46,12 @@ export default function RWACategoriesPage({
 	return (
 		<Layout
 			title="Real World Asset (RWA) by Category Dashboard & Analytics - DefiLlama"
-			description={`Explore Real World Asset (RWA) categories, high-level economic groupings that classify the type of underlying asset or financial product represented onchain.`}
+			description="Explore Real World Asset (RWA) categories, high-level economic groupings that classify the type of underlying asset or financial product represented onchain."
 			pageName={pageName}
-			canonicalUrl={`/rwa/categories`}
+			canonicalUrl="/rwa/categories"
 		>
 			<RWATabNav active="categories" />
-			<RowLinksWithDropdown links={categoryLinks} activeLink={'All'} />
+			<RowLinksWithDropdown links={categoryLinks} activeLink="All" />
 			<RWACategories categories={categories} initialChartDataset={initialChartDataset} page={{ kind: 'category' }} />
 		</Layout>
 	)

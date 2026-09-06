@@ -8,15 +8,15 @@ function reconcileStablecoinSelection({
 	defaultSeries,
 	fallbackToDefault
 }: {
-	availableSeries: readonly string[]
-	selectedSeries: readonly string[] | null
-	defaultSeries: readonly string[]
+	availableSeries: ReadonlyArray<string>
+	selectedSeries: ReadonlyArray<string> | null
+	defaultSeries: ReadonlyArray<string>
 	fallbackToDefault: boolean
 }) {
 	if (availableSeries.length === 0 || selectedSeries?.length === 0) return []
 	const available = new Set(availableSeries)
 	const preferred = selectedSeries ?? defaultSeries
-	const reconciled: string[] = []
+	const reconciled: Array<string> = []
 	const included = new Set<string>()
 	for (const name of preferred) {
 		if (!available.has(name) || included.has(name)) continue
@@ -86,7 +86,7 @@ export function useStablecoinChartSelection({
 		return rendered
 	}, [activeSeries, marketCapSeries, runtimeSeries.fixedRemainderSeries, runtimeSeries.renderedSelectableSeries])
 	const setSelectedSeries = React.useCallback(
-		(nextSelection: string[]) => {
+		(nextSelection: Array<string>) => {
 			const selected = new Set(nextSelection)
 			const selectsDefault =
 				nextSelection.length === defaultSeries.length && defaultSeries.every((name) => selected.has(name))

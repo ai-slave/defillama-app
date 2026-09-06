@@ -8,7 +8,7 @@ import { SeriesChip } from './SeriesChip'
 
 interface ChartToolbarProps {
 	config: ChartConfig
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onChange: (patch: Partial<ChartConfig>) => void
 }
 
@@ -25,8 +25,8 @@ const STACK_OPTIONS: Array<{ value: StackMode; label: string }> = [
 	{ value: 'expand', label: '100%' }
 ]
 
-const TYPES_SUPPORTING_STACK: ChartType[] = ['bar', 'hbar', 'area', 'areaStacked', 'areaPct']
-const TYPES_SUPPORTING_SPLIT: ChartType[] = ['line', 'area', 'areaStacked', 'areaPct', 'bar', 'hbar']
+const TYPES_SUPPORTING_STACK: Array<ChartType> = ['bar', 'hbar', 'area', 'areaStacked', 'areaPct']
+const TYPES_SUPPORTING_SPLIT: Array<ChartType> = ['line', 'area', 'areaStacked', 'areaPct', 'bar', 'hbar']
 
 export function ChartToolbar({ config, classified, onChange }: ChartToolbarProps) {
 	const xOptions = classified.filter(
@@ -183,7 +183,7 @@ function PickerChip({
 	value: string | null
 	hint?: string
 	onChange: (next: string) => void
-	options: string[]
+	options: Array<string>
 	optionLabel?: (v: string) => string
 }) {
 	return (
@@ -223,8 +223,8 @@ function PickerChip({
 	)
 }
 
-const DUAL_AXIS_TYPES: ChartType[] = ['line', 'bar', 'area', 'areaStacked']
-const KIND_EDIT_TYPES: ChartType[] = ['line', 'bar']
+const DUAL_AXIS_TYPES: Array<ChartType> = ['line', 'bar', 'area', 'areaStacked']
+const KIND_EDIT_TYPES: Array<ChartType> = ['line', 'bar']
 
 function YSeriesPicker({
 	yCols,
@@ -234,8 +234,8 @@ function YSeriesPicker({
 	config,
 	onChange
 }: {
-	yCols: string[]
-	available: string[]
+	yCols: Array<string>
+	available: Array<string>
 	onToggle: (name: string) => void
 	splitByActive: boolean
 	config: ChartConfig

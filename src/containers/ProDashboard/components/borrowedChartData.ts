@@ -12,8 +12,8 @@ import type { BorrowedChartType } from '../types'
 interface BorrowedChartData {
 	dataset: TimestampDataset | null
 	breakdown: ProtocolBreakdownChart | null
-	seriesNames: string[]
-	defaultSeriesNames: string[]
+	seriesNames: Array<string>
+	defaultSeriesNames: Array<string>
 	pieSeries: RuntimePieChartData
 }
 
@@ -21,7 +21,7 @@ const EMPTY_PIE_SERIES: RuntimePieChartData = { peers: [], limit: 15, upstreamOt
 
 export function buildBorrowedChartData(
 	chartType: BorrowedChartType,
-	sources: BorrowedBreakdownSource[],
+	sources: Array<BorrowedBreakdownSource>,
 	breakdowns: Array<ProtocolValueBreakdownChart | null | undefined>
 ): BorrowedChartData {
 	const chainBreakdownCharts: Array<IProtocolChainBreakdownChart | null | undefined> = []

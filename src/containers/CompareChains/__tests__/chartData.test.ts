@@ -1,15 +1,15 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildCompareChainsChartData } from '../index'
 
 describe('CompareChains chart data', () => {
-	it('keeps selected and chain order while aligning sparse second and millisecond timestamps', () => {
+	test('keeps selected and chain order while aligning sparse second and millisecond timestamps', () => {
 		const result = buildCompareChainsChartData(
 			[
 				{
 					chain: 'Ethereum',
 					tvlChart: [
-						[2_000, 20],
-						[1_000, 10]
+						[2000, 20],
+						[1000, 10]
 					],
 					dexVolumeChart: [[1, 100]],
 					chainFeesChart: null,
@@ -17,7 +17,7 @@ describe('CompareChains chart data', () => {
 				},
 				{
 					chain: 'Solana',
-					tvlChart: [[2_000, 40]],
+					tvlChart: [[2000, 40]],
 					dexVolumeChart: [[2, 200]],
 					chainFeesChart: null,
 					chainRevenueChart: null
@@ -34,8 +34,8 @@ describe('CompareChains chart data', () => {
 			'Solana - TVL'
 		])
 		expect(result.dataset.source).toEqual([
-			[1_000, 100, null, 10, null],
-			[2_000, null, 200, 20, 40]
+			[1000, 100, null, 10, null],
+			[2000, null, 200, 20, 40]
 		])
 		expect(result.charts.map(({ name, type }) => ({ name, type }))).toEqual([
 			{ name: 'Ethereum - DEXs Volume', type: 'bar' },
@@ -46,18 +46,18 @@ describe('CompareChains chart data', () => {
 		expect(result.showTotalInTooltip).toBe(false)
 	})
 
-	it('shows a tooltip total only when every displayed series has the same metric meaning', () => {
+	test('shows a tooltip total only when every displayed series has the same metric meaning', () => {
 		const chainData: Parameters<typeof buildCompareChainsChartData>[0] = [
 			{
 				chain: 'Ethereum',
-				tvlChart: [[1_000, 10]],
+				tvlChart: [[1000, 10]],
 				dexVolumeChart: [[1, 100]],
 				chainFeesChart: null,
 				chainRevenueChart: null
 			},
 			{
 				chain: 'Solana',
-				tvlChart: [[1_000, 20]],
+				tvlChart: [[1000, 20]],
 				dexVolumeChart: [[1, 200]],
 				chainFeesChart: null,
 				chainRevenueChart: null
@@ -68,7 +68,7 @@ describe('CompareChains chart data', () => {
 		expect(buildCompareChainsChartData(chainData, ['tvlChart', 'dexVolumeChart']).showTotalInTooltip).toBe(false)
 	})
 
-	it('returns an empty time-series contract for no chains', () => {
+	test('returns an empty time-series contract for no chains', () => {
 		expect(buildCompareChainsChartData([], ['tvlChart'])).toEqual({
 			dataset: { source: [], dimensions: ['timestamp'] },
 			charts: [],

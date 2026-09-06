@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { hasTokenLiquidationsData } from '~/containers/LiquidationsV2/server/dataset.server'
 import { getTokenIncomeStatement } from '~/containers/ProtocolOverview/queries'
 import type { Raise } from '~/containers/Raises/model'
@@ -44,7 +44,7 @@ const runTokenPageRequest = getServerSideProps as unknown as (context: never) =>
 const { capturedTokenNavSections, renderedTokenSections, setPageHeader, getTokensCacheControlMock } = vi.hoisted(
 	() => ({
 		capturedTokenNavSections: [] as Array<{ id: string; label: string }>,
-		renderedTokenSections: [] as string[],
+		renderedTokenSections: [] as Array<string>,
 		setPageHeader: vi.fn(),
 		getTokensCacheControlMock: vi.fn(() => 'public, s-maxage=123, must-revalidate')
 	})
@@ -97,26 +97,26 @@ const overviewFixture: TokenOverviewData = {
 	outstandingFDV: null,
 	rawChartData: {
 		'Token Price': [
-			[1711929600000, 100],
-			[1712016000000, 110]
+			[1_711_929_600_000, 100],
+			[1_712_016_000_000, 110]
 		]
 	}
 }
 
 const state: {
 	tokensJson: TokenDirectory
-	tokenRightsEntries: unknown[]
+	tokenRightsEntries: Array<unknown>
 	protocolMetadata: Record<string, IProtocolMetadata>
 	chainMetadata: Record<string, { name: string }>
-	liquidationsTokenSymbols: string[]
+	liquidationsTokenSymbols: Array<string>
 	liquidationsTokenSymbolsSet: Set<string>
 	hasTokenLiquidationsData: boolean
 	hasTokenMarkets: boolean
-	emissionsProtocolsList: string[]
+	emissionsProtocolsList: Array<string>
 	emissionsSupplyMetrics: ProtocolEmissionSupplyMetricsMap
 	incomeStatementData: unknown
 	tokenRiskData: TokenRiskResponse | null
-	initialYieldsRows: unknown[]
+	initialYieldsRows: Array<unknown>
 	initialTokenBorrowRoutesData: unknown
 	tokenlist: Record<string, unknown>
 } = {
@@ -273,7 +273,7 @@ function makeRouteRow(overrides: Partial<RouteTableRow> = {}): RouteTableRow {
 	}
 }
 
-function makeTokenPageProps(sections: TokenPageSection[]): TokenPageProps {
+function makeTokenPageProps(sections: Array<TokenPageSection>): TokenPageProps {
 	return {
 		seoTitle: 'title',
 		seoDescription: 'description',
@@ -302,12 +302,12 @@ function makeUsageSection(tokenSymbol = 'BTC') {
 	} satisfies TokenPageSection
 }
 
-function tokenPageSectionIds(sections: TokenPageSection[]): string[] {
+function tokenPageSectionIds(sections: Array<TokenPageSection>): Array<string> {
 	return sections.map((section) => section.id)
 }
 
 function findTokenPageSection<Id extends TokenPageSection['id']>(
-	sections: TokenPageSection[],
+	sections: Array<TokenPageSection>,
 	id: Id
 ): Extract<TokenPageSection, { id: Id }> | undefined {
 	return sections.find((section): section is Extract<TokenPageSection, { id: Id }> => section.id === id)
@@ -575,7 +575,7 @@ describe('token page', () => {
 		tokenBreakdowns: { ownTokens: 0, stablecoins: 50, majors: 0, others: 0 }
 	}
 
-	it.each(['raises', 'treasury', 'both'] as const)(
+	test.each(['raises', 'treasury', 'both'] as const)(
 		'contains ordinary %s failures and recovers on the next request',
 		async (failed) => {
 			state.tokensJson = {
@@ -621,7 +621,7 @@ describe('token page', () => {
 		}
 	)
 
-	it('keeps empty funding distinct from an outage and never fetches a chain treasury', async () => {
+	test('keeps empty funding distinct from an outage and never fetches a chain treasury', async () => {
 		state.tokensJson = {
 			eth: {
 				name: 'Ethereum',
@@ -646,7 +646,7 @@ describe('token page', () => {
 		}
 	})
 
-	it.each(['raises', 'treasuries'] as const)(
+	test.each(['raises', 'treasuries'] as const)(
 		'rethrows %s snapshot corruption instead of rendering missing data',
 		async (domain) => {
 			state.tokensJson = {
@@ -666,7 +666,7 @@ describe('token page', () => {
 		}
 	)
 
-	it('shares each request’s current snapshot and Yields handle across concurrent detail construction', async () => {
+	test('shares each request’s current snapshot and Yields handle across concurrent detail construction', async () => {
 		state.tokensJson = {
 			sdt: {
 				name: 'Stake DAO',
@@ -709,7 +709,7 @@ describe('token page', () => {
 		for (const [handle] of vi.mocked(getTokenBorrowRoutes).mock.calls) expect(handle).toBe(snapshot)
 	})
 
-	it('propagates a core failure while optional Yields acquisition is pending', async () => {
+	test('propagates a core failure while optional Yields acquisition is pending', async () => {
 		const pendingYields = Promise.withResolvers<Awaited<ReturnType<typeof acquireOptionalYieldsSnapshot>>>()
 		vi.mocked(acquireOptionalYieldsSnapshot).mockReturnValueOnce(pendingYields.promise)
 		const error = new Error('Current snapshot unavailable')
@@ -728,8 +728,8 @@ describe('token page', () => {
 		}
 	})
 
-	it('renders the sticky section nav and token sections in manifest order', () => {
-		const sections: TokenPageSection[] = [
+	test('renders the sticky section nav and token sections in manifest order', () => {
+		const sections: Array<TokenPageSection> = [
 			makeOverviewSection(),
 			{
 				id: 'token-income-statement',
@@ -812,7 +812,7 @@ describe('token page', () => {
 		expect(renderedTokenSections).toEqual(sections.map((section) => section.id))
 	})
 
-	it('limits the section nav to the sections that actually render', () => {
+	test('limits the section nav to the sections that actually render', () => {
 		renderToStaticMarkup(<TokenPage {...makeTokenPageProps([makeOverviewSection(), makeUsageSection()])} />)
 
 		expect(capturedTokenNavSections).toEqual([
@@ -822,7 +822,7 @@ describe('token page', () => {
 		expect(renderedTokenSections).toEqual(['token-overview', 'token-usage'])
 	})
 
-	it('renders the markets section when hasMarkets is true', () => {
+	test('renders the markets section when hasMarkets is true', () => {
 		renderToStaticMarkup(
 			<TokenPage
 				{...makeTokenPageProps([
@@ -842,7 +842,7 @@ describe('token page', () => {
 		expect(renderedTokenSections).toEqual(['token-overview', 'token-markets', 'token-usage'])
 	})
 
-	it('renders each yield-related section from its own prefetched dataset', () => {
+	test('renders each yield-related section from its own prefetched dataset', () => {
 		renderToStaticMarkup(
 			<TokenPage
 				{...makeTokenPageProps([
@@ -884,19 +884,19 @@ describe('token page', () => {
 		expect(renderedTokenSections).not.toContain('token-unlocks')
 	})
 
-	it('runTokenPageRequest returns notFound when params.token is missing', async () => {
+	test('runTokenPageRequest returns notFound when params.token is missing', async () => {
 		await expect(runTokenPageRequest({ params: {} } as never)).resolves.toEqual({
 			notFound: true
 		})
 	})
 
-	it('runTokenPageRequest returns notFound for an unknown token key', async () => {
+	test('runTokenPageRequest returns notFound for an unknown token key', async () => {
 		await expect(runTokenPageRequest({ params: { token: 'litecoin' } } as never)).resolves.toEqual({
 			notFound: true
 		})
 	})
 
-	it('runTokenPageRequest resolves the route param by slugging the token key', async () => {
+	test('runTokenPageRequest resolves the route param by slugging the token key', async () => {
 		await expect(runTokenPageRequest({ params: { token: 'BTC' } } as never)).resolves.toMatchObject({
 			props: {
 				seoTitle: 'BTC Price, Market Cap, Supply & Trading Volume',
@@ -924,7 +924,7 @@ describe('token page', () => {
 		expect(getTokensCacheControlMock).toHaveBeenCalledWith(42)
 	})
 
-	it('runTokenPageRequest passes the canonical rankings metrics to the token overview', async () => {
+	test('runTokenPageRequest passes the canonical rankings metrics to the token overview', async () => {
 		const currentMetrics: TokenOverviewCurrentMetrics = {
 			currentPrice: 2,
 			percentChange24h: -3,
@@ -944,7 +944,7 @@ describe('token page', () => {
 		expect(getTokenOverviewData).toHaveBeenCalledWith(expect.objectContaining({ currentMetrics }))
 	})
 
-	it('runTokenPageRequest redirects lowercase token params when metadata defines a canonical route', async () => {
+	test('runTokenPageRequest redirects lowercase token params when metadata defines a canonical route', async () => {
 		await expect(runTokenPageRequest({ params: { token: 'btc' } } as never)).resolves.toEqual({
 			redirect: {
 				destination: '/token/BTC',
@@ -953,7 +953,7 @@ describe('token page', () => {
 		})
 	})
 
-	it('runTokenPageRequest does not resolve arbitrary non-token routes during alias lookup', async () => {
+	test('runTokenPageRequest does not resolve arbitrary non-token routes during alias lookup', async () => {
 		state.tokensJson = {
 			proto: { name: 'Protocol Token', symbol: 'PROTO', route: '/protocol/proto' }
 		}
@@ -963,7 +963,7 @@ describe('token page', () => {
 		})
 	})
 
-	it('runTokenPageRequest treats API-provided mixed-case and spaced token routes as canonical', async () => {
+	test('runTokenPageRequest treats API-provided mixed-case and spaced token routes as canonical', async () => {
 		state.tokensJson = {
 			tbtc: { name: 'Threshold Bitcoin', symbol: 'TBTC', route: '/token/tBTC' },
 			'velodrome-finance': {
@@ -991,7 +991,7 @@ describe('token page', () => {
 		})
 	})
 
-	it('runTokenPageRequest enables the liquidations section when metadata includes the token symbol with rows', async () => {
+	test('runTokenPageRequest enables the liquidations section when metadata includes the token symbol with rows', async () => {
 		state.liquidationsTokenSymbols = ['BTC']
 		state.liquidationsTokenSymbolsSet = new Set(['BTC'])
 		state.hasTokenLiquidationsData = true
@@ -1004,7 +1004,7 @@ describe('token page', () => {
 		expect(tokenPageSectionIds(result.props.sections)).toContain('token-liquidations')
 	})
 
-	it('uses the canonical Token record symbol for liquidations availability', async () => {
+	test('uses the canonical Token record symbol for liquidations availability', async () => {
 		state.tokensJson = {
 			wsteth: { name: 'Wrapped stETH', symbol: 'wstETH', route: '/token/wstETH' }
 		}
@@ -1024,7 +1024,7 @@ describe('token page', () => {
 		})
 	})
 
-	it('runTokenPageRequest skips the liquidations section when metadata has the token but no rows', async () => {
+	test('runTokenPageRequest skips the liquidations section when metadata has the token but no rows', async () => {
 		state.liquidationsTokenSymbols = ['BTC']
 		state.liquidationsTokenSymbolsSet = new Set(['BTC'])
 
@@ -1036,13 +1036,13 @@ describe('token page', () => {
 		expect(tokenPageSectionIds(result.props.sections)).not.toContain('token-liquidations')
 	})
 
-	it('runTokenPageRequest does not resolve by token name slug', async () => {
+	test('runTokenPageRequest does not resolve by token name slug', async () => {
 		await expect(runTokenPageRequest({ params: { token: 'bitcoin' } } as never)).resolves.toEqual({
 			notFound: true
 		})
 	})
 
-	it('runTokenPageRequest returns props even when token market stats are missing', async () => {
+	test('runTokenPageRequest returns props even when token market stats are missing', async () => {
 		state.tokensJson = {
 			btc: { name: 'Bitcoin', symbol: 'BTC', route: '/token/BTC' }
 		}
@@ -1068,7 +1068,7 @@ describe('token page', () => {
 		})
 	})
 
-	it('runTokenPageRequest redirects to an encoded symbol when metadata route is missing', async () => {
+	test('runTokenPageRequest redirects to an encoded symbol when metadata route is missing', async () => {
 		state.tokensJson = {
 			swing: { name: 'Swing.xyz', symbol: '$SWING', token_nk: 'coingecko:swing-xyz' }
 		}
@@ -1099,7 +1099,7 @@ describe('token page', () => {
 		})
 	})
 
-	it('runTokenPageRequest renders an encoded symbol canonical route when metadata route is missing', async () => {
+	test('runTokenPageRequest renders an encoded symbol canonical route when metadata route is missing', async () => {
 		state.tokensJson = {
 			swing: { name: 'Swing.xyz', symbol: '$SWING', token_nk: 'coingecko:swing-xyz' }
 		}
@@ -1142,7 +1142,7 @@ describe('token page', () => {
 		})
 	})
 
-	it('runTokenPageRequest includes token rights data when the token record has the flag', async () => {
+	test('runTokenPageRequest includes token rights data when the token record has the flag', async () => {
 		state.tokenRightsEntries = [
 			{
 				'Protocol Name': 'Chainlink',
@@ -1218,7 +1218,7 @@ describe('token page', () => {
 		})
 	})
 
-	it('runTokenPageRequest includes token rights data for flagged tokens without protocol metadata', async () => {
+	test('runTokenPageRequest includes token rights data for flagged tokens without protocol metadata', async () => {
 		state.tokenRightsEntries = [
 			{
 				'Protocol Name': 'Backpack',
@@ -1290,7 +1290,7 @@ describe('token page', () => {
 		expect(fetchTokenRightsEntryByDefillamaId).not.toHaveBeenCalled()
 	})
 
-	it('runTokenPageRequest falls back to protocol id when a token rights chain id has no row', async () => {
+	test('runTokenPageRequest falls back to protocol id when a token rights chain id has no row', async () => {
 		state.tokenRightsEntries = [
 			{
 				'Protocol Name': 'Hyperliquid',
@@ -1353,7 +1353,7 @@ describe('token page', () => {
 		expect(fetchTokenRightsEntryByDefillamaId).toHaveBeenNthCalledWith(2, 'parent#hyperliquid')
 	})
 
-	it('runTokenPageRequest skips token rights for flagged tokens without a matching row', async () => {
+	test('runTokenPageRequest skips token rights for flagged tokens without a matching row', async () => {
 		state.tokenRightsEntries = [
 			{
 				'Protocol Name': 'Other',
@@ -1403,7 +1403,7 @@ describe('token page', () => {
 		expect(tokenPageSectionIds(result.props.sections)).toEqual(['token-overview', 'token-usage'])
 	})
 
-	it('runTokenPageRequest resolves embedded unlocks by protocol display name when the slug is cached', async () => {
+	test('runTokenPageRequest resolves embedded unlocks by protocol display name when the slug is cached', async () => {
 		state.tokensJson = {
 			link: {
 				name: 'Chainlink',
@@ -1439,7 +1439,7 @@ describe('token page', () => {
 		expect(findTokenPageSection(result.props.sections, 'token-unlocks')?.resolvedUnlocksSlug).toBe('chainlink')
 	})
 
-	it('runTokenPageRequest falls back to chain-name unlock slugs when the chain is cached', async () => {
+	test('runTokenPageRequest falls back to chain-name unlock slugs when the chain is cached', async () => {
 		state.tokensJson = {
 			sol: {
 				name: 'Solana',
@@ -1475,7 +1475,7 @@ describe('token page', () => {
 		expect(findTokenPageSection(result.props.sections, 'token-unlocks')?.resolvedUnlocksSlug).toBe('solana')
 	})
 
-	it('runTokenPageRequest includes income statement data when the token is flagged', async () => {
+	test('runTokenPageRequest includes income statement data when the token is flagged', async () => {
 		const incomeStatementData = {
 			data: {
 				monthly: {},
@@ -1553,7 +1553,7 @@ describe('token page', () => {
 		expect(getTokenIncomeStatement).toHaveBeenCalledWith({ token: 'AAVE' })
 	})
 
-	it('runTokenPageRequest skips income statements when the token is not flagged', async () => {
+	test('runTokenPageRequest skips income statements when the token is not flagged', async () => {
 		state.tokensJson = {
 			aave: {
 				name: 'Aave',
@@ -1591,7 +1591,7 @@ describe('token page', () => {
 		expect(getTokenIncomeStatement).not.toHaveBeenCalled()
 	})
 
-	it('runTokenPageRequest falls back to null token risk data when the risk query throws', async () => {
+	test('runTokenPageRequest falls back to null token risk data when the risk query throws', async () => {
 		state.tokensJson = {
 			link: {
 				name: 'Chainlink',
@@ -1640,7 +1640,7 @@ describe('token page', () => {
 		consoleErrorSpy.mockRestore()
 	})
 
-	it('runTokenPageRequest limits prefetched yields tables to the first page while preserving total counts', async () => {
+	test('runTokenPageRequest limits prefetched yields tables to the first page while preserving total counts', async () => {
 		state.tokensJson = {
 			link: {
 				name: 'Chainlink',
@@ -1695,7 +1695,7 @@ describe('token page', () => {
 		})
 	})
 
-	it('runTokenPageRequest keeps the page renderable when optional token fetches fail', async () => {
+	test('runTokenPageRequest keeps the page renderable when optional token fetches fail', async () => {
 		state.tokensJson = {
 			link: {
 				name: 'Chainlink',
@@ -1759,7 +1759,7 @@ describe('token page', () => {
 		consoleErrorSpy.mockRestore()
 	})
 
-	it('runTokenPageRequest keeps the page renderable when the optional Yields snapshot is unavailable', async () => {
+	test('runTokenPageRequest keeps the page renderable when the optional Yields snapshot is unavailable', async () => {
 		state.tokensJson = {
 			link: {
 				name: 'Chainlink',
@@ -1780,7 +1780,7 @@ describe('token page', () => {
 		expect(getTokenBorrowRoutes).not.toHaveBeenCalled()
 	})
 
-	it('rethrows dataset snapshot integrity errors from optional dataset sections', async () => {
+	test('rethrows dataset snapshot integrity errors from optional dataset sections', async () => {
 		state.liquidationsTokenSymbolsSet = new Set(['BTC'])
 		const integrityError = new DatasetSnapshotIntegrityError(
 			'liquidations',
@@ -1794,7 +1794,7 @@ describe('token page', () => {
 		)
 	})
 
-	it('renders the risks section only when runTokenPageRequest returns token risk data', async () => {
+	test('renders the risks section only when runTokenPageRequest returns token risk data', async () => {
 		state.tokensJson = {
 			link: {
 				name: 'Chainlink',
@@ -1873,7 +1873,7 @@ describe('token page', () => {
 	})
 })
 
-it.each(['success', 'current failure', 'import failure'] as const)(
+test.each(['success', 'current failure', 'import failure'] as const)(
 	'overlaps a cold module load and current snapshot with safe %s handling',
 	async (outcome) => {
 		vi.resetModules()

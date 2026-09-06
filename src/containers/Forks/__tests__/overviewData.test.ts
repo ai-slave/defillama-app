@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { CHART_COLORS } from '~/constants/colors'
 import { buildForksOverviewDisplayData, mergeForkOverviewChartData } from '../overviewData'
@@ -8,7 +8,7 @@ const basePageData = {
 	forks: ['Uniswap', 'Curve'],
 	forkColors: { Uniswap: '#111111', Curve: '#222222' },
 	baseTableData: [
-		{ name: 'Uniswap', tvl: 80, forkedProtocols: 3, parentTvl: 1_000, ftot: 8 },
+		{ name: 'Uniswap', tvl: 80, forkedProtocols: 3, parentTvl: 1000, ftot: 8 },
 		{ name: 'Curve', tvl: 120, forkedProtocols: 2, parentTvl: 400, ftot: 30 }
 	],
 	chartData: [
@@ -21,7 +21,7 @@ const basePageData = {
 }
 
 describe('mergeForkOverviewChartData', () => {
-	it('returns base chart data without successful extra measurements', () => {
+	test('returns base chart data without successful extra measurements', () => {
 		expect(
 			mergeForkOverviewChartData({
 				chartData: basePageData.chartData,
@@ -30,7 +30,7 @@ describe('mergeForkOverviewChartData', () => {
 		).toBe(basePageData.chartData)
 	})
 
-	it('merges extra values by timestamp and keeps extra-only timestamps sorted', () => {
+	test('merges extra values by timestamp and keeps extra-only timestamps sorted', () => {
 		const merged = mergeForkOverviewChartData({
 			chartData: basePageData.chartData,
 			extraBreakdownByTimestamp: new Map([
@@ -49,7 +49,7 @@ describe('mergeForkOverviewChartData', () => {
 })
 
 describe('buildForksOverviewDisplayData', () => {
-	it('builds table, pie, colors, and dominance data from latest chart values', () => {
+	test('builds table, pie, colors, and dominance data from latest chart values', () => {
 		const display = buildForksOverviewDisplayData(basePageData)
 
 		expect(display.tableData).toEqual([
@@ -57,7 +57,7 @@ describe('buildForksOverviewDisplayData', () => {
 			{
 				name: 'Uniswap',
 				forkedProtocols: 3,
-				parentTvl: 1_000,
+				parentTvl: 1000,
 				tvl: 80,
 				ftot: 8
 			},
@@ -96,7 +96,7 @@ describe('buildForksOverviewDisplayData', () => {
 		expect(display.dominanceCharts.map((chart) => chart.name)).toEqual(['Curve', 'Uniswap', 'NewFork', 'EmptyFork'])
 	})
 
-	it('uses zero for explicit and omitted values in the successful latest snapshot', () => {
+	test('uses zero for explicit and omitted values in the successful latest snapshot', () => {
 		const display = buildForksOverviewDisplayData({
 			...basePageData,
 			chartData: [{ timestamp: 10, Uniswap: 100, ZeroFork: 0 }]
@@ -106,7 +106,7 @@ describe('buildForksOverviewDisplayData', () => {
 			{
 				name: 'Uniswap',
 				forkedProtocols: 3,
-				parentTvl: 1_000,
+				parentTvl: 1000,
 				tvl: 100,
 				ftot: 10
 			},
@@ -131,7 +131,7 @@ describe('buildForksOverviewDisplayData', () => {
 		expect(display.dominanceDataset.source).toEqual([[10_000, 100, 0, 0]])
 	})
 
-	it('uses zero current TVL when the successful chart is empty', () => {
+	test('uses zero current TVL when the successful chart is empty', () => {
 		const display = buildForksOverviewDisplayData({
 			...basePageData,
 			chartData: []
@@ -141,7 +141,7 @@ describe('buildForksOverviewDisplayData', () => {
 			{
 				name: 'Uniswap',
 				forkedProtocols: 3,
-				parentTvl: 1_000,
+				parentTvl: 1000,
 				tvl: 0,
 				ftot: 0
 			},

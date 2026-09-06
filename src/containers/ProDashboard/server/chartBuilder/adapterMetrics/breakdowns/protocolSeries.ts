@@ -10,8 +10,8 @@ import { DIMENSIONS_API_METRIC_CONFIG, type AdapterChartBuilderMetric } from './
 
 type DimensionsBreakdownParams = {
 	metric: AdapterChartBuilderMetric
-	chains: string[]
-	categories: string[]
+	chains: Array<string>
+	categories: Array<string>
 	topN: number
 	groupByParent: boolean
 	chainFilterMode: 'include' | 'exclude'
@@ -28,7 +28,7 @@ export type ProtocolLookup = {
 }
 
 export type ProtocolBreakdownBase = {
-	chainsArray: string[]
+	chainsArray: Array<string>
 	metricName: string
 	chainResultsCount: number
 	totalDataChartBreakdown: Array<[number, Record<string, number>]>
@@ -47,8 +47,8 @@ const getBreakdownColor = (index: number): string => {
 }
 
 const buildEmptyBreakdown = (
-	chainsArray: string[],
-	categoriesArray: string[],
+	chainsArray: Array<string>,
+	categoriesArray: Array<string>,
 	metricName: string,
 	topN: number,
 	groupByParent: boolean,
@@ -115,7 +115,10 @@ export const getProtocolLookup = async (): Promise<ProtocolLookup> => {
 	return data
 }
 
-const fetchChainResults = async (chainsArray: string[], metric: AdapterChartBuilderMetric): Promise<ChainResult[]> => {
+const fetchChainResults = async (
+	chainsArray: Array<string>,
+	metric: AdapterChartBuilderMetric
+): Promise<Array<ChainResult>> => {
 	const config = DIMENSIONS_API_METRIC_CONFIG[metric]
 	return mapWithConcurrency(chainsArray, 8, async (singleChain): Promise<ChainResult> => ({
 		chain: singleChain,
@@ -143,14 +146,14 @@ const toBreakdownMap = (breakdown: Array<[number, Record<string, number>]>): Map
 
 const buildAggregatedBreakdown = (
 	chainFilterMode: 'include' | 'exclude',
-	chainResults: ChainResult[],
+	chainResults: Array<ChainResult>,
 	allBreakdown: IAdapterBreakdownChartData | null
 ): Map<number, Map<string, number>> => {
 	const aggregatedBreakdown = new Map<number, Map<string, number>>()
 
 	if (chainFilterMode === 'exclude' && allBreakdown !== null) {
 		const allMap = toBreakdownMap(allBreakdown)
-		const excludedMaps: Map<number, Map<string, number>>[] = []
+		const excludedMaps: Array<Map<number, Map<string, number>>> = []
 		for (const result of chainResults) {
 			excludedMaps.push(toBreakdownMap(result.data))
 		}
@@ -192,7 +195,7 @@ const buildAggregatedBreakdown = (
 
 export const getAdapterMetricProtocolBase = async (
 	metric: AdapterChartBuilderMetric,
-	chainsArray: string[],
+	chainsArray: Array<string>,
 	chainFilterMode: 'include' | 'exclude'
 ): Promise<ProtocolBreakdownBase> => {
 	const config = DIMENSIONS_API_METRIC_CONFIG[metric]
@@ -318,7 +321,7 @@ export const getAdapterMetricProtocolSeries = async ({
 		}
 	}
 
-	let topProtocols: string[]
+	let topProtocols: Array<string>
 	let topProtocolsSet: Set<string>
 	let protocolNameMapping: Map<string, string> = new Map()
 	let protocolFamilyValues: Map<string, { name: string; value: number; isParent: boolean }> = new Map()
@@ -422,12 +425,12 @@ export const getAdapterMetricProtocolSeries = async ({
 
 	const allTimestamps = Array.from(timestampTotals.keys()).sort((a, b) => a - b)
 
-	const series: ChartSeries[] = []
+	const series: Array<ChartSeries> = []
 
 	for (const [i, protocol] of topProtocols.entries()) {
 		const protocolDataMap = protocolData.get(protocol) || new Map<number, number>()
 
-		const alignedData: [number, number][] = allTimestamps.map((timestamp) => {
+		const alignedData: Array<[number, number]> = allTimestamps.map((timestamp) => {
 			return [timestamp, protocolDataMap.get(timestamp) || 0]
 		})
 
@@ -438,7 +441,7 @@ export const getAdapterMetricProtocolSeries = async ({
 		})
 	}
 
-	const othersData: [number, number][] = allTimestamps.map((timestamp) => {
+	const othersData: Array<[number, number]> = allTimestamps.map((timestamp) => {
 		const total = timestampTotals.get(timestamp) || 0
 		const topTotal = timestampTopTotals.get(timestamp) || 0
 		const othersValue = Math.max(0, total - topTotal)
@@ -471,7 +474,7 @@ export const getAdapterMetricProtocolSeries = async ({
 			metric: config.metricName,
 			topN,
 			...entityMetadata,
-			othersCount: othersCount,
+			othersCount,
 			marketSector: categoriesArray.join(',') || null
 		}
 	}

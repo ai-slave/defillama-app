@@ -10,7 +10,7 @@ export const BRIDGE_VOLUME_METRIC_TYPES = ['Volume', 'Transactions'] as const
 export type BridgeVolumeMetricType = (typeof BRIDGE_VOLUME_METRIC_TYPES)[number]
 
 export function getStaleBridgeVolumeTimestamp(
-	data: BridgeVolumePoint[] | null | undefined,
+	data: Array<BridgeVolumePoint> | null | undefined,
 	currentTimeMs: number = Date.now()
 ): number | null {
 	const hasCurrentOrCompletedDay =
@@ -95,7 +95,7 @@ export function buildBridgeVolumeChartData({
 	metricType,
 	viewType
 }: {
-	data: BridgeVolumePoint[] | null | undefined
+	data: Array<BridgeVolumePoint> | null | undefined
 	timePeriod: ChartTimeGrouping
 	metricType: BridgeVolumeMetricType
 	viewType: BridgeVolumeViewType

@@ -11,8 +11,8 @@ export type TokenIncomeStatementData = NonNullable<Awaited<ReturnType<typeof get
 // collateral leg ('Use X') vs the borrow leg ('Borrow X'). Flat RouteTableRow shape
 // shared with /yields/borrow routes mode (Tables/Borrow).
 export type TokenBorrowRoutesData = {
-	useAsCollateral: RouteTableRow[]
-	borrowThis: RouteTableRow[]
+	useAsCollateral: Array<RouteTableRow>
+	borrowThis: Array<RouteTableRow>
 }
 
 export type TokenBorrowRoutesCounts = {
@@ -21,17 +21,17 @@ export type TokenBorrowRoutesCounts = {
 }
 
 export type TokenBorrowRoutesChainLists = {
-	useAsCollateral: string[]
-	borrowThis: string[]
+	useAsCollateral: Array<string>
+	borrowThis: Array<string>
 }
 
 export type TokenYieldsHydration = {
-	rows: IYieldTableRow[]
+	rows: Array<IYieldTableRow>
 	rowCount: number
-	chainList: string[]
+	chainList: Array<string>
 	pageSize: number
 	// Resolved token option keys the client re-fetches full data with.
-	tokenKeys: string[]
+	tokenKeys: Array<string>
 }
 
 export type TokenBorrowRoutesHydration = {
@@ -40,7 +40,7 @@ export type TokenBorrowRoutesHydration = {
 	chainLists: TokenBorrowRoutesChainLists
 	pageSize: number
 	// Resolved token option keys the client re-fetches full data with.
-	tokenKeys: string[]
+	tokenKeys: Array<string>
 }
 
 export type TokenIssuer = {
@@ -116,5 +116,5 @@ export type TokenPageProps = {
 	seoTitle: string
 	seoDescription: string
 	canonicalUrl: string
-	sections: TokenPageSection[]
+	sections: Array<TokenPageSection>
 }

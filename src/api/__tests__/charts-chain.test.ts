@@ -1,5 +1,5 @@
 import type { NextApiRequest } from 'next'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 const {
@@ -83,7 +83,7 @@ beforeEach(() => {
 })
 
 describe('/api/public/chains/charts', () => {
-	it('canonicalizes adapter protocol chart requests before fetching', async () => {
+	test('canonicalizes adapter protocol chart requests before fetching', async () => {
 		const req = {
 			method: 'GET',
 			query: { kind: 'adapter-protocol', adapterType: 'fees', protocol: 'Aave V3' }
@@ -96,7 +96,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('does not fetch adapter protocol charts for unknown protocols', async () => {
+	test('does not fetch adapter protocol charts for unknown protocols', async () => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue(null)
 		const req = {
@@ -112,7 +112,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
-	it('allows chain-level fees through adapter protocol chart requests', async () => {
+	test('allows chain-level fees through adapter protocol chart requests', async () => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Hyperliquid L1',
@@ -135,7 +135,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('allows chain-level revenue through adapter protocol chart requests', async () => {
+	test('allows chain-level revenue through adapter protocol chart requests', async () => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Sui',
@@ -165,7 +165,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('does not fetch chain-level fees when the chain metadata flag is missing', async () => {
+	test('does not fetch chain-level fees when the chain metadata flag is missing', async () => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
@@ -185,7 +185,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
-	it('does not use chain fallback for explicit protocol adapter protocol chart requests', async () => {
+	test('does not use chain fallback for explicit protocol adapter protocol chart requests', async () => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
@@ -206,7 +206,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
-	it('does not use chain fallback for non-chain-level adapter protocol chart requests', async () => {
+	test('does not use chain fallback for non-chain-level adapter protocol chart requests', async () => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
@@ -233,7 +233,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
-	it('does not use chain fallback for all-chain adapter protocol chart requests', async () => {
+	test('does not use chain fallback for all-chain adapter protocol chart requests', async () => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		const req = {
 			method: 'GET',
@@ -254,7 +254,7 @@ describe('/api/public/chains/charts', () => {
 		{ label: 'Chain Revenue', metadataFlag: 'chainRevenue', dataType: 'dailyRevenue' }
 	] as const
 
-	it.each(chainNativeProtocolRows)(
+	test.each(chainNativeProtocolRows)(
 		'accepts $label as adapter-protocol entity=chain only with its metadata flag',
 		async (row) => {
 			resolveProtocolParamMock.mockResolvedValue(null)
@@ -287,7 +287,7 @@ describe('/api/public/chains/charts', () => {
 		}
 	)
 
-	it.each(chainNativeProtocolRows)(
+	test.each(chainNativeProtocolRows)(
 		'rejects $label as adapter-protocol entity=chain when its metadata flag is missing',
 		async (row) => {
 			resolveProtocolParamMock.mockResolvedValue(null)
@@ -316,7 +316,7 @@ describe('/api/public/chains/charts', () => {
 		}
 	)
 
-	it.each([
+	test.each([
 		{ kind: 'adapter-chain', entityParam: { chain: 'Base' }, fetchMock: fetchAdapterChainChartDataMock },
 		{
 			kind: 'adapter-protocol',
@@ -342,7 +342,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Unsupported adapter dataType' })
 	})
 
-	it('rejects unsupported adapter types before resolving or fetching', async () => {
+	test('rejects unsupported adapter types before resolving or fetching', async () => {
 		const req = {
 			method: 'GET',
 			query: { kind: 'adapter-chain', adapterType: 'unknown-adapter', chain: 'Base' }
@@ -357,34 +357,37 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Unsupported adapterType' })
 	})
 
-	it.each(chainNativeProtocolRows)('does not use chain fallback for explicit protocol $label requests', async (row) => {
-		resolveProtocolParamMock.mockResolvedValue(null)
-		resolveChainParamMock.mockResolvedValue({
-			canonicalName: 'Base',
-			canonicalSlug: 'base',
-			metadata: { name: 'Base', [row.metadataFlag]: true }
-		})
-		const req = {
-			method: 'GET',
-			query: {
-				kind: 'adapter-protocol',
-				entity: 'protocol',
-				adapterType: 'fees',
-				protocol: 'Base',
-				...(row.dataType ? { dataType: row.dataType } : null)
-			}
-		} as unknown as NextApiRequest
-		const res = createMockNextApiResponse()
+	test.each(chainNativeProtocolRows)(
+		'does not use chain fallback for explicit protocol $label requests',
+		async (row) => {
+			resolveProtocolParamMock.mockResolvedValue(null)
+			resolveChainParamMock.mockResolvedValue({
+				canonicalName: 'Base',
+				canonicalSlug: 'base',
+				metadata: { name: 'Base', [row.metadataFlag]: true }
+			})
+			const req = {
+				method: 'GET',
+				query: {
+					kind: 'adapter-protocol',
+					entity: 'protocol',
+					adapterType: 'fees',
+					protocol: 'Base',
+					...(row.dataType ? { dataType: row.dataType } : null)
+				}
+			} as unknown as NextApiRequest
+			const res = createMockNextApiResponse()
 
-		await handler(req, res)
+			await handler(req, res)
 
-		expect(resolveChainParamMock).not.toHaveBeenCalled()
-		expect(fetchAdapterProtocolChartDataMock).not.toHaveBeenCalled()
-		expect(res.status).toHaveBeenCalledWith(404)
-		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
-	})
+			expect(resolveChainParamMock).not.toHaveBeenCalled()
+			expect(fetchAdapterProtocolChartDataMock).not.toHaveBeenCalled()
+			expect(res.status).toHaveBeenCalledWith(404)
+			expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
+		}
+	)
 
-	it.each(chainNativeProtocolRows)('keeps legacy omitted-entity fallback for $label only', async (row) => {
+	test.each(chainNativeProtocolRows)('keeps legacy omitted-entity fallback for $label only', async (row) => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
@@ -417,7 +420,7 @@ describe('/api/public/chains/charts', () => {
 		{ label: 'App Revenue', dataType: 'dailyAppRevenue' }
 	] as const
 
-	it.each(appProtocolRows)('does not accept $label through adapter-protocol entity=chain', async (row) => {
+	test.each(appProtocolRows)('does not accept $label through adapter-protocol entity=chain', async (row) => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
@@ -444,7 +447,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
-	it.each(appProtocolRows)('does not use legacy omitted-entity chain fallback for $label', async (row) => {
+	test.each(appProtocolRows)('does not use legacy omitted-entity chain fallback for $label', async (row) => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
@@ -476,7 +479,7 @@ describe('/api/public/chains/charts', () => {
 		{ label: 'Transactions', adapterType: 'active-users', dataType: 'dailyTransactionsCount' }
 	] as const
 
-	it.each(chainActivityProtocolRows)('accepts $label as adapter-protocol entity=chain', async (row) => {
+	test.each(chainActivityProtocolRows)('accepts $label as adapter-protocol entity=chain', async (row) => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Ethereum',
@@ -506,7 +509,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('does not accept Gas Used as adapter-protocol entity=chain', async () => {
+	test('does not accept Gas Used as adapter-protocol entity=chain', async () => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Ethereum',
@@ -533,7 +536,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
-	it.each(chainActivityProtocolRows)('does not use legacy omitted-entity chain fallback for $label', async (row) => {
+	test.each(chainActivityProtocolRows)('does not use legacy omitted-entity chain fallback for $label', async (row) => {
 		resolveProtocolParamMock.mockResolvedValue(null)
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Ethereum',
@@ -559,7 +562,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'protocol not found' })
 	})
 
-	it('accepts Bridged TVL chart requests only for chainAssets chains', async () => {
+	test('accepts Bridged TVL chart requests only for chainAssets chains', async () => {
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Hyperliquid L1',
 			canonicalSlug: 'hyperliquid-l1',
@@ -579,7 +582,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith([{ timestamp: 1_700_000_000, data: { total: 100 } }])
 	})
 
-	it.each([
+	test.each([
 		['OP Mainnet', 'optimism'],
 		['Avalanche', 'avax'],
 		['Gnosis', 'xdai'],
@@ -602,7 +605,7 @@ describe('/api/public/chains/charts', () => {
 		expect(fetchChainAssetsChartMock).toHaveBeenCalledWith(id)
 	})
 
-	it('does not fetch Bridged TVL charts when chainAssets metadata is missing', async () => {
+	test('does not fetch Bridged TVL charts when chainAssets metadata is missing', async () => {
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
 			canonicalSlug: 'base',
@@ -621,7 +624,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'chain not found' })
 	})
 
-	it('rejects all-chain Bridged TVL chart requests', async () => {
+	test('rejects all-chain Bridged TVL chart requests', async () => {
 		const req = {
 			method: 'GET',
 			query: { kind: 'bridged-tvl', chain: 'all' }
@@ -636,7 +639,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'chain not found' })
 	})
 
-	it('returns an upstream error when Bridged TVL historical data is unavailable', async () => {
+	test('returns an upstream error when Bridged TVL historical data is unavailable', async () => {
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
 			canonicalSlug: 'base',
@@ -656,7 +659,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.json).toHaveBeenCalledWith({ error: 'Bridged TVL chart is unavailable upstream' })
 	})
 
-	it('loads bridge net inflows with one focused chain-volume request', async () => {
+	test('loads bridge net inflows with one focused chain-volume request', async () => {
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
 			canonicalSlug: 'base',
@@ -678,12 +681,12 @@ describe('/api/public/chains/charts', () => {
 		expect(fetchBridgeVolumeByChainMock).toHaveBeenCalledWith('Base')
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith([
-			[1700000000, 100, -40],
-			[1700086400, 25, -10]
+			[1_700_000_000, 100, -40],
+			[1_700_086_400, 25, -10]
 		])
 	})
 
-	it('preserves missing bridge legs so clients can distinguish unknown from zero', async () => {
+	test('preserves missing bridge legs so clients can distinguish unknown from zero', async () => {
 		resolveChainParamMock.mockResolvedValue({
 			canonicalName: 'Base',
 			canonicalSlug: 'base',
@@ -703,13 +706,13 @@ describe('/api/public/chains/charts', () => {
 		await handler(req, res)
 
 		expect(res.json).toHaveBeenCalledWith([
-			[1700000000, null, -4],
-			[1700086400, 0, 0],
-			[1700172800, null, null]
+			[1_700_000_000, null, -4],
+			[1_700_086_400, 0, 0],
+			[1_700_172_800, null, null]
 		])
 	})
 
-	it('trims leading zero token incentive points without changing producer tuples', async () => {
+	test('trims leading zero token incentive points without changing producer tuples', async () => {
 		getProtocolUnlockUsdChartMock.mockResolvedValue([
 			[100, 0],
 			[200, 5],
@@ -733,7 +736,7 @@ describe('/api/public/chains/charts', () => {
 		])
 	})
 
-	it('preserves a valid empty token incentive chart as a cached empty response', async () => {
+	test('preserves a valid empty token incentive chart as a cached empty response', async () => {
 		getProtocolUnlockUsdChartMock.mockResolvedValue([])
 		const req = {
 			method: 'GET',
@@ -748,7 +751,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.setHeader).not.toHaveBeenCalledWith('Cache-Control', 'no-store')
 	})
 
-	it('preserves a nonempty all-zero token incentive chart', async () => {
+	test('preserves a nonempty all-zero token incentive chart', async () => {
 		getProtocolUnlockUsdChartMock.mockResolvedValue([
 			[100, 0],
 			[200, 0]
@@ -768,7 +771,7 @@ describe('/api/public/chains/charts', () => {
 		])
 	})
 
-	it('accepts lowercase all for adapter chain charts', async () => {
+	test('accepts lowercase all for adapter chain charts', async () => {
 		const req = {
 			method: 'GET',
 			query: { kind: 'adapter-chain', adapterType: 'fees', chain: 'all' }
@@ -781,7 +784,7 @@ describe('/api/public/chains/charts', () => {
 		expect(res.status).toHaveBeenCalledWith(200)
 	})
 
-	it('sorts aggregated raise dates while retaining an explicit zero total', async () => {
+	test('sorts aggregated raise dates while retaining an explicit zero total', async () => {
 		fetchRaisesMock.mockResolvedValue({
 			raises: [
 				{ date: 3, amountUsd: 0 },
@@ -800,19 +803,19 @@ describe('/api/public/chains/charts', () => {
 
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith([
-			[1_000, 3],
-			[2_000, 5],
-			[3_000, 0]
+			[1000, 3],
+			[2000, 5],
+			[3000, 0]
 		])
 	})
 
-	it('preserves stablecoin chart gaps and zero-valued rows', async () => {
+	test('preserves stablecoin chart gaps and zero-valued rows', async () => {
 		getStablecoinOverviewChartSeriesMock.mockResolvedValue({
 			dataset: {
 				dimensions: ['timestamp', 'Total Stablecoins'],
 				source: [
-					[1_000, null],
-					[2_000, 0]
+					[1000, null],
+					[2000, 0]
 				]
 			}
 		})
@@ -826,8 +829,8 @@ describe('/api/public/chains/charts', () => {
 
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.json).toHaveBeenCalledWith([
-			[1_000, null],
-			[2_000, 0]
+			[1000, null],
+			[2000, 0]
 		])
 	})
 })

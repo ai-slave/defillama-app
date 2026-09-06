@@ -58,11 +58,11 @@ export function buildStablecoinsChartCacheValue({
 	chain: string
 }): StablecoinsChartCacheValue {
 	const { peggedAssets } = peggedData
-	const chartDataByPeggedAsset: StablecoinOverviewChartPoint[][] = []
+	const chartDataByPeggedAsset: Array<Array<StablecoinOverviewChartPoint>> = []
 	const peggedAssetNames = buildUniqueStablecoinChartLabels(peggedAssets, 'name')
 	const pieAssetLabels = buildUniqueStablecoinChartLabels(peggedAssets, 'symbol')
 	const peggedAssetIdToChartDataIndex: Record<string, number> = {}
-	const doublecountedIds: number[] = []
+	const doublecountedIds: Array<number> = []
 	const doublecountedSourceIds = new Set(chainData.doublecountedIds)
 
 	for (const [index, asset] of peggedAssets.entries()) {
@@ -70,7 +70,7 @@ export function buildStablecoinsChartCacheValue({
 		if (doublecountedSourceIds.has(asset.id)) doublecountedIds.push(index)
 
 		const charts = chainData.breakdown[asset.id] ?? []
-		const formattedCharts: StablecoinOverviewChartPoint[] = []
+		const formattedCharts: Array<StablecoinOverviewChartPoint> = []
 		for (const chart of charts) {
 			formattedCharts.push({ date: Number(chart.date), mcap: chart.totalCirculatingUSD ?? {} })
 		}
@@ -163,8 +163,8 @@ export async function fetchStablecoinsTableData(chain: string) {
 
 export interface StablecoinAssetCacheValue {
 	peggedAssetData: StablecoinDetailResponse
-	chainsUnique: string[]
-	chainsData: StablecoinChainBalanceToken[][]
+	chainsUnique: Array<string>
+	chainsData: Array<Array<StablecoinChainBalanceToken>>
 	stablecoinName: string
 	stablecoinSymbol: string
 }
@@ -172,7 +172,7 @@ export interface StablecoinAssetCacheValue {
 export function buildStablecoinAssetCacheValue(res: StablecoinDetailResponse | null): StablecoinAssetCacheValue | null {
 	if (!res) return null
 
-	const chainsUnique: string[] = []
+	const chainsUnique: Array<string> = []
 	const chainsData: StablecoinAssetCacheValue['chainsData'] = []
 	for (const chain in res.chainBalances) {
 		const balance = res.chainBalances[chain]

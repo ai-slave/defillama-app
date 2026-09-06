@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import {
 	execChipLabel,
 	execChipTone,
@@ -13,56 +13,56 @@ import {
 import type { Alert, PriceTrigger } from '~/containers/LlamaAI/components/alerts/types'
 
 describe('getAlertsAccessState', () => {
-	it('waits for authentication before choosing a view', () => {
+	test('waits for authentication before choosing a view', () => {
 		expect(getAlertsAccessState(false, true)).toBe('loading')
 	})
 
-	it('gates anonymous users', () => {
+	test('gates anonymous users', () => {
 		expect(getAlertsAccessState(false, false)).toBe('sign-in')
 	})
 
-	it('keeps authenticated users in the alerts flow', () => {
+	test('keeps authenticated users in the alerts flow', () => {
 		expect(getAlertsAccessState(true, false)).toBe('ready')
 	})
 })
 
 describe('isAlertsUpsellActive', () => {
-	it('is inactive when usage is undefined or null (cap unknown)', () => {
+	test('is inactive when usage is undefined or null (cap unknown)', () => {
 		expect(isAlertsUpsellActive(undefined)).toBe(false)
 		expect(isAlertsUpsellActive(null)).toBe(false)
 	})
 
-	it('is inactive when allowed is true', () => {
+	test('is inactive when allowed is true', () => {
 		expect(isAlertsUpsellActive({ count: 1, cap: 3, allowed: true })).toBe(false)
 	})
 
-	it('is active only when allowed is explicitly false', () => {
+	test('is active only when allowed is explicitly false', () => {
 		expect(isAlertsUpsellActive({ count: 3, cap: 3, allowed: false })).toBe(true)
 	})
 })
 
 describe('getPriceAlertState', () => {
-	it('is armed when enabled and armed is true', () => {
+	test('is armed when enabled and armed is true', () => {
 		expect(getPriceAlertState(true, true, true, 0)).toBe('armed')
 	})
 
-	it('defaults to armed when the armed field is absent (legacy alerts)', () => {
+	test('defaults to armed when the armed field is absent (legacy alerts)', () => {
 		expect(getPriceAlertState(true, undefined, true, 0)).toBe('armed')
 	})
 
-	it('is waiting to re-arm when enabled but not armed', () => {
+	test('is waiting to re-arm when enabled but not armed', () => {
 		expect(getPriceAlertState(true, false, true, 0)).toBe('waiting to re-arm')
 	})
 
-	it('is fired when disabled, one-time (recurring=false), and it has actually run', () => {
+	test('is fired when disabled, one-time (recurring=false), and it has actually run', () => {
 		expect(getPriceAlertState(false, false, false, 1)).toBe('fired')
 	})
 
-	it('is paused (not fired) when disabled and one-time but it never ran (manually paused pre-fire)', () => {
+	test('is paused (not fired) when disabled and one-time but it never ran (manually paused pre-fire)', () => {
 		expect(getPriceAlertState(false, false, false, 0)).toBe('paused')
 	})
 
-	it('is paused when disabled and recurring (or recurring unknown), regardless of run_count', () => {
+	test('is paused when disabled and recurring (or recurring unknown), regardless of run_count', () => {
 		expect(getPriceAlertState(false, false, true, 1)).toBe('paused')
 		expect(getPriceAlertState(false, false, undefined, 1)).toBe('paused')
 	})
@@ -73,7 +73,7 @@ describe('formatPriceAlertSummary', () => {
 		type: 'price',
 		token_nk: 'coingecko:bitcoin',
 		op: 'below',
-		value: 70000,
+		value: 70_000,
 		recurring: false
 	}
 	const recurringArmed: PriceTrigger = {
@@ -84,15 +84,15 @@ describe('formatPriceAlertSummary', () => {
 		recurring: true
 	}
 
-	it('formats a fired one-time alert with the exact brief example', () => {
+	test('formats a fired one-time alert with the exact brief example', () => {
 		expect(formatPriceAlertSummary(oneTimeFired, false, false, 1)).toBe('BITCOIN below $70,000 · one-time · fired')
 	})
 
-	it('omits the one-time segment for recurring alerts', () => {
+	test('omits the one-time segment for recurring alerts', () => {
 		expect(formatPriceAlertSummary(recurringArmed, true, true, 0)).toBe('ETHEREUM above $3,000 · armed')
 	})
 
-	it('keeps sub-dollar thresholds readable instead of collapsing them to $0', () => {
+	test('keeps sub-dollar thresholds readable instead of collapsing them to $0', () => {
 		const tiny: PriceTrigger = {
 			type: 'price',
 			token_nk: 'coingecko:pepe',
@@ -103,15 +103,15 @@ describe('formatPriceAlertSummary', () => {
 		expect(formatPriceAlertSummary(tiny, true, true, 0)).toBe('PEPE above $0.00001235 · one-time · armed')
 	})
 
-	it('shows waiting to re-arm for an enabled-but-unarmed recurring alert', () => {
+	test('shows waiting to re-arm for an enabled-but-unarmed recurring alert', () => {
 		expect(formatPriceAlertSummary(recurringArmed, true, false, 0)).toBe('ETHEREUM above $3,000 · waiting to re-arm')
 	})
 
-	it('shows paused for a manually disabled recurring alert', () => {
+	test('shows paused for a manually disabled recurring alert', () => {
 		expect(formatPriceAlertSummary(recurringArmed, false, false, 3)).toBe('ETHEREUM above $3,000 · paused')
 	})
 
-	it('shows paused (not fired) for a one-time alert manually paused before it ever ran', () => {
+	test('shows paused (not fired) for a one-time alert manually paused before it ever ran', () => {
 		expect(formatPriceAlertSummary(oneTimeFired, false, false, 0)).toBe('BITCOIN below $70,000 · one-time · paused')
 	})
 })
@@ -130,12 +130,12 @@ describe('isFiredOneTimePriceAlert', () => {
 		created_at: ''
 	}
 
-	it('is true for a disabled one-time price alert', () => {
+	test('is true for a disabled one-time price alert', () => {
 		const alert: Alert = { ...base, trigger: { type: 'price', token_nk: 'x', op: 'below', value: 1, recurring: false } }
 		expect(isFiredOneTimePriceAlert(alert)).toBe(true)
 	})
 
-	it('is false when the alert is still enabled', () => {
+	test('is false when the alert is still enabled', () => {
 		const alert: Alert = {
 			...base,
 			enabled: true,
@@ -144,16 +144,16 @@ describe('isFiredOneTimePriceAlert', () => {
 		expect(isFiredOneTimePriceAlert(alert)).toBe(false)
 	})
 
-	it('is false for a disabled recurring price alert (that is just paused)', () => {
+	test('is false for a disabled recurring price alert (that is just paused)', () => {
 		const alert: Alert = { ...base, trigger: { type: 'price', token_nk: 'x', op: 'below', value: 1, recurring: true } }
 		expect(isFiredOneTimePriceAlert(alert)).toBe(false)
 	})
 
-	it('is false for a disabled schedule alert (no trigger)', () => {
+	test('is false for a disabled schedule alert (no trigger)', () => {
 		expect(isFiredOneTimePriceAlert(base)).toBe(false)
 	})
 
-	it('is false for a one-time price alert manually paused before it ever ran (run_count=0)', () => {
+	test('is false for a one-time price alert manually paused before it ever ran (run_count=0)', () => {
 		const alert: Alert = {
 			...base,
 			run_count: 0,
@@ -164,15 +164,15 @@ describe('isFiredOneTimePriceAlert', () => {
 })
 
 describe('formatTokenLabel', () => {
-	it('strips the source prefix and uppercases the symbol', () => {
+	test('strips the source prefix and uppercases the symbol', () => {
 		expect(formatTokenLabel('coingecko:bitcoin')).toBe('BITCOIN')
 	})
 
-	it('turns dashes into spaces', () => {
+	test('turns dashes into spaces', () => {
 		expect(formatTokenLabel('coingecko:usd-coin')).toBe('USD COIN')
 	})
 
-	it('falls back to the raw value when there is no prefix', () => {
+	test('falls back to the raw value when there is no prefix', () => {
 		expect(formatTokenLabel('eth')).toBe('ETH')
 	})
 })
@@ -192,7 +192,7 @@ describe('applyAlertUpdateToList', () => {
 		delivery_channel: 'email'
 	}
 
-	it('applies a price trigger and Slack destination in one cache transition', () => {
+	test('applies a price trigger and Slack destination in one cache transition', () => {
 		const trigger: PriceTrigger = {
 			type: 'price',
 			token_nk: 'coingecko:ethereum',
@@ -226,7 +226,7 @@ describe('applyAlertUpdateToList', () => {
 		expect(updated.schedule_expression).toBe(alert.schedule_expression)
 	})
 
-	it('updates schedule and condition without adding a price trigger', () => {
+	test('updates schedule and condition without adding a price trigger', () => {
 		const [updated] = applyAlertUpdateToList(
 			[alert],
 			{
@@ -250,17 +250,17 @@ describe('applyAlertUpdateToList', () => {
 })
 
 describe('execChipTone / execChipLabel', () => {
-	it('keeps success and legacy test rows green', () => {
+	test('keeps success and legacy test rows green', () => {
 		expect(execChipTone('success', false)).toBe('success')
 		expect(execChipTone('test', false)).toBe('success')
 	})
 
-	it('colors delivery_test by whether it actually delivered', () => {
+	test('colors delivery_test by whether it actually delivered', () => {
 		expect(execChipTone('delivery_test', false)).toBe('success')
 		expect(execChipTone('delivery_test', true)).toBe('error')
 	})
 
-	it('keeps real failures red and labels test pings in user language', () => {
+	test('keeps real failures red and labels test pings in user language', () => {
 		expect(execChipTone('error', true)).toBe('error')
 		expect(execChipLabel('delivery_test')).toBe('test ping')
 		expect(execChipLabel('success')).toBe('success')

@@ -8,10 +8,10 @@ export const useGetBridgeChartDataByChain = (chain?: string) => {
 		queryFn:
 			chain && chain !== 'All'
 				? () =>
-						fetchJson<BridgeOverviewVolumeChartTuple[] | null>(
+						fetchJson<Array<BridgeOverviewVolumeChartTuple> | null>(
 							`/api/public/chains/charts?kind=net-inflows&chain=${encodeURIComponent(chain)}`
-						).catch((err) => {
-							console.log(err)
+						).catch((error) => {
+							console.log(error)
 							return null
 						})
 				: () => null,

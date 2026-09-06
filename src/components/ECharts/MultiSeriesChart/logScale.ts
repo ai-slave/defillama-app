@@ -15,9 +15,9 @@ export function getZeroBaselineYAxisMin(extent: AxisExtent) {
 }
 
 type YAxisOption = MultiSeriesYAxisOption | undefined
-type YAxisOptions = YAxisOption | MultiSeriesYAxisOption[]
+type YAxisOptions = YAxisOption | Array<MultiSeriesYAxisOption>
 type ConfiguredYAxisOption = MultiSeriesYAxisOverride | undefined
-type ConfiguredYAxisOptions = ConfiguredYAxisOption | MultiSeriesYAxisOverride[]
+type ConfiguredYAxisOptions = ConfiguredYAxisOption | Array<MultiSeriesYAxisOverride>
 
 export function mergeYAxisOption(
 	base: MultiSeriesYAxisOption,
@@ -63,10 +63,10 @@ export function applyConfiguredYAxisScale(yAxis: YAxisOptions, configuredYAxis: 
 }
 
 export function applyLogScaleToYAxes(
-	axes: MultiSeriesYAxisOption[],
+	axes: Array<MultiSeriesYAxisOption>,
 	logScale: boolean | undefined,
-	logEligibleYAxes: number[] | undefined
-): MultiSeriesYAxisOption[] {
+	logEligibleYAxes: Array<number> | undefined
+): Array<MultiSeriesYAxisOption> {
 	if (!logScale || !Array.isArray(axes)) return axes
 	const eligible = logEligibleYAxes ?? []
 	return axes.map((axis, index) => {

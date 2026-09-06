@@ -9,20 +9,20 @@ type AuthorizedFetch = (url: string, options?: RequestInit) => Promise<Response 
 // so a concurrent editor save can only lose the append, never corrupt the doc.
 export async function appendBlocksToArticle(
 	articleId: string,
-	blocks: TiptapJson[],
+	blocks: Array<TiptapJson>,
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleDocument> {
 	const article = await getOwnedArticle(articleId, authorizedFetch)
 	const contentJson = {
 		...(article.contentJson ?? { type: 'doc' }),
-		content: [...((article.contentJson?.content as TiptapJson[]) ?? []), ...blocks]
+		content: [...((article.contentJson?.content as Array<TiptapJson>) ?? []), ...blocks]
 	}
 	return updateArticle(articleId, { ...article, contentJson }, authorizedFetch)
 }
 
 export async function createArticleWithBlocks(
 	title: string,
-	blocks: TiptapJson[],
+	blocks: Array<TiptapJson>,
 	authorizedFetch: AuthorizedFetch
 ): Promise<ArticleDocument> {
 	const draft = createEmptyLocalArticle()

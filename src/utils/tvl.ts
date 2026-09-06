@@ -1,8 +1,8 @@
 export interface TvlChartData {
-	tvl?: [string | number, number][]
-	liquidstaking?: [string | number, number][]
-	doublecounted?: [string | number, number][]
-	dcAndLsOverlap?: [string | number, number][]
+	tvl?: Array<[string | number, number]>
+	liquidstaking?: Array<[string | number, number]>
+	doublecounted?: Array<[string | number, number]>
+	dcAndLsOverlap?: Array<[string | number, number]>
 }
 
 export interface TvlOverlapValues {
@@ -23,7 +23,7 @@ export function applyTvlOverlapBaseAdjustment(
 	)
 }
 
-export const processAdjustedTvl = (data: TvlChartData | null | undefined): [number, number][] => {
+export const processAdjustedTvl = (data: TvlChartData | null | undefined): Array<[number, number]> => {
 	const { tvl = [], liquidstaking = [], doublecounted = [], dcAndLsOverlap = [] } = data ?? {}
 
 	const extraTvlCharts: Record<'liquidstaking' | 'doublecounted' | 'dcAndLsOverlap', Record<number, number>> = {
@@ -42,7 +42,7 @@ export const processAdjustedTvl = (data: TvlChartData | null | undefined): [numb
 		extraTvlCharts.dcAndLsOverlap[Number(date)] = Math.trunc(totalLiquidityUSD)
 	}
 
-	const adjustedTvl: [number, number][] = tvl.map(([date, totalLiquidityUSD]) => {
+	const adjustedTvl: Array<[number, number]> = tvl.map(([date, totalLiquidityUSD]) => {
 		const timestamp = Number(date)
 		const sum = applyTvlOverlapBaseAdjustment(Math.trunc(totalLiquidityUSD), {
 			liquidstaking: extraTvlCharts.liquidstaking[timestamp],
@@ -55,23 +55,23 @@ export const processAdjustedTvl = (data: TvlChartData | null | undefined): [numb
 	return adjustedTvl
 }
 
-const toUtcDay = (ts: number): number => Math.floor(Number(ts) / 86400) * 86400
+const toUtcDay = (ts: number): number => Math.floor(Number(ts) / 86_400) * 86_400
 const startOfTodayUtc = (): number => {
 	const now = new Date()
 	return Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) / 1000)
 }
-const filterOutToday = (pairs: [number, number][]): [number, number][] => {
+const filterOutToday = (pairs: Array<[number, number]>): Array<[number, number]> => {
 	const today = startOfTodayUtc()
 	return pairs.filter(([ts]) => ts < today)
 }
 
 type ProtocolTvlPoint = { date: number | string; totalLiquidityUSD: number | string }
 
-export type ProtocolChainTvls = Record<string, { tvl?: ProtocolTvlPoint[] }>
+export type ProtocolChainTvls = Record<string, { tvl?: Array<ProtocolTvlPoint> }>
 
 interface AdjustProtocolTvlOptions {
-	includeChains?: string[]
-	excludeChains?: string[]
+	includeChains?: Array<string>
+	excludeChains?: Array<string>
 	filterMode?: 'include' | 'exclude'
 }
 
@@ -93,7 +93,7 @@ const getChainFromDerivedKey = (key: string, type: AdjustKey): string | null => 
 	return key.endsWith(suffix) ? key.slice(0, -suffix.length) : null
 }
 
-const toPairs = (points: readonly ProtocolTvlPoint[] | undefined): [number, number][] => {
+const toPairs = (points: ReadonlyArray<ProtocolTvlPoint> | undefined): Array<[number, number]> => {
 	const byDay = new Map<number, { ts: number; v: number }>()
 
 	for (const point of points ?? []) {
@@ -113,14 +113,14 @@ const toPairs = (points: readonly ProtocolTvlPoint[] | undefined): [number, numb
 	return result
 }
 
-const accumulate = (store: Map<number, number>, pairs: [number, number][]) => {
+const accumulate = (store: Map<number, number>, pairs: Array<[number, number]>) => {
 	for (const [ts, v] of pairs) store.set(ts, (store.get(ts) || 0) + v)
 }
 
 export const processAdjustedProtocolTvl = (
 	chainTvls: ProtocolChainTvls,
 	options: AdjustProtocolTvlOptions = {}
-): [number, number][] => {
+): Array<[number, number]> => {
 	const includeSet = new Set((options.includeChains || []).filter(Boolean))
 	const excludeSet = new Set((options.excludeChains || []).filter(Boolean))
 	const filterMode =
@@ -185,7 +185,7 @@ export const processAdjustedProtocolTvl = (
 	}
 	const allTs = Array.from(tsSet).sort((a, b) => a - b)
 
-	const adjusted: [number, number][] = allTs.map((ts) => {
+	const adjusted: Array<[number, number]> = allTs.map((ts) => {
 		const doublecounted = dc.get(ts)
 		const liquidstaking = ls.get(ts)
 		const dcAndLsOverlap = overlap.get(ts)

@@ -93,8 +93,8 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 				data={props.protocols}
 				getSubRows={(row) => row.subRows}
 				columns={EXTRA_TVL_COLUMNS_BY_METRIC[props.metric]}
-				placeholder={'Search protocols...'}
-				columnToSearch={'name'}
+				placeholder="Search protocols..."
+				columnToSearch="name"
 				compact
 				csvFileName={`protocols-${props.metric}-${props.chain}`}
 				sortingState={DEFAULT_SORTING_STATE}

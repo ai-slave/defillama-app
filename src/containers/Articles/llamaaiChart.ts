@@ -18,10 +18,10 @@ export const LLAMAAI_CHART_MAX_POINTS_PER_SERIES = 2000
 // insert can never be rejected on save.
 export const LLAMAAI_CHART_MAX_DATA_BYTES = 400 * 1024
 
-function downsampleRows<T>(rows: T[], maxPoints: number): T[] {
+function downsampleRows<T>(rows: Array<T>, maxPoints: number): Array<T> {
 	if (rows.length <= maxPoints) return rows
 	const stride = (rows.length - 1) / (maxPoints - 1)
-	const out: T[] = []
+	const out: Array<T> = []
 	for (let i = 0; i < maxPoints; i++) {
 		const row = rows[Math.round(i * stride)]
 		if (row !== undefined) out.push(row)
@@ -29,8 +29,11 @@ function downsampleRows<T>(rows: T[], maxPoints: number): T[] {
 	return out
 }
 
-export function downsampleChartData<T>(data: T[], maxPointsPerSeries?: number): T[]
-export function downsampleChartData<T>(data: Record<string, T[]>, maxPointsPerSeries?: number): Record<string, T[]>
+export function downsampleChartData<T>(data: Array<T>, maxPointsPerSeries?: number): Array<T>
+export function downsampleChartData<T>(
+	data: Record<string, Array<T>>,
+	maxPointsPerSeries?: number
+): Record<string, Array<T>>
 export function downsampleChartData(
 	data: ChartDataSeries | ChartDataByKey,
 	maxPointsPerSeries?: number
@@ -41,7 +44,7 @@ export function downsampleChartData(
 ): ChartDataSeries | ChartDataByKey {
 	if (Array.isArray(data)) return downsampleRows(data, maxPointsPerSeries)
 	let changed = false
-	const out: Record<string, unknown[]> = {}
+	const out: Record<string, Array<unknown>> = {}
 	for (const key in data) {
 		const rows = data[key]
 		if (!rows) continue

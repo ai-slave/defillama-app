@@ -9,8 +9,8 @@ import { LoadingSpinner } from './LoadingSpinner'
 interface AriakitVirtualizedMultiSelectProps {
 	label: string
 	options: ReadonlyArray<MultiSelectOption>
-	selectedValues: string[]
-	onChange: (values: string[]) => void
+	selectedValues: Array<string>
+	onChange: (values: Array<string>) => void
 	placeholder?: string
 	isLoading?: boolean
 	className?: string
@@ -123,7 +123,7 @@ export function AriakitVirtualizedMultiSelect({
 					<Popover
 						store={popover}
 						modal={false}
-						portal={true}
+						portal
 						flip={false}
 						gutter={4}
 						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-xl"

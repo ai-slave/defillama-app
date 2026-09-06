@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api.types'
 import { definitions } from '~/public/definitions'
 import { formatAdapterData } from '../formatAdapterData'
@@ -48,7 +48,7 @@ function createAdapterMetrics(overrides: Partial<IAdapterProtocolMetrics> = {}):
 }
 
 describe('formatAdapterData', () => {
-	it('slims chain breakdown into key metrics shape', () => {
+	test('slims chain breakdown into key metrics shape', () => {
 		const result = formatAdapterData({
 			data: createAdapterMetrics({
 				chainBreakdown: {
@@ -124,7 +124,7 @@ describe('formatAdapterData', () => {
 		})
 	})
 
-	it('normalizes missing or empty chain breakdowns to null', () => {
+	test('normalizes missing or empty chain breakdowns to null', () => {
 		expect(formatAdapterData({ data: createAdapterMetrics(), methodologyKey: 'Fees' })?.chainBreakdown).toBeNull()
 
 		expect(
@@ -135,7 +135,7 @@ describe('formatAdapterData', () => {
 		).toBeNull()
 	})
 
-	it('uses a string methodology as the protocol methodology', () => {
+	test('uses a string methodology as the protocol methodology', () => {
 		expect(
 			formatAdapterData({
 				data: createAdapterMetrics({ methodology: 'Reported directly by the protocol' }),
@@ -144,7 +144,7 @@ describe('formatAdapterData', () => {
 		).toBe('Reported directly by the protocol')
 	})
 
-	it('uses the common liquidation methodology when the producer omits a protocol-specific value', () => {
+	test('uses the common liquidation methodology when the producer omits a protocol-specific value', () => {
 		expect(
 			formatAdapterData({
 				data: createAdapterMetrics({ methodology: {} }),
@@ -153,7 +153,7 @@ describe('formatAdapterData', () => {
 		).toBe(definitions.liquidationVolume.common)
 	})
 
-	it('preserves child methodology behavior', () => {
+	test('preserves child methodology behavior', () => {
 		const result = formatAdapterData({
 			data: createAdapterMetrics({
 				childProtocols: [
@@ -189,7 +189,7 @@ describe('formatAdapterData', () => {
 		})
 	})
 
-	it('aggregates holders revenue across children instead of picking one', () => {
+	test('aggregates holders revenue across children instead of picking one', () => {
 		const result = formatAdapterData({
 			data: createAdapterMetrics({
 				childProtocols: [

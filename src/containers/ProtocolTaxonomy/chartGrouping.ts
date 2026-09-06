@@ -58,7 +58,7 @@ export function buildProtocolTaxonomyGroupedCharts({
 			timestamp: number
 			row: ProtocolTaxonomyCharts['dataset']['source'][number]
 			lineTimestamps: Array<number | null>
-			unavailableBarDimensions: number[] | null
+			unavailableBarDimensions: Array<number> | null
 		}
 	>()
 	let hasBarCharts = false

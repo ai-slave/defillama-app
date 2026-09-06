@@ -51,7 +51,7 @@ const CURRENCY_HEADER_PATTERN =
 
 type PreviewRow = {
 	id: number
-	values: string[]
+	values: Array<string>
 }
 
 type ColumnKind = 'text' | 'number' | 'currency' | 'percent' | 'date'
@@ -70,8 +70,8 @@ interface SortState {
 	direction: SortDirection
 }
 
-function parseCsvLine(line: string): string[] {
-	const fields: string[] = []
+function parseCsvLine(line: string): Array<string> {
+	const fields: Array<string> = []
 	let i = 0
 	while (i < line.length) {
 		if (line[i] === '"') {
@@ -105,7 +105,7 @@ function parseCsvLine(line: string): string[] {
 	return fields
 }
 
-function parseCsv(text: string): { headers: string[]; rows: PreviewRow[] } {
+function parseCsv(text: string): { headers: Array<string>; rows: Array<PreviewRow> } {
 	const lines = text.split(/\r?\n/).filter((line) => line.trim())
 	if (lines.length === 0) return { headers: [], rows: [] }
 	const headers = parseCsvLine(lines[0])
@@ -122,7 +122,7 @@ function parseNumericValue(value: string): number | null {
 	return Number.isFinite(parsed) ? parsed : null
 }
 
-function detectColumnKind(header: string, values: string[]): ColumnKind {
+function detectColumnKind(header: string, values: Array<string>): ColumnKind {
 	const sample = values.filter((value) => value.trim()).slice(0, COLUMN_DETECTION_SAMPLE_SIZE)
 	if (sample.length === 0) return 'text'
 	const numericMatches = sample.filter((value) => parseNumericValue(value) !== null).length
@@ -138,7 +138,7 @@ function detectColumnKind(header: string, values: string[]): ColumnKind {
 	return 'text'
 }
 
-function getColumnWidth(header: string, kind: ColumnKind, values: string[], isFirst: boolean): number {
+function getColumnWidth(header: string, kind: ColumnKind, values: Array<string>, isFirst: boolean): number {
 	const sampleMaxLength = values.slice(0, COLUMN_WIDTH_SAMPLE_SIZE).reduce((max, value) => {
 		return Math.max(max, value.length)
 	}, header.length)
@@ -181,13 +181,17 @@ function getInitialSortDirection(kind: ColumnKind): SortDirection {
 	return kind === 'text' ? 'asc' : 'desc'
 }
 
-function buildSelectedCsvRows(columns: ColumnMeta[], selected: Set<number>, rows: PreviewRow[]): string[][] {
+function buildSelectedCsvRows(
+	columns: Array<ColumnMeta>,
+	selected: Set<number>,
+	rows: Array<PreviewRow>
+): Array<Array<string>> {
 	const activeCols = columns.filter((c) => selected.has(c.index))
 	if (activeCols.length === 0) return []
 	return [activeCols.map((c) => c.header), ...rows.map((row) => activeCols.map((c) => row.values[c.index] ?? ''))]
 }
 
-function buildTsvString(columns: ColumnMeta[], selected: Set<number>, rows: PreviewRow[]): string {
+function buildTsvString(columns: Array<ColumnMeta>, selected: Set<number>, rows: Array<PreviewRow>): string {
 	const activeCols = columns.filter((c) => selected.has(c.index))
 	if (activeCols.length === 0) return ''
 	const header = activeCols.map((c) => c.header).join('\t')
@@ -247,7 +251,7 @@ export function DatasetPreviewModal({
 			const response = await authorizedFetch(`/api/private/downloads/${dataset.slug}?mode=chains`)
 			if (!response || !response.ok) return []
 			const json = await response.json()
-			return (json?.chains as string[]) ?? []
+			return (json?.chains as Array<string>) ?? []
 		},
 		staleTime: 10 * 60 * 1000,
 		refetchOnWindowFocus: false,
@@ -282,7 +286,7 @@ export function DatasetPreviewModal({
 	})
 
 	const { headers, rows } = useMemo(() => {
-		if (!csvText) return { headers: [] as string[], rows: [] as PreviewRow[] }
+		if (!csvText) return { headers: [] as Array<string>, rows: [] as Array<PreviewRow> }
 		return parseCsv(csvText)
 	}, [csvText])
 
@@ -355,7 +359,7 @@ export function DatasetPreviewModal({
 		headers.forEach((header, index) => {
 			if (!headerIndices.has(header)) headerIndices.set(header, index)
 		})
-		const fieldIndices: number[] = []
+		const fieldIndices: Array<number> = []
 		for (const toggle of toggles) {
 			if (!excludeState[toggle.field]) continue
 			const index = headerIndices.get(toggle.field)
@@ -1002,10 +1006,10 @@ function PlaceholderRows({
 	rows,
 	cols
 }: {
-	columnMeta: ColumnMeta[]
+	columnMeta: Array<ColumnMeta>
 	gridTemplate: string
 	tableWidth: number
-	rows: PreviewRow[]
+	rows: Array<PreviewRow>
 	cols: Set<number>
 }) {
 	if (rows.length === 0) return null
@@ -1054,7 +1058,7 @@ function ChainPickerPopover({
 	selected,
 	onSelect
 }: {
-	chains: string[]
+	chains: Array<string>
 	selected: string | null
 	onSelect: (chain: string | null) => void
 }) {
@@ -1149,7 +1153,7 @@ function ColumnPickerPopover({
 	onToggle,
 	onToggleAll
 }: {
-	columns: ColumnMeta[]
+	columns: Array<ColumnMeta>
 	selected: Set<number>
 	allSelected: boolean
 	onToggle: (index: number) => void

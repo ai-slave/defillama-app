@@ -57,12 +57,12 @@ export function buildRWAPerpsContractOverlayRows({
 	selectedPlatform,
 	selectedAssetGroup
 }: {
-	markets: IRWAPerpsMarket[]
+	markets: Array<IRWAPerpsMarket>
 	selectedCategory?: string
 	selectedPlatform?: string
 	selectedAssetGroup?: string
-}): RWAPerpsContractOverlayRow[] {
-	const rows: RWAPerpsContractOverlayRow[] = []
+}): Array<RWAPerpsContractOverlayRow> {
+	const rows: Array<RWAPerpsContractOverlayRow> = []
 
 	for (const market of markets) {
 		const row = toRWAPerpsContractOverlayRow(market)
@@ -90,7 +90,7 @@ export function buildRWAPerpsOpenInterestOverlayDataset({
 	rows,
 	breakdownRows
 }: {
-	rows: RWAPerpsContractOverlayRow[]
+	rows: Array<RWAPerpsContractOverlayRow>
 	breakdownRows: IRWAPerpsBreakdownChartResponse | null
 }): IRWAInitialTimeSeriesDataset | null {
 	if (breakdownRows == null) return null

@@ -15,11 +15,11 @@ export type MasterMicaStatus = 'active' | 'in-progress'
 export type MasterDirectoryVisibility = 'listed' | 'mica-only'
 export type MasterProfileMode = 'markets' | 'metadata-only'
 
-export const MASTER_SEGMENTS = ['spot', 'linear_perp', 'inverse_perp'] as const satisfies readonly MasterSegment[]
+export const MASTER_SEGMENTS = ['spot', 'linear_perp', 'inverse_perp'] as const satisfies ReadonlyArray<MasterSegment>
 
 // --- Shared venue core (buildPublicVenueCore) --------------------------------
 
-export type MasterEntityScope = { kind: 'global' } | { kind: 'regional'; regions: string[] }
+export type MasterEntityScope = { kind: 'global' } | { kind: 'regional'; regions: Array<string> }
 
 export interface MasterRelatedEntity {
 	slug: string
@@ -59,7 +59,7 @@ export interface MasterVenueCore {
 	profile_mode: MasterProfileMode
 	scope: MasterEntityScope
 	parent_entity: MasterRelatedEntity | null
-	related_entities: MasterRelatedEntity[]
+	related_entities: Array<MasterRelatedEntity>
 	liquidity: MasterLiquidityBySegment
 	links: {
 		profile: string
@@ -114,7 +114,7 @@ export interface MasterSegmentStats {
 export interface MasterDepthLadder {
 	bid_usd: Array<number | null>
 	ask_usd: Array<number | null>
-	coverage: number[]
+	coverage: Array<number>
 }
 
 export interface MasterSegmentNormalizedVolume {
@@ -178,8 +178,8 @@ export interface MasterFiatFeeRow {
 }
 
 export interface MasterFiatFees {
-	on_ramp: MasterFiatFeeRow[]
-	off_ramp: MasterFiatFeeRow[]
+	on_ramp: Array<MasterFiatFeeRow>
+	off_ramp: Array<MasterFiatFeeRow>
 }
 
 // --- exchanges/directory.json --------------------------------------------------
@@ -199,7 +199,7 @@ export interface MasterDirectoryVenue extends MasterVenueCore {
 	segments: Partial<Record<MasterSegment, MasterSegmentStats>>
 	capabilities: Partial<Record<MasterSegment, MasterCapabilityFlags>>
 	totals: MasterVenueTotals
-	sparks: Partial<Record<MasterSegment, number[]>>
+	sparks: Partial<Record<MasterSegment, Array<number>>>
 	freshness: MasterFreshness
 	reserves: {
 		total_usd: number | null
@@ -232,16 +232,16 @@ export interface MasterDirectoryVenue extends MasterVenueCore {
 	profile: {
 		founded: number | null
 		native_token: string | null
-		promotions: MasterPromotion[]
+		promotions: Array<MasterPromotion>
 		last_verified: string | null
 	} | null
 	funding: {
-		fiat_currencies: string[] | null
+		fiat_currencies: Array<string> | null
 		has_fiat_onramp: boolean | null
 		fiat_fees: MasterFiatFees | null
 		ramp_cost_1k: MasterRampCost | null
 	} | null
-	warnings: MasterWarning[]
+	warnings: Array<MasterWarning>
 	regional: Pick<MasterExchangeRegionManifestResponse, 'variants'> | null
 	nvol: Record<MasterSegment, MasterSegmentNormalizedVolume | null>
 	/** Internal quality rank, stamped from a manually refreshed upstream file — null
@@ -303,7 +303,7 @@ export interface MasterExecutionFeedHealth {
 }
 
 export interface MasterExecutionVenueMetrics extends MasterExecutionMeasurements {
-	assets: string[]
+	assets: Array<string>
 	pair_count: number
 	hours_covered: number
 	n_trades: number
@@ -318,7 +318,7 @@ export interface MasterExecutionSlippageResponse {
 }
 
 export interface MasterExecutionQualityResponse {
-	basket: string[]
+	basket: Array<string>
 	unit: string
 	unit_note: string
 	venues: Record<string, MasterExecutionVenueMetrics>
@@ -348,7 +348,7 @@ export interface MasterQualityRanksResponse {
 		}
 	>
 	/** Venues with no observed book — listed, never scored. */
-	insufficient_data?: string[]
+	insufficient_data?: Array<string>
 }
 
 /** Published ranking catalog — `exchanges/rank-methodology.json`: what each pillar
@@ -374,9 +374,9 @@ export interface MasterDirectoryTotals {
 }
 
 export interface MasterDirectoryResponse {
-	venues: MasterDirectoryVenue[]
+	venues: Array<MasterDirectoryVenue>
 	/** One band axis (fractions of mid) for every venue's `depth_ladder`. */
-	depth_bands: number[]
+	depth_bands: Array<number>
 	totals: MasterDirectoryTotals & { cex: MasterDirectoryTotals; dex: MasterDirectoryTotals }
 	freshness: MasterFreshness
 	last_updated: string
@@ -436,8 +436,8 @@ export const MASTER_VENUE_SERIES_KEYS = [
 	'inverse_perp_market_count'
 ] as const
 
-interface MasterColumnarSeriesBase<Key extends readonly string[]> {
-	days: number[]
+interface MasterColumnarSeriesBase<Key extends ReadonlyArray<string>> {
+	days: Array<number>
 	key: Key
 	series: Array<Array<number | null> | null>
 	last_updated: string
@@ -527,7 +527,7 @@ export interface MasterExchangeIndexSegment {
 	oi_prev_usd?: number | null
 	freshness: MasterFreshness
 	doublecount?: MasterDoubleCount
-	pairs: MasterExchangePair[]
+	pairs: Array<MasterExchangePair>
 }
 
 export interface MasterExchangeIndexResponse {
@@ -537,7 +537,7 @@ export interface MasterExchangeIndexResponse {
 	segments: Partial<Record<MasterSegment, MasterExchangeIndexSegment>>
 	capabilities: Partial<Record<MasterSegment, MasterCapabilityFlags>>
 	freshness: MasterFreshness
-	depth_bands: number[]
+	depth_bands: Array<number>
 	last_updated: string
 }
 
@@ -566,7 +566,7 @@ export interface MasterMetadataLink {
 	label: string
 	url: string
 }
-export type MasterMetadataCell = string | number | boolean | string[] | MasterMetadataLink | null
+export type MasterMetadataCell = string | number | boolean | Array<string> | MasterMetadataLink | null
 
 interface MasterMetadataValueBase {
 	key: string
@@ -587,9 +587,9 @@ type MasterMetadataNonTableValue = MasterMetadataValueBase &
 		| { type: 'number' | 'usd' | 'pct'; value: number }
 		| { type: 'bool'; value: boolean }
 		| { type: 'badge'; value: string; tone?: MasterMetadataTone }
-		| { type: 'pills'; value: string[] }
+		| { type: 'pills'; value: Array<string> }
 		| { type: 'link'; value: MasterMetadataLink }
-		| { type: 'links'; value: MasterMetadataLink[] }
+		| { type: 'links'; value: Array<MasterMetadataLink> }
 		| { type: 'kv'; value: Array<{ label: string; value: MasterMetadataCell }> }
 	)
 
@@ -598,7 +598,7 @@ export type MasterMetadataField =
 	| (MasterMetadataValueBase & {
 			type: 'table'
 			value: Array<Record<string, MasterMetadataCell>>
-			columns: MasterMetadataTableColumn[]
+			columns: Array<MasterMetadataTableColumn>
 			comparable: boolean
 	  })
 
@@ -606,7 +606,7 @@ export interface MasterMetadataGroup {
 	key: MasterMetadataGroupKey
 	title: string
 	fromPor?: boolean
-	fields: MasterMetadataField[]
+	fields: Array<MasterMetadataField>
 	source?: MasterMetadataSource
 }
 
@@ -617,8 +617,8 @@ export interface MasterPromotion {
 	label: string
 	subtitle?: string
 	type: 'deposit_bonus' | 'cashback' | 'fee_discount' | 'prize_draw' | 'referral' | 'other'
-	regions?: string[]
-	excluded_regions?: string[]
+	regions?: Array<string>
+	excluded_regions?: Array<string>
 	url?: string
 	terms_url?: string
 	starts_at?: string
@@ -629,17 +629,17 @@ export interface MasterPromotion {
 
 export interface MasterExchangeMetadataResponse extends MasterVenueCore {
 	native_token: { symbol: string; name: string; coingecko_id: string | null; url: string } | null
-	promotions: MasterPromotion[]
-	kpis: MasterMetadataKpi[]
-	groups: MasterMetadataGroup[]
+	promotions: Array<MasterPromotion>
+	kpis: Array<MasterMetadataKpi>
+	groups: Array<MasterMetadataGroup>
 	last_updated: string
 }
 
 export interface MasterExchangeRegionCatalogResponse {
 	version: string
-	countries: string[]
+	countries: Array<string>
 	country_regions: Record<string, string>
-	regions: Record<string, { label: string; continent: string; countries: string[] }>
+	regions: Record<string, { label: string; continent: string; countries: Array<string> }>
 	last_updated: string
 }
 
@@ -658,7 +658,7 @@ type MasterExchangeRegionVariantBase = {
 export type MasterExchangeRegionVariant = MasterExchangeRegionVariantBase &
 	(
 		| { status: 'unavailable'; segments: [] }
-		| { status: Exclude<MasterEuStatus, 'unavailable'>; segments: MasterSegment[] }
+		| { status: Exclude<MasterEuStatus, 'unavailable'>; segments: Array<MasterSegment> }
 	)
 
 export interface MasterExchangeRegionManifestResponse {
@@ -670,7 +670,7 @@ export interface MasterExchangeRegionManifestResponse {
 interface MasterExchangeRegionalMetadataBase {
 	country: string
 	region: { key: string; label: string }
-	segments: MasterSegment[]
+	segments: Array<MasterSegment>
 	note: string | null
 	source: MasterMetadataSource | null
 	used_fallback: boolean
@@ -711,7 +711,7 @@ export interface MasterMicaVenue extends MasterVenueCore {
 	fiat_currency_count: number | null
 	has_fiat_onramp: boolean
 	fiat_fees: MasterFiatFees | null
-	warnings: MasterWarning[]
+	warnings: Array<MasterWarning>
 	ramp_cost_1k: MasterRampCost | null
 	depth_summary: Record<MasterSegment, MasterMicaDepthSegment | null>
 	eu_status: MasterEuStatus | null
@@ -719,8 +719,8 @@ export interface MasterMicaVenue extends MasterVenueCore {
 	mica_licensed: boolean | null
 	mica_member_state: string | null
 	mica_regulator: string | null
-	products: MasterMicaProduct[]
-	promotions: MasterPromotion[]
+	products: Array<MasterMicaProduct>
+	promotions: Array<MasterPromotion>
 	kyc_required: boolean | null
 	kyc_short: string | null
 	kyc_summary: string | null
@@ -738,7 +738,7 @@ export interface MasterMicaVenue extends MasterVenueCore {
 }
 
 export interface MasterMicaResponse {
-	exchanges: MasterMicaVenue[]
+	exchanges: Array<MasterMicaVenue>
 	last_updated: string
 }
 
@@ -777,8 +777,8 @@ export interface MasterRampCurrencyCost {
 }
 
 export interface MasterRampMatrix {
-	sizes: number[]
-	currencies: string[]
+	sizes: Array<number>
+	currencies: Array<string>
 	/** Keyed by notional in USD, as a string. */
 	trade: Partial<Record<string, MasterRampTradeLegs>>
 	/** currency → notional → both directions. */
@@ -804,12 +804,12 @@ export interface MasterCryptoFeeRow {
 }
 
 export interface MasterCryptoRails {
-	deposit: MasterCryptoFeeRow[]
-	withdraw: MasterCryptoFeeRow[]
+	deposit: Array<MasterCryptoFeeRow>
+	withdraw: Array<MasterCryptoFeeRow>
 }
 
 export type MasterRampVariant = MasterExchangeRegionVariant & {
-	fiat_currencies: string[] | null
+	fiat_currencies: Array<string> | null
 	rails: MasterFiatFees | null
 	/** Chain-side routes: (asset x network x direction), L2s included. */
 	crypto_rails: MasterCryptoRails | null
@@ -824,9 +824,9 @@ export interface MasterRampVenue extends MasterVenueCore {
 }
 
 export interface MasterRampsResponse {
-	sizes: number[]
+	sizes: Array<number>
 	btc_network_fee_btc: number | null
-	exchanges: MasterRampVenue[]
+	exchanges: Array<MasterRampVenue>
 	last_updated: string
 }
 
@@ -866,7 +866,7 @@ export const MASTER_CHART_KEYS = {
 		'active_liquidity_linear_perp',
 		'active_liquidity_inverse_perp'
 	]
-} as const satisfies Record<MasterChartPart, readonly MasterChartMetric[]>
+} as const satisfies Record<MasterChartPart, ReadonlyArray<MasterChartMetric>>
 
 /**
  * Compact columnar shape of a global chart range (`charts/{part}/{range}.json`).
@@ -878,9 +878,9 @@ export const MASTER_CHART_KEYS = {
  * are each keyed by all three segments.
  */
 interface MasterChartColumnarBase {
-	days: number[]
-	exchanges: string[]
-	types: MasterVenueType[]
+	days: Array<number>
+	exchanges: Array<string>
+	types: Array<MasterVenueType>
 	series: Array<Array<Array<number | null> | null>>
 	btc_depth?: Record<MasterSegment, Array<number | null>>
 	btc_oi?: Record<MasterSegment, Array<number | null>>

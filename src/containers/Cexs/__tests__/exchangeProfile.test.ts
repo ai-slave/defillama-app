@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { attachExchangeProfileSlugs } from '../exchangeProfile'
 import type { ICex } from '../types'
 
@@ -18,7 +18,7 @@ const cex: ICex = {
 }
 
 describe('CEX Exchange profile identity', () => {
-	it('keeps the CEX protocol key separate from its Exchange profile slug', () => {
+	test('keeps the CEX protocol key separate from its Exchange profile slug', () => {
 		const [result] = attachExchangeProfileSlugs([cex], {
 			'binance-cex': { exchange: 'binance', defillama_slug: 'binance-cex' }
 		})
@@ -26,7 +26,7 @@ describe('CEX Exchange profile identity', () => {
 		expect(result).toMatchObject({ cexProtocolSlug: 'binance-cex', exchangeProfileSlug: 'binance' })
 	})
 
-	it('leaves a CEX without an Exchange profile unchanged', () => {
+	test('leaves a CEX without an Exchange profile unchanged', () => {
 		const [result] = attachExchangeProfileSlugs([cex], {})
 
 		expect(result).toBe(cex)

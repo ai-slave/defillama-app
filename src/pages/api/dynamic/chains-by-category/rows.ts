@@ -42,7 +42,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	}
 	if (names.length === 0) return res.status(200).json({ rows: [] })
 
-	const wanted = new Set(names as string[])
+	const wanted = new Set(names as Array<string>)
 	const chains = await loadAllChains()
 	return res.status(200).json({ rows: chains.filter((chain) => wanted.has(chain.name)) })
 }

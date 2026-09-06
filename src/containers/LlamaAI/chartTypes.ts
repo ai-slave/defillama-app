@@ -15,12 +15,12 @@ export interface ChartConfiguration {
 			type: 'time' | 'category' | 'value'
 			valueSymbol?: string
 			entityType?: 'protocol' | 'chain' | 'token' | 'stablecoin' | 'equity'
-			logoCategories?: string[]
+			logoCategories?: Array<string>
 			logoKeys?: Record<string, string>
 		}
 		yAxes: Array<{
 			id: string
-			fields: string[]
+			fields: Array<string>
 			label: string
 			position: 'left' | 'right'
 			scale?: 'linear' | 'log'
@@ -48,7 +48,7 @@ export interface ChartConfiguration {
 	dataTransformation: {
 		groupBy?: string
 		timeField: string
-		metrics: string[]
+		metrics: Array<string>
 	}
 	hallmarks?: Array<[number] | [number, string]>
 	hallmarkStyle?: 'event-rail' | 'mark-line'
@@ -97,10 +97,10 @@ export interface ChartStylePatch {
 		type?: 'line' | 'bar' | 'area'
 		metricClass?: 'flow' | 'stock'
 	}>
-	order?: number[]
+	order?: Array<number>
 }
 
-export type ChartDataSeries = unknown[]
+export type ChartDataSeries = Array<unknown>
 export type ChartDataByKey = Record<string, ChartDataSeries>
 
 const CHART_TYPES = new Set<string>(['line', 'area', 'bar', 'combo', 'pie', 'scatter', 'hbar', 'candlestick'])
@@ -112,7 +112,7 @@ export function isChartDataRow(value: unknown): value is Record<string, unknown>
 	return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
-function isStringArray(value: unknown): value is string[] {
+function isStringArray(value: unknown): value is Array<string> {
 	return Array.isArray(value) && value.every((item) => typeof item === 'string')
 }
 

@@ -1,7 +1,7 @@
 import type { Writable } from 'node:stream'
 
 export function isoDateFromTimestamp(timestamp: number): string {
-	return new Date(timestamp * 1_000).toISOString().slice(0, 10)
+	return new Date(timestamp * 1000).toISOString().slice(0, 10)
 }
 
 export async function writeCsvChunk(output: Writable, chunk: string): Promise<void> {
@@ -40,7 +40,7 @@ export function percentageValues(values: Array<number | undefined>): Array<numbe
 	return values.map((value) => (value === undefined ? undefined : (value / total) * 100))
 }
 
-export function disambiguateCsvLabels<T extends { key: string; label: string }>(entities: T[]): T[] {
+export function disambiguateCsvLabels<T extends { key: string; label: string }>(entities: Array<T>): Array<T> {
 	const labelCounts = new Map<string, number>()
 	for (const entity of entities) labelCounts.set(entity.label, (labelCounts.get(entity.label) ?? 0) + 1)
 	return entities.map((entity) =>

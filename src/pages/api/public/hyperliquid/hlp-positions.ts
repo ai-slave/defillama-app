@@ -31,7 +31,7 @@ interface RawClearinghouse {
 	crossMaintenanceMarginUsed?: string
 	withdrawable?: string
 	time?: number
-	assetPositions: RawPosition[]
+	assetPositions: Array<RawPosition>
 }
 
 interface RawFill {
@@ -93,11 +93,11 @@ export interface HlpData {
 		crossMaintenanceMarginUsed: number
 		snapshotTime: number | null
 	}
-	positions: HlpPosition[]
-	recentFills: HlpFill[]
+	positions: Array<HlpPosition>
+	recentFills: Array<HlpFill>
 }
 
-function mapPositions(raw: RawClearinghouse, vault: HlpVaultKey): HlpPosition[] {
+function mapPositions(raw: RawClearinghouse, vault: HlpVaultKey): Array<HlpPosition> {
 	return (raw.assetPositions ?? []).map((ap) => {
 		const p = ap.position
 		const szi = num(p?.szi)
@@ -119,7 +119,7 @@ function mapPositions(raw: RawClearinghouse, vault: HlpVaultKey): HlpPosition[] 
 	})
 }
 
-function mapFills(raw: RawFill[], vault: HlpVaultKey): HlpFill[] {
+function mapFills(raw: Array<RawFill>, vault: HlpVaultKey): Array<HlpFill> {
 	return raw.map((f) => ({
 		coin: f.coin,
 		side: f.side === 'B' ? 'Buy' : 'Sell',
@@ -162,8 +162,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 				},
 				9000
 			),
-			safePostInfo<RawFill[]>({ type: 'userFills', user: HLP_VAULTS.A, aggregateByTime: true }, [], 9000),
-			safePostInfo<RawFill[]>({ type: 'userFills', user: HLP_VAULTS.B, aggregateByTime: true }, [], 9000)
+			safePostInfo<Array<RawFill>>({ type: 'userFills', user: HLP_VAULTS.A, aggregateByTime: true }, [], 9000),
+			safePostInfo<Array<RawFill>>({ type: 'userFills', user: HLP_VAULTS.B, aggregateByTime: true }, [], 9000)
 		])
 
 		const positionsA = mapPositions(chA, 'A')

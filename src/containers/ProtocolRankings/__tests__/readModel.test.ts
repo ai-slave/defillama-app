@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type {
 	AdapterChainProtocol,
 	AdapterMetricPeriods,
@@ -35,15 +35,15 @@ const metricRow = (
 	change_7dover7d: totals.change_7dover7d ?? null
 })
 
-const metricResponse = (protocols: AdapterChainProtocol[]): IAdapterChainMetrics => ({ allChains: [], protocols })
-const dexResponse = (protocols: AdapterChainProtocol[]): IAdapterChainOverview => ({
+const metricResponse = (protocols: Array<AdapterChainProtocol>): IAdapterChainMetrics => ({ allChains: [], protocols })
+const dexResponse = (protocols: Array<AdapterChainProtocol>): IAdapterChainOverview => ({
 	allChains: [],
 	protocols,
 	totalDataChart: []
 })
 
 describe('buildDimensionProtocolMetrics', () => {
-	it('normalizes nullable activity periods to zero inside successful listings', () => {
+	test('normalizes nullable activity periods to zero inside successful listings', () => {
 		expect(
 			buildDimensionProtocolMetrics({
 				fees: metricResponse([
@@ -159,7 +159,7 @@ describe('buildDimensionProtocolMetrics', () => {
 		})
 	})
 
-	it('keeps extended activity sources distinct and preserves listed nullable periods', () => {
+	test('keeps extended activity sources distinct and preserves listed nullable periods', () => {
 		const result = buildDimensionProtocolMetrics({
 			fees: null,
 			revenue: null,
@@ -196,19 +196,19 @@ describe('buildDimensionProtocolMetrics', () => {
 		})
 	})
 
-	it('clamps only normalized 24h volume to reported perp volume', () => {
+	test('clamps only normalized 24h volume to reported perp volume', () => {
 		const result = buildDimensionProtocolMetrics({
 			fees: null,
 			revenue: null,
 			holdersRevenue: null,
 			activity: {
 				perps: metricResponse([
-					metricRow('clamped', { total24h: 100, total7d: 400, total30d: 1_000 }),
+					metricRow('clamped', { total24h: 100, total7d: 400, total30d: 1000 }),
 					metricRow('lower-normalized', { total24h: 100 }),
 					metricRow('missing-reported', { total24h: null })
 				]),
 				normalizedVolume: metricResponse([
-					metricRow('clamped', { total24h: 120, total7d: 500, total30d: 1_200 }),
+					metricRow('clamped', { total24h: 120, total7d: 500, total30d: 1200 }),
 					metricRow('lower-normalized', { total24h: 80 }),
 					metricRow('missing-reported', { total24h: 50 }),
 					metricRow('normalized-only', { total24h: 25 })
@@ -219,7 +219,7 @@ describe('buildDimensionProtocolMetrics', () => {
 		expect(result.clamped.normalizedVolume).toMatchObject({
 			total24h: 100,
 			total7d: 500,
-			total30d: 1_200
+			total30d: 1200
 		})
 		expect(result['lower-normalized'].normalizedVolume?.total24h).toBe(80)
 		expect(result['missing-reported'].normalizedVolume?.total24h).toBeNull()
@@ -228,7 +228,7 @@ describe('buildDimensionProtocolMetrics', () => {
 })
 
 describe('getProtocolEarningsValue', () => {
-	it('preserves zero and only subtracts when both sources are available', () => {
+	test('preserves zero and only subtracts when both sources are available', () => {
 		expect(getProtocolEarningsValue(10, 0)).toBe(10)
 		expect(getProtocolEarningsValue(0, 0)).toBe(0)
 		expect(getProtocolEarningsValue(10, null)).toBeNull()

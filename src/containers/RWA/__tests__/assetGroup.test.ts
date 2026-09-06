@@ -1,21 +1,21 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { UNKNOWN_RWA_ASSET_GROUP, appendUnknownRwaAssetGroup, normalizeRwaAssetGroup } from '../assetGroup'
 
 describe('normalizeRwaAssetGroup', () => {
-	it('maps missing asset groups to Unknown', () => {
+	test('maps missing asset groups to Unknown', () => {
 		expect(normalizeRwaAssetGroup(null)).toBe(UNKNOWN_RWA_ASSET_GROUP)
 		expect(normalizeRwaAssetGroup(undefined)).toBe(UNKNOWN_RWA_ASSET_GROUP)
 		expect(normalizeRwaAssetGroup('')).toBe(UNKNOWN_RWA_ASSET_GROUP)
 		expect(normalizeRwaAssetGroup('   ')).toBe(UNKNOWN_RWA_ASSET_GROUP)
 	})
 
-	it('preserves valid asset group labels', () => {
+	test('preserves valid asset group labels', () => {
 		expect(normalizeRwaAssetGroup('Private Credit')).toBe('Private Credit')
 	})
 })
 
 describe('appendUnknownRwaAssetGroup', () => {
-	it('adds Unknown once at the end of the list', () => {
+	test('adds Unknown once at the end of the list', () => {
 		expect(appendUnknownRwaAssetGroup(['Bonds', 'Private Credit'])).toEqual([
 			'Bonds',
 			'Private Credit',

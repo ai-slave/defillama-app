@@ -36,7 +36,7 @@ const SQL_X_DIMENSION = 'x'
 interface LineBarChartProps {
 	config: ChartConfig
 	result: QueryResult
-	classified: ClassifiedColumn[]
+	classified: Array<ClassifiedColumn>
 	onReady?: (instance: echarts.ECharts | null) => void
 	forceType?: 'line' | 'bar'
 	forceArea?: boolean
@@ -153,12 +153,12 @@ export function LineBarChart({
 }
 
 export function buildSqlChartModel(
-	rows: ReadonlyArray<readonly unknown[]>,
+	rows: ReadonlyArray<ReadonlyArray<unknown>>,
 	xIndex: number,
 	xAxisType: 'time' | 'category',
-	series: SqlSeriesSpec[],
+	series: Array<SqlSeriesSpec>,
 	preserveNullCategory = false
-): { dataset: CanonicalMultiSeriesChartDataset; charts: MultiSeriesChartSeriesConfig[] } {
+): { dataset: CanonicalMultiSeriesChartDataset; charts: Array<MultiSeriesChartSeriesConfig> } {
 	const source: CanonicalMultiSeriesChartDataset['source'] = []
 	for (const input of rows) {
 		const parsedX = toXValue(input[xIndex], xAxisType)
@@ -212,7 +212,7 @@ function normalizeRowsToPercent(rows: Array<Array<number | string | null>>): Arr
 	})
 }
 
-function normalizeWideRowsToPercent(rows: unknown[][], valueIndexes: number[]): unknown[][] {
+function normalizeWideRowsToPercent(rows: Array<Array<unknown>>, valueIndexes: Array<number>): Array<Array<unknown>> {
 	return rows.map((row) => {
 		let total = 0
 		for (const index of valueIndexes) {

@@ -7,28 +7,28 @@ export const sampleProtocol: IProtocol = {
 	category: 'Yield',
 	tvl: {
 		default: {
-			tvl: 3342618874.186361,
-			tvlPrevDay: 3278311992.4107237,
-			tvlPrevWeek: 3037305538.9910874,
-			tvlPrevMonth: 3092652399.4909043
+			tvl: 3_342_618_874.186361,
+			tvlPrevDay: 3_278_311_992.4107237,
+			tvlPrevWeek: 3_037_305_538.9910874,
+			tvlPrevMonth: 3_092_652_399.4909043
 		},
 		staking: {
-			tvl: 208900390.34536666,
-			tvlPrevDay: 196577023.94138634,
-			tvlPrevWeek: 213657387.70061365,
-			tvlPrevMonth: 173728082.37494668
+			tvl: 208_900_390.34536666,
+			tvlPrevDay: 196_577_023.94138634,
+			tvlPrevWeek: 213_657_387.70061365,
+			tvlPrevMonth: 173_728_082.37494668
 		},
 		pool2: {
-			tvl: 1653011.7550280518,
-			tvlPrevDay: 1555972.8199892591,
-			tvlPrevWeek: 1685498.7409283835,
-			tvlPrevMonth: 1377086.9400414496
+			tvl: 1_653_011.7550280518,
+			tvlPrevDay: 1_555_972.8199892591,
+			tvlPrevWeek: 1_685_498.7409283835,
+			tvlPrevMonth: 1_377_086.9400414496
 		},
 		doublecounted: {
-			tvl: 3342618874.186361,
-			tvlPrevDay: 3278311992.4107237,
-			tvlPrevWeek: 3037305538.9910874,
-			tvlPrevMonth: 3092652399.4909043
+			tvl: 3_342_618_874.186361,
+			tvlPrevDay: 3_278_311_992.4107237,
+			tvlPrevWeek: 3_037_305_538.9910874,
+			tvlPrevMonth: 3_092_652_399.4909043
 		}
 	},
 	tvlChange: {
@@ -36,36 +36,36 @@ export const sampleProtocol: IProtocol = {
 		change7d: 10.052111362385045,
 		change1m: 8.082591976279152
 	},
-	mcap: 552591758.0142369,
+	mcap: 552_591_758.0142369,
 	tokenPrice: 3.68,
 	mcaptvl: 0.17,
 	strikeTvl: true,
 	fees: {
-		total24h: 13689,
-		total7d: 100059,
-		total30d: 1148707,
-		total1y: 19280143,
-		annualized1y: 19280143,
-		monthlyAverage1y: 1606678.5833333333,
-		totalAllTime: 25640450,
+		total24h: 13_689,
+		total7d: 100_059,
+		total30d: 1_148_707,
+		total1y: 19_280_143,
+		annualized1y: 19_280_143,
+		monthlyAverage1y: 1_606_678.5833333333,
+		totalAllTime: 25_640_450,
 		pf: 40.09
 	},
 	revenue: {
-		total24h: 12581,
-		total7d: 92307,
-		total30d: 1133455,
-		total1y: 19085881,
-		annualized1y: 19085881,
-		monthlyAverage1y: 1590490.0833333333,
-		totalAllTime: 25287865,
+		total24h: 12_581,
+		total7d: 92_307,
+		total30d: 1_133_455,
+		total1y: 19_085_881,
+		annualized1y: 19_085_881,
+		monthlyAverage1y: 1_590_490.0833333333,
+		totalAllTime: 25_287_865,
 		ps: 40.63
 	},
 	dexs: {
-		total24h: 377779013,
-		total7d: 1177832690,
-		total30d: 4820195300,
+		total24h: 377_779_013,
+		total7d: 1_177_832_690,
+		total30d: 4_820_195_300,
 		change_7dover7d: 194.74,
-		totalAllTime: 22702816840
+		totalAllTime: 22_702_816_840
 	}
 }
 

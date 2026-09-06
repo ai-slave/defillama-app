@@ -28,7 +28,7 @@ function optionalString(value: unknown, name: string): string | undefined {
 	return requireString(value, name)
 }
 
-function stringList(value: unknown, name: string, maxItems: number): string[] {
+function stringList(value: unknown, name: string, maxItems: number): Array<string> {
 	if (!Array.isArray(value) || value.length > maxItems) {
 		throw new Error(`${name} must be an array of at most ${maxItems} strings`)
 	}
@@ -39,7 +39,7 @@ function stringList(value: unknown, name: string, maxItems: number): string[] {
 	return result
 }
 
-function optionalStringList(value: unknown, name: string, maxItems: number): string[] | undefined {
+function optionalStringList(value: unknown, name: string, maxItems: number): Array<string> | undefined {
 	if (value === undefined) return undefined
 	return stringList(value, name, maxItems)
 }

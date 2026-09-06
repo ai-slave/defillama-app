@@ -14,22 +14,22 @@ type DailyMarketplaceValues = {
 
 const MAX_MARKETPLACE_SERIES = 30
 const REMAINDER_SERIES_NAME = 'Others'
-type NFTMarketplaceDatasetRow = [timestamp: number, ...values: number[]]
-type NFTMarketplaceDataset = Omit<MultiSeriesChartDataset, 'source'> & { source: NFTMarketplaceDatasetRow[] }
+type NFTMarketplaceDatasetRow = [timestamp: number, ...values: Array<number>]
+type NFTMarketplaceDataset = Omit<MultiSeriesChartDataset, 'source'> & { source: Array<NFTMarketplaceDatasetRow> }
 
 export type NFTMarketplaceChartData = {
 	absoluteVolumeDataset: NFTMarketplaceDataset
 	absoluteTradesDataset: NFTMarketplaceDataset
-	absoluteBarCharts: MultiSeriesChartSeriesConfig[]
+	absoluteBarCharts: Array<MultiSeriesChartSeriesConfig>
 	dailyTotals: Array<[volume: number, trades: number]>
 	upstreamRemainder: Array<[volume: number, trades: number]>
-	availableSeries: string[]
+	availableSeries: Array<string>
 }
 
 export type NFTMarketplaceRelativeChartData = {
 	relativeVolumeDataset: NFTMarketplaceDataset
 	relativeTradesDataset: NFTMarketplaceDataset
-	relativeAreaCharts: MultiSeriesChartSeriesConfig[]
+	relativeAreaCharts: Array<MultiSeriesChartSeriesConfig>
 }
 
 export type NFTMarketplaceCsvMetric = 'volume' | 'trades'
@@ -40,9 +40,9 @@ function getNumericDominance(value: number, total: number): number {
 	return Math.round(ratio * 10_000) / 100
 }
 
-export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]): NFTMarketplaceChartData {
+export function buildNFTMarketplaceChartData(volume: Array<RawNftMarketplaceVolume>): NFTMarketplaceChartData {
 	const daysByTimestamp = new Map<number, DailyMarketplaceValues>()
-	const marketplaces: string[] = []
+	const marketplaces: Array<string> = []
 	const seenMarketplaces = new Set<string>()
 	const volumeByMarketplace = new Map<string, number>()
 
@@ -50,7 +50,7 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 		const parsedTimestamp = Date.parse(entry.day)
 		const volumeValue = entry.sum ?? 0
 		// Preserve the legacy second-level dataset timestamp while parsing each API date only once.
-		const timestamp = Math.floor(parsedTimestamp / 1_000) * 1_000
+		const timestamp = Math.floor(parsedTimestamp / 1000) * 1000
 		let day = daysByTimestamp.get(timestamp)
 		if (!day) {
 			day = {
@@ -137,7 +137,7 @@ export function buildNFTMarketplaceChartData(volume: RawNftMarketplaceVolume[]):
 
 export function buildNFTMarketplaceChartPresentation(
 	canonical: NFTMarketplaceChartData,
-	selectedSeries: readonly string[],
+	selectedSeries: ReadonlyArray<string>,
 	includeUpstreamRemainder: boolean
 ): NFTMarketplaceChartData {
 	const selected = new Set(selectedSeries)
@@ -149,7 +149,7 @@ export function buildNFTMarketplaceChartPresentation(
 	const hasRemainder = omittedSeries.length > 0 || hasUpstreamRemainder
 	const visibleSeries = hasRemainder ? [...explicitSeries, REMAINDER_SERIES_NAME] : explicitSeries
 	const canonicalIndex = new Map(canonical.absoluteVolumeDataset.dimensions.map((name, index) => [name, index]))
-	const omittedIndexes: number[] = []
+	const omittedIndexes: Array<number> = []
 	for (const name of omittedSeries) {
 		const index = canonicalIndex.get(name)
 		if (index === undefined) throw new Error(`Missing NFT marketplace dimension: ${name}`)

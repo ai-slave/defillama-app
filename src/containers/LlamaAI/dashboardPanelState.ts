@@ -3,13 +3,13 @@ import type { DashboardArtifact } from '~/containers/LlamaAI/types'
 export type DashboardPanelState = {
 	isOpen: boolean
 	mountedConfig: DashboardArtifact | null
-	versions: DashboardArtifact[]
+	versions: Array<DashboardArtifact>
 	versionIndex: number
 }
 
 export type DashboardPanelAction =
 	| { type: 'APPEND'; value: DashboardArtifact }
-	| { type: 'RESTORE'; value: DashboardArtifact[] }
+	| { type: 'RESTORE'; value: Array<DashboardArtifact> }
 	| { type: 'RESET' }
 	| { type: 'TOGGLE' }
 	| { type: 'SELECT_VERSION'; value: number }

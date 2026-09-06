@@ -7,11 +7,11 @@ import { generateConsistentChartColor } from './utils/colorManager'
 type NumericChartTuple = readonly [timestamp: string | number, value: string | number]
 
 export const convertToNumberFormat = (
-	data: readonly NumericChartTuple[],
+	data: ReadonlyArray<NumericChartTuple>,
 	convertToSeconds: boolean = false
-): [number, number][] => {
+): Array<[number, number]> => {
 	const divisor = convertToSeconds ? 1000 : 1
-	const points: [number, number][] = []
+	const points: Array<[number, number]> = []
 	for (const [timestamp, value] of data) {
 		points.push([
 			(typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp) / divisor,
@@ -22,9 +22,9 @@ export const convertToNumberFormat = (
 }
 
 export const normalizeHourlyToDaily = (
-	data: [number, number][],
+	data: Array<[number, number]>,
 	aggregationType: 'last' | 'sum' = 'last'
-): [number, number][] => {
+): Array<[number, number]> => {
 	if (!data || data.length === 0) return []
 	if (data.length === 1) return data
 
@@ -48,7 +48,7 @@ export const normalizeHourlyToDaily = (
 		return data
 	}
 
-	const dailyData: [number, number][] = []
+	const dailyData: Array<[number, number]> = []
 	for (const [timestamp, value] of data) {
 		const dayTimestamp = Math.floor(timestamp / 86_400) * 86_400
 		const previous = dailyData[dailyData.length - 1]
@@ -83,16 +83,16 @@ export const getGroupedTimestampSec = (timestampSec: number, grouping: Dashboard
 }
 
 export const groupData = (
-	data: [number, number][] | undefined,
+	data: Array<[number, number]> | undefined,
 	grouping: DashboardGrouping = 'day'
-): [number, number][] => {
+): Array<[number, number]> => {
 	if (!data || data.length === 0) return []
 
 	if (grouping === 'day') {
 		return data
 	}
 
-	const groupedData: [number, number][] = []
+	const groupedData: Array<[number, number]> = []
 	for (const [timestamp, value] of data) {
 		const groupKey = getGroupedTimestampSec(timestamp, grouping)
 		const lastGroup = groupedData[groupedData.length - 1]
@@ -111,11 +111,10 @@ export const getItemIconUrl = (
 ): string => {
 	if (itemType === 'chain') {
 		return chainIconUrl(itemIdentifier)
-	} else {
-		if (itemInfo && 'logo' in itemInfo && itemInfo.logo) return itemInfo.logo
-		const key = (itemInfo && 'id' in itemInfo ? itemInfo.id : itemIdentifier)?.toString()
-		return tokenIconUrl(key)
 	}
+	if (itemInfo && 'logo' in itemInfo && itemInfo.logo) return itemInfo.logo
+	const key = (itemInfo && 'id' in itemInfo ? itemInfo.id : itemIdentifier)?.toString()
+	return tokenIconUrl(key)
 }
 
 export const generateChartColor = (itemName: string, fallbackColor: string): string => {

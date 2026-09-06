@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ChainListItem } from '~/containers/Chains/api.types'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
 import { buildProDashboardParentMapping, buildProDashboardProtocolCatalog } from './protocolCatalog'
@@ -29,7 +29,7 @@ const parentProtocol = (
 ): ProtocolsResponse['parentProtocols'][number] => ({
 	id: 'parent#group',
 	name: 'Group',
-	chains: [] as string[],
+	chains: [] as Array<string>,
 	gecko_id: null,
 	mcap: null,
 	logo: 'group.png',
@@ -37,7 +37,7 @@ const parentProtocol = (
 })
 
 describe('buildProDashboardProtocolCatalog', () => {
-	it('uses Lens membership and metrics while Lite contributes display metadata only', () => {
+	test('uses Lens membership and metrics while Lite contributes display metadata only', () => {
 		const protocolsData: ProtocolsResponse = {
 			protocols: [
 				protocol({ parentProtocol: 'parent#group', tvl: 999, geckoId: 'wrong' }),
@@ -57,7 +57,7 @@ describe('buildProDashboardProtocolCatalog', () => {
 			],
 			protocolCategories: []
 		}
-		const chainsData: ChainListItem[] = [
+		const chainsData: Array<ChainListItem> = [
 			{
 				name: 'Ethereum',
 				tvl: 100,
@@ -134,7 +134,7 @@ describe('buildProDashboardProtocolCatalog', () => {
 		])
 	})
 
-	it('builds reusable parent indexes regardless of catalog order', () => {
+	test('builds reusable parent indexes regardless of catalog order', () => {
 		const protocols = [
 			{
 				id: 'child',
@@ -159,7 +159,7 @@ describe('buildProDashboardProtocolCatalog', () => {
 		expect(buildProDashboardParentMapping(protocols)).toEqual(new Map([['parent', ['child']]]))
 	})
 
-	it('keeps the canonical Lens protocol when its slug matches Lite parent metadata', () => {
+	test('keeps the canonical Lens protocol when its slug matches Lite parent metadata', () => {
 		const result = buildProDashboardProtocolCatalog(
 			[
 				{
@@ -187,7 +187,7 @@ describe('buildProDashboardProtocolCatalog', () => {
 		expect(result.protocols[0]).toMatchObject({ id: 'group', tvl: 4 })
 	})
 
-	it('keeps a zero-TVL parent when every child is excluded from its parent total', () => {
+	test('keeps a zero-TVL parent when every child is excluded from its parent total', () => {
 		const result = buildProDashboardProtocolCatalog(
 			[
 				{
@@ -212,7 +212,7 @@ describe('buildProDashboardProtocolCatalog', () => {
 		])
 	})
 
-	it('replaces a parent self row with the aggregate of its eligible children', () => {
+	test('replaces a parent self row with the aggregate of its eligible children', () => {
 		const result = buildProDashboardProtocolCatalog(
 			[
 				{

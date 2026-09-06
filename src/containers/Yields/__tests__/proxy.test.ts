@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { YIELDS_V2_SERVER_URL } from '~/constants'
 import { fetchPoolDetailHistory, fetchBorrowMarketDetailHistory } from '../poolDetail/fetch'
 import { fetchStablecoinRatesHistory } from '../rates/fetch'
@@ -7,7 +7,7 @@ import { buildYieldsProxyUrl, yieldsProxy } from '../server/proxy'
 const fetchJsonMock = vi.hoisted(() => vi.fn())
 
 vi.mock('~/utils/async', () => ({
-	fetchJson: (...args: unknown[]) => fetchJsonMock(...args)
+	fetchJson: (...args: Array<unknown>) => fetchJsonMock(...args)
 }))
 
 const fetchMock = vi.fn()
@@ -24,7 +24,7 @@ afterEach(() => {
 })
 
 describe('Yields v2 browser fetches', () => {
-	it('routes shared client-side history fetchers through the same-origin proxy', async () => {
+	test('routes shared client-side history fetchers through the same-origin proxy', async () => {
 		vi.stubGlobal('window', {})
 
 		await fetchPoolDetailHistory('earn/pool', 'max')
@@ -38,7 +38,7 @@ describe('Yields v2 browser fetches', () => {
 		])
 	})
 
-	it('keeps SSR requests on the direct keyed upstream', async () => {
+	test('keeps SSR requests on the direct keyed upstream', async () => {
 		await fetchPoolDetailHistory('pool', 'max')
 
 		expect(fetchMock).toHaveBeenCalledOnce()
@@ -47,7 +47,7 @@ describe('Yields v2 browser fetches', () => {
 })
 
 describe('Yields v2 proxy mapping', () => {
-	it('maps the allowlisted history routes to the direct upstream', () => {
+	test('maps the allowlisted history routes to the direct upstream', () => {
 		expect(buildYieldsProxyUrl({ path: ['v2', 'earn', 'earn/pool', 'history'], range: 'max' })).toBe(
 			`${YIELDS_V2_SERVER_URL}/v2/earn/earn%2Fpool/history?range=max`
 		)
@@ -62,7 +62,7 @@ describe('Yields v2 proxy mapping', () => {
 		)
 	})
 
-	it('rejects unrelated endpoints and invalid ranges before fetching upstream', async () => {
+	test('rejects unrelated endpoints and invalid ranges before fetching upstream', async () => {
 		expect(buildYieldsProxyUrl({ path: ['v2', 'earn'] })).toBeNull()
 		expect(buildYieldsProxyUrl({ path: ['v2', 'earn', 'pool', 'history'], range: '1y' })).toBeNull()
 

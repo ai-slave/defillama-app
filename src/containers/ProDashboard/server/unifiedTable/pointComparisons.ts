@@ -133,8 +133,8 @@ const POINT_SQL_DEFINITIONS: Readonly<
 	}
 }
 
-function pointColumns(metrics: ProtocolPointMetric[], chain: boolean): string {
-	const columns: string[] = []
+function pointColumns(metrics: Array<ProtocolPointMetric>, chain: boolean): string {
+	const columns: Array<string> = []
 	for (const metric of metrics) {
 		const definition = POINT_SQL_DEFINITIONS[metric]
 		const column = chain ? definition.chainColumn : definition.protocolColumn
@@ -155,7 +155,7 @@ const getPercentChange = (current: number | null | undefined, previous: number |
 function applyPointMetrics(
 	metrics: ProtocolTableMetrics,
 	comparison: PointComparisonRow | undefined,
-	requestedMetrics: readonly ProtocolPointMetric[]
+	requestedMetrics: ReadonlyArray<ProtocolPointMetric>
 ): ProtocolTableMetrics {
 	const next = { ...metrics }
 	for (const metric of requestedMetrics) {
@@ -176,7 +176,7 @@ export interface ProtocolPointComparisonData {
 	chains: ReadonlyMap<string, PointComparisonRow>
 }
 
-async function fetchAggregatePointComparisons(metrics: ProtocolPointMetric[]): Promise<PointComparisonRow[]> {
+async function fetchAggregatePointComparisons(metrics: Array<ProtocolPointMetric>): Promise<Array<PointComparisonRow>> {
 	return llamaDb.any<PointComparisonRow>(`
 		SELECT
 			latest.protocol AS entity_id,
@@ -203,11 +203,11 @@ async function fetchAggregatePointComparisons(metrics: ProtocolPointMetric[]): P
 }
 
 async function fetchChainPointComparisons(
-	chainFilters: string[],
-	metrics: ProtocolPointMetric[]
+	chainFilters: Array<string>,
+	metrics: Array<ProtocolPointMetric>
 ): Promise<{
-	protocols: PointComparisonRow[]
-	chains: PointComparisonRow[]
+	protocols: Array<PointComparisonRow>
+	chains: Array<PointComparisonRow>
 }> {
 	const filter = `COALESCE(cardinality($1::text[]), 0) = 0 OR lower(latest.chain) = ANY($1)`
 	const [protocols, chains] = await Promise.all([
@@ -269,9 +269,9 @@ export async function fetchProtocolPointComparisons({
 	byChain,
 	metrics
 }: {
-	chainFilters: string[]
+	chainFilters: Array<string>
 	byChain: boolean
-	metrics: ProtocolPointMetric[]
+	metrics: Array<ProtocolPointMetric>
 }): Promise<ProtocolPointComparisonData> {
 	const data = byChain
 		? await fetchChainPointComparisons(chainFilters, metrics)
@@ -284,10 +284,10 @@ export async function fetchProtocolPointComparisons({
 }
 
 export function applyProtocolPointComparisons(
-	rows: ProtocolTableSourceRow[],
+	rows: Array<ProtocolTableSourceRow>,
 	comparisons: ProtocolPointComparisonData,
-	pointMetrics: ProtocolPointMetric[]
-): ProtocolTableSourceRow[] {
+	pointMetrics: Array<ProtocolPointMetric>
+): Array<ProtocolTableSourceRow> {
 	return rows.map((row) => {
 		const comparison = comparisons.protocols.get(entityKey(row.protocolId, row.chain))
 		return comparison ? { ...row, metrics: applyPointMetrics(row.metrics, comparison, pointMetrics) } : row
@@ -297,7 +297,7 @@ export function applyProtocolPointComparisons(
 export function applyChainPointComparisons(
 	chainMetrics: Record<string, ChainMetrics> | undefined,
 	comparisons: ProtocolPointComparisonData,
-	pointMetrics: ProtocolPointMetric[]
+	pointMetrics: Array<ProtocolPointMetric>
 ): Record<string, ChainMetrics> | undefined {
 	if (!chainMetrics) return undefined
 	const result: Record<string, ChainMetrics> = {}

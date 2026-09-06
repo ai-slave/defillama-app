@@ -25,7 +25,7 @@ export interface IDATOverviewFlowSeries {
 
 export interface IDATOverviewPageProps {
 	allAssets: Array<{ label: string; to: string }>
-	institutions: IDATInstitutionOverview[]
+	institutions: Array<IDATInstitutionOverview>
 	dailyFlowsByAsset: Record<string, IDATOverviewFlowSeries>
 }
 
@@ -39,17 +39,17 @@ export interface IDATInstitutionOverviewByAsset extends Omit<
 }
 
 export interface IDATChartPayload {
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	dataset: MultiSeriesChartDataset
 }
 
 export interface IDATMNAVChartPayload {
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 	dataset: MultiSeriesChartDataset
 }
 
 export interface IDATOverviewDataByAssetProps {
-	institutions: IDATInstitutionOverviewByAsset[]
+	institutions: Array<IDATInstitutionOverviewByAsset>
 	asset: string
 	metadata: {
 		name: string
@@ -65,7 +65,7 @@ export interface IDATOverviewDataByAssetProps {
 	mNAVRealizedChart: IDATMNAVChartPayload
 	mNAVRealisticChart: IDATMNAVChartPayload
 	mNAVMaxChart: IDATMNAVChartPayload
-	institutionsNames: string[]
+	institutionsNames: Array<string>
 }
 
 // ── Company detail page (digital-asset-treasury/[company]) ──────────────
@@ -95,7 +95,7 @@ export interface IDATTransactionRow extends Omit<IDATTransaction, 'amount' | 'av
 export interface IDATCompanyPageProps {
 	name: string
 	ticker: string
-	transactions: IDATTransactionRow[]
+	transactions: Array<IDATTransactionRow>
 	price: number
 	priceChange24h: number | null
 	totalCost: number
@@ -105,9 +105,9 @@ export interface IDATCompanyPageProps {
 	realized_mNAV: number | null
 	realistic_mNAV: number | null
 	max_mNAV: number | null
-	assets: string[]
-	assetsBreakdown: IDATCompanyAssetBreakdown[]
-	chartByAsset: IDATCompanyChartByAsset[]
+	assets: Array<string>
+	assetsBreakdown: Array<IDATCompanyAssetBreakdown>
+	chartByAsset: Array<IDATCompanyChartByAsset>
 	mNAVChart: IDATChartPayload | null
 	fdChart: IDATChartPayload | null
 	totalAssetValueChart: IDATChartPayload | null

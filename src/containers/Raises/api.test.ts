@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { fetchRaises } from './api'
 import type { RaisesApiResponse } from './api.types'
 
@@ -11,7 +11,7 @@ describe('Raises API', () => {
 		fetchJsonMock.mockReset()
 	})
 
-	it('converts million-USD transport values to whole-USD domain values', async () => {
+	test('converts million-USD transport values to whole-USD domain values', async () => {
 		fetchJsonMock.mockResolvedValue({
 			raises: [
 				{
@@ -38,7 +38,7 @@ describe('Raises API', () => {
 		expect(result.raises[0]).not.toHaveProperty('valuation')
 	})
 
-	it.each([null, '', ' ', 'not disclosed', '3,000', '<7000', '9.8 millions'])(
+	test.each([null, '', ' ', 'not disclosed', '3,000', '<7000', '9.8 millions'])(
 		'keeps freeform valuation %s unavailable',
 		async (valuation) => {
 			fetchJsonMock.mockResolvedValue({
@@ -73,7 +73,7 @@ describe('Raises API', () => {
 		}
 	)
 
-	it('preserves measured zero, required empty source, exact labels and optional identity', async () => {
+	test('preserves measured zero, required empty source, exact labels and optional identity', async () => {
 		fetchJsonMock.mockResolvedValue({
 			raises: [
 				{

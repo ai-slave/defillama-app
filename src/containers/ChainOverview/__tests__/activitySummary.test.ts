@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
 	fetchAdapterProtocolMetrics: vi.fn(),
@@ -19,7 +19,7 @@ describe('fetchChainActivityProtocolMetricTotal', () => {
 		vi.clearAllMocks()
 	})
 
-	it('fetches active address totals from the protocol-backed chain activity endpoint', async () => {
+	test('fetches active address totals from the protocol-backed chain activity endpoint', async () => {
 		mocks.fetchAdapterProtocolMetrics.mockResolvedValue({ total24h: 123 })
 
 		await expect(
@@ -33,7 +33,7 @@ describe('fetchChainActivityProtocolMetricTotal', () => {
 		expect(mocks.fetchAdapterChainMetrics).not.toHaveBeenCalled()
 	})
 
-	it('fetches transaction totals from the protocol-backed chain activity endpoint', async () => {
+	test('fetches transaction totals from the protocol-backed chain activity endpoint', async () => {
 		mocks.fetchAdapterProtocolMetrics.mockResolvedValue({ total24h: 456 })
 
 		await expect(
@@ -52,7 +52,7 @@ describe('fetchChainActivityProtocolMetricTotal', () => {
 		expect(mocks.fetchAdapterChainMetrics).not.toHaveBeenCalled()
 	})
 
-	it('fetches new address totals from the protocol-backed chain activity endpoint', async () => {
+	test('fetches new address totals from the protocol-backed chain activity endpoint', async () => {
 		mocks.fetchAdapterProtocolMetrics.mockResolvedValue({ total24h: 789 })
 
 		await expect(fetchChainActivityProtocolMetricTotal({ chain: 'Ethereum', adapterType: 'new-users' })).resolves.toBe(

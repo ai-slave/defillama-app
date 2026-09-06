@@ -210,7 +210,7 @@ export class ChartDataTransformer {
 					: interval === 'quarter'
 						? 'quarterly'
 						: 'yearly'
-		const groupedSource: LlamaAICartesianDatasetRow[] = []
+		const groupedSource: Array<LlamaAICartesianDatasetRow> = []
 
 		// Adapted time datasets are chronological, so equal buckets are contiguous and
 		// can be aggregated without a Map, per-series tuple arrays, or a reconstruction sort.

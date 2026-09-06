@@ -1,24 +1,24 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { ParsedCsvRow } from './csvParse'
 import { createPreviewSearchIndex, filterPreviewRows } from './previewSearch'
 
-const rows: ParsedCsvRow[] = [
+const rows: Array<ParsedCsvRow> = [
 	{ id: 0, values: ['Aave', 'Ethereum', 'trailing value'] },
 	{ id: 1, values: ['Morpho', 'Base', 'another trailing value'] }
 ]
 const searchIndex = createPreviewSearchIndex(rows, 2)
 
 describe('preview search index', () => {
-	it('searches header-backed cells case-insensitively while preserving row order', () => {
+	test('searches header-backed cells case-insensitively while preserving row order', () => {
 		expect(filterPreviewRows(rows, searchIndex, 'a')).toEqual(rows)
 		expect(filterPreviewRows(rows, searchIndex, 'ethereum')).toEqual([rows[0]])
 	})
 
-	it('does not search trailing cells without a header', () => {
+	test('does not search trailing cells without a header', () => {
 		expect(filterPreviewRows(rows, searchIndex, 'trailing')).toEqual([])
 	})
 
-	it('returns the original rows for an empty search', () => {
+	test('returns the original rows for an empty search', () => {
 		expect(filterPreviewRows(rows, searchIndex, '')).toBe(rows)
 	})
 })

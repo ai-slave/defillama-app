@@ -19,7 +19,7 @@ export interface CsvItem {
  *
  * Returns a `string[][]` where the first row is the header and subsequent rows are data.
  */
-export function combineCsvsWide(items: CsvItem[], range?: DateRangeConfig | null): string[][] {
+export function combineCsvsWide(items: Array<CsvItem>, range?: DateRangeConfig | null): Array<Array<string>> {
 	if (items.length === 0) return []
 
 	const window = resolveDateRange(range ?? null)
@@ -28,8 +28,8 @@ export function combineCsvsWide(items: CsvItem[], range?: DateRangeConfig | null
 	const parsed = items.map((item) => {
 		const { headers, rows } = parseCsv(item.csvText)
 		const dateIndex = headers.indexOf('date')
-		const nonDateIndices: number[] = []
-		const outputHeaders: string[] = []
+		const nonDateIndices: Array<number> = []
+		const outputHeaders: Array<string> = []
 		headers.forEach((_, index) => {
 			if (index === dateIndex) return
 			nonDateIndices.push(index)
@@ -38,7 +38,7 @@ export function combineCsvsWide(items: CsvItem[], range?: DateRangeConfig | null
 		for (const index of nonDateIndices) {
 			outputHeaders.push(useBareValue ? item.value : `${item.value}_${headers[index]}`)
 		}
-		const byDate = new Map<string, string[]>()
+		const byDate = new Map<string, Array<string>>()
 		if (dateIndex !== -1) {
 			for (const row of rows) {
 				const dateKey = row.values[dateIndex] ?? ''
@@ -59,12 +59,12 @@ export function combineCsvsWide(items: CsvItem[], range?: DateRangeConfig | null
 	}
 	const dates = [...dateSet].sort()
 
-	const headerRow: string[] = ['date']
+	const headerRow: Array<string> = ['date']
 	for (const p of parsed) headerRow.push(...p.outputHeaders)
 
-	const output: string[][] = [headerRow]
+	const output: Array<Array<string>> = [headerRow]
 	for (const date of dates) {
-		const row: string[] = [date]
+		const row: Array<string> = [date]
 		for (const p of parsed) {
 			const values = p.byDate.get(date)
 			if (values) {

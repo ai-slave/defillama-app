@@ -25,7 +25,7 @@ import { getNDistinctColors, slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
 import type { IAdapterBreakdownChartData } from './api.types'
-import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
+import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from './constants'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const EMPTY_PROTOCOL_BREAKDOWN_DATASET: MultiSeriesTimeSeriesDataset = {
@@ -35,10 +35,10 @@ const EMPTY_PROTOCOL_BREAKDOWN_DATASET: MultiSeriesTimeSeriesDataset = {
 
 type ProtocolBreakdownChartPresentation = {
 	dataset: MultiSeriesTimeSeriesDataset
-	charts: MultiSeriesChartSeriesConfig[]
+	charts: Array<MultiSeriesChartSeriesConfig>
 }
 
-function getPaletteColor(colors: string[], index: number): string {
+function getPaletteColor(colors: Array<string>, index: number): string {
 	const color = colors[index]
 	if (color === undefined) throw new Error(`Protocol breakdown palette is missing color ${index}`)
 	return color
@@ -50,13 +50,13 @@ export function buildProtocolBreakdownChartPresentation({
 	chartInterval
 }: {
 	data: IAdapterBreakdownChartData
-	seriesNames: string[]
+	seriesNames: Array<string>
 	chartInterval: LowercaseDwmcGrouping
 }): ProtocolBreakdownChartPresentation {
 	if (seriesNames.length === 0) return { dataset: EMPTY_PROTOCOL_BREAKDOWN_DATASET, charts: [] }
 
 	const isCumulative = chartInterval === 'cumulative'
-	const aggregatedByDate = new Map<number, number[]>()
+	const aggregatedByDate = new Map<number, Array<number>>()
 	for (const [date, valuesBySeries] of data) {
 		const timestampMs = date * 1e3
 		const finalDate = isCumulative ? timestampMs : getBucketTimestampMs(timestampMs, chartInterval)
@@ -113,7 +113,7 @@ export function buildProtocolBreakdownChartPresentation({
 
 	const colors = getNDistinctColors(seriesNames.length)
 	const chartType: 'line' | 'bar' = isCumulative ? 'line' : 'bar'
-	const charts: MultiSeriesChartSeriesConfig[] = []
+	const charts: Array<MultiSeriesChartSeriesConfig> = []
 	for (let index = 0; index < seriesNames.length; index++) {
 		const name = seriesNames[index]
 		if (name === undefined) continue
@@ -172,8 +172,8 @@ export const DimensionProtocolChartByType = ({
 	adapterType: `${ADAPTER_TYPES}`
 	dataType?: `${ADAPTER_DATA_TYPES}`
 	chartType: 'chain' | 'version'
-	breakdownNames: string[]
-	hallmarks?: [number, string][]
+	breakdownNames: Array<string>
+	hallmarks?: Array<[number, string]>
 	title: string
 }) => {
 	const { data, isLoading, error } = useQuery({
@@ -243,12 +243,12 @@ const ChartByType = ({
 }: {
 	data: Array<[number, Record<string, number>]>
 	title?: string
-	breakdownNames: string[]
+	breakdownNames: Array<string>
 	chartType: 'chain' | 'version'
 	protocolName: string
 	protocolDisplayName?: string
 	adapterType: string
-	hallmarks?: [number, string][]
+	hallmarks?: Array<[number, string]>
 }) => {
 	const [chartInterval, changeChartInterval] = React.useState<LowercaseDwmcGrouping>('daily')
 	const uniqueBreakdownNames = React.useMemo(() => Array.from(new Set(breakdownNames)), [breakdownNames])

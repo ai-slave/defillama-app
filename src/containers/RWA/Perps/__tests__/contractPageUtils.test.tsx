@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { IRWAPerpsMarketChartPoint } from '../api.types'
 import { RWAPerpsContractSummaryMetrics } from '../Contract'
 import {
@@ -36,7 +36,7 @@ const baseContract: IRWAPerpsContractData = {
 	},
 	market: {
 		id: 'xyz:meta',
-		timestamp: 1775011512,
+		timestamp: 1_775_011_512,
 		contract: 'xyz:META',
 		venue: 'xyz',
 		venueType: 'DEX',
@@ -137,7 +137,7 @@ const fundingHistoryPoints: [IRWAPerpsContractFundingHistoryPoint, IRWAPerpsCont
 ]
 
 describe('RWAPerpsContractSummaryMetrics', () => {
-	it('renders price with inline 24h change and grouped metric sections without key-metrics png export', () => {
+	test('renders price with inline 24h change and grouped metric sections without key-metrics png export', () => {
 		const html = renderToStaticMarkup(<RWAPerpsContractSummaryMetrics contract={baseContract} />)
 
 		expect(html).toContain('Price')
@@ -153,7 +153,7 @@ describe('RWAPerpsContractSummaryMetrics', () => {
 })
 
 describe('buildRWAPerpsContractInfoRows', () => {
-	it('omits duplicate reference assets and empty website rows', () => {
+	test('omits duplicate reference assets and empty website rows', () => {
 		const rows = buildRWAPerpsContractInfoRows({
 			...baseContract,
 			contract: {
@@ -167,7 +167,7 @@ describe('buildRWAPerpsContractInfoRows', () => {
 		expect(rows.some((row) => row.label === 'Website')).toBe(false)
 	})
 
-	it('includes the reference asset when it differs from the contract symbol suffix', () => {
+	test('includes the reference asset when it differs from the contract symbol suffix', () => {
 		const rows = buildRWAPerpsContractInfoRows({
 			...baseContract,
 			contract: {
@@ -184,7 +184,7 @@ describe('buildRWAPerpsContractInfoRows', () => {
 })
 
 describe('buildRWAPerpsContractMetricSections', () => {
-	it('shows unavailable max leverage as "-"', () => {
+	test('shows unavailable max leverage as "-"', () => {
 		const sections = buildRWAPerpsContractMetricSections({
 			...baseContract,
 			market: {
@@ -201,11 +201,11 @@ describe('buildRWAPerpsContractMetricSections', () => {
 })
 
 describe('buildRWAPerpsContractChartSpec', () => {
-	it('keeps the expected default enabled metrics', () => {
+	test('keeps the expected default enabled metrics', () => {
 		expect(DEFAULT_ENABLED_RWA_PERPS_CONTRACT_CHART_METRICS).toEqual(['openInterest', 'volume24h', 'price'])
 	})
 
-	it('uses summed buckets for volume and last-value buckets for line metrics', () => {
+	test('uses summed buckets for volume and last-value buckets for line metrics', () => {
 		const spec = buildRWAPerpsContractChartSpec({
 			marketPoints: chartPoints,
 			fundingHistory: null,
@@ -236,7 +236,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		expect(spec.dataset.source).toEqual([])
 	})
 
-	it('overwrites exact daily duplicates but sums every point in coarser volume buckets', () => {
+	test('overwrites exact daily duplicates but sums every point in coarser volume buckets', () => {
 		const duplicateTimestampPoints = [
 			chartPoints[0],
 			{
@@ -282,7 +282,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		])
 	})
 
-	it('keeps grouped volume as a bar series without offering cumulative accumulation', () => {
+	test('keeps grouped volume as a bar series without offering cumulative accumulation', () => {
 		const spec = buildRWAPerpsContractChartSpec({
 			marketPoints: chartPoints,
 			fundingHistory: null,
@@ -312,8 +312,8 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		])
 	})
 
-	it('preserves full chart config and dimensions in noncanonical selection order', () => {
-		const enabledMetrics: RWAPerpsContractChartMetricKey[] = [
+	test('preserves full chart config and dimensions in noncanonical selection order', () => {
+		const enabledMetrics: Array<RWAPerpsContractChartMetricKey> = [
 			'premium',
 			'volume24h',
 			'openInterest',
@@ -395,7 +395,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		expect(defined(volumePoint)[1]).toBe(30)
 	})
 
-	it('keeps market and funding lines on their independent timestamp calendars', () => {
+	test('keeps market and funding lines on their independent timestamp calendars', () => {
 		const spec = buildRWAPerpsContractChartSpec({
 			marketPoints: [chartPoints[0], chartPoints[2]],
 			fundingHistory: [fundingHistoryPoints[0]],
@@ -412,7 +412,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		])
 	})
 
-	it('falls back to market funding fields only when funding history is empty', () => {
+	test('falls back to market funding fields only when funding history is empty', () => {
 		const fallbackSpec = buildRWAPerpsContractChartSpec({
 			marketPoints: [chartPoints[0]],
 			fundingHistory: [],
@@ -442,7 +442,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		])
 	})
 
-	it('omits metrics whose selected source is empty and keeps rows sparse', () => {
+	test('omits metrics whose selected source is empty and keeps rows sparse', () => {
 		const spec = buildRWAPerpsContractChartSpec({
 			marketPoints: null,
 			fundingHistory: fundingHistoryPoints,
@@ -458,7 +458,7 @@ describe('buildRWAPerpsContractChartSpec', () => {
 		])
 	})
 
-	it('scans ascending market and funding streams independently without mutating them', () => {
+	test('scans ascending market and funding streams independently without mutating them', () => {
 		const marketPoints = [...chartPoints]
 		const fundingHistory = [...fundingHistoryPoints]
 		const originalMarketPoints = structuredClone(marketPoints)

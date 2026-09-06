@@ -15,7 +15,7 @@ import { TOKEN_SEARCH_LIMIT, type TokenSearchResult } from './types'
 export type TokenSearchOption = TokenSearchResult | IResponseCGMarketsAPI
 
 interface TokenSearchDialogProps {
-	initialTokens?: TokenSearchResult[]
+	initialTokens?: Array<TokenSearchResult>
 	coinsData?: Array<IResponseCGMarketsAPI>
 	selectToken: (token: TokenSearchOption) => void
 	dialogStore: Ariakit.DialogStore

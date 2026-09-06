@@ -20,7 +20,7 @@ import { WatchListTabs } from './WatchlistView'
 // client-side with the pools table.
 
 // Fetch the bookmarked pools by id in a single request; sort ids for a stable cache key.
-function buildEarnByIdQueryString(ids: string[]): string | null {
+function buildEarnByIdQueryString(ids: Array<string>): string | null {
 	if (ids.length === 0) return null
 	const params = new URLSearchParams()
 	for (const id of [...ids].sort()) params.append('id', id)

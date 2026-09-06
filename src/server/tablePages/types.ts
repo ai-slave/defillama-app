@@ -12,7 +12,7 @@ export type TableSortValue = string | number | boolean | null
 
 /** One page of a cursor-mode (accumulating / infinite-scroll) table. */
 export type CursorTablePage<Row> = {
-	rows: Row[]
+	rows: Array<Row>
 	nextCursor: string | null
 	version: string
 	total: number
@@ -21,7 +21,7 @@ export type CursorTablePage<Row> = {
 
 /** One page of an offset-mode (discrete prev/next) table. */
 export type OffsetTablePage<Row> = {
-	rows: Row[]
+	rows: Array<Row>
 	page: number
 	pageSize: number
 	total: number

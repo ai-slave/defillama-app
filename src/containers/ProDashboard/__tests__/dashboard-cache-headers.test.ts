@@ -4,7 +4,7 @@ import { Socket } from 'node:net'
 import type { GetServerSidePropsContext, GetServerSidePropsResult, NextApiRequest } from 'next'
 import { createElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from '~/containers/ProDashboard/dashboardStreamContract'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
@@ -293,7 +293,7 @@ describe('pro dashboard cache headers', () => {
 		vi.unstubAllEnvs()
 	})
 
-	it('keeps the public dashboard page cache header unjittered', async () => {
+	test('keeps the public dashboard page cache header unjittered', async () => {
 		const context = createSsrContext('dashboard-1')
 
 		const result = await getServerSideProps(context)
@@ -334,7 +334,7 @@ describe('pro dashboard cache headers', () => {
 		expect(streamProTokenUsageDataMock).not.toHaveBeenCalled()
 	})
 
-	it('seeds the provider from public config without rendering the config loader', async () => {
+	test('seeds the provider from public config without rendering the config loader', async () => {
 		const result = await getServerSideProps(createSsrContext('dashboard-1'))
 		const props = await readServerSideProps(result)
 
@@ -353,7 +353,7 @@ describe('pro dashboard cache headers', () => {
 		expect(proDashboardLoaderMock).not.toHaveBeenCalled()
 	})
 
-	it('seeds authenticated edit config only for the verified owner', async () => {
+	test('seeds authenticated edit config only for the verified owner', async () => {
 		const context = createSsrContext('dashboard-1', 'auth-token')
 
 		const result = await getEditServerSideProps(context)
@@ -375,7 +375,7 @@ describe('pro dashboard cache headers', () => {
 		expect(props.initialDashboard?.data).not.toHaveProperty('aiUndoState')
 	})
 
-	it('does not seed edit config for a non-owner', async () => {
+	test('does not seed edit config for a non-owner', async () => {
 		fetchAuthenticatedUserIdMock.mockResolvedValue('other-user')
 
 		const result = await getEditServerSideProps(createSsrContext('dashboard-1', 'auth-token'))
@@ -385,7 +385,7 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
-	it('redirects anonymous id requests to the canonical slug url', async () => {
+	test('redirects anonymous id requests to the canonical slug url', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({
 			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
 			status: 200
@@ -402,7 +402,7 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
-	it('redirects anonymous old-slug requests to the canonical slug url', async () => {
+	test('redirects anonymous old-slug requests to the canonical slug url', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({
 			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
 			status: 200
@@ -419,7 +419,7 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
-	it('redirects authenticated public dashboard ids with private cache headers', async () => {
+	test('redirects authenticated public dashboard ids with private cache headers', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({
 			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
 			status: 200
@@ -437,7 +437,7 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
-	it('renders canonical slug requests with a slug-based canonical path', async () => {
+	test('renders canonical slug requests with a slug-based canonical path', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({
 			dashboard: { ...publicDashboard, slug: 'public-fees-dashboard' },
 			status: 200
@@ -462,7 +462,7 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
-	it('hydrates authenticated public dashboard pages with private cache headers', async () => {
+	test('hydrates authenticated public dashboard pages with private cache headers', async () => {
 		const context = createSsrContext('dashboard-1', 'auth-token')
 
 		const result = await getServerSideProps(context)
@@ -487,7 +487,7 @@ describe('pro dashboard cache headers', () => {
 		expect(props.initialDashboard).not.toHaveProperty('aiGenerated')
 	})
 
-	it('seeds authenticated private dashboard pages from the token-authorized config read', async () => {
+	test('seeds authenticated private dashboard pages from the token-authorized config read', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({
 			dashboard: { ...publicDashboard, visibility: 'private' },
 			status: 200
@@ -519,7 +519,7 @@ describe('pro dashboard cache headers', () => {
 		expect(props.initialDashboard).not.toHaveProperty('metrics')
 	})
 
-	it('keeps authenticated dashboard pages unseeded when the config read fails', async () => {
+	test('keeps authenticated dashboard pages unseeded when the config read fails', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({
 			dashboard: null,
 			status: 401
@@ -543,7 +543,7 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
-	it('uses private no-store cache headers for unauthenticated private-dashboard pages', async () => {
+	test('uses private no-store cache headers for unauthenticated private-dashboard pages', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({
 			dashboard: null,
 			status: 401
@@ -565,7 +565,7 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
-	it('uses 404 and noindex props for missing dashboard pages', async () => {
+	test('uses 404 and noindex props for missing dashboard pages', async () => {
 		fetchDashboardConfigWithStatusMock.mockResolvedValue({
 			dashboard: null,
 			status: 404
@@ -586,7 +586,7 @@ describe('pro dashboard cache headers', () => {
 		})
 	})
 
-	it('keeps the public dashboard stream cache header unjittered', async () => {
+	test('keeps the public dashboard stream cache header unjittered', async () => {
 		const res = createMockNextApiResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
@@ -603,7 +603,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalled()
 	})
 
-	it('waits for response backpressure to clear before ending the stream', async () => {
+	test('waits for response backpressure to clear before ending the stream', async () => {
 		const events = new EventEmitter()
 		const res = createMockNextApiResponse()
 		Object.assign(res, {
@@ -623,7 +623,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalledOnce()
 	})
 
-	it('finishes the stream when the shared protocols request fails', async () => {
+	test('finishes the stream when the shared protocols request fails', async () => {
 		fetchProtocolsMock.mockRejectedValue(new Error('protocols unavailable'))
 		fetchProtocolsAndChainsMock.mockImplementation(
 			async (_sourcePromise: undefined, protocolsPromise: Promise<unknown>) => {
@@ -640,7 +640,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalled()
 	})
 
-	it('waits for app metadata before planning chart sources', async () => {
+	test('waits for app metadata before planning chart sources', async () => {
 		let resolveAppMetadata: (value: null) => void = () => {}
 		fetchAppMetadataMock.mockReturnValue(
 			new Promise<null>((resolve) => {
@@ -659,7 +659,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalled()
 	})
 
-	it('does not fetch catalog, oracle, or chart metadata for a table without those columns', async () => {
+	test('does not fetch catalog, oracle, or chart metadata for a table without those columns', async () => {
 		fetchDashboardConfigMock.mockResolvedValue({
 			...publicDashboard,
 			data: {
@@ -687,7 +687,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalledOnce()
 	})
 
-	it('fetches oracle membership without starting the protocol catalog for an oracle table', async () => {
+	test('fetches oracle membership without starting the protocol catalog for an oracle table', async () => {
 		fetchDashboardConfigMock.mockResolvedValue({
 			...publicDashboard,
 			data: {
@@ -719,7 +719,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalledOnce()
 	})
 
-	it('leaves catalog and chart sources beyond the initial stream window to client fallback', async () => {
+	test('leaves catalog and chart sources beyond the initial stream window to client fallback', async () => {
 		fetchDashboardConfigMock.mockResolvedValue({
 			...publicDashboard,
 			data: {
@@ -751,7 +751,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
-	it('bounds source work even when one dashboard item expands into many requests', async () => {
+	test('bounds source work even when one dashboard item expands into many requests', async () => {
 		const chartCount = DASHBOARD_STREAM_SOURCE_CONCURRENCY + 4
 		fetchProtocolsAndChainsMock.mockResolvedValue({
 			protocols: Array.from({ length: chartCount }, (_, index) => catalogProtocol(`protocol-${index}`)),
@@ -778,10 +778,10 @@ describe('pro dashboard cache headers', () => {
 		})
 		let activeRequestCount = 0
 		let maximumActiveRequestCount = 0
-		const pendingResolutions: Array<(data: [number, number][]) => void> = []
+		const pendingResolutions: Array<(data: Array<[number, number]>) => void> = []
 		fetchSingleChartDataMock.mockImplementation(
 			() =>
-				new Promise<[number, number][]>((resolve) => {
+				new Promise<Array<[number, number]>>((resolve) => {
 					activeRequestCount += 1
 					maximumActiveRequestCount = Math.max(maximumActiveRequestCount, activeRequestCount)
 					pendingResolutions.push((data) => {
@@ -808,7 +808,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalledOnce()
 	})
 
-	it('caps expanded classic sources while preserving the first multi-chart', async () => {
+	test('caps expanded classic sources while preserving the first multi-chart', async () => {
 		const multiCount = INITIAL_DASHBOARD_STREAM_ITEM_COUNT
 		const chartCount = DASHBOARD_STREAM_CLASSIC_SOURCE_LIMIT
 		fetchProtocolsAndChainsMock.mockResolvedValue({
@@ -845,7 +845,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.write.mock.calls.at(-1)?.[0]).toBe('{"type":"done"}\n')
 	})
 
-	it('emits done after the initial window without fetching the offscreen remainder', async () => {
+	test('emits done after the initial window without fetching the offscreen remainder', async () => {
 		fetchProtocolsAndChainsMock.mockResolvedValue({
 			protocols: Array.from({ length: INITIAL_DASHBOARD_STREAM_ITEM_COUNT + 1 }, (_, index) =>
 				catalogProtocol(`protocol-${index}`)
@@ -865,10 +865,10 @@ describe('pro dashboard cache headers', () => {
 				}))
 			}
 		})
-		const pendingResolutions: Array<(data: [number, number][]) => void> = []
+		const pendingResolutions: Array<(data: Array<[number, number]>) => void> = []
 		fetchSingleChartDataMock.mockImplementation(
 			() =>
-				new Promise<[number, number][]>((resolve) => {
+				new Promise<Array<[number, number]>>((resolve) => {
 					pendingResolutions.push(resolve)
 				})
 		)
@@ -885,7 +885,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalledOnce()
 	})
 
-	it('does not let an offscreen table expand the initial table request', async () => {
+	test('does not let an offscreen table expand the initial table request', async () => {
 		fetchDashboardConfigMock.mockResolvedValue({
 			...publicDashboard,
 			data: {
@@ -920,7 +920,7 @@ describe('pro dashboard cache headers', () => {
 		expect(fetchProtocolsTableMock.mock.calls[0]?.[0]).toMatchObject({ baseMetricFamilies: ['tvl'] })
 	})
 
-	it('does not seed chart-builder data for stream-skipped metrics', async () => {
+	test('does not seed chart-builder data for stream-skipped metrics', async () => {
 		fetchDashboardConfigMock.mockResolvedValue({
 			...publicDashboard,
 			data: {
@@ -959,7 +959,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalled()
 	})
 
-	it('streams chart-builder data for metrics the stream owns', async () => {
+	test('streams chart-builder data for metrics the stream owns', async () => {
 		fetchChartBuilderServerDataMock.mockResolvedValue({
 			series: [{ name: 'Aave', data: [[1_700_000_000, 5]] }]
 		})
@@ -1002,7 +1002,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalled()
 	})
 
-	it('uses private no-store cache headers for authenticated dashboard streams', async () => {
+	test('uses private no-store cache headers for authenticated dashboard streams', async () => {
 		const res = createMockNextApiResponse()
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1', 'auth-token'), res)
@@ -1012,7 +1012,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalled()
 	})
 
-	it('uses private no-store cache headers for unauthenticated private-dashboard streams', async () => {
+	test('uses private no-store cache headers for unauthenticated private-dashboard streams', async () => {
 		fetchDashboardConfigMock.mockResolvedValue({
 			visibility: 'private',
 			data: { items: [] }
@@ -1026,7 +1026,7 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalled()
 	})
 
-	it('uses private no-store cache headers when dashboard is not found', async () => {
+	test('uses private no-store cache headers when dashboard is not found', async () => {
 		fetchDashboardConfigMock.mockResolvedValue(null)
 		const res = createMockNextApiResponse()
 

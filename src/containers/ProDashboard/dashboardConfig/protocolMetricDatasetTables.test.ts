@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildUnifiedTableStreamSourcePlan } from '../unifiedTableSourcePlan'
 import { migrateDashboardItemConfig } from './migrate'
 import type { PersistedProtocolMetricDatasetType } from './persisted'
@@ -24,7 +24,7 @@ const PROTOCOL_METRIC_DATASET_MIGRATIONS = [
 }>
 
 describe('protocol metric dataset-table migration', () => {
-	it.each(PROTOCOL_METRIC_DATASET_MIGRATIONS)(
+	test.each(PROTOCOL_METRIC_DATASET_MIGRATIONS)(
 		'migrates $datasetType to the canonical $presetId Unified Table preset',
 		({ datasetType, presetId, sortColumn }) => {
 			const migrated = migrateDashboardItemConfig({
@@ -53,7 +53,7 @@ describe('protocol metric dataset-table migration', () => {
 		}
 	)
 
-	it('preserves only normalized chain and category row scope from transitional dataset-table configs', () => {
+	test('preserves only normalized chain and category row scope from transitional dataset-table configs', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'current-revenue',
 			kind: 'dataset-table',
@@ -78,7 +78,7 @@ describe('protocol metric dataset-table migration', () => {
 		})
 	})
 
-	it('preserves supported row scope and drops obsolete dataset filters from historical table configs', () => {
+	test('preserves supported row scope and drops obsolete dataset filters from historical table configs', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'historical-fees',
 			kind: 'table',
@@ -104,7 +104,7 @@ describe('protocol metric dataset-table migration', () => {
 		expect(migrated.filters).not.toHaveProperty('tvlMin')
 	})
 
-	it('dispatches migrated configs through the Unified Table stream source plan', () => {
+	test('dispatches migrated configs through the Unified Table stream source plan', () => {
 		const migrated = migrateDashboardItemConfig({
 			id: 'current-earnings',
 			kind: 'dataset-table',

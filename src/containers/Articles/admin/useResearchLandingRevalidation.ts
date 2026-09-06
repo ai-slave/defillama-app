@@ -9,8 +9,8 @@ export function useResearchLandingRevalidation() {
 
 	return useCallback(() => {
 		queryClient.invalidateQueries({ queryKey: ['research-landing'] })
-		void revalidateResearchLanding(authorizedFetch).catch((err) => {
-			console.error('Failed to revalidate research landing', err)
+		void revalidateResearchLanding(authorizedFetch).catch((error) => {
+			console.error('Failed to revalidate research landing', error)
 		})
 	}, [authorizedFetch, queryClient])
 }

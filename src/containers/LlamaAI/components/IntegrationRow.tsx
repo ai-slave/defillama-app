@@ -114,8 +114,8 @@ export function IntegrationRow({
 							.then((result) => {
 								if (result && 'linked' in result && result.linked) onInitialStateConsumed?.()
 							})
-							.catch((err: any) => {
-								setInlineError(err?.body?.error || err?.message || 'Invalid code')
+							.catch((error: any) => {
+								setInlineError(error?.body?.error || error?.message || 'Invalid code')
 							})
 					}}
 					className="mt-3 flex gap-2"

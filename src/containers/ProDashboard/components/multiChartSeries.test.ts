@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildMultiChartCsvRows, buildMultiChartSeriesView, type MultiChartInputSeries } from './multiChartSeries'
 
 const FLOW: MultiChartInputSeries = {
@@ -24,7 +24,7 @@ const SNAPSHOT: MultiChartInputSeries = {
 }
 
 describe('buildMultiChartSeriesView', () => {
-	it('turns only cumulative flow bars into running-total lines', () => {
+	test('turns only cumulative flow bars into running-total lines', () => {
 		const result = buildMultiChartSeriesView({
 			series: [FLOW, SNAPSHOT],
 			showCumulative: true,
@@ -35,9 +35,9 @@ describe('buildMultiChartSeriesView', () => {
 		expect(result.dataset).toEqual({
 			dimensions: ['timestamp', 'Fees', 'TVL'],
 			source: [
-				[1_000, 10, 100],
-				[2_000, 10, 90],
-				[3_000, 7, null]
+				[1000, 10, 100],
+				[2000, 10, 90],
+				[3000, 7, null]
 			]
 		})
 		expect(result.charts).toEqual([
@@ -46,7 +46,7 @@ describe('buildMultiChartSeriesView', () => {
 		])
 	})
 
-	it('carries independently timed cumulative flows into percentage rows', () => {
+	test('carries independently timed cumulative flows into percentage rows', () => {
 		const result = buildMultiChartSeriesView({
 			series: [
 				{ ...FLOW, name: 'A', data: [[1, 100]] },
@@ -58,12 +58,12 @@ describe('buildMultiChartSeriesView', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			[1_000, 100, 0],
-			[2_000, 50, 50]
+			[1000, 100, 0],
+			[2000, 50, 50]
 		])
 	})
 
-	it('zero-fills and stacks aligned bar series without re-sorting input', () => {
+	test('zero-fills and stacks aligned bar series without re-sorting input', () => {
 		const result = buildMultiChartSeriesView({
 			series: [FLOW, { ...FLOW, name: 'Revenue', data: [[2, 4]], color: '#333333' }],
 			showCumulative: false,
@@ -72,15 +72,15 @@ describe('buildMultiChartSeriesView', () => {
 		})
 
 		expect(result.dataset.source).toEqual([
-			[1_000, 10, 0],
-			[2_000, 0, 4],
-			[3_000, -3, 0]
+			[1000, 10, 0],
+			[2000, 0, 4],
+			[3000, -3, 0]
 		])
 		expect(result.charts.every((chart) => chart.type === 'bar' && chart.stack === 'total')).toBe(true)
 		expect(result.charts.every((chart) => !('connectNulls' in chart))).toBe(true)
 	})
 
-	it('uses the existing solid area presentation for stacked snapshot series', () => {
+	test('uses the existing solid area presentation for stacked snapshot series', () => {
 		const result = buildMultiChartSeriesView({
 			series: [SNAPSHOT, { ...SNAPSHOT, name: 'Stablecoins', color: '#333333' }],
 			showCumulative: false,
@@ -92,7 +92,7 @@ describe('buildMultiChartSeriesView', () => {
 		expect(result.solidChartAreaStyle).toBe(true)
 	})
 
-	it('calculates percentages row-major and orders the stack by average share', () => {
+	test('calculates percentages row-major and orders the stack by average share', () => {
 		const result = buildMultiChartSeriesView({
 			series: [
 				{ ...FLOW, name: 'Large', data: [[1, 75]] },
@@ -103,13 +103,13 @@ describe('buildMultiChartSeriesView', () => {
 			stackSeries: false
 		})
 
-		expect(result.dataset.source).toEqual([[1_000, 75, 25]])
+		expect(result.dataset.source).toEqual([[1000, 75, 25]])
 		expect(result.charts.map((chart) => chart.name)).toEqual(['Small', 'Large'])
 		expect(result.charts.every((chart) => chart.valueSymbol === '%' && chart.yAxisIndex === 0)).toBe(true)
 		expect(result.solidChartAreaStyle).toBe(true)
 	})
 
-	it('preserves mixed-unit y-axis assignments and symbols', () => {
+	test('preserves mixed-unit y-axis assignments and symbols', () => {
 		const result = buildMultiChartSeriesView({
 			series: [FLOW, { ...SNAPSHOT, name: 'APY', metricType: 'medianApy' }],
 			showCumulative: false,
@@ -123,7 +123,7 @@ describe('buildMultiChartSeriesView', () => {
 		])
 	})
 
-	it('separates same-unit series when one scale would flatten the smaller metric', () => {
+	test('separates same-unit series when one scale would flatten the smaller metric', () => {
 		const result = buildMultiChartSeriesView({
 			series: [
 				{ ...SNAPSHOT, name: 'Token Price', metricType: 'tokenPrice', data: [[1, 63_780.9]] },
@@ -140,7 +140,7 @@ describe('buildMultiChartSeriesView', () => {
 		])
 	})
 
-	it('exports the row-major dataset in displayed chart order', () => {
+	test('exports the row-major dataset in displayed chart order', () => {
 		const result = buildMultiChartSeriesView({
 			series: [
 				{ ...FLOW, name: 'Large', data: [[1, 75]] },
@@ -157,7 +157,7 @@ describe('buildMultiChartSeriesView', () => {
 		])
 	})
 
-	it('exports missing snapshot observations as empty fields while preserving real flow zeroes', () => {
+	test('exports missing snapshot observations as empty fields while preserving real flow zeroes', () => {
 		const result = buildMultiChartSeriesView({
 			series: [
 				{ ...SNAPSHOT, data: [[1, 100]] },
@@ -175,7 +175,7 @@ describe('buildMultiChartSeriesView', () => {
 		])
 	})
 
-	it('returns an empty canonical dataset when no source has data', () => {
+	test('returns an empty canonical dataset when no source has data', () => {
 		expect(
 			buildMultiChartSeriesView({
 				series: [],

@@ -7,7 +7,7 @@ function PluginPage() {
 		<Layout
 			title="DefiLlama ChatGPT Plugin - DeFi Data Assistant"
 			description="Access DefiLlama DeFi data through the ChatGPT plugin. Query TVL, protocol stats, chain data, and more using natural language."
-			canonicalUrl={`/chatgptplugin`}
+			canonicalUrl="/chatgptplugin"
 		>
 			<PageTitleStrip title="DefiLlama ChatGPT Plugin" />
 

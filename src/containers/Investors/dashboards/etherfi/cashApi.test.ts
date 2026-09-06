@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { buildEtherfiCashTransactions, type EtherfiCashTxnRow } from './cashApi'
 
 function row(overrides: Partial<EtherfiCashTxnRow>): EtherfiCashTxnRow {
@@ -21,7 +21,7 @@ function row(overrides: Partial<EtherfiCashTxnRow>): EtherfiCashTxnRow {
 }
 
 describe('buildEtherfiCashTransactions', () => {
-	it('groups raw Dune rows by timestamp and transaction class', () => {
+	test('groups raw Dune rows by timestamp and transaction class', () => {
 		const result = buildEtherfiCashTransactions([
 			row({ txn_class: 'Transfer', num_txns: 3, num_users: 2 }),
 			row({ txn_class: 'Card' })

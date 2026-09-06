@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { ApyTriple, ApyWindows, DepegRow, EarnAttributes, EnrichedEarnRow } from '../types'
 
 // getEarnPage pulls rows from getEnrichedEarn and depeg/exploit flags from the snapshot readers;
 // mock them so the test controls the dataset and exercises only the sparse id-join stamping.
-const getEnrichedEarn = vi.fn<() => Promise<EnrichedEarnRow[]>>()
-const getYieldsDepegs = vi.fn<() => Promise<DepegRow[]>>()
-const getYieldsExploits = vi.fn<() => Promise<string[]>>()
+const getEnrichedEarn = vi.fn<() => Promise<Array<EnrichedEarnRow>>>()
+const getYieldsDepegs = vi.fn<() => Promise<Array<DepegRow>>>()
+const getYieldsExploits = vi.fn<() => Promise<Array<string>>>()
 vi.mock('../enrich.server', () => ({ getEnrichedEarn: () => getEnrichedEarn() }))
 vi.mock('../snapshot', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../snapshot')>()),
@@ -50,7 +50,7 @@ function row(id: string): EnrichedEarnRow {
 		chain: 'Ethereum',
 		underlying_tokens: [],
 		reward_tokens: [],
-		tvl_usd: 1_000,
+		tvl_usd: 1000,
 		available_supply_usd: null,
 		apy: ZERO_APY,
 		intrinsic: null,
@@ -78,7 +78,7 @@ describe('getEarnPage depeg stamping', () => {
 		getYieldsExploits.mockResolvedValue([])
 	})
 
-	it('stamps pegDeviation (relative) + pegTokenSymbol onto matching pools, leaves others absent', async () => {
+	test('stamps pegDeviation (relative) + pegTokenSymbol onto matching pools, leaves others absent', async () => {
 		getEnrichedEarn.mockResolvedValue([row('a'), row('b')])
 		getYieldsDepegs.mockResolvedValue([{ pool_id: 'a', deviation_pct: -0.0723, token_symbol: 'deUSD' }])
 
@@ -91,7 +91,7 @@ describe('getEarnPage depeg stamping', () => {
 		expect(byId.get('b')?.pegTokenSymbol).toBeUndefined()
 	})
 
-	it('stamps exploited onto pools flagged by /v2/exploits, leaves others absent', async () => {
+	test('stamps exploited onto pools flagged by /v2/exploits, leaves others absent', async () => {
 		getEnrichedEarn.mockResolvedValue([row('a'), row('b')])
 		getYieldsDepegs.mockResolvedValue([])
 		getYieldsExploits.mockResolvedValue(['b'])
@@ -105,16 +105,16 @@ describe('getEarnPage depeg stamping', () => {
 })
 
 describe('depeg warning severity', () => {
-	it('returns no warning below the 5% threshold', () => {
+	test('returns no warning below the 5% threshold', () => {
 		expect(getDepegWarningSeverity(0.0499)).toBeNull()
 	})
 
-	it('returns warning severity from 5% up to 10%', () => {
+	test('returns warning severity from 5% up to 10%', () => {
 		expect(getDepegWarningSeverity(-0.05)).toBe('warning')
 		expect(getDepegWarningSeverity(0.0999)).toBe('warning')
 	})
 
-	it('returns danger severity at 10% in either direction', () => {
+	test('returns danger severity at 10% in either direction', () => {
 		expect(getDepegWarningSeverity(0.1)).toBe('danger')
 		expect(getDepegWarningSeverity(-0.1)).toBe('danger')
 	})

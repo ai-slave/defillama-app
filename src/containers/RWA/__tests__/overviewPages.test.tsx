@@ -1,10 +1,10 @@
 import { createElement, type ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { IRWAChainsOverviewRow, RWAStatsSegmented } from '../api.types'
 import type { RWAPositionalChartDataset } from '../chartDataset'
 
-let routerQuery: Record<string, string | string[]> = {}
+let routerQuery: Record<string, string | Array<string>> = {}
 let lastTableData: Array<Record<string, unknown>> | null = null
 let lastCsvFileName: string | null = null
 
@@ -69,7 +69,7 @@ beforeEach(() => {
 })
 
 describe('RWA overview pages bridge/interop toggle', () => {
-	it('renders the toggle and keeps bridge TVL in the totals by default', () => {
+	test('renders the toggle and keeps bridge TVL in the totals by default', () => {
 		const html = renderAll(
 			createElement(RWAChains, {
 				chains: [chainRow],
@@ -83,7 +83,7 @@ describe('RWA overview pages bridge/interop toggle', () => {
 		expect(lastCsvFileName).toBe('rwa-chains')
 	})
 
-	it('subtracts bridge TVL from the chains table when the toggle is off', () => {
+	test('subtracts bridge TVL from the chains table when the toggle is off', () => {
 		routerQuery = { includeBridgeTvl: 'false' }
 
 		renderAll(
@@ -98,7 +98,7 @@ describe('RWA overview pages bridge/interop toggle', () => {
 		expect(lastCsvFileName).toBe('rwa-chains-without-bridge-tvl')
 	})
 
-	it('subtracts bridge TVL on categories, platforms and asset groups', () => {
+	test('subtracts bridge TVL on categories, platforms and asset groups', () => {
 		routerQuery = { includeBridgeTvl: 'false' }
 
 		for (const [element, name] of [
