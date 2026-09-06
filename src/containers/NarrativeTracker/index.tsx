@@ -84,13 +84,13 @@ const BAR_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' 
 const LINE_CHART_OPTIONS: MultiSeriesChartOptions = { yAxis: { position: 'right' } }
 const EMPTY_SERIES: Array<string> = []
 
-export const CategoryPerformanceContainer = ({
+export function CategoryPerformanceContainer({
 	pctChanges,
 	performanceTimeSeries,
 	areaChartLegend,
 	isCoinPage,
 	categoryName
-}: CategoryPerformanceProps) => {
+}: CategoryPerformanceProps) {
 	const [tab, setTab] = React.useState('linechart')
 	const [groupBy, setGroupBy] = React.useState<Period>('30D')
 	const [groupByDenom, setGroupByDenom] = React.useState<Denom>('$')

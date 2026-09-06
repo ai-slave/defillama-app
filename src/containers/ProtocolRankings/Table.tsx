@@ -94,7 +94,7 @@ type ChainProtocolsTableInnerProps = ChainProtocolsTableProps & {
 	tablePresets: ReadonlyArray<TablePreset>
 }
 
-export const ChainProtocolsTable = (props: ChainProtocolsTableProps) => {
+export function ChainProtocolsTable(props: ChainProtocolsTableProps) {
 	const legacyFilterState = useStorageItem(legacyTableFilterStateKey, null)
 	const storedMetricPreset = useStorageItem(tableMetricPresetKey, null)
 	const storedPeriod = useStorageItem(tablePeriodKey, null)
@@ -120,7 +120,7 @@ export const ChainProtocolsTable = (props: ChainProtocolsTableProps) => {
 	)
 }
 
-const ChainProtocolsTableInner = ({
+function ChainProtocolsTableInner({
 	protocols,
 	sampleRow = sampleProtocol,
 	useStickyHeader = true,
@@ -134,7 +134,7 @@ const ChainProtocolsTableInner = ({
 	selectedMetricPreset,
 	selectedPeriod,
 	tablePresets
-}: ChainProtocolsTableInnerProps) => {
+}: ChainProtocolsTableInnerProps) {
 	const { customColumns, setCustomColumns } = useCustomColumns()
 	const remoteEnabled = protocolRankings !== undefined
 
@@ -1956,7 +1956,7 @@ export function getProtocolRankingDefaultColumnVisibility(customColumnCount = 0)
 	return visibility
 }
 
-const ProtocolTvlCell = ({ rowValues }: { rowValues: IProtocol }) => {
+function ProtocolTvlCell({ rowValues }: { rowValues: IProtocol }) {
 	// Same settings source the toolbar's "Include in TVL" menu writes to, so the
 	// strike marker reacts to the toggles in the same render pass.
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')

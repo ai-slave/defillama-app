@@ -62,7 +62,9 @@ function persistSubscriptionStatus(userId: string, value: Subscription | null) {
 			subscriptionStatusStorageKey(userId),
 			JSON.stringify({ userId, value, updatedAt: Date.now() } satisfies PersistedSubscriptionStatus)
 		)
-	} catch {}
+	} catch {
+		// Storage can be unavailable or full; the feature degrades silently.
+	}
 }
 
 export function clearPersistedSubscriptionStatus(userId: string | null | undefined) {
@@ -70,7 +72,9 @@ export function clearPersistedSubscriptionStatus(userId: string | null | undefin
 
 	try {
 		localStorage.removeItem(subscriptionStatusStorageKey(userId))
-	} catch {}
+	} catch {
+		// Storage can be unavailable or full; the feature degrades silently.
+	}
 }
 
 export async function fetchSubscriptionStatus({

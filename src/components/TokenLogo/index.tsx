@@ -31,14 +31,16 @@ function resolveLogoUrl(props: NamedLogoProps): string {
 	}
 }
 
-export const FallbackLogo = ({ size = 24, 'data-lgonly': lgonly }: { size?: number; 'data-lgonly'?: boolean }) => (
-	<span
-		aria-hidden="true"
-		data-lgonly={lgonly}
-		className="inline-block shrink-0 rounded-full bg-surface-elevated-2 data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
-		style={{ height: size, width: size }}
-	/>
-)
+export function FallbackLogo({ size = 24, 'data-lgonly': lgonly }: { size?: number; 'data-lgonly'?: boolean }) {
+	return (
+		<span
+			aria-hidden="true"
+			data-lgonly={lgonly}
+			className="inline-block shrink-0 rounded-full bg-surface-elevated-2 data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block"
+			style={{ height: size, width: size }}
+		/>
+	)
+}
 
 export function TokenLogo(props: TokenLogoProps) {
 	const { size = 24, fallbackSrc, alt, title, 'data-lgonly': lgonly, ...rest } = props

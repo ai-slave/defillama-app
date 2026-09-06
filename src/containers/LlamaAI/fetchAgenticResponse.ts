@@ -519,7 +519,9 @@ async function getResponseErrorMessage(response: Response, fallback: string) {
 			const errorData = parseAgenticErrorResponse(JSON.parse(text))
 			const detailedMessage = errorData?.error || errorData?.message || errorData?.content
 			if (detailedMessage) return `${fallback}: ${detailedMessage}`
-		} catch {}
+		} catch {
+			// A non-JSON error body keeps the default message.
+		}
 	}
 	if (text) return `${fallback}: ${text}`
 
@@ -765,7 +767,9 @@ export function parseSSEStream(
 		} finally {
 			try {
 				reader.releaseLock()
-			} catch {}
+			} catch {
+				// The lock is already released once the stream has errored.
+			}
 		}
 	}
 

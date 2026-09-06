@@ -29,7 +29,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const EarningsOnAllChains = (props: IAdapterByChainPageData) => {
+function EarningsOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="DeFi Earnings & Net Profit Rankings - DefiLlama"

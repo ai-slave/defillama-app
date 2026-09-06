@@ -28,7 +28,9 @@ export const getServerSideProps: GetServerSideProps = async () => {
 			INVESTORS_PROJECTS.filter((p) => p.dashboardId).map((project) => fetchCustomServerData(project.dashboardId))
 		)
 		for (const data of customResults) Object.assign(customServerData, data)
-	} catch {}
+	} catch {
+		// Custom dashboard data is optional; the page renders without it.
+	}
 
 	return { props: { customServerData } }
 }

@@ -33,7 +33,9 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 			// Refresh auth to update user state (verified will become false for new email)
 			try {
 				await refreshSession()
-			} catch {}
+			} catch {
+				// The change request already succeeded; refreshSession only updates the cached user state.
+			}
 			setIsSuccess(true)
 		} catch {
 			setError('This email is already associated with another account.')

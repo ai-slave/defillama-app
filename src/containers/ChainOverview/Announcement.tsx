@@ -9,7 +9,7 @@ import { getMainSiteIrDashboard } from '../Investors/mainSiteDashboards'
 
 const NEAR_CHAIN_ICON = chainIconUrl('near')
 
-export const ChainOverviewAnnouncement = ({ chainName }: { chainName?: string }) => {
+export function ChainOverviewAnnouncement({ chainName }: { chainName?: string }) {
 	const { user } = useAuthContext()
 	const normalizedChainName = chainName?.toLowerCase()
 	const showsInPageIr = !!chainName && !!getMainSiteIrDashboard('chain', slug(chainName))

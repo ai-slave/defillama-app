@@ -122,6 +122,7 @@ export function useChatExecutionOwner({
 					activeMessageId = activeExecution.messageId
 					if (buffer.executionId && buffer.executionId !== activeMessageId) {
 						appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
+						// oxlint-disable-next-line no-param-reassign -- the buffer is rotated when the execution changes; every downstream callback receives the current one.
 						buffer = createStreamBuffer()
 						if (!resetStream) {
 							dispatch({ type: 'RESET_STREAM' })
@@ -244,6 +245,7 @@ export function useChatExecutionOwner({
 					if (replacementCount >= 2) return 'superseded'
 					if (changedExecution?.messageId && changedExecution.messageId !== activeMessageId) {
 						appendBufferedAssistantMessage(buffer, currentMessageIdRef, appendMessage)
+						// oxlint-disable-next-line no-param-reassign -- see above: the buffer is rotated for the replacement execution.
 						buffer = createStreamBuffer()
 						if (!resetStream) {
 							dispatch({ type: 'RESET_STREAM' })

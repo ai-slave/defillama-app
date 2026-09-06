@@ -27,7 +27,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const BridgeAggregatorsVolumeOnAllChains = (props: IAdapterByChainPageData) => {
+function BridgeAggregatorsVolumeOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="Bridge Aggregator Volume & Rankings - DefiLlama"

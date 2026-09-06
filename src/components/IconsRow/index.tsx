@@ -18,7 +18,7 @@ interface IIconItemLogoProps {
 	item: IconsRowItem
 }
 
-const IconItemLogo = ({ item }: IIconItemLogoProps) => {
+function IconItemLogo({ item }: IIconItemLogoProps) {
 	const title = item.title ?? item.label
 
 	if (!item.href) {
@@ -39,7 +39,7 @@ interface IIconsRowProps {
 
 const EMPTY_ITEMS: Array<IconsRowItem> = []
 
-export const IconsRow = ({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps) => {
+export function IconsRow({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps) {
 	const mainWrapEl = useRef<HTMLDivElement>(null)
 	const { width: mainWrapWidth } = useResize(mainWrapEl)
 

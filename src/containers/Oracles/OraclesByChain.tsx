@@ -28,14 +28,14 @@ const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeri
 
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]
 
-export const OraclesByChain = ({
+export function OraclesByChain({
 	chartData,
 	tableData,
 	oracles,
 	chainLinks,
 	oraclesColors,
 	chain
-}: OraclesByChainPageData) => {
+}: OraclesByChainPageData) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 
 	const enabledExtraApiKeys = React.useMemo(() => getEnabledExtraTvlApiKeys(extraTvlsEnabled), [extraTvlsEnabled])

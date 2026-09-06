@@ -16,7 +16,7 @@ const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeri
 
 const DEMO_CHAINS = ['Ethereum']
 
-const generateFakeChartData = (baseValue: number, volatility: number = 0.1): MultiSeriesChartDataset['source'] => {
+const generateFakeChartData = (baseValue: number, volatility = 0.1): MultiSeriesChartDataset['source'] => {
 	const data = new Array<MultiSeriesChartDataset['source'][number]>(90)
 	const now = new Date()
 	let currentValue = baseValue
@@ -36,7 +36,7 @@ const generateFakeChartData = (baseValue: number, volatility: number = 0.1): Mul
 	return data
 }
 
-const DemoChartCard = ({ chart }: { chart: ChartConfig }) => {
+function DemoChartCard({ chart }: { chart: ChartConfig }) {
 	const chartTypeDetails = getProDashboardChartTypeConfig(chart.type) ?? {
 		title: chart.type.toUpperCase(),
 		color: '#2172E5',
@@ -114,7 +114,7 @@ const normalizeDemoBaseType = (chartType: string): MultiChartInputSeries['baseTy
 	return 'line'
 }
 
-const DemoMultiChartCard = ({ multi }: { multi: MultiChartConfig }) => {
+function DemoMultiChartCard({ multi }: { multi: MultiChartConfig }) {
 	const chartView = React.useMemo(() => {
 		const series: Array<MultiChartInputSeries> = multi.items.map((item, index) => {
 			const fakeData = generateFakeChartData(
@@ -460,7 +460,7 @@ const features = [
 	}
 ] satisfies Array<{ icon: React.ComponentProps<typeof Icon>['name']; title: string }>
 
-export const DemoPreview = () => {
+export function DemoPreview() {
 	const router = useRouter()
 	const [firstMultiChart, secondMultiChart, thirdMultiChart] = demoMultiCharts
 	if (!firstMultiChart || !secondMultiChart || !thirdMultiChart) {

@@ -9,21 +9,23 @@ const SubscribeProModal = lazy(() =>
 	}))
 )
 
-const CheckIcon = () => (
-	<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/12">
-		<svg
-			viewBox="0 0 24 24"
-			className="size-3"
-			fill="none"
-			stroke="#2172E5"
-			strokeWidth="2.5"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-		>
-			<polyline points="20 6 9 17 4 12" />
-		</svg>
-	</span>
-)
+function CheckIcon() {
+	return (
+		<span className="mt-px flex size-5 shrink-0 items-center justify-center rounded-full bg-brand/12">
+			<svg
+				viewBox="0 0 24 24"
+				className="size-3"
+				fill="none"
+				stroke="#2172E5"
+				strokeWidth="2.5"
+				strokeLinecap="round"
+				strokeLinejoin="round"
+			>
+				<polyline points="20 6 9 17 4 12" />
+			</svg>
+		</span>
+	)
+}
 
 const highlightFormula = (formula: string) => {
 	const parts = formula.split(/(=\w+|"[^"]*"|[(),])/).filter(Boolean)
@@ -233,9 +235,11 @@ const templates = [
 	}
 ]
 
-const SectionSeparator = () => <hr className="mx-auto max-w-[1100px] border-sub-line/40" />
+function SectionSeparator() {
+	return <hr className="mx-auto max-w-[1100px] border-sub-line/40" />
+}
 
-const HeroMock = () => {
+function HeroMock() {
 	const heroGridCols = '36px minmax(0, 1fr) minmax(108px, 0.55fr)'
 
 	return (
@@ -283,7 +287,7 @@ const HeroMock = () => {
 	)
 }
 
-const ShowcaseSection = ({
+function ShowcaseSection({
 	overline,
 	heading,
 	description,
@@ -297,28 +301,30 @@ const ShowcaseSection = ({
 	bullets: Array<string>
 	reversed?: boolean
 	children: ReactNode
-}) => (
-	<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8 md:py-20">
-		<div
-			className={`grid grid-cols-1 items-center gap-8 md:gap-15 ${reversed ? 'md:grid-cols-[45fr_55fr]' : 'md:grid-cols-[55fr_45fr]'}`}
-		>
-			<div className={reversed ? 'md:order-2' : ''}>
-				<p className="mb-3 text-[13px] font-semibold tracking-[2px] text-brand uppercase">{overline}</p>
-				<h2 className="mb-3.5 text-[28px] leading-[1.25] font-bold tracking-[-0.02em]">{heading}</h2>
-				<p className="mb-6 text-[15px] leading-relaxed text-sub-text-soft">{description}</p>
-				<ul className="flex flex-col gap-3">
-					{bullets.map((bullet) => (
-						<li key={bullet} className="flex items-start gap-2.5 text-sm leading-normal text-sub-text-soft">
-							<CheckIcon />
-							{bullet}
-						</li>
-					))}
-				</ul>
+}) {
+	return (
+		<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8 md:py-20">
+			<div
+				className={`grid grid-cols-1 items-center gap-8 md:gap-15 ${reversed ? 'md:grid-cols-[45fr_55fr]' : 'md:grid-cols-[55fr_45fr]'}`}
+			>
+				<div className={reversed ? 'md:order-2' : ''}>
+					<p className="mb-3 text-[13px] font-semibold tracking-[2px] text-brand uppercase">{overline}</p>
+					<h2 className="mb-3.5 text-[28px] leading-[1.25] font-bold tracking-[-0.02em]">{heading}</h2>
+					<p className="mb-6 text-[15px] leading-relaxed text-sub-text-soft">{description}</p>
+					<ul className="flex flex-col gap-3">
+						{bullets.map((bullet) => (
+							<li key={bullet} className="flex items-start gap-2.5 text-sm leading-normal text-sub-text-soft">
+								<CheckIcon />
+								{bullet}
+							</li>
+						))}
+					</ul>
+				</div>
+				<div className={reversed ? 'md:order-1' : ''}>{children}</div>
 			</div>
-			<div className={reversed ? 'md:order-1' : ''}>{children}</div>
-		</div>
-	</section>
-)
+		</section>
+	)
+}
 
 type MockCell = { value: string; variant?: 'value' | 'formula'; colSpan?: number }
 type MockRow = { num: string; cells: Array<MockCell> }
@@ -326,7 +332,7 @@ type MockRow = { num: string; cells: Array<MockCell> }
 const cellClass = (variant?: 'value' | 'formula') =>
 	variant === 'value' ? 'font-semibold text-sub-live' : variant === 'formula' ? '' : 'text-sub-text-soft'
 
-const MockTable = ({
+function MockTable({
 	formulaBar,
 	headers,
 	rows,
@@ -336,7 +342,7 @@ const MockTable = ({
 	headers?: { num?: string; labels: Array<string> }
 	rows: Array<MockRow>
 	footer?: MockRow
-}) => {
+}) {
 	const colCount = headers ? headers.labels.length : rows[0].cells.length
 	const valueColTrack = colCount <= 2 ? '96px' : 'minmax(92px, 0.8fr)'
 	const gridCols =
@@ -415,38 +421,40 @@ const MockTable = ({
 	)
 }
 
-const TemplatesSection = () => (
-	<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8 md:py-20">
-		<div className="mb-12 text-center">
-			<h2 className="mb-2.5 text-[32px] font-bold tracking-[-0.02em]">Templates</h2>
-			<p className="mx-auto max-w-[500px] text-base text-sub-text-soft">
-				Pre-built spreadsheets to get you started. Clone and customize to fit your workflow.
-			</p>
-		</div>
-		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-			{templates.map((tpl) => (
-				<a
-					key={tpl.title}
-					href={tpl.href}
-					target="_blank"
-					rel="noopener noreferrer"
-					data-umami-event="sheets-templates-click"
-					data-umami-event-template={tpl.title}
-					className="flex flex-col gap-2.5 rounded-2xl border border-sub-line/40 bg-sub-dark-panel p-7 transition-all hover:border-brand hover:shadow-brand-glow"
-				>
-					<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10 [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-[#2172E5] [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
-						{tpl.icon}
-					</div>
-					<h3 className="text-[15px] font-semibold">{tpl.title}</h3>
-					<p className="text-[13px] leading-normal text-sub-text-muted">{tpl.desc}</p>
-					<span className="mt-auto flex items-center gap-1 text-[13px] font-medium text-brand">
-						View template &rarr;
-					</span>
-				</a>
-			))}
-		</div>
-	</section>
-)
+function TemplatesSection() {
+	return (
+		<section className="mx-auto max-w-[1100px] px-4 py-12 sm:px-6 md:px-8 md:py-20">
+			<div className="mb-12 text-center">
+				<h2 className="mb-2.5 text-[32px] font-bold tracking-[-0.02em]">Templates</h2>
+				<p className="mx-auto max-w-[500px] text-base text-sub-text-soft">
+					Pre-built spreadsheets to get you started. Clone and customize to fit your workflow.
+				</p>
+			</div>
+			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{templates.map((tpl) => (
+					<a
+						key={tpl.title}
+						href={tpl.href}
+						target="_blank"
+						rel="noopener noreferrer"
+						data-umami-event="sheets-templates-click"
+						data-umami-event-template={tpl.title}
+						className="flex flex-col gap-2.5 rounded-2xl border border-sub-line/40 bg-sub-dark-panel p-7 transition-all hover:border-brand hover:shadow-brand-glow"
+					>
+						<div className="flex size-10 items-center justify-center rounded-lg bg-brand/10 [&>svg]:size-5 [&>svg]:fill-none [&>svg]:stroke-[#2172E5] [&>svg]:[stroke-width:1.8] [&>svg]:[stroke-linecap:round] [&>svg]:[stroke-linejoin:round]">
+							{tpl.icon}
+						</div>
+						<h3 className="text-[15px] font-semibold">{tpl.title}</h3>
+						<p className="text-[13px] leading-normal text-sub-text-muted">{tpl.desc}</p>
+						<span className="mt-auto flex items-center gap-1 text-[13px] font-medium text-brand">
+							View template &rarr;
+						</span>
+					</a>
+				))}
+			</div>
+		</section>
+	)
+}
 
 export default function SheetsContainer() {
 	const subscribeModalStore = Ariakit.useDialogStore()

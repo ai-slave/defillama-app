@@ -13,7 +13,7 @@ interface IRowLinksProps {
 	alternativeOthersText?: string
 }
 
-export const RowLinksWithDropdown = (props: IRowLinksProps) => {
+export function RowLinksWithDropdown(props: IRowLinksProps) {
 	return (
 		<span>
 			<span className="sm:hidden">

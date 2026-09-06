@@ -27,7 +27,7 @@ interface CalendarButtonProps {
 	isProtocolPage: boolean
 }
 
-const ProtocolPageButton = () => {
+function ProtocolPageButton() {
 	return (
 		<Ariakit.MenuButton className="flex items-center gap-2 rounded-sm p-2 hover:bg-hover-row focus-visible:bg-hover-row">
 			<Icon name="calendar-plus" width={16} height={16} />
@@ -36,7 +36,7 @@ const ProtocolPageButton = () => {
 	)
 }
 
-const RegularButton = () => {
+function RegularButton() {
 	return (
 		<Ariakit.MenuButton
 			className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
@@ -47,7 +47,7 @@ const RegularButton = () => {
 	)
 }
 
-const CalendarButton = ({ event, tokenName, tokenValue, isProtocolPage }: CalendarButtonProps) => {
+function CalendarButton({ event, tokenName, tokenValue, isProtocolPage }: CalendarButtonProps) {
 	return (
 		<Ariakit.MenuProvider>
 			{isProtocolPage ? <ProtocolPageButton /> : <RegularButton />}
@@ -178,7 +178,7 @@ const formatCountdownBadge = (days: number, hours: number, minutes: number, seco
 const countdownTileStyles =
 	'inline-flex min-h-8 w-16 items-center justify-center rounded-lg bg-surface-elevated-2 px-2 py-1.5 label-md text-primary tabular-nums'
 
-export const UpcomingEvent = ({
+export function UpcomingEvent({
 	timestamp,
 	event,
 	price,
@@ -188,7 +188,7 @@ export const UpcomingEvent = ({
 	name,
 	geckoId,
 	isProtocolPage = false
-}: UpcomingEventProps) => {
+}: UpcomingEventProps) {
 	const tokenSymbol = symbol ? symbol.toUpperCase() : ''
 	const { currentUnlockBreakdown, eventSummaries, calendarTokenValue } = useMemo(() => {
 		const breakdown: Array<UnlockBreakdown> = []

@@ -234,7 +234,7 @@ const LST_COLUMNS_WITH_RATES_AND_APY = [
 	LST_FEE_COLUMN
 ]
 
-export const LSTOverview = ({
+export function LSTOverview({
 	areaChartData,
 	pieSeries,
 	tokensList,
@@ -246,7 +246,7 @@ export const LSTOverview = ({
 	barChartStacks,
 	ratesAvailable,
 	apyAvailable
-}: LSTOverviewProps) => {
+}: LSTOverviewProps) {
 	const [tab, setTab] = React.useState('breakdown')
 	const [groupBy, setGroupBy] = React.useState<LowercaseDwmcGrouping>('weekly')
 	const {

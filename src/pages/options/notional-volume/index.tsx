@@ -29,7 +29,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const NotionalVolumeOnAllChains = (props: IAdapterByChainPageData) => {
+function NotionalVolumeOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="Options Notional Volume Rankings - DefiLlama"

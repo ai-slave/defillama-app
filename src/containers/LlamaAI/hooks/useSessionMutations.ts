@@ -473,7 +473,7 @@ export function useSessionMutations() {
 
 	// Normalize the restore API payload into the shape the chat screen consumes.
 	const restoreSession = useCallback(
-		async (sessionId: string, limit: number = 10, around?: string, signal?: AbortSignal) => {
+		async (sessionId: string, limit = 10, around?: string, signal?: AbortSignal) => {
 			try {
 				const result = await restoreSessionMutation.mutateAsync({
 					sessionId,

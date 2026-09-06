@@ -60,7 +60,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse<ResponseData>) 
 						const preview = await buildChainPreview(item.slug)
 						if (preview) return { ...item, preview, logo: item.logo ?? preview.logo ?? null }
 					}
-				} catch {}
+				} catch {
+					// A failed preview lookup leaves the item without a preview.
+				}
 				return item
 			})
 		)

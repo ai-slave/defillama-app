@@ -118,32 +118,34 @@ const FILTER_MODE_OPTIONS: Array<{ value: 'include' | 'exclude'; label: string }
 	{ value: 'exclude', label: 'Exclude' }
 ]
 
-const FilterModeToggle = ({
+function FilterModeToggle({
 	value,
 	onChange
 }: {
 	value: 'include' | 'exclude'
 	onChange: (mode: 'include' | 'exclude') => void
-}) => (
-	<div className="rounded-lg border border-pro-cards-border p-0.5">
-		<div className="grid grid-cols-2 gap-0.5">
-			{FILTER_MODE_OPTIONS.map((option) => (
-				<button
-					type="button"
-					key={option.value}
-					onClick={() => onChange(option.value)}
-					className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors duration-200 ${
-						value === option.value
-							? 'bg-pro-accent text-on-brand shadow-sm'
-							: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
-					}`}
-				>
-					{option.label}
-				</button>
-			))}
+}) {
+	return (
+		<div className="rounded-lg border border-pro-cards-border p-0.5">
+			<div className="grid grid-cols-2 gap-0.5">
+				{FILTER_MODE_OPTIONS.map((option) => (
+					<button
+						type="button"
+						key={option.value}
+						onClick={() => onChange(option.value)}
+						className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors duration-200 ${
+							value === option.value
+								? 'bg-pro-accent text-on-brand shadow-sm'
+								: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
+						}`}
+					>
+						{option.label}
+					</button>
+				))}
+			</div>
 		</div>
-	</div>
-)
+	)
+}
 
 export function ChartBuilderTab({
 	chartBuilder,
@@ -443,7 +445,7 @@ export function ChartBuilderTab({
 	}
 
 	const handleLimitChange = (option: SelectOption) => {
-		onChartBuilderChange({ limit: parseInt(option.value) || 10 })
+		onChartBuilderChange({ limit: parseInt(option.value, 10) || 10 })
 	}
 
 	const handleChartTypeChange = (type: ChartBuilderConfig['chartType']) => {

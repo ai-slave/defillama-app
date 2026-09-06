@@ -276,16 +276,19 @@ describe('ChainOverview small charts', () => {
 		]
 
 		for (const hoverCase of hoverCases) {
+			// oxlint-disable-next-line no-loop-func -- the closure reads only the current hover case, and the loop awaits it before moving on.
 			await act(async () => root.render(hoverCase.initial))
 			const chart = getChartContainer()
 			await movePointer(chart, 30)
 			expect(container.textContent, `${hoverCase.name} should show its ordinary hover`).not.toBe('')
 			expect(hasCrosshair(), `${hoverCase.name} should show its ordinary crosshair`).toBe(true)
 
+			// oxlint-disable-next-line no-loop-func -- see above.
 			await act(async () => root.render(hoverCase.shorter))
 			expect(container.textContent, `${hoverCase.name} should hide its stale tooltip`).toBe('')
 			expect(hasCrosshair(), `${hoverCase.name} should hide its stale crosshair`).toBe(false)
 
+			// oxlint-disable-next-line no-loop-func -- see above.
 			await act(async () => root.render(hoverCase.initial))
 			expect(container.textContent, `${hoverCase.name} should not resurrect its old hover`).toBe('')
 			expect(hasCrosshair(), `${hoverCase.name} should not resurrect its old crosshair`).toBe(false)

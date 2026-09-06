@@ -1,12 +1,12 @@
 // empty pixel
 const fallbackImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='
 
-export const ImageWithFallback = ({
+export function ImageWithFallback({
 	fallback: _fallback = fallbackImage,
 	...props
 }: React.ImgHTMLAttributes<HTMLImageElement> & {
 	fallback?: string
-}) => {
+}) {
 	return (
 		<img
 			alt=""

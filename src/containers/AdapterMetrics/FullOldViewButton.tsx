@@ -15,7 +15,7 @@ const SubscribeProModal = lazy(() =>
 	}))
 )
 
-export const FullOldViewButton = () => {
+export function FullOldViewButton() {
 	const { createDashboardWithDataset, isLoading } = useDashboardCreation()
 	const { loaders, isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const [shouldRenderModal, setShouldRenderModal] = useState(false)

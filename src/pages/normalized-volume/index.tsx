@@ -27,7 +27,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const NormalizedVolumeOnAllChains = (props: IAdapterByChainPageData) => {
+function NormalizedVolumeOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="Normalized DEX Volume Rankings - DefiLlama"

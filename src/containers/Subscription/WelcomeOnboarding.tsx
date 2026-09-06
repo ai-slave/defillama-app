@@ -108,7 +108,9 @@ export function WelcomeOnboarding() {
 				trialActivationFiredRef.current = true
 				trackUmamiEvent('llamaai-trial-activated', { variant: marker.variant ?? 'trial' })
 			}
-		} catch {}
+		} catch {
+			// Storage can be unavailable or the marker malformed; the event is not tracked.
+		}
 	}, [hasActiveSubscription])
 
 	useEffect(() => {

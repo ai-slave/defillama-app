@@ -34,20 +34,23 @@ interface INftCollection {
 	sales1d: number
 }
 
-const EthIcon = () => (
-	<svg fill="#777E91" height={12} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6 9">
-		<path d="M5.56641 4.55935L2.76099 0L0 4.56239L2.78244 6.22185L5.56641 4.55935Z" />
-		<path d="M5.56641 5.11627L2.77631 6.74082L0 5.11627L2.78244 8.99999L5.56641 5.11627Z" />
-	</svg>
-)
+function EthIcon() {
+	return (
+		<svg fill="#777E91" height={12} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 6 9">
+			<path d="M5.56641 4.55935L2.76099 0L0 4.56239L2.78244 6.22185L5.56641 4.55935Z" />
+			<path d="M5.56641 5.11627L2.77631 6.74082L0 5.11627L2.78244 8.99999L5.56641 5.11627Z" />
+		</svg>
+	)
+}
 
-const EthValueCell = ({ value }: { value: unknown }) =>
-	value != null ? (
+function EthValueCell({ value }: { value: unknown }) {
+	return value != null ? (
 		<span className="flex flex-nowrap items-center justify-end gap-1">
 			<span>{String(value)}</span>
 			<EthIcon />
 		</span>
 	) : null
+}
 
 const columnHelper = createColumnHelper<INftCollection>()
 

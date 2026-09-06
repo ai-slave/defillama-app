@@ -44,7 +44,7 @@ export const getStaticPaths = () => {
 	}
 }
 
-const Raises = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
+function Raises(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	const investorName = props.investorName
 	return (
 		<Layout

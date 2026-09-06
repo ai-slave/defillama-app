@@ -151,19 +151,17 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 	)
 }
 
-const AppWrapper = (props: AppPropsWithLayout) => {
+function AppWrapper(props: AppPropsWithLayout) {
 	const [queryClient] = useState(() => new QueryClient())
 
 	return (
-		<>
-			<QueryClientProvider client={queryClient}>
-				<AuthProvider>
-					<UserSettingsSync />
-					<App {...props} />
-				</AuthProvider>
-				<ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
-			</QueryClientProvider>
-		</>
+		<QueryClientProvider client={queryClient}>
+			<AuthProvider>
+				<UserSettingsSync />
+				<App {...props} />
+			</AuthProvider>
+			<ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
+		</QueryClientProvider>
 	)
 }
 

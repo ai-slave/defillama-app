@@ -36,7 +36,7 @@ interface ILinkPreviewCardProps {
 
 // volumeChange remove for now
 
-export const LinkPreviewCard = ({
+export function LinkPreviewCard({
 	cardName,
 	chain,
 	token,
@@ -51,7 +51,7 @@ export const LinkPreviewCard = ({
 	pageType,
 	isCEX,
 	valueHeader
-}: ILinkPreviewCardProps) => {
+}: ILinkPreviewCardProps) {
 	const windowURL = typeof window !== 'undefined' && window.location.href ? window.location.href : ''
 
 	const isTvlValid = unlockPage ? true : typeof tvl === 'string' && tvl !== '$0'

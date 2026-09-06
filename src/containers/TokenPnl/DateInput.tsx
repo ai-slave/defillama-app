@@ -12,7 +12,7 @@ const isPlausibleIsoDate = (value: string): boolean => {
 	return Number(match[1]) >= MIN_PLAUSIBLE_YEAR
 }
 
-export const DateInput = ({
+export function DateInput({
 	label,
 	value,
 	onChange,
@@ -26,7 +26,7 @@ export const DateInput = ({
 	min?: string
 	max?: string
 	invalid?: boolean
-}) => {
+}) {
 	const inputRef = useRef<HTMLInputElement>(null)
 	const lastCommittedRef = useRef(value)
 

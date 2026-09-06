@@ -505,20 +505,22 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 	)
 }
 
-const FaqItem = ({ question, children }: { question: string; children: React.ReactNode }) => (
-	<details className="group">
-		<summary className="flex cursor-pointer items-center gap-4 py-4">
-			<span className="flex-1 text-sm font-medium text-pro-text-primary">{question}</span>
-			<Icon
-				name="chevron-down"
-				height={16}
-				width={16}
-				className="shrink-0 text-pro-text-secondary transition-transform duration-200 group-open:rotate-180"
-			/>
-		</summary>
-		<div className="pb-4 text-sm text-pro-text-secondary">{children}</div>
-	</details>
-)
+function FaqItem({ question, children }: { question: string; children: React.ReactNode }) {
+	return (
+		<details className="group">
+			<summary className="flex cursor-pointer items-center gap-4 py-4">
+				<span className="flex-1 text-sm font-medium text-pro-text-primary">{question}</span>
+				<Icon
+					name="chevron-down"
+					height={16}
+					width={16}
+					className="shrink-0 text-pro-text-secondary transition-transform duration-200 group-open:rotate-180"
+				/>
+			</summary>
+			<div className="pb-4 text-sm text-pro-text-secondary">{children}</div>
+		</details>
+	)
+}
 
 function kindIcon(kind: SavedDownload['kind']): IIcon['name'] {
 	if (kind === 'dataset') return 'file-text'

@@ -205,7 +205,9 @@ export function useDashboardStream(
 				} finally {
 					try {
 						reader.releaseLock()
-					} catch {}
+					} catch {
+						// The lock is already released once the stream has errored.
+					}
 				}
 
 				if (!abortController.signal.aborted) {

@@ -8,7 +8,7 @@ const StripeCheckoutModal = lazy(() =>
 	import('~/containers/Subscription/shared/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
 )
 
-export const PaymentButton = ({
+export function PaymentButton({
 	paymentMethod,
 	type = 'api',
 	billingInterval = 'month'
@@ -16,7 +16,7 @@ export const PaymentButton = ({
 	paymentMethod: 'stripe' | 'llamapay'
 	type?: 'api' | 'llamafeed'
 	billingInterval?: 'year' | 'month'
-}) => {
+}) {
 	const { handleSubscribe, loading } = useSubscribe()
 	const { isAuthenticated, user, promptVerifyEmail } = useAuthContext()
 	const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false)

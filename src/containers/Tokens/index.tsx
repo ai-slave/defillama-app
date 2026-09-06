@@ -795,7 +795,9 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 				const next = functionalUpdate(updater, old)
 				try {
 					window.localStorage.setItem(TOKENS_COLUMN_VISIBILITY_STORAGE_KEY, JSON.stringify(next))
-				} catch {}
+				} catch {
+					// Storage can be unavailable or full; the feature degrades silently.
+				}
 				return next
 			})
 		},

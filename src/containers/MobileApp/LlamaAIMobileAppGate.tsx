@@ -110,7 +110,9 @@ function useMobileAppPromotion() {
 	const continueOnWeb = () => {
 		try {
 			sessionStorage.setItem(LLAMAAI_MOBILE_APP_PROMOTION_KEY, 'true')
-		} catch {}
+		} catch {
+			// Storage can be unavailable or full; the feature degrades silently.
+		}
 		setHasContinued(true)
 	}
 

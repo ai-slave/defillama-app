@@ -308,10 +308,7 @@ export class ChartDataTransformer {
 		return chart
 	}
 
-	private static toPercentage(
-		chart: AdaptedLlamaAICartesianChart,
-		shouldStack: boolean = true
-	): AdaptedLlamaAICartesianChart {
+	private static toPercentage(chart: AdaptedLlamaAICartesianChart, shouldStack = true): AdaptedLlamaAICartesianChart {
 		const nextChart = chart
 		const primarySeries = nextChart.seriesMeta.filter((series) => (series.yAxisIndex ?? 0) === 0)
 		if (primarySeries.length === 0) return nextChart

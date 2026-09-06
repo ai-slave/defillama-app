@@ -16,7 +16,7 @@ import { buildTopProtocolChainSeries } from './protocolTvlBreakdown'
 async function getTvlProtocolChainData(
 	protocol: string,
 	chains?: Array<string>,
-	topN: number = 5,
+	topN = 5,
 	chainFilterMode: 'include' | 'exclude' = 'include',
 	chainCategoryFilterMode: 'include' | 'exclude' = 'include',
 	chainCategories?: Array<string>
@@ -61,7 +61,7 @@ async function getTvlProtocolChainData(
 }
 
 async function getAllProtocolsTopChainsTvlData(
-	topN: number = 5,
+	topN = 5,
 	chains?: Array<string>,
 	chainFilterMode: 'include' | 'exclude' = 'include',
 	chainCategoryFilterMode: 'include' | 'exclude' = 'include',

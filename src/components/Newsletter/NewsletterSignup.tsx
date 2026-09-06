@@ -30,7 +30,9 @@ const persistNewsletterDismissed = (): void => {
 	if (typeof window === 'undefined') return
 	try {
 		window.localStorage.setItem(NEWSLETTER_DISMISSED_KEY, '1')
-	} catch {}
+	} catch {
+		// Storage can be unavailable or full; the feature degrades silently.
+	}
 }
 
 const subscribeToStorage = (onChange: () => void) => {

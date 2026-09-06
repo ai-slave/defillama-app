@@ -339,15 +339,13 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, 
 					</div>
 				</>
 			) : viewMode === 'Week' ? (
-				<>
-					<div className="grid grid-cols-1 gap-px border border-medium bg-border-medium md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-						{calendarDays.map((day) => (
-							<React.Fragment key={day.date!.format('YYYY-MM-DD')}>
-								<WeekDayColumn dayInfo={day as { date: Dayjs; isCurrentMonth: boolean }} unlocksData={unlocksData} />
-							</React.Fragment>
-						))}
-					</div>
-				</>
+				<div className="grid grid-cols-1 gap-px border border-medium bg-border-medium md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+					{calendarDays.map((day) => (
+						<React.Fragment key={day.date!.format('YYYY-MM-DD')}>
+							<WeekDayColumn dayInfo={day as { date: Dayjs; isCurrentMonth: boolean }} unlocksData={unlocksData} />
+						</React.Fragment>
+					))}
+				</div>
 			) : (
 				<UnlocksListView events={listEventsData} />
 			)}

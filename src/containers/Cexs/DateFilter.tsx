@@ -54,7 +54,7 @@ const isAtMidnight = (timestamp: number | null) => {
 	return date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0
 }
 
-export const DateFilter = ({
+export function DateFilter({
 	startDate,
 	endDate,
 	isLoading = false
@@ -62,7 +62,7 @@ export const DateFilter = ({
 	startDate: number | null
 	endDate: number | null
 	isLoading?: boolean
-}) => {
+}) {
 	const router = useRouter()
 	const { isAuthenticated, hasActiveSubscription, loaders } = useAuthContext()
 	const isSubscribed = !loaders.userLoading && isAuthenticated && hasActiveSubscription

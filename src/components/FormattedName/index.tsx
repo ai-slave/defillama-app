@@ -12,7 +12,7 @@ interface IFormattedNameProps extends WrapperProps {
 	text: string
 }
 
-export const FormattedName = ({ text, maxCharacters, fontSize, fontWeight = 400, link }: IFormattedNameProps) => {
+export function FormattedName({ text, maxCharacters, fontSize, fontWeight = 400, link }: IFormattedNameProps) {
 	if (!text) {
 		return null
 	}

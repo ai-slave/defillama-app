@@ -12,7 +12,7 @@ import {
 export const AGENT_HOME_MEMORIES_KEY = ['agent-home-memories'] as const
 export const AGENT_HOME_SKILLS_KEY = ['agent-home-skills'] as const
 
-export function useAgentHomeData(shouldLoad: boolean = true) {
+export function useAgentHomeData(shouldLoad = true) {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()
 	const queryClient = useQueryClient()
 

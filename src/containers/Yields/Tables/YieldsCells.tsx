@@ -318,14 +318,12 @@ export function TotalApyCell({
 							<span className="text-right text-primary">{signedPct(tip.value, tip.signed)}</span>
 						</Fragment>
 					))}
-					<>
-						<span className="mt-0.5 border-t border-subtle pt-1.5 text-secondary">
-							{kind === 'borrow' ? 'Cost' : 'Total'}
-						</span>
-						<span className="mt-0.5 border-t border-subtle pt-1.5 text-right label-sm">
-							{formatPercent(value, YIELD_PERCENT_OPTIONS)}
-						</span>
-					</>
+					<span className="mt-0.5 border-t border-subtle pt-1.5 text-secondary">
+						{kind === 'borrow' ? 'Cost' : 'Total'}
+					</span>
+					<span className="mt-0.5 border-t border-subtle pt-1.5 text-right label-sm">
+						{formatPercent(value, YIELD_PERCENT_OPTIONS)}
+					</span>
 				</span>
 			}
 		>

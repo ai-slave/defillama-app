@@ -117,7 +117,7 @@ const getTimeSinceSeconds = (timeQuery: string | undefined, nowSec: number): num
 	}
 }
 
-export const HacksContainer = ({
+export function HacksContainer({
 	data,
 	monthlyHacksChartData,
 	totalHacked,
@@ -127,7 +127,7 @@ export const HacksContainer = ({
 	chainOptions,
 	techniqueOptions,
 	classificationOptions
-}: IHacksPageData) => {
+}: IHacksPageData) {
 	const [chartType, setChartType] = React.useState('Monthly Sum')
 	const [nowSec] = React.useState(() => Math.floor(Date.now() / 1000))
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()

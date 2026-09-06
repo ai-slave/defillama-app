@@ -29,7 +29,7 @@ const DEFAULT_SORTING_STATE = [{ id: 'total24h', desc: true }]
 
 const columnHelper = createColumnHelper<IChainsByREVPageData['chains'][0]>()
 
-const REVByChain = (props: IChainsByREVPageData) => {
+function REVByChain(props: IChainsByREVPageData) {
 	return (
 		<Layout
 			title="Real Economic Value (REV) by Blockchain - DefiLlama"

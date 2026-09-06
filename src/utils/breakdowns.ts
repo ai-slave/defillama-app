@@ -75,7 +75,7 @@ export const BREAKDOWN_COLOR_PALETTE = [
 	'#b034c5'
 ]
 
-export const toSlug = (name: string = ''): string => name?.toLowerCase().split(' ').join('-').split("'").join('')
+export const toSlug = (name = ''): string => name?.toLowerCase().split(' ').join('-').split("'").join('')
 
 const toUtcDay = (ts: number): number => Math.floor(ts / 86_400) * 86_400
 

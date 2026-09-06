@@ -29,7 +29,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const PremiumVolumeOnAllChains = (props: IAdapterByChainPageData) => {
+function PremiumVolumeOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="Options Premium Volume Rankings - DefiLlama"

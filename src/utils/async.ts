@@ -222,7 +222,7 @@ function sanitizeUrlForLogs(input: RequestInfo | URL): string {
 export async function fetchJson<T = any>(
 	url: RequestInfo | URL,
 	options?: FetchWithPoolingOnServerOptions,
-	extraRetry: boolean = false
+	extraRetry = false
 ): Promise<T> {
 	const timeout = options?.timeout ?? getDefaultJsonTimeoutMs()
 	const requestOptions = { ...options, timeout }
@@ -243,7 +243,7 @@ export async function fetchJson<T = any>(
 async function fetchJsonWithRetries<T = any>(
 	url: RequestInfo | URL,
 	options: FetchWithPoolingOnServerOptions,
-	extraRetry: boolean = false
+	extraRetry = false
 ): Promise<T> {
 	const maxAttempts = extraRetry ? 3 : 2
 	const sanitizedUrl = sanitizeUrlForLogs(url)

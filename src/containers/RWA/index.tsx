@@ -114,7 +114,7 @@ const EMPTY_HBAR_PRESENTATION = {
 	colors: [] as Array<string>
 }
 
-export const RWAOverview = (props: IRWAAssetsOverview) => {
+export function RWAOverview(props: IRWAAssetsOverview) {
 	const rankedFilterValues = useMemo(
 		() =>
 			getRankedRwaFilterValues({

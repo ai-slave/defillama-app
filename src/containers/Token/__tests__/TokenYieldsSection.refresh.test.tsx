@@ -216,6 +216,7 @@ test.each(['success', 'empty', 'outage', 'sort-outage', 'no-rows-outage'] as con
 						})
 					})
 					expect(container.querySelector('[data-ids]')?.textContent).toBe(hydration.rows[0]?.id)
+					// oxlint-disable-next-line no-loop-func -- the closure reads only the current scenario, and the loop awaits it before moving on.
 					await act(async () => {
 						if (recovered) response.resolve(Response.json({ rows: state.filter ? [] : ssr.rows }))
 						else response.reject(new Error('Still unavailable'))

@@ -11,5 +11,7 @@ export function trackUmamiEvent(eventName: string, data?: Record<string, unknown
 	try {
 		if (typeof window === 'undefined') return
 		window.umami?.track(eventName, data)
-	} catch {}
+	} catch {
+		// Analytics must never throw into the app.
+	}
 }

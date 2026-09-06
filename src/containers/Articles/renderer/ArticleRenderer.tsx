@@ -130,7 +130,9 @@ function renderCodeBlock(node: TiptapJson, key: string) {
 		try {
 			const tree = lowlight.highlight(language, code) as unknown as HastNode
 			body = hastToReact(tree, `${key}-hl`)
-		} catch {}
+		} catch {
+			// Unknown languages render as plain text.
+		}
 	}
 	return (
 		<pre key={key} className="hljs">
@@ -776,7 +778,9 @@ function ShareIcons({ url, title, size = 'md' }: { url: string; title: string; s
 			await navigator.clipboard.writeText(url)
 			setCopied(true)
 			setTimeout(() => setCopied(false), 1500)
-		} catch {}
+		} catch {
+			// Clipboard access can be denied; the copy control just does nothing.
+		}
 	}
 	const dim = size === 'sm' ? 'size-9' : 'size-11'
 	const iconDim = size === 'sm' ? 'size-4' : 'size-5'

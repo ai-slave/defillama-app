@@ -341,7 +341,7 @@ function getPreHydrationTokenSearchValue() {
 	return input instanceof HTMLInputElement ? input.value : ''
 }
 
-export const TokenUsageSearch = () => {
+export function TokenUsageSearch() {
 	const router = useRouter()
 
 	const [searchValue, setSearchValue] = useState(getPreHydrationTokenSearchValue)

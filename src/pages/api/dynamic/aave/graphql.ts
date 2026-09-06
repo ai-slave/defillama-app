@@ -132,7 +132,9 @@ function fetchWithCurl(query: string): Promise<unknown> {
 		proc.on('close', (code) => {
 			try {
 				unlinkSync(tmpFile)
-			} catch {}
+			} catch {
+				// The temp file may already be gone.
+			}
 			if (code !== 0) return reject(new Error(`curl exited with code ${code}`))
 			try {
 				resolve(JSON.parse(Buffer.concat(chunks).toString()))
@@ -144,7 +146,9 @@ function fetchWithCurl(query: string): Promise<unknown> {
 		proc.on('error', (err) => {
 			try {
 				unlinkSync(tmpFile)
-			} catch {}
+			} catch {
+				// The temp file may already be gone.
+			}
 			reject(err)
 		})
 	})

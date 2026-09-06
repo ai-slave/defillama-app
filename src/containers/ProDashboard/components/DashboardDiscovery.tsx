@@ -73,7 +73,7 @@ export function DashboardDiscovery({
 				? (timeFrameOptions.find((option) => option.key === timeFrame) ?? timeFrameOptions[1])
 				: timeFrameOptions[1]
 		const searchQuery = typeof query === 'string' ? query : ''
-		const selectedPage = typeof pageQuery === 'string' && !Number.isNaN(Number(pageQuery)) ? parseInt(pageQuery) : 1
+		const selectedPage = typeof pageQuery === 'string' && !Number.isNaN(Number(pageQuery)) ? parseInt(pageQuery, 10) : 1
 
 		let itemsPerPage = DEFAULT_PAGE_LIMIT
 		if (typeof limit === 'string' && !Number.isNaN(Number(limit))) {

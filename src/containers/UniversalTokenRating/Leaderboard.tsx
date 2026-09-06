@@ -305,178 +305,170 @@ export function Leaderboard({
 		setSort((prev) => (prev.key === key ? { key, desc: !prev.desc } : { key, desc: key !== 'rank' }))
 
 	return (
-		<>
-			<div className="overflow-x-auto">
-				<table className="w-full body-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-					<thead>
-						<tr>
-							<th className="border-b border-subtle px-3 py-2.5 text-left" style={stickyStyle(0)}>
+		<div className="overflow-x-auto">
+			<table className="w-full body-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+				<thead>
+					<tr>
+						<th className="border-b border-subtle px-3 py-2.5 text-left" style={stickyStyle(0)}>
+							<button
+								type="button"
+								className="flex cursor-pointer items-center gap-1 label-sm text-secondary"
+								onClick={() => toggleSort('rank')}
+							>
+								#
+								<SortIcon dir={sort.key === 'rank' ? (sort.desc ? 'desc' : 'asc') : false} />
+							</button>
+						</th>
+						<th className="border-b border-subtle px-3 py-2.5 text-left label-sm text-secondary" style={stickyStyle(1)}>
+							Protocol
+						</th>
+						<th className="border-b border-subtle px-3 py-2.5 text-left label-sm whitespace-nowrap text-secondary">
+							Grade
+						</th>
+						{SORTABLE_COLUMNS.map((column) => (
+							<th key={column.key} className="border-b border-subtle px-3 py-2.5 text-left whitespace-nowrap">
 								<button
 									type="button"
-									className="flex cursor-pointer items-center gap-1 label-sm text-secondary"
-									onClick={() => toggleSort('rank')}
+									className="flex cursor-pointer items-center gap-1 label-sm whitespace-nowrap text-secondary"
+									onClick={() => toggleSort(column.key)}
 								>
-									#
-									<SortIcon dir={sort.key === 'rank' ? (sort.desc ? 'desc' : 'asc') : false} />
+									{column.label}
+									<SortIcon dir={sort.key === column.key ? (sort.desc ? 'desc' : 'asc') : false} />
 								</button>
 							</th>
-							<th
-								className="border-b border-subtle px-3 py-2.5 text-left label-sm text-secondary"
-								style={stickyStyle(1)}
-							>
-								Protocol
-							</th>
-							<th className="border-b border-subtle px-3 py-2.5 text-left label-sm whitespace-nowrap text-secondary">
-								Grade
-							</th>
-							{SORTABLE_COLUMNS.map((column) => (
-								<th key={column.key} className="border-b border-subtle px-3 py-2.5 text-left whitespace-nowrap">
-									<button
-										type="button"
-										className="flex cursor-pointer items-center gap-1 label-sm whitespace-nowrap text-secondary"
-										onClick={() => toggleSort(column.key)}
-									>
-										{column.label}
-										<SortIcon dir={sort.key === column.key ? (sort.desc ? 'desc' : 'asc') : false} />
-									</button>
-								</th>
-							))}
-							<th aria-label="Expand row" className="border-b border-subtle" />
-						</tr>
-					</thead>
-					<tbody>
-						{pagedRows.map((row) => {
-							const expanded = expandedAssets.has(row.asset)
-							const momText = formatPercentChangeText(row.scores.overallMomChangePct)
-							return (
-								<Fragment key={row.asset}>
-									<tr
-										id={`utr-row-${row.asset}`}
-										className="cursor-pointer hover:bg-hover-row"
-										onClick={(event) => {
-											if ((event.target as HTMLElement).closest('a, button')) return
-											toggleExpanded(row.asset)
-										}}
-									>
-										<td
-											className="border-b border-subtle px-3 py-2.5 font-jetbrains tabular-nums"
-											style={stickyStyle(0)}
+						))}
+						<th aria-label="Expand row" className="border-b border-subtle" />
+					</tr>
+				</thead>
+				<tbody>
+					{pagedRows.map((row) => {
+						const expanded = expandedAssets.has(row.asset)
+						const momText = formatPercentChangeText(row.scores.overallMomChangePct)
+						return (
+							<Fragment key={row.asset}>
+								<tr
+									id={`utr-row-${row.asset}`}
+									className="cursor-pointer hover:bg-hover-row"
+									onClick={(event) => {
+										if ((event.target as HTMLElement).closest('a, button')) return
+										toggleExpanded(row.asset)
+									}}
+								>
+									<td className="border-b border-subtle px-3 py-2.5 font-jetbrains tabular-nums" style={stickyStyle(0)}>
+										{row.scores.rank}
+									</td>
+									<td className="border-b border-subtle px-3 py-2.5" style={stickyStyle(1)}>
+										<BasicLink
+											href={`/universal-token-rating/token/${row.asset}`}
+											className="flex items-center gap-2 hover:underline"
 										>
-											{row.scores.rank}
-										</td>
-										<td className="border-b border-subtle px-3 py-2.5" style={stickyStyle(1)}>
-											<BasicLink
-												href={`/universal-token-rating/token/${row.asset}`}
-												className="flex items-center gap-2 hover:underline"
-											>
-												<TokenLogo src={row.coingeckoId ? geckoTokenIconUrl(row.coingeckoId) : null} size={22} />
-												<span className="flex flex-col">
-													<span className="flex items-center gap-1 text-primary">
-														{row.symbol}
-														{row.claimed ? (
-															<Icon name="check-circle" height={12} width={12} className="text-link" />
-														) : null}
-													</span>
-													<span className="body-xs text-tertiary">{row.name}</span>
+											<TokenLogo src={row.coingeckoId ? geckoTokenIconUrl(row.coingeckoId) : null} size={22} />
+											<span className="flex flex-col">
+												<span className="flex items-center gap-1 text-primary">
+													{row.symbol}
+													{row.claimed ? (
+														<Icon name="check-circle" height={12} width={12} className="text-link" />
+													) : null}
 												</span>
-											</BasicLink>
-										</td>
-										<td className="border-b border-subtle px-3 py-2.5">
-											<GradeBadge score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
-										</td>
-										<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
-											<span className="flex items-center gap-3">
-												<ScoreBar score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
-												<span
-													className={`font-jetbrains tabular-nums ${
-														(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-success' : 'text-error'
-													}`}
-												>
-													{momText ?? '—'}
-												</span>
+												<span className="body-xs text-tertiary">{row.name}</span>
 											</span>
-										</td>
-										<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
-											<ScoreBar
-												score={row.scores.disclosure}
-												scale={10}
-												grade={row.disclosureGrade}
-												gradingScale={grading?.disclosure.scale}
-											/>
-										</td>
-										<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
-											<ScoreBar
-												score={row.scores.performance}
-												scale={10}
-												grade={row.performanceGrade}
-												gradingScale={grading?.performance.scale}
-											/>
-										</td>
-										<td className="border-b border-subtle px-3 py-2.5 font-jetbrains whitespace-nowrap tabular-nums">
-											{row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}
-										</td>
-										<td className="border-b border-subtle px-3 py-2.5">
-											<Button
-												type="button"
-												size="sm"
-												square
-												aria-label={expanded ? 'Collapse row' : 'Expand row'}
-												onClick={() => toggleExpanded(row.asset)}
+										</BasicLink>
+									</td>
+									<td className="border-b border-subtle px-3 py-2.5">
+										<GradeBadge score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
+									</td>
+									<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
+										<span className="flex items-center gap-3">
+											<ScoreBar score={row.scores.overall} grade={row.grade} gradingScale={grading?.overall.scale} />
+											<span
+												className={`font-jetbrains tabular-nums ${
+													(row.scores.overallMomChangePct ?? 0) >= 0 ? 'text-success' : 'text-error'
+												}`}
 											>
-												<Icon name={expanded ? 'chevron-up' : 'chevron-down'} height={14} width={14} />
-											</Button>
+												{momText ?? '—'}
+											</span>
+										</span>
+									</td>
+									<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
+										<ScoreBar
+											score={row.scores.disclosure}
+											scale={10}
+											grade={row.disclosureGrade}
+											gradingScale={grading?.disclosure.scale}
+										/>
+									</td>
+									<td className="border-b border-subtle px-3 py-2.5 whitespace-nowrap">
+										<ScoreBar
+											score={row.scores.performance}
+											scale={10}
+											grade={row.performanceGrade}
+											gradingScale={grading?.performance.scale}
+										/>
+									</td>
+									<td className="border-b border-subtle px-3 py-2.5 font-jetbrains whitespace-nowrap tabular-nums">
+										{row.fdvUsd == null ? 'N/A' : `$${formatNumber(row.fdvUsd)}`}
+									</td>
+									<td className="border-b border-subtle px-3 py-2.5">
+										<Button
+											type="button"
+											size="sm"
+											square
+											aria-label={expanded ? 'Collapse row' : 'Expand row'}
+											onClick={() => toggleExpanded(row.asset)}
+										>
+											<Icon name={expanded ? 'chevron-up' : 'chevron-down'} height={14} width={14} />
+										</Button>
+									</td>
+								</tr>
+								{expanded ? (
+									<tr>
+										<td colSpan={LEADERBOARD_COLUMN_COUNT} className="border-b border-subtle bg-surface p-0">
+											<div className="sticky left-0 max-w-[calc(100vw-16px)] lg:max-w-none">
+												<div className="max-lg:hidden">
+													<ExpandedRow row={row} grading={grading} />
+												</div>
+												<div className="lg:hidden">
+													<MobileExpandedRow row={row} grading={grading} />
+												</div>
+											</div>
 										</td>
 									</tr>
-									{expanded ? (
-										<tr>
-											<td colSpan={LEADERBOARD_COLUMN_COUNT} className="border-b border-subtle bg-surface p-0">
-												<div className="sticky left-0 max-w-[calc(100vw-16px)] lg:max-w-none">
-													<div className="max-lg:hidden">
-														<ExpandedRow row={row} grading={grading} />
-													</div>
-													<div className="lg:hidden">
-														<MobileExpandedRow row={row} grading={grading} />
-													</div>
-												</div>
-											</td>
-										</tr>
-									) : null}
-								</Fragment>
-							)
-						})}
-					</tbody>
-				</table>
-				{pageCount > 1 ? (
-					<div className="flex items-center justify-between gap-2 border-t border-subtle px-4 py-2.5">
-						<span className="flex items-center gap-1.5">
-							<Button
-								type="button"
-								size="sm"
-								square
-								disabled={currentPage === 0}
-								onClick={() => setPage(currentPage - 1)}
-								aria-label="Previous page"
-							>
-								<Icon name="arrow-left" height={14} width={14} />
-							</Button>
-							<Button
-								type="button"
-								size="sm"
-								square
-								disabled={currentPage + 1 >= pageCount}
-								onClick={() => setPage(currentPage + 1)}
-								aria-label="Next page"
-							>
-								<Icon name="arrow-right" height={14} width={14} />
-							</Button>
-							<span className="body-sm text-secondary">
-								Page <strong className="text-primary">{currentPage + 1}</strong> of {pageCount}
-							</span>
+								) : null}
+							</Fragment>
+						)
+					})}
+				</tbody>
+			</table>
+			{pageCount > 1 ? (
+				<div className="flex items-center justify-between gap-2 border-t border-subtle px-4 py-2.5">
+					<span className="flex items-center gap-1.5">
+						<Button
+							type="button"
+							size="sm"
+							square
+							disabled={currentPage === 0}
+							onClick={() => setPage(currentPage - 1)}
+							aria-label="Previous page"
+						>
+							<Icon name="arrow-left" height={14} width={14} />
+						</Button>
+						<Button
+							type="button"
+							size="sm"
+							square
+							disabled={currentPage + 1 >= pageCount}
+							onClick={() => setPage(currentPage + 1)}
+							aria-label="Next page"
+						>
+							<Icon name="arrow-right" height={14} width={14} />
+						</Button>
+						<span className="body-sm text-secondary">
+							Page <strong className="text-primary">{currentPage + 1}</strong> of {pageCount}
 						</span>
-						<span className="body-sm text-secondary">{sortedRows.length} tokens</span>
-					</div>
-				) : null}
-			</div>
-		</>
+					</span>
+					<span className="body-sm text-secondary">{sortedRows.length} tokens</span>
+				</div>
+			) : null}
+		</div>
 	)
 }

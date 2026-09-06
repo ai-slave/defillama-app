@@ -73,7 +73,9 @@ export function ChainsByCategoryTable({
 		let parsedColumnVisibility: Record<string, boolean> = {}
 		try {
 			parsedColumnVisibility = JSON.parse(columnsInStorage) as Record<string, boolean>
-		} catch {}
+		} catch {
+			// A corrupt stored value falls back to the defaults.
+		}
 
 		const columnVisibility = { ...defaultColumnVisibility, ...parsedColumnVisibility }
 		const selectedColumns = columnOptions.flatMap((column) => (columnVisibility[column.key] ? [column.key] : []))

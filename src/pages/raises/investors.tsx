@@ -131,7 +131,7 @@ const allPeriods = [
 ]
 const validPeriods = new Set(allPeriods.map((p) => p.value))
 
-const ActiveInvestors = ({ investors }: IInvestorsPageData) => {
+function ActiveInvestors({ investors }: IInvestorsPageData) {
 	const router = useRouter()
 	const { period } = router.query
 	const selectedPeriod = typeof period === 'string' && validPeriods.has(period) ? period : 'allTime'

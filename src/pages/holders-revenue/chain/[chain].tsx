@@ -35,7 +35,9 @@ export const getStaticPaths = async () => {
 			dataType,
 			chainMetadata: metadataCache.chainMetadata
 		})
-	} catch {}
+	} catch {
+		// Prerender no chain paths when the API is unavailable; they render on demand.
+	}
 	const paths = Object.entries(chains)
 		.sort(([, a], [, b]) => (b?.['24h'] ?? 0) - (a?.['24h'] ?? 0))
 		.slice(0, 10)
@@ -106,7 +108,7 @@ export const getStaticProps = withPerformanceLogging(
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const HoldersRevenueOnChain = (props: IAdapterByChainPageData) => {
+function HoldersRevenueOnChain(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title={`${props.chain} Holders Revenue by Protocol - DefiLlama`}

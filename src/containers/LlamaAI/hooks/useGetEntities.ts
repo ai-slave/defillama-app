@@ -33,7 +33,7 @@ async function fetchEntities(query: string): Promise<Array<EntityResult>> {
 /**
  * Fetch coins/tokens matching the query.
  */
-export async function fetchCoins(query: string, limit: number = 10): Promise<Array<EntityResult>> {
+export async function fetchCoins(query: string, limit = 10): Promise<Array<EntityResult>> {
 	const tokens = await searchTokens(query, limit)
 
 	return tokens.map((token) => ({

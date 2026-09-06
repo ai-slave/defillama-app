@@ -157,8 +157,8 @@ export const useSubscribe = () => {
 			type: 'api' | 'llamafeed',
 			onSuccess?: (checkoutUrl: string) => void,
 			billingInterval: 'year' | 'month' = 'month',
-			useEmbedded: boolean = false,
-			isTrial: boolean = false
+			useEmbedded = false,
+			isTrial = false
 		) => {
 			if (!isAuthenticated) {
 				toast.error('Please sign in to subscribe')

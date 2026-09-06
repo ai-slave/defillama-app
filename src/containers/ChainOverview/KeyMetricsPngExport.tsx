@@ -205,7 +205,9 @@ export function KeyMetricsPngExportButton({
 				if (iconBase64) {
 					try {
 						iconImg = await loadImage(iconBase64)
-					} catch {}
+					} catch {
+						// A missing icon leaves the header without a logo.
+					}
 				}
 			}
 
@@ -277,7 +279,9 @@ export function KeyMetricsPngExportButton({
 				ctx.globalAlpha = 0.6
 				ctx.drawImage(watermarkImg, wmX, wmY, wmWidth, wmHeight)
 				ctx.globalAlpha = 1
-			} catch {}
+			} catch {
+				// The watermark is optional; the export still succeeds without it.
+			}
 
 			const dataUrl = canvas.toDataURL('image/png')
 			const filename = `${chainName.toLowerCase().replace(/\s+/g, '-')}-key-metrics`

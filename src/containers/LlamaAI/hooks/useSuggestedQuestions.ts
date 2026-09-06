@@ -13,7 +13,7 @@ async function fetchSuggestedQuestions(): Promise<SuggestedQuestionsResponse> {
 	return response.json()
 }
 
-export function useSuggestedQuestions(enabled: boolean = true): UseQueryResult<SuggestedQuestionsResponse> {
+export function useSuggestedQuestions(enabled = true): UseQueryResult<SuggestedQuestionsResponse> {
 	return useQuery({
 		queryKey: SUGGESTED_QUESTIONS_QUERY_KEY,
 		queryFn: fetchSuggestedQuestions,

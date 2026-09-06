@@ -4,11 +4,13 @@ import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { PageTitleStrip } from '~/ui/EntityTitleStrip'
 
-const PressPanel = ({ imageFilename }) => (
-	<Card padding="md" className="grid place-items-center">
-		<TokenLogo src={`/press/${imageFilename}`} alt={imageFilename} size={150} />
-	</Card>
-)
+function PressPanel({ imageFilename }) {
+	return (
+		<Card padding="md" className="grid place-items-center">
+			<TokenLogo src={`/press/${imageFilename}`} alt={imageFilename} size={150} />
+		</Card>
+	)
+}
 
 const pressList = [
 	['us-treasury.png', 'https://home.treasury.gov/system/files/221/TBACCharge2Q22025.pdf'],

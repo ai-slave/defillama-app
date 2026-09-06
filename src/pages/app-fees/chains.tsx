@@ -27,7 +27,7 @@ export const getStaticProps = withPerformanceLogging(`${adapterType}/${dataType}
 
 const pageName = ['Chains', 'ranked by', type]
 
-const AppFeesByChain = (props: IChainsByAdapterPageData) => {
+function AppFeesByChain(props: IChainsByAdapterPageData) {
 	return (
 		<Layout
 			title="App Fee Rankings by Blockchain - DefiLlama"

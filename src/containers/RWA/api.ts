@@ -214,7 +214,7 @@ export function subtractBridgeFromMetricRows(
 export function normalizeRWAChartMetricRows(
 	data: IRWAChartDataByAsset,
 	metric: RWAChartMetricKey,
-	includeBridgeTvl: boolean = true
+	includeBridgeTvl = true
 ): IRWAChartMetricRows {
 	const rows =
 		metric === 'defiActiveTvl' && !includeBridgeTvl

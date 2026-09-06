@@ -203,7 +203,7 @@ const breakdownColor = (type: string) => BREAKDOWN_COLORS[type] ?? '#f85149'
 
 const formatBreakdownType = (type: string) => BREAKDOWN_LABELS[type] ?? type
 
-const Breakdown = ({ data }: { data: [string, number] }) => {
+function Breakdown({ data }: { data: [string, number] }) {
 	const color = breakdownColor(data[0])
 	const name = `${formatBreakdownType(data[0])} (${formatPercent(data[1], { input: 'percent' })})`
 
@@ -218,13 +218,13 @@ const Breakdown = ({ data }: { data: [string, number] }) => {
 	)
 }
 
-const BreakdownTooltipContent = ({
+function BreakdownTooltipContent({
 	dominance,
 	protocolName
 }: {
 	dominance: Array<[string, number]>
 	protocolName: string
-}) => {
+}) {
 	return (
 		<span className="flex flex-col gap-1">
 			{dominance.map((dom) => (

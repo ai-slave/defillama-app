@@ -209,25 +209,27 @@ function Support() {
 
 export default Support
 
-const SuccessScreen = ({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boolean) => void }) => (
-	<Card padding="md" className="flex w-full flex-col gap-4 text-center">
-		<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success/15">
-			<svg
-				className="size-8 text-success"
-				fill="none"
-				stroke="currentColor"
-				viewBox="0 0 24 24"
-				xmlns="http://www.w3.org/2000/svg"
-			>
-				<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-			</svg>
-		</div>
-		<h1 className="text-2xl font-semibold text-success">Success!</h1>
-		<p className="text-secondary">
-			Your support request has been submitted successfully. We'll get back to you as soon as possible.
-		</p>
-		<Button variant="primary" size="md" onClick={() => setIsSubmitted(false)} className="mt-4 w-full">
-			Submit Another Request
-		</Button>
-	</Card>
-)
+function SuccessScreen({ setIsSubmitted }: { setIsSubmitted: (isSubmitted: boolean) => void }) {
+	return (
+		<Card padding="md" className="flex w-full flex-col gap-4 text-center">
+			<div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-success/15">
+				<svg
+					className="size-8 text-success"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+				</svg>
+			</div>
+			<h1 className="text-2xl font-semibold text-success">Success!</h1>
+			<p className="text-secondary">
+				Your support request has been submitted successfully. We'll get back to you as soon as possible.
+			</p>
+			<Button variant="primary" size="md" onClick={() => setIsSubmitted(false)} className="mt-4 w-full">
+				Submit Another Request
+			</Button>
+		</Card>
+	)
+}

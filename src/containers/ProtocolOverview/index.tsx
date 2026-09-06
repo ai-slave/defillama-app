@@ -24,7 +24,7 @@ import type { IProtocolOverviewPageData } from './types'
 
 const IncomeStatement = lazy(() => import('./IncomeStatement').then((module) => ({ default: module.IncomeStatement })))
 
-export const ProtocolOverview = (props: IProtocolOverviewPageData) => {
+export function ProtocolOverview(props: IProtocolOverviewPageData) {
 	const router = useRouter()
 
 	const { tvl, tvlByChain, oracleTvs, oracleTvsByChain, toggleOptions } = useFinalTVL(props)
@@ -238,7 +238,7 @@ function ProtocolHeader({
 	)
 }
 
-const PrimaryValue = ({
+function PrimaryValue({
 	hasTvl,
 	value,
 	name,
@@ -256,7 +256,7 @@ const PrimaryValue = ({
 	valueByChain?: Array<[string, number]>
 	title?: string
 	byChainTitle?: string
-}) => {
+}) {
 	if (!hasTvl) return null
 
 	const defaultLabels = getPrimaryValueLabelType(category)

@@ -53,7 +53,7 @@ interface ISearchItem {
 	r?: number
 }
 
-export const MobileSearch = ({ searchTrigger }: { searchTrigger?: ReactNode } = {}) => {
+export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = {}) {
 	const isClient = useIsClient()
 	const { isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const shouldSkipLanding = isAuthenticated
@@ -201,7 +201,7 @@ function getPreHydrationInputValue() {
 	return el instanceof HTMLInputElement ? el.value : ''
 }
 
-export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boolean }) => {
+export function DesktopSearch({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boolean }) {
 	const isClient = useIsClient()
 	const { isAuthenticated, hasActiveSubscription } = useAuthContext()
 	const shouldSkipLanding = isAuthenticated
@@ -352,7 +352,7 @@ export const DesktopSearch = ({ hideLlamaAiCta = false }: { hideLlamaAiCta?: boo
 	)
 }
 
-const SearchItem = ({
+function SearchItem({
 	route,
 	recent = false,
 	onSelect
@@ -360,7 +360,7 @@ const SearchItem = ({
 	route: ISearchItem
 	recent?: boolean
 	onSelect?: () => void
-}) => {
+}) {
 	const router = useRouter()
 	const deprecatedContent = route.type ? `Deprecated ${route.type.toLowerCase()}` : 'Deprecated'
 	return (
@@ -407,7 +407,7 @@ const SearchItem = ({
 	)
 }
 
-const SeeMoreButton = ({ isLoading, onClick }: { isLoading: boolean; onClick: () => void }) => {
+function SeeMoreButton({ isLoading, onClick }: { isLoading: boolean; onClick: () => void }) {
 	return (
 		<button
 			type="button"

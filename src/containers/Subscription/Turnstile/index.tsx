@@ -8,7 +8,7 @@ interface TurnstileProps {
 	className?: string
 }
 
-export const Turnstile = ({ onVerify, onError, onExpire, className }: TurnstileProps) => {
+export function Turnstile({ onVerify, onError, onExpire, className }: TurnstileProps) {
 	const [isDarkMode] = useDarkModeManager()
 	const theme: 'light' | 'dark' = isDarkMode ? 'dark' : 'light'
 	const siteKey = '0x4AAAAAABjeuAHi7HNPyGmv'

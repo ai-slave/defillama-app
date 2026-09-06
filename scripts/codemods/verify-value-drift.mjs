@@ -22,9 +22,9 @@ const parseVars = (block) => {
 const light = parseVars(rootBlock)
 const dark = { ...light, ...parseVars(darkBlock) }
 
-const toRGB = (v) => {
-	if (!v) return null
-	v = v.trim()
+const toRGB = (raw) => {
+	if (!raw) return null
+	const v = raw.trim()
 	let m
 	if ((m = v.match(/^#([0-9a-fA-F]{6})$/))) {
 		const h = m[1]

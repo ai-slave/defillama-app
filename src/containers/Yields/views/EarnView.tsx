@@ -43,7 +43,7 @@ export type EarnViewProps = EarnPageMeta & {
 	intro?: React.ReactNode
 }
 
-const EarnView = ({
+function EarnView({
 	projectList,
 	chainList,
 	categoryList,
@@ -55,7 +55,7 @@ const EarnView = ({
 	initialEarnPageGeneratedAt,
 	lockedQuery,
 	intro
-}: EarnViewProps) => {
+}: EarnViewProps) {
 	const router = useRouter()
 
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).

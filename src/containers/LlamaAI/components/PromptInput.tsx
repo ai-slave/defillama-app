@@ -213,7 +213,9 @@ export function PromptInput({
 
 		try {
 			textarea.setSelectionRange(pendingSelection.selectionStart, pendingSelection.selectionEnd)
-		} catch {}
+		} catch {
+			// Some inputs reject the range; the caret stays where the browser put it.
+		}
 		pendingSelectionRef.current = null
 	}, [value, promptInputRef, isMobile])
 

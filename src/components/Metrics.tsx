@@ -349,96 +349,94 @@ export function MetricsAndTools({ currentMetric }: { currentMetric: Array<string
 	}
 
 	return (
-		<>
-			<Ariakit.DialogProvider store={dialogStore}>
-				<div className="relative isolate w-full rounded-md bg-surface p-1">
-					{/* Left decorative dot pattern */}
-					<div
-						className="pointer-events-none absolute top-px left-px h-[calc(100%-2px)] w-16 overflow-hidden rounded-l-[6px] sm:w-24 md:w-48"
-						aria-hidden="true"
-					>
-						<div
-							className="absolute inset-0"
-							style={{
-								backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--bg-brand) 60%, transparent) 0.8px, transparent 0.8px)`,
-								backgroundSize: '3px 3px',
-								maskImage: 'linear-gradient(to right, black 0%, transparent 100%)',
-								WebkitMaskImage: 'linear-gradient(to right, black 0%, transparent 100%)'
-							}}
-						/>
-					</div>
-					<div className="relative z-10 flex min-h-6 flex-wrap items-center justify-center gap-1">
-						<div className="flex min-w-0 flex-wrap items-center justify-center gap-1">
-							{currentMetric.map((metric, i) => (
-								<Fragment key={`metric-name-${metric}`}>
-									{i === 1 ? (
-										<span>{metric}</span>
-									) : (
-										<Ariakit.DialogDisclosure
-											className={buttonStyles({ variant: 'metricBrowse', size: 'sm' })}
-											onClick={() => trackDialogOpen('pill', metric)}
-										>
-											{metric}
-										</Ariakit.DialogDisclosure>
-									)}
-								</Fragment>
-							))}
-						</div>
-						<Ariakit.DialogDisclosure
-							className="hover-wash flex min-h-6 w-fit items-center gap-1 rounded-md px-1.5 py-1 body-sm text-secondary hover:text-primary focus-visible:text-primary"
-							onClick={() => trackDialogOpen('browse-search')}
-						>
-							<Icon name="search" height={12} width={12} />
-							<span className="hidden sm:block">Click to browse & search</span>
-						</Ariakit.DialogDisclosure>
-					</div>
-					{/* Right decorative dot pattern */}
-					<div
-						className="pointer-events-none absolute top-px right-px h-[calc(100%-2px)] w-16 overflow-hidden rounded-r-[6px] sm:w-24 md:w-48"
-						aria-hidden="true"
-					>
-						<div
-							className="absolute inset-0"
-							style={{
-								backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--bg-brand) 60%, transparent) 0.8px, transparent 0.8px)`,
-								backgroundSize: '3px 3px',
-								maskImage: 'linear-gradient(to left, black 0%, transparent 100%)',
-								WebkitMaskImage: 'linear-gradient(to left, black 0%, transparent 100%)'
-							}}
-						/>
-					</div>
-					<svg width="100%" height="100%" className="absolute top-0 right-0 bottom-0 left-0 z-0">
-						<defs>
-							<linearGradient id="border-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-								<stop offset="0%" style={{ stopColor: 'var(--border-brand)' }} />
-								<stop offset="8%" style={{ stopColor: 'var(--border-brand)' }} />
-								<stop offset="18%" style={{ stopColor: 'var(--border-brand)', stopOpacity: 0 }} />
-								<stop offset="82%" style={{ stopColor: 'var(--border-brand)', stopOpacity: 0 }} />
-								<stop offset="92%" style={{ stopColor: 'var(--border-brand)' }} />
-								<stop offset="100%" style={{ stopColor: 'var(--border-brand)' }} />
-							</linearGradient>
-						</defs>
-						<rect
-							x="1"
-							y="1"
-							width="calc(100% - 1.5px)"
-							height="calc(100% - 1.5px)"
-							rx="6"
-							ry="6"
-							fill="none"
-							stroke="url(#border-gradient)"
-							strokeWidth="1"
-						/>
-					</svg>
-				</div>
-				<Ariakit.Dialog
-					className={`${dialogCanvasSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))] sm:[--dialog-width:min(85vw,1280px)]`}
-					unmountOnHide={false}
-					hideOnInteractOutside
+		<Ariakit.DialogProvider store={dialogStore}>
+			<div className="relative isolate w-full rounded-md bg-surface p-1">
+				{/* Left decorative dot pattern */}
+				<div
+					className="pointer-events-none absolute top-px left-px h-[calc(100%-2px)] w-16 overflow-hidden rounded-l-[6px] sm:w-24 md:w-48"
+					aria-hidden="true"
 				>
-					<Metrics canDismiss hasScrolledToCategoryRef={hasScrolledToCategoryRef} />
-				</Ariakit.Dialog>
-			</Ariakit.DialogProvider>
-		</>
+					<div
+						className="absolute inset-0"
+						style={{
+							backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--bg-brand) 60%, transparent) 0.8px, transparent 0.8px)`,
+							backgroundSize: '3px 3px',
+							maskImage: 'linear-gradient(to right, black 0%, transparent 100%)',
+							WebkitMaskImage: 'linear-gradient(to right, black 0%, transparent 100%)'
+						}}
+					/>
+				</div>
+				<div className="relative z-10 flex min-h-6 flex-wrap items-center justify-center gap-1">
+					<div className="flex min-w-0 flex-wrap items-center justify-center gap-1">
+						{currentMetric.map((metric, i) => (
+							<Fragment key={`metric-name-${metric}`}>
+								{i === 1 ? (
+									<span>{metric}</span>
+								) : (
+									<Ariakit.DialogDisclosure
+										className={buttonStyles({ variant: 'metricBrowse', size: 'sm' })}
+										onClick={() => trackDialogOpen('pill', metric)}
+									>
+										{metric}
+									</Ariakit.DialogDisclosure>
+								)}
+							</Fragment>
+						))}
+					</div>
+					<Ariakit.DialogDisclosure
+						className="hover-wash flex min-h-6 w-fit items-center gap-1 rounded-md px-1.5 py-1 body-sm text-secondary hover:text-primary focus-visible:text-primary"
+						onClick={() => trackDialogOpen('browse-search')}
+					>
+						<Icon name="search" height={12} width={12} />
+						<span className="hidden sm:block">Click to browse & search</span>
+					</Ariakit.DialogDisclosure>
+				</div>
+				{/* Right decorative dot pattern */}
+				<div
+					className="pointer-events-none absolute top-px right-px h-[calc(100%-2px)] w-16 overflow-hidden rounded-r-[6px] sm:w-24 md:w-48"
+					aria-hidden="true"
+				>
+					<div
+						className="absolute inset-0"
+						style={{
+							backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--bg-brand) 60%, transparent) 0.8px, transparent 0.8px)`,
+							backgroundSize: '3px 3px',
+							maskImage: 'linear-gradient(to left, black 0%, transparent 100%)',
+							WebkitMaskImage: 'linear-gradient(to left, black 0%, transparent 100%)'
+						}}
+					/>
+				</div>
+				<svg width="100%" height="100%" className="absolute top-0 right-0 bottom-0 left-0 z-0">
+					<defs>
+						<linearGradient id="border-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+							<stop offset="0%" style={{ stopColor: 'var(--border-brand)' }} />
+							<stop offset="8%" style={{ stopColor: 'var(--border-brand)' }} />
+							<stop offset="18%" style={{ stopColor: 'var(--border-brand)', stopOpacity: 0 }} />
+							<stop offset="82%" style={{ stopColor: 'var(--border-brand)', stopOpacity: 0 }} />
+							<stop offset="92%" style={{ stopColor: 'var(--border-brand)' }} />
+							<stop offset="100%" style={{ stopColor: 'var(--border-brand)' }} />
+						</linearGradient>
+					</defs>
+					<rect
+						x="1"
+						y="1"
+						width="calc(100% - 1.5px)"
+						height="calc(100% - 1.5px)"
+						rx="6"
+						ry="6"
+						fill="none"
+						stroke="url(#border-gradient)"
+						strokeWidth="1"
+					/>
+				</svg>
+			</div>
+			<Ariakit.Dialog
+				className={`${dialogCanvasSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))] sm:[--dialog-width:min(85vw,1280px)]`}
+				unmountOnHide={false}
+				hideOnInteractOutside
+			>
+				<Metrics canDismiss hasScrolledToCategoryRef={hasScrolledToCategoryRef} />
+			</Ariakit.Dialog>
+		</Ariakit.DialogProvider>
 	)
 }

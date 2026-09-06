@@ -716,7 +716,7 @@ describe('token page', () => {
 		vi.mocked(getTokenOverviewCurrentSnapshot).mockRejectedValueOnce(error)
 		const outcome = runTokenPageRequest({ params: { token: 'BTC' } } as never).then(
 			() => 'resolved',
-			(reason: unknown) => reason
+			(caughtError: unknown) => caughtError
 		)
 		try {
 			expect(
@@ -1891,7 +1891,7 @@ test.each(['success', 'current failure', 'import failure'] as const)(
 		const error = new Error(outcome)
 		const result = request({ params: { token: 'BTC' } } as never).then(
 			(value) => ({ value }),
-			(reason: unknown) => ({ reason })
+			(caughtError: unknown) => ({ reason: caughtError })
 		)
 		try {
 			await moduleStarted.promise

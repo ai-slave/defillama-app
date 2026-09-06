@@ -125,7 +125,9 @@ class DashboardAPIService {
 			try {
 				const errorData: { message?: string; error?: string } = await response.json()
 				message = errorData.message || errorData.error || message
-			} catch {}
+			} catch {
+				// A non-JSON error body keeps the default message.
+			}
 
 			throw new DashboardError(message, response.status)
 		}

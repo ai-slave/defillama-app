@@ -23,7 +23,7 @@ const LOOPS_DEFAULT_SORT = [{ id: 'loop_apy', desc: true }]
 
 type LoopRowsResponse = { rows: Array<LoopTableRow> }
 
-const LoopView = ({
+function LoopView({
 	chainList = EMPTY_STRINGS,
 	projectList = EMPTY_STRINGS,
 	evmChains = EMPTY_STRINGS,
@@ -35,7 +35,7 @@ const LoopView = ({
 	evmChains?: Array<string>
 	tokens?: Array<TokenOption>
 	attributeIds?: Array<AttributeId>
-}) => {
+}) {
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
 	const normalized = useLegacyYieldsUrlNormalizer({ page: 'loop', tokens })
 

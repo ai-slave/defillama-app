@@ -60,7 +60,7 @@ interface DexsPageProps extends IAdapterByChainPageData {
 	cexSpotVenueCount: number | null
 }
 
-const DexsVolumeOnAllChains = ({ cexSpotVolume, cexSpotVenueCount, ...props }: DexsPageProps) => {
+function DexsVolumeOnAllChains({ cexSpotVolume, cexSpotVenueCount, ...props }: DexsPageProps) {
 	return (
 		<Layout
 			title="DEX Volume Rankings - Trading Activity - DefiLlama"

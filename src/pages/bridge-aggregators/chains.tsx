@@ -22,7 +22,7 @@ export const getStaticProps = withPerformanceLogging(`${adapterType}/${dataType}
 
 const pageName = ['Chains', 'ranked by', type]
 
-const BridgeAggregatorsByChain = (props: IChainsByAdapterPageData) => {
+function BridgeAggregatorsByChain(props: IChainsByAdapterPageData) {
 	return (
 		<Layout
 			title="Bridge Aggregator Volume by Chain - DefiLlama"

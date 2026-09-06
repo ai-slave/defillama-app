@@ -256,7 +256,9 @@ function ProContent({
 	const dialogWasOpenRef = useRef(false)
 
 	const selectedPage =
-		typeof router.query.page === 'string' && !Number.isNaN(Number(router.query.page)) ? parseInt(router.query.page) : 1
+		typeof router.query.page === 'string' && !Number.isNaN(Number(router.query.page))
+			? parseInt(router.query.page, 10)
+			: 1
 	const {
 		dashboards: myDashboards,
 		isLoading: isLoadingMyDashboards,

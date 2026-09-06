@@ -225,7 +225,7 @@ function CapabilityRow({
 	)
 }
 
-const SetAlertChip = ({ onOpenAlerts }: { onOpenAlerts: () => void }) => {
+function SetAlertChip({ onOpenAlerts }: { onOpenAlerts: () => void }) {
 	return (
 		<button
 			type="button"
@@ -241,7 +241,7 @@ const SetAlertChip = ({ onOpenAlerts }: { onOpenAlerts: () => void }) => {
 	)
 }
 
-const Capability = ({
+function Capability({
 	cap,
 	promptInputRef,
 	getAnchorRect
@@ -249,7 +249,7 @@ const Capability = ({
 	cap: (typeof FEATURED_CAPABILITIES)[number]
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
 	getAnchorRect: () => { x: number; y: number; width: number; height: number } | null
-}) => {
+}) {
 	const isMobile = useMedia('(max-width: 640px)')
 	const popoverStore = Ariakit.usePopoverStore()
 

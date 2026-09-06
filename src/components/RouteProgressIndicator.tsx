@@ -15,7 +15,7 @@ const getNextProgress = (progress: number) => {
 	return Math.min(progress + 0.005, MAX_TRICKLE_PROGRESS)
 }
 
-export const RouteProgressIndicator = () => {
+export function RouteProgressIndicator() {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const barRef = useRef<HTMLDivElement>(null)
 	const pendingRoutesRef = useRef(0)

@@ -1318,7 +1318,7 @@ type NormalizedIncomeStatementPeriods = Record<string, NormalizedIncomeStatement
 const getIncomeStatementPeriodTimestamp = (period: string): number => {
 	if (!period.includes('Q')) return new Date(period.length === 4 ? `${period}-01-01` : period).getTime()
 	const [year = '', quarterLabel = ''] = period.split('-')
-	const month = ((parseInt(quarterLabel.replace('Q', '')) - 1) * 3 + 1).toString().padStart(2, '0')
+	const month = ((parseInt(quarterLabel.replace('Q', ''), 10) - 1) * 3 + 1).toString().padStart(2, '0')
 	return new Date(`${year}-${month}`).getTime()
 }
 

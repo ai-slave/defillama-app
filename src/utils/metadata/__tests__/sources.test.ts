@@ -50,8 +50,8 @@ function withoutCacheVersion(url: string): string {
 	return parsed.toString()
 }
 
-function responseForUrl(url: string): unknown {
-	url = withoutCacheVersion(url)
+function responseForUrl(rawUrl: string): unknown {
+	const url = withoutCacheVersion(rawUrl)
 	if (url.includes('appMetadata-protocols.json')) return { 'parent#aave': { name: 'aave', tvl: true } }
 	if (url.includes('appMetadata-chains.json')) return { Ethereum: { name: 'Ethereum', id: 'ethereum' } }
 	if (url.includes('appMetadata-categoriesAndTags.json')) {

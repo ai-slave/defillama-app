@@ -462,15 +462,13 @@ export function RWAOverviewBreakdownChart({
 			) : (
 				<Suspense fallback={<ChartPanelBodyFallback />}>
 					{isFlowHeatmap ? (
-						<>
-							<RWAFlowTreemapChart
-								nodes={flowTreemap.nodes}
-								sizeLabel={flowTreemapSizeLabel}
-								periodLabel={getRWAFlowTreemapPeriodLabel(flowFrequency)}
-								excludedSizeCount={flowTreemap.excludedSizeCount}
-								onReady={handleChartReady}
-							/>
-						</>
+						<RWAFlowTreemapChart
+							nodes={flowTreemap.nodes}
+							sizeLabel={flowTreemapSizeLabel}
+							periodLabel={getRWAFlowTreemapPeriodLabel(flowFrequency)}
+							excludedSizeCount={flowTreemap.excludedSizeCount}
+							onReady={handleChartReady}
+						/>
 					) : (
 						<MultiSeriesChart
 							dataset={selectedDataset}

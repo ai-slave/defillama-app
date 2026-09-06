@@ -18,7 +18,7 @@ import type { ForkByProtocolPageData } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-export const ForksByProtocol = ({ fork, forkLinks, protocolTableData, chartData }: ForkByProtocolPageData) => {
+export function ForksByProtocol({ fork, forkLinks, protocolTableData, chartData }: ForkByProtocolPageData) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const enabledExtraApiKeys = useMemo(
 		() => getEnabledForkOracleExtraTvlChartApiKeys(extraTvlsEnabled),

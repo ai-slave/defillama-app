@@ -54,7 +54,7 @@ export function getDefaultColumnVisibility(
 	config: ColumnVisibilityConfig,
 	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	fallbackPreset?: UnifiedTablePreset,
-	includeDefaults: boolean = false
+	includeDefaults = false
 ): VisibilityState {
 	let visibility: VisibilityState
 

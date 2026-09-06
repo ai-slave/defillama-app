@@ -89,14 +89,14 @@ interface InvestorContainerProps {
 	investorName: string
 }
 
-export const InvestorContainer = ({
+export function InvestorContainer({
 	raises,
 	investors,
 	rounds,
 	sectors,
 	chains,
 	investorName
-}: InvestorContainerProps) => {
+}: InvestorContainerProps) {
 	const {
 		filteredRaisesList,
 		selectedInvestors,

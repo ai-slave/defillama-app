@@ -45,7 +45,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const PerpsVolumeOnAllChains = (props) => {
+function PerpsVolumeOnAllChains(props) {
 	return (
 		<Layout
 			title="Perp DEX Volume Rankings - DeFi Futures Trading - DefiLlama"

@@ -18,7 +18,7 @@ import type { MultiSelectOption } from './types'
 
 const DEFAULT_VIEWABLE_MATCHES = 10
 
-export const MultiSelectCombobox = ({
+export function MultiSelectCombobox({
 	data,
 	placeholder,
 	selectedValues,
@@ -36,7 +36,7 @@ export const MultiSelectCombobox = ({
 	onSearchChange?: (value: string) => void
 	isLoading?: boolean
 	emptyMessage?: string
-}) => {
+}) {
 	const [searchValue, setSearchValue] = useState('')
 
 	const matches = useMemo(() => {

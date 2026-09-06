@@ -22,7 +22,7 @@ export const getStaticProps = withPerformanceLogging(`${adapterType}/${dataType}
 
 const pageName = ['Chains', 'ranked by', type]
 
-const PerpsByChain = (props: IChainsByAdapterPageData) => {
+function PerpsByChain(props: IChainsByAdapterPageData) {
 	return (
 		<Layout
 			title="Perp DEX Volume by Chain - DefiLlama"

@@ -27,7 +27,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const DexAggregatorsVolumeOnAllChains = (props: IAdapterByChainPageData) => {
+function DexAggregatorsVolumeOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="DEX Aggregator Rankings - Swap Routing Analytics - DefiLlama"

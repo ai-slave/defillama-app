@@ -15,7 +15,7 @@ export interface ParagraphPost {
 }
 
 function isWithinLastThreeMonths(timestamp: string): boolean {
-	const date = new Date(parseInt(timestamp))
+	const date = new Date(parseInt(timestamp, 10))
 	const now = new Date()
 	const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate())
 	return date >= threeMonthsAgo

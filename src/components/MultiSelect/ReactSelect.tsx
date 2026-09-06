@@ -56,31 +56,29 @@ function getCustomStyles<Option, IsMulti extends boolean, Group extends GroupBas
 	}
 }
 
-export const ReactSelect = <
+export function ReactSelect<
 	Option,
 	IsMulti extends boolean = false,
 	Group extends GroupBase<Option> = GroupBase<Option>
->({
-	options,
-	styles,
-	...props
-}: Props<Option, IsMulti, Group>) => (
-	<Select
-		styles={
-			styles ? { ...getCustomStyles<Option, IsMulti, Group>(), ...styles } : getCustomStyles<Option, IsMulti, Group>()
-		}
-		options={options}
-		theme={(theme) => {
-			return {
-				...theme,
-				colors: {
-					...theme.colors,
-					primary25: 'var(--bg2)',
-					primary50: 'var(--bg2)',
-					primary75: 'var(--bg2)'
-				}
+>({ options, styles, ...props }: Props<Option, IsMulti, Group>) {
+	return (
+		<Select
+			styles={
+				styles ? { ...getCustomStyles<Option, IsMulti, Group>(), ...styles } : getCustomStyles<Option, IsMulti, Group>()
 			}
-		}}
-		{...props}
-	/>
-)
+			options={options}
+			theme={(theme) => {
+				return {
+					...theme,
+					colors: {
+						...theme.colors,
+						primary25: 'var(--bg2)',
+						primary50: 'var(--bg2)',
+						primary75: 'var(--bg2)'
+					}
+				}
+			}}
+			{...props}
+		/>
+	)
+}

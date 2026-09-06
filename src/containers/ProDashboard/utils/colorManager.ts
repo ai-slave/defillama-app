@@ -99,7 +99,7 @@ export const generateConsistentChartColor = (
 	itemName: string,
 	fallbackColor: string,
 	itemType: 'protocol' | 'chain' = 'protocol',
-	useConsistentColors: boolean = true
+	useConsistentColors = true
 ): string => {
 	if (!useConsistentColors || !itemName || itemName === 'unknown') {
 		return fallbackColor

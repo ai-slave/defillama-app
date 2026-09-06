@@ -355,11 +355,9 @@ export function createRWAAssetColumns(
 									<span className="label-sm text-secondary">{getAssetSecondaryLabel(info.row.original)}</span>
 								</>
 							) : (
-								<>
-									<span className="truncate label-md" title={info.row.original.assetName}>
-										{info.row.original.assetName}
-									</span>
-								</>
+								<span className="truncate label-md" title={info.row.original.assetName}>
+									{info.row.original.assetName}
+								</span>
 							)}
 						</span>
 						{info.row.original.suspicious === true ? (
@@ -859,7 +857,7 @@ function getAssetCategoryLabels(asset: AssetRow): Array<string> {
 	return []
 }
 
-const TVLBreakdownCell = ({
+function TVLBreakdownCell({
 	value,
 	breakdown,
 	breakdownUnavailable,
@@ -869,7 +867,7 @@ const TVLBreakdownCell = ({
 	breakdown: Array<[string, number]> | null | undefined
 	breakdownUnavailable?: boolean
 	description: string
-}) => {
+}) {
 	if (value == null) {
 		return null
 	}

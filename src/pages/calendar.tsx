@@ -327,7 +327,7 @@ export const calendarColumns = [
 	})
 ]
 
-const SimpleUpcomingEvent = ({ timestamp, name }: { timestamp: number; name: string }) => {
+function SimpleUpcomingEvent({ timestamp, name }: { timestamp: number; name: string }) {
 	const [nowMs, setNowMs] = React.useState(() => Date.now())
 	const timeLeft = Math.max(0, timestamp - nowMs / 1e3)
 	const days = Math.floor(timeLeft / 86_400)

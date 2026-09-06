@@ -47,18 +47,20 @@ type ReadOnlyTokenUsageDatasetProps = TokenUsageDatasetProps & {
 	onConfigChange?: never
 }
 
-const TokenOptionComponent = ({ innerProps, label, data }: OptionProps<TokenOption, true>) => (
-	<div {...innerProps} className="flex cursor-pointer items-center gap-2 p-2">
-		{data.logo ? (
-			<img src={data.logo?.replace('/0/', '')} alt="" width={20} height={20} className="size-5 rounded-full" />
-		) : (
-			<div className="size-5 rounded-full bg-surface-elevated-2" />
-		)}
-		<span>{label}</span>
-	</div>
-)
+function TokenOptionComponent({ innerProps, label, data }: OptionProps<TokenOption, true>) {
+	return (
+		<div {...innerProps} className="flex cursor-pointer items-center gap-2 p-2">
+			{data.logo ? (
+				<img src={data.logo?.replace('/0/', '')} alt="" width={20} height={20} className="size-5 rounded-full" />
+			) : (
+				<div className="size-5 rounded-full bg-surface-elevated-2" />
+			)}
+			<span>{label}</span>
+		</div>
+	)
+}
 
-const CustomValueContainer = ({ children, ...props }: ValueContainerProps<TokenOption, true>) => {
+function CustomValueContainer({ children, ...props }: ValueContainerProps<TokenOption, true>) {
 	const { getValue } = props
 	const values = getValue()
 

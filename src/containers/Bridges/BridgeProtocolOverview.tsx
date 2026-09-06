@@ -42,7 +42,7 @@ const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as Re
 const CHART_TYPES = ['Inflows', 'Volume', 'Tokens To', 'Tokens From'] as const
 type ChartType = (typeof CHART_TYPES)[number]
 
-export const BridgeInfo = ({
+export function BridgeInfo({
 	displayName,
 	logo,
 	chains,
@@ -50,7 +50,7 @@ export const BridgeInfo = ({
 	volumeDataByChain,
 	tableDataByChain,
 	config
-}: BridgePageData) => {
+}: BridgePageData) {
 	const [chartType, setChartType] = React.useState<ChartType>('Volume')
 	const [groupBy, setGroupBy] = React.useState<LowercaseDwmGrouping>('daily')
 	const [currentChain, setChain] = React.useState(defaultChain)

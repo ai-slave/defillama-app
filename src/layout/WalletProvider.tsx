@@ -10,6 +10,6 @@ const WalletProviderClient = dynamic<WalletProviderProps>(
 	{ ssr: false }
 )
 
-export const WalletProvider = ({ children }: WalletProviderProps) => {
+export function WalletProvider({ children }: WalletProviderProps) {
 	return <WalletProviderClient>{children}</WalletProviderClient>
 }

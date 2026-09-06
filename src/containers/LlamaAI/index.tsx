@@ -1040,7 +1040,7 @@ export function AgenticChat({
 		}
 	)
 
-	const clearRecoveryController = useCallback((resetState: boolean = true) => {
+	const clearRecoveryController = useCallback((resetState = true) => {
 		const controller = recoveryControllerRef.current
 		if (controller && controller.timer !== null) window.clearTimeout(controller.timer)
 		recoveryControllerRef.current = null
@@ -1514,7 +1514,9 @@ export function AgenticChat({
 							{ icon: '🔍', duration: 8000 }
 						)
 					}
-				} catch {}
+				} catch {
+					// Storage can be unavailable; the one-time hint is skipped.
+				}
 			}
 
 			const abandonedDuelSessionId = duelPairId ? sessionId : null
@@ -1920,7 +1922,9 @@ export function AgenticChat({
 				let timezone: string | undefined
 				try {
 					timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-				} catch {}
+				} catch {
+					// Intl can be unavailable; the timezone stays unset.
+				}
 
 				const effectiveMode = modeOverride ?? mode
 				const effectiveQuotedText =

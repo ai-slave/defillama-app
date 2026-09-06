@@ -95,13 +95,13 @@ const forksColumn = [
 
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]
 
-export const ForksOverview = ({
+export function ForksOverview({
 	forks,
 	forkLinks,
 	forkColors,
 	tableData: baseTableData,
 	chartData
-}: ForkOverviewPageData) => {
+}: ForkOverviewPageData) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const enabledExtraApiKeys = React.useMemo(
 		() => getEnabledForkOracleExtraTvlChartApiKeys(extraTvlsEnabled),

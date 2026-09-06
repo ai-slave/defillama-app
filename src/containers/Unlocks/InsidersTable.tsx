@@ -130,7 +130,7 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 	})
 ]
 
-export const InsidersTable = ({
+export function InsidersTable({
 	insiders,
 	methodology,
 	token
@@ -138,7 +138,7 @@ export const InsidersTable = ({
 	insiders: Array<Insider>
 	methodology: string
 	token?: string | null
-}) => {
+}) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'received', desc: true }])
 	const { data: blockExplorersData } = useBlockExplorers()
 	const tokenChainValue = token?.includes(':') ? token.split(':')[0] : null

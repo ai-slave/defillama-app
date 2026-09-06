@@ -385,7 +385,9 @@ function ShareButton() {
 			await navigator.clipboard.writeText(window.location.href)
 			setCopied(true)
 			setTimeout(() => setCopied(false), 1500)
-		} catch {}
+		} catch {
+			// Clipboard access can be denied; the copy control just does nothing.
+		}
 	}
 	return (
 		<Button type="button" onClick={onShare} size="md">
@@ -568,515 +570,512 @@ export function MarketMakersDocumentation() {
 	const active = useActiveSection(TOC_IDS)
 
 	return (
-		<>
-			<div className="flex flex-col gap-2">
-				<MarketMakersTabs active="Documentation" />
-				<Card padding="md">
-					<div className="mb-4 flex items-center justify-between gap-3 border-b border-subtle pb-4 min-[1120px]:hidden">
-						<span className="body-sm text-secondary">Last Updated: {LAST_UPDATED}</span>
-						<ShareButton />
-					</div>
+		<div className="flex flex-col gap-2">
+			<MarketMakersTabs active="Documentation" />
+			<Card padding="md">
+				<div className="mb-4 flex items-center justify-between gap-3 border-b border-subtle pb-4 min-[1120px]:hidden">
+					<span className="body-sm text-secondary">Last Updated: {LAST_UPDATED}</span>
+					<ShareButton />
+				</div>
 
-					<div className="mb-4 min-[1120px]:hidden">
-						<TocAccordion active={active} />
-					</div>
+				<div className="mb-4 min-[1120px]:hidden">
+					<TocAccordion active={active} />
+				</div>
 
-					<div className="grid min-[1120px]:grid-cols-[minmax(0,1fr)_300px]">
-						<div className="min-w-0 min-[1120px]:pr-8">
-							<div className="mx-auto w-full max-w-[820px]">
-								<div className="hidden h-9 items-center justify-between gap-3 min-[1120px]:flex">
-									<span className="body-sm text-secondary">Last Updated: {LAST_UPDATED}</span>
-									<ShareButton />
+				<div className="grid min-[1120px]:grid-cols-[minmax(0,1fr)_300px]">
+					<div className="min-w-0 min-[1120px]:pr-8">
+						<div className="mx-auto w-full max-w-[820px]">
+							<div className="hidden h-9 items-center justify-between gap-3 min-[1120px]:flex">
+								<span className="body-sm text-secondary">Last Updated: {LAST_UPDATED}</span>
+								<ShareButton />
+							</div>
+							<div className="mt-3 hidden border-t border-subtle min-[1120px]:block" />
+							<div className="flex w-full flex-col gap-10 min-[1120px]:pt-6">
+								<h1 className="heading-sm text-primary">Market Maker Leaderboard Documentation</h1>
+
+								<div id="introduction" aria-labelledby="introduction-title" className="scroll-mt-24">
+									<span id="introduction-title" className="sr-only">
+										Introduction
+									</span>
+									<Lead label="Required Context for Readers:">
+										This document serves as the central repository for official documentation of Forgd's Market Maker
+										Leaderboard. The content of this document is organized by the five pages of the Market Maker
+										Leaderboard: Performance Index, Depth Leaderboard, Volume Leaderboard, Spread Leaderboard, and KPI
+										Adherence Leaderboard in addition to a Preface section to provide a necessary overview of the
+										aforementioned pages before readers dive in.
+									</Lead>
 								</div>
-								<div className="mt-3 hidden border-t border-subtle min-[1120px]:block" />
-								<div className="flex w-full flex-col gap-10 min-[1120px]:pt-6">
-									<h1 className="heading-sm text-primary">Market Maker Leaderboard Documentation</h1>
 
-									<div id="introduction" aria-labelledby="introduction-title" className="scroll-mt-24">
-										<span id="introduction-title" className="sr-only">
-											Introduction
-										</span>
-										<Lead label="Required Context for Readers:">
-											This document serves as the central repository for official documentation of Forgd's Market Maker
-											Leaderboard. The content of this document is organized by the five pages of the Market Maker
-											Leaderboard: Performance Index, Depth Leaderboard, Volume Leaderboard, Spread Leaderboard, and KPI
-											Adherence Leaderboard in addition to a Preface section to provide a necessary overview of the
-											aforementioned pages before readers dive in.
-										</Lead>
-									</div>
+								<Divider />
 
-									<Divider />
+								<Section id="preface" title="1. Preface & Market Maker Leaderboard Overview">
+									<P>
+										Forgd's Market Maker Leaderboard provides data-driven insights on{' '}
+										<span className="font-semibold text-primary">40+ institutional liquidity providers</span> across key
+										performance metrics to measure top-of-book spreads, depth of liquidity, fill order volume and KPI
+										adherence. These metrics are calculated and updated on a daily basis across hundreds of engagements
+										for live token projects that utilize Forgd to monitor Market Maker trade activity via our
+										free-to-use dashboards. There are five distinct leaderboards: Performance Index, Depth Leaderboard,
+										Volume Leaderboard, Spread Leaderboard, and KPI Adherence Leaderboard. A high level description of
+										each can be found below:
+									</P>
+									<Bullets
+										items={[
+											<>
+												<span className="font-semibold text-primary">The Performance Index</span> {PI_PREFACE_BULLET}
+											</>,
+											<>
+												<span className="font-semibold text-primary">The Depth Leaderboard</span> displays the average
+												depth of liquidity for each market maker across +/- 0.50%, +/- 1.00%, & +/- 2.00% for all of
+												their respective active engagements being tracked by Forgd. Both the average notional depth and
+												the average percentage of all depth is provided on a per market maker basis. Additionally, the
+												average depth loan utilization is calculated for each market maker.
+											</>,
+											<>
+												<span className="font-semibold text-primary">The Volume Leaderboard</span> provides insights to
+												the average maker fill order volume, the average taker fill order volume, the average total fill
+												order volume (maker + taker), and the average volume loan utilization for each market maker
+												across all of their active engagements that Forgd tracks.
+											</>,
+											<>
+												<span className="font-semibold text-primary">The Spread Leaderboard</span> shows the average
+												volume-weighted bid-ask spread across each market maker's active engagements. By using the
+												volume-weighted bid-ask spread, we account for the notional size of orders at the best bid and
+												the best ask, providing a more accurate reflection of implied transaction costs.
+											</>,
+											<>
+												<span className="font-semibold text-primary">The KPI Adherence Leaderboard</span> tracks the
+												uptime of market makers across their active engagements using industry standard KPIs (depth +/-
+												0.50%, +/- 1.00%, & +/- 2.00%, and top-of-book spreads). This measures the consistency with
+												which market makers meet predefined performance thresholds, calculated as the proportion of
+												successful KPI outcomes over time using a daily binary pass/fail framework.
+											</>
+										]}
+									/>
+									<P>
+										Each leaderboard is further outlined in the documentation that follows with details on the
+										significance of each, the calculation methodologies and how to navigate the various filter views.
+										Project founders, advisors, investors and researchers can use the Market Maker Leaderboards to
+										inform their decision around the right engagement structure or partner to align with for their
+										token.
+									</P>
+								</Section>
 
-									<Section id="preface" title="1. Preface & Market Maker Leaderboard Overview">
-										<P>
-											Forgd's Market Maker Leaderboard provides data-driven insights on{' '}
-											<span className="font-semibold text-primary">40+ institutional liquidity providers</span> across
-											key performance metrics to measure top-of-book spreads, depth of liquidity, fill order volume and
-											KPI adherence. These metrics are calculated and updated on a daily basis across hundreds of
-											engagements for live token projects that utilize Forgd to monitor Market Maker trade activity via
-											our free-to-use dashboards. There are five distinct leaderboards: Performance Index, Depth
-											Leaderboard, Volume Leaderboard, Spread Leaderboard, and KPI Adherence Leaderboard. A high level
-											description of each can be found below:
-										</P>
-										<Bullets
-											items={[
-												<>
-													<span className="font-semibold text-primary">The Performance Index</span> {PI_PREFACE_BULLET}
-												</>,
-												<>
-													<span className="font-semibold text-primary">The Depth Leaderboard</span> displays the average
-													depth of liquidity for each market maker across +/- 0.50%, +/- 1.00%, & +/- 2.00% for all of
-													their respective active engagements being tracked by Forgd. Both the average notional depth
-													and the average percentage of all depth is provided on a per market maker basis. Additionally,
-													the average depth loan utilization is calculated for each market maker.
-												</>,
-												<>
-													<span className="font-semibold text-primary">The Volume Leaderboard</span> provides insights
-													to the average maker fill order volume, the average taker fill order volume, the average total
-													fill order volume (maker + taker), and the average volume loan utilization for each market
-													maker across all of their active engagements that Forgd tracks.
-												</>,
-												<>
-													<span className="font-semibold text-primary">The Spread Leaderboard</span> shows the average
-													volume-weighted bid-ask spread across each market maker's active engagements. By using the
-													volume-weighted bid-ask spread, we account for the notional size of orders at the best bid and
-													the best ask, providing a more accurate reflection of implied transaction costs.
-												</>,
-												<>
-													<span className="font-semibold text-primary">The KPI Adherence Leaderboard</span> tracks the
-													uptime of market makers across their active engagements using industry standard KPIs (depth
-													+/- 0.50%, +/- 1.00%, & +/- 2.00%, and top-of-book spreads). This measures the consistency
-													with which market makers meet predefined performance thresholds, calculated as the proportion
-													of successful KPI outcomes over time using a daily binary pass/fail framework.
-												</>
-											]}
-										/>
-										<P>
-											Each leaderboard is further outlined in the documentation that follows with details on the
-											significance of each, the calculation methodologies and how to navigate the various filter views.
-											Project founders, advisors, investors and researchers can use the Market Maker Leaderboards to
-											inform their decision around the right engagement structure or partner to align with for their
-											token.
-										</P>
-									</Section>
+								<Divider />
 
-									<Divider />
-
-									<Section id="performance-index" title="2. Performance Index">
-										<SubHeading>Overview</SubHeading>
-										{PI_OVERVIEW_PARAGRAPHS.map((paragraph) => (
-											<P key={paragraph}>{paragraph}</P>
-										))}
-										<FigureTable
-											src={docsAsset('performance_index.png')}
-											alt="Forgd Market Maker Performance Index leaderboard table"
-											caption={PI_FIGURE_CAPTION}
-										/>
-										<SubHeading>Calculation Methodology</SubHeading>
-										<P>{PI_METHODOLOGY_INTRO}</P>
-										<P>
-											Each KPI contributes to the composite score with its own weighting, reflecting its relative
-											importance within the overall evaluation framework. In addition to quantitative trading metrics,
-											select infrastructure and capability-based attributes, such as integrations, API support, and
-											trading coverage, are also incorporated into the composite calculation. The global weights of each
-											metric are as follows:
-										</P>
-										<WeightTable rows={PERFORMANCE_GLOBAL_WEIGHTS} showRanking={false} />
-										<P>{PI_COMPOSITE_SCORE_INTRO}</P>
-										<GradeBandsTable />
-										<P>{PI_GRADE_SUMMARY}</P>
-										<SubHeading>Trading KPIs</SubHeading>
-										<P>
-											The Trading KPI component evaluates a market maker's performance across four core dimensions:
-											liquidity depth, execution quality, capital efficiency, and operational reliability. Depth is
-											measured at +/- 0.50%, +/- 1.00%, & +/- 2.00% in both USD and % of market, with a bias toward
-											bid-side liquidity. Execution quality is captured through maker and taker volume, with greater
-											emphasis on passive (maker) activity, while loan utilization measures how efficiently capital is
-											deployed. Uptime and bid-ask spread reflect consistency and quote competitiveness. The weightings
-											and rankings of all Trading KPIs are below:
-										</P>
-										<WeightTable rows={PERFORMANCE_KPI_WEIGHTS} />
-										<P>
-											All values are aggregated across each market maker's active engagements tracked by Forgd and are
-											recalculated dynamically based on the selected timeframe.
-										</P>
-										{PI_COMPONENT_SECTIONS.map((component) => (
-											<Fragment key={component.title}>
-												<SubHeading>{component.title}</SubHeading>
-												{component.paragraphs.map((paragraph) => (
-													<P key={paragraph}>{paragraph}</P>
-												))}
-											</Fragment>
-										))}
-										<SubHeading>How to Interpret</SubHeading>
-										<P>
-											The composite score represents a relative measure of overall performance across all included
-											dimensions. Higher-ranked market makers have demonstrated stronger aggregate performance across
-											the full set of evaluated KPIs and attributes within the selected timeframe. Supporting columns
-											should be used to contextualize the composite score. For example:
-										</P>
-										<Bullets
-											ordered
-											items={[
-												"Trading KPIs benchmark market makers' raw performance against one another.",
-												'Trust is measured based on the number of engagements tracked and instances of trading abnormalities from tracked engagements.',
-												'Coverage & Capabilities reflects the breadth of trading coverage across CEXs & DEXs as well as additional trading functions.',
-												'Uptime indicates operational consistency over the selected period.',
-												"Integration Level reflects the degree of integration with Forgd's data consumption systems."
-											]}
-										/>
-										<P>{PI_SAME_RANK_NOTE}</P>
-										<FigureRadar
-											src={docsAsset('radar_mm_details.png')}
-											alt="Market Maker detail view — Leaderboard Performance radar chart"
-										/>
-										<SubHeading>Filtering</SubHeading>
-										<P>
-											Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
-											Performance Index values, including the composite score, rankings, and supporting metrics, are
-											recalculated dynamically based on the selected timeframe.
-										</P>
-									</Section>
-
-									<Divider />
-
-									<Section id="depth-leaderboard" title="3. Depth Leaderboard">
-										<SubHeading>Overview</SubHeading>
-										<P>
-											The Depth Leaderboard ranks market makers based on the liquidity they provide within defined
-											thresholds around the mid-point, offering a comparative view of resting bid and ask depth across
-											their tracked engagements. It measures average notional liquidity within +/- 0.50%, +/- 1.00%, &
-											+/- 2.00% price bands, representing progressively wider segments of the order book. In addition to
-											notional depth, the leaderboard includes each market maker's percentage share of total depth
-											within the selected threshold, providing a normalized view of relative liquidity contribution, as
-											well as Depth Loan Utilization, which measures the extent to which loaned inventory is used to
-											support quoted depth.
-										</P>
-										<FigureTable
-											src={docsAsset('depth_table.png')}
-											alt="Market Makers Depth Rank leaderboard table"
-											caption="Supporting fields within the table provide additional context on each market maker's infrastructure and capabilities, and a “Details” view allows for a more granular breakdown of performance and characteristics. Screenshot taken April 16, 2026."
-										/>
-										<SubHeading>Calculation Methodology</SubHeading>
-										<P>
-											Average notional depth is calculated by measuring the total resting bid and ask liquidity within
-											the selected price thresholds (+/- 0.50%, +/- 1.00%, & +/- 2.00%) and averaging these values
-											across all tracked engagements for each market maker over the selected timeframe.
-										</P>
-										<Bullets
-											items={[
-												<>
-													<span className="font-semibold text-primary">% of Total Depth</span> is calculated as each
-													market maker's average share of aggregate depth across all resting bids and offers within the
-													selected threshold, relative to the total depth provided by all market makers.
-												</>,
-												<>
-													<span className="font-semibold text-primary">Depth Loan Utilization</span> is calculated as
-													the ratio of loaned inventory utilized to support quoted depth relative to the total average
-													depth provided. Values exceeding 100% indicate that quoted depth exceeds the amount of loaned
-													inventory and should be interpreted with caution.
-												</>
-											]}
-										/>
-										<P>
-											The table below outlines the underlying metrics used to rank market makers on the Depth
-											Leaderboard, including their respective weightings and relative importance. These metrics
-											primarily capture liquidity provision across defined thresholds around the mid-point, with
-											emphasis on bid-side depth, project count, and overall market share.
-										</P>
-										<WeightTable rows={DEPTH_WEIGHTS} />
-										<SubHeading>How to Interpret</SubHeading>
-										<P>
-											Higher notional depth indicates that a market maker is consistently providing larger amounts of
-											liquidity within the selected price thresholds. Depth closer to the mid-point (e.g., +/- 0.50%)
-											reflects tighter and more immediately accessible liquidity, while wider thresholds (e.g., +/-
-											2.00%) capture broader order book support.
-										</P>
-										<P>
-											% of Total Depth provides context on relative market presence. A higher percentage indicates that
-											a market maker contributes a larger share of overall liquidity within the selected threshold
-											across all tracked engagements.
-										</P>
-										<P>
-											Depth Loan Utilization reflects how efficiently loaned inventory is being deployed to support
-											liquidity. Higher utilization generally indicates more active use of inventory, while values
-											exceeding 100% may indicate reliance on additional inventory sources or elevated quoting relative
-											to loan size.
-										</P>
-										<SubHeading>Filtering</SubHeading>
-										<P>
-											By default, the Depth Leaderboard displays average notional values. Users can switch between
-											notional values, percentile rankings, and absolute rank positions. Depth thresholds (+/- 0.50%,
-											+/- 1.00%, & +/- 2.00%) can be selected to filter the displayed data across all market makers.
-										</P>
-										<P>
-											Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
-											depth metrics are recalculated dynamically based on the selected timeframe.
-										</P>
-									</Section>
-
-									<Divider />
-
-									<Section id="volume-leaderboard" title="4. Volume Leaderboard">
-										<SubHeading>Overview</SubHeading>
-										<P>
-											The Volume Leaderboard ranks market makers based on the trading activity they generate across
-											their tracked engagements, providing a comparative view of executed volume segmented by maker and
-											taker activity. It measures average maker fill volume (passive liquidity provision), taker fill
-											volume (active liquidity taking), and total executed volume, allowing users to assess how market
-											makers participate in trading flows. The leaderboard also includes Volume Loan Utilization, which
-											measures the relationship between executed trading activity and the amount of loaned inventory,
-											providing additional context on inventory turnover relative to trading activity.
-										</P>
-										<FigureTable
-											src={docsAsset('volume_table_perc.png')}
-											alt="Market Makers Volume Rank leaderboard table"
-											caption="Screenshot taken April 16, 2026."
-										/>
-										<SubHeading>Calculation Methodology</SubHeading>
-										<P>
-											Average Maker Fill Volume and Average Taker Fill Volume are calculated by measuring executed
-											trading volume attributable to each activity type and averaging these values across all tracked
-											engagements for each market maker over the selected timeframe.
-										</P>
-										<Bullets
-											items={[
-												<>
-													<span className="font-semibold text-primary">Average Total Volume</span> is calculated as the
-													sum of maker and taker fill volumes.
-												</>,
-												<>
-													<span className="font-semibold text-primary">Volume Loan Utilization</span> is calculated as
-													the average total executed volume per period divided by the amount of loaned inventory. This
-													reflects the level of trading activity generated relative to available inventory.
-												</>
-											]}
-										/>
-										<P>
-											The table below details how market makers are evaluated on the Volume Leaderboard, including the
-											weighting of each underlying metric. The framework is centered on passive trading activity, with
-											greater emphasis placed on maker fill volume and overall participation in market turnover.
-										</P>
-										<WeightTable rows={VOLUME_WEIGHTS} />
-										<SubHeading>How to Interpret</SubHeading>
-										<P>
-											Higher total volume indicates greater overall participation in trading activity across tracked
-											engagements.
-										</P>
-										<Bullets
-											items={[
-												<>
-													<span className="font-semibold text-primary">Maker Fill Volume</span> reflects passive
-													execution, where trades occur against resting liquidity provided by the market maker.
-												</>,
-												<>
-													<span className="font-semibold text-primary">Taker Fill Volume</span> reflects active
-													execution, where the market maker is crossing the spread to trade against existing liquidity.
-												</>
-											]}
-										/>
-										<P>
-											The relationship between maker and taker volume provides additional context on how trading
-											activity is generated, though all components contribute to total volume.
-										</P>
-										<P>
-											Volume Loan Utilization reflects how actively loaned inventory is used to generate trading
-											activity. Higher utilization indicates greater turnover relative to inventory size.
-										</P>
-										<SubHeading>Filtering</SubHeading>
-										<P>
-											By default, the Volume Leaderboard displays average notional values. Users can switch between
-											notional values, percentile rankings, and absolute rank positions.
-										</P>
-										<P>
-											Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
-											volume metrics are recalculated dynamically based on the selected timeframe.
-										</P>
-									</Section>
-
-									<Divider />
-
-									<Section id="spread-leaderboard" title="5. Spread Leaderboard">
-										<SubHeading>Overview</SubHeading>
-										<P>
-											The Spread Leaderboard ranks market makers based on the tightness of their quoted bid-ask spreads
-											across their tracked engagements, providing a comparative view of pricing efficiency around the
-											mid-point. It measures the average bid-ask spread using a volume-weighted methodology, accounting
-											for the notional size of orders at the best bid and best ask and ensuring that periods with higher
-											trading activity have a greater impact on the final metric. This approach provides a more accurate
-											representation of implied transaction costs under active market conditions.
-										</P>
-										<FigureDualTable
-											frontSrc={docsAsset('spread_table_rank_front.png')}
-											backSrc={docsAsset('spread_table_val_back.png')}
-											alt="Market Makers Spread Rank leaderboard table"
-											caption="Screenshot taken April 16, 2026."
-										/>
-										<SubHeading>Calculation Methodology</SubHeading>
-										<Bullets
-											items={[
-												'The bid-ask spread is calculated as the difference between the best bid and best ask prices and is expressed relative to the mid-point.',
-												'Spreads are aggregated using a volume-weighted approach, where each observation is weighted by the corresponding traded volume. This ensures that periods with higher executed volume contribute more significantly to the average spread.',
-												'The final value represents the average volume-weighted bid-ask spread across all tracked engagements for each market maker over the selected timeframe.'
-											]}
-										/>
-										<P>
-											Below are the key inputs used to rank market makers on the Spread Leaderboard. Weightings are
-											primarily driven by volume-weighted bid-ask spreads and the uptime to measure market makers'
-											consistency of quoting.
-										</P>
-										<WeightTable rows={SPREAD_WEIGHTS} />
-										<P>
-											Volume-weighted average bid-ask spreads ("VWAS") are calculated per market maker on a once-daily
-											basis. Each trading pair's spread is weighted by its share of total daily fill volume, and those
-											weighted spreads are summed to produce the VWAS. Venues with more volume therefore have a larger
-											impact on the final number.
-										</P>
-										<P>Take the following example where the MM is trading across 5 venues:</P>
-										<Bullets
-											ordered
-											items={[
-												'Venue 1: $1.0m @ 5 bps',
-												'Venue 2: $750k @ 10 bps',
-												'Venue 3: $500k @ 10 bps',
-												'Venue 4: $100k @ 50 bps',
-												'Venue 5: $10k @ 100 bps'
-											]}
-										/>
-										<P>The total fill volume in this example is $2.36m, allowing us to calculate VWAS as:</P>
-										<pre className="overflow-x-auto rounded-md bg-page p-3 text-sm text-primary">
-											<code>
-												VWAS = [(1.0m×5) + (0.75m×10) + (0.5m×10) + (0.1m×50) + (0.01m×100)] / 2.36m ≈ 9.96 bps (~10
-												bps)
-											</code>
-										</pre>
-										<P>
-											It's worth noting that even though Venue 5 has a very wide spread, its impact is minimal due to
-											low volume, while the high-volume venues dominate the result.
-										</P>
-										<SubHeading>How to Interpret</SubHeading>
-										<P>
-											Lower bid-ask spreads indicate tighter pricing around the prevailing price, or the mid-point,
-											reflecting more competitive quoting.
-										</P>
-										<P>
-											Because spreads are volume-weighted, the metric emphasizes pricing behavior during periods of
-											meaningful trading activity. As a result, the leaderboard reflects effective spread performance
-											under active market conditions rather than purely static quoting.
-										</P>
-										<P>
-											Comparisons across market makers should be made within the same selected timeframe to ensure
-											consistency.
-										</P>
-										<SubHeading>Filtering</SubHeading>
-										<P>
-											By default, the Spread Leaderboard displays average notional values. Users can switch between
-											percentile rankings and absolute rank positions.
-										</P>
-										<P>
-											Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
-											spread metrics are recalculated dynamically based on the selected timeframe.
-										</P>
-									</Section>
-
-									<Divider />
-
-									<Section id="kpi-adherence-leaderboard" title="6. KPI Adherence Leaderboard">
-										<SubHeading>Overview</SubHeading>
-										<P>
-											The KPI Adherence Leaderboard ranks market makers based on the consistency with which they meet
-											predefined performance thresholds across their tracked engagements. It evaluates adherence to
-											industry standard KPIs, including depth thresholds (+/- 0.50%, +/- 1.00%, & +/- 2.00%) and
-											top-of-book spread requirements, using a daily binary pass/fail framework. These outcomes are
-											aggregated over time to measure the proportion of successful KPI instances, providing a
-											standardized view of operational consistency across market makers.
-										</P>
-										<FigureTable
-											src={docsAsset('kpi_table.png')}
-											alt="Market Makers % Uptime Rank leaderboard table"
-											caption="Screenshot taken April 16, 2026."
-										/>
-										<SubHeading>Calculation Methodology</SubHeading>
-										<P>
-											KPI adherence is calculated on a monthly basis by evaluating daily performance against predefined
-											thresholds for each KPI.
-										</P>
-										<P>For each day and each KPI, a binary value is assigned:</P>
-										<Bullets items={['1 (pass) if the KPI is met', '0 (fail) if the KPI is not met']} />
-										<P>
-											These binary outcomes are aggregated across all days in the month and across all tracked
-											engagements for each market maker.
-										</P>
-										<P>
-											The final KPI adherence value represents the proportion of “pass” instances relative to the total
-											number of evaluated instances.
-										</P>
-										<P>
-											The table below outlines how KPI adherence is measured and ranked across market makers. The
-											weighting reflects the relative importance of maintaining depth and spread requirements over time,
-											based on daily pass/fail outcomes.
-										</P>
-										<WeightTable rows={KPI_WEIGHTS} />
-										<SubHeading>How to Interpret</SubHeading>
-										<P>
-											Higher KPI adherence indicates that a market maker consistently meets predefined performance
-											thresholds across their engagements.
-										</P>
-										<P>
-											Because adherence is measured as a proportion of successful outcomes over time, the metric
-											reflects reliability and consistency rather than magnitude of performance.
-										</P>
-										<P>
-											Lower adherence indicates more frequent deviations from required thresholds, even if other
-											performance metrics (e.g., depth or volume) may be strong.
-										</P>
-										<P>
-											Comparisons across market makers should be made within the same selected timeframe to ensure
-											consistency.
-										</P>
-										<SubHeading>Filtering</SubHeading>
-										<P>
-											By default, the KPI Adherence Leaderboard displays average notional values. Users can switch
-											between percentile rankings and absolute rank positions. Depth thresholds (+/- 0.50%, +/- 1.00%, &
-											+/- 2.00%) can be selected to filter KPI adherence results based on the corresponding performance
-											criteria.
-										</P>
-										<P>
-											Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
-											KPI adherence metrics are recalculated dynamically based on the selected timeframe.
-										</P>
-									</Section>
-
-									<Divider />
-
-									<Section id="glossary" title="7. Glossary">
-										<div className="flex flex-col gap-5">
-											{GLOSSARY.map((entry) => (
-												<GlossaryItem key={entry.term} entry={entry} />
+								<Section id="performance-index" title="2. Performance Index">
+									<SubHeading>Overview</SubHeading>
+									{PI_OVERVIEW_PARAGRAPHS.map((paragraph) => (
+										<P key={paragraph}>{paragraph}</P>
+									))}
+									<FigureTable
+										src={docsAsset('performance_index.png')}
+										alt="Forgd Market Maker Performance Index leaderboard table"
+										caption={PI_FIGURE_CAPTION}
+									/>
+									<SubHeading>Calculation Methodology</SubHeading>
+									<P>{PI_METHODOLOGY_INTRO}</P>
+									<P>
+										Each KPI contributes to the composite score with its own weighting, reflecting its relative
+										importance within the overall evaluation framework. In addition to quantitative trading metrics,
+										select infrastructure and capability-based attributes, such as integrations, API support, and
+										trading coverage, are also incorporated into the composite calculation. The global weights of each
+										metric are as follows:
+									</P>
+									<WeightTable rows={PERFORMANCE_GLOBAL_WEIGHTS} showRanking={false} />
+									<P>{PI_COMPOSITE_SCORE_INTRO}</P>
+									<GradeBandsTable />
+									<P>{PI_GRADE_SUMMARY}</P>
+									<SubHeading>Trading KPIs</SubHeading>
+									<P>
+										The Trading KPI component evaluates a market maker's performance across four core dimensions:
+										liquidity depth, execution quality, capital efficiency, and operational reliability. Depth is
+										measured at +/- 0.50%, +/- 1.00%, & +/- 2.00% in both USD and % of market, with a bias toward
+										bid-side liquidity. Execution quality is captured through maker and taker volume, with greater
+										emphasis on passive (maker) activity, while loan utilization measures how efficiently capital is
+										deployed. Uptime and bid-ask spread reflect consistency and quote competitiveness. The weightings
+										and rankings of all Trading KPIs are below:
+									</P>
+									<WeightTable rows={PERFORMANCE_KPI_WEIGHTS} />
+									<P>
+										All values are aggregated across each market maker's active engagements tracked by Forgd and are
+										recalculated dynamically based on the selected timeframe.
+									</P>
+									{PI_COMPONENT_SECTIONS.map((component) => (
+										<Fragment key={component.title}>
+											<SubHeading>{component.title}</SubHeading>
+											{component.paragraphs.map((paragraph) => (
+												<P key={paragraph}>{paragraph}</P>
 											))}
-										</div>
-									</Section>
-								</div>
+										</Fragment>
+									))}
+									<SubHeading>How to Interpret</SubHeading>
+									<P>
+										The composite score represents a relative measure of overall performance across all included
+										dimensions. Higher-ranked market makers have demonstrated stronger aggregate performance across the
+										full set of evaluated KPIs and attributes within the selected timeframe. Supporting columns should
+										be used to contextualize the composite score. For example:
+									</P>
+									<Bullets
+										ordered
+										items={[
+											"Trading KPIs benchmark market makers' raw performance against one another.",
+											'Trust is measured based on the number of engagements tracked and instances of trading abnormalities from tracked engagements.',
+											'Coverage & Capabilities reflects the breadth of trading coverage across CEXs & DEXs as well as additional trading functions.',
+											'Uptime indicates operational consistency over the selected period.',
+											"Integration Level reflects the degree of integration with Forgd's data consumption systems."
+										]}
+									/>
+									<P>{PI_SAME_RANK_NOTE}</P>
+									<FigureRadar
+										src={docsAsset('radar_mm_details.png')}
+										alt="Market Maker detail view — Leaderboard Performance radar chart"
+									/>
+									<SubHeading>Filtering</SubHeading>
+									<P>
+										Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
+										Performance Index values, including the composite score, rankings, and supporting metrics, are
+										recalculated dynamically based on the selected timeframe.
+									</P>
+								</Section>
+
+								<Divider />
+
+								<Section id="depth-leaderboard" title="3. Depth Leaderboard">
+									<SubHeading>Overview</SubHeading>
+									<P>
+										The Depth Leaderboard ranks market makers based on the liquidity they provide within defined
+										thresholds around the mid-point, offering a comparative view of resting bid and ask depth across
+										their tracked engagements. It measures average notional liquidity within +/- 0.50%, +/- 1.00%, & +/-
+										2.00% price bands, representing progressively wider segments of the order book. In addition to
+										notional depth, the leaderboard includes each market maker's percentage share of total depth within
+										the selected threshold, providing a normalized view of relative liquidity contribution, as well as
+										Depth Loan Utilization, which measures the extent to which loaned inventory is used to support
+										quoted depth.
+									</P>
+									<FigureTable
+										src={docsAsset('depth_table.png')}
+										alt="Market Makers Depth Rank leaderboard table"
+										caption="Supporting fields within the table provide additional context on each market maker's infrastructure and capabilities, and a “Details” view allows for a more granular breakdown of performance and characteristics. Screenshot taken April 16, 2026."
+									/>
+									<SubHeading>Calculation Methodology</SubHeading>
+									<P>
+										Average notional depth is calculated by measuring the total resting bid and ask liquidity within the
+										selected price thresholds (+/- 0.50%, +/- 1.00%, & +/- 2.00%) and averaging these values across all
+										tracked engagements for each market maker over the selected timeframe.
+									</P>
+									<Bullets
+										items={[
+											<>
+												<span className="font-semibold text-primary">% of Total Depth</span> is calculated as each
+												market maker's average share of aggregate depth across all resting bids and offers within the
+												selected threshold, relative to the total depth provided by all market makers.
+											</>,
+											<>
+												<span className="font-semibold text-primary">Depth Loan Utilization</span> is calculated as the
+												ratio of loaned inventory utilized to support quoted depth relative to the total average depth
+												provided. Values exceeding 100% indicate that quoted depth exceeds the amount of loaned
+												inventory and should be interpreted with caution.
+											</>
+										]}
+									/>
+									<P>
+										The table below outlines the underlying metrics used to rank market makers on the Depth Leaderboard,
+										including their respective weightings and relative importance. These metrics primarily capture
+										liquidity provision across defined thresholds around the mid-point, with emphasis on bid-side depth,
+										project count, and overall market share.
+									</P>
+									<WeightTable rows={DEPTH_WEIGHTS} />
+									<SubHeading>How to Interpret</SubHeading>
+									<P>
+										Higher notional depth indicates that a market maker is consistently providing larger amounts of
+										liquidity within the selected price thresholds. Depth closer to the mid-point (e.g., +/- 0.50%)
+										reflects tighter and more immediately accessible liquidity, while wider thresholds (e.g., +/- 2.00%)
+										capture broader order book support.
+									</P>
+									<P>
+										% of Total Depth provides context on relative market presence. A higher percentage indicates that a
+										market maker contributes a larger share of overall liquidity within the selected threshold across
+										all tracked engagements.
+									</P>
+									<P>
+										Depth Loan Utilization reflects how efficiently loaned inventory is being deployed to support
+										liquidity. Higher utilization generally indicates more active use of inventory, while values
+										exceeding 100% may indicate reliance on additional inventory sources or elevated quoting relative to
+										loan size.
+									</P>
+									<SubHeading>Filtering</SubHeading>
+									<P>
+										By default, the Depth Leaderboard displays average notional values. Users can switch between
+										notional values, percentile rankings, and absolute rank positions. Depth thresholds (+/- 0.50%, +/-
+										1.00%, & +/- 2.00%) can be selected to filter the displayed data across all market makers.
+									</P>
+									<P>
+										Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
+										depth metrics are recalculated dynamically based on the selected timeframe.
+									</P>
+								</Section>
+
+								<Divider />
+
+								<Section id="volume-leaderboard" title="4. Volume Leaderboard">
+									<SubHeading>Overview</SubHeading>
+									<P>
+										The Volume Leaderboard ranks market makers based on the trading activity they generate across their
+										tracked engagements, providing a comparative view of executed volume segmented by maker and taker
+										activity. It measures average maker fill volume (passive liquidity provision), taker fill volume
+										(active liquidity taking), and total executed volume, allowing users to assess how market makers
+										participate in trading flows. The leaderboard also includes Volume Loan Utilization, which measures
+										the relationship between executed trading activity and the amount of loaned inventory, providing
+										additional context on inventory turnover relative to trading activity.
+									</P>
+									<FigureTable
+										src={docsAsset('volume_table_perc.png')}
+										alt="Market Makers Volume Rank leaderboard table"
+										caption="Screenshot taken April 16, 2026."
+									/>
+									<SubHeading>Calculation Methodology</SubHeading>
+									<P>
+										Average Maker Fill Volume and Average Taker Fill Volume are calculated by measuring executed trading
+										volume attributable to each activity type and averaging these values across all tracked engagements
+										for each market maker over the selected timeframe.
+									</P>
+									<Bullets
+										items={[
+											<>
+												<span className="font-semibold text-primary">Average Total Volume</span> is calculated as the
+												sum of maker and taker fill volumes.
+											</>,
+											<>
+												<span className="font-semibold text-primary">Volume Loan Utilization</span> is calculated as the
+												average total executed volume per period divided by the amount of loaned inventory. This
+												reflects the level of trading activity generated relative to available inventory.
+											</>
+										]}
+									/>
+									<P>
+										The table below details how market makers are evaluated on the Volume Leaderboard, including the
+										weighting of each underlying metric. The framework is centered on passive trading activity, with
+										greater emphasis placed on maker fill volume and overall participation in market turnover.
+									</P>
+									<WeightTable rows={VOLUME_WEIGHTS} />
+									<SubHeading>How to Interpret</SubHeading>
+									<P>
+										Higher total volume indicates greater overall participation in trading activity across tracked
+										engagements.
+									</P>
+									<Bullets
+										items={[
+											<>
+												<span className="font-semibold text-primary">Maker Fill Volume</span> reflects passive
+												execution, where trades occur against resting liquidity provided by the market maker.
+											</>,
+											<>
+												<span className="font-semibold text-primary">Taker Fill Volume</span> reflects active execution,
+												where the market maker is crossing the spread to trade against existing liquidity.
+											</>
+										]}
+									/>
+									<P>
+										The relationship between maker and taker volume provides additional context on how trading activity
+										is generated, though all components contribute to total volume.
+									</P>
+									<P>
+										Volume Loan Utilization reflects how actively loaned inventory is used to generate trading activity.
+										Higher utilization indicates greater turnover relative to inventory size.
+									</P>
+									<SubHeading>Filtering</SubHeading>
+									<P>
+										By default, the Volume Leaderboard displays average notional values. Users can switch between
+										notional values, percentile rankings, and absolute rank positions.
+									</P>
+									<P>
+										Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
+										volume metrics are recalculated dynamically based on the selected timeframe.
+									</P>
+								</Section>
+
+								<Divider />
+
+								<Section id="spread-leaderboard" title="5. Spread Leaderboard">
+									<SubHeading>Overview</SubHeading>
+									<P>
+										The Spread Leaderboard ranks market makers based on the tightness of their quoted bid-ask spreads
+										across their tracked engagements, providing a comparative view of pricing efficiency around the
+										mid-point. It measures the average bid-ask spread using a volume-weighted methodology, accounting
+										for the notional size of orders at the best bid and best ask and ensuring that periods with higher
+										trading activity have a greater impact on the final metric. This approach provides a more accurate
+										representation of implied transaction costs under active market conditions.
+									</P>
+									<FigureDualTable
+										frontSrc={docsAsset('spread_table_rank_front.png')}
+										backSrc={docsAsset('spread_table_val_back.png')}
+										alt="Market Makers Spread Rank leaderboard table"
+										caption="Screenshot taken April 16, 2026."
+									/>
+									<SubHeading>Calculation Methodology</SubHeading>
+									<Bullets
+										items={[
+											'The bid-ask spread is calculated as the difference between the best bid and best ask prices and is expressed relative to the mid-point.',
+											'Spreads are aggregated using a volume-weighted approach, where each observation is weighted by the corresponding traded volume. This ensures that periods with higher executed volume contribute more significantly to the average spread.',
+											'The final value represents the average volume-weighted bid-ask spread across all tracked engagements for each market maker over the selected timeframe.'
+										]}
+									/>
+									<P>
+										Below are the key inputs used to rank market makers on the Spread Leaderboard. Weightings are
+										primarily driven by volume-weighted bid-ask spreads and the uptime to measure market makers'
+										consistency of quoting.
+									</P>
+									<WeightTable rows={SPREAD_WEIGHTS} />
+									<P>
+										Volume-weighted average bid-ask spreads ("VWAS") are calculated per market maker on a once-daily
+										basis. Each trading pair's spread is weighted by its share of total daily fill volume, and those
+										weighted spreads are summed to produce the VWAS. Venues with more volume therefore have a larger
+										impact on the final number.
+									</P>
+									<P>Take the following example where the MM is trading across 5 venues:</P>
+									<Bullets
+										ordered
+										items={[
+											'Venue 1: $1.0m @ 5 bps',
+											'Venue 2: $750k @ 10 bps',
+											'Venue 3: $500k @ 10 bps',
+											'Venue 4: $100k @ 50 bps',
+											'Venue 5: $10k @ 100 bps'
+										]}
+									/>
+									<P>The total fill volume in this example is $2.36m, allowing us to calculate VWAS as:</P>
+									<pre className="overflow-x-auto rounded-md bg-page p-3 text-sm text-primary">
+										<code>
+											VWAS = [(1.0m×5) + (0.75m×10) + (0.5m×10) + (0.1m×50) + (0.01m×100)] / 2.36m ≈ 9.96 bps (~10 bps)
+										</code>
+									</pre>
+									<P>
+										It's worth noting that even though Venue 5 has a very wide spread, its impact is minimal due to low
+										volume, while the high-volume venues dominate the result.
+									</P>
+									<SubHeading>How to Interpret</SubHeading>
+									<P>
+										Lower bid-ask spreads indicate tighter pricing around the prevailing price, or the mid-point,
+										reflecting more competitive quoting.
+									</P>
+									<P>
+										Because spreads are volume-weighted, the metric emphasizes pricing behavior during periods of
+										meaningful trading activity. As a result, the leaderboard reflects effective spread performance
+										under active market conditions rather than purely static quoting.
+									</P>
+									<P>
+										Comparisons across market makers should be made within the same selected timeframe to ensure
+										consistency.
+									</P>
+									<SubHeading>Filtering</SubHeading>
+									<P>
+										By default, the Spread Leaderboard displays average notional values. Users can switch between
+										percentile rankings and absolute rank positions.
+									</P>
+									<P>
+										Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
+										spread metrics are recalculated dynamically based on the selected timeframe.
+									</P>
+								</Section>
+
+								<Divider />
+
+								<Section id="kpi-adherence-leaderboard" title="6. KPI Adherence Leaderboard">
+									<SubHeading>Overview</SubHeading>
+									<P>
+										The KPI Adherence Leaderboard ranks market makers based on the consistency with which they meet
+										predefined performance thresholds across their tracked engagements. It evaluates adherence to
+										industry standard KPIs, including depth thresholds (+/- 0.50%, +/- 1.00%, & +/- 2.00%) and
+										top-of-book spread requirements, using a daily binary pass/fail framework. These outcomes are
+										aggregated over time to measure the proportion of successful KPI instances, providing a standardized
+										view of operational consistency across market makers.
+									</P>
+									<FigureTable
+										src={docsAsset('kpi_table.png')}
+										alt="Market Makers % Uptime Rank leaderboard table"
+										caption="Screenshot taken April 16, 2026."
+									/>
+									<SubHeading>Calculation Methodology</SubHeading>
+									<P>
+										KPI adherence is calculated on a monthly basis by evaluating daily performance against predefined
+										thresholds for each KPI.
+									</P>
+									<P>For each day and each KPI, a binary value is assigned:</P>
+									<Bullets items={['1 (pass) if the KPI is met', '0 (fail) if the KPI is not met']} />
+									<P>
+										These binary outcomes are aggregated across all days in the month and across all tracked engagements
+										for each market maker.
+									</P>
+									<P>
+										The final KPI adherence value represents the proportion of “pass” instances relative to the total
+										number of evaluated instances.
+									</P>
+									<P>
+										The table below outlines how KPI adherence is measured and ranked across market makers. The
+										weighting reflects the relative importance of maintaining depth and spread requirements over time,
+										based on daily pass/fail outcomes.
+									</P>
+									<WeightTable rows={KPI_WEIGHTS} />
+									<SubHeading>How to Interpret</SubHeading>
+									<P>
+										Higher KPI adherence indicates that a market maker consistently meets predefined performance
+										thresholds across their engagements.
+									</P>
+									<P>
+										Because adherence is measured as a proportion of successful outcomes over time, the metric reflects
+										reliability and consistency rather than magnitude of performance.
+									</P>
+									<P>
+										Lower adherence indicates more frequent deviations from required thresholds, even if other
+										performance metrics (e.g., depth or volume) may be strong.
+									</P>
+									<P>
+										Comparisons across market makers should be made within the same selected timeframe to ensure
+										consistency.
+									</P>
+									<SubHeading>Filtering</SubHeading>
+									<P>
+										By default, the KPI Adherence Leaderboard displays average notional values. Users can switch between
+										percentile rankings and absolute rank positions. Depth thresholds (+/- 0.50%, +/- 1.00%, & +/-
+										2.00%) can be selected to filter KPI adherence results based on the corresponding performance
+										criteria.
+									</P>
+									<P>
+										Timeframe filtering can be configured under the “Refine” button at the top right of the table. All
+										KPI adherence metrics are recalculated dynamically based on the selected timeframe.
+									</P>
+								</Section>
+
+								<Divider />
+
+								<Section id="glossary" title="7. Glossary">
+									<div className="flex flex-col gap-5">
+										{GLOSSARY.map((entry) => (
+											<GlossaryItem key={entry.term} entry={entry} />
+										))}
+									</div>
+								</Section>
 							</div>
 						</div>
-
-						<aside className="hidden min-[1120px]:block min-[1120px]:border-l min-[1120px]:border-subtle min-[1120px]:pl-8">
-							<div className="sticky top-6">
-								<div className="flex h-9 items-center">
-									<span className="label-sm text-secondary uppercase">Table of Contents</span>
-								</div>
-								<div className="mt-3 border-t border-subtle" />
-								<div className="pt-6">
-									<TocList active={active} />
-								</div>
-							</div>
-						</aside>
 					</div>
-				</Card>
-				<div className="mt-6">
-					<MarketMakersOutro />
+
+					<aside className="hidden min-[1120px]:block min-[1120px]:border-l min-[1120px]:border-subtle min-[1120px]:pl-8">
+						<div className="sticky top-6">
+							<div className="flex h-9 items-center">
+								<span className="label-sm text-secondary uppercase">Table of Contents</span>
+							</div>
+							<div className="mt-3 border-t border-subtle" />
+							<div className="pt-6">
+								<TocList active={active} />
+							</div>
+						</div>
+					</aside>
 				</div>
+			</Card>
+			<div className="mt-6">
+				<MarketMakersOutro />
 			</div>
-		</>
+		</div>
 	)
 }

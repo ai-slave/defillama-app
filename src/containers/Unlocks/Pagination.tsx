@@ -65,7 +65,7 @@ function paginationReducer(state: PaginationState, action: PaginationAction): Pa
 	}
 }
 
-export const Pagination = ({ items, startIndex = 0 }: PaginationProps) => {
+export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 	const [state, dispatch] = useReducer(paginationReducer, {
 		...initialState,
 		pageOverride: { startIndex, page: null }

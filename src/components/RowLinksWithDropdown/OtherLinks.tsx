@@ -105,7 +105,7 @@ export function OtherLinks({ options, name, keyPrefix = 'row-links', isActive, c
 	)
 }
 
-const Item = ({ label, to }: { label: string; to: string }) => {
+function Item({ label, to }: { label: string; to: string }) {
 	const [loading, setLoading] = useState(false)
 	const router = useRouter()
 	return (

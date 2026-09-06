@@ -119,7 +119,7 @@ type PeggedAssetInfoProps = PeggedAssetPageProps & {
 const getStablecoinOptionLabel = ({ name, symbol }: { name: string; symbol: string }) =>
 	symbol && symbol !== '-' && symbol !== name ? `${name} (${symbol})` : name
 
-export const PeggedAssetInfo = ({
+export function PeggedAssetInfo({
 	chainsUnique: _chainsUnique,
 	chainCirculatings,
 	peggedAssetData,
@@ -132,7 +132,7 @@ export const PeggedAssetInfo = ({
 	blockExplorerName,
 	stablecoinOptions,
 	onStablecoinChange
-}: PeggedAssetInfoProps) => {
+}: PeggedAssetInfoProps) {
 	const router = useRouter()
 	const lifecycleStatus = peggedAssetData.deadFrom
 		? `Ended on ${peggedAssetData.deadFrom}`

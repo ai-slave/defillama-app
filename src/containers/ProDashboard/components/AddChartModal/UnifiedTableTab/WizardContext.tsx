@@ -21,13 +21,13 @@ interface WizardContextValue {
 
 const WizardContext = createContext<WizardContextValue | null>(null)
 
-export const UnifiedTableWizardProvider = ({
+export function UnifiedTableWizardProvider({
 	children,
 	initialConfig
 }: {
 	children: React.ReactNode
 	initialConfig?: UnifiedTableConfig | null | undefined
-}) => {
+}) {
 	const wizard = useUnifiedTableWizard(initialConfig?.activePresetId, initialConfig ?? undefined)
 
 	return <WizardContext.Provider value={wizard}>{children}</WizardContext.Provider>

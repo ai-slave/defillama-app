@@ -11,7 +11,7 @@ const getEntityQuestionsQueryKey = (
 export function useEntityQuestions(
 	entitySlug: string | null,
 	entityType: 'protocol' | 'chain' | 'page' | null,
-	enabled: boolean = true,
+	enabled = true,
 	context?: Record<string, unknown>
 ): UseQueryResult<EntityQuestionsResponse> {
 	return useQuery({

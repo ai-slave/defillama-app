@@ -29,7 +29,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const OpenInterestOnAllChains = (props: IAdapterByChainPageData) => {
+function OpenInterestOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="Open Interest Rankings - DeFi Derivatives - DefiLlama"

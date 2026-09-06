@@ -223,7 +223,7 @@ function extractChainValues(
 	return sortedEntries.length > 0 ? Object.fromEntries(sortedEntries) : null
 }
 
-export const KeyMetrics = (props: IKeyMetricsProps) => {
+export function KeyMetrics(props: IKeyMetricsProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 
 	if (!props.hasKeyMetrics) return null
@@ -675,7 +675,7 @@ function BridgeVolume(props: IKeyMetricsProps) {
 	)
 }
 
-const SmolStats = ({
+function SmolStats({
 	data,
 	protocolName,
 	formatPrice,
@@ -691,7 +691,7 @@ const SmolStats = ({
 	formatPrice: (value: number | null) => string | number | null
 	openSmolStatsSummaryByDefault?: boolean | undefined
 	dataType: string
-}) => {
+}) {
 	const restOfData = useMemo(() => data.slice(1), [data])
 	const primary = data[0]
 	if (!primary) return null
@@ -785,7 +785,7 @@ function renderChainRows({
 	return rows
 }
 
-const Treasury = (props: IKeyMetricsProps) => {
+function Treasury(props: IKeyMetricsProps) {
 	if (!props.treasury) return null
 	return (
 		<MetricSection
@@ -841,7 +841,7 @@ const Treasury = (props: IKeyMetricsProps) => {
 	)
 }
 
-const Expenses = (props: IKeyMetricsProps) => {
+function Expenses(props: IKeyMetricsProps) {
 	if (!props.expenses) return null
 	return (
 		<MetricSection label="Annual Operational Expenses" value={props.formatPrice(props.expenses.total)}>
@@ -899,7 +899,7 @@ const Expenses = (props: IKeyMetricsProps) => {
 	)
 }
 
-const TokenCGData = (props: IKeyMetricsProps) => {
+function TokenCGData(props: IKeyMetricsProps) {
 	if (!props.tokenCGData) return null
 	const priceLabel = `${props.token?.symbol ? `$${props.token.symbol}` : 'Token'} Price`
 	const linkedPriceLabel = props.token?.tokenPageRoute ? (
@@ -986,7 +986,7 @@ const TokenCGData = (props: IKeyMetricsProps) => {
 	)
 }
 
-const Raises = (props: IKeyMetricsProps) => {
+function Raises(props: IKeyMetricsProps) {
 	if (!props.raises || props.raises.length === 0) return null
 	return (
 		<MetricSection label="Total Raised" value={<RaisesTotal {...summarizeRaises(props.raises)} />}>

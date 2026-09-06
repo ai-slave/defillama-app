@@ -15,7 +15,7 @@ export const getStaticProps = withPerformanceLogging('raises', async () => {
 	}
 })
 
-const Raises = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
+function Raises(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="DeFi Funding Rounds & Crypto Raises - DefiLlama"

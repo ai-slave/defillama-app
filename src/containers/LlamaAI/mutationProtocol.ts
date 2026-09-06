@@ -69,7 +69,9 @@ export function createAgenticMutationEnvelope(args: {
 	let timezone: string | undefined
 	try {
 		timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-	} catch {}
+	} catch {
+		// Intl can be unavailable; the timezone stays unset.
+	}
 
 	return {
 		clientMutationId: args.clientMutationId,

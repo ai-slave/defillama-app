@@ -27,7 +27,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const PerpsAggregatorsVolumeOnAllChains = (props: IAdapterByChainPageData) => {
+function PerpsAggregatorsVolumeOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="Perps Aggregator Rankings - Futures Routing - DefiLlama"

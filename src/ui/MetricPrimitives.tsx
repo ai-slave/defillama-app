@@ -17,7 +17,7 @@ interface MetricRowProps {
 	dashed?: boolean
 }
 
-export const MetricRow = ({
+export function MetricRow({
 	label,
 	tooltip,
 	value,
@@ -25,49 +25,53 @@ export const MetricRow = ({
 	className = '',
 	valueClassName = 'mono-md-bold ml-auto',
 	dashed = false
-}: MetricRowProps) => (
-	<p
-		className={`group flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b ${dashed ? 'border-dashed' : ''} border-subtle py-1 last:border-none ${className}`.trim()}
-	>
-		{tooltip ? (
-			<Tooltip
-				content={tooltip}
-				render={<button type="button" className="body-md text-secondary underline decoration-dotted" />}
-			>
-				<span data-metric-label>{label}</span>
-			</Tooltip>
-		) : (
-			<span className="body-md text-secondary" data-metric-label>
-				{label}
+}: MetricRowProps) {
+	return (
+		<p
+			className={`group flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b ${dashed ? 'border-dashed' : ''} border-subtle py-1 last:border-none ${className}`.trim()}
+		>
+			{tooltip ? (
+				<Tooltip
+					content={tooltip}
+					render={<button type="button" className="body-md text-secondary underline decoration-dotted" />}
+				>
+					<span data-metric-label>{label}</span>
+				</Tooltip>
+			) : (
+				<span className="body-md text-secondary" data-metric-label>
+					{label}
+				</span>
+			)}
+			{extra}
+			<span className={valueClassName} data-metric-value>
+				{value}
 			</span>
-		)}
-		{extra}
-		<span className={valueClassName} data-metric-value>
-			{value}
-		</span>
-	</p>
-)
+		</p>
+	)
+}
 
 type SubMetricRowProps = Omit<MetricRowProps, 'dashed'>
 
-export const SubMetricRow = ({
+export function SubMetricRow({
 	label,
 	tooltip,
 	value,
 	extra,
 	className = '',
 	valueClassName = 'mono-md ml-auto'
-}: SubMetricRowProps) => (
-	<MetricRow
-		label={label}
-		tooltip={tooltip}
-		value={value}
-		extra={extra}
-		className={className}
-		valueClassName={valueClassName}
-		dashed
-	/>
-)
+}: SubMetricRowProps) {
+	return (
+		<MetricRow
+			label={label}
+			tooltip={tooltip}
+			value={value}
+			extra={extra}
+			className={className}
+			valueClassName={valueClassName}
+			dashed
+		/>
+	)
+}
 
 interface MetricSectionProps {
 	label: ReactNode
@@ -83,7 +87,7 @@ interface MetricSectionProps {
 const metricSummaryStyles =
 	'flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-subtle py-1 group-last/metric:border-none group-open/metric:border-none group-open/metric:font-semibold'
 
-export const MetricSection = ({
+export function MetricSection({
 	label,
 	tooltip,
 	value,
@@ -92,7 +96,7 @@ export const MetricSection = ({
 	defaultOpen = false,
 	className = '',
 	valueClassName = 'mono-md-bold ml-auto'
-}: MetricSectionProps) => {
+}: MetricSectionProps) {
 	const summaryContent = (
 		<>
 			<span
@@ -138,7 +142,7 @@ export const MetricSection = ({
 	)
 }
 
-export const SubMetricSection = ({
+export function SubMetricSection({
 	label,
 	value,
 	children,
@@ -148,24 +152,26 @@ export const SubMetricSection = ({
 	value?: ReactNode
 	children?: ReactNode
 	defaultOpen?: boolean
-}) => (
-	<details className="group/sub" open={defaultOpen}>
-		<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-dashed border-subtle py-1 group-last/sub:border-none group-open/sub:border-none group-open/sub:font-semibold">
-			<span className="body-md text-secondary" data-metric-label>
-				{label}
-			</span>
-			<Icon
-				name="chevron-down"
-				height={16}
-				width={16}
-				className="relative top-1 text-tertiary transition-transform duration-100 group-open/sub:rotate-180"
-			/>
-			{value != null ? (
-				<span className="ml-auto mono-md" data-metric-value>
-					{value}
+}) {
+	return (
+		<details className="group/sub" open={defaultOpen}>
+			<summary className="flex min-h-6 flex-wrap items-baseline justify-start gap-1 border-b border-dashed border-subtle py-1 group-last/sub:border-none group-open/sub:border-none group-open/sub:font-semibold">
+				<span className="body-md text-secondary" data-metric-label>
+					{label}
 				</span>
-			) : null}
-		</summary>
-		{children ? <div className="mb-3 flex flex-col">{children}</div> : null}
-	</details>
-)
+				<Icon
+					name="chevron-down"
+					height={16}
+					width={16}
+					className="relative top-1 text-tertiary transition-transform duration-100 group-open/sub:rotate-180"
+				/>
+				{value != null ? (
+					<span className="ml-auto mono-md" data-metric-value>
+						{value}
+					</span>
+				) : null}
+			</summary>
+			{children ? <div className="mb-3 flex flex-col">{children}</div> : null}
+		</details>
+	)
+}

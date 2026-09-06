@@ -103,19 +103,21 @@ function AlertTypeCard({
 	)
 }
 
-const TokenOptionRow = ({ innerProps, label, data }: any) => (
-	<div {...innerProps} className="flex cursor-pointer items-center gap-2 p-2">
-		{data.logo ? (
-			<img src={data.logo} alt="" width={18} height={18} className="size-[18px] rounded-full" />
-		) : (
-			<div className="size-[18px] rounded-full bg-(--bg-tertiary)" />
-		)}
-		<span className="text-sm">{label}</span>
-		{typeof data.price === 'number' ? (
-			<span className="ml-auto pl-3 font-mono text-xs text-ai-muted">{formatPriceLabel(data.price)}</span>
-		) : null}
-	</div>
-)
+function TokenOptionRow({ innerProps, label, data }: any) {
+	return (
+		<div {...innerProps} className="flex cursor-pointer items-center gap-2 p-2">
+			{data.logo ? (
+				<img src={data.logo} alt="" width={18} height={18} className="size-[18px] rounded-full" />
+			) : (
+				<div className="size-[18px] rounded-full bg-(--bg-tertiary)" />
+			)}
+			<span className="text-sm">{label}</span>
+			{typeof data.price === 'number' ? (
+				<span className="ml-auto pl-3 font-mono text-xs text-ai-muted">{formatPriceLabel(data.price)}</span>
+			) : null}
+		</div>
+	)
+}
 
 export const CreateAlertModal = memo(function CreateAlertModal({
 	dialogStore,

@@ -157,7 +157,7 @@ export const buildAdapterProtocolBreakdownApiUrl = ({
 	return `/api/public/protocols/charts?${searchParams.toString()}`
 }
 
-export const DimensionProtocolChartByType = ({
+export function DimensionProtocolChartByType({
 	protocolName,
 	protocolDisplayName,
 	adapterType,
@@ -175,7 +175,7 @@ export const DimensionProtocolChartByType = ({
 	breakdownNames: Array<string>
 	hallmarks?: Array<[number, string]>
 	title: string
-}) => {
+}) {
 	const { data, isLoading, error } = useQuery({
 		queryKey: ['dimension-adapter-chart-breakdown', protocolName, adapterType, dataType ?? null, chartType],
 		queryFn: () =>
@@ -231,7 +231,7 @@ export const DimensionProtocolChartByType = ({
 	)
 }
 
-const ChartByType = ({
+function ChartByType({
 	data,
 	title,
 	breakdownNames,
@@ -249,7 +249,7 @@ const ChartByType = ({
 	protocolDisplayName?: string
 	adapterType: string
 	hallmarks?: Array<[number, string]>
-}) => {
+}) {
 	const [chartInterval, changeChartInterval] = React.useState<LowercaseDwmcGrouping>('daily')
 	const uniqueBreakdownNames = React.useMemo(() => Array.from(new Set(breakdownNames)), [breakdownNames])
 	const {

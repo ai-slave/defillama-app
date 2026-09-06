@@ -5,7 +5,7 @@ import type { TNavLink, TNavLinks, TOldNavLink } from '../types'
 import { Menu } from './Menu'
 import { Settings } from './Settings'
 
-export const MobileNav = ({
+export function MobileNav({
 	mainLinks,
 	pinnedPages,
 	userDashboards,
@@ -21,7 +21,7 @@ export const MobileNav = ({
 	tvlOptions?: Array<{ name: string; key: string }>
 	oldMetricLinks: Array<TOldNavLink>
 	asPath: string
-}) => {
+}) {
 	const isResearch = asPath.startsWith('/research')
 	return (
 		<nav className="col-span-full flex items-center gap-2 bg-brand px-4 py-3 lg:hidden">

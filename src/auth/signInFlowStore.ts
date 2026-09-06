@@ -34,14 +34,18 @@ function removeStoredChallenge() {
 	if (typeof window === 'undefined') return
 	try {
 		window.sessionStorage.removeItem(STORAGE_KEY)
-	} catch {}
+	} catch {
+		// Storage can be unavailable or full; the feature degrades silently.
+	}
 }
 
 function storeChallenge(challenge: GoogleLinkChallenge) {
 	if (typeof window === 'undefined') return
 	try {
 		window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(challenge))
-	} catch {}
+	} catch {
+		// Storage can be unavailable or full; the feature degrades silently.
+	}
 }
 
 export function isGoogleLinkChallenge(value: unknown): value is GoogleLinkChallenge {

@@ -66,21 +66,19 @@ function TvlFilters({ options }: { options: Array<{ name: string; key: string }>
 	const { selectedValues, setSelectedValues } = useProtocolsFilterState(options)
 
 	return (
-		<>
-			<Select
-				allValues={options}
-				selectedValues={selectedValues}
-				setSelectedValues={setSelectedValues}
-				label="Include in TVL"
-				variant="default"
-				size="sm"
-				triggerProps={{
-					className: `${selectTriggerStyles('default', 'sm')} ml-auto whitespace-nowrap *:shrink-0`
-				}}
-				placement="bottom-end"
-				unmountOnHide={false}
-			/>
-		</>
+		<Select
+			allValues={options}
+			selectedValues={selectedValues}
+			setSelectedValues={setSelectedValues}
+			label="Include in TVL"
+			variant="default"
+			size="sm"
+			triggerProps={{
+				className: `${selectTriggerStyles('default', 'sm')} ml-auto whitespace-nowrap *:shrink-0`
+			}}
+			placement="bottom-end"
+			unmountOnHide={false}
+		/>
 	)
 }
 

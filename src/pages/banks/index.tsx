@@ -92,7 +92,7 @@ const chartCharts: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const Banks = () => {
+function Banks() {
 	return (
 		<Layout
 			title="Historical Bank Failures Database - DefiLlama"

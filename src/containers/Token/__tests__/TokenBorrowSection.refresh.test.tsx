@@ -225,11 +225,13 @@ test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 				await vi.waitFor(async () => {
 					await act(async () => expect(findButton('Retrying…').disabled).toBe(true))
 				})
+				// oxlint-disable-next-line no-loop-func -- the closure reads only the current scenario, and the loop awaits it before moving on.
 				await act(async () =>
 					collateral.resolve(Response.json({ rows: scenario === 'empty' ? [] : ssr.useAsCollateral }))
 				)
 				expect(container.querySelector('[data-ids]')?.textContent).toBe(retained)
 				expect(findButton('Retrying…').disabled).toBe(true)
+				// oxlint-disable-next-line no-loop-func -- see above.
 				await act(async () => {
 					if (recover) borrow.resolve(Response.json({ rows: scenario === 'empty' ? [] : ssr.borrowThis }))
 					else borrow.reject(new Error('Still unavailable'))

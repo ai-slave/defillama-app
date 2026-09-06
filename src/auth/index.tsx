@@ -518,7 +518,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 							provider: 'github'
 						})
 					})
-				} catch {}
+				} catch {
+					// Attribution is best effort; sign-in must not fail because of it.
+				}
 			}
 
 			return authData
@@ -575,7 +577,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 							provider: 'google'
 						})
 					})
-				} catch {}
+				} catch {
+					// Attribution is best effort; sign-in must not fail because of it.
+				}
 			}
 			clearSignupSource()
 			return result

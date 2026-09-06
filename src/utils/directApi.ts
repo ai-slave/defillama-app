@@ -42,15 +42,14 @@ const DIRECT_AUTH_CONFIGS = [
 	secretKind: DirectAuthSecretKind
 }>
 
-function normalizeDirectUrlEnv(value: string | undefined): string | undefined {
-	value = value?.trim()
+function normalizeDirectUrlEnv(raw: string | undefined): string | undefined {
+	const value = raw?.trim()
 	if (!value) return undefined
 	return value.replace(/\/+$/, '')
 }
 
-function normalizeDirectAuthSecret(value: string | undefined): string | undefined {
-	value = value?.trim()
-	return value || undefined
+function normalizeDirectAuthSecret(raw: string | undefined): string | undefined {
+	return raw?.trim() || undefined
 }
 
 function getCoreDirectAuthSecret(): string | undefined {

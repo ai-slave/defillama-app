@@ -32,6 +32,7 @@ export function createBoundedTaskScheduler(concurrency: number, isStopped: () =>
 			void task
 				.run()
 				.then(task.resolve, task.reject)
+				// oxlint-disable-next-line no-loop-func -- the closure updates the shared active-task counter when the task settles; that is the scheduler.
 				.finally(() => {
 					activeTaskCount -= 1
 					startPendingTasks()

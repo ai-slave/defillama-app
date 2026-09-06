@@ -22,7 +22,7 @@ const pageName = ['Protocols', 'ranked by', 'Net Project Treasury']
 const DEFAULT_SORTING_STATE = [{ id: 'netTreasury', desc: true }]
 const columnHelper = createColumnHelper<INetProjectTreasury>()
 
-const NetProjectTreasuries = (props: InferGetStaticPropsType<typeof getStaticProps>) => {
+function NetProjectTreasuries(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
 		<Layout
 			title="Net Treasury Rankings - Excl. Native Token - DefiLlama"

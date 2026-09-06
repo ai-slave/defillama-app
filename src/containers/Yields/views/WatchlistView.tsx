@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import { TabLink, tabTrackStyles } from '~/ui/Tab'
 
-export const WatchListTabs = () => {
+export function WatchListTabs() {
 	const router = useRouter()
 	const isTokensTab = router.pathname === '/watchlist' && router.query.tab === 'tokens'
 	return (

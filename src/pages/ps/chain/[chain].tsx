@@ -75,7 +75,7 @@ export const getStaticProps = withPerformanceLogging(
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const RevenueOnChain = (props: IAdapterByChainPageData) => {
+function RevenueOnChain(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title={`Price to Sales (P/S) Ratio on ${props.chain} - DefiLlama`}

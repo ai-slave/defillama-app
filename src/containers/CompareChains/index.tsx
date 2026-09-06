@@ -271,7 +271,7 @@ const updateRoute = (key: string, val: string | Array<string>, router: NextRoute
 	)
 }
 
-const ChartFilters = () => {
+function ChartFilters() {
 	const { selectedValues, setSelectedValues } = useChainsChartFilterState()
 
 	const selectedChartsNames = React.useMemo(() => {
@@ -360,11 +360,7 @@ export function CompareChains({ chains }: { chains: Array<ChainOption> }) {
 					/>
 				</div>
 
-				{selectedChains.length > 1 ? (
-					<>
-						<ChartFilters />
-					</>
-				) : null}
+				{selectedChains.length > 1 ? <ChartFilters /> : null}
 			</div>
 
 			{selectedChains.length > 1 ? (

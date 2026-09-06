@@ -156,7 +156,9 @@ function CopyBox({ text, label }: { text: string; label: string }) {
 								setTimeout(() => {
 									btn.textContent = 'Copy'
 								}, 2000)
-							} catch {}
+							} catch {
+								// Clipboard access can be denied; the copy control just does nothing.
+							}
 						}}
 						variant="ghost"
 						size="sm"
@@ -182,7 +184,9 @@ function CodeBlock({ children, label }: { children: string; label: string }) {
 						try {
 							await navigator.clipboard.writeText(children)
 							trackUmamiEvent('mcp-copy', { label })
-						} catch {}
+						} catch {
+							// Clipboard access can be denied; the copy control just does nothing.
+						}
 					}}
 					variant="ghost"
 					size="sm"
@@ -276,7 +280,9 @@ function ManualSetup() {
 							try {
 								await navigator.clipboard.writeText(clientConfigs[active].code)
 								trackUmamiEvent('mcp-copy', { label: clientConfigs[active].name })
-							} catch {}
+							} catch {
+								// Clipboard access can be denied; the copy control just does nothing.
+							}
 						}}
 						variant="ghost"
 						size="sm"

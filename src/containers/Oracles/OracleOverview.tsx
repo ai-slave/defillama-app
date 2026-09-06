@@ -54,7 +54,7 @@ function getStrikeTvlText({
 	return null
 }
 
-export const OracleOverview = ({
+export function OracleOverview({
 	chartData,
 	chainLinks,
 	oracle,
@@ -62,7 +62,7 @@ export const OracleOverview = ({
 	extraTvl,
 	protocolTableData,
 	chain = null
-}: OracleOverviewPageData) => {
+}: OracleOverviewPageData) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const protocolColumns = useMemo(
 		() => [

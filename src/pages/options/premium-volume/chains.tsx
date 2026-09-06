@@ -22,7 +22,7 @@ export const getStaticProps = withPerformanceLogging(`${adapterType}/${dataType}
 
 const pageName = ['Chains', 'ranked by', type]
 
-const OptionsPremiumVolumeByChain = (props: IChainsByAdapterPageData) => {
+function OptionsPremiumVolumeByChain(props: IChainsByAdapterPageData) {
 	return (
 		<Layout
 			title="Options Premium Volume by Chain - DefiLlama"

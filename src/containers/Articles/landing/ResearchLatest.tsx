@@ -78,7 +78,7 @@ function normalizeItem(article: ArticleDocument, index: number): NormalizedItem 
 	}
 }
 
-const CardSlot = ({
+function CardSlot({
 	item,
 	titlePlacement = 'bottom',
 	className
@@ -86,14 +86,15 @@ const CardSlot = ({
 	item: NormalizedItem | undefined
 	titlePlacement?: TitlePlacement
 	className: string
-}) =>
-	item ? (
+}) {
+	return item ? (
 		<div className={className}>
 			<ContentCard item={item} titlePlacement={titlePlacement} className="h-full" />
 		</div>
 	) : null
+}
 
-const ContentCard = ({
+function ContentCard({
 	item,
 	titlePlacement,
 	className = ''
@@ -101,31 +102,33 @@ const ContentCard = ({
 	item: NormalizedItem
 	titlePlacement: TitlePlacement
 	className?: string
-}) => (
-	<Link href={item.href} className={`group relative flex flex-col overflow-hidden rounded-[16px] ${className}`}>
-		<div className="absolute inset-0">
-			{item.image ? (
-				<div className="relative h-full w-full">
-					<img
-						src={item.image}
-						alt={item.alt}
-						className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-						loading="lazy"
-						decoding="async"
-					/>
-				</div>
-			) : null}
-		</div>
+}) {
+	return (
+		<Link href={item.href} className={`group relative flex flex-col overflow-hidden rounded-[16px] ${className}`}>
+			<div className="absolute inset-0">
+				{item.image ? (
+					<div className="relative h-full w-full">
+						<img
+							src={item.image}
+							alt={item.alt}
+							className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
+				) : null}
+			</div>
 
-		<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-research-white px-2 py-0.5 text-[10px] font-semibold text-on-brand uppercase backdrop-blur-sm">
-			{item.label}
-		</span>
+			<span className="absolute top-[12px] left-[12px] rounded-[4px] border border-research-white px-2 py-0.5 text-[10px] font-semibold text-on-brand uppercase backdrop-blur-sm">
+				{item.label}
+			</span>
 
-		<TitleOverlay title={item.title} placement={titlePlacement} />
-	</Link>
-)
+			<TitleOverlay title={item.title} placement={titlePlacement} />
+		</Link>
+	)
+}
 
-const SquareBannerCard = ({ banner }: { banner: Banner }) => {
+function SquareBannerCard({ banner }: { banner: Banner }) {
 	const content = (
 		// eslint-disable-next-line @next/next/no-img-element
 		<img

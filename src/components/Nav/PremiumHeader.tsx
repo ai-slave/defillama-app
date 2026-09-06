@@ -3,7 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { useIsClient } from '~/hooks/useIsClient'
 import { freeTrialBadgeStyles, SidebarDivider } from './shared'
 
-export const PremiumHeader = () => {
+export function PremiumHeader() {
 	const { hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
 	const hasMounted = useIsClient()
 

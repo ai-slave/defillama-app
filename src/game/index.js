@@ -1,7 +1,7 @@
 /* eslint-disable nextjs/no-css-tags */
 import Head from 'next/head'
 
-const Game = () => {
+function Game() {
 	React.useEffect(() => {
 		const startGame = async () => {
 			const data = await fetch('/game/index.js').then((r) => r.text())

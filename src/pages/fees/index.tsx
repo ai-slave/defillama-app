@@ -45,7 +45,7 @@ export const getStaticProps = withPerformanceLogging(`${type}/index`, async () =
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const FeesOnAllChains = (props: IAdapterByChainPageData) => {
+function FeesOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="Protocol Fees Rankings - Fees Generated - DefiLlama"

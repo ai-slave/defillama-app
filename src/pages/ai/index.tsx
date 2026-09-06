@@ -184,7 +184,7 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 	)
 }
 
-const TrialBadge = ({ centered = false }: { centered?: boolean }) => {
+function TrialBadge({ centered = false }: { centered?: boolean }) {
 	const { isAuthenticated, hasActiveSubscription } = useAuthContext()
 	if (isAuthenticated && hasActiveSubscription) return null
 
@@ -195,63 +195,67 @@ const TrialBadge = ({ centered = false }: { centered?: boolean }) => {
 	)
 }
 
-const MobileAppButton = () => (
-	<BasicLink
-		href="/app"
-		data-umami-event="mobile-app-ai-landing-hero-click"
-		className={clsx(
-			'group relative z-10 inline-flex items-center justify-center gap-2.5 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-200',
-			'border border-ai-line-on-white bg-ai-white text-ai-primary hover:-translate-y-0.5 hover:border-ai-gold/50 hover:shadow-ai-halo',
-			'dark:border-ai-line dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30 dark:hover:shadow-ai-halo-faint'
-		)}
-	>
-		<img src="/assets/app/app-icon.png" alt="" width={20} height={20} className="size-5 shrink-0 rounded-md" />
-		<span className="whitespace-nowrap">Get the mobile app</span>
-	</BasicLink>
-)
+function MobileAppButton() {
+	return (
+		<BasicLink
+			href="/app"
+			data-umami-event="mobile-app-ai-landing-hero-click"
+			className={clsx(
+				'group relative z-10 inline-flex items-center justify-center gap-2.5 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-200',
+				'border border-ai-line-on-white bg-ai-white text-ai-primary hover:-translate-y-0.5 hover:border-ai-gold/50 hover:shadow-ai-halo',
+				'dark:border-ai-line dark:bg-ai-ink-raised dark:hover:border-ai-gold-bright/30 dark:hover:shadow-ai-halo-faint'
+			)}
+		>
+			<img src="/assets/app/app-icon.png" alt="" width={20} height={20} className="size-5 shrink-0 rounded-md" />
+			<span className="whitespace-nowrap">Get the mobile app</span>
+		</BasicLink>
+	)
+}
 
-const MobileAppCard = () => (
-	<div className="relative overflow-hidden rounded-2xl border border-ai-line bg-ai-surface-card">
-		<div className="relative z-10 flex flex-col gap-5 p-5 sm:p-6 sm:pr-44">
-			<div className="flex items-start gap-3">
-				<img src="/assets/app/app-icon.png" alt="" width={40} height={40} className="size-10 shrink-0 rounded-xl" />
-				<div>
-					<h3 className="font-semibold text-ai-primary">Take LlamaAI with you</h3>
-					<p className="mt-1 max-w-md text-sm text-ai-secondary dark:text-ai-tertiary">
-						Full theses, forecasts, backtests and alerts on iOS and Android — plus extra free queries.
-					</p>
+function MobileAppCard() {
+	return (
+		<div className="relative overflow-hidden rounded-2xl border border-ai-line bg-ai-surface-card">
+			<div className="relative z-10 flex flex-col gap-5 p-5 sm:p-6 sm:pr-44">
+				<div className="flex items-start gap-3">
+					<img src="/assets/app/app-icon.png" alt="" width={40} height={40} className="size-10 shrink-0 rounded-xl" />
+					<div>
+						<h3 className="font-semibold text-ai-primary">Take LlamaAI with you</h3>
+						<p className="mt-1 max-w-md text-sm text-ai-secondary dark:text-ai-tertiary">
+							Full theses, forecasts, backtests and alerts on iOS and Android — plus extra free queries.
+						</p>
+					</div>
+				</div>
+				<div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+					<StoreButtons eventSuffix="ai-landing" size="sm" className="sm:items-start" />
+					<BasicLink
+						href="/app"
+						data-umami-event="mobile-app-ai-landing-card-click"
+						className="group inline-flex items-center gap-1 text-sm font-medium text-ai-gold transition-colors hover:text-ai-bronze-deep dark:text-ai-gold-bright dark:hover:text-ai-gold-soft"
+					>
+						Learn more
+						<Icon
+							name="arrow-right"
+							height={12}
+							width={12}
+							className="transition-transform duration-200 group-hover:translate-x-0.5"
+						/>
+					</BasicLink>
 				</div>
 			</div>
-			<div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-				<StoreButtons eventSuffix="ai-landing" size="sm" className="sm:items-start" />
-				<BasicLink
-					href="/app"
-					data-umami-event="mobile-app-ai-landing-card-click"
-					className="group inline-flex items-center gap-1 text-sm font-medium text-ai-gold transition-colors hover:text-ai-bronze-deep dark:text-ai-gold-bright dark:hover:text-ai-gold-soft"
-				>
-					Learn more
-					<Icon
-						name="arrow-right"
-						height={12}
-						width={12}
-						className="transition-transform duration-200 group-hover:translate-x-0.5"
-					/>
-				</BasicLink>
-			</div>
+			<img
+				src="/assets/app/thesis.webp"
+				alt=""
+				aria-hidden="true"
+				width={760}
+				height={1245}
+				loading="lazy"
+				className="pointer-events-none absolute top-6 -right-6 hidden w-40 -rotate-6 rounded-3xl border border-ai-line shadow-xl sm:block"
+			/>
 		</div>
-		<img
-			src="/assets/app/thesis.webp"
-			alt=""
-			aria-hidden="true"
-			width={760}
-			height={1245}
-			loading="lazy"
-			className="pointer-events-none absolute top-6 -right-6 hidden w-40 -rotate-6 rounded-3xl border border-ai-line shadow-xl sm:block"
-		/>
-	</div>
-)
+	)
+}
 
-const CTAButton = ({ className = '', label }: { className?: string; label?: string }) => {
+function CTAButton({ className = '', label }: { className?: string; label?: string }) {
 	const { isAuthenticated, hasActiveSubscription, loaders } = useAuthContext()
 
 	if (loaders.userLoading) {
@@ -450,7 +454,9 @@ export const getStaticProps = withPerformanceLogging('ai', async () => {
 				landingQuestions = landingQuestions.sort(() => Math.random() - 0.5).slice(0, 9)
 			}
 		}
-	} catch {}
+	} catch {
+		// The landing renders without suggested questions if the fetch fails.
+	}
 
 	return {
 		props: { landingQuestions },
@@ -1021,7 +1027,7 @@ export default function LlamaAIGetStarted({ landingQuestions }: { landingQuestio
 	)
 }
 
-const FAQ = ({ question, children }: { question: string; children: React.ReactNode }) => {
+function FAQ({ question, children }: { question: string; children: React.ReactNode }) {
 	return (
 		<details className="group">
 			<summary className="flex cursor-pointer items-center gap-4 py-4 md:py-5">

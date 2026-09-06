@@ -41,5 +41,7 @@ export async function set(key: string, data: unknown, ttlSeconds: number): Promi
 		} else {
 			await client.set(key, payload)
 		}
-	} catch {}
+	} catch {
+		// Cache writes are best effort.
+	}
 }

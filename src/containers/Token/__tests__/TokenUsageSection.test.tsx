@@ -15,7 +15,7 @@ const { DynamicPaginatedTable, paginatedTableCalls } = vi.hoisted(() => {
 		shell: 'default' | 'none' | undefined
 	}> = []
 
-	const DynamicPaginatedTable = ({ table, pageSizeOptions, shell }: any) => {
+	function DynamicPaginatedTable({ table, pageSizeOptions, shell }: any) {
 		const rows = table.getRowModel().rows
 		const rowCount = table.getRowCount()
 		const { pageIndex, pageSize } = table.getState().pagination

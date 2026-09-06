@@ -2,7 +2,7 @@ import { BRIDGES_SHOWING_ADDRESSES, useLocalStorageSettingsManager } from '~/con
 import { Icon } from '~/ui/Icon'
 import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
 
-export const AddressesTableSwitch = () => {
+export function AddressesTableSwitch() {
 	const [bridgesSettings, toggleBridgesSettings] = useLocalStorageSettingsManager('bridges')
 	const isBridgesShowingAddresses = bridgesSettings[BRIDGES_SHOWING_ADDRESSES]
 

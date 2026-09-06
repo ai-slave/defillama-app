@@ -850,29 +850,35 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 	)
 }
 
-const ChartLoadingSpinner = () => <div className="size-4 animate-spin rounded-full border-b-2 border-ai-accent-blue" />
+function ChartLoadingSpinner() {
+	return <div className="size-4 animate-spin rounded-full border-b-2 border-ai-accent-blue" />
+}
 
-const ChartLoadingPlaceholder = ({ chartTypes }: { chartTypes: Array<string> | undefined }) => (
-	<div className="flex flex-col items-center justify-center gap-2 rounded-md border border-ai-line px-1 py-8">
-		<ChartLoadingSpinner />
-		<p className="text-ai-tertiary">
-			{chartTypes?.length ? (
-				<>
-					Creating {chartTypes.join(', ')} visualization{chartTypes.length > 1 ? 's' : ''}&hellip;
-				</>
-			) : (
-				<>Creating visualization&hellip;</>
-			)}
-		</p>
-	</div>
-)
+function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | undefined }) {
+	return (
+		<div className="flex flex-col items-center justify-center gap-2 rounded-md border border-ai-line px-1 py-8">
+			<ChartLoadingSpinner />
+			<p className="text-ai-tertiary">
+				{chartTypes?.length ? (
+					<>
+						Creating {chartTypes.join(', ')} visualization{chartTypes.length > 1 ? 's' : ''}&hellip;
+					</>
+				) : (
+					<>Creating visualization&hellip;</>
+				)}
+			</p>
+		</div>
+	)
+}
 
-const ChartErrorPlaceholder = () => (
-	<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
-		<Icon name="alert-triangle" height={16} width={16} />
-		<p>Chart generation encountered an issue</p>
-	</div>
-)
+function ChartErrorPlaceholder() {
+	return (
+		<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
+			<Icon name="alert-triangle" height={16} width={16} />
+			<p>Chart generation encountered an issue</p>
+		</div>
+	)
+}
 
 export function ChartRenderer({
 	charts,

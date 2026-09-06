@@ -154,7 +154,7 @@ export const filterUnlockTableProtocols = (
 	return filteredProtocols
 }
 
-export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: IUnlocksTableProps) => {
+export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols }: IUnlocksTableProps) {
 	const router = useRouter()
 	const unlockTypes = useMemo(() => getUnlockTypes(protocols), [protocols])
 	const unlockTypeOptions = useMemo(
@@ -230,7 +230,9 @@ export const UnlocksTable = ({ protocols, showOnlyWatchlist, savedProtocols }: I
 		let parsedColumnVisibility: Record<string, boolean> = {}
 		try {
 			parsedColumnVisibility = JSON.parse(columnsInStorage) as Record<string, boolean>
-		} catch {}
+		} catch {
+			// A corrupt stored value falls back to the defaults.
+		}
 
 		const columnVisibility = {
 			...defaultColumnVisibility,

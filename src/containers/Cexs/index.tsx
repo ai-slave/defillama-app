@@ -90,7 +90,7 @@ function CustomRangeCell({ state, value }: { state: CustomRangeState; value: num
 	}
 }
 
-export const Cexs = ({ cexs }: { cexs: Array<ICex> }) => {
+export function Cexs({ cexs }: { cexs: Array<ICex> }) {
 	const router = useRouter()
 	const { authorizedFetch, hasActiveSubscription, isAuthenticated, loaders } = useAuthContext()
 

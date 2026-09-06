@@ -89,7 +89,7 @@ type TokenPnlContentProps = {
 	selectedCoinInfo: TokenSearchResult | null
 }
 
-const TokenPnlContent = ({
+function TokenPnlContent({
 	routerReady,
 	isLoading,
 	isFetching,
@@ -106,7 +106,7 @@ const TokenPnlContent = ({
 	comparisonData,
 	selectedCoinId,
 	selectedCoinInfo
-}: TokenPnlContentProps) => {
+}: TokenPnlContentProps) {
 	if (!routerReady || isLoading || isFetching) {
 		return <PanelLoadingStatus />
 	}

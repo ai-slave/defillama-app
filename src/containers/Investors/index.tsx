@@ -49,6 +49,7 @@ function useProjectModules(projects: typeof ALL_PROJECTS) {
 			if (!project.dashboardId || project.comingSoon) continue
 			const loader = getDashboardModule(project.dashboardId)
 			if (loader) {
+				// oxlint-disable-next-line no-loop-func -- the closure reads the cancellation flag that the effect cleanup sets.
 				loader.then((mod) => {
 					if (!cancelled && mod?.tabs) {
 						setTabsByProject((prev) => (prev[project.id] === mod.tabs ? prev : { ...prev, [project.id]: mod.tabs }))

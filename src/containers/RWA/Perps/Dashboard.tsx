@@ -1622,7 +1622,7 @@ function RWAPerpsDraftFilterEditor({
 	)
 }
 
-const StatCard = ({
+function StatCard({
 	label,
 	tooltip,
 	value,
@@ -1634,7 +1634,7 @@ const StatCard = ({
 	value: React.ReactNode
 	change?: number | null
 	changeTooltip?: string
-}) => {
+}) {
 	const changeDecorationClass =
 		change == null ? '' : change > 0 ? 'text-data-up' : change < 0 ? 'text-data-down' : 'text-secondary'
 
@@ -2298,16 +2298,14 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 				<RowLinksWithDropdown links={props.data.assetLinks} activeLink={props.data.asset} />
 			) : null}
 			{showForexToggle ? (
-				<>
-					<Card padding="sm" className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-						<p className="body-sm text-tertiary">
-							The RWA Perpetuals Dashboard only covers real world assets such as stocks, RWA tokens, forex, and other
-							significant financial indices. This excludes digital assets such as BTC or ETH perpetual contracts. RWA
-							perpetual contracts on centralized exchanges are excluded by default and can be included with the CEX
-							Venues filter.
-						</p>
-					</Card>
-				</>
+				<Card padding="sm" className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+					<p className="body-sm text-tertiary">
+						The RWA Perpetuals Dashboard only covers real world assets such as stocks, RWA tokens, forex, and other
+						significant financial indices. This excludes digital assets such as BTC or ETH perpetual contracts. RWA
+						perpetual contracts on centralized exchanges are excluded by default and can be included with the CEX Venues
+						filter.
+					</p>
+				</Card>
 			) : null}
 			<RWAPerpsMarketFilters
 				filters={visibleMarketFilters}

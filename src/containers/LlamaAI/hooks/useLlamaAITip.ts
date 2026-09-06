@@ -35,7 +35,9 @@ function writeCachedTip(userId: string | null, tip: TipDTO | null) {
 	try {
 		if (tip) window.localStorage.setItem(key, JSON.stringify(tip))
 		else window.localStorage.removeItem(key)
-	} catch {}
+	} catch {
+		// Storage can be unavailable or full; the feature degrades silently.
+	}
 }
 
 export function useActiveTip(): {

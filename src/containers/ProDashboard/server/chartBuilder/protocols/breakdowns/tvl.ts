@@ -98,7 +98,7 @@ export const getTvlBreakdownData = async (
 	chains: Array<string>,
 	categories: Array<string>,
 	topN: number,
-	groupByParent: boolean = false,
+	groupByParent = false,
 	chainFilterMode: 'include' | 'exclude' = 'include',
 	categoryFilterMode: 'include' | 'exclude' = 'include'
 ): Promise<ProtocolBreakdownData> => {

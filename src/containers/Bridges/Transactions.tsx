@@ -468,7 +468,7 @@ function EmptyState({ hasFetched }: { hasFetched: boolean }) {
 	)
 }
 
-export const BridgeTransactionsPage = ({ bridges }: { bridges: Array<RawBridgeInfo> }) => {
+export function BridgeTransactionsPage({ bridges }: { bridges: Array<RawBridgeInfo> }) {
 	const defaultEndDate = new Date()
 	const defaultStartDate = new Date(defaultEndDate)
 	defaultStartDate.setMonth(defaultEndDate.getMonth() - 1)

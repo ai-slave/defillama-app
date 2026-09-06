@@ -22,7 +22,7 @@ export const getStaticProps = withPerformanceLogging(`${adapterType}/${dataType}
 
 const pageName = ['Chains', 'ranked by', type]
 
-const NormalizedVolumeByChain = (props: IChainsByAdapterPageData) => {
+function NormalizedVolumeByChain(props: IChainsByAdapterPageData) {
 	return (
 		<Layout
 			title="Normalized DEX Volume by Chain - DefiLlama"

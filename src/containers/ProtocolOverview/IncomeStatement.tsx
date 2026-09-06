@@ -75,7 +75,7 @@ interface IncomeStatementProps {
 	description?: string | undefined
 }
 
-export const IncomeStatement = ({
+export function IncomeStatement({
 	name,
 	incomeStatement,
 	hasIncentives = false,
@@ -85,7 +85,7 @@ export const IncomeStatement = ({
 	showTitles = true,
 	titleClassName,
 	description
-}: IncomeStatementProps) => {
+}: IncomeStatementProps) {
 	const [groupBy, setGroupBy] = useState<IncomeStatementGroupBy>('Quarterly')
 	const [sankeyGroupBy, setSankeyGroupBy] = useState<IncomeStatementGroupBy>('Quarterly')
 	const [selectedSankeyPeriod, setSelectedSankeyPeriod] = useState<string | null>(null)
@@ -810,7 +810,7 @@ export const IncomeStatement = ({
 	)
 }
 
-const IncomeStatementByLabel = ({
+function IncomeStatementByLabel({
 	protocolName,
 	groupBy,
 	data,
@@ -832,7 +832,7 @@ const IncomeStatementByLabel = ({
 	breakdownByLabels: Array<string>
 	breakdownMethodology: Record<string, string>
 	alignWithBreakdownRows: boolean
-}) => {
+}) {
 	const isEarnings = dataType === 'earnings'
 	const hasBreakdownRows = breakdownByLabels.length > 0
 	const showComparison = groupBy !== 'Cumulative'
@@ -972,7 +972,7 @@ const IncomeStatementByLabel = ({
 	)
 }
 
-const PerformanceTooltipContent = ({
+function PerformanceTooltipContent({
 	currentValue,
 	previousValue,
 	groupBy,
@@ -984,7 +984,7 @@ const PerformanceTooltipContent = ({
 	groupBy: IncomeStatementGroupBy
 	dataType: IncomeStatementDataType
 	label?: string
-}) => {
+}) {
 	if (previousValue == null || currentValue == null) return null
 	const valueChange = currentValue - previousValue
 	const percentageChange = previousValue !== 0 ? (valueChange / Math.abs(previousValue)) * 100 : 0

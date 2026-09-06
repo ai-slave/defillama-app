@@ -18,19 +18,19 @@ const {
 	}> = []
 	const liquidationsSummaryCalls: Array<{ items: Array<{ label: string; value: number }> }> = []
 	const tableWithSearchCalls: Array<{ csvFileName?: string; dataLength: number; placeholder?: string }> = []
-	const DynamicLiquidationsSummaryStats = ({ items }: { items: Array<{ label: string; value: number }> }) => {
+	function DynamicLiquidationsSummaryStats({ items }: { items: Array<{ label: string; value: number }> }) {
 		liquidationsSummaryCalls.push({ items })
 		return <div>Liquidations summary</div>
 	}
-	const DynamicLiquidationsDistributionChart = (props: {
+	function DynamicLiquidationsDistributionChart(props: {
 		hideTokenSelector?: boolean
 		defaultBreakdownMode?: string
 		title?: string
-	}) => {
+	}) {
 		liquidationsDistributionChartCalls.push(props)
 		return <div>Liquidations distribution</div>
 	}
-	const DynamicTableWithSearch = ({ data, leadingControls, placeholder, csvFileName }: any) => {
+	function DynamicTableWithSearch({ data, leadingControls, placeholder, csvFileName }: any) {
 		tableWithSearchCalls.push({ csvFileName, dataLength: data.length, placeholder })
 		return <div>{leadingControls}</div>
 	}

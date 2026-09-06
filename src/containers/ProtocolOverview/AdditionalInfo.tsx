@@ -36,20 +36,22 @@ interface SectionHeaderProps {
 	children: React.ReactNode
 }
 
-const SectionHeader = ({ id, children }: SectionHeaderProps) => (
-	<h2 className="group relative flex items-center gap-1 heading-xs" id={id}>
-		{children}
-		<a
-			aria-hidden="true"
-			tabIndex={-1}
-			href={`#${id}`}
-			className="absolute top-0 right-0 z-10 flex size-full items-center"
-		/>
-		<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-	</h2>
-)
+function SectionHeader({ id, children }: SectionHeaderProps) {
+	return (
+		<h2 className="group relative flex items-center gap-1 heading-xs" id={id}>
+			{children}
+			<a
+				aria-hidden="true"
+				tabIndex={-1}
+				href={`#${id}`}
+				className="absolute top-0 right-0 z-10 flex size-full items-center"
+			/>
+			<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
+		</h2>
+	)
+}
 
-export const AdditionalInfo = (props: IProtocolOverviewPageData) => {
+export function AdditionalInfo(props: IProtocolOverviewPageData) {
 	const cardsToStackOnLeft =
 		(props.fees?.childMethodologies?.length ? 1 : 0) +
 		(props.revenue?.childMethodologies?.length ? 1 : 0) +
@@ -164,7 +166,7 @@ export function UserActivity({
 	)
 }
 
-export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
+export function ProtocolInfo(props: IProtocolOverviewPageData) {
 	const childProtocols = props.childProtocols ?? []
 	// Parent protocols spread across categories: the protocol's own category leads, children add the rest.
 	const categories: Array<string> = []
@@ -269,23 +271,25 @@ export const ProtocolInfo = (props: IProtocolOverviewPageData) => {
 	)
 }
 
-const ChildProtocolRow = ({ child }: { child: NonNullable<IProtocolOverviewPageData['childProtocols']>[number] }) => (
-	<li className="flex items-center gap-2 rounded-lg bg-surface-elevated-1 p-2">
-		<TokenLogo name={child.name} kind="token" size={24} alt="" />
-		<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-			<BasicLink href={child.href} className="truncate label-md text-primary hover:text-link hover:underline">
-				{child.name}
-			</BasicLink>
-			{child.category ? <span className="truncate label-sm text-secondary">{child.category}</span> : null}
-		</div>
-		{/* Fixed width: IconsRow sizes its overflow from its own measured width, so a shrink-to-fit cell renders nothing. */}
-		<div className="w-24 shrink-0">
-			<IconsRow items={toChainIconItems(child.chains, (chain) => chainHref('/chain', chain))} align="end" />
-		</div>
-	</li>
-)
+function ChildProtocolRow({ child }: { child: NonNullable<IProtocolOverviewPageData['childProtocols']>[number] }) {
+	return (
+		<li className="flex items-center gap-2 rounded-lg bg-surface-elevated-1 p-2">
+			<TokenLogo name={child.name} kind="token" size={24} alt="" />
+			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+				<BasicLink href={child.href} className="truncate label-md text-primary hover:text-link hover:underline">
+					{child.name}
+				</BasicLink>
+				{child.category ? <span className="truncate label-sm text-secondary">{child.category}</span> : null}
+			</div>
+			{/* Fixed width: IconsRow sizes its overflow from its own measured width, so a shrink-to-fit cell renders nothing. */}
+			<div className="w-24 shrink-0">
+				<IconsRow items={toChainIconItems(child.chains, (chain) => chainHref('/chain', chain))} align="end" />
+			</div>
+		</li>
+	)
+}
 
-const Methodology = (props: IProtocolOverviewPageData) => {
+function Methodology(props: IProtocolOverviewPageData) {
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
 			<SectionHeader id="methodology">Methodology</SectionHeader>
@@ -355,13 +359,13 @@ const Methodology = (props: IProtocolOverviewPageData) => {
 	)
 }
 
-const MethodologyByAdapter = ({
+function MethodologyByAdapter({
 	adapter,
 	title
 }: {
 	adapter: IProtocolOverviewPageData['fees'] | null
 	title: string
-}) => {
+}) {
 	if (adapter?.childMethodologies?.length) {
 		return (
 			<div className="flex flex-col">
@@ -446,7 +450,7 @@ function Yields(props: IProtocolOverviewPageData) {
 	)
 }
 
-export const Hacks = (props: Pick<IProtocolOverviewPageData, 'hacks' | 'id' | 'name'>) => {
+export function Hacks(props: Pick<IProtocolOverviewPageData, 'hacks' | 'id' | 'name'>) {
 	if (!props.hacks?.length) return null
 	return (
 		<Card as="section" padding="sm" className="col-span-1 flex flex-col gap-3 body-md">
@@ -527,7 +531,7 @@ export const Hacks = (props: Pick<IProtocolOverviewPageData, 'hacks' | 'id' | 'n
 	)
 }
 
-const Competitors = (props: IProtocolOverviewPageData) => {
+function Competitors(props: IProtocolOverviewPageData) {
 	const competitors = props.competitors ?? EMPTY_COMPETITORS
 	const [shouldRenderModal, setShouldRenderModal] = useState(false)
 	const subscribeModalStore = Ariakit.useDialogStore({ open: shouldRenderModal, setOpen: setShouldRenderModal })

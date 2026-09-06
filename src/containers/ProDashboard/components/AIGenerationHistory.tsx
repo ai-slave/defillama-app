@@ -23,49 +23,42 @@ export function AIGenerationHistory({ aiGenerated }: AIGenerationHistoryProps) {
 				<span>View AI Generation History</span>
 				<Icon name="chevron-down" height={14} width={14} className="transition-transform group-open:rotate-180" />
 			</summary>
-			<>
-				{sessions.map((session, index) => (
-					<div
-						key={session.sessionId}
-						className="mt-2 flex flex-nowrap gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 pl-1 md:p-4 md:pl-2"
-					>
-						<Icon
-							name="sparkles"
-							height={14}
-							width={14}
-							className="shrink-0 text-pro-info-400 dark:text-pro-info-200"
-						/>
-						<div className="flex flex-col gap-1">
-							<div className="-mt-0.5 flex flex-wrap items-center gap-2 text-xs">
-								<h2 className="text-sm font-medium">
-									{session.mode === 'create' ? 'Initial Generation' : 'Iteration'} #{sessions.length - index}
-								</h2>
-								<p className="text-pro-text-form">{formatDateTime(session.timestamp, { timeZone: 'UTC' }) ?? '-'}</p>
-								{session.rating !== undefined && session.rating !== -1 ? (
-									<p className="flex items-center gap-1">
-										<span className="sr-only">Rating: </span>
-										{session.rating === -99 ? (
-											<>
-												<Icon name="arrow-left" height={12} width={12} className="text-orange-500" />
-												<span className="text-orange-500">Undone</span>
-											</>
-										) : (
-											<>
-												<Icon name="star" height={12} width={12} className="fill-current text-warning" />
-												<span>{session.rating}/5</span>
-											</>
-										)}
-									</p>
-								) : null}
-							</div>
-							<p>
-								<span className="font-medium">Prompt: </span>
-								<span className="text-pro-text-label">{session.prompt || 'No prompt recorded'}</span>
-							</p>
+			{sessions.map((session, index) => (
+				<div
+					key={session.sessionId}
+					className="mt-2 flex flex-nowrap gap-2 rounded-md border border-pro-cards-border bg-pro-cards-bg p-2 pl-1 md:p-4 md:pl-2"
+				>
+					<Icon name="sparkles" height={14} width={14} className="shrink-0 text-pro-info-400 dark:text-pro-info-200" />
+					<div className="flex flex-col gap-1">
+						<div className="-mt-0.5 flex flex-wrap items-center gap-2 text-xs">
+							<h2 className="text-sm font-medium">
+								{session.mode === 'create' ? 'Initial Generation' : 'Iteration'} #{sessions.length - index}
+							</h2>
+							<p className="text-pro-text-form">{formatDateTime(session.timestamp, { timeZone: 'UTC' }) ?? '-'}</p>
+							{session.rating !== undefined && session.rating !== -1 ? (
+								<p className="flex items-center gap-1">
+									<span className="sr-only">Rating: </span>
+									{session.rating === -99 ? (
+										<>
+											<Icon name="arrow-left" height={12} width={12} className="text-orange-500" />
+											<span className="text-orange-500">Undone</span>
+										</>
+									) : (
+										<>
+											<Icon name="star" height={12} width={12} className="fill-current text-warning" />
+											<span>{session.rating}/5</span>
+										</>
+									)}
+								</p>
+							) : null}
 						</div>
+						<p>
+							<span className="font-medium">Prompt: </span>
+							<span className="text-pro-text-label">{session.prompt || 'No prompt recorded'}</span>
+						</p>
 					</div>
-				))}
-			</>
+				</div>
+			))}
 		</details>
 	)
 }

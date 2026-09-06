@@ -249,7 +249,7 @@ export default function SyrupActivity() {
 	const txRows = useMemo<Array<TxRow>>(() => {
 		return stSyrupTxes.map((tx) => ({
 			id: tx.id,
-			timestamp: parseInt(tx.timestamp),
+			timestamp: parseInt(tx.timestamp, 10),
 			type: tx.type,
 			assetsAmount: parseWad(tx.assetsAmount, 18),
 			account: tx.account.id
@@ -259,7 +259,7 @@ export default function SyrupActivity() {
 	const dripRows = useMemo<Array<DripRow>>(() => {
 		return dripTxes.map((tx) => ({
 			id: tx.id,
-			timestamp: parseInt(tx.timestamp),
+			timestamp: parseInt(tx.timestamp, 10),
 			type: tx.type,
 			amount: parseWad(tx.amount, 18),
 			account: tx.account.id
@@ -312,7 +312,7 @@ export default function SyrupActivity() {
 	const migrationChart = useMemo<MultiSeriesChartDataset>(() => {
 		const map = new Map<number, number>()
 		for (const tx of syrupTxes) {
-			const ts = parseInt(tx.timestamp)
+			const ts = parseInt(tx.timestamp, 10)
 			const mk = monthTimestampMs(ts)
 			const amount = parseWad(tx.tokensMigrated, 18)
 			map.set(mk, (map.get(mk) ?? 0) + amount)

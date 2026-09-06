@@ -22,7 +22,7 @@ export const getStaticProps = withPerformanceLogging(`${adapterType}/${dataType}
 
 const pageName = ['Chains', 'ranked by', type]
 
-const OptionsNotionalVolumeByChain = (props: IChainsByAdapterPageData) => {
+function OptionsNotionalVolumeByChain(props: IChainsByAdapterPageData) {
 	return (
 		<Layout
 			title="Options Notional Volume by Chain - DefiLlama"

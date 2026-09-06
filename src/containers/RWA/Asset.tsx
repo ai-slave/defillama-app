@@ -79,7 +79,7 @@ interface ClassificationItemProps {
 	description?: string
 }
 
-const ClassificationItem = ({ label, value, positive, description }: ClassificationItemProps) => {
+function ClassificationItem({ label, value, positive, description }: ClassificationItemProps) {
 	if (value == null && positive == null) return null
 
 	const isBoolean = positive != null
@@ -118,15 +118,7 @@ const ClassificationItem = ({ label, value, positive, description }: Classificat
 }
 
 // KYC items: true = warning (amber), false = green (no KYC required is good)
-const KYCItem = ({
-	label,
-	required,
-	description
-}: {
-	label: string
-	required: boolean | null
-	description?: string
-}) => {
+function KYCItem({ label, required, description }: { label: string; required: boolean | null; description?: string }) {
 	if (required == null) return null
 
 	return (
@@ -147,15 +139,17 @@ const KYCItem = ({
 	)
 }
 
-const SectionCard = ({ title, children }: { title: React.ReactNode; children: React.ReactNode }) => (
-	<Card as="section" padding="sm" className="flex flex-col gap-3">
-		<h2 className="heading-xs">{title}</h2>
-		{children}
-	</Card>
-)
+function SectionCard({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
+	return (
+		<Card as="section" padding="sm" className="flex flex-col gap-3">
+			<h2 className="heading-xs">{title}</h2>
+			{children}
+		</Card>
+	)
+}
 
 /** Hero stat mirroring the protocol page's PrimaryValue: big value expanding to per-chain rows. */
-const AssetPrimaryValue = ({
+function AssetPrimaryValue({
 	label,
 	tooltip,
 	total,
@@ -165,7 +159,7 @@ const AssetPrimaryValue = ({
 	tooltip?: string
 	total: number | null | undefined
 	byChain?: Array<[string, number]> | null
-}) => {
+}) {
 	const value = (
 		<span className="min-h-8 font-jetbrains text-2xl font-semibold">
 			{total != null
@@ -238,7 +232,7 @@ const AssetPrimaryValue = ({
 	)
 }
 
-const AssetHeader = ({
+function AssetHeader({
 	asset,
 	displayName,
 	headingAs: Tag = 'h1'
@@ -246,7 +240,7 @@ const AssetHeader = ({
 	asset: IRWAAssetData
 	displayName: string
 	headingAs?: 'h1' | 'div'
-}) => {
+}) {
 	return (
 		<>
 			<Tag className="flex flex-wrap items-center gap-2 heading-sm">
@@ -267,7 +261,7 @@ const AssetHeader = ({
 	)
 }
 
-const AssetKeyMetrics = ({
+function AssetKeyMetrics({
 	asset,
 	flow7d,
 	flow30d,
@@ -279,7 +273,7 @@ const AssetKeyMetrics = ({
 	flow30d: IRWAAssetFlowSummary | undefined
 	isLoadingFlows: boolean
 	isFlowUnavailable: boolean
-}) => {
+}) {
 	const activeMcap = asset.activeMcap ?? null
 	const defiActiveTvl = asset.defiActiveTvl ?? null
 
@@ -411,7 +405,7 @@ const AssetKeyMetrics = ({
 	)
 }
 
-const ContractItem = ({ address, explorerUrl }: { address: string; explorerUrl?: string }) => {
+function ContractItem({ address, explorerUrl }: { address: string; explorerUrl?: string }) {
 	const truncatedAddress = truncateAddress(address)
 	return (
 		<div className="flex items-center">
@@ -435,7 +429,7 @@ const ContractItem = ({ address, explorerUrl }: { address: string; explorerUrl?:
 	)
 }
 
-const ChainBadge = ({
+function ChainBadge({
 	chain,
 	isPrimary = false,
 	showPrimaryStyle = true,
@@ -447,7 +441,7 @@ const ChainBadge = ({
 	showPrimaryStyle?: boolean
 	contracts?: Array<string>
 	contractUrls?: Record<string, string>
-}) => {
+}) {
 	return (
 		<Card padding="sm" className="flex items-start gap-1.5">
 			<img src={chainIconUrl(chain)} alt={chain} className="mt-0.5 size-5 rounded-full" loading="lazy" />
@@ -475,7 +469,7 @@ const ChainBadge = ({
 	)
 }
 
-export const RWAAssetPage = ({ asset }: { asset: IRWAAssetData }) => {
+export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 	const router = useRouter()
 	const displayName = asset.assetName ?? asset.ticker ?? 'Unknown asset'
 	const keyBase = asset.ticker ?? asset.assetName ?? 'asset'

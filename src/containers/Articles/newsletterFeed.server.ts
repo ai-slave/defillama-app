@@ -28,7 +28,7 @@ function decodeXmlEntities(value: string): string {
 		(entity: string, decimal: string | undefined, hexadecimal: string | undefined, named: string | undefined) => {
 			if (named) return namedEntities[named] ?? entity
 
-			const codePoint = Number.parseInt(decimal ?? hexadecimal ?? '', decimal ? 10 : 16)
+			const codePoint = decimal ? Number.parseInt(decimal, 10) : Number.parseInt(hexadecimal ?? '', 16)
 			if (
 				!Number.isInteger(codePoint) ||
 				codePoint <= 0 ||

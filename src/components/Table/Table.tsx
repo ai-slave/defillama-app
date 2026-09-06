@@ -532,48 +532,73 @@ export function VirtualTable<T extends RowData>({
 		})
 
 	return (
-		<>
-			<div
-				{...props}
-				ref={tableContainerRef}
-				className={clsx(
-					'relative isolate w-full overflow-x-auto overflow-y-visible overscroll-x-contain rounded-md bg-surface',
-					className
-				)}
-				style={{ maxWidth: '100%', WebkitOverflowScrolling: 'touch', ...style }}
+		<div
+			{...props}
+			ref={tableContainerRef}
+			className={clsx(
+				'relative isolate w-full overflow-x-auto overflow-y-visible overscroll-x-contain rounded-md bg-surface',
+				className
+			)}
+			style={{ maxWidth: '100%', WebkitOverflowScrolling: 'touch', ...style }}
+		>
+			<table
+				style={{
+					width: '100%',
+					minWidth: '100%',
+					tableLayout,
+					borderCollapse: 'separate',
+					borderSpacing: 0
+				}}
 			>
-				<table
-					style={{
-						width: '100%',
-						minWidth: '100%',
-						tableLayout,
-						borderCollapse: 'separate',
-						borderSpacing: 0
-					}}
+				{useColumnWidths ? (
+					<colgroup>
+						{visibleLeafColumns.map((column) => (
+							<col key={column.id} className={column.columnDef.meta?.headerClassName} />
+						))}
+					</colgroup>
+				) : null}
+
+				<thead ref={tableHeaderRef} style={{ display: 'table-header-group', zIndex: 10 }}>
+					{renderHeaderRows()}
+				</thead>
+
+				<tbody
+					className="vf-row-counter"
+					style={{ ['--vf-row-offset' as string]: skipVirtualization ? '0' : `${virtualItems?.[0]?.index ?? 0}` }}
 				>
-					{useColumnWidths ? (
-						<colgroup>
-							{visibleLeafColumns.map((column) => (
-								<col key={column.id} className={column.columnDef.meta?.headerClassName} />
-							))}
-						</colgroup>
-					) : null}
-
-					<thead ref={tableHeaderRef} style={{ display: 'table-header-group', zIndex: 10 }}>
-						{renderHeaderRows()}
-					</thead>
-
-					<tbody
-						className="vf-row-counter"
-						style={{ ['--vf-row-offset' as string]: skipVirtualization ? '0' : `${virtualItems?.[0]?.index ?? 0}` }}
-					>
-						{skipVirtualization ? (
-							rows.map((row, i) => (
+					{skipVirtualization ? (
+						rows.map((row, i) => (
+							<TableRow
+								key={row.id}
+								row={row}
+								index={i}
+								rowHeight={estimatedRowSize}
+								subRowOrdinalById={subRowOrdinalById}
+								rowRankById={rowRankById}
+								firstColumnId={firstColumnId}
+								stripedBg={stripedBg}
+								isChainPage={isChainPage}
+								compact={compact}
+							/>
+						))
+					) : (
+						<>
+							{topSpacerHeight > 0 ? (
+								<tr aria-hidden="true">
+									<td
+										colSpan={visibleLeafColumns.length}
+										className="border-0 p-0"
+										style={{ height: `${topSpacerHeight}px` }}
+									/>
+								</tr>
+							) : null}
+							{virtualItems.map((virtualRow) => (
 								<TableRow
-									key={row.id}
-									row={row}
-									index={i}
-									rowHeight={estimatedRowSize}
+									key={rows[virtualRow.index].id}
+									row={rows[virtualRow.index]}
+									index={virtualRow.index}
+									virtualRow={virtualRow}
+									rowHeight={virtualRow.size}
 									subRowOrdinalById={subRowOrdinalById}
 									rowRankById={rowRankById}
 									firstColumnId={firstColumnId}
@@ -581,109 +606,82 @@ export function VirtualTable<T extends RowData>({
 									isChainPage={isChainPage}
 									compact={compact}
 								/>
-							))
-						) : (
-							<>
-								{topSpacerHeight > 0 ? (
-									<tr aria-hidden="true">
-										<td
-											colSpan={visibleLeafColumns.length}
-											className="border-0 p-0"
-											style={{ height: `${topSpacerHeight}px` }}
-										/>
-									</tr>
-								) : null}
-								{virtualItems.map((virtualRow) => (
-									<TableRow
-										key={rows[virtualRow.index].id}
-										row={rows[virtualRow.index]}
-										index={virtualRow.index}
-										virtualRow={virtualRow}
-										rowHeight={virtualRow.size}
-										subRowOrdinalById={subRowOrdinalById}
-										rowRankById={rowRankById}
-										firstColumnId={firstColumnId}
-										stripedBg={stripedBg}
-										isChainPage={isChainPage}
-										compact={compact}
+							))}
+							{bottomSpacerHeight > 0 ? (
+								<tr aria-hidden="true">
+									<td
+										colSpan={visibleLeafColumns.length}
+										className="border-0 p-0"
+										style={{ height: `${bottomSpacerHeight}px` }}
 									/>
-								))}
-								{bottomSpacerHeight > 0 ? (
-									<tr aria-hidden="true">
-										<td
-											colSpan={visibleLeafColumns.length}
-											className="border-0 p-0"
-											style={{ height: `${bottomSpacerHeight}px` }}
-										/>
-									</tr>
-								) : null}
-							</>
-						)}
-					</tbody>
-				</table>
+								</tr>
+							) : null}
+						</>
+					)}
+				</tbody>
+			</table>
 
-				{stickyHeaderLayout ? (
-					<div
-						aria-hidden="true"
-						className="overflow-hidden bg-surface"
-						style={{
-							position: 'fixed',
-							top: 0,
-							left: stickyHeaderLayout.left,
-							width: stickyHeaderLayout.width,
-							height: stickyHeaderLayout.headerHeight,
-							zIndex: 998
-						}}
-					>
-						<table
-							ref={stickyHeaderTableRef}
-							style={{
-								width: `${stickyHeaderLayout.tableWidth}px`,
-								minWidth: `${stickyHeaderLayout.tableWidth}px`,
-								tableLayout: 'fixed',
-								borderCollapse: 'separate',
-								borderSpacing: 0,
-								['--vf-header-scroll-left' as string]: `${stickyHeaderLayout.scrollLeft}px`
-							}}
-						>
-							<colgroup>
-								{visibleLeafColumns.map((column, index) => (
-									<col
-										key={column.id}
-										className={column.columnDef.meta?.headerClassName}
-										style={leafColumnWidths[index] ? { width: `${leafColumnWidths[index]}px` } : undefined}
-									/>
-								))}
-							</colgroup>
-							<thead style={{ display: 'table-header-group', zIndex: 10 }}>
-								{renderHeaderRows({ isStickyMirror: true })}
-							</thead>
-						</table>
-					</div>
-				) : null}
-
-				{/* Sticky horizontal scrollbar */}
+			{stickyHeaderLayout ? (
 				<div
-					ref={stickyScrollbarRef}
+					aria-hidden="true"
+					className="overflow-hidden bg-surface"
 					style={{
 						position: 'fixed',
-						bottom: 0,
-						height: '12px',
-						overflowX: 'auto',
-						overflowY: 'hidden',
-						zIndex: 999,
-						display: 'none',
-						backgroundColor: 'var(--bg-surface)'
+						top: 0,
+						left: stickyHeaderLayout.left,
+						width: stickyHeaderLayout.width,
+						height: stickyHeaderLayout.headerHeight,
+						zIndex: 998
 					}}
 				>
-					<div ref={stickyScrollbarContentRef} style={{ height: '1px' }} />
+					<table
+						ref={stickyHeaderTableRef}
+						style={{
+							width: `${stickyHeaderLayout.tableWidth}px`,
+							minWidth: `${stickyHeaderLayout.tableWidth}px`,
+							tableLayout: 'fixed',
+							borderCollapse: 'separate',
+							borderSpacing: 0,
+							['--vf-header-scroll-left' as string]: `${stickyHeaderLayout.scrollLeft}px`
+						}}
+					>
+						<colgroup>
+							{visibleLeafColumns.map((column, index) => (
+								<col
+									key={column.id}
+									className={column.columnDef.meta?.headerClassName}
+									style={leafColumnWidths[index] ? { width: `${leafColumnWidths[index]}px` } : undefined}
+								/>
+							))}
+						</colgroup>
+						<thead style={{ display: 'table-header-group', zIndex: 10 }}>
+							{renderHeaderRows({ isStickyMirror: true })}
+						</thead>
+					</table>
 				</div>
+			) : null}
+
+			{/* Sticky horizontal scrollbar */}
+			<div
+				ref={stickyScrollbarRef}
+				style={{
+					position: 'fixed',
+					bottom: 0,
+					height: '12px',
+					overflowX: 'auto',
+					overflowY: 'hidden',
+					zIndex: 999,
+					display: 'none',
+					backgroundColor: 'var(--bg-surface)'
+				}}
+			>
+				<div ref={stickyScrollbarContentRef} style={{ height: '1px' }} />
 			</div>
-		</>
+		</div>
 	)
 }
 
-const HeaderWithTooltip = ({
+function HeaderWithTooltip({
 	children,
 	content,
 	onClick,
@@ -693,7 +691,7 @@ const HeaderWithTooltip = ({
 	content?: string
 	onClick: (() => void) | null
 	tabIndex?: number
-}) => {
+}) {
 	if (onClick) {
 		if (!content)
 			return (

@@ -27,7 +27,7 @@ export const getStaticProps = withPerformanceLogging(`${adapterType}/${dataType}
 
 const pageName = ['Chains', 'ranked by', type]
 
-const DexsByChain = (props: IChainsByAdapterPageData) => {
+function DexsByChain(props: IChainsByAdapterPageData) {
 	return (
 		<Layout
 			title="DEX Volume by Chain - Spot Trading - DefiLlama"

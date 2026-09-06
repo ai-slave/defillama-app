@@ -237,8 +237,8 @@ export const getTokenDominance = (
 export const getPrevVolumeFromChart = (
 	chart: Array<VolumeChartEntry> | null | undefined,
 	daysBefore: number,
-	txs: boolean = false,
-	inflows: boolean = false
+	txs = false,
+	inflows = false
 ): number | null => {
 	if (!chart) return null
 	const prevChart = chart[chart.length - 1 - daysBefore]
@@ -306,8 +306,8 @@ function hexToHSL(hex: string): HSL {
 	return { h: h * 360, s: s * 100, l: l * 100 }
 }
 
-function hslToHex(h: number, s: number, l: number): string {
-	l /= 100
+function hslToHex(h: number, s: number, lightnessPercent: number): string {
+	const l = lightnessPercent / 100
 	const a = (s * Math.min(l, 1 - l)) / 100
 
 	const f = (n: number): string => {
@@ -338,7 +338,7 @@ interface BatchHistoricalResponse {
 
 export async function batchFetchHistoricalPrices(
 	priceReqs: Record<string, number | Array<number>>,
-	batchSize: number = 15
+	batchSize = 15
 ): Promise<{ results: Record<string, BatchHistoricalCoin> }> {
 	const results: Record<string, BatchHistoricalCoin> = {}
 	let batchReqs: Record<string, number | Array<number>> = {}

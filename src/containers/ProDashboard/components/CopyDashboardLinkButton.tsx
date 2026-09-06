@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
-export const CopyDashboardLinkButton = ({
+export function CopyDashboardLinkButton({
 	dashboardVisibility,
 	dashboardId,
 	dashboardSlug
@@ -11,7 +11,7 @@ export const CopyDashboardLinkButton = ({
 	dashboardVisibility: 'private' | 'public'
 	dashboardId: string
 	dashboardSlug?: string
-}) => {
+}) {
 	const [copied, setCopied] = useState(false)
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	useEffect(() => {

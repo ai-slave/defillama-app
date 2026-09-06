@@ -438,7 +438,7 @@ function SourcesNotesSection({ notes, futures }: { notes: Array<string>; futures
 	)
 }
 
-const ChartContainer = ({
+function ChartContainer({
 	data,
 	isEmissionsPage,
 	initialTokenMarketData,
@@ -450,7 +450,7 @@ const ChartContainer = ({
 	initialTokenMarketData: InitialTokenMarketData | null
 	disableClientTokenStatsFetch: boolean
 	hideTokenStats: boolean
-}) => {
+}) {
 	const width = useBreakpointWidth()
 	const router = useRouter()
 
@@ -1073,7 +1073,7 @@ const ChartContainer = ({
 	)
 }
 
-export const UnlocksCharts = ({
+export function UnlocksCharts({
 	protocolName,
 	initialData,
 	initialTokenMarketData = null,
@@ -1087,7 +1087,7 @@ export const UnlocksCharts = ({
 	disableClientTokenStatsFetch?: boolean
 	isEmissionsPage?: boolean
 	hideTokenStats?: boolean
-}) => {
+}) {
 	const shouldFetch = !initialData
 	const { data = null, isLoading, error } = useGetProtocolEmissions(shouldFetch ? slug(protocolName) : null)
 

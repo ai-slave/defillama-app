@@ -1,4 +1,4 @@
-export const ProgressBar = ({ pct }: { pct: number }) => {
+export function ProgressBar({ pct }: { pct: number }) {
 	return (
 		<div className="relative h-2 w-full overflow-hidden rounded-full bg-surface-elevated-2 shadow-inner backdrop-blur-xs">
 			<div

@@ -1,4 +1,4 @@
-export const LoadingDots = () => {
+export function LoadingDots() {
 	return (
 		<span className="flex gap-0.5">
 			<span className="animate-bounce [animation-delay:-0.3s]">.</span>
@@ -8,7 +8,7 @@ export const LoadingDots = () => {
 	)
 }
 
-export const LoadingSpinner = ({ size = 14 }: { size: number }) => {
+export function LoadingSpinner({ size = 14 }: { size: number }) {
 	return (
 		<span className="animate-spin">
 			<svg
@@ -30,6 +30,6 @@ export const LoadingSpinner = ({ size = 14 }: { size: number }) => {
 	)
 }
 
-export const LocalLoader = () => {
+export function LocalLoader() {
 	return <img src="/assets/logo_white.webp" alt="logo of defillama" width={40} height={40} className="animate-loader" />
 }

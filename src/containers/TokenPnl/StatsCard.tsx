@@ -1,6 +1,6 @@
 import { Card } from '~/ui/Card'
 
-export const StatsCard = ({
+export function StatsCard({
 	label,
 	value,
 	subtle,
@@ -10,7 +10,7 @@ export const StatsCard = ({
 	value: string
 	subtle?: string
 	variant?: 'default' | 'highlight'
-}) => {
+}) {
 	const valueClass =
 		variant === 'highlight'
 			? 'font-jetbrains text-2xl font-semibold text-primary'

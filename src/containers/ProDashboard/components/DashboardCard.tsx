@@ -213,7 +213,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 	)
 }
 
-const Tags = ({ dashboard, onTagClick }: { dashboard: Dashboard; onTagClick?: (tag: string) => void }) => {
+function Tags({ dashboard, onTagClick }: { dashboard: Dashboard; onTagClick?: (tag: string) => void }) {
 	if (!dashboard.tags || dashboard.tags.length === 0) return null
 	return (
 		<div className="flex max-w-[65%] flex-wrap items-center gap-1.5">

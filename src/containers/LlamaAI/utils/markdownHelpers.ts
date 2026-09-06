@@ -90,8 +90,8 @@ interface ParsedContent {
  * Parse markdown content to extract chart, CSV, and alert artifact placeholders.
  * Placeholders follow the format [CHART:id], [CSV:id], and [ALERT:id].
  */
-export function parseArtifactPlaceholders(content: string): ParsedContent {
-	content = stripBeforeReportStart(content)
+export function parseArtifactPlaceholders(rawContent: string): ParsedContent {
+	const content = stripBeforeReportStart(rawContent)
 	const chartPlaceholderPattern = /\[CHART:([^\]]+)\]/g
 	const csvPlaceholderPattern = /\[CSV:([^\]]+)\]/g
 	const mdPlaceholderPattern = /\[MD:([^\]]+)\]/g

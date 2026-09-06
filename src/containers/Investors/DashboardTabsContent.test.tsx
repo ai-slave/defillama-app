@@ -34,8 +34,12 @@ function CustomTab({ label }: { label: string }) {
 	return <div data-testid={`custom-${label}`}>{label}</div>
 }
 
-const FIRST_TAB = () => <CustomTab label="first" />
-const SECOND_TAB = () => <CustomTab label="second" />
+function FIRST_TAB() {
+	return <CustomTab label="first" />
+}
+function SECOND_TAB() {
+	return <CustomTab label="second" />
+}
 
 const INVESTOR_TABS: Array<DashboardTabConfig> = [
 	{ id: 'dashboard', label: 'Overview' },

@@ -24,7 +24,7 @@ const EMPTY_TOKENS: Array<TokenOption> = []
 
 type BorrowRowsResponse<TRow> = { rows: Array<TRow> }
 
-const BorrowView = ({
+function BorrowView({
 	chainList = EMPTY_STRINGS,
 	projectList = EMPTY_STRINGS,
 	categoryList = EMPTY_STRINGS,
@@ -40,7 +40,7 @@ const BorrowView = ({
 	collateralTokens?: Array<TokenOption>
 	borrowTokens?: Array<TokenOption>
 	attributeIds?: Array<AttributeId>
-}) => {
+}) {
 	const router = useRouter()
 
 	// Routes mode is entered as soon as either token picker has a selection.

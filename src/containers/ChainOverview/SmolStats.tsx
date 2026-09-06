@@ -9,7 +9,7 @@ import { SmolLineChart } from './SmolLineChart'
 import type { IChainOverviewData } from './types'
 import { UpcomingUnlocksChart } from './UpcomingUnlocksChart'
 
-export const SmolStats = (props: IChainOverviewData) => {
+export function SmolStats(props: IChainOverviewData) {
 	const chainSlug = slug(props.metadata.name)
 	const unlocks = props.unlocks
 	const dexs = props.dexs

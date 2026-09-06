@@ -12,19 +12,23 @@ import {
 /** Coverage below this share of days is flagged amber — flows meaningfully understate reality. */
 const LOW_COVERAGE_THRESHOLD = 0.5
 
-export const RWAFlowValueShimmer = ({ label = 'Loading flow value' }: { label?: string }) => (
-	<span
-		role="status"
-		aria-label={label}
-		className="inline-block h-3 w-12 animate-pulse rounded-sm bg-tertiary opacity-20"
-	/>
-)
+export function RWAFlowValueShimmer({ label = 'Loading flow value' }: { label?: string }) {
+	return (
+		<span
+			role="status"
+			aria-label={label}
+			className="inline-block h-3 w-12 animate-pulse rounded-sm bg-tertiary opacity-20"
+		/>
+	)
+}
 
-export const RWAFlowValueUnavailable = () => (
-	<Tooltip content="Flow data could not be loaded." className="text-secondary underline decoration-dotted">
-		Unavailable
-	</Tooltip>
-)
+export function RWAFlowValueUnavailable() {
+	return (
+		<Tooltip content="Flow data could not be loaded." className="text-secondary underline decoration-dotted">
+			Unavailable
+		</Tooltip>
+	)
+}
 
 /**
  * Chart-toolbar metadata tag for flow data coverage. Deliberately NOT a

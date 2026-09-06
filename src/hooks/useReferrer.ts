@@ -14,6 +14,8 @@ export function useReferrer() {
 				}
 			}
 			if (value) setReferrer(value)
-		} catch {}
+		} catch {
+			// URL parsing can fail on odd locations; no referrer is recorded.
+		}
 	}, [])
 }

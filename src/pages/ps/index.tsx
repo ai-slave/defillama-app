@@ -29,7 +29,7 @@ export const getStaticProps = withPerformanceLogging(`revenue/ps/index`, async (
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const RevenueOnAllChains = (props: IAdapterByChainPageData) => {
+function RevenueOnAllChains(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title="Price to Sales Ratio (P/S) Rankings - DefiLlama"

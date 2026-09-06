@@ -50,7 +50,9 @@ function saveRecent(item: ArticleEntitySuggestionItem) {
 		const current = loadRecents()
 		const next = [item, ...current.filter((i) => i.id !== item.id)].slice(0, RECENTS_LIMIT)
 		window.localStorage.setItem(RECENTS_KEY, JSON.stringify(next))
-	} catch {}
+	} catch {
+		// Storage can be unavailable or full; the feature degrades silently.
+	}
 }
 
 type FloatingHost = {

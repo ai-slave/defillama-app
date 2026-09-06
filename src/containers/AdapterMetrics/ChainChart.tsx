@@ -206,7 +206,7 @@ function applyBarLayoutToPresentation(
 	}
 }
 
-export const AdapterByChainChart = ({
+export function AdapterByChainChart({
 	chartData,
 	adapterType,
 	chain,
@@ -216,7 +216,7 @@ export const AdapterByChainChart = ({
 }: Pick<IAdapterByChainPageData, 'chartData' | 'adapterType' | 'chain' | 'dataType'> & {
 	chartName: string
 	tableProtocols: IAdapterByChainPageData['protocols']
-}) => {
+}) {
 	const router = useRouter()
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
@@ -750,7 +750,7 @@ function useAdapterByChainBreakdownChartData({
 	}, [data, enabled, error, isLoading])
 }
 
-export const ChainsByAdapterChart = ({
+export function ChainsByAdapterChart({
 	adapterType,
 	dataType,
 	chartData,
@@ -758,7 +758,7 @@ export const ChainsByAdapterChart = ({
 	chartName
 }: Pick<IChainsByAdapterPageData, 'adapterType' | 'dataType' | 'chartData' | 'allChains'> & {
 	chartName: string
-}) => {
+}) {
 	const router = useRouter()
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 	const chartState = React.useMemo(

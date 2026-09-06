@@ -23,7 +23,7 @@ interface RaisesContainerProps {
 	investorName: string | null
 }
 
-const RaisesContainer = ({ raises, investors, rounds, sectors, chains, investorName }: RaisesContainerProps) => {
+function RaisesContainer({ raises, investors, rounds, sectors, chains, investorName }: RaisesContainerProps) {
 	const { pathname } = useRouter()
 
 	const {

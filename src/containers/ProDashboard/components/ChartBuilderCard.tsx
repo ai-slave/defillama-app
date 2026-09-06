@@ -296,7 +296,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 				try {
 					const body: { error?: string } = await response.json()
 					if (body.error) message = body.error
-				} catch {}
+				} catch {
+					// A non-JSON error body keeps the default message.
+				}
 				throw new Error(message)
 			}
 			downloadBlob(fileName, await response.blob())

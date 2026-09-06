@@ -17,7 +17,7 @@ const CSV_SUFFIX = {
 export function getRWAOverviewInclusion(
 	includeStablecoins: boolean,
 	includeGovernance: boolean,
-	includeBridgeTvl: boolean = true
+	includeBridgeTvl = true
 ): RWAOverviewInclusion {
 	if (includeStablecoins && includeGovernance) return { kind: 'all', includeBridgeTvl }
 	if (includeStablecoins) return { kind: 'stablecoins', includeBridgeTvl }

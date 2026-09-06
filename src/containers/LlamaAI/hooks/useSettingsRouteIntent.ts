@@ -109,7 +109,9 @@ export function useSettingsRouteIntent({
 		if (!user) {
 			try {
 				stashSettingsIntent(window.sessionStorage, intent.initialState)
-			} catch {}
+			} catch {
+				// Storage can be unavailable or full; the feature degrades silently.
+			}
 			return
 		}
 
@@ -121,7 +123,9 @@ export function useSettingsRouteIntent({
 		let intent: SettingsInitialState | null = null
 		try {
 			intent = readPendingSettingsIntent(window.sessionStorage)
-		} catch {}
+		} catch {
+			// Storage can be unavailable or full; the feature degrades silently.
+		}
 		if (intent) openSettingsIntent(intent)
 	}, [openSettingsIntent, user])
 }

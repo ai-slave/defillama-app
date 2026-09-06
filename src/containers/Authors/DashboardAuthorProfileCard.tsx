@@ -254,7 +254,9 @@ export function DashboardAuthorProfileCard() {
 			setProfile(nextProfile)
 			setInitial(next)
 			setState(next)
-		} catch {}
+		} catch {
+			// toast.promise already showed the error; the form keeps the unsaved draft.
+		}
 	}
 
 	const displayName = state.displayName.trim() || 'Your name'

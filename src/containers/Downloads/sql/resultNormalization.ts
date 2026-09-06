@@ -6,12 +6,11 @@ function normalizeInteger(value: unknown): unknown {
 	if (typeof value === 'bigint') {
 		return value <= Number.MAX_SAFE_INTEGER && value >= Number.MIN_SAFE_INTEGER ? Number(value) : value.toString()
 	}
-	if (value !== null && typeof value === 'object' && typeof value.toString === 'function') {
-		value = value.toString()
-	}
-	if (typeof value !== 'string' || value.trim() === '') return value
-	const numeric = Number(value)
-	return Number.isSafeInteger(numeric) ? numeric : value
+	const text =
+		value !== null && typeof value === 'object' && typeof value.toString === 'function' ? value.toString() : value
+	if (typeof text !== 'string' || text.trim() === '') return text
+	const numeric = Number(text)
+	return Number.isSafeInteger(numeric) ? numeric : text
 }
 
 function normalizeFloat(value: unknown): unknown {
@@ -19,12 +18,11 @@ function normalizeFloat(value: unknown): unknown {
 	if (typeof value === 'bigint') {
 		return value <= Number.MAX_SAFE_INTEGER && value >= Number.MIN_SAFE_INTEGER ? Number(value) : value.toString()
 	}
-	if (value !== null && typeof value === 'object' && typeof value.toString === 'function') {
-		value = value.toString()
-	}
-	if (typeof value !== 'string' || value.trim() === '') return value
-	const numeric = Number(value)
-	return Number.isFinite(numeric) ? numeric : value
+	const text =
+		value !== null && typeof value === 'object' && typeof value.toString === 'function' ? value.toString() : value
+	if (typeof text !== 'string' || text.trim() === '') return text
+	const numeric = Number(text)
+	return Number.isFinite(numeric) ? numeric : text
 }
 
 function normalizeDate(value: unknown): unknown {

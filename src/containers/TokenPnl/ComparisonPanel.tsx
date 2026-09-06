@@ -3,7 +3,7 @@ import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { formatPnlPercent } from './format'
 import type { ComparisonEntry } from './types'
 
-export const ComparisonPanel = ({ entries, activeId }: { entries: Array<ComparisonEntry>; activeId: string }) => {
+export function ComparisonPanel({ entries, activeId }: { entries: Array<ComparisonEntry>; activeId: string }) {
 	if (entries.length === 0) return null
 	return (
 		<Card padding="md" as="section" aria-label="Range comparison">

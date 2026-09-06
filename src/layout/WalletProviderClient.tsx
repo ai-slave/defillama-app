@@ -10,7 +10,7 @@ const config = getDefaultConfig({
 	ssr: true
 })
 
-export const WalletProviderClient = ({ children }: { children: ReactNode }) => {
+export function WalletProviderClient({ children }: { children: ReactNode }) {
 	return (
 		<WagmiProvider config={config}>
 			<RainbowKitProvider

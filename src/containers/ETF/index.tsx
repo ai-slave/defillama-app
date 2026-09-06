@@ -32,7 +32,7 @@ type GroupBy = LowercaseDwmcGrouping
 
 const DEFAULT_SORTING_STATE = [{ id: 'aum', desc: true }]
 
-export const ETFOverview = ({ snapshot, flows, totalsByAsset, lastUpdated }: ETFOverviewProps) => {
+export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETFOverviewProps) {
 	const [groupBy, setGroupBy] = React.useState<GroupBy>('weekly')
 	const {
 		activeSeries: tickers,

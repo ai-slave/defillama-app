@@ -8,7 +8,7 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
    Label is label-sm at gap-2.
 ---------------------------------------------------------------------------- */
 
-export const Switch = ({
+export function Switch({
 	label,
 	checked,
 	onChange,
@@ -24,7 +24,7 @@ export const Switch = ({
 	className?: string
 	help?: string
 	isLoading?: boolean
-}) => {
+}) {
 	return (
 		<label
 			className={`relative isolate flex cursor-pointer flex-nowrap items-center gap-2 label-sm ${className ?? ''}`}

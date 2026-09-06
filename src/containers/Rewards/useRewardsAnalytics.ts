@@ -47,7 +47,9 @@ export function observeRewardsLinks(
 			if (event.impressionKey !== null) {
 				try {
 					window.sessionStorage.setItem(event.impressionKey, '1')
-				} catch {}
+				} catch {
+					// Storage can be unavailable or full; the feature degrades silently.
+				}
 			}
 		}
 		state.pending.length = 0
@@ -61,7 +63,9 @@ export function observeRewardsLinks(
 				state.seen.add(key)
 				return
 			}
-		} catch {}
+		} catch {
+			// See above: storage can be disabled.
+		}
 		state.seen.add(key)
 		state.pending.push({ name: `${prefix}-program-impression`, data: exposure.data, impressionKey: key })
 		flushEvents()

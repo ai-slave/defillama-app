@@ -72,7 +72,7 @@ export const getStaticProps = withPerformanceLogging(
 
 const pageName = ['Protocols', 'ranked by', type]
 
-const FeesOnChain = (props: IAdapterByChainPageData) => {
+function FeesOnChain(props: IAdapterByChainPageData) {
 	return (
 		<Layout
 			title={`Price to Fees (P/F) Ratio on ${props.chain} - DefiLlama`}

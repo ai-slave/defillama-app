@@ -5,7 +5,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import type { Dashboard } from '../dashboardTypes'
 import { useDashboardEngagement } from '../hooks/useDashboardEngagement'
 
-export const LikeDashboardButton = ({
+export function LikeDashboardButton({
 	currentDashboard,
 	dashboardVisibility,
 	dashboardId
@@ -13,7 +13,7 @@ export const LikeDashboardButton = ({
 	currentDashboard: Dashboard
 	dashboardVisibility: 'private' | 'public'
 	dashboardId: string
-}) => {
+}) {
 	const { isAuthenticated } = useAuthContext()
 	const { toggleLike, isLiking, liked, likeCount } = useDashboardEngagement(dashboardId)
 	if (dashboardVisibility === 'private') return null

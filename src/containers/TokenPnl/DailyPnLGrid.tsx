@@ -3,7 +3,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatDateLabel, formatPnlPercent } from './format'
 import type { TimelinePoint } from './types'
 
-export const DailyPnLGrid = ({ timeline }: { timeline: Array<TimelinePoint> }) => {
+export function DailyPnLGrid({ timeline }: { timeline: Array<TimelinePoint> }) {
 	if (timeline.length === 0) return null
 	const days = timeline.slice(1)
 	if (days.length === 0) return null

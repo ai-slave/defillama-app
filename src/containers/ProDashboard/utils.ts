@@ -8,7 +8,7 @@ type NumericChartTuple = readonly [timestamp: string | number, value: string | n
 
 export const convertToNumberFormat = (
 	data: ReadonlyArray<NumericChartTuple>,
-	convertToSeconds: boolean = false
+	convertToSeconds = false
 ): Array<[number, number]> => {
 	const divisor = convertToSeconds ? 1000 : 1
 	const points: Array<[number, number]> = []

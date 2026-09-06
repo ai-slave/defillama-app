@@ -151,7 +151,9 @@ export const getTimezoneLabel = (timezone: string): string => {
 		if (tzPart?.value) {
 			return tzPart.value.replace('GMT', 'UTC')
 		}
-	} catch {}
+	} catch {
+		// Intl can be unavailable; the timezone stays unset.
+	}
 	return timezone
 }
 

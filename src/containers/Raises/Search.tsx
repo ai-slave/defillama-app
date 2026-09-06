@@ -147,7 +147,7 @@ function Input({ open, setOpen, placeholder, hideIcon, onSearchTermChange }: IIn
 	)
 }
 
-const Row = ({ name, setOpen }: { name: string; setOpen: (open: boolean) => void }) => {
+function Row({ name, setOpen }: { name: string; setOpen: (open: boolean) => void }) {
 	const [loading, setLoading] = useState(false)
 	const router = useRouter()
 

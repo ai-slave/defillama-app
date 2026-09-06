@@ -136,7 +136,7 @@ export function HacksFilters({
 	)
 }
 
-const Filters = ({
+function Filters({
 	chainOptions,
 	selectedChains,
 	minLostVal,
@@ -153,7 +153,7 @@ const Filters = ({
 	hasActiveFilters,
 	onClearAll,
 	isMobile = false
-}: FiltersInnerProps) => {
+}: FiltersInnerProps) {
 	return (
 		<>
 			<SelectWithCombobox

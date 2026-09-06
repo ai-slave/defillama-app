@@ -4,7 +4,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const { DynamicUnlocksCharts, unlocksChartsCalls } = vi.hoisted(() => {
 	const unlocksChartsCalls: Array<{ hideTokenStats?: boolean; protocolName: string }> = []
-	const DynamicUnlocksCharts = (props: { protocolName: string; hideTokenStats?: boolean }) => {
+	function DynamicUnlocksCharts(props: { protocolName: string; hideTokenStats?: boolean }) {
 		unlocksChartsCalls.push(props)
 		return <div>Unlock charts</div>
 	}
