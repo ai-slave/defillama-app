@@ -15,6 +15,7 @@ import {
 	popoverSingleSelectCheckStyles,
 	popoverSurfaceStyles
 } from '~/ui/Popover'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import {
 	activeEquityFiltersToDraft,
@@ -139,24 +140,16 @@ function ModeToggle({
 	onChange: (mode: EquityCategoricalMode) => void
 }) {
 	return (
-		<div
-			role="group"
-			aria-label="Match mode"
-			className="flex min-h-8 shrink-0 items-center gap-0.5 rounded-lg border border-medium bg-page p-0.5 label-sm"
-		>
-			{MODE_OPTIONS.map((option) => (
-				<button
-					key={option.value}
-					type="button"
-					onClick={() => onChange(option.value)}
-					data-active={value === option.value}
-					aria-pressed={value === option.value}
-					className="flex cursor-pointer items-center self-stretch rounded-md px-2.5 text-secondary hover:text-primary data-[active=true]:bg-brand data-[active=true]:text-on-brand"
-				>
-					{option.label}
-				</button>
-			))}
-		</div>
+		<SegmentedControl
+			label="Match mode"
+			value={value}
+			onValueChange={onChange}
+			options={MODE_OPTIONS}
+			variant="default"
+			size="md"
+			className="shrink-0 bg-page label-sm"
+			buttonClassName="self-stretch px-2.5"
+		/>
 	)
 }
 

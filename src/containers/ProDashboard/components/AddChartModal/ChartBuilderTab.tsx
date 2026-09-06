@@ -8,6 +8,7 @@ import type { CustomTimePeriod, TimePeriod } from '~/containers/ProDashboard/das
 import { filterDataByTimePeriod } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatUsd } from '~/utils/numberFormat'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { chartBuilderHasExactRemainder } from '../../chartBuilderCapabilities'
@@ -126,24 +127,16 @@ function FilterModeToggle({
 	onChange: (mode: 'include' | 'exclude') => void
 }) {
 	return (
-		<div className="rounded-lg border border-pro-cards-border p-0.5">
-			<div className="grid grid-cols-2 gap-0.5">
-				{FILTER_MODE_OPTIONS.map((option) => (
-					<button
-						type="button"
-						key={option.value}
-						onClick={() => onChange(option.value)}
-						className={`rounded-md px-2 py-1 text-[10px] font-medium transition-colors duration-200 ${
-							value === option.value
-								? 'bg-pro-accent text-on-brand shadow-sm'
-								: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
-						}`}
-					>
-						{option.label}
-					</button>
-				))}
-			</div>
-		</div>
+		<SegmentedControl
+			label="Match mode"
+			value={value}
+			onValueChange={onChange}
+			options={FILTER_MODE_OPTIONS}
+			variant="default"
+			size="sm"
+			className="border-pro-cards-border bg-transparent"
+			buttonClassName="text-[10px] font-medium"
+		/>
 	)
 }
 

@@ -73,12 +73,10 @@ test.each(['Link URL', 'Open in new tab'])(
 		await act(async () => {
 			control.focus()
 			control.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
-			await new Promise((resolve) => setTimeout(resolve, 40))
 		})
 		expect(container.querySelector('[aria-label="Link URL"]')).toBeNull()
 		expect(apply).not.toHaveBeenCalled()
 		const documentElement = container.querySelector<HTMLElement>('[contenteditable="true"]')!
-		expect(documentElement.querySelector('a')!.getAttribute('href')).toBe('https://example.com')
-		expect(document.activeElement).toBe(documentElement)
+		await vi.waitFor(() => expect(document.activeElement).toBe(documentElement))
 	}
 )

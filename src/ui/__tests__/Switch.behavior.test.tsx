@@ -45,7 +45,6 @@ test('loading blocks activation, then a settled switch can be deselected', async
 		input.click()
 	})
 	expect(document.activeElement).toBe(input)
-	expect(change).toHaveBeenCalledOnce()
 	expect(change).toHaveBeenCalledExactlyOnceWith(false)
 })
 test('article switch has a concise label and separate description; label activation is reversible', async () => {

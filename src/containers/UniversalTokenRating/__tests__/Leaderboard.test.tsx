@@ -1,12 +1,14 @@
-import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, test, vi } from 'vitest'
+// @vitest-environment happy-dom
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { UtrGradingConfig, UtrLeaderboardRow } from '../types'
 
 vi.mock('../PerformanceMatrix', () => ({
 	PerformanceMatrix: () => <div>Matrix</div>
 }))
 
-import { Leaderboard, LEADERBOARD_COLUMN_COUNT } from '../Leaderboard'
+import { Leaderboard } from '../Leaderboard'
 import { pageForUtrAsset } from '../navigation'
 
 const grading: UtrGradingConfig = {
@@ -54,6 +56,14 @@ const row: UtrLeaderboardRow = {
 	}
 }
 
+let root: Root | undefined
+let container: HTMLDivElement | undefined
+afterEach(async () => {
+	await act(async () => root?.unmount())
+	root = undefined
+	container?.remove()
+})
+
 describe('Leaderboard', () => {
 	test('returns the page that contains a searched asset', () => {
 		const rows = Array.from({ length: 205 }, (_, index) => ({ ...row, asset: `asset-${index}` }))
@@ -63,24 +73,36 @@ describe('Leaderboard', () => {
 		expect(pageForUtrAsset(rows, 'missing')).toBeNull()
 	})
 
-	test('renders the API grade after Protocol without a Status or pin column', () => {
-		const html = renderToStaticMarkup(
-			<Leaderboard
-				rows={[row]}
-				grading={grading}
-				sort={{ key: 'rank', desc: false }}
-				setSort={() => undefined}
-				fdvRanges={[]}
-				sectors={[]}
-				listingStatuses={[]}
-			/>
+	test('uses the API grade and spans every column when a row expands', async () => {
+		container = document.createElement('div')
+		document.body.append(container)
+		root = createRoot(container)
+		await act(async () =>
+			root!.render(
+				<Leaderboard
+					rows={[{ ...row, grade: 'CCC' }]}
+					grading={grading}
+					sort={{ key: 'rank', desc: false }}
+					setSort={() => undefined}
+					fdvRanges={[]}
+					sectors={[]}
+					listingStatuses={[]}
+				/>
+			)
 		)
 
-		expect(html.indexOf('Protocol')).toBeLessThan(html.indexOf('Grade'))
-		expect(html).toContain('AAA')
-		expect(html).toContain('bg-utr-grade-aaa')
-		expect(html).not.toContain('Status')
-		expect(html).not.toContain('Pin My Token')
-		expect(LEADERBOARD_COLUMN_COUNT).toBe(8)
+		const headers = [...container.querySelectorAll('thead th')]
+		const labels = headers.map((header) => header.textContent?.trim())
+		const gradeIndex = labels.indexOf('Grade')
+		expect(gradeIndex).toBeGreaterThan(-1)
+		expect(labels[gradeIndex - 1]).toBe('Protocol')
+		// The score maps to AAA; the API's explicit CCC grade must take precedence.
+		expect(container.querySelector('tbody tr')!.children[gradeIndex].textContent).toBe('CCC')
+		expect(labels).not.toContain('Status')
+		expect(container.textContent).not.toContain('Pin My Token')
+		await act(async () => container!.querySelector<HTMLButtonElement>('button[aria-label="Expand row"]')!.click())
+		expect(container.querySelector<HTMLTableCellElement>('td[colspan]')!.colSpan).toBe(headers.length)
+		await act(async () => container!.querySelector<HTMLButtonElement>('button[aria-label="Collapse row"]')!.click())
+		expect(container.querySelector('td[colspan]')).toBeNull()
 	})
 })

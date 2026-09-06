@@ -1,8 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { NestedMenu } from '~/components/NestedMenu'
 import { BrowserContent } from '~/containers/LlamaAI/components/input/CapabilityBrowser'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
+import { nestedPopoverMobileWrapperClassName, nestedMenuHeaderIconButtonStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface MobileToolsPopoverProps {
@@ -164,19 +164,41 @@ export function MobileToolsPopover({
 
 				<Ariakit.MenuSeparator className="mx-2 border-t border-ai-line-subtle" />
 
-				<NestedMenu
-					data-walkthrough="mobile-explore-item"
-					label={
-						<span className="flex items-center gap-3">
-							<Icon name="layout-grid" height={16} width={16} className="shrink-0 text-ai-tertiary" />
-							<span>Explore</span>
-						</span>
-					}
-					className={itemClassName}
-					popoverVariant="legacy"
-				>
-					<BrowserContent onPromptSelect={handlePromptSelect} hideDragHandle />
-				</NestedMenu>
+				<Ariakit.PopoverProvider placement="right-start">
+					<Ariakit.PopoverDisclosure
+						render={<Ariakit.MenuItem hideOnClick={false} />}
+						role="menuitem"
+						data-walkthrough="mobile-explore-item"
+						className={itemClassName}
+					>
+						<Icon name="layout-grid" height={16} width={16} className="shrink-0 text-ai-tertiary" />
+						<span className="flex-1">Explore</span>
+						<Icon name="chevron-right" className="size-4" />
+					</Ariakit.PopoverDisclosure>
+					<Ariakit.Popover
+						modal
+						portal
+						unmountOnHide
+						aria-label="Explore AI capabilities"
+						wrapperProps={{ className: nestedPopoverMobileWrapperClassName }}
+						className="z-20 flex h-[calc(100dvh-80px)] max-h-dvh w-full flex-col overflow-hidden rounded-t-xl border border-ai-line-medium bg-ai-surface-card p-2 shadow-2xl max-sm:drawer-to-left sm:h-[420px] sm:w-[600px] sm:max-w-[calc(100vw-2rem)] sm:rounded-xl"
+					>
+						<div className="grid min-h-12 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1">
+							<Ariakit.PopoverDismiss aria-label="Back to mobile tools" className={nestedMenuHeaderIconButtonStyles}>
+								<Icon name="chevron-left" className="size-4" />
+							</Ariakit.PopoverDismiss>
+							<span className="text-center label-md text-ai-primary">Explore</span>
+							<Ariakit.PopoverDismiss
+								aria-label="Close mobile tools"
+								onClick={() => menu.hideAll()}
+								className={nestedMenuHeaderIconButtonStyles}
+							>
+								<Icon name="x" className="size-4" />
+							</Ariakit.PopoverDismiss>
+						</div>
+						<BrowserContent onPromptSelect={handlePromptSelect} hideDragHandle />
+					</Ariakit.Popover>
+				</Ariakit.PopoverProvider>
 
 				{onOpenAlerts ? (
 					<Ariakit.MenuItem

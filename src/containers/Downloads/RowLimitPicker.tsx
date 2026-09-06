@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { formatNumber } from '~/utils/numberFormat'
 
@@ -13,6 +13,7 @@ interface RowLimitPickerProps {
 }
 
 export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimitPickerProps) {
+	const id = useId()
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-start' })
 
 	const [customInput, setCustomInput] = useState<string>(() =>
@@ -31,11 +32,14 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 	const isActive = value !== null && value > 0
 
 	const handlePresetClick = (n: number | null) => {
+		setCustomInput('')
+		setError(null)
 		onChange(n)
 		popover.hide()
 	}
 
 	const handleClear = () => {
+		popover.getState().disclosureElement?.focus()
 		onChange(null)
 		popover.hide()
 	}
@@ -72,6 +76,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 			</div>
 
 			<Ariakit.Popover
+				aria-label="Row limit"
 				gutter={6}
 				portal
 				unmountOnHide
@@ -133,6 +138,9 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 					<div className="flex items-center gap-2">
 						<input
 							type="number"
+							aria-label="Custom row limit"
+							aria-invalid={!!error}
+							aria-describedby={error ? `${id}-error` : undefined}
 							min={1}
 							inputMode="numeric"
 							value={customInput}
@@ -141,7 +149,7 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 								setError(null)
 							}}
 							placeholder="e.g. 250"
-							className="flex-1 rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
+							className="min-w-0 flex-1 rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
 						/>
 						<button
 							type="submit"
@@ -151,7 +159,11 @@ export function RowLimitPicker({ value, totalRows, onChange, disabled }: RowLimi
 							Apply
 						</button>
 					</div>
-					{error ? <p className="text-[11px] text-error">{error}</p> : null}
+					{error ? (
+						<p id={`${id}-error`} role="alert" className="text-[11px] text-error">
+							{error}
+						</p>
+					) : null}
 				</form>
 
 				<p className="text-[11px] text-pro-text-tertiary">Applied after sort — top N by current sort order.</p>

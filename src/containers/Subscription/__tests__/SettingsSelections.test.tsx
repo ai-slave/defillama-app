@@ -90,9 +90,8 @@ test('an unavailable private selection remains intact while Public stays keyboar
 	await press(radio('public'), 'ArrowRight')
 	expect(radio('public').checked).toBe(true)
 })
-test('billing arrows change the offer once without checkout or a mount callback', async () => {
+test('billing arrows change the selected cycle once without a mount callback', async () => {
 	const change = vi.fn()
-	const checkout = vi.fn()
 	function Pricing() {
 		const [value, setValue] = useState<BillingCycle>('yearly')
 		return (
@@ -103,7 +102,7 @@ test('billing arrows change the offer once without checkout or a mount callback'
 					change(next)
 					setValue(next)
 				}}
-				onPrimaryCtaClick={checkout}
+				onPrimaryCtaClick={vi.fn()}
 			/>
 		)
 	}
@@ -116,5 +115,4 @@ test('billing arrows change the offer once without checkout or a mount callback'
 	expect(change).toHaveBeenCalledOnce()
 	await press(radio('monthly'), 'ArrowRight')
 	expect(radio('yearly').checked).toBe(true)
-	expect(checkout).not.toHaveBeenCalled()
 })

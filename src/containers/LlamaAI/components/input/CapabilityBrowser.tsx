@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef } from 'react'
 import { CAPABILITIES } from '~/containers/LlamaAI/capabilities'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
@@ -14,6 +14,7 @@ export function CapabilityBrowser({ onPromptSelect }: CapabilityBrowserProps) {
 
 	return (
 		<Ariakit.Popover
+			aria-label="Explore AI capabilities"
 			portal
 			modal={isMobile}
 			unmountOnHide
@@ -37,24 +38,25 @@ export function BrowserContent({
 	onPromptSelect: (prompt: string, categoryKey?: string) => void
 	hideDragHandle?: boolean
 }) {
+	const id = useId()
 	const tabs = Ariakit.useTabStore({
-		defaultSelectedId: CAPABILITIES[0].key,
+		defaultSelectedId: `${id}-${CAPABILITIES[0].key}`,
 		selectOnMove: true,
-		orientation: 'vertical'
+		orientation: 'both'
 	})
 	const selectedId = Ariakit.useStoreState(tabs, 'selectedId')
-	const activeCategory = CAPABILITIES.find((c) => c.key === selectedId) ?? CAPABILITIES[0]
+	const activeCategory = CAPABILITIES.find((c) => `${id}-${c.key}` === selectedId) ?? CAPABILITIES[0]
 
 	const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const handleHoverIntent = useCallback(
 		(key: string) => {
 			if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
 			hoverTimerRef.current = setTimeout(() => {
-				tabs.setSelectedId(key)
+				tabs.setSelectedId(`${id}-${key}`)
 				trackUmamiEvent('llamaai-capability-category-view', { category: key })
 			}, 80)
 		},
-		[tabs]
+		[id, tabs]
 	)
 	const cancelHoverIntent = useCallback(() => {
 		if (hoverTimerRef.current) {
@@ -82,64 +84,32 @@ export function BrowserContent({
 			{!hideDragHandle ? (
 				<div className="flex items-center justify-between px-3 pt-3 pb-1 sm:hidden">
 					<span className="text-[13px] font-semibold text-ai-primary">Explore</span>
-					<Ariakit.PopoverDismiss className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton">
+					<Ariakit.PopoverDismiss
+						aria-label="Close Explore"
+						className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton"
+					>
 						<Icon name="x" height={14} width={14} />
 					</Ariakit.PopoverDismiss>
 				</div>
 			) : null}
 
-			{/* Mobile: horizontal category pills */}
-			<div className="flex scrollbar-none gap-1.5 overflow-x-auto px-3 pb-2.5 sm:hidden">
-				{CAPABILITIES.map((cap) => {
-					const isActive = activeCategory.key === cap.key
-					return (
-						<button
-							key={cap.key}
-							type="button"
-							aria-pressed={isActive}
-							onClick={() => {
-								tabs.setSelectedId(cap.key)
-								trackUmamiEvent('llamaai-capability-category-view', { category: cap.key })
-							}}
-							className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
-								isActive
-									? 'bg-ai-inverse text-ai-on-inverse'
-									: 'bg-ai-surface-muted text-ai-secondary dark:bg-ai-surface-card dark:text-ai-muted'
-							}`}
-						>
-							<Icon name={cap.icon} height={11} width={11} />
-							<span>{cap.name}</span>
-							{cap.badge ? (
-								<span
-									className={`rounded-sm px-1 py-px text-[8px] leading-normal font-bold tracking-wide ${
-										isActive
-											? 'bg-ai-white/20 text-ai-on-inverse dark:bg-ai-black/20'
-											: 'bg-ai-accent-blue/12 text-ai-accent-blue'
-									}`}
-								>
-									{cap.badge}
-								</span>
-							) : null}
-						</button>
-					)
-				})}
-			</div>
-
-			{/* Mobile: description */}
-			<p className="px-4 pt-1 pb-2 text-xs leading-relaxed text-ai-tertiary sm:hidden">{activeCategory.description}</p>
-
-			{/* Main layout: desktop sidebar + content */}
-			<div className="flex min-h-0 flex-1">
-				{/* Desktop: sidebar */}
-				<Ariakit.TabList className="hidden w-[176px] shrink-0 flex-col gap-0.5 overflow-y-auto overscroll-contain border-r border-ai-line-subtle bg-ai-surface p-1.5 sm:flex">
+			<div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+				<Ariakit.TabList
+					aria-label="Capability categories"
+					onKeyDownCapture={cancelHoverIntent}
+					className="flex scrollbar-none shrink-0 gap-1.5 overflow-x-auto px-3 pb-2.5 sm:w-[176px] sm:flex-col sm:gap-0.5 sm:overflow-y-auto sm:overscroll-contain sm:border-r sm:border-ai-line-subtle sm:bg-ai-surface sm:p-1.5"
+				>
 					{CAPABILITIES.map((cap) => (
 						<Ariakit.Tab
 							key={cap.key}
-							id={cap.key}
-							onClick={() => trackUmamiEvent('llamaai-capability-category-view', { category: cap.key })}
+							id={`${id}-${cap.key}`}
+							onClick={() => {
+								cancelHoverIntent()
+								trackUmamiEvent('llamaai-capability-category-view', { category: cap.key })
+							}}
 							onMouseEnter={() => handleHoverIntent(cap.key)}
 							onMouseLeave={cancelHoverIntent}
-							className="group flex items-center gap-2 rounded-lg px-2.5 py-1.75 text-left text-[12.5px] font-medium text-ai-secondary hover:bg-ai-hover hover:text-ai-primary aria-selected:bg-ai-surface-card aria-selected:text-ai-primary aria-selected:shadow-ai-xs"
+							className="group flex shrink-0 items-center gap-1.5 rounded-full bg-ai-surface-muted px-3 py-1.5 text-left text-xs font-medium whitespace-nowrap text-ai-secondary aria-selected:bg-ai-inverse aria-selected:text-ai-on-inverse sm:gap-2 sm:rounded-lg sm:bg-transparent sm:px-2.5 sm:py-1.75 sm:text-[12.5px] sm:hover:bg-ai-hover sm:hover:text-ai-primary sm:aria-selected:bg-ai-surface-card sm:aria-selected:text-ai-primary sm:aria-selected:shadow-ai-xs"
 						>
 							<Icon
 								name={cap.icon}
@@ -158,10 +128,13 @@ export function BrowserContent({
 				</Ariakit.TabList>
 
 				{/* Content panel */}
-				<Ariakit.TabPanel tabId={selectedId ?? undefined} className="flex flex-1 flex-col overflow-hidden">
+				<Ariakit.TabPanel
+					tabId={selectedId ?? undefined}
+					className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+				>
 					{/* Desktop: category header */}
-					<div className="hidden shrink-0 border-b border-ai-line-subtle px-4 pt-3.5 pb-3 sm:block">
-						<div className="flex items-center gap-2">
+					<div className="shrink-0 px-4 pt-1 pb-2 sm:border-b sm:border-ai-line-subtle sm:pt-3.5 sm:pb-3">
+						<div className="hidden items-center gap-2 sm:flex">
 							<Icon name={activeCategory.icon} height={14} width={14} className="text-ai-tertiary" />
 							<h3 className="text-[13px] font-semibold text-ai-primary">{activeCategory.name}</h3>
 							{activeCategory.badge ? (

@@ -13,10 +13,41 @@ import { matchSorter } from 'match-sorter'
 import { forwardRef, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
 import type { Chain, MetricAggregator, MetricChartType, MetricWindow, Protocol } from '../../types'
 import { getProDashboardChartTypeConfig } from '../../types'
 import { getItemIconUrl } from '../../utils'
+
+const CHART_TYPE_OPTIONS = [
+	{
+		value: 'sparkline',
+		label: (
+			<>
+				<Icon name="activity" width={12} height={12} />
+				<span>Line</span>
+			</>
+		)
+	},
+	{
+		value: 'bar',
+		label: (
+			<>
+				<Icon name="bar-chart-2" width={12} height={12} />
+				<span>Bar</span>
+			</>
+		)
+	},
+	{
+		value: 'none',
+		label: (
+			<>
+				<Icon name="x" width={12} height={12} />
+				<span>None</span>
+			</>
+		)
+	}
+] as const
 
 const AGGREGATOR_OPTIONS: Array<{ value: MetricAggregator; label: string; description: string }> = [
 	{ value: 'latest', label: 'Latest', description: 'Most recent value in the selected window' },
@@ -723,46 +754,16 @@ export function MetricSentenceBuilder({
 				</div>
 				<div className="mt-2.5 flex flex-wrap items-center gap-2 rounded-md border border-dashed border-pro-cards-border px-2 py-1.5 sm:mt-3 sm:px-2.5">
 					<span className="text-[11px] font-medium text-pro-text-secondary sm:text-xs">Chart:</span>
-					<div className="flex flex-1 items-center gap-1 rounded-md bg-surface-elevated-1 p-0.5">
-						<button
-							type="button"
-							onClick={() => onChartTypeChange('sparkline')}
-							aria-pressed={chartType === 'sparkline'}
-							title="Line chart"
-							className={`flex flex-1 items-center justify-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
-								chartType === 'sparkline'
-									? 'bg-brand text-on-brand'
-									: 'text-pro-text-secondary hover:text-pro-text-primary'
-							}`}
-						>
-							<Icon name="activity" width={12} height={12} />
-							<span>Line</span>
-						</button>
-						<button
-							type="button"
-							onClick={() => onChartTypeChange('bar')}
-							aria-pressed={chartType === 'bar'}
-							title="Bar chart"
-							className={`flex flex-1 items-center justify-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
-								chartType === 'bar' ? 'bg-brand text-on-brand' : 'text-pro-text-secondary hover:text-pro-text-primary'
-							}`}
-						>
-							<Icon name="bar-chart-2" width={12} height={12} />
-							<span>Bar</span>
-						</button>
-						<button
-							type="button"
-							onClick={() => onChartTypeChange('none')}
-							aria-pressed={chartType === 'none'}
-							title="No chart"
-							className={`flex flex-1 items-center justify-center gap-1 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors sm:text-xs ${
-								chartType === 'none' ? 'bg-brand text-on-brand' : 'text-pro-text-secondary hover:text-pro-text-primary'
-							}`}
-						>
-							<Icon name="x" width={12} height={12} />
-							<span>None</span>
-						</button>
-					</div>
+					<SegmentedControl
+						label="Chart type"
+						value={chartType}
+						onValueChange={onChartTypeChange}
+						options={CHART_TYPE_OPTIONS}
+						variant="default"
+						size="sm"
+						className="flex-1 border-0 bg-surface-elevated-1"
+						buttonClassName="flex flex-1 items-center justify-center gap-1 text-[11px] font-medium sm:text-xs"
+					/>
 				</div>
 			</div>
 			<Popover

@@ -650,7 +650,7 @@ export function DatasetPreviewModal({
 					<div className="flex shrink-0 flex-col border-b border-subtle">
 						<div className="flex items-center gap-3 px-4 py-2.5">
 							<div className="mr-auto min-w-0">
-								<h2 className="truncate heading-xs">{dataset.name}</h2>
+								<Ariakit.DialogHeading render={<h2>{dataset.name}</h2>} className="truncate heading-xs" />
 								<p className="text-xs text-pro-text-tertiary">
 									{loading
 										? 'Loading...'
@@ -728,6 +728,7 @@ export function DatasetPreviewModal({
 							<button
 								type="button"
 								onClick={onClose}
+								aria-label="Close dataset preview"
 								className="rounded-md p-1.5 text-pro-text-tertiary transition-colors hover:bg-hover-row hover:text-pro-text-primary"
 							>
 								<Icon name="x" className="size-4" />
@@ -738,7 +739,7 @@ export function DatasetPreviewModal({
 							<div className="flex flex-wrap items-center gap-2 border-t border-subtle px-4 py-2">
 								{!isPreview ? (
 									<>
-										<label className="relative min-w-0 flex-1">
+										<label className="relative min-w-32 flex-1 sm:min-w-48">
 											<Icon
 												name="search"
 												height={14}
@@ -748,8 +749,9 @@ export function DatasetPreviewModal({
 											<input
 												value={search}
 												onChange={(event) => setSearch(event.currentTarget.value)}
+												aria-label="Filter rows"
 												placeholder="Filter rows..."
-												className="w-full min-w-32 rounded-md border border-subtle bg-transparent py-1.5 pr-2.5 pl-8 text-xs outline-hidden transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand/30 sm:w-48"
+												className="w-full min-w-0 rounded-md border border-subtle bg-transparent py-1.5 pr-2.5 pl-8 text-xs outline-hidden transition-colors placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand/30 sm:w-48"
 											/>
 										</label>
 

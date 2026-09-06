@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import dayjs from 'dayjs'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { type DateRangeConfig, type DateRangePreset, formatDateRangeLong } from './savedDownloads'
 
@@ -22,6 +22,7 @@ interface DateRangePickerProps {
 }
 
 export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }: DateRangePickerProps) {
+	const id = useId()
 	const popover = Ariakit.usePopoverStore({ placement: 'bottom-start' })
 	const today = dayjs().format('YYYY-MM-DD')
 	const maxAllowed = maxDate ?? today
@@ -47,6 +48,9 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 	const isActive = !!value && !(value.kind === 'preset' && value.preset === 'all')
 
 	const handlePresetClick = (preset: DateRangePreset) => {
+		setCustomFrom('')
+		setCustomTo('')
+		setError(null)
 		if (preset === 'all') {
 			onChange(null)
 		} else {
@@ -56,6 +60,10 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 	}
 
 	const handleClear = () => {
+		setCustomFrom('')
+		setCustomTo('')
+		setError(null)
+		popover.getState().disclosureElement?.focus()
 		onChange(null)
 		popover.hide()
 	}
@@ -89,6 +97,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 			</div>
 
 			<Ariakit.Popover
+				aria-label="Date range"
 				gutter={6}
 				portal
 				unmountOnHide
@@ -98,7 +107,7 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 					<h3 className="text-[11px] font-semibold tracking-wide text-pro-text-tertiary uppercase">Quick ranges</h3>
 					<div className="flex flex-wrap gap-1">
 						{PRESET_LABELS.map(({ label, preset }) => {
-							const isSelected = preset === 'all' ? isAllSelected && !customFrom && !customTo : activePreset === preset
+							const isSelected = preset === 'all' ? isAllSelected : activePreset === preset
 							return (
 								<button
 									key={preset}
@@ -143,6 +152,8 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 							<span className="text-[11px] text-pro-text-secondary">From</span>
 							<input
 								type="date"
+								aria-invalid={!!error}
+								aria-describedby={error ? `${id}-error` : undefined}
 								value={customFrom}
 								onChange={(e) => {
 									setCustomFrom(e.currentTarget.value)
@@ -150,13 +161,15 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 								}}
 								min={minDate}
 								max={customTo || maxAllowed}
-								className="rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
+								className="min-w-0 rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
 							/>
 						</label>
 						<label className="flex flex-col gap-1">
 							<span className="text-[11px] text-pro-text-secondary">To</span>
 							<input
 								type="date"
+								aria-invalid={!!error}
+								aria-describedby={error ? `${id}-error` : undefined}
 								value={customTo}
 								onChange={(e) => {
 									setCustomTo(e.currentTarget.value)
@@ -164,11 +177,15 @@ export function DateRangePicker({ value, onChange, minDate, maxDate, disabled }:
 								}}
 								min={customFrom || minDate}
 								max={maxAllowed}
-								className="rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
+								className="min-w-0 rounded-md border border-subtle bg-transparent px-2 py-1 text-xs outline-hidden focus:border-brand focus:ring-1 focus:ring-brand/30"
 							/>
 						</label>
 					</div>
-					{error ? <p className="text-[11px] text-error">{error}</p> : null}
+					{error ? (
+						<p id={`${id}-error`} role="alert" className="text-[11px] text-error">
+							{error}
+						</p>
+					) : null}
 					<div className="flex justify-end gap-1.5 pt-1">
 						<button
 							type="button"
