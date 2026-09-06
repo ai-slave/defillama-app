@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
+import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { CookbookTab, ShortcutsTab } from './DocsPanel'
 import { SchemaBrowser, type SchemaBrowserProps } from './SchemaBrowser'
 
@@ -78,52 +79,51 @@ export function SchemaDrawer({
 					</Ariakit.DialogDismiss>
 				</header>
 
-				<TabBar tab={tab} onChange={setTab} />
+				<Tabs<TabId> value={tab} onValueChange={setTab} values={TABS.map((item) => item.id)}>
+					<TabBar tab={tab} />
 
-				<div className="flex-1 overflow-y-auto px-5 py-4">
-					{tab === 'schema' ? (
-						<SchemaBrowser {...browserProps} onReplaceSql={wrappedReplace} onInsertAtCursor={onInsertAtCursor} />
-					) : tab === 'cookbook' ? (
-						<CookbookTab
-							onApplyAndRun={(sql) => {
-								onClose()
-								onApplyAndRun(sql)
-							}}
-						/>
-					) : (
-						<ShortcutsTab />
-					)}
-				</div>
+					<TabPanel value={tab} className="flex-1 overflow-y-auto px-5 py-4">
+						{tab === 'schema' ? (
+							<SchemaBrowser {...browserProps} onReplaceSql={wrappedReplace} onInsertAtCursor={onInsertAtCursor} />
+						) : tab === 'cookbook' ? (
+							<CookbookTab
+								onApplyAndRun={(sql) => {
+									onClose()
+									onApplyAndRun(sql)
+								}}
+							/>
+						) : (
+							<ShortcutsTab />
+						)}
+					</TabPanel>
+				</Tabs>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)
 }
 
-function TabBar({ tab, onChange }: { tab: TabId; onChange: (next: TabId) => void }) {
+function TabBar({ tab }: { tab: TabId }) {
 	return (
-		<nav
-			role="tablist"
+		<Ariakit.TabList
 			aria-label="SQL reference section"
 			className="flex items-center gap-5 border-b border-subtle px-5 text-sm"
 		>
 			{TABS.map((t) => {
 				const active = tab === t.id
 				return (
-					<button
+					<Tab
 						key={t.id}
-						role="tab"
+						value={t.id}
 						type="button"
-						aria-selected={active}
-						onClick={() => onChange(t.id)}
 						className={`group relative flex items-center gap-1.5 pt-2.5 pb-2 text-xs font-medium transition-colors ${
 							active ? 'text-brand' : 'text-pro-text-secondary hover:text-pro-text-primary'
 						}`}
 					>
 						{t.label}
 						{active ? <span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" /> : null}
-					</button>
+					</Tab>
 				)
 			})}
-		</nav>
+		</Ariakit.TabList>
 	)
 }

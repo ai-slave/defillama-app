@@ -1,3 +1,4 @@
+import { TabList } from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
@@ -7,6 +8,7 @@ import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { getStorageJSON, setStorageJSON } from '~/contexts/localStorageStore'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner, LocalLoader } from '~/ui/Loaders'
+import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartOptionsMap } from '../chart-datasets'
 import { chartDatasets } from '../chart-datasets'
@@ -817,159 +819,161 @@ function SqlWorkspaceInner({
 				error={!!activeTab.runError || (activeTab.cells?.some((c) => !!c.runError) ?? false)}
 			/>
 
-			<TabNav tab={sectionTab} onChange={setSectionTab} savedCount={savedQueries.length} />
-
-			{sectionTab === 'editor' ? (
-				<div
-					className={`grid grid-cols-1 gap-4 ${
-						playbookCollapsed ? 'lg:grid-cols-[minmax(0,1fr)_44px]' : 'lg:grid-cols-[minmax(0,1fr)_320px]'
-					}`}
-				>
-					<div className="flex min-w-0 flex-col gap-3">
-						<QueryTabBar
-							tabs={tabs}
-							activeTabId={activeTabId}
-							onFocus={focusTab}
-							onClose={closeTab}
-							onNewTab={() => openTab({ focus: true })}
-							onNewNotebookTab={() => openNotebookTab({ focus: true })}
-							onRename={renameTab}
-							onDuplicate={duplicateTab}
-							onCloseOthers={closeOthers}
-							onCloseToRight={closeToRight}
-							onConvertToNotebook={convertTabToNotebook}
-						/>
-						<TableChipRail
-							tables={registry.tables}
-							onBrowseSchema={() => setSchemaDrawerOpen(true)}
-							onRemove={registry.remove}
-							pending={
-								activeTab.mode === 'notebook'
-									? (activeTab.cells?.flatMap((c) => c.pendingTables) ?? [])
-									: activeTab.pendingTables
-							}
-							totalSchemaCount={TOTAL_SCHEMA_COUNT}
-						/>
-
-						{activeTab.mode === 'notebook' ? (
-							<NotebookView
-								tab={activeTab}
-								loadedTables={registry.tables}
-								canRun={!!duckdb.conn}
-								onCellSourceChange={(cellId, source) =>
-									updateCell(activeTab.id, cellId, (c) => ({
-										source,
-										dirty: source !== c.source ? true : c.dirty
-									}))
-								}
-								onCellFocus={(cellId) => focusCell(activeTab.id, cellId)}
-								onCellChartConfig={(cellId, next) =>
-									updateCell(activeTab.id, cellId, { chartConfig: next ?? undefined })
-								}
-								onCellPreferredView={(cellId, view) => updateCell(activeTab.id, cellId, { preferredView: view })}
-								onRunCell={async (cellId) => {
-									await runSqlForCell(activeTab.id, cellId)
-								}}
-								onCancelCell={(cellId) => cancelCellRun(activeTab.id, cellId)}
-								onRunCellAndAdvance={(cellId) => runCellAndAdvance(activeTab.id, cellId)}
-								onRunAbove={(cellId) => runCellsAbove(activeTab.id, cellId)}
-								onRunBelow={(cellId) => runCellsBelow(activeTab.id, cellId)}
-								onRunAll={() => runAllCellsInTab(activeTab.id)}
-								onAddCell={(type, atIndex) => {
-									addCell(activeTab.id, type, atIndex, true)
-								}}
-								onDeleteCell={(cellId) => removeCell(activeTab.id, cellId)}
-								onMoveCell={(cellId, direction) => {
-									const cells = activeTab.cells ?? []
-									const idx = cells.findIndex((c) => c.id === cellId)
-									if (idx === -1) return
-									const toIdx = direction === 'up' ? idx - 1 : idx + 1
-									if (toIdx < 0 || toIdx >= cells.length) return
-									reorderCells(activeTab.id, idx, toIdx)
-								}}
-								onReorderCell={(fromIdx, toIdx) => reorderCells(activeTab.id, fromIdx, toIdx)}
-								onConvertCellType={(cellId, nextType) =>
-									updateCell(activeTab.id, cellId, { type: nextType, result: null, runError: null, lastRun: null })
-								}
-								onDismissCellsDirty={() => setCellsDirty(activeTab.id, false)}
-							/>
-						) : (
-							<>
-								<Editor
-									key={activeTabId}
-									ref={editorRef}
-									value={activeTab.sql}
-									onChange={setActiveSql}
-									onRun={runQuery}
+			<Tabs<SqlTab> value={sectionTab} onValueChange={setSectionTab} values={SQL_TABS.map((item) => item.id)}>
+				<TabNav tab={sectionTab} savedCount={savedQueries.length} />
+				<TabPanel value={sectionTab}>
+					{sectionTab === 'editor' ? (
+						<div
+							className={`grid grid-cols-1 gap-4 ${
+								playbookCollapsed ? 'lg:grid-cols-[minmax(0,1fr)_44px]' : 'lg:grid-cols-[minmax(0,1fr)_320px]'
+							}`}
+						>
+							<div className="flex min-w-0 flex-col gap-3">
+								<QueryTabBar
+									tabs={tabs}
+									activeTabId={activeTabId}
+									onFocus={focusTab}
+									onClose={closeTab}
+									onNewTab={() => openTab({ focus: true })}
+									onNewNotebookTab={() => openNotebookTab({ focus: true })}
+									onRename={renameTab}
+									onDuplicate={duplicateTab}
+									onCloseOthers={closeOthers}
+									onCloseToRight={closeToRight}
+									onConvertToNotebook={convertTabToNotebook}
+								/>
+								<TableChipRail
 									tables={registry.tables}
+									onBrowseSchema={() => setSchemaDrawerOpen(true)}
+									onRemove={registry.remove}
+									pending={
+										activeTab.mode === 'notebook'
+											? (activeTab.cells?.flatMap((c) => c.pendingTables) ?? [])
+											: activeTab.pendingTables
+									}
+									totalSchemaCount={TOTAL_SCHEMA_COUNT}
 								/>
-								<EditorRunBar
-									running={activeTab.running || !!activeTab.loadingStage}
-									canRun={!!duckdb.conn && !!activeTab.sql.trim()}
-									onRun={runQuery}
-									onCancel={() => cancelTabRun(activeTabId)}
-									onSave={() => setSavePresetOpen(true)}
-									sql={activeTab.sql}
-									tables={tableRefs}
-									chartConfig={activeTab.chartConfig}
-									mode="query"
-									notebookCells={[]}
-									notebookTitle={activeTab.title}
-								/>
-								{activeTab.runError ? (
-									<ErrorBanner
-										error={activeTab.runError}
-										loadedTables={registry.tables}
-										onJump={(line, col) => editorRef.current?.revealLine(line, col)}
-										onApplyFix={onApplyFix}
-									/>
-								) : null}
-								<ResultsPanel
-									result={activeTab.result}
-									running={activeTab.running}
-									busyLabel={activeTab.loadingStage}
-									chartConfig={activeTab.chartConfig}
-									onChartConfigChange={setActiveChartConfig}
-									preferredView={chartPreferredTab === activeTabId ? 'chart' : undefined}
-									onConsumePreferredView={() => setChartPreferredTab(null)}
-									durationMs={activeTab.lastRun?.durationMs ?? null}
-								/>
-							</>
-						)}
 
-						{activeTab.mode === 'notebook' ? (
-							<div className="flex flex-wrap items-center justify-end gap-2">
-								<ShareQueryButton
-									sql=""
-									tables={tableRefs}
-									chartConfig={undefined}
-									disabled={!duckdb.conn}
-									mode="notebook"
-									notebookCells={notebookShareCells}
-									notebookTitle={activeTab.title}
+								{activeTab.mode === 'notebook' ? (
+									<NotebookView
+										tab={activeTab}
+										loadedTables={registry.tables}
+										canRun={!!duckdb.conn}
+										onCellSourceChange={(cellId, source) =>
+											updateCell(activeTab.id, cellId, (c) => ({
+												source,
+												dirty: source !== c.source ? true : c.dirty
+											}))
+										}
+										onCellFocus={(cellId) => focusCell(activeTab.id, cellId)}
+										onCellChartConfig={(cellId, next) =>
+											updateCell(activeTab.id, cellId, { chartConfig: next ?? undefined })
+										}
+										onCellPreferredView={(cellId, view) => updateCell(activeTab.id, cellId, { preferredView: view })}
+										onRunCell={async (cellId) => {
+											await runSqlForCell(activeTab.id, cellId)
+										}}
+										onCancelCell={(cellId) => cancelCellRun(activeTab.id, cellId)}
+										onRunCellAndAdvance={(cellId) => runCellAndAdvance(activeTab.id, cellId)}
+										onRunAbove={(cellId) => runCellsAbove(activeTab.id, cellId)}
+										onRunBelow={(cellId) => runCellsBelow(activeTab.id, cellId)}
+										onRunAll={() => runAllCellsInTab(activeTab.id)}
+										onAddCell={(type, atIndex) => {
+											addCell(activeTab.id, type, atIndex, true)
+										}}
+										onDeleteCell={(cellId) => removeCell(activeTab.id, cellId)}
+										onMoveCell={(cellId, direction) => {
+											const cells = activeTab.cells ?? []
+											const idx = cells.findIndex((c) => c.id === cellId)
+											if (idx === -1) return
+											const toIdx = direction === 'up' ? idx - 1 : idx + 1
+											if (toIdx < 0 || toIdx >= cells.length) return
+											reorderCells(activeTab.id, idx, toIdx)
+										}}
+										onReorderCell={(fromIdx, toIdx) => reorderCells(activeTab.id, fromIdx, toIdx)}
+										onConvertCellType={(cellId, nextType) =>
+											updateCell(activeTab.id, cellId, { type: nextType, result: null, runError: null, lastRun: null })
+										}
+										onDismissCellsDirty={() => setCellsDirty(activeTab.id, false)}
+									/>
+								) : (
+									<>
+										<Editor
+											key={activeTabId}
+											ref={editorRef}
+											value={activeTab.sql}
+											onChange={setActiveSql}
+											onRun={runQuery}
+											tables={registry.tables}
+										/>
+										<EditorRunBar
+											running={activeTab.running || !!activeTab.loadingStage}
+											canRun={!!duckdb.conn && !!activeTab.sql.trim()}
+											onRun={runQuery}
+											onCancel={() => cancelTabRun(activeTabId)}
+											onSave={() => setSavePresetOpen(true)}
+											sql={activeTab.sql}
+											tables={tableRefs}
+											chartConfig={activeTab.chartConfig}
+											mode="query"
+											notebookCells={[]}
+											notebookTitle={activeTab.title}
+										/>
+										{activeTab.runError ? (
+											<ErrorBanner
+												error={activeTab.runError}
+												loadedTables={registry.tables}
+												onJump={(line, col) => editorRef.current?.revealLine(line, col)}
+												onApplyFix={onApplyFix}
+											/>
+										) : null}
+										<ResultsPanel
+											result={activeTab.result}
+											running={activeTab.running}
+											busyLabel={activeTab.loadingStage}
+											chartConfig={activeTab.chartConfig}
+											onChartConfigChange={setActiveChartConfig}
+											preferredView={chartPreferredTab === activeTabId ? 'chart' : undefined}
+											onConsumePreferredView={() => setChartPreferredTab(null)}
+											durationMs={activeTab.lastRun?.durationMs ?? null}
+										/>
+									</>
+								)}
+
+								{activeTab.mode === 'notebook' ? (
+									<div className="flex flex-wrap items-center justify-end gap-2">
+										<ShareQueryButton
+											sql=""
+											tables={tableRefs}
+											chartConfig={undefined}
+											disabled={!duckdb.conn}
+											mode="notebook"
+											notebookCells={notebookShareCells}
+											notebookTitle={activeTab.title}
+										/>
+									</div>
+								) : null}
+							</div>
+							<div className="lg:sticky lg:top-4 lg:self-start">
+								<ExamplesPanel
+									onApply={onApplyExample}
+									busyTaskId={activeTab.busyTaskId}
+									collapsed={playbookCollapsed}
+									onToggleCollapsed={togglePlaybook}
 								/>
 							</div>
-						) : null}
-					</div>
-					<div className="lg:sticky lg:top-4 lg:self-start">
-						<ExamplesPanel
-							onApply={onApplyExample}
+						</div>
+					) : (
+						<SavedQueriesTab
+							savedQueries={savedQueries}
+							onOpen={onLoadSavedQuery}
+							onDelete={deleteDownload}
+							onRename={renameDownload}
 							busyTaskId={activeTab.busyTaskId}
-							collapsed={playbookCollapsed}
-							onToggleCollapsed={togglePlaybook}
 						/>
-					</div>
-				</div>
-			) : (
-				<SavedQueriesTab
-					savedQueries={savedQueries}
-					onOpen={onLoadSavedQuery}
-					onDelete={deleteDownload}
-					onRename={renameDownload}
-					busyTaskId={activeTab.busyTaskId}
-				/>
-			)}
-
+					)}
+				</TabPanel>
+			</Tabs>
 			{savePresetOpen ? (
 				<SavePresetDialog
 					suggestedName={firstNonEmptyLine(activeTab.sql).slice(0, 60) || 'Untitled query'}
@@ -1085,23 +1089,17 @@ function Divider() {
 	return <span aria-hidden className="h-3 w-px bg-border-subtle" />
 }
 
-function TabNav({ tab, onChange, savedCount }: { tab: SqlTab; onChange: (next: SqlTab) => void; savedCount: number }) {
+function TabNav({ tab, savedCount }: { tab: SqlTab; savedCount: number }) {
 	return (
-		<nav
-			role="tablist"
-			aria-label="SQL workspace section"
-			className="flex items-center gap-5 border-b border-subtle text-sm"
-		>
+		<TabList aria-label="SQL workspace section" className="flex items-center gap-5 border-b border-subtle text-sm">
 			{SQL_TABS.map((t) => {
 				const active = tab === t.id
 				const showCount = t.id === 'saved' && savedCount > 0
 				return (
-					<button
+					<Tab
 						key={t.id}
-						role="tab"
+						value={t.id}
 						type="button"
-						aria-selected={active}
-						onClick={() => onChange(t.id)}
 						className={`group relative flex items-center gap-1.5 pb-2 font-medium transition-colors ${
 							active ? 'text-brand' : 'text-pro-text-secondary hover:text-pro-text-primary'
 						}`}
@@ -1113,10 +1111,10 @@ function TabNav({ tab, onChange, savedCount }: { tab: SqlTab; onChange: (next: S
 							</span>
 						) : null}
 						{active ? <span aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" /> : null}
-					</button>
+					</Tab>
 				)
 			})}
-		</nav>
+		</TabList>
 	)
 }
 

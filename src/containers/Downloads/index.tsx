@@ -2,6 +2,7 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import { LocalLoader } from '~/ui/Loaders'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import type { ChartOptionsMap } from './chart-datasets'
 import { DownloadsCatalog as SimpleCatalog } from './DownloadsCatalog'
 import { ModeToggle, type DownloadsMode } from './sql/ModeToggle'
@@ -36,17 +37,21 @@ export function DownloadsCatalog({ chartOptionsMap }: DownloadsCatalogProps) {
 
 	return (
 		<div className="flex flex-col gap-6">
-			<ModeBand mode={mode} onChange={handleModeChange} />
-			{mode === 'sql' ? (
-				<SqlWorkspace chartOptionsMap={chartOptionsMap} />
-			) : (
-				<SimpleCatalog chartOptionsMap={chartOptionsMap} />
-			)}
+			<Tabs value={mode} onValueChange={handleModeChange} values={['simple', 'sql']}>
+				<ModeBand mode={mode} />
+				<TabPanel value={mode}>
+					{mode === 'sql' ? (
+						<SqlWorkspace chartOptionsMap={chartOptionsMap} />
+					) : (
+						<SimpleCatalog chartOptionsMap={chartOptionsMap} />
+					)}
+				</TabPanel>
+			</Tabs>
 		</div>
 	)
 }
 
-function ModeBand({ mode, onChange }: { mode: DownloadsMode; onChange: (next: DownloadsMode) => void }) {
+function ModeBand({ mode }: { mode: DownloadsMode }) {
 	const isSql = mode === 'sql'
 	const title = isSql ? 'SQL Studio' : 'Power user? Try SQL Studio'
 	const subtitle = isSql
@@ -70,7 +75,7 @@ function ModeBand({ mode, onChange }: { mode: DownloadsMode; onChange: (next: Do
 				</div>
 			)}
 			<div className={`shrink-0 ${isSql ? 'sm:ml-auto' : ''}`}>
-				<ModeToggle mode={mode} onChange={onChange} size="md" />
+				<ModeToggle mode={mode} size="md" />
 			</div>
 		</div>
 	)

@@ -1,6 +1,8 @@
+import { TabList } from '@ariakit/react'
 import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { formatNumber } from '~/utils/numberFormat'
 import { FormatSplitButton } from '../FormatSplitButton'
 import type { ChartConfig } from './chartConfig'
@@ -92,89 +94,72 @@ export function ResultsPanel({
 	const isEmpty = result.rows.length === 0
 
 	return (
-		<div className="flex flex-col gap-2">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<div className="flex items-baseline gap-2">
-					<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">Results</h3>
-					<span className="text-xs text-pro-text-tertiary tabular-nums">
-						{formatNumber(result.rows.length)} row{result.rows.length === 1 ? '' : 's'} · {result.columns.length} col
-						{result.columns.length === 1 ? '' : 's'}
-						{durationMs != null ? ` · ${formatSqlDuration(durationMs)}` : ''}
-					</span>
+		<Tabs<ResultsView> value={view} onValueChange={setView} values={['table', 'chart']}>
+			<div className="flex flex-col gap-2">
+				<div className="flex flex-wrap items-center justify-between gap-2">
+					<div className="flex items-baseline gap-2">
+						<h3 className="text-sm font-semibold tracking-tight text-pro-text-primary">Results</h3>
+						<span className="text-xs text-pro-text-tertiary tabular-nums">
+							{formatNumber(result.rows.length)} row{result.rows.length === 1 ? '' : 's'} · {result.columns.length} col
+							{result.columns.length === 1 ? '' : 's'}
+							{durationMs != null ? ` · ${formatSqlDuration(durationMs)}` : ''}
+						</span>
+					</div>
+					<div className="flex items-center gap-2">
+						{viewToggleLabel ? <span className="text-xs font-medium text-secondary">{viewToggleLabel}</span> : null}
+						<ViewToggle view={view} disabled={isEmpty} />
+						<FormatSplitButton
+							disabled={isEmpty}
+							label="Export"
+							onDownload={(format) => exportQueryResult(result, format)}
+						/>
+					</div>
 				</div>
-				<div className="flex items-center gap-2">
-					{viewToggleLabel ? <span className="text-xs font-medium text-secondary">{viewToggleLabel}</span> : null}
-					<ViewToggle view={view} onChange={setView} disabled={isEmpty} />
-					<FormatSplitButton
-						disabled={isEmpty}
-						label="Export"
-						onDownload={(format) => exportQueryResult(result, format)}
-					/>
-				</div>
+				<TabPanel value={view}>
+					{view === 'chart' ? (
+						<ResultsChart result={result} chartConfig={chartConfig} onChartConfigChange={onChartConfigChange} />
+					) : (
+						<ResultsGrid result={result} />
+					)}
+				</TabPanel>
 			</div>
-			{view === 'chart' ? (
-				<ResultsChart result={result} chartConfig={chartConfig} onChartConfigChange={onChartConfigChange} />
-			) : (
-				<ResultsGrid result={result} />
-			)}
-		</div>
+		</Tabs>
 	)
 }
 
-function ViewToggle({
-	view,
-	onChange,
-	disabled
-}: {
-	view: ResultsView
-	onChange: (next: ResultsView) => void
-	disabled?: boolean
-}) {
+function ViewToggle({ view, disabled }: { view: ResultsView; disabled?: boolean }) {
 	return (
-		<div
-			role="tablist"
+		<TabList
 			aria-label="Results view"
 			className={`inline-flex items-center gap-0.5 rounded-md border border-subtle bg-surface p-0.5 ${
 				disabled ? 'opacity-50' : ''
 			}`}
 		>
-			<ToggleButton
-				active={view === 'table'}
-				onClick={() => onChange('table')}
-				disabled={disabled}
-				label="Table"
-				icon="layout-grid"
-			/>
-			<ToggleButton
-				active={view === 'chart'}
-				onClick={() => onChange('chart')}
-				disabled={disabled}
-				label="Chart"
-				icon="bar-chart-2"
-			/>
-		</div>
+			<ToggleButton active={view === 'table'} value="table" disabled={disabled} label="Table" icon="layout-grid" />
+			<ToggleButton active={view === 'chart'} value="chart" disabled={disabled} label="Chart" icon="bar-chart-2" />
+		</TabList>
 	)
 }
 
 function ToggleButton({
 	active,
-	onClick,
+	value,
 	disabled,
 	label,
 	icon
 }: {
 	active: boolean
-	onClick: () => void
+	value: ResultsView
 	disabled?: boolean
 	label: string
 	icon: 'layout-grid' | 'bar-chart-2'
 }) {
+	// Ariakit keeps a selected disabled tab focusable; empty results need native disabling.
 	return (
-		<button
-			role="tab"
-			type="button"
-			aria-selected={active}
-			onClick={onClick}
+		<Tab
+			value={value}
+			focusable={!disabled}
+			render={<button type="button" disabled={disabled} aria-label={label} />}
 			disabled={disabled}
 			className={`flex items-center gap-1.5 rounded-sm px-2 py-1 text-[11px] font-medium transition-colors ${
 				active
@@ -184,6 +169,6 @@ function ToggleButton({
 		>
 			<Icon name={icon} className="size-3" />
 			{label}
-		</button>
+		</Tab>
 	)
 }

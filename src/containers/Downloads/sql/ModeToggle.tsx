@@ -1,38 +1,25 @@
+import { TabList } from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
+import { Tab } from '~/ui/Tabs'
 
 export type DownloadsMode = 'simple' | 'sql'
 
 interface ModeToggleProps {
 	mode: DownloadsMode
-	onChange: (next: DownloadsMode) => void
 	size?: 'sm' | 'md'
 }
 
-export function ModeToggle({ mode, onChange, size = 'md' }: ModeToggleProps) {
+export function ModeToggle({ mode, size = 'md' }: ModeToggleProps) {
 	return (
-		<div
-			role="tablist"
+		<TabList
 			aria-label="Downloads mode"
 			className={`inline-flex items-center gap-1 rounded-lg border border-subtle bg-surface ${
 				size === 'md' ? 'p-1' : 'p-0.5'
 			}`}
 		>
-			<ModeButton
-				active={mode === 'simple'}
-				label="Simple"
-				icon="download-cloud"
-				onClick={() => onChange('simple')}
-				size={size}
-			/>
-			<ModeButton
-				active={mode === 'sql'}
-				label="SQL Studio"
-				icon="code"
-				onClick={() => onChange('sql')}
-				badge="NEW"
-				size={size}
-			/>
-		</div>
+			<ModeButton active={mode === 'simple'} label="Simple" icon="download-cloud" value="simple" size={size} />
+			<ModeButton active={mode === 'sql'} label="SQL Studio" icon="code" value="sql" badge="NEW" size={size} />
+		</TabList>
 	)
 }
 
@@ -40,25 +27,23 @@ function ModeButton({
 	active,
 	label,
 	icon,
-	onClick,
+	value,
 	badge,
 	size
 }: {
 	active: boolean
 	label: string
 	icon: 'download-cloud' | 'code'
-	onClick: () => void
+	value: DownloadsMode
 	badge?: string
 	size: 'sm' | 'md'
 }) {
 	const sizing = size === 'md' ? 'gap-2 rounded-md px-4 py-2 text-sm' : 'gap-1.5 rounded-sm px-2.5 py-1 text-xs'
 	const iconSize = size === 'md' ? 'size-4' : 'size-3'
 	return (
-		<button
-			role="tab"
+		<Tab
+			value={value}
 			type="button"
-			aria-selected={active}
-			onClick={onClick}
 			className={`flex items-center font-medium transition-colors ${sizing} ${
 				active
 					? 'bg-brand text-on-brand shadow-sm'
@@ -76,6 +61,6 @@ function ModeButton({
 					{badge}
 				</span>
 			) : null}
-		</button>
+		</Tab>
 	)
 }
