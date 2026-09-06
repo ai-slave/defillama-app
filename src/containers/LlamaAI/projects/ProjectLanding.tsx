@@ -11,6 +11,7 @@ import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { AddSourcesMenu } from './AddSourcesMenu'
 import { CreateProjectModal } from './CreateProjectModal'
@@ -22,6 +23,7 @@ import type { ProjectTier } from './types'
 
 // Match PromptInput: text pastes above this length collapse into a file chip instead of flooding the field.
 const PASTE_TO_FILE_THRESHOLD = 1500
+const projectTabs = ['chats', 'sources'] as const
 
 interface ProjectLandingProps {
 	projectId: string
@@ -343,175 +345,182 @@ export function ProjectLanding({
 					</div>
 				</form>
 
-				<div role="tablist" className="flex items-center gap-1 border-b border-ai-line">
-					{(['chats', 'sources'] as const).map((id, index) => (
-						<button
-							key={id}
-							type="button"
-							role="tab"
-							aria-selected={tab === id}
-							onClick={() => setTab(id)}
-							className={`relative py-2 text-xs font-medium capitalize transition-colors focus:outline-hidden ${index === 0 ? 'pr-2 pl-0' : 'px-2'} ${
-								tab === id ? 'text-brand' : 'text-ai-tertiary hover:text-ai-primary'
-							}`}
-						>
-							{id}
-							{tab === id ? (
-								<span
-									className={`absolute -bottom-px h-0.5 rounded-full bg-brand ${index === 0 ? 'right-2 left-0' : 'inset-x-2'}`}
-								/>
-							) : null}
-						</button>
-					))}
-				</div>
+				<Tabs value={tab} onValueChange={setTab} values={projectTabs}>
+					<Ariakit.TabList aria-label="Project sections" className="flex items-center gap-1 border-b border-ai-line">
+						{projectTabs.map((id, index) => (
+							<Tab
+								key={id}
+								type="button"
+								value={id}
+								className={`relative py-2 text-xs font-medium capitalize transition-colors focus-visible:focus-ring ${index === 0 ? 'pr-2 pl-0' : 'px-2'} ${
+									tab === id ? 'text-brand' : 'text-ai-tertiary hover:text-ai-primary'
+								}`}
+							>
+								{id}
+								{tab === id ? (
+									<span
+										className={`absolute -bottom-px h-0.5 rounded-full bg-brand ${index === 0 ? 'right-2 left-0' : 'inset-x-2'}`}
+									/>
+								) : null}
+							</Tab>
+						))}
+					</Ariakit.TabList>
 
-				<div className={tab === 'sources' ? 'flex flex-col gap-6 pt-4' : 'pt-4'}>
-					<div className={tab === 'sources' ? undefined : 'hidden'}>
-						<ProjectInstructionsEditor key={projectId} projectId={projectId} value={project.data.custom_instructions} />
-					</div>
+					<TabPanel value="sources" className="flex flex-col gap-6 pt-4">
+						<div>
+							<ProjectInstructionsEditor
+								key={projectId}
+								projectId={projectId}
+								value={project.data.custom_instructions}
+							/>
+						</div>
+						{tab === 'sources' ? (
+							<section>
+								<ProjectFilesPanel
+									projectId={projectId}
+									autoOpenGitHub={connectGithubValue === '1'}
+									projectBytesUsed={projectBytesUsed}
+									projectBytesLimit={projectBytesLimit}
+									projectFileCount={projectFileCount}
+									projectFileLimit={projectFileLimit}
+									tier={tier}
+								/>
+							</section>
+						) : null}
+					</TabPanel>
 					{tab === 'chats' ? (
-						<section>
-							{projectSessions.isLoading ? (
-								<div className="flex justify-center py-8">
-									<LoadingSpinner size={12} />
-								</div>
-							) : sessions.length === 0 ? (
-								<p className="py-10 text-center text-sm text-ai-muted">
-									Start a chat above to keep conversations organized in this project.
-								</p>
-							) : (
-								<ul className="flex flex-col">
-									{sessions.map((s) => {
-										const isRenaming = renamingSessionId === s.sessionId
-										const isActing = actingSessionId === s.sessionId
-										const isBusy = isActing && (isDeletingSession || isUpdatingTitle)
-										if (isRenaming) {
+						<TabPanel value="chats" className="pt-4">
+							<section>
+								{projectSessions.isLoading ? (
+									<div className="flex justify-center py-8">
+										<LoadingSpinner size={12} />
+									</div>
+								) : sessions.length === 0 ? (
+									<p className="py-10 text-center text-sm text-ai-muted">
+										Start a chat above to keep conversations organized in this project.
+									</p>
+								) : (
+									<ul className="flex flex-col">
+										{sessions.map((s) => {
+											const isRenaming = renamingSessionId === s.sessionId
+											const isActing = actingSessionId === s.sessionId
+											const isBusy = isActing && (isDeletingSession || isUpdatingTitle)
+											if (isRenaming) {
+												return (
+													<li key={s.sessionId}>
+														<form
+															onSubmit={(e) => void handleRenameSubmit(e, s)}
+															className="group/row -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg bg-ai-surface-muted px-2 py-1"
+														>
+															<input
+																type="text"
+																name="newTitle"
+																defaultValue={s.title}
+																autoFocus
+																disabled={isBusy}
+																onFocus={(e) => e.currentTarget.select()}
+																onKeyDown={(e) => {
+																	if (e.key === 'Escape') {
+																		e.preventDefault()
+																		setRenamingSessionId(null)
+																	}
+																}}
+																className="min-w-0 flex-1 bg-transparent p-1 text-[13px] text-inherit focus:outline-hidden"
+															/>
+															<button
+																type="submit"
+																disabled={isBusy}
+																className="flex size-7 items-center justify-center rounded-md bg-brand text-ai-white disabled:opacity-60"
+																aria-label="Save title"
+															>
+																{isBusy ? <LoadingSpinner size={12} /> : <Icon name="check" height={13} width={13} />}
+															</button>
+															<button
+																type="button"
+																onClick={() => setRenamingSessionId(null)}
+																disabled={isBusy}
+																className="flex size-7 items-center justify-center rounded-md bg-ai-error-vivid/15 text-ai-error disabled:opacity-60"
+																aria-label="Cancel rename"
+															>
+																<Icon name="x" height={13} width={13} />
+															</button>
+														</form>
+													</li>
+												)
+											}
 											return (
 												<li key={s.sessionId}>
-													<form
-														onSubmit={(e) => void handleRenameSubmit(e, s)}
-														className="group/row -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg bg-ai-surface-muted px-2 py-1"
-													>
-														<input
-															type="text"
-															name="newTitle"
-															defaultValue={s.title}
-															autoFocus
-															disabled={isBusy}
-															onFocus={(e) => e.currentTarget.select()}
-															onKeyDown={(e) => {
-																if (e.key === 'Escape') {
-																	e.preventDefault()
-																	setRenamingSessionId(null)
-																}
-															}}
-															className="min-w-0 flex-1 bg-transparent p-1 text-[13px] text-inherit focus:outline-hidden"
-														/>
-														<button
-															type="submit"
-															disabled={isBusy}
-															className="flex size-7 items-center justify-center rounded-md bg-brand text-ai-white disabled:opacity-60"
-															aria-label="Save title"
-														>
-															{isBusy ? <LoadingSpinner size={12} /> : <Icon name="check" height={13} width={13} />}
-														</button>
+													<div className="group/row relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg pr-1 transition-colors focus-within:bg-ai-surface-muted hover:bg-ai-surface-muted">
 														<button
 															type="button"
-															onClick={() => setRenamingSessionId(null)}
+															onClick={() => handlePickSession(s)}
 															disabled={isBusy}
-															className="flex size-7 items-center justify-center rounded-md bg-ai-error-vivid/15 text-ai-error disabled:opacity-60"
-															aria-label="Cancel rename"
+															className="flex min-w-0 flex-1 items-center gap-1.5 p-2 text-left disabled:opacity-60"
 														>
-															<Icon name="x" height={13} width={13} />
+															{s.hasUnseenCompletion ? (
+																<Tooltip content="New response ready">
+																	<span
+																		className="size-1.5 shrink-0 rounded-full bg-brand"
+																		aria-label="Unseen completion"
+																	/>
+																</Tooltip>
+															) : null}
+															<span className="min-w-0 flex-1 truncate text-[13px]">{s.title || 'Untitled chat'}</span>
 														</button>
-													</form>
+														<RelativeTime
+															value={s.lastActivity ?? s.createdAt}
+															className="shrink-0 text-xs text-ai-muted tabular-nums group-focus-within/row:hidden group-hover/row:hidden"
+														/>
+														<div className="hidden shrink-0 items-center gap-0.5 group-focus-within/row:flex group-hover/row:flex">
+															<Tooltip
+																content="Rename chat"
+																render={
+																	<button
+																		type="button"
+																		aria-label={`Rename ${s.title || 'chat'}`}
+																		disabled={isBusy}
+																		onClick={(e) => {
+																			e.stopPropagation()
+																			setRenamingSessionId(s.sessionId)
+																		}}
+																	/>
+																}
+																className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white disabled:opacity-50"
+															>
+																<Icon name="pencil" height={13} width={13} />
+															</Tooltip>
+															<Tooltip
+																content="Delete chat"
+																render={
+																	<button
+																		type="button"
+																		aria-label={`Delete ${s.title || 'chat'}`}
+																		disabled={isBusy}
+																		onClick={(e) => {
+																			e.stopPropagation()
+																			void handleDeleteSession(s)
+																		}}
+																	/>
+																}
+																className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-ai-error disabled:opacity-50"
+															>
+																{isBusy && isDeletingSession ? (
+																	<LoadingSpinner size={12} />
+																) : (
+																	<Icon name="trash-2" height={13} width={13} />
+																)}
+															</Tooltip>
+														</div>
+													</div>
 												</li>
 											)
-										}
-										return (
-											<li key={s.sessionId}>
-												<div className="group/row relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg pr-1 transition-colors focus-within:bg-ai-surface-muted hover:bg-ai-surface-muted">
-													<button
-														type="button"
-														onClick={() => handlePickSession(s)}
-														disabled={isBusy}
-														className="flex min-w-0 flex-1 items-center gap-1.5 p-2 text-left disabled:opacity-60"
-													>
-														{s.hasUnseenCompletion ? (
-															<Tooltip content="New response ready">
-																<span
-																	className="size-1.5 shrink-0 rounded-full bg-brand"
-																	aria-label="Unseen completion"
-																/>
-															</Tooltip>
-														) : null}
-														<span className="min-w-0 flex-1 truncate text-[13px]">{s.title || 'Untitled chat'}</span>
-													</button>
-													<RelativeTime
-														value={s.lastActivity ?? s.createdAt}
-														className="shrink-0 text-xs text-ai-muted tabular-nums group-focus-within/row:hidden group-hover/row:hidden"
-													/>
-													<div className="hidden shrink-0 items-center gap-0.5 group-focus-within/row:flex group-hover/row:flex">
-														<Tooltip
-															content="Rename chat"
-															render={
-																<button
-																	type="button"
-																	aria-label={`Rename ${s.title || 'chat'}`}
-																	disabled={isBusy}
-																	onClick={(e) => {
-																		e.stopPropagation()
-																		setRenamingSessionId(s.sessionId)
-																	}}
-																/>
-															}
-															className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white disabled:opacity-50"
-														>
-															<Icon name="pencil" height={13} width={13} />
-														</Tooltip>
-														<Tooltip
-															content="Delete chat"
-															render={
-																<button
-																	type="button"
-																	aria-label={`Delete ${s.title || 'chat'}`}
-																	disabled={isBusy}
-																	onClick={(e) => {
-																		e.stopPropagation()
-																		void handleDeleteSession(s)
-																	}}
-																/>
-															}
-															className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-ai-error disabled:opacity-50"
-														>
-															{isBusy && isDeletingSession ? (
-																<LoadingSpinner size={12} />
-															) : (
-																<Icon name="trash-2" height={13} width={13} />
-															)}
-														</Tooltip>
-													</div>
-												</div>
-											</li>
-										)
-									})}
-								</ul>
-							)}
-						</section>
-					) : (
-						<section>
-							<ProjectFilesPanel
-								projectId={projectId}
-								autoOpenGitHub={connectGithubValue === '1'}
-								projectBytesUsed={projectBytesUsed}
-								projectBytesLimit={projectBytesLimit}
-								projectFileCount={projectFileCount}
-								projectFileLimit={projectFileLimit}
-								tier={tier}
-							/>
-						</section>
-					)}
-				</div>
+										})}
+									</ul>
+								)}
+							</section>
+						</TabPanel>
+					) : null}
+				</Tabs>
 
 				<CreateProjectModal dialogStore={renameStore} mode="rename" project={project.data} />
 				<DeleteProjectModal

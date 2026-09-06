@@ -31,6 +31,7 @@ import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
+import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 const CreateDashboardPicker = lazy(() =>
 	import('~/containers/ProDashboard/components/CreateDashboardPicker').then((m) => ({
@@ -197,6 +198,7 @@ function ProPageContent({ initialDiscoveryCategories }: ProPageProps) {
 }
 
 const tabs = ['my-dashboards', 'discover', 'favorites', 'following', 'profile'] as const
+const publicTabs = ['discover'] as const
 type ProTab = (typeof tabs)[number]
 
 const tabClassName =
@@ -226,7 +228,8 @@ function ProContent({
 }) {
 	const router = useRouter()
 	const { tab } = router.query
-	const activeTab: ProTab = typeof tab === 'string' && tabs.includes(tab as ProTab) ? (tab as ProTab) : 'discover'
+	const availableTabs = isAuthenticated ? tabs : publicTabs
+	const activeTab = availableTabs.find((value) => value === tab) ?? 'discover'
 
 	const switchTab = (nextTab: ProTab) => {
 		if (nextTab === activeTab) return
@@ -312,246 +315,197 @@ function ProContent({
 	}
 
 	return (
-		<div className="flex flex-1 flex-col gap-4 pro-dashboard p-2 lg:px-0">
-			<div className="flex flex-wrap items-center justify-between gap-2">
-				<div className="flex overflow-x-auto" role="tablist" aria-label="Dashboard views">
-					<button
-						type="button"
-						role="tab"
-						aria-selected={activeTab === 'discover'}
-						onClick={() => switchTab('discover')}
-						data-active={activeTab === 'discover'}
-						data-umami-event="dashboard-open-discover"
-						className={tabClassName}
-					>
-						Discover
-					</button>
-					{isAuthenticated ? (
+		<Tabs value={activeTab} onValueChange={switchTab} values={availableTabs}>
+			<div className="flex flex-1 flex-col gap-4 pro-dashboard p-2 lg:px-0">
+				<div className="flex flex-wrap items-center justify-between gap-2">
+					<Ariakit.TabList className="flex overflow-x-auto" aria-label="Dashboard views">
+						<Tab type="button" value="discover" data-umami-event="dashboard-open-discover" className={tabClassName}>
+							Discover
+						</Tab>
+						{isAuthenticated ? (
+							<Tab
+								type="button"
+								value="my-dashboards"
+								data-umami-event="dashboard-open-my-dashboards"
+								className={tabClassName}
+							>
+								My Dashboards
+							</Tab>
+						) : null}
+						{isAuthenticated ? (
+							<Tab type="button" value="favorites" data-umami-event="dashboard-open-favorites" className={tabClassName}>
+								Favorites
+							</Tab>
+						) : null}
+						{isAuthenticated ? (
+							<Tab type="button" value="following" data-umami-event="dashboard-open-following" className={tabClassName}>
+								Following
+							</Tab>
+						) : null}
+						{isAuthenticated ? (
+							<Tab type="button" value="profile" data-umami-event="dashboard-open-my-profile" className={tabClassName}>
+								My Profile
+							</Tab>
+						) : null}
+					</Ariakit.TabList>
+					<div className="ml-auto flex flex-wrap justify-end gap-2">
 						<button
 							type="button"
-							role="tab"
-							aria-selected={activeTab === 'my-dashboards'}
-							onClick={() => switchTab('my-dashboards')}
-							data-active={activeTab === 'my-dashboards'}
-							data-umami-event="dashboard-open-my-dashboards"
-							className={tabClassName}
+							onClick={
+								!isAuthenticated
+									? () => router.push('/pro/preview')
+									: hasActiveSubscription
+										? () => setShowGenerateDashboardModal(true)
+										: () => showPaywall('llamaai')
+							}
+							data-umami-event="dashboard-llamaai-generate"
+							className="flex items-center gap-1 rounded-md pro-btn-primary px-4 py-2"
 						>
-							My Dashboards
+							<Icon name="sparkles" height={16} width={16} />
+							Generate with LlamaAI
 						</button>
-					) : null}
-					{isAuthenticated ? (
+
 						<button
 							type="button"
-							role="tab"
-							aria-selected={activeTab === 'favorites'}
-							onClick={() => switchTab('favorites')}
-							data-active={activeTab === 'favorites'}
-							data-umami-event="dashboard-open-favorites"
-							className={tabClassName}
+							onClick={
+								!isAuthenticated
+									? () => router.push('/pro/preview')
+									: canCreateDashboard
+										? () => createDashboardDialogStore.show()
+										: () => showPaywall('dashboard-limit')
+							}
+							data-umami-event="dashboard-create"
+							className="flex items-center gap-1 rounded-md pro-btn-ai px-4 py-2"
 						>
-							Favorites
+							<Icon name="plus" height={16} width={16} />
+							<span className="sm:hidden">Create</span>
+							<span className="hidden sm:inline">Create New Dashboard</span>
 						</button>
-					) : null}
-					{isAuthenticated ? (
-						<button
-							type="button"
-							role="tab"
-							aria-selected={activeTab === 'following'}
-							onClick={() => switchTab('following')}
-							data-active={activeTab === 'following'}
-							data-umami-event="dashboard-open-following"
-							className={tabClassName}
-						>
-							Following
-						</button>
-					) : null}
-					{isAuthenticated ? (
-						<button
-							type="button"
-							role="tab"
-							aria-selected={activeTab === 'profile'}
-							onClick={() => switchTab('profile')}
-							data-active={activeTab === 'profile'}
-							data-umami-event="dashboard-open-my-profile"
-							className={tabClassName}
-						>
-							My Profile
-						</button>
-					) : null}
+					</div>
 				</div>
-				<div className="ml-auto flex flex-wrap justify-end gap-2">
-					<button
-						type="button"
-						onClick={
-							!isAuthenticated
-								? () => router.push('/pro/preview')
-								: hasActiveSubscription
-									? () => setShowGenerateDashboardModal(true)
-									: () => showPaywall('llamaai')
-						}
-						data-umami-event="dashboard-llamaai-generate"
-						className="flex items-center gap-1 rounded-md pro-btn-primary px-4 py-2"
-					>
-						<Icon name="sparkles" height={16} width={16} />
-						Generate with LlamaAI
-					</button>
 
-					<button
-						type="button"
-						onClick={
-							!isAuthenticated
-								? () => router.push('/pro/preview')
-								: canCreateDashboard
-									? () => createDashboardDialogStore.show()
-									: () => showPaywall('dashboard-limit')
-						}
-						data-umami-event="dashboard-create"
-						className="flex items-center gap-1 rounded-md pro-btn-ai px-4 py-2"
-					>
-						<Icon name="plus" height={16} width={16} />
-						<span className="sm:hidden">Create</span>
-						<span className="hidden sm:inline">Create New Dashboard</span>
-					</button>
-				</div>
-			</div>
+				<TabPanel value="discover" className="flex flex-col gap-4">
+					<DashboardDiscovery initialCategories={initialDiscoveryCategories} />
+				</TabPanel>
 
-			<div
-				role="tabpanel"
-				aria-hidden={activeTab !== 'discover'}
-				className={activeTab === 'discover' ? 'flex flex-col gap-4' : 'hidden'}
-			>
-				<DashboardDiscovery initialCategories={initialDiscoveryCategories} />
-			</div>
+				{isAuthenticated ? (
+					<TabPanel value="my-dashboards" className="flex flex-col gap-4">
+						<AuthorProfileStrip />
 
-			{isAuthenticated ? (
-				<div
-					role="tabpanel"
-					aria-hidden={activeTab !== 'my-dashboards'}
-					className={activeTab === 'my-dashboards' ? 'flex flex-col gap-4' : 'hidden'}
-				>
-					<AuthorProfileStrip />
+						{!isLoadingMyDashboards ? (
+							<p className="text-xs text-pro-text-label">
+								Showing {myDashboards.length} of {myDashboardsTotalItems} dashboards
+							</p>
+						) : null}
 
-					{!isLoadingMyDashboards ? (
-						<p className="text-xs text-pro-text-label">
-							Showing {myDashboards.length} of {myDashboardsTotalItems} dashboards
-						</p>
-					) : null}
+						<DashboardList
+							dashboards={myDashboards}
+							isLoading={isLoadingMyDashboards}
+							onCreateNew={() => createDashboardDialogStore.show()}
+							onDeleteDashboard={(dashboardId) => {
+								void handleDeleteDashboard(dashboardId)
+							}}
+						/>
 
-					<DashboardList
-						dashboards={myDashboards}
-						isLoading={isLoadingMyDashboards}
-						onCreateNew={() => createDashboardDialogStore.show()}
-						onDeleteDashboard={(dashboardId) => {
-							void handleDeleteDashboard(dashboardId)
+						{myDashboardsTotalPages > 1 ? (
+							<div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto">
+								<button
+									type="button"
+									onClick={() => goToPage(1)}
+									disabled={selectedPage < 3}
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label disabled:hidden"
+								>
+									<Icon name="chevrons-left" height={16} width={16} />
+								</button>
+
+								<button
+									type="button"
+									onClick={() => goToPage(Math.max(1, selectedPage - 1))}
+									disabled={selectedPage === 1}
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label disabled:hidden"
+								>
+									<Icon name="chevron-left" height={16} width={16} />
+								</button>
+
+								{getDashboardPagesToShow(selectedPage, myDashboardsTotalPages).map((pageNum) => {
+									const isActive = selectedPage === pageNum
+									return (
+										<button
+											type="button"
+											key={`my-dashboard-page-${pageNum}`}
+											onClick={() => goToPage(pageNum)}
+											data-active={isActive}
+											className="h-[32px] min-w-[32px] shrink-0 rounded-md px-2 py-1.5 data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
+										>
+											{pageNum}
+										</button>
+									)
+								})}
+
+								<button
+									type="button"
+									onClick={() => goToPage(Math.min(myDashboardsTotalPages, selectedPage + 1))}
+									disabled={selectedPage === myDashboardsTotalPages}
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label disabled:hidden"
+								>
+									<Icon name="chevron-right" height={16} width={16} />
+								</button>
+								<button
+									type="button"
+									onClick={() => goToPage(myDashboardsTotalPages)}
+									disabled={selectedPage > myDashboardsTotalPages - 2}
+									className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label disabled:hidden"
+								>
+									<Icon name="chevrons-right" height={16} width={16} />
+								</button>
+							</div>
+						) : null}
+					</TabPanel>
+				) : null}
+
+				{isAuthenticated ? (
+					<TabPanel value="favorites" className="flex flex-col gap-4">
+						<LikedDashboards />
+					</TabPanel>
+				) : null}
+
+				{isAuthenticated ? (
+					<TabPanel value="following" className="flex flex-col gap-4">
+						<FollowingShelves />
+					</TabPanel>
+				) : null}
+
+				{isAuthenticated && activeTab === 'profile' ? (
+					<TabPanel value="profile" className="flex flex-col gap-6">
+						<MyProfileTab />
+					</TabPanel>
+				) : null}
+
+				<Suspense fallback={<></>}>
+					<CreateDashboardPicker
+						dialogStore={createDashboardDialogStore}
+						onCreate={(data) => {
+							void handleCreateDashboard(data)
+						}}
+						comparisonPreset={comparisonPreset}
+					/>
+				</Suspense>
+
+				<Suspense fallback={<></>}>
+					<GenerateDashboardModal
+						isOpen={showGenerateDashboardModal}
+						onClose={() => setShowGenerateDashboardModal(false)}
+						onGenerate={(prompt) => {
+							void handleGenerateDashboard(prompt)
 						}}
 					/>
+				</Suspense>
 
-					{myDashboardsTotalPages > 1 ? (
-						<div className="flex flex-nowrap items-center justify-center gap-2 overflow-x-auto">
-							<button
-								type="button"
-								onClick={() => goToPage(1)}
-								disabled={selectedPage < 3}
-								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label disabled:hidden"
-							>
-								<Icon name="chevrons-left" height={16} width={16} />
-							</button>
-
-							<button
-								type="button"
-								onClick={() => goToPage(Math.max(1, selectedPage - 1))}
-								disabled={selectedPage === 1}
-								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label disabled:hidden"
-							>
-								<Icon name="chevron-left" height={16} width={16} />
-							</button>
-
-							{getDashboardPagesToShow(selectedPage, myDashboardsTotalPages).map((pageNum) => {
-								const isActive = selectedPage === pageNum
-								return (
-									<button
-										type="button"
-										key={`my-dashboard-page-${pageNum}`}
-										onClick={() => goToPage(pageNum)}
-										data-active={isActive}
-										className="h-[32px] min-w-[32px] shrink-0 rounded-md px-2 py-1.5 data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand"
-									>
-										{pageNum}
-									</button>
-								)
-							})}
-
-							<button
-								type="button"
-								onClick={() => goToPage(Math.min(myDashboardsTotalPages, selectedPage + 1))}
-								disabled={selectedPage === myDashboardsTotalPages}
-								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label disabled:hidden"
-							>
-								<Icon name="chevron-right" height={16} width={16} />
-							</button>
-							<button
-								type="button"
-								onClick={() => goToPage(myDashboardsTotalPages)}
-								disabled={selectedPage > myDashboardsTotalPages - 2}
-								className="h-[32px] min-w-[32px] rounded-md px-2 py-1.5 text-pro-text-label disabled:hidden"
-							>
-								<Icon name="chevrons-right" height={16} width={16} />
-							</button>
-						</div>
-					) : null}
-				</div>
-			) : null}
-
-			{isAuthenticated ? (
-				<div
-					role="tabpanel"
-					aria-hidden={activeTab !== 'favorites'}
-					className={activeTab === 'favorites' ? 'flex flex-col gap-4' : 'hidden'}
-				>
-					<LikedDashboards />
-				</div>
-			) : null}
-
-			{isAuthenticated ? (
-				<div
-					role="tabpanel"
-					aria-hidden={activeTab !== 'following'}
-					className={activeTab === 'following' ? 'flex flex-col gap-4' : 'hidden'}
-				>
-					<FollowingShelves />
-				</div>
-			) : null}
-
-			{isAuthenticated && activeTab === 'profile' ? (
-				<div role="tabpanel" className="flex flex-col gap-6">
-					<MyProfileTab />
-				</div>
-			) : null}
-
-			<Suspense fallback={<></>}>
-				<CreateDashboardPicker
-					dialogStore={createDashboardDialogStore}
-					onCreate={(data) => {
-						void handleCreateDashboard(data)
-					}}
-					comparisonPreset={comparisonPreset}
-				/>
-			</Suspense>
-
-			<Suspense fallback={<></>}>
-				<GenerateDashboardModal
-					isOpen={showGenerateDashboardModal}
-					onClose={() => setShowGenerateDashboardModal(false)}
-					onGenerate={(prompt) => {
-						void handleGenerateDashboard(prompt)
-					}}
-				/>
-			</Suspense>
-
-			{paywallState.open ? (
-				<DashboardPaywallModal dialogStore={paywallDialogStore} reason={paywallState.reason} />
-			) : null}
-		</div>
+				{paywallState.open ? (
+					<DashboardPaywallModal dialogStore={paywallDialogStore} reason={paywallState.reason} />
+				) : null}
+			</div>
+		</Tabs>
 	)
 }
 
