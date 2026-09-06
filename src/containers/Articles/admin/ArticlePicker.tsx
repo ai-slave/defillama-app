@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { listArticles, type ArticleListResponse } from '~/containers/Articles/api'
 import type { ArticleDocument } from '~/containers/Articles/types'
@@ -9,6 +9,21 @@ import { Icon } from '~/ui/Icon'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
 const EMPTY_ARTICLE_DOCUMENTS: Array<ArticleDocument> = []
+
+function mergeTitles(
+	titles: Record<string, string>,
+	...sources: Array<Array<ArticleDocument> | undefined>
+): Record<string, string> {
+	let merged = titles
+	for (const source of sources) {
+		for (const article of source ?? []) {
+			if (merged[article.id] === article.title) continue
+			if (merged === titles) merged = { ...titles }
+			merged[article.id] = article.title
+		}
+	}
+	return merged
+}
 
 type Props = {
 	value: string | null
@@ -22,7 +37,9 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 	const { authorizedFetch } = useAuthContext()
 	const [searchValue, setSearchValue] = useState('')
 	const [open, setOpen] = useState(false)
-	const [selectedLabel, setSelectedLabel] = useState<string>('')
+	// Every title seen (search results, the resolved selection, a pick) stays known by id, so the selected
+	// article keeps its label through later search changes and failed lookups.
+	const [titles, setTitles] = useState<Record<string, string>>({})
 
 	const trimmed = searchValue.trim()
 
@@ -46,25 +63,17 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 			const fallback = await listArticles({ limit: 50, sort: 'newest', ...listArticlesParams }, authorizedFetch)
 			return fallback.items.find((item) => item.id === value) ?? null
 		},
-		enabled: !!value && !selectedLabel,
+		enabled: !!value && !titles[value],
 		retry: false,
 		staleTime: 60_000
 	})
 
-	useEffect(() => {
-		if (!value) {
-			setSelectedLabel('')
-			return
-		}
-		const fromItems = items.find((item) => item.id === value)
-		if (fromItems) {
-			setSelectedLabel(fromItems.title)
-			return
-		}
-		if (selectedQuery.data) {
-			setSelectedLabel(selectedQuery.data.title)
-		}
-	}, [value, items, selectedQuery.data])
+	const [seen, setSeen] = useState({ items, resolved: selectedQuery.data })
+	if (seen.items !== items || seen.resolved !== selectedQuery.data) {
+		setSeen({ items, resolved: selectedQuery.data })
+		setTitles(mergeTitles(titles, items, selectedQuery.data ? [selectedQuery.data] : undefined))
+	}
+	const selectedLabel = value ? (titles[value] ?? '') : ''
 
 	return (
 		<div className="grid gap-1.5">
@@ -87,7 +96,6 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 						<button
 							type="button"
 							onClick={() => {
-								setSelectedLabel('')
 								setSearchValue('')
 								onChange(null)
 							}}
@@ -117,7 +125,9 @@ export function ArticlePicker({ value, onChange, hint, error, listArticlesParams
 							value={article.title}
 							setValueOnClick={false}
 							onClick={() => {
-								setSelectedLabel(article.title)
+								setTitles((prev) =>
+									prev[article.id] === article.title ? prev : { ...prev, [article.id]: article.title }
+								)
 								setSearchValue('')
 								onChange(article)
 								setOpen(false)

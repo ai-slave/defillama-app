@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
@@ -62,10 +62,12 @@ export function TrustedLogoForm({ logoId }: Props) {
 
 	const [state, setState] = useState<FormState>(() => logoToForm(logo))
 	const initial = useMemo(() => logoToForm(logo), [logo])
-
-	useEffect(() => {
+	// The draft restarts from the saved logo whenever a different logo (or a refetched copy) arrives.
+	const [syncedLogo, setSyncedLogo] = useState(logo)
+	if (logo !== syncedLogo) {
+		setSyncedLogo(logo)
 		setState(logoToForm(logo))
-	}, [logo])
+	}
 
 	const errors = validate(state)
 	const hasError = Object.keys(errors).length > 0

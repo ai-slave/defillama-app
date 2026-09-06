@@ -208,24 +208,20 @@ const AutoplayCarousel: React.FC<AutoplayCarouselProps> = ({
 }) => {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [selectedIndex, setSelectedIndex] = useState(0)
+	// A shorter slide list wraps the selection back to the first slide.
+	const activeIndex = selectedIndex > slides.length - 1 ? 0 : selectedIndex
 
-	useEffect(() => {
-		if (selectedIndex > slides.length - 1) {
-			setSelectedIndex(0)
-		}
-	}, [slides.length, selectedIndex])
-
-	// Smoothly scroll to the selected slide whenever the index changes
+	// Smoothly scroll to the active slide whenever it changes
 	useEffect(() => {
 		const container = containerRef.current
 		if (!container) return
-		const target = container.children[selectedIndex] as HTMLElement | undefined
+		const target = container.children[activeIndex] as HTMLElement | undefined
 		if (!target) return
 		container.scrollTo({ left: target.offsetLeft, behavior: 'smooth' })
-	}, [selectedIndex])
+	}, [activeIndex])
 
-	// Autoplay: advance one slide every intervalMs. Re-scheduling on selectedIndex
-	// change ensures manual interaction (dot click / swipe) resets the timer.
+	// Autoplay: advance one slide every intervalMs from the active slide, so manual interaction
+	// (dot click / swipe) restarts the timer.
 	useEffect(() => {
 		if (slides.length <= 1) return
 
@@ -234,10 +230,10 @@ const AutoplayCarousel: React.FC<AutoplayCarouselProps> = ({
 		if (prefersReducedMotion) return
 
 		const timer = window.setTimeout(() => {
-			setSelectedIndex((prev) => (prev + 1) % slides.length)
+			setSelectedIndex((activeIndex + 1) % slides.length)
 		}, intervalMs)
 		return () => clearTimeout(timer)
-	}, [selectedIndex, slides.length, intervalMs])
+	}, [activeIndex, slides.length, intervalMs])
 
 	// Sync selectedIndex with the slide nearest to the user's scroll position
 	useEffect(() => {
@@ -284,7 +280,7 @@ const AutoplayCarousel: React.FC<AutoplayCarouselProps> = ({
 							aria-label={`Go to slide ${idx + 1}`}
 							onClick={() => setSelectedIndex(idx)}
 							className={`h-[8px] w-[8px] rounded-full transition-colors ${
-								idx === selectedIndex ? 'bg-research-accent-strong' : 'bg-tertiary'
+								idx === activeIndex ? 'bg-research-accent-strong' : 'bg-tertiary'
 							}`}
 						/>
 					))}

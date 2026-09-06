@@ -111,7 +111,7 @@ export function ResearchNewsletters({ newsletters, interviews }: ResearchNewslet
 		observer.observe(newsletterContent)
 		updateHeight(newsletterContent.getBoundingClientRect().height)
 		return () => observer.disconnect()
-	}, [newsletters])
+	}, [])
 
 	if (newsletters.length === 0) return null
 

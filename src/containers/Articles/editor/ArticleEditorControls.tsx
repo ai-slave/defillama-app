@@ -1,5 +1,5 @@
 import { useEditorState, type Editor } from '@tiptap/react'
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import {
 	headingAbove,
 	readColumnWidths,
@@ -64,8 +64,11 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 	const [target, setTarget] = useState<HTMLElement | null>(null)
 	const [rect, setRect] = useState<DOMRect | null>(null)
 	const overlayRef = useRef<HTMLDivElement | null>(null)
+	// Mirrors `target` for the pointer and export callbacks, which read it outside render.
 	const targetRef = useRef<HTMLElement | null>(null)
-	targetRef.current = target
+	useLayoutEffect(() => {
+		targetRef.current = target
+	}, [target])
 
 	const [watermarkEnabled, toggleWatermark] = useTableImageWatermark()
 
@@ -133,11 +136,9 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 		}
 	}, [editor])
 
-	useEffect(() => {
-		if (!target) {
-			setRect(null)
-			return
-		}
+	// Layout measurement: the overlay position comes from the table's rendered box.
+	useLayoutEffect(() => {
+		if (!target) return
 		const update = () => setRect(target.getBoundingClientRect())
 		update()
 		window.addEventListener('scroll', update, true)

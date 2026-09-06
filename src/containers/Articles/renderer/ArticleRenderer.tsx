@@ -1,6 +1,6 @@
 import { common, createLowlight } from 'lowlight'
 import Link from 'next/link'
-import { createElement, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createElement, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { Icon } from '~/ui/Icon'
 import styles from '../ArticleStyles.module.css'
@@ -507,6 +507,19 @@ function groupToc(toc: Array<TocEntry>): Array<TocGroup> {
 	return groups
 }
 
+function subscribeToLocation(onChange: () => void) {
+	window.addEventListener('popstate', onChange)
+	window.addEventListener('hashchange', onChange)
+	return () => {
+		window.removeEventListener('popstate', onChange)
+		window.removeEventListener('hashchange', onChange)
+	}
+}
+
+function readLocationHref() {
+	return window.location.href
+}
+
 function collectToc(node: TiptapJson | null | undefined, out: Array<TocEntry>) {
 	if (!node) return
 	if (node.type === 'heading') {
@@ -869,16 +882,10 @@ export function ArticleRenderer({
 	const tagChips = (article.tags ?? []).filter((tag) => typeof tag === 'string' && tag.trim().length > 0)
 
 	const sectionPath = article.section ? `/research/${ARTICLE_SECTION_SLUGS[article.section]}/${article.slug}` : null
-	const [shareUrl, setShareUrl] = useState<string>(shareUrlOverride ?? sectionPath ?? `/research/${article.slug}`)
-	useEffect(() => {
-		if (shareUrlOverride) {
-			setShareUrl(shareUrlOverride)
-			return
-		}
-		if (typeof window !== 'undefined') {
-			setShareUrl(window.location.href)
-		}
-	}, [article.slug, article.section, shareUrlOverride])
+	const articlePath = sectionPath ?? `/research/${article.slug}`
+	// The server and hydration render the article path; the client then shares its live location.
+	const locationHref = useSyncExternalStore(subscribeToLocation, readLocationHref, () => articlePath)
+	const shareUrl = shareUrlOverride ?? locationHref
 
 	const sentinelRef = useRef<HTMLDivElement>(null)
 	const [pastHeader, setPastHeader] = useState(false)

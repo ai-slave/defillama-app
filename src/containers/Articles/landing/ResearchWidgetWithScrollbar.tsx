@@ -46,7 +46,7 @@ interface ResearchWidgetWithScrollbarScrollerProps {
 function ResearchWidgetWithScrollbarScroller({ articles, onHeightChange }: ResearchWidgetWithScrollbarScrollerProps) {
 	useEffect(() => {
 		onHeightChange?.(CONTAINER_HEIGHT_VALUE)
-	}, [onHeightChange, articles])
+	}, [onHeightChange])
 
 	const containerHeight = `${DEFAULT_CONTAINER_HEIGHT} ${DESKTOP_CONTAINER_HEIGHT}`
 	const style = { '--container-height': `${CONTAINER_HEIGHT_VALUE}px` } as CSSProperties

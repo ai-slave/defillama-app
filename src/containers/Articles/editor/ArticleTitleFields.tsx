@@ -18,6 +18,7 @@ export function ArticleTitleFields({ article, updateArticle }: ArticleTitleField
 
 		title.style.height = 'auto'
 		title.style.height = `${title.scrollHeight}px`
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the textarea is re-measured after every title renders.
 	}, [article.title])
 
 	return (

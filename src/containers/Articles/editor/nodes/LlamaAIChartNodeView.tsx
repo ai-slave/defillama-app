@@ -7,16 +7,19 @@ import { Icon } from '~/ui/Icon'
 function CaptionEditor({ caption, onChange }: { caption: string; onChange: (caption: string) => void }) {
 	const [draft, setDraft] = useState(caption)
 	const ref = useRef<HTMLTextAreaElement | null>(null)
-
-	useEffect(() => {
+	// The draft restarts from the node's caption when the document changes it (undo, collaboration).
+	const [syncedCaption, setSyncedCaption] = useState(caption)
+	if (caption !== syncedCaption) {
+		setSyncedCaption(caption)
 		setDraft(caption)
-	}, [caption])
+	}
 
 	useEffect(() => {
 		const el = ref.current
 		if (!el) return
 		el.style.height = 'auto'
 		el.style.height = `${el.scrollHeight}px`
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the textarea is re-measured after every draft renders.
 	}, [draft])
 
 	return (

@@ -473,19 +473,18 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 		return { previous, live, pending }
 	}, [previousId, liveAnchorId, pendingAnchorId, selectedId])
 
+	// In diff view a base with nothing to diff against switches to the first available base. The switch is
+	// permanent, exactly as if the user had chosen it, so later selections keep the fallback base.
+	if (viewMode === 'diff' && !baseAvailability[baseMode]) {
+		const fallback = (['previous', 'live', 'pending'] as Array<BaseMode>).find((mode) => baseAvailability[mode])
+		if (fallback) setBaseMode(fallback)
+	}
+
 	const baseId = useMemo(() => {
 		if (baseMode === 'previous') return baseAvailability.previous
 		if (baseMode === 'live') return baseAvailability.live
 		return baseAvailability.pending
 	}, [baseMode, baseAvailability])
-
-	useEffect(() => {
-		if (viewMode !== 'diff') return
-		if (baseAvailability[baseMode]) return
-		const fallback: BaseMode | null =
-			(['previous', 'live', 'pending'] as Array<BaseMode>).find((mode) => baseAvailability[mode]) ?? null
-		if (fallback && fallback !== baseMode) setBaseMode(fallback)
-	}, [viewMode, baseMode, baseAvailability])
 
 	const baseRevisionQuery = useQuery({
 		queryKey: ['research', 'article-revision', articleId, baseId],

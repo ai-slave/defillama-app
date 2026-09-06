@@ -62,18 +62,27 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 	const altInputRef = useRef<HTMLTextAreaElement | null>(null)
 	const headlineInputRef = useRef<HTMLInputElement | null>(null)
 
-	useEffect(() => {
-		setAltDraft(attrs.alt ?? '')
-	}, [attrs.alt])
-
-	useEffect(() => {
-		setLinkDraft(attrs.href ?? '')
-	}, [attrs.href])
-
-	useEffect(() => {
-		setCaptionDraft(attrs.caption ?? '')
-		if (attrs.caption) setShowCaption(true)
-	}, [attrs.caption])
+	// Each draft restarts from its attribute when the document changes that attribute (undo, collaboration).
+	const [syncedAttrs, setSyncedAttrs] = useState(attrs)
+	if (
+		syncedAttrs.alt !== attrs.alt ||
+		syncedAttrs.href !== attrs.href ||
+		syncedAttrs.caption !== attrs.caption ||
+		syncedAttrs.credit !== attrs.credit ||
+		syncedAttrs.copyright !== attrs.copyright ||
+		syncedAttrs.headline !== attrs.headline
+	) {
+		if (syncedAttrs.alt !== attrs.alt) setAltDraft(attrs.alt ?? '')
+		if (syncedAttrs.href !== attrs.href) setLinkDraft(attrs.href ?? '')
+		if (syncedAttrs.caption !== attrs.caption) {
+			setCaptionDraft(attrs.caption ?? '')
+			if (attrs.caption) setShowCaption(true)
+		}
+		if (syncedAttrs.credit !== attrs.credit) setCreditDraft(attrs.credit ?? '')
+		if (syncedAttrs.copyright !== attrs.copyright) setCopyrightDraft(attrs.copyright ?? '')
+		if (syncedAttrs.headline !== attrs.headline) setHeadlineDraft(attrs.headline ?? '')
+		setSyncedAttrs(attrs)
+	}
 
 	useEffect(() => {
 		if (!linkOpen) return
@@ -86,18 +95,6 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 		const timeout = setTimeout(() => altInputRef.current?.focus(), 0)
 		return () => clearTimeout(timeout)
 	}, [altOpen])
-
-	useEffect(() => {
-		setCreditDraft(attrs.credit ?? '')
-	}, [attrs.credit])
-
-	useEffect(() => {
-		setCopyrightDraft(attrs.copyright ?? '')
-	}, [attrs.copyright])
-
-	useEffect(() => {
-		setHeadlineDraft(attrs.headline ?? '')
-	}, [attrs.headline])
 
 	useEffect(() => {
 		if (!creditOpen) return

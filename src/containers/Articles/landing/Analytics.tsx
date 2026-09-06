@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useEffectEvent } from 'react'
 import { useIntersectionObserver } from '~/containers/Articles/landing/useIntersectionObserver'
 import type { ArticleDocument, ArticleSection } from '~/containers/Articles/types'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -131,13 +131,11 @@ export const InViewAnalytics: React.FC<InViewAnalyticsProps> = (props) => {
 	} = props
 
 	const { ref, isIntersecting } = useIntersectionObserver(intersectionOptions)
-	const paramsRef = useRef(eventParams)
-	paramsRef.current = eventParams
+	// Fires once per intersection with the params current at that moment, without re-running on param changes.
+	const pushEvent = useEffectEvent(() => pushResearchAnalyticsEvent(...eventParams))
 
 	useEffect(() => {
-		if (isIntersecting) {
-			pushResearchAnalyticsEvent(...paramsRef.current)
-		}
+		if (isIntersecting) pushEvent()
 	}, [isIntersecting])
 
 	return <div ref={ref} className="invisible" />

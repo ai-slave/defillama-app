@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 import type { SlashCommandItem } from './slashCommand'
 
 type Props = {
@@ -15,10 +15,12 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(functi
 	ref
 ) {
 	const [selectedIndex, setSelectedIndex] = useState(0)
-
-	useEffect(() => {
+	// A new result list restarts the highlight at the top.
+	const [syncedItems, setSyncedItems] = useState(items)
+	if (items !== syncedItems) {
+		setSyncedItems(items)
 		setSelectedIndex(0)
-	}, [items])
+	}
 
 	useImperativeHandle(ref, () => ({
 		onKeyDown(event) {

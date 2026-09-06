@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { listArticles, type ArticleListResponse } from '~/containers/Articles/api'
 import type { ArticleDocument } from '~/containers/Articles/types'
@@ -9,6 +9,21 @@ import { Icon } from '~/ui/Icon'
 
 type ListArticlesParams = NonNullable<Parameters<typeof listArticles>[0]>
 const EMPTY_ARTICLE_DOCUMENTS: Array<ArticleDocument> = []
+
+function mergeTitles(
+	titles: Record<string, string>,
+	...sources: Array<Array<ArticleDocument> | undefined>
+): Record<string, string> {
+	let merged = titles
+	for (const source of sources) {
+		for (const article of source ?? []) {
+			if (merged[article.id] === article.title) continue
+			if (merged === titles) merged = { ...titles }
+			merged[article.id] = article.title
+		}
+	}
+	return merged
+}
 
 type Props = {
 	value: Array<string>
@@ -48,23 +63,13 @@ export function ArticleMultiPicker({ value, onChange, hint, listArticlesParams }
 		staleTime: 60_000
 	})
 
-	useEffect(() => {
-		const incoming: Record<string, string> = {}
-		for (const article of items) incoming[article.id] = article.title
-		if (resolveQuery.data) for (const article of resolveQuery.data) incoming[article.id] = article.title
-		if (Object.keys(incoming).length === 0) return
-		setTitles((prev) => {
-			let changed = false
-			const merged = { ...prev }
-			for (const [id, title] of Object.entries(incoming)) {
-				if (merged[id] !== title) {
-					merged[id] = title
-					changed = true
-				}
-			}
-			return changed ? merged : prev
-		})
-	}, [items, resolveQuery.data])
+	// Every title seen in search results or resolved ids stays known, so a selection keeps its label through
+	// later value changes and failed lookups. Fresh data still updates a title.
+	const [seen, setSeen] = useState({ items, resolved: resolveQuery.data })
+	if (seen.items !== items || seen.resolved !== resolveQuery.data) {
+		setSeen({ items, resolved: resolveQuery.data })
+		setTitles(mergeTitles(titles, items, resolveQuery.data))
+	}
 
 	const addArticle = (article: ArticleDocument) => {
 		setTitles((prev) => ({ ...prev, [article.id]: article.title }))

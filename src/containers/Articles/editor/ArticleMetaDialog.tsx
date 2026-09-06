@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { EDITORIAL_TAGS, isEditorialTagSlug } from '../editorialTags'
 import type {
@@ -90,22 +90,31 @@ export function ArticleMetaDialog({
 	const [scheduleMode, setScheduleMode] = useState(false)
 	const [scheduleAtLocal, setScheduleAtLocal] = useState('')
 	const [scheduleError, setScheduleError] = useState<string | null>(null)
+	const [guestRows, setGuestRows] = useState<Array<ArticleGuestAuthor>>(() => article.guestAuthors ?? [])
+	const [assetRows, setAssetRows] = useState<Array<ArticlePageAsset>>(() => article.pageAssets ?? [])
 
-	useEffect(() => {
-		if (!dialogOpen) return
-		setScheduleMode(articleIsScheduled || article.goLiveAt != null)
-		setScheduleAtLocal(toDateTimeLocal(article.goLiveAt) || '')
-		setScheduleError(null)
-	}, [dialogOpen, article.goLiveAt, articleIsScheduled])
+	// While open, the schedule fields follow the saved schedule; the row drafts restart only when the dialog opens.
+	const scheduleSyncKey = dialogOpen ? `${article.goLiveAt ?? ''}|${articleIsScheduled}` : null
+	const [syncedScheduleKey, setSyncedScheduleKey] = useState<string | null>(null)
+	if (scheduleSyncKey !== syncedScheduleKey) {
+		setSyncedScheduleKey(scheduleSyncKey)
+		if (scheduleSyncKey !== null) {
+			setScheduleMode(articleIsScheduled || article.goLiveAt != null)
+			setScheduleAtLocal(toDateTimeLocal(article.goLiveAt) || '')
+			setScheduleError(null)
+		}
+	}
+	const [wasOpen, setWasOpen] = useState(false)
+	if (dialogOpen !== wasOpen) {
+		setWasOpen(dialogOpen)
+		if (dialogOpen) {
+			setGuestRows(article.guestAuthors ?? [])
+			setAssetRows(article.pageAssets ?? [])
+		}
+	}
 
 	const minScheduleLocal = toDateTimeLocal(new Date().toISOString())
 
-	const [guestRows, setGuestRows] = useState<Array<ArticleGuestAuthor>>(() => article.guestAuthors ?? [])
-	const savedGuestAuthorsRef = useRef(article.guestAuthors)
-	savedGuestAuthorsRef.current = article.guestAuthors
-	useEffect(() => {
-		if (dialogOpen) setGuestRows(savedGuestAuthorsRef.current ?? [])
-	}, [dialogOpen])
 	const commitGuestAuthors = (rows: Array<ArticleGuestAuthor>) =>
 		updateArticle(
 			'guestAuthors',
@@ -123,12 +132,6 @@ export function ArticleMetaDialog({
 		commitGuestAuthors(next)
 	}
 
-	const [assetRows, setAssetRows] = useState<Array<ArticlePageAsset>>(() => article.pageAssets ?? [])
-	const savedPageAssetsRef = useRef(article.pageAssets)
-	savedPageAssetsRef.current = article.pageAssets
-	useEffect(() => {
-		if (dialogOpen) setAssetRows(savedPageAssetsRef.current ?? [])
-	}, [dialogOpen])
 	const updatePageAssets = (rows: Array<ArticlePageAsset>) => {
 		setAssetRows(rows)
 		updateArticle('pageAssets', rows)

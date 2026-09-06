@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
@@ -79,10 +79,12 @@ export function BannerForm({ banner }: Props) {
 	const revalidateLanding = useResearchLandingRevalidation()
 	const [state, setState] = useState<BannerFormState>(() => bannerToForm(banner))
 	const initial = useMemo(() => bannerToForm(banner), [banner])
-
-	useEffect(() => {
+	// The draft restarts from the saved banner whenever a different banner (or a refetched copy) arrives.
+	const [syncedBanner, setSyncedBanner] = useState(banner)
+	if (banner !== syncedBanner) {
+		setSyncedBanner(banner)
 		setState(bannerToForm(banner))
-	}, [banner])
+	}
 
 	const errors = validateBannerForm(state)
 	const hasError = Object.keys(errors).length > 0

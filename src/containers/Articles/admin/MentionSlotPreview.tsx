@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { QuoteBlock, type MentionQuote } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 
 const SLOT_CONFIG = [
@@ -22,8 +22,10 @@ export function MentionSlotPreview({ quote, slotIndex, scale = 1 }: Props) {
 
 	const hasQuoteContent = !!(quote.quote || quote.username)
 
-	useEffect(() => {
+	// Layout measurement: whether the rendered quote overflows its slot is only known after commit.
+	useLayoutEffect(() => {
 		if (!hasQuoteContent) {
+			// oxlint-disable-next-line react/set-state-in-effect -- layout measurement result
 			setClipped(false)
 			return
 		}
@@ -31,7 +33,9 @@ export function MentionSlotPreview({ quote, slotIndex, scale = 1 }: Props) {
 		const clampEl = wrapperRef.current?.querySelector('.line-clamp-5')
 		const textClipped = !!clampEl && clampEl.scrollHeight > clampEl.clientHeight + 1
 		const cardOverflowing = !!card && card.scrollHeight > card.clientHeight + 1
+		// oxlint-disable-next-line react/set-state-in-effect -- layout measurement result
 		setClipped(textClipped || cardOverflowing)
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- re-measure whenever the rendered text or slot changes
 	}, [quote.quote, quote.username, slotIndex, hasQuoteContent])
 
 	if (!hasQuoteContent) {

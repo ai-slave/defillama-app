@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { ArticlePicker } from '~/containers/Articles/admin/ArticlePicker'
@@ -220,13 +220,20 @@ function ReportHighlightControls({
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const currentText = article.editorialTagMetadata?.highlightText ?? ''
+	const currentLogo = article.sponsorLogo ?? null
 	const [highlightText, setHighlightText] = useState(currentText)
-	const [sponsorLogo, setSponsorLogo] = useState<ArticleImage | null>(article.sponsorLogo ?? null)
-
-	useEffect(() => {
-		setHighlightText(article.editorialTagMetadata?.highlightText ?? '')
-		setSponsorLogo(article.sponsorLogo ?? null)
-	}, [article.id, article.editorialTagMetadata?.highlightText, article.sponsorLogo])
+	const [sponsorLogo, setSponsorLogo] = useState<ArticleImage | null>(currentLogo)
+	// Drafts restart from the saved values when the article, its saved text or its saved logo changes.
+	const [syncedFrom, setSyncedFrom] = useState({ id: article.id, currentText, currentLogo })
+	if (
+		syncedFrom.id !== article.id ||
+		syncedFrom.currentText !== currentText ||
+		syncedFrom.currentLogo !== currentLogo
+	) {
+		setSyncedFrom({ id: article.id, currentText, currentLogo })
+		setHighlightText(currentText)
+		setSponsorLogo(currentLogo)
+	}
 
 	const textDirty = highlightText.trim() !== currentText.trim()
 	const previewText =

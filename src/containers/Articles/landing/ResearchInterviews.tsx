@@ -39,7 +39,7 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 		observer.observe(el)
 		setHeight(el.getBoundingClientRect().height)
 		return () => observer.disconnect()
-	}, [setHeight, articles])
+	}, [setHeight])
 
 	const leftArticles = isMobile ? articles.slice(0, 2) : articles.slice(0, 5)
 	const rightArticles = isMobile ? articles.slice(2) : articles.slice(5)

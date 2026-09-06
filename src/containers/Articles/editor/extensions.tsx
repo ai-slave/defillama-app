@@ -103,16 +103,19 @@ function ChartCaptionEditor({
 }) {
 	const [draft, setDraft] = useState(config.caption ?? '')
 	const ref = useRef<HTMLTextAreaElement | null>(null)
-
-	useEffect(() => {
+	// The draft restarts from the node's caption when the document changes it (undo, collaboration).
+	const [syncedCaption, setSyncedCaption] = useState(config.caption)
+	if (config.caption !== syncedCaption) {
+		setSyncedCaption(config.caption)
 		setDraft(config.caption ?? '')
-	}, [config.caption])
+	}
 
 	useEffect(() => {
 		const el = ref.current
 		if (!el) return
 		el.style.height = 'auto'
 		el.style.height = `${el.scrollHeight}px`
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the textarea is re-measured after every draft renders.
 	}, [draft])
 
 	const placeholder = `${uniqueEntityNames.join(' vs ') || 'Entity'} ${chartLabel.toLowerCase() || 'chart'}, USD-denominated.`
@@ -595,8 +598,8 @@ export function createArticleEditorExtensions(imageOptions?: Partial<ArticleImag
 		LlamaAIChart,
 		ArticleEmbed,
 		ArticleImage.configure({
-			uploadRef: imageOptions?.uploadRef ?? null,
-			articleIdRef: imageOptions?.articleIdRef ?? null,
+			getUpload: imageOptions?.getUpload ?? null,
+			getArticleId: imageOptions?.getArticleId ?? null,
 			onMissingArticleId: imageOptions?.onMissingArticleId ?? null
 		}),
 		ArticlePeoplePanel,

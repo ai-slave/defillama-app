@@ -90,14 +90,13 @@ export const EntitySuggestionList = forwardRef<EntitySuggestionListHandle, Props
 
 	const [selectedId, setSelectedId] = useState<string | null>(flat[0]?.id ?? null)
 	const listRef = useRef<HTMLDivElement | null>(null)
-
-	useEffect(() => {
-		if (flat.length === 0) {
-			setSelectedId(null)
-			return
-		}
-		setSelectedId((prev) => (prev && flat.some((i) => i.id === prev) ? prev : flat[0].id))
-	}, [flat])
+	// The highlight survives while its row is still listed. When the row disappears the first row takes over
+	// and the old highlight is forgotten, so widening the list again does not bring it back.
+	const [syncedFlat, setSyncedFlat] = useState(flat)
+	if (flat !== syncedFlat) {
+		setSyncedFlat(flat)
+		if (!selectedId || !flat.some((i) => i.id === selectedId)) setSelectedId(flat[0]?.id ?? null)
+	}
 
 	useEffect(() => {
 		if (!selectedId || !listRef.current) return

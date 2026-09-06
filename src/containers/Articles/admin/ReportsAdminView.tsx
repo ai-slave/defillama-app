@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
@@ -57,10 +57,12 @@ function ReportRow({ article }: { article: ArticleDocument }) {
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
 	const [state, setState] = useState<RowState>(() => rowStateFromArticle(article))
-
-	useEffect(() => {
+	// The row draft restarts from the saved article whenever a new article object arrives.
+	const [syncedArticle, setSyncedArticle] = useState(article)
+	if (article !== syncedArticle) {
+		setSyncedArticle(article)
 		setState(rowStateFromArticle(article))
-	}, [article])
+	}
 
 	const dirty = isRowDirty(state, article)
 	const isPublished = article.status === 'published'

@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { MentionSlotPreview } from '~/containers/Articles/admin/MentionSlotPreview'
@@ -68,10 +68,12 @@ export function SocialMentionForm({ mentionId }: Props) {
 
 	const [state, setState] = useState<FormState>(() => mentionToForm(mention))
 	const initial = useMemo(() => mentionToForm(mention), [mention])
-
-	useEffect(() => {
+	// The draft restarts from the saved mention whenever a different mention (or a refetched copy) arrives.
+	const [syncedMention, setSyncedMention] = useState(mention)
+	if (mention !== syncedMention) {
+		setSyncedMention(mention)
 		setState(mentionToForm(mention))
-	}, [mention])
+	}
 
 	const submittable = canSubmit(state)
 

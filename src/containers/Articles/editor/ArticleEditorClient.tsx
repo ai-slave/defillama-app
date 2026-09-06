@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEditor } from '@tiptap/react'
 import { useRouter } from 'next/router'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
@@ -64,42 +64,56 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	const [wordCount, setWordCount] = useState(0)
 	const [linkEdit, setLinkEdit] = useState<{ url: string; newTab: boolean } | null>(null)
 	const linkInputRef = useRef<HTMLInputElement | null>(null)
+	// Latest-value refs for tiptap plugins, autosave and keyboard shortcuts, which run outside render.
+	// They are written in layout effects so no render reads or writes a ref.
 	const inlineUploadRef = useRef<ArticleImageUploadFn | null>(null)
-	const inlineArticleIdRef = useRef<string | null | undefined>(undefined)
-	const inlineMissingArticleRef = useRef<() => void>(() => {})
+	const saveRef = useRef<(opts?: { silent?: boolean }) => Promise<void>>(async () => {})
+	const articleIdRef = useRef<string | undefined>(article.id)
+	useLayoutEffect(() => {
+		articleIdRef.current = article.id
+	}, [article.id])
 	const extensions = useMemo(
 		() =>
 			createArticleEditorExtensions({
-				uploadRef: inlineUploadRef,
-				articleIdRef: inlineArticleIdRef,
-				onMissingArticleId: () => inlineMissingArticleRef.current?.()
+				getUpload: () => inlineUploadRef.current,
+				getArticleId: () => articleIdRef.current,
+				onMissingArticleId: () => toast.error('Save the draft first to attach images')
 			}),
 		[]
 	)
-	const chartDialog = Ariakit.useDialogStore()
-	const llamaaiChartDialog = Ariakit.useDialogStore()
-	const embedDialog = Ariakit.useDialogStore()
-	const peoplePanelDialog = Ariakit.useDialogStore()
-	const metaDialog = Ariakit.useDialogStore()
-	const deleteDialog = Ariakit.useDialogStore()
-	const coverDetailsDialog = Ariakit.useDialogStore()
 	const [editingChart, setEditingChart] = useState<{ config: ArticleChartConfig; pos: number } | null>(null)
 	const [editingEmbed, setEditingEmbed] = useState<{ config: ArticleEmbedConfig; pos: number } | null>(null)
 	const [editingPanel, setEditingPanel] = useState<{ config: ArticlePeoplePanelConfig; pos: number } | null>(null)
+	// Closing a dialog by any means (button, Escape, backdrop) drops what it was editing.
+	const chartDialog = Ariakit.useDialogStore({
+		setOpen: (open) => {
+			if (!open) setEditingChart(null)
+		}
+	})
+	const llamaaiChartDialog = Ariakit.useDialogStore()
+	const embedDialog = Ariakit.useDialogStore({
+		setOpen: (open) => {
+			if (!open) setEditingEmbed(null)
+		}
+	})
+	const peoplePanelDialog = Ariakit.useDialogStore({
+		setOpen: (open) => {
+			if (!open) setEditingPanel(null)
+		}
+	})
+	const metaDialog = Ariakit.useDialogStore()
+	const deleteDialog = Ariakit.useDialogStore()
+	const coverDetailsDialog = Ariakit.useDialogStore()
 	const [saveError, setSaveError] = useState(false)
 	const [slugEditing, setSlugEditing] = useState(false)
 	const [slugDraft, setSlugDraft] = useState('')
 	const [publishErrors, setPublishErrors] = useState<Record<string, string>>({})
 	const [viewMode, setViewMode] = useState<ArticleEditorViewMode>('write')
-	const [previewArticle, setPreviewArticle] = useState<LocalArticleDocument | null>(null)
 	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 	const autoCreatingRef = useRef(false)
 	const autoRedirectingRef = useRef(false)
 	const hydratedArticleIdRef = useRef<string | null>(null)
 	const routeViewModeHandledRef = useRef<string | null>(null)
-	const saveRef = useRef<(opts?: { silent?: boolean }) => Promise<void>>(async () => {})
-	const articleIdRef = useRef<string | undefined>(article.id)
-	articleIdRef.current = article.id
 
 	const { uploadFile: uploadInlineImageRaw } = useImageUpload({
 		scope: 'article-inline',
@@ -123,11 +137,9 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		[uploadInlineImageRaw]
 	)
 
-	inlineUploadRef.current = uploadInlineImage
-	inlineArticleIdRef.current = article.id
-	inlineMissingArticleRef.current = () => {
-		toast.error('Save the draft first to attach images')
-	}
+	useLayoutEffect(() => {
+		inlineUploadRef.current = uploadInlineImage
+	}, [uploadInlineImage])
 
 	const scheduleAutosave = useCallback(() => {
 		if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -211,7 +223,9 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	}, [articleId, createArticleMutation, editor, isAuthenticated, loaders.userLoading])
 
 	useEffect(() => {
+		// A different route article must hydrate again even if its query data was already applied once.
 		hydratedArticleIdRef.current = null
+		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- the route article id is the reset trigger.
 	}, [articleId])
 
 	useEffect(() => {
@@ -336,10 +350,11 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		editor.chain().focus().extendMarkRange('entityLink').unsetEntityLink().run()
 	}, [editor])
 
+	const activeEntityRoute = activeEntity?.route
 	const openActiveEntityLink = useCallback(() => {
-		if (!activeEntity?.route) return
-		window.open(activeEntity.route, '_blank', 'noopener,noreferrer')
-	}, [activeEntity?.route])
+		if (!activeEntityRoute) return
+		window.open(activeEntityRoute, '_blank', 'noopener,noreferrer')
+	}, [activeEntityRoute])
 
 	const changeActiveEntityLink = useCallback(() => {
 		if (!editor) return
@@ -372,7 +387,10 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		void saveRef.current({ silent: true })
 	}, [slugDraft, article.slug])
 
-	saveRef.current = saveArticle
+	// saveArticle is rebuilt every render, so the mirror is refreshed after every commit.
+	useLayoutEffect(() => {
+		saveRef.current = saveArticle
+	})
 
 	useEffect(() => {
 		const handler = (event: KeyboardEvent) => {
@@ -468,11 +486,11 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	useEffect(() => {
 		const handler = () => {
 			if (!editor) return
-			if (!inlineArticleIdRef.current) {
+			if (!articleIdRef.current) {
 				toast.error('Save the draft first to attach images')
 				return
 			}
-			void triggerInlineImagePicker(editor, inlineUploadRef)
+			void triggerInlineImagePicker(editor, () => inlineUploadRef.current)
 		}
 		document.addEventListener('article:trigger-image-upload', handler)
 		return () => document.removeEventListener('article:trigger-image-upload', handler)
@@ -496,21 +514,6 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			document.removeEventListener('article:open-people-panel-picker', openHandler)
 		}
 	}, [peoplePanelDialog])
-
-	const chartDialogOpen = Ariakit.useStoreState(chartDialog, 'open')
-	useEffect(() => {
-		if (!chartDialogOpen) setEditingChart(null)
-	}, [chartDialogOpen])
-
-	const embedDialogOpen = Ariakit.useStoreState(embedDialog, 'open')
-	useEffect(() => {
-		if (!embedDialogOpen) setEditingEmbed(null)
-	}, [embedDialogOpen])
-
-	const peoplePanelDialogOpen = Ariakit.useStoreState(peoplePanelDialog, 'open')
-	useEffect(() => {
-		if (!peoplePanelDialogOpen) setEditingPanel(null)
-	}, [peoplePanelDialogOpen])
 
 	const handleChartSubmit = useCallback(
 		(config: ArticleChartConfig) => {
@@ -774,18 +777,16 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		}
 	}, [article, editor])
 
-	const handleViewModeChange = useCallback(
-		(mode: ArticleEditorViewMode) => {
-			if (mode === 'preview') setPreviewArticle(buildPreviewArticle())
-			setViewMode(mode)
-		},
-		[buildPreviewArticle]
-	)
+	const chartDialogOpen = Ariakit.useStoreState(chartDialog, 'open')
+	const embedDialogOpen = Ariakit.useStoreState(embedDialog, 'open')
+	const peoplePanelDialogOpen = Ariakit.useStoreState(peoplePanelDialog, 'open')
 
-	useEffect(() => {
-		if (viewMode !== 'preview') return
-		setPreviewArticle(buildPreviewArticle())
-	}, [buildPreviewArticle, viewMode])
+	// The preview is the current draft rendered as an article; it exists only while previewing.
+	const previewArticle = useMemo(
+		() => (viewMode === 'preview' ? buildPreviewArticle() : null),
+		[buildPreviewArticle, viewMode]
+	)
+	const handleViewModeChange = useCallback((mode: ArticleEditorViewMode) => setViewMode(mode), [])
 
 	useEffect(() => {
 		if (!router.isReady) return
@@ -793,8 +794,8 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		const routeModeKey = `${articleId ?? 'new'}:${routeMode}`
 		if (routeViewModeHandledRef.current === routeModeKey) return
 		routeViewModeHandledRef.current = routeModeKey
+		// oxlint-disable-next-line react/set-state-in-effect -- the route query is only readable once router.isReady, which Next.js documents as effect-only.
 		setViewMode(routeMode)
-		if (routeMode === 'write') setPreviewArticle(null)
 	}, [articleId, routeView, router.isReady])
 
 	if (isLoading) {

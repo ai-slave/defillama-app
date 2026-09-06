@@ -8,9 +8,10 @@ export { normalizeImageHref, type ArticleImageAttrs } from './ArticleImage.share
 
 export type ArticleImageUploadFn = (file: File, placeholderId: string) => Promise<UploadResult>
 
+/** Getters, not values: the editor reads them at paste/drop time so they always see the latest upload and article. */
 export type ArticleImageOptions = {
-	uploadRef: { current: ArticleImageUploadFn | null } | null
-	articleIdRef: { current: string | null | undefined } | null
+	getUpload: (() => ArticleImageUploadFn | null) | null
+	getArticleId: (() => string | null | undefined) | null
 	onMissingArticleId?: (() => void) | null
 }
 
@@ -75,12 +76,10 @@ function pickInlineImageFile(): Promise<File | null> {
 
 export async function runInlineImageUpload(
 	editor: Editor,
-	uploadRef: { current: ArticleImageUploadFn | null },
+	upload: ArticleImageUploadFn,
 	file: File,
 	pos?: number
 ): Promise<void> {
-	const upload = uploadRef.current
-	if (!upload) return
 	const placeholderId = genPlaceholderId()
 	editor.chain().focus().insertArticleImagePlaceholder({ placeholderId, pos }).run()
 	try {
@@ -103,13 +102,15 @@ export async function runInlineImageUpload(
 
 export async function triggerInlineImagePicker(
 	editor: Editor,
-	uploadRef: { current: ArticleImageUploadFn | null },
+	getUpload: () => ArticleImageUploadFn | null,
 	pos?: number
 ): Promise<void> {
-	if (!uploadRef.current) return
+	if (!getUpload()) return
 	const file = await pickInlineImageFile()
 	if (!file) return
-	await runInlineImageUpload(editor, uploadRef, file, pos)
+	const upload = getUpload()
+	if (!upload) return
+	await runInlineImageUpload(editor, upload, file, pos)
 }
 
 declare module '@tiptap/core' {
@@ -138,8 +139,8 @@ export const ArticleImage = Node.create<ArticleImageOptions>({
 
 	addOptions() {
 		return {
-			uploadRef: null,
-			articleIdRef: null,
+			getUpload: null,
+			getArticleId: null,
 			onMissingArticleId: null
 		}
 	},
@@ -151,33 +152,33 @@ export const ArticleImage = Node.create<ArticleImageOptions>({
 			new Plugin({
 				props: {
 					handlePaste: (_view, event) => {
-						const uploadRef = opts.uploadRef
-						if (!uploadRef?.current) return false
+						const upload = opts.getUpload?.()
+						if (!upload) return false
 						const file = fileFromClipboard(event as unknown as ClipboardEvent)
 						if (!file) return false
 						event.preventDefault()
-						if (!opts.articleIdRef?.current) {
+						if (!opts.getArticleId?.()) {
 							opts.onMissingArticleId?.()
 							return true
 						}
-						void runInlineImageUpload(editor, uploadRef, file)
+						void runInlineImageUpload(editor, upload, file)
 						return true
 					},
 					handleDrop: (view, event, _slice, moved) => {
 						if (moved) return false
-						const uploadRef = opts.uploadRef
-						if (!uploadRef?.current) return false
+						const upload = opts.getUpload?.()
+						if (!upload) return false
 						const file = fileFromDrop(event as unknown as DragEvent)
 						if (!file) return false
 						event.preventDefault()
-						if (!opts.articleIdRef?.current) {
+						if (!opts.getArticleId?.()) {
 							opts.onMissingArticleId?.()
 							return true
 						}
 						const dragEvent = event as unknown as DragEvent
 						const coords = view.posAtCoords({ left: dragEvent.clientX, top: dragEvent.clientY })
 						const pos = coords?.pos
-						void runInlineImageUpload(editor, uploadRef, file, pos)
+						void runInlineImageUpload(editor, upload, file, pos)
 						return true
 					}
 				}

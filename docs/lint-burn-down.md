@@ -107,6 +107,44 @@ Each bucket has one right answer per site but needs a human to read the site.
 Order: Articles, ProDashboard, Investors, Downloads, hooks, components, then LlamaAI as its own series.
 Each PR covers one directory and lists the pattern used per site.
 
+### Phase 3a: Articles (done)
+
+58 sites, all four rules. Patterns used, in order of frequency:
+
+- Prop copied into draft state (admin forms, caption editors, ArticleImageNodeView, SlashCommandList,
+  ArticleMetaDialog): the "store previous prop" form during render. The compiler accepts it (verified
+  with a fixture). ArticleMetaDialog keeps its exact triggers with two sync keys: schedule fields follow
+  `goLiveAt`/`isScheduled` while open, row drafts restart only when the dialog opens.
+- Derived state (ResearchSocialMediaMentions index clamp, editor preview article): computed during
+  render; the state that remains is only what the user chose.
+- State that is also memory (EntitySuggestionList highlight, RevisionHistoryDrawer base mode, both
+  article pickers' titles): kept as state, with the reset or merge done during render when its input
+  changes. Review of the first version caught three regressions from deriving these instead: a stale
+  highlight came back when a filter cleared, a forced diff-base fallback stopped sticking, and a removed
+  selection dropped another selection's resolved title. Rule: before deriving a value from state, walk it
+  through the invalid-then-valid transition; if the old value must be forgotten or the value must
+  survive a failed refetch, it is memory, not a derivation. Each of these now has an interaction test
+  that fails against the derived version.
+- Dialog close resets in ArticleEditorClient: `useDialogStore({ setOpen })` clears the edited node when
+  the store closes by any means, replacing three effects on the `open` state.
+- Latest-value refs (`saveRef`, `articleIdRef`, `inlineUploadRef`, `targetRef`): written in
+  `useLayoutEffect`. The tiptap image plugin takes getters (`getUpload`, `getArticleId`) instead of ref
+  objects, so `createArticleEditorExtensions` no longer closes over refs in its `useMemo`.
+- Share URL in ArticleRenderer: `useSyncExternalStore` over `popstate`/`hashchange`, server snapshot is
+  the article path.
+- Inline disables with reasons: layout measurement (MentionSlotPreview), textarea autosize that must
+  re-run after the value renders (ArticleTitleFields, caption editors), the `router.isReady` route copy,
+  and the hydration reset keyed on the route article id.
+- Trigger-only deps dropped (`articles`, `newsletters`, `items` in the landing widgets): the observers
+  and rAF loop already react to content changes.
+
+Follow-up PR, deliberately out of this migration because each changes behavior: the admin forms reset
+their draft whenever a refetched object arrives, even for the same entity, so unsaved edits vanish on a
+background refetch (reset on entity id instead, adopt fresh data only when the draft is clean, and
+decide what a dirty draft does with a conflicting save); and the revision drawer silently switches the
+diff base when the chosen one is unavailable, where a "this is the live revision, choose another base"
+state would be clearer than either the sticky or the transient fallback.
+
 ### react/refs (79)
 
 Verified in oxlint 1.81: a function returned by `useEffectEvent` may only be called from an effect or

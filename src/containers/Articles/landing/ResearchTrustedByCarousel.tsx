@@ -131,7 +131,7 @@ const LogosCarousel: React.FC<LogosCarouselProps> = ({ items, speed = SPEED_PX_P
 			rafIdRef.current = null
 			lastTimeRef.current = null
 		}
-	}, [items, speed])
+	}, [speed])
 
 	const pause = () => {
 		pausedRef.current = true
