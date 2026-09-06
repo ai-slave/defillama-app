@@ -855,11 +855,13 @@ function ShareBlock({ url, title, compactMode = false }: { url: string; title: s
 export function ArticleRenderer({
 	article,
 	hideSidePanel = false,
-	shareUrlOverride
+	shareUrlOverride,
+	sidePanelAction
 }: {
 	article: LocalArticleDocument
 	hideSidePanel?: boolean
 	shareUrlOverride?: string
+	sidePanelAction?: ReactNode
 }) {
 	const visibleDateIso =
 		article.displayDate ??
@@ -1131,26 +1133,29 @@ export function ArticleRenderer({
 
 			{hideSidePanel ? null : (
 				<aside className="hidden lg:sticky lg:top-6 lg:block lg:self-start">
-					<div className="flex flex-col gap-8 border-l border-medium pt-10 pr-1 pb-6 pl-5">
-						{toc.length > 1 ? (
+					<div className={sidePanelAction ? 'grid gap-6 pt-4' : undefined}>
+						{sidePanelAction ? <div className="flex justify-end">{sidePanelAction}</div> : null}
+						<div className="flex flex-col gap-8 border-l border-medium pt-10 pr-1 pb-6 pl-5">
+							{toc.length > 1 ? (
+								<div className="pr-2">
+									<ArticleToc toc={toc} compactMode={pastHeader} />
+								</div>
+							) : null}
+							{article.pageAssets && article.pageAssets.length > 0 ? (
+								<div className="pr-2 transition-[margin] duration-300 ease-out has-[[aria-expanded=false]]:-my-8">
+									<ArticlePageAssets pageAssets={article.pageAssets} />
+								</div>
+							) : null}
 							<div className="pr-2">
-								<ArticleToc toc={toc} compactMode={pastHeader} />
+								<ShareBlock url={shareUrl} title={article.title} compactMode={pastHeader} />
 							</div>
-						) : null}
-						{article.pageAssets && article.pageAssets.length > 0 ? (
-							<div className="pr-2 transition-[margin] duration-300 ease-out has-[[aria-expanded=false]]:-my-8">
-								<ArticlePageAssets pageAssets={article.pageAssets} />
-							</div>
-						) : null}
-						<div className="pr-2">
-							<ShareBlock url={shareUrl} title={article.title} compactMode={pastHeader} />
+							{cardPromoImageUrl(promoBanner) ? (
+								<div className="pr-2">
+									<ArticlePromoCard articleId={article.id} />
+								</div>
+							) : null}
+							<ArticleImageBanner articleId={article.id} section={article.section ?? null} />
 						</div>
-						{cardPromoImageUrl(promoBanner) ? (
-							<div className="pr-2">
-								<ArticlePromoCard articleId={article.id} />
-							</div>
-						) : null}
-						<ArticleImageBanner articleId={article.id} section={article.section ?? null} />
 					</div>
 				</aside>
 			)}

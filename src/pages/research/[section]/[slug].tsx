@@ -258,11 +258,8 @@ function SectionArticleContent({
 				section={article.section ?? null}
 				initialData={initialBanners}
 			/>
-			<div className="mx-auto hidden w-full max-w-[1300px] justify-end px-6 pt-4 lg:flex">
-				<ResearchSearchDialog variant="article" />
-			</div>
 			<AppMetadataProvider>
-				<ArticleRenderer article={article} />
+				<ArticleRenderer article={article} sidePanelAction={<ResearchSearchDialog variant="article" />} />
 				<OwnerEditChip article={article} />
 			</AppMetadataProvider>
 			<ResearchFooter maxWidthClassName="max-w-[1300px]" />
