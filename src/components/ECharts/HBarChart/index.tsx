@@ -10,6 +10,7 @@ import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../r
 import { setChartLogoMetadata } from '../shared/chartLogoMetadata'
 import { CHART_INSET, CHART_LEGEND_RESERVE } from '../shared/chartSpacing'
 import { useChartTheme } from '../shared/chartTheme'
+import { escapeHtml } from '../shared/escapeHtml'
 import { formatTooltipValue } from '../shared/formatters'
 import { getTooltipRawYValue, normalizeTooltipItems } from '../shared/tooltip'
 import { buildWatermarkGraphic } from '../shared/watermark'
@@ -288,14 +289,14 @@ function HBarChart({
 					if (!first) return ''
 					const firstRawValue = getTooltipRawYValue(first, first.seriesName ?? '')
 					const numericValue = typeof firstRawValue === 'number' ? firstRawValue : Number(firstRawValue ?? 0)
-					const header = `<div style="font-weight: 600; margin-bottom: 4px;">${first.name ?? ''}</div>`
+					const header = `<div style="font-weight: 600; margin-bottom: 4px;">${escapeHtml(first.name ?? '')}</div>`
 					if (!grouped) return `${header}<div>${formatTooltipValue(numericValue, valueSymbol)}</div>`
 					let rows = ''
 					for (const item of items) {
 						const name = item.seriesName ?? ''
 						const rawValue = getTooltipRawYValue(item, name)
 						const value = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? 0)
-						rows += `<div>${item.marker ?? ''}${name}: ${formatTooltipValue(value, valueSymbol)}</div>`
+						rows += `<div>${item.marker ?? ''}${escapeHtml(name)}: ${formatTooltipValue(value, valueSymbol)}</div>`
 					}
 					return header + rows
 				}

@@ -11,6 +11,7 @@ import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { usePersistentEChartsLifecycle, withEChartsRenderVisibility } from '../renderVisibility'
 import { CHART_INSET } from '../shared/chartSpacing'
 import { getChartTheme } from '../shared/chartTheme'
+import { escapeHtml } from '../shared/escapeHtml'
 import { formatChartValue } from '../shared/formatters'
 import { buildWatermarkGraphic } from '../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from './focus'
@@ -145,7 +146,7 @@ function TreemapChart({
 					if (variant === 'narrative') {
 						if (treePath.length > 1) {
 							return [
-								`${treePath[1]}<br>`,
+								`${escapeHtml(treePath[1]!)}<br>`,
 								`Return: ${formatPercent(info.value[1], { input: 'percent' })}<br>`,
 								`Market Cap: ${formatUsd(info.value[0], { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}<br>`
 							].join('')

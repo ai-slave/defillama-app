@@ -1,4 +1,5 @@
 import { formatPercent } from '~/utils/numberFormat'
+import { escapeHtml } from '../shared/escapeHtml'
 import type { TreemapValue } from './types'
 
 type TreemapPathInfo = Array<{ name?: unknown }>
@@ -46,18 +47,22 @@ export function formatRwaTreemapTooltip({
 		const parent = treePath[treePath.length - 2]
 		const child = treePath[treePath.length - 1]
 		return [
-			`Parent: ${parent}<br>`,
-			`Child: ${child}<br>`,
-			`${valueLabel}: ${metricValue}<br>`,
+			`Parent: ${escapeHtml(parent!)}<br>`,
+			`Child: ${escapeHtml(child!)}<br>`,
+			`${escapeHtml(valueLabel)}: ${escapeHtml(metricValue)}<br>`,
 			`Share of Parent: ${shareOfParent}<br>`,
 			`Share of Total: ${shareOfTotal}<br>`
 		].join('')
 	}
 
 	if (treePath.length === 1) {
-		return [`${treePath[0]}<br>`, `${valueLabel}: ${metricValue}<br>`, `Share of Total: ${shareOfTotal}<br>`].join('')
+		return [
+			`${escapeHtml(treePath[0]!)}<br>`,
+			`${escapeHtml(valueLabel)}: ${escapeHtml(metricValue)}<br>`,
+			`Share of Total: ${shareOfTotal}<br>`
+		].join('')
 	}
 
 	const rootLabel = getName(info?.name) || 'RWA'
-	return [`${rootLabel}<br>`, `${valueLabel}: ${metricValue}<br>`].join('')
+	return [`${escapeHtml(rootLabel)}<br>`, `${escapeHtml(valueLabel)}: ${escapeHtml(metricValue)}<br>`].join('')
 }

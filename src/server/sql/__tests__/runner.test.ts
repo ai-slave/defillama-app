@@ -17,6 +17,19 @@ beforeEach(() => {
 })
 
 describe('runServerSql', () => {
+	test.each(['histogram', 'histogram_values'])(
+		'blocks the encoded-source %s macro before loading tables',
+		async (macro) => {
+			await expect(
+				runServerSql({
+					sql: `SELECT * FROM ${macro}(chr(112)||'g'||chr(95)||'catalog.'||chr(112)||'g'||chr(95)||'settings', name || chr(61) || setting)`,
+					tableSources: [...RECIPE_SOURCES]
+				})
+			).rejects.toThrow('Something went wrong')
+			expect(fetchCsvMock).not.toHaveBeenCalled()
+		}
+	)
+
 	test('rejects multiple SELECT statements through the engine parser', async () => {
 		await expect(runServerSql({ sql: 'SELECT 1; SELECT 2', tableSources: [] })).rejects.toThrow(SqlPolicyError)
 	}, 30_000)

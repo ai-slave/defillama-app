@@ -84,6 +84,10 @@ const BLOCKED_WORDS = new Set(
 		'query',
 		'query_table',
 		'query_table_columns',
+		// These built-in table macros expand to query_table with a dynamic source.
+		'histogram',
+		'histogram_values',
+		'truncate_duckdb_logs',
 		'import_database',
 		'nextval',
 		'currval',

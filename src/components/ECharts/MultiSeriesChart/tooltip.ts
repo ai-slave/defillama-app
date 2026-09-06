@@ -1,3 +1,4 @@
+import { escapeHtml } from '../shared/escapeHtml'
 import { formatTooltipChartDate, formatTooltipValue, type TooltipGroupBy } from '../shared/formatters'
 import {
 	getTooltipAxisValue,
@@ -23,7 +24,7 @@ export function createCategoryTooltipFormatter(valueSymbol: string) {
 
 		const first = items[0]!
 		const category = first.axisValue ?? first.name
-		let output = category == null ? '' : `<strong>${category}</strong><br/>`
+		let output = category == null ? '' : `<strong>${escapeHtml(String(category))}</strong><br/>`
 		const rows: Array<LegacyTooltipRow> = []
 		for (const item of items) {
 			const name = item.seriesName
@@ -39,10 +40,10 @@ export function createCategoryTooltipFormatter(valueSymbol: string) {
 		const limit = others ? 9 : 10
 		for (let index = 0; index < rows.length && index < limit; index++) {
 			const row = rows[index]!
-			output += `<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
+			output += `<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
 		}
 		if (others) {
-			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${others.marker}${others.name}&nbsp;&nbsp;${formatTooltipValue(others.value, valueSymbol)}</li>`
+			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${others.marker}${escapeHtml(others.name)}&nbsp;&nbsp;${formatTooltipValue(others.value, valueSymbol)}</li>`
 		}
 		return output
 	}
@@ -89,7 +90,7 @@ export function createCappedRemainderTooltipFormatter({
 		const visibleLimit = hasRemainder ? Math.max(0, maxItems - 1) : maxItems
 		for (let index = 0; index < rows.length && index < visibleLimit; index++) {
 			const row = rows[index]!
-			output += `<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
+			output += `<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
 		}
 
 		if (hasRemainder) {
@@ -180,7 +181,7 @@ export function createInflowsTooltipFormatter({
 		if (regularCount === 0 && !explicitOthers) return chartdate
 		if (regularCount === 1 && !explicitOthers && topValues.length === 1) {
 			const row = topValues[0]!
-			return `${chartdate}<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
+			return `${chartdate}<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
 		}
 
 		let selectedSum = 0
@@ -189,13 +190,13 @@ export function createInflowsTooltipFormatter({
 		if (Math.abs(others) < 1e-8) others = 0
 
 		let output = chartdate
-		output += `<li style="list-style:none;font-weight:600">${totalLabel}&nbsp;&nbsp;${formatTooltipValue(total, valueSymbol)}</li>`
+		output += `<li style="list-style:none;font-weight:600">${escapeHtml(totalLabel)}&nbsp;&nbsp;${formatTooltipValue(total, valueSymbol)}</li>`
 		for (let index = topValues.length - 1; index >= 0; index--) {
 			const row = topValues[index]!
-			output += `<li style="list-style:none">${row.marker}${row.name}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
+			output += `<li style="list-style:none">${row.marker}${escapeHtml(row.name)}&nbsp;&nbsp;${formatTooltipValue(row.value, valueSymbol)}</li>`
 		}
 		if (others !== 0) {
-			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${explicitOthers?.marker ?? ''}${othersLabel}&nbsp;&nbsp;${formatTooltipValue(others, valueSymbol)}</li>`
+			output += `<li style="${TOOLTIP_OTHERS_ROW_STYLE}">${explicitOthers?.marker ?? ''}${escapeHtml(othersLabel)}&nbsp;&nbsp;${formatTooltipValue(others, valueSymbol)}</li>`
 		}
 		return output
 	}
@@ -228,7 +229,7 @@ function insertTopTooltipValue(rows: Array<TooltipValueRow>, nextRow: TooltipVal
 
 function renderTooltipRow(row: TooltipValueRow, separated = false) {
 	const style = separated ? TOOLTIP_OTHERS_ROW_STYLE : 'list-style:none;'
-	return `<li style="${style}">${row[0]} ${row[1]}: ${formatAxisLabel(row[2], row[3])}</li>`
+	return `<li style="${style}">${row[0]} ${escapeHtml(row[1])}: ${formatAxisLabel(row[2], row[3])}</li>`
 }
 
 export function createTooltipFormatter({

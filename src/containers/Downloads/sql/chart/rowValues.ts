@@ -10,6 +10,4 @@ export function readSqlTimestampMs(value: unknown): number | null {
 	return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
-export function escapeSqlChartHtml(value: string): string {
-	return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
+export { escapeHtml as escapeSqlChartHtml } from '~/components/ECharts/shared/escapeHtml'
