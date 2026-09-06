@@ -28,9 +28,10 @@ const mocks = vi.hoisted(() => ({
 	useQuery: vi.fn(),
 	useQueries: vi.fn(),
 	useFetchProtocolTVLChart: vi.fn<(options: TvlChartOptions) => TvlQueryResult>(),
-	useFetchProtocolMedianAPY: vi.fn(
-		(_protocol: string | null): QueryHookResult<IProtocolMedianApyChart> => ({ data: null, isLoading: false })
-	),
+	useFetchProtocolMedianAPY: vi.fn((_protocol: string | null): QueryHookResult<IProtocolMedianApyChart> => ({
+		data: null,
+		isLoading: false
+	})),
 	isClient: true,
 	lastResult: null as ReturnType<typeof import('../useFetchProtocolChartData').useFetchProtocolChartData> | null
 }))

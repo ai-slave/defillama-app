@@ -249,18 +249,16 @@ export function useSparklendYieldPools() {
 			)
 			return data.rows
 				.filter((pool) => pool.projectslug === PROTOCOL_SLUG)
-				.map(
-					(pool): YieldPool => ({
-						pool: pool.configID,
-						chain: pool.chains[0],
-						symbol: pool.pool,
-						tvlUsd: pool.tvl ?? 0,
-						apy: pool.apy,
-						apyBase: pool.apyBase,
-						apyReward: pool.apyReward,
-						poolMeta: pool.poolMeta ?? null
-					})
-				)
+				.map((pool): YieldPool => ({
+					pool: pool.configID,
+					chain: pool.chains[0],
+					symbol: pool.pool,
+					tvlUsd: pool.tvl ?? 0,
+					apy: pool.apy,
+					apyBase: pool.apyBase,
+					apyReward: pool.apyReward,
+					poolMeta: pool.poolMeta ?? null
+				}))
 				.sort((a, b) => b.tvlUsd - a.tvlUsd)
 		},
 		staleTime: STALE_TIME,

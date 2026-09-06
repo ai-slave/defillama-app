@@ -230,12 +230,10 @@ export const getProtocolOverviewPageData = async ({
 					protocol: currentProtocolSlug,
 					timeout: getFastJsonTimeoutMs()
 				})
-					.then(
-						(chart): IProtocolTvlChartSeedResult => ({
-							data: chart,
-							failed: false
-						})
-					)
+					.then((chart): IProtocolTvlChartSeedResult => ({
+						data: chart,
+						failed: false
+					}))
 					.catch((err): IProtocolTvlChartSeedResult => {
 						console.log(
 							'[HTTP]:[ERROR]:[PROTOCOL_TVL_CHART]:',
@@ -459,14 +457,12 @@ export const getProtocolOverviewPageData = async ({
 					null
 				)
 			: Promise.resolve(null),
-		fetchProtocols().catch(
-			(): ProtocolsResponse => ({
-				protocols: [],
-				chains: [],
-				parentProtocols: [],
-				protocolCategories: []
-			})
-		),
+		fetchProtocols().catch((): ProtocolsResponse => ({
+			protocols: [],
+			chains: [],
+			parentProtocols: [],
+			protocolCategories: []
+		})),
 		currentProtocolMetadata.bridge
 			? optionalProtocolData(
 					'bridge_volume',

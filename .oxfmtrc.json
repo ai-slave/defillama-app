@@ -16,6 +16,7 @@
 		"functions": ["clsx", "cn", "cva", "tw"]
 	},
 	"ignorePatterns": [
+		".oxlintrc.baseline.counts.json",
 		"/.claude",
 		"/node_modules",
 		"/.pnp",

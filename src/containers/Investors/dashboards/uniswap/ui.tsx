@@ -455,15 +455,13 @@ export function TimeAreaCard({
 				: {}
 		return {
 			dataset,
-			charts: chart.series.map(
-				(series, index): MultiSeriesChartSeriesConfig => ({
-					type: 'line',
-					name: series.name,
-					encode: { x: 'timestamp', y: series.name },
-					color: seriesColor(series.name, index),
-					...(stacked ? { stack: 'total' } : { hideAreaStyle: multipleSeries || !!level })
-				})
-			),
+			charts: chart.series.map((series, index): MultiSeriesChartSeriesConfig => ({
+				type: 'line',
+				name: series.name,
+				encode: { x: 'timestamp', y: series.name },
+				color: seriesColor(series.name, index),
+				...(stacked ? { stack: 'total' } : { hideAreaStyle: multipleSeries || !!level })
+			})),
 			chartOptions: {
 				...createTimeSeriesChartOptions(resolvedValueSymbol),
 				// The legend doubles as the per-series enable/disable toggle.

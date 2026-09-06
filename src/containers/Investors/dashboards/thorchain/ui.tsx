@@ -384,15 +384,13 @@ export function TimeAreaCard({
 		const dataset = chartToDataset(chart)
 		return {
 			dataset,
-			charts: chart.series.map(
-				(series, index): MultiSeriesChartSeriesConfig => ({
-					type: 'line',
-					name: series.name,
-					encode: { x: 'timestamp', y: series.name },
-					color: paletteColor(index),
-					hideAreaStyle: multipleSeries
-				})
-			),
+			charts: chart.series.map((series, index): MultiSeriesChartSeriesConfig => ({
+				type: 'line',
+				name: series.name,
+				encode: { x: 'timestamp', y: series.name },
+				color: paletteColor(index),
+				hideAreaStyle: multipleSeries
+			})),
 			chartOptions: {
 				...createTimeSeriesChartOptions(resolvedValueSymbol),
 				...(fullRange ? {} : (lastNDaysZoom(dataset.source.length) ?? {}))
@@ -433,16 +431,14 @@ export function TimeBarCard({
 		const dataset = chartToDataset(chart)
 		return {
 			dataset,
-			charts: chart.series.map(
-				(series, index): MultiSeriesChartSeriesConfig => ({
-					type: 'bar',
-					name: series.name,
-					encode: { x: 'timestamp', y: series.name },
-					color: paletteColor(index),
-					stack: series.stack ?? series.name,
-					large: false
-				})
-			),
+			charts: chart.series.map((series, index): MultiSeriesChartSeriesConfig => ({
+				type: 'bar',
+				name: series.name,
+				encode: { x: 'timestamp', y: series.name },
+				color: paletteColor(index),
+				stack: series.stack ?? series.name,
+				large: false
+			})),
 			chartOptions: {
 				...createTimeSeriesChartOptions(resolvedValueSymbol),
 				...(lastNDaysZoom(dataset.source.length) ?? {})

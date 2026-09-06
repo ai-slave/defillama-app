@@ -149,9 +149,12 @@ let cache: { meta: YieldsMeta; expiresAt: number; value: Promise<ProtocolJoins> 
 async function buildFromSources(meta: YieldsMeta): Promise<ProtocolJoins> {
 	const [raisesResponse, protocolsLite] = await Promise.all([
 		fetchRaisesFromNetwork().catch((): RaisesResponse => ({ raises: [] })),
-		fetchProtocols().catch(
-			(): ProtocolsResponse => ({ protocols: [], chains: [], parentProtocols: [], protocolCategories: [] })
-		)
+		fetchProtocols().catch((): ProtocolsResponse => ({
+			protocols: [],
+			chains: [],
+			parentProtocols: [],
+			protocolCategories: []
+		}))
 	])
 	return {
 		raiseValuationsUsd: buildRaiseValuationsUsd(raisesResponse.raises, meta.protocols, protocolsLite),

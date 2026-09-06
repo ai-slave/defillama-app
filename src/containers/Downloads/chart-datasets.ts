@@ -198,9 +198,8 @@ const extractActiveLoansProtocolOptions = (json: unknown): ProtocolOption[] => {
 const extractOverviewChainOptions = (json: unknown): Array<{ label: string; value: string }> => {
 	const chains = recordValue(json, 'allChains')
 	const chainOptions = Array.isArray(chains)
-		? chains.flatMap(
-				(chain): Array<{ label: string; value: string }> =>
-					typeof chain === 'string' && chain ? [{ label: chain, value: toSlug(chain) }] : []
+		? chains.flatMap((chain): Array<{ label: string; value: string }> =>
+				typeof chain === 'string' && chain ? [{ label: chain, value: toSlug(chain) }] : []
 			)
 		: []
 	chainOptions.sort((a, b) => a.label.localeCompare(b.label))

@@ -51,3 +51,6 @@ next-env.d.ts
 
 .codex/
 .claude/
+
+# generated from .oxlintrc.baseline.counts.json by `bun run lint`
+.oxlintrc.baseline.json

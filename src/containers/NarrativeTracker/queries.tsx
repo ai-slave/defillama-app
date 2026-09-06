@@ -49,9 +49,10 @@ export async function getCategoryPerformance(): Promise<CategoryPerformanceProps
 
 	const [performanceEntries, info] = await Promise.all([
 		Promise.all(
-			periods.map(
-				async (period): Promise<[string, TimeSeriesEntry[]]> => [period, await fetchCategoryPerformance(period)]
-			)
+			periods.map(async (period): Promise<[string, TimeSeriesEntry[]]> => [
+				period,
+				await fetchCategoryPerformance(period)
+			])
 		),
 		fetchCategoryInfo()
 	])

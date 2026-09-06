@@ -117,18 +117,14 @@ export const getProtocolLookup = async (): Promise<ProtocolLookup> => {
 
 const fetchChainResults = async (chainsArray: string[], metric: AdapterChartBuilderMetric): Promise<ChainResult[]> => {
 	const config = DIMENSIONS_API_METRIC_CONFIG[metric]
-	return mapWithConcurrency(
-		chainsArray,
-		8,
-		async (singleChain): Promise<ChainResult> => ({
-			chain: singleChain,
-			data: await fetchAdapterChainChartDataByProtocolBreakdown({
-				adapterType: config.endpoint,
-				chain: singleChain.toLowerCase() === 'all' ? 'All' : singleChain,
-				...(config.dataType ? { dataType: config.dataType } : {})
-			})
+	return mapWithConcurrency(chainsArray, 8, async (singleChain): Promise<ChainResult> => ({
+		chain: singleChain,
+		data: await fetchAdapterChainChartDataByProtocolBreakdown({
+			adapterType: config.endpoint,
+			chain: singleChain.toLowerCase() === 'all' ? 'All' : singleChain,
+			...(config.dataType ? { dataType: config.dataType } : {})
 		})
-	)
+	}))
 }
 
 const toBreakdownMap = (breakdown: Array<[number, Record<string, number>]>): Map<number, Map<string, number>> => {

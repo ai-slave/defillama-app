@@ -5,104 +5,102 @@ import {
 } from '~/containers/ProtocolOverview/server/routes'
 import type { MetadataCache } from '~/utils/metadata/artifactContract'
 
-const metadataCache = vi.hoisted(
-	(): MetadataCache => ({
-		chainMetadata: {
-			ethereum: { name: 'Ethereum', id: 'ethereum', stablecoins: true, fees: true }
-		},
-		chainRouteKeyBySlug: {
-			ethereum: 'ethereum'
-		},
-		protocolMetadata: {
-			aave: { name: 'aave', displayName: 'Aave', tvl: true, fees: true, emissions: true },
-			uniswap: { name: 'uniswap', displayName: 'Uniswap', dexs: true },
-			binance: { name: 'binance-cex', displayName: 'Binance CEX', tvl: true, stablecoins: true, cex: true },
-			'no-markets': { name: 'no-markets-cex', displayName: 'No Markets CEX', tvl: true, cex: true }
-		},
-		protocolRouteIdBySlug: {
-			aave: 'aave',
-			uniswap: 'uniswap'
-		},
-		categoriesAndTags: { categories: ['Lending'], tags: [], tagCategoryMap: {}, configs: {} },
-		protocolCategoryBySlug: {
-			lending: 'Lending'
-		},
-		protocolTagBySlug: {},
-		cexs: [
-			{ name: 'Binance', slug: 'binance-cex' },
-			{ name: 'No Markets', slug: 'no-markets-cex' }
-		],
-		cexRouteIdBySlug: {
-			binance: 'binance',
-			'binance-cex': 'binance',
-			'no-markets-cex': 'no-markets'
-		},
-		cexMetadataBySlug: {
-			'binance-cex': { name: 'Binance', slug: 'binance-cex' },
-			'no-markets-cex': { name: 'No Markets', slug: 'no-markets-cex' }
-		},
-		rwaList: {
-			canonicalMarketIds: ['ondo/usdy'],
-			platforms: ['Ondo'],
-			chains: ['Ethereum'],
-			categories: ['Treasuries'],
-			assetGroups: ['US Treasury Bills'],
-			idMap: {}
-		},
-		rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
-		rwaPerpsList: {
-			contracts: ['xyz:sp500'],
-			venues: ['CME'],
-			categories: ['RWA Perps'],
-			assets: ['S&P 500 Index'],
-			assetGroups: [],
-			total: 2
-		},
-		tokenlist: {},
-		tokenDirectory: {
-			btc: { name: 'Bitcoin', symbol: 'BTC', route: 'token/btc' }
-		},
-		tokenDirectoryRecordByRouteSegment: {},
-		protocolDisplayNames: new Map(),
-		chainDisplayNames: new Map(),
-		chainCategories: [],
-		liquidationsTokenSymbols: ['WETH'],
-		liquidationsTokenSymbolsSet: new Set(['WETH']),
-		emissionsProtocolsList: ['aave'],
-		emissionsProtocolBySlug: { aave: 'aave' },
-		emissionsSupplyMetrics: {},
-		emissionsHistoricalPrices: {},
-		cgExchangeIdentifiers: [],
-		bridgeProtocolSlugs: ['stargate'],
-		bridgeProtocolSlugsSet: new Set(['stargate']),
-		bridgeChainSlugs: ['ethereum'],
-		bridgeChainSlugsSet: new Set(['ethereum']),
-		bridgeChainSlugToName: { ethereum: 'Ethereum' },
-		narrativeCategories: { ids: ['ai'], nameById: { ai: 'AI' } },
-		narrativeCategoryIdsSet: new Set(['ai']),
-		oracleRoutes: {
-			oracleNameBySlug: { chainlink: 'Chainlink' },
-			chainNameBySlug: { ethereum: 'Ethereum' },
-			chainSlugsByOracleSlug: { chainlink: ['ethereum'] }
-		},
-		digitalAssetTreasuryRoutes: { assetSlugs: ['bitcoin'], companySlugs: ['MSTR'] },
-		digitalAssetTreasuryAssetSlugsSet: new Set(['bitcoin']),
-		digitalAssetTreasuryCompanyRouteBySlug: { mstr: 'MSTR' },
-		stablecoinPeggedAssetSlugs: ['tether'],
-		stablecoinPeggedAssetSlugsSet: new Set(['tether']),
-		equitiesCompanyRoutes: [],
-		equitiesCompanySlugsSet: new Set(),
-		preIpoCompanyIds: ['anthropic', 'commonwealth-fusion'],
-		preIpoCompanyIdsSet: new Set(['anthropic', 'commonwealth-fusion']),
-		tokenFilterMetadata: {
-			schemaVersion: 2,
-			generatedAt: 0,
-			sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
-			tokens: {},
-			categories: []
-		}
-	})
-)
+const metadataCache = vi.hoisted((): MetadataCache => ({
+	chainMetadata: {
+		ethereum: { name: 'Ethereum', id: 'ethereum', stablecoins: true, fees: true }
+	},
+	chainRouteKeyBySlug: {
+		ethereum: 'ethereum'
+	},
+	protocolMetadata: {
+		aave: { name: 'aave', displayName: 'Aave', tvl: true, fees: true, emissions: true },
+		uniswap: { name: 'uniswap', displayName: 'Uniswap', dexs: true },
+		binance: { name: 'binance-cex', displayName: 'Binance CEX', tvl: true, stablecoins: true, cex: true },
+		'no-markets': { name: 'no-markets-cex', displayName: 'No Markets CEX', tvl: true, cex: true }
+	},
+	protocolRouteIdBySlug: {
+		aave: 'aave',
+		uniswap: 'uniswap'
+	},
+	categoriesAndTags: { categories: ['Lending'], tags: [], tagCategoryMap: {}, configs: {} },
+	protocolCategoryBySlug: {
+		lending: 'Lending'
+	},
+	protocolTagBySlug: {},
+	cexs: [
+		{ name: 'Binance', slug: 'binance-cex' },
+		{ name: 'No Markets', slug: 'no-markets-cex' }
+	],
+	cexRouteIdBySlug: {
+		binance: 'binance',
+		'binance-cex': 'binance',
+		'no-markets-cex': 'no-markets'
+	},
+	cexMetadataBySlug: {
+		'binance-cex': { name: 'Binance', slug: 'binance-cex' },
+		'no-markets-cex': { name: 'No Markets', slug: 'no-markets-cex' }
+	},
+	rwaList: {
+		canonicalMarketIds: ['ondo/usdy'],
+		platforms: ['Ondo'],
+		chains: ['Ethereum'],
+		categories: ['Treasuries'],
+		assetGroups: ['US Treasury Bills'],
+		idMap: {}
+	},
+	rwaPlatformsIndex: { generatedAt: 0, byPid: {}, platforms: {} },
+	rwaPerpsList: {
+		contracts: ['xyz:sp500'],
+		venues: ['CME'],
+		categories: ['RWA Perps'],
+		assets: ['S&P 500 Index'],
+		assetGroups: [],
+		total: 2
+	},
+	tokenlist: {},
+	tokenDirectory: {
+		btc: { name: 'Bitcoin', symbol: 'BTC', route: 'token/btc' }
+	},
+	tokenDirectoryRecordByRouteSegment: {},
+	protocolDisplayNames: new Map(),
+	chainDisplayNames: new Map(),
+	chainCategories: [],
+	liquidationsTokenSymbols: ['WETH'],
+	liquidationsTokenSymbolsSet: new Set(['WETH']),
+	emissionsProtocolsList: ['aave'],
+	emissionsProtocolBySlug: { aave: 'aave' },
+	emissionsSupplyMetrics: {},
+	emissionsHistoricalPrices: {},
+	cgExchangeIdentifiers: [],
+	bridgeProtocolSlugs: ['stargate'],
+	bridgeProtocolSlugsSet: new Set(['stargate']),
+	bridgeChainSlugs: ['ethereum'],
+	bridgeChainSlugsSet: new Set(['ethereum']),
+	bridgeChainSlugToName: { ethereum: 'Ethereum' },
+	narrativeCategories: { ids: ['ai'], nameById: { ai: 'AI' } },
+	narrativeCategoryIdsSet: new Set(['ai']),
+	oracleRoutes: {
+		oracleNameBySlug: { chainlink: 'Chainlink' },
+		chainNameBySlug: { ethereum: 'Ethereum' },
+		chainSlugsByOracleSlug: { chainlink: ['ethereum'] }
+	},
+	digitalAssetTreasuryRoutes: { assetSlugs: ['bitcoin'], companySlugs: ['MSTR'] },
+	digitalAssetTreasuryAssetSlugsSet: new Set(['bitcoin']),
+	digitalAssetTreasuryCompanyRouteBySlug: { mstr: 'MSTR' },
+	stablecoinPeggedAssetSlugs: ['tether'],
+	stablecoinPeggedAssetSlugsSet: new Set(['tether']),
+	equitiesCompanyRoutes: [],
+	equitiesCompanySlugsSet: new Set(),
+	preIpoCompanyIds: ['anthropic', 'commonwealth-fusion'],
+	preIpoCompanyIdsSet: new Set(['anthropic', 'commonwealth-fusion']),
+	tokenFilterMetadata: {
+		schemaVersion: 2,
+		generatedAt: 0,
+		sources: { coingeckoCatalogGeneratedAt: 0, rankingsUpdatedAt: null },
+		tokens: {},
+		categories: []
+	}
+}))
 
 vi.mock('~/utils/metadata', () => ({
 	__esModule: true,

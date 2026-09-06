@@ -363,8 +363,9 @@ export type CoinGeckoCoinDetailResponseForOptions<TOptions = undefined> = CoinGe
 		Array<Record<string, unknown>>
 	>
 
-export type CoinGeckoCoinDetailResultForOptions<TOptions = undefined> =
-	CoinGeckoCoinDetailResponseForOptions<TOptions> | null
+export type CoinGeckoCoinDetailResultForOptions<
+	TOptions = undefined
+> = CoinGeckoCoinDetailResponseForOptions<TOptions> | null
 
 export type CoinGeckoCoinTickersResponseForOptions<TOptions = undefined> = {
 	name?: string

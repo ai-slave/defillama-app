@@ -87,15 +87,13 @@ export function buildComposition(
 			source
 		},
 		charts: [
-			...comp.segments.map(
-				(segment): MultiSeriesChartSeriesConfig => ({
-					type: 'line',
-					name: segment.name,
-					stack: 'total',
-					encode: { x: PERIOD_DIMENSION, y: segment.name },
-					color: colors[segment.name]
-				})
-			),
+			...comp.segments.map((segment): MultiSeriesChartSeriesConfig => ({
+				type: 'line',
+				name: segment.name,
+				stack: 'total',
+				encode: { x: PERIOD_DIMENSION, y: segment.name },
+				color: colors[segment.name]
+			})),
 			...(lineFits
 				? [
 						{

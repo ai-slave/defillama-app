@@ -38,6 +38,11 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Check lint baseline is tight
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          bun run lint:baseline:check -- --base origin/main
+
       - name: Check number-formatting policy
         run: bun scripts/policies/check-number-formatting.ts
 

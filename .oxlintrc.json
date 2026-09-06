@@ -1,13 +1,36 @@
 {
 	"$schema": "./node_modules/oxlint/configuration_schema.json",
-	"plugins": ["react", "react-perf", "typescript", "nextjs"],
+	// Hand-written rules only. `bun run lint` runs .oxlintrc.baseline.json, which extends this file and
+	// turns each rule off in the files that still violate it. Regenerate it with `bun run lint:baseline`.
+	"plugins": ["react", "typescript", "nextjs", "oxc", "unicorn", "import", "vitest", "jsx-a11y"],
 	"categories": {
 		"correctness": "error",
 		"suspicious": "error"
 	},
 	"rules": {
+		// --- Control flow and syntax ---
 		"eslint/eqeqeq": ["error", "always", { "null": "ignore" }],
-		"eslint/no-fallthrough": "warn",
+		"eslint/array-callback-return": "error",
+		"eslint/max-depth": ["error", 4],
+		"eslint/no-await-in-loop": "error",
+		"eslint/no-constructor-return": "error",
+		"eslint/no-else-return": "error",
+		"eslint/no-empty": "error",
+		"eslint/no-fallthrough": "error",
+		"eslint/no-lonely-if": "error",
+		"eslint/no-loop-func": "error",
+		"eslint/no-param-reassign": "error",
+		"eslint/no-shadow": ["error", { "ignoreOnInitialization": true }],
+		"eslint/no-throw-literal": "error",
+		"eslint/no-underscore-dangle": "off",
+		"eslint/no-useless-return": "error",
+		"eslint/no-var": "error",
+		"eslint/object-shorthand": "error",
+		"eslint/prefer-exponentiation-operator": "error",
+		"eslint/prefer-object-has-own": "error",
+		"eslint/prefer-template": "error",
+		"eslint/preserve-caught-error": "off",
+		"eslint/radix": "error",
 		"eslint/no-restricted-imports": [
 			"error",
 			{
@@ -20,24 +43,88 @@
 				]
 			}
 		],
-		"eslint/no-shadow": ["error", { "ignoreOnInitialization": true }],
-		"eslint/no-throw-literal": "error",
-		"eslint/no-underscore-dangle": "off",
-		"eslint/prefer-const": "off",
-		"eslint/preserve-caught-error": "off",
-		"typescript/await-thenable": "warn",
+		// --- Types ---
+		"typescript/array-type": ["error", { "default": "generic" }],
+		"typescript/consistent-type-imports": "error",
+		// Deferred until the strict-types migration is complete.
+		"typescript/no-explicit-any": "off",
 		"typescript/no-extraneous-class": "off",
+		"typescript/no-import-type-side-effects": "error",
+		"typescript/no-inferrable-types": "error",
+		"typescript/no-unused-vars": ["error", { "args": "none", "varsIgnorePattern": "^_" }],
+		"typescript/prefer-find": "error",
+		"typescript/prefer-for-of": "error",
+		"typescript/prefer-string-starts-ends-with": "error",
+		// Type-aware rules: only run with `oxlint --type-aware`, which CI does not do yet.
+		"typescript/await-thenable": "warn",
 		"typescript/no-floating-promises": "warn",
 		"typescript/no-misused-promises": "warn",
 		"typescript/no-useless-default-assignment": "warn",
-		"typescript/no-unused-vars": "warn",
-		"typescript/prefer-find": "warn",
-		"typescript/prefer-string-starts-ends-with": "warn",
 		"typescript/require-await": "warn",
-		"react/jsx-no-target-blank": "warn",
+		// --- Allocation and iteration: one pass per dataset, loops over chained transforms ---
+		"oxc/no-accumulating-spread": "error",
+		"oxc/no-map-spread": "error",
+		"unicorn/catch-error-name": "error",
+		"unicorn/consistent-function-scoping": "error",
+		"unicorn/explicit-length-check": "error",
+		// `new Array(n)` is the preallocation idiom for hot paths.
+		"unicorn/no-new-array": "off",
+		"unicorn/no-array-for-each": "error",
+		"unicorn/no-array-reduce": "error",
+		// toSorted/toReversed copy the array; in-place sort of props or state is caught by react/immutability.
+		"unicorn/no-array-reverse": "off",
+		"unicorn/no-array-sort": "off",
+		"unicorn/no-lonely-if": "error",
+		"unicorn/no-typeof-undefined": "error",
+		"unicorn/numeric-separators-style": "error",
+		"unicorn/prefer-add-event-listener": "error",
+		"unicorn/prefer-array-find": "error",
+		"unicorn/prefer-array-some": "error",
+		"unicorn/prefer-node-protocol": "error",
+		"unicorn/prefer-set-has": "error",
+		// --- Modules ---
+		"import/no-duplicates": "error",
+		"import/no-empty-named-blocks": "error",
+		// clsx and friends legitimately export a named binding that matches the default.
+		"import/no-named-as-default": "off",
+		"import/no-self-import": "error",
+		// Global CSS imports in _app are side-effect imports by design.
+		"import/no-unassigned-import": "off",
+		// --- React: render is pure, state is derived, effects only synchronize ---
+		"react/button-has-type": "error",
+		"react/exhaustive-deps": "error",
+		"react/function-component-definition": [
+			"error",
+			{ "namedComponents": "function-declaration", "unnamedComponents": "arrow-function" }
+		],
+		"react/hook-use-state": "error",
+		"react/jsx-boolean-value": "error",
+		"react/jsx-curly-brace-presence": ["error", { "props": "never", "children": "never" }],
+		"react/jsx-no-constructed-context-values": "error",
+		"react/jsx-no-target-blank": "error",
+		"react/jsx-no-useless-fragment": "error",
+		"react/no-array-index-key": "error",
+		"react/no-danger": "error",
+		"react/no-unescaped-entities": "error",
 		"react/no-unstable-nested-components": ["error", { "allowAsProps": true }],
 		"react/react-in-jsx-scope": "off",
 		"react/rules-of-hooks": "error",
+		"react/self-closing-comp": "error",
+		// React Compiler rules. All upstream-recommended rules are on via the correctness category;
+		// the two below are added on top.
+		"react/no-deriving-state-in-effects": "error",
+		"react/void-use-memo": "error",
+		// Every hit is useReactTable or useVirtualizer. Re-enable after the TanStack table/virtual migration.
+		"react/incompatible-library": "off",
+		// --- Tests ---
+		"vitest/consistent-test-it": ["error", { "fn": "test", "withinDescribe": "test" }],
+		"vitest/require-mock-type-parameters": "off",
+		// --- Accessibility ---
+		// Recommends <output> over role="status", which is worse for live regions.
+		"jsx-a11y/prefer-tag-over-role": "off",
+		// Autofocus inside a dialog is the expected behavior.
+		"jsx-a11y/no-autofocus": "off",
+		// --- Next.js ---
 		"nextjs/no-duplicate-head": "off",
 		"nextjs/no-html-link-for-pages": "off",
 		"nextjs/no-img-element": "off"
@@ -47,6 +134,52 @@
 	// sanctioned escape hatch is a dynamic import inside getStaticProps (metadata, dataset
 	// snapshots, routeRegistry) stay in vitest import-boundary tests instead.
 	"overrides": [
+		{
+			// tsc already reports these as errors; skipping them in TS files is free lint time.
+			// no-unreachable stays on: tsc only flags unreachable code without allowUnreachableCode: false.
+			"files": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
+			"rules": {
+				"eslint/constructor-super": "off",
+				"eslint/getter-return": "off",
+				"eslint/no-class-assign": "off",
+				"eslint/no-const-assign": "off",
+				"eslint/no-dupe-class-members": "off",
+				"eslint/no-dupe-keys": "off",
+				"eslint/no-func-assign": "off",
+				"eslint/no-import-assign": "off",
+				"eslint/no-new-native-nonconstructor": "off",
+				"eslint/no-obj-calls": "off",
+				"eslint/no-redeclare": "off",
+				"eslint/no-setter-return": "off",
+				"eslint/no-this-before-super": "off",
+				"eslint/no-undef": "off",
+				"eslint/no-unsafe-negation": "off",
+				"eslint/no-with": "off"
+			}
+		},
+		{
+			// Test harnesses reassign module variables and define helpers inline on purpose.
+			"files": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+			"rules": {
+				"react/capitalized-calls": "off",
+				"react/error-boundaries": "off",
+				"react/exhaustive-effect-dependencies": "off",
+				"react/globals": "off",
+				"react/hooks": "off",
+				"react/immutability": "off",
+				"react/memo-dependencies": "off",
+				"react/no-deriving-state-in-effects": "off",
+				"react/preserve-manual-memoization": "off",
+				"react/purity": "off",
+				"react/refs": "off",
+				"react/set-state-in-effect": "off",
+				"react/set-state-in-render": "off",
+				"react/static-components": "off",
+				"react/use-memo": "off",
+				"react/void-use-memo": "off",
+				"unicorn/consistent-function-scoping": "off"
+			}
+		},
 		{
 			// Client entry roots must never import tablePages .server modules at runtime.
 			// Server-side code inside these roots (server/ dirs, .server files, API routes, tests) is exempt.

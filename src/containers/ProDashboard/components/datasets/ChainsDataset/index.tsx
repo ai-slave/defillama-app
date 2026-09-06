@@ -137,36 +137,34 @@ export function ChainsDataset({
 	const totals = React.useMemo(() => buildChainShareTotals(data), [data])
 
 	const percentageShareColumns = React.useMemo(() => {
-		return CHAIN_SHARE_METRICS.map(
-			(metric): ColumnDef<ChainsDatasetRow> => ({
-				id: `${metric.key}_share`,
-				header: metric.name,
-				size: 120,
-				accessorFn: (row) => {
-					const value = row[metric.key]
-					const total = totals[metric.key]
+		return CHAIN_SHARE_METRICS.map((metric): ColumnDef<ChainsDatasetRow> => ({
+			id: `${metric.key}_share`,
+			header: metric.name,
+			size: 120,
+			accessorFn: (row) => {
+				const value = row[metric.key]
+				const total = totals[metric.key]
 
-					return getChainMetricShare(value, total) ?? undefined
-				},
-				cell: ({ row }) => {
-					const sourceValue = row.original[metric.key]
-					const total = totals[metric.key]
-					const value = getChainMetricShare(sourceValue, total)
-					if (value == null) return <span className="text-pro-text-secondary">-</span>
+				return getChainMetricShare(value, total) ?? undefined
+			},
+			cell: ({ row }) => {
+				const sourceValue = row.original[metric.key]
+				const total = totals[metric.key]
+				const value = getChainMetricShare(sourceValue, total)
+				if (value == null) return <span className="text-pro-text-secondary">-</span>
 
-					return (
-						<span className="text-pro-text-secondary">
-							{formatPercent(value, {
-								input: 'percent',
-								minimumFractionDigits: 2,
-								maximumFractionDigits: 2,
-								useGrouping: false
-							})}
-						</span>
-					)
-				}
-			})
-		)
+				return (
+					<span className="text-pro-text-secondary">
+						{formatPercent(value, {
+							input: 'percent',
+							minimumFractionDigits: 2,
+							maximumFractionDigits: 2,
+							useGrouping: false
+						})}
+					</span>
+				)
+			}
+		}))
 	}, [totals])
 
 	const allColumns = React.useMemo(() => {
