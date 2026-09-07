@@ -372,9 +372,8 @@ export function useImageUpload({
 				addImages(droppedFiles)
 			} catch (error) {
 				console.error('Failed to add dropped images:', error)
-			} finally {
-				clearDroppedFiles?.()
 			}
+			clearDroppedFiles?.()
 		}
 	}, [droppedFiles, clearDroppedFiles, addImages])
 

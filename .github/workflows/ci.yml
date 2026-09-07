@@ -43,6 +43,14 @@ jobs:
           git fetch --no-tags --depth=1 origin main
           bun run lint:baseline:check -- --base origin/main
 
+      - name: Check React Compiler baseline is tight
+        # A component that stops compiling is invisible otherwise: nothing fails, it just stops being
+        # memoized. The baseline records what still bails so everything else is protected.
+        # Fetches main itself: without the ref the base comparison skips silently.
+        run: |
+          git fetch --no-tags --depth=1 origin main
+          bun run compiler:baseline:check -- --base origin/main
+
       - name: Check number-formatting policy
         run: bun scripts/policies/check-number-formatting.ts
 

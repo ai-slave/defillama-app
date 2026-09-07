@@ -57,9 +57,8 @@ export function ProjectLanding({
 	const renameStore = Ariakit.useDialogStore()
 	const deleteStore = Ariakit.useDialogStore()
 	const clearUnseenCompletion = useClearUnseenCompletion()
-	const { deleteSession, updateSessionTitle, isDeletingSession, isUpdatingTitle } = useSessionMutations()
+	const { deleteSession, updateTitle } = useSessionMutations()
 	const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null)
-	const [actingSessionId, setActingSessionId] = useState<string | null>(null)
 	const tab = initialTab
 	const [prompt, setPrompt] = usePromptDraft(`project:${projectId}`)
 	const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -161,7 +160,7 @@ export function ProjectLanding({
 		onPickSession(session.sessionId)
 	}
 
-	const handleRenameSubmit = async (e: React.FormEvent<HTMLFormElement>, session: (typeof sessions)[number]) => {
+	const handleRenameSubmit = (e: React.FormEvent<HTMLFormElement>, session: (typeof sessions)[number]) => {
 		e.preventDefault()
 		const input = e.currentTarget.elements.namedItem('newTitle') as HTMLInputElement | null
 		const next = input?.value.trim() ?? ''
@@ -169,27 +168,23 @@ export function ProjectLanding({
 			setRenamingSessionId(null)
 			return
 		}
-		setActingSessionId(session.sessionId)
-		try {
-			await updateSessionTitle({ sessionId: session.sessionId, title: next, projectId })
-			setRenamingSessionId(null)
-		} catch (error) {
-			console.error('Failed to rename session:', error)
-		} finally {
-			setActingSessionId(null)
-		}
+		updateTitle.mutate(
+			{ sessionId: session.sessionId, title: next, projectId },
+			{
+				onSuccess: () => setRenamingSessionId(null),
+				onError: (error) => console.error('Failed to rename session:', error)
+			}
+		)
 	}
 
-	const handleDeleteSession = async (session: (typeof sessions)[number]) => {
+	const handleDeleteSession = (session: (typeof sessions)[number]) => {
+		// The confirm guards whether to act at all, so it stays out of the mutation: a cancelled prompt
+		// is neither a failure nor a delete, and neither state is one to leave the mutation in.
 		if (!window.confirm('Are you sure you want to delete this chat?')) return
-		setActingSessionId(session.sessionId)
-		try {
-			await deleteSession(session.sessionId, projectId)
-		} catch (error) {
-			console.error('Failed to delete session:', error)
-		} finally {
-			setActingSessionId(null)
-		}
+		deleteSession.mutate(
+			{ sessionId: session.sessionId, projectId },
+			{ onError: (error) => console.error('Failed to delete session:', error) }
+		)
 	}
 
 	const handleKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -403,8 +398,11 @@ export function ProjectLanding({
 									<ul className="flex flex-col">
 										{sessions.map((s) => {
 											const isRenaming = renamingSessionId === s.sessionId
-											const isActing = actingSessionId === s.sessionId
-											const isBusy = isActing && (isDeletingSession || isUpdatingTitle)
+											const isDeletingThis =
+												deleteSession.isPending && deleteSession.variables?.sessionId === s.sessionId
+											// The mutation knows which row it is renaming; that is what its variables are.
+											const isRenamingThis = updateTitle.isPending && updateTitle.variables?.sessionId === s.sessionId
+											const isBusy = isDeletingThis || isRenamingThis
 											if (isRenaming) {
 												return (
 													<li key={s.sessionId}>
@@ -504,7 +502,7 @@ export function ProjectLanding({
 																}
 																className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-ai-error disabled:opacity-50"
 															>
-																{isBusy && isDeletingSession ? (
+																{isDeletingThis ? (
 																	<LoadingSpinner size={12} />
 																) : (
 																	<Icon name="trash-2" height={13} width={13} />

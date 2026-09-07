@@ -425,9 +425,8 @@ export function MessageBubble({
 			setIsEditing(false)
 		} catch {
 			// textarea stays open with draft preserved; parent rolled back state and surfaced an error
-		} finally {
-			setIsSaving(false)
 		}
+		setIsSaving(false)
 	}
 	if (message.role === 'user') {
 		const isPersistedId = !!message.id && !/^(local|persisted|shared)-/.test(message.id)

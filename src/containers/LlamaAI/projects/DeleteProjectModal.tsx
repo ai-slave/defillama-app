@@ -14,16 +14,18 @@ interface DeleteProjectModalProps {
 export function DeleteProjectModal({ dialogStore, project, onDeleted }: DeleteProjectModalProps) {
 	const remove = useDeleteProject()
 
-	const onConfirm = async () => {
+	const onConfirm = () => {
 		if (!project) return
-		try {
-			await remove.mutateAsync(project.id)
-			toast.success('Project deleted')
-			dialogStore.hide()
-			onDeleted?.()
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to delete project')
-		}
+		remove.mutate(project.id, {
+			onSuccess: () => {
+				toast.success('Project deleted')
+				dialogStore.hide()
+				onDeleted?.()
+			},
+			onError: (error) => {
+				toast.error(error instanceof Error ? error.message : 'Failed to delete project')
+			}
+		})
 	}
 
 	return (

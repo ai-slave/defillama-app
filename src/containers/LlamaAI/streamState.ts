@@ -45,6 +45,8 @@ export type StreamPhase =
 export interface StreamState {
 	phase: StreamPhase
 	isStreaming: boolean
+	/** Id of the assistant message currently being streamed, once the server has assigned one. */
+	messageId: string | null
 	pendingQueueItemId: string | null
 	isCompacting: boolean
 	text: string
@@ -108,6 +110,7 @@ export type StreamAction =
 	| { type: 'STOP_REQUESTED' }
 	| { type: 'STOP_FAILED'; error: string }
 	| { type: 'COMMIT_STREAM' }
+	| { type: 'SET_MESSAGE_ID'; value: string }
 	| { type: 'SET_COMPACTING'; value: boolean }
 	| { type: 'SET_ERROR'; value: string | null }
 	| { type: 'SET_RATE_LIMIT_DETAILS'; value: RateLimitDetails | null }
@@ -139,6 +142,7 @@ export type StreamAction =
 // Reset only the in-flight runtime fields; persistent errors are layered on top separately.
 const createEmptyRuntimeState = (): ResettableStreamState => ({
 	isStreaming: false,
+	messageId: null,
 	pendingQueueItemId: null,
 	isCompacting: false,
 	text: '',
@@ -235,6 +239,8 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
 			// Clear only in-flight runtime fields. Error/rate-limit metadata is managed
 			// by separate actions so callers can reset the draft without hiding failures.
 			return { ...state, ...createEmptyRuntimeState(), phase: { status: 'idle' } }
+		case 'SET_MESSAGE_ID':
+			return { ...state, messageId: action.value }
 		case 'STOP_REQUESTED':
 			return { ...state, phase: { status: 'stopping' }, isStreaming: true, error: null }
 		case 'STOP_FAILED':

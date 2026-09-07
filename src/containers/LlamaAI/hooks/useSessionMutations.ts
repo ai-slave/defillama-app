@@ -548,11 +548,6 @@ export function useSessionMutations() {
 		[restoreSessionMutation]
 	)
 
-	const deleteSession = useCallback(
-		(sessionId: string, projectId?: string | null) => deleteSessionMutation.mutateAsync({ sessionId, projectId }),
-		[deleteSessionMutation]
-	)
-
 	return {
 		createSession: createSessionMutation.mutateAsync,
 		createFakeSession,
@@ -562,13 +557,11 @@ export function useSessionMutations() {
 		loadMoreMessages,
 		loadNewerMessages,
 		switchActiveLeaf: switchActiveLeafMutation.mutateAsync,
-		deleteSession,
-		updateSessionTitle: updateTitleMutation.mutateAsync,
+		deleteSession: deleteSessionMutation,
+		updateTitle: updateTitleMutation,
 		isCreatingSession: createSessionMutation.isPending,
 		isRestoringSession: restoreSessionMutation.isPending,
 		isSwitchingActiveLeaf: switchActiveLeafMutation.isPending,
-		isDeletingSession: deleteSessionMutation.isPending,
-		isUpdatingTitle: updateTitleMutation.isPending,
 		bulkDeleteSessions: bulkDeleteSessionsMutation.mutateAsync,
 		isBulkDeleting: bulkDeleteSessionsMutation.isPending,
 		pinSession: pinSessionMutation.mutateAsync,

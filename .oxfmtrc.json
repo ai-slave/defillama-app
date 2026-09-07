@@ -17,6 +17,7 @@
 	},
 	"ignorePatterns": [
 		".oxlintrc.baseline.counts.json",
+		".reactcompiler.baseline.json",
 		"/.claude",
 		"/node_modules",
 		"/.pnp",

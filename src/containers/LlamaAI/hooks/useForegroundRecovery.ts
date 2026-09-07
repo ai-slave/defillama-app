@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 import { getForegroundRecoveryIntent, type PromptFailure } from '~/containers/LlamaAI/promptFailures'
 
 export const FOREGROUND_RECOVERY_POLL_MS = 30_000
@@ -28,13 +28,6 @@ export function useForegroundRecovery({
 	onReplayPrompt,
 	onProbeSession
 }: UseForegroundRecoveryOptions) {
-	const onResumeRecoveryRef = useRef(onResumeRecovery)
-	onResumeRecoveryRef.current = onResumeRecovery
-	const onReplayPromptRef = useRef(onReplayPrompt)
-	onReplayPromptRef.current = onReplayPrompt
-	const onProbeSessionRef = useRef(onProbeSession)
-	onProbeSessionRef.current = onProbeSession
-
 	const reconnectVisibleExecution = useEffectEvent(() => {
 		if (readOnly || isRouteSessionPending) return
 		const intent = getForegroundRecoveryIntent({
@@ -44,13 +37,13 @@ export function useForegroundRecovery({
 		})
 		switch (intent) {
 			case 'resume-recovery':
-				onResumeRecoveryRef.current()
+				onResumeRecovery()
 				return
 			case 'replay-prompt':
-				onReplayPromptRef.current()
+				onReplayPrompt()
 				return
 			case 'probe-session':
-				if (sessionId && !isStreaming) onProbeSessionRef.current(sessionId)
+				if (sessionId && !isStreaming) onProbeSession(sessionId)
 				return
 			case 'none':
 				return
@@ -86,6 +79,14 @@ export function useForegroundRecovery({
 		return () => window.removeEventListener('online', onOnline)
 	}, [])
 
+	// Stable identity, latest props: the poll must not restart when a callback changes, and must not
+	// call yesterday's callback either.
+	const pollRecovery = useEffectEvent((intent: 'replay-prompt' | 'probe-session', session: string) => {
+		if (document.hidden) return
+		if (intent === 'replay-prompt') onReplayPrompt()
+		else onProbeSession(session)
+	})
+
 	useEffect(() => {
 		const recoveryIntent = getForegroundRecoveryIntent({
 			hasActiveRecovery: false,
@@ -102,12 +103,7 @@ export function useForegroundRecovery({
 			return
 		}
 		const intervalId = window.setInterval(() => {
-			if (document.hidden) return
-			if (recoveryIntent === 'replay-prompt') {
-				onReplayPromptRef.current()
-			} else {
-				onProbeSessionRef.current(sessionId)
-			}
+			pollRecovery(recoveryIntent, sessionId)
 		}, FOREGROUND_RECOVERY_POLL_MS)
 		return () => window.clearInterval(intervalId)
 	}, [isRouteSessionPending, isStreaming, hasGenericError, sessionId, readOnly, promptFailure])

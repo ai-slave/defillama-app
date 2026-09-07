@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { SESSIONS_QUERY_KEY } from '~/containers/LlamaAI/hooks/sessionListCache'
 import {
@@ -194,6 +195,12 @@ export function useMoveSessionToProject() {
 			if (variables.projectId) {
 				void qc.invalidateQueries({ queryKey: projectSessionsKey(variables.projectId) })
 			}
+			toast.success(variables.projectId ? 'Moved to project' : 'Removed from project')
+		},
+		// The menu that triggered this unmounts as it closes, so the feedback cannot ride on the mutate
+		// call the way a dialog-scoped effect would.
+		onError: (error) => {
+			toast.error(error instanceof Error ? error.message : 'Failed to move session')
 		}
 	})
 }

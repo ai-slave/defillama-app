@@ -31,13 +31,17 @@ export function useAgenticRouteTransition({
 	onClearChat
 }: UseAgenticRouteTransitionOptions) {
 	const onNewChatRef = useRef(onNewChat)
-	onNewChatRef.current = onNewChat
 	const onOpenSessionRef = useRef(onOpenSession)
-	onOpenSessionRef.current = onOpenSession
 	const onClearChatRef = useRef(onClearChat)
-	onClearChatRef.current = onClearChat
 	const getCurrentSessionIdRef = useRef(getCurrentSessionId)
-	getCurrentSessionIdRef.current = getCurrentSessionId
+	// Written after commit rather than during render: a render-phase ref write costs the hook its
+	// compiler optimization, and every reader here runs from a handler or an effect, after commit.
+	useLayoutEffect(() => {
+		onNewChatRef.current = onNewChat
+		onOpenSessionRef.current = onOpenSession
+		onClearChatRef.current = onClearChat
+		getCurrentSessionIdRef.current = getCurrentSessionId
+	})
 
 	const previousRouteTransitionRef = useRef<AgenticRouteTransition | null>(null)
 	const projectHomeSignalRef = useRef(projectHomeSignal)

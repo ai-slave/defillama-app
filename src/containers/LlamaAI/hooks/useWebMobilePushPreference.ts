@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import { useAuthContext } from '~/auth'
 import { getAuthStoreSnapshot } from '~/auth/authStore'
 import {
@@ -73,7 +73,11 @@ export function useWebMobilePushPreference() {
 	const queryClient = useQueryClient()
 	const userId = user?.id ?? null
 	const currentUserIdRef = useRef(userId)
-	currentUserIdRef.current = userId
+	// Written after commit rather than during render: a render-phase ref write costs the hook its
+	// compiler optimization, and the mutation callbacks that read it run well after commit.
+	useLayoutEffect(() => {
+		currentUserIdRef.current = userId
+	})
 	const queryKey = [...WEB_MOBILE_PUSH_QUERY_KEY, userId] as const
 
 	const statusQuery = useQuery({

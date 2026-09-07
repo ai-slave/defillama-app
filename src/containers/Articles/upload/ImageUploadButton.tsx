@@ -33,9 +33,8 @@ export function ImageUploadButton({
 			onUploaded(result)
 		} catch {
 			// surfaced via toast; nothing to do here
-		} finally {
-			if (inputRef.current) inputRef.current.value = ''
 		}
+		if (inputRef.current) inputRef.current.value = ''
 	}
 
 	const open = () => inputRef.current?.click()

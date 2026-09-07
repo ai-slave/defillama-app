@@ -138,9 +138,8 @@ export function TableImageButtons({
 			} catch (error) {
 				toast.error(mode === 'copy' ? 'Could not copy the image' : 'Could not create the image')
 				console.log(error)
-			} finally {
-				setIsLoading(false)
 			}
+			setIsLoading(false)
 		},
 		[disabled, getSource, isDarkMode, isLoading, watermarkEnabled, watermarkMode]
 	)

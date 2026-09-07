@@ -180,9 +180,8 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 			onChange({ imageId: result.id, src: result.url, width: result.width, height: result.height })
 		} catch {
 			// surfaced via toast
-		} finally {
-			if (inputRef.current) inputRef.current.value = ''
 		}
+		if (inputRef.current) inputRef.current.value = ''
 	}
 
 	const missingImage = showErrors && !item.src

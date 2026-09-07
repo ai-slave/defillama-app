@@ -18,6 +18,8 @@
 		"lint": "bun scripts/lintBaseline.ts --emit && oxlint -c .oxlintrc.baseline.json",
 		"lint:baseline": "bun scripts/lintBaseline.ts",
 		"lint:baseline:check": "bun scripts/lintBaseline.ts --check",
+		"compiler:baseline": "bun scripts/compilerBaseline.ts",
+		"compiler:baseline:check": "bun scripts/compilerBaseline.ts --check",
 		"prepare": "git config core.hooksPath .githooks || true",
 		"start": "next start",
 		"start:docker": "sh ./scripts/docker-entrypoint.sh .next/standalone/server.js",

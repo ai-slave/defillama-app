@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
 	consumePendingPageContext,
 	consumePendingPrompt,
@@ -43,9 +43,13 @@ export function useDeepLinkPrompt({
 	const [confirmationPrompt, setConfirmationPrompt] = useState<string | null>(null)
 	const consumedKeyRef = useRef<string | null>(null)
 	const submitPromptRef = useRef(submitPrompt)
-	submitPromptRef.current = submitPrompt
 	const clearDeepLinkFromUrlRef = useRef(clearDeepLinkFromUrl)
-	clearDeepLinkFromUrlRef.current = clearDeepLinkFromUrl
+	// Written after commit rather than during render: a render-phase ref write costs the hook its
+	// compiler optimization, and every reader here runs from a handler or an effect, after commit.
+	useLayoutEffect(() => {
+		submitPromptRef.current = submitPrompt
+		clearDeepLinkFromUrlRef.current = clearDeepLinkFromUrl
+	})
 
 	useEffect(() => {
 		if (!isNewChat || sharedSession) return

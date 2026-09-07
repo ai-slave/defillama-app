@@ -515,6 +515,229 @@ The residual risk is maintenance, not correctness: a component whose memo is gon
 if a future caller bails out. That is an argument for keeping the LlamaAI bailouts on the burn-down
 list, not for keeping the memos.
 
+## The React Compiler baseline
+
+`bun run compiler:baseline:check` is the ratchet for compiler bailouts, and CI runs it. It exists
+because a component that stops compiling fails nothing: it simply stops being memoized, and nothing
+downstream of it is cached either. That is how `AgenticChat` went its whole life without compiling.
+
+It mirrors the lint ratchet exactly — `.reactcompiler.baseline.json` records bailouts per file per
+reason, one line per file; the check fails if a file bails more than recorded, if the record is stale,
+or if the committed record accepts more than `origin/main` does. Regenerate with
+`bun run compiler:baseline`. A full run recompiles every non-test `.ts`/`.tsx` under `src` and takes
+about a minute.
+
+At creation: 193 bailouts across 154 files and 17 reasons. `Use of incompatible library` is 82 of them
+(`useVirtualizer` and `useReactTable`, the deferred rule). The rest are dominated by things the compiler
+cannot lower — value blocks inside `try`/`catch` (23), refs read during render (22), `try` with a
+`finally` (21) — and each has a mechanical fix, which is what makes this a burn-down list rather than a
+wall.
+
+Two traps when working with the checker directly, both of which produced false clean runs here:
+
+- `scripts/reactCompilerCheck.cjs` takes the repo root as its first positional argument. Passing only a
+  file checks nothing and exits 0. Always `node scripts/reactCompilerCheck.cjs . <files>`, and expect a
+  `<file>: compiled N [...]` line for every file.
+- The compiler only visits components and real hooks. A plain function whose name happens to start with
+  `use` but which calls no hooks is never compiled, so probing the checker with one proves nothing.
+
+## Follow-up: try/catch around an awaited mutation
+
+React Compiler cannot lower a conditional, logical or optional chain inside a `try`/`catch`, and the
+commonest shape in this repo puts one there:
+
+```tsx
+try {
+	await remove.mutateAsync(project.id)
+	toast.success('Project deleted')
+} catch (error) {
+	toast.error(error instanceof Error ? error.message : 'Failed to delete project')
+}
+```
+
+The fix is not a helper for the message. It is that the error already has a home: pass the callbacks to
+`mutate` instead. That removes the `try`, adds no abstraction, and leaves the failure in
+`mutation.error` — which is what an inline error message renders from, where a toast does not. So this
+conversion is a prerequisite for moving off toasts, not churn ahead of it.
+
+Three project modals are converted. **`ProjectInstructionsEditor` is deliberately not**, and it is the
+counter-example that stops this being a codemod: its draft merge awaits the save and reads `isPending`
+to decide whether to keep a newer draft, and it has tests for exactly that concurrency
+("submits a newer draft while an earlier save is pending"). `mutate` fires and forgets. Its three tests
+failed immediately, which is the check to run per site — and the mocks in that file only expose
+`mutateAsync`, so a converted component silently calls `undefined`.
+
+The pattern app-wide, for the revisit: **28 `try` blocks awaiting a `mutateAsync` across 17 files** —
+LlamaAI 10, Articles 6, Subscription 5, Account 4, auth 3. The densest are
+`useArticleCollaborators` (4), `useSessionMutations` (3), `SignInDialog` (3) and `SwitchToEmailModal` (3).
+Per site, ask whether anything after the `await` depends on ordering or on the promise itself; if it
+does, leave it alone.
+
+The other three `try` bailout families are separate work: a `finally` clause (21 bailouts) is unsupported
+whatever it contains, so those need promise `.finally()` or the cleanup duplicated per exit path; `try`
+without a `catch` (9) and `throw` inside `try`/`catch` (8) likewise need restructuring rather than a
+substitution.
+
+## Follow-up: hand-rolled pending and error state
+
+A `finally` clause is unsupported by the compiler whatever it contains, and the commonest one in this
+repo resets a flag:
+
+```tsx
+setIsLoading(true)
+try {
+	await requestEmailChange(email)
+	setIsSuccess(true)
+} catch {
+	setError('This email is already associated with another account.')
+} finally {
+	setIsLoading(false)
+}
+```
+
+Fourteen of those were moved after the `try`/`catch`, which is behaviour-identical wherever neither
+block exits early — but it treats the symptom. All three flags are a hand-rolled `useMutation`:
+`isPending`, `isError` and `isSuccess` already exist, the `finally` has nothing to reset, and
+`reset()` replaces clearing them by hand. `EmailChangeModal` is the worked example: three `useState`
+calls and the whole `try`/`catch`/`finally` gone, seven lines shorter.
+
+Two things the conversion must keep. The error text was a fixed string, not the thrown message, so it
+moves into the JSX rather than into state. And a nested `try` that swallowed a secondary failure becomes
+`await refreshSession().catch(() => {})`, which keeps the primary request's success independent of it.
+
+### Where this pattern lives
+
+**35 files** keep local pending or error state around an `await`. LlamaAI 12, Articles 8, ProDashboard 5,
+components 3, Account 2, and one each in auth, Downloads, ChainOverview, ProtocolOverview and
+ProtocolRankings.
+
+**Eight of them already use a mutation and duplicate its state**, which makes them pure deletions:
+`Account/DeleteAccountCard`, `Account/SwitchToEmailModal`, `Articles/editor/ArticleEditorClient` (×2),
+`Articles/editor/RevisionHistoryDrawer`, `Articles/editor/useArticleCollaborators`,
+`LlamaAI/components/ShareModal`, `LlamaAI/components/sidebar/AgenticSessionItem`, `LlamaAI/index` (×2).
+
+**Four keep a per-item busy marker** — state holding the id of the row being acted on rather than a
+boolean: `ProjectLanding`, `AgenticSidebar`, `LlamaAIChartPicker`, `SqlChartModal`. Those do not need
+their own state either: `mutation.variables` is the in-flight input, so
+`rename.isPending && rename.variables.sessionId === session.sessionId` is the whole condition.
+
+### The rule, and what it decides
+
+Local state is fine where the work it guards is genuinely synchronous and the justification is written
+down. Where the work is async and the state only tracks that it is in flight, it is a hand-rolled
+mutation and should go. Client-side versus server-side is not the axis — PNG export and clipboard writes
+are as async as any request.
+
+Applied to the 27 files with no mutation, that leaves **one** case of justified local state:
+`ChatMarkdownRenderer`'s `pendingExternalHref`, which is not a loading flag at all but the link awaiting
+confirmation. Every other flag in that list guards an `await`.
+
+The eight files that already hold a mutation need a _partial_ refactor, not a deletion. `SwitchToEmailModal`
+and `DeleteAccountCard` keep their error state for validation messages — "Passwords do not match",
+"Password must be at least 8 characters" — which no mutation produces. Only the branch that copies a
+rejection into that same state is redundant, and `DeleteAccountCard` already composes both mutations'
+errors alongside it.
+
+### The reverse check
+
+Nothing to undo. All **150** `useMutation` call sites wrap genuinely async work. Thirteen look otherwise
+to a naive "no `await` in the options block" search, and all thirteen are references to an async function
+declared elsewhere (`requestSwitchToEmailOtp`, `submitSupportRequest`, `downloadMarkdownFile`) or a call
+returning a promise (`loadMoreMessages`). No mutation here is wrapping synchronous work.
+
+The remaining `finally` sites are the ones where a block exits early, plus `try` without a `catch` (9)
+and `throw` inside `try`/`catch` (8). Those cannot move the finalizer, so they need either promise
+`.finally()`, the cleanup duplicated per exit path, or the whole block lifted out of the component the
+way `stopSettlement` was.
+
+## Follow-up: put the mutation where the button is
+
+The audits above kept arriving at the same root cause. Six hooks hand callers a bare trigger —
+`createSession: createSessionMutation.mutateAsync` and twelve more like it — so every caller has to
+re-derive what the mutation already knows. That is where most of the 35 local pending flags come from.
+
+There are three shapes, in increasing order of how good they are.
+
+**Worst: a local id.** `ProjectLanding` kept `actingSessionId` because the hook only offered one shared
+`isUpdatingTitle` for every row. State duplicating something the mutation holds.
+
+**Better: hand out the mutation.** `useSessionMutations` now returns `updateTitle` rather than its
+trigger and its `isPending` separately, and `updateTitle.variables?.sessionId === s.sessionId` answers
+which row without any state. Two lines, no new state, and it is what `variables` is for.
+
+**Best: move the mutation down to the row.** The "which row" question only exists because the mutation
+lives above the thing that owns the action. A `SessionRow` that calls its own update mutation has
+`isPending` for itself, and no id is compared anywhere — the same "state belongs to the component that
+owns it" move as the rest of this burn-down, and the row becomes memoizable per row as a bonus.
+
+Is a mutation per row expensive? Worth answering from the mechanism rather than taste. `useMutation`
+creates one `MutationObserver` and one subscription to the mutation cache. It does not fetch, and unlike
+`useQuery` it holds no keyed cache entry, so the per-row cost is an allocation and a subscribe — the
+same order as any other hook. Against that it _removes_ work: with the mutation in the parent, every
+`isPending` flip re-renders the parent and recomputes the busy flag for every row; with it in the row,
+only the acting row re-renders.
+
+So per row wins here, with two conditions. It has to be a granular hook: `useSessionMutations` holds
+**eight** mutations, so calling it per row would mean eight observers per row. And the list has to stay
+bounded — `useProjectSessions` fetches every session for a project with no limit and the list is not
+virtualised, so N is the reader's. At tens of rows the observers are free; at thousands the mount cost
+becomes real, though by then an unvirtualised list is the larger problem. If it ever grows that far, the
+mutation moves back up or reaches the row through context.
+
+The title mutation only needs `authorizedFetch`, `queryClient` and the user id, so it extracts cleanly
+into `useUpdateSessionTitle`. Splitting the omnibus hook comes first; then the row can own its mutation.
+
+### Measured
+
+200 rows, unmemoized React, one row's action taken:
+
+|                           | mount            | renders when it starts | renders when it settles |
+| ------------------------- | ---------------- | ---------------------- | ----------------------- |
+| one mutation for the list | 200 rows, 15.1ms | **200**                | **200**                 |
+| one mutation per row      | 200 rows, 10.3ms | **1**                  | **1**                   |
+
+Two hundred mutation observers cost nothing measurable at mount — the per-row shape was in fact the
+faster of the two, inside noise. What differs is every action after that: the shared shape re-renders
+the whole list twice, once to show the pending state and once to clear it, because the flag lives in
+the parent. The per-row shape re-renders the row that is acting.
+
+So the worry is unfounded at this size, and the caveats stand rather than being softened: it must be a
+granular hook, and the list must stay bounded. This was a synthetic list, so it measures the render
+mechanism, not this page. React Compiler was not enabled in the harness, which is the honest worst case
+for the shared shape — but the busy flag differs per row, so the map callback is rebuilt either way and
+production should behave the same.
+
+Deletion in the same component went the same way, which removed the last local id there. Its
+`window.confirm` stays outside the mutation on purpose: the confirm guards whether to act at all, and a
+cancelled prompt is neither a failure nor a delete, so putting it in `mutationFn` would have to leave
+the mutation in one of two states that misdescribe what happened. `isPending` would also be true while a
+prompt waits on a person — harmless while it blocks, wrong as soon as it is a real dialog.
+
+## What is left of the async-state work
+
+One tally, so the remaining work is a list rather than a feeling. All counts are against the current
+tree.
+
+| Bucket                                                   | Remaining             | Where                                                                                                                         |
+| -------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Value block inside a `try`/`catch`                       | 24 bailouts, 24 files | Spread thin; one per file                                                                                                     |
+| `try` without a `catch`                                  | 9 bailouts, 8 files   | Upload hooks, SQL chart modal, stream readers                                                                                 |
+| `throw` inside a `try`/`catch`                           | 8 bailouts, 5 files   | `useChatQueueController`, `LlamaAIChartPicker`                                                                                |
+| `finally` clause                                         | 7 bailouts, 7 files   | The ones where a block exits early                                                                                            |
+| Local pending or error state around an `await`           | 34 files              | LlamaAI 11, Articles 8, ProDashboard 5                                                                                        |
+| — of those, alongside a mutation that already reports it | 8 files               | Partial refactors, not deletions                                                                                              |
+| — of those, with no mutation at all                      | 26 files              | Full conversions                                                                                                              |
+| Hooks handing out a bare trigger                         | 12 sites, 6 hooks     | `useSessionMutations` (3 left), `auth`, `useDashboardAPI`, `useDashboardDiscovery`, `useDashboardEngagement`, `useUserConfig` |
+
+48 of the compiler bailouts and all 34 state files are the same underlying thing seen from two angles,
+so the order that pays is: hooks hand out mutations, callers stop hand-rolling pending and error state,
+and the `try`/`catch` around the await goes with it. Doing it in the other order means converting a
+`try`/`catch` and then rewriting the same lines again.
+
+Two things not on this list. `no-await-in-loop` (109) and `max-depth` (91) are the Phase 4 judgment
+buckets and unrelated. `Use of incompatible library` (82) is the deferred TanStack rule and will not
+move until table and virtual migrate.
+
 ## Phase 4: judgment buckets
 
 | Rule                                          | Hits | Approach                                                                                                                                                                                                                                                                                                                               |

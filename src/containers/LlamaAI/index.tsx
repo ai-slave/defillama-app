@@ -18,7 +18,6 @@ import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
 import { AI_SERVER } from '~/constants'
 import { AbortScope } from '~/containers/LlamaAI/abortScope'
-import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
 import { authorizedFetchAsFetch } from '~/containers/LlamaAI/authorizedFetchAdapter'
 import { LlamaAIChromeContext, useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { ArticleExportProvider } from '~/containers/LlamaAI/components/AddToArticle/ArticleExportContext'
@@ -45,12 +44,8 @@ import { TipActionProvider } from '~/containers/LlamaAI/components/TipActionCont
 import { TokenLimitModal } from '~/containers/LlamaAI/components/TokenLimitModal'
 import { RECOVERY_MAX_MS } from '~/containers/LlamaAI/connectionErrors'
 import { dashboardPanelReducer, INITIAL_DASHBOARD_PANEL_STATE } from '~/containers/LlamaAI/dashboardPanelState'
-import {
-	ExecutionCoordinator,
-	waitForAbortableDelay,
-	type ExecutionOperation
-} from '~/containers/LlamaAI/executionCoordinator'
-import { fetchAgenticResponse, stopAgenticExecution } from '~/containers/LlamaAI/fetchAgenticResponse'
+import { ExecutionCoordinator, type ExecutionOperation } from '~/containers/LlamaAI/executionCoordinator'
+import { fetchAgenticResponse } from '~/containers/LlamaAI/fetchAgenticResponse'
 import { useAgenticRouteTransition } from '~/containers/LlamaAI/hooks/useAgenticRouteTransition'
 import { useChatExecutionOwner } from '~/containers/LlamaAI/hooks/useChatExecutionOwner'
 import { useChatQueueController, type QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
@@ -85,6 +80,7 @@ import { useProjectSessions } from '~/containers/LlamaAI/projects/hooks'
 import { ProjectLanding } from '~/containers/LlamaAI/projects/ProjectLanding'
 import { ProjectsGrid } from '~/containers/LlamaAI/projects/ProjectsGrid'
 import { getProjectTier } from '~/containers/LlamaAI/projects/tier'
+import { resolveTimezone, runEnqueue } from '~/containers/LlamaAI/promptEnqueue'
 import {
 	canProbeSessionAfterEmptyResponse,
 	getPromptFailurePolicy,
@@ -98,6 +94,7 @@ import {
 } from '~/containers/LlamaAI/promptFailures'
 import { decodeQueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import { isFreeLimitError, runAgenticRequest, type UsageLimitError } from '~/containers/LlamaAI/runAgenticRequest'
+import { settleStopRequest } from '~/containers/LlamaAI/stopSettlement'
 import { appendBufferedAssistantMessage, createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import {
 	createInitialStreamState,
@@ -118,6 +115,7 @@ import { AI_BALANCE_QUERY_KEY, useAiBalance } from '~/containers/Subscription/us
 import { useLlamaAINavigate, useProjectHomeSignal } from '~/contexts/LlamaAINavigate'
 import { useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
 import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
+import { useConstant } from '~/hooks/useConstant'
 import { useMedia } from '~/hooks/useMedia'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { Icon } from '~/ui/Icon'
@@ -316,10 +314,8 @@ export function AgenticChat({
 		loadNewerMessages,
 		switchActiveLeaf,
 		deleteSession,
-		updateSessionTitle,
+		updateTitle,
 		applyServerSessionTitle,
-		isDeletingSession,
-		isUpdatingTitle,
 		bulkDeleteSessions,
 		pinSession,
 		isSwitchingActiveLeaf,
@@ -411,18 +407,10 @@ export function AgenticChat({
 	const isSubscribeModalOpen = Ariakit.useStoreState(subscribeModalStore, 'open')
 	const [limitModalFeature, setLimitModalFeature] = useState<'research' | 'fact_checked'>('research')
 	const currentMessageIdRef = useRef<string | null>(null)
-	const executionCoordinatorRef = useRef<ExecutionCoordinator | null>(null)
-	const restoreCoordinatorRef = useRef<AbortScope | null>(null)
-	const paginationCoordinatorRef = useRef<AbortScope | null>(null)
-	const branchCoordinatorRef = useRef<AbortScope | null>(null)
-	executionCoordinatorRef.current ??= new ExecutionCoordinator()
-	restoreCoordinatorRef.current ??= new AbortScope()
-	paginationCoordinatorRef.current ??= new AbortScope()
-	branchCoordinatorRef.current ??= new AbortScope()
-	const executionCoordinator = executionCoordinatorRef.current
-	const restoreCoordinator = restoreCoordinatorRef.current
-	const paginationCoordinator = paginationCoordinatorRef.current
-	const branchCoordinator = branchCoordinatorRef.current
+	const executionCoordinator = useConstant(() => new ExecutionCoordinator())
+	const restoreCoordinator = useConstant(() => new AbortScope())
+	const paginationCoordinator = useConstant(() => new AbortScope())
+	const branchCoordinator = useConstant(() => new AbortScope())
 	const restoredSessionIdRef = useRef<string | null>(null)
 	const recoveryIdRef = useRef(0)
 	const recoveryControllerRef = useRef<RecoveryController | null>(null)
@@ -446,11 +434,8 @@ export function AgenticChat({
 	const isFirstMessageRef = useRef(true)
 	const promptTransitionTimerRef = useRef<number | null>(null)
 	const currentSessionIdRef = useRef(sessionId)
-	currentSessionIdRef.current = sessionId
 	const routeSessionIdRef = useRef(routeSessionId)
-	routeSessionIdRef.current = routeSessionId
 	const currentSessionProjectIdRef = useRef(currentSessionProjectId)
-	currentSessionProjectIdRef.current = currentSessionProjectId
 	const {
 		phase: streamPhase,
 		isStreaming,
@@ -465,6 +450,7 @@ export function AgenticChat({
 		legacyUrlCitations: streamingLegacyUrlCitations,
 		toolExecutions: streamingToolExecutions,
 		generatedImages: streamingGeneratedImages,
+		messageId: streamMessageId,
 		thinking: streamingThinking,
 		activeToolCalls,
 		spawnProgress,
@@ -526,7 +512,17 @@ export function AgenticChat({
 	}, [isStreaming, queryClient])
 
 	const isStreamingRef = useRef(isStreaming)
-	isStreamingRef.current = isStreaming
+
+	// These four carry the latest value into network callbacks that must not be rebuilt on every change.
+	// Writing them during render is what costs this component its compiler optimization, and nothing
+	// reads them before commit: every reader is an event handler, a stream callback or a later effect.
+	// A layout effect keeps them ahead of every passive effect in the tree.
+	useLayoutEffect(() => {
+		currentSessionIdRef.current = sessionId
+		routeSessionIdRef.current = routeSessionId
+		currentSessionProjectIdRef.current = currentSessionProjectId
+		isStreamingRef.current = isStreaming
+	})
 	// Network callbacks need the latest failure before React commits the queued reducer action.
 	const updatePromptFailures = useCallback((action: PromptFailureAction) => {
 		promptFailuresRef.current = promptFailuresReducer(promptFailuresRef.current, action)
@@ -713,7 +709,7 @@ export function AgenticChat({
 			streamingGeneratedImages.length > 0
 		if (!hasContent) return null
 		return {
-			id: currentMessageIdRef.current || undefined,
+			id: streamMessageId || undefined,
 			role: 'assistant',
 			content: streamingText || undefined,
 			charts: streamingCharts.length > 0 ? streamingCharts : undefined,
@@ -728,6 +724,7 @@ export function AgenticChat({
 		}
 	}, [
 		visibleIsStreaming,
+		streamMessageId,
 		streamingText,
 		streamingCharts,
 		streamingCsvExports,
@@ -848,11 +845,14 @@ export function AgenticChat({
 		startDetached: shouldStartDetachedForAnchor
 	})
 	const { preference: webMobilePreference, setEnabled: setWebMobilePushEnabled } = useWebMobilePushPreference()
+	// Read through a local: the declared dependency was `streamingDraft?.id` while the compiler infers
+	// the whole draft, and a mismatch there costs the component its optimization.
+	const streamingDraftId = streamingDraft?.id
 	const visibleMessageIds = useMemo(() => {
 		const ids = new Set(effectiveMessages.map((message) => message.id).filter((id): id is string => !!id))
-		if (streamingDraft?.id) ids.add(streamingDraft.id)
+		if (streamingDraftId) ids.add(streamingDraftId)
 		return ids
-	}, [effectiveMessages, streamingDraft?.id])
+	}, [effectiveMessages, streamingDraftId])
 	const isChatPresent =
 		!readOnly &&
 		!(isMobileChatView && (sidebarVisible || citationSheet.isOpen)) &&
@@ -1082,12 +1082,17 @@ export function AgenticChat({
 			operation: ExecutionOperation,
 			options?: { around?: string }
 		): Promise<RestoreSessionSnapshotResult> => {
-			let result: SessionRestoreResult
-			try {
-				result = (await restoreSession(targetSessionId, 10, options?.around, operation.signal)) as SessionRestoreResult
-			} catch {
-				return { status: operation.signal.aborted || !operation.isCurrent() ? 'aborted' : 'failed' }
+			// Settled through `then` rather than try/catch: the compiler cannot lower a conditional inside a
+			// catch block, and one here costs the whole chat component its optimization.
+			const outcome = await restoreSession(targetSessionId, 10, options?.around, operation.signal).then(
+				(value) => ({ ok: true as const, value: value as SessionRestoreResult }),
+				() => ({ ok: false as const, value: undefined })
+			)
+			if (!outcome.ok) {
+				const aborted = operation.signal.aborted || !operation.isCurrent()
+				return { status: aborted ? 'aborted' : 'failed' }
 			}
+			const result = outcome.value
 			if (!operation.isCurrent()) return { status: 'aborted' }
 
 			const restored: Array<Message> = (result.messages || []).map(mapPersistedMessage)
@@ -1335,7 +1340,7 @@ export function AgenticChat({
 
 	const handleDeleteSession = useCallback(
 		async (targetSessionId: string, projectId?: string | null) => {
-			await deleteSession(targetSessionId, projectId)
+			await deleteSession.mutateAsync({ sessionId: targetSessionId, projectId })
 			clearPromptFailure(targetSessionId)
 			forgetQueueSession(targetSessionId)
 		},
@@ -1918,60 +1923,49 @@ export function AgenticChat({
 			const hasImages = !!images && images.length > 0
 			if ((!trimmed && !hasImages) || !sessionId) return { status: 'cancelled' as const }
 
-			try {
-				let timezone: string | undefined
-				try {
-					timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-				} catch {
-					// Intl can be unavailable; the timezone stays unset.
+			const effectiveMode = modeOverride ?? mode
+			const effectiveQuotedText =
+				quotedTextOverride === undefined ? quotedText || undefined : (quotedTextOverride ?? undefined)
+			// The payload is built out here on purpose: every `??`, `?.` and ternary below is a value block,
+			// and the compiler cannot lower one inside a try or catch.
+			const payload = {
+				message: trimmed,
+				entities: entities?.length ? entities : undefined,
+				images: images?.length ? images : undefined,
+				researchMode: effectiveMode === 'research',
+				factCheckMode: effectiveMode === 'fact_checked',
+				quotedText: effectiveQuotedText,
+				timezone: resolveTimezone(),
+				client: 'web' as const,
+				projectId: currentSessionProjectId ?? undefined,
+				customInstructions: settings.customInstructions || undefined,
+				blockedSkills: isMobileChatView ? (['dashboard'] as Array<string>) : undefined
+			}
+			const outcome = await runEnqueue(() => enqueuePrompt(payload))
+			if (outcome.kind === 'queue-full') {
+				return {
+					status: 'rejected' as const,
+					message: outcome.maxDepth
+						? `Queue is full (max ${outcome.maxDepth}). Wait for a message to send first.`
+						: 'Queue is full. Wait for a message to send first.'
 				}
-
-				const effectiveMode = modeOverride ?? mode
-				const effectiveQuotedText =
-					quotedTextOverride === undefined ? quotedText || undefined : (quotedTextOverride ?? undefined)
-				const result = await enqueuePrompt({
-					message: trimmed,
-					entities: entities?.length ? entities : undefined,
-					images: images?.length ? images : undefined,
-					researchMode: effectiveMode === 'research',
-					factCheckMode: effectiveMode === 'fact_checked',
-					quotedText: effectiveQuotedText,
-					timezone,
-					client: 'web',
-					projectId: currentSessionProjectId ?? undefined,
-					customInstructions: settings.customInstructions || undefined,
-					blockedSkills: isMobileChatView ? ['dashboard'] : undefined
-				})
-				if (result === 'aborted') return { status: 'cancelled' as const }
-				if (result === 'session_idle') {
-					return handleSubmit(trimmed, entities, images, undefined, { modeOverride, quotedTextOverride })
-						? ({ status: 'accepted' } as const)
-						: ({ status: 'rejected', message: 'Failed to submit your prompt. Please try again.' } as const)
-				}
-
-				if (
-					quotedTextOverride === undefined &&
-					effectiveQuotedText !== undefined &&
-					quotedText === effectiveQuotedText
-				) {
-					setQuotedText(null)
-				}
-				return { status: 'accepted' as const }
-			} catch (queueError) {
-				if (queueError instanceof LlamaAITransportError) {
-					const body = queueError.body as { error?: string; maxDepth?: number } | null
-					if (body?.error === 'queue_full') {
-						return {
-							status: 'rejected' as const,
-							message: body.maxDepth
-								? `Queue is full (max ${body.maxDepth}). Wait for a message to send first.`
-								: 'Queue is full. Wait for a message to send first.'
-						}
-					}
-				}
-				console.error('[llama-ai] [queue-enqueue] failed:', getErrorMessage(queueError))
+			}
+			if (outcome.kind === 'error') {
 				return { status: 'rejected' as const, message: 'Failed to queue your prompt. Please try again.' }
 			}
+
+			const result = outcome.value
+			if (result === 'aborted') return { status: 'cancelled' as const }
+			if (result === 'session_idle') {
+				return handleSubmit(trimmed, entities, images, undefined, { modeOverride, quotedTextOverride })
+					? ({ status: 'accepted' } as const)
+					: ({ status: 'rejected', message: 'Failed to submit your prompt. Please try again.' } as const)
+			}
+
+			if (quotedTextOverride === undefined && effectiveQuotedText !== undefined && quotedText === effectiveQuotedText) {
+				setQuotedText(null)
+			}
+			return { status: 'accepted' as const }
 		},
 		[
 			sessionId,
@@ -2225,8 +2219,10 @@ export function AgenticChat({
 			await branchCoordinator.run(sessionId, async (operation) => {
 				setViewError(null)
 				setPaginationError(null)
-				try {
-					const result = await switchActiveLeaf({ sessionId, leafMessageId, signal: operation.signal })
+				// Both halves live outside the try on purpose: they are full of optional chains and logical
+				// operators, and the compiler cannot lower one inside a try or catch. Calling out to them
+				// keeps the error handling identical while leaving the try itself trivial.
+				const applySwitchedLeaf = async (result: Awaited<ReturnType<typeof switchActiveLeaf>>) => {
 					if (!operation.isCurrent() || currentSessionIdRef.current !== sessionId) return
 					setActiveLeafMessageId(result.activeLeafMessageId)
 					if (Array.isArray(result.messages)) {
@@ -2240,10 +2236,16 @@ export function AgenticChat({
 					} else {
 						await restoreSessionSnapshot(sessionId, operation)
 					}
-				} catch (switchError) {
+				}
+				const reportSwitchFailure = (switchError: unknown) => {
 					if (operation.isCurrent() && currentSessionIdRef.current === sessionId) {
 						setViewError(getErrorMessage(switchError))
 					}
+				}
+				try {
+					await applySwitchedLeaf(await switchActiveLeaf({ sessionId, leafMessageId, signal: operation.signal }))
+				} catch (switchError) {
+					reportSwitchFailure(switchError)
 				}
 			})
 		},
@@ -2285,44 +2287,25 @@ export function AgenticChat({
 		stopSettlementControllerRef.current?.abort()
 		stopSettlementControllerRef.current = stopController
 		dispatchStream({ type: 'STOP_REQUESTED' })
+		const isCurrentSession = () => (routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId
 		void (async () => {
-			let acknowledged = false
-			let confirmedInactive = false
-			try {
-				while (
-					!stopController.signal.aborted &&
-					(routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId
-				) {
-					try {
-						const result = await stopAgenticExecution(targetSessionId, authorizedFetchCompat, stopController.signal)
-						if ((routeSessionIdRef.current ?? currentSessionIdRef.current) !== targetSessionId) return
-						acknowledged = true
-						if (result.active) {
-							await waitForAbortableDelay(500, stopController.signal)
-							continue
-						}
-						applyQueueSnapshot(result.snapshot)
-						confirmedInactive = true
-						break
-					} catch (stopError) {
-						if (stopController.signal.aborted) return
-						if (!acknowledged) throw stopError
-						await waitForAbortableDelay(1000, stopController.signal)
-					}
+			const settlement = await settleStopRequest({
+				sessionId: targetSessionId,
+				signal: stopController.signal,
+				authorizedFetch: authorizedFetchCompat,
+				isCurrentSession,
+				applyQueueSnapshot,
+				release: () => {
+					if (stopSettlementControllerRef.current === stopController) stopSettlementControllerRef.current = null
 				}
-			} catch {
-				if (stopController.signal.aborted) return
-				if ((routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId) {
-					dispatchStream({ type: 'STOP_FAILED', error: 'Could not stop the response. Try again.' })
-				}
+			})
+			if (settlement === 'failed') {
+				dispatchStream({ type: 'STOP_FAILED', error: 'Could not stop the response. Try again.' })
 				return
-			} finally {
-				if (stopSettlementControllerRef.current === stopController) stopSettlementControllerRef.current = null
 			}
-
-			if (!confirmedInactive || (routeSessionIdRef.current ?? currentSessionIdRef.current) !== targetSessionId) return
+			if (settlement !== 'stopped' || !isCurrentSession()) return
 			await abortActiveRequest()
-			if ((routeSessionIdRef.current ?? currentSessionIdRef.current) !== targetSessionId) return
+			if (!isCurrentSession()) return
 			resetDuel()
 			dispatchStream({ type: 'RESET_STREAM' })
 		})()
@@ -2382,9 +2365,14 @@ export function AgenticChat({
 		setMessages((current) => current.filter((message) => message.id !== request.optimisticMessageId))
 	}, [clearPromptFailure, sessionId, sessionPromptFailure])
 
-	submitPendingPromptRef.current = (prompt, pageContext, isSuggestedQuestion) => {
-		handleSubmit(prompt, undefined, undefined, pageContext, { isSuggestedQuestion })
-	}
+	// The deep-link hook is built before handleSubmit exists, so it calls through this ref. Assigning it
+	// after commit rather than during render keeps the component optimizable; the only caller is the
+	// hook's own confirm handler, which cannot run before the first commit.
+	useLayoutEffect(() => {
+		submitPendingPromptRef.current = (prompt, pageContext, isSuggestedQuestion) => {
+			handleSubmit(prompt, undefined, undefined, pageContext, { isSuggestedQuestion })
+		}
+	})
 
 	useForegroundRecovery({
 		readOnly,
@@ -2666,9 +2654,9 @@ export function AgenticChat({
 										}}
 										onNewChat={handleNewChat}
 										onDelete={handleDeleteSession}
-										onUpdateTitle={updateSessionTitle}
-										isDeletingSession={isDeletingSession}
-										isUpdatingTitle={isUpdatingTitle}
+										onUpdateTitle={updateTitle.mutateAsync}
+										isDeletingSession={deleteSession.isPending}
+										isUpdatingTitle={updateTitle.isPending}
 										shouldAnimate={shouldAnimateSidebar}
 										onOpenSettings={openSettings}
 										hasCustomInstructions={settings.customInstructions.trim().length > 0}

@@ -6,6 +6,10 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { useCreateProject, useUpdateProject } from './hooks'
 import type { Project } from './types'
 
+function onSaveFailed(error: unknown) {
+	toast.error(error instanceof Error ? error.message : 'Failed to save project')
+}
+
 interface CreateProjectModalProps {
 	dialogStore: Ariakit.DialogStore
 	mode?: 'create' | 'rename'
@@ -53,26 +57,29 @@ function CreateProjectForm({
 	const create = useCreateProject()
 	const update = useUpdateProject(project?.id ?? '')
 
-	const submit = async (e: { preventDefault: () => void }) => {
+	const submit = (e: { preventDefault: () => void }) => {
 		e.preventDefault()
 		const trimmed = name.trim()
 		if (!trimmed) return
-		try {
-			if (mode === 'rename' && project) {
-				await update.mutateAsync({ name: trimmed, description: description.trim() || null })
-				toast.success('Project updated')
-			} else {
-				const created = await create.mutateAsync({
-					name: trimmed,
-					description: description.trim() || null
-				})
+		const payload = { name: trimmed, description: description.trim() || null }
+		if (mode === 'rename' && project) {
+			update.mutate(payload, {
+				onSuccess: () => {
+					toast.success('Project updated')
+					dialogStore.hide()
+				},
+				onError: onSaveFailed
+			})
+			return
+		}
+		create.mutate(payload, {
+			onSuccess: (created) => {
 				onCreated?.(created)
 				toast.success('Project created')
-			}
-			dialogStore.hide()
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to save project')
-		}
+				dialogStore.hide()
+			},
+			onError: onSaveFailed
+		})
 	}
 
 	const isPending = create.isPending || update.isPending

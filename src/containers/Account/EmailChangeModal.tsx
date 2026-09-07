@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { refreshSession } from '~/auth/authStore'
 import { Icon } from '~/ui/Icon'
@@ -11,41 +12,31 @@ interface EmailChangeModalProps {
 
 export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 	const [email, setEmail] = useState('')
-	const [error, setError] = useState('')
-	const [isLoading, setIsLoading] = useState(false)
-	const [isSuccess, setIsSuccess] = useState(false)
+	// The request already tracks whether it is in flight, whether it failed and whether it succeeded, so
+	// there is nothing here to mirror it with.
+	const requestEmailChange = useMutation({
+		mutationFn: async (nextEmail: string) => {
+			await pb.collection('users').requestEmailChange(nextEmail)
+			// The change request already succeeded; refreshSession only updates the cached user state, so
+			// its failure must not fail the change.
+			await refreshSession().catch(() => {})
+		}
+	})
 
 	const handleClose = () => {
 		setEmail('')
-		setError('')
-		setIsSuccess(false)
+		requestEmailChange.reset()
 		onClose()
 	}
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
-		if (!email || isLoading) return
-
-		setError('')
-		setIsLoading(true)
-		try {
-			await pb.collection('users').requestEmailChange(email)
-			// Refresh auth to update user state (verified will become false for new email)
-			try {
-				await refreshSession()
-			} catch {
-				// The change request already succeeded; refreshSession only updates the cached user state.
-			}
-			setIsSuccess(true)
-		} catch {
-			setError('This email is already associated with another account.')
-		} finally {
-			setIsLoading(false)
-		}
+		if (!email || requestEmailChange.isPending) return
+		requestEmailChange.mutate(email)
 	}
 
-	const hasError = !!error
-	const canSubmit = !!email && !hasError && !isLoading
+	const hasError = requestEmailChange.isError
+	const canSubmit = !!email && !hasError && !requestEmailChange.isPending
 
 	return (
 		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
@@ -64,7 +55,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 						</Ariakit.DialogDismiss>
 					</div>
 
-					{isSuccess ? (
+					{requestEmailChange.isSuccess ? (
 						<div className="flex flex-col items-center gap-4 text-center">
 							<div className="flex items-center rounded-full bg-green-100 p-3 dark:bg-green-900/30">
 								<Icon name="mail-rounded" height={24} width={24} className="text-success" />
@@ -92,7 +83,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 									value={email}
 									onChange={(e) => {
 										setEmail(e.target.value)
-										if (error) setError('')
+										if (hasError) requestEmailChange.reset()
 									}}
 									placeholder="your.new.email@example.com"
 									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
@@ -101,7 +92,9 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
 									}`}
 								/>
-								{hasError && <p className="text-xs leading-4 text-error">{error}</p>}
+								{hasError && (
+									<p className="text-xs leading-4 text-error">This email is already associated with another account.</p>
+								)}
 							</div>
 
 							<button
@@ -109,7 +102,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 								disabled={!canSubmit}
 								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-25"
 							>
-								{isLoading ? 'Sending...' : 'Confirm Email'}
+								{requestEmailChange.isPending ? 'Sending...' : 'Confirm Email'}
 							</button>
 						</form>
 					)}

@@ -309,9 +309,8 @@ export function ChartStyleEditor({
 			await onSave(draft, toPatch(draft, draftView, seriesOrder))
 		} catch (saveError) {
 			setError(saveError instanceof Error ? saveError.message : 'Save failed')
-		} finally {
-			setSaving(false)
 		}
+		setSaving(false)
 	}
 
 	const reset = () => {

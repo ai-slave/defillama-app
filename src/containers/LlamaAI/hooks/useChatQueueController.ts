@@ -759,9 +759,8 @@ export function useChatQueueController({
 			} catch (error) {
 				const snapshot = snapshotFromError(error)
 				if (snapshot) applySnapshot(snapshot)
-			} finally {
-				if (renewalControllerRef.current === renewalController) renewalControllerRef.current = null
 			}
+			if (renewalControllerRef.current === renewalController) renewalControllerRef.current = null
 		}
 		const timer = window.setInterval(() => void renew(), 30_000)
 		renewalTimerRef.current = timer

@@ -30,9 +30,8 @@ export function PdfUploadButton({ articleId, currentPdf, onUploaded, onCleared, 
 			onUploaded(result)
 		} catch {
 			// surfaced via toast
-		} finally {
-			if (inputRef.current) inputRef.current.value = ''
 		}
+		if (inputRef.current) inputRef.current.value = ''
 	}
 
 	const open = () => inputRef.current?.click()

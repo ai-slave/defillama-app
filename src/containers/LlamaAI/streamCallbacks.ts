@@ -192,7 +192,10 @@ export function createAgenticCallbacks({
 		}),
 		onMessageId: guard((messageId) => {
 			buffer.executionId = messageId
+			// The ref serves the async machinery, which reads it outside render; the dispatch is what the
+			// streaming draft renders from.
 			currentMessageIdRef.current = messageId
+			dispatch({ type: 'SET_MESSAGE_ID', value: messageId })
 			onMessageIdObserved?.(messageId)
 		}),
 		onUserMessageId: guard((messageId, queueItemId) => {

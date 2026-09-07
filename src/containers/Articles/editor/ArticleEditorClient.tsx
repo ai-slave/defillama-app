@@ -734,24 +734,26 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 
 	const handleCoverFile = async (file: File | null | undefined) => {
 		if (!file) return
-		try {
-			const result = await uploadCoverImage(file)
-			if (articleIdRef.current !== article.id) return
-			// Metadata can change while the replacement image uploads.
+		// Settled through `then` rather than try/catch, so the input is cleared on every path. A `finally`
+		// would do that too, but the compiler cannot lower one; an early `return` inside a `try` would
+		// skip the clear and leave the same file unpickable.
+		const upload = await uploadCoverImage(file).then(
+			(value) => ({ ok: true as const, value }),
+			() => ({ ok: false as const, value: undefined })
+		)
+		// Metadata can change while the replacement image uploads, and the reader may have moved on.
+		if (upload.ok && articleIdRef.current === article.id) {
 			setArticle((current) => ({
 				...current,
 				coverImage: {
 					...current.coverImage,
-					url: result.url,
+					url: upload.value.url,
 					alt: current.coverImage?.alt || current.title
 				}
 			}))
 			markArticleDirty()
-		} catch {
-			// surfaced via toast
-		} finally {
-			if (coverFileInputRef.current) coverFileInputRef.current.value = ''
 		}
+		if (coverFileInputRef.current) coverFileInputRef.current.value = ''
 	}
 
 	const openCoverPicker = () => coverFileInputRef.current?.click()

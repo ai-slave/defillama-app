@@ -73,9 +73,8 @@ export function ImagePreviewModal({ imageUrl, onClose, source, sessionId, messag
 		} catch {
 			// Fallback: open in new tab if CORS blocks the fetch.
 			window.open(imageUrl, '_blank', 'noopener,noreferrer')
-		} finally {
-			setDownloading(false)
 		}
+		setDownloading(false)
 	}
 
 	return (

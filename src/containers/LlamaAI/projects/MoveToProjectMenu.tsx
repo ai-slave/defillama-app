@@ -1,5 +1,4 @@
 import * as Ariakit from '@ariakit/react'
-import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { useMoveSessionToProject, useProjectList } from './hooks'
@@ -17,15 +16,11 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 	const projects = useProjectList()
 	const move = useMoveSessionToProject()
 
-	const onMove = async (projectId: string | null) => {
+	const onMove = (projectId: string | null) => {
 		if (projectId === currentProjectId) return
-
-		try {
-			await move.mutateAsync({ sessionId, projectId, previousProjectId: currentProjectId })
-			toast.success(projectId ? 'Moved to project' : 'Removed from project')
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to move session')
-		}
+		// Feedback lives on the mutation: choosing a destination closes this menu, and its unmountOnHide
+		// would drop a callback passed here before the request settles.
+		move.mutate({ sessionId, projectId, previousProjectId: currentProjectId })
 	}
 
 	return (

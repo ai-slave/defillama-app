@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { isChatSurfaceAttended, type ChatAttention } from '~/containers/LlamaAI/chatAttention'
 
 interface UseStreamNotificationOptions {
@@ -12,9 +12,13 @@ export function useStreamNotification({ soundEnabled, attention }: UseStreamNoti
 	const hasBadgeRef = useRef(false)
 	const audioRef = useRef<HTMLAudioElement | null>(null)
 	const soundEnabledRef = useRef(soundEnabled)
-	soundEnabledRef.current = soundEnabled
 	const attentionRef = useRef(attention)
-	attentionRef.current = attention
+	// Written after commit rather than during render: a render-phase ref write costs the hook its
+	// compiler optimization, and every reader here runs from a handler or an effect, after commit.
+	useLayoutEffect(() => {
+		soundEnabledRef.current = soundEnabled
+		attentionRef.current = attention
+	})
 
 	// Preload the notification sound once so later completion notifications can play immediately.
 	useEffect(() => {

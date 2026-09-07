@@ -319,9 +319,8 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 			onClose()
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : 'Failed to restore revision')
-		} finally {
-			setConfirming(null)
 		}
+		setConfirming(null)
 	}, [restoreRevision, onRestored, onClose, selectedId])
 
 	const handleDelete = useCallback(
