@@ -52,6 +52,7 @@ export function SponsorEntityPicker({
 					<Icon name="search" height={14} width={14} className="pointer-events-none absolute left-3 text-tertiary" />
 					<Ariakit.Combobox
 						id={inputId}
+						aria-label={inputId ? undefined : 'Sponsor page'}
 						placeholder={value?.label ?? placeholder}
 						autoSelect
 						className={`${inputStyles} w-full pr-9 pl-9`}

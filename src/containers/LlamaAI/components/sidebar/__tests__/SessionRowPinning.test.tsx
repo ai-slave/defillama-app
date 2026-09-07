@@ -7,8 +7,8 @@ import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '~/containers/L
 import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
 import { SessionListFocusContext } from '../../DeleteSessionDialog'
 import { AgenticSessionItem } from '../AgenticSessionItem'
-const api = vi.hoisted(() => ({ request: vi.fn(), toastError: vi.fn() }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: { id: 'user' }, authorizedFetch: vi.fn() }) }))
+const api = vi.hoisted(() => ({ request: vi.fn(), authorizedFetch: vi.fn(), toastError: vi.fn() }))
+vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: { id: 'user' }, authorizedFetch: api.authorizedFetch }) }))
 vi.mock('~/containers/LlamaAI/api/transport', () => ({ llamaAIRequest: api.request }))
 vi.mock('react-hot-toast', () => ({ default: { error: api.toastError } }))
 vi.mock('~/containers/LlamaAI/chrome', () => ({ useLlamaAIChrome: () => ({ hideSidebar: vi.fn() }) }))
@@ -264,4 +264,99 @@ test('a failed pin does not undo another row pin that has succeeded', async () =
 	await act(async () => reject(new Error('Offline')))
 	await vi.waitFor(() => expect(isPinned('chat')).toBe(false))
 	expect(isPinned('other')).toBe(true)
+})
+
+async function openShareMenu(isPublic: boolean) {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<AgenticSessionItem
+					session={{ ...session('chat'), isPublic, shareToken: 'test-share' }}
+					isActive={false}
+					onSessionSelect={vi.fn()}
+					onDelete={vi.fn()}
+					isRestoring={false}
+				/>
+			</QueryClientProvider>
+		)
+	)
+	const trigger = [...document.querySelectorAll<HTMLButtonElement>('button')].find((el) =>
+		el.textContent?.includes('Open menu')
+	)!
+	await act(async () => trigger.click())
+	return trigger
+}
+const namedButton = (name: string) =>
+	[...document.querySelectorAll<HTMLElement>('button,[role=menuitem]')].find(
+		(el) => (el.getAttribute('aria-label') ?? el.textContent?.trim()) === name
+	)!
+
+test('making a chat private confirms first, keeps failures retryable, and restores menu focus', async () => {
+	const request = Promise.withResolvers<Response>()
+	api.authorizedFetch.mockReturnValueOnce(request.promise).mockResolvedValueOnce(Response.json({ isPublic: false }))
+	const trigger = await openShareMenu(true)
+	await act(async () => namedButton('Make Private').click())
+	await vi.waitFor(() => expect(document.activeElement?.textContent).toBe('Cancel'))
+	await act(async () => namedButton('Cancel').click())
+	expect(api.authorizedFetch).not.toHaveBeenCalled()
+	await act(async () => namedButton('Make Private').click())
+	const confirm = document.querySelector<HTMLElement>('[role="alertdialog"]')!
+	await act(async () =>
+		[...confirm.querySelectorAll('button')].find((el) => el.textContent === 'Make private')!.click()
+	)
+	await settle()
+	expect(confirm.textContent).toContain('Updating…')
+	await act(async () => request.resolve(Response.json({ message: 'Not available' }, { status: 503 })))
+	await vi.waitFor(() => expect(confirm.querySelector('[role="alert"]')).not.toBeNull())
+	expect(api.toastError).not.toHaveBeenCalled()
+	await act(async () =>
+		[...confirm.querySelectorAll('button')].find((el) => el.textContent === 'Make private')!.click()
+	)
+	await vi.waitFor(() => expect(document.querySelector('[role="alertdialog"]')).toBeNull())
+	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
+	expect(api.authorizedFetch).toHaveBeenCalledTimes(2)
+})
+
+test('making a chat public reports failure in the menu without adding a private-action confirmation', async () => {
+	api.authorizedFetch
+		.mockRejectedValueOnce(new Error('Offline'))
+		.mockResolvedValueOnce(Response.json({ isPublic: true }))
+	await openShareMenu(false)
+	await act(async () => namedButton('Make Public').click())
+	await vi.waitFor(() =>
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Failed to update visibility')
+	)
+	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+	await act(async () => namedButton('Make Public').click())
+	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')).toBeNull())
+	expect(api.authorizedFetch).toHaveBeenCalledTimes(2)
+})
+
+test('copy failures stay inline while the menu is open and remain visible if it closes during a request', async () => {
+	const request = Promise.withResolvers<void>()
+	const copy = vi
+		.spyOn(navigator.clipboard, 'writeText')
+		.mockRejectedValueOnce(new Error('Denied'))
+		.mockReturnValueOnce(request.promise)
+		.mockResolvedValueOnce(undefined)
+	const trigger = await openShareMenu(true)
+	await act(async () => namedButton('Copy Link').click())
+	await vi.waitFor(() =>
+		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy the link')
+	)
+	expect(api.toastError).not.toHaveBeenCalled()
+	await act(async () => namedButton('Copy Link').click())
+	await act(async () =>
+		document
+			.querySelector('[role="menu"]')!
+			.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+	)
+	await vi.waitFor(() => expect(document.querySelector('[role="menu"]')).toBeNull())
+	await act(async () => request.reject(new Error('Clipboard blocked')))
+	await vi.waitFor(() => expect(api.toastError).toHaveBeenCalledExactlyOnceWith('Failed to copy link'))
+	await act(async () => trigger.click())
+	await act(async () => namedButton('Copy Link').click())
+	await vi.waitFor(() => expect(namedButton('Link copied')).toBeDefined())
+	expect(copy).toHaveBeenLastCalledWith(`${window.location.origin}/ai/chat/shared/test-share`)
+	copy.mockRestore()
 })

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { memo, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
@@ -20,6 +20,7 @@ import { useUpdateSessionTitle } from '~/containers/LlamaAI/hooks/useUpdateSessi
 import { MoveToProjectMenuItem } from '~/containers/LlamaAI/projects/MoveToProjectMenu'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
@@ -57,7 +58,6 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const clearUnseenCompletion = useClearUnseenCompletion()
 
 	const [isEditing, setIsEditing] = useState(false)
-	const [isCopyingLink, setIsCopyingLink] = useState(false)
 	const formRef = useRef<HTMLFormElement>(null)
 	const renameRef = useRef<HTMLButtonElement>(null)
 	const closeRename = () => {
@@ -65,10 +65,25 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 		setIsEditing(false)
 		if (restoreFocus) requestAnimationFrame(() => renameRef.current?.focus())
 	}
+	const [confirmPrivate, setConfirmPrivate] = useState(false)
+	const menuContentRef = useRef<HTMLDivElement>(null)
 	const deleteStore = Ariakit.useDialogStore()
 	const menuRef = useRef<HTMLButtonElement>(null)
 
-	const { mutate: toggleVisibility, isPending: isTogglingVisibility } = useMutation({
+	const copyLink = useMutation({
+		mutationFn: () => navigator.clipboard.writeText(`${window.location.origin}/ai/chat/shared/${session.shareToken}`),
+		onSuccess: () => trackUmamiEvent('llamaai-session-share'),
+		onError: () => {
+			if (!menuContentRef.current?.isConnected) toast.error('Failed to copy link')
+		}
+	})
+	useEffect(() => {
+		if (!copyLink.isSuccess) return
+		const timer = setTimeout(copyLink.reset, 2000)
+		return () => clearTimeout(timer)
+	}, [copyLink.isSuccess, copyLink.reset])
+
+	const visibility = useMutation({
 		mutationFn: async () => {
 			const response = assertResponse(
 				await authorizedFetch(`${AI_SERVER}/user/sessions/${session.sessionId}/share`, {
@@ -78,32 +93,25 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			)
 			return response.json()
 		},
-		onSuccess: () => {
-			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
-		},
+		onSuccess: () => queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] }),
 		onError: () => {
-			toast.error(`Failed to make session ${session.isPublic ? 'private' : 'public'}`)
+			if (!session.isPublic && !menuContentRef.current?.isConnected) toast.error('Failed to make session public')
 			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
 		}
 	})
 
 	const updateTitle = useUpdateSessionTitle()
-	// The request belongs to the owner because it also clears queue and prompt-failure state this row
-	// cannot reach. Only the pending state is local. Deletion is no longer optimistic, so the row does
-	// outlive the request now — but that alone would not make a callback passed to mutate safe here.
+	// The parent also clears queue and prompt-failure state; each row owns its pending feedback.
 	const deletion = useMutation({
 		mutationFn: () => onDelete(session.sessionId, session.projectId),
 		onError: (error) => {
 			if (!deleteStore.getState().contentElement?.isConnected) toast.error(error.message)
 		}
 	})
-	const isDeleting = deletion.isPending
-	const isUpdatingTitle = updateTitle.isPending
 
 	const invalidateSessionWrites = useInvalidateSessionWrites()
 	const sessionsKey = [SESSIONS_QUERY_KEY, user?.id]
-	// Owned by the row so an in-flight pin disables only this menu item. Lifted to the sidebar it would
-	// have to travel back down as a busy flag, blocking every other session and re-rendering the list.
+	// Keep other rows usable while this session is being pinned.
 	const pinSession = useMutation({
 		mutationKey: [SESSION_WRITE_KEY, user?.id],
 		mutationFn: () =>
@@ -152,7 +160,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		const title = (e.currentTarget.elements.namedItem('newTitle') as HTMLInputElement | null)?.value.trim() ?? ''
-		if (isUpdatingTitle || !title) return
+		if (updateTitle.isPending || !title) return
 		if (title === session.title) {
 			closeRename()
 			return
@@ -166,7 +174,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	}
 
 	const handleDelete = () => {
-		if (isDeleting) return
+		if (deletion.isPending) return
 		trackUmamiEvent('llamaai-session-delete')
 		deletion.mutate(undefined, { onSuccess: () => deleteStore.hide() })
 	}
@@ -183,7 +191,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					type="text"
 					name="newTitle"
 					onKeyDown={(event) => {
-						if (event.key === 'Escape' && !isUpdatingTitle) {
+						if (event.key === 'Escape' && !updateTitle.isPending) {
 							event.preventDefault()
 							closeRename()
 						}
@@ -193,25 +201,25 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					autoFocus
 					onFocus={(e) => e.currentTarget.select()}
 					className="min-w-0 flex-1 truncate p-1.5 text-left text-xs"
-					disabled={isUpdatingTitle}
+					disabled={updateTitle.isPending}
 				/>
 				<div className="flex items-center justify-center gap-0.5">
 					<Ariakit.Button
 						accessibleWhenDisabled
 						type="submit"
-						aria-label={isUpdatingTitle ? 'Saving session title' : 'Save session title'}
+						aria-label={updateTitle.isPending ? 'Saving session title' : 'Save session title'}
 						className="flex items-center justify-center gap-1 rounded-sm bg-brand p-1.5 text-ai-white"
-						disabled={isUpdatingTitle}
+						disabled={updateTitle.isPending}
 					>
-						{isUpdatingTitle ? <LoadingSpinner size={12} /> : null}
-						{isUpdatingTitle ? 'Saving…' : 'Save'}
+						{updateTitle.isPending ? <LoadingSpinner size={12} /> : null}
+						{updateTitle.isPending ? 'Saving…' : 'Save'}
 					</Ariakit.Button>
 					<button
 						type="button"
 						aria-label="Cancel session rename"
 						onClick={closeRename}
 						className="flex aspect-square items-center justify-center rounded-sm bg-ai-error-vivid/20 p-1.5 text-error"
-						disabled={isUpdatingTitle}
+						disabled={updateTitle.isPending}
 					>
 						<Icon name="x" height={12} width={12} className="shrink-0" />
 					</button>
@@ -258,7 +266,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					}
 					handleSessionClick(session.sessionId)
 				}}
-				disabled={isEditing || isDeleting || isRestoring}
+				disabled={isEditing || deletion.isPending || isRestoring}
 				className="flex flex-1 items-center gap-1 overflow-hidden p-1.5 text-left aria-disabled:pointer-events-none aria-disabled:opacity-60"
 			>
 				{session.isPinned ? <Icon name="pin" height={10} width={10} className="shrink-0 opacity-40" /> : null}
@@ -281,7 +289,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								updateTitle.reset()
 								setIsEditing(true)
 							}}
-							disabled={isUpdatingTitle || isDeleting || isRestoring}
+							disabled={updateTitle.isPending || deletion.isPending || isRestoring}
 						/>
 					}
 					className="flex aspect-square items-center justify-center rounded-sm p-1.5 hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
@@ -298,6 +306,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						<span className="sr-only">Open menu</span>
 					</Ariakit.MenuButton>
 					<Ariakit.Menu
+						ref={menuContentRef}
 						portal
 						unmountOnHide
 						hideOnInteractOutside
@@ -322,69 +331,66 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						</Ariakit.MenuItem>
 						<Ariakit.MenuItem
 							onClick={() => {
-								void (async () => {
-									try {
-										if (session.isPublic) {
-											if (session.shareToken) {
-												await navigator.clipboard.writeText(
-													`${window.location.origin}/ai/chat/shared/${session.shareToken}`
-												)
-												trackUmamiEvent('llamaai-session-share')
-												setIsCopyingLink(true)
-												setTimeout(() => {
-													setIsCopyingLink(false)
-												}, 500)
-											}
-										}
-									} catch (error) {
-										console.error(error)
-										toast.error('Failed to copy link')
-									}
-								})()
+								copyLink.mutate()
 							}}
 							hideOnClick={false}
-							disabled={!session.isPublic || !session.shareToken || isTogglingVisibility}
+							disabled={!session.isPublic || !session.shareToken || visibility.isPending || copyLink.isPending}
 							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
 						>
-							{isCopyingLink ? (
+							{copyLink.isSuccess ? (
 								<Icon name="check-circle" height={14} width={14} className="shrink-0" />
 							) : (
 								<Icon name="copy" height={14} width={14} className="shrink-0" />
 							)}
-							{session.isPublic ? 'Copy Link' : 'Make Public to Share'}
+							{!session.isPublic
+								? 'Make Public to Share'
+								: copyLink.isPending
+									? 'Copying…'
+									: copyLink.isSuccess
+										? 'Link copied'
+										: 'Copy Link'}
 						</Ariakit.MenuItem>
+						{copyLink.error ? (
+							<p role="alert" className="px-3 py-2 text-xs text-ai-error">
+								Could not copy the link. Please try again.
+							</p>
+						) : null}
 						<Ariakit.MenuItem
 							onClick={() => {
 								if (session.isPublic) {
-									if (window.confirm('This conversation is currently public. Do you want to make it private?')) {
-										toggleVisibility()
-									}
+									visibility.reset()
+									setConfirmPrivate(true)
 								} else {
-									toggleVisibility()
+									visibility.mutate()
 								}
 							}}
 							hideOnClick={false}
-							disabled={isTogglingVisibility || isUpdatingTitle || isDeleting || isRestoring}
+							disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
 							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
 						>
-							{isTogglingVisibility ? (
+							{visibility.isPending ? (
 								<LoadingSpinner size={14} />
 							) : (
 								<Icon name={session.isPublic ? 'eye' : 'link'} height={14} width={14} className="shrink-0" />
 							)}
 							{session.isPublic ? 'Make Private' : 'Make Public'}
 						</Ariakit.MenuItem>
+						{visibility.error && !confirmPrivate ? (
+							<p role="alert" className="px-3 py-2 text-xs text-ai-error">
+								Failed to update visibility. Please try again.
+							</p>
+						) : null}
 						<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
 						<Ariakit.MenuItem
 							onClick={() => {
 								deletion.reset()
 								deleteStore.show()
 							}}
-							disabled={isUpdatingTitle || isDeleting || isRestoring || isTogglingVisibility}
-							data-deleting={isDeleting}
+							disabled={updateTitle.isPending || deletion.isPending || isRestoring || visibility.isPending}
+							data-deleting={deletion.isPending}
 							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-ai-error-vivid/10 hover:text-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-error data-active-item:bg-ai-error-vivid/10 data-active-item:text-error data-[deleting=true]:bg-ai-error-vivid/10 data-[deleting=true]:text-error"
 						>
-							{isDeleting ? (
+							{deletion.isPending ? (
 								<LoadingSpinner size={14} />
 							) : (
 								<Icon name="trash-2" height={14} width={14} className="shrink-0" />
@@ -394,10 +400,22 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					</Ariakit.Menu>
 				</Ariakit.MenuProvider>
 			</div>
+			{confirmPrivate ? (
+				<ConfirmActionDialog
+					title="Make this conversation private?"
+					description="The shared link will no longer let other people view this conversation."
+					confirmLabel="Make private"
+					pendingLabel="Updating…"
+					mutation={visibility}
+					variables={undefined}
+					onClose={() => setConfirmPrivate(false)}
+					finalFocus={menuRef}
+				/>
+			) : null}
 			<DeleteSessionDialog
 				store={deleteStore}
 				title={`Delete “${session.title}”?`}
-				pending={isDeleting}
+				pending={deletion.isPending}
 				error={deletion.error}
 				onConfirm={handleDelete}
 				finalFocus={menuRef}

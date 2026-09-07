@@ -4,6 +4,7 @@ import { useRef, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { LoadingSpinner } from '~/ui/Loaders'
 
+// The parent mounts this dialog only for the current target and removes it on close.
 export function ProjectSourceDeleteDialog({
 	target,
 	mutation,

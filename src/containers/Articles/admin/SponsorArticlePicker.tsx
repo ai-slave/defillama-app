@@ -34,6 +34,7 @@ export function SponsorArticlePicker({ excludedIds, onSelect, disabled = false }
 			<div className="relative flex items-center">
 				<Icon name="search" height={14} width={14} className="pointer-events-none absolute left-3 text-tertiary" />
 				<Ariakit.Combobox
+					aria-label="Research article to link"
 					placeholder="Search Research articles…"
 					autoSelect
 					disabled={disabled}

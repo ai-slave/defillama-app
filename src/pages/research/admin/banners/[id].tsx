@@ -52,7 +52,7 @@ function EditBannerInner({ id }: { id: string }) {
 					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Edit banner</h1>
 				</header>
 			</div>
-			<BannerForm banner={banner} />
+			<BannerForm key={banner.id} banner={banner} />
 		</>
 	)
 }

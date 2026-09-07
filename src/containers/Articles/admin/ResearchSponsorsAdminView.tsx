@@ -1,6 +1,7 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import {
@@ -16,7 +17,9 @@ import type { ResearchSponsorAdmin, ResearchSponsorPayload } from '~/containers/
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { SponsorArticlePicker } from './SponsorArticlePicker'
 import { SponsorEntityPicker, type SponsorEntitySelection } from './SponsorEntityPicker'
 
@@ -34,25 +37,20 @@ function mutationMessage(error: unknown, fallback: string) {
 	return error instanceof ArticleApiError ? error.message : fallback
 }
 
-function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
+function SponsorPanel({
+	sponsor,
+	fallbackFocus
+}: {
+	sponsor: ResearchSponsorAdmin
+	fallbackFocus: RefObject<HTMLHeadingElement | null>
+}) {
+	const [confirmDelete, setConfirmDelete] = useState(false)
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const [editing, setEditing] = useState(false)
-	const [replacement, setReplacement] = useState<SponsorEntitySelection | null>(null)
 	const linkedIds = new Set(sponsor.reports.map((report) => report.id))
 
 	const invalidate = () => queryClient.invalidateQueries({ queryKey: SPONSORS_QUERY_KEY })
-	const updateMutation = useMutation({
-		mutationFn: (entity: SponsorEntitySelection) =>
-			updateResearchSponsor(sponsor.id, payloadFromEntity(entity), authorizedFetch),
-		onSuccess: () => {
-			invalidate()
-			setEditing(false)
-			setReplacement(null)
-			toast.success('Sponsor page updated')
-		},
-		onError: (error) => toast.error(mutationMessage(error, 'Failed to update sponsor page'))
-	})
 	const linkMutation = useMutation({
 		mutationFn: (articleId: string) => linkResearchSponsorReport(sponsor.id, articleId, authorizedFetch),
 		onSuccess: () => {
@@ -71,11 +69,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 	})
 	const deleteMutation = useMutation({
 		mutationFn: () => deleteResearchSponsor(sponsor.id, authorizedFetch),
-		onSuccess: () => {
-			invalidate()
-			toast.success('Sponsor page removed')
-		},
-		onError: (error) => toast.error(mutationMessage(error, 'Failed to remove sponsor page'))
+		onSuccess: invalidate
 	})
 
 	return (
@@ -102,7 +96,8 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 						type="button"
 						disabled={deleteMutation.isPending}
 						onClick={() => {
-							if (window.confirm(`Remove ${sponsor.displayName} and all of its report links?`)) deleteMutation.mutate()
+							deleteMutation.reset()
+							setConfirmDelete(true)
 						}}
 					>
 						Remove
@@ -110,24 +105,19 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 				</div>
 			</div>
 
-			{editing ? (
-				<div className="grid gap-3 border-t border-subtle pt-4">
-					<label className="label-sm text-primary" htmlFor={`replacement-${sponsor.id}`}>
-						Replacement DefiLlama page
-					</label>
-					<SponsorEntityPicker inputId={`replacement-${sponsor.id}`} value={replacement} onChange={setReplacement} />
-					<Button
-						size="md"
-						variant="primary"
-						type="button"
-						className="justify-self-start"
-						disabled={!replacement || updateMutation.isPending}
-						onClick={() => replacement && updateMutation.mutate(replacement)}
-					>
-						Save page
-					</Button>
-				</div>
+			{confirmDelete ? (
+				<ConfirmActionDialog
+					title={`Remove ${sponsor.displayName}?`}
+					description="This removes the sponsor page and all its report links. The articles themselves stay unchanged."
+					confirmLabel="Remove"
+					pendingLabel="Removing…"
+					mutation={deleteMutation}
+					variables={undefined}
+					onClose={() => setConfirmDelete(false)}
+					fallbackFocus={fallbackFocus}
+				/>
 			) : null}
+			{editing ? <SponsorPageEditor sponsor={sponsor} onSaved={() => setEditing(false)} /> : null}
 
 			<div className="grid gap-2 border-t border-subtle pt-4">
 				<div>
@@ -182,6 +172,7 @@ function SponsorPanel({ sponsor }: { sponsor: ResearchSponsorAdmin }) {
 }
 
 export function ResearchSponsorsAdminView() {
+	const headingRef = useRef<HTMLHeadingElement>(null)
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const [selectedEntity, setSelectedEntity] = useState<SponsorEntitySelection | null>(null)
@@ -209,7 +200,9 @@ export function ResearchSponsorsAdminView() {
 				>
 					<span aria-hidden>←</span> Admin
 				</Link>
-				<h1 className="heading-lg text-primary">Sponsored reports</h1>
+				<h1 ref={headingRef} tabIndex={-1} className="heading-lg text-primary">
+					Sponsored reports
+				</h1>
 				<p className="max-w-[72ch] body-md text-secondary">
 					Link Research articles to canonical protocol, chain, or CEX pages. Public pages show up to three published
 					articles, newest first.
@@ -221,7 +214,10 @@ export function ResearchSponsorsAdminView() {
 					<h2 className="heading-xs text-primary">Add a sponsor page</h2>
 					<p className="body-sm text-secondary">Search by company name, then confirm the exact DefiLlama page.</p>
 				</div>
-				<div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+				<fieldset
+					disabled={createMutation.isPending}
+					className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start"
+				>
 					<SponsorEntityPicker value={selectedEntity} onChange={setSelectedEntity} />
 					<Button
 						size="md"
@@ -232,7 +228,7 @@ export function ResearchSponsorsAdminView() {
 					>
 						Add sponsor
 					</Button>
-				</div>
+				</fieldset>
 			</Card>
 
 			{isLoading ? <div className="py-16 text-center body-sm text-tertiary">Loading sponsor pages…</div> : null}
@@ -249,8 +245,59 @@ export function ResearchSponsorsAdminView() {
 				</div>
 			) : null}
 			{data?.map((sponsor) => (
-				<SponsorPanel key={sponsor.id} sponsor={sponsor} />
+				<SponsorPanel key={sponsor.id} sponsor={sponsor} fallbackFocus={headingRef} />
 			))}
 		</div>
+	)
+}
+
+function SponsorPageEditor({ sponsor, onSaved }: { sponsor: ResearchSponsorAdmin; onSaved: () => void }) {
+	const { authorizedFetch } = useAuthContext()
+	const queryClient = useQueryClient()
+	const formRef = useRef<HTMLFormElement>(null)
+	const [replacement, setReplacement] = useState<SponsorEntitySelection | null>(null)
+	const update = useMutation({
+		// Reopened editors keep separate UI state, but saves to the same sponsor must stay ordered.
+		scope: { id: `research-sponsor-update:${sponsor.id}` },
+		mutationFn: (entity: SponsorEntitySelection) =>
+			updateResearchSponsor(sponsor.id, payloadFromEntity(entity), authorizedFetch),
+		onSuccess: () => {
+			void queryClient.invalidateQueries({ queryKey: SPONSORS_QUERY_KEY })
+		},
+		onError: (error) => {
+			if (!formRef.current?.isConnected) toast.error(mutationMessage(error, 'Failed to update sponsor page'))
+		}
+	})
+	return (
+		<form
+			ref={formRef}
+			className="grid gap-3 border-t border-subtle pt-4"
+			onSubmit={(event) => {
+				event.preventDefault()
+				if (!replacement || update.isPending) return
+				update.mutate(replacement, { onSuccess: onSaved })
+			}}
+		>
+			<fieldset disabled={update.isPending} className="grid min-w-0 gap-3">
+				<label className="label-sm text-primary" htmlFor={`replacement-${sponsor.id}`}>
+					Replacement DefiLlama page
+				</label>
+				<SponsorEntityPicker inputId={`replacement-${sponsor.id}`} value={replacement} onChange={setReplacement} />
+			</fieldset>
+			<Ariakit.Button
+				render={<Button size="md" variant="primary" type="submit" />}
+				className="justify-self-start"
+				accessibleWhenDisabled={update.isPending}
+				disabled={!replacement || update.isPending}
+			>
+				{update.isPending ? <LoadingSpinner size={14} /> : null}
+				{update.isPending ? 'Saving…' : 'Save page'}
+			</Ariakit.Button>
+			{update.error ? (
+				<p role="alert" className="body-sm text-data-down">
+					{mutationMessage(update.error, 'Failed to update sponsor page')}
+				</p>
+			) : null}
+		</form>
 	)
 }

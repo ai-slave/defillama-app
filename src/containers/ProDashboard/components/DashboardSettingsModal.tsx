@@ -353,6 +353,7 @@ function DashboardSettingsModalInner({
 				onConfirm={handleConfirmDelete}
 				closeOnConfirm={false}
 				pending={deletion.isPending}
+				pendingText="Deleting…"
 				error={deletion.isError ? 'Could not delete the dashboard. Please try again.' : null}
 				title="Delete Dashboard"
 				message="Are you sure you want to delete this dashboard? This action cannot be undone."

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
@@ -7,8 +8,11 @@ import { ArticleApiError, deleteBanner, listBanners, updateBanner } from '~/cont
 import { bannerAudienceLabel } from '~/containers/Articles/bannerCountryGroups'
 import type { Banner } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS, BANNER_KIND_LABELS, BANNER_SCOPE_LABELS } from '~/containers/Articles/types'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 
 export function BannersListView() {
+	const [deleteTarget, setDeleteTarget] = useState<Banner | null>(null)
+	const headingRef = useRef<HTMLHeadingElement>(null)
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
@@ -38,13 +42,9 @@ export function BannersListView() {
 	const deleteBannerMutation = useMutation({
 		mutationFn: (id: string) => deleteBanner(id, authorizedFetch),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['research', 'admin', 'banners'] })
 			queryClient.invalidateQueries({ queryKey: ['research', 'banner'] })
 			revalidateLanding()
-			toast.success('Banner deleted')
-		},
-		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to delete')
+			return queryClient.invalidateQueries({ queryKey: ['research', 'admin', 'banners'] })
 		}
 	})
 
@@ -74,7 +74,9 @@ export function BannersListView() {
 					>
 						<span aria-hidden>←</span> Admin
 					</Link>
-					<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Banners</h1>
+					<h1 ref={headingRef} tabIndex={-1} className="mt-2 text-3xl font-semibold tracking-tight text-primary">
+						Banners
+					</h1>
 					<p className="mt-1 text-sm text-secondary">
 						Configure the dismissible top strip, the desktop right-rail image, or the mobile inline image shown on
 						/research, all articles, a section's articles, or a single article.
@@ -88,6 +90,19 @@ export function BannersListView() {
 				</Link>
 			</header>
 
+			{deleteTarget ? (
+				<ConfirmActionDialog
+					key={deleteTarget.id}
+					title={`Delete ${deleteTarget.imageAlt || BANNER_KIND_LABELS[deleteTarget.type]} banner?`}
+					description="This removes the banner from research pages. This cannot be undone."
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deleteBannerMutation}
+					variables={deleteTarget.id}
+					onClose={() => setDeleteTarget(null)}
+					fallbackFocus={headingRef}
+				/>
+			) : null}
 			{items.length === 0 ? (
 				<div className="rounded-md border border-dashed border-medium bg-surface p-10 text-center">
 					<p className="text-sm text-secondary">No banners yet.</p>
@@ -174,9 +189,8 @@ export function BannersListView() {
 								<button
 									type="button"
 									onClick={() => {
-										if (window.confirm('Delete this banner? This cannot be undone.')) {
-											deleteBannerMutation.mutate(banner.id)
-										}
+										deleteBannerMutation.reset()
+										setDeleteTarget(banner)
 									}}
 									disabled={deleteBannerMutation.isPending}
 									className="rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 disabled:opacity-50"

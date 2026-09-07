@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import toast from 'react-hot-toast'
+import { useMutation, type UseMutationResult } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { formatNumber, formatFixedNumber, formatPercent } from '~/utils/numberFormat'
 import { ApiUsageBreakdown, type ApiUsageStats } from './ApiUsageBreakdown'
@@ -13,8 +14,7 @@ interface ApiAccessCardProps {
 	usageStats: ApiUsageStats | null | undefined
 	isUsageStatsLoading: boolean
 	isUsageStatsError: boolean
-	onRegenerateKey: () => void
-	isRegenerateLoading?: boolean
+	generateNewKeyMutation: UseMutationResult<string, Error, void>
 	canManageOverage?: boolean
 	isOverageEnabled?: boolean
 	onToggleOverage?: () => void
@@ -28,28 +28,29 @@ export function ApiAccessCard({
 	usageStats,
 	isUsageStatsLoading,
 	isUsageStatsError,
-	onRegenerateKey,
-	isRegenerateLoading,
+	generateNewKeyMutation,
 	canManageOverage,
 	isOverageEnabled,
 	onToggleOverage,
 	isOverageToggleLoading,
 	overageError
 }: ApiAccessCardProps) {
-	const [copied, setCopied] = useState(false)
+	const [confirmRegenerate, setConfirmRegenerate] = useState(false)
+	const copy = useMutation({
+		mutationFn: async () => {
+			await navigator.clipboard.writeText(apiKey!)
+			return apiKey
+		}
+	})
+	useEffect(() => {
+		if (!copy.isSuccess) return
+		const timer = setTimeout(copy.reset, 2000)
+		return () => clearTimeout(timer)
+	}, [copy.isSuccess, copy.reset])
 	const [showKey, setShowKey] = useState(false)
 
 	const remaining = credits ?? 0
 	const usagePercentage = formatFixedNumber((remaining / API_CREDITS_LIMIT) * 100, 1)
-
-	const handleCopy = () => {
-		if (apiKey) {
-			navigator.clipboard.writeText(apiKey)
-			setCopied(true)
-			toast.success('API key copied to clipboard')
-			setTimeout(() => setCopied(false), 2000)
-		}
-	}
 
 	if (!apiKey) {
 		return (
@@ -65,13 +66,20 @@ export function ApiAccessCard({
 					</p>
 					<button
 						type="button"
-						onClick={onRegenerateKey}
-						disabled={isRegenerateLoading}
+						onClick={() => {
+							generateNewKeyMutation.mutate()
+						}}
+						disabled={generateNewKeyMutation.isPending}
 						className="flex h-11 items-center gap-2 rounded-lg bg-sub-brand-primary px-6 text-sm font-medium text-on-brand disabled:opacity-50"
 					>
 						<Icon name="key" height={16} width={16} />
-						{isRegenerateLoading ? 'Generating...' : 'Generate API Key'}
+						{generateNewKeyMutation.isPending ? 'Generating...' : 'Generate API Key'}
 					</button>
+					{generateNewKeyMutation.error ? (
+						<p role="alert" className="text-sm text-error">
+							{generateNewKeyMutation.error.message}
+						</p>
+					) : null}
 				</div>
 			</div>
 		)
@@ -93,7 +101,6 @@ export function ApiAccessCard({
 						<button
 							type="button"
 							onClick={() => setShowKey((v) => !v)}
-							disabled={!apiKey}
 							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
 							aria-label={showKey ? 'Hide API key' : 'Show API key'}
 						>
@@ -102,39 +109,50 @@ export function ApiAccessCard({
 						</button>
 						<button
 							type="button"
-							onClick={handleCopy}
-							disabled={!apiKey}
+							onClick={() => copy.mutate()}
+							disabled={copy.isPending}
 							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
 						>
 							<Icon name="copy" height={12} width={12} />
-							{copied ? 'Copied' : 'Copy'}
+							{copy.isPending ? 'Copying…' : copy.isSuccess && copy.data === apiKey ? 'Copied' : 'Copy'}
 						</button>
 						<button
 							type="button"
 							onClick={() => {
-								if (
-									window.confirm(
-										'Regenerating will invalidate your current API key. All existing integrations will stop working. Continue?'
-									)
-								) {
-									onRegenerateKey()
-								}
+								generateNewKeyMutation.reset()
+								setConfirmRegenerate(true)
 							}}
-							disabled={isRegenerateLoading}
+							disabled={generateNewKeyMutation.isPending}
 							className="flex h-6 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-[10px] leading-3 font-medium text-sub-text-primary disabled:opacity-50 dark:border-sub-border-strong"
 						>
 							<Icon name="repeat" height={12} width={12} />
-							{isRegenerateLoading ? 'Regenerating...' : 'Regenerate'}
+							{generateNewKeyMutation.isPending ? 'Regenerating...' : 'Regenerate'}
 						</button>
 					</div>
 				</div>
 				<div className="rounded-lg bg-sub-surface-panel px-3 py-2.5 dark:bg-sub-dark-page">
 					<code className="font-mono text-xs leading-5 break-all text-sub-text-muted">
-						{!apiKey ? '...' : showKey ? apiKey : '•'.repeat(apiKey.length)}
+						{showKey ? apiKey : '•'.repeat(apiKey.length)}
 					</code>
 				</div>
 			</div>
 
+			{copy.error ? (
+				<p role="alert" className="text-sm text-error">
+					Could not copy the API key. Please try again.
+				</p>
+			) : null}
+			{confirmRegenerate ? (
+				<ConfirmActionDialog
+					title="Regenerate API key?"
+					description="Your current API key will stop working. Update every integration to use the new key after regeneration."
+					confirmLabel="Regenerate"
+					pendingLabel="Regenerating…"
+					mutation={generateNewKeyMutation}
+					variables={undefined}
+					onClose={() => setConfirmRegenerate(false)}
+				/>
+			) : null}
 			{/* API Usage */}
 			<div className="flex flex-col gap-4 rounded-lg bg-sub-surface-panel p-3 dark:bg-sub-dark-page">
 				<span className="text-sm text-sub-text-primary">API Usage</span>

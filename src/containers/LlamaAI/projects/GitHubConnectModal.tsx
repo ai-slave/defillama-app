@@ -52,6 +52,7 @@ export function GitHubConnectModal({ dialogStore, projectId, finalFocus }: GitHu
 	)
 }
 
+// One instance per opening: unmounting prevents old completions from changing a reopened form.
 function GitHubConnectForm({
 	dialogStore,
 	projectId,

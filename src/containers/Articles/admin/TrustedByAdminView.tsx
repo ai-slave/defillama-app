@@ -11,7 +11,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import type * as React from 'react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { MentionSlotPreview } from '~/containers/Articles/admin/MentionSlotPreview'
@@ -30,6 +30,7 @@ import {
 import { BlockContent, toMentionQuote } from '~/containers/Articles/landing/ResearchSocialMediaMentions'
 import { chunkMentions } from '~/containers/Articles/landing/utils'
 import type { SocialMention, TrustedLogo } from '~/containers/Articles/types'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 
 const VERTICAL_SORTING_MODIFIERS = [restrictToVerticalAxis, restrictToParentElement]
@@ -49,6 +50,8 @@ function linkHost(linkUrl: string): string {
 }
 
 export function TrustedByAdminView() {
+	const [deleteTarget, setDeleteTarget] = useState<{ kind: 'logo' | 'mention'; id: string; name: string } | null>(null)
+	const headingRef = useRef<HTMLHeadingElement>(null)
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidate = useResearchLandingRevalidation()
@@ -92,12 +95,8 @@ export function TrustedByAdminView() {
 	const deleteLogoMutation = useMutation({
 		mutationFn: (id: string) => deleteTrustedLogo(id, authorizedFetch),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['trusted-by-logos'] })
 			revalidate()
-			toast.success('Logo deleted')
-		},
-		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to delete logo')
+			return queryClient.invalidateQueries({ queryKey: ['trusted-by-logos'] })
 		}
 	})
 
@@ -127,12 +126,8 @@ export function TrustedByAdminView() {
 	const deleteMentionMutation = useMutation({
 		mutationFn: (id: string) => deleteSocialMention(id, authorizedFetch),
 		onSuccess: () => {
-			queryClient.invalidateQueries({ queryKey: ['trusted-by-mentions'] })
 			revalidate()
-			toast.success('Mention deleted')
-		},
-		onError: (err) => {
-			toast.error(err instanceof ArticleApiError ? err.message : 'Failed to delete mention')
+			return queryClient.invalidateQueries({ queryKey: ['trusted-by-mentions'] })
 		}
 	})
 
@@ -177,6 +172,19 @@ export function TrustedByAdminView() {
 
 	return (
 		<div className="mx-auto grid w-full max-w-5xl gap-6 px-1 pb-16">
+			{deleteTarget ? (
+				<ConfirmActionDialog
+					key={`${deleteTarget.kind}-${deleteTarget.id}`}
+					title={`Delete ${deleteTarget.name}?`}
+					description={`This removes the ${deleteTarget.kind} from research pages. This cannot be undone.`}
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deleteTarget.kind === 'logo' ? deleteLogoMutation : deleteMentionMutation}
+					variables={deleteTarget.id}
+					onClose={() => setDeleteTarget(null)}
+					fallbackFocus={headingRef}
+				/>
+			) : null}
 			<header className="pt-2 pb-2">
 				<Link
 					href="/research/admin"
@@ -184,7 +192,9 @@ export function TrustedByAdminView() {
 				>
 					<span aria-hidden>←</span> Admin
 				</Link>
-				<h1 className="mt-2 text-3xl font-semibold tracking-tight text-primary">Trusted By</h1>
+				<h1 ref={headingRef} tabIndex={-1} className="mt-2 text-3xl font-semibold tracking-tight text-primary">
+					Trusted By
+				</h1>
 				<p className="mt-1 text-sm text-secondary">
 					Manage the logos and social media mentions shown in the Trusted By section on /research.
 				</p>
@@ -225,9 +235,8 @@ export function TrustedByAdminView() {
 										onToggle={(enabled) => toggleLogoMutation.mutate({ id: logo.id, enabled })}
 										togglePending={toggleLogoMutation.isPending}
 										onDelete={() => {
-											if (window.confirm('Delete this logo? This cannot be undone.')) {
-												deleteLogoMutation.mutate(logo.id)
-											}
+											deleteLogoMutation.reset()
+											setDeleteTarget({ kind: 'logo', id: logo.id, name: logo.name })
 										}}
 										deletePending={deleteLogoMutation.isPending}
 									/>
@@ -280,9 +289,12 @@ export function TrustedByAdminView() {
 												onToggle={(enabled) => toggleMentionMutation.mutate({ id: mention.id, enabled })}
 												togglePending={toggleMentionMutation.isPending}
 												onDelete={() => {
-													if (window.confirm('Delete this mention? This cannot be undone.')) {
-														deleteMentionMutation.mutate(mention.id)
-													}
+													deleteMentionMutation.reset()
+													setDeleteTarget({
+														kind: 'mention',
+														id: mention.id,
+														name: mention.username || mention.xPostId || 'this mention'
+													})
 												}}
 												deletePending={deleteMentionMutation.isPending}
 											/>
@@ -297,7 +309,7 @@ export function TrustedByAdminView() {
 			</section>
 
 			{enabledMentions.length > 0 ? (
-				<section className="grid gap-3">
+				<section className="grid min-w-0 gap-3">
 					<div className="flex flex-wrap items-end justify-between gap-3">
 						<h2 className="text-lg font-semibold text-primary">Slide preview</h2>
 						<button
@@ -310,21 +322,29 @@ export function TrustedByAdminView() {
 					</div>
 					<div className="grid gap-3">
 						{chunkMentions(enabledMentions).map((block, blockIndex) => (
-							<div key={block[0].id} className="grid gap-2 rounded-md border border-medium bg-surface p-4">
+							<div key={block[0].id} className="grid min-w-0 gap-2 rounded-md border border-medium bg-surface p-4">
 								<span className="label-xs tracking-[0.18em] text-tertiary uppercase">Slide {blockIndex + 1}</span>
 								{showFullPreview ? (
 									<div
-										style={{
-											width: FULL_PREVIEW_WIDTH * FULL_PREVIEW_SCALE,
-											height: FULL_PREVIEW_HEIGHT * FULL_PREVIEW_SCALE
-										}}
-										className="overflow-hidden"
+										className="min-w-0 overflow-x-auto"
+										role="region"
+										aria-label={`Slide ${blockIndex + 1} preview`}
+										// oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- Keyboard users must be able to scroll this fixed-width preview.
+										tabIndex={0}
 									>
 										<div
-											style={{ width: FULL_PREVIEW_WIDTH, transform: `scale(${FULL_PREVIEW_SCALE})` }}
-											className="pointer-events-none origin-top-left"
+											style={{
+												width: FULL_PREVIEW_WIDTH * FULL_PREVIEW_SCALE,
+												height: FULL_PREVIEW_HEIGHT * FULL_PREVIEW_SCALE
+											}}
+											className="overflow-hidden"
 										>
-											<BlockContent block={block.map(toMentionQuote)} isEven={blockIndex % 2 === 1} />
+											<div
+												style={{ width: FULL_PREVIEW_WIDTH, transform: `scale(${FULL_PREVIEW_SCALE})` }}
+												className="pointer-events-none origin-top-left"
+											>
+												<BlockContent block={block.map(toMentionQuote)} isEven={blockIndex % 2 === 1} />
+											</div>
 										</div>
 									</div>
 								) : (
@@ -403,7 +423,7 @@ function SortableLogoRow({
 			ref={setNodeRef}
 			style={style}
 			data-dragging={isDragging}
-			className={`grid grid-cols-[auto_auto_1fr_auto] items-center gap-3 p-4 ${logo.enabled ? '' : 'opacity-50'}`}
+			className={`grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-3 p-4 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] ${logo.enabled ? '' : 'opacity-50'}`}
 		>
 			<button
 				type="button"
@@ -424,7 +444,7 @@ function SortableLogoRow({
 				<p className="truncate text-xs text-tertiary">{linkHost(logo.linkUrl)}</p>
 			</div>
 
-			<div className="flex flex-wrap items-center gap-2 justify-self-end">
+			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
 				<label className="flex items-center gap-1.5 text-xs text-secondary">
 					<input
 						type="checkbox"
@@ -444,6 +464,7 @@ function SortableLogoRow({
 				<button
 					type="button"
 					onClick={onDelete}
+					aria-label={`Delete ${logo.name}`}
 					disabled={deletePending}
 					className="rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 disabled:opacity-50"
 				>
@@ -488,7 +509,7 @@ function SortableMentionRow({
 			ref={setNodeRef}
 			style={style}
 			data-dragging={isDragging}
-			className={`grid grid-cols-[auto_auto_1fr_auto] items-center gap-3 p-4 ${mention.enabled ? '' : 'opacity-50'}`}
+			className={`grid grid-cols-[auto_auto_minmax(0,1fr)] items-center gap-3 p-4 sm:grid-cols-[auto_auto_minmax(0,1fr)_auto] ${mention.enabled ? '' : 'opacity-50'}`}
 		>
 			<button
 				type="button"
@@ -520,7 +541,7 @@ function SortableMentionRow({
 				</p>
 			</div>
 
-			<div className="flex flex-wrap items-center gap-2 justify-self-end">
+			<div className="col-span-full flex flex-wrap items-center gap-2 justify-self-end sm:col-auto">
 				<label className="flex items-center gap-1.5 text-xs text-secondary">
 					<input
 						type="checkbox"
@@ -540,6 +561,7 @@ function SortableMentionRow({
 				<button
 					type="button"
 					onClick={onDelete}
+					aria-label={`Delete mention ${mention.username || mention.xPostId || ''}`}
 					disabled={deletePending}
 					className="rounded-md px-3 py-1.5 text-xs text-error transition-colors hover:bg-error/10 disabled:opacity-50"
 				>

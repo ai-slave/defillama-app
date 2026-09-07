@@ -6,10 +6,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { QueueChips } from '~/containers/LlamaAI/components/QueueChips'
 import type { QueueSurface, QueueServerRow } from '~/containers/LlamaAI/hooks/useChatQueueController'
 
-vi.mock('~/ui/Icon', () => ({
-	Icon: ({ name, ...props }: { name: string }) => <svg data-icon={name} {...props} />
-}))
-
 function pending(overrides: Partial<QueueServerRow> = {}): QueueServerRow {
 	return {
 		kind: 'server',
@@ -141,16 +137,18 @@ describe('QueueChips', () => {
 				queueActionError: { action: 'clearing', message: 'Could not clear the queue. Try again.' }
 			})
 		)
-		vi.stubGlobal(
-			'confirm',
-			vi.fn(() => true)
-		)
 
 		const retryClear = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Retry clear')
 		await act(async () => retryClear?.click())
 
+		expect(onClear).not.toHaveBeenCalled()
+		const dialog = document.querySelector('[role="dialog"]')!
+		expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe(
+			'Clear all queued prompts?'
+		)
+		const confirm = [...dialog.querySelectorAll('button')].find((button) => button.textContent === 'Clear queue')!
+		await act(async () => confirm.click())
 		expect(onClear).toHaveBeenCalledOnce()
-		vi.unstubAllGlobals()
 	})
 
 	test('waits for the editing snapshot before rendering the editor', async () => {

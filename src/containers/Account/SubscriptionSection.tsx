@@ -363,8 +363,7 @@ export function SubscriptionSection() {
 						usageStats={usageStats}
 						isUsageStatsLoading={isUsageStatsLoading}
 						isUsageStatsError={isUsageStatsError}
-						onRegenerateKey={() => generateNewKeyMutation.mutate()}
-						isRegenerateLoading={generateNewKeyMutation.isPending}
+						generateNewKeyMutation={generateNewKeyMutation}
 					/>
 					{memberBalanceCard}
 					{isTopupModalOpen ? (
@@ -622,8 +621,7 @@ export function SubscriptionSection() {
 					usageStats={usageStats}
 					isUsageStatsLoading={isUsageStatsLoading}
 					isUsageStatsError={isUsageStatsError}
-					onRegenerateKey={() => generateNewKeyMutation.mutate()}
-					isRegenerateLoading={generateNewKeyMutation.isPending}
+					generateNewKeyMutation={generateNewKeyMutation}
 					canManageOverage={canManageOverage}
 					isOverageEnabled={isOverageEnabled}
 					onToggleOverage={handleToggleOverage}

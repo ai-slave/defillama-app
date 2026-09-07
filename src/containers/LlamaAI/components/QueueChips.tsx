@@ -1,6 +1,10 @@
+import * as Ariakit from '@ariakit/react'
+import { useRef, type RefObject } from 'react'
 import { useCurrentSecond } from '~/containers/LlamaAI/components/status/useCurrentSecond'
 import type { QueueRowStatus, QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import type { QueueNotSentReason } from '~/containers/LlamaAI/queue/protocol'
+import { Button } from '~/ui/Button'
+import { DialogHeading, dialogSurfaceStyles, dialogScrollableBodyStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 
@@ -91,7 +95,17 @@ function RowError({ status }: { status: QueueRowStatus | undefined }) {
 	return status?.error ? <p className="m-0 body-xs text-ai-error-strong">{status.error}</p> : null
 }
 
-export function QueueChips({ surface, quotaResetTime }: { surface: QueueSurface; quotaResetTime?: string | null }) {
+export function QueueChips({
+	surface,
+	quotaResetTime,
+	promptInputRef
+}: {
+	surface: QueueSurface
+	quotaResetTime?: string | null
+	promptInputRef?: RefObject<HTMLTextAreaElement | null>
+}) {
+	const clearStore = Ariakit.useDialogStore()
+	const returnFocus = useRef<HTMLElement | null>(null)
 	const {
 		rows,
 		ownedEditId,
@@ -145,8 +159,9 @@ export function QueueChips({ surface, quotaResetTime }: { surface: QueueSurface;
 							type="button"
 							disabled={queueAction !== null}
 							className={secondaryButtonClass}
-							onClick={() => {
-								if (window.confirm('Clear every queued and waiting prompt?')) onClear()
+							onClick={(event) => {
+								returnFocus.current = event.currentTarget
+								clearStore.show()
 							}}
 						>
 							{queueAction === 'clearing' ? (
@@ -160,7 +175,45 @@ export function QueueChips({ surface, quotaResetTime }: { surface: QueueSurface;
 					</div>
 				</div>
 			) : null}
-			{queueActionError ? <p className="m-0 body-xs text-ai-error-strong">{queueActionError.message}</p> : null}
+			{queueActionError ? (
+				<p role="alert" className="m-0 body-xs text-ai-error-strong">
+					{queueActionError.message}
+				</p>
+			) : null}
+			<span role="status" className="sr-only">
+				{queueAction === 'clearing' ? 'Clearing queued prompts' : ''}
+			</span>
+			<Ariakit.Dialog
+				store={clearStore}
+				unmountOnHide
+				finalFocus={returnFocus}
+				className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}
+			>
+				<header className="shrink-0 border-b border-subtle p-3">
+					<DialogHeading>Clear all queued prompts?</DialogHeading>
+				</header>
+				<div className={`${dialogScrollableBodyStyles} p-3`}>
+					<Ariakit.DialogDescription className="body-sm text-secondary">
+						This removes every queued and waiting prompt from this conversation.
+					</Ariakit.DialogDescription>
+				</div>
+				<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle p-3">
+					<Ariakit.DialogDismiss autoFocus render={<Button size="md" />}>
+						Cancel
+					</Ariakit.DialogDismiss>
+					<Ariakit.Button
+						render={<Button size="md" variant="destructive" />}
+						onClick={() => {
+							// The queue owns pending/error feedback after confirmation, including a lost response.
+							returnFocus.current = promptInputRef?.current ?? returnFocus.current
+							clearStore.hide()
+							onClear()
+						}}
+					>
+						Clear queue
+					</Ariakit.Button>
+				</footer>
+			</Ariakit.Dialog>
 			<ul className="flex flex-col gap-1.5">
 				{rows.map((item, index) => {
 					const rowKey = item.kind === 'local' ? item.payload.clientMutationId : (item.clientMutationId ?? item.id)

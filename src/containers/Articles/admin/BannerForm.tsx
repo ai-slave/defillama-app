@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { MultiSelectCombobox } from '~/components/Select/MultiSelectCombobox'
@@ -38,6 +38,7 @@ import {
 } from '~/containers/Articles/types'
 import { ImageUploadButton } from '~/containers/Articles/upload/ImageUploadButton'
 import type { UploadScope } from '~/containers/Articles/upload/useImageUpload'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 
 function imageUploadConfig(state: BannerFormState): { scope: UploadScope; helperText: string } {
 	if (state.kind === 'image-square') {
@@ -75,6 +76,7 @@ type Props = {
 }
 
 export function BannerForm({ banner }: Props) {
+	const [confirmDelete, setConfirmDelete] = useState(false)
 	const router = useRouter()
 	const { authorizedFetch } = useAuthContext()
 	const revalidateLanding = useResearchLandingRevalidation()
@@ -90,9 +92,7 @@ export function BannerForm({ banner }: Props) {
 	const errors = validateBannerForm(state)
 	const hasError = Object.keys(errors).length > 0
 
-	// The save happened whatever the reader did next, so the revalidation and the toast belong to the
-	// mutation. Only the redirect is tied to this form still being on screen, and that goes on the
-	// mutate call, which React Query drops if the form unmounted first.
+	// Refresh shared data after navigation; draft updates and redirects belong to this form's lifetime.
 	const saveMutation = useMutation({
 		mutationFn: async (submitted: BannerFormState) => {
 			const payload = buildPayload(submitted)
@@ -109,16 +109,9 @@ export function BannerForm({ banner }: Props) {
 	})
 
 	const deleteMutation = useMutation({
-		mutationFn: async () => {
-			if (!banner) return
-			await deleteBanner(banner.id, authorizedFetch)
-		},
+		mutationFn: (id: string) => deleteBanner(id, authorizedFetch),
 		onSuccess: () => {
 			revalidateLanding()
-			toast.success('Banner deleted')
-		},
-		onError: (error) => {
-			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to delete')
 		}
 	})
 
@@ -148,14 +141,6 @@ export function BannerForm({ banner }: Props) {
 					router.push(`/research/admin/banners/${saved.id}`)
 				}
 			}
-		})
-	}
-
-	const handleDelete = () => {
-		if (!banner) return
-		if (!window.confirm('Delete this banner? This cannot be undone.')) return
-		deleteMutation.mutate(undefined, {
-			onSuccess: () => router.push('/research/admin/banners')
 		})
 	}
 
@@ -686,7 +671,10 @@ export function BannerForm({ banner }: Props) {
 						{banner ? (
 							<button
 								type="button"
-								onClick={handleDelete}
+								onClick={() => {
+									deleteMutation.reset()
+									setConfirmDelete(true)
+								}}
 								disabled={deleteMutation.isPending}
 								className="rounded-md px-3 py-2 text-sm text-error transition-colors hover:bg-error/10 disabled:cursor-not-allowed disabled:opacity-40"
 							>
@@ -703,6 +691,21 @@ export function BannerForm({ banner }: Props) {
 					</div>
 				</div>
 			</div>
+			{confirmDelete && banner ? (
+				<ConfirmActionDialog
+					key={banner.id}
+					title="Delete this banner?"
+					description="This removes the banner from research pages. This cannot be undone."
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deleteMutation}
+					variables={banner.id}
+					onClose={() => setConfirmDelete(false)}
+					onSuccess={() => {
+						void router.push('/research/admin/banners')
+					}}
+				/>
+			) : null}
 		</form>
 	)
 }

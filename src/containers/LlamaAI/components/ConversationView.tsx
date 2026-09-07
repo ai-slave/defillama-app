@@ -881,7 +881,12 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 						</div>
 					) : null}
 					{queueSurface && queueSurface.rows.length > 0 ? (
-						<QueueChips surface={queueSurface} quotaResetTime={quotaResetTime} />
+						<QueueChips
+							key={sessionId}
+							surface={queueSurface}
+							quotaResetTime={quotaResetTime}
+							promptInputRef={promptInputRef}
+						/>
 					) : null}
 					<PromptInput
 						draftScope={draftScope}

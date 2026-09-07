@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
-import toast from 'react-hot-toast'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { useResearchLandingRevalidation } from '~/containers/Articles/admin/useResearchLandingRevalidation'
 import { deleteArticle as deleteArticleApi, listMyArticles, type ArticleListResponse } from '~/containers/Articles/api'
@@ -12,6 +11,7 @@ import { formatArticleDate } from '~/containers/Articles/editor/ArticleEditorUti
 import type { ArticleDocument, ArticleSection } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 import Layout from '~/layout'
+import { ConfirmActionDialog } from '~/ui/ConfirmActionDialog'
 import { Icon } from '~/ui/Icon'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { formatNumber } from '~/utils/numberFormat'
@@ -56,6 +56,8 @@ function StatusDot({ status }: { status: ArticleDocument['status'] }) {
 }
 
 function MyArticlesContent() {
+	const [deleteTarget, setDeleteTarget] = useState<ArticleDocument | null>(null)
+	const headingRef = useRef<HTMLHeadingElement>(null)
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
 	const queryClient = useQueryClient()
 	const revalidateLanding = useResearchLandingRevalidation()
@@ -82,10 +84,6 @@ function MyArticlesContent() {
 				current ? { ...current, items: current.items.filter((a) => a.id !== articleId) } : current
 			)
 			revalidateLanding()
-			toast.success('Deleted')
-		},
-		onError: (err) => {
-			toast.error(err instanceof Error ? err.message : 'Failed to delete')
 		}
 	})
 
@@ -142,21 +140,40 @@ function MyArticlesContent() {
 	const rangeEnd = Math.min(safePage * PAGE_SIZE, filtered.length)
 
 	const handleDelete = (article: ArticleDocument) => {
-		if (!confirm(`Delete "${article.title || 'Untitled'}"? This cannot be undone.`)) return
-		deleteArticleMutation.mutate(article.id)
+		deleteArticleMutation.reset()
+		setDeleteTarget(article)
 	}
 
 	const showLoading = loaders.userLoading || (isAuthenticated && isLoading)
 
 	return (
 		<div className="mx-auto grid w-full max-w-5xl gap-8 px-3 pt-2 pb-20 lg:px-0">
+			{deleteTarget ? (
+				<ConfirmActionDialog
+					key={deleteTarget.id}
+					title={`Delete ${deleteTarget.title || 'Untitled'}?`}
+					description="This permanently deletes the article. This cannot be undone."
+					confirmLabel="Delete"
+					pendingLabel="Deleting…"
+					mutation={deleteArticleMutation}
+					variables={deleteTarget.id}
+					onClose={() => setDeleteTarget(null)}
+					fallbackFocus={headingRef}
+				/>
+			) : null}
 			<header className="grid gap-6 border-b border-medium pb-6">
 				<div className="flex flex-wrap items-end justify-between gap-4">
 					<div className="grid gap-2">
 						<span className="font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase">
 							Research · Workspace
 						</span>
-						<h1 className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl">My research</h1>
+						<h1
+							ref={headingRef}
+							tabIndex={-1}
+							className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl"
+						>
+							My research
+						</h1>
 						{!showLoading ? (
 							<p className="text-sm text-secondary">
 								<span className="text-primary tabular-nums">{draftCount}</span> draft

@@ -7,6 +7,7 @@ interface ConfirmationModalProps {
 	finalFocus?: RefObject<HTMLElement | null>
 	fallbackFocus?: RefObject<HTMLElement | null>
 	pending?: boolean
+	pendingText?: string
 	error?: string | null
 	closeOnConfirm?: boolean
 	isOpen: boolean
@@ -23,6 +24,7 @@ export function ConfirmationModal({
 	finalFocus,
 	fallbackFocus,
 	pending = false,
+	pendingText = 'Working…',
 	error,
 	closeOnConfirm = true,
 	isOpen,
@@ -91,11 +93,11 @@ export function ConfirmationModal({
 						className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${confirmButtonClass}`}
 					>
 						{pending ? <LoadingSpinner size={14} /> : null}
-						{pending ? 'Deleting…' : confirmText}
+						{pending ? pendingText : confirmText}
 					</Ariakit.Button>
 				</div>
 				<span role="status" className="sr-only">
-					{pending ? 'Deletion in progress' : ''}
+					{pending ? pendingText : ''}
 				</span>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>

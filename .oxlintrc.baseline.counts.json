@@ -212,7 +212,7 @@
 	"src/containers/LlamaAI/components/messages/CitationPill.tsx": {"jsx-a11y/control-has-associated-label":1,"react/no-array-index-key":1},
 	"src/containers/LlamaAI/components/messages/ToolDataView.tsx": {"react/no-array-index-key":2},
 	"src/containers/LlamaAI/components/messages/ToolExecutionPanel.tsx": {"react/no-array-index-key":2},
-	"src/containers/LlamaAI/components/sidebar/AgenticSessionItem.tsx": {"react/function-component-definition":1,"unicorn/no-lonely-if":1},
+	"src/containers/LlamaAI/components/sidebar/AgenticSessionItem.tsx": {"react/function-component-definition":1},
 	"src/containers/LlamaAI/components/sidebar/AgenticSidebar.tsx": {"jsx-a11y/control-has-associated-label":3,"react/function-component-definition":1,"react/hook-use-state":1,"react/jsx-no-useless-fragment":1,"react/no-unescaped-entities":1},
 	"src/containers/LlamaAI/components/sidebar/SearchResults.tsx": {"react/function-component-definition":1,"react/no-array-index-key":1},
 	"src/containers/LlamaAI/components/status/StreamingStatus.tsx": {"react/hook-use-state":1},

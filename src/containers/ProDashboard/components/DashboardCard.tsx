@@ -215,6 +215,7 @@ export function DashboardCard({
 				onConfirm={() => deletion.mutate(undefined, { onSuccess: () => setShowDeleteConfirm(false) })}
 				closeOnConfirm={false}
 				pending={deletion.isPending}
+				pendingText="Deleting…"
 				error={deletion.error?.message}
 				title={`Delete ${dashboard.data.dashboardName || 'dashboard'}?`}
 				message="Are you sure you want to delete this dashboard? This action cannot be undone."
