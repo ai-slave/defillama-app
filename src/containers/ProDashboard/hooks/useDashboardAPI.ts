@@ -146,15 +146,11 @@ export function useDashboardAPI() {
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
-			toast.success('Dashboard deleted successfully')
 			// Navigate away if current dashboard was deleted
 			const routeKey = router.query.dashboardId
 			if (routeKey === deleted.id || (deleted.slug && routeKey === deleted.slug)) {
 				void router.push('/pro')
 			}
-		},
-		onError: (err: unknown) => {
-			toast.error(err instanceof Error ? err.message : 'Failed to delete dashboard')
 		}
 	})
 

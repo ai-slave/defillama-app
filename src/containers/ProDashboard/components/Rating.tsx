@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
@@ -16,18 +17,13 @@ interface RatingProps {
 
 export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDismiss }: RatingProps) {
 	const [rating, setRating] = useState(0)
-	const [hoveredRating, setHoveredRating] = useState(0)
 	const [isSubmitting, setIsSubmitting] = useState(false)
 	const bannerFeedbackId = `${sessionId}-rating-feedback-banner`
 	const inlineFeedbackId = `${sessionId}-rating-feedback-inline`
 
-	const handleStarClick = (star: number) => {
-		setRating(star)
-	}
-
 	const handleSubmit = async (e: FormSubmitEvent) => {
 		e.preventDefault()
-		if (rating === 0) return
+		if (rating === 0 || isSubmitting) return
 
 		if (rating < 1 || rating > 5 || !Number.isInteger(rating)) {
 			toast.error('Rating must be between 1 and 5')
@@ -71,30 +67,9 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 				onSubmit={(e) => void handleSubmit(e)}
 				className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4"
 			>
-				<div className="flex items-center gap-4">
+				<div className="flex flex-wrap items-center gap-4">
 					<h3 className="text-lg font-semibold">{currentTexts.title}</h3>
-					<div className="flex items-center gap-1">
-						{[1, 2, 3, 4, 5].map((star) => (
-							<button
-								key={star}
-								type="button"
-								onClick={() => handleStarClick(star)}
-								onMouseEnter={() => setHoveredRating(star)}
-								onMouseLeave={() => setHoveredRating(0)}
-								className="p-1 transition-transform hover:scale-110"
-								disabled={isSubmitting}
-							>
-								<Icon
-									name="star"
-									height={20}
-									width={20}
-									className={`${
-										star <= (hoveredRating || rating) ? 'fill-current text-warning' : 'text-pro-text-form'
-									} transition-colors`}
-								/>
-							</button>
-						))}
-					</div>
+					<RatingStars value={rating} onChange={setRating} disabled={isSubmitting} size={20} />
 					{onDismiss ? (
 						<button
 							type="button"
@@ -149,14 +124,15 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 					</button>
 
 					{rating > 0 ? (
-						<button
+						<Ariakit.Button
+							accessibleWhenDisabled
 							type="submit"
 							disabled={isSubmitting}
 							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand"
 						>
 							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
 							Submit Rating
-						</button>
+						</Ariakit.Button>
 					) : null}
 				</div>
 			</form>
@@ -177,28 +153,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 				</div>
 			) : null}
 
-			<div className="flex items-center justify-center gap-2">
-				{[1, 2, 3, 4, 5].map((star) => (
-					<button
-						key={star}
-						type="button"
-						onClick={() => handleStarClick(star)}
-						onMouseEnter={() => setHoveredRating(star)}
-						onMouseLeave={() => setHoveredRating(0)}
-						className="p-2 transition-transform hover:scale-110"
-						disabled={isSubmitting}
-					>
-						<Icon
-							name="star"
-							height={24}
-							width={24}
-							className={`${
-								star <= (hoveredRating || rating) ? 'fill-current text-warning' : 'text-pro-text-form'
-							} transition-colors`}
-						/>
-					</button>
-				))}
-			</div>
+			<RatingStars value={rating} onChange={setRating} disabled={isSubmitting} size={24} />
 
 			{rating > 0 ? (
 				<div className="flex w-full max-w-xl flex-col items-center gap-6">
@@ -228,14 +183,15 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 						>
 							Skip
 						</button>
-						<button
+						<Ariakit.Button
+							accessibleWhenDisabled
 							type="submit"
 							disabled={isSubmitting}
 							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand"
 						>
 							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
 							Submit Rating
-						</button>
+						</Ariakit.Button>
 					</div>
 				</div>
 			) : (
@@ -253,5 +209,54 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 				</>
 			)}
 		</form>
+	)
+}
+
+const RATING_VALUES = [1, 2, 3, 4, 5] as const
+
+function RatingStars({
+	value,
+	onChange,
+	disabled,
+	size
+}: {
+	value: number
+	onChange: (value: number) => void
+	disabled: boolean
+	size: 20 | 24
+}) {
+	const [hovered, setHovered] = useState(0)
+	return (
+		<Ariakit.RadioProvider value={value} setValue={(next) => onChange(next as number)} orientation="horizontal">
+			<Ariakit.RadioGroup
+				aria-label="Dashboard rating"
+				className="flex items-center justify-center gap-1"
+				onMouseLeave={() => setHovered(0)}
+			>
+				{RATING_VALUES.map((star) => (
+					<span
+						key={star}
+						className={`relative rounded-sm transition-transform has-focus-visible:focus-ring has-disabled:opacity-50 ${size === 20 ? 'p-1' : 'p-2'} ${disabled ? '' : 'cursor-pointer hover:scale-110'}`}
+					>
+						<Ariakit.Radio
+							onMouseEnter={() => {
+								if (!disabled) setHovered(star)
+							}}
+							value={star}
+							aria-label={`${star} ${star === 1 ? 'star' : 'stars'}`}
+							disabled={disabled}
+							className="cursor-inherit absolute inset-0 z-10 size-full opacity-0"
+						/>
+						<Icon
+							name="star"
+							height={size}
+							width={size}
+							aria-hidden="true"
+							className={`${star <= (hovered || value) ? 'fill-current text-warning' : 'text-pro-text-form'} transition-colors`}
+						/>
+					</span>
+				))}
+			</Ariakit.RadioGroup>
+		</Ariakit.RadioProvider>
 	)
 }

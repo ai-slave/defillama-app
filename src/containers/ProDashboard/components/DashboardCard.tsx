@@ -1,4 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { useMemo, useRef, useState, type RefObject } from 'react'
+import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
 import { avatarColorStyle } from '~/containers/Authors/avatarColor'
 import { Icon } from '~/ui/Icon'
@@ -11,10 +13,10 @@ import { CardLikeButton } from './CardLikeButton'
 import { ConfirmationModal } from './ConfirmationModal'
 
 interface DashboardCardProps {
+	fallbackFocus?: RefObject<HTMLElement | null>
 	dashboard: Dashboard
 	onTagClick?: (tag: string) => void
 	onDelete?: (dashboardId: string) => void | Promise<void>
-	isDeleting?: boolean
 	viewMode?: 'grid' | 'list'
 	className?: string
 }
@@ -45,27 +47,33 @@ function DashboardAuthorLink({ author }: { author: Dashboard['author'] }) {
 	)
 }
 
-export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'grid', className }: DashboardCardProps) {
-	const [isDeleting, setIsDeleting] = useState<boolean>(false)
+export function DashboardCard({
+	fallbackFocus,
+	dashboard,
+	onTagClick,
+	onDelete,
+	viewMode = 'grid',
+	className
+}: DashboardCardProps) {
+	const returnFocus = useRef<HTMLElement | null>(null)
+	const cardRef = useRef<HTMLDivElement>(null)
+	const deletion = useMutation({
+		mutationFn: async () => {
+			await onDelete!(dashboard.id)
+		},
+		onError: (error) => {
+			if (!cardRef.current?.isConnected) toast.error(error.message)
+		}
+	})
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false)
 	const updatedAt = dashboard.editedAt || dashboard.updated
 
 	const handleDeleteClick = (e: React.MouseEvent) => {
 		e.stopPropagation()
 		if (!onDelete) return
+		returnFocus.current = e.currentTarget as HTMLElement
+		deletion.reset()
 		setShowDeleteConfirm(true)
-	}
-
-	const handleConfirmDelete = async () => {
-		if (!onDelete) return
-		setIsDeleting(true)
-		try {
-			await onDelete(dashboard.id)
-			setShowDeleteConfirm(false)
-		} catch (error) {
-			console.error('Failed to delete dashboard:', error)
-		}
-		setIsDeleting(false)
 	}
 
 	const itemTypes = useMemo(() => {
@@ -106,6 +114,7 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 
 	return (
 		<div
+			ref={cardRef}
 			className={`relative isolate flex ${viewMode === 'grid' ? 'min-h-[220px]' : ''} flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg transition-[border-color,box-shadow,background-color] duration-200 ease-out hover:border-pro-accent/30 hover:bg-pro-info-300/5 hover:shadow-lg hover:shadow-pro-info-300/10 dark:hover:border-pro-accent/40 dark:hover:bg-pro-info-300/10 ${className ?? ''}`}
 		>
 			<div className="h-1.5 w-full bg-linear-to-r from-pro-accent/20 via-pro-accent/10 to-transparent" />
@@ -142,13 +151,13 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 									<button
 										type="button"
 										aria-label="Delete dashboard"
-										disabled={isDeleting}
+										disabled={deletion.isPending}
 										onClick={handleDeleteClick}
 									/>
 								}
 								className="z-10 flex items-center justify-center gap-2 rounded-md bg-error/10 px-2 py-1.75 text-sm font-medium text-error"
 							>
-								{isDeleting ? <LoadingSpinner size={12} /> : <Icon name="trash-2" height={12} width={12} />}
+								{deletion.isPending ? <LoadingSpinner size={12} /> : <Icon name="trash-2" height={12} width={12} />}
 							</Tooltip>
 						</div>
 					) : null}
@@ -199,12 +208,15 @@ export function DashboardCard({ dashboard, onTagClick, onDelete, viewMode = 'gri
 			</BasicLink>
 
 			<ConfirmationModal
+				finalFocus={returnFocus}
+				fallbackFocus={fallbackFocus}
 				isOpen={showDeleteConfirm}
 				onClose={() => setShowDeleteConfirm(false)}
-				onConfirm={() => {
-					void handleConfirmDelete()
-				}}
-				title="Delete Dashboard"
+				onConfirm={() => deletion.mutate(undefined, { onSuccess: () => setShowDeleteConfirm(false) })}
+				closeOnConfirm={false}
+				pending={deletion.isPending}
+				error={deletion.error?.message}
+				title={`Delete ${dashboard.data.dashboardName || 'dashboard'}?`}
 				message="Are you sure you want to delete this dashboard? This action cannot be undone."
 				confirmText="Delete"
 				cancelText="Cancel"

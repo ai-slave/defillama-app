@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
+import { useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -8,63 +8,72 @@ import { useAddTextFile } from './hooks'
 interface AddTextContentModalProps {
 	dialogStore: Ariakit.DialogStore
 	projectId: string
+	finalFocus?: RefObject<HTMLElement | null>
 }
 
-export function AddTextContentModal({ dialogStore, projectId }: AddTextContentModalProps) {
+export function AddTextContentModal({ dialogStore, projectId, finalFocus }: AddTextContentModalProps) {
+	const nameRef = useRef<HTMLInputElement>(null)
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="fixed top-1/2 left-1/2 z-50 w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
+				initialFocus={nameRef}
+				finalFocus={finalFocus}
+				className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
 				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
 				unmountOnHide
 			>
-				<AddTextContentForm dialogStore={dialogStore} projectId={projectId} />
+				<AddTextContentForm dialogStore={dialogStore} projectId={projectId} nameRef={nameRef} />
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)
 }
 
 // Lives inside the dialog, so closing it discards the draft and the next open starts empty.
-function AddTextContentForm({ dialogStore, projectId }: AddTextContentModalProps) {
+function AddTextContentForm({
+	dialogStore,
+	projectId,
+	nameRef
+}: AddTextContentModalProps & { nameRef: RefObject<HTMLInputElement | null> }) {
+	const formRef = useRef<HTMLFormElement>(null)
 	const [name, setName] = useState('')
 	const [content, setContent] = useState('')
 	const add = useAddTextFile(projectId)
 
-	// Everything here answers "what should this dialog do now", so it goes on the mutate call rather than
-	// the mutation: a reader who closed the dialog mid-request is not told about it and does not have it
-	// reopened or hidden underneath them. The file still lands, and useAddTextFile still invalidates.
 	const submit = (e: { preventDefault: () => void }) => {
 		e.preventDefault()
 		const trimmedName = name.trim()
-		if (!trimmedName || !content) return
-		add.mutate(
-			{ name: trimmedName, content },
-			{
-				onSuccess: (result) => {
-					if (result.skipped.length > 0 && result.imported.length === 0) {
-						toast.error(`Skipped: ${result.skipped[0].reason}`)
-						return
-					}
-					toast.success('Added')
-					dialogStore.hide()
-				},
-				onError: (error) => {
-					toast.error(error instanceof Error ? error.message : 'Failed to add file')
+		if (!trimmedName || !content || add.isPending) return
+		void add.mutateAsync({ name: trimmedName, content }).then(
+			(result) => {
+				const skipped = result.skipped.length > 0 && result.imported.length === 0
+				if (!formRef.current?.isConnected) {
+					if (skipped) toast.error(result.skipped[0].reason)
+					else toast.success('Text content added')
+					return
 				}
+				if (!skipped) dialogStore.hide()
+			},
+			(error: Error) => {
+				if (!formRef.current?.isConnected) toast.error(error.message)
 			}
 		)
 	}
 
 	return (
-		<form onSubmit={submit} className="flex flex-col gap-4">
+		<form ref={formRef} onSubmit={submit} className="flex flex-col gap-4">
 			<header className="flex items-start justify-between">
 				<div>
-					<h2 className="text-base font-semibold text-primary">Add text content</h2>
+					<Ariakit.DialogHeading className="text-base font-semibold text-primary">
+						Add text content
+					</Ariakit.DialogHeading>
 					<p className="mt-0.5 text-xs text-ai-tertiary">
 						Paste a note, prompt, or any plain-text content for this project.
 					</p>
 				</div>
-				<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary">
+				<Ariakit.DialogDismiss
+					aria-label="Close text content dialog"
+					className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary"
+				>
 					<Icon name="x" height={16} width={16} />
 				</Ariakit.DialogDismiss>
 			</header>
@@ -72,7 +81,8 @@ function AddTextContentForm({ dialogStore, projectId }: AddTextContentModalProps
 			<label className="flex flex-col gap-1.5">
 				<span className="text-xs font-medium text-ai-secondary">Filename</span>
 				<input
-					autoFocus
+					ref={nameRef}
+					disabled={add.isPending}
 					required
 					maxLength={255}
 					value={name}
@@ -85,6 +95,7 @@ function AddTextContentForm({ dialogStore, projectId }: AddTextContentModalProps
 			<label className="flex flex-col gap-1.5">
 				<span className="text-xs font-medium text-ai-secondary">Content</span>
 				<textarea
+					disabled={add.isPending}
 					required
 					rows={12}
 					value={content}
@@ -94,6 +105,11 @@ function AddTextContentForm({ dialogStore, projectId }: AddTextContentModalProps
 				/>
 			</label>
 
+			{add.isError || (add.data?.skipped.length && add.data.imported.length === 0) ? (
+				<p role="alert" className="text-sm text-ai-error">
+					{add.error?.message ?? add.data?.skipped[0].reason}
+				</p>
+			) : null}
 			<footer className="mt-1 flex justify-end gap-2">
 				<Ariakit.DialogDismiss
 					type="button"
@@ -107,7 +123,7 @@ function AddTextContentForm({ dialogStore, projectId }: AddTextContentModalProps
 					className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
 				>
 					{add.isPending ? <LoadingSpinner size={12} /> : null}
-					Save
+					{add.isPending ? 'Saving…' : 'Save'}
 				</button>
 			</footer>
 		</form>

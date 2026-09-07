@@ -142,3 +142,19 @@ test('catalog navigation preserves visible search and category deselection witho
 	expect(panel.getAttribute('aria-labelledby')).toBe(button('Time Series').id)
 	expect(document.querySelectorAll('[role="tabpanel"]')).toHaveLength(1)
 })
+
+test.each([
+	['Rename First preset', 'Enter'],
+	['Rename First preset', ' '],
+	['Delete First preset', 'Enter'],
+	['Delete First preset', ' ']
+])('%s retains native %j activation instead of running the preset', async (name, key) => {
+	const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+	await act(async () => {
+		button(name).focus()
+		button(name).dispatchEvent(event)
+	})
+	expect(event.defaultPrevented).toBe(false)
+	expect(deleted).not.toHaveBeenCalled()
+	expect(renamed).not.toHaveBeenCalled()
+})

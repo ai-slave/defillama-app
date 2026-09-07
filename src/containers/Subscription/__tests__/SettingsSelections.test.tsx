@@ -15,6 +15,7 @@ let root: Root
 let container: HTMLDivElement
 const save = vi.fn()
 const close = vi.fn()
+const remove = vi.fn()
 beforeEach(() => {
 	auth.hasActiveSubscription = true
 	vi.clearAllMocks()
@@ -56,6 +57,7 @@ async function dashboard(isOpen: boolean, visibility: 'public' | 'private' = 'pu
 					onTagsChange={vi.fn()}
 					onDescriptionChange={vi.fn()}
 					onSave={save}
+					onDelete={remove}
 				/>
 			</QueryClientProvider>
 		)
@@ -154,4 +156,21 @@ test('keeps dashboard settings after save failure and closes only after retry su
 	})
 	expect(close).toHaveBeenCalledOnce()
 	expect(save.mock.calls[1][0].dashboardName).toBe('My edited name')
+})
+
+test('dashboard deletion keeps its confirmation open on error and closes settings only after success', async () => {
+	const request = Promise.withResolvers<void>()
+	remove.mockReturnValueOnce(request.promise).mockResolvedValueOnce(undefined)
+	await dashboard(true)
+	const button = (name: string) =>
+		[...document.querySelectorAll<HTMLButtonElement>('button')].find((e) => e.textContent?.trim() === name)!
+	await act(async () => button('Delete Dashboard').click())
+	await act(async () => button('Delete').click())
+	await vi.waitFor(() => expect(button('Deleting…')).toBeDefined())
+	expect(close).not.toHaveBeenCalled()
+	await act(async () => request.reject(new Error('Offline')))
+	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not delete'))
+	await act(async () => button('Delete').click())
+	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	expect(remove).toHaveBeenCalledTimes(2)
 })

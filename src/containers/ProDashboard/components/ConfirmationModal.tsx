@@ -1,7 +1,14 @@
 import * as Ariakit from '@ariakit/react'
+import type { RefObject } from 'react'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 interface ConfirmationModalProps {
+	finalFocus?: RefObject<HTMLElement | null>
+	fallbackFocus?: RefObject<HTMLElement | null>
+	pending?: boolean
+	error?: string | null
+	closeOnConfirm?: boolean
 	isOpen: boolean
 	onClose: () => void
 	onConfirm: () => void
@@ -13,6 +20,11 @@ interface ConfirmationModalProps {
 }
 
 export function ConfirmationModal({
+	finalFocus,
+	fallbackFocus,
+	pending = false,
+	error,
+	closeOnConfirm = true,
 	isOpen,
 	onClose,
 	onConfirm,
@@ -30,14 +42,22 @@ export function ConfirmationModal({
 			}}
 		>
 			<Ariakit.Dialog
+				finalFocus={finalFocus}
+				autoFocusOnHide={(element) => {
+					if (element) return true
+					fallbackFocus?.current?.focus()
+					return false
+				}}
 				className="dialog w-full max-w-sm gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
 				unmountOnHide
 				portal
-				hideOnInteractOutside
+				hideOnEscape={!pending}
+				hideOnInteractOutside={!pending}
 			>
 				<div className="mb-6 flex items-center justify-between">
 					<Ariakit.DialogHeading className="text-xl font-semibold text-pro-text-primary">{title}</Ariakit.DialogHeading>
 					<Ariakit.DialogDismiss
+						disabled={pending}
 						className="rounded-md pro-hover-bg p-1 text-pro-text-primary transition-colors"
 						aria-label="Close modal"
 					>
@@ -45,23 +65,38 @@ export function ConfirmationModal({
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<p className="mb-6 text-pro-text-secondary">{message}</p>
+				<Ariakit.DialogDescription className="mb-6 text-pro-text-secondary">{message}</Ariakit.DialogDescription>
+				{error ? (
+					<p role="alert" className="mb-4 text-sm text-error">
+						{error}
+					</p>
+				) : null}
 
 				<div className="flex justify-end gap-3">
-					<Ariakit.DialogDismiss className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary">
+					<Ariakit.DialogDismiss
+						autoFocus
+						disabled={pending}
+						className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
+					>
 						{cancelText}
 					</Ariakit.DialogDismiss>
-					<button
+					<Ariakit.Button
+						accessibleWhenDisabled
+						disabled={pending}
 						type="button"
 						onClick={() => {
 							onConfirm()
-							onClose()
+							if (closeOnConfirm) onClose()
 						}}
-						className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${confirmButtonClass}`}
+						className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${confirmButtonClass}`}
 					>
-						{confirmText}
-					</button>
+						{pending ? <LoadingSpinner size={14} /> : null}
+						{pending ? 'Deleting…' : confirmText}
+					</Ariakit.Button>
 				</div>
+				<span role="status" className="sr-only">
+					{pending ? 'Deletion in progress' : ''}
+				</span>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)

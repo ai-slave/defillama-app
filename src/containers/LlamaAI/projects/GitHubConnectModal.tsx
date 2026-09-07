@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { useMemo, useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { useId, useMemo, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -14,6 +15,7 @@ import {
 interface GitHubConnectModalProps {
 	dialogStore: Ariakit.DialogStore
 	projectId: string
+	finalFocus?: RefObject<HTMLElement | null>
 }
 
 const TRUSTED_GITHUB_INSTALL_HOSTS = new Set(['github.com', 'www.github.com'])
@@ -30,34 +32,56 @@ function getSafeGithubInstallUrl(value: string): string | null {
 	}
 }
 
-export function GitHubConnectModal({ dialogStore, projectId }: GitHubConnectModalProps) {
+export function GitHubConnectModal({ dialogStore, projectId, finalFocus }: GitHubConnectModalProps) {
+	const headingRef = useRef<HTMLHeadingElement>(null)
 	const isOpen = Ariakit.useStoreState(dialogStore, 'open')
 
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				className="fixed top-1/2 left-1/2 z-50 w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
+				initialFocus={headingRef}
+				finalFocus={finalFocus}
+				className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
 				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
 			>
-				{isOpen ? <GitHubConnectForm key={projectId} dialogStore={dialogStore} projectId={projectId} /> : null}
+				{isOpen ? (
+					<GitHubConnectForm key={projectId} dialogStore={dialogStore} projectId={projectId} headingRef={headingRef} />
+				) : null}
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)
 }
 
-function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) {
+function GitHubConnectForm({
+	dialogStore,
+	projectId,
+	headingRef
+}: GitHubConnectModalProps & { headingRef: RefObject<HTMLHeadingElement | null> }) {
+	const formRef = useRef<HTMLDivElement>(null)
+	const repoInputId = useId()
+	const branchInputId = useId()
 	const installs = useGithubInstallations()
 	const [selectedInstallId, setSelectedInstallId] = useState<number | null>(null)
 	const [selectedRepo, setSelectedRepo] = useState('')
 	const [repoQuery, setRepoQuery] = useState('')
 	const [selectedBranch, setSelectedBranch] = useState<string | null>(null)
 	const [branchQuery, setBranchQuery] = useState('')
-	const [installing, setInstalling] = useState(false)
 	const defaultInstallId = installs.data?.[0]?.installation_id ?? null
 	const effectiveInstallId = selectedInstallId ?? defaultInstallId
 	const repos = useGithubRepos(effectiveInstallId)
 	const connect = useConnectGithubSource(projectId)
 	const startInstall = useStartGithubInstall()
+	const install = useMutation({
+		mutationFn: async () => {
+			const { install_url } = await startInstall(`/ai/projects/${projectId}?tab=sources&connectGithub=1`)
+			const url = getSafeGithubInstallUrl(install_url)
+			if (!url) throw new Error('Could not start GitHub install')
+			return url
+		},
+		onError: (error) => {
+			if (!formRef.current?.isConnected) toast.error(error.message)
+		}
+	})
 
 	const filteredRepos = useMemo(() => {
 		const all = repos.data ?? []
@@ -96,6 +120,8 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 	}, [branches.data, branchQuery])
 
 	const onConnect = async () => {
+		if (connect.isPending) return
+		const isStillMounted = () => formRef.current?.isConnected === true
 		if (!selectedRepo || !effectiveBranch || !effectiveInstallId) {
 			toast.error('Choose a repository and branch before connecting.')
 			return
@@ -112,51 +138,56 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 				branch: effectiveBranch,
 				installation_id: effectiveInstallId
 			})
-			toast.success(`Connected ${repo.full_name}`)
-			dialogStore.hide()
+			if (isStillMounted()) dialogStore.hide()
+			else toast.success(`Connected ${repo.full_name}`)
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to connect repository')
+			if (!isStillMounted()) toast.error(error instanceof Error ? error.message : 'Failed to connect repository')
 		}
 	}
 
-	const onStartInstall = async () => {
-		try {
-			setInstalling(true)
-			const returnTo = `/ai/projects/${projectId}?tab=sources&connectGithub=1`
-			const { install_url } = await startInstall(returnTo)
-			const safeInstallUrl = getSafeGithubInstallUrl(install_url)
-			if (!safeInstallUrl) {
-				console.error('Rejected unsafe GitHub install URL', install_url)
-				toast.error('Could not start GitHub install')
-				setInstalling(false)
-				return
+	const onStartInstall = () => {
+		if (install.isPending) return
+		install.mutate(undefined, {
+			onSuccess: (url) => {
+				window.location.href = url
 			}
-			window.location.href = safeInstallUrl
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Could not start GitHub install')
-			setInstalling(false)
-		}
+		})
 	}
 
 	const hasInstalls = (installs.data?.length ?? 0) > 0
 
 	return (
-		<>
+		<div ref={formRef}>
 			<header className="flex items-start justify-between">
 				<div className="flex items-center gap-2">
 					<Icon name="github" height={18} width={18} />
 					<div>
-						<h2 className="text-base font-semibold text-primary">Connect a GitHub repo</h2>
+						<Ariakit.DialogHeading ref={headingRef} tabIndex={-1} className="text-base font-semibold text-primary">
+							Connect a GitHub repo
+						</Ariakit.DialogHeading>
 						<p className="mt-0.5 text-xs text-ai-tertiary">
 							Read-only access. Files are fetched on demand, never written back.
 						</p>
 					</div>
 				</div>
-				<Ariakit.DialogDismiss className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary">
+				<Ariakit.DialogDismiss
+					aria-label="Close GitHub connection dialog"
+					className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary"
+				>
 					<Icon name="x" height={16} width={16} />
 				</Ariakit.DialogDismiss>
 			</header>
 
+			{connect.error ? (
+				<p role="alert" className="mt-3 text-sm text-ai-error">
+					{connect.error.message}
+				</p>
+			) : null}
+			{install.error ? (
+				<p role="alert" className="mt-3 text-sm text-ai-error">
+					{install.error.message}
+				</p>
+			) : null}
 			<div className="mt-4 flex flex-col gap-4">
 				{installs.isLoading ? (
 					<div className="flex items-center gap-2 text-xs text-ai-tertiary">
@@ -179,10 +210,10 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 						<button
 							type="button"
 							onClick={() => void onStartInstall()}
-							disabled={installing}
+							disabled={install.isPending || connect.isPending}
 							className="flex items-center justify-center gap-2 self-start rounded-md border border-ai-inverse bg-ai-inverse px-3 py-1.5 text-xs font-medium text-ai-on-inverse transition-opacity hover:opacity-90 disabled:opacity-50"
 						>
-							{installing ? <LoadingSpinner size={12} /> : <Icon name="github" height={14} width={14} />}
+							{install.isPending ? <LoadingSpinner size={12} /> : <Icon name="github" height={14} width={14} />}
 							Install GitHub App
 						</button>
 					</div>
@@ -191,6 +222,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 						<label className="flex flex-col gap-1.5">
 							<span className="text-xs font-medium text-ai-secondary">Installation</span>
 							<select
+								disabled={connect.isPending || install.isPending}
 								value={effectiveInstallId ?? ''}
 								onChange={(e) => {
 									setSelectedInstallId(Number(e.target.value))
@@ -207,7 +239,9 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 						</label>
 
 						<div className="flex flex-col gap-1.5">
-							<span className="text-xs font-medium text-ai-secondary">Repository</span>
+							<label htmlFor={repoInputId} className="text-xs font-medium text-ai-secondary">
+								Repository
+							</label>
 							{repos.isLoading ? (
 								<div className="flex items-center gap-2 text-xs text-ai-tertiary">
 									<LoadingSpinner size={12} /> Loading repositories…
@@ -233,6 +267,8 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 									}}
 								>
 									<Ariakit.Combobox
+										id={repoInputId}
+										disabled={connect.isPending || install.isPending}
 										placeholder={selectedRepo || 'Search repositories…'}
 										className="rounded-md border border-ai-line bg-surface px-3 py-2 text-sm text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
 									/>
@@ -268,7 +304,9 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 						</div>
 
 						<div className="flex flex-col gap-1.5">
-							<span className="text-xs font-medium text-ai-secondary">Branch</span>
+							<label htmlFor={branchInputId} className="text-xs font-medium text-ai-secondary">
+								Branch
+							</label>
 							{!selectedRepo ? (
 								<div className="rounded-md border border-dashed border-ai-line px-3 py-2 text-xs text-ai-muted">
 									Pick a repository first
@@ -298,6 +336,8 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 									}}
 								>
 									<Ariakit.Combobox
+										id={branchInputId}
+										disabled={connect.isPending || install.isPending}
 										placeholder={effectiveBranch || 'Search branches…'}
 										className="rounded-md border border-ai-line bg-surface px-3 py-2 text-sm text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
 									/>
@@ -336,7 +376,7 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 						<button
 							type="button"
 							onClick={() => void onStartInstall()}
-							disabled={installing}
+							disabled={install.isPending || connect.isPending}
 							className="self-start text-xs text-brand underline-offset-2 hover:underline disabled:opacity-50"
 						>
 							Manage installations →
@@ -355,15 +395,15 @@ function GitHubConnectForm({ dialogStore, projectId }: GitHubConnectModalProps) 
 						<button
 							type="button"
 							onClick={() => void onConnect()}
-							disabled={!repoMeta || !effectiveBranch || !effectiveInstallId || connect.isPending}
+							disabled={!repoMeta || !effectiveBranch || !effectiveInstallId || connect.isPending || install.isPending}
 							className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{connect.isPending ? <LoadingSpinner size={12} /> : null}
-							Connect
+							{connect.isPending ? 'Connecting…' : 'Connect'}
 						</button>
 					) : null}
 				</footer>
 			</div>
-		</>
+		</div>
 	)
 }

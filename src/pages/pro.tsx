@@ -316,10 +316,6 @@ function ProContent({
 		}
 	}, [comparisonPreset, createDashboardDialogStore, router, routerIsReady, routerQuery])
 
-	const handleDeleteDashboard = async (dashboardId: string) => {
-		await deleteDashboard(dashboardId)
-	}
-
 	return (
 		<Tabs value={activeTab} onValueChange={switchTab} values={availableTabs}>
 			<div className="flex flex-1 flex-col gap-4 pro-dashboard p-2 lg:px-0">
@@ -408,9 +404,7 @@ function ProContent({
 							dashboards={myDashboards}
 							isLoading={isLoadingMyDashboards}
 							onCreateNew={() => createDashboardDialogStore.show()}
-							onDeleteDashboard={(dashboardId) => {
-								void handleDeleteDashboard(dashboardId)
-							}}
+							onDeleteDashboard={deleteDashboard}
 						/>
 
 						{myDashboardsTotalPages > 1 ? (

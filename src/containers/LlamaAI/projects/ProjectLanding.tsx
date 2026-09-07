@@ -362,6 +362,7 @@ export function ProjectLanding({
 							{tab === 'sources' ? (
 								<section>
 									<ProjectFilesPanel
+										key={projectId}
 										projectId={projectId}
 										autoOpenGitHub={connectGithubValue === '1'}
 										projectBytesUsed={projectBytesUsed}
@@ -423,14 +424,14 @@ export function ProjectLanding({
 						}}
 					/>
 					<CreateProjectModal
-						key={projectId}
+						key={`rename-${projectId}`}
 						finalFocus={projectMenuRef}
 						dialogStore={renameStore}
 						mode="rename"
 						project={project.data}
 					/>
 					<DeleteProjectModal
-						key={projectId}
+						key={`delete-${projectId}`}
 						finalFocus={projectMenuRef}
 						dialogStore={deleteStore}
 						project={project.data}

@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { useId, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -47,7 +48,13 @@ function DashboardSettingsModalInner({
 	const [localVisibility, setLocalVisibility] = useState(visibility)
 	const [localTags, setLocalTags] = useState(tags)
 	const save = useMutation({ mutationFn: (overrides: Parameters<typeof onSave>[0]) => onSave(overrides) })
-	const deletion = useMutation({ mutationFn: (idToDelete: string) => onDelete!(idToDelete) })
+	const formRef = useRef<HTMLFormElement>(null)
+	const deletion = useMutation({
+		mutationFn: (idToDelete: string) => onDelete!(idToDelete),
+		onError: (error) => {
+			if (!formRef.current?.isConnected) toast.error(error.message)
+		}
+	})
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 	const tagInputRef = useRef<HTMLInputElement>(null)
 	const charCountRef = useRef<HTMLSpanElement>(null)
@@ -95,6 +102,7 @@ function DashboardSettingsModalInner({
 	}
 
 	const handleDeleteClick = () => {
+		deletion.reset()
 		setShowDeleteConfirm(true)
 	}
 
@@ -131,13 +139,16 @@ function DashboardSettingsModalInner({
 							render={<h2>Dashboard Settings</h2>}
 							className="text-xl font-semibold text-pro-text-primary"
 						/>
-						<Ariakit.DialogDismiss className="rounded-md pro-hover-bg p-1 transition-colors">
+						<Ariakit.DialogDismiss
+							aria-label="Close dashboard settings"
+							className="rounded-md pro-hover-bg p-1 transition-colors"
+						>
 							<Icon name="x" height={20} width={20} className="text-pro-text-secondary" />
 							<span className="sr-only">Close dialog</span>
 						</Ariakit.DialogDismiss>
 					</div>
 
-					<form onSubmit={handleSave}>
+					<form ref={formRef} onSubmit={handleSave}>
 						<fieldset disabled={save.isPending || deletion.isPending} className="min-w-0 space-y-6">
 							<div>
 								<label
@@ -311,7 +322,7 @@ function DashboardSettingsModalInner({
 								</div>
 							) : null}
 						</fieldset>
-						{failureMessage ? (
+						{failureMessage && !showDeleteConfirm ? (
 							<p role="alert" className="mt-4 text-sm text-error">
 								{failureMessage}
 							</p>
@@ -339,9 +350,10 @@ function DashboardSettingsModalInner({
 			<ConfirmationModal
 				isOpen={showDeleteConfirm}
 				onClose={() => setShowDeleteConfirm(false)}
-				onConfirm={() => {
-					void handleConfirmDelete()
-				}}
+				onConfirm={handleConfirmDelete}
+				closeOnConfirm={false}
+				pending={deletion.isPending}
+				error={deletion.isError ? 'Could not delete the dashboard. Please try again.' : null}
 				title="Delete Dashboard"
 				message="Are you sure you want to delete this dashboard? This action cannot be undone."
 				confirmText="Delete"

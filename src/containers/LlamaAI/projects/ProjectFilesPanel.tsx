@@ -1,7 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import toast from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
@@ -9,7 +8,8 @@ import { AddTextContentModal } from './AddTextContentModal'
 import { formatProjectBytes } from './format'
 import { GitHubConnectModal } from './GitHubConnectModal'
 import { useDeleteProjectFile, useDisconnectSource, useProjectFiles, useProjectSources } from './hooks'
-import type { ProjectFile, ProjectSource } from './types'
+import { ProjectSourceDeleteDialog } from './ProjectSourceDeleteDialog'
+import type { ProjectSource } from './types'
 import { PROJECT_FILE_ACCEPT, useProjectFileUpload } from './useProjectFileUpload'
 
 const EMPTY_PROJECT_SOURCES: Array<ProjectSource> = []
@@ -40,6 +40,13 @@ export function ProjectFilesPanel({
 	const deleteFile = useDeleteProjectFile(projectId)
 	const disconnect = useDisconnectSource(projectId)
 
+	const addButtonRef = useRef<HTMLButtonElement>(null)
+	const [deleteTarget, setDeleteTarget] = useState<{
+		kind: 'file' | 'source'
+		id: string
+		name: string
+		trigger: HTMLButtonElement
+	} | null>(null)
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const addTextStore = Ariakit.useDialogStore()
 	const githubStore = Ariakit.useDialogStore()
@@ -73,26 +80,6 @@ export function ProjectFilesPanel({
 		void handleFiles(files)
 	}
 
-	const onDelete = async (file: ProjectFile) => {
-		if (!window.confirm(`Delete ${file.path}?`)) return
-		try {
-			await deleteFile.mutateAsync(file.id)
-			toast.success('File deleted')
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to delete')
-		}
-	}
-
-	const onDisconnectSource = async (source: ProjectSource) => {
-		if (!window.confirm(`Disconnect ${source.mount_path}?`)) return
-		try {
-			await disconnect.mutateAsync(source.id)
-			toast.success('Source disconnected')
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to disconnect')
-		}
-	}
-
 	const files = filesQuery.data?.files ?? []
 	const githubSources = sources.filter((s) => s.adapter_type === 'github')
 
@@ -101,7 +88,11 @@ export function ProjectFilesPanel({
 			<header className="flex items-center justify-between">
 				<h3 className="text-[13px] font-semibold text-primary">Files</h3>
 				<Ariakit.MenuProvider placement="bottom-end">
-					<Ariakit.MenuButton className="flex items-center gap-1.5 rounded-md border border-brand bg-brand/12 px-2 py-1 text-xs font-medium text-brand hover:bg-brand hover:text-ai-white">
+					<Ariakit.MenuButton
+						ref={addButtonRef}
+						aria-label="Add project source"
+						className="flex items-center gap-1.5 rounded-md border border-brand bg-brand/12 px-2 py-1 text-xs font-medium text-brand hover:bg-brand hover:text-ai-white"
+					>
 						<Icon name="plus" height={12} width={12} />
 						Add
 					</Ariakit.MenuButton>
@@ -189,8 +180,17 @@ export function ProjectFilesPanel({
 									render={
 										<button
 											type="button"
-											onClick={() => void onDisconnectSource(source)}
-											className="shrink-0 rounded-sm p-1 text-ai-muted opacity-0 transition-opacity group-hover:opacity-100 hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid"
+											aria-label={`Disconnect ${source.mount_path}`}
+											onClick={(event) => {
+												disconnect.reset()
+												setDeleteTarget({
+													kind: 'source',
+													id: source.id,
+													name: source.mount_path,
+													trigger: event.currentTarget
+												})
+											}}
+											className="flex size-8 shrink-0 items-center justify-center rounded-sm text-ai-muted transition-opacity hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid sm:size-6 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
 										/>
 									}
 								>
@@ -245,8 +245,17 @@ export function ProjectFilesPanel({
 											render={
 												<button
 													type="button"
-													onClick={() => void onDelete(file)}
-													className="shrink-0 rounded-sm p-1 text-ai-muted opacity-0 transition-opacity group-hover:opacity-100 hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid"
+													aria-label={`Delete ${file.path}`}
+													onClick={(event) => {
+														deleteFile.reset()
+														setDeleteTarget({
+															kind: 'file',
+															id: file.id,
+															name: file.path,
+															trigger: event.currentTarget
+														})
+													}}
+													className="flex size-8 shrink-0 items-center justify-center rounded-sm text-ai-muted transition-opacity hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid sm:size-6 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
 												/>
 											}
 										>
@@ -266,8 +275,16 @@ export function ProjectFilesPanel({
 				</p>
 			) : null}
 
-			<AddTextContentModal dialogStore={addTextStore} projectId={projectId} />
-			<GitHubConnectModal dialogStore={githubStore} projectId={projectId} />
+			<AddTextContentModal dialogStore={addTextStore} projectId={projectId} finalFocus={addButtonRef} />
+			<GitHubConnectModal dialogStore={githubStore} projectId={projectId} finalFocus={addButtonRef} />
+			{deleteTarget ? (
+				<ProjectSourceDeleteDialog
+					target={deleteTarget}
+					mutation={deleteTarget.kind === 'file' ? deleteFile : disconnect}
+					fallbackFocus={addButtonRef}
+					onClose={() => setDeleteTarget(null)}
+				/>
+			) : null}
 		</section>
 	)
 }

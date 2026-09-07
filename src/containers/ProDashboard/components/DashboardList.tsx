@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Icon } from '~/ui/Icon'
 import type { Dashboard } from '../dashboardTypes'
 import { DashboardCard } from './DashboardCard'
@@ -7,10 +8,11 @@ interface DashboardListProps {
 	dashboards: Array<Dashboard>
 	isLoading: boolean
 	onCreateNew: () => void
-	onDeleteDashboard?: (dashboardId: string) => void
+	onDeleteDashboard?: (dashboardId: string) => Promise<void>
 }
 
 export function DashboardList({ dashboards, isLoading, onCreateNew, onDeleteDashboard }: DashboardListProps) {
+	const listRef = useRef<HTMLDivElement>(null)
 	if (isLoading) {
 		return (
 			<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
@@ -20,7 +22,7 @@ export function DashboardList({ dashboards, isLoading, onCreateNew, onDeleteDash
 	}
 
 	return (
-		<>
+		<div ref={listRef} tabIndex={-1} aria-label="Your dashboards">
 			{dashboards.length === 0 ? (
 				<div className="flex flex-1 flex-col items-center justify-center gap-1 rounded-md border border-pro-cards-border bg-pro-cards-bg px-1 py-12">
 					<Icon name="layers" height={48} width={48} className="text-pro-text-label" />
@@ -38,10 +40,16 @@ export function DashboardList({ dashboards, isLoading, onCreateNew, onDeleteDash
 			) : (
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 					{dashboards.map((dashboard) => (
-						<DashboardCard key={dashboard.id} dashboard={dashboard} onDelete={onDeleteDashboard} viewMode="grid" />
+						<DashboardCard
+							fallbackFocus={listRef}
+							key={dashboard.id}
+							dashboard={dashboard}
+							onDelete={onDeleteDashboard}
+							viewMode="grid"
+						/>
 					))}
 				</div>
 			)}
-		</>
+		</div>
 	)
 }
