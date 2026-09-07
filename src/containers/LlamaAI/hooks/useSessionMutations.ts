@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
-import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { llamaAIRequest } from '~/containers/LlamaAI/api/transport'
 import {
@@ -12,7 +11,9 @@ import {
 	type SessionListInfiniteData,
 	updateSessionInInfiniteData
 } from '~/containers/LlamaAI/hooks/sessionListCache'
-import { isProjectSessionsQueryKey, projectSessionsKey } from '~/containers/LlamaAI/projects/queryKeys'
+import { mutationActionError, useInvalidateProjectSessions } from '~/containers/LlamaAI/hooks/sessionMutationCache'
+import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
+import { projectSessionsKey } from '~/containers/LlamaAI/projects/queryKeys'
 import type { ProjectChatSession } from '~/containers/LlamaAI/projects/types'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { placeholderTitleFromMessage } from '~/containers/LlamaAI/utils/sessionTitle'
@@ -105,24 +106,11 @@ function assertSwitchActiveLeafResponse(response: unknown): asserts response is 
 	}
 }
 
-function mutationActionError(action: string, error: unknown) {
-	return new Error(`${action}: ${getErrorMessage(error)}`)
-}
-
 export function useSessionMutations() {
 	const { user, authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 
-	const invalidateProjectSessions = useCallback(
-		(projectId?: string | null) => {
-			if (projectId) {
-				void queryClient.invalidateQueries({ queryKey: projectSessionsKey(projectId) })
-				return
-			}
-			void queryClient.invalidateQueries({ predicate: (query) => isProjectSessionsQueryKey(query.queryKey) })
-		},
-		[queryClient]
-	)
+	const invalidateProjectSessions = useInvalidateProjectSessions()
 
 	const prependProjectSession = useCallback(
 		(projectId: string, session: ProjectChatSession) => {
@@ -271,43 +259,7 @@ export function useSessionMutations() {
 	})
 
 	// Delete from both the backend and the optimistic sidebar/session cache.
-	const deleteSessionMutation = useMutation({
-		mutationFn: async ({ sessionId }: { sessionId: string; projectId?: string | null }) => {
-			try {
-				await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}`, {
-					method: 'DELETE'
-				})
-			} catch (error) {
-				console.log('Failed to delete session:', error)
-				throw new Error(`Failed to delete session: ${getErrorMessage(error)}`)
-			}
-		},
-		onMutate: async ({ sessionId }) => {
-			// Cancel any outgoing refetches
-			await queryClient.cancelQueries({ queryKey: [SESSIONS_QUERY_KEY, user?.id] })
-
-			// Snapshot previous value for rollback
-			const previous = queryClient.getQueryData<SessionListInfiniteData>([SESSIONS_QUERY_KEY, user?.id])
-
-			// Optimistically update
-			queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], (old: SessionListInfiniteData | undefined) =>
-				removeSessionFromInfiniteData(old, sessionId)
-			)
-
-			return { previous }
-		},
-		onError: (_err, _sessionId, context) => {
-			// Rollback to previous state on error
-			if (context?.previous) {
-				queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], context.previous)
-			}
-		},
-		onSettled: (_data, _error, variables) => {
-			// Always invalidate after mutation settles (success or error)
-			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
-			if (variables.projectId) invalidateProjectSessions(variables.projectId)
-		}
-	})
+	const deleteSessionMutation = useDeleteSession()
 
 	const bulkDeleteSessionsMutation = useMutation({
 		mutationFn: async (sessionIds: Array<string>) => {
@@ -330,81 +282,6 @@ export function useSessionMutations() {
 			return { previous }
 		},
 		onError: (_err, _sessionIds, context) => {
-			if (context?.previous) {
-				queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], context.previous)
-			}
-		},
-		onSettled: () => {
-			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
-			invalidateProjectSessions()
-		}
-	})
-
-	// Rename a session optimistically so the sidebar updates immediately.
-	const updateTitleMutation = useMutation({
-		mutationFn: async ({ sessionId, title }: { sessionId: string; title: string; projectId?: string | null }) => {
-			try {
-				await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}/title`, {
-					method: 'PUT',
-					json: { title }
-				})
-			} catch (error) {
-				throw mutationActionError('Failed to update session title', error)
-			}
-		},
-		onMutate: async ({ sessionId, title }) => {
-			// Cancel any outgoing refetches
-			await queryClient.cancelQueries({ queryKey: [SESSIONS_QUERY_KEY, user?.id] })
-
-			// Snapshot previous value for rollback
-			const previous = queryClient.getQueryData<SessionListInfiniteData>([SESSIONS_QUERY_KEY, user?.id])
-
-			// Optimistically update the global session cache
-			queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], (old: SessionListInfiniteData | undefined) =>
-				updateSessionInInfiniteData(old, sessionId, (session) => ({ ...session, title }))
-			)
-
-			return { previous }
-		},
-		onError: (_err, _variables, context) => {
-			// Rollback to previous state on error
-			if (context?.previous) {
-				queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], context.previous)
-			}
-		},
-		onSettled: (_data, _error, variables) => {
-			if (variables.projectId) {
-				invalidateProjectSessions(variables.projectId)
-				return
-			}
-			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
-		}
-	})
-
-	const pinSessionMutation = useMutation({
-		mutationFn: async (sessionId: string) => {
-			try {
-				await llamaAIRequest(authorizedFetch, `/user/sessions/${sessionId}/pin`, {
-					method: 'PUT'
-				})
-			} catch (error) {
-				throw mutationActionError('Failed to toggle pin', error)
-			}
-		},
-		onMutate: async (sessionId) => {
-			await queryClient.cancelQueries({ queryKey: [SESSIONS_QUERY_KEY, user?.id] })
-			const previous = queryClient.getQueryData<SessionListInfiniteData>([SESSIONS_QUERY_KEY, user?.id])
-			queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], (old: SessionListInfiniteData | undefined) =>
-				updateSessionInInfiniteData(old, sessionId, (session) => ({
-					...session,
-					isPinned: !session.isPinned,
-					pinnedAt: !session.isPinned ? new Date().toISOString() : undefined
-				}))
-			)
-			return { previous }
-		},
-		onError: (error, _sessionId, context) => {
-			toast.error(error.message)
 			if (context?.previous) {
 				queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], context.previous)
 			}
@@ -566,9 +443,7 @@ export function useSessionMutations() {
 		loadNewerMessages,
 		switchActiveLeaf: switchActiveLeafMutation,
 		deleteSession: deleteSessionMutation,
-		updateTitle: updateTitleMutation,
 		isRestoringSession: restoreSessionMutation.isPending,
-		bulkDeleteSessions: bulkDeleteSessionsMutation,
-		pinSession: pinSessionMutation
+		bulkDeleteSessions: bulkDeleteSessionsMutation
 	}
 }

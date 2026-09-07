@@ -4,33 +4,33 @@ import { memo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
+import { llamaAIRequest } from '~/containers/LlamaAI/api/transport'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
+import { updateSessionInInfiniteData, type SessionListInfiniteData } from '~/containers/LlamaAI/hooks/sessionListCache'
 import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUnseenCompletion'
 import { useClickOutside } from '~/containers/LlamaAI/hooks/useClickOutside'
 import { SESSIONS_QUERY_KEY } from '~/containers/LlamaAI/hooks/useSessionList'
+import { useUpdateSessionTitle } from '~/containers/LlamaAI/hooks/useUpdateSessionTitle'
 import { MoveToProjectMenuItem } from '~/containers/LlamaAI/projects/MoveToProjectMenu'
+import { isProjectSessionsQueryKey } from '~/containers/LlamaAI/projects/queryKeys'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { getErrorMessage } from '~/utils/error'
 
 interface AgenticSessionItemProps {
 	session: ChatSession
 	isActive: boolean
 	onSessionSelect: (sessionId: string) => void
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
-	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<void>
 	isRestoring: boolean
-	isDeleting: boolean
-	isUpdatingTitle: boolean
 	style?: React.CSSProperties
 	selectMode?: boolean
 	isSelected?: boolean
 	onToggleSelect?: (sessionId: string) => void
-	onPinSession?: (sessionId: string) => void
-	isPinningSession?: boolean
 }
 
 // Rendered from a list in the projects sidebar, where the compiler caches the row callback rather than
@@ -40,18 +40,13 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	isActive,
 	onSessionSelect,
 	onDelete,
-	onUpdateTitle,
 	isRestoring,
-	isDeleting,
-	isUpdatingTitle,
 	style,
 	selectMode,
 	isSelected,
-	onToggleSelect,
-	onPinSession,
-	isPinningSession
+	onToggleSelect
 }: AgenticSessionItemProps) {
-	const { authorizedFetch } = useAuthContext()
+	const { user, authorizedFetch } = useAuthContext()
 	const { hideSidebar } = useLlamaAIChrome()
 	const queryClient = useQueryClient()
 	const clearUnseenCompletion = useClearUnseenCompletion()
@@ -79,6 +74,46 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 		}
 	})
 
+	const updateTitle = useUpdateSessionTitle()
+	// The request belongs to the owner: deleting removes the row from the session cache, so a callback
+	// passed to mutate would be dropped when this row unmounts. Only the pending state is local.
+	const deletion = useMutation({ mutationFn: () => onDelete(session.sessionId, session.projectId) })
+	const isDeleting = deletion.isPending
+	const isUpdatingTitle = updateTitle.isPending
+
+	const sessionsKey = [SESSIONS_QUERY_KEY, user?.id]
+	// Owned by the row so an in-flight pin disables only this menu item. Lifted to the sidebar it would
+	// have to travel back down as a busy flag, blocking every other session and re-rendering the list.
+	const pinSession = useMutation({
+		mutationFn: async () => {
+			try {
+				await llamaAIRequest(authorizedFetch, `/user/sessions/${session.sessionId}/pin`, { method: 'PUT' })
+			} catch (error) {
+				throw new Error(`Failed to toggle pin: ${getErrorMessage(error)}`)
+			}
+		},
+		onMutate: async () => {
+			await queryClient.cancelQueries({ queryKey: sessionsKey })
+			const previous = queryClient.getQueryData<SessionListInfiniteData>(sessionsKey)
+			queryClient.setQueryData(sessionsKey, (old: SessionListInfiniteData | undefined) =>
+				updateSessionInInfiniteData(old, session.sessionId, (current) => ({
+					...current,
+					isPinned: !current.isPinned,
+					pinnedAt: !current.isPinned ? new Date().toISOString() : undefined
+				}))
+			)
+			return { previous }
+		},
+		onError: (error, _variables, context) => {
+			toast.error(error.message)
+			if (context?.previous) queryClient.setQueryData(sessionsKey, context.previous)
+		},
+		onSettled: () => {
+			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
+			void queryClient.invalidateQueries({ predicate: (query) => isProjectSessionsQueryKey(query.queryKey) })
+		}
+	})
+
 	useClickOutside(formRef, () => setIsEditing(false), isEditing)
 
 	const handleSessionClick = (sessionId: string) => {
@@ -91,37 +126,27 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 		}
 	}
 
-	const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		const form = e.currentTarget
-		const title = (form.elements.namedItem('newTitle') as HTMLInputElement | null)?.value ?? ''
-		if (title.trim() && title !== session.title) {
-			try {
-				await onUpdateTitle({ sessionId: session.sessionId, title: title.trim(), projectId: session.projectId })
-				setIsEditing(false)
-			} catch (error) {
-				console.error('Failed to update title:', error)
-			}
-		}
+		const title = (e.currentTarget.elements.namedItem('newTitle') as HTMLInputElement | null)?.value.trim() ?? ''
+		if (!title || title === session.title) return
+		updateTitle.mutate(
+			{ sessionId: session.sessionId, title, projectId: session.projectId },
+			{ onSuccess: () => setIsEditing(false) }
+		)
 	}
 
-	const handleDelete = async () => {
-		if (window.confirm('Are you sure you want to delete this chat?')) {
-			trackUmamiEvent('llamaai-session-delete')
-			try {
-				await onDelete(session.sessionId, session.projectId)
-				setIsEditing(false)
-			} catch (error) {
-				console.error('Failed to delete session:', error)
-			}
-		}
+	const handleDelete = () => {
+		if (!window.confirm('Are you sure you want to delete this chat?')) return
+		trackUmamiEvent('llamaai-session-delete')
+		deletion.mutate(undefined, { onSuccess: () => setIsEditing(false) })
 	}
 
 	if (isEditing) {
 		return (
 			<form
 				ref={formRef}
-				onSubmit={(e) => void handleSave(e)}
+				onSubmit={handleSave}
 				className="group relative -mx-1.5 flex items-center gap-0.5 rounded-sm text-xs hover:bg-ai-surface-muted data-[active=true]:bg-brand data-[active=true]:text-ai-white"
 				style={style}
 			>
@@ -250,9 +275,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							<Icon name="x" className="size-5" />
 						</Ariakit.PopoverDismiss>
 						<Ariakit.MenuItem
-							disabled={!onPinSession || isPinningSession}
+							disabled={pinSession.isPending}
 							onClick={() => {
-								onPinSession?.(session.sessionId)
+								pinSession.mutate()
 							}}
 							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted data-active-item:bg-brand-muted"
 						>
@@ -315,9 +340,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						</Ariakit.MenuItem>
 						<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
 						<Ariakit.MenuItem
-							onClick={() => {
-								void handleDelete()
-							}}
+							onClick={handleDelete}
 							disabled={isUpdatingTitle || isDeleting || isRestoring || isTogglingVisibility}
 							data-deleting={isDeleting}
 							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-ai-error-vivid/10 hover:text-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-error data-active-item:bg-ai-error-vivid/10 data-active-item:text-error data-[deleting=true]:bg-ai-error-vivid/10 data-[deleting=true]:text-error"

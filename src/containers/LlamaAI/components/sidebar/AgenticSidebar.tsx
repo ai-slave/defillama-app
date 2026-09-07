@@ -42,15 +42,10 @@ interface AgenticSidebarProps {
 	onSessionSelect: (sessionId: string) => void
 	onNewChat: () => void
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
-	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<void>
-	isDeletingSession: boolean
-	isUpdatingTitle: boolean
 	shouldAnimate?: boolean
 	onOpenSettings?: () => void
 	hasCustomInstructions?: boolean
 	onBulkDelete?: (sessionIds: Array<string>) => Promise<void>
-	onPinSession?: (sessionId: string) => void
-	isPinningSession?: boolean
 	onSearchMatchClick?: (sessionId: string, messageId: string) => void
 	hasMoreSessions?: boolean
 	isFetchingMoreSessions?: boolean
@@ -85,31 +80,21 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 	itemStyle,
 	currentSessionId,
 	restoringSessionId,
-	deletingSessionId,
-	updatingTitleSessionId,
 	onSessionSelect,
 	onDelete,
-	onUpdateTitle,
 	selectMode,
 	isSelected,
-	onToggleSelect,
-	onPinSession,
-	isPinningSession
+	onToggleSelect
 }: {
 	item: VirtualItem
 	itemStyle: CSSProperties
 	currentSessionId: string | null
 	restoringSessionId: string | null
-	deletingSessionId: string | null
-	updatingTitleSessionId: string | null
 	onSessionSelect: (sessionId: string) => void
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
-	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<void>
 	selectMode: boolean
 	isSelected: boolean
 	onToggleSelect: (sessionId: string) => void
-	onPinSession?: (sessionId: string) => void
-	isPinningSession?: boolean
 }) {
 	if (item.type === 'header') {
 		return (
@@ -151,16 +136,11 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 			isActive={item.session.sessionId === currentSessionId}
 			onSessionSelect={onSessionSelect}
 			onDelete={onDelete}
-			onUpdateTitle={onUpdateTitle}
 			isRestoring={restoringSessionId === item.session.sessionId}
-			isDeleting={deletingSessionId === item.session.sessionId}
-			isUpdatingTitle={updatingTitleSessionId === item.session.sessionId}
 			style={itemStyle}
 			selectMode={selectMode}
 			isSelected={isSelected}
 			onToggleSelect={onToggleSelect}
-			onPinSession={onPinSession}
-			isPinningSession={isPinningSession}
 		/>
 	)
 })
@@ -174,15 +154,10 @@ export function AgenticSidebar({
 	onSessionSelect,
 	onNewChat,
 	onDelete,
-	onUpdateTitle,
-	isDeletingSession: _isDeletingSession,
-	isUpdatingTitle: _isUpdatingTitle,
 	shouldAnimate = false,
 	onOpenSettings,
 	hasCustomInstructions,
 	onBulkDelete,
-	onPinSession,
-	isPinningSession,
 	onSearchMatchClick,
 	hasMoreSessions = false,
 	isFetchingMoreSessions = false,
@@ -198,8 +173,6 @@ export function AgenticSidebar({
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const projectsSectionRef = useRef<HTMLDivElement>(null)
 	const [projectsSectionHeight, setProjectsSectionHeight] = useState(0)
-	const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null)
-	const [updatingTitleSessionId, setUpdatingTitleSessionId] = useState<string | null>(null)
 	const [selectMode, setSelectMode] = useState(false)
 	const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set())
 	const { balance, totalAvailable } = useAiBalance()
@@ -242,26 +215,6 @@ export function AgenticSidebar({
 		setSelectMode(false)
 		setSelectedSessionIds(new Set())
 	}, [])
-
-	const handleDelete = useCallback(
-		(sessionId: string, projectId?: string | null) => {
-			setDeletingSessionId(sessionId)
-			return onDelete(sessionId, projectId).finally(() => {
-				setDeletingSessionId(null)
-			})
-		},
-		[onDelete]
-	)
-
-	const handleUpdateTitle = useCallback(
-		(args: { sessionId: string; title: string; projectId?: string | null }) => {
-			setUpdatingTitleSessionId(args.sessionId)
-			return onUpdateTitle(args).finally(() => {
-				setUpdatingTitleSessionId(null)
-			})
-		},
-		[onUpdateTitle]
-	)
 
 	const [nowMs] = useState(() => Date.now())
 	const trimmedSearchQuery = searchQuery.trim()
@@ -495,13 +448,8 @@ export function AgenticSidebar({
 						currentSessionProjectId={currentSessionProjectId}
 						currentSessionId={currentSessionId}
 						restoringSessionId={restoringSessionId}
-						deletingSessionId={deletingSessionId}
-						updatingTitleSessionId={updatingTitleSessionId}
 						onSessionSelect={onSessionSelect}
-						onDelete={handleDelete}
-						onUpdateTitle={handleUpdateTitle}
-						onPinSession={onPinSession}
-						isPinningSession={isPinningSession}
+						onDelete={onDelete}
 					/>
 					{onOpenAlerts ? (
 						<div className="px-4 pt-1">
@@ -586,16 +534,11 @@ export function AgenticSidebar({
 										itemStyle={itemStyle}
 										currentSessionId={currentSessionId}
 										restoringSessionId={restoringSessionId}
-										deletingSessionId={deletingSessionId}
-										updatingTitleSessionId={updatingTitleSessionId}
 										onSessionSelect={onSessionSelect}
-										onDelete={handleDelete}
-										onUpdateTitle={handleUpdateTitle}
+										onDelete={onDelete}
 										selectMode={selectMode}
 										isSelected={item.type === 'session' && selectedSessionIds.has(item.session.sessionId)}
 										onToggleSelect={toggleSelect}
-										onPinSession={onPinSession}
-										isPinningSession={isPinningSession}
 									/>
 								)
 							})}

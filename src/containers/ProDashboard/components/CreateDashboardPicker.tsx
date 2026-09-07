@@ -59,6 +59,18 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 		})
 	}
 	const [comparisonPresetHandled, setComparisonPresetHandled] = useState(false)
+	// The free-tier limit is refused before the request, so its message is the only thing that tells the
+	// user why, and that retrying will not help.
+	const creationFeedback = creation.isPending ? (
+		<p role="status" className="px-6 py-3 text-sm">
+			Creating dashboard…
+		</p>
+	) : creation.isError ? (
+		<p role="alert" className="px-6 py-3 text-sm text-error">
+			{creation.error.message}
+			<span className="block text-pro-text-tertiary">Your choices are still here.</span>
+		</p>
+	) : null
 	const { hasActiveSubscription } = useAuthContext()
 	const { protocols, chains } = useProDashboardCatalog()
 	const { protocolsBySlug } = useAppMetadata()
@@ -157,16 +169,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 					</div>
 					<CreateDashboardModalContent onCreate={handleCreateFromScratch} />
 				</fieldset>
-				{creation.isPending ? (
-					<p role="status" className="px-6 py-3 text-sm">
-						Creating dashboard…
-					</p>
-				) : null}
-				{creation.isError ? (
-					<p role="alert" className="px-6 py-3 text-sm text-error">
-						Could not create the dashboard. Your choices are still here; please try again.
-					</p>
-				) : null}
+				{creationFeedback}
 			</Ariakit.Dialog>
 		)
 	}
@@ -212,16 +215,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 						/>
 					</Suspense>
 				</fieldset>
-				{creation.isPending ? (
-					<p role="status" className="px-6 py-3 text-sm">
-						Creating dashboard…
-					</p>
-				) : null}
-				{creation.isError ? (
-					<p role="alert" className="px-6 py-3 text-sm text-error">
-						Could not create the dashboard. Your choices are still here; please try again.
-					</p>
-				) : null}
+				{creationFeedback}
 			</Ariakit.Dialog>
 		)
 	}
@@ -300,16 +294,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 					</div>
 				</div>
 			</fieldset>
-			{creation.isPending ? (
-				<p role="status" className="px-6 py-3 text-sm">
-					Creating dashboard…
-				</p>
-			) : null}
-			{creation.isError ? (
-				<p role="alert" className="px-6 py-3 text-sm text-error">
-					Could not create the dashboard. Your choices are still here; please try again.
-				</p>
-			) : null}
+			{creationFeedback}
 		</Ariakit.Dialog>
 	)
 }

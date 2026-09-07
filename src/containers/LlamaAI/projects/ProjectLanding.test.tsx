@@ -30,7 +30,10 @@ vi.mock('./CreateProjectModal', () => ({ CreateProjectModal: () => null }))
 vi.mock('./DeleteProjectModal', () => ({ DeleteProjectModal: () => null }))
 vi.mock('./AddSourcesMenu', () => ({ AddSourcesMenu: () => null }))
 vi.mock('~/containers/LlamaAI/hooks/useClearUnseenCompletion', () => ({ useClearUnseenCompletion: () => vi.fn() }))
-vi.mock('~/containers/LlamaAI/hooks/useSessionMutations', () => ({ useSessionMutations: () => ({}) }))
+vi.mock('~/containers/LlamaAI/hooks/useDeleteSession', () => ({ useDeleteSession: () => ({ isPending: false }) }))
+vi.mock('~/containers/LlamaAI/hooks/useUpdateSessionTitle', () => ({
+	useUpdateSessionTitle: () => ({ isPending: false })
+}))
 vi.mock('~/containers/LlamaAI/hooks/usePromptDraft', () => ({
 	usePromptDraft: () => {
 		const [prompt, setPrompt] = useState('')

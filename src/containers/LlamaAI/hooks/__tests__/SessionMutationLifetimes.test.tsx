@@ -63,35 +63,6 @@ async function mount() {
 		)
 	)
 }
-const settle = () =>
-	act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 0))
-	})
-test('a failed pin restores the cached session, exposes failure, and can retry', async () => {
-	let reject!: (error: Error) => void
-	api.request
-		.mockImplementationOnce(
-			() =>
-				new Promise((_, fail) => {
-					reject = fail
-				})
-		)
-		.mockResolvedValueOnce({})
-	await mount()
-	await act(async () => mutations.pinSession.mutate('chat'))
-	await settle()
-	expect(mutations.pinSession.isPending).toBe(true)
-	expect(client.getQueryData<SessionListInfiniteData>(key)!.pages[0].sessions[0].isPinned).toBe(true)
-	await act(async () => reject(new Error('Unavailable')))
-	await settle()
-	expect(mutations.pinSession.isError).toBe(true)
-	expect(client.getQueryData(key)).toEqual(initial)
-	expect(api.toastError).toHaveBeenCalledExactlyOnceWith('Failed to toggle pin: Unavailable')
-	await act(async () => mutations.pinSession.mutate('chat'))
-	await settle()
-	expect(mutations.pinSession.isSuccess).toBe(true)
-	expect(client.getQueryData<SessionListInfiniteData>(key)!.pages[0].sessions[0].isPinned).toBe(true)
-})
 test('branch switching still rejects malformed successful responses and accepts valid responses', async () => {
 	api.request
 		.mockResolvedValueOnce({ messages: [] })

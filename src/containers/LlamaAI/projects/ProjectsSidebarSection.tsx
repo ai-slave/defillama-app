@@ -26,13 +26,8 @@ interface ProjectsSidebarSectionProps {
 	currentSessionProjectId?: string | null
 	currentSessionId?: string | null
 	restoringSessionId?: string | null
-	deletingSessionId?: string | null
-	updatingTitleSessionId?: string | null
 	onSessionSelect: (sessionId: string) => void
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
-	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<void>
-	onPinSession?: (sessionId: string) => void
-	isPinningSession?: boolean
 }
 
 export function ProjectsSidebarSection({
@@ -41,13 +36,8 @@ export function ProjectsSidebarSection({
 	currentSessionProjectId,
 	currentSessionId,
 	restoringSessionId,
-	deletingSessionId,
-	updatingTitleSessionId,
 	onSessionSelect,
-	onDelete,
-	onUpdateTitle,
-	onPinSession,
-	isPinningSession
+	onDelete
 }: ProjectsSidebarSectionProps) {
 	const { user, hasActiveSubscription, isTrial } = useAuthContext()
 	const storageKey = `${LAST_SELECTED_PROJECT_KEY_PREFIX}:${user?.id ?? 'anonymous'}`
@@ -204,12 +194,7 @@ export function ProjectsSidebarSection({
 																isActive={sidebarSession.sessionId === currentSessionId}
 																onSessionSelect={onSessionSelect}
 																onDelete={onDelete}
-																onUpdateTitle={onUpdateTitle}
 																isRestoring={restoringSessionId === sidebarSession.sessionId}
-																isDeleting={deletingSessionId === sidebarSession.sessionId}
-																isUpdatingTitle={updatingTitleSessionId === sidebarSession.sessionId}
-																onPinSession={onPinSession}
-																isPinningSession={isPinningSession}
 															/>
 														</li>
 													)

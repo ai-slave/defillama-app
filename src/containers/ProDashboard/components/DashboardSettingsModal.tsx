@@ -103,6 +103,15 @@ function DashboardSettingsModalInner({
 		deletion.mutate(dashboardId, { onSuccess: onClose })
 	}
 
+	// Both requests report into the same alert, so the newer attempt wins; a save that failed earlier
+	// must not describe a delete that just failed.
+	const failureMessage =
+		deletion.isError && (!save.isError || deletion.submittedAt > save.submittedAt)
+			? 'Could not delete the dashboard. Please try again.'
+			: save.isError
+				? 'Could not save changes. Your draft is still here; please try again.'
+				: null
+
 	return (
 		<>
 			<Ariakit.DialogProvider
@@ -302,11 +311,9 @@ function DashboardSettingsModalInner({
 								</div>
 							) : null}
 						</fieldset>
-						{save.isError || deletion.isError ? (
+						{failureMessage ? (
 							<p role="alert" className="mt-4 text-sm text-error">
-								{save.isError
-									? 'Could not save changes. Your draft is still here; please try again.'
-									: 'Could not delete the dashboard. Please try again.'}
+								{failureMessage}
 							</p>
 						) : null}
 

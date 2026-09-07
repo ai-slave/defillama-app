@@ -103,3 +103,15 @@ test('a creation finishing after dismissal does not close a newly opened picker'
 	expect(store.getState().open).toBe(true)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
 })
+
+test('a refusal shows why it was refused, not an invitation to retry', async () => {
+	const limit = 'You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.'
+	create.mockRejectedValueOnce(new Error(limit))
+	await mount()
+	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Over the limit'
+	await click('Create Dashboard')
+	const alert = document.querySelector('[role="alert"]')!
+	expect(alert.textContent).toContain(limit)
+	expect(alert.textContent).not.toContain('please try again')
+	expect(store.getState().open).toBe(true)
+})

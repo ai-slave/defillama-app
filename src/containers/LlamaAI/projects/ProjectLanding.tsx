@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { DragOverlay, ImageUpload } from '~/containers/LlamaAI/components/input/ImageUpload'
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
 import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUnseenCompletion'
+import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
 import { fileToBase64, useImageUpload } from '~/containers/LlamaAI/hooks/useImageUpload'
 import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
-import { useSessionMutations } from '~/containers/LlamaAI/hooks/useSessionMutations'
+import { useUpdateSessionTitle } from '~/containers/LlamaAI/hooks/useUpdateSessionTitle'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -57,7 +58,8 @@ export function ProjectLanding({
 	const renameStore = Ariakit.useDialogStore()
 	const deleteStore = Ariakit.useDialogStore()
 	const clearUnseenCompletion = useClearUnseenCompletion()
-	const { deleteSession, updateTitle } = useSessionMutations()
+	const deleteSession = useDeleteSession()
+	const updateTitle = useUpdateSessionTitle()
 	const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null)
 	const tab = initialTab
 	const [prompt, setPrompt] = usePromptDraft(`project:${projectId}`)

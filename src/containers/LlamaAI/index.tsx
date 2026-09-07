@@ -314,10 +314,8 @@ export function AgenticChat({
 		loadNewerMessages,
 		switchActiveLeaf,
 		deleteSession,
-		updateTitle,
 		applyServerSessionTitle,
 		bulkDeleteSessions,
-		pinSession,
 		replaceOptimisticSessionId
 	} = useSessionMutations()
 	const { sidebarVisible, toggleSidebar, hideSidebar, isFullscreen, toggleFullscreen } = useSidebarVisibility()
@@ -2657,15 +2655,10 @@ export function AgenticChat({
 										}}
 										onNewChat={handleNewChat}
 										onDelete={handleDeleteSession}
-										onUpdateTitle={updateTitle.mutateAsync}
-										isDeletingSession={deleteSession.isPending}
-										isUpdatingTitle={updateTitle.isPending}
 										shouldAnimate={shouldAnimateSidebar}
 										onOpenSettings={openSettings}
 										hasCustomInstructions={settings.customInstructions.trim().length > 0}
 										onBulkDelete={handleBulkDeleteSessions}
-										onPinSession={pinSession.mutate}
-										isPinningSession={pinSession.isPending}
 										onSearchMatchClick={handleSearchMatchClick}
 										hasMoreSessions={hasMoreSessions}
 										isFetchingMoreSessions={isFetchingMoreSessions}
