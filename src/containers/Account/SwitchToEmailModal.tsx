@@ -68,6 +68,12 @@ async function confirmSwitchToEmail({
 	return (await response.json()) as SwitchToEmailResponse
 }
 
+// A logical expression cannot be lowered inside a catch, and all three handlers here format a caught
+// error the same way. Reads `message` off whatever was thrown, as the previous inline `any` casts did.
+function switchErrorMessage(error: unknown, fallback: string) {
+	return (error as { message?: string } | null | undefined)?.message || fallback
+}
+
 export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEmailModalProps) {
 	const [step, setStep] = useState<Step>('email')
 	const [email, setEmail] = useState(defaultEmail ?? '')
@@ -78,6 +84,8 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 	const [showPassword, setShowPassword] = useState(false)
 	const [showPasswordConfirm, setShowPasswordConfirm] = useState(false)
 	const resendRef = useRef<ResendCooldownHandle>(null)
+	// An optional call cannot be lowered inside a try, and both handlers start the timer from inside one.
+	const startResendCooldown = () => resendRef.current?.start()
 	// The whole flow is pinned to the session it started in: every request uses the
 	// token captured at the first OTP send, and a session change in the meantime
 	// discards the result instead of writing into the newer account.
@@ -114,10 +122,10 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 
 		try {
 			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
-			resendRef.current?.start()
+			startResendCooldown()
 			setStep('confirm')
-		} catch (requestError: any) {
-			setError(requestError.message || 'Failed to send verification code. Please try again.')
+		} catch (requestError) {
+			setError(switchErrorMessage(requestError, 'Failed to send verification code. Please try again.'))
 		}
 	}
 
@@ -155,8 +163,8 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 			}
 
 			setStep('success')
-		} catch (confirmError: any) {
-			setError(confirmError.message || 'Failed to switch to email authentication. Please try again.')
+		} catch (confirmError) {
+			setError(switchErrorMessage(confirmError, 'Failed to switch to email authentication. Please try again.'))
 		}
 	}
 
@@ -167,10 +175,10 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 
 		try {
 			await requestOtpMutation.mutateAsync({ email, sessionToken: sessionTokenRef.current })
-			resendRef.current?.start()
+			startResendCooldown()
 			toast.success('Verification code resent!')
-		} catch (resendError: any) {
-			setError(resendError.message || 'Failed to resend verification code.')
+		} catch (resendError) {
+			setError(switchErrorMessage(resendError, 'Failed to resend verification code.'))
 		}
 	}
 

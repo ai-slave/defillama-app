@@ -35,9 +35,13 @@ function WalletSignInButtonInner({
 	const handleWalletSignIn = useCallback(async () => {
 		setError('')
 		if (address) {
+			// An optional call cannot be lowered inside a try. Kept as mutateAsync in the try rather than
+			// moved to mutate callbacks, because setError belongs to the parent: a callback would stop
+			// reporting the failure if this button unmounted mid-request, and the try does not.
+			const notifyAuthenticated = () => onAuthenticated?.()
 			try {
 				await signInWithEthereumMutation.mutateAsync({ address, signMessageFunction: signMessageAsync })
-				onAuthenticated?.()
+				notifyAuthenticated()
 				dialogStore.hide()
 			} catch {
 				setError('Failed to sign in with wallet')

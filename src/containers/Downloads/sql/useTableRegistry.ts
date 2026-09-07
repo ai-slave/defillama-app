@@ -43,6 +43,28 @@ export function identifierize(s: string): string {
 	return /^[a-z]/.test(normalized) ? normalized : `t_${normalized}`
 }
 
+// A conditional cannot be lowered inside the try that runs the query.
+function firstRowCount(result: { toArray: () => Array<unknown> }) {
+	const row = result.toArray()[0] as { n: bigint | number } | undefined
+	return row ? Number(row.n) : 0
+}
+
+// A logical test cannot be lowered inside the try, and a predicate keeps the narrowing it gave.
+function canRegisterFileText(
+	bindings: unknown
+): bindings is { registerFileText: (name: string, text: string) => unknown } {
+	return !!bindings && typeof (bindings as { registerFileText?: unknown }).registerFileText === 'function'
+}
+
+// Neither a conditional nor an optional chain can be lowered inside a catch.
+function loadErrorMessage(error: unknown) {
+	return error instanceof Error ? error.message : String(error)
+}
+
+function wasAborted(error: unknown, signal?: AbortSignal) {
+	return isAbortError(error) || signal?.aborted === true
+}
+
 export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOptions) {
 	const [tables, setTables] = useState<Array<RegisteredTable>>([])
 	const [loading, setLoading] = useState<string | null>(null)
@@ -54,54 +76,58 @@ export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOpti
 			const name = tableNameFor(source)
 			setLoading(name)
 			setError(null)
-			try {
-				throwIfAborted(signal)
-				const { csvText, columns } = await fetchCsvFor(source, authorizedFetch, signal)
-				throwIfAborted(signal)
-				const fileName = `${name}.csv`
-				const db = conn.bindings
-				if (db && typeof db.registerFileText === 'function') {
-					await withAbort(Promise.resolve(db.registerFileText(fileName, csvText)), signal)
-				} else {
-					await registerViaBuffer(conn, fileName, csvText, signal)
-				}
-				throwIfAborted(signal)
-				await withAbort(
-					conn.query(
-						`CREATE OR REPLACE TABLE "${name}" AS SELECT * FROM read_csv_auto('${fileName}', header = true, sample_size = -1)`
-					),
-					signal,
-					() => conn.cancelSent().catch(() => undefined)
-				)
-				throwIfAborted(signal)
-				const countResult = await withAbort(conn.query(`SELECT COUNT(*)::BIGINT AS n FROM "${name}"`), signal, () =>
-					conn.cancelSent().catch(() => undefined)
-				)
-				const countRow = countResult.toArray()[0] as { n: bigint | number } | undefined
-				const rowCount = countRow ? Number(countRow.n) : 0
+			// Every branch of the try returns, so clearing the flag in a finalizer cannot simply move after
+			// the catch. The body settles in its own function first, which the swallowing catch guarantees.
+			const register = async (): Promise<RegisteredTable | null> => {
+				try {
+					throwIfAborted(signal)
+					const { csvText, columns } = await fetchCsvFor(source, authorizedFetch, signal)
+					throwIfAborted(signal)
+					const fileName = `${name}.csv`
+					const db = conn.bindings
+					if (canRegisterFileText(db)) {
+						await withAbort(Promise.resolve(db.registerFileText(fileName, csvText)), signal)
+					} else {
+						await registerViaBuffer(conn, fileName, csvText, signal)
+					}
+					throwIfAborted(signal)
+					await withAbort(
+						conn.query(
+							`CREATE OR REPLACE TABLE "${name}" AS SELECT * FROM read_csv_auto('${fileName}', header = true, sample_size = -1)`
+						),
+						signal,
+						() => conn.cancelSent().catch(() => undefined)
+					)
+					throwIfAborted(signal)
+					const countResult = await withAbort(conn.query(`SELECT COUNT(*)::BIGINT AS n FROM "${name}"`), signal, () =>
+						conn.cancelSent().catch(() => undefined)
+					)
+					const rowCount = firstRowCount(countResult)
 
-				throwIfAborted(signal)
-				const typeByColumn = await describeTypes(conn, name, signal)
-				throwIfAborted(signal)
-				const entry: RegisteredTable = {
-					name,
-					source,
-					columns: columns.map((c) => ({ name: c, type: typeByColumn.get(c) })),
-					rowCount,
-					loadedAt: Date.now()
+					throwIfAborted(signal)
+					const typeByColumn = await describeTypes(conn, name, signal)
+					throwIfAborted(signal)
+					const entry: RegisteredTable = {
+						name,
+						source,
+						columns: columns.map((c) => ({ name: c, type: typeByColumn.get(c) })),
+						rowCount,
+						loadedAt: Date.now()
+					}
+					setTables((prev) => {
+						const without = prev.filter((t) => t.name !== name)
+						return [...without, entry]
+					})
+					return entry
+				} catch (loadError) {
+					if (wasAborted(loadError, signal)) return null
+					setError(loadErrorMessage(loadError))
+					return null
 				}
-				setTables((prev) => {
-					const without = prev.filter((t) => t.name !== name)
-					return [...without, entry]
-				})
-				return entry
-			} catch (loadError) {
-				if (isAbortError(loadError) || signal?.aborted) return null
-				setError(loadError instanceof Error ? loadError.message : String(loadError))
-				return null
-			} finally {
-				setLoading(null)
 			}
+			const entry = await register()
+			setLoading(null)
+			return entry
 		},
 		[conn, authorizedFetch]
 	)

@@ -110,6 +110,38 @@ interface GenerateDashboardModalProps {
 	}) => void
 }
 
+type AiGenerationContext = { sessionId: string; mode: 'create' | 'iterate'; timestamp: string; prompt: string }
+
+// Optional chains and a conditional, none of which can be lowered inside the try that reads the stream.
+function buildAiGenerationContext(
+	metadata: DashboardCompleteEvent['metadata'],
+	fallbackMode: 'create' | 'iterate',
+	prompt: string
+): AiGenerationContext | undefined {
+	if (!metadata?.sessionId) return undefined
+	return {
+		sessionId: metadata.sessionId,
+		mode: metadata.mode ?? fallbackMode,
+		timestamp: new Date().toISOString(),
+		prompt
+	}
+}
+
+// Keeps the key absent rather than present-and-undefined, which is what the conditional spread did.
+function withAiGenerationContext<T extends object>(payload: T, aiGenerationContext: AiGenerationContext | undefined) {
+	return aiGenerationContext ? { ...payload, aiGenerationContext } : payload
+}
+
+// An optional chain cannot be lowered inside the try that guards the request.
+function getStreamReader(response: Response) {
+	return response.body ? response.body.getReader() : null
+}
+
+// A conditional cannot be lowered inside a catch either.
+function generateErrorMessage(error: unknown) {
+	return error instanceof Error ? error.message : 'Failed to generate dashboard. Please try again.'
+}
+
 export function GenerateDashboardModal({
 	isOpen,
 	onClose,
@@ -228,64 +260,62 @@ export function GenerateDashboardModal({
 		}
 
 		setIsLoading(true)
-		try {
-			const response = await authorizedFetch(`${AI_SERVER}/dashboard-creator`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(requestBody)
-			})
+		// Every branch of the try returns, so the finalizer cannot move after it. The body runs in its
+		// own function and the flag clears once that settles, which the swallowing catch guarantees.
+		const generate = async () => {
+			try {
+				const response = await authorizedFetch(`${AI_SERVER}/dashboard-creator`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(requestBody)
+				})
 
-			if (!response) {
-				toast.error('Authentication failed. Please sign in again.')
-				return
+				if (!response) {
+					toast.error('Authentication failed. Please sign in again.')
+					return
+				}
+				if (!response.ok) {
+					toast.error('Failed to generate dashboard. Please try again.')
+					return
+				}
+
+				const reader = getStreamReader(response)
+				if (!reader) {
+					toast.error('Failed to read response stream')
+					return
+				}
+				const data = await readDashboardCreatorStream(reader)
+				if (!data) {
+					toast.error('Invalid response format from AI service')
+					return
+				}
+
+				const items = migrateDashboardItems(data.dashboardConfig.items)
+				const aiGenerationContext = buildAiGenerationContext(data.metadata, mode, aiDescription.trim())
+				onGenerate(
+					withAiGenerationContext(
+						{
+							dashboardName: dashboardNameForGenerate,
+							visibility: visibilityForGenerate,
+							tags: tagsForGenerate,
+							description: descriptionForGenerate,
+							items
+						},
+						aiGenerationContext
+					)
+				)
+
+				resetModalState()
+				onClose()
+			} catch (error) {
+				console.error('Failed to generate dashboard:', error)
+				toast.error(generateErrorMessage(error))
 			}
-			if (!response.ok) {
-				toast.error('Failed to generate dashboard. Please try again.')
-				return
-			}
-
-			const reader = response.body?.getReader()
-			if (!reader) {
-				toast.error('Failed to read response stream')
-				return
-			}
-			const data = await readDashboardCreatorStream(reader)
-			if (!data) {
-				toast.error('Invalid response format from AI service')
-				return
-			}
-
-			const items = migrateDashboardItems(data.dashboardConfig.items)
-			const sessionId = data.metadata?.sessionId
-			const generationMode = data.metadata?.mode ?? mode
-			const aiGenerationContext = sessionId
-				? {
-						sessionId,
-						mode: generationMode,
-						timestamp: new Date().toISOString(),
-						prompt: aiDescription.trim()
-					}
-				: undefined
-
-			onGenerate({
-				dashboardName: dashboardNameForGenerate,
-				visibility: visibilityForGenerate,
-				tags: tagsForGenerate,
-				description: descriptionForGenerate,
-				items,
-				...(aiGenerationContext ? { aiGenerationContext } : {})
-			})
-
-			resetModalState()
-			onClose()
-		} catch (error) {
-			console.error('Failed to generate dashboard:', error)
-			toast.error(error instanceof Error ? error.message : 'Failed to generate dashboard. Please try again.')
-		} finally {
-			setIsLoading(false)
 		}
+		await generate()
+		setIsLoading(false)
 	}
 
 	const handleClose = () => {

@@ -3,6 +3,12 @@ import type { FormSubmitEvent } from '~/types/forms'
 
 const RESEND_COOLDOWN_MS = 30_000
 
+// Reads `message` off whatever was thrown, as the previous inline `any` did: these rejections are not
+// always Error instances.
+function otpErrorMessage(error: unknown) {
+	return (error as { message?: string } | null | undefined)?.message || 'Invalid or expired code'
+}
+
 export function EmailOtpForm({
 	email,
 	sendOtp,
@@ -54,11 +60,13 @@ export function EmailOtpForm({
 			setError('Enter the 6-digit code')
 			return
 		}
+		// Neither an optional call nor an optional chain can be lowered inside a try or catch.
+		const notifyVerified = () => onVerified?.()
 		try {
 			await verifyOtp(trimmed)
-			onVerified?.()
-		} catch (verifyError: any) {
-			setError(verifyError?.message || 'Invalid or expired code')
+			notifyVerified()
+		} catch (verifyError) {
+			setError(otpErrorMessage(verifyError))
 		}
 	}
 

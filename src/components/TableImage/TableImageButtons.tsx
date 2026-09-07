@@ -122,13 +122,12 @@ export function TableImageButtons({
 				toast.error('Nothing to export')
 				return
 			}
+			// Decided before the try: a conditional cannot be lowered inside one, nor inside the catch.
+			const watermark = watermarkMode === 'always' ? true : watermarkEnabled
+			const failureMessage = mode === 'copy' ? 'Could not copy the image' : 'Could not create the image'
 			setIsLoading(true)
 			try {
-				const input: TableImageInput = {
-					...source,
-					isDark: !!isDarkMode,
-					watermark: watermarkMode === 'always' ? true : watermarkEnabled
-				}
+				const input: TableImageInput = { ...source, isDark: !!isDarkMode, watermark }
 				if (mode === 'download') {
 					await downloadTableImage(input)
 				} else {
@@ -136,7 +135,7 @@ export function TableImageButtons({
 					toast.success('Image copied')
 				}
 			} catch (error) {
-				toast.error(mode === 'copy' ? 'Could not copy the image' : 'Could not create the image')
+				toast.error(failureMessage)
 				console.log(error)
 			}
 			setIsLoading(false)
