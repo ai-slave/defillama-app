@@ -44,6 +44,7 @@ export interface ChatLandingProps {
 	factCheckedUsage?: FactCheckedUsage | null
 	onFactCheckedGated?: () => void
 	onOpenAlerts: () => void
+	isAlertsModalOpen: boolean
 	quotedText?: string | null
 	onClearQuotedText?: () => void
 	enterToSend: boolean
@@ -67,6 +68,7 @@ export function ChatLanding({
 	factCheckedUsage,
 	onFactCheckedGated,
 	onOpenAlerts,
+	isAlertsModalOpen,
 	quotedText,
 	onClearQuotedText,
 	enterToSend
@@ -189,6 +191,7 @@ export function ChatLanding({
 
 			{!readOnly && !hasSeenWelcome ? (
 				<OnboardingWalkthrough
+					isAlertsModalOpen={isAlertsModalOpen}
 					mode={mode}
 					setMode={setMode}
 					handleSubmit={handleSubmit}

@@ -1340,8 +1340,13 @@ export function AgenticChat({
 			await deleteSession.mutateAsync({ sessionId: targetSessionId, projectId })
 			clearPromptFailure(targetSessionId)
 			forgetQueueSession(targetSessionId)
+			// Check the current view after the request; the reader may have switched chats while it ran.
+			if ((routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId) {
+				clearConversationState()
+				void navigate.toNewChat()
+			}
 		},
-		[clearPromptFailure, deleteSession, forgetQueueSession]
+		[clearConversationState, clearPromptFailure, deleteSession, forgetQueueSession, navigate]
 	)
 
 	const handleBulkDeleteSessions = useCallback(
@@ -1351,8 +1356,13 @@ export function AgenticChat({
 				clearPromptFailure(targetSessionId)
 				forgetQueueSession(targetSessionId)
 			}
+			const viewedSessionId = routeSessionIdRef.current ?? currentSessionIdRef.current
+			if (viewedSessionId && sessionIds.includes(viewedSessionId)) {
+				clearConversationState()
+				void navigate.toNewChat()
+			}
 		},
-		[bulkDeleteSessions, clearPromptFailure, forgetQueueSession]
+		[bulkDeleteSessions, clearConversationState, clearPromptFailure, forgetQueueSession, navigate]
 	)
 
 	useLayoutEffect(() => {
@@ -2459,6 +2469,7 @@ export function AgenticChat({
 		factCheckedUsage,
 		onFactCheckedGated: handleFactCheckedGated,
 		onOpenAlerts: alertsModalStore.show,
+		isAlertsModalOpen,
 		quotedText,
 		onClearQuotedText: () => setQuotedText(null),
 		enterToSend: settings.enterToSend

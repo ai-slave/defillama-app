@@ -6,30 +6,19 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 const { DynamicPaginatedTable, paginatedTableCalls } = vi.hoisted(() => {
 	const paginatedTableCalls: Array<{
-		availablePageSizeOptions: Array<number>
-		pageCount: number
-		pageIndex: number
+		pageSizeOptions: ReadonlyArray<number>
 		pageSize: number
 		renderedNames: Array<string>
-		rowCount: number
-		shell: 'default' | 'none' | undefined
 	}> = []
 
-	function DynamicPaginatedTable({ table, pageSizeOptions, shell }: any) {
+	function DynamicPaginatedTable({ table, pageSizeOptions }: any) {
 		const rows = table.getRowModel().rows
-		const rowCount = table.getRowCount()
-		const { pageIndex, pageSize } = table.getState().pagination
-		const availablePageSizeOptions = pageSizeOptions.filter((pageSizeOption: number) => pageSizeOption <= rowCount)
-		const pageCount = Math.max(1, table.getPageCount())
+		const { pageSize } = table.getState().pagination
 
 		paginatedTableCalls.push({
-			availablePageSizeOptions,
-			pageCount,
-			pageIndex,
+			pageSizeOptions,
 			pageSize,
-			renderedNames: rows.map((row: any) => row.original.name),
-			rowCount,
-			shell
+			renderedNames: rows.map((row: any) => row.original.name)
 		})
 
 		return (
@@ -41,8 +30,6 @@ const { DynamicPaginatedTable, paginatedTableCalls } = vi.hoisted(() => {
 						))}
 					</div>
 				))}
-				{rowCount > 10 && pageCount > 1 ? <span>{`Page ${pageIndex + 1} of ${pageCount}`}</span> : null}
-				{rowCount > 10 && availablePageSizeOptions.length >= 2 ? <span>Rows per page</span> : null}
 			</div>
 		)
 	}
@@ -167,7 +154,6 @@ describe('TokenUsageSection', () => {
 		expect(html).toContain('Aave')
 		expect(html).toContain('/protocol/aave')
 		expect(html).toContain('Include CEXs')
-		expect(paginatedTableCalls[0]?.shell).toBe('none')
 	})
 
 	test('shows a sign-in gate for unauthenticated users', () => {
@@ -234,7 +220,7 @@ describe('TokenUsageSection', () => {
 		expect(includeCexHtml).toContain('Binance')
 	})
 
-	test('renders paginated rows and exposes rows-per-page options', () => {
+	test('paginates rows by descending usage and honors the initial page size', () => {
 		queryState = {
 			data: Array.from({ length: 22 }, (_, index) => ({
 				name: `Protocol ${index + 1}`,
@@ -245,25 +231,16 @@ describe('TokenUsageSection', () => {
 			isLoading: false
 		}
 
-		const defaultHtml = renderToStaticMarkup(<TokenUsageSection tokenSymbol="link" />)
+		renderToStaticMarkup(<TokenUsageSection tokenSymbol="link" />)
 		renderToStaticMarkup(<TokenUsageSection tokenSymbol="link" initialPageSize={30} />)
 		const defaultTableCall = paginatedTableCalls[0]
 		const expandedTableCall = paginatedTableCalls[1]
 
-		expect(defaultTableCall?.renderedNames).toContain('Protocol 13')
-		expect(defaultTableCall?.renderedNames).not.toContain('Protocol 11')
-		expect(defaultTableCall?.renderedNames).not.toContain('Protocol 10')
-		expect(defaultTableCall?.renderedNames).not.toContain('Protocol 3')
-		expect(defaultTableCall?.renderedNames).not.toContain('Protocol 2')
-		expect(defaultTableCall?.renderedNames).not.toContain('Protocol 1')
-		expect(defaultHtml).toContain('Rows per page')
-		expect(defaultTableCall?.availablePageSizeOptions).toEqual([10, 20])
+		expect(defaultTableCall?.renderedNames).toEqual(Array.from({ length: 10 }, (_, index) => `Protocol ${22 - index}`))
+		expect(defaultTableCall?.pageSizeOptions).toEqual([10, 20, 30, 50])
 		expect(defaultTableCall?.pageSize).toBe(10)
-		expect(defaultTableCall?.shell).toBe('none')
-		expect(defaultHtml).toContain('Page 1 of 3')
-		expect(expandedTableCall?.renderedNames).toContain('Protocol 2')
-		expect(expandedTableCall?.renderedNames).toContain('Protocol 11')
-		expect(expandedTableCall?.renderedNames).toContain('Protocol 12')
+		expect(expandedTableCall?.pageSize).toBe(30)
+		expect(expandedTableCall?.renderedNames).toEqual(Array.from({ length: 22 }, (_, index) => `Protocol ${22 - index}`))
 	})
 })
 

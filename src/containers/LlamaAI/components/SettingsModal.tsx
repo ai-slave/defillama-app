@@ -829,12 +829,12 @@ export const SettingsModal = memo(function SettingsModal({
 								{activeTab === 'lab' && isDark ? (
 									<div className="space-y-5">
 										<SectionHeading title="Experimental" subtitle="Bleeding-edge modes. Things may get weird." />
-										<button
-											type="button"
+										<Ariakit.Checkbox
+											render={<button type="button" aria-label="Hacker Mode" />}
 											role="switch"
 											aria-checked={settings.hackerMode}
-											aria-label="Hacker Mode"
-											onClick={handleHackerToggle}
+											checked={settings.hackerMode}
+											onChange={handleHackerToggle}
 											className={`group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl p-4 text-left transition-all ${
 												settings.hackerMode
 													? 'bg-ai-ink shadow-ai-terminal-glow ring-1 ring-ai-terminal/30'
@@ -874,7 +874,7 @@ export const SettingsModal = memo(function SettingsModal({
 													}`}
 												/>
 											</div>
-										</button>
+										</Ariakit.Checkbox>
 									</div>
 								) : null}
 							</div>
@@ -959,13 +959,13 @@ function ToggleRow({
 }) {
 	const descriptionId = useId()
 	return (
-		<button
-			type="button"
+		<Ariakit.Checkbox
+			render={<button type="button" aria-label={label} />}
 			role="switch"
 			aria-checked={checked}
-			aria-label={label}
+			checked={checked}
 			aria-describedby={descriptionId}
-			onClick={onClick}
+			onChange={onClick}
 			disabled={!interactive}
 			className="group flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-ai-hover-faint disabled:cursor-default disabled:hover:bg-transparent"
 		>
@@ -986,7 +986,7 @@ function ToggleRow({
 					}`}
 				/>
 			</div>
-		</button>
+		</Ariakit.Checkbox>
 	)
 }
 

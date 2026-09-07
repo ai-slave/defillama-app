@@ -1,5 +1,4 @@
 import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import type { DownloadFormat } from '~/utils/download'
 
@@ -9,18 +8,22 @@ interface FormatSplitButtonProps {
 	label?: string
 }
 
+const DOWNLOAD_FORMATS = ['csv', 'json'] as const
+
 const FORMAT_LABELS: Record<DownloadFormat, string> = {
 	csv: 'CSV',
 	json: 'JSON'
 }
 
 export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: FormatSplitButtonProps) {
-	const [format, setFormat] = useState<DownloadFormat>('csv')
+	const menu = Ariakit.useMenuStore<{ format: DownloadFormat }>({ defaultValues: { format: 'csv' } })
+	const { format } = Ariakit.useStoreState(menu, 'values')
 
 	return (
 		<div className="inline-flex overflow-hidden rounded-md bg-brand shadow-sm">
 			<button
 				type="button"
+				aria-label={`${label} ${FORMAT_LABELS[format]}`}
 				onClick={() => onDownload(format)}
 				disabled={disabled}
 				className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-on-brand transition-colors hover:bg-black/10 disabled:opacity-40"
@@ -30,7 +33,7 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 					{label} {FORMAT_LABELS[format]}
 				</span>
 			</button>
-			<Ariakit.MenuProvider>
+			<Ariakit.MenuProvider store={menu}>
 				<Ariakit.MenuButton
 					disabled={disabled}
 					aria-label="Choose download format"
@@ -44,13 +47,13 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 					hideOnInteractOutside
 					className="z-50 min-w-32 overflow-hidden rounded-lg border border-medium bg-surface-elevated-1 shadow-lg"
 				>
-					{(['csv', 'json'] as const).map((fmt) => (
-						<Ariakit.MenuItem
+					{DOWNLOAD_FORMATS.map((fmt) => (
+						<Ariakit.MenuItemRadio
 							key={fmt}
-							role="menuitemradio"
-							aria-checked={format === fmt}
+							name="format"
+							value={fmt}
+							hideOnClick
 							onClick={() => {
-								setFormat(fmt)
 								onDownload(fmt)
 							}}
 							className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-pro-text-primary hover:bg-hover-row data-active-item:bg-hover-row"
@@ -61,7 +64,7 @@ export function FormatSplitButton({ onDownload, disabled, label = 'Download' }: 
 							) : (
 								<span className="size-3.5" aria-hidden="true" />
 							)}
-						</Ariakit.MenuItem>
+						</Ariakit.MenuItemRadio>
 					))}
 				</Ariakit.Menu>
 			</Ariakit.MenuProvider>

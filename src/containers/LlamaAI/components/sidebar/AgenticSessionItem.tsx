@@ -153,6 +153,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				<input
 					type="text"
 					name="newTitle"
+					aria-label="Session title"
 					defaultValue={session.title}
 					autoFocus
 					onFocus={(e) => e.currentTarget.select()}
@@ -162,6 +163,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				<div className="flex items-center justify-center gap-0.5">
 					<button
 						type="submit"
+						aria-label="Save session title"
 						className="flex aspect-square items-center justify-center rounded-sm bg-brand p-1.5 text-ai-white"
 						disabled={isUpdatingTitle}
 					>
@@ -173,6 +175,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					</button>
 					<button
 						type="button"
+						aria-label="Cancel session rename"
 						onClick={() => setIsEditing(false)}
 						className="flex aspect-square items-center justify-center rounded-sm bg-ai-error-vivid/20 p-1.5 text-error"
 						disabled={isUpdatingTitle}
@@ -248,6 +251,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					render={
 						<button
 							type="button"
+							aria-label={`Rename ${session.title}`}
 							onClick={() => setIsEditing(true)}
 							disabled={isUpdatingTitle || isDeleting || isRestoring}
 						/>

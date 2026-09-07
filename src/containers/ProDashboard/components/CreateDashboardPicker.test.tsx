@@ -17,6 +17,7 @@ let store: Ariakit.DialogStore
 const create = vi.fn()
 beforeEach(() => {
 	vi.clearAllMocks()
+	create.mockReset()
 	client = new QueryClient()
 	container = document.createElement('div')
 	document.body.append(container)
@@ -49,6 +50,14 @@ async function click(name: string) {
 		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
 }
+async function waitFor(check: () => void) {
+	await vi.waitFor(async () => {
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 0))
+		})
+		check()
+	})
+}
 test('failed creation retains the name and visibility, blocks duplicate submissions, and retries successfully', async () => {
 	let reject!: (error: Error) => void
 	create
@@ -76,12 +85,12 @@ test('failed creation retains the name and visibility, blocks duplicate submissi
 		reject(new Error('Unavailable'))
 		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
-	expect(document.querySelector('[role="alert"]')).not.toBeNull()
+	await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 	expect(name.value).toBe('Keep my draft')
 	expect(document.querySelector<HTMLInputElement>('input[value="private"]')!.checked).toBe(true)
 	await click('Create Dashboard')
-	expect(create).toHaveBeenCalledTimes(2)
-	expect(store.getState().open).toBe(false)
+	await waitFor(() => expect(create).toHaveBeenCalledTimes(2))
+	await waitFor(() => expect(store.getState().open).toBe(false))
 })
 test('a creation finishing after dismissal does not close a newly opened picker', async () => {
 	let finish!: () => void
@@ -94,6 +103,7 @@ test('a creation finishing after dismissal does not close a newly opened picker'
 	await mount()
 	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Earlier draft'
 	await click('Create Dashboard')
+	await waitFor(() => expect(create).toHaveBeenCalledOnce())
 	await act(async () => store.hide())
 	await act(async () => store.show())
 	await act(async () => {
@@ -110,6 +120,7 @@ test('a refusal shows why it was refused, not an invitation to retry', async () 
 	await mount()
 	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Over the limit'
 	await click('Create Dashboard')
+	await waitFor(() => expect(document.querySelector('[role="alert"]')).not.toBeNull())
 	const alert = document.querySelector('[role="alert"]')!
 	expect(alert.textContent).toContain(limit)
 	expect(alert.textContent).not.toContain('please try again')

@@ -1,5 +1,5 @@
+import * as Ariakit from '@ariakit/react'
 import { useCallback, useEffect, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { useAuthContext } from '~/auth'
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
@@ -159,6 +159,7 @@ const SPOTLIGHT_CONFIGS = {
 } satisfies Partial<Record<Step, SpotlightConfig>>
 
 interface OnboardingWalkthroughProps {
+	isAlertsModalOpen: boolean
 	mode: AgenticAnswerMode
 	setMode: (mode: AgenticAnswerMode) => void
 	handleSubmit: ChatLandingProps['handleSubmit']
@@ -167,6 +168,7 @@ interface OnboardingWalkthroughProps {
 }
 
 export function OnboardingWalkthrough({
+	isAlertsModalOpen,
 	mode,
 	setMode,
 	handleSubmit,
@@ -176,7 +178,7 @@ export function OnboardingWalkthrough({
 	const isResearchMode = mode === 'research'
 	const [step, setStep] = useState<Step>('intro')
 	const [introExiting, setIntroExiting] = useState(false)
-	const [spotlightRect, setSpotlightRect] = useState<DOMRect | null>(null)
+	const [spotlight, setSpotlight] = useState<{ step: Step; rect: DOMRect; expanded: boolean } | null>(null)
 	const isMobile = useMedia('(max-width: 639px)')
 
 	// A/B experiment: full steps (A) vs short steps (B)
@@ -197,6 +199,8 @@ export function OnboardingWalkthrough({
 			? DESKTOP_STEPS_SHORT
 			: DESKTOP_STEPS
 	const currentStep = RESEARCH_STEPS.has(step) && isResearchMode ? 'prompts' : step
+	const spotlightRect = spotlight?.step === currentStep ? spotlight.rect : null
+	const targetExpanded = spotlight?.step === currentStep && spotlight.expanded
 	const config = getOwnRegistryValue<SpotlightConfig>(SPOTLIGHT_CONFIGS, currentStep)
 	const isSpotlightStep = !!config
 	const firstSpotlightStep =
@@ -212,13 +216,17 @@ export function OnboardingWalkthrough({
 
 	// Find and measure spotlight target(s)
 	useEffect(() => {
-		if (!isSpotlightStep || !config) return
+		if (!isSpotlightStep || !config || isAlertsModalOpen) return
 
 		const updateRect = () => {
 			const rects: Array<DOMRect> = []
+			let expanded = false
 			for (const sel of config.selectors) {
 				const el = document.querySelector(sel)
-				if (el) rects.push(el.getBoundingClientRect())
+				if (el) {
+					rects.push(el.getBoundingClientRect())
+					expanded = expanded || el.getAttribute('aria-expanded') === 'true'
+				}
 			}
 			if (rects.length === 0) return
 
@@ -227,7 +235,7 @@ export function OnboardingWalkthrough({
 			const top = Math.min(...rects.map((r) => r.top))
 			const right = Math.max(...rects.map((r) => r.right))
 			const bottom = Math.max(...rects.map((r) => r.bottom))
-			setSpotlightRect(new DOMRect(left, top, right - left, bottom - top))
+			setSpotlight({ step: currentStep, rect: new DOMRect(left, top, right - left, bottom - top), expanded })
 		}
 
 		// rAF-guarded version to coalesce rapid scroll/resize events
@@ -243,23 +251,29 @@ export function OnboardingWalkthrough({
 		const drawerOpening = MOBILE_DRAWER_STEPS.has(currentStep) && drawerButton?.getAttribute('aria-expanded') !== 'true'
 		const initialDelay = drawerOpening ? 400 : 0
 
+		const observer = new MutationObserver(debouncedUpdateRect)
 		const timer = setTimeout(() => {
-			requestAnimationFrame(updateRect)
+			debouncedUpdateRect()
+			for (const selector of config.selectors) {
+				const target = document.querySelector(selector)
+				if (target) observer.observe(target, { attributes: true, attributeFilter: ['aria-expanded'] })
+			}
 		}, initialDelay)
 
 		window.addEventListener('resize', debouncedUpdateRect)
 		window.addEventListener('scroll', debouncedUpdateRect, true)
 		return () => {
 			clearTimeout(timer)
+			observer.disconnect()
 			if (rafId) cancelAnimationFrame(rafId)
 			window.removeEventListener('resize', debouncedUpdateRect)
 			window.removeEventListener('scroll', debouncedUpdateRect, true)
 		}
-	}, [currentStep, isSpotlightStep, config])
+	}, [currentStep, isSpotlightStep, config, isAlertsModalOpen])
 
 	// Auto-skip spotlight steps whose target element doesn't exist (e.g. alerts when not available)
 	useEffect(() => {
-		if (!isSpotlightStep || !config) return
+		if (!isSpotlightStep || !config || isAlertsModalOpen) return
 
 		const timer = setTimeout(() => {
 			const hasTarget = config.selectors.some((sel) => document.querySelector(sel))
@@ -272,10 +286,11 @@ export function OnboardingWalkthrough({
 		}, 600)
 
 		return () => clearTimeout(timer)
-	}, [currentStep, isSpotlightStep, config, steps])
+	}, [currentStep, isSpotlightStep, config, steps, isAlertsModalOpen])
 
 	// Manage mobile drawer: open when entering a drawer step, close when leaving all drawer steps
 	useEffect(() => {
+		if (isAlertsModalOpen) return
 		const isMobileDrawerStep = MOBILE_DRAWER_STEPS.has(currentStep)
 		const btn = document.querySelector<HTMLElement>('[data-walkthrough="mobile-tools-button"]')
 		const isExpanded = btn?.getAttribute('aria-expanded') === 'true'
@@ -287,7 +302,7 @@ export function OnboardingWalkthrough({
 		} else if (btn && isExpanded) {
 			btn.click()
 		}
-	}, [currentStep])
+	}, [currentStep, isAlertsModalOpen])
 
 	const nextStep = useCallback(() => {
 		const i = steps.indexOf(step)
@@ -324,16 +339,8 @@ export function OnboardingWalkthrough({
 		trackUmamiEvent('llamaai-walkthrough-skip', { step: currentStep, variant })
 		setMode('research')
 		onComplete()
-	}, [currentStep, variant, setMode, onComplete])
-
-	// Dismiss walkthrough on Escape key
-	useEffect(() => {
-		const onKeyDown = (e: KeyboardEvent) => {
-			if (e.key === 'Escape') handleSkip()
-		}
-		window.addEventListener('keydown', onKeyDown)
-		return () => window.removeEventListener('keydown', onKeyDown)
-	}, [handleSkip])
+		requestAnimationFrame(() => promptInputRef.current?.focus())
+	}, [currentStep, variant, setMode, onComplete, promptInputRef])
 
 	const handleStartChatting = useCallback(() => {
 		trackUmamiEvent('llamaai-walkthrough-complete', { action: 'start-chatting', variant })
@@ -342,51 +349,39 @@ export function OnboardingWalkthrough({
 		requestAnimationFrame(() => promptInputRef.current?.focus())
 	}, [variant, setMode, onComplete, promptInputRef])
 
-	if (typeof document === 'undefined') return null
+	if (typeof document === 'undefined' || isAlertsModalOpen) return null
 
 	const pad = 4
-	// ~180px for tooltip height; flip if not enough room in preferred direction
-	const tooltipH = 180
-	const tooltipPosition =
-		isSpotlightStep && spotlightRect
-			? config!.position === 'above' && spotlightRect.top - pad - 14 - tooltipH < 0
-				? 'below'
-				: config!.position === 'below' && spotlightRect.bottom + pad + 14 + tooltipH > window.innerHeight
-					? 'above'
-					: config!.position
-			: 'below'
 
 	// Show a plain dark overlay while waiting for spotlight measurement
 	// so there's no flash of bare screen between intro and first spotlight
 	const showGapOverlay = isSpotlightStep && !spotlightRect
 
-	return createPortal(
-		<div className="pointer-events-none fixed inset-0 z-9999">
-			{/* Dark overlay bridging the gap between intro→spotlight and spotlight→prompts */}
-			{showGapOverlay ? (
-				<button
-					type="button"
-					aria-label="Skip walkthrough"
-					className="pointer-events-auto absolute inset-0 bg-ai-backdrop"
-					onClick={handleSkip}
-				/>
-			) : null}
-
-			{/* ─── Intro ─── */}
-			{currentStep === 'intro' ? (
-				<>
+	return (
+		<Ariakit.Portal>
+			<div className="pointer-events-none fixed inset-0 z-9999">
+				{/* Dark overlay bridging the gap between intro→spotlight and spotlight→prompts */}
+				{showGapOverlay ? (
 					<button
 						type="button"
 						aria-label="Skip walkthrough"
 						className="pointer-events-auto absolute inset-0 bg-ai-backdrop"
 						onClick={handleSkip}
 					/>
-					<div
-						className={`pointer-events-auto absolute inset-0 flex items-center justify-center p-4 ${
+				) : null}
+
+				{/* ─── Intro ─── */}
+				{currentStep === 'intro' ? (
+					<Ariakit.Dialog
+						open
+						onClose={handleSkip}
+						autoFocusOnHide={false}
+						backdrop={<div className="fixed inset-0 z-9999 bg-ai-backdrop" />}
+						className={`pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 ${
 							introExiting ? 'animate-[intro-exit_0.25s_ease-in_forwards]' : 'animate-[fadein_0.3s_ease-out]'
 						}`}
 					>
-						<div className="relative w-full max-w-[340px] overflow-hidden rounded-2xl border border-ai-gold/15 bg-ai-ink shadow-ai-modal">
+						<div className="relative max-h-full w-full max-w-[340px] overflow-y-auto rounded-2xl border border-ai-gold/15 bg-ai-ink shadow-ai-modal">
 							<div className="h-px w-full bg-linear-to-r from-transparent via-ai-gold/60 to-transparent" />
 							<div className="p-6">
 								<div className="mb-5 flex flex-col items-center gap-3 text-center">
@@ -406,7 +401,9 @@ export function OnboardingWalkthrough({
 											height={56}
 										/>
 									</div>
-									<h2 className="text-lg font-bold tracking-tight text-ai-white">Welcome to LlamaAI</h2>
+									<Ariakit.DialogHeading className="text-lg font-bold tracking-tight text-ai-white">
+										Welcome to LlamaAI
+									</Ariakit.DialogHeading>
 									<p className="text-[13px] leading-relaxed text-ai-on-ink-muted">
 										AI-powered research across DeFi, TradFi, and on-chain data. Charts, reports, forecasts, and alerts —
 										all in one conversation.
@@ -435,126 +432,135 @@ export function OnboardingWalkthrough({
 								<ProgressFooter currentStep={currentStep} steps={steps} onSkip={handleSkip} />
 							</div>
 						</div>
-					</div>
-				</>
-			) : null}
+					</Ariakit.Dialog>
+				) : null}
 
-			{/* ─── Spotlight steps ─── */}
-			{isSpotlightStep && spotlightRect && config ? (
-				<>
-					{/* Touch-blocking overlay: 4 rects around the spotlight hole */}
-					<div
-						className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
-						style={{ top: 0, left: 0, right: 0, height: spotlightRect.top - pad }}
-					/>
-					<div
-						className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
-						style={{ top: spotlightRect.bottom + pad, left: 0, right: 0, bottom: 0 }}
-					/>
-					<div
-						className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
-						style={{
-							top: spotlightRect.top - pad,
-							left: 0,
-							width: spotlightRect.left - pad,
-							height: spotlightRect.height + pad * 2
-						}}
-					/>
-					<div
-						className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
-						style={{
-							top: spotlightRect.top - pad,
-							left: spotlightRect.right + pad,
-							right: 0,
-							height: spotlightRect.height + pad * 2
-						}}
-					/>
+				{/* ─── Spotlight steps ─── */}
+				{isSpotlightStep && spotlightRect && config && !targetExpanded ? (
+					<>
+						{/* Touch-blocking overlay: 4 rects around the spotlight hole */}
+						<div
+							className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
+							style={{ top: 0, left: 0, right: 0, height: spotlightRect.top - pad }}
+						/>
+						<div
+							className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
+							style={{ top: spotlightRect.bottom + pad, left: 0, right: 0, bottom: 0 }}
+						/>
+						<div
+							className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
+							style={{
+								top: spotlightRect.top - pad,
+								left: 0,
+								width: spotlightRect.left - pad,
+								height: spotlightRect.height + pad * 2
+							}}
+						/>
+						<div
+							className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
+							style={{
+								top: spotlightRect.top - pad,
+								left: spotlightRect.right + pad,
+								right: 0,
+								height: spotlightRect.height + pad * 2
+							}}
+						/>
 
-					{/* Spotlight cutout (visual dim + glow) */}
-					<div
-						className={`pointer-events-none fixed rounded-xl transition-all duration-300 ease-in-out ${isFirstSpotlight ? 'animate-[spotlight-enter_0.35s_ease-out]' : ''}`}
-						style={{
-							left: spotlightRect.left - pad,
-							top: spotlightRect.top - pad,
-							width: spotlightRect.width + pad * 2,
-							height: spotlightRect.height + pad * 2,
-							boxShadow: `0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 24px 6px ${config.accentColor}`
-						}}
-					/>
+						{/* Spotlight cutout (visual dim + glow) */}
+						<div
+							className={`pointer-events-none fixed rounded-xl transition-all duration-300 ease-in-out ${isFirstSpotlight ? 'animate-[spotlight-enter_0.35s_ease-out]' : ''}`}
+							style={{
+								left: spotlightRect.left - pad,
+								top: spotlightRect.top - pad,
+								width: spotlightRect.width + pad * 2,
+								height: spotlightRect.height + pad * 2,
+								boxShadow: `0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 24px 6px ${config.accentColor}`
+							}}
+						/>
 
-					{/* Tooltip card */}
-					<div
-						className={`pointer-events-auto absolute z-10 w-[280px] transition-[left,top] duration-300 ease-in-out ${isFirstSpotlight ? (tooltipPosition === 'above' ? 'animate-[tooltip-enter-above_0.35s_ease-out]' : 'animate-[tooltip-enter-below_0.35s_ease-out]') : ''}`}
-						style={{
-							left: Math.max(16, Math.min(spotlightRect.left + spotlightRect.width / 2 - 140, window.innerWidth - 296)),
-							...(tooltipPosition === 'above'
-								? { top: spotlightRect.top - pad - 14, transform: 'translateY(-100%)' }
-								: { top: spotlightRect.bottom + pad + 14 })
-						}}
-					>
-						{tooltipPosition === 'below' ? (
-							<div className="mb-1 flex justify-center">
-								<div className="size-0 border-x-8 border-b-8 border-x-transparent border-b-[#111214]" />
-							</div>
-						) : null}
+						{/* Tooltip card */}
+						<Ariakit.PopoverProvider key={currentStep} placement={config.position === 'above' ? 'top' : 'bottom'}>
+							<Ariakit.Popover
+								open
+								getAnchorRect={() => spotlightRect}
+								fixed
+								gutter={18}
+								overflowPadding={16}
+								fitViewport
+								hideOnInteractOutside={false}
+								autoFocusOnHide={false}
+								onClose={handleSkip}
+								className="pointer-events-auto z-9999 w-[280px] max-w-[calc(100vw-32px)] overflow-y-auto outline-hidden"
+							>
+								<Ariakit.PopoverArrow className="fill-ai-ink" />
 
-						<div className="overflow-hidden rounded-xl border border-ai-ink-line bg-ai-ink shadow-ai-overlay">
-							<div
-								className="h-px w-full bg-linear-to-r from-transparent to-transparent"
-								style={{
-									backgroundImage: `linear-gradient(to right, transparent, ${config.iconColor}40, transparent)`
-								}}
-							/>
-							<div className="p-4">
-								<div className="flex items-start gap-3">
+								<div className="overflow-hidden rounded-xl border border-ai-ink-line bg-ai-ink shadow-ai-overlay">
 									<div
-										className="flex size-7 shrink-0 items-center justify-center rounded-lg"
-										style={{ backgroundColor: `${config.iconColor}15` }}
-									>
-										<Icon name={config.icon} height={14} width={14} style={{ color: config.iconColor }} />
-									</div>
-									<div className="flex flex-col gap-1">
-										<span className="text-[13px] font-semibold text-ai-white">{config.title}</span>
-										<span className="text-xs leading-snug text-ai-on-ink-muted">
-											{RESEARCH_STEPS.has(currentStep) ? researchDescription : config.description}
-										</span>
+										className="h-px w-full bg-linear-to-r from-transparent to-transparent"
+										style={{
+											backgroundImage: `linear-gradient(to right, transparent, ${config.iconColor}40, transparent)`
+										}}
+									/>
+									<div className="p-4">
+										<div className="flex items-start gap-3">
+											<div
+												className="flex size-7 shrink-0 items-center justify-center rounded-lg"
+												style={{ backgroundColor: `${config.iconColor}15` }}
+											>
+												<Icon name={config.icon} height={14} width={14} style={{ color: config.iconColor }} />
+											</div>
+											<div className="flex flex-col gap-1">
+												<Ariakit.PopoverHeading className="text-[13px] font-semibold text-ai-white">
+													{config.title}
+												</Ariakit.PopoverHeading>
+												<span className="text-xs leading-snug text-ai-on-ink-muted">
+													{RESEARCH_STEPS.has(currentStep) ? researchDescription : config.description}
+												</span>
+											</div>
+										</div>
+
+										<button
+											type="button"
+											onClick={() => {
+												const target = document.querySelector<HTMLElement>(config.selectors[0])
+												const control = target?.matches('button, input, [tabindex]')
+													? target
+													: (target?.querySelector<HTMLElement>('input:checked') ??
+														target?.querySelector<HTMLElement>('button, input, [tabindex]'))
+												control?.focus()
+											}}
+											className="mt-3 w-full rounded-lg bg-ai-ink-raised py-2 text-xs font-medium text-ai-on-ink hover:bg-ai-ink-hover focus-visible:outline-2"
+										>
+											Try this control
+										</button>
+										{!RESEARCH_STEPS.has(currentStep) ? (
+											<button
+												type="button"
+												onClick={nextStep}
+												className="mt-3 w-full rounded-lg bg-ai-ink-raised py-2 text-xs font-medium text-ai-on-ink transition-colors hover:bg-ai-ink-hover hover:text-ai-white"
+											>
+												Next
+											</button>
+										) : null}
+
+										<ProgressFooter currentStep={currentStep} steps={steps} onSkip={handleSkip} />
 									</div>
 								</div>
+							</Ariakit.Popover>
+						</Ariakit.PopoverProvider>
+					</>
+				) : null}
 
-								{!RESEARCH_STEPS.has(currentStep) ? (
-									<button
-										type="button"
-										onClick={nextStep}
-										className="mt-3 w-full rounded-lg bg-ai-ink-raised py-2 text-xs font-medium text-ai-on-ink transition-colors hover:bg-ai-ink-hover hover:text-ai-white"
-									>
-										Next
-									</button>
-								) : null}
-
-								<ProgressFooter currentStep={currentStep} steps={steps} onSkip={handleSkip} />
-							</div>
-						</div>
-
-						{tooltipPosition === 'above' ? (
-							<div className="mt-px flex justify-center">
-								<div className="size-0 border-x-8 border-t-8 border-x-transparent border-t-[#111214]" />
-							</div>
-						) : null}
-					</div>
-				</>
-			) : null}
-
-			{/* ─── Prompts ─── */}
-			{currentStep === 'prompts' ? (
-				<>
-					<button
-						type="button"
-						aria-label="Skip walkthrough"
-						className="pointer-events-auto absolute inset-0 bg-ai-backdrop"
-						onClick={handleSkip}
-					/>
-					<div className="pointer-events-auto absolute inset-0 flex animate-ai-fade-in items-center justify-center p-4">
-						<div className="relative w-full max-w-[400px] overflow-hidden rounded-2xl border border-ai-ink-line bg-ai-ink shadow-ai-modal">
+				{/* ─── Prompts ─── */}
+				{currentStep === 'prompts' ? (
+					<Ariakit.Dialog
+						open
+						onClose={handleSkip}
+						autoFocusOnHide={false}
+						backdrop={<div className="fixed inset-0 z-9999 bg-ai-backdrop" />}
+						className="pointer-events-auto fixed inset-0 z-9999 flex animate-ai-fade-in items-center justify-center overflow-y-auto p-4"
+					>
+						<div className="relative max-h-full w-full max-w-[400px] overflow-y-auto rounded-2xl border border-ai-ink-line bg-ai-ink shadow-ai-modal">
 							<div className="h-px w-full bg-linear-to-r from-transparent via-ai-success-vivid/50 to-transparent" />
 
 							<div className="p-6">
@@ -562,7 +568,9 @@ export function OnboardingWalkthrough({
 									<div className="mb-1 flex size-7 items-center justify-center rounded-full bg-ai-success-vivid/12">
 										<Icon name="check" height={14} width={14} className="text-ai-success-vivid" />
 									</div>
-									<span className="text-[15px] font-bold text-ai-white">Research mode is on</span>
+									<Ariakit.DialogHeading className="text-[15px] font-bold text-ai-white">
+										Research mode is on
+									</Ariakit.DialogHeading>
 									<span className="text-[13px] text-ai-on-ink-muted">Unsure what to ask? Try one of these:</span>
 								</div>
 
@@ -608,11 +616,10 @@ export function OnboardingWalkthrough({
 								<ProgressFooter currentStep={currentStep} steps={steps} onSkip={handleSkip} />
 							</div>
 						</div>
-					</div>
-				</>
-			) : null}
-		</div>,
-		document.body
+					</Ariakit.Dialog>
+				) : null}
+			</div>
+		</Ariakit.Portal>
 	)
 }
 
@@ -621,7 +628,10 @@ function ProgressFooter({ currentStep, steps, onSkip }: { currentStep: Step; ste
 
 	return (
 		<div className="mt-3 flex items-center justify-between">
-			<div className="flex items-center gap-1">
+			<span className="sr-only" role="status">
+				Step {currentIndex + 1} of {steps.length}
+			</span>
+			<div className="flex items-center gap-1" aria-hidden="true">
 				{steps.map((stepName, index) => (
 					<div
 						key={stepName}

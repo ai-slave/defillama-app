@@ -28,7 +28,7 @@ const session = (sessionId: string) => ({
 const initial: SessionListInfiniteData = {
 	pages: [
 		{
-			sessions: [session('chat')],
+			sessions: [session('chat'), session('other')],
 			usage: null,
 			factCheckedUsage: null,
 			alertsUsage: null,
@@ -58,27 +58,26 @@ async function render() {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<AgenticSessionItem
-					session={session('chat')}
-					isActive={false}
-					onSessionSelect={vi.fn()}
-					onDelete={vi.fn()}
-					onUpdateTitle={vi.fn()}
-					isRestoring={false}
-					isDeleting={false}
-					isUpdatingTitle={false}
-				/>
+				{initial.pages[0].sessions.map((item) => (
+					<AgenticSessionItem
+						key={item.sessionId}
+						session={item}
+						isActive={false}
+						onSessionSelect={vi.fn()}
+						onDelete={vi.fn()}
+						isRestoring={false}
+					/>
+				))}
 			</QueryClientProvider>
 		)
 	)
 }
 // The menu mounts its items only while open, and clicking one hides it again.
-async function pinItem() {
-	await act(async () =>
-		[...document.querySelectorAll<HTMLElement>('button')]
-			.find((button) => button.textContent?.includes('Open menu'))!
-			.click()
+async function pinItem(rowIndex: number) {
+	const triggers = [...document.querySelectorAll<HTMLElement>('button')].filter((button) =>
+		button.textContent?.includes('Open menu')
 	)
+	await act(async () => triggers[rowIndex].click())
 	const items = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].filter((item) =>
 		item.textContent?.includes('Pin to Top')
 	)
@@ -100,14 +99,41 @@ test('a failed pin restores the cached session, reports the failure, and can ret
 		)
 		.mockResolvedValueOnce({})
 	await render()
-	await act(async () => (await pinItem()).click())
+	await act(async () => (await pinItem(0)).click())
 	await settle()
 	expect(isPinned('chat')).toBe(true)
 	await act(async () => reject(new Error('Unavailable')))
 	await settle()
 	expect(client.getQueryData(key)).toEqual(initial)
 	expect(api.toastError).toHaveBeenCalledExactlyOnceWith('Failed to toggle pin: Unavailable')
-	await act(async () => (await pinItem()).click())
+	await act(async () => (await pinItem(0)).click())
+	await settle()
+	expect(isPinned('chat')).toBe(true)
+})
+
+test('a pending pin prevents duplicate requests without blocking another session', async () => {
+	let finish!: () => void
+	api.request
+		.mockImplementationOnce(
+			() =>
+				new Promise<void>((resolve) => {
+					finish = resolve
+				})
+		)
+		.mockResolvedValueOnce({})
+	await render()
+	await act(async () => (await pinItem(0)).click())
+	await settle()
+	const pendingItem = await pinItem(0)
+	expect(pendingItem.getAttribute('aria-disabled') === 'true' || pendingItem.hasAttribute('disabled')).toBe(true)
+	await act(async () => pendingItem.click())
+	expect(api.request).toHaveBeenCalledTimes(1)
+	await act(async () => pendingItem.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
+	await act(async () => (await pinItem(1)).click())
+	await settle()
+	expect(api.request).toHaveBeenLastCalledWith(expect.any(Function), '/user/sessions/other/pin', { method: 'PUT' })
+	expect(isPinned('other')).toBe(true)
+	await act(async () => finish())
 	await settle()
 	expect(isPinned('chat')).toBe(true)
 })

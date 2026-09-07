@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { type ChangeEvent, type FormEvent, useId, useState, useSyncExternalStore } from 'react'
 import { useAuthContext } from '~/auth'
 import { ToggleSwitch } from '~/containers/Account/ToggleSwitch'
@@ -135,12 +136,11 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 								{NEWSLETTERS.map(({ key, label }) => {
 									const on = selected[key]
 									return (
-										<button
+										<Ariakit.Checkbox
 											key={key}
-											type="button"
-											aria-pressed={on}
-											aria-label={`Subscribe to ${label}`}
-											onClick={() => toggle(key)}
+											render={<button type="button" aria-label={`Subscribe to ${label}`} />}
+											checked={on}
+											onChange={() => toggle(key)}
 											disabled={isPending}
 											className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
 												on
@@ -150,7 +150,7 @@ export function NewsletterSignup({ layout, className }: NewsletterSignupProps) {
 										>
 											{on ? <Icon name="check" height={14} width={14} /> : null}
 											{label.replace('DefiLlama ', '')}
-										</button>
+										</Ariakit.Checkbox>
 									)
 								})}
 							</div>

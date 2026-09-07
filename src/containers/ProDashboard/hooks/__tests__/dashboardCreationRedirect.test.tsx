@@ -12,9 +12,9 @@ vi.mock('next/router', () => ({ default: { pathname: '/dexs', push }, useRouter:
 vi.mock('~/auth', () => ({
 	useAuthContext: () => ({ authorizedFetch: vi.fn(), isAuthenticated: true, user: { id: 'u1' } })
 }))
-vi.mock('../../services/DashboardAPI', () => ({
-	dashboardAPI: { createDashboard: (...a: Array<unknown>) => createDashboard(...a), listDashboards: async () => [] },
-	dashboardUrlKey: (dashboard: { id: string; slug?: string }) => dashboard.slug || dashboard.id
+vi.mock('../../services/DashboardAPI', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../services/DashboardAPI')>()),
+	dashboardAPI: { createDashboard: (...a: Array<unknown>) => createDashboard(...a), listDashboards: async () => [] }
 }))
 vi.mock('react-hot-toast', () => ({
 	default: { success: vi.fn(), error: vi.fn(), loading: vi.fn(() => 't1'), dismiss: vi.fn() }

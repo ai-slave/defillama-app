@@ -1,3 +1,5 @@
+import * as Ariakit from '@ariakit/react'
+
 interface ToggleSwitchProps {
 	checked: boolean
 	onClick?: () => void
@@ -7,18 +9,18 @@ interface ToggleSwitchProps {
 
 export function ToggleSwitch({ checked, onClick, disabled, 'aria-label': ariaLabel }: ToggleSwitchProps) {
 	return (
-		<button
-			type="button"
+		<Ariakit.Checkbox
+			render={<button type="button" aria-label={ariaLabel} />}
 			role="switch"
 			aria-checked={checked}
-			aria-label={ariaLabel}
-			onClick={onClick}
+			checked={checked}
+			onChange={onClick}
 			disabled={disabled}
 			className={`flex w-10 cursor-pointer items-center rounded-full p-0.5 transition-colors ${
 				checked ? 'justify-end bg-sub-brand-primary' : 'bg-sub-border-muted dark:bg-sub-dark-card'
 			} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
 		>
 			<span className="block size-5 rounded-full bg-white" />
-		</button>
+		</Ariakit.Checkbox>
 	)
 }

@@ -379,24 +379,30 @@ function SearchTypeFilters({
 	return (
 		<nav className="border-t border-subtle px-4 py-3" aria-label="Research and newsletter content types">
 			<p className="mb-2 label-sm text-secondary">Browse by format</p>
-			<div className="flex scrollbar-none touch-pan-x gap-1 overflow-x-auto rounded-lg bg-surface-elevated-1 p-1 [-webkit-overflow-scrolling:touch]">
-				{SECTION_FILTERS.map((filter) => {
-					const active = filter.value === section
-					return (
-						<button
-							key={filter.label}
-							type="button"
-							onClick={() => onChange(filter.value)}
-							aria-pressed={active}
-							className={`shrink-0 rounded-md px-2.5 py-1.5 label-sm transition-colors ${
-								active ? 'bg-brand text-on-brand' : 'text-secondary hover:bg-hover-row hover:text-primary'
-							}`}
-						>
-							{filter.label}
-						</button>
-					)
-				})}
-			</div>
+			<Ariakit.RadioProvider
+				value={section ?? 'all'}
+				setValue={(value) => onChange(value === 'all' ? null : (value as SearchContentType))}
+			>
+				<Ariakit.RadioGroup
+					aria-label="Content type"
+					className="flex scrollbar-none touch-pan-x gap-1 overflow-x-auto rounded-lg bg-surface-elevated-1 p-1 [-webkit-overflow-scrolling:touch]"
+				>
+					{SECTION_FILTERS.map((filter) => {
+						const active = filter.value === section
+						return (
+							<label
+								key={filter.label}
+								className={`relative shrink-0 cursor-pointer rounded-md px-2.5 py-1.5 label-sm transition-colors has-focus-visible:focus-ring ${
+									active ? 'bg-brand text-on-brand' : 'text-secondary hover:bg-hover-row hover:text-primary'
+								}`}
+							>
+								<Ariakit.Radio value={filter.value ?? 'all'} className="sr-only" />
+								{filter.label}
+							</label>
+						)
+					})}
+				</Ariakit.RadioGroup>
+			</Ariakit.RadioProvider>
 		</nav>
 	)
 }
