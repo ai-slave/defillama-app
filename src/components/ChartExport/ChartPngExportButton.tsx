@@ -1535,6 +1535,11 @@ interface ChartPngExportButtonProps {
 	iconOnly?: boolean | undefined
 }
 
+// Called out to because a conditional cannot be lowered inside the try that guards prepareCsv.
+function withCsvExtension(filename: string) {
+	return filename.endsWith('.csv') ? filename : `${filename}.csv`
+}
+
 export function ChartPngExportButton({
 	chartInstance,
 	className = DEFAULT_CLASSNAME,
@@ -1667,9 +1672,7 @@ export function ChartPngExportButton({
 						onClick={() => {
 							try {
 								const { filename: csvFilename, rows } = csvMenuItem.prepareCsv()
-								downloadCSV(csvFilename.endsWith('.csv') ? csvFilename : `${csvFilename}.csv`, rows, {
-									addTimestamp: false
-								})
+								downloadCSV(withCsvExtension(csvFilename), rows, { addTimestamp: false })
 							} catch {
 								toast.error('Failed to export CSV')
 							}

@@ -244,6 +244,12 @@ function ActorAvatar({ name, url, size = 16 }: { name: string; url?: string | nu
 	)
 }
 
+// A conditional cannot be lowered inside a catch, and both handlers here need one. Kept local with the
+// fallback passed in so each message stays exactly what it was.
+function messageOf(error: unknown, fallback: string) {
+	return error instanceof Error ? error.message : fallback
+}
+
 export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onRestored }: Props) {
 	const [selectedIdState, setSelectedId] = useState<string | null>(null)
 	const [filter, setFilter] = useState<FilterKey>('all')
@@ -318,7 +324,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 			onRestored(saved)
 			onClose()
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to restore revision')
+			toast.error(messageOf(error, 'Failed to restore revision'))
 		}
 		setConfirming(null)
 	}, [restoreRevision, onRestored, onClose, selectedId])
@@ -346,10 +352,11 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 				}
 				toast.success('Revision removed from history')
 			} catch (error) {
-				toast.error(error instanceof Error ? error.message : 'Failed to delete revision')
-			} finally {
-				setConfirming(null)
+				toast.error(messageOf(error, 'Failed to delete revision'))
 			}
+			// Ran in a finally before: neither body exits early, so after the catch is the same thing, and
+			// the compiler cannot lower a finalizer.
+			setConfirming(null)
 		},
 		[deleteRevision, items, queryClient, revisionsQueryKey, selectedId]
 	)

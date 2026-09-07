@@ -204,6 +204,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType)
 
+// An optional chain cannot be lowered inside a try, and this one is read inside the OAuth try/catch.
+function isNewOauthUser(authData: { meta?: { isNew?: boolean } }) {
+	return authData.meta?.isNew === true
+}
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 	// Use useSyncExternalStore to listen to authStore changes
 	const authStoreState = useSyncExternalStore(subscribeToAuthStore, getAuthStoreSnapshot, getServerSnapshot)
@@ -503,7 +508,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 				redirectTo: `${window.location.origin}/subscription`
 			})
 
-			if (authData.meta?.isNew) {
+			if (isNewOauthUser(authData)) {
 				openOauthWelcome()
 				try {
 					await fetch(`${AUTH_SERVER}/user/attribution`, {

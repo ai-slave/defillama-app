@@ -31,6 +31,55 @@ function seedSerializedQueryData<T>(
 	if (queryKey) queryClient.setQueryData(queryKey, data, { updatedAt: now })
 }
 
+// Owns the try/finally: the compiler cannot lower a try without a catch, and a plain module function
+// is never compiled. The reader is released on every path, including a mid-stream throw.
+async function pumpStream(
+	reader: ReadableStreamDefaultReader<Uint8Array>,
+	decoder: TextDecoder,
+	lineParser: { push: (chunk: string) => void; finish: () => void },
+	signal: AbortSignal
+) {
+	try {
+		while (true) {
+			if (signal.aborted) break
+			const { done, value } = await reader.read()
+			if (done) {
+				lineParser.push(decoder.decode())
+				lineParser.finish()
+				break
+			}
+			lineParser.push(decoder.decode(value, { stream: true }))
+		}
+	} finally {
+		try {
+			reader.releaseLock()
+		} catch {
+			// The lock is already released once the stream has errored.
+		}
+	}
+}
+
+// A conditional cannot be lowered inside a catch either, so the message is named out here.
+function streamErrorMessage(error: unknown) {
+	return error instanceof Error ? error.message : 'Stream failed'
+}
+
+function buildStreamRequest(dashboardId: string, authToken: string | null | undefined, signal: AbortSignal) {
+	// The cache-buster is only needed on the authorized URL, which is why the two differ.
+	const url = authToken
+		? `/api/dynamic/pro-dashboard/${dashboardId}/stream?_=${Date.now()}`
+		: `/api/dynamic/pro-dashboard/${dashboardId}/stream`
+	const init: RequestInit = { credentials: 'include', signal }
+	if (authToken) init.headers = { Authorization: `Bearer ${authToken}` }
+	return { url, init }
+}
+
+// Returns the body only when the response is actually streamable, so the caller's check is not a
+// logical value block inside its try.
+function usableStreamBody(response: Response) {
+	return response.ok ? response.body : null
+}
+
 export function useDashboardStream(
 	dashboardId: string | undefined,
 	authToken?: string | null,
@@ -162,19 +211,14 @@ export function useDashboardStream(
 		const abortController = new AbortController()
 
 		const startStream = async () => {
+			// Built before the try: its conditionals are value blocks, and assembling a request cannot fail.
+			const request = buildStreamRequest(dashboardId, authToken, abortController.signal)
 			try {
-				const tokenAtFetch = authToken
-				const streamUrl = tokenAtFetch
-					? `/api/dynamic/pro-dashboard/${dashboardId}/stream?_=${Date.now()}`
-					: `/api/dynamic/pro-dashboard/${dashboardId}/stream`
-				const response = await fetch(streamUrl, {
-					credentials: 'include',
-					...(tokenAtFetch ? { headers: { Authorization: `Bearer ${tokenAtFetch}` } } : {}),
-					signal: abortController.signal
-				})
+				const response = await fetch(request.url, request.init)
 				if (abortController.signal.aborted) return
 
-				if (!response.ok || !response.body) {
+				const body = usableStreamBody(response)
+				if (!body) {
 					setState((s) => ({
 						...s,
 						isStreaming: false,
@@ -184,45 +228,23 @@ export function useDashboardStream(
 					return
 				}
 
-				const reader = response.body.getReader()
+				const reader = body.getReader()
 				const decoder = new TextDecoder()
 				const lineParser = createDashboardStreamLineParser((line) => {
 					if (!abortController.signal.aborted) handleLine(line)
 				})
 
-				try {
-					while (true) {
-						if (abortController.signal.aborted) break
-
-						const { done, value } = await reader.read()
-
-						if (done) {
-							lineParser.push(decoder.decode())
-							lineParser.finish()
-							break
-						}
-
-						lineParser.push(decoder.decode(value, { stream: true }))
-					}
-				} finally {
-					try {
-						reader.releaseLock()
-					} catch {
-						// The lock is already released once the stream has errored.
-					}
-				}
+				await pumpStream(reader, decoder, lineParser, abortController.signal)
 
 				if (!abortController.signal.aborted) {
 					setState((s) => (s.isDone ? s : { ...s, isStreaming: false, isDone: true }))
 				}
 			} catch (error) {
 				if (abortController.signal.aborted) return
-				setState((s) => ({
-					...s,
-					isStreaming: false,
-					isDone: true,
-					error: error instanceof Error ? error.message : 'Stream failed'
-				}))
+				// Read out of the catch binding before the updater closes over it: the compiler cannot treat
+				// a caught binding referenced from a nested function as consistently local.
+				const message = streamErrorMessage(error)
+				setState((s) => ({ ...s, isStreaming: false, isDone: true, error: message }))
 			}
 		}
 

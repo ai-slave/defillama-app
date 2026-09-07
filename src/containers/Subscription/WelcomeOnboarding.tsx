@@ -71,6 +71,33 @@ const ONBOARDING_OPTIONS = [
 
 const PRIORITY_ORDER = ['llamaai', 'dashboards', 'csv', 'llamafeed', 'sheets'] as const
 
+// `window.sessionStorage` throws by itself when browser policy denies storage, so the access has to be
+// guarded and not just the getItem call. Both effects below read through this.
+function getSessionStorage(): Storage | null {
+	try {
+		return window.sessionStorage
+	} catch {
+		return null
+	}
+}
+
+// Reads and consumes the checkout marker: the storage calls need a try, and the marker's own tests are
+// value blocks the compiler cannot lower inside one.
+function readTrialCheckoutMarker(storage: Storage): { variant: string } | null {
+	try {
+		const raw = storage.getItem('llamaai_checkout')
+		if (!raw) return null
+		// Consumed even when stale, so a stale marker cannot fire later.
+		storage.removeItem('llamaai_checkout')
+		const marker = JSON.parse(raw) as { variant?: string; ts?: number }
+		if (!marker.ts || Date.now() - marker.ts >= 60 * 60 * 1000) return null
+		return { variant: marker.variant ?? 'trial' }
+	} catch {
+		// Storage can be unavailable or the marker malformed; the event is not tracked.
+		return null
+	}
+}
+
 export function WelcomeOnboarding() {
 	const queryClient = useQueryClient()
 	const { isAuthenticated, hasActiveSubscription, loaders, authorizedFetch } = useAuthContext()
@@ -99,25 +126,24 @@ export function WelcomeOnboarding() {
 	const trialActivationFiredRef = useRef(false)
 	useEffect(() => {
 		if (trialActivationFiredRef.current || !hasActiveSubscription) return
-		try {
-			const raw = sessionStorage.getItem('llamaai_checkout')
-			if (!raw) return
-			sessionStorage.removeItem('llamaai_checkout')
-			const marker = JSON.parse(raw) as { variant?: string; ts?: number }
-			if (marker.ts && Date.now() - marker.ts < 60 * 60 * 1000) {
-				trialActivationFiredRef.current = true
-				trackUmamiEvent('llamaai-trial-activated', { variant: marker.variant ?? 'trial' })
-			}
-		} catch {
-			// Storage can be unavailable or the marker malformed; the event is not tracked.
-		}
+		const storage = getSessionStorage()
+		if (!storage) return
+		const marker = readTrialCheckoutMarker(storage)
+		if (!marker) return
+		trialActivationFiredRef.current = true
+		trackUmamiEvent('llamaai-trial-activated', { variant: marker.variant })
 	}, [hasActiveSubscription])
 
 	useEffect(() => {
 		if (slackAcquisitionHandledRef.current) return
 		if (!hasActiveSubscription || !isAuthenticated || loaders.userLoading) return
 		if (typeof window === 'undefined') return
-		const acquisition = readSlackAcquisition(window.sessionStorage)
+		const storage = getSessionStorage()
+		if (!storage) {
+			slackAcquisitionHandledRef.current = true
+			return
+		}
+		const acquisition = readSlackAcquisition(storage)
 		if (!acquisition) {
 			slackAcquisitionHandledRef.current = true
 			return

@@ -30,22 +30,28 @@ export function parseAmount(raw: string): number | null {
 
 type PositionState = [number | null, (v: number | null) => void]
 
+// Reading storage owns the try/catch: the compiler cannot lower the validity test inside one, and a
+// plain module function is not compiled at all.
+function readStoredPosition(): number | null {
+	try {
+		const raw = localStorage.getItem(STORAGE_KEY)
+		if (!raw) return null
+		const value = Number(raw)
+		return Number.isFinite(value) && value > 0 ? value : null
+	} catch {
+		return null // storage unavailable → stay in pool mode
+	}
+}
+
 function usePositionUsdState(): PositionState {
 	const [position, setPosition] = useState<number | null>(null)
 
 	// Load after mount so SSR and the first client render agree (pool mode).
 	useEffect(() => {
-		try {
-			const raw = localStorage.getItem(STORAGE_KEY)
-			if (raw) {
-				const n = Number(raw)
-				// Read after mount so SSR and the first client render agree.
-				// oxlint-disable-next-line react/set-state-in-effect -- see above
-				if (Number.isFinite(n) && n > 0) setPosition(n)
-			}
-		} catch {
-			/* storage unavailable → stay in pool mode */
-		}
+		const stored = readStoredPosition()
+		// Read after mount so SSR and the first client render agree.
+		// oxlint-disable-next-line react/set-state-in-effect -- see above
+		if (stored !== null) setPosition(stored)
 	}, [])
 
 	const set = useCallback((v: number | null) => {

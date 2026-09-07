@@ -157,13 +157,10 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 			setName((prev) => (overwriteName ? title : prev.trim() ? prev : title))
 			if (!duckdb.conn) return
 			setBusyTaskId(taskId)
-			try {
-				await run(nextSql, tables)
-			} finally {
-				setBusyTaskId(null)
-			}
+			// Promise.finally rather than a try/finally statement: the compiler cannot lower a try without
+			// a catch, and the flag still clears when run rejects.
+			await run(nextSql, tables).finally(() => setBusyTaskId(null))
 		},
-		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
 		[running, savePending, busyTaskId, duckdb.conn, run]
 	)
 
@@ -183,11 +180,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 		let ranForSave = false
 		if (!outcome) {
 			setSavePending(true)
-			try {
-				outcome = await run()
-			} finally {
-				setSavePending(false)
-			}
+			outcome = await run().finally(() => setSavePending(false))
 			if (!outcome) return
 			ranForSave = true
 		}

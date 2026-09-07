@@ -328,6 +328,17 @@ function ClaimConfirmation() {
 	)
 }
 
+function uploadErrorMessage(error: unknown) {
+	return error instanceof Error ? error.message : 'Failed to upload supporting documents'
+}
+
+// Throws from outside the try's own body: the compiler cannot lower a ThrowStatement inside one.
+function assertReceiptsSigned(receipts: Array<{ signature?: string }>) {
+	if (receipts.some((receipt) => !receipt.signature)) {
+		throw new Error('A document receipt is missing its signature')
+	}
+}
+
 export function ClaimTokenProfile({
 	variant = 'claim',
 	projects = [],
@@ -426,17 +437,14 @@ export function ClaimTokenProfile({
 		setUploadStatuses((current) => ({ ...current, [key]: { pending: true, error: null } }))
 		try {
 			const receipts = await uploadUtrClaimDocuments(files)
-			if (receipts.some((receipt) => !receipt.signature)) throw new Error('A document receipt is missing its signature')
+			assertReceiptsSigned(receipts)
 			setDocuments((current) => ({ ...current, [key]: [...current[key], ...receipts] }))
 			setUploadStatuses((current) => ({ ...current, [key]: { pending: false, error: null } }))
 		} catch (error) {
-			setUploadStatuses((current) => ({
-				...current,
-				[key]: {
-					pending: false,
-					error: error instanceof Error ? error.message : 'Failed to upload supporting documents'
-				}
-			}))
+			// Named out here, then read into a local: a conditional cannot be lowered inside a catch, and a
+			// caught binding referenced from the updater closure is not consistently local either.
+			const message = uploadErrorMessage(error)
+			setUploadStatuses((current) => ({ ...current, [key]: { pending: false, error: message } }))
 		}
 	}
 

@@ -80,6 +80,20 @@ function isTrade(value: unknown): value is HyperliquidWsTrade {
 }
 
 /** Validate the channel discriminator and its corresponding websocket payload before dispatch. */
+// The parse owns the try/catch and the channel check is a logical value block; neither can be lowered
+// inside a try in compiled code, and plain module functions are not compiled.
+function parseFrame(data: string): unknown | undefined {
+	try {
+		return JSON.parse(data)
+	} catch {
+		return undefined // non-json frame
+	}
+}
+
+function isSubscriptionResponse(message: unknown) {
+	return isRecord(message) && message.channel === 'subscriptionResponse'
+}
+
 export function parseHyperliquidWsMessage(value: unknown): HyperliquidWsMessage | null {
 	if (!isRecord(value) || typeof value.channel !== 'string') return null
 	const isSnapshot = typeof value.isSnapshot === 'boolean' ? value.isSnapshot : undefined
@@ -214,13 +228,10 @@ export function useHyperliquidWs(subscriptions: Array<WsSubscription>, onMessage
 
 			ws.onmessage = (event) => {
 				lastMessageAtRef.current = Date.now()
-				try {
-					const message: unknown = JSON.parse(event.data)
-					if (isRecord(message) && message.channel === 'subscriptionResponse') return
-					cbRef.current(message)
-				} catch {
-					// ignore non-json frames
-				}
+				const message = parseFrame(event.data)
+				// JSON.parse never yields undefined, so it stands in for a frame that would not parse.
+				if (message === undefined || isSubscriptionResponse(message)) return
+				cbRef.current(message)
 			}
 
 			ws.onclose = () => {

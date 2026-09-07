@@ -629,6 +629,41 @@ suspects.
 on the next regeneration without failing — the two scripts are coupled by the checker's stdout, so
 change them together and re-run `bun run compiler:baseline` before trusting a diff.
 
+## The try family, and what its messages do not tell you
+
+Four fix shapes cover it, and three of them are not guessable from the bailout text.
+
+**A value block in a `catch` is the same bailout as one in a `try`.** The message only says
+"within a try/catch statement", so a conditional formatting a caught error reads as unrelated. Name the
+message out in a function, or compute it before the try when it does not depend on the error.
+
+**A caught binding referenced from a nested function reports as something else entirely.** The message
+is `Expected all references to a variable to be consistently local or context references`, with the
+detail "this is local", which sounds like a separate and harder class. It is not: it means the `catch
+(error)` binding is captured by a closure inside the catch, typically a `setState` updater. Read it into
+a plain const first, then let the updater close over that.
+
+Both of those cost a revert before being understood. `ClaimTokenProfile` was set aside as
+"not mechanical" on the strength of that message alone, and turned out to be two ordinary fixes.
+
+**The compiler cannot lower a loop inside a `try` at all.** Not the iterator, the whole statement.
+`for (const [i, x] of plan.entries())` reports against `plan.entries()`; rewriting it as
+`for (let i = 0; i < plan.length; i++)` moves the complaint to the `0`. The loop has to come out of the
+try, which is a restructure, not a hoist. `SqlWorkspace` is left in the baseline for that reason.
+
+**`Promise.finally` replaces a `try`/`finally` whenever the callee already returns a promise.** No try
+statement survives, the flag still clears on rejection, and in the SQL chart modal it also retired a
+`react/memo-dependencies` suppression that only existed because the compiler could not see through the
+try.
+
+A finalizer can only move after the try/catch when neither body exits early. Where every path returns —
+`ArticleEditorClient`'s save, `useTableRegistry`'s load — moving it means it never runs, so those need
+the body extracted instead.
+
+One file at a time is the wrong unit here. `useDashboardStream` took five passes: two request
+conditionals, a catch ternary, a caught binding in an updater, a body test, and a `try` with a
+`finally` but no `catch`. Expect to re-run the checker after every fix.
+
 ## Follow-up: try/catch around an awaited mutation
 
 React Compiler cannot lower a conditional, logical or optional chain inside a `try`/`catch`, and the

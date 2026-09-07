@@ -33,18 +33,20 @@ export function ShareQueryButton({
 	const isNotebook = mode === 'notebook'
 	const hasContent = isNotebook ? notebookCells.some((c) => c.source.trim()) : !!sql.trim()
 
+	// Both are value blocks, which the compiler cannot lower inside a try or catch. Building the link is
+	// called out to so a failure there is still caught; the message does not depend on anything in the
+	// try, so it is computed before it.
+	const buildShareLink = () => {
+		const url = isNotebook
+			? buildNotebookShareUrl(window.location.origin, '/downloads', { title: notebookTitle, cells: notebookCells })
+			: buildShareUrl(window.location.origin, '/downloads', extractQueryConfig({ sql, tables, chartConfig }))
+		return url.includes('mode=sql') ? url : `${url}${url.includes('?') ? '&' : '?'}mode=sql`
+	}
+	const copiedMessage = isNotebook ? 'Notebook link copied' : 'Share link copied'
+
 	const onClick = async () => {
 		try {
-			let url: string
-			if (isNotebook) {
-				url = buildNotebookShareUrl(window.location.origin, '/downloads', {
-					title: notebookTitle,
-					cells: notebookCells
-				})
-			} else {
-				url = buildShareUrl(window.location.origin, '/downloads', extractQueryConfig({ sql, tables, chartConfig }))
-			}
-			const withMode = url.includes('mode=sql') ? url : `${url}${url.includes('?') ? '&' : '?'}mode=sql`
+			const withMode = buildShareLink()
 			if (withMode.length > MAX_SAFE_URL_LENGTH) {
 				toast(
 					(t) => (
@@ -60,7 +62,7 @@ export function ShareQueryButton({
 			}
 			await navigator.clipboard.writeText(withMode)
 			setCopied(true)
-			toast.success(isNotebook ? 'Notebook link copied' : 'Share link copied')
+			toast.success(copiedMessage)
 			setTimeout(() => setCopied(false), 1500)
 		} catch {
 			toast.error('Could not copy link')

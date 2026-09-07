@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { setLlamaAIWalkthroughState, writeAppStorage } from '~/contexts/LocalStorage'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { WelcomeOnboarding } from '../WelcomeOnboarding'
 const { push } = vi.hoisted(() => ({ push: vi.fn() }))
 vi.mock('next/router', () => ({ default: { push }, useRouter: () => ({ push }) }))
@@ -116,4 +117,33 @@ test('exploring routes home; deselecting it blocks continue', async () => {
 	await act(async () => continueButton().click())
 	expect(push).toHaveBeenCalledExactlyOnceWith('/')
 	expect(writeAppStorage).toHaveBeenCalledExactlyOnceWith({ ONBOARDING_INTENT: ['exploring'] })
+})
+
+test('onboarding still renders when browser policy denies session storage', async () => {
+	// Reading window.sessionStorage throws by itself when storage is denied, so guarding only the
+	// getItem call is not enough: the access has to sit inside the try too.
+	const original = Object.getOwnPropertyDescriptor(window, 'sessionStorage')
+	Object.defineProperty(window, 'sessionStorage', {
+		configurable: true,
+		get() {
+			throw new Error('The operation is insecure.')
+		}
+	})
+	const deniedContainer = document.body.appendChild(document.createElement('div'))
+	const deniedRoot = createRoot(deniedContainer)
+	try {
+		await act(async () =>
+			deniedRoot.render(
+				<QueryClientProvider client={client}>
+					<WelcomeOnboarding />
+				</QueryClientProvider>
+			)
+		)
+		expect(deniedContainer.querySelectorAll('button').length).toBeGreaterThan(0)
+		expect(vi.mocked(trackUmamiEvent)).not.toHaveBeenCalledWith('llamaai-trial-activated', expect.anything())
+	} finally {
+		await act(async () => deniedRoot.unmount())
+		deniedContainer.remove()
+		if (original) Object.defineProperty(window, 'sessionStorage', original)
+	}
 })

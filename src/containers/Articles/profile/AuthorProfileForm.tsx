@@ -304,6 +304,8 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 		if (hasError || !dirty) return
 		const payload = buildPayload(state, initial)
 		if (Object.keys(payload).length === 0) return
+		// A logical test cannot be lowered inside a try, and this one needs the saved slug to compare.
+		const isRenamed = (savedSlug: string) => Boolean(payload.slug) && savedSlug !== payload.slug
 		try {
 			const updated = await updateProfileMutation.mutateAsync(payload)
 			const next = profileToForm(updated)
@@ -311,7 +313,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 			setInitial(next)
 			setState(next)
 			setShowCustom(next.customSocials.length > 0)
-			if (payload.slug && next.slug !== payload.slug) {
+			if (isRenamed(next.slug)) {
 				toast.success(`Saved as @${next.slug}`)
 			} else {
 				toast.success('Saved')
