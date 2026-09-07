@@ -16,7 +16,14 @@ import { useAuthBridge } from '~/hooks/useAuthBridge'
 import { useParentAuthTracker } from '~/hooks/useParentAuthTracker'
 import { useReferrer } from '~/hooks/useReferrer'
 import { useUmamiIdentityTracker } from '~/hooks/useUmamiIdentityTracker'
-import { AB_EXPERIMENT_ID, getABGroupFromCookie } from '~/utils/abTesting'
+import {
+	AB_COOKIE_MAX_AGE_SECONDS,
+	AB_EXPERIMENT_ID,
+	AB_GROUP_COOKIE_NAME,
+	AB_VISITOR_COOKIE_NAME,
+	getABClientAssignment,
+	getABGroupFromCookie
+} from '~/utils/abTesting'
 import { addABTag, trackUmamiEvent, UMAMI_READY_EVENT } from '~/utils/analytics/umami'
 
 type NextPageWithLayout = AppProps['Component'] & {
@@ -32,7 +39,31 @@ const AB_EXPOSURE_SESSION_KEY = `ab-exposure:${AB_EXPERIMENT_ID}`
 const MAIN_UMAMI_WEBSITE_ID = 'ca346731-f7ec-437f-9727-162f29bb67ae'
 const UMAMI_WEBSITE_ID = ACTIVE_INVESTORS_SITE?.umamiWebsiteId ?? MAIN_UMAMI_WEBSITE_ID
 
+function ensureClientABAssignment() {
+	const hostname = window.location.hostname
+	const isMainSite = hostname === 'defillama.com' || hostname === 'www.defillama.com'
+	const isLocalDevelopment =
+		process.env.NODE_ENV !== 'production' && (hostname === 'localhost' || hostname === '127.0.0.1')
+	if (!isMainSite && !isLocalDevelopment) return
+
+	try {
+		const assignment = getABClientAssignment(document.cookie, () => crypto.randomUUID())
+		if (!assignment) return
+
+		const attributes = `Max-Age=${AB_COOKIE_MAX_AGE_SECONDS}; Path=/; SameSite=Lax${
+			window.location.protocol === 'https:' ? '; Secure' : ''
+		}`
+		if (assignment.shouldSetVisitorCookie) {
+			document.cookie = `${AB_VISITOR_COOKIE_NAME}=${assignment.visitorId}; ${attributes}`
+		}
+		document.cookie = `${AB_GROUP_COOKIE_NAME}=${assignment.group}; ${attributes}`
+	} catch {
+		// A/B assignment must never prevent the app from loading.
+	}
+}
+
 if (typeof window !== 'undefined') {
+	ensureClientABAssignment()
 	window.umamiABBeforeSend = (_type, payload) => addABTag(payload, document.cookie)
 }
 

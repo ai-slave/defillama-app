@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { AB_GROUP_COOKIE_NAME, getABGroup, getABTag } from '~/utils/abTesting'
+import {
+	AB_GROUP_COOKIE_NAME,
+	AB_VISITOR_COOKIE_NAME,
+	getABClientAssignment,
+	getABGroup,
+	getABTag
+} from '~/utils/abTesting'
 import { addABTag } from './umami'
 
 describe('addABTag', () => {
@@ -21,5 +27,38 @@ describe('addABTag', () => {
 		const payload = { name: 'nav-click' }
 
 		expect(addABTag(payload, `${AB_GROUP_COOKIE_NAME}=invalid`)).toBe(payload)
+	})
+})
+
+describe('getABClientAssignment', () => {
+	test('creates a stable assignment when the proxy cookies are missing', () => {
+		const visitorId = '00000000-0000-4000-8000-000000000008'
+
+		expect(getABClientAssignment('theme=dark', () => visitorId)).toEqual({
+			visitorId,
+			group: 'b',
+			shouldSetVisitorCookie: true
+		})
+	})
+
+	test('restores the group from an existing client-readable visitor cookie', () => {
+		const visitorId = '00000000-0000-4000-8000-000000000007'
+
+		expect(getABClientAssignment(`${AB_VISITOR_COOKIE_NAME}=${visitorId}`, () => crypto.randomUUID())).toEqual({
+			visitorId,
+			group: 'a',
+			shouldSetVisitorCookie: false
+		})
+	})
+
+	test('keeps an existing group without generating another assignment', () => {
+		let generated = false
+		const assignment = getABClientAssignment(`${AB_GROUP_COOKIE_NAME}=a`, () => {
+			generated = true
+			return crypto.randomUUID()
+		})
+
+		expect(assignment).toBeNull()
+		expect(generated).toBe(false)
 	})
 })
