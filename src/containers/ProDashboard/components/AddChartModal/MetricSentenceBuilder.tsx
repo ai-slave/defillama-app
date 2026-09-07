@@ -174,7 +174,17 @@ export function MetricSentenceBuilder({
 	const [subjectTab, setSubjectTab] = useState<'chain' | 'protocol'>('chain')
 	const isMobile = useMedia('(max-width: 639px)')
 	const popover = usePopoverStore({
-		placement: isMobile ? 'bottom' : 'right-start'
+		placement: isMobile ? 'bottom' : 'right-start',
+		// Every close runs the same teardown, including the ones that never reach closePopover: an
+		// outside click or Escape. Nothing is left over for the next open to reset.
+		setOpen(open) {
+			if (open) return
+			setActiveToken(null)
+			setSearchTerm('')
+			setSubjectTab(metricSubjectType)
+			subjectCombobox.setInputValue('')
+			subjectCombobox.setOpen(false)
+		}
 	})
 	const subjectCombobox = useComboboxStore({ resetValueOnHide: true })
 	const anchorRefs = useRef<Record<Exclude<ActiveToken, null>, HTMLButtonElement | null>>({
@@ -184,30 +194,11 @@ export function MetricSentenceBuilder({
 		window: null
 	})
 	const [popoverWidth, setPopoverWidth] = useState(260)
-	const isPopoverOpen = useStoreState(popover, 'open')
 	const subjectSearchValue = useStoreState(subjectCombobox, 'inputValue') ?? ''
 	const deferredSubjectSearchValue = useDeferredValue(subjectSearchValue)
 	const chainListRef = useRef<HTMLDivElement | null>(null)
 	const protocolListRef = useRef<HTMLDivElement | null>(null)
 	const { availableProtocolChartTypes, availableChainChartTypes } = useAppMetadata()
-
-	useEffect(() => {
-		if (!isPopoverOpen) {
-			setActiveToken(null)
-		}
-	}, [isPopoverOpen])
-
-	useEffect(() => {
-		if (!activeToken) {
-			setSearchTerm('')
-		}
-	}, [activeToken])
-
-	useEffect(() => {
-		if (!activeToken) {
-			setSubjectTab(metricSubjectType)
-		}
-	}, [activeToken, metricSubjectType])
 
 	useEffect(() => {
 		if (activeToken === 'subject') {
@@ -226,9 +217,6 @@ export function MetricSentenceBuilder({
 
 	const closePopover = () => {
 		popover.setOpen(false)
-		setActiveToken(null)
-		subjectCombobox.setInputValue('')
-		subjectCombobox.setOpen(false)
 	}
 
 	const chainOptions = useMemo(
@@ -404,6 +392,9 @@ export function MetricSentenceBuilder({
 			setSubjectTab(metricSubjectType)
 		}
 
+		// Switching tokens without closing keeps the popover open, so the previous token's search has to
+		// be cleared here too.
+		setSearchTerm('')
 		setPopoverWidth(getTokenWidth(token, isMobile))
 		setActiveToken(token)
 		popover.setAnchorElement(anchor)

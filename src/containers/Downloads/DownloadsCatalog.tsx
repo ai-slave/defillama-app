@@ -437,7 +437,10 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 			) : null}
 
 			{previewChartDataset && (
+				// Keyed by what the modal is showing: running a different saved preset while it is open
+				// builds a fresh modal instead of resetting the one on screen.
 				<ChartDatasetModal
+					key={`${previewChartDataset.slug}:${chartInitialConfig?.id ?? 'new'}`}
 					dataset={previewChartDataset}
 					options={chartOptionsMap[previewChartDataset.slug] ?? []}
 					authorizedFetch={authorizedFetch}
@@ -452,7 +455,9 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 			)}
 
 			{previewDataset && (
+				// Keyed by what the modal is showing, as above.
 				<DatasetPreviewModal
+					key={`${previewDataset.slug}:${datasetInitialConfig?.id ?? 'new'}`}
 					dataset={previewDataset}
 					authorizedFetch={authorizedFetch}
 					onClose={() => {

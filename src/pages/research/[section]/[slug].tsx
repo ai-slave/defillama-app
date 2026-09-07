@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
 import { ResearchSearchDialog } from '~/components/ResearchSearchDialog'
@@ -178,7 +178,6 @@ function SectionArticleContent({
 	initialArticle?: PublicArticleDocument | null
 	initialBanners?: ArticleBannerStripInitialData | null
 }) {
-	const router = useRouter()
 	const expectedSection = ARTICLE_SECTION_FROM_SLUG[sectionSlug]
 	const {
 		data: article = null,
@@ -203,8 +202,8 @@ function SectionArticleContent({
 		const slugMismatch = article.slug !== slug
 		if (!sectionMismatch && !slugMismatch) return
 		const canonicalSectionSlug = article.section ? ARTICLE_SECTION_SLUGS[article.section] : sectionSlug
-		void router.replace(`/research/${canonicalSectionSlug}/${article.slug}`)
-	}, [article, expectedSection, slug, sectionSlug, router])
+		void Router.replace(`/research/${canonicalSectionSlug}/${article.slug}`)
+	}, [article, expectedSection, slug, sectionSlug])
 
 	if (!expectedSection) {
 		return (

@@ -1,6 +1,6 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import Head from 'next/head'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
@@ -115,14 +115,14 @@ function DashboardEditPageContent({
 		if (!isClient || loaders.userLoading) return
 		if (!isAuthenticated && !hasRedirectedRef.current) {
 			hasRedirectedRef.current = true
-			void router.replace(`/pro/${dashboardId}`)
+			void Router.replace(`/pro/${dashboardId}`)
 			return
 		}
 		if (currentDashboard && user?.id && currentDashboard.user !== user.id && !hasRedirectedRef.current) {
 			hasRedirectedRef.current = true
-			void router.replace(`/pro/${currentDashboard.slug ?? dashboardId}`)
+			void Router.replace(`/pro/${currentDashboard.slug ?? dashboardId}`)
 		}
-	}, [isClient, isAuthenticated, loaders.userLoading, currentDashboard, user?.id, dashboardId, router])
+	}, [isClient, isAuthenticated, loaders.userLoading, currentDashboard, user?.id, dashboardId])
 
 	// Read through locals: the pages router keeps one object identity and swaps `query` on navigation,
 	// so these are the values that actually change.
@@ -130,9 +130,9 @@ function DashboardEditPageContent({
 	useEffect(() => {
 		if (hasRedirectedRef.current || !currentDashboard?.slug) return
 		if (typeof routeDashboardId === 'string' && routeDashboardId !== currentDashboard.slug) {
-			void router.replace(`/pro/${currentDashboard.slug}/edit`, undefined, { shallow: true })
+			void Router.replace(`/pro/${currentDashboard.slug}/edit`, undefined, { shallow: true })
 		}
-	}, [currentDashboard?.slug, routeDashboardId, router])
+	}, [currentDashboard?.slug, routeDashboardId])
 
 	const isLoading = !isClient || loaders.userLoading || isValidating || isLoadingDashboard
 

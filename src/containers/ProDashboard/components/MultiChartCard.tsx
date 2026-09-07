@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useCallback, useContext, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
@@ -66,7 +66,7 @@ const normalizeBaseType = (chartType: string | undefined): MultiChartInputSeries
 	return undefined
 }
 
-const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardProps) {
+function MultiChartCard({ multi }: MultiChartCardProps) {
 	const { getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const {
@@ -555,6 +555,6 @@ const MultiChartCard = memo(function MultiChartCard({ multi }: MultiChartCardPro
 			/>
 		</div>
 	)
-})
+}
 
 export default MultiChartCard

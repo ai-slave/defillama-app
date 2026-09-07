@@ -1,5 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
@@ -185,9 +185,9 @@ function DashboardPageContent({
 			routeDashboardId !== 'new' &&
 			routeDashboardId !== currentDashboard.slug
 		) {
-			void router.replace(`/pro/${currentDashboard.slug}`, undefined, { shallow: true })
+			void Router.replace(`/pro/${currentDashboard.slug}`, undefined, { shallow: true })
 		}
-	}, [dashboardId, currentDashboard?.slug, routeDashboardId, router])
+	}, [dashboardId, currentDashboard?.slug, routeDashboardId])
 
 	useEffect(() => {
 		if (dashboardId === 'new') {

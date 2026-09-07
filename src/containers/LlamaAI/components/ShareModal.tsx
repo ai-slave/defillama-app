@@ -34,6 +34,23 @@ function canWriteClipboard() {
 }
 
 export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, messageId }: ShareModalProps) {
+	return (
+		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
+			<Ariakit.Dialog
+				className="dialog w-full gap-0 border border-medium bg-surface p-4 shadow-2xl max-sm:drawer sm:max-w-sm"
+				unmountOnHide
+				portal
+				hideOnInteractOutside
+			>
+				<ShareModalBody setOpen={setOpen} sessionId={sessionId} messageId={messageId} />
+			</Ariakit.Dialog>
+		</Ariakit.DialogProvider>
+	)
+})
+
+// Mounted only while the dialog is open, so each share starts from a fresh request instead of clearing
+// the previous result on close.
+function ShareModalBody({ setOpen, sessionId, messageId }: Omit<ShareModalProps, 'open'>) {
 	const { authorizedFetch } = useAuthContext()
 	const queryClient = useQueryClient()
 	const hasStartedRef = useRef(false)
@@ -67,18 +84,6 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 		[markCopied]
 	)
 
-	useEffect(() => {
-		if (open) return
-		if (copiedTimeoutRef.current) {
-			clearTimeout(copiedTimeoutRef.current)
-			copiedTimeoutRef.current = null
-		}
-		hasStartedRef.current = false
-		setShareResult(null)
-		setCopied(false)
-		setShareError(null)
-	}, [open])
-
 	const { mutate: createShareLink, isPending } = useMutation<ShareResult>({
 		mutationFn: async () => {
 			if (!sessionId) throw new Error('No session to share')
@@ -96,12 +101,13 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 
 			return { ...data, shareToken: toShareToken(data.shareToken) }
 		},
+		// The share link exists whatever the reader did next, so the cache write stays here. Writing to
+		// their clipboard does not: that is this dialog acting on their machine, and it moves to the
+		// mutate call so a dialog they already closed cannot overwrite what they copied since.
 		onSuccess: (data) => {
 			setShareResult(data)
 			setShareError(null)
 			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
-			const nextShareLink = buildShareLink(window.location.origin, data.shareToken, messageId)
-			void copyShareLink(nextShareLink, 'Failed to copy share link')
 		},
 		onError: (error) => {
 			const message = error instanceof Error ? error.message : 'Failed to share conversation'
@@ -110,8 +116,22 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 		}
 	})
 
+	// Copying is this dialog acting on the reader's machine, so it rides on the mutate call, which React
+	// Query drops once the dialog is gone. Both the first attempt and the retry go through here so both
+	// copy the link.
+	const startShare = useCallback(() => {
+		createShareLink(undefined, {
+			onSuccess: (data) => {
+				const nextShareLink = buildShareLink(window.location.origin, data.shareToken, messageId)
+				void copyShareLink(nextShareLink, 'Failed to copy share link')
+			}
+		})
+	}, [createShareLink, messageId, copyShareLink])
+
+	// Runs once per open, because this component only exists while the dialog is open. The ref still
+	// guards against React's development double-invoke.
 	useEffect(() => {
-		if (!open || hasStartedRef.current) return
+		if (hasStartedRef.current) return
 		hasStartedRef.current = true
 
 		if (!sessionId) {
@@ -121,8 +141,8 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 		}
 
 		trackUmamiEvent('llamaai-share-conversation')
-		createShareLink()
-	}, [open, sessionId, setOpen, createShareLink])
+		startShare()
+	}, [sessionId, setOpen, startShare])
 
 	useEffect(() => {
 		return () => {
@@ -170,117 +190,108 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 			: 'Creating Share Link'
 
 	return (
-		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
-			<Ariakit.Dialog
-				className="dialog w-full gap-0 border border-medium bg-surface p-4 shadow-2xl max-sm:drawer sm:max-w-sm"
-				unmountOnHide
-				portal
-				hideOnInteractOutside
-			>
-				<div className="mb-4 flex items-center justify-between">
-					<Ariakit.DialogHeading className="text-lg font-semibold">{heading}</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss className="-m-2 rounded-sm p-2 hover:bg-ai-surface-muted">
-						<Icon name="x" height={16} width={16} />
-					</Ariakit.DialogDismiss>
-				</div>
+		<>
+			<div className="mb-4 flex items-center justify-between">
+				<Ariakit.DialogHeading className="text-lg font-semibold">{heading}</Ariakit.DialogHeading>
+				<Ariakit.DialogDismiss className="-m-2 rounded-sm p-2 hover:bg-ai-surface-muted">
+					<Icon name="x" height={16} width={16} />
+				</Ariakit.DialogDismiss>
+			</div>
 
-				{shareResult ? (
-					<div className="flex flex-col gap-4">
-						<div className="flex flex-col items-center gap-2 py-2 text-center">
-							<div className="flex size-10 items-center justify-center rounded-full bg-success/12 text-success">
-								<Icon name="check-circle" height={24} width={24} />
-							</div>
-							<p className="m-0 text-sm font-medium">
-								{copied ? 'Share link copied to clipboard' : 'Share link ready'}
-							</p>
-							<p className="m-0 text-xs text-ai-tertiary">
-								Anyone with the link can view this conversation. Paste it into your favorite social app or share it
-								directly below.
-							</p>
+			{shareResult ? (
+				<div className="flex flex-col gap-4">
+					<div className="flex flex-col items-center gap-2 py-2 text-center">
+						<div className="flex size-10 items-center justify-center rounded-full bg-success/12 text-success">
+							<Icon name="check-circle" height={24} width={24} />
 						</div>
-						<div className="flex flex-col gap-2">
-							<label htmlFor={shareLinkInputId} className="text-xs text-ai-tertiary">
-								Share Link
-							</label>
-							<div className="flex gap-2">
-								<input
-									id={shareLinkInputId}
-									type="text"
-									value={shareLink}
-									readOnly
-									onFocus={(event) => event.currentTarget.select()}
-									className="flex-1 rounded-sm border border-ai-line bg-page px-3 py-2 text-sm"
-								/>
-								<button
-									type="button"
-									onClick={() => void handleCopyLink()}
-									data-umami-event="llamaai-copy-share-link"
-									className="rounded-sm border border-ai-line px-3 py-2 text-sm hover:bg-ai-surface-muted"
-								>
-									{copied ? (
-										<Icon name="check-circle" height={16} width={16} />
-									) : (
-										<Icon name="copy" height={16} width={16} />
-									)}
-								</button>
-							</div>
-						</div>
-						<div className="flex items-center justify-end gap-3">
-							<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-ai-tertiary hover:bg-ai-surface-muted">
-								Close
-							</Ariakit.DialogDismiss>
-							{canNativeShare ? (
-								<button
-									type="button"
-									onClick={() => void handleNativeShare()}
-									data-umami-event="llamaai-native-share"
-									className="rounded-sm border border-ai-line px-3 py-2 text-xs hover:bg-ai-surface-muted"
-								>
-									Share&hellip;
-								</button>
-							) : null}
+						<p className="m-0 text-sm font-medium">{copied ? 'Share link copied to clipboard' : 'Share link ready'}</p>
+						<p className="m-0 text-xs text-ai-tertiary">
+							Anyone with the link can view this conversation. Paste it into your favorite social app or share it
+							directly below.
+						</p>
+					</div>
+					<div className="flex flex-col gap-2">
+						<label htmlFor={shareLinkInputId} className="text-xs text-ai-tertiary">
+							Share Link
+						</label>
+						<div className="flex gap-2">
+							<input
+								id={shareLinkInputId}
+								type="text"
+								value={shareLink}
+								readOnly
+								onFocus={(event) => event.currentTarget.select()}
+								className="flex-1 rounded-sm border border-ai-line bg-page px-3 py-2 text-sm"
+							/>
 							<button
 								type="button"
-								onClick={handleShareToX}
-								data-umami-event="llamaai-share-to-x"
-								className="rounded-sm bg-brand px-3 py-2 text-xs text-ai-white hover:opacity-90"
+								onClick={() => void handleCopyLink()}
+								data-umami-event="llamaai-copy-share-link"
+								className="rounded-sm border border-ai-line px-3 py-2 text-sm hover:bg-ai-surface-muted"
 							>
-								Share to X
+								{copied ? (
+									<Icon name="check-circle" height={16} width={16} />
+								) : (
+									<Icon name="copy" height={16} width={16} />
+								)}
 							</button>
 						</div>
 					</div>
-				) : (
-					<>
-						{shareError ? (
-							<div className="flex flex-col gap-4">
-								<p className="m-0 text-sm text-ai-tertiary">{shareError}</p>
-								<div className="flex items-center justify-end gap-3">
-									<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-ai-tertiary hover:bg-ai-surface-muted">
-										Close
-									</Ariakit.DialogDismiss>
-									<button
-										type="button"
-										onClick={() => {
-											setShareError(null)
-											createShareLink()
-										}}
-										disabled={isPending}
-										className="flex items-center gap-2 rounded-sm bg-brand px-3 py-2 text-xs text-ai-white hover:opacity-90 disabled:opacity-50"
-									>
-										{isPending ? <LoadingSpinner size={14} /> : null}
-										<span>Retry</span>
-									</button>
-								</div>
+					<div className="flex items-center justify-end gap-3">
+						<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-ai-tertiary hover:bg-ai-surface-muted">
+							Close
+						</Ariakit.DialogDismiss>
+						{canNativeShare ? (
+							<button
+								type="button"
+								onClick={() => void handleNativeShare()}
+								data-umami-event="llamaai-native-share"
+								className="rounded-sm border border-ai-line px-3 py-2 text-xs hover:bg-ai-surface-muted"
+							>
+								Share&hellip;
+							</button>
+						) : null}
+						<button
+							type="button"
+							onClick={handleShareToX}
+							data-umami-event="llamaai-share-to-x"
+							className="rounded-sm bg-brand px-3 py-2 text-xs text-ai-white hover:opacity-90"
+						>
+							Share to X
+						</button>
+					</div>
+				</div>
+			) : (
+				<>
+					{shareError ? (
+						<div className="flex flex-col gap-4">
+							<p className="m-0 text-sm text-ai-tertiary">{shareError}</p>
+							<div className="flex items-center justify-end gap-3">
+								<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-ai-tertiary hover:bg-ai-surface-muted">
+									Close
+								</Ariakit.DialogDismiss>
+								<button
+									type="button"
+									onClick={() => {
+										setShareError(null)
+										startShare()
+									}}
+									disabled={isPending}
+									className="flex items-center gap-2 rounded-sm bg-brand px-3 py-2 text-xs text-ai-white hover:opacity-90 disabled:opacity-50"
+								>
+									{isPending ? <LoadingSpinner size={14} /> : null}
+									<span>Retry</span>
+								</button>
 							</div>
-						) : (
-							<div className="flex items-center gap-3 py-2 text-sm text-ai-tertiary">
-								<LoadingSpinner size={16} />
-								<span>Creating and copying your share link&hellip;</span>
-							</div>
-						)}
-					</>
-				)}
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+						</div>
+					) : (
+						<div className="flex items-center gap-3 py-2 text-sm text-ai-tertiary">
+							<LoadingSpinner size={16} />
+							<span>Creating and copying your share link&hellip;</span>
+						</div>
+					)}
+				</>
+			)}
+		</>
 	)
-})
+}

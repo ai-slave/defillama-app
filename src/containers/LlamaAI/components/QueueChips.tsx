@@ -1,4 +1,3 @@
-import { memo } from 'react'
 import { useCurrentSecond } from '~/containers/LlamaAI/components/status/useCurrentSecond'
 import type { QueueRowStatus, QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import type { QueueNotSentReason } from '~/containers/LlamaAI/queue/protocol'
@@ -92,13 +91,7 @@ function RowError({ status }: { status: QueueRowStatus | undefined }) {
 	return status?.error ? <p className="m-0 body-xs text-ai-error-strong">{status.error}</p> : null
 }
 
-export const QueueChips = memo(function QueueChips({
-	surface,
-	quotaResetTime
-}: {
-	surface: QueueSurface
-	quotaResetTime?: string | null
-}) {
+export function QueueChips({ surface, quotaResetTime }: { surface: QueueSurface; quotaResetTime?: string | null }) {
 	const {
 		rows,
 		ownedEditId,
@@ -390,4 +383,4 @@ export const QueueChips = memo(function QueueChips({
 			</ul>
 		</div>
 	)
-})
+}

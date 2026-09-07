@@ -1,4 +1,4 @@
-import { useRouter } from 'next/router'
+import Router from 'next/router'
 import type { ReactNode } from 'react'
 import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
@@ -65,14 +65,13 @@ export function ArticlesAccessGate({
 }) {
 	const { isLoading, hasAccess } = useHasArticlesAccess()
 	const isClient = useIsClient()
-	const router = useRouter()
 
 	const state = resolveArticlesGateState({ isClient, isLoading, hasAccess })
 
 	useEffect(() => {
 		if (state !== 'redirect') return
-		void router.replace(RESEARCH_ACCESS_REDIRECT_PATH)
-	}, [state, router])
+		void Router.replace(RESEARCH_ACCESS_REDIRECT_PATH)
+	}, [state])
 
 	if (state === 'loading') return <>{loadingFallback}</>
 	if (state === 'redirect') return null

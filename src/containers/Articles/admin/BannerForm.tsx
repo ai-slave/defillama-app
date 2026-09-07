@@ -90,11 +90,21 @@ export function BannerForm({ banner }: Props) {
 	const errors = validateBannerForm(state)
 	const hasError = Object.keys(errors).length > 0
 
+	// The save happened whatever the reader did next, so the revalidation and the toast belong to the
+	// mutation. Only the redirect is tied to this form still being on screen, and that goes on the
+	// mutate call, which React Query drops if the form unmounted first.
 	const saveMutation = useMutation({
 		mutationFn: async (submitted: BannerFormState) => {
 			const payload = buildPayload(submitted)
 			if (banner) return updateBanner(banner.id, payload, authorizedFetch)
 			return createBanner(payload, authorizedFetch)
+		},
+		onSuccess: () => {
+			revalidateLanding()
+			toast.success(banner ? 'Banner saved' : 'Banner created')
+		},
+		onError: (error) => {
+			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to save')
 		}
 	})
 
@@ -102,6 +112,13 @@ export function BannerForm({ banner }: Props) {
 		mutationFn: async () => {
 			if (!banner) return
 			await deleteBanner(banner.id, authorizedFetch)
+		},
+		onSuccess: () => {
+			revalidateLanding()
+			toast.success('Banner deleted')
+		},
+		onError: (error) => {
+			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to delete')
 		}
 	})
 
@@ -121,33 +138,25 @@ export function BannerForm({ banner }: Props) {
 	}
 	const availableCountryOptions = BANNER_COUNTRY_OPTIONS.filter((option) => !countriesCoveredByGroups.has(option.value))
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
 		if (hasError) return
-		try {
-			const saved = await saveMutation.mutateAsync(state)
-			acceptSaved(bannerToForm(saved), state)
-			revalidateLanding()
-			toast.success(banner ? 'Banner saved' : 'Banner created')
-			if (!banner && saved?.id) {
-				router.push(`/research/admin/banners/${saved.id}`)
+		saveMutation.mutate(state, {
+			onSuccess: (saved) => {
+				acceptSaved(bannerToForm(saved), state)
+				if (!banner && saved?.id) {
+					router.push(`/research/admin/banners/${saved.id}`)
+				}
 			}
-		} catch (error) {
-			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to save')
-		}
+		})
 	}
 
-	const handleDelete = async () => {
+	const handleDelete = () => {
 		if (!banner) return
 		if (!window.confirm('Delete this banner? This cannot be undone.')) return
-		try {
-			await deleteMutation.mutateAsync()
-			revalidateLanding()
-			toast.success('Banner deleted')
-			router.push('/research/admin/banners')
-		} catch (error) {
-			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to delete')
-		}
+		deleteMutation.mutate(undefined, {
+			onSuccess: () => router.push('/research/admin/banners')
+		})
 	}
 
 	const previewBanner: Banner = {

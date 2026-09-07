@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEditor } from '@tiptap/react'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
@@ -191,10 +191,6 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	})
 	const createArticleMutation = useMutation({
 		mutationFn: () => createArticle(createEmptyLocalArticle(), authorizedFetch),
-		onSuccess: (saved) => {
-			autoRedirectingRef.current = true
-			void router.replace(`/research/edit/${saved.id}`)
-		},
 		onError: (error) => {
 			autoCreatingRef.current = false
 			toast.error(error instanceof Error ? error.message : 'Failed to create draft')
@@ -227,7 +223,14 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		if (!articleId) {
 			if (autoCreatingRef.current) return
 			autoCreatingRef.current = true
-			createArticleMutation.mutate()
+			// The redirect into the new draft belongs to the mutate call, not the mutation: a reader who
+			// confirmed the "save in progress" prompt and left must not be pulled back into the editor.
+			createArticleMutation.mutate(undefined, {
+				onSuccess: (saved) => {
+					autoRedirectingRef.current = true
+					void Router.replace(`/research/edit/${saved.id}`)
+				}
+			})
 		}
 	}, [articleId, createArticleMutation, editor, isAuthenticated, loaders.userLoading])
 
@@ -589,7 +592,6 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		mutationFn: (targetArticleId: string) => deleteArticle(targetArticleId, authorizedFetch),
 		onSuccess: () => {
 			revalidateLanding()
-			void router.replace('/research')
 		},
 		onError: (error) => {
 			toast.error(error instanceof Error ? error.message : 'Failed to delete')
@@ -758,6 +760,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	const confirmDeleteArticle = () => {
 		if (!article.id) return
 		deleteArticleMutation.mutate(article.id, {
+			onSuccess: () => void Router.replace('/research'),
 			onSettled: () => deleteDialog.hide()
 		})
 	}

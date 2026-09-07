@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { AI_SERVER } from '~/constants'
@@ -42,7 +42,7 @@ import type { AlertIntent } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
-export const AlertArtifactLoading = memo(function AlertArtifactLoading() {
+export function AlertArtifactLoading() {
 	return (
 		<div className="my-2 flex flex-col gap-3 rounded-xl border border-ai-line-subtle bg-ai-surface-card p-3.5">
 			<div className="flex items-center gap-3">
@@ -60,7 +60,7 @@ export const AlertArtifactLoading = memo(function AlertArtifactLoading() {
 			</div>
 		</div>
 	)
-})
+}
 
 interface AlertArtifactProps {
 	alertId: string
@@ -73,7 +73,7 @@ interface AlertArtifactProps {
 
 type TestSentState = 'sent' | 'already' | null
 
-export const AlertArtifact = memo(function AlertArtifact({
+export function AlertArtifact({
 	alertId,
 	alertIntent,
 	messageId,
@@ -586,4 +586,4 @@ export const AlertArtifact = memo(function AlertArtifact({
 			)}
 		</div>
 	)
-})
+}

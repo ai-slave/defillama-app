@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => {
 		router: { query: { dashboardId: 'test-dashboard' }, replace: vi.fn() }
 	}
 })
-vi.mock('next/router', () => ({ useRouter: () => mocks.router }))
+vi.mock('next/router', () => ({ default: mocks.router, useRouter: () => mocks.router }))
 vi.mock('next/head', () => ({ default: () => null }))
 vi.mock('~/auth', () => ({
 	useAuthContext: () =>

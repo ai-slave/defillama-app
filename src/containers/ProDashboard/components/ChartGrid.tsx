@@ -183,6 +183,8 @@ type DashboardItemRendererProps = DashboardItemRendererBaseProps &
 		| { isEditable: false; handleEditItem?: never }
 	)
 
+// Two of its three call sites sit inside the grid's item map, where the compiler caches the callback
+// rather than each element, so an unrelated card changing would otherwise re-render every renderer.
 const DashboardItemRenderer = memo(function DashboardItemRenderer(props: DashboardItemRendererProps) {
 	const { item, isEditable, onEditItem } = props
 

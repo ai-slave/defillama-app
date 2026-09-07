@@ -32,6 +32,8 @@ interface AgenticSessionItemProps {
 	onPinSession?: (sessionId: string) => Promise<void>
 }
 
+// Rendered from a list in the projects sidebar, where the compiler caches the row callback rather than
+// each row, so memo is what keeps untouched sessions from re-rendering.
 export const AgenticSessionItem = memo(function AgenticSessionItem({
 	session,
 	isActive,

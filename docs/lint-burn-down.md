@@ -346,6 +346,175 @@ and are fixed first.
 - `react/incompatible-library`: off until the TanStack table and virtual migration. All 83 non-test hits
   are `useReactTable` and `useVirtualizer`.
 
+## Follow-up: the reset class, swept app-wide
+
+A scan of every effect that calls a real `useState`/`useReducer` setter found 139 across 96 files. 85 are
+async arrival, a subscription, or a browser-only read. Of the 54 that remain, 17 looked like the
+unmount class. Six are LlamaAI and wait for that directory. Of the other eleven, this pass fixed the
+ones where a component really could stop existing:
+
+- The chart and dataset preview modals reset a dozen fields when a different saved preset was run into
+  them. Both are already mounted conditionally, so the call site keys them by what they display.
+- The virtualized multi-select cleared its search on close. Its popover body is now its own component
+  behind `unmountOnHide`, so the search box, the filtered list and the virtualizer stop existing while
+  the popover is shut.
+- The metric sentence builder reset three pieces of state whenever its popover closed. Ariakit's store
+  takes a `setOpen` callback that runs on every close, including Escape and outside clicks, which the
+  old `closePopover` helper missed — so three effects collapse into one teardown. Ariakit runs that
+  callback from its own store subscription rather than from the click, so this is not literally an event
+  handler; what it buys is one teardown that no close path can miss.
+- The two author profile forms wrote loaded profile data into four state variables after the request
+  landed, guarded by a hydration ref. Each is now a loader that renders a form keyed by the loaded
+  profile, so the fields are seeded at mount. That also removes the nullability those forms carried
+  everywhere, and fixes an unreachable branch: both checked `loadError` _after_ a spinner condition that
+  a failed load also satisfied, so a load error span forever.
+
+The remaining four are not the unmount class, and the heuristic that grouped them was wrong:
+
+- `ChartDatasetModal` resets its table view when the category, the previewed value or sum mode changes.
+  Those are transitions inside one open modal. The real fix is to give the table its own component keyed
+  by what it displays, which is a larger extraction from a 1300-line file.
+- `MarkdownCell` enters edit mode when an already-mounted empty cell gains focus. Cells are keyed by id,
+  so a new cell is already handled; this is a genuine prop-change reconciliation.
+- `pro.tsx` clears a comparison preset when the create dialog closes. The preset is a URL intent, and
+  the honest fix is to consume it — strip the query param — not to clear it on close.
+
+Rule this pass adds: **the effect only disappears if the owner can stop existing.** Where it cannot, the
+next question is whether the state change belongs to an event; a store callback like Ariakit's `setOpen`
+often turns "reset when it closed" into "reset when it closes".
+
+### LlamaAI
+
+Four of the six LlamaAI sites are the unmount class. `AddTextContentModal`, `ShareModal` and
+`CreateAlertModal` all had a dialog that already carried `unmountOnHide` and state that sat above it, so
+each becomes a shell plus a form. `ResearchLimitModal` cannot: its latch is what chooses between two
+dialogs, so it is reconciled in render instead.
+
+`CreateAlertModal` is the interesting one. It reset thirteen fields, a mutation and a captcha-style
+generation counter on every open, and carried two refs whose only job was telling a stale submission
+apart from a live one. Unmounting removes the reset, but not the stale-submission problem: React Query
+still calls a mutation's own `onSuccess` after the component unmounts. Only the callbacks passed to
+`mutate` are dropped. So the split is by ownership — the cache invalidation and the toast stay on the
+mutation, because the alert exists regardless; `onCreated` and `dialogStore.hide()` move to the `mutate`
+call, because they only mean something to a dialog that is still open.
+
+Extracting the form also made it compile: `CreateAlertModal` and `CreateAlertModalForm` both do now,
+where the original bailed out, which is why two of its rule violations had never been reported.
+
+Two traps found while confirming that. `scripts/reactCompilerCheck.cjs` takes the repo root as its first
+positional argument, so `node scripts/reactCompilerCheck.cjs <file>` checks nothing and exits 0 — always
+pass `.` first. And an `eslint-disable` comment for a React rule makes the compiler skip the whole
+component ("React Compiler has skipped optimizing this component because one or more React ESLint rules
+were disabled"), so silencing `react-hooks/exhaustive-deps` costs the component its optimization.
+`oxlint-disable-next-line` does not have that effect.
+
+`SettingsModal`'s two sites stay. Its dialog closes with `onClose={() => void commitDraft()}`, which
+reads the instructions draft, so the state that would need to unmount is exactly the state the close
+handler needs. Splitting it means either lifting the draft back into the shell — six props to save one
+effect — or a latest-value ref in an unmount cleanup, which is the pattern this burn-down is removing.
+
+## Follow-up: mutation callbacks that outlive their component
+
+The alert-modal fix turned on a React Query detail worth stating once. A mutation's own `onSuccess` runs
+even after the component that declared it unmounts; only the callbacks passed to `mutate` are dropped.
+So the two places are not interchangeable, and the choice is about ownership:
+
+- On the mutation: work that must happen because the request succeeded — cache writes, invalidation,
+  a toast, analytics. The alert exists whether or not anyone is looking at the dialog.
+- On the `mutate` call: work that only means something to the component that started it — navigating,
+  closing a dialog, calling back to an opener.
+
+A sweep of every `useMutation` found no case of the second mistake: nothing puts cache work in a
+`mutate` callback where an unmount would silently skip it. The first mistake existed in eight places, all
+of them navigation. Six are fixed: the two `router.replace` calls in
+`containers/Articles/editor/ArticleEditorClient.tsx`, the redirect in
+`containers/ProDashboard/hooks/useDashboardCreation.tsx`, and the three Articles admin forms
+(`BannerForm`, `SocialMentionForm`, `TrustedLogoForm`), which wrote the same shape as
+`await mutateAsync(...)` followed by a push — a continuation that survives unmount just as the callback
+does. Each keeps its revalidation and toast on the mutation and moves only the redirect.
+
+Two are left, because moving them would not fix them:
+
+- `containers/ProDashboard/hooks/useDashboardAPI.ts` exposes `createDashboard` as `mutateAsync`, and its
+  three consumers in `ProDashboardAPIContext` all await it. Taking the push off the mutation only moves
+  it into an awaited continuation, which has the same lifetime. A real fix redesigns that provider's
+  API to hand callers a `mutate`, and that is a separate change.
+- `ArticleEditorClient`'s `save()` awaits `mutateAsync` and returns a boolean its callers depend on, so
+  it cannot become a `mutate` call without restructuring the save contract. Its redirect only runs on
+  the first save of a brand-new article.
+
+Two more escaped side effects came out of review. `AddTextContentModal` hid its dialog and toasted from
+the continuation of an awaited request; `ShareModal` wrote the new link to the reader's clipboard from
+the mutation's `onSuccess`, so a share the reader had already dismissed could overwrite whatever they
+copied since. Both move to the `mutate` call.
+
+Moving a callback onto the `mutate` call means every caller of that mutation has to carry it. The share
+dialog has two — the initial attempt and the retry button — and moving only the first silently stopped
+retries from copying anything. Look for the other call sites before making this move. The invalidation each depends on already sits on its
+mutation, so nothing that must happen is lost.
+
+`AddToDashboardModal` calls `dialogStore.hide()` from a mutation callback. Hiding an already-hidden
+dialog does nothing, so it is left alone.
+
+### `router` in dependency arrays
+
+63 hooks list the whole `router` object. It is not a correctness problem: the pages router keeps one
+object identity for the life of the app, so the dependency never fires. It is only noise.
+
+`next/router`'s default export is the same router as an imperative singleton, and the repo already uses
+it in several places. Where a hook only navigates, importing `Router` and calling `Router.push` drops
+the dependency entirely; that is what `useDashboardCreation` and the two article-editor redirects now
+do. The eight purely imperative hooks app-wide now do the same: the articles access gate, the onboarding
+continue handler, the movers chart click, both Pro dashboard route normalisers, the research canonical
+redirect and the sheets auth handoff. Four of those files stopped calling `useRouter` altogether.
+
+The remaining 56 read `query`, `pathname` or `isReady`, and an effect gated on `isReady` genuinely needs
+to re-run when it flips, so those keep `useRouter` and their dependency.
+
+Two test harnesses had to learn the singleton, and the failure is worth knowing: `vi.mock` factories are
+hoisted above the file body, so a `default: { push }` referring to a `const push = vi.fn()` throws
+"Cannot access 'push' before initialization". Declare those through `vi.hoisted`.
+
+Note the setState findings the same sweep produced are _not_ bugs: setting state on an unmounted
+component is a no-op in React 18, and `setQueryData` is a cache write that belongs on the mutation.
+Only effects that escape the component matter here.
+
+## Follow-up: the memo sweep
+
+React Compiler caches the JSX elements a component creates, so a child whose element comes back
+identical is not re-rendered — which is the work `React.memo` was doing. The condition is not "the
+caller compiles": it is that the element for that child sits inside a `if ($[n] !== dep)` cache guard in
+the compiled caller. A child rendered inside a `.map()` never does, however well its caller compiles.
+
+`scripts/reactCompilerCheck.cjs` answers the first question, not the second, so this sweep used a
+throwaway variant that compiles a caller and reports, per component, how many of its JSX elements land
+inside a cache guard.
+
+That check was wrong on its first pass, in a way worth recording. It walked up from the element to the
+nearest guard, which marks a list item as cached: the guard is real, but it caches the render _callback_
+the compiler hoisted out of the list, not each element the callback produces, so one item changing
+rebuilds them all. The rule that matches the compiled output is **no function boundary between the
+element and its guard**. Two of the nine removals were wrong under the corrected rule, and a browser
+comparison of render counts caught the first one before the corrected tool did.
+
+Results across the 22 `memo()` sites:
+
+- **7 removed**: `MultiChartCard`, `KeyMetrics`, `AlertArtifact`, `AlertArtifactLoading`, `QueueChips`,
+  `CreateAlertModal`, `SpawnProgressCard`. Every caller of each caches the element with no function
+  boundary in between. `KeyMetrics` has nine callers and all nine do.
+- **14 kept**: the element is uncached in at least one caller. `DashboardItemRenderer` and
+  `AgenticSessionItem` are here because of the corrected rule — both render inside a list whose callback
+  is what gets cached. Several others are rendered from `containers/LlamaAI/index.tsx`, which has six
+  bailouts, so nothing it renders is cached. `SearchResults` is the instructive one: cached from
+  `components/ResearchSearchDialog.tsx`, uncached from the agentic sidebar, so a per-component verdict
+  would have cleared it wrongly.
+- **1 untouchable**: `ChartRendererMemoized` passes a custom comparator, which is a behaviour choice
+  rather than automatic memoization.
+
+The residual risk is maintenance, not correctness: a component whose memo is gone will re-render freely
+if a future caller bails out. That is an argument for keeping the LlamaAI bailouts on the burn-down
+list, not for keeping the memos.
+
 ## Phase 4: judgment buckets
 
 | Rule                                          | Hits | Approach                                                                                                                                                                                                                                                                                                                               |

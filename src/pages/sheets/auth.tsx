@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import dynamic from 'next/dynamic'
 import Head from 'next/head'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import { useEffect } from 'react'
 import { AuthProvider, useAuthContext } from '~/auth'
 import { useSubscribe } from '~/auth/useSubscribe'
@@ -43,7 +43,7 @@ function AuthContent() {
 			trackUmamiEvent('sheets-auth-sign-in', { user_id: user?.id })
 			// google sheets auth, requiring redirect url
 			if (redirectUrl) {
-				void router.push({
+				void Router.push({
 					pathname: redirectUrl as string,
 					query: {
 						...routerQuery,
@@ -68,16 +68,7 @@ function AuthContent() {
 				window.close()
 			}
 		}
-	}, [
-		isAuthenticated,
-		redirectUrl,
-		router,
-		routerQuery,
-		user,
-		isSubscriptionLoading,
-		isSubscriptionError,
-		subscription
-	])
+	}, [isAuthenticated, redirectUrl, routerQuery, user, isSubscriptionLoading, isSubscriptionError, subscription])
 
 	const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
 

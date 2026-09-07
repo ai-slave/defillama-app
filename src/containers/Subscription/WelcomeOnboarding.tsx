@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useRouter } from 'next/router'
+import Router from 'next/router'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
@@ -72,7 +72,6 @@ const ONBOARDING_OPTIONS = [
 const PRIORITY_ORDER = ['llamaai', 'dashboards', 'csv', 'llamafeed', 'sheets'] as const
 
 export function WelcomeOnboarding() {
-	const router = useRouter()
 	const queryClient = useQueryClient()
 	const { isAuthenticated, hasActiveSubscription, loaders, authorizedFetch } = useAuthContext()
 	const [selectedFeatures, setSelectedFeatures] = useState<Set<string>>(new Set())
@@ -167,7 +166,7 @@ export function WelcomeOnboarding() {
 		}
 
 		if (selectedFeatures.has('exploring')) {
-			void router.push('/')
+			void Router.push('/')
 			return
 		}
 
@@ -175,7 +174,7 @@ export function WelcomeOnboarding() {
 			if (url.startsWith('http')) {
 				window.location.href = url
 			} else {
-				void router.push(url)
+				void Router.push(url)
 			}
 		}
 
@@ -204,7 +203,7 @@ export function WelcomeOnboarding() {
 				}
 			}
 		}
-	}, [selectedFeatures, router])
+	}, [selectedFeatures])
 
 	if (loaders.userLoading) {
 		return (
@@ -342,7 +341,7 @@ export function WelcomeOnboarding() {
 				</button>
 				<button
 					type="button"
-					onClick={() => void router.push('/account')}
+					onClick={() => void Router.push('/account')}
 					className="py-1 text-xs text-sub-text-muted transition-colors hover:text-sub-text-soft"
 				>
 					Skip

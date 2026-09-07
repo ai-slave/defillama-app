@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
@@ -179,23 +179,43 @@ function validateForm(state: FormState): string | null {
 
 export function DashboardAuthorProfileCard() {
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
-	const queryClient = useQueryClient()
-	const [profile, setProfile] = useState<PublicDashboardAuthor | null>(null)
-	const [initial, setInitial] = useState<FormState | null>(null)
-	const [state, setState] = useState<FormState | null>(null)
-	const hydratedProfileRef = useRef<string | null>(null)
-	const queryEnabled = isAuthenticated && !loaders.userLoading
-	const {
-		data: loadedProfile,
-		isLoading: profileLoading,
-		error: profileError
-	} = useQuery({
+	const { data: loadedProfile, error: profileError } = useQuery({
 		queryKey: ['dashboard-author-profile'],
 		queryFn: () => getMyDashboardAuthorProfile(authorizedFetch),
-		enabled: queryEnabled,
+		enabled: isAuthenticated && !loaders.userLoading,
 		retry: false,
 		refetchOnWindowFocus: false
 	})
+
+	// Only a load that produced nothing gets the error card. A failed background refetch keeps the last
+	// profile in the cache, and unmounting the editor over it would throw away an unsaved draft.
+	if (!loadedProfile) {
+		if (profileError) {
+			return (
+				<div className="rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
+					<p className="text-sm text-sub-text-muted">Profile could not be loaded.</p>
+				</div>
+			)
+		}
+		return (
+			<div className="flex min-h-56 items-center justify-center rounded-2xl border border-sub-border-slate-100 bg-white dark:border-sub-border-strong dark:bg-sub-surface-dark">
+				<div className="size-7 animate-spin rounded-full border-2 border-sub-brand-primary border-t-transparent" />
+			</div>
+		)
+	}
+
+	// Keyed by the saved profile: a successful save writes the new one into the cache, which rebuilds the
+	// form on the saved values rather than re-seeding the fields by hand.
+	return (
+		<DashboardAuthorProfileEditor key={`${loadedProfile.slug}:${loadedProfile.updatedAt}`} profile={loadedProfile} />
+	)
+}
+
+function DashboardAuthorProfileEditor({ profile }: { profile: PublicDashboardAuthor }) {
+	const { authorizedFetch } = useAuthContext()
+	const queryClient = useQueryClient()
+	const initial = useMemo(() => profileToForm(profile), [profile])
+	const [state, setState] = useState<FormState>(initial)
 	const updateMutation = useMutation({
 		mutationFn: (payload: AuthorProfileUpdate) => updateMyDashboardAuthorProfile(payload, authorizedFetch),
 		onSuccess: (nextProfile) => {
@@ -205,62 +225,30 @@ export function DashboardAuthorProfileCard() {
 		}
 	})
 
-	useEffect(() => {
-		if (!loadedProfile) return
-		const profileKey = `${loadedProfile.slug}:${loadedProfile.updatedAt}`
-		if (hydratedProfileRef.current === profileKey) return
-		hydratedProfileRef.current = profileKey
-		const next = profileToForm(loadedProfile)
-		setProfile(loadedProfile)
-		setInitial(next)
-		setState(next)
-	}, [loadedProfile])
-
-	const validationError = state ? validateForm(state) : null
-	const isDirty = state && initial ? !formsEqual(state, initial) : false
-
-	if (profileLoading || !state || !initial) {
-		return (
-			<div className="flex min-h-56 items-center justify-center rounded-2xl border border-sub-border-slate-100 bg-white dark:border-sub-border-strong dark:bg-sub-surface-dark">
-				<div className="size-7 animate-spin rounded-full border-2 border-sub-brand-primary border-t-transparent" />
-			</div>
-		)
-	}
-
-	if (profileError) {
-		return (
-			<div className="rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
-				<p className="text-sm text-sub-text-muted">Profile could not be loaded.</p>
-			</div>
-		)
-	}
+	const validationError = validateForm(state)
+	const isDirty = !formsEqual(state, initial)
 
 	const save = async () => {
-		if (!state || !initial) return
-		const error = validateForm(state)
-		if (error) {
-			toast.error(error)
+		if (validationError) {
+			toast.error(validationError)
 			return
 		}
 		const payload = buildPayload(state, initial)
 		try {
-			const nextProfile = await toast.promise(updateMutation.mutateAsync(payload), {
+			// The mutation writes the saved profile into the cache, which changes this editor's key and
+			// rebuilds it on the saved values.
+			await toast.promise(updateMutation.mutateAsync(payload), {
 				loading: 'Saving profile…',
 				success: 'Profile saved',
 				error: (err) => (err instanceof Error ? err.message : 'Failed to save profile')
 			})
-			const next = profileToForm(nextProfile)
-			hydratedProfileRef.current = `${nextProfile.slug}:${nextProfile.updatedAt}`
-			setProfile(nextProfile)
-			setInitial(next)
-			setState(next)
 		} catch {
 			// toast.promise already showed the error; the form keeps the unsaved draft.
 		}
 	}
 
 	const displayName = state.displayName.trim() || 'Your name'
-	const publicHref = `/authors/${state.slug || profile?.slug || ''}`
+	const publicHref = `/authors/${state.slug || profile.slug}`
 
 	return (
 		<div className="grid gap-4 rounded-2xl border border-sub-border-slate-100 bg-white p-4 dark:border-sub-border-strong dark:bg-sub-surface-dark">
@@ -269,7 +257,7 @@ export function DashboardAuthorProfileCard() {
 					<Icon name="users" height={24} width={24} className="text-sub-text-primary" />
 					<span className="text-base font-medium text-sub-text-primary">Public Profile</span>
 				</div>
-				{profile?.slug ? (
+				{profile.slug ? (
 					<BasicLink href={publicHref} className="text-sm font-medium text-link hover:underline">
 						View profile
 					</BasicLink>

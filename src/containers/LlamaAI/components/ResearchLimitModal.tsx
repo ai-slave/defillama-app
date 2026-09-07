@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { EndTrialModal } from '~/containers/Account/EndTrialModal'
@@ -44,16 +44,12 @@ export function ResearchLimitModal({
 	const { isTrial } = useAuthContext()
 	const open = Ariakit.useStoreState(dialogStore, 'open')
 
-	// Freeze the dialog choice while open: a successful upgrade flips isTrial, and
-	// swapping in the paid-plan dialog would replace the success pane mid-view.
+	// Freeze the dialog choice while open: a successful upgrade flips isTrial, and swapping in the
+	// paid-plan dialog would replace the success pane mid-view. The latch cannot live inside either
+	// dialog, because it is what chooses between them, so it is reconciled in render instead.
 	const [trialFlow, setTrialFlow] = useState<boolean | null>(null)
-	useEffect(() => {
-		if (open) {
-			setTrialFlow((current) => current ?? isTrial)
-		} else {
-			setTrialFlow(null)
-		}
-	}, [open, isTrial])
+	if (open && trialFlow === null) setTrialFlow(isTrial)
+	if (!open && trialFlow !== null) setTrialFlow(null)
 
 	const limitBody = isLifetime ? COPY[feature].bodyLifetime(limit) : COPY[feature].bodyDaily(limit)
 

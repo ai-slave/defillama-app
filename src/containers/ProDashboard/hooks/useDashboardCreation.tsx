@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useRouter } from 'next/router'
+import Router from 'next/router'
 import { useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
@@ -62,7 +62,6 @@ function createProtocolMetricTable(datasetType: DatasetType): UnifiedTableConfig
 }
 
 export const useDashboardCreation = () => {
-	const router = useRouter()
 	const queryClient = useQueryClient()
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 
@@ -84,13 +83,15 @@ export const useDashboardCreation = () => {
 
 			return dashboard
 		},
+		// The dashboard exists whether or not the button that made it is still on screen, so the cache
+		// write and the toast stay here. The redirect goes on the mutate call below, which React Query
+		// drops on unmount, so a reader who navigated away is not pulled back.
 		onSuccess: (dashboard) => {
 			queryClient.setQueryData(
 				['pro-dashboard', 'dashboard', dashboardUrlKey(dashboard), isAuthenticated, user?.id],
 				dashboard
 			)
 			toast.success('Dashboard created successfully')
-			void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
 		},
 		onError: (error: unknown) => {
 			console.log('Error creating dashboard:', error)
@@ -99,9 +100,9 @@ export const useDashboardCreation = () => {
 	})
 
 	const createDashboardWithDataset = useCallback(() => {
-		const datasetType = getDatasetTypeFromPath(router.pathname)
+		const datasetType = getDatasetTypeFromPath(Router.pathname)
 		if (!datasetType) {
-			console.log('Unknown dataset type for path:', router.pathname)
+			console.log('Unknown dataset type for path:', Router.pathname)
 			toast.error('Unable to determine dataset type for this page')
 			return
 		}
@@ -114,11 +115,14 @@ export const useDashboardCreation = () => {
 		const loadingToast = toast.loading('Creating dashboard and preparing to redirect...')
 
 		createMutation.mutate(datasetType, {
+			onSuccess: (dashboard) => {
+				void Router.push(`/pro/${dashboardUrlKey(dashboard)}`)
+			},
 			onSettled: () => {
 				toast.dismiss(loadingToast)
 			}
 		})
-	}, [router.pathname, isAuthenticated, createMutation])
+	}, [isAuthenticated, createMutation])
 
 	return {
 		createDashboardWithDataset,

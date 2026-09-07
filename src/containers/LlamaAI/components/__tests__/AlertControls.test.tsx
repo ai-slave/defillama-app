@@ -242,3 +242,29 @@ test.each([
 	})
 	expect(onSave).toHaveBeenCalledTimes(1)
 })
+
+test('a closed dialog renders no form, and a submission it left behind cannot reopen it', async () => {
+	let resolveCreate: (value: { id: string; alertExpression: string; nextRunAt: string }) => void = () => {}
+	vi.mocked(createManualAlert).mockImplementationOnce(
+		() => new Promise((resolve) => (resolveCreate = resolve)) as ReturnType<typeof createManualAlert>
+	)
+	const onCreated = vi.fn()
+	const store = await mountModal({ onCreated })
+
+	await input('textarea', 'Daily gas report')
+	await act(async () => document.querySelector<HTMLButtonElement>('button[type="submit"]')!.click())
+	expect(createManualAlert).toHaveBeenCalledTimes(1)
+
+	await act(async () => {
+		store.hide()
+		await settle()
+	})
+	expect(document.querySelector('textarea')).toBeNull()
+
+	// The form went away with the dialog, so the late response has nothing to call back into.
+	await act(async () => {
+		resolveCreate({ id: 'alert-1', alertExpression: 'gas', nextRunAt: '2026-01-01T00:00:00.000Z' })
+		await settle()
+	})
+	expect(onCreated).not.toHaveBeenCalled()
+})

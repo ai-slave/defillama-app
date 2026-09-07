@@ -1,7 +1,7 @@
-import { Popover, PopoverDisclosure, usePopoverStore, useStoreState } from '@ariakit/react'
+import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
-import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useId, useMemo, useRef, useState } from 'react'
 import type { MultiSelectOption } from '~/components/Select/types'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from './LoadingSpinner'
@@ -19,24 +19,24 @@ interface AriakitVirtualizedMultiSelectProps {
 	onSearchChange?: (value: string) => void
 }
 
-export function AriakitVirtualizedMultiSelect({
-	label,
+type PopoverBodyProps = Pick<
+	AriakitVirtualizedMultiSelectProps,
+	'options' | 'selectedValues' | 'onChange' | 'maxSelections' | 'renderIcon' | 'onSearchChange'
+>
+
+// Only rendered while the popover is open, so the search box, the filtered list and the virtualizer
+// are all destroyed on close instead of being reset the next time it opens.
+function MultiSelectPopoverBody({
 	options,
 	selectedValues,
 	onChange,
-	placeholder = 'Select...',
-	isLoading = false,
-	className = '',
 	maxSelections = 100,
 	renderIcon,
 	onSearchChange
-}: AriakitVirtualizedMultiSelectProps) {
+}: PopoverBodyProps) {
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
 	const listRef = useRef<HTMLDivElement | null>(null)
-	const popover = usePopoverStore({ placement: 'bottom-start' })
-	const isPopoverOpen = useStoreState(popover, 'open')
-	const disclosureId = useId()
 
 	const filteredOptions = useMemo(() => {
 		if (!deferredSearch) return options
@@ -50,19 +50,6 @@ export function AriakitVirtualizedMultiSelect({
 		overscan: 5
 	})
 
-	useEffect(() => {
-		if (!isPopoverOpen) {
-			setSearch('')
-		}
-	}, [isPopoverOpen])
-
-	const buttonLabel =
-		selectedValues.length === 0
-			? placeholder
-			: selectedValues.length === 1
-				? options.find((opt) => opt.value === selectedValues[0])?.label || selectedValues[0]
-				: `${selectedValues.length} selected`
-
 	const toggleValue = (value: string) => {
 		if (selectedValues.includes(value)) {
 			onChange(selectedValues.filter((v) => v !== value))
@@ -75,11 +62,9 @@ export function AriakitVirtualizedMultiSelect({
 
 	const handleSearchChange = (value: string) => {
 		setSearch(value)
-		if (isPopoverOpen) {
-			virtualizer.measure()
-			if (value) {
-				virtualizer.scrollToIndex(0, { align: 'start' })
-			}
+		virtualizer.measure()
+		if (value) {
+			virtualizer.scrollToIndex(0, { align: 'start' })
 		}
 		onSearchChange?.(value)
 	}
@@ -90,6 +75,140 @@ export function AriakitVirtualizedMultiSelect({
 	}
 
 	const isMaxReached = selectedValues.length >= maxSelections
+
+	return (
+		<div className="p-2">
+			<div className="relative mb-2">
+				<Icon
+					name="search"
+					width={12}
+					height={12}
+					className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
+				/>
+				<input
+					value={search}
+					onChange={(e) => handleSearchChange(e.target.value)}
+					placeholder="Search..."
+					className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
+				/>
+			</div>
+			<div
+				ref={listRef}
+				className="max-h-[280px] overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border"
+			>
+				{filteredOptions.length === 0 ? (
+					<p className="px-3 py-2 text-center text-xs text-pro-text-tertiary">No results found.</p>
+				) : (
+					<div
+						key={`virtual-${filteredOptions.length}`}
+						style={{
+							height: `${virtualizer.getTotalSize()}px`,
+							width: '100%',
+							position: 'relative'
+						}}
+					>
+						{virtualizer.getVirtualItems().map((virtualRow) => {
+							const option = filteredOptions[virtualRow.index]
+							if (!option) return null
+							const isActive = selectedValues.includes(option.value)
+							const isDisabled = option.disabled || (!isActive && isMaxReached)
+							const iconUrl = renderIcon ? renderIcon(option) : option.logo
+							return (
+								<button
+									type="button"
+									key={option.value}
+									onClick={() => {
+										if (!isDisabled) {
+											toggleValue(option.value)
+										}
+									}}
+									disabled={isDisabled}
+									className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
+										isDisabled
+											? 'cursor-not-allowed text-pro-text-tertiary opacity-50'
+											: isActive
+												? 'bg-brand/10 font-semibold text-brand'
+												: 'text-pro-text-secondary hover:text-pro-text-primary'
+									}`}
+									style={{
+										position: 'absolute',
+										top: 0,
+										left: '4px',
+										width: 'calc(100% - 8px)',
+										height: `${virtualRow.size}px`,
+										transform: `translateY(${virtualRow.start}px)`
+									}}
+								>
+									<div className={`flex min-w-0 items-center gap-2 ${option.isChild ? 'pl-4' : ''}`}>
+										{iconUrl ? (
+											<img
+												src={iconUrl}
+												alt={option.label}
+												width={20}
+												height={20}
+												className={`size-5 shrink-0 rounded-full object-cover ring-1 ring-pro-cards-border ${
+													option.isChild ? 'opacity-70' : ''
+												}`}
+											/>
+										) : null}
+										<div className="flex min-w-0 flex-col gap-0.5">
+											<span className={`truncate ${option.isChild ? 'text-pro-text-secondary' : ''}`}>
+												{option.label}
+											</span>
+											{option.isChild ? (
+												<span className="text-[10px] leading-none text-pro-text-tertiary">Child protocol</span>
+											) : null}
+										</div>
+									</div>
+									{isActive ? <Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-brand" /> : null}
+								</button>
+							)
+						})}
+					</div>
+				)}
+			</div>
+			{selectedValues.length > 0 ? (
+				<div className="mt-2 flex items-center justify-between rounded-md border border-pro-cards-border px-2.5 py-2">
+					<div className="flex items-center gap-2">
+						<div className="flex size-5 items-center justify-center rounded-full bg-brand/15">
+							<Icon name="check" width={10} height={10} className="text-brand" />
+						</div>
+						<span className="text-[11px] font-medium text-pro-text-secondary">{selectedValues.length} selected</span>
+					</div>
+					<button
+						type="button"
+						onClick={clearAll}
+						className="text-[11px] font-medium text-pro-text-tertiary transition-colors hover:text-brand"
+					>
+						Clear All
+					</button>
+				</div>
+			) : null}
+		</div>
+	)
+}
+
+export function AriakitVirtualizedMultiSelect({
+	label,
+	options,
+	selectedValues,
+	onChange,
+	placeholder = 'Select...',
+	isLoading = false,
+	className = '',
+	maxSelections = 100,
+	renderIcon,
+	onSearchChange
+}: AriakitVirtualizedMultiSelectProps) {
+	const popover = usePopoverStore({ placement: 'bottom-start' })
+	const disclosureId = useId()
+
+	const buttonLabel =
+		selectedValues.length === 0
+			? placeholder
+			: selectedValues.length === 1
+				? options.find((opt) => opt.value === selectedValues[0])?.label || selectedValues[0]
+				: `${selectedValues.length} selected`
 
 	return (
 		<div className={className}>
@@ -128,119 +247,16 @@ export function AriakitVirtualizedMultiSelect({
 						gutter={4}
 						className="z-50 rounded-md border border-pro-cards-border bg-pro-cards-bg shadow-xl"
 						style={{ width: 'var(--popover-anchor-width)' }}
+						unmountOnHide
 					>
-						<div className="p-2">
-							<div className="relative mb-2">
-								<Icon
-									name="search"
-									width={12}
-									height={12}
-									className="absolute top-1/2 left-2.5 -translate-y-1/2 text-pro-text-tertiary"
-								/>
-								<input
-									value={search}
-									onChange={(e) => handleSearchChange(e.target.value)}
-									placeholder="Search..."
-									className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-1.5 pr-2.5 pl-7 text-xs transition-colors focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
-								/>
-							</div>
-							<div
-								ref={listRef}
-								className="max-h-[280px] overflow-y-auto overscroll-contain rounded-md border border-pro-cards-border"
-							>
-								{filteredOptions.length === 0 ? (
-									<p className="px-3 py-2 text-center text-xs text-pro-text-tertiary">No results found.</p>
-								) : (
-									<div
-										key={`virtual-${filteredOptions.length}`}
-										style={{
-											height: `${virtualizer.getTotalSize()}px`,
-											width: '100%',
-											position: 'relative'
-										}}
-									>
-										{virtualizer.getVirtualItems().map((virtualRow) => {
-											const option = filteredOptions[virtualRow.index]
-											if (!option) return null
-											const isActive = selectedValues.includes(option.value)
-											const isDisabled = option.disabled || (!isActive && isMaxReached)
-											const iconUrl = renderIcon ? renderIcon(option) : option.logo
-											return (
-												<button
-													type="button"
-													key={option.value}
-													onClick={() => {
-														if (!isDisabled) {
-															toggleValue(option.value)
-														}
-													}}
-													disabled={isDisabled}
-													className={`flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs transition-colors ${
-														isDisabled
-															? 'cursor-not-allowed text-pro-text-tertiary opacity-50'
-															: isActive
-																? 'bg-brand/10 font-semibold text-brand'
-																: 'text-pro-text-secondary hover:text-pro-text-primary'
-													}`}
-													style={{
-														position: 'absolute',
-														top: 0,
-														left: '4px',
-														width: 'calc(100% - 8px)',
-														height: `${virtualRow.size}px`,
-														transform: `translateY(${virtualRow.start}px)`
-													}}
-												>
-													<div className={`flex min-w-0 items-center gap-2 ${option.isChild ? 'pl-4' : ''}`}>
-														{iconUrl ? (
-															<img
-																src={iconUrl}
-																alt={option.label}
-																width={20}
-																height={20}
-																className={`size-5 shrink-0 rounded-full object-cover ring-1 ring-pro-cards-border ${
-																	option.isChild ? 'opacity-70' : ''
-																}`}
-															/>
-														) : null}
-														<div className="flex min-w-0 flex-col gap-0.5">
-															<span className={`truncate ${option.isChild ? 'text-pro-text-secondary' : ''}`}>
-																{option.label}
-															</span>
-															{option.isChild ? (
-																<span className="text-[10px] leading-none text-pro-text-tertiary">Child protocol</span>
-															) : null}
-														</div>
-													</div>
-													{isActive ? (
-														<Icon name="check" width={14} height={14} className="ml-2 shrink-0 text-brand" />
-													) : null}
-												</button>
-											)
-										})}
-									</div>
-								)}
-							</div>
-							{selectedValues.length > 0 ? (
-								<div className="mt-2 flex items-center justify-between rounded-md border border-pro-cards-border px-2.5 py-2">
-									<div className="flex items-center gap-2">
-										<div className="flex size-5 items-center justify-center rounded-full bg-brand/15">
-											<Icon name="check" width={10} height={10} className="text-brand" />
-										</div>
-										<span className="text-[11px] font-medium text-pro-text-secondary">
-											{selectedValues.length} selected
-										</span>
-									</div>
-									<button
-										type="button"
-										onClick={clearAll}
-										className="text-[11px] font-medium text-pro-text-tertiary transition-colors hover:text-brand"
-									>
-										Clear All
-									</button>
-								</div>
-							) : null}
-						</div>
+						<MultiSelectPopoverBody
+							options={options}
+							selectedValues={selectedValues}
+							onChange={onChange}
+							maxSelections={maxSelections}
+							renderIcon={renderIcon}
+							onSearchChange={onSearchChange}
+						/>
 					</Popover>
 				</>
 			)}

@@ -1,5 +1,5 @@
 import type * as echarts from 'echarts/core'
-import { useRouter } from 'next/router'
+import Router, { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { ChartRestoreButton } from '~/components/ChartExport/ChartRestoreButton'
@@ -272,7 +272,6 @@ function MoversChart({
 	entries: Array<TokensMoverEntry>
 	color: string
 }) {
-	const router = useRouter()
 	// Read by the chart's click handler, which echarts calls on user interaction, never during render.
 	const entriesRef = React.useRef(entries)
 	React.useLayoutEffect(() => {
@@ -290,17 +289,14 @@ function MoversChart({
 		return { categories, values, logos }
 	}, [entries])
 
-	const handleReady = React.useCallback(
-		(instance: echarts.ECharts | null) => {
-			if (!instance) return
-			instance.off('click')
-			instance.on('click', (params) => {
-				const href = entriesRef.current[params.dataIndex]?.href
-				if (href) void router.push(href)
-			})
-		},
-		[router]
-	)
+	const handleReady = React.useCallback((instance: echarts.ECharts | null) => {
+		if (!instance) return
+		instance.off('click')
+		instance.on('click', (params) => {
+			const href = entriesRef.current[params.dataIndex]?.href
+			if (href) void Router.push(href)
+		})
+	}, [])
 
 	return (
 		<div className={`flex min-w-0 flex-col ${className ?? ''}`.trim()}>

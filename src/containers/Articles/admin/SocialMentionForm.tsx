@@ -94,6 +94,13 @@ export function SocialMentionForm({ mentionId }: Props) {
 			const payload = buildPayload(submitted)
 			if (mention) return updateSocialMention(mention.id, payload, authorizedFetch)
 			return createSocialMention(payload, authorizedFetch)
+		},
+		onSuccess: () => {
+			revalidate()
+			toast.success(mention ? 'Mention saved' : 'Mention created')
+		},
+		onError: (error) => {
+			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to save')
 		}
 	})
 
@@ -111,18 +118,18 @@ export function SocialMentionForm({ mentionId }: Props) {
 		)
 	}
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	// The save happened whatever the reader did next, so the revalidation and the toast belong to the
+	// mutation. Only the redirect is tied to this form still being on screen, and that goes on the
+	// mutate call, which React Query drops if the form unmounted first.
+	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault()
 		if (!submittable) return
-		try {
-			const saved = await saveMutation.mutateAsync(state)
-			acceptSaved(mentionToForm(saved), state)
-			revalidate()
-			toast.success(mention ? 'Mention saved' : 'Mention created')
-			router.push('/research/admin/trusted-by')
-		} catch (error) {
-			toast.error(error instanceof ArticleApiError ? error.message : 'Failed to save')
-		}
+		saveMutation.mutate(state, {
+			onSuccess: (saved) => {
+				acceptSaved(mentionToForm(saved), state)
+				router.push('/research/admin/trusted-by')
+			}
+		})
 	}
 
 	return (

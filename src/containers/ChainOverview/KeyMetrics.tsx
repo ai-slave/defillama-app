@@ -1,4 +1,4 @@
-import { Fragment, memo, useRef } from 'react'
+import { Fragment, useRef } from 'react'
 import { BasicLink } from '~/components/Link'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
@@ -49,7 +49,7 @@ interface KeyMetricsProps {
 	tvlSettingsGovtokens: boolean
 }
 
-export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
+export function KeyMetrics(props: KeyMetricsProps) {
 	const keyMetricsRef = useRef<HTMLDivElement>(null)
 	const keyMetricsTitle = props.metadata.name === 'All' ? 'All Chains' : props.metadata.name
 	const hasKeyMetricsPrimary = props.protocols.length > 0 && props.totalValueUSD != null
@@ -171,7 +171,7 @@ export const KeyMetrics = memo(function KeyMetrics(props: KeyMetricsProps) {
 			</div>
 		</div>
 	)
-})
+}
 
 function StablecoinsMcap({ stablecoins, isAll }: { stablecoins: IChainOverviewData['stablecoins']; isAll: boolean }) {
 	if (!stablecoins?.mcap) return null

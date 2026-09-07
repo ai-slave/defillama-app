@@ -291,15 +291,6 @@ export function DatasetPreviewModal({
 	}, [csvText])
 
 	useEffect(() => {
-		setSelectedColumns(null)
-		setSearch('')
-		setSortState(null)
-		setSelectedChain(initialConfig?.chain ?? null)
-		setRowLimit(initialConfig?.rowLimit ?? null)
-		initialConfigAppliedRef.current = false
-	}, [dataset.slug, initialConfig?.id, initialConfig?.chain, initialConfig?.rowLimit])
-
-	useEffect(() => {
 		if (headers.length === 0 || selectedColumns !== null) return
 
 		if (initialConfig && !initialConfigAppliedRef.current) {

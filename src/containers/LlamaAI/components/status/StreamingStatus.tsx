@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
 	LLAMA_AI_ANIMATION_SRC,
 	LLAMA_AI_HACKER_ANIMATION_SRC
@@ -162,7 +162,7 @@ export function ToolProgressIndicator({
 	)
 }
 
-export const SpawnProgressCard = memo(function SpawnProgressCard({
+export function SpawnProgressCard({
 	agents,
 	startTime,
 	isResearchMode,
@@ -325,4 +325,4 @@ export const SpawnProgressCard = memo(function SpawnProgressCard({
 			) : null}
 		</section>
 	)
-})
+}

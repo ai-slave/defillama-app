@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { setLlamaAIWalkthroughState, writeAppStorage } from '~/contexts/LocalStorage'
 import { WelcomeOnboarding } from '../WelcomeOnboarding'
 const { push } = vi.hoisted(() => ({ push: vi.fn() }))
-vi.mock('next/router', () => ({ useRouter: () => ({ push }) }))
+vi.mock('next/router', () => ({ default: { push }, useRouter: () => ({ push }) }))
 vi.mock('~/auth', () => ({
 	useAuthContext: () => ({
 		isAuthenticated: true,

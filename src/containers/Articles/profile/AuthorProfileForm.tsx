@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import {
@@ -215,11 +215,6 @@ function Section({ title, description, children }: { title: string; description:
 
 export function AuthorProfileForm() {
 	const { authorizedFetch, isAuthenticated, loaders } = useAuthContext()
-	const [profile, setProfile] = useState<ArticleAuthorProfile | null>(null)
-	const [initial, setInitial] = useState<FormState | null>(null)
-	const [state, setState] = useState<FormState | null>(null)
-	const [showCustom, setShowCustom] = useState(false)
-	const hydratedProfileIdRef = useRef<string | null>(null)
 	const {
 		data: loadedProfile,
 		isLoading,
@@ -231,75 +226,6 @@ export function AuthorProfileForm() {
 		retry: false,
 		refetchOnWindowFocus: false
 	})
-	const updateProfileMutation = useMutation({
-		mutationFn: (payload: AuthorProfileUpdate) => updateMyAuthorProfile(payload, authorizedFetch)
-	})
-
-	useEffect(() => {
-		if (!loadedProfile) return
-		if (hydratedProfileIdRef.current === loadedProfile.id) return
-		hydratedProfileIdRef.current = loadedProfile.id
-		const next = profileToForm(loadedProfile)
-		setProfile(loadedProfile)
-		setInitial(next)
-		setState(next)
-		setShowCustom(next.customSocials.length > 0)
-	}, [loadedProfile])
-
-	const dirty = useMemo(() => (state && initial ? !formsEqual(state, initial) : false), [state, initial])
-	const slugError = state ? validateSlug(state.slug) : null
-	const displayNameError = state && !state.displayName.trim() ? 'Display name is required' : null
-	const hasError = !!slugError || !!displayNameError
-
-	const slugChanged = !!state && !!initial && state.slug.trim() !== initial.slug.trim()
-
-	const update = (patch: Partial<FormState>) => setState((current) => (current ? { ...current, ...patch } : current))
-	const updateSocial = (key: string, value: string) =>
-		setState((current) => (current ? { ...current, socials: { ...current.socials, [key]: value } } : current))
-	const updateCustom = (index: number, patch: { key?: string; value?: string }) =>
-		setState((current) => {
-			if (!current) return current
-			const next = current.customSocials.slice()
-			next[index] = { ...next[index], ...patch }
-			return { ...current, customSocials: next }
-		})
-	const addCustom = () =>
-		setState((current) =>
-			current ? { ...current, customSocials: [...current.customSocials, { key: '', value: '' }] } : current
-		)
-	const removeCustom = (index: number) =>
-		setState((current) =>
-			current ? { ...current, customSocials: current.customSocials.filter((_, i) => i !== index) } : current
-		)
-
-	const handleReset = () => {
-		if (initial) {
-			setState(initial)
-			setShowCustom(initial.customSocials.length > 0)
-		}
-	}
-
-	const handleSubmit = async (event: React.FormEvent) => {
-		event.preventDefault()
-		if (!state || !initial || hasError || !dirty) return
-		const payload = buildPayload(state, initial)
-		if (Object.keys(payload).length === 0) return
-		try {
-			const updated = await updateProfileMutation.mutateAsync(payload)
-			const next = profileToForm(updated)
-			setProfile(updated)
-			setInitial(next)
-			setState(next)
-			setShowCustom(next.customSocials.length > 0)
-			if (payload.slug && next.slug !== payload.slug) {
-				toast.success(`Saved as @${next.slug}`)
-			} else {
-				toast.success('Saved')
-			}
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to save')
-		}
-	}
 
 	if (loaders.userLoading || (isAuthenticated && isLoading)) {
 		return (
@@ -320,7 +246,9 @@ export function AuthorProfileForm() {
 		)
 	}
 
-	if (loadError || !state || !profile) {
+	// As above: only a load that produced nothing is an error here. A failed refetch keeps the editor,
+	// and its unsaved draft, on screen.
+	if (!loadedProfile) {
 		const message = loadError instanceof ArticleApiError ? loadError.message : 'Failed to load profile'
 		return (
 			<div className="mx-auto grid max-w-xl gap-3 rounded-md border border-error/30 bg-error/5 p-6">
@@ -328,6 +256,69 @@ export function AuthorProfileForm() {
 				<p className="text-sm text-secondary">{message}</p>
 			</div>
 		)
+	}
+
+	// Keyed by the loaded profile, so the fields are seeded once at mount instead of being written into
+	// place after the request lands.
+	return <AuthorProfileEditor key={loadedProfile.id} loadedProfile={loadedProfile} />
+}
+
+function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorProfile }) {
+	const { authorizedFetch } = useAuthContext()
+	const [profile, setProfile] = useState(loadedProfile)
+	const [initial, setInitial] = useState(() => profileToForm(loadedProfile))
+	const [state, setState] = useState(initial)
+	const [showCustom, setShowCustom] = useState(() => initial.customSocials.length > 0)
+	const updateProfileMutation = useMutation({
+		mutationFn: (payload: AuthorProfileUpdate) => updateMyAuthorProfile(payload, authorizedFetch)
+	})
+
+	const dirty = !formsEqual(state, initial)
+	const slugError = validateSlug(state.slug)
+	const displayNameError = !state.displayName.trim() ? 'Display name is required' : null
+	const hasError = !!slugError || !!displayNameError
+
+	const slugChanged = state.slug.trim() !== initial.slug.trim()
+
+	const update = (patch: Partial<FormState>) => setState((current) => ({ ...current, ...patch }))
+	const updateSocial = (key: string, value: string) =>
+		setState((current) => ({ ...current, socials: { ...current.socials, [key]: value } }))
+	const updateCustom = (index: number, patch: { key?: string; value?: string }) =>
+		setState((current) => {
+			const next = current.customSocials.slice()
+			next[index] = { ...next[index], ...patch }
+			return { ...current, customSocials: next }
+		})
+	const addCustom = () =>
+		setState((current) => ({ ...current, customSocials: [...current.customSocials, { key: '', value: '' }] }))
+	const removeCustom = (index: number) =>
+		setState((current) => ({ ...current, customSocials: current.customSocials.filter((_, i) => i !== index) }))
+
+	const handleReset = () => {
+		setState(initial)
+		setShowCustom(initial.customSocials.length > 0)
+	}
+
+	const handleSubmit = async (event: React.FormEvent) => {
+		event.preventDefault()
+		if (hasError || !dirty) return
+		const payload = buildPayload(state, initial)
+		if (Object.keys(payload).length === 0) return
+		try {
+			const updated = await updateProfileMutation.mutateAsync(payload)
+			const next = profileToForm(updated)
+			setProfile(updated)
+			setInitial(next)
+			setState(next)
+			setShowCustom(next.customSocials.length > 0)
+			if (payload.slug && next.slug !== payload.slug) {
+				toast.success(`Saved as @${next.slug}`)
+			} else {
+				toast.success('Saved')
+			}
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : 'Failed to save')
+		}
 	}
 
 	return (
@@ -418,7 +409,7 @@ export function AuthorProfileForm() {
 					) : slugChanged ? (
 						<span className="inline-flex items-center gap-1.5 text-xs text-warning">
 							<span aria-hidden className="size-1.5 rounded-full bg-warning" />
-							Old links to <span className="font-jetbrains">/research/authors/{initial?.slug}</span> will 404.
+							Old links to <span className="font-jetbrains">/research/authors/{initial.slug}</span> will 404.
 						</span>
 					) : null}
 				</label>

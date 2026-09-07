@@ -212,12 +212,6 @@ export function ChartDatasetModal({
 	const isCategoryMode = supportsBreakdown && selectedCategory !== null
 	const maxSelections = isCategoryMode ? Number.POSITIVE_INFINITY : MAX_PARAMS
 
-	useEffect(() => {
-		setDateRange(initialConfig?.dateRange ?? null)
-		initialParamsAppliedRef.current = false
-		initialColumnsAppliedRef.current = false
-	}, [initialConfig?.id, initialConfig?.dateRange])
-
 	// Apply saved params once options are loaded.
 	useEffect(() => {
 		if (!initialConfig || initialParamsAppliedRef.current) return
