@@ -54,6 +54,62 @@ interface SqlWorkspaceProps {
 	chartOptionsMap: ChartOptionsMap
 }
 
+type PlanStep = { key: string; source: TableSource; name: string; label: string }
+type PlanOutcome = { kind: 'loaded' } | { kind: 'superseded' } | { kind: 'failed'; step: PlanStep }
+
+// The loop lives out here because the compiler cannot lower any loop inside a try. Its early exits
+// become an outcome, since a helper cannot return from its caller.
+async function loadPlannedTables({
+	plan,
+	signal,
+	isCurrent,
+	load,
+	markLoading,
+	markLoaded
+}: {
+	plan: Array<PlanStep>
+	signal: AbortSignal
+	isCurrent: () => boolean
+	load: (source: TableSource, signal: AbortSignal) => Promise<unknown>
+	markLoading: (step: PlanStep, stage: string) => void
+	markLoaded: (step: PlanStep) => void
+}): Promise<PlanOutcome> {
+	for (let index = 0; index < plan.length; index++) {
+		const step = plan[index]
+		throwIfAborted(signal)
+		if (!isCurrent()) return { kind: 'superseded' }
+		const position = plan.length > 1 ? ` · ${index + 1}/${plan.length}` : ''
+		markLoading(step, `Loading ${step.label}${position}…`)
+		const loaded = await load(step.source, signal)
+		throwIfAborted(signal)
+		if (!isCurrent()) return { kind: 'superseded' }
+		if (!loaded) return { kind: 'failed', step }
+		markLoaded(step)
+	}
+	return { kind: 'loaded' }
+}
+
+type RunHandle = {
+	signal: AbortSignal
+	owns: () => boolean
+	mayFinish: () => boolean
+	release: () => void
+}
+
+// Re-checked after every await, and a logical test cannot be lowered inside a try either.
+function runIsLive(run: RunHandle) {
+	return run.owns() && !run.signal.aborted
+}
+
+// Both are value blocks, which the compiler cannot lower inside the catch that reports a failed run.
+function wasRunAborted(error: unknown, signal: AbortSignal) {
+	return isAbortError(error) || signal.aborted
+}
+
+function runErrorMessage(error: unknown) {
+	return error instanceof Error ? error.message : String(error)
+}
+
 export function SqlWorkspace({ chartOptionsMap }: SqlWorkspaceProps) {
 	const { isAuthenticated, isTrial, loaders, authorizedFetch, user } = useAuthContext()
 	const { subscription, isSubscriptionLoading, isSubscriptionError, isSubscriptionRetrying, refetchSubscription } =
@@ -143,16 +199,25 @@ function SqlWorkspaceInner({
 	const editorRef = useRef<EditorHandle | null>(null)
 	const runControllersRef = useRef(new Map<string, AbortController>())
 
-	const beginRun = useCallback((key: string): AbortController => {
-		const existing = runControllersRef.current.get(key)
-		if (existing) existing.abort()
+	// Starting a run hands back the only thing allowed to write for it. Ownership used to be re-derived
+	// at every await with a bare map lookup, which meant each new await was a chance to forget one.
+	const beginRun = useCallback((key: string): RunHandle => {
+		runControllersRef.current.get(key)?.abort()
 		const controller = new AbortController()
 		runControllersRef.current.set(key, controller)
-		return controller
-	}, [])
-
-	const endRun = useCallback((key: string, controller: AbortController) => {
-		if (runControllersRef.current.get(key) === controller) runControllersRef.current.delete(key)
+		const owns = () => runControllersRef.current.get(key) === controller
+		return {
+			signal: controller.signal,
+			owns,
+			// Terminal cleanup also runs once nobody owns the key, which is the state a cancel leaves behind.
+			mayFinish: () => {
+				const current = runControllersRef.current.get(key)
+				return current === controller || current === undefined
+			},
+			release: () => {
+				if (owns()) runControllersRef.current.delete(key)
+			}
+		}
 	}, [])
 
 	const cancelRun = useCallback(
@@ -217,12 +282,16 @@ function SqlWorkspaceInner({
 	)
 
 	const runSqlForTab = useCallback(
-		async (tabId: string, rawSql: string, existingController?: AbortController): Promise<boolean> => {
+		async (tabId: string, rawSql: string, existingRun?: RunHandle): Promise<boolean> => {
 			if (!duckdb.conn) return false
 			const trimmed = rawSql.trim()
 			if (!trimmed) return false
 			const runKey = `tab:${tabId}`
-			const controller = existingController ?? beginRun(runKey)
+			const run = existingRun ?? beginRun(runKey)
+			// Every write for this run goes through here, so a superseded one cannot reach the tab at all.
+			const writeTab = (update: Parameters<typeof updateTab>[1]) => {
+				if (run.owns()) updateTab(tabId, update)
+			}
 			updateTab(tabId, { running: true, runError: null, loadingStage: null, pendingTables: [] })
 			const res = await runSql(
 				{
@@ -233,18 +302,14 @@ function SqlWorkspaceInner({
 				},
 				trimmed,
 				{
-					onPendingChange: (pending) => {
-						if (runControllersRef.current.get(runKey) === controller) updateTab(tabId, { pendingTables: pending })
-					},
-					onLoadingStage: (stage) => {
-						if (runControllersRef.current.get(runKey) === controller) updateTab(tabId, { loadingStage: stage })
-					}
+					onPendingChange: (pending) => writeTab({ pendingTables: pending }),
+					onLoadingStage: (stage) => writeTab({ loadingStage: stage })
 				},
 				undefined,
-				controller.signal
+				run.signal
 			)
-			if (runControllersRef.current.get(runKey) !== controller) return false
-			endRun(runKey, controller)
+			if (!run.owns()) return false
+			run.release()
 			if (!res.ok) {
 				const errRes = res as Extract<typeof res, { ok: false }>
 				updateTab(tabId, {
@@ -287,7 +352,7 @@ function SqlWorkspaceInner({
 			recordRecent(preset)
 			return true
 		},
-		[duckdb.conn, registry, recordRecent, chartOptionsMap, updateTab, beginRun, endRun]
+		[duckdb.conn, registry, recordRecent, chartOptionsMap, updateTab, beginRun]
 	)
 
 	const runQuery = useCallback(() => {
@@ -310,11 +375,20 @@ function SqlWorkspaceInner({
 			sql: string
 		}) => {
 			const runKey = `tab:${tabId}`
-			const controller = beginRun(runKey)
+			const run = beginRun(runKey)
+			// Every write for this run goes through here, so a superseded one cannot reach the tab at all.
+			const writeTab = (update: Parameters<typeof updateTab>[1]) => {
+				if (run.owns()) updateTab(tabId, update)
+			}
+			// The run that takes over sets no busyTaskId of its own, so every exit that has lost ownership
+			// releases this one's, or the example that started it stays busy and the Playbook stays
+			// disabled. Guarded by the id, so a newer preparation -- which does set one -- keeps it.
+			const releaseBusyTask = () => {
+				updateTab(tabId, (t) => (t.busyTaskId === taskId ? { busyTaskId: null } : {}))
+			}
 			const finishRun = () => {
-				const current = runControllersRef.current.get(runKey)
-				if (current !== controller && current !== undefined) return false
-				endRun(runKey, controller)
+				if (!run.mayFinish()) return false
+				run.release()
 				updateTab(tabId, { loadingStage: null, busyTaskId: null, running: false })
 				return true
 			}
@@ -345,43 +419,55 @@ function SqlWorkspaceInner({
 					})
 				}
 
-				for (const [index, step] of plan.entries()) {
-					throwIfAborted(controller.signal)
-					if (runControllersRef.current.get(runKey) !== controller) return
-					updateTab(tabId, (t) => ({
-						pendingTables: t.pendingTables.map((p) => (p.key === step.key ? { ...p, status: 'loading' } : p))
-					}))
-					const stagePrefix =
-						plan.length > 1 ? `Loading ${step.label} · ${index + 1}/${plan.length}` : `Loading ${step.label}`
-					updateTab(tabId, { loadingStage: `${stagePrefix}…` })
-					const loaded = await registry.load(step.source, controller.signal)
-					throwIfAborted(controller.signal)
-					if (runControllersRef.current.get(runKey) !== controller) return
-					if (!loaded) {
-						const error = `Could not load ${step.label}.`
-						updateTab(tabId, (t) => ({
-							pendingTables: t.pendingTables.map((p) => (p.key === step.key ? { ...p, status: 'failed' } : p))
+				const outcome = await loadPlannedTables({
+					plan,
+					signal: run.signal,
+					isCurrent: run.owns,
+					load: registry.load,
+					markLoading: (step, stage) => {
+						writeTab((t) => ({
+							pendingTables: t.pendingTables.map((p) => (p.key === step.key ? { ...p, status: 'loading' } : p))
 						}))
-						updateTab(tabId, {
-							runError: error,
-							result: null,
-							running: false,
-							loadingStage: null
-						})
-						scheduleTabPendingClear(updateTab, tabId)
-						finishRun()
-						return
+						writeTab({ loadingStage: stage })
+					},
+					markLoaded: (step) => {
+						writeTab((t) => ({ pendingTables: t.pendingTables.filter((p) => p.key !== step.key) }))
 					}
-					updateTab(tabId, (t) => ({
-						pendingTables: t.pendingTables.filter((p) => p.key !== step.key)
+				})
+				// The outcome describes the moment the helper returned. Awaiting it hands control back, so a
+				// newer run or a Stop can land before this resumes; in the loop these checks and the tab
+				// updates below sat in one synchronous block and could not be separated.
+				if (!runIsLive(run)) {
+					releaseBusyTask()
+					return
+				}
+				if (outcome.kind === 'superseded') {
+					releaseBusyTask()
+					return
+				}
+				if (outcome.kind === 'failed') {
+					writeTab((t) => ({
+						pendingTables: t.pendingTables.map((p) => (p.key === outcome.step.key ? { ...p, status: 'failed' } : p))
 					}))
+					writeTab({
+						runError: `Could not load ${outcome.step.label}.`,
+						result: null,
+						running: false,
+						loadingStage: null
+					})
+					scheduleTabPendingClear(updateTab, tabId)
+					finishRun()
+					return
 				}
 				updateTab(tabId, { loadingStage: null })
-				await runSqlForTab(tabId, nextSql, controller)
+				await runSqlForTab(tabId, nextSql, run)
 				finishRun()
 			} catch (error) {
-				if (runControllersRef.current.get(runKey) !== controller) return
-				if (isAbortError(error) || controller.signal.aborted) {
+				if (!run.owns()) {
+					releaseBusyTask()
+					return
+				}
+				if (wasRunAborted(error, run.signal)) {
 					updateTab(tabId, {
 						runError: null,
 						result: null,
@@ -393,7 +479,7 @@ function SqlWorkspaceInner({
 					return
 				}
 				updateTab(tabId, {
-					runError: error instanceof Error ? error.message : String(error),
+					runError: runErrorMessage(error),
 					result: null,
 					running: false
 				})
@@ -401,7 +487,7 @@ function SqlWorkspaceInner({
 				finishRun()
 			}
 		},
-		[registry, runSqlForTab, updateTab, beginRun, endRun]
+		[registry, runSqlForTab, updateTab, beginRun]
 	)
 
 	// --- Notebook cell execution ---
@@ -427,7 +513,11 @@ function SqlWorkspaceInner({
 			const cellName = `cell_${cellIdx + 1}`
 			const skipSet = cellViewNames(tab.cells)
 			const runKey = `cell:${cellId}`
-			const controller = beginRun(runKey)
+			const run = beginRun(runKey)
+			// Every write for this cell's run goes through here, for the same reason as the tab's.
+			const writeCell = (update: Parameters<typeof updateCell>[2]) => {
+				if (run.owns()) updateCell(tabId, cellId, update)
+			}
 
 			updateCell(tabId, cellId, {
 				running: true,
@@ -445,18 +535,13 @@ function SqlWorkspaceInner({
 				},
 				trimmed,
 				{
-					onPendingChange: (pending) => {
-						if (runControllersRef.current.get(runKey) === controller)
-							updateCell(tabId, cellId, { pendingTables: pending })
-					},
-					onLoadingStage: (stage) => {
-						if (runControllersRef.current.get(runKey) === controller) updateCell(tabId, cellId, { loadingStage: stage })
-					}
+					onPendingChange: (pending) => writeCell({ pendingTables: pending }),
+					onLoadingStage: (stage) => writeCell({ loadingStage: stage })
 				},
 				skipSet,
-				controller.signal
+				run.signal
 			)
-			if (runControllersRef.current.get(runKey) !== controller) return false
+			if (!run.owns()) return false
 
 			if (res.ok) {
 				const okRes = res as Extract<typeof res, { ok: true }>
@@ -467,9 +552,9 @@ function SqlWorkspaceInner({
 				} catch (error) {
 					console.warn(`Failed to create view ${cellName}:`, error)
 				}
-				if (runControllersRef.current.get(runKey) !== controller) return false
-				if (controller.signal.aborted) {
-					endRun(runKey, controller)
+				if (!run.owns()) return false
+				if (run.signal.aborted) {
+					run.release()
 					updateCell(tabId, cellId, {
 						result: null,
 						runError: null,
@@ -479,7 +564,7 @@ function SqlWorkspaceInner({
 					})
 					return false
 				}
-				endRun(runKey, controller)
+				run.release()
 				updateCell(tabId, cellId, {
 					result: okRes.result,
 					lastRun: {
@@ -497,7 +582,7 @@ function SqlWorkspaceInner({
 				return true
 			}
 			const errRes = res as Extract<typeof res, { ok: false }>
-			endRun(runKey, controller)
+			run.release()
 			updateCell(tabId, cellId, {
 				result: null,
 				runError: errRes.cancelled ? null : errRes.error,
@@ -506,7 +591,7 @@ function SqlWorkspaceInner({
 			})
 			return false
 		},
-		[tabs, duckdb.conn, registry, chartOptionsMap, updateCell, cellViewNames, beginRun, endRun]
+		[tabs, duckdb.conn, registry, chartOptionsMap, updateCell, cellViewNames, beginRun]
 	)
 
 	const runCellsSequential = useCallback(

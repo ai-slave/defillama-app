@@ -651,6 +651,29 @@ Both of those cost a revert before being understood. `ClaimTokenProfile` was set
 `for (let i = 0; i < plan.length; i++)` moves the complaint to the `0`. The loop has to come out of the
 try, which is a restructure, not a hoist. `SqlWorkspace` is left in the baseline for that reason.
 
+### Moving code out of a try moves it out from under the guards too
+
+Twice now the defect was not the expression that moved, but what the original code
+happened to sit inside. Both slipped through a green suite and were caught in a browser.
+
+**A guard covers everything lexically inside it, including the parts you did not think about.**
+`WelcomeOnboarding` read `sessionStorage.getItem` inside a `try`. Moving the read into a helper
+that takes `storage` left `window.sessionStorage` — the property access — being evaluated at the
+call site, and that access throws by itself when browser policy denies storage. The fix was a
+guarded getter, not a guarded read.
+
+**Extraction turns a synchronous continuation into an asynchronous one.** `SqlWorkspace` checked
+run ownership and then applied its failure state in one uninterrupted block inside the loop.
+Lifting the loop into a helper put a promise boundary between the helper's last ownership check
+and the caller acting on its outcome, so a newer run or a Stop could land in between and the
+caller would apply a stale failure to a tab it no longer owned. The outcome describes the moment
+the helper returned, not the moment you handle it, so re-check after every await.
+
+Before extracting anything, list what the enclosing block guaranteed — a `try`, an ownership
+check, an abort signal, a mounted component — and confirm each still holds at the new call site.
+"Its statements are identical" is not the same as "it behaves identically", and a suite that
+never interleaves two runs cannot tell you the difference.
+
 **`Promise.finally` replaces a `try`/`finally` whenever the callee already returns a promise.** No try
 statement survives, the flag still clears on rejection, and in the SQL chart modal it also retired a
 `react/memo-dependencies` suppression that only existed because the compiler could not see through the
