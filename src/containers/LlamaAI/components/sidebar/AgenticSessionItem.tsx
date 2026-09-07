@@ -6,13 +6,18 @@ import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { llamaAIRequest } from '~/containers/LlamaAI/api/transport'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
-import { updateSessionInInfiniteData, type SessionListInfiniteData } from '~/containers/LlamaAI/hooks/sessionListCache'
+import { DeleteSessionDialog } from '~/containers/LlamaAI/components/DeleteSessionDialog'
+import {
+	findSessionInInfiniteData,
+	updateSessionInInfiniteData,
+	type SessionListInfiniteData
+} from '~/containers/LlamaAI/hooks/sessionListCache'
+import { SESSION_WRITE_KEY, useInvalidateSessionWrites } from '~/containers/LlamaAI/hooks/sessionMutationCache'
+import { withSessionWriteScope } from '~/containers/LlamaAI/hooks/sessionWriteScope'
 import { useClearUnseenCompletion } from '~/containers/LlamaAI/hooks/useClearUnseenCompletion'
-import { useClickOutside } from '~/containers/LlamaAI/hooks/useClickOutside'
 import { SESSIONS_QUERY_KEY } from '~/containers/LlamaAI/hooks/useSessionList'
 import { useUpdateSessionTitle } from '~/containers/LlamaAI/hooks/useUpdateSessionTitle'
 import { MoveToProjectMenuItem } from '~/containers/LlamaAI/projects/MoveToProjectMenu'
-import { isProjectSessionsQueryKey } from '~/containers/LlamaAI/projects/queryKeys'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
 import { Icon } from '~/ui/Icon'
@@ -54,6 +59,14 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const [isEditing, setIsEditing] = useState(false)
 	const [isCopyingLink, setIsCopyingLink] = useState(false)
 	const formRef = useRef<HTMLFormElement>(null)
+	const renameRef = useRef<HTMLButtonElement>(null)
+	const closeRename = () => {
+		const restoreFocus = formRef.current?.contains(document.activeElement)
+		setIsEditing(false)
+		if (restoreFocus) requestAnimationFrame(() => renameRef.current?.focus())
+	}
+	const deleteStore = Ariakit.useDialogStore()
+	const menuRef = useRef<HTMLButtonElement>(null)
 
 	const { mutate: toggleVisibility, isPending: isTogglingVisibility } = useMutation({
 		mutationFn: async () => {
@@ -77,44 +90,53 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	const updateTitle = useUpdateSessionTitle()
 	// The request belongs to the owner: deleting removes the row from the session cache, so a callback
 	// passed to mutate would be dropped when this row unmounts. Only the pending state is local.
-	const deletion = useMutation({ mutationFn: () => onDelete(session.sessionId, session.projectId) })
+	const deletion = useMutation({
+		mutationFn: () => onDelete(session.sessionId, session.projectId),
+		onError: (error) => {
+			if (!deleteStore.getState().contentElement?.isConnected) toast.error(error.message)
+		}
+	})
 	const isDeleting = deletion.isPending
 	const isUpdatingTitle = updateTitle.isPending
 
+	const invalidateSessionWrites = useInvalidateSessionWrites()
 	const sessionsKey = [SESSIONS_QUERY_KEY, user?.id]
 	// Owned by the row so an in-flight pin disables only this menu item. Lifted to the sidebar it would
 	// have to travel back down as a busy flag, blocking every other session and re-rendering the list.
 	const pinSession = useMutation({
-		mutationFn: async () => {
-			try {
-				await llamaAIRequest(authorizedFetch, `/user/sessions/${session.sessionId}/pin`, { method: 'PUT' })
-			} catch (error) {
-				throw new Error(`Failed to toggle pin: ${getErrorMessage(error)}`)
-			}
-		},
-		onMutate: async () => {
-			await queryClient.cancelQueries({ queryKey: sessionsKey })
-			const previous = queryClient.getQueryData<SessionListInfiniteData>(sessionsKey)
-			queryClient.setQueryData(sessionsKey, (old: SessionListInfiniteData | undefined) =>
-				updateSessionInInfiniteData(old, session.sessionId, (current) => ({
-					...current,
-					isPinned: !current.isPinned,
-					pinnedAt: !current.isPinned ? new Date().toISOString() : undefined
-				}))
-			)
-			return { previous }
-		},
-		onError: (error, _variables, context) => {
-			toast.error(error.message)
-			if (context?.previous) queryClient.setQueryData(sessionsKey, context.previous)
-		},
-		onSettled: () => {
-			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
-			void queryClient.invalidateQueries({ predicate: (query) => isProjectSessionsQueryKey(query.queryKey) })
-		}
+		mutationKey: [SESSION_WRITE_KEY, user?.id],
+		mutationFn: () =>
+			withSessionWriteScope(queryClient, `${user?.id}:${session.sessionId}:pin`, async () => {
+				await queryClient.cancelQueries({ queryKey: sessionsKey })
+				const previous = findSessionInInfiniteData(
+					queryClient.getQueryData<SessionListInfiniteData>(sessionsKey),
+					session.sessionId
+				)
+				queryClient.setQueryData(sessionsKey, (old: SessionListInfiniteData | undefined) =>
+					updateSessionInInfiniteData(old, session.sessionId, (current) => ({
+						...current,
+						isPinned: !current.isPinned,
+						pinnedAt: !current.isPinned ? new Date().toISOString() : undefined
+					}))
+				)
+				try {
+					await llamaAIRequest(authorizedFetch, `/user/sessions/${session.sessionId}/pin`, { method: 'PUT' })
+				} catch (error) {
+					if (previous) {
+						queryClient.setQueryData(sessionsKey, (old: SessionListInfiniteData | undefined) =>
+							updateSessionInInfiniteData(old, session.sessionId, (current) =>
+								current.isPinned === !previous.isPinned
+									? { ...current, isPinned: previous.isPinned, pinnedAt: previous.pinnedAt }
+									: current
+							)
+						)
+					}
+					throw new Error(`Failed to toggle pin: ${getErrorMessage(error)}`)
+				}
+			}),
+		onError: (error) => toast.error(error.message),
+		onSettled: invalidateSessionWrites
 	})
-
-	useClickOutside(formRef, () => setIsEditing(false), isEditing)
 
 	const handleSessionClick = (sessionId: string) => {
 		if (isActive) return
@@ -126,20 +148,26 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 		}
 	}
 
-	const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+	const handleSave = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		const title = (e.currentTarget.elements.namedItem('newTitle') as HTMLInputElement | null)?.value.trim() ?? ''
-		if (!title || title === session.title) return
-		updateTitle.mutate(
-			{ sessionId: session.sessionId, title, projectId: session.projectId },
-			{ onSuccess: () => setIsEditing(false) }
-		)
+		if (isUpdatingTitle || !title) return
+		if (title === session.title) {
+			closeRename()
+			return
+		}
+		try {
+			await updateTitle.mutateAsync({ sessionId: session.sessionId, title, projectId: session.projectId })
+			closeRename()
+		} catch (error) {
+			if (!formRef.current?.isConnected) toast.error(getErrorMessage(error))
+		}
 	}
 
 	const handleDelete = () => {
-		if (!window.confirm('Are you sure you want to delete this chat?')) return
+		if (isDeleting) return
 		trackUmamiEvent('llamaai-session-delete')
-		deletion.mutate(undefined, { onSuccess: () => setIsEditing(false) })
+		deletion.mutate(undefined, { onSuccess: () => deleteStore.hide() })
 	}
 
 	if (isEditing) {
@@ -147,74 +175,69 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			<form
 				ref={formRef}
 				onSubmit={handleSave}
-				className="group relative -mx-1.5 flex items-center gap-0.5 rounded-sm text-xs hover:bg-ai-surface-muted data-[active=true]:bg-brand data-[active=true]:text-ai-white"
+				className="group relative -mx-1.5 flex flex-wrap items-center gap-0.5 rounded-sm text-xs hover:bg-ai-surface-muted data-[active=true]:bg-brand data-[active=true]:text-ai-white"
 				style={style}
 			>
 				<input
 					type="text"
 					name="newTitle"
+					onKeyDown={(event) => {
+						if (event.key === 'Escape' && !isUpdatingTitle) {
+							event.preventDefault()
+							closeRename()
+						}
+					}}
 					aria-label="Session title"
 					defaultValue={session.title}
 					autoFocus
 					onFocus={(e) => e.currentTarget.select()}
-					className="flex-1 truncate p-1.5 text-left text-xs"
+					className="min-w-0 flex-1 truncate p-1.5 text-left text-xs"
 					disabled={isUpdatingTitle}
 				/>
 				<div className="flex items-center justify-center gap-0.5">
-					<button
+					<Ariakit.Button
+						accessibleWhenDisabled
 						type="submit"
-						aria-label="Save session title"
-						className="flex aspect-square items-center justify-center rounded-sm bg-brand p-1.5 text-ai-white"
+						aria-label={isUpdatingTitle ? 'Saving session title' : 'Save session title'}
+						className="flex items-center justify-center gap-1 rounded-sm bg-brand p-1.5 text-ai-white"
 						disabled={isUpdatingTitle}
 					>
-						{isUpdatingTitle ? (
-							<LoadingSpinner size={12} />
-						) : (
-							<Icon name="check" height={12} width={12} className="shrink-0" />
-						)}
-					</button>
+						{isUpdatingTitle ? <LoadingSpinner size={12} /> : null}
+						{isUpdatingTitle ? 'Saving…' : 'Save'}
+					</Ariakit.Button>
 					<button
 						type="button"
 						aria-label="Cancel session rename"
-						onClick={() => setIsEditing(false)}
+						onClick={closeRename}
 						className="flex aspect-square items-center justify-center rounded-sm bg-ai-error-vivid/20 p-1.5 text-error"
 						disabled={isUpdatingTitle}
 					>
 						<Icon name="x" height={12} width={12} className="shrink-0" />
 					</button>
 				</div>
+				{updateTitle.error ? (
+					<p role="alert" className="w-full p-1.5 text-ai-error">
+						{updateTitle.error.message} Edit the title or retry saving.
+					</p>
+				) : null}
 			</form>
 		)
 	}
 
 	if (selectMode) {
 		return (
-			<button
-				type="button"
-				onClick={() => onToggleSelect?.(session.sessionId)}
-				className="group relative -mx-1.5 flex w-full items-center gap-2 rounded-sm p-1.5 text-left text-xs hover:bg-ai-surface-muted"
+			<label
+				className="group relative -mx-1.5 flex w-full cursor-pointer items-center gap-2 rounded-sm p-1.5 text-left text-xs hover:bg-ai-surface-muted"
 				style={style}
 			>
-				<span
-					data-checked={isSelected}
-					className="flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-ai-line data-[checked=true]:border-brand data-[checked=true]:bg-brand dark:data-[checked=true]:border-brand"
-				>
-					{isSelected ? (
-						<svg
-							className="size-2.5 text-ai-white"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="3"
-							strokeLinecap="round"
-							strokeLinejoin="round"
-						>
-							<polyline points="20 6 9 17 4 12" />
-						</svg>
-					) : null}
-				</span>
+				<input
+					type="checkbox"
+					checked={!!isSelected}
+					onChange={() => onToggleSelect?.(session.sessionId)}
+					className="size-3.5 shrink-0 accent-brand"
+				/>
 				<span className="flex-1 truncate">{session.title}</span>
-			</button>
+			</label>
 		)
 	}
 
@@ -234,7 +257,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					}
 					handleSessionClick(session.sessionId)
 				}}
-				aria-disabled={isEditing || isDeleting || isRestoring}
+				disabled={isEditing || isDeleting || isRestoring}
 				className="flex flex-1 items-center gap-1 overflow-hidden p-1.5 text-left aria-disabled:pointer-events-none aria-disabled:opacity-60"
 			>
 				{session.isPinned ? <Icon name="pin" height={10} width={10} className="shrink-0 opacity-40" /> : null}
@@ -251,8 +274,12 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					render={
 						<button
 							type="button"
+							ref={renameRef}
 							aria-label={`Rename ${session.title}`}
-							onClick={() => setIsEditing(true)}
+							onClick={() => {
+								updateTitle.reset()
+								setIsEditing(true)
+							}}
 							disabled={isUpdatingTitle || isDeleting || isRestoring}
 						/>
 					}
@@ -261,7 +288,11 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					<Icon name="pencil" height={12} width={12} className="shrink-0" />
 				</Tooltip>
 				<Ariakit.MenuProvider>
-					<Ariakit.MenuButton className="flex aspect-square items-center justify-center rounded-sm p-1.5 hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white">
+					<Ariakit.MenuButton
+						ref={menuRef}
+						aria-label={`Actions for ${session.title}`}
+						className="flex aspect-square items-center justify-center rounded-sm p-1.5 hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
+					>
 						<Icon name="ellipsis" height={12} width={12} className="shrink-0" />
 						<span className="sr-only">Open menu</span>
 					</Ariakit.MenuButton>
@@ -275,7 +306,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						}}
 						className="z-50 flex min-w-[180px] flex-col overflow-auto overscroll-contain rounded-md border border-ai-line bg-surface text-primary max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:rounded-b-none sm:max-h-[min(400px,60dvh)] sm:max-w-md lg:max-h-(--popover-available-height)"
 					>
-						<Ariakit.PopoverDismiss className="ml-auto p-2 opacity-50 sm:hidden">
+						<Ariakit.PopoverDismiss aria-label="Close session menu" className="ml-auto p-2 opacity-50 sm:hidden">
 							<Icon name="x" className="size-5" />
 						</Ariakit.PopoverDismiss>
 						<Ariakit.MenuItem
@@ -344,7 +375,10 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						</Ariakit.MenuItem>
 						<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
 						<Ariakit.MenuItem
-							onClick={handleDelete}
+							onClick={() => {
+								deletion.reset()
+								deleteStore.show()
+							}}
 							disabled={isUpdatingTitle || isDeleting || isRestoring || isTogglingVisibility}
 							data-deleting={isDeleting}
 							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-ai-error-vivid/10 hover:text-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-error data-active-item:bg-ai-error-vivid/10 data-active-item:text-error data-[deleting=true]:bg-ai-error-vivid/10 data-[deleting=true]:text-error"
@@ -359,6 +393,14 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					</Ariakit.Menu>
 				</Ariakit.MenuProvider>
 			</div>
+			<DeleteSessionDialog
+				store={deleteStore}
+				title={`Delete “${session.title}”?`}
+				pending={isDeleting}
+				error={deletion.error}
+				onConfirm={handleDelete}
+				finalFocus={menuRef}
+			/>
 			{isRestoring ? (
 				<span className="absolute top-0 right-0 bottom-0 left-0 flex items-center justify-center rounded-sm bg-surface/70">
 					<LoadingSpinner size={12} />

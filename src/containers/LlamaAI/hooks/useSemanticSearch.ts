@@ -3,7 +3,7 @@ import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import type { SearchResult } from '~/containers/LlamaAI/types'
 
-export function useSemanticSearch() {
+export function useSemanticSearch(enabled: boolean) {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()
 	const [query, setQuery] = useState('')
 	const [results, setResults] = useState<Array<SearchResult>>([])
@@ -53,7 +53,7 @@ export function useSemanticSearch() {
 		if (debounceRef.current) clearTimeout(debounceRef.current)
 		abortRef.current?.abort()
 
-		if (!query.trim()) {
+		if (!enabled || !query.trim()) {
 			setResults([])
 			setIsSearching(false)
 			return
@@ -66,7 +66,7 @@ export function useSemanticSearch() {
 			if (debounceRef.current) clearTimeout(debounceRef.current)
 			abortRef.current?.abort()
 		}
-	}, [query, search])
+	}, [query, search, enabled])
 
 	useEffect(() => {
 		return () => {

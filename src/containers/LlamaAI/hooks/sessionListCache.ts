@@ -278,3 +278,13 @@ export function moveSessionToTopInInfiniteData(
 		pages
 	}
 }
+
+export function findSessionInInfiniteData(data: SessionListInfiniteData | undefined, sessionId: string) {
+	if (!data) return undefined
+	for (const page of data.pages) {
+		for (const session of page.sessions) {
+			if (session.sessionId === sessionId) return session
+		}
+	}
+	return undefined
+}

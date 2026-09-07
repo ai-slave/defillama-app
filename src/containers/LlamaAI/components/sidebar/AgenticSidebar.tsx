@@ -1,3 +1,4 @@
+import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { type Virtualizer, useVirtualizer } from '@tanstack/react-virtual'
 import {
@@ -12,9 +13,11 @@ import {
 	useRef,
 	useState
 } from 'react'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
+import { DeleteSessionDialog, SessionListFocusContext } from '~/containers/LlamaAI/components/DeleteSessionDialog'
 import { AgenticSessionItem } from '~/containers/LlamaAI/components/sidebar/AgenticSessionItem'
 import { SearchResults } from '~/containers/LlamaAI/components/sidebar/SearchResults'
 import { useSemanticSearch } from '~/containers/LlamaAI/hooks/useSemanticSearch'
@@ -169,6 +172,7 @@ export function AgenticSidebar({
 	onOpenAlerts
 }: AgenticSidebarProps) {
 	const { hideSidebar, isFullscreen, toggleFullscreen, toggleSidebar } = useLlamaAIChrome()
+	const newChatRef = useRef<HTMLButtonElement>(null)
 	const sidebarRef = useRef<HTMLDivElement>(null)
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const projectsSectionRef = useRef<HTMLDivElement>(null)
@@ -184,7 +188,7 @@ export function AgenticSidebar({
 		results: searchResults,
 		isSearching,
 		clear: clearSearch
-	} = useSemanticSearch()
+	} = useSemanticSearch(!selectMode)
 
 	const toggleSelect = useCallback((sessionId: string) => {
 		setSelectedSessionIds((prev) => {
@@ -198,13 +202,19 @@ export function AgenticSidebar({
 		})
 	}, [])
 
-	const bulkDeletion = useMutation({ mutationFn: (ids: Array<string>) => onBulkDelete!(ids) })
+	const deleteStore = Ariakit.useDialogStore()
+	const bulkDeleteRef = useRef<HTMLButtonElement>(null)
+	const bulkDeletion = useMutation({
+		mutationFn: (ids: Array<string>) => onBulkDelete!(ids),
+		onError: (error) => {
+			if (!deleteStore.getState().contentElement?.isConnected) toast.error(error.message)
+		}
+	})
 	const handleBulkDelete = () => {
-		if (selectedSessionIds.size === 0 || !onBulkDelete || bulkDeletion.isPending) return
-		const count = selectedSessionIds.size
-		if (!window.confirm(`Delete ${count} session${count > 1 ? 's' : ''}?`)) return
-		bulkDeletion.mutate([...selectedSessionIds], {
+		if (selectedIds.length === 0 || !onBulkDelete || bulkDeletion.isPending) return
+		bulkDeletion.mutate(selectedIds, {
 			onSuccess: () => {
+				deleteStore.hide()
 				setSelectMode(false)
 				setSelectedSessionIds(new Set())
 			}
@@ -226,6 +236,15 @@ export function AgenticSidebar({
 		if (!trimmedSearchQuery) return nonProjectSessions
 		return nonProjectSessions.filter((s) => s.title.toLowerCase().includes(trimmedSearchQuery.toLowerCase()))
 	}, [nonProjectSessions, trimmedSearchQuery])
+
+	const selectedIds = useMemo(() => {
+		const ids: Array<string> = []
+		for (const session of filteredSessions) {
+			if (selectedSessionIds.has(session.sessionId)) ids.push(session.sessionId)
+		}
+		return ids
+	}, [filteredSessions, selectedSessionIds])
+	const allSelected = filteredSessions.length > 0 && selectedIds.length === filteredSessions.length
 
 	const { pinnedSessions, unpinnedSessions } = useMemo(() => {
 		const pinned = filteredSessions.filter((s) => s.isPinned).sort(compareSessionsByActivity)
@@ -340,294 +359,319 @@ export function AgenticSidebar({
 	}, [])
 
 	return (
-		<aside
-			ref={sidebarRef}
-			className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-ai-line bg-surface max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'animate-[slideInRight_0.08s_ease-out]' : ''}`}
-		>
-			<header className="flex flex-col gap-2 p-4 pb-2">
-				<div className="flex h-6 items-center">
-					{isLoading || hasNonProjectSessions ? (
-						<button
-							type="button"
-							onClick={selectMode ? exitSelectMode : () => setSelectMode(true)}
-							disabled={isLoading && !hasNonProjectSessions}
-							className={`flex h-6 items-center gap-1 rounded-sm px-1.5 text-[11px] transition-colors disabled:invisible ${
-								selectMode ? 'bg-brand/12 text-brand' : 'text-ai-tertiary hover:text-ai-primary'
-							}`}
-						>
-							<Icon name={selectMode ? 'x' : 'check'} height={12} width={12} />
-							{selectMode ? 'Cancel' : 'Select'}
-						</button>
-					) : null}
-					<div className="ml-auto flex items-center gap-2">
-						<Tooltip
-							content={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-							render={
-								<button
-									type="button"
-									onClick={toggleFullscreen}
-									data-umami-event="llamaai-fullscreen-toggle"
-									data-umami-event-action={isFullscreen ? 'exit' : 'enter'}
-									data-umami-event-source="sidebar_header"
-								/>
-							}
-							className="hidden size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white lg:flex"
-						>
-							<Icon name={isFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
-							<span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
-						</Tooltip>
-
-						<Tooltip
-							content="Close Chat History"
-							render={
-								<button
-									type="button"
-									onClick={toggleSidebar}
-									data-umami-event="llamaai-sidebar-toggle"
-									data-umami-event-action="close"
-									data-umami-event-source="sidebar_header"
-								/>
-							}
-							className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
-						>
-							<Icon name="panel-left-close" height={16} width={16} />
-							<span className="sr-only">Close Chat History</span>
-						</Tooltip>
-					</div>
-				</div>
-
-				<button
-					type="button"
-					onClick={() => {
-						trackUmamiEvent('llamaai-new-chat')
-						onNewChat()
-					}}
-					className="flex items-center justify-center gap-2 rounded-sm border border-brand bg-brand/12 px-2 py-0.75 text-xs text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
-				>
-					<Icon name="message-square-plus" height={16} width={16} />
-					<span>New Chat</span>
-				</button>
-
-				{isLoading || hasNonProjectSessions ? (
-					<div className="group/search relative flex items-center rounded-md bg-ai-surface-muted transition-colors focus-within:bg-ai-surface-muted">
-						<Icon
-							name="search"
-							height={13}
-							width={13}
-							className="pointer-events-none ml-2.5 shrink-0 text-ai-muted transition-colors group-focus-within/search:text-brand"
-						/>
-						<input
-							type="text"
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-							placeholder="Search"
-							disabled={isLoading && !hasNonProjectSessions}
-							className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 pl-2 text-[11px] text-inherit placeholder:text-ai-muted focus:outline-hidden disabled:cursor-default"
-						/>
-						{isSearching ? (
-							<Icon name="search" height={11} width={11} className="mr-1.5 shrink-0 animate-pulse text-ai-muted" />
-						) : null}
-						{searchQuery ? (
+		<SessionListFocusContext.Provider value={newChatRef}>
+			<aside
+				ref={sidebarRef}
+				className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-ai-line bg-surface max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'animate-[slideInRight_0.08s_ease-out]' : ''}`}
+			>
+				<header className="flex flex-col gap-2 p-4 pb-2">
+					<div className="flex h-6 items-center">
+						{isLoading || hasNonProjectSessions ? (
 							<button
 								type="button"
-								onClick={() => clearSearch()}
-								className="mr-1.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-ai-handle text-ai-white transition-colors hover:bg-ai-handle-hover"
+								onClick={selectMode ? exitSelectMode : () => setSelectMode(true)}
+								disabled={isLoading && !hasNonProjectSessions}
+								className={`flex h-6 items-center gap-1 rounded-sm px-1.5 text-[11px] transition-colors disabled:invisible ${
+									selectMode ? 'bg-brand/12 text-brand' : 'text-ai-tertiary hover:text-ai-primary'
+								}`}
 							>
-								<Icon name="x" height={8} width={8} />
+								<Icon name={selectMode ? 'x' : 'check'} height={12} width={12} />
+								{selectMode ? 'Cancel' : 'Select'}
 							</button>
 						) : null}
-					</div>
-				) : null}
-			</header>
-
-			<div ref={scrollContainerRef} className="flex-1 overflow-auto overscroll-contain">
-				<div ref={projectsSectionRef} className="border-b border-ai-line pb-3">
-					<ProjectsSidebarSection
-						sessions={sessions}
-						currentProjectId={currentProjectId}
-						currentSessionProjectId={currentSessionProjectId}
-						currentSessionId={currentSessionId}
-						restoringSessionId={restoringSessionId}
-						onSessionSelect={onSessionSelect}
-						onDelete={onDelete}
-					/>
-					{onOpenAlerts ? (
-						<div className="px-4 pt-1">
-							<button
-								type="button"
-								onClick={() => {
-									trackUmamiEvent('llamaai-alerts-open', { source: 'sidebar' })
-									onOpenAlerts()
-								}}
-								className="-mx-1.5 flex w-[calc(100%+0.75rem)] items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
-							>
-								<Icon name="calendar-plus" height={12} width={12} className="shrink-0 text-ai-warning-bright" />
-								<span className="min-w-0 flex-1 truncate">Alerts</span>
-								{typeof alertsCount === 'number' ? (
-									<span className="shrink-0 text-[11px] text-ai-muted">· {alertsCount}</span>
-								) : null}
-							</button>
-						</div>
-					) : null}
-				</div>
-
-				<nav className="p-4 pt-3 pr-1" aria-label="Chat history">
-					{isLoading ? (
-						<div className="flex items-center justify-center rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
-							<LoadingSpinner size={12} />
-						</div>
-					) : loadError ? (
-						<p className="rounded-sm border border-dashed border-ai-error-border bg-ai-error-bg p-4 text-center text-xs text-ai-error-strong">
-							{loadError}
-						</p>
-					) : nonProjectSessions.length === 0 ? (
-						<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
-							You don't have any chats yet
-						</p>
-					) : trimmedSearchQuery && (searchResults.length > 0 || isSearching) ? (
-						<SearchResults
-							results={searchResults}
-							isSearching={isSearching}
-							query={searchQuery}
-							onMatchClick={(sessionId, messageId) => {
-								clearSearch()
-								onSearchMatchClick?.(sessionId, messageId)
-							}}
-							onSessionClick={(sessionId) => {
-								clearSearch()
-								onSessionSelect(sessionId)
-							}}
-						/>
-					) : filteredSessions.length === 0 && trimmedSearchQuery && !isSearching && searchResults.length === 0 ? (
-						<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
-							No chats matching &ldquo;{searchQuery}&rdquo;
-						</p>
-					) : (
-						<div
-							style={{
-								height: `${virtualizer.getTotalSize()}px`,
-								width: '100%',
-								position: 'relative'
-							}}
-						>
-							{virtualizedItems.map((virtualItem) => {
-								const item = virtualItems[virtualItem.index]
-								const itemStyle: CSSProperties = {
-									position: 'absolute',
-									top: 0,
-									left: 0,
-									width: '100%',
-									height: `${virtualItem.size}px`,
-									transform: `translateY(${virtualItem.start - projectsSectionHeight}px)`
-								}
-
-								return (
-									<VirtualizedSidebarItem
-										key={
-											item.type === 'header'
-												? `header-${item.groupName}`
-												: item.type === 'loader'
-													? 'session-loader'
-													: `session-${item.session.sessionId}-${item.session.isPublic}-${item.session.lastActivity}`
-										}
-										item={item}
-										itemStyle={itemStyle}
-										currentSessionId={currentSessionId}
-										restoringSessionId={restoringSessionId}
-										onSessionSelect={onSessionSelect}
-										onDelete={onDelete}
-										selectMode={selectMode}
-										isSelected={item.type === 'session' && selectedSessionIds.has(item.session.sessionId)}
-										onToggleSelect={toggleSelect}
+						<div className="ml-auto flex items-center gap-2">
+							<Tooltip
+								content={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+								render={
+									<button
+										type="button"
+										onClick={toggleFullscreen}
+										data-umami-event="llamaai-fullscreen-toggle"
+										data-umami-event-action={isFullscreen ? 'exit' : 'enter'}
+										data-umami-event-source="sidebar_header"
 									/>
-								)
-							})}
+								}
+								className="hidden size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white lg:flex"
+							>
+								<Icon name={isFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
+								<span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
+							</Tooltip>
+
+							<Tooltip
+								content="Close Chat History"
+								render={
+									<button
+										type="button"
+										onClick={toggleSidebar}
+										data-umami-event="llamaai-sidebar-toggle"
+										data-umami-event-action="close"
+										data-umami-event-source="sidebar_header"
+									/>
+								}
+								className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
+							>
+								<Icon name="panel-left-close" height={16} width={16} />
+								<span className="sr-only">Close Chat History</span>
+							</Tooltip>
 						</div>
-					)}
-				</nav>
-			</div>
-
-			{balance ? (
-				<Tooltip
-					content={
-						hasActiveSubscription
-							? 'Credits that let LlamaAI access premium external data sources like onchain data, X profiles, LinkedIn, and more.'
-							: 'Subscribe to a plan to top up your external data balance.'
-					}
-					render={<button type="button" onClick={() => hasActiveSubscription && setIsTopupModalOpen(true)} />}
-					className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-ai-line bg-surface px-4 py-3 transition-colors hover:bg-ai-surface-muted"
-				>
-					<div className="flex min-w-0 items-center gap-2">
-						<Icon name="package" height={14} width={14} className="shrink-0 text-ai-research" />
-						<span className="text-xs text-ai-tertiary">External Data Balance</span>
 					</div>
-					<span
-						className={`shrink-0 font-jetbrains text-xs font-semibold ${totalAvailable < 1 ? 'text-ai-warning-bright' : 'text-ai-tertiary dark:text-ai-primary'}`}
-					>
-						{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-					</span>
-				</Tooltip>
-			) : null}
 
-			{selectMode ? (
-				<footer className="flex min-h-[52px] shrink-0 items-center gap-2 border-t border-ai-line px-4 py-2">
 					<button
+						ref={newChatRef}
 						type="button"
 						onClick={() => {
-							if (selectedSessionIds.size === filteredSessions.length) {
-								setSelectedSessionIds(new Set())
-							} else {
-								setSelectedSessionIds(new Set(filteredSessions.map((s) => s.sessionId)))
-							}
+							trackUmamiEvent('llamaai-new-chat')
+							onNewChat()
 						}}
-						className="flex min-h-0 flex-1 items-center justify-center rounded-md p-2 text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
+						className="flex items-center justify-center gap-2 rounded-sm border border-brand bg-brand/12 px-2 py-0.75 text-xs text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 					>
-						{selectedSessionIds.size === filteredSessions.length ? 'Deselect All' : 'Select All'}
+						<Icon name="message-square-plus" height={16} width={16} />
+						<span>New Chat</span>
 					</button>
-					<button
-						type="button"
-						onClick={handleBulkDelete}
-						disabled={selectedSessionIds.size === 0 || !onBulkDelete || bulkDeletion.isPending}
-						className="flex min-h-0 items-center justify-center rounded-md bg-ai-error-vivid/10 px-3 py-2 text-xs font-medium text-ai-error transition-colors hover:bg-ai-error-vivid/20 disabled:opacity-40"
+
+					{isLoading || hasNonProjectSessions ? (
+						<div className="group/search relative flex items-center rounded-md bg-ai-surface-muted transition-colors focus-within:bg-ai-surface-muted">
+							<Icon
+								name="search"
+								height={13}
+								width={13}
+								className="pointer-events-none ml-2.5 shrink-0 text-ai-muted transition-colors group-focus-within/search:text-brand"
+							/>
+							<input
+								type="text"
+								value={searchQuery}
+								onChange={(e) => {
+									setSearchQuery(e.target.value)
+									setSelectedSessionIds(new Set())
+								}}
+								aria-label="Search sessions"
+								placeholder="Search"
+								disabled={isLoading && !hasNonProjectSessions}
+								className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 pl-2 text-[11px] text-inherit placeholder:text-ai-muted focus:outline-hidden disabled:cursor-default"
+							/>
+							{isSearching ? (
+								<Icon name="search" height={11} width={11} className="mr-1.5 shrink-0 animate-pulse text-ai-muted" />
+							) : null}
+							{searchQuery ? (
+								<button
+									type="button"
+									aria-label="Clear session search"
+									onClick={() => {
+										clearSearch()
+										setSelectedSessionIds(new Set())
+									}}
+									className="mr-1.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-ai-handle text-ai-white transition-colors hover:bg-ai-handle-hover"
+								>
+									<Icon name="x" height={8} width={8} />
+								</button>
+							) : null}
+						</div>
+					) : null}
+				</header>
+
+				<div ref={scrollContainerRef} className="flex-1 overflow-auto overscroll-contain">
+					<div ref={projectsSectionRef} className="border-b border-ai-line pb-3">
+						<ProjectsSidebarSection
+							sessions={sessions}
+							currentProjectId={currentProjectId}
+							currentSessionProjectId={currentSessionProjectId}
+							currentSessionId={currentSessionId}
+							restoringSessionId={restoringSessionId}
+							onSessionSelect={onSessionSelect}
+							onDelete={onDelete}
+						/>
+						{onOpenAlerts ? (
+							<div className="px-4 pt-1">
+								<button
+									type="button"
+									onClick={() => {
+										trackUmamiEvent('llamaai-alerts-open', { source: 'sidebar' })
+										onOpenAlerts()
+									}}
+									className="-mx-1.5 flex w-[calc(100%+0.75rem)] items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+								>
+									<Icon name="calendar-plus" height={12} width={12} className="shrink-0 text-ai-warning-bright" />
+									<span className="min-w-0 flex-1 truncate">Alerts</span>
+									{typeof alertsCount === 'number' ? (
+										<span className="shrink-0 text-[11px] text-ai-muted">· {alertsCount}</span>
+									) : null}
+								</button>
+							</div>
+						) : null}
+					</div>
+
+					<nav className="p-4 pt-3 pr-1" aria-label="Chat history">
+						{isLoading ? (
+							<div className="flex items-center justify-center rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
+								<LoadingSpinner size={12} />
+							</div>
+						) : loadError ? (
+							<p className="rounded-sm border border-dashed border-ai-error-border bg-ai-error-bg p-4 text-center text-xs text-ai-error-strong">
+								{loadError}
+							</p>
+						) : nonProjectSessions.length === 0 ? (
+							<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
+								You don't have any chats yet
+							</p>
+						) : !selectMode && trimmedSearchQuery && (searchResults.length > 0 || isSearching) ? (
+							<SearchResults
+								results={searchResults}
+								isSearching={isSearching}
+								query={searchQuery}
+								onMatchClick={(sessionId, messageId) => {
+									clearSearch()
+									onSearchMatchClick?.(sessionId, messageId)
+								}}
+								onSessionClick={(sessionId) => {
+									clearSearch()
+									onSessionSelect(sessionId)
+								}}
+							/>
+						) : filteredSessions.length === 0 &&
+						  trimmedSearchQuery &&
+						  (selectMode || (!isSearching && searchResults.length === 0)) ? (
+							<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
+								No chats matching &ldquo;{searchQuery}&rdquo;
+							</p>
+						) : (
+							<div
+								style={{
+									height: `${virtualizer.getTotalSize()}px`,
+									width: '100%',
+									position: 'relative'
+								}}
+							>
+								{virtualizedItems.map((virtualItem) => {
+									const item = virtualItems[virtualItem.index]
+									const itemStyle: CSSProperties = {
+										position: 'absolute',
+										top: 0,
+										left: 0,
+										width: '100%',
+										height: `${virtualItem.size}px`,
+										transform: `translateY(${virtualItem.start - projectsSectionHeight}px)`
+									}
+
+									return (
+										<VirtualizedSidebarItem
+											key={
+												item.type === 'header'
+													? `header-${item.groupName}`
+													: item.type === 'loader'
+														? 'session-loader'
+														: `session-${item.session.sessionId}-${item.session.isPublic}-${item.session.lastActivity}`
+											}
+											item={item}
+											itemStyle={itemStyle}
+											currentSessionId={currentSessionId}
+											restoringSessionId={restoringSessionId}
+											onSessionSelect={onSessionSelect}
+											onDelete={onDelete}
+											selectMode={selectMode}
+											isSelected={item.type === 'session' && selectedSessionIds.has(item.session.sessionId)}
+											onToggleSelect={toggleSelect}
+										/>
+									)
+								})}
+							</div>
+						)}
+					</nav>
+				</div>
+
+				{balance ? (
+					<Tooltip
+						content={
+							hasActiveSubscription
+								? 'Credits that let LlamaAI access premium external data sources like onchain data, X profiles, LinkedIn, and more.'
+								: 'Subscribe to a plan to top up your external data balance.'
+						}
+						render={<button type="button" onClick={() => hasActiveSubscription && setIsTopupModalOpen(true)} />}
+						className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-ai-line bg-surface px-4 py-3 transition-colors hover:bg-ai-surface-muted"
 					>
-						Delete{selectedSessionIds.size > 0 ? ` (${selectedSessionIds.size})` : ''}
-					</button>
-				</footer>
-			) : (
-				<footer className="flex min-h-[52px] shrink-0 items-stretch border-t border-ai-line">
-					{onOpenSettings ? (
+						<div className="flex min-w-0 items-center gap-2">
+							<Icon name="package" height={14} width={14} className="shrink-0 text-ai-research" />
+							<span className="text-xs text-ai-tertiary">External Data Balance</span>
+						</div>
+						<span
+							className={`shrink-0 font-jetbrains text-xs font-semibold ${totalAvailable < 1 ? 'text-ai-warning-bright' : 'text-ai-tertiary dark:text-ai-primary'}`}
+						>
+							{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+						</span>
+					</Tooltip>
+				) : null}
+
+				<DeleteSessionDialog
+					store={deleteStore}
+					title={`Delete ${selectedIds.length} session${selectedIds.length === 1 ? '' : 's'}?`}
+					pending={bulkDeletion.isPending}
+					error={bulkDeletion.error}
+					onConfirm={handleBulkDelete}
+					finalFocus={bulkDeleteRef}
+				/>
+				{selectMode ? (
+					<footer className="flex min-h-[52px] shrink-0 items-center gap-2 border-t border-ai-line px-4 py-2">
 						<button
 							type="button"
-							onClick={onOpenSettings}
-							className="flex min-w-0 flex-1 items-center gap-2.5 px-4 py-3 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+							onClick={() => {
+								if (allSelected) {
+									setSelectedSessionIds(new Set())
+								} else {
+									setSelectedSessionIds(new Set(filteredSessions.map((s) => s.sessionId)))
+								}
+							}}
+							className="flex min-h-0 flex-1 items-center justify-center rounded-md p-2 text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
 						>
-							<div className="relative">
-								<Icon name="settings" height={14} width={14} />
-								{hasCustomInstructions ? (
-									<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-accent-blue-deep" />
-								) : null}
-							</div>
-							<span>Settings</span>
+							{allSelected ? 'Deselect All' : 'Select All'}
 						</button>
-					) : (
-						<span className="flex-1" />
-					)}
-					<Tooltip
-						content="Get the mobile app · iOS & Android"
-						render={<BasicLink href="/app" data-umami-event="mobile-app-chat-sidebar-click" />}
-						className="flex shrink-0 items-center justify-center px-4 text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
-					>
-						<Icon name="download" height={14} width={14} />
-						<span className="sr-only">Get the mobile app</span>
-					</Tooltip>
-				</footer>
-			)}
+						<button
+							type="button"
+							ref={bulkDeleteRef}
+							onClick={() => {
+								bulkDeletion.reset()
+								deleteStore.show()
+							}}
+							disabled={selectedIds.length === 0 || !onBulkDelete || bulkDeletion.isPending}
+							className="flex min-h-0 items-center justify-center rounded-md bg-ai-error-vivid/10 px-3 py-2 text-xs font-medium text-ai-error transition-colors hover:bg-ai-error-vivid/20 disabled:opacity-40"
+						>
+							Delete{selectedIds.length > 0 ? ` (${selectedIds.length})` : ''}
+						</button>
+					</footer>
+				) : (
+					<footer className="flex min-h-[52px] shrink-0 items-stretch border-t border-ai-line">
+						{onOpenSettings ? (
+							<button
+								type="button"
+								onClick={onOpenSettings}
+								className="flex min-w-0 flex-1 items-center gap-2.5 px-4 py-3 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+							>
+								<div className="relative">
+									<Icon name="settings" height={14} width={14} />
+									{hasCustomInstructions ? (
+										<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-accent-blue-deep" />
+									) : null}
+								</div>
+								<span>Settings</span>
+							</button>
+						) : (
+							<span className="flex-1" />
+						)}
+						<Tooltip
+							content="Get the mobile app · iOS & Android"
+							render={<BasicLink href="/app" data-umami-event="mobile-app-chat-sidebar-click" />}
+							className="flex shrink-0 items-center justify-center px-4 text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+						>
+							<Icon name="download" height={14} width={14} />
+							<span className="sr-only">Get the mobile app</span>
+						</Tooltip>
+					</footer>
+				)}
 
-			{isTopupModalOpen ? (
-				<Suspense fallback={<></>}>
-					<TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
-				</Suspense>
-			) : null}
-		</aside>
+				{isTopupModalOpen ? (
+					<Suspense fallback={<></>}>
+						<TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
+					</Suspense>
+				) : null}
+			</aside>
+		</SessionListFocusContext.Provider>
 	)
 }

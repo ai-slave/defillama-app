@@ -11,7 +11,12 @@ import {
 	type SessionListInfiniteData,
 	updateSessionInInfiniteData
 } from '~/containers/LlamaAI/hooks/sessionListCache'
-import { mutationActionError, useInvalidateProjectSessions } from '~/containers/LlamaAI/hooks/sessionMutationCache'
+import {
+	mutationActionError,
+	SESSION_WRITE_KEY,
+	useInvalidateSessionWrites,
+	useInvalidateProjectSessions
+} from '~/containers/LlamaAI/hooks/sessionMutationCache'
 import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
 import { projectSessionsKey } from '~/containers/LlamaAI/projects/queryKeys'
 import type { ProjectChatSession } from '~/containers/LlamaAI/projects/types'
@@ -111,6 +116,7 @@ export function useSessionMutations() {
 	const queryClient = useQueryClient()
 
 	const invalidateProjectSessions = useInvalidateProjectSessions()
+	const invalidateSessionWrites = useInvalidateSessionWrites()
 
 	const prependProjectSession = useCallback(
 		(projectId: string, session: ProjectChatSession) => {
@@ -262,6 +268,7 @@ export function useSessionMutations() {
 	const deleteSessionMutation = useDeleteSession()
 
 	const bulkDeleteSessionsMutation = useMutation({
+		mutationKey: [SESSION_WRITE_KEY, user?.id],
 		mutationFn: async (sessionIds: Array<string>) => {
 			try {
 				await llamaAIRequest(authorizedFetch, '/user/sessions/bulk', {
@@ -272,24 +279,12 @@ export function useSessionMutations() {
 				throw mutationActionError('Failed to bulk delete sessions', error)
 			}
 		},
-		onMutate: async (sessionIds) => {
-			await queryClient.cancelQueries({ queryKey: [SESSIONS_QUERY_KEY, user?.id] })
-			const previous = queryClient.getQueryData<SessionListInfiniteData>([SESSIONS_QUERY_KEY, user?.id])
-			const idsSet = new Set(sessionIds)
+		onSuccess: (_data, sessionIds) => {
 			queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], (old: SessionListInfiniteData | undefined) =>
-				removeSessionsFromInfiniteData(old, idsSet)
+				removeSessionsFromInfiniteData(old, new Set(sessionIds))
 			)
-			return { previous }
 		},
-		onError: (_err, _sessionIds, context) => {
-			if (context?.previous) {
-				queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], context.previous)
-			}
-		},
-		onSettled: () => {
-			void queryClient.invalidateQueries({ queryKey: [SESSIONS_QUERY_KEY] })
-			invalidateProjectSessions()
-		}
+		onSettled: invalidateSessionWrites
 	})
 
 	// The server already persisted this title; only the local caches need to catch up.

@@ -135,16 +135,16 @@ export function ProjectsSidebarSection({
 				</button>
 			) : (
 				<>
-					<button
+					<Ariakit.DialogDisclosure
+						store={createStore}
 						type="button"
-						onClick={createStore.show}
 						className="-mx-1.5 grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-1 rounded-md px-1.5 py-1 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
 					>
 						<span className="inline-flex justify-center font-medium text-brand" aria-hidden>
 							+
 						</span>
 						<span className="min-w-0 truncate">New project</span>
-					</button>
+					</Ariakit.DialogDisclosure>
 
 					{isLoading ? (
 						<ul aria-hidden className="flex flex-col">

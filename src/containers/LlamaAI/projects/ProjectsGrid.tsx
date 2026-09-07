@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
 import Router from 'next/router'
-import { type KeyboardEvent, startTransition, useDeferredValue, useMemo, useState } from 'react'
+import { type KeyboardEvent, startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
@@ -22,6 +22,9 @@ export function ProjectsGrid() {
 	const tier = getProjectTier(user, hasActiveSubscription, isTrial)
 	const isLocked = tier === 'free'
 	const usage = useProjectUsage(!isLocked)
+	const createRef = useRef<HTMLButtonElement>(null)
+	const renameRef = useRef<HTMLButtonElement>(null)
+	const deleteRef = useRef<HTMLButtonElement>(null)
 	const createStore = Ariakit.useDialogStore()
 	const renameStore = Ariakit.useDialogStore()
 	const deleteStore = Ariakit.useDialogStore()
@@ -94,15 +97,16 @@ export function ProjectsGrid() {
 	const hasProjects = allProjects.length > 0
 	const hasSearchQuery = deferredQuery.trim().length > 0
 	const createProjectButton = (
-		<button
+		<Ariakit.DialogDisclosure
+			store={createStore}
+			ref={createRef}
 			type="button"
-			onClick={createStore.show}
 			disabled={reachedProjectCap}
 			className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
 		>
 			<Icon name="plus" height={14} width={14} />
 			New project
-		</button>
+		</Ariakit.DialogDisclosure>
 	)
 
 	return (
@@ -155,12 +159,14 @@ export function ProjectsGrid() {
 					<input
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
+						aria-label="Search projects"
 						placeholder="Search projects"
 						className="min-w-0 flex-1 bg-transparent p-2 text-xs text-inherit placeholder:text-ai-muted focus:outline-hidden"
 					/>
 					{query ? (
 						<button
 							type="button"
+							aria-label="Clear project search"
 							onClick={() => setQuery('')}
 							className="mr-2 flex size-4 items-center justify-center rounded-full bg-ai-handle text-ai-white hover:bg-ai-handle-hover"
 						>
@@ -203,6 +209,7 @@ export function ProjectsGrid() {
 					{hasSearchQuery ? (
 						<button
 							type="button"
+							aria-label="Clear project search"
 							onClick={() => setQuery('')}
 							className="rounded-md border border-ai-line px-3 py-1.5 text-xs font-medium text-primary hover:border-brand"
 						>
@@ -231,7 +238,7 @@ export function ProjectsGrid() {
 											<RelativeTime value={p.updated_at} prefix="Updated" />
 										</p>
 									</div>
-									<div className="-mr-1 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+									<div className="-mr-1 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 max-sm:opacity-100">
 										<Tooltip
 											content="Rename project"
 											render={
@@ -241,6 +248,7 @@ export function ProjectsGrid() {
 													onClick={(e) => {
 														e.preventDefault()
 														e.stopPropagation()
+														renameRef.current = e.currentTarget
 														setProjectToRename(p)
 														renameStore.show()
 													}}
@@ -259,6 +267,7 @@ export function ProjectsGrid() {
 													onClick={(e) => {
 														e.preventDefault()
 														e.stopPropagation()
+														deleteRef.current = e.currentTarget
 														setProjectToDelete(p)
 														deleteStore.show()
 													}}
@@ -284,8 +293,17 @@ export function ProjectsGrid() {
 			)}
 
 			<CreateProjectModal dialogStore={createStore} onCreated={onCreated} />
-			<CreateProjectModal dialogStore={renameStore} mode="rename" project={projectToRename} />
+			<CreateProjectModal
+				key={projectToRename?.id}
+				finalFocus={renameRef}
+				dialogStore={renameStore}
+				mode="rename"
+				project={projectToRename}
+			/>
 			<DeleteProjectModal
+				key={projectToDelete?.id}
+				finalFocus={deleteRef}
+				fallbackFocus={createRef}
 				dialogStore={deleteStore}
 				project={projectToDelete}
 				onDeleted={() => setProjectToDelete(null)}

@@ -2602,6 +2602,7 @@ export function AgenticChat({
 			: route.kind === 'project'
 				? (api: LandingOverrideApi) => (
 						<ProjectLanding
+							key={route.projectId}
 							projectId={route.projectId}
 							tier={projectTier}
 							sessionList={sessions}

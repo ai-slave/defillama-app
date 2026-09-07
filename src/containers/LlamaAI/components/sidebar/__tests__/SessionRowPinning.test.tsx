@@ -1,9 +1,11 @@
 // @vitest-environment happy-dom
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act } from 'react'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
+import { act, useRef, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '~/containers/LlamaAI/hooks/sessionListCache'
+import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
+import { SessionListFocusContext } from '../../DeleteSessionDialog'
 import { AgenticSessionItem } from '../AgenticSessionItem'
 const api = vi.hoisted(() => ({ request: vi.fn(), toastError: vi.fn() }))
 vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: { id: 'user' }, authorizedFetch: vi.fn() }) }))
@@ -38,7 +40,7 @@ const initial: SessionListInfiniteData = {
 	pageParams: [0]
 }
 beforeEach(() => {
-	vi.clearAllMocks()
+	vi.resetAllMocks()
 	client = new QueryClient()
 	client.setQueryData(key, initial)
 	container = document.createElement('div')
@@ -74,8 +76,8 @@ async function render() {
 }
 // The menu mounts its items only while open, and clicking one hides it again.
 async function pinItem(rowIndex: number) {
-	const triggers = [...document.querySelectorAll<HTMLElement>('button')].filter((button) =>
-		button.textContent?.includes('Open menu')
+	const triggers = [...document.querySelectorAll<HTMLElement>('button')].filter((trigger) =>
+		trigger.textContent?.includes('Open menu')
 	)
 	await act(async () => triggers[rowIndex].click())
 	const items = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].filter((item) =>
@@ -136,4 +138,130 @@ test('a pending pin prevents duplicate requests without blocking another session
 	await act(async () => finish())
 	await settle()
 	expect(isPinned('chat')).toBe(true)
+})
+
+function ManagedRows() {
+	const data = useQuery<SessionListInfiniteData>({ queryKey: key, enabled: false }).data!
+	const deletion = useDeleteSession()
+	const focus = useRef<HTMLButtonElement>(null)
+	const [completed, setCompleted] = useState(false)
+	return (
+		<SessionListFocusContext.Provider value={focus}>
+			<button type="button" ref={focus}>
+				New Chat
+			</button>
+			{data.pages[0].sessions.map((item) => (
+				<AgenticSessionItem
+					key={item.sessionId}
+					session={item}
+					isActive={false}
+					isRestoring={false}
+					onSessionSelect={() => {}}
+					onDelete={async (sessionId) => {
+						await deletion.mutateAsync({ sessionId })
+						setCompleted(true)
+					}}
+				/>
+			))}
+			{completed ? <p>Deletion completed</p> : null}
+		</SessionListFocusContext.Provider>
+	)
+}
+async function mountManaged() {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<ManagedRows />
+			</QueryClientProvider>
+		)
+	)
+}
+function button(name: string) {
+	const result = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+		(el) => el.getAttribute('aria-label') === name || el.textContent?.trim() === name
+	)
+	expect(result).toBeDefined()
+	return result!
+}
+async function click(name: string) {
+	await act(async () => button(name).click())
+}
+async function openDelete() {
+	await click('Actions for chat')
+	const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find((el) =>
+		el.textContent?.includes('Delete Session')
+	)!
+	await act(async () => item.click())
+	await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).not.toBeNull())
+}
+
+test('session confirmation cancels without a request and returns focus to its menu', async () => {
+	await mountManaged()
+	await openDelete()
+	const dialog = document.querySelector('[role="dialog"]')!
+	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toBe('Delete “chat”?')
+	await click('Cancel')
+	expect(api.request).not.toHaveBeenCalled()
+	await vi.waitFor(() => expect(document.activeElement).toBe(button('Actions for chat')))
+})
+
+test('deletion keeps feedback mounted, prevents duplicates, retries, and completes after row removal', async () => {
+	let reject!: (error: Error) => void
+	api.request
+		.mockImplementationOnce(
+			() =>
+				new Promise((_, fail) => {
+					reject = fail
+				})
+		)
+		.mockResolvedValue({})
+	await mountManaged()
+	await openDelete()
+	await click('Delete')
+	await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
+	await click('Deleting…')
+	expect(api.request).toHaveBeenCalledTimes(1)
+	expect(button('Actions for chat')).toBeDefined()
+	await act(async () => reject(new Error('Offline')))
+	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+	await click('Retry deletion')
+	await vi.waitFor(() => expect(container.textContent).toContain('Deletion completed'))
+	expect(container.querySelector('[aria-label="Actions for chat"]')).toBeNull()
+	await vi.waitFor(() => expect(document.activeElement).toBe(button('New Chat')))
+})
+
+test('failed rename preserves the entered title for retry', async () => {
+	api.request.mockRejectedValueOnce(new Error('Offline')).mockResolvedValue({})
+	await mountManaged()
+	await click('Rename chat')
+	const input = document.querySelector<HTMLInputElement>('input[name="newTitle"]')!
+	await act(async () => {
+		input.value = 'QA renamed'
+		input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+	})
+	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Offline'))
+	expect(input.value).toBe('QA renamed')
+	await act(async () => input.form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	await vi.waitFor(() => expect(container.querySelector('[aria-label="Rename QA renamed"]')).not.toBeNull())
+})
+
+test('a failed pin does not undo another row pin that has succeeded', async () => {
+	let reject!: (error: Error) => void
+	api.request
+		.mockImplementationOnce(
+			() =>
+				new Promise((_, fail) => {
+					reject = fail
+				})
+		)
+		.mockResolvedValue({})
+	await render()
+	await act(async () => (await pinItem(0)).click())
+	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
+	await act(async () => (await pinItem(1)).click())
+	await vi.waitFor(() => expect(isPinned('other')).toBe(true))
+	await act(async () => reject(new Error('Offline')))
+	await vi.waitFor(() => expect(isPinned('chat')).toBe(false))
+	expect(isPinned('other')).toBe(true)
 })
