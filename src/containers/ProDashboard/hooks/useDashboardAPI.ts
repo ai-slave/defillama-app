@@ -71,7 +71,7 @@ export function useGetLiteDashboards() {
 	}
 }
 
-export function useDashboardAPI() {
+export function useDashboardAPI(dashboardId: string | null) {
 	const router = useRouter()
 	const queryClient = useQueryClient()
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
@@ -116,6 +116,8 @@ export function useDashboardAPI() {
 	})
 
 	const updateDashboardMutation = useMutation({
+		// Settings and page remounts must not let an older save overtake a newer save.
+		scope: { id: `pro-dashboard-update:${dashboardId}` },
 		mutationFn: async ({ id, data }: { id: string; data: DashboardSavePayload }) => {
 			return await dashboardAPI.updateDashboard(id, data, authorizedFetch)
 		},

@@ -2714,6 +2714,7 @@ export function AgenticChat({
 									<LoadingConversationState />
 								) : !hasMessages && visibleError ? (
 									<EmptyConversationErrorState
+										onNewChat={() => void navigate.toNewChat()}
 										message={visibleError}
 										onRetry={
 											isRouteSessionPending && routeSessionId

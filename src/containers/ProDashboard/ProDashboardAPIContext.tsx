@@ -414,7 +414,7 @@ function ProDashboardAPIProviderInner({
 		deleteDashboard: deleteDashboardWithConfirmation,
 		loadDashboard: loadDashboardData,
 		navigateToDashboard
-	} = useDashboardAPI()
+	} = useDashboardAPI(dashboardId)
 
 	// Use the permissions hook
 	const { isReadOnly: rawIsReadOnly, dashboardOwnerId } = useDashboardPermissions(currentDashboard)

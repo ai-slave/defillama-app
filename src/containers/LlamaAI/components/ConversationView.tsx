@@ -927,10 +927,20 @@ export function LoadingConversationState() {
 	)
 }
 
-export function EmptyConversationErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+export function EmptyConversationErrorState({
+	message,
+	onRetry,
+	onNewChat
+}: {
+	message: string
+	onRetry?: () => void
+	onNewChat: () => void
+}) {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-2">
-			<p className="text-sm text-ai-error-strong">{message}</p>
+			<p role="alert" className="text-sm text-ai-error-strong">
+				{message}
+			</p>
 			{onRetry ? (
 				<button
 					type="button"
@@ -940,6 +950,9 @@ export function EmptyConversationErrorState({ message, onRetry }: { message: str
 					Retry
 				</button>
 			) : null}
+			<button type="button" onClick={onNewChat} className="rounded-md px-3 py-2 text-sm underline">
+				Start a new chat
+			</button>
 		</div>
 	)
 }

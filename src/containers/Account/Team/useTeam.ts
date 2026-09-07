@@ -128,6 +128,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 
 	// ── Mutation: POST /team/update ──
 	const updateTeamMutation = useMutation({
+		scope: { id: `team-name:${currentUserId}:${team?.id}` },
 		mutationFn: async ({ name }: { name: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/update`, {
 				method: 'POST',
@@ -140,13 +141,9 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			return normalized.json()
 		},
-		onMutate: async ({ name }) => {
-			await queryClient.cancelQueries({ queryKey: teamQueryKey })
-			return optimistic((old) => ({ ...old, name }))
-		},
-		onError: (error, _vars, context) => {
-			rollback(error, _vars, context)
-			console.log('Failed to update team:', error)
+		onSuccess: (_data, { name }) => {
+			// A rename owns only the name; other team operations may finish while it is pending.
+			queryClient.setQueryData<Team | null>(teamQueryKey, (old) => (old ? { ...old, name } : old))
 		},
 		onSettled: () => refetch()
 	})

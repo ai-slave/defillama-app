@@ -1,8 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useId } from 'react'
 import { refreshSession } from '~/auth/authStore'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import pb from '~/utils/pocketbase'
 
 interface EmailChangeModalProps {
@@ -11,9 +12,7 @@ interface EmailChangeModalProps {
 }
 
 export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
-	const [email, setEmail] = useState('')
-	// The request already tracks whether it is in flight, whether it failed and whether it succeeded, so
-	// there is nothing here to mirror it with.
+	const emailId = useId()
 	const requestEmailChange = useMutation({
 		mutationFn: async (nextEmail: string) => {
 			await pb.collection('users').requestEmailChange(nextEmail)
@@ -24,19 +23,15 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 	})
 
 	const handleClose = () => {
-		setEmail('')
 		requestEmailChange.reset()
 		onClose()
 	}
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
-		if (!email || requestEmailChange.isPending) return
-		requestEmailChange.mutate(email)
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (requestEmailChange.isPending) return
+		requestEmailChange.mutate(new FormData(event.currentTarget).get('email') as string)
 	}
-
-	const hasError = requestEmailChange.isError
-	const canSubmit = !!email && !hasError && !requestEmailChange.isPending
 
 	return (
 		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
@@ -49,8 +44,13 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 				<div className="flex flex-col gap-5 px-5 py-6">
 					{/* Header */}
 					<div className="flex items-center justify-between">
-						<h3 className="text-xl leading-7 font-semibold text-sub-text-primary">Change Your Email</h3>
-						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-primary transition-colors">
+						<Ariakit.DialogHeading className="text-xl leading-7 font-semibold text-sub-text-primary">
+							Change Your Email
+						</Ariakit.DialogHeading>
+						<Ariakit.DialogDismiss
+							aria-label="Close email change"
+							className="rounded-full p-1 text-sub-text-primary transition-colors"
+						>
 							<Icon name="x" height={24} width={24} />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -60,50 +60,64 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 							<div className="flex items-center rounded-full bg-green-100 p-3 dark:bg-green-900/30">
 								<Icon name="mail-rounded" height={24} width={24} className="text-success" />
 							</div>
-							<p className="text-sm leading-5 text-sub-text-primary">
-								A confirmation link has been sent to <strong>{email}</strong>. Please check your inbox to confirm the
-								change.
+							<p id={`${emailId}-success`} className="text-sm leading-5 text-sub-text-primary">
+								A confirmation link has been sent to <strong>{requestEmailChange.variables}</strong>. Please check your
+								inbox to confirm the change.
 							</p>
-							<button
+							<Ariakit.Button
 								type="button"
+								autoFocus
 								onClick={handleClose}
+								aria-describedby={`${emailId}-success`}
 								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand"
 							>
 								Done
-							</button>
+							</Ariakit.Button>
 						</div>
 					) : (
 						<form onSubmit={handleSubmit} className="flex flex-col gap-5">
-							<label className="text-sm leading-[21px] text-sub-text-primary">Enter your new email:</label>
+							<p role="status" className="sr-only">
+								{requestEmailChange.isPending ? 'Sending confirmation email…' : ''}
+							</p>
+							<label htmlFor={emailId} className="text-sm leading-[21px] text-sub-text-primary">
+								Enter your new email:
+							</label>
 
 							<div className="flex flex-col gap-2">
-								<input
-									type="email"
-									required
-									value={email}
-									onChange={(e) => {
-										setEmail(e.target.value)
-										if (hasError) requestEmailChange.reset()
-									}}
-									placeholder="your.new.email@example.com"
-									className={`h-10 w-full rounded-lg border bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden dark:bg-sub-dark-page ${
-										hasError
-											? 'border-error'
-											: 'border-sub-border-muted focus:border-sub-brand-primary dark:border-sub-border-strong dark:focus:border-sub-brand-primary'
-									}`}
+								<Ariakit.Focusable
+									autoFocus
+									render={
+										<input
+											type="email"
+											readOnly={requestEmailChange.isPending}
+											id={emailId}
+											name="email"
+											aria-describedby={requestEmailChange.isError ? `${emailId}-error` : undefined}
+											required
+											onChange={() => {
+												if (requestEmailChange.isError) requestEmailChange.reset()
+											}}
+											placeholder="your.new.email@example.com"
+											className="h-10 w-full rounded-lg border border-sub-border-muted bg-sub-surface-panel px-3 text-sm leading-[21px] text-sub-text-primary outline-hidden user-invalid:border-error focus:border-sub-brand-primary user-invalid:focus:border-error dark:border-sub-border-strong dark:bg-sub-dark-page dark:user-invalid:border-error"
+										/>
+									}
 								/>
-								{hasError && (
-									<p className="text-xs leading-4 text-error">This email is already associated with another account.</p>
+								{requestEmailChange.isError && (
+									<p id={`${emailId}-error`} role="alert" className="text-xs leading-4 text-error">
+										Could not send the confirmation email. Please check the address and try again.
+									</p>
 								)}
 							</div>
 
-							<button
+							<Ariakit.Button
+								accessibleWhenDisabled
 								type="submit"
-								disabled={!canSubmit}
-								className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-25"
+								disabled={requestEmailChange.isPending}
+								className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-25"
 							>
-								{requestEmailChange.isPending ? 'Sending...' : 'Confirm Email'}
-							</button>
+								{requestEmailChange.isPending ? <LoadingSpinner size={14} /> : null}
+								{requestEmailChange.isPending ? 'Sending…' : 'Confirm Email'}
+							</Ariakit.Button>
 						</form>
 					)}
 				</div>

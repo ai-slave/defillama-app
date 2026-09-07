@@ -44,7 +44,6 @@
 	"src/components/TableImage/renderTableImage.ts": {"unicorn/prefer-add-event-listener":2},
 	"src/containers/Account/ApiAccessCard.tsx": {"react/no-unescaped-entities":2},
 	"src/containers/Account/DeleteAccountCard.tsx": {"react/hook-use-state":1},
-	"src/containers/Account/EmailChangeModal.tsx": {"jsx-a11y/label-has-associated-control":1},
 	"src/containers/Account/PasswordResetModal.tsx": {"react/no-unescaped-entities":1},
 	"src/containers/Account/ReferralCard.tsx": {"react/no-unescaped-entities":1},
 	"src/containers/Account/ResendCooldown.tsx": {"react/function-component-definition":1,"react/no-unescaped-entities":1},

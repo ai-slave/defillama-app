@@ -84,6 +84,7 @@ afterEach(async () => {
 	client.clear()
 	container.remove()
 	vi.unstubAllGlobals()
+	vi.useRealTimers()
 })
 async function mount(element: React.ReactNode) {
 	await act(async () => root.render(<QueryClientProvider client={client}>{element}</QueryClientProvider>))
@@ -131,6 +132,43 @@ test('copy reports success only after the clipboard accepts the key and retries 
 	await vi.waitFor(() => expect(button('Copied')).toBeDefined())
 	expect(api.copy).toHaveBeenCalledWith('old-test-key')
 	expect(api.error).not.toHaveBeenCalled()
+})
+test('each successful copy gets a fresh feedback interval, while a later failure stays visible', async () => {
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+	api.copy.mockResolvedValue(undefined)
+	await mount(<ApiHarness />)
+	await click('Copy')
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1)
+	})
+	expect(button('Copied')).toBeDefined()
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1000)
+	})
+	await click('Copied')
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1)
+	})
+	expect(api.copy).toHaveBeenCalledTimes(2)
+	// Cross the first copy's expiry while the second copy should still show success.
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1100)
+	})
+	expect(button('Copied')).toBeDefined()
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1000)
+	})
+	expect(button('Copy')).toBeDefined()
+	await click('Copy')
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1)
+	})
+	api.copy.mockRejectedValueOnce(new Error('Permission denied'))
+	await click('Copied')
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(2100)
+	})
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy')
 })
 test('regeneration keeps confirmation and old key on failure, retries, and closes on success', async () => {
 	const request = Promise.withResolvers<string>()

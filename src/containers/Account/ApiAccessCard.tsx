@@ -42,11 +42,13 @@ export function ApiAccessCard({
 			return apiKey
 		}
 	})
+	// Fast consecutive copies can batch away the pending render; each attempt needs a fresh timer.
+	const successfulCopyAttempt = copy.isSuccess ? copy.submittedAt : null
 	useEffect(() => {
-		if (!copy.isSuccess) return
+		if (successfulCopyAttempt === null) return
 		const timer = setTimeout(copy.reset, 2000)
 		return () => clearTimeout(timer)
-	}, [copy.isSuccess, copy.reset])
+	}, [successfulCopyAttempt, copy.reset])
 	const [showKey, setShowKey] = useState(false)
 
 	const remaining = credits ?? 0

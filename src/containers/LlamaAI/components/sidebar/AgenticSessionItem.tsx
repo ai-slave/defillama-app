@@ -77,11 +77,13 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 			if (!menuContentRef.current?.isConnected) toast.error('Failed to copy link')
 		}
 	})
+	// Fast consecutive copies can batch away the pending render; each attempt needs a fresh timer.
+	const successfulCopyAttempt = copyLink.isSuccess ? copyLink.submittedAt : null
 	useEffect(() => {
-		if (!copyLink.isSuccess) return
+		if (successfulCopyAttempt === null) return
 		const timer = setTimeout(copyLink.reset, 2000)
 		return () => clearTimeout(timer)
-	}, [copyLink.isSuccess, copyLink.reset])
+	}, [successfulCopyAttempt, copyLink.reset])
 
 	const visibility = useMutation({
 		mutationFn: async () => {

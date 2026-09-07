@@ -51,11 +51,9 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	client.clear()
 	container.remove()
+	vi.restoreAllMocks()
+	vi.useRealTimers()
 })
-const settle = () =>
-	act(async () => {
-		await new Promise((resolve) => setTimeout(resolve, 0))
-	})
 async function render() {
 	await act(async () =>
 		root.render(
@@ -75,11 +73,8 @@ async function render() {
 	)
 }
 // The menu mounts its items only while open, and clicking one hides it again.
-async function pinItem(rowIndex: number) {
-	const triggers = [...document.querySelectorAll<HTMLElement>('button')].filter((trigger) =>
-		trigger.textContent?.includes('Open menu')
-	)
-	await act(async () => triggers[rowIndex].click())
+async function pinItem(sessionId: string) {
+	await click(`Actions for ${sessionId}`)
 	const items = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].filter((item) =>
 		item.textContent?.includes('Pin to Top')
 	)
@@ -101,16 +96,15 @@ test('a failed pin restores the cached session, reports the failure, and can ret
 		)
 		.mockResolvedValueOnce({})
 	await render()
-	await act(async () => (await pinItem(0)).click())
-	await settle()
-	expect(isPinned('chat')).toBe(true)
+	await act(async () => (await pinItem('chat')).click())
+	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
 	await act(async () => reject(new Error('Unavailable')))
-	await settle()
-	expect(client.getQueryData(key)).toEqual(initial)
+	await vi.waitFor(() => expect(client.getQueryData(key)).toEqual(initial))
 	expect(api.toastError).toHaveBeenCalledExactlyOnceWith('Failed to toggle pin: Unavailable')
-	await act(async () => (await pinItem(0)).click())
-	await settle()
-	expect(isPinned('chat')).toBe(true)
+	const retry = await pinItem('chat')
+	await vi.waitFor(() => expect(retry.getAttribute('aria-disabled')).not.toBe('true'))
+	await act(async () => retry.click())
+	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
 })
 
 test('a pending pin prevents duplicate requests without blocking another session', async () => {
@@ -124,20 +118,20 @@ test('a pending pin prevents duplicate requests without blocking another session
 		)
 		.mockResolvedValueOnce({})
 	await render()
-	await act(async () => (await pinItem(0)).click())
-	await settle()
-	const pendingItem = await pinItem(0)
-	expect(pendingItem.getAttribute('aria-disabled') === 'true' || pendingItem.hasAttribute('disabled')).toBe(true)
+	await act(async () => (await pinItem('chat')).click())
+	await vi.waitFor(() => expect(api.request).toHaveBeenCalledOnce())
+	const pendingItem = await pinItem('chat')
+	await vi.waitFor(() => expect(pendingItem.getAttribute('aria-disabled')).toBe('true'))
 	await act(async () => pendingItem.click())
 	expect(api.request).toHaveBeenCalledTimes(1)
 	await act(async () => pendingItem.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
-	await act(async () => (await pinItem(1)).click())
-	await settle()
-	expect(api.request).toHaveBeenLastCalledWith(expect.any(Function), '/user/sessions/other/pin', { method: 'PUT' })
+	await act(async () => (await pinItem('other')).click())
+	await vi.waitFor(() =>
+		expect(api.request).toHaveBeenLastCalledWith(expect.any(Function), '/user/sessions/other/pin', { method: 'PUT' })
+	)
 	expect(isPinned('other')).toBe(true)
 	await act(async () => finish())
-	await settle()
-	expect(isPinned('chat')).toBe(true)
+	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
 })
 
 function ManagedRows() {
@@ -257,9 +251,9 @@ test('a failed pin does not undo another row pin that has succeeded', async () =
 		)
 		.mockResolvedValue({})
 	await render()
-	await act(async () => (await pinItem(0)).click())
+	await act(async () => (await pinItem('chat')).click())
 	await vi.waitFor(() => expect(isPinned('chat')).toBe(true))
-	await act(async () => (await pinItem(1)).click())
+	await act(async () => (await pinItem('other')).click())
 	await vi.waitFor(() => expect(isPinned('other')).toBe(true))
 	await act(async () => reject(new Error('Offline')))
 	await vi.waitFor(() => expect(isPinned('chat')).toBe(false))
@@ -280,9 +274,7 @@ async function openShareMenu(isPublic: boolean) {
 			</QueryClientProvider>
 		)
 	)
-	const trigger = [...document.querySelectorAll<HTMLButtonElement>('button')].find((el) =>
-		el.textContent?.includes('Open menu')
-	)!
+	const trigger = button('Actions for chat')
 	await act(async () => trigger.click())
 	return trigger
 }
@@ -304,8 +296,7 @@ test('making a chat private confirms first, keeps failures retryable, and restor
 	await act(async () =>
 		[...confirm.querySelectorAll('button')].find((el) => el.textContent === 'Make private')!.click()
 	)
-	await settle()
-	expect(confirm.textContent).toContain('Updating…')
+	await vi.waitFor(() => expect(confirm.textContent).toContain('Updating…'))
 	await act(async () => request.resolve(Response.json({ message: 'Not available' }, { status: 503 })))
 	await vi.waitFor(() => expect(confirm.querySelector('[role="alert"]')).not.toBeNull())
 	expect(api.toastError).not.toHaveBeenCalled()
@@ -358,5 +349,43 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 	await act(async () => namedButton('Copy Link').click())
 	await vi.waitFor(() => expect(namedButton('Link copied')).toBeDefined())
 	expect(copy).toHaveBeenLastCalledWith(`${window.location.origin}/ai/chat/shared/test-share`)
-	copy.mockRestore()
+})
+
+test('repeated link copies restart success feedback without clearing a later pending copy', async () => {
+	vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+	const copy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
+	await openShareMenu(true)
+	await act(async () => namedButton('Copy Link').click())
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1)
+	})
+	expect(namedButton('Link copied')).toBeDefined()
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1000)
+	})
+	await act(async () => namedButton('Link copied').click())
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1)
+	})
+	expect(copy).toHaveBeenCalledTimes(2)
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1100)
+	})
+	expect(namedButton('Link copied')).toBeDefined()
+	const pending = Promise.withResolvers<void>()
+	copy.mockReturnValueOnce(pending.promise)
+	await act(async () => namedButton('Link copied').click())
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(2100)
+	})
+	expect(namedButton('Copying…')?.getAttribute('aria-disabled')).toBe('true')
+	await act(async () => pending.resolve())
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(1)
+	})
+	expect(namedButton('Link copied')).toBeDefined()
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(2100)
+	})
+	expect(namedButton('Copy Link')).toBeDefined()
 })

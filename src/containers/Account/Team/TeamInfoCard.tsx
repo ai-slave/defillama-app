@@ -1,22 +1,31 @@
-import { useState } from 'react'
+import * as Ariakit from '@ariakit/react'
+import { useId, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { useTeam } from './useTeam'
 
 export function TeamInfoCard() {
 	const { team, isAdmin, updateTeamMutation } = useTeam()
 	const [isEditing, setIsEditing] = useState(false)
-	const [editName, setEditName] = useState('')
+	const errorId = useId()
+	const renameRef = useRef<HTMLButtonElement>(null)
+	const closeEditor = () => {
+		setIsEditing(false)
+		requestAnimationFrame(() => renameRef.current?.focus())
+	}
 
 	if (!team) return null
 
-	const handleSave = () => {
-		if (!editName.trim() || updateTeamMutation.isPending) return
-		updateTeamMutation.mutate({ name: editName.trim() }, { onSuccess: () => setIsEditing(false) })
+	const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (updateTeamMutation.isPending) return
+		const name = (new FormData(event.currentTarget).get('name') as string).trim()
+		if (!name) return
+		updateTeamMutation.mutate({ name }, { onSuccess: closeEditor })
 	}
 
 	const startEditing = () => {
 		updateTeamMutation.reset()
-		setEditName(team.name)
 		setIsEditing(true)
 	}
 
@@ -32,38 +41,53 @@ export function TeamInfoCard() {
 					<span className="shrink-0 text-xs leading-4 text-sub-text-muted">Name</span>
 					<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 					{isEditing ? (
-						<div className="flex items-center gap-2">
+						<form className="flex min-w-0 flex-wrap items-center gap-2" onSubmit={handleSave}>
 							<input
 								type="text"
-								value={editName}
-								onChange={(e) => setEditName(e.target.value)}
+								aria-label="Team name"
+								readOnly={updateTeamMutation.isPending}
+								name="name"
+								defaultValue={team.name}
+								required
+								pattern=".*\S.*"
+								title="Enter a team name"
+								aria-describedby={updateTeamMutation.isError ? errorId : undefined}
 								onKeyDown={(e) => {
-									if (e.key === 'Enter') handleSave()
-									if (e.key === 'Escape') setIsEditing(false)
+									if (e.key === 'Escape' && !updateTeamMutation.isPending) closeEditor()
 								}}
-								className="w-40 rounded-sm border border-sub-border-slate-100 bg-white px-2 py-1 text-xs text-sub-text-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
+								className="h-8 w-40 min-w-0 rounded-sm border border-sub-border-slate-100 bg-white px-2 py-1 text-xs text-sub-text-primary user-invalid:border-error focus:border-sub-brand-primary focus:outline-hidden user-invalid:focus:border-error dark:border-sub-border-strong dark:bg-sub-surface-dark dark:user-invalid:border-error"
 								autoFocus
 							/>
+							<Ariakit.Button
+								accessibleWhenDisabled
+								type="submit"
+								disabled={updateTeamMutation.isPending}
+								className="flex min-h-8 items-center gap-1 px-1 text-xs font-medium text-sub-brand-primary disabled:opacity-50"
+							>
+								{updateTeamMutation.isPending ? <LoadingSpinner size={12} /> : null}
+								{updateTeamMutation.isPending ? 'Saving…' : 'Save'}
+							</Ariakit.Button>
 							<button
 								type="button"
-								onClick={handleSave}
-								disabled={!editName.trim() || updateTeamMutation.isPending}
-								className="text-xs font-medium text-sub-brand-primary disabled:opacity-50"
+								disabled={updateTeamMutation.isPending}
+								onClick={closeEditor}
+								className="min-h-8 px-1 text-xs text-sub-text-muted"
 							>
-								{updateTeamMutation.isPending ? '...' : 'Save'}
-							</button>
-							<button type="button" onClick={() => setIsEditing(false)} className="text-xs text-sub-text-muted">
 								Cancel
 							</button>
-						</div>
+						</form>
 					) : (
-						<div className="flex items-center gap-2">
-							<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.name}</span>
+						<div className="flex min-w-0 items-center gap-2">
+							<span className="min-w-0 text-right text-xs leading-4 break-words text-sub-text-primary">
+								{team.name}
+							</span>
 							{isAdmin && (
 								<button
 									type="button"
+									ref={renameRef}
+									aria-label="Rename team"
 									onClick={startEditing}
-									className="text-sub-text-muted transition-colors hover:text-sub-text-primary"
+									className="flex size-8 shrink-0 items-center justify-center rounded-sm text-sub-text-muted transition-colors hover:text-sub-text-primary"
 								>
 									<Icon name="pencil" height={14} width={14} />
 								</button>
@@ -77,8 +101,13 @@ export function TeamInfoCard() {
 					<div className="h-0 min-w-0 flex-1 border-b border-dashed border-sub-border" />
 					<span className="shrink-0 text-xs leading-4 text-sub-text-primary">{team.isAdmin ? 'Admin' : 'Member'}</span>
 				</div>
+				<p role="status" className="sr-only">
+					{updateTeamMutation.isPending ? 'Saving team name…' : ''}
+				</p>
 				{isEditing && updateTeamMutation.isError ? (
-					<p className="text-xs text-error">{updateTeamMutation.error.message}</p>
+					<p id={errorId} role="alert" className="text-xs text-error">
+						{updateTeamMutation.error.message}
+					</p>
 				) : null}
 			</div>
 		</div>
