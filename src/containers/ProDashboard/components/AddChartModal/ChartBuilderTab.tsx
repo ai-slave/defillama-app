@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import { lazy, Suspense, useCallback, useMemo, type ComponentProps } from 'react'
+import { lazy, Suspense, useCallback, useId, useMemo, type ComponentProps } from 'react'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { fetchChainsCategories } from '~/containers/Chains/api'
@@ -151,6 +151,7 @@ export function ChartBuilderTab({
 	timePeriod,
 	customTimePeriod
 }: ChartBuilderTabProps) {
+	const groupByParentId = useId()
 	const { loading: metaLoading, error: metaError, hasProtocolBuilderMetric } = useAppMetadata()
 	const { getProtocolInfo, protocols } = useProDashboardCatalog()
 
@@ -528,6 +529,7 @@ export function ChartBuilderTab({
 					type="text"
 					value={chartBuilderName}
 					onChange={(e) => onChartBuilderNameChange(e.target.value)}
+					aria-label="Chart name"
 					placeholder="Enter chart name..."
 					className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 px-2 py-1.5 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 				/>
@@ -550,24 +552,35 @@ export function ChartBuilderTab({
 
 					<div className="border-t pro-border pt-1.5">
 						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Mode</h4>
-						<div className="mb-1.5 rounded-lg border border-pro-cards-border p-0.5">
-							<div className="grid grid-cols-2 gap-0.5">
-								{MODE_OPTIONS.map((option) => (
-									<button
-										type="button"
-										key={option.value}
-										onClick={() => handleModeChange(option.value)}
-										className={`rounded-md px-2 py-1.5 text-xs font-medium transition-all duration-200 ${
-											chartBuilder.mode === option.value
-												? 'bg-pro-accent text-on-brand shadow-sm'
-												: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
-										}`}
-									>
-										{option.label}
-									</button>
-								))}
-							</div>
-						</div>
+						<Ariakit.RadioProvider
+							orientation="both"
+							value={chartBuilder.mode}
+							setValue={(next) => {
+								const option = MODE_OPTIONS.find((item) => item.value === next)
+								if (option && next !== chartBuilder.mode) handleModeChange(option.value)
+							}}
+						>
+							<Ariakit.RadioGroup
+								aria-label="Grouping mode"
+								className="mb-1.5 rounded-lg border border-pro-cards-border p-0.5"
+							>
+								<div className="grid grid-cols-2 gap-0.5">
+									{MODE_OPTIONS.map((option) => (
+										<label
+											key={option.value}
+											className={`relative cursor-pointer rounded-md px-2 py-1.5 text-center text-xs font-medium transition-all duration-200 has-focus-visible:focus-ring ${
+												chartBuilder.mode === option.value
+													? 'bg-pro-accent text-on-brand shadow-sm'
+													: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
+											}`}
+										>
+											<Ariakit.Radio value={option.value} className="sr-only" />
+											{option.label}
+										</label>
+									))}
+								</div>
+							</Ariakit.RadioGroup>
+						</Ariakit.RadioProvider>
 					</div>
 
 					<div className="border-t pro-border pt-1.5">
@@ -646,8 +659,9 @@ export function ChartBuilderTab({
 
 								<div className="mb-1">
 									<Ariakit.CheckboxProvider value={chartBuilder.groupByParent || false}>
-										<div className="flex cursor-pointer items-center gap-1.5">
+										<label htmlFor={groupByParentId} className="flex cursor-pointer items-center gap-1.5">
 											<Ariakit.Checkbox
+												id={groupByParentId}
 												onChange={(e) =>
 													onChartBuilderChange({
 														groupByParent: e.target.checked
@@ -656,7 +670,7 @@ export function ChartBuilderTab({
 												className="flex size-3 shrink-0 items-center justify-center rounded-[2px] border pro-border data-checked:border-pro-info-100 data-checked:bg-pro-info-400 dark:data-checked:border-pro-info-300/20 dark:data-checked:bg-pro-info-300/20"
 											/>
 											<span className="text-[10px] text-pro-text-secondary">Group by parent protocol</span>
-										</div>
+										</label>
 									</Ariakit.CheckboxProvider>
 								</div>
 							</>
@@ -791,23 +805,31 @@ export function ChartBuilderTab({
 
 					<div className="border-t pro-border pt-1.5">
 						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Chart type</h4>
-						<div className="grid grid-cols-4 gap-1">
-							{CHART_TYPE_OPTIONS.map((option) => (
-								<button
-									type="button"
-									key={option.value}
-									onClick={() => handleChartTypeChange(option.value)}
-									className={`flex flex-col items-center gap-0.5 rounded-md border p-1 transition-colors ${
-										chartBuilder.chartType === option.value
-											? 'border-pro-info-100 bg-pro-info-300/20 text-pro-info-400 dark:border-pro-info-300/20 dark:bg-pro-info-300/20 dark:text-pro-info-200'
-											: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
-									}`}
-								>
-									<Icon name={option.icon} height={14} width={14} />
-									<span className="text-[10px]">{option.label}</span>
-								</button>
-							))}
-						</div>
+						<Ariakit.RadioProvider
+							orientation="both"
+							value={chartBuilder.chartType}
+							setValue={(next) => {
+								const option = CHART_TYPE_OPTIONS.find((item) => item.value === next)
+								if (option && next !== chartBuilder.chartType) handleChartTypeChange(option.value)
+							}}
+						>
+							<Ariakit.RadioGroup aria-label="Chart type" className="grid grid-cols-4 gap-1">
+								{CHART_TYPE_OPTIONS.map((option) => (
+									<label
+										key={option.value}
+										className={`relative flex cursor-pointer flex-col items-center gap-0.5 rounded-md border p-1 text-center transition-colors has-focus-visible:focus-ring ${
+											chartBuilder.chartType === option.value
+												? 'border-pro-info-100 bg-pro-info-300/20 text-pro-info-400 dark:border-pro-info-300/20 dark:bg-pro-info-300/20 dark:text-pro-info-200'
+												: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
+										}`}
+									>
+										<Ariakit.Radio value={option.value} className="sr-only" />
+										<Icon name={option.icon} height={14} width={14} />
+										<span className="text-[10px]">{option.label}</span>
+									</label>
+								))}
+							</Ariakit.RadioGroup>
+						</Ariakit.RadioProvider>
 					</div>
 
 					{chartBuilder.chartType === 'treemap' && !isSnapshotMetric ? (
@@ -825,26 +847,37 @@ export function ChartBuilderTab({
 
 					<div className="border-t pro-border pt-1.5">
 						<h4 className="mb-1 text-[11px] font-medium text-pro-text-secondary">Display value as</h4>
-						<div className="rounded-lg border border-pro-cards-border p-0.5">
-							<div className="grid grid-cols-2 gap-0.5">
-								{DISPLAY_OPTIONS.map((option) =>
-									!hasExactRemainder && option.value === 'percentage' ? null : (
-										<button
-											type="button"
-											key={option.value}
-											onClick={() => handleDisplayChange(option.value)}
-											className={`rounded-md px-2 py-1.5 text-xs font-medium transition-colors duration-200 ${
-												displayAs === option.value
-													? 'bg-pro-accent text-on-brand shadow-sm'
-													: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
-											}`}
-										>
-											{option.label}
-										</button>
-									)
-								)}
-							</div>
-						</div>
+						<Ariakit.RadioProvider
+							orientation="both"
+							value={displayAs}
+							setValue={(next) => {
+								const option = DISPLAY_OPTIONS.find((item) => item.value === next)
+								if (option && next !== displayAs) handleDisplayChange(option.value)
+							}}
+						>
+							<Ariakit.RadioGroup
+								aria-label="Display value as"
+								className="rounded-lg border border-pro-cards-border p-0.5"
+							>
+								<div className="grid grid-cols-2 gap-0.5">
+									{DISPLAY_OPTIONS.map((option) =>
+										!hasExactRemainder && option.value === 'percentage' ? null : (
+											<label
+												key={option.value}
+												className={`relative cursor-pointer rounded-md px-2 py-1.5 text-center text-xs font-medium transition-colors duration-200 has-focus-visible:focus-ring ${
+													displayAs === option.value
+														? 'bg-pro-accent text-on-brand shadow-sm'
+														: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary'
+												}`}
+											>
+												<Ariakit.Radio value={option.value} className="sr-only" />
+												{option.label}
+											</label>
+										)
+									)}
+								</div>
+							</Ariakit.RadioGroup>
+						</Ariakit.RadioProvider>
 					</div>
 				</div>
 

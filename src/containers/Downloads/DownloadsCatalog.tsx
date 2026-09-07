@@ -9,6 +9,7 @@ import { Icon, type IIcon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import {
 	chartDatasets,
 	chartDatasetCategories,
@@ -29,8 +30,13 @@ import {
 } from './savedDownloads'
 import { SavePresetDialog } from './SavePresetDialog'
 
-const ALL_TABS = ['Datasets', 'Time Series', 'Saved'] as const
-type Tab = (typeof ALL_TABS)[number]
+const ALL_TABS = [
+	{ value: 'datasets', label: 'Datasets' },
+	{ value: 'time-series', label: 'Time Series' },
+	{ value: 'saved', label: 'Saved' }
+] as const
+const TAB_VALUES = ALL_TABS.map((tab) => tab.value)
+type CatalogTab = (typeof TAB_VALUES)[number]
 
 const ALL_CATEGORY = 'All'
 
@@ -75,7 +81,7 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 	const { isAuthenticated, hasActiveSubscription, isTrial, loaders, authorizedFetch } = useAuthContext()
 	const { savedDownloads, deleteDownload, renameDownload } = useSavedDownloads()
 	const { recentDownloads, clearRecents } = useRecentDownloads()
-	const [activeTab, setActiveTab] = useState<Tab>('Datasets')
+	const [activeTab, setActiveTab] = useState<CatalogTab>('datasets')
 	const [previewDataset, setPreviewDataset] = useState<DatasetDefinition | null>(null)
 	const [previewChartDataset, setPreviewChartDataset] = useState<ChartDatasetDefinition | null>(null)
 	const [trialLimitOpen, setTrialLimitOpen] = useState(false)
@@ -111,16 +117,16 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 	}, [deferredSearch, selectedCategory])
 
 	const totalFilteredCount = useMemo(() => {
-		const groups = activeTab === 'Datasets' ? filteredDatasetsByCategory : filteredChartsByCategory
+		const groups = activeTab === 'datasets' ? filteredDatasetsByCategory : filteredChartsByCategory
 		return groups.reduce((sum, g) => sum + g.items.length, 0)
 	}, [activeTab, filteredDatasetsByCategory, filteredChartsByCategory])
 
-	const totalCount = activeTab === 'Datasets' ? datasets.length : chartDatasets.length
+	const totalCount = activeTab === 'datasets' ? datasets.length : chartDatasets.length
 
-	const currentCategories = activeTab === 'Datasets' ? datasetCategories : chartDatasetCategories
+	const currentCategories = activeTab === 'datasets' ? datasetCategories : chartDatasetCategories
 
 	const categoryCounts = useMemo(() => {
-		const groups = activeTab === 'Datasets' ? ALL_DATASETS_BY_CATEGORY : ALL_CHARTS_BY_CATEGORY
+		const groups = activeTab === 'datasets' ? ALL_DATASETS_BY_CATEGORY : ALL_CHARTS_BY_CATEGORY
 		const counts: Record<string, number> = {}
 		for (const g of groups) {
 			counts[g.category] = g.items.length
@@ -189,331 +195,346 @@ export function DownloadsCatalog({ chartOptionsMap }: { chartOptionsMap: ChartOp
 	const isUserLoading = loaders.userLoading
 
 	return (
-		<div className="flex flex-col gap-6">
-			<div className="flex flex-col gap-1">
-				<h1 className="text-2xl font-semibold">Downloads</h1>
-				<p className="text-sm text-pro-text-secondary">
-					Download CSV datasets from DefiLlama. Click a dataset to preview and choose columns.
-				</p>
-			</div>
+		<Tabs
+			value={activeTab}
+			values={TAB_VALUES}
+			onValueChange={(tab) => {
+				setActiveTab(tab)
+				setSelectedCategory(ALL_CATEGORY)
+			}}
+		>
+			<div className="flex flex-col gap-6">
+				<div className="flex flex-col gap-1">
+					<h1 className="text-2xl font-semibold">Downloads</h1>
+					<p className="text-sm text-pro-text-secondary">
+						Download CSV datasets from DefiLlama. Click a dataset to preview and choose columns.
+					</p>
+				</div>
 
-			{recentDownloads.length > 0 ? (
-				<RecentDownloadsStrip recents={recentDownloads} onRun={handleRunPreset} onClear={clearRecents} />
-			) : null}
+				{recentDownloads.length > 0 ? (
+					<RecentDownloadsStrip recents={recentDownloads} onRun={handleRunPreset} onClear={clearRecents} />
+				) : null}
 
-			<div className="flex items-center gap-1 rounded-lg border border-subtle p-1">
-				{ALL_TABS.map((tab) => (
-					<button
-						key={tab}
-						ref={tab === 'Saved' ? savedTabRef : undefined}
-						type="button"
-						onClick={() => {
-							setActiveTab(tab)
-							setSelectedCategory(ALL_CATEGORY)
-						}}
-						className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-							activeTab === tab
-								? 'bg-brand text-on-brand shadow-sm'
-								: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
-						}`}
-					>
-						{tab}
-					</button>
-				))}
-			</div>
-
-			{activeTab !== 'Saved' ? (
-				<label className="relative">
-					<span className="sr-only">Search datasets</span>
-					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-					<Input
-						type="text"
-						inputMode="search"
-						placeholder="Search..."
-						onInput={(e) => setSearchValue(e.currentTarget.value)}
-						className={searchFieldInputPlacementStyles}
-					/>
-				</label>
-			) : null}
-
-			{activeTab !== 'Saved' ? (
-				<div className="flex flex-wrap items-center gap-2">
-					<button
-						type="button"
-						onClick={() => setSelectedCategory(ALL_CATEGORY)}
-						className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-							selectedCategory === ALL_CATEGORY
-								? 'bg-brand text-on-brand shadow-sm'
-								: 'border border-subtle text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
-						}`}
-					>
-						All
-						<span
-							className={`ml-1.5 ${selectedCategory === ALL_CATEGORY ? 'text-on-brand/70' : 'text-pro-text-tertiary'}`}
-						>
-							{totalCount}
-						</span>
-					</button>
-					{currentCategories.map((category) => (
-						<button
-							key={category}
-							type="button"
-							onClick={() => setSelectedCategory(selectedCategory === category ? ALL_CATEGORY : category)}
-							className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-								selectedCategory === category
+				<Ariakit.TabList
+					aria-label="Download type"
+					className="flex items-center gap-1 rounded-lg border border-subtle p-1"
+				>
+					{ALL_TABS.map((tab) => (
+						<Tab
+							value={tab.value}
+							key={tab.value}
+							ref={tab.value === 'saved' ? savedTabRef : undefined}
+							className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+								activeTab === tab.value
 									? 'bg-brand text-on-brand shadow-sm'
-									: 'border border-subtle text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
+									: 'text-pro-text-secondary hover:bg-hover-row hover:text-pro-text-primary'
 							}`}
 						>
-							{category}
-							<span
-								className={`ml-1.5 ${selectedCategory === category ? 'text-on-brand/70' : 'text-pro-text-tertiary'}`}
+							{tab.label}
+						</Tab>
+					))}
+				</Ariakit.TabList>
+
+				<TabPanel value={activeTab} className="flex min-w-0 flex-col gap-6">
+					{activeTab !== 'saved' ? (
+						<label className="relative">
+							<span className="sr-only">Search datasets</span>
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Input
+								type="text"
+								inputMode="search"
+								value={searchValue}
+								placeholder="Search..."
+								onInput={(e) => setSearchValue(e.currentTarget.value)}
+								className={searchFieldInputPlacementStyles}
+							/>
+						</label>
+					) : null}
+
+					{activeTab !== 'saved' ? (
+						<div role="group" aria-label="Dataset categories" className="flex flex-wrap items-center gap-2">
+							<button
+								type="button"
+								aria-pressed={selectedCategory === ALL_CATEGORY}
+								onClick={() => setSelectedCategory(ALL_CATEGORY)}
+								className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+									selectedCategory === ALL_CATEGORY
+										? 'bg-brand text-on-brand shadow-sm'
+										: 'border border-subtle text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
+								}`}
 							>
-								{categoryCounts[category] ?? 0}
-							</span>
-						</button>
-					))}
-				</div>
-			) : null}
-
-			{activeTab !== 'Saved' && (deferredSearch || selectedCategory !== ALL_CATEGORY) && (
-				<p className="text-xs text-pro-text-tertiary">
-					Showing {totalFilteredCount} of {totalCount} datasets
-					{selectedCategory !== ALL_CATEGORY ? ` in ${selectedCategory}` : ''}
-					{deferredSearch ? ` matching "${deferredSearch}"` : ''}
-				</p>
-			)}
-
-			{activeTab === 'Datasets' ? (
-				<div className="flex flex-col gap-8">
-					{filteredDatasetsByCategory.map(({ category, items }) => (
-						<section key={category} className="flex flex-col gap-3">
-							<h2 className="heading-xs text-pro-text-primary">{category}</h2>
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-								{items.map((dataset) => {
-									const disabled = !!isUserLoading
-									return (
-										<button
-											key={dataset.slug}
-											type="button"
-											disabled={disabled}
-											onClick={() => handleCardClick(dataset)}
-											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-										>
-											<div className="flex items-start justify-between gap-3">
-												<div className="flex items-center gap-3">
-													<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/10">
-														{disabled ? (
-															<LoadingSpinner size={18} />
-														) : (
-															<Icon name="file-text" className="size-5 text-brand" />
-														)}
-													</div>
-													<span className="font-medium text-brand group-hover:underline">{dataset.name}</span>
-												</div>
-												<Icon
-													name="arrow-up-right"
-													className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
-												/>
-											</div>
-											<p className="text-sm text-pro-text-secondary">{dataset.description}</p>
-										</button>
-									)
-								})}
-							</div>
-						</section>
-					))}
-					{filteredDatasetsByCategory.length === 0 && (
-						<p className="py-8 text-center text-sm text-pro-text-tertiary">No datasets match your search.</p>
-					)}
-				</div>
-			) : activeTab === 'Time Series' ? (
-				<div className="flex flex-col gap-8">
-					<button
-						type="button"
-						onClick={() => {
-							if (isTrial) {
-								setTrialLimitOpen(true)
-								return
-							}
-							setCombineModalOpen(true)
-						}}
-						className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-brand/30 bg-linear-to-br from-brand/8 to-brand/2 p-4 text-left transition-all hover:border-brand/60 hover:from-brand/12 hover:to-brand/4"
-					>
-						<div className="flex items-start gap-3">
-							<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/15">
-								<Icon name="layers" className="size-5 text-brand" />
-							</div>
-							<div className="flex flex-col gap-0.5">
-								<p className="font-medium text-pro-text-primary">Combine multiple metrics</p>
-								<p className="text-sm text-pro-text-secondary">
-									Pick a protocol or chain, mix any of its metrics — TVL, fees, volume, revenue — into a single CSV.
-								</p>
-							</div>
+								All
+								<span
+									className={`ml-1.5 ${selectedCategory === ALL_CATEGORY ? 'text-on-brand/70' : 'text-pro-text-tertiary'}`}
+								>
+									{totalCount}
+								</span>
+							</button>
+							{currentCategories.map((category) => (
+								<button
+									key={category}
+									type="button"
+									aria-pressed={selectedCategory === category}
+									onClick={() => setSelectedCategory(selectedCategory === category ? ALL_CATEGORY : category)}
+									className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+										selectedCategory === category
+											? 'bg-brand text-on-brand shadow-sm'
+											: 'border border-subtle text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
+									}`}
+								>
+									{category}
+									<span
+										className={`ml-1.5 ${selectedCategory === category ? 'text-on-brand/70' : 'text-pro-text-tertiary'}`}
+									>
+										{categoryCounts[category] ?? 0}
+									</span>
+								</button>
+							))}
 						</div>
-						<span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-on-brand shadow-sm transition-transform group-hover:translate-x-0.5">
-							Open builder
-							<Icon name="arrow-up-right" className="size-3.5" />
-						</span>
-					</button>
+					) : null}
 
-					{filteredChartsByCategory.map(({ category, items }) => (
-						<section key={`chart-${category}`} className="flex flex-col gap-3">
-							<h2 className="heading-xs text-pro-text-primary">{category}</h2>
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-								{items.map((dataset) => {
-									const disabled = !!isUserLoading
-									return (
-										<button
-											key={dataset.slug}
-											type="button"
-											disabled={disabled}
-											onClick={() => handleChartCardClick(dataset)}
-											className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-										>
-											<div className="flex items-start justify-between gap-3">
-												<div className="flex items-center gap-3">
-													<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/10">
-														{disabled ? (
-															<LoadingSpinner size={18} />
-														) : (
-															<Icon name="bar-chart-2" className="size-5 text-brand" />
-														)}
-													</div>
-													<span className="font-medium text-brand group-hover:underline">{dataset.name}</span>
-												</div>
-												<Icon
-													name="arrow-up-right"
-													className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
-												/>
-											</div>
-											<p className="text-sm text-pro-text-secondary">{dataset.description}</p>
-											<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 text-xs text-pro-text-tertiary">
-												Select {dataset.paramLabel}
-											</span>
-										</button>
-									)
-								})}
-							</div>
-							{category === 'RWA' ? (
-								<p className="text-sm text-pro-text-secondary">
-									Download more RWA data{' '}
-									<a href="https://defillama.com/rwa" className="text-brand underline hover:opacity-80">
-										here
-									</a>
-									.
-								</p>
-							) : null}
-						</section>
-					))}
-					{filteredChartsByCategory.length === 0 && (
-						<p className="py-8 text-center text-sm text-pro-text-tertiary">No datasets match your search.</p>
+					{activeTab !== 'saved' && (deferredSearch || selectedCategory !== ALL_CATEGORY) && (
+						<p className="text-xs text-pro-text-tertiary">
+							Showing {totalFilteredCount} of {totalCount} datasets
+							{selectedCategory !== ALL_CATEGORY ? ` in ${selectedCategory}` : ''}
+							{deferredSearch ? ` matching "${deferredSearch}"` : ''}
+						</p>
 					)}
-				</div>
-			) : (
-				<SavedDownloadsContent
-					finalFocus={savedTabRef}
-					savedDownloads={savedDownloads}
-					onRun={handleRunPreset}
-					onRename={renameDownload}
-					onDelete={deleteDownload}
-				/>
-			)}
 
-			{combineModalOpen ? (
-				// Keyed by the saved config so opening a different preset builds a fresh modal rather than
-				// resetting the one on screen.
-				<MultiMetricModal
-					key={multiMetricInitialConfig?.id ?? 'new'}
-					chartOptionsMap={chartOptionsMap}
-					authorizedFetch={authorizedFetch}
-					isPreview={isPreview}
-					initialConfig={multiMetricInitialConfig}
-					onClose={() => {
-						setCombineModalOpen(false)
-						setMultiMetricInitialConfig(undefined)
-					}}
-				/>
-			) : null}
+					{activeTab === 'datasets' ? (
+						<div className="flex flex-col gap-8">
+							{filteredDatasetsByCategory.map(({ category, items }) => (
+								<section key={category} className="flex flex-col gap-3">
+									<h2 className="heading-xs text-pro-text-primary">{category}</h2>
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+										{items.map((dataset) => {
+											const disabled = !!isUserLoading
+											return (
+												<button
+													key={dataset.slug}
+													type="button"
+													disabled={disabled}
+													onClick={() => handleCardClick(dataset)}
+													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+												>
+													<div className="flex items-start justify-between gap-3">
+														<div className="flex items-center gap-3">
+															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/10">
+																{disabled ? (
+																	<LoadingSpinner size={18} />
+																) : (
+																	<Icon name="file-text" className="size-5 text-brand" />
+																)}
+															</div>
+															<span className="font-medium text-brand group-hover:underline">{dataset.name}</span>
+														</div>
+														<Icon
+															name="arrow-up-right"
+															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
+														/>
+													</div>
+													<p className="text-sm text-pro-text-secondary">{dataset.description}</p>
+												</button>
+											)
+										})}
+									</div>
+								</section>
+							))}
+							{filteredDatasetsByCategory.length === 0 && (
+								<p className="py-8 text-center text-sm text-pro-text-tertiary">No datasets match your search.</p>
+							)}
+						</div>
+					) : activeTab === 'time-series' ? (
+						<div className="flex flex-col gap-8">
+							<button
+								type="button"
+								onClick={() => {
+									if (isTrial) {
+										setTrialLimitOpen(true)
+										return
+									}
+									setCombineModalOpen(true)
+								}}
+								className="group relative flex items-start justify-between gap-4 overflow-hidden rounded-xl border border-brand/30 bg-linear-to-br from-brand/8 to-brand/2 p-4 text-left transition-all hover:border-brand/60 hover:from-brand/12 hover:to-brand/4"
+							>
+								<div className="flex items-start gap-3">
+									<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/15">
+										<Icon name="layers" className="size-5 text-brand" />
+									</div>
+									<div className="flex flex-col gap-0.5">
+										<p className="font-medium text-pro-text-primary">Combine multiple metrics</p>
+										<p className="text-sm text-pro-text-secondary">
+											Pick a protocol or chain, mix any of its metrics — TVL, fees, volume, revenue — into a single CSV.
+										</p>
+									</div>
+								</div>
+								<span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-md bg-brand px-2.5 py-1 text-xs font-medium text-on-brand shadow-sm transition-transform group-hover:translate-x-0.5">
+									Open builder
+									<Icon name="arrow-up-right" className="size-3.5" />
+								</span>
+							</button>
 
-			{previewChartDataset && (
-				// Keyed by what the modal is showing: running a different saved preset while it is open
-				// builds a fresh modal instead of resetting the one on screen.
-				<ChartDatasetModal
-					key={`${previewChartDataset.slug}:${chartInitialConfig?.id ?? 'new'}`}
-					dataset={previewChartDataset}
-					options={chartOptionsMap[previewChartDataset.slug] ?? []}
-					authorizedFetch={authorizedFetch}
-					onClose={() => {
-						setPreviewChartDataset(null)
-						setChartInitialConfig(undefined)
-					}}
-					isTrial={isTrial}
-					isPreview={isPreview}
-					initialConfig={chartInitialConfig}
-				/>
-			)}
+							{filteredChartsByCategory.map(({ category, items }) => (
+								<section key={`chart-${category}`} className="flex flex-col gap-3">
+									<h2 className="heading-xs text-pro-text-primary">{category}</h2>
+									<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+										{items.map((dataset) => {
+											const disabled = !!isUserLoading
+											return (
+												<button
+													key={dataset.slug}
+													type="button"
+													disabled={disabled}
+													onClick={() => handleChartCardClick(dataset)}
+													className="group flex cursor-pointer touch-manipulation flex-col gap-3 rounded-xl border border-medium p-5 text-left transition-all duration-150 hover:border-brand/40 hover:shadow-md active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+												>
+													<div className="flex items-start justify-between gap-3">
+														<div className="flex items-center gap-3">
+															<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand/10">
+																{disabled ? (
+																	<LoadingSpinner size={18} />
+																) : (
+																	<Icon name="bar-chart-2" className="size-5 text-brand" />
+																)}
+															</div>
+															<span className="font-medium text-brand group-hover:underline">{dataset.name}</span>
+														</div>
+														<Icon
+															name="arrow-up-right"
+															className="mt-0.5 size-4 shrink-0 text-pro-text-secondary transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand"
+														/>
+													</div>
+													<p className="text-sm text-pro-text-secondary">{dataset.description}</p>
+													<span className="inline-flex w-fit items-center gap-1 rounded-full bg-hover-row px-2 py-0.5 text-xs text-pro-text-tertiary">
+														Select {dataset.paramLabel}
+													</span>
+												</button>
+											)
+										})}
+									</div>
+									{category === 'RWA' ? (
+										<p className="text-sm text-pro-text-secondary">
+											Download more RWA data{' '}
+											<a href="https://defillama.com/rwa" className="text-brand underline hover:opacity-80">
+												here
+											</a>
+											.
+										</p>
+									) : null}
+								</section>
+							))}
+							{filteredChartsByCategory.length === 0 && (
+								<p className="py-8 text-center text-sm text-pro-text-tertiary">No datasets match your search.</p>
+							)}
+						</div>
+					) : (
+						<SavedDownloadsContent
+							finalFocus={savedTabRef}
+							savedDownloads={savedDownloads}
+							onRun={handleRunPreset}
+							onRename={renameDownload}
+							onDelete={deleteDownload}
+						/>
+					)}
+				</TabPanel>
 
-			{previewDataset && (
-				// Keyed by what the modal is showing, as above.
-				<DatasetPreviewModal
-					key={`${previewDataset.slug}:${datasetInitialConfig?.id ?? 'new'}`}
-					dataset={previewDataset}
-					authorizedFetch={authorizedFetch}
-					onClose={() => {
-						setPreviewDataset(null)
-						setDatasetInitialConfig(undefined)
-					}}
-					isTrial={isTrial}
-					isPreview={isPreview}
-					initialConfig={datasetInitialConfig}
-				/>
-			)}
+				{combineModalOpen ? (
+					// Keyed by the saved config so opening a different preset builds a fresh modal rather than
+					// resetting the one on screen.
+					<MultiMetricModal
+						key={multiMetricInitialConfig?.id ?? 'new'}
+						chartOptionsMap={chartOptionsMap}
+						authorizedFetch={authorizedFetch}
+						isPreview={isPreview}
+						initialConfig={multiMetricInitialConfig}
+						onClose={() => {
+							setCombineModalOpen(false)
+							setMultiMetricInitialConfig(undefined)
+						}}
+					/>
+				) : null}
 
-			{trialLimitOpen ? <TrialCsvLimitModal isOpen={trialLimitOpen} onClose={() => setTrialLimitOpen(false)} /> : null}
+				{previewChartDataset && (
+					// Keyed by what the modal is showing: running a different saved preset while it is open
+					// builds a fresh modal instead of resetting the one on screen.
+					<ChartDatasetModal
+						key={`${previewChartDataset.slug}:${chartInitialConfig?.id ?? 'new'}`}
+						dataset={previewChartDataset}
+						options={chartOptionsMap[previewChartDataset.slug] ?? []}
+						authorizedFetch={authorizedFetch}
+						onClose={() => {
+							setPreviewChartDataset(null)
+							setChartInitialConfig(undefined)
+						}}
+						isTrial={isTrial}
+						isPreview={isPreview}
+						initialConfig={chartInitialConfig}
+					/>
+				)}
 
-			<section className="mt-8 flex flex-col gap-4 border-t border-subtle pt-8">
-				<h2 className="heading-xs text-pro-text-primary">FAQ</h2>
-				<div className="divide-y divide-(--border-subtle) border-y border-subtle">
-					<FaqItem question="How do I subscribe to download data from DefiLlama?">
-						DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans{' '}
-						<a
-							href="https://defillama.com/subscription"
-							className="text-brand underline hover:opacity-80"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							here
-						</a>
-						.
-					</FaqItem>
-					<FaqItem question="Is DefiLlama data available through an API?">
-						Yes, DefiLlama data is available through both a free and paid{' '}
-						<a
-							href="https://api-docs.defillama.com/"
-							className="text-brand underline hover:opacity-80"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							API
-						</a>
-						.
-					</FaqItem>
-					<FaqItem question="How can I contact DefiLlama with questions?">
-						You can contact us by email, a support form, or live support{' '}
-						<a
-							href="https://defillama.com/support"
-							className="text-brand underline hover:opacity-80"
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							here
-						</a>
-						.
-					</FaqItem>
-				</div>
-			</section>
-		</div>
+				{previewDataset && (
+					// Keyed by what the modal is showing, as above.
+					<DatasetPreviewModal
+						key={`${previewDataset.slug}:${datasetInitialConfig?.id ?? 'new'}`}
+						dataset={previewDataset}
+						authorizedFetch={authorizedFetch}
+						onClose={() => {
+							setPreviewDataset(null)
+							setDatasetInitialConfig(undefined)
+						}}
+						isTrial={isTrial}
+						isPreview={isPreview}
+						initialConfig={datasetInitialConfig}
+					/>
+				)}
+
+				{trialLimitOpen ? (
+					<TrialCsvLimitModal isOpen={trialLimitOpen} onClose={() => setTrialLimitOpen(false)} />
+				) : null}
+
+				<section className="mt-8 flex flex-col gap-4 border-t border-subtle pt-8">
+					<h2 className="heading-xs text-pro-text-primary">FAQ</h2>
+					<div className="divide-y divide-(--border-subtle) border-y border-subtle">
+						<FaqItem question="How do I subscribe to download data from DefiLlama?">
+							DefiLlama data is available to subscribers of our Pro and API plans. Learn more about these plans{' '}
+							<a
+								href="https://defillama.com/subscription"
+								className="text-brand underline hover:opacity-80"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								here
+							</a>
+							.
+						</FaqItem>
+						<FaqItem question="Is DefiLlama data available through an API?">
+							Yes, DefiLlama data is available through both a free and paid{' '}
+							<a
+								href="https://api-docs.defillama.com/"
+								className="text-brand underline hover:opacity-80"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								API
+							</a>
+							.
+						</FaqItem>
+						<FaqItem question="How can I contact DefiLlama with questions?">
+							You can contact us by email, a support form, or live support{' '}
+							<a
+								href="https://defillama.com/support"
+								className="text-brand underline hover:opacity-80"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								here
+							</a>
+							.
+						</FaqItem>
+					</div>
+				</section>
+			</div>
+		</Tabs>
 	)
 }
 

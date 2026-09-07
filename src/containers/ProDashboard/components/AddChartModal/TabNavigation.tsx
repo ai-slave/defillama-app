@@ -1,5 +1,7 @@
+import * as Ariakit from '@ariakit/react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
+import { Tab } from '~/ui/Tabs'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { MainTabType } from './types'
 
@@ -13,31 +15,26 @@ const ALL_TABS: Array<{ id: MainTabType; label: string; subtitle?: string; mobil
 	{ id: 'sql', label: 'SQL', subtitle: '', mobileLabel: 'SQL' }
 ]
 
+export const MAIN_TAB_VALUES = ALL_TABS.map((tab) => tab.id)
+
 interface TabNavigationProps {
-	selectedMainTab: MainTabType
 	editItem?: DashboardItemConfig | null | undefined
-	onTabChange: (tab: MainTabType) => void
 	isSqlAllowed?: boolean
 }
 
-export function TabNavigation({ selectedMainTab, editItem, onTabChange, isSqlAllowed }: TabNavigationProps) {
+export function TabNavigation({ editItem, isSqlAllowed }: TabNavigationProps) {
 	const { hasActiveSubscription } = useAuthContext()
 
 	return (
 		<div className="rounded-xl border border-pro-cards-border p-1 shadow-sm">
-			<div className="grid grid-cols-6 gap-1">
+			<Ariakit.TabList aria-label="Item type" className="grid grid-cols-3 gap-1 min-[400px]:grid-cols-6">
 				{ALL_TABS.map((tab) => {
 					const locked = (PRO_ONLY_TABS.has(tab.id) && !hasActiveSubscription) || (tab.id === 'sql' && !isSqlAllowed)
 					return (
-						<button
-							type="button"
+						<Tab
+							value={tab.id}
 							key={tab.id}
-							className={`rounded-lg px-3 py-2.5 text-xs font-medium transition-all duration-200 md:text-sm ${
-								selectedMainTab === tab.id
-									? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
-									: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
-							} ${editItem ? 'cursor-not-allowed opacity-50' : ''}`}
-							onClick={() => !editItem && onTabChange(tab.id)}
+							className="rounded-lg px-1 py-2.5 text-xs font-medium text-pro-text-secondary transition-all duration-200 hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-50 data-[active=true]:bg-pro-accent data-[active=true]:text-on-brand data-[active=true]:shadow-md data-[active=true]:ring-1 data-[active=true]:ring-black/10 sm:px-3 md:text-sm"
 							disabled={!!editItem}
 						>
 							<span className="lg:hidden">
@@ -49,10 +46,10 @@ export function TabNavigation({ selectedMainTab, editItem, onTabChange, isSqlAll
 								{tab.subtitle ? <span className="ml-1 text-xs opacity-70">{tab.subtitle}</span> : null}
 								{locked ? <Icon name="file-lock-2" height={10} width={10} className="ml-1 inline opacity-70" /> : null}
 							</span>
-						</button>
+						</Tab>
 					)
 				})}
-			</div>
+			</Ariakit.TabList>
 		</div>
 	)
 }

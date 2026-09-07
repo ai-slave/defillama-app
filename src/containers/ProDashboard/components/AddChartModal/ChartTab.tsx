@@ -1,4 +1,6 @@
+import * as Ariakit from '@ariakit/react'
 import { Icon } from '~/ui/Icon'
+import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import type { CustomTimePeriod, TimePeriod } from '../../dashboardTypes'
 import type { RWAOverviewChartBreakdown, RWAOverviewChartMetric, RWAOverviewChartView } from '../../types'
@@ -113,69 +115,77 @@ interface ChartTabProps {
 	customTimePeriod?: CustomTimePeriod | null
 }
 
+const CHART_MODES = ['builder', 'manual'] as const
+
 export function ChartTab(props: ChartTabProps) {
 	const { chartMode, onChartModeChange } = props
 
 	return (
-		<div className="flex h-full flex-col">
-			<div className="mb-3 rounded-xl border border-pro-cards-border p-1 shadow-sm">
-				<div className="grid grid-cols-2 gap-1">
-					<button
-						type="button"
-						onClick={() => onChartModeChange('builder')}
-						className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-							chartMode === 'builder'
-								? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
-								: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
-						}`}
-					>
-						<Icon
-							name="pencil-ruler"
-							width={15}
-							height={15}
-							className={
-								chartMode === 'builder' ? 'text-on-brand' : 'text-pro-text-tertiary group-hover:text-pro-text-secondary'
-							}
-						/>
-						<span>Builder</span>
-					</button>
-					<button
-						type="button"
-						onClick={() => onChartModeChange('manual')}
-						className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-							chartMode === 'manual'
-								? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
-								: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
-						}`}
-					>
-						<Icon
-							name="layers"
-							width={15}
-							height={15}
-							className={
-								chartMode === 'manual' ? 'text-on-brand' : 'text-pro-text-tertiary group-hover:text-pro-text-secondary'
-							}
-						/>
-						<span>Manual</span>
-					</button>
+		<Tabs value={chartMode} values={CHART_MODES} onValueChange={onChartModeChange}>
+			<div className="flex h-full flex-col">
+				<div className="mb-3 rounded-xl border border-pro-cards-border p-1 shadow-sm">
+					<Ariakit.TabList aria-label="Chart creation" className="grid grid-cols-2 gap-1">
+						<Tab
+							value="builder"
+							className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+								chartMode === 'builder'
+									? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
+									: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
+							}`}
+						>
+							<Icon
+								name="pencil-ruler"
+								width={15}
+								height={15}
+								className={
+									chartMode === 'builder'
+										? 'text-on-brand'
+										: 'text-pro-text-tertiary group-hover:text-pro-text-secondary'
+								}
+							/>
+							<span>Builder</span>
+						</Tab>
+						<Tab
+							value="manual"
+							className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+								chartMode === 'manual'
+									? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
+									: 'text-pro-text-secondary hover:bg-pro-cards-bg/80 hover:text-pro-text-primary hover:shadow-sm'
+							}`}
+						>
+							<Icon
+								name="layers"
+								width={15}
+								height={15}
+								className={
+									chartMode === 'manual'
+										? 'text-on-brand'
+										: 'text-pro-text-tertiary group-hover:text-pro-text-secondary'
+								}
+							/>
+							<span>Manual</span>
+						</Tab>
+					</Ariakit.TabList>
 				</div>
-			</div>
 
-			{chartMode === 'builder' ? (
-				<ChartBuilderTab
-					chartBuilder={props.chartBuilder}
-					chartBuilderName={props.chartBuilderName}
-					chainOptions={props.chainOptions}
-					protocolOptions={props.protocolOptions}
-					protocolsLoading={props.protocolsLoading}
-					onChartBuilderChange={props.onChartBuilderChange}
-					onChartBuilderNameChange={props.onChartBuilderNameChange}
-					timePeriod={props.timePeriod}
-					{...(props.customTimePeriod === undefined ? {} : { customTimePeriod: props.customTimePeriod })}
-				/>
-			) : (
-				<UnifiedChartTab {...props} />
-			)}
-		</div>
+				<TabPanel value={chartMode} className="flex min-h-0 flex-1 flex-col">
+					{chartMode === 'builder' ? (
+						<ChartBuilderTab
+							chartBuilder={props.chartBuilder}
+							chartBuilderName={props.chartBuilderName}
+							chainOptions={props.chainOptions}
+							protocolOptions={props.protocolOptions}
+							protocolsLoading={props.protocolsLoading}
+							onChartBuilderChange={props.onChartBuilderChange}
+							onChartBuilderNameChange={props.onChartBuilderNameChange}
+							timePeriod={props.timePeriod}
+							{...(props.customTimePeriod === undefined ? {} : { customTimePeriod: props.customTimePeriod })}
+						/>
+					) : (
+						<UnifiedChartTab {...props} />
+					)}
+				</TabPanel>
+			</div>
+		</Tabs>
 	)
 }

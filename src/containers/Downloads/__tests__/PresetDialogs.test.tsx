@@ -103,3 +103,42 @@ test('rename starts in the named input, retains edits through rerender, and canc
 	await click(trigger)
 	expect(document.querySelector<HTMLInputElement>('[role="dialog"] input')!.value).toBe('First preset')
 })
+
+test('catalog navigation preserves visible search and category deselection without activating on arrow focus', async () => {
+	await click(button('Datasets'))
+	const categories = document.querySelector('[role="group"][aria-label="Dataset categories"]')!
+	const all = categories.querySelector<HTMLButtonElement>('button')!
+	const category = categories.querySelectorAll<HTMLButtonElement>('button')[1]!
+	await click(category)
+	expect(category.getAttribute('aria-pressed')).toBe('true')
+	expect(all.getAttribute('aria-pressed')).toBe('false')
+	await click(category)
+	expect(category.getAttribute('aria-pressed')).toBe('false')
+	expect(all.getAttribute('aria-pressed')).toBe('true')
+
+	const input = document.querySelector<HTMLInputElement>('input[inputmode="search"]')!
+	await act(async () => {
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'no-matching-dataset')
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	expect(container.textContent).toContain('No datasets match your search.')
+	await click(button('Saved'))
+	expect(document.querySelector('input[inputmode="search"]')).toBeNull()
+	await click(button('Datasets'))
+	expect(document.querySelector<HTMLInputElement>('input[inputmode="search"]')!.value).toBe('no-matching-dataset')
+	expect(container.textContent).toContain('No datasets match your search.')
+
+	await act(async () => {
+		button('Datasets').focus()
+		button('Datasets').dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+		)
+	})
+	await vi.waitFor(() => expect(document.activeElement).toBe(button('Time Series')))
+	expect(button('Datasets').getAttribute('aria-selected')).toBe('true')
+	await click(button('Time Series'))
+	const panel = document.querySelector('[role="tabpanel"]')!
+	expect(button('Time Series').getAttribute('aria-controls')).toBe(panel.id)
+	expect(panel.getAttribute('aria-labelledby')).toBe(button('Time Series').id)
+	expect(document.querySelectorAll('[role="tabpanel"]')).toHaveLength(1)
+})

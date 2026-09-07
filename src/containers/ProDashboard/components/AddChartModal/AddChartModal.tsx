@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useEffect } from 'react'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
+import { Tabs, TabPanel } from '~/ui/Tabs'
 import { useIsSqlAllowed } from '../../hooks/useIsSqlAllowed'
 import type { VirtualizedSelectOption } from '../AriakitVirtualizedSelect'
 import { SqlChartUpsell } from '../SqlChart/SqlChartUpsell'
@@ -9,7 +10,7 @@ import { LlamaAITab } from './LlamaAITab'
 import { MetricTab } from './MetricTab'
 import { ModalHeader } from './ModalHeader'
 import { SubmitButton } from './SubmitButton'
-import { TabNavigation } from './TabNavigation'
+import { MAIN_TAB_VALUES, TabNavigation } from './TabNavigation'
 import { TextTab } from './TextTab'
 import type { AddChartModalProps } from './types'
 import { UnifiedTableTab } from './UnifiedTableTab'
@@ -123,230 +124,229 @@ export function AddChartModal({
 				unmountOnHide
 				portal
 			>
-				<ModalHeader editItem={editItem} />
+				<Tabs value={state.selectedMainTab} values={MAIN_TAB_VALUES} onValueChange={handleTabChange}>
+					<ModalHeader editItem={editItem} />
+					<TabNavigation editItem={editItem} isSqlAllowed={isSqlAllowed} />
 
-				<TabNavigation
-					selectedMainTab={state.selectedMainTab}
-					editItem={editItem}
-					onTabChange={handleTabChange}
-					isSqlAllowed={isSqlAllowed}
-				/>
+					<TabPanel
+						value={state.selectedMainTab}
+						className="-mx-3 flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-3 md:mx-0 md:px-0"
+					>
+						{state.selectedMainTab === 'charts' ? (
+							<ChartTab
+								chartMode={state.chartMode}
+								onChartModeChange={actions.setChartMode}
+								selectedChartTab={state.selectedChartTab}
+								selectedChartTypes={state.selectedChartTypes}
+								selectedYieldPool={state.selectedYieldPool}
+								chainOptions={computed.chainOptions}
+								protocolOptions={computed.protocolOptions}
+								protocolsLoading={computed.protocolsLoading}
+								unifiedChartName={state.unifiedChartName}
+								chartCreationMode={state.chartCreationMode}
+								composerItems={composerItemsWithData}
+								onChartTabChange={actions.handleChartTabChange}
+								onChartTypesChange={actions.setSelectedChartTypes}
+								onBulkChartTypeChange={actions.handleBulkChartTypeChange}
+								onSelectedYieldPoolChange={actions.setSelectedYieldPool}
+								selectedYieldChains={state.selectedYieldChains}
+								selectedYieldProjects={state.selectedYieldProjects}
+								selectedYieldCategories={state.selectedYieldCategories}
+								selectedYieldTokens={state.selectedYieldTokens}
+								minTvl={state.minTvl}
+								maxTvl={state.maxTvl}
+								onSelectedYieldChainsChange={actions.setSelectedYieldChains}
+								onSelectedYieldProjectsChange={actions.setSelectedYieldProjects}
+								onSelectedYieldCategoriesChange={actions.setSelectedYieldCategories}
+								onSelectedYieldTokensChange={actions.setSelectedYieldTokens}
+								onMinTvlChange={actions.setMinTvl}
+								onMaxTvlChange={actions.setMaxTvl}
+								selectedYieldChartType={state.selectedYieldChartType}
+								onSelectedYieldChartTypeChange={handleYieldChartTypeChange}
+								selectedStablecoinChain={state.selectedStablecoinChain}
+								selectedStablecoinChartType={state.selectedStablecoinChartType}
+								stablecoinMode={state.stablecoinMode}
+								selectedStablecoinAsset={state.selectedStablecoinAsset}
+								selectedStablecoinAssetId={state.selectedStablecoinAssetId}
+								selectedStablecoinAssetChartType={state.selectedStablecoinAssetChartType}
+								onSelectedStablecoinChainChange={actions.setSelectedStablecoinChain}
+								onSelectedStablecoinChartTypeChange={handleStablecoinChartTypeChange}
+								onStablecoinModeChange={actions.setStablecoinMode}
+								onSelectedStablecoinAssetChange={actions.setSelectedStablecoinAsset}
+								onSelectedStablecoinAssetIdChange={actions.setSelectedStablecoinAssetId}
+								onSelectedStablecoinAssetChartTypeChange={handleStablecoinAssetChartTypeChange}
+								selectedAdvancedTvlProtocol={state.selectedAdvancedTvlProtocol}
+								selectedAdvancedTvlProtocolName={state.selectedAdvancedTvlProtocolName}
+								selectedAdvancedTvlChartType={state.selectedAdvancedTvlChartType}
+								onSelectedAdvancedTvlProtocolChange={actions.setSelectedAdvancedTvlProtocol}
+								onSelectedAdvancedTvlProtocolNameChange={actions.setSelectedAdvancedTvlProtocolName}
+								onSelectedAdvancedTvlChartTypeChange={handleAdvancedTvlChartTypeChange}
+								selectedBorrowedProtocol={state.selectedBorrowedProtocol}
+								selectedBorrowedProtocolName={state.selectedBorrowedProtocolName}
+								selectedBorrowedChartType={state.selectedBorrowedChartType}
+								onSelectedBorrowedProtocolChange={actions.setSelectedBorrowedProtocol}
+								onSelectedBorrowedProtocolNameChange={actions.setSelectedBorrowedProtocolName}
+								onSelectedBorrowedChartTypeChange={handleBorrowedChartTypeChange}
+								selectedIncomeStatementProtocol={state.selectedIncomeStatementProtocol}
+								selectedIncomeStatementProtocolName={state.selectedIncomeStatementProtocolName}
+								onSelectedIncomeStatementProtocolChange={actions.setSelectedIncomeStatementProtocol}
+								onSelectedIncomeStatementProtocolNameChange={actions.setSelectedIncomeStatementProtocolName}
+								selectedUnlocksProtocol={state.selectedUnlocksProtocol}
+								selectedUnlocksProtocolName={state.selectedUnlocksProtocolName}
+								selectedUnlocksChartType={state.selectedUnlocksChartType}
+								onSelectedUnlocksProtocolChange={actions.setSelectedUnlocksProtocol}
+								onSelectedUnlocksProtocolNameChange={actions.setSelectedUnlocksProtocolName}
+								onSelectedUnlocksChartTypeChange={actions.setSelectedUnlocksChartType}
+								rwaMode={state.rwaMode}
+								selectedRwaChain={state.selectedRwaChain}
+								selectedRwaMetric={state.selectedRwaMetric}
+								selectedRwaChartView={state.selectedRwaChartView}
+								selectedRwaBreakdown={state.selectedRwaBreakdown}
+								selectedRwaTreemapNestedBy={state.selectedRwaTreemapNestedBy}
+								selectedRwaAssetId={state.selectedRwaAssetId}
+								selectedRwaAssetName={state.selectedRwaAssetName}
+								selectedRwaAssetMetrics={state.selectedRwaAssetMetrics}
+								onRwaModeChange={actions.setRwaMode}
+								onSelectedRwaChainChange={actions.setSelectedRwaChain}
+								onSelectedRwaMetricChange={actions.setSelectedRwaMetric}
+								onSelectedRwaChartViewChange={actions.setSelectedRwaChartView}
+								onSelectedRwaBreakdownChange={actions.setSelectedRwaBreakdown}
+								onSelectedRwaTreemapNestedByChange={actions.setSelectedRwaTreemapNestedBy}
+								onSelectedRwaAssetIdChange={actions.setSelectedRwaAssetId}
+								onSelectedRwaAssetNameChange={actions.setSelectedRwaAssetName}
+								onSelectedRwaAssetMetricsChange={actions.setSelectedRwaAssetMetrics}
+								onUnifiedChartNameChange={actions.setUnifiedChartName}
+								onChartCreationModeChange={actions.setChartCreationMode}
+								onComposerItemColorChange={actions.handleUpdateComposerItemColor}
+								onAddToComposer={actions.handleAddToComposer}
+								onRemoveFromComposer={actions.handleRemoveFromComposer}
+								chartBuilder={state.chartBuilder}
+								chartBuilderName={state.chartBuilderName}
+								onChartBuilderChange={actions.updateChartBuilder}
+								onChartBuilderNameChange={actions.setChartBuilderName}
+								timePeriod={computed.timePeriod}
+								customTimePeriod={computed.customTimePeriod}
+							/>
+						) : null}
 
-				<div className="-mx-4 flex flex-1 flex-col overflow-y-auto px-4 md:mx-0 md:px-0">
-					{state.selectedMainTab === 'charts' ? (
-						<ChartTab
-							chartMode={state.chartMode}
-							onChartModeChange={actions.setChartMode}
-							selectedChartTab={state.selectedChartTab}
-							selectedChartTypes={state.selectedChartTypes}
-							selectedYieldPool={state.selectedYieldPool}
-							chainOptions={computed.chainOptions}
-							protocolOptions={computed.protocolOptions}
-							protocolsLoading={computed.protocolsLoading}
-							unifiedChartName={state.unifiedChartName}
-							chartCreationMode={state.chartCreationMode}
-							composerItems={composerItemsWithData}
-							onChartTabChange={actions.handleChartTabChange}
-							onChartTypesChange={actions.setSelectedChartTypes}
-							onBulkChartTypeChange={actions.handleBulkChartTypeChange}
-							onSelectedYieldPoolChange={actions.setSelectedYieldPool}
-							selectedYieldChains={state.selectedYieldChains}
-							selectedYieldProjects={state.selectedYieldProjects}
-							selectedYieldCategories={state.selectedYieldCategories}
-							selectedYieldTokens={state.selectedYieldTokens}
-							minTvl={state.minTvl}
-							maxTvl={state.maxTvl}
-							onSelectedYieldChainsChange={actions.setSelectedYieldChains}
-							onSelectedYieldProjectsChange={actions.setSelectedYieldProjects}
-							onSelectedYieldCategoriesChange={actions.setSelectedYieldCategories}
-							onSelectedYieldTokensChange={actions.setSelectedYieldTokens}
-							onMinTvlChange={actions.setMinTvl}
-							onMaxTvlChange={actions.setMaxTvl}
-							selectedYieldChartType={state.selectedYieldChartType}
-							onSelectedYieldChartTypeChange={handleYieldChartTypeChange}
-							selectedStablecoinChain={state.selectedStablecoinChain}
-							selectedStablecoinChartType={state.selectedStablecoinChartType}
-							stablecoinMode={state.stablecoinMode}
-							selectedStablecoinAsset={state.selectedStablecoinAsset}
-							selectedStablecoinAssetId={state.selectedStablecoinAssetId}
-							selectedStablecoinAssetChartType={state.selectedStablecoinAssetChartType}
-							onSelectedStablecoinChainChange={actions.setSelectedStablecoinChain}
-							onSelectedStablecoinChartTypeChange={handleStablecoinChartTypeChange}
-							onStablecoinModeChange={actions.setStablecoinMode}
-							onSelectedStablecoinAssetChange={actions.setSelectedStablecoinAsset}
-							onSelectedStablecoinAssetIdChange={actions.setSelectedStablecoinAssetId}
-							onSelectedStablecoinAssetChartTypeChange={handleStablecoinAssetChartTypeChange}
-							selectedAdvancedTvlProtocol={state.selectedAdvancedTvlProtocol}
-							selectedAdvancedTvlProtocolName={state.selectedAdvancedTvlProtocolName}
-							selectedAdvancedTvlChartType={state.selectedAdvancedTvlChartType}
-							onSelectedAdvancedTvlProtocolChange={actions.setSelectedAdvancedTvlProtocol}
-							onSelectedAdvancedTvlProtocolNameChange={actions.setSelectedAdvancedTvlProtocolName}
-							onSelectedAdvancedTvlChartTypeChange={handleAdvancedTvlChartTypeChange}
-							selectedBorrowedProtocol={state.selectedBorrowedProtocol}
-							selectedBorrowedProtocolName={state.selectedBorrowedProtocolName}
-							selectedBorrowedChartType={state.selectedBorrowedChartType}
-							onSelectedBorrowedProtocolChange={actions.setSelectedBorrowedProtocol}
-							onSelectedBorrowedProtocolNameChange={actions.setSelectedBorrowedProtocolName}
-							onSelectedBorrowedChartTypeChange={handleBorrowedChartTypeChange}
-							selectedIncomeStatementProtocol={state.selectedIncomeStatementProtocol}
-							selectedIncomeStatementProtocolName={state.selectedIncomeStatementProtocolName}
-							onSelectedIncomeStatementProtocolChange={actions.setSelectedIncomeStatementProtocol}
-							onSelectedIncomeStatementProtocolNameChange={actions.setSelectedIncomeStatementProtocolName}
-							selectedUnlocksProtocol={state.selectedUnlocksProtocol}
-							selectedUnlocksProtocolName={state.selectedUnlocksProtocolName}
-							selectedUnlocksChartType={state.selectedUnlocksChartType}
-							onSelectedUnlocksProtocolChange={actions.setSelectedUnlocksProtocol}
-							onSelectedUnlocksProtocolNameChange={actions.setSelectedUnlocksProtocolName}
-							onSelectedUnlocksChartTypeChange={actions.setSelectedUnlocksChartType}
-							rwaMode={state.rwaMode}
-							selectedRwaChain={state.selectedRwaChain}
-							selectedRwaMetric={state.selectedRwaMetric}
-							selectedRwaChartView={state.selectedRwaChartView}
-							selectedRwaBreakdown={state.selectedRwaBreakdown}
-							selectedRwaTreemapNestedBy={state.selectedRwaTreemapNestedBy}
-							selectedRwaAssetId={state.selectedRwaAssetId}
-							selectedRwaAssetName={state.selectedRwaAssetName}
-							selectedRwaAssetMetrics={state.selectedRwaAssetMetrics}
-							onRwaModeChange={actions.setRwaMode}
-							onSelectedRwaChainChange={actions.setSelectedRwaChain}
-							onSelectedRwaMetricChange={actions.setSelectedRwaMetric}
-							onSelectedRwaChartViewChange={actions.setSelectedRwaChartView}
-							onSelectedRwaBreakdownChange={actions.setSelectedRwaBreakdown}
-							onSelectedRwaTreemapNestedByChange={actions.setSelectedRwaTreemapNestedBy}
-							onSelectedRwaAssetIdChange={actions.setSelectedRwaAssetId}
-							onSelectedRwaAssetNameChange={actions.setSelectedRwaAssetName}
-							onSelectedRwaAssetMetricsChange={actions.setSelectedRwaAssetMetrics}
-							onUnifiedChartNameChange={actions.setUnifiedChartName}
-							onChartCreationModeChange={actions.setChartCreationMode}
-							onComposerItemColorChange={actions.handleUpdateComposerItemColor}
-							onAddToComposer={actions.handleAddToComposer}
-							onRemoveFromComposer={actions.handleRemoveFromComposer}
-							chartBuilder={state.chartBuilder}
-							chartBuilderName={state.chartBuilderName}
-							onChartBuilderChange={actions.updateChartBuilder}
-							onChartBuilderNameChange={actions.setChartBuilderName}
-							timePeriod={computed.timePeriod}
-							customTimePeriod={computed.customTimePeriod}
-						/>
+						{state.selectedMainTab === 'metric' ? (
+							<MetricTab
+								metricSubjectType={state.metricSubjectType}
+								metricChain={state.metricChain}
+								metricProtocol={state.metricProtocol}
+								metricType={state.metricType}
+								metricAggregator={state.metricAggregator}
+								metricWindow={state.metricWindow}
+								metricLabel={state.metricLabel}
+								metricChartType={state.metricChartType}
+								onSubjectTypeChange={actions.setMetricSubjectType}
+								onChainChange={handleMetricChainChange}
+								onProtocolChange={handleMetricProtocolChange}
+								onTypeChange={actions.setMetricType}
+								onAggregatorChange={actions.setMetricAggregator}
+								onWindowChange={actions.setMetricWindow}
+								onLabelChange={actions.setMetricLabel}
+								onChartTypeChange={actions.setMetricChartType}
+							/>
+						) : null}
+
+						{state.selectedMainTab === 'table' ? (
+							<UnifiedTableTab
+								onClose={onClose}
+								chainOptions={computed.chainOptions ?? EMPTY_CHAIN_OPTIONS}
+								editItem={editItem?.kind === 'unified-table' ? editItem : undefined}
+								initialFocusSection={editItem?.kind === 'unified-table' ? initialUnifiedFocusSection : undefined}
+								selectedTableType={state.selectedTableType}
+								onTableTypeChange={actions.setSelectedTableType}
+								selectedChains={state.selectedChains}
+								onChainsChange={actions.handleChainsChange}
+								selectedDatasetChain={state.selectedDatasetChain}
+								onDatasetChainChange={actions.handleDatasetChainChange}
+								selectedCexAnalyticsView={state.selectedCexAnalyticsView}
+								onCexAnalyticsViewChange={actions.setSelectedCexAnalyticsView}
+								selectedCexAnalyticsMetric={state.selectedCexAnalyticsMetric}
+								onCexAnalyticsMetricChange={actions.setSelectedCexAnalyticsMetric}
+								selectedCexAnalyticsTopN={state.selectedCexAnalyticsTopN}
+								onCexAnalyticsTopNChange={actions.setSelectedCexAnalyticsTopN}
+								selectedTokens={state.selectedTokens}
+								onTokensChange={actions.handleTokensChange}
+								includeCex={state.includeCex}
+								onIncludeCexChange={actions.setIncludeCex}
+								protocolsLoading={computed.protocolsLoading}
+								isEditingItem={Boolean(editItem)}
+							/>
+						) : null}
+
+						{state.selectedMainTab === 'text' ? (
+							<TextTab
+								textTitle={state.textTitle}
+								textContent={state.textContent}
+								onTextTitleChange={actions.setTextTitle}
+								onTextContentChange={actions.setTextContent}
+							/>
+						) : null}
+
+						{state.selectedMainTab === 'llamaai' ? (
+							<LlamaAITab selectedChart={state.selectedLlamaAIChart} onChartSelect={actions.setSelectedLlamaAIChart} />
+						) : null}
+
+						{state.selectedMainTab === 'sql' ? (
+							isSqlAccessUnknown ? (
+								<div className="mx-auto w-full max-w-md py-8">
+									<SubscriptionLoadError isRetrying={isRetrying} onRetry={retry} />
+								</div>
+							) : (
+								<SqlChartUpsell />
+							)
+						) : null}
+					</TabPanel>
+
+					{(state.selectedMainTab !== 'table' || state.selectedTableType !== 'protocols') &&
+					state.selectedMainTab !== 'sql' ? (
+						<div className="shrink-0">
+							<SubmitButton
+								editItem={editItem}
+								selectedMainTab={state.selectedMainTab}
+								selectedChartTab={state.selectedChartTab}
+								selectedChain={state.selectedChain}
+								selectedChains={state.selectedChains}
+								selectedProtocol={state.selectedProtocol}
+								selectedChartTypes={state.selectedChartTypes}
+								selectedYieldPool={state.selectedYieldPool}
+								composerItems={state.composerItems}
+								textContent={state.textContent}
+								selectedTableType={state.selectedTableType}
+								selectedDatasetChain={state.selectedDatasetChain}
+								selectedTokens={state.selectedTokens}
+								chartBuilder={state.chartBuilder}
+								chartCreationMode={state.chartCreationMode}
+								chartMode={state.chartMode}
+								metricSubjectType={state.metricSubjectType}
+								metricChain={state.metricChain}
+								metricProtocol={state.metricProtocol}
+								metricType={state.metricType}
+								selectedStablecoinChain={state.selectedStablecoinChain}
+								selectedStablecoinChartType={state.selectedStablecoinChartType}
+								stablecoinMode={state.stablecoinMode}
+								selectedStablecoinAsset={state.selectedStablecoinAsset}
+								selectedStablecoinAssetId={state.selectedStablecoinAssetId}
+								selectedStablecoinAssetChartType={state.selectedStablecoinAssetChartType}
+								selectedAdvancedTvlProtocol={state.selectedAdvancedTvlProtocol}
+								selectedAdvancedTvlChartType={state.selectedAdvancedTvlChartType}
+								selectedBorrowedProtocol={state.selectedBorrowedProtocol}
+								selectedBorrowedChartType={state.selectedBorrowedChartType}
+								selectedIncomeStatementProtocol={state.selectedIncomeStatementProtocol}
+								selectedLlamaAIChart={state.selectedLlamaAIChart}
+								selectedUnlocksProtocol={state.selectedUnlocksProtocol}
+								selectedUnlocksChartType={state.selectedUnlocksChartType}
+								rwaMode={state.rwaMode}
+								selectedRwaAssetId={state.selectedRwaAssetId}
+								selectedRwaAssetMetrics={state.selectedRwaAssetMetrics}
+								onSubmit={actions.handleSubmit}
+							/>
+						</div>
 					) : null}
-
-					{state.selectedMainTab === 'metric' ? (
-						<MetricTab
-							metricSubjectType={state.metricSubjectType}
-							metricChain={state.metricChain}
-							metricProtocol={state.metricProtocol}
-							metricType={state.metricType}
-							metricAggregator={state.metricAggregator}
-							metricWindow={state.metricWindow}
-							metricLabel={state.metricLabel}
-							metricChartType={state.metricChartType}
-							onSubjectTypeChange={actions.setMetricSubjectType}
-							onChainChange={handleMetricChainChange}
-							onProtocolChange={handleMetricProtocolChange}
-							onTypeChange={actions.setMetricType}
-							onAggregatorChange={actions.setMetricAggregator}
-							onWindowChange={actions.setMetricWindow}
-							onLabelChange={actions.setMetricLabel}
-							onChartTypeChange={actions.setMetricChartType}
-						/>
-					) : null}
-
-					{state.selectedMainTab === 'table' ? (
-						<UnifiedTableTab
-							onClose={onClose}
-							chainOptions={computed.chainOptions ?? EMPTY_CHAIN_OPTIONS}
-							editItem={editItem?.kind === 'unified-table' ? editItem : undefined}
-							initialFocusSection={editItem?.kind === 'unified-table' ? initialUnifiedFocusSection : undefined}
-							selectedTableType={state.selectedTableType}
-							onTableTypeChange={actions.setSelectedTableType}
-							selectedChains={state.selectedChains}
-							onChainsChange={actions.handleChainsChange}
-							selectedDatasetChain={state.selectedDatasetChain}
-							onDatasetChainChange={actions.handleDatasetChainChange}
-							selectedCexAnalyticsView={state.selectedCexAnalyticsView}
-							onCexAnalyticsViewChange={actions.setSelectedCexAnalyticsView}
-							selectedCexAnalyticsMetric={state.selectedCexAnalyticsMetric}
-							onCexAnalyticsMetricChange={actions.setSelectedCexAnalyticsMetric}
-							selectedCexAnalyticsTopN={state.selectedCexAnalyticsTopN}
-							onCexAnalyticsTopNChange={actions.setSelectedCexAnalyticsTopN}
-							selectedTokens={state.selectedTokens}
-							onTokensChange={actions.handleTokensChange}
-							includeCex={state.includeCex}
-							onIncludeCexChange={actions.setIncludeCex}
-							protocolsLoading={computed.protocolsLoading}
-							isEditingItem={Boolean(editItem)}
-						/>
-					) : null}
-
-					{state.selectedMainTab === 'text' ? (
-						<TextTab
-							textTitle={state.textTitle}
-							textContent={state.textContent}
-							onTextTitleChange={actions.setTextTitle}
-							onTextContentChange={actions.setTextContent}
-						/>
-					) : null}
-
-					{state.selectedMainTab === 'llamaai' ? (
-						<LlamaAITab selectedChart={state.selectedLlamaAIChart} onChartSelect={actions.setSelectedLlamaAIChart} />
-					) : null}
-
-					{state.selectedMainTab === 'sql' ? (
-						isSqlAccessUnknown ? (
-							<div className="mx-auto w-full max-w-md py-8">
-								<SubscriptionLoadError isRetrying={isRetrying} onRetry={retry} />
-							</div>
-						) : (
-							<SqlChartUpsell />
-						)
-					) : null}
-				</div>
-
-				{(state.selectedMainTab !== 'table' || state.selectedTableType !== 'protocols') &&
-				state.selectedMainTab !== 'sql' ? (
-					<div className="shrink-0">
-						<SubmitButton
-							editItem={editItem}
-							selectedMainTab={state.selectedMainTab}
-							selectedChartTab={state.selectedChartTab}
-							selectedChain={state.selectedChain}
-							selectedChains={state.selectedChains}
-							selectedProtocol={state.selectedProtocol}
-							selectedChartTypes={state.selectedChartTypes}
-							selectedYieldPool={state.selectedYieldPool}
-							composerItems={state.composerItems}
-							textContent={state.textContent}
-							selectedTableType={state.selectedTableType}
-							selectedDatasetChain={state.selectedDatasetChain}
-							selectedTokens={state.selectedTokens}
-							chartBuilder={state.chartBuilder}
-							chartCreationMode={state.chartCreationMode}
-							chartMode={state.chartMode}
-							metricSubjectType={state.metricSubjectType}
-							metricChain={state.metricChain}
-							metricProtocol={state.metricProtocol}
-							metricType={state.metricType}
-							selectedStablecoinChain={state.selectedStablecoinChain}
-							selectedStablecoinChartType={state.selectedStablecoinChartType}
-							stablecoinMode={state.stablecoinMode}
-							selectedStablecoinAsset={state.selectedStablecoinAsset}
-							selectedStablecoinAssetId={state.selectedStablecoinAssetId}
-							selectedStablecoinAssetChartType={state.selectedStablecoinAssetChartType}
-							selectedAdvancedTvlProtocol={state.selectedAdvancedTvlProtocol}
-							selectedAdvancedTvlChartType={state.selectedAdvancedTvlChartType}
-							selectedBorrowedProtocol={state.selectedBorrowedProtocol}
-							selectedBorrowedChartType={state.selectedBorrowedChartType}
-							selectedIncomeStatementProtocol={state.selectedIncomeStatementProtocol}
-							selectedLlamaAIChart={state.selectedLlamaAIChart}
-							selectedUnlocksProtocol={state.selectedUnlocksProtocol}
-							selectedUnlocksChartType={state.selectedUnlocksChartType}
-							rwaMode={state.rwaMode}
-							selectedRwaAssetId={state.selectedRwaAssetId}
-							selectedRwaAssetMetrics={state.selectedRwaAssetMetrics}
-							onSubmit={actions.handleSubmit}
-						/>
-					</div>
-				) : null}
+				</Tabs>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
 	)
