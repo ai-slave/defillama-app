@@ -156,6 +156,7 @@ export function DefiWatchlistContainer({
 			<div className="flex flex-col gap-2">
 				<PortfolioSelection />
 				<PortfolioNotifications
+					key={selectedPortfolio}
 					selectedPortfolio={selectedPortfolio}
 					filteredProtocols={protocolsTableData as any}
 					filteredChains={chainsTableData}
@@ -237,7 +238,7 @@ const positiveActionButtonClassName = `${smallToneActionButtonBaseClassName} bor
 const portfolioDestructiveActionButtonClassName =
 	'flex min-h-8 shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-data-down px-3 py-1.5 label-sm text-data-down hover:bg-hover-row focus-visible:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60'
 
-function PortfolioNotifications({
+export function PortfolioNotifications({
 	selectedPortfolio,
 	filteredProtocols = EMPTY_ARRAY,
 	filteredChains = EMPTY_ARRAY
@@ -249,16 +250,9 @@ function PortfolioNotifications({
 	const dialogStore = Ariakit.useDialogStore()
 	const isClient = useIsClient()
 	const { loaders, isAuthenticated, hasActiveSubscription } = useAuthContext()
-	const {
-		preferences,
-		isLoading,
-		savePreferences,
-		isSaving,
-		updateStatus,
-		isUpdatingStatus,
-		deletePreferences,
-		isDeleting
-	} = useEmailNotifications(selectedPortfolio)
+	const { preferences, isLoading, savePreferences, updateStatus, deletePreferences } =
+		useEmailNotifications(selectedPortfolio)
+	const isChangingPreferences = savePreferences.isPending || updateStatus.isPending || deletePreferences.isPending
 	const [shouldRenderModal, setShouldRenderModal] = useState(false)
 	const subscribeModalStore = Ariakit.useDialogStore({ open: shouldRenderModal, setOpen: setShouldRenderModal })
 
@@ -350,73 +344,68 @@ function PortfolioNotifications({
 		}
 	}
 
-	const handleFormSubmit = async () => {
-		const buildAndSavePreferences = async () => {
-			const values = formStore.getState().values
-			const selectedProtocolMetrics = values.protocolMetrics
-			const selectedChainMetrics = values.chainMetrics
+	const handleFormSubmit = () => {
+		if (isChangingPreferences) return
+		const values = formStore.getState().values
+		const selectedProtocolMetrics = values.protocolMetrics
+		const selectedChainMetrics = values.chainMetrics
 
-			const settings: NotificationSettings = {}
+		const settings: NotificationSettings = {}
 
-			if (selectedProtocolMetrics.length > 0 && filteredProtocols.length > 0) {
-				const mappedProtocolMetrics = selectedProtocolMetrics.map(mapUIMetricToAPI)
-				const protocolsMap: NotificationSettings['protocols'] = {}
-				let protocolCount = 0
-				for (const protocol of filteredProtocols) {
-					const identifier = protocol.slug
-					if (!identifier) continue
-					protocolsMap[identifier] = mappedProtocolMetrics
-					protocolCount++
-				}
-				if (protocolCount > 0) {
-					settings.protocols = protocolsMap
-				}
+		if (selectedProtocolMetrics.length > 0 && filteredProtocols.length > 0) {
+			const mappedProtocolMetrics = selectedProtocolMetrics.map(mapUIMetricToAPI)
+			const protocolsMap: NotificationSettings['protocols'] = {}
+			let protocolCount = 0
+			for (const protocol of filteredProtocols) {
+				const identifier = protocol.slug
+				if (!identifier) continue
+				protocolsMap[identifier] = mappedProtocolMetrics
+				protocolCount++
 			}
-
-			if (selectedChainMetrics.length > 0 && filteredChains.length > 0) {
-				const mappedChainMetrics = selectedChainMetrics.map(mapUIMetricToAPI)
-				const chainsMap: NotificationSettings['chains'] = {}
-				let chainCount = 0
-				for (const chain of filteredChains) {
-					if (!chain.name) continue
-					chainsMap[chain.name] = mappedChainMetrics
-					chainCount++
-				}
-				if (chainCount > 0) {
-					settings.chains = chainsMap
-				}
+			if (protocolCount > 0) {
+				settings.protocols = protocolsMap
 			}
+		}
 
-			const hasProtocols = settings.protocols != null
-			const hasChains = settings.chains != null
-			if (!hasProtocols && !hasChains) {
-				toast.error('Unable to save: no valid settings configured')
-				return
+		if (selectedChainMetrics.length > 0 && filteredChains.length > 0) {
+			const mappedChainMetrics = selectedChainMetrics.map(mapUIMetricToAPI)
+			const chainsMap: NotificationSettings['chains'] = {}
+			let chainCount = 0
+			for (const chain of filteredChains) {
+				if (!chain.name) continue
+				chainsMap[chain.name] = mappedChainMetrics
+				chainCount++
 			}
+			if (chainCount > 0) {
+				settings.chains = chainsMap
+			}
+		}
 
-			await savePreferences({
+		const hasProtocols = settings.protocols != null
+		const hasChains = settings.chains != null
+		if (!hasProtocols && !hasChains) {
+			toast.error('Unable to save: no valid settings configured')
+			return
+		}
+
+		savePreferences.mutate(
+			{
 				portfolioName: selectedPortfolio,
 				settings,
 				frequency: 'weekly'
-			})
-
-			dialogStore.hide()
-		}
-		await buildAndSavePreferences().catch(() => {
-			// Error toast handled by mutation's onError
-		})
+			},
+			{ onSuccess: () => dialogStore.hide() }
+		)
 	}
 
 	const handleDisableNotifications = () => {
-		void updateStatus({ portfolioName: selectedPortfolio, active: false }).then(() => {
-			dialogStore.hide()
-		})
+		if (isChangingPreferences) return
+		updateStatus.mutate({ portfolioName: selectedPortfolio, active: false }, { onSuccess: () => dialogStore.hide() })
 	}
 
 	const handleDeleteNotifications = () => {
-		void deletePreferences({ portfolioName: selectedPortfolio }).then(() => {
-			dialogStore.hide()
-		})
+		if (isChangingPreferences) return
+		deletePreferences.mutate({ portfolioName: selectedPortfolio }, { onSuccess: () => dialogStore.hide() })
 	}
 
 	return (
@@ -491,37 +480,37 @@ function PortfolioNotifications({
 								<button
 									type="button"
 									onClick={handleDisableNotifications}
-									disabled={loaders.userLoading || isUpdatingStatus}
+									disabled={loaders.userLoading || isChangingPreferences}
 									className={smallActionButtonClassName}
 									title="Temporarily disable notifications"
 								>
 									<Icon name="pause" height={16} width={16} />
-									<span>{isUpdatingStatus ? 'Disabling...' : 'Disable'}</span>
+									<span>{updateStatus.isPending ? 'Disabling...' : 'Disable'}</span>
 								</button>
 							) : null}
 							{!preferences.active ? (
 								<button
 									type="button"
 									onClick={() => {
-										void updateStatus({ portfolioName: selectedPortfolio, active: true })
+										updateStatus.mutate({ portfolioName: selectedPortfolio, active: true })
 									}}
-									disabled={loaders.userLoading || isUpdatingStatus}
+									disabled={loaders.userLoading || isChangingPreferences}
 									className={positiveActionButtonClassName}
 									title="Re-enable notifications"
 								>
 									<Icon name="check-circle" height={16} width={16} />
-									<span>{isUpdatingStatus ? 'Enabling...' : 'Enable'}</span>
+									<span>{updateStatus.isPending ? 'Enabling...' : 'Enable'}</span>
 								</button>
 							) : null}
 							<button
 								type="button"
 								onClick={handleDeleteNotifications}
-								disabled={loaders.userLoading || isDeleting}
+								disabled={loaders.userLoading || isChangingPreferences}
 								className={destructiveActionButtonClassName}
 								title="Permanently delete notification preferences"
 							>
 								<Icon name="trash-2" height={16} width={16} />
-								<span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
+								<span>{deletePreferences.isPending ? 'Deleting...' : 'Delete'}</span>
 							</button>
 						</>
 					) : null}
@@ -568,7 +557,7 @@ function PortfolioNotifications({
 					store={formStore}
 					onSubmit={(e) => {
 						e.preventDefault()
-						void handleFormSubmit()
+						handleFormSubmit()
 					}}
 					className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
 				>
@@ -640,21 +629,21 @@ function PortfolioNotifications({
 										<button
 											type="button"
 											onClick={handleDisableNotifications}
-											disabled={isUpdatingStatus}
+											disabled={isChangingPreferences}
 											className={smallActionButtonClassName}
 										>
 											<Icon name="pause" height={16} width={16} />
-											<span>{isUpdatingStatus ? 'Disabling...' : 'Disable'}</span>
+											<span>{updateStatus.isPending ? 'Disabling...' : 'Disable'}</span>
 										</button>
 									) : null}
 									<button
 										type="button"
 										onClick={handleDeleteNotifications}
-										disabled={isDeleting}
+										disabled={isChangingPreferences}
 										className={destructiveActionButtonClassName}
 									>
 										<Icon name="trash-2" height={16} width={16} />
-										<span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
+										<span>{deletePreferences.isPending ? 'Deleting...' : 'Delete'}</span>
 									</button>
 								</>
 							) : (
@@ -663,8 +652,11 @@ function PortfolioNotifications({
 						</div>
 						<div className="flex gap-2">
 							<Ariakit.DialogDismiss render={<Button type="button" size="md" />}>Cancel</Ariakit.DialogDismiss>
-							<Ariakit.FormSubmit disabled={isSaving} render={<Button type="submit" variant="primary" size="md" />}>
-								{isSaving ? 'Saving...' : preferences ? 'Update Settings' : 'Enable Notifications'}
+							<Ariakit.FormSubmit
+								disabled={isChangingPreferences}
+								render={<Button type="submit" variant="primary" size="md" />}
+							>
+								{savePreferences.isPending ? 'Saving...' : preferences ? 'Update Settings' : 'Enable Notifications'}
 							</Ariakit.FormSubmit>
 						</div>
 					</div>
@@ -692,7 +684,8 @@ function PortfolioSelection() {
 	}
 
 	const handleRemovePortfolio = () => {
-		deleteNotificationPreferences({ portfolioName: selectedPortfolio })
+		deleteNotificationPreferences
+			.mutateAsync({ portfolioName: selectedPortfolio })
 			.catch(() => {})
 			.finally(() => {
 				removePortfolio(selectedPortfolio)

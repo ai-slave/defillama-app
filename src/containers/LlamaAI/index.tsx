@@ -318,7 +318,6 @@ export function AgenticChat({
 		applyServerSessionTitle,
 		bulkDeleteSessions,
 		pinSession,
-		isSwitchingActiveLeaf,
 		replaceOptimisticSessionId
 	} = useSessionMutations()
 	const { sidebarVisible, toggleSidebar, hideSidebar, isFullscreen, toggleFullscreen } = useSidebarVisibility()
@@ -1349,7 +1348,7 @@ export function AgenticChat({
 
 	const handleBulkDeleteSessions = useCallback(
 		async (sessionIds: Array<string>) => {
-			await bulkDeleteSessions(sessionIds)
+			await bulkDeleteSessions.mutateAsync(sessionIds)
 			for (const targetSessionId of sessionIds) {
 				clearPromptFailure(targetSessionId)
 				forgetQueueSession(targetSessionId)
@@ -1379,7 +1378,7 @@ export function AgenticChat({
 			setCurrentSessionProjectId(projectIdForNewChat)
 			restoredSessionIdRef.current = nextSessionId
 			isFirstMessageRef.current = false
-			const persistSession = createSession({
+			const persistSession = createSession.mutateAsync({
 				sessionId: nextSessionId,
 				projectId: projectIdForNewChat
 			})
@@ -1577,13 +1576,15 @@ export function AgenticChat({
 					}
 					if (sharedSession) onSharedSessionFork?.(id)
 					if (previousSessionId !== id && !sessions.some((session) => session.sessionId === id)) {
-						void createSession({
-							sessionId: id,
-							title: sessionTitle ?? undefined,
-							projectId: submitProjectId
-						}).catch((createSessionError) => {
-							console.error('[llama-ai] [createSession] failed:', getErrorMessage(createSessionError))
-						})
+						void createSession
+							.mutateAsync({
+								sessionId: id,
+								title: sessionTitle ?? undefined,
+								projectId: submitProjectId
+							})
+							.catch((createSessionError) => {
+								console.error('[llama-ai] [createSession] failed:', getErrorMessage(createSessionError))
+							})
 					}
 				}
 
@@ -2222,7 +2223,7 @@ export function AgenticChat({
 				// Both halves live outside the try on purpose: they are full of optional chains and logical
 				// operators, and the compiler cannot lower one inside a try or catch. Calling out to them
 				// keeps the error handling identical while leaving the try itself trivial.
-				const applySwitchedLeaf = async (result: Awaited<ReturnType<typeof switchActiveLeaf>>) => {
+				const applySwitchedLeaf = async (result: Awaited<ReturnType<typeof switchActiveLeaf.mutateAsync>>) => {
 					if (!operation.isCurrent() || currentSessionIdRef.current !== sessionId) return
 					setActiveLeafMessageId(result.activeLeafMessageId)
 					if (Array.isArray(result.messages)) {
@@ -2243,7 +2244,9 @@ export function AgenticChat({
 					}
 				}
 				try {
-					await applySwitchedLeaf(await switchActiveLeaf({ sessionId, leafMessageId, signal: operation.signal }))
+					await applySwitchedLeaf(
+						await switchActiveLeaf.mutateAsync({ sessionId, leafMessageId, signal: operation.signal })
+					)
 				} catch (switchError) {
 					reportSwitchFailure(switchError)
 				}
@@ -2566,7 +2569,7 @@ export function AgenticChat({
 		handleActionClick,
 		onEditMessage: handleEditMessage,
 		onBranchSwitch: handleBranchSwitch,
-		isBranchSwitching: isSwitchingActiveLeaf,
+		isBranchSwitching: switchActiveLeaf.isPending,
 		mode,
 		setMode,
 		researchUsage,
@@ -2661,7 +2664,8 @@ export function AgenticChat({
 										onOpenSettings={openSettings}
 										hasCustomInstructions={settings.customInstructions.trim().length > 0}
 										onBulkDelete={handleBulkDeleteSessions}
-										onPinSession={pinSession}
+										onPinSession={pinSession.mutate}
+										isPinningSession={pinSession.isPending}
 										onSearchMatchClick={handleSearchMatchClick}
 										hasMoreSessions={hasMoreSessions}
 										isFetchingMoreSessions={isFetchingMoreSessions}

@@ -206,11 +206,8 @@ export const useEmailNotifications = (portfolioName?: string) => {
 		isLoading,
 		isFetching,
 		error,
-		savePreferences: savePreferences.mutateAsync,
-		isSaving: savePreferences.isPending,
-		updateStatus: updateStatus.mutateAsync,
-		isUpdatingStatus: updateStatus.isPending,
-		deletePreferences: deletePreferences.mutateAsync,
-		isDeleting: deletePreferences.isPending
+		savePreferences,
+		updateStatus,
+		deletePreferences
 	}
 }

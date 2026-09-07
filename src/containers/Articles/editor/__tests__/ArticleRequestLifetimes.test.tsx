@@ -11,12 +11,9 @@ import { LlamaAIChart } from '../nodes/LlamaAIChart'
 import { makeEmptyPeoplePanelItem } from '../peoplePanel'
 import { PeoplePanelDialog } from '../PeoplePanelDialog'
 
-const api = vi.hoisted(() => ({ fetch: vi.fn(), upload: vi.fn(), error: vi.fn() }))
+const api = vi.hoisted(() => ({ fetch: vi.fn(), error: vi.fn() }))
 vi.mock('~/auth', () => ({ useAuthContext: () => ({ authorizedFetch: api.fetch, isAuthenticated: true }) }))
-vi.mock('../../upload/useImageUpload', () => ({
-	useImageUpload: () => ({ uploadWithToast: api.upload, isUploading: false })
-}))
-vi.mock('react-hot-toast', () => ({ default: { error: api.error } }))
+vi.mock('react-hot-toast', () => ({ default: { error: api.error, promise: (promise: Promise<unknown>) => promise } }))
 let root: Root
 let container: HTMLDivElement
 let client: QueryClient
@@ -46,6 +43,9 @@ function deferred<T>() {
 }
 async function click(name: string) {
 	await act(async () => {
+		await new Promise((resolve) => setTimeout(resolve, 0))
+	})
+	await act(async () => {
 		const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(e) => e.getAttribute('aria-label') === name || e.textContent?.trim() === name
 		)!
@@ -68,7 +68,13 @@ async function mountPanel() {
 			/>
 		)
 	}
-	await act(async () => root.render(<Harness />))
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<Harness />
+			</QueryClientProvider>
+		)
+	)
 	return submit
 }
 async function uploadFirst() {
@@ -79,12 +85,14 @@ async function uploadFirst() {
 	})
 }
 test('keeps an upload attached to its person after reordering', async () => {
-	const pending = deferred<object>()
-	api.upload.mockReturnValue(pending.promise)
+	const pending = deferred<Response>()
+	api.fetch.mockReturnValue(pending.promise)
 	const submit = await mountPanel()
 	await uploadFirst()
+	await click('Uploading images…')
+	expect(submit).not.toHaveBeenCalled()
 	await click('Move person 1 down')
-	await act(async () => pending.resolve({ id: 'new', url: '/new.png', width: 100, height: 100 }))
+	await act(async () => pending.resolve(Response.json({ id: 'new', url: '/new.png', width: 100, height: 100 })))
 	await click('Update panel')
 	expect(submit.mock.calls[0][0].items.map(({ name, src }: { name: string; src: string }) => ({ name, src }))).toEqual([
 		{ name: 'Bob', src: '/Bob.png' },
@@ -92,13 +100,15 @@ test('keeps an upload attached to its person after reordering', async () => {
 	])
 })
 test('ignores a removed person’s late upload', async () => {
-	const pending = deferred<object>()
-	api.upload.mockReturnValue(pending.promise)
+	const pending = deferred<Response>()
+	api.fetch.mockReturnValue(pending.promise)
 	const submit = await mountPanel()
 	await uploadFirst()
 	await click('Remove person 1')
-	await act(async () => pending.resolve({ id: 'new', url: '/new.png', width: 100, height: 100 }))
 	await click('Update panel')
+	expect(submit.mock.calls[0][0].items).toMatchObject([{ name: 'Bob', src: '/Bob.png' }])
+	await act(async () => pending.resolve(Response.json({ id: 'new', url: '/new.png', width: 100, height: 100 })))
+	expect(submit).toHaveBeenCalledOnce()
 	expect(submit.mock.calls[0][0].items).toMatchObject([{ name: 'Bob', src: '/Bob.png' }])
 })
 const chart = {

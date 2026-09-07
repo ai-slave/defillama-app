@@ -18,7 +18,8 @@ export function CardLikeButton({
 	return (
 		<button
 			type="button"
-			aria-label={isLiked ? 'Unlike dashboard' : 'Like dashboard'}
+			aria-label="Like dashboard"
+			aria-pressed={isLiked}
 			disabled={isLiking}
 			onClick={(e) => {
 				e.preventDefault()

@@ -38,7 +38,7 @@ export function MobileToolsPopover({
 	walkthroughActive
 }: MobileToolsPopoverProps) {
 	const disabled = isPending || !!isStreaming || !!isStopping
-	const menu = Ariakit.useMenuStore({ placement: 'top-start' })
+	const menu = Ariakit.useMenuStore({ placement: 'top-start', values: { answerMode: mode } })
 
 	const handlePromptSelect = (prompt: string, categoryKey?: string) => {
 		menu.hideAll()
@@ -102,10 +102,12 @@ export function MobileToolsPopover({
 
 				<Ariakit.MenuSeparator className="mx-2 border-t border-ai-line-subtle" />
 
-				<Ariakit.MenuItem
+				<Ariakit.MenuItemRadio
 					className={itemClassName}
 					hideOnClick={false}
-					onClick={() => setMode('quick')}
+					name="answerMode"
+					value="quick"
+					onChange={() => setMode('quick')}
 					data-umami-event="llamaai-quick-mode-toggle"
 				>
 					<Icon name="sparkles" height={16} width={16} className="shrink-0 text-ai-tertiary" />
@@ -113,13 +115,16 @@ export function MobileToolsPopover({
 					{mode === 'quick' ? (
 						<Icon name="check" height={14} width={14} className="shrink-0 text-ai-accent-blue" />
 					) : null}
-				</Ariakit.MenuItem>
+				</Ariakit.MenuItemRadio>
 
-				<Ariakit.MenuItem
+				<Ariakit.MenuItemRadio
 					className={itemClassName}
 					hideOnClick={false}
-					onClick={() => {
+					name="answerMode"
+					value="fact_checked"
+					onChange={(event) => {
 						if (factCheckedUsage?.period === 'blocked') {
+							event.preventDefault()
 							onFactCheckedGated?.()
 							return
 						}
@@ -139,13 +144,15 @@ export function MobileToolsPopover({
 							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-accent-blue" />
 						) : null}
 					</span>
-				</Ariakit.MenuItem>
+				</Ariakit.MenuItemRadio>
 
-				<Ariakit.MenuItem
+				<Ariakit.MenuItemRadio
 					data-walkthrough="mobile-research-item"
 					className={itemClassName}
 					hideOnClick={false}
-					onClick={() => setMode('research')}
+					name="answerMode"
+					value="research"
+					onChange={() => setMode('research')}
 					data-umami-event="llamaai-research-mode-toggle"
 				>
 					<Icon name="search" height={16} width={16} className="shrink-0 text-ai-tertiary" />
@@ -160,7 +167,7 @@ export function MobileToolsPopover({
 							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-accent-blue" />
 						) : null}
 					</span>
-				</Ariakit.MenuItem>
+				</Ariakit.MenuItemRadio>
 
 				<Ariakit.MenuSeparator className="mx-2 border-t border-ai-line-subtle" />
 

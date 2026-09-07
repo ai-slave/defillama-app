@@ -29,7 +29,8 @@ interface AgenticSessionItemProps {
 	selectMode?: boolean
 	isSelected?: boolean
 	onToggleSelect?: (sessionId: string) => void
-	onPinSession?: (sessionId: string) => Promise<void>
+	onPinSession?: (sessionId: string) => void
+	isPinningSession?: boolean
 }
 
 // Rendered from a list in the projects sidebar, where the compiler caches the row callback rather than
@@ -47,7 +48,8 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	selectMode,
 	isSelected,
 	onToggleSelect,
-	onPinSession
+	onPinSession,
+	isPinningSession
 }: AgenticSessionItemProps) {
 	const { authorizedFetch } = useAuthContext()
 	const { hideSidebar } = useLlamaAIChrome()
@@ -248,8 +250,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							<Icon name="x" className="size-5" />
 						</Ariakit.PopoverDismiss>
 						<Ariakit.MenuItem
+							disabled={!onPinSession || isPinningSession}
 							onClick={() => {
-								void onPinSession?.(session.sessionId)
+								onPinSession?.(session.sessionId)
 							}}
 							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted data-active-item:bg-brand-muted"
 						>

@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 // @vitest-environment happy-dom
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -9,6 +10,7 @@ import type { BillingCycle } from '../types'
 const auth = vi.hoisted(() => ({ hasActiveSubscription: true }))
 vi.mock('~/auth', () => ({ useAuthContext: () => auth }))
 vi.mock('~/containers/Subscription/components', () => ({ PricingCard: () => null }))
+let client: QueryClient
 let root: Root
 let container: HTMLDivElement
 const save = vi.fn()
@@ -19,10 +21,12 @@ beforeEach(() => {
 	container = document.createElement('div')
 	document.body.append(container)
 	root = createRoot(container)
+	client = new QueryClient()
 })
 afterEach(async () => {
 	await act(async () => root.unmount())
 	container.remove()
+	client.clear()
 })
 async function press(el: HTMLElement, key: string) {
 	await act(async () => {
@@ -38,20 +42,22 @@ function radio(value: string) {
 async function dashboard(isOpen: boolean, visibility: 'public' | 'private' = 'public') {
 	await act(async () =>
 		root.render(
-			<DashboardSettingsModal
-				isOpen={isOpen}
-				onClose={close}
-				dashboardName="Original"
-				visibility={visibility}
-				tags={[]}
-				description=""
-				dashboardId="test"
-				onDashboardNameChange={vi.fn()}
-				onVisibilityChange={vi.fn()}
-				onTagsChange={vi.fn()}
-				onDescriptionChange={vi.fn()}
-				onSave={save}
-			/>
+			<QueryClientProvider client={client}>
+				<DashboardSettingsModal
+					isOpen={isOpen}
+					onClose={close}
+					dashboardName="Original"
+					visibility={visibility}
+					tags={[]}
+					description=""
+					dashboardId="test"
+					onDashboardNameChange={vi.fn()}
+					onVisibilityChange={vi.fn()}
+					onTagsChange={vi.fn()}
+					onDescriptionChange={vi.fn()}
+					onSave={save}
+				/>
+			</QueryClientProvider>
 		)
 	)
 }
@@ -115,4 +121,37 @@ test('billing arrows change the selected cycle once without a mount callback', a
 	expect(change).toHaveBeenCalledOnce()
 	await press(radio('monthly'), 'ArrowRight')
 	expect(radio('yearly').checked).toBe(true)
+})
+
+test('keeps dashboard settings after save failure and closes only after retry succeeds', async () => {
+	let finish!: () => void
+	save.mockRejectedValueOnce(new Error('Offline')).mockImplementationOnce(
+		() =>
+			new Promise<void>((resolve) => {
+				finish = resolve
+			})
+	)
+	await dashboard(true)
+	const input = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
+	input.value = 'My edited name'
+	const submit = async () => {
+		await act(async () => {
+			document.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+			await new Promise((resolve) => setTimeout(resolve, 20))
+		})
+	}
+	await submit()
+	expect(close).not.toHaveBeenCalled()
+	expect(input.value).toBe('My edited name')
+	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
+	await submit()
+	expect(document.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true)
+	await submit()
+	expect(save).toHaveBeenCalledTimes(2)
+	await act(async () => {
+		finish()
+		await new Promise((resolve) => setTimeout(resolve, 20))
+	})
+	expect(close).toHaveBeenCalledOnce()
+	expect(save.mock.calls[1][0].dashboardName).toBe('My edited name')
 })

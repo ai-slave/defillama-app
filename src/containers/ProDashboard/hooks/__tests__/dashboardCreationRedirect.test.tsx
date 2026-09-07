@@ -13,13 +13,14 @@ vi.mock('~/auth', () => ({
 	useAuthContext: () => ({ authorizedFetch: vi.fn(), isAuthenticated: true, user: { id: 'u1' } })
 }))
 vi.mock('../../services/DashboardAPI', () => ({
-	dashboardAPI: { createDashboard: (...a: Array<unknown>) => createDashboard(...a) },
+	dashboardAPI: { createDashboard: (...a: Array<unknown>) => createDashboard(...a), listDashboards: async () => [] },
 	dashboardUrlKey: (dashboard: { id: string; slug?: string }) => dashboard.slug || dashboard.id
 }))
 vi.mock('react-hot-toast', () => ({
 	default: { success: vi.fn(), error: vi.fn(), loading: vi.fn(() => 't1'), dismiss: vi.fn() }
 }))
 
+import toast from 'react-hot-toast'
 import { useDashboardCreation } from '../useDashboardCreation'
 
 function Button() {
@@ -31,7 +32,7 @@ function Button() {
 	)
 }
 
-describe('creating a dashboard from a dataset page', () => {
+describe('creating a dashboard from a dataset', () => {
 	let container: HTMLDivElement
 	let root: Root
 	let client: QueryClient
@@ -55,6 +56,7 @@ describe('creating a dashboard from a dataset page', () => {
 
 	afterEach(() => {
 		container.remove()
+		client.clear()
 	})
 
 	test('it redirects to the new dashboard', async () => {
@@ -78,5 +80,7 @@ describe('creating a dashboard from a dataset page', () => {
 			await new Promise((resolve) => setTimeout(resolve, 0))
 		})
 		expect(push).not.toHaveBeenCalled()
+		expect(client.getQueryData(['pro-dashboard', 'dashboard', 'dex-volume', true, 'u1'])).toMatchObject({ id: 'd1' })
+		expect(toast.dismiss).toHaveBeenCalledTimes(1)
 	})
 })

@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react'
+import { useMutation, type MutationKey } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
@@ -77,50 +78,54 @@ export function buildUploadPayload(args: {
 	}
 }
 
-export function useImageUpload(args: { scope: UploadScope; articleId?: string | null }) {
+export function useImageUpload(args: { scope: UploadScope; articleId?: string | null; mutationKey?: MutationKey }) {
 	const { authorizedFetch } = useAuthContext()
-	const [isUploading, setIsUploading] = useState(false)
 
-	// articleIdOverride: callers that only learn the article id at upload time
-	// (e.g. the LlamaAI export modal, which may create the draft first) pass it here.
-	const uploadFile = useCallback(
-		async (file: File, articleIdOverride?: string | null): Promise<UploadResult> => {
+	const upload = useMutation({
+		mutationKey: args.mutationKey,
+		mutationFn: async ({
+			file,
+			articleId
+		}: {
+			file: File
+			articleId: string | null | undefined
+		}): Promise<UploadResult> => {
 			const clientError = validateClient(file)
 			if (clientError) throw new ImageUploadError(clientError, 400)
 
-			setIsUploading(true)
-			try {
-				const dataBase64 = await fileToBase64(file)
-				const payload = buildUploadPayload({
-					scope: args.scope,
-					articleId: articleIdOverride ?? args.articleId,
-					filename: file.name,
-					mimeType: file.type,
-					dataBase64
-				})
+			const dataBase64 = await fileToBase64(file)
+			const payload = buildUploadPayload({
+				scope: args.scope,
+				articleId,
+				filename: file.name,
+				mimeType: file.type,
+				dataBase64
+			})
 
-				const response = await authorizedFetch(uploadUrl(), {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(payload)
-				})
-				if (!response) throw new ImageUploadError('Please sign in to continue', 401)
-				const text = await response.text()
-				const data = text ? JSON.parse(text) : null
-				if (!response.ok) {
-					const message =
-						data && typeof data === 'object' && typeof data.error === 'string'
-							? data.error
-							: response.statusText || 'Upload failed'
-					throw new ImageUploadError(message, response.status)
-				}
-				return data as UploadResult
-			} finally {
-				setIsUploading(false)
+			const response = await authorizedFetch(uploadUrl(), {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			})
+			if (!response) throw new ImageUploadError('Please sign in to continue', 401)
+			const text = await response.text()
+			const data = text ? JSON.parse(text) : null
+			if (!response.ok) {
+				const message =
+					data && typeof data === 'object' && typeof data.error === 'string'
+						? data.error
+						: response.statusText || 'Upload failed'
+				throw new ImageUploadError(message, response.status)
 			}
-		},
-		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
-		[args.scope, args.articleId, authorizedFetch]
+			return data as UploadResult
+		}
+	})
+	const { mutateAsync } = upload
+	// Export callers may create the article immediately before uploading.
+	const uploadFile = useCallback(
+		(file: File, articleIdOverride?: string | null) =>
+			mutateAsync({ file, articleId: articleIdOverride ?? args.articleId }),
+		[mutateAsync, args.articleId]
 	)
 
 	const uploadWithToast = useCallback(
@@ -134,5 +139,5 @@ export function useImageUpload(args: { scope: UploadScope; articleId?: string | 
 		[uploadFile]
 	)
 
-	return { uploadFile, uploadWithToast, isUploading }
+	return { uploadFile, uploadWithToast, isUploading: upload.isPending }
 }

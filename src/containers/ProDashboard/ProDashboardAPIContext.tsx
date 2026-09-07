@@ -39,7 +39,7 @@ import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import { isDashboardInitialRenderHydration } from './initialDashboard'
 import { buildProDashboardParentMapping } from './protocolCatalog'
 import { ProxyAuthTokenContext, StreamDoneContext, useProtocolsAndChains } from './queries'
-import { DashboardError, matchesDashboardKey } from './services/DashboardAPI'
+import { DashboardError, dashboardUrlKey, matchesDashboardKey } from './services/DashboardAPI'
 import type { Chain, Protocol } from './types'
 import { useDashboardActions } from './useDashboardActions'
 import { toPersistedDashboardItems } from './utils/dashboardUtils'
@@ -412,7 +412,8 @@ function ProDashboardAPIProviderInner({
 		createDashboard,
 		updateDashboard,
 		deleteDashboard: deleteDashboardWithConfirmation,
-		loadDashboard: loadDashboardData
+		loadDashboard: loadDashboardData,
+		navigateToDashboard
 	} = useDashboardAPI()
 
 	// Use the permissions hook
@@ -440,7 +441,7 @@ function ProDashboardAPIProviderInner({
 		isReadOnly: isReadOnlyUntilDashboardLoaded,
 		currentDashboard,
 		userId: user?.id,
-		updateDashboard,
+		updateDashboard: updateDashboard.mutateAsync,
 		toPersistedDashboardItems,
 		isFreeUser,
 		mode
@@ -565,17 +566,19 @@ function ProDashboardAPIProviderInner({
 			}
 
 			if (dashboardId) {
-				const savedDashboard = await updateDashboard({ id: dashboardId, data })
+				const savedDashboard = await updateDashboard.mutateAsync({ id: dashboardId, data })
 				if (savedDashboard) {
-					applyDashboard(savedDashboard)
+					dispatch({ type: 'SAVE_DASHBOARD', payload: savedDashboard, submitted: state })
 					if (savedDashboard.artifactActivationPending) {
 						toast.error('Dashboard saved, but chart refresh setup is pending.')
 					}
 				}
 			} else {
-				const newDashboard = await createDashboard(data)
+				const newDashboard = await createDashboard.mutateAsync(data, {
+					onSuccess: (dashboard) => navigateToDashboard(dashboardUrlKey(dashboard))
+				})
 				if (newDashboard) {
-					applyDashboard(newDashboard)
+					dispatch({ type: 'SAVE_DASHBOARD', payload: newDashboard, submitted: state })
 					if (newDashboard.artifactActivationPending) {
 						toast.error('Dashboard saved, but chart refresh setup is pending.')
 					}
@@ -597,7 +600,8 @@ function ProDashboardAPIProviderInner({
 			isFreeUser,
 			updateDashboard,
 			createDashboard,
-			applyDashboard
+			navigateToDashboard,
+			state
 		]
 	)
 
@@ -660,7 +664,9 @@ function ProDashboardAPIProviderInner({
 		}
 
 		try {
-			await createDashboard(data)
+			await createDashboard.mutateAsync(data, {
+				onSuccess: (dashboard) => navigateToDashboard(dashboardUrlKey(dashboard))
+			})
 		} catch (error) {
 			console.log('Failed to copy dashboard:', error)
 		}
@@ -671,6 +677,7 @@ function ProDashboardAPIProviderInner({
 		customTimePeriod,
 		isAuthenticated,
 		createDashboard,
+		navigateToDashboard,
 		canCreateDashboard,
 		isFreeUser,
 		dashboardVisibility,
@@ -687,8 +694,7 @@ function ProDashboardAPIProviderInner({
 			aiGenerated?: AIGeneratedData | null
 		}) => {
 			if (!canCreateDashboard) {
-				toast.error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
-				return
+				throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
 			}
 
 			const defaultTimePeriod: TimePeriod = '365d'
@@ -702,14 +708,11 @@ function ProDashboardAPIProviderInner({
 				aiGenerated: data.aiGenerated ?? null
 			}
 
-			try {
-				await createDashboard(dashboardData)
-			} catch (error) {
-				console.log('Failed to create new dashboard:', error)
-				toast.error('Failed to create new dashboard')
-			}
+			await createDashboard.mutateAsync(dashboardData, {
+				onSuccess: (dashboard) => navigateToDashboard(dashboardUrlKey(dashboard))
+			})
 		},
-		[createDashboard, canCreateDashboard, isFreeUser]
+		[createDashboard, navigateToDashboard, canCreateDashboard, isFreeUser]
 	)
 
 	const handleGenerateDashboard = useCallback(

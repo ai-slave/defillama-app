@@ -244,22 +244,22 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 			const hovers = registerSqlHovers(monaco, contextRef)
 
 			ensureActiveStmtStyles()
-			let decorationIds: Array<string> = []
+			const activeStatement = editor.createDecorationsCollection()
 			const updateActiveStmt = () => {
 				const model = editor.getModel?.()
 				const position = editor.getPosition?.()
 				const selection = editor.getSelection?.()
 				if (!model || !position) {
-					decorationIds = editor.deltaDecorations(decorationIds, [])
+					activeStatement.clear()
 					return
 				}
 				if (selection && !selection.isEmpty?.()) {
-					decorationIds = editor.deltaDecorations(decorationIds, [])
+					activeStatement.clear()
 					return
 				}
 				const sql = model.getValue() ?? ''
 				if (!sql) {
-					decorationIds = editor.deltaDecorations(decorationIds, [])
+					activeStatement.clear()
 					return
 				}
 				const offset = model.getOffsetAt(position)
@@ -267,13 +267,13 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 				while (start < end && /\s/.test(sql[start])) start++
 				while (end > start && /\s/.test(sql[end - 1])) end--
 				if (start >= end) {
-					decorationIds = editor.deltaDecorations(decorationIds, [])
+					activeStatement.clear()
 					return
 				}
 				const startPos = model.getPositionAt(start)
 				const endPos = model.getPositionAt(end)
 				const range = new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column)
-				decorationIds = editor.deltaDecorations(decorationIds, [
+				activeStatement.set([
 					{
 						range,
 						options: {

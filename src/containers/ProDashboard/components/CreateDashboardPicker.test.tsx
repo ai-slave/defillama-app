@@ -1,0 +1,105 @@
+// @vitest-environment happy-dom
+import * as Ariakit from '@ariakit/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { act } from 'react'
+import { createRoot, type Root } from 'react-dom/client'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { CreateDashboardPicker } from './CreateDashboardPicker'
+vi.mock('~/auth', () => ({ useAuthContext: () => ({ hasActiveSubscription: true }) }))
+vi.mock('~/containers/Chains/api', () => ({ fetchChainsByCategory: async () => ({ chainsUnique: [] }) }))
+vi.mock('../AppMetadataContext', () => ({ useAppMetadata: () => ({ protocolsBySlug: new Map() }) }))
+vi.mock('../ProDashboardAPIContext', () => ({ useProDashboardCatalog: () => ({ protocols: [], chains: [] }) }))
+vi.mock('../hooks/useDimensionProtocols', () => ({ useDimensionProtocols: () => ({ dimensionProtocols: {} }) }))
+let root: Root
+let container: HTMLDivElement
+let client: QueryClient
+let store: Ariakit.DialogStore
+const create = vi.fn()
+beforeEach(() => {
+	vi.clearAllMocks()
+	client = new QueryClient()
+	container = document.createElement('div')
+	document.body.append(container)
+	root = createRoot(container)
+})
+afterEach(async () => {
+	await act(async () => root.unmount())
+	client.clear()
+	container.remove()
+})
+async function mount() {
+	function Harness() {
+		store = Ariakit.useDialogStore({ defaultOpen: true })
+		return <CreateDashboardPicker dialogStore={store} onCreate={create} />
+	}
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<Harness />
+			</QueryClientProvider>
+		)
+	)
+	await click('From Scratch')
+}
+async function click(name: string) {
+	await act(async () => {
+		;[...document.querySelectorAll<HTMLButtonElement>('button')]
+			.find((button) => button.textContent?.trim().startsWith(name))!
+			.click()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+	})
+}
+test('failed creation retains the name and visibility, blocks duplicate submissions, and retries successfully', async () => {
+	let reject!: (error: Error) => void
+	create
+		.mockImplementationOnce(
+			() =>
+				new Promise((_, fail) => {
+					reject = fail
+				})
+		)
+		.mockResolvedValueOnce(undefined)
+	await mount()
+	const name = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
+	name.value = 'Keep my draft'
+	await act(async () => document.querySelector<HTMLInputElement>('input[value="private"]')!.click())
+	await click('Create Dashboard')
+	expect(document.querySelector('fieldset')!.disabled).toBe(true)
+	await click('Create Dashboard')
+	expect(create).toHaveBeenCalledExactlyOnceWith({
+		dashboardName: 'Keep my draft',
+		visibility: 'private',
+		tags: [],
+		description: ''
+	})
+	await act(async () => {
+		reject(new Error('Unavailable'))
+		await new Promise((resolve) => setTimeout(resolve, 0))
+	})
+	expect(document.querySelector('[role="alert"]')).not.toBeNull()
+	expect(name.value).toBe('Keep my draft')
+	expect(document.querySelector<HTMLInputElement>('input[value="private"]')!.checked).toBe(true)
+	await click('Create Dashboard')
+	expect(create).toHaveBeenCalledTimes(2)
+	expect(store.getState().open).toBe(false)
+})
+test('a creation finishing after dismissal does not close a newly opened picker', async () => {
+	let finish!: () => void
+	create.mockImplementationOnce(
+		() =>
+			new Promise<void>((resolve) => {
+				finish = resolve
+			})
+	)
+	await mount()
+	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Earlier draft'
+	await click('Create Dashboard')
+	await act(async () => store.hide())
+	await act(async () => store.show())
+	await act(async () => {
+		finish()
+		await new Promise((resolve) => setTimeout(resolve, 0))
+	})
+	expect(store.getState().open).toBe(true)
+	expect(document.querySelector('[role="alert"]')).toBeNull()
+})

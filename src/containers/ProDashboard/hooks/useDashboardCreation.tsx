@@ -66,6 +66,10 @@ export const useDashboardCreation = () => {
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 
 	const createMutation = useMutation({
+		onMutate: () => toast.loading('Creating dashboard and preparing to redirect...'),
+		onSettled: (_data, _error, _variables, loadingToast) => {
+			toast.dismiss(loadingToast)
+		},
 		mutationFn: async (datasetType: DatasetType) => {
 			if (!isAuthenticated) {
 				throw new Error('Not authenticated')
@@ -112,14 +116,9 @@ export const useDashboardCreation = () => {
 			return
 		}
 
-		const loadingToast = toast.loading('Creating dashboard and preparing to redirect...')
-
 		createMutation.mutate(datasetType, {
 			onSuccess: (dashboard) => {
 				void Router.push(`/pro/${dashboardUrlKey(dashboard)}`)
-			},
-			onSettled: () => {
-				toast.dismiss(loadingToast)
 			}
 		})
 	}, [isAuthenticated, createMutation])

@@ -603,20 +603,13 @@ function ProDashboardContent() {
 					onVisibilityChange={setDashboardVisibility}
 					onTagsChange={setDashboardTags}
 					onDescriptionChange={setDashboardDescription}
-					onSave={(overrides) => {
-						void saveDashboard(overrides)
-					}}
+					onSave={saveDashboard}
 					onDelete={deleteDashboard}
 				/>
 			</Suspense>
 
 			<Suspense fallback={<></>}>
-				<CreateDashboardPicker
-					dialogStore={createDashboardDialogStore}
-					onCreate={(data) => {
-						void handleCreateDashboard(data)
-					}}
-				/>
+				<CreateDashboardPicker dialogStore={createDashboardDialogStore} onCreate={handleCreateDashboard} />
 			</Suspense>
 
 			<Suspense fallback={<></>}>

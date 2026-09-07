@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { useMutation } from '@tanstack/react-query'
 import { useId, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
@@ -22,7 +23,7 @@ interface DashboardSettingsModalProps {
 		visibility?: 'private' | 'public'
 		tags?: Array<string>
 		description?: string
-	}) => void
+	}) => Promise<void>
 	onDelete?: (dashboardId: string) => Promise<void>
 }
 
@@ -45,13 +46,15 @@ function DashboardSettingsModalInner({
 	const { hasActiveSubscription } = useAuthContext()
 	const [localVisibility, setLocalVisibility] = useState(visibility)
 	const [localTags, setLocalTags] = useState(tags)
-	const [isDeleting, setIsDeleting] = useState(false)
+	const save = useMutation({ mutationFn: (overrides: Parameters<typeof onSave>[0]) => onSave(overrides) })
+	const deletion = useMutation({ mutationFn: (idToDelete: string) => onDelete!(idToDelete) })
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 	const tagInputRef = useRef<HTMLInputElement>(null)
 	const charCountRef = useRef<HTMLSpanElement>(null)
 
 	const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
+		if (save.isPending || deletion.isPending) return
 		const formData = new FormData(e.currentTarget)
 		const localDashboardName = (formData.get('dashboardName') as string) ?? ''
 		const localDescription = (formData.get('description') as string)?.slice(0, 200) ?? ''
@@ -59,13 +62,15 @@ function DashboardSettingsModalInner({
 		onVisibilityChange(localVisibility)
 		onTagsChange(localTags)
 		onDescriptionChange(localDescription)
-		onSave({
-			dashboardName: localDashboardName,
-			visibility: localVisibility,
-			tags: localTags,
-			description: localDescription
-		})
-		onClose()
+		save.mutate(
+			{
+				dashboardName: localDashboardName,
+				visibility: localVisibility,
+				tags: localTags,
+				description: localDescription
+			},
+			{ onSuccess: onClose }
+		)
 	}
 
 	const handleAddTag = () => {
@@ -93,18 +98,9 @@ function DashboardSettingsModalInner({
 		setShowDeleteConfirm(true)
 	}
 
-	const handleConfirmDelete = async () => {
-		if (!onDelete || !dashboardId) return
-
-		setIsDeleting(true)
-		try {
-			await onDelete(dashboardId)
-			setShowDeleteConfirm(false)
-			onClose()
-		} catch (error) {
-			console.error('Failed to delete dashboard:', error)
-		}
-		setIsDeleting(false)
+	const handleConfirmDelete = () => {
+		if (!onDelete || !dashboardId || deletion.isPending) return
+		deletion.mutate(dashboardId, { onSuccess: onClose })
 	}
 
 	return (
@@ -133,7 +129,7 @@ function DashboardSettingsModalInner({
 					</div>
 
 					<form onSubmit={handleSave}>
-						<div className="space-y-6">
+						<fieldset disabled={save.isPending || deletion.isPending} className="min-w-0 space-y-6">
 							<div>
 								<label
 									htmlFor="dashboard-settings-name"
@@ -297,15 +293,22 @@ function DashboardSettingsModalInner({
 									<button
 										type="button"
 										onClick={handleDeleteClick}
-										disabled={isDeleting}
+										disabled={deletion.isPending}
 										className="flex items-center gap-2 rounded-md bg-error/10 px-4 py-2 text-sm font-medium text-error transition-colors hover:bg-error/20 disabled:cursor-not-allowed disabled:opacity-50"
 									>
-										{isDeleting ? <LoadingSpinner size={16} /> : <Icon name="trash-2" height={16} width={16} />}
+										{deletion.isPending ? <LoadingSpinner size={16} /> : <Icon name="trash-2" height={16} width={16} />}
 										<span>Delete Dashboard</span>
 									</button>
 								</div>
 							) : null}
-						</div>
+						</fieldset>
+						{save.isError || deletion.isError ? (
+							<p role="alert" className="mt-4 text-sm text-error">
+								{save.isError
+									? 'Could not save changes. Your draft is still here; please try again.'
+									: 'Could not delete the dashboard. Please try again.'}
+							</p>
+						) : null}
 
 						<div className="mt-8 flex gap-3">
 							<Ariakit.DialogDismiss
@@ -314,8 +317,12 @@ function DashboardSettingsModalInner({
 							>
 								Cancel
 							</Ariakit.DialogDismiss>
-							<button type="submit" className="flex-1 rounded-md pro-btn-primary px-4 py-2 transition-colors">
-								Save Changes
+							<button
+								type="submit"
+								disabled={save.isPending || deletion.isPending}
+								className="flex-1 rounded-md pro-btn-primary px-4 py-2 transition-colors"
+							>
+								{save.isPending ? 'Saving…' : 'Save Changes'}
 							</button>
 						</div>
 					</form>

@@ -1,3 +1,4 @@
+import { useMutation } from '@tanstack/react-query'
 import { type Virtualizer, useVirtualizer } from '@tanstack/react-virtual'
 import {
 	type CSSProperties,
@@ -48,7 +49,8 @@ interface AgenticSidebarProps {
 	onOpenSettings?: () => void
 	hasCustomInstructions?: boolean
 	onBulkDelete?: (sessionIds: Array<string>) => Promise<void>
-	onPinSession?: (sessionId: string) => Promise<void>
+	onPinSession?: (sessionId: string) => void
+	isPinningSession?: boolean
 	onSearchMatchClick?: (sessionId: string, messageId: string) => void
 	hasMoreSessions?: boolean
 	isFetchingMoreSessions?: boolean
@@ -91,7 +93,8 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 	selectMode,
 	isSelected,
 	onToggleSelect,
-	onPinSession
+	onPinSession,
+	isPinningSession
 }: {
 	item: VirtualItem
 	itemStyle: CSSProperties
@@ -105,7 +108,8 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 	selectMode: boolean
 	isSelected: boolean
 	onToggleSelect: (sessionId: string) => void
-	onPinSession?: (sessionId: string) => Promise<void>
+	onPinSession?: (sessionId: string) => void
+	isPinningSession?: boolean
 }) {
 	if (item.type === 'header') {
 		return (
@@ -156,6 +160,7 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 			isSelected={isSelected}
 			onToggleSelect={onToggleSelect}
 			onPinSession={onPinSession}
+			isPinningSession={isPinningSession}
 		/>
 	)
 })
@@ -177,6 +182,7 @@ export function AgenticSidebar({
 	hasCustomInstructions,
 	onBulkDelete,
 	onPinSession,
+	isPinningSession,
 	onSearchMatchClick,
 	hasMoreSessions = false,
 	isFetchingMoreSessions = false,
@@ -219,18 +225,18 @@ export function AgenticSidebar({
 		})
 	}, [])
 
-	const handleBulkDelete = useCallback(async () => {
-		if (selectedSessionIds.size === 0 || !onBulkDelete) return
+	const bulkDeletion = useMutation({ mutationFn: (ids: Array<string>) => onBulkDelete!(ids) })
+	const handleBulkDelete = () => {
+		if (selectedSessionIds.size === 0 || !onBulkDelete || bulkDeletion.isPending) return
 		const count = selectedSessionIds.size
 		if (!window.confirm(`Delete ${count} session${count > 1 ? 's' : ''}?`)) return
-		try {
-			await onBulkDelete([...selectedSessionIds])
-			setSelectMode(false)
-			setSelectedSessionIds(new Set())
-		} catch {
-			// rollback handled by mutation
-		}
-	}, [selectedSessionIds, onBulkDelete])
+		bulkDeletion.mutate([...selectedSessionIds], {
+			onSuccess: () => {
+				setSelectMode(false)
+				setSelectedSessionIds(new Set())
+			}
+		})
+	}
 
 	const exitSelectMode = useCallback(() => {
 		setSelectMode(false)
@@ -495,6 +501,7 @@ export function AgenticSidebar({
 						onDelete={handleDelete}
 						onUpdateTitle={handleUpdateTitle}
 						onPinSession={onPinSession}
+						isPinningSession={isPinningSession}
 					/>
 					{onOpenAlerts ? (
 						<div className="px-4 pt-1">
@@ -588,6 +595,7 @@ export function AgenticSidebar({
 										isSelected={item.type === 'session' && selectedSessionIds.has(item.session.sessionId)}
 										onToggleSelect={toggleSelect}
 										onPinSession={onPinSession}
+										isPinningSession={isPinningSession}
 									/>
 								)
 							})}
@@ -635,8 +643,8 @@ export function AgenticSidebar({
 					</button>
 					<button
 						type="button"
-						onClick={() => void handleBulkDelete()}
-						disabled={selectedSessionIds.size === 0 || !onBulkDelete}
+						onClick={handleBulkDelete}
+						disabled={selectedSessionIds.size === 0 || !onBulkDelete || bulkDeletion.isPending}
 						className="flex min-h-0 items-center justify-center rounded-md bg-ai-error-vivid/10 px-3 py-2 text-xs font-medium text-ai-error transition-colors hover:bg-ai-error-vivid/20 disabled:opacity-40"
 					>
 						Delete{selectedSessionIds.size > 0 ? ` (${selectedSessionIds.size})` : ''}

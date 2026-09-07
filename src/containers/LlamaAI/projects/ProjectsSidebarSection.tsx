@@ -31,7 +31,8 @@ interface ProjectsSidebarSectionProps {
 	onSessionSelect: (sessionId: string) => void
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
 	onUpdateTitle: (args: { sessionId: string; title: string; projectId?: string | null }) => Promise<void>
-	onPinSession?: (sessionId: string) => Promise<void>
+	onPinSession?: (sessionId: string) => void
+	isPinningSession?: boolean
 }
 
 export function ProjectsSidebarSection({
@@ -45,7 +46,8 @@ export function ProjectsSidebarSection({
 	onSessionSelect,
 	onDelete,
 	onUpdateTitle,
-	onPinSession
+	onPinSession,
+	isPinningSession
 }: ProjectsSidebarSectionProps) {
 	const { user, hasActiveSubscription, isTrial } = useAuthContext()
 	const storageKey = `${LAST_SELECTED_PROJECT_KEY_PREFIX}:${user?.id ?? 'anonymous'}`
@@ -207,6 +209,7 @@ export function ProjectsSidebarSection({
 																isDeleting={deletingSessionId === sidebarSession.sessionId}
 																isUpdatingTitle={updatingTitleSessionId === sidebarSession.sessionId}
 																onPinSession={onPinSession}
+																isPinningSession={isPinningSession}
 															/>
 														</li>
 													)

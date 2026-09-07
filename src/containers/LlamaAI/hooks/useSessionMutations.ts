@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { llamaAIRequest } from '~/containers/LlamaAI/api/transport'
 import {
@@ -253,19 +254,19 @@ export function useSessionMutations() {
 			leafMessageId: string
 			signal?: AbortSignal
 		}) => {
-			try {
-				const response: unknown = await llamaAIRequest(authorizedFetch, `/agentic/${sessionId}/active-leaf`, {
-					method: 'POST',
-					json: { leafMessageId },
-					signal
+			return llamaAIRequest<unknown>(authorizedFetch, `/agentic/${sessionId}/active-leaf`, {
+				method: 'POST',
+				json: { leafMessageId },
+				signal
+			})
+				.then((response) => {
+					assertSwitchActiveLeafResponse(response)
+					return response
 				})
-
-				assertSwitchActiveLeafResponse(response)
-				return response
-			} catch (error) {
-				if (!signal?.aborted) console.error('[llama-ai] [switchActiveLeaf] failed:', getErrorMessage(error))
-				throw error instanceof Error ? error : new Error('Failed to switch branch')
-			}
+				.catch((error) => {
+					if (!signal?.aborted) console.error('[llama-ai] [switchActiveLeaf] failed:', getErrorMessage(error))
+					throw error instanceof Error ? error : new Error('Failed to switch branch')
+				})
 		}
 	})
 
@@ -402,7 +403,8 @@ export function useSessionMutations() {
 			)
 			return { previous }
 		},
-		onError: (_err, _sessionId, context) => {
+		onError: (error, _sessionId, context) => {
+			toast.error(error.message)
 			if (context?.previous) {
 				queryClient.setQueryData([SESSIONS_QUERY_KEY, user?.id], context.previous)
 			}
@@ -474,35 +476,37 @@ export function useSessionMutations() {
 	// Normalize the restore API payload into the shape the chat screen consumes.
 	const restoreSession = useCallback(
 		async (sessionId: string, limit = 10, around?: string, signal?: AbortSignal) => {
-			try {
-				const result = await restoreSessionMutation.mutateAsync({
+			return restoreSessionMutation
+				.mutateAsync({
 					sessionId,
 					limit: around ? 20 : limit,
 					around,
 					signal
 				})
-				const messages = getSessionRestoreMessages(result)
-				return {
-					messages,
-					pagination: {
-						hasMore: result?.hasMore ?? false,
-						isLoadingMore: false,
-						cursor: result?.nextCursor,
-						totalMessages: result?.totalMessages,
-						hasNewer: result?.hasNewer ?? false,
-						newerCursor: result?.newerCursor
-					},
-					activeLeafMessageId: result?.activeLeafMessageId ?? null,
-					streaming: result?.streaming,
-					todos: result?.todos,
-					projectId: result?.projectId ?? null,
-					queuedMessages: result?.queuedMessages,
-					queueRevision: result?.queueRevision
-				}
-			} catch (error) {
-				if (!signal?.aborted) console.error('[llama-ai] [restoreSession] failed:', getErrorMessage(error))
-				throw error instanceof Error ? error : new Error('Failed to restore session')
-			}
+				.then((result) => {
+					const messages = getSessionRestoreMessages(result)
+					return {
+						messages,
+						pagination: {
+							hasMore: result?.hasMore ?? false,
+							isLoadingMore: false,
+							cursor: result?.nextCursor,
+							totalMessages: result?.totalMessages,
+							hasNewer: result?.hasNewer ?? false,
+							newerCursor: result?.newerCursor
+						},
+						activeLeafMessageId: result?.activeLeafMessageId ?? null,
+						streaming: result?.streaming,
+						todos: result?.todos,
+						projectId: result?.projectId ?? null,
+						queuedMessages: result?.queuedMessages,
+						queueRevision: result?.queueRevision
+					}
+				})
+				.catch((error) => {
+					if (!signal?.aborted) console.error('[llama-ai] [restoreSession] failed:', getErrorMessage(error))
+					throw error instanceof Error ? error : new Error('Failed to restore session')
+				})
 		},
 		[restoreSessionMutation]
 	)
@@ -510,61 +514,61 @@ export function useSessionMutations() {
 	// Reuse the restore endpoint to fetch older history pages for infinite scroll.
 	const loadMoreMessages = useCallback(
 		async (sessionId: string, cursor: number, signal?: AbortSignal) => {
-			try {
-				const result = await restoreSessionMutation.mutateAsync({ sessionId, limit: 10, cursor, signal })
-				return {
-					messages: getSessionRestoreMessages(result),
-					pagination: {
-						hasMore: result?.hasMore ?? false,
-						isLoadingMore: false,
-						cursor: result?.nextCursor,
-						totalMessages: result?.totalMessages
+			return restoreSessionMutation
+				.mutateAsync({ sessionId, limit: 10, cursor, signal })
+				.then((result) => {
+					return {
+						messages: getSessionRestoreMessages(result),
+						pagination: {
+							hasMore: result?.hasMore ?? false,
+							isLoadingMore: false,
+							cursor: result?.nextCursor,
+							totalMessages: result?.totalMessages
+						}
 					}
-				}
-			} catch (error) {
-				if (!signal?.aborted) console.error('[llama-ai] [loadMoreMessages] failed:', getErrorMessage(error))
-				throw new Error(`Failed to load older messages: ${getErrorMessage(error)}`)
-			}
+				})
+				.catch((error) => {
+					if (!signal?.aborted) console.error('[llama-ai] [loadMoreMessages] failed:', getErrorMessage(error))
+					throw new Error(`Failed to load older messages: ${getErrorMessage(error)}`)
+				})
 		},
 		[restoreSessionMutation]
 	)
 
 	const loadNewerMessages = useCallback(
 		async (sessionId: string, afterSequence: number, signal?: AbortSignal) => {
-			try {
-				const result = await restoreSessionMutation.mutateAsync({ sessionId, limit: 10, afterSequence, signal })
-				return {
-					messages: getSessionRestoreMessages(result),
-					pagination: {
-						hasNewer: result?.hasNewer ?? false,
-						newerCursor: result?.newerCursor
+			return restoreSessionMutation
+				.mutateAsync({ sessionId, limit: 10, afterSequence, signal })
+				.then((result) => {
+					return {
+						messages: getSessionRestoreMessages(result),
+						pagination: {
+							hasNewer: result?.hasNewer ?? false,
+							newerCursor: result?.newerCursor
+						}
 					}
-				}
-			} catch (error) {
-				if (!signal?.aborted) console.error('[llama-ai] [loadNewerMessages] failed:', getErrorMessage(error))
-				throw new Error(`Failed to load newer messages: ${getErrorMessage(error)}`)
-			}
+				})
+				.catch((error) => {
+					if (!signal?.aborted) console.error('[llama-ai] [loadNewerMessages] failed:', getErrorMessage(error))
+					throw new Error(`Failed to load newer messages: ${getErrorMessage(error)}`)
+				})
 		},
 		[restoreSessionMutation]
 	)
 
 	return {
-		createSession: createSessionMutation.mutateAsync,
+		createSession: createSessionMutation,
 		createFakeSession,
 		applyServerSessionTitle,
 		replaceOptimisticSessionId,
 		restoreSession,
 		loadMoreMessages,
 		loadNewerMessages,
-		switchActiveLeaf: switchActiveLeafMutation.mutateAsync,
+		switchActiveLeaf: switchActiveLeafMutation,
 		deleteSession: deleteSessionMutation,
 		updateTitle: updateTitleMutation,
-		isCreatingSession: createSessionMutation.isPending,
 		isRestoringSession: restoreSessionMutation.isPending,
-		isSwitchingActiveLeaf: switchActiveLeafMutation.isPending,
-		bulkDeleteSessions: bulkDeleteSessionsMutation.mutateAsync,
-		isBulkDeleting: bulkDeleteSessionsMutation.isPending,
-		pinSession: pinSessionMutation.mutateAsync,
-		isPinningSession: pinSessionMutation.isPending
+		bulkDeleteSessions: bulkDeleteSessionsMutation,
+		pinSession: pinSessionMutation
 	}
 }

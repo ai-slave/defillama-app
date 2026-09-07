@@ -109,7 +109,6 @@ export function useDashboardAPI() {
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
-			void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
 		},
 		onError: (err: unknown) => {
 			toast.error(err instanceof Error ? err.message : 'Failed to create dashboard')
@@ -160,24 +159,21 @@ export function useDashboardAPI() {
 	})
 
 	const loadDashboard = useCallback(
-		async (id: string) => {
-			try {
-				const dashboard = await dashboardAPI.getDashboard(id, isAuthenticated ? authorizedFetch : undefined)
-				return dashboard
-			} catch (error) {
-				if (error instanceof DashboardError && error.status === 404) {
-					return null
-				}
+		(id: string) =>
+			dashboardAPI.getDashboard(id, isAuthenticated ? authorizedFetch : undefined).catch((error: unknown) => {
+				if (error instanceof DashboardError && error.status === 404) return null
 				throw error
-			}
-		},
+			}),
 		[isAuthenticated, authorizedFetch]
 	)
 
 	// Navigate to a dashboard
-	const navigateToDashboard = (id: string) => {
-		void router.push(`/pro/${id}`)
-	}
+	const navigateToDashboard = useCallback(
+		(id: string) => {
+			void router.push(`/pro/${id}`)
+		},
+		[router]
+	)
 
 	// Delete dashboard (confirmation handled in UI)
 	const deleteDashboardWithConfirmation = useCallback(
@@ -194,11 +190,9 @@ export function useDashboardAPI() {
 		dashboardsError,
 
 		// Mutations
-		createDashboard: createDashboardMutation.mutateAsync,
-		updateDashboard: updateDashboardMutation.mutateAsync,
+		createDashboard: createDashboardMutation,
+		updateDashboard: updateDashboardMutation,
 		deleteDashboard: deleteDashboardWithConfirmation,
-		isCreating: createDashboardMutation.isPending,
-		isUpdating: updateDashboardMutation.isPending,
 		isDeleting: deleteDashboardMutation.isPending,
 
 		// Actions

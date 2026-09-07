@@ -9,16 +9,15 @@ export function useDashboardEngagement(dashboardId: string | null) {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()
 
 	const viewMutation = useMutation({
-		mutationFn: async () => {
-			if (!dashboardId) return
-			return await dashboardAPI.viewDashboard(dashboardId, isAuthenticated ? authorizedFetch : undefined)
+		mutationFn: async (id: string) => {
+			return await dashboardAPI.viewDashboard(id, isAuthenticated ? authorizedFetch : undefined)
 		},
-		onSuccess: (data) => {
-			if (!dashboardId || !data) return
+		onSuccess: (data, id) => {
+			if (!data) return
 			queryClient.setQueriesData(
 				{ queryKey: ['pro-dashboard', 'dashboard'], exact: false },
 				(oldData: Dashboard | undefined) => {
-					if (!oldData || oldData.id !== dashboardId) return oldData
+					if (!oldData || oldData.id !== id) return oldData
 					return { ...oldData, ...data }
 				}
 			)
@@ -29,20 +28,13 @@ export function useDashboardEngagement(dashboardId: string | null) {
 	})
 
 	const likeMutation = useMutation({
-		mutationFn: async () => {
-			if (!dashboardId) return
-			if (!isAuthenticated) {
-				toast.error('Please sign in to like dashboards')
-				return
-			}
-			return await dashboardAPI.likeDashboard(dashboardId, authorizedFetch)
-		},
-		onSuccess: (data) => {
+		mutationFn: (id: string) => dashboardAPI.likeDashboard(id, authorizedFetch),
+		onSuccess: (data, id) => {
 			if (!data) return
 			queryClient.setQueriesData(
 				{ queryKey: ['pro-dashboard', 'dashboard'], exact: false },
 				(oldData: Dashboard | undefined) => {
-					if (!oldData || oldData.id !== dashboardId) return oldData
+					if (!oldData || oldData.id !== id) return oldData
 					return {
 						...oldData,
 						likeCount: data.likeCount,
@@ -59,10 +51,19 @@ export function useDashboardEngagement(dashboardId: string | null) {
 	})
 
 	return {
-		trackView: viewMutation.mutate,
-		toggleLike: likeMutation.mutate,
-		isLiking: likeMutation.isPending,
-		liked: likeMutation.data?.liked,
-		likeCount: likeMutation.data?.likeCount
+		trackView: () => {
+			if (dashboardId) viewMutation.mutate(dashboardId)
+		},
+		toggleLike: () => {
+			if (!dashboardId) return
+			if (!isAuthenticated) {
+				toast.error('Please sign in to like dashboards')
+				return
+			}
+			likeMutation.mutate(dashboardId)
+		},
+		isLiking: likeMutation.isPending && likeMutation.variables === dashboardId,
+		liked: likeMutation.variables === dashboardId ? likeMutation.data?.liked : undefined,
+		likeCount: likeMutation.variables === dashboardId ? likeMutation.data?.likeCount : undefined
 	}
 }

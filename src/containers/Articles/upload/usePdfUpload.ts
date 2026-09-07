@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { FEATURES_SERVER } from '~/constants'
@@ -52,10 +53,9 @@ async function fileToBase64(file: File): Promise<string> {
 
 export function usePdfUpload(args: { articleId: string | null | undefined }) {
 	const { authorizedFetch } = useAuthContext()
-	const [isUploading, setIsUploading] = useState(false)
 
-	const uploadFile = useCallback(
-		async (file: File): Promise<PdfUploadResult> => {
+	const upload = useMutation({
+		mutationFn: async (file: File): Promise<PdfUploadResult> => {
 			const clientError = validateClient(file)
 			if (clientError) throw new PdfUploadError(clientError, 400)
 			if (!args.articleId) throw new PdfUploadError('Save the article before uploading a PDF', 400)
@@ -69,31 +69,25 @@ export function usePdfUpload(args: { articleId: string | null | undefined }) {
 				dataBase64
 			}
 
-			setIsUploading(true)
-			try {
-				const response = await authorizedFetch(uploadUrl(), {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(payload)
-				})
-				if (!response) throw new PdfUploadError('Please sign in to continue', 401)
-				const text = await response.text()
-				const data = text ? JSON.parse(text) : null
-				if (!response.ok) {
-					const message =
-						data && typeof data === 'object' && typeof data.error === 'string'
-							? data.error
-							: response.statusText || 'Upload failed'
-					throw new PdfUploadError(message, response.status)
-				}
-				return data as PdfUploadResult
-			} finally {
-				setIsUploading(false)
+			const response = await authorizedFetch(uploadUrl(), {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload)
+			})
+			if (!response) throw new PdfUploadError('Please sign in to continue', 401)
+			const text = await response.text()
+			const data = text ? JSON.parse(text) : null
+			if (!response.ok) {
+				const message =
+					data && typeof data === 'object' && typeof data.error === 'string'
+						? data.error
+						: response.statusText || 'Upload failed'
+				throw new PdfUploadError(message, response.status)
 			}
-		},
-		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
-		[args.articleId, authorizedFetch]
-	)
+			return data as PdfUploadResult
+		}
+	})
+	const { mutateAsync: uploadFile } = upload
 
 	const uploadWithToast = useCallback(
 		async (file: File): Promise<PdfUploadResult> => {
@@ -106,5 +100,5 @@ export function usePdfUpload(args: { articleId: string | null | undefined }) {
 		[uploadFile]
 	)
 
-	return { uploadFile, uploadWithToast, isUploading }
+	return { uploadFile, uploadWithToast, isUploading: upload.isPending }
 }

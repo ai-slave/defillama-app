@@ -35,6 +35,25 @@ interface SqlChartModalProps {
 
 type RunOutcome = { result: QueryResult; chartConfig: ChartConfig }
 
+async function runWithSources(
+	context: Parameters<typeof runSql>[0],
+	sql: string,
+	sources: Array<TableSource>,
+	options: Parameters<typeof runSql>[2],
+	signal: AbortSignal
+) {
+	const loadedNames = new Set(context.loadedTables.map((table) => table.name))
+	for (const source of sources) {
+		if (signal.aborted) return { ok: false, cancelled: true } as const
+		if (source.kind === 'chart' && !loadedNames.has(tableNameFor(source))) {
+			await context.loadSource(source, signal)
+			loadedNames.add(tableNameFor(source))
+		}
+	}
+	if (signal.aborted) return { ok: false, cancelled: true } as const
+	return runSql(context, sql, options, undefined, signal)
+}
+
 export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 	const { authorizedFetch } = useAuthContext()
 	const { handleAddSqlChart, handleEditItem } = useProDashboardEditorActions()
@@ -61,7 +80,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 	const [savePending, setSavePending] = useState(false)
 	const [busyTaskId, setBusyTaskId] = useState<string | null>(null)
 	const [loadingStage, setLoadingStage] = useState<string | null>(null)
-	const [error, setError] = useState<string | null>(null)
+	const [queryError, setQueryError] = useState<string | null>(null)
 	const [durationMs, setDurationMs] = useState<number | null>(null)
 
 	const editorRef = useRef<EditorHandle | null>(null)
@@ -84,7 +103,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 	useEffect(() => () => runControllerRef.current?.abort(), [])
 
 	const run = useCallback(
-		async (override?: string): Promise<RunOutcome | null> => {
+		async (override?: string, sources: Array<TableSource> = []): Promise<RunOutcome | null> => {
 			if (!duckdb.conn) return null
 			const trimmed = (override ?? sql).trim()
 			if (!trimmed) return null
@@ -92,20 +111,24 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 			const controller = new AbortController()
 			runControllerRef.current = controller
 			setRunning(true)
-			setError(null)
+			setQueryError(null)
 			setLoadingStage(null)
-			const res = await runSql(
+			const res = await runWithSources(
 				{ conn: duckdb.conn, loadedTables: registry.tables, loadSource: registry.load, chartOptionsMap },
 				trimmed,
+				sources,
 				{
 					onLoadingStage: (stage) => {
 						if (runControllerRef.current === controller) setLoadingStage(stage)
 					}
 				},
-				undefined,
 				controller.signal
-			)
-			if (runControllerRef.current !== controller) return null
+			).catch((error: unknown) => ({
+				ok: false as const,
+				cancelled: false,
+				error: error instanceof Error ? error.message : 'Could not load query sources'
+			}))
+			if (controller.signal.aborted || runControllerRef.current !== controller) return null
 			runControllerRef.current = null
 			setRunning(false)
 			setLoadingStage(null)
@@ -121,14 +144,11 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 				setChartConfig(nextChartConfig)
 				return { result: res.result, chartConfig: nextChartConfig }
 			}
-			if ('error' in res && !res.cancelled) setError(res.error)
+			if ('error' in res && !res.cancelled) setQueryError(res.error)
 			return null
 		},
 		[duckdb.conn, registry.tables, registry.load, chartOptionsMap, sql]
 	)
-
-	const loadTable = registry.load
-	const registryTables = registry.tables
 
 	const applyQuery = useCallback(
 		async (taskId: string, title: string, nextSql: string, tables?: Array<TableSource>, overwriteName?: boolean) => {
@@ -138,19 +158,13 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 			if (!duckdb.conn) return
 			setBusyTaskId(taskId)
 			try {
-				const loadedNames = new Set(registryTables.map((t) => t.name))
-				for (const source of tables ?? []) {
-					if (source.kind === 'chart' && !loadedNames.has(tableNameFor(source))) {
-						await loadTable(source)
-					}
-				}
-				await run(nextSql)
+				await run(nextSql, tables)
 			} finally {
 				setBusyTaskId(null)
 			}
 		},
 		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
-		[running, savePending, busyTaskId, duckdb.conn, registryTables, loadTable, run]
+		[running, savePending, busyTaskId, duckdb.conn, run]
 	)
 
 	const editorLineCount = sql.split('\n').length
@@ -258,6 +272,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 							type="text"
 							value={name}
 							onChange={(e) => setName(e.target.value)}
+							aria-label="Widget name"
 							placeholder="Widget name (optional)"
 							className="shrink-0 rounded-md border pro-border bg-page px-3 py-2 text-sm text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
@@ -301,9 +316,9 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 							) : null}
 						</div>
 
-						{error ? (
+						{queryError ? (
 							<div className="shrink-0 rounded-md border border-error/40 bg-error/10 px-3 py-2 text-xs text-error">
-								{error}
+								{queryError}
 							</div>
 						) : null}
 

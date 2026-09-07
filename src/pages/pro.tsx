@@ -490,9 +490,7 @@ function ProContent({
 				<Suspense fallback={<></>}>
 					<CreateDashboardPicker
 						dialogStore={createDashboardDialogStore}
-						onCreate={(data) => {
-							void handleCreateDashboard(data)
-						}}
+						onCreate={handleCreateDashboard}
 						comparisonPreset={comparisonPreset}
 					/>
 				</Suspense>

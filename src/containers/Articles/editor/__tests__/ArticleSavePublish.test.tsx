@@ -239,7 +239,12 @@ test('preserves cover metadata edited while its replacement uploads', async () =
 	await mount()
 	await act(async () => {
 		const input = document.querySelector<HTMLInputElement>('[aria-label="Upload cover image"]')!
-		Object.defineProperty(input, 'files', { value: [new File(['image'], 'cover.png', { type: 'image/png' })] })
+		Object.defineProperty(input, 'files', {
+			configurable: true,
+			value: [new File(['image'], 'cover.png', { type: 'image/png' })]
+		})
+		// The DOM shim does not populate value when files are assigned. Model the browser's chosen filename.
+		Object.defineProperty(input, 'value', { configurable: true, writable: true, value: 'C:\\fakepath\\cover.png' })
 		input.dispatchEvent(new Event('change', { bubbles: true }))
 	})
 	await click('Edit details')
@@ -263,7 +268,12 @@ test('does not apply an old cover upload to a different article', async () => {
 	await mount()
 	await act(async () => {
 		const input = document.querySelector<HTMLInputElement>('[aria-label="Upload cover image"]')!
-		Object.defineProperty(input, 'files', { value: [new File(['image'], 'cover.png', { type: 'image/png' })] })
+		Object.defineProperty(input, 'files', {
+			configurable: true,
+			value: [new File(['image'], 'cover.png', { type: 'image/png' })]
+		})
+		// The DOM shim does not populate value when files are assigned. Model the browser's chosen filename.
+		Object.defineProperty(input, 'value', { configurable: true, writable: true, value: 'C:\\fakepath\\cover.png' })
 		input.dispatchEvent(new Event('change', { bubbles: true }))
 	})
 	article = {
@@ -276,4 +286,15 @@ test('does not apply an old cover upload to a different article', async () => {
 	await act(async () => pending.resolve({ url: '/late.png' }))
 	expect(title().value).toBe('Another article')
 	expect(container.querySelector('img[alt="Second cover"]')?.getAttribute('src')).toBe('/second.png')
+	const input = document.querySelector<HTMLInputElement>('[aria-label="Upload cover image"]')!
+	expect(input.value).toBe('')
+	api.upload.mockResolvedValue({ url: '/retry.png' })
+	Object.defineProperty(input, 'files', {
+		configurable: true,
+		value: [new File(['image'], 'cover.png', { type: 'image/png' })]
+	})
+	await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })))
+	expect(api.upload).toHaveBeenCalledTimes(2)
+	await save()
+	expect(api.save.mock.calls.at(-1)![1].coverImage.url).toBe('/retry.png')
 })

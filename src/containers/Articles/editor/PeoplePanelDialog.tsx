@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { useRef, useState } from 'react'
+import { useMutationState, type MutationKey } from '@tanstack/react-query'
+import { useId, useRef, useState } from 'react'
 import { useImageUpload, type UploadResult } from '../upload/useImageUpload'
 import {
 	makeEmptyPeoplePanelConfig,
@@ -16,6 +17,7 @@ type Props = {
 }
 
 export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }: Props) {
+	const uploadGroupId = useId()
 	const initialPanel = initialConfig ?? makeEmptyPeoplePanelConfig()
 	const [label, setLabel] = useState(initialPanel.label)
 	const [items, setItems] = useState(() =>
@@ -54,8 +56,14 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 		})
 	}
 
+	// Removed rows may still finish uploading; only people still in this draft block Save.
+	const pendingUploadIds = useMutationState({
+		filters: { mutationKey: ['article-person-image', uploadGroupId], status: 'pending' },
+		select: (mutation) => mutation.options.mutationKey?.[2]
+	})
+	const hasPendingUploads = items.some(({ id }) => pendingUploadIds.includes(id))
 	const itemsHaveImage = items.every(({ item }) => Boolean(item.src))
-	const canSubmit = items.length > 0 && itemsHaveImage
+	const canSubmit = items.length > 0 && itemsHaveImage && !hasPendingUploads
 
 	const submit = () => {
 		if (!canSubmit) {
@@ -114,6 +122,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 						{items.map(({ id, item }, idx) => (
 							<PersonRow
 								key={id}
+								uploadKey={['article-person-image', uploadGroupId, id]}
 								item={item}
 								idx={idx}
 								total={items.length}
@@ -151,7 +160,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 					onClick={submit}
 					className="rounded-md bg-research-tint px-3 py-2 text-xs font-medium text-link shadow-sm transition-colors hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
 				>
-					{initialConfig ? 'Update panel' : 'Insert panel'}
+					{hasPendingUploads ? 'Uploading images…' : initialConfig ? 'Update panel' : 'Insert panel'}
 				</button>
 			</div>
 		</Ariakit.Dialog>
@@ -159,6 +168,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 }
 
 type RowProps = {
+	uploadKey: MutationKey
 	item: ArticlePeoplePanelItem
 	idx: number
 	total: number
@@ -169,9 +179,13 @@ type RowProps = {
 	onMove: (direction: -1 | 1) => void
 }
 
-function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove, onMove }: RowProps) {
+function PersonRow({ uploadKey, item, idx, total, articleId, showErrors, onChange, onRemove, onMove }: RowProps) {
 	const inputRef = useRef<HTMLInputElement>(null)
-	const { uploadWithToast, isUploading } = useImageUpload({ scope: 'article-inline', articleId })
+	const { uploadWithToast, isUploading } = useImageUpload({
+		scope: 'article-inline',
+		articleId,
+		mutationKey: uploadKey
+	})
 
 	const handleFile = async (file: File | null | undefined) => {
 		if (!file) return

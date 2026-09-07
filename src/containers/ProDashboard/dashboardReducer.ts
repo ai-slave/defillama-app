@@ -1,3 +1,4 @@
+import { replaceEqualDeep } from '@tanstack/react-query'
 import type { SetStateAction } from 'react'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
@@ -29,6 +30,7 @@ export type DashboardAction =
 	| { type: 'SET_SHOW_GENERATE_DASHBOARD_MODAL'; payload: boolean }
 	| { type: 'SET_SHOW_ITERATE_DASHBOARD_MODAL'; payload: boolean }
 	| { type: 'APPLY_DASHBOARD'; payload: Dashboard }
+	| { type: 'SAVE_DASHBOARD'; payload: Dashboard; submitted: DashboardState }
 
 const INITIAL_DASHBOARD_STATE: DashboardState = {
 	items: [],
@@ -54,7 +56,7 @@ function stateFromDashboard(dashboard: Dashboard): DashboardState {
 		customTimePeriod: dashboard.data.customTimePeriod || null,
 		currentDashboard: dashboard,
 		dashboardVisibility: dashboard.visibility || 'private',
-		dashboardTags: dashboard.tags || [],
+		dashboardTags: dashboard.tags || INITIAL_DASHBOARD_STATE.dashboardTags,
 		dashboardDescription: dashboard.description || ''
 	}
 }
@@ -76,6 +78,36 @@ export function initDashboardState(
 	return {
 		...INITIAL_DASHBOARD_STATE,
 		dashboardId: id
+	}
+}
+
+// Apply server-owned metadata, but retain fields edited since this request's baseline.
+// Compare arrays only on responses: server/cache copies need not share the local draft's references.
+function reconcileDashboard(state: DashboardState, dashboard: Dashboard, baseline: DashboardState): DashboardState {
+	const saved = stateFromDashboard(dashboard)
+	const periodUnchanged =
+		state.timePeriod === baseline.timePeriod &&
+		replaceEqualDeep(baseline.customTimePeriod, state.customTimePeriod) === baseline.customTimePeriod
+	return {
+		...state,
+		dashboardId: saved.dashboardId,
+		currentDashboard: dashboard,
+		items: replaceEqualDeep(baseline.items, state.items) === baseline.items ? saved.items : state.items,
+		dashboardName: state.dashboardName === baseline.dashboardName ? saved.dashboardName : state.dashboardName,
+		timePeriod: periodUnchanged ? saved.timePeriod : state.timePeriod,
+		customTimePeriod: periodUnchanged ? saved.customTimePeriod : state.customTimePeriod,
+		dashboardVisibility:
+			state.dashboardVisibility === baseline.dashboardVisibility
+				? saved.dashboardVisibility
+				: state.dashboardVisibility,
+		dashboardTags:
+			replaceEqualDeep(baseline.dashboardTags, state.dashboardTags) === baseline.dashboardTags
+				? saved.dashboardTags
+				: state.dashboardTags,
+		dashboardDescription:
+			state.dashboardDescription === baseline.dashboardDescription
+				? saved.dashboardDescription
+				: state.dashboardDescription
 	}
 }
 
@@ -128,10 +160,17 @@ export function dashboardReducer(state: DashboardState, action: DashboardAction)
 		case 'SET_SHOW_ITERATE_DASHBOARD_MODAL':
 			return { ...state, showIterateDashboardModal: action.payload }
 
+		case 'SAVE_DASHBOARD':
+			if (state.dashboardId !== action.submitted.dashboardId) return state
+			return reconcileDashboard(state, action.payload, action.submitted)
+
 		case 'APPLY_DASHBOARD': {
 			const dashboard = action.payload
 			if (!dashboard?.data?.items || !Array.isArray(dashboard.data.items)) {
 				return state
+			}
+			if (state.currentDashboard?.id === dashboard.id) {
+				return reconcileDashboard(state, dashboard, stateFromDashboard(state.currentDashboard))
 			}
 			return {
 				...stateFromDashboard(dashboard),
