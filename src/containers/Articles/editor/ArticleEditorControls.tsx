@@ -26,6 +26,7 @@ export function RailButton({
 		<button
 			type="button"
 			aria-label={label}
+			aria-pressed={active}
 			title={label}
 			onClick={onClick}
 			disabled={disabled}
@@ -218,6 +219,7 @@ export type EditorFlags = {
 	highlight: boolean
 	link: boolean
 	entityLink: boolean
+	paragraph: boolean
 	h2: boolean
 	h3: boolean
 	bulletList: boolean
@@ -238,6 +240,7 @@ const EMPTY_FLAGS: EditorFlags = {
 	highlight: false,
 	link: false,
 	entityLink: false,
+	paragraph: false,
 	h2: false,
 	h3: false,
 	bulletList: false,
@@ -264,6 +267,7 @@ export function useEditorFlags(editor: Editor | null): EditorFlags {
 							highlight: e.isActive('highlight'),
 							link: e.isActive('link'),
 							entityLink: e.isActive('entityLink'),
+							paragraph: e.isActive('paragraph'),
 							h2: e.isActive('heading', { level: 2 }),
 							h3: e.isActive('heading', { level: 3 }),
 							bulletList: e.isActive('bulletList'),

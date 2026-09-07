@@ -1,9 +1,9 @@
 import { Extension, type Editor, type Range } from '@tiptap/core'
 import { PluginKey } from '@tiptap/pm/state'
 import { ReactRenderer } from '@tiptap/react'
-import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion'
+import Suggestion, { exitSuggestion, type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion'
 import { matchSorter } from 'match-sorter'
-import { SlashCommandList, type SlashCommandListHandle } from './SlashCommandList'
+import { SlashCommandPopover, type SlashCommandListHandle } from './SlashCommandList'
 
 export type SlashCommandItem = {
 	id: string
@@ -289,71 +289,35 @@ type FloatingHost = {
 
 function createFloatingHost(): FloatingHost {
 	let renderer: ReactRenderer<SlashCommandListHandle> | null = null
-	let wrapper: HTMLDivElement | null = null
-	let onScroll: (() => void) | null = null
-
-	const updatePosition = (props: SuggestionProps<SlashCommandItem, SlashCommandItem>) => {
-		if (!wrapper) return
-		const rect = props.clientRect?.()
-		if (!rect) {
-			wrapper.style.visibility = 'hidden'
-			return
-		}
-		wrapper.style.visibility = 'visible'
-		const popWidth = 288
-		const margin = 8
-		let left = rect.left
-		if (left + popWidth + margin > window.innerWidth) left = window.innerWidth - popWidth - margin
-		if (left < margin) left = margin
-		const popHeightEstimate = 360
-		let top = rect.bottom + 8
-		if (top + popHeightEstimate > window.innerHeight - margin) {
-			top = Math.max(margin, rect.top - popHeightEstimate - 8)
-		}
-		wrapper.style.left = `${left}px`
-		wrapper.style.top = `${top}px`
-	}
 
 	return {
 		mount(props, items) {
-			wrapper = document.createElement('div')
-			wrapper.style.position = 'fixed'
-			wrapper.style.zIndex = '70'
-			wrapper.style.visibility = 'hidden'
-			document.body.appendChild(wrapper)
-			renderer = new ReactRenderer(SlashCommandList, {
+			renderer = new ReactRenderer(SlashCommandPopover, {
 				props: {
+					editor: props.editor,
+					clientRect: props.clientRect,
+					dismiss: () => exitSuggestion(props.editor.view, SLASH_KEY),
 					items,
 					command: (item: SlashCommandItem) => props.command(item)
 				},
 				editor: props.editor
 			})
-			if (renderer.element) wrapper.appendChild(renderer.element)
-			updatePosition(props)
-			onScroll = () => updatePosition(props)
-			window.addEventListener('scroll', onScroll, true)
-			window.addEventListener('resize', onScroll)
+			document.body.appendChild(renderer.element)
 		},
 		updateProps(props, items) {
 			renderer?.updateProps({
+				clientRect: props.clientRect,
 				items,
 				command: (item: SlashCommandItem) => props.command(item)
 			})
-			updatePosition(props)
 		},
 		keyDown({ event }) {
 			return renderer?.ref?.onKeyDown(event) ?? false
 		},
 		destroy() {
-			if (onScroll) {
-				window.removeEventListener('scroll', onScroll, true)
-				window.removeEventListener('resize', onScroll)
-				onScroll = null
-			}
+			renderer?.element.remove()
 			renderer?.destroy()
 			renderer = null
-			wrapper?.remove()
-			wrapper = null
 		}
 	}
 }
@@ -385,6 +349,10 @@ export const ArticleSlashCommand = Extension.create({
 							host?.updateProps(props, props.items)
 						},
 						onKeyDown: (props) => {
+							if (props.event.key === 'Tab') {
+								exitSuggestion(props.view, SLASH_KEY)
+								return false
+							}
 							if (props.event.key === 'Escape') {
 								host?.destroy()
 								host = null

@@ -166,6 +166,9 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		immediatelyRender: false,
 		editorProps: {
 			attributes: {
+				role: 'textbox',
+				'aria-label': 'Article body',
+				'aria-multiline': 'true',
 				class:
 					'article-editor-prose prose prose-neutral dark:prose-invert max-w-none focus:outline-hidden prose-a:text-link prose-headings:tracking-tight prose-headings:font-semibold min-h-[60vh] py-10 break-words [overflow-wrap:anywhere]'
 			}

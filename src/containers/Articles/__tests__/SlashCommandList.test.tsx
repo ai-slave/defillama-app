@@ -1,10 +1,10 @@
 // @vitest-environment happy-dom
 
-import { act } from 'react'
+import { act, createRef } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { SlashCommandItem } from '../editor/slashCommand'
-import { SlashCommandList } from '../editor/SlashCommandList'
+import { SlashCommandList, type SlashCommandListHandle } from '../editor/SlashCommandList'
 
 function item(id: string, group: string): SlashCommandItem {
 	// No icon or description, so the option's text is exactly its title.
@@ -27,24 +27,35 @@ describe('SlashCommandList', () => {
 		container.remove()
 	})
 
-	test('opens a group header at the start of every run of consecutive items sharing a group', async () => {
-		const items = [item('h1', 'Blocks'), item('h2', 'Blocks'), item('image', 'Media'), item('quote', 'Blocks')]
+	test('wraps navigation, ignores composition, and resets the highlight for new results', async () => {
+		const handle = createRef<SlashCommandListHandle>()
+		const command = vi.fn()
+		const items = [item('heading', 'Blocks'), item('quote', 'Blocks')]
+		await act(async () => root.render(<SlashCommandList ref={handle} items={items} command={command} />))
 		await act(async () => {
-			root.render(<SlashCommandList items={items} command={vi.fn()} />)
+			handle.current!.onKeyDown(new KeyboardEvent('keydown', { key: 'ArrowUp' }))
 		})
-
-		// Text order captures group boundaries without depending on wrapper tags or nesting.
-		expect(container.querySelector('[role="listbox"]')?.textContent?.replace(/\s+/g, '')).toBe(
-			'Blocksh1h2MediaimageBlocksquote'
-		)
+		await act(async () => {
+			handle.current!.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true }))
+		})
+		expect(command).not.toHaveBeenCalled()
+		await act(async () => {
+			handle.current!.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter' }))
+		})
+		expect(command).toHaveBeenLastCalledWith(items[1])
+		await act(async () => root.render(<SlashCommandList ref={handle} items={[items[0]]} command={command} />))
+		await act(async () => {
+			handle.current!.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter' }))
+		})
+		expect(command).toHaveBeenLastCalledWith(items[0])
 	})
 
-	test('renders the empty state without a listbox when nothing matches', async () => {
+	test('keeps an empty named list available when nothing matches', async () => {
 		await act(async () => {
 			root.render(<SlashCommandList items={[]} command={vi.fn()} />)
 		})
 
-		expect(container.querySelector('[role="listbox"]')).toBeNull()
+		expect(container.querySelector('[role="listbox"]')?.getAttribute('aria-label')).toBe('Insert a block')
 		expect(container.textContent).toContain('No matches')
 	})
 })

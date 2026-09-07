@@ -1,19 +1,25 @@
-import { forwardRef, useImperativeHandle, useState } from 'react'
+import { forwardRef, useId, useImperativeHandle, useState } from 'react'
 import type { SlashCommandItem } from './slashCommand'
+import { SuggestionPopover, useSuggestionAccessibility, type SuggestionAnchor } from './SuggestionPopover'
 
 type Props = {
 	items: Array<SlashCommandItem>
 	command: (item: SlashCommandItem) => void
 }
 
+export const SlashCommandPopover = forwardRef<SlashCommandListHandle, Props & SuggestionAnchor>((props, ref) => {
+	return (
+		<SuggestionPopover {...props}>
+			<SlashCommandList {...props} ref={ref} />
+		</SuggestionPopover>
+	)
+})
+
 export type SlashCommandListHandle = {
 	onKeyDown: (event: KeyboardEvent) => boolean
 }
 
-export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(function SlashCommandList(
-	{ items, command },
-	ref
-) {
+export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(({ items, command }, ref) => {
 	const [selectedIndex, setSelectedIndex] = useState(0)
 	// A new result list restarts the highlight at the top.
 	const [syncedItems, setSyncedItems] = useState(items)
@@ -22,9 +28,14 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(functi
 		setSelectedIndex(0)
 	}
 
+	const listId = useId()
+	const optionId = (index: number) => `${listId}-${index}`
+	useSuggestionAccessibility(listId, items.length > 0 ? optionId(selectedIndex) : null)
+
 	useImperativeHandle(ref, () => ({
 		onKeyDown(event) {
-			if (items.length === 0) return false
+			if (event.isComposing) return false
+			if (items.length === 0) return ['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)
 			if (event.key === 'ArrowDown') {
 				setSelectedIndex((i) => (i + 1) % items.length)
 				return true
@@ -42,17 +53,17 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(functi
 		}
 	}))
 
-	if (items.length === 0) {
-		return (
-			<div className="w-72 rounded-md border border-medium bg-surface p-3 text-xs text-tertiary shadow-xl">
-				No matches
-			</div>
-		)
-	}
-
 	return (
-		<div className="w-72 overflow-hidden rounded-md border border-medium bg-surface shadow-xl">
-			<div className="max-h-80 overflow-y-auto py-1" role="listbox">
+		<div
+			className="flex w-72 max-w-full flex-col overflow-hidden rounded-md border border-medium bg-surface shadow-xl"
+			style={{ maxHeight: 'var(--popover-available-height)' }}
+		>
+			<div id={listId} aria-label="Insert a block" className="max-h-80 min-h-0 overflow-y-auto py-1" role="listbox">
+				{items.length === 0 ? (
+					<div className="p-3 text-xs text-tertiary" role="status">
+						No matches
+					</div>
+				) : null}
 				{items.map((item, index) => {
 					// A group header opens each run of consecutive items sharing a group.
 					const showHeader = index === 0 || item.group !== items[index - 1].group
@@ -67,11 +78,13 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(functi
 							<button
 								type="button"
 								role="option"
+								id={optionId(index)}
+								tabIndex={-1}
 								aria-selected={active}
-								onMouseEnter={() => setSelectedIndex(index)}
+								onMouseMove={() => setSelectedIndex(index)}
+								onClick={() => command(item)}
 								onMouseDown={(event) => {
 									event.preventDefault()
-									command(item)
 								}}
 								className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left transition-colors ${
 									active ? 'bg-research-tint' : 'hover:bg-research-tint-hover'
@@ -89,7 +102,7 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(functi
 					)
 				})}
 			</div>
-			<div className="flex items-center justify-between gap-2 border-t border-medium px-3 py-1.5 text-[10px] text-tertiary">
+			<div className="flex shrink-0 items-center justify-between gap-2 border-t border-medium px-3 py-1.5 text-[10px] text-tertiary">
 				<span>
 					<kbd className="rounded-sm border border-medium px-1">↑</kbd>{' '}
 					<kbd className="rounded-sm border border-medium px-1">↓</kbd> nav

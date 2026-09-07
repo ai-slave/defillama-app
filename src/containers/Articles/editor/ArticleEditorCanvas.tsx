@@ -238,6 +238,7 @@ export function ArticleEditorCanvas({
 											key={b.name}
 											type="button"
 											aria-label={b.label}
+											aria-pressed={b.isActive()}
 											title={b.label}
 											onClick={b.toggle}
 											className={`flex size-7 items-center justify-center rounded-md transition-colors ${
@@ -375,8 +376,8 @@ export function ArticleEditorCanvas({
 
 			{editor ? (
 				<div className="pointer-events-none sticky bottom-6 z-30 mt-10 flex justify-center">
-					<div className="article-editor-rail pointer-events-auto inline-flex items-stretch gap-1 rounded-2xl border border-medium bg-surface/95 p-1.5 shadow-modal backdrop-blur supports-[backdrop-filter]:bg-surface/80">
-						<div className="hidden items-center gap-1 pl-1 sm:flex">
+					<div className="article-editor-rail pointer-events-auto inline-flex max-w-full items-stretch gap-1 overflow-x-auto rounded-2xl border border-medium bg-surface/95 p-1.5 shadow-modal backdrop-blur supports-[backdrop-filter]:bg-surface/80">
+						<div className="flex shrink-0 items-center gap-1 pl-1">
 							<RailButton label="Undo" disabled={!flags.canUndo} onClick={() => editor.chain().focus().undo().run()}>
 								<Icon name="undo" className="size-4" />
 							</RailButton>
@@ -386,7 +387,16 @@ export function ArticleEditorCanvas({
 							<RailDivider />
 						</div>
 
-						<div className="flex items-center gap-1">
+						<div className="flex shrink-0 items-center gap-1">
+							<RailButton
+								label="Paragraph"
+								active={flags.paragraph}
+								onClick={() => editor.chain().focus().setParagraph().run()}
+							>
+								<span aria-hidden className="text-base">
+									¶
+								</span>
+							</RailButton>
 							<RailButton
 								label="Heading 2"
 								active={flags.h2}
@@ -429,14 +439,14 @@ export function ArticleEditorCanvas({
 							>
 								<Icon name="code-block" className="size-4" />
 							</RailButton>
-							<RailButton label="Link" active={flags.link} onClick={handleLinkRail}>
+							<RailButton label="Link" onClick={handleLinkRail}>
 								<Icon name="link" className="size-4" />
 							</RailButton>
 						</div>
 
 						<RailDivider />
 
-						<div className="flex items-center gap-1">
+						<div className="flex shrink-0 items-center gap-1">
 							<button
 								type="button"
 								onClick={onOpenChartPicker}

@@ -82,4 +82,41 @@ describe('EntitySuggestionList highlight', () => {
 		await render([gamma, alpha])
 		expect(highlighted()).toBe('gamma')
 	})
+	test('filters with click or Alt+arrows while leaving Tab available to move focus', async () => {
+		const chain = { ...gamma, entityType: 'chain' as const }
+		await render([alpha, chain])
+		const proto = [...container.querySelectorAll('button')].find((button) => button.textContent === 'Proto')!
+		await act(async () => proto.click())
+		expect(proto.getAttribute('aria-pressed')).toBe('true')
+		expect(container.querySelectorAll('[role="option"]')).toHaveLength(1)
+		expect(handle.current!.onKeyDown(key('Tab'))).toBe(false)
+		await act(async () => {
+			handle.current!.onKeyDown(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true }))
+		})
+		expect(highlighted()).toBe('gamma')
+		await act(async () => {
+			handle.current!.onKeyDown(new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true }))
+		})
+		expect(highlighted()).toBe('alpha')
+	})
+
+	test('lists a recent entity only once when it also appears in search results', async () => {
+		await act(async () =>
+			root.render(
+				<EntitySuggestionList
+					ref={handle}
+					items={[alpha, beta]}
+					recents={[alpha]}
+					query=""
+					loading={false}
+					command={command}
+				/>
+			)
+		)
+		expect(container.querySelectorAll('[role="option"]')).toHaveLength(2)
+		await act(async () => {
+			handle.current!.onKeyDown(key('ArrowDown'))
+		})
+		expect(highlighted()).toBe('beta')
+	})
 })
