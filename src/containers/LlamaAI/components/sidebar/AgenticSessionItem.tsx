@@ -88,8 +88,9 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 	})
 
 	const updateTitle = useUpdateSessionTitle()
-	// The request belongs to the owner: deleting removes the row from the session cache, so a callback
-	// passed to mutate would be dropped when this row unmounts. Only the pending state is local.
+	// The request belongs to the owner because it also clears queue and prompt-failure state this row
+	// cannot reach. Only the pending state is local. Deletion is no longer optimistic, so the row does
+	// outlive the request now — but that alone would not make a callback passed to mutate safe here.
 	const deletion = useMutation({
 		mutationFn: () => onDelete(session.sessionId, session.projectId),
 		onError: (error) => {

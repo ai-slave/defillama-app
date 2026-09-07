@@ -82,17 +82,24 @@ function CreateProjectForm({
 		const trimmed = name.trim()
 		if (!trimmed || create.isPending || update.isPending) return
 		const payload = { name: trimmed, description: description.trim() || null }
+		// Both read through an optional chain, which the compiler cannot lower inside a try or catch, so
+		// they are called out to instead. The form can unmount while the request is still running, which
+		// is why the check has to happen after the await rather than before the try.
+		const isStillMounted = () => formRef.current?.isConnected === true
+		const notifyCreated = (created: Project) => onCreated?.(created)
+		const isRename = mode === 'rename' && project != null
+		const closedMessage = isRename ? 'Project updated' : 'Project created'
 		try {
-			if (mode === 'rename' && project) {
+			if (isRename) {
 				await update.mutateAsync(payload)
 			} else {
 				const created = await create.mutateAsync(payload)
-				if (formRef.current?.isConnected) onCreated?.(created)
+				if (isStillMounted()) notifyCreated(created)
 			}
-			if (formRef.current?.isConnected) dialogStore.hide()
-			else toast.success(mode === 'rename' ? 'Project updated' : 'Project created')
+			if (isStillMounted()) dialogStore.hide()
+			else toast.success(closedMessage)
 		} catch (error) {
-			if (!formRef.current?.isConnected) toast.error(getErrorMessage(error))
+			if (!isStillMounted()) toast.error(getErrorMessage(error))
 		}
 	}
 

@@ -125,8 +125,9 @@ function ResearchChartCard({
 			<SegmentedControl<ExchangeResearchView>
 				value={resolvedView}
 				onValueChange={(nextView) => {
+					const viewQueryKey = getResearchViewQueryKey(part)
 					void pushShallowQuery(router, {
-						[getResearchViewQueryKey(part)]: nextView === viewOptions[0]?.id ? undefined : nextView
+						[viewQueryKey]: nextView === viewOptions[0]?.id ? undefined : nextView
 					})
 				}}
 				options={viewOptions.map(({ id, label }) => {

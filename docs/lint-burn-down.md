@@ -541,6 +541,94 @@ Two traps when working with the checker directly, both of which produced false c
 - The compiler only visits components and real hooks. A plain function whose name happens to start with
   `use` but which calls no hooks is never compiled, so probing the checker with one proves nothing.
 
+### Every count here is a floor, not a total
+
+The compiler stops at the first unsupported expression in a component, so the baseline records the
+reason it reported, not the reasons the component has. Fixing that one can reveal another underneath.
+
+This is not a rare edge. Two of the seventeen files in the mechanical sweep did exactly that:
+
+| File                                                       | Recorded  | Revealed once fixed           |
+| ---------------------------------------------------------- | --------- | ----------------------------- |
+| `components/ECharts/MultiSeriesChart/index.tsx`            | `??=` (2) | refs read during render       |
+| `containers/LlamaAI/components/sidebar/AgenticSidebar.tsx` | `??=` (1) | `Use of incompatible library` |
+
+Both were left unfixed on purpose. Neither component compiles either way, so the change would trade one
+baseline entry for another, and the ratchet is right to read that as new debt under a different rule.
+They go with the phase that unblocks them — the refs restructure, and the TanStack migration.
+
+Three consequences worth carrying:
+
+- **Per-rule totals understate.** `Use of incompatible library` reads 82, but at least one more is
+  hiding behind a `??=`. Treat it as a floor. The same applies to every row in the tally below.
+- **A fix that "reveals" is still progress on the file, but not on the count.** Judge a sweep by
+  components that newly compile, not by the delta in the baseline total. The mechanical sweep moved 22
+  bailouts and 14 components; those numbers are not two views of the same thing.
+- **The ratchet cannot express "same file, still broken, different first reason".** That is a real gap
+  in the tool, not a false positive. Reverting the fix is the honest response until the blocking rule is
+  in scope; do not add an allowance to make the check quiet.
+
+### Some bailouts are load-bearing
+
+The dangerous case is the opposite one: a bailout can be the only thing keeping a component out of the
+compiler, and removing it is a behaviour change even when the edit itself is a no-op.
+
+`components/Table/Table.tsx` is the worked example. Its three `['--x' as string]` computed keys kept
+`TableRow` and `VirtualTable` uncompiled. Rewriting them into the `{ '--x': v } as CSSProperties` form
+used elsewhere in the repo is provably equivalent CSS — and it let both components compile, which cached
+`instance.getRowModel()` against the instance identity and `row.getVisibleCells()` against the row
+identity. TanStack keeps both objects stable while their state mutates, so the cached reads froze after
+the first render: sorting and filtering stopped taking effect, replaced data kept its old values, and
+hiding a column dropped its header while leaving the cells under the wrong headings. A reviewer caught
+it in compiled browser fixtures; no unit test in the suite would have.
+
+The reason the compiler does not protect itself here is that `instance` arrives as a **prop**. The
+`Use of incompatible library` bailout fires on `useReactTable` and `useVirtualizer` call sites, so a
+component handed a table object never trips it.
+
+Two rules follow:
+
+- Before removing a bailout from a file that reads TanStack row, cell, header or column state, check
+  where that read ends up in the compiled output. `node scripts/reactCompilerCheck.cjs . <file>` says
+  whether the component compiles; dumping the compiled code says whether the read landed inside an
+  `if ($[n] !== x)` guard. A read in a cache guard against a stable-identity object is the bug.
+- **There is already a convention for this, and it is a directive.** `PaginatedTable`, ProDashboard's
+  `TableBody` and `MarketMakers/StickyTable` each open with `'use no memo'`, precisely because they take
+  a table instance as a prop. That is the established answer for this component shape; use it rather
+  than inventing something.
+
+  `containers/Investors/dashboards/aave/shared.tsx` was the one that had missed it, and was a live bug
+  on main: compiled, it cached `overrideRows ?? instance.getRowModel().rows` and
+  `instance.getHeaderGroups()` against the instance, so its GHO and Rates views ignored sorting and kept
+  stale values after the data was replaced. `getVisibleCells()` was left uncached there, which is why
+  cells stayed under the right headings — a narrower symptom set than `Table.tsx`'s, and easy to misread
+  as a data-fetching problem. It now carries the directive.
+
+  Two files in that group are fine for reasons other than a directive: `UnifiedTable/index.tsx` reads
+  columns inside click handlers, which run after render and so must read fresh; `Table/utils.ts` is a
+  plain function the compiler never visits.
+
+- **Opt-outs are recorded in the baseline.** `scripts/reactCompilerCheck.cjs` prints a `SKIPPED` line
+  for a directive and `scripts/compilerBaseline.ts` records it as `Skipped by directive`. Deleting a
+  directive therefore makes its entry stale and fails the check, instead of quietly letting the
+  component compile again. Adding one shows up as growth against `origin/main`, so it stays a decision
+  rather than a habit.
+
+When a bailout turns out to be load-bearing, keep it and say so at the line, so the next person to tidy
+the expression knows what it is holding up.
+
+### Finding the expression, not the function
+
+The checker's `BAILOUT` line used to print the enclosing function's position, which for a long
+component is its declaration and tells you nothing. It now prints the expression's own location from
+the diagnostic, falling back to the function when there isn't one. Three location guesses were wrong
+before this was noticed, so prefer the line the checker gives you over reading the file for likely
+suspects.
+
+`scripts/compilerBaseline.ts` parses that line. A format change there emptied the counts file to zero
+on the next regeneration without failing — the two scripts are coupled by the checker's stdout, so
+change them together and re-run `bun run compiler:baseline` before trusting a diff.
+
 ## Follow-up: try/catch around an awaited mutation
 
 React Compiler cannot lower a conditional, logical or optional chain inside a `try`/`catch`, and the
@@ -720,23 +808,30 @@ tree.
 
 | Bucket                                                   | Remaining             | Where                                                                                                                         |
 | -------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Value block inside a `try`/`catch`                       | 24 bailouts, 24 files | Spread thin; one per file                                                                                                     |
-| `try` without a `catch`                                  | 9 bailouts, 8 files   | Upload hooks, SQL chart modal, stream readers                                                                                 |
+| Value block inside a `try`/`catch`                       | 21 bailouts, 21 files | Spread thin; one per file                                                                                                     |
 | `throw` inside a `try`/`catch`                           | 8 bailouts, 5 files   | `useChatQueueController`, `LlamaAIChartPicker`                                                                                |
+| `try` without a `catch`                                  | 7 bailouts, 6 files   | Upload hooks, SQL chart modal, stream readers                                                                                 |
 | `finally` clause                                         | 7 bailouts, 7 files   | The ones where a block exits early                                                                                            |
+| Refs read during render                                  | 8 bailouts, 4 files   | `useDuelStream`, `ChatMarkdownRenderer`, `TreemapChart/Market`, `useDebounce` — restructure, not mechanical                   |
+| `??=` left in place                                      | 3 bailouts, 2 files   | Masked by a deferred or restructure bailout; see the floor caveat above                                                       |
+| `as string` computed keys in `Table.tsx`                 | 3 bailouts, 1 file    | Load-bearing: they keep the shared table out of the compiler. Needs reactive row/cell data first                              |
 | Local pending or error state around an `await`           | 34 files              | LlamaAI 11, Articles 8, ProDashboard 5                                                                                        |
 | — of those, alongside a mutation that already reports it | 8 files               | Partial refactors, not deletions                                                                                              |
 | — of those, with no mutation at all                      | 26 files              | Full conversions                                                                                                              |
 | Hooks handing out a bare trigger                         | 12 sites, 6 hooks     | `useSessionMutations` (3 left), `auth`, `useDashboardAPI`, `useDashboardDiscovery`, `useDashboardEngagement`, `useUserConfig` |
 
-48 of the compiler bailouts and all 34 state files are the same underlying thing seen from two angles,
+43 of the compiler bailouts and all 34 state files are the same underlying thing seen from two angles,
 so the order that pays is: hooks hand out mutations, callers stop hand-rolling pending and error state,
 and the `try`/`catch` around the await goes with it. Doing it in the other order means converting a
 `try`/`catch` and then rewriting the same lines again.
 
 Two things not on this list. `no-await-in-loop` (109) and `max-depth` (91) are the Phase 4 judgment
-buckets and unrelated. `Use of incompatible library` (82) is the deferred TanStack rule and will not
-move until table and virtual migrate.
+buckets and unrelated. `Use of incompatible library` (82, and at least one more masked) is the deferred
+TanStack rule and will not move until table and virtual migrate.
+
+The mechanical sweep took the baseline from 161 to 139, so 57 of the 139 are actionable. It fixed 22
+bailouts across 14 files and made 14 more components compile — the two figures differ, for the reason in
+the floor caveat above.
 
 ## Phase 4: judgment buckets
 

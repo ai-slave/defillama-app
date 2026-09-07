@@ -13,6 +13,12 @@ export const AAVE_CATEGORY_PERCENT_CHART_OPTIONS = createCategoryChartOptions('%
 
 export const AAVE_PERCENT_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('%')
 
+// Every read below comes off a table instance handed in as a prop, so the compiler never sees
+// `useReactTable` and does not flag the incompatible library. Compiled, it caches the row model and the
+// header groups against the instance identity, which TanStack keeps stable while its state mutates:
+// sorting stops taking effect and replaced data keeps its old values. Opted out until the component
+// takes reactive rows, headers, columns and sizes rather than reading them off the instance.
+// See "Some bailouts are load-bearing" in docs/lint-burn-down.md.
 export function InvestorsTable<T extends RowData>({
 	instance,
 	overrideRows
@@ -20,6 +26,8 @@ export function InvestorsTable<T extends RowData>({
 	instance: Table<T>
 	overrideRows?: Array<import('@tanstack/react-table').Row<T>>
 }) {
+	'use no memo'
+
 	const columns = instance.getVisibleLeafColumns()
 	const gridTemplateColumns = columns.map((col) => `${col.getSize() ?? 100}fr`).join(' ')
 	const rows = overrideRows ?? instance.getRowModel().rows

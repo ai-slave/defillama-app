@@ -570,11 +570,12 @@ export function useWatchlistManager(type: 'defi' | 'yields' | 'chains' | 'tokens
 				const currentSelectedPortfolio =
 					(currentStore[selectedPortfolioKey as keyof AppStorage] as string) ?? DEFAULT_PORTFOLIO_NAME
 
+				const nameSlug = slug(name)
 				const newWatchlist = {
 					...currentWatchlist,
 					[currentSelectedPortfolio]: {
 						...currentWatchlist[currentSelectedPortfolio],
-						[slug(name)]: name
+						[nameSlug]: name
 					}
 				}
 

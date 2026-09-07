@@ -35,12 +35,30 @@ import {
 	getBridgeProtocolCompletedDayVolumes,
 	getBridgeProtocolPrevDayVolumeValue
 } from './bridgeProtocolChartData'
-import type { BridgePageData } from './types'
+import type { BridgePageData, BridgeTableData } from './types'
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const CHART_TYPES = ['Inflows', 'Volume', 'Tokens To', 'Tokens From'] as const
 type ChartType = (typeof CHART_TYPES)[number]
+
+// A fresh object literal here would make every value destructured out of it look mutable to the
+// compiler, which then refuses to preserve the memoization below.
+const EMPTY_TOKEN_ROWS: BridgeTableData['tokensTableData'] = []
+const EMPTY_ADDRESS_ROWS: BridgeTableData['addressesTableData'] = []
+
+// Kept out of the component: a reassigned local also stops the memoization being preserved.
+function getVolumePercentChange(
+	completedDayVolumes: ReturnType<typeof getBridgeProtocolCompletedDayVolumes>,
+	currentDailyVolume: number | null
+) {
+	if (!completedDayVolumes || currentDailyVolume == null) return null
+	const { Deposited, Withdrawn } = completedDayVolumes.previous
+	if (Deposited == null || Withdrawn == null) return null
+	const previousVolume = Deposited - Withdrawn
+	if (previousVolume <= 0) return null
+	return getPercentChange(currentDailyVolume, previousVolume)
+}
 
 export function BridgeInfo({
 	displayName,
@@ -59,21 +77,17 @@ export function BridgeInfo({
 	const [bridgesSettings] = useLocalStorageSettingsManager('bridges')
 	const isBridgesShowingAddresses = bridgesSettings[BRIDGES_SHOWING_ADDRESSES]
 
+	// Read through rather than destructured from a fallback object: a fresh literal there makes every
+	// value taken out of it look mutable to the compiler, which then refuses to preserve the
+	// memoization below and skips the whole component.
 	const currentTableData = tableDataByChain[currentChain]
-	const {
-		tokensTableData,
-		addressesTableData,
-		tokenDeposits,
-		tokenWithdrawals,
-		totalDepositedUSD,
-		totalWithdrawnUSD,
-		dataTimestamp
-	} = currentTableData ?? {
-		tokensTableData: [],
-		addressesTableData: [],
-		tokenDeposits: null,
-		tokenWithdrawals: null
-	}
+	const tokensTableData = currentTableData?.tokensTableData ?? EMPTY_TOKEN_ROWS
+	const addressesTableData = currentTableData?.addressesTableData ?? EMPTY_ADDRESS_ROWS
+	const tokenDeposits = currentTableData?.tokenDeposits ?? null
+	const tokenWithdrawals = currentTableData?.tokenWithdrawals ?? null
+	const totalDepositedUSD = currentTableData?.totalDepositedUSD
+	const totalWithdrawnUSD = currentTableData?.totalWithdrawnUSD
+	const dataTimestamp = currentTableData?.dataTimestamp
 
 	const volumeChartDataByChain = volumeDataByChain[currentChain]
 	const completedDayVolumes = getBridgeProtocolCompletedDayVolumes(volumeChartDataByChain)
@@ -95,18 +109,7 @@ export function BridgeInfo({
 	const rollingHours = config.name === 'wormhole' ? 28 : 24
 	const windowLabel = rollingHours === 24 ? '24h' : `${rollingHours}h`
 
-	let volPercentChange: number | null = null
-
-	if (completedDayVolumes) {
-		const prev2DayChart = completedDayVolumes.previous
-		const prevVolume =
-			prev2DayChart.Deposited == null || prev2DayChart.Withdrawn == null
-				? null
-				: prev2DayChart.Deposited - prev2DayChart.Withdrawn
-		if (currentDailyVolume != null && prevVolume != null && prevVolume > 0) {
-			volPercentChange = getPercentChange(currentDailyVolume, prevVolume)
-		}
-	}
+	const volPercentChange = getVolumePercentChange(completedDayVolumes, currentDailyVolume)
 
 	const chainOptions = chains.map((chain) => {
 		return { name: chain, route: '' }

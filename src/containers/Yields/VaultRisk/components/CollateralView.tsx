@@ -96,7 +96,8 @@ export function CollateralView({
 	const hidden = ranked.length - shown.length
 	const dropFor = (c: CollateralVM) => customDrops[c.address.toLowerCase()] ?? DEFAULT_STRESS_DROP
 	const setDropFor = (c: CollateralVM, drop: number) => {
-		setCustomDrops((prev) => ({ ...prev, [c.address.toLowerCase()]: drop }))
+		const address = c.address.toLowerCase()
+		setCustomDrops((prev) => ({ ...prev, [address]: drop }))
 	}
 	const tunedCount = Object.entries(customDrops).filter(([, d]) => d !== DEFAULT_STRESS_DROP).length
 	const resetDrops = () => setCustomDrops({})

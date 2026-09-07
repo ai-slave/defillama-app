@@ -74,13 +74,15 @@ export function useChatScroll({
 	}, [])
 
 	const setMode = useCallback(
-		(mode: ScrollMode, container: HTMLDivElement | null = scrollContainerRef.current) => {
+		// Container passed in rather than defaulted from the ref: every caller already has it, and a member
+		// expression in a default parameter is one the compiler cannot reorder.
+		(mode: ScrollMode, container: HTMLDivElement | null) => {
 			modeRef.current = mode
 			if (mode === 'attached') lastAutoScrollTopRef.current = null
 			setIsAttached(mode === 'attached')
 			syncScrollToBottomVisibility(container)
 		},
-		[scrollContainerRef, syncScrollToBottomVisibility]
+		[syncScrollToBottomVisibility]
 	)
 
 	const cancelPendingReattach = useCallback(() => {
@@ -90,8 +92,8 @@ export function useChatScroll({
 
 	const attach = useCallback(() => {
 		cancelPendingReattach()
-		setMode('attached')
-	}, [cancelPendingReattach, setMode])
+		setMode('attached', scrollContainerRef.current)
+	}, [cancelPendingReattach, scrollContainerRef, setMode])
 
 	const pinBottom = useCallback((container: HTMLDivElement) => {
 		container.scrollTop = container.scrollHeight

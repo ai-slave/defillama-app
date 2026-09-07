@@ -81,11 +81,20 @@ for (const relativePath of files) {
 	for (const event of events.filter((e) => e.kind === 'CompileError')) {
 		problems++
 		const detail = event.detail ?? {}
-		const reason = detail.reason ?? detail.description ?? JSON.stringify(detail).slice(0, 200)
-		console.log(`  BAILOUT fn@${event.fnLoc?.start?.line ?? '?'}: ${reason}`)
+		const options = detail.options ?? detail
+		const reason = options.reason ?? options.description ?? JSON.stringify(detail).slice(0, 200)
+		// fnLoc points at the enclosing function; options.loc points at the expression to actually fix.
+		const at = options.loc?.start?.line ?? event.fnLoc?.start?.line ?? '?'
+		console.log(`  BAILOUT ${relativePath}:${at}: ${reason}`)
 	}
+	// Printed in the BAILOUT shape so the baseline records deliberate opt-outs too: removing a directive
+	// makes the recorded entry stale, which fails the check instead of silently compiling the component.
 	for (const event of events.filter((e) => e.kind === 'CompileSkip')) {
-		console.log(`  skip fn@${event.fnLoc?.start?.line ?? '?'}: ${event.reason}`)
+		const at = event.fnLoc?.start?.line ?? '?'
+		// The compiler's own message interpolates the directive node, so normalise it to something a
+		// baseline diff can be read against.
+		const reason = /directive/.test(event.reason ?? '') ? 'Skipped by directive' : (event.reason ?? 'Skipped')
+		console.log(`  SKIPPED ${relativePath}:${at}: ${reason}`)
 	}
 
 	if (requiredCached.length === 0) continue

@@ -26,14 +26,19 @@ export function DeleteProjectModal({
 	const onConfirm = async () => {
 		if (!project || remove.isPending) return
 		const contentElement = dialogStore.getState().contentElement
+		// Both read through an optional chain, which the compiler cannot lower inside a try or catch, so
+		// they are called out to instead. The dialog can close while the request is still running, which
+		// is why the check has to happen after the await rather than before the try.
+		const isStillOpen = () => contentElement?.isConnected === true
+		const notifyDeleted = () => onDeleted?.()
 		try {
 			await remove.mutateAsync(project.id)
-			if (contentElement?.isConnected) {
+			if (isStillOpen()) {
 				dialogStore.hide()
-				onDeleted?.()
+				notifyDeleted()
 			} else toast.success('Project deleted')
 		} catch (error) {
-			if (!contentElement?.isConnected) toast.error(getErrorMessage(error))
+			if (!isStillOpen()) toast.error(getErrorMessage(error))
 		}
 	}
 

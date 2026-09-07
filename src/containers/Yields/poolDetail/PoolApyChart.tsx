@@ -380,13 +380,10 @@ export function PoolApyChart({
 					className="ml-auto"
 					value={apyWindow}
 					options={WINDOW_OPTIONS}
-					onValueChange={(next) =>
-						void pushShallowQuery(
-							router,
-							{ [getPoolSeriesQueryKey(kind, 'window')]: getWindowQueryValue(next) },
-							router.pathname
-						)
-					}
+					onValueChange={(next) => {
+						const windowQueryKey = getPoolSeriesQueryKey(kind, 'window')
+						void pushShallowQuery(router, { [windowQueryKey]: getWindowQueryValue(next) }, router.pathname)
+					}}
 				/>
 			</ChartPanelToolbar>
 

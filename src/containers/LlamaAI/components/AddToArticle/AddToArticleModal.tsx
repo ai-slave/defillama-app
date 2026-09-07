@@ -95,6 +95,11 @@ function SelectableRow({
 	)
 }
 
+// Loaded at module scope: the compiler cannot lower an import expression inside a component, and the
+// export helpers are only needed once the reader confirms the export.
+const loadExportBlocks = () =>
+	import('~/containers/LlamaAI/utils/articleExport').then((module) => module.buildExportBlocks)
+
 export function AddToArticleModal({ dialogStore, request, sessionTitle }: AddToArticleModalProps) {
 	const open = Ariakit.useStoreState(dialogStore, 'open')
 
@@ -188,7 +193,7 @@ function AddToArticleForm({
 
 	const mutation = useMutation({
 		mutationFn: async () => {
-			const { buildExportBlocks } = await import('~/containers/LlamaAI/utils/articleExport')
+			const buildExportBlocks = await loadExportBlocks()
 
 			const include: ArticleExportInclude = {
 				text: request.kind === 'message' ? includeText : true,

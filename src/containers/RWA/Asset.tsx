@@ -494,9 +494,11 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 	const { data: assetFlows, isLoading: isLoadingFlows, error: flowError } = useRWAAssetFlows(asset.id, isFlowChart)
 	const [flowVisibleRange, setFlowVisibleRange] = useState<RWAFlowVisibleRange | null>(null)
 	const handleFlowVisibleRangeChange = useCallback((range: RWAFlowVisibleRange | null) => {
-		setFlowVisibleRange((previous) =>
-			previous?.start === range?.start && previous?.end === range?.end ? previous : range
-		)
+		setFlowVisibleRange((previous) => {
+			const sameStart = previous?.start === range?.start
+			const sameEnd = previous?.end === range?.end
+			return sameStart && sameEnd ? previous : range
+		})
 	}, [])
 
 	const nativeYieldExportFilename = `${asset.ticker ?? asset.assetName ?? 'asset'}-native-yield`

@@ -459,9 +459,8 @@ export function TokenPnl({ initialTokenOptions }: { initialTokenOptions: Array<T
 			handleEndDateChange(value)
 		}
 		const unixValue = dateStringToUnix(value)
-		void pushShallowQuery(router, {
-			[isStart ? 'start' : 'end']: unixValue ?? undefined
-		})
+		const bound = isStart ? 'start' : 'end'
+		void pushShallowQuery(router, { [bound]: unixValue ?? undefined })
 	}
 
 	const updateCoin = (coinId: string) => {

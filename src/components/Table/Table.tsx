@@ -10,6 +10,22 @@ import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
+// These components must not compile until they take reactive row and cell data. `instance` arrives as a
+// prop, so the compiler never sees `useReactTable` and does not flag the incompatible library; it
+// happily caches `instance.getRowModel()` against the instance identity and `row.getVisibleCells()`
+// against the row identity. TanStack keeps both objects stable while their state mutates, so the cached
+// reads freeze after the first render: sorting and filtering stop taking effect, replaced data keeps its
+// old values, and hiding a column drops its header while leaving the cells.
+//
+// The `['--x' as string]` computed keys below are what keeps the compiler out. Replacing them with the
+// `{ '--x': v } as CSSProperties` form used elsewhere lets these components compile and reintroduces all
+// of that silently, so leave them until the TanStack reads are reactive.
+//
+// A `'use no memo'` directive on each component would say this out loud instead of relying on a cast,
+// which is what PaginatedTable, ProDashboard's TableBody and MarketMakers/StickyTable do for the same
+// reason. That is the better end state and it is now tracked by the baseline, but it is deliberately not
+// in this change: these two components already regressed once here.
+
 export type VirtualTableLayout = 'fixed' | 'auto'
 
 interface ITableProps<T extends RowData = RowData> {

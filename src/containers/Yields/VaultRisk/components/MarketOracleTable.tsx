@@ -26,9 +26,11 @@ export function MarketOracleTable({
 	explorers?: BlockExplorersResponse
 }) {
 	if (markets.length === 0) return null
-	const rows = [...markets].sort(
-		(a, b) => (b.allocation_usd ?? 0) - (a.allocation_usd ?? 0) || (b.lltv ?? 0) - (a.lltv ?? 0)
-	)
+	const rows = [...markets].sort((a, b) => {
+		const byAllocation = (b.allocation_usd ?? 0) - (a.allocation_usd ?? 0)
+		if (byAllocation !== 0) return byAllocation
+		return (b.lltv ?? 0) - (a.lltv ?? 0)
+	})
 	return (
 		<Card as="details" padding="none" className="group smooth-disclosure overflow-hidden">
 			<summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2 label-md hover:bg-hover-row">

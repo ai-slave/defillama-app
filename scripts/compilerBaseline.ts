@@ -25,6 +25,7 @@ import { join } from 'node:path'
 import { type Counts, findGrowth, findStale, parseCounts, renderCounts, total } from './lib/lintBaseline'
 
 const COUNTS_PATH = '.reactcompiler.baseline.json'
+const SKIP_REASON = 'Skipped by directive'
 
 function sourceFiles(dir = 'src'): Array<string> {
 	const out: Array<string> = []
@@ -75,7 +76,9 @@ function collect(): Report {
 			reported.add(file)
 			continue
 		}
-		const bailout = /^ {2}BAILOUT fn@\S+: (.+)$/.exec(line)
+		// SKIPPED lines are directive opt-outs. Recording them alongside bailouts means deleting a
+		// directive shows up as a stale entry rather than as a component that quietly starts compiling.
+		const bailout = /^ {2}(?:BAILOUT|SKIPPED) \S+: (.+)$/.exec(line)
 		if (!bailout || !file) continue
 		// Counts are rule-major in memory; renderCounts transposes them to one line per file on disk.
 		const reason = bailout[1]
@@ -148,7 +151,10 @@ if (args.includes('--check')) {
 	if (base === null) {
 		console.log(`No ${COUNTS_PATH} on ${baseRef}; skipping the growth check against it.`)
 	} else {
-		const grown = findGrowth(base, committed)
+		// A new opt-out is a visible diff and a review decision, so it is not counted as growth. The
+		// direction that needs a machine is the other one: deleting a directive makes its recorded entry
+		// stale, which the staleness check above already fails on.
+		const grown = findGrowth(base, committed).filter((entry) => !entry.includes(SKIP_REASON))
 		if (grown.length > 0) {
 			report(
 				`Baseline accepts ${grown.length} file/reason entr(ies) of new debt relative to ${baseRef}. Fix the bailouts instead.`,

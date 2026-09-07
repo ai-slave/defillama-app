@@ -46,7 +46,9 @@ export function useParentAuthTracker() {
 
 			let retries = 0
 			intervalId = window.setInterval(() => {
-				if (trackVisit() || ++retries >= MAX_UMAMI_RETRIES) {
+				const tracked = trackVisit()
+				retries += 1
+				if (tracked || retries >= MAX_UMAMI_RETRIES) {
 					if (intervalId !== null) {
 						window.clearInterval(intervalId)
 						intervalId = null

@@ -28,7 +28,8 @@ export function SeriesChip({
 	const kind = config.seriesKinds[name] ?? (chartType === 'bar' ? 'bar' : 'line')
 
 	const setColor = (next: string | null) => {
-		const { [name]: _omit, ...rest } = config.seriesColors
+		const rest = { ...config.seriesColors }
+		delete rest[name]
 		onChange({ seriesColors: next == null ? rest : { ...rest, [name]: next } })
 	}
 
@@ -39,7 +40,8 @@ export function SeriesChip({
 	}
 
 	const toggleKind = () => {
-		const { [name]: _omit, ...rest } = config.seriesKinds
+		const rest = { ...config.seriesKinds }
+		delete rest[name]
 		const next = kind === 'line' ? 'bar' : 'line'
 		onChange({ seriesKinds: { ...rest, [name]: next } })
 	}

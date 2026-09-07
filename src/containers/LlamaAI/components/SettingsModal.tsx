@@ -90,7 +90,9 @@ export const SettingsModal = memo(function SettingsModal({
 		if (initialState && !initialState.tgloginToken && onInitialStateConsumed) onInitialStateConsumed()
 	}, [activeTab, isOpen, initialState, onInitialStateConsumed])
 
-	const commitDraft = async (value = instructionsDraft.value) => {
+	// Value passed in rather than defaulted from the draft: a member expression in a default parameter is
+	// one the compiler cannot reorder.
+	const commitDraft = async (value: string) => {
 		const nextValue = value.trim()
 		if (nextValue === lastSubmittedInstructionsRef.current) return
 
@@ -371,7 +373,7 @@ export const SettingsModal = memo(function SettingsModal({
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				onClose={() => void commitDraft()}
+				onClose={() => void commitDraft(instructionsDraft.value)}
 				className="dialog max-h-[88vh] w-full max-w-[720px] gap-0 overflow-hidden rounded-2xl border border-ai-line-subtle bg-ai-surface-card p-0 shadow-ai-lg"
 				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
 				portal
@@ -456,7 +458,7 @@ export const SettingsModal = memo(function SettingsModal({
 													) {
 														return
 													}
-													void commitDraft()
+													void commitDraft(instructionsDraft.value)
 												}}
 											>
 												<div className="relative">
@@ -471,7 +473,7 @@ export const SettingsModal = memo(function SettingsModal({
 														onKeyDown={(e) => {
 															if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
 																e.preventDefault()
-																void commitDraft().then(() => dialogStore.hide())
+																void commitDraft(instructionsDraft.value).then(() => dialogStore.hide())
 															}
 														}}
 														placeholder="e.g., Be concise and lead with numbers. Always include % changes."
