@@ -132,7 +132,6 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		articleId: article.id ?? null
 	})
 	const coverFileInputRef = useRef<HTMLInputElement>(null)
-	const [coverHovered, setCoverHovered] = useState(false)
 
 	const uploadInlineImage = useCallback<ArticleImageUploadFn>(
 		(file: File): Promise<UploadResult> => {
@@ -997,13 +996,11 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 					<ArticleCoverImageEditor
 						article={article}
 						coverFileInputRef={coverFileInputRef}
-						coverHovered={coverHovered}
 						handleCoverFile={handleCoverFile}
 						isUploadingCover={isUploadingCover}
 						onOpenCoverDetails={() => coverDetailsDialog.show()}
 						openCoverPicker={openCoverPicker}
 						publishError={publishErrors.coverImage}
-						setCoverHovered={setCoverHovered}
 						updateArticle={updateArticle}
 					/>
 

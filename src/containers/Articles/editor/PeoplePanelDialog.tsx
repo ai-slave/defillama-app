@@ -188,14 +188,15 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 				ref={inputRef}
 				type="file"
 				accept="image/png,image/jpeg,image/webp,image/gif"
-				className="sr-only"
+				className="hidden"
+				aria-label={`Upload image for person ${idx + 1}`}
 				onChange={(e) => handleFile(e.target.files?.[0])}
 			/>
 			<button
 				type="button"
 				disabled={isUploading || !articleId}
 				onClick={() => inputRef.current?.click()}
-				className="group relative aspect-square overflow-hidden rounded-full border border-medium bg-surface outline-hidden transition-[border-color] hover:border-link/50 disabled:cursor-not-allowed disabled:opacity-60"
+				className="group relative aspect-square overflow-hidden rounded-full border border-medium bg-surface outline-hidden transition-[border-color] hover:border-link/50 focus-visible:border-link disabled:cursor-not-allowed disabled:opacity-60"
 				aria-label={item.src ? 'Replace image' : 'Upload image'}
 			>
 				{item.src ? (
@@ -216,6 +217,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 				<input
 					value={item.name}
 					onChange={(e) => onChange({ name: e.target.value })}
+					aria-label={`Person ${idx + 1} name, role, organization`}
 					placeholder="Name, role, organization"
 					className="rounded-md border border-medium bg-surface px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 				/>
@@ -223,6 +225,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					value={item.bio}
 					onChange={(e) => onChange({ bio: e.target.value })}
 					rows={3}
+					aria-label={`Person ${idx + 1} biography`}
 					placeholder="Short bio paragraph"
 					className="resize-y rounded-md border border-medium bg-surface px-3 py-2 text-sm leading-snug text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 				/>
@@ -231,6 +234,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					inputMode="url"
 					value={item.href}
 					onChange={(e) => onChange({ href: e.target.value })}
+					aria-label={`Person ${idx + 1} link`}
 					placeholder="Link (optional) — e.g. https://twitter.com/…"
 					className="rounded-md border border-medium bg-surface px-3 py-2 text-xs text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
 				/>
@@ -243,6 +247,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					onClick={() => onMove(-1)}
 					disabled={idx === 0}
 					title="Move up"
+					aria-label={`Move person ${idx + 1} up`}
 					className="border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] text-tertiary transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					↑
@@ -252,6 +257,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					onClick={() => onMove(1)}
 					disabled={idx === total - 1}
 					title="Move down"
+					aria-label={`Move person ${idx + 1} down`}
 					className="border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] text-tertiary transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					↓
@@ -261,6 +267,7 @@ function PersonRow({ item, idx, total, articleId, showErrors, onChange, onRemove
 					onClick={onRemove}
 					disabled={total === 1}
 					title="Remove"
+					aria-label={`Remove person ${idx + 1}`}
 					className="border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] text-tertiary transition-colors hover:bg-error/10 hover:text-error disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					×

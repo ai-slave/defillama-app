@@ -1,5 +1,6 @@
+import * as Ariakit from '@ariakit/react'
 import { useEditorState, type Editor } from '@tiptap/react'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
 import {
 	headingAbove,
 	readColumnWidths,
@@ -46,11 +47,22 @@ export function RailDivider() {
 const RAIL_BUTTON_CLASS =
 	'flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary disabled:opacity-50'
 
-function TableRailButton({ label, onClick, children }: { label: string; onClick: () => void; children: ReactNode }) {
+function TableRailButton({
+	label,
+	onClick,
+	children,
+	pressed
+}: {
+	label: string
+	onClick: () => void
+	children: ReactNode
+	pressed?: boolean
+}) {
 	return (
 		<button
 			type="button"
 			aria-label={label}
+			aria-pressed={pressed}
 			title={label}
 			onClick={onClick}
 			onMouseDown={(e) => e.preventDefault()}
@@ -63,104 +75,59 @@ function TableRailButton({ label, onClick, children }: { label: string; onClick:
 
 export function TableControlsOverlay({ editor }: { editor: Editor }) {
 	const [target, setTarget] = useState<HTMLElement | null>(null)
-	const [rect, setRect] = useState<DOMRect | null>(null)
-	const overlayRef = useRef<HTMLDivElement | null>(null)
-	// Mirrors `target` for the pointer and export callbacks, which read it outside render.
-	const targetRef = useRef<HTMLElement | null>(null)
-	useLayoutEffect(() => {
-		targetRef.current = target
-	}, [target])
-
-	const [watermarkEnabled, toggleWatermark] = useTableImageWatermark()
-
-	const getTableImageSource = useCallback(() => {
-		const table = targetRef.current as HTMLTableElement | null
-		const rows = readTableRows(table)
-		if (rows.length === 0) return null
-		return { rows, columnWidths: readColumnWidths(table), title: headingAbove(table) }
-	}, [])
-
 	useEffect(() => {
-		const root = editor.view.dom as HTMLElement
-
-		const tableFromSelection = (): HTMLElement | null => {
-			if (!editor.isActive('table')) return null
-			try {
-				const { from } = editor.view.state.selection
-				const dom = editor.view.domAtPos(from).node
-				let el: HTMLElement | null = dom.nodeType === 1 ? (dom as HTMLElement) : dom.parentElement
-				while (el && el.tagName !== 'TABLE') el = el.parentElement
-				return el && root.contains(el) ? el : null
-			} catch {
-				return null
-			}
-		}
-
-		const tableFromPoint = (x: number, y: number): HTMLElement | null => {
-			const el = document.elementFromPoint(x, y) as HTMLElement | null
-			if (!el) return null
-			if (overlayRef.current?.contains(el)) return targetRef.current
-			const tableEl = el.closest('table') as HTMLElement | null
-			return tableEl && root.contains(tableEl) ? tableEl : null
-		}
-
-		let lastX = -1
-		let lastY = -1
-
-		const compute = (): HTMLElement | null => {
-			const sel = tableFromSelection()
-			if (sel) return sel
-			if (lastX < 0) return null
-			return tableFromPoint(lastX, lastY)
-		}
-
 		const sync = () => {
-			const next = compute()
-			setTarget((prev) => (prev === next ? prev : next))
+			if (!editor.isEditable || !editor.isActive('table')) {
+				setTarget(null)
+				return
+			}
+			const { from } = editor.state.selection
+			const node = editor.view.domAtPos(from).node
+			const element = node.nodeType === 1 ? (node as HTMLElement) : node.parentElement
+			setTarget(element?.closest('table') ?? null)
 		}
-
-		const onPointerMove = (e: PointerEvent) => {
-			lastX = e.clientX
-			lastY = e.clientY
-			sync()
-		}
-
-		document.addEventListener('pointermove', onPointerMove, { passive: true })
-		editor.on('selectionUpdate', sync)
+		editor.on('update', sync)
 		editor.on('transaction', sync)
 		sync()
-
 		return () => {
-			document.removeEventListener('pointermove', onPointerMove)
-			editor.off('selectionUpdate', sync)
+			editor.off('update', sync)
 			editor.off('transaction', sync)
 		}
 	}, [editor])
+	return target ? <TableToolbar editor={editor} target={target} /> : null
+}
 
-	// Layout measurement: the overlay position comes from the table's rendered box.
+function TableToolbar({ editor, target }: { editor: Editor; target: HTMLElement }) {
+	const store = Ariakit.usePopoverStore({ defaultOpen: true, placement: 'top-start' })
 	useLayoutEffect(() => {
-		if (!target) return
-		const update = () => setRect(target.getBoundingClientRect())
-		update()
-		window.addEventListener('scroll', update, true)
-		window.addEventListener('resize', update)
-		const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(update) : null
-		ro?.observe(target)
-		return () => {
-			window.removeEventListener('scroll', update, true)
-			window.removeEventListener('resize', update)
-			ro?.disconnect()
-		}
-	}, [target])
-
-	if (!target || !rect) return null
-
-	const top = Math.max(8, rect.top - 44)
-	const left = Math.max(8, rect.left)
-
+		store.setAnchorElement(target)
+		store.show()
+	}, [store, target])
+	const [watermarkEnabled, toggleWatermark] = useTableImageWatermark()
+	const getTableImageSource = useCallback(
+		() => ({
+			rows: readTableRows(target as HTMLTableElement),
+			columnWidths: readColumnWidths(target as HTMLTableElement),
+			title: headingAbove(target as HTMLTableElement)
+		}),
+		[target]
+	)
 	return (
-		<div ref={overlayRef} style={{ position: 'fixed', top, left, zIndex: 40 }} className="article-table-overlay">
-			<div className="flex items-center gap-0.5 rounded-lg border border-medium bg-surface/95 p-1 shadow-raised backdrop-blur supports-[backdrop-filter]:bg-surface/90">
+		<Ariakit.Popover
+			store={store}
+			role="presentation"
+			portal
+			fixed
+			gutter={8}
+			overflowPadding={8}
+			fitViewport
+			autoFocusOnShow={false}
+			autoFocusOnHide={false}
+			hideOnInteractOutside={false}
+			hideOnEscape={false}
+			className="article-table-overlay z-40 max-w-[calc(100vw-16px)] overflow-x-auto rounded-lg border border-medium bg-surface/95 p-1 shadow-raised backdrop-blur supports-[backdrop-filter]:bg-surface/90"
+		>
+			<div role="group" aria-label="Table controls" className="flex w-max items-center gap-0.5">
 				<span className="px-1.5 font-jetbrains text-[10px] tracking-[0.18em] text-tertiary uppercase">Table</span>
 				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
 				<TableRailButton label="Toggle header row" onClick={() => editor.chain().focus().toggleHeaderRow().run()}>
@@ -195,10 +162,7 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 					watermarkMode="preference"
 					hideWatermarkItem
 				/>
-				<TableRailButton
-					label={watermarkEnabled ? 'Watermark on — click to turn off' : 'Watermark off — click to turn on'}
-					onClick={toggleWatermark}
-				>
+				<TableRailButton label="Watermark" pressed={watermarkEnabled} onClick={toggleWatermark}>
 					<span className={`label-xs tracking-wider ${watermarkEnabled ? '' : 'text-tertiary line-through'}`}>WM</span>
 				</TableRailButton>
 				<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
@@ -206,7 +170,7 @@ export function TableControlsOverlay({ editor }: { editor: Editor }) {
 					<Icon name="x" className="size-3.5" />
 				</TableRailButton>
 			</div>
-		</div>
+		</Ariakit.Popover>
 	)
 }
 

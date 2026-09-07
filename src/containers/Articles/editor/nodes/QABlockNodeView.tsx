@@ -2,6 +2,7 @@ import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { NodeViewContent, NodeViewWrapper, type NodeViewProps, useEditorState } from '@tiptap/react'
 import { useRef } from 'react'
 import { formatAutomaticQAQuestionNumber, normalizeQAQuestionNumber } from '../../qa'
+import { useArticleEditable } from '../useArticleEditable'
 
 function getAutomaticQuestionIndex(doc: ProseMirrorNode, targetPos: number | undefined): number {
 	if (typeof targetPos !== 'number') return 1
@@ -27,6 +28,7 @@ function getQuestionNumberInputWidth(characterCount: number): string {
 export function QABlockNodeView({ node, updateAttributes, getPos, editor }: NodeViewProps) {
 	const questionNumber = normalizeQAQuestionNumber(node.attrs.questionNumber)
 	const cancelCommitRef = useRef(false)
+	const isEditable = useArticleEditable(editor)
 	const automaticQuestionNumber = useEditorState({
 		editor,
 		selector: ({ editor: currentEditor }) => {
@@ -64,42 +66,48 @@ export function QABlockNodeView({ node, updateAttributes, getPos, editor }: Node
 				className="article-qa-number-editor"
 			>
 				<span>Q · </span>
-				<input
-					key={questionNumber ?? 'automatic'}
-					type="text"
-					inputMode="numeric"
-					pattern="[0-9]*"
-					maxLength={4}
-					defaultValue={questionNumber ?? ''}
-					placeholder={automaticQuestionNumber}
-					aria-label="Question number"
-					onChange={(event) => {
-						const next = normalizeQAQuestionNumber(event.currentTarget.value) ?? ''
-						event.currentTarget.value = next
-						event.currentTarget.style.width = getQuestionNumberInputWidth(
-							next.length > 0 ? next.length : automaticQuestionNumber.length
-						)
-					}}
-					onBlur={(event) => handleBlur(event.currentTarget)}
-					onKeyDown={(event) => {
-						if (event.key === 'Enter') {
-							event.preventDefault()
-							event.currentTarget.blur()
-						}
-						if (event.key === 'Escape') {
-							event.preventDefault()
-							cancelCommitRef.current = true
-							event.currentTarget.value = questionNumber ?? ''
-							event.currentTarget.blur()
-						}
-					}}
-					style={{
-						width: getQuestionNumberInputWidth(
-							questionNumber && questionNumber.length > 0 ? questionNumber.length : automaticQuestionNumber.length
-						)
-					}}
-					className="font-inherit h-[1.4em] appearance-none rounded-xs border-b border-dashed border-transparent bg-transparent p-0 leading-[1.4] text-inherit outline-hidden placeholder:text-link placeholder:opacity-100 hover:border-medium focus:border-link"
-				/>
+				{isEditable ? (
+					<input
+						key={questionNumber ?? 'automatic'}
+						type="text"
+						inputMode="numeric"
+						pattern="[0-9]*"
+						maxLength={4}
+						defaultValue={questionNumber ?? ''}
+						placeholder={automaticQuestionNumber}
+						aria-label="Question number"
+						onChange={(event) => {
+							const next = normalizeQAQuestionNumber(event.currentTarget.value) ?? ''
+							event.currentTarget.value = next
+							event.currentTarget.style.width = getQuestionNumberInputWidth(
+								next.length > 0 ? next.length : automaticQuestionNumber.length
+							)
+						}}
+						onBlur={(event) => handleBlur(event.currentTarget)}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter') {
+								event.preventDefault()
+								event.currentTarget.blur()
+								editor.commands.focus()
+							}
+							if (event.key === 'Escape') {
+								event.preventDefault()
+								cancelCommitRef.current = true
+								event.currentTarget.value = questionNumber ?? ''
+								event.currentTarget.blur()
+								editor.commands.focus()
+							}
+						}}
+						style={{
+							width: getQuestionNumberInputWidth(
+								questionNumber && questionNumber.length > 0 ? questionNumber.length : automaticQuestionNumber.length
+							)
+						}}
+						className="font-inherit h-[1.4em] appearance-none rounded-xs border-b border-dashed border-transparent bg-transparent p-0 leading-[1.4] text-inherit outline-hidden placeholder:text-link placeholder:opacity-100 hover:border-medium focus:border-link"
+					/>
+				) : (
+					<span>{questionNumber ?? automaticQuestionNumber}</span>
+				)}
 			</div>
 			<NodeViewContent<'dl'> as="dl" />
 		</NodeViewWrapper>

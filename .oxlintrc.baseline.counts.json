@@ -78,7 +78,6 @@
 	"src/containers/Articles/editor/PeoplePanelDialog.tsx": {"react/no-array-index-key":1},
 	"src/containers/Articles/editor/RevisionHistoryDrawer.tsx": {"react/hook-use-state":1,"react/no-array-index-key":6},
 	"src/containers/Articles/editor/extensions.tsx": {"jsx-a11y/label-has-associated-control":3,"jsx-a11y/no-static-element-interactions":1},
-	"src/containers/Articles/editor/nodes/ArticleImageNodeView.tsx": {"jsx-a11y/no-static-element-interactions":4},
 	"src/containers/Articles/editor/nodes/ArticlePeoplePanelNodeView.tsx": {"jsx-a11y/no-static-element-interactions":1},
 	"src/containers/Articles/editor/nodes/LlamaAIChart.ts": {"unicorn/consistent-function-scoping":1},
 	"src/containers/Articles/editor/nodes/LlamaAIChartNodeView.tsx": {"jsx-a11y/no-static-element-interactions":1},

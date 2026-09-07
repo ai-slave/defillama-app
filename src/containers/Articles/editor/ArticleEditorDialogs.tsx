@@ -18,7 +18,7 @@ export function CoverDetailsDialog({ article, publishErrors, store, updateCoverF
 			backdrop={
 				<div className="fixed inset-0 z-40 bg-research-backdrop-soft opacity-0 backdrop-blur-sm transition-opacity duration-150 data-[enter]:opacity-100 data-[leave]:opacity-0" />
 			}
-			className="fixed top-1/2 left-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-medium bg-surface p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
+			className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-32px)] w-[calc(100%-32px)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-medium bg-surface p-5 opacity-0 shadow-2xl transition-opacity duration-150 data-[enter]:opacity-100"
 		>
 			<div className="mb-4 flex items-start justify-between gap-3">
 				<div className="grid gap-1">

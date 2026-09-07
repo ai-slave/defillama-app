@@ -1,4 +1,4 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react'
+import type { RefObject } from 'react'
 import { Icon as SharedIcon } from '~/ui/Icon'
 import type { LocalArticleDocument } from '../types'
 import { Icon } from './ArticleEditorIcon'
@@ -7,26 +7,22 @@ import type { ArticleFieldUpdater } from './ArticleEditorTypes'
 type ArticleCoverImageEditorProps = {
 	article: LocalArticleDocument
 	coverFileInputRef: RefObject<HTMLInputElement | null>
-	coverHovered: boolean
 	isUploadingCover: boolean
 	publishError?: string
 	handleCoverFile: (file: File | null | undefined) => void
 	openCoverPicker: () => void
 	onOpenCoverDetails: () => void
-	setCoverHovered: Dispatch<SetStateAction<boolean>>
 	updateArticle: ArticleFieldUpdater
 }
 
 export function ArticleCoverImageEditor({
 	article,
 	coverFileInputRef,
-	coverHovered,
 	handleCoverFile,
 	isUploadingCover,
 	onOpenCoverDetails,
 	openCoverPicker,
 	publishError,
-	setCoverHovered,
 	updateArticle
 }: ArticleCoverImageEditorProps) {
 	return (
@@ -35,16 +31,13 @@ export function ArticleCoverImageEditor({
 				ref={coverFileInputRef}
 				type="file"
 				accept="image/png,image/jpeg,image/webp,image/gif"
-				className="sr-only"
+				className="hidden"
+				aria-label="Upload cover image"
 				onChange={(e) => handleCoverFile(e.target.files?.[0])}
 			/>
 			{article.coverImage?.url ? (
 				<figure className="grid gap-2">
-					<div
-						className="group relative aspect-[700/400] w-full overflow-hidden rounded-md border border-medium"
-						onMouseEnter={() => setCoverHovered(true)}
-						onMouseLeave={() => setCoverHovered(false)}
-					>
+					<div className="group relative aspect-[700/400] w-full overflow-hidden rounded-md border border-medium">
 						{/* eslint-disable-next-line @next/next/no-img-element */}
 						<img
 							src={article.coverImage.url}
@@ -53,7 +46,9 @@ export function ArticleCoverImageEditor({
 						/>
 						<div
 							className={`pointer-events-none absolute inset-0 flex items-end justify-end gap-2 bg-linear-to-t from-research-black/55 via-research-black/10 to-transparent p-3 transition-opacity ${
-								coverHovered || isUploadingCover ? 'opacity-100' : 'opacity-0'
+								isUploadingCover
+									? 'opacity-100'
+									: 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100'
 							}`}
 						>
 							<button

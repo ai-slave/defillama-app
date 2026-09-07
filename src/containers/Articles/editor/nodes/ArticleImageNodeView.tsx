@@ -1,167 +1,225 @@
+import * as Ariakit from '@ariakit/react'
 import { NodeViewWrapper, type NodeViewProps } from '@tiptap/react'
-import { useEffect, useRef, useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Icon } from '~/ui/Icon'
+import { useArticleEditable } from '../useArticleEditable'
 import { normalizeImageHref, type ArticleImageAttrs } from './ArticleImage.shared'
 
-function ToolbarButton({
+const BUTTON_CLASS =
+	'flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary'
+const INPUT_CLASS =
+	'w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden'
+const SAVE_CLASS = 'rounded-md bg-research-tint px-3 py-1.5 text-xs font-medium text-link hover:brightness-110'
+
+function ImageDetailsPopover({
 	label,
-	indicator,
-	active,
-	tone = 'default',
-	onClick,
-	title
+	title,
+	hasValue,
+	children
 }: {
 	label: string
-	indicator?: boolean
-	active?: boolean
-	tone?: 'default' | 'danger'
-	onClick: () => void
-	title?: string
+	title: string
+	hasValue: boolean
+	children: ReactNode
 }) {
-	const toneClass =
-		tone === 'danger'
-			? active
-				? 'bg-error/10 text-error'
-				: 'text-secondary hover:bg-error/10 hover:text-error'
-			: active
-				? 'bg-research-tint text-link'
-				: 'text-secondary hover:bg-research-tint-hover hover:text-primary'
 	return (
-		<button
-			type="button"
-			title={title ?? label}
-			onClick={onClick}
-			className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed ${toneClass}`}
+		<Ariakit.PopoverProvider placement="bottom-end">
+			<Ariakit.PopoverDisclosure
+				title={title}
+				className={`${BUTTON_CLASS} data-open:bg-research-tint data-open:text-link`}
+			>
+				{label}
+				<span aria-hidden className={`size-1.5 rounded-full ${hasValue ? 'bg-link' : 'bg-tertiary/40'}`} />
+			</Ariakit.PopoverDisclosure>
+			<Ariakit.Popover
+				aria-label={title}
+				portal
+				fixed
+				gutter={8}
+				overflowPadding={8}
+				fitViewport
+				unmountOnHide
+				className="z-[70] w-80 max-w-[calc(100vw-16px)] overflow-y-auto rounded-md border border-medium bg-surface p-3 shadow-lg"
+				style={{ maxHeight: 'var(--popover-available-height)' }}
+			>
+				{children}
+			</Ariakit.Popover>
+		</Ariakit.PopoverProvider>
+	)
+}
+
+function FormActions() {
+	return (
+		<div className="flex items-center justify-between">
+			<Ariakit.PopoverDismiss className={BUTTON_CLASS}>Cancel</Ariakit.PopoverDismiss>
+			<button type="submit" className={SAVE_CLASS}>
+				Save
+			</button>
+		</div>
+	)
+}
+
+function AltForm({ alt, save }: { alt: string; save: (alt: string) => void }) {
+	const [draft, setDraft] = useState(alt)
+	const store = Ariakit.usePopoverContext()!
+	return (
+		<form
+			className="grid gap-3"
+			onSubmit={(event) => {
+				event.preventDefault()
+				save(draft.trim())
+				store.hide()
+			}}
 		>
-			<span>{label}</span>
-			{typeof indicator === 'boolean' ? (
-				<span
-					aria-hidden
-					className={`size-1.5 rounded-full transition-colors ${indicator ? 'bg-link' : 'bg-tertiary/40'}`}
+			<label className="grid gap-1.5">
+				<span className="text-xs font-medium text-secondary">Alt text</span>
+				<textarea
+					value={draft}
+					onChange={(event) => setDraft(event.target.value)}
+					rows={3}
+					placeholder="Describe the image for screen readers"
+					className={`${INPUT_CLASS} resize-none`}
+					onKeyDown={(event) => {
+						if (event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing) {
+							event.preventDefault()
+							event.currentTarget.form?.requestSubmit()
+						}
+					}}
 				/>
+			</label>
+			<FormActions />
+		</form>
+	)
+}
+
+function LinkForm({ href, save }: { href: string; save: (href: string) => void }) {
+	const [draft, setDraft] = useState(href)
+	const store = Ariakit.usePopoverContext()!
+	return (
+		<form
+			className="grid gap-3"
+			onSubmit={(event) => {
+				event.preventDefault()
+				save(normalizeImageHref(draft))
+				store.hide()
+			}}
+		>
+			<label className="grid gap-1.5">
+				<span className="text-xs font-medium text-secondary">Image link</span>
+				<input
+					type="text"
+					inputMode="url"
+					value={draft}
+					onChange={(event) => setDraft(event.target.value)}
+					placeholder="https://…"
+					className={INPUT_CLASS}
+				/>
+			</label>
+			{href ? (
+				<button
+					type="button"
+					onClick={() => {
+						save('')
+						store.hide()
+					}}
+					className="justify-self-start rounded-md px-2 py-1 text-xs text-error"
+				>
+					Remove link
+				</button>
 			) : null}
-		</button>
+			<FormActions />
+		</form>
+	)
+}
+
+type Credit = Pick<ArticleImageAttrs, 'headline' | 'credit' | 'copyright'>
+function CreditForm({ credit, save }: { credit: Credit; save: (credit: Credit) => void }) {
+	const [draft, setDraft] = useState(credit)
+	const store = Ariakit.usePopoverContext()!
+	return (
+		<form
+			className="grid gap-3"
+			onSubmit={(event) => {
+				event.preventDefault()
+				save({
+					headline: draft.headline.trim(),
+					credit: draft.credit.trim(),
+					copyright: draft.copyright.trim()
+				})
+				store.hide()
+			}}
+		>
+			<label className="grid gap-1.5">
+				<span className="text-xs font-medium text-secondary">Headline</span>
+				<input
+					value={draft.headline}
+					onChange={(event) => setDraft({ ...draft, headline: event.target.value })}
+					placeholder="Image title"
+					className={INPUT_CLASS}
+				/>
+			</label>
+			<label className="grid gap-1.5">
+				<span className="text-xs font-medium text-secondary">Credit</span>
+				<input
+					value={draft.credit}
+					onChange={(event) => setDraft({ ...draft, credit: event.target.value })}
+					placeholder="Photographer or illustrator"
+					className={INPUT_CLASS}
+				/>
+			</label>
+			<label className="grid gap-1.5">
+				<span className="text-xs font-medium text-secondary">Copyright</span>
+				<input
+					value={draft.copyright}
+					onChange={(event) => setDraft({ ...draft, copyright: event.target.value })}
+					placeholder="Rights holder"
+					className={INPUT_CLASS}
+				/>
+			</label>
+			<FormActions />
+		</form>
+	)
+}
+
+function ImageCaption({
+	caption,
+	autoFocus,
+	save
+}: {
+	caption: string
+	autoFocus: boolean
+	save: (caption: string) => void
+}) {
+	const [draft, setDraft] = useState(caption)
+	return (
+		<Ariakit.Focusable
+			autoFocus={autoFocus}
+			render={
+				<textarea
+					value={draft}
+					onChange={(event) => setDraft(event.target.value)}
+					aria-label="Image caption"
+					onBlur={() => save(draft.trim())}
+					placeholder="Add a caption…"
+					rows={Math.min(3, Math.max(1, draft.split('\n').length))}
+					className="w-full resize-none rounded-md border border-medium bg-transparent px-3 py-2 text-sm leading-snug text-secondary outline-hidden focus:border-link"
+				/>
+			}
+		/>
 	)
 }
 
 export function ArticleImageNodeView({ node, selected, updateAttributes, deleteNode, editor }: NodeViewProps) {
 	const attrs = node.attrs as ArticleImageAttrs
-	const [altOpen, setAltOpen] = useState(false)
-	const [altDraft, setAltDraft] = useState(attrs.alt ?? '')
-	const [linkOpen, setLinkOpen] = useState(false)
-	const [linkDraft, setLinkDraft] = useState(attrs.href ?? '')
-	const [captionDraft, setCaptionDraft] = useState(attrs.caption ?? '')
-	const [captionFocused, setCaptionFocused] = useState(false)
-	const [showCaption, setShowCaption] = useState(Boolean(attrs.caption))
-	const [creditOpen, setCreditOpen] = useState(false)
-	const [creditDraft, setCreditDraft] = useState(attrs.credit ?? '')
-	const [copyrightDraft, setCopyrightDraft] = useState(attrs.copyright ?? '')
-	const [headlineDraft, setHeadlineDraft] = useState(attrs.headline ?? '')
-	const captionInputRef = useRef<HTMLTextAreaElement | null>(null)
-	const linkInputRef = useRef<HTMLInputElement | null>(null)
-	const altInputRef = useRef<HTMLTextAreaElement | null>(null)
-	const headlineInputRef = useRef<HTMLInputElement | null>(null)
-
-	// Each draft restarts from its attribute when the document changes that attribute (undo, collaboration).
-	const [syncedAttrs, setSyncedAttrs] = useState(attrs)
-	if (
-		syncedAttrs.alt !== attrs.alt ||
-		syncedAttrs.href !== attrs.href ||
-		syncedAttrs.caption !== attrs.caption ||
-		syncedAttrs.credit !== attrs.credit ||
-		syncedAttrs.copyright !== attrs.copyright ||
-		syncedAttrs.headline !== attrs.headline
-	) {
-		if (syncedAttrs.alt !== attrs.alt) setAltDraft(attrs.alt ?? '')
-		if (syncedAttrs.href !== attrs.href) setLinkDraft(attrs.href ?? '')
-		if (syncedAttrs.caption !== attrs.caption) {
-			setCaptionDraft(attrs.caption ?? '')
-			if (attrs.caption) setShowCaption(true)
-		}
-		if (syncedAttrs.credit !== attrs.credit) setCreditDraft(attrs.credit ?? '')
-		if (syncedAttrs.copyright !== attrs.copyright) setCopyrightDraft(attrs.copyright ?? '')
-		if (syncedAttrs.headline !== attrs.headline) setHeadlineDraft(attrs.headline ?? '')
-		setSyncedAttrs(attrs)
-	}
-
-	useEffect(() => {
-		if (!linkOpen) return
-		const timeout = setTimeout(() => linkInputRef.current?.focus(), 0)
-		return () => clearTimeout(timeout)
-	}, [linkOpen])
-
-	useEffect(() => {
-		if (!altOpen) return
-		const timeout = setTimeout(() => altInputRef.current?.focus(), 0)
-		return () => clearTimeout(timeout)
-	}, [altOpen])
-
-	useEffect(() => {
-		if (!creditOpen) return
-		const timeout = setTimeout(() => headlineInputRef.current?.focus(), 0)
-		return () => clearTimeout(timeout)
-	}, [creditOpen])
-
-	const isEditable = editor?.isEditable !== false
-	const isUploading = Boolean(attrs.uploading)
-	const showOverlay = isEditable && (selected || altOpen || linkOpen || creditOpen)
-	const hasCreditMeta = Boolean(attrs.credit || attrs.copyright || attrs.headline)
-
-	const commitAlt = () => {
-		updateAttributes({ alt: altDraft.trim() })
-		setAltOpen(false)
-	}
-
-	const commitLink = () => {
-		updateAttributes({ href: normalizeImageHref(linkDraft) })
-		setLinkOpen(false)
-	}
-
-	const clearLink = () => {
-		setLinkDraft('')
-		updateAttributes({ href: '' })
-		setLinkOpen(false)
-	}
-
-	const toggleCaption = () => {
-		if (showCaption) {
-			setCaptionDraft('')
-			updateAttributes({ caption: '' })
-			setShowCaption(false)
-			return
-		}
-		setShowCaption(true)
-		setTimeout(() => captionInputRef.current?.focus(), 0)
-	}
-
-	const commitCaption = () => {
-		const trimmed = captionDraft.trim()
-		updateAttributes({ caption: trimmed })
-		if (!trimmed) setShowCaption(false)
-	}
-
-	const commitCredit = () => {
-		updateAttributes({
-			credit: creditDraft.trim(),
-			copyright: copyrightDraft.trim(),
-			headline: headlineDraft.trim()
-		})
-		setCreditOpen(false)
-	}
-
-	const cancelCredit = () => {
-		setCreditDraft(attrs.credit ?? '')
-		setCopyrightDraft(attrs.copyright ?? '')
-		setHeadlineDraft(attrs.headline ?? '')
-		setCreditOpen(false)
-	}
+	const [captionDraftOpen, setCaptionDraftOpen] = useState(false)
+	const showCaption = Boolean(attrs.caption) || captionDraftOpen
+	const isUploading = attrs.uploading
+	const isEditable = useArticleEditable(editor)
 
 	return (
-		<NodeViewWrapper data-article-image-wrapper className="article-image-block not-prose relative my-6">
+		<NodeViewWrapper data-article-image-wrapper className="article-image-block group/image not-prose relative my-6">
 			<figure
-				className={`relative overflow-hidden rounded-md border bg-surface transition-colors ${
-					selected ? 'border-link' : 'border-medium'
-				}`}
+				className={`relative overflow-hidden rounded-md border bg-surface transition-colors ${selected ? 'border-link' : 'border-medium'}`}
 			>
 				{attrs.src ? (
 					<img
@@ -178,272 +236,77 @@ export function ArticleImageNodeView({ node, selected, updateAttributes, deleteN
 						</div>
 					</div>
 				)}
-
 				{isUploading ? (
 					<div
-						aria-hidden
+						role="status"
 						className="pointer-events-none absolute inset-0 flex items-center justify-center bg-page/40 text-xs font-medium text-secondary"
 					>
 						<span className="rounded-md bg-surface/95 px-3 py-1.5 shadow-sm">Uploading…</span>
 					</div>
 				) : null}
-
-				{showOverlay && !isUploading ? (
+				{isEditable && !isUploading ? (
 					<div
 						contentEditable={false}
-						onMouseDown={(e) => e.stopPropagation()}
-						className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-md border border-medium bg-surface p-1 shadow-md"
+						className={`absolute top-3 right-3 left-3 flex w-fit max-w-[calc(100%-24px)] flex-wrap items-center gap-1 rounded-md border border-medium bg-surface p-1 shadow-md ${selected ? '' : 'opacity-0 group-focus-within/image:opacity-100 group-hover/image:opacity-100 pointer-coarse:opacity-100'}`}
 					>
-						<ToolbarButton
-							label="Alt"
-							indicator={Boolean(attrs.alt)}
-							active={altOpen}
+						<ImageDetailsPopover label="Alt" title="Image alt text" hasValue={Boolean(attrs.alt)}>
+							<AltForm key={attrs.alt} alt={attrs.alt} save={(alt) => updateAttributes({ alt })} />
+						</ImageDetailsPopover>
+						<ImageDetailsPopover label="Link" title="Image link" hasValue={Boolean(attrs.href)}>
+							<LinkForm key={attrs.href} href={attrs.href} save={(href) => updateAttributes({ href })} />
+						</ImageDetailsPopover>
+						<button
+							type="button"
+							aria-pressed={showCaption}
 							onClick={() => {
-								setAltOpen((v) => !v)
-								if (linkOpen) setLinkOpen(false)
-								if (creditOpen) setCreditOpen(false)
+								if (showCaption) {
+									setCaptionDraftOpen(false)
+									updateAttributes({ caption: '' })
+								} else setCaptionDraftOpen(true)
 							}}
-							title={attrs.alt ? `Alt: ${attrs.alt}` : 'Add alt text'}
-						/>
-						<ToolbarButton
-							label="Link"
-							indicator={Boolean(attrs.href)}
-							active={linkOpen}
-							onClick={() => {
-								setLinkOpen((v) => !v)
-								if (altOpen) setAltOpen(false)
-								if (creditOpen) setCreditOpen(false)
-							}}
-							title={attrs.href ? `Links to: ${attrs.href}` : 'Add link'}
-						/>
-						<ToolbarButton
-							label="Caption"
-							indicator={showCaption}
-							active={showCaption}
-							onClick={toggleCaption}
-							title={showCaption ? 'Remove caption' : 'Add caption'}
-						/>
-						<ToolbarButton
+							className={`${BUTTON_CLASS} ${showCaption ? 'bg-research-tint text-link' : ''}`}
+						>
+							Caption
+						</button>
+						<ImageDetailsPopover
 							label="Credit"
-							indicator={hasCreditMeta}
-							active={creditOpen}
+							title="Image credits"
+							hasValue={Boolean(attrs.credit || attrs.copyright || attrs.headline)}
+						>
+							<CreditForm
+								key={JSON.stringify([attrs.headline, attrs.credit, attrs.copyright])}
+								credit={attrs}
+								save={updateAttributes}
+							/>
+						</ImageDetailsPopover>
+						<button
+							type="button"
 							onClick={() => {
-								setCreditOpen((v) => !v)
-								if (altOpen) setAltOpen(false)
-								if (linkOpen) setLinkOpen(false)
+								deleteNode()
+								editor.commands.focus()
 							}}
-							title={hasCreditMeta ? 'Edit headline / credit / copyright' : 'Add headline, credit, or copyright'}
-						/>
-						<span aria-hidden className="mx-0.5 h-4 w-px bg-border-medium" />
-						<ToolbarButton label="Remove" tone="danger" onClick={() => deleteNode()} title="Remove image" />
-					</div>
-				) : null}
-
-				{linkOpen && !isUploading ? (
-					<div
-						contentEditable={false}
-						onMouseDown={(e) => e.stopPropagation()}
-						className="absolute top-13 right-3 z-10 grid w-80 gap-3 rounded-md border border-medium bg-surface p-3 shadow-lg"
-					>
-						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-secondary">Image link</span>
-							<input
-								ref={linkInputRef}
-								type="url"
-								inputMode="url"
-								value={linkDraft}
-								onChange={(e) => setLinkDraft(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === 'Escape') {
-										e.preventDefault()
-										setLinkDraft(attrs.href ?? '')
-										setLinkOpen(false)
-									}
-									if (e.key === 'Enter' && !e.shiftKey) {
-										e.preventDefault()
-										commitLink()
-									}
-								}}
-								placeholder="https://…"
-								className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-							/>
-						</label>
-						<div className="flex items-center justify-between">
-							{attrs.href ? (
-								<button
-									type="button"
-									onClick={clearLink}
-									className="rounded-md px-2 py-1 text-xs text-tertiary transition-colors hover:bg-error/10 hover:text-error"
-								>
-									Remove link
-								</button>
-							) : (
-								<button
-									type="button"
-									onClick={() => {
-										setLinkDraft(attrs.href ?? '')
-										setLinkOpen(false)
-									}}
-									className="rounded-md px-2 py-1 text-xs text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
-								>
-									Cancel
-								</button>
-							)}
-							<button
-								type="button"
-								onClick={commitLink}
-								className="rounded-md bg-research-tint px-3 py-1.5 text-xs font-medium text-link transition-colors hover:brightness-110"
-							>
-								Save
-							</button>
-						</div>
-					</div>
-				) : null}
-
-				{creditOpen && !isUploading ? (
-					<div
-						contentEditable={false}
-						onMouseDown={(e) => e.stopPropagation()}
-						className="absolute top-13 right-3 z-10 grid w-80 gap-3 rounded-md border border-medium bg-surface p-3 shadow-lg"
-					>
-						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-secondary">Headline</span>
-							<input
-								ref={headlineInputRef}
-								value={headlineDraft}
-								onChange={(e) => setHeadlineDraft(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === 'Escape') {
-										e.preventDefault()
-										cancelCredit()
-									}
-								}}
-								placeholder="Image title"
-								className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-							/>
-						</label>
-						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-secondary">Credit</span>
-							<input
-								value={creditDraft}
-								onChange={(e) => setCreditDraft(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === 'Escape') {
-										e.preventDefault()
-										cancelCredit()
-									}
-								}}
-								placeholder="Photographer or illustrator"
-								className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-							/>
-						</label>
-						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-secondary">Copyright</span>
-							<input
-								value={copyrightDraft}
-								onChange={(e) => setCopyrightDraft(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === 'Escape') {
-										e.preventDefault()
-										cancelCredit()
-									}
-									if (e.key === 'Enter' && !e.shiftKey) {
-										e.preventDefault()
-										commitCredit()
-									}
-								}}
-								placeholder="Rights holder"
-								className="w-full rounded-md border border-medium bg-page px-3 py-2 text-sm text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-							/>
-						</label>
-						<div className="flex items-center justify-between">
-							<button
-								type="button"
-								onClick={cancelCredit}
-								className="rounded-md px-2 py-1 text-xs text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
-							>
-								Cancel
-							</button>
-							<button
-								type="button"
-								onClick={commitCredit}
-								className="rounded-md bg-research-tint px-3 py-1.5 text-xs font-medium text-link transition-colors hover:brightness-110"
-							>
-								Save
-							</button>
-						</div>
-					</div>
-				) : null}
-
-				{altOpen && !isUploading ? (
-					<div
-						contentEditable={false}
-						onMouseDown={(e) => e.stopPropagation()}
-						className="absolute top-13 right-3 z-10 grid w-80 gap-3 rounded-md border border-medium bg-surface p-3 shadow-lg"
-					>
-						<label className="grid gap-1.5">
-							<span className="text-xs font-medium text-secondary">Alt text</span>
-							<textarea
-								ref={altInputRef}
-								value={altDraft}
-								onChange={(e) => setAltDraft(e.target.value)}
-								onKeyDown={(e) => {
-									if (e.key === 'Escape') {
-										e.preventDefault()
-										setAltDraft(attrs.alt ?? '')
-										setAltOpen(false)
-									}
-									if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-										e.preventDefault()
-										commitAlt()
-									}
-								}}
-								rows={3}
-								placeholder="Describe the image for screen readers"
-								className="w-full resize-none rounded-md border border-medium bg-page px-3 py-2 text-sm leading-snug text-primary placeholder:text-tertiary focus:border-link focus:outline-hidden"
-							/>
-						</label>
-						<div className="flex items-center justify-between">
-							<button
-								type="button"
-								onClick={() => {
-									setAltDraft(attrs.alt ?? '')
-									setAltOpen(false)
-								}}
-								className="rounded-md px-2 py-1 text-xs text-secondary transition-colors hover:bg-research-tint-hover hover:text-primary"
-							>
-								Cancel
-							</button>
-							<button
-								type="button"
-								onClick={commitAlt}
-								className="rounded-md bg-research-tint px-3 py-1.5 text-xs font-medium text-link transition-colors hover:brightness-110"
-							>
-								Save
-							</button>
-						</div>
+							className={`${BUTTON_CLASS} hover:text-error`}
+						>
+							Remove
+						</button>
 					</div>
 				) : null}
 			</figure>
-
 			{showCaption ? (
-				<div className="mt-2">
-					<textarea
-						ref={captionInputRef}
-						value={captionDraft}
-						onChange={(e) => setCaptionDraft(e.target.value)}
-						aria-label="Image caption"
-						onFocus={() => setCaptionFocused(true)}
-						onBlur={() => {
-							setCaptionFocused(false)
-							commitCaption()
-						}}
-						placeholder="Add a caption…"
-						rows={Math.min(3, Math.max(1, captionDraft.split('\n').length))}
-						className={`w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm leading-snug text-secondary outline-hidden transition-colors ${
-							captionFocused ? 'border-link' : 'border-medium'
-						}`}
-					/>
+				<div contentEditable={false} className="mt-2">
+					{isEditable ? (
+						<ImageCaption
+							key={attrs.caption}
+							caption={attrs.caption}
+							autoFocus={captionDraftOpen}
+							save={(caption) => {
+								updateAttributes({ caption })
+								setCaptionDraftOpen(false)
+							}}
+						/>
+					) : (
+						<p className="text-sm text-secondary">{attrs.caption}</p>
+					)}
 				</div>
 			) : null}
 		</NodeViewWrapper>

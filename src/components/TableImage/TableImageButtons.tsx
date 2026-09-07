@@ -163,13 +163,14 @@ export function TableImageButtons({
 				</Ariakit.PopoverDisclosure>
 
 				<Ariakit.Popover
+					aria-label="Export table"
 					gutter={8}
 					unmountOnHide
 					portal
 					wrapperProps={{ className: popoverMobileWrapperClassName }}
 					className={`${menuSurfaceStyles} z-50`}
 				>
-					<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+					<Ariakit.PopoverDismiss aria-label="Close export options" className={popoverMobileDismissStyles}>
 						<Icon name="x" className="size-5" />
 					</Ariakit.PopoverDismiss>
 					{csvSlot ? <div className="contents">{csvSlot}</div> : null}
@@ -203,8 +204,7 @@ export function TableImageButtons({
 						<button
 							type="button"
 							className={`${popoverMenuItemStyles} border-t border-medium`}
-							role="menuitemcheckbox"
-							aria-checked={watermarkEnabled}
+							aria-pressed={watermarkEnabled}
 							onClick={toggleWatermark}
 						>
 							<Icon

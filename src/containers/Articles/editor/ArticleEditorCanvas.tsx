@@ -1,4 +1,5 @@
 import * as Ariakit from '@ariakit/react'
+import { isNodeSelection } from '@tiptap/core'
 import { EditorContent, type Editor } from '@tiptap/react'
 import { BubbleMenu, FloatingMenu } from '@tiptap/react/menus'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
@@ -83,6 +84,7 @@ export function ArticleEditorCanvas({
 						options={{ placement: 'top' }}
 						shouldShow={({ editor: e, from, to, state }) => {
 							if (linkEdit) return true
+							if (isNodeSelection(state.selection)) return false
 							if (!e.isEditable) return false
 							if (e.isActive('entityLink') && e.isFocused) return true
 							if (from === to) return false

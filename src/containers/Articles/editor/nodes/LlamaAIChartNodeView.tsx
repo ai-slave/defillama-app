@@ -3,6 +3,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { isChartConfiguration, isChartData, type ChartConfiguration } from '~/containers/LlamaAI/chartTypes'
 import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
 import { Icon } from '~/ui/Icon'
+import { useArticleEditable } from '../useArticleEditable'
 
 function CaptionEditor({ caption, onChange }: { caption: string; onChange: (caption: string) => void }) {
 	const [draft, setDraft] = useState(caption)
@@ -25,6 +26,7 @@ function CaptionEditor({ caption, onChange }: { caption: string; onChange: (capt
 	return (
 		<textarea
 			ref={ref}
+			aria-label="Chart caption"
 			value={draft}
 			rows={1}
 			placeholder="Add a caption, e.g. data source and denomination."
@@ -46,7 +48,8 @@ function CaptionEditor({ caption, onChange }: { caption: string; onChange: (capt
 	)
 }
 
-export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttributes }: NodeViewProps) {
+export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttributes, editor }: NodeViewProps) {
+	const isEditable = useArticleEditable(editor)
 	const config = isChartConfiguration(node.attrs.chartConfig) ? node.attrs.chartConfig : null
 	const chartData = isChartData(node.attrs.chartData) ? node.attrs.chartData : null
 	const caption = typeof node.attrs.caption === 'string' ? node.attrs.caption : ''
@@ -80,42 +83,51 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 				}`}
 			/>
 
-			<div
-				contentEditable={false}
-				onMouseDown={(e) => e.stopPropagation()}
-				className={`pointer-events-none absolute -top-2 right-0 left-4 z-10 flex items-center justify-between gap-2 transition-opacity duration-150 sm:left-6 ${
-					selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
-				}`}
-			>
-				<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase shadow-xs">
-					<Icon name="sparkles" className="size-3 text-link" />
-					LlamaAI · {config?.type ?? 'chart'}
-				</span>
-				<span className="pointer-events-auto flex items-stretch divide-x divide-(--border-medium) overflow-hidden rounded-xs border border-medium bg-surface shadow-xs">
-					<button
-						type="button"
-						title="Remove chart"
-						aria-label="Remove chart"
-						onMouseDown={(e) => {
-							e.preventDefault()
-							e.stopPropagation()
-						}}
-						onClick={(e) => {
-							e.stopPropagation()
-							deleteNode()
-						}}
-						className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-tertiary uppercase transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-error"
-					>
-						<Icon name="trash-2" className="size-3" />
-						Remove
-					</button>
-				</span>
-			</div>
+			{isEditable ? (
+				<div
+					contentEditable={false}
+					onMouseDown={(e) => e.stopPropagation()}
+					className={`pointer-events-none absolute -top-2 right-0 left-4 z-10 flex items-center justify-between gap-2 transition-opacity duration-150 sm:left-6 ${
+						selected
+							? 'opacity-100'
+							: 'opacity-0 group-hover:opacity-100 focus-within:opacity-100 pointer-coarse:opacity-100'
+					}`}
+				>
+					<span className="pointer-events-auto inline-flex items-center gap-1.5 rounded-xs border border-medium bg-surface px-2 py-1 font-jetbrains text-[10px] tracking-[0.22em] text-tertiary uppercase shadow-xs">
+						<Icon name="sparkles" className="size-3 text-link" />
+						LlamaAI · {config?.type ?? 'chart'}
+					</span>
+					<span className="pointer-events-auto flex items-stretch divide-x divide-(--border-medium) overflow-hidden rounded-xs border border-medium bg-surface shadow-xs">
+						<button
+							type="button"
+							title="Remove chart"
+							aria-label="Remove chart"
+							onMouseDown={(e) => {
+								e.preventDefault()
+								e.stopPropagation()
+							}}
+							onClick={(e) => {
+								e.stopPropagation()
+								deleteNode()
+								editor.commands.focus()
+							}}
+							className="flex items-center gap-1.5 px-2.5 py-1 font-jetbrains text-[10px] tracking-[0.2em] text-tertiary uppercase transition-colors hover:bg-(--legacy-link-hover-bg) hover:text-error"
+						>
+							<Icon name="trash-2" className="size-3" />
+							Remove
+						</button>
+					</span>
+				</div>
+			) : null}
 
 			<div contentEditable={false} ref={chartHostRef}>
 				{config && chartData && attached ? (
 					<Suspense fallback={<div className="h-[338px]" />}>
-						<DeferredChartRenderer charts={[config]} chartData={chartData} onLocalStyleSave={handleStyleSave} />
+						<DeferredChartRenderer
+							charts={[config]}
+							chartData={chartData}
+							onLocalStyleSave={isEditable ? handleStyleSave : undefined}
+						/>
 					</Suspense>
 				) : config && chartData ? (
 					<div className="h-[338px]" />
@@ -124,7 +136,11 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 						Invalid LlamaAI chart data — remove this block and re-export it.
 					</div>
 				)}
-				<CaptionEditor caption={caption} onChange={(next) => updateAttributes({ caption: next })} />
+				{isEditable ? (
+					<CaptionEditor caption={caption} onChange={(next) => updateAttributes({ caption: next })} />
+				) : caption ? (
+					<p className="text-[13px] leading-snug text-secondary">{caption}</p>
+				) : null}
 			</div>
 		</NodeViewWrapper>
 	)
