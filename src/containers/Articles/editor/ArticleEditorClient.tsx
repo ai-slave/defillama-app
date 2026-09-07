@@ -267,6 +267,12 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		}
 	}, [ownedArticleQuery.error])
 
+	const markArticleDirty = useCallback(() => {
+		draftRevisionRef.current += 1
+		setIsDirty(true)
+		scheduleAutosave()
+	}, [scheduleAutosave])
+
 	const updateArticle = useCallback(
 		<K extends keyof LocalArticleDocument>(key: K, value: LocalArticleDocument[K]) => {
 			setArticle((current) => ({
@@ -274,11 +280,9 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 				[key]: value,
 				...(key === 'title' && isDraftPlaceholderSlug(current.slug) ? { slug: slugFromTitle(String(value)) } : {})
 			}))
-			draftRevisionRef.current += 1
-			setIsDirty(true)
-			scheduleAutosave()
+			markArticleDirty()
 		},
-		[scheduleAutosave]
+		[markArticleDirty]
 	)
 
 	const saveArticle = async (opts: { silent?: boolean } = {}) => {
@@ -732,11 +736,17 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		if (!file) return
 		try {
 			const result = await uploadCoverImage(file)
-			updateArticle('coverImage', {
-				...article.coverImage,
-				url: result.url,
-				alt: article.coverImage?.alt || article.title
-			})
+			if (articleIdRef.current !== article.id) return
+			// Metadata can change while the replacement image uploads.
+			setArticle((current) => ({
+				...current,
+				coverImage: {
+					...current.coverImage,
+					url: result.url,
+					alt: current.coverImage?.alt || current.title
+				}
+			}))
+			markArticleDirty()
 		} catch {
 			// surfaced via toast
 		} finally {
@@ -1095,7 +1105,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 				/>
 			) : null}
 
-			<LlamaAIChartPickerDialog dialogStore={llamaaiChartDialog} editor={editor} />
+			<LlamaAIChartPickerDialog key={article.id} dialogStore={llamaaiChartDialog} editor={editor} />
 
 			{embedDialogOpen ? (
 				<EmbedPicker

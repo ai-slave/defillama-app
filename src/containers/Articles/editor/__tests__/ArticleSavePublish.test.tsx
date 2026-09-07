@@ -9,7 +9,7 @@ import { createEmptyLocalArticle } from '../../document'
 import type { ArticleDocument, LocalArticleDocument } from '../../types'
 import { ArticleEditorClient } from '../ArticleEditorClient'
 
-const api = vi.hoisted(() => ({ get: vi.fn(), save: vi.fn(), publish: vi.fn(), error: vi.fn() }))
+const api = vi.hoisted(() => ({ get: vi.fn(), save: vi.fn(), publish: vi.fn(), error: vi.fn(), upload: vi.fn() }))
 const router = {
 	query: {},
 	asPath: '/research/edit/test-article',
@@ -29,7 +29,9 @@ vi.mock('../../api', async (original) => ({
 	revalidateResearchLanding: async () => {}
 }))
 vi.mock('../extensions', () => ({ createArticleEditorExtensions: () => [StarterKit] }))
-vi.mock('../../upload/useImageUpload', () => ({ useImageUpload: () => ({}) }))
+vi.mock('../../upload/useImageUpload', () => ({
+	useImageUpload: () => ({ uploadWithToast: api.upload, isUploading: false })
+}))
 vi.mock('../ArticlePageAssetPicker', () => ({ ArticlePageAssetPicker: () => null }))
 vi.mock('../ArticleEditorPreview', () => ({ ArticleEditorPreview: () => null }))
 vi.mock('../ArticleChartPicker', () => ({ ArticleChartPickerDialog: () => null }))
@@ -78,11 +80,11 @@ async function settle() {
 		await new Promise((resolve) => setTimeout(resolve, 30))
 	})
 }
-async function mount() {
+async function mount(articleId = 'test-article') {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<ArticleEditorClient articleId="test-article" />
+				<ArticleEditorClient articleId={articleId} />
 			</QueryClientProvider>
 		)
 	)
@@ -229,4 +231,49 @@ test('saves the committed slug rather than the previous render’s slug', async 
 	await save()
 	expect(article.slug).toBe('new-slug')
 	expect(api.save).toHaveBeenCalledOnce()
+})
+
+test('preserves cover metadata edited while its replacement uploads', async () => {
+	const pending = deferred<{ url: string }>()
+	api.upload.mockReturnValue(pending.promise)
+	await mount()
+	await act(async () => {
+		const input = document.querySelector<HTMLInputElement>('[aria-label="Upload cover image"]')!
+		Object.defineProperty(input, 'files', { value: [new File(['image'], 'cover.png', { type: 'image/png' })] })
+		input.dispatchEvent(new Event('change', { bubbles: true }))
+	})
+	await click('Edit details')
+	await act(async () => {
+		const input = document.querySelector<HTMLInputElement>('[placeholder="Photographer"]')!
+		Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'Updated photographer')
+		input.dispatchEvent(new Event('input', { bubbles: true }))
+	})
+	await click('Done')
+	await act(async () => pending.resolve({ url: '/replacement.png' }))
+	await save()
+	expect(api.save.mock.calls.at(-1)![1].coverImage).toMatchObject({
+		url: '/replacement.png',
+		credit: 'Updated photographer'
+	})
+})
+
+test('does not apply an old cover upload to a different article', async () => {
+	const pending = deferred<{ url: string }>()
+	api.upload.mockReturnValue(pending.promise)
+	await mount()
+	await act(async () => {
+		const input = document.querySelector<HTMLInputElement>('[aria-label="Upload cover image"]')!
+		Object.defineProperty(input, 'files', { value: [new File(['image'], 'cover.png', { type: 'image/png' })] })
+		input.dispatchEvent(new Event('change', { bubbles: true }))
+	})
+	article = {
+		...article,
+		id: 'second-article',
+		title: 'Another article',
+		coverImage: { url: '/second.png', alt: 'Second cover' }
+	}
+	await mount('second-article')
+	await act(async () => pending.resolve({ url: '/late.png' }))
+	expect(title().value).toBe('Another article')
+	expect(container.querySelector('img[alt="Second cover"]')?.getAttribute('src')).toBe('/second.png')
 })

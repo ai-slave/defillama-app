@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import type { Editor } from '@tiptap/core'
 import { matchSorter } from 'match-sorter'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
@@ -49,19 +49,50 @@ export function LlamaAIChartPickerDialog({
 	dialogStore: Ariakit.DialogStore
 	editor: Editor | null
 }) {
-	const { authorizedFetch, isAuthenticated } = useAuthContext()
+	const { isAuthenticated } = useAuthContext()
 	const open = Ariakit.useStoreState(dialogStore, 'open')
 	const [search, setSearch] = useState('')
-	const [insertingId, setInsertingId] = useState<string | null>(null)
+	return open ? (
+		<SavedChartPickerSession
+			key={isAuthenticated ? 'signed-in' : 'signed-out'}
+			dialogStore={dialogStore}
+			editor={editor}
+			search={search}
+			setSearch={setSearch}
+		/>
+	) : null
+}
 
-	const { data, isLoading } = useQuery({
+function SavedChartPickerSession({
+	dialogStore,
+	editor,
+	search,
+	setSearch
+}: {
+	dialogStore: Ariakit.DialogStore
+	editor: Editor | null
+	search: string
+	setSearch: (value: string) => void
+}) {
+	const { authorizedFetch, isAuthenticated } = useAuthContext()
+	const [insertingId, setInsertingId] = useState<string | null>(null)
+	const insertion = useRef<AbortController | null>(null)
+	useEffect(
+		() => () => {
+			insertion.current?.abort()
+			insertion.current = null
+		},
+		[]
+	)
+
+	const { data, isLoading, isError, refetch } = useQuery({
 		queryKey: ['llamaai-saved-charts-picker'],
-		queryFn: async () => {
-			const res = await authorizedFetch(`${AI_SERVER}/charts`)
+		queryFn: async ({ signal }) => {
+			const res = await authorizedFetch(`${AI_SERVER}/charts`, { signal })
 			if (!res?.ok) throw new Error('Failed to load saved charts')
 			return parseSavedChartList(await res.json())
 		},
-		enabled: open && isAuthenticated,
+		enabled: isAuthenticated,
 		staleTime: 60_000
 	})
 
@@ -72,13 +103,16 @@ export function LlamaAIChartPickerDialog({
 	}, [data, search])
 
 	const handleInsert = async (item: SavedChartListItem) => {
-		if (!editor || insertingId) return
+		if (!isAuthenticated || !editor || !editor.isEditable || insertion.current) return
+		const controller = new AbortController()
+		insertion.current = controller
 		setInsertingId(item.id)
 		try {
 			// Snapshot at insert time: the article keeps this data forever; no live link.
-			const res = await authorizedFetch(`${AI_SERVER}/charts/${item.id}`)
+			const res = await authorizedFetch(`${AI_SERVER}/charts/${item.id}`, { signal: controller.signal })
 			if (!res?.ok) throw new Error('Failed to load chart data')
 			const detail = await res.json()
+			if (controller.signal.aborted || !dialogStore.getState().open || editor.isDestroyed || !editor.isEditable) return
 			if (!isChartDataRow(detail)) throw new Error('Chart has no usable data to insert')
 			const attrs = createLlamaAIChartAttrs(detail.chartConfig, detail.chartData)
 			if (!attrs) throw new Error('Chart has no usable data to insert')
@@ -92,9 +126,13 @@ export function LlamaAIChartPickerDialog({
 				.run()
 			dialogStore.hide()
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to insert chart')
+			if (!controller.signal.aborted && dialogStore.getState().open)
+				toast.error(error instanceof Error ? error.message : 'Failed to insert chart')
 		} finally {
-			setInsertingId(null)
+			if (insertion.current === controller) {
+				insertion.current = null
+				setInsertingId(null)
+			}
 		}
 	}
 
@@ -111,18 +149,31 @@ export function LlamaAIChartPickerDialog({
 			</div>
 			<Input
 				name="llamaai-chart-search"
+				aria-label="Search saved charts"
 				placeholder="Search your saved charts…"
 				value={search}
 				onChange={(e) => setSearch(e.target.value)}
 			/>
-			{isLoading ? (
+			{!isAuthenticated ? (
+				<p role="status" className="py-6 text-center text-sm">
+					Sign in to insert your saved charts.
+				</p>
+			) : isError ? (
+				<div role="alert" className="grid justify-items-center gap-3 py-6 text-sm">
+					<p>Could not load saved charts.</p>
+					<button type="button" onClick={() => void refetch()} className="rounded-md border border-medium px-3 py-2">
+						Try again
+					</button>
+				</div>
+			) : isLoading ? (
 				<div className="flex justify-center py-6">
 					<LoadingSpinner size={18} />
 				</div>
 			) : charts.length === 0 ? (
-				<p className="py-6 text-center text-sm opacity-60">
-					No saved charts yet. Save one from a LlamaAI chat — the bookmark button on any chart — and it will show up
-					here.
+				<p role="status" className="py-6 text-center text-sm opacity-60">
+					{data?.length
+						? 'No saved charts match your search.'
+						: 'No saved charts yet. Save one from a LlamaAI chat using the bookmark button on a chart.'}
 				</p>
 			) : (
 				<div className="flex flex-col gap-0.5">

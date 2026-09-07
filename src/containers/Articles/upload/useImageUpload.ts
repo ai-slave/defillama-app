@@ -88,17 +88,17 @@ export function useImageUpload(args: { scope: UploadScope; articleId?: string | 
 			const clientError = validateClient(file)
 			if (clientError) throw new ImageUploadError(clientError, 400)
 
-			const dataBase64 = await fileToBase64(file)
-			const payload = buildUploadPayload({
-				scope: args.scope,
-				articleId: articleIdOverride ?? args.articleId,
-				filename: file.name,
-				mimeType: file.type,
-				dataBase64
-			})
-
 			setIsUploading(true)
 			try {
+				const dataBase64 = await fileToBase64(file)
+				const payload = buildUploadPayload({
+					scope: args.scope,
+					articleId: articleIdOverride ?? args.articleId,
+					filename: file.name,
+					mimeType: file.type,
+					dataBase64
+				})
+
 				const response = await authorizedFetch(uploadUrl(), {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },

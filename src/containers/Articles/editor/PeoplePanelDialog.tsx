@@ -18,13 +18,22 @@ type Props = {
 export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }: Props) {
 	const initialPanel = initialConfig ?? makeEmptyPeoplePanelConfig()
 	const [label, setLabel] = useState(initialPanel.label)
-	const [items, setItems] = useState<Array<ArticlePeoplePanelItem>>(
-		initialPanel.items.length > 0 ? initialPanel.items : [makeEmptyPeoplePanelItem()]
+	const [items, setItems] = useState(() =>
+		(initialPanel.items.length > 0 ? initialPanel.items : [makeEmptyPeoplePanelItem()]).map((item) => ({
+			id: crypto.randomUUID(),
+			item
+		}))
 	)
 	const [showErrors, setShowErrors] = useState(false)
 
-	const updateItem = (idx: number, patch: Partial<ArticlePeoplePanelItem>) => {
-		setItems((prev) => prev.map((item, i) => (i === idx ? { ...item, ...patch } : item)))
+	const updateItem = (id: string, patch: Partial<ArticlePeoplePanelItem>) => {
+		setItems((prev) => {
+			const index = prev.findIndex((entry) => entry.id === id)
+			if (index === -1) return prev
+			const next = [...prev]
+			next[index] = { ...prev[index], item: { ...prev[index].item, ...patch } }
+			return next
+		})
 	}
 
 	const removeItem = (idx: number) => {
@@ -32,7 +41,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 	}
 
 	const addItem = () => {
-		setItems((prev) => [...prev, makeEmptyPeoplePanelItem()])
+		setItems((prev) => [...prev, { id: crypto.randomUUID(), item: makeEmptyPeoplePanelItem() }])
 	}
 
 	const moveItem = (idx: number, direction: -1 | 1) => {
@@ -45,7 +54,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 		})
 	}
 
-	const itemsHaveImage = items.every((item) => Boolean(item.src))
+	const itemsHaveImage = items.every(({ item }) => Boolean(item.src))
 	const canSubmit = items.length > 0 && itemsHaveImage
 
 	const submit = () => {
@@ -55,7 +64,7 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 		}
 		onSubmit({
 			label: label.trim(),
-			items: items.map((item) => ({
+			items: items.map(({ item }) => ({
 				...item,
 				name: item.name.trim(),
 				bio: item.bio.trim(),
@@ -102,15 +111,15 @@ export function PeoplePanelDialog({ store, articleId, onSubmit, initialConfig }:
 						</span>
 					</div>
 					<div className="grid gap-3">
-						{items.map((item, idx) => (
+						{items.map(({ id, item }, idx) => (
 							<PersonRow
-								key={idx}
+								key={id}
 								item={item}
 								idx={idx}
 								total={items.length}
 								articleId={articleId}
 								showErrors={showErrors}
-								onChange={(patch) => updateItem(idx, patch)}
+								onChange={(patch) => updateItem(id, patch)}
 								onRemove={() => removeItem(idx)}
 								onMove={(dir) => moveItem(idx, dir)}
 							/>
