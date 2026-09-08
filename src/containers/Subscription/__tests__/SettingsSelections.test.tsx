@@ -52,10 +52,6 @@ async function dashboard(isOpen: boolean, visibility: 'public' | 'private' = 'pu
 					tags={[]}
 					description=""
 					dashboardId="test"
-					onDashboardNameChange={vi.fn()}
-					onVisibilityChange={vi.fn()}
-					onTagsChange={vi.fn()}
-					onDescriptionChange={vi.fn()}
 					onSave={save}
 					onDelete={remove}
 				/>
@@ -147,7 +143,7 @@ test('keeps dashboard settings after save failure and closes only after retry su
 	expect(input.value).toBe('My edited name')
 	expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not save changes')
 	await submit()
-	expect(document.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true)
+	expect(document.querySelector('button[type="submit"]')!.getAttribute('aria-disabled')).toBe('true')
 	await submit()
 	expect(save).toHaveBeenCalledTimes(2)
 	await act(async () => {

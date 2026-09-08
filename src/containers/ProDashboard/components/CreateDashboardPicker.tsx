@@ -1,13 +1,17 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { useRouter } from 'next/router'
 import { Suspense, lazy, useId, useMemo, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { fetchChainsByCategory as fetchChainsByCategoryApi } from '~/containers/Chains/api'
 import { Icon } from '~/ui/Icon'
 import { useAppMetadata } from '../AppMetadataContext'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
+import type { Dashboard } from '../dashboardTypes'
 import { useDimensionProtocols } from '../hooks/useDimensionProtocols'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
+import { dashboardUrlKey } from '../services/DashboardAPI'
 import {
 	DASHBOARD_TEMPLATES,
 	generateTemplateCharts,
@@ -28,7 +32,7 @@ interface CreateDashboardPickerProps {
 		tags: Array<string>
 		description: string
 		items?: Array<DashboardItemConfig>
-	}) => Promise<void>
+	}) => Promise<Dashboard>
 	comparisonPreset?: ComparisonPreset | null
 }
 
@@ -44,14 +48,21 @@ export function CreateDashboardPicker(props: CreateDashboardPickerProps) {
 }
 
 function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }: CreateDashboardPickerProps) {
+	const router = useRouter()
 	const [mode, setMode] = useState<PickerMode>('picker')
+	// The keyed picker gives each opening its own feedback lifetime.
+	const dialogRef = useRef<HTMLDivElement>(null)
 	const creation = useMutation({
-		mutationFn: (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => onCreate(data)
+		mutationFn: (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => onCreate(data),
+		onError: (error) => {
+			if (!dialogRef.current?.isConnected) toast.error(error.message)
+		}
 	})
 	const submitCreation = (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => {
 		if (creation.isPending) return
 		creation.mutate(data, {
-			onSuccess: () => {
+			onSuccess: (dashboard) => {
+				void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
 				dialogStore.hide()
 				setMode('picker')
 				setComparisonPresetHandled(false)
@@ -104,25 +115,6 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 		dialogStore.toggle()
 	}
 
-	const handleCreateFromScratch = (data: {
-		dashboardName: string
-		visibility: 'private' | 'public'
-		tags: Array<string>
-		description: string
-	}) => {
-		submitCreation(data)
-	}
-
-	const handleCreateComparison = (data: {
-		dashboardName: string
-		visibility: 'private' | 'public'
-		tags: Array<string>
-		description: string
-		items: Array<DashboardItemConfig>
-	}) => {
-		submitCreation(data)
-	}
-
 	const handleBackToPicker = () => {
 		setComparisonPresetHandled(true)
 		setMode('picker')
@@ -150,6 +142,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 	if (effectiveMode === 'scratch') {
 		return (
 			<Ariakit.Dialog
+				ref={dialogRef}
 				store={dialogStore}
 				className="dialog w-full max-w-lg gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-2xl"
 			>
@@ -167,7 +160,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 							Create New Dashboard
 						</Ariakit.DialogHeading>
 					</div>
-					<CreateDashboardModalContent onCreate={handleCreateFromScratch} />
+					<CreateDashboardModalContent onCreate={submitCreation} />
 				</fieldset>
 				{creationFeedback}
 			</Ariakit.Dialog>
@@ -177,6 +170,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 	if (effectiveMode === 'comparison') {
 		return (
 			<Ariakit.Dialog
+				ref={dialogRef}
 				store={dialogStore}
 				className="dialog w-full max-w-4xl gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-2xl"
 			>
@@ -210,7 +204,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 						}
 					>
 						<ComparisonWizard
-							onComplete={handleCreateComparison}
+							onComplete={submitCreation}
 							{...(comparisonPreset !== null ? { comparisonPreset } : {})}
 						/>
 					</Suspense>
@@ -222,6 +216,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 
 	return (
 		<Ariakit.Dialog
+			ref={dialogRef}
 			store={dialogStore}
 			className="dialog w-full max-w-3xl gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
 		>

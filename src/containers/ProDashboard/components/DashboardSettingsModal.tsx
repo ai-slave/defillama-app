@@ -15,10 +15,6 @@ interface DashboardSettingsModalProps {
 	tags: Array<string>
 	description: string
 	dashboardId: string | null
-	onDashboardNameChange: (name: string) => void
-	onVisibilityChange: (visibility: 'private' | 'public') => void
-	onTagsChange: (tags: Array<string>) => void
-	onDescriptionChange: (description: string) => void
 	onSave: (overrides?: {
 		dashboardName?: string
 		visibility?: 'private' | 'public'
@@ -36,10 +32,6 @@ function DashboardSettingsModalInner({
 	tags,
 	description,
 	dashboardId,
-	onDashboardNameChange,
-	onVisibilityChange,
-	onTagsChange,
-	onDescriptionChange,
 	onSave,
 	onDelete
 }: DashboardSettingsModalProps) {
@@ -47,8 +39,14 @@ function DashboardSettingsModalInner({
 	const { hasActiveSubscription } = useAuthContext()
 	const [localVisibility, setLocalVisibility] = useState(visibility)
 	const [localTags, setLocalTags] = useState(tags)
-	const save = useMutation({ mutationFn: (overrides: Parameters<typeof onSave>[0]) => onSave(overrides) })
+	// Each opening mounts a new form; late errors belong to the dismissed opening.
 	const formRef = useRef<HTMLFormElement>(null)
+	const save = useMutation({
+		mutationFn: (overrides: Parameters<typeof onSave>[0]) => onSave(overrides),
+		onError: (error) => {
+			if (!formRef.current?.isConnected) toast.error(error.message)
+		}
+	})
 	const deletion = useMutation({
 		mutationFn: (idToDelete: string) => onDelete!(idToDelete),
 		onError: (error) => {
@@ -63,12 +61,14 @@ function DashboardSettingsModalInner({
 		e.preventDefault()
 		if (save.isPending || deletion.isPending) return
 		const formData = new FormData(e.currentTarget)
-		const localDashboardName = (formData.get('dashboardName') as string) ?? ''
-		const localDescription = (formData.get('description') as string)?.slice(0, 200) ?? ''
-		onDashboardNameChange(localDashboardName)
-		onVisibilityChange(localVisibility)
-		onTagsChange(localTags)
-		onDescriptionChange(localDescription)
+		const localDashboardName = (formData.get('dashboardName') as string).trim()
+		const localDescription = formData.get('description') as string
+		if (!localDashboardName) {
+			const input = e.currentTarget.elements.namedItem('dashboardName') as HTMLInputElement
+			input.setCustomValidity('Dashboard name is required')
+			input.reportValidity()
+			return
+		}
 		save.mutate(
 			{
 				dashboardName: localDashboardName,
@@ -96,6 +96,7 @@ function DashboardSettingsModalInner({
 
 	const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
 		if (e.key === 'Enter') {
+			if (save.isPending || deletion.isPending) return
 			e.preventDefault()
 			handleAddTag()
 		}
@@ -149,7 +150,7 @@ function DashboardSettingsModalInner({
 					</div>
 
 					<form ref={formRef} onSubmit={handleSave}>
-						<fieldset disabled={save.isPending || deletion.isPending} className="min-w-0 space-y-6">
+						<fieldset className="min-w-0 space-y-6">
 							<div>
 								<label
 									htmlFor="dashboard-settings-name"
@@ -160,6 +161,9 @@ function DashboardSettingsModalInner({
 								<input
 									id="dashboard-settings-name"
 									name="dashboardName"
+									readOnly={save.isPending || deletion.isPending}
+									required
+									onInput={(event) => event.currentTarget.setCustomValidity('')}
 									type="text"
 									defaultValue={dashboardName}
 									placeholder="Enter dashboard name"
@@ -187,6 +191,8 @@ function DashboardSettingsModalInner({
 											<Ariakit.Radio
 												id={`${id}-public`}
 												value="public"
+												accessibleWhenDisabled
+												disabled={save.isPending || deletion.isPending}
 												className="sr-only"
 												tabIndex={!hasActiveSubscription && localVisibility === 'private' ? 0 : undefined}
 											/>
@@ -207,7 +213,8 @@ function DashboardSettingsModalInner({
 												id={`${id}-private`}
 												value="private"
 												className="sr-only"
-												disabled={!hasActiveSubscription}
+												accessibleWhenDisabled={hasActiveSubscription}
+												disabled={!hasActiveSubscription || save.isPending || deletion.isPending}
 											/>
 											<Icon
 												name={hasActiveSubscription ? 'key' : 'file-lock-2'}
@@ -241,14 +248,16 @@ function DashboardSettingsModalInner({
 									<input
 										id="dashboard-settings-tag-input"
 										ref={tagInputRef}
+										readOnly={save.isPending || deletion.isPending}
 										type="text"
 										onKeyDown={handleTagInputKeyDown}
 										placeholder="Enter tag name"
-										className="flex-1 rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
+										className="min-w-0 flex-1 rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden"
 									/>
 									<button
 										type="button"
 										onClick={handleAddTag}
+										disabled={save.isPending || deletion.isPending}
 										className="rounded-md pro-btn-primary-outline border px-4 py-2 transition-colors"
 									>
 										Add Tag
@@ -262,12 +271,13 @@ function DashboardSettingsModalInner({
 										{localTags.map((tag) => (
 											<span
 												key={tag}
-												className="flex items-center gap-1 rounded-md border pro-border px-3 py-1 text-sm text-pro-text-secondary"
+												className="flex max-w-full items-center gap-1 rounded-md border pro-border px-3 py-1 text-sm text-pro-text-secondary"
 											>
-												{tag}
+												<span className="min-w-0 wrap-anywhere">{tag}</span>
 												<button
 													type="button"
 													onClick={() => handleRemoveTag(tag)}
+													disabled={save.isPending || deletion.isPending}
 													aria-label={`Remove tag ${tag}`}
 													title={`Remove tag ${tag}`}
 													className="hover:text-pro-info-400"
@@ -290,6 +300,7 @@ function DashboardSettingsModalInner({
 								<textarea
 									id="dashboard-settings-description"
 									name="description"
+									readOnly={save.isPending || deletion.isPending}
 									defaultValue={description}
 									onInput={(e) => {
 										if (charCountRef.current) charCountRef.current.textContent = String(e.currentTarget.value.length)
@@ -313,7 +324,7 @@ function DashboardSettingsModalInner({
 									<button
 										type="button"
 										onClick={handleDeleteClick}
-										disabled={deletion.isPending}
+										disabled={save.isPending || deletion.isPending}
 										className="flex items-center gap-2 rounded-md bg-error/10 px-4 py-2 text-sm font-medium text-error transition-colors hover:bg-error/20 disabled:cursor-not-allowed disabled:opacity-50"
 									>
 										{deletion.isPending ? <LoadingSpinner size={16} /> : <Icon name="trash-2" height={16} width={16} />}
@@ -335,13 +346,18 @@ function DashboardSettingsModalInner({
 							>
 								Cancel
 							</Ariakit.DialogDismiss>
-							<button
+							<Ariakit.Button
 								type="submit"
+								accessibleWhenDisabled
 								disabled={save.isPending || deletion.isPending}
-								className="flex-1 rounded-md pro-btn-primary px-4 py-2 transition-colors"
+								className="flex flex-1 items-center justify-center gap-2 rounded-md pro-btn-primary px-4 py-2 transition-colors"
 							>
-								{save.isPending ? 'Saving…' : 'Save Changes'}
-							</button>
+								{save.isPending ? <LoadingSpinner size={16} /> : null}
+								<span>{save.isPending ? 'Saving…' : 'Save Changes'}</span>
+							</Ariakit.Button>
+							<span role="status" className="sr-only">
+								{save.isPending ? 'Saving dashboard changes' : ''}
+							</span>
 						</div>
 					</form>
 				</Ariakit.Dialog>

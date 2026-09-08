@@ -1,4 +1,6 @@
 import * as Ariakit from '@ariakit/react'
+import { useMutation } from '@tanstack/react-query'
+import { useRouter } from 'next/router'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
@@ -8,9 +10,15 @@ import { migrateDashboardItems } from '../dashboardConfig/migrate'
 import type { PersistedDashboardItemConfig } from '../dashboardConfig/persisted'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import { createDashboardStreamLineParser } from '../dashboardStreamLines'
+import type { Dashboard } from '../dashboardTypes'
+import { dashboardUrlKey } from '../services/DashboardAPI'
 
 const EMPTY_DASHBOARD_ITEMS: Array<DashboardItemConfig> = []
 const EMPTY_DASHBOARD_TAGS: Array<string> = []
+const VISIBILITY_OPTIONS = [
+	{ value: 'public', label: 'Public', icon: 'earth' },
+	{ value: 'private', label: 'Private', icon: 'key' }
+] as const
 
 type AIGeneratedHistory = Record<
 	string,
@@ -107,66 +115,70 @@ interface GenerateDashboardModalProps {
 			timestamp: string
 			prompt: string
 		}
-	}) => void
+	}) => Promise<Dashboard | void>
 }
 
-type AiGenerationContext = { sessionId: string; mode: 'create' | 'iterate'; timestamp: string; prompt: string }
-
-// Optional chains and a conditional, none of which can be lowered inside the try that reads the stream.
-function buildAiGenerationContext(
-	metadata: DashboardCompleteEvent['metadata'],
-	fallbackMode: 'create' | 'iterate',
-	prompt: string
-): AiGenerationContext | undefined {
-	if (!metadata?.sessionId) return undefined
-	return {
-		sessionId: metadata.sessionId,
-		mode: metadata.mode ?? fallbackMode,
-		timestamp: new Date().toISOString(),
-		prompt
-	}
+export function GenerateDashboardModal(props: GenerateDashboardModalProps) {
+	return <GenerateDashboardModalInner key={props.isOpen ? 'open' : 'closed'} {...props} />
 }
 
-// Keeps the key absent rather than present-and-undefined, which is what the conditional spread did.
-function withAiGenerationContext<T extends object>(payload: T, aiGenerationContext: AiGenerationContext | undefined) {
-	return aiGenerationContext ? { ...payload, aiGenerationContext } : payload
-}
-
-// An optional chain cannot be lowered inside the try that guards the request.
-function getStreamReader(response: Response) {
-	return response.body ? response.body.getReader() : null
-}
-
-// A conditional cannot be lowered inside a catch either.
-function generateErrorMessage(error: unknown) {
-	return error instanceof Error ? error.message : 'Failed to generate dashboard. Please try again.'
-}
-
-export function GenerateDashboardModal({
+function GenerateDashboardModalInner({
 	isOpen,
 	onClose,
 	mode = 'create',
 	existingDashboard,
 	onGenerate
 }: GenerateDashboardModalProps) {
+	const router = useRouter()
 	const { user, isAuthenticated, authorizedFetch } = useAuthContext()
-	const [isLoading, setIsLoading] = useState(false)
+	const formRef = useRef<HTMLFormElement>(null)
+	const generation = useMutation({
+		mutationFn: async ({
+			request,
+			payload
+		}: {
+			request: DashboardCreatorRequest
+			payload: Omit<Parameters<GenerateDashboardModalProps['onGenerate']>[0], 'items'>
+		}) => {
+			if (!isAuthenticated || !user?.id) throw new Error('Please sign in to generate dashboards')
+			const response = await authorizedFetch(`${AI_SERVER}/dashboard-creator`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(request)
+			})
+			if (!response) throw new Error('Authentication failed. Please sign in again.')
+			if (!response.ok) throw new Error('Failed to generate dashboard. Please try again.')
+			const reader = response.body?.getReader()
+			if (!reader) throw new Error('Failed to read response stream')
+			const data = await readDashboardCreatorStream(reader)
+			if (!data) throw new Error('Invalid response format from AI service')
+			const aiGenerationContext = data.metadata?.sessionId
+				? {
+						sessionId: data.metadata.sessionId,
+						mode: data.metadata.mode ?? mode,
+						timestamp: new Date().toISOString(),
+						prompt: request.message
+					}
+				: undefined
+			return onGenerate({
+				...payload,
+				items: migrateDashboardItems(data.dashboardConfig.items),
+				...(aiGenerationContext ? { aiGenerationContext } : {})
+			})
+		},
+		onError: (error) => {
+			// Each opening owns its form. A request can still fail after navigating away.
+			if (!formRef.current?.isConnected) toast.error(error.message)
+		}
+	})
 	const [visibility, setVisibility] = useState<'private' | 'public'>('public')
 	const [tags, setTags] = useState<Array<string>>([])
 	const tagInputRef = useRef<HTMLInputElement>(null)
 	const charCountRef = useRef<HTMLSpanElement>(null)
 
-	const resetModalState = () => {
-		setVisibility('public')
-		setTags([])
-	}
-
-	const handleGenerate = async (e: React.FormEvent<HTMLFormElement>) => {
+	const handleGenerate = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (!isAuthenticated || !user?.id) {
-			toast.error('Please sign in to generate dashboards')
-			return
-		}
+		if (generation.isPending) return
 
 		const form = e.currentTarget
 		const formData = new FormData(form)
@@ -203,124 +215,40 @@ export function GenerateDashboardModal({
 			return
 		}
 
-		let existingItems = EMPTY_DASHBOARD_ITEMS
-		if (mode === 'iterate' && existingDashboard && existingDashboard.items) {
-			existingItems = existingDashboard.items
-		}
+		const requestBody: DashboardCreatorRequest =
+			mode === 'iterate'
+				? {
+						message: aiDescription.trim(),
+						mode: 'iterate',
+						existingDashboard: {
+							dashboardName: existingDashboard?.dashboardName ?? '',
+							items: existingDashboard?.items ?? EMPTY_DASHBOARD_ITEMS,
+							...(existingDashboard?.aiGenerated ? { aiGenerated: existingDashboard.aiGenerated } : {})
+						}
+					}
+				: { message: aiDescription.trim(), dashboardName }
 
-		let requestBody: DashboardCreatorRequest
-		if (mode === 'iterate') {
-			let existingName = ''
-			if (existingDashboard && existingDashboard.dashboardName) {
-				existingName = existingDashboard.dashboardName
-			}
-			requestBody = {
-				message: aiDescription.trim(),
-				mode: 'iterate',
-				existingDashboard: {
-					dashboardName: existingName,
-					items: existingItems,
-					...(existingDashboard?.aiGenerated ? { aiGenerated: existingDashboard.aiGenerated } : {})
+		generation.mutate(
+			{
+				request: requestBody,
+				payload: {
+					dashboardName: mode === 'iterate' ? (existingDashboard?.dashboardName ?? '') : dashboardName,
+					visibility: mode === 'iterate' ? (existingDashboard?.visibility ?? 'private') : visibility,
+					tags: mode === 'iterate' ? (existingDashboard?.tags ?? EMPTY_DASHBOARD_TAGS) : tags,
+					description: mode === 'iterate' ? (existingDashboard?.description ?? '') : ''
+				}
+			},
+			{
+				onSuccess: (dashboard) => {
+					if (dashboard) void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
+					onClose()
 				}
 			}
-		} else {
-			requestBody = {
-				message: aiDescription.trim(),
-				dashboardName
-			}
-		}
-
-		let dashboardNameForGenerate = dashboardName
-		if (mode === 'iterate') {
-			dashboardNameForGenerate = ''
-			if (existingDashboard && existingDashboard.dashboardName) {
-				dashboardNameForGenerate = existingDashboard.dashboardName
-			}
-		}
-
-		let visibilityForGenerate = visibility
-		if (mode === 'iterate') {
-			visibilityForGenerate = 'private'
-			if (existingDashboard && existingDashboard.visibility) {
-				visibilityForGenerate = existingDashboard.visibility
-			}
-		}
-
-		let tagsForGenerate = tags
-		if (mode === 'iterate') {
-			tagsForGenerate = EMPTY_DASHBOARD_TAGS
-			if (existingDashboard && existingDashboard.tags != null) {
-				tagsForGenerate = existingDashboard.tags
-			}
-		}
-
-		let descriptionForGenerate = ''
-		if (mode === 'iterate' && existingDashboard && existingDashboard.description) {
-			descriptionForGenerate = existingDashboard.description
-		}
-
-		setIsLoading(true)
-		// Every branch of the try returns, so the finalizer cannot move after it. The body runs in its
-		// own function and the flag clears once that settles, which the swallowing catch guarantees.
-		const generate = async () => {
-			try {
-				const response = await authorizedFetch(`${AI_SERVER}/dashboard-creator`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify(requestBody)
-				})
-
-				if (!response) {
-					toast.error('Authentication failed. Please sign in again.')
-					return
-				}
-				if (!response.ok) {
-					toast.error('Failed to generate dashboard. Please try again.')
-					return
-				}
-
-				const reader = getStreamReader(response)
-				if (!reader) {
-					toast.error('Failed to read response stream')
-					return
-				}
-				const data = await readDashboardCreatorStream(reader)
-				if (!data) {
-					toast.error('Invalid response format from AI service')
-					return
-				}
-
-				const items = migrateDashboardItems(data.dashboardConfig.items)
-				const aiGenerationContext = buildAiGenerationContext(data.metadata, mode, aiDescription.trim())
-				onGenerate(
-					withAiGenerationContext(
-						{
-							dashboardName: dashboardNameForGenerate,
-							visibility: visibilityForGenerate,
-							tags: tagsForGenerate,
-							description: descriptionForGenerate,
-							items
-						},
-						aiGenerationContext
-					)
-				)
-
-				resetModalState()
-				onClose()
-			} catch (error) {
-				console.error('Failed to generate dashboard:', error)
-				toast.error(generateErrorMessage(error))
-			}
-		}
-		await generate()
-		setIsLoading(false)
+		)
 	}
 
 	const handleClose = () => {
-		if (!isLoading) {
-			resetModalState()
+		if (!generation.isPending) {
 			onClose()
 		}
 	}
@@ -360,11 +288,11 @@ export function GenerateDashboardModal({
 				hideOnInteractOutside
 			>
 				<div className="mb-6 flex items-center justify-between">
-					<h2 className="text-xl font-semibold text-pro-text-primary">
+					<Ariakit.DialogHeading className="text-xl font-semibold text-pro-text-primary">
 						{mode === 'iterate' ? 'Edit with LlamaAI' : 'Generate using LlamaAI'}
-					</h2>
+					</Ariakit.DialogHeading>
 					<Ariakit.DialogDismiss
-						disabled={isLoading}
+						disabled={generation.isPending}
 						className="rounded-md pro-hover-bg p-1 transition-colors disabled:opacity-50"
 					>
 						<Icon name="x" height={20} width={20} className="text-pro-text-secondary" />
@@ -372,11 +300,7 @@ export function GenerateDashboardModal({
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<form
-					onSubmit={(e) => {
-						void handleGenerate(e)
-					}}
-				>
+				<form ref={formRef} onSubmit={handleGenerate}>
 					<div className="space-y-6">
 						{mode === 'create' ? (
 							<div>
@@ -392,8 +316,8 @@ export function GenerateDashboardModal({
 									type="text"
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
 									placeholder="e.g., Ethereum vs Arbitrum Analysis"
-									className={`w-full rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
-									disabled={isLoading}
+									className={`w-full rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${generation.isPending ? 'cursor-not-allowed opacity-50' : ''}`}
+									readOnly={generation.isPending}
 									required
 								/>
 							</div>
@@ -421,8 +345,8 @@ export function GenerateDashboardModal({
 										: 'e.g., Build a DeFi yields dashboard with top earning protocols, comparing different chains and showing historical performance...'
 								}
 								rows={4}
-								className={`w-full resize-none rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
-								disabled={isLoading}
+								className={`w-full resize-none rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${generation.isPending ? 'cursor-not-allowed opacity-50' : ''}`}
+								readOnly={generation.isPending}
 								required
 							/>
 							<p className="mt-1 text-xs text-pro-text-tertiary">
@@ -438,34 +362,32 @@ export function GenerateDashboardModal({
 								<p id="generate-dashboard-visibility" className="mb-3 block text-sm font-medium text-pro-text-primary">
 									Visibility
 								</p>
-								<div className="flex gap-3" aria-labelledby="generate-dashboard-visibility">
-									<button
-										type="button"
-										onClick={() => setVisibility('public')}
-										disabled={isLoading}
-										className={`flex-1 rounded-md border px-4 py-3 transition-colors ${
-											visibility === 'public'
-												? 'pro-btn-primary'
-												: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
-										} ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
-									>
-										<Icon name="earth" height={16} width={16} className="mr-2 inline" />
-										Public
-									</button>
-									<button
-										type="button"
-										onClick={() => setVisibility('private')}
-										disabled={isLoading}
-										className={`flex-1 rounded-md border px-4 py-3 transition-colors ${
-											visibility === 'private'
-												? 'pro-btn-primary'
-												: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
-										} ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
-									>
-										<Icon name="key" height={16} width={16} className="mr-2 inline" />
-										Private
-									</button>
-								</div>
+								<Ariakit.RadioProvider
+									value={visibility}
+									setValue={(value) => setVisibility(value as 'public' | 'private')}
+								>
+									<Ariakit.RadioGroup className="flex gap-3" aria-labelledby="generate-dashboard-visibility">
+										{VISIBILITY_OPTIONS.map((option) => (
+											<label
+												key={option.value}
+												className={`relative flex-1 cursor-pointer rounded-md border px-4 py-3 text-center transition-colors has-focus-visible:focus-ring ${
+													visibility === option.value
+														? 'pro-btn-primary'
+														: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
+												} ${generation.isPending ? 'cursor-not-allowed opacity-50' : ''}`}
+											>
+												<Ariakit.Radio
+													value={option.value}
+													className="sr-only"
+													disabled={generation.isPending}
+													accessibleWhenDisabled
+												/>
+												<Icon name={option.icon} height={16} width={16} className="mr-2 inline" />
+												{option.label}
+											</label>
+										))}
+									</Ariakit.RadioGroup>
+								</Ariakit.RadioProvider>
 								{visibility === 'public' ? (
 									<p className="mt-2 text-sm text-pro-text-tertiary">
 										Public dashboards are visible in the Discover tab
@@ -489,15 +411,17 @@ export function GenerateDashboardModal({
 										type="text"
 										onKeyDown={handleTagInputKeyDown}
 										placeholder="Enter tag name"
-										className={`flex-1 rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
-										disabled={isLoading}
+										className={`min-w-0 flex-1 rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${generation.isPending ? 'cursor-not-allowed opacity-50' : ''}`}
+										disabled={generation.isPending}
 									/>
 									<button
 										type="button"
 										onClick={handleAddTag}
-										disabled={isLoading}
+										disabled={generation.isPending}
 										className={`rounded-md border px-4 py-2 transition-colors ${
-											!isLoading ? 'pro-btn-primary-outline' : 'cursor-not-allowed pro-border text-pro-text-tertiary'
+											!generation.isPending
+												? 'pro-btn-primary-outline'
+												: 'cursor-not-allowed pro-border text-pro-text-tertiary'
 										}`}
 									>
 										Add Tag
@@ -511,14 +435,15 @@ export function GenerateDashboardModal({
 										{tags.map((tag) => (
 											<span
 												key={tag}
-												className="flex items-center gap-1 rounded-md border pro-border px-3 py-1 text-sm text-pro-text-secondary"
+												className="flex max-w-full items-center gap-1 rounded-md border pro-border px-3 py-1 text-sm text-pro-text-secondary"
 											>
-												{tag}
+												<span className="min-w-0 wrap-anywhere">{tag}</span>
 												<button
 													type="button"
 													onClick={() => handleRemoveTag(tag)}
+													aria-label={`Remove tag ${tag}`}
 													className="hover:text-pro-info-400"
-													disabled={isLoading}
+													disabled={generation.isPending}
 												>
 													<Icon name="x" height={12} width={12} />
 												</button>
@@ -530,27 +455,33 @@ export function GenerateDashboardModal({
 						) : null}
 					</div>
 
+					{generation.isError ? (
+						<p role="alert" className="mt-4 text-sm text-error">
+							{generation.error.message} Your draft is still here; please try again.
+						</p>
+					) : null}
 					<div className="mt-8 flex gap-3">
 						<Ariakit.DialogDismiss
 							type="button"
-							disabled={isLoading}
+							disabled={generation.isPending}
 							className="flex-1 rounded-md border pro-border pro-hover-bg px-4 py-2 text-pro-text-secondary transition-colors hover:text-pro-text-primary disabled:opacity-50"
 						>
 							Cancel
 						</Ariakit.DialogDismiss>
-						<button
+						<Ariakit.Button
 							type="submit"
-							disabled={isLoading}
+							accessibleWhenDisabled
+							disabled={generation.isPending}
 							className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
-								!isLoading
+								!generation.isPending
 									? 'animate-pro-glow pro-btn-primary'
 									: 'cursor-not-allowed border pro-border text-pro-text-tertiary'
 							}`}
 						>
-							{isLoading ? (
+							{generation.isPending ? (
 								<>
 									<Icon name="sparkles" height={16} width={16} className="animate-spin" />
-									{mode === 'iterate' ? 'Updating...' : 'Generating...'}
+									{mode === 'iterate' ? 'Updating…' : 'Generating…'}
 								</>
 							) : (
 								<>
@@ -558,7 +489,10 @@ export function GenerateDashboardModal({
 									{mode === 'iterate' ? 'Edit Dashboard' : 'Generate Dashboard'}
 								</>
 							)}
-						</button>
+						</Ariakit.Button>
+						<span role="status" className="sr-only">
+							{generation.isPending ? 'Generating and saving dashboard' : ''}
+						</span>
 					</div>
 				</form>
 			</Ariakit.Dialog>

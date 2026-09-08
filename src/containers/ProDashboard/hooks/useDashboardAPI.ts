@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
-import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import type { Dashboard } from '../dashboardTypes'
@@ -109,9 +108,6 @@ export function useDashboardAPI(dashboardId: string | null) {
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
-		},
-		onError: (err: unknown) => {
-			toast.error(err instanceof Error ? err.message : 'Failed to create dashboard')
 		}
 	})
 
@@ -129,9 +125,6 @@ export function useDashboardAPI(dashboardId: string | null) {
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
-		},
-		onError: (err: unknown) => {
-			toast.error(err instanceof Error ? err.message : 'Failed to save dashboard')
 		}
 	})
 

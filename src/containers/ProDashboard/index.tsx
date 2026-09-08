@@ -194,7 +194,6 @@ function ProDashboardContent() {
 	}, [guardNavigationWhileRefreshing, router])
 	const {
 		dashboardName,
-		setDashboardName,
 		dashboardId,
 		saveDashboard,
 		copyDashboard,
@@ -202,9 +201,6 @@ function ProDashboardContent() {
 		dashboardTags,
 		dashboardDescription,
 		currentDashboard,
-		setDashboardVisibility,
-		setDashboardTags,
-		setDashboardDescription,
 		handleCreateDashboard,
 		handleGenerateDashboard,
 		handleIterateDashboard,
@@ -528,7 +524,9 @@ function ProDashboardContent() {
 								type="button"
 								className="hidden items-center gap-2 rounded-md border pro-border pro-hover-bg px-4 py-2 text-base whitespace-nowrap text-pro-text-secondary transition-colors hover:text-pro-text-primary md:flex"
 								onClick={() => {
-									void undoAIGeneration()
+									void undoAIGeneration().catch((error) => {
+										toast.error(error instanceof Error ? error.message : 'Could not undo changes. Please try again.')
+									})
 								}}
 								title="Undo AI changes"
 							>
@@ -599,10 +597,6 @@ function ProDashboardContent() {
 					tags={dashboardTags}
 					description={dashboardDescription}
 					dashboardId={dashboardId}
-					onDashboardNameChange={setDashboardName}
-					onVisibilityChange={setDashboardVisibility}
-					onTagsChange={setDashboardTags}
-					onDescriptionChange={setDashboardDescription}
 					onSave={saveDashboard}
 					onDelete={deleteDashboard}
 				/>
@@ -616,9 +610,7 @@ function ProDashboardContent() {
 				<GenerateDashboardModal
 					isOpen={showGenerateDashboardModal}
 					onClose={() => setShowGenerateDashboardModal(false)}
-					onGenerate={(prompt) => {
-						void handleGenerateDashboard(prompt)
-					}}
+					onGenerate={handleGenerateDashboard}
 				/>
 			</Suspense>
 
@@ -635,9 +627,7 @@ function ProDashboardContent() {
 						items,
 						...(currentDashboard?.aiGenerated ? { aiGenerated: currentDashboard.aiGenerated } : {})
 					}}
-					onGenerate={(prompt) => {
-						void handleIterateDashboard(prompt)
-					}}
+					onGenerate={handleIterateDashboard}
 				/>
 			</Suspense>
 

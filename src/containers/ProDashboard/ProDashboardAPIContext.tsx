@@ -158,7 +158,7 @@ interface ProDashboardDashboardContextType {
 		description: string
 		items?: Array<DashboardItemConfig>
 		aiGenerated?: AIGeneratedData | null
-	}) => Promise<void>
+	}) => Promise<Dashboard>
 	handleGenerateDashboard: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
@@ -171,7 +171,7 @@ interface ProDashboardDashboardContextType {
 			timestamp: string
 			prompt: string
 		}
-	}) => Promise<void>
+	}) => Promise<Dashboard>
 	handleIterateDashboard: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
@@ -540,12 +540,11 @@ function ProDashboardAPIProviderInner({
 			aiUndoState?: AIUndoState | null
 		}) => {
 			if (!isAuthenticated) {
-				toast.error('Please sign in to save dashboards')
-				return
+				throw new Error('Please sign in to save dashboards')
 			}
 
 			if (isReadOnly) {
-				return
+				throw new Error('This dashboard is read-only')
 			}
 
 			const itemsToSave = overrides?.items ?? items
@@ -626,7 +625,7 @@ function ProDashboardAPIProviderInner({
 		try {
 			await saveDashboard({ aiGenerated: updatedAiGenerated })
 		} catch (error) {
-			console.log('Failed to auto-skip older sessions:', error)
+			toast.error(error instanceof Error ? error.message : 'Could not dismiss older ratings. Please try again.')
 			return
 		}
 
@@ -668,7 +667,7 @@ function ProDashboardAPIProviderInner({
 				onSuccess: (dashboard) => navigateToDashboard(dashboardUrlKey(dashboard))
 			})
 		} catch (error) {
-			console.log('Failed to copy dashboard:', error)
+			toast.error(error instanceof Error ? error.message : 'Could not copy dashboard. Please try again.')
 		}
 	}, [
 		items,
@@ -708,11 +707,9 @@ function ProDashboardAPIProviderInner({
 				aiGenerated: data.aiGenerated ?? null
 			}
 
-			await createDashboard.mutateAsync(dashboardData, {
-				onSuccess: (dashboard) => navigateToDashboard(dashboardUrlKey(dashboard))
-			})
+			return createDashboard.mutateAsync(dashboardData)
 		},
-		[createDashboard, navigateToDashboard, canCreateDashboard, isFreeUser]
+		[createDashboard, canCreateDashboard, isFreeUser]
 	)
 
 	const handleGenerateDashboard = useCallback(
@@ -743,7 +740,7 @@ function ProDashboardAPIProviderInner({
 				}
 			}
 
-			await handleCreateDashboard({
+			return handleCreateDashboard({
 				...data,
 				aiGenerated: aiGeneratedData
 			})
@@ -893,7 +890,7 @@ function ProDashboardAPIProviderInner({
 					aiGenerated: updatedAiGenerated
 				})
 			} catch (error) {
-				console.log('Failed to skip rating:', error)
+				toast.error(error instanceof Error ? error.message : 'Could not skip rating. Please try again.')
 				return
 			}
 

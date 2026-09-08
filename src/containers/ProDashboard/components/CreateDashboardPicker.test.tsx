@@ -3,8 +3,12 @@ import * as Ariakit from '@ariakit/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
+import toast from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { CreateDashboardPicker } from './CreateDashboardPicker'
+const navigation = vi.hoisted(() => ({ push: vi.fn() }))
+vi.mock('next/router', () => ({ useRouter: () => navigation }))
+vi.mock('react-hot-toast', () => ({ default: { error: vi.fn() } }))
 vi.mock('~/auth', () => ({ useAuthContext: () => ({ hasActiveSubscription: true }) }))
 vi.mock('~/containers/Chains/api', () => ({ fetchChainsByCategory: async () => ({ chainsUnique: [] }) }))
 vi.mock('../AppMetadataContext', () => ({ useAppMetadata: () => ({ protocolsBySlug: new Map() }) }))
@@ -67,7 +71,7 @@ test('failed creation retains the name and visibility, blocks duplicate submissi
 					reject = fail
 				})
 		)
-		.mockResolvedValueOnce(undefined)
+		.mockResolvedValueOnce({ id: 'created', slug: 'new-dashboard' })
 	await mount()
 	const name = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
 	name.value = 'Keep my draft'
@@ -91,13 +95,15 @@ test('failed creation retains the name and visibility, blocks duplicate submissi
 	await click('Create Dashboard')
 	await waitFor(() => expect(create).toHaveBeenCalledTimes(2))
 	await waitFor(() => expect(store.getState().open).toBe(false))
+	expect(navigation.push).toHaveBeenCalledExactlyOnceWith('/pro/new-dashboard')
+	expect(toast.error).not.toHaveBeenCalled()
 })
 test('a creation finishing after dismissal does not close a newly opened picker', async () => {
 	let finish!: () => void
 	create.mockImplementationOnce(
 		() =>
-			new Promise<void>((resolve) => {
-				finish = resolve
+			new Promise<{ id: string }>((resolve) => {
+				finish = () => resolve({ id: 'older' })
 			})
 	)
 	await mount()
@@ -112,6 +118,7 @@ test('a creation finishing after dismissal does not close a newly opened picker'
 	})
 	expect(store.getState().open).toBe(true)
 	expect(document.querySelector('[role="alert"]')).toBeNull()
+	expect(navigation.push).not.toHaveBeenCalled()
 })
 
 test('a refusal shows why it was refused, not an invitation to retry', async () => {

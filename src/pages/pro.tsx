@@ -493,9 +493,7 @@ function ProContent({
 					<GenerateDashboardModal
 						isOpen={showGenerateDashboardModal}
 						onClose={() => setShowGenerateDashboardModal(false)}
-						onGenerate={(prompt) => {
-							void handleGenerateDashboard(prompt)
-						}}
+						onGenerate={handleGenerateDashboard}
 					/>
 				</Suspense>
 

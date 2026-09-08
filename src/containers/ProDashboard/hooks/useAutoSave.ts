@@ -161,13 +161,14 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 		autoSaveTimeoutRef.current = setTimeout(() => {
 			updateDashboard({ id: dashboardId, data })
 				.then((savedDashboard) => {
-					pendingDataRef.current = null
+					// A newer edit may already be waiting when this request finishes.
+					if (pendingDataRef.current?.data === data) pendingDataRef.current = null
 					if (savedDashboard?.artifactActivationPending) {
 						toast.error('Dashboard saved, but chart refresh setup is pending.')
 					}
 				})
 				.catch((error) => {
-					console.log('Auto-save failed:', error)
+					toast.error(error instanceof Error ? error.message : 'Could not save dashboard changes. Please try again.')
 				})
 		}, delay)
 	}, [])
