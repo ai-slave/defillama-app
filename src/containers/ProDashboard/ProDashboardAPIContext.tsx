@@ -364,7 +364,10 @@ function ProDashboardAPIProviderInner({
 		showGenerateDashboardModal,
 		showIterateDashboardModal
 	} = state
-	const needsProtocolCatalog = mode !== 'view' || dashboardStreamNeedsProtocolCatalog(items)
+	const createDashboardDialogStore = Ariakit.useDialogStore()
+	const createDashboardDialogOpen = Ariakit.useStoreState(createDashboardDialogStore, 'open')
+	const needsProtocolCatalog =
+		createDashboardDialogOpen || mode !== 'view' || dashboardStreamNeedsProtocolCatalog(items)
 	const waitForStreamedProtocolCatalog =
 		!dashboardReady || dashboardStreamNeedsProtocolCatalog(items.slice(0, INITIAL_DASHBOARD_STREAM_ITEM_COUNT))
 	const {
@@ -423,8 +426,6 @@ function ProDashboardAPIProviderInner({
 	useEffect(() => {
 		applyTrustedDashboard(stream.dashboard)
 	}, [applyTrustedDashboard, stream.dashboard])
-
-	const createDashboardDialogStore = Ariakit.useDialogStore()
 
 	// Use the dashboard API hook
 	const {

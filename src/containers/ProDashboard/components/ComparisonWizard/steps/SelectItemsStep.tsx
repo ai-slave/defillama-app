@@ -20,7 +20,7 @@ interface Option {
 
 export function SelectItemsStep() {
 	const { state, actions } = useComparisonWizardContext()
-	const { protocols, chains, protocolsLoading } = useProDashboardCatalog()
+	const { protocols, chains, protocolsLoading, protocolCatalog } = useProDashboardCatalog()
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
 	const [selectedCategories, setSelectedCategories] = useState<Array<string>>([])
@@ -279,6 +279,13 @@ export function SelectItemsStep() {
 					{protocolsLoading ? (
 						<div className="flex h-full items-center justify-center">
 							<div className="size-6 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+						</div>
+					) : protocolCatalog.status === 'error' ? (
+						<div role="alert" className="flex h-full flex-col items-center justify-center gap-2 text-pro-text-tertiary">
+							<span className="text-sm">Failed to load {typeLabel.toLowerCase()}</span>
+							<button type="button" onClick={protocolCatalog.retry} className="text-sm text-brand hover:underline">
+								Retry
+							</button>
 						</div>
 					) : filteredOptions.length === 0 ? (
 						<div className="flex h-full flex-col items-center justify-center gap-2 text-pro-text-tertiary">
