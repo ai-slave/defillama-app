@@ -9,6 +9,7 @@ import Script from 'next/script'
 import type { ReactElement } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { AuthProvider } from '~/auth'
+import { DashboardSaveGuard } from '~/components/DashboardSaveGuard'
 import { RouteProgressIndicator } from '~/components/RouteProgressIndicator'
 import { UserSettingsSync } from '~/components/UserSettingsSync'
 import { ACTIVE_INVESTORS_SITE } from '~/containers/Investors/config'
@@ -189,6 +190,7 @@ function AppWrapper(props: AppPropsWithLayout) {
 		<QueryClientProvider client={queryClient}>
 			<AuthProvider>
 				<UserSettingsSync />
+				<DashboardSaveGuard />
 				<App {...props} />
 			</AuthProvider>
 			<ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />

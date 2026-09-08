@@ -1,5 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { replaceEqualDeep, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
 	createContext,
 	type ReactNode,
@@ -32,7 +32,7 @@ import type {
 	TimePeriod
 } from './dashboardTypes'
 import { useAutoSave } from './hooks/useAutoSave'
-import { useDashboardAPI } from './hooks/useDashboardAPI'
+import { getUnsavedDashboardItems, useDashboardAPI, wasDashboardDeleted } from './hooks/useDashboardAPI'
 import { useDashboardConfigFallback } from './hooks/useDashboardConfigFallback'
 import { useDashboardPermissions } from './hooks/useDashboardPermissions'
 import { useDashboardStream } from './hooks/useDashboardStream'
@@ -215,6 +215,8 @@ interface ProDashboardUIContextType {
 	setShowIterateDashboardModal: (show: boolean) => void
 }
 
+const ProDashboardSaveContext = createContext<ReturnType<typeof useAutoSave> | null>(null)
+
 const ProDashboardTimeContext = createContext<ProDashboardTimeContextType | undefined>(undefined)
 const ProDashboardCatalogContext = createContext<ProDashboardCatalogContextType | undefined>(undefined)
 const ProDashboardPermissionsContext = createContext<ProDashboardPermissionsContextType | undefined>(undefined)
@@ -314,12 +316,19 @@ function ProDashboardAPIProviderInner({
 		[initialDashboardId, isAuthenticated, user?.id]
 	)
 	useEffect(() => {
-		if (stream.dashboard) {
+		if (stream.dashboard && !wasDashboardDeleted(queryClient, stream.dashboard.id, user?.id)) {
 			queryClient.setQueryData(dashboardQueryKey, stream.dashboard, {
 				updatedAt: Date.now()
 			})
+			// Slug routes and mutation scopes must share the same confirmed snapshot by dashboard id.
+			if (stream.dashboard.id !== initialDashboardId) {
+				queryClient.setQueryData(
+					['pro-dashboard', 'dashboard', stream.dashboard.id, isAuthenticated, user?.id],
+					stream.dashboard
+				)
+			}
 		}
-	}, [stream.dashboard, queryClient, dashboardQueryKey])
+	}, [stream.dashboard, queryClient, dashboardQueryKey, initialDashboardId, isAuthenticated, user?.id])
 
 	const initArg = initialDashboard
 		? { dashboard: initialDashboard }
@@ -329,7 +338,12 @@ function ProDashboardAPIProviderInner({
 					items: initialItems
 				}
 			: initialDashboardId
-	const [state, dispatch] = useReducer(dashboardReducer, initArg, initDashboardState)
+	const [state, dispatch] = useReducer(dashboardReducer, initArg, (arg) => {
+		const initial = initDashboardState(arg)
+		const draft = getUnsavedDashboardItems(queryClient, initial.dashboardId, user?.id)
+		// QueryClient retains in-flight/failed writes across route remounts. Recover the draft without retrying it.
+		return draft ? { ...initial, items: draft } : initial
+	})
 
 	useEffect(() => {
 		if (!initialDashboard && initialItems && initialItems.length > 0) {
@@ -377,9 +391,17 @@ function ProDashboardAPIProviderInner({
 		return map
 	}, [protocols])
 
-	const applyDashboard = useCallback((dashboard: Dashboard) => {
-		dispatch({ type: 'APPLY_DASHBOARD', payload: dashboard })
-	}, [])
+	const applyDashboard = useCallback(
+		(dashboard: Dashboard) => {
+			if (wasDashboardDeleted(queryClient, dashboard.id, user?.id)) return
+			dispatch({ type: 'APPLY_DASHBOARD', payload: dashboard })
+			if (currentDashboard?.id !== dashboard.id) {
+				const draft = getUnsavedDashboardItems(queryClient, dashboard.id, user?.id)
+				if (draft) dispatch({ type: 'SET_ITEMS', payload: draft })
+			}
+		},
+		[currentDashboard?.id, queryClient, user?.id]
+	)
 	const lastAppliedTrustedDashboardRef = useRef<Dashboard | null>(initialDashboard ?? null)
 	const [hasTrustedDashboard, setHasTrustedDashboard] = useState(!initialDashboard)
 	const applyTrustedDashboard = useCallback(
@@ -406,8 +428,8 @@ function ProDashboardAPIProviderInner({
 
 	// Use the dashboard API hook
 	const {
-		createDashboard,
-		updateDashboard,
+		createDashboard: { mutateAsync: createDashboard },
+		updateDashboard: { mutateAsync: updateDashboard },
 		deleteDashboard: deleteDashboardWithConfirmation,
 		loadDashboard: loadDashboardData,
 		navigateToDashboard
@@ -425,26 +447,16 @@ function ProDashboardAPIProviderInner({
 		hasTrustedDashboard
 	})
 
-	// Use the auto-save hook
-	const { autoSave } = useAutoSave({
-		dashboardId,
-		dashboardName,
-		dashboardVisibility,
-		dashboardTags,
-		dashboardDescription,
-		timePeriod,
-		customTimePeriod,
-		isAuthenticated,
-		isReadOnly: isReadOnlyUntilDashboardLoaded,
-		currentDashboard,
-		userId: user?.id,
-		updateDashboard: updateDashboard.mutateAsync,
-		toPersistedDashboardItems,
+	const autosave = useAutoSave({
+		dashboard: currentDashboard,
 		isFreeUser,
-		mode
+		enabled: !isReadOnlyUntilDashboardLoaded && isAuthenticated && !!user?.id && currentDashboard?.user === user.id,
+		timePeriod,
+		customTimePeriod
 	})
 
-	const actions = useDashboardActions(dispatch, state, autoSave, isReadOnlyUntilDashboardLoaded)
+	const { flush, acknowledge } = autosave
+	const actions = useDashboardActions(dispatch, state, autosave.autoSave, isReadOnlyUntilDashboardLoaded)
 
 	const {
 		setTimePeriod,
@@ -483,7 +495,9 @@ function ProDashboardAPIProviderInner({
 		refetchOnMount: initialDashboard ? false : 'always',
 		retry: (failureCount, error) => error instanceof DashboardError && error.status >= 500 && failureCount < 3,
 		enabled: dashboardReady && !!initialDashboardId,
-		...(initialDashboard && matchesDashboardKey(initialDashboard, initialDashboardId)
+		...(initialDashboard &&
+		matchesDashboardKey(initialDashboard, initialDashboardId) &&
+		!wasDashboardDeleted(queryClient, initialDashboard.id, user?.id)
 			? { initialData: initialDashboard }
 			: {}),
 		...(initialDashboardUpdatedAt === undefined ? {} : { initialDataUpdatedAt: initialDashboardUpdatedAt })
@@ -543,6 +557,17 @@ function ProDashboardAPIProviderInner({
 				throw new Error('This dashboard is read-only')
 			}
 
+			// Reconciliation compares editable fields, not dialog visibility or the whole reducer state.
+			const submitted = {
+				items,
+				timePeriod,
+				customTimePeriod,
+				dashboardName,
+				dashboardId,
+				dashboardVisibility,
+				dashboardTags,
+				dashboardDescription
+			}
 			const itemsToSave = overrides?.items ?? items
 			const cleanedItems = toPersistedDashboardItems(itemsToSave)
 			const nameToSave = overrides?.dashboardName ?? dashboardName
@@ -557,23 +582,40 @@ function ProDashboardAPIProviderInner({
 				tags: overrides?.tags ?? dashboardTags,
 				description: overrides?.description ?? dashboardDescription,
 				aiGenerated: aiGeneratedToSave,
+				aiUndoState: currentDashboard?.data.aiUndoState ?? null,
 				...(overrides && 'aiUndoState' in overrides ? { aiUndoState: overrides.aiUndoState } : {})
 			}
 
 			if (dashboardId) {
-				const savedDashboard = await updateDashboard.mutateAsync({ id: dashboardId, data })
+				// Queue existing item edits first; this action owns only its explicit changes and local drafts.
+				const flushedAutosave = flush()
+				const savedDashboard = await updateDashboard({
+					id: dashboardId,
+					data,
+					changes: {
+						...(currentDashboard && replaceEqualDeep(currentDashboard.data.items, items) !== currentDashboard.data.items
+							? { items: cleanedItems }
+							: {}),
+						timePeriod,
+						customTimePeriod,
+						...overrides,
+						...(overrides?.items ? { items: cleanedItems } : {}),
+						...(isFreeUser ? { visibility: 'public' as const } : {})
+					}
+				})
 				if (savedDashboard) {
-					dispatch({ type: 'SAVE_DASHBOARD', payload: savedDashboard, submitted: state })
+					acknowledge(flushedAutosave)
+					dispatch({ type: 'SAVE_DASHBOARD', payload: savedDashboard, submitted })
 					if (savedDashboard.artifactActivationPending) {
 						toast.error('Dashboard saved, but chart refresh setup is pending.')
 					}
 				}
 			} else {
-				const newDashboard = await createDashboard.mutateAsync(data, {
+				const newDashboard = await createDashboard(data, {
 					onSuccess: (dashboard) => navigateToDashboard(dashboardUrlKey(dashboard))
 				})
 				if (newDashboard) {
-					dispatch({ type: 'SAVE_DASHBOARD', payload: newDashboard, submitted: state })
+					dispatch({ type: 'SAVE_DASHBOARD', payload: newDashboard, submitted })
 					if (newDashboard.artifactActivationPending) {
 						toast.error('Dashboard saved, but chart refresh setup is pending.')
 					}
@@ -589,14 +631,15 @@ function ProDashboardAPIProviderInner({
 			dashboardVisibility,
 			dashboardTags,
 			dashboardDescription,
-			currentDashboard?.aiGenerated,
+			currentDashboard,
 			isAuthenticated,
 			isReadOnly,
 			isFreeUser,
 			updateDashboard,
+			flush,
+			acknowledge,
 			createDashboard,
-			navigateToDashboard,
-			state
+			navigateToDashboard
 		]
 	)
 
@@ -619,7 +662,7 @@ function ProDashboardAPIProviderInner({
 			...(dashboardId && { copySourceDashboardId: dashboardId })
 		}
 
-		return createDashboard.mutateAsync(data)
+		return createDashboard(data)
 	}, [
 		items,
 		dashboardName,
@@ -657,7 +700,7 @@ function ProDashboardAPIProviderInner({
 				aiGenerated: data.aiGenerated ?? null
 			}
 
-			return createDashboard.mutateAsync(dashboardData)
+			return createDashboard(dashboardData)
 		},
 		[createDashboard, canCreateDashboard, isFreeUser]
 	)
@@ -942,19 +985,21 @@ function ProDashboardAPIProviderInner({
 	)
 
 	return (
-		<ProDashboardTimeContext.Provider value={timeContextValue}>
-			<ProDashboardCatalogContext.Provider value={catalogContextValue}>
-				<ProDashboardPermissionsContext.Provider value={permissionsContextValue}>
-					<ProDashboardDashboardContext.Provider value={dashboardContextValue}>
-						<ProDashboardEditorActionsContext.Provider value={editorActionsContextValue}>
-							<ProDashboardItemsStateContext.Provider value={itemsStateContextValue}>
-								<ProDashboardUIContext.Provider value={uiContextValue}>{children}</ProDashboardUIContext.Provider>
-							</ProDashboardItemsStateContext.Provider>
-						</ProDashboardEditorActionsContext.Provider>
-					</ProDashboardDashboardContext.Provider>
-				</ProDashboardPermissionsContext.Provider>
-			</ProDashboardCatalogContext.Provider>
-		</ProDashboardTimeContext.Provider>
+		<ProDashboardSaveContext.Provider value={autosave}>
+			<ProDashboardTimeContext.Provider value={timeContextValue}>
+				<ProDashboardCatalogContext.Provider value={catalogContextValue}>
+					<ProDashboardPermissionsContext.Provider value={permissionsContextValue}>
+						<ProDashboardDashboardContext.Provider value={dashboardContextValue}>
+							<ProDashboardEditorActionsContext.Provider value={editorActionsContextValue}>
+								<ProDashboardItemsStateContext.Provider value={itemsStateContextValue}>
+									<ProDashboardUIContext.Provider value={uiContextValue}>{children}</ProDashboardUIContext.Provider>
+								</ProDashboardItemsStateContext.Provider>
+							</ProDashboardEditorActionsContext.Provider>
+						</ProDashboardDashboardContext.Provider>
+					</ProDashboardPermissionsContext.Provider>
+				</ProDashboardCatalogContext.Provider>
+			</ProDashboardTimeContext.Provider>
+		</ProDashboardSaveContext.Provider>
 	)
 }
 
@@ -1016,4 +1061,10 @@ export function useProDashboardUI() {
 
 export function useDashboardMode() {
 	return useContext(ProDashboardModeContext).mode
+}
+
+export function useProDashboardSave() {
+	const context = useContext(ProDashboardSaveContext)
+	if (!context) throw new Error('useProDashboardSave requires ProDashboardAPIProvider')
+	return context
 }

@@ -15,6 +15,7 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { AppMetadataProvider } from './AppMetadataContext'
+import { AutosaveStatus } from './components/AutosaveStatus'
 import { ChartGrid } from './components/ChartGrid'
 import { CopyDashboardLinkButton } from './components/CopyDashboardLinkButton'
 import { CustomTimePeriodPicker } from './components/CustomTimePeriodPicker'
@@ -523,6 +524,8 @@ function ProDashboardContent() {
 					</div>
 				</div>
 			) : null}
+
+			{!isReadOnly && dashboardId ? <AutosaveStatus /> : null}
 
 			{items.length > 0 ? <ChartGrid onAddChartClick={openAddModal} onEditItem={handleEditItemModal} /> : null}
 

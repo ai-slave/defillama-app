@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { buildDashboardSaveRequest, dashboardAPI } from './DashboardAPI'
 
 describe('Dashboard API save contract', () => {
@@ -111,4 +111,45 @@ describe('Dashboard API save contract', () => {
 			editedAt: '2026-08-29T15:14:53.567Z'
 		})
 	})
+})
+
+test('updates use keepalive within the shared byte budget and release it after failure', async () => {
+	const held = Promise.withResolvers<Response>()
+	const response = () =>
+		new Response(JSON.stringify({ id: 'id', created: '', updated: '', data: { dashboardName: 'Saved', items: [] } }))
+	const authorizedFetch = vi
+		.fn()
+		.mockReturnValueOnce(held.promise)
+		.mockImplementation(async () => response())
+	const data = {
+		dashboardName: 'Saved',
+		items: [],
+		description: 'a'.repeat(40_000),
+		visibility: 'public' as const,
+		tags: []
+	}
+	const first = dashboardAPI.updateDashboard('first', data, authorizedFetch)
+	await dashboardAPI.updateDashboard('second', data, authorizedFetch)
+	expect(authorizedFetch.mock.calls[0][1].keepalive).toBe(true)
+	expect(authorizedFetch.mock.calls[1][1].keepalive).toBe(false)
+	held.reject(new Error('Offline'))
+	await expect(first).rejects.toThrow('Offline')
+	await dashboardAPI.updateDashboard('third', data, authorizedFetch)
+	expect(authorizedFetch.mock.calls[2][1].keepalive).toBe(true)
+})
+
+test('large UTF-8 update bodies use normal fetch without changing their content', async () => {
+	const authorizedFetch = vi.fn(
+		async (_url: string, _options?: RequestInit) =>
+			new Response(JSON.stringify({ id: 'id', created: '', updated: '', data: { dashboardName: 'Saved', items: [] } }))
+	)
+	const description = '😀'.repeat(20_000)
+	await dashboardAPI.updateDashboard(
+		'id',
+		{ dashboardName: 'Saved', items: [], description, visibility: 'public', tags: [] },
+		authorizedFetch
+	)
+	const options = authorizedFetch.mock.calls[0][1]!
+	expect(options.keepalive).toBe(false)
+	expect(JSON.parse(options.body as string).description).toBe(description)
 })

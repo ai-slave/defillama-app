@@ -16,6 +16,11 @@ export interface DashboardState {
 	showIterateDashboardModal: boolean
 }
 
+type DashboardSaveBaseline = Omit<
+	DashboardState,
+	'currentDashboard' | 'showGenerateDashboardModal' | 'showIterateDashboardModal'
+>
+
 export type DashboardAction =
 	| { type: 'SET_ITEMS'; payload: Array<DashboardItemConfig> }
 	| { type: 'SET_TIME_PERIOD'; payload: TimePeriod }
@@ -28,7 +33,7 @@ export type DashboardAction =
 	| { type: 'SET_SHOW_GENERATE_DASHBOARD_MODAL'; payload: boolean }
 	| { type: 'SET_SHOW_ITERATE_DASHBOARD_MODAL'; payload: boolean }
 	| { type: 'APPLY_DASHBOARD'; payload: Dashboard }
-	| { type: 'SAVE_DASHBOARD'; payload: Dashboard; submitted: DashboardState }
+	| { type: 'SAVE_DASHBOARD'; payload: Dashboard; submitted: DashboardSaveBaseline }
 
 const INITIAL_DASHBOARD_STATE: DashboardState = {
 	items: [],
@@ -81,7 +86,11 @@ export function initDashboardState(
 
 // Apply server-owned metadata, but retain fields edited since this request's baseline.
 // Compare arrays only on responses: server/cache copies need not share the local draft's references.
-function reconcileDashboard(state: DashboardState, dashboard: Dashboard, baseline: DashboardState): DashboardState {
+function reconcileDashboard(
+	state: DashboardState,
+	dashboard: Dashboard,
+	baseline: DashboardSaveBaseline
+): DashboardState {
 	const saved = stateFromDashboard(dashboard)
 	const periodUnchanged =
 		state.timePeriod === baseline.timePeriod &&

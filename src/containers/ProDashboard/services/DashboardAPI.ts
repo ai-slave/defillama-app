@@ -117,6 +117,10 @@ export function buildDashboardSaveRequest(params: { id?: string; data: Dashboard
 	}
 }
 
+// Fetch limits outstanding keepalive request bodies to 64 KiB. Larger/concurrent
+// saves still use normal fetch instead of failing solely because of that quota.
+let dashboardKeepaliveBytes = 0
+
 class DashboardAPIService {
 	private async handleResponse<T>(response: Response): Promise<T> {
 		if (!response.ok) {
@@ -185,9 +189,15 @@ class DashboardAPIService {
 		authorizedFetch: DashboardAuthorizedFetch
 	): Promise<Dashboard> {
 		const { url, options } = buildDashboardSaveRequest({ id, data })
-		const response = await requireAuthorizedResponse(authorizedFetch, url, options)
-
-		return migrateDashboardConfig(await this.handleResponse<PersistedDashboard>(response))
+		const bytes = new TextEncoder().encode(options.body).byteLength
+		const keepalive = dashboardKeepaliveBytes + bytes <= 65_536
+		if (keepalive) dashboardKeepaliveBytes += bytes
+		try {
+			const response = await requireAuthorizedResponse(authorizedFetch, url, { ...options, keepalive })
+			return migrateDashboardConfig(await this.handleResponse<PersistedDashboard>(response))
+		} finally {
+			if (keepalive) dashboardKeepaliveBytes -= bytes
+		}
 	}
 
 	async deleteDashboard(id: string, authorizedFetch: DashboardAuthorizedFetch): Promise<{ message: string }> {

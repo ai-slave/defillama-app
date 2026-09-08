@@ -1,187 +1,137 @@
-import { useCallback, useEffect, useEffectEvent, useLayoutEffect, useRef } from 'react'
-import toast from 'react-hot-toast'
-import pb from '~/utils/pocketbase'
+import { type MutationState, useIsMutating, useMutationState, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
+import { useAuthContext } from '~/auth'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
-import type { AIGeneratedData, CustomTimePeriod, Dashboard, TimePeriod } from '../dashboardTypes'
-import { buildDashboardSaveRequest } from '../services/DashboardAPI'
+import type { CustomTimePeriod, Dashboard, TimePeriod } from '../dashboardTypes'
+import { toDashboardSavePayload } from '../utils/dashboardUtils'
+import { type DashboardUpdate, useUpdateDashboard, wasDashboardDeleted } from './useDashboardAPI'
 
-interface UseAutoSaveOptions {
-	dashboardId: string | null
-	dashboardName: string
-	dashboardVisibility: 'private' | 'public'
-	dashboardTags: Array<string>
-	dashboardDescription: string
+export function useAutoSave({
+	dashboard,
+	enabled,
+	isFreeUser,
+	timePeriod,
+	customTimePeriod,
+	delay = 800
+}: {
+	dashboard: Dashboard | null
+	enabled: boolean
+	isFreeUser: boolean
 	timePeriod: TimePeriod
 	customTimePeriod: CustomTimePeriod | null
-	isAuthenticated: boolean
-	isReadOnly: boolean
-	currentDashboard: { user?: string; aiGenerated?: AIGeneratedData | null } | null
-	userId: string | undefined
-	updateDashboard: (params: {
-		id: string
-		data: {
-			items: Array<DashboardItemConfig>
-			dashboardName: string
-			timePeriod?: TimePeriod
-			customTimePeriod?: CustomTimePeriod | null
-			visibility: 'private' | 'public'
-			tags: Array<string>
-			description: string
-			aiGenerated?: AIGeneratedData | null
-		}
-	}) => Promise<Dashboard>
-	toPersistedDashboardItems: (items: Array<DashboardItemConfig>) => Array<DashboardItemConfig>
-	isFreeUser: boolean
-	mode?: 'view' | 'edit'
 	delay?: number
-}
-
-interface AutoSaveOverrides {
-	timePeriod?: TimePeriod
-	customTimePeriod?: CustomTimePeriod | null
-}
-
-interface PendingSaveData {
-	dashboardId: string
-	data: {
-		items: Array<DashboardItemConfig>
-		dashboardName: string
-		timePeriod?: TimePeriod
-		customTimePeriod?: CustomTimePeriod | null
-		visibility: 'private' | 'public'
-		tags: Array<string>
-		description: string
-		aiGenerated?: AIGeneratedData | null
-	}
-}
-
-export function useAutoSave(options: UseAutoSaveOptions) {
-	const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-	// Read by the debounce timer and the flush handler, which run outside render.
-	const optionsRef = useRef(options)
-	useLayoutEffect(() => {
-		optionsRef.current = options
+}) {
+	const client = useQueryClient()
+	const { user } = useAuthContext()
+	const mutationKey = useMemo(
+		() => ['pro-dashboard-update', dashboard?.id ?? null, user?.id],
+		[dashboard?.id, user?.id]
+	)
+	const { mutate: save } = useUpdateDashboard(dashboard?.id ?? null, 'autosave')
+	const attempts = useMutationState({
+		filters: {
+			mutationKey,
+			predicate: (mutation) => (mutation.state.variables as DashboardUpdate | undefined)?.source === 'autosave'
+		},
+		select: (mutation) => mutation.state as MutationState<Dashboard, Error, DashboardUpdate>
 	})
-
-	const pendingDataRef = useRef<PendingSaveData | null>(null)
-
-	// useEffectEvent ensures we always call the latest flush logic without re-subscribing listeners
-	const onFlushPendingSave = useEffectEvent(() => {
-		if (autoSaveTimeoutRef.current) {
-			clearTimeout(autoSaveTimeoutRef.current)
-			autoSaveTimeoutRef.current = null
+	const state = attempts.at(-1)
+	const saving = useIsMutating({ mutationKey }) > 0
+	const [queued, setQueued] = useState<DashboardUpdate | null>(null)
+	// Timer, manual save, and page lifecycle events may flush the same render before React commits.
+	const flushedRef = useRef<DashboardUpdate | null>(null)
+	const flush = useCallback(() => {
+		if (!queued || flushedRef.current === queued) return flushedRef.current ?? state?.variables ?? null
+		if (wasDashboardDeleted(client, queued.id, user?.id)) {
+			setQueued(null)
+			return null
 		}
+		flushedRef.current = queued
+		setQueued((current) => (current === queued ? null : current))
+		save(queued)
+		return queued
+	}, [queued, save, state?.variables, client, user?.id])
 
-		const pending = pendingDataRef.current
-		const token = pb.authStore.token
-
-		if (pending && token) {
-			const { url, options: requestOptions } = buildDashboardSaveRequest({
-				id: pending.dashboardId,
-				data: pending.data
-			})
-			void fetch(url, {
-				...requestOptions,
-				headers: {
-					...requestOptions.headers,
-					Authorization: `Bearer ${token}`
-				},
-				keepalive: true
-			})
-			pendingDataRef.current = null
-		}
-	})
-
-	useEffect(() => {
-		const handlePageHide = () => onFlushPendingSave()
-		const handleBeforeUnload = () => onFlushPendingSave()
-		const handleVisibilityChange = () => {
-			if (document.visibilityState === 'hidden') {
-				onFlushPendingSave()
+	const onFlush = useEffectEvent(() => flush())
+	const onUnmount = useEffectEvent(() => {
+		flush()
+		for (const mutation of client.getMutationCache().findAll({ mutationKey })) {
+			if (
+				(mutation.state.variables as DashboardUpdate | undefined)?.source === 'autosave' &&
+				mutation.state.status === 'success'
+			) {
+				client.getMutationCache().remove(mutation)
 			}
 		}
+	})
+	useEffect(() => {
+		if (!queued) return
+		const timer = setTimeout(() => onFlush(), delay)
+		return () => clearTimeout(timer)
+	}, [queued, delay])
 
-		window.addEventListener('pagehide', handlePageHide)
-		window.addEventListener('beforeunload', handleBeforeUnload)
-		document.addEventListener('visibilitychange', handleVisibilityChange)
-
+	useEffect(() => {
+		const hide = () => onFlush()
+		const visibility = () => {
+			if (document.visibilityState === 'hidden') onFlush()
+		}
+		window.addEventListener('pagehide', hide)
+		document.addEventListener('visibilitychange', visibility)
 		return () => {
-			onFlushPendingSave()
-			window.removeEventListener('pagehide', handlePageHide)
-			window.removeEventListener('beforeunload', handleBeforeUnload)
-			document.removeEventListener('visibilitychange', handleVisibilityChange)
+			onUnmount()
+			window.removeEventListener('pagehide', hide)
+			document.removeEventListener('visibilitychange', visibility)
 		}
 	}, [])
 
-	const autoSave = useCallback((newItems: Array<DashboardItemConfig>, overrides?: AutoSaveOverrides) => {
-		const {
-			dashboardId,
-			isAuthenticated,
-			isReadOnly,
-			currentDashboard,
-			userId,
-			dashboardName,
-			dashboardVisibility,
-			dashboardTags,
-			dashboardDescription,
-			timePeriod,
-			customTimePeriod,
-			toPersistedDashboardItems,
-			updateDashboard,
-			isFreeUser,
-			mode = 'edit',
-			delay = 800
-		} = optionsRef.current
-
-		const isOwner = currentDashboard && userId && currentDashboard.user === userId
-		const shouldBlock = mode === 'view' || !dashboardId || !isAuthenticated || isReadOnly || !isOwner
-
-		if (shouldBlock) {
-			return
+	const unsaved = queued !== null
+	useEffect(() => {
+		if (!unsaved) return
+		const warn = (event: BeforeUnloadEvent) => {
+			onFlush()
+			event.preventDefault()
+			event.returnValue = ''
 		}
+		window.addEventListener('beforeunload', warn)
+		return () => window.removeEventListener('beforeunload', warn)
+	}, [unsaved])
 
-		if (autoSaveTimeoutRef.current) {
-			clearTimeout(autoSaveTimeoutRef.current)
+	const autoSave = useCallback(
+		(items: Array<DashboardItemConfig>) => {
+			if (!enabled || !dashboard) return
+			setQueued({
+				id: dashboard.id,
+				source: 'autosave',
+				data: toDashboardSavePayload(dashboard),
+				changes: {
+					items,
+					timePeriod,
+					customTimePeriod,
+					...(isFreeUser ? { visibility: 'public' as const } : {})
+				}
+			})
+		},
+		[enabled, dashboard, timePeriod, customTimePeriod, isFreeUser]
+	)
+
+	const acknowledge = useCallback(
+		(request: DashboardUpdate | null) => {
+			// A manual save includes earlier local edits, but must not clear feedback for a later edit.
+			if (!request) return
+			for (const mutation of client.getMutationCache().findAll({ mutationKey })) {
+				if (mutation.state.variables === request) client.getMutationCache().remove(mutation)
+			}
+		},
+		[client, mutationKey]
+	)
+	const retry = () => {
+		if (client.isMutating({ mutationKey })) return
+		if (queued) flush()
+		else if (state?.status === 'error' && state.variables) {
+			const request = { ...state.variables }
+			flushedRef.current = request
+			save(request)
 		}
-
-		const cleanedItems = toPersistedDashboardItems(newItems)
-		const data = {
-			items: cleanedItems,
-			dashboardName,
-			timePeriod: overrides?.timePeriod ?? timePeriod,
-			customTimePeriod: overrides?.customTimePeriod !== undefined ? overrides.customTimePeriod : customTimePeriod,
-			visibility: isFreeUser ? 'public' : dashboardVisibility,
-			tags: dashboardTags,
-			description: dashboardDescription,
-			aiGenerated: currentDashboard?.aiGenerated ?? null
-		}
-
-		pendingDataRef.current = { dashboardId, data }
-
-		autoSaveTimeoutRef.current = setTimeout(() => {
-			updateDashboard({ id: dashboardId, data })
-				.then((savedDashboard) => {
-					// A newer edit may already be waiting when this request finishes.
-					if (pendingDataRef.current?.data === data) pendingDataRef.current = null
-					if (savedDashboard?.artifactActivationPending) {
-						toast.error('Dashboard saved, but chart refresh setup is pending.')
-					}
-				})
-				.catch((error) => {
-					toast.error(error instanceof Error ? error.message : 'Could not save dashboard changes. Please try again.')
-				})
-		}, delay)
-	}, [])
-
-	const clearAutoSave = useCallback(() => {
-		if (autoSaveTimeoutRef.current) {
-			clearTimeout(autoSaveTimeoutRef.current)
-			autoSaveTimeoutRef.current = null
-		}
-	}, [])
-
-	return {
-		autoSave,
-		clearAutoSave
 	}
+	return { autoSave, flush, acknowledge, queued, state, retry, saving }
 }

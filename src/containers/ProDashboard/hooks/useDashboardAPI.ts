@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { type MutationState, type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useCallback } from 'react'
 import { useAuthContext } from '~/auth'
@@ -11,6 +11,7 @@ import {
 	type DashboardSavePayload,
 	type LiteDashboardSummary
 } from '../services/DashboardAPI'
+import { toDashboardSavePayload, toPersistedDashboardItems } from '../utils/dashboardUtils'
 
 const EMPTY_DASHBOARDS: Array<Dashboard> = []
 
@@ -111,22 +112,7 @@ export function useDashboardAPI(dashboardId: string | null) {
 		}
 	})
 
-	const updateDashboardMutation = useMutation({
-		// Settings and page remounts must not let an older save overtake a newer save.
-		scope: { id: `pro-dashboard-update:${dashboardId}` },
-		mutationFn: async ({ id, data }: { id: string; data: DashboardSavePayload }) => {
-			return await dashboardAPI.updateDashboard(id, data, authorizedFetch)
-		},
-		onSuccess: (dashboard: Dashboard) => {
-			queryClient.setQueriesData(
-				{ queryKey: ['pro-dashboard', 'dashboard'], exact: false },
-				(oldData: Dashboard | undefined) => (oldData?.id === dashboard.id ? dashboard : oldData)
-			)
-			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
-			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
-			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
-		}
-	})
+	const updateDashboardMutation = useUpdateDashboard(dashboardId, 'manual')
 
 	// Mutation to delete dashboard
 	const deleteDashboardMutation = useMutation({
@@ -134,6 +120,15 @@ export function useDashboardAPI(dashboardId: string | null) {
 			return await dashboardAPI.deleteDashboard(id, authorizedFetch)
 		},
 		onSuccess: (_, deleted) => {
+			// Keep a small session-local deletion marker so late writes cannot revive a deleted dashboard.
+			const key = ['pro-dashboard-deleted', deleted.id, user?.id]
+			queryClient.setQueryDefaults(key, { gcTime: Infinity })
+			queryClient.setQueryData(key, true)
+			for (const mutation of queryClient
+				.getMutationCache()
+				.findAll({ mutationKey: ['pro-dashboard-update', deleted.id, user?.id] })) {
+				queryClient.getMutationCache().remove(mutation)
+			}
 			queryClient.removeQueries({ queryKey: ['pro-dashboard', 'dashboard', deleted.id] })
 			if (deleted.slug) {
 				queryClient.removeQueries({ queryKey: ['pro-dashboard', 'dashboard', deleted.slug] })
@@ -150,12 +145,19 @@ export function useDashboardAPI(dashboardId: string | null) {
 	})
 
 	const loadDashboard = useCallback(
-		(id: string) =>
-			dashboardAPI.getDashboard(id, isAuthenticated ? authorizedFetch : undefined).catch((error: unknown) => {
-				if (error instanceof DashboardError && error.status === 404) return null
-				throw error
-			}),
-		[isAuthenticated, authorizedFetch]
+		(id: string) => {
+			if (wasDashboardDeleted(queryClient, id, user?.id)) return Promise.resolve(null)
+			return dashboardAPI
+				.getDashboard(id, isAuthenticated ? authorizedFetch : undefined)
+				.then((dashboard) => {
+					return wasDashboardDeleted(queryClient, dashboard.id, user?.id) ? null : dashboard
+				})
+				.catch((error: unknown) => {
+					if (error instanceof DashboardError && error.status === 404) return null
+					throw error
+				})
+		},
+		[isAuthenticated, authorizedFetch, queryClient, user?.id]
 	)
 
 	// Navigate to a dashboard
@@ -190,4 +192,71 @@ export function useDashboardAPI(dashboardId: string | null) {
 		loadDashboard,
 		navigateToDashboard
 	}
+}
+
+export interface DashboardUpdate {
+	source?: 'autosave'
+	id: string
+	data: DashboardSavePayload
+	changes?: Partial<DashboardSavePayload>
+}
+
+export function useUpdateDashboard(dashboardId: string | null, source: 'manual' | 'autosave') {
+	const queryClient = useQueryClient()
+	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
+	return useMutation({
+		mutationKey: ['pro-dashboard-update', dashboardId, user?.id],
+		// A failed item draft must survive route remounts. Superseded attempts are pruned below.
+		...(source === 'autosave' ? { gcTime: Infinity } : {}),
+		onSettled: (_data, _error, request) => {
+			if (source !== 'autosave') return
+			for (const mutation of queryClient
+				.getMutationCache()
+				.findAll({ mutationKey: ['pro-dashboard-update', request.id, user?.id] })) {
+				const variables = mutation.state.variables as DashboardUpdate | undefined
+				if (variables?.source === 'autosave' && variables !== request && mutation.state.status !== 'pending') {
+					queryClient.getMutationCache().remove(mutation)
+				}
+			}
+		},
+		// Settings and page remounts must not let an older save overtake a newer save.
+		scope: { id: `pro-dashboard-update:${dashboardId}` },
+		mutationFn: async ({ id, data, changes }: DashboardUpdate) => {
+			if (wasDashboardDeleted(queryClient, id, user?.id)) throw new DashboardError('Dashboard has been deleted', 404)
+			// The scope orders requests, but payloads must also preserve fields saved while waiting.
+			const latest = queryClient.getQueryData<Dashboard>(['pro-dashboard', 'dashboard', id, isAuthenticated, user?.id])
+			const payload = changes ? { ...(latest ? toDashboardSavePayload(latest) : data), ...changes } : data
+			return await dashboardAPI.updateDashboard(
+				id,
+				{ ...payload, items: toPersistedDashboardItems(payload.items) },
+				authorizedFetch
+			)
+		},
+		onSuccess: (dashboard: Dashboard) => {
+			if (wasDashboardDeleted(queryClient, dashboard.id, user?.id)) return
+			queryClient.setQueryData(['pro-dashboard', 'dashboard', dashboard.id, isAuthenticated, user?.id], dashboard)
+			queryClient.setQueriesData(
+				{ queryKey: ['pro-dashboard', 'dashboard'], exact: false },
+				(oldData: Dashboard | undefined) => (oldData?.id === dashboard.id ? dashboard : oldData)
+			)
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'dashboards'] })
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'my-dashboards'] })
+			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
+		}
+	})
+}
+
+export function getUnsavedDashboardItems(client: QueryClient, dashboardId: string | null, userId: string | undefined) {
+	const state = client
+		.getMutationCache()
+		.findAll({
+			mutationKey: ['pro-dashboard-update', dashboardId, userId],
+			predicate: (mutation) => (mutation.state.variables as DashboardUpdate | undefined)?.source === 'autosave'
+		})
+		.at(-1)?.state as MutationState<Dashboard, Error, DashboardUpdate> | undefined
+	return state?.status === 'pending' || state?.status === 'error' ? state.variables?.changes?.items : undefined
+}
+
+export function wasDashboardDeleted(client: QueryClient, dashboardId: string, userId: string | undefined) {
+	return client.getQueryData<boolean>(['pro-dashboard-deleted', dashboardId, userId]) === true
 }
