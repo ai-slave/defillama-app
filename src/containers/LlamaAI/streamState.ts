@@ -115,6 +115,7 @@ export type StreamAction =
 	| { type: 'SET_ERROR'; value: string | null }
 	| { type: 'SET_RATE_LIMIT_DETAILS'; value: RateLimitDetails | null }
 	| { type: 'APPEND_TOKEN'; value: string }
+	| { type: 'RESET_TEXT' }
 	| { type: 'APPEND_CHARTS'; value: ChartSet }
 	| { type: 'APPEND_CSV_EXPORTS'; value: Array<CsvExport> }
 	| { type: 'APPEND_MD_EXPORTS'; value: Array<MdExport> }
@@ -270,6 +271,8 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
 			const newText = stripBeforeReportStart(state.text + action.value)
 			return { ...state, text: newText }
 		}
+		case 'RESET_TEXT':
+			return { ...state, text: '' }
 		case 'APPEND_CHARTS':
 			return { ...state, charts: [...state.charts, action.value] }
 		case 'APPEND_CSV_EXPORTS':

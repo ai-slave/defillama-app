@@ -77,6 +77,7 @@ export class AgenticExecutionChangedError extends Error {
 
 export interface AgenticSSECallbacks {
 	onToken: (content: string) => void
+	onResponseReset?: () => void
 	onCharts: (charts: Array<ChartConfiguration>, chartData: ChartDataByKey, artifactRefs?: ChartArtifactRefs) => void
 	onGeneratedImages?: (images: Array<GeneratedImage>) => void
 	onProgress: (toolName: string, isPremium?: boolean) => void
@@ -269,6 +270,12 @@ interface ResponseEndEvent {
 	type: 'response_end'
 }
 
+interface ResponseResetEvent {
+	type: 'response_reset'
+	reason?: string
+	attempt?: number
+}
+
 interface DuelStartEvent {
 	type: 'duel_start'
 	pairId: string
@@ -344,6 +351,7 @@ type AgenticSSEPayload =
 	| ErrorEvent
 	| DoneEvent
 	| ResponseEndEvent
+	| ResponseResetEvent
 	| DuelStartEvent
 	| DuelReadyEvent
 	| ArmMessageIdEvent
@@ -541,6 +549,9 @@ export function dispatchAgenticEvent(data: DispatchableAgenticEvent, callbacks: 
 			if (chunk) callbacks.onToken(chunk)
 			break
 		}
+		case 'response_reset':
+			callbacks.onResponseReset?.()
+			break
 		case 'charts': {
 			const charts = normalizeChartConfigs(data.charts)
 			const chartData = normalizeChartDataByKey(data.chartData, charts)

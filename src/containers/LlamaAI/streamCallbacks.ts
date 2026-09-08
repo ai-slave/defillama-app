@@ -104,6 +104,11 @@ export function createAgenticCallbacks({
 			buffer.text = stripBeforeReportStart(buffer.text + content)
 			dispatch({ type: 'APPEND_TOKEN', value: content })
 		}),
+		onResponseReset: guard(() => {
+			buffer.text = ''
+			buffer.hasStartedText = false
+			dispatch({ type: 'RESET_TEXT' })
+		}),
 		onCharts: guard((charts, chartData, artifactRefs) => {
 			dispatch({ type: 'CLEAR_ACTIVITY' })
 			const chartSet = { charts, chartData, ...(artifactRefs && { artifactRefs }) }
