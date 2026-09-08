@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
-import { createElement, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { createContext, createElement, useContext, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import ReactMarkdown from 'react-markdown'
 import type { Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -33,30 +33,10 @@ import { popoverMenuItemStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
 import styles from '../../LlamaAIChat.module.css'
+import { rehypeHeadingIds } from './rehypeHeadingIds'
 import { SANITIZE_REHYPE_PLUGINS } from './sanitizeConfig'
 
 const MARKDOWN_REMARK_PLUGINS: import('unified').PluggableList = [[remarkGfm, { singleTilde: false }]]
-
-export function headingSlug(text: string): string {
-	return text
-		.toLowerCase()
-		.replace(/[^\w\s-]/g, '')
-		.replace(/\s+/g, '-')
-		.replace(/-+/g, '-')
-		.replace(/^-|-$/g, '')
-}
-
-function createHeadingIdFactory(messageId?: string) {
-	const counts = new Map<string, number>()
-
-	return (text: string) => {
-		const slug = headingSlug(text) || 'section'
-		const baseId = messageId ? `${messageId.slice(0, 8)}-${slug}` : slug
-		const occurrence = counts.get(baseId) ?? 0
-		counts.set(baseId, occurrence + 1)
-		return occurrence === 0 ? baseId : `${baseId}-${occurrence}`
-	}
-}
 
 function extractText(children: ReactNode): string {
 	if (typeof children === 'string') return children
@@ -71,17 +51,15 @@ function extractText(children: ReactNode): string {
 function HeadingWithId({
 	level,
 	messageId,
-	resolveId,
+	id,
 	children,
 	...props
 }: {
 	level: number
 	messageId?: string
-	resolveId: (text: string) => string
+	id: string
 	children?: ReactNode
 } & Record<string, any>) {
-	const text = extractText(children)
-	const id = resolveId(text)
 	const attrs: Record<string, any> = { ...props, id, 'data-section-heading': true }
 	if (level === 2 && messageId) {
 		attrs['data-section-msg'] = messageId
@@ -480,9 +458,130 @@ interface MarkdownRenderContext {
 	linkMap: Map<string, string>
 	messageId?: string
 	onTableFullscreenOpen?: () => void
-	resolveHeadingId: (text: string) => string
 	setPendingExternalHref: (href: string) => void
 }
+
+// react-markdown renders these components in the same pass as ChatMarkdownRenderer, so they read the
+// message's render context rather than take it as props: `markdownComponents` below has to stay one
+// module-level constant, because react-markdown gets it as a prop on every message in the thread.
+const MarkdownRenderContextProvider = createContext<MarkdownRenderContext | null>(null)
+
+function MarkdownHeading({
+	level,
+	id,
+	children,
+	...props
+}: { level: number; id: string; children: ReactNode } & Record<string, any>) {
+	const current = useContext(MarkdownRenderContextProvider)
+	if (!current) return createElement(`h${level}`, props, children)
+	return (
+		<HeadingWithId level={level} messageId={current.messageId} id={id} {...props}>
+			{children}
+		</HeadingWithId>
+	)
+}
+
+function MarkdownAnchor(props: EntityLinkProps) {
+	const current = useContext(MarkdownRenderContextProvider)
+	const textChild = getSingleTextChild(props.children)
+	// A bare link whose text names an entity resolves through the message's link map.
+	if (current && !props.href && textChild && current.linkMap.has(textChild)) {
+		return (
+			<EntityLinkRenderer
+				{...props}
+				href={current.linkMap.get(textChild)}
+				onExternalLinkClick={current.setPendingExternalHref}
+				allowedExternalHosts={current.allowedExternalHosts}
+			/>
+		)
+	}
+	return (
+		<EntityLinkRenderer
+			{...props}
+			onExternalLinkClick={current?.setPendingExternalHref}
+			allowedExternalHosts={current?.allowedExternalHosts}
+		/>
+	)
+}
+
+function MarkdownTable({ children, ...props }: ComponentPropsWithoutRef<'table'> & { children?: ReactNode }) {
+	const current = useContext(MarkdownRenderContextProvider)
+	return (
+		<TableWrapper
+			isStreaming={current?.isStreaming ?? false}
+			tableProps={props}
+			onTableFullscreenOpen={current?.onTableFullscreenOpen}
+			messageId={current?.messageId}
+		>
+			{children}
+		</TableWrapper>
+	)
+}
+
+function MarkdownFactCheckPill(props: Record<string, any>) {
+	const current = useContext(MarkdownRenderContextProvider)
+	const refsById = current?.citationRefsById
+	if (!refsById || refsById.size === 0) return null
+	const raw = props.dataRef ?? props['data-ref']
+	if (raw == null) return null
+	const numericId = Number(raw)
+	if (!Number.isFinite(numericId)) return null
+	const ref = refsById.get(numericId)
+	if (!ref) return null
+	return <CitationPill reference={ref} advancedProvenance={current.advancedProvenance} />
+}
+
+// `fact-check-pill` is a custom element the citation remark step emits; `Components` only types the
+// standard HTML keys, so the whole map is asserted rather than annotated.
+const markdownComponents = {
+	h1: ({ node: _node, children, ...props }: any) => (
+		<MarkdownHeading level={1} {...props}>
+			{children}
+		</MarkdownHeading>
+	),
+	h2: ({ node: _node, children, ...props }: any) => (
+		<MarkdownHeading level={2} {...props}>
+			{children}
+		</MarkdownHeading>
+	),
+	h3: ({ node: _node, children, ...props }: any) => (
+		<MarkdownHeading level={3} {...props}>
+			{children}
+		</MarkdownHeading>
+	),
+	a: ({ node: _node, ...props }: MarkdownAnchorProps) => <MarkdownAnchor {...props} />,
+	table: ({ children, node: _node, ...props }: MarkdownTableProps) => (
+		<MarkdownTable {...props}>{children}</MarkdownTable>
+	),
+	th: ({ children, node: _node, ...props }: MarkdownCellProps) => (
+		<th
+			{...props}
+			className={`border border-ai-line bg-page px-3 py-2 align-top whitespace-nowrap [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
+		>
+			{children}
+		</th>
+	),
+	td: ({ children, node: _node, ...props }: MarkdownDataCellProps) => (
+		<td
+			{...props}
+			className={`border border-ai-line bg-ai-surface-card px-3 py-2 align-top whitespace-nowrap [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
+		>
+			{children}
+		</td>
+	),
+	ul: ({ children, node: _node, ...props }: MarkdownListProps) => (
+		<ul {...props} className={`grid list-disc gap-1 pl-4 ${props.className ?? ''}`}>
+			{children}
+		</ul>
+	),
+	ol: ({ children, node: _node, ...props }: MarkdownOrderedListProps) => (
+		<ol {...props} className={`grid list-decimal gap-1 pl-8 ${props.className ?? ''}`}>
+			{children}
+		</ol>
+	),
+	pre: ({ children, ...props }: MarkdownPreProps) => <CodeBlock {...props}>{children}</CodeBlock>,
+	'fact-check-pill': MarkdownFactCheckPill
+} as Components
 
 export function ChatMarkdownRenderer({
 	content,
@@ -530,108 +629,24 @@ export function ChatMarkdownRenderer({
 		() => escapeBareOrderedListMarkers(processUnifiedCitations(content, renderCitationRefs)),
 		[content, renderCitationRefs]
 	)
-	const renderContextRef = useRef<MarkdownRenderContext | null>(null)
-	renderContextRef.current = {
-		allowedExternalHosts,
-		advancedProvenance,
-		citationRefsById,
-		isStreaming,
-		linkMap,
-		messageId,
-		onTableFullscreenOpen,
-		resolveHeadingId: createHeadingIdFactory(messageId),
-		setPendingExternalHref: (href) => setPendingExternalHref(href)
-	}
-
-	const markdownComponents: Components = useMemo(() => {
-		const heading = (level: number, children: ReactNode, props: Record<string, any>) => {
-			const current = renderContextRef.current
-			if (!current) return createElement(`h${level}`, props, children)
-			return (
-				<HeadingWithId level={level} messageId={current.messageId} resolveId={current.resolveHeadingId} {...props}>
-					{children}
-				</HeadingWithId>
-			)
-		}
-		const components: Components = {
-			h1: ({ node: _node, children, ...props }: any) => heading(1, children, props),
-			h2: ({ node: _node, children, ...props }: any) => heading(2, children, props),
-			h3: ({ node: _node, children, ...props }: any) => heading(3, children, props),
-			a: ({ node: _node, ...props }: MarkdownAnchorProps) => {
-				const current = renderContextRef.current
-				const textChild = getSingleTextChild(props.children)
-				if (current && !props.href && textChild && current.linkMap.has(textChild)) {
-					const llamaUrl = current.linkMap.get(textChild)
-					return EntityLinkRenderer({
-						...props,
-						href: llamaUrl,
-						onExternalLinkClick: current.setPendingExternalHref,
-						allowedExternalHosts: current.allowedExternalHosts
-					})
-				}
-				return EntityLinkRenderer({
-					...props,
-					onExternalLinkClick: current?.setPendingExternalHref,
-					allowedExternalHosts: current?.allowedExternalHosts
-				})
-			},
-			table: ({ children, node: _node, ...props }: MarkdownTableProps) => {
-				const current = renderContextRef.current
-				return (
-					<TableWrapper
-						isStreaming={current?.isStreaming ?? false}
-						tableProps={props}
-						onTableFullscreenOpen={current?.onTableFullscreenOpen}
-						messageId={current?.messageId}
-					>
-						{children}
-					</TableWrapper>
-				)
-			},
-			th: ({ children, node: _node, ...props }: MarkdownCellProps) => (
-				<th
-					{...props}
-					className={`border border-ai-line bg-page px-3 py-2 align-top whitespace-nowrap [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
-				>
-					{children}
-				</th>
-			),
-			td: ({ children, node: _node, ...props }: MarkdownDataCellProps) => (
-				<td
-					{...props}
-					className={`border border-ai-line bg-ai-surface-card px-3 py-2 align-top whitespace-nowrap [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
-				>
-					{children}
-				</td>
-			),
-			ul: ({ children, node: _node, ...props }: MarkdownListProps) => (
-				<ul {...props} className={`grid list-disc gap-1 pl-4 ${props.className ?? ''}`}>
-					{children}
-				</ul>
-			),
-			ol: ({ children, node: _node, ...props }: MarkdownOrderedListProps) => (
-				<ol {...props} className={`grid list-decimal gap-1 pl-8 ${props.className ?? ''}`}>
-					{children}
-				</ol>
-			),
-			pre: ({ children, ...props }: MarkdownPreProps) => <CodeBlock {...props}>{children}</CodeBlock>
-		}
-
-		;(components as Record<string, any>)['fact-check-pill'] = (props: Record<string, any>) => {
-			const current = renderContextRef.current
-			const refsById = current?.citationRefsById
-			if (!refsById || refsById.size === 0) return null
-			const raw = props.dataRef ?? props['data-ref']
-			if (raw == null) return null
-			const numericId = Number(raw)
-			if (!Number.isFinite(numericId)) return null
-			const ref = refsById.get(numericId)
-			if (!ref) return null
-			return <CitationPill reference={ref} advancedProvenance={current?.advancedProvenance} />
-		}
-
-		return components
-	}, [])
+	// After the sanitize plugins: its schema drops ids it does not know about.
+	const rehypePlugins = useMemo<import('unified').PluggableList>(
+		() => [...SANITIZE_REHYPE_PLUGINS, [rehypeHeadingIds, { messageId }]],
+		[messageId]
+	)
+	const renderContext = useMemo<MarkdownRenderContext>(
+		() => ({
+			allowedExternalHosts,
+			advancedProvenance,
+			citationRefsById,
+			isStreaming,
+			linkMap,
+			messageId,
+			onTableFullscreenOpen,
+			setPendingExternalHref
+		}),
+		[allowedExternalHosts, advancedProvenance, citationRefsById, isStreaming, linkMap, messageId, onTableFullscreenOpen]
+	)
 
 	if (!processedContent.trim()) {
 		return null
@@ -642,13 +657,15 @@ export function ChatMarkdownRenderer({
 			data-llamaai-prose
 			className={`${styles.prose} prose prose-sm flex max-w-none flex-col gap-2.5 overflow-x-auto leading-normal dark:prose-invert prose-a:no-underline${hackerMode ? ` ${styles.hackerMode}` : ''}`}
 		>
-			<ReactMarkdown
-				remarkPlugins={MARKDOWN_REMARK_PLUGINS}
-				rehypePlugins={SANITIZE_REHYPE_PLUGINS}
-				components={markdownComponents}
-			>
-				{processedContent}
-			</ReactMarkdown>
+			<MarkdownRenderContextProvider.Provider value={renderContext}>
+				<ReactMarkdown
+					remarkPlugins={MARKDOWN_REMARK_PLUGINS}
+					rehypePlugins={rehypePlugins}
+					components={markdownComponents}
+				>
+					{processedContent}
+				</ReactMarkdown>
+			</MarkdownRenderContextProvider.Provider>
 			<ExternalLinkInterstitial
 				href={pendingExternalHref}
 				onClose={() => setPendingExternalHref(null)}

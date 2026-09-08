@@ -26,6 +26,11 @@ function useDuelArm() {
 	const [persistedMessageId, setPersistedMessageId] = useState<string | null>(null)
 	const bufferRef = useRef(createStreamBuffer())
 	const currentMessageIdRef = useRef<string | null>(null)
+	// The answer is snapshotted out of the buffer after each event rather than rebuilt during render.
+	// The buffer has to stay mutable and has to outlive COMMIT_STREAM -- which clears the reducer's
+	// runtime fields -- because duel answers never enter shared message history. Snapshotting keeps
+	// that lifetime while giving render an immutable value it can memoise.
+	const [message, setMessage] = useState<Message | null>(null)
 	const toolCallIdRef = useRef(0)
 	const callbacksRef = useRef<AgenticSSECallbacks | null>(null)
 
@@ -34,6 +39,7 @@ function useDuelArm() {
 		bufferRef.current = buffer
 		currentMessageIdRef.current = null
 		setPersistedMessageId(null)
+		setMessage(null)
 		dispatch({ type: 'START_STREAM' })
 		callbacksRef.current = createAgenticCallbacks({
 			isCurrent: () => callbacksRef.current !== null,
@@ -69,6 +75,10 @@ function useDuelArm() {
 				return
 			}
 			dispatchAgenticEvent(event, callbacks)
+			const buffer = bufferRef.current
+			setMessage(
+				hasStreamBufferContent(buffer) ? buildAssistantMessage(buffer, currentMessageIdRef.current ?? undefined) : null
+			)
 		},
 		[settle]
 	)
@@ -78,15 +88,10 @@ function useDuelArm() {
 		bufferRef.current = createStreamBuffer()
 		currentMessageIdRef.current = null
 		setPersistedMessageId(null)
+		setMessage(null)
 		dispatch({ type: 'RESET_STREAM' })
 		dispatch({ type: 'SET_ERROR', value: null })
 	}, [])
-
-	// Computed every render on purpose: the buffer mutates in place, so memoising it would
-	// stall the live draft behind a dependency the compiler cannot see.
-	const message: Message | null = hasStreamBufferContent(bufferRef.current)
-		? buildAssistantMessage(bufferRef.current, currentMessageIdRef.current ?? undefined)
-		: null
 
 	return {
 		message,

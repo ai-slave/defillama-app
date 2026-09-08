@@ -23,11 +23,9 @@ const positional = cachedIndex === -1 ? argv : [...argv.slice(0, cachedIndex), .
 const root = path.resolve(positional[0] ?? '.')
 const files = positional.slice(1)
 
-const resolveFrom = (id) => require.resolve(id, { paths: [root] })
-const babel = require(resolveFrom('next/dist/compiled/babel/core'))
-const compilerPath = resolveFrom('babel-plugin-react-compiler')
-const syntaxTs = resolveFrom('next/dist/compiled/babel/plugin-syntax-typescript')
-const syntaxJsx = resolveFrom('next/dist/compiled/babel/plugin-syntax-jsx')
+const { reactCompilerBabel } = require('./reactCompilerBabel.cjs')
+
+const { babel, plugins } = reactCompilerBabel(root)
 
 /** True when the node is inside `if ($[n] !== dep)`, the guard the compiler emits around a memo scope. */
 function insideCacheGuard(nodePath) {
@@ -55,17 +53,7 @@ for (const relativePath of files) {
 			babelrc: false,
 			configFile: false,
 			compact: false,
-			plugins: [
-				[syntaxTs, { isTSX: true }],
-				syntaxJsx,
-				[
-					compilerPath,
-					{
-						environment: { enableNameAnonymousFunctions: false },
-						logger: { logEvent: (_filename, event) => events.push(event) }
-					}
-				]
-			]
+			plugins: plugins({ logger: { logEvent: (_filename, event) => events.push(event) } })
 		})
 	} catch (error) {
 		console.log(`${relativePath}: BABEL FAILED ${error.message.split('\n')[0]}`)
