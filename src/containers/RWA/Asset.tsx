@@ -1,4 +1,3 @@
-import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -13,11 +12,11 @@ import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
+import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
 import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { LoadingDots } from '~/ui/Loaders'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
-import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Switch } from '~/ui/Switch'
@@ -56,6 +55,8 @@ import { useNativeYieldHistory } from './useNativeYieldChart'
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
 const assetHeaderLinkButtonStyles = buttonStyles({ variant: 'secondary', size: 'md' })
+const formatCompactUsd = (value: number) =>
+	formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 type AssetChartMetric = 'marketData' | 'flows' | 'flowVsPrice'
 
@@ -149,90 +150,6 @@ function SectionCard({ title, children }: { title: React.ReactNode; children: Re
 	)
 }
 
-/** Hero stat mirroring the protocol page's PrimaryValue: big value expanding to per-chain rows. */
-function AssetPrimaryValue({
-	label,
-	tooltip,
-	total,
-	byChain
-}: {
-	label: string
-	tooltip?: string
-	total: number | null | undefined
-	byChain?: Array<[string, number]> | null
-}) {
-	const value = (
-		<span className="min-h-8 font-jetbrains text-2xl font-semibold">
-			{total != null
-				? formatUsd(total, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: '-'}
-		</span>
-	)
-
-	if (!byChain || byChain.length === 0) {
-		return (
-			<p className="flex flex-col">
-				{tooltip ? (
-					<Tooltip content={tooltip} className="text-secondary underline decoration-dotted">
-						{label}
-					</Tooltip>
-				) : (
-					<span className="text-secondary">{label}</span>
-				)}
-				{value}
-			</p>
-		)
-	}
-
-	const summaryContent = (
-		<>
-			<span className={`text-secondary ${tooltip ? 'underline decoration-dotted' : ''}`.trim()}>{label}</span>
-			<span className="flex flex-nowrap items-center gap-2">
-				{value}
-				<Icon
-					name="chevron-down"
-					height={16}
-					width={16}
-					className="relative top-0.5 text-tertiary transition-transform duration-100 group-open:rotate-180"
-				/>
-			</span>
-		</>
-	)
-
-	return (
-		<details className="group">
-			{tooltip ? (
-				/* A <summary> must not contain interactive descendants, so the summary
-				   itself anchors the tooltip (same trick as MetricSection). */
-				<Ariakit.TooltipProvider placement="top-start">
-					<Ariakit.TooltipAnchor render={<summary className="flex cursor-pointer flex-col" />}>
-						{summaryContent}
-					</Ariakit.TooltipAnchor>
-					<Ariakit.Tooltip className={`${tooltipSurfaceStyles} max-w-56 whitespace-pre-wrap`} unmountOnHide portal>
-						<div className="p-2">{tooltip}</div>
-					</Ariakit.Tooltip>
-				</Ariakit.TooltipProvider>
-			) : (
-				<summary className="flex cursor-pointer flex-col">{summaryContent}</summary>
-			)}
-			<div className="my-3 flex max-h-[50dvh] flex-col overflow-auto">
-				<h2 className="font-semibold">{label} by chain</h2>
-				{byChain.map(([chain, chainValue]) => (
-					<p
-						key={chain}
-						className="flex items-center justify-between gap-1 border-b border-dashed border-subtle py-1 last:border-none"
-					>
-						<span className="text-secondary">{chain}</span>
-						<span className="font-jetbrains">
-							{formatUsd(chainValue, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-						</span>
-					</p>
-				))}
-			</div>
-		</details>
-	)
-}
-
 function AssetHeader({
 	asset,
 	displayName,
@@ -252,11 +169,13 @@ function AssetHeader({
 					<RWASuspiciousWarning {...(asset.suspiciousReason !== undefined ? { reason: asset.suspiciousReason } : {})} />
 				) : null}
 			</Tag>
-			<AssetPrimaryValue
+			<HeroMetric
 				label={definitions.onChainMcap.label}
 				tooltip={definitions.onChainMcap.description}
-				total={asset.onChainMcap?.total}
-				{...(asset.onChainMcap?.breakdown ? { byChain: asset.onChainMcap.breakdown } : {})}
+				value={asset.onChainMcap?.total != null ? formatCompactUsd(asset.onChainMcap.total) : '-'}
+				{...(asset.onChainMcap?.breakdown
+					? { byChain: asset.onChainMcap.breakdown.map(([chain, v]) => [chain, formatCompactUsd(v)]) }
+					: {})}
 			/>
 		</>
 	)

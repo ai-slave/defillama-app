@@ -9,7 +9,7 @@ import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
-import { Icon } from '~/ui/Icon'
+import { HeroMetric } from '~/ui/HeroMetric'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { AdditionalInfo } from './AdditionalInfo'
@@ -260,52 +260,12 @@ function PrimaryValue({
 	if (!hasTvl) return null
 
 	const defaultLabels = getPrimaryValueLabelType(category)
-	const title = titleOverride ?? defaultLabels.title
-	const byChainTitle = byChainTitleOverride ?? defaultLabels.byChainTitle
-
-	if (!valueByChain || valueByChain.length === 0) {
-		return (
-			<p className="flex flex-col">
-				<span className="flex flex-nowrap items-center gap-2">
-					<span className="text-secondary">{title}</span>
-				</span>
-				<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
-					{formatPrice(value) ?? 'N/A'}
-				</span>
-			</p>
-		)
-	}
-
 	return (
-		<details className="group">
-			<summary className="flex flex-col">
-				<span className="flex flex-nowrap items-center gap-2">
-					<span className="text-secondary">{title}</span>
-				</span>
-				<span className="flex flex-nowrap items-center gap-2">
-					<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
-						{formatPrice(value) ?? 'N/A'}
-					</span>
-					<Icon
-						name="chevron-down"
-						height={16}
-						width={16}
-						className="relative top-0.5 text-tertiary transition-transform duration-100 group-open:rotate-180"
-					/>
-				</span>
-			</summary>
-			<div className="my-3 flex max-h-[50dvh] flex-col overflow-auto">
-				<h2 className="font-semibold">{byChainTitle}</h2>
-				{valueByChain.map(([chain, tvl]) => (
-					<p
-						key={`${chain}-${tvl}-${name}`}
-						className="flex items-center justify-between gap-1 border-b border-dashed border-subtle py-1 group-last:border-none"
-					>
-						<span className="text-secondary">{chain}</span>
-						<span className="font-jetbrains">{formatPrice(tvl)}</span>
-					</p>
-				))}
-			</div>
-		</details>
+		<HeroMetric
+			label={titleOverride ?? defaultLabels.title}
+			value={formatPrice(value) ?? 'N/A'}
+			byChainTitle={byChainTitleOverride ?? defaultLabels.byChainTitle}
+			{...(valueByChain ? { byChain: valueByChain.map(([chain, tvl]) => [chain, formatPrice(tvl)]) } : {})}
+		/>
 	)
 }

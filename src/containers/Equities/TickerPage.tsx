@@ -11,6 +11,7 @@ import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import defs from '~/public/equities-definitions.json'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { Tabs, TabPanel } from '~/ui/Tabs'
@@ -119,72 +120,75 @@ function getDimensionPeriodFromQuery(value?: string): EquityDimensionPeriodOptio
 
 export function EquityKeyMetrics({ summary }: { summary: IEquitiesSummaryResponse }) {
 	return (
-		<div className="flex flex-col">
-			<MetricRow
-				label={defs.currentPrice.label}
-				tooltip={defs.currentPrice.description}
-				value={formatEquitiesCompactValue(summary.currentPrice, '$') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.revenueTTM.label}
-				tooltip={defs.revenueTTM.description}
-				value={formatEquitiesCompactValue(summary.revenueTTM, '$') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.holdersRevenueTTM.label}
-				tooltip={defs.holdersRevenueTTM.description}
-				value={formatEquitiesCompactValue(summary.holdersRevenueTTM, '$') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.grossProfitTTM.label}
-				tooltip={defs.grossProfitTTM.description}
-				value={formatEquitiesCompactValue(summary.grossProfitTTM, '$') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.earningsTTM.label}
-				tooltip={defs.earningsTTM.description}
-				value={formatEquitiesCompactValue(summary.earningsTTM, '$') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.ebitdaTTM.label}
-				tooltip={defs.ebitdaTTM.description}
-				value={formatEquitiesCompactValue(summary.ebitdaTTM, '$') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.operatingProfitMarginTTM.label}
-				tooltip={defs.operatingProfitMarginTTM.description}
-				value={formatEquitiesCompactValue(summary.operatingProfitMarginTTM, '%') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.dividendYield.label}
-				tooltip={defs.dividendYield.description}
-				value={formatEquitiesCompactValue(summary.dividendYield, '%') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.holdersYield.label}
-				tooltip={defs.holdersYield.description}
-				value={formatEquitiesCompactValue(summary.holdersYield, '%') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.cashAndCashEquivalents.label}
-				tooltip={defs.cashAndCashEquivalents.description}
-				value={formatEquitiesCompactValue(summary.cashAndCashEquivalents, '$') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.totalAssets.label}
-				tooltip={defs.totalAssets.description}
-				value={formatEquitiesCompactValue(summary.totalAssets, '$') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.totalShareholdersEquity.label}
-				tooltip={defs.totalShareholdersEquity.description}
-				value={formatEquitiesCompactValue(summary.totalShareholdersEquity, '$') ?? '-'}
-			/>
-			<MetricRow
-				label={defs.totalDebt.label}
-				tooltip={defs.totalDebt.description}
-				value={formatEquitiesCompactValue(summary.totalDebt, '$') ?? '-'}
-			/>
+		<div className="flex flex-col gap-2">
+			<KeyMetricsHeader />
+			<div className="flex flex-col">
+				<MetricRow
+					label={defs.currentPrice.label}
+					tooltip={defs.currentPrice.description}
+					value={formatEquitiesCompactValue(summary.currentPrice, '$') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.revenueTTM.label}
+					tooltip={defs.revenueTTM.description}
+					value={formatEquitiesCompactValue(summary.revenueTTM, '$') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.holdersRevenueTTM.label}
+					tooltip={defs.holdersRevenueTTM.description}
+					value={formatEquitiesCompactValue(summary.holdersRevenueTTM, '$') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.grossProfitTTM.label}
+					tooltip={defs.grossProfitTTM.description}
+					value={formatEquitiesCompactValue(summary.grossProfitTTM, '$') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.earningsTTM.label}
+					tooltip={defs.earningsTTM.description}
+					value={formatEquitiesCompactValue(summary.earningsTTM, '$') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.ebitdaTTM.label}
+					tooltip={defs.ebitdaTTM.description}
+					value={formatEquitiesCompactValue(summary.ebitdaTTM, '$') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.operatingProfitMarginTTM.label}
+					tooltip={defs.operatingProfitMarginTTM.description}
+					value={formatEquitiesCompactValue(summary.operatingProfitMarginTTM, '%') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.dividendYield.label}
+					tooltip={defs.dividendYield.description}
+					value={formatEquitiesCompactValue(summary.dividendYield, '%') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.holdersYield.label}
+					tooltip={defs.holdersYield.description}
+					value={formatEquitiesCompactValue(summary.holdersYield, '%') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.cashAndCashEquivalents.label}
+					tooltip={defs.cashAndCashEquivalents.description}
+					value={formatEquitiesCompactValue(summary.cashAndCashEquivalents, '$') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.totalAssets.label}
+					tooltip={defs.totalAssets.description}
+					value={formatEquitiesCompactValue(summary.totalAssets, '$') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.totalShareholdersEquity.label}
+					tooltip={defs.totalShareholdersEquity.description}
+					value={formatEquitiesCompactValue(summary.totalShareholdersEquity, '$') ?? '-'}
+				/>
+				<MetricRow
+					label={defs.totalDebt.label}
+					tooltip={defs.totalDebt.description}
+					value={formatEquitiesCompactValue(summary.totalDebt, '$') ?? '-'}
+				/>
+			</div>
 		</div>
 	)
 }
