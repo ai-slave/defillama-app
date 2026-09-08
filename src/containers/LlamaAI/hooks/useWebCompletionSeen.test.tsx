@@ -148,6 +148,26 @@ describe('useWebCompletionSeen', () => {
 		await vi.waitFor(() => expect(mocks.markSeen).toHaveBeenCalledTimes(2), { timeout: 2000 })
 	})
 
+	test('walks the whole retry ladder and then gives up', async () => {
+		vi.useFakeTimers()
+		vi.spyOn(console, 'error').mockImplementation(() => undefined)
+		mocks.markSeen.mockRejectedValue(new TypeError('network unavailable'))
+
+		act(() => result.markCompletionSeen('session-1', 'message-1'))
+		await act(async () => vi.advanceTimersByTimeAsync(0))
+		expect(mocks.markSeen).toHaveBeenCalledOnce()
+
+		await act(async () => vi.advanceTimersByTimeAsync(750))
+		expect(mocks.markSeen).toHaveBeenCalledTimes(2)
+
+		await act(async () => vi.advanceTimersByTimeAsync(2000))
+		expect(mocks.markSeen).toHaveBeenCalledTimes(3)
+
+		await act(async () => vi.advanceTimersByTimeAsync(10_000))
+		expect(mocks.markSeen).toHaveBeenCalledTimes(3)
+		expect(vi.getTimerCount()).toBe(0)
+	})
+
 	test('does not POST while the preference is disabled', async () => {
 		mocks.preference = { kind: 'known', available: true, enabled: false }
 		await renderHook()

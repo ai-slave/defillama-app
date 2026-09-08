@@ -300,6 +300,128 @@ function actionError(action: QueueAction, error: unknown): string {
 	return 'Could not retry this message. Try again.'
 }
 
+/** The latest-value mirrors an in-flight command reads after each await. They are
+    passed as getters because a command outlives the render that started it. */
+interface QueueRuntime {
+	isEnabled: () => boolean
+	getActiveSessionId: () => string | null
+	getState: () => QueueControllerState
+	send: (event: QueueControllerEvent) => void
+}
+
+type RunQueueCommand = <T extends { snapshot: QueueSnapshot }>(
+	targetSessionId: string,
+	command: (signal: AbortSignal) => Promise<T>
+) => Promise<T>
+
+/** Module scope on purpose: try/finally and the `throw`s below cannot be lowered
+    by the React compiler, so keeping this out of the hook lets the hook compile. */
+async function runQueueCommand<T extends { snapshot: QueueSnapshot }>({
+	targetSessionId,
+	command,
+	controllers,
+	applySnapshot,
+	runtime
+}: {
+	targetSessionId: string
+	command: (signal: AbortSignal) => Promise<T>
+	controllers: Set<AbortController>
+	applySnapshot: (snapshot: QueueSnapshot) => boolean
+	runtime: QueueRuntime
+}) {
+	const controller = new AbortController()
+	controllers.add(controller)
+	try {
+		const result = await command(controller.signal)
+		if (!runtime.isEnabled() || runtime.getActiveSessionId() !== targetSessionId) {
+			throw new DOMException('Session changed', 'AbortError')
+		}
+		if (result.snapshot.sessionId !== targetSessionId) throw new Error('Queue response belongs to another session')
+		applySnapshot(result.snapshot)
+		return result
+	} catch (error) {
+		const snapshot = snapshotFromError(error)
+		if (runtime.isEnabled() && snapshot) applySnapshot(snapshot)
+		throw error
+	} finally {
+		controllers.delete(controller)
+	}
+}
+
+/** Module scope on purpose: the compiler cannot lower the loop or the try/finally
+    that releases the drain slot. */
+async function drainLocalQueue({
+	targetSessionId,
+	drains,
+	isAdmissionPaused,
+	runCommand,
+	authorizedFetch,
+	runtime
+}: {
+	targetSessionId: string
+	drains: Set<string>
+	isAdmissionPaused: () => boolean
+	runCommand: RunQueueCommand
+	authorizedFetch: AuthorizedFetch
+	runtime: QueueRuntime
+}) {
+	const { isEnabled, getActiveSessionId, getState, send } = runtime
+	if (drains.has(targetSessionId) || !isEnabled() || getActiveSessionId() !== targetSessionId) return
+	drains.add(targetSessionId)
+	try {
+		while (isEnabled() && getActiveSessionId() === targetSessionId && !isAdmissionPaused()) {
+			const current = getState()
+			if (current.queueAction === 'clearing' || current.queueActionError) return
+			const head = current.localBySession[targetSessionId]?.[0]
+			if (!head || head.state === 'failed' || isServerQueuePaused(current.queue)) return
+			let activeDepth = 0
+			for (const item of current.queue) {
+				if (item.state !== 'not_sent') activeDepth += 1
+			}
+			if (current.maxDepth !== null && activeDepth >= current.maxDepth) {
+				send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'waiting' })
+				return
+			}
+
+			send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'adding' })
+			try {
+				const result = await runCommand(targetSessionId, (signal) =>
+					queueMessage(authorizedFetch, targetSessionId, head.payload, signal)
+				)
+				send({ type: 'max_depth', value: result.maxDepth })
+				if (getState().localBySession[targetSessionId]?.some((item) => item.id === head.id)) {
+					send({ type: 'local_remove', sessionId: targetSessionId, id: head.id })
+				}
+			} catch (error) {
+				const stillLocal = getState().localBySession[targetSessionId]?.some((item) => item.id === head.id)
+				if (!stillLocal) continue
+				if (error instanceof DOMException && error.name === 'AbortError') {
+					send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'waiting' })
+					return
+				}
+				if (error instanceof LlamaAITransportError) {
+					const maxDepth = (error.body as { maxDepth?: number } | null)?.maxDepth
+					if (typeof maxDepth === 'number') send({ type: 'max_depth', value: maxDepth })
+					if (errorCode(error) === 'queue_full') {
+						send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'waiting' })
+						return
+					}
+				}
+				send({
+					type: 'local_state',
+					sessionId: targetSessionId,
+					id: head.id,
+					state: 'failed',
+					error: 'Could not add this prompt. Retry or dismiss it.'
+				})
+				return
+			}
+		}
+	} finally {
+		drains.delete(targetSessionId)
+	}
+}
+
 export function useChatQueueController({
 	sessionId,
 	enabled,
@@ -312,18 +434,16 @@ export function useChatQueueController({
 	authorizedFetch: AuthorizedFetch
 }) {
 	const [state, dispatch] = useReducer(queueControllerReducer, sessionId, initialState)
+	// `send` advances this mirror eagerly so a command that dispatches and then
+	// reads the queue in the same tick sees its own effect, ahead of the render.
 	const stateRef = useRef(state)
-	stateRef.current = state
 	const send = useCallback((event: QueueControllerEvent) => {
 		stateRef.current = queueControllerReducer(stateRef.current, event)
 		dispatch(event)
 	}, [])
 	const activeSessionIdRef = useRef(sessionId)
-	activeSessionIdRef.current = sessionId
 	const enabledRef = useRef(enabled)
-	enabledRef.current = enabled
 	const admissionPausedRef = useRef(admissionPaused)
-	admissionPausedRef.current = admissionPaused
 	const controllersRef = useRef(new Set<AbortController>())
 	const outboxDrainsRef = useRef(new Set<string>())
 	const drainOutboxRef = useRef<(sessionId: string) => void>(() => {})
@@ -352,6 +472,16 @@ export function useChatQueueController({
 		}
 		return { type: 'snapshot', snapshot, rememberedEdit }
 	}, [])
+
+	// Refreshed after commit rather than during render: a render can be discarded,
+	// and every reader is an in-flight command that must see committed values.
+	// This runs before the reset effect below, which reads the state mirror.
+	useLayoutEffect(() => {
+		stateRef.current = state
+		activeSessionIdRef.current = sessionId
+		enabledRef.current = enabled
+		admissionPausedRef.current = admissionPaused
+	})
 
 	useLayoutEffect(() => {
 		if (stateRef.current.sessionId !== sessionId) send({ type: 'reset', sessionId })
@@ -404,98 +534,45 @@ export function useChatQueueController({
 		[applySnapshot]
 	)
 
-	const runCommand = useCallback(
-		async <T extends { snapshot: QueueSnapshot }>(
-			targetSessionId: string,
-			command: (signal: AbortSignal) => Promise<T>
-		) => {
-			const controller = new AbortController()
-			controllersRef.current.add(controller)
-			try {
-				const result = await command(controller.signal)
-				if (!enabledRef.current || activeSessionIdRef.current !== targetSessionId) {
-					throw new DOMException('Session changed', 'AbortError')
-				}
-				if (result.snapshot.sessionId !== targetSessionId) throw new Error('Queue response belongs to another session')
-				applySnapshot(result.snapshot)
-				return result
-			} catch (error) {
-				const snapshot = snapshotFromError(error)
-				if (enabledRef.current && snapshot) applySnapshot(snapshot)
-				throw error
-			} finally {
-				controllersRef.current.delete(controller)
-			}
-		},
-		[applySnapshot]
+	// Built per call rather than per render: the getters read refs, so allocating
+	// them during render would be both a compiler bailout and a wasted memo.
+	const readRuntime = useCallback(
+		(): QueueRuntime => ({
+			isEnabled: () => enabledRef.current,
+			getActiveSessionId: () => activeSessionIdRef.current,
+			getState: () => stateRef.current,
+			send
+		}),
+		[send]
+	)
+
+	const runCommand = useCallback<RunQueueCommand>(
+		(targetSessionId, command) =>
+			runQueueCommand({
+				targetSessionId,
+				command,
+				controllers: controllersRef.current,
+				applySnapshot,
+				runtime: readRuntime()
+			}),
+		[applySnapshot, readRuntime]
 	)
 
 	const drainLocalOutbox = useCallback(
-		async (targetSessionId: string) => {
-			if (
-				outboxDrainsRef.current.has(targetSessionId) ||
-				!enabledRef.current ||
-				activeSessionIdRef.current !== targetSessionId
-			)
-				return
-			outboxDrainsRef.current.add(targetSessionId)
-			try {
-				while (enabledRef.current && activeSessionIdRef.current === targetSessionId && !admissionPausedRef.current) {
-					const current = stateRef.current
-					if (current.queueAction === 'clearing' || current.queueActionError) return
-					const head = current.localBySession[targetSessionId]?.[0]
-					if (!head || head.state === 'failed' || isServerQueuePaused(current.queue)) return
-					let activeDepth = 0
-					for (const item of current.queue) {
-						if (item.state !== 'not_sent') activeDepth += 1
-					}
-					if (current.maxDepth !== null && activeDepth >= current.maxDepth) {
-						send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'waiting' })
-						return
-					}
-
-					send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'adding' })
-					try {
-						const result = await runCommand(targetSessionId, (signal) =>
-							queueMessage(authorizedFetch, targetSessionId, head.payload, signal)
-						)
-						send({ type: 'max_depth', value: result.maxDepth })
-						if (stateRef.current.localBySession[targetSessionId]?.some((item) => item.id === head.id)) {
-							send({ type: 'local_remove', sessionId: targetSessionId, id: head.id })
-						}
-					} catch (error) {
-						const stillLocal = stateRef.current.localBySession[targetSessionId]?.some((item) => item.id === head.id)
-						if (!stillLocal) continue
-						if (error instanceof DOMException && error.name === 'AbortError') {
-							send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'waiting' })
-							return
-						}
-						if (error instanceof LlamaAITransportError) {
-							const maxDepth = (error.body as { maxDepth?: number } | null)?.maxDepth
-							if (typeof maxDepth === 'number') send({ type: 'max_depth', value: maxDepth })
-							if (errorCode(error) === 'queue_full') {
-								send({ type: 'local_state', sessionId: targetSessionId, id: head.id, state: 'waiting' })
-								return
-							}
-						}
-						send({
-							type: 'local_state',
-							sessionId: targetSessionId,
-							id: head.id,
-							state: 'failed',
-							error: 'Could not add this prompt. Retry or dismiss it.'
-						})
-						return
-					}
-				}
-			} finally {
-				outboxDrainsRef.current.delete(targetSessionId)
-			}
-		},
-		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
-		[authorizedFetch, runCommand, send]
+		(targetSessionId: string) =>
+			drainLocalQueue({
+				targetSessionId,
+				drains: outboxDrainsRef.current,
+				isAdmissionPaused: () => admissionPausedRef.current,
+				runCommand,
+				authorizedFetch,
+				runtime: readRuntime()
+			}),
+		[authorizedFetch, readRuntime, runCommand]
 	)
-	drainOutboxRef.current = (targetSessionId) => void drainLocalOutbox(targetSessionId)
+	useLayoutEffect(() => {
+		drainOutboxRef.current = (targetSessionId) => void drainLocalOutbox(targetSessionId)
+	}, [drainLocalOutbox])
 
 	useEffect(() => {
 		if (enabled && sessionId && !admissionPaused) void drainLocalOutbox(sessionId)

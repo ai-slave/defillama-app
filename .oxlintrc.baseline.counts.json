@@ -217,7 +217,7 @@
 	"src/containers/LlamaAI/executionCoordinator.ts": {"no-await-in-loop":1},
 	"src/containers/LlamaAI/fetchAgenticResponse.ts": {"no-await-in-loop":4},
 	"src/containers/LlamaAI/hooks/useChatExecutionOwner.ts": {"no-await-in-loop":2},
-	"src/containers/LlamaAI/hooks/useChatQueueController.ts": {"max-depth":2,"no-await-in-loop":1,"react/refs":5},
+	"src/containers/LlamaAI/hooks/useChatQueueController.ts": {"max-depth":2,"no-await-in-loop":1},
 	"src/containers/LlamaAI/hooks/useChatScroll.ts": {"react/exhaustive-effect-dependencies":2},
 	"src/containers/LlamaAI/hooks/useDeepLinkPrompt.ts": {"react/set-state-in-effect":1},
 	"src/containers/LlamaAI/hooks/useDuelStream.ts": {"react/refs":4},

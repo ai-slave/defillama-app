@@ -51,6 +51,22 @@ import type { ArticlePeoplePanelConfig } from './peoplePanel'
 import { PeoplePanelDialog } from './PeoplePanelDialog'
 import { RevisionHistoryDrawer } from './RevisionHistoryDrawer'
 import { useArticleCollaborators } from './useArticleCollaborators'
+import { useEditorEventCallback } from './useEditorEventCallback'
+
+/** The pending revision's timestamp wins whenever a draft edit is unpublished. */
+function latestArticleUpdatedAt(article: Pick<LocalArticleDocument, 'pendingUpdatedAt' | 'updatedAt'>) {
+	return article.pendingUpdatedAt ?? article.updatedAt
+}
+
+/** A non-Error reason gets the caller's fallback rather than being stringified. */
+function errorMessageOr(error: unknown, fallback: string) {
+	return error instanceof Error ? error.message : fallback
+}
+
+function publishValidationErrors(error: unknown) {
+	if (!(error instanceof ArticleApiError)) return []
+	return error.validationErrors ?? []
+}
 
 export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	const router = useRouter()
@@ -67,28 +83,10 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	const [wordCount, setWordCount] = useState(0)
 	const [linkEdit, setLinkEdit] = useState<{ url: string; newTab: boolean } | null>(null)
 	const linkInputRef = useRef<HTMLInputElement | null>(null)
-	// Latest-value refs for tiptap plugins, autosave and keyboard shortcuts, which run outside render.
-	// They are written in layout effects so no render reads or writes a ref.
-	const inlineUploadRef = useRef<ArticleImageUploadFn | null>(null)
+	// Autosave and the save shortcut re-enter saveArticle, which itself schedules
+	// the next autosave, so this mirror is the one latest-value ref left: a stable
+	// callback cannot close the cycle without referencing itself.
 	const saveRef = useRef<(opts?: { silent?: boolean }) => Promise<boolean>>(async () => false)
-	const articleIdRef = useRef<string | undefined>(article.id)
-	useLayoutEffect(() => {
-		articleIdRef.current = article.id
-	}, [article.id])
-	// The editor is built once and its plugins must reach the current upload function and article id, so the
-	// options carry getters over refs. The compiler cannot prove the getters are not called while rendering,
-	// so it will not keep this memo; useMemo still does the work at runtime, which is what tiptap needs.
-	// oxlint-disable-next-line react/preserve-manual-memoization -- see above
-	const extensions = useMemo(
-		() =>
-			// oxlint-disable-next-line react/refs -- the getters are stored for tiptap's paste and drop handlers, which run on editor events.
-			createArticleEditorExtensions({
-				getUpload: () => inlineUploadRef.current,
-				getArticleId: () => articleIdRef.current,
-				onMissingArticleId: () => toast.error('Save the draft first to attach images')
-			}),
-		[]
-	)
 	const [editingChart, setEditingChart] = useState<{ config: ArticleChartConfig; pos: number } | null>(null)
 	const [editingEmbed, setEditingEmbed] = useState<{ config: ArticleEmbedConfig; pos: number } | null>(null)
 	const [editingPanel, setEditingPanel] = useState<{ config: ArticlePeoplePanelConfig; pos: number } | null>(null)
@@ -144,18 +142,28 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		[uploadInlineImageRaw]
 	)
 
-	useLayoutEffect(() => {
-		inlineUploadRef.current = uploadInlineImage
-	}, [uploadInlineImage])
+	// Keep tiptap's plugins stable while their event handlers follow the committed article.
+	const getUpload = useEditorEventCallback(() => uploadInlineImage)
+	const getArticleId = useEditorEventCallback(() => article.id)
+
+	const extensions = useMemo(
+		() =>
+			createArticleEditorExtensions({
+				getUpload,
+				getArticleId,
+				onMissingArticleId: () => toast.error('Save the draft first to attach images')
+			}),
+		[getUpload, getArticleId]
+	)
 
 	const scheduleAutosave = useCallback(() => {
 		if (debounceRef.current) clearTimeout(debounceRef.current)
-		if (!articleIdRef.current) return
+		if (!getArticleId()) return
 		debounceRef.current = setTimeout(() => {
 			debounceRef.current = null
 			void saveRef.current({ silent: true })
 		}, 1500)
-	}, [])
+	}, [getArticleId])
 
 	useTicker()
 
@@ -256,7 +264,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 		setSaveError(false)
 		const text = merged.plainText || ''
 		setWordCount(text.trim() ? text.trim().split(/\s+/).length : 0)
-		setSavedAt(merged.pendingUpdatedAt ?? merged.updatedAt)
+		setSavedAt(latestArticleUpdatedAt(merged))
 	}, [editor, ownedArticleQuery.data])
 
 	useEffect(() => {
@@ -292,41 +300,49 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			return false
 		}
 		if (saveInFlightRef.current) return false
-		saveInFlightRef.current = true
 		const savedRevision = draftRevisionRef.current
 		if (debounceRef.current) {
 			clearTimeout(debounceRef.current)
 			debounceRef.current = null
 		}
+		// Validation runs before the request so a malformed document reports
+		// itself instead of arriving in the catch below as a fake save failure.
+		const normalized = normalizeLocalArticleDocument({ ...article, contentJson: editor.getJSON() })
+		if (normalized.ok === false) {
+			setSaveError(true)
+			if (!opts.silent) toast.error(normalized.error)
+			return false
+		}
 		if (!opts.silent) setSaveError(false)
+		saveInFlightRef.current = true
+		let didSave = false
 		try {
-			const normalized = normalizeLocalArticleDocument({ ...article, contentJson: editor.getJSON() })
-			if (normalized.ok === false) throw new Error(normalized.error)
 			const saved = await saveArticleMutation.mutateAsync({
 				targetArticleId: article.id,
 				articlePayload: normalized.value
 			})
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
 			setOwnedArticleCache(saved)
-			setSavedAt(merged.pendingUpdatedAt ?? merged.updatedAt)
+			setSavedAt(latestArticleUpdatedAt(merged))
 			setSaveError(false)
-			if (savedRevision !== draftRevisionRef.current) {
+			if (savedRevision === draftRevisionRef.current) {
+				setArticle(merged)
+				if (!article.id) {
+					void router.replace(`/research/edit/${saved.id}`)
+				}
+				setIsDirty(false)
+				didSave = true
+			} else {
+				// The user edited while the request was in flight, so keep their
+				// newer draft and let the next autosave carry it.
 				scheduleAutosave()
-				return false
 			}
-			setArticle(merged)
-			if (!article.id) {
-				void router.replace(`/research/edit/${saved.id}`)
-			}
-			setIsDirty(false)
-			return true
 		} catch (error) {
 			setSaveError(true)
-			if (!opts.silent) toast.error(error instanceof Error ? error.message : 'Failed to save research')
-			return false
-		} finally {
-			saveInFlightRef.current = false
+			if (!opts.silent) toast.error(errorMessageOr(error, 'Failed to save research'))
 		}
+		saveInFlightRef.current = false
+		return didSave
 	}
 
 	const openLinkEditor = useCallback(() => {
@@ -510,15 +526,15 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 	useEffect(() => {
 		const handler = () => {
 			if (!editor) return
-			if (!articleIdRef.current) {
+			if (!getArticleId()) {
 				toast.error('Save the draft first to attach images')
 				return
 			}
-			void triggerInlineImagePicker(editor, () => inlineUploadRef.current)
+			void triggerInlineImagePicker(editor, getUpload)
 		}
 		document.addEventListener('article:trigger-image-upload', handler)
 		return () => document.removeEventListener('article:trigger-image-upload', handler)
-	}, [editor])
+	}, [editor, getArticleId, getUpload])
 
 	useEffect(() => {
 		const editHandler = (event: Event) => {
@@ -648,16 +664,17 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			return false
 		}
 		setPublishErrors({})
+		// An explicit `goLiveAt` wins; otherwise publishing a scheduled article
+		// clears its schedule and publishing a draft leaves the field untouched.
+		const goLiveAt = opts && 'goLiveAt' in opts ? opts.goLiveAt : article.goLiveAt != null ? null : undefined
+		const publishPayload = { articleId: article.id, ...(goLiveAt !== undefined ? { goLiveAt } : {}) }
+		const publishedMessage = article.status === 'published' ? 'Update published' : 'Published'
 		try {
 			if (!(await flushPendingSave())) {
 				toast.error('Save the latest edits before publishing.')
 				return false
 			}
-			const goLiveAt = opts && 'goLiveAt' in opts ? opts.goLiveAt : article.goLiveAt != null ? null : undefined
-			const saved = await publishMutation.mutateAsync({
-				articleId: article.id,
-				...(goLiveAt !== undefined ? { goLiveAt } : {})
-			})
+			const saved = await publishMutation.mutateAsync(publishPayload)
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
 			setArticle(merged)
 			setSavedAt(merged.updatedAt)
@@ -665,18 +682,17 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			if (isScheduled(merged)) {
 				toast.success(`Scheduled for ${formatArticleDate(merged.goLiveAt)}`)
 			} else if (merged.status === 'published') {
-				toast.success(article.status === 'published' ? 'Update published' : 'Published')
+				toast.success(publishedMessage)
 			} else {
 				toast.success('Saved')
 			}
 			return true
 		} catch (error) {
-			if (error instanceof ArticleApiError && error.validationErrors?.length) {
-				setPublishErrors(Object.fromEntries(error.validationErrors.map((e) => [e.field, e.message])))
-				toast.error(error.message)
-			} else {
-				toast.error(error instanceof Error ? error.message : 'Failed to publish')
+			const validationErrors = publishValidationErrors(error)
+			if (validationErrors.length > 0) {
+				setPublishErrors(Object.fromEntries(validationErrors.map((e) => [e.field, e.message])))
 			}
+			toast.error(errorMessageOr(error, 'Failed to publish'))
 			return false
 		}
 	}
@@ -687,12 +703,12 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			const saved = await unpublishMutation.mutateAsync(article.id)
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
 			setArticle(merged)
-			editor?.commands.setContent(merged.contentJson, { emitUpdate: false })
+			if (editor) editor.commands.setContent(merged.contentJson, { emitUpdate: false })
 			setSavedAt(merged.updatedAt)
 			revalidateLanding()
 			toast.success('Moved to drafts')
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to unpublish')
+			toast.error(errorMessageOr(error, 'Failed to unpublish'))
 		}
 	}
 
@@ -707,12 +723,12 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			const saved = await discardPendingMutation.mutateAsync(article.id)
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
 			setArticle(merged)
-			editor?.commands.setContent(merged.contentJson, { emitUpdate: false })
+			if (editor) editor.commands.setContent(merged.contentJson, { emitUpdate: false })
 			setSavedAt(merged.updatedAt)
 			setIsDirty(false)
 			toast.success('Pending changes discarded')
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to discard changes')
+			toast.error(errorMessageOr(error, 'Failed to discard changes'))
 		}
 	}
 
@@ -724,8 +740,8 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			}
 			const merged = applyPendingToLocalArticle(saved, saved.pending)
 			setArticle(merged)
-			editor?.commands.setContent(merged.contentJson, { emitUpdate: false })
-			setSavedAt(merged.pendingUpdatedAt ?? merged.updatedAt)
+			if (editor) editor.commands.setContent(merged.contentJson, { emitUpdate: false })
+			setSavedAt(latestArticleUpdatedAt(merged))
 			setIsDirty(false)
 			setSaveError(false)
 		},
@@ -742,7 +758,7 @@ export function ArticleEditorClient({ articleId }: { articleId?: string }) {
 			() => ({ ok: false as const, value: undefined })
 		)
 		// Metadata can change while the replacement image uploads, and the reader may have moved on.
-		if (upload.ok && articleIdRef.current === article.id) {
+		if (upload.ok && getArticleId() === article.id) {
 			setArticle((current) => ({
 				...current,
 				coverImage: {
