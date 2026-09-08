@@ -81,12 +81,10 @@ concurrent stale requests by domain.
 - A short process-local retry backoff prevents a broken upstream from being
   hammered on every request.
 
-`bun run snapshots:refresh` exposes the same atomic publisher for a scheduler or
-protected operational job. It is optional for correctness: an ISR request with
+Preparation publishes missing or stale snapshots and reuses domain snapshots
+that are still within their registry max age. At runtime, an ISR request with
 blocking acquisition refreshes stale data before publishing the new page, while
 the previous page and previous snapshot remain available on failure.
-Preparation and scheduled publication reuse domain snapshots that are still
-within their registry max age instead of refetching them.
 
 All artifacts used for one logical response must come from one snapshot handle.
 Never reacquire between related reads.

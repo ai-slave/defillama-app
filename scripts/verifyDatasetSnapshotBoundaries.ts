@@ -19,23 +19,16 @@ async function pathExists(filePath: string): Promise<boolean> {
 	}
 }
 
-async function collectFiles(rootDir: string): Promise<Array<string>> {
-	const files: Array<string> = []
-	for (const entry of await fs.readdir(rootDir, { withFileTypes: true })) {
-		const filePath = path.join(rootDir, entry.name)
-		if (entry.isDirectory()) files.push(...(await collectFiles(filePath)))
-		else files.push(filePath)
-	}
-	return files
-}
-
 async function main(): Promise<void> {
 	const projectDir = process.cwd()
 	const browserDir = path.join(projectDir, '.next', 'static')
 	if (!(await pathExists(browserDir))) throw new Error('Expected .next/static; run this guard after next build')
 
 	const leaks: Array<string> = []
-	for (const filePath of await collectFiles(browserDir)) {
+	// Stream the tree and read one bundle at a time to bound memory use on large builds.
+	for await (const entry of await fs.opendir(browserDir, { recursive: true })) {
+		if (entry.isDirectory()) continue
+		const filePath = path.join(entry.parentPath, entry.name)
 		if (!TEXT_BUNDLE_EXTENSIONS.has(path.extname(filePath))) continue
 		const source = await fs.readFile(filePath, 'utf8').catch(() => '')
 		if (FORBIDDEN_BROWSER_MARKERS.some((marker) => source.includes(marker))) {

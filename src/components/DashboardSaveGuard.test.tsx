@@ -7,8 +7,9 @@ import { getUnsavedDashboardItems, type DashboardUpdate } from '~/containers/Pro
 import { DashboardSaveGuard } from './DashboardSaveGuard'
 
 const route = vi.hoisted(() => ({ pathname: '/yields', query: {} as { dashboardId?: string } }))
+const auth = vi.hoisted(() => ({ user: { id: 'owner' }, isAuthenticated: true }))
 vi.mock('next/router', () => ({ useRouter: () => route }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: { id: 'owner' }, isAuthenticated: true }) }))
+vi.mock('~/auth', () => ({ useAuthContext: () => auth }))
 let client: QueryClient
 let root: Root
 let container: HTMLDivElement
@@ -48,6 +49,7 @@ function warns() {
 	return event.defaultPrevented
 }
 beforeEach(async () => {
+	auth.user = { id: 'owner' }
 	route.pathname = '/yields'
 	route.query = {}
 	client = new QueryClient()
@@ -109,6 +111,19 @@ test('another account’s failed draft cannot show a notice or arm the warning',
 	await fail('other')
 	expect(container.querySelector('section')).toBeNull()
 	expect(warns()).toBe(false)
+})
+
+test('switching accounts updates recovery notices without another mutation', async () => {
+	await fail()
+	expect(container.querySelector('section')).not.toBeNull()
+	auth.user = { id: 'other' }
+	await render()
+	expect(container.querySelector('section')).toBeNull()
+	expect(warns()).toBe(false)
+	auth.user = { id: 'owner' }
+	await render()
+	expect(container.querySelector('section')).not.toBeNull()
+	expect(warns()).toBe(true)
 })
 
 test('a newer pending save hides discard and successful recovery clears the warning', async () => {

@@ -129,6 +129,7 @@ function ExpandedExamplesPanel({
 					type="text"
 					value={filter}
 					onChange={(e) => setFilter(e.target.value)}
+					aria-label="Filter example queries"
 					placeholder="Filter queries…"
 					className="w-full border-b border-subtle bg-transparent pr-5 pb-1.5 pl-5 text-xs text-pro-text-primary transition-colors placeholder:text-pro-text-tertiary/80 focus:border-brand focus:outline-hidden"
 				/>

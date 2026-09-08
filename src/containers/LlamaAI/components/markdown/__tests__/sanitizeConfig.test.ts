@@ -1,5 +1,5 @@
 import type { Root } from 'hast'
-import { sanitize, type Schema } from 'hast-util-sanitize'
+import rehypeSanitize, { type Options as SanitizeSchema } from 'rehype-sanitize'
 import { describe, expect, test } from 'vitest'
 import { SANITIZE_SCHEMA } from '../sanitizeConfig'
 
@@ -16,9 +16,10 @@ describe('SANITIZE_SCHEMA', () => {
 				}
 			]
 		}
-		const schema: Schema = SANITIZE_SCHEMA
+		const schema: SanitizeSchema = SANITIZE_SCHEMA
 
-		const sanitized = sanitize(tree, schema)
+		// Through the plugin the renderer uses, which wraps hast-util-sanitize itself.
+		const sanitized = rehypeSanitize(schema)(tree)
 		if (sanitized.type !== 'root') throw new Error('Expected a sanitized root')
 		const pill = sanitized.children[0]
 		if (pill.type !== 'element') throw new Error('Expected a sanitized element')

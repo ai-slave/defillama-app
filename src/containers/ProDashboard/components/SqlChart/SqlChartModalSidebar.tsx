@@ -25,6 +25,7 @@ interface SqlChartModalSidebarProps {
 	loadedTables: Array<RegisteredTable>
 	onLoadTable: (source: TableSource) => Promise<RegisteredTable | null>
 	schemaLoading: string | null
+	schemaError: string | null
 	busyTaskId: string | null
 	savedQueries: Array<QuerySavedConfig>
 	onApplyExample: (example: ExampleQuery) => void
@@ -39,6 +40,7 @@ export function SqlChartModalSidebar({
 	loadedTables,
 	onLoadTable,
 	schemaLoading,
+	schemaError,
 	busyTaskId,
 	savedQueries,
 	onApplyExample,
@@ -50,7 +52,7 @@ export function SqlChartModalSidebar({
 	const [tab, setTab] = useState<TabId>('examples')
 
 	return (
-		<aside className="flex min-h-0 flex-col overflow-hidden rounded-md border border-medium bg-surface">
+		<aside className="flex max-h-96 min-h-0 min-w-0 shrink-0 flex-col overflow-hidden rounded-md border border-medium bg-surface lg:max-h-none lg:shrink">
 			<Tabs<TabId> value={tab} onValueChange={setTab} values={TABS.map((item) => item.id)}>
 				<TabList
 					aria-label="SQL reference section"
@@ -83,14 +85,21 @@ export function SqlChartModalSidebar({
 					{tab === 'examples' ? (
 						<ExamplesPanel onApply={onApplyExample} busyTaskId={busyTaskId} />
 					) : tab === 'schema' ? (
-						<SchemaBrowser
-							chartOptionsMap={chartOptionsMap}
-							loadedTables={loadedTables}
-							onLoad={onLoadTable}
-							onReplaceSql={onReplaceSql}
-							onInsertAtCursor={onInsertAtCursor}
-							loading={schemaLoading}
-						/>
+						<>
+							{schemaError ? (
+								<p role="alert" className="mb-3 text-xs text-error">
+									{schemaError}
+								</p>
+							) : null}
+							<SchemaBrowser
+								chartOptionsMap={chartOptionsMap}
+								loadedTables={loadedTables}
+								onLoad={onLoadTable}
+								onReplaceSql={onReplaceSql}
+								onInsertAtCursor={onInsertAtCursor}
+								loading={schemaLoading}
+							/>
+						</>
 					) : tab === 'cookbook' ? (
 						<CookbookTab onApplyAndRun={onApplyAndRun} />
 					) : tab === 'shortcuts' ? (

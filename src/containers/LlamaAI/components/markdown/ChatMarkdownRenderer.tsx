@@ -2,7 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import { createContext, createElement, useContext, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import ReactMarkdown from 'react-markdown'
-import type { Components } from 'react-markdown'
+import type { Components, Options } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { readTableRows, TableImageButtons } from '~/components/TableImage/TableImageButtons'
@@ -36,7 +36,7 @@ import styles from '../../LlamaAIChat.module.css'
 import { rehypeHeadingIds } from './rehypeHeadingIds'
 import { SANITIZE_REHYPE_PLUGINS } from './sanitizeConfig'
 
-const MARKDOWN_REMARK_PLUGINS: import('unified').PluggableList = [[remarkGfm, { singleTilde: false }]]
+const MARKDOWN_REMARK_PLUGINS: NonNullable<Options['remarkPlugins']> = [[remarkGfm, { singleTilde: false }]]
 
 function extractText(children: ReactNode): string {
 	if (typeof children === 'string') return children
@@ -630,7 +630,7 @@ export function ChatMarkdownRenderer({
 		[content, renderCitationRefs]
 	)
 	// After the sanitize plugins: its schema drops ids it does not know about.
-	const rehypePlugins = useMemo<import('unified').PluggableList>(
+	const rehypePlugins = useMemo<NonNullable<Options['rehypePlugins']>>(
 		() => [...SANITIZE_REHYPE_PLUGINS, [rehypeHeadingIds, { messageId }]],
 		[messageId]
 	)

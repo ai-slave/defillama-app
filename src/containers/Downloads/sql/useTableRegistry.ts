@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import { slug as toSlug } from '~/utils'
 import { chartDatasetsBySlug } from '../chart-datasets'
 import { datasetsBySlug } from '../datasets'
+import { queryDuckDB } from './duckdb/query'
 
 export type TableSource =
 	| { kind: 'dataset'; slug: string }
@@ -91,17 +92,13 @@ export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOpti
 						await registerViaBuffer(conn, fileName, csvText, signal)
 					}
 					throwIfAborted(signal)
-					await withAbort(
-						conn.query(
-							`CREATE OR REPLACE TABLE "${name}" AS SELECT * FROM read_csv_auto('${fileName}', header = true, sample_size = -1)`
-						),
-						signal,
-						() => conn.cancelSent().catch(() => undefined)
+					await queryDuckDB(
+						conn,
+						`CREATE OR REPLACE TABLE "${name}" AS SELECT * FROM read_csv_auto('${fileName}', header = true, sample_size = -1)`,
+						signal
 					)
 					throwIfAborted(signal)
-					const countResult = await withAbort(conn.query(`SELECT COUNT(*)::BIGINT AS n FROM "${name}"`), signal, () =>
-						conn.cancelSent().catch(() => undefined)
-					)
+					const countResult = await queryDuckDB(conn, `SELECT COUNT(*)::BIGINT AS n FROM "${name}"`, signal)
 					const rowCount = firstRowCount(countResult)
 
 					throwIfAborted(signal)
@@ -136,7 +133,7 @@ export function useTableRegistry({ conn, authorizedFetch }: UseTableRegistryOpti
 		async (name: string) => {
 			if (!conn) return
 			try {
-				await conn.query(`DROP TABLE IF EXISTS "${name}"`)
+				await queryDuckDB(conn, `DROP TABLE IF EXISTS "${name}"`)
 			} catch (dropError) {
 				console.error(`Failed to drop table ${name}:`, dropError)
 			}
@@ -154,9 +151,7 @@ async function describeTypes(
 	signal?: AbortSignal
 ): Promise<Map<string, string>> {
 	try {
-		const described = await withAbort(conn.query(`DESCRIBE "${name}"`), signal, () =>
-			conn.cancelSent().catch(() => undefined)
-		)
+		const described = await queryDuckDB(conn, `DESCRIBE "${name}"`, signal)
 		const map = new Map<string, string>()
 		for (const row of described.toArray() as Array<{ column_name: string; column_type: string }>) {
 			if (row?.column_name) map.set(row.column_name, row.column_type)

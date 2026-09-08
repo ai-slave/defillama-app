@@ -105,7 +105,7 @@ export function ResultsPanel({
 							{durationMs != null ? ` · ${formatSqlDuration(durationMs)}` : ''}
 						</span>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="flex flex-wrap items-center gap-2">
 						{viewToggleLabel ? <span className="text-xs font-medium text-secondary">{viewToggleLabel}</span> : null}
 						<ViewToggle view={view} disabled={isEmpty} />
 						<FormatSplitButton

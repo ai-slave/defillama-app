@@ -1,10 +1,10 @@
 import ReactMarkdown from 'react-markdown'
-import type { Components } from 'react-markdown'
+import type { Components, Options } from 'react-markdown'
 import rehypeSanitize from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 
-const REMARK_PLUGINS: import('unified').PluggableList = [[remarkGfm, { singleTilde: false }]]
-const REHYPE_PLUGINS: import('unified').PluggableList = [rehypeSanitize]
+const REMARK_PLUGINS: NonNullable<Options['remarkPlugins']> = [[remarkGfm, { singleTilde: false }]]
+const REHYPE_PLUGINS: NonNullable<Options['rehypePlugins']> = [rehypeSanitize]
 
 const components: Components = {
 	a: ({ node: _node, ...props }: any) => <a {...props} target="_blank" rel="noreferrer noopener" />,

@@ -1,8 +1,10 @@
 import type { AsyncDuckDBConnection } from '@duckdb/duckdb-wasm'
+import type { Table } from 'apache-arrow'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import type { ChartOptionsMap } from '../chart-datasets'
 import { datasets } from '../datasets'
 import { extractTableRefs, matchTableRef } from './completions'
+import { queryDuckDB } from './duckdb/query'
 import type { QueryResult } from './exportResults'
 import { normalizeSqlResultRows } from './resultNormalization'
 import type { PendingTable } from './TableChipRail'
@@ -80,16 +82,21 @@ function buildAutoLoadPlan(
 	return steps
 }
 
-async function runWithFreshLoadRetry(conn: AsyncDuckDBConnection, sql: string, justLoaded: boolean): Promise<any> {
+async function runWithFreshLoadRetry(
+	conn: AsyncDuckDBConnection,
+	sql: string,
+	justLoaded: boolean,
+	signal?: AbortSignal
+): Promise<Table> {
 	try {
-		return await conn.query(sql)
+		return await queryDuckDB(conn, sql, signal)
 	} catch (error) {
-		if (!justLoaded) throw error
+		if (signal?.aborted || !justLoaded) throw error
 		const msg = error instanceof Error ? error.message : String(error)
 		const transient = /function signature mismatch/i.test(msg)
 		if (!transient) throw error
 		await new Promise((resolve) => setTimeout(resolve, 60))
-		return await conn.query(sql)
+		return await queryDuckDB(conn, sql, signal)
 	}
 }
 
@@ -169,27 +176,7 @@ export async function runSql(
 		callbacks.onLoadingStage?.(null)
 
 		const conn = ctx.conn
-		const queryPromise = runWithFreshLoadRetry(conn, trimmed, plan.length > 0)
-		const arrow = signal
-			? await new Promise<any>((resolve, reject) => {
-					const onAbort = () => {
-						conn.cancelSent().catch(() => undefined)
-						reject(new DOMException('Cancelled', 'AbortError'))
-					}
-					signal.addEventListener('abort', onAbort, { once: true })
-					queryPromise.then(
-						(value) => {
-							signal.removeEventListener('abort', onAbort)
-							resolve(value)
-						},
-						(error) => {
-							signal.removeEventListener('abort', onAbort)
-							reject(error)
-						}
-					)
-					if (signal.aborted) onAbort()
-				})
-			: await queryPromise
+		const arrow = await runWithFreshLoadRetry(conn, trimmed, plan.length > 0, signal)
 
 		const columns = arrow.schema.fields.map((f: any) => ({ name: f.name, type: String(f.type) }))
 		const arrowRows = arrow.toArray()

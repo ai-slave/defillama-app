@@ -55,7 +55,7 @@ it can read. The union is copied into Next's standalone **server** output; it is
 not copied into `_next/static` or made publicly addressable. Only selected page
 props and API response data are sent to browsers.
 
-`bun run verify:dataset-snapshot-build` is a post-build CI guard. It rejects
+`bun run verify:dataset-snapshot-boundaries` is a post-build CI guard. It rejects
 snapshot implementation markers in `.next/static`, verifies prepared snapshots
 were traced into standalone output, and rejects `public/.cache`.
 

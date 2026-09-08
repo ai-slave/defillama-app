@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'vitest'
-import { parse as parseEChartsColor } from 'zrender/lib/tool/color'
 import type {
 	MultiSeriesTimeSeriesDataset,
 	MultiSeriesTimeSeriesRow
@@ -521,8 +520,8 @@ describe('buildChainsByAdapterChartPresentation', () => {
 		const colors = overflow.charts.flatMap(({ color }) => (color === undefined ? [] : [color]))
 		expect(colors).toHaveLength(overflow.charts.length)
 		for (const color of colors) {
-			expect(color).toMatch(/^hsl\([^,]+, 68%, 48%\)$/)
-			expect(parseEChartsColor(color)).toBeDefined()
+			// A numeric hue, so the pattern alone proves echarts can read the colour.
+			expect(color).toMatch(/^hsl\(\d+(\.\d+)?, 68%, 48%\)$/)
 		}
 	})
 

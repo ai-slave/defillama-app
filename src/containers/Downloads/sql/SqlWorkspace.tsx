@@ -17,6 +17,7 @@ import { extractQueryConfig, generatePresetId, type QuerySavedConfig, type Query
 import { SavePresetDialog } from '../SavePresetDialog'
 import { decodeDownloadConfig, decodeNotebookShare } from '../urlState'
 import type { ChartConfig } from './chartConfig'
+import { queryDuckDB } from './duckdb/query'
 import { Editor, type EditorHandle } from './Editor'
 import { ErrorBanner, replaceIdentifier } from './ErrorBanner'
 import type { ExampleQuery } from './examples'
@@ -220,16 +221,7 @@ function SqlWorkspaceInner({
 		}
 	}, [])
 
-	const cancelRun = useCallback(
-		(key: string) => {
-			const controller = runControllersRef.current.get(key)
-			if (controller) {
-				controller.abort()
-				duckdb.conn?.cancelSent().catch(() => undefined)
-			}
-		},
-		[duckdb.conn]
-	)
+	const cancelRun = useCallback((key: string) => runControllersRef.current.get(key)?.abort(), [])
 
 	const cancelTabRun = useCallback(
 		(tabId: string) => {
@@ -548,7 +540,7 @@ function SqlWorkspaceInner({
 				// Register output as a view for downstream cells.
 				try {
 					const viewSql = trimmed.replace(/;\s*$/g, '').trim()
-					await duckdb.conn.query(`CREATE OR REPLACE VIEW "${cellName}" AS (${viewSql})`)
+					await queryDuckDB(duckdb.conn, `CREATE OR REPLACE VIEW "${cellName}" AS (${viewSql})`, run.signal)
 				} catch (error) {
 					console.warn(`Failed to create view ${cellName}:`, error)
 				}
@@ -615,7 +607,7 @@ function SqlWorkspaceInner({
 				const maxViews = Math.max(tab.cells.length + 4, 16)
 				for (let i = 1; i <= maxViews; i++) {
 					try {
-						await duckdb.conn.query(`DROP VIEW IF EXISTS "cell_${i}"`)
+						await queryDuckDB(duckdb.conn, `DROP VIEW IF EXISTS "cell_${i}"`)
 					} catch {
 						/* noop */
 					}
@@ -680,7 +672,7 @@ function SqlWorkspaceInner({
 			// Cleanup on workspace unmount — best-effort
 			if (!duckdb.conn) return
 			for (let i = 1; i <= 64; i++) {
-				duckdb.conn.query(`DROP VIEW IF EXISTS "cell_${i}"`).catch(() => undefined)
+				queryDuckDB(duckdb.conn, `DROP VIEW IF EXISTS "cell_${i}"`).catch(() => undefined)
 			}
 		}
 	}, [duckdb.conn])

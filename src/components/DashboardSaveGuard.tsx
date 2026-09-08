@@ -15,15 +15,18 @@ export function DashboardSaveGuard() {
 	const client = useQueryClient()
 	const router = useRouter()
 	const attempts = useMutationState({
-		filters: {
-			mutationKey: ['pro-dashboard-update'],
-			predicate: (mutation) => mutation.options.mutationKey?.[2] === user?.id
-		},
-		select: (mutation) => ({ status: mutation.state.status, request: mutation.state.variables as DashboardUpdate })
+		filters: { mutationKey: ['pro-dashboard-update'] },
+		select: (mutation) => ({
+			userId: mutation.options.mutationKey?.[2],
+			status: mutation.state.status,
+			request: mutation.state.variables as DashboardUpdate
+		})
 	})
 	const pending = new Set<string>()
 	const latest = new Map<string, (typeof attempts)[number]>()
 	for (const attempt of attempts) {
+		// Filter snapshots during render: changing useMutationState's filters alone does not refresh them.
+		if (attempt.userId !== user?.id) continue
 		if (attempt.status === 'pending') pending.add(attempt.request.id)
 		if (attempt.request?.source === 'autosave') latest.set(attempt.request.id, attempt)
 	}

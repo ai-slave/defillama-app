@@ -146,6 +146,7 @@ test('SQL chart reference switches only on activation and keeps inactive section
 				loadedTables={[]}
 				onLoadTable={async () => null}
 				schemaLoading={null}
+				schemaError="Source unavailable"
 				busyTaskId={null}
 				savedQueries={[]}
 				onApplyExample={vi.fn()}
@@ -160,13 +161,16 @@ test('SQL chart reference switches only on activation and keeps inactive section
 	await press(examples, 'ArrowRight')
 	expect(document.activeElement).toBe(schema)
 	expectPanel(examples, 'Examples content')
+	expect(document.querySelector('[role="alert"]')).toBeNull()
 	expect(mocks.schemaMount).not.toHaveBeenCalled()
 	await press(schema, 'Enter')
 	expectPanel(schema, 'Schema content')
+	expect(document.querySelector('[role="alert"]')?.textContent).toBe('Source unavailable')
 	await press(schema, 'End')
 	await press(shortcuts, ' ')
 	expectPanel(shortcuts, 'Shortcuts content')
 	await press(shortcuts, 'ArrowLeft')
 	await press(saved, 'Enter')
 	expectPanel(saved, 'Saved content')
+	expect(document.querySelector('[role="alert"]')).toBeNull()
 })

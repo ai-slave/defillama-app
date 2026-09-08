@@ -1,4 +1,4 @@
-import { type MutationState, useIsMutating, useMutationState, useQueryClient } from '@tanstack/react-query'
+import { type MutationState, useMutationState, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
@@ -28,20 +28,28 @@ export function useAutoSave({
 		[dashboard?.id, user?.id]
 	)
 	const { mutate: save } = useUpdateDashboard(dashboard?.id ?? null, 'autosave')
+	// useMutationState refreshes on cache events, not filter changes. Select the dashboard from the
+	// subscribed snapshots so loading its id also reveals an existing failed draft immediately.
 	const attempts = useMutationState({
-		filters: {
-			mutationKey,
-			predicate: (mutation) => (mutation.state.variables as DashboardUpdate | undefined)?.source === 'autosave'
-		},
-		select: (mutation) => mutation.state as MutationState<Dashboard, Error, DashboardUpdate>
+		filters: { mutationKey: ['pro-dashboard-update'] },
+		select: (mutation) => ({
+			userId: mutation.options.mutationKey?.[2],
+			state: mutation.state as MutationState<Dashboard, Error, DashboardUpdate>
+		})
 	})
-	const state = attempts.at(-1)
-	const saving = useIsMutating({ mutationKey }) > 0
+	let state: MutationState<Dashboard, Error, DashboardUpdate> | undefined
+	let saving = false
+	for (const attempt of attempts) {
+		if (attempt.userId !== user?.id || attempt.state.variables?.id !== dashboard?.id) continue
+		if (attempt.state.status === 'pending') saving = true
+		if (attempt.state.variables?.source === 'autosave') state = attempt.state
+	}
 	const [queued, setQueued] = useState<DashboardUpdate | null>(null)
 	// Timer, manual save, and page lifecycle events may flush the same render before React commits.
 	const flushedRef = useRef<DashboardUpdate | null>(null)
+	const lastRequest = state?.variables
 	const flush = useCallback(() => {
-		if (!queued || flushedRef.current === queued) return flushedRef.current ?? state?.variables ?? null
+		if (!queued || flushedRef.current === queued) return flushedRef.current ?? lastRequest ?? null
 		if (wasDashboardDeleted(client, queued.id, user?.id)) {
 			setQueued(null)
 			return null
@@ -50,7 +58,7 @@ export function useAutoSave({
 		setQueued((current) => (current === queued ? null : current))
 		save(queued)
 		return queued
-	}, [queued, save, state?.variables, client, user?.id])
+	}, [queued, save, lastRequest, client, user?.id])
 
 	const onFlush = useEffectEvent(() => flush())
 	const onUnmount = useEffectEvent(() => {

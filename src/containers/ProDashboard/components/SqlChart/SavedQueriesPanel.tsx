@@ -131,6 +131,7 @@ function InlineRenameInput({
 	return (
 		<input
 			ref={inputRef}
+			aria-label="Saved query name"
 			value={value}
 			onChange={(e) => setValue(e.target.value)}
 			onKeyDown={(e) => {

@@ -46,6 +46,10 @@ function reactCompilerUnderTest() {
  * that memoization can change.
  */
 const COMPILER_SENSITIVE_TESTS = [
+	'src/containers/ProDashboard/components/SqlChart/__tests__/SqlChartLifetime.test.tsx',
+	'src/components/DashboardSaveGuard.test.tsx',
+	'src/containers/ProDashboard/dashboardAutosave.test.tsx',
+	'src/containers/ProDashboard/hooks/__tests__/useAutoSave.test.tsx',
 	'src/containers/LlamaAI/components/markdown/headingIds.test.tsx',
 	'src/containers/LlamaAI/__tests__/duelVariant.test.ts'
 ]
@@ -71,7 +75,7 @@ export default defineConfig({
 		// only changes how long a genuinely stuck test takes to give up.
 		testTimeout: 30_000,
 		hookTimeout: 30_000,
-		exclude: [...configDefaults.exclude, '**/.codex/**'],
+		exclude: [...configDefaults.exclude, '**/.codex/**', '**/.claude/**'],
 		setupFiles: ['./vitest.setup.ts'],
 		projects: [
 			{ extends: true, test: { name: 'unit', include: ['**/*.test.ts', '**/*.test.tsx'] } },

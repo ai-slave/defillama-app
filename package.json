@@ -23,11 +23,10 @@
 		"prepare": "git config core.hooksPath .githooks || true",
 		"start": "next start",
 		"start:docker": "sh ./scripts/docker-entrypoint.sh .next/standalone/server.js",
-		"snapshots:refresh": "bun scripts/refreshDatasetSnapshots.ts",
 		"test": "vitest run",
 		"test:typecheck": "tsgo -p tsconfig.vitest.json --noEmit",
 		"typecheck": "tsgo --noEmit",
-		"verify:dataset-snapshot-build": "bun scripts/verifyDatasetSnapshotBuild.ts"
+		"verify:dataset-snapshot-boundaries": "bun scripts/verifyDatasetSnapshotBoundaries.ts"
 	},
 	"dependencies": {
 		"@ariakit/react": "0.4.39",

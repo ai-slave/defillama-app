@@ -17,9 +17,15 @@ import type { QueryResult } from '~/containers/Downloads/sql/exportResults'
 import { Keycap } from '~/containers/Downloads/sql/primitives'
 import { ResultsPanel } from '~/containers/Downloads/sql/ResultsPanel'
 import { useDuckDB } from '~/containers/Downloads/sql/useDuckDB'
-import { tableNameFor, useTableRegistry, type TableSource } from '~/containers/Downloads/sql/useTableRegistry'
+import {
+	tableNameFor,
+	useTableRegistry,
+	type RegisteredTable,
+	type TableSource
+} from '~/containers/Downloads/sql/useTableRegistry'
 import { useSavedDownloads } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { formatNumber } from '~/utils/numberFormat'
 import { useProDashboardEditorActions } from '../../ProDashboardAPIContext'
 import { clampRowCap, snapshotToResult, SQL_SNAPSHOT_ROW_CAP_MAX, SQL_SNAPSHOT_ROW_CAP_MIN } from '../../sqlSnapshot'
@@ -33,7 +39,8 @@ interface SqlChartModalProps {
 	onClose: () => void
 }
 
-type RunOutcome = { result: QueryResult; chartConfig: ChartConfig }
+type RunOutcome = { result: QueryResult; chartConfig: ChartConfig; tables: Array<RegisteredTable> }
+type Execution = { saving: boolean; taskId: string | null; stage: string | null; stopping?: boolean }
 
 async function runWithSources(
 	context: Parameters<typeof runSql>[0],
@@ -46,8 +53,10 @@ async function runWithSources(
 	for (const source of sources) {
 		if (signal.aborted) return { ok: false, cancelled: true } as const
 		if (source.kind === 'chart' && !loadedNames.has(tableNameFor(source))) {
-			await context.loadSource(source, signal)
-			loadedNames.add(tableNameFor(source))
+			const loaded = await context.loadSource(source, signal)
+			if (signal.aborted) return { ok: false, cancelled: true } as const
+			if (!loaded) return { ok: false, error: `Could not load table "${tableNameFor(source)}".` } as const
+			loadedNames.add(loaded.name)
 		}
 	}
 	if (signal.aborted) return { ok: false, cancelled: true } as const
@@ -58,7 +67,12 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 	const { authorizedFetch } = useAuthContext()
 	const { handleAddSqlChart, handleEditItem } = useProDashboardEditorActions()
 	const duckdb = useDuckDB()
-	const registry = useTableRegistry({ conn: duckdb.conn ?? null, authorizedFetch })
+	const {
+		tables: loadedTables,
+		load: loadTable,
+		loading: schemaLoading,
+		error: schemaError
+	} = useTableRegistry({ conn: duckdb.conn ?? null, authorizedFetch })
 	const { savedDownloads, saveDownload } = useSavedDownloads()
 	const savedQueries = useMemo(
 		() => savedDownloads.filter((d): d is QuerySavedConfig => d.kind === 'query'),
@@ -76,10 +90,10 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 	const [chartConfig, setChartConfig] = useState<ChartConfig | undefined>(editItem?.chart)
 	const [displayMode, setDisplayMode] = useState<'chart' | 'table'>(editItem?.displayMode ?? 'chart')
 	const [rowCap, setRowCap] = useState(clampRowCap(editItem?.rowCap))
-	const [running, setRunning] = useState(false)
-	const [savePending, setSavePending] = useState(false)
-	const [busyTaskId, setBusyTaskId] = useState<string | null>(null)
-	const [loadingStage, setLoadingStage] = useState<string | null>(null)
+	const [execution, setExecution] = useState<Execution | null>(null)
+	const running = execution !== null
+	const savePending = execution?.saving ?? false
+	const loadingStage = execution?.stage ?? null
 	const [queryError, setQueryError] = useState<string | null>(null)
 	const [durationMs, setDurationMs] = useState<number | null>(null)
 
@@ -100,26 +114,57 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 		}
 	}, [])
 
-	useEffect(() => () => runControllerRef.current?.abort(), [])
+	useEffect(
+		() => () => {
+			runControllerRef.current?.abort()
+			runControllerRef.current = null
+		},
+		[]
+	)
+
+	const stopQuery = () => {
+		const controller = runControllerRef.current
+		if (!controller || controller.signal.aborted) return
+		setExecution((current) => (current ? { ...current, stopping: true } : current))
+		controller.abort()
+	}
 
 	const run = useCallback(
-		async (override?: string, sources: Array<TableSource> = []): Promise<RunOutcome | null> => {
-			if (!duckdb.conn) return null
-			const trimmed = (override ?? sql).trim()
+		async (
+			query: string,
+			{
+				sources = [],
+				saving = false,
+				taskId = null
+			}: {
+				sources?: Array<TableSource>
+				saving?: boolean
+				taskId?: string | null
+			} = {}
+		): Promise<RunOutcome | null> => {
+			// Shortcuts and sidebar actions share the same ownership gate as the buttons.
+			if (!duckdb.conn || runControllerRef.current || schemaLoading) return null
+			const trimmed = query.trim()
 			if (!trimmed) return null
-			runControllerRef.current?.abort()
 			const controller = new AbortController()
 			runControllerRef.current = controller
-			setRunning(true)
+			setExecution({ saving, taskId, stage: null })
 			setQueryError(null)
-			setLoadingStage(null)
+			// React's registry snapshot predates auto-loading. Carry the loaded sources with this result.
+			const tables = [...loadedTables]
+			const loadSource = async (source: TableSource, signal?: AbortSignal) => {
+				const table = await loadTable(source, signal)
+				if (table) tables.push(table)
+				return table
+			}
 			const res = await runWithSources(
-				{ conn: duckdb.conn, loadedTables: registry.tables, loadSource: registry.load, chartOptionsMap },
+				{ conn: duckdb.conn, loadedTables: tables, loadSource, chartOptionsMap },
 				trimmed,
 				sources,
 				{
 					onLoadingStage: (stage) => {
-						if (runControllerRef.current === controller) setLoadingStage(stage)
+						if (runControllerRef.current === controller && !controller.signal.aborted)
+							setExecution({ saving, taskId, stage })
 					}
 				},
 				controller.signal
@@ -128,10 +173,11 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 				cancelled: false,
 				error: error instanceof Error ? error.message : 'Could not load query sources'
 			}))
-			if (controller.signal.aborted || runControllerRef.current !== controller) return null
+			if (runControllerRef.current !== controller) return null
+			// A mounted editor must unlock after Stop, but an aborted result must never reach Save.
 			runControllerRef.current = null
-			setRunning(false)
-			setLoadingStage(null)
+			setExecution(null)
+			if (controller.signal.aborted) return null
 			if (res.ok) {
 				const classified = classifyColumns(res.result)
 				const nextChartConfig = chartConfigRef.current
@@ -142,27 +188,28 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 				setRanFresh(true)
 				setDurationMs(res.durationMs)
 				setChartConfig(nextChartConfig)
-				return { result: res.result, chartConfig: nextChartConfig }
+				return { result: res.result, chartConfig: nextChartConfig, tables }
 			}
 			if ('error' in res && !res.cancelled) setQueryError(res.error)
 			return null
 		},
-		[duckdb.conn, registry.tables, registry.load, chartOptionsMap, sql]
+		[duckdb.conn, loadedTables, loadTable, schemaLoading, chartOptionsMap]
 	)
 
 	const applyQuery = useCallback(
-		async (taskId: string, title: string, nextSql: string, tables?: Array<TableSource>, overwriteName?: boolean) => {
-			if (running || savePending || busyTaskId) return
+		(taskId: string, title: string, nextSql: string, tables?: Array<TableSource>, overwriteName?: boolean) => {
+			if (runControllerRef.current || schemaLoading) return
 			setSql(nextSql)
 			setName((prev) => (overwriteName ? title : prev.trim() ? prev : title))
-			if (!duckdb.conn) return
-			setBusyTaskId(taskId)
-			// Promise.finally rather than a try/finally statement: the compiler cannot lower a try without
-			// a catch, and the flag still clears when run rejects.
-			await run(nextSql, tables).finally(() => setBusyTaskId(null))
+			void run(nextSql, { sources: tables, taskId })
 		},
-		[running, savePending, busyTaskId, duckdb.conn, run]
+		[schemaLoading, run]
 	)
+
+	const handleClose = () => {
+		runControllerRef.current?.abort()
+		onClose()
+	}
 
 	const editorLineCount = sql.split('\n').length
 	const editorHeight = `${(Math.min(Math.max(editorLineCount + 1, 6), 22) * 19 + 16).toString()}px`
@@ -172,15 +219,15 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 	const needsRun = isDirty || !result || !chartConfig
 	const engineLoading = duckdb.status === 'loading'
 	const engineError = duckdb.status === 'error'
-	const canSave = !!sql.trim() && !running && !savePending && !(needsRun && (engineLoading || engineError))
+	const canSave = !!sql.trim() && !running && !schemaLoading && !(needsRun && (engineLoading || engineError))
 
 	const handleSave = useCallback(async () => {
-		if (!canSave) return
-		let outcome: RunOutcome | null = !needsRun && result && chartConfig ? { result, chartConfig } : null
+		if (!canSave || runControllerRef.current) return
+		let outcome: RunOutcome | null =
+			!needsRun && result && chartConfig ? { result, chartConfig, tables: loadedTables } : null
 		let ranForSave = false
 		if (!outcome) {
-			setSavePending(true)
-			outcome = await run().finally(() => setSavePending(false))
+			outcome = await run(sql, { saving: true })
 			if (!outcome) return
 			ranForSave = true
 		}
@@ -193,7 +240,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 			chartConfig: outcome.chartConfig,
 			displayMode,
 			rowCap,
-			registryTables: registry.tables
+			registryTables: outcome.tables
 		})
 		if (editItem) {
 			handleEditItem(config.id, config)
@@ -220,7 +267,6 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 		needsRun,
 		result,
 		chartConfig,
-		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; `run` is used.
 		run,
 		editItem,
 		name,
@@ -228,7 +274,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 		ranFresh,
 		displayMode,
 		rowCap,
-		registry.tables,
+		loadedTables,
 		handleEditItem,
 		handleAddSqlChart,
 		saveDownload,
@@ -239,7 +285,7 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 		<Ariakit.DialogProvider
 			open
 			setOpen={(open) => {
-				if (!open) onClose()
+				if (!open) handleClose()
 			}}
 		>
 			<Ariakit.Dialog
@@ -259,11 +305,16 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_540px]">
-					<div className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+				{/* Save owns this snapshot; keep Cancel and its status outside the locked editing region. */}
+				<div
+					inert={savePending}
+					className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 overflow-y-auto lg:grid lg:grid-cols-[minmax(0,1fr)_540px] lg:overflow-hidden"
+				>
+					<div className="flex min-h-0 min-w-0 shrink-0 flex-col gap-3 pr-1 lg:shrink lg:overflow-y-auto">
 						<input
 							type="text"
 							value={name}
+							readOnly={savePending}
 							onChange={(e) => setName(e.target.value)}
 							aria-label="Widget name"
 							placeholder="Widget name (optional)"
@@ -275,32 +326,43 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 								ref={editorRef}
 								value={sql}
 								onChange={setSql}
-								onRun={() => void run()}
-								tables={registry.tables}
+								onRun={() => void run(sql)}
+								tables={loadedTables}
 								height={editorHeight}
+								readOnly={savePending}
 							/>
 						</div>
 
 						<div className="flex shrink-0 flex-wrap items-center gap-3">
-							<button
+							<Ariakit.Button
 								type="button"
-								onClick={() => void run()}
-								disabled={running || savePending || engineLoading || !sql.trim()}
-								className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-on-brand shadow-sm transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+								onClick={() => (running ? stopQuery() : void run(sql))}
+								disabled={
+									savePending ||
+									(running ? execution.stopping : !!schemaLoading || engineLoading || engineError || !sql.trim())
+								}
+								accessibleWhenDisabled
+								className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-on-brand shadow-sm transition-colors hover:opacity-90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 							>
-								<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-									<path d="M8 5v14l11-7z" />
-								</svg>
-								{running ? 'Running…' : 'Run query'}
-								<span aria-hidden className="flex items-center gap-0.5">
-									<Keycap muted>⌘</Keycap>
-									<Keycap muted>↵</Keycap>
-								</span>
-							</button>
+								{running ? (
+									<LoadingSpinner size={14} />
+								) : (
+									<svg className="size-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+										<path d="M8 5v14l11-7z" />
+									</svg>
+								)}
+								{savePending ? 'Running…' : execution?.stopping ? 'Stopping…' : running ? 'Stop query' : 'Run query'}
+								{!running ? (
+									<span aria-hidden className="flex items-center gap-0.5">
+										<Keycap muted>⌘</Keycap>
+										<Keycap muted>↵</Keycap>
+									</span>
+								) : null}
+							</Ariakit.Button>
 							{loadingStage ? <span className="text-xs text-pro-text-tertiary">{loadingStage}</span> : null}
 							{engineLoading ? <span className="text-xs text-pro-text-tertiary">Starting SQL engine…</span> : null}
 							{engineError ? (
-								<span className="text-xs text-error">
+								<span role="alert" className="text-xs text-error">
 									SQL engine failed to load{duckdb.error ? `: ${duckdb.error}` : ''}.
 								</span>
 							) : null}
@@ -310,15 +372,18 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 						</div>
 
 						{queryError ? (
-							<div className="shrink-0 rounded-md border border-error/40 bg-error/10 px-3 py-2 text-xs text-error">
+							<div
+								role="alert"
+								className="shrink-0 rounded-md border border-error/40 bg-error/10 px-3 py-2 text-xs text-error"
+							>
 								{queryError}
 							</div>
 						) : null}
 
 						{resultRowCount !== null && resultRowCount > rowCap ? (
 							<div className="shrink-0 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-pro-text-secondary">
-								Result has {formatNumber(resultRowCount)} rows. The widget will show the first {formatNumber(rowCap)}
-								with this widget.
+								Result has {formatNumber(resultRowCount)} rows. The widget will show the first {formatNumber(rowCap)}{' '}
+								rows.
 							</div>
 						) : null}
 
@@ -337,26 +402,45 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 
 					<SqlChartModalSidebar
 						chartOptionsMap={chartOptionsMap}
-						loadedTables={registry.tables}
-						onLoadTable={registry.load}
-						schemaLoading={registry.loading}
-						busyTaskId={busyTaskId}
+						loadedTables={loadedTables}
+						onLoadTable={async (source) => {
+							if (runControllerRef.current) return null
+							setQueryError(null)
+							const controller = new AbortController()
+							runControllerRef.current = controller
+							return loadTable(source, controller.signal).finally(() => {
+								if (runControllerRef.current === controller) runControllerRef.current = null
+							})
+						}}
+						schemaLoading={schemaLoading}
+						schemaError={schemaError}
+						busyTaskId={execution?.taskId ?? null}
 						savedQueries={savedQueries}
 						onApplyExample={(example: ExampleQuery) =>
-							void applyQuery(`example:${example.title}`, example.title, example.sql, example.tables)
+							applyQuery(`example:${example.title}`, example.title, example.sql, example.tables)
 						}
 						onApplySaved={(query: QuerySavedConfig) =>
-							void applyQuery(`saved:${query.id}`, query.name, query.sql, query.tables, true)
+							applyQuery(`saved:${query.id}`, query.name, query.sql, query.tables, true)
 						}
 						onReplaceSql={setSql}
 						onInsertAtCursor={(text) => editorRef.current?.insertSnippet(text)}
 						onApplyAndRun={(snippet) => {
+							if (runControllerRef.current || schemaLoading) return
 							setSql(snippet)
 							void run(snippet)
 						}}
 					/>
 				</div>
 
+				<span role="status" className="text-xs text-pro-text-tertiary">
+					{execution?.stopping
+						? 'Stopping query…'
+						: savePending
+							? 'Running query before saving. Stop query keeps your draft; Cancel closes the editor.'
+							: running
+								? (loadingStage ?? 'Running query…')
+								: ''}
+				</span>
 				<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-medium pt-3">
 					<div className="flex flex-wrap items-center gap-4">
 						<span className="text-xs text-pro-text-tertiary">
@@ -368,14 +452,15 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 								type="number"
 								min={SQL_SNAPSHOT_ROW_CAP_MIN}
 								max={SQL_SNAPSHOT_ROW_CAP_MAX}
-								step={100}
+								step={1}
 								value={rowCap}
+								readOnly={savePending}
 								onChange={(e) => {
 									const next = Number(e.target.value)
 									if (Number.isFinite(next)) setRowCap(next)
 								}}
 								onBlur={() => setRowCap((prev) => clampRowCap(prev))}
-								title={`How many query result rows the widget can display (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). Query results are refreshed at request time and are not stored in the dashboard.`}
+								title={`How many query result rows the widget can display (${SQL_SNAPSHOT_ROW_CAP_MIN}–${SQL_SNAPSHOT_ROW_CAP_MAX}). The widget keeps a preview of the query result and refreshes it when requested.`}
 								className="w-20 rounded-md border pro-border bg-page px-2 py-1 text-xs text-pro-text-primary focus:ring-1 focus:ring-brand focus:outline-hidden"
 							/>
 						</label>
@@ -383,19 +468,27 @@ export function SqlChartModal({ editItem, onClose }: SqlChartModalProps) {
 					<div className="flex items-center gap-2">
 						<button
 							type="button"
-							onClick={onClose}
+							onClick={handleClose}
 							className="rounded-md border pro-border pro-hover-bg px-4 py-2 text-sm text-pro-text-secondary transition-colors hover:text-pro-text-primary"
 						>
 							Cancel
 						</button>
-						<button
+						<Ariakit.Button
 							type="button"
-							onClick={() => void handleSave()}
-							disabled={!canSave}
-							className="rounded-md bg-brand px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+							onClick={() => (savePending ? stopQuery() : void handleSave())}
+							accessibleWhenDisabled
+							disabled={savePending ? execution?.stopping : !canSave}
+							className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-medium text-on-brand transition-colors hover:opacity-90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 						>
-							{savePending ? 'Running…' : editItem ? 'Save changes' : 'Add to dashboard'}
-						</button>
+							{savePending ? <LoadingSpinner size={14} /> : null}
+							{savePending
+								? execution?.stopping
+									? 'Stopping…'
+									: 'Stop query'
+								: editItem
+									? 'Save changes'
+									: 'Add to dashboard'}
+						</Ariakit.Button>
 					</div>
 				</div>
 			</Ariakit.Dialog>

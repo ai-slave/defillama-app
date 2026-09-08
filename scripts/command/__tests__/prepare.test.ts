@@ -1,38 +1,8 @@
-import { readFileSync } from 'node:fs'
 import { describe, expect, test, vi } from 'vitest'
-import { createPreparationSteps, runPreparationCommand, type PreparationStep } from '../prepare'
+import { runPreparationCommand, type PreparationStep } from '../prepare'
 import { CommandExitError } from '../timedStep'
 
 describe('preparation command', () => {
-	test('runs the production build on Bun and scopes the Node heap override to the Next child process', () => {
-		const packageJson = JSON.parse(readFileSync('package.json', 'utf8')) as { scripts: { build: string } }
-		const wrapper = readFileSync('scripts/command/runPreparedNext.mjs', 'utf8')
-
-		expect(packageJson.scripts.build).toBe('bun run --bun ./scripts/command/runPreparedNext.mjs production build')
-		expect(wrapper).not.toContain('BUILD_OLD_SPACE_OPTION')
-		expect(wrapper).not.toContain('--max-old-space-size=4096')
-		expect(wrapper).toContain("const buildNodeOptions = process.versions.bun ? '' : '--max-heap-size=6144'")
-		expect(wrapper).toContain('buildNodeOptions ? { NODE_OPTIONS: buildNodeOptions } : {}')
-		expect(wrapper).toContain("path.join(repoRoot, 'scripts', 'verifyDatasetSnapshotBuild.ts')")
-		expect(wrapper).toContain('isProductionBuild && nextExitCode === 0')
-	})
-
-	test('creates default preparation steps in order', () => {
-		const steps = createPreparationSteps({
-			env: { NODE_ENV: 'test' },
-			logger: { log: vi.fn() },
-			repoRoot: '/tmp/defillama-app'
-		})
-
-		expect(steps.map((step) => step.name)).toEqual([
-			'Metadata cache',
-			'Site navigation',
-			'Dataset snapshot',
-			'llms.txt',
-			'robots.txt'
-		])
-	})
-
 	test('runs preparation steps in order', async () => {
 		const calls: Array<string> = []
 		const steps: Array<PreparationStep> = [

@@ -496,10 +496,12 @@ function ProDashboardAPIProviderInner({
 		refetchOnMount: initialDashboard ? false : 'always',
 		retry: (failureCount, error) => error instanceof DashboardError && error.status >= 500 && failureCount < 3,
 		enabled: dashboardReady && !!initialDashboardId,
-		...(initialDashboard &&
-		matchesDashboardKey(initialDashboard, initialDashboardId) &&
-		!wasDashboardDeleted(queryClient, initialDashboard.id, user?.id)
-			? { initialData: initialDashboard }
+		...(initialDashboard && matchesDashboardKey(initialDashboard, initialDashboardId)
+			? {
+					// Read the deletion marker when seeding, not from a memoized render-time cache read.
+					initialData: () =>
+						wasDashboardDeleted(queryClient, initialDashboard.id, user?.id) ? undefined : initialDashboard
+				}
 			: {}),
 		...(initialDashboardUpdatedAt === undefined ? {} : { initialDataUpdatedAt: initialDashboardUpdatedAt })
 	})

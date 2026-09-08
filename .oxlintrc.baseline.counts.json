@@ -7,7 +7,6 @@
 	"scripts/latency/buildLatencyUrls.js": {"no-await-in-loop":1},
 	"scripts/metadata/__tests__/pages.test.ts": {"vitest/require-to-throw-message":1},
 	"scripts/policies/check-date-formatting.ts": {"unicorn/no-lonely-if":1},
-	"scripts/verifyDatasetSnapshotBuild.ts": {"no-await-in-loop":2},
 	"src/api/coingecko.ts": {"no-await-in-loop":1},
 	"src/auth/GoogleSignInButton.test.ts": {"vitest/valid-expect":1},
 	"src/auth/authStore.test.ts": {"vitest/no-conditional-expect":1},
