@@ -112,7 +112,7 @@ const columns = [
 		meta: {
 			align: 'end',
 			headerClassName: 'min-w-[137px]',
-			headerHelperText: 'Tick-data hours behind these figures — more hours, more confidence.'
+			headerHelperText: 'Tick-data hours behind these figures: more hours, more confidence.'
 		}
 	}),
 	columnHelper.accessor((row) => row.nTrades, {

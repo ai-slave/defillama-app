@@ -107,7 +107,9 @@ export function Breakdown({
 function CurrencyTag({ row }: { row: RampRowModel }) {
 	if (!row.costIsFallback || !row.cost) return null
 	return (
-		<Tooltip content={`The selected currency doesn't price the full round trip here — priced in ${row.cost.currency}.`}>
+		<Tooltip
+			content={`The selected currency doesn't price the full round trip here, so it is priced in ${row.cost.currency}.`}
+		>
 			<span className="ml-1 align-super label-sm text-tertiary">{row.cost.currency}</span>
 		</Tooltip>
 	)
@@ -198,7 +200,7 @@ export function RampTradeValue({ row, size }: { row: RampRowModel; size: number 
 	if (row.tradeCostUsd == null || !row.trade) return DASH
 	const { takerFee } = row.variant.assumptions
 	const detail = [
-		`Execution only — no fiat rail, no transfer.`,
+		`Execution only: no fiat rail, no transfer.`,
 		`${formatUsd(size, { maximumFractionDigits: 0 })} market buy on ${row.trade.pair ?? '–'}`,
 		`Taker fee${takerFee == null ? '' : ` (${formatPercent(takerFee, { input: 'fraction' })})`}: ${usd(row.trade.tradeFeeUsd) ?? 'unknown'}`,
 		`Book slippage: ${usd(row.trade.slippageBuyUsd) ?? 'unknown'}`
@@ -246,7 +248,7 @@ export function RampAccessValue({ row, country }: { row: RampRowModel; country: 
 	const detail = [
 		presentation.description,
 		row.note,
-		country && row.usedFallback ? 'No record for this region — the venue’s global terms apply.' : null
+		country && row.usedFallback ? 'No record for this region, so the venue’s global terms apply.' : null
 	]
 		.filter(Boolean)
 		.join('\n')

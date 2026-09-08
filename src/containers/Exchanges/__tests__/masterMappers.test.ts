@@ -1503,13 +1503,16 @@ describe('canonical research charts', () => {
 				'reported_inverse_perp',
 				'active_liquidity_spot',
 				'active_liquidity_linear_perp',
-				'active_liquidity_inverse_perp'
+				'active_liquidity_inverse_perp',
+				'active_liquidity_measured_spot',
+				'active_liquidity_measured_linear_perp',
+				'active_liquidity_measured_inverse_perp'
 			],
 			exchanges: ['one', 'two'],
 			types: ['cex', 'dex'],
 			series: [
-				[[30, 0], [20, 10], null, [60, 1], [40, 20], null, null, null, null],
-				[null, [5, 0], null, null, [10, 1], null, null, null, null]
+				[[30, 0], [20, 10], null, [60, 1], [40, 20], null, null, null, null, null, null, null],
+				[null, [5, 0], null, null, [10, 1], null, null, null, null, null, null, null]
 			],
 			names: { one: 'one', two: 'two' },
 			last_updated: '2026-07-14T00:00:00Z',
@@ -1603,13 +1606,16 @@ describe('canonical research charts', () => {
 				'reported_inverse_perp',
 				'active_liquidity_spot',
 				'active_liquidity_linear_perp',
-				'active_liquidity_inverse_perp'
+				'active_liquidity_inverse_perp',
+				'active_liquidity_measured_spot',
+				'active_liquidity_measured_linear_perp',
+				'active_liquidity_measured_inverse_perp'
 			],
 			exchanges: ['covered', 'missing-reported'],
 			types: ['cex', 'dex'],
 			series: [
-				[[30, 20, 10], [20, 10, 0], null, [60, 0, 0], [40, 0, 0], null, null, null, null],
-				[[5, 5, 5], null, null, null, null, null, null, null, null]
+				[[30, 20, 10], [20, 10, 0], null, [60, 0, 0], [40, 0, 0], null, null, null, null, null, null, null],
+				[[5, 5, 5], null, null, null, null, null, null, null, null, null, null, null]
 			],
 			names: { covered: 'covered', 'missing-reported': 'missing-reported' },
 			last_updated: '2026-07-14T00:00:00Z',
@@ -1639,14 +1645,17 @@ describe('canonical research charts', () => {
 				'reported_inverse_perp',
 				'active_liquidity_spot',
 				'active_liquidity_linear_perp',
-				'active_liquidity_inverse_perp'
+				'active_liquidity_inverse_perp',
+				'active_liquidity_measured_spot',
+				'active_liquidity_measured_linear_perp',
+				'active_liquidity_measured_inverse_perp'
 			],
 			exchanges,
 			types: exchanges.map(() => 'cex'),
 			series: exchanges.map((_, index) => {
 				const reported = 100 - index * 10
 				const normalized = index === 8 ? 8 : index === 9 ? 7 : reported / 2
-				return [[normalized], null, null, [reported], null, null, null, null, null]
+				return [[normalized], null, null, [reported], null, null, null, null, null, null, null, null]
 			}),
 			names: Object.fromEntries(exchanges.map((exchange) => [exchange, exchange])),
 			last_updated: '2026-07-14T00:00:00Z',

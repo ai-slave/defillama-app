@@ -173,7 +173,7 @@ export interface MasterFiatFeeRow {
 	method: string
 	min: string
 	note: string
-	src: MasterMetadataLink
+	src: MasterMetadataLink | null
 	time: string
 }
 
@@ -799,7 +799,7 @@ export interface MasterCryptoFeeRow {
 	fee: string
 	min: string
 	note: string
-	src: MasterMetadataLink
+	src: MasterMetadataLink | null
 	time: string
 }
 
@@ -849,6 +849,9 @@ export type MasterChartMetric =
 	| 'active_liquidity_spot'
 	| 'active_liquidity_linear_perp'
 	| 'active_liquidity_inverse_perp'
+	| 'active_liquidity_measured_spot'
+	| 'active_liquidity_measured_linear_perp'
+	| 'active_liquidity_measured_inverse_perp'
 
 /** Exact ordered key schema per chart part (lib/chart-contract.ts GLOBAL_CHART_KEYS). */
 export const MASTER_CHART_KEYS = {
@@ -864,7 +867,10 @@ export const MASTER_CHART_KEYS = {
 		'reported_inverse_perp',
 		'active_liquidity_spot',
 		'active_liquidity_linear_perp',
-		'active_liquidity_inverse_perp'
+		'active_liquidity_inverse_perp',
+		'active_liquidity_measured_spot',
+		'active_liquidity_measured_linear_perp',
+		'active_liquidity_measured_inverse_perp'
 	]
 } as const satisfies Record<MasterChartPart, ReadonlyArray<MasterChartMetric>>
 

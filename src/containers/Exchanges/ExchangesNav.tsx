@@ -33,10 +33,17 @@ const EXCHANGES_PAGES = {
 		label: 'Token finder',
 		heading: 'Find exchanges by token',
 		description: 'Find exchanges and market segments listing all or any selected tokens.'
+	},
+	ramp: {
+		href: '/ramp',
+		label: 'Fiat ramps',
+		heading: 'Fiat on-ramp and off-ramp costs',
+		description:
+			'What a fiat round trip costs on each venue: rail fee, taker fee, slippage and the BTC transfer, per country and currency.'
 	}
 } as const
 
-const EXCHANGES_PAGE_ORDER = ['exchanges', 'rank', 'reserves', 'charts', 'tokens'] as const
+const EXCHANGES_PAGE_ORDER = ['exchanges', 'rank', 'reserves', 'charts', 'tokens', 'ramp'] as const
 
 export type ExchangesPage = keyof typeof EXCHANGES_PAGES
 
@@ -47,7 +54,10 @@ export function ExchangesNav({ activePage, country = null }: { activePage: Excha
 			<nav className={tabTrackStyles} aria-label="Exchanges pages">
 				{EXCHANGES_PAGE_ORDER.map((pageId) => {
 					const page = EXCHANGES_PAGES[pageId]
-					const href = pageId === 'exchanges' || pageId === 'tokens' ? withCountryParam(page.href, country) : page.href
+					const href =
+						pageId === 'exchanges' || pageId === 'tokens' || pageId === 'ramp'
+							? withCountryParam(page.href, country)
+							: page.href
 					if (pageId === activePage) {
 						return (
 							<TabLink as={BasicLink} key={pageId} href={href} data-active aria-current="page">

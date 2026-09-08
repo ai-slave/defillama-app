@@ -117,7 +117,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'spot',
 			grouping: 'exchange',
 			title: 'Spot market depth · Exchanges',
-			description: `End-of-day spot order-book depth within ±2% by exchange. ${TOP_EXCHANGES}`,
+			description: `End-of-day spot bid plus ask depth within ±2% of mid by exchange, from our own order-book snapshots. ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -127,7 +127,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'linear_perp',
 			grouping: 'exchange',
 			title: 'USD perp market depth · Exchanges',
-			description: `End-of-day USD perp order-book depth within ±2% by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
+			description: `End-of-day USD perp bid plus ask depth within ±2% of mid by exchange, from our own order-book snapshots. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -137,7 +137,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'inverse_perp',
 			grouping: 'exchange',
 			title: 'COIN perp market depth · Exchanges',
-			description: `End-of-day COIN perp order-book depth within ±2% by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
+			description: `End-of-day COIN perp bid plus ask depth within ±2% of mid by exchange, from our own order-book snapshots. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -148,7 +148,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			grouping: 'venue-type',
 			title: 'Market depth · CEX vs DEX',
 			description:
-				'End-of-day order-book depth within ±2% grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate.',
+				'End-of-day bid plus ask depth within ±2% of mid from our own order-book snapshots, grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate.',
 			valueSymbol: '$'
 		},
 		{
@@ -159,7 +159,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			grouping: 'segment',
 			title: 'Market depth · BTC by segment',
 			description:
-				'Daily BTC order-book depth within ±2% across all exchanges, with spot, USD perp, and COIN perp lines kept separate.',
+				'Daily BTC bid plus ask depth within ±2% of mid across all exchanges, from our own order-book snapshots, with spot, USD perp, and COIN perp lines kept separate.',
 			valueSymbol: '$'
 		}
 	],

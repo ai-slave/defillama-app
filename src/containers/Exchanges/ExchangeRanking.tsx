@@ -247,7 +247,7 @@ function PillarSection({ pillar, ranking }: { pillar: ExchangeRankingPillarModel
 								{sub.weight}
 								{pillar.key === 'R' ? ` of ${pillar.weight}` : ''}
 							</span>
-							<span className="text-secondary"> — {sub.what}</span>
+							<span className="text-secondary">: {sub.what}</span>
 						</li>
 					))}
 				</ul>
@@ -286,6 +286,13 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 					the venue, execution quality from tick-level fills, volume and open interest that survive verification, and
 					order-book depth we snapshot ourselves. It is not a judgement of conduct or solvency; a low pillar means weak
 					measurable evidence, and where our measurement is the limit the venue is not penalized.
+				</p>
+				<p className="body-md text-secondary">
+					Why this design: the usual exchange ranking is a volume table, and volume is the one figure a venue reports
+					about itself and can inflate at no cost. Each pillar here is something a venue cannot print. Reserves must
+					show up on chain or in filed accounts, execution is measured from the fills that actually happened, activity
+					only counts volume and open interest that our own order-book snapshots could support, and liquidity is resting
+					depth we observed. The weights put half the score on those two hardest-to-fake pillars.
 				</p>
 				<div className="flex flex-wrap items-center gap-2">
 					{ranking.pillars.map((pillar) => (
@@ -370,10 +377,10 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 			<h2 className="px-1 pt-2 text-xl font-semibold">How the score is built</h2>
 			<Card padding="md" className="flex flex-col gap-2 body-md text-secondary">
 				<p>
-					The score is a weighted mean of four 0–100 pillars. Within each pillar, size is log-scaled: the largest venue
-					scores 100 and a venue a tenth its size still scores about 70, so a mid-sized honest venue is not crushed by
-					the giants. Every credibility check lives inside the pillar whose data it questions and lowers that pillar;
-					there is no separate penalty layer.
+					The score is a weighted mean of four 0 to 100 pillars. Within each pillar, size is log-scaled: the largest
+					venue scores 100 and a venue a tenth its size still scores about 70, so a mid-sized honest venue is not
+					crushed by the giants. Every credibility check lives inside the pillar whose data it questions and lowers that
+					pillar; there is no separate penalty layer.
 				</p>
 				<p>
 					An input we do not have is not counted as zero: its weight redistributes over the pillars we did measure. An
@@ -404,9 +411,9 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 					})}
 				</div>
 				<p className="body-md text-secondary">
-					Fixed bands on the 0–100 score, not quantiles, so a new listing does not reshuffle everyone. S also requires a
-					measured execution pillar: the top grade cannot be earned from displayed data alone. A venue with no observed
-					order book is not ranked rather than scored low.
+					Fixed bands on the 0 to 100 score, not quantiles, so a new listing does not reshuffle everyone. S also
+					requires a measured execution pillar: the top grade cannot be earned from displayed data alone. A venue with
+					no observed order book is not ranked rather than scored low.
 				</p>
 			</Card>
 

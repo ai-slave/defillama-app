@@ -196,7 +196,7 @@ export function normalizedOrReported(
 }
 
 const REPORTED_NOTE =
-	'Reported volume: no order book captured for this segment, so there is nothing to normalize against.'
+	'Reported volume, not liquidity-checked: no order book captured for this segment, so there is nothing to normalize against.'
 
 /**
  * One segment-qualified money column for the merged view.

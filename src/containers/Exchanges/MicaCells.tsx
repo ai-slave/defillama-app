@@ -66,12 +66,14 @@ export function MicaDepthValue({
 	)
 }
 
-export const SPOT_DEPTH_2_HELP = 'Aggregated spot orderbook bid and ask depth within 2% of mid price.'
+export const SPOT_DEPTH_2_HELP =
+	'Bid plus ask depth within 2% of mid across the venue’s spot markets, from our own order-book snapshots, never venue-reported.'
 export const SPOT_DEPTH_05_HELP =
-	'Aggregated spot orderbook bid and ask depth within 0.5% of mid price, closest to executable liquidity at the touch.'
-export const PERP_DEPTH_2_HELP = 'Aggregated perpetual orderbook bid and ask depth within 2% of mid price.'
+	'Bid plus ask depth within 0.5% of mid across the venue’s spot markets, from our own order-book snapshots. Closest to executable liquidity at the touch.'
+export const PERP_DEPTH_2_HELP =
+	'Bid plus ask depth within 2% of mid across the venue’s perpetual markets, from our own order-book snapshots, never venue-reported.'
 export const PERP_DEPTH_05_HELP =
-	'Aggregated perpetual orderbook bid and ask depth within 0.5% of mid price, closest to executable liquidity at the touch.'
+	'Bid plus ask depth within 0.5% of mid across the venue’s perpetual markets, from our own order-book snapshots. Closest to executable liquidity at the touch.'
 export const ON_RAMP_COST_HELP =
 	'Total cost to turn €1,000 into BTC in your own wallet: SEPA deposit + taker fee + orderbook slippage + BTC withdrawal fee. Hover for the full breakdown.'
 export const OFF_RAMP_COST_HELP =

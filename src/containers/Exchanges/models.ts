@@ -117,7 +117,7 @@ export interface ExchangeFiatFeeRow {
 	method: string
 	minimum: string
 	note: string
-	source: ExchangeMetadataLink
+	source: ExchangeMetadataLink | null
 	processingTime: string
 }
 
@@ -792,7 +792,7 @@ export interface CryptoRailRowModel {
 	minimum: string
 	note: string
 	processingTime: string
-	source: ExchangeMetadataLink
+	source: ExchangeMetadataLink | null
 }
 
 export interface CryptoRailsModel {

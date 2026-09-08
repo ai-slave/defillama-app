@@ -42,14 +42,18 @@ function FiatFeeTable({ label, rows }: { label: string; rows: Array<ExchangeFiat
 										{displayText(row.note)}
 									</td>
 									<td className="border-b border-subtle px-2 py-1.5">
-										<a
-											href={row.source.url}
-											target="_blank"
-											rel="noopener noreferrer"
-											className="text-link hover:underline"
-										>
-											{row.source.label}
-										</a>
+										{row.source ? (
+											<a
+												href={row.source.url}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="text-link hover:underline"
+											>
+												{row.source.label}
+											</a>
+										) : (
+											<span className="text-tertiary">–</span>
+										)}
 									</td>
 								</tr>
 							))}

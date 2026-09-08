@@ -135,7 +135,7 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 				headerClassName: 'min-w-[116px] whitespace-nowrap',
 				align: 'end',
 				headerHelperText:
-					'Deposit and withdrawal routes per asset and network — BTC, ETH and their L2s. Sparse today: most venues carry only the BTC withdrawal fee the on-ramp total already charges.',
+					'Deposit and withdrawal routes per asset and network (BTC, ETH and their L2s). Sparse today: most venues carry only the BTC withdrawal fee the on-ramp total already charges.',
 				csvValue: (row) => (row.variant.cryptoRails ? cryptoRailSummary(row.variant.cryptoRails) : null)
 			}
 		}),

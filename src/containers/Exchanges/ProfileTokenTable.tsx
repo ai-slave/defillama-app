@@ -31,7 +31,7 @@ const money = (value: number | null | undefined) =>
 			})
 
 const REPORTED_NOTE =
-	'Reported volume: no order book captured for one of these markets, so there is nothing to normalize against.'
+	'Reported volume, not liquidity-checked: no order book captured for one of these markets, so there is nothing to normalize against.'
 
 function Volume({ value, reported }: { value: number | null; reported: boolean }) {
 	if (value == null) return <span className="text-tertiary">–</span>
