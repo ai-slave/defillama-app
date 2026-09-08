@@ -209,6 +209,9 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	// Per-component tooltip size cache (used by tooltip.position). Keeping this in a ref avoids
 	// recreating it on effect re-runs and prevents cross-chart interference.
 	const tooltipSizeCacheRef = useRef<{ w: number; h: number; updatedAt: number } | null>(null)
+	// The end-label formatter needs the live instance, but echarts calls it while painting, never during
+	// render. A stable getter keeps the ref itself out of the series build below.
+	const getChart = useStableCallback(() => chartRef.current)
 	const { chartInstance, handleChartReady } = useGetChartInstance()
 	const persistentLifecycle = usePersistentEChartsLifecycle()
 
@@ -412,7 +415,6 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	)
 
 	const { series, sourceAxisIndexes } = useMemo(() => {
-		// oxlint-disable-next-line react/refs -- chartRef reaches only the end-label formatter, which echarts calls when it paints; the series built here never read the ref's value.
 		const builtSeries = buildMultiSeries({
 			charts: renderedCharts,
 			selectedCharts,
@@ -420,7 +422,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			solidChartAreaStyle,
 			chartTheme,
 			hallmarksMarkLine,
-			chartRef,
+			getChart,
 			validLegendIcons
 		})
 		return normalizeSeriesYAxisIndices(builtSeries)
@@ -431,6 +433,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		solidChartAreaStyle,
 		selectedCharts,
 		hallmarksMarkLine,
+		getChart,
 		validLegendIcons
 	])
 	const displayValueSymbol = expandTo100Percent ? '%' : valueSymbol
@@ -448,11 +451,11 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		let tooltipTotalExcludedSeries: Set<string> | undefined
 		for (const chart of displayedCharts) {
 			if (chart.valueSymbol != null) {
-				seriesSymbols ??= new Map<string, string>()
+				seriesSymbols = seriesSymbols ?? new Map<string, string>()
 				seriesSymbols.set(chart.name, chart.valueSymbol)
 			}
 			if (chart.excludeFromTooltipTotal) {
-				tooltipTotalExcludedSeries ??= new Set<string>()
+				tooltipTotalExcludedSeries = tooltipTotalExcludedSeries ?? new Set<string>()
 				tooltipTotalExcludedSeries.add(chart.name)
 			}
 		}

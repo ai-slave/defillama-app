@@ -9,7 +9,7 @@ type NamedLineSeriesOption = Omit<LineSeriesOption, 'type'> & { name: string; ty
 type NamedBarSeriesOption = Omit<BarSeriesOption, 'type'> & { name: string; type: 'bar' }
 
 type MultiSeriesRenderSeries = NamedLineSeriesOption | NamedBarSeriesOption
-type ChartInstanceRef = { current: echarts.ECharts | null }
+type GetChartInstance = () => echarts.ECharts | null
 
 const MIN_PROJECTION_LABEL_HEIGHT_PX = 16
 const EMPHASIS_COLOR_LIFT = 0.25
@@ -38,13 +38,13 @@ function createEndLabel(
 	offset: [number, number],
 	seriesDimension: string | number | undefined,
 	yAxisIndex: number,
-	chartRef: ChartInstanceRef | undefined
+	getChart: GetChartInstance | undefined
 ): NonNullable<LineSeriesOption['endLabel']> {
 	return {
 		show: true,
-		formatter: chartRef
+		formatter: getChart
 			? (params: DefaultLabelFormatterCallbackParams) => {
-					const instance = chartRef.current
+					const instance = getChart()
 					if (!instance || instance.isDisposed() || typeof seriesDimension !== 'number') return text
 					const value = Array.isArray(params.value) ? params.value[seriesDimension] : undefined
 					if (typeof value !== 'number') return text
@@ -71,7 +71,7 @@ export function buildMultiSeries({
 	solidChartAreaStyle,
 	chartTheme,
 	hallmarksMarkLine,
-	chartRef,
+	getChart,
 	validLegendIcons
 }: {
 	charts: IMultiSeriesChartProps['charts']
@@ -80,7 +80,9 @@ export function buildMultiSeries({
 	solidChartAreaStyle: boolean
 	chartTheme: ChartTheme
 	hallmarksMarkLine?: ReturnType<typeof buildHallmarksMarkLine> | undefined
-	chartRef?: ChartInstanceRef | undefined
+	/** Reads the live echarts instance when the end-label formatter paints. A getter rather than a ref
+	    object so nothing ref-shaped crosses render, which is what lets MultiSeriesChart compile. */
+	getChart?: GetChartInstance | undefined
 	/** Legend icon URLs whose image has been probed and loads; other icons render as plain markers. */
 	validLegendIcons: ReadonlySet<string>
 }) {
@@ -190,7 +192,7 @@ export function buildMultiSeries({
 					isForecast ? [-80, 15] : [-40, 10],
 					seriesDimension,
 					chart.yAxisIndex ?? 0,
-					chartRef
+					getChart
 				)
 			}
 		}

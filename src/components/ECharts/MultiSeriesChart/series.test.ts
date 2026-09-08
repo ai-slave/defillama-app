@@ -96,12 +96,11 @@ describe('MultiSeriesChart series construction', () => {
 	})
 
 	test('styles forecast series and hides only end labels that are too short to fit', () => {
-		const chartRef: { current: ECharts | null } = {
-			current: {
-				isDisposed: () => false,
-				convertToPixel: (_finder: unknown, value: number) => value * 2
-			} as unknown as ECharts
-		}
+		const instance = {
+			isDisposed: () => false,
+			convertToPixel: (_finder: unknown, value: number) => value * 2
+		} as unknown as ECharts
+		const getChart = () => instance
 		const series = requireLineSeries(
 			buildMultiSeries({
 				charts: [
@@ -117,7 +116,7 @@ describe('MultiSeriesChart series construction', () => {
 				solidChartAreaStyle: false,
 				validLegendIcons: NO_ICONS,
 				chartTheme,
-				chartRef
+				getChart
 			})[0]
 		)
 

@@ -4,9 +4,10 @@ import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/co
 import * as echarts from 'echarts/core'
 import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
+import { useStableCallback } from '~/hooks/useStableCallback'
 import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { CHART_INSET } from '../../shared/chartSpacing'
 import { getChartTheme } from '../../shared/chartTheme'
@@ -360,14 +361,17 @@ export default function MarketTreemapChart({
 
 	const applyOptionRef = useRef<(() => void) | null>(null)
 	const iconRefreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-	const scheduleIconRefresh = useCallback(() => {
+	// Stable rather than a plain useCallback: prepareLeaf receives this during render, and the compiler
+	// rejects a render-phase hand-off of any function it can see reading a ref. Only image load events
+	// call it, never render.
+	const scheduleIconRefresh = useStableCallback(() => {
 		if (iconRefreshTimer.current) clearTimeout(iconRefreshTimer.current)
 		iconRefreshTimer.current = setTimeout(() => {
 			iconRefreshTimer.current = null
 			if (pendingIconUrls.size > 0) return
 			applyOptionRef.current?.()
 		}, 200)
-	}, [])
+	})
 	useEffect(() => {
 		return () => {
 			if (iconRefreshTimer.current) clearTimeout(iconRefreshTimer.current)
@@ -381,7 +385,6 @@ export default function MarketTreemapChart({
 		const byIconKey = new Map<number, PreparedMarketTreemapLeaf>()
 		for (const leaf of leaves) {
 			if (byIconKey.has(leaf.iconKey)) throw new Error(`Duplicate market treemap icon key ${leaf.iconKey}`)
-			// oxlint-disable-next-line react/refs -- prepareLeaf stores the callback for image load events; it never calls it during render.
 			const prepared = prepareLeaf(leaf, scheduleIconRefresh)
 			ordered.push(prepared)
 			byIconKey.set(leaf.iconKey, prepared)

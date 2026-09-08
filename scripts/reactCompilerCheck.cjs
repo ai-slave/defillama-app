@@ -83,8 +83,14 @@ for (const relativePath of files) {
 		const detail = event.detail ?? {}
 		const options = detail.options ?? detail
 		const reason = options.reason ?? options.description ?? JSON.stringify(detail).slice(0, 200)
-		// fnLoc points at the enclosing function; options.loc points at the expression to actually fix.
-		const at = options.loc?.start?.line ?? event.fnLoc?.start?.line ?? '?'
+		// fnLoc points at the enclosing function, which is useless on a 1000-line component. Refs and a few
+		// other categories carry the offending expression in `details` instead of `options.loc`, so read
+		// that first and only fall back to the function.
+		const at =
+			options.details?.find((entry) => entry.loc?.start?.line)?.loc?.start?.line ??
+			options.loc?.start?.line ??
+			event.fnLoc?.start?.line ??
+			'?'
 		console.log(`  BAILOUT ${relativePath}:${at}: ${reason}`)
 	}
 	// Printed in the BAILOUT shape so the baseline records deliberate opt-outs too: removing a directive

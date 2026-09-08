@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStableCallback } from '~/hooks/useStableCallback'
 
 type DebouncedFunction<T extends (...args: Array<any>) => void> = ((...args: Parameters<T>) => void) & {
@@ -20,45 +20,41 @@ export function useDebouncedCallback<T extends (...args: Array<any>) => void>(
 		callback(...args)
 	})
 
-	const cancel = useCallback(() => {
+	// Every handle is a stable callback rather than a useCallback so the timer and pending-args refs stay
+	// inside this hook. Handing the compiler a function it can see touching a ref is what it rejects, even
+	// when -- as here -- callers only ever invoke these from event handlers, timers and effects.
+	const cancel = useStableCallback(() => {
 		if (timeoutRef.current != null) {
 			clearTimeout(timeoutRef.current)
 			timeoutRef.current = null
 		}
 		pendingArgsRef.current = null
-	}, [])
+	})
 
-	const flush = useCallback(() => {
+	const flush = useStableCallback(() => {
 		const pendingArgs = pendingArgsRef.current
 		cancel()
 		if (pendingArgs != null) onInvoke(pendingArgs)
-	}, [cancel, onInvoke])
+	})
+
+	const schedule = useStableCallback((args: Parameters<T>) => {
+		cancel()
+		pendingArgsRef.current = args
+		timeoutRef.current = setTimeout(() => {
+			const pendingArgs = pendingArgsRef.current
+			timeoutRef.current = null
+			pendingArgsRef.current = null
+			if (pendingArgs != null) onInvoke(pendingArgs)
+		}, normalizedDelay)
+	})
 
 	useEffect(() => {
 		return cancel
 	}, [cancel])
 
-	// The debounced callable and its cancel/flush handles own the pending-args and timer refs. Callers
-	// invoke them from event handlers and effects, never while rendering, so no render output depends on
-	// a ref's value here.
 	return useMemo(
-		() =>
-			Object.assign(
-				// oxlint-disable-next-line react/refs -- see above
-				((...args: Parameters<T>) => {
-					cancel()
-					pendingArgsRef.current = args
-					timeoutRef.current = setTimeout(() => {
-						const pendingArgs = pendingArgsRef.current
-						timeoutRef.current = null
-						pendingArgsRef.current = null
-						if (pendingArgs != null) onInvoke(pendingArgs)
-					}, normalizedDelay)
-				}) as DebouncedFunction<T>,
-				// oxlint-disable-next-line react/refs -- see above
-				{ cancel, flush }
-			),
-		[cancel, flush, normalizedDelay, onInvoke]
+		() => Object.assign(((...args: Parameters<T>) => schedule(args)) as DebouncedFunction<T>, { cancel, flush }),
+		[cancel, flush, schedule]
 	)
 }
 

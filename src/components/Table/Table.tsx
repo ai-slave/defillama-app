@@ -10,23 +10,23 @@ import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
-// These components must not compile until they take reactive row and cell data. `instance` arrives as a
-// prop, so the compiler never sees `useReactTable` and does not flag the incompatible library; it
-// happily caches `instance.getRowModel()` against the instance identity and `row.getVisibleCells()`
-// against the row identity. TanStack keeps both objects stable while their state mutates, so the cached
-// reads freeze after the first render: sorting and filtering stop taking effect, replaced data keeps its
-// old values, and hiding a column drops its header while leaving the cells.
+// `TableRow` and `VirtualTable` carry `'use no memo'` and must keep it until they take reactive row and
+// cell data. `instance` arrives as a prop, so the compiler never sees `useReactTable` and does not flag
+// the incompatible library; it happily caches `instance.getRowModel()` against the instance identity and
+// `row.getVisibleCells()` against the row identity. TanStack keeps both objects stable while their state
+// mutates, so the cached reads freeze after the first render: sorting and filtering stop taking effect,
+// replaced data keeps its old values, and hiding a column drops its header while leaving the cells.
 //
-// The `['--x' as string]` computed keys below are what keeps the compiler out. Replacing them with the
-// `{ '--x': v } as CSSProperties` form used elsewhere lets these components compile and reintroduces all
-// of that silently, so leave them until the TanStack reads are reactive.
-//
-// A `'use no memo'` directive on each component would say this out loud instead of relying on a cast,
-// which is what PaginatedTable, ProDashboard's TableBody and MarketMakers/StickyTable do for the same
-// reason. That is the better end state and it is now tracked by the baseline, but it is deliberately not
-// in this change: these two components already regressed once here.
+// The opt-out used to be implicit -- `['--x' as string]` computed keys the compiler could not lower --
+// which read as an unexplained bailout in the baseline and would have broken silently the moment someone
+// tidied the casts. The directive is what PaginatedTable, ProDashboard's TableBody and
+// MarketMakers/StickyTable already do, and the baseline records it as `Skipped by directive`, so
+// deleting it fails the ratchet instead of quietly compiling these two.
 
 export type VirtualTableLayout = 'fixed' | 'auto'
+
+/** CSSProperties has no index signature, so the row-counter custom properties need a cast. */
+type TableCssVars = React.CSSProperties & Record<`--${string}`, string>
 
 interface ITableProps<T extends RowData = RowData> {
 	instance: Table<T>
@@ -103,6 +103,7 @@ function TableRow<T extends RowData>({
 	isChainPage,
 	compact
 }: TableRowProps<T>) {
+	'use no memo'
 	const explicitIndex =
 		rowToRender.depth > 0
 			? (subRowOrdinalById.get(rowToRender.id) ?? rowToRender.index + 1)
@@ -110,15 +111,13 @@ function TableRow<T extends RowData>({
 	return (
 		<tr
 			data-index={virtualRow?.index}
-			style={{
-				height: rowHeight,
-				opacity: (rowToRender.original as Record<string, unknown>)?.disabled ? 0.3 : 1,
-				...(explicitIndex != null
-					? {
-							['--vf-subrow-index' as string]: `"${explicitIndex}"`
-						}
-					: null)
-			}}
+			style={
+				{
+					height: rowHeight,
+					opacity: (rowToRender.original as Record<string, unknown>)?.disabled ? 0.3 : 1,
+					...(explicitIndex != null ? { '--vf-subrow-index': `"${explicitIndex}"` } : null)
+				} as TableCssVars
+			}
 			data-depth={rowToRender.depth}
 			className="vf-row"
 		>
@@ -171,6 +170,7 @@ export function VirtualTable<T extends RowData>({
 	style,
 	...props
 }: ITableProps<T>) {
+	'use no memo'
 	const router = useRouter()
 	const isSmallScreen = useMedia('(max-width: 768px)')
 	const tableContainerRef = useRef<HTMLDivElement>(null)
@@ -582,7 +582,7 @@ export function VirtualTable<T extends RowData>({
 
 				<tbody
 					className="vf-row-counter"
-					style={{ ['--vf-row-offset' as string]: skipVirtualization ? '0' : `${virtualItems?.[0]?.index ?? 0}` }}
+					style={{ '--vf-row-offset': skipVirtualization ? '0' : `${virtualItems?.[0]?.index ?? 0}` } as TableCssVars}
 				>
 					{skipVirtualization ? (
 						rows.map((row, i) => (
@@ -654,14 +654,16 @@ export function VirtualTable<T extends RowData>({
 				>
 					<table
 						ref={stickyHeaderTableRef}
-						style={{
-							width: `${stickyHeaderLayout.tableWidth}px`,
-							minWidth: `${stickyHeaderLayout.tableWidth}px`,
-							tableLayout: 'fixed',
-							borderCollapse: 'separate',
-							borderSpacing: 0,
-							['--vf-header-scroll-left' as string]: `${stickyHeaderLayout.scrollLeft}px`
-						}}
+						style={
+							{
+								width: `${stickyHeaderLayout.tableWidth}px`,
+								minWidth: `${stickyHeaderLayout.tableWidth}px`,
+								tableLayout: 'fixed',
+								borderCollapse: 'separate',
+								borderSpacing: 0,
+								'--vf-header-scroll-left': `${stickyHeaderLayout.scrollLeft}px`
+							} as TableCssVars
+						}
 					>
 						<colgroup>
 							{visibleLeafColumns.map((column, index) => (
