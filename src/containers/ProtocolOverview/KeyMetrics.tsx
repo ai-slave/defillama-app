@@ -1,16 +1,16 @@
 import { useMemo, useRef, useState } from 'react'
+import { KeyMetricsPngExportButton } from '~/components/KeyMetricsPngExport/KeyMetricsPngExportButton'
 import { BasicLink } from '~/components/Link'
 import { ReportIncorrectData } from '~/components/ReportIncorrectData'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { definitions } from '~/public/definitions'
-import { Icon } from '~/ui/Icon'
+import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { getProtocolBridgeVolumeMetrics } from './chartSeries.utils'
 import { getPrimaryValueLabelType } from './helpers'
-import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import { getProtocolPrimaryMetricOverride } from './primaryMetricOverrides'
 import type { IProtocolOverviewPageData } from './types'
 
@@ -242,26 +242,19 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
-			<div className="flex items-center justify-between">
-				<h2 className="group relative flex items-center gap-1 font-semibold" id="key-metrics">
-					Key Metrics
-					<a
-						aria-hidden="true"
-						tabIndex={-1}
-						href="#key-metrics"
-						className="absolute top-0 right-0 z-10 flex size-full items-center"
+			<KeyMetricsHeader
+				id="key-metrics"
+				action={
+					<KeyMetricsPngExportButton
+						containerRef={containerRef}
+						title={props.name}
+						iconUrl={`/api/public/protocol-icon?slug=${encodeURIComponent(props.name)}`}
+						primaryValue={hasPrimaryMetricData ? (primaryValue ?? null) : null}
+						primaryLabel={primaryLabel}
+						formatPrice={props.formatPrice}
 					/>
-					<Icon name="link" className="invisible size-3.5 group-hover:visible group-focus-visible:visible" />
-				</h2>
-				<KeyMetricsPngExportButton
-					containerRef={containerRef}
-					protocolName={props.name}
-					{...(primaryValue != null ? { primaryValue } : {})}
-					primaryLabel={primaryLabel}
-					formatPrice={props.formatPrice}
-					hasTvlData={hasPrimaryMetricData}
-				/>
-			</div>
+				}
+			/>
 			<div className="flex flex-col" ref={containerRef}>
 				{props.isOracleProtocol && hasTvlData && props.tvl != null ? <TVL {...props} tvl={props.tvl} /> : null}
 				<Fees {...props} />
@@ -336,7 +329,11 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 				<Raises {...props} />
 				<Expenses {...props} />
 			</div>
-			<ReportIncorrectData subject={{ type: 'protocol', name: props.name, isLending: props.category === 'Lending' }} />
+			<KeyMetricsFooter>
+				<ReportIncorrectData
+					subject={{ type: 'protocol', name: props.name, isLending: props.category === 'Lending' }}
+				/>
+			</KeyMetricsFooter>
 		</div>
 	)
 }

@@ -215,12 +215,7 @@ export function Stats(props: IStatsProps) {
 					protocols={props.protocols}
 					totalValueUSD={totalValueUSD}
 					tvlSettingsGovtokens={!!tvlSettings.govtokens}
-				/>
-				<CSVDownloadButton
-					onClick={handleDownloadChartCsv}
-					isLoading={isDownloadingChartCsv}
-					smol
-					className="ml-auto"
+					footerAction={<CSVDownloadButton onClick={handleDownloadChartCsv} isLoading={isDownloadingChartCsv} smol />}
 				/>
 			</SummaryStatsCard>
 			{!props.hideChart ? (

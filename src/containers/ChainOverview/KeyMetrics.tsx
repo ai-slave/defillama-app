@@ -1,9 +1,11 @@
-import { Fragment, useRef } from 'react'
+import { Fragment, useRef, type ReactNode } from 'react'
+import { KeyMetricsPngExportButton } from '~/components/KeyMetricsPngExport/KeyMetricsPngExportButton'
 import { BasicLink } from '~/components/Link'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { summarizeRaises } from '~/containers/Raises/summary'
 import { definitions as rwaDefinitions } from '~/containers/RWA/definitions'
 import { definitions } from '~/public/definitions'
+import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import {
 	MetricRow as ChainMetricRow,
 	MetricSection as ChainMetricSection,
@@ -13,7 +15,6 @@ import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd, formatCompactNumber, formatPercent, formatPercentChange } from '~/utils/numberFormat'
-import { KeyMetricsPngExportButton } from './KeyMetricsPngExport'
 import type { IChainOverviewData } from './types'
 
 const formatKeyMetricsValue = (value: number | string | null) => {
@@ -47,6 +48,8 @@ interface KeyMetricsProps {
 	protocols: IChainOverviewData['protocols']
 	totalValueUSD: number | null
 	tvlSettingsGovtokens: boolean
+	/** Left slot of the footer row; the parent owns the CSV export because it holds the chart data. */
+	footerAction?: ReactNode
 }
 
 export function KeyMetrics(props: KeyMetricsProps) {
@@ -56,20 +59,20 @@ export function KeyMetrics(props: KeyMetricsProps) {
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
-			<div className="flex items-center justify-between">
-				<h2 className="label-md">Key Metrics</h2>
-				{props.metadata.name !== 'All' ? (
-					<KeyMetricsPngExportButton
-						containerRef={keyMetricsRef}
-						chainName={keyMetricsTitle}
-						chainIconSlug={props.metadata.name}
-						primaryValue={props.totalValueUSD}
-						primaryLabel="Total Value Locked in DeFi"
-						formatPrice={formatKeyMetricsValue}
-						hasTvlData={hasKeyMetricsPrimary}
-					/>
-				) : null}
-			</div>
+			<KeyMetricsHeader
+				action={
+					props.metadata.name !== 'All' ? (
+						<KeyMetricsPngExportButton
+							containerRef={keyMetricsRef}
+							title={keyMetricsTitle}
+							iconUrl={`/api/public/chain-icon?slug=${encodeURIComponent(props.metadata.name)}`}
+							primaryValue={hasKeyMetricsPrimary ? props.totalValueUSD : null}
+							primaryLabel="Total Value Locked in DeFi"
+							formatPrice={formatKeyMetricsValue}
+						/>
+					) : null
+				}
+			/>
 			<div className="flex flex-col" ref={keyMetricsRef}>
 				<StablecoinsMcap stablecoins={props.stablecoins} isAll={props.metadata.name === 'All'} />
 				<RwaActiveMcap rwaActiveMcap={props.rwaActiveMcap} />
@@ -169,6 +172,7 @@ export function KeyMetrics(props: KeyMetricsProps) {
 				) : null}
 				<ChainTokenInfo chainTokenInfo={props.chainTokenInfo} />
 			</div>
+			<KeyMetricsFooter>{props.footerAction}</KeyMetricsFooter>
 		</div>
 	)
 }

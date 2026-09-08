@@ -16,7 +16,7 @@ vi.mock('~/components/ReportIncorrectData', () => ({
 	ReportIncorrectData: () => null
 }))
 
-vi.mock('../KeyMetricsPngExport', () => ({
+vi.mock('~/components/KeyMetricsPngExport/KeyMetricsPngExportButton', () => ({
 	KeyMetricsPngExportButton: () => null
 }))
 

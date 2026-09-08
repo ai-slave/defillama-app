@@ -21,6 +21,7 @@ import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar }
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
+import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { LoadingDots } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
@@ -390,9 +391,7 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
-			<h2 className="font-semibold" id="token-key-metrics">
-				Key Metrics
-			</h2>
+			<KeyMetricsHeader id="token-key-metrics" />
 			<div className="flex flex-col">
 				{overview.marketData.mcap != null ? (
 					<MetricRow
@@ -506,6 +505,7 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 					</MetricSection>
 				) : null}
 			</div>
+			<KeyMetricsFooter />
 		</div>
 	)
 }

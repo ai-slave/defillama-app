@@ -14,6 +14,7 @@ import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { CopyHelper } from '~/ui/Copy'
 import { Icon } from '~/ui/Icon'
+import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { LoadingDots } from '~/ui/Loaders'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
@@ -278,129 +279,138 @@ function AssetKeyMetrics({
 	const defiActiveTvl = asset.defiActiveTvl ?? null
 
 	return (
-		<div className="flex flex-col">
-			<h2 className="mb-2 font-semibold">Key Metrics</h2>
-			{activeMcap?.breakdown != null && activeMcap.breakdown.length > 0 ? (
-				<MetricSection
-					label={definitions.activeMcap.label}
-					tooltip={definitions.activeMcap.description}
-					value={formatUsd(activeMcap.total, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				>
-					{activeMcap.breakdown.map(([chain, value]) => (
-						<SubMetricRow
-							key={chain}
-							label={chain}
-							value={formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-						/>
-					))}
-				</MetricSection>
-			) : (
-				<MetricRow
-					label={definitions.activeMcap.label}
-					tooltip={definitions.activeMcap.description}
-					value={
-						activeMcap?.total != null
-							? formatUsd(activeMcap.total, {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})
-							: '-'
-					}
-				/>
-			)}
-			{asset.defiActiveTvlByProtocolChain != null && asset.defiActiveTvlByProtocolChain.length > 0 ? (
-				<MetricSection
-					label={definitions.defiActiveTvl.label}
-					tooltip={definitions.defiActiveTvl.description}
-					value={formatUsd(defiActiveTvl?.total ?? 0, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
-				>
-					{asset.defiActiveTvlByProtocolChain.map((row) => (
-						<SubMetricSection
-							key={row.protocol}
-							label={row.protocol}
-							value={formatUsd(row.total, {
-								compact: true,
-								minimumCompactValue: 1_000_000,
-								compactSuffix: 'lowercase'
-							})}
-						>
-							{row.byChain.map(([chain, value]) => (
-								<SubMetricRow
-									key={chain}
-									label={chain}
-									value={formatUsd(value, {
+		<div className="flex flex-col gap-2">
+			<KeyMetricsHeader />
+			<div className="flex flex-col">
+				{activeMcap?.breakdown != null && activeMcap.breakdown.length > 0 ? (
+					<MetricSection
+						label={definitions.activeMcap.label}
+						tooltip={definitions.activeMcap.description}
+						value={formatUsd(activeMcap.total, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					>
+						{activeMcap.breakdown.map(([chain, value]) => (
+							<SubMetricRow
+								key={chain}
+								label={chain}
+								value={formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+							/>
+						))}
+					</MetricSection>
+				) : (
+					<MetricRow
+						label={definitions.activeMcap.label}
+						tooltip={definitions.activeMcap.description}
+						value={
+							activeMcap?.total != null
+								? formatUsd(activeMcap.total, {
 										compact: true,
 										minimumCompactValue: 1_000_000,
 										compactSuffix: 'lowercase'
-									})}
-								/>
-							))}
-						</SubMetricSection>
-					))}
-				</MetricSection>
-			) : (
+									})
+								: '-'
+						}
+					/>
+				)}
+				{asset.defiActiveTvlByProtocolChain != null && asset.defiActiveTvlByProtocolChain.length > 0 ? (
+					<MetricSection
+						label={definitions.defiActiveTvl.label}
+						tooltip={definitions.defiActiveTvl.description}
+						value={formatUsd(defiActiveTvl?.total ?? 0, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					>
+						{asset.defiActiveTvlByProtocolChain.map((row) => (
+							<SubMetricSection
+								key={row.protocol}
+								label={row.protocol}
+								value={formatUsd(row.total, {
+									compact: true,
+									minimumCompactValue: 1_000_000,
+									compactSuffix: 'lowercase'
+								})}
+							>
+								{row.byChain.map(([chain, value]) => (
+									<SubMetricRow
+										key={chain}
+										label={chain}
+										value={formatUsd(value, {
+											compact: true,
+											minimumCompactValue: 1_000_000,
+											compactSuffix: 'lowercase'
+										})}
+									/>
+								))}
+							</SubMetricSection>
+						))}
+					</MetricSection>
+				) : (
+					<MetricRow
+						label={definitions.defiActiveTvl.label}
+						tooltip={definitions.defiActiveTvl.description}
+						value={formatUsd(defiActiveTvl?.total ?? 0, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
+				)}
 				<MetricRow
-					label={definitions.defiActiveTvl.label}
-					tooltip={definitions.defiActiveTvl.description}
-					value={formatUsd(defiActiveTvl?.total ?? 0, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})}
+					label={definitions.flows.assetNetFlow7d.label}
+					tooltip={
+						<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow7d.description} summary={flow7d} />
+					}
+					value={
+						isLoadingFlows ? (
+							<RWAFlowValueShimmer />
+						) : isFlowUnavailable ? (
+							<RWAFlowValueUnavailable />
+						) : (
+							formatSignedRWAFlow(flow7d?.flow)
+						)
+					}
+					valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow7d?.flow)}`}
 				/>
-			)}
-			<MetricRow
-				label={definitions.flows.assetNetFlow7d.label}
-				tooltip={<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow7d.description} summary={flow7d} />}
-				value={
-					isLoadingFlows ? (
-						<RWAFlowValueShimmer />
-					) : isFlowUnavailable ? (
-						<RWAFlowValueUnavailable />
-					) : (
-						formatSignedRWAFlow(flow7d?.flow)
-					)
-				}
-				valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow7d?.flow)}`}
-			/>
-			<MetricRow
-				label={definitions.flows.assetNetFlow30d.label}
-				tooltip={
-					<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow30d.description} summary={flow30d} />
-				}
-				value={
-					isLoadingFlows ? (
-						<RWAFlowValueShimmer />
-					) : isFlowUnavailable ? (
-						<RWAFlowValueUnavailable />
-					) : (
-						formatSignedRWAFlow(flow30d?.flow)
-					)
-				}
-				valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow30d?.flow)}`}
-			/>
-			{asset.price != null ? (
 				<MetricRow
-					label={`${asset.ticker ?? 'Token'} Price`}
-					value={formatUsd(asset.price, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+					label={definitions.flows.assetNetFlow30d.label}
+					tooltip={
+						<RWAFlowSummaryTooltip description={definitions.flows.assetNetFlow30d.description} summary={flow30d} />
+					}
+					value={
+						isLoadingFlows ? (
+							<RWAFlowValueShimmer />
+						) : isFlowUnavailable ? (
+							<RWAFlowValueUnavailable />
+						) : (
+							formatSignedRWAFlow(flow30d?.flow)
+						)
+					}
+					valueClassName={`mono-md-bold ml-auto ${getRWAFlowTextClass(flow30d?.flow)}`}
 				/>
-			) : null}
-			<MetricRow label="Chains" value={asset.chain?.length ?? 0} />
-			{asset.nativeYieldCurrent != null ? (
-				<MetricRow
-					label="Native Yield"
-					value={`${formatPercent(asset.nativeYieldCurrent, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
-				/>
-			) : null}
+				{asset.price != null ? (
+					<MetricRow
+						label={`${asset.ticker ?? 'Token'} Price`}
+						value={formatUsd(asset.price, {
+							compact: true,
+							minimumCompactValue: 1_000_000,
+							compactSuffix: 'lowercase'
+						})}
+					/>
+				) : null}
+				<MetricRow label="Chains" value={asset.chain?.length ?? 0} />
+				{asset.nativeYieldCurrent != null ? (
+					<MetricRow
+						label="Native Yield"
+						value={`${formatPercent(asset.nativeYieldCurrent, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
+					/>
+				) : null}
+			</div>
+			<KeyMetricsFooter />
 		</div>
 	)
 }

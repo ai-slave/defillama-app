@@ -6,6 +6,7 @@ import { Menu } from '~/components/Menu'
 import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -237,44 +238,48 @@ export function RWAPlatformHeader({
 			    kinds of number recomputed over whatever the filters currently
 			    select. Naming both scopes is what keeps "DeFi TVL" and "DeFi
 			    Active TVL" from reading as two answers to one question. */}
-			<div className="flex flex-col">
-				<h2 className="mb-2 font-semibold">Platform totals</h2>
-				<MetricRow label="Live assets" value={formatCompactNumber(data.assetCount)} />
-				<MetricRow label="Chains" value={formatCompactNumber(data.chainCount)} />
-				{meta.estAnnualRevenueUsd != null ? (
-					<MetricRow label="Est. annual revenue" value={formatUsd(meta.estAnnualRevenueUsd, compactUsdOptions)} />
-				) : null}
-				<MetricRow label="DeFi TVL" value={formatUsd(displayedDefiActiveTvl, compactUsdOptions)} />
-				{displayedDefiActiveTvlToAumPct != null ? (
-					<MetricRow
-						label="DeFi TVL / AUM"
-						value={formatPercent(displayedDefiActiveTvlToAumPct, {
-							input: 'percent'
-						})}
-					/>
-				) : null}
-				{data.assetCount > 0 ? (
-					<MetricRow label="Confirmed attestations" value={`${data.attestedAssetCount} / ${data.assetCount}`} />
-				) : null}
-				{data.dominantAccessModel ? (
-					<MetricRow
-						label="Primary access"
-						value={`${data.dominantAccessModel.name} (${data.dominantAccessModel.count})`}
-						valueClassName="ml-auto label-md"
-					/>
-				) : null}
+			<div className="flex flex-col gap-2">
+				<KeyMetricsHeader title="Platform totals" />
+				<div className="flex flex-col">
+					<MetricRow label="Live assets" value={formatCompactNumber(data.assetCount)} />
+					<MetricRow label="Chains" value={formatCompactNumber(data.chainCount)} />
+					{meta.estAnnualRevenueUsd != null ? (
+						<MetricRow label="Est. annual revenue" value={formatUsd(meta.estAnnualRevenueUsd, compactUsdOptions)} />
+					) : null}
+					<MetricRow label="DeFi TVL" value={formatUsd(displayedDefiActiveTvl, compactUsdOptions)} />
+					{displayedDefiActiveTvlToAumPct != null ? (
+						<MetricRow
+							label="DeFi TVL / AUM"
+							value={formatPercent(displayedDefiActiveTvlToAumPct, {
+								input: 'percent'
+							})}
+						/>
+					) : null}
+					{data.assetCount > 0 ? (
+						<MetricRow label="Confirmed attestations" value={`${data.attestedAssetCount} / ${data.assetCount}`} />
+					) : null}
+					{data.dominantAccessModel ? (
+						<MetricRow
+							label="Primary access"
+							value={`${data.dominantAccessModel.name} (${data.dominantAccessModel.count})`}
+							valueClassName="ml-auto label-md"
+						/>
+					) : null}
+				</div>
 			</div>
 			{listedTotals.length > 0 ? (
-				<div className="flex flex-col">
-					<h2 className="mb-2 font-semibold">Totals for filtered assets</h2>
-					{listedTotals.map((total) => (
-						<MetricRow
-							key={total.label}
-							label={total.label}
-							{...(total.tooltip != null ? { tooltip: total.tooltip } : {})}
-							value={total.value}
-						/>
-					))}
+				<div className="flex flex-col gap-2">
+					<KeyMetricsHeader title="Totals for filtered assets" />
+					<div className="flex flex-col">
+						{listedTotals.map((total) => (
+							<MetricRow
+								key={total.label}
+								label={total.label}
+								{...(total.tooltip != null ? { tooltip: total.tooltip } : {})}
+								value={total.value}
+							/>
+						))}
+					</div>
 				</div>
 			) : null}
 		</SummaryStatsCard>

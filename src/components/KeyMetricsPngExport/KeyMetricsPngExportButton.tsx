@@ -7,11 +7,14 @@ import { METRIC_LABEL_SELECTOR, METRIC_VALUE_SELECTOR } from '~/ui/MetricPrimiti
 import { downloadDataURL } from '~/utils/download'
 interface KeyMetricsPngExportButtonProps {
 	containerRef: RefObject<HTMLDivElement | null>
-	protocolName: string
-	primaryValue?: number
+	/** Heading text and download filename stem. */
+	title: string
+	/** Same-origin icon URL drawn beside the title; omit to skip the icon. */
+	iconUrl?: string
+	/** Pass null when the card has no headline metric to show. */
+	primaryValue: number | null
 	primaryLabel: string
-	formatPrice: (value: number | null) => string | number | null
-	hasTvlData?: boolean
+	formatPrice: (value: number) => string | number | null
 }
 
 interface MetricRow {
@@ -24,13 +27,13 @@ function getTrimmedText(el: Element | null | undefined): string {
 }
 
 function extractLabel(el: Element): string {
-	const directChildren = Array.from(el.children)
-	const directLabel =
-		directChildren.find((child) => child.matches?.(METRIC_LABEL_SELECTOR)) ??
-		directChildren.find((child) => child.tagName.toUpperCase() === 'SPAN')
-	const fallbackLabel = el.querySelector?.(METRIC_LABEL_SELECTOR) ?? null
+	// Tooltip rows nest the label span inside a button, so search descendants
+	// before falling back to a bare span (which would otherwise match the value).
+	const label =
+		el.querySelector?.(METRIC_LABEL_SELECTOR) ??
+		Array.from(el.children).find((child) => child.tagName.toUpperCase() === 'SPAN')
 
-	return getTrimmedText(directLabel ?? fallbackLabel)
+	return getTrimmedText(label)
 }
 
 function extractValue(el: Element): string {
@@ -45,7 +48,7 @@ function extractRow(el: Element): MetricRow | null {
 	return { label, value }
 }
 
-function extractRows(container: HTMLDivElement): Array<MetricRow> {
+export function extractRows(container: HTMLDivElement): Array<MetricRow> {
 	const rows: Array<MetricRow> = []
 	const children = Array.from(container.children)
 
@@ -71,25 +74,23 @@ async function loadImage(src: string): Promise<HTMLImageElement> {
 	return new Promise((resolve, reject) => {
 		const img = new Image()
 		img.crossOrigin = 'anonymous'
-		img.onload = () => resolve(img)
-		img.onerror = reject
+		img.addEventListener('load', () => resolve(img), { once: true })
+		img.addEventListener('error', reject, { once: true })
 		img.src = src
 	})
 }
 
-async function loadProtocolIcon(name: string): Promise<string | null> {
+async function loadIconDataUrl(url: string): Promise<string | null> {
 	try {
-		const response = await fetch(`/api/public/protocol-icon?slug=${encodeURIComponent(name)}`)
+		const response = await fetch(url)
 		if (!response.ok) return null
 		const blob = await response.blob()
 		return await new Promise<string | null>((resolve) => {
 			const reader = new FileReader()
-			reader.onloadend = () => {
-				if (typeof reader.result === 'string') resolve(reader.result)
-				else resolve(null)
-			}
-			reader.onerror = () => resolve(null)
-			reader.onabort = () => resolve(null)
+			// loadend fires after error and abort too, with a non-string result.
+			reader.addEventListener('loadend', () => resolve(typeof reader.result === 'string' ? reader.result : null), {
+				once: true
+			})
 			reader.readAsDataURL(blob)
 		})
 	} catch {
@@ -136,11 +137,11 @@ function fillRoundedRect(
 
 export function KeyMetricsPngExportButton({
 	containerRef,
-	protocolName,
+	title,
+	iconUrl,
 	primaryValue,
 	primaryLabel,
-	formatPrice,
-	hasTvlData = false
+	formatPrice
 }: KeyMetricsPngExportButtonProps) {
 	const [isLoading, setIsLoading] = useState(false)
 	const [isDark] = useDarkModeManager()
@@ -158,11 +159,9 @@ export function KeyMetricsPngExportButton({
 
 		const renderAndDownload = async () => {
 			let formattedPrimaryValue = ''
-			if (hasTvlData && primaryValue != null) {
+			if (primaryValue != null) {
 				const formatted = formatPrice(primaryValue)
-				if (formatted != null) {
-					formattedPrimaryValue = String(formatted)
-				}
+				if (formatted != null) formattedPrimaryValue = String(formatted)
 			}
 			const hasPrimaryValue = formattedPrimaryValue !== ''
 			const dpr = window.devicePixelRatio || 1
@@ -171,11 +170,7 @@ export function KeyMetricsPngExportButton({
 			if (!container) return
 			const rows = extractRows(container)
 
-			if (!hasPrimaryValue) {
-				if (rows.length === 0) {
-					return
-				}
-			}
+			if (!hasPrimaryValue && rows.length === 0) return
 
 			const containerWidth = container.getBoundingClientRect().width
 			const canvasWidth = Math.max(400, Math.min(600, containerWidth))
@@ -184,7 +179,9 @@ export function KeyMetricsPngExportButton({
 			const headerHeight = 56
 			const rowHeight = 32
 			const rowsHeight = rows.length * rowHeight
-			const canvasHeight = padding * 2 + headerHeight + primaryValueHeight + rowsHeight
+			// Footer strip holds the corner watermark so it never overlaps a row.
+			const footerHeight = 32
+			const canvasHeight = padding * 2 + headerHeight + primaryValueHeight + rowsHeight + footerHeight
 
 			const canvas = document.createElement('canvas')
 			canvas.width = canvasWidth * dpr
@@ -199,7 +196,7 @@ export function KeyMetricsPngExportButton({
 			ctx.fillStyle = bgColor
 			fillRoundedRect(ctx, 0, 0, canvasWidth, canvasHeight, 12)
 
-			const iconBase64 = await loadProtocolIcon(protocolName)
+			const iconBase64 = iconUrl ? await loadIconDataUrl(iconUrl) : null
 			let iconImg: HTMLImageElement | null = null
 			if (iconBase64) {
 				try {
@@ -221,7 +218,7 @@ export function KeyMetricsPngExportButton({
 			ctx.fillStyle = textColor
 			ctx.font = 'bold 24px system-ui, -apple-system, sans-serif'
 			ctx.textBaseline = 'middle'
-			ctx.fillText(protocolName, headerX, headerY + iconSize / 2)
+			ctx.fillText(title, headerX, headerY + iconSize / 2)
 
 			let rowsStartY = headerY + headerHeight
 
@@ -267,12 +264,12 @@ export function KeyMetricsPngExportButton({
 
 			try {
 				const watermarkImg = await loadImage(watermarkSrc)
-				const wmHeight = 48
+				const wmHeight = 20
 				const wmWidth = (watermarkImg.width / watermarkImg.height) * wmHeight
-				const wmX = (canvasWidth - wmWidth) / 2
-				const wmY = (canvasHeight - wmHeight) / 2
+				const wmX = canvasWidth - padding - wmWidth
+				const wmY = canvasHeight - padding - footerHeight + (footerHeight - wmHeight) / 2
 
-				ctx.globalAlpha = 0.6
+				ctx.globalAlpha = 0.4
 				ctx.drawImage(watermarkImg, wmX, wmY, wmWidth, wmHeight)
 				ctx.globalAlpha = 1
 			} catch {
@@ -280,7 +277,7 @@ export function KeyMetricsPngExportButton({
 			}
 
 			const dataUrl = canvas.toDataURL('image/png')
-			const filename = `${protocolName.toLowerCase().replace(/\s+/g, '-')}-key-metrics`
+			const filename = `${title.toLowerCase().replace(/\s+/g, '-')}-key-metrics`
 			downloadDataURL(filename, dataUrl)
 		}
 		try {
