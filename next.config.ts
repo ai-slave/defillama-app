@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
 			'./node_modules/@duckdb/node-bindings-*/**'
 		]
 	},
-	experimental: getStaticGenerationConfig(process.env.VERCEL),
+	experimental: { ...getStaticGenerationConfig(process.env.VERCEL), proxyPrefetch: 'strict' },
 	reactStrictMode: true,
 	reactCompiler: true,
 	// Increase timeout for static page generation (default is 60 seconds)
