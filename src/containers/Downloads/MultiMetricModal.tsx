@@ -821,7 +821,7 @@ function ParamPickerEmpty({
 									autoFocus
 								/>
 							</div>
-							<div className="flex-1 overflow-auto py-1">
+							<div className="min-h-0 flex-auto overflow-auto py-1">
 								{filtered.length === 0 ? (
 									<p className="px-3 py-2 text-xs text-pro-text-tertiary">No results</p>
 								) : (
@@ -1245,7 +1245,7 @@ function ParamPickerPopover({
 						autoFocus
 					/>
 				</div>
-				<div className="flex-1 overflow-auto py-1">
+				<div className="min-h-0 flex-auto overflow-auto py-1">
 					{filtered.length === 0 ? (
 						<p className="px-3 py-2 text-xs text-pro-text-tertiary">No results</p>
 					) : (
@@ -1362,7 +1362,7 @@ function MetricMultiPickerPopover({
 						autoFocus
 					/>
 				</div>
-				<div className="flex-1 overflow-auto">
+				<div className="min-h-0 flex-auto overflow-auto">
 					{grouped.length === 0 ? (
 						<p className="p-3 text-xs text-pro-text-tertiary">No matches</p>
 					) : (

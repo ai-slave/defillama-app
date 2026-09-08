@@ -270,14 +270,14 @@ function AddToArticleForm({
 				e.preventDefault()
 				if (canSubmit && !isSubmitting) mutation.mutate()
 			}}
-			className="flex min-h-0 flex-1 flex-col"
+			className="flex min-h-0 flex-auto flex-col"
 		>
 			<div className="flex items-center justify-between gap-3 border-b border-subtle px-4 py-3">
 				<DialogHeading>Add to article</DialogHeading>
 				<DialogCloseButton className="-mr-1" />
 			</div>
 
-			<div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-3">
+			<div className="flex min-h-0 flex-auto flex-col gap-4 overflow-y-auto overscroll-contain px-4 py-3">
 				<label className="relative block">
 					<span className="sr-only">Search drafts</span>
 					<Icon

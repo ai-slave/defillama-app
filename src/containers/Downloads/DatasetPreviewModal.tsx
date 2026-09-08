@@ -1084,7 +1084,7 @@ function ChainPickerPopover({
 						className="w-full rounded-md border border-subtle bg-transparent px-2.5 py-1.5 text-xs outline-hidden placeholder:text-pro-text-tertiary focus:border-brand"
 					/>
 				</div>
-				<div className="flex-1 overflow-auto py-1">
+				<div className="min-h-0 flex-auto overflow-auto py-1">
 					<button
 						type="button"
 						onClick={() => {
@@ -1175,7 +1175,7 @@ function ColumnPickerPopover({
 						{allSelected ? 'Deselect all' : 'Select all'}
 					</button>
 				</div>
-				<div className="flex-1 overflow-auto py-1">
+				<div className="min-h-0 flex-auto overflow-auto py-1">
 					{columns.map((column) => {
 						const isSelected = selected.has(column.index)
 						return (

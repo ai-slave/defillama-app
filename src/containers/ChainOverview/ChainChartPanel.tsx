@@ -269,7 +269,7 @@ export function ChainChartPanel({
 								</label>
 							</div>
 
-							<div className="flex flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-4">
+							<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto overscroll-contain p-4">
 								{groupedFilteredOptions.map((group) => (
 									<section key={`chain-chart-category-${group.label}`} className="flex flex-col gap-2">
 										<div className="flex items-baseline gap-1.5">

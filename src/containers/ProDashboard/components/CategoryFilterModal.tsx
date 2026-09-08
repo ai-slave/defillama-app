@@ -92,7 +92,10 @@ export function CategoryFilterModal({
 					</Ariakit.DialogDismiss>
 				</div>
 
-				<div className="flex-1 space-y-6 overflow-y-auto p-4" style={{ backgroundColor: 'var(--pro-panel-bg)' }}>
+				<div
+					className="min-h-0 flex-auto space-y-6 overflow-y-auto p-4"
+					style={{ backgroundColor: 'var(--pro-panel-bg)' }}
+				>
 					<div>
 						<label htmlFor="category-filter-include" className="mb-2 block text-sm font-medium text-pro-text-secondary">
 							Include Categories

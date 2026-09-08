@@ -218,7 +218,7 @@ export function CustomColumnModal({
 						<DialogHeading>Add Custom Column</DialogHeading>
 						<DialogCloseButton ariaLabel="Close modal" />
 					</div>
-					<div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
+					<div className="flex min-h-0 flex-auto flex-col gap-3 overflow-y-auto px-4 py-3">
 						<label className="flex flex-col gap-1">
 							<span className="label-sm text-secondary">Column Name</span>
 							<Input

@@ -559,7 +559,7 @@ export function PortfolioNotifications({
 						e.preventDefault()
 						handleFormSubmit()
 					}}
-					className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+					className="min-h-0 flex-auto overflow-y-auto overscroll-contain"
 				>
 					<div className="border-b border-subtle px-4 py-3">
 						<h3 className="mb-2 label-md text-primary">Protocol Metrics</h3>

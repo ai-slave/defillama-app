@@ -91,7 +91,7 @@ export function MobileSearch({ searchTrigger }: { searchTrigger?: ReactNode } = 
 
 					<Ariakit.Dialog
 						unmountOnHide={false}
-						className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))] sm:[--dialog-width:640px]`}
+						className={`${dialogSurfaceStyles} h-[calc(100dvh-80px)] sm:h-[min(720px,calc(100dvh-32px))]! sm:[--dialog-width:640px]`}
 						hideOnInteractOutside
 						portal
 					>

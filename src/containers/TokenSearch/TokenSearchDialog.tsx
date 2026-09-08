@@ -108,7 +108,7 @@ export function TokenSearchDialog({
 					</label>
 				</div>
 
-				<div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-2">
+				<div className="flex min-h-0 flex-auto flex-col overflow-y-auto p-2">
 					{visibleTokens.map((token) => (
 						<button
 							type="button"

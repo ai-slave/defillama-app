@@ -1698,7 +1698,7 @@ function CategoryPickerPopover({
 						autoFocus
 					/>
 				</div>
-				<div className="flex-1 overflow-auto py-1">
+				<div className="min-h-0 flex-auto overflow-auto py-1">
 					<button
 						type="button"
 						onClick={() => onSelect(null)}
@@ -1818,7 +1818,7 @@ function MultiOptionPickerPopover({
 						autoFocus
 					/>
 				</div>
-				<div className="flex-1 overflow-auto py-1">
+				<div className="min-h-0 flex-auto overflow-auto py-1">
 					{filtered.length === 0 ? (
 						<p className="px-3 py-2 text-xs text-pro-text-tertiary">No results</p>
 					) : (
@@ -1895,7 +1895,7 @@ function ColumnPickerPopover({
 						{allSelected ? 'Deselect all' : 'Select all'}
 					</button>
 				</div>
-				<div className="flex-1 overflow-auto py-1">
+				<div className="min-h-0 flex-auto overflow-auto py-1">
 					{columns.map((column) => {
 						const isSelected = selected.has(column.index)
 						return (

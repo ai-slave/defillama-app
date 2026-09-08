@@ -841,7 +841,7 @@ function RWAFiltersDialog({
 					<DialogCloseButton />
 				</div>
 
-				<div className="flex min-h-0 flex-1 flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">
+				<div className="flex min-h-0 flex-auto flex-col overflow-y-auto sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] sm:overflow-hidden">
 					<RWAFilterBrowser filterDefinitions={filterDefinitions} draft={draft} onDraftChange={setDraft} />
 					<RWAActiveDraftFilters filterDefinitions={filterDefinitions} draft={draft} onDraftChange={setDraft} />
 				</div>
@@ -896,7 +896,7 @@ function RWAFilterBrowser({
 			<div className="border-b border-subtle px-4 py-2">
 				<h3 className="label-sm text-secondary">Browse filters</h3>
 			</div>
-			<div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
+			<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto p-4 max-sm:overflow-visible">
 				{groups.map((group) => {
 					const availableDefinitions = filterDefinitions.filter(
 						(definition) => definition.group === group && !activeIds.has(definition.id)
@@ -981,7 +981,7 @@ function RWAActiveDraftFilters({
 			<div className="border-b border-subtle px-4 py-2">
 				<h3 className="label-sm text-secondary">Active filters</h3>
 			</div>
-			<div className="flex flex-1 flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
+			<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-4 max-sm:overflow-visible">
 				{activeDefinitions.length > 0 ? (
 					activeDefinitions.map((definition) => (
 						<RWADraftFilterEditor

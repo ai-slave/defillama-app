@@ -51,7 +51,7 @@ export function ChartMetricsPicker({
 						<DialogCloseButton className="-mr-1" />
 					</div>
 
-					<div className="flex flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-4">
+					<div className="flex min-h-0 flex-auto flex-col gap-5 overflow-y-auto overscroll-contain p-4">
 						{groups
 							.filter((group) => group.options.length > 0)
 							.map((group) => (

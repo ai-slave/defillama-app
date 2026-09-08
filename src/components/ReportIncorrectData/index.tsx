@@ -143,13 +143,13 @@ export function ReportIncorrectData({
 					onSubmit={(e) => {
 						void onSubmit(e)
 					}}
-					className="flex min-h-0 flex-1 flex-col"
+					className="flex min-h-0 flex-auto flex-col"
 				>
 					<div className="flex items-center gap-2 border-b border-subtle p-3">
 						<DialogHeading>Report incorrect data</DialogHeading>
 						<DialogCloseButton className="-mr-1 ml-auto" ariaLabel="Close report dialog" />
 					</div>
-					<div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
+					<div className="flex min-h-0 flex-auto flex-col gap-2 overflow-y-auto p-3">
 						{subject.type === 'protocol' && subject.isLending ? (
 							<p className="text-center body-sm text-warning">
 								For lending protocols TVL doesn't include active loans by default

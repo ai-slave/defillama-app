@@ -17,7 +17,7 @@ import { tw } from './tw'
             is <Button size="md">Cancel</Button> +
             <Button variant="primary" size="md">Save/Done</Button>.
    Body:    the surface is overflow-hidden flex-col — give the scrolling
-            region `min-h-0 flex-1 overflow-y-auto` and p-3 itself.
+            region `min-h-0 flex-auto overflow-y-auto` and p-3 itself.
 
    `dialogSurfaceStyles` (bg-overlay) is the default for content dialogs —
    a single sheet of controls/text. `dialogCanvasSurfaceStyles`
@@ -37,8 +37,8 @@ export const dialogSurfaceStyles = `${dialogSurfaceBaseStyles} bg-overlay`
 /** Canvas dialogs only: hosts bg-surface cards on an elevated-1 backdrop. */
 export const dialogCanvasSurfaceStyles = `${dialogSurfaceBaseStyles} bg-surface-elevated-1`
 
-/** Required on the single scrolling body inside an overflow-hidden dialog surface. */
-export const dialogScrollableBodyStyles = tw`min-h-0 flex-1 overflow-y-auto overscroll-contain`
+/** Use a content basis so Safari includes the body when sizing a fit-content dialog. */
+export const dialogScrollableBodyStyles = tw`min-h-0 flex-auto overflow-y-auto overscroll-contain`
 
 type DialogHeadingProps = {
 	/** Layout placement only — the type/color comes from the recipe. */
