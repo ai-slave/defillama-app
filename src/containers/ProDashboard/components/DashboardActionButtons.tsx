@@ -1,0 +1,97 @@
+import * as Ariakit from '@ariakit/react'
+import { useMutation } from '@tanstack/react-query'
+import { useRouter } from 'next/router'
+import { useRef } from 'react'
+import toast from 'react-hot-toast'
+import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
+import type { Dashboard } from '../dashboardTypes'
+import { dashboardUrlKey } from '../services/DashboardAPI'
+
+export function CopyDashboardButton({
+	onCopy,
+	onLimitReached
+}: {
+	onCopy: () => Promise<Dashboard>
+	onLimitReached?: () => void
+}) {
+	const router = useRouter()
+	const buttonRef = useRef<HTMLButtonElement>(null)
+	const copy = useMutation({
+		mutationFn: onCopy,
+		onError: (error) => {
+			if (!buttonRef.current?.isConnected) toast.error(error.message)
+		}
+	})
+	return (
+		<div className="flex min-w-0 flex-col gap-1">
+			<Ariakit.Button
+				ref={buttonRef}
+				type="button"
+				accessibleWhenDisabled
+				disabled={copy.isPending || copy.isSuccess}
+				onClick={() => {
+					if (copy.isPending || copy.isSuccess) return
+					if (onLimitReached) return onLimitReached()
+					copy.mutate(undefined, {
+						onSuccess: (dashboard) => {
+							void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
+						}
+					})
+				}}
+				className="flex items-center gap-1 rounded-md pro-btn-primary-outline px-3 py-1.5 text-sm aria-disabled:opacity-60"
+			>
+				{copy.isPending ? (
+					<LoadingSpinner size={16} />
+				) : (
+					<Icon name={copy.isSuccess ? 'check' : 'copy'} height={16} width={16} />
+				)}
+				{copy.isPending ? 'Copying…' : copy.isSuccess ? 'Copied' : 'Copy Dashboard'}
+			</Ariakit.Button>
+			<span role="status" className="sr-only">
+				{copy.isPending ? 'Copying dashboard' : copy.isSuccess ? 'Dashboard copied' : ''}
+			</span>
+			{copy.error ? (
+				<p role="alert" className="max-w-xs text-sm text-error">
+					{copy.error.message}
+				</p>
+			) : null}
+		</div>
+	)
+}
+
+export function UndoAIGenerationButton({ onUndo }: { onUndo: () => Promise<void> }) {
+	const buttonRef = useRef<HTMLButtonElement>(null)
+	const undo = useMutation({
+		mutationFn: onUndo,
+		onError: (error) => {
+			if (!buttonRef.current?.isConnected) toast.error(error.message)
+		}
+	})
+	return (
+		<div className="flex min-w-0 flex-col gap-1">
+			<Ariakit.Button
+				ref={buttonRef}
+				type="button"
+				accessibleWhenDisabled
+				disabled={undo.isPending}
+				onClick={() => {
+					if (!undo.isPending) undo.mutate()
+				}}
+				className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg px-4 py-2 text-base whitespace-nowrap text-pro-text-secondary transition-colors hover:text-pro-text-primary aria-disabled:opacity-60"
+				aria-label="Undo AI changes"
+			>
+				{undo.isPending ? <LoadingSpinner size={16} /> : <Icon name="arrow-left" height={16} width={16} />}
+				{undo.isPending ? 'Undoing…' : 'Undo'}
+			</Ariakit.Button>
+			<span role="status" className="sr-only">
+				{undo.isPending ? 'Undoing AI changes' : ''}
+			</span>
+			{undo.error ? (
+				<p role="alert" className="max-w-xs text-sm text-error">
+					{undo.error.message}
+				</p>
+			) : null}
+		</div>
+	)
+}

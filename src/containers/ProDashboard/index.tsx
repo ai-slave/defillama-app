@@ -18,6 +18,7 @@ import { AppMetadataProvider } from './AppMetadataContext'
 import { ChartGrid } from './components/ChartGrid'
 import { CopyDashboardLinkButton } from './components/CopyDashboardLinkButton'
 import { CustomTimePeriodPicker } from './components/CustomTimePeriodPicker'
+import { CopyDashboardButton, UndoAIGenerationButton } from './components/DashboardActionButtons'
 import { EmptyState } from './components/EmptyState'
 import { LikeDashboardButton } from './components/LikeDashboardButton'
 import {
@@ -206,8 +207,6 @@ function ProDashboardContent() {
 		handleIterateDashboard,
 		getCurrentRatingSession,
 		submitRating,
-		skipRating,
-		dismissRating,
 		undoAIGeneration,
 		canUndo,
 		deleteDashboard
@@ -369,20 +368,11 @@ function ProDashboardContent() {
 										</button>
 									) : null}
 									{isReadOnly ? (
-										<button
-											type="button"
-											onClick={() => {
-												if (canCreateDashboard) {
-													void copyDashboard()
-												} else {
-													showPaywall('dashboard-limit')
-												}
-											}}
-											className="flex items-center gap-1 rounded-md pro-btn-primary-outline px-3 py-1.5 text-sm"
-										>
-											<Icon name="copy" height={16} width={16} />
-											<span>Copy Dashboard</span>
-										</button>
+										<CopyDashboardButton
+											key={dashboardId}
+											onCopy={copyDashboard}
+											onLimitReached={canCreateDashboard ? undefined : () => showPaywall('dashboard-limit')}
+										/>
 									) : null}
 									<button
 										type="button"
@@ -439,9 +429,7 @@ function ProDashboardContent() {
 						mode={currentRatingSession.mode}
 						variant="banner"
 						prompt={currentRatingSession.prompt}
-						onRate={submitRating}
-						onSkip={skipRating}
-						onDismiss={dismissRating}
+						onSubmit={submitRating}
 					/>
 				</Suspense>
 			) : null}
@@ -477,7 +465,7 @@ function ProDashboardContent() {
 							/>
 						</div>
 					</Tooltip>
-					<div className="order-3 flex items-center gap-2">
+					<div className="order-3 flex min-w-0 flex-wrap items-center gap-2">
 						{dashboardId && items.some((item) => item.kind === 'sql') ? (
 							<button
 								type="button"
@@ -519,21 +507,7 @@ function ProDashboardContent() {
 								Edit with LlamaAI
 							</button>
 						) : null}
-						{!isReadOnly && canUndo ? (
-							<button
-								type="button"
-								className="hidden items-center gap-2 rounded-md border pro-border pro-hover-bg px-4 py-2 text-base whitespace-nowrap text-pro-text-secondary transition-colors hover:text-pro-text-primary md:flex"
-								onClick={() => {
-									void undoAIGeneration().catch((error) => {
-										toast.error(error instanceof Error ? error.message : 'Could not undo changes. Please try again.')
-									})
-								}}
-								title="Undo AI changes"
-							>
-								<Icon name="arrow-left" height={16} width={16} />
-								Undo
-							</button>
-						) : null}
+						{!isReadOnly && canUndo ? <UndoAIGenerationButton key={dashboardId} onUndo={undoAIGeneration} /> : null}
 
 						{!isReadOnly ? (
 							<button

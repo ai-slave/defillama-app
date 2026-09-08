@@ -82,6 +82,8 @@ test('generation waits for persistence, retains a failed draft, and navigates on
 	await submit()
 	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.push).toHaveBeenCalledExactlyOnceWith('/pro/new')
+	expect(mocks.fetch).toHaveBeenCalledOnce()
+	expect(save.mock.calls[1][0]).toEqual(save.mock.calls[0][0])
 })
 test.each(['success', 'failure'] as const)(
 	'a generation finishing with %s after unmount cannot affect another opening',
@@ -119,19 +121,29 @@ test('a stream error is shown inline without attempting to save', async () => {
 })
 
 test('iteration preserves existing metadata, awaits saving, and closes without creation navigation', async () => {
+	const response = Promise.withResolvers<Response>()
+	mocks.fetch.mockReturnValueOnce(response.promise)
 	const pending = Promise.withResolvers<void>()
 	save.mockReturnValueOnce(pending.promise)
 	await render(true, 'iterate')
 	document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.value =
 		'Add a fees comparison to this dashboard'
 	await submit()
-	await vi.waitFor(() => expect(save).toHaveBeenCalledOnce())
+	await vi.waitFor(() => expect(document.querySelector('button[type="submit"]')?.textContent).toBe('Updating…'))
+	expect(document.querySelector('[role="status"]')?.textContent).toBe('Updating dashboard')
+	expect(save).not.toHaveBeenCalled()
+	await act(async () =>
+		response.resolve(new Response('data: {"type":"dashboard_complete","dashboardConfig":{"items":[]}}\n\n'))
+	)
+	await vi.waitFor(() => expect(document.querySelector('button[type="submit"]')?.textContent).toBe('Saving…'))
+	expect(document.querySelector('[role="status"]')?.textContent).toBe('Saving dashboard')
+	expect(save).toHaveBeenCalledOnce()
 	expect(JSON.parse(mocks.fetch.mock.calls[0][1].body)).toEqual({
 		message: 'Add a fees comparison to this dashboard',
 		mode: 'iterate',
 		existingDashboard: { dashboardName: 'Existing dashboard', items: [] }
 	})
-	expect(save).toHaveBeenCalledExactlyOnceWith({
+	expect(save.mock.calls[0][0]).toEqual({
 		dashboardName: 'Existing dashboard',
 		visibility: 'private',
 		tags: ['research'],
@@ -142,4 +154,39 @@ test('iteration preserves existing metadata, awaits saving, and closes without c
 	await act(async () => pending.resolve())
 	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
 	expect(mocks.push).not.toHaveBeenCalled()
+})
+
+test('editing the prompt explicitly discards the generated result before generating another', async () => {
+	save.mockRejectedValueOnce(new Error('Save unavailable')).mockResolvedValueOnce(dashboard)
+	await render()
+	draft()
+	await submit()
+	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')?.textContent).toContain('Save unavailable'))
+	expect(document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!.readOnly).toBe(true)
+	await act(async () =>
+		[...document.querySelectorAll('button')].find((el) => el.textContent === 'Edit prompt and regenerate')!.click()
+	)
+	const prompt = document.querySelector<HTMLTextAreaElement>('[name="aiDescription"]')!
+	await vi.waitFor(() => expect(prompt.readOnly).toBe(false))
+	prompt.value = 'Compare stablecoin supplies instead of fees and TVL'
+	await submit()
+	await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+	expect(mocks.fetch).toHaveBeenCalledTimes(2)
+	expect(JSON.parse(mocks.fetch.mock.calls[1][1].body).message).toBe(prompt.value)
+})
+test('generation finishing after leaving does not start a save in a new opening', async () => {
+	const response = Promise.withResolvers<Response>()
+	mocks.fetch.mockReturnValueOnce(response.promise)
+	await render()
+	draft()
+	await submit()
+	await render(false)
+	await render()
+	await act(async () =>
+		response.resolve(new Response('data: {"type":"dashboard_complete","dashboardConfig":{"items":[]}}\n\n'))
+	)
+	await vi.waitFor(() => expect(client.isMutating()).toBe(0))
+	expect(save).not.toHaveBeenCalled()
+	expect(close).not.toHaveBeenCalled()
+	expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('')
 })

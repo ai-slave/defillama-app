@@ -1,48 +1,45 @@
 import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import type { DashboardRatingDecision } from '../dashboardTypes'
 
 interface RatingProps {
 	sessionId: string
 	mode: 'create' | 'iterate'
 	variant: 'banner' | 'inline'
 	prompt?: string
-	onRate: (sessionId: string, rating: number, feedback?: string) => void | Promise<void>
-	onSkip: (sessionId: string) => void | Promise<void>
-	onDismiss?: (sessionId: string) => void
+	onSubmit: (sessionId: string, decision: DashboardRatingDecision) => Promise<void>
 }
 
-export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDismiss }: RatingProps) {
+export function Rating(props: RatingProps) {
+	return <RatingForm key={props.sessionId} {...props} />
+}
+
+function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps) {
 	const [rating, setRating] = useState(0)
-	const [isSubmitting, setIsSubmitting] = useState(false)
+	const formRef = useRef<HTMLFormElement>(null)
+	const submission = useMutation({
+		mutationFn: (decision: DashboardRatingDecision) => onSubmit(sessionId, decision),
+		onError: (error) => {
+			if (!formRef.current?.isConnected) toast.error(error.message)
+		}
+	})
 	const bannerFeedbackId = `${sessionId}-rating-feedback-banner`
 	const inlineFeedbackId = `${sessionId}-rating-feedback-inline`
 
-	const handleSubmit = async (e: FormSubmitEvent) => {
+	const handleSubmit = (e: FormSubmitEvent) => {
 		e.preventDefault()
-		if (rating === 0 || isSubmitting) return
-
-		if (rating < 1 || rating > 5 || !Number.isInteger(rating)) {
-			toast.error('Rating must be between 1 and 5')
-			return
-		}
-
-		setIsSubmitting(true)
-		const feedbackInput = e.currentTarget.elements.namedItem('feedback') as HTMLTextAreaElement | null
-		const feedbackValue = feedbackInput?.value.trim() || undefined
-		try {
-			await onRate(sessionId, rating, feedbackValue)
-		} catch (error) {
-			console.error('Failed to submit rating:', error)
-		}
-		setIsSubmitting(false)
+		if (rating === 0 || submission.isPending) return
+		const feedback = (new FormData(e.currentTarget).get('feedback') as string | null)?.trim()
+		submission.mutate({ rating, ...(feedback ? { feedback } : {}) })
 	}
 
 	const handleSkip = () => {
-		void onSkip(sessionId)
+		if (!submission.isPending) submission.mutate({ skipped: true })
 	}
 
 	const texts = {
@@ -64,25 +61,23 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 	if (variant === 'banner') {
 		return (
 			<form
-				onSubmit={(e) => void handleSubmit(e)}
+				ref={formRef}
+				onSubmit={handleSubmit}
 				className="relative isolate col-span-full flex animate-pro-glow flex-col gap-6 rounded-md border border-pro-cards-border bg-pro-cards-bg p-4"
 			>
 				<div className="flex flex-wrap items-center gap-4">
 					<h3 className="text-lg font-semibold">{currentTexts.title}</h3>
-					<RatingStars value={rating} onChange={setRating} disabled={isSubmitting} size={20} />
-					{onDismiss ? (
-						<button
-							type="button"
-							onClick={() => {
-								void onDismiss(sessionId)
-							}}
-							className="ml-auto rounded-md p-2 hover:bg-error/10 hover:text-error"
-							disabled={isSubmitting}
-							title="Dismiss"
-						>
-							<Icon name="x" height={16} width={16} />
-						</button>
-					) : null}
+					<RatingStars value={rating} onChange={setRating} disabled={submission.isPending} size={20} />
+					<Ariakit.Button
+						accessibleWhenDisabled
+						type="button"
+						onClick={handleSkip}
+						className="ml-auto rounded-md p-2 hover:bg-error/10 hover:text-error"
+						disabled={submission.isPending}
+						aria-label="Dismiss rating"
+					>
+						<Icon name="x" height={16} width={16} />
+					</Ariakit.Button>
 				</div>
 
 				<p className="text-sm text-pro-text-label">{currentTexts.subtitle}</p>
@@ -107,40 +102,54 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 							name="feedback"
 							placeholder="Share your thoughts about the AI-generated dashboard..."
 							rows={3}
-							className="w-full rounded-md border border-pro-form-control-border bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-pro-text-primary"
-							disabled={isSubmitting}
+							className="w-full rounded-md border border-pro-form-control-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
+							readOnly={submission.isPending}
 						/>
 					</div>
 				) : null}
 
 				<div className="mt-6 flex items-center justify-center gap-3">
-					<button
+					<Ariakit.Button
+						accessibleWhenDisabled
 						type="button"
 						onClick={handleSkip}
-						disabled={isSubmitting}
-						className="px-4 py-2 text-sm hover:text-link"
+						disabled={submission.isPending}
+						className="flex items-center gap-2 px-4 py-2 text-sm hover:text-link"
 					>
+						{submission.isPending && 'skipped' in submission.variables ? <LoadingSpinner size={16} /> : null}
 						Skip
-					</button>
+					</Ariakit.Button>
 
 					{rating > 0 ? (
 						<Ariakit.Button
 							accessibleWhenDisabled
 							type="submit"
-							disabled={isSubmitting}
+							disabled={submission.isPending}
 							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand"
 						>
-							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
+							{submission.isPending && !('skipped' in submission.variables) ? (
+								<LoadingSpinner size={16} />
+							) : (
+								<Icon name="sparkles" height={16} width={16} />
+							)}
 							Submit Rating
 						</Ariakit.Button>
 					) : null}
 				</div>
+				<span role="status" className="sr-only">
+					{submission.isPending ? ('skipped' in submission.variables ? 'Dismissing rating' : 'Saving rating') : ''}
+				</span>
+				{submission.error ? (
+					<p role="alert" className="text-sm text-error">
+						{submission.error.message}
+					</p>
+				) : null}
 			</form>
 		)
 	}
 
 	return (
-		<form onSubmit={(e) => void handleSubmit(e)} className="contents">
+		<form ref={formRef} onSubmit={handleSubmit} className="contents">
 			<Icon name="sparkles" height={24} width={24} className="shrink-0 text-pro-info-400 dark:text-pro-info-200" />
 
 			<h3 className="-mt-5 text-xl font-semibold">{currentTexts.title}</h3>
@@ -153,7 +162,7 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 				</div>
 			) : null}
 
-			<RatingStars value={rating} onChange={setRating} disabled={isSubmitting} size={24} />
+			<RatingStars value={rating} onChange={setRating} disabled={submission.isPending} size={24} />
 
 			{rating > 0 ? (
 				<div className="flex w-full max-w-xl flex-col items-center gap-6">
@@ -169,27 +178,33 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 							name="feedback"
 							placeholder="Share your thoughts about the AI-generated dashboard..."
 							rows={3}
-							className="w-full rounded-md border border-pro-form-control-border bg-white p-2 text-black disabled:opacity-50 dark:bg-black dark:text-pro-text-primary"
-							disabled={isSubmitting}
+							className="w-full rounded-md border border-pro-form-control-border bg-white p-2 text-black read-only:opacity-50 dark:bg-black dark:text-pro-text-primary"
+							readOnly={submission.isPending}
 						/>
 					</div>
 
 					<div className="flex items-center justify-center gap-3">
-						<button
+						<Ariakit.Button
+							accessibleWhenDisabled
 							type="button"
 							onClick={handleSkip}
-							disabled={isSubmitting}
-							className="px-4 py-2 text-sm text-pro-text-form hover:text-link"
+							disabled={submission.isPending}
+							className="flex items-center gap-2 px-4 py-2 text-sm text-pro-text-form hover:text-link"
 						>
+							{submission.isPending && 'skipped' in submission.variables ? <LoadingSpinner size={16} /> : null}
 							Skip
-						</button>
+						</Ariakit.Button>
 						<Ariakit.Button
 							accessibleWhenDisabled
 							type="submit"
-							disabled={isSubmitting}
+							disabled={submission.isPending}
 							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand"
 						>
-							{isSubmitting ? <LoadingSpinner size={16} /> : <Icon name="sparkles" height={16} width={16} />}
+							{submission.isPending && !('skipped' in submission.variables) ? (
+								<LoadingSpinner size={16} />
+							) : (
+								<Icon name="sparkles" height={16} width={16} />
+							)}
 							Submit Rating
 						</Ariakit.Button>
 					</div>
@@ -198,16 +213,26 @@ export function Rating({ sessionId, mode, variant, prompt, onRate, onSkip, onDis
 				<>
 					<p className="-mt-5 text-center text-xs text-pro-text-form">Click the stars above to rate your experience</p>
 
-					<button
+					<Ariakit.Button
+						accessibleWhenDisabled
 						type="button"
 						onClick={handleSkip}
-						disabled={isSubmitting}
-						className="px-4 py-2 text-sm hover:text-link"
+						disabled={submission.isPending}
+						className="flex items-center gap-2 px-4 py-2 text-sm hover:text-link"
 					>
+						{submission.isPending && 'skipped' in submission.variables ? <LoadingSpinner size={16} /> : null}
 						Skip
-					</button>
+					</Ariakit.Button>
 				</>
 			)}
+			<span role="status" className="sr-only">
+				{submission.isPending ? ('skipped' in submission.variables ? 'Dismissing rating' : 'Saving rating') : ''}
+			</span>
+			{submission.error ? (
+				<p role="alert" className="text-sm text-error">
+					{submission.error.message}
+				</p>
+			) : null}
 		</form>
 	)
 }
@@ -236,9 +261,10 @@ function RatingStars({
 				{RATING_VALUES.map((star) => (
 					<span
 						key={star}
-						className={`relative rounded-sm transition-transform has-focus-visible:focus-ring has-disabled:opacity-50 ${size === 20 ? 'p-1' : 'p-2'} ${disabled ? '' : 'cursor-pointer hover:scale-110'}`}
+						className={`relative rounded-sm transition-transform has-focus-visible:focus-ring has-aria-disabled:opacity-50 ${size === 20 ? 'p-1' : 'p-2'} ${disabled ? '' : 'cursor-pointer hover:scale-110'}`}
 					>
 						<Ariakit.Radio
+							accessibleWhenDisabled
 							onMouseEnter={() => {
 								if (!disabled) setHovered(star)
 							}}

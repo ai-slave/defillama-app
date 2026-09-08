@@ -28,6 +28,7 @@ import type {
 	CustomTimePeriod,
 	Dashboard,
 	DashboardMode,
+	DashboardRatingDecision,
 	TimePeriod
 } from './dashboardTypes'
 import { useAutoSave } from './hooks/useAutoSave'
@@ -135,7 +136,6 @@ interface ProDashboardDashboardContextType {
 	loadError: { status: number; message: string } | null
 	reloadDashboard: () => void
 	getCurrentRatingSession: () => (AISessionData & { sessionId: string }) | null
-	autoSkipOlderSessionsForRating: () => Promise<void>
 	setDashboardName: (name: string) => void
 	setDashboardVisibility: (visibility: 'private' | 'public') => void
 	setDashboardTags: (tags: Array<string>) => void
@@ -150,7 +150,7 @@ interface ProDashboardDashboardContextType {
 		items?: Array<DashboardItemConfig>
 		aiUndoState?: AIUndoState | null
 	}) => Promise<void>
-	copyDashboard: () => Promise<void>
+	copyDashboard: () => Promise<Dashboard>
 	handleCreateDashboard: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
@@ -185,9 +185,7 @@ interface ProDashboardDashboardContextType {
 			prompt: string
 		}
 	}) => Promise<void>
-	submitRating: (sessionId: string, rating: number, feedback?: string) => Promise<void>
-	skipRating: (sessionId: string) => Promise<void>
-	dismissRating: (sessionId: string) => void
+	submitRating: (sessionId: string, decision: DashboardRatingDecision) => Promise<void>
 	undoAIGeneration: () => Promise<void>
 	canUndo: boolean
 }
@@ -203,7 +201,6 @@ type ProDashboardEditorActionsContextType = Omit<
 	| 'setShowGenerateDashboardModal'
 	| 'setShowIterateDashboardModal'
 	| 'setItems'
-	| 'setCurrentDashboard'
 >
 
 interface ProDashboardItemsStateContextType {
@@ -458,8 +455,7 @@ function ProDashboardAPIProviderInner({
 		setDashboardDescription,
 		setShowGenerateDashboardModal,
 		setShowIterateDashboardModal,
-		setItems,
-		setCurrentDashboard
+		setItems
 	} = actions
 
 	const getCurrentRatingSession = useCallback(() => {
@@ -604,52 +600,13 @@ function ProDashboardAPIProviderInner({
 		]
 	)
 
-	const autoSkipOlderSessionsForRating = useCallback(async () => {
-		if (!isAuthenticated || !currentDashboard?.aiGenerated || !user?.id || !dashboardId) return
-		const latestSession = getLatestPendingRating(currentDashboard.aiGenerated, user.id)
-		if (!latestSession) return
-		let updatedAiGenerated: AIGeneratedData | null = null
-		for (const sessionId in currentDashboard.aiGenerated) {
-			if (!Object.hasOwn(currentDashboard.aiGenerated, sessionId) || sessionId === latestSession.sessionId) continue
-			const session = currentDashboard.aiGenerated[sessionId]
-			if (!session || !isPendingRating(session, user.id)) continue
-			if (updatedAiGenerated === null) updatedAiGenerated = { ...currentDashboard.aiGenerated }
-			updatedAiGenerated[sessionId] = {
-				...session,
-				rated: false,
-				skipped: true
-			}
-		}
-		if (!updatedAiGenerated) return
-
-		try {
-			await saveDashboard({ aiGenerated: updatedAiGenerated })
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Could not dismiss older ratings. Please try again.')
-			return
-		}
-
-		setCurrentDashboard((prev) =>
-			prev
-				? {
-						...prev,
-						aiGenerated: updatedAiGenerated
-					}
-				: null
-		)
-	}, [isAuthenticated, currentDashboard, user, dashboardId, saveDashboard, setCurrentDashboard])
-
-	// Save dashboard name
-	// Copy dashboard
 	const copyDashboard = useCallback(async () => {
 		if (!isAuthenticated) {
-			toast.error('Please sign in to copy dashboards')
-			return
+			throw new Error('Please sign in to copy dashboards')
 		}
 
 		if (!canCreateDashboard) {
-			toast.error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
-			return
+			throw new Error('You have reached the free tier dashboard limit. Upgrade to Pro for unlimited dashboards.')
 		}
 
 		const cleanedItems = toPersistedDashboardItems(items)
@@ -662,13 +619,7 @@ function ProDashboardAPIProviderInner({
 			...(dashboardId && { copySourceDashboardId: dashboardId })
 		}
 
-		try {
-			await createDashboard.mutateAsync(data, {
-				onSuccess: (dashboard) => navigateToDashboard(dashboardUrlKey(dashboard))
-			})
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Could not copy dashboard. Please try again.')
-		}
+		return createDashboard.mutateAsync(data)
 	}, [
 		items,
 		dashboardName,
@@ -676,7 +627,6 @@ function ProDashboardAPIProviderInner({
 		customTimePeriod,
 		isAuthenticated,
 		createDashboard,
-		navigateToDashboard,
 		canCreateDashboard,
 		isFreeUser,
 		dashboardVisibility,
@@ -796,121 +746,36 @@ function ProDashboardAPIProviderInner({
 					...(updatedAiGenerated ? { aiGenerated: updatedAiGenerated } : {}),
 					...(aiUndoState === undefined ? {} : { aiUndoState })
 				})
-
-				setItems(data.items)
-				setCurrentDashboard((prev) =>
-					prev
-						? {
-								...prev,
-								data: {
-									...prev.data,
-									items: data.items,
-									...(aiUndoState === undefined ? {} : { aiUndoState })
-								},
-								...(updatedAiGenerated ? { aiGenerated: updatedAiGenerated } : {})
-							}
-						: null
-				)
 			} else {
 				setItems(data.items)
 			}
 		},
-		[dashboardId, saveDashboard, user, currentDashboard, items, setItems, setCurrentDashboard]
+		[dashboardId, saveDashboard, user, currentDashboard, items, setItems]
 	)
 
 	const submitRating = useCallback(
-		async (sessionId: string, rating: number, feedback?: string) => {
+		async (sessionId: string, decision: DashboardRatingDecision) => {
 			if (!isAuthenticated || !user?.id || !dashboardId) {
-				toast.error('Please sign in to rate dashboards')
-				return
+				throw new Error('Please sign in to rate dashboards')
 			}
 
 			const currentAiGenerated = currentDashboard?.aiGenerated ?? {}
 			const existingSession = currentAiGenerated[sessionId]
-			if (!existingSession) {
-				toast.error('This rating session is no longer available')
-				return
-			}
-			const updatedAiGenerated: AIGeneratedData = {
-				...currentAiGenerated,
-				[sessionId]: {
-					...existingSession,
-					rating,
-					...(feedback === undefined ? {} : { feedback }),
-					userId: user.id,
-					rated: true
+			if (!existingSession) throw new Error('This rating session is no longer available')
+
+			await saveDashboard({
+				aiGenerated: {
+					...currentAiGenerated,
+					[sessionId]: {
+						...existingSession,
+						...decision,
+						userId: user.id,
+						rated: !('skipped' in decision)
+					}
 				}
-			}
-
-			try {
-				await saveDashboard({
-					aiGenerated: updatedAiGenerated
-				})
-			} catch (error) {
-				console.log('Failed to submit rating:', error)
-				toast.error('Failed to submit rating. Please try again.')
-				return
-			}
-
-			setCurrentDashboard((prev) =>
-				prev
-					? {
-							...prev,
-							aiGenerated: updatedAiGenerated
-						}
-					: null
-			)
-
-			toast.success('Thank you for your feedback!')
+			})
 		},
-		[isAuthenticated, user, dashboardId, currentDashboard, saveDashboard, setCurrentDashboard]
-	)
-
-	const skipRating = useCallback(
-		async (sessionId: string) => {
-			if (!isAuthenticated || !user?.id || !dashboardId) {
-				return
-			}
-
-			const currentAiGenerated = currentDashboard?.aiGenerated ?? {}
-			const existingSession = currentAiGenerated[sessionId]
-			if (!existingSession) return
-			const updatedAiGenerated: AIGeneratedData = {
-				...currentAiGenerated,
-				[sessionId]: {
-					...existingSession,
-					userId: user.id,
-					rated: false,
-					skipped: true
-				}
-			}
-
-			try {
-				await saveDashboard({
-					aiGenerated: updatedAiGenerated
-				})
-			} catch (error) {
-				toast.error(error instanceof Error ? error.message : 'Could not skip rating. Please try again.')
-				return
-			}
-
-			setCurrentDashboard((prev) =>
-				prev
-					? {
-							...prev,
-							aiGenerated: updatedAiGenerated
-						}
-					: null
-			)
-		},
-		[isAuthenticated, user, dashboardId, currentDashboard, saveDashboard, setCurrentDashboard]
-	)
-
-	const dismissRating = useCallback(
-		async (sessionId: string) => {
-			await skipRating(sessionId)
-		},
-		[skipRating]
+		[isAuthenticated, user, dashboardId, currentDashboard, saveDashboard]
 	)
 
 	const undoAIGeneration = useCallback(async () => {
@@ -936,18 +801,7 @@ function ProDashboardAPIProviderInner({
 			aiUndoState: null,
 			aiGenerated: updatedAiGenerated
 		})
-
-		setItems(previousItems)
-		setCurrentDashboard((prev) => {
-			if (!prev) return null
-			const { aiUndoState: _aiUndoState, ...dashboardData } = prev.data
-			return {
-				...prev,
-				data: { ...dashboardData, items: previousItems },
-				aiGenerated: updatedAiGenerated
-			}
-		})
-	}, [currentDashboard, dashboardId, saveDashboard, setItems, setCurrentDashboard])
+	}, [currentDashboard, dashboardId, saveDashboard])
 
 	const canUndo = !!currentDashboard?.data?.aiUndoState?.items
 
@@ -1019,7 +873,6 @@ function ProDashboardAPIProviderInner({
 			loadError,
 			reloadDashboard,
 			getCurrentRatingSession,
-			autoSkipOlderSessionsForRating,
 			setDashboardName,
 			setDashboardVisibility,
 			setDashboardTags,
@@ -1031,8 +884,6 @@ function ProDashboardAPIProviderInner({
 			handleGenerateDashboard,
 			handleIterateDashboard,
 			submitRating,
-			skipRating,
-			dismissRating,
 			undoAIGeneration,
 			canUndo
 		}),
@@ -1048,7 +899,6 @@ function ProDashboardAPIProviderInner({
 			loadError,
 			reloadDashboard,
 			getCurrentRatingSession,
-			autoSkipOlderSessionsForRating,
 			setDashboardName,
 			setDashboardVisibility,
 			setDashboardTags,
@@ -1060,8 +910,6 @@ function ProDashboardAPIProviderInner({
 			handleGenerateDashboard,
 			handleIterateDashboard,
 			submitRating,
-			skipRating,
-			dismissRating,
 			undoAIGeneration,
 			canUndo
 		]

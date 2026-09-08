@@ -1,5 +1,4 @@
 import { replaceEqualDeep } from '@tanstack/react-query'
-import type { SetStateAction } from 'react'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
 
@@ -23,7 +22,6 @@ export type DashboardAction =
 	| { type: 'SET_CUSTOM_TIME_PERIOD'; payload: CustomTimePeriod | null }
 	| { type: 'SET_DASHBOARD_NAME'; payload: string }
 	| { type: 'SET_DASHBOARD_ID'; payload: string | null }
-	| { type: 'SET_CURRENT_DASHBOARD'; payload: SetStateAction<Dashboard | null> }
 	| { type: 'SET_DASHBOARD_VISIBILITY'; payload: 'private' | 'public' }
 	| { type: 'SET_DASHBOARD_TAGS'; payload: Array<string> }
 	| { type: 'SET_DASHBOARD_DESCRIPTION'; payload: string }
@@ -138,12 +136,6 @@ export function dashboardReducer(state: DashboardState, action: DashboardAction)
 
 		case 'SET_DASHBOARD_ID':
 			return { ...state, dashboardId: action.payload }
-
-		case 'SET_CURRENT_DASHBOARD':
-			return {
-				...state,
-				currentDashboard: typeof action.payload === 'function' ? action.payload(state.currentDashboard) : action.payload
-			}
 
 		case 'SET_DASHBOARD_VISIBILITY':
 			return { ...state, dashboardVisibility: action.payload }

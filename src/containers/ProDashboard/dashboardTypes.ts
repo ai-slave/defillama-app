@@ -57,3 +57,5 @@ export interface Dashboard {
 	aiGenerated?: AIGeneratedData | null
 	artifactActivationPending?: boolean
 }
+
+export type DashboardRatingDecision = { rating: number; feedback?: string } | { skipped: true }

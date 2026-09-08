@@ -2,7 +2,7 @@ import { type Dispatch, type SetStateAction, useCallback, useEffect, useLayoutEf
 import type { StoredColSpan } from './dashboardConfig/colSpan'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { DashboardAction, DashboardState } from './dashboardReducer'
-import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
+import type { CustomTimePeriod, TimePeriod } from './dashboardTypes'
 import type { ChartBuilderConfig, DashboardGrouping, MultiChartConfig, SqlChartConfig } from './types'
 import { limitMultiChartItems } from './types'
 import {
@@ -459,13 +459,6 @@ export function useDashboardActions(
 		[dispatch]
 	)
 
-	const setCurrentDashboard = useCallback(
-		(updater: SetStateAction<Dashboard | null>) => {
-			dispatch({ type: 'SET_CURRENT_DASHBOARD', payload: updater })
-		},
-		[dispatch]
-	)
-
 	return useMemo(
 		() => ({
 			handleAppendItems,
@@ -493,8 +486,7 @@ export function useDashboardActions(
 			setDashboardDescription,
 			setShowGenerateDashboardModal,
 			setShowIterateDashboardModal,
-			setItems,
-			setCurrentDashboard
+			setItems
 		}),
 		[
 			handleAppendItems,
@@ -522,8 +514,7 @@ export function useDashboardActions(
 			setDashboardDescription,
 			setShowGenerateDashboardModal,
 			setShowIterateDashboardModal,
-			setItems,
-			setCurrentDashboard
+			setItems
 		]
 	)
 }

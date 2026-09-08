@@ -132,6 +132,20 @@ function GenerateDashboardModalInner({
 	const router = useRouter()
 	const { user, isAuthenticated, authorizedFetch } = useAuthContext()
 	const formRef = useRef<HTMLFormElement>(null)
+	const save = useMutation({
+		mutationFn: onGenerate,
+		onError: (error) => {
+			if (!formRef.current?.isConnected) toast.error(error.message)
+		}
+	})
+	const saveGeneratedDashboard = (payload: Parameters<GenerateDashboardModalProps['onGenerate']>[0]) => {
+		save.mutate(payload, {
+			onSuccess: (dashboard) => {
+				if (dashboard) void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
+				onClose()
+			}
+		})
+	}
 	const generation = useMutation({
 		mutationFn: async ({
 			request,
@@ -160,17 +174,22 @@ function GenerateDashboardModalInner({
 						prompt: request.message
 					}
 				: undefined
-			return onGenerate({
+			return {
 				...payload,
 				items: migrateDashboardItems(data.dashboardConfig.items),
 				...(aiGenerationContext ? { aiGenerationContext } : {})
-			})
+			}
 		},
 		onError: (error) => {
 			// Each opening owns its form. A request can still fail after navigating away.
 			if (!formRef.current?.isConnected) toast.error(error.message)
 		}
 	})
+	const pending = generation.isPending || save.isPending
+	const pendingLabel = save.isPending ? 'Saving' : mode === 'iterate' ? 'Updating' : 'Generating'
+	// Keep the generated payload intact until saved or explicitly discarded.
+	const fieldsLocked = pending || !!generation.data
+	const error = save.error ?? generation.error
 	const [visibility, setVisibility] = useState<'private' | 'public'>('public')
 	const [tags, setTags] = useState<Array<string>>([])
 	const tagInputRef = useRef<HTMLInputElement>(null)
@@ -178,7 +197,11 @@ function GenerateDashboardModalInner({
 
 	const handleGenerate = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
-		if (generation.isPending) return
+		if (pending) return
+		if (generation.data) {
+			saveGeneratedDashboard(generation.data)
+			return
+		}
 
 		const form = e.currentTarget
 		const formData = new FormData(form)
@@ -239,16 +262,13 @@ function GenerateDashboardModalInner({
 				}
 			},
 			{
-				onSuccess: (dashboard) => {
-					if (dashboard) void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
-					onClose()
-				}
+				onSuccess: saveGeneratedDashboard
 			}
 		)
 	}
 
 	const handleClose = () => {
-		if (!generation.isPending) {
+		if (!pending) {
 			onClose()
 		}
 	}
@@ -292,7 +312,7 @@ function GenerateDashboardModalInner({
 						{mode === 'iterate' ? 'Edit with LlamaAI' : 'Generate using LlamaAI'}
 					</Ariakit.DialogHeading>
 					<Ariakit.DialogDismiss
-						disabled={generation.isPending}
+						disabled={pending}
 						className="rounded-md pro-hover-bg p-1 transition-colors disabled:opacity-50"
 					>
 						<Icon name="x" height={20} width={20} className="text-pro-text-secondary" />
@@ -316,8 +336,8 @@ function GenerateDashboardModalInner({
 									type="text"
 									onInput={(e) => e.currentTarget.setCustomValidity('')}
 									placeholder="e.g., Ethereum vs Arbitrum Analysis"
-									className={`w-full rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${generation.isPending ? 'cursor-not-allowed opacity-50' : ''}`}
-									readOnly={generation.isPending}
+									className={`w-full rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+									readOnly={fieldsLocked}
 									required
 								/>
 							</div>
@@ -345,8 +365,8 @@ function GenerateDashboardModalInner({
 										: 'e.g., Build a DeFi yields dashboard with top earning protocols, comparing different chains and showing historical performance...'
 								}
 								rows={4}
-								className={`w-full resize-none rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${generation.isPending ? 'cursor-not-allowed opacity-50' : ''}`}
-								readOnly={generation.isPending}
+								className={`w-full resize-none rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+								readOnly={fieldsLocked}
 								required
 							/>
 							<p className="mt-1 text-xs text-pro-text-tertiary">
@@ -374,12 +394,12 @@ function GenerateDashboardModalInner({
 													visibility === option.value
 														? 'pro-btn-primary'
 														: 'pro-border text-pro-text-secondary hover:text-pro-text-primary'
-												} ${generation.isPending ? 'cursor-not-allowed opacity-50' : ''}`}
+												} ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
 											>
 												<Ariakit.Radio
 													value={option.value}
 													className="sr-only"
-													disabled={generation.isPending}
+													disabled={fieldsLocked}
 													accessibleWhenDisabled
 												/>
 												<Icon name={option.icon} height={16} width={16} className="mr-2 inline" />
@@ -411,17 +431,15 @@ function GenerateDashboardModalInner({
 										type="text"
 										onKeyDown={handleTagInputKeyDown}
 										placeholder="Enter tag name"
-										className={`min-w-0 flex-1 rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${generation.isPending ? 'cursor-not-allowed opacity-50' : ''}`}
-										disabled={generation.isPending}
+										className={`min-w-0 flex-1 rounded-md border pro-border px-3 py-2 text-pro-text-primary placeholder:text-pro-text-tertiary focus:ring-1 focus:ring-brand focus:outline-hidden ${fieldsLocked ? 'cursor-not-allowed opacity-50' : ''}`}
+										disabled={fieldsLocked}
 									/>
 									<button
 										type="button"
 										onClick={handleAddTag}
-										disabled={generation.isPending}
+										disabled={fieldsLocked}
 										className={`rounded-md border px-4 py-2 transition-colors ${
-											!generation.isPending
-												? 'pro-btn-primary-outline'
-												: 'cursor-not-allowed pro-border text-pro-text-tertiary'
+											!fieldsLocked ? 'pro-btn-primary-outline' : 'cursor-not-allowed pro-border text-pro-text-tertiary'
 										}`}
 									>
 										Add Tag
@@ -443,7 +461,7 @@ function GenerateDashboardModalInner({
 													onClick={() => handleRemoveTag(tag)}
 													aria-label={`Remove tag ${tag}`}
 													className="hover:text-pro-info-400"
-													disabled={generation.isPending}
+													disabled={fieldsLocked}
 												>
 													<Icon name="x" height={12} width={12} />
 												</button>
@@ -455,15 +473,30 @@ function GenerateDashboardModalInner({
 						) : null}
 					</div>
 
-					{generation.isError ? (
+					{error ? (
 						<p role="alert" className="mt-4 text-sm text-error">
-							{generation.error.message} Your draft is still here; please try again.
+							{error.message}{' '}
+							{generation.data
+								? 'Your generated dashboard is ready. Retry saving it without generating again.'
+								: 'Your draft is still here; please try again.'}
 						</p>
+					) : null}
+					{generation.data && !pending ? (
+						<button
+							type="button"
+							onClick={() => {
+								generation.reset()
+								save.reset()
+							}}
+							className="mt-3 text-sm text-link underline"
+						>
+							Edit prompt and regenerate
+						</button>
 					) : null}
 					<div className="mt-8 flex gap-3">
 						<Ariakit.DialogDismiss
 							type="button"
-							disabled={generation.isPending}
+							disabled={pending}
 							className="flex-1 rounded-md border pro-border pro-hover-bg px-4 py-2 text-pro-text-secondary transition-colors hover:text-pro-text-primary disabled:opacity-50"
 						>
 							Cancel
@@ -471,27 +504,27 @@ function GenerateDashboardModalInner({
 						<Ariakit.Button
 							type="submit"
 							accessibleWhenDisabled
-							disabled={generation.isPending}
+							disabled={pending}
 							className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2 transition-colors ${
-								!generation.isPending
+								!pending
 									? 'animate-pro-glow pro-btn-primary'
 									: 'cursor-not-allowed border pro-border text-pro-text-tertiary'
 							}`}
 						>
-							{generation.isPending ? (
+							{pending ? (
 								<>
 									<Icon name="sparkles" height={16} width={16} className="animate-spin" />
-									{mode === 'iterate' ? 'Updating…' : 'Generating…'}
+									{pendingLabel}…
 								</>
 							) : (
 								<>
 									<Icon name="sparkles" height={16} width={16} />
-									{mode === 'iterate' ? 'Edit Dashboard' : 'Generate Dashboard'}
+									{generation.data ? 'Retry save' : mode === 'iterate' ? 'Edit Dashboard' : 'Generate Dashboard'}
 								</>
 							)}
 						</Ariakit.Button>
 						<span role="status" className="sr-only">
-							{generation.isPending ? 'Generating and saving dashboard' : ''}
+							{pending ? `${pendingLabel} dashboard` : ''}
 						</span>
 					</div>
 				</form>

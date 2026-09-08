@@ -43,7 +43,11 @@ test.each(['banner', 'inline'] as const)(
 		const request = Promise.withResolvers<void>()
 		const rate = vi.fn(() => request.promise)
 		await act(async () =>
-			root.render(<Rating sessionId="rating-1" mode="create" variant={variant} onRate={rate} onSkip={vi.fn()} />)
+			root.render(
+				<QueryClientProvider client={client}>
+					<Rating sessionId="rating-1" mode="create" variant={variant} onSubmit={rate} />
+				</QueryClientProvider>
+			)
 		)
 		const radios = [...document.querySelectorAll<HTMLInputElement>('input[type="radio"]')]
 		expect(radios.map((e) => e.getAttribute('aria-label'))).toEqual([
@@ -68,8 +72,8 @@ test.each(['banner', 'inline'] as const)(
 		await act(async () =>
 			document.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 		)
-		expect(rate).toHaveBeenCalledExactlyOnceWith('rating-1', 2, 'Useful summary')
-		expect(radios.every((e) => e.disabled)).toBe(true)
+		expect(rate).toHaveBeenCalledExactlyOnceWith('rating-1', { rating: 2, feedback: 'Useful summary' })
+		await vi.waitFor(() => expect(radios.every((e) => e.getAttribute('aria-disabled') === 'true')).toBe(true))
 		await act(async () => request.resolve())
 		expect(radios[1].checked).toBe(true)
 		expect(feedback.value).toBe('Useful summary')
