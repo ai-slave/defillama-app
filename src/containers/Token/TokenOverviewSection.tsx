@@ -21,7 +21,7 @@ import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar }
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
-import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
+import { KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { LoadingDots } from '~/ui/Loaders'
 import { metricChipStyles, metricOptionChipStyles } from '~/ui/MetricChip'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
@@ -505,7 +505,6 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 					</MetricSection>
 				) : null}
 			</div>
-			<KeyMetricsFooter />
 		</div>
 	)
 }

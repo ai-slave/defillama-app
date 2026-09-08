@@ -159,21 +159,18 @@ export function KeyMetrics(props: KeyMetricsProps) {
 				) : null}
 				<ChainTokenInfo chainTokenInfo={props.chainTokenInfo} />
 			</div>
-			<KeyMetricsFooter
-				action={
-					props.metadata.name !== 'All' ? (
-						<KeyMetricsPngExportButton
-							containerRef={keyMetricsRef}
-							title={keyMetricsTitle}
-							iconUrl={`/api/public/chain-icon?slug=${encodeURIComponent(props.metadata.name)}`}
-							primaryValue={hasKeyMetricsPrimary ? props.totalValueUSD : null}
-							primaryLabel="Total Value Locked in DeFi"
-							formatPrice={formatKeyMetricsValue}
-						/>
-					) : null
-				}
-			>
+			<KeyMetricsFooter>
 				{props.footerAction}
+				{props.metadata.name !== 'All' ? (
+					<KeyMetricsPngExportButton
+						containerRef={keyMetricsRef}
+						title={keyMetricsTitle}
+						iconUrl={`/api/public/chain-icon?slug=${encodeURIComponent(props.metadata.name)}`}
+						primaryValue={hasKeyMetricsPrimary ? props.totalValueUSD : null}
+						primaryLabel="Total Value Locked in DeFi"
+						formatPrice={formatKeyMetricsValue}
+					/>
+				) : null}
 			</KeyMetricsFooter>
 		</div>
 	)

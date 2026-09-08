@@ -14,7 +14,7 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, Char
 import { CopyHelper } from '~/ui/Copy'
 import { HeroMetric } from '~/ui/HeroMetric'
 import { Icon } from '~/ui/Icon'
-import { KeyMetricsFooter, KeyMetricsHeader } from '~/ui/KeyMetricsCard'
+import { KeyMetricsHeader } from '~/ui/KeyMetricsCard'
 import { LoadingDots } from '~/ui/Loaders'
 import { MetricRow, MetricSection, SubMetricRow, SubMetricSection } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -329,7 +329,6 @@ function AssetKeyMetrics({
 					/>
 				) : null}
 			</div>
-			<KeyMetricsFooter />
 		</div>
 	)
 }

@@ -31,12 +31,7 @@ export function KeyMetricsHeader({ title = 'Key Metrics', id }: KeyMetricsHeader
 	)
 }
 
-/** Footer row: optional left content (e.g. report button) and the right-aligned action, e.g. the PNG export button. */
-export function KeyMetricsFooter({ children, action }: { children?: ReactNode; action?: ReactNode }) {
-	return (
-		<div className="mt-auto flex items-center justify-between gap-2">
-			{children ?? <span />}
-			{action}
-		</div>
-	)
+/** Footer row pinned to the card bottom; callers order the children (report button left, PNG export right). */
+export function KeyMetricsFooter({ children }: { children: ReactNode }) {
+	return <div className="mt-auto flex items-center justify-between gap-2">{children}</div>
 }

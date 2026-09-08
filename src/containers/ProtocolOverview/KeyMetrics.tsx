@@ -317,20 +317,17 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 				<Raises {...props} />
 				<Expenses {...props} />
 			</div>
-			<KeyMetricsFooter
-				action={
-					<KeyMetricsPngExportButton
-						containerRef={containerRef}
-						title={props.name}
-						iconUrl={`/api/public/protocol-icon?slug=${encodeURIComponent(props.name)}`}
-						primaryValue={hasPrimaryMetricData ? (primaryValue ?? null) : null}
-						primaryLabel={primaryLabel}
-						formatPrice={props.formatPrice}
-					/>
-				}
-			>
+			<KeyMetricsFooter>
 				<ReportIncorrectData
 					subject={{ type: 'protocol', name: props.name, isLending: props.category === 'Lending' }}
+				/>
+				<KeyMetricsPngExportButton
+					containerRef={containerRef}
+					title={props.name}
+					iconUrl={`/api/public/protocol-icon?slug=${encodeURIComponent(props.name)}`}
+					primaryValue={hasPrimaryMetricData ? (primaryValue ?? null) : null}
+					primaryLabel={primaryLabel}
+					formatPrice={props.formatPrice}
 				/>
 			</KeyMetricsFooter>
 		</div>
