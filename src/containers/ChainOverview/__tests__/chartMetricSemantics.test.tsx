@@ -68,11 +68,13 @@ function Probe({
 	toggledCharts,
 	denomination = 'USD',
 	chainGeckoId = null,
+	gasTokenGeckoId = chainGeckoId,
 	tvlChart = []
 }: {
 	toggledCharts: Array<ChainChartLabels>
 	denomination?: string
 	chainGeckoId?: string | null
+	gasTokenGeckoId?: string | null
 	tvlChart?: Array<[number, number]>
 }) {
 	mocks.lastResult = useFetchChainChartData({
@@ -88,6 +90,7 @@ function Probe({
 		extraTvlCharts: {},
 		tvlSettings: {},
 		chainGeckoId,
+		gasTokenGeckoId,
 		toggledCharts,
 		groupBy: 'daily'
 	})
@@ -343,5 +346,85 @@ describe('ChainOverview chart metric semantics', () => {
 
 		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, null]])
 		expect(mocks.lastResult?.valueSymbol).toBe('ETH')
+	})
+	test('uses ETH for conversion and ARB for all official token series', () => {
+		const timestamp = Date.UTC(2024, 0, 1)
+		mocks.useQuery.mockImplementation((options: { queryKey: Array<unknown> }) => {
+			if (options.queryKey[1] !== 'price-history') return { data: null, isLoading: false }
+			const data =
+				options.queryKey[2] === 'ethereum'
+					? buildDenominationPriceHistory({
+							prices: [[timestamp, 2000]],
+							mcaps: [[timestamp, 99_999]],
+							volumes: [[timestamp, 88_888]]
+						})
+					: buildDenominationPriceHistory({
+							prices: [[timestamp, 2]],
+							mcaps: [[timestamp, 300]],
+							volumes: [[timestamp, 400]]
+						})
+			return { data, isLoading: false }
+		})
+		renderToStaticMarkup(
+			<Probe
+				denomination="ETH"
+				chainGeckoId="arbitrum"
+				gasTokenGeckoId="ethereum"
+				toggledCharts={['TVL', 'Token Price', 'Token Mcap', 'Token Volume']}
+				tvlChart={[[timestamp, 4000]]}
+			/>
+		)
+		expect(mocks.lastResult?.valueSymbol).toBe('ETH')
+		expect(mocks.lastResult?.finalCharts).toMatchObject({
+			TVL: [[timestamp, 2]],
+			'Token Price': [[timestamp, 2]],
+			'Token Mcap': [[timestamp, 300]],
+			'Token Volume': [[timestamp, 400]]
+		})
+	})
+
+	test('converts a tokenless chain without creating gas-token valuation charts', () => {
+		const timestamp = Date.UTC(2024, 0, 1)
+		mocks.useQuery.mockImplementation((options: { enabled: boolean; queryKey: Array<unknown> }) => ({
+			data:
+				options.enabled && options.queryKey[1] === 'price-history'
+					? buildDenominationPriceHistory({ prices: [[timestamp, 2000]] })
+					: null,
+			isLoading: false
+		}))
+		renderToStaticMarkup(
+			<Probe
+				denomination="ETH"
+				chainGeckoId={null}
+				gasTokenGeckoId="ethereum"
+				toggledCharts={['TVL', 'Token Price']}
+				tvlChart={[[timestamp, 4000]]}
+			/>
+		)
+		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 2]])
+		expect(mocks.lastResult?.finalCharts['Token Price']).toBeUndefined()
+	})
+
+	test('keeps official valuation available when gas mapping is absent', () => {
+		const timestamp = Date.UTC(2024, 0, 1)
+		mocks.useQuery.mockImplementation((options: { enabled: boolean; queryKey: Array<unknown> }) => ({
+			data:
+				options.enabled && options.queryKey[1] === 'price-history'
+					? buildDenominationPriceHistory({ prices: [[timestamp, 2]] })
+					: null,
+			isLoading: false
+		}))
+		renderToStaticMarkup(
+			<Probe
+				denomination="ETH"
+				chainGeckoId="arbitrum"
+				gasTokenGeckoId={null}
+				toggledCharts={['TVL', 'Token Price']}
+				tvlChart={[[timestamp, 4000]]}
+			/>
+		)
+		expect(mocks.lastResult?.valueSymbol).toBe('$')
+		expect(mocks.lastResult?.finalCharts.TVL).toEqual([[timestamp, 4000]])
+		expect(mocks.lastResult?.finalCharts['Token Price']).toEqual([[timestamp, 2]])
 	})
 })

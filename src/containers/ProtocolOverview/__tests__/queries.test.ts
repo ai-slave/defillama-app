@@ -151,6 +151,39 @@ describe('getProtocolOverviewPageData', () => {
 		formatAdapterData.mockClear()
 	})
 
+	test.each([
+		[
+			{ gasTokenGeckoId: 'ethereum', gasTokenSymbol: 'ETH' },
+			[
+				{ symbol: 'USD', geckoId: null },
+				{ symbol: 'ETH', geckoId: 'ethereum' }
+			]
+		],
+		[{}, [{ symbol: 'USD', geckoId: null }]]
+	])(
+		'uses gas metadata for protocol denominations without assuming the official token',
+		async (gasMetadata, expected) => {
+			const protocol = await fetchProtocolOverviewMetrics()
+			fetchProtocolOverviewMetrics.mockResolvedValueOnce({
+				...protocol,
+				currentChainTvls: { Arbitrum: 100, Ethereum: 10 }
+			})
+			const { getProtocolOverviewPageData } = await import('../queries')
+			const data = await getProtocolOverviewPageData({
+				protocolId: 'test-protocol',
+				currentProtocolMetadata: { displayName: 'Test Protocol' },
+				chainMetadata: {
+					arbitrum: { name: 'Arbitrum', id: 'arbitrum', gecko_id: 'arbitrum', tokenSymbol: 'ARB', ...gasMetadata }
+				},
+				tokenlist: {},
+				cgExchangeIdentifiers: [],
+				emissionsSupplyMetrics: {},
+				yieldsSnapshot
+			})
+			expect(data.chartDenominations).toEqual(expected)
+		}
+	)
+
 	test('looks up sponsored reports by the canonical protocol page identity', async () => {
 		const report = {
 			id: 'report-id',

@@ -12,12 +12,12 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
-import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { TVL_SETTINGS_KEYS, useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { buttonStyles } from '~/ui/Button'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { downloadCSV } from '~/utils/download'
+import { getChainDenominations } from '~/utils/metadata/chainDenominations'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import { ChainChartPanel } from './ChainChartPanel'
 import { BAR_CHARTS, chainCharts } from './constants'
@@ -54,22 +54,8 @@ export function Stats(props: IStatsProps) {
 	const { isAuthenticated } = useAuthContext()
 
 	const { toggledCharts, DENOMINATIONS, chainGeckoId, hasAtleasOneBarChart, groupBy, denomination } = useMemo(() => {
-		let CHAIN_SYMBOL = props.chainTokenInfo?.token_symbol ?? null
-		let chainGeckoId = props.chainTokenInfo?.gecko_id ?? null
-
-		if (props.metadata.name !== 'All') {
-			const gasToken = chainCoingeckoIdsForGasNotMcap[props.metadata.name]
-
-			if (!chainGeckoId) {
-				chainGeckoId = gasToken?.geckoId ?? null
-			}
-
-			if (!CHAIN_SYMBOL) {
-				CHAIN_SYMBOL = gasToken?.symbol ?? null
-			}
-		}
-
-		const DENOMINATIONS = CHAIN_SYMBOL ? ['USD', CHAIN_SYMBOL] : ['USD']
+		const DENOMINATIONS = getChainDenominations(props.metadata).map(({ symbol }) => symbol)
+		const chainGeckoId = props.chainTokenInfo?.gecko_id ?? null
 
 		const toggledCharts = props.charts.filter((tchart, index) =>
 			index === 0 ? searchParams.get(chainCharts[tchart]) !== 'false' : searchParams.get(chainCharts[tchart]) === 'true'
@@ -90,7 +76,7 @@ export function Stats(props: IStatsProps) {
 			groupBy,
 			denomination: DENOMINATIONS.find((d) => d.toLowerCase() === currencyInSearchParams) ?? 'USD'
 		}
-	}, [searchParams, props.chainTokenInfo, props.metadata.name, props.charts])
+	}, [searchParams, props.chainTokenInfo, props.metadata, props.charts])
 
 	const { totalValueUSD, change24h, valueChange24hUSD, finalCharts, valueSymbol, isFetchingChartData, failedMetrics } =
 		useFetchChainChartData({
@@ -101,6 +87,7 @@ export function Stats(props: IStatsProps) {
 			extraTvlCharts: props.extraTvlCharts,
 			tvlSettings,
 			chainGeckoId,
+			gasTokenGeckoId: props.metadata.gasTokenGeckoId ?? null,
 			toggledCharts,
 			groupBy
 		})

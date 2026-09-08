@@ -121,6 +121,7 @@ export const useFetchChainChartData = ({
 	extraTvlCharts,
 	tvlSettings,
 	chainGeckoId,
+	gasTokenGeckoId,
 	toggledCharts,
 	groupBy
 }: {
@@ -136,24 +137,19 @@ export const useFetchChainChartData = ({
 	extraTvlCharts: Record<string, Record<string, number>>
 	tvlSettings: Record<string, boolean>
 	chainGeckoId: string | null
+	gasTokenGeckoId: string | null
 	toggledCharts: Array<ChainChartLabels>
 	groupBy: ChartTimeGroupingWithCumulative
 }) => {
 	const toggledChartsSet = useMemo(() => new Set(toggledCharts), [toggledCharts])
 	const [nowMs] = useState(() => Date.now())
 
-	const denominationGeckoId =
-		denomination !== 'USD' ||
-		toggledChartsSet.has('Token Price') ||
-		toggledChartsSet.has('Token Mcap') ||
-		toggledChartsSet.has('Token Volume')
-			? chainGeckoId
-			: null
-
-	const isDenominationEnabled = denomination !== 'USD' && !!chainGeckoId
+	const denominationGeckoId = denomination !== 'USD' ? gasTokenGeckoId : null
+	const isDenominationEnabled = !!denominationGeckoId
 	const isTokenPriceEnabled = toggledChartsSet.has('Token Price')
 	const isTokenMcapEnabled = toggledChartsSet.has('Token Mcap')
 	const isTokenVolumeEnabled = toggledChartsSet.has('Token Volume')
+	const tokenGeckoId = isTokenPriceEnabled || isTokenMcapEnabled || isTokenVolumeEnabled ? chainGeckoId : null
 
 	// date in the chart is in ms
 	const { data: denominationPriceHistory = null, isLoading: fetchingDenominationPriceHistory } = useQuery({
@@ -163,6 +159,16 @@ export const useFetchChainChartData = ({
 		refetchOnWindowFocus: false,
 		retry: 0,
 		enabled: !!denominationGeckoId
+	})
+
+	// Official-token valuation stays separate from gas-token conversion (e.g. ARB versus ETH).
+	const { data: tokenPriceHistory = null, isLoading: fetchingTokenPriceHistory } = useQuery({
+		queryKey: ['chain-overview', 'price-history', tokenGeckoId],
+		queryFn: tokenGeckoId ? () => fetchDenominationPriceHistory(tokenGeckoId) : skipToken,
+		staleTime: 60 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		retry: 0,
+		enabled: !!tokenGeckoId
 	})
 
 	const isChainFeesEnabled = toggledChartsSet.has(chainFeesMetric.label)
@@ -378,6 +384,10 @@ export const useFetchChainChartData = ({
 			loadingCharts.push('Denomination Price')
 		}
 
+		if (fetchingTokenPriceHistory) {
+			loadingCharts.push('Token Price')
+		}
+
 		if (fetchingChainFees) {
 			loadingCharts.push(chainFeesMetric.label)
 		}
@@ -508,30 +518,30 @@ export const useFetchChainChartData = ({
 			})
 		}
 
-		if (isTokenPriceEnabled && denominationPriceHistory?.priceChart) {
+		if (isTokenPriceEnabled && tokenPriceHistory?.priceChart) {
 			const chartName: ChainChartLabels = 'Token Price'
 			charts[chartName] = formatLineChart({
-				data: denominationPriceHistory.priceChart,
+				data: tokenPriceHistory.priceChart,
 				groupBy,
 				denominationPriceHistory: null,
 				dateInMs: true
 			})
 		}
 
-		if (isTokenMcapEnabled && denominationPriceHistory?.mcaps) {
+		if (isTokenMcapEnabled && tokenPriceHistory?.mcaps) {
 			const chartName: ChainChartLabels = 'Token Mcap'
 			charts[chartName] = formatLineChart({
-				data: denominationPriceHistory?.mcaps,
+				data: tokenPriceHistory?.mcaps,
 				groupBy,
 				denominationPriceHistory: null,
 				dateInMs: true
 			})
 		}
 
-		if (isTokenVolumeEnabled && denominationPriceHistory?.volumes) {
+		if (isTokenVolumeEnabled && tokenPriceHistory?.volumes) {
 			const chartName: ChainChartLabels = 'Token Volume'
 			charts[chartName] = formatBarChart({
-				data: denominationPriceHistory?.volumes,
+				data: tokenPriceHistory?.volumes,
 				groupBy,
 				denominationPriceHistory: null,
 				dateInMs: true
@@ -619,7 +629,7 @@ export const useFetchChainChartData = ({
 		const failedMetrics = toggledCharts.filter((chartLabel) => {
 			const isTokenMetric = chartLabel === 'Token Price' || chartLabel === 'Token Mcap' || chartLabel === 'Token Volume'
 			// Token metrics are intentionally not fetched when no chain gecko id is available.
-			if (isTokenMetric && !denominationGeckoId) return false
+			if (isTokenMetric && !tokenGeckoId) return false
 			return !Object.hasOwn(charts, chartLabel)
 		})
 		return {
@@ -632,6 +642,9 @@ export const useFetchChainChartData = ({
 		toggledChartsSet,
 		isGovTokensEnabled,
 		fetchingDenominationPriceHistory,
+		fetchingTokenPriceHistory,
+		tokenPriceHistory,
+		tokenGeckoId,
 		isDenominationEnabled,
 		denominationPriceHistory,
 		fetchingChainFees,
@@ -678,7 +691,6 @@ export const useFetchChainChartData = ({
 		isChainIncentivesEnabled,
 		chainIncentivesData,
 		finalTvlChart,
-		denominationGeckoId,
 		denomination,
 		groupBy,
 		toggledCharts

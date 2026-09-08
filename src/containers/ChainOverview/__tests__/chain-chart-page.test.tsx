@@ -126,4 +126,28 @@ describe('chart/chain/[chain]', () => {
 		})
 		expect(mocks.useFetchChainChartData.mock.calls[0][0]).not.toHaveProperty('feesSettings')
 	})
+	test.each([
+		['eth', 'ETH'],
+		['ARB', 'USD'],
+		[['ETH'], 'USD']
+	])('validates embedded chart currency %s', (currency, denomination) => {
+		mocks.routerState.query = { currency }
+		const props = createProps(makeExtraTvlCharts())
+		props.metadata = { id: 'arbitrum', name: 'Arbitrum', gasTokenGeckoId: 'ethereum', gasTokenSymbol: 'ETH' }
+		props.chainTokenInfo = {
+			gecko_id: 'arbitrum',
+			token_symbol: 'ARB',
+			current_price: null,
+			market_cap: null,
+			fully_diluted_valuation: null
+		}
+		renderToStaticMarkup(<ChainChartPage {...props} />)
+		expect(mocks.useFetchChainChartData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				chainGeckoId: 'arbitrum',
+				gasTokenGeckoId: 'ethereum',
+				denomination
+			})
+		)
+	})
 })

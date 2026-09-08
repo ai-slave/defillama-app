@@ -535,3 +535,7 @@ Browser request settings and cache identities share the token-page policy used b
 must succeed before either list replaces hydration. Failed Earn/Borrow full-data loads retain existing rows
 and offer Retry beside the section error (or in the error placeholder when empty). Retry shows loading,
 prevents duplicate requests, and preserves the requested page and sorting.
+
+### Chain chart denominations
+
+Chain and protocol chart denominations use `chainMetadata.gasTokenGeckoId` and `gasTokenSymbol` together. Missing gas metadata leaves USD as the only chain denomination; never infer a gas asset from the official token or default to ETH. Chain token price, market cap, volume, and token links continue to use the official `gecko_id` / `tokenSymbol`. For example, Arbitrum converts TVL using ETH prices while its token valuation series describe ARB. Token valuation and other intrinsically USD series retain their existing USD units.

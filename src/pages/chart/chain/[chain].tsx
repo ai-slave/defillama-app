@@ -6,7 +6,6 @@ import {
 	type LowercaseDwmcGrouping
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { SKIP_BUILD_STATIC_GENERATION } from '~/constants'
-import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { BAR_CHARTS, type ChainChartLabels, chainCharts } from '~/containers/ChainOverview/constants'
 import { getChainOverviewData } from '~/containers/ChainOverview/queries.server'
 import type { IChainOverviewData } from '~/containers/ChainOverview/types'
@@ -15,6 +14,7 @@ import { TVL_SETTINGS } from '~/contexts/LocalStorage'
 import { useIsClient } from '~/hooks/useIsClient'
 import { LocalLoader } from '~/ui/Loaders'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
+import { getChainDenominations } from '~/utils/metadata/chainDenominations'
 import { withPerformanceLogging } from '~/utils/perf'
 import { canonicalRouteRedirect } from '~/utils/route'
 import { isTruthyQueryParam } from '~/utils/routerQuery'
@@ -103,14 +103,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 	const { toggledCharts, chainGeckoId, groupBy, denomination, tvlSettings, isThemeDark } = useMemo(() => {
 		const queryParams = JSON.parse(queryParamsString)
 
-		let chainGeckoId = null
-
-		if (selectedChain !== 'All') {
-			const gasToken = chainCoingeckoIdsForGasNotMcap[selectedChain]
-			let chainDenomination = props.chainTokenInfo?.gecko_id ?? gasToken?.geckoId ?? null
-
-			chainGeckoId = chainDenomination ?? null
-		}
+		const chainGeckoId = props.chainTokenInfo?.gecko_id ?? null
 
 		const tvlSettings = {}
 
@@ -127,7 +120,11 @@ export default function ChainChartPage(props: IChainOverviewData) {
 		const groupBy =
 			hasAtleasOneBarChart && queryParams?.groupBy ? (normalizeChartInterval(queryParams.groupBy) ?? 'daily') : 'daily'
 
-		const denomination = typeof queryParams.currency === 'string' ? queryParams.currency : 'USD'
+		const denomination =
+			getChainDenominations(props.metadata).find(
+				({ symbol }) =>
+					typeof queryParams.currency === 'string' && symbol.toLowerCase() === queryParams.currency.toLowerCase()
+			)?.symbol ?? 'USD'
 
 		const isThemeDark = queryParams.theme === 'dark'
 
@@ -139,7 +136,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 			tvlSettings,
 			isThemeDark
 		}
-	}, [queryParamsString, props.charts, props.chainTokenInfo?.gecko_id, selectedChain])
+	}, [queryParamsString, props.charts, props.chainTokenInfo?.gecko_id, props.metadata])
 
 	const { finalCharts, valueSymbol, isFetchingChartData } = useFetchChainChartData({
 		denomination,
@@ -149,6 +146,7 @@ export default function ChainChartPage(props: IChainOverviewData) {
 		extraTvlCharts: props.extraTvlCharts,
 		tvlSettings,
 		chainGeckoId,
+		gasTokenGeckoId: props.metadata.gasTokenGeckoId ?? null,
 		toggledCharts,
 		groupBy
 	})

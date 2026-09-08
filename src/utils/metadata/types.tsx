@@ -19,6 +19,8 @@ export interface IChainMetadata {
 	inflows?: boolean
 	chainAssets?: boolean
 	gecko_id?: string
+	gasTokenGeckoId?: string | null
+	gasTokenSymbol?: string | null
 	tokenSymbol?: string | null
 	github?: boolean
 	id: string

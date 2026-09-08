@@ -3,7 +3,6 @@ import { fetchCoinGeckoChartByIdWithCacheFallback } from '~/api/coingecko'
 import type { CgChartResponse } from '~/api/coingecko.types'
 import type { BlockExplorersResponse } from '~/api/types'
 import { V2_SERVER_URL } from '~/constants'
-import { chainCoingeckoIdsForGasNotMcap } from '~/constants/chainTokens'
 import { CHART_COLORS } from '~/constants/colors'
 import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import { getSponsoredResearchReports } from '~/containers/Articles/api'
@@ -21,6 +20,7 @@ import { capitalizeFirstLetter, slug } from '~/utils'
 import { fetchJson, getFastJsonTimeoutMs } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { buildProtocolOverviewHallmarks } from '~/utils/hallmarks'
+import { getChainDenominations } from '~/utils/metadata/chainDenominations'
 import type { IChainMetadata, IProtocolMetadata, ITokenListEntry } from '~/utils/metadata/types'
 import { optionalPageData } from '~/utils/optionalPageData'
 import { findTokenPageRoute, type TokenDirectory } from '~/utils/tokenDirectory'
@@ -636,30 +636,7 @@ export const getProtocolOverviewPageData = async ({
 		}
 	}
 	const tokenGeckoId = protocolData.gecko_id ?? currentProtocolMetadata.gecko_id ?? null
-	const chartDenominations: Array<{ symbol: string; geckoId?: string | null }> = []
-	if (firstChain && !isCEX) {
-		chartDenominations.push({ symbol: 'USD', geckoId: null })
-
-		const cmetadata = chainMetadata?.[slug(firstChain)]
-		const chainGas = cmetadata ? chainCoingeckoIdsForGasNotMcap[cmetadata.name] : undefined
-		if (chainGas) {
-			chartDenominations.push({
-				symbol: chainGas.symbol,
-				geckoId: chainGas.geckoId
-			})
-		} else if (cmetadata?.gecko_id) {
-			chartDenominations.push({
-				symbol: cmetadata.tokenSymbol ?? '',
-				geckoId: cmetadata.gecko_id
-			})
-		} else {
-			const ethereumGeckoId = chainMetadata?.['ethereum']?.gecko_id
-			chartDenominations.push({
-				symbol: 'ETH',
-				...(ethereumGeckoId !== undefined ? { geckoId: ethereumGeckoId } : {})
-			})
-		}
-	}
+	const chartDenominations = firstChain && !isCEX ? getChainDenominations(chainMetadata[slug(firstChain)]) : []
 
 	const protocolTvlChartData = protocolTvlChartSeed.data
 	const availableCharts = buildAvailableCharts({

@@ -109,12 +109,40 @@ describe('ChainOverview Stats header', () => {
 			React.createElement(Stats, {
 				...statsProps,
 				chain: 'ZKsync Era',
-				metadata: { id: 'zksync-era', name: 'ZKsync Era' }
+				metadata: { id: 'zksync-era', name: 'ZKsync Era', gasTokenGeckoId: 'ethereum', gasTokenSymbol: 'ETH' }
 			})
 		)
 
 		expect(useFetchChainChartData).toHaveBeenCalledWith(
-			expect.objectContaining({ chainGeckoId: 'ethereum', denomination: 'USD' })
+			expect.objectContaining({ chainGeckoId: null, gasTokenGeckoId: 'ethereum', denomination: 'USD' })
+		)
+	})
+
+	test.each([
+		['eth', 'ETH'],
+		['ARB', 'USD']
+	])('resolves currency %s against gas metadata', async (currency, denomination) => {
+		const { useFetchChainChartData } = setupStatsMocks(`/chain/arbitrum?currency=${currency}`)
+		const { Stats } = await import('../Stats')
+		renderToStaticMarkup(
+			React.createElement(Stats, {
+				...statsProps,
+				metadata: { id: 'arbitrum', name: 'Arbitrum', gasTokenGeckoId: 'ethereum', gasTokenSymbol: 'ETH' },
+				chainTokenInfo: {
+					gecko_id: 'arbitrum',
+					token_symbol: 'ARB',
+					current_price: null,
+					market_cap: null,
+					fully_diluted_valuation: null
+				}
+			})
+		)
+		expect(useFetchChainChartData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				chainGeckoId: 'arbitrum',
+				gasTokenGeckoId: 'ethereum',
+				denomination
+			})
 		)
 	})
 
