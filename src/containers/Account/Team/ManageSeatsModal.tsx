@@ -1,6 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
+import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
+import { DialogHeading } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
@@ -39,8 +42,10 @@ function formatCancelDate(raw: string | number): string {
 }
 
 export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsModalProps) {
-	const { setSeatsMutation } = useTeam()
-	const [seatCount, setSeatCount] = useState(subscription.seats.seatCount)
+	const { canChangeTeamBilling, isTeamRefreshError, isTeamRetrying, refetchTeam, isTeamUpdating, setSeatsMutation } =
+		useTeam()
+	const [seatInput, setSeatInput] = useState(String(subscription.seats.seatCount))
+	const seatCount = Number(seatInput)
 	const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
 	const label = getSubscriptionLabel(subscription.type)
@@ -56,18 +61,21 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 	// When canceling, lock the floor at the current count — only increases (which undo
 	// the pending cancel) are allowed.
 	const minSeats = isCanceling ? subscription.seats.seatCount : Math.max(1, subscription.seats.occupiedSeats)
+	const isValidSeatCount = seatInput !== '' && Number.isInteger(seatCount) && seatCount >= minSeats
 	const isAtOccupiedFloor =
 		!isCanceling && seatCount <= subscription.seats.occupiedSeats && subscription.seats.occupiedSeats > 0
 	const decrementDisabled = seatCount <= minSeats
-	const isPending = setSeatsMutation.isPending
 
 	const seatsError = setSeatsMutation.isError ? setSeatsMutation.error.message : null
 
-	const handleSubmit = () => {
+	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+		event.preventDefault()
+		if (!canChangeTeamBilling) return
 		setSeatsMutation.mutate({ subscriptionType: subscription.type, seatCount }, { onSuccess: onClose })
 	}
 
 	const handleConfirmCancel = () => {
+		if (!canChangeTeamBilling) return
 		setSeatsMutation.mutate(
 			{ subscriptionType: subscription.type, seatCount: 0 },
 			{
@@ -80,8 +88,9 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 	}
 
 	const handleClose = () => {
+		if (setSeatsMutation.isPending) return
 		setSeatsMutation.reset()
-		setSeatCount(subscription.seats.seatCount)
+		setSeatInput(String(subscription.seats.seatCount))
 		onClose()
 	}
 
@@ -89,14 +98,22 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && handleClose()}>
 			<Ariakit.Dialog
 				backdrop={<div className="bg-black/80" />}
-				className="dialog max-h-[90vh] min-h-0 gap-0 overflow-y-auto rounded-2xl border-0 p-0 md:max-w-[420px]"
+				className="dialog h-fit max-h-[90dvh] min-h-0 gap-0 overflow-y-auto rounded-2xl border-0 p-0 md:max-w-[420px]"
+				hideOnEscape={!setSeatsMutation.isPending}
+				hideOnInteractOutside={!setSeatsMutation.isPending}
 				portal
 				unmountOnHide
 			>
-				<div className="flex flex-col gap-5 bg-white px-5 py-6 dark:bg-sub-surface-dark">
+				<form onSubmit={handleSubmit} className="flex flex-col gap-5 bg-white px-5 py-6 dark:bg-sub-surface-dark">
 					<div className="flex items-center justify-between">
-						<h2 className="text-base font-semibold text-sub-text-primary">Manage {label} Seats</h2>
-						<Ariakit.DialogDismiss className="rounded-full p-1 text-sub-text-muted transition-colors hover:text-sub-text-primary">
+						<DialogHeading className="text-base font-semibold text-sub-text-primary">
+							Manage {label} Seats
+						</DialogHeading>
+						<Ariakit.DialogDismiss
+							aria-label="Close"
+							disabled={setSeatsMutation.isPending}
+							className="flex size-8 shrink-0 items-center justify-center rounded-full text-sub-text-muted transition-colors hover:text-sub-text-primary"
+						>
 							<Icon name="x" height={18} width={18} />
 						</Ariakit.DialogDismiss>
 					</div>
@@ -139,8 +156,9 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 							>
 								<button
 									type="button"
-									onClick={() => setSeatCount((c) => Math.max(minSeats, c - 1))}
-									disabled={decrementDisabled}
+									aria-label="Decrease seats"
+									onClick={() => setSeatInput(String(Math.max(minSeats, seatCount - 1)))}
+									disabled={decrementDisabled || !canChangeTeamBilling}
 									className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary disabled:opacity-30 dark:border-sub-border-strong"
 								>
 									<Icon name="minus" height={16} width={16} />
@@ -148,19 +166,21 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 							</Tooltip>
 							<input
 								id="manage-seat-count"
-								type="text"
+								type="number"
+								required
+								min={minSeats}
+								step={1}
+								readOnly={!canChangeTeamBilling}
 								inputMode="numeric"
-								pattern="[0-9]*"
-								value={seatCount}
-								onChange={(e) => {
-									const val = parseInt(e.target.value, 10)
-									if (!isNaN(val) && val >= minSeats) setSeatCount(val)
-								}}
+								value={seatInput}
+								onChange={(e) => setSeatInput(e.target.value)}
 								className="h-10 w-20 rounded-lg border border-sub-border-slate-100 bg-white text-center text-sm text-sub-text-primary focus:border-sub-brand-primary focus:outline-hidden dark:border-sub-border-strong dark:bg-sub-surface-dark"
 							/>
 							<button
 								type="button"
-								onClick={() => setSeatCount((c) => c + 1)}
+								aria-label="Increase seats"
+								disabled={!canChangeTeamBilling}
+								onClick={() => setSeatInput(String(Math.max(minSeats, seatCount + 1)))}
 								className="flex size-10 items-center justify-center rounded-lg border border-sub-border-slate-100 text-sub-text-primary dark:border-sub-border-strong"
 							>
 								<Icon name="plus" height={16} width={16} />
@@ -168,7 +188,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 						</div>
 					</div>
 
-					{hasChange && (
+					{hasChange && isValidSeatCount && (
 						<div className="flex flex-col gap-2 rounded-lg bg-sub-brand-primary/5 p-3">
 							<div className="flex items-center justify-between">
 								<span className="text-sm text-sub-text-muted">
@@ -191,7 +211,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 						</div>
 					)}
 
-					{diff < 0 && (
+					{diff < 0 && isValidSeatCount && (
 						<div className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/5 p-3">
 							<Icon name="alert-triangle" height={14} width={14} className="mt-0.5 shrink-0 text-error" />
 							<p className="text-xs leading-5 text-sub-text-primary">
@@ -201,20 +221,24 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 					)}
 
 					{seatsError && !showCancelConfirm ? (
-						<div className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error">
+						<div
+							role="alert"
+							className="flex items-center gap-2 rounded-lg border border-error/30 bg-error/10 p-3 text-error"
+						>
 							<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
 							<p className="text-sm">{seatsError}</p>
 						</div>
 					) : null}
 
-					<button
-						type="button"
-						onClick={handleSubmit}
-						disabled={isPending || !hasChange}
-						className="flex h-10 w-full items-center justify-center rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50"
+					<Ariakit.Button
+						type="submit"
+						accessibleWhenDisabled
+						disabled={!canChangeTeamBilling || !hasChange}
+						className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-50 aria-disabled:opacity-50"
 					>
-						{isPending ? 'Updating...' : 'Update Seats'}
-					</button>
+						{setSeatsMutation.isPending ? <LoadingSpinner size={14} /> : null}
+						{setSeatsMutation.isPending ? 'Updating...' : 'Update Seats'}
+					</Ariakit.Button>
 
 					{!isCanceling && subscription.seats.seatCount > 0 ? (
 						<button
@@ -223,24 +247,40 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 								setSeatsMutation.reset()
 								setShowCancelConfirm(true)
 							}}
-							disabled={isPending}
-							className="flex h-10 w-full items-center justify-center rounded-lg border border-error/40 text-sm font-medium text-error hover:bg-error/5 disabled:opacity-50"
+							disabled={!canChangeTeamBilling}
+							className="flex h-10 w-full items-center justify-center rounded-lg border border-error/40 text-sm font-medium text-error hover:bg-error/5 disabled:opacity-50 aria-disabled:opacity-50"
 						>
 							Cancel subscription
 						</button>
 					) : null}
-				</div>
+					{isTeamRefreshError ? (
+						<SubscriptionLoadError
+							message="Couldn't refresh team billing. Refresh before making another change."
+							isRetrying={isTeamRetrying}
+							onRetry={() => void refetchTeam()}
+						/>
+					) : null}
+					<span role="status" className="text-sm text-sub-text-muted">
+						{isTeamUpdating && !setSeatsMutation.isPending
+							? 'Another team update is in progress. Please wait for the confirmed subscription.'
+							: ''}
+					</span>
+					<span role="status" className="sr-only">
+						{setSeatsMutation.isPending ? 'Processing request' : ''}
+					</span>
+				</form>
 			</Ariakit.Dialog>
 
 			<ConfirmActionModal
+				confirmDisabled={!canChangeTeamBilling}
 				isOpen={showCancelConfirm}
 				onClose={() => {
-					if (isPending) return
+					if (setSeatsMutation.isPending) return
 					setSeatsMutation.reset()
 					setShowCancelConfirm(false)
 				}}
 				onConfirm={handleConfirmCancel}
-				isLoading={isPending}
+				isLoading={setSeatsMutation.isPending}
 				error={showCancelConfirm ? seatsError : null}
 				title={`Cancel ${label} Subscription`}
 				description={
@@ -249,6 +289,7 @@ export function ManageSeatsModal({ isOpen, onClose, subscription }: ManageSeatsM
 						: `Cancel this ${label} subscription at the end of the current billing period? You will not be billed again.`
 				}
 				confirmLabel="Cancel Subscription"
+				pendingLabel="Canceling subscription..."
 				confirmVariant="danger"
 			/>
 		</Ariakit.DialogProvider>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type RefObject } from 'react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { ConfirmActionModal } from './ConfirmActionModal'
@@ -36,7 +36,7 @@ function ReadOnlyMemberRow({ member, isCurrentUser }: { member: TeamMember; isCu
 	)
 }
 
-export function TeamMemberView() {
+export function TeamMemberView({ finalFocus }: { finalFocus: RefObject<HTMLElement | null> }) {
 	const { user } = useAuthContext()
 	const { team, members, leaveTeamMutation } = useTeam()
 	const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
@@ -104,6 +104,7 @@ export function TeamMemberView() {
 			)}
 
 			<ConfirmActionModal
+				finalFocus={finalFocus}
 				isOpen={showLeaveConfirm}
 				onClose={() => {
 					leaveTeamMutation.reset()
@@ -116,6 +117,7 @@ export function TeamMemberView() {
 				title="Leave Team"
 				description="Are you sure you want to leave this team? Your team subscription will be revoked and you will lose access to any team-managed features."
 				confirmLabel="Leave Team"
+				pendingLabel="Leaving team..."
 				confirmVariant="danger"
 				error={leaveTeamMutation.isError ? leaveTeamMutation.error.message : null}
 			/>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState, type RefObject } from 'react'
 import { useAuthContext } from '~/auth'
 import { Icon } from '~/ui/Icon'
 import { AssignSubscriptionModal } from './AssignSubscriptionModal'
@@ -12,7 +12,9 @@ function getSubscriptionLabel(type: string | null): string {
 	return 'Unassigned'
 }
 
-export function MemberRow({ member }: { member: TeamMember }) {
+export function MemberRow({ member, finalFocus }: { member: TeamMember; finalFocus?: RefObject<HTMLElement | null> }) {
+	const subscriptionFocusRef = useRef<HTMLButtonElement>(null)
+	const removeFocusRef = useRef<HTMLElement>(null)
 	const { user } = useAuthContext()
 	const { isAdmin, teamSubscriptions, unassignMemberMutation, removeMemberMutation } = useTeam()
 	const [showAssignModal, setShowAssignModal] = useState(false)
@@ -50,9 +52,10 @@ export function MemberRow({ member }: { member: TeamMember }) {
 							hasAvailableSeats && (
 								<button
 									type="button"
+									ref={subscriptionFocusRef}
 									onClick={() => setShowAssignModal(true)}
 									className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-primary transition-colors hover:bg-sub-brand-primary/5 dark:border-sub-border-strong"
-									title="Assign subscription"
+									aria-label={`Assign subscription to ${member.email}`}
 								>
 									<Icon name="plus" height={12} width={12} />
 									Assign
@@ -61,9 +64,10 @@ export function MemberRow({ member }: { member: TeamMember }) {
 						) : (
 							<button
 								type="button"
+								ref={subscriptionFocusRef}
 								onClick={() => setShowUnassignConfirm(true)}
 								className="flex h-7 items-center gap-1 rounded-md border border-sub-border-muted px-2 text-xs font-medium text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
-								title="Unassign subscription"
+								aria-label={`Unassign subscription from ${member.email}`}
 							>
 								<Icon name="x" height={12} width={12} />
 								Unassign
@@ -72,9 +76,12 @@ export function MemberRow({ member }: { member: TeamMember }) {
 						{!isCurrentUser && !isAdminMember && (
 							<button
 								type="button"
-								onClick={() => setShowRemoveConfirm(true)}
+								onClick={(event) => {
+									removeFocusRef.current = event.currentTarget
+									setShowRemoveConfirm(true)
+								}}
 								className="flex h-7 items-center justify-center rounded-md border border-sub-border-muted px-2 text-sub-text-muted transition-colors hover:border-error hover:text-error dark:border-sub-border-strong"
-								title="Remove member"
+								aria-label={`Remove ${member.email}`}
 							>
 								<Icon name="trash-2" height={14} width={14} />
 							</button>
@@ -84,10 +91,16 @@ export function MemberRow({ member }: { member: TeamMember }) {
 			</div>
 
 			{showAssignModal && (
-				<AssignSubscriptionModal isOpen={showAssignModal} onClose={() => setShowAssignModal(false)} member={member} />
+				<AssignSubscriptionModal
+					finalFocus={hasSubscription || hasAvailableSeats ? subscriptionFocusRef : finalFocus}
+					isOpen={showAssignModal}
+					onClose={() => setShowAssignModal(false)}
+					member={member}
+				/>
 			)}
 
 			<ConfirmActionModal
+				finalFocus={hasSubscription || hasAvailableSeats ? subscriptionFocusRef : finalFocus}
 				isOpen={showUnassignConfirm}
 				onClose={() => {
 					unassignMemberMutation.reset()
@@ -100,23 +113,37 @@ export function MemberRow({ member }: { member: TeamMember }) {
 				title="Unassign Subscription"
 				description={`This will remove the ${getSubscriptionLabel(member.subscriptionType)} subscription from ${member.email}. Their access and credits will be revoked.`}
 				confirmLabel="Unassign"
+				pendingLabel="Unassigning..."
 				confirmVariant="danger"
 				error={unassignMemberMutation.isError ? unassignMemberMutation.error.message : null}
 			/>
 
 			<ConfirmActionModal
+				finalFocus={removeFocusRef}
 				isOpen={showRemoveConfirm}
 				onClose={() => {
 					removeMemberMutation.reset()
 					setShowRemoveConfirm(false)
 				}}
 				onConfirm={() => {
-					removeMemberMutation.mutate({ userId: member.userId }, { onSuccess: () => setShowRemoveConfirm(false) })
+					const trigger = removeFocusRef.current
+					// Reconciliation can unmount this row before the success callback runs.
+					removeFocusRef.current = finalFocus?.current ?? trigger
+					removeMemberMutation.mutate(
+						{ userId: member.userId },
+						{
+							onSuccess: () => setShowRemoveConfirm(false),
+							onError: () => {
+								removeFocusRef.current = trigger
+							}
+						}
+					)
 				}}
 				isLoading={removeMemberMutation.isPending}
 				title="Remove Member"
 				description={`Are you sure you want to remove ${member.email} from the team? Their subscription will be revoked.`}
 				confirmLabel="Remove"
+				pendingLabel="Removing..."
 				confirmVariant="danger"
 				error={removeMemberMutation.isError ? removeMemberMutation.error.message : null}
 			/>

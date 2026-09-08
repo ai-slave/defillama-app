@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type RefObject } from 'react'
 import { Icon } from '~/ui/Icon'
 import { formatDate, formatDateTime, formatRelativeTime, parseDateTimestamp } from '~/utils/dateFormat'
 import { ConfirmActionModal } from './ConfirmActionModal'
@@ -8,7 +8,7 @@ import { useTeam } from './useTeam'
 
 const RESEND_COOLDOWN_MS = 60_000
 
-function InviteRow({ invite }: { invite: TeamInvite }) {
+function InviteRow({ invite, finalFocus }: { invite: TeamInvite; finalFocus: RefObject<HTMLElement | null> }) {
 	const { revokeInviteMutation, resendInviteMutation } = useTeam()
 	const [showRevokeConfirm, setShowRevokeConfirm] = useState(false)
 	const [cooldownUntil, setCooldownUntil] = useState<number | null>(null)
@@ -46,7 +46,7 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 		<>
 			<div className="flex items-center gap-3 rounded-lg border border-sub-border-slate-100 p-3 dark:border-sub-border-strong">
 				<div className="min-w-0 flex-1">
-					<span className="truncate text-sm text-sub-text-primary">{invite.email}</span>
+					<span className="block truncate text-sm text-sub-text-primary">{invite.email}</span>
 					<div className="mt-1 flex items-center gap-2">
 						<span
 							className={`text-xs ${isExpired ? 'text-error' : 'text-sub-text-muted'}`}
@@ -57,7 +57,9 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 						</span>
 					</div>
 					{resendInviteMutation.isError ? (
-						<p className="mt-1 text-xs text-error">{resendInviteMutation.error.message}</p>
+						<p role="alert" className="mt-1 text-xs text-error">
+							{resendInviteMutation.error.message}
+						</p>
 					) : null}
 				</div>
 				{!isExpired && (
@@ -84,6 +86,7 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 			</div>
 
 			<ConfirmActionModal
+				finalFocus={finalFocus}
 				isOpen={showRevokeConfirm}
 				onClose={() => {
 					revokeInviteMutation.reset()
@@ -96,6 +99,7 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 				title="Revoke Invite"
 				description={`Are you sure you want to revoke the invite for ${invite.email}?`}
 				confirmLabel="Revoke"
+				pendingLabel="Revoking..."
 				confirmVariant="danger"
 				error={revokeInviteMutation.isError ? revokeInviteMutation.error.message : null}
 			/>
@@ -105,6 +109,7 @@ function InviteRow({ invite }: { invite: TeamInvite }) {
 
 export function TeamInvitesCard() {
 	const { pendingInvites } = useTeam()
+	const inviteButtonRef = useRef<HTMLButtonElement>(null)
 	const [showInviteModal, setShowInviteModal] = useState(false)
 
 	return (
@@ -116,6 +121,7 @@ export function TeamInvitesCard() {
 				</div>
 				<button
 					type="button"
+					ref={inviteButtonRef}
 					onClick={() => setShowInviteModal(true)}
 					className="flex h-8 items-center gap-1.5 rounded-lg bg-sub-brand-primary px-3 text-xs font-medium text-on-brand"
 				>
@@ -129,7 +135,7 @@ export function TeamInvitesCard() {
 			) : (
 				<div className="flex flex-col gap-2">
 					{pendingInvites.map((invite) => (
-						<InviteRow key={invite.id} invite={invite} />
+						<InviteRow key={invite.id} invite={invite} finalFocus={inviteButtonRef} />
 					))}
 				</div>
 			)}

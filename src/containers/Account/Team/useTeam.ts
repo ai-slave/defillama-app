@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AUTH_SERVER } from '~/constants'
@@ -27,23 +27,19 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 	const currentUserId = user?.id
 	const teamQueryKey = ['team', currentUserId]
 
-	/** Snapshot current team cache, apply an optimistic transform, return the snapshot for rollback. */
-	const optimistic = (updater: (old: Team) => Team) => {
-		const previous = queryClient.getQueryData<Team | null>(teamQueryKey)
-		if (previous) {
-			queryClient.setQueryData<Team | null>(teamQueryKey, updater(previous))
+	// Seats, membership and billing share server state. Serialize writes across hook
+	// instances, and show confirmed data instead of rolling back whole-team snapshots.
+	const mutationKey = ['team-write', currentUserId]
+	const isTeamUpdating = useIsMutating({ mutationKey }) > 0
+	const scope = { id: `team:${currentUserId}` }
+	const refetch = () => queryClient.invalidateQueries({ queryKey: teamQueryKey })
+	const reconcileTeam = (_data: unknown, error: Error | null) => {
+		// Show request errors immediately; successful actions wait for canonical seats.
+		if (error) {
+			void refetch()
+			return
 		}
-		return { previous }
-	}
-
-	const rollback = (_err: unknown, _vars: unknown, context: { previous?: Team | null } | undefined) => {
-		if (context?.previous !== undefined) {
-			queryClient.setQueryData<Team | null>(teamQueryKey, context.previous)
-		}
-	}
-
-	const refetch = () => {
-		void queryClient.invalidateQueries({ queryKey: teamQueryKey })
+		return refetch()
 	}
 
 	const inviteAcceptance = useQuery({
@@ -104,6 +100,9 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 
 	// ── Mutation: POST /team/create ──
 	const createTeamMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async ({ name }: { name: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/create`, {
 				method: 'POST',
@@ -118,8 +117,8 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onSuccess: () => {
 			toast.success('Team created successfully!')
-			refetch()
 			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
+			return refetch()
 		},
 		onError: (error) => {
 			console.log('Failed to create team:', error)
@@ -128,7 +127,9 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 
 	// ── Mutation: POST /team/update ──
 	const updateTeamMutation = useMutation({
-		scope: { id: `team-name:${currentUserId}:${team?.id}` },
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async ({ name }: { name: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/update`, {
 				method: 'POST',
@@ -145,11 +146,14 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			// A rename owns only the name; other team operations may finish while it is pending.
 			queryClient.setQueryData<Team | null>(teamQueryKey, (old) => (old ? { ...old, name } : old))
 		},
-		onSettled: () => refetch()
+		onSettled: reconcileTeam
 	})
 
 	// ── Mutation: POST /team/seats/purchase ──
 	const purchaseSeatsMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async (data: {
 			subscriptionType: string
 			seatCount: number
@@ -171,7 +175,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		onSuccess: (data) => {
 			if (data.action === 'seats_added') {
 				toast.success(`${data.seatsAdded} seat(s) added successfully!`)
-				refetch()
+				return refetch()
 			}
 		},
 		onError: (error) => {
@@ -182,6 +186,9 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 	// ── Mutation: POST /team/seats/upgrade ──
 	// No optimistic update: billingInterval flips on the team sub and all assigned member subs.
 	const upgradeSeatsMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async (data: { subscriptionType: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/seats/upgrade`, {
 				method: 'POST',
@@ -196,8 +203,8 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onSuccess: () => {
 			toast.success('Subscription upgraded to yearly billing')
-			refetch()
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
+			return refetch()
 		},
 		onError: (error) => {
 			console.log('Failed to upgrade subscription:', error)
@@ -206,6 +213,9 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 
 	// ── Mutation: POST /team/seats ──
 	const setSeatsMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async (data: { subscriptionType: string; seatCount: number }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/seats`, {
 				method: 'POST',
@@ -218,39 +228,17 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			return normalized.json()
 		},
-		onMutate: async ({ subscriptionType, seatCount }) => {
-			await queryClient.cancelQueries({ queryKey: teamQueryKey })
-			// seatCount=0 cancels at period end on the backend; skip optimistic update so
-			// the canonical canceledAtPeriodEnd/effectiveAt state comes from the refetch.
-			if (seatCount === 0) return { previous: queryClient.getQueryData<Team | null>(teamQueryKey) }
-			return optimistic((old) => ({
-				...old,
-				subscriptions: old.subscriptions.map((sub) =>
-					sub.type === subscriptionType
-						? {
-								...sub,
-								seats: {
-									...sub.seats,
-									seatCount,
-									availableSeats: seatCount - sub.seats.occupiedSeats
-								}
-							}
-						: sub
-				)
-			}))
-		},
-		onError: (error, _vars, context) => {
-			rollback(error, _vars, context)
-			console.log('Failed to update seats:', error)
-		},
 		onSuccess: (_data, { seatCount }) => {
 			if (seatCount === 0) toast.success('Subscription will cancel at the end of the current period')
 		},
-		onSettled: () => refetch()
+		onSettled: reconcileTeam
 	})
 
 	// ── Mutation: POST /team/member/assign ──
 	const assignMemberMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async (data: { userId: string; subscriptionType: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/member/assign`, {
 				method: 'POST',
@@ -263,38 +251,18 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			return normalized.json()
 		},
-		onMutate: async ({ userId, subscriptionType }) => {
-			await queryClient.cancelQueries({ queryKey: teamQueryKey })
-			return optimistic((old) => ({
-				...old,
-				members: old.members.map((m) => (m.userId === userId ? { ...m, subscriptionType } : m)),
-				subscriptions: old.subscriptions.map((sub) =>
-					sub.type === subscriptionType
-						? {
-								...sub,
-								seats: {
-									...sub.seats,
-									occupiedSeats: sub.seats.occupiedSeats + 1,
-									availableSeats: sub.seats.availableSeats - 1
-								}
-							}
-						: sub
-				)
-			}))
-		},
-		onError: (error, _vars, context) => {
-			rollback(error, _vars, context)
-			console.log('Failed to assign member:', error)
-		},
 		onSuccess: () => {
 			toast.success('Subscription assigned successfully!')
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
-		onSettled: () => refetch()
+		onSettled: reconcileTeam
 	})
 
 	// ── Mutation: POST /team/member/unassign ──
 	const unassignMemberMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async (data: { userId: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/member/unassign`, {
 				method: 'POST',
@@ -307,45 +275,18 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			return normalized.json()
 		},
-		onMutate: async ({ userId }) => {
-			await queryClient.cancelQueries({ queryKey: teamQueryKey })
-			const previous = queryClient.getQueryData<Team | null>(teamQueryKey)
-			const member = previous?.members.find((m) => m.userId === userId)
-			const prevSubType = member?.subscriptionType
-
-			if (previous) {
-				queryClient.setQueryData<Team | null>(teamQueryKey, {
-					...previous,
-					members: previous.members.map((m) => (m.userId === userId ? { ...m, subscriptionType: null } : m)),
-					subscriptions: previous.subscriptions.map((sub) =>
-						prevSubType && sub.type === prevSubType
-							? {
-									...sub,
-									seats: {
-										...sub.seats,
-										occupiedSeats: sub.seats.occupiedSeats - 1,
-										availableSeats: sub.seats.availableSeats + 1
-									}
-								}
-							: sub
-					)
-				})
-			}
-			return { previous }
-		},
-		onError: (error, _vars, context) => {
-			rollback(error, _vars, context)
-			console.log('Failed to unassign member:', error)
-		},
 		onSuccess: () => {
 			toast.success('Subscription removed from member')
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
-		onSettled: () => refetch()
+		onSettled: reconcileTeam
 	})
 
 	// ── Mutation: POST /team/invite ──
 	const inviteMemberMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async (data: { email: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/invite`, {
 				method: 'POST',
@@ -358,35 +299,17 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			return normalized.json()
 		},
-		onMutate: async ({ email }) => {
-			await queryClient.cancelQueries({ queryKey: teamQueryKey })
-			const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-			return optimistic((old) => ({
-				...old,
-				pendingInvites: [
-					...old.pendingInvites,
-					{
-						id: `optimistic-${Date.now()}`,
-						email,
-						status: 'pending' as const,
-						createdAt: new Date().toISOString(),
-						expiresAt
-					}
-				]
-			}))
-		},
-		onError: (error, _vars, context) => {
-			rollback(error, _vars, context)
-			console.log('Failed to send invite:', error)
-		},
 		onSuccess: () => {
 			toast.success('Invite sent successfully!')
 		},
-		onSettled: () => refetch()
+		onSettled: reconcileTeam
 	})
 
 	// ── Mutation: POST /team/invite/resend ──
 	const resendInviteMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async (data: { inviteId: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/invite/resend`, {
 				method: 'POST',
@@ -401,7 +324,7 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 		},
 		onSuccess: () => {
 			// The row's Resend button flips into its cooldown label, which is the feedback.
-			refetch()
+			return refetch()
 		},
 		onError: (error) => {
 			console.log('Failed to resend invite:', error)
@@ -410,6 +333,9 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 
 	// ── Mutation: POST /team/invite/revoke ──
 	const revokeInviteMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async (data: { inviteId: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/invite/revoke`, {
 				method: 'POST',
@@ -422,25 +348,17 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			return normalized.json()
 		},
-		onMutate: async ({ inviteId }) => {
-			await queryClient.cancelQueries({ queryKey: teamQueryKey })
-			return optimistic((old) => ({
-				...old,
-				pendingInvites: old.pendingInvites.filter((inv) => inv.id !== inviteId)
-			}))
-		},
-		onError: (error, _vars, context) => {
-			rollback(error, _vars, context)
-			console.log('Failed to revoke invite:', error)
-		},
 		onSuccess: () => {
 			toast.success('Invite revoked')
 		},
-		onSettled: () => refetch()
+		onSettled: reconcileTeam
 	})
 
 	// ── Mutation: POST /team/member/remove ──
 	const removeMemberMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async (data: { userId: string }) => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/member/remove`, {
 				method: 'POST',
@@ -453,44 +371,17 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			return normalized.json()
 		},
-		onMutate: async ({ userId }) => {
-			await queryClient.cancelQueries({ queryKey: teamQueryKey })
-			const previous = queryClient.getQueryData<Team | null>(teamQueryKey)
-			const member = previous?.members.find((m) => m.userId === userId)
-			const prevSubType = member?.subscriptionType
-
-			if (previous) {
-				queryClient.setQueryData<Team | null>(teamQueryKey, {
-					...previous,
-					members: previous.members.filter((m) => m.userId !== userId),
-					subscriptions: previous.subscriptions.map((sub) =>
-						prevSubType && sub.type === prevSubType
-							? {
-									...sub,
-									seats: {
-										...sub.seats,
-										occupiedSeats: sub.seats.occupiedSeats - 1,
-										availableSeats: sub.seats.availableSeats + 1
-									}
-								}
-							: sub
-					)
-				})
-			}
-			return { previous }
-		},
-		onError: (error, _vars, context) => {
-			rollback(error, _vars, context)
-			console.log('Failed to remove member:', error)
-		},
 		onSuccess: () => {
 			toast.success('Member removed from team')
 		},
-		onSettled: () => refetch()
+		onSettled: reconcileTeam
 	})
 
 	// ── Mutation: POST /team/leave ──
 	const leaveTeamMutation = useMutation({
+		mutationKey,
+		scope,
+		retry: false,
 		mutationFn: async () => {
 			const response = await authorizedFetch(`${AUTH_SERVER}/team/leave`, {
 				method: 'POST'
@@ -501,26 +392,19 @@ export const useTeam = ({ inviteToken }: UseTeamOptions = {}) => {
 			})
 			return normalized.json()
 		},
-		onMutate: async () => {
-			await queryClient.cancelQueries({ queryKey: teamQueryKey })
-			const previous = queryClient.getQueryData<Team | null>(teamQueryKey)
-			queryClient.setQueryData<Team | null>(teamQueryKey, null)
-			return { previous }
-		},
-		onError: (error, _vars, context) => {
-			rollback(error, _vars, context)
-			console.log('Failed to leave team:', error)
-		},
 		onSuccess: () => {
 			toast.success('You have left the team')
 			void queryClient.invalidateQueries({ queryKey: ['auth', 'status'] })
 			void queryClient.invalidateQueries({ queryKey: ['subscription'] })
 		},
-		onSettled: () => refetch()
+		onSettled: reconcileTeam
 	})
 
 	return {
 		// Query state
+		isTeamUpdating,
+		canChangeTeamBilling: !isTeamUpdating && !teamQuery.isFetching && !teamQuery.isError,
+		isTeamRefreshError: teamQuery.isError && teamQuery.data != null,
 		team,
 		isTeamLoading,
 		isTeamError,

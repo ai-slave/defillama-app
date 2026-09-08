@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { useEffect } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
 import { Icon } from '~/ui/Icon'
 import { CreateTeamCard } from './CreateTeamCard'
@@ -14,6 +14,15 @@ import { useTeam } from './useTeam'
 const getQueryParam = (value: string | Array<string> | undefined) => (Array.isArray(value) ? value[0] : value)
 
 export function TeamTab() {
+	const regionRef = useRef<HTMLDivElement>(null)
+	return (
+		<div ref={regionRef} role="region" aria-label="Team management" tabIndex={-1}>
+			<TeamTabContent finalFocus={regionRef} />
+		</div>
+	)
+}
+
+function TeamTabContent({ finalFocus }: { finalFocus: RefObject<HTMLElement | null> }) {
 	const router = useRouter()
 	const token = router.isReady ? getQueryParam(router.query.token) : undefined
 	const { team, isTeamLoading, isTeamError, isTeamRetrying, refetchTeam, isAdmin, inviteAcceptance } = useTeam({
@@ -91,7 +100,7 @@ export function TeamTab() {
 	if (!isAdmin) {
 		return (
 			<div className="flex flex-col gap-3">
-				<TeamMemberView />
+				<TeamMemberView finalFocus={finalFocus} />
 				<TeamFaqCard defaultOpenIndex={null} />
 			</div>
 		)
