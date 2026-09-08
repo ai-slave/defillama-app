@@ -3,6 +3,25 @@ import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import type { SearchResult } from '~/containers/LlamaAI/types'
 
+type SemanticSearchOutcome = { kind: 'results'; results: Array<SearchResult> } | { kind: 'empty' } | { kind: 'aborted' }
+
+// Owns the try: the compiler can lower neither the finalizer nor the logical, coalescing and
+// optional-chained tests inside it. The caller keeps the decisions that touch state.
+async function fetchSemanticResults(
+	authorizedFetch: ReturnType<typeof useAuthContext>['authorizedFetch'],
+	query: string,
+	signal: AbortSignal
+): Promise<SemanticSearchOutcome> {
+	try {
+		const res = await authorizedFetch(`${AI_SERVER}/search?q=${encodeURIComponent(query)}&limit=10`, { signal })
+		if (!res || !res.ok) return { kind: 'empty' }
+		const data = await res.json()
+		return { kind: 'results', results: data.results ?? [] }
+	} catch (error) {
+		return (error as { name?: string } | null)?.name === 'AbortError' ? { kind: 'aborted' } : { kind: 'empty' }
+	}
+}
+
 export function useSemanticSearch(enabled: boolean) {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()
 	const [query, setQuery] = useState('')
@@ -24,27 +43,15 @@ export function useSemanticSearch(enabled: boolean) {
 			abortRef.current = controller
 
 			setIsSearching(true)
-			try {
-				const res = await authorizedFetch(`${AI_SERVER}/search?q=${encodeURIComponent(q.trim())}&limit=10`, {
-					signal: controller.signal
-				})
-				if (!res || !res.ok) {
-					setResults([])
-					return
-				}
-				const data = await res.json()
-				if (!controller.signal.aborted) {
-					setResults(data.results ?? [])
-				}
-			} catch (error: any) {
-				if (error?.name !== 'AbortError') {
-					setResults([])
-				}
-			} finally {
-				if (!controller.signal.aborted) {
-					setIsSearching(false)
-				}
+			const outcome = await fetchSemanticResults(authorizedFetch, q.trim(), controller.signal)
+			// The same two guards the finalizer and its early return carried: an aborted search touches
+			// neither the results nor the spinner, and an aborted request reports nothing at all.
+			if (outcome.kind === 'results') {
+				if (!controller.signal.aborted) setResults(outcome.results)
+			} else if (outcome.kind === 'empty') {
+				setResults([])
 			}
+			if (!controller.signal.aborted) setIsSearching(false)
 		},
 		[authorizedFetch, isAuthenticated]
 	)

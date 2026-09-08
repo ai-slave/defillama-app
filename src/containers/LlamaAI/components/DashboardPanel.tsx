@@ -91,13 +91,10 @@ function DashboardPanelInner({
 			)
 			let activationPending = false
 			if (artifactSave.expectedItemIds.length > 0) {
+				// A conditional cannot be lowered inside a try, and the cap does not depend on the request.
+				const costCap = artifactSave.containsPremium ? artifactSave.estimatedMaxCostUsd : undefined
 				try {
-					await activateDashboardArtifacts(
-						authorizedFetch,
-						dashboard.id,
-						artifactSave,
-						artifactSave.containsPremium ? artifactSave.estimatedMaxCostUsd : undefined
-					)
+					await activateDashboardArtifacts(authorizedFetch, dashboard.id, artifactSave, costCap)
 				} catch {
 					activationPending = true
 				}

@@ -196,12 +196,15 @@ export function ResponseControls({
 			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
 			copiedTimeoutRef.current = setTimeout(() => dispatch({ type: 'setCopied', value: false }), 2000)
 		}
+		// A logical test with an optional chain cannot be lowered inside a try. Decided before it, which is
+		// still synchronous and so still inside the user gesture.
+		const canWriteRichClipboard = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write
 		try {
 			// Both flavors go up together: rich targets (Docs, Sheets, Notion) read text/html
 			// and get real tables and charts; plain targets keep the markdown text.
 			// ClipboardItem accepts promise values, so write() stays inside the user gesture
 			// while artifacts resolve (Safari requires this).
-			if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+			if (canWriteRichClipboard) {
 				await navigator.clipboard.write([
 					new ClipboardItem({
 						'text/plain': buildCopyMarkdown(content, source).then(

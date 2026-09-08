@@ -42,6 +42,26 @@ function parseSavedChartList(value: unknown): Array<SavedChartListItem> {
 	return charts
 }
 
+// Owns all three throws and the optional-chained response check, none of which the compiler can lower
+// inside a try. Snapshot at insert time: the article keeps this data forever; no live link.
+async function loadInsertableChart(
+	authorizedFetch: (url: string, init?: RequestInit) => Promise<Response | null>,
+	chartId: string,
+	signal: AbortSignal
+) {
+	const res = await authorizedFetch(`${AI_SERVER}/charts/${chartId}`, { signal })
+	if (!res?.ok) throw new Error('Failed to load chart data')
+	const detail = await res.json()
+	if (!isChartDataRow(detail)) throw new Error('Chart has no usable data to insert')
+	const attrs = createLlamaAIChartAttrs(detail.chartConfig, detail.chartData)
+	if (!attrs) throw new Error('Chart has no usable data to insert')
+	return attrs
+}
+
+function insertChartError(error: unknown) {
+	return error instanceof Error ? error.message : 'Failed to insert chart'
+}
+
 export function LlamaAIChartPickerDialog({
 	dialogStore,
 	editor
@@ -107,32 +127,28 @@ function SavedChartPickerSession({
 		const controller = new AbortController()
 		insertion.current = controller
 		setInsertingId(item.id)
-		try {
-			// Snapshot at insert time: the article keeps this data forever; no live link.
-			const res = await authorizedFetch(`${AI_SERVER}/charts/${item.id}`, { signal: controller.signal })
-			if (!res?.ok) throw new Error('Failed to load chart data')
-			const detail = await res.json()
-			if (controller.signal.aborted || !dialogStore.getState().open || editor.isDestroyed || !editor.isEditable) return
-			if (!isChartDataRow(detail)) throw new Error('Chart has no usable data to insert')
-			const attrs = createLlamaAIChartAttrs(detail.chartConfig, detail.chartData)
-			if (!attrs) throw new Error('Chart has no usable data to insert')
-			editor
-				.chain()
-				.focus()
-				.insertLlamaAIChart({
-					...attrs,
-					savedChartId: item.id
-				})
-				.run()
-			dialogStore.hide()
-		} catch (error) {
-			if (!controller.signal.aborted && dialogStore.getState().open)
-				toast.error(error instanceof Error ? error.message : 'Failed to insert chart')
-		} finally {
-			if (insertion.current === controller) {
-				insertion.current = null
-				setInsertingId(null)
+		const dialogStillOpen = () => !controller.signal.aborted && dialogStore.getState().open
+		const editorStillReady = () => dialogStillOpen() && !editor.isDestroyed && editor.isEditable
+		// The finalizer guarded an early return, so the body settles in its own function first and the
+		// clean-up follows it. The swallowing catch is what makes that the same thing.
+		const insert = async () => {
+			try {
+				const attrs = await loadInsertableChart(authorizedFetch, item.id, controller.signal)
+				if (!editorStillReady()) return
+				editor
+					.chain()
+					.focus()
+					.insertLlamaAIChart({ ...attrs, savedChartId: item.id })
+					.run()
+				dialogStore.hide()
+			} catch (error) {
+				if (dialogStillOpen()) toast.error(insertChartError(error))
 			}
+		}
+		await insert()
+		if (insertion.current === controller) {
+			insertion.current = null
+			setInsertingId(null)
 		}
 	}
 

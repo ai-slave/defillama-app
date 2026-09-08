@@ -10,6 +10,10 @@ interface ProjectInstructionsEditorProps {
 
 const MAX_LENGTH = 8000
 
+function saveInstructionsError(error: unknown) {
+	return error instanceof Error ? error.message : 'Failed to save instructions'
+}
+
 export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructionsEditorProps) {
 	const update = useUpdateProject(projectId)
 	const incomingValue = value ?? ''
@@ -24,11 +28,13 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 	const dirty = draft.value.trim() !== draft.savedValue.trim()
 
 	const saveDraft = async (nextDraft: string) => {
+		// Neither a logical nor a conditional can be lowered inside a try or catch.
+		const custom_instructions = nextDraft || null
 		try {
-			await update.mutateAsync({ custom_instructions: nextDraft || null })
+			await update.mutateAsync({ custom_instructions })
 			toast.success('Instructions saved')
 		} catch (error) {
-			toast.error(error instanceof Error ? error.message : 'Failed to save instructions')
+			toast.error(saveInstructionsError(error))
 		}
 	}
 

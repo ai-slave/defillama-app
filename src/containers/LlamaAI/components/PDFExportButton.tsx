@@ -46,6 +46,13 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 		if (loading) return
 		if (!sessionId) return
 
+		// A conditional and two coalesces, none of which the compiler can lower inside the try below.
+		const trackingContext = {
+			theme: isDark ? ('dark' as const) : ('light' as const),
+			sessionId: sessionId ?? '',
+			messageId: messageId ?? ''
+		}
+
 		if (hasActiveSubscription) {
 			try {
 				setIsLoading(true)
@@ -130,9 +137,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 					kind: 'pdf',
 					filename: pdfFilename,
 					exportType,
-					theme: isDark ? 'dark' : 'light',
-					sessionId: sessionId ?? '',
-					messageId: messageId ?? ''
+					...trackingContext
 				})
 				toast.success('PDF downloaded!', { id: 'pdf-export' })
 				setIsLoading(false)

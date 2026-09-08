@@ -68,6 +68,12 @@ interface UseImageUploadOptions {
 	clearDroppedFiles?: () => void
 }
 
+// A conditional cannot be lowered inside the try that guards createObjectURL, but the call itself
+// stays in there: it is the part that can fail.
+function previewUrlFor(file: File) {
+	return isImageType(file.type) ? URL.createObjectURL(file) : ''
+}
+
 export function useImageUpload({
 	maxImages = 15,
 	maxSizeBytes,
@@ -147,7 +153,7 @@ export function useImageUpload({
 			const newImages: Array<SelectedImage> = []
 			for (const file of valid) {
 				try {
-					const url = isImageType(file.type) ? URL.createObjectURL(file) : ''
+					const url = previewUrlFor(file)
 					attachmentCounterRef.current += 1
 					newImages.push({ id: `file-${attachmentCounterRef.current}`, file, url })
 				} catch (error) {

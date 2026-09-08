@@ -24,6 +24,8 @@ function extractFilename(url: string): string {
 export function ImagePreviewModal({ imageUrl, onClose, source, sessionId, messageId }: ImagePreviewModalProps) {
 	const [copied, setCopied] = useState(false)
 	const [downloading, setDownloading] = useState(false)
+	// Coalescing cannot be lowered inside a try, and both handlers below report the same ids.
+	const trackingIds = { source: source ?? '', sessionId: sessionId ?? '', messageId: messageId ?? '' }
 
 	const handleBackdropClick = (e: React.MouseEvent) => {
 		if (e.target === e.currentTarget) onClose()
@@ -37,9 +39,7 @@ export function ImagePreviewModal({ imageUrl, onClose, source, sessionId, messag
 				kind: 'image-copy-url',
 				filename: extractFilename(imageUrl),
 				url: imageUrl,
-				source: source ?? '',
-				sessionId: sessionId ?? '',
-				messageId: messageId ?? ''
+				...trackingIds
 			})
 			setCopied(true)
 			setTimeout(() => setCopied(false), 1500)
@@ -66,9 +66,7 @@ export function ImagePreviewModal({ imageUrl, onClose, source, sessionId, messag
 				kind: 'image',
 				filename: extractFilename(imageUrl),
 				url: imageUrl,
-				source: source ?? '',
-				sessionId: sessionId ?? '',
-				messageId: messageId ?? ''
+				...trackingIds
 			})
 		} catch {
 			// Fallback: open in new tab if CORS blocks the fetch.

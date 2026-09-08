@@ -361,6 +361,17 @@ function InlineContent({
 	)
 }
 
+// Owns the try: the compiler cannot lower a conditional inside one, and an unreadable paste is simply
+// empty rather than an error the reader has to act on.
+async function readPastedText(url: string) {
+	try {
+		const res = await fetch(url)
+		return res.ok ? await res.text() : ''
+	} catch {
+		return ''
+	}
+}
+
 export function MessageBubble({
 	message,
 	sessionId,
@@ -420,8 +431,10 @@ export function MessageBubble({
 		const next = draftText.trim()
 		if (!message.id || !next || next === message.content?.trim() || isSaving) return
 		setIsSaving(true)
+		// An optional call cannot be lowered inside a try.
+		const submitEdit = () => onEditMessage?.(message.id, next, message)
 		try {
-			await onEditMessage?.(message.id, next, message)
+			await submitEdit()
 			setIsEditing(false)
 		} catch {
 			// textarea stays open with draft preserved; parent rolled back state and surfaced an error
@@ -483,15 +496,8 @@ export function MessageBubble({
 											textContent={image.textContent ?? ''}
 											isPasted={isPasted}
 											onOpen={async () => {
-												let content = image.textContent
-												if (typeof content !== 'string') {
-													try {
-														const res = await fetch(image.url)
-														content = res.ok ? await res.text() : ''
-													} catch {
-														content = ''
-													}
-												}
+												const content =
+													typeof image.textContent === 'string' ? image.textContent : await readPastedText(image.url)
 												setPastedPreview({ content, filename: displayName, isPasted })
 											}}
 										/>

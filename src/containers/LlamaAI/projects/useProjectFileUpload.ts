@@ -77,6 +77,21 @@ function isAcceptedProjectFile(file: File): boolean {
 	return PROJECT_FILE_ACCEPT_EXTENSION_SET.has(name.slice(extensionStart))
 }
 
+// The compiler cannot lower a loop inside a try at all, so the reporting moves out. The call stays in
+// the try, so a throwing toast is still caught.
+function reportSkipped(skipped: Array<{ path: string; reason: string }>) {
+	for (const entry of skipped) toast.error(`Skipped ${entry.path}: ${entry.reason}`)
+}
+
+// Both are value blocks, which the compiler cannot lower inside the try or the catch.
+function fileCountLabel(count: number) {
+	return count === 1 ? `${count} file` : `${count} files`
+}
+
+function uploadErrorMessage(error: unknown) {
+	return error instanceof Error ? error.message : 'Upload failed'
+}
+
 export function useProjectFileUpload(projectId: string) {
 	const upload = useUploadProjectFiles(projectId)
 
@@ -104,13 +119,11 @@ export function useProjectFileUpload(projectId: string) {
 			try {
 				const res = await upload.mutateAsync(files)
 				if (res.imported.length > 0) {
-					toast.success(`Uploaded ${res.imported.length} file${res.imported.length === 1 ? '' : 's'}`)
+					toast.success(`Uploaded ${fileCountLabel(res.imported.length)}`)
 				}
-				for (const skipped of res.skipped) {
-					toast.error(`Skipped ${skipped.path}: ${skipped.reason}`)
-				}
+				reportSkipped(res.skipped)
 			} catch (error) {
-				toast.error(error instanceof Error ? error.message : 'Upload failed')
+				toast.error(uploadErrorMessage(error))
 			}
 		},
 		[upload]

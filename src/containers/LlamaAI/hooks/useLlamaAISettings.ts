@@ -323,6 +323,16 @@ export function useAdvancedProvenance(): boolean {
 	return stored == null ? isLlama : stored === 'true'
 }
 
+// Throws from outside the try's own body, and reads through the optional chain outside the catch:
+// the compiler can lower neither in place.
+function assertSettingsPersisted(response: Response | null) {
+	if (!response?.ok) throw new Error('Failed to persist LlamaAI settings')
+}
+
+function settingsOf(latest: SettingsQueryResult | undefined) {
+	return latest?.settings ?? null
+}
+
 export function useLlamaAISettings() {
 	const { authorizedFetch, isAuthenticated, user } = useAuthContext()
 	const queryClient = useQueryClient()
@@ -430,10 +440,10 @@ export function useLlamaAISettings() {
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ settings: update })
 				})
-				if (!response?.ok) throw new Error('Failed to persist LlamaAI settings')
+				assertSettingsPersisted(response)
 			} catch (error) {
 				const latest = queryClient.getQueryData<SettingsQueryResult>(queryKey)
-				applySettingsUpdate(getFailedSettingsRollback(latest?.settings ?? null, optimisticUpdate, previousSettings))
+				applySettingsUpdate(getFailedSettingsRollback(settingsOf(latest), optimisticUpdate, previousSettings))
 				throw error
 			}
 			return update

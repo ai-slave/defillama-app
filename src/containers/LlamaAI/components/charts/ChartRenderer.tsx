@@ -465,8 +465,7 @@ function SingleChart({
 	const [savingToLibrary, setSavingToLibrary] = useState(false)
 	const handleSaveToLibrary = useCallback(async () => {
 		if (!authorizedFetch || savingToLibrary) return
-		setSavingToLibrary(true)
-		try {
+		const save = async () => {
 			const request: Parameters<typeof saveChartToLibrary>[1] = {
 				chartId: baseConfig.id,
 				frozen: true
@@ -476,10 +475,11 @@ function SingleChart({
 			const id = await saveChartToLibrary(authorizedFetch, request)
 			if (id) toast.success('Chart saved to your library (frozen)')
 			else toast.error('Failed to save chart')
-		} finally {
-			setSavingToLibrary(false)
 		}
-		// oxlint-disable-next-line react/memo-dependencies -- React Compiler does not see dependencies read inside an async try/finally; these are correct.
+		setSavingToLibrary(true)
+		// Promise.finally rather than a try/finally statement, which the compiler cannot lower. A throw
+		// still propagates after the flag clears, which is what the finalizer did.
+		await save().finally(() => setSavingToLibrary(false))
 	}, [authorizedFetch, savingToLibrary, baseConfig.id, sessionId, messageId])
 
 	const handleSaveStyle = useCallback(

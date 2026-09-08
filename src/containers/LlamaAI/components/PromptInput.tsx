@@ -83,6 +83,16 @@ interface PendingSelection {
 	focus?: boolean
 }
 
+// Logical tests and a conditional, none of which the compiler can lower inside the try that guards the
+// submit. Only an explicit rejection carries a message; anything else has none to show.
+function wasAccepted(result: void | boolean | QueueSubmitResult) {
+	return typeof result === 'object' && result.status === 'accepted'
+}
+
+function rejectionMessage(result: void | boolean | QueueSubmitResult) {
+	return typeof result === 'object' && result.status === 'rejected' ? result.message : null
+}
+
 export function PromptInput({
 	draftScope,
 	submitMode,
@@ -316,7 +326,9 @@ export function PromptInput({
 		if (isStopping) return
 		if (!promptValue.trim() && imageUpload.selectedImages.length === 0) return
 		submitInFlightRef.current = true
-		try {
+		// The finalizer guarded six early returns, so the body settles in its own function and the flag
+		// clears after it. Promise.finally keeps a throw propagating once it has, as the finalizer did.
+		const submit = async () => {
 			const finalEntities = entityCombobox.getFinalEntities()
 			const imagesToSend = [...imageUpload.selectedImages]
 			const isSuggested = isSuggestedRef.current
@@ -346,9 +358,8 @@ export function PromptInput({
 				try {
 					const images = await prepareImagesForSubmit(imagesToSend)
 					const result = await handleSubmit(promptValue, finalEntities, images)
-					if (typeof result !== 'object' || result.status !== 'accepted') {
-						const message = typeof result === 'object' && result.status === 'rejected' ? result.message : null
-						setSubmitError(message)
+					if (!wasAccepted(result)) {
+						setSubmitError(rejectionMessage(result))
 						restoreDraftIfUntouched()
 					}
 				} catch (error) {
@@ -361,12 +372,14 @@ export function PromptInput({
 
 			trackSubmit()
 			const hasImages = imagesToSend.length > 0
+			// A logical cannot be lowered inside a try, and both submit paths below pass the same flag.
+			const suggestedFlag = isSuggested || undefined
 
 			if (hasImages) {
 				try {
 					const images = await prepareImagesForSubmit(imagesToSend)
 					const accepted = await Promise.resolve(
-						handleSubmit(promptValue, finalEntities, images, undefined, isSuggested || undefined)
+						handleSubmit(promptValue, finalEntities, images, undefined, suggestedFlag)
 					)
 					if (accepted === false) return
 					setSubmitError(null)
@@ -383,7 +396,7 @@ export function PromptInput({
 
 			try {
 				const accepted = await Promise.resolve(
-					handleSubmit(promptValue, finalEntities, undefined, undefined, isSuggested || undefined)
+					handleSubmit(promptValue, finalEntities, undefined, undefined, suggestedFlag)
 				)
 				if (accepted === false) return
 				setSubmitError(null)
@@ -392,9 +405,10 @@ export function PromptInput({
 				console.error('Submission failed', error)
 				setSubmitError('Failed to submit your prompt. Please try again.')
 			}
-		} finally {
-			submitInFlightRef.current = false
 		}
+		await submit().finally(() => {
+			submitInFlightRef.current = false
+		})
 	}
 
 	const handleKeyDownCapture = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
