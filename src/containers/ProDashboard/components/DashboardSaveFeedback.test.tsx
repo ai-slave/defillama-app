@@ -94,8 +94,13 @@ test.each(['success', 'failure'] as const)(
 		const originalInput = document.querySelector<HTMLInputElement>('[name="dashboardName"]')!
 		originalInput.focus()
 		await submit()
-		await vi.waitFor(() => expect(api.update).toHaveBeenCalledOnce())
-		expect(originalInput.readOnly).toBe(true)
+		// `readOnly` comes from the mutation's pending state, so waiting on the API mock alone races the
+		// React commit that locks the form: the mock is called from inside the mutation function, which
+		// runs before the pending render is flushed.
+		await vi.waitFor(() => {
+			expect(api.update).toHaveBeenCalledOnce()
+			expect(originalInput.readOnly).toBe(true)
+		})
 		expect(document.activeElement).toBe(originalInput)
 		await render(false)
 		await render(true)
