@@ -36,7 +36,7 @@ export function KeyMetricsHeader({ title = 'Key Metrics', id, action }: KeyMetri
 /** Footer row: optional left content (e.g. report button) and the DefiLlama mark always bottom-right. */
 export function KeyMetricsFooter({ children }: { children?: ReactNode }) {
 	return (
-		<div className="flex items-center justify-between gap-2">
+		<div className="mt-auto flex items-center justify-between gap-2">
 			{children ?? <span />}
 			<Watermark />
 		</div>
