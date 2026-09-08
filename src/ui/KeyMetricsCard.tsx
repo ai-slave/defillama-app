@@ -6,12 +6,10 @@ interface KeyMetricsHeaderProps {
 	title?: string
 	/** Anchor id; when set the heading gets a hover-revealed self link. */
 	id?: string
-	/** Right-aligned action, e.g. the PNG export button. */
-	action?: ReactNode
 }
 
-/** Title row shared by every Key Metrics card so heading size and action placement match across pages. */
-export function KeyMetricsHeader({ title = 'Key Metrics', id, action }: KeyMetricsHeaderProps) {
+/** Title row shared by every Key Metrics card; the DefiLlama mark sits top-right. */
+export function KeyMetricsHeader({ title = 'Key Metrics', id }: KeyMetricsHeaderProps) {
 	return (
 		<div className="flex items-center justify-between gap-2">
 			<h2 className="group relative flex items-center gap-1 font-semibold" id={id}>
@@ -28,17 +26,17 @@ export function KeyMetricsHeader({ title = 'Key Metrics', id, action }: KeyMetri
 					</>
 				) : null}
 			</h2>
-			{action}
+			<Watermark />
 		</div>
 	)
 }
 
-/** Footer row: optional left content (e.g. report button) and the DefiLlama mark always bottom-right. */
-export function KeyMetricsFooter({ children }: { children?: ReactNode }) {
+/** Footer row: optional left content (e.g. report button) and the right-aligned action, e.g. the PNG export button. */
+export function KeyMetricsFooter({ children, action }: { children?: ReactNode; action?: ReactNode }) {
 	return (
 		<div className="mt-auto flex items-center justify-between gap-2">
 			{children ?? <span />}
-			<Watermark />
+			{action}
 		</div>
 	)
 }

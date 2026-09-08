@@ -242,19 +242,7 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
-			<KeyMetricsHeader
-				id="key-metrics"
-				action={
-					<KeyMetricsPngExportButton
-						containerRef={containerRef}
-						title={props.name}
-						iconUrl={`/api/public/protocol-icon?slug=${encodeURIComponent(props.name)}`}
-						primaryValue={hasPrimaryMetricData ? (primaryValue ?? null) : null}
-						primaryLabel={primaryLabel}
-						formatPrice={props.formatPrice}
-					/>
-				}
-			/>
+			<KeyMetricsHeader id="key-metrics" />
 			<div className="flex flex-col" ref={containerRef}>
 				{props.isOracleProtocol && hasTvlData && props.tvl != null ? <TVL {...props} tvl={props.tvl} /> : null}
 				<Fees {...props} />
@@ -329,7 +317,18 @@ export function KeyMetrics(props: IKeyMetricsProps) {
 				<Raises {...props} />
 				<Expenses {...props} />
 			</div>
-			<KeyMetricsFooter>
+			<KeyMetricsFooter
+				action={
+					<KeyMetricsPngExportButton
+						containerRef={containerRef}
+						title={props.name}
+						iconUrl={`/api/public/protocol-icon?slug=${encodeURIComponent(props.name)}`}
+						primaryValue={hasPrimaryMetricData ? (primaryValue ?? null) : null}
+						primaryLabel={primaryLabel}
+						formatPrice={props.formatPrice}
+					/>
+				}
+			>
 				<ReportIncorrectData
 					subject={{ type: 'protocol', name: props.name, isLending: props.category === 'Lending' }}
 				/>

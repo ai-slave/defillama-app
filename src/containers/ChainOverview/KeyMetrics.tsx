@@ -59,20 +59,7 @@ export function KeyMetrics(props: KeyMetricsProps) {
 
 	return (
 		<div className="flex flex-1 flex-col gap-2">
-			<KeyMetricsHeader
-				action={
-					props.metadata.name !== 'All' ? (
-						<KeyMetricsPngExportButton
-							containerRef={keyMetricsRef}
-							title={keyMetricsTitle}
-							iconUrl={`/api/public/chain-icon?slug=${encodeURIComponent(props.metadata.name)}`}
-							primaryValue={hasKeyMetricsPrimary ? props.totalValueUSD : null}
-							primaryLabel="Total Value Locked in DeFi"
-							formatPrice={formatKeyMetricsValue}
-						/>
-					) : null
-				}
-			/>
+			<KeyMetricsHeader />
 			<div className="flex flex-col" ref={keyMetricsRef}>
 				<StablecoinsMcap stablecoins={props.stablecoins} isAll={props.metadata.name === 'All'} />
 				<RwaActiveMcap rwaActiveMcap={props.rwaActiveMcap} />
@@ -172,7 +159,22 @@ export function KeyMetrics(props: KeyMetricsProps) {
 				) : null}
 				<ChainTokenInfo chainTokenInfo={props.chainTokenInfo} />
 			</div>
-			<KeyMetricsFooter>{props.footerAction}</KeyMetricsFooter>
+			<KeyMetricsFooter
+				action={
+					props.metadata.name !== 'All' ? (
+						<KeyMetricsPngExportButton
+							containerRef={keyMetricsRef}
+							title={keyMetricsTitle}
+							iconUrl={`/api/public/chain-icon?slug=${encodeURIComponent(props.metadata.name)}`}
+							primaryValue={hasKeyMetricsPrimary ? props.totalValueUSD : null}
+							primaryLabel="Total Value Locked in DeFi"
+							formatPrice={formatKeyMetricsValue}
+						/>
+					) : null
+				}
+			>
+				{props.footerAction}
+			</KeyMetricsFooter>
 		</div>
 	)
 }
