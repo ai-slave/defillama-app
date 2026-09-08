@@ -1894,7 +1894,14 @@ test.each(['success', 'current failure', 'import failure'] as const)(
 			(caughtError: unknown) => ({ reason: caughtError })
 		)
 		try {
-			await moduleStarted.promise
+			// Bounded against `result`: when the mocked factory never runs, the request
+			// settles without it and this would otherwise wait for the whole timeout.
+			await Promise.race([
+				moduleStarted.promise,
+				result.then(() => {
+					throw new Error('getServerSideProps settled before the mocked dataset module started loading')
+				})
+			])
 			expect(readCurrent).toHaveBeenCalledOnce()
 			if (outcome === 'current failure') {
 				current.reject(error)
