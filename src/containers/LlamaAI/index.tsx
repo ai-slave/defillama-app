@@ -172,6 +172,9 @@ function getPromptDraftScope(sessionId: string | null, projectId: string | null)
 	return projectId ? `project:${projectId}` : 'new'
 }
 
+const SHARE_TOOLTIP = 'Share conversation'
+const SHARE_PENDING_TOOLTIP = 'Available once the conversation is saved.'
+
 type RecoveryController = {
 	id: number
 	sessionId: string
@@ -559,6 +562,10 @@ export function AgenticChat({
 	const effectiveSessionId = (forkedFromShared ? sessionId : sharedSession?.session.sessionId) ?? sessionId
 	const lookupSessionId = routeSessionId ?? sessionId ?? null
 	const sessionListEntry = lookupSessionId ? (sessions.find((s) => s.sessionId === lookupSessionId) ?? null) : null
+	// A first submit assigns a local UUID before the server persists the session, so a non-null id is not
+	// yet shareable. Only a positively optimistic entry blocks sharing: the list is paginated, so an older
+	// session opened by URL may not be loaded at all.
+	const isSessionSaved = !!effectiveSessionId && sessionListEntry?.isOptimistic !== true
 	const sessionListTitle = sessionListEntry?.title ?? null
 	const effectiveSessionTitle =
 		sharedSession?.session.title ?? (isRouteSessionPending ? sessionListTitle : (sessionTitle ?? sessionListTitle))
@@ -1580,8 +1587,9 @@ export function AgenticChat({
 						adoptQueueSession(previousSessionId, id)
 						movePromptFailure(previousSessionId, id)
 						registerSessionAlias(previousSessionId, id)
-						replaceOptimisticSessionId(previousSessionId, id, submitProjectId)
 					}
+					// The server can persist the client UUID without assigning a different ID.
+					replaceOptimisticSessionId(previousSessionId, id, submitProjectId)
 					if (sharedSession) onSharedSessionFork?.(id)
 					if (previousSessionId !== id && !sessions.some((session) => session.sessionId === id)) {
 						void createSession
@@ -2695,20 +2703,29 @@ export function AgenticChat({
 										hasCustomInstructions={settings.customInstructions.trim().length > 0}
 										sessionTitle={effectiveSessionTitle}
 										canShare={!isSharedView && effectiveMessages.length > 0}
+										isSessionSaved={isSessionSaved}
 										onShare={() => openShareModal()}
 									/>
 								) : null}
 								{!readOnly && !isSharedView && effectiveMessages.length > 0 ? (
-									<button
-										type="button"
-										onClick={() => openShareModal()}
-										data-umami-event="llamaai-share-modal-open"
-										data-umami-event-source="header_controls"
-										className="absolute top-2.5 right-2.5 z-10 hidden items-center gap-1.5 rounded-md border border-ai-line bg-surface px-3 py-1.5 text-xs font-medium text-ai-secondary transition-colors hover:bg-ai-surface-muted lg:flex"
+									<Tooltip
+										content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
+										placement="bottom-end"
+										render={
+											<Ariakit.Button
+												type="button"
+												onClick={() => openShareModal()}
+												disabled={!isSessionSaved}
+												accessibleWhenDisabled
+												data-umami-event="llamaai-share-modal-open"
+												data-umami-event-source="header_controls"
+											/>
+										}
+										className="absolute top-2.5 right-2.5 z-10 hidden items-center gap-1.5 rounded-md border border-ai-line bg-surface px-3 py-1.5 text-xs font-medium text-ai-secondary transition-colors hover:bg-ai-surface-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:flex"
 									>
 										<Icon name="share" height={14} width={14} />
 										Share
-									</button>
+									</Tooltip>
 								) : null}
 								{(isRouteSessionPending || restoringSessionId) && !hasMessages && !visibleError ? (
 									<LoadingConversationState />
@@ -2840,6 +2857,7 @@ const ChatControls = memo(function ChatControls({
 	hasCustomInstructions,
 	sessionTitle,
 	canShare,
+	isSessionSaved,
 	onShare
 }: {
 	handleNewChat: () => void
@@ -2847,6 +2865,7 @@ const ChatControls = memo(function ChatControls({
 	hasCustomInstructions: boolean
 	sessionTitle: string | null
 	canShare: boolean
+	isSessionSaved: boolean
 	onShare: () => void
 }) {
 	const isMobile = useMedia('(max-width: 1023px)')
@@ -2899,16 +2918,23 @@ const ChatControls = memo(function ChatControls({
 					<span className="sr-only">New Chat</span>
 				</Tooltip>
 				{canShare ? (
-					<button
-						type="button"
-						onClick={onShare}
-						data-umami-event="llamaai-share-modal-open"
-						data-umami-event-source="header_controls"
-						className="flex h-6 items-center gap-1 rounded-sm bg-brand/12 px-2 text-[11px] text-brand transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white lg:hidden"
+					<Tooltip
+						content={isSessionSaved ? SHARE_TOOLTIP : SHARE_PENDING_TOOLTIP}
+						render={
+							<Ariakit.Button
+								type="button"
+								onClick={onShare}
+								disabled={!isSessionSaved}
+								accessibleWhenDisabled
+								data-umami-event="llamaai-share-modal-open"
+								data-umami-event-source="header_controls"
+							/>
+						}
+						className="flex h-6 items-center gap-1 rounded-sm bg-brand/12 px-2 text-[11px] text-brand transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:hidden"
 					>
 						<Icon name="share" height={12} width={12} />
 						Share
-					</button>
+					</Tooltip>
 				) : null}
 				{!isMobile ? (
 					<Tooltip

@@ -46,6 +46,9 @@ function reactCompilerUnderTest() {
  * that memoization can change.
  */
 const COMPILER_SENSITIVE_TESTS = [
+	'src/containers/LlamaAI/components/__tests__/chatShareReadiness.test.tsx',
+	'src/containers/LlamaAI/components/__tests__/shareModalClipboard.test.tsx',
+	'src/containers/LlamaAI/components/__tests__/ImagePreviewModal.test.tsx',
 	'src/containers/ProDashboard/components/MultiChartCard.csv.test.tsx',
 	'src/components/__tests__/CsvDownloadButton.test.tsx',
 	'src/containers/ProDashboard/components/TemplateCreation.test.tsx',

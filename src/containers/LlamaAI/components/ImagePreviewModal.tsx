@@ -1,7 +1,10 @@
 import * as Ariakit from '@ariakit/react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
+import { downloadBlob } from '~/utils/download'
 
 interface ImagePreviewModalProps {
 	imageUrl: string | null
@@ -21,115 +24,155 @@ function extractFilename(url: string): string {
 	}
 }
 
-export function ImagePreviewModal({ imageUrl, onClose, source, sessionId, messageId }: ImagePreviewModalProps) {
-	const [copied, setCopied] = useState(false)
-	const [downloading, setDownloading] = useState(false)
-	// Coalescing cannot be lowered inside a try, and both handlers below report the same ids.
+export function ImagePreviewModal({ imageUrl, onClose, ...tracking }: ImagePreviewModalProps) {
+	return (
+		<Ariakit.DialogProvider open={!!imageUrl} setOpen={(open) => !open && onClose()}>
+			<Ariakit.Dialog
+				aria-label="Image preview"
+				className="data-[enter]:animate-in data-[leave]:animate-out data-[enter]:fade-in data-[leave]:fade-out fixed inset-0 z-50 flex items-center justify-center bg-ai-black/80 p-4 backdrop-blur-md data-[enter]:duration-150"
+				portal
+				unmountOnHide
+				onClick={(event) => {
+					if (event.target === event.currentTarget) onClose()
+				}}
+			>
+				{imageUrl ? <ImagePreviewContent key={imageUrl} imageUrl={imageUrl} {...tracking} /> : null}
+				<Ariakit.DialogDismiss
+					className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-ai-white/10 text-ai-white backdrop-blur-md transition-colors hover:bg-ai-hover-strong"
+					aria-label="Close preview"
+				>
+					<Icon name="x" height={18} width={18} />
+				</Ariakit.DialogDismiss>
+			</Ariakit.Dialog>
+		</Ariakit.DialogProvider>
+	)
+}
+
+// Feedback belongs to this image/opening; an already requested download may finish after dismissal.
+function ImagePreviewContent({
+	imageUrl,
+	source,
+	sessionId,
+	messageId
+}: Omit<ImagePreviewModalProps, 'imageUrl' | 'onClose'> & { imageUrl: string }) {
+	const [copy, setCopy] = useState<'idle' | 'pending' | 'success' | 'error'>('idle')
+	const [download, setDownload] = useState<'idle' | 'pending' | 'success' | 'error'>('idle')
+	useEffect(() => {
+		if (copy !== 'success') return
+		const timer = setTimeout(() => setCopy('idle'), 1500)
+		return () => clearTimeout(timer)
+	}, [copy])
 	const trackingIds = { source: source ?? '', sessionId: sessionId ?? '', messageId: messageId ?? '' }
 
-	const handleBackdropClick = (e: React.MouseEvent) => {
-		if (e.target === e.currentTarget) onClose()
-	}
-
-	const handleCopyUrl = async () => {
-		if (!imageUrl) return
+	const handleCopyUrl = async (event: React.MouseEvent<HTMLButtonElement>) => {
+		if (copy === 'pending') return
+		const button = event.currentTarget
+		setCopy('pending')
 		try {
 			await navigator.clipboard.writeText(imageUrl)
+			setCopy('success')
 			trackUmamiEvent('llamaai-download', {
 				kind: 'image-copy-url',
 				filename: extractFilename(imageUrl),
 				url: imageUrl,
 				...trackingIds
 			})
-			setCopied(true)
-			setTimeout(() => setCopied(false), 1500)
 		} catch {
-			// Ignore clipboard failures silently — user can still use the "open" button.
+			setCopy('error')
+			if (!button.isConnected) toast.error('Couldn’t copy the image URL.')
 		}
 	}
 
-	const handleDownload = async () => {
-		if (!imageUrl || downloading) return
-		setDownloading(true)
-		try {
-			const response = await fetch(imageUrl)
-			const blob = await response.blob()
-			const objectUrl = URL.createObjectURL(blob)
-			const link = document.createElement('a')
-			link.href = objectUrl
-			link.download = extractFilename(imageUrl)
-			document.body.appendChild(link)
-			link.click()
-			document.body.removeChild(link)
-			URL.revokeObjectURL(objectUrl)
-			trackUmamiEvent('llamaai-download', {
-				kind: 'image',
-				filename: extractFilename(imageUrl),
-				url: imageUrl,
-				...trackingIds
+	const handleDownload = (event: React.MouseEvent<HTMLButtonElement>) => {
+		if (download === 'pending') return
+		const button = event.currentTarget
+		setDownload('pending')
+		void fetch(imageUrl)
+			.then((response) => {
+				if (!response.ok) throw new Error('Image download failed')
+				return response.blob()
 			})
-		} catch {
-			// Fallback: open in new tab if CORS blocks the fetch.
-			window.open(imageUrl, '_blank', 'noopener,noreferrer')
-		}
-		setDownloading(false)
+			.then((blob) => {
+				downloadBlob(extractFilename(imageUrl), blob)
+				trackUmamiEvent('llamaai-download', {
+					kind: 'image',
+					filename: extractFilename(imageUrl),
+					url: imageUrl,
+					...trackingIds
+				})
+			})
+			.then(
+				() => setDownload('success'),
+				() => {
+					setDownload('error')
+					if (!button.isConnected) toast.error('Couldn’t download the image. Reopen its preview to try again.')
+				}
+			)
 	}
 
 	return (
-		<Ariakit.DialogProvider open={!!imageUrl} setOpen={(open) => !open && onClose()}>
-			<Ariakit.Dialog
-				className="data-[enter]:animate-in data-[leave]:animate-out data-[enter]:fade-in data-[leave]:fade-out fixed inset-0 z-50 flex items-center justify-center bg-ai-black/80 p-4 backdrop-blur-md data-[enter]:duration-150"
-				portal
-				unmountOnHide
-				onClick={handleBackdropClick}
-			>
-				{imageUrl ? (
-					<div className="relative flex max-h-full max-w-full flex-col items-center gap-3">
-						<div className="relative overflow-hidden rounded-xl shadow-2xl ring-1 ring-ai-white/10">
-							<img src={imageUrl} alt="Preview" className="block max-h-[80vh] max-w-[90vw] object-contain" />
-						</div>
-						<div className="flex items-center gap-2 rounded-full bg-ai-backdrop px-2 py-1.5 ring-1 ring-ai-white/10 backdrop-blur-md">
-							<button
-								type="button"
-								onClick={handleCopyUrl}
-								title={copied ? 'Copied!' : 'Copy URL'}
-								className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white"
-							>
-								<Icon name={copied ? 'check' : 'copy'} height={14} width={14} />
-								<span>{copied ? 'Copied' : 'Copy URL'}</span>
-							</button>
-							<button
-								type="button"
-								onClick={handleDownload}
-								disabled={downloading}
-								title="Download"
-								className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white disabled:opacity-50"
-							>
-								<Icon name="download-cloud" height={14} width={14} />
-								<span>{downloading ? 'Saving…' : 'Download'}</span>
-							</button>
-							<a
-								href={imageUrl}
-								target="_blank"
-								rel="noopener noreferrer"
-								title="Open in new tab"
-								className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white"
-							>
-								<Icon name="external-link" height={14} width={14} />
-								<span>Open</span>
-							</a>
-						</div>
-					</div>
-				) : null}
-
-				<Ariakit.DialogDismiss
-					className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-ai-white/10 text-ai-white backdrop-blur-md transition-colors hover:bg-ai-hover-strong"
-					title="Close"
+		<div className="relative flex max-h-full min-h-0 max-w-full flex-col items-center gap-3 overflow-y-auto">
+			<div className="shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-ai-white/10">
+				<img src={imageUrl} alt="Preview" className="block max-h-[80vh] max-w-full object-contain" />
+			</div>
+			<div className="flex max-w-full shrink-0 flex-wrap justify-center gap-2 rounded-2xl bg-ai-backdrop px-2 py-1.5 ring-1 ring-ai-white/10 backdrop-blur-md">
+				<Ariakit.Button
+					type="button"
+					onClick={handleCopyUrl}
+					disabled={copy === 'pending'}
+					accessibleWhenDisabled
+					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white aria-disabled:opacity-50"
 				>
-					<Icon name="x" height={18} width={18} />
-					<span className="sr-only">Close preview</span>
-				</Ariakit.DialogDismiss>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+					{copy === 'pending' ? (
+						<LoadingSpinner size={14} />
+					) : (
+						<Icon name={copy === 'success' ? 'check' : 'copy'} height={14} width={14} />
+					)}
+					<span>{copy === 'pending' ? 'Copying…' : copy === 'success' ? 'Copied' : 'Copy URL'}</span>
+				</Ariakit.Button>
+				<Ariakit.Button
+					type="button"
+					onClick={handleDownload}
+					disabled={download === 'pending'}
+					accessibleWhenDisabled
+					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white aria-disabled:opacity-50"
+				>
+					{download === 'pending' ? (
+						<LoadingSpinner size={14} />
+					) : (
+						<Icon name={download === 'success' ? 'check' : 'download-cloud'} height={14} width={14} />
+					)}
+					<span>
+						{download === 'pending' ? 'Downloading…' : download === 'success' ? 'Download again' : 'Download'}
+					</span>
+				</Ariakit.Button>
+				<a
+					href={imageUrl}
+					target="_blank"
+					rel="noopener noreferrer"
+					title="Open in new tab"
+					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white"
+				>
+					<Icon name="external-link" height={14} width={14} />
+					<span>Open</span>
+				</a>
+			</div>
+			{copy === 'error' ? (
+				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center text-sm text-ai-white">
+					Couldn’t copy the image URL. Try again, or use Open to copy it from your browser.
+				</p>
+			) : null}
+			{download === 'error' ? (
+				<p role="alert" className="max-w-sm shrink-0 rounded-lg bg-ai-black/80 p-3 text-center text-sm text-ai-white">
+					Couldn’t download the image. Try again, or use Open to save it from your browser.
+				</p>
+			) : null}
+			<span role="status" className="sr-only">
+				{copy === 'pending' ? 'Copying image URL' : copy === 'success' ? 'Image URL copied' : ''}
+			</span>
+			<span role="status" className="sr-only">
+				{download === 'pending' ? 'Downloading image' : download === 'success' ? 'Image download started' : ''}
+			</span>
+		</div>
 	)
 }
