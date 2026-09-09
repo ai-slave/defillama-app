@@ -1919,6 +1919,8 @@ test.each(['success', 'current failure', 'import failure'] as const)(
 			current.resolve({ generatedAt: 42, metrics: null })
 			moduleReady.resolve()
 			await result
+			// A current-snapshot failure settles the request before its imports finish.
+			await vi.dynamicImportSettled()
 			vi.doMock('~/containers/Markets/server/dataset.server', () => ({ hasTokenMarkets: vi.fn(async () => false) }))
 		}
 	}

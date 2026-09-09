@@ -204,9 +204,14 @@ export async function getProtocolRankingsSnapshot({
 				}
 			}
 			const lastGood = await snapshotStore.readLastGood(chainCacheKey(chain))
-			const leafProtocols = protocols.filter((protocol) => !protocol.id.startsWith('parent#'))
+			// Group metadata can describe TVL on other chains; check the included children instead.
 			const allowNoTvl =
-				leafProtocols.length > 0 && leafProtocols.every((protocol) => protocolMetadata[protocol.id]?.tvl === false)
+				protocols.length > 0 &&
+				protocols.every((protocol) =>
+					protocol.childProtocols
+						? protocol.childProtocols.every((child) => protocolMetadata[child.id]?.tvl === false)
+						: protocolMetadata[protocol.id]?.tvl === false
+				)
 			try {
 				assertPublishableSnapshot(snapshot, {
 					expectDexs: shouldFetchDexs,

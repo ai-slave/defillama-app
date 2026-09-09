@@ -13,7 +13,6 @@
 	"src/auth/index.tsx": {"react/function-component-definition":1,"react/jsx-no-constructed-context-values":1,"unicorn/consistent-function-scoping":1},
 	"src/components/AddToDashboard/AddToDashboardModal.tsx": {"jsx-a11y/label-has-associated-control":1},
 	"src/components/ChartExport/ChartCsvExportButton.tsx": {"max-depth":1},
-	"src/components/ChartExport/ChartPngExportButton.tsx": {"unicorn/prefer-add-event-listener":14},
 	"src/components/ECharts/BarSparkline/index.tsx": {"jsx-a11y/no-noninteractive-tabindex":1},
 	"src/components/ECharts/HBarChart/index.tsx": {"unicorn/prefer-add-event-listener":3},
 	"src/components/ECharts/MultiSeriesChart/index.tsx": {"unicorn/no-useless-length-check":1,"unicorn/prefer-add-event-listener":1},

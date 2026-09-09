@@ -494,6 +494,7 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 												render={
 													<button
 														type="button"
+														aria-label={direction === -1 ? 'Move up' : 'Move down'}
 														disabled={direction === -1 ? index === 0 : index === items.length - 1}
 														onClick={() => handleMoveItem(index, direction)}
 														onKeyDown={keepKeyboardEventsInsideCard}

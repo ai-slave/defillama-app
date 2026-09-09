@@ -174,6 +174,71 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 		expect(cacheMocks.setCache).toHaveBeenCalledTimes(1)
 	})
 
+	test('publishes a dimension-only chain whose protocols are all grouped', async () => {
+		cacheMocks.setCache.mockResolvedValue(true)
+		cacheMocks.setObjectCache.mockResolvedValue(true)
+		const groupedProtocol = {
+			...protocol('parent#dimension-only', null),
+			childProtocols: [protocol('dimension-dex', null), protocol('dimension-perps', null)]
+		}
+		queriesMocks.getProtocolsByChain.mockResolvedValue({
+			protocols: [groupedProtocol],
+			chains: ['Grouped Dimensions'],
+			fees: null,
+			dexs: null,
+			perps: null
+		})
+
+		const result = await getProtocolRankingsSnapshot({
+			chain: 'Grouped Dimensions',
+			chainMetadata: { 'grouped-dimensions': { id: 'grouped-dimensions', name: 'Grouped Dimensions' } },
+			protocolMetadata: {
+				'parent#dimension-only': { tvl: true },
+				'dimension-dex': { tvl: false },
+				'dimension-perps': { tvl: false }
+			},
+			categoriesAndTagsMetadata: { configs: {} } as never
+		})
+
+		expect(result.protocols).toEqual([groupedProtocol])
+		expect(cacheMocks.setCache).toHaveBeenCalledTimes(1)
+		expect(cacheMocks.setObjectCache).toHaveBeenCalledTimes(2)
+	})
+
+	test.each([true, undefined])('rejects missing grouped TVL when child TVL metadata is %s', async (tvl) => {
+		const chain = `Grouped Outage ${String(tvl)}`
+		const chainKey = `grouped-outage-${String(tvl)}`
+		queriesMocks.getProtocolsByChain.mockResolvedValue({
+			protocols: [
+				protocol('standalone-dimension', null),
+				{
+					...protocol('parent#grouped-outage', null),
+					childProtocols: [protocol('grouped-dimension', null), protocol('grouped-tvl', null)]
+				}
+			],
+			chains: [chain],
+			fees: null,
+			dexs: null,
+			perps: null
+		})
+
+		await expect(
+			getProtocolRankingsSnapshot({
+				chain,
+				chainMetadata: { [chainKey]: { id: chainKey, name: chain } },
+				protocolMetadata: {
+					'standalone-dimension': { tvl: false },
+					'parent#grouped-outage': { tvl: false },
+					'grouped-dimension': { tvl: false },
+					'grouped-tvl': { tvl }
+				},
+				categoriesAndTagsMetadata: { configs: {} } as never
+			})
+		).rejects.toThrow(/TVL/)
+		expect(cacheMocks.setCache).not.toHaveBeenCalled()
+		expect(cacheMocks.setObjectCache).not.toHaveBeenCalled()
+	})
+
 	test('still rejects an all-null TVL rebuild for a TVL-backed chain', async () => {
 		queriesMocks.getProtocolsByChain.mockResolvedValue({
 			protocols: [protocol('aave', null)],

@@ -111,7 +111,7 @@ export function sanitizeRichImagesForExport(rich: any) {
 		try {
 			dataUrl = image.toDataURL('image/png')
 		} catch {
-			continue
+			// Remove tainted canvases from the export clone so they cannot taint its output.
 		}
 
 		if (sanitized === rich) sanitized = { ...rich }
