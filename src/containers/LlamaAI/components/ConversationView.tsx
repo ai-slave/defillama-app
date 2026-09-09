@@ -689,7 +689,14 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 	return (
 		<>
-			<div ref={scrollContainerRef} className="relative flex-1 overflow-y-auto p-2.5 max-lg:px-0">
+			<div
+				ref={scrollContainerRef}
+				className={`relative flex-1 overflow-y-auto px-2.5 pt-2.5 max-lg:px-0 ${readOnly ? 'pb-2.5' : 'pb-12'}`}
+				style={{
+					// Browser anchoring can otherwise move scrollTop and look like an upward user gesture.
+					overflowAnchor: isScrollAttached ? 'none' : 'auto'
+				}}
+			>
 				<div
 					className={`relative mx-auto flex ${isFullscreen ? 'max-w-[80rem] justify-center' : 'llamaai-chat-width w-full flex-col'}`}
 				>

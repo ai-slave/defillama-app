@@ -7,6 +7,9 @@ import { useChatScroll } from './useChatScroll'
 
 const BOTTOM = 5000
 const VIEWPORT = 800
+const items: ReadonlyArray<unknown> = []
+const paginationState = { hasMore: false, isLoadingMore: false }
+function onLoadMoreMessages() {}
 
 let resizeCallback: ResizeObserverCallback | null = null
 let rafQueue: Array<FrameRequestCallback> = []
@@ -23,10 +26,10 @@ function Harness({ isStreaming, onReady }: { isStreaming: boolean; onReady: (api
 	const api = useChatScroll({
 		scrollContainerRef,
 		isStreaming,
-		items: [],
+		items,
 		hasMessages: true,
-		paginationState: { hasMore: false, isLoadingMore: false },
-		onLoadMoreMessages: () => {},
+		paginationState,
+		onLoadMoreMessages,
 		keyboardOpen
 	})
 	onReady({ ...api, setKeyboardOpen })
@@ -53,11 +56,11 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 				unobserve() {}
 			}
 		)
+		vi.useFakeTimers()
 		vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
 			rafQueue.push(cb)
 			return rafQueue.length
 		})
-		vi.useFakeTimers()
 
 		host = document.createElement('div')
 		document.body.appendChild(host)
@@ -138,23 +141,43 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 	})
 
 	test('keeps following the bottom while the user has not scrolled', async () => {
-		container.scrollTop = 0
+		Object.defineProperty(container, 'scrollHeight', { value: 6000, configurable: true })
 		await act(async () => {
 			vi.advanceTimersByTime(200)
 		})
 
 		expect(api.isAttached).toBe(true)
-		expect(container.scrollTop).toBe(BOTTOM)
+		expect(container.scrollTop).toBe(6000)
 	})
 
 	test('stays attached when a known layout change clamps the viewport', async () => {
 		await act(async () => vi.advanceTimersByTime(200))
+		await act(async () => {
+			container.dispatchEvent(new Event('scroll'))
+			flushFrames()
+		})
 		Object.defineProperty(container, 'scrollHeight', { value: 4000, configurable: true })
 		container.scrollTop = 3200
 		await act(async () => api.syncAfterLayout())
+		await act(async () => {
+			container.dispatchEvent(new Event('scroll'))
+			flushFrames()
+		})
 
 		expect(api.isAttached).toBe(true)
 		expect(container.scrollTop).toBe(4000)
+	})
+
+	test('keeps following when content grows before the automatic scroll event arrives', async () => {
+		await act(async () => vi.advanceTimersByTime(200))
+		Object.defineProperty(container, 'scrollHeight', { value: 7000, configurable: true })
+		await act(async () => {
+			container.dispatchEvent(new Event('scroll'))
+			flushFrames()
+		})
+		expect(api.isAttached).toBe(true)
+		await act(async () => vi.advanceTimersByTime(200))
+		expect(container.scrollTop).toBe(7000)
 	})
 
 	test('keeps the container resize observer attached after a layout clamp', async () => {
@@ -178,6 +201,32 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 
 		expect(api.isAttached).toBe(false)
 		expect(container.scrollTop).toBe(1200)
+	})
+
+	test('only offers scroll to bottom when content remains below the viewport', async () => {
+		container.scrollTop = BOTTOM - VIEWPORT
+		await act(async () => {
+			const wheel = new Event('wheel') as any
+			wheel.deltaY = -120
+			container.dispatchEvent(wheel)
+		})
+		expect(api.isAttached).toBe(false)
+		expect(api.showScrollToBottom).toBe(false)
+
+		container.scrollTop -= 200
+		await act(async () => {
+			container.dispatchEvent(new Event('scroll'))
+			flushFrames()
+		})
+		expect(api.showScrollToBottom).toBe(true)
+
+		container.scrollTop = BOTTOM - VIEWPORT
+		await act(async () => {
+			container.dispatchEvent(new Event('scroll'))
+			flushFrames()
+		})
+		expect(api.isAttached).toBe(true)
+		expect(api.showScrollToBottom).toBe(false)
 	})
 
 	test('stays attached when the keyboard opens after a layout clamp', async () => {

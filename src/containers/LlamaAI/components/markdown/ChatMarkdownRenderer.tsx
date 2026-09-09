@@ -34,6 +34,7 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
 import styles from '../../LlamaAIChat.module.css'
 import { rehypeHeadingIds } from './rehypeHeadingIds'
+import { rehypeStreamingCaret } from './rehypeStreamingCaret'
 import { SANITIZE_REHYPE_PLUGINS } from './sanitizeConfig'
 
 const MARKDOWN_REMARK_PLUGINS: NonNullable<Options['remarkPlugins']> = [[remarkGfm, { singleTilde: false }]]
@@ -589,6 +590,7 @@ export function ChatMarkdownRenderer({
 	legacyUrlCitations,
 	advancedProvenance,
 	isStreaming = false,
+	showStreamingCaret = false,
 	hackerMode = false,
 	onTableFullscreenOpen,
 	messageId
@@ -598,6 +600,7 @@ export function ChatMarkdownRenderer({
 	legacyUrlCitations?: Array<string>
 	advancedProvenance?: boolean
 	isStreaming?: boolean
+	showStreamingCaret?: boolean
 	hackerMode?: boolean
 	onTableFullscreenOpen?: () => void
 	messageId?: string
@@ -631,8 +634,12 @@ export function ChatMarkdownRenderer({
 	)
 	// After the sanitize plugins: its schema drops ids it does not know about.
 	const rehypePlugins = useMemo<NonNullable<Options['rehypePlugins']>>(
-		() => [...SANITIZE_REHYPE_PLUGINS, [rehypeHeadingIds, { messageId }]],
-		[messageId]
+		() => [
+			...SANITIZE_REHYPE_PLUGINS,
+			[rehypeHeadingIds, { messageId }],
+			[rehypeStreamingCaret, { active: showStreamingCaret }]
+		],
+		[messageId, showStreamingCaret]
 	)
 	const renderContext = useMemo<MarkdownRenderContext>(
 		() => ({

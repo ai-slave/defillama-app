@@ -69,8 +69,8 @@ export function useChatScroll({
 			return
 		}
 
-		const hasScrollableContent = container.scrollHeight > container.clientHeight
-		setShowScrollToBottom(modeRef.current !== 'attached' && hasScrollableContent)
+		const distanceFromBottom = container.scrollHeight - container.clientHeight - container.scrollTop
+		setShowScrollToBottom(modeRef.current !== 'attached' && distanceFromBottom > ATTACHED_THRESHOLD_PX)
 	}, [])
 
 	const setMode = useCallback(
@@ -98,6 +98,8 @@ export function useChatScroll({
 	const pinBottom = useCallback((container: HTMLDivElement) => {
 		container.scrollTop = container.scrollHeight
 		lastAutoScrollTopRef.current = container.scrollTop
+		// Its delayed scroll event must not treat this application move as user intent.
+		lastScrollTopRef.current = container.scrollTop
 	}, [])
 
 	// Opportunistic follow checks preserve unsignaled scrollbar and keyboard intent.
@@ -307,7 +309,6 @@ export function useChatScroll({
 				const isAtBottom = Math.ceil(scrollTop + clientHeight) >= scrollHeight - ATTACHED_THRESHOLD_PX
 				const isScrollingUp = scrollTop < previousScrollTop
 				const hasMoved = scrollTop !== previousScrollTop
-				const hasScrollableContent = scrollHeight > clientHeight
 				const currentMode = modeRef.current
 
 				const currentPagination = paginationRef.current
@@ -317,10 +318,16 @@ export function useChatScroll({
 					setMode('detached', container)
 				} else if (currentMode === 'attached' && hasMoved && !isAtBottom) {
 					setMode('detached', container)
-				} else if (currentMode === 'detached' && isAtBottom && !isScrollingUp && !currentPagination.hasNewer) {
+				} else if (
+					currentMode === 'detached' &&
+					isAtBottom &&
+					hasMoved &&
+					!isScrollingUp &&
+					!currentPagination.hasNewer
+				) {
 					setMode('attached', container)
 				} else {
-					setShowScrollToBottom(currentMode !== 'attached' && hasScrollableContent)
+					syncScrollToBottomVisibility(container)
 				}
 
 				lastScrollTopRef.current = scrollTop
@@ -368,7 +375,8 @@ export function useChatScroll({
 		onLoadMoreMessages,
 		onLoadNewerMessages,
 		scrollContainerRef,
-		setMode
+		setMode,
+		syncScrollToBottomVisibility
 	])
 
 	return {

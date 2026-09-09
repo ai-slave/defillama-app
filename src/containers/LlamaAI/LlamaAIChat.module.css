@@ -80,3 +80,33 @@
 	height: 1em;
 	width: 1em;
 }
+
+@keyframes llamaaiCaretBlink {
+	0%,
+	49% {
+		opacity: 1;
+	}
+	50%,
+	100% {
+		opacity: 0;
+	}
+}
+
+/* Trails the last word of a streaming answer. `rehypeStreamingCaret` marks exactly one element, so
+   this cannot draw a second caret on an outer block. */
+.prose :global([data-llamaai-caret])::after {
+	content: '';
+	display: inline-block;
+	width: 2px;
+	height: 1em;
+	margin-left: 0.15em;
+	vertical-align: -0.15em;
+	background: var(--color-brand);
+	animation: llamaaiCaretBlink 1s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.prose :global([data-llamaai-caret])::after {
+		animation: none;
+	}
+}

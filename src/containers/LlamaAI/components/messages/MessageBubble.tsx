@@ -237,6 +237,7 @@ function MessageContentBlock({
 	block,
 	artifact,
 	isStreaming,
+	showStreamingCaret,
 	sessionId,
 	onActionClick,
 	nextUserMessage,
@@ -250,6 +251,7 @@ function MessageContentBlock({
 	block: MessageRenderBlock
 	artifact?: ArtifactRecord
 	isStreaming: boolean
+	showStreamingCaret: boolean
 	sessionId?: string | null
 	onActionClick?: (message: string) => void
 	nextUserMessage?: string
@@ -271,6 +273,7 @@ function MessageContentBlock({
 				citations={block.citations}
 				legacyUrlCitations={block.legacyUrlCitations}
 				isStreaming={isStreaming}
+				showStreamingCaret={showStreamingCaret}
 				hackerMode={hackerMode}
 				advancedProvenance={advancedProvenance}
 				onTableFullscreenOpen={onTableFullscreenOpen}
@@ -331,12 +334,13 @@ function InlineContent({
 
 	return (
 		<div className="flex flex-col gap-2.5" style={isStreaming ? { overflowAnchor: 'none' } : undefined}>
-			{blocks.map((block) => (
+			{blocks.map((block, index) => (
 				<div key={block.key}>
 					<MessageContentBlock
 						block={block}
 						artifact={'artifactId' in block ? artifactsById.get(block.artifactId) : undefined}
 						isStreaming={isStreaming}
+						showStreamingCaret={isStreaming && index === blocks.length - 1}
 						sessionId={sessionId}
 						onActionClick={onActionClick}
 						nextUserMessage={nextUserMessage}
@@ -349,8 +353,6 @@ function InlineContent({
 					/>
 				</div>
 			))}
-
-			{isStreaming && message.content ? <span className="inline-block h-4 w-0.5 animate-pulse bg-brand" /> : null}
 
 			{!isStreaming && toolExecutions && toolExecutions.length > 0 ? (
 				<ToolExecutionPanel toolExecutions={toolExecutions} showDetails={showToolDetails} />
