@@ -467,6 +467,7 @@ export function ArticleEditorCanvas({
 									<span className="hidden sm:inline">Insert</span>
 								</Ariakit.MenuButton>
 								<Ariakit.Menu
+									portal
 									gutter={8}
 									className="z-50 grid min-w-[200px] gap-0.5 rounded-md border border-medium bg-surface p-1 shadow-xl"
 								>
@@ -526,6 +527,7 @@ export function ArticleEditorCanvas({
 											}
 										/>
 										<Ariakit.Menu
+											portal
 											gutter={4}
 											className="z-50 grid min-w-[140px] gap-0.5 rounded-md border border-medium bg-surface p-1 shadow-xl"
 										>

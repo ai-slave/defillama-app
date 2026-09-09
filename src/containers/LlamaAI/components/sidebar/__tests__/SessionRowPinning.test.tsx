@@ -5,15 +5,17 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { SESSIONS_QUERY_KEY, type SessionListInfiniteData } from '~/containers/LlamaAI/hooks/sessionListCache'
 import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
+import { PROJECTS_KEY } from '~/containers/LlamaAI/projects/queryKeys'
 import { SessionListFocusContext } from '../../DeleteSessionDialog'
 import { AgenticSessionItem } from '../AgenticSessionItem'
 const api = vi.hoisted(() => ({ request: vi.fn(), authorizedFetch: vi.fn(), toastError: vi.fn() }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: { id: 'user' }, authorizedFetch: api.authorizedFetch }) }))
+vi.mock('~/auth', () => ({
+	useAuthContext: () => ({ user: { id: 'user' }, isAuthenticated: false, authorizedFetch: api.authorizedFetch })
+}))
 vi.mock('~/containers/LlamaAI/api/transport', () => ({ llamaAIRequest: api.request }))
 vi.mock('react-hot-toast', () => ({ default: { error: api.toastError } }))
 vi.mock('~/containers/LlamaAI/chrome', () => ({ useLlamaAIChrome: () => ({ hideSidebar: vi.fn() }) }))
 vi.mock('~/containers/LlamaAI/hooks/useClearUnseenCompletion', () => ({ useClearUnseenCompletion: () => vi.fn() }))
-vi.mock('~/containers/LlamaAI/projects/MoveToProjectMenu', () => ({ MoveToProjectMenuItem: () => null }))
 vi.mock('~/utils/analytics/umami', () => ({ trackUmamiEvent: vi.fn() }))
 let root: Root
 let container: HTMLDivElement
@@ -312,12 +314,14 @@ test('making a chat public reports failure in the menu without adding a private-
 	api.authorizedFetch
 		.mockRejectedValueOnce(new Error('Offline'))
 		.mockResolvedValueOnce(Response.json({ isPublic: true }))
-	await openShareMenu(false)
+	const trigger = await openShareMenu(false)
 	await act(async () => namedButton('Make Public').click())
 	await vi.waitFor(() =>
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Failed to update visibility')
 	)
 	expect(document.querySelector('[role="alertdialog"]')).toBeNull()
+	await reopenMenu(trigger)
+	expect(document.querySelector('[role="alert"]')).toBeNull()
 	await act(async () => namedButton('Make Public').click())
 	await vi.waitFor(() => expect(document.querySelector('[role="alert"]')).toBeNull())
 	expect(api.authorizedFetch).toHaveBeenCalledTimes(2)
@@ -336,6 +340,9 @@ test('copy failures stay inline while the menu is open and remain visible if it 
 		expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not copy the link')
 	)
 	expect(api.toastError).not.toHaveBeenCalled()
+	expect(document.querySelector('[role="menu"] [role="alert"]')).toBeNull()
+	await reopenMenu(trigger)
+	expect(document.querySelector('[role="alert"]')).toBeNull()
 	await act(async () => namedButton('Copy Link').click())
 	await act(async () =>
 		document
@@ -388,4 +395,69 @@ test('repeated link copies restart success feedback without clearing a later pen
 		await vi.advanceTimersByTimeAsync(2100)
 	})
 	expect(namedButton('Copy Link')).toBeDefined()
+})
+
+async function reopenMenu(trigger: HTMLElement) {
+	await act(async () =>
+		document
+			.querySelector('[role="menu"]')!
+			.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
+	)
+	await vi.waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('false'))
+	await act(async () =>
+		trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }))
+	)
+	await vi.waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('true'))
+}
+
+test.each(['copy', 'visibility'] as const)(
+	'reopening preserves the pending %s action and its eventual failure',
+	async (action) => {
+		const copyRequest = Promise.withResolvers<void>()
+		const visibilityRequest = Promise.withResolvers<Response>()
+		const copy = vi.spyOn(navigator.clipboard, 'writeText').mockReturnValue(copyRequest.promise)
+		api.authorizedFetch.mockReturnValue(visibilityRequest.promise)
+		const trigger = await openShareMenu(action === 'copy')
+		await act(async () => namedButton(action === 'copy' ? 'Copy Link' : 'Make Public').click())
+		await reopenMenu(trigger)
+		const pendingItem = namedButton(action === 'copy' ? 'Copying…' : 'Make Public')
+		expect(pendingItem.getAttribute('aria-disabled')).toBe('true')
+		await act(async () => pendingItem.click())
+		expect(copy.mock.calls).toEqual(action === 'copy' ? [[`${window.location.origin}/ai/chat/shared/test-share`]] : [])
+		const visibilityCall = [expect.stringContaining('/user/sessions/chat/share'), { method: 'PUT' }]
+		expect(api.authorizedFetch.mock.calls).toEqual(action === 'visibility' ? [visibilityCall] : [])
+		await act(async () => {
+			if (action === 'copy') copyRequest.reject(new Error('Denied'))
+			else visibilityRequest.reject(new Error('Offline'))
+		})
+		await vi.waitFor(() =>
+			expect(document.querySelector('[role="alert"]')?.textContent).toBe(
+				action === 'copy'
+					? 'Could not copy the link. Please try again.'
+					: 'Failed to update visibility. Please try again.'
+			)
+		)
+	}
+)
+
+test('the real project submenu returns to its parent and closes the whole menu from its mobile controls', async () => {
+	client.setQueryData(PROJECTS_KEY, [{ id: 'research', name: 'Research notes' }])
+	const trigger = await openShareMenu(false)
+	const openSubmenu = async () => {
+		await act(async () =>
+			namedButton('Move to project').dispatchEvent(
+				new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true })
+			)
+		)
+		await vi.waitFor(() => expect(namedButton('Research notes')?.textContent).toBe('Research notes'))
+	}
+	await openSubmenu()
+	await act(async () => namedButton('Back to session actions').click())
+	await vi.waitFor(() => expect(document.activeElement).toBe(namedButton('Move to project')))
+	expect(trigger.getAttribute('aria-expanded')).toBe('true')
+	expect(namedButton('Research notes')).toBeUndefined()
+	await openSubmenu()
+	await act(async () => namedButton('Close session menus').click())
+	await vi.waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('false'))
+	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
 })

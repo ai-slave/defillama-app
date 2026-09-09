@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 import type { FormSubmitEvent } from '~/types/forms'
 import { Button } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
@@ -60,59 +61,56 @@ export function ReportIncorrectData({
 	dataType?: string
 	className?: string
 }) {
-	const [loading, setLoading] = useState(false)
-	const [error, setError] = useState(false)
-
-	const dialogStore = Ariakit.useDialogStore()
+	const [status, setStatus] = useState<'idle' | 'pending' | 'error'>('idle')
+	const dialogStore = Ariakit.useDialogStore({
+		setOpen: () => {
+			// Closing must not release a pending request and allow duplicate submissions.
+			setStatus((current) => (current === 'pending' ? current : 'idle'))
+		}
+	})
 	const successDialogStore = Ariakit.useDialogStore()
 	const subjectLabel = subject.type === 'exchange' ? 'Exchange' : 'Protocol'
 	const dataTypes = subject.type === 'exchange' ? EXCHANGE_DATA_TYPES : PROTOCOL_DATA_TYPES
 
-	const onSubmit = async (e: FormSubmitEvent) => {
-		e.preventDefault()
-		setError(false)
-		setLoading(true)
-
-		const form = e.currentTarget
-		const dataTypeValue =
-			(form.elements.namedItem('dataType') as HTMLInputElement | HTMLSelectElement | null)?.value ?? ''
-		const messageValue = (form.elements.namedItem('message') as HTMLTextAreaElement | null)?.value ?? ''
-		const correctSourceValue = (form.elements.namedItem('correctSource') as HTMLTextAreaElement | null)?.value ?? ''
-		const contactValue = (form.elements.namedItem('contact') as HTMLInputElement | null)?.value ?? ''
-
+	const onSubmit = (event: FormSubmitEvent) => {
+		event.preventDefault()
+		if (status === 'pending') return
+		const form = event.currentTarget
+		const values = new FormData(form)
+		// A select cannot stay read-only; preserve focus before disabling it.
+		if (document.activeElement === form.elements.namedItem('dataType')) {
+			form.querySelector<HTMLButtonElement>('button[type="submit"]')!.focus()
+		}
+		setStatus('pending')
+		const finish = (success: boolean) => {
+			// Dialog contents unmount on close; the submitted form identifies its opening.
+			setStatus(success || !form.isConnected ? 'idle' : 'error')
+			if (!form.isConnected) {
+				if (success) toast.success('Report sent successfully')
+				else toast.error("Something went wrong, couldn't submit report")
+				return
+			}
+			if (success) {
+				form.reset()
+				dialogStore.hide()
+				successDialogStore.show()
+			}
+		}
 		const subjectPayload = subject.type === 'exchange' ? { subject } : { protocol: subject.name }
-
-		const data = await fetchJson('https://api.llama.fi/reportError', {
+		void fetchJson('https://api.llama.fi/reportError', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				...subjectPayload,
-				dataType: dataType ?? dataTypeValue,
-				message: messageValue,
-				correctSource: correctSourceValue,
-				contact: contactValue
+				dataType: dataType ?? values.get('dataType'),
+				message: values.get('message'),
+				correctSource: values.get('correctSource'),
+				contact: values.get('contact')
 			})
-		})
-			.then((data) => {
-				setLoading(false)
-
-				if (data?.message === 'success') {
-					form.reset()
-					dialogStore.setOpen(false)
-					successDialogStore.setOpen(true)
-				} else {
-					setError(true)
-				}
-			})
-			.catch((submitError) => {
-				console.log(submitError)
-				setError(true)
-			})
-			.finally(() => {
-				setLoading(false)
-			})
-
-		return data
+		}).then(
+			(data) => finish(data?.message === 'success'),
+			() => finish(false)
+		)
 	}
 
 	return (
@@ -139,12 +137,7 @@ export function ReportIncorrectData({
 				store={dialogStore}
 				portal
 			>
-				<form
-					onSubmit={(e) => {
-						void onSubmit(e)
-					}}
-					className="flex min-h-0 flex-auto flex-col"
-				>
+				<form onSubmit={onSubmit} className="flex min-h-0 flex-auto flex-col">
 					<div className="flex items-center gap-2 border-b border-subtle p-3">
 						<DialogHeading>Report incorrect data</DialogHeading>
 						<DialogCloseButton className="-mr-1 ml-auto" ariaLabel="Close report dialog" />
@@ -164,7 +157,11 @@ export function ReportIncorrectData({
 							{dataType ? (
 								<input name="dataType" value={dataType} disabled className={`${inputStyles} disabled:opacity-50`} />
 							) : (
-								<select name="dataType" className={`${inputStyles} disabled:opacity-50`}>
+								<select
+									disabled={status === 'pending'}
+									name="dataType"
+									className={`${inputStyles} disabled:opacity-50`}
+								>
 									{dataTypes.map((option) => (
 										<option key={option} value={option}>
 											{option}
@@ -175,25 +172,45 @@ export function ReportIncorrectData({
 						</label>
 						<label className="flex flex-col gap-1 label-sm text-secondary">
 							<span>What's wrong about it?</span>
-							<textarea name="message" required className={`${inputStyles} min-h-24 resize-y disabled:opacity-50`} />
+							<textarea
+								readOnly={status === 'pending'}
+								name="message"
+								required
+								className={`${inputStyles} min-h-24 resize-y read-only:opacity-50`}
+							/>
 						</label>
 						<label className="flex flex-col gap-1 label-sm text-secondary">
 							<span>Where can we find correct information? (optional)</span>
-							<textarea name="correctSource" className={`${inputStyles} min-h-24 resize-y disabled:opacity-50`} />
+							<textarea
+								readOnly={status === 'pending'}
+								name="correctSource"
+								className={`${inputStyles} min-h-24 resize-y read-only:opacity-50`}
+							/>
 						</label>
 						<label className="flex flex-col gap-1 label-sm text-secondary">
 							<span>How can we contact you? (optional)</span>
-							<input name="contact" placeholder="Email address" className={`${inputStyles} disabled:opacity-50`} />
+							<input
+								readOnly={status === 'pending'}
+								name="contact"
+								placeholder="Email address"
+								className={`${inputStyles} read-only:opacity-50`}
+							/>
 						</label>
-						{error ? (
+						{status === 'error' ? (
 							<p className="text-center body-sm text-data-down" role="alert">
 								Something went wrong, couldn't submit report
 							</p>
 						) : null}
 					</div>
 					<div className="border-t border-subtle p-3">
-						<Button type="submit" name="submit-btn" disabled={loading} variant="primary" size="md" className="w-full">
-							{loading ? (
+						<Ariakit.Button
+							type="submit"
+							name="submit-btn"
+							accessibleWhenDisabled
+							disabled={status === 'pending'}
+							render={<Button variant="primary" size="md" className="w-full aria-disabled:opacity-50" />}
+						>
+							{status === 'pending' ? (
 								<>
 									<LoadingSpinner size={16} />
 									<span>Submitting...</span>
@@ -201,7 +218,10 @@ export function ReportIncorrectData({
 							) : (
 								'Report'
 							)}
-						</Button>
+						</Ariakit.Button>
+						<span role="status" className="sr-only">
+							{status === 'pending' ? 'Submitting report' : ''}
+						</span>
 					</div>
 				</form>
 			</Ariakit.Dialog>

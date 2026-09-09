@@ -89,7 +89,7 @@ export function FilterBetweenRange({
 				className={popoverSurfaceStyles}
 				portal
 			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+				<Ariakit.PopoverDismiss aria-label="Close range filter" className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 

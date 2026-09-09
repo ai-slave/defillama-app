@@ -102,6 +102,13 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 		}
 	})
 
+	const menu = Ariakit.useMenuStore({
+		setOpen: () => {
+			if (copyLink.isError) copyLink.reset()
+			if (visibility.isError) visibility.reset()
+		}
+	})
+
 	const updateTitle = useUpdateSessionTitle()
 	// The parent also clears queue and prompt-failure state; each row owns its pending feedback.
 	const deletion = useMutation({
@@ -298,7 +305,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				>
 					<Icon name="pencil" height={12} width={12} className="shrink-0" />
 				</Tooltip>
-				<Ariakit.MenuProvider>
+				<Ariakit.MenuProvider store={menu}>
 					<Ariakit.MenuButton
 						ref={menuRef}
 						aria-label={`Actions for ${session.title}`}
@@ -309,6 +316,8 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					</Ariakit.MenuButton>
 					<Ariakit.Menu
 						ref={menuContentRef}
+						composite={false}
+						aria-label={`Actions for ${session.title}`}
 						portal
 						unmountOnHide
 						hideOnInteractOutside
@@ -321,84 +330,88 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						<Ariakit.PopoverDismiss aria-label="Close session menu" className="ml-auto p-2 opacity-50 sm:hidden">
 							<Icon name="x" className="size-5" />
 						</Ariakit.PopoverDismiss>
-						<Ariakit.MenuItem
-							disabled={pinSession.isPending}
-							onClick={() => {
-								pinSession.mutate()
-							}}
-							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted data-active-item:bg-brand-muted"
-						>
-							<Icon name="pin" height={14} width={14} className="shrink-0" />
-							{session.isPinned ? 'Unpin' : 'Pin to Top'}
-						</Ariakit.MenuItem>
-						<Ariakit.MenuItem
-							onClick={() => {
-								copyLink.mutate()
-							}}
-							hideOnClick={false}
-							disabled={!session.isPublic || !session.shareToken || visibility.isPending || copyLink.isPending}
-							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
-						>
-							{copyLink.isSuccess ? (
-								<Icon name="check-circle" height={14} width={14} className="shrink-0" />
-							) : (
-								<Icon name="copy" height={14} width={14} className="shrink-0" />
-							)}
-							{!session.isPublic
-								? 'Make Public to Share'
-								: copyLink.isPending
-									? 'Copying…'
-									: copyLink.isSuccess
-										? 'Link copied'
-										: 'Copy Link'}
-						</Ariakit.MenuItem>
+						<Ariakit.MenuList store={menu} aria-label="Session actions" className="flex shrink-0 flex-col">
+							<Ariakit.MenuItem
+								disabled={pinSession.isPending}
+								onClick={() => {
+									pinSession.mutate()
+								}}
+								className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted data-active-item:bg-brand-muted"
+							>
+								<Icon name="pin" height={14} width={14} className="shrink-0" />
+								{session.isPinned ? 'Unpin' : 'Pin to Top'}
+							</Ariakit.MenuItem>
+							<Ariakit.MenuItem
+								onClick={() => {
+									copyLink.mutate()
+								}}
+								hideOnClick={false}
+								accessibleWhenDisabled
+								disabled={!session.isPublic || !session.shareToken || visibility.isPending || copyLink.isPending}
+								className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
+							>
+								{copyLink.isSuccess ? (
+									<Icon name="check-circle" height={14} width={14} className="shrink-0" />
+								) : (
+									<Icon name="copy" height={14} width={14} className="shrink-0" />
+								)}
+								{!session.isPublic
+									? 'Make Public to Share'
+									: copyLink.isPending
+										? 'Copying…'
+										: copyLink.isSuccess
+											? 'Link copied'
+											: 'Copy Link'}
+							</Ariakit.MenuItem>
+							<Ariakit.MenuItem
+								onClick={() => {
+									if (session.isPublic) {
+										visibility.reset()
+										setConfirmPrivate(true)
+									} else {
+										visibility.mutate()
+									}
+								}}
+								hideOnClick={false}
+								accessibleWhenDisabled
+								disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
+								className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
+							>
+								{visibility.isPending ? (
+									<LoadingSpinner size={14} />
+								) : (
+									<Icon name={session.isPublic ? 'eye' : 'link'} height={14} width={14} className="shrink-0" />
+								)}
+								{session.isPublic ? 'Make Private' : 'Make Public'}
+							</Ariakit.MenuItem>
+							<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
+							<Ariakit.MenuItem
+								onClick={() => {
+									deletion.reset()
+									deleteStore.show()
+								}}
+								disabled={updateTitle.isPending || deletion.isPending || isRestoring || visibility.isPending}
+								data-deleting={deletion.isPending}
+								className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-ai-error-vivid/10 hover:text-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-error data-active-item:bg-ai-error-vivid/10 data-active-item:text-error data-[deleting=true]:bg-ai-error-vivid/10 data-[deleting=true]:text-error"
+							>
+								{deletion.isPending ? (
+									<LoadingSpinner size={14} />
+								) : (
+									<Icon name="trash-2" height={14} width={14} className="shrink-0" />
+								)}
+								Delete Session
+							</Ariakit.MenuItem>
+						</Ariakit.MenuList>
 						{copyLink.error ? (
 							<p role="alert" className="px-3 py-2 text-xs text-ai-error">
 								Could not copy the link. Please try again.
 							</p>
 						) : null}
-						<Ariakit.MenuItem
-							onClick={() => {
-								if (session.isPublic) {
-									visibility.reset()
-									setConfirmPrivate(true)
-								} else {
-									visibility.mutate()
-								}
-							}}
-							hideOnClick={false}
-							disabled={visibility.isPending || updateTitle.isPending || deletion.isPending || isRestoring}
-							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
-						>
-							{visibility.isPending ? (
-								<LoadingSpinner size={14} />
-							) : (
-								<Icon name={session.isPublic ? 'eye' : 'link'} height={14} width={14} className="shrink-0" />
-							)}
-							{session.isPublic ? 'Make Private' : 'Make Public'}
-						</Ariakit.MenuItem>
 						{visibility.error && !confirmPrivate ? (
 							<p role="alert" className="px-3 py-2 text-xs text-ai-error">
 								Failed to update visibility. Please try again.
 							</p>
 						) : null}
-						<MoveToProjectMenuItem sessionId={session.sessionId} currentProjectId={session.projectId ?? null} />
-						<Ariakit.MenuItem
-							onClick={() => {
-								deletion.reset()
-								deleteStore.show()
-							}}
-							disabled={updateTitle.isPending || deletion.isPending || isRestoring || visibility.isPending}
-							data-deleting={deletion.isPending}
-							className="flex shrink-0 cursor-pointer items-center gap-2 truncate border-b border-medium px-3 py-2 cv-auto-37 first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-ai-error-vivid/10 hover:text-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-error data-active-item:bg-ai-error-vivid/10 data-active-item:text-error data-[deleting=true]:bg-ai-error-vivid/10 data-[deleting=true]:text-error"
-						>
-							{deletion.isPending ? (
-								<LoadingSpinner size={14} />
-							) : (
-								<Icon name="trash-2" height={14} width={14} className="shrink-0" />
-							)}
-							Delete Session
-						</Ariakit.MenuItem>
 					</Ariakit.Menu>
 				</Ariakit.MenuProvider>
 			</div>

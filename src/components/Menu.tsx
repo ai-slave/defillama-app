@@ -63,7 +63,7 @@ export function Menu({
 				className={surfaceStyles}
 				portal={shouldPortalMenu}
 			>
-				<Ariakit.PopoverDismiss className={popoverMobileDismissStyles}>
+				<Ariakit.PopoverDismiss aria-label="Close menu" className={popoverMobileDismissStyles}>
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 

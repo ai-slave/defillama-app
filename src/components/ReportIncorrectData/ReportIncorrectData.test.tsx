@@ -5,7 +5,8 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ReportIncorrectData, type ReportSubject } from '.'
 
-const mocks = vi.hoisted(() => ({ fetchJson: vi.fn() }))
+const mocks = vi.hoisted(() => ({ fetchJson: vi.fn(), success: vi.fn(), error: vi.fn() }))
+vi.mock('react-hot-toast', () => ({ default: { success: mocks.success, error: mocks.error } }))
 
 vi.mock('~/utils/async', () => ({ fetchJson: mocks.fetchJson }))
 
@@ -14,7 +15,7 @@ let root: Root
 
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
-	mocks.fetchJson.mockReset()
+	vi.resetAllMocks()
 	mocks.fetchJson.mockResolvedValue({ message: 'success' })
 	container = document.createElement('div')
 	document.body.appendChild(container)
@@ -73,3 +74,97 @@ describe('ReportIncorrectData', () => {
 		expect(payload).not.toHaveProperty('subject')
 	})
 })
+
+async function clickReportButton(name: string) {
+	const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+		(el) => (el.getAttribute('aria-label') ?? el.textContent?.trim()) === name
+	)!
+	await act(async () => button.click())
+}
+
+test('failed reports retain the draft for retry but reopening starts without the old error', async () => {
+	mocks.fetchJson.mockRejectedValueOnce(new Error('Offline'))
+	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
+	await submitReport('TVL')
+	await vi.waitFor(() =>
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Something went wrong, couldn't submit report")
+	)
+	expect(document.querySelector('textarea')?.value).toBe('Incorrect value')
+	await clickReportButton('Close report dialog')
+	await clickReportButton('Report incorrect data')
+	expect(document.querySelector('[role="alert"]')).toBeNull()
+	expect(document.querySelector('textarea')?.value).toBe('')
+	await submitReport('Fees')
+	expect(JSON.parse(mocks.fetchJson.mock.calls[1][1].body)).toEqual({
+		protocol: 'Aave',
+		dataType: 'Fees',
+		message: 'Incorrect value',
+		correctSource: '',
+		contact: ''
+	})
+	await vi.waitFor(() =>
+		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported Successfully')
+	)
+})
+
+test.each(['success', 'failure'] as const)('a dismissed report %s leaves the reopened form intact', async (outcome) => {
+	const request = Promise.withResolvers<{ message: string }>()
+	mocks.fetchJson.mockReturnValueOnce(request.promise)
+	await openReport({ type: 'protocol', name: 'Aave', isLending: false })
+	await submitReport('TVL')
+	await vi.waitFor(() => expect(document.querySelector('textarea')?.readOnly).toBe(true))
+	await clickReportButton('Close report dialog')
+	await clickReportButton('Report incorrect data')
+	const newForm = document.querySelector('form')!
+	expect(document.querySelector('button[type="submit"]')?.getAttribute('aria-disabled')).toBe('true')
+	await act(async () => newForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })))
+	expect(mocks.fetchJson).toHaveBeenCalledTimes(1)
+	await act(async () => {
+		if (outcome === 'success') request.resolve({ message: 'success' })
+		else request.reject(new Error('Offline'))
+	})
+	expect(document.querySelector('form')).toBe(newForm)
+	expect(document.querySelector('[role="alert"]')).toBeNull()
+	await vi.waitFor(() => expect(document.querySelector('textarea')?.readOnly).toBe(false))
+	expect(mocks.success.mock.calls).toEqual(outcome === 'success' ? [['Report sent successfully']] : [])
+	expect(mocks.error.mock.calls).toEqual(
+		outcome === 'failure' ? [["Something went wrong, couldn't submit report"]] : []
+	)
+	await submitReport('Revenue')
+	expect(JSON.parse(mocks.fetchJson.mock.calls[1][1].body).dataType).toBe('Revenue')
+	await vi.waitFor(() =>
+		expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Reported Successfully')
+	)
+})
+
+test.each(['dataType', 'contact', 'submit-btn'])(
+	'pending submission from %s preserves focus and the selected metric',
+	async (focusedField) => {
+		const request = Promise.withResolvers<{ message: string }>()
+		mocks.fetchJson.mockReturnValueOnce(request.promise)
+		await openReport({ type: 'protocol', name: 'Aave', isLending: false })
+		const form = document.querySelector('form')!
+		const focusedControl = form.elements.namedItem(focusedField) as HTMLElement
+		await act(async () => focusedControl.focus())
+		const payload = await submitReport('Fees')
+
+		expect(payload).toEqual({
+			protocol: 'Aave',
+			dataType: 'Fees',
+			message: 'Incorrect value',
+			correctSource: '',
+			contact: ''
+		})
+		const pendingFocus = form.elements.namedItem(focusedField === 'dataType' ? 'submit-btn' : focusedField)
+		expect(document.activeElement).toBe(pendingFocus)
+		expect(document.querySelector('button[type="submit"]')?.getAttribute('aria-disabled')).toBe('true')
+		expect(document.querySelector('select')?.disabled).toBe(true)
+		expect(document.querySelector('[role="status"]')?.textContent).toBe('Submitting report')
+
+		await act(async () => request.reject(new Error('Offline')))
+		expect(document.querySelector('[role="alert"]')?.textContent).toBe("Something went wrong, couldn't submit report")
+		expect(document.activeElement).toBe(pendingFocus)
+		expect(document.querySelector('select')?.disabled).toBe(false)
+		expect(document.querySelector('textarea')?.value).toBe('Incorrect value')
+	}
+)
