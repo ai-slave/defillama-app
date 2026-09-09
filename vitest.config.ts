@@ -46,6 +46,8 @@ function reactCompilerUnderTest() {
  * that memoization can change.
  */
 const COMPILER_SENSITIVE_TESTS = [
+	'src/containers/ProDashboard/components/MultiChartCard.csv.test.tsx',
+	'src/components/__tests__/CsvDownloadButton.test.tsx',
 	'src/containers/ProDashboard/components/TemplateCreation.test.tsx',
 	'src/containers/ProDashboard/components/SqlChart/__tests__/SqlChartLifetime.test.tsx',
 	'src/components/DashboardSaveGuard.test.tsx',

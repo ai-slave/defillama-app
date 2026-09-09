@@ -4,6 +4,7 @@ import {
 	METRIC_UNIT_GROUP_SYMBOL,
 	resolveSeriesAxisLayout
 } from '~/containers/ProDashboard/components/metricGroups'
+import type { CsvCell } from '~/utils/csvCell'
 
 export type MultiChartInputSeries = {
 	name: string
@@ -28,17 +29,17 @@ function getSeriesMagnitude(data: MultiChartInputSeries['data']): number | undef
 	return magnitude > 0 ? magnitude : undefined
 }
 
-export function buildMultiChartCsvRows({ dataset, charts }: MultiChartSeriesView): Array<Array<string>> {
-	const rows = new Array<Array<string>>(dataset.source.length + 1)
+export function buildMultiChartCsvRows({ dataset, charts }: MultiChartSeriesView): Array<Array<CsvCell>> {
+	const rows = new Array<Array<CsvCell>>(dataset.source.length + 1)
 	rows[0] = ['Date', ...charts.map((chart) => chart.name)]
 	for (let rowIndex = 0; rowIndex < dataset.source.length; rowIndex++) {
 		const sourceRow = dataset.source[rowIndex]
-		const row = new Array<string>(charts.length + 1)
+		const row = new Array<CsvCell>(charts.length + 1)
 		row[0] = new Date(sourceRow[0] as number).toISOString().slice(0, 10)
 		for (let chartIndex = 0; chartIndex < charts.length; chartIndex++) {
 			const dimension = charts[chartIndex].encode.y
 			const value = typeof dimension === 'number' ? sourceRow[dimension] : null
-			row[chartIndex + 1] = value == null ? '' : String(value)
+			row[chartIndex + 1] = value ?? ''
 		}
 		rows[rowIndex + 1] = row
 	}

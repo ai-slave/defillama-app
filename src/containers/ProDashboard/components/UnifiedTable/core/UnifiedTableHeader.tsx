@@ -15,8 +15,8 @@ interface UnifiedTableHeaderProps {
 	rowHeadersSummary: string | null
 	onCustomizeColumns?: (() => void) | undefined
 	onDuplicate?: (() => void) | undefined
-	onCsvExport?: (() => void) | undefined
-	onCsvExportLevel?: ((level: CsvExportLevel) => void) | undefined
+	onCsvExport?: (() => void | Promise<void>) | undefined
+	onCsvExportLevel?: ((level: CsvExportLevel) => void | Promise<void>) | undefined
 	rowHeaders?: Array<UnifiedRowHeaderType>
 	isExportDisabled?: boolean
 	isLoading?: boolean
@@ -66,7 +66,7 @@ export function UnifiedTableHeader({
 
 	const handleCsvExportClick = () => {
 		if (csvDisabled) return
-		onCsvExport?.()
+		return onCsvExport?.()
 	}
 
 	return (
@@ -88,6 +88,7 @@ export function UnifiedTableHeader({
 					{groupingOptions?.length ? (
 						<div className="relative">
 							<select
+								aria-label="Group table rows"
 								value={groupingSelectValue}
 								onChange={(event) => onGroupingChange?.(event.target.value)}
 								disabled={!isGroupingInteractive}
@@ -156,13 +157,7 @@ export function UnifiedTableHeader({
 							disabled={csvDisabled}
 						/>
 					) : (
-						<CSVExportButton
-							onClick={handleCsvExportClick}
-							isLoading={isLoading}
-							className={`flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors ${
-								csvDisabled ? 'cursor-not-allowed opacity-60' : ''
-							}`}
-						/>
+						<CSVExportButton onClick={handleCsvExportClick} isLoading={isLoading} disabled={csvDisabled} />
 					)}
 				</div>
 			</div>
@@ -177,6 +172,7 @@ export function UnifiedTableHeader({
 					/>
 					<input
 						type="search"
+						aria-label="Search table rows"
 						onInput={(event) => onSearchChange(event.currentTarget.value)}
 						placeholder="Search protocols, chains, categories..."
 						className="w-full rounded-md border border-subtle bg-pro-cards-bg py-2 pr-3 pl-9 text-sm text-pro-text-primary focus:border-brand focus:ring-2 focus:ring-brand/30 focus:outline-hidden"

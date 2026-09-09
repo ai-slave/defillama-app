@@ -32,9 +32,8 @@ function toCell(value: unknown, isDate: boolean): CsvSerializableCell {
 	if (typeof value === 'bigint') return value.toString()
 	if (value instanceof Date) return value.toISOString()
 	if (typeof value === 'object') {
-		// Arrow may hand us Date-like, Map-like, or array values. Fall through to the CSV writer's
-		// object handling (JSON.stringify) rather than guessing semantic types here.
-		return value
+		// Arrow lists and structs may contain bigint values that JSON cannot encode directly.
+		return JSON.stringify(value, (_key, entry) => (typeof entry === 'bigint' ? entry.toString() : entry))
 	}
 	if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
 	return String(value)

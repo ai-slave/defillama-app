@@ -148,6 +148,8 @@ export const getUnifiedTableColumns = ({
 							<button
 								type="button"
 								onClick={row.getToggleExpandedHandler()}
+								aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${display.displayName}`}
+								aria-expanded={isExpanded}
 								className="rounded-md p-1 transition-colors hover:bg-surface-elevated-2"
 							>
 								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={12} width={12} />

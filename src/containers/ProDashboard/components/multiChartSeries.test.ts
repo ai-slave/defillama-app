@@ -153,7 +153,7 @@ describe('buildMultiChartSeriesView', () => {
 
 		expect(buildMultiChartCsvRows(result)).toEqual([
 			['Date', 'Small', 'Large'],
-			['1970-01-01', '25', '75']
+			['1970-01-01', 25, 75]
 		])
 	})
 
@@ -170,8 +170,8 @@ describe('buildMultiChartSeriesView', () => {
 
 		expect(buildMultiChartCsvRows(result)).toEqual([
 			['Date', 'TVL', 'Fees'],
-			['1970-01-01', '100', ''],
-			['1970-01-01', '', '0']
+			['1970-01-01', 100, ''],
+			['1970-01-01', '', 0]
 		])
 	})
 

@@ -184,6 +184,9 @@ function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 	const yAxis = Array.isArray(yAxisRaw) ? yAxisRaw[0] : yAxisRaw
 	const yAxisData: Array<unknown> | null = Array.isArray(yAxis?.data) ? yAxis.data : null
 	const categoryAxisData = xAxisData ?? yAxisData
+	const isCategory =
+		xAxis?.type === 'category' || yAxis?.type === 'category' || seriesArr.every((series) => series?.type === 'pie')
+	const isTimeAxis = xAxis?.type === 'time'
 
 	if (isScatterChart) {
 		const xHeader = typeof xAxis?.name === 'string' && xAxis.name ? xAxis.name : 'X'
@@ -240,7 +243,7 @@ function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 				y = point
 			}
 
-			const xKey = coerceXKey(x)
+			const xKey = isCategory && typeof x === 'string' ? x : coerceXKey(x)
 			if (xKey == null) continue
 
 			const existing = rowsByX.get(xKey) ?? {}
@@ -253,10 +256,9 @@ function buildCsvRowsFromSeriesFallback(option: any): Array<Array<CsvCell>> {
 
 	const xKeys = Array.from(rowsByX.keys())
 	const allNumeric = xKeys.every((k) => typeof k === 'number')
-	const sorted = allNumeric ? Array.from(xKeys).sort((a, b) => Number(a) - Number(b)) : xKeys
+	const sorted = allNumeric && !isCategory ? Array.from(xKeys).sort((a, b) => Number(a) - Number(b)) : xKeys
 
-	const maybeFirstTsSeconds = normalizeEpochSeconds(sorted[0])
-	const includeDate = maybeFirstTsSeconds != null
+	const includeDate = isTimeAxis
 	const headerLabel = xAxis?.type === 'category' || yAxis?.type === 'category' ? 'category' : 'x'
 	const header: Array<CsvCell> = includeDate ? [headerLabel, 'Date', ...seriesNames] : [headerLabel, ...seriesNames]
 	const rows: Array<Array<CsvCell>> = [header]

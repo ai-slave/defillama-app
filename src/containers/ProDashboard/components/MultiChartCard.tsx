@@ -461,6 +461,8 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 							smol
 						/>
 						<CSVExportButton
+							disabled={failedItems.length > 0}
+							isLoading={loadingItems.length > 0}
 							onClick={handleCsvExport}
 							smol
 							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"

@@ -55,3 +55,45 @@ describe('addTimestampToFilename', () => {
 		)
 	})
 })
+
+test('CSV fallback retains escaped rows, formula protection, and the dated filename', () => {
+	const attributes: Record<string, string> = {}
+	const link = {
+		style: {},
+		setAttribute: (name: string, value: string) => {
+			attributes[name] = value
+		},
+		click: vi.fn()
+	}
+	vi.useFakeTimers()
+	vi.setSystemTime(new Date('2026-09-08T00:00:00Z'))
+	vi.spyOn(console, 'log').mockImplementation(() => {})
+	vi.stubGlobal('window', {
+		URL: {
+			createObjectURL: () => {
+				throw new Error('Blob URLs unavailable')
+			}
+		}
+	})
+	vi.stubGlobal('document', { createElement: () => link, body: { appendChild: vi.fn(), removeChild: vi.fn() } })
+	try {
+		downloadCSV(
+			'protocols.csv',
+			[
+				['Name', 'Value'],
+				['Alpha, Inc.', '=1+1'],
+				['Beta', 0]
+			],
+			{ addTimestamp: true }
+		)
+		expect(attributes.download).toBe('protocols_2026-09-08.csv')
+		expect(decodeURIComponent(attributes.href)).toBe(
+			'data:text/plain;charset=utf-8,Name,Value\n"Alpha, Inc.","\'=1+1"\nBeta,0'
+		)
+		expect(link.click).toHaveBeenCalledOnce()
+	} finally {
+		vi.useRealTimers()
+		vi.restoreAllMocks()
+		vi.unstubAllGlobals()
+	}
+})

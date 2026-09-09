@@ -1,35 +1,41 @@
-import type { Table } from '@tanstack/react-table'
-import { describe, expect, test } from 'vitest'
+import {
+	createTable,
+	getCoreRowModel,
+	getFilteredRowModel,
+	getPaginationRowModel,
+	getSortedRowModel
+} from '@tanstack/react-table'
+import { expect, test } from 'vitest'
+import { serializeCsv } from '~/utils/csv'
 import { prepareTableCsv } from '../utils'
 
-type Row = { name: string; volume: number }
-
-function tableStub(): Table<Row> {
-	const columns = [
-		{ id: 'name', columnDef: { header: 'Name' } },
-		{ id: 'volume', columnDef: { header: 'Volume' } }
-	]
-	const row = {
-		original: { name: 'Example', volume: 42 },
-		getValue: (id: string) => (id === 'name' ? 'Example' : 42)
-	}
-
-	return {
-		getVisibleLeafColumns: () => [columns[0]],
-		getAllLeafColumns: () => columns,
-		getPrePaginationRowModel: () => ({ rows: [row] })
-	} as unknown as Table<Row>
-}
-
-describe('prepareTableCsv', () => {
-	test('exports visible columns by default', () => {
-		expect(prepareTableCsv({ instance: tableStub(), filename: 'markets' }).rows).toEqual([['Name'], ['Example']])
+test('exports every filtered and sorted row before pagination with literal CSV values', () => {
+	const table = createTable({
+		data: [
+			{ name: 'Alpha, Inc.', volume: 12 },
+			{ name: 'Beta', volume: -3 },
+			{ name: 'Excluded', volume: 99 }
+		],
+		columns: [
+			{ accessorKey: 'name', header: 'Name', filterFn: (row, id, value) => row.getValue(id) !== value },
+			{ accessorKey: 'volume', header: 'Volume', meta: { csvHeader: 'Volume (USD)' } }
+		],
+		state: {
+			pagination: { pageSize: 1, pageIndex: 0 },
+			sorting: [{ id: 'volume', desc: false }],
+			columnFilters: [{ id: 'name', value: 'Excluded' }],
+			columnVisibility: { volume: false }
+		},
+		onStateChange: () => {},
+		renderFallbackValue: null,
+		getCoreRowModel: getCoreRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getPaginationRowModel: getPaginationRowModel()
 	})
-
-	test('can export columns hidden only for presentation', () => {
-		expect(prepareTableCsv({ instance: tableStub(), filename: 'markets', includeHiddenColumns: true }).rows).toEqual([
-			['Name', 'Volume'],
-			['Example', 42]
-		])
-	})
+	expect(table.getRowModel().rows.map((row) => row.original.name)).toEqual(['Beta'])
+	expect(serializeCsv(prepareTableCsv({ instance: table, filename: 'markets' }).rows)).toBe('Name\nBeta\n"Alpha, Inc."')
+	expect(serializeCsv(prepareTableCsv({ instance: table, filename: 'markets', includeHiddenColumns: true }).rows)).toBe(
+		'Name,Volume (USD)\nBeta,-3\n"Alpha, Inc.",12'
+	)
 })

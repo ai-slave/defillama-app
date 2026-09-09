@@ -20,8 +20,11 @@ describe('prepareChartCsv', () => {
 		)
 
 		expect(result.filename).toBe('test.csv')
-		expect(result.rows[0]).toEqual(['Timestamp', 'Date', 'TVL', 'Volume'])
-		expect(result.rows).toHaveLength(3) // header + 2 data rows
+		expect(result.rows).toEqual([
+			['Timestamp', 'Date', 'TVL', 'Volume'],
+			['1704067200000', '2024-01-01', 100, 50],
+			['1704153600000', '2024-01-02', 200, 75]
+		])
 	})
 
 	test('fills missing values with empty string', () => {

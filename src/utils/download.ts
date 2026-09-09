@@ -119,20 +119,18 @@ export function downloadTabular(
 }
 
 export function downloadCSV(filename: string, csvData: CsvData, options: CSVDownloadOptions = {}): void {
+	const csvContent = serializeCsv(csvData)
+	const { mimeType = 'text/csv;charset=utf-8;', addTimestamp = false } = options
+	const finalFilename = addTimestamp
+		? addTimestampToFilename(filename, new Date().toISOString().slice(0, 10))
+		: filename
+
 	try {
-		const { mimeType = 'text/csv;charset=utf-8;', addTimestamp = false } = options
-
-		const csvContent = serializeCsv(csvData)
-
 		trackUmamiEvent('export-csv-success', { filename })
-
-		const finalFilename = addTimestamp
-			? addTimestampToFilename(filename, new Date().toISOString().slice(0, 10))
-			: filename
 
 		downloadBlob(finalFilename, new Blob([csvContent], { type: mimeType }))
 	} catch (error) {
 		console.log('CSV download error:', error)
-		download(filename, String(csvData))
+		download(finalFilename, csvContent)
 	}
 }

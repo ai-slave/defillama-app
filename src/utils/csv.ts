@@ -12,7 +12,13 @@ export function serializeCsvRow(row: ReadonlyArray<CsvSerializableCell>): string
 			// Preserve typed negative numbers; only text can be interpreted as a spreadsheet formula.
 			const formulaPrefixed = typeof cell === 'string' && CSV_FORMULA_PREFIX_REGEX.test(cell)
 			const cellString = typeof cell === 'object' ? JSON.stringify(cell) : formulaPrefixed ? `'${cell}` : String(cell)
-			if (formulaPrefixed || cellString.includes(',') || cellString.includes('"') || cellString.includes('\n')) {
+			if (
+				formulaPrefixed ||
+				cellString.includes(',') ||
+				cellString.includes('"') ||
+				cellString.includes('\n') ||
+				cellString.includes('\r')
+			) {
 				return `"${cellString.replace(/"/g, '""')}"`
 			}
 			return cellString

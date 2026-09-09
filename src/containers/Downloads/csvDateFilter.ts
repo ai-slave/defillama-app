@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { formatIsoDate } from '~/utils/dateFormat'
-import { parseCsvLine, type ParsedCsvRow } from './csvParse'
+import { csvRecords, parseCsvLine, type ParsedCsvRow } from './csvParse'
 import type { DateRangeConfig } from './savedDownloads'
 
 export interface ResolvedDateRange {
@@ -46,7 +46,7 @@ export function resolveDateRange(range: DateRangeConfig | null | undefined): Res
 }
 
 /**
- * Filter a CSV string by its `date` column. Only full-line slicing — no re-serialization
+ * Filter a CSV string by its `date` column. Only complete-record slicing — no re-serialization
  * of fields — so quoted/escaped values in non-date columns are preserved bit-for-bit.
  * Returns the original string unchanged when there is no filter or no date column.
  */
@@ -54,18 +54,16 @@ export function filterCsvByDateRange(csv: string, range: DateRangeConfig | null 
 	const window = resolveDateRange(range)
 	if (!window) return csv
 	const eol = csv.includes('\r\n') ? '\r\n' : '\n'
-	const lines = csv.split(eol)
-	if (lines.length === 0) return csv
-	const headerLine = lines[0]
-	if (!headerLine.trim()) return csv
+	const records = csvRecords(csv)
+	const header = records.next()
+	if (header.done) return csv
+	const headerLine = header.value
 	const headers = parseCsvLine(headerLine)
 	const dateIdx = headers.indexOf('date')
 	if (dateIdx === -1) return csv
 
 	const kept: Array<string> = [headerLine]
-	for (let i = 1; i < lines.length; i++) {
-		const line = lines[i]
-		if (!line.trim()) continue
+	for (const line of records) {
 		const fields = parseCsvLine(line)
 		const value = fields[dateIdx]
 		if (!value) continue

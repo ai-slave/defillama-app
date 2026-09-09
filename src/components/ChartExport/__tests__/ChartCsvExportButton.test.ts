@@ -142,3 +142,112 @@ describe('ChartCsvExportButton', () => {
 		expect(onExport).toHaveBeenCalledWith({ filename: result.filename })
 	})
 })
+
+test('exports a real ECharts dataset with dates and chain labels intact', async () => {
+	const { init, use } = await import('echarts/core')
+	const { BarChart } = await import('echarts/charts')
+	const { DatasetComponent, GridComponent } = await import('echarts/components')
+	const { SVGRenderer } = await import('echarts/renderers')
+	const { serializeCsv } = await import('~/utils/csv')
+	use([BarChart, DatasetComponent, GridComponent, SVGRenderer])
+	const instance = init(null, undefined, { renderer: 'svg', ssr: true, width: 640, height: 320 })
+	try {
+		instance.setOption({
+			dataset: {
+				dimensions: [
+					{ name: '__dimension_0', displayName: 'timestamp' },
+					{ name: '__dimension_1', displayName: 'ethereum' },
+					{ name: '__dimension_2', displayName: 'solana' }
+				],
+				source: [
+					[1_704_067_200_000, 123.25, 0],
+					[1_704_153_600_000, null, 7.5]
+				]
+			},
+			xAxis: { type: 'time' },
+			yAxis: {},
+			series: [
+				{ type: 'bar', encode: { x: 0, y: 1 } },
+				{ type: 'bar', encode: { x: 0, y: 2 } }
+			]
+		})
+		const result = await prepareCsv(instance)
+		expect(serializeCsv(result.rows)).toBe(
+			'Timestamp,Date,ethereum,solana\n1704067200000,2024-01-01,123.25,0\n1704153600000,2024-01-02,,7.5'
+		)
+	} finally {
+		instance.dispose()
+	}
+})
+
+test('downloads all protocol columns from the real capped presentation, including unselected history', async () => {
+	const { buildAdapterByChainBreakdownPresentation } = await import('~/containers/AdapterMetrics/utils')
+	const { serializeCsv } = await import('~/utils/csv')
+	const names = Array.from({ length: 32 }, (_, index) => `Protocol ${index + 1}`)
+	const presentation = buildAdapterByChainBreakdownPresentation({
+		chartData: {
+			dimensions: ['timestamp', ...names, 'Historical protocol'],
+			source: [[1_704_067_200_000, ...Array.from({ length: 32 }, (_, index) => index + 1), 500]]
+		},
+		selectedProtocols: names,
+		state: { chartKind: 'bar', valueMode: 'absolute', barLayout: 'stacked', groupBy: 'daily' }
+	})
+	expect(presentation.dataset.dimensions.at(-1)).toBe('Others')
+	mocks.prepareCsv = undefined
+	renderToStaticMarkup(
+		createElement(ChartCsvExportButton, { chartInstance: () => null, source: presentation.csvSource })
+	)
+	if (!mocks.prepareCsv) throw new Error('CSV preparer was not rendered')
+	const result = await mocks.prepareCsv()
+	expect(serializeCsv(result.rows)).toBe(
+		'Timestamp,Date,Protocol 1,Protocol 2,Protocol 3,Protocol 4,Protocol 5,Protocol 6,Protocol 7,Protocol 8,Protocol 9,Protocol 10,Protocol 11,Protocol 12,Protocol 13,Protocol 14,Protocol 15,Protocol 16,Protocol 17,Protocol 18,Protocol 19,Protocol 20,Protocol 21,Protocol 22,Protocol 23,Protocol 24,Protocol 25,Protocol 26,Protocol 27,Protocol 28,Protocol 29,Protocol 30,Protocol 31,Protocol 32,Historical protocol\n1704067200000,2024-01-01,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,500'
+	)
+})
+
+test('keeps numeric-looking pie labels distinct without inventing a date column', async () => {
+	const result = await prepareCsv({
+		getOption: () => ({
+			series: [
+				{
+					type: 'pie',
+					name: 'Value',
+					data: [
+						{ name: '001', value: 12 },
+						{ name: '1', value: 5 }
+					]
+				}
+			]
+		})
+	} as unknown as ECharts)
+	expect(result.rows).toEqual([
+		['x', 'Value'],
+		['001', 12],
+		['1', 5]
+	])
+})
+
+test('adds dates to time axes but not numeric value axes', async () => {
+	const series = [
+		{
+			name: 'Volume',
+			type: 'line',
+			data: [
+				[1_704_067_200_000, 0],
+				[1_704_153_600_000, 12]
+			]
+		}
+	]
+	const time = await prepareCsv({ getOption: () => ({ xAxis: [{ type: 'time' }], series }) } as unknown as ECharts)
+	expect(time.rows).toEqual([
+		['x', 'Date', 'Volume'],
+		[1_704_067_200_000, '2024-01-01', 0],
+		[1_704_153_600_000, '2024-01-02', 12]
+	])
+	const value = await prepareCsv({
+		getOption: () => ({ xAxis: [{ type: 'value' }], series: [{ name: 'Count', type: 'bar', data: [[5, 20]] }] })
+	} as unknown as ECharts)
+	expect(value.rows).toEqual([
+		['x', 'Count'],
+		[5, 20]
+	])
+})
