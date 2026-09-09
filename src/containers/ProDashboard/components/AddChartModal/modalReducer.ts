@@ -1,5 +1,12 @@
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
-import { type ChartConfig, type MetricAggregator, type MetricChartType, normalizeYieldChartType } from '../../types'
+import {
+	type ChartConfig,
+	isDashboardChartTypeForSubject,
+	type MetricAggregator,
+	type MetricChartType,
+	normalizeYieldChartType
+} from '../../types'
+import { DEFAULT_CHART_MODE } from './chartModePreference'
 import type {
 	ChartBuilderConfig,
 	ChartModeType,
@@ -132,7 +139,7 @@ const DEFAULT_CHART_BUILDER: ChartBuilderConfig = {
 const INITIAL_MODAL_STATE: ModalState = {
 	selectedMainTab: 'charts',
 	selectedChartTab: 'chain',
-	chartMode: 'builder',
+	chartMode: DEFAULT_CHART_MODE,
 	composerItems: [],
 	selectedChain: null,
 	selectedChains: [],
@@ -198,10 +205,14 @@ const INITIAL_MODAL_STATE: ModalState = {
 	selectedRwaAssetMetrics: ['activeMcap', 'onChainMcap', 'defiActiveTvl']
 }
 
-export function initializeFromEditItem(editItem: DashboardItemConfig | null | undefined): ModalState {
+export function initializeFromEditItem(
+	editItem: DashboardItemConfig | null | undefined,
+	preferredChartMode = DEFAULT_CHART_MODE
+): ModalState {
 	if (!editItem) {
 		return {
 			...INITIAL_MODAL_STATE,
+			chartMode: preferredChartMode,
 			composerItems: [],
 			selectedChains: [],
 			selectedProtocols: [],
@@ -490,8 +501,17 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 		case 'SET_SELECTED_MAIN_TAB':
 			return { ...state, selectedMainTab: action.payload }
 
-		case 'SET_SELECTED_CHART_TAB':
-			return { ...state, selectedChartTab: action.payload }
+		case 'SET_SELECTED_CHART_TAB': {
+			if (action.payload !== 'chain' && action.payload !== 'protocol')
+				return { ...state, selectedChartTab: action.payload }
+			const selectedChartTypes = resolveChartTypesForSubjectTab(action.payload, state.selectedChartTypes)
+			return {
+				...state,
+				selectedChartTab: action.payload,
+				selectedChartTypes,
+				selectedChartType: selectedChartTypes[0]
+			}
+		}
 
 		case 'SET_CHART_MODE':
 			return { ...state, chartMode: action.payload }
@@ -696,12 +716,20 @@ export function modalReducer(state: ModalState, action: ModalAction): ModalState
 			return { ...state, selectedRwaAssetMetrics: action.payload }
 
 		case 'RESET_STATE':
-			return INITIAL_MODAL_STATE
+			return initializeFromEditItem(null, state.chartMode)
 
 		case 'INITIALIZE_FROM_EDIT_ITEM':
-			return initializeFromEditItem(action.payload.editItem)
+			return initializeFromEditItem(action.payload.editItem, state.chartMode)
 
 		default:
 			return state
 	}
+}
+
+export function resolveChartTypesForSubjectTab(
+	subjectType: 'chain' | 'protocol',
+	selectedChartTypes: Array<string>
+): [string] {
+	const current = selectedChartTypes[0]
+	return [current && isDashboardChartTypeForSubject(subjectType, current) ? current : 'tvl']
 }

@@ -4,6 +4,7 @@ import { GraphicComponent, ToolboxComponent, TooltipComponent } from 'echarts/co
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useRef } from 'react'
+import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useMedia } from '~/hooks/useMedia'
@@ -37,6 +38,7 @@ function normalizeTreemapFormatterParams(params: unknown): TreemapFormatterParam
 }
 
 function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemapChartProps) {
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const [isDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const containerRef = useRef<HTMLDivElement | null>(null)
@@ -81,17 +83,19 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 
 		const total = data.reduce((sum, item) => sum + item.value, 0)
 
-		const graphic = {
-			type: 'image',
-			z: 100,
-			style: {
-				image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-				height: 40,
-				opacity: 0.3
-			},
-			left: isSmall ? '40%' : '45%',
-			top: '45%'
-		}
+		const graphic = canvasWatermarkEnabled
+			? {
+					type: 'image',
+					z: 100,
+					style: {
+						image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
+						height: 40,
+						opacity: 0.3
+					},
+					left: isSmall ? '40%' : '45%',
+					top: '45%'
+				}
+			: undefined
 
 		const option: EChartsOption = {
 			graphic,
@@ -183,7 +187,7 @@ function BuilderTreemapChart({ data, height = '450px', onReady }: BuilderTreemap
 
 		clearTreemapFocus(instance)
 		instance.setOption(option, true)
-	}, [data, isDark, isSmall])
+	}, [canvasWatermarkEnabled, data, isDark, isSmall])
 
 	return (
 		<div

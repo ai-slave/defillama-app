@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useContext, useMemo } from 'react'
 import { getProtocolEmissionsPieData } from '~/containers/Unlocks/queries'
+import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { slug } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { StreamDoneContext } from '../queries'
 import type { UnlocksPieConfig } from '../types'
-import { CSVExportButton } from './CSVExportButton'
 import { LoadingSpinner } from './LoadingSpinner'
+import { ProCardOverflowMenu } from './ProCardActions'
 
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
 
@@ -22,6 +23,7 @@ interface UnlocksPieCardProps {
 }
 
 export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
+	const { chartInstance, handleChartReady } = useChartImageExport()
 	const { protocol, protocolName, chartType } = config
 	const includeSupplyMeta = chartType === 'locked-unlocked'
 
@@ -82,10 +84,9 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 				</div>
 				{hasChartData ? (
 					<div className="flex gap-2">
-						<CSVExportButton
-							onClick={handleCsvExport}
-							smol
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
+						<ProCardOverflowMenu
+							image={{ chartInstance, filename: csvFileName, title: chartTitle }}
+							csv={{ onClick: handleCsvExport }}
 						/>
 					</div>
 				) : null}
@@ -99,7 +100,12 @@ export function UnlocksPieCard({ config }: UnlocksPieCardProps) {
 							</div>
 						}
 					>
-						<PieChart chartData={chartData} stackColors={stackColors} valueSymbol={valueSymbol} />
+						<PieChart
+							onReady={handleChartReady}
+							chartData={chartData}
+							stackColors={stackColors}
+							valueSymbol={valueSymbol}
+						/>
 					</Suspense>
 				) : (
 					<p className="flex h-[320px] items-center justify-center text-center text-pro-text-tertiary">

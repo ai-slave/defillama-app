@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { CHART_COLORS } from '~/constants/colors'
 import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
-import { buildProRwaAssetChartSeries } from './rwaAssetChart'
+import { buildProRwaAssetChartSeries, projectRwaAssetDatasetToMetrics } from './rwaAssetChart'
 
 describe('Pro RWA asset chart series', () => {
 	const dataset: RWAPositionalChartDataset = {
@@ -59,4 +59,13 @@ describe('Pro RWA asset chart series', () => {
 			}
 		])
 	})
+})
+
+test('projects CSV rows in dataset order with timestamps', () => {
+	expect(
+		projectRwaAssetDatasetToMetrics(
+			{ dimensions: ['timestamp', 'DeFi Active TVL', 'Active Mcap', 'Onchain Mcap'], source: [[1, 2, 3, 4]] },
+			['onChainMcap', 'defiActiveTvl']
+		)
+	).toEqual({ dimensions: ['timestamp', 'DeFi Active TVL', 'Onchain Mcap'], source: [[1, 2, 4]] })
 })

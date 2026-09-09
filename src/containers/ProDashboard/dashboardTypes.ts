@@ -31,7 +31,14 @@ export interface AIUndoState {
 
 export type DashboardMode = 'view' | 'edit'
 
+export interface DashboardCopySource {
+	id: string
+	slug?: string
+	name: string
+}
+
 export interface Dashboard {
+	copiedFrom?: DashboardCopySource
 	id: string
 	slug?: string
 	user?: string

@@ -17,8 +17,8 @@ import { ProDashboardLoader } from '~/containers/ProDashboard/components/ProDash
 import type { Dashboard } from '~/containers/ProDashboard/dashboardTypes'
 import {
 	DISCOVERY_CATEGORIES,
-	type DiscoveryCategoryResponse,
-	type DiscoveryCategoriesInitialData
+	type DiscoveryCategoriesInitialData,
+	type DiscoveryCategoryResponse
 } from '~/containers/ProDashboard/discoveryCategories'
 import { useFreeTierStatus } from '~/containers/ProDashboard/hooks/useFreeTierStatus'
 import { useMyDashboards } from '~/containers/ProDashboard/hooks/useMyDashboards'
@@ -31,7 +31,7 @@ import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { dashboardAPI } from '~/containers/ProDashboard/services/DashboardAPI'
 import Layout from '~/layout'
 import { Icon } from '~/ui/Icon'
-import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
+import { Tab, TabPanel, Tabs } from '~/ui/Tabs'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 const CreateDashboardPicker = lazy(() =>
 	import('~/containers/ProDashboard/components/CreateDashboardPicker').then((m) => ({
@@ -75,6 +75,7 @@ function compactDiscoveryAuthor(author: Dashboard['author']): Dashboard['author'
 function compactDiscoveryDashboard(dashboard: Dashboard): Dashboard {
 	const author = compactDiscoveryAuthor(dashboard.author)
 	return {
+		...(dashboard.copiedFrom ? { copiedFrom: dashboard.copiedFrom } : {}),
 		id: dashboard.id,
 		slug: dashboard.slug,
 		visibility: dashboard.visibility,

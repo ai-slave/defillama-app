@@ -1,6 +1,5 @@
 import type * as echarts from 'echarts/core'
 import { lazy, Suspense, useContext, useMemo, useState } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { Select } from '~/components/Select/Select'
@@ -11,12 +10,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { capitalizeFirstLetter } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { getChartDataPrerequisite, toChartRuntimeState } from '../chartRuntime'
-import {
-	useProDashboardCatalog,
-	useProDashboardEditorActions,
-	useProDashboardPermissions,
-	useProDashboardTime
-} from '../ProDashboardAPIContext'
+import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartData } from '../queries'
 import {
 	type Chain,
@@ -26,8 +20,8 @@ import {
 	type Protocol
 } from '../types'
 import { generateChartColor, getItemIconUrl } from '../utils'
-import { CSVExportButton } from './CSVExportButton'
 import { LoadingSpinner } from './LoadingSpinner'
+import { ProCardEditControls, ProCardOverflowMenu } from './ProCardActions'
 import { buildSingleMetricChartDataset } from './singleMetricChart'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -142,7 +136,6 @@ export function ChartCard({ chart }: ChartCardProps) {
 	const { getChainInfo, getProtocolInfo, parentMapping, protocolBySlug, protocolCatalog } = useProDashboardCatalog()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { handleGroupingChange, handleCumulativeChange } = useProDashboardEditorActions()
-	const { isReadOnly } = useProDashboardPermissions()
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
@@ -240,48 +233,42 @@ export function ChartCard({ chart }: ChartCardProps) {
 					</h2>
 				</div>
 				<div className="flex flex-wrap items-center justify-end gap-2">
-					{!isReadOnly ? (
-						<>
-							{isGroupable ? (
-								<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
-									{groupingOptions.map((dataInterval) => (
-										<Tooltip
-											content={capitalizeFirstLetter(dataInterval)}
-											render={<button type="button" />}
-											className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary data-[active=true]:bg-pro-accent data-[active=true]:font-medium data-[active=true]:text-on-brand"
-											data-active={chart.grouping === dataInterval}
-											onClick={() => handleGroupingChange(chart.id, dataInterval)}
-											key={`${chart.id}-options-groupBy-${dataInterval}`}
-										>
-											{dataInterval.slice(0, 1).toUpperCase()}
-										</Tooltip>
-									))}
-								</div>
-							) : null}
-							{isBarChart ? (
-								<Select
-									size="sm"
-									allValues={CUMULATIVE_DISPLAY_OPTIONS}
-									selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
-									setSelectedValues={(value: string) => {
-										handleCumulativeChange(chart.id, value === 'Cumulative')
-									}}
-									label={showCumulative ? 'Cumulative' : 'Individual'}
-									labelType="none"
-									variant="pro"
-								/>
-							) : null}
-						</>
-					) : null}
-					{chartDataset.source.length > 0 ? (
-						<>
-							<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-							<CSVExportButton
-								onClick={handleCsvExport}
-								smol
-								className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
+					<ProCardEditControls>
+						{isGroupable ? (
+							<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
+								{groupingOptions.map((dataInterval) => (
+									<Tooltip
+										content={capitalizeFirstLetter(dataInterval)}
+										render={<button type="button" />}
+										className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary data-[active=true]:bg-pro-accent data-[active=true]:font-medium data-[active=true]:text-on-brand"
+										data-active={chart.grouping === dataInterval}
+										onClick={() => handleGroupingChange(chart.id, dataInterval)}
+										key={`${chart.id}-options-groupBy-${dataInterval}`}
+									>
+										{dataInterval.slice(0, 1).toUpperCase()}
+									</Tooltip>
+								))}
+							</div>
+						) : null}
+						{isBarChart ? (
+							<Select
+								size="sm"
+								allValues={CUMULATIVE_DISPLAY_OPTIONS}
+								selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
+								setSelectedValues={(value: string) => {
+									handleCumulativeChange(chart.id, value === 'Cumulative')
+								}}
+								label={showCumulative ? 'Cumulative' : 'Individual'}
+								labelType="none"
+								variant="pro"
 							/>
-						</>
+						) : null}
+					</ProCardEditControls>
+					{chartDataset.source.length > 0 ? (
+						<ProCardOverflowMenu
+							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
+							csv={{ onClick: handleCsvExport }}
+						/>
 					) : null}
 				</div>
 			</div>

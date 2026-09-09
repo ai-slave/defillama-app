@@ -29,3 +29,15 @@ export function buildProRwaAssetChartSeries(
 	}
 	return charts
 }
+
+export function projectRwaAssetDatasetToMetrics(
+	dataset: RWAPositionalChartDataset,
+	metrics: ReadonlyArray<RWAOverviewChartMetric>
+): RWAPositionalChartDataset {
+	const selected = new Set(metrics.map((metric) => RWA_ASSET_METRIC_DIMENSIONS[metric]))
+	const indexes = dataset.dimensions.flatMap((name, index) => (index > 0 && selected.has(name) ? [index] : []))
+	return {
+		dimensions: ['timestamp', ...indexes.map((index) => dataset.dimensions[index])],
+		source: dataset.source.map((row) => [row[0], ...indexes.map((index) => row[index])])
+	}
+}

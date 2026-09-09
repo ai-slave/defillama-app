@@ -17,7 +17,6 @@ export function hasRwaOverviewChartExportData(
 	timeSeriesDataset: RWAPositionalChartDataset | null,
 	snapshot: RwaSnapshotPresentation | null
 ): boolean {
-	if (view === 'pie') return false
 	if (view === 'timeSeries') return (timeSeriesDataset?.source.length ?? 0) > 0
 	if (!snapshot || snapshot.view !== view) return false
 	return snapshot.view === 'hbar' ? snapshot.categories.length > 0 : snapshot.data.length > 0
@@ -71,4 +70,16 @@ export function buildRwaSnapshotPresentation({
 	if (view === 'pie') return { view, data: items }
 	if (items.length > 20) items.length = 20
 	return { view, categories: items.map((item) => item.name), values: items.map((item) => item.value) }
+}
+
+export function buildRwaSnapshotCsvRows(
+	snapshot: RwaSnapshotPresentation | null,
+	breakdownLabel: string,
+	metricLabel: string
+): Array<Array<string | number>> {
+	const rows: Array<Array<string | number>> = [[breakdownLabel, metricLabel]]
+	if (!snapshot) return rows
+	if (snapshot.view === 'hbar')
+		return [...rows, ...snapshot.categories.map((name, index) => [name, snapshot.values[index]])]
+	return [...rows, ...snapshot.data.map((item) => [item.name, Array.isArray(item.value) ? item.value[0] : item.value])]
 }

@@ -105,7 +105,10 @@ export function useAutoSave({
 	}, [unsaved])
 
 	const autoSave = useCallback(
-		(items: Array<DashboardItemConfig>) => {
+		(
+			items: Array<DashboardItemConfig>,
+			overrides?: { timePeriod?: TimePeriod; customTimePeriod?: CustomTimePeriod | null }
+		) => {
 			if (!enabled || !dashboard) return
 			setQueued({
 				id: dashboard.id,
@@ -113,8 +116,8 @@ export function useAutoSave({
 				data: toDashboardSavePayload(dashboard),
 				changes: {
 					items,
-					timePeriod,
-					customTimePeriod,
+					timePeriod: overrides?.timePeriod ?? timePeriod,
+					customTimePeriod: overrides?.customTimePeriod !== undefined ? overrides.customTimePeriod : customTimePeriod,
 					...(isFreeUser ? { visibility: 'public' as const } : {})
 				}
 			})
@@ -141,5 +144,19 @@ export function useAutoSave({
 			save(request)
 		}
 	}
-	return { autoSave, flush, acknowledge, queued, state, retry, saving }
+	const hasPendingSave = useCallback(
+		() =>
+			queued !== null ||
+			client
+				.getMutationCache()
+				.findAll({ mutationKey })
+				.some(
+					(mutation) =>
+						mutation.state.status === 'pending' ||
+						(mutation.state.status === 'error' &&
+							(mutation.state.variables as DashboardUpdate | undefined)?.source === 'autosave')
+				),
+		[queued, client, mutationKey]
+	)
+	return { autoSave, flush, acknowledge, queued, state, retry, saving, hasPendingSave }
 }

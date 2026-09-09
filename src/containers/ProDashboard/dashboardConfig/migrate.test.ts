@@ -1606,3 +1606,15 @@ describe('Pro dashboard config migration', () => {
 		expect(persisted.data).toHaveProperty('aiUndoState', null)
 	})
 })
+
+test('preserves copy source attribution during migration', () => {
+	const copiedFrom = { id: 'source', slug: 'original', name: 'Original' }
+	const migrated = migrateDashboardConfig({
+		id: 'copy',
+		created: '',
+		updated: '',
+		data: { dashboardName: 'Copy', items: [] },
+		copiedFrom
+	})
+	expect(migrated.copiedFrom).toEqual(copiedFrom)
+})

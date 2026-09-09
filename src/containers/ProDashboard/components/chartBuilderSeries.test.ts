@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from './chartBuilderSeries'
+import {
+	buildChartBuilderSeriesView,
+	isChartBuilderSnapshotMetric,
+	selectChartBuilderSeries
+} from './chartBuilderSeries'
 
 const color = (name: string, fallback?: string) => fallback ?? `color:${name}`
 
@@ -101,4 +105,18 @@ describe('buildChartBuilderSeriesView', () => {
 		})
 		expect(result.charts[0]).toMatchObject({ name: 'timestamp', encode: { x: 0, y: 1 } })
 	})
+})
+
+test('select hides Others without modifying the cached series', () => {
+	const data = {
+		series: [
+			{ name: 'A', data: [] },
+			{ name: 'Others (3 chains)', data: [] }
+		]
+	}
+	expect(selectChartBuilderSeries(data, { hideOthers: false, timePeriod: 'all' })).toBe(data)
+	expect(selectChartBuilderSeries(data, { hideOthers: true, timePeriod: 'all' }).series.map((s) => s.name)).toEqual([
+		'A'
+	])
+	expect(data.series).toHaveLength(2)
 })

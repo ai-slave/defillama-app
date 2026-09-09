@@ -1,8 +1,8 @@
 import { Icon } from '~/ui/Icon'
 import type { UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
-import { CSVExportButton } from '../../CSVExportButton'
+import { ProCardOverflowMenu } from '../../ProCardActions'
 import type { ActiveFilterChip } from '../utils/filterChips'
-import { CsvExportDropdown, type CsvExportLevel } from './CsvExportDropdown'
+import type { CsvExportLevel } from './csvExportLevels'
 
 interface GroupingOption {
 	id: string
@@ -54,20 +54,13 @@ export function UnifiedTableHeader({
 	selectedGroupingId,
 	onGroupingChange
 }: UnifiedTableHeaderProps) {
-	const hasGrouping = rowHeaders && rowHeaders.length > 1
-	const csvDisabled = isExportDisabled || (!onCsvExport && !onCsvExportLevel)
-	const customizeDisabled = !onCustomizeColumns
+	const hasCsvLevels = Boolean(rowHeaders && rowHeaders.length > 1 && onCsvExportLevel)
 	const hasFilters = filterChips.length > 0
 	const canMutateFilters = filtersEditable && Boolean(onFilterRemove)
 	const isGroupingInteractive = Boolean(onGroupingChange)
 	const groupingSelectValue = groupingOptions
 		? groupingOptions.find((option) => option.id === selectedGroupingId)?.id || groupingOptions[0]?.id || ''
 		: ''
-
-	const handleCsvExportClick = () => {
-		if (csvDisabled) return
-		return onCsvExport?.()
-	}
 
 	return (
 		<div className="mb-3 flex flex-col gap-2">
@@ -85,16 +78,13 @@ export function UnifiedTableHeader({
 					</div>
 				</div>
 				<div className="flex flex-wrap items-center justify-end gap-2">
-					{groupingOptions?.length ? (
+					{isGroupingInteractive && groupingOptions?.length ? (
 						<div className="relative">
 							<select
 								aria-label="Group table rows"
 								value={groupingSelectValue}
 								onChange={(event) => onGroupingChange?.(event.target.value)}
-								disabled={!isGroupingInteractive}
-								className={`appearance-none rounded-md border pro-border pro-panel-bg px-3 py-1.5 pr-8 text-sm text-pro-text-primary transition-colors ${
-									isGroupingInteractive ? 'pro-hover-bg' : 'cursor-not-allowed opacity-60'
-								}`}
+								className="appearance-none rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 pr-8 text-sm text-pro-text-primary transition-colors"
 							>
 								{groupingOptions.map((option) => (
 									<option key={option.id} value={option.id}>
@@ -126,39 +116,27 @@ export function UnifiedTableHeader({
 							</span>
 						</button>
 					) : null}
-					<button
-						type="button"
-						onClick={onCustomizeColumns}
-						disabled={customizeDisabled}
-						className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm transition-colors ${
-							customizeDisabled
-								? 'cursor-not-allowed border-pro-cards-border text-pro-text-tertiary'
-								: 'pro-border pro-hover-bg pro-panel-bg text-pro-text-primary'
-						}`}
-					>
-						<Icon name="settings" height={14} width={14} />
-						<span>Customize Columns</span>
-					</button>
-					{onDuplicate ? (
+
+					{onCustomizeColumns ? (
 						<button
 							type="button"
-							onClick={onDuplicate}
-							className="inline-flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary transition-colors"
+							onClick={onCustomizeColumns}
+							className="inline-flex items-center gap-2 rounded-md border pro-border pro-hover-bg pro-panel-bg px-3 py-1.5 text-sm text-pro-text-primary"
 						>
-							<Icon name="copy" height={14} width={14} />
-							<span>Duplicate</span>
+							<Icon name="settings" height={14} width={14} />
+							<span>Customize Columns</span>
 						</button>
 					) : null}
-					{hasGrouping && onCsvExportLevel && rowHeaders ? (
-						<CsvExportDropdown
-							rowHeaders={rowHeaders}
-							onExport={onCsvExportLevel}
-							isLoading={isLoading}
-							disabled={csvDisabled}
-						/>
-					) : (
-						<CSVExportButton onClick={handleCsvExportClick} isLoading={isLoading} disabled={csvDisabled} />
-					)}
+					<ProCardOverflowMenu
+						onDuplicate={onDuplicate}
+						disabled={isExportDisabled}
+						csvLevels={
+							hasCsvLevels && onCsvExportLevel && rowHeaders
+								? { rowHeaders, onExport: onCsvExportLevel, isLoading }
+								: undefined
+						}
+						csv={!hasCsvLevels && onCsvExport ? { onClick: onCsvExport, isLoading } : undefined}
+					/>
 				</div>
 			</div>
 

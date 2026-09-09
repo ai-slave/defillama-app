@@ -1,15 +1,17 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { CHART_COLORS } from '~/constants/colors'
 import { isRwaTotalSeriesLabel } from '~/containers/RWA/chartAggregation'
 import { getChartMetricLabel } from '~/containers/RWA/chartState'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
-import type { RWAOverviewChartConfig, RWAOverviewChartBreakdown } from '../types'
+import type { RWAOverviewChartBreakdown, RWAOverviewChartConfig } from '../types'
+import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWABreakdownChartData } from './datasets/RWADataset/useRWAChartData'
 import { LoadingSpinner } from './LoadingSpinner'
+import { ProCardOverflowMenu } from './ProCardActions'
 import {
+	buildRwaSnapshotCsvRows,
 	buildRwaSnapshotPresentation,
 	hasRwaOverviewChartExportData,
 	type RwaSnapshotPresentation
@@ -115,7 +117,15 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 					</p>
 				</div>
 				{hasExportData ? (
-					<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
+					<ProCardOverflowMenu
+						image={{ chartInstance, filename: imageFilename, title: imageTitle }}
+						csv={{
+							prepareCsv: () =>
+								timeSeriesDataset
+									? prepareProChartCsv(timeSeriesDataset, imageFilename)
+									: { filename: imageFilename, rows: buildRwaSnapshotCsvRows(snapshot, breakdownLabel, metricLabel) }
+						}}
+					/>
 				) : null}
 			</div>
 			<div className="flex-1" key={`${chartView}-${breakdown}-${metric}`}>
@@ -135,7 +145,7 @@ export function RWAOverviewChartCard({ config }: RWAOverviewChartCardProps) {
 							onReady={handleChartReady}
 						/>
 					) : chartView === 'pie' && pieData.length > 0 ? (
-						<PieChart chartData={pieData} stackColors={pieColors} />
+						<PieChart onReady={handleChartReady} chartData={pieData} stackColors={pieColors} />
 					) : chartView === 'hbar' && barData.categories.length > 0 ? (
 						<HBarChart
 							categories={barData.categories}

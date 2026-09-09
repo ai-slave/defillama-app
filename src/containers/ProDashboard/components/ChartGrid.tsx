@@ -9,6 +9,7 @@ import {
 } from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable'
 import { lazy, memo, type ReactNode, Suspense, useContext, useMemo, useState } from 'react'
+import { ChartWatermarkContext } from '~/components/ECharts/shared/watermark'
 import { SortableItem } from '~/containers/ProtocolOverview/ProtocolPro'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
@@ -24,9 +25,11 @@ import {
 import { StreamDoneContext } from '../queries'
 import type { SqlChartConfig } from '../types'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
+import { moveDashboardItem } from '../utils/dashboardItemsUtils'
 import { ConfirmationModal } from './ConfirmationModal'
 import { DashboardCardLoader } from './DashboardCardLoader'
 import { InViewDashboardCard } from './InViewDashboardCard'
+import { keepKeyboardEventsInsideCard } from './ProCardActions'
 import { TextCard } from './TextCard'
 import type { UnifiedTableFocusSection } from './UnifiedTable/types'
 
@@ -435,26 +438,32 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 		}
 	}
 
+	const handleMoveItem = (index: number, direction: -1 | 1) => {
+		const next = moveDashboardItem(items, index, direction)
+		if (next !== items) handleChartsReordered(next)
+	}
 	const handleCancelDelete = () => {
 		setDeleteConfirmItem(null)
 	}
 
 	if (isReadOnly) {
 		return (
-			<div className="grid grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-4">
-				{items.map((item, index) => (
-					<ReadOnlyDashboardItem
-						key={item.id}
-						item={item}
-						streamPrefetchEligible={index < INITIAL_DASHBOARD_STREAM_ITEM_COUNT}
-					/>
-				))}
-			</div>
+			<ChartWatermarkContext.Provider value="export-only">
+				<div className="grid grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-4">
+					{items.map((item, index) => (
+						<ReadOnlyDashboardItem
+							key={item.id}
+							item={item}
+							streamPrefetchEligible={index < INITIAL_DASHBOARD_STREAM_ITEM_COUNT}
+						/>
+					))}
+				</div>
+			</ChartWatermarkContext.Provider>
 		)
 	}
 
 	return (
-		<>
+		<ChartWatermarkContext.Provider value="export-only">
 			<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
 				<SortableContext items={sortableItemIds} strategy={rectSortingStrategy}>
 					<div className="grid grid-flow-dense grid-cols-1 gap-2 lg:grid-cols-4">
@@ -475,9 +484,28 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 									id={item.id}
 									isTable={item.kind === 'dataset-table'}
 									data-col={item.colSpan}
-									className={`col-span-1 flex flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
+									className={`group/dashboard-card col-span-1 flex flex-col overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg ${COL_SPAN_CLASS_MAP[effectiveColSpan]}`}
 								>
 									<div className="flex flex-wrap items-center justify-end border-b border-pro-cards-border">
+										{([-1, 1] as const).map((direction) => (
+											<Tooltip
+												key={direction}
+												content={direction === -1 ? 'Move up' : 'Move down'}
+												render={
+													<button
+														type="button"
+														disabled={direction === -1 ? index === 0 : index === items.length - 1}
+														onClick={() => handleMoveItem(index, direction)}
+														onKeyDown={keepKeyboardEventsInsideCard}
+													/>
+												}
+												className="px-3 py-2 hover:pro-btn-primary disabled:opacity-50 md:hidden"
+											>
+												<Icon name={direction === -1 ? 'chevron-up' : 'chevron-down'} height={16} width={16} />
+												<span className="sr-only">{direction === -1 ? 'Move up' : 'Move down'}</span>
+											</Tooltip>
+										))}
+
 										{item.kind !== 'dataset-table' ? (
 											<>
 												<Tooltip
@@ -586,6 +614,6 @@ export function ChartGrid({ onAddChartClick, onEditItem }: ChartGridProps) {
 				confirmText="Remove"
 				cancelText="Cancel"
 			/>
-		</>
+		</ChartWatermarkContext.Provider>
 	)
 }

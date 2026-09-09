@@ -48,3 +48,7 @@ export function normalizeChartBuilderConfig(config: ChartBuilderConfig['config']
 		...(!hasExactRemainder && normalized.displayAs === 'percentage' ? { displayAs: 'timeSeries' } : {})
 	}
 }
+
+export function chartBuilderScopeHidesOthers(config: ChartBuilderConfig['config']) {
+	return Boolean(config.chainCategories?.length || (config.mode === 'protocol' && config.protocolCategories?.length))
+}

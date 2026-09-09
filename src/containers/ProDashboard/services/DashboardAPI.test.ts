@@ -153,3 +153,12 @@ test('large UTF-8 update bodies use normal fetch without changing their content'
 	expect(options.keepalive).toBe(false)
 	expect(JSON.parse(options.body as string).description).toBe(description)
 })
+
+test('sends the copy source at the top level of the creation request', () => {
+	const request = buildDashboardSaveRequest({
+		data: { dashboardName: 'Original', items: [], copySourceDashboardId: 'source' }
+	})
+	const body = JSON.parse(request.options.body)
+	expect(body.copySourceDashboardId).toBe('source')
+	expect(body.data).not.toHaveProperty('copySourceDashboardId')
+})

@@ -56,6 +56,11 @@ function normalizeCsvFilename(filename: string): string {
 	return `${normalizedBaseName || 'data'}.csv`
 }
 
+export async function downloadPreparedCsv(prepareCsv: PrepareCsv) {
+	const { filename, rows } = await prepareCsv()
+	downloadCSV(normalizeCsvFilename(filename), rows, { addTimestamp: false })
+}
+
 export const CSV_DOWNLOAD_ERROR = 'Couldn’t complete the CSV export. Please try again.'
 
 // Export state stays local; access dialogs only decide whether it may start.
@@ -143,8 +148,7 @@ export function CSVDownloadButton(props: CSVDownloadButtonPropsUnion) {
 		if (disabled || isLoading) return
 		csv.requestDownload(async () => {
 			if (prepareCsv) {
-				const { filename, rows } = await prepareCsv()
-				downloadCSV(normalizeCsvFilename(filename), rows, { addTimestamp: false })
+				await downloadPreparedCsv(prepareCsv)
 			} else {
 				await onClick()
 			}

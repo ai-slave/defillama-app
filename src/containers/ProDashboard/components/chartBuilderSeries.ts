@@ -3,6 +3,8 @@ import type {
 	MultiSeriesChartSeriesConfig
 } from '~/components/ECharts/MultiSeriesChart/types'
 import type { ChartSeries } from '~/utils/breakdowns'
+import type { CustomTimePeriod, TimePeriod } from '../dashboardTypes'
+import { filterDataByTimePeriod } from '../queries'
 import type { DashboardGrouping } from '../types'
 import { getGroupedTimestampSec } from '../utils'
 
@@ -98,4 +100,26 @@ export function buildChartBuilderSeriesView({
 	pushRow()
 
 	return { dataset: { source, dimensions }, charts, seriesNames }
+}
+
+export function withoutOthersSeries(series: Array<ChartSeries>) {
+	return series.some((entry) => entry.name.startsWith('Others'))
+		? series.filter((entry) => !entry.name.startsWith('Others'))
+		: series
+}
+export function selectChartBuilderSeries(
+	data: { series: Array<ChartSeries> },
+	{
+		hideOthers,
+		timePeriod,
+		customTimePeriod
+	}: { hideOthers: boolean; timePeriod: TimePeriod; customTimePeriod?: CustomTimePeriod | null }
+) {
+	let series = hideOthers ? withoutOthersSeries(data.series) : data.series
+	if (timePeriod && timePeriod !== 'all')
+		series = series.map((entry) => ({
+			...entry,
+			data: filterDataByTimePeriod(entry.data, timePeriod, customTimePeriod)
+		}))
+	return series === data.series ? data : { series }
 }

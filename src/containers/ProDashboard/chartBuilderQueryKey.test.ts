@@ -22,3 +22,9 @@ describe('Pro dashboard chart-builder query identity', () => {
 		expect(getChartBuilderQueryKey(config).slice(-4)).toEqual(['exclude', 'include', 'exclude', 'include'])
 	})
 })
+
+test('hideOthers does not change the data identity', () => {
+	expect(getChartBuilderQueryKey({ ...config, hideOthers: true })).toEqual(
+		getChartBuilderQueryKey({ ...config, hideOthers: false })
+	)
+})

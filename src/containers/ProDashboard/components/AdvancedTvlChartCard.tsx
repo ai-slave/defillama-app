@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext, useMemo } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { buildTimeSeriesDataset, type TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import type { MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { IProtocolValueChart } from '~/containers/ProtocolOverview/api.types'
 import {
-	buildProtocolBreakdownPresentation,
 	buildCompleteProtocolBreakdownDataset,
+	buildProtocolBreakdownPresentation,
 	MAX_PROTOCOL_BREAKDOWN_SERIES,
 	type ProtocolBreakdownChart
 } from '~/containers/ProtocolOverview/useProtocolBreakdownCharts'
@@ -26,9 +25,9 @@ import { shouldSuppressAdvancedTvlTokenBreakdown } from '../services/protocolTvl
 import type { AdvancedTvlChartConfig } from '../types'
 import { buildAdvancedTvlPresentation } from './advancedTvlPresentation'
 import { prepareProChartCsv } from './chartCsv'
-import { CSVExportButton } from './CSVExportButton'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
+import { ProCardOverflowMenu } from './ProCardActions'
 import { useAdvancedTvlChartData } from './useAdvancedTvlChartData'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -296,11 +295,9 @@ export function AdvancedTvlChartCard({ config }: AdvancedTvlChartCardProps) {
 								size="md"
 							/>
 						) : null}
-						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						<CSVExportButton
-							prepareCsv={prepareCsvExport}
-							smol
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
+						<ProCardOverflowMenu
+							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
+							csv={{ prepareCsv: prepareCsvExport }}
 						/>
 					</div>
 				) : null}

@@ -13,7 +13,6 @@ export function getChartBuilderQueryKey(config: ChartBuilderConfig['config']): R
 		config.categories,
 		config.chainCategories,
 		config.protocolCategories,
-		config.hideOthers,
 		config.groupByParent,
 		config.chainFilterMode,
 		config.categoryFilterMode,

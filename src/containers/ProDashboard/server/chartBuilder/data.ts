@@ -3,6 +3,8 @@ import { normalizeCacheList } from '~/server/api/cacheKey'
 import { parseCachedJsonResult } from '~/server/api/resultCache'
 import type { ChartSeries } from '~/utils/breakdowns'
 import { recordRuntimeError } from '~/utils/telemetry'
+import { chartBuilderScopeHidesOthers } from '../../chartBuilderCapabilities'
+import { withoutOthersSeries } from '../../components/chartBuilderSeries'
 import type { ChartBuilderSeriesData } from '../../dataContracts'
 import { parseAdapterChartBuilderMetric } from './adapterMetrics/breakdowns/config'
 import { getCachedAdapterMetricChainBreakdown, getCachedAdapterMetricProtocolBreakdown } from './adapterMetrics/data'
@@ -13,10 +15,6 @@ import { validateCategoryChainFanOut, validateChartBuilderFilters } from './requ
 import { getCachedStablecoinChainBreakdown } from './stablecoinData'
 
 const clampTopN = (limit: number): number => Math.min(Math.max(Math.trunc(limit), 1), 20)
-
-function withoutOthers(series: Array<ChartSeries>): Array<ChartSeries> {
-	return series.filter((entry) => !entry.name.startsWith('Others'))
-}
 
 async function getProtocolSeries(config: ChartBuilderConfig['config']): Promise<ChartBuilderSeriesData> {
 	if (config.metric === 'stablecoins' || isChainNativeBreakdownMetric(config.metric)) {
@@ -55,8 +53,7 @@ async function getProtocolSeries(config: ChartBuilderConfig['config']): Promise<
 		).series
 	}
 
-	const hideOthers = config.hideOthers === true || (config.chainCategories?.length ?? 0) > 0
-	return { series: hideOthers ? withoutOthers(series) : series }
+	return { series: chartBuilderScopeHidesOthers(config) ? withoutOthersSeries(series) : series }
 }
 
 async function getChainSeries(config: ChartBuilderConfig['config']): Promise<ChartBuilderSeriesData> {
@@ -129,9 +126,7 @@ async function getChainSeries(config: ChartBuilderConfig['config']): Promise<Cha
 		).series
 	}
 
-	const hideOthers =
-		config.hideOthers === true || chainCategories.length > 0 || (config.protocolCategories?.length ?? 0) > 0
-	return { series: hideOthers ? withoutOthers(series) : series }
+	return { series: chartBuilderScopeHidesOthers(config) ? withoutOthersSeries(series) : series }
 }
 
 export async function fetchChartBuilderServerData(

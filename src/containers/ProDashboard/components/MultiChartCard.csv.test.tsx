@@ -38,7 +38,9 @@ vi.mock('../ProDashboardAPIContext', () => ({
 	useProDashboardEditorActions: () => ({}),
 	useProDashboardPermissions: () => ({ isReadOnly: true, hideDuplicateButton: true })
 }))
-vi.mock('~/components/ChartExport/ChartPngExportButton', () => ({ ChartPngExportButton: () => null }))
+vi.mock('~/components/ChartExport/useChartPngExport', () => ({
+	useChartPngExport: () => ({ isExporting: false, downloadImage: vi.fn(), copyImage: vi.fn() })
+}))
 vi.mock('~/components/ECharts/MultiSeriesChart', () => ({ default: () => <div>Chart canvas</div> }))
 
 test('waits for every series, blocks failed partial exports, then exports both series after recovery', async () => {
@@ -66,14 +68,15 @@ test('waits for every series, blocks failed partial exports, then exports both s
 			)
 		)
 	const exportButton = () => {
-		const button = [...container.querySelectorAll('button')].find(
-			(element) => element.textContent?.trim() === '.csv' || element.textContent?.trim() === 'Preparing…'
+		const button = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+			(element) => element.textContent?.trim() === 'Download CSV'
 		)
 		if (!button) throw new Error('Missing CSV button')
 		return button
 	}
 	try {
 		await render()
+		await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="More actions"]')!.click())
 		expect(exportButton().getAttribute('aria-disabled')).toBe('true')
 		await act(async () => exportButton().click())
 		expect(mocks.download).not.toHaveBeenCalled()
@@ -83,7 +86,7 @@ test('waits for every series, blocks failed partial exports, then exports both s
 		expect(container.textContent).toContain('1 series is unavailable.')
 		Object.assign(mocks.second, { isError: false, data: [[1_704_067_200, -7]] })
 		await render()
-		expect(exportButton().disabled).toBe(false)
+		expect(exportButton().getAttribute('aria-disabled')).not.toBe('true')
 		await act(async () => exportButton().click())
 		await vi.waitFor(() => expect(mocks.download).toHaveBeenCalledOnce())
 		expect(serializeCsv(mocks.download.mock.calls[0][1])).toBe('Date,Ethereum TVL,Solana TVL\n2024-01-01,12,-7')

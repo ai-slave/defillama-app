@@ -1,3 +1,4 @@
+import { arrayMove } from '@dnd-kit/sortable'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard } from '../dashboardTypes'
 import { dashboardAPI, type DashboardAuthorizedFetch } from '../services/DashboardAPI'
@@ -68,4 +69,11 @@ export async function replaceItemInDashboard(
 		},
 		authorizedFetch
 	)
+}
+
+export function moveDashboardItem(items: Array<DashboardItemConfig>, index: number, direction: -1 | 1) {
+	const target = index + direction
+	return index < 0 || index >= items.length || target < 0 || target >= items.length
+		? items
+		: arrayMove(items, index, target)
 }

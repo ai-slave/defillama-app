@@ -4,7 +4,7 @@ import { act, type ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import toast, { Toaster } from 'react-hot-toast'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { CsvExportDropdown } from '~/containers/ProDashboard/components/UnifiedTable/core/CsvExportDropdown'
+import { ProCardOverflowMenu } from '~/containers/ProDashboard/components/ProCardActions'
 import { UnifiedTableHeader } from '~/containers/ProDashboard/components/UnifiedTable/core/UnifiedTableHeader'
 import { CSVDownloadButton, type CsvPayload } from '../CsvDownloadButton'
 
@@ -13,6 +13,12 @@ const mocks = vi.hoisted(() => ({
 	auth: { isAuthenticated: true, hasActiveSubscription: true, isTrial: false, loaders: { userLoading: false } }
 }))
 vi.mock('~/utils/download', () => ({ downloadCSV: mocks.download }))
+vi.mock('~/containers/ProDashboard/ProDashboardAPIContext', () => ({
+	useProDashboardPermissions: () => ({ isReadOnly: false })
+}))
+vi.mock('~/components/ChartExport/useChartPngExport', () => ({
+	useChartPngExport: () => ({ isExporting: false, downloadImage: vi.fn(), copyImage: vi.fn() })
+}))
 vi.mock('~/auth', () => ({ useAuthContext: () => mocks.auth }))
 vi.mock('~/hooks/useIsClient', () => ({ useIsClient: () => true }))
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pro/example' }) }))
@@ -65,7 +71,7 @@ async function render(node: ReactNode) {
 }
 function button(name: string) {
 	const found = [...document.querySelectorAll<HTMLButtonElement>('button, [role="menuitem"]')].find(
-		(el) => el.textContent?.trim() === name
+		(el) => el.textContent?.trim() === name || el.getAttribute('aria-label') === name
 	)
 	if (!found) throw new Error(`Missing button: ${name}`)
 	return found
@@ -159,13 +165,13 @@ test.each([true, false])(
 			/>
 		)
 		await render(header(true))
-		const trigger = button('Download .csv')
+		const trigger = button('More actions')
 		expect(trigger.disabled || trigger.getAttribute('aria-disabled') === 'true').toBe(true)
-		await click('Download .csv')
+		await click('More actions')
 		expect(exportRows).not.toHaveBeenCalled()
 		await render(header(false))
-		await click('Download .csv')
-		if (grouped) await click('Chains Only')
+		await click('More actions')
+		await click(grouped ? 'Download CSV: Chains Only' : 'Download CSV')
 		await vi.waitFor(() => expect(exportRows.mock.calls).toEqual(grouped ? [['chain']] : [[]]))
 		expect(container.querySelector('input[aria-label="Search table rows"]')).not.toBeNull()
 	}
@@ -175,27 +181,22 @@ test('grouped export supports arrows and Escape, retains failed choices, and pre
 	const pending = Promise.withResolvers<void>()
 	const exportRows = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValueOnce(undefined)
 	await render(
-		<CsvExportDropdown
-			rowHeaders={['chain', 'category', 'protocol']}
-			onExport={exportRows}
-			isLoading={false}
-			disabled={false}
-		/>
+		<ProCardOverflowMenu csvLevels={{ rowHeaders: ['chain', 'category', 'protocol'], onExport: exportRows }} />
 	)
-	const trigger = button('Download .csv')
+	const trigger = button('More actions')
 	await act(async () => trigger.focus())
 	await key(trigger, 'ArrowDown')
-	await vi.waitFor(() => expect(document.activeElement?.textContent?.trim()).toBe('All Protocols'))
+	await vi.waitFor(() => expect(document.activeElement?.textContent?.trim()).toBe('Download CSV: All Protocols'))
 	expect(trigger.getAttribute('aria-expanded')).toBe('true')
 	await key(document.activeElement as HTMLElement, 'ArrowDown')
-	await vi.waitFor(() => expect(document.activeElement?.textContent?.trim()).toBe('Chains Only'))
+	await vi.waitFor(() => expect(document.activeElement?.textContent?.trim()).toBe('Download CSV: Chains Only'))
 	await key(document.activeElement as HTMLElement, 'Escape')
 	await vi.waitFor(() => expect(document.activeElement).toBe(trigger))
 	expect(trigger.getAttribute('aria-expanded')).toBe('false')
-	await click('Download .csv')
-	await click('Chains Only')
-	await vi.waitFor(() => expect(button('Categories Only').getAttribute('aria-disabled')).toBe('true'))
-	await click('Categories Only')
+	await click('More actions')
+	await click('Download CSV: Chains Only')
+	await vi.waitFor(() => expect(button('Download CSV: Categories Only').getAttribute('aria-disabled')).toBe('true'))
+	await click('Download CSV: Categories Only')
 	expect(exportRows.mock.calls).toEqual([['chain']])
 	await act(async () => pending.reject(new Error('Unavailable')))
 	await vi.waitFor(() =>
@@ -205,11 +206,11 @@ test('grouped export supports arrows and Escape, retains failed choices, and pre
 	)
 	expect(document.querySelector('[role="menu"] [role="alert"]')).toBeNull()
 	expect(document.querySelector('[data-rht-toaster]')?.textContent).toBe('')
-	await key(button('Chains Only'), 'Escape')
+	await key(button('Download CSV: Chains Only'), 'Escape')
 	await key(trigger, 'ArrowDown')
 	await vi.waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('true'))
 	expect(document.querySelector('[role="alert"]')).toBeNull()
-	await click('Categories Only')
+	await click('Download CSV: Categories Only')
 	await vi.waitFor(() => expect(exportRows.mock.calls).toEqual([['chain'], ['category']]))
 	await vi.waitFor(() => expect(trigger.getAttribute('aria-expanded')).toBe('false'))
 	expect(document.querySelector('[role="alert"]')).toBeNull()
@@ -224,12 +225,10 @@ test.each(['trial', 'signed out'] as const)(
 			isTrial: account === 'trial'
 		})
 		const exportRows = vi.fn()
-		const menu = () => (
-			<CsvExportDropdown rowHeaders={['chain', 'protocol']} onExport={exportRows} isLoading={false} disabled={false} />
-		)
+		const menu = () => <ProCardOverflowMenu csvLevels={{ rowHeaders: ['chain', 'protocol'], onExport: exportRows }} />
 		await render(menu())
-		await click('Download .csv')
-		await click('Chains Only')
+		await click('More actions')
+		await click('Download CSV: Chains Only')
 		await vi.waitFor(() =>
 			expect(document.body.textContent).toContain(account === 'trial' ? 'Trial CSV limit' : 'Subscribe to export')
 		)
@@ -237,7 +236,7 @@ test.each(['trial', 'signed out'] as const)(
 		await click(account === 'trial' ? 'Close trial limit' : 'Close offer')
 		Object.assign(mocks.auth, { isAuthenticated: true, hasActiveSubscription: true, isTrial: false })
 		await render(menu())
-		await click('Chains Only')
+		await click('Download CSV: Chains Only')
 		await vi.waitFor(() => expect(exportRows).toHaveBeenCalledExactlyOnceWith('chain'))
 	}
 )
@@ -261,14 +260,12 @@ test.each(['dismissed', 'unmounted'] as const)(
 	async (closing) => {
 		const pending = Promise.withResolvers<void>()
 		const exportRows = vi.fn().mockReturnValueOnce(pending.promise).mockResolvedValueOnce(undefined)
-		const dropdown = (
-			<CsvExportDropdown rowHeaders={['chain', 'protocol']} onExport={exportRows} isLoading={false} disabled={false} />
-		)
+		const dropdown = <ProCardOverflowMenu csvLevels={{ rowHeaders: ['chain', 'protocol'], onExport: exportRows }} />
 		await render(dropdown)
-		await click('Download .csv')
-		await click('Chains Only')
+		await click('More actions')
+		await click('Download CSV: Chains Only')
 		if (closing === 'dismissed') {
-			await key(button('Chains Only'), 'Escape')
+			await key(button('Download CSV: Chains Only'), 'Escape')
 		} else {
 			await render(null)
 		}
@@ -279,10 +276,10 @@ test.each(['dismissed', 'unmounted'] as const)(
 			)
 		)
 		await render(dropdown)
-		await click('Download .csv')
+		await click('More actions')
 		expect(document.querySelector('p[role="alert"]')).toBeNull()
-		await click('Chains Only')
+		await click('Download CSV: Chains Only')
 		await vi.waitFor(() => expect(exportRows.mock.calls).toEqual([['chain'], ['chain']]))
-		await vi.waitFor(() => expect(button('Download .csv').getAttribute('aria-expanded')).toBe('false'))
+		await vi.waitFor(() => expect(button('More actions').getAttribute('aria-expanded')).toBe('false'))
 	}
 )

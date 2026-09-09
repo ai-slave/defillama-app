@@ -1,5 +1,4 @@
 import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { Select } from '~/components/Select/Select'
@@ -11,12 +10,7 @@ import { capitalizeFirstLetter } from '~/utils'
 import { downloadCSV } from '~/utils/download'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { getChartDataPrerequisite, toChartRuntimeState, type ChartRuntimeView } from '../chartRuntime'
-import {
-	useProDashboardCatalog,
-	useProDashboardEditorActions,
-	useProDashboardPermissions,
-	useProDashboardTime
-} from '../ProDashboardAPIContext'
+import { useProDashboardCatalog, useProDashboardEditorActions, useProDashboardTime } from '../ProDashboardAPIContext'
 import { ProxyAuthTokenContext, StreamDoneContext, useChartsData } from '../queries'
 import {
 	getProDashboardChartTypeConfig,
@@ -28,8 +22,8 @@ import { generateChartColor } from '../utils'
 import { COLOR_PALETTE_2, EXTENDED_COLOR_PALETTE, getPaletteColor } from '../utils/colorManager'
 import { buildProTreemapData } from '../utils/treemap'
 import { ConfirmationModal } from './ConfirmationModal'
-import { CSVExportButton } from './CSVExportButton'
 import { buildMultiChartCsvRows, buildMultiChartSeriesView, type MultiChartInputSeries } from './multiChartSeries'
+import { ProCardEditControls, ProCardOverflowMenu } from './ProCardActions'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
@@ -77,7 +71,6 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 		handleTreemapChange,
 		handleDuplicateMultiChart
 	} = useProDashboardEditorActions()
-	const { isReadOnly, hideDuplicateButton } = useProDashboardPermissions()
 	const { chartInstance, handleChartReady } = useChartImageExport()
 	const authToken = useContext(ProxyAuthTokenContext)
 	const streamDone = useContext(StreamDoneContext)
@@ -368,106 +361,92 @@ function MultiChartCard({ multi }: MultiChartCardProps) {
 				<div className="mr-auto flex items-center gap-2">
 					<h2 className="text-base font-semibold">{multi.name || `Multi-Chart (${limitedItems.length})`}</h2>
 				</div>
-				{!isReadOnly && allChartsGroupable && hasAnyData ? (
-					<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
-						{groupingOptions.map((dataInterval) => (
-							<Tooltip
-								content={capitalizeFirstLetter(dataInterval)}
-								render={<button type="button" />}
-								className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary data-[active=true]:bg-pro-accent data-[active=true]:font-medium data-[active=true]:text-on-brand"
-								data-active={multi.grouping === dataInterval}
-								onClick={() => handleGroupingChange(multi.id, dataInterval)}
-								key={`${multi.id}-options-groupBy-${dataInterval}`}
-							>
-								{dataInterval.slice(0, 1).toUpperCase()}
-							</Tooltip>
-						))}
-					</div>
-				) : null}
+				<ProCardEditControls>
+					{allChartsGroupable && hasAnyData ? (
+						<div className="flex w-fit flex-nowrap items-center overflow-x-auto rounded-md border border-pro-form-control-border text-pro-text-form">
+							{groupingOptions.map((dataInterval) => (
+								<Tooltip
+									content={capitalizeFirstLetter(dataInterval)}
+									render={<button type="button" />}
+									className="shrink-0 px-2 py-1 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary data-[active=true]:bg-pro-accent data-[active=true]:font-medium data-[active=true]:text-on-brand"
+									data-active={multi.grouping === dataInterval}
+									onClick={() => handleGroupingChange(multi.id, dataInterval)}
+									key={`${multi.id}-options-groupBy-${dataInterval}`}
+								>
+									{dataInterval.slice(0, 1).toUpperCase()}
+								</Tooltip>
+							))}
+						</div>
+					) : null}
 
-				{!isReadOnly && hasAnyData && !hasMultipleMetrics && allBarType ? (
-					<Select
-						size="sm"
-						allValues={CUMULATIVE_DISPLAY_OPTIONS}
-						selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
-						setSelectedValues={(value: string) => {
-							handleCumulativeChange(multi.id, value === 'Cumulative')
-							if (value === 'Cumulative') {
+					{hasAnyData && !hasMultipleMetrics && allBarType ? (
+						<Select
+							size="sm"
+							allValues={CUMULATIVE_DISPLAY_OPTIONS}
+							selectedValues={showCumulative ? 'Cumulative' : 'Individual'}
+							setSelectedValues={(value: string) => {
+								handleCumulativeChange(multi.id, value === 'Cumulative')
+								if (value === 'Cumulative') {
+									handleStackedChange(multi.id, false)
+								}
+							}}
+							label={showCumulative ? 'Cumulative' : 'Individual'}
+							labelType="none"
+							variant="pro"
+						/>
+					) : null}
+					{hasAnyData && !hasMultipleMetrics && canStack && !showCumulative && !showTreemap ? (
+						<Select
+							size="sm"
+							allValues={STACKING_DISPLAY_OPTIONS}
+							selectedValues={showStacked ? 'Stacked' : 'Separate'}
+							setSelectedValues={(value: string) => {
+								handleStackedChange(multi.id, value !== 'Separate')
+								handlePercentageChange(multi.id, false)
+							}}
+							label={showStacked ? 'Stacked' : 'Separate'}
+							labelType="none"
+							variant="pro"
+						/>
+					) : null}
+					{hasAnyData && !hasMultipleMetrics && !showTreemap ? (
+						<Select
+							size="sm"
+							allValues={VALUE_TYPE_OPTIONS}
+							selectedValues={showPercentage ? '% Percentage' : '$ Absolute'}
+							setSelectedValues={(value: string) => {
+								handlePercentageChange(multi.id, value === '% Percentage')
 								handleStackedChange(multi.id, false)
-							}
-						}}
-						label={showCumulative ? 'Cumulative' : 'Individual'}
-						labelType="none"
-						variant="pro"
-					/>
-				) : null}
-				{!isReadOnly && hasAnyData && !hasMultipleMetrics && canStack && !showCumulative && !showTreemap ? (
-					<Select
-						size="sm"
-						allValues={STACKING_DISPLAY_OPTIONS}
-						selectedValues={showStacked ? 'Stacked' : 'Separate'}
-						setSelectedValues={(value: string) => {
-							handleStackedChange(multi.id, value !== 'Separate')
-							handlePercentageChange(multi.id, false)
-						}}
-						label={showStacked ? 'Stacked' : 'Separate'}
-						labelType="none"
-						variant="pro"
-					/>
-				) : null}
-				{!isReadOnly && hasAnyData && !hasMultipleMetrics && !showTreemap ? (
-					<Select
-						size="sm"
-						allValues={VALUE_TYPE_OPTIONS}
-						selectedValues={showPercentage ? '% Percentage' : '$ Absolute'}
-						setSelectedValues={(value: string) => {
-							handlePercentageChange(multi.id, value === '% Percentage')
-							handleStackedChange(multi.id, false)
-						}}
-						label={showPercentage ? '% Percentage' : '$ Absolute'}
-						labelType="none"
-						variant="pro"
-					/>
-				) : null}
-				{!isReadOnly && hasAnyData && !hasMultipleMetrics ? (
-					<Select
-						size="sm"
-						allValues={CHART_LAYOUT_OPTIONS}
-						selectedValues={showTreemap ? 'treemap' : 'chart'}
-						setSelectedValues={(value: string) => {
-							handleTreemapChange(multi.id, value === 'treemap')
-						}}
-						label={showTreemap ? 'Tree Map' : 'Time Series'}
-						labelType="none"
-						variant="pro"
-					/>
-				) : null}
-				{!isReadOnly && !hideDuplicateButton ? (
-					<button
-						type="button"
-						onClick={() => setShowDuplicateConfirm(true)}
-						className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
-					>
-						<Icon name="copy" height={14} width={14} />
-						<span>Duplicate</span>
-					</button>
-				) : null}
+							}}
+							label={showPercentage ? '% Percentage' : '$ Absolute'}
+							labelType="none"
+							variant="pro"
+						/>
+					) : null}
+					{hasAnyData && !hasMultipleMetrics ? (
+						<Select
+							size="sm"
+							allValues={CHART_LAYOUT_OPTIONS}
+							selectedValues={showTreemap ? 'treemap' : 'chart'}
+							setSelectedValues={(value: string) => {
+								handleTreemapChange(multi.id, value === 'treemap')
+							}}
+							label={showTreemap ? 'Tree Map' : 'Time Series'}
+							labelType="none"
+							variant="pro"
+						/>
+					) : null}
+				</ProCardEditControls>
 				{chartView.charts.length > 0 ? (
-					<>
-						<ChartPngExportButton
-							chartInstance={chartInstance}
-							filename={multi.name || 'multi_chart'}
-							title={showTreemap ? undefined : capitalizeFirstLetter(multi.name) || 'Multi Chart'}
-							smol
-						/>
-						<CSVExportButton
-							disabled={failedItems.length > 0}
-							isLoading={loadingItems.length > 0}
-							onClick={handleCsvExport}
-							smol
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
-						/>
-					</>
+					<ProCardOverflowMenu
+						image={{
+							chartInstance,
+							filename: multi.name || 'multi_chart',
+							title: showTreemap ? undefined : capitalizeFirstLetter(multi.name) || 'Multi Chart'
+						}}
+						csv={{ onClick: handleCsvExport, isLoading: loadingItems.length > 0, disabled: failedItems.length > 0 }}
+						onDuplicate={() => setShowDuplicateConfirm(true)}
+					/>
 				) : null}
 			</div>
 

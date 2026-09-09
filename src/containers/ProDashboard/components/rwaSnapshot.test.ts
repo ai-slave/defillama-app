@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest'
 import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
-import { buildRwaSnapshotPresentation, findLatestRwaSnapshotRow, hasRwaOverviewChartExportData } from './rwaSnapshot'
+import {
+	buildRwaSnapshotCsvRows,
+	buildRwaSnapshotPresentation,
+	findLatestRwaSnapshotRow,
+	hasRwaOverviewChartExportData
+} from './rwaSnapshot'
 
 const DAY = 86_400_000
 const dataset: RWAPositionalChartDataset = {
@@ -65,11 +70,11 @@ describe('RWA snapshot presentation', () => {
 		}
 	})
 
-	test('exposes exports only when the active non-pie presentation has data', () => {
+	test('exposes exports only when the active presentation has data', () => {
 		const emptyDataset: RWAPositionalChartDataset = { dimensions: ['timestamp'], source: [] }
 		expect(hasRwaOverviewChartExportData('timeSeries', dataset, null)).toBe(true)
 		expect(hasRwaOverviewChartExportData('timeSeries', emptyDataset, null)).toBe(false)
-		expect(hasRwaOverviewChartExportData('pie', null, { view: 'pie', data: [{ name: 'Alpha', value: 1 }] })).toBe(false)
+		expect(hasRwaOverviewChartExportData('pie', null, { view: 'pie', data: [{ name: 'Alpha', value: 1 }] })).toBe(true)
 		expect(hasRwaOverviewChartExportData('hbar', null, { view: 'hbar', categories: [], values: [] })).toBe(false)
 		expect(hasRwaOverviewChartExportData('hbar', null, { view: 'hbar', categories: ['Alpha'], values: [1] })).toBe(true)
 		expect(hasRwaOverviewChartExportData('treemap', null, { view: 'treemap', data: [] })).toBe(false)
@@ -80,4 +85,24 @@ describe('RWA snapshot presentation', () => {
 			})
 		).toBe(true)
 	})
+})
+
+test('exports snapshot labels and raw values for each presentation', () => {
+	const expected = [
+		['Chain', 'TVL'],
+		['Alpha', 12]
+	]
+	expect(buildRwaSnapshotCsvRows({ view: 'pie', data: [{ name: 'Alpha', value: 12 }] }, 'Chain', 'TVL')).toEqual(
+		expected
+	)
+	expect(buildRwaSnapshotCsvRows({ view: 'hbar', categories: ['Alpha'], values: [12] }, 'Chain', 'TVL')).toEqual(
+		expected
+	)
+	expect(
+		buildRwaSnapshotCsvRows(
+			{ view: 'treemap', data: [{ name: 'Alpha', path: 'Alpha', value: [12, 12, 12], children: [] }] },
+			'Chain',
+			'TVL'
+		)
+	).toEqual(expected)
 })

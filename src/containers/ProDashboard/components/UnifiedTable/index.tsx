@@ -16,15 +16,15 @@ import { ConfirmationModal } from '../ConfirmationModal'
 import { LoadingSpinner } from '../LoadingSpinner'
 import { TablePagination } from '../Table/TablePagination'
 import { sanitizeConfigColumns } from './config/metricCapabilities'
-import type { CsvExportLevel } from './core/CsvExportDropdown'
+import type { CsvExportLevel } from './core/csvExportLevels'
 import { UnifiedTableHeader } from './core/UnifiedTableHeader'
 import { UnifiedVirtualTable } from './core/UnifiedVirtualTable'
 import { useUnifiedTable } from './core/useUnifiedTable'
 import type { ProtocolTableRow, UnifiedTableProps } from './types'
 import { getDefaultColumnOrder, getDefaultColumnVisibility } from './utils/configHelpers'
 import { buildGroupedCsvData, getProtocolTableCsvValue, getRowsAtGroupLevel } from './utils/csvExport'
-import { getActiveFilterChips } from './utils/filterChips'
 import type { ActiveFilterChip } from './utils/filterChips'
+import { getActiveFilterChips } from './utils/filterChips'
 
 const CSV_PERCENT_COLUMNS = new Set([
 	'change1d',

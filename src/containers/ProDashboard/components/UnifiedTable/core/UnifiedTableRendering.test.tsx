@@ -325,7 +325,12 @@ describe('UnifiedTable rendering', () => {
 			)
 		)
 
-		await act(async () => button('Duplicate').click())
+		await act(async () => (container.querySelector('[aria-label="More actions"]') as HTMLButtonElement).click())
+		const duplicateItem = Array.from(document.body.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+			(node) => node.textContent === 'Duplicate'
+		)
+		if (!duplicateItem) throw new Error('Expected duplicate menu item')
+		await act(async () => duplicateItem.click())
 		expect(dashboardMocks.handleDuplicateUnifiedTable).not.toHaveBeenCalled()
 		await waitForContent(document.body, 'Create a duplicate of this table in the dashboard?')
 

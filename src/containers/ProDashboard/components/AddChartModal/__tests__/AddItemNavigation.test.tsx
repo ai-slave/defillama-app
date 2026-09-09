@@ -3,6 +3,7 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AddChartModal } from '../AddChartModal'
+import { CHART_MODE_STORAGE_KEY } from '../chartModePreference'
 
 const { sqlAccess, openSql, appendItems, builderMounted, builderUnmounted } = vi.hoisted(() => ({
 	sqlAccess: { isAllowed: false, isUnknown: false, isRetrying: false, retry: vi.fn() },
@@ -42,6 +43,7 @@ let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
 	vi.clearAllMocks()
+	localStorage.removeItem(CHART_MODE_STORAGE_KEY)
 	sqlAccess.isAllowed = false
 	container = document.createElement('div')
 	document.body.append(container)
@@ -74,6 +76,9 @@ test('nested navigation unmounts inactive previews while text drafts survive sec
 	await renderModal()
 	const dialog = document.querySelector('[role="dialog"]')!
 	expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)!.textContent).toBe('Add Item')
+	expect(tab('manual').getAttribute('aria-selected')).toBe('true')
+	expect(builderMounted).not.toHaveBeenCalled()
+	await click(tab('builder'))
 	expect(builderMounted).toHaveBeenCalledTimes(1)
 	await pressKey(tab('builder'), 'ArrowRight')
 	await vi.waitFor(() => expect(document.activeElement).toBe(tab('manual')))

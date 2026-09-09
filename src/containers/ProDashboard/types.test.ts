@@ -1,5 +1,11 @@
 import { describe, expect, test } from 'vitest'
-import { getProDashboardChartTypeConfig, limitMultiChartItems, MAX_MULTI_CHART_SERIES, type ChartConfig } from './types'
+import {
+	isDashboardChartTypeForSubject,
+	getProDashboardChartTypeConfig,
+	limitMultiChartItems,
+	MAX_MULTI_CHART_SERIES,
+	type ChartConfig
+} from './types'
 
 const chart = (index: number): ChartConfig => ({
 	id: `chart-${index}`,
@@ -24,4 +30,10 @@ describe('getProDashboardChartTypeConfig', () => {
 		expect(getProDashboardChartTypeConfig('fees')).toMatchObject({ title: 'Fees', chartType: 'bar' })
 		expect(getProDashboardChartTypeConfig('legacy-unknown')).toBeUndefined()
 	})
+})
+
+test('validates chart types against the selected subject', () => {
+	expect(isDashboardChartTypeForSubject('chain', 'stablecoins')).toBe(true)
+	expect(isDashboardChartTypeForSubject('protocol', 'stablecoins')).toBe(false)
+	expect(isDashboardChartTypeForSubject('protocol', 'unlocks')).toBe(true)
 })

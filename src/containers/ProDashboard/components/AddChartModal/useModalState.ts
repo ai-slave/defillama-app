@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useReducer } from 'react'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
 import type { ChartConfig, MetricAggregator, MetricChartType } from '../../types'
+import { readPreferredChartMode, writePreferredChartMode } from './chartModePreference'
 import { initializeFromEditItem, modalReducer } from './modalReducer'
 import type {
 	ChartBuilderConfig,
@@ -12,7 +13,9 @@ import type {
 } from './types'
 
 export function useModalState(editItem?: DashboardItemConfig | null) {
-	const [state, dispatch] = useReducer(modalReducer, editItem, initializeFromEditItem)
+	const [state, dispatch] = useReducer(modalReducer, editItem, (item) =>
+		initializeFromEditItem(item, readPreferredChartMode())
+	)
 
 	const resetState = useCallback(() => {
 		dispatch({ type: 'RESET_STATE' })
@@ -22,7 +25,10 @@ export function useModalState(editItem?: DashboardItemConfig | null) {
 		() => ({
 			setSelectedMainTab: (tab: MainTabType) => dispatch({ type: 'SET_SELECTED_MAIN_TAB', payload: tab }),
 			setSelectedChartTab: (tab: ChartTabType) => dispatch({ type: 'SET_SELECTED_CHART_TAB', payload: tab }),
-			setChartMode: (mode: ChartModeType) => dispatch({ type: 'SET_CHART_MODE', payload: mode }),
+			setChartMode: (mode: ChartModeType) => {
+				writePreferredChartMode(mode)
+				dispatch({ type: 'SET_CHART_MODE', payload: mode })
+			},
 			setComposerItems: (items: React.SetStateAction<Array<ChartConfig>>) =>
 				dispatch({ type: 'SET_COMPOSER_ITEMS', payload: items }),
 			setSelectedChain: (chain: string | null) => dispatch({ type: 'SET_SELECTED_CHAIN', payload: chain }),

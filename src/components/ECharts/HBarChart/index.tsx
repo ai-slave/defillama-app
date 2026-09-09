@@ -13,7 +13,7 @@ import { useChartTheme } from '../shared/chartTheme'
 import { escapeHtml } from '../shared/escapeHtml'
 import { formatTooltipValue } from '../shared/formatters'
 import { getTooltipRawYValue, normalizeTooltipItems } from '../shared/tooltip'
-import { buildWatermarkGraphic } from '../shared/watermark'
+import { buildWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import type { IHBarChartProps } from './types'
 
 echarts.use([CanvasRenderer, BarChart, GraphicComponent, GridComponent, LegendComponent, TooltipComponent])
@@ -55,6 +55,7 @@ function HBarChart({
 	onReady
 }: IHBarChartProps) {
 	const grouped = series != null && series.length > 1
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const [isThemeDark] = useDarkModeManager()
 	const chartTheme = useChartTheme(isThemeDark)
 	const containerRef = useRef<HTMLDivElement>(null)
@@ -236,7 +237,7 @@ function HBarChart({
 		const leftGridWidth = hasLogos ? LEFT_PAD + LOGO_SIZE + LOGO_GAP + overlayLabelWidth + 8 : CHART_INSET
 
 		const option: EChartsOption = {
-			graphic: [buildWatermarkGraphic(isThemeDark)],
+			...(canvasWatermarkEnabled ? { graphic: [buildWatermarkGraphic(isThemeDark)] } : {}),
 			...(grouped
 				? {
 						legend: {
@@ -323,6 +324,7 @@ function HBarChart({
 			cancelAnimationFrame(syncLogosFrame)
 		}
 	}, [
+		canvasWatermarkEnabled,
 		categories,
 		values,
 		valueSymbol,

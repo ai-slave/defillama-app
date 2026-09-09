@@ -1,4 +1,4 @@
-import type { DashboardMode } from './dashboardTypes'
+import type { Dashboard, DashboardMode } from './dashboardTypes'
 
 export function getDashboardHydrationState({
 	hasDashboardId,
@@ -53,5 +53,26 @@ export function isDashboardEditingLocked({
 	return (
 		isReadOnly ||
 		(hasDashboardId && (!hasCurrentDashboard || (mode === 'edit' && hasInitialDashboard && !hasTrustedDashboard)))
+	)
+}
+
+export function getDashboardUpdatedAtMs(dashboard?: Dashboard | null) {
+	if (!dashboard) return undefined
+	const updatedAt = Date.parse(dashboard.editedAt || dashboard.updated || dashboard.created || '')
+	return Number.isFinite(updatedAt) ? updatedAt : undefined
+}
+
+export function shouldApplyTrustedDashboard({
+	hasPendingSave,
+	incomingUpdatedAt,
+	appliedUpdatedAt
+}: {
+	hasPendingSave: boolean
+	incomingUpdatedAt: number | undefined
+	appliedUpdatedAt: number | undefined
+}) {
+	return (
+		!hasPendingSave &&
+		(incomingUpdatedAt === undefined || appliedUpdatedAt === undefined || incomingUpdatedAt >= appliedUpdatedAt)
 	)
 }

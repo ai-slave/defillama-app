@@ -13,6 +13,7 @@ type InitialDashboardData = {
 }
 
 export interface DashboardInitialRenderPayload {
+	copiedFrom?: Dashboard['copiedFrom']
 	id: string
 	slug?: string
 	ownerId?: string
@@ -63,6 +64,7 @@ function publicFields(dashboard: Dashboard) {
 		...(dashboard.viewCount !== undefined ? { viewCount: dashboard.viewCount } : {}),
 		...(dashboard.likeCount !== undefined ? { likeCount: dashboard.likeCount } : {}),
 		...(dashboard.author ? { author: dashboard.author } : {}),
+		...(dashboard.copiedFrom ? { copiedFrom: dashboard.copiedFrom } : {}),
 		created: dashboard.created,
 		updated: dashboard.updated,
 		...(dashboard.editedAt ? { editedAt: dashboard.editedAt } : {})
@@ -110,6 +112,7 @@ export function hydrateDashboardInitialRenderPayload(payload: DashboardInitialRe
 		...(payload.viewCount !== undefined ? { viewCount: payload.viewCount } : {}),
 		...(payload.likeCount !== undefined ? { likeCount: payload.likeCount } : {}),
 		...(payload.author !== undefined ? { author: payload.author } : {}),
+		...(payload.copiedFrom ? { copiedFrom: payload.copiedFrom } : {}),
 		created: payload.created,
 		updated: payload.updated,
 		...(payload.editedAt !== undefined ? { editedAt: payload.editedAt } : {})

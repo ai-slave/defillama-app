@@ -6,6 +6,7 @@ import { createElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from '~/containers/ProDashboard/dashboardStreamContract'
+import { recordRouteRuntimeError, recordRuntimeError } from '~/utils/telemetry'
 import { createMockNextApiResponse } from '~/utils/test/nextApiMocks'
 
 async function readServerSideProps<Props extends object>(result: GetServerSidePropsResult<Props>): Promise<Props> {
@@ -57,6 +58,7 @@ const {
 }))
 
 vi.mock('~/utils/telemetry', () => ({
+	recordRuntimeError: vi.fn(),
 	recordRouteRuntimeError: vi.fn(),
 	withApiRouteTelemetry: (_route: string, handler: unknown) => handler,
 	withServerSidePropsTelemetry: (_route: string, handler: unknown) => handler
@@ -635,6 +637,11 @@ describe('pro dashboard cache headers', () => {
 
 		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
 
+		expect(recordRuntimeError).toHaveBeenCalledWith(
+			expect.any(Error),
+			'outboundFetch',
+			expect.objectContaining({ stream_source: 'protocols-and-chains' })
+		)
 		expect(fetchProtocolsMock).toHaveBeenCalledOnce()
 		expect(res.write).toHaveBeenCalledWith('{"type":"done"}\n')
 		expect(res.end).toHaveBeenCalled()
@@ -959,6 +966,49 @@ describe('pro dashboard cache headers', () => {
 		expect(res.end).toHaveBeenCalled()
 	})
 
+	test('records failed chart-builder sources without failing the stream', async () => {
+		fetchChartBuilderServerDataMock.mockRejectedValue(new Error('builder unavailable'))
+		fetchDashboardConfigMock.mockResolvedValue({
+			...publicDashboard,
+			data: {
+				...publicDashboard.data,
+				items: [
+					{
+						id: 'builder-2',
+						kind: 'builder',
+						config: {
+							mode: 'chains',
+							metric: 'fees',
+							chains: [],
+							limit: 10,
+							categories: [],
+							chainCategories: [],
+							protocolCategories: [],
+							hideOthers: false,
+							groupBy: 'protocol',
+							chartType: 'stackedBar',
+							displayAs: 'timeSeries',
+							chainFilterMode: 'include',
+							categoryFilterMode: 'include',
+							chainCategoryFilterMode: 'include',
+							protocolCategoryFilterMode: 'include'
+						}
+					}
+				]
+			}
+		})
+		const res = createMockNextApiResponse()
+
+		await dashboardStreamHandler(createStreamRequest('dashboard-1'), res)
+
+		expect(recordRuntimeError).toHaveBeenCalledWith(
+			expect.any(Error),
+			'outboundFetch',
+			expect.objectContaining({ stream_source: 'chart-builder' })
+		)
+		expect(recordRouteRuntimeError).not.toHaveBeenCalled()
+		expect(res.write).toHaveBeenCalledWith('{"type":"done"}\n')
+	})
 	test('streams chart-builder data for metrics the stream owns', async () => {
 		fetchChartBuilderServerDataMock.mockResolvedValue({
 			series: [{ name: 'Aave', data: [[1_700_000_000, 5]] }]

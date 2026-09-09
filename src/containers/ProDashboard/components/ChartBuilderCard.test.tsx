@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import { getChartBuilderQueryKey } from '../chartBuilderQueryKey'
 import { StreamDoneContext } from '../queries'
 import type { ChartBuilderConfig } from '../types'
 import { ChartBuilderCard } from './ChartBuilderCard'
@@ -50,24 +51,7 @@ const builder: ChartBuilderConfig = {
 	config
 }
 
-const queryKey = [
-	'pro-dashboard',
-	'chartBuilder',
-	config.mode,
-	config.metric,
-	undefined,
-	config.chains,
-	config.limit,
-	config.categories,
-	config.chainCategories,
-	config.protocolCategories,
-	config.hideOthers,
-	config.groupByParent,
-	config.chainFilterMode,
-	config.categoryFilterMode,
-	config.chainCategoryFilterMode,
-	config.protocolCategoryFilterMode
-]
+const queryKey = getChartBuilderQueryKey(config)
 
 function renderCard(queryClient: QueryClient) {
 	return renderToStaticMarkup(

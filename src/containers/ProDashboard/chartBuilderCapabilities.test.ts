@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { chartBuilderHasExactRemainder, normalizeChartBuilderConfig } from './chartBuilderCapabilities'
+import {
+	chartBuilderHasExactRemainder,
+	chartBuilderScopeHidesOthers,
+	normalizeChartBuilderConfig
+} from './chartBuilderCapabilities'
 import type { ChartBuilderConfig } from './types'
 
 const baseConfig = (overrides: Partial<ChartBuilderConfig['config']> = {}): ChartBuilderConfig['config'] => ({
@@ -61,4 +65,11 @@ describe('Chart Builder series capabilities', () => {
 		).toMatchObject({ metric: 'tvl', chartType: 'stackedArea' })
 		expect(normalizeChartBuilderConfig(baseConfig({ metric: 'chain-fees', protocol: 'aave' })).protocol).toBeUndefined()
 	})
+})
+
+test('scope hides Others only for supported category dimensions', () => {
+	expect(chartBuilderScopeHidesOthers(baseConfig())).toBe(false)
+	expect(chartBuilderScopeHidesOthers(baseConfig({ protocolCategories: ['Dexs'] }))).toBe(true)
+	expect(chartBuilderScopeHidesOthers(baseConfig({ mode: 'chains', protocolCategories: ['Dexs'] }))).toBe(false)
+	expect(chartBuilderScopeHidesOthers(baseConfig({ mode: 'chains', chainCategories: ['Rollup'] }))).toBe(true)
 })

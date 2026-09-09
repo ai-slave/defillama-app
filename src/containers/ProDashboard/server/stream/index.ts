@@ -28,8 +28,8 @@ import { streamProTokenUsageData } from '~/containers/ProDashboard/server/tableQ
 import { fetchProtocolsTable } from '~/containers/ProDashboard/server/unifiedTable/protocols'
 import { fetchProYieldsDataset } from '~/containers/ProDashboard/server/yieldsDataset'
 import {
-	buildStablecoinsTableData,
 	buildStablecoinsChartCacheValue,
+	buildStablecoinsTableData,
 	fetchStablecoinAssetChartCacheValue
 } from '~/containers/ProDashboard/stablecoinData'
 import {
@@ -42,12 +42,12 @@ import {
 } from '~/containers/ProDashboard/tableQueryKeys'
 import type {
 	ChartBuilderConfig,
-	IncomeStatementConfig,
 	DatasetTableConfig,
+	IncomeStatementConfig,
 	RWAAssetChartConfig,
 	RWAOverviewChartConfig,
-	StablecoinsChartConfig,
-	StablecoinAssetChartConfig
+	StablecoinAssetChartConfig,
+	StablecoinsChartConfig
 } from '~/containers/ProDashboard/types'
 import { MAX_MULTI_CHART_SERIES, normalizeYieldChartType } from '~/containers/ProDashboard/types'
 import { createProtocolsUnifiedTableResponse } from '~/containers/ProDashboard/unifiedTable/contracts'
@@ -70,7 +70,7 @@ import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import { slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
-import { recordRouteRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
+import { recordRouteRuntimeError, recordRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
 
 export const config = {
 	api: { responseLimit: false }
@@ -112,6 +112,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	let streamEnded = false
 	let writeQueue = Promise.resolve()
 	const isStreamStopped = () => streamEnded || res.destroyed
+	const recordStreamSourceFailure = (sourceKind: string) => (error: unknown) => {
+		if (isStreamStopped()) return
+		recordRuntimeError(error, 'outboundFetch', { stream_source: sourceKind, dashboard_id: dashboardId })
+	}
+
 	const sourceScheduler = createBoundedTaskScheduler(DASHBOARD_STREAM_SOURCE_CONCURRENCY, isStreamStopped)
 	const stopStream = () => {
 		if (streamEnded) return
@@ -222,7 +227,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 							await writeLine({ type: 'protocolsAndChains', data: d })
 							return d
 						})
-						.catch(() => null)
+						.catch((error) => {
+							recordStreamSourceFailure('protocols-and-chains')(error)
+							return null
+						})
 				: Promise.resolve(null))
 		let appMetadataPromise: Promise<Awaited<ReturnType<typeof fetchAppMetadata>> | null> | null = null
 		const getAppMetadata = () =>
@@ -232,7 +240,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 							await writeLine({ type: 'appMetadata', data: d })
 							return d
 						})
-						.catch(() => null)
+						.catch((error) => {
+							recordStreamSourceFailure('app-metadata')(error)
+							return null
+						})
 				: Promise.resolve(null))
 
 		if (items.length === 0) {
@@ -340,10 +351,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 									? []
 									: await withTimeout(fetchSingleChartData(source.request, 'all', null, protocolRelations), 10_000)
 								await writeLine({ type: 'chartData', queryKey: source.queryKey, data })
-							}).catch(() => {})
+							}).catch(recordStreamSourceFailure('chart'))
 						)
 					}
-				}).catch(() => {})
+				}).catch(recordStreamSourceFailure('chart-plan'))
 				phase2Promises.push(
 					planChartSources.then(async () => {
 						await Promise.allSettled(chartSourcePromises)
@@ -355,7 +366,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 			phase2Promises.push(
 				streamProTokenUsageData(items, claimStreamSource, scheduleSource, (data) =>
 					writeLine({ type: 'tokenUsageData', ...data })
-				).catch(() => {})
+				).catch(recordStreamSourceFailure('token-usage'))
 			)
 
 			// Yields — stream per pool
@@ -391,7 +402,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 								...(fetchBorrow && borrowResult.status === 'fulfilled' ? { borrow: borrowResult.value } : null)
 							}
 						})
-					}).catch(() => {})
+					}).catch(recordStreamSourceFailure('yields-chart'))
 				)
 			}
 
@@ -413,7 +424,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 								data: data ?? []
 							})
 						})
-					).catch(() => {})
+					).catch(recordStreamSourceFailure('advanced-tvl'))
 				)
 			}
 
@@ -433,10 +444,10 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 							scheduleSource(async () => {
 								const data = await withTimeout(fetchProtocolTvlChart(request), 15_000)
 								await writeLine({ type: 'protocolTvlChartData', queryKey, data: data ?? [] })
-							}).catch(() => {})
+							}).catch(recordStreamSourceFailure('protocol-tvl'))
 						)
 					}
-				}).catch(() => {})
+				}).catch(recordStreamSourceFailure('protocol-tvl-plan'))
 				phase2Promises.push(
 					planProtocolTvlSources.then(async () => {
 						await Promise.allSettled(protocolTvlSourcePromises)
@@ -471,7 +482,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 						)
 						const response = createProtocolsUnifiedTableResponse(data)
 						await writeLine({ type: 'unifiedTableData', key: source.cacheKey, data: response })
-					}).catch(() => {})
+					}).catch(recordStreamSourceFailure('stablecoins-charts'))
 				)
 			}
 
@@ -489,7 +500,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 						])
 						const data = buildStablecoinsChartCacheValue({ peggedData, chainData, chain })
 						await writeLine({ type: 'stablecoinsChartData', chain, data })
-					}).catch(() => {})
+					}).catch(recordStreamSourceFailure('stablecoins-chart'))
 				)
 			}
 
@@ -550,7 +561,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 									data: toRwaPositionalChartDataset(data)
 								})
 							}
-						}).catch(() => {})
+						}).catch(recordStreamSourceFailure('rwa-overview'))
 					)
 				}
 
@@ -569,7 +580,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 										data
 									})
 							})
-						}).catch(() => {})
+						}).catch(recordStreamSourceFailure('rwa-asset'))
 					)
 				}
 			}
@@ -585,7 +596,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 						if (data && claimStreamSource('rwa-assets-table', [])) {
 							await writeLine({ type: 'rwaAssetsTableData', data })
 						}
-					}).catch(() => {})
+					}).catch(recordStreamSourceFailure('rwa-assets-table'))
 				)
 			}
 
@@ -595,7 +606,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 						const { fetchRWAStats: fetchStats } = await import('~/containers/RWA/api')
 						const data = await withTimeout(fetchStats(), 10_000)
 						if (data) await writeLine({ type: 'rwaChainsTableData', data })
-					}).catch(() => {})
+					}).catch(recordStreamSourceFailure('rwa-chains-table'))
 				)
 			}
 
@@ -610,7 +621,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 						const { fetchEquitiesCompanies } = await import('~/containers/Equities/api')
 						const data = await withTimeout(fetchEquitiesCompanies(), 15_000)
 						if (data) await writeLine({ type: 'equitiesCompaniesData', data })
-					}).catch(() => {})
+					}).catch(recordStreamSourceFailure('equities-companies'))
 				)
 			}
 
@@ -637,7 +648,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 									data
 								})
 							}
-						}).catch(() => {})
+						}).catch(recordStreamSourceFailure('equities-statements'))
 					)
 				}
 			}
@@ -662,7 +673,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 									data
 								})
 							}
-						}).catch(() => {})
+						}).catch(recordStreamSourceFailure('equities-filings'))
 					)
 				}
 			}
@@ -680,7 +691,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 								10_000
 							)
 							await writeLine({ type: 'emissionData', view: 'pie', key: cacheKey, data })
-						}).catch(() => {})
+						}).catch(recordStreamSourceFailure('emissions-pie'))
 					)
 				} else if (item.kind === 'unlocks-schedule') {
 					const resolvedDataType = item.dataType === 'realtime' ? 'documented' : item.dataType
@@ -697,7 +708,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 										data
 									})
 							})
-						).catch(() => {})
+						).catch(recordStreamSourceFailure('emissions-schedule'))
 					)
 				}
 			}
@@ -737,7 +748,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 										key: JSON.stringify(PRO_CEX_SNAPSHOT_QUERY_KEY),
 										data
 									})
-							}).catch(() => {})
+							}).catch(recordStreamSourceFailure('cex-snapshot'))
 						)
 					}
 					if (needsTotals) {
@@ -752,7 +763,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 										key: JSON.stringify(PRO_CEX_TOTALS_QUERY_KEY),
 										data
 									})
-							}).catch(() => {})
+							}).catch(recordStreamSourceFailure('cex-totals'))
 						)
 					}
 					for (const [shareKey, { metric, topNData }] of shareSpecs) {
@@ -767,7 +778,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 										key: shareKey,
 										data
 									})
-							}).catch(() => {})
+							}).catch(recordStreamSourceFailure('cex-share'))
 						)
 					}
 				}
@@ -788,7 +799,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 									data
 								})
 						})
-					).catch(() => {})
+					).catch(recordStreamSourceFailure('chains-dataset'))
 				)
 			}
 
@@ -812,7 +823,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 									key: source.cacheKey,
 									data
 								})
-						}).catch(() => {})
+						}).catch(recordStreamSourceFailure('yields-dataset'))
 					)
 				}
 			}
@@ -838,7 +849,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 							key: cacheKey,
 							data
 						})
-					}).catch(() => {})
+					}).catch(recordStreamSourceFailure('stablecoins-table'))
 				)
 			}
 
@@ -860,7 +871,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 									data
 								})
 						})
-					).catch(() => {})
+					).catch(recordStreamSourceFailure('stablecoin-asset'))
 				)
 			}
 
@@ -885,7 +896,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 										data
 									})
 							})
-						}).catch(() => {})
+						}).catch(recordStreamSourceFailure('income-statement'))
 					)
 				}
 			}
@@ -902,7 +913,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 						withTimeout(fetchChartBuilderServerData(cfg), CHART_BUILDER_STREAM_TIMEOUT_MS).then((data) =>
 							writeLine({ type: 'chartBuilderData', key: cacheKey, data })
 						)
-					).catch(() => {})
+					).catch(recordStreamSourceFailure('chart-builder'))
 				)
 			}
 

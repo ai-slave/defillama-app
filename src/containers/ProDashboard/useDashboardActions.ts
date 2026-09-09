@@ -96,6 +96,14 @@ export function useDashboardActions(
 		[dispatch, autoSave]
 	)
 
+	const saveTimePeriodSelection = useCallback(
+		(overrides: AutoSaveOverrides) => {
+			if (!hasHydratedRef.current) return
+			autoSave(itemsRef.current, overrides)
+		},
+		[autoSave]
+	)
+
 	const handleAppendItems = useCallback(
 		(createItems: DashboardItemsFactory) => {
 			if (isReadOnlyUntilDashboardLoaded) return
@@ -225,15 +233,19 @@ export function useDashboardActions(
 	const setTimePeriod = useCallback(
 		(period: TimePeriod) => {
 			dispatch({ type: 'SET_TIME_PERIOD', payload: period })
+			saveTimePeriodSelection(
+				period === 'custom' ? { timePeriod: period } : { timePeriod: period, customTimePeriod: null }
+			)
 		},
-		[dispatch]
+		[dispatch, saveTimePeriodSelection]
 	)
 
 	const setCustomTimePeriod = useCallback(
 		(period: CustomTimePeriod | null) => {
 			dispatch({ type: 'SET_CUSTOM_TIME_PERIOD', payload: period })
+			saveTimePeriodSelection(period ? { timePeriod: 'custom', customTimePeriod: period } : { customTimePeriod: null })
 		},
-		[dispatch]
+		[dispatch, saveTimePeriodSelection]
 	)
 
 	const handleChartsReordered = useCallback(

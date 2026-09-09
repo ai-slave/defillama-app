@@ -13,7 +13,7 @@ import { CHART_INSET } from '../shared/chartSpacing'
 import { getChartTheme } from '../shared/chartTheme'
 import { escapeHtml } from '../shared/escapeHtml'
 import { formatChartValue } from '../shared/formatters'
-import { buildWatermarkGraphic } from '../shared/watermark'
+import { buildWatermarkGraphic, useCanvasWatermarkEnabled } from '../shared/watermark'
 import { clearTreemapFocus, registerTreemapFocusTracking } from './focus'
 import { formatRwaTreemapBoxLabel, formatRwaTreemapTooltip, formatRwaUpperLabel } from './rwaFormatting'
 import type { TreemapChartProps, TreemapNode, TreemapValue } from './types'
@@ -76,6 +76,7 @@ function TreemapChart({
 	const isRwaVariant = variant === 'rwa'
 	const isCategoricalColor = colorMode === 'categorical'
 
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const [isDark] = useDarkModeManager()
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
@@ -128,7 +129,7 @@ function TreemapChart({
 		if (!instance) return
 
 		const option: TreemapOption = {
-			graphic: [buildWatermarkGraphic(isDark)],
+			...(canvasWatermarkEnabled ? { graphic: [buildWatermarkGraphic(isDark)] } : {}),
 			tooltip: {
 				className: 'defillama-echarts-tooltip',
 				backgroundColor: 'transparent',
@@ -369,6 +370,7 @@ function TreemapChart({
 		clearTreemapFocus(instance)
 		instance.setOption(option, { notMerge: true })
 	}, [
+		canvasWatermarkEnabled,
 		chartTheme,
 		formatTreemapMetricValue,
 		isCategoricalColor,

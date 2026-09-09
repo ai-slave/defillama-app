@@ -16,15 +16,20 @@ import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import pb from '~/utils/pocketbase'
 import type { ChartDataPrerequisite } from './chartRuntime'
-import { getDashboardHydrationState, isDashboardEditingLocked } from './dashboardHydrationState'
+import {
+	getDashboardHydrationState,
+	getDashboardUpdatedAtMs,
+	isDashboardEditingLocked,
+	shouldApplyTrustedDashboard
+} from './dashboardHydrationState'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import { dashboardReducer, initDashboardState } from './dashboardReducer'
 import { dashboardStreamNeedsProtocolCatalog } from './dashboardStreamCapabilities'
 import { INITIAL_DASHBOARD_STREAM_ITEM_COUNT } from './dashboardStreamContract'
 import type {
 	AIGeneratedData,
-	AIUndoState,
 	AISessionData,
+	AIUndoState,
 	CustomTimePeriod,
 	Dashboard,
 	DashboardMode,
@@ -64,12 +69,6 @@ function getServerReadySnapshot() {
 
 function useClientReady() {
 	return useSyncExternalStore(subscribeToClientReady, getClientReadySnapshot, getServerReadySnapshot)
-}
-
-function getDashboardInitialUpdatedAt(dashboard?: Dashboard | null) {
-	if (!dashboard) return undefined
-	const updatedAt = Date.parse(dashboard.editedAt || dashboard.updated || dashboard.created || '')
-	return Number.isFinite(updatedAt) ? updatedAt : undefined
 }
 
 function isPendingRating(session: AISessionData, userId: string): boolean {
@@ -408,25 +407,6 @@ function ProDashboardAPIProviderInner({
 	)
 	const lastAppliedTrustedDashboardRef = useRef<Dashboard | null>(initialDashboard ?? null)
 	const [hasTrustedDashboard, setHasTrustedDashboard] = useState(!initialDashboard)
-	const applyTrustedDashboard = useCallback(
-		(dashboard: Dashboard | null | undefined) => {
-			if (
-				!dashboard ||
-				isDashboardInitialRenderHydration(dashboard) ||
-				!matchesDashboardKey(dashboard, initialDashboardId) ||
-				lastAppliedTrustedDashboardRef.current === dashboard
-			)
-				return
-			lastAppliedTrustedDashboardRef.current = dashboard
-			setHasTrustedDashboard(true)
-			applyDashboard(dashboard)
-		},
-		[applyDashboard, initialDashboardId]
-	)
-
-	useEffect(() => {
-		applyTrustedDashboard(stream.dashboard)
-	}, [applyTrustedDashboard, stream.dashboard])
 
 	// Use the dashboard API hook
 	const {
@@ -457,7 +437,36 @@ function ProDashboardAPIProviderInner({
 		customTimePeriod
 	})
 
-	const { flush, acknowledge } = autosave
+	const { flush, acknowledge, hasPendingSave } = autosave
+
+	const applyTrustedDashboard = useCallback(
+		(dashboard: Dashboard | null | undefined) => {
+			if (
+				!dashboard ||
+				isDashboardInitialRenderHydration(dashboard) ||
+				!matchesDashboardKey(dashboard, initialDashboardId) ||
+				lastAppliedTrustedDashboardRef.current === dashboard
+			)
+				return
+			setHasTrustedDashboard(true)
+			if (
+				!shouldApplyTrustedDashboard({
+					hasPendingSave: currentDashboard?.id === dashboard.id && hasPendingSave(),
+					incomingUpdatedAt: getDashboardUpdatedAtMs(dashboard),
+					appliedUpdatedAt: getDashboardUpdatedAtMs(lastAppliedTrustedDashboardRef.current)
+				})
+			)
+				return
+			lastAppliedTrustedDashboardRef.current = dashboard
+			applyDashboard(dashboard)
+		},
+		[applyDashboard, initialDashboardId, hasPendingSave, currentDashboard?.id]
+	)
+
+	useEffect(() => {
+		applyTrustedDashboard(stream.dashboard)
+	}, [applyTrustedDashboard, stream.dashboard])
+
 	const actions = useDashboardActions(dispatch, state, autosave.autoSave, isReadOnlyUntilDashboardLoaded)
 
 	const {
@@ -478,7 +487,7 @@ function ProDashboardAPIProviderInner({
 	}, [isAuthenticated, currentDashboard, user])
 
 	// Load initial dashboard — stream seeds this cache key, queryFn fires as fallback after stream
-	const initialDashboardUpdatedAt = getDashboardInitialUpdatedAt(initialDashboard)
+	const initialDashboardUpdatedAt = getDashboardUpdatedAtMs(initialDashboard)
 	const {
 		data: currentDashboard2 = null,
 		isLoading: isQueryLoadingDashboard,
@@ -495,6 +504,7 @@ function ProDashboardAPIProviderInner({
 		},
 		staleTime: 1000 * 60 * 5,
 		refetchOnMount: initialDashboard ? false : 'always',
+		refetchOnWindowFocus: false,
 		retry: (failureCount, error) => error instanceof DashboardError && error.status >= 500 && failureCount < 3,
 		enabled: dashboardReady && !!initialDashboardId,
 		...(initialDashboard && matchesDashboardKey(initialDashboard, initialDashboardId)
@@ -659,7 +669,7 @@ function ProDashboardAPIProviderInner({
 		const cleanedItems = toPersistedDashboardItems(items)
 		const data = {
 			items: cleanedItems,
-			dashboardName: `${dashboardName} (Copy)`,
+			dashboardName,
 			timePeriod,
 			customTimePeriod,
 			visibility: isFreeUser ? ('public' as const) : dashboardVisibility,

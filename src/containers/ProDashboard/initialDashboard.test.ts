@@ -220,3 +220,11 @@ describe('dashboard initial render payload', () => {
 		expect(nextDataBytes).toBeLessThan(30_000)
 	})
 })
+
+test('preserves public fork attribution through SSR hydration', () => {
+	const copiedFrom = { id: 'source', slug: 'original', name: 'Original' }
+	const source = { ...dashboard([]), copiedFrom }
+	for (const payload of [toPublicDashboardInitialRenderPayload(source), toOwnerDashboardInitialRenderPayload(source)]) {
+		expect(hydrateDashboardInitialRenderPayload(payload).copiedFrom).toEqual(copiedFrom)
+	}
+})

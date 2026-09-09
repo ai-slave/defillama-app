@@ -31,9 +31,10 @@ vi.mock('./hooks/useFreeTierStatus', () => ({
 vi.mock('./hooks/useDashboardStream', () => ({
 	useDashboardStream: () => ({ dashboard: api.dashboard, isDone: true })
 }))
-vi.mock('./hooks/useAutoSave', () => ({
-	useAutoSave: () => ({ autoSave: vi.fn(), flush: vi.fn(), acknowledge: vi.fn() })
-}))
+vi.mock('./hooks/useAutoSave', () => {
+	const hasPendingSave = () => false
+	return { useAutoSave: () => ({ autoSave: vi.fn(), flush: vi.fn(), acknowledge: vi.fn(), hasPendingSave }) }
+})
 vi.mock('./queries', () => ({
 	StreamDoneContext: createContext(true),
 	ProxyAuthTokenContext: createContext(null),

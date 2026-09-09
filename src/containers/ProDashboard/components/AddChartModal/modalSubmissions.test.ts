@@ -429,7 +429,7 @@ describe('buildNewDashboardItems', () => {
 
 	test('constructs non-manual item kinds and returns no item for incomplete submissions', () => {
 		const base = initializeFromEditItem(null)
-		const builder = buildNew({ ...base, chartBuilderName: ' Leaders ' })[0]
+		const builder = buildNew({ ...base, chartMode: 'builder', chartBuilderName: ' Leaders ' })[0]
 		const text = buildNew({ ...base, selectedMainTab: 'text', textTitle: ' Note ', textContent: ' Body ' })[0]
 		const metric = buildNew({ ...base, selectedMainTab: 'metric', metricChain: 'Ethereum' })[0]
 		const llama = buildNew({

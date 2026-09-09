@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'vitest'
-import { getDashboardHydrationState, isDashboardEditingLocked } from './dashboardHydrationState'
+import {
+	getDashboardHydrationState,
+	isDashboardEditingLocked,
+	shouldApplyTrustedDashboard
+} from './dashboardHydrationState'
 
 const settledStream = {
 	hasDashboardId: true,
@@ -106,4 +110,14 @@ describe('dashboard hydration state', () => {
 			shouldFetchTrustedDashboardFallback: false
 		})
 	})
+})
+
+test.each([
+	[true, 3, 2, false],
+	[false, 1, 2, false],
+	[false, 2, 2, true],
+	[false, undefined, 2, true],
+	[false, 2, undefined, true]
+])('trusted snapshot gate %s %s %s', (hasPendingSave, incomingUpdatedAt, appliedUpdatedAt, expected) => {
+	expect(shouldApplyTrustedDashboard({ hasPendingSave, incomingUpdatedAt, appliedUpdatedAt })).toBe(expected)
 })

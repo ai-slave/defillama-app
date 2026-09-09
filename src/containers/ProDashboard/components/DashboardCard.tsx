@@ -11,6 +11,7 @@ import type { Dashboard } from '../dashboardTypes'
 import { dashboardUrlKey } from '../services/DashboardAPI'
 import { CardLikeButton } from './CardLikeButton'
 import { ConfirmationModal } from './ConfirmationModal'
+import { summarizeDashboardItemKinds } from './dashboardItemKindSummary'
 
 interface DashboardCardProps {
 	fallbackFocus?: RefObject<HTMLElement | null>
@@ -76,41 +77,7 @@ export function DashboardCard({
 		setShowDeleteConfirm(true)
 	}
 
-	const itemTypes = useMemo(() => {
-		const counts = new Map<string, number>()
-		for (const item of dashboard.data.items ?? []) {
-			if (!item) continue
-
-			switch (item.kind) {
-				case 'chart':
-					counts.set('charts', (counts.get('charts') ?? 0) + 1)
-					break
-				case 'multi':
-					counts.set('multi-charts', (counts.get('multi-charts') ?? 0) + 1)
-					break
-				case 'dataset-table':
-					counts.set('tables', (counts.get('tables') ?? 0) + 1)
-					break
-				case 'text':
-					counts.set('text blocks', (counts.get('text blocks') ?? 0) + 1)
-					break
-				default:
-					counts.set(item.kind, (counts.get(item.kind) ?? 0) + 1)
-			}
-		}
-
-		const sorted = Array.from(counts)
-			.sort(([, a], [, b]) => b - a)
-			.slice(0, 3)
-
-		const summary = sorted.map(([type, count]) => `${count} ${type}`).join(', ')
-
-		if (counts.size > 3) {
-			return `${summary} +${counts.size - 3} more`
-		}
-
-		return summary
-	}, [dashboard.data.items])
+	const itemTypes = useMemo(() => summarizeDashboardItemKinds(dashboard.data.items ?? []), [dashboard.data.items])
 
 	return (
 		<div
@@ -175,6 +142,15 @@ export function DashboardCard({
 
 				<div className={`mt-auto flex flex-col gap-2.5 ${viewMode === 'grid' ? 'pt-4' : 'pt-2'}`}>
 					<div className="flex flex-wrap items-center gap-2">
+						{dashboard.copiedFrom ? (
+							<span
+								className="flex items-center gap-1 rounded-md bg-brand/15 px-2 py-1 text-xs text-link"
+								title={`Forked from ${dashboard.copiedFrom.name}`}
+							>
+								<Icon name="copy" height={12} width={12} />
+								Fork
+							</span>
+						) : null}
 						{dashboard.data.items?.length ? (
 							<span
 								className="flex items-center gap-1.5 rounded-md bg-brand/15 px-2 py-1 text-xs font-medium text-link tabular-nums"

@@ -119,6 +119,10 @@ describe('parseUnifiedTableQuery', () => {
 				rowMembership: { kind: 'all-protocols' }
 			})
 		)
+		expect(res.setHeader).toHaveBeenCalledWith(
+			'Cache-Control',
+			'public, max-age=300, s-maxage=300, stale-while-revalidate=60'
+		)
 		expect(res.json).toHaveBeenCalledWith({
 			rows: [],
 			chainMetrics: {
@@ -133,4 +137,16 @@ describe('parseUnifiedTableQuery', () => {
 			}
 		})
 	})
+})
+
+test('does not cache invalid requests or source failures', async () => {
+	const invalid = createMockNextApiResponse()
+	await unifiedTableHandler(createMockNextApiRequest({ method: 'GET', query: { strategy: 'chains' } }), invalid)
+	expect(invalid.status).toHaveBeenCalledWith(400)
+	expect(invalid.setHeader.mock.calls.some(([name]) => name === 'Cache-Control')).toBe(false)
+	fetchProtocolsTableMock.mockRejectedValueOnce(new Error('source unavailable'))
+	const failed = createMockNextApiResponse()
+	await unifiedTableHandler(createMockNextApiRequest({ method: 'GET', query: { strategy: 'protocols' } }), failed)
+	expect(failed.status).toHaveBeenCalledWith(500)
+	expect(failed.setHeader.mock.calls.some(([name]) => name === 'Cache-Control')).toBe(false)
 })

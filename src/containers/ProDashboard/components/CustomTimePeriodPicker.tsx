@@ -108,7 +108,7 @@ export function CustomTimePeriodPicker({
 	return (
 		<Ariakit.PopoverProvider store={popover}>
 			<Ariakit.PopoverDisclosure
-				className={`-ml-px flex-1 rounded-none rounded-r-md border px-3 py-1.5 text-sm font-medium transition-colors duration-200 md:flex-initial md:px-4 md:py-2 ${
+				className={`-ml-px shrink-0 rounded-none rounded-r-md border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-200 md:flex-initial md:px-4 md:py-2 ${
 					isActive
 						? 'pro-border pro-btn-primary'
 						: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'

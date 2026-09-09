@@ -757,3 +757,7 @@ export function isProtocolDashboardChartType(type: string): type is ProtocolChar
 export function isChainDashboardChartType(type: string): type is ChainChartType {
 	return CHAIN_CHART_TYPE_SET.has(type)
 }
+
+export function isDashboardChartTypeForSubject(subjectType: 'chain' | 'protocol', type: string) {
+	return subjectType === 'chain' ? isChainDashboardChartType(type) : isProtocolDashboardChartType(type)
+}

@@ -1,12 +1,10 @@
 import type * as echarts from 'echarts/core'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { ChartRouter } from '~/containers/Downloads/sql/chart'
 import { migrateChartConfig } from '~/containers/Downloads/sql/chartConfig'
 import { classifyColumns } from '~/containers/Downloads/sql/columnKind'
 import { exportQueryResult } from '~/containers/Downloads/sql/exportResults'
 import { ResultsGrid } from '~/containers/Downloads/sql/ResultsGrid'
-import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -14,13 +12,12 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatNumber } from '~/utils/numberFormat'
 import { snapshotToResult } from '../../sqlSnapshot'
 import type { SqlChartConfig } from '../../types'
-import { CSVExportButton } from '../CSVExportButton'
+import { ProCardOverflowMenu } from '../ProCardActions'
 import { SqlQueryView } from './SqlQueryView'
 import { reportSqlRefreshEnd, reportSqlRefreshStart, subscribeSqlRefreshAll } from './sqlRefreshBus'
 import { useServerSqlRun } from './useServerSqlRun'
 
 const REFRESH_HINT = 'Refresh re-runs the query on the server and updates the result for everyone.'
-const EXPORT_BUTTON_CLASSNAME = buttonStyles({ size: 'sm' })
 
 interface SqlChartCardProps {
 	config: SqlChartConfig
@@ -137,20 +134,22 @@ export function SqlChartCard({ config }: SqlChartCardProps) {
 							</Tooltip>
 						</>
 					) : null}
-					{cardView === 'output' && canExportPng ? (
-						<ChartPngExportButton
-							chartInstance={getChartInstance}
-							filename={config.name || 'sql-chart'}
-							title={config.name || 'SQL chart'}
-							className={EXPORT_BUTTON_CLASSNAME}
-							smol
-						/>
-					) : null}
-					{cardView === 'output' && canExportCsv ? (
-						<CSVExportButton
-							onClick={() => exportQueryResult(result, 'csv', config.name || 'sql-chart')}
-							smol
-							className={EXPORT_BUTTON_CLASSNAME}
+					{cardView === 'output' ? (
+						<ProCardOverflowMenu
+							image={
+								canExportPng
+									? {
+											chartInstance: getChartInstance,
+											filename: config.name || 'sql-chart',
+											title: config.name || 'SQL chart'
+										}
+									: undefined
+							}
+							csv={
+								canExportCsv
+									? { onClick: () => exportQueryResult(result, 'csv', config.name || 'sql-chart') }
+									: undefined
+							}
 						/>
 					) : null}
 				</div>

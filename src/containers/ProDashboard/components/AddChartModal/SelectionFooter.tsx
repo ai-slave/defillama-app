@@ -43,7 +43,7 @@ export function SelectionFooter({
 						onChange={() => onChartCreationModeChange(chartCreationMode === 'combined' ? 'separate' : 'combined')}
 						className="size-3.5 rounded-sm border-gray-600 bg-transparent"
 					/>
-					<span>Multi-Chart</span>
+					<span>Combine into one chart</span>
 				</label>
 				{composerItems.map((item) => {
 					const chartType = getProDashboardChartTypeConfig(item.type)
@@ -76,9 +76,8 @@ export function SelectionFooter({
 			</div>
 			<div className="text-[10px] text-pro-text-tertiary">
 				{chartCreationMode === 'combined'
-					? `Create 1 multi-chart with ${composerItems.length} chart${composerItems.length !== 1 ? 's' : ''}`
-					: `Create ${composerItems.length} separate chart${composerItems.length !== 1 ? 's' : ''}`}
-				{` (maximum ${MAX_MULTI_CHART_SERIES})`}
+					? `1 combined chart with ${composerItems.length} series (max ${MAX_MULTI_CHART_SERIES})`
+					: `${composerItems.length} separate chart${composerItems.length !== 1 ? 's' : ''}`}
 			</div>
 		</div>
 	)

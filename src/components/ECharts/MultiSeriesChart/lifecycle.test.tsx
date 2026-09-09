@@ -3,6 +3,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { ChartWatermarkContext } from '../shared/watermark'
 
 const mocks = vi.hoisted(() => {
 	const instance = {
@@ -69,6 +70,17 @@ describe('MultiSeriesChart lifecycle', () => {
 	afterEach(async () => {
 		if (container.childNodes.length > 0) await act(async () => root.unmount())
 		container.remove()
+	})
+
+	test('hides the canvas watermark inside Pro dashboards', async () => {
+		await act(async () =>
+			root.render(
+				<ChartWatermarkContext.Provider value="export-only">
+					<MultiSeriesChart dataset={INITIAL_DATASET} charts={CHARTS} exportButtons="hidden" />
+				</ChartWatermarkContext.Provider>
+			)
+		)
+		for (const [option] of mocks.instance.setOption.mock.calls) expect(option.graphic).toBeUndefined()
 	})
 
 	test('reuses one owned instance and stable listeners across rerenders', async () => {

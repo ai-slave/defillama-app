@@ -317,7 +317,6 @@ export function useModalActions(editItem: DashboardItemConfig | null | undefined
 			actions.setSelectedChartTab(tab)
 			actions.setSelectedChain(null)
 			actions.setSelectedProtocol(null)
-			actions.setSelectedChartType('tvl')
 			if (tab === 'unlocks') {
 				actions.setSelectedUnlocksProtocol(null)
 				actions.setSelectedUnlocksProtocolName(null)

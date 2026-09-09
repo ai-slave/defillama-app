@@ -1,12 +1,17 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { RWAAssetChartConfig } from '../types'
+import { prepareProChartCsv } from './chartCsv'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { useRWAAssetChartData } from './datasets/RWADataset/useRWAChartData'
 import { LoadingSpinner } from './LoadingSpinner'
-import { buildProRwaAssetChartSeries, RWA_ASSET_METRIC_DIMENSIONS } from './rwaAssetChart'
+import { ProCardOverflowMenu } from './ProCardActions'
+import {
+	buildProRwaAssetChartSeries,
+	projectRwaAssetDatasetToMetrics,
+	RWA_ASSET_METRIC_DIMENSIONS
+} from './rwaAssetChart'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -50,7 +55,17 @@ export function RWAAssetChartCard({ config }: RWAAssetChartCardProps) {
 					<p className="text-xs text-pro-text-secondary">{metricsLabel}</p>
 				</div>
 				{hasData ? (
-					<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
+					<ProCardOverflowMenu
+						image={{ chartInstance, filename: imageFilename, title: imageTitle }}
+						csv={
+							filteredDataset
+								? {
+										prepareCsv: () =>
+											prepareProChartCsv(projectRwaAssetDatasetToMetrics(filteredDataset, metrics), imageFilename)
+									}
+								: undefined
+						}
+					/>
 				) : null}
 			</div>
 			<div className="flex-1">

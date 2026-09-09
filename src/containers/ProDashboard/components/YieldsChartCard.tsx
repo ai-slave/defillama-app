@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useContext } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
 import type { BorrowMarketHistory, PoolHistory } from '~/containers/Yields/poolDetail/types'
@@ -12,8 +11,8 @@ import { ProxyAuthTokenContext, StreamDoneContext } from '../queries'
 import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { fetchProDashboardProxy } from '../services/fetchViaProxy'
 import { normalizeYieldChartType, type ActiveYieldChartType, type YieldsChartConfig } from '../types'
-import { CSVExportButton } from './CSVExportButton'
 import { LoadingSpinner } from './LoadingSpinner'
+import { ProCardOverflowMenu } from './ProCardActions'
 import { useYieldChartTransformations } from './useYieldChartTransformations'
 import {
 	borrowApyCharts,
@@ -205,11 +204,9 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 				</div>
 				{currentChartDataset.source.length > 0 ? (
 					<div className="flex gap-2">
-						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						<CSVExportButton
-							onClick={handleCsvExport}
-							smol
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
+						<ProCardOverflowMenu
+							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
+							csv={{ onClick: handleCsvExport }}
 						/>
 					</div>
 				) : null}

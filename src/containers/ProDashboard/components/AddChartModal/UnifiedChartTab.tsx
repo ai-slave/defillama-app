@@ -4,8 +4,8 @@ import { useAppMetadata } from '../../AppMetadataContext'
 import type { ChartRuntimeView } from '../../chartRuntime'
 import { useProDashboardCatalog } from '../../ProDashboardAPIContext'
 import {
-	getProDashboardChartTypeConfig,
 	CHAIN_CHART_TYPES,
+	getProDashboardChartTypeConfig,
 	PROTOCOL_CHART_TYPES,
 	type RWAOverviewChartBreakdown,
 	type RWAOverviewChartMetric,
@@ -235,21 +235,12 @@ export function UnifiedChartTab({
 	const handleSelectCategory = (category: ChartTabType) => {
 		onChartTabChange(category)
 		setViewMode('form')
-		if (category === 'chain' || category === 'protocol') {
-			onChartTypesChange(['tvl'])
-		}
 	}
 
 	const handleBackToCards = () => {
 		setViewMode('cards')
 	}
 
-	const handleChainProtocolTabChange = (tab: 'chain' | 'protocol') => {
-		onChartTabChange(tab)
-		if (selectedChartTypes.length === 0 || selectedChartTypes[0] !== 'tvl') {
-			onChartTypesChange(['tvl'])
-		}
-	}
 	const handleChartTypeSelect = useCallback((type: string) => onChartTypesChange([type]), [onChartTypesChange])
 	const handleBulkChartTypeSelect = useCallback((type: string) => onBulkChartTypeChange(type), [onBulkChartTypeChange])
 
@@ -696,7 +687,7 @@ export function UnifiedChartTab({
 						<div className="grid grid-cols-2 gap-1">
 							<button
 								type="button"
-								onClick={() => handleChainProtocolTabChange('chain')}
+								onClick={() => onChartTabChange('chain')}
 								className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
 									selectedChartTab === 'chain'
 										? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'
@@ -717,7 +708,7 @@ export function UnifiedChartTab({
 							</button>
 							<button
 								type="button"
-								onClick={() => handleChainProtocolTabChange('protocol')}
+								onClick={() => onChartTabChange('protocol')}
 								className={`group flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all duration-200 ${
 									selectedChartTab === 'protocol'
 										? 'bg-pro-accent text-on-brand shadow-md ring-1 ring-black/10'

@@ -1,3 +1,4 @@
+const UNIFIED_TABLE_CACHE_CONTROL = 'public, max-age=300, s-maxage=300, stale-while-revalidate=60'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import {
 	UNIFIED_TABLE_CONFIG_VERSION,
@@ -15,8 +16,8 @@ import {
 } from '~/containers/ProDashboard/unifiedTable/contracts'
 import {
 	PROTOCOL_BASE_METRIC_FAMILIES,
-	isProtocolPointMetric,
 	isProtocolBaseMetricFamily,
+	isProtocolPointMetric,
 	isProtocolSupplementalMetric,
 	type ProtocolBaseMetricFamily,
 	type ProtocolPointMetric,
@@ -131,7 +132,7 @@ export async function unifiedTableHandler(req: NextApiRequest, res: NextApiRespo
 			rowMembership
 		})
 
-		res.setHeader('Cache-Control', 'public, max-age=300')
+		res.setHeader('Cache-Control', UNIFIED_TABLE_CACHE_CONTROL)
 		return res
 			.status(200)
 			.json(

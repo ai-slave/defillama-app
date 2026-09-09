@@ -20,6 +20,7 @@ import { ChartGrid } from './components/ChartGrid'
 import { CopyDashboardLinkButton } from './components/CopyDashboardLinkButton'
 import { CustomTimePeriodPicker } from './components/CustomTimePeriodPicker'
 import { CopyDashboardButton, EditDashboardButton, UndoAIGenerationButton } from './components/DashboardActionButtons'
+import { DashboardActionsSheet, type DashboardSheetAction } from './components/DashboardActionsSheet'
 import { EmptyState } from './components/EmptyState'
 import { LikeDashboardButton } from './components/LikeDashboardButton'
 import {
@@ -30,6 +31,7 @@ import {
 } from './components/SqlChart/sqlRefreshBus'
 import type { UnifiedTableFocusSection } from './components/UnifiedTable/types'
 import type { DashboardItemConfig } from './dashboardItemConfig'
+import { dashboardItemsUseTimePeriod } from './dashboardTimePeriodCapabilities'
 import type { TimePeriod } from './dashboardTypes'
 import { useFreeTierStatus } from './hooks/useFreeTierStatus'
 import {
@@ -237,21 +239,9 @@ function ProDashboardContent() {
 		{ value: 'all', label: 'All' }
 	]
 
-	const hasChartItems = items?.some(
-		(item) =>
-			item?.kind === 'chart' ||
-			item?.kind === 'multi' ||
-			item?.kind === 'builder' ||
-			item?.kind === 'yields' ||
-			item?.kind === 'stablecoins' ||
-			item?.kind === 'stablecoin-asset' ||
-			item?.kind === 'advanced-tvl' ||
-			item?.kind === 'advanced-borrowed' ||
-			item?.kind === 'income-statement' ||
-			item?.kind === 'unlocks-schedule' ||
-			item?.kind === 'unlocks-pie' ||
-			item?.kind === 'llamaai-chart'
-	)
+	const hasTimePeriodItems = dashboardItemsUseTimePeriod(items)
+	const showTimePeriodSelector = hasTimePeriodItems || mode === 'edit'
+	const showSqlRefresh = !!dashboardId && items.some((item) => item.kind === 'sql')
 
 	const currentRatingSession = getCurrentRatingSession()
 	const shouldShowAuthorProfileSetup =
@@ -259,6 +249,25 @@ function ProDashboardContent() {
 
 	const openAddModal = () => {
 		setShowAddModal(true)
+	}
+
+	const openIterateDashboardOrPaywall = () => {
+		if (hasActiveSubscription) setShowIterateDashboardModal(true)
+		else showPaywall('llamaai')
+	}
+	const openDashboardSettings = () => setShowSettingsModal(true)
+	const mobileHeaderActions: Array<DashboardSheetAction> = []
+	if (!isReadOnly) {
+		mobileHeaderActions.push({ label: 'Add Item', icon: 'plus', onSelect: openAddModal, emphasis: 'primary' })
+		if (items.length > 0)
+			mobileHeaderActions.push({
+				label: 'Edit with LlamaAI',
+				icon: 'sparkles',
+				onSelect: openIterateDashboardOrPaywall,
+				emphasis: 'ai'
+			})
+		if (canUndo) mobileHeaderActions.push({ label: 'Undo', icon: 'arrow-left', onSelect: undoAIGeneration })
+		if (dashboardId) mobileHeaderActions.push({ label: 'Settings', icon: 'settings', onSelect: openDashboardSettings })
 	}
 
 	const handleEditItemModal = (item: DashboardItemConfig, focusSection?: UnifiedTableFocusSection) => {
@@ -321,6 +330,17 @@ function ProDashboardContent() {
 							) : null}
 						</div>
 						<DashboardAuthorByline {...(currentDashboard?.author ? { author: currentDashboard.author } : {})} />
+						{currentDashboard?.copiedFrom ? (
+							<p className="text-xs text-pro-text-secondary">
+								Forked from{' '}
+								<BasicLink
+									href={`/pro/${currentDashboard.copiedFrom.slug ?? currentDashboard.copiedFrom.id}`}
+									className="text-link"
+								>
+									{currentDashboard.copiedFrom.name}
+								</BasicLink>
+							</p>
+						) : null}
 						{shouldShowAuthorProfileSetup ? <AuthorProfileSetupNotice /> : null}
 						{dashboardDescription ? (
 							<p className="mt-2 max-w-3xl text-sm leading-6 text-pro-text-form">{dashboardDescription}</p>
@@ -429,39 +449,42 @@ function ProDashboardContent() {
 				</Suspense>
 			) : null}
 
-			{hasChartItems || mode === 'edit' ? (
+			{showTimePeriodSelector || showSqlRefresh ? (
 				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-					<Tooltip
-						content={!hasChartItems ? 'Add chart items to enable time period selection' : null}
-						placement="bottom"
-					>
-						<div className="order-2 flex gap-0 overflow-x-auto md:order-1">
-							{timePeriods.map((period) => (
-								<button
-									type="button"
-									key={period.value}
-									className={`-ml-px flex-1 rounded-none border px-3 py-1.5 text-sm font-medium transition-colors duration-200 first:ml-0 first:rounded-l-md md:flex-initial md:px-4 md:py-2 ${
-										timePeriod === period.value
-											? 'pro-border pro-btn-primary'
-											: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
-									} ${!hasChartItems ? 'cursor-not-allowed opacity-50' : ''}`}
-									onClick={() => hasChartItems && setTimePeriod(period.value)}
-									disabled={!hasChartItems}
-								>
-									{period.label}
-								</button>
-							))}
-							<CustomTimePeriodPicker
-								isActive={timePeriod === 'custom'}
-								customPeriod={customTimePeriod}
-								onApply={(period) => setCustomTimePeriod(period)}
-								onClear={() => setTimePeriod('365d')}
-								disabled={!hasChartItems}
-							/>
-						</div>
-					</Tooltip>
+					{showTimePeriodSelector ? (
+						<Tooltip
+							content={!hasTimePeriodItems ? 'Add chart items to enable time period selection' : null}
+							placement="bottom"
+						>
+							<div className="order-2 -mx-1 flex scrollbar-none gap-0 overflow-x-auto px-1 md:order-1 md:mx-0 md:px-0">
+								{timePeriods.map((period) => (
+									<button
+										type="button"
+										key={period.value}
+										className={`-ml-px shrink-0 rounded-none border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-200 first:ml-0 first:rounded-l-md md:flex-initial md:px-4 md:py-2 ${
+											timePeriod === period.value
+												? 'pro-border pro-btn-primary'
+												: 'pro-border pro-hover-bg text-pro-text-secondary hover:text-pro-text-primary'
+										} ${!hasTimePeriodItems ? 'cursor-not-allowed opacity-50' : ''}`}
+										onClick={() => hasTimePeriodItems && setTimePeriod(period.value)}
+										disabled={!hasTimePeriodItems}
+									>
+										{period.label}
+									</button>
+								))}
+								<CustomTimePeriodPicker
+									isActive={timePeriod === 'custom'}
+									customPeriod={customTimePeriod}
+									onApply={(period) => setCustomTimePeriod(period)}
+									onClear={() => setTimePeriod('365d')}
+									disabled={!hasTimePeriodItems}
+								/>
+							</div>
+						</Tooltip>
+					) : null}
 					<div className="order-3 flex min-w-0 flex-wrap items-center gap-2">
-						{dashboardId && items.some((item) => item.kind === 'sql') ? (
+						<DashboardActionsSheet actions={mobileHeaderActions} />
+						{showSqlRefresh ? (
 							<button
 								type="button"
 								className="flex items-center gap-2 rounded-md border pro-border pro-hover-bg px-3 py-2 text-sm whitespace-nowrap text-pro-text-secondary transition-colors hover:text-pro-text-primary disabled:cursor-not-allowed disabled:opacity-60 md:px-4 md:text-base"
@@ -478,8 +501,8 @@ function ProDashboardContent() {
 						{!isReadOnly && dashboardId ? (
 							<button
 								type="button"
-								onClick={() => setShowSettingsModal(true)}
-								className="flex rounded-md pro-glass pro-hover-bg p-2 transition-colors"
+								onClick={openDashboardSettings}
+								className="hidden rounded-md pro-glass pro-hover-bg p-2 transition-colors md:flex"
 								aria-label="Dashboard Settings"
 								title="Dashboard Settings"
 							>
@@ -490,20 +513,18 @@ function ProDashboardContent() {
 							<button
 								type="button"
 								className="hidden animate-pro-glow items-center gap-2 rounded-md pro-btn-primary-outline px-4 py-2 text-base whitespace-nowrap md:flex"
-								onClick={() => {
-									if (hasActiveSubscription) {
-										setShowIterateDashboardModal(true)
-									} else {
-										showPaywall('llamaai')
-									}
-								}}
+								onClick={openIterateDashboardOrPaywall}
 								title="Edit with LlamaAI"
 							>
 								<Icon name="sparkles" height={16} width={16} />
 								Edit with LlamaAI
 							</button>
 						) : null}
-						{!isReadOnly && canUndo ? <UndoAIGenerationButton key={dashboardId} onUndo={undoAIGeneration} /> : null}
+						{!isReadOnly && canUndo ? (
+							<div className="hidden md:block">
+								<UndoAIGenerationButton key={dashboardId} onUndo={undoAIGeneration} />
+							</div>
+						) : null}
 
 						{!isReadOnly ? (
 							<button

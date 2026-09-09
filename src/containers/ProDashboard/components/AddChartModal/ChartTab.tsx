@@ -8,6 +8,11 @@ import { ChartBuilderTab } from './ChartBuilderTab'
 import type { ChartBuilderConfig, ChartBuilderUpdate, ChartModeType, ChartTabType } from './types'
 import { UnifiedChartTab } from './UnifiedChartTab'
 
+const CHART_MODE_HINTS: Record<ChartModeType, string> = {
+	builder: 'Top protocols or chains by one metric, stacked into a single chart.',
+	manual: 'Pick a category, then choose specific protocols, chains or assets.'
+}
+
 interface ChartTabProps {
 	chartMode: ChartModeType
 	onChartModeChange: (mode: ChartModeType) => void
@@ -143,7 +148,7 @@ export function ChartTab(props: ChartTabProps) {
 										: 'text-pro-text-tertiary group-hover:text-pro-text-secondary'
 								}
 							/>
-							<span>Builder</span>
+							<span>Top-N breakdown</span>
 						</Tab>
 						<Tab
 							value="manual"
@@ -168,6 +173,7 @@ export function ChartTab(props: ChartTabProps) {
 					</Ariakit.TabList>
 				</div>
 
+				<p className="-mt-1 mb-3 px-1 text-xs text-pro-text-tertiary">{CHART_MODE_HINTS[chartMode]}</p>
 				<TabPanel value={chartMode} className="flex min-h-0 flex-1 flex-col">
 					{chartMode === 'builder' ? (
 						<ChartBuilderTab

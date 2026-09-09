@@ -1,6 +1,6 @@
 import type { PublicDashboardAuthor } from '~/containers/Authors/types'
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
-import type { AIGeneratedData, CustomTimePeriod, TimePeriod } from '../dashboardTypes'
+import type { AIGeneratedData, CustomTimePeriod, DashboardCopySource, TimePeriod } from '../dashboardTypes'
 import type {
 	AdvancedTvlChartConfig,
 	BorrowedChartConfig,
@@ -13,9 +13,9 @@ import type {
 	StablecoinAssetChartConfig,
 	StablecoinsChartConfig,
 	TextConfig,
+	UnlocksDataType,
 	UnlocksPieConfig,
 	UnlocksScheduleConfig,
-	UnlocksDataType,
 	YieldsChartConfig
 } from '../types'
 import type { ChartConfigInput } from './classicChartConfig'
@@ -612,6 +612,7 @@ export type PersistedDashboardItemConfig =
 	| PersistedUnifiedTableV3Config
 
 export interface PersistedDashboard {
+	copiedFrom?: DashboardCopySource
 	id: string
 	slug?: string
 	user?: string

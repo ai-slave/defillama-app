@@ -5,6 +5,7 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -71,6 +72,7 @@ function PieChart({
 	onReady,
 	...props
 }: IPieChartProps) {
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const [isDark] = useDarkModeManager()
 	const chartTheme = useChartTheme(isDark)
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
@@ -409,23 +411,27 @@ function PieChart({
 			series: {
 				center: !showLegend || isSmall || reservedRight <= 0 ? ['50%', centerY] : [cx, centerY]
 			},
-			graphic: [
-				{
-					id: 'defillama-watermark',
-					type: 'image',
-					zlevel: 10,
-					z: 999,
-					silent: true,
-					left: Math.round(cx - watermarkWidth / 2),
-					top: Math.round(cy - watermarkHeight / 2),
-					style: {
-						image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-						width: watermarkWidth,
-						height: watermarkHeight,
-						opacity: 0.3
+			...(canvasWatermarkEnabled
+				? {
+						graphic: [
+							{
+								id: 'defillama-watermark',
+								type: 'image',
+								zlevel: 10,
+								z: 999,
+								silent: true,
+								left: Math.round(cx - watermarkWidth / 2),
+								top: Math.round(cy - watermarkHeight / 2),
+								style: {
+									image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
+									width: watermarkWidth,
+									height: watermarkHeight,
+									opacity: 0.3
+								}
+							}
+						]
 					}
-				}
-			]
+				: {})
 		}
 		instance.setOption(option, { lazyUpdate: true })
 	})
@@ -436,7 +442,7 @@ function PieChart({
 	useEffect(() => {
 		syncLayout()
 		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- these are the layout inputs; syncLayout is stable and reads the latest values, so it must run again when they change.
-	}, [showLegend, isSmall, reservedRight, isDark, centerY, syncLayout])
+	}, [canvasWatermarkEnabled, showLegend, isSmall, reservedRight, isDark, centerY, syncLayout])
 
 	return (
 		<ChartContainer

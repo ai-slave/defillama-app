@@ -1,5 +1,4 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import { buildRuntimePieChartPresentation } from '~/components/ECharts/PieChart/data'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import {
@@ -22,8 +21,8 @@ import { formatUsd } from '~/utils/numberFormat'
 import { useProDashboardTime } from '../ProDashboardAPIContext'
 import type { StablecoinsChartConfig } from '../types'
 import { prepareProChartCsv } from './chartCsv'
-import { CSVExportButton } from './CSVExportButton'
 import { LoadingSpinner } from './LoadingSpinner'
+import { ProCardOverflowMenu } from './ProCardActions'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const PieChart = lazy(() => import('~/components/ECharts/PieChart'))
@@ -190,11 +189,9 @@ export function StablecoinsChartCard({ config }: StablecoinsChartCardProps) {
 								popoverVariant="legacy"
 							/>
 						) : null}
-						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						<CSVExportButton
-							prepareCsv={prepareCsvExport}
-							smol
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
+						<ProCardOverflowMenu
+							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
+							csv={{ prepareCsv: prepareCsvExport }}
 						/>
 					</div>
 				) : null}

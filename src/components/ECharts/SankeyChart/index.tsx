@@ -11,6 +11,7 @@ import { LabelLayout } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
+import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -149,6 +150,7 @@ function SankeyChart({
 	imageExportTitle,
 	...props
 }: ISankeyChartProps) {
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const [isDark] = useDarkModeManager()
 	const isSmall = useMedia(`(max-width: 37.5rem)`)
 	const useMobileLayout = isSmall && orient === 'horizontal'
@@ -286,17 +288,19 @@ function SankeyChart({
 	])
 
 	const option = useMemo<EChartsOption>(() => {
-		const graphic: GraphicComponentOption = {
-			type: 'image',
-			z: 0,
-			style: {
-				image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-				height: 40,
-				opacity: 0.3
-			},
-			left: isSmall ? '35%' : '40%',
-			top: '50%'
-		}
+		const graphic: GraphicComponentOption = canvasWatermarkEnabled
+			? {
+					type: 'image',
+					z: 0,
+					style: {
+						image: isDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
+						height: 40,
+						opacity: 0.3
+					},
+					left: isSmall ? '35%' : '40%',
+					top: '50%'
+				}
+			: undefined
 		const tooltip: TooltipComponentOption = {
 			trigger: 'item',
 			triggerOn: isSmall ? 'click' : 'mousemove',
@@ -336,7 +340,7 @@ function SankeyChart({
 			tooltip,
 			series
 		}
-	}, [series, isDark, isSmall, useMobileLayout, nodeMetadata, formatSankeyValue])
+	}, [canvasWatermarkEnabled, series, isDark, isSmall, useMobileLayout, nodeMetadata, formatSankeyValue])
 
 	const getOption = useCallback(
 		(element: HTMLDivElement): EChartsOption => {

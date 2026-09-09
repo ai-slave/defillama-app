@@ -2,18 +2,16 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { lazy, Suspense, useCallback, useContext, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { MultiSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_INSET, CHART_LEGEND_RESERVE, chartGrid } from '~/components/ECharts/shared/chartSpacing'
 import { Select } from '~/components/Select/Select'
-import { filterDataByTimePeriod, StreamDoneContext } from '~/containers/ProDashboard/queries'
+import { StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS } from '~/containers/ProDashboard/utils/breakdownMetrics'
 import { useChartImageExport } from '~/hooks/useChartImageExport'
-import { Icon } from '~/ui/Icon'
 import type { ChartSeries } from '~/utils/breakdowns'
 import { downloadBlob } from '~/utils/download'
 import { formatUsd } from '~/utils/numberFormat'
-import { chartBuilderHasExactRemainder } from '../chartBuilderCapabilities'
+import { chartBuilderHasExactRemainder, chartBuilderScopeHidesOthers } from '../chartBuilderCapabilities'
 import { getChartBuilderQueryKey } from '../chartBuilderQueryKey'
 import {
 	useProDashboardCatalog,
@@ -24,10 +22,15 @@ import {
 import { fetchProtocolBreakdownData, fetchProtocolChainBreakdownData } from '../services/ProtocolChartBuilderData'
 import type { ChartBuilderConfig, DashboardGrouping } from '../types'
 import { buildProTreemapData } from '../utils/treemap'
-import { buildChartBuilderSeriesView, isChartBuilderSnapshotMetric } from './chartBuilderSeries'
+import {
+	buildChartBuilderSeriesView,
+	isChartBuilderSnapshotMetric,
+	selectChartBuilderSeries,
+	withoutOthersSeries
+} from './chartBuilderSeries'
 import { createChartBuilderTooltipFormatter, dashboardGroupingToTooltipGroupBy } from './chartBuilderTooltip'
 import { ConfirmationModal } from './ConfirmationModal'
-import { CSVExportButton } from './CSVExportButton'
+import { ProCardEditControls, ProCardOverflowMenu } from './ProCardActions'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const BuilderTreemapChart = lazy(() => import('~/components/ECharts/TreemapChart/Builder'))
@@ -89,14 +92,8 @@ async function fetchChartBuilderSeries(config: ChartBuilderConfig['config']): Pr
 			chainCategoryFilterMode: config.chainCategoryFilterMode,
 			protocolCategoryFilterMode: config.protocolCategoryFilterMode
 		})
-		if (
-			config.hideOthers ||
-			(config.chainCategories && config.chainCategories.length > 0) ||
-			(config.protocolCategories && config.protocolCategories.length > 0)
-		) {
-			return data.series.filter((series) => !series.name.startsWith('Others'))
-		}
-		return data.series
+
+		return chartBuilderScopeHidesOthers(config) ? withoutOthersSeries(data.series) : data.series
 	}
 
 	if (PROTOCOL_UNSUPPORTED_BY_CHAIN_METRICS.has(config.metric)) return []
@@ -109,10 +106,8 @@ async function fetchChartBuilderSeries(config: ChartBuilderConfig['config']): Pr
 		chainFilterMode: config.chainFilterMode,
 		categoryFilterMode: config.categoryFilterMode
 	})
-	if (config.hideOthers || (config.chainCategories && config.chainCategories.length > 0)) {
-		return data.series.filter((series) => !series.name.startsWith('Others'))
-	}
-	return data.series
+
+	return chartBuilderScopeHidesOthers(config) ? withoutOthersSeries(data.series) : data.series
 }
 
 export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
@@ -124,7 +119,7 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 		handleEditItem,
 		handleDuplicateChartBuilder
 	} = useProDashboardEditorActions()
-	const { isReadOnly, hideDuplicateButton } = useProDashboardPermissions()
+	const { isReadOnly } = useProDashboardPermissions()
 	const { timePeriod, customTimePeriod } = useProDashboardTime()
 	const { authorizedFetch } = useAuthContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
@@ -158,16 +153,9 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 
 	const streamDone = useContext(StreamDoneContext)
 	const selectChartData = useCallback(
-		(data: { series: Array<ChartSeries> }) => {
-			if (!timePeriod || timePeriod === 'all') return data
-			return {
-				series: data.series.map((series) => ({
-					...series,
-					data: filterDataByTimePeriod(series.data, timePeriod, customTimePeriod)
-				}))
-			}
-		},
-		[timePeriod, customTimePeriod]
+		(data: { series: Array<ChartSeries> }) =>
+			selectChartBuilderSeries(data, { hideOthers: config.hideOthers === true, timePeriod, customTimePeriod }),
+		[config.hideOthers, timePeriod, customTimePeriod]
 	)
 	const { data: chartData, isPending: isChartDataPending } = useQuery({
 		queryKey: getChartBuilderQueryKey(config),
@@ -379,25 +367,26 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 								? `${(config.protocol && (getProtocolInfo(config.protocol)?.name || config.protocol)) || 'All Protocols'} ${config.metric} by Chain`
 								: `${config.metric} by Protocol`)}
 					</h2>
-					{!isReadOnly && hasRenderableData && config.chartType !== 'treemap' ? (
-						<div className="flex overflow-hidden rounded-md border border-pro-form-control-border">
-							{groupingOptions.map((option, index) => (
-								<button
-									type="button"
-									key={option}
-									onClick={() => handleGroupingChange(builder.id, option)}
-									className={`px-2 py-1 text-xs font-medium transition-colors duration-150 ease-in-out sm:px-3 ${index > 0 ? 'border-l border-pro-form-control-border' : ''} ${
-										builder.grouping === option || (!builder.grouping && option === 'day')
-											? 'bg-brand text-on-brand focus:ring-2 focus:ring-brand/50 focus:outline-hidden'
-											: 'bg-transparent pro-hover-bg text-pro-text-secondary focus:ring-1 focus:ring-pro-form-control-border focus:outline-hidden'
-									}`}
-								>
-									{option.slice(0, 1).toUpperCase()}
-								</button>
-							))}
-						</div>
-					) : null}
-					{!isReadOnly ? (
+					<ProCardEditControls>
+						{hasRenderableData && config.chartType !== 'treemap' ? (
+							<div className="flex overflow-hidden rounded-md border border-pro-form-control-border">
+								{groupingOptions.map((option, index) => (
+									<button
+										type="button"
+										key={option}
+										onClick={() => handleGroupingChange(builder.id, option)}
+										className={`px-2 py-1 text-xs font-medium transition-colors duration-150 ease-in-out sm:px-3 ${index > 0 ? 'border-l border-pro-form-control-border' : ''} ${
+											builder.grouping === option || (!builder.grouping && option === 'day')
+												? 'bg-brand text-on-brand focus:ring-2 focus:ring-brand/50 focus:outline-hidden'
+												: 'bg-transparent pro-hover-bg text-pro-text-secondary focus:ring-1 focus:ring-pro-form-control-border focus:outline-hidden'
+										}`}
+									>
+										{option.slice(0, 1).toUpperCase()}
+									</button>
+								))}
+							</div>
+						) : null}
+
 						<Select
 							size="sm"
 							allValues={CHART_TYPE_OPTIONS}
@@ -419,92 +408,77 @@ export function ChartBuilderCard({ builder }: ChartBuilderCardProps) {
 							labelType="none"
 							variant="pro"
 						/>
-					) : null}
-					{!isReadOnly && config.chartType === 'treemap' && !isSnapshotChart ? (
-						<Select
-							size="sm"
-							allValues={TREEMAP_VALUE_OPTIONS}
-							selectedValues={treemapMode}
-							setSelectedValues={(value: string) => handleTreemapValueChange(value)}
-							label={treemapLabel}
-							labelType="none"
-							variant="pro"
-						/>
-					) : null}
-					{!isReadOnly && config.chartType !== 'treemap' && hasExactRemainder ? (
-						<Select
-							size="sm"
-							allValues={VALUE_TYPE_OPTIONS}
-							selectedValues={displayAs === 'percentage' ? '% Percentage' : '$ Absolute'}
-							setSelectedValues={(value: string) => {
-								handlePercentageChange(builder.id, value === '% Percentage')
-							}}
-							label={displayAs === 'percentage' ? '% Percentage' : '$ Absolute'}
-							labelType="none"
-							variant="pro"
-						/>
-					) : null}
-					{hasRenderableData ? (
-						<button
-							type="button"
-							data-btn="colors"
-							onClick={() => setShowColors((prev) => !prev)}
-							disabled={isReadOnly}
-							aria-pressed={effectiveShowColors}
-							className={`flex items-center gap-1 rounded-md border px-1.5 py-1 text-xs transition-colors disabled:cursor-not-allowed ${
-								effectiveShowColors
-									? 'border-transparent bg-brand text-on-brand'
-									: 'border-pro-form-control-border hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary'
-							} disabled:border-pro-cards-border disabled:text-tertiary`}
-						>
-							Colors
-						</button>
-					) : null}
-					{!isReadOnly &&
-					hasExactRemainder &&
-					(config.mode !== 'protocol' || !(config.chainCategories && config.chainCategories.length > 0)) ? (
-						<Select
-							size="sm"
-							allValues={hideOthersOptions}
-							selectedValues={config.hideOthers ? `Top ${config.limit}` : 'All'}
-							setSelectedValues={(value: string) => {
-								handleHideOthersChange(builder.id, value !== 'All')
-							}}
-							label={config.hideOthers ? `Top ${config.limit}` : 'All'}
-							labelType="none"
-							variant="pro"
-						/>
-					) : !isReadOnly && !hasExactRemainder ? (
-						<span className="rounded-md border border-pro-form-control-border px-2 py-1 text-xs text-pro-text-secondary">
-							Top {config.limit}
-						</span>
-					) : null}
-					{!isReadOnly && !hideDuplicateButton ? (
-						<button
-							type="button"
-							onClick={() => setShowDuplicateConfirm(true)}
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
-						>
-							<Icon name="copy" height={14} width={14} />
-							<span>Duplicate</span>
-						</button>
-					) : null}
-					{hasRenderableData ? (
-						<>
-							<ChartPngExportButton
-								chartInstance={chartInstance}
-								filename={builder.name || config.metric}
-								title={config.chartType === 'treemap' ? undefined : builder.name || `${config.metric} by Protocol`}
-								expandLegend
-								smol
+
+						{config.chartType === 'treemap' && !isSnapshotChart ? (
+							<Select
+								size="sm"
+								allValues={TREEMAP_VALUE_OPTIONS}
+								selectedValues={treemapMode}
+								setSelectedValues={(value: string) => handleTreemapValueChange(value)}
+								label={treemapLabel}
+								labelType="none"
+								variant="pro"
 							/>
-							<CSVExportButton
-								onClick={() => csvExportMutation.mutate()}
-								isLoading={csvExportMutation.isPending}
-								smol
-								className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
+						) : null}
+						{config.chartType !== 'treemap' && hasExactRemainder ? (
+							<Select
+								size="sm"
+								allValues={VALUE_TYPE_OPTIONS}
+								selectedValues={displayAs === 'percentage' ? '% Percentage' : '$ Absolute'}
+								setSelectedValues={(value: string) => {
+									handlePercentageChange(builder.id, value === '% Percentage')
+								}}
+								label={displayAs === 'percentage' ? '% Percentage' : '$ Absolute'}
+								labelType="none"
+								variant="pro"
 							/>
-						</>
+						) : null}
+
+						{hasRenderableData ? (
+							<button
+								type="button"
+								data-btn="colors"
+								onClick={() => setShowColors((prev) => !prev)}
+								aria-pressed={effectiveShowColors}
+								className={`flex items-center gap-1 rounded-md border px-1.5 py-1 text-xs transition-colors disabled:cursor-not-allowed ${
+									effectiveShowColors
+										? 'border-transparent bg-brand text-on-brand'
+										: 'border-pro-form-control-border hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary'
+								} disabled:border-pro-cards-border disabled:text-tertiary`}
+							>
+								Colors
+							</button>
+						) : null}
+						{hasExactRemainder &&
+						(config.mode !== 'protocol' || !(config.chainCategories && config.chainCategories.length > 0)) ? (
+							<Select
+								size="sm"
+								allValues={hideOthersOptions}
+								selectedValues={config.hideOthers ? `Top ${config.limit}` : 'All'}
+								setSelectedValues={(value: string) => {
+									handleHideOthersChange(builder.id, value !== 'All')
+								}}
+								label={config.hideOthers ? `Top ${config.limit}` : 'All'}
+								labelType="none"
+								variant="pro"
+							/>
+						) : !hasExactRemainder ? (
+							<span className="rounded-md border border-pro-form-control-border px-2 py-1 text-xs text-pro-text-secondary">
+								Top {config.limit}
+							</span>
+						) : null}
+					</ProCardEditControls>
+					{hasRenderableData ? (
+						<ProCardOverflowMenu
+							image={{
+								chartInstance,
+								filename: builder.name || config.metric,
+								title: config.chartType === 'treemap' ? undefined : builder.name || `${config.metric} by Protocol`,
+								expandLegend: true
+							}}
+							csv={{ onClick: () => csvExportMutation.mutate(), isLoading: csvExportMutation.isPending }}
+							onDuplicate={() => setShowDuplicateConfirm(true)}
+						/>
 					) : null}
 				</div>
 				{effectiveShowColors && hasRenderableData ? (

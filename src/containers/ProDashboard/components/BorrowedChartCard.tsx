@@ -1,5 +1,4 @@
 import { lazy, Suspense, useContext, useMemo } from 'react'
-import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
 import type { TimestampDataset } from '~/components/ECharts/MultiSeriesChart/timeSeriesDataset'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
@@ -16,9 +15,9 @@ import { PRO_DASHBOARD_METRIC_STALE_TIME } from '../queryPolicy'
 import { shouldSuppressBorrowedTokenBreakdown } from '../services/protocolTvl'
 import type { BorrowedChartConfig } from '../types'
 import { prepareProChartCsv } from './chartCsv'
-import { CSVExportButton } from './CSVExportButton'
 import { filterChartDatasetByTimePeriod } from './datasets/filterChartDataset'
 import { LoadingSpinner } from './LoadingSpinner'
+import { ProCardOverflowMenu } from './ProCardActions'
 import { useBorrowedChartData } from './useBorrowedChartData'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -247,11 +246,9 @@ export function BorrowedChartCard({ config }: BorrowedChartCardProps) {
 								size="md"
 							/>
 						) : null}
-						<ChartPngExportButton chartInstance={chartInstance} filename={imageFilename} title={imageTitle} smol />
-						<CSVExportButton
-							prepareCsv={prepareCsvExport}
-							smol
-							className="flex items-center gap-1 rounded-md border border-pro-form-control-border px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-pro-cards-border disabled:text-tertiary"
+						<ProCardOverflowMenu
+							image={{ chartInstance, filename: imageFilename, title: imageTitle }}
+							csv={{ prepareCsv: prepareCsvExport }}
 						/>
 					</div>
 				) : null}

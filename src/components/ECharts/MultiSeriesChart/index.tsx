@@ -8,20 +8,21 @@ import type {
 } from 'echarts'
 import { BarChart, CustomChart, LineChart } from 'echarts/charts'
 import {
+	DatasetComponent,
 	DataZoomComponent,
 	GraphicComponent,
 	GridComponent,
 	LegendComponent,
 	MarkAreaComponent,
 	MarkLineComponent,
-	TooltipComponent,
-	DatasetComponent
+	TooltipComponent
 } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { buildCsvFromDataset } from '~/components/ChartExport/ChartCsvExportButton'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
+import { useCanvasWatermarkEnabled } from '~/components/ECharts/shared/watermark'
 import { CHART_COLORS } from '~/constants/colors'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -53,8 +54,8 @@ import {
 	createEventRailSeries,
 	createEventStripYAxis,
 	type EventHoverState,
-	getMainGridBottom,
 	getDatasetTimeBounds,
+	getMainGridBottom,
 	getSeriesTimeBounds,
 	mergeGraphicWithEventMarkLinePlaceholder
 } from './eventRail'
@@ -185,6 +186,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		isThemeDark: isThemeDarkOverride
 	} = props
 
+	const canvasWatermarkEnabled = useCanvasWatermarkEnabled()
 	const [managedIsThemeDark] = useDarkModeManager()
 	const isThemeDark = isThemeDarkOverride ?? managedIsThemeDark
 	// Legend icons render only once their image URL has been probed, so the probe result is series input.
@@ -225,17 +227,19 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		const themeColor = chartTheme.text
 		const axisLabelColor = chartTheme.axisLabel
 
-		const graphic = {
-			type: 'image',
-			z: 0,
-			style: {
-				image: isThemeDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
-				height: 40,
-				opacity: 0.3
-			},
-			left: isSmall ? '40%' : '45%',
-			top: '130px'
-		}
+		const graphic = canvasWatermarkEnabled
+			? {
+					type: 'image',
+					z: 0,
+					style: {
+						image: isThemeDark ? '/assets/defillama-light-neutral.webp' : '/assets/defillama-dark-neutral.webp',
+						height: 40,
+						opacity: 0.3
+					},
+					left: isSmall ? '40%' : '45%',
+					top: '130px'
+				}
+			: undefined
 
 		const xAxis: XAXisComponentOption = {
 			type: 'time',
@@ -307,7 +311,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 		]
 
 		return { graphic, xAxis, yAxis, legend, dataZoom }
-	}, [chartTheme, isThemeDark, valueSymbol, isSmall])
+	}, [canvasWatermarkEnabled, chartTheme, isThemeDark, valueSymbol, isSmall])
 
 	const datasetDimensions = dataset.dimensions
 	const inferredCharts = useMemo(() => {

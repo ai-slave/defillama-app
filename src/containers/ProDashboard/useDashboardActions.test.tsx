@@ -70,6 +70,27 @@ describe('useDashboardActions', () => {
 		container.remove()
 	})
 
+	test('saves each period selection with matching overrides', async () => {
+		const autoSave = vi.fn()
+		const dispatch = vi.fn()
+		let actions!: ReturnType<typeof useDashboardActions>
+		function Harness() {
+			actions = useDashboardActions(dispatch, dashboardState(), autoSave, false)
+			return null
+		}
+		await act(async () => root.render(<Harness />))
+		act(() => actions.setTimePeriod('30d'))
+		expect(autoSave).toHaveBeenLastCalledWith([FIRST, SECOND], { timePeriod: '30d', customTimePeriod: null })
+		expect(dispatch).toHaveBeenLastCalledWith({ type: 'SET_TIME_PERIOD', payload: '30d' })
+		act(() => actions.setTimePeriod('custom'))
+		expect(autoSave).toHaveBeenLastCalledWith([FIRST, SECOND], { timePeriod: 'custom' })
+		const period = { type: 'relative', relativeDays: 14 } as const
+		act(() => actions.setCustomTimePeriod(period))
+		expect(autoSave).toHaveBeenLastCalledWith([FIRST, SECOND], { timePeriod: 'custom', customTimePeriod: period })
+		act(() => actions.setCustomTimePeriod(null))
+		expect(autoSave).toHaveBeenLastCalledWith([FIRST, SECOND], { customTimePeriod: null })
+	})
+
 	test('uses a reordered list as the synchronous source for the next mutation and save', async () => {
 		const dispatch = vi.fn<(action: DashboardAction) => void>()
 		const autoSave = vi.fn<(items: Array<DashboardItemConfig>) => void>()

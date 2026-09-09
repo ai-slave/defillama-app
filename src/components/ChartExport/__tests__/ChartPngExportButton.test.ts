@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from 'vitest'
 import {
 	applyTreemapViewportExportState,
 	buildPieExportLegendOption,
+	ensureExportWatermarkGraphic,
 	getTreemapTargetDataRoot,
 	mutateAndWaitForChartRender,
 	readTreemapViewportExportState,
@@ -9,6 +10,8 @@ import {
 	scaleXAxisForExport,
 	scaleYAxisForExport
 } from '../ChartPngExportButton'
+import { getChartExportIconFetchUrl } from '../chartPngExportIcon'
+import { BASE_TOP_PADDING, computeExportLayout, EXPORT_HALLMARK_LABEL_RESERVE } from '../chartPngExportLayout'
 
 describe('pie PNG export legend', () => {
 	test('keeps the legend vertical and on the right like the rendered pie chart', () => {
@@ -148,8 +151,6 @@ describe('scaleXAxisForExport', () => {
 		expect(scaled.axisLabel.formatter).toBe(formatter)
 	})
 })
-import { getChartExportIconFetchUrl } from '../chartPngExportIcon'
-import { BASE_TOP_PADDING, computeExportLayout, EXPORT_HALLMARK_LABEL_RESERVE } from '../chartPngExportLayout'
 
 describe('scaleYAxisForExport', () => {
 	// EXPORT_FONT_SIZE = 24; on-screen category labels use the ECharts default 12px font.
@@ -284,5 +285,25 @@ describe('getChartExportIconFetchUrl', () => {
 	test('falls back to the generic icon proxy for other allowed icon URLs', () => {
 		const url = 'https://token-icons.llamao.fi/icons/tokens/gecko/ethereum?w=48&h=48'
 		expect(getChartExportIconFetchUrl(url)).toBe(`/api/public/icon-proxy?url=${encodeURIComponent(url)}`)
+	})
+})
+
+test('adds one centered export watermark and preserves unrelated graphics', () => {
+	const unrelated = { elements: [{ type: 'text', style: { text: 'Label' } }] }
+	const options = { isDark: false, exportHeight: 1000, onTop: true }
+	const graphic = ensureExportWatermarkGraphic([unrelated], options)
+	expect(graphic).toHaveLength(1)
+	expect(graphic[0].elements[0]).toBe(unrelated.elements[0])
+	expect(graphic[0].elements[1]).toMatchObject({
+		top: 460,
+		zlevel: 10,
+		z: 999,
+		silent: true,
+		style: { height: 80, image: '/assets/defillama-dark-neutral.webp' }
+	})
+	expect(ensureExportWatermarkGraphic(graphic, options)).toBe(graphic)
+	expect(ensureExportWatermarkGraphic([], { ...options, onTop: false })[0].elements[0]).toMatchObject({
+		zlevel: 0,
+		z: 0
 	})
 })
