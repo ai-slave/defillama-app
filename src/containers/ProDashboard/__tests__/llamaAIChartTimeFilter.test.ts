@@ -71,4 +71,28 @@ describe('filterLlamaAIChartPayload', () => {
 		]
 		expect(filterLlamaAIChartPayload([pieConfig], pieRows, '30d')).toEqual(pieRows)
 	})
+
+	test('keeps every row when the period would leave the chart empty', () => {
+		const quarterly = [
+			{ date: '2025-10-01', tvl: 1 },
+			{ date: '2026-01-01', tvl: 2 },
+			{ date: '2026-04-01', tvl: 3 }
+		]
+		expect(filterLlamaAIChartPayload([baseConfig], quarterly, '30d')).toEqual(quarterly)
+	})
+
+	test('keeps every row when the period would leave a single point', () => {
+		const quarterly = [
+			{ date: '2025-10-01', tvl: 1 },
+			{ date: '2026-01-01', tvl: 2 },
+			{ date: '2026-04-01', tvl: 3 }
+		]
+		expect(
+			filterLlamaAIChartPayload([baseConfig], quarterly, 'custom', {
+				type: 'absolute',
+				startDate: 1_772_323_200,
+				endDate: 1_777_593_600
+			})
+		).toEqual(quarterly)
+	})
 })

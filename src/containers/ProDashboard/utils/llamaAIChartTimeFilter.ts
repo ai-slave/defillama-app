@@ -137,7 +137,8 @@ function filterChartRows<Row>(
 	const bounds = getTimePeriodBounds(timePeriod, customPeriod)
 	if (!bounds || !isTimeSeriesChart(config, rows)) return rows
 
-	return filterRowsByTimePeriod(rows, getTimeField(config), bounds)
+	const filtered = filterRowsByTimePeriod(rows, getTimeField(config), bounds)
+	return filtered.length < 2 ? rows : filtered
 }
 
 export function filterLlamaAIChartPayload<Row>(
