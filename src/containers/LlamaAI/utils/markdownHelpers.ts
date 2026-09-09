@@ -196,33 +196,40 @@ export function normalizeCitationMarkerWhitespace(text: string): string {
 	return text.replace(/[ \t]+([.,;:!?])/g, '$1').replace(/[ \t]{2,}/g, ' ')
 }
 
+/** Matches `[1]`, `[1,3]`, `[2-4]`, `[^1]` and `【1†…】`. One source for every marker reader. */
+export function citationMarkerRegex(): RegExp {
+	const citationSequencePattern = String.raw`\d+(?:(?:\s*-\s*\d+)|(?:\s*,\s*\d+))*`
+	return new RegExp(
+		String.raw`(?:\[(?:\^\s*)?(${citationSequencePattern})\s*\]|【\s*(${citationSequencePattern})(?:\s*†[^】]*)?\s*】)`,
+		'g'
+	)
+}
+
+/** Expand one marker's captured digits, so `2-4` becomes 2, 3, 4 and `1,3` becomes 1, 3. */
+export function expandCitationIds(nums: string): Array<number> {
+	const expanded: Array<number> = []
+	for (const part of nums.split(',').map((p) => p.trim())) {
+		if (part.includes('-')) {
+			const [start, end] = part.split('-').map((n) => parseInt(n.trim(), 10))
+			if (!Number.isNaN(start) && !Number.isNaN(end) && start <= end) {
+				for (let i = start; i <= end; i++) expanded.push(i)
+			}
+		} else {
+			const n = parseInt(part.trim(), 10)
+			if (!Number.isNaN(n)) expanded.push(n)
+		}
+	}
+	return expanded
+}
+
 /**
  * Walk every citation marker — `[1]`, `[1,3]`, `[2-4]`, `[^1]`, or `【1†…】` — expand
  * ranges/lists into individual ids, and substitute whatever `render` returns.
  */
 export function replaceCitationMarkers(text: string, render: (ids: Array<number>) => string): string {
-	const citationSequencePattern = String.raw`\d+(?:(?:\s*-\s*\d+)|(?:\s*,\s*\d+))*`
-	const markerRegex = new RegExp(
-		String.raw`(?:\[(?:\^\s*)?(${citationSequencePattern})\s*\]|【\s*(${citationSequencePattern})(?:\s*†[^】]*)?\s*】)`,
-		'g'
+	return text.replace(citationMarkerRegex(), (_full: string, bracketNums?: string, modelNums?: string) =>
+		render(expandCitationIds(bracketNums ?? modelNums ?? ''))
 	)
-
-	return text.replace(markerRegex, (_full: string, bracketNums?: string, modelNums?: string) => {
-		const nums = bracketNums ?? modelNums ?? ''
-		const expanded: Array<number> = []
-		for (const part of nums.split(',').map((p) => p.trim())) {
-			if (part.includes('-')) {
-				const [start, end] = part.split('-').map((n) => parseInt(n.trim(), 10))
-				if (!Number.isNaN(start) && !Number.isNaN(end) && start <= end) {
-					for (let i = start; i <= end; i++) expanded.push(i)
-				}
-			} else {
-				const n = parseInt(part.trim(), 10)
-				if (!Number.isNaN(n)) expanded.push(n)
-			}
-		}
-		return render(expanded)
-	})
 }
 
 export function processUnifiedCitations(

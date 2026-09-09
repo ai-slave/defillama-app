@@ -8,7 +8,7 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { readTableRows, TableImageButtons } from '~/components/TableImage/TableImageButtons'
 import { EntityPreviewLink } from '~/containers/Articles/renderer/EntityPreviewLink'
 import type { ArticleEntityType } from '~/containers/Articles/types'
-import { CitationPill } from '~/containers/LlamaAI/components/messages/CitationPill'
+import { CitationPill, PendingCitationMarker } from '~/containers/LlamaAI/components/messages/CitationPill'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { getEntityUrl } from '~/containers/LlamaAI/utils/entityLinks'
 import {
@@ -22,7 +22,6 @@ import {
 	escapeBareOrderedListMarkers,
 	extractLlamaLinks,
 	normalizeSourceUrl,
-	processUnifiedCitations,
 	wrapLegacyUrlCitations
 } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { ExternalLinkInterstitial } from '~/containers/ProDashboard/components/ExternalLinkInterstitial'
@@ -33,6 +32,7 @@ import { popoverMenuItemStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
 import styles from '../../LlamaAIChat.module.css'
+import { rehypeCitationMarkers } from './rehypeCitationMarkers'
 import { rehypeHeadingIds } from './rehypeHeadingIds'
 import { rehypeStreamingCaret } from './rehypeStreamingCaret'
 import { SANITIZE_REHYPE_PLUGINS } from './sanitizeConfig'
@@ -467,6 +467,11 @@ interface MarkdownRenderContext {
 // module-level constant, because react-markdown gets it as a prop on every message in the thread.
 const MarkdownRenderContextProvider = createContext<MarkdownRenderContext | null>(null)
 
+// Set inside a table only. A citation marker in a cell reserves its width while its reference is
+// pending; in ordinary prose an unresolved marker still shows nothing, and a resolved one still
+// shows its domain or handle.
+const InTableContext = createContext(false)
+
 function MarkdownHeading({
 	level,
 	id,
@@ -508,28 +513,35 @@ function MarkdownAnchor(props: EntityLinkProps) {
 function MarkdownTable({ children, ...props }: ComponentPropsWithoutRef<'table'> & { children?: ReactNode }) {
 	const current = useContext(MarkdownRenderContextProvider)
 	return (
-		<TableWrapper
-			isStreaming={current?.isStreaming ?? false}
-			tableProps={props}
-			onTableFullscreenOpen={current?.onTableFullscreenOpen}
-			messageId={current?.messageId}
-		>
-			{children}
-		</TableWrapper>
+		<InTableContext.Provider value>
+			<TableWrapper
+				isStreaming={current?.isStreaming ?? false}
+				tableProps={props}
+				onTableFullscreenOpen={current?.onTableFullscreenOpen}
+				messageId={current?.messageId}
+			>
+				{children}
+			</TableWrapper>
+		</InTableContext.Provider>
 	)
 }
 
 function MarkdownFactCheckPill(props: Record<string, any>) {
 	const current = useContext(MarkdownRenderContextProvider)
-	const refsById = current?.citationRefsById
-	if (!refsById || refsById.size === 0) return null
+	const inTable = useContext(InTableContext)
 	const raw = props.dataRef ?? props['data-ref']
 	if (raw == null) return null
 	const numericId = Number(raw)
 	if (!Number.isFinite(numericId)) return null
-	const ref = refsById.get(numericId)
-	if (!ref) return null
-	return <CitationPill reference={ref} advancedProvenance={current.advancedProvenance} />
+	const ref = current?.citationRefsById?.get(numericId)
+	if (!ref) {
+		// Only while the answer streams: a marker whose reference never arrives was not a citation, and
+		// holding a slot for it forever would show a source that does not exist. Citation ids start at
+		// 1, so `[0]` is array syntax in a data cell rather than a reference waiting to land.
+		if (!inTable || !current?.isStreaming || numericId < 1) return null
+		return <PendingCitationMarker id={numericId} />
+	}
+	return <CitationPill reference={ref} advancedProvenance={current?.advancedProvenance} numberOnlyMarker={inTable} />
 }
 
 // `fact-check-pill` is a custom element the citation remark step emits; `Components` only types the
@@ -628,18 +640,21 @@ export function ChatMarkdownRenderer({
 		return byId
 	}, [renderCitationRefs])
 	const linkMap = useMemo(() => extractLlamaLinks(content), [content])
-	const processedContent = useMemo(
-		() => escapeBareOrderedListMarkers(processUnifiedCitations(content, renderCitationRefs)),
-		[content, renderCitationRefs]
-	)
+	const processedContent = useMemo(() => escapeBareOrderedListMarkers(content), [content])
 	// After the sanitize plugins: its schema drops ids it does not know about.
 	const rehypePlugins = useMemo<NonNullable<Options['rehypePlugins']>>(
 		() => [
 			...SANITIZE_REHYPE_PLUGINS,
+			// Before the heading and caret plugins, which read the finished tree: a marker sitting in a
+			// heading or at the end of an answer has to be a pill by the time they walk it.
+			[
+				rehypeCitationMarkers,
+				{ resolvedIds: citationRefsById ? new Set(citationRefsById.keys()) : undefined, reserveInTables: isStreaming }
+			],
 			[rehypeHeadingIds, { messageId }],
 			[rehypeStreamingCaret, { active: showStreamingCaret }]
 		],
-		[messageId, showStreamingCaret]
+		[citationRefsById, isStreaming, messageId, showStreamingCaret]
 	)
 	const renderContext = useMemo<MarkdownRenderContext>(
 		() => ({

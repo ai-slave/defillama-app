@@ -37,6 +37,36 @@ import { CitationRowsTable } from './ToolDataView'
 interface CitationPillProps {
 	reference: UnifiedCitationReference
 	advancedProvenance?: boolean
+	/** Table cells show the reference number so the marker keeps the width it reserved while pending. */
+	numberOnlyMarker?: boolean
+}
+
+// Shared by the resolved marker and the pending one: identical box, so resolving a reference cannot
+// change a cell's width.
+export const CITATION_MARKER_BOX =
+	'mx-px inline-flex h-[18px] max-w-[160px] items-center justify-center gap-0.5 rounded-[4px] border px-1 align-baseline text-[11px] leading-none font-medium no-underline'
+
+/**
+ * Holds a citation marker's place until its reference arrives.
+ *
+ * References are delivered in batches while an answer streams. A marker that renders as nothing
+ * until its batch lands changes a table cell after the table itself is finished, and because a
+ * table with auto layout sizes columns from content, one late pill re-proportions every column.
+ * Reserving the number's width means the resolved pill occupies exactly the same box.
+ *
+ * Dashed and muted so it does not read as a source you can open yet. Hidden from assistive
+ * technology: the resolved pill carries the label, and a bare number announces nothing useful.
+ */
+export function PendingCitationMarker({ id }: { id: number }) {
+	return (
+		<span
+			aria-hidden="true"
+			data-citation-pending="true"
+			className={`${CITATION_MARKER_BOX} border-dashed border-ai-line text-ai-tertiary opacity-70`}
+		>
+			{id}
+		</span>
+	)
 }
 
 function openUrl(reference: UnifiedCitationReference): string | null {
@@ -397,7 +427,7 @@ export function PillBody({
 	)
 }
 
-export function CitationPill({ reference }: CitationPillProps) {
+export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps) {
 	const id = reference.id
 	const hovercard = Ariakit.useHovercardStore({ placement: 'top', showTimeout: 120, hideTimeout: 180 })
 	const badge = badgeFor(reference.sourceType)
@@ -426,8 +456,10 @@ export function CitationPill({ reference }: CitationPillProps) {
 	const isLink = (reference.sourceType === 'web' || reference.sourceType === 'x') && !!url
 	const markerDomain = reference.sourceType === 'web' ? domainFromUrl(reference.url) : null
 	const markerHandle = reference.sourceType === 'x' ? (xHandleLabel(reference.label) ?? reference.label) : null
-	const showMarkerIcon = reference.sourceType === 'web' || reference.sourceType === 'x'
-	const markerText = markerDomain ?? markerHandle ?? String(id ?? '?')
+	// Inside a table the marker stays the number it reserved: a domain or handle would be wider than
+	// the pending marker and move the column. The hovercard still names the source.
+	const showMarkerIcon = !numberOnlyMarker && (reference.sourceType === 'web' || reference.sourceType === 'x')
+	const markerText = numberOnlyMarker ? String(id ?? '?') : (markerDomain ?? markerHandle ?? String(id ?? '?'))
 	const { open } = useCitationSheet()
 
 	return (
@@ -435,7 +467,7 @@ export function CitationPill({ reference }: CitationPillProps) {
 			<Ariakit.HovercardAnchor
 				render={<button type="button" />}
 				onClick={() => (isLink && url ? window.open(url, '_blank', 'noopener,noreferrer') : open(reference))}
-				className="mx-px inline-flex h-[18px] max-w-[160px] cursor-pointer items-center justify-center gap-0.5 rounded-[4px] border px-1 align-baseline text-[11px] leading-none font-medium no-underline transition hover:brightness-110 focus-visible:outline-hidden"
+				className={`${CITATION_MARKER_BOX} cursor-pointer transition hover:brightness-110 focus-visible:outline-hidden`}
 				style={{ color: accent, borderColor: `${accent}59`, backgroundColor: `${accent}14` }}
 				aria-label={headline ? `Source ${id ?? ''}: ${headline}` : `Source ${id ?? ''}`}
 			>
