@@ -1,6 +1,7 @@
 import { replaceEqualDeep } from '@tanstack/react-query'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { CustomTimePeriod, Dashboard, TimePeriod } from './dashboardTypes'
+import { mergeDashboardItems } from './utils/dashboardUtils'
 
 export interface DashboardState {
 	items: Array<DashboardItemConfig>
@@ -99,7 +100,7 @@ function reconcileDashboard(
 		...state,
 		dashboardId: saved.dashboardId,
 		currentDashboard: dashboard,
-		items: replaceEqualDeep(baseline.items, state.items) === baseline.items ? saved.items : state.items,
+		items: mergeDashboardItems(baseline.items, saved.items, state.items),
 		dashboardName: state.dashboardName === baseline.dashboardName ? saved.dashboardName : state.dashboardName,
 		timePeriod: periodUnchanged ? saved.timePeriod : state.timePeriod,
 		customTimePeriod: periodUnchanged ? saved.customTimePeriod : state.customTimePeriod,

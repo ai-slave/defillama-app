@@ -123,6 +123,7 @@ export function PromptInput({
 	const [submitError, setSubmitError] = useState<string | null>(null)
 	const submitInFlightRef = useRef(false)
 	const highlightRef = useRef<HTMLDivElement>(null)
+	const inputWrapperRef = useRef<HTMLDivElement>(null)
 	const pendingSelectionRef = useRef<PendingSelection | null>(null)
 	const valueRef = useRef(value)
 	const isSuggestedRef = useRef(false)
@@ -205,7 +206,7 @@ export function PromptInput({
 		if (!textarea) return
 
 		if (value) {
-			setInputSize(promptInputRef, highlightRef, isMobile ? 3 : 5)
+			setInputSize(promptInputRef, highlightRef, isMobile ? 3 : 5, inputWrapperRef)
 		} else {
 			textarea.style.height = ''
 			textarea.style.overflowY = 'hidden'
@@ -572,6 +573,7 @@ export function PromptInput({
 				combobox={entityCombobox.combobox}
 				promptInputRef={promptInputRef}
 				highlightRef={highlightRef}
+				wrapperRef={inputWrapperRef}
 				value={value}
 				sanitizedHighlightedHtml={sanitizedHighlightedHtml}
 				placeholder={finalPlaceholder}

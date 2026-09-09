@@ -6,6 +6,8 @@ interface InputTextareaProps {
 	combobox: Ariakit.ComboboxStore
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
 	highlightRef: RefObject<HTMLDivElement | null>
+	/** The in-flow box the textarea sizes. `setInputSize` holds its height while it measures. */
+	wrapperRef: RefObject<HTMLDivElement | null>
 	value: string
 	sanitizedHighlightedHtml: string
 	placeholder: string
@@ -23,6 +25,7 @@ export function InputTextarea({
 	combobox,
 	promptInputRef,
 	highlightRef,
+	wrapperRef,
 	value,
 	sanitizedHighlightedHtml,
 	placeholder,
@@ -37,7 +40,7 @@ export function InputTextarea({
 }: InputTextareaProps) {
 	const bindPromptInput = useMemo(() => createOwnedRef(promptInputRef), [promptInputRef])
 	return (
-		<div className="relative w-full">
+		<div ref={wrapperRef} className="relative w-full">
 			<Ariakit.Combobox
 				store={combobox}
 				autoSelect

@@ -90,7 +90,7 @@ export type DashboardSavePayload = {
 	copySourceDashboardId?: string
 }
 
-function dashboardSaveBody(data: DashboardSavePayload) {
+function dashboardSaveBody(data: DashboardSavePayload, baseEditedAt?: string) {
 	const { visibility, tags, description, aiGenerated, copySourceDashboardId, ...dashboardData } = data
 	return {
 		data: dashboardData,
@@ -98,7 +98,8 @@ function dashboardSaveBody(data: DashboardSavePayload) {
 		tags: Array.isArray(tags) ? tags : [],
 		description: typeof description === 'string' ? description : '',
 		aiGenerated: aiGenerated || null,
-		...(copySourceDashboardId && { copySourceDashboardId })
+		...(copySourceDashboardId && { copySourceDashboardId }),
+		...(baseEditedAt && { baseEditedAt })
 	}
 }
 
@@ -106,13 +107,13 @@ function dashboardSaveUrl(id?: string) {
 	return id ? `/api/private/pro-dashboard/save?id=${encodeURIComponent(id)}` : `/api/private/pro-dashboard/save`
 }
 
-export function buildDashboardSaveRequest(params: { id?: string; data: DashboardSavePayload }) {
+export function buildDashboardSaveRequest(params: { id?: string; data: DashboardSavePayload; baseEditedAt?: string }) {
 	return {
 		url: dashboardSaveUrl(params.id),
 		options: {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(dashboardSaveBody(params.data))
+			body: JSON.stringify(dashboardSaveBody(params.data, params.baseEditedAt))
 		}
 	}
 }
@@ -186,9 +187,10 @@ class DashboardAPIService {
 	async updateDashboard(
 		id: string,
 		data: DashboardSavePayload,
-		authorizedFetch: DashboardAuthorizedFetch
+		authorizedFetch: DashboardAuthorizedFetch,
+		baseEditedAt?: string
 	): Promise<Dashboard> {
-		const { url, options } = buildDashboardSaveRequest({ id, data })
+		const { url, options } = buildDashboardSaveRequest({ id, data, baseEditedAt })
 		const bytes = new TextEncoder().encode(options.body).byteLength
 		const keepalive = dashboardKeepaliveBytes + bytes <= 65_536
 		if (keepalive) dashboardKeepaliveBytes += bytes

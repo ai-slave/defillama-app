@@ -11,7 +11,12 @@ import {
 	type DashboardSavePayload,
 	type LiteDashboardSummary
 } from '../services/DashboardAPI'
-import { toDashboardSavePayload, toPersistedDashboardItems } from '../utils/dashboardUtils'
+import {
+	dashboardPayloadChanges,
+	mergeDashboardItems,
+	toDashboardSavePayload,
+	toPersistedDashboardItems
+} from '../utils/dashboardUtils'
 
 const EMPTY_DASHBOARDS: Array<Dashboard> = []
 
@@ -224,13 +229,31 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 		mutationFn: async ({ id, data, changes }: DashboardUpdate) => {
 			if (wasDashboardDeleted(queryClient, id, user?.id)) throw new DashboardError('Dashboard has been deleted', 404)
 			// The scope orders requests, but payloads must also preserve fields saved while waiting.
-			const latest = queryClient.getQueryData<Dashboard>(['pro-dashboard', 'dashboard', id, isAuthenticated, user?.id])
-			const payload = changes ? { ...(latest ? toDashboardSavePayload(latest) : data), ...changes } : data
-			return await dashboardAPI.updateDashboard(
-				id,
-				{ ...payload, items: toPersistedDashboardItems(payload.items) },
-				authorizedFetch
-			)
+			const latest = cachedDashboard(queryClient, id, isAuthenticated, user?.id)
+			const base = latest ? toDashboardSavePayload(latest) : undefined
+			const payload = changes ? { ...(base ?? data), ...changes } : data
+			try {
+				return await dashboardAPI.updateDashboard(
+					id,
+					{ ...payload, items: toPersistedDashboardItems(payload.items) },
+					authorizedFetch,
+					latest?.editedAt
+				)
+			} catch (error) {
+				if (!(error instanceof DashboardError) || error.status !== 409) throw error
+				const server = await dashboardAPI.getDashboard(id, authorizedFetch)
+				const items = mergeDashboardItems(base?.items ?? [], server.data.items ?? [], payload.items)
+				return await dashboardAPI.updateDashboard(
+					id,
+					{
+						...toDashboardSavePayload(server),
+						...dashboardPayloadChanges(base, payload),
+						items: toPersistedDashboardItems(items)
+					},
+					authorizedFetch,
+					server.editedAt
+				)
+			}
 		},
 		onSuccess: (dashboard: Dashboard) => {
 			if (wasDashboardDeleted(queryClient, dashboard.id, user?.id)) return
@@ -244,6 +267,16 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 			void queryClient.invalidateQueries({ queryKey: ['pro-dashboard', 'lite-dashboards'] })
 		}
 	})
+}
+
+function cachedDashboard(client: QueryClient, id: string, isAuthenticated: boolean, userId: string | undefined) {
+	return (
+		client.getQueryData<Dashboard>(['pro-dashboard', 'dashboard', id, isAuthenticated, userId]) ??
+		client
+			.getQueriesData<Dashboard>({ queryKey: ['pro-dashboard', 'dashboard'], exact: false })
+			.map(([, dashboard]) => dashboard)
+			.find((dashboard) => dashboard?.id === id)
+	)
 }
 
 export function getUnsavedDashboardItems(client: QueryClient, dashboardId: string | null, userId: string | undefined) {

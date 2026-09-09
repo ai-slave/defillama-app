@@ -162,3 +162,22 @@ test('sends the copy source at the top level of the creation request', () => {
 	expect(body.copySourceDashboardId).toBe('source')
 	expect(body.data).not.toHaveProperty('copySourceDashboardId')
 })
+
+test('sends the last-known editedAt at the top level of an update request', () => {
+	const data = { dashboardName: 'Dashboard', items: [] }
+	const withBase = JSON.parse(buildDashboardSaveRequest({ id: 'id', data, baseEditedAt: 'v1' }).options.body)
+	expect(withBase.baseEditedAt).toBe('v1')
+	expect(withBase.data).not.toHaveProperty('baseEditedAt')
+	const withoutBase = JSON.parse(buildDashboardSaveRequest({ id: 'id', data }).options.body)
+	expect(withoutBase).not.toHaveProperty('baseEditedAt')
+})
+
+test('a stale update surfaces the conflict as a 409 DashboardError', async () => {
+	const authorizedFetch = vi.fn(
+		async (_url: string, _options?: RequestInit) =>
+			new Response(JSON.stringify({ message: 'Dashboard was modified elsewhere' }), { status: 409 })
+	)
+	const update = dashboardAPI.updateDashboard('id', { dashboardName: 'Saved', items: [] }, authorizedFetch, 'v1')
+	await expect(update).rejects.toMatchObject({ name: 'DashboardError', status: 409 })
+	expect(JSON.parse(authorizedFetch.mock.calls[0][1]!.body as string).baseEditedAt).toBe('v1')
+})

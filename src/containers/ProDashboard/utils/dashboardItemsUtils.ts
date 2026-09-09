@@ -1,10 +1,10 @@
 import { arrayMove } from '@dnd-kit/sortable'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard } from '../dashboardTypes'
-import { dashboardAPI, type DashboardAuthorizedFetch } from '../services/DashboardAPI'
+import { DashboardError, dashboardAPI, type DashboardAuthorizedFetch } from '../services/DashboardAPI'
 import { toPersistedDashboardItems } from './dashboardUtils'
 
-export async function addItemToDashboard(
+async function appendItemToDashboard(
 	dashboardId: string,
 	newItem: DashboardItemConfig,
 	authorizedFetch: DashboardAuthorizedFetch
@@ -25,8 +25,22 @@ export async function addItemToDashboard(
 			...(dashboard.description === undefined ? {} : { description: dashboard.description }),
 			aiGenerated: dashboard.aiGenerated ?? null
 		},
-		authorizedFetch
+		authorizedFetch,
+		dashboard.editedAt
 	)
+}
+
+export async function addItemToDashboard(
+	dashboardId: string,
+	newItem: DashboardItemConfig,
+	authorizedFetch: DashboardAuthorizedFetch
+): Promise<Dashboard> {
+	try {
+		return await appendItemToDashboard(dashboardId, newItem, authorizedFetch)
+	} catch (error) {
+		if (!(error instanceof DashboardError) || error.status !== 409) throw error
+		return appendItemToDashboard(dashboardId, newItem, authorizedFetch)
+	}
 }
 
 export function replaceDashboardItem(

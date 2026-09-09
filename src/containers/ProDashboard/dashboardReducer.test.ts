@@ -72,3 +72,15 @@ test('refreshes keep locally edited custom dates paired with the custom period',
 	expect(unchanged.timePeriod).toBe('365d')
 	expect(unchanged.customTimePeriod).toBeNull()
 })
+
+test('a save response merges remote item changes with items added during the request', () => {
+	const a = { id: 'a', kind: 'text' as const, content: 'A' }
+	const b = { id: 'b', kind: 'text' as const, content: 'B' }
+	const c = { id: 'c', kind: 'text' as const, content: 'C' }
+	let state = initDashboardState({ dashboard: { ...original, data: { ...original.data, items: [a] } } })
+	const submitted = state
+	state = dashboardReducer(state, { type: 'SET_ITEMS', payload: [a, c] })
+	const saved = { ...original, data: { ...original.data, items: [a, b] } }
+	state = dashboardReducer(state, { type: 'SAVE_DASHBOARD', submitted, payload: saved })
+	expect(state.items).toEqual([a, c, b])
+})
