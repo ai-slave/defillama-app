@@ -469,7 +469,10 @@ export function AgenticSidebar({
 					) : null}
 				</header>
 
-				<div ref={scrollContainerRef} className="flex-1 overflow-auto overscroll-contain">
+				<div
+					ref={scrollContainerRef}
+					className="flex-1 [scrollbar-width:thin] [scrollbar-gutter:stable] overflow-auto overscroll-contain"
+				>
 					<div ref={projectsSectionRef} className="border-b border-ai-line pb-3">
 						<ProjectsSidebarSection
 							sessions={sessions}
@@ -500,7 +503,7 @@ export function AgenticSidebar({
 						) : null}
 					</div>
 
-					<nav className="p-4 pt-3 pr-1" aria-label="Chat history">
+					<nav className="pt-3 pr-2 pb-4 pl-4" aria-label="Chat history">
 						{isLoading ? (
 							<div className="flex items-center justify-center rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
 								<LoadingSpinner size={12} />

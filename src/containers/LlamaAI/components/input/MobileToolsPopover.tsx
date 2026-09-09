@@ -62,7 +62,7 @@ export function MobileToolsPopover({
 				data-walkthrough="mobile-tools-button"
 				disabled={disabled}
 				aria-label="Open mobile tools"
-				className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton hover:text-ai-primary disabled:pointer-events-none disabled:opacity-40 aria-expanded:bg-ai-accent-blue/15 aria-expanded:text-ai-accent-blue sm:hidden"
+				className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton hover:text-ai-primary disabled:pointer-events-none disabled:opacity-40 aria-expanded:bg-ai-accent-blue/15 aria-expanded:text-ai-accent-blue @sm:hidden"
 			>
 				<Icon name="plus" height={16} width={16} />
 			</Ariakit.MenuButton>

@@ -276,7 +276,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 					handleSessionClick(session.sessionId)
 				}}
 				disabled={isEditing || deletion.isPending || isRestoring}
-				className="flex flex-1 items-center gap-1 overflow-hidden p-1.5 text-left aria-disabled:pointer-events-none aria-disabled:opacity-60"
+				className="flex flex-1 items-center gap-1 overflow-hidden p-1.5 text-left group-focus-within:pr-14 group-hover:pr-14 aria-disabled:pointer-events-none aria-disabled:opacity-60"
 			>
 				{session.isPinned ? <Icon name="pin" height={10} width={10} className="shrink-0 opacity-40" /> : null}
 				{session.hasUnseenCompletion ? (
@@ -286,7 +286,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 				) : null}
 				<span className="truncate">{session.title}</span>
 			</button>
-			<div className="flex items-center justify-center opacity-0 group-focus-within:opacity-100 group-hover:opacity-100">
+			<div className="pointer-events-none absolute inset-y-0 right-0 flex items-center justify-center rounded-r-sm bg-ai-surface-muted pl-1 opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 group-data-[active=true]:bg-brand">
 				<Tooltip
 					content="Edit Session Title"
 					render={

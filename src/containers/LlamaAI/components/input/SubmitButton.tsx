@@ -16,7 +16,7 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 				render={<button type="submit" disabled={mode.disabled} data-umami-event="llamaai-queue-submit" />}
 				className="flex size-7 items-center justify-center rounded-lg bg-brand/12 text-brand hover:bg-brand/25 disabled:opacity-25"
 			>
-				<Icon name="arrow-up" height={14} width={14} className="sm:size-4" />
+				<Icon name="arrow-up" height={14} width={14} className="@sm:size-4" />
 				<span className="sr-only">Queue message</span>
 			</Tooltip>
 		)
@@ -31,7 +31,7 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 						render={<button type="submit" data-umami-event="llamaai-queue-submit" />}
 						className="flex size-7 items-center justify-center rounded-lg bg-brand/12 text-brand hover:bg-brand/25"
 					>
-						<Icon name="arrow-up" height={14} width={14} className="sm:size-4" />
+						<Icon name="arrow-up" height={14} width={14} className="@sm:size-4" />
 						<span className="sr-only">Queue message</span>
 					</Tooltip>
 				) : null}
@@ -67,7 +67,7 @@ export function SubmitButton({ mode }: { mode: SubmitButtonMode }) {
 			className="flex size-7 items-center justify-center gap-2 rounded-lg bg-brand text-ai-white hover:bg-brand/80 focus-visible:bg-brand/80 disabled:opacity-25"
 			disabled={mode.disabled}
 		>
-			<Icon name="arrow-up" height={14} width={14} className="sm:size-4" />
+			<Icon name="arrow-up" height={14} width={14} className="@sm:size-4" />
 			<span className="sr-only">Submit prompt</span>
 		</button>
 	)

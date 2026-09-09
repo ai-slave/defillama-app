@@ -691,7 +691,9 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		<>
 			<div
 				ref={scrollContainerRef}
-				className={`relative flex-1 overflow-y-auto px-2.5 pt-2.5 max-lg:px-0 ${readOnly ? 'pb-2.5' : 'pb-12'}`}
+				// `both-edges` keeps the message column centered on the same axis as the composer below,
+				// which sits outside this scroll container and never loses width to a classic scrollbar.
+				className={`relative flex-1 [scrollbar-gutter:stable_both-edges] overflow-y-auto px-2.5 pt-2.5 max-lg:px-0 ${readOnly ? 'pb-2.5' : 'pb-12'}`}
 				style={{
 					// Browser anchoring can otherwise move scrollTop and look like an upward user gesture.
 					overflowAnchor: isScrollAttached ? 'none' : 'auto'
@@ -873,7 +875,9 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 			</div>
 
 			{!readOnly ? (
-				<div className="llamaai-chat-width relative mx-auto flex w-full flex-col gap-2 pb-2.5">
+				// The 10px side inset comes off the width instead of padding so the shared column
+				// max-width still applies to the composer itself and matches the message column.
+				<div className="llamaai-chat-width relative mx-auto flex w-[calc(100%-1.25rem)] flex-col gap-2 pb-2.5">
 					<div className="pointer-events-none absolute -top-8 right-0 left-0 h-8 bg-linear-to-b from-transparent to-ai-surface" />
 					{!isSharedView && contextWarning && onStartNewChat && onDismissContextWarning ? (
 						<ContextWarningBanner

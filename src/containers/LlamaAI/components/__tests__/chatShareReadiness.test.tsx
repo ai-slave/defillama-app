@@ -93,7 +93,9 @@ async function waitFor(check: () => void) {
 	})
 }
 function shareButtons() {
-	const buttons = [...document.querySelectorAll('button')].filter((button) => button.textContent?.trim() === 'Share')
+	const buttons = [...document.querySelectorAll('button')].filter(
+		(button) => button.textContent?.trim() === 'Share conversation'
+	)
 	expect(buttons.length, 'Share controls must remain available').toBeGreaterThan(0)
 	return buttons
 }

@@ -2721,10 +2721,10 @@ export function AgenticChat({
 												data-umami-event-source="header_controls"
 											/>
 										}
-										className="absolute top-2.5 right-2.5 z-10 hidden items-center gap-1.5 rounded-md border border-ai-line bg-surface px-3 py-1.5 text-xs font-medium text-ai-secondary transition-colors hover:bg-ai-surface-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:flex"
+										className="absolute top-2.5 right-2.5 z-10 hidden size-6 items-center justify-center rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:flex"
 									>
 										<Icon name="share" height={14} width={14} />
-										Share
+										<span className="sr-only">{SHARE_TOOLTIP}</span>
 									</Tooltip>
 								) : null}
 								{(isRouteSessionPending || restoringSessionId) && !hasMessages && !visibleError ? (
@@ -2930,10 +2930,10 @@ const ChatControls = memo(function ChatControls({
 								data-umami-event-source="header_controls"
 							/>
 						}
-						className="flex h-6 items-center gap-1 rounded-sm bg-brand/12 px-2 text-[11px] text-brand transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:hidden"
+						className="flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:hidden"
 					>
-						<Icon name="share" height={12} width={12} />
-						Share
+						<Icon name="share" height={14} width={14} />
+						<span className="sr-only">{SHARE_TOOLTIP}</span>
 					</Tooltip>
 				) : null}
 				{!isMobile ? (

@@ -507,7 +507,7 @@ export function PromptInput({
 
 	return (
 		<form
-			className="relative flex w-full flex-col gap-4 rounded-lg border border-ai-line bg-page p-4 has-[textarea:focus]:border-brand"
+			className="@container relative flex w-full flex-col gap-4 rounded-lg border border-ai-line bg-page p-4 has-[textarea:focus]:border-brand"
 			onDragEnter={isStopping ? undefined : imageUpload.handleDragEnter}
 			onDragLeave={imageUpload.handleDragLeave}
 			onDragOver={(e) => e.preventDefault()}
@@ -605,7 +605,7 @@ export function PromptInput({
 			) : null}
 
 			<div className="flex items-center justify-between gap-4 p-0">
-				<div className="hidden items-center gap-2 sm:flex">
+				<div className="hidden min-w-0 flex-1 [scrollbar-width:none] items-center gap-2 overflow-x-auto *:shrink-0 @sm:flex">
 					<ModeToggle
 						mode={mode}
 						setMode={setMode}
@@ -665,8 +665,8 @@ export function PromptInput({
 					isStopping={isStopping}
 					walkthroughActive={walkthroughActive}
 				/>
-				<div className="flex items-center gap-2">
-					<span className="max-sm:hidden" data-walkthrough="image-upload">
+				<div className="flex shrink-0 items-center gap-2">
+					<span className="@max-sm:hidden" data-walkthrough="image-upload">
 						<ImageUploadButton onClick={imageUpload.openFilePicker} disabled={isStopping} />
 					</span>
 					<SubmitButton
