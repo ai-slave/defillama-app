@@ -1,9 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import { createContext, createElement, useContext, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import ReactMarkdown from 'react-markdown'
-import type { Components, Options } from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import type { Components } from 'react-markdown'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { readTableRows, TableImageButtons } from '~/components/TableImage/TableImageButtons'
 import { EntityPreviewLink } from '~/containers/Articles/renderer/EntityPreviewLink'
@@ -32,12 +30,12 @@ import { popoverMenuItemStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
 import styles from '../../LlamaAIChat.module.css'
+import { createSegmentProcessors, createSegmentRenderer } from './markdownSegments'
 import { rehypeCitationMarkers } from './rehypeCitationMarkers'
 import { rehypeHeadingIds } from './rehypeHeadingIds'
 import { rehypeStreamingCaret } from './rehypeStreamingCaret'
 import { SANITIZE_REHYPE_PLUGINS } from './sanitizeConfig'
-
-const MARKDOWN_REMARK_PLUGINS: NonNullable<Options['remarkPlugins']> = [[remarkGfm, { singleTilde: false }]]
+import { useStreamReveal } from './useStreamReveal'
 
 function extractText(children: ReactNode): string {
 	if (typeof children === 'string') return children
@@ -603,6 +601,7 @@ export function ChatMarkdownRenderer({
 	advancedProvenance,
 	isStreaming = false,
 	showStreamingCaret = false,
+	paceReveal = false,
 	hackerMode = false,
 	onTableFullscreenOpen,
 	messageId
@@ -613,10 +612,18 @@ export function ChatMarkdownRenderer({
 	advancedProvenance?: boolean
 	isStreaming?: boolean
 	showStreamingCaret?: boolean
+	/** Type the text out a few characters per frame as it arrives, instead of a chunk at a time. */
+	paceReveal?: boolean
 	hackerMode?: boolean
 	onTableFullscreenOpen?: () => void
 	messageId?: string
 }) {
+	const segments = useMemo(() => createSegmentRenderer(markdownComponents), [])
+	const reveal = useStreamReveal(content, paceReveal && isStreaming, segments.lastCostMs)
+	const caretActive = showStreamingCaret || reveal.revealing
+	// Unfinished text can end mid-marker; finished text is rendered exactly as written.
+	const unfinished = isStreaming || reveal.revealing
+	const text = reveal.text
 	const [pendingExternalHref, setPendingExternalHref] = useState<string | null>(null)
 	const externalAllowlistSnapshot = useSyncExternalStore(
 		subscribeToLocalStorage,
@@ -639,11 +646,11 @@ export function ChatMarkdownRenderer({
 		for (const ref of renderCitationRefs) byId.set(ref.id, ref)
 		return byId
 	}, [renderCitationRefs])
-	const linkMap = useMemo(() => extractLlamaLinks(content), [content])
-	const processedContent = useMemo(() => escapeBareOrderedListMarkers(content), [content])
+	const linkMap = useMemo(() => extractLlamaLinks(text), [text])
+	const processedContent = useMemo(() => escapeBareOrderedListMarkers(text), [text])
 	// After the sanitize plugins: its schema drops ids it does not know about.
-	const rehypePlugins = useMemo<NonNullable<Options['rehypePlugins']>>(
-		() => [
+	const processors = useMemo(() => {
+		const plugins = [
 			...SANITIZE_REHYPE_PLUGINS,
 			// Before the heading and caret plugins, which read the finished tree: a marker sitting in a
 			// heading or at the end of an answer has to be a pill by the time they walk it.
@@ -651,11 +658,10 @@ export function ChatMarkdownRenderer({
 				rehypeCitationMarkers,
 				{ resolvedIds: citationRefsById ? new Set(citationRefsById.keys()) : undefined, reserveInTables: isStreaming }
 			],
-			[rehypeHeadingIds, { messageId }],
-			[rehypeStreamingCaret, { active: showStreamingCaret }]
-		],
-		[citationRefsById, isStreaming, messageId, showStreamingCaret]
-	)
+			[rehypeHeadingIds, { messageId }]
+		]
+		return createSegmentProcessors(plugins, [...plugins, [rehypeStreamingCaret, { active: caretActive }]])
+	}, [caretActive, citationRefsById, isStreaming, messageId])
 	const renderContext = useMemo<MarkdownRenderContext>(
 		() => ({
 			allowedExternalHosts,
@@ -680,13 +686,7 @@ export function ChatMarkdownRenderer({
 			className={`${styles.prose} prose prose-sm flex max-w-none flex-col gap-2.5 overflow-x-auto leading-normal dark:prose-invert prose-a:no-underline${hackerMode ? ` ${styles.hackerMode}` : ''}`}
 		>
 			<MarkdownRenderContextProvider.Provider value={renderContext}>
-				<ReactMarkdown
-					remarkPlugins={MARKDOWN_REMARK_PLUGINS}
-					rehypePlugins={rehypePlugins}
-					components={markdownComponents}
-				>
-					{processedContent}
-				</ReactMarkdown>
+				{segments.render(processedContent, processors, unfinished)}
 			</MarkdownRenderContextProvider.Provider>
 			<ExternalLinkInterstitial
 				href={pendingExternalHref}

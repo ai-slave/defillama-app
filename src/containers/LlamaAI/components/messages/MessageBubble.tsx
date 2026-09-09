@@ -274,6 +274,7 @@ function MessageContentBlock({
 				legacyUrlCitations={block.legacyUrlCitations}
 				isStreaming={isStreaming}
 				showStreamingCaret={showStreamingCaret}
+				paceReveal
 				hackerMode={hackerMode}
 				advancedProvenance={advancedProvenance}
 				onTableFullscreenOpen={onTableFullscreenOpen}

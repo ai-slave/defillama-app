@@ -1,5 +1,15 @@
 import type { Element, Root } from 'hast'
 import { visit } from 'unist-util-visit'
+import type { VFile } from 'vfile'
+
+/** Occurrences per base id so far, so repeated headings number in document order. */
+export type HeadingCounts = Map<string, number>
+
+declare module 'vfile' {
+	interface DataMap {
+		headingCounts?: HeadingCounts
+	}
+}
 
 // h1-h3 only, matching the headings the renderer maps to its own component. Numbering h4-h6 as well
 // would let a deeper heading claim a slug first and renumber an existing h1-h3 anchor.
@@ -33,11 +43,15 @@ function headingText(node: Element): string {
  * reset every render, and under the React compiler it cannot: the compiler caches such a call against
  * the message id, so counts carry over and headings renumber themselves as prose arrives below them.
  *
+ * When the document renders as cached segments, each segment is its own tree. The caller then hands
+ * the counts reached by the previous segment in through `file.data.headingCounts`, and this pass
+ * leaves the updated counts there, so numbering still runs across the whole answer.
+ *
  * Place this after the sanitize plugins; the schema drops unknown ids.
  */
 export function rehypeHeadingIds({ messageId }: { messageId?: string } = {}) {
-	return (tree: Root) => {
-		const counts = new Map<string, number>()
+	return (tree: Root, file: VFile) => {
+		const counts = file.data.headingCounts ?? new Map<string, number>()
 		visit(tree, 'element', (node: Element) => {
 			if (!HEADINGS.has(node.tagName)) return
 			const slug = headingSlug(headingText(node)) || 'section'

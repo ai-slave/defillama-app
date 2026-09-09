@@ -76,6 +76,7 @@ export interface ConversationViewModel {
 	} | null
 	onReconnectNow: () => void
 	scrollContainerRef: RefObject<HTMLDivElement | null>
+	scrollContentRef: RefObject<HTMLDivElement | null>
 	messagesEndRef: RefObject<HTMLDivElement | null>
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
 	restoreRequest?: { key: number; text: string; entities?: Array<{ term: string; slug: string; type?: string }> } | null
@@ -429,6 +430,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		promptFailureAction,
 		onReconnectNow,
 		scrollContainerRef,
+		scrollContentRef,
 		messagesEndRef,
 		promptInputRef,
 		restoreRequest = null,
@@ -700,6 +702,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 				}}
 			>
 				<div
+					ref={scrollContentRef}
 					className={`relative mx-auto flex ${isFullscreen ? 'max-w-[80rem] justify-center' : 'llamaai-chat-width w-full flex-col'}`}
 				>
 					{isFullscreen && !sidebarVisible ? (

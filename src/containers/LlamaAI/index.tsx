@@ -426,6 +426,7 @@ export function AgenticChat({
 	const stopSettlementControllerRef = useRef<AbortController | null>(null)
 	const messagesEndRef = useRef<HTMLDivElement>(null)
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
+	const scrollContentRef = useRef<HTMLDivElement>(null)
 	const { keyboardOpen, viewportHeight } = useVisualViewport()
 	const promptInputRef = useRef<HTMLTextAreaElement>(null)
 	const toolCallIdRef = useRef(0)
@@ -839,6 +840,7 @@ export function AgenticChat({
 		showScrollToBottom
 	} = useChatScroll({
 		scrollContainerRef,
+		scrollContentRef,
 		isStreaming,
 		items: effectiveMessages,
 		hasMessages,
@@ -2566,6 +2568,7 @@ export function AgenticChat({
 		promptFailureAction,
 		onReconnectNow: handleReconnectNow,
 		scrollContainerRef,
+		scrollContentRef,
 		messagesEndRef,
 		promptInputRef,
 		restoreRequest: alertPrefillRequest,

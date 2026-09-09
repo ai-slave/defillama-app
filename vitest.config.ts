@@ -57,6 +57,7 @@ const COMPILER_SENSITIVE_TESTS = [
 	'src/containers/ProDashboard/dashboardAutosave.test.tsx',
 	'src/containers/ProDashboard/hooks/__tests__/useAutoSave.test.tsx',
 	'src/containers/LlamaAI/components/markdown/headingIds.test.tsx',
+	'src/containers/LlamaAI/components/markdown/incrementalRendering.test.tsx',
 	'src/containers/LlamaAI/components/markdown/streamingCaret.test.tsx',
 	'src/containers/LlamaAI/components/markdown/citationMarkerReservation.test.tsx',
 	'src/containers/LlamaAI/__tests__/duelVariant.test.ts'
