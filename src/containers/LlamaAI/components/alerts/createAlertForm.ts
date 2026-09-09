@@ -26,6 +26,39 @@ export function validatePriceTrigger(fields: { tokenNk: string | null; value: st
 	return null
 }
 
+export interface SlackTarget {
+	teamId: string
+	channelId: string
+}
+
+const NO_SLACK_TARGET: SlackTarget = { teamId: '', channelId: '' }
+
+/**
+ * The Slack target the form should use: the user's own pick, or the only connected workspace and its
+ * default channel when there is exactly one to choose from.
+ *
+ * A pick names its workspace, so a channel can never outlive the workspace it belongs to. Losing
+ * that workspace means reselecting: neither the channel nor a substitute default may stand in for a
+ * destination the user chose deliberately.
+ *
+ * The single-workspace case is a default, not a selection. Storing it as one meant writing it from an
+ * effect, which showed the form as having no workspace for a render.
+ */
+export function resolveSlackTarget(input: {
+	isSlack: boolean
+	picked: SlackTarget | null
+	workspaces: ReadonlyArray<{ team_id: string; default_channel_id: string | null }>
+}): SlackTarget {
+	if (!input.isSlack) return NO_SLACK_TARGET
+	const { picked, workspaces } = input
+	// A selection that is gone clears the target rather than falling back to a default. Substituting
+	// one would move an explicitly chosen destination to a workspace the user never picked, and the
+	// pair would look settled enough to save.
+	if (picked) return workspaces.some((workspace) => workspace.team_id === picked.teamId) ? picked : NO_SLACK_TARGET
+	const sole = workspaces.length === 1 ? workspaces[0] : null
+	return sole ? { teamId: sole.team_id, channelId: sole.default_channel_id ?? '' } : NO_SLACK_TARGET
+}
+
 export function getDeliveryReadinessBlock(input: {
 	channel: DeliveryChannel
 	telegramLinked: boolean

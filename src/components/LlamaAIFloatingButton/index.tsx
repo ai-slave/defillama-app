@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useEntityQuestions } from '~/containers/LlamaAI/hooks/useEntityQuestions'
 import { useSuggestedQuestions } from '~/containers/LlamaAI/hooks/useSuggestedQuestions'
+import { notifyKeyChange, subscribeToStorageKey } from '~/contexts/localStorageStore'
 import { useMedia } from '~/hooks/useMedia'
 import type { FormSubmitEvent } from '~/types/forms'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -61,9 +62,24 @@ function useEntityContext() {
 }
 
 export function setPendingPrompt(prompt: string) {
-	if (typeof window !== 'undefined') {
-		localStorage.setItem(PENDING_PROMPT_KEY, prompt)
-	}
+	if (typeof window === 'undefined') return
+	localStorage.setItem(PENDING_PROMPT_KEY, prompt)
+	notifyKeyChange(PENDING_PROMPT_KEY)
+}
+
+/** Notifies on both handover and consumption, so a reader can defer to a waiting prompt reactively. */
+export function subscribeToPendingPrompt(callback: () => void) {
+	return subscribeToStorageKey(PENDING_PROMPT_KEY, callback)
+}
+
+/** Whether a prompt is waiting, without taking it. Lets a reader defer to it before it is consumed. */
+export function hasPendingPrompt(): boolean {
+	if (typeof window === 'undefined') return false
+	return localStorage.getItem(PENDING_PROMPT_KEY) !== null
+}
+
+export function hasNoPendingPrompt(): boolean {
+	return false
 }
 
 export function consumePendingPrompt(): string | null {
@@ -71,6 +87,7 @@ export function consumePendingPrompt(): string | null {
 	const prompt = localStorage.getItem(PENDING_PROMPT_KEY)
 	if (prompt) {
 		localStorage.removeItem(PENDING_PROMPT_KEY)
+		notifyKeyChange(PENDING_PROMPT_KEY)
 	}
 	return prompt
 }

@@ -53,17 +53,23 @@ export function useActiveTip(): {
 	const { authorizedFetch, user } = useAuthContext()
 	const userId = user?.id ?? null
 
+	// Placeholder shown only until the settings query resolves, so the tip area does not flash empty.
 	const [cachedTip, setCachedTip] = useState<TipDTO | null>(() => readCachedTip(userId))
+	const [cachedTipUserId, setCachedTipUserId] = useState(userId)
+	// Re-seeded during render rather than in an effect: an effect would first commit the previous
+	// account's tip and only then replace it. A dismissal clears storage as well as state, so
+	// re-reading for the same account cannot bring the tip back -- and this only re-reads when the
+	// account itself changes.
+	if (cachedTipUserId !== userId) {
+		setCachedTipUserId(userId)
+		setCachedTip(readCachedTip(userId))
+	}
 	const tip = isResolved ? serverTip : cachedTip
 
 	useEffect(() => {
 		if (!isResolved) return
 		writeCachedTip(userId, serverTip)
 	}, [isResolved, serverTip, userId])
-
-	useEffect(() => {
-		setCachedTip(readCachedTip(userId))
-	}, [userId])
 
 	const clearTipInCache = useCallback(() => {
 		queryClient.setQueriesData({ queryKey: LLAMA_AI_SETTINGS_QUERY_KEY }, (old?: SettingsQueryResult | null) =>

@@ -1,20 +1,28 @@
 // @vitest-environment happy-dom
 
-import { act } from 'react'
+import { act, useLayoutEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { useDeepLinkPrompt } from '~/containers/LlamaAI/hooks/useDeepLinkPrompt'
 
 const pending = vi.hoisted(() => ({
+	listeners: new Set<() => void>(),
 	prompt: null as string | null,
 	pageContext: null as { route: string } | null,
 	suggested: false
 }))
 
 vi.mock('~/components/LlamaAIFloatingButton', () => ({
+	hasPendingPrompt: () => pending.prompt !== null,
+	hasNoPendingPrompt: () => false,
+	subscribeToPendingPrompt: (callback: () => void) => {
+		pending.listeners.add(callback)
+		return () => pending.listeners.delete(callback)
+	},
 	consumePendingPrompt: () => {
 		const prompt = pending.prompt
 		pending.prompt = null
+		if (prompt) for (const listener of pending.listeners) listener()
 		return prompt
 	},
 	consumePendingPageContext: () => {
@@ -45,6 +53,8 @@ const options = vi.hoisted(() => ({
 
 let api: ReturnType<typeof useDeepLinkPrompt>
 
+const committed: Array<string | null> = []
+
 function Harness() {
 	api = useDeepLinkPrompt({
 		isNewChat: options.isNewChat,
@@ -54,6 +64,10 @@ function Harness() {
 		utmCampaign: options.utmCampaign,
 		clearDeepLinkFromUrl: options.clearDeepLinkFromUrl,
 		submitPrompt: options.submitPrompt
+	})
+	// Recorded after commit, so a value the effect corrects afterwards is still caught.
+	useLayoutEffect(() => {
+		committed.push(api.confirmationPrompt)
 	})
 	return null
 }
@@ -74,6 +88,8 @@ describe('useDeepLinkPrompt', () => {
 		options.utmCampaign = null
 		options.clearDeepLinkFromUrl.mockReset()
 		options.submitPrompt.mockReset()
+		committed.length = 0
+		pending.listeners.clear()
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		root = createRoot(container)
@@ -109,6 +125,60 @@ describe('useDeepLinkPrompt', () => {
 
 		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl')
 		expect(options.clearDeepLinkFromUrl).toHaveBeenCalled()
+		expect(api.confirmationPrompt).toBeNull()
+	})
+
+	// A pending prompt outranks the link, and the banner must not flash over the answer while the url
+	// change lands.
+	test('a pending prompt supersedes a deep link without showing its banner', async () => {
+		pending.prompt = 'from floating button'
+		options.deepLinkPrompt = 'what is tvl'
+		await mount()
+
+		// Not just at the end: the banner must never reach the screen, not even for the commit before
+		// the effect settles precedence. Asserted on what was committed, not how many times.
+		expect(committed.filter((value) => value !== null)).toEqual([])
+		expect(api.confirmationPrompt).toBeNull()
+		expect(options.clearDeepLinkFromUrl).toHaveBeenCalled()
+		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', undefined, undefined)
+	})
+
+	// The queue and the link can both arrive after mount, so precedence cannot be settled once at
+	// mount: the confirmation must never reach a commit even then.
+	test('a pending prompt arriving with a later link still suppresses its banner', async () => {
+		await mount()
+		expect(api.confirmationPrompt).toBeNull()
+		committed.length = 0
+
+		pending.prompt = 'from floating button'
+		options.deepLinkPrompt = 'later url'
+		await mount()
+
+		expect(committed.filter((value) => value !== null)).toEqual([])
+		expect(options.submitPrompt).toHaveBeenCalledWith('from floating button', undefined, undefined)
+	})
+
+	test('asks again when the same link comes back after a dismissal', async () => {
+		options.deepLinkPrompt = 'what is tvl'
+		await mount()
+		act(() => api.dismiss())
+		expect(api.confirmationPrompt).toBeNull()
+
+		options.deepLinkPrompt = undefined
+		await mount()
+		options.deepLinkPrompt = 'what is tvl'
+		await mount()
+
+		expect(api.confirmationPrompt).toBe('what is tvl')
+	})
+
+	test('closes the banner for a link padded with whitespace', async () => {
+		options.deepLinkPrompt = '  what is tvl  '
+		await mount()
+		expect(api.confirmationPrompt).toBe('  what is tvl  ')
+
+		act(() => api.confirm())
+		expect(options.submitPrompt).toHaveBeenCalledWith('what is tvl')
 		expect(api.confirmationPrompt).toBeNull()
 	})
 

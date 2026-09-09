@@ -19,9 +19,11 @@ import {
 	getPriceCaption,
 	getSubmitBlockReason,
 	getUpsellCopy,
+	resolveSlackTarget,
 	isAlertCapReachedError,
 	roundPriceValue,
 	type PriceOp,
+	type SlackTarget,
 	type TriggerType
 } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { ALERTS_QUERY_KEY } from '~/containers/LlamaAI/components/alerts/queryKeys'
@@ -174,8 +176,7 @@ function CreateAlertModalForm({
 	const [priceOp, setPriceOp] = useState<PriceOp>(prefill?.op ?? 'above')
 
 	const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>('email')
-	const [slackTeamId, setSlackTeamId] = useState('')
-	const [slackChannelId, setSlackChannelId] = useState('')
+	const [pickedSlack, setPickedSlack] = useState<SlackTarget | null>(null)
 
 	const { data: tokenOptionsResponse, isLoading: isLoadingTokens } = useTokenSearch(tokenSearchInput, true)
 	const tokenOptions = tokenOptionsResponse ?? []
@@ -184,11 +185,16 @@ function CreateAlertModalForm({
 	const telegramLinked = telegramLink.state.status === 'linked'
 
 	const slackWorkspacesQuery = useSlackWorkspaces()
-	const slackChannelsQuery = useSlackChannels(deliveryChannel === 'slack' && slackTeamId ? slackTeamId : null)
 	const activeSlackWorkspaces = useMemo(() => {
 		const workspaces = slackWorkspacesQuery.data?.workspaces ?? []
 		return workspaces.filter((w) => !w.revoked)
 	}, [slackWorkspacesQuery.data?.workspaces])
+	const { teamId: slackTeamId, channelId: slackChannelId } = resolveSlackTarget({
+		isSlack: deliveryChannel === 'slack',
+		picked: pickedSlack,
+		workspaces: activeSlackWorkspaces
+	})
+	const slackChannelsQuery = useSlackChannels(deliveryChannel === 'slack' && slackTeamId ? slackTeamId : null)
 	const slackChannels = slackChannelsQuery.data?.channels
 	const selectableSlackChannels = useMemo(() => {
 		const channels = (slackChannels ?? []).filter((c) => !c.is_archived)
@@ -199,17 +205,6 @@ function CreateAlertModalForm({
 		if (GMT_OFFSETS.some((option) => option.value === timezone)) return GMT_OFFSETS
 		return [...GMT_OFFSETS, { value: timezone, label: getTimezoneLabel(timezone) }]
 	}, [timezone])
-
-	useEffect(() => {
-		if (deliveryChannel !== 'slack' || slackTeamId || activeSlackWorkspaces.length !== 1) return
-		const workspace = activeSlackWorkspaces[0]
-		if (!workspace) return
-		// The workspace list arrives from a query, so the single-workspace default can only be applied
-		// once it lands.
-		// oxlint-disable-next-line react/set-state-in-effect -- see above
-		setSlackTeamId(workspace.team_id)
-		if (workspace.default_channel_id) setSlackChannelId(workspace.default_channel_id)
-	}, [deliveryChannel, slackTeamId, activeSlackWorkspaces])
 
 	const createAlertMutation = useMutation<
 		{ id: string; alertExpression: string; nextRunAt: string },
@@ -546,9 +541,11 @@ function CreateAlertModalForm({
 														value={slackTeamId}
 														aria-label="Slack workspace"
 														onChange={(e) => {
-															setSlackTeamId(e.target.value)
 															const workspace = activeSlackWorkspaces.find((w) => w.team_id === e.target.value)
-															setSlackChannelId(workspace?.default_channel_id ?? '')
+															setPickedSlack({
+																teamId: e.target.value,
+																channelId: workspace?.default_channel_id ?? ''
+															})
 														}}
 														className={alertSelectClass}
 													>
@@ -571,7 +568,8 @@ function CreateAlertModalForm({
 														<select
 															value={slackChannelId}
 															aria-label="Slack channel"
-															onChange={(e) => setSlackChannelId(e.target.value)}
+															// The workspace travels with the channel, so a later workspace change cannot inherit it.
+															onChange={(e) => setPickedSlack({ teamId: slackTeamId, channelId: e.target.value })}
 															className={alertSelectClass}
 														>
 															<option value="" disabled>

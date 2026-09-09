@@ -3,6 +3,16 @@ import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import type { SearchResult } from '~/containers/LlamaAI/types'
 
+const EMPTY_RESULTS: Array<SearchResult> = []
+
+/** The query the current results answer, and those results. */
+interface SettledSearch {
+	query: string
+	results: Array<SearchResult>
+}
+
+const NO_RESULTS: SettledSearch = { query: '', results: EMPTY_RESULTS }
+
 type SemanticSearchOutcome = { kind: 'results'; results: Array<SearchResult> } | { kind: 'empty' } | { kind: 'aborted' }
 
 // Owns the try: the compiler can lower neither the finalizer nor the logical, coalescing and
@@ -25,66 +35,46 @@ async function fetchSemanticResults(
 export function useSemanticSearch(enabled: boolean) {
 	const { authorizedFetch, isAuthenticated } = useAuthContext()
 	const [query, setQuery] = useState('')
-	const [results, setResults] = useState<Array<SearchResult>>([])
-	const [isSearching, setIsSearching] = useState(false)
+	// The query these results belong to. Both the result list and the spinner derive from it, so
+	// neither has to be maintained by hand: a query we have not settled yet is still in flight.
+	const [settled, setSettled] = useState<SettledSearch>(NO_RESULTS)
 	const abortRef = useRef<AbortController | null>(null)
-	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+	const trimmed = query.trim()
+	const active = enabled && isAuthenticated && trimmed !== ''
+	// Forgotten as the box empties, so clearing and retyping runs the search again. Without this a
+	// failed request would be remembered as a settled empty result and never retried, since a failure
+	// and a genuinely empty answer are indistinguishable by the time they get here.
+	if (!active && settled.query !== '') setSettled(NO_RESULTS)
+	const isSearching = active && trimmed !== settled.query
+	// Results outlive the keystroke that supersedes them, so the list does not flash empty while the
+	// next search runs.
+	const results = active ? settled.results : EMPTY_RESULTS
 
 	const search = useCallback(
 		async (q: string) => {
-			if (!q.trim() || !isAuthenticated) {
-				setResults([])
-				setIsSearching(false)
-				return
-			}
-
 			abortRef.current?.abort()
 			const controller = new AbortController()
 			abortRef.current = controller
-
-			setIsSearching(true)
-			const outcome = await fetchSemanticResults(authorizedFetch, q.trim(), controller.signal)
-			// The same two guards the finalizer and its early return carried: an aborted search touches
-			// neither the results nor the spinner, and an aborted request reports nothing at all.
-			if (outcome.kind === 'results') {
-				if (!controller.signal.aborted) setResults(outcome.results)
-			} else if (outcome.kind === 'empty') {
-				setResults([])
-			}
-			if (!controller.signal.aborted) setIsSearching(false)
+			const outcome = await fetchSemanticResults(authorizedFetch, q, controller.signal)
+			// A superseded search reports nothing: its results and its emptiness are both stale.
+			if (controller.signal.aborted || outcome.kind === 'aborted') return
+			setSettled({ query: q, results: outcome.kind === 'results' ? outcome.results : EMPTY_RESULTS })
 		},
-		[authorizedFetch, isAuthenticated]
+		[authorizedFetch]
 	)
 
 	useEffect(() => {
-		if (debounceRef.current) clearTimeout(debounceRef.current)
-		abortRef.current?.abort()
-
-		if (!enabled || !query.trim()) {
-			setResults([])
-			setIsSearching(false)
-			return
-		}
-
-		setIsSearching(true)
-		debounceRef.current = setTimeout(() => search(query), 300)
-
+		if (!active || trimmed === settled.query) return
+		const timer = setTimeout(() => void search(trimmed), 300)
 		return () => {
-			if (debounceRef.current) clearTimeout(debounceRef.current)
+			clearTimeout(timer)
 			abortRef.current?.abort()
 		}
-	}, [query, search, enabled])
-
-	useEffect(() => {
-		return () => {
-			abortRef.current?.abort()
-		}
-	}, [])
+	}, [active, trimmed, settled.query, search])
 
 	const clear = useCallback(() => {
 		setQuery('')
-		setResults([])
-		setIsSearching(false)
 		abortRef.current?.abort()
 	}, [])
 

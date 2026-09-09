@@ -27,14 +27,15 @@ export function CitationDetailPanel({
 }) {
 	const { activeRef, close } = useCitationSheet()
 	const isMobile = useMedia('(max-width: 1023px)')
-	const [entered, setEntered] = useState(false)
+	// Which citation the panel has finished animating in for. Deriving `entered` from it means the
+	// closed panel needs no reset write, and a different citation replays the transition rather than
+	// appearing already settled.
+	const [enteredFor, setEnteredFor] = useState<typeof activeRef>(null)
+	const entered = activeRef !== null && enteredFor === activeRef
 
 	useEffect(() => {
-		if (!activeRef) {
-			setEntered(false)
-			return
-		}
-		const raf = requestAnimationFrame(() => setEntered(true))
+		if (!activeRef) return
+		const raf = requestAnimationFrame(() => setEnteredFor(activeRef))
 		return () => {
 			cancelAnimationFrame(raf)
 		}

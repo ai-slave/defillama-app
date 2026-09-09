@@ -14,6 +14,7 @@ import {
 	getSubmitBlockReason,
 	isAlertCapReachedError,
 	normalizePriceInput,
+	resolveSlackTarget,
 	roundPriceValue,
 	validatePriceTrigger,
 	validatePrompt
@@ -600,5 +601,76 @@ describe('roundPriceValue', () => {
 		expect(roundPriceValue(-5)).toBe('')
 		expect(roundPriceValue(NaN)).toBe('')
 		expect(roundPriceValue(Infinity)).toBe('')
+	})
+})
+
+describe('resolveSlackTarget', () => {
+	const t1 = { team_id: 'T1', default_channel_id: 'C1' }
+	const t2 = { team_id: 'T2', default_channel_id: 'C2' }
+
+	test('defaults to the only workspace and its default channel', () => {
+		expect(resolveSlackTarget({ isSlack: true, picked: null, workspaces: [t1] })).toEqual({
+			teamId: 'T1',
+			channelId: 'C1'
+		})
+	})
+
+	test('leaves the channel empty when the only workspace has no default', () => {
+		expect(
+			resolveSlackTarget({ isSlack: true, picked: null, workspaces: [{ team_id: 'T1', default_channel_id: null }] })
+		).toEqual({ teamId: 'T1', channelId: '' })
+	})
+
+	test("the user's pick wins over the default", () => {
+		expect(
+			resolveSlackTarget({ isSlack: true, picked: { teamId: 'T1', channelId: 'C9' }, workspaces: [t1, t2] })
+		).toEqual({ teamId: 'T1', channelId: 'C9' })
+	})
+
+	// A deliberate choice that disappears is not replaced. Neither the channel nor a substitute
+	// workspace may stand in for a destination the user picked, however valid the pair would look.
+	test('clears a pick whose workspace is gone rather than substituting the only one left', () => {
+		expect(resolveSlackTarget({ isSlack: true, picked: { teamId: 'T1', channelId: 'C9' }, workspaces: [t2] })).toEqual({
+			teamId: '',
+			channelId: ''
+		})
+	})
+
+	test('defaults only when nothing was picked', () => {
+		expect(resolveSlackTarget({ isSlack: true, picked: null, workspaces: [t1] })).toEqual({
+			teamId: 'T1',
+			channelId: 'C1'
+		})
+	})
+
+	test('clears a pick whose workspace is gone among several', () => {
+		expect(
+			resolveSlackTarget({
+				isSlack: true,
+				picked: { teamId: 'T1', channelId: 'C9' },
+				workspaces: [t2, { team_id: 'T3', default_channel_id: 'C3' }]
+			})
+		).toEqual({ teamId: '', channelId: '' })
+	})
+
+	// Two workspaces is an ambiguous choice, so the form asks instead of guessing.
+	test('defaults nothing when there is more than one workspace', () => {
+		expect(resolveSlackTarget({ isSlack: true, picked: null, workspaces: [t1, t2] })).toEqual({
+			teamId: '',
+			channelId: ''
+		})
+	})
+
+	test('defaults nothing for a channel other than Slack', () => {
+		expect(resolveSlackTarget({ isSlack: false, picked: { teamId: 'T1', channelId: 'C9' }, workspaces: [t1] })).toEqual(
+			{ teamId: '', channelId: '' }
+		)
+	})
+
+	test('defaults nothing with no workspaces connected', () => {
+		expect(resolveSlackTarget({ isSlack: true, picked: null, workspaces: [] })).toEqual({
+			teamId: '',
+			channelId: ''
+		})
 	})
 })

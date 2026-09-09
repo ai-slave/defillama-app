@@ -13,6 +13,10 @@ import type {
 	ModelOption
 } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import {
+	notifyNotificationPermissionChanged,
+	useNotificationPermission
+} from '~/containers/LlamaAI/hooks/useNotificationPermission'
+import {
 	isWebMobileToggleVisible,
 	type WebMobilePreference,
 	type WebMobilePushEnabledMutation
@@ -70,9 +74,22 @@ export const SettingsModal = memo(function SettingsModal({
 	const isOpen = Ariakit.useStoreState(dialogStore, 'open')
 	const [isDark] = useDarkModeManager()
 	const [, markNotifBannerDismissed] = useLlamaAINotifyBannerDismissed()
-	const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>('unsupported')
+	const notifPermission = useNotificationPermission()
 	const [isRequestingNotif, setIsRequestingNotif] = useState(false)
-	const [activeTab, setActiveTab] = useState<TabId>('persona')
+	const [selectedTab, setSelectedTab] = useState<TabId>(() =>
+		isSettingsTabId(initialState?.tab) ? initialState.tab : 'persona'
+	)
+	// Which command object the tab above came from. Applying a new one during render keeps the modal
+	// from opening on the old tab for a frame, and identity is what marks it applied -- the parent
+	// hands over a fresh object each time it asks for a tab.
+	const [appliedInitialState, setAppliedInitialState] = useState(initialState)
+	if (isOpen && initialState !== appliedInitialState) {
+		setAppliedInitialState(initialState)
+		if (isSettingsTabId(initialState?.tab)) setSelectedTab(initialState.tab)
+	}
+	// The lab tab renders only in dark mode, so light mode falls back rather than leaving the panel
+	// blank. Constraining the selection here keeps one source of truth for which tab is showing.
+	const activeTab: TabId = selectedTab === 'lab' && !isDark ? 'persona' : selectedTab
 	const agentHome = useAgentHomeData(isOpen && activeTab === 'memory')
 	const initialInstructions = settings.customInstructions
 	const [instructionsDraft, setInstructionsDraft] = useState(() => ({
@@ -86,9 +103,8 @@ export const SettingsModal = memo(function SettingsModal({
 
 	useEffect(() => {
 		if (!isOpen) return
-		if (isSettingsTabId(initialState?.tab) && initialState.tab !== activeTab) setActiveTab(initialState.tab)
 		if (initialState && !initialState.tgloginToken && onInitialStateConsumed) onInitialStateConsumed()
-	}, [activeTab, isOpen, initialState, onInitialStateConsumed])
+	}, [isOpen, initialState, onInitialStateConsumed])
 
 	// Value passed in rather than defaulted from the draft: a member expression in a default parameter is
 	// one the compiler cannot reorder.
@@ -128,12 +144,6 @@ export const SettingsModal = memo(function SettingsModal({
 	useEffect(() => {
 		if (isOpen) trackUmamiEvent('llamaai-settings-open')
 	}, [isOpen])
-
-	useEffect(() => {
-		if (activeTab === 'lab' && !isDark) {
-			setActiveTab('persona')
-		}
-	}, [activeTab, isDark])
 
 	const handleClear = () => {
 		setInstructionsDraft((current) => ({ ...current, value: '' }))
@@ -239,22 +249,13 @@ export const SettingsModal = memo(function SettingsModal({
 		[commitSpendCap]
 	)
 
-	useEffect(() => {
-		if (!isOpen) return
-		if (typeof window === 'undefined' || typeof Notification === 'undefined') {
-			setNotifPermission('unsupported')
-			return
-		}
-		setNotifPermission(Notification.permission)
-	}, [isOpen])
-
 	const handleNotifToggle = useCallback(() => {
 		if (notifPermission !== 'default' || isRequestingNotif) return
 		trackUmamiEvent('llamaai-notify-settings-enable')
 		setIsRequestingNotif(true)
 		Notification.requestPermission()
 			.then((next) => {
-				setNotifPermission(next)
+				notifyNotificationPermissionChanged()
 				if (next !== 'granted') markNotifBannerDismissed()
 			})
 			.catch(() => markNotifBannerDismissed())
@@ -405,7 +406,7 @@ export const SettingsModal = memo(function SettingsModal({
 
 				<Tabs<TabId>
 					value={activeTab}
-					onValueChange={setActiveTab}
+					onValueChange={setSelectedTab}
 					values={tabs.map((tab) => tab.id)}
 					orientation="both"
 				>
@@ -828,7 +829,7 @@ export const SettingsModal = memo(function SettingsModal({
 									</div>
 								)}
 
-								{activeTab === 'lab' && isDark ? (
+								{activeTab === 'lab' ? (
 									<div className="space-y-5">
 										<SectionHeading title="Experimental" subtitle="Bleeding-edge modes. Things may get weird." />
 										<Ariakit.Checkbox

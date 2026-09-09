@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { AI_SERVER } from '~/constants'
@@ -13,9 +13,11 @@ import {
 	getDeliveryReadinessBlock,
 	getUpsellCopy,
 	isAlertCapReachedError,
+	resolveSlackTarget,
 	roundPriceValue,
 	validatePriceTrigger,
-	type ArtifactSaveBody
+	type ArtifactSaveBody,
+	type SlackTarget
 } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import {
 	DAYS_OF_WEEK,
@@ -95,21 +97,27 @@ export function AlertArtifact({
 	const [savedDbId, setSavedDbId] = useState<string | null>(savedAlertIds?.includes(alertId) ? alertId : null)
 	const [savedNextRunAt, setSavedNextRunAt] = useState<string | null>(null)
 	const [hasRetriedTest, setHasRetriedTest] = useState(false)
-	const [testSent, setTestSent] = useState<TestSentState>(null)
+	const [testResult, setTestResult] = useState<TestSentState>(null)
 	const [promptExpanded, setPromptExpanded] = useState(false)
 
 	const [deliveryChannel, setDeliveryChannel] = useState<DeliveryChannel>(alertIntent.deliveryChannel || 'email')
 	const isSlack = deliveryChannel === 'slack'
-	const [slackTeamId, setSlackTeamId] = useState<string>(alertIntent.slackTeamId ?? '')
-	const [slackChannelId, setSlackChannelId] = useState<string>(alertIntent.slackChannelId ?? '')
+	const [pickedSlack, setPickedSlack] = useState<SlackTarget | null>(
+		alertIntent.slackTeamId ? { teamId: alertIntent.slackTeamId, channelId: alertIntent.slackChannelId ?? '' } : null
+	)
 	const telegramLink = useIntegrationLink()
 	const telegramLinked = telegramLink.state.status === 'linked'
 	const slackWorkspacesQuery = useSlackWorkspaces()
-	const slackChannelsQuery = useSlackChannels(isSlack && slackTeamId ? slackTeamId : null)
 	const activeWorkspaces = useMemo(() => {
 		const workspaces = slackWorkspacesQuery.data?.workspaces ?? []
 		return workspaces.filter((w) => !w.revoked)
 	}, [slackWorkspacesQuery.data?.workspaces])
+	const { teamId: slackTeamId, channelId: slackChannelId } = resolveSlackTarget({
+		isSlack,
+		picked: pickedSlack,
+		workspaces: activeWorkspaces
+	})
+	const slackChannelsQuery = useSlackChannels(isSlack && slackTeamId ? slackTeamId : null)
 	const slackChannels = slackChannelsQuery.data?.channels
 	const selectableSlackChannels = useMemo(() => {
 		const channels = (slackChannels ?? []).filter((c) => !c.is_archived)
@@ -126,14 +134,6 @@ export function AlertArtifact({
 	const priceValidationError = trigger ? validatePriceTrigger({ tokenNk: trigger.token_nk, value: priceValue }) : null
 	const editedTrigger: PriceTrigger | null = trigger ? { ...trigger, op: priceOp, value: Number(priceValue) } : null
 
-	useEffect(() => {
-		if (!isSlack || slackTeamId || activeWorkspaces.length !== 1) return
-		setSlackTeamId(activeWorkspaces[0].team_id)
-		if (!slackChannelId && activeWorkspaces[0].default_channel_id) {
-			setSlackChannelId(activeWorkspaces[0].default_channel_id)
-		}
-	}, [isSlack, slackTeamId, slackChannelId, activeWorkspaces])
-
 	const alertDetailQuery = useQuery<{ alert?: { test_sent?: boolean } }>({
 		queryKey: ['llamaai-alert-detail', savedDbId],
 		queryFn: async () => {
@@ -145,9 +145,10 @@ export function AlertArtifact({
 		staleTime: 30_000
 	})
 
-	useEffect(() => {
-		if (alertDetailQuery.data?.alert?.test_sent === true) setTestSent((prev) => prev ?? 'already')
-	}, [alertDetailQuery.data?.alert?.test_sent])
+	// A test sent in this session wins over the server's record of an earlier one, so the button can
+	// report which happened. Derived rather than copied in, so a saved alert shows its history on the
+	// first render instead of after one.
+	const testSent: TestSentState = testResult ?? (alertDetailQuery.data?.alert?.test_sent === true ? 'already' : null)
 
 	const {
 		mutate: saveAlert,
@@ -186,7 +187,7 @@ export function AlertArtifact({
 			return { alreadySent: false }
 		},
 		onSuccess: (data) => {
-			setTestSent(data.alreadySent ? 'already' : 'sent')
+			setTestResult(data.alreadySent ? 'already' : 'sent')
 		}
 	})
 
@@ -492,9 +493,8 @@ export function AlertArtifact({
 											value={slackTeamId}
 											onChange={(e) => {
 												const nextTeamId = e.target.value
-												setSlackTeamId(nextTeamId)
 												const nextWorkspace = activeWorkspaces.find((w) => w.team_id === nextTeamId)
-												setSlackChannelId(nextWorkspace?.default_channel_id ?? '')
+												setPickedSlack({ teamId: nextTeamId, channelId: nextWorkspace?.default_channel_id ?? '' })
 											}}
 											className={alertSelectClass}
 										>
@@ -516,7 +516,8 @@ export function AlertArtifact({
 										) : (
 											<select
 												value={slackChannelId}
-												onChange={(e) => setSlackChannelId(e.target.value)}
+												// The workspace travels with the channel, so a later workspace change cannot inherit it.
+												onChange={(e) => setPickedSlack({ teamId: slackTeamId, channelId: e.target.value })}
 												className={alertSelectClass}
 											>
 												<option value="" disabled>

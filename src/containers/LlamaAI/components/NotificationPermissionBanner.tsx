@@ -1,25 +1,16 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
+import {
+	notifyNotificationPermissionChanged,
+	useNotificationPermission
+} from '~/containers/LlamaAI/hooks/useNotificationPermission'
 import { useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
-type Permission = NotificationPermission | 'unsupported'
-
-function readPermission(): Permission {
-	if (typeof window === 'undefined' || typeof Notification === 'undefined') return 'unsupported'
-	return Notification.permission
-}
-
 export function NotificationPermissionBanner() {
-	const [permission, setPermission] = useState<Permission>('unsupported')
+	const permission = useNotificationPermission()
 	const [dismissed, markDismissed] = useLlamaAINotifyBannerDismissed()
-	const [hydrated, setHydrated] = useState(false)
 	const [isRequesting, setIsRequesting] = useState(false)
-
-	useEffect(() => {
-		setHydrated(true)
-		setPermission(readPermission())
-	}, [])
 
 	const handleEnable = useCallback(() => {
 		if (typeof Notification === 'undefined' || isRequesting) return
@@ -30,7 +21,7 @@ export function NotificationPermissionBanner() {
 		// non-granted result so we stop nagging a user the browser won't let us prompt again anyway.
 		Notification.requestPermission()
 			.then((next) => {
-				setPermission(next)
+				notifyNotificationPermissionChanged()
 				if (next !== 'granted') markDismissed()
 			})
 			.catch(() => {
@@ -46,7 +37,6 @@ export function NotificationPermissionBanner() {
 		markDismissed()
 	}, [markDismissed])
 
-	if (!hydrated) return null
 	if (permission !== 'default') return null
 	if (dismissed) return null
 

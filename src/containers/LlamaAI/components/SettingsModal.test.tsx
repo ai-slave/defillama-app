@@ -307,3 +307,84 @@ describe('SettingsModal instructions', () => {
 		expect(input.value).toBe('0.50')
 	})
 })
+
+describe('SettingsModal initial tab', () => {
+	let container: HTMLDivElement
+	let root: Root
+	let actions: LlamaAISettingsActions
+
+	function Harness({ initialState }: { initialState?: { tab?: string; tgloginToken?: string } | null }) {
+		const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
+		return (
+			<SettingsModal
+				dialogStore={dialogStore}
+				settings={settings}
+				actions={actions}
+				initialState={initialState as never}
+				setMobileNotificationEnabled={
+					{ mutateAsync: vi.fn(), isPending: false, error: null } as unknown as WebMobilePushEnabledMutation
+				}
+			/>
+		)
+	}
+
+	beforeEach(() => {
+		globalThis.IS_REACT_ACT_ENVIRONMENT = true
+		vi.clearAllMocks()
+		actions = {
+			setCustomInstructions: vi.fn(async () => true),
+			setEnableMemory: vi.fn(async () => true),
+			setEnablePremiumTools: vi.fn(async () => true),
+			setHackerMode: vi.fn(async () => true),
+			setModel: vi.fn(async () => true),
+			setEffort: vi.fn(async () => true),
+			setEnableSoundNotifications: vi.fn(async () => true),
+			setEnterToSend: vi.fn(async () => true),
+			setAdvancedProvenance: vi.fn(async () => true),
+			setSpendCapPerMessage: vi.fn(async () => true)
+		} as LlamaAISettingsActions
+		container = document.createElement('div')
+		document.body.appendChild(container)
+		root = createRoot(container)
+	})
+
+	afterEach(async () => {
+		await act(async () => root.unmount())
+		container.remove()
+	})
+
+	const render = async (initialState?: { tab?: string; tgloginToken?: string } | null) =>
+		act(async () => root.render(<Harness initialState={initialState} />))
+
+	const tab = (label: string) =>
+		[...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((node) => node.textContent === label)!
+
+	const openTabId = () => document.querySelector('[role="tabpanel"]')?.getAttribute('aria-labelledby')
+
+	test('opens on the tab the caller asked for', async () => {
+		await render({ tab: 'capabilities' })
+		expect(openTabId()).toBe(tab('Capabilities').id)
+	})
+
+	test('applies a newly requested tab', async () => {
+		await render({ tab: 'capabilities' })
+		await render({ tab: 'app' })
+		expect(openTabId()).toBe(tab('App').id)
+	})
+
+	// The request used to be reapplied whenever the selection differed from it, so a caller that kept
+	// its request alive pulled the user back to that tab every time they left it.
+	test('does not pull the user back to the requested tab', async () => {
+		await render({ tab: 'capabilities', tgloginToken: 'keeps-the-request-alive' })
+		expect(openTabId()).toBe(tab('Capabilities').id)
+
+		await act(async () => tab('App').click())
+		expect(openTabId()).toBe(tab('App').id)
+	})
+
+	// The lab tab exists only in dark mode, and this suite mocks dark mode off.
+	test('falls back from a requested lab tab outside dark mode', async () => {
+		await render({ tab: 'lab' })
+		expect(openTabId()).toBe(tab('Persona').id)
+	})
+})
