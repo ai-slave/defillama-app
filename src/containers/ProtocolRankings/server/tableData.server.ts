@@ -204,11 +204,15 @@ export async function getProtocolRankingsSnapshot({
 				}
 			}
 			const lastGood = await snapshotStore.readLastGood(chainCacheKey(chain))
+			const leafProtocols = protocols.filter((protocol) => !protocol.id.startsWith('parent#'))
+			const allowNoTvl =
+				leafProtocols.length > 0 && leafProtocols.every((protocol) => protocolMetadata[protocol.id]?.tvl === false)
 			try {
 				assertPublishableSnapshot(snapshot, {
 					expectDexs: shouldFetchDexs,
 					expectPerps: shouldFetchPerps,
-					previousProtocolCount: lastGood?.protocols.length ?? null
+					previousProtocolCount: lastGood?.protocols.length ?? null,
+					allowNoTvl
 				})
 			} catch (error) {
 				// Never publish a degraded snapshot — it would be pinned for hours.

@@ -555,7 +555,7 @@ export async function getChainOverviewData({
 
 		const charts: Array<ChainChartLabels> = []
 
-		if (chartData) {
+		if (tvl.length > 0) {
 			charts.push('TVL')
 		}
 

@@ -485,6 +485,10 @@ describe('ProtocolOverview SEO contract', () => {
 		vi.doMock('~/ui/Icon', () => ({
 			Icon: () => null
 		}))
+		vi.doMock('~/components/WebsiteGlobeLink', () => ({
+			WebsiteGlobeLink: ({ url, name }: { url: string; name: string }) =>
+				React.createElement('a', { href: url, 'aria-label': `Open ${name} website` })
+		}))
 		vi.doMock('~/components/SEO', () => ({
 			LinkPreviewCard: () => null
 		}))

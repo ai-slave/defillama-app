@@ -28,6 +28,26 @@ function setupStatsMocks(asPath = '/chain/ethereum') {
 	vi.doMock('~/ui/Icon', () => ({
 		Icon: () => null
 	}))
+	vi.doMock('~/components/WebsiteGlobeLink', () => ({
+		WebsiteGlobeLink: ({
+			url,
+			name,
+			event,
+			eventData
+		}: {
+			url: string
+			name: string
+			event: string
+			eventData: Record<string, string>
+		}) =>
+			React.createElement('a', {
+				href: url,
+				'aria-label': `Open ${name} website`,
+				'data-umami-event': event,
+				'data-umami-event-placement': 'header',
+				...Object.fromEntries(Object.entries(eventData).map(([key, value]) => [`data-umami-event-${key}`, value]))
+			})
+	}))
 	vi.doMock('~/components/TokenLogo', () => ({
 		TokenLogo: () => null
 	}))

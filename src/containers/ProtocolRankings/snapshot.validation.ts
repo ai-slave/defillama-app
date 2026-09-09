@@ -39,6 +39,8 @@ export function assertPublishableSnapshot(
 		expectPerps: boolean
 		/** Row count of the last published snapshot, when one is available to compare against. */
 		previousProtocolCount?: number | null
+		/** Dimension-only chains legitimately have no TVL-bearing protocol rows. */
+		allowNoTvl?: boolean
 	}
 ): void {
 	const fail = (check: string, message: string) => {
@@ -48,7 +50,7 @@ export function assertPublishableSnapshot(
 	if (snapshot.protocols.length === 0) {
 		fail('protocols-empty', 'snapshot has no protocols')
 	}
-	if (!snapshot.protocols.some((protocol) => protocol.tvl?.default?.tvl != null)) {
+	if (!context.allowNoTvl && !snapshot.protocols.some((protocol) => protocol.tvl?.default?.tvl != null)) {
 		fail('tvl-all-null', 'no protocol carries a TVL value')
 	}
 	const previous = context.previousProtocolCount

@@ -73,6 +73,15 @@ describe('assertPublishableSnapshot', () => {
 		)
 	})
 
+	test('accepts an explicitly dimension-only snapshot with no TVL', () => {
+		expect(() =>
+			assertPublishableSnapshot(snapshot({ chain: 'Native Core', protocols: [protocol('native-core-clob', null)] }), {
+				...healthyContext,
+				allowNoTvl: true
+			})
+		).not.toThrow()
+	})
+
 	test('rejects a row count that dropped below the ratio floor of the previous snapshot', () => {
 		const rows = Array.from({ length: 6 }, (_, index) => protocol(`p${index}`, 10))
 		expect(() =>
@@ -140,6 +149,49 @@ describe('getProtocolRankingsSnapshot publication gate', () => {
 		expect(cacheMocks.setCache.mock.invocationCallOrder[0]).toBeLessThan(
 			cacheMocks.setObjectCache.mock.invocationCallOrder[0] ?? Infinity
 		)
+	})
+
+	test('publishes a dimension-only chain snapshot without TVL', async () => {
+		cacheMocks.setCache.mockResolvedValue(true)
+		cacheMocks.setObjectCache.mockResolvedValue(true)
+		queriesMocks.getProtocolsByChain.mockResolvedValue({
+			protocols: [protocol('native-core-clob', null)],
+			chains: ['Native Core'],
+			parentProtocols: [],
+			fees: null,
+			dexs: null,
+			perps: null
+		})
+
+		const result = await getProtocolRankingsSnapshot({
+			chain: 'Native Core',
+			chainMetadata: { 'native-core': { id: 'native_core', name: 'Native Core' } },
+			protocolMetadata: { 'native-core-clob': { tvl: false } },
+			categoriesAndTagsMetadata: { configs: {} } as never
+		})
+
+		expect(result.protocols).toHaveLength(1)
+		expect(cacheMocks.setCache).toHaveBeenCalledTimes(1)
+	})
+
+	test('still rejects an all-null TVL rebuild for a TVL-backed chain', async () => {
+		queriesMocks.getProtocolsByChain.mockResolvedValue({
+			protocols: [protocol('aave', null)],
+			chains: ['TVL Outage'],
+			parentProtocols: [],
+			fees: null,
+			dexs: null,
+			perps: null
+		})
+
+		await expect(
+			getProtocolRankingsSnapshot({
+				chain: 'TVL Outage',
+				chainMetadata: { 'tvl-outage': { id: 'tvl-outage', name: 'TVL Outage' } },
+				protocolMetadata: { aave: { tvl: true } },
+				categoriesAndTagsMetadata: { configs: {} } as never
+			})
+		).rejects.toThrow(/TVL/)
 	})
 
 	test('never writes a snapshot that fails validation, and records the failure', async () => {
