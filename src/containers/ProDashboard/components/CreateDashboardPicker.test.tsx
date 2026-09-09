@@ -11,9 +11,23 @@ vi.mock('next/router', () => ({ useRouter: () => navigation }))
 vi.mock('react-hot-toast', () => ({ default: { error: vi.fn() } }))
 vi.mock('~/auth', () => ({ useAuthContext: () => ({ hasActiveSubscription: true }) }))
 vi.mock('~/containers/Chains/api', () => ({ fetchChainsByCategory: async () => ({ chainsUnique: [] }) }))
-vi.mock('../AppMetadataContext', () => ({ useAppMetadata: () => ({ protocolsBySlug: new Map() }) }))
-vi.mock('../ProDashboardAPIContext', () => ({ useProDashboardCatalog: () => ({ protocols: [], chains: [] }) }))
-vi.mock('../hooks/useDimensionProtocols', () => ({ useDimensionProtocols: () => ({ dimensionProtocols: {} }) }))
+vi.mock('../ProDashboardAPIContext', () => ({
+	useProDashboardCatalog: () => ({ protocols: [], chains: [], protocolCatalog: { status: 'ready' } })
+}))
+vi.mock('../hooks/useDimensionProtocols', () => ({
+	useDimensionProtocols: () => ({
+		perps: { data: { protocols: [] } },
+		dexs: { data: { protocols: [] } },
+		dexAggregators: { data: { protocols: [] } }
+	})
+}))
+vi.mock('../AppMetadataContext', () => ({
+	useAppMetadata: () => ({
+		chainsByName: new Map([['Ethereum', { name: 'Ethereum' }]]),
+		availableChainChartTypes: () => ['tvl'],
+		availableProtocolChartTypes: () => []
+	})
+}))
 let root: Root
 let container: HTMLDivElement
 let client: QueryClient
@@ -21,6 +35,7 @@ let store: Ariakit.DialogStore
 const create = vi.fn()
 beforeEach(() => {
 	vi.clearAllMocks()
+	navigation.push.mockReset().mockResolvedValue(true)
 	create.mockReset()
 	client = new QueryClient()
 	container = document.createElement('div')
@@ -32,10 +47,17 @@ afterEach(async () => {
 	client.clear()
 	container.remove()
 })
-async function mount() {
+async function mount(mode = 'From Scratch') {
+	if (mode === 'Comparison') await import('./ComparisonWizard')
 	function Harness() {
 		store = Ariakit.useDialogStore({ defaultOpen: true })
-		return <CreateDashboardPicker dialogStore={store} onCreate={create} />
+		return (
+			<CreateDashboardPicker
+				dialogStore={store}
+				onCreate={create}
+				comparisonPreset={mode === 'Comparison' ? { comparisonType: 'chains', items: ['Ethereum'] } : null}
+			/>
+		)
 	}
 	await act(async () =>
 		root.render(
@@ -44,12 +66,22 @@ async function mount() {
 			</QueryClientProvider>
 		)
 	)
-	await click('From Scratch')
+	await waitFor(() =>
+		expect(document.body.textContent).toContain(
+			mode === 'Comparison' ? 'Select Metrics to Compare' : 'How would you like to create your dashboard?'
+		)
+	)
+	if (mode === 'Comparison') {
+		await click('TVL')
+		await click('Next')
+	} else {
+		await click(mode)
+	}
 }
 async function click(name: string) {
 	await act(async () => {
 		;[...document.querySelectorAll<HTMLButtonElement>('button')]
-			.find((button) => button.textContent?.trim().startsWith(name))!
+			.find((button) => button.getAttribute('aria-label') === name || button.textContent?.trim().startsWith(name))!
 			.click()
 		await new Promise((resolve) => setTimeout(resolve, 0))
 	})
@@ -78,7 +110,7 @@ test('failed creation retains the name and visibility, blocks duplicate submissi
 	await act(async () => document.querySelector<HTMLInputElement>('input[value="private"]')!.click())
 	await click('Create Dashboard')
 	expect(document.querySelector('fieldset')!.disabled).toBe(true)
-	await click('Create Dashboard')
+	await click('Creating…')
 	expect(create).toHaveBeenCalledExactlyOnceWith({
 		dashboardName: 'Keep my draft',
 		visibility: 'private',
@@ -132,4 +164,67 @@ test('a refusal shows why it was refused, not an invitation to retry', async () 
 	expect(alert.textContent).toContain(limit)
 	expect(alert.textContent).not.toContain('please try again')
 	expect(store.getState().open).toBe(true)
+})
+
+test.each([
+	['From Scratch', 'Back to dashboard choices'],
+	['From Scratch', 'Cancel'],
+	['Comparison', 'Back to dashboard choices'],
+	['Comparison', 'Close comparison creation']
+])('%s permits %s after navigation fails without allowing another creation', async (mode, exit) => {
+	const saved = Promise.withResolvers<{ id: string; slug: string }>()
+	create.mockReturnValueOnce(saved.promise)
+	navigation.push.mockRejectedValueOnce(new Error('Route unavailable'))
+	await mount(mode)
+	if (mode === 'From Scratch') {
+		document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Saved dashboard'
+	}
+	const createButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+		(button) => button.textContent?.trim() === 'Create Dashboard'
+	)!
+	await click('Create Dashboard')
+	expect(createButton.textContent?.trim()).toBe('Creating…')
+	const exitButton = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+		(button) => button.getAttribute('aria-label') === exit || button.textContent?.trim() === exit
+	)!
+	// happy-dom click() does not enforce disabled ancestor fieldsets.
+	await click('Creating…')
+	expect(create).toHaveBeenCalledOnce()
+	expect(exitButton.disabled || exitButton.closest('fieldset[disabled]') !== null).toBe(true)
+	await act(async () => saved.resolve({ id: 'created', slug: 'created-dashboard' }))
+	await waitFor(() => expect(document.querySelector('a[href="/pro/created-dashboard"]')).not.toBeNull())
+	expect(toast.error).not.toHaveBeenCalled()
+	expect(document.querySelector('a[href="/pro/created-dashboard"]')?.textContent).toBe('Open dashboard')
+	expect(createButton.textContent?.trim()).toBe('Created')
+	await click('Created')
+	expect(create).toHaveBeenCalledOnce()
+	expect(exitButton.disabled).toBe(false)
+	expect(exitButton.closest('fieldset[disabled]')).toBeNull()
+	await click(exit)
+	if (exit === 'Back to dashboard choices') {
+		await click('From Scratch')
+		await click('Close dialog')
+	}
+	expect(store.getState().open).toBe(false)
+	await act(async () => store.show())
+	if (mode === 'Comparison') await click('Back to dashboard choices')
+	await click('From Scratch')
+	expect(document.querySelector('a[href="/pro/created-dashboard"]')).toBeNull()
+	expect(document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value).toBe('')
+	expect(create).toHaveBeenCalledOnce()
+})
+
+test('navigation completion cannot dismiss a newer picker opening', async () => {
+	const route = Promise.withResolvers<boolean>()
+	create.mockResolvedValueOnce({ id: 'created' })
+	navigation.push.mockReturnValueOnce(route.promise)
+	await mount()
+	document.querySelector<HTMLInputElement>('[name="dashboardName"]')!.value = 'Saved dashboard'
+	await click('Create Dashboard')
+	await waitFor(() => expect(navigation.push).toHaveBeenCalledOnce())
+	await act(async () => store.hide())
+	await act(async () => store.show())
+	await act(async () => route.resolve(true))
+	expect(store.getState().open).toBe(true)
+	expect(document.querySelector('a[href="/pro/created"]')).toBeNull()
 })

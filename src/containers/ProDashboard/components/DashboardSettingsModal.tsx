@@ -350,7 +350,7 @@ function DashboardSettingsModalInner({
 								type="submit"
 								accessibleWhenDisabled
 								disabled={save.isPending || deletion.isPending}
-								className="flex flex-1 items-center justify-center gap-2 rounded-md pro-btn-primary px-4 py-2 transition-colors"
+								className="flex flex-1 items-center justify-center gap-2 rounded-md pro-btn-primary px-4 py-2 transition-colors aria-disabled:opacity-50"
 							>
 								{save.isPending ? <LoadingSpinner size={16} /> : null}
 								<span>{save.isPending ? 'Saving…' : 'Save Changes'}</span>

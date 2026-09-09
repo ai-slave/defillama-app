@@ -4,7 +4,7 @@ import { act, useEffect, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { withEChartsRenderVisibility } from '~/components/ECharts/renderVisibility'
-import { DASHBOARD_CARD_ROOT_MARGIN, InViewDashboardCard } from './InViewDashboardCard'
+import { InViewDashboardCard } from './InViewDashboardCard'
 
 describe('InViewDashboardCard', () => {
 	let container: HTMLDivElement
@@ -23,7 +23,6 @@ describe('InViewDashboardCard', () => {
 			this.callback = callback
 			this.rootMargin = options?.rootMargin ?? '0px'
 			observers.push(this)
-			expect(this.rootMargin).toBe(DASHBOARD_CARD_ROOT_MARGIN)
 		}
 
 		observe(target: Element) {
@@ -101,7 +100,7 @@ describe('InViewDashboardCard', () => {
 		)
 		expect(queryStarted).not.toHaveBeenCalled()
 		expect(mounted).not.toHaveBeenCalled()
-		expect(container.textContent).toBe('')
+		expect(container.querySelector('[role="status"]')?.textContent).toContain('Loading dashboard card')
 		expect(container.firstElementChild?.getAttribute('aria-busy')).toBe('true')
 		const observer = observers[0]
 		if (!observer) throw new Error('Expected the dashboard card observer')

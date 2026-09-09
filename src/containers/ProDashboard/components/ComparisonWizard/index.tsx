@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import type { MutationStatus } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 import { useAppMetadata } from '../../AppMetadataContext'
 import { createChartConfig, createMetricConfig } from '../../dashboardConfig/classicChartConfig'
 import type { DashboardItemConfig } from '../../dashboardItemConfig'
@@ -15,6 +16,7 @@ import { SelectTypeStep } from './steps/SelectTypeStep'
 import type { ComparisonPreset } from './types'
 
 interface ComparisonWizardProps {
+	creationStatus: MutationStatus
 	onComplete: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
@@ -25,11 +27,10 @@ interface ComparisonWizardProps {
 	comparisonPreset?: ComparisonPreset
 }
 
-function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWizardProps) {
+function ComparisonWizardContent({ onComplete, comparisonPreset, creationStatus }: ComparisonWizardProps) {
 	const { state, actions, derived, availableMetrics } = useComparisonWizardContext()
 	const { getProtocolInfo } = useProDashboardCatalog()
 	const { chainsByName } = useAppMetadata()
-	const [isGenerating, setIsGenerating] = useState(false)
 	const { applyPreset } = actions
 	const appliedPresetRef = useRef(false)
 
@@ -177,7 +178,6 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 	const handleGenerate = () => {
 		if (!state.dashboardName.trim()) return
 
-		setIsGenerating(true)
 		const metricCards = generateComparisonMetrics()
 		const charts = generateComparisonCharts()
 		const table = generateComparisonTable()
@@ -202,7 +202,6 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 			description: state.description,
 			items
 		})
-		setIsGenerating(false)
 	}
 
 	const stepContent = (() => {
@@ -231,17 +230,18 @@ function ComparisonWizardContent({ onComplete, comparisonPreset }: ComparisonWiz
 					onNext={actions.goToNextStep}
 					onBack={actions.goToPrevStep}
 					onGenerate={handleGenerate}
-					isGenerating={isGenerating}
+					creationStatus={creationStatus}
 				/>
 			</div>
 		</div>
 	)
 }
 
-export function ComparisonWizard({ onComplete, comparisonPreset }: ComparisonWizardProps) {
+export function ComparisonWizard({ onComplete, comparisonPreset, creationStatus }: ComparisonWizardProps) {
 	return (
 		<ComparisonWizardProvider>
 			<ComparisonWizardContent
+				creationStatus={creationStatus}
 				onComplete={onComplete}
 				{...(comparisonPreset !== undefined ? { comparisonPreset } : {})}
 			/>

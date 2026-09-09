@@ -1,23 +1,19 @@
 import * as Ariakit from '@ariakit/react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, type MutationStatus } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { Suspense, lazy, useId, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { fetchChainsByCategory as fetchChainsByCategoryApi } from '~/containers/Chains/api'
 import { Icon } from '~/ui/Icon'
-import { useAppMetadata } from '../AppMetadataContext'
+import { LoadingSpinner } from '~/ui/Loaders'
 import type { DashboardItemConfig } from '../dashboardItemConfig'
 import type { Dashboard } from '../dashboardTypes'
 import { useDimensionProtocols } from '../hooks/useDimensionProtocols'
 import { useProDashboardCatalog } from '../ProDashboardAPIContext'
 import { dashboardUrlKey } from '../services/DashboardAPI'
-import {
-	DASHBOARD_TEMPLATES,
-	generateTemplateCharts,
-	type ChainCategoryData,
-	type DashboardTemplate
-} from '../templates'
+import { DASHBOARD_TEMPLATES, generateTemplateCharts, getTemplateItems, type ChainCategoryData } from '../templates'
 import type { ComparisonPreset } from './ComparisonWizard/types'
 
 const ComparisonWizard = lazy(() => import('./ComparisonWizard').then((m) => ({ default: m.ComparisonWizard })))
@@ -36,12 +32,6 @@ interface CreateDashboardPickerProps {
 	comparisonPreset?: ComparisonPreset | null
 }
 
-async function fetchChainsByCategory(category: string): Promise<{ category: string; chains: Array<string> }> {
-	return fetchChainsByCategoryApi(category)
-		.then((data) => ({ category, chains: data.chainsUnique }))
-		.catch(() => ({ category, chains: [] }))
-}
-
 export function CreateDashboardPicker(props: CreateDashboardPickerProps) {
 	const open = Ariakit.useStoreState(props.dialogStore, 'open')
 	return <CreateDashboardPickerInner key={open ? 'open' : 'closed'} {...props} />
@@ -49,6 +39,7 @@ export function CreateDashboardPicker(props: CreateDashboardPickerProps) {
 
 function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }: CreateDashboardPickerProps) {
 	const router = useRouter()
+	const open = Ariakit.useStoreState(dialogStore, 'open')
 	const [mode, setMode] = useState<PickerMode>('picker')
 	// The keyed picker gives each opening its own feedback lifetime.
 	const dialogRef = useRef<HTMLDivElement>(null)
@@ -59,13 +50,16 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 		}
 	})
 	const submitCreation = (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => {
-		if (creation.isPending) return
+		if (creation.isPending || creation.isSuccess) return
 		creation.mutate(data, {
 			onSuccess: (dashboard) => {
-				void router.push(`/pro/${dashboardUrlKey(dashboard)}`)
-				dialogStore.hide()
-				setMode('picker')
-				setComparisonPresetHandled(false)
+				// Keep the saved link visible if navigation is cancelled or fails, without allowing a duplicate creation.
+				void router
+					.push(`/pro/${dashboardUrlKey(dashboard)}`)
+					.catch(() => false)
+					.then((navigated) => {
+						if (navigated && dialogRef.current?.isConnected) dialogStore.hide()
+					})
 			}
 		})
 	}
@@ -76,37 +70,19 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 		<p role="status" className="px-6 py-3 text-sm">
 			Creating dashboard…
 		</p>
+	) : creation.isSuccess ? (
+		<p role="status" className="px-6 py-3 text-sm">
+			Dashboard created.{' '}
+			<BasicLink href={`/pro/${dashboardUrlKey(creation.data)}`} className="underline">
+				Open dashboard
+			</BasicLink>
+		</p>
 	) : creation.isError ? (
 		<p role="alert" className="px-6 py-3 text-sm text-error">
 			{creation.error.message}
 			<span className="block text-pro-text-tertiary">Your choices are still here.</span>
 		</p>
 	) : null
-	const { hasActiveSubscription } = useAuthContext()
-	const { protocols, chains } = useProDashboardCatalog()
-	const { protocolsBySlug } = useAppMetadata()
-
-	const { data: chainCategoriesData } = useQuery({
-		queryKey: ['pro-dashboard', 'chain-categories-for-templates'],
-		queryFn: async () => {
-			const categoriesToFetch = ['Rollup']
-			const results = await Promise.all(categoriesToFetch.map((category) => fetchChainsByCategory(category)))
-			return results
-		},
-		staleTime: 60 * 60 * 1000
-	})
-
-	const chainCategoryData = useMemo<ChainCategoryData>(() => {
-		const chainsInCategory = new Map<string, Set<string>>()
-		if (chainCategoriesData) {
-			for (const { category, chains: categoryChains } of chainCategoriesData) {
-				chainsInCategory.set(category, new Set(categoryChains))
-			}
-		}
-		return { chainsInCategory }
-	}, [chainCategoriesData])
-
-	const { dimensionProtocols } = useDimensionProtocols()
 	const effectiveMode: PickerMode = comparisonPreset && !comparisonPresetHandled ? 'comparison' : mode
 
 	const handleClose = () => {
@@ -120,25 +96,6 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 		setMode('picker')
 	}
 
-	const handleCreateFromTemplate = (template: DashboardTemplate) => {
-		const items = generateTemplateCharts(
-			template,
-			protocols,
-			chains,
-			protocolsBySlug,
-			chainCategoryData,
-			dimensionProtocols
-		)
-
-		submitCreation({
-			dashboardName: template.name,
-			visibility: hasActiveSubscription ? 'private' : 'public',
-			tags: [],
-			description: template.description,
-			items
-		})
-	}
-
 	if (effectiveMode === 'scratch') {
 		return (
 			<Ariakit.Dialog
@@ -146,22 +103,21 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 				store={dialogStore}
 				className="dialog w-full max-w-lg gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-2xl"
 			>
-				<fieldset disabled={creation.isPending} className="contents">
-					<div className="flex items-center gap-2 border-b border-pro-cards-border px-6 py-4">
-						<button
-							type="button"
-							aria-label="Back to dashboard choices"
-							onClick={handleBackToPicker}
-							className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
-						>
-							<Icon name="arrow-left" height={18} width={18} />
-						</button>
-						<Ariakit.DialogHeading className="text-lg font-semibold text-pro-text-primary">
-							Create New Dashboard
-						</Ariakit.DialogHeading>
-					</div>
-					<CreateDashboardModalContent onCreate={submitCreation} />
-				</fieldset>
+				<div className="flex items-center gap-2 border-b border-pro-cards-border px-6 py-4">
+					<button
+						type="button"
+						aria-label="Back to dashboard choices"
+						disabled={creation.isPending}
+						onClick={handleBackToPicker}
+						className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary disabled:opacity-50"
+					>
+						<Icon name="arrow-left" height={18} width={18} />
+					</button>
+					<Ariakit.DialogHeading className="text-lg font-semibold text-pro-text-primary">
+						Create New Dashboard
+					</Ariakit.DialogHeading>
+				</div>
+				<CreateDashboardModalContent onCreate={submitCreation} status={creation.status} />
 				{creationFeedback}
 			</Ariakit.Dialog>
 		)
@@ -174,28 +130,31 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 				store={dialogStore}
 				className="dialog w-full max-w-4xl gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-0 shadow-2xl"
 			>
-				<fieldset disabled={creation.isPending} className="contents">
-					<div className="flex items-center justify-between border-b border-pro-cards-border px-6 py-4">
-						<div className="flex items-center gap-2">
-							<button
-								type="button"
-								aria-label="Back to dashboard choices"
-								onClick={handleBackToPicker}
-								className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
-							>
-								<Icon name="arrow-left" height={18} width={18} />
-							</button>
-							<Ariakit.DialogHeading className="text-lg font-semibold text-pro-text-primary">
-								Create Comparison Dashboard
-							</Ariakit.DialogHeading>
-						</div>
-						<Ariakit.DialogDismiss
-							onClick={handleClose}
-							className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
+				<div className="flex items-center justify-between border-b border-pro-cards-border px-6 py-4">
+					<div className="flex items-center gap-2">
+						<button
+							type="button"
+							aria-label="Back to dashboard choices"
+							disabled={creation.isPending}
+							onClick={handleBackToPicker}
+							className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary disabled:opacity-50"
 						>
-							<Icon name="x" height={20} width={20} />
-						</Ariakit.DialogDismiss>
+							<Icon name="arrow-left" height={18} width={18} />
+						</button>
+						<Ariakit.DialogHeading className="text-lg font-semibold text-pro-text-primary">
+							Create Comparison Dashboard
+						</Ariakit.DialogHeading>
 					</div>
+					<Ariakit.DialogDismiss
+						aria-label="Close comparison creation"
+						disabled={creation.isPending}
+						onClick={handleClose}
+						className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary disabled:opacity-50"
+					>
+						<Icon name="x" height={20} width={20} />
+					</Ariakit.DialogDismiss>
+				</div>
+				<fieldset disabled={creation.isPending || creation.isSuccess} className="contents">
 					<Suspense
 						fallback={
 							<div className="flex h-96 items-center justify-center">
@@ -204,6 +163,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 						}
 					>
 						<ComparisonWizard
+							creationStatus={creation.status}
 							onComplete={submitCreation}
 							{...(comparisonPreset !== null ? { comparisonPreset } : {})}
 						/>
@@ -220,14 +180,16 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 			store={dialogStore}
 			className="dialog w-full max-w-3xl gap-0 border pro-dashboard border-pro-cards-border bg-pro-cards-bg p-6 shadow-2xl"
 		>
-			<fieldset disabled={creation.isPending} className="contents">
+			<fieldset className="contents">
 				<div className="mb-6 flex items-center justify-between">
 					<Ariakit.DialogHeading className="text-xl font-semibold text-pro-text-primary">
 						Create New Dashboard
 					</Ariakit.DialogHeading>
 					<Ariakit.DialogDismiss
+						disabled={creation.isPending}
+						accessibleWhenDisabled
 						onClick={handleClose}
-						className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary"
+						className="rounded-md p-1 text-pro-text-tertiary transition-colors hover:text-pro-text-primary aria-disabled:opacity-50"
 					>
 						<Icon name="x" height={20} width={20} />
 						<span className="sr-only">Close dialog</span>
@@ -239,6 +201,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 				<div className="grid gap-4 sm:grid-cols-2">
 					<button
 						type="button"
+						disabled={creation.isPending || creation.isSuccess}
 						onClick={() => {
 							setComparisonPresetHandled(true)
 							setMode('scratch')
@@ -256,6 +219,7 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 
 					<button
 						type="button"
+						disabled={creation.isPending || creation.isSuccess}
 						onClick={() => {
 							setComparisonPresetHandled(true)
 							setMode('comparison')
@@ -274,19 +238,12 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 
 				<div className="mt-6 border-t border-pro-cards-border pt-6">
 					<h3 className="mb-3 text-sm font-medium text-pro-text-secondary">Or use a template</h3>
-					<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-						{DASHBOARD_TEMPLATES.map((template) => (
-							<button
-								key={template.id}
-								type="button"
-								onClick={() => handleCreateFromTemplate(template)}
-								className="rounded-lg border border-pro-cards-border p-2.5 text-left transition-colors hover:border-brand/40"
-							>
-								<div className="text-sm font-medium text-pro-text-primary">{template.name}</div>
-								<div className="mt-0.5 line-clamp-1 text-xs text-pro-text-tertiary">{template.description}</div>
-							</button>
-						))}
-					</div>
+					{open ? (
+						<DashboardTemplates
+							onCreate={submitCreation}
+							pendingName={creation.isPending || creation.isSuccess ? creation.variables.dashboardName : null}
+						/>
+					) : null}
 				</div>
 			</fieldset>
 			{creationFeedback}
@@ -294,9 +251,109 @@ function CreateDashboardPickerInner({ dialogStore, onCreate, comparisonPreset }:
 	)
 }
 
-function CreateDashboardModalContent({
-	onCreate
+function DashboardTemplates({
+	onCreate,
+	pendingName
 }: {
+	pendingName: string | null
+	onCreate: (data: Parameters<CreateDashboardPickerProps['onCreate']>[0]) => void
+}) {
+	const id = useId()
+	const { hasActiveSubscription } = useAuthContext()
+	const { protocols, chains, protocolCatalog } = useProDashboardCatalog()
+	const categories = useQuery({
+		queryKey: ['pro-dashboard', 'chain-category-for-templates', 'Rollup'],
+		queryFn: () => fetchChainsByCategoryApi('Rollup'),
+		staleTime: 60 * 60 * 1000,
+		retry: 1
+	})
+	const dimensions = useDimensionProtocols()
+	const categoryData = categories.data
+	const perps = dimensions.perps.data
+	const dexs = dimensions.dexs.data
+	const dexAggregators = dimensions.dexAggregators.data
+	const selections = useMemo(() => {
+		const chainCategoryData: ChainCategoryData = {
+			chainsInCategory: new Map(categoryData ? [['Rollup', new Set(categoryData.chainsUnique)]] : [])
+		}
+		return DASHBOARD_TEMPLATES.map((template) =>
+			getTemplateItems(template, protocols, chains, chainCategoryData, {
+				perps: perps?.protocols,
+				dexs: dexs?.protocols,
+				dexAggregators: dexAggregators?.protocols
+			})
+		)
+	}, [protocols, chains, categoryData, perps, dexs, dexAggregators])
+
+	return (
+		<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+			{DASHBOARD_TEMPLATES.map((template, index) => {
+				const creating = pendingName === template.name
+				const dimension = template.filter.metadataFlag
+				const query = dimension ? dimensions[dimension] : template.type === 'chains' ? categories : undefined
+				const needsCatalog = !dimension
+				const queryMissing = query && query.data === undefined
+				const catalogError = needsCatalog && protocolCatalog.status === 'error'
+				const failed = catalogError || (queryMissing && query.isError && !query.isFetching)
+				const loading = !failed && ((needsCatalog && protocolCatalog.status === 'loading') || queryMissing)
+				const empty = !failed && !loading && selections[index].length === 0
+				const status = creating
+					? 'Creating dashboard…'
+					: failed
+						? 'Could not load template data. Retry'
+						: loading
+							? 'Loading template data…'
+							: empty
+								? 'No matching data available'
+								: ''
+				return (
+					<Ariakit.Button
+						key={template.id}
+						type="button"
+						aria-label={failed ? `Retry ${template.name}` : template.name}
+						aria-describedby={`${id}-${template.id}`}
+						aria-busy={creating}
+						disabled={pendingName !== null || loading || empty}
+						accessibleWhenDisabled
+						onClick={() => {
+							if (failed) {
+								if (catalogError) protocolCatalog.retry()
+								if (queryMissing && query.isError) void query.refetch()
+								return
+							}
+							if (pendingName !== null || loading || empty) return
+							onCreate({
+								dashboardName: template.name,
+								visibility: hasActiveSubscription ? 'private' : 'public',
+								tags: [],
+								description: template.description,
+								items: generateTemplateCharts(template, selections[index])
+							})
+						}}
+						className={`rounded-lg border p-2.5 text-left transition-colors hover:border-brand/40 aria-disabled:cursor-not-allowed ${creating ? 'border-brand/40' : 'border-pro-cards-border aria-disabled:opacity-60'}`}
+					>
+						<span className="flex items-center gap-2 text-sm font-medium text-pro-text-primary">
+							{template.name}
+							{creating || loading ? <LoadingSpinner size={14} /> : null}
+						</span>
+						<span id={`${id}-${template.id}`} className="mt-0.5 block text-xs text-pro-text-tertiary">
+							{template.description}
+							<span role="status" className={failed ? 'block text-error' : 'block'}>
+								{status}
+							</span>
+						</span>
+					</Ariakit.Button>
+				)
+			})}
+		</div>
+	)
+}
+
+function CreateDashboardModalContent({
+	onCreate,
+	status
+}: {
+	status: MutationStatus
 	onCreate: (data: {
 		dashboardName: string
 		visibility: 'private' | 'public'
@@ -354,7 +411,7 @@ function CreateDashboardModalContent({
 
 	return (
 		<form className="p-6" onSubmit={handleCreate}>
-			<div className="space-y-6">
+			<fieldset disabled={status === 'pending' || status === 'success'} className="space-y-6">
 				<div>
 					<label htmlFor="create-dashboard-name" className="mb-3 block text-sm font-medium text-pro-text-primary">
 						Dashboard Name
@@ -484,21 +541,28 @@ function CreateDashboardModalContent({
 						<span ref={charCountRef}>0</span>/200 characters
 					</p>
 				</div>
-			</div>
+			</fieldset>
 
 			<div className="mt-8 flex gap-3">
 				<Ariakit.DialogDismiss
 					type="button"
-					className="flex-1 rounded-md border border-pro-form-control-border px-4 py-2 text-pro-text-secondary transition-colors hover:text-pro-text-primary"
+					disabled={status === 'pending'}
+					className="flex-1 rounded-md border border-pro-form-control-border px-4 py-2 text-pro-text-secondary transition-colors hover:text-pro-text-primary disabled:opacity-50"
 				>
 					Cancel
 				</Ariakit.DialogDismiss>
 				<button
 					type="submit"
 					data-umami-event="dashboard-create"
-					className="flex-1 rounded-md bg-brand px-4 py-2 font-medium text-on-brand transition-colors hover:bg-brand/90"
+					disabled={status === 'pending' || status === 'success'}
+					className="flex flex-1 items-center justify-center gap-2 rounded-md bg-brand px-4 py-2 font-medium text-on-brand transition-colors hover:bg-brand/90 disabled:opacity-50"
 				>
-					Create Dashboard
+					{status === 'pending' ? (
+						<LoadingSpinner size={16} />
+					) : status === 'success' ? (
+						<Icon name="check" height={16} width={16} />
+					) : null}
+					{status === 'pending' ? 'Creating…' : status === 'success' ? 'Created' : 'Create Dashboard'}
 				</button>
 			</div>
 		</form>

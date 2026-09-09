@@ -72,7 +72,7 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 						accessibleWhenDisabled
 						type="button"
 						onClick={handleSkip}
-						className="ml-auto rounded-md p-2 hover:bg-error/10 hover:text-error"
+						className="ml-auto rounded-md p-2 hover:bg-error/10 hover:text-error aria-disabled:opacity-50"
 						disabled={submission.isPending}
 						aria-label="Dismiss rating"
 					>
@@ -114,7 +114,7 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 						type="button"
 						onClick={handleSkip}
 						disabled={submission.isPending}
-						className="flex items-center gap-2 px-4 py-2 text-sm hover:text-link"
+						className="flex items-center gap-2 px-4 py-2 text-sm hover:text-link aria-disabled:opacity-50"
 					>
 						{submission.isPending && 'skipped' in submission.variables ? <LoadingSpinner size={16} /> : null}
 						Skip
@@ -125,7 +125,7 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 							accessibleWhenDisabled
 							type="submit"
 							disabled={submission.isPending}
-							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand"
+							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand aria-disabled:opacity-50"
 						>
 							{submission.isPending && !('skipped' in submission.variables) ? (
 								<LoadingSpinner size={16} />
@@ -189,7 +189,7 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 							type="button"
 							onClick={handleSkip}
 							disabled={submission.isPending}
-							className="flex items-center gap-2 px-4 py-2 text-sm text-pro-text-form hover:text-link"
+							className="flex items-center gap-2 px-4 py-2 text-sm text-pro-text-form hover:text-link aria-disabled:opacity-50"
 						>
 							{submission.isPending && 'skipped' in submission.variables ? <LoadingSpinner size={16} /> : null}
 							Skip
@@ -198,7 +198,7 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 							accessibleWhenDisabled
 							type="submit"
 							disabled={submission.isPending}
-							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand"
+							className="flex items-center gap-2 rounded-md bg-pro-accent px-6 py-2 font-medium text-on-brand aria-disabled:opacity-50"
 						>
 							{submission.isPending && !('skipped' in submission.variables) ? (
 								<LoadingSpinner size={16} />
@@ -218,7 +218,7 @@ function RatingForm({ sessionId, mode, variant, prompt, onSubmit }: RatingProps)
 						type="button"
 						onClick={handleSkip}
 						disabled={submission.isPending}
-						className="flex items-center gap-2 px-4 py-2 text-sm hover:text-link"
+						className="flex items-center gap-2 px-4 py-2 text-sm hover:text-link aria-disabled:opacity-50"
 					>
 						{submission.isPending && 'skipped' in submission.variables ? <LoadingSpinner size={16} /> : null}
 						Skip

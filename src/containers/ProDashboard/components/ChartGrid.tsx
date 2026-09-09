@@ -25,6 +25,7 @@ import { StreamDoneContext } from '../queries'
 import type { SqlChartConfig } from '../types'
 import type { UnifiedTableConfig } from '../unifiedTable/config/current'
 import { ConfirmationModal } from './ConfirmationModal'
+import { DashboardCardLoader } from './DashboardCardLoader'
 import { InViewDashboardCard } from './InViewDashboardCard'
 import { TextCard } from './TextCard'
 import type { UnifiedTableFocusSection } from './UnifiedTable/types'
@@ -155,7 +156,7 @@ function UnifiedTableCard({ item, onEditItem }: UnifiedTableCardProps) {
 	}
 
 	return (
-		<Suspense fallback={<div className="flex min-h-[360px] flex-col p-1 md:min-h-[380px]" />}>
+		<Suspense fallback={<DashboardCardLoader className="min-h-[360px] md:min-h-[380px]" />}>
 			<UnifiedTable config={item} {...(onEditItem ? { onEdit: handleEdit } : {})} />
 		</Suspense>
 	)
@@ -163,7 +164,7 @@ function UnifiedTableCard({ item, onEditItem }: UnifiedTableCardProps) {
 
 function SqlChartItem({ item }: { item: SqlChartConfig }) {
 	return (
-		<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+		<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 			<SqlChartCard config={item} />
 		</Suspense>
 	)
@@ -190,7 +191,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'chart') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 				<ChartCard chart={item} />
 			</Suspense>
 		)
@@ -198,7 +199,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'multi') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[402px] flex-col p-1 md:min-h-[418px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[402px] md:min-h-[418px]" />}>
 				<MultiChartCard multi={item} />
 			</Suspense>
 		)
@@ -206,7 +207,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'metric') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[140px] flex-col p-1" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[140px]" />}>
 				<MetricCard metric={item} />
 			</Suspense>
 		)
@@ -214,7 +215,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'builder') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[422px] flex-col p-1 md:min-h-[438px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[422px] md:min-h-[438px]" />}>
 				<ChartBuilderCard builder={item} />
 			</Suspense>
 		)
@@ -222,7 +223,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'yields') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 				<YieldsChartCard config={item} />
 			</Suspense>
 		)
@@ -230,7 +231,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'stablecoins') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 				<StablecoinsChartCard config={item} />
 			</Suspense>
 		)
@@ -238,7 +239,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'stablecoin-asset') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 				<StablecoinAssetChartCard config={item} />
 			</Suspense>
 		)
@@ -246,7 +247,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'advanced-tvl') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 				<AdvancedTvlChartCard config={item} />
 			</Suspense>
 		)
@@ -254,7 +255,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'advanced-borrowed') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 				<BorrowedChartCard config={item} />
 			</Suspense>
 		)
@@ -262,7 +263,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'income-statement') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[360px] flex-col p-1" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" />}>
 				<IncomeStatementCard config={item} />
 			</Suspense>
 		)
@@ -270,7 +271,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'unlocks-schedule') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[360px] flex-col p-1" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" />}>
 				<UnlocksScheduleCard config={item} />
 			</Suspense>
 		)
@@ -278,7 +279,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'unlocks-pie') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[360px] flex-col p-1" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" />}>
 				<UnlocksPieCard config={item} />
 			</Suspense>
 		)
@@ -286,7 +287,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'llamaai-chart') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 				<LlamaAIChartCard config={item} />
 			</Suspense>
 		)
@@ -294,7 +295,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'rwa-overview') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 				<RWAOverviewChartCard config={item} />
 			</Suspense>
 		)
@@ -302,7 +303,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'rwa-asset') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[344px] flex-col p-1 md:min-h-[360px]" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[344px] md:min-h-[360px]" />}>
 				<RWAAssetChartCard config={item} />
 			</Suspense>
 		)
@@ -322,7 +323,7 @@ const DashboardItemRenderer = memo(function DashboardItemRenderer(props: Dashboa
 
 	if (item.kind === 'dataset-table') {
 		return (
-			<Suspense fallback={<div className="flex min-h-[360px] flex-col p-1" />}>
+			<Suspense fallback={<DashboardCardLoader className="min-h-[360px]" />}>
 				{props.isEditable ? (
 					<DatasetTableCard config={item} onConfigChange={(config) => props.handleEditItem(item.id, config)} />
 				) : (

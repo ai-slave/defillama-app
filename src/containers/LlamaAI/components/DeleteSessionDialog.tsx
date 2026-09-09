@@ -57,7 +57,7 @@ export function DeleteSessionDialog({
 					type="button"
 					disabled={pending}
 					onClick={onConfirm}
-					className="flex items-center gap-2 rounded-md bg-ai-error-vivid/10 px-3 py-2 text-sm font-medium text-ai-error disabled:opacity-50"
+					className="flex items-center gap-2 rounded-md bg-ai-error-vivid/10 px-3 py-2 text-sm font-medium text-ai-error aria-disabled:opacity-50"
 				>
 					{pending ? <LoadingSpinner size={14} /> : null}
 					{pending ? 'Deleting…' : error ? 'Retry deletion' : 'Delete'}

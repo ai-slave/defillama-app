@@ -76,7 +76,7 @@ export function ProjectSessionItem({
 						accessibleWhenDisabled
 						type="submit"
 						disabled={isBusy}
-						className="flex min-h-7 items-center justify-center gap-1 rounded-md bg-brand px-2 text-ai-white disabled:opacity-60"
+						className="flex min-h-7 items-center justify-center gap-1 rounded-md bg-brand px-2 text-ai-white aria-disabled:opacity-60"
 						aria-label={updateTitle.isPending ? 'Saving title' : 'Save title'}
 					>
 						{updateTitle.isPending ? <LoadingSpinner size={12} /> : null}

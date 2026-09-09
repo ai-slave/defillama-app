@@ -197,10 +197,6 @@ function generateId(prefix: string, suffix: string): string {
 	return `${prefix}-${suffix}-${Date.now()}`
 }
 
-interface ProtocolMetadata {
-	flags?: Record<string, boolean>
-}
-
 export interface ChainCategoryData {
 	chainsInCategory: Map<string, Set<string>>
 }
@@ -224,24 +220,20 @@ export interface DimensionProtocols {
 	dexAggregators?: Array<DimensionProtocol>
 }
 
-function getSelectedItems(
+export function getTemplateItems(
 	template: DashboardTemplate,
 	protocols: Array<Protocol>,
 	chains: Array<Chain>,
-	protocolMetadata: Map<string, ProtocolMetadata>,
 	chainCategoryData?: ChainCategoryData,
 	dimensionProtocols?: DimensionProtocols
 ): Array<SelectedItem> {
 	if (template.type === 'protocols') {
-		if (template.filter.metadataFlag && dimensionProtocols) {
-			const dimensionKey = template.filter.metadataFlag
-			const dimensionData = dimensionProtocols[dimensionKey]
-			if (dimensionData && dimensionData.length > 0) {
-				return dimensionData.slice(0, template.count).map((p) => ({
-					slug: p.slug,
-					name: p.displayName || p.name
-				}))
-			}
+		// Volume templates use the ranked dimension dataset, never a TVL-ranked fallback.
+		if (template.filter.metadataFlag) {
+			return (dimensionProtocols?.[template.filter.metadataFlag] ?? []).slice(0, template.count).map((p) => ({
+				slug: p.slug,
+				name: p.displayName || p.name
+			}))
 		}
 
 		let filtered = protocols
@@ -250,16 +242,8 @@ function getSelectedItems(
 			filtered = filtered.filter((p) => p.category === template.filter.category)
 		}
 
-		if (template.filter.metadataFlag) {
-			const metadataFlag = template.filter.metadataFlag
-			filtered = filtered.filter((p) => {
-				const meta = protocolMetadata.get(p.slug)
-				return meta?.flags?.[metadataFlag]
-			})
-		}
-
 		return filtered
-			.filter((p) => template.filter.metadataFlag || !p.parentProtocol)
+			.filter((p) => !p.parentProtocol)
 			.sort((a, b) => b.tvl - a.tvl)
 			.slice(0, template.count)
 			.map((p) => ({ slug: p.slug, name: p.name }))
@@ -286,7 +270,7 @@ function getSelectedItems(
 	}
 
 	return filteredChains
-		.sort((a, b) => b.tvl - a.tvl)
+		.toSorted((a, b) => b.tvl - a.tvl)
 		.slice(0, template.count)
 		.map((c) => ({ slug: c.name, name: c.name }))
 }
@@ -383,21 +367,8 @@ function generateTemplateMultiCharts(
 
 export function generateTemplateCharts(
 	template: DashboardTemplate,
-	protocols: Array<Protocol>,
-	chains: Array<Chain>,
-	protocolMetadata: Map<string, ProtocolMetadata>,
-	chainCategoryData?: ChainCategoryData,
-	dimensionProtocols?: DimensionProtocols
+	selectedItems: Array<SelectedItem>
 ): Array<DashboardItemConfig> {
-	const selectedItems = getSelectedItems(
-		template,
-		protocols,
-		chains,
-		protocolMetadata,
-		chainCategoryData,
-		dimensionProtocols
-	)
-
 	if (selectedItems.length === 0) {
 		return []
 	}

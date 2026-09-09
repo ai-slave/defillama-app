@@ -1,4 +1,6 @@
+import type { MutationStatus } from '@tanstack/react-query'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import type { WizardStep } from '../types'
 import { getStepIndex, WIZARD_STEPS } from '../types'
 
@@ -9,7 +11,7 @@ interface WizardNavigationProps {
 	onNext: () => void
 	onBack: () => void
 	onGenerate?: () => void
-	isGenerating?: boolean
+	creationStatus: MutationStatus
 }
 
 const STEP_LABELS: Record<WizardStep, string> = {
@@ -26,7 +28,7 @@ export function WizardNavigation({
 	onNext,
 	onBack,
 	onGenerate,
-	isGenerating
+	creationStatus
 }: WizardNavigationProps) {
 	const currentIndex = getStepIndex(currentStep)
 	const isLastStep = currentStep === 'preview'
@@ -78,20 +80,15 @@ export function WizardNavigation({
 					<button
 						type="button"
 						onClick={onGenerate}
-						disabled={!canProceed || isGenerating}
+						disabled={!canProceed || creationStatus === 'pending' || creationStatus === 'success'}
 						className="flex items-center gap-1.5 rounded-md bg-brand px-6 py-2 text-sm font-medium text-on-brand transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
 					>
-						{isGenerating ? (
-							<>
-								<div className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-								Creating...
-							</>
+						{creationStatus === 'pending' ? (
+							<LoadingSpinner size={16} />
 						) : (
-							<>
-								<Icon name="plus" height={14} width={14} />
-								Create Dashboard
-							</>
+							<Icon name={creationStatus === 'success' ? 'check' : 'plus'} height={14} width={14} />
 						)}
+						{creationStatus === 'pending' ? 'Creating…' : creationStatus === 'success' ? 'Created' : 'Create Dashboard'}
 					</button>
 				) : (
 					<button

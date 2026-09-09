@@ -1,5 +1,6 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { EChartsRenderVisibilityProvider } from '~/components/ECharts/renderVisibility'
+import { DashboardCardLoader } from './DashboardCardLoader'
 
 export const DASHBOARD_CARD_ROOT_MARGIN = '1000px 0px'
 
@@ -36,7 +37,7 @@ export function InViewDashboardCard({ children, minHeight }: { children: ReactNo
 	return (
 		<div ref={containerRef} aria-busy={!hasMounted} style={{ minHeight }}>
 			<EChartsRenderVisibilityProvider visible={renderState === 'visible'}>
-				{hasMounted ? children : null}
+				{hasMounted ? children : <DashboardCardLoader className="min-h-[inherit]" />}
 			</EChartsRenderVisibilityProvider>
 		</div>
 	)

@@ -62,7 +62,7 @@ export function TeamInfoCard() {
 								accessibleWhenDisabled
 								type="submit"
 								disabled={updateTeamMutation.isPending}
-								className="flex min-h-8 items-center gap-1 px-1 text-xs font-medium text-sub-brand-primary disabled:opacity-50"
+								className="flex min-h-8 items-center gap-1 px-1 text-xs font-medium text-sub-brand-primary aria-disabled:opacity-50"
 							>
 								{updateTeamMutation.isPending ? <LoadingSpinner size={12} /> : null}
 								{updateTeamMutation.isPending ? 'Saving…' : 'Save'}

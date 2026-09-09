@@ -373,6 +373,7 @@ function ProDashboardAPIProviderInner({
 	const {
 		data: protocolsAndChains,
 		isError: protocolCatalogHasError,
+		isFetching: protocolCatalogFetching,
 		refetch: refetchProtocolCatalog
 	} = useProtocolsAndChains({ enabled: needsProtocolCatalog, waitForStream: waitForStreamedProtocolCatalog })
 	const retryProtocolCatalog = useCallback(() => {
@@ -380,9 +381,9 @@ function ProDashboardAPIProviderInner({
 	}, [refetchProtocolCatalog])
 	const protocolCatalog = useMemo<ChartDataPrerequisite>(() => {
 		if (!needsProtocolCatalog || protocolsAndChains !== undefined) return { status: 'ready' }
-		if (protocolCatalogHasError) return { status: 'error', retry: retryProtocolCatalog }
+		if (protocolCatalogHasError && !protocolCatalogFetching) return { status: 'error', retry: retryProtocolCatalog }
 		return { status: 'loading' }
-	}, [needsProtocolCatalog, protocolCatalogHasError, protocolsAndChains, retryProtocolCatalog])
+	}, [needsProtocolCatalog, protocolCatalogHasError, protocolCatalogFetching, protocolsAndChains, retryProtocolCatalog])
 	const protocolsLoading = protocolCatalog.status === 'loading'
 	const protocols = protocolsAndChains?.protocols ?? EMPTY_PROTOCOLS
 	const rawChains = protocolsAndChains?.chains ?? EMPTY_CHAINS

@@ -168,7 +168,7 @@ function CreateProjectForm({
 					accessibleWhenDisabled
 					type="submit"
 					disabled={!name.trim() || isPending}
-					className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
+					className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
 				>
 					{isPending ? <LoadingSpinner size={12} /> : null}
 					{isPending ? (mode === 'rename' ? 'Saving…' : 'Creating…') : mode === 'rename' ? 'Save' : 'Create project'}

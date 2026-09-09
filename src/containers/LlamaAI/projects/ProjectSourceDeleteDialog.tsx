@@ -69,7 +69,7 @@ export function ProjectSourceDeleteDialog({
 							}
 						)
 					}}
-					className="flex items-center gap-2 rounded-md bg-ai-error-vivid/10 px-3 py-2 text-sm font-medium text-ai-error disabled:opacity-50"
+					className="flex items-center gap-2 rounded-md bg-ai-error-vivid/10 px-3 py-2 text-sm font-medium text-ai-error aria-disabled:opacity-50"
 				>
 					{mutation.isPending ? <LoadingSpinner size={14} /> : null}
 					{mutation.isPending ? (target.kind === 'file' ? 'Deleting…' : 'Disconnecting…') : action}

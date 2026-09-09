@@ -113,7 +113,7 @@ export function EmailChangeModal({ isOpen, onClose }: EmailChangeModalProps) {
 								accessibleWhenDisabled
 								type="submit"
 								disabled={requestEmailChange.isPending}
-								className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand disabled:opacity-25"
+								className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-sub-brand-primary text-sm font-medium text-on-brand aria-disabled:opacity-25"
 							>
 								{requestEmailChange.isPending ? <LoadingSpinner size={14} /> : null}
 								{requestEmailChange.isPending ? 'Sending…' : 'Confirm Email'}

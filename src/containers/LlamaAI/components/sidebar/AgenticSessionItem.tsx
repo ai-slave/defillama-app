@@ -210,7 +210,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 						accessibleWhenDisabled
 						type="submit"
 						aria-label={updateTitle.isPending ? 'Saving session title' : 'Save session title'}
-						className="flex items-center justify-center gap-1 rounded-sm bg-brand p-1.5 text-ai-white"
+						className="flex items-center justify-center gap-1 rounded-sm bg-brand p-1.5 text-ai-white aria-disabled:opacity-50"
 						disabled={updateTitle.isPending}
 					>
 						{updateTitle.isPending ? <LoadingSpinner size={12} /> : null}

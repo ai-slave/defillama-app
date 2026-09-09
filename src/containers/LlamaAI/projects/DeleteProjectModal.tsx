@@ -98,7 +98,7 @@ export function DeleteProjectModal({
 							void onConfirm()
 						}}
 						disabled={remove.isPending || !project}
-						className="flex items-center gap-1.5 rounded-md bg-ai-error-vivid/10 px-3 py-1.5 text-xs font-medium text-ai-error transition-colors hover:bg-ai-error-vivid/20 disabled:opacity-50"
+						className="flex items-center gap-1.5 rounded-md bg-ai-error-vivid/10 px-3 py-1.5 text-xs font-medium text-ai-error transition-colors hover:bg-ai-error-vivid/20 aria-disabled:opacity-50"
 					>
 						{remove.isPending ? <LoadingSpinner size={12} /> : null}
 						{remove.isPending ? 'Deleting…' : remove.error ? 'Retry deletion' : 'Delete project'}

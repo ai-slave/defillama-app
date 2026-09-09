@@ -90,7 +90,7 @@ export function ConfirmationModal({
 							onConfirm()
 							if (closeOnConfirm) onClose()
 						}}
-						className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${confirmButtonClass}`}
+						className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors aria-disabled:opacity-50 ${confirmButtonClass}`}
 					>
 						{pending ? <LoadingSpinner size={14} /> : null}
 						{pending ? pendingText : confirmText}

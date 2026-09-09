@@ -19,7 +19,7 @@ import { AutosaveStatus } from './components/AutosaveStatus'
 import { ChartGrid } from './components/ChartGrid'
 import { CopyDashboardLinkButton } from './components/CopyDashboardLinkButton'
 import { CustomTimePeriodPicker } from './components/CustomTimePeriodPicker'
-import { CopyDashboardButton, UndoAIGenerationButton } from './components/DashboardActionButtons'
+import { CopyDashboardButton, EditDashboardButton, UndoAIGenerationButton } from './components/DashboardActionButtons'
 import { EmptyState } from './components/EmptyState'
 import { LikeDashboardButton } from './components/LikeDashboardButton'
 import {
@@ -343,16 +343,10 @@ function ProDashboardContent() {
 							{isAuthenticated ? (
 								<>
 									{mode === 'view' && dashboardId && currentDashboard?.user === user?.id ? (
-										<button
-											type="button"
-											onClick={() => {
-												void router.push(`/pro/${currentDashboard?.slug ?? dashboardId}/edit`)
-											}}
-											className="flex items-center gap-1 rounded-md pro-btn-ai px-3 py-1.5 text-sm"
-										>
-											<Icon name="pencil" height={16} width={16} />
-											<span>Edit</span>
-										</button>
+										<EditDashboardButton
+											key={dashboardId}
+											href={`/pro/${currentDashboard?.slug ?? dashboardId}/edit`}
+										/>
 									) : null}
 									{mode === 'edit' && dashboardId ? (
 										<button
@@ -485,7 +479,8 @@ function ProDashboardContent() {
 							<button
 								type="button"
 								onClick={() => setShowSettingsModal(true)}
-								className="hidden rounded-md pro-glass pro-hover-bg p-2 transition-colors md:flex"
+								className="flex rounded-md pro-glass pro-hover-bg p-2 transition-colors"
+								aria-label="Dashboard Settings"
 								title="Dashboard Settings"
 							>
 								<Icon name="settings" height={20} width={20} className="text-pro-text-primary" />
