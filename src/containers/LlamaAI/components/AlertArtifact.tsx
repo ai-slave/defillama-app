@@ -13,6 +13,7 @@ import {
 	getDeliveryReadinessBlock,
 	getUpsellCopy,
 	isAlertCapReachedError,
+	resolveSlackChannelName,
 	resolveSlackTarget,
 	roundPriceValue,
 	validatePriceTrigger,
@@ -128,8 +129,12 @@ export function AlertArtifact({
 		if (GMT_OFFSETS.some((option) => option.value === timezone)) return GMT_OFFSETS
 		return [...GMT_OFFSETS, { value: timezone, label: getTimezoneLabel(timezone) }]
 	}, [timezone])
-	const selectedChannel = (slackChannels ?? []).find((c) => c.id === slackChannelId) ?? null
-	const slackChannelName = selectedChannel?.name ?? alertIntent.slackChannelName ?? null
+	const slackChannelName = resolveSlackChannelName({
+		channelId: slackChannelId,
+		channels: slackChannels,
+		intentChannelId: alertIntent.slackChannelId,
+		intentChannelName: alertIntent.slackChannelName
+	})
 	const isSaved = savedDbId !== null
 	const priceValidationError = trigger ? validatePriceTrigger({ tokenNk: trigger.token_nk, value: priceValue }) : null
 	const editedTrigger: PriceTrigger | null = trigger ? { ...trigger, op: priceOp, value: Number(priceValue) } : null

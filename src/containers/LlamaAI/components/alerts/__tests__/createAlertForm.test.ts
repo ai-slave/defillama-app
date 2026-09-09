@@ -14,6 +14,7 @@ import {
 	getSubmitBlockReason,
 	isAlertCapReachedError,
 	normalizePriceInput,
+	resolveSlackChannelName,
 	resolveSlackTarget,
 	roundPriceValue,
 	validatePriceTrigger,
@@ -672,5 +673,56 @@ describe('resolveSlackTarget', () => {
 			teamId: '',
 			channelId: ''
 		})
+	})
+})
+
+describe('resolveSlackChannelName', () => {
+	const channels = [
+		{ id: 'C1', name: 'general' },
+		{ id: 'C9', name: 'private-research' }
+	]
+
+	test('names the chosen channel from the loaded list', () => {
+		expect(resolveSlackChannelName({ channelId: 'C9', channels })).toBe('private-research')
+	})
+
+	test("carries the intent's proposed name while its channel is still the chosen one", () => {
+		expect(
+			resolveSlackChannelName({
+				channelId: 'C1',
+				channels: undefined,
+				intentChannelId: 'C1',
+				intentChannelName: 'general'
+			})
+		).toBe('general')
+	})
+
+	// The reported drift: switching channel before the list arrives used to keep the intent's name, so
+	// the alert saved a label for a channel it does not post to.
+	test('gives no name to a channel the intent did not propose', () => {
+		expect(
+			resolveSlackChannelName({
+				channelId: 'C7',
+				channels: undefined,
+				intentChannelId: 'C1',
+				intentChannelName: 'general'
+			})
+		).toBeNull()
+	})
+
+	test('prefers the loaded name over the intent', () => {
+		expect(
+			resolveSlackChannelName({ channelId: 'C1', channels, intentChannelId: 'C1', intentChannelName: 'stale-name' })
+		).toBe('general')
+	})
+
+	test('gives no name when no channel is chosen', () => {
+		expect(
+			resolveSlackChannelName({ channelId: '', channels, intentChannelId: 'C1', intentChannelName: 'general' })
+		).toBeNull()
+	})
+
+	test('gives no name for a channel missing from the loaded list', () => {
+		expect(resolveSlackChannelName({ channelId: 'C7', channels })).toBeNull()
 	})
 })

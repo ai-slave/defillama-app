@@ -59,6 +59,29 @@ export function resolveSlackTarget(input: {
 	return sole ? { teamId: sole.team_id, channelId: sole.default_channel_id ?? '' } : NO_SLACK_TARGET
 }
 
+/**
+ * The name to show and persist for the chosen Slack channel.
+ *
+ * The loaded channel list is the only source that can name the chosen channel. The proposed name
+ * from an alert intent describes the intent's channel and nothing else, so it stands in only while
+ * that channel is still the chosen one -- otherwise switching channel before the list arrives would
+ * label the alert with somewhere it does not go, and persist that label with the save.
+ *
+ * No name is better than the wrong one: the id decides delivery, and the payload already accepts a
+ * null name.
+ */
+export function resolveSlackChannelName(input: {
+	channelId: string
+	channels: ReadonlyArray<{ id: string; name: string }> | undefined
+	intentChannelId?: string | null
+	intentChannelName?: string | null
+}): string | null {
+	const loaded = input.channels?.find((channel) => channel.id === input.channelId)
+	if (loaded) return loaded.name
+	if (input.channelId && input.channelId === input.intentChannelId) return input.intentChannelName ?? null
+	return null
+}
+
 export function getDeliveryReadinessBlock(input: {
 	channel: DeliveryChannel
 	telegramLinked: boolean
