@@ -507,6 +507,78 @@ describe('useChatQueueController', () => {
 		expect(controller.serverQueue).toEqual([retried])
 	})
 
+	// The payload cache used to evict whatever was inserted first, which in queue order is the head:
+	// the very next message to run. Losing it drops that message from the transcript entirely.
+	test('keeps the head payload for a queue deeper than the retired-row bound', async () => {
+		const deep = Array.from({ length: 25 }, (_, index) => pending(`q${index + 1}`))
+		await act(async () => controller.applySnapshot(snapshot(1, deep)))
+
+		expect(controller.takeStartedItem('q1')).toEqual(deep[0])
+		expect(controller.takeStartedItem('q25')).toEqual(deep[24])
+	})
+
+	// Adopting the real session id runs ahead of the prop on purpose, so the payloads have to travel
+	// with it: queue item ids do not change.
+	test('keeps queued payloads when the session takes its real id', async () => {
+		const queued = pending('q1')
+		await act(async () => controller.applySnapshot(snapshot(1, [queued])))
+		await act(async () => controller.adoptSession('session-1', 'session-2'))
+
+		expect(controller.takeStartedItem('q1')).toEqual(queued)
+	})
+
+	// The queue the user can see, not just the payload cache. The reducer drops a snapshot for a
+	// session it has not adopted yet, and the prop committing resets the queue, so an accepted
+	// snapshot has to survive both or the queue empties until a newer revision happens along.
+	test('shows the adopted queue once the session prop commits', async () => {
+		await act(async () => controller.adoptSession('session-1', 'session-2'))
+		await act(async () => controller.applySnapshot(snapshot(4, [pending('q1')], 'session-2')))
+		await act(async () => root.render(<Harness sessionId="session-2" />))
+
+		expect(controller.serverQueue.map((item) => item.id)).toEqual(['q1'])
+	})
+
+	test('a snapshot for the adopted session still applies after adoption', async () => {
+		await act(async () => controller.applySnapshot(snapshot(1, [pending('q1')])))
+		await act(async () => controller.adoptSession('session-1', 'session-2'))
+		await act(async () => controller.applySnapshot(snapshot(2, [pending('q2')], 'session-2')))
+
+		expect(controller.takeStartedItem('q2')).toEqual(pending('q2'))
+	})
+
+	// The opposite edge: moving to a different session must not serve that session's payloads.
+	test('drops queued payloads when the session actually changes', async () => {
+		await act(async () => controller.applySnapshot(snapshot(1, [pending('q1')])))
+		await act(async () => root.render(<Harness sessionId="session-9" />))
+
+		expect(controller.takeStartedItem('q1')).toBeNull()
+	})
+
+	test('never serves the same payload twice, retired or not', async () => {
+		const queued = pending('q1')
+		await act(async () => controller.applySnapshot(snapshot(1, [queued])))
+		// Leaving the queue retires the payload rather than dropping it.
+		await act(async () => controller.applySnapshot(snapshot(2, [])))
+
+		expect(controller.takeStartedItem('q1')).toEqual(queued)
+		expect(controller.takeStartedItem('q1')).toBeNull()
+	})
+
+	test('bounds retired payloads without touching live ones', async () => {
+		const live = pending('live')
+		await act(async () => controller.applySnapshot(snapshot(1, [live])))
+		await act(async () => {
+			for (let index = 0; index < 30; index++) {
+				controller.applySnapshot(snapshot(index * 2 + 2, [live, pending(`gone${index}`)]))
+				controller.applySnapshot(snapshot(index * 2 + 3, [live]))
+			}
+		})
+
+		expect(controller.takeStartedItem('gone0')).toBeNull()
+		expect(controller.takeStartedItem('gone29')).toEqual(pending('gone29'))
+		expect(controller.takeStartedItem('live')).toEqual(live)
+	})
+
 	test('keeps queued content for the execution handoff even when the firing snapshot is missed', async () => {
 		const queued = pending('q1')
 		await act(async () => {

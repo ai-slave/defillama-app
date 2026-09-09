@@ -35,6 +35,40 @@ export interface QueueActionError {
 
 export type QueueServerRow = QueuedMessageElement & { kind: 'server' }
 
+interface QueuedRowStore {
+	sessionId: string
+	live: Map<string, QueuedMessageElement>
+	departed: Map<string, QueuedMessageElement>
+}
+
+/** How many payloads to keep for items that left the queue before their start event arrived. */
+const DEPARTED_ROW_LIMIT = 20
+
+/**
+ * Mirror the snapshot's queue into `live` and retire anything it no longer lists.
+ *
+ * Retiring rather than deleting covers the race where an item starts before the snapshot that drops
+ * it: the start event still finds its payload. Only retired rows are bounded, so a queue deeper than
+ * that bound cannot lose the payload of a message still waiting to run.
+ */
+function refreshQueuedRows(store: QueuedRowStore, snapshot: QueueSnapshot) {
+	const queued = new Set<string>()
+	for (const item of snapshot.queue) {
+		if (item.state !== 'pending' && item.state !== 'firing') continue
+		queued.add(item.id)
+		store.live.set(item.id, item)
+		store.departed.delete(item.id)
+	}
+	for (const [id, item] of store.live) {
+		if (queued.has(id)) continue
+		store.live.delete(id)
+		store.departed.set(id, item)
+	}
+	while (store.departed.size > DEPARTED_ROW_LIMIT) {
+		store.departed.delete(store.departed.keys().next().value!)
+	}
+}
+
 export interface QueueLocalRow {
 	kind: 'local'
 	id: string
@@ -447,7 +481,11 @@ export function useChatQueueController({
 	const controllersRef = useRef(new Set<AbortController>())
 	const outboxDrainsRef = useRef(new Set<string>())
 	const drainOutboxRef = useRef<(sessionId: string) => void>(() => {})
-	const queuedRowsRef = useRef<{ sessionId: string; rows: Map<string, QueuedMessageElement> } | null>(null)
+	// Payloads for queued messages, held until the execution start event claims one. `live` mirrors the
+	// server queue, which the server itself bounds, so it is never trimmed: dropping a live payload
+	// loses the message from the transcript. `departed` holds items that have left the queue and whose
+	// start event may still be in flight, and that is what needs a bound.
+	const queuedRowsRef = useRef<QueuedRowStore | null>(null)
 	const rememberedEditsRef = useRef(new Map<string, RememberedEdit>())
 	const pendingSnapshotRef = useRef<QueueSnapshot | null>(null)
 	const snapshotCursorRef = useRef({ sessionId, revision: -1 })
@@ -484,10 +522,22 @@ export function useChatQueueController({
 	})
 
 	useLayoutEffect(() => {
-		if (stateRef.current.sessionId !== sessionId) send({ type: 'reset', sessionId })
-		snapshotCursorRef.current = { sessionId, revision: -1 }
-		latestSnapshotRef.current = null
-		queuedRowsRef.current = sessionId ? { sessionId, rows: new Map() } : null
+		if (stateRef.current.sessionId !== sessionId) {
+			send({ type: 'reset', sessionId })
+			// The reducer drops a snapshot for a session it has not adopted, so one accepted during
+			// adoption never reached the visible queue, and the reset just cleared it. Replaying it here
+			// is the only delivery left: the revision cursor survives adoption on purpose, so the same
+			// revision arriving again would be turned away as stale.
+			if (latestSnapshotRef.current?.sessionId === sessionId) send(snapshotEvent(latestSnapshotRef.current))
+		}
+		// Keyed on the session the refs already hold, not on every render of this effect: adopting a
+		// real session id retargets them, and resetting here would throw away payloads for a queue that
+		// did not change. Server queue item ids survive adoption.
+		if (queuedRowsRef.current?.sessionId !== sessionId) {
+			snapshotCursorRef.current = { sessionId, revision: -1 }
+			latestSnapshotRef.current = null
+			queuedRowsRef.current = sessionId ? { sessionId, live: new Map(), departed: new Map() } : null
+		}
 		if (pendingSnapshotRef.current?.sessionId === sessionId) {
 			snapshotCursorRef.current.revision = pendingSnapshotRef.current.revision
 			latestSnapshotRef.current = pendingSnapshotRef.current
@@ -512,13 +562,7 @@ export function useChatQueueController({
 			snapshotCursorRef.current = { sessionId: snapshot.sessionId, revision: snapshot.revision }
 			latestSnapshotRef.current = snapshot
 			const queuedRows = queuedRowsRef.current
-			if (queuedRows?.sessionId === snapshot.sessionId) {
-				for (const item of snapshot.queue) {
-					if (item.state !== 'pending' && item.state !== 'firing') continue
-					queuedRows.rows.set(item.id, item)
-					if (queuedRows.rows.size > 20) queuedRows.rows.delete(queuedRows.rows.keys().next().value!)
-				}
-			}
+			if (queuedRows?.sessionId === snapshot.sessionId) refreshQueuedRows(queuedRows, snapshot)
 			send(snapshotEvent(snapshot))
 			queueMicrotask(() => drainOutboxRef.current(snapshot.sessionId))
 			return true
@@ -785,6 +829,14 @@ export function useChatQueueController({
 		(previousSessionId: string, nextSessionId: string) => {
 			if (previousSessionId === nextSessionId) return
 			activeSessionIdRef.current = nextSessionId
+			// The queue keeps its item ids across adoption, so the payloads move with it rather than
+			// being stranded under the id the session no longer has.
+			if (queuedRowsRef.current?.sessionId === previousSessionId) {
+				queuedRowsRef.current.sessionId = nextSessionId
+			}
+			if (snapshotCursorRef.current.sessionId === previousSessionId) {
+				snapshotCursorRef.current = { sessionId: nextSessionId, revision: snapshotCursorRef.current.revision }
+			}
 			abortCommands()
 			send({ type: 'local_adopt_session', previousSessionId, nextSessionId })
 		},
@@ -794,8 +846,9 @@ export function useChatQueueController({
 	const takeStartedItem = useCallback((id: string) => {
 		const queuedRows = queuedRowsRef.current
 		if (!queuedRows || queuedRows.sessionId !== activeSessionIdRef.current) return null
-		const item = queuedRows.rows.get(id) ?? null
-		queuedRows.rows.delete(id)
+		const item = queuedRows.live.get(id) ?? queuedRows.departed.get(id) ?? null
+		queuedRows.live.delete(id)
+		queuedRows.departed.delete(id)
 		return item
 	}, [])
 	const getServerQueue = useCallback(

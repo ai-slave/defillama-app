@@ -30,4 +30,29 @@ describe('materializePersistedUserMessage', () => {
 			{ role: 'user', content: 'direct prompt', id: 'persisted-direct' }
 		])
 	})
+
+	// A queued prompt whose payload is missing must not borrow the direct-send row's text, which would
+	// attach the persisted queue id to a different message. Leaving the transcript alone is the lesser
+	// fault; keeping the payload available is the queue controller's job.
+	test('leaves a direct-send row alone when the queued payload is missing', () => {
+		const messages = [{ role: 'user' as const, content: 'direct prompt', id: 'local-1' }]
+
+		expect(materializePersistedUserMessage(messages, 'persisted-queue', 'queue-1', null)).toBe(messages)
+		expect(materializePersistedUserMessage(messages, 'persisted-queue', 'queue-1', firedItem)).toEqual([
+			{ role: 'user', content: 'direct prompt', id: 'local-1' },
+			{ role: 'user', content: 'queued prompt', id: 'persisted-queue' }
+		])
+	})
+
+	test('does not add a queued prompt that is already in the transcript', () => {
+		const messages = [{ role: 'user' as const, content: 'queued prompt', id: 'persisted-queue' }]
+
+		expect(materializePersistedUserMessage(messages, 'persisted-queue', 'queue-1', firedItem)).toBe(messages)
+	})
+
+	test('leaves a transcript with no optimistic tail alone', () => {
+		const messages = [{ role: 'assistant' as const, content: 'an answer', id: 'assistant-1' }]
+
+		expect(materializePersistedUserMessage(messages, 'persisted-direct', undefined, null)).toBe(messages)
+	})
 })
