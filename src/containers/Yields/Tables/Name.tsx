@@ -78,7 +78,9 @@ export function PoolNameLockup({
 	// row, vertically centered by the row's items-center.
 	return (
 		<span className="flex h-9 min-w-0 items-center gap-2">
-			{bookmark ? <Bookmark readableName={value} configID={configID} data-lgonly className="-ml-1" /> : null}
+			{bookmark ? (
+				<Bookmark size="sm" readableName={value} configID={configID} className="-my-1 -mr-1 -ml-2 hidden lg:flex" />
+			) : null}
 			{rowId != null && rowNumber != null ? (
 				<span className="inline-block min-w-4 shrink-0 text-left text-secondary">{rowNumber}</span>
 			) : null}

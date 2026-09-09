@@ -9,6 +9,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
+import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
@@ -43,9 +44,12 @@ const categoriesColumns = [
 			return (
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
 					{row.subRows?.length != null && row.subRows.length > 0 ? (
-						<button
+						<Button
+							size="sm"
+							variant="ghost"
+							square
 							type="button"
-							className="absolute -left-1"
+							className="absolute -left-2"
 							{...{
 								onClick: row.getToggleExpandedHandler()
 							}}
@@ -61,7 +65,7 @@ const categoriesColumns = [
 									<span className="sr-only">View tags</span>
 								</>
 							)}
-						</button>
+						</Button>
 					) : null}
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<BasicLink

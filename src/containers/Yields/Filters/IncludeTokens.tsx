@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router'
 import { useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { iconHitTargetStyles } from '~/ui/IconHitTarget'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { TOKEN_MATCHES, TOKEN_ONS, type TokenMatch, type TokenOn } from '../data/tokenMatch'
 import type { TokenOption } from '../data/types'
@@ -126,14 +126,17 @@ export function IncludeTokens({
 					)}
 				</button>
 				{clearable ? (
-					<button
+					<Button
+						size="sm"
+						variant="ghost"
+						square
 						type="button"
-						className={`${iconHitTargetStyles} mr-1`}
+						className="-my-1 mr-1 -ml-1"
 						aria-label="Clear selected tokens"
 						onClick={clearAll}
 					>
 						<Icon name="x" height={14} width={14} />
-					</button>
+					</Button>
 				) : null}
 			</div>
 

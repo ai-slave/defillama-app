@@ -6,7 +6,6 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { LinkPreviewCard } from '~/components/SEO'
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
-import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { HeroMetric } from '~/ui/HeroMetric'
@@ -198,10 +197,7 @@ function ProtocolHeader({
 							eventData={{ protocol: props.name, referral: String(!!props.isWebsiteReferral) }}
 						/>
 					) : null}
-					<Bookmark
-						readableName={props.name}
-						className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
-					/>
+					<Bookmark size="md" readableName={props.name} />
 				</span>
 			</Tag>
 			{primaryMetricOverride ? (

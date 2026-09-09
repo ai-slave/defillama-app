@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
-import { buttonStyles } from '~/ui/Button'
+import { Button, buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
@@ -346,7 +346,14 @@ export function buildDirectoryColumns(
 				return (
 					<div className={`relative flex min-w-0 items-center gap-2 ${row.depth > 0 ? 'pl-12' : 'pl-6'}`}>
 						{row.subRows.length > 0 ? (
-							<button type="button" className="absolute -left-0.5" onClick={row.getToggleExpandedHandler()}>
+							<Button
+								size="sm"
+								variant="ghost"
+								square
+								type="button"
+								className="absolute -left-1.5"
+								onClick={row.getToggleExpandedHandler()}
+							>
 								{row.getIsExpanded() ? (
 									<>
 										<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
@@ -358,7 +365,7 @@ export function buildDirectoryColumns(
 										<span className="sr-only">Show child venues</span>
 									</>
 								)}
-							</button>
+							</Button>
 						) : null}
 						<span className="vf-row-index shrink-0" aria-hidden="true" />
 						{quality?.tier ? (

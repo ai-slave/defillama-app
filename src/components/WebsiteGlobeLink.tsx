@@ -1,4 +1,4 @@
-import { buttonStyles } from '~/ui/Button'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -18,20 +18,27 @@ export function WebsiteGlobeLink({ url, name, event, eventData, size = 'md', cla
 	const label = `Open ${name} website`
 
 	return (
-		<Tooltip content={label}>
-			<a
-				href={url}
-				target="_blank"
-				rel="noopener noreferrer"
-				aria-label={label}
-				{...umamiAttributes}
-				data-umami-event={event}
-				data-umami-event-placement="header"
-				data-umami-event-url={url}
-				className={`${buttonStyles({ variant: 'ghost', size, square: true })} ${className ?? ''}`.trim()}
-			>
-				<Icon name="globe" className="size-4" />
-			</a>
+		<Tooltip
+			content={label}
+			className={className}
+			render={
+				<Button
+					as="a"
+					variant="ghost"
+					size={size}
+					square
+					href={url}
+					target="_blank"
+					rel="noopener noreferrer"
+					aria-label={label}
+					{...umamiAttributes}
+					data-umami-event={event}
+					data-umami-event-placement="header"
+					data-umami-event-url={url}
+				/>
+			}
+		>
+			<Icon name="globe" className="size-4" />
 		</Tooltip>
 	)
 }

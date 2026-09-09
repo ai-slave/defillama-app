@@ -7,6 +7,7 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
+import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
@@ -126,9 +127,12 @@ function createColumns(metric: ExtraTvlMetric) {
 				return (
 					<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-12' : 'pl-6'}`}>
 						{row.subRows?.length > 0 ? (
-							<button
+							<Button
+								size="sm"
+								variant="ghost"
+								square
 								type="button"
-								className="absolute -left-0.5"
+								className="absolute -left-1.5"
 								{...{
 									onClick: row.getToggleExpandedHandler()
 								}}
@@ -144,7 +148,7 @@ function createColumns(metric: ExtraTvlMetric) {
 										<span className="sr-only">View child protocols</span>
 									</>
 								)}
-							</button>
+							</Button>
 						) : null}
 
 						<span className="vf-row-index shrink-0" aria-hidden="true" />

@@ -1229,9 +1229,12 @@ const columns = [
 			return (
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-12' : 'pl-6'}`}>
 					{row.subRows?.length > 0 ? (
-						<button
+						<Button
+							size="sm"
+							variant="ghost"
+							square
 							type="button"
-							className="absolute -left-0.5"
+							className="absolute -left-1.5"
 							aria-expanded={row.getIsExpanded()}
 							{...{
 								onClick: row.getToggleExpandedHandler()
@@ -1248,9 +1251,9 @@ const columns = [
 									<span className="sr-only">View child protocols</span>
 								</>
 							)}
-						</button>
+						</Button>
 					) : (
-						<Bookmark readableName={value} data-lgonly data-bookmark />
+						<Bookmark size="sm" readableName={value} className="absolute -left-1.5 hidden lg:flex" />
 					)}
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />

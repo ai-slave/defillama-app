@@ -7,6 +7,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Icon } from '~/ui/Icon'
@@ -74,12 +75,19 @@ export function OracleOverview({
 					return (
 						<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
 							{row.subRows.length > 0 ? (
-								<button type="button" className="absolute -left-0.5" onClick={row.getToggleExpandedHandler()}>
+								<Button
+									size="sm"
+									variant="ghost"
+									square
+									type="button"
+									className="absolute -left-1.5"
+									onClick={row.getToggleExpandedHandler()}
+								>
 									<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} height={16} width={16} />
 									<span className="sr-only">
 										{row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
 									</span>
-								</button>
+								</Button>
 							) : null}
 							<span className="vf-row-index shrink-0" aria-hidden="true" />
 

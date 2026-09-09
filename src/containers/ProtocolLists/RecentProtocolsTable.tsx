@@ -24,6 +24,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { removedCategoriesFromChainTvlSet } from '~/containers/ProtocolRankings/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -202,9 +203,12 @@ const protocolsColumns = [
 					style={{ paddingLeft: row.depth ? row.depth * 48 : row.depth === 0 ? 24 : 0 }}
 				>
 					{row.subRows?.length > 0 ? (
-						<button
+						<Button
+							size="sm"
+							variant="ghost"
+							square
 							type="button"
-							className="absolute -left-0.5"
+							className="absolute -left-1.5"
 							{...{
 								onClick: row.getToggleExpandedHandler()
 							}}
@@ -220,9 +224,9 @@ const protocolsColumns = [
 									<span className="sr-only">View child protocols</span>
 								</>
 							)}
-						</button>
+						</Button>
 					) : (
-						<Bookmark readableName={value} data-lgonly data-bookmark />
+						<Bookmark size="sm" readableName={value} className="absolute -left-1.5 hidden lg:flex" />
 					)}
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />

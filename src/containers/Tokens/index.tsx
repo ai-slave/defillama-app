@@ -132,7 +132,13 @@ function TokenCell({ row }: { row: { original: TokensTableRow } }) {
 
 	return (
 		<span className="relative flex min-w-0 items-center gap-2 pl-5">
-			<Bookmark watchlistType="tokens" itemKey={id} readableName={symbol} data-lgonly data-bookmark />
+			<Bookmark
+				size="sm"
+				watchlistType="tokens"
+				itemKey={id}
+				readableName={symbol}
+				className="absolute -left-1.5 hidden lg:flex"
+			/>
 			<TokenLogo src={logo} size={24} alt={`Logo of ${name}`} />
 			{href ? (
 				<BasicLink href={href} className="min-w-0 text-link hover:underline">

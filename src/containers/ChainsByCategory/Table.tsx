@@ -23,6 +23,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -272,9 +273,12 @@ const columns = [
 					style={{ paddingLeft: row.depth ? row.depth * 48 : row.depth === 0 ? 24 : 0 }}
 				>
 					{row.subRows?.length > 0 ? (
-						<button
+						<Button
+							size="sm"
+							variant="ghost"
+							square
 							type="button"
-							className="absolute -left-0.5"
+							className="absolute -left-1.5"
 							{...{
 								onClick: row.getToggleExpandedHandler()
 							}}
@@ -290,9 +294,9 @@ const columns = [
 									<span className="sr-only">Hide child protocols</span>
 								</>
 							)}
-						</button>
+						</Button>
 					) : (
-						<Bookmark readableName={value} isChain data-bookmark className="absolute -left-0.5" />
+						<Bookmark size="sm" readableName={value} isChain className="absolute -left-1.5" />
 					)}
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 

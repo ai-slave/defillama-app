@@ -60,7 +60,7 @@ const topGainersAndLosersColumns = [
 					className="relative flex items-center gap-2"
 					style={{ paddingLeft: row.depth ? row.depth * 48 : row.depth === 0 ? 24 : 0 }}
 				>
-					<Bookmark readableName={value} data-lgonly data-bookmark />
+					<Bookmark size="sm" readableName={value} className="absolute -left-1.5 hidden lg:flex" />
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${value}`} />
 					<span className="flex items-center gap-1 overflow-hidden">

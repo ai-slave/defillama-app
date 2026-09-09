@@ -13,7 +13,6 @@ import {
 import { TokenLogo } from '~/components/TokenLogo'
 import { WebsiteGlobeLink } from '~/components/WebsiteGlobeLink'
 import { TVL_SETTINGS_KEYS, useDarkModeManager, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
-import { buttonStyles } from '~/ui/Button'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { downloadCSV } from '~/utils/download'
@@ -138,11 +137,7 @@ export function Stats(props: IStatsProps) {
 									eventData={{ chain: props.metadata.name }}
 								/>
 							) : null}
-							<Bookmark
-								readableName={props.metadata.name}
-								isChain
-								className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
-							/>
+							<Bookmark size="md" readableName={props.metadata.name} isChain />
 						</span>
 					</h1>
 				) : null}

@@ -19,6 +19,7 @@ import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { useGroupChainsPegged } from '~/containers/Stablecoins/hooks'
 import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
@@ -47,9 +48,12 @@ const stablecoinsByChainColumns = [
 					style={{ paddingLeft: row.depth ? row.depth * 48 : row.depth === 0 ? 24 : 0 }}
 				>
 					{row.subRows?.length > 0 ? (
-						<button
+						<Button
+							size="sm"
+							variant="ghost"
+							square
 							type="button"
-							className="absolute -left-0.5"
+							className="absolute -left-1.5"
 							{...{
 								onClick: row.getToggleExpandedHandler()
 							}}
@@ -65,7 +69,7 @@ const stablecoinsByChainColumns = [
 									<span className="sr-only">View child protocols</span>
 								</>
 							)}
-						</button>
+						</Button>
 					) : null}
 
 					{isSubRow ? (

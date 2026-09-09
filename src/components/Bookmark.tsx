@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router'
 import toast from 'react-hot-toast'
 import { useBookmarks } from '~/hooks/useBookmarks'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -17,6 +18,7 @@ const WATCHLIST_PATHS: Record<WatchlistType, string> = {
 }
 
 interface IBookmarkProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+	size: 'sm' | 'md'
 	readableName: string
 	configID?: string
 	isChain?: boolean
@@ -25,6 +27,7 @@ interface IBookmarkProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export function Bookmark({
+	size,
 	readableName,
 	configID,
 	isChain,
@@ -76,18 +79,19 @@ export function Bookmark({
 	const buttonStyle: React.CSSProperties & Record<'--fill-icon', string> = {
 		'--fill-icon': isSaved ? 'var(--text-primary)' : 'none'
 	}
-	const classNames = `-left-0.5 shrink-0 data-[bookmark=true]:absolute data-[lgonly=true]:hidden lg:data-[lgonly=true]:inline-block ${className ?? ''}`
 
 	return (
 		<Tooltip
 			content={label}
-			className={classNames}
+			className={className}
 			render={
-				<button
+				<Button
+					size={size}
+					variant="ghost"
+					square
 					type="button"
 					{...props}
 					style={buttonStyle}
-					className={classNames}
 					onClick={(event) => {
 						onButtonClick?.(event)
 						if (!event.defaultPrevented) onClick()

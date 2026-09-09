@@ -4,6 +4,7 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { FallbackLogo, TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollectionEarnings } from '~/containers/Nft/queries'
 import Layout from '~/layout'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd } from '~/utils/numberFormat'
@@ -72,9 +73,12 @@ const earningsColumns = [
 					style={{ paddingLeft: row.depth ? row.depth * 48 : row.depth === 0 ? 24 : 0 }}
 				>
 					{row.subRows?.length > 0 ? (
-						<button
+						<Button
+							size="sm"
+							variant="ghost"
+							square
 							type="button"
-							className="absolute -left-0.5"
+							className="absolute -left-1.5"
 							{...{
 								onClick: row.getToggleExpandedHandler()
 							}}
@@ -90,7 +94,7 @@ const earningsColumns = [
 									<span className="sr-only">View child collections</span>
 								</>
 							)}
-						</button>
+						</Button>
 					) : null}
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />

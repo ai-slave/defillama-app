@@ -33,6 +33,7 @@ import type { protocolCharts } from '~/containers/ProtocolOverview/constants'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { setStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
 import { MetricRow } from '~/ui/MetricPrimitives'
@@ -508,9 +509,13 @@ const NameColumn = (type: IProps['type']) =>
 			return (
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-6' : 'pl-0'}`}>
 					{row.subRows?.length > 0 ? (
-						<button
+						<Button
+							size="sm"
+							variant="ghost"
+							square
 							type="button"
-							className="absolute -left-4.5"
+							aria-expanded={row.getIsExpanded()}
+							className="absolute -left-5.5"
 							{...{
 								onClick: row.getToggleExpandedHandler()
 							}}
@@ -526,7 +531,7 @@ const NameColumn = (type: IProps['type']) =>
 									<span className="sr-only">Hide child protocols</span>
 								</>
 							)}
-						</button>
+						</Button>
 					) : null}
 
 					<span className="vf-row-index shrink-0" aria-hidden="true" />

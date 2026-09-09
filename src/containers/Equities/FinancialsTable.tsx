@@ -1,8 +1,8 @@
 import { useRouter } from 'next/router'
 import { startTransition, useMemo, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { tableIconHitTargetStyles } from '~/ui/IconHitTarget'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
@@ -80,7 +80,10 @@ function FinancialRow({
 						}}
 					>
 						{hasSubRows ? (
-							<button
+							<Button
+								size="sm"
+								variant="ghost"
+								square
 								type="button"
 								aria-expanded={isExpanded}
 								aria-label={`${isExpanded ? 'Hide' : 'Show'} ${row.label} breakdown`}
@@ -88,10 +91,10 @@ function FinancialRow({
 									event.stopPropagation()
 									setIsExpanded((expanded) => !expanded)
 								}}
-								className={tableIconHitTargetStyles}
+								className="-m-1"
 							>
 								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
-							</button>
+							</Button>
 						) : showExpandPlaceholder ? (
 							<span aria-hidden="true" className="-ml-1 block size-5 shrink-0" />
 						) : null}

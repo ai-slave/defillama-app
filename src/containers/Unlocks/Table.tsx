@@ -426,7 +426,7 @@ const emissionsColumns = [
 			return (
 				<div className="flex h-full items-center">
 					<span className="relative flex items-center gap-2 pl-6">
-						<Bookmark readableName={protocolName} data-lgonly data-bookmark className="absolute -left-0.5" />
+						<Bookmark size="sm" readableName={protocolName} className="absolute -left-1.5 hidden lg:flex" />
 						<TokenLogo
 							name={protocolName}
 							kind="token"

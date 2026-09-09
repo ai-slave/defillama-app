@@ -17,6 +17,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { definitions } from '~/public/definitions'
+import { Button } from '~/ui/Button'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { MetricRow } from '~/ui/MetricPrimitives'
@@ -322,7 +323,14 @@ const COLUMN_REGISTRY = {
 			return (
 				<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
 					{row.subRows?.length > 0 ? (
-						<button type="button" className="absolute -left-0.5" onClick={row.getToggleExpandedHandler()}>
+						<Button
+							size="sm"
+							variant="ghost"
+							square
+							type="button"
+							className="absolute -left-1.5"
+							onClick={row.getToggleExpandedHandler()}
+						>
 							{row.getIsExpanded() ? (
 								<>
 									<Icon name="chevron-down" height={16} width={16} className="text-tertiary" />
@@ -334,7 +342,7 @@ const COLUMN_REGISTRY = {
 									<span className="sr-only">View child protocols</span>
 								</>
 							)}
-						</button>
+						</Button>
 					) : null}
 					<span className="vf-row-index shrink-0" aria-hidden="true" />
 					<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${row.original.name}`} />

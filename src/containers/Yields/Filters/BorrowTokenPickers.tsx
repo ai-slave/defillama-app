@@ -2,7 +2,6 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { iconHitTargetStyles } from '~/ui/IconHitTarget'
 import { Tooltip } from '~/ui/Tooltip'
 import type { TokenOption } from '../data/types'
 import { pushYieldsQuery } from '../queryUpdates.client'
@@ -81,14 +80,17 @@ function TokenSearchField({
 					)}
 				</button>
 				{selected ? (
-					<button
+					<Button
+						size="sm"
+						variant="ghost"
+						square
 						type="button"
 						onClick={() => select(undefined)}
-						className={`${iconHitTargetStyles} mr-1`}
+						className="-my-1 mr-1 -ml-1"
 						aria-label={`Clear ${label.toLowerCase()} token`}
 					>
 						<Icon name="x" height={14} width={14} />
-					</button>
+					</Button>
 				) : null}
 			</div>
 			{open ? (
