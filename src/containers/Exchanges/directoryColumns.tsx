@@ -7,7 +7,14 @@ import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
-import { formatNumber, formatRatio, formatUsd, formatPercent, roundNumber } from '~/utils/numberFormat'
+import {
+	formatNumber,
+	formatRatio,
+	formatUsd,
+	formatPercent,
+	roundNumber,
+	USD_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 import {
 	EuAvailabilityValue,
 	getEuStatusPresentation,
@@ -32,24 +39,19 @@ import {
 } from './modelHelpers'
 import type { ExchangeDirectoryRowModel, ExchangeNormalizedVolume, ExchangeSegment, ExchangeVenueKind } from './models'
 import { EXCHANGE_SEGMENT_LABELS } from './models'
-import { executionUsd, MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
+import { MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
 import { withCountryParam, type DirectoryScope } from './queryState'
 import { selectVenueDestination } from './venueLinks'
 
+const PERCENT_OPTIONS = {
+	input: 'fraction',
+	minimumFractionDigits: 1,
+	maximumFractionDigits: 1,
+	useGrouping: false
+} as const
+
 const columnHelper = createColumnHelper<ExchangeDirectoryRowModel>()
 export const EXECUTION_COLUMN_IDS = ['execCostToTrade', 'execSlippage10k', 'execMarkout1m']
-
-function money(value: number | null | undefined): string {
-	return value == null
-		? '–'
-		: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-}
-
-function percentage(value: number | null | undefined, digits = 1): string {
-	return value == null
-		? '–'
-		: `${formatPercent(value, { input: 'fraction', minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false })}`
-}
 
 function ratio(value: number | null | undefined): string {
 	if (value == null) return '–'
@@ -61,7 +63,7 @@ function Change({ value }: { value: number | undefined }) {
 	return (
 		<span
 			className={value >= 0 ? 'text-data-up' : 'text-data-down'}
-		>{`${value >= 0 ? '+' : ''}${percentage(value)}`}</span>
+		>{`${value >= 0 ? '+' : ''}${formatPercent(value, PERCENT_OPTIONS) ?? '–'}`}</span>
 	)
 }
 
@@ -72,9 +74,6 @@ function UnsupportedMetric() {
 function KindBadge({ kind }: { kind: ExchangeVenueKind }) {
 	return <span className="rounded-sm border border-subtle px-1.5 py-0.5 label-sm uppercase">{kind}</span>
 }
-
-export const formatScore = (score: number) =>
-	formatNumber(score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
 
 // Quality tier chip — the public summary of the measured quality score.
 // Fixed bands: S ≥85 (requires measured execution), A ≥70, B ≥55, C ≥40, else D.
@@ -126,7 +125,9 @@ export function QualityHover({
 		<div className="flex w-72 flex-col gap-2 py-0.5 text-left">
 			<div className="flex items-center gap-2">
 				{quality.tier ? <TierBadge tier={quality.tier} /> : null}
-				<span className="mono-md-bold">{formatScore(quality.score)} / 100</span>
+				<span className="mono-md-bold">
+					{formatNumber(quality.score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} / 100
+				</span>
 				<span className="text-tertiary">
 					#{quality.rank} of {kind.toUpperCase()}s
 				</span>
@@ -176,7 +177,7 @@ function linkedMetric(value: React.ReactNode, note: string | undefined) {
 
 function normalizedVolumeNote(nvol: ExchangeNormalizedVolume | null): string | undefined {
 	if (!nvol) return undefined
-	return `${percentage(nvol.discountFraction)} below ${money(nvol.reported)} reported${nvol.flag ? ` · ${nvol.flag}` : ''}`
+	return `${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below ${formatUsd(nvol.reported, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} reported${nvol.flag ? ` · ${nvol.flag}` : ''}`
 }
 
 /**
@@ -221,7 +222,10 @@ function segmentColumn(spec: {
 		header: spec.definition.label,
 		cell: ({ row, getValue }) => {
 			if (!row.original.segments[spec.segment]) return <UnsupportedMetric />
-			return linkedMetric(`${money(getValue())}${spec.suffix?.(row.original) ?? ''}`, spec.note?.(row.original))
+			return linkedMetric(
+				`${formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}${spec.suffix?.(row.original) ?? ''}`,
+				spec.note?.(row.original)
+			)
 		},
 		meta: {
 			headerClassName: spec.headerClassName ?? 'w-[112px] min-w-[112px]',
@@ -280,10 +284,13 @@ function perpColumn(spec: {
 			const present = parts(row.original)
 			if (present.length === 0) return <UnsupportedMetric />
 			const breakdown = present
-				.map(({ segment, value }) => `${EXCHANGE_SEGMENT_LABELS[segment]}: ${money(value)}`)
+				.map(
+					({ segment, value }) =>
+						`${EXCHANGE_SEGMENT_LABELS[segment]}: ${formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}`
+				)
 				.join(' · ')
 			return linkedMetric(
-				`${money(getValue())}${spec.suffix?.(row.original) ?? ''}`,
+				`${formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}${spec.suffix?.(row.original) ?? ''}`,
 				[breakdown, spec.extraNote?.(row.original)].filter(Boolean).join(' · ')
 			)
 		},
@@ -489,14 +496,14 @@ export function buildDirectoryColumns(
 				// tooltip, where it can say so.
 				return (
 					<Tooltip
-						content={`Base-tier taker fee plus half the effective spread of ${executionUsd(
-							execution?.effectiveSpreadBps ?? null
-						)}. Median across ${execution?.costAssets?.join(', ') ?? 'the measured'} perps over ${
+						content={`Base-tier taker fee plus half the effective spread of ${formatUsd(execution?.effectiveSpreadBps ?? null, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}. Median across ${execution?.costAssets?.join(', ') ?? 'the measured'} perps over ${
 							execution?.hoursCovered ?? 'n/a'
 						}h of tick data; VIP tiers can lower the fee part.`}
 						className="ms-auto w-fit"
 					>
-						<span className="underline decoration-dotted">{executionUsd(cost)}</span>
+						<span className="underline decoration-dotted">
+							{formatUsd(cost, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}
+						</span>
 					</Tooltip>
 				)
 			},
@@ -597,10 +604,12 @@ export function buildDirectoryColumns(
 				// this is the whole captured book rather than a projection of it — a
 				// displayed liquidity figure has to be liquidity that exists.
 				const notes = [
-					fixedDepth != null ? `Fixed ±2% depth: ${money(fixedDepth)}` : null,
+					fixedDepth != null
+						? `Fixed ±2% depth: ${formatUsd(fixedDepth, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}`
+						: null,
 					scopedActivity(row.original)?.doubleCount?.depth
 				].filter(Boolean)
-				return linkedMetric(money(getValue()), notes.join(' · '))
+				return linkedMetric(formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–', notes.join(' · '))
 			},
 			meta: {
 				headerClassName: 'w-[124px] min-w-[124px]',
@@ -619,7 +628,7 @@ export function buildDirectoryColumns(
 				const note = [metric.partial ? 'Partial orderbook coverage' : null, activity?.doubleCount?.depth]
 					.filter(Boolean)
 					.join(' · ')
-				return linkedMetric(money(getValue()), note || undefined)
+				return linkedMetric(formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–', note || undefined)
 			},
 			meta: {
 				headerClassName: 'w-[114px] min-w-[114px]',
@@ -630,7 +639,11 @@ export function buildDirectoryColumns(
 		columnHelper.accessor((row) => scopedActivity(row)?.volume24h ?? undefined, {
 			id: 'volume24h',
 			header: definitions.volume24h.label,
-			cell: ({ row, getValue }) => linkedMetric(money(getValue()), scopedActivity(row.original)?.doubleCount?.volume),
+			cell: ({ row, getValue }) =>
+				linkedMetric(
+					formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
+					scopedActivity(row.original)?.doubleCount?.volume
+				),
 			meta: {
 				headerClassName: 'w-[124px] min-w-[124px]',
 				align: 'end',
@@ -659,7 +672,10 @@ export function buildDirectoryColumns(
 			cell: ({ row, getValue }) => {
 				const activity = scopedActivity(row.original)
 				if (!activity?.supportsOpenInterest) return <UnsupportedMetric />
-				return linkedMetric(money(getValue()), activity.doubleCount?.openInterest)
+				return linkedMetric(
+					formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
+					activity.doubleCount?.openInterest
+				)
 			},
 			meta: {
 				headerClassName: 'w-[129px] min-w-[129px]',
@@ -691,10 +707,12 @@ export function buildDirectoryColumns(
 				const nvol = scopedNvol(row.original)
 				return nvol ? (
 					<Tooltip
-						content={`${percentage(nvol.discountFraction)} below reported · ${percentage(nvol.unverifiedFraction)} judged against estimated depth${nvol.flag ? ` · ${nvol.flag}` : ''}`}
+						content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below reported · ${formatPercent(nvol.unverifiedFraction, PERCENT_OPTIONS) ?? '–'} judged against estimated depth${nvol.flag ? ` · ${nvol.flag}` : ''}`}
 						className="ms-auto w-fit"
 					>
-						<span className="underline decoration-dotted">{money(getValue())}</span>
+						<span className="underline decoration-dotted">
+							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+						</span>
 					</Tooltip>
 				) : (
 					'–'
@@ -767,7 +785,7 @@ export function buildDirectoryColumns(
 		columnHelper.accessor((row) => row.reserves?.totalUsd ?? undefined, {
 			id: 'reservesUsd',
 			header: definitions.reservesUsd.label,
-			cell: ({ getValue }) => money(getValue()),
+			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: {
 				headerClassName: 'w-[119px] min-w-[119px]',
 				align: 'end',
@@ -782,7 +800,7 @@ export function buildDirectoryColumns(
 			{
 				id: 'cleanRatio',
 				header: definitions.cleanRatio.label,
-				cell: ({ getValue }) => percentage(getValue()),
+				cell: ({ getValue }) => formatPercent(getValue(), PERCENT_OPTIONS) ?? '–',
 				meta: {
 					headerClassName: 'w-[114px] min-w-[114px]',
 					align: 'end',
@@ -793,7 +811,7 @@ export function buildDirectoryColumns(
 		columnHelper.accessor((row) => row.reserves?.inflows24hUsd ?? undefined, {
 			id: 'inflows24hUsd',
 			header: definitions.inflows24hUsd.label,
-			cell: ({ getValue }) => money(getValue()),
+			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: {
 				headerClassName: 'w-[117px] min-w-[117px]',
 				align: 'end',
@@ -803,7 +821,7 @@ export function buildDirectoryColumns(
 		columnHelper.accessor((row) => row.reserves?.inflows7dUsd ?? undefined, {
 			id: 'inflows7dUsd',
 			header: definitions.inflows7dUsd.label,
-			cell: ({ getValue }) => money(getValue()),
+			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: {
 				headerClassName: 'w-[114px] min-w-[114px]',
 				align: 'end',
@@ -813,7 +831,7 @@ export function buildDirectoryColumns(
 		columnHelper.accessor((row) => row.reserves?.inflows1mUsd ?? undefined, {
 			id: 'inflows1mUsd',
 			header: definitions.inflows1mUsd.label,
-			cell: ({ getValue }) => money(getValue()),
+			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: {
 				headerClassName: 'w-[114px] min-w-[114px]',
 				align: 'end',
@@ -823,7 +841,7 @@ export function buildDirectoryColumns(
 		columnHelper.accessor((row) => row.reserves?.ownTokenFraction ?? undefined, {
 			id: 'ownTokenFraction',
 			header: definitions.ownTokenFraction.label,
-			cell: ({ getValue }) => percentage(getValue()),
+			cell: ({ getValue }) => formatPercent(getValue(), PERCENT_OPTIONS) ?? '–',
 			meta: {
 				headerClassName: 'w-[114px] min-w-[114px]',
 				align: 'end',
@@ -927,7 +945,9 @@ export function buildDirectoryColumns(
 			cell: ({ row, getValue }) => {
 				const symbol = getValue()
 				const discount = row.original.fees?.feeToken?.discountFraction
-				return symbol ? `${symbol.toUpperCase()}${discount == null ? '' : ` · ${percentage(discount)} off`}` : '–'
+				return symbol
+					? `${symbol.toUpperCase()}${discount == null ? '' : ` · ${formatPercent(discount, PERCENT_OPTIONS) ?? '–'} off`}`
+					: '–'
 			},
 			meta: { headerClassName: 'w-[130px] min-w-[130px]', headerHelperText: definitions.feeToken.description }
 		}),
@@ -957,7 +977,7 @@ export function buildDirectoryColumns(
 		columnHelper.accessor((row) => row.funding?.rampCost?.onRamp.totalUsd ?? undefined, {
 			id: 'rampCost',
 			header: definitions.rampCost.label,
-			cell: ({ getValue }) => money(getValue()),
+			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: {
 				headerClassName: 'w-[155px] min-w-[155px]',
 				align: 'end',

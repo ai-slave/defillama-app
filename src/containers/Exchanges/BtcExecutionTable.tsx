@@ -3,10 +3,10 @@ import { BasicLink } from '~/components/Link'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { letterLogoDataUri } from '~/utils/icons'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatNumber, formatUsd } from '~/utils/numberFormat'
 import { TierBadge } from './directoryColumns'
 import type { BtcExecutionRowModel } from './models'
-import { executionUsd, Markout, MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
+import { Markout, MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
 
 const columnHelper = createColumnHelper<BtcExecutionRowModel>()
 
@@ -45,7 +45,10 @@ const columns = [
 		id: 'costToTrade',
 		header: 'Cost to trade',
 		sortDescFirst: false,
-		cell: ({ getValue }) => (getValue() == null ? NA : executionUsd(getValue())),
+		cell: ({ getValue }) =>
+			getValue() == null
+				? NA
+				: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
 		meta: {
 			align: 'end',
 			headerClassName: 'min-w-[124px]',
@@ -56,14 +59,20 @@ const columns = [
 		id: 'effectiveSpread',
 		header: 'Effective spread',
 		sortDescFirst: false,
-		cell: ({ getValue }) => (getValue() == null ? NA : executionUsd(getValue())),
+		cell: ({ getValue }) =>
+			getValue() == null
+				? NA
+				: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
 		meta: { align: 'end', headerClassName: 'min-w-[147px]' }
 	}),
 	columnHelper.accessor((row) => row.quotedSpreadBps ?? undefined, {
 		id: 'quotedSpread',
 		header: 'Quoted spread',
 		sortDescFirst: false,
-		cell: ({ getValue }) => (getValue() == null ? NA : executionUsd(getValue())),
+		cell: ({ getValue }) =>
+			getValue() == null
+				? NA
+				: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
 		meta: { align: 'end', headerClassName: 'min-w-[137px]' }
 	}),
 	columnHelper.accessor((row) => row.realizedSlippage10kBps ?? undefined, {
@@ -98,7 +107,10 @@ const columns = [
 		id: 'takerFee',
 		header: 'Taker fee',
 		sortDescFirst: false,
-		cell: ({ getValue }) => (getValue() == null ? NA : executionUsd(getValue())),
+		cell: ({ getValue }) =>
+			getValue() == null
+				? NA
+				: (formatUsd(getValue(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'),
 		meta: {
 			align: 'end',
 			headerClassName: 'min-w-[102px]',

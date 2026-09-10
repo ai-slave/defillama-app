@@ -2,12 +2,6 @@
 // canonical formatters directly so the unit and input semantics stay visible.
 import { formatNumber } from '~/utils/numberFormat'
 
-export const YIELD_USD_OPTIONS = {
-	compact: true,
-	minimumCompactValue: 1_000_000,
-	compactSuffix: 'lowercase'
-} as const
-
 export const YIELD_PERCENT_OPTIONS = {
 	input: 'percent',
 	minimumFractionDigits: 2,

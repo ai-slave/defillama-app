@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatDate } from '~/utils/dateFormat'
+import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import type { KpkExcessWindow, KpkMandateClient, KpkMandatePerf, KpkMandateSleeve, KpkMandateWindow } from './api'
 import { useKpkMandates } from './api'
 import { KPK_BENCH_TEXT, KPK_MINT_TEXT } from './chartDefaults'
@@ -13,7 +14,6 @@ import {
 	LedgerStrip,
 	LedgerTile,
 	MeterBar,
-	pct,
 	QueryError,
 	RefLinks,
 	RowLink,
@@ -26,7 +26,8 @@ import {
 	ToggleGroup,
 	usdFromMillions,
 	usdSignedFromMillions,
-	type FooterRow
+	type FooterRow,
+	KPK_PERCENT_OPTIONS
 } from './ui'
 
 /** Sleeve mix with its alpha underneath. A denomination the client does not hold is a dash, not `0%`. */
@@ -34,7 +35,12 @@ function SleeveCell({ sleeve }: { sleeve: KpkMandateSleeve | null }) {
 	if (!sleeve?.mix) return <>—</>
 	return (
 		<span className="flex flex-col items-end">
-			{pct(sleeve.mix, 0)}
+			{formatPercent(sleeve.mix, {
+				input: 'percent',
+				smallValueDisplay: 'rounded',
+				maximumFractionDigits: 0,
+				useGrouping: false
+			}) ?? '—'}
 			{sleeve.alpha != null && <span className={`body-sm ${signClass(sleeve.alpha)}`}>{signedBps(sleeve.alpha)}</span>}
 		</span>
 	)
@@ -57,7 +63,10 @@ function rateBasisTitle(window: KpkMandateWindow): string | undefined {
 		return 'Spot reading: a trailing mean applied to the latest balances. No per-position history covers this window.'
 	}
 	const balance = window.avgBalance == null ? '' : ` on a mean balance of ${usdFromMillions(window.avgBalance)}`
-	const spot = window.spot?.apy == null ? '' : ` The spot reading on the latest balances is ${pct(window.spot.apy)}.`
+	const spot =
+		window.spot?.apy == null
+			? ''
+			: ` The spot reading on the latest balances is ${formatPercent(window.spot.apy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}.`
 	return `Earned: money-weighted across every priced position-day in the window${balance}.${spot}`
 }
 
@@ -116,8 +125,8 @@ export default function Mandates() {
 			cells: {
 				name: 'Total',
 				aum: usdFromMillions(data.totals.aum),
-				share: pct(sharesTotal, 1),
-				deployedPct: pct(data.totals.weightedDeployedPct, 1),
+				share: formatPercent(sharesTotal, KPK_PERCENT_OPTIONS) ?? '—',
+				deployedPct: formatPercent(data.totals.weightedDeployedPct, KPK_PERCENT_OPTIONS) ?? '—',
 				excess: usdSignedFromMillions(data.totals.excess)
 			}
 		})
@@ -198,7 +207,7 @@ export default function Mandates() {
 										const basis = rateBasisTitle(row)
 										return (
 											<span title={basis} className={`${KPK_MINT_TEXT} ${basis ? 'cursor-help' : ''}`}>
-												{pct(row.apy)}
+												{formatPercent(row.apy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}
 											</span>
 										)
 									}
@@ -207,7 +216,11 @@ export default function Mandates() {
 									key: 'bench',
 									label: 'Benchmark',
 									right: true,
-									render: (row) => <span className={KPK_BENCH_TEXT}>{pct(row.bench)}</span>
+									render: (row) => (
+										<span className={KPK_BENCH_TEXT}>
+											{formatPercent(row.bench, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}
+										</span>
+									)
 								},
 								{
 									key: 'spread',
@@ -231,8 +244,8 @@ export default function Mandates() {
 											benchmark={row.bench}
 											scale={barScale}
 											labels={{
-												value: `KPK ${pct(row.apy)} over ${row.label}`,
-												benchmark: `Benchmark ${pct(row.bench)}`
+												value: `KPK ${formatPercent(row.apy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'} over ${row.label}`,
+												benchmark: `Benchmark ${formatPercent(row.bench, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}`
 											}}
 										/>
 									)
@@ -308,7 +321,12 @@ export default function Mandates() {
 									)
 								}
 							},
-							{ key: 'share', label: 'Share', right: true, render: (row) => pct(row.share, 1) },
+							{
+								key: 'share',
+								label: 'Share',
+								right: true,
+								render: (row) => formatPercent(row.share, KPK_PERCENT_OPTIONS) ?? '—'
+							},
 							{
 								key: 'deployedPct',
 								label: 'Deployed',
@@ -319,7 +337,7 @@ export default function Mandates() {
 										title={deployedTitle(row)}
 										className={`flex items-center justify-end gap-2 ${deployedTitle(row) ? 'cursor-help' : ''}`}
 									>
-										{pct(row.deployedPct, 1)}
+										{formatPercent(row.deployedPct, KPK_PERCENT_OPTIONS) ?? '—'}
 										<MeterBar value={row.deployedPct} />
 									</span>
 								)

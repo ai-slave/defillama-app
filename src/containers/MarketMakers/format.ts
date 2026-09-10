@@ -3,10 +3,6 @@ import { GRADE_BANDS } from './gradeBands'
 
 export type MetricFormatKind = 'usd' | 'percent' | 'spread' | 'score' | 'decimal'
 
-function pct2(value: number): string {
-	return formatPercent(value, { input: 'percent' })
-}
-
 export function formatComposite(value: number | null | undefined): string {
 	if (value == null) return 'N/A'
 	if (value < 5) return '<5.00'
@@ -38,7 +34,7 @@ export function formatMetricValue(value: number | null | undefined, kind: Metric
 			return formatUsd(value, { compact: true }) ?? 'N/A'
 		case 'percent':
 		case 'spread':
-			return pct2(value)
+			return formatPercent(value, { input: 'percent' })
 		case 'score':
 			return formatNumber(value, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 		case 'decimal':
@@ -48,5 +44,5 @@ export function formatMetricValue(value: number | null | undefined, kind: Metric
 
 export function formatMarketPct(value: number | null | undefined): string {
 	if (value == null) return 'N/A'
-	return `${pct2(value)} of Market`
+	return `${formatPercent(value, { input: 'percent' })} of Market`
 }

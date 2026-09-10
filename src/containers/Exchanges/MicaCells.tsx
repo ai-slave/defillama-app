@@ -7,9 +7,7 @@ import type { ExchangePromotionModel, MicaProduct, MicaVenueModel } from './mode
 import { promotionLinks } from './promotions'
 import { btcAmount, Breakdown, CostBadge, LEG_TONE_LIMITS } from './RampCells'
 
-function liquidity(value: number): string {
-	return formatUsd(value, { compact: true }) ?? '–'
-}
+const EUR_FIXED_OPTIONS = { currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 } as const
 
 export function supportsMicaProduct(row: MicaVenueModel, product: 'spot' | 'perp'): boolean {
 	return row.products.includes(product === 'perp' ? 'linear_perp' : product)
@@ -30,7 +28,11 @@ export function micaProductLabel(products: Array<MicaProduct>): string {
 
 export function micaDepthDetail(bid: number | null, ask: number | null, partialCoverage: boolean): string | null {
 	if (bid == null || ask == null) return null
-	return [`${liquidity(bid)} bid`, `${liquidity(ask)} ask`, partialCoverage ? 'Partial coverage' : null]
+	return [
+		`${formatUsd(bid, { compact: true }) ?? '–'} bid`,
+		`${formatUsd(ask, { compact: true }) ?? '–'} ask`,
+		partialCoverage ? 'Partial coverage' : null
+	]
 		.filter(Boolean)
 		.join('\n')
 }
@@ -57,7 +59,7 @@ export function MicaDepthValue({
 	return (
 		<span className="inline-flex items-center justify-end gap-1.5">
 			<Tooltip content={detail} className="justify-end whitespace-nowrap">
-				{liquidity(value)}
+				{formatUsd(value, { compact: true }) ?? '–'}
 			</Tooltip>
 			<Tooltip content={helperText}>
 				<Icon name="help-circle" height={13} width={13} className="shrink-0 text-tertiary" />
@@ -153,12 +155,6 @@ const RAMP_DIRECTION_STEPS: Record<RampDirection, string> = {
 	offRamp: 'Deposit BTC → sell → withdraw EUR (SEPA)'
 }
 
-function formatEur(value: number | null): string | null {
-	return value == null
-		? null
-		: formatNumber(value, { currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
 /** Same badge and breakdown the /ramp table uses, priced in EUR on the SEPA rail. */
 export function RampCostValue({ row, direction }: { row: MicaVenueModel; direction: RampDirection }) {
 	const cost = row.rampCost
@@ -171,7 +167,7 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 	const notional = formatNumber(cost.notionalUsd, { currency: 'EUR', maximumFractionDigits: 0 })
 	return (
 		<CostBadge
-			label={formatEur(leg.totalUsd) ?? '–'}
+			label={formatNumber(leg.totalUsd, EUR_FIXED_OPTIONS) ?? '–'}
 			fraction={leg.totalFraction}
 			limits={LEG_TONE_LIMITS}
 			ariaLabel={`${row.name} ${notional} ${direction === 'onRamp' ? 'on-ramp' : 'off-ramp'} cost breakdown`}
@@ -180,24 +176,27 @@ export function RampCostValue({ row, direction }: { row: MicaVenueModel; directi
 				steps={RAMP_DIRECTION_STEPS[direction]}
 				scope={`${notional} notional on ${cost.pair ?? '–'}`}
 				rows={[
-					{ label: `SEPA ${direction === 'onRamp' ? 'deposit' : 'withdrawal'}`, value: formatEur(leg.fiatFeeUsd) },
+					{
+						label: `SEPA ${direction === 'onRamp' ? 'deposit' : 'withdrawal'}`,
+						value: formatNumber(leg.fiatFeeUsd, EUR_FIXED_OPTIONS)
+					},
 					{
 						label:
 							cost.assumptions.takerFee == null
 								? 'Taker fee'
 								: `Taker fee (${formatPercent(cost.assumptions.takerFee, { input: 'fraction' })})`,
-						value: formatEur(leg.tradeFeeUsd)
+						value: formatNumber(leg.tradeFeeUsd, EUR_FIXED_OPTIONS)
 					},
-					{ label: 'Slippage vs mid price', value: formatEur(leg.slippageUsd) },
+					{ label: 'Slippage vs mid price', value: formatNumber(leg.slippageUsd, EUR_FIXED_OPTIONS) },
 					{
 						label:
 							direction === 'onRamp'
 								? `BTC withdrawal fee${transferBtc ? ` (${transferBtc})` : ''}`
 								: `BTC network fee${transferBtc ? ` (${transferBtc})` : ''}`,
-						value: formatEur(leg.transferFeeUsd)
+						value: formatNumber(leg.transferFeeUsd, EUR_FIXED_OPTIONS)
 					}
 				]}
-				total={formatEur(leg.totalUsd)}
+				total={formatNumber(leg.totalUsd, EUR_FIXED_OPTIONS)}
 				totalFraction={leg.totalFraction}
 			/>
 		</CostBadge>

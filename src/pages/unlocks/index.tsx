@@ -49,7 +49,7 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 
@@ -91,29 +91,22 @@ const EMPTY_CHART_RESULT = {
 	charts: [] as NonNullable<IMultiSeriesChartProps['charts']>
 }
 
-const formatUnlockValue = (value: number) =>
-	formatUsd(value, {
-		compact: true,
-		minimumCompactValue: 1_000_000,
-		compactSuffix: 'lowercase'
-	})
-
 function UpcomingUnlockMetric({ days, values }: { days: 7 | 30; values: UpcomingUnlockValueBreakdown }) {
 	return (
 		<MetricSection
 			label={`Upcoming Unlocks (${days}d)`}
 			tooltip={`Combined cliff and linear unlock value over the exact ${days}-day period. USD values use token prices from the data snapshot, not projected prices. Events without a known amount or valid snapshot price are excluded.`}
-			value={formatUnlockValue(values.total)}
+			value={formatUsd(values.total, USD_LOWERCASE_MILLIONS_OPTIONS)}
 		>
 			<SubMetricRow
 				label="Cliff Unlocks"
 				tooltip={UPCOMING_UNLOCK_TYPE_HELP.cliff}
-				value={formatUnlockValue(values.cliff)}
+				value={formatUsd(values.cliff, USD_LOWERCASE_MILLIONS_OPTIONS)}
 			/>
 			<SubMetricRow
 				label="Linear Unlocks"
 				tooltip={UPCOMING_UNLOCK_TYPE_HELP.linear}
-				value={formatUnlockValue(values.linear)}
+				value={formatUsd(values.linear, USD_LOWERCASE_MILLIONS_OPTIONS)}
 			/>
 		</MetricSection>
 	)

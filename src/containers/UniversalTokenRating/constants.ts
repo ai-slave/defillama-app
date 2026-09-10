@@ -12,3 +12,11 @@ export const LISTING_STATUS_LABELS = {
 	'pre-tge': 'Pre-TGE',
 	unlisted: 'Unlisted'
 } as const
+
+export const UTR_PERCENT_OPTIONS = {
+	input: 'percent',
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2,
+	smallValueDisplay: 'rounded',
+	useGrouping: false
+} as const

@@ -23,7 +23,12 @@ import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
 import { truncateAddress } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import {
+	formatUsd,
+	formatPercent,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IRWAAssetData, IRWAAssetFlowSummary } from './api.types'
 import { definitions } from './definitions'
@@ -55,8 +60,6 @@ import { useNativeYieldHistory } from './useNativeYieldChart'
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const RWAFlowsChart = lazy(() => import('./FlowsChart').then((module) => ({ default: module.RWAFlowsChart })))
 const assetHeaderLinkButtonStyles = buttonStyles({ variant: 'secondary', size: 'md' })
-const formatCompactUsd = (value: number) =>
-	formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 type AssetChartMetric = 'marketData' | 'flows' | 'flowVsPrice'
 
@@ -172,9 +175,16 @@ function AssetHeader({
 			<HeroMetric
 				label={definitions.onChainMcap.label}
 				tooltip={definitions.onChainMcap.description}
-				value={asset.onChainMcap?.total != null ? formatCompactUsd(asset.onChainMcap.total) : '-'}
+				value={
+					asset.onChainMcap?.total != null ? formatUsd(asset.onChainMcap.total, USD_LOWERCASE_MILLIONS_OPTIONS) : '-'
+				}
 				{...(asset.onChainMcap?.breakdown
-					? { byChain: asset.onChainMcap.breakdown.map(([chain, v]) => [chain, formatCompactUsd(v)]) }
+					? {
+							byChain: asset.onChainMcap.breakdown.map(([chain, v]) => [
+								chain,
+								formatUsd(v, USD_LOWERCASE_MILLIONS_OPTIONS)
+							])
+						}
 					: {})}
 			/>
 		</>
@@ -205,65 +215,33 @@ function AssetKeyMetrics({
 					<MetricSection
 						label={definitions.activeMcap.label}
 						tooltip={definitions.activeMcap.description}
-						value={formatUsd(activeMcap.total, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
+						value={formatUsd(activeMcap.total, USD_LOWERCASE_MILLIONS_OPTIONS)}
 					>
 						{activeMcap.breakdown.map(([chain, value]) => (
-							<SubMetricRow
-								key={chain}
-								label={chain}
-								value={formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-							/>
+							<SubMetricRow key={chain} label={chain} value={formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)} />
 						))}
 					</MetricSection>
 				) : (
 					<MetricRow
 						label={definitions.activeMcap.label}
 						tooltip={definitions.activeMcap.description}
-						value={
-							activeMcap?.total != null
-								? formatUsd(activeMcap.total, {
-										compact: true,
-										minimumCompactValue: 1_000_000,
-										compactSuffix: 'lowercase'
-									})
-								: '-'
-						}
+						value={activeMcap?.total != null ? formatUsd(activeMcap.total, USD_LOWERCASE_MILLIONS_OPTIONS) : '-'}
 					/>
 				)}
 				{asset.defiActiveTvlByProtocolChain != null && asset.defiActiveTvlByProtocolChain.length > 0 ? (
 					<MetricSection
 						label={definitions.defiActiveTvl.label}
 						tooltip={definitions.defiActiveTvl.description}
-						value={formatUsd(defiActiveTvl?.total ?? 0, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
+						value={formatUsd(defiActiveTvl?.total ?? 0, USD_LOWERCASE_MILLIONS_OPTIONS)}
 					>
 						{asset.defiActiveTvlByProtocolChain.map((row) => (
 							<SubMetricSection
 								key={row.protocol}
 								label={row.protocol}
-								value={formatUsd(row.total, {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})}
+								value={formatUsd(row.total, USD_LOWERCASE_MILLIONS_OPTIONS)}
 							>
 								{row.byChain.map(([chain, value]) => (
-									<SubMetricRow
-										key={chain}
-										label={chain}
-										value={formatUsd(value, {
-											compact: true,
-											minimumCompactValue: 1_000_000,
-											compactSuffix: 'lowercase'
-										})}
-									/>
+									<SubMetricRow key={chain} label={chain} value={formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)} />
 								))}
 							</SubMetricSection>
 						))}
@@ -272,11 +250,7 @@ function AssetKeyMetrics({
 					<MetricRow
 						label={definitions.defiActiveTvl.label}
 						tooltip={definitions.defiActiveTvl.description}
-						value={formatUsd(defiActiveTvl?.total ?? 0, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
+						value={formatUsd(defiActiveTvl?.total ?? 0, USD_LOWERCASE_MILLIONS_OPTIONS)}
 					/>
 				)}
 				<MetricRow
@@ -314,18 +288,14 @@ function AssetKeyMetrics({
 				{asset.price != null ? (
 					<MetricRow
 						label={`${asset.ticker ?? 'Token'} Price`}
-						value={formatUsd(asset.price, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
+						value={formatUsd(asset.price, USD_LOWERCASE_MILLIONS_OPTIONS)}
 					/>
 				) : null}
 				<MetricRow label="Chains" value={asset.chain?.length ?? 0} />
 				{asset.nativeYieldCurrent != null ? (
 					<MetricRow
 						label="Native Yield"
-						value={`${formatPercent(asset.nativeYieldCurrent, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`}
+						value={`${formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}`}
 					/>
 				) : null}
 			</div>
@@ -959,12 +929,7 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 									<span className="label-sm text-secondary uppercase">Native Yield</span>
 									{asset.nativeYieldCurrent != null ? (
 										<span className="font-jetbrains text-3xl font-bold tracking-tight text-[#cc3e82]">
-											{formatPercent(asset.nativeYieldCurrent, {
-												input: 'percent',
-												minimumFractionDigits: 2,
-												maximumFractionDigits: 2,
-												useGrouping: false
-											})}
+											{formatPercent(asset.nativeYieldCurrent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
 										</span>
 									) : null}
 								</p>

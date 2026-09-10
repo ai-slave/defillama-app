@@ -1,21 +1,23 @@
 import { describe, expect, test } from 'vitest'
 import {
-	formatEquitiesCompanyDividendYield,
-	formatEquitiesCompanyVolume,
-	getEquitiesCompanyCsvRow
-} from './EquitiesCompaniesDataset.utils'
+	formatCompactNumber,
+	formatPercent,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
+import { getEquitiesCompanyCsvRow } from './EquitiesCompaniesDataset.utils'
 
 describe('Pro Equities company units', () => {
 	test('formats company volume as a share count', () => {
-		expect(formatEquitiesCompanyVolume(50_000_000)).toBe('50m')
-		expect(formatEquitiesCompanyVolume(0)).toBe('0')
-		expect(formatEquitiesCompanyVolume(null)).toBeNull()
+		expect(formatCompactNumber(50_000_000, NUMBER_LOWERCASE_MILLIONS_OPTIONS)).toBe('50m')
+		expect(formatCompactNumber(0, NUMBER_LOWERCASE_MILLIONS_OPTIONS)).toBe('0')
+		expect(formatCompactNumber(null, NUMBER_LOWERCASE_MILLIONS_OPTIONS)).toBeNull()
 	})
 
 	test('formats dividend yield as producer percentage points', () => {
-		expect(formatEquitiesCompanyDividendYield(0.34)).toBe('0.34%')
-		expect(formatEquitiesCompanyDividendYield(0)).toBe('0.00%')
-		expect(formatEquitiesCompanyDividendYield(null)).toBe('—')
+		expect(formatPercent(0.34, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—').toBe('0.34%')
+		expect(formatPercent(0, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—').toBe('0.00%')
+		expect(formatPercent(null, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—').toBe('—')
 	})
 
 	test('preserves raw share volume and percentage-point yield in CSV', () => {

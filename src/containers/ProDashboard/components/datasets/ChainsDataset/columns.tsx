@@ -3,10 +3,13 @@ import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { PercentChange } from '~/ui/PercentChange'
-import { formatRatio, formatUsd, formatCompactNumber } from '~/utils/numberFormat'
-
-const formatNullableUsd = (value: number | null) =>
-	value == null ? '-' : formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+import {
+	formatRatio,
+	formatUsd,
+	formatCompactNumber,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 
 const renderChange = (value: number | null) => (
 	<span
@@ -46,12 +49,7 @@ export const chainsDatasetColumns: Array<ColumnDef<ChainsDatasetRow>> = [
 		size: 130,
 		cell: ({ row }) => (
 			<span className="text-pro-text-primary">
-				{row.original.users == null
-					? '-'
-					: formatCompactNumber(row.original.users, {
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})}
+				{row.original.users == null ? '-' : formatCompactNumber(row.original.users, NUMBER_LOWERCASE_MILLIONS_OPTIONS)}
 			</span>
 		)
 	},
@@ -81,49 +79,77 @@ export const chainsDatasetColumns: Array<ColumnDef<ChainsDatasetRow>> = [
 		id: 'tvl',
 		accessorFn: (row) => row.tvl ?? undefined,
 		size: 140,
-		cell: ({ row }) => <span className="text-pro-text-primary">{formatNullableUsd(row.original.tvl)}</span>
+		cell: ({ row }) => (
+			<span className="text-pro-text-primary">
+				{formatUsd(row.original.tvl, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
+		)
 	},
 	{
 		header: 'Bridged TVL',
 		id: 'bridgedTvl',
 		accessorFn: (row) => row.bridgedTvl ?? undefined,
 		size: 120,
-		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.bridgedTvl)}</span>
+		cell: ({ row }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.bridgedTvl, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
+		)
 	},
 	{
 		header: 'Stables',
 		id: 'stablesMcap',
 		accessorFn: (row) => row.stablesMcap ?? undefined,
 		size: 120,
-		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.stablesMcap)}</span>
+		cell: ({ row }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.stablesMcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
+		)
 	},
 	{
 		header: '24h DEXs Volume',
 		id: 'totalVolume24h',
 		accessorFn: (row) => row.totalVolume24h ?? undefined,
 		size: 150,
-		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalVolume24h)}</span>
+		cell: ({ row }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.totalVolume24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
+		)
 	},
 	{
 		header: '30d DEXs Volume',
 		id: 'totalVolume30d',
 		accessorFn: (row) => row.totalVolume30d ?? undefined,
 		size: 150,
-		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalVolume30d)}</span>
+		cell: ({ row }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.totalVolume30d, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
+		)
 	},
 	{
 		header: '24h Chain Fees',
 		id: 'totalFees24h',
 		accessorFn: (row) => row.totalFees24h ?? undefined,
 		size: 130,
-		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalFees24h)}</span>
+		cell: ({ row }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.totalFees24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
+		)
 	},
 	{
 		header: '30d Chain Fees',
 		id: 'totalFees30d',
 		accessorFn: (row) => row.totalFees30d ?? undefined,
 		size: 130,
-		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalFees30d)}</span>
+		cell: ({ row }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.totalFees30d, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
+		)
 	},
 	{
 		header: '24h App Revenue',
@@ -131,7 +157,9 @@ export const chainsDatasetColumns: Array<ColumnDef<ChainsDatasetRow>> = [
 		accessorFn: (row) => row.totalAppRevenue24h ?? undefined,
 		size: 120,
 		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalAppRevenue24h)}</span>
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.totalAppRevenue24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
 		)
 	},
 	{
@@ -140,7 +168,9 @@ export const chainsDatasetColumns: Array<ColumnDef<ChainsDatasetRow>> = [
 		accessorFn: (row) => row.totalAppRevenue30d ?? undefined,
 		size: 140,
 		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalAppRevenue30d)}</span>
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.totalAppRevenue30d, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
 		)
 	},
 	{
@@ -149,7 +179,9 @@ export const chainsDatasetColumns: Array<ColumnDef<ChainsDatasetRow>> = [
 		accessorFn: (row) => row.totalRevenue30d ?? undefined,
 		size: 140,
 		cell: ({ row }) => (
-			<span className="text-pro-text-secondary">{formatNullableUsd(row.original.totalRevenue30d)}</span>
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.totalRevenue30d, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
 		)
 	},
 	{
@@ -168,13 +200,21 @@ export const chainsDatasetColumns: Array<ColumnDef<ChainsDatasetRow>> = [
 		id: 'mcap',
 		accessorFn: (row) => row.mcap ?? undefined,
 		size: 140,
-		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.mcap)}</span>
+		cell: ({ row }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
+		)
 	},
 	{
 		header: 'NFT Volume',
 		id: 'nftVolume',
 		accessorFn: (row) => row.nftVolume ?? undefined,
 		size: 120,
-		cell: ({ row }) => <span className="text-pro-text-secondary">{formatNullableUsd(row.original.nftVolume)}</span>
+		cell: ({ row }) => (
+			<span className="text-pro-text-secondary">
+				{formatUsd(row.original.nftVolume, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '-'}
+			</span>
+		)
 	}
 ]

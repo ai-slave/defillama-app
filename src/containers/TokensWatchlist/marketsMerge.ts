@@ -4,9 +4,6 @@ import { formatUsd } from '~/utils/numberFormat'
 
 type MarketsListEntry = TokenMarketsListResponse['tokens'][number]
 
-const currencyDisplay = (value: number | null): string | null =>
-	value == null ? null : formatUsd(value, { compact: true })
-
 // Mirrors the server-side sumSegments: perps metrics are the sum of the linear + inverse perp segments.
 function sumPerpSegments(entry: MarketsListEntry, key: 'volume_24h' | 'oi_usd'): number | null {
 	let total = 0
@@ -78,9 +75,9 @@ export function mergeMarketsSummary(
 			openInterest24h,
 			display: {
 				...row.display,
-				spotVolume24h: currencyDisplay(spotVolume24h),
-				perpsVolume24h: currencyDisplay(perpsVolume24h),
-				openInterest24h: currencyDisplay(openInterest24h)
+				spotVolume24h: formatUsd(spotVolume24h, { compact: true }),
+				perpsVolume24h: formatUsd(perpsVolume24h, { compact: true }),
+				openInterest24h: formatUsd(openInterest24h, { compact: true })
 			}
 		}
 	})

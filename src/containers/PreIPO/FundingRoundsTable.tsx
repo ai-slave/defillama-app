@@ -4,17 +4,8 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import type { PreIpoRaise } from './api.types'
+import { PRE_IPO_USD_OPTIONS } from './constants'
 import { preIpoDefinitions } from './definitions'
-
-function formatMoney(value: number | null | undefined): string {
-	return (
-		formatUsd(value, {
-			compact: true,
-			minimumCompactValue: 1_000_000,
-			maximumFractionDigits: 2
-		}) ?? '-'
-	)
-}
 
 const columnHelper = createColumnHelper<PreIpoRaise>()
 const DEFAULT_SORTING = [
@@ -35,7 +26,7 @@ const columns = [
 	columnHelper.accessor((row) => row.amountRaised ?? undefined, {
 		id: 'amountRaised',
 		header: preIpoDefinitions.fundingRound.amountRaised.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[150px]',
 			align: 'end',
@@ -45,7 +36,7 @@ const columns = [
 	columnHelper.accessor((row) => row.valuation ?? undefined, {
 		id: 'valuation',
 		header: preIpoDefinitions.fundingRound.valuation.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[160px]',
 			align: 'end',

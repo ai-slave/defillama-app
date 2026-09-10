@@ -10,21 +10,12 @@ import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
+import { PRE_IPO_USD_OPTIONS } from './constants'
 import { preIpoDefinitions } from './definitions'
 import type { PreIpoCompanyPageProps } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 const HISTORY_CHART_TITLE = 'Valuation & Funding History'
-
-function formatMoney(value: number | null): string {
-	return (
-		formatUsd(value, {
-			compact: true,
-			minimumCompactValue: 1_000_000,
-			maximumFractionDigits: 2
-		}) ?? '-'
-	)
-}
 
 export function PreIpoCompanyPage({
 	summary,
@@ -65,7 +56,7 @@ export function PreIpoCompanyPage({
 						<MetricRow
 							label={preIpoDefinitions.company.estimatedValuation.label}
 							tooltip={preIpoDefinitions.company.estimatedValuation.description}
-							value={formatMoney(summary.latestEstimatedValuation)}
+							value={formatUsd(summary.latestEstimatedValuation, PRE_IPO_USD_OPTIONS) ?? '-'}
 						/>
 						<MetricRow
 							label={preIpoDefinitions.company.valuationAsOf.label}
@@ -75,13 +66,13 @@ export function PreIpoCompanyPage({
 						<MetricRow
 							label={preIpoDefinitions.company.latestRaise.label}
 							tooltip={preIpoDefinitions.company.latestRaise.description}
-							value={formatMoney(summary.latestRaise?.amountRaised ?? null)}
+							value={formatUsd(summary.latestRaise?.amountRaised ?? null, PRE_IPO_USD_OPTIONS) ?? '-'}
 						/>
 						<MetricRow label="Latest Round" value={summary.latestRaise?.series ?? '-'} />
 						<MetricRow
 							label={preIpoDefinitions.company.latestFundingValuation.label}
 							tooltip={preIpoDefinitions.company.latestFundingValuation.description}
-							value={formatMoney(summary.latestRaise?.valuation ?? null)}
+							value={formatUsd(summary.latestRaise?.valuation ?? null, PRE_IPO_USD_OPTIONS) ?? '-'}
 						/>
 						<MetricRow
 							label={preIpoDefinitions.company.latestFundingDate.label}

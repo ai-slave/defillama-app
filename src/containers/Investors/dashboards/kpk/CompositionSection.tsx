@@ -1,6 +1,7 @@
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { formatUsd, formatPercent } from '~/utils/numberFormat'
 import type { KpkRangeKey } from './api'
 import { KPK_COMPOSITION_CHART_OPTIONS, kpkCompositionChartOptions, kpkLineStroke, kpkPalette } from './chartDefaults'
 import { asRanged, buildComposition, defaultRange, gapNote, rangeOptions, type CompositionPayload } from './transform'
@@ -12,9 +13,8 @@ import {
 	DuplicateMark,
 	SectionHeader,
 	ToggleGroup,
-	pct,
-	usd,
-	type FooterRow
+	type FooterRow,
+	KPK_PERCENT_OPTIONS
 } from './ui'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -95,12 +95,20 @@ export function CompositionSection({
 				title: extra.title,
 				cells: {
 					name: extra.name,
-					valueUsd: usd(extra.valueUsd),
-					share: model.totalUsd ? pct((extra.valueUsd / model.totalUsd) * 100, 1) : '—'
+					valueUsd: formatUsd(extra.valueUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—',
+					share: model.totalUsd
+						? (formatPercent((extra.valueUsd / model.totalUsd) * 100, KPK_PERCENT_OPTIONS) ?? '—')
+						: '—'
 				}
 			})
 		}
-		rows.push({ cells: { name: 'Total', valueUsd: usd(model.totalUsd), share: pct(100, 1) } })
+		rows.push({
+			cells: {
+				name: 'Total',
+				valueUsd: formatUsd(model.totalUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—',
+				share: formatPercent(100, KPK_PERCENT_OPTIONS) ?? '—'
+			}
+		})
 		if (model.line) {
 			rows.push({
 				muted: true,
@@ -112,7 +120,7 @@ export function CompositionSection({
 							{model.line.name}
 						</span>
 					),
-					valueUsd: usd(model.line.valueUsd)
+					valueUsd: formatUsd(model.line.valueUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
 				}
 			})
 		}
@@ -182,8 +190,18 @@ export function CompositionSection({
 									</span>
 								)
 							},
-							{ key: 'valueUsd', label: 'Value', right: true, render: (row) => usd(row.valueUsd) },
-							{ key: 'share', label: 'Share', right: true, render: (row) => pct(row.share, 1) }
+							{
+								key: 'valueUsd',
+								label: 'Value',
+								right: true,
+								render: (row) => formatUsd(row.valueUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
+							},
+							{
+								key: 'share',
+								label: 'Share',
+								right: true,
+								render: (row) => formatPercent(row.share, KPK_PERCENT_OPTIONS) ?? '—'
+							}
 						]}
 						footer={footer}
 					/>

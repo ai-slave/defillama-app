@@ -2,7 +2,12 @@ import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/rea
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import {
+	formatPercent,
+	formatUsd,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
 import { useAaveMarkets, useAaveAPYHistory } from './api'
 import type { TimeWindow } from './api'
 import {
@@ -14,7 +19,6 @@ import {
 	MetricStrip,
 	SectionHeader,
 	WindowToggle,
-	formatPct,
 	AAVE_AREA_EXPORT,
 	AAVE_BAR_EXPORT,
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
@@ -80,8 +84,7 @@ const rateColumns: Array<ColumnDef<RateComparisonRow>> = [
 		header: 'Market Size',
 		id: 'sizeUsd',
 		accessorFn: (row) => row.sizeUsd ?? undefined,
-		cell: ({ getValue }) =>
-			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatUsd(getValue<number>(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -89,7 +92,7 @@ const rateColumns: Array<ColumnDef<RateComparisonRow>> = [
 		header: 'Supply APY',
 		id: 'supplyApy',
 		accessorFn: (row) => row.supplyApy ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number>()),
+		cell: ({ getValue }) => formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 110
 	},
@@ -97,7 +100,7 @@ const rateColumns: Array<ColumnDef<RateComparisonRow>> = [
 		header: 'Borrow APY',
 		id: 'borrowApy',
 		accessorFn: (row) => row.borrowApy ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number | null>()),
+		cell: ({ getValue }) => formatPercent(getValue<number | null>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 110
 	},
@@ -105,7 +108,7 @@ const rateColumns: Array<ColumnDef<RateComparisonRow>> = [
 		header: 'Utilization',
 		id: 'utilization',
 		accessorFn: (row) => row.utilization ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number | null>()),
+		cell: ({ getValue }) => formatPercent(getValue<number | null>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 100
 	}
@@ -230,18 +233,23 @@ export default function Rates() {
 	const kpis = useMemo(() => {
 		if (!primaryReserve) return null
 		return {
-			supplyApy: formatPct(primaryReserve.supplyApy),
-			borrowApy: formatPct(primaryReserve.borrowApy),
-			utilization: formatPct(primaryReserve.utilization),
-			marketSize: formatUsd(primaryReserve.sizeUsd, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			}),
+			supplyApy: formatPercent(primaryReserve.supplyApy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
+			borrowApy: formatPercent(primaryReserve.borrowApy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
+			utilization: formatPercent(primaryReserve.utilization, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
+			marketSize: formatUsd(primaryReserve.sizeUsd, USD_LOWERCASE_MILLIONS_OPTIONS),
 			marketsCount: assetReserves.length,
-			optimalUtil: primaryReserve.optimalUsageRate != null ? formatPct(primaryReserve.optimalUsageRate) : null,
-			slope1: primaryReserve.variableRateSlope1 != null ? formatPct(primaryReserve.variableRateSlope1) : null,
-			slope2: primaryReserve.variableRateSlope2 != null ? formatPct(primaryReserve.variableRateSlope2) : null
+			optimalUtil:
+				primaryReserve.optimalUsageRate != null
+					? (formatPercent(primaryReserve.optimalUsageRate, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—')
+					: null,
+			slope1:
+				primaryReserve.variableRateSlope1 != null
+					? (formatPercent(primaryReserve.variableRateSlope1, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—')
+					: null,
+			slope2:
+				primaryReserve.variableRateSlope2 != null
+					? (formatPercent(primaryReserve.variableRateSlope2, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—')
+					: null
 		}
 	}, [primaryReserve, assetReserves])
 

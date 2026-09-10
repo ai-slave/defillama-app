@@ -3,7 +3,12 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import {
+	formatUsd,
+	formatPercent,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
 import { AREA_EXPORT, BAR_EXPORT, DOLLAR_CHART_OPTIONS, DOLLAR_STACKED_CHART_OPTIONS } from './chartDefaults'
 import {
 	useSparklendBorrowedChart,
@@ -85,11 +90,6 @@ function KpiSkeleton({ label }: { label: string }) {
 	)
 }
 
-const formatPct = (v: number | null) =>
-	v != null
-		? `${formatPercent(v, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-		: '—'
-
 interface PoolRow {
 	symbol: string
 	chain: string
@@ -115,8 +115,7 @@ const poolColumns: Array<ColumnDef<PoolRow>> = [
 		header: 'TVL',
 		id: 'tvlUsd',
 		accessorFn: (row) => row.tvlUsd ?? undefined,
-		cell: ({ getValue }) =>
-			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatUsd(getValue<number>(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -124,7 +123,7 @@ const poolColumns: Array<ColumnDef<PoolRow>> = [
 		header: 'Supply APY',
 		id: 'apy',
 		accessorFn: (row) => row.apy ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number | null>()),
+		cell: ({ getValue }) => formatPercent(getValue<number | null>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 100
 	},
@@ -132,7 +131,7 @@ const poolColumns: Array<ColumnDef<PoolRow>> = [
 		header: 'Base APY',
 		id: 'apyBase',
 		accessorFn: (row) => row.apyBase ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number | null>()),
+		cell: ({ getValue }) => formatPercent(getValue<number | null>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 110
 	},
@@ -140,7 +139,7 @@ const poolColumns: Array<ColumnDef<PoolRow>> = [
 		header: 'Reward APY',
 		id: 'apyReward',
 		accessorFn: (row) => row.apyReward ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number | null>()),
+		cell: ({ getValue }) => formatPercent(getValue<number | null>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 120
 	}
@@ -216,33 +215,14 @@ export default function SparkLend() {
 		if (metricsLoading || tvlLoading || borrowedLoading) return null
 
 		return {
-			tvl:
-				previousTvl != null
-					? formatUsd(previousTvl, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-					: '—',
-			borrowed:
-				currentBorrowed != null
-					? formatUsd(currentBorrowed, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-					: '—',
-			fees24h:
-				fees?.total48hto24h != null
-					? formatUsd(fees.total48hto24h, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-					: '—',
+			tvl: previousTvl != null ? formatUsd(previousTvl, USD_LOWERCASE_MILLIONS_OPTIONS) : '—',
+			borrowed: currentBorrowed != null ? formatUsd(currentBorrowed, USD_LOWERCASE_MILLIONS_OPTIONS) : '—',
+			fees24h: fees?.total48hto24h != null ? formatUsd(fees.total48hto24h, USD_LOWERCASE_MILLIONS_OPTIONS) : '—',
 			revenue24h:
-				revenue?.total48hto24h != null
-					? formatUsd(revenue.total48hto24h, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})
-					: '—',
+				revenue?.total48hto24h != null ? formatUsd(revenue.total48hto24h, USD_LOWERCASE_MILLIONS_OPTIONS) : '—',
 			supplySideRevenue24h:
 				supplySideRevenue?.total48hto24h != null
-					? formatUsd(supplySideRevenue.total48hto24h, {
-							compact: true,
-							minimumCompactValue: 1_000_000,
-							compactSuffix: 'lowercase'
-						})
+					? formatUsd(supplySideRevenue.total48hto24h, USD_LOWERCASE_MILLIONS_OPTIONS)
 					: '—'
 		}
 	}, [fees, revenue, supplySideRevenue, previousTvl, currentBorrowed, metricsLoading, tvlLoading, borrowedLoading])

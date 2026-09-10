@@ -5,10 +5,6 @@ import { KpiCard, ChartCard, SectionHeader, SimpleTable, type Col } from './ui'
 
 const SIZES = [10_000, 50_000, 100_000, 500_000, 1_000_000]
 
-function fmtSize(s: number) {
-	return formatUsd(s, { compact: true, maximumFractionDigits: 0 })
-}
-
 function PegPill({ ratio, bps }: { ratio: number; bps?: number }) {
 	const dev = bps != null ? bps : Math.abs(ratio - 1) * 10_000
 	const color = dev <= 30 ? 'text-success' : dev <= 100 ? 'text-warning' : 'text-error'
@@ -43,7 +39,7 @@ function SynthTable({ rows }: { rows: Array<PegRow> }) {
 								key={s}
 								className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-pro-text-label uppercase"
 							>
-								{fmtSize(s)}
+								{formatUsd(s, { compact: true, maximumFractionDigits: 0 })}
 							</th>
 						))}
 						<th className="px-3 py-2.5 text-right text-[11px] font-semibold tracking-wider text-pro-text-label uppercase">
@@ -112,7 +108,7 @@ export default function Pegs() {
 					}
 					sub={
 						k?.msUSD
-							? `Worst: ${k.msUSD.worstChain} @ ${fmtSize(k.msUSD.worstSizeUsd)} → ${formatRatio(k.msUSD.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msUSD.worstDeviationBps} bps)`
+							? `Worst: ${k.msUSD.worstChain} @ ${formatUsd(k.msUSD.worstSizeUsd, { compact: true, maximumFractionDigits: 0 })} → ${formatRatio(k.msUSD.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msUSD.worstDeviationBps} bps)`
 							: undefined
 					}
 				/>
@@ -125,7 +121,7 @@ export default function Pegs() {
 					}
 					sub={
 						k?.msETH
-							? `Worst: ${k.msETH.worstChain} @ ${fmtSize(k.msETH.worstSizeUsd)} → ${formatRatio(k.msETH.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msETH.worstDeviationBps} bps)`
+							? `Worst: ${k.msETH.worstChain} @ ${formatUsd(k.msETH.worstSizeUsd, { compact: true, maximumFractionDigits: 0 })} → ${formatRatio(k.msETH.worstPegRatio, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} (${k.msETH.worstDeviationBps} bps)`
 							: undefined
 					}
 				/>

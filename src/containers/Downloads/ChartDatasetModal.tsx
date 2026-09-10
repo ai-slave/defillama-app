@@ -10,11 +10,12 @@ import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug as toSlug } from '~/utils'
+import { formatIsoDate } from '~/utils/dateFormat'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
 import { formatNumber } from '~/utils/numberFormat'
 import type { ChartDatasetDefinition } from './chart-datasets'
 import { combineCsvsWide } from './combineCsvsWide'
-import { calendarDateKey, filterParsedRowsByDateRange } from './csvDateFilter'
+import { filterParsedRowsByDateRange } from './csvDateFilter'
 import { parseCsv, type ParsedCsvRow } from './csvParse'
 import { DateRangePicker } from './DateRangePicker'
 import { FormatSplitButton } from './FormatSplitButton'
@@ -488,7 +489,7 @@ export function ChartDatasetModal({
 		let min: string | undefined
 		let max: string | undefined
 		for (const row of rows) {
-			const d = calendarDateKey(row.values[dateColIndex] ?? '')
+			const d = formatIsoDate(row.values[dateColIndex] ?? '')
 			if (!d) continue
 			if (min === undefined || d < min) min = d
 			if (max === undefined || d > max) max = d

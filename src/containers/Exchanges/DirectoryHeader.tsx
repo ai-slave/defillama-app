@@ -3,27 +3,32 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { tooltipSurfaceStyles } from '~/ui/Popover'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { exchangeDefinitions } from './definitions'
 import type { ExchangeDirectorySummaryModel, ExchangeVolumeSplit } from './models'
-
-const money = (value: number | null | undefined) =>
-	value == null ? '–' : formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 function VolumeKindSection({ label, tooltip, split }: { label: string; tooltip: string; split: ExchangeVolumeSplit }) {
 	const definitions = exchangeDefinitions.summary
 	return (
-		<MetricSection label={label} tooltip={tooltip} value={money(split.total)}>
-			<SubMetricRow label={definitions.spot.label} tooltip={definitions.spot.description} value={money(split.spot)} />
+		<MetricSection
+			label={label}
+			tooltip={tooltip}
+			value={formatUsd(split.total, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+		>
+			<SubMetricRow
+				label={definitions.spot.label}
+				tooltip={definitions.spot.description}
+				value={formatUsd(split.spot, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+			/>
 			<SubMetricRow
 				label={definitions.linearPerp.label}
 				tooltip={definitions.linearPerp.description}
-				value={money(split.linearPerp)}
+				value={formatUsd(split.linearPerp, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 			/>
 			<SubMetricRow
 				label={definitions.inversePerp.label}
 				tooltip={definitions.inversePerp.description}
-				value={money(split.inversePerp)}
+				value={formatUsd(split.inversePerp, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 			/>
 		</MetricSection>
 	)
@@ -44,7 +49,9 @@ export function DirectoryHeader({ summary }: { summary: ExchangeDirectorySummary
 					<Ariakit.TooltipAnchor render={<summary className="flex flex-col" />}>
 						<span className="text-secondary underline decoration-dotted">{definitions.totalVolume24h.label}</span>
 						<span className="flex items-center gap-2">
-							<span className="min-h-8 font-jetbrains text-2xl font-semibold">{money(summary.totalVolume24h)}</span>
+							<span className="min-h-8 font-jetbrains text-2xl font-semibold">
+								{formatUsd(summary.totalVolume24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+							</span>
 							<Icon
 								name="chevron-down"
 								height={16}
@@ -75,32 +82,32 @@ export function DirectoryHeader({ summary }: { summary: ExchangeDirectorySummary
 				<MetricRow
 					label={definitions.spotVolume24h.label}
 					tooltip={definitions.spotVolume24h.description}
-					value={money(summary.spotVolume24h)}
+					value={formatUsd(summary.spotVolume24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 				/>
 				<MetricRow
 					label={definitions.linearPerpVolume24h.label}
 					tooltip={definitions.linearPerpVolume24h.description}
-					value={money(summary.linearPerpVolume24h)}
+					value={formatUsd(summary.linearPerpVolume24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 				/>
 				<MetricRow
 					label={definitions.inversePerpVolume24h.label}
 					tooltip={definitions.inversePerpVolume24h.description}
-					value={money(summary.inversePerpVolume24h)}
+					value={formatUsd(summary.inversePerpVolume24h, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 				/>
 				<MetricRow
 					label={definitions.linearPerpOpenInterest.label}
 					tooltip={definitions.linearPerpOpenInterest.description}
-					value={money(summary.linearPerpOpenInterestUsd)}
+					value={formatUsd(summary.linearPerpOpenInterestUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 				/>
 				<MetricRow
 					label={definitions.inversePerpOpenInterest.label}
 					tooltip={definitions.inversePerpOpenInterest.description}
-					value={money(summary.inversePerpOpenInterestUsd)}
+					value={formatUsd(summary.inversePerpOpenInterestUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 				/>
 				<MetricRow
 					label={definitions.reserves.label}
 					tooltip={definitions.reserves.description}
-					value={money(summary.reservesUsd)}
+					value={formatUsd(summary.reservesUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 				/>
 				<MetricRow
 					label={definitions.venues.label}

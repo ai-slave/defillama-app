@@ -8,10 +8,6 @@ export interface ResolvedDateRange {
 	to: string // YYYY-MM-DD, inclusive
 }
 
-export function calendarDateKey(value: string): string | null {
-	return formatIsoDate(value)
-}
-
 /**
  * Convert a DateRangeConfig into an inclusive {from, to} pair of YYYY-MM-DD strings.
  * Returns null for unbounded ranges ('all' preset) and for invalid inputs — callers
@@ -67,7 +63,7 @@ export function filterCsvByDateRange(csv: string, range: DateRangeConfig | null 
 		const fields = parseCsvLine(line)
 		const value = fields[dateIdx]
 		if (!value) continue
-		const date = calendarDateKey(value)
+		const date = formatIsoDate(value)
 		if (!date) continue
 		if (date < window.from || date > window.to) continue
 		kept.push(line)
@@ -91,7 +87,7 @@ export function filterParsedRowsByDateRange<T extends ParsedCsvRow>(
 	for (const row of rows) {
 		const value = row.values[dateColIndex]
 		if (!value) continue
-		const date = calendarDateKey(value)
+		const date = formatIsoDate(value)
 		if (!date) continue
 		if (date < window.from || date > window.to) continue
 		result.push(row)

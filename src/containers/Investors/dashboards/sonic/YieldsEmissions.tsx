@@ -8,7 +8,7 @@ import {
 import { lazy, useEffect } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
-import { formatPercent } from '~/utils/numberFormat'
+import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
 
@@ -34,11 +34,6 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 
 function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
-}
-
-function formatPct(n: number | null): string {
-	if (n === null || n === undefined) return '—'
-	return `${formatPercent(n, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
 }
 
 const columnHelper = createColumnHelper<YieldPool>()
@@ -69,13 +64,17 @@ const columns = [
 	columnHelper.accessor((row) => row.apyBase ?? undefined, {
 		id: 'apyBase',
 		header: 'Base APY',
-		cell: (info) => <span className="tabular-nums">{formatPct(info.getValue())}</span>,
+		cell: (info) => (
+			<span className="tabular-nums">{formatPercent(info.getValue(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}</span>
+		),
 		size: 100
 	}),
 	columnHelper.accessor((row) => row.apyReward ?? undefined, {
 		id: 'apyReward',
 		header: 'Reward APY',
-		cell: (info) => <span className="tabular-nums">{formatPct(info.getValue())}</span>,
+		cell: (info) => (
+			<span className="tabular-nums">{formatPercent(info.getValue(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}</span>
+		),
 		size: 110
 	})
 ]

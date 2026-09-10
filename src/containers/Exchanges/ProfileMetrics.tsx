@@ -6,8 +6,16 @@ import { Card } from '~/ui/Card'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl } from '~/utils/icons'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
-import { formatScore, TierBadge } from './directoryColumns'
+import {
+	formatUsd,
+	formatCompactNumber,
+	formatPercent,
+	formatNumber,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
+import { TierBadge } from './directoryColumns'
 import { fractionChange, sumNullable } from './modelHelpers'
 import {
 	EXCHANGE_SEGMENT_LABELS,
@@ -19,11 +27,6 @@ import {
 import { ProfileIdentity } from './ProfileIdentity'
 import { TierScale } from './ProfileRanking'
 import { SEGMENT_DEFINITIONS } from './segmentPresentation'
-
-const money = (value: number | null) =>
-	value == null ? '–' : formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-const count = (value: number | null) =>
-	value == null ? '–' : formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 function ChangePct({ value }: { value: number }) {
 	return (
@@ -140,7 +143,7 @@ export function ProfileMetrics({
 						<span className="flex w-full items-center gap-2">
 							{profile.quality.tier ? <TierBadge tier={profile.quality.tier} /> : null}
 							<span className="font-jetbrains text-xl leading-none font-semibold">
-								{formatScore(profile.quality.score)}
+								{formatNumber(profile.quality.score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
 							</span>
 							<span className="body-sm text-tertiary">/ 100</span>
 							<span className="ml-auto body-sm text-secondary">
@@ -155,7 +158,9 @@ export function ProfileMetrics({
 			<div className="flex flex-col">
 				<span className="body-sm text-secondary">24h Volume{showGlobalLabel ? ' · Global' : ''}</span>
 				<span className="flex flex-wrap items-baseline gap-2">
-					<span className="min-h-8 font-jetbrains text-2xl font-semibold">{money(totalVolume)}</span>
+					<span className="min-h-8 font-jetbrains text-2xl font-semibold">
+						{formatUsd(totalVolume, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+					</span>
 					{volumeChange != null ? <ChangePct value={volumeChange} /> : null}
 				</span>
 			</div>
@@ -166,7 +171,7 @@ export function ProfileMetrics({
 						key={segment.label}
 						label={`${segment.label} volume`}
 						tooltip={segment.tooltip}
-						value={money(segment.value)}
+						value={formatUsd(segment.value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 					/>
 				))}
 				{supportsOpenInterest
@@ -175,14 +180,24 @@ export function ProfileMetrics({
 								key={segment.label}
 								label={`${segment.label} open interest`}
 								tooltip={segment.tooltip}
-								value={money(segment.value)}
+								value={formatUsd(segment.value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
 							/>
 						))
 					: null}
 				{totalDepth != null ? (
-					<BreakdownMetric label="Depth ±2%" total={totalDepth} segments={depthBySegment} render={money} />
+					<BreakdownMetric
+						label="Depth ±2%"
+						total={totalDepth}
+						segments={depthBySegment}
+						render={(value: number | null) => formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+					/>
 				) : null}
-				<BreakdownMetric label="Markets" total={totalMarkets} segments={marketsBySegment} render={count} />
+				<BreakdownMetric
+					label="Markets"
+					total={totalMarkets}
+					segments={marketsBySegment}
+					render={(value: number | null) => formatCompactNumber(value, NUMBER_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+				/>
 				{profile.execution?.costToTradeBps != null ? (
 					<MetricRow
 						label="Cost to trade"
@@ -205,17 +220,13 @@ export function ProfileMetrics({
 									alt={`${profile.nativeToken.name} logo`}
 								/>
 								<span>{profile.nativeToken.symbol}</span>
-								{profile.nativeToken.priceUsd != null ? <span>{money(profile.nativeToken.priceUsd)}</span> : null}
+								{profile.nativeToken.priceUsd != null ? (
+									<span>{formatUsd(profile.nativeToken.priceUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}</span>
+								) : null}
 								{profile.nativeToken.change24h != null ? (
 									<span className={profile.nativeToken.change24h >= 0 ? 'text-data-up' : 'text-data-down'}>
 										({profile.nativeToken.change24h >= 0 ? '+' : ''}
-										{formatPercent(profile.nativeToken.change24h, {
-											input: 'percent',
-											minimumFractionDigits: 2,
-											maximumFractionDigits: 2,
-											useGrouping: false
-										})}
-										)
+										{formatPercent(profile.nativeToken.change24h, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)})
 									</span>
 								) : null}
 							</BasicLink>

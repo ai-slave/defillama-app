@@ -8,6 +8,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { geckoTokenIconUrl } from '~/utils/icons'
 import { formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
+import { UTR_PERCENT_OPTIONS } from './constants'
 import { CriteriaDrawer, type CriteriaDrawerState } from './CriteriaDrawer'
 import { GradeBadge, GradeChip, ScoreBar } from './grades'
 import { MarketMakerPerformance } from './MarketMakerPerformance'
@@ -42,6 +43,20 @@ import type {
 	UtrLeaderboardRow,
 	UtrScoringConfig
 } from './types'
+
+const NUMBER_OPTIONS = {
+	minimumFractionDigits: 1,
+	maximumFractionDigits: 1,
+	useGrouping: false
+} as const
+
+const PERCENT_FOUR_DECIMALS_OPTIONS = {
+	input: 'percent',
+	minimumFractionDigits: 4,
+	maximumFractionDigits: 4,
+	smallValueDisplay: 'rounded',
+	useGrouping: false
+} as const
 
 const EXCHANGE_LABELS: Record<string, string> = {
 	binance_futures: 'Binance (Futures)',
@@ -125,18 +140,6 @@ function ExchangeCell({ id }: { id: string }) {
 
 function usd(value: number | null | undefined): string {
 	return value == null ? 'N/A' : `$${formatNumber(Math.round(value))}`
-}
-
-function pct(value: number | null | undefined, digits = 2): string {
-	return (
-		formatPercent(value, {
-			input: 'percent',
-			minimumFractionDigits: digits,
-			maximumFractionDigits: digits,
-			smallValueDisplay: 'rounded',
-			useGrouping: false
-		}) ?? 'N/A'
-	)
 }
 
 function toTime(date: string): number {
@@ -264,13 +267,7 @@ function AboutDrawer({
 						<span className="body-sm text-tertiary">Overall Score</span>
 						<span className="flex items-center gap-2">
 							<span className="mono-md tabular-nums">
-								{asset.overallScore == null
-									? 'N/A'
-									: formatNumber(asset.overallScore, {
-											minimumFractionDigits: 1,
-											maximumFractionDigits: 1,
-											useGrouping: false
-										})}
+								{asset.overallScore == null ? 'N/A' : formatNumber(asset.overallScore, NUMBER_OPTIONS)}
 								<span className="text-tertiary"> /100</span>
 							</span>
 							<ScoreBar
@@ -290,7 +287,9 @@ function AboutDrawer({
 					<span className="flex flex-col gap-0.5">
 						<span className="body-sm text-tertiary">Percentile</span>
 						<span className="flex items-center gap-2">
-							<span className="mono-md tabular-nums">{pct(rankPercentile)}</span>
+							<span className="mono-md tabular-nums">
+								{formatPercent(rankPercentile, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+							</span>
 							<span className="h-2 w-10 shrink-0 overflow-hidden rounded-full bg-surface-elevated-1">
 								<span
 									className="block h-full rounded-full bg-(--text-primary)"
@@ -423,7 +422,7 @@ export function TokenPageLive({
 		},
 		{
 			title: 'Annualized Rate of Inflation',
-			value: pct(metrics?.annualizedInflationPct),
+			value: formatPercent(metrics?.annualizedInflationPct, UTR_PERCENT_OPTIONS) ?? 'N/A',
 			hasData: metrics?.annualizedInflationPct != null,
 			criterion: findTokenomicsCriterion('inflation')
 		},
@@ -566,13 +565,7 @@ export function TokenPageLive({
 							<span className="label-md">
 								Overall Score:{' '}
 								<span className="font-jetbrains tabular-nums">
-									{asset.overallScore == null
-										? 'N/A'
-										: formatNumber(asset.overallScore, {
-												minimumFractionDigits: 1,
-												maximumFractionDigits: 1,
-												useGrouping: false
-											})}
+									{asset.overallScore == null ? 'N/A' : formatNumber(asset.overallScore, NUMBER_OPTIONS)}
 								</span>
 								<span className="text-tertiary"> /100</span>
 							</span>
@@ -659,13 +652,7 @@ export function TokenPageLive({
 														gradingScale={scoringConfig?.grading.disclosure.scale}
 													/>
 													<span className="min-w-[8ch] text-right mono-sm tabular-nums">
-														{item.score == null
-															? 'N/A'
-															: formatNumber(item.score, {
-																	minimumFractionDigits: 1,
-																	maximumFractionDigits: 1,
-																	useGrouping: false
-																})}
+														{item.score == null ? 'N/A' : formatNumber(item.score, NUMBER_OPTIONS)}
 														<span className="text-tertiary"> /10</span>
 													</span>
 												</span>
@@ -745,7 +732,10 @@ export function TokenPageLive({
 													usd(marketQuality?.volumeMcap.avgUsd)
 												],
 												['Market Capitalization (prev. 30D avg.)', usd(marketQuality?.volumeMcap.avgMarketCapUsd)],
-												['Trade Volume / Market Capitalization', pct(marketQuality?.volumeMcap.ratioPct)]
+												[
+													'Trade Volume / Market Capitalization',
+													formatPercent(marketQuality?.volumeMcap.ratioPct, UTR_PERCENT_OPTIONS) ?? 'N/A'
+												]
 											]}
 										/>
 									</MetricCard>
@@ -796,7 +786,10 @@ export function TokenPageLive({
 													usd(marketQuality?.depthMcap.avgUsd)
 												],
 												['Market Capitalization (prev. 30D avg.)', usd(marketQuality?.depthMcap.avgMarketCapUsd)],
-												['Depth / Market Capitalization', pct(marketQuality?.depthMcap.ratioPct)]
+												[
+													'Depth / Market Capitalization',
+													formatPercent(marketQuality?.depthMcap.ratioPct, UTR_PERCENT_OPTIONS) ?? 'N/A'
+												]
 											]}
 										/>
 									</MetricCard>
@@ -842,7 +835,10 @@ export function TokenPageLive({
 														'N/A'
 													)
 												],
-												['Volume Weighted Bid / Ask Spread (prev. 30 days)', pct(spread?.vwasPct, 4)]
+												[
+													'Volume Weighted Bid / Ask Spread (prev. 30 days)',
+													formatPercent(spread?.vwasPct, PERCENT_FOUR_DECIMALS_OPTIONS) ?? 'N/A'
+												]
 											]}
 										/>
 									</MetricCard>
@@ -855,7 +851,8 @@ export function TokenPageLive({
 										badge={
 											priceChart?.changePct == null ? null : (
 												<AccentBadge className="h-6">
-													{priceChart.windowDays ?? 30}D Change: {pct(priceChart.changePct)}
+													{priceChart.windowDays ?? 30}D Change:{' '}
+													{formatPercent(priceChart.changePct, UTR_PERCENT_OPTIONS) ?? 'N/A'}
 												</AccentBadge>
 											)
 										}
@@ -883,7 +880,7 @@ export function TokenPageLive({
 											rows={[
 												['Count Green Candles', String(priceChart?.greenCandles ?? 'N/A')],
 												['Count Red Candles', String(priceChart?.redCandles ?? 'N/A')],
-												['Candle "Win Rate"', pct(priceChart?.winRatePct)]
+												['Candle "Win Rate"', formatPercent(priceChart?.winRatePct, UTR_PERCENT_OPTIONS) ?? 'N/A']
 											]}
 										/>
 									</MetricCard>
@@ -911,7 +908,14 @@ export function TokenPageLive({
 											/>
 										</div>
 										<CardDivider />
-										<KvTable rows={[['Open Interest / Market Capitalization', pct(openInterest?.oiMcapRatioPct)]]} />
+										<KvTable
+											rows={[
+												[
+													'Open Interest / Market Capitalization',
+													formatPercent(openInterest?.oiMcapRatioPct, UTR_PERCENT_OPTIONS) ?? 'N/A'
+												]
+											]}
+										/>
 									</MetricCard>
 								) : null}
 								{hasFundingData ? (
@@ -948,7 +952,14 @@ export function TokenPageLive({
 												<CardDivider />
 											</>
 										) : null}
-										<KvTable rows={[['Open Interest-Weighted Funding Rate', pct(funding?.oiWeightedFundingPct, 4)]]} />
+										<KvTable
+											rows={[
+												[
+													'Open Interest-Weighted Funding Rate',
+													formatPercent(funding?.oiWeightedFundingPct, PERCENT_FOUR_DECIMALS_OPTIONS) ?? 'N/A'
+												]
+											]}
+										/>
 									</MetricCard>
 								) : null}
 							</div>
@@ -1085,7 +1096,10 @@ export function TokenPageLive({
 												],
 												[
 													`${entry.names[0]} share`,
-													pct(entry.kind === 'cexdex' ? entry.chart?.cexSharePct : entry.chart?.spotSharePct)
+													formatPercent(
+														entry.kind === 'cexdex' ? entry.chart?.cexSharePct : entry.chart?.spotSharePct,
+														UTR_PERCENT_OPTIONS
+													) ?? 'N/A'
 												]
 											]}
 										/>

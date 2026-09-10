@@ -5,6 +5,8 @@ import { formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { FEE_TONE_CLASS, type FeeTone } from './feePresentation'
 import type { RampRowModel } from './rampPresentation'
 
+const USD_FIXED_OPTIONS = { currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 } as const
+
 const DASH = <span className="text-tertiary">–</span>
 
 /** Single-leg tone bands, shared with the /mica ramp columns; round trip is one leg each way. */
@@ -16,12 +18,6 @@ function tone(fraction: number | null, limits: { low: number; medium: number }):
 	if (fraction <= limits.low) return 'low'
 	if (fraction <= limits.medium) return 'medium'
 	return 'high'
-}
-
-function usd(value: number | null): string | null {
-	return value == null
-		? null
-		: formatNumber(value, { currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 /** Shared with the /mica ramp columns. */
@@ -120,24 +116,24 @@ export function RampLegValue({
 	const rail = direction === 'onRamp' ? cost.onRail : cost.offRail
 	const transferBtc = btcAmount(direction === 'onRamp' ? btcWithdrawalFeeBtc : btcNetworkFeeBtc)
 	const rows = [
-		{ label: `${rail ?? 'Fiat rail'} (${cost.currency})`, value: usd(leg.fiatFeeUsd) },
+		{ label: `${rail ?? 'Fiat rail'} (${cost.currency})`, value: formatNumber(leg.fiatFeeUsd, USD_FIXED_OPTIONS) },
 		{
 			label: takerFee == null ? 'Taker fee' : `Taker fee (${formatPercent(takerFee, { input: 'fraction' })})`,
-			value: usd(leg.tradeFeeUsd)
+			value: formatNumber(leg.tradeFeeUsd, USD_FIXED_OPTIONS)
 		},
-		{ label: 'Book slippage vs mid', value: usd(leg.slippageUsd) },
+		{ label: 'Book slippage vs mid', value: formatNumber(leg.slippageUsd, USD_FIXED_OPTIONS) },
 		{
 			label:
 				direction === 'onRamp'
 					? `BTC withdrawal fee${transferBtc ? ` (${transferBtc})` : ''}`
 					: `BTC network fee${transferBtc ? ` (${transferBtc})` : ''}`,
-			value: usd(leg.transferFeeUsd)
+			value: formatNumber(leg.transferFeeUsd, USD_FIXED_OPTIONS)
 		}
 	]
 	return (
 		<span className="inline-flex items-center justify-end whitespace-nowrap">
 			<CostBadge
-				label={usd(leg.totalUsd) ?? '–'}
+				label={formatNumber(leg.totalUsd, USD_FIXED_OPTIONS) ?? '–'}
 				fraction={leg.totalFraction}
 				limits={LEG_TONE_LIMITS}
 				ariaLabel={`${row.name} ${direction === 'onRamp' ? 'on-ramp' : 'off-ramp'} cost breakdown`}
@@ -150,7 +146,7 @@ export function RampLegValue({
 					}
 					scope={`${formatUsd(size, { maximumFractionDigits: 0 })} on ${cost.pair ?? '–'}`}
 					rows={rows}
-					total={usd(leg.totalUsd)}
+					total={formatNumber(leg.totalUsd, USD_FIXED_OPTIONS)}
 					totalFraction={leg.totalFraction}
 				/>
 			</CostBadge>
@@ -163,7 +159,7 @@ export function RampRoundTripValue({ row, size }: { row: RampRowModel; size: num
 	return (
 		<span className="inline-flex items-center justify-end whitespace-nowrap">
 			<CostBadge
-				label={usd(row.roundTripUsd) ?? '–'}
+				label={formatNumber(row.roundTripUsd, USD_FIXED_OPTIONS) ?? '–'}
 				fraction={row.roundTripFraction}
 				limits={ROUND_TRIP_TONE_LIMITS}
 				ariaLabel={`${row.name} round-trip cost breakdown`}
@@ -172,10 +168,10 @@ export function RampRoundTripValue({ row, size }: { row: RampRowModel; size: num
 					steps={`In and back out: ${row.cost.currency} → BTC → your wallet, then wallet → BTC → ${row.cost.currency}`}
 					scope={`${formatUsd(size, { maximumFractionDigits: 0 })} each way on ${row.cost.pair ?? '–'}`}
 					rows={[
-						{ label: 'On-ramp', value: usd(row.cost.onRamp.totalUsd) },
-						{ label: 'Off-ramp', value: usd(row.cost.offRamp.totalUsd) }
+						{ label: 'On-ramp', value: formatNumber(row.cost.onRamp.totalUsd, USD_FIXED_OPTIONS) },
+						{ label: 'Off-ramp', value: formatNumber(row.cost.offRamp.totalUsd, USD_FIXED_OPTIONS) }
 					]}
-					total={usd(row.roundTripUsd)}
+					total={formatNumber(row.roundTripUsd, USD_FIXED_OPTIONS)}
 					totalFraction={row.roundTripFraction}
 				/>
 			</CostBadge>
@@ -189,12 +185,12 @@ export function RampTradeValue({ row, size }: { row: RampRowModel; size: number 
 	const detail = [
 		`Execution only: no fiat rail, no transfer.`,
 		`${formatUsd(size, { maximumFractionDigits: 0 })} market buy on ${row.trade.pair ?? '–'}`,
-		`Taker fee${takerFee == null ? '' : ` (${formatPercent(takerFee, { input: 'fraction' })})`}: ${usd(row.trade.tradeFeeUsd) ?? 'unknown'}`,
-		`Book slippage: ${usd(row.trade.slippageBuyUsd) ?? 'unknown'}`
+		`Taker fee${takerFee == null ? '' : ` (${formatPercent(takerFee, { input: 'fraction' })})`}: ${formatNumber(row.trade.tradeFeeUsd, USD_FIXED_OPTIONS) ?? 'unknown'}`,
+		`Book slippage: ${formatNumber(row.trade.slippageBuyUsd, USD_FIXED_OPTIONS) ?? 'unknown'}`
 	].join('\n')
 	return (
 		<Tooltip content={detail} className="justify-end whitespace-nowrap">
-			{usd(row.tradeCostUsd)}
+			{formatNumber(row.tradeCostUsd, USD_FIXED_OPTIONS)}
 		</Tooltip>
 	)
 }

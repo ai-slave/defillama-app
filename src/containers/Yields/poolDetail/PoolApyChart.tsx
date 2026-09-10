@@ -13,11 +13,11 @@ import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
-import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { ChartMetricsPicker, type ChartMetricGroup, type ChartMetricOption } from './ChartMetricsPicker'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from './fetch'
-import { YIELD_PERCENT_OPTIONS, YIELD_USD_OPTIONS } from './format'
+import { YIELD_PERCENT_OPTIONS } from './format'
 import {
 	buildBorrowChart,
 	buildSupplyChart,
@@ -75,7 +75,7 @@ function rangeCount(range: Range, total: number): number {
 
 function fmtVal(v: number, symbol: string): string {
 	if (!Number.isFinite(v)) return '-'
-	return symbol === '$' ? formatUsd(v, YIELD_USD_OPTIONS) : formatPercent(v, YIELD_PERCENT_OPTIONS)
+	return symbol === '$' ? formatUsd(v, USD_LOWERCASE_MILLIONS_OPTIONS) : formatPercent(v, YIELD_PERCENT_OPTIONS)
 }
 
 // One smoothing window governs every rate series — bars and the net line render their

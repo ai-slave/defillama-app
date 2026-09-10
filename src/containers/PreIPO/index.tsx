@@ -23,34 +23,21 @@ import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { preIpoIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { PreIpoCompanyListItem } from './api.types'
+import { PRE_IPO_USD_OPTIONS } from './constants'
 import { preIpoDefinitions } from './definitions'
 import { filterPreIpoCompanies, getPreIpoSectors } from './overviewData'
 import { getSelectedPreIpoSectors, PRE_IPO_EXCLUDE_SECTOR_QUERY_KEY, PRE_IPO_SECTOR_QUERY_KEY } from './queryState'
 import type { PreIpoOverviewPageProps } from './types'
 
+const PERCENT_OPTIONS = {
+	input: 'percent',
+	signDisplay: 'exceptZero',
+	maximumFractionDigits: 2
+} as const
+
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 const DEFAULT_PAGINATION: PaginationState = { pageIndex: 0, pageSize: 50 }
 const DEFAULT_SORTING: SortingState = [{ id: 'latestEstimatedValuation', desc: true }]
-
-function formatMoney(value: number | null | undefined): string {
-	return (
-		formatUsd(value, {
-			compact: true,
-			minimumCompactValue: 1_000_000,
-			maximumFractionDigits: 2
-		}) ?? '-'
-	)
-}
-
-function formatPercentage(value: number | null | undefined): string {
-	return (
-		formatPercent(value, {
-			input: 'percent',
-			signDisplay: 'exceptZero',
-			maximumFractionDigits: 2
-		}) ?? '-'
-	)
-}
 
 function CompanyCell({ row }: { row: { id: string; original: PreIpoCompanyListItem } }) {
 	const rowIndex = usePaginatedTableDisplayRowNumber(row.id)
@@ -102,7 +89,7 @@ const columns = [
 	columnHelper.accessor((row) => row.latestEstimatedValuation ?? undefined, {
 		id: 'latestEstimatedValuation',
 		header: preIpoDefinitions.company.estimatedValuation.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[168px] min-w-[168px]',
 			align: 'end',
@@ -116,7 +103,7 @@ const columns = [
 			const value = getValue()
 			return (
 				<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-					{formatPercentage(value)}
+					{formatPercent(value, PERCENT_OPTIONS) ?? '-'}
 				</span>
 			)
 		},
@@ -129,7 +116,7 @@ const columns = [
 	columnHelper.accessor((row) => row.latestRaise ?? undefined, {
 		id: 'latestRaise',
 		header: preIpoDefinitions.company.latestRaise.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[132px] min-w-[132px]',
 			align: 'end',
@@ -139,7 +126,7 @@ const columns = [
 	columnHelper.accessor((row) => row.latestFundingValuation ?? undefined, {
 		id: 'latestFundingValuation',
 		header: preIpoDefinitions.company.latestFundingValuation.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[200px] min-w-[200px]',
 			align: 'end',
@@ -149,7 +136,7 @@ const columns = [
 	columnHelper.accessor((row) => row.totalRaised ?? undefined, {
 		id: 'totalRaised',
 		header: preIpoDefinitions.company.totalRaised.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[132px] min-w-[132px]',
 			align: 'end',
@@ -163,7 +150,7 @@ const columns = [
 			const value = getValue()
 			return (
 				<span className={value == null || value === 0 ? undefined : value > 0 ? 'text-data-up' : 'text-data-down'}>
-					{formatPercentage(value)}
+					{formatPercent(value, PERCENT_OPTIONS) ?? '-'}
 				</span>
 			)
 		},

@@ -46,6 +46,21 @@ export interface FormatPercentOptions extends PrecisionOptions {
 	smallValueDisplay?: 'rounded' | 'threshold'
 }
 
+export const USD_LOWERCASE_MILLIONS_OPTIONS = {
+	compact: true,
+	minimumCompactValue: 1_000_000,
+	compactSuffix: 'lowercase'
+} as const
+
+export const NUMBER_LOWERCASE_MILLIONS_OPTIONS = { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' } as const
+
+export const PERCENT_POINTS_TWO_DECIMALS_OPTIONS = {
+	input: 'percent',
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2,
+	useGrouping: false
+} as const
+
 /** Produces fixed decimal text for protocols that require exact trailing digits. */
 export function formatFixedNumber(value: number, fractionDigits?: number): string
 export function formatFixedNumber(value: null | undefined, fractionDigits?: number): null

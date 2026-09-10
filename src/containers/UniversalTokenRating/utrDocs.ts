@@ -7,6 +7,15 @@ import type {
 	UtrScoringCriterionConfig
 } from './types'
 
+const PERCENT_OPTIONS = {
+	input: 'fraction',
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2,
+	useGrouping: false
+} as const
+
+const NUMBER_OPTIONS = { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false } as const
+
 export type UtrDocListItem = { text: string; children?: Array<string>; strong?: boolean }
 
 export type UtrDocBlock =
@@ -937,15 +946,6 @@ function modernizeBlock(block: UtrDocBlock): UtrDocBlock {
 	}
 }
 
-function formatWeight(weight: number): string {
-	return formatPercent(weight, {
-		input: 'fraction',
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-		useGrouping: false
-	})
-}
-
 function categoryWeight(criteria: Array<UtrScoringCriterionConfig>): number {
 	return criteria.reduce((total, criterion) => total + criterion.weight, 0)
 }
@@ -975,7 +975,7 @@ function categoryTableBlocks(
 			headers: ['Category', 'Category Weight'],
 			rows: applicableCategories.map(({ category, criteria }) => [
 				category.label,
-				formatWeight(categoryWeight(criteria))
+				formatPercent(categoryWeight(criteria), PERCENT_OPTIONS)
 			])
 		}
 	]
@@ -983,7 +983,7 @@ function categoryTableBlocks(
 		blocks.push(
 			{
 				type: 'paragraph',
-				lead: `${category.label} (${formatWeight(categoryWeight(criteria))}):`,
+				lead: `${category.label} (${formatPercent(categoryWeight(criteria), PERCENT_OPTIONS)}):`,
 				text:
 					CATEGORY_DESCRIPTIONS[category.key] ??
 					`Includes the currently configured ${applicability === 'preTge' ? 'pre-TGE' : applicability === 'postTge' ? 'post-TGE' : ''} evaluation criteria for this category.`
@@ -991,7 +991,7 @@ function categoryTableBlocks(
 			{
 				type: 'table',
 				headers: ['Criterion', 'Weight'],
-				rows: criteria.map((criterion) => [criterion.label, formatWeight(criterion.weight)])
+				rows: criteria.map((criterion) => [criterion.label, formatPercent(criterion.weight, PERCENT_OPTIONS)])
 			}
 		)
 	}
@@ -1073,8 +1073,6 @@ function replacePerformanceCalculationMethodology(chapter: UtrDocChapter): UtrDo
 }
 
 function gradeRangeRows(scale: Array<UtrGradeScaleEntry>): Array<Array<string>> {
-	const formatScore = (score: number) =>
-		formatNumber(score, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })
 	const sorted = [...scale].sort((a, b) => {
 		if (a.min === null) return 1
 		if (b.min === null) return -1
@@ -1086,10 +1084,10 @@ function gradeRangeRows(scale: Array<UtrGradeScaleEntry>): Array<Array<string>> 
 			entry.min === null
 				? previousMin == null
 					? 'All scores'
-					: `<${formatScore(previousMin)}`
+					: `<${formatNumber(previousMin, NUMBER_OPTIONS)}`
 				: previousMin == null
-					? `≥${formatScore(entry.min)}`
-					: `${formatScore(entry.min)}–<${formatScore(previousMin)}`
+					? `≥${formatNumber(entry.min, NUMBER_OPTIONS)}`
+					: `${formatNumber(entry.min, NUMBER_OPTIONS)}–<${formatNumber(previousMin, NUMBER_OPTIONS)}`
 		return [range, entry.grade, entry.interpretation]
 	})
 }
@@ -1177,7 +1175,9 @@ function glossaryChapter(chapter: UtrDocChapter, config: UtrScoringConfig | null
 		'Total Market (Category)': 'total_market'
 	}
 	const describeCategories = (categories: Array<UtrScoringCategoryConfig>) =>
-		categories.map((category) => `${category.label} (${formatWeight(categoryWeight(category.criteria))})`).join(', ')
+		categories
+			.map((category) => `${category.label} (${formatPercent(categoryWeight(category.criteria), PERCENT_OPTIONS)})`)
+			.join(', ')
 	let heading = ''
 	return {
 		...chapter,
@@ -1211,7 +1211,7 @@ function glossaryChapter(chapter: UtrDocChapter, config: UtrScoringConfig | null
 				...block,
 				text: block.text.replace(
 					/Category weight: [0-9.]+%\./,
-					`Category weight: ${formatWeight(categoryWeight(category.criteria))}.`
+					`Category weight: ${formatPercent(categoryWeight(category.criteria), PERCENT_OPTIONS)}.`
 				)
 			}
 		})

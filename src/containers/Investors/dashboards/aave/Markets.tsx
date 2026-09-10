@@ -2,7 +2,12 @@ import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/rea
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import {
+	formatUsd,
+	formatPercent,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
 import { useAaveMarkets } from './api'
 import type { FlatReserve } from './api'
 import {
@@ -12,7 +17,6 @@ import {
 	KpiCard,
 	MetricStrip,
 	SectionHeader,
-	formatPct,
 	AAVE_BAR_EXPORT,
 	AAVE_CATEGORY_DOLLAR_CHART_OPTIONS,
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS
@@ -46,8 +50,7 @@ const reserveColumns: Array<ColumnDef<FlatReserve>> = [
 		header: 'Market Size',
 		id: 'sizeUsd',
 		accessorFn: (row) => row.sizeUsd ?? undefined,
-		cell: ({ getValue }) =>
-			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatUsd(getValue<number>(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 130
 	},
@@ -72,12 +75,13 @@ const reserveColumns: Array<ColumnDef<FlatReserve>> = [
 		id: 'supplyApy',
 		accessorFn: (row) => row.supplyApy ?? undefined,
 		cell: ({ getValue, row }) => {
-			const apy = formatPct(getValue<number>())
+			const apy = formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'
 			const reward = row.original.rewardSupplyApr
 			if (reward && reward > 0) {
 				return (
 					<span>
-						{apy} <span className="text-success">+{formatPct(reward)}</span>
+						{apy}{' '}
+						<span className="text-success">+{formatPercent(reward, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}</span>
 					</span>
 				)
 			}
@@ -91,12 +95,13 @@ const reserveColumns: Array<ColumnDef<FlatReserve>> = [
 		id: 'borrowApy',
 		accessorFn: (row) => row.borrowApy ?? undefined,
 		cell: ({ getValue, row }) => {
-			const apy = formatPct(getValue<number | null>())
+			const apy = formatPercent(getValue<number | null>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'
 			const discount = row.original.rewardBorrowDiscount
 			if (discount && discount > 0) {
 				return (
 					<span>
-						{apy} <span className="text-success">-{formatPct(discount)}</span>
+						{apy}{' '}
+						<span className="text-success">-{formatPercent(discount, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}</span>
 					</span>
 				)
 			}
@@ -109,7 +114,7 @@ const reserveColumns: Array<ColumnDef<FlatReserve>> = [
 		header: 'Utilization',
 		id: 'utilization',
 		accessorFn: (row) => row.utilization ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number | null>()),
+		cell: ({ getValue }) => formatPercent(getValue<number | null>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 90
 	},
@@ -117,7 +122,7 @@ const reserveColumns: Array<ColumnDef<FlatReserve>> = [
 		header: 'LTV',
 		id: 'maxLTV',
 		accessorFn: (row) => row.maxLTV ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number>()),
+		cell: ({ getValue }) => formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 70
 	},
@@ -125,7 +130,7 @@ const reserveColumns: Array<ColumnDef<FlatReserve>> = [
 		header: 'Liq. Threshold',
 		id: 'liquidationThreshold',
 		accessorFn: (row) => row.liquidationThreshold ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number>()),
+		cell: ({ getValue }) => formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 110
 	},
@@ -215,24 +220,12 @@ export default function Markets() {
 		const avgSupplyApy = totalReserveSize > 0 ? weightedApySum / totalReserveSize : 0
 
 		return {
-			totalMarketSize: formatUsd(totalMarketSize, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			}),
-			totalAvailableLiquidity: formatUsd(totalAvailableLiquidity, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			}),
-			totalBorrowed: formatUsd(totalBorrowed, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			}),
+			totalMarketSize: formatUsd(totalMarketSize, USD_LOWERCASE_MILLIONS_OPTIONS),
+			totalAvailableLiquidity: formatUsd(totalAvailableLiquidity, USD_LOWERCASE_MILLIONS_OPTIONS),
+			totalBorrowed: formatUsd(totalBorrowed, USD_LOWERCASE_MILLIONS_OPTIONS),
 			numChains: chainSet.size,
 			numAssets: assetSet.size,
-			avgSupplyApy: `${formatPercent(avgSupplyApy, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
+			avgSupplyApy: `${formatPercent(avgSupplyApy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}`
 		}
 	}, [markets, reserves])
 

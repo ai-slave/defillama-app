@@ -6,8 +6,6 @@ import type { ExchangeExecutionFeedHealth, ExchangeExecutionModel, ExchangeExecu
 
 // Execution metrics are one-way bps figures; 1bp of $10k is exactly $1, so bps values
 // render as dollars at the reference size — the framing regular users reason in.
-export const executionUsd = (bps: number | null, digits = 2) =>
-	bps == null ? 'n/a' : formatUsd(bps, { minimumFractionDigits: digits, maximumFractionDigits: digits })
 
 // Spreads read most naturally as a percentage of price, not dollars.
 const pctOfBps = (bps: number | null) => {
@@ -24,9 +22,11 @@ export function SlippagePair({ predicted, actual }: { predicted: number | null; 
 	return (
 		<span className="flex flex-nowrap items-center justify-end gap-1 whitespace-nowrap">
 			{predicted == null ? null : (
-				<span className="whitespace-nowrap text-tertiary">{`p ${executionUsd(predicted)} →`}</span>
+				<span className="whitespace-nowrap text-tertiary">{`p ${formatUsd(predicted, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} →`}</span>
 			)}
-			<span className="whitespace-nowrap">{executionUsd(actual)}</span>
+			<span className="whitespace-nowrap">
+				{formatUsd(actual, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}
+			</span>
 		</span>
 	)
 }
@@ -121,7 +121,7 @@ function summarySentences(execution: ExchangeExecutionModel): Array<string> {
 	const sentences: Array<string> = []
 	if (execution.costToTradeBps != null) {
 		sentences.push(
-			`A $10k market order here costs about ${executionUsd(execution.costToTradeBps)} all-in: base-tier taker fee plus spread. VIP fee tiers can lower the fee part; the slippage figures below exclude fees entirely, since venues charge fees separately after the fill.`
+			`A $10k market order here costs about ${formatUsd(execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} all-in: base-tier taker fee plus spread. VIP fee tiers can lower the fee part; the slippage figures below exclude fees entirely, since venues charge fees separately after the fill.`
 		)
 	}
 	const actual = execution.realizedSlippage10kBps
@@ -130,15 +130,15 @@ function summarySentences(execution: ExchangeExecutionModel): Array<string> {
 		const gap = actual - predicted
 		sentences.push(
 			gap <= 0.05
-				? `The book delivers what it promises: it predicted ${executionUsd(predicted)} of slippage on a $10k fill, and fills actually cost ${executionUsd(actual)}.`
-				: `The book promised ${executionUsd(predicted)} of slippage on a $10k fill; fills actually cost ${executionUsd(actual)}, which is ${executionUsd(gap)} more, so displayed depth partly moves before fills land.`
+				? `The book delivers what it promises: it predicted ${formatUsd(predicted, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} of slippage on a $10k fill, and fills actually cost ${formatUsd(actual, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}.`
+				: `The book promised ${formatUsd(predicted, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} of slippage on a $10k fill; fills actually cost ${formatUsd(actual, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}, which is ${formatUsd(gap, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} more, so displayed depth partly moves before fills land.`
 		)
 	}
 	if (execution.markout1mBps != null) {
 		sentences.push(
 			execution.markout1mBps > 0
-				? `In the minute after a $10k fill the price keeps moving against the taker by about ${executionUsd(Math.abs(execution.markout1mBps))} on average.`
-				: `In the minute after a fill the price tends to come back about ${executionUsd(Math.abs(execution.markout1mBps))} (per $10k) in the taker's favour.`
+				? `In the minute after a $10k fill the price keeps moving against the taker by about ${formatUsd(Math.abs(execution.markout1mBps), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} on average.`
+				: `In the minute after a fill the price tends to come back about ${formatUsd(Math.abs(execution.markout1mBps), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} (per $10k) in the taker's favour.`
 		)
 	}
 	sentences.push(
@@ -217,7 +217,8 @@ function PairRow({ pair }: { pair: ExchangeExecutionPairModel }) {
 					NA
 				) : (
 					<>
-						{executionUsd(pair.costToTradeBps)} <span className="text-tertiary">/$10k</span>
+						{formatUsd(pair.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}{' '}
+						<span className="text-tertiary">/$10k</span>
 					</>
 				)}
 			</td>

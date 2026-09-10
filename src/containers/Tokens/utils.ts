@@ -224,10 +224,6 @@ export function buildTokensSortIndexes(rows: Array<TokensSourceRow>): TokensSort
 	return indexes
 }
 
-function currencyDisplay(value: number | null): string | null {
-	return value == null ? null : formatUsd(value, { compact: true })
-}
-
 function priceDisplay(value: number | null): string | null {
 	if (value == null) return null
 	const absoluteValue = Math.abs(value)
@@ -264,21 +260,21 @@ function getRowDisplay(row: TokensSourceRow): TokensTableRowDisplay {
 		priceChange7dTone: percentTone(row.priceChange7d),
 		priceChange30d: percentDisplay(row.priceChange30d, true),
 		priceChange30dTone: percentTone(row.priceChange30d),
-		marketCap: currencyDisplay(row.marketCap),
-		fdv: currencyDisplay(row.fdv),
-		outstandingFdv: currencyDisplay(row.outstandingFdv),
+		marketCap: formatUsd(row.marketCap, { compact: true }),
+		fdv: formatUsd(row.fdv, { compact: true }),
+		outstandingFdv: formatUsd(row.outstandingFdv, { compact: true }),
 		unlockedPercent: percentDisplay(row.unlockedPercent),
 		unlockedPercentWidth: percentWidth(row.unlockedPercent),
-		spotVolume24h: currencyDisplay(row.spotVolume24h),
-		perpsVolume24h: currencyDisplay(row.perpsVolume24h),
-		openInterest24h: currencyDisplay(row.openInterest24h),
-		fees24h: currencyDisplay(row.fees24h),
-		revenue24h: currencyDisplay(row.revenue24h),
-		holdersRevenue24h: currencyDisplay(row.holdersRevenue24h),
+		spotVolume24h: formatUsd(row.spotVolume24h, { compact: true }),
+		perpsVolume24h: formatUsd(row.perpsVolume24h, { compact: true }),
+		openInterest24h: formatUsd(row.openInterest24h, { compact: true }),
+		fees24h: formatUsd(row.fees24h, { compact: true }),
+		revenue24h: formatUsd(row.revenue24h, { compact: true }),
+		holdersRevenue24h: formatUsd(row.holdersRevenue24h, { compact: true }),
 		trsPercent: percentDisplay(row.trsPercent),
 		trsPercentWidth: percentWidth(row.trsPercent),
-		unlock30dUsd: currencyDisplay(row.unlock30dUsd),
-		upcomingUnlockUsd: currencyDisplay(row.upcomingUnlockUsd)
+		unlock30dUsd: formatUsd(row.unlock30dUsd, { compact: true }),
+		upcomingUnlockUsd: formatUsd(row.upcomingUnlockUsd, { compact: true })
 	}
 }
 
@@ -298,11 +294,11 @@ export function getTokensStatsDisplay(stats: TokensPageStats): TokensPageStatsDi
 		totalMarketCap: formatUsd(stats.totalMarketCap, { compact: true }),
 		marketCapWeightedChange24h: percentDisplay(stats.marketCapWeightedChange24h, true),
 		marketCapWeightedChange24hTone: percentTone(stats.marketCapWeightedChange24h),
-		spotVolume24h: currencyDisplay(stats.spotVolume24h),
-		perpsVolume24h: currencyDisplay(stats.perpsVolume24h),
-		openInterest24h: currencyDisplay(stats.openInterest24h),
-		unlock30dUsd: currencyDisplay(stats.unlock30dUsd),
-		upcomingUnlockUsd: currencyDisplay(stats.upcomingUnlockUsd)
+		spotVolume24h: formatUsd(stats.spotVolume24h, { compact: true }),
+		perpsVolume24h: formatUsd(stats.perpsVolume24h, { compact: true }),
+		openInterest24h: formatUsd(stats.openInterest24h, { compact: true }),
+		unlock30dUsd: formatUsd(stats.unlock30dUsd, { compact: true }),
+		upcomingUnlockUsd: formatUsd(stats.upcomingUnlockUsd, { compact: true })
 	}
 }
 

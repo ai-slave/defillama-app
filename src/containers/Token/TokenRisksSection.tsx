@@ -13,7 +13,7 @@ import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { DeferredPaginatedTable } from './deferred/DeferredPaginatedTable'
 import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from './tableUtils'
 import type {
@@ -27,11 +27,6 @@ import type {
 const TOKEN_RISKS_SECTION_ID = 'token-risks'
 const exposureColumnHelper = createColumnHelper<TokenRiskExposureRow>()
 const DEFAULT_EXPOSURES_SORTING: SortingState = [{ id: 'currentMaxBorrowUsd', desc: true }]
-
-function formatRiskUsd(value: number | null | undefined) {
-	if (value == null) return 'Unavailable'
-	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-}
 
 function TableEntityCell({
 	label,
@@ -60,14 +55,8 @@ function formatProtocolChains(chainBreakdowns: Array<TokenRiskChainExposureSumma
 
 function formatMinBadDebtValue(value: number | null | undefined, coverage: TokenRiskCoverageStatus) {
 	if (coverage === 'unavailable' || value == null) return '—'
-	if (coverage === 'partial')
-		return `${formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} (partial)`
-	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-}
-
-function formatProtocolSummaryBadDebt(value: number | null | undefined) {
-	if (value == null) return '--'
-	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+	if (coverage === 'partial') return `${formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)} (partial)`
+	return formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS)
 }
 
 function ProtocolExposureSummaryText({
@@ -81,9 +70,10 @@ function ProtocolExposureSummaryText({
 
 	return (
 		<>
-			{formatRiskUsd(totalAtRiskUsd)} at-risk exposure ={' '}
-			{formatProtocolSummaryBadDebt(summary.totalMinBadDebtAtPriceZeroUsd)} bad debt if hacked +{' '}
-			{formatRiskUsd(summary.totalCurrentMaxBorrowUsd)} additional borrowable against {tokenSymbol}
+			{formatUsd(totalAtRiskUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'} at-risk exposure ={' '}
+			{formatUsd(summary.totalMinBadDebtAtPriceZeroUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '--'} bad debt if hacked +{' '}
+			{formatUsd(summary.totalCurrentMaxBorrowUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'} additional
+			borrowable against {tokenSymbol}
 		</>
 	)
 }
@@ -111,14 +101,19 @@ function ChainBreakdownTooltipContent({ chainBreakdowns }: { chainBreakdowns: Ar
 							</span>
 						</span>
 						<span className="text-right text-primary">
-							{formatRiskUsd(chain.totalCurrentMaxBorrowUsd + (chain.totalMinBadDebtAtPriceZeroUsd ?? 0))}
+							{formatUsd(
+								chain.totalCurrentMaxBorrowUsd + (chain.totalMinBadDebtAtPriceZeroUsd ?? 0),
+								USD_LOWERCASE_MILLIONS_OPTIONS
+							) ?? 'Unavailable'}
 						</span>
 						<span className="text-secondary">Bad debt if hacked</span>
 						<span className="text-right text-secondary">
 							{formatMinBadDebtValue(chain.totalMinBadDebtAtPriceZeroUsd, chain.minBadDebtAtPriceZeroCoverage)}
 						</span>
 						<span className="text-secondary">Additional borrowable</span>
-						<span className="text-right text-secondary">{formatRiskUsd(chain.totalCurrentMaxBorrowUsd)}</span>
+						<span className="text-right text-secondary">
+							{formatUsd(chain.totalCurrentMaxBorrowUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'}
+						</span>
 					</div>
 				))}
 			</div>
@@ -187,7 +182,7 @@ function createExposureColumns(methodologies: TokenRiskResponse['exposures']['me
 		exposureColumnHelper.accessor((row) => row.currentMaxBorrowUsd ?? undefined, {
 			id: 'currentMaxBorrowUsd',
 			header: 'Max Borrowable',
-			cell: ({ getValue }) => formatRiskUsd(getValue()),
+			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable',
 			meta: {
 				align: 'end',
 				headerHelperText: methodologies.currentMaxBorrowUsd
@@ -267,15 +262,18 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 				<Card padding="md">
 					<p className="body-md text-secondary">Maximum possible exposure to {tokenSymbol}</p>
 					<p className="mt-1 font-jetbrains text-2xl font-semibold text-primary">
-						{formatRiskUsd(totalMaxExposureUsd)}
+						{formatUsd(totalMaxExposureUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'}
 					</p>
 					<p className="mt-1 body-md text-secondary">
-						{formatRiskUsd(exposures.summary.totalCurrentMaxBorrowUsd)} (max additional borrows against {tokenSymbol})
+						{formatUsd(exposures.summary.totalCurrentMaxBorrowUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unavailable'}{' '}
+						(max additional borrows against {tokenSymbol})
 						{exposures.summary.totalMinBadDebtAtPriceZeroUsd == null ? null : (
 							<>
 								{' '}
-								+ {formatRiskUsd(exposures.summary.totalMinBadDebtAtPriceZeroUsd)} (bad debt if {tokenSymbol} was hacked
-								now)
+								+{' '}
+								{formatUsd(exposures.summary.totalMinBadDebtAtPriceZeroUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ??
+									'Unavailable'}{' '}
+								(bad debt if {tokenSymbol} was hacked now)
 							</>
 						)}
 					</p>

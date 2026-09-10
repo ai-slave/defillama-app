@@ -3,7 +3,12 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import {
+	formatUsd,
+	formatPercent,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
 import { useMaplePoolsWithLoans } from './api'
 import { buildMapleLoansData, type LoanRow } from './chartData'
 import {
@@ -13,8 +18,7 @@ import {
 	KpiSkeleton,
 	MAPLE_CSV_ONLY_EXPORT,
 	MAPLE_USD_CATEGORY_CHART_OPTIONS,
-	Pagination,
-	formatPct
+	Pagination
 } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -62,8 +66,7 @@ const loanColumns: Array<ColumnDef<LoanRow>> = [
 		header: 'Principal',
 		id: 'principal',
 		accessorFn: (row) => row.principal ?? undefined,
-		cell: ({ getValue }) =>
-			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatUsd(getValue<number>(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 130
 	},
@@ -71,7 +74,7 @@ const loanColumns: Array<ColumnDef<LoanRow>> = [
 		header: 'Rate',
 		id: 'interestRate',
 		accessorFn: (row) => row.interestRate ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number>()),
+		cell: ({ getValue }) => formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 80
 	},
@@ -97,8 +100,7 @@ const loanColumns: Array<ColumnDef<LoanRow>> = [
 		header: 'Interest Paid',
 		id: 'interestPaid',
 		accessorFn: (row) => row.interestPaid ?? undefined,
-		cell: ({ getValue }) =>
-			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatUsd(getValue<number>(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 120
 	},
@@ -158,17 +160,9 @@ export default function Loans() {
 			? null
 			: {
 					totalLoans: data.rows.length,
-					totalPrincipal: formatUsd(data.totals.totalPrincipal, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					}),
-					avgRate: `${formatPercent(data.totals.weightedAverageRate, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`,
-					totalInterestPaid: formatUsd(data.totals.totalInterestPaid, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					}),
+					totalPrincipal: formatUsd(data.totals.totalPrincipal, USD_LOWERCASE_MILLIONS_OPTIONS),
+					avgRate: `${formatPercent(data.totals.weightedAverageRate, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}`,
+					totalInterestPaid: formatUsd(data.totals.totalInterestPaid, USD_LOWERCASE_MILLIONS_OPTIONS),
 					avgAge: `${Math.round(data.totals.averageAgeDays)}d`
 				}
 

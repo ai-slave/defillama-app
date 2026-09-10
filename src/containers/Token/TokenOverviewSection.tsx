@@ -30,7 +30,13 @@ import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatDate } from '~/utils/dateFormat'
 import { tokenIconUrl } from '~/utils/icons'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import {
+	formatUsd,
+	formatCompactNumber,
+	formatPercent,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 import {
 	DEFAULT_PRICE_CHART_TIMEFRAME,
 	getPriceChartTimeframe,
@@ -88,15 +94,10 @@ const DeferredProtocolChart = dynamic(() => import('~/containers/ProtocolOvervie
 	loading: () => <div className="min-h-[360px]" />
 })
 
-function formatTokenCurrency(value: number | null | undefined) {
-	if (value == null) return 'N/A'
-	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-}
-
 function formatSupply(value: number | null | undefined, symbol: string) {
 	if (value == null) return 'N/A'
 	if (value === Infinity) return `∞ ${symbol}`.trim()
-	return `${formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${symbol}`.trim()
+	return `${formatCompactNumber(value, NUMBER_LOWERCASE_MILLIONS_OPTIONS)} ${symbol}`.trim()
 }
 
 function formatTokenPercentChange(value: number | null | undefined) {
@@ -242,7 +243,7 @@ export function TokenPageHero({
 					<summary className="flex flex-wrap items-center gap-x-3 gap-y-1">
 						<span className="basis-full text-secondary">Token Price</span>
 						<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
-							{formatTokenCurrency(overview.marketData.currentPrice)}
+							{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 						</span>
 						<TokenPriceAlertButton
 							overview={overview}
@@ -275,7 +276,7 @@ export function TokenPageHero({
 									) : null
 								}
 								valueClassName="font-jetbrains"
-								value={formatTokenCurrency(overview.marketData.ath)}
+								value={formatUsd(overview.marketData.ath, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 							/>
 						) : null}
 						{overview.marketData.atl != null ? (
@@ -290,7 +291,7 @@ export function TokenPageHero({
 									) : null
 								}
 								valueClassName="font-jetbrains"
-								value={formatTokenCurrency(overview.marketData.atl)}
+								value={formatUsd(overview.marketData.atl, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 							/>
 						) : null}
 					</div>
@@ -299,7 +300,7 @@ export function TokenPageHero({
 				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
 					<span className="basis-full text-secondary">Token Price</span>
 					<span className="min-h-8 font-jetbrains text-2xl font-semibold" suppressHydrationWarning>
-						{formatTokenCurrency(overview.marketData.currentPrice)}
+						{formatUsd(overview.marketData.currentPrice, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 					</span>
 					<TokenPriceAlertButton
 						overview={overview}
@@ -342,7 +343,7 @@ function MarketsCategoryBreakdown({ totals, metric }: { totals: MarketTotalsBySe
 					<SubMetricRow
 						key={category}
 						label={MARKET_CATEGORY_LABELS[category]}
-						value={value == null ? 'N/A' : formatTokenCurrency(value)}
+						value={value == null ? 'N/A' : (formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A')}
 					/>
 				)
 			})}
@@ -366,11 +367,21 @@ function MarketsMetricSection({
 	const cexValue = sumVenueMetric(markets.totals.cex, metric)
 	const dexValue = sumVenueMetric(markets.totals.dex, metric)
 	return (
-		<MetricSection label={label} tooltip={tooltip} value={formatTokenCurrency(totalValue)}>
-			<SubMetricSection label="CEX" value={cexValue == null ? 'N/A' : formatTokenCurrency(cexValue)}>
+		<MetricSection
+			label={label}
+			tooltip={tooltip}
+			value={formatUsd(totalValue, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+		>
+			<SubMetricSection
+				label="CEX"
+				value={cexValue == null ? 'N/A' : (formatUsd(cexValue, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A')}
+			>
 				<MarketsCategoryBreakdown totals={markets.totals.cex} metric={metric} />
 			</SubMetricSection>
-			<SubMetricSection label="DEX" value={dexValue == null ? 'N/A' : formatTokenCurrency(dexValue)}>
+			<SubMetricSection
+				label="DEX"
+				value={dexValue == null ? 'N/A' : (formatUsd(dexValue, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A')}
+			>
 				<MarketsCategoryBreakdown totals={markets.totals.dex} metric={metric} />
 			</SubMetricSection>
 		</MetricSection>
@@ -397,14 +408,14 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 					<MetricRow
 						label="Market Cap"
 						tooltip={MARKET_CAP_TOOLTIP}
-						value={formatTokenCurrency(overview.marketData.mcap)}
+						value={formatUsd(overview.marketData.mcap, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 					/>
 				) : null}
 				{overview.marketData.fdv != null ? (
 					<MetricRow
 						label="Fully Diluted Valuation"
 						tooltip={FDV_TOOLTIP}
-						value={formatTokenCurrency(overview.marketData.fdv)}
+						value={formatUsd(overview.marketData.fdv, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 					/>
 				) : null}
 				{overview.marketData.circulatingSupply != null ? (
@@ -425,7 +436,7 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 					<MetricRow
 						label="Outstanding FDV"
 						tooltip={OUTSTANDING_FDV_TOOLTIP}
-						value={formatTokenCurrency(overview.outstandingFDV)}
+						value={formatUsd(overview.outstandingFDV, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 					/>
 				) : null}
 				{marketsHasVolume && markets ? (
@@ -442,13 +453,19 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 					<MetricSection
 						label="Volume 24h"
 						tooltip={VOLUME_24H_TOOLTIP}
-						value={formatTokenCurrency(overview.marketData.volume24h.total)}
+						value={formatUsd(overview.marketData.volume24h.total, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 					>
 						{overview.marketData.volume24h.cex != null ? (
-							<SubMetricRow label="CEX Volume" value={formatTokenCurrency(overview.marketData.volume24h.cex)} />
+							<SubMetricRow
+								label="CEX Volume"
+								value={formatUsd(overview.marketData.volume24h.cex, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+							/>
 						) : null}
 						{overview.marketData.volume24h.dex != null ? (
-							<SubMetricRow label="DEX Volume" value={formatTokenCurrency(overview.marketData.volume24h.dex)} />
+							<SubMetricRow
+								label="DEX Volume"
+								value={formatUsd(overview.marketData.volume24h.dex, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+							/>
 						) : null}
 					</MetricSection>
 				) : null}
@@ -465,19 +482,32 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 					<MetricSection
 						label="Treasury"
 						tooltip={TREASURY_TOOLTIP}
-						value={formatTokenCurrency(overview.treasury.total)}
+						value={formatUsd(overview.treasury.total, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
 					>
 						{overview.treasury.majors != null ? (
-							<SubMetricRow label="Majors" tooltip="BTC, ETH" value={formatTokenCurrency(overview.treasury.majors)} />
+							<SubMetricRow
+								label="Majors"
+								tooltip="BTC, ETH"
+								value={formatUsd(overview.treasury.majors, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+							/>
 						) : null}
 						{overview.treasury.stablecoins != null ? (
-							<SubMetricRow label="Stablecoins" value={formatTokenCurrency(overview.treasury.stablecoins)} />
+							<SubMetricRow
+								label="Stablecoins"
+								value={formatUsd(overview.treasury.stablecoins, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+							/>
 						) : null}
 						{overview.treasury.ownTokens != null ? (
-							<SubMetricRow label="Own Tokens" value={formatTokenCurrency(overview.treasury.ownTokens)} />
+							<SubMetricRow
+								label="Own Tokens"
+								value={formatUsd(overview.treasury.ownTokens, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+							/>
 						) : null}
 						{overview.treasury.others != null ? (
-							<SubMetricRow label="Others" value={formatTokenCurrency(overview.treasury.others)} />
+							<SubMetricRow
+								label="Others"
+								value={formatUsd(overview.treasury.others, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'N/A'}
+							/>
 						) : null}
 					</MetricSection>
 				) : null}
@@ -492,13 +522,7 @@ function TokenMetrics({ overview, geckoId }: { overview: TokenOverviewData; geck
 										: (formatDateLabel(raise.date) ?? 'Unknown date')
 								}
 								value={
-									raise.amountUsd == null
-										? 'Undisclosed'
-										: formatUsd(raise.amountUsd, {
-												compact: true,
-												minimumCompactValue: 1_000_000,
-												compactSuffix: 'lowercase'
-											})
+									raise.amountUsd == null ? 'Undisclosed' : formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
 								}
 							/>
 						))}

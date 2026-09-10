@@ -21,7 +21,7 @@ import { fetchRWAActiveTVLs } from '~/containers/RWA/api'
 import type { IFetchedRWAProject } from '~/containers/RWA/api.types'
 import { RWASuspiciousWarning } from '~/containers/RWA/SuspiciousWarning'
 import { downloadCSV } from '~/utils/download'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { TableBody } from '../../Table/TableBody'
@@ -34,8 +34,6 @@ import {
 } from './rwaAssetsTableData'
 
 const columnHelper = createColumnHelper<RWAAssetTableRow>()
-const formatNullableUsd = (value: number | null) =>
-	value == null ? '—' : formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 const columns = [
 	columnHelper.accessor('name', {
@@ -59,22 +57,21 @@ const columns = [
 	columnHelper.accessor((row) => row.activeMcap ?? undefined, {
 		id: 'activeMcap',
 		header: 'Active Mcap',
-		cell: (info) => formatNullableUsd(info.getValue()),
+		cell: (info) => formatUsd(info.getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—',
 		meta: { align: 'end' },
 		size: 150
 	}),
 	columnHelper.accessor((row) => row.onChainMcap ?? undefined, {
 		id: 'onChainMcap',
 		header: 'Onchain Mcap',
-		cell: (info) => formatNullableUsd(info.getValue()),
+		cell: (info) => formatUsd(info.getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—',
 		meta: { align: 'end' },
 		size: 150
 	}),
 	columnHelper.accessor((row) => row.defiActiveTvl ?? undefined, {
 		id: 'defiActiveTvl',
 		header: 'DeFi Active TVL',
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatUsd(info.getValue(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' },
 		size: 150
 	}),

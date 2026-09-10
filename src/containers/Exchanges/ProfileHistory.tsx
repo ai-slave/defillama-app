@@ -5,13 +5,8 @@ import { summarizeRaises } from '~/containers/Raises/summary'
 import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import type { ExchangeProfileModel } from './models'
-
-const money = (value: number | null) =>
-	value == null
-		? 'Unknown'
-		: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
 
 function HistoryHeader({ icon, title, count }: { icon: IIcon['name']; title: string; count?: number }) {
 	return (
@@ -69,7 +64,11 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 	const totalHacked = profile.hacks.reduce((sum, hack) => sum + (hack.amountUsd ?? 0), 0)
 	const hasKnownHackTotal = profile.hacks.some((hack) => hack.amountUsd != null)
 	const hackedTotalLabel =
-		profile.hacks.length === 0 ? 'No recorded hacks' : hasKnownHackTotal ? money(totalHacked) : 'Amount unknown'
+		profile.hacks.length === 0
+			? 'No recorded hacks'
+			: hasKnownHackTotal
+				? (formatUsd(totalHacked, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown')
+				: 'Amount unknown'
 	return (
 		<section className="flex flex-col gap-2" aria-label="Exchange hacks and raises">
 			<Card as="section" padding="none" className="overflow-hidden">
@@ -84,7 +83,11 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 					<div className="border-t border-subtle p-3 sm:border-t-0 sm:border-l">
 						<p className="label-sm text-tertiary">Total disclosed raises</p>
 						<p className="mt-1 font-jetbrains text-xl font-semibold">
-							{profile.raises.length > 0 ? <RaisesTotal {...summarizeRaises(profile.raises)} /> : money(null)}
+							{profile.raises.length > 0 ? (
+								<RaisesTotal {...summarizeRaises(profile.raises)} />
+							) : (
+								(formatUsd(null, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown')
+							)}
 						</p>
 					</div>
 				</div>
@@ -102,11 +105,13 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 										{hack.date ? (formatDate(hack.date, { input: 'seconds' }) ?? 'Unknown date') : 'Unknown date'}
 									</p>
 									{hack.returnedFundsUsd != null ? (
-										<p className="mt-1 body-sm text-secondary">Returned funds: {money(hack.returnedFundsUsd)}</p>
+										<p className="mt-1 body-sm text-secondary">
+											Returned funds: {formatUsd(hack.returnedFundsUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
+										</p>
 									) : null}
 								</>
 							}
-							amount={money(hack.amountUsd)}
+							amount={formatUsd(hack.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
 						/>
 					))}
 				</HistorySection>
@@ -122,7 +127,9 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 									<p className="label-md">{raise.round || 'Funding round'}</p>
 									<p className="mt-0.5 body-sm text-tertiary">{formatDate(raise.date, { input: 'seconds' })}</p>
 									{raise.valuationUsd != null ? (
-										<p className="mt-1 body-sm text-secondary">Valuation: {money(raise.valuationUsd)}</p>
+										<p className="mt-1 body-sm text-secondary">
+											Valuation: {formatUsd(raise.valuationUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
+										</p>
 									) : null}
 									{raise.investors.length > 0 ? (
 										<p className="mt-1 body-sm text-secondary">Investors: {raise.investors.join(', ')}</p>
@@ -137,11 +144,11 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 										rel="noopener noreferrer"
 										className="inline-flex items-center gap-1 text-link hover:underline"
 									>
-										{money(raise.amountUsd)}
+										{formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
 										<Icon name="external-link" height={12} width={12} />
 									</BasicLink>
 								) : (
-									money(raise.amountUsd)
+									(formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown')
 								)
 							}
 						/>

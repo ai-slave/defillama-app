@@ -18,16 +18,6 @@ function RibbonBadge({ place, color }: { place: number; color: string }) {
 	)
 }
 
-function abbrUsd(value: number | null | undefined): string {
-	if (value == null) return '—'
-	return formatUsd(value, { compact: true }) ?? '—'
-}
-
-function pct(value: number | null | undefined): string {
-	if (value == null) return '—'
-	return formatPercent(value, { input: 'percent' })
-}
-
 function Stat({ label, value, rank }: { label: string; value: string; rank: number | null }) {
 	return (
 		<div className="flex flex-col gap-0.5">
@@ -69,15 +59,29 @@ function PodiumCard({
 					</div>
 					<div className="flex flex-col gap-0.5 min-[713px]:max-[1119px]:flex-1">
 						<span className="label-sm text-secondary">Median Engagements FDV</span>
-						<span className="text-lg font-semibold">{abbrUsd(row.medianEngagementsFdv)}</span>
+						<span className="text-lg font-semibold">
+							{formatUsd(row.medianEngagementsFdv, { compact: true }) ?? '—'}
+						</span>
 					</div>
 				</div>
 			</div>
 			<div className="border-t border-subtle" />
 			<div className="grid grid-cols-3 gap-8 min-[713px]:max-[1119px]:gap-2 min-[713px]:max-[1119px]:pr-12">
-				<Stat label="Avg 2.00% Depth" value={abbrUsd(depth?.value)} rank={depth?.rank ?? null} />
-				<Stat label="Avg Spread" value={pct(spread?.value)} rank={spread?.rank ?? null} />
-				<Stat label="Avg Volume" value={abbrUsd(volume?.value)} rank={volume?.rank ?? null} />
+				<Stat
+					label="Avg 2.00% Depth"
+					value={formatUsd(depth?.value, { compact: true }) ?? '—'}
+					rank={depth?.rank ?? null}
+				/>
+				<Stat
+					label="Avg Spread"
+					value={formatPercent(spread?.value, { input: 'percent' }) ?? '—'}
+					rank={spread?.rank ?? null}
+				/>
+				<Stat
+					label="Avg Volume"
+					value={formatUsd(volume?.value, { compact: true }) ?? '—'}
+					rank={volume?.rank ?? null}
+				/>
 			</div>
 		</Card>
 	)

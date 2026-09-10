@@ -7,7 +7,13 @@ import type {
 } from '~/components/ECharts/MultiSeriesChart/types'
 import { getBucketTimestampMs } from '~/components/ECharts/shared/timeSeries'
 import { formatPercentChangeText } from '~/ui/PercentChange'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import {
+	formatUsd,
+	formatCompactNumber,
+	formatPercent,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 import { perpsDefinitions as d } from './definitions'
 import type {
 	IRWAPerpsContractData,
@@ -89,15 +95,6 @@ function formatFractionPercent(value: number): string {
 	return `${formatPercent(value, { input: 'fraction', minimumFractionDigits: Math.abs(value * 100) >= 1 ? 2 : 4, maximumFractionDigits: Math.abs(value * 100) >= 1 ? 2 : 4, useGrouping: false })}`
 }
 
-function formatCurrency(value: number): string {
-	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-}
-
-function formatMaybeNumber(value: number | null): string {
-	if (value == null) return '-'
-	return formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-}
-
 function formatTextValue(value: string | null | undefined): string | null {
 	return value ?? null
 }
@@ -126,7 +123,7 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 	marketReference: MetricSectionData
 	pointInTimeRows: Array<MetricRowData>
 } {
-	const maxLeverage = formatMaybeNumber(contractData.market.maxLeverage)
+	const maxLeverage = formatCompactNumber(contractData.market.maxLeverage, NUMBER_LOWERCASE_MILLIONS_OPTIONS) ?? '-'
 	const pair = formatTextValue(contractData.market.pair)
 	const marginAsset = formatTextValue(contractData.market.marginAsset)
 	const settlementAsset = formatTextValue(contractData.market.settlementAsset)
@@ -154,7 +151,7 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 		{
 			label: d.sizeDecimals.label,
 			tooltip: d.sizeDecimals.description,
-			value: formatMaybeNumber(contractData.market.szDecimals)
+			value: formatCompactNumber(contractData.market.szDecimals, NUMBER_LOWERCASE_MILLIONS_OPTIONS) ?? '-'
 		}
 	]
 
@@ -162,13 +159,17 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 		{
 			label: d.oraclePrice.label,
 			tooltip: d.oraclePrice.description,
-			value: formatCurrency(contractData.market.oraclePx)
+			value: formatUsd(contractData.market.oraclePx, USD_LOWERCASE_MILLIONS_OPTIONS)
 		},
-		{ label: d.midPrice.label, tooltip: d.midPrice.description, value: formatCurrency(contractData.market.midPx) },
+		{
+			label: d.midPrice.label,
+			tooltip: d.midPrice.description,
+			value: formatUsd(contractData.market.midPx, USD_LOWERCASE_MILLIONS_OPTIONS)
+		},
 		{
 			label: d.previousDayPrice.label,
 			tooltip: d.previousDayPrice.description,
-			value: formatCurrency(contractData.market.prevDayPx)
+			value: formatUsd(contractData.market.prevDayPx, USD_LOWERCASE_MILLIONS_OPTIONS)
 		},
 		...(pair ? [{ label: d.pair.label, tooltip: d.pair.description, value: pair }] : []),
 		...(marginAsset ? [{ label: d.marginAsset.label, tooltip: d.marginAsset.description, value: marginAsset }] : []),
@@ -187,49 +188,49 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 		openInterest: {
 			label: d.openInterest.label,
 			tooltip: d.openInterest.description,
-			value: formatCurrency(contractData.market.openInterest)
+			value: formatUsd(contractData.market.openInterest, USD_LOWERCASE_MILLIONS_OPTIONS)
 		},
 		volume: {
 			label: d.volume30d.label,
 			tooltip: d.volume30d.description,
-			value: formatCurrency(contractData.market.volume30d),
+			value: formatUsd(contractData.market.volume30d, USD_LOWERCASE_MILLIONS_OPTIONS),
 			children: [
 				{
 					label: d.volume7d.label,
 					tooltip: d.volume7d.description,
-					value: formatCurrency(contractData.market.volume7d)
+					value: formatUsd(contractData.market.volume7d, USD_LOWERCASE_MILLIONS_OPTIONS)
 				},
 				{
 					label: 'Volume 24h',
 					tooltip: d.volume24h.description,
-					value: formatCurrency(contractData.market.volume24h)
+					value: formatUsd(contractData.market.volume24h, USD_LOWERCASE_MILLIONS_OPTIONS)
 				},
 				{
 					label: d.cumulativeVolume.label,
 					tooltip: d.cumulativeVolume.description,
-					value: formatCurrency(contractData.market.volumeAllTime)
+					value: formatUsd(contractData.market.volumeAllTime, USD_LOWERCASE_MILLIONS_OPTIONS)
 				}
 			]
 		},
 		fees: {
 			label: d.estimatedProtocolFees30d.label,
 			tooltip: d.estimatedProtocolFees30d.description,
-			value: formatCurrency(contractData.market.estimatedProtocolFees30d),
+			value: formatUsd(contractData.market.estimatedProtocolFees30d, USD_LOWERCASE_MILLIONS_OPTIONS),
 			children: [
 				{
 					label: d.estimatedProtocolFees7d.label,
 					tooltip: d.estimatedProtocolFees7d.description,
-					value: formatCurrency(contractData.market.estimatedProtocolFees7d)
+					value: formatUsd(contractData.market.estimatedProtocolFees7d, USD_LOWERCASE_MILLIONS_OPTIONS)
 				},
 				{
 					label: d.estimatedProtocolFees24h.label,
 					tooltip: d.estimatedProtocolFees24h.description,
-					value: formatCurrency(contractData.market.estimatedProtocolFees24h)
+					value: formatUsd(contractData.market.estimatedProtocolFees24h, USD_LOWERCASE_MILLIONS_OPTIONS)
 				},
 				{
 					label: d.estimatedCumulativeProtocolFees.label,
 					tooltip: d.estimatedCumulativeProtocolFees.description,
-					value: formatCurrency(contractData.market.estimatedProtocolFeesAllTime)
+					value: formatUsd(contractData.market.estimatedProtocolFeesAllTime, USD_LOWERCASE_MILLIONS_OPTIONS)
 				}
 			]
 		},
@@ -242,7 +243,7 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 		marketReference: {
 			label: d.marketReference.label,
 			tooltip: d.marketReference.description,
-			value: formatCurrency(contractData.market.oraclePx),
+			value: formatUsd(contractData.market.oraclePx, USD_LOWERCASE_MILLIONS_OPTIONS),
 			children: marketReferenceChildren
 		},
 		pointInTimeRows: [
@@ -264,7 +265,7 @@ export function buildRWAPerpsContractMetricSections(contractData: IRWAPerpsContr
 			{
 				label: d.cumulativeFunding.label,
 				tooltip: d.cumulativeFunding.description,
-				value: formatCurrency(contractData.market.cumulativeFunding)
+				value: formatUsd(contractData.market.cumulativeFunding, USD_LOWERCASE_MILLIONS_OPTIONS)
 			}
 		]
 	}

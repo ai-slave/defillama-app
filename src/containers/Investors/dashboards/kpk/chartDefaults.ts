@@ -63,10 +63,6 @@ export const KPK_MINT_BORDER = 'border-sl-kpk-mint/45'
 export const KPK_BENCH_TEXT = 'text-sl-kpk-benchmark'
 export const KPK_BENCH_BG = 'bg-sl-kpk-benchmark'
 
-function chartUsd(value: number): string {
-	return formatUsd(value, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
-}
-
 const DUST_USD = 0.01
 
 /**
@@ -90,7 +86,7 @@ function compositionTooltipFormatter(params: unknown, overlaySeries?: string): s
 		const raw = getTooltipRawYValue(item, name)
 		const value = typeof raw === 'number' ? raw : Number(raw)
 		if (!Number.isFinite(value) || Math.abs(value) < DUST_USD) continue
-		const row = `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${chartUsd(value)}</li>`
+		const row = `<li style="list-style:none">${item.marker ?? ''}${name}&nbsp;&nbsp;${formatUsd(value, { compact: true, compactSuffix: 'lowercase' }) ?? '—'}</li>`
 		if (name === overlaySeries) {
 			overlay = row
 			continue
@@ -101,7 +97,7 @@ function compositionTooltipFormatter(params: unknown, overlaySeries?: string): s
 	}
 
 	if (counted > 1) {
-		out += `<li style="list-style:none;border-top:1px solid currentColor;opacity:0.85;margin-top:6px;padding-top:5px">Total&nbsp;&nbsp;${chartUsd(total)}</li>`
+		out += `<li style="list-style:none;border-top:1px solid currentColor;opacity:0.85;margin-top:6px;padding-top:5px">Total&nbsp;&nbsp;${formatUsd(total, { compact: true, compactSuffix: 'lowercase' }) ?? '—'}</li>`
 	}
 	return out + overlay
 }

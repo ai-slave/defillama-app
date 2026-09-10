@@ -2,8 +2,8 @@ import { Fragment } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatUsd } from '~/utils/numberFormat'
-import { formatScore, TIER_COLORS, TierBadge } from './directoryColumns'
+import { formatUsd, formatNumber } from '~/utils/numberFormat'
+import { TIER_COLORS, TierBadge } from './directoryColumns'
 import type { ExchangeExecutionModel, ExchangeProfileModel, ExchangeProfileQualityModel } from './models'
 
 // Score → hue: 0 red, ~50 amber, 100 green. Moderate saturation so the fills sit
@@ -24,7 +24,7 @@ const TIER_BANDS = [
 export function TierScale({ score, tier }: { score: number; tier: string | null }) {
 	return (
 		<Tooltip
-			content={`Fixed bands on the 0 to 100 score: D below 40, C 40+, B 55+, A 70+, S 85+ (S also requires measured execution). The marker is this venue's score, ${formatScore(score)}.`}
+			content={`Fixed bands on the 0 to 100 score: D below 40, C 40+, B 55+, A 70+, S 85+ (S also requires measured execution). The marker is this venue's score, ${formatNumber(score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}.`}
 			className="w-full"
 		>
 			<span className="relative flex h-5 w-full overflow-hidden rounded-sm">
@@ -83,16 +83,14 @@ function PillarRow({ pillar }: { pillar: ExchangeProfileQualityModel['components
 	)
 }
 
-const usd = (bps: number | null) =>
-	bps == null ? 'n/a' : formatUsd(bps, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
 /** The measured figure behind each execution sub-score (1bp of $10k = $1). */
 function execSubFigure(key: string, execution: ExchangeExecutionModel | null): string | null {
 	if (!execution) return null
-	if (key === 'cost' && execution.costToTradeBps != null) return `${usd(execution.costToTradeBps)} /$10k`
+	if (key === 'cost' && execution.costToTradeBps != null)
+		return `${formatUsd(execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} /$10k`
 	if (key === 'slip' && execution.realizedSlippage10kBps != null) {
 		const predicted = execution.predictedSlippage10kBps
-		return `${predicted == null ? '' : `p ${usd(predicted)} → `}${usd(execution.realizedSlippage10kBps)} /$10k`
+		return `${predicted == null ? '' : `p ${formatUsd(predicted, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} → `}${formatUsd(execution.realizedSlippage10kBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'} /$10k`
 	}
 	if (key === 'markout' && execution.markout1mBps != null) {
 		const value = execution.markout1mBps
@@ -157,7 +155,9 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 					>
 						<span className="flex items-end gap-3">
 							<TierBadge tier={quality.tier} />
-							<span className="font-jetbrains text-4xl leading-none font-semibold">{formatScore(quality.score)}</span>
+							<span className="font-jetbrains text-4xl leading-none font-semibold">
+								{formatNumber(quality.score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+							</span>
 							<span className="pb-0.5 body-sm text-secondary">/ 100</span>
 						</span>
 					</Tooltip>

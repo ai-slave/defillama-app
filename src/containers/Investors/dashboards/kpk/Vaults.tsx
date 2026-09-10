@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatDate } from '~/utils/dateFormat'
-import { formatNumber } from '~/utils/numberFormat'
+import { formatNumber, formatUsd, formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import type { KpkVault } from './api'
 import { useKpkVaults } from './api'
 import { KPK_MINT_TEXT } from './chartDefaults'
@@ -21,21 +21,16 @@ import {
 	SectionHeader,
 	Spark,
 	ToggleGroup,
-	pct,
 	signClass,
 	signedBps,
-	usd,
 	usdFromMillions,
-	type FooterRow
+	type FooterRow,
+	KPK_PERCENT_OPTIONS
 } from './ui'
 
 const ALL_VENUES = 'all'
 
 const DOUBLE_COUNT_NOTE = 'Counted inside another vault on this table. Excluded from the adjusted totals.'
-
-function count(value: number | undefined) {
-	return value == null ? '—' : formatNumber(value, { maximumFractionDigits: 0 })
-}
 
 /**
  * Three distinct states, rendered as three distinct things: a count (`0` is a real
@@ -49,7 +44,7 @@ function RebalanceCell({ value }: { value: KpkVault['rebalances30d'] }) {
 			</span>
 		)
 	}
-	return <>{count(value)}</>
+	return <>{formatNumber(value, { maximumFractionDigits: 0 }) ?? '—'}</>
 }
 
 export default function Vaults() {
@@ -77,7 +72,13 @@ export default function Vaults() {
 	const footer = useMemo<Array<FooterRow> | undefined>(() => {
 		if (!totals) return undefined
 		const footerRows: Array<FooterRow> = [
-			{ cells: { name: 'Total', tva: usd(totals.tvaUsd), interest: usd(totals.interestUsd) } }
+			{
+				cells: {
+					name: 'Total',
+					tva: formatUsd(totals.tvaUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—',
+					interest: formatUsd(totals.interestUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
+				}
+			}
 		]
 		if (totals.duplicateVenues.length > 0) {
 			footerRows.push({
@@ -85,8 +86,8 @@ export default function Vaults() {
 				title: doubleCountNote,
 				cells: {
 					name: `Adjusted, excl. ${andList(totals.duplicateVenues)}`,
-					tva: usd(totals.tvaAdjustedUsd),
-					interest: usd(totals.interestAdjustedUsd)
+					tva: formatUsd(totals.tvaAdjustedUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—',
+					interest: formatUsd(totals.interestAdjustedUsd, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
 				}
 			})
 		}
@@ -118,11 +119,11 @@ export default function Vaults() {
 				/>
 				<LedgerTile
 					label="Instant liquidity"
-					value={data ? pct(data.liquidityPct, 1) : undefined}
+					value={data ? (formatPercent(data.liquidityPct, KPK_PERCENT_OPTIONS) ?? '—') : undefined}
 					suffix={data ? 'of TVA' : undefined}
 					sub={
 						data
-							? `Aggregate instantly withdrawable share of curated TVA against a ${pct(data.liquidityTarget, 1)} target`
+							? `Aggregate instantly withdrawable share of curated TVA against a ${formatPercent(data.liquidityTarget, KPK_PERCENT_OPTIONS) ?? '—'} target`
 							: undefined
 					}
 				/>
@@ -166,12 +167,19 @@ export default function Vaults() {
 								right: true,
 								render: (row) => (
 									<span className="flex items-center justify-end gap-2">
-										<span className={KPK_MINT_TEXT}>{pct(row.apy)}</span>
+										<span className={KPK_MINT_TEXT}>
+											{formatPercent(row.apy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'}
+										</span>
 										<Spark values={row.apyHistory} label={`${row.name} APY history`} />
 									</span>
 								)
 							},
-							{ key: 'apy30', label: 'APY 30d', right: true, render: (row) => pct(row.apy30) },
+							{
+								key: 'apy30',
+								label: 'APY 30d',
+								right: true,
+								render: (row) => formatPercent(row.apy30, PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—'
+							},
 							{
 								key: 'spreadBps',
 								label: 'vs benchmark',
@@ -197,7 +205,13 @@ export default function Vaults() {
 								render: (row) => (
 									<span className="flex items-center justify-end gap-2">
 										<span className={row.belowTarget ? 'text-warning' : undefined}>
-											{pct(row.liq, 1)} / {pct(row.liqTarget, 0)}
+											{formatPercent(row.liq, KPK_PERCENT_OPTIONS) ?? '—'} /{' '}
+											{formatPercent(row.liqTarget, {
+												input: 'percent',
+												smallValueDisplay: 'rounded',
+												maximumFractionDigits: 0,
+												useGrouping: false
+											}) ?? '—'}
 										</span>
 										<MeterBar value={row.liq} target={row.liqTarget} tone={row.belowTarget ? 'warning' : 'accent'} />
 									</span>
@@ -216,7 +230,7 @@ export default function Vaults() {
 								title:
 									'All-time count of agent-executed derisking rebalances. Only venues with an agent-attributed event source report a figure.',
 								right: true,
-								render: (row) => count(row.deriskingAutomations)
+								render: (row) => formatNumber(row.deriskingAutomations, { maximumFractionDigits: 0 }) ?? '—'
 							},
 							{ key: 'losses', label: 'Incurred losses', render: () => 'None' },
 							{

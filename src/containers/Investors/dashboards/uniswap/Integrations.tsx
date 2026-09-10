@@ -3,6 +3,13 @@ import type { Chart, Kpi as KpiT } from './transform'
 import { chartToTrendSeries, groupTopN, SeriesTrendChart } from './TrendChart'
 import { BarListCard, ChartCard, MiniTable, PageLoader, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
 
+const PERCENT_OPTIONS = {
+	input: 'percent',
+	minimumFractionDigits: 1,
+	maximumFractionDigits: 1,
+	useGrouping: false
+} as const
+
 // The ir-server switched the window from 30d to 3 months; the old
 // field names are kept as fallbacks so an older payload still renders.
 interface MarketshareRow {
@@ -58,9 +65,6 @@ interface IntegrationsData {
 	hookCategories: Chart
 }
 
-const pct = (value: number) =>
-	formatPercent(value, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })
-
 export default function Integrations() {
 	const { data } = useUniswapData<IntegrationsData>('integrations')
 	if (!data) return <PageLoader />
@@ -105,7 +109,7 @@ export default function Integrations() {
 							row.chain,
 							row.uniswapVolumeFormatted ?? row.uniswapVolume30dFormatted ?? '-',
 							row.chainVolumeFormatted ?? row.chainVolume30dFormatted ?? '-',
-							pct(row.sharePct)
+							formatPercent(row.sharePct, PERCENT_OPTIONS)
 						])}
 					/>
 				</ChartCard>
@@ -140,7 +144,7 @@ export default function Integrations() {
 								row.entity,
 								row.volumeFormatted,
 								formatCompactNumber(row.trades) ?? String(row.trades),
-								pct(row.sharePct)
+								formatPercent(row.sharePct, PERCENT_OPTIONS)
 							])}
 							maxHeight="480px"
 						/>
@@ -212,7 +216,7 @@ export default function Integrations() {
 								row.project,
 								row.hooks,
 								row.volumeFormatted,
-								pct(row.sharePct)
+								formatPercent(row.sharePct, PERCENT_OPTIONS)
 							])}
 							maxHeight="420px"
 						/>

@@ -1,7 +1,7 @@
 import { preparePieChartData } from '~/components/ECharts/PieChart/data'
 import { CHART_COLORS } from '~/constants/colors'
 import { firstDayOfMonth } from '~/utils'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import type { IHacksPageData, IHackRow } from './types'
 
 export interface HacksFilterState {
@@ -23,13 +23,6 @@ export type HacksDisplaySummary = Pick<
 
 export type HacksPageSummary = HacksDisplaySummary &
 	Pick<IHacksPageData, 'chainOptions' | 'techniqueOptions' | 'classificationOptions'>
-
-const formatTotal = (value: number): string =>
-	formatUsd(value, {
-		compact: true,
-		minimumCompactValue: 1_000_000,
-		compactSuffix: 'lowercase'
-	})
 
 const addToTotal = (totals: Map<string, number>, key: string, amount: number): void => {
 	if (!key) return
@@ -91,9 +84,9 @@ function buildHacksSummary(
 				}
 			]
 		},
-		totalHacked: formatTotal(totalHacked),
-		totalHackedDefi: formatTotal(totalHackedDefi),
-		totalRugs: formatTotal(totalBridgeHacks),
+		totalHacked: formatUsd(totalHacked, USD_LOWERCASE_MILLIONS_OPTIONS),
+		totalHackedDefi: formatUsd(totalHackedDefi, USD_LOWERCASE_MILLIONS_OPTIONS),
+		totalRugs: formatUsd(totalBridgeHacks, USD_LOWERCASE_MILLIONS_OPTIONS),
 		pieChartData: preparePieChartData({
 			data: Array.from(techniqueTotals, ([name, value]) => ({ name, value })),
 			limit: 15

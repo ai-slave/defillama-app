@@ -23,16 +23,6 @@ function leader(
 	return best
 }
 
-function pctValue(value: number | null | undefined): string {
-	if (value == null) return '—'
-	return formatPercent(value, { input: 'percent' })
-}
-
-function usdValue(value: number | null | undefined): string {
-	if (value == null) return '—'
-	return formatUsd(value, { compact: true }) ?? '—'
-}
-
 function Card({ label, winner, value }: { label: string; winner: AggregatedMetrics | null; value: string }) {
 	return (
 		<div className="flex min-h-[4.875rem] flex-col justify-center gap-2 bg-surface p-4">
@@ -72,22 +62,22 @@ export function Superlatives({
 				<Card
 					label={`Top Avg. (+/-) 2.00% Depth (${period})`}
 					winner={topDepth}
-					value={usdValue(topDepth?.bidAskDepth?.value)}
+					value={formatUsd(topDepth?.bidAskDepth?.value, { compact: true }) ?? '—'}
 				/>
 				<Card
 					label={`Highest Volume (Maker & Taker) (${period})`}
 					winner={topVolume}
-					value={usdValue(topVolume?.dailyFillVolume?.value)}
+					value={formatUsd(topVolume?.dailyFillVolume?.value, { compact: true }) ?? '—'}
 				/>
 				<Card
 					label={`Top Bid-Ask Spread (${period})`}
 					winner={topSpread}
-					value={pctValue(topSpread?.topOfBookSpread?.value)}
+					value={formatPercent(topSpread?.topOfBookSpread?.value, { input: 'percent' }) ?? '—'}
 				/>
 				<Card
 					label={`Top KPI Adherence — Combined Uptime (${period})`}
 					winner={topUptime}
-					value={pctValue(topUptime?.combinedUptime?.value)}
+					value={formatPercent(topUptime?.combinedUptime?.value, { input: 'percent' }) ?? '—'}
 				/>
 			</div>
 		</UICard>

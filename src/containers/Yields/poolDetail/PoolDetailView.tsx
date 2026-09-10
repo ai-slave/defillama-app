@@ -3,9 +3,9 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
-import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { hasPart } from '../domain/apyPresentation'
-import { scoreValue, YIELD_PERCENT_OPTIONS, YIELD_USD_OPTIONS } from './format'
+import { scoreValue, YIELD_PERCENT_OPTIONS } from './format'
 import { HoldersPanel } from './HoldersPanel'
 import { PoolApyChart } from './PoolApyChart'
 import type { PoolChartModel } from './poolCharts'
@@ -135,7 +135,7 @@ function SideBlock({ side, kind, children }: { side: PoolSide; kind: ApyKind; ch
 									minimumCompactValue: 1_000_000,
 									compactSuffix: 'lowercase'
 								}) ?? '—')
-							: (formatUsd(m.value, YIELD_USD_OPTIONS) ?? '—')
+							: (formatUsd(m.value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—')
 					}
 					valueClassName={VALUE_CLS}
 				/>

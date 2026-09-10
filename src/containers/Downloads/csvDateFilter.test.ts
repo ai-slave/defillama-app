@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { calendarDateKey, filterCsvByDateRange, resolveDateRange } from './csvDateFilter'
+import { formatIsoDate } from '~/utils/dateFormat'
+import { filterCsvByDateRange, resolveDateRange } from './csvDateFilter'
 
 afterEach(() => {
 	vi.useRealTimers()
@@ -7,12 +8,12 @@ afterEach(() => {
 
 describe('CSV date filters', () => {
 	test('normalizes only valid calendar dates and offset-bearing instants', () => {
-		expect(calendarDateKey('2026-07-24')).toBe('2026-07-24')
-		expect(calendarDateKey('2026-07-24T16:00:00Z')).toBe('2026-07-24')
-		expect(calendarDateKey('2026-07-24T00:30:00+14:00')).toBe('2026-07-23')
-		expect(calendarDateKey('2026-07-24T23:30:00-02:00')).toBe('2026-07-25')
-		expect(calendarDateKey('2026-02-30T16:00:00Z')).toBeNull()
-		expect(calendarDateKey('2026-07-24garbage')).toBeNull()
+		expect(formatIsoDate('2026-07-24')).toBe('2026-07-24')
+		expect(formatIsoDate('2026-07-24T16:00:00Z')).toBe('2026-07-24')
+		expect(formatIsoDate('2026-07-24T00:30:00+14:00')).toBe('2026-07-23')
+		expect(formatIsoDate('2026-07-24T23:30:00-02:00')).toBe('2026-07-25')
+		expect(formatIsoDate('2026-02-30T16:00:00Z')).toBeNull()
+		expect(formatIsoDate('2026-07-24garbage')).toBeNull()
 	})
 
 	test('resolves Last N days to exactly N inclusive calendar dates', () => {

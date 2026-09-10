@@ -11,10 +11,6 @@ interface IProps {
 	rowCount: number
 }
 
-function roundPct(value: number | null | undefined): string {
-	return value == null ? 'N/A' : formatPercent(value, { input: 'percent', maximumFractionDigits: 0 })
-}
-
 export function MetricCell({ metric, market, mode, kind }: IProps) {
 	if (!metric) return <span className="text-tertiary">N/A</span>
 	const hasTwin = market != null
@@ -30,11 +26,16 @@ export function MetricCell({ metric, market, mode, kind }: IProps) {
 		)
 	}
 
-	const top = mode === 'percentile' ? roundPct(metric.percentile) : metric.rank == null ? 'N/A' : `${metric.rank}`
+	const top =
+		mode === 'percentile'
+			? (formatPercent(metric.percentile, { input: 'percent', maximumFractionDigits: 0 }) ?? 'N/A')
+			: metric.rank == null
+				? 'N/A'
+				: `${metric.rank}`
 	const topLabel = hasTwin ? (mode === 'percentile' ? 'Value: ' : 'Value Rank: ') : ''
 	const sub = hasTwin
 		? mode === 'percentile'
-			? `% of Market: ${roundPct(market!.percentile)}`
+			? `% of Market: ${formatPercent(market!.percentile, { input: 'percent', maximumFractionDigits: 0 }) ?? 'N/A'}`
 			: `% of Market: ${market!.rank ?? 'N/A'}`
 		: null
 

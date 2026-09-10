@@ -78,7 +78,7 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 	useEffect(() => {
 		const instance = chartRef.current
 		if (!instance || instance.isDisposed()) return
-		const usd = (value: number) => formatUsd(value, { compact: true })
+
 		const option: EChartsOption = {
 			grid: { left: 12, right: 12, top: 36, bottom: 8, containLabel: true },
 			legend: { top: 0, textStyle: { color: theme.text } },
@@ -91,7 +91,7 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 			},
 			yAxis: {
 				type: 'value',
-				axisLabel: { color: theme.axisLabel, formatter: (value: number) => usd(value) },
+				axisLabel: { color: theme.axisLabel, formatter: (value: number) => formatUsd(value, { compact: true }) },
 				splitLine: { lineStyle: { color: theme.gridline } }
 			},
 			tooltip: {
@@ -113,10 +113,10 @@ function VoteTurnoutChart({ chart }: { chart: VoteTurnoutData }) {
 					const total = items.reduce((sum, item) => sum + (item.value || 0), 0)
 					let html = `<b>#${row.id} ${escapeHtml(proposalTitle(row.title))}</b><br/>`
 					html += `<span style="opacity:.7">${escapeHtml(row.date)} &middot; ${row.voters} voters</span><br/>`
-					html += `<b>Turnout: ${usd(total)}</b><br/>`
+					html += `<b>Turnout: ${formatUsd(total, { compact: true })}</b><br/>`
 					for (const item of items) {
 						if (!item.value) continue
-						html += `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${item.color};margin-right:6px"></span>${item.seriesName}: ${usd(item.value)}<br/>`
+						html += `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${item.color};margin-right:6px"></span>${item.seriesName}: ${formatUsd(item.value, { compact: true })}<br/>`
 					}
 					return html
 				}
@@ -215,15 +215,19 @@ export default function Security() {
 	// redeploy.
 	const terse = (k: KpiT | undefined, format: (value: number) => string): KpiT | undefined =>
 		k ? { ...k, formatted: format(k.value) } : undefined
-	const usd = (value: number) => formatUsd(value, { compact: true, maximumFractionDigits: 2 })
+
 	const kpis: Record<string, KpiT | undefined> = {
 		...data.kpis,
 		uptime: terse(data.kpis.uptime, String),
 		totalAudits: terse(data.kpis.totalAudits, String),
 		v4Audits: terse(data.kpis.v4Audits, String),
 		auditFirms: terse(data.kpis.auditFirms, String),
-		bugBounty: terse(data.kpis.bugBounty, usd),
-		securityCompetition: terse(data.kpis.securityCompetition, usd),
+		bugBounty: terse(data.kpis.bugBounty, (value: number) =>
+			formatUsd(value, { compact: true, maximumFractionDigits: 2 })
+		),
+		securityCompetition: terse(data.kpis.securityCompetition, (value: number) =>
+			formatUsd(value, { compact: true, maximumFractionDigits: 2 })
+		),
 		exploits: terse(data.kpis.exploits, (value) => (value === 0 ? '0 · $0 lost' : String(value)))
 	}
 

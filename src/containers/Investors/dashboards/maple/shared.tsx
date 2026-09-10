@@ -1,7 +1,6 @@
 import type { Table } from '@tanstack/react-table'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
-import { formatPercent } from '~/utils/numberFormat'
 
 export const MAPLE_USD_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('$')
 export const MAPLE_PERCENT_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('%')
@@ -78,8 +77,3 @@ export function Pagination<T>({ table }: { table: Table<T> }) {
 		</div>
 	)
 }
-
-export const formatPct = (v: number | null) =>
-	v != null
-		? `${formatPercent(v, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`
-		: '—'

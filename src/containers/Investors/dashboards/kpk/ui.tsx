@@ -7,30 +7,21 @@ import { MILLION } from './transform'
 
 /* ──────────────────────────── formatting ──────────────────────────── */
 
-/** Compact USD, KPK's own house style: `$8.03bn`, `$47.27m`. */
-export function usd(value: number | null | undefined): string {
-	return formatUsd(value, { compact: true, compactSuffix: 'lowercase' }) ?? '—'
-}
+export const KPK_PERCENT_OPTIONS = {
+	input: 'percent',
+	minimumFractionDigits: 1,
+	maximumFractionDigits: 1,
+	useGrouping: false
+} as const
 
-/** The same, for the upstream fields carried in $m. */
+/** Upstream USD amounts are expressed in millions. */
 export function usdFromMillions(value: number | null | undefined): string {
-	return value == null ? '—' : usd(value * MILLION)
+	return value == null ? '—' : (formatUsd(value * MILLION, { compact: true, compactSuffix: 'lowercase' }) ?? '—')
 }
 
 export function usdSignedFromMillions(value: number | null | undefined): string {
 	if (value == null || !Number.isFinite(value)) return '—'
-	return `${value < 0 ? '−' : ''}${usd(Math.abs(value) * MILLION)}`
-}
-
-export function pct(value: number | null | undefined, decimals = 2): string {
-	return (
-		formatPercent(value, {
-			input: 'percent',
-			minimumFractionDigits: decimals,
-			maximumFractionDigits: decimals,
-			useGrouping: false
-		}) ?? '—'
-	)
+	return `${value < 0 ? '−' : ''}${formatUsd(Math.abs(value) * MILLION, { compact: true, compactSuffix: 'lowercase' }) ?? '—'}`
 }
 
 /** Signed percentage points, for an APY spread over its benchmark. */
@@ -116,7 +107,14 @@ export function earnedTitle(window: KpkExcessWindow | null | undefined): string 
 		`Earned ${usdFromMillions(window.earned)} against ${usdFromMillions(
 			window.benchEarned
 		)} at benchmark, on a mean balance of ${usdFromMillions(window.avgBalance)}`,
-		`Rates found for ${pct(window.coveragePct, 1)} of balance-days`
+		`Rates found for ${
+			formatPercent(window.coveragePct, {
+				input: 'percent',
+				minimumFractionDigits: 1,
+				maximumFractionDigits: 1,
+				useGrouping: false
+			}) ?? '—'
+		} of balance-days`
 	]
 	if (window.stacked.length > 0) {
 		parts.push(

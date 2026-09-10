@@ -6,10 +6,30 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import {
+	formatUsd,
+	formatCompactNumber,
+	formatPercent,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 import { exchangeDefinitions } from './definitions'
 import { sumNullable } from './modelHelpers'
 import type { ExchangePairModel, ExchangeSegment } from './models'
+
+const PERCENT_OPTIONS = {
+	input: 'fraction',
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2,
+	useGrouping: false
+} as const
+
+const PERCENT_THREE_DECIMALS_OPTIONS = {
+	input: 'fraction',
+	minimumFractionDigits: 3,
+	maximumFractionDigits: 3,
+	useGrouping: false
+} as const
 
 /** Venue fields only exist on surfaces that mix venues in one table, such as token markets. */
 export type PairTableRow = ExchangePairModel & {
@@ -20,22 +40,8 @@ export type PairTableRow = ExchangePairModel & {
 
 const columnHelper = createColumnHelper<PairTableRow>()
 
-function money(value: number | null | undefined) {
-	return value == null
-		? '–'
-		: formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-}
-
 export function formatPairPrice(price: number | null | undefined, quote: string) {
-	return price == null
-		? '–'
-		: `${formatCompactNumber(price, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })} ${quote.toUpperCase()}`
-}
-
-function percentage(value: number | null | undefined, digits = 2) {
-	return value == null
-		? '–'
-		: `${formatPercent(value, { input: 'fraction', minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false })}`
+	return price == null ? '–' : `${formatCompactNumber(price, NUMBER_LOWERCASE_MILLIONS_OPTIONS)} ${quote.toUpperCase()}`
 }
 
 function Change({ value }: { value: number | undefined }) {
@@ -44,7 +50,7 @@ function Change({ value }: { value: number | undefined }) {
 	) : (
 		<span className={value >= 0 ? 'text-data-up' : 'text-data-down'}>
 			{value >= 0 ? '+' : ''}
-			{percentage(value)}
+			{formatPercent(value, PERCENT_OPTIONS) ?? '–'}
 		</span>
 	)
 }
@@ -163,13 +169,19 @@ export function buildPairColumns(
 				// Observed depth only, so the share never exceeds the whole captured book.
 				// 100% means the band reached at least as far as our snapshot did.
 				const share =
-					nvol.activeLiquidityShare == null ? null : `${percentage(nvol.activeLiquidityShare)} of the visible book`
+					nvol.activeLiquidityShare == null
+						? null
+						: `${formatPercent(nvol.activeLiquidityShare, PERCENT_OPTIONS) ?? '–'} of the visible book`
 				return (
 					<Tooltip
-						content={[`Band ±${percentage(nvol.band)} of mid`, share].filter(Boolean).join(' · ')}
+						content={[`Band ±${formatPercent(nvol.band, PERCENT_OPTIONS) ?? '–'} of mid`, share]
+							.filter(Boolean)
+							.join(' · ')}
 						className="ms-auto w-fit"
 					>
-						<span className="underline decoration-dotted">{money(getValue())}</span>
+						<span className="underline decoration-dotted">
+							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+						</span>
 					</Tooltip>
 				)
 			},
@@ -185,19 +197,24 @@ export function buildPairColumns(
 			cell: ({ row, getValue }) =>
 				capabilities.depth ? (
 					<Tooltip
-						content={`Bid ${money(row.original.depthBid2Usd)} · Ask ${money(row.original.depthAsk2Usd)}${
+						content={`Bid ${formatUsd(row.original.depthBid2Usd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} · Ask ${formatUsd(row.original.depthAsk2Usd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}${
 							row.original.depthBidMaxDistance != null || row.original.depthAskMaxDistance != null
-								? ` · fetched to ${percentage(
-										Math.min(
-											row.original.depthBidMaxDistance ?? Number.POSITIVE_INFINITY,
-											row.original.depthAskMaxDistance ?? Number.POSITIVE_INFINITY
-										)
-									)}`
+								? ` · fetched to ${
+										formatPercent(
+											Math.min(
+												row.original.depthBidMaxDistance ?? Number.POSITIVE_INFINITY,
+												row.original.depthAskMaxDistance ?? Number.POSITIVE_INFINITY
+											),
+											PERCENT_OPTIONS
+										) ?? '–'
+									}`
 								: ''
 						}`}
 						className="ms-auto w-fit"
 					>
-						<span className="underline decoration-dotted">{money(getValue())}</span>
+						<span className="underline decoration-dotted">
+							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+						</span>
 					</Tooltip>
 				) : (
 					<UnsupportedMetric />
@@ -207,7 +224,7 @@ export function buildPairColumns(
 		columnHelper.accessor((row) => row.volume24h ?? undefined, {
 			id: 'volume24h',
 			header: definitions.volume24h.label,
-			cell: ({ getValue }) => money(getValue()),
+			cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 			meta: { headerClassName: 'w-[120px]', align: 'end', headerHelperText: definitions.volume24h.description }
 		}),
 		columnHelper.accessor((row) => row.volumeChange24h ?? undefined, {
@@ -228,10 +245,12 @@ export function buildPairColumns(
 				const nvol = row.original.normalizedVolume
 				return nvol ? (
 					<Tooltip
-						content={`${percentage(nvol.discountFraction)} below ${money(nvol.reported)} reported · ${nvol.status}`}
+						content={`${formatPercent(nvol.discountFraction, PERCENT_OPTIONS) ?? '–'} below ${formatUsd(nvol.reported, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'} reported · ${nvol.status}`}
 						className="ms-auto w-fit"
 					>
-						<span className="underline decoration-dotted">{money(getValue())}</span>
+						<span className="underline decoration-dotted">
+							{formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}
+						</span>
 					</Tooltip>
 				) : (
 					'–'
@@ -246,7 +265,7 @@ export function buildPairColumns(
 		columnHelper.accessor((row) => row.spreadFraction ?? undefined, {
 			id: 'spreadFraction',
 			header: definitions.spreadFraction.label,
-			cell: ({ getValue }) => percentage(getValue(), 3),
+			cell: ({ getValue }) => formatPercent(getValue(), PERCENT_THREE_DECIMALS_OPTIONS) ?? '–',
 			meta: {
 				headerClassName: 'w-[90px]',
 				align: 'end',
@@ -272,13 +291,18 @@ export function buildPairColumns(
 				columnHelper.accessor((row) => row.basis ?? undefined, {
 					id: 'basis',
 					header: definitions.basis.label,
-					cell: ({ getValue }) => percentage(getValue(), 3),
+					cell: ({ getValue }) => formatPercent(getValue(), PERCENT_THREE_DECIMALS_OPTIONS) ?? '–',
 					meta: { headerClassName: 'w-[90px]', align: 'end', headerHelperText: definitions.basis.description }
 				}),
 				columnHelper.accessor((row) => row.openInterestUsd ?? undefined, {
 					id: 'openInterestUsd',
 					header: definitions.openInterestUsd.label,
-					cell: ({ getValue }) => (capabilities.openInterest ? money(getValue()) : <UnsupportedMetric />),
+					cell: ({ getValue }) =>
+						capabilities.openInterest ? (
+							(formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–')
+						) : (
+							<UnsupportedMetric />
+						),
 					meta: {
 						headerClassName: 'w-[125px]',
 						align: 'end',
@@ -306,7 +330,14 @@ export function buildPairColumns(
 								content={`Raw venue period: ${row.original.fundingPeriodHours ?? 'unknown'}h; normalized to 8h`}
 								className="ms-auto w-fit"
 							>
-								<span className="underline decoration-dotted">{percentage(getValue(), 4)}</span>
+								<span className="underline decoration-dotted">
+									{formatPercent(getValue(), {
+										input: 'fraction',
+										minimumFractionDigits: 4,
+										maximumFractionDigits: 4,
+										useGrouping: false
+									}) ?? '–'}
+								</span>
 							</Tooltip>
 						)
 					},
@@ -365,13 +396,13 @@ export function buildPairColumns(
 		columnHelper.accessor((row) => row.makerFee ?? undefined, {
 			id: 'makerFee',
 			header: definitions.makerFee.label,
-			cell: ({ getValue }) => percentage(getValue(), 3),
+			cell: ({ getValue }) => formatPercent(getValue(), PERCENT_THREE_DECIMALS_OPTIONS) ?? '–',
 			meta: { headerClassName: 'w-[100px]', align: 'end', headerHelperText: definitions.makerFee.description }
 		}),
 		columnHelper.accessor((row) => row.takerFee ?? undefined, {
 			id: 'takerFee',
 			header: definitions.takerFee.label,
-			cell: ({ getValue }) => percentage(getValue(), 3),
+			cell: ({ getValue }) => formatPercent(getValue(), PERCENT_THREE_DECIMALS_OPTIONS) ?? '–',
 			meta: { headerClassName: 'w-[100px]', align: 'end', headerHelperText: definitions.takerFee.description }
 		}),
 		columnHelper.accessor((row) => row.listedAt ?? undefined, {

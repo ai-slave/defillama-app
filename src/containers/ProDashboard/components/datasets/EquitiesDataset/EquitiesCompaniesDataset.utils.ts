@@ -1,24 +1,5 @@
 import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
 import type { CsvCell } from '~/utils/csvCell'
-import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
-
-export function formatEquitiesCompanyVolume(value: number | null): string | null {
-	return formatCompactNumber(value, {
-		minimumCompactValue: 1_000_000,
-		compactSuffix: 'lowercase'
-	})
-}
-
-export function formatEquitiesCompanyDividendYield(value: number | null): string {
-	return value == null
-		? '—'
-		: formatPercent(value, {
-				input: 'percent',
-				minimumFractionDigits: 2,
-				maximumFractionDigits: 2,
-				useGrouping: false
-			})
-}
 
 type EquitiesCompanyCsvItem = Pick<
 	IEquitiesCompanyApiItem,

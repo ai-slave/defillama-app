@@ -5,6 +5,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
+import { UTR_PERCENT_OPTIONS } from './constants'
 import { LpPerformanceInsights } from './LiquidityProviders'
 import { buildSeriesOption, ChartLegend, SimpleChart, useChartAxisColor, type SimpleSeries } from './SimpleChart'
 import { GradeFooterColumns } from './TokenPage'
@@ -26,18 +27,6 @@ const CRITERIA = [
 ] as const
 
 const ALL_OTHERS_COLOR = '#284ca3'
-
-function pct(value: number | null | undefined, digits = 2): string {
-	return (
-		formatPercent(value, {
-			input: 'percent',
-			minimumFractionDigits: digits,
-			maximumFractionDigits: digits,
-			smallValueDisplay: 'rounded',
-			useGrouping: false
-		}) ?? 'N/A'
-	)
-}
 
 function usd(value: number | null | undefined): string {
 	return value == null ? 'N/A' : `$${formatNumber(Math.round(value))}`
@@ -66,7 +55,9 @@ function CriterionCards({
 						<div className="flex min-h-20 items-start justify-between gap-2 px-4 py-3">
 							<div className="flex flex-col gap-1">
 								<h3 className="body-sm text-secondary">{definition.label}</h3>
-								<span className="label-lg">{pct(marketMakerCriterionRawPercent(criterion?.raw ?? null))}</span>
+								<span className="label-lg">
+									{formatPercent(marketMakerCriterionRawPercent(criterion?.raw ?? null), UTR_PERCENT_OPTIONS) ?? 'N/A'}
+								</span>
 							</div>
 							<Button
 								type="button"
@@ -133,7 +124,9 @@ function PerformanceSummary({ providers }: { providers: Array<UtrMarketMakerProv
 							>
 								<td className="px-4 py-2.5 label-md">{provider.name}</td>
 								<td className="px-3 py-2.5 text-secondary">{normalizedEngagementType(provider.engagementType)}</td>
-								<td className="px-3 py-2.5 text-right mono-sm">{pct(provider.avgSpread)}</td>
+								<td className="px-3 py-2.5 text-right mono-sm">
+									{formatPercent(provider.avgSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+								</td>
 								<td className="px-3 py-2.5 text-right mono-sm">{usd(provider.avgBidAskDepth50)}</td>
 								<td className="px-3 py-2.5 text-right mono-sm">{usd(provider.avgBidAskDepth100)}</td>
 								<td className="px-3 py-2.5 text-right mono-sm">{usd(provider.avgBidAskDepth200)}</td>
@@ -268,12 +261,12 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 						<div className="flex items-center justify-between gap-4">
 							<div className="flex flex-col gap-1">
 								<span className="body-sm text-secondary">All Market Makers</span>
-								<strong className="heading-sm">{pct(providerShare)}</strong>
+								<strong className="heading-sm">{formatPercent(providerShare, UTR_PERCENT_OPTIONS) ?? 'N/A'}</strong>
 								<span className="mono-md">{usd(metric.avgBreakdown.marketMakers)}</span>
 							</div>
 							<div
 								className="size-28 shrink-0 rounded-full"
-								aria-label={`Market makers account for ${pct(providerShare)}`}
+								aria-label={`Market makers account for ${formatPercent(providerShare, UTR_PERCENT_OPTIONS) ?? 'N/A'}`}
 								style={{
 									background: `radial-gradient(circle at center, var(--bg-surface) 0 44%, transparent 45%), conic-gradient(var(--bg-brand) 0 ${Math.max(0, Math.min(100, providerShare ?? 0))}%, var(--bg-surface-elevated-2) 0)`
 								}}
@@ -281,7 +274,9 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 						</div>
 						<div className="flex flex-col gap-1 border-t border-subtle pt-3">
 							<span className="body-sm text-secondary">All Others</span>
-							<strong className="label-lg">{pct(metric.avgBreakdown.allOthersPercentage)}</strong>
+							<strong className="label-lg">
+								{formatPercent(metric.avgBreakdown.allOthersPercentage, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+							</strong>
 							<span className="mono-sm">{usd(metric.avgBreakdown.allOthers)}</span>
 						</div>
 						<div className="rounded-lg bg-surface-elevated-1 p-3 body-sm text-secondary">
@@ -340,10 +335,14 @@ function PerformanceBreakdown({ breakdown }: { breakdown: UtrMarketMakerPerforma
 											<tr key={point.date} className="border-b border-subtle last:border-b-0">
 												<td className="px-3 py-2">{point.date.slice(0, 10)}</td>
 												<td className="px-3 py-2 text-right mono-sm">
-													{unit === 'percent' ? pct(point.marketMakersPercentage) : usd(point.marketMakers)}
+													{unit === 'percent'
+														? (formatPercent(point.marketMakersPercentage, UTR_PERCENT_OPTIONS) ?? 'N/A')
+														: usd(point.marketMakers)}
 												</td>
 												<td className="px-3 py-2 text-right mono-sm">
-													{unit === 'percent' ? pct(point.allOthersPercentage) : usd(point.allOthers)}
+													{unit === 'percent'
+														? (formatPercent(point.allOthersPercentage, UTR_PERCENT_OPTIONS) ?? 'N/A')
+														: usd(point.allOthers)}
 												</td>
 											</tr>
 										))}
@@ -410,11 +409,21 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 												<span className="body-xs text-tertiary">{normalizedEngagementType(entry.engagementType)}</span>
 											</span>
 										</td>
-										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgBidAskSpread)}</td>
-										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgDepth50)}</td>
-										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgDepth100)}</td>
-										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgDepth200)}</td>
-										<td className="px-3 py-2.5 text-right mono-sm">{pct(entry.performance?.avgUptime)}</td>
+										<td className="px-3 py-2.5 text-right mono-sm">
+											{formatPercent(entry.performance?.avgBidAskSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+										</td>
+										<td className="px-3 py-2.5 text-right mono-sm">
+											{formatPercent(entry.performance?.avgDepth50, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+										</td>
+										<td className="px-3 py-2.5 text-right mono-sm">
+											{formatPercent(entry.performance?.avgDepth100, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+										</td>
+										<td className="px-3 py-2.5 text-right mono-sm">
+											{formatPercent(entry.performance?.avgDepth200, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+										</td>
+										<td className="px-3 py-2.5 text-right mono-sm">
+											{formatPercent(entry.performance?.avgUptime, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+										</td>
 										<td className="px-4 py-2.5 text-right">
 											<span
 												className={`rounded-full px-2 py-1 body-xs ${
@@ -461,9 +470,15 @@ function UptimeCalculations({ rows }: { rows: Array<UtrMarketMakerUptime> }) {
 								{(provider?.breakdown ?? []).map((entry) => (
 									<tr key={entry.date} className="border-b border-subtle last:border-b-0">
 										<td className="px-3 py-2">{entry.date.slice(0, 10)}</td>
-										<td className="px-3 py-2 text-right mono-sm">{pct(entry.uptimeRatio)}</td>
-										<td className="px-3 py-2 text-right mono-sm">{pct(entry.targetSpread)}</td>
-										<td className="px-3 py-2 text-right mono-sm">{pct(entry.reportedSpread)}</td>
+										<td className="px-3 py-2 text-right mono-sm">
+											{formatPercent(entry.uptimeRatio, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+										</td>
+										<td className="px-3 py-2 text-right mono-sm">
+											{formatPercent(entry.targetSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+										</td>
+										<td className="px-3 py-2 text-right mono-sm">
+											{formatPercent(entry.reportedSpread, UTR_PERCENT_OPTIONS) ?? 'N/A'}
+										</td>
 										<td className="px-3 py-2 text-right">
 											{entry.achievedSpread == null ? 'N/A' : entry.achievedSpread ? 'Achieved' : 'Lagging'}
 										</td>

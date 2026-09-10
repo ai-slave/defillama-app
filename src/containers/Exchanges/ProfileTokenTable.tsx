@@ -13,32 +13,23 @@ import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
-import { formatUsd } from '~/utils/numberFormat'
+import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { exchangeDefinitions, usdPerpLabel } from './definitions'
 import { EXCHANGE_SEGMENT_LABELS, type ExchangeProfileModel } from './models'
-import { executionUsd, MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
+import { MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
 import { exchangeTokenRows, type ExchangeTokenRow } from './profileTokens'
 
 const columnHelper = createColumnHelper<ExchangeTokenRow>()
-
-const money = (value: number | null | undefined) =>
-	value == null
-		? '–'
-		: formatUsd(value, {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			})
 
 const REPORTED_NOTE =
 	'Reported volume, not liquidity-checked: no order book captured for one of these markets, so there is nothing to normalize against.'
 
 function Volume({ value, reported }: { value: number | null; reported: boolean }) {
 	if (value == null) return <span className="text-tertiary">–</span>
-	if (!reported) return <>{money(value)}</>
+	if (!reported) return <>{formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}</>
 	return (
 		<Tooltip content={REPORTED_NOTE} className="ms-auto w-fit underline decoration-dotted">
-			{`${money(value)}*`}
+			{`${formatUsd(value, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–'}*`}
 		</Tooltip>
 	)
 }
@@ -97,7 +88,11 @@ const TOKEN_COLUMNS = [
 		sortDescFirst: false,
 		cell: ({ row }) => {
 			const execution = row.original.execution
-			return execution?.costToTradeBps == null ? NA : <>{executionUsd(execution.costToTradeBps)}</>
+			return execution?.costToTradeBps == null ? (
+				NA
+			) : (
+				<>{formatUsd(execution.costToTradeBps, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}</>
+			)
 		},
 		meta: {
 			headerClassName: 'w-[160px]',
@@ -133,7 +128,7 @@ const TOKEN_COLUMNS = [
 	columnHelper.accessor((row) => row.spotActiveLiquidity ?? undefined, {
 		id: 'spotActiveLiquidity',
 		header: definitions.spotActiveLiquidity.label,
-		cell: ({ getValue }) => money(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 		meta: {
 			headerClassName: 'w-[112px]',
 			align: 'end',
@@ -143,7 +138,7 @@ const TOKEN_COLUMNS = [
 	columnHelper.accessor((row) => row.perpActiveLiquidity ?? undefined, {
 		id: 'perpActiveLiquidity',
 		header: definitions.perpActiveLiquidity.label,
-		cell: ({ getValue }) => money(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 		meta: {
 			headerClassName: 'w-[116px]',
 			align: 'end',
@@ -153,7 +148,7 @@ const TOKEN_COLUMNS = [
 	columnHelper.accessor((row) => row.perpOpenInterestUsd ?? undefined, {
 		id: 'perpOpenInterest',
 		header: definitions.perpOpenInterest.label,
-		cell: ({ getValue }) => money(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
 		meta: {
 			headerClassName: 'w-[112px]',
 			align: 'end',

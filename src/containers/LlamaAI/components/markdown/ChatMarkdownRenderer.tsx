@@ -31,6 +31,7 @@ import { popoverMenuItemStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { equityIconUrl } from '~/utils/icons'
 import styles from '../../LlamaAIChat.module.css'
+import { MarkdownOrderedList } from './MarkdownOrderedList'
 import { createSegmentProcessors, createSegmentRenderer } from './markdownSegments'
 import { rehypeCitationMarkers } from './rehypeCitationMarkers'
 import { rehypeHeadingIds } from './rehypeHeadingIds'
@@ -84,7 +85,6 @@ type MarkdownTableProps = ComponentPropsWithoutRef<'table'> & { node?: unknown }
 type MarkdownCellProps = ComponentPropsWithoutRef<'th'> & { node?: unknown }
 type MarkdownDataCellProps = ComponentPropsWithoutRef<'td'> & { node?: unknown }
 type MarkdownListProps = ComponentPropsWithoutRef<'ul'> & { node?: unknown }
-type MarkdownOrderedListProps = ComponentPropsWithoutRef<'ol'> & { node?: unknown }
 
 const LLAMA_PREVIEW_ENTITY_TYPES = {
 	protocol: 'protocol',
@@ -583,11 +583,7 @@ const markdownComponents = {
 			{children}
 		</ul>
 	),
-	ol: ({ children, node: _node, ...props }: MarkdownOrderedListProps) => (
-		<ol {...props} className={`grid list-decimal gap-1 pl-5 ${props.className ?? ''}`}>
-			{children}
-		</ol>
-	),
+	ol: MarkdownOrderedList,
 	pre: ({ children, ...props }: MarkdownPreProps) => <CodeBlock {...props}>{children}</CodeBlock>,
 	'fact-check-pill': MarkdownFactCheckPill
 } as Components

@@ -4,7 +4,13 @@ import type {
 	UnifiedNumericTableFilterKey,
 	UnifiedTableFilters
 } from '~/containers/ProDashboard/unifiedTable/config/current'
-import { formatPercent, formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import {
+	formatPercent,
+	formatUsd,
+	formatCompactNumber,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 
 export interface ActiveFilterChip {
 	id: string
@@ -21,19 +27,14 @@ const formatList = (values: Array<string>): string => {
 	return `${values.slice(0, 3).join(', ')} +${remaining}`
 }
 
-const formatFilterCurrency = (value: number) =>
-	formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-const formatFilterNumber = (value: number) =>
-	formatCompactNumber(value, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-const formatFilterPercent = (value: number) => formatPercent(value, { input: 'percent' })
-
-const addRangeChip = (
+const addRangeChip = <TOptions>(
 	chips: Array<ActiveFilterChip>,
 	filters: UnifiedTableFilters,
 	minKey: UnifiedNumericTableFilterKey,
 	maxKey: UnifiedNumericTableFilterKey,
 	label: string,
-	formatter: (value: number) => string
+	formatter: (value: number, options: TOptions) => string,
+	options: TOptions
 ) => {
 	const minValue = filters[minKey]
 	const maxValue = filters[maxKey]
@@ -42,11 +43,11 @@ const addRangeChip = (
 	}
 	let value: string
 	if (minValue !== undefined && maxValue !== undefined) {
-		value = `${formatter(minValue)} - ${formatter(maxValue)}`
+		value = `${formatter(minValue, options)} - ${formatter(maxValue, options)}`
 	} else if (minValue !== undefined) {
-		value = `≥ ${formatter(minValue)}`
+		value = `≥ ${formatter(minValue, options)}`
 	} else if (maxValue !== undefined) {
-		value = `≤ ${formatter(maxValue)}`
+		value = `≤ ${formatter(maxValue, options)}`
 	} else {
 		return
 	}
@@ -101,20 +102,39 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 	addListChip(chips, clones, 'chains', 'Chains')
 	addListChip(chips, clones, 'oracles', 'Oracles')
 
-	addRangeChip(chips, clones, 'tvlMin', 'tvlMax', 'TVL', formatFilterCurrency)
-	addRangeChip(chips, clones, 'mcapMin', 'mcapMax', 'Market Cap', formatFilterCurrency)
-	addRangeChip(chips, clones, 'protocolAgeDaysMin', 'protocolAgeDaysMax', 'Protocol Age (days)', formatFilterNumber)
-	addRangeChip(chips, clones, 'volumeDex24hMin', 'volumeDex24hMax', '24h Volume', formatFilterCurrency)
-	addRangeChip(chips, clones, 'volume7dMin', 'volume7dMax', '7d Volume', formatFilterCurrency)
-	addRangeChip(chips, clones, 'volume30dMin', 'volume30dMax', '30d Volume', formatFilterCurrency)
-	addRangeChip(chips, clones, 'volumeChange1dMin', 'volumeChange1dMax', 'Volume Change 1d', formatFilterPercent)
+	addRangeChip(chips, clones, 'tvlMin', 'tvlMax', 'TVL', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(chips, clones, 'mcapMin', 'mcapMax', 'Market Cap', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(
+		chips,
+		clones,
+		'protocolAgeDaysMin',
+		'protocolAgeDaysMax',
+		'Protocol Age (days)',
+		formatCompactNumber,
+		NUMBER_LOWERCASE_MILLIONS_OPTIONS
+	)
+	addRangeChip(
+		chips,
+		clones,
+		'volumeDex24hMin',
+		'volumeDex24hMax',
+		'24h Volume',
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
+	)
+	addRangeChip(chips, clones, 'volume7dMin', 'volume7dMax', '7d Volume', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(chips, clones, 'volume30dMin', 'volume30dMax', '30d Volume', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(chips, clones, 'volumeChange1dMin', 'volumeChange1dMax', 'Volume Change 1d', formatPercent, {
+		input: 'percent'
+	} as const)
 	addRangeChip(
 		chips,
 		clones,
 		'volumeChange7dOver7dMin',
 		'volumeChange7dOver7dMax',
 		'Volume Change 7d over 7d',
-		formatFilterPercent
+		formatPercent,
+		{ input: 'percent' } as const
 	)
 	addRangeChip(
 		chips,
@@ -122,20 +142,24 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		'volumeChange30dOver30dMin',
 		'volumeChange30dOver30dMax',
 		'Volume Change 30d over 30d',
-		formatFilterPercent
+		formatPercent,
+		{ input: 'percent' } as const
 	)
-	addRangeChip(chips, clones, 'fees24hMin', 'fees24hMax', '24h Fees', formatFilterCurrency)
-	addRangeChip(chips, clones, 'fees7dMin', 'fees7dMax', '7d Fees', formatFilterCurrency)
-	addRangeChip(chips, clones, 'fees30dMin', 'fees30dMax', '30d Fees', formatFilterCurrency)
-	addRangeChip(chips, clones, 'fees1yMin', 'fees1yMax', '1y Fees', formatFilterCurrency)
-	addRangeChip(chips, clones, 'feesChange1dMin', 'feesChange1dMax', 'Fees Change 1d', formatFilterPercent)
+	addRangeChip(chips, clones, 'fees24hMin', 'fees24hMax', '24h Fees', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(chips, clones, 'fees7dMin', 'fees7dMax', '7d Fees', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(chips, clones, 'fees30dMin', 'fees30dMax', '30d Fees', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(chips, clones, 'fees1yMin', 'fees1yMax', '1y Fees', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(chips, clones, 'feesChange1dMin', 'feesChange1dMax', 'Fees Change 1d', formatPercent, {
+		input: 'percent'
+	} as const)
 	addRangeChip(
 		chips,
 		clones,
 		'feesChange7dOver7dMin',
 		'feesChange7dOver7dMax',
 		'Fees Change 7d over 7d',
-		formatFilterPercent
+		formatPercent,
+		{ input: 'percent' } as const
 	)
 	addRangeChip(
 		chips,
@@ -143,20 +167,40 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		'feesChange30dOver30dMin',
 		'feesChange30dOver30dMax',
 		'Fees Change 30d over 30d',
-		formatFilterPercent
+		formatPercent,
+		{ input: 'percent' } as const
 	)
-	addRangeChip(chips, clones, 'revenue24hMin', 'revenue24hMax', '24h Revenue', formatFilterCurrency)
-	addRangeChip(chips, clones, 'revenue7dMin', 'revenue7dMax', '7d Revenue', formatFilterCurrency)
-	addRangeChip(chips, clones, 'revenue30dMin', 'revenue30dMax', '30d Revenue', formatFilterCurrency)
-	addRangeChip(chips, clones, 'revenue1yMin', 'revenue1yMax', '1y Revenue', formatFilterCurrency)
-	addRangeChip(chips, clones, 'revenueChange1dMin', 'revenueChange1dMax', 'Revenue Change 1d', formatFilterPercent)
+	addRangeChip(
+		chips,
+		clones,
+		'revenue24hMin',
+		'revenue24hMax',
+		'24h Revenue',
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
+	)
+	addRangeChip(chips, clones, 'revenue7dMin', 'revenue7dMax', '7d Revenue', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(
+		chips,
+		clones,
+		'revenue30dMin',
+		'revenue30dMax',
+		'30d Revenue',
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
+	)
+	addRangeChip(chips, clones, 'revenue1yMin', 'revenue1yMax', '1y Revenue', formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS)
+	addRangeChip(chips, clones, 'revenueChange1dMin', 'revenueChange1dMax', 'Revenue Change 1d', formatPercent, {
+		input: 'percent'
+	} as const)
 	addRangeChip(
 		chips,
 		clones,
 		'revenueChange7dOver7dMin',
 		'revenueChange7dOver7dMax',
 		'Revenue Change 7d over 7d',
-		formatFilterPercent
+		formatPercent,
+		{ input: 'percent' } as const
 	)
 	addRangeChip(
 		chips,
@@ -164,30 +208,51 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		'revenueChange30dOver30dMin',
 		'revenueChange30dOver30dMax',
 		'Revenue Change 30d over 30d',
-		formatFilterPercent
+		formatPercent,
+		{ input: 'percent' } as const
 	)
-	addRangeChip(chips, clones, 'change1dMin', 'change1dMax', 'TVL Change 1d', formatFilterPercent)
-	addRangeChip(chips, clones, 'change7dMin', 'change7dMax', 'TVL Change 7d', formatFilterPercent)
-	addRangeChip(chips, clones, 'change1mMin', 'change1mMax', 'TVL Change 30d', formatFilterPercent)
-	addRangeChip(chips, clones, 'pfRatioMin', 'pfRatioMax', 'P/F Ratio', formatFilterNumber)
-	addRangeChip(chips, clones, 'protocolCountMin', 'protocolCountMax', 'Protocol Count', formatFilterNumber)
-	addRangeChip(chips, clones, 'volumeDominance24hMin', 'volumeDominance24hMax', '24h Volume Share', formatFilterPercent)
+	addRangeChip(chips, clones, 'change1dMin', 'change1dMax', 'TVL Change 1d', formatPercent, {
+		input: 'percent'
+	} as const)
+	addRangeChip(chips, clones, 'change7dMin', 'change7dMax', 'TVL Change 7d', formatPercent, {
+		input: 'percent'
+	} as const)
+	addRangeChip(chips, clones, 'change1mMin', 'change1mMax', 'TVL Change 30d', formatPercent, {
+		input: 'percent'
+	} as const)
 	addRangeChip(
 		chips,
 		clones,
-		'volumeMarketShare7dMin',
-		'volumeMarketShare7dMax',
-		'7d Volume Share',
-		formatFilterPercent
+		'pfRatioMin',
+		'pfRatioMax',
+		'P/F Ratio',
+		formatCompactNumber,
+		NUMBER_LOWERCASE_MILLIONS_OPTIONS
 	)
-	addRangeChip(chips, clones, 'tvlShareMin', 'tvlShareMax', 'TVL Share', formatFilterPercent)
+	addRangeChip(
+		chips,
+		clones,
+		'protocolCountMin',
+		'protocolCountMax',
+		'Protocol Count',
+		formatCompactNumber,
+		NUMBER_LOWERCASE_MILLIONS_OPTIONS
+	)
+	addRangeChip(chips, clones, 'volumeDominance24hMin', 'volumeDominance24hMax', '24h Volume Share', formatPercent, {
+		input: 'percent'
+	} as const)
+	addRangeChip(chips, clones, 'volumeMarketShare7dMin', 'volumeMarketShare7dMax', '7d Volume Share', formatPercent, {
+		input: 'percent'
+	} as const)
+	addRangeChip(chips, clones, 'tvlShareMin', 'tvlShareMax', 'TVL Share', formatPercent, { input: 'percent' } as const)
 	addRangeChip(
 		chips,
 		clones,
 		'perpsVolumeDominance24hMin',
 		'perpsVolumeDominance24hMax',
 		'Perps Volume Share 24h',
-		formatFilterPercent
+		formatPercent,
+		{ input: 'percent' } as const
 	)
 	addRangeChip(
 		chips,
@@ -195,18 +260,44 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		'optionsVolumeDominance24hMin',
 		'optionsVolumeDominance24hMax',
 		'Options Volume Share 24h',
-		formatFilterPercent
+		formatPercent,
+		{ input: 'percent' } as const
 	)
-	addRangeChip(chips, clones, 'holderRevenue24hMin', 'holderRevenue24hMax', 'Holder Revenue 24h', formatFilterCurrency)
-	addRangeChip(chips, clones, 'stablesMcapMin', 'stablesMcapMax', 'Stablecoin Market Cap', formatFilterCurrency)
-	addRangeChip(chips, clones, 'bridgedTvlMin', 'bridgedTvlMax', 'Bridged TVL', formatFilterCurrency)
+	addRangeChip(
+		chips,
+		clones,
+		'holderRevenue24hMin',
+		'holderRevenue24hMax',
+		'Holder Revenue 24h',
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
+	)
+	addRangeChip(
+		chips,
+		clones,
+		'stablesMcapMin',
+		'stablesMcapMax',
+		'Stablecoin Market Cap',
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
+	)
+	addRangeChip(
+		chips,
+		clones,
+		'bridgedTvlMin',
+		'bridgedTvlMax',
+		'Bridged TVL',
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
+	)
 	addRangeChip(
 		chips,
 		clones,
 		'aggregatorsVolume24hMin',
 		'aggregatorsVolume24hMax',
 		'Aggregator Volume 24h',
-		formatFilterCurrency
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
 	)
 	addRangeChip(
 		chips,
@@ -214,7 +305,8 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		'aggregatorsVolume7dMin',
 		'aggregatorsVolume7dMax',
 		'Aggregator Volume 7d',
-		formatFilterCurrency
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
 	)
 	addRangeChip(
 		chips,
@@ -222,7 +314,8 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		'aggregatorsVolume30dMin',
 		'aggregatorsVolume30dMax',
 		'Aggregator Volume 30d',
-		formatFilterCurrency
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
 	)
 	addRangeChip(
 		chips,
@@ -230,7 +323,8 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		'derivativesAggregatorsVolume24hMin',
 		'derivativesAggregatorsVolume24hMax',
 		'Derivatives Aggregator Volume 24h',
-		formatFilterCurrency
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
 	)
 	addRangeChip(
 		chips,
@@ -238,7 +332,8 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		'derivativesAggregatorsVolume7dMin',
 		'derivativesAggregatorsVolume7dMax',
 		'Derivatives Aggregator Volume 7d',
-		formatFilterCurrency
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
 	)
 	addRangeChip(
 		chips,
@@ -246,7 +341,8 @@ export const getActiveFilterChips = (filters?: UnifiedTableFilters): Array<Activ
 		'derivativesAggregatorsVolume30dMin',
 		'derivativesAggregatorsVolume30dMax',
 		'Derivatives Aggregator Volume 30d',
-		formatFilterCurrency
+		formatUsd,
+		USD_LOWERCASE_MILLIONS_OPTIONS
 	)
 
 	addBooleanChip(chips, clones, 'hasPerps', 'Perps only')

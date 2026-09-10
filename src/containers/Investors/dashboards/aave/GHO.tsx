@@ -2,7 +2,12 @@ import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/rea
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
-import { formatUsd } from '~/utils/numberFormat'
+import {
+	formatUsd,
+	formatPercent,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
 import { useAaveGHOReserve, useAaveMarkets, useAaveAPYHistory, num, pct } from './api'
 import type { TimeWindow } from './api'
 import {
@@ -13,7 +18,6 @@ import {
 	MetricStrip,
 	SectionHeader,
 	WindowToggle,
-	formatPct,
 	AAVE_AREA_EXPORT,
 	AAVE_PERCENT_TIME_CHART_OPTIONS
 } from './shared'
@@ -55,8 +59,7 @@ const ghoMarketColumns: Array<ColumnDef<GHOMarketRow>> = [
 		header: 'Market Size',
 		id: 'sizeUsd',
 		accessorFn: (row) => row.sizeUsd ?? undefined,
-		cell: ({ getValue }) =>
-			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatUsd(getValue<number>(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -64,8 +67,7 @@ const ghoMarketColumns: Array<ColumnDef<GHOMarketRow>> = [
 		header: 'Total Borrowed',
 		id: 'totalBorrowedUsd',
 		accessorFn: (row) => row.totalBorrowedUsd ?? undefined,
-		cell: ({ getValue }) =>
-			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatUsd(getValue<number>(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -73,8 +75,7 @@ const ghoMarketColumns: Array<ColumnDef<GHOMarketRow>> = [
 		header: 'Available Liquidity',
 		id: 'availableLiquidityUsd',
 		accessorFn: (row) => row.availableLiquidityUsd ?? undefined,
-		cell: ({ getValue }) =>
-			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatUsd(getValue<number>(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 150
 	},
@@ -82,7 +83,7 @@ const ghoMarketColumns: Array<ColumnDef<GHOMarketRow>> = [
 		header: 'Borrow APY',
 		id: 'borrowApy',
 		accessorFn: (row) => row.borrowApy ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number>()),
+		cell: ({ getValue }) => formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 110
 	},
@@ -90,7 +91,7 @@ const ghoMarketColumns: Array<ColumnDef<GHOMarketRow>> = [
 		header: 'Utilization',
 		id: 'utilization',
 		accessorFn: (row) => row.utilization ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number>()),
+		cell: ({ getValue }) => formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 110
 	}
@@ -165,37 +166,17 @@ export default function GHO() {
 		const bi = reserve.borrowInfo
 		return {
 			totalSize: aggregated
-				? formatUsd(aggregated.totalSize, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-				: formatUsd(num(reserve.size?.usd), {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					}),
+				? formatUsd(aggregated.totalSize, USD_LOWERCASE_MILLIONS_OPTIONS)
+				: formatUsd(num(reserve.size?.usd), USD_LOWERCASE_MILLIONS_OPTIONS),
 			totalBorrowed: aggregated
-				? formatUsd(aggregated.totalBorrowed, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})
-				: formatUsd(num(bi?.total?.usd), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+				? formatUsd(aggregated.totalBorrowed, USD_LOWERCASE_MILLIONS_OPTIONS)
+				: formatUsd(num(bi?.total?.usd), USD_LOWERCASE_MILLIONS_OPTIONS),
 			availableLiquidity: aggregated
-				? formatUsd(aggregated.totalLiquidity, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					})
-				: formatUsd(num(bi?.availableLiquidity?.usd), {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					}),
-			borrowApy: formatPct(pct(bi?.apy?.value)),
-			utilization: formatPct(pct(bi?.utilizationRate?.value)),
-			borrowCap: formatUsd(num(bi?.borrowCap?.usd), {
-				compact: true,
-				minimumCompactValue: 1_000_000,
-				compactSuffix: 'lowercase'
-			}),
+				? formatUsd(aggregated.totalLiquidity, USD_LOWERCASE_MILLIONS_OPTIONS)
+				: formatUsd(num(bi?.availableLiquidity?.usd), USD_LOWERCASE_MILLIONS_OPTIONS),
+			borrowApy: formatPercent(pct(bi?.apy?.value), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
+			utilization: formatPercent(pct(bi?.utilizationRate?.value), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
+			borrowCap: formatUsd(num(bi?.borrowCap?.usd), USD_LOWERCASE_MILLIONS_OPTIONS),
 			markets: aggregated?.marketsCount ?? 1
 		}
 	}, [reserve, aggregated])

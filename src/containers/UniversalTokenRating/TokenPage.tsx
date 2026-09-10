@@ -6,21 +6,10 @@ import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
+import { UTR_PERCENT_OPTIONS } from './constants'
 import { resolveUtrGradeOrLabel, utrGradeColor } from './gradeBands'
 import { GradeBadge, ScoreBar } from './grades'
 import type { UtrGradeScaleEntry } from './types'
-
-function formatPercentile(percentile: number | null | undefined): string {
-	return (
-		formatPercent(percentile, {
-			input: 'percent',
-			minimumFractionDigits: 2,
-			maximumFractionDigits: 2,
-			smallValueDisplay: 'rounded',
-			useGrouping: false
-		}) ?? 'N/A'
-	)
-}
 
 export function GradeFooter({
 	score,
@@ -35,7 +24,7 @@ export function GradeFooter({
 	percentile?: number | null
 	divider?: boolean
 }) {
-	const percentileLabel = formatPercentile(percentile)
+	const percentileLabel = formatPercent(percentile, UTR_PERCENT_OPTIONS) ?? 'N/A'
 	const percentileWidth = percentile == null ? 0 : Math.max(0, Math.min(100, percentile))
 	return (
 		<div
@@ -110,7 +99,7 @@ export function GradeFooterColumns({
 	gradingScale?: Array<UtrGradeScaleEntry> | null
 	percentile?: number | null
 }) {
-	const percentileLabel = formatPercentile(percentile)
+	const percentileLabel = formatPercent(percentile, UTR_PERCENT_OPTIONS) ?? 'N/A'
 	const percentileWidth = percentile == null ? 0 : Math.max(0, Math.min(100, percentile))
 	return (
 		<div className="flex items-start gap-x-2 border-t border-subtle px-4 py-2.5">
@@ -151,7 +140,7 @@ export function GradeFooterStacked({
 	gradingScale?: Array<UtrGradeScaleEntry> | null
 	percentile?: number | null
 }) {
-	const percentileLabel = formatPercentile(percentile)
+	const percentileLabel = formatPercent(percentile, UTR_PERCENT_OPTIONS) ?? 'N/A'
 	const percentileWidth = percentile == null ? 0 : Math.max(0, Math.min(100, percentile))
 	return (
 		<div className="flex flex-col border-t border-subtle px-4 py-1.5">

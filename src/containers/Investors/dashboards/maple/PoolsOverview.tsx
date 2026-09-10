@@ -3,7 +3,14 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { VirtualTable } from '~/components/Table/Table'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import {
+	formatUsd,
+	formatCompactNumber,
+	formatPercent,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 import { useMapleActivePools } from './api'
 import { buildMaplePoolsData, type PoolRow } from './chartData'
 import {
@@ -14,8 +21,7 @@ import {
 	MAPLE_CSV_ONLY_EXPORT,
 	MAPLE_PERCENT_CATEGORY_CHART_OPTIONS,
 	MAPLE_USD_CATEGORY_CHART_OPTIONS,
-	Pagination,
-	formatPct
+	Pagination
 } from './shared'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -55,8 +61,7 @@ const poolColumns: Array<ColumnDef<PoolRow>> = [
 		header: 'TVL',
 		id: 'tvlUsd',
 		accessorFn: (row) => row.tvlUsd ?? undefined,
-		cell: ({ getValue }) =>
-			formatUsd(getValue<number>(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatUsd(getValue<number>(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 140
 	},
@@ -64,7 +69,7 @@ const poolColumns: Array<ColumnDef<PoolRow>> = [
 		header: 'Spot APY',
 		id: 'spotApy',
 		accessorFn: (row) => row.spotApy ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number>()),
+		cell: ({ getValue }) => formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 100
 	},
@@ -72,7 +77,7 @@ const poolColumns: Array<ColumnDef<PoolRow>> = [
 		header: 'Utilization',
 		id: 'utilization',
 		accessorFn: (row) => row.utilization ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number>()),
+		cell: ({ getValue }) => formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 100
 	},
@@ -80,8 +85,7 @@ const poolColumns: Array<ColumnDef<PoolRow>> = [
 		header: 'Depositors',
 		id: 'numPositions',
 		accessorFn: (row) => row.numPositions ?? undefined,
-		cell: ({ getValue }) =>
-			formatCompactNumber(getValue<number>(), { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: ({ getValue }) => formatCompactNumber(getValue<number>(), NUMBER_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' as const },
 		size: 100
 	},
@@ -96,7 +100,7 @@ const poolColumns: Array<ColumnDef<PoolRow>> = [
 		header: 'Fees',
 		id: 'feeRate',
 		accessorFn: (row) => row.feeRate ?? undefined,
-		cell: ({ getValue }) => formatPct(getValue<number>()),
+		cell: ({ getValue }) => formatPercent(getValue<number>(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' as const },
 		size: 80
 	},
@@ -144,17 +148,10 @@ export default function PoolsOverview() {
 		isLoading || pools.length === 0
 			? null
 			: {
-					totalTvl: formatUsd(data.totals.totalTvl, {
-						compact: true,
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					}),
+					totalTvl: formatUsd(data.totals.totalTvl, USD_LOWERCASE_MILLIONS_OPTIONS),
 					activePools: pools.length,
-					totalDepositors: formatCompactNumber(data.totals.totalDepositors, {
-						minimumCompactValue: 1_000_000,
-						compactSuffix: 'lowercase'
-					}),
-					avgApy: `${formatPercent(data.totals.weightedAverageApy, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}`,
+					totalDepositors: formatCompactNumber(data.totals.totalDepositors, NUMBER_LOWERCASE_MILLIONS_OPTIONS),
+					avgApy: `${formatPercent(data.totals.weightedAverageApy, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}`,
 					avgUtil: `${formatPercent(data.totals.weightedAverageUtilization, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })}`
 				}
 

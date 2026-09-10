@@ -16,12 +16,25 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { StatItem } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
-import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import {
+	formatCompactNumber,
+	formatNumber,
+	formatPercent,
+	formatUsd,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
-import { YIELD_USD_OPTIONS } from './format'
 import { getHolderMode, getHolderModeQueryValue, type HolderMode } from './queryState'
 import { getChartTooltipItems } from './tooltip'
 import type { DetailHolders, Holder, HolderChange, HolderStatus } from './types'
+
+const PERCENT_OPTIONS = {
+	input: 'percent',
+	minimumFractionDigits: 1,
+	maximumFractionDigits: 1,
+	useGrouping: false
+} as const
 
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 
@@ -43,10 +56,6 @@ function lerpHex(a: string, b: string, t: number): string {
 
 function shortAddr(address: string): string {
 	return address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address
-}
-
-function pctStr(value: number, digits = 1): string {
-	return `${formatPercent(value, { input: 'percent', minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false })}`
 }
 
 function fmtToken(balance: string | null, decimals: number | null): string {
@@ -82,12 +91,7 @@ export function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: n
 			return (
 				<span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-(--yield-positive-text)">
 					<Icon name="arrow-up" className="size-3.5 shrink-0" aria-hidden />+
-					{formatPercent(Math.abs(delta.value), {
-						input: 'percent',
-						minimumFractionDigits: 1,
-						maximumFractionDigits: 1,
-						useGrouping: false
-					})}
+					{formatPercent(Math.abs(delta.value), PERCENT_OPTIONS)}
 				</span>
 			)
 		case 'down':
@@ -95,12 +99,7 @@ export function ChangeBadge({ delta }: { delta: { status: HolderStatus; value: n
 			return (
 				<span className="inline-flex items-center justify-end gap-1 whitespace-nowrap text-(--yield-negative-text)">
 					<Icon name="arrow-down" className="size-3.5 shrink-0" aria-hidden />-
-					{formatPercent(Math.abs(delta.value), {
-						input: 'percent',
-						minimumFractionDigits: 1,
-						maximumFractionDigits: 1,
-						useGrouping: false
-					})}
+					{formatPercent(Math.abs(delta.value), PERCENT_OPTIONS)}
 				</span>
 			)
 		case 'entered_top_10':
@@ -184,7 +183,7 @@ function HolderDistribution({
 						if (!item) return ''
 						const rawValue = item.value
 						const value = typeof rawValue === 'number' ? rawValue : Number(rawValue ?? 0)
-						return `${item.marker}${item.name}: <b>${formatPercent(value, { input: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false })}</b>`
+						return `${item.marker}${item.name}: <b>${formatPercent(value, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}</b>`
 					}}
 					exportButtons={{
 						png: true,
@@ -361,12 +360,7 @@ function HoldersTable({
 										{mode === 'share' && holder.share_pct !== null ? (
 											<span className="flex items-center justify-end gap-2">
 												<span className="text-primary">
-													{formatPercent(holder.share_pct, {
-														input: 'percent',
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-														useGrouping: false
-													})}
+													{formatPercent(holder.share_pct, PERCENT_POINTS_TWO_DECIMALS_OPTIONS)}
 												</span>
 												<span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-border-subtle sm:block">
 													<span
@@ -445,13 +439,7 @@ function HolderInsights({
 							<div key={tier.label} className="flex items-center justify-between body-md">
 								<span className="text-secondary">{tier.label}</span>
 								<span className="mono-md-bold text-primary">
-									{tier.pct == null
-										? '—'
-										: formatUsd((tier.pct / 100) * tvlUsd, {
-												compact: true,
-												minimumCompactValue: 1_000_000,
-												compactSuffix: 'lowercase'
-											})}
+									{tier.pct == null ? '—' : formatUsd((tier.pct / 100) * tvlUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}
 								</span>
 							</div>
 						))}
@@ -482,13 +470,7 @@ function HolderInsights({
 				{avg != null ? (
 					<div className="flex flex-col gap-1 rounded-md bg-surface-elevated-1 p-2">
 						<span className="body-md text-secondary">Avg Position Size</span>
-						<span className="mono-md-bold text-primary">
-							{formatUsd(avg, {
-								compact: true,
-								minimumCompactValue: 1_000_000,
-								compactSuffix: 'lowercase'
-							})}
-						</span>
+						<span className="mono-md-bold text-primary">{formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS)}</span>
 					</div>
 				) : null}
 			</div>
@@ -550,8 +532,8 @@ export function HoldersPanel({
 									})
 						}
 					/>
-					<StatItem label="Avg position" value={formatUsd(avg, YIELD_USD_OPTIONS) ?? '—'} />
-					<StatItem label="Top 10 holders" value={top10Pct == null ? '—' : pctStr(top10Pct)} />
+					<StatItem label="Avg position" value={formatUsd(avg, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—'} />
+					<StatItem label="Top 10 holders" value={top10Pct == null ? '—' : formatPercent(top10Pct, PERCENT_OPTIONS)} />
 				</div>
 			</Card>
 		)

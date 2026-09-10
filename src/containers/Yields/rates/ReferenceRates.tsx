@@ -17,9 +17,15 @@ import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar }
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
-import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
+import {
+	formatCompactNumber,
+	formatNumber,
+	formatPercent,
+	formatUsd,
+	USD_LOWERCASE_MILLIONS_OPTIONS
+} from '~/utils/numberFormat'
 import { InstantTooltip } from '../InstantTooltip'
-import { YIELD_PERCENT_OPTIONS, YIELD_USD_OPTIONS } from '../poolDetail/format'
+import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { ProtocolIcon } from '../poolDetail/Icons'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue } from '../poolDetail/tooltip'
 import { YieldsTabs } from '../YieldsTabs'
@@ -48,9 +54,6 @@ interface CompRow {
 	borrow: RefRateProtocol | null
 }
 
-function pct(value: number | null): string {
-	return value == null ? '—' : formatPercent(value, YIELD_PERCENT_OPTIONS)
-}
 function spreadPct(value: number | null): { text: string; neg: boolean } {
 	if (value == null) return { text: '—', neg: false }
 	return { text: `${value < 0 ? '−' : '+'}${formatPercent(Math.abs(value), YIELD_PERCENT_OPTIONS)}`, neg: value < 0 }
@@ -95,7 +98,7 @@ function ratesTooltipFormatter(params: unknown): string {
 		const raw = getChartTooltipValue(p)
 		const v = typeof raw === 'number' ? raw : raw == null ? null : Number(raw)
 		if (v == null || !Number.isFinite(v)) continue
-		rows += `<li style="list-style:none;">${p.marker} ${p.seriesName}: ${pct(v)}</li>`
+		rows += `<li style="list-style:none;">${p.marker} ${p.seriesName}: ${formatPercent(v, YIELD_PERCENT_OPTIONS) ?? '—'}</li>`
 	}
 	return date + rows
 }
@@ -184,7 +187,9 @@ function BenchmarkMetric({
 				<span className={`size-1.5 rounded-full ${markerClassName}`} aria-hidden />
 				{label}
 			</dt>
-			<dd className="-translate-y-px mono-md-bold text-primary">{pct(value)}</dd>
+			<dd className="-translate-y-px mono-md-bold text-primary">
+				{formatPercent(value, YIELD_PERCENT_OPTIONS) ?? '—'}
+			</dd>
 			{deltaText ? (
 				<dd className={`flex items-center gap-1 body-sm tabular-nums ${deltaClassName}`}>
 					{deltaText}
@@ -409,12 +414,12 @@ function RatesByProtocolPanel({
 									</span>
 								</TokenPageTableBodyCell>
 								<TokenPageTableBodyCell textAlign="end" className="text-primary">
-									{protocol.supply ? pct(protocol.supply.apy) : '—'}
+									{protocol.supply ? (formatPercent(protocol.supply.apy, YIELD_PERCENT_OPTIONS) ?? '—') : '—'}
 								</TokenPageTableBodyCell>
 								<TokenPageTableBodyCell textAlign="end" className="text-primary">
 									{protocol.supply ? (
 										<InstantTooltip
-											content={`${formatUsd(protocol.supply.weight_usd, YIELD_USD_OPTIONS) ?? '—'} weighted`}
+											content={`${formatUsd(protocol.supply.weight_usd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—'} weighted`}
 											className="justify-end"
 										>
 											{weightPct(protocol.supply.weight_pct)}
@@ -424,12 +429,12 @@ function RatesByProtocolPanel({
 									)}
 								</TokenPageTableBodyCell>
 								<TokenPageTableBodyCell textAlign="end" className="text-primary">
-									{protocol.borrow ? pct(protocol.borrow.apy) : '—'}
+									{protocol.borrow ? (formatPercent(protocol.borrow.apy, YIELD_PERCENT_OPTIONS) ?? '—') : '—'}
 								</TokenPageTableBodyCell>
 								<TokenPageTableBodyCell textAlign="end" className="text-primary">
 									{protocol.borrow ? (
 										<InstantTooltip
-											content={`${formatUsd(protocol.borrow.weight_usd, YIELD_USD_OPTIONS) ?? '—'} weighted`}
+											content={`${formatUsd(protocol.borrow.weight_usd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? '—'} weighted`}
 											className="justify-end"
 										>
 											{weightPct(protocol.borrow.weight_pct)}
@@ -622,10 +627,10 @@ function AssetRow({ name, rates }: { name: string; rates: RefRateAssetSet }) {
 				<span className="text-primary">{name}</span>
 			</TokenPageTableBodyCell>
 			<TokenPageTableBodyCell textAlign="end" className="text-primary">
-				{pct(rates.supply.apy)}
+				{formatPercent(rates.supply.apy, YIELD_PERCENT_OPTIONS) ?? '—'}
 			</TokenPageTableBodyCell>
 			<TokenPageTableBodyCell textAlign="end" className="text-primary">
-				{pct(rates.borrow.apy)}
+				{formatPercent(rates.borrow.apy, YIELD_PERCENT_OPTIONS) ?? '—'}
 			</TokenPageTableBodyCell>
 			<TokenPageTableBodyCell textAlign="end" className="text-primary">
 				{sp.text}

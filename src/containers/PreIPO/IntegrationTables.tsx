@@ -5,11 +5,8 @@ import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { PreIpoPerpIntegration, PreIpoTokenIssuerIntegration } from './api.types'
+import { PRE_IPO_USD_OPTIONS } from './constants'
 import { preIpoDefinitions } from './definitions'
-
-function formatMoney(value: number | null | undefined): string {
-	return formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, maximumFractionDigits: 2 }) ?? '-'
-}
 
 function IntegrationLink({ href, label }: { href: string; label: string }) {
 	return (
@@ -76,7 +73,7 @@ const perpColumns = [
 	perpColumnHelper.accessor((row) => row.volume ?? undefined, {
 		id: 'volume',
 		header: preIpoDefinitions.perpetualMarket.volume.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[120px]',
 			align: 'end',
@@ -86,7 +83,7 @@ const perpColumns = [
 	perpColumnHelper.accessor((row) => row.openInterest ?? undefined, {
 		id: 'openInterest',
 		header: preIpoDefinitions.perpetualMarket.openInterest.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -107,7 +104,7 @@ const perpColumns = [
 	perpColumnHelper.accessor((row) => row.estimatedValuation ?? undefined, {
 		id: 'estimatedValuation',
 		header: preIpoDefinitions.perpetualMarket.estimatedValuation.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[170px]',
 			align: 'end',
@@ -155,7 +152,7 @@ const issuerColumns = [
 	issuerColumnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
 		header: preIpoDefinitions.tokenIssuer.marketCap.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[140px]',
 			align: 'end',
@@ -165,7 +162,7 @@ const issuerColumns = [
 	issuerColumnHelper.accessor((row) => row.estimatedValuation ?? undefined, {
 		id: 'estimatedValuation',
 		header: preIpoDefinitions.tokenIssuer.estimatedValuation.label,
-		cell: ({ getValue }) => formatMoney(getValue()),
+		cell: ({ getValue }) => formatUsd(getValue(), PRE_IPO_USD_OPTIONS) ?? '-',
 		meta: {
 			headerClassName: 'w-[170px]',
 			align: 'end',

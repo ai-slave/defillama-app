@@ -21,16 +21,21 @@ import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetch
 import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tableQueryKeys'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
-import { formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
+import {
+	formatPercentChange,
+	formatRatio,
+	formatUsd,
+	formatCompactNumber,
+	formatPercent,
+	USD_LOWERCASE_MILLIONS_OPTIONS,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+} from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
-import {
-	formatEquitiesCompanyDividendYield,
-	formatEquitiesCompanyVolume,
-	getEquitiesCompanyCsvRow
-} from './EquitiesCompaniesDataset.utils'
+import { getEquitiesCompanyCsvRow } from './EquitiesCompaniesDataset.utils'
 
 const columnHelper = createColumnHelper<IEquitiesCompanyApiItem>()
 
@@ -54,23 +59,21 @@ const columns = [
 	columnHelper.accessor((row) => row.currentPrice ?? undefined, {
 		id: 'currentPrice',
 		header: 'Price',
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatUsd(info.getValue(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' },
 		size: 120
 	}),
 	columnHelper.accessor((row) => row.marketCap ?? undefined, {
 		id: 'marketCap',
 		header: 'Market Cap',
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatUsd(info.getValue(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' },
 		size: 140
 	}),
 	columnHelper.accessor((row) => row.volume ?? undefined, {
 		id: 'volume',
 		header: 'Volume',
-		cell: (info) => formatEquitiesCompanyVolume(info.getValue()),
+		cell: (info) => formatCompactNumber(info.getValue(), NUMBER_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' },
 		size: 130
 	}),
@@ -120,23 +123,21 @@ const columns = [
 	columnHelper.accessor((row) => row.dividendYield ?? undefined, {
 		id: 'dividendYield',
 		header: 'Div Yield',
-		cell: (info) => formatEquitiesCompanyDividendYield(info.getValue()),
+		cell: (info) => formatPercent(info.getValue(), PERCENT_POINTS_TWO_DECIMALS_OPTIONS) ?? '—',
 		meta: { align: 'end' },
 		size: 100
 	}),
 	columnHelper.accessor((row) => row.revenueTTM ?? undefined, {
 		id: 'revenueTTM',
 		header: 'Revenue TTM',
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatUsd(info.getValue(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' },
 		size: 140
 	}),
 	columnHelper.accessor((row) => row.earningsTTM ?? undefined, {
 		id: 'earningsTTM',
 		header: 'Earnings TTM',
-		cell: (info) =>
-			formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+		cell: (info) => formatUsd(info.getValue(), USD_LOWERCASE_MILLIONS_OPTIONS),
 		meta: { align: 'end' },
 		size: 140
 	})
