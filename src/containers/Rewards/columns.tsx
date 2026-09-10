@@ -150,10 +150,12 @@ export function renderProgramDetails(row: Row<RewardProgram>) {
 					<dt className="label-sm text-secondary">For invited users</dt>
 					<dd className="mt-1 body-md text-primary">{program.visitorBenefit}</dd>
 				</div>
-				<div>
-					<dt className="label-sm text-secondary">For users who invite others</dt>
-					<dd className="mt-1 body-md text-primary">{program.referrerBenefit}</dd>
-				</div>
+				{program.referrerBenefit ? (
+					<div>
+						<dt className="label-sm text-secondary">For users who invite others</dt>
+						<dd className="mt-1 body-md text-primary">{program.referrerBenefit}</dd>
+					</div>
+				) : null}
 			</dl>
 			{program.sources.length > 0 ? (
 				<div className="flex flex-wrap items-center gap-2">

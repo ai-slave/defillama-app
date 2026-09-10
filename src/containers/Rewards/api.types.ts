@@ -3,7 +3,7 @@ import type { RewardBenefitAudience, RewardLifecycle, RewardType, RewardVerifica
 // /rewards returns Airtable fields directly; empty cells are omitted.
 export interface RewardsApiRecord {
 	program_id: string
-	defillama_id: string
+	defillama_id?: string
 	/** Backend-resolved ranking identity; not the row's navigation destination. */
 	project_path: string | null
 	protocol: string

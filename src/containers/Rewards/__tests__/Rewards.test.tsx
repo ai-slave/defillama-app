@@ -40,6 +40,21 @@ describe('Rewards dashboard', () => {
 	}
 	const tableRows = () => [...container.querySelectorAll('tbody tr')]
 
+	test.each([null, 'Referrers earn points.'])(
+		'renders the referrer section only with benefit copy: %j',
+		async (benefit) => {
+			await act(async () =>
+				root.render(<Rewards programs={[program({ referrerBenefit: benefit })]} analyticsMode="off" />)
+			)
+			await act(async () => element<HTMLButtonElement>('[aria-label="Details for Example"]').click())
+			const details = element<HTMLElement>('[id^="reward-details-"]')
+			expect(details.textContent).toContain('For invited users')
+			expect(details.textContent).toContain('Earn points on deposits.')
+			expect(details.textContent?.includes('For users who invite others')).toBe(benefit !== null)
+			expect(details.querySelector('dl > div:nth-child(2) dd')?.textContent ?? null).toBe(benefit)
+		}
+	)
+
 	test('sorts headers locally, ignores sort URLs, and restores server order on Reset', async () => {
 		const programs = [
 			program({ programId: 'popular', protocol: 'Popular' }),

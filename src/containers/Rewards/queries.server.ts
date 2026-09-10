@@ -64,8 +64,8 @@ export function buildRewardsPageData(
 			featuredRankByProgramId.set(entry.program_id, featuredRank)
 			programIdByFeaturedRank.set(featuredRank, entry.program_id)
 		}
-		const protocol = metadata[entry.defillama_id]
-		if (!protocol) missingMetadata.add(entry.defillama_id)
+		const protocol = entry.defillama_id ? metadata[entry.defillama_id] : undefined
+		if (entry.defillama_id && !protocol) missingMetadata.add(entry.defillama_id)
 		const name = protocol?.displayName ?? protocol?.name ?? entry.protocol
 		const sources: Array<RewardSource> = []
 		for (const value of entry.source_url?.split('|') ?? []) {
@@ -74,7 +74,7 @@ export function buildRewardsPageData(
 		}
 		programs.push({
 			programId: entry.program_id,
-			defillamaId: entry.defillama_id,
+			defillamaId: entry.defillama_id ?? null,
 			projectPath: entry.project_path,
 			protocol: name,
 			programName: entry.program_name ?? null,
@@ -89,10 +89,8 @@ export function buildRewardsPageData(
 			summary: entry.summary,
 			benefitAudience: entry.benefit_audience,
 			visitorBenefit: entry.visitor_benefit,
-			// Published for every program: reward_types describes what a program pays
-			// out, never whether inviting others earns anything, so it cannot gate this.
-			// Entries with no referral payout say so in their own copy.
-			referrerBenefit: entry.referrer_benefit ?? null,
+			// Referral benefits depend on the supplied copy, not the program's reward types.
+			referrerBenefit: entry.referrer_benefit?.trim() || null,
 			referralUrl: publicHttpUrl(entry.referral_url)?.url ?? null,
 			sources,
 			lastVerified: formatDate(entry.last_verified)

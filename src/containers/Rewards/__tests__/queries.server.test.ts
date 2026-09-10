@@ -46,6 +46,7 @@ describe('rewards public page boundary', () => {
 		expect(programs).toHaveLength(2)
 		expect(programs[0]).toMatchObject({
 			programId: 'referral',
+			defillamaId: '1',
 			protocol: 'Example Protocol',
 			protocolHref: '/protocol/example-protocol',
 			category: 'Derivatives'
@@ -135,9 +136,26 @@ describe('rewards public page boundary', () => {
 		])
 	})
 
-	test('serializes programs when the API omits the referrer benefit', () => {
+	test('retains serializable programs when the API omits the DefiLlama ID', () => {
+		const entry = apiRecord({ project_path: null })
+		delete entry.defillama_id
+		const data = buildRewardsPageData([entry], {}, rankings)
+
+		expect(data.programs[0]).toMatchObject({
+			programId: entry.program_id,
+			defillamaId: null,
+			protocol: entry.protocol,
+			protocolHref: null,
+			logo: null,
+			category: null
+		})
+		expect(JSON.parse(JSON.stringify(data))).toEqual(data)
+	})
+
+	test.each([undefined, '', ' \t '])('serializes blank referrer benefit %j as null', (benefit) => {
 		const entry = apiRecord({})
-		delete entry.referrer_benefit
+		if (benefit === undefined) delete entry.referrer_benefit
+		else entry.referrer_benefit = benefit
 		const { programs } = buildRewardsPageData([entry], {}, rankings)
 
 		expect(programs[0].referrerBenefit).toBeNull()

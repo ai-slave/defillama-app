@@ -25,7 +25,7 @@ export interface RewardSource {
 
 export interface RewardProgram {
 	programId: string
-	defillamaId: string
+	defillamaId: string | null
 	projectPath: string | null
 	protocol: string
 	programName: string | null
