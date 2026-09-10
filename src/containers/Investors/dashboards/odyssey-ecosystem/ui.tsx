@@ -19,8 +19,8 @@ export function KpiCard({
 			<span className="flex items-center gap-0.5 text-xs font-medium tracking-wide text-pro-text-label">
 				{label}
 				{info && (
-					<Tooltip content={info} className="cursor-help">
-						<span className="text-pro-text-secondary">*</span>
+					<Tooltip content={info} className="cursor-help text-pro-text-secondary">
+						*
 					</Tooltip>
 				)}
 			</span>

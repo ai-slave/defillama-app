@@ -56,8 +56,8 @@ export function MicaDepthValue({
 	const detail = micaDepthDetail(bid, ask, partialCoverage)
 	return (
 		<span className="inline-flex items-center justify-end gap-1.5">
-			<Tooltip content={detail} className="justify-end">
-				<span className="whitespace-nowrap">{liquidity(value)}</span>
+			<Tooltip content={detail} className="justify-end whitespace-nowrap">
+				{liquidity(value)}
 			</Tooltip>
 			<Tooltip content={helperText}>
 				<Icon name="help-circle" height={13} width={13} className="shrink-0 text-tertiary" />

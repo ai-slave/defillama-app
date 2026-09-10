@@ -162,8 +162,8 @@ function createEarnColumns(query: Record<string, unknown>, median?: EarnApyMedia
 			cell: (info) => {
 				const value = info.getValue()
 				return value ? (
-					<Tooltip content={value} className="block">
-						<span className="truncate">{value}</span>
+					<Tooltip content={value} className="block! truncate">
+						{value}
 					</Tooltip>
 				) : (
 					<EmptyCell />

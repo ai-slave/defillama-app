@@ -193,8 +193,8 @@ export function RampTradeValue({ row, size }: { row: RampRowModel; size: number 
 		`Book slippage: ${usd(row.trade.slippageBuyUsd) ?? 'unknown'}`
 	].join('\n')
 	return (
-		<Tooltip content={detail} className="justify-end">
-			<span className="whitespace-nowrap">{usd(row.tradeCostUsd)}</span>
+		<Tooltip content={detail} className="justify-end whitespace-nowrap">
+			{usd(row.tradeCostUsd)}
 		</Tooltip>
 	)
 }

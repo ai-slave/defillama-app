@@ -192,8 +192,8 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 						<li key={i} className="flex items-center justify-between gap-2 py-1.5 body-sm">
 							<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-secondary">
 								{meta ? (
-									<Tooltip content={meta} className="underline decoration-dotted">
-										<span className="text-primary">{a.firm}</span>
+									<Tooltip content={meta} className="text-primary underline decoration-dotted">
+										{a.firm}
 									</Tooltip>
 								) : (
 									<span className="text-primary">{a.firm}</span>

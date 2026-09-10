@@ -228,10 +228,8 @@ export function EquitiesFinancialsTable({ statements }: { statements: IEquitiesS
 										key={`${statementType}-${periodType}-${header.periodEnding}`}
 										className="min-w-[132px] truncate border border-subtle bg-page p-2 text-left font-medium"
 									>
-										<Tooltip content={tooltipContent}>
-											<span className="underline decoration-dotted underline-offset-3">
-												{formatStatementPeriodLabel(header.periodEnding)}
-											</span>
+										<Tooltip className="underline decoration-dotted underline-offset-3" content={tooltipContent}>
+											{formatStatementPeriodLabel(header.periodEnding)}
 										</Tooltip>
 									</th>
 								)

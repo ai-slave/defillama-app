@@ -854,8 +854,11 @@ export function buildDirectoryColumns(
 			header: definitions.warnings.label,
 			cell: ({ row, getValue }) =>
 				getValue() > 0 ? (
-					<Tooltip content={row.original.warnings.map((warning) => warning.text).join(' · ')}>
-						<span className="underline decoration-dotted">{getValue()}</span>
+					<Tooltip
+						className="underline decoration-dotted"
+						content={row.original.warnings.map((warning) => warning.text).join(' · ')}
+					>
+						{getValue()}
 					</Tooltip>
 				) : (
 					'–'
@@ -967,8 +970,8 @@ export function buildDirectoryColumns(
 			cell: ({ getValue }) => {
 				const headquarters = getValue()
 				return headquarters ? (
-					<Tooltip content={headquarters} className="max-w-full">
-						<span className="truncate">{headquarters}</span>
+					<Tooltip content={headquarters} className="block! max-w-full truncate">
+						{headquarters}
 					</Tooltip>
 				) : (
 					<span className="text-tertiary">–</span>

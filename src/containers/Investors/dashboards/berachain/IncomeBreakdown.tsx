@@ -148,10 +148,8 @@ function KpiCard({ label, value, tooltip }: { label: string; value: string | num
 			<span className="flex items-center gap-1 text-xs font-medium tracking-wide text-pro-text-label">
 				{label}
 				{tooltip && (
-					<Tooltip content={tooltip}>
-						<span className="cursor-help">
-							<InfoIcon />
-						</span>
+					<Tooltip className="cursor-help" content={tooltip}>
+						<InfoIcon />
 					</Tooltip>
 				)}
 			</span>

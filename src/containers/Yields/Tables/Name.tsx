@@ -97,8 +97,8 @@ export function PoolNameLockup({
 					<span className="truncate font-medium text-link hover:underline">{value}</span>
 				</Tooltip>
 				{poolMeta ? (
-					<Tooltip content={poolMeta} className="max-w-full body-sm text-secondary">
-						<span className="truncate">{poolMeta}</span>
+					<Tooltip content={poolMeta} className="block! max-w-full truncate body-sm text-secondary">
+						{poolMeta}
 					</Tooltip>
 				) : null}
 			</BasicLink>

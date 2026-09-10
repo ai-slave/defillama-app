@@ -69,8 +69,8 @@ function CustomRangeCell({ state, value }: { state: CustomRangeState; value: num
 		}
 		case 'missing':
 			return (
-				<Tooltip content="No inflow data available for this date range">
-					<span className="text-tertiary">N/A</span>
+				<Tooltip className="text-tertiary" content="No inflow data available for this date range">
+					N/A
 				</Tooltip>
 			)
 		case 'measured':

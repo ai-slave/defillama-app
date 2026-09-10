@@ -226,7 +226,7 @@ function PairRow({ pair }: { pair: ExchangeExecutionPairModel }) {
 					NA
 				) : (
 					<Tooltip content={`Quoted spread: ${pctOfBps(pair.quotedSpreadBps)}`} className="ms-auto w-fit">
-						<span>{pctOfBps(pair.effectiveSpreadBps)}</span>
+						{pctOfBps(pair.effectiveSpreadBps)}
 					</Tooltip>
 				)}
 			</td>
@@ -253,7 +253,7 @@ function PairRow({ pair }: { pair: ExchangeExecutionPairModel }) {
 			</td>
 			<td className="border-t border-subtle px-2 py-2 text-right whitespace-nowrap text-tertiary">
 				<Tooltip content={`${formatNumber(pair.fillCount)} fills measured`} className="ms-auto w-fit">
-					<span>{`${pair.hoursCovered}h`}</span>
+					{`${pair.hoursCovered}h`}
 				</Tooltip>
 			</td>
 		</tr>
@@ -296,8 +296,11 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 		<Card padding="sm" className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center gap-2">
 				<h3 className="label-md">Order book feed speed</h3>
-				<Tooltip content={`Latest measured day: ${feed.date}.`} className="w-fit">
-					<span className="body-sm text-secondary underline decoration-dotted">BTC perp book</span>
+				<Tooltip
+					content={`Latest measured day: ${feed.date}.`}
+					className="w-fit body-sm text-secondary underline decoration-dotted"
+				>
+					BTC perp book
 				</Tooltip>
 				{feed.degraded ? (
 					<Tooltip
@@ -311,8 +314,8 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 			<div className="grid grid-cols-2 gap-3 md:grid-cols-4">
 				{stats.map((stat) => (
 					<div key={stat.label} className="flex flex-col gap-0.5">
-						<Tooltip content={stat.help} className="w-fit">
-							<span className="label-md text-secondary underline decoration-dotted">{stat.label}</span>
+						<Tooltip content={stat.help} className="w-fit label-md text-secondary underline decoration-dotted">
+							{stat.label}
 						</Tooltip>
 						<span className="mono-xl">{stat.value}</span>
 					</div>
@@ -353,8 +356,11 @@ export function ProfileExecution({ execution }: { execution: ExchangeExecutionMo
 													: 'text-left'
 										}`}
 									>
-										<Tooltip content={column.help} className={column.align === 'end' ? 'ms-auto w-fit' : 'w-fit'}>
-											<span className="whitespace-nowrap underline decoration-dotted">{column.label}</span>
+										<Tooltip
+											content={column.help}
+											className={`${column.align === 'end' ? 'ms-auto w-fit' : 'w-fit'} whitespace-nowrap underline decoration-dotted`}
+										>
+											{column.label}
 										</Tooltip>
 									</th>
 								))}
