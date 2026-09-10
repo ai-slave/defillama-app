@@ -1,11 +1,27 @@
-import type { ReactElement } from 'react'
+// @vitest-environment happy-dom
+
+import type { ReactNode } from 'react'
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import type { IRWAPerpsContractData } from '../types'
 
+/** Records what the page hands its layout, so the assertions mount the page instead of calling it. */
+const layoutProps: Array<Record<string, unknown>> = []
+
 afterEach(() => {
+	layoutProps.length = 0
 	vi.clearAllMocks()
 	vi.resetModules()
 })
+
+/** Mounts a page component the way the app does, so the React Compiler runtime has a render to sit in. */
+async function mount(element: ReactNode): Promise<void> {
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	await act(async () => root.render(element))
+}
 
 function setupPageModule({
 	contracts = ['xyz:META'],
@@ -35,7 +51,10 @@ function setupPageModule({
 		getRWAPerpsContractData: vi.fn().mockResolvedValue(contractData)
 	}))
 	vi.doMock('~/layout', () => ({
-		default: () => null
+		default: ({ children, ...props }: { children?: ReactNode }) => {
+			layoutProps.push(props)
+			return children
+		}
 	}))
 	vi.doMock('~/utils/maxAgeForNext', () => ({
 		maxAgeForNext: () => 123
@@ -209,11 +228,10 @@ describe('rwa perps contract page', () => {
 
 	test('uses the raw contract identifier in the SEO title', async () => {
 		const page = await setupPageModule({ contracts: ['xyz:META'], contractData: TEST_CONTRACT })
+		const Page = page.default
 
-		const element = page.default({ contract: TEST_CONTRACT, canonicalContract: 'xyz:META' } as never) as ReactElement<{
-			title: string
-		}>
+		await mount(<Page contract={TEST_CONTRACT as never} canonicalContract="xyz:META" />)
 
-		expect(element.props.title).toBe('xyz:META - RWA Perps Analytics - DefiLlama')
+		expect(layoutProps[0].title).toBe('xyz:META - RWA Perps Analytics - DefiLlama')
 	})
 })

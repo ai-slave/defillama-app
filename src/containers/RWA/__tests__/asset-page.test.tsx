@@ -1,10 +1,26 @@
-import type { ReactElement } from 'react'
+// @vitest-environment happy-dom
+
+import type { ReactNode } from 'react'
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
+/** Records what the page hands its layout, so the assertions mount the page instead of calling it. */
+const layoutProps: Array<Record<string, unknown>> = []
+
 afterEach(() => {
+	layoutProps.length = 0
 	vi.clearAllMocks()
 	vi.resetModules()
 })
+
+/** Mounts a page component the way the app does, so the React Compiler runtime has a render to sit in. */
+async function mount(element: ReactNode): Promise<void> {
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	await act(async () => root.render(element))
+}
 
 const TEST_ASSET = {
 	id: 'asset-1',
@@ -49,7 +65,10 @@ function setupPageModule({
 		acquireOptionalYieldsSnapshot: vi.fn().mockResolvedValue(yieldsSnapshot)
 	}))
 	vi.doMock('~/layout', () => ({
-		default: () => null
+		default: ({ children, ...props }: { children?: ReactNode }) => {
+			layoutProps.push(props)
+			return children
+		}
 	}))
 	vi.doMock('~/utils/maxAgeForNext', () => ({
 		maxAgeForNext: () => 123
@@ -138,11 +157,10 @@ describe('rwa asset page', () => {
 
 	test('uses the canonical-cased asset slug in the canonical URL', async () => {
 		const page = await setupPageModule()
+		const Page = page.default
 
-		const element = page.default({ asset: TEST_ASSET, canonicalMarketId: 'USDE' } as never) as ReactElement<{
-			canonicalUrl: string
-		}>
+		await mount(<Page asset={TEST_ASSET as never} canonicalMarketId="USDE" />)
 
-		expect(element.props.canonicalUrl).toBe('/rwa/asset/USDE')
+		expect(layoutProps[0].canonicalUrl).toBe('/rwa/asset/USDE')
 	})
 })

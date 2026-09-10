@@ -35,36 +35,25 @@ function reactCompilerUnderTest() {
 	}
 }
 
+const SHARED_EXCLUDE = [...configDefaults.exclude, '**/.codex/**', '**/.claude/**']
+
 /**
- * Behaviour that breaks only once its component compiles, so it runs a second time against compiler
- * output.
+ * Tests that cannot run against compiler output. Empty, and worth keeping that way: every `.test.tsx`
+ * file runs twice, once as written and once compiled, because compiling changes what gets memoized and
+ * a memo can hold state that a render used to rebuild. Heading ids in the chat renderer renumbered
+ * themselves mid-stream once the component started compiling, with the suite green.
  *
- * Listed rather than globbed, because compiling narrows what a test may do: the compiler runtime
- * reads `useMemoCache`, which only exists inside a render, so a test that calls a component or hook
- * as a plain function throws here even though the app never calls it that way. A dozen existing
- * tests do exactly that. Add a file when it mounts through a real renderer and asserts behaviour
- * that memoization can change.
+ * Before adding a file here, check which of the two known causes it is, because both are test defects
+ * with a fix:
+ *
+ * - Calling a component or hook as a plain function. The compiler runtime reads `useMemoCache`, which
+ *   only exists inside a render, so it throws `Cannot read properties of null`. Mount the component
+ *   instead and assert what it renders or what it hands its children.
+ * - Mutating a mock in place and re-rendering. A memo keyed on the mock's identity cannot see the new
+ *   value, and the app cannot produce that transition either, because react-query replaces a result
+ *   object when its state changes. Replace the object instead of writing to its fields.
  */
-const COMPILER_SENSITIVE_TESTS = [
-	'src/containers/LlamaAI/components/markdown/mendStreamingMarkdown.test.tsx',
-	'src/containers/LlamaAI/components/messages/ResponseErrorBoundary.test.tsx',
-	'src/containers/LlamaAI/hooks/useChatScroll.test.tsx',
-	'src/containers/LlamaAI/components/__tests__/chatShareReadiness.test.tsx',
-	'src/containers/LlamaAI/components/__tests__/shareModalClipboard.test.tsx',
-	'src/containers/LlamaAI/components/__tests__/ImagePreviewModal.test.tsx',
-	'src/containers/ProDashboard/components/MultiChartCard.csv.test.tsx',
-	'src/components/__tests__/CsvDownloadButton.test.tsx',
-	'src/containers/ProDashboard/components/TemplateCreation.test.tsx',
-	'src/containers/ProDashboard/components/SqlChart/__tests__/SqlChartLifetime.test.tsx',
-	'src/components/DashboardSaveGuard.test.tsx',
-	'src/containers/ProDashboard/dashboardAutosave.test.tsx',
-	'src/containers/ProDashboard/hooks/__tests__/useAutoSave.test.tsx',
-	'src/containers/LlamaAI/components/markdown/headingIds.test.tsx',
-	'src/containers/LlamaAI/components/markdown/incrementalRendering.test.tsx',
-	'src/containers/LlamaAI/components/markdown/streamingCaret.test.tsx',
-	'src/containers/LlamaAI/components/markdown/citationMarkerReservation.test.tsx',
-	'src/containers/LlamaAI/__tests__/duelVariant.test.ts'
-]
+const COMPILER_INCOMPATIBLE_TESTS: Array<string> = []
 
 export default defineConfig({
 	css: {
@@ -87,14 +76,20 @@ export default defineConfig({
 		// only changes how long a genuinely stuck test takes to give up.
 		testTimeout: 30_000,
 		hookTimeout: 30_000,
-		exclude: [...configDefaults.exclude, '**/.codex/**', '**/.claude/**'],
+		exclude: SHARED_EXCLUDE,
 		setupFiles: ['./vitest.setup.ts'],
 		projects: [
 			{ extends: true, test: { name: 'unit', include: ['**/*.test.ts', '**/*.test.tsx'] } },
 			{
 				extends: true,
 				plugins: [reactCompilerUnderTest()],
-				test: { name: 'compiled', include: COMPILER_SENSITIVE_TESTS }
+				// Project-level exclude replaces the inherited one, so it restates SHARED_EXCLUDE. Without
+				// it, `.claude/worktrees` copies of the tree would be collected as tests.
+				test: {
+					name: 'compiled',
+					include: ['**/*.test.tsx'],
+					exclude: [...SHARED_EXCLUDE, ...COMPILER_INCOMPATIBLE_TESTS]
+				}
 			}
 		]
 	}

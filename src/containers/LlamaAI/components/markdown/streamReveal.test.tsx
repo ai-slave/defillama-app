@@ -15,7 +15,6 @@ async function runFrames(count: number) {
 		const time = now
 		const queued = frames
 		frames = []
-		// oxlint-disable-next-line no-await-in-loop
 		await act(async () => {
 			for (const cb of queued) cb(time)
 		})
@@ -65,7 +64,6 @@ test('spreads a chunk over the expected gap instead of showing it at once', asyn
 	let previous = 0
 	await runFrames(6)
 	for (let i = 0; i < 10; i++) {
-		// oxlint-disable-next-line no-await-in-loop
 		await runFrames(1)
 		const length = shown().length
 		expect(length).toBeGreaterThan(previous)
@@ -141,7 +139,6 @@ test('spaces commits so a costly render stays within its budget while the text k
 	const steps: Array<number> = []
 	let previous = first
 	for (let i = 0; i < 20; i++) {
-		// oxlint-disable-next-line no-await-in-loop
 		await runFrames(1)
 		if (shown().length !== previous) steps.push(shown().length - previous)
 		previous = shown().length
@@ -164,7 +161,6 @@ test('drops to every other frame while frames arrive late', async () => {
 		const time = now
 		const queued = frames
 		frames = []
-		// oxlint-disable-next-line no-await-in-loop
 		await act(async () => {
 			for (const cb of queued) cb(time)
 		})
@@ -179,7 +175,6 @@ test('never splits an emoji between frames', async () => {
 	const text = '🦙'.repeat(60)
 	await render(text, true)
 	for (let i = 0; i < 40; i++) {
-		// oxlint-disable-next-line no-await-in-loop
 		await runFrames(1)
 		const value = shown()
 		expect(/[\uD800-\uDBFF]$/.test(value), `lone high surrogate after ${value.length} characters`).toBe(false)

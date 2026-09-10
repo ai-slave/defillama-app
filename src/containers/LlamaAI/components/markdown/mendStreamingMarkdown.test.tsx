@@ -129,7 +129,6 @@ test.each([
 			const content = source.slice(0, end)
 			expect(() => mend(content)).not.toThrow()
 			// Each prefix must commit before the next to exercise the incremental parser cache.
-			// eslint-disable-next-line no-await-in-loop
 			await act(async () => root.render(<ChatMarkdownRenderer content={content} isStreaming />))
 		}
 		await act(async () => root.render(<ChatMarkdownRenderer content={source} isStreaming={false} />))
@@ -177,12 +176,10 @@ test('stress streams malformed Markdown through cached and fresh renderers', asy
 					end = Math.min(source.length, end + [1, 2, 7, 19][(renders + index) % 4])
 					const content = source.slice(0, end)
 					// Commit each chunk to exercise parser reuse and streaming repair together.
-					// eslint-disable-next-line no-await-in-loop
 					await act(async () => root.render(<ChatMarkdownRenderer content={content} isStreaming />))
 					renders++
 				}
 				// Compare the completed streamed instance with a newly mounted, finished instance.
-				// eslint-disable-next-line no-await-in-loop
 				await act(async () => {
 					root.render(<ChatMarkdownRenderer content={source} isStreaming={false} />)
 					freshRoot.render(<ChatMarkdownRenderer key={`${index}:${prefix}`} content={source} isStreaming={false} />)

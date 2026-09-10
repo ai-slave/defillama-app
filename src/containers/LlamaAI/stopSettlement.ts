@@ -35,7 +35,6 @@ export async function settleStopRequest({
 	let acknowledged = false
 	// Sequential by design: each poll asks whether the execution is still running, and the delays are
 	// the backoff between asks. There is nothing to run in parallel.
-	// oxlint-disable eslint/no-await-in-loop -- see above
 	try {
 		while (!signal.aborted && isCurrentSession()) {
 			try {
@@ -64,4 +63,3 @@ export async function settleStopRequest({
 		release()
 	}
 }
-// oxlint-enable eslint/no-await-in-loop

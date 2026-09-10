@@ -16,12 +16,18 @@ const mocks = vi.hoisted(() => ({
 	clearImages: vi.fn()
 }))
 vi.mock('next/router', () => ({ useRouter: () => mocks.router, default: {} }))
+
+// react-query replaces a result object when its state changes, so `setSessions` does too. Mutating one
+// in place leaves the identity untouched, which a memo cannot see.
+function setSessions(patch: Partial<typeof mocks.sessions>): void {
+	mocks.sessions = { ...mocks.sessions, ...patch }
+}
 vi.mock('./hooks', () => ({
 	useProjectUsage: () => ({ data: { limits: { project_bytes: 1000, project_files: 10 } } }),
 	useProjectDetail: () => ({
 		data: { name: 'Research', custom_instructions: mocks.instructions, file_count: 2, total_bytes: 100 }
 	}),
-	useProjectSessions: () => mocks.sessions,
+	useProjectSessions: () => ({ ...mocks.sessions }),
 	useUpdateProject: () => ({ isPending: false, error: null, mutate: mocks.updateProject })
 }))
 vi.mock('./ProjectFilesPanel', () => ({
@@ -60,9 +66,9 @@ beforeEach(() => {
 	vi.clearAllMocks()
 	mocks.router.query = { id: 'project-1', connectGithub: '1' }
 	mocks.instructions = 'Saved instructions'
-	mocks.sessions.isLoading = false
-	mocks.sessions.isFetching = false
-	mocks.sessions.error = null
+	setSessions({ isLoading: false })
+	setSessions({ isFetching: false })
+	setSessions({ error: null })
 	mocks.isStreaming = false
 	mocks.updateProject.mockResolvedValue(undefined)
 	container = document.createElement('div')
@@ -185,12 +191,12 @@ test('tab changes preserve drafts and show the composer only on Chats', async ()
 })
 
 test('chat loading, failure and retry never present a false empty state', async () => {
-	mocks.sessions.isLoading = true
+	setSessions({ isLoading: true })
 	await render()
 	expect(container.textContent).toContain('Loading chats')
 	expect(container.textContent).not.toContain('No chats yet')
-	mocks.sessions.isLoading = false
-	mocks.sessions.error = new Error('Unavailable')
+	setSessions({ isLoading: false })
+	setSessions({ error: new Error('Unavailable') })
 	await render()
 	expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load chats.")
 	expect(container.textContent).not.toContain('No chats yet')
@@ -198,12 +204,12 @@ test('chat loading, failure and retry never present a false empty state', async 
 		[...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Retry chats'))!.click()
 	)
 	expect(mocks.sessions.refetch).toHaveBeenCalledOnce()
-	mocks.sessions.isFetching = true
+	setSessions({ isFetching: true })
 	await render()
 	const retry = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Retrying…'))!
 	expect(retry.disabled).toBe(true)
-	mocks.sessions.error = null
-	mocks.sessions.isFetching = false
+	setSessions({ error: null })
+	setSessions({ isFetching: false })
 	await render()
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 	expect(container.textContent).toContain('No chats yet')

@@ -26,6 +26,24 @@ import { type Counts, findGrowth, findStale, parseCounts, renderCounts, total } 
 
 const COUNTS_PATH = '.reactcompiler.baseline.json'
 const SKIP_REASON = 'Skipped by directive'
+const LIBRARY_REASON = 'Use of incompatible library'
+
+/**
+ * Reasons a new entry is expected rather than a regression, so the growth check against the base ref
+ * ignores them. Both still fail the working-tree check until the baseline is regenerated, which keeps
+ * every new entry a visible diff and a review decision.
+ *
+ * `Skipped by directive` is an opt-out somebody chose. `Use of incompatible library` is the deferred
+ * TanStack rule -- the same decision as `react/incompatible-library: "off"` in .oxlintrc.json -- and it
+ * fires on every `useReactTable` and `useVirtualizer` call site, so a new table page trips it with no
+ * fix available. Treating that as new debt blocked the page and told the author to fix a bailout that
+ * only the TanStack migration can remove.
+ *
+ * Staleness is deliberately not exempt. A file that stops bailing on the library has started compiling,
+ * and for a component that reads TanStack row or cell state that is the failure mode described in
+ * docs/lint-burn-down.md: the read lands in a cache guard against a stable identity and freezes.
+ */
+const GROWTH_EXEMPT_REASONS = [SKIP_REASON, LIBRARY_REASON]
 
 function sourceFiles(dir = 'src'): Array<string> {
 	const out: Array<string> = []
@@ -112,6 +130,11 @@ function readBaseCounts(ref: string): Counts | null {
 	return parseCounts(result.stdout)
 }
 
+/** findGrowth renders entries as `<reason>  <file>  <before> -> <after>`. */
+function isGrowthExempt(entry: string): boolean {
+	return GROWTH_EXEMPT_REASONS.some((reason) => entry.startsWith(`${reason}  `))
+}
+
 function report(title: string, lines: Array<string>): void {
 	console.error(title)
 	for (const line of lines.slice(0, 50)) console.error(`  ${line}`)
@@ -138,8 +161,11 @@ if (args.includes('--check')) {
 
 	const hidden = findGrowth(committed, fresh)
 	if (hidden.length > 0) {
+		const expected = hidden.every((entry) => isGrowthExempt(entry))
 		report(
-			`${hidden.length} file/reason entr(ies) bail more than the baseline records. A component stopped compiling; fix it rather than regenerating.`,
+			expected
+				? `${hidden.length} file/reason entr(ies) bail more than the baseline records, all for expected reasons. Run \`bun run compiler:baseline\` and keep the diff in the change.`
+				: `${hidden.length} file/reason entr(ies) bail more than the baseline records. A component stopped compiling; fix it rather than regenerating.`,
 			hidden
 		)
 		failed = true
@@ -151,10 +177,7 @@ if (args.includes('--check')) {
 	if (base === null) {
 		console.log(`No ${COUNTS_PATH} on ${baseRef}; skipping the growth check against it.`)
 	} else {
-		// A new opt-out is a visible diff and a review decision, so it is not counted as growth. The
-		// direction that needs a machine is the other one: deleting a directive makes its recorded entry
-		// stale, which the staleness check above already fails on.
-		const grown = findGrowth(base, committed).filter((entry) => !entry.includes(SKIP_REASON))
+		const grown = findGrowth(base, committed).filter((entry) => !isGrowthExempt(entry))
 		if (grown.length > 0) {
 			report(
 				`Baseline accepts ${grown.length} file/reason entr(ies) of new debt relative to ${baseRef}. Fix the bailouts instead.`,
@@ -172,5 +195,12 @@ if (args.includes('--check')) {
 	const fresh = report_.counts
 	writeFileSync(COUNTS_PATH, renderCounts(fresh))
 	const { rules, files, violations } = total(fresh)
+	// Split the total, because the two halves mean different things: one is a burn-down list, the other
+	// a register of components the deferred TanStack rule keeps out of the compiler.
+	let accepted = 0
+	for (const reason of GROWTH_EXEMPT_REASONS) {
+		for (const file in fresh[reason]) accepted += fresh[reason][file]
+	}
 	console.log(`Wrote ${COUNTS_PATH}: ${files} files, ${violations} bailouts across ${rules} reasons.`)
+	console.log(`${violations - accepted} to burn down; ${accepted} accepted (${GROWTH_EXEMPT_REASONS.join(', ')}).`)
 }

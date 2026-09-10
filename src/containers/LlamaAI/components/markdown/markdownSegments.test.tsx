@@ -50,7 +50,6 @@ test.each(fixtures)(
 		try {
 			for (let end = 1; end <= source.length; end += 5) {
 				const content = end + 5 > source.length ? source : source.slice(0, end)
-				// oxlint-disable-next-line no-await-in-loop
 				await act(async () => {
 					reference.root.render(
 						<ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]} rehypePlugins={rehype(true)}>

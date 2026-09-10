@@ -1,6 +1,6 @@
 # Lint burn-down plan
 
-Status as of 2026-09-06. Phase 0 is PR #3383. Every later phase starts from a fresh worktree off `main`
+Status as of 2026-09-10. Phase 0 is PR #3383. Every later phase starts from a fresh worktree off `main`
 after the previous PR is merged. No stacked PRs.
 
 ## How the ratchet works
@@ -19,6 +19,9 @@ after the previous PR is merged. No stacked PRs.
   `--base origin/main`. Regenerating the baseline can therefore only shrink it.
 - Editors that auto-discover `.oxlintrc.json` show the full debt in the files being edited. That is
   intended.
+- Every source file is in scope. The Llama Design System sweep excludes several surfaces, but that
+  exclusion is about legacy CSS tokens in products awaiting designs and does not carry over here. Lint
+  scope is narrowed by rule, never by path; Phase 5 lists the rules that are off and what re-opens each.
 
 Workflow for every fix PR: fix violations, run `bun run lint:baseline` to shrink the baseline, run
 `bun run lint:baseline:check`, and state in the PR which behavior each pattern must preserve and how it
@@ -31,6 +34,33 @@ was checked. "Mechanical" is not a review category; each pattern below names its
 | Rules with open violations          | 79    |
 | Files with at least one suppression | 2724  |
 | Violations                          | 19100 |
+
+## Where it stands
+
+|                                     |     |
+| ----------------------------------- | --- |
+| Rules with open violations          | 30  |
+| Files with at least one suppression | 323 |
+| Violations                          | 626 |
+
+`react/no-array-index-key` is 125 of the 626 and stays a one-at-a-time judgment bucket; the assessed
+`react/exhaustive-effect-dependencies` is 9 more. The groups worth doing, in order:
+
+1. `unicorn/prefer-add-event-listener` (27 in 13 files). The only remaining group where a violation
+   implies a defect: `img.onload =` replaces any handler already attached. Densest in
+   `UniversalTokenRating/PerformanceMatrix.tsx` (4) and `ECharts/HBarChart` (3).
+2. `vitest/no-conditional-expect` (74 in 19 files) plus `valid-expect` (7), `expect-expect` (6),
+   `require-to-throw-message` (2). A conditional `expect` can pass while asserting nothing, which is the
+   failure mode the testing policy in AGENTS.md exists to prevent. Half of it sits in four files:
+   `Token/__tests__/TokenYieldsSection.refresh.test.tsx` (15), `MarketMakers/server/__tests__/leads.test.ts`
+   (11), `AdapterMetrics/__tests__/feeRevenueSemantics.test.ts` (9) and
+   `StablecoinAssetDataset/useStablecoinAssetChartData.test.ts` (8).
+3. The jsx-a11y set (~155, led by `control-has-associated-label` at 78 across 49 files). User-facing, but
+   each fix is a decision about what the label should say, so it is a per-control judgment call rather
+   than one change.
+4. Style bulk: `consistent-function-scoping` 60, `function-component-definition` 52,
+   `jsx-no-useless-fragment` 30, `hook-use-state` 24, both `no-lonely-if` 28. No behavior change, very
+   wide diff.
 
 ## Phase 1: autofix
 
@@ -100,7 +130,7 @@ Each bucket has one right answer per site but needs a human to read the site.
 | unicorn/consistent-function-scoping                                  | 63 non-test | Hoist to module scope only when the function captures nothing. If it reads a component variable the rule is wrong about it; check before moving.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | react/button-has-type                                                | 315         | Done in Phase 2b. Every typeless button sat outside a `<form>` (checked by scanning each file for an enclosing form; the only component named SubmitButton fires `onClick`), so all 324 got `type="button"`, which cannot change submit behavior. The `Link` wrapper keeps its dynamic `type={props.type ?? 'button'}` behind an inline disable; test mocks using `createElement` pass `{ type: 'button' }`.                                                                                                                                                                                                                                                                                                                                                              |
 | eslint/no-empty                                                      | 64          | Done in Phase 2d. All 64 were `catch {}`; each now holds a one-line comment naming why the error is ignored (storage unavailable, clipboard denied, optional icon, best-effort attribution, prerender without paths). None swallowed an error a caller needed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| eslint/max-depth (4), no-param-reassign, no-loop-func, radix         | ~120        | Phase 2d: `radix` adds `, 10` where the input is decimal digits, and splits one conditional radix into two literal calls. `no-param-reassign` renames the parameter and binds the normalized value to a `const`; the two buffer rotations in useChatExecutionOwner keep an inline disable. `no-loop-func` stays on; its 8 hits are deliberate captures (a cancellation flag, the scheduler counter, awaited test cases) and carry inline disables naming that. `max-depth` (91) moves to the next PR.                                                                                                                                                                                                                                                                     |
+| eslint/max-depth (4), no-param-reassign, no-loop-func, radix         | ~120        | Phase 2d: `radix` adds `, 10` where the input is decimal digits, and splits one conditional radix into two literal calls. `no-param-reassign` renames the parameter and binds the normalized value to a `const`; the two buffer rotations in useChatExecutionOwner keep an inline disable. `no-loop-func` stays on; its 8 hits are deliberate captures (a cancellation flag, the scheduler counter, awaited test cases) and carry inline disables naming that. `max-depth` (91) was reviewed in Phase 4 and turned off.                                                                                                                                                                                                                                                   |
 
 ## Phase 3: React Compiler rules, by directory
 
@@ -527,6 +557,21 @@ or if the committed record accepts more than `origin/main` does. Regenerate with
 `bun run compiler:baseline`. A full run recompiles every non-test `.ts`/`.tsx` under `src` and takes
 about a minute.
 
+Two reasons are exempt from the growth check against the base ref, because a new entry for either is
+expected rather than a regression: `Skipped by directive`, which somebody chose, and
+`Use of incompatible library`, the deferred TanStack rule. That reason fires on every `useReactTable`
+and `useVirtualizer` call site, so adding a table page tripped it with no fix available — the check
+failed before regenerating and again after, and told the author to fix a bailout only the TanStack
+migration can remove. Both still fail the working-tree check until the baseline is regenerated, so
+every new entry stays a visible diff and a review decision.
+
+Staleness is deliberately not exempt. A file that stops bailing on the library has started compiling,
+which for a component reading TanStack row or cell state is the `Table.tsx` failure below.
+
+Because 87 of the 88 recorded bailouts are those two accepted reasons, regeneration prints the split
+rather than one total: what is left to burn down, and what is a register of components the deferred
+rule keeps out of the compiler.
+
 At creation: 193 bailouts across 154 files and 17 reasons. `Use of incompatible library` is 82 of them
 (`useVirtualizer` and `useReactTable`, the deferred rule). The rest are dominated by things the compiler
 cannot lower — value blocks inside `try`/`catch` (23), refs read during render (22), `try` with a
@@ -883,9 +928,9 @@ so the order that pays is: hooks hand out mutations, callers stop hand-rolling p
 and the `try`/`catch` around the await goes with it. Doing it in the other order means converting a
 `try`/`catch` and then rewriting the same lines again.
 
-Two things not on this list. `no-await-in-loop` (109) and `max-depth` (91) are the Phase 4 judgment
-buckets and unrelated. `Use of incompatible library` (82, and at least one more masked) is the deferred
-TanStack rule and will not move until table and virtual migrate.
+One thing not on this list. `Use of incompatible library` (82, and at least one more masked) is the
+deferred TanStack rule and will not move until table and virtual migrate. `no-await-in-loop` and
+`max-depth`, which used to be listed here as Phase 4 judgment buckets, are now off.
 
 The mechanical sweep took the baseline from 161 to 139, so 57 of the 139 are actionable. It fixed 22
 bailouts across 14 files and made 14 more components compile — the two figures differ, for the reason in
@@ -898,11 +943,21 @@ the floor caveat above.
 | react/no-array-index-key                      | 129  | One at a time. Preference order: the id the backend sends; a composite key from fields that identify the row; an id assigned once where the response is normalized, never at render time; for static lists that are never reordered, filtered or edited, keep the index with an inline disable saying so. Never `index + value` hacks. |
 | jsx-a11y correctness set                      | ~200 | Mostly `aria-label` on icon-only controls (96) and keyboard handlers on clickable divs (39). `prefer-tag-over-role` and `no-autofocus` stay off with reasons in the config.                                                                                                                                                            |
 | vitest/no-conditional-expect                  | 74   | Split the test or assert the condition. Each test still covers the branch it covered before.                                                                                                                                                                                                                                           |
-| eslint/no-await-in-loop                       | 109  | Parallelize with `Promise.all` where the iterations are independent; inline disable where sequencing is deliberate (rate limits, ordered writes).                                                                                                                                                                                      |
-| eslint/max-depth                              | 91   | Extract or early-return.                                                                                                                                                                                                                                                                                                               |
 | unicorn/consistent-function-scoping leftovers |      | See Phase 2.                                                                                                                                                                                                                                                                                                                           |
 
+Reviewed and turned off, with the reasoning recorded in `.oxlintrc.json`:
+
+| Rule                        | Hits | Why                                                                                                                                                          |
+| --------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| react/no-unescaped-entities | 177  | React escapes JSX text already. The hits are apostrophes and quotes in copy, and entity-encoding prose makes it harder to read and to translate.             |
+| eslint/no-await-in-loop     | 104  | The hits are deliberate sequencing: paginated fetches, rate-limited upstream calls, ordered writes, awaited test cases. Parallelizing changes behavior.      |
+| eslint/max-depth            | 91   | The hits are nested data reshaping and chart option builders whose depth follows the shape of the source data. A helper per level reads worse than the loop. |
+
 ## Phase 5: deferred, with the trigger that re-opens each
+
+`.oxlintrc.json` groups every rule that is not enforced into two blocks at the end of `rules`: the
+deferred ones below, each naming its trigger, and the ones off by decision. Enabled rules carry no
+comment.
 
 | Rule                                                                                                                                 | Trigger                                                                                                                         |
 | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -932,3 +987,7 @@ the floor caveat above.
   different questions and both are false on the server and during hydration. Loader-on-`!isReady` pages
   (~12) are a UX and SEO tradeoff to decide per page, not a lint fix.
 - `no-map-spread` is kept only if most sites own their arrays; the Phase 2 PR reports the split.
+- `no-unescaped-entities`, `no-await-in-loop` and `max-depth` are off rather than burned down; see the
+  Phase 4 table for the reasoning.
+- Lint scope is the whole repository. The design sweep's surface exclusions do not apply to it; only
+  rules are deferred, and each one carries its trigger in Phase 5.

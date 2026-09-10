@@ -52,7 +52,14 @@ const home = vi.hoisted(() => ({
 		mutate: vi.fn()
 	}
 }))
-vi.mock('~/containers/LlamaAI/hooks/useAgentHomeData', () => ({ useAgentHomeData: () => home }))
+// A hook composing query results hands back a new object each render, and react-query replaces a
+// result object when its state changes. Mutating one in place instead leaves every identity untouched,
+// which a memo cannot see -- so writes go through `set`, which replaces the slice it touches.
+vi.mock('~/containers/LlamaAI/hooks/useAgentHomeData', () => ({ useAgentHomeData: () => ({ ...home }) }))
+
+function set<K extends keyof typeof home>(slice: K, patch: Partial<(typeof home)[K]>): void {
+	home[slice] = { ...home[slice], ...patch }
+}
 
 vi.mock('~/contexts/LocalStorage', () => ({
 	useDarkModeManager: () => [false, vi.fn()],
@@ -111,12 +118,8 @@ describe('SettingsModal instructions', () => {
 	beforeEach(async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		vi.clearAllMocks()
-		home.memories.data = undefined
-		home.skills.data = undefined
-		home.memories.error = null
-		home.skills.error = null
-		home.memories.isFetching = false
-		home.skills.isFetching = false
+		set('memories', { data: undefined, error: null, isFetching: false })
+		set('skills', { data: undefined, error: null, isFetching: false })
 		for (const mutation of [
 			home.deleteMemoryMutation,
 			home.clearMemoriesMutation,
@@ -176,8 +179,8 @@ describe('SettingsModal instructions', () => {
 		)
 	}
 	test('memory and skills errors offer retry without claiming an empty workspace', async () => {
-		home.memories.error = new Error('Offline')
-		home.skills.error = new Error('Offline')
+		set('memories', { error: new Error('Offline') })
+		set('skills', { error: new Error('Offline') })
 		await openMemory()
 		expect(document.body.textContent).toContain("Couldn't load memories.")
 		expect(document.body.textContent).toContain("Couldn't load skills.")
@@ -190,37 +193,40 @@ describe('SettingsModal instructions', () => {
 		})
 		expect(home.memories.refetch).toHaveBeenCalledTimes(1)
 		expect(home.skills.refetch).toHaveBeenCalledTimes(1)
-		home.memories.isFetching = true
+		set('memories', { isFetching: true })
 		await act(async () => root.render(<Harness currentSettings={{ ...settings }} />))
 		expect(document.querySelector<HTMLButtonElement>('[role="alert"] button')!.disabled).toBe(true)
 	})
 	test('failed refresh retains cached memories and skills, and a failed deletion retries its original target', async () => {
-		home.memories.data = {
-			available: true,
-			user: [{ id: 'memory-1', text: 'Prefer concise answers', chars: 22 }],
-			memory: [],
-			limits: { user: 1000, memory: 1000 }
-		}
-		home.skills.data = {
-			available: true,
-			active: [
-				{
-					name: 'Research',
-					description: 'Saved workflow',
-					source: 'user',
-					createdBy: 'user',
-					useCount: 1,
-					pinned: false,
-					lastUsedAt: null,
-					referencedSkills: []
-				}
-			],
-			archived: []
-		}
-		home.memories.error = new Error('Offline')
-		home.skills.error = new Error('Offline')
-		home.deleteMemoryMutation.error = new Error('Delete failed')
-		home.deleteMemoryMutation.variables = 'memory-1'
+		set('memories', {
+			data: {
+				available: true,
+				user: [{ id: 'memory-1', text: 'Prefer concise answers', chars: 22 }],
+				memory: [],
+				limits: { user: 1000, memory: 1000 }
+			}
+		})
+		set('skills', {
+			data: {
+				available: true,
+				active: [
+					{
+						name: 'Research',
+						description: 'Saved workflow',
+						source: 'user',
+						createdBy: 'user',
+						useCount: 1,
+						pinned: false,
+						lastUsedAt: null,
+						referencedSkills: []
+					}
+				],
+				archived: []
+			}
+		})
+		set('memories', { error: new Error('Offline') })
+		set('skills', { error: new Error('Offline') })
+		set('deleteMemoryMutation', { error: new Error('Delete failed'), variables: 'memory-1' })
 		await openMemory()
 		expect(document.body.textContent).toContain('Prefer concise answers')
 		expect(document.body.textContent).toContain('Saved workflow')
@@ -229,7 +235,7 @@ describe('SettingsModal instructions', () => {
 		)!
 		await act(async () => error.querySelector('button')!.click())
 		expect(home.deleteMemoryMutation.mutate).toHaveBeenCalledExactlyOnceWith('memory-1')
-		home.deleteMemoryMutation.isPending = true
+		set('deleteMemoryMutation', { isPending: true })
 		await act(async () => root.render(<Harness currentSettings={{ ...settings }} />))
 		const deletion = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
 			(el) => el.textContent === 'Delete'

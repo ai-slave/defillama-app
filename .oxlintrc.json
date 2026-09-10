@@ -2,6 +2,8 @@
 	"$schema": "./node_modules/oxlint/configuration_schema.json",
 	// Hand-written rules only. `bun run lint` runs .oxlintrc.baseline.json, which extends this file and
 	// turns each rule off in the files that still violate it. Regenerate it with `bun run lint:baseline`.
+	// Enabled rules carry no comment. Everything not enforced sits in the two blocks at the end of
+	// `rules`: deferred rules name the trigger that re-opens them, the rest are decisions.
 	"plugins": ["react", "typescript", "nextjs", "oxc", "unicorn", "import", "vitest", "jsx-a11y"],
 	"categories": {
 		"correctness": "error",
@@ -11,8 +13,6 @@
 		// --- Control flow and syntax ---
 		"eslint/eqeqeq": ["error", "always", { "null": "ignore" }],
 		"eslint/array-callback-return": "error",
-		"eslint/max-depth": ["error", 4],
-		"eslint/no-await-in-loop": "error",
 		"eslint/no-constructor-return": "error",
 		"eslint/no-else-return": "error",
 		"eslint/no-empty": "error",
@@ -22,14 +22,12 @@
 		"eslint/no-param-reassign": "error",
 		"eslint/no-shadow": ["error", { "ignoreOnInitialization": true }],
 		"eslint/no-throw-literal": "error",
-		"eslint/no-underscore-dangle": "off",
 		"eslint/no-useless-return": "error",
 		"eslint/no-var": "error",
 		"eslint/object-shorthand": "error",
 		"eslint/prefer-exponentiation-operator": "error",
 		"eslint/prefer-object-has-own": "error",
 		"eslint/prefer-template": "error",
-		"eslint/preserve-caught-error": "off",
 		"eslint/radix": "error",
 		"eslint/no-restricted-imports": [
 			"error",
@@ -47,38 +45,19 @@
 		"typescript/array-type": ["error", { "default": "generic" }],
 		// `typeof import('x')` annotations are the vitest `importOriginal<typeof import('x')>()` idiom.
 		"typescript/consistent-type-imports": ["error", { "disallowTypeAnnotations": false }],
-		// Deferred until the strict-types migration is complete.
-		"typescript/no-explicit-any": "off",
-		"typescript/no-extraneous-class": "off",
 		"typescript/no-import-type-side-effects": "error",
 		"typescript/no-inferrable-types": "error",
 		"typescript/no-unused-vars": ["error", { "args": "none", "varsIgnorePattern": "^_" }],
 		"typescript/prefer-find": "error",
 		"typescript/prefer-for-of": "error",
 		"typescript/prefer-string-starts-ends-with": "error",
-		// Type-aware rules: only run with `oxlint --type-aware`, which CI does not do yet.
-		"typescript/await-thenable": "warn",
-		"typescript/no-floating-promises": "warn",
-		"typescript/no-misused-promises": "warn",
-		"typescript/no-useless-default-assignment": "warn",
-		"typescript/require-await": "warn",
 		// --- Allocation and iteration: one pass per dataset, loops over chained transforms ---
 		"oxc/no-accumulating-spread": "error",
-		// Measured in Phase 2c over 128 sites: about half map React props, state, module constants or test
-		// fixtures, where the copy is required; most of the rest map cached API responses. The rule's fix
-		// (mutate the source) is only safe for arrays the function itself created, so it is off; the
-		// "one pass per dataset" guidance stays a review concern.
-		"oxc/no-map-spread": "off",
 		"unicorn/catch-error-name": "error",
 		"unicorn/consistent-function-scoping": "error",
 		"unicorn/explicit-length-check": "error",
-		// `new Array(n)` is the preallocation idiom for hot paths.
-		"unicorn/no-new-array": "off",
 		"unicorn/no-array-for-each": "error",
 		"unicorn/no-array-reduce": "error",
-		// toSorted/toReversed copy the array; in-place sort of props or state is caught by react/immutability.
-		"unicorn/no-array-reverse": "off",
-		"unicorn/no-array-sort": "off",
 		"unicorn/no-lonely-if": "error",
 		"unicorn/no-typeof-undefined": "error",
 		"unicorn/numeric-separators-style": "error",
@@ -90,11 +69,7 @@
 		// --- Modules ---
 		"import/no-duplicates": "error",
 		"import/no-empty-named-blocks": "error",
-		// clsx and friends legitimately export a named binding that matches the default.
-		"import/no-named-as-default": "off",
 		"import/no-self-import": "error",
-		// Global CSS imports in _app are side-effect imports by design.
-		"import/no-unassigned-import": "off",
 		// --- React: render is pure, state is derived, effects only synchronize ---
 		"react/button-has-type": "error",
 		"react/exhaustive-deps": "error",
@@ -107,30 +82,67 @@
 		"react/jsx-curly-brace-presence": ["error", { "props": "never", "children": "never" }],
 		"react/jsx-no-constructed-context-values": "error",
 		"react/jsx-no-target-blank": "error",
-		// `<>{children}</>` is how a component returns a ReactNode child; only fragments around a single element are useless.
+		// `<>{children}</>` is how a component returns a ReactNode child; only a fragment around a single element is useless.
 		"react/jsx-no-useless-fragment": ["error", { "allowExpressions": true }],
 		"react/no-array-index-key": "error",
 		"react/no-danger": "error",
-		"react/no-unescaped-entities": "error",
 		"react/no-unstable-nested-components": ["error", { "allowAsProps": true }],
-		"react/react-in-jsx-scope": "off",
 		"react/rules-of-hooks": "error",
 		"react/self-closing-comp": "error",
-		// React Compiler rules. All upstream-recommended rules are on via the correctness category;
-		// the two below are added on top.
+		// Added on top of the React Compiler rules the correctness category already enables.
 		"react/no-deriving-state-in-effects": "error",
 		"react/void-use-memo": "error",
-		// Every hit is useReactTable or useVirtualizer. Re-enable after the TanStack table/virtual migration.
-		"react/incompatible-library": "off",
 		// --- Tests ---
 		"vitest/consistent-test-it": ["error", { "fn": "test", "withinDescribe": "test" }],
-		"vitest/require-mock-type-parameters": "off",
-		// --- Accessibility ---
+
+		// --- Deferred: off until the trigger named here happens ---
+		// Trigger: the strict-types migration completes. 175 non-test hits.
+		"typescript/no-explicit-any": "off",
+		// Trigger: TanStack table and virtual migrate. Every hit is useReactTable or useVirtualizer.
+		"react/incompatible-library": "off",
+		// Trigger: a logger decision. 299 hits; likely `allow: ["warn", "error"]` with a server override.
+		"eslint/no-console": "off",
+		// Trigger: a measurement run with oxlint's multi-file pass. Never counted.
+		"import/no-cycle": "off",
+		// Trigger: CI runs `oxlint --type-aware`. Warnings until then, so they never fail a build.
+		"typescript/await-thenable": "warn",
+		"typescript/no-floating-promises": "warn",
+		"typescript/no-misused-promises": "warn",
+		"typescript/no-useless-default-assignment": "warn",
+		"typescript/require-await": "warn",
+
+		// --- Off by decision: these disagree with how this code is written, not debt to burn down ---
+		// Depth follows the shape of the source data in reshaping and chart option builders.
+		"eslint/max-depth": "off",
+		// The hits are deliberate sequencing: paginated fetches, rate limits, ordered writes.
+		"eslint/no-await-in-loop": "off",
+		// React escapes JSX text already; the hits are apostrophes and quotes in copy.
+		"react/no-unescaped-entities": "off",
+		// The fix (mutate the source) is only safe for arrays the function itself created. Measured in
+		// Phase 2c: half the sites copy props, state or fixtures, where the copy is required.
+		"oxc/no-map-spread": "off",
+		// `new Array(n)` is the preallocation idiom for hot paths.
+		"unicorn/no-new-array": "off",
+		// toSorted/toReversed copy; sorting props or state in place is caught by react/immutability.
+		"unicorn/no-array-reverse": "off",
+		"unicorn/no-array-sort": "off",
+		// `_` marks an intentionally unused binding, matching no-unused-vars above.
+		"eslint/no-underscore-dangle": "off",
+		// clsx and friends export a named binding that matches the default.
+		"import/no-named-as-default": "off",
+		// Global CSS imports in _app are side-effect imports by design.
+		"import/no-unassigned-import": "off",
+		// The automatic JSX runtime needs no React import.
+		"react/react-in-jsx-scope": "off",
 		// Recommends <output> over role="status", which is worse for live regions.
 		"jsx-a11y/prefer-tag-over-role": "off",
 		// Autofocus inside a dialog is the expected behavior.
 		"jsx-a11y/no-autofocus": "off",
-		// --- Next.js ---
+		// Off since the ratchet was created (#3383). No reason was recorded; revisit when one of them
+		// would have caught something.
+		"eslint/preserve-caught-error": "off",
+		"typescript/no-extraneous-class": "off",
+		"vitest/require-mock-type-parameters": "off",
 		"nextjs/no-duplicate-head": "off",
 		"nextjs/no-html-link-for-pages": "off",
 		"nextjs/no-img-element": "off"

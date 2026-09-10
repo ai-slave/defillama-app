@@ -35,7 +35,6 @@ test('streamed blocks keep headings, links, citations and exportable tables reac
 		for (let end = 7; end < continuation.length + 7; end += 7) {
 			content = beginning + continuation.slice(0, end)
 			// Each chunk must commit: batching the whole loop would skip the streaming transitions.
-			// oxlint-disable-next-line no-await-in-loop
 			await render(content)
 			expect(container.querySelector('h2')).toBe(heading)
 			expect(heading.id).toBe('message--revenue')
