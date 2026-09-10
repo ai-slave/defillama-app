@@ -149,9 +149,7 @@ export const processAdjustedProtocolTvl = (
 			if (chainScope) {
 				if (filterMode === 'include' && hasInclude) include = includeSet.has(chainScope)
 				if (filterMode === 'exclude' && hasExclude) include = !excludeSet.has(chainScope)
-			} else {
-				if (hasInclude || hasExclude) include = false
-			}
+			} else if (hasInclude || hasExclude) include = false
 		} else {
 			if (filterMode === 'include' && hasInclude) include = includeSet.has(key)
 			if (filterMode === 'exclude' && hasExclude) include = !excludeSet.has(key)

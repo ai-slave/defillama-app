@@ -107,7 +107,7 @@ export function NFTCollectionContainer() {
 							}}
 						/>
 					</div>
-					<React.Suspense fallback={<></>}>
+					<React.Suspense fallback={null}>
 						<CollectionScatterChart
 							sales={includeOutliers ? sales : salesExOutliers}
 							salesMedian1d={salesMedian1d}

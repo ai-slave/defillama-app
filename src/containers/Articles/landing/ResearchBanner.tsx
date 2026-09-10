@@ -7,7 +7,7 @@ import { InViewAnalytics, pushResearchAnalyticsEvent } from '~/containers/Articl
 import type { BannerLookupResult } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
 
-export const ResearchBanner: React.FC<{ initialData?: BannerLookupResult | null }> = ({ initialData }) => {
+export function ResearchBanner({ initialData }: { initialData?: BannerLookupResult | null }) {
 	const isMobile = useMedia('(max-width: 768px)')
 
 	const { data } = useQuery<BannerLookupResult>({

@@ -1,5 +1,5 @@
+import type { Ref } from 'react'
 import type * as React from 'react'
-import { forwardRef } from 'react'
 import type { ArticleDocument } from '~/containers/Articles/types'
 import { ARTICLE_SECTION_LABELS } from '~/containers/Articles/types'
 
@@ -12,10 +12,16 @@ type EditorialTagRowProps = {
 	className?: string
 } & Omit<React.ComponentPropsWithoutRef<'li'>, 'className'>
 
-export const EditorialTagRow = forwardRef<HTMLLIElement, EditorialTagRowProps>(function EditorialTagRow(
-	{ article, onRemove, pending, position, leading, className, ...rest },
-	ref
-) {
+export function EditorialTagRow({
+	ref,
+	article,
+	onRemove,
+	pending,
+	position,
+	leading,
+	className,
+	...rest
+}: EditorialTagRowProps & { ref?: Ref<HTMLLIElement> }) {
 	const defaultClassName = leading
 		? 'grid gap-3 px-4 py-3 sm:grid-cols-[auto_1fr_auto] sm:items-center'
 		: 'grid gap-3 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center'
@@ -46,4 +52,4 @@ export const EditorialTagRow = forwardRef<HTMLLIElement, EditorialTagRowProps>(f
 			</button>
 		</li>
 	)
-})
+}

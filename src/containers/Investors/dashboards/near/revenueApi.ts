@@ -161,16 +161,12 @@ export type { FormattedValue, WalletEntry, Metadata }
 
 export function getValidTimeframeForAggregation(timeframe: string, aggregation: string): string {
 	// If monthly aggregation, minimum timeframe is 1y
-	if (aggregation === 'monthly') {
-		if (timeframe === '7d' || timeframe === '30d') {
-			return '1y'
-		}
+	if (aggregation === 'monthly' && (timeframe === '7d' || timeframe === '30d')) {
+		return '1y'
 	}
 	// If weekly aggregation, minimum is 30d
-	if (aggregation === 'weekly') {
-		if (timeframe === '7d') {
-			return '30d'
-		}
+	if (aggregation === 'weekly' && timeframe === '7d') {
+		return '30d'
 	}
 	return timeframe
 }

@@ -84,7 +84,7 @@ interface LogosCarouselProps {
 	speed?: number
 }
 
-const LogosCarousel: React.FC<LogosCarouselProps> = ({ items, speed = SPEED_PX_PER_FRAME }) => {
+function LogosCarousel({ items, speed = SPEED_PX_PER_FRAME }: LogosCarouselProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const firstSetRef = useRef<HTMLDivElement>(null)
 	const rafIdRef = useRef<number | null>(null)
@@ -160,7 +160,7 @@ const LogosCarousel: React.FC<LogosCarouselProps> = ({ items, speed = SPEED_PX_P
 	)
 }
 
-export const ResearchTrustedByCarousel: React.FC<{ logos?: Array<TrustedLogo> | null }> = ({ logos }) => {
+export function ResearchTrustedByCarousel({ logos }: { logos?: Array<TrustedLogo> | null }) {
 	const isMobile = useMedia('(max-width: 1023px)')
 
 	const trustedByItems = logos && logos.length > 0 ? logos.map(toLogo) : TRUSTED_BY_LOGOS

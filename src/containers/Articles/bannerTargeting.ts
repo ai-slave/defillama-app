@@ -42,9 +42,13 @@ export function selectBannerForCountry(
 		const targets = targetCountries(banner)
 		if (targets.length === 0) return banner
 		if (!visitorResolved) return null
-		if (normalizedCountry && normalizedCountry !== 'XX' && normalizedCountry !== 'T1') {
-			if (targets.includes(normalizedCountry)) return banner
-		}
+		if (
+			normalizedCountry &&
+			normalizedCountry !== 'XX' &&
+			normalizedCountry !== 'T1' &&
+			targets.includes(normalizedCountry)
+		)
+			return banner
 	}
 
 	return null

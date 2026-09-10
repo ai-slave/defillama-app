@@ -139,7 +139,7 @@ function ResearchInterviewsContent({ articles, pageWidget }: ResearchInterviewsC
 	)
 }
 
-export const ResearchInterviews: React.FC<Props> = ({ title, articles }) => {
+export function ResearchInterviews({ title, articles }: Props) {
 	const pageWidget = 'DefiLlama Research Interview widget'
 
 	if (articles.length === 0) return null

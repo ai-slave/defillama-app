@@ -47,12 +47,10 @@ export function LikedDashboards() {
 
 					{Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
 						let pageNum = i + 1
-						if (totalPages > 5) {
-							if (page > 3) {
-								pageNum = page - 2 + i
-								if (pageNum > totalPages) {
-									pageNum = totalPages - 4 + i
-								}
+						if (totalPages > 5 && page > 3) {
+							pageNum = page - 2 + i
+							if (pageNum > totalPages) {
+								pageNum = totalPages - 4 + i
 							}
 						}
 						return (

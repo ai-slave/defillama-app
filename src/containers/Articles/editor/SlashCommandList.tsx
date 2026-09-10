@@ -1,4 +1,5 @@
-import { forwardRef, useId, useImperativeHandle, useState } from 'react'
+import type { Ref } from 'react'
+import { useId, useImperativeHandle, useState } from 'react'
 import type { SlashCommandItem } from './slashCommand'
 import { SuggestionPopover, useSuggestionAccessibility, type SuggestionAnchor } from './SuggestionPopover'
 
@@ -7,19 +8,22 @@ type Props = {
 	command: (item: SlashCommandItem) => void
 }
 
-export const SlashCommandPopover = forwardRef<SlashCommandListHandle, Props & SuggestionAnchor>((props, ref) => {
+export function SlashCommandPopover({
+	ref,
+	...props
+}: Props & SuggestionAnchor & { ref?: Ref<SlashCommandListHandle> }) {
 	return (
 		<SuggestionPopover {...props}>
 			<SlashCommandList {...props} ref={ref} />
 		</SuggestionPopover>
 	)
-})
+}
 
 export type SlashCommandListHandle = {
 	onKeyDown: (event: KeyboardEvent) => boolean
 }
 
-export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(({ items, command }, ref) => {
+export function SlashCommandList({ items, command, ref }: Props & { ref?: Ref<SlashCommandListHandle> }) {
 	const [selectedIndex, setSelectedIndex] = useState(0)
 	// A new result list restarts the highlight at the top.
 	const [syncedItems, setSyncedItems] = useState(items)
@@ -114,4 +118,4 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, Props>(({ ite
 			</div>
 		</div>
 	)
-})
+}

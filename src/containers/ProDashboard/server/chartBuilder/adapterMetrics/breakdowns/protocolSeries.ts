@@ -399,11 +399,8 @@ export const getAdapterMetricProtocolSeries = async ({
 			if (protocolValue === undefined) throw new Error(`Missing protocol breakdown value for ${protocolName}`)
 			if (categoriesSet.size > 0 && (protocolCategories.size > 0 || protocolCategoriesBySlug.size > 0)) {
 				const cat = getCategory(protocolName)
-				if (categoryFilterMode === 'exclude') {
-					if (categoriesSet.has(cat)) continue
-				} else {
-					if (!categoriesSet.has(cat)) continue
-				}
+				const inCategories = categoriesSet.has(cat)
+				if (categoryFilterMode === 'exclude' ? inCategories : !inCategories) continue
 			}
 
 			dayTotal += protocolValue

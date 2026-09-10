@@ -482,7 +482,7 @@ function ProContent({
 					</TabPanel>
 				) : null}
 
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<CreateDashboardPicker
 						dialogStore={createDashboardDialogStore}
 						onCreate={handleCreateDashboard}
@@ -490,7 +490,7 @@ function ProContent({
 					/>
 				</Suspense>
 
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<GenerateDashboardModal
 						isOpen={showGenerateDashboardModal}
 						onClose={() => setShowGenerateDashboardModal(false)}

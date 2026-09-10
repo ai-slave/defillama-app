@@ -60,7 +60,10 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 			try {
 				setIsLoading(true)
 
+				// Kept nested: a `&&` inside this try/catch is a value block the React Compiler cannot
+				// lower, and merging these two stopped the component compiling.
 				if (exportType === 'single_message') {
+					// oxlint-disable-next-line unicorn/no-lonely-if -- see above
 					if (!messageId) {
 						toast.error('Unable to export this message. Please try again from a specific message.', {
 							id: 'pdf-export'
@@ -202,7 +205,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 				</Ariakit.Menu>
 			</Ariakit.MenuProvider>
 			{shouldRenderModal ? (
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />
 				</Suspense>
 			) : null}

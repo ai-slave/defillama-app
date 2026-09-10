@@ -62,7 +62,7 @@ export function PaymentButton({
 			</button>
 
 			{isStripe ? (
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<StripeCheckoutModal
 						isOpen={isCheckoutModalOpen}
 						onClose={() => setIsCheckoutModalOpen(false)}

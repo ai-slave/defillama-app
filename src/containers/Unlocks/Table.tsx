@@ -130,10 +130,8 @@ export const filterUnlockTableProtocols = (
 		if (isCategoryFilterActive && events.length === 0) continue
 
 		let totalUnlockValue: number | null = null
-		if (isValueFilterActive || isPercentageFilterActive) {
-			if (protocol.tPrice != null && protocol.tPrice > 0) {
-				totalUnlockValue = protocol.next24h.total * protocol.tPrice
-			}
+		if ((isValueFilterActive || isPercentageFilterActive) && protocol.tPrice != null && protocol.tPrice > 0) {
+			totalUnlockValue = protocol.next24h.total * protocol.tPrice
 		}
 
 		if (isValueFilterActive && totalUnlockValue === null) continue

@@ -433,32 +433,30 @@ export function IncomeStatement({
 					})
 					links.push({ source: 'Earnings', target: 'Value Distributed to Token Holders', value: tokenHolderNetIncome })
 				}
-			} else {
+			} else if (earnings > 0) {
 				// No incentives: Gross Profit flows directly to Earnings
-				if (earnings > 0) {
-					nodes.push({
-						name: 'Earnings',
-						color: COLORS.green,
-						description: incomeStatement.methodology['Gross Profit'] ?? '',
-						depth: 3,
-						percentageLabel: formatIncomePercent(earnings, grossProfit)
-					})
-					links.push({ source: 'Gross Profit', target: 'Earnings', value: earnings })
+				nodes.push({
+					name: 'Earnings',
+					color: COLORS.green,
+					description: incomeStatement.methodology['Gross Profit'] ?? '',
+					depth: 3,
+					percentageLabel: formatIncomePercent(earnings, grossProfit)
+				})
+				links.push({ source: 'Gross Profit', target: 'Earnings', value: earnings })
 
-					if (tokenHolderNetIncome > 0) {
-						nodes.push({
-							name: 'Value Distributed to Token Holders',
-							color: COLORS.green,
-							description: incomeStatement.methodology['Token Holder Net Income'] ?? '',
-							depth: 4,
-							percentageLabel: formatIncomePercent(tokenHolderNetIncome, earnings)
-						})
-						links.push({
-							source: 'Earnings',
-							target: 'Value Distributed to Token Holders',
-							value: tokenHolderNetIncome
-						})
-					}
+				if (tokenHolderNetIncome > 0) {
+					nodes.push({
+						name: 'Value Distributed to Token Holders',
+						color: COLORS.green,
+						description: incomeStatement.methodology['Token Holder Net Income'] ?? '',
+						depth: 4,
+						percentageLabel: formatIncomePercent(tokenHolderNetIncome, earnings)
+					})
+					links.push({
+						source: 'Earnings',
+						target: 'Value Distributed to Token Holders',
+						value: tokenHolderNetIncome
+					})
 				}
 			}
 		}

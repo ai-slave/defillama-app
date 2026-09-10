@@ -292,16 +292,14 @@ export function parseMessageToRenderModel(
 		}
 	}
 
-	if (citations.length > 0) {
-		if (lastMarkdownIndex >= 0) {
-			// Sources belong immediately after the final prose block, before fallback
-			// artifacts that may have arrived out-of-band.
-			blocks.splice(lastMarkdownIndex + 1, 0, {
-				type: 'sources',
-				key: `sources-${blocks.length}`,
-				citations
-			})
-		}
+	// Sources belong immediately after the final prose block, before fallback
+	// artifacts that may have arrived out-of-band.
+	if (citations.length > 0 && lastMarkdownIndex >= 0) {
+		blocks.splice(lastMarkdownIndex + 1, 0, {
+			type: 'sources',
+			key: `sources-${blocks.length}`,
+			citations
+		})
 	}
 
 	if (includeFallbackArtifacts) {

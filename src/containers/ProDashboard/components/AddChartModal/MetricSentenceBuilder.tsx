@@ -10,7 +10,8 @@ import {
 } from '@ariakit/react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
-import { forwardRef, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import type { Ref } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
@@ -127,10 +128,13 @@ interface TokenButtonProps {
 	active?: boolean
 }
 
-const TokenButton = forwardRef<HTMLButtonElement, TokenButtonProps>(function TokenButtonInner(
-	{ label, secondary, onClick, active },
+function TokenButtonInner({
+	label,
+	secondary,
+	onClick,
+	active,
 	ref
-) {
+}: TokenButtonProps & { ref?: Ref<HTMLButtonElement> }) {
 	return (
 		<button
 			type="button"
@@ -148,7 +152,8 @@ const TokenButton = forwardRef<HTMLButtonElement, TokenButtonProps>(function Tok
 			{secondary ? <span className="sr-only">{secondary}</span> : null}
 		</button>
 	)
-})
+}
+const TokenButton = TokenButtonInner
 
 export function MetricSentenceBuilder({
 	aggregator,

@@ -122,7 +122,7 @@ interface InViewAnalyticsProps {
 	intersectionOptions?: IntersectionObserverInit & { freezeOnceVisible?: boolean }
 }
 
-export const InViewAnalytics: React.FC<InViewAnalyticsProps> = (props) => {
+export function InViewAnalytics(props: InViewAnalyticsProps) {
 	const {
 		eventParams,
 		intersectionOptions = {

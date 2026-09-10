@@ -273,15 +273,13 @@ function PieChart({
 
 		if (radius) {
 			series.radius = radius
-		} else {
-			if (!isSmall) {
-				// Slightly larger on desktop when a right-side legend exists,
-				// so the pie uses the available canvas and reduces "wasted" left space.
-				// Without a legend the external labels + leader lines render around
-				// the arc — 70% left them colliding with the card edge (the pie is
-				// centered at 50% with zero grid), so reserve the room in the radius.
-				series.radius = reservedRight > 0 ? '78%' : '62%'
-			}
+		} else if (!isSmall) {
+			// Slightly larger on desktop when a right-side legend exists,
+			// so the pie uses the available canvas and reduces "wasted" left space.
+			// Without a legend the external labels + leader lines render around
+			// the arc — 70% left them colliding with the card edge (the pie is
+			// centered at 50% with zero grid), so reserve the room in the radius.
+			series.radius = reservedRight > 0 ? '78%' : '62%'
 		}
 
 		if (customLabel && typeof customLabel === 'object') {

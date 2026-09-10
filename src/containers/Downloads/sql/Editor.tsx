@@ -1,5 +1,6 @@
 import MonacoEditor, { loader } from '@monaco-editor/react'
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import type { Ref } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { registerSqlCompletions, registerSqlHovers, type CompletionContext } from './completions'
 import type { RegisteredTable } from './useTableRegistry'
@@ -131,10 +132,16 @@ interface EditorProps {
 	fitContentHeight?: boolean
 }
 
-export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
-	{ value, onChange, onRun, tables, height = '44vh', readOnly = false, fitContentHeight = false },
+export function Editor({
+	value,
+	onChange,
+	onRun,
+	tables,
+	height = '44vh',
+	readOnly = false,
+	fitContentHeight = false,
 	ref
-) {
+}: EditorProps & { ref?: Ref<EditorHandle> }) {
 	const [theme, setTheme] = useState<string>(() => computeTheme())
 	const [contentHeight, setContentHeight] = useState<number | null>(null)
 	const editorInstanceRef = useRef<any>(null)
@@ -347,7 +354,7 @@ export const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
 			/>
 		</div>
 	)
-})
+}
 
 function computeTheme(): string {
 	if (typeof document === 'undefined') return DARK_THEME_ID

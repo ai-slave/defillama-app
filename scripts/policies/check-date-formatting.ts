@@ -182,10 +182,13 @@ function scanSource(relative: string, file: string, source: string): Array<strin
 			}
 		}
 
-		if (!testFile && ts.isNewExpression(node) && node.expression.getText(sourceFile) === 'Intl.DateTimeFormat') {
-			if (!intlDateFormatFiles.has(relative)) {
-				report(node, 'constructs Intl.DateTimeFormat outside the canonical formatter or an approved domain policy')
-			}
+		if (
+			!testFile &&
+			ts.isNewExpression(node) &&
+			node.expression.getText(sourceFile) === 'Intl.DateTimeFormat' &&
+			!intlDateFormatFiles.has(relative)
+		) {
+			report(node, 'constructs Intl.DateTimeFormat outside the canonical formatter or an approved domain policy')
 		}
 
 		if (!testFile && ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {

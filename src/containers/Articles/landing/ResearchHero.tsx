@@ -12,7 +12,7 @@ interface ResearchHeroProps {
 	reports: Array<ArticleDocument>
 }
 
-export const ResearchHero: React.FC<ResearchHeroProps> = ({ title, subtitle, reports }) => {
+export function ResearchHero({ title, subtitle, reports }: ResearchHeroProps) {
 	return (
 		<div className="text-on-brand">
 			<div>

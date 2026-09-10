@@ -72,12 +72,14 @@ const DESKTOP_TWEET_TILE_SIZE = 215
 const DESKTOP_TWEET_RENDER_WIDTH = 320
 const DESKTOP_TWEET_SCALE = DESKTOP_TWEET_TILE_SIZE / DESKTOP_TWEET_RENDER_WIDTH
 
-export const QuoteBlock: React.FC<{
+interface QuoteBlockProps {
 	quote: MentionQuote
 	variant?: 'primary' | 'secondary'
 	size?: 'small' | 'large'
 	mobile?: boolean
-}> = ({ quote, variant = 'primary', size = 'large', mobile }) => {
+}
+
+export function QuoteBlock({ quote, variant = 'primary', size = 'large', mobile }: QuoteBlockProps) {
 	if (!quote.quote && !quote.username) return null
 
 	const bgColor = variant === 'secondary' ? 'bg-research-accent-tint' : 'bg-research-accent-strong'
@@ -119,7 +121,7 @@ export const QuoteBlock: React.FC<{
 	)
 }
 
-const TweetWidget: React.FC<{ tweetId: string; mobile?: boolean }> = ({ tweetId, mobile }) => {
+function TweetWidget({ tweetId, mobile }: { tweetId: string; mobile?: boolean }) {
 	if (!tweetId) return null
 
 	const sourceUrl = `https://x.com/i/status/${tweetId}`
@@ -149,22 +151,28 @@ const TweetWidget: React.FC<{ tweetId: string; mobile?: boolean }> = ({ tweetId,
 	)
 }
 
-const MobileSlide: React.FC<{ quote: MentionQuote; tweetId: string; variant?: 'primary' | 'secondary' }> = ({
+function MobileSlide({
 	quote,
 	tweetId,
 	variant = 'primary'
-}) => (
-	<div className="flex w-full min-w-0 shrink-0 flex-col gap-2.5">
-		<div className="h-[160px] w-full shrink-0">
-			<QuoteBlock quote={quote} variant={variant} mobile />
+}: {
+	quote: MentionQuote
+	tweetId: string
+	variant?: 'primary' | 'secondary'
+}) {
+	return (
+		<div className="flex w-full min-w-0 shrink-0 flex-col gap-2.5">
+			<div className="h-[160px] w-full shrink-0">
+				<QuoteBlock quote={quote} variant={variant} mobile />
+			</div>
+			<div className="h-[356px] w-full shrink-0">
+				<TweetWidget tweetId={tweetId} mobile />
+			</div>
 		</div>
-		<div className="h-[356px] w-full shrink-0">
-			<TweetWidget tweetId={tweetId} mobile />
-		</div>
-	</div>
-)
+	)
+}
 
-export const BlockContent: React.FC<{ block: MentionBlock; isEven: boolean }> = ({ block, isEven }) => {
+export function BlockContent({ block, isEven }: { block: MentionBlock; isEven: boolean }) {
 	const empty: MentionQuote = { quote: '', username: '', social_media_name: '', social_media_link: '', x_post_id: '' }
 	const quote1 = block[0] ?? empty
 	const quote2 = block[1] ?? empty
@@ -200,12 +208,12 @@ interface AutoplayCarouselProps {
 	showDots?: boolean
 }
 
-const AutoplayCarousel: React.FC<AutoplayCarouselProps> = ({
+function AutoplayCarousel({
 	slides,
 	containerClassName = '',
 	intervalMs = AUTOPLAY_MS,
 	showDots = false
-}) => {
+}: AutoplayCarouselProps) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const [selectedIndex, setSelectedIndex] = useState(0)
 	// A shorter slide list wraps the selection back to the first slide.
@@ -298,7 +306,7 @@ export const toMentionQuote = (mention: SocialMention): MentionQuote => ({
 	x_post_id: mention.xPostId ?? ''
 })
 
-export const ResearchSocialMediaMentions: React.FC<{ mentions?: Array<SocialMention> | null }> = ({ mentions }) => {
+export function ResearchSocialMediaMentions({ mentions }: { mentions?: Array<SocialMention> | null }) {
 	const isMobile = useMedia('(max-width: 767px)')
 
 	const blocks: Array<MentionBlock> =

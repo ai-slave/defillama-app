@@ -38,6 +38,7 @@ function createSortValueGetter(query: ProtocolRankingQuery): (row: IChildProtoco
 		return (row) => getProtocolRankingSortValue(row, query.sort === 'custom' ? 'tvl' : query.sort)
 	}
 	const evaluate = createFormulaEvaluator(replaceAliases(query.customSort.formula))
+	// oxlint-disable-next-line react/function-component-definition -- a row accessor, not a component.
 	return (row) => {
 		const result = evaluate(row)
 		return result.status === 'success' ? getSortableValue(result.value, query.customSort?.formatType ?? 'auto') : null
@@ -48,6 +49,7 @@ function createCachedSortValueGetter(query: ProtocolRankingQuery): (row: IChildP
 	const getValue = createSortValueGetter(query)
 	if (query.sort !== 'custom') return getValue
 	const values = new WeakMap<IChildProtocol, ProtocolRankingSortValue>()
+	// oxlint-disable-next-line react/function-component-definition -- a row accessor, not a component.
 	return (row) => {
 		if (values.has(row)) return values.get(row) ?? null
 		const value = getValue(row)

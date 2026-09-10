@@ -517,7 +517,7 @@ export function PortfolioNotifications({
 				</div>
 			</Card>
 			{shouldRenderModal ? (
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />
 				</Suspense>
 			) : null}

@@ -23,7 +23,7 @@ export const RESEARCH_COLLECTIONS_ITEM_HEIGHT_VAR = '--research-collections-item
 export const RESEARCH_COLLECTIONS_SCROLLER_HEIGHT_CLASSES =
 	'h-[calc((var(--research-collections-item-h,65px)_*_4)_+_(12px_*_3))] lg:h-[calc((var(--research-collections-item-h,65px)_*_5)_+_(12px_*_4))] overflow-y-auto' as const
 
-export const ResearchCollections: React.FC<ResearchCollectionsProps> = ({ title, articles }) => {
+export function ResearchCollections({ title, articles }: ResearchCollectionsProps) {
 	const gridRef = useRef<HTMLDivElement>(null)
 	const remeasureKey = useMemo(() => articles.map((a) => a.id).join(','), [articles])
 

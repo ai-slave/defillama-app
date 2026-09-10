@@ -66,7 +66,7 @@ export function FullOldViewButton() {
 				</Hovercard>
 			</span>
 			{shouldRenderModal ? (
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />
 				</Suspense>
 			) : null}

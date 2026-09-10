@@ -22,6 +22,7 @@ function activityValue(
 	metric: ProtocolRankingActivityMetricKey | 'dexs',
 	period: 'total24h' | 'total7d' | 'total30d' | 'totalAllTime' | 'change_7dover7d'
 ): SortAccessor {
+	// oxlint-disable-next-line react/function-component-definition -- a row accessor, not a component.
 	return (row) => row[metric]?.[period] ?? null
 }
 

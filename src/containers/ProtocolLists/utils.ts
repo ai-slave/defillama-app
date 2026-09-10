@@ -265,16 +265,14 @@ export const applyProtocolTvlSettings = ({
 						mcaptvl
 					})
 				}
-			} else {
-				if (passesTvlBounds(defaultTvl.tvl)) {
-					final.push({
-						...protocol,
-						strikeTvl,
-						tvl: { ...protocol.tvl, default: defaultTvl },
-						tvlChange,
-						mcaptvl
-					})
-				}
+			} else if (passesTvlBounds(defaultTvl.tvl)) {
+				final.push({
+					...protocol,
+					strikeTvl,
+					tvl: { ...protocol.tvl, default: defaultTvl },
+					tvlChange,
+					mcaptvl
+				})
 			}
 		}
 	}

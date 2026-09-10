@@ -13,7 +13,7 @@ interface TopUnlocksProps {
 	initialNowSec?: number
 }
 
-export const TopUnlocks: React.FC<TopUnlocksProps> = ({ data, period, title, className, initialNowSec }) => {
+export function TopUnlocks({ data, period, title, className, initialNowSec }: TopUnlocksProps) {
 	const [now] = React.useState(() => Math.floor(initialNowSec ?? Date.now() / 1000))
 	const { topUnlocks } = React.useMemo(() => {
 		const protocolUnlocks = new Map<

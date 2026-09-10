@@ -250,7 +250,7 @@ function ChartByType({
 	adapterType: string
 	hallmarks?: Array<[number, string]>
 }) {
-	const [chartInterval, changeChartInterval] = React.useState<LowercaseDwmcGrouping>('daily')
+	const [chartInterval, setChartInterval] = React.useState<LowercaseDwmcGrouping>('daily')
 	const uniqueBreakdownNames = React.useMemo(() => Array.from(new Set(breakdownNames)), [breakdownNames])
 	const {
 		activeSeries: selectedTypes,
@@ -328,7 +328,7 @@ function ChartByType({
 				{title ? <h2 className="mr-auto heading-xs">{title}</h2> : null}
 				<ChartGroupingSelector
 					value={chartInterval}
-					setValue={changeChartInterval}
+					setValue={setChartInterval}
 					options={DWMC_GROUPING_OPTIONS_LOWERCASE}
 					className="ml-auto"
 				/>

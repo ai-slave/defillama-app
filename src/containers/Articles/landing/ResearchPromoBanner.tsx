@@ -8,7 +8,7 @@ import { PromoDisclosure } from '~/containers/Articles/PromoDisclosure'
 import type { BannerLookupResult } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
 
-export const ResearchPromoBanner: React.FC<{ initialData?: BannerLookupResult | null }> = ({ initialData }) => {
+export function ResearchPromoBanner({ initialData }: { initialData?: BannerLookupResult | null }) {
 	const isMobile = useMedia('(max-width: 768px)')
 
 	const { data } = useQuery<BannerLookupResult>({

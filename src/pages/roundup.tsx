@@ -125,15 +125,12 @@ export const getStaticProps = withPerformanceLogging('roundup', async () => {
 			trimmedLine &&
 			!trimmedLine.startsWith('[') &&
 			!trimmedLine.match(/^\d+\/\d+/) &&
-			!trimmedLine.match(/^\[(\d+)\]:/)
+			!trimmedLine.match(/^\[(\d+)\]:/) &&
+			// A section header carries an emoji or one of the known category names.
+			(trimmedLine.match(/\p{Emoji}/u) ||
+				trimmedLine.match(/^(News|Layer 1|DeFi|Reads|Raises|Security|AI|Llama Update)/))
 		) {
-			// Check if this looks like a section header (contains emoji or is a category name)
-			if (
-				trimmedLine.match(/\p{Emoji}/u) ||
-				trimmedLine.match(/^(News|Layer 1|DeFi|Reads|Raises|Security|AI|Llama Update)/)
-			) {
-				formattedMessages.push(trimmedLine)
-			}
+			formattedMessages.push(trimmedLine)
 		}
 	}
 

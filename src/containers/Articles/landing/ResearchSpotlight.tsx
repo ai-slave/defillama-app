@@ -38,7 +38,7 @@ interface ResearchSpotlightProps {
 	title: string
 }
 
-export const ResearchSpotlight: React.FC<ResearchSpotlightProps> = ({ title, articles }) => {
+export function ResearchSpotlight({ title, articles }: ResearchSpotlightProps) {
 	if (articles.length === 0) return null
 
 	const count = articles.length

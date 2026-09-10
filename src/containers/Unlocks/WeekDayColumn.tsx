@@ -13,7 +13,7 @@ interface WeekDayColumnProps {
 	}
 }
 
-export const WeekDayColumn: React.FC<WeekDayColumnProps> = ({ dayInfo, unlocksData }) => {
+export function WeekDayColumn({ dayInfo, unlocksData }: WeekDayColumnProps) {
 	const dateStr = dayInfo.date?.format('YYYY-MM-DD')
 	const dayData = dateStr ? unlocksData[dateStr] : undefined
 	const hasUnlocks = dayData !== undefined && dayData.events.length > 0

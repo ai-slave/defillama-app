@@ -54,7 +54,7 @@ function Layout({
 				{children}
 			</main>
 			{isClient ? (
-				<React.Suspense fallback={<></>}>
+				<React.Suspense fallback={null}>
 					<Toaster />
 				</React.Suspense>
 			) : null}

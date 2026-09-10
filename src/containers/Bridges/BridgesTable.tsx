@@ -8,6 +8,7 @@ import {
 	type SortingState,
 	useReactTable
 } from '@tanstack/react-table'
+import type { Ref } from 'react'
 import * as React from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
@@ -146,10 +147,12 @@ const bridgesColumnOrders: ColumnOrdersByBreakpoint = {
 	0: ['displayName', 'lastDailyVolume', 'change_1d', 'weeklyVolume', 'monthlyVolume', 'chains', 'txsPrevDay'],
 	1024: ['displayName', 'chains', 'change_1d', 'lastDailyVolume', 'weeklyVolume', 'monthlyVolume', 'txsPrevDay']
 }
-export const BridgesTable = React.forwardRef<BridgesTableHandle, BridgesTableProps>(function BridgesTable(
-	{ data, searchValue = '', csvFileName = 'bridges' },
+export function BridgesTable({
+	data,
+	searchValue = '',
+	csvFileName = 'bridges',
 	ref
-) {
+}: BridgesTableProps & { ref?: Ref<BridgesTableHandle> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'lastDailyVolume', desc: true }])
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
@@ -193,4 +196,4 @@ export const BridgesTable = React.forwardRef<BridgesTableHandle, BridgesTablePro
 	)
 
 	return <VirtualTable instance={instance} />
-})
+}

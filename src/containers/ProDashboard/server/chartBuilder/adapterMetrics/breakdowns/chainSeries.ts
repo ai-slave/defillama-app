@@ -190,19 +190,12 @@ async function getDimensionsProtocolChainData(
 				if (chainTotal === undefined) throw new Error(`Missing adapter chain total for ${chain}`)
 				if (chains && chains.length > 0) {
 					const matches = chainSet.has(chain)
-					if (chainFilterMode === 'include') {
-						if (!matches) continue
-					} else {
-						if (matches) continue
-					}
+					if (chainFilterMode === 'include' ? !matches : matches) continue
 				}
 
 				if (allowNamesFromCategories && allowNamesFromCategories.size > 0) {
-					if (chainCategoryFilterMode === 'include') {
-						if (!allowNamesFromCategories.has(chain)) continue
-					} else {
-						if (allowNamesFromCategories.has(chain)) continue
-					}
+					const inCategoryNames = allowNamesFromCategories.has(chain)
+					if (chainCategoryFilterMode === 'include' ? !inCategoryNames : inCategoryNames) continue
 				}
 
 				if (chainTotal > 0) {

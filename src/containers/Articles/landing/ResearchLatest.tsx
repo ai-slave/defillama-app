@@ -167,7 +167,7 @@ interface ResearchLatestProps {
 	initialData?: BannerLookupResult | null
 }
 
-export const ResearchLatest: React.FC<ResearchLatestProps> = ({ articles = [], initialData }) => {
+export function ResearchLatest({ articles = [], initialData }: ResearchLatestProps) {
 	const { data } = useQuery<BannerLookupResult>({
 		queryKey: ['research', 'banner', 'landing'],
 		queryFn: () => getLandingBanner(),

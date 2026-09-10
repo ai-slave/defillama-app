@@ -35,7 +35,7 @@ const UnlocksTreemapChart = lazy(() => import('./TreemapChart'))
 
 const VIEW_MODES = ['Month', 'Week', 'TreeMap', 'List'] as const
 
-export const CalendarView: React.FC<CalendarViewProps> = ({ initialUnlocksData, precomputedData }) => {
+export function CalendarView({ initialUnlocksData, precomputedData }: CalendarViewProps) {
 	const router = useRouter()
 
 	const viewParam = readSingleQueryValue(router.query.view)

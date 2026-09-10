@@ -209,7 +209,7 @@ function isNewOauthUser(authData: { meta?: { isNew?: boolean } }) {
 	return authData.meta?.isNew === true
 }
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
 	// Use useSyncExternalStore to listen to authStore changes
 	const authStoreState = useSyncExternalStore(subscribeToAuthStore, getAuthStoreSnapshot, getServerSnapshot)
 	const [verifyEmailPrompt, setVerifyEmailPrompt] = useState<{ isOpen: boolean; email?: string }>({ isOpen: false })

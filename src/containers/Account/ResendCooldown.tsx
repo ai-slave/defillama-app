@@ -1,4 +1,5 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import type { Ref } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 
 const COOLDOWN_SECONDS = 60
 
@@ -11,10 +12,7 @@ interface ResendCooldownProps {
 	disabled?: boolean
 }
 
-export const ResendCooldown = forwardRef<ResendCooldownHandle, ResendCooldownProps>(function ResendCooldown(
-	{ onResend, disabled },
-	ref
-) {
+export function ResendCooldown({ onResend, disabled, ref }: ResendCooldownProps & { ref?: Ref<ResendCooldownHandle> }) {
 	const [secondsLeft, setSecondsLeft] = useState(0)
 	const intervalRef = useRef<ReturnType<typeof setInterval>>(null)
 
@@ -60,4 +58,4 @@ export const ResendCooldown = forwardRef<ResendCooldownHandle, ResendCooldownPro
 			)}
 		</div>
 	)
-})
+}

@@ -53,10 +53,8 @@ function MultiSelectPopoverBody({
 	const toggleValue = (value: string) => {
 		if (selectedValues.includes(value)) {
 			onChange(selectedValues.filter((v) => v !== value))
-		} else {
-			if (selectedValues.length < maxSelections) {
-				onChange([...selectedValues, value])
-			}
+		} else if (selectedValues.length < maxSelections) {
+			onChange([...selectedValues, value])
 		}
 	}
 

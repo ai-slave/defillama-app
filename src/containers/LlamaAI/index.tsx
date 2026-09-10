@@ -2653,7 +2653,7 @@ export function AgenticChat({
 					</p>
 				</div>
 				{shouldRenderSubscribeModal ? (
-					<Suspense fallback={<></>}>
+					<Suspense fallback={null}>
 						<SubscribeProModal dialogStore={subscribeModalStore} />
 					</Suspense>
 				) : null}
@@ -2830,7 +2830,7 @@ export function AgenticChat({
 								/>
 							) : null}
 							{shouldRenderSubscribeModal ? (
-								<Suspense fallback={<></>}>
+								<Suspense fallback={null}>
 									<SubscribeProModal dialogStore={subscribeModalStore} />
 								</Suspense>
 							) : null}

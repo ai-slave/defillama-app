@@ -221,7 +221,7 @@ interface ReportsCarouselProps {
 	showButtons?: boolean
 }
 
-export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
+export function ReportsCarousel(props: ReportsCarouselProps) {
 	const { reports: originalReports, showButtons = true } = props
 
 	const reports = useMemo(() => {
@@ -412,22 +412,18 @@ export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
 					offset = MOBILE_PLANE_WIDTH / 2
 				}
 			}
+		} else if (desktopOffsets) {
+			offset = desktopOffsets[position]
+		} else if (dist === 1) {
+			const scale = getScaleRatio(dist)
+			const centralHalfWidth = responsiveConfig.planeWidth / 2
+			const lateralHalfWidth = (responsiveConfig.planeWidth * scale) / 2
+			const lateralOffset = centralHalfWidth + VISUAL_GAP + lateralHalfWidth
+			offset = (position - CENTER) * lateralOffset
 		} else {
-			if (desktopOffsets) {
-				offset = desktopOffsets[position]
-			} else {
-				if (dist === 1) {
-					const scale = getScaleRatio(dist)
-					const centralHalfWidth = responsiveConfig.planeWidth / 2
-					const lateralHalfWidth = (responsiveConfig.planeWidth * scale) / 2
-					const lateralOffset = centralHalfWidth + VISUAL_GAP + lateralHalfWidth
-					offset = (position - CENTER) * lateralOffset
-				} else {
-					const baseOffset = (position - CENTER) * responsiveConfig.distPerPlane
-					const extraSpacing = dist > 1 ? VISUAL_GAP * 7.5 : 0
-					offset = baseOffset + (position > CENTER ? extraSpacing : -extraSpacing)
-				}
-			}
+			const baseOffset = (position - CENTER) * responsiveConfig.distPerPlane
+			const extraSpacing = dist > 1 ? VISUAL_GAP * 7.5 : 0
+			offset = baseOffset + (position > CENTER ? extraSpacing : -extraSpacing)
 		}
 
 		const scale = getScaleRatio(dist)

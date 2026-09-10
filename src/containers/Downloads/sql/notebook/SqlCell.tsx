@@ -1,5 +1,6 @@
 import MonacoEditor, { loader } from '@monaco-editor/react'
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import type { Ref } from 'react'
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../chartConfig'
 import { ErrorBanner, replaceIdentifier } from '../ErrorBanner'
@@ -32,10 +33,17 @@ interface SqlCellProps {
 	onPreferredViewChange: (view: ResultsView | undefined) => void
 }
 
-export const SqlCell = forwardRef<SqlCellHandle, SqlCellProps>(function SqlCell(
-	{ cell, loadedTables, onSourceChange, onRun, onRunAndAdvance, onFocus, onChartConfigChange, onPreferredViewChange },
+export function SqlCell({
+	cell,
+	loadedTables,
+	onSourceChange,
+	onRun,
+	onRunAndAdvance,
+	onFocus,
+	onChartConfigChange,
+	onPreferredViewChange,
 	ref
-) {
+}: SqlCellProps & { ref?: Ref<SqlCellHandle> }) {
 	const [theme, setTheme] = useState<string>(() => computeTheme())
 	const editorInstanceRef = useRef<any>(null)
 
@@ -162,7 +170,7 @@ export const SqlCell = forwardRef<SqlCellHandle, SqlCellProps>(function SqlCell(
 			/>
 		</div>
 	)
-})
+}
 
 function computeTheme(): string {
 	if (typeof document === 'undefined') return DARK_THEME_ID

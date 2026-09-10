@@ -8,7 +8,7 @@ interface CollapsibleSectionProps {
 	className?: string
 }
 
-export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, badge, children, className = '' }) => {
+export function CollapsibleSection({ title, badge, children, className = '' }: CollapsibleSectionProps) {
 	const [isExpanded, setIsExpanded] = useState(true)
 
 	return (

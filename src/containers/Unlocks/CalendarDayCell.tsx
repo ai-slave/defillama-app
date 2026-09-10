@@ -17,7 +17,7 @@ interface CalendarDayCellProps {
 	maxUnlockValue: number
 }
 
-export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({ dayInfo, unlocksData, maxUnlockValue }) => {
+export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue }: CalendarDayCellProps) {
 	const [isDarkMode] = useDarkModeManager()
 
 	if (!dayInfo.date) return <div className="h-24 w-full bg-surface opacity-40" />

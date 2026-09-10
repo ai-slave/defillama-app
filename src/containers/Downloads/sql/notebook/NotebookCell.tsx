@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import { forwardRef, useCallback, useRef, useState } from 'react'
+import type { Ref } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import type { ChartConfig } from '../chartConfig'
@@ -37,35 +38,33 @@ interface NotebookCellProps {
 	upstreamDirty: boolean
 }
 
-export const NotebookCell = forwardRef<SqlCellHandle, NotebookCellProps>(function NotebookCell(
-	{
-		cell,
-		index,
-		total,
-		focused,
-		cellName,
-		loadedTables,
-		availableChartSources,
-		onSourceChange,
-		onRun,
-		onCancel,
-		onRunAndAdvance,
-		onRunAbove,
-		onRunBelow,
-		onFocus,
-		onDelete,
-		onMoveUp,
-		onMoveDown,
-		onConvertType,
-		onChartConfigChange,
-		onPreferredViewChange,
-		onDragStart,
-		onDragEnd,
-		canRun,
-		upstreamDirty
-	},
+export function NotebookCell({
+	cell,
+	index,
+	total,
+	focused,
+	cellName,
+	loadedTables,
+	availableChartSources,
+	onSourceChange,
+	onRun,
+	onCancel,
+	onRunAndAdvance,
+	onRunAbove,
+	onRunBelow,
+	onFocus,
+	onDelete,
+	onMoveUp,
+	onMoveDown,
+	onConvertType,
+	onChartConfigChange,
+	onPreferredViewChange,
+	onDragStart,
+	onDragEnd,
+	canRun,
+	upstreamDirty,
 	ref
-) {
+}: NotebookCellProps & { ref?: Ref<SqlCellHandle> }) {
 	const isFirst = index === 0
 	const isLast = index === total - 1
 
@@ -214,7 +213,7 @@ export const NotebookCell = forwardRef<SqlCellHandle, NotebookCellProps>(functio
 			)}
 		</div>
 	)
-})
+}
 
 function CellTypeBadge({ type }: { type: CellType }) {
 	const label = type === 'sql' ? 'SQL' : type === 'markdown' ? 'MD' : 'CHART'

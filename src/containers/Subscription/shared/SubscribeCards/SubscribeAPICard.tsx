@@ -153,7 +153,7 @@ export function SubscribeAPICard({
 			</div>
 
 			{isUpgradeModalOpen ? (
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<StripeCheckoutModal
 						isOpen={isUpgradeModalOpen}
 						onClose={() => setIsUpgradeModalOpen(false)}

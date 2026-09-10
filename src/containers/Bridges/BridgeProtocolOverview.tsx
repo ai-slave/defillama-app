@@ -71,7 +71,7 @@ export function BridgeInfo({
 }: BridgePageData) {
 	const [chartType, setChartType] = React.useState<ChartType>('Volume')
 	const [groupBy, setGroupBy] = React.useState<LowercaseDwmGrouping>('daily')
-	const [currentChain, setChain] = React.useState(defaultChain)
+	const [currentChain, setCurrentChain] = React.useState(defaultChain)
 	const { chartInstance: exportChartInstance, handleChartReady } = useGetChartInstance()
 
 	const [bridgesSettings] = useLocalStorageSettingsManager('bridges')
@@ -216,7 +216,7 @@ export function BridgeInfo({
 							currentChain={currentChain}
 							options={chainOptions}
 							handleClick={(chain) => {
-								setChain(chain)
+								setCurrentChain(chain)
 								if (chain === 'All Chains') {
 									setChartType('Volume')
 								} else {

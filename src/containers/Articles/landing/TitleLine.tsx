@@ -6,7 +6,7 @@ interface TitleLineProps {
 	hideOnMobile?: boolean
 }
 
-export const TitleLine: React.FC<TitleLineProps> = (props) => {
+export function TitleLine(props: TitleLineProps) {
 	const { title = '', hideOnMobile = false } = props
 
 	return (

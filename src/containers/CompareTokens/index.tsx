@@ -43,7 +43,7 @@ export function CompareTokens({
 	protocols: Array<CompareTokenProtocol>
 }) {
 	const router = useRouter()
-	const [isModalOpen, setModalOpen] = useState(0)
+	const [isModalOpen, setIsModalOpen] = useState(0)
 	const coinParam = router.query?.coin
 	const typeParam = router.query?.type
 
@@ -118,7 +118,7 @@ export function CompareTokens({
 						<input
 							value={selectedCoins[0]?.name ?? ''}
 							onClick={() => {
-								setModalOpen(1)
+								setIsModalOpen(1)
 								dialogStore.toggle()
 							}}
 							readOnly
@@ -156,7 +156,7 @@ export function CompareTokens({
 						<input
 							value={selectedCoins[1]?.name ?? ''}
 							onClick={() => {
-								setModalOpen(2)
+								setIsModalOpen(2)
 								dialogStore.toggle()
 							}}
 							readOnly
@@ -248,7 +248,7 @@ export function CompareTokens({
 						const newCoins = coins.slice()
 						newCoins[isModalOpen - 1] = coin.id
 						void pushShallowQuery(router, { coin: newCoins })
-						setModalOpen(0)
+						setIsModalOpen(0)
 						dialogStore.toggle()
 					}}
 				/>

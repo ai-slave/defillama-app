@@ -297,11 +297,9 @@ export function useMetricData(metric: MetricConfig) {
 				delta = value - previousValue
 				deltaPct = previousValue !== 0 ? (delta / previousValue) * 100 : null
 			}
-		} else if (compare.mode === 'previous_window') {
-			if (value !== null && previousValue !== null) {
-				delta = value - previousValue
-				deltaPct = previousValue !== 0 ? (delta / previousValue) * 100 : null
-			}
+		} else if (compare.mode === 'previous_window' && value !== null && previousValue !== null) {
+			delta = value - previousValue
+			deltaPct = previousValue !== 0 ? (delta / previousValue) * 100 : null
 		}
 
 		// Scale data points based on window size - charts handle their own sampling

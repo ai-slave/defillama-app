@@ -1049,7 +1049,7 @@ export function ColumnManager({
 			</section>
 
 			{shouldRenderSubscribeModal ? (
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />
 				</Suspense>
 			) : null}

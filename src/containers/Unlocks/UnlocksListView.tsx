@@ -13,7 +13,7 @@ interface UnlocksListViewProps {
 	events: Array<{ date: Dayjs; event: DailyUnlocks['events'][0] }>
 }
 
-export const UnlocksListView: React.FC<UnlocksListViewProps> = ({ events }) => {
+export function UnlocksListView({ events }: UnlocksListViewProps) {
 	const groupedEventsEntries = React.useMemo(() => {
 		const groupedEvents: { [date: string]: Array<DailyUnlocks['events'][0]> } = {}
 		for (const { date, event } of events) {

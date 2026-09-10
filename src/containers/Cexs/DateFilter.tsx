@@ -307,7 +307,7 @@ export function DateFilter({
 				</Ariakit.Popover>
 			</Ariakit.PopoverProvider>
 			{shouldRenderModal ? (
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />
 				</Suspense>
 			) : null}

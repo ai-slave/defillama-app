@@ -24,13 +24,11 @@ export const getProtocolWarningBanners = (
 			message: 'This protocol rug pulled user funds, their website is down.',
 			level: 'rug'
 		})
-	} else {
-		if (protocolData.rugged) {
-			banners.push({
-				message: 'This protocol rug pulled user funds.',
-				level: 'rug'
-			})
-		}
+	} else if (protocolData.rugged) {
+		banners.push({
+			message: 'This protocol rug pulled user funds.',
+			level: 'rug'
+		})
 	}
 	return banners
 }

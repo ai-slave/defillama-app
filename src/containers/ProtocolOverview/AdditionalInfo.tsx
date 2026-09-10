@@ -607,7 +607,7 @@ function Competitors(props: IProtocolOverviewPageData) {
 				))}
 			</div>
 			{shouldRenderModal ? (
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<SubscribeProModal dialogStore={subscribeModalStore} />
 				</Suspense>
 			) : null}

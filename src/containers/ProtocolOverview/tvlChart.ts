@@ -174,10 +174,13 @@ export function buildTvlChart({
 			}
 
 			// Align only near the latest timestamp so stale charts do not shift.
-			if (extraValue === undefined && latestMainTvlTimestamp != null && dateInSec === latestMainTvlTimestamp) {
-				if (Math.abs(latestMainTvlTimestamp - extraLatestTimestamp) <= MAX_TVL_TIMESTAMP_ALIGNMENT_DIFF_SEC) {
-					extraValue = extraChart[String(extraLatestTimestamp)]
-				}
+			if (
+				extraValue === undefined &&
+				latestMainTvlTimestamp != null &&
+				dateInSec === latestMainTvlTimestamp &&
+				Math.abs(latestMainTvlTimestamp - extraLatestTimestamp) <= MAX_TVL_TIMESTAMP_ALIGNMENT_DIFF_SEC
+			) {
+				extraValue = extraChart[String(extraLatestTimestamp)]
 			}
 			if (extraValue === undefined) {
 				hasMissingExtra = true

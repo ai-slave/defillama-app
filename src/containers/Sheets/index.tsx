@@ -570,7 +570,7 @@ export default function SheetsContainer() {
 			<SectionSeparator />
 			<TemplatesSection />
 
-			<Suspense fallback={<></>}>
+			<Suspense fallback={null}>
 				<SubscribeProModal dialogStore={subscribeModalStore} />
 			</Suspense>
 		</>

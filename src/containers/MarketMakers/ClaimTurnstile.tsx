@@ -1,5 +1,5 @@
 import { Turnstile, type TurnstileInstance } from '@marsidev/react-turnstile'
-import { forwardRef } from 'react'
+import type { Ref } from 'react'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 
 interface ClaimTurnstileProps {
@@ -12,10 +12,12 @@ export function isClaimTurnstileEnabled(): boolean {
 	return Boolean(process.env.NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY?.trim())
 }
 
-export const ClaimTurnstile = forwardRef<TurnstileInstance | undefined, ClaimTurnstileProps>(function ClaimTurnstile(
-	{ onVerify, onError, className },
+export function ClaimTurnstile({
+	onVerify,
+	onError,
+	className,
 	ref
-) {
+}: ClaimTurnstileProps & { ref?: Ref<TurnstileInstance | undefined> }) {
 	const [isDarkMode] = useDarkModeManager()
 	const siteKey = process.env.NEXT_PUBLIC_CLAIMS_TURNSTILE_SITE_KEY?.trim()
 
@@ -41,4 +43,4 @@ export const ClaimTurnstile = forwardRef<TurnstileInstance | undefined, ClaimTur
 			/>
 		</div>
 	)
-})
+}

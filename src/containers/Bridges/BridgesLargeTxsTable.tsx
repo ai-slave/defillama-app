@@ -6,6 +6,7 @@ import {
 	type SortingState,
 	useReactTable
 } from '@tanstack/react-table'
+import type { Ref } from 'react'
 import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { BasicLink } from '~/components/Link'
@@ -45,167 +46,164 @@ const largeTxsColumnOrders: ColumnOrdersByBreakpoint = {
 	0: ['date', 'symbol', 'usdValue', 'isDeposit', 'bridge', 'txHash'],
 	1024: ['date', 'bridge', 'isDeposit', 'symbol', 'usdValue', 'txHash']
 }
-export const BridgesLargeTxsTable = React.forwardRef<BridgesLargeTxsTableHandle, BridgesLargeTxsTableProps>(
-	function BridgesLargeTxsTable({ data, csvFileName = 'bridge-transactions' }, ref) {
-		const [sorting, setSorting] = React.useState<SortingState>([{ id: 'date', desc: true }])
-		const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
-		const { data: blockExplorersData } = useBlockExplorers()
+export function BridgesLargeTxsTable({
+	data,
+	csvFileName = 'bridge-transactions',
+	ref
+}: BridgesLargeTxsTableProps & { ref?: Ref<BridgesLargeTxsTableHandle> }) {
+	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'date', desc: true }])
+	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
+	const { data: blockExplorersData } = useBlockExplorers()
 
-		const columns = React.useMemo(
-			() => [
-				columnHelper.accessor((row) => row.date ?? undefined, {
-					id: 'date',
-					header: 'Timestamp',
-					cell: (info) => (
-						<span className="whitespace-nowrap">
-							{formatDateTime(info.getValue(), { input: 'seconds', timeZone: 'UTC' }) ?? '–'}
-						</span>
-					),
-					meta: {
-						headerClassName: 'w-[220px]'
-					}
-				}),
-				columnHelper.accessor('bridge', {
-					header: 'Bridge',
-					cell: ({ getValue }) => {
-						const value = getValue()
-						const linkValue = slug(value)
-						return (
-							<BasicLink href={`/bridge/${linkValue}`} className="truncate text-sm font-medium text-link">
-								{value}
-							</BasicLink>
-						)
-					},
-					meta: {
-						headerClassName: 'w-[140px] lg:w-[160px]'
-					}
-				}),
-				columnHelper.accessor('isDeposit', {
-					header: 'Deposit/Withdrawal',
-					cell: ({ getValue }) => {
-						const value = getValue()
-						return (
-							<span className={`${value ? 'text-data-down' : 'text-data-up'}`}>{value ? 'Withdrawal' : 'Deposit'}</span>
-						)
-					},
-					meta: {
-						headerClassName: 'w-[140px]',
-						align: 'end'
-					}
-				}),
-				columnHelper.accessor('symbol', {
-					header: 'Token',
-					cell: ({ getValue }) => {
-						const value = getValue()
-						if (!value) return 'Not found'
-
-						const [symbol, token] = value.split('#')
-						const explorer = token
-							? getBlockExplorerNew({
-									apiResponse: blockExplorersData ?? [],
-									address: token,
-									urlType: 'token'
-								})
-							: null
-
-						if (!explorer) {
-							return <span>{symbol}</span>
-						}
-
-						return (
-							<a
-								href={explorer.url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="flex items-center justify-end"
-							>
-								<span>{symbol}</span>
-								<Icon name="external-link" height={10} width={10} />
-							</a>
-						)
-					},
-					meta: {
-						headerClassName: 'w-[100px] min-[480px]:w-[120px]',
-						align: 'end'
-					}
-				}),
-				columnHelper.accessor((row) => row.usdValue ?? undefined, {
-					id: 'usdValue',
-					header: 'Value',
-					cell: (info) =>
-						formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
-					meta: {
-						headerClassName: 'w-[120px]',
-						align: 'end'
-					}
-				}),
-				columnHelper.accessor('txHash', {
-					header: 'Explorer Link',
-					cell: ({ getValue }) => {
-						const value = getValue()
-						if (!value) return 'Not found'
-
-						const explorer = getBlockExplorerNew({
-							apiResponse: blockExplorersData ?? [],
-							address: value,
-							urlType: 'tx'
-						})
-
-						if (!explorer) {
-							return null
-						}
-
-						return (
-							<a
-								href={explorer.url}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="flex items-center justify-end gap-2"
-							>
-								<span>View Transaction</span>
-								<Icon name="external-link" height={10} width={10} />
-							</a>
-						)
-					},
-					meta: {
-						headerClassName: 'w-[160px]',
-						align: 'end'
-					}
-				})
-			],
-			[blockExplorersData]
-		)
-
-		const instance = useReactTable({
-			data,
-			columns,
-			state: {
-				sorting,
-				columnOrder
-			},
-			defaultColumn: {
-				sortUndefined: 'last'
-			},
-			enableSortingRemoval: false,
-			onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-			onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
-			getCoreRowModel: getCoreRowModel(),
-			getSortedRowModel: getSortedRowModel()
-		})
-
-		useSortColumnOrders({
-			instance,
-			columnOrders: largeTxsColumnOrders
-		})
-
-		React.useImperativeHandle(
-			ref,
-			() => ({
-				prepareCsv: () => prepareTableCsv({ instance, filename: csvFileName })
+	const columns = React.useMemo(
+		() => [
+			columnHelper.accessor((row) => row.date ?? undefined, {
+				id: 'date',
+				header: 'Timestamp',
+				cell: (info) => (
+					<span className="whitespace-nowrap">
+						{formatDateTime(info.getValue(), { input: 'seconds', timeZone: 'UTC' }) ?? '–'}
+					</span>
+				),
+				meta: {
+					headerClassName: 'w-[220px]'
+				}
 			}),
-			[csvFileName, instance]
-		)
+			columnHelper.accessor('bridge', {
+				header: 'Bridge',
+				cell: ({ getValue }) => {
+					const value = getValue()
+					const linkValue = slug(value)
+					return (
+						<BasicLink href={`/bridge/${linkValue}`} className="truncate text-sm font-medium text-link">
+							{value}
+						</BasicLink>
+					)
+				},
+				meta: {
+					headerClassName: 'w-[140px] lg:w-[160px]'
+				}
+			}),
+			columnHelper.accessor('isDeposit', {
+				header: 'Deposit/Withdrawal',
+				cell: ({ getValue }) => {
+					const value = getValue()
+					return (
+						<span className={`${value ? 'text-data-down' : 'text-data-up'}`}>{value ? 'Withdrawal' : 'Deposit'}</span>
+					)
+				},
+				meta: {
+					headerClassName: 'w-[140px]',
+					align: 'end'
+				}
+			}),
+			columnHelper.accessor('symbol', {
+				header: 'Token',
+				cell: ({ getValue }) => {
+					const value = getValue()
+					if (!value) return 'Not found'
 
-		return <VirtualTable instance={instance} />
-	}
-)
+					const [symbol, token] = value.split('#')
+					const explorer = token
+						? getBlockExplorerNew({
+								apiResponse: blockExplorersData ?? [],
+								address: token,
+								urlType: 'token'
+							})
+						: null
+
+					if (!explorer) {
+						return <span>{symbol}</span>
+					}
+
+					return (
+						<a href={explorer.url} target="_blank" rel="noopener noreferrer" className="flex items-center justify-end">
+							<span>{symbol}</span>
+							<Icon name="external-link" height={10} width={10} />
+						</a>
+					)
+				},
+				meta: {
+					headerClassName: 'w-[100px] min-[480px]:w-[120px]',
+					align: 'end'
+				}
+			}),
+			columnHelper.accessor((row) => row.usdValue ?? undefined, {
+				id: 'usdValue',
+				header: 'Value',
+				cell: (info) =>
+					formatUsd(info.getValue(), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' }),
+				meta: {
+					headerClassName: 'w-[120px]',
+					align: 'end'
+				}
+			}),
+			columnHelper.accessor('txHash', {
+				header: 'Explorer Link',
+				cell: ({ getValue }) => {
+					const value = getValue()
+					if (!value) return 'Not found'
+
+					const explorer = getBlockExplorerNew({
+						apiResponse: blockExplorersData ?? [],
+						address: value,
+						urlType: 'tx'
+					})
+
+					if (!explorer) {
+						return null
+					}
+
+					return (
+						<a
+							href={explorer.url}
+							target="_blank"
+							rel="noopener noreferrer"
+							className="flex items-center justify-end gap-2"
+						>
+							<span>View Transaction</span>
+							<Icon name="external-link" height={10} width={10} />
+						</a>
+					)
+				},
+				meta: {
+					headerClassName: 'w-[160px]',
+					align: 'end'
+				}
+			})
+		],
+		[blockExplorersData]
+	)
+
+	const instance = useReactTable({
+		data,
+		columns,
+		state: {
+			sorting,
+			columnOrder
+		},
+		defaultColumn: {
+			sortUndefined: 'last'
+		},
+		enableSortingRemoval: false,
+		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
+		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel()
+	})
+
+	useSortColumnOrders({
+		instance,
+		columnOrders: largeTxsColumnOrders
+	})
+
+	React.useImperativeHandle(
+		ref,
+		() => ({
+			prepareCsv: () => prepareTableCsv({ instance, filename: csvFileName })
+		}),
+		[csvFileName, instance]
+	)
+
+	return <VirtualTable instance={instance} />
+}

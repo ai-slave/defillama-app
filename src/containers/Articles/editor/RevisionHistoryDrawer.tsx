@@ -251,7 +251,7 @@ function messageOf(error: unknown, fallback: string) {
 }
 
 export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onRestored }: Props) {
-	const [selectedIdState, setSelectedId] = useState<string | null>(null)
+	const [selectedIdState, setSelectedIdState] = useState<string | null>(null)
 	const [filter, setFilter] = useState<FilterKey>('all')
 	const [confirming, setConfirming] = useState<null | 'restore' | 'delete'>(null)
 	const [viewMode, setViewMode] = useState<ViewMode>('preview')
@@ -313,7 +313,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 
 	const selectRevision = useCallback((revisionId: string) => {
 		setConfirming(null)
-		setSelectedId(revisionId)
+		setSelectedIdState(revisionId)
 	}, [])
 
 	const handleRestore = useCallback(async () => {
@@ -345,7 +345,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 						: current
 				)
 				if (selectedId === revisionId) {
-					setSelectedId((current) => {
+					setSelectedIdState((current) => {
 						if (current !== revisionId) return current
 						return items.find((entry) => entry.id !== revisionId)?.id ?? null
 					})
@@ -413,7 +413,7 @@ export function RevisionHistoryDrawer({ onClose, articleId, authorizedFetch, onR
 			const next = filtered[nextIndex]
 			if (next) {
 				setConfirming(null)
-				setSelectedId(next.id)
+				setSelectedIdState(next.id)
 			}
 		},
 		[filtered, selectedIndex]

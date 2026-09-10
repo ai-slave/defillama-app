@@ -438,7 +438,7 @@ function ProDashboardContent() {
 			{currentDashboard?.aiGenerated ? <AIGenerationHistory aiGenerated={currentDashboard.aiGenerated} /> : null}
 
 			{currentRatingSession && !isReadOnly ? (
-				<Suspense fallback={<></>}>
+				<Suspense fallback={null}>
 					<Rating
 						sessionId={currentRatingSession.sessionId}
 						mode={currentRatingSession.mode}
@@ -545,7 +545,7 @@ function ProDashboardContent() {
 
 			{items.length > 0 ? <ChartGrid onAddChartClick={openAddModal} onEditItem={handleEditItemModal} /> : null}
 
-			<Suspense fallback={<></>}>
+			<Suspense fallback={null}>
 				{showAddModal ? (
 					<AddChartModal
 						key={editModalState.item?.id ?? 'new-dashboard-item'}
@@ -561,7 +561,7 @@ function ProDashboardContent() {
 				) : null}
 			</Suspense>
 
-			<Suspense fallback={<></>}>
+			<Suspense fallback={null}>
 				{sqlModalState.open ? (
 					<SqlChartModal
 						key={sqlModalState.item?.id ?? 'new-sql-item'}
@@ -581,7 +581,7 @@ function ProDashboardContent() {
 				/>
 			) : null}
 
-			<Suspense fallback={<></>}>
+			<Suspense fallback={null}>
 				<DashboardSettingsModal
 					isOpen={showSettingsModal}
 					onClose={() => setShowSettingsModal(false)}
@@ -595,11 +595,11 @@ function ProDashboardContent() {
 				/>
 			</Suspense>
 
-			<Suspense fallback={<></>}>
+			<Suspense fallback={null}>
 				<CreateDashboardPicker dialogStore={createDashboardDialogStore} onCreate={handleCreateDashboard} />
 			</Suspense>
 
-			<Suspense fallback={<></>}>
+			<Suspense fallback={null}>
 				<GenerateDashboardModal
 					isOpen={showGenerateDashboardModal}
 					onClose={() => setShowGenerateDashboardModal(false)}
@@ -607,7 +607,7 @@ function ProDashboardContent() {
 				/>
 			</Suspense>
 
-			<Suspense fallback={<></>}>
+			<Suspense fallback={null}>
 				<GenerateDashboardModal
 					isOpen={showIterateDashboardModal}
 					onClose={() => setShowIterateDashboardModal(false)}

@@ -176,10 +176,12 @@ export function useYieldsTable({
 				if (!hasMatchingChain) return false
 			}
 
-			if (selectedProtocols) {
-				if (!selectedProtocols.has(row.projectslug.toLowerCase()) && !selectedProtocols.has(row.project.toLowerCase()))
-					return false
-			}
+			if (
+				selectedProtocols &&
+				!selectedProtocols.has(row.projectslug.toLowerCase()) &&
+				!selectedProtocols.has(row.project.toLowerCase())
+			)
+				return false
 
 			if (filters.hasRewards && (!row.apyReward || row.apyReward <= 0)) return false
 

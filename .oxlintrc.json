@@ -54,7 +54,6 @@
 		// --- Allocation and iteration: one pass per dataset, loops over chained transforms ---
 		"oxc/no-accumulating-spread": "error",
 		"unicorn/catch-error-name": "error",
-		"unicorn/consistent-function-scoping": "error",
 		"unicorn/explicit-length-check": "error",
 		"unicorn/no-array-for-each": "error",
 		"unicorn/no-array-reduce": "error",
@@ -73,11 +72,13 @@
 		// --- React: render is pure, state is derived, effects only synchronize ---
 		"react/button-has-type": "error",
 		"react/exhaustive-deps": "error",
+		// A component passed to memo or forwardRef is an argument, which the rule reads as unnamed. Naming
+		// that function expression is what puts the component's own name in React DevTools, so it is the
+		// convention here rather than an arrow.
 		"react/function-component-definition": [
 			"error",
-			{ "namedComponents": "function-declaration", "unnamedComponents": "arrow-function" }
+			{ "namedComponents": "function-declaration", "unnamedComponents": "function-expression" }
 		],
-		"react/hook-use-state": "error",
 		"react/jsx-boolean-value": "error",
 		"react/jsx-curly-brace-presence": ["error", { "props": "never", "children": "never" }],
 		"react/jsx-no-constructed-context-values": "error",
@@ -126,6 +127,18 @@
 		"eslint/no-await-in-loop": "off",
 		// React escapes JSX text already; the hits are apostrophes and quotes in copy.
 		"react/no-unescaped-entities": "off",
+		// 60 hits over 47 files, each a helper defined next to its only caller. Moving them out costs
+		// locality for one closure allocation per call, and none sit in a measured hot path. The advice is
+		// also incomplete in places: `compareOptions` in Tokens/queries.server.ts captures no variables
+		// but is typed by a `type` declared inside the same function, so it cannot move alone. Revisit
+		// per site if profiling points at one, not as a sweep.
+		"unicorn/consistent-function-scoping": "off",
+		// It requires a setter, and 20 of its 24 hits deliberately omit one: `const [nowMs] =
+		// useState(() => Date.now())` holds a value fixed for the mount, and `const [queryClient] =
+		// useState(() => new QueryClient())` is React Query's own SSR pattern. Adding the setter to
+		// satisfy it makes no-unused-vars demand a `_` prefix, so the two rules cannot both be met. The
+		// four hits that were real, a setter named for something other than its state, are fixed.
+		"react/hook-use-state": "off",
 		// The fix (mutate the source) is only safe for arrays the function itself created. Measured in
 		// Phase 2c: half the sites copy props, state or fixtures, where the copy is required.
 		"oxc/no-map-spread": "off",
@@ -204,9 +217,12 @@
 		},
 		{
 			// `export {}` is what makes a declaration file a module, so its `declare global` block applies.
+			// Both rules report it as dead, and require-module-specifiers deletes it, which drops every
+			// Window augmentation in the file.
 			"files": ["**/*.d.ts"],
 			"rules": {
-				"typescript/no-useless-empty-export": "off"
+				"typescript/no-useless-empty-export": "off",
+				"unicorn/require-module-specifiers": "off"
 			}
 		},
 		{
@@ -214,6 +230,7 @@
 			"files": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
 			"rules": {
 				"react/capitalized-calls": "off",
+				"react/function-component-definition": "off",
 				"react/error-boundaries": "off",
 				"react/exhaustive-effect-dependencies": "off",
 				"react/globals": "off",

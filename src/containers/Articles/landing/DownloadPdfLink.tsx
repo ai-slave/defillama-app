@@ -11,14 +11,14 @@ interface DownloadPdfLinkProps {
 	children?: ReactNode
 }
 
-export const DownloadPdfLink: React.FC<DownloadPdfLinkProps> = ({
+export function DownloadPdfLink({
 	article,
 	pdfUrl,
 	widgetLabel,
 	className,
 	stopPropagation,
 	children = 'Download PDF'
-}) => {
+}: DownloadPdfLinkProps) {
 	const onClick = (e: MouseEvent<HTMLAnchorElement>) => {
 		if (stopPropagation) e.stopPropagation()
 		pushResearchAnalyticsEvent(article, 'export-pdf-research', widgetLabel)

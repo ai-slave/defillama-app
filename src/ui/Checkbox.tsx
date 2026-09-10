@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
-import { forwardRef, useState } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
+import { useState } from 'react'
 
 const CHECKBOX_WRAPPER_VARIANTS = {
 	default:
@@ -15,15 +15,12 @@ const CHECKBOX_WRAPPER_VARIANTS = {
 const CHECKBOX_INDICATOR_STYLES =
 	'grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-strong bg-transparent text-transparent group-hover:border-medium data-[checked=true]:border-brand data-[checked=true]:bg-brand data-[checked=true]:text-on-brand'
 
-interface CheckboxProps extends ComponentPropsWithoutRef<'input'> {
+interface CheckboxProps extends ComponentProps<'input'> {
 	children?: ReactNode
 	variant: keyof typeof CHECKBOX_WRAPPER_VARIANTS
 }
 
-export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
-	{ children, variant, ...props },
-	ref
-) {
+export function Checkbox({ ref, children, variant, ...props }: CheckboxProps) {
 	const [checked, setChecked] = useState(props.checked ?? props.defaultChecked ?? false)
 	const [focusVisible, setFocusVisible] = useState(false)
 	const isChecked = props.checked ?? checked
@@ -57,4 +54,4 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
 			{children}
 		</label>
 	)
-})
+}

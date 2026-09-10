@@ -85,7 +85,7 @@ function DemoChartCard({ chart }: { chart: ChartConfig }) {
 				</h2>
 			</div>
 			<div className="flex-1">
-				<React.Suspense fallback={<></>}>
+				<React.Suspense fallback={null}>
 					<MultiSeriesChart
 						dataset={dataset}
 						charts={charts}
@@ -169,7 +169,7 @@ function DemoMultiChartCard({ multi }: { multi: MultiChartConfig }) {
 		<div className="flex min-h-[400px] flex-col p-1 md:min-h-[416px]">
 			<h2 className="p-1 text-base font-semibold md:p-3">{multi.name}</h2>
 			<div className="flex-1">
-				<React.Suspense fallback={<></>}>
+				<React.Suspense fallback={null}>
 					<MultiSeriesChart
 						dataset={chartView.dataset}
 						charts={chartView.charts}

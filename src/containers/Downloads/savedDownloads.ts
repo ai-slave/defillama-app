@@ -560,9 +560,12 @@ export function sameSavedConfigShape(a: SavedDownload, b: SavedDownload): boolea
 	if (a.kind === 'chart' && b.kind === 'chart') {
 		if (a.slug !== b.slug) return false
 		if ((a.categoryBreakdown?.category ?? null) !== (b.categoryBreakdown?.category ?? null)) return false
-		if (!a.categoryBreakdown && !b.categoryBreakdown) {
-			if (JSON.stringify(sortedArray(a.params)) !== JSON.stringify(sortedArray(b.params))) return false
-		}
+		if (
+			!a.categoryBreakdown &&
+			!b.categoryBreakdown &&
+			JSON.stringify(sortedArray(a.params)) !== JSON.stringify(sortedArray(b.params))
+		)
+			return false
 		if (
 			JSON.stringify(a.columns ? sortedArray(a.columns) : null) !==
 			JSON.stringify(b.columns ? sortedArray(b.columns) : null)

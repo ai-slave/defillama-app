@@ -33,12 +33,7 @@ const parseDescription = (description: string): string => {
 	return matches?.[1] || matches?.[2] || matches?.[3] || matches?.[4] || ''
 }
 
-export const PastUnlockPriceImpact: React.FC<PastUnlockPriceImpactProps> = ({
-	data,
-	title,
-	className,
-	initialNowSec
-}) => {
+export function PastUnlockPriceImpact({ data, title, className, initialNowSec }: PastUnlockPriceImpactProps) {
 	const [now] = React.useState(() => Math.floor(initialNowSec ?? Date.now() / 1000))
 	const { topImpacts } = React.useMemo(() => {
 		const protocolImpacts = new Map<

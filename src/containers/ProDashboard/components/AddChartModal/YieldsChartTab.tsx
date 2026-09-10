@@ -303,10 +303,11 @@ export function YieldsChartTab({
 				return false
 			}
 
-			if (normalizedSelectedTokenSet.size > 0) {
-				if (!pool.tokenSymbols.some((token) => normalizedSelectedTokenSet.has(normalizeYieldToken(token)))) {
-					return false
-				}
+			if (
+				normalizedSelectedTokenSet.size > 0 &&
+				!pool.tokenSymbols.some((token) => normalizedSelectedTokenSet.has(normalizeYieldToken(token)))
+			) {
+				return false
 			}
 
 			if (minTvl !== null && (pool.tvl == null || pool.tvl < minTvl)) {

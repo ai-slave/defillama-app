@@ -16,7 +16,7 @@ interface ResearchReportHighlightWithHeightProps {
 	highlight: ArticleDocument
 }
 
-export const ResearchReportHighlight: React.FC<ResearchReportHighlightProps> = ({ highlight, sharedHeight }) => {
+export function ResearchReportHighlight({ highlight, sharedHeight }: ResearchReportHighlightProps) {
 	const coverUrl = highlight.coverImage?.url
 	const excerpt =
 		highlight.editorialTagMetadata?.highlightText?.trim() ||

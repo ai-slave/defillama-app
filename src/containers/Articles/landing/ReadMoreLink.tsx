@@ -1,12 +1,11 @@
 import Link from 'next/link'
-import type React from 'react'
 
 export interface ReadMoreLinkProps {
 	url: string
 	title: string
 }
 
-export const ReadMoreLink: React.FC<ReadMoreLinkProps> = ({ url, title }) => {
+export function ReadMoreLink({ url, title }: ReadMoreLinkProps) {
 	const isExternalLink = url.startsWith('http')
 
 	return (
