@@ -8,6 +8,7 @@ import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/c
 import { useCustomServerData } from '~/containers/Investors/CustomServerDataContext'
 import { EmissionsByProtocol } from '~/containers/Unlocks/EmissionsByProtocol'
 import { chainIconUrl } from '~/utils/icons'
+import { formatPercent } from '~/utils/numberFormat'
 import type { UniswapUnlocks } from './serverData'
 import type { Chart, Kpi as KpiT } from './transform'
 import {
@@ -38,7 +39,8 @@ interface FeeSwitchData {
 	title?: string
 	status: string
 	mechanism: string
-	schedule: Array<{ date: string; chains: Array<string> }>
+	/** `date` drives the rail spacing; `label` (e.g. 'Mar 6-7, 2026') is what the card shows. */
+	schedule: Array<{ date: string; label?: string; chains: Array<string> }>
 }
 
 interface FeeActivationRow {
@@ -140,7 +142,7 @@ function FeeSwitchTimeline({ feeSwitch }: { feeSwitch: FeeSwitchData }) {
 									</>
 								)}
 							</div>
-							<span className="mono-sm text-pro-text-tertiary tabular-nums">{wave.date}</span>
+							<span className="mono-sm text-pro-text-tertiary tabular-nums">{wave.label ?? wave.date}</span>
 							<div className="flex flex-wrap gap-1 pr-3">
 								{wave.chains.map((chain) => (
 									<img
@@ -187,16 +189,16 @@ function FeeActivationTable({ rows }: { rows: Array<FeeActivationRow> }) {
 					const cell = `truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${rowBg}`
 					const numCell = `${cell} text-right font-jetbrains tabular-nums`
 					return [
-						<div key={`${index}-chain`} className={cell}>
+						<div key={`${row.chain}-chain`} className={cell}>
 							{row.chain}
 						</div>,
-						<div key={`${index}-date`} className={`${cell} font-jetbrains tabular-nums`}>
+						<div key={`${row.chain}-date`} className={`${cell} font-jetbrains tabular-nums`}>
 							{(row.activationDate || '').slice(0, 10)}
 						</div>,
-						<div key={`${index}-pf`} className={numCell}>
+						<div key={`${row.chain}-pf`} className={numCell}>
 							{row.protocolFees30dFormatted}
 						</div>,
-						<div key={`${index}-lp`} className={numCell}>
+						<div key={`${row.chain}-lp`} className={numCell}>
 							{row.lpFees30dFormatted}
 						</div>
 					]
@@ -210,6 +212,32 @@ export default function Economics() {
 	const { data } = useUniswapData<EconomicsData>('economics')
 	const defs = useUniswapDefs()
 	const unlocks = useCustomServerData<UniswapUnlocks>('uniswapUnlocks')
+	// Every vesting allocation is fully unlocked; the residual "locked" figure is just the unpaid
+	// tail of ongoing Merkl incentive campaigns (~7K UNI, 0.001% of supply). Per Uniswap that is
+	// not locked supply, so the shared component's unlocked/locked donut is dropped for this
+	// dashboard (it hides itself when totalLocked is absent; the other meta fields still drive the
+	// schedule chart) and the unlocked share is shown as a KPI below instead. Done here rather than
+	// in the shared component so no other protocol's unlocks page changes.
+	const { unlockedEmissions, unlockedKpi } = useMemo(() => {
+		const emissions = unlocks?.emissions
+		if (!emissions?.meta) return { unlockedEmissions: emissions, unlockedKpi: undefined }
+		const { totalLocked, ...meta } = emissions.meta
+		const pct = meta.maxSupply > 0 ? Math.min(100, Math.max(0, 100 - (totalLocked / meta.maxSupply) * 100)) : null
+		return {
+			unlockedEmissions: { ...emissions, meta: meta as typeof emissions.meta },
+			unlockedKpi:
+				pct == null
+					? undefined
+					: {
+							value: pct,
+							formatted: formatPercent(pct, {
+								input: 'percent',
+								maximumFractionDigits: pct >= 99.95 ? 0 : 1,
+								useGrouping: false
+							})
+						}
+		}
+	}, [unlocks?.emissions])
 	const [burnView, setBurnView] = useState<'total' | 'chain'>('total')
 	const [lpView, setLpView] = useState<'total' | 'chain'>('total')
 
@@ -217,7 +245,7 @@ export default function Economics() {
 	const fees = useProtocolMetrics(ADAPTER_TYPES.FEES)
 	const holders = useProtocolMetrics(ADAPTER_TYPES.FEES, ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE)
 
-	// Daily LP fees: total swap fees minus the buyback-and-burn cut, from DefiLlama.
+	// Daily LP fees: total swap fees minus the protocol fee (holders revenue), from DefiLlama.
 	const lpFeesSeries = useQuery({
 		queryKey: ['uniswap-lp-fees-daily'],
 		queryFn: async (): Promise<Array<TrendSeries>> => {
@@ -262,7 +290,7 @@ export default function Economics() {
 		...QUERY_OPTS
 	})
 
-	// LP fees by chain: per-chain daily fees minus that chain's buyback cut.
+	// LP fees by chain: per-chain daily fees minus that chain's protocol fee.
 	const lpFeesByChainSeries = useQuery({
 		queryKey: ['uniswap-breakdown', 'lp-fees-by-chain'],
 		queryFn: async () => {
@@ -391,7 +419,7 @@ export default function Economics() {
 				{data.protocolFeesByCategory.dates.length < 2 ? (
 					<BarListCard
 						title={`Protocol Fees by Pair Category (${data.protocolFeesByCategory.dates[0]?.slice(0, 7) ?? 'latest month'})`}
-						subtitle="The monthly protocol-fee total split by pair category (fee-switch cut, not total swap fees; v4 pools collect no protocol fee yet). Renders as a monthly trend once more history accumulates."
+						subtitle="The monthly protocol-fee total split by pair category (fee-switch cut, not total swap fees; the category mix is measured on v2 and v3 pools). Renders as a monthly trend once more history accumulates."
 						items={data.protocolFeesByCategory.series
 							.map((series) => ({ name: series.name, value: series.data[0] ?? 0 }))
 							.sort((a, b) => b.value - a.value)}
@@ -400,7 +428,7 @@ export default function Economics() {
 				) : (
 					<SeriesTrendChart
 						title="Protocol Fees by Pair Category"
-						subtitle="The monthly protocol-fee total split by pair category (fee-switch cut, not total swap fees; v4 pools collect no protocol fee yet)."
+						subtitle="The monthly protocol-fee total split by pair category (fee-switch cut, not total swap fees; the category mix is measured on v2 and v3 pools)."
 						series={chartToTrendSeries(data.protocolFeesByCategory)}
 					/>
 				)}
@@ -416,7 +444,7 @@ export default function Economics() {
 				<SectionHeader>LP Fees (Supply-Side Revenue)</SectionHeader>
 				<SeriesTrendChart
 					title="LP Fees (Supply-Side Revenue)"
-					subtitle="Swap fees accruing to liquidity providers: total fees minus the buyback-and-burn cut."
+					subtitle="Swap fees accruing to liquidity providers: total fees minus the protocol fee."
 					series={lpView === 'total' ? lpFeesSeries.data : lpFeesByChainSeries.data}
 					isLoading={lpView === 'total' ? lpFeesSeries.isLoading : lpFeesByChainSeries.isLoading}
 					isError={lpView === 'total' ? lpFeesSeries.isError : lpFeesByChainSeries.isError}
@@ -467,9 +495,22 @@ export default function Economics() {
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>UNI Token Unlocks</SectionHeader>
-				{unlocks?.emissions ? (
+				{unlockedKpi && (
+					<KpiGrid
+						kpis={{ supplyUnlocked: unlockedKpi }}
+						cols={3}
+						items={[
+							[
+								'supplyUnlocked',
+								'Supply Unlocked',
+								'All vesting allocations (team, investors, advisors, community, airdrop) are fully unlocked. The unpaid tail of ongoing Merkl incentive campaigns (~7K UNI) is not locked supply.'
+							]
+						]}
+					/>
+				)}
+				{unlockedEmissions ? (
 					<EmissionsByProtocol
-						data={unlocks.emissions}
+						data={unlockedEmissions}
 						initialTokenMarketData={unlocks.initialTokenMarketData}
 						isEmissionsPage
 						disableClientTokenStatsFetch

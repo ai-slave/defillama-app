@@ -129,60 +129,6 @@ function CustodySankeyCard({ sankey }: { sankey: NonNullable<LiquidityData['lpCu
 	)
 }
 
-const POOL_COLUMNS = 'minmax(140px,1.5fr) minmax(110px,1fr) minmax(70px,0.5fr) minmax(110px,1fr) minmax(90px,0.8fr)'
-const POOL_HEADERS: Array<[string, 'left' | 'right']> = [
-	['Pool', 'left'],
-	['Chain', 'left'],
-	['Version', 'left'],
-	['TVL', 'right'],
-	['% of TVL', 'right']
-]
-
-function TopPoolsTable({ rows }: { rows: Array<TopPoolRow> }) {
-	return (
-		<div className="w-full overflow-auto rounded-lg border border-pro-cards-border">
-			<div style={{ display: 'grid', gridTemplateColumns: POOL_COLUMNS }}>
-				{POOL_HEADERS.map(([label, align]) => (
-					<div
-						key={label}
-						className="sticky top-0 z-[1] border-b border-subtle bg-pro-cards-bg px-3 py-2.5 text-sm font-medium tracking-wider text-pro-text-tertiary uppercase"
-						style={{ textAlign: align }}
-					>
-						{label}
-					</div>
-				))}
-				{rows.map((row, index) => {
-					const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
-					const cell = `truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${rowBg}`
-					const numCell = `${cell} text-right font-jetbrains tabular-nums`
-					return [
-						<div key={`${index}-pool`} className={cell}>
-							{row.pool}
-						</div>,
-						<div key={`${index}-chain`} className={cell}>
-							{row.chain}
-						</div>,
-						<div key={`${index}-version`} className={`${cell} font-jetbrains`}>
-							{row.version.replace(/^uniswap-/, '')}
-						</div>,
-						<div key={`${index}-tvl`} className={numCell}>
-							{row.tvlFormatted}
-						</div>,
-						<div key={`${index}-pct`} className={numCell}>
-							{formatPercent(row.pctOfTvl, {
-								input: 'percent',
-								minimumFractionDigits: 2,
-								maximumFractionDigits: 2,
-								useGrouping: false
-							})}
-						</div>
-					]
-				})}
-			</div>
-		</div>
-	)
-}
-
 export default function Liquidity() {
 	const { data } = useUniswapData<LiquidityData>('liquidity')
 	// Kept as its own endpoint upstream so a slow Allium run never blocks the rest of the tab.
@@ -223,12 +169,22 @@ export default function Liquidity() {
 				: undefined
 	}
 
+	// Snapshot = the latest day of the same core-pool series the over-time chart draws, so the two
+	// cards agree (the ir-server's yields-API snapshot covers a broader pool set and read slightly
+	// differently for the top segments). Falls back to that snapshot only when the series is absent.
 	// Largest segment first (HBarChart renders the first item at the top), catch-all last.
-	const segmentSnapshot = (data.liquidityBySegment?.dates ?? [])
-		.map((name, index) => ({
-			name,
-			value: data.liquidityBySegment.series[0]?.data[index] ?? 0
-		}))
+	const segmentSnapshot = (
+		segmentsOverTime?.series?.length
+			? segmentsOverTime.series.map((series) => ({
+					name: series.name,
+					value: series.data[series.data.length - 1] ?? 0
+				}))
+			: (data.liquidityBySegment?.dates ?? []).map((name, index) => ({
+					name,
+					value: data.liquidityBySegment.series[0]?.data[index] ?? 0
+				}))
+	)
+		.filter((item) => item.value > 0)
 		.sort((a, b) => {
 			const aOther = a.name.startsWith('Other')
 			const bOther = b.name.startsWith('Other')
@@ -315,7 +271,7 @@ export default function Liquidity() {
 				<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 					<BarListCard
 						title="TVL by Token Segment"
-						subtitle="Current pool TVL mapped to token segments via the maintained segment list."
+						subtitle="Latest daily snapshot of core-pool TVL by token segment (same series as the chart over time)."
 						items={segmentSnapshot}
 						valueSymbol="$"
 					/>
@@ -333,12 +289,16 @@ export default function Liquidity() {
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Top Pools</SectionHeader>
-				<ChartCard
-					title={data.topPools.title ?? 'Top Uniswap Pools as % of TVL'}
-					subtitle="The largest pools by TVL and their share of total protocol TVL."
-				>
-					<TopPoolsTable rows={data.topPools.rows} />
-				</ChartCard>
+				{/* A concentration metric, not a leaderboard: the ten largest pools as a share of TVL. */}
+				<BarListCard
+					title="Top 10 Pools as % of TVL"
+					subtitle="Each of the ten largest pools as a share of total protocol TVL."
+					items={data.topPools.rows.slice(0, 10).map((row) => ({
+						name: `${row.pool} (${row.version.replace(/^uniswap-/, '')}, ${row.chain})`,
+						value: row.pctOfTvl
+					}))}
+					valueSymbol="%"
+				/>
 			</section>
 		</div>
 	)

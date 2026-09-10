@@ -1,9 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { fetchAdapterProtocolChartDataByBreakdownType } from '~/containers/AdapterMetrics/api'
+import {
+	fetchAdapterProtocolChartData,
+	fetchAdapterProtocolChartDataByBreakdownType
+} from '~/containers/AdapterMetrics/api'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import type { Chart, Kpi as KpiT } from './transform'
-import { breakdownToSeries, groupTopN, SeriesTrendChart, trimLeadingZeros } from './TrendChart'
+import { breakdownToSeries, groupTopN, SeriesTrendChart, trimLeadingZeros, type TrendSeries } from './TrendChart'
 import {
 	countKpi,
 	KpiGrid,
@@ -80,21 +83,22 @@ export default function Overview() {
 			),
 		...QUERY_OPTS
 	})
-	// Protocol fees (the fee-switch cut) by version, so the Fees section shows what accrues
-	// to the protocol alongside what users pay. Trimmed to start at the fee switch.
-	const protocolFeesByVersion = useQuery({
-		queryKey: ['uniswap-breakdown', 'protocol-fees-by-version'],
-		queryFn: async () =>
-			trimLeadingZeros(
-				breakdownToSeries(
-					await fetchAdapterProtocolChartDataByBreakdownType({
+	// Protocol fees (the fee-switch cut), shown cumulative rather than by version: v4 charges its
+	// protocol fee on the trader side while v2/v3 take it out of LP fees, so a per-version split
+	// is not like-for-like. Trimmed to start at the fee switch.
+	const protocolFees = useQuery({
+		queryKey: ['uniswap-protocol-fees-daily'],
+		queryFn: async (): Promise<Array<TrendSeries>> =>
+			trimLeadingZeros([
+				{
+					name: 'Protocol Fees',
+					data: await fetchAdapterProtocolChartData({
 						adapterType: ADAPTER_TYPES.FEES,
 						protocol: PROTOCOL,
-						dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE,
-						type: 'version'
+						dataType: ADAPTER_DATA_TYPES.DAILY_HOLDERS_REVENUE
 					})
-				)
-			),
+				}
+			]),
 		...QUERY_OPTS
 	})
 	// TVL belongs on the overview for visitors who never click past it; the total series is
@@ -224,13 +228,14 @@ export default function Overview() {
 					minBucket="week"
 				/>
 				<SeriesTrendChart
-					title="Protocol Fees by Version"
-					subtitle="The protocol's cut of swap fees, split by version, since the fee-switch activation."
-					series={protocolFeesByVersion.data}
-					isLoading={protocolFeesByVersion.isLoading}
-					isError={protocolFeesByVersion.isError}
-					defaultView="month"
+					title="Protocol Fees (Cumulative)"
+					subtitle="The protocol's cut of swap fees since the fee-switch activation, cumulative."
+					series={protocolFees.data}
+					isLoading={protocolFees.isLoading}
+					isError={protocolFees.isError}
+					defaultView="cumulative"
 					minBucket="week"
+					stacked={false}
 				/>
 			</section>
 

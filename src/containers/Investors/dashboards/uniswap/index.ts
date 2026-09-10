@@ -13,7 +13,7 @@ const Economics = lazy(() => import('./Economics'))
 export const tabs: Array<DashboardTabConfig> = [
 	{ id: 'overview', label: 'Overview', component: Overview },
 	{ id: 'liquidity', label: 'Liquidity Depth', component: Liquidity },
-	{ id: 'integrations', label: 'Integrations & Ecosystem', component: Integrations },
+	{ id: 'integrations', label: 'Ecosystem & Integrations', component: Integrations },
 	{ id: 'assets', label: 'Asset Breadth', component: Assets },
 	{ id: 'economics', label: 'Economic Model', component: Economics },
 	{ id: 'security', label: 'Security', component: Security }

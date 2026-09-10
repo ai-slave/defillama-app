@@ -96,15 +96,6 @@ export default function Assets() {
 						['longTailVolume', 'Long-Tail Volume (30d)', undefined]
 					]}
 				/>
-				<KpiGrid
-					label="Continuous Clearing Auctions"
-					kpis={data.cca.kpis}
-					cols={3}
-					items={[
-						['totalRaised', 'CCA Total Raised', 'Realized proceeds of graduated auctions.'],
-						['graduatedAuctions', 'Graduated Auctions', undefined]
-					]}
-				/>
 			</section>
 
 			<section className="flex flex-col gap-6">
@@ -200,7 +191,7 @@ export default function Assets() {
 							<TimeAreaCard
 								chart={data.tradedAssets}
 								valueSymbol=""
-								subtitle="Distinct tokens with more than $1k of volume per month, both trade legs, all chains."
+								subtitle="Distinct tokens traded per month, both trade legs, all chains (no volume floor)."
 							/>
 						)}
 						{data.newTokens && (
@@ -208,7 +199,7 @@ export default function Assets() {
 								chart={data.newTokens}
 								title="New Tokens First-Traded on Uniswap"
 								valueSymbol=""
-								subtitle="Tokens whose first-ever Uniswap trade happened that month and that cleared $1k of volume (spam excluded)."
+								subtitle="Tokens whose first-ever Uniswap trade happened that month (no volume floor; known scam/wash tokens excluded)."
 							/>
 						)}
 					</div>
@@ -217,6 +208,14 @@ export default function Assets() {
 
 			<section className="flex flex-col gap-6">
 				<SectionHeader>Continuous Clearing Auctions</SectionHeader>
+				<KpiGrid
+					kpis={data.cca.kpis}
+					cols={3}
+					items={[
+						['totalRaised', 'CCA Total Raised', 'Realized proceeds of graduated auctions.'],
+						['graduatedAuctions', 'Graduated Auctions', undefined]
+					]}
+				/>
 				{/* Monthly default: proceeds are dominated by single graduation days, so the daily
 				    view is one giant spike; monthly reads the trend. */}
 				<SeriesTrendChart

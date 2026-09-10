@@ -184,7 +184,7 @@ export default function Integrations() {
 				/>
 				<SeriesTrendChart
 					title="v4 Hook Creation by Capability"
-					subtitle="New hooks deployed per week, split by their primary permission flag (decoded from the hook address)."
+					subtitle="New v4 hook contracts per week by capability class, read from the permission bits in the hook address."
 					series={chartToTrendSeries(data.hooks.creationByCapability)}
 					valueSymbol=""
 				/>
