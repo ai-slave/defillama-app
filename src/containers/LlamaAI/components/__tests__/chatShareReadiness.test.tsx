@@ -32,6 +32,7 @@ vi.mock('../ChatSurface', () => ({
 				Send prompt
 			</button>
 			<p>{conversationViewModel.error}</p>
+			<output data-testid="streaming">{String(conversationViewModel.isStreaming)}</output>
 		</>
 	)
 }))
@@ -208,4 +209,30 @@ test('a failed first prompt stays unshareable while an older restored chat outsi
 		expect(document.querySelector('input')?.value).toBe('http://localhost:3000/ai/chat/shared/shared-chat')
 	)
 	expect(shareRequests).toEqual(['/user/sessions/old-chat/share'])
+})
+
+test('a preparation failure clears streaming, displays the error, and permits another submission', async () => {
+	await mount({ kind: 'chat-session', sessionId: 'old-chat' })
+	await waitFor(() => expect(document.querySelector('[data-testid="streaming"]')).not.toBeNull())
+	const uuid = vi.spyOn(crypto, 'randomUUID').mockImplementationOnce(() => {
+		throw new Error('UUID unavailable')
+	})
+	const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+	try {
+		await act(async () =>
+			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
+		)
+		expect(document.body.textContent).toContain('The request was interrupted.')
+		expect(document.querySelector('[data-testid="streaming"]')?.textContent).toBe('false')
+		await act(async () =>
+			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
+		)
+		await waitFor(() =>
+			expect(api.fetch.mock.calls.some(([url]) => new URL(url).pathname.endsWith('/agentic'))).toBe(true)
+		)
+		expect(document.querySelector('[data-testid="streaming"]')?.textContent).toBe('true')
+	} finally {
+		uuid.mockRestore()
+		consoleError.mockRestore()
+	}
 })

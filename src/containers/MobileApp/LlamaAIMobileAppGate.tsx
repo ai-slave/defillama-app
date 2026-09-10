@@ -1,20 +1,17 @@
 import * as Ariakit from '@ariakit/react'
-import { useState, type ReactNode } from 'react'
+import { useSyncExternalStore, type ReactNode } from 'react'
 import { StoreButtons } from '~/containers/MobileApp'
 import { useIsClient } from '~/hooks/useIsClient'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
+import {
+	createAnnouncementDismissalToken,
+	dismissAnnouncement,
+	isAnnouncementDismissed,
+	subscribeToAnnouncementDismissals
+} from '~/utils/cookies'
 
-export const LLAMAAI_MOBILE_APP_PROMOTION_KEY = 'llamaai-mobile-app-promotion-2026-08-03'
-
-function hasSeenPromotion(): boolean {
-	if (typeof window === 'undefined') return false
-	try {
-		return sessionStorage.getItem(LLAMAAI_MOBILE_APP_PROMOTION_KEY) === 'true'
-	} catch {
-		return false
-	}
-}
+const promotionDismissalToken = createAnnouncementDismissalToken('llamaai-mobile-app-promotion', '2026-08-03')
 
 function MobileAppPromotion({ onContinue }: { onContinue: () => void }) {
 	return (
@@ -105,16 +102,13 @@ function MobileAppPromotion({ onContinue }: { onContinue: () => void }) {
 function useMobileAppPromotion() {
 	const isClient = useIsClient()
 	const isMobile = useMedia('(max-width: 1023px)')
-	const [hasContinued, setHasContinued] = useState(hasSeenPromotion)
+	const hasContinued = useSyncExternalStore(
+		subscribeToAnnouncementDismissals,
+		() => isAnnouncementDismissed(promotionDismissalToken),
+		() => false
+	)
 
-	const continueOnWeb = () => {
-		try {
-			sessionStorage.setItem(LLAMAAI_MOBILE_APP_PROMOTION_KEY, 'true')
-		} catch {
-			// Storage can be unavailable or full; the feature degrades silently.
-		}
-		setHasContinued(true)
-	}
+	const continueOnWeb = () => dismissAnnouncement(promotionDismissalToken)
 
 	return { isClient, shouldShow: isClient && isMobile && !hasContinued, continueOnWeb }
 }

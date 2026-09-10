@@ -207,7 +207,7 @@ export function useChatScroll({
 		}
 	}, [paginationState])
 
-	// When streaming ends, a one-shot check re-attaches if still near the bottom.
+	// Completion updates the button, but only user intent may end a detachment.
 	useEffect(() => {
 		if (isStreaming) return
 		const timer = setTimeout(() => {
@@ -215,17 +215,11 @@ export function useChatScroll({
 				const container = scrollContainerRef.current
 				if (!container) return
 
-				const isAtBottom =
-					Math.ceil(container.scrollTop + container.clientHeight) >= container.scrollHeight - ATTACHED_THRESHOLD_PX
-				if (isAtBottom && modeRef.current !== 'reattaching') {
-					setMode('attached', container)
-				} else {
-					syncScrollToBottomVisibility(container)
-				}
+				syncScrollToBottomVisibility(container)
 			})
 		}, 100)
 		return () => clearTimeout(timer)
-	}, [isStreaming, scrollContainerRef, setMode, syncScrollToBottomVisibility])
+	}, [isStreaming, scrollContainerRef, syncScrollToBottomVisibility])
 
 	// Content follow: pin the viewport to the bottom in the same frame the conversation changes size,
 	// but ONLY in 'attached' mode — 'reattaching' and 'detached' are left alone so smooth-scroll
@@ -289,6 +283,7 @@ export function useChatScroll({
 		if (!container) return
 
 		const detachOnUpwardIntent = () => {
+			intentRef.current.downAt = Number.NEGATIVE_INFINITY
 			if (modeRef.current === 'attached') setMode('detached', container)
 			else if (modeRef.current === 'reattaching') {
 				cancelPendingReattach()
@@ -325,16 +320,19 @@ export function useChatScroll({
 			intentRef.current.scrollbar = false
 		}
 
-		let touchStartY: number | null = null
+		let touchY: number | null = null
 		const onTouchStart = (event: TouchEvent) => {
-			touchStartY = event.touches[0]?.clientY ?? null
+			touchY = event.touches[0]?.clientY ?? null
 		}
 		const onTouchMove = (event: TouchEvent) => {
 			const currentY = event.touches[0]?.clientY
-			if (touchStartY == null || currentY == null) return
+			if (touchY == null || currentY == null) return
 			// Dragging the finger downward scrolls the content up.
-			if (currentY - touchStartY > 8) detachOnUpwardIntent()
-			else if (touchStartY - currentY > 8) noteDownwardIntent()
+			if (currentY - touchY > 8) detachOnUpwardIntent()
+			else if (touchY - currentY > 8) noteDownwardIntent()
+			else return
+			// Keep sub-threshold movement cumulative, but measure reversals from the latest gesture.
+			touchY = currentY
 		}
 
 		container.addEventListener('wheel', onWheel, { passive: true })

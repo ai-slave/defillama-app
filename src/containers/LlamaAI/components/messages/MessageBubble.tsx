@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState, type RefCallback } from 'react'
+import { Suspense, useMemo, useState, type ComponentProps, type RefCallback } from 'react'
 import { stepsForMessage } from '~/containers/LlamaAI/agentSteps'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { AlertArtifact, AlertArtifactLoading } from '~/containers/LlamaAI/components/AlertArtifact'
@@ -11,6 +11,7 @@ import { ChatMarkdownRenderer, SourcesList } from '~/containers/LlamaAI/componen
 import { MarkdownExportArtifact } from '~/containers/LlamaAI/components/MarkdownExportArtifact'
 import { BranchArrows } from '~/containers/LlamaAI/components/messages/BranchControls'
 import { ActionButtonGroup } from '~/containers/LlamaAI/components/messages/MessageActionGroup'
+import { ResponseErrorBoundary } from '~/containers/LlamaAI/components/messages/ResponseErrorBoundary'
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
 import { ResponseControls } from '~/containers/LlamaAI/components/ResponseControls'
 import { AgentTimeline } from '~/containers/LlamaAI/components/status/AgentTimeline'
@@ -367,7 +368,16 @@ async function readPastedText(url: string) {
 	}
 }
 
-export function MessageBubble({
+export function MessageBubble(props: ComponentProps<typeof MessageBubbleContent>) {
+	if (props.message.role === 'user') return <MessageBubbleContent {...props} />
+	return (
+		<ResponseErrorBoundary key={props.message.id}>
+			<MessageBubbleContent {...props} />
+		</ResponseErrorBoundary>
+	)
+}
+
+function MessageBubbleContent({
 	message,
 	sessionId,
 	isDraft = false,

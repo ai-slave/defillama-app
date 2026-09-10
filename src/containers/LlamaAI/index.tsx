@@ -93,7 +93,9 @@ import {
 	type PromptFailureAction
 } from '~/containers/LlamaAI/promptFailures'
 import { decodeQueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
+import { reportChatError } from '~/containers/LlamaAI/reportChatError'
 import { isFreeLimitError, runAgenticRequest, type UsageLimitError } from '~/containers/LlamaAI/runAgenticRequest'
+import { runPromptSubmission } from '~/containers/LlamaAI/runPromptSubmission'
 import { settleStopRequest } from '~/containers/LlamaAI/stopSettlement'
 import { appendBufferedAssistantMessage, createAgenticCallbacks } from '~/containers/LlamaAI/streamCallbacks'
 import {
@@ -1295,6 +1297,7 @@ export function AgenticChat({
 	// never delay or remain authoritative during navigation to another session.
 	const abortActiveRequest = useCallback(() => {
 		executionCoordinator.invalidate()
+		promptSubmissionLockRef.current = null
 		currentMessageIdRef.current = null
 		clearRecoveryController()
 	}, [clearRecoveryController, executionCoordinator])
@@ -1318,7 +1321,6 @@ export function AgenticChat({
 		abortActiveRequest()
 		abortQueueCommands()
 		clearConversationRuntimeState()
-		promptSubmissionLockRef.current = null
 		setMessages([])
 		setActiveLeafMessageId(null)
 		setQuotedText(null)
@@ -1519,12 +1521,10 @@ export function AgenticChat({
 	const startPromptSubmission = useCallback(
 		(effectiveMode: AgenticAnswerMode, prepare: () => PreparedPromptSubmission): boolean => {
 			if (isStreamingRef.current || promptSubmissionLockRef.current !== null) return false
+			abortActiveRequest()
 			triggerPromptTransition(shouldShowLanding ? 'landing' : 'conversation')
 			const submissionId = ++nextPromptSubmissionIdRef.current
 			promptSubmissionLockRef.current = submissionId
-			const releaseSubmission = () => {
-				if (promptSubmissionLockRef.current === submissionId) promptSubmissionLockRef.current = null
-			}
 			if (effectiveMode === 'research') {
 				try {
 					if (!localStorage.getItem('llamaai-research-duration-toast')) {
@@ -1541,8 +1541,7 @@ export function AgenticChat({
 
 			const abandonedDuelSessionId = duelPairId ? sessionId : null
 
-			abortActiveRequest()
-			void (async () => {
+			const execute = async () => {
 				setViewError(null)
 				setPaginationError(null)
 				primeAudio()
@@ -1605,7 +1604,7 @@ export function AgenticChat({
 					}
 				}
 
-				void executionCoordinator.run(currentSessionId, 'prompt', async (operation) => {
+				await executionCoordinator.run(currentSessionId, 'prompt', async (operation) => {
 					await runAgenticRequest({
 						mode: 'prompt',
 						operation,
@@ -1783,13 +1782,20 @@ export function AgenticChat({
 							}
 						},
 						onFinally: ({ isCurrent }) => {
-							releaseSubmission()
 							if (isCurrent()) finishDuel()
 						}
 					})
 				})
-			})().catch(() => {
-				releaseSubmission()
+			}
+			void runPromptSubmission({
+				submissionId,
+				submissionLockRef: promptSubmissionLockRef,
+				execute,
+				onFailure: (submissionError) => {
+					dispatchStream({ type: 'RESET_STREAM' })
+					setViewError('The request was interrupted. Reload this conversation before trying again.')
+					reportChatError(submissionError, 'submission', '')
+				}
 			})
 
 			return true

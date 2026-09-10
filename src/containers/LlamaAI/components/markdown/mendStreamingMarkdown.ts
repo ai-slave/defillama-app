@@ -66,6 +66,9 @@ export function mendStreamingMarkdown(source: string, tree: Root): string | null
 
 	const paragraph = trailingParagraph(last)
 	if (!paragraph) return null
+	// GFM can synthesize text and autolinks without positions inside an unfinished label.
+	// Keep that paragraph as written: decoded node values cannot recover raw source offsets.
+	if (paragraph.children.some((child) => !child.position)) return null
 	let mended = source
 	// An unfinished link is text up to the `(` and, thanks to GFM autolink literals, often a link node
 	// for the partial URL after it. Scan the raw source of that trailing run only, so a `[a](b` inside

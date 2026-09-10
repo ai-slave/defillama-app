@@ -46,6 +46,9 @@ function reactCompilerUnderTest() {
  * that memoization can change.
  */
 const COMPILER_SENSITIVE_TESTS = [
+	'src/containers/LlamaAI/components/markdown/mendStreamingMarkdown.test.tsx',
+	'src/containers/LlamaAI/components/messages/ResponseErrorBoundary.test.tsx',
+	'src/containers/LlamaAI/hooks/useChatScroll.test.tsx',
 	'src/containers/LlamaAI/components/__tests__/chatShareReadiness.test.tsx',
 	'src/containers/LlamaAI/components/__tests__/shareModalClipboard.test.tsx',
 	'src/containers/LlamaAI/components/__tests__/ImagePreviewModal.test.tsx',

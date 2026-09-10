@@ -96,35 +96,33 @@ afterEach(async () => {
 	client.clear()
 	container.remove()
 })
-test.each(['undo', 'iterate'] as const)(
-	'%s accepts the saved result but preserves edits made while saving',
-	async (action) => {
-		const pending = Promise.withResolvers<Dashboard>()
-		api.update.mockReturnValueOnce(pending.promise)
-		let completion: Promise<void>
-		await act(async () => {
-			completion =
-				action === 'undo'
-					? dashboard.undoAIGeneration()
-					: dashboard.handleIterateDashboard({
-							dashboardName: 'Analysis',
-							visibility: 'public',
-							tags: [],
-							description: '',
-							items: oldItems
-						})
-		})
-		await vi.waitFor(() => expect(api.update).toHaveBeenCalledOnce())
-		await act(async () => editor.handleEditItem('ai', laterItems[0]))
-		const saved = { ...original, data: { ...original.data, ...api.update.mock.calls[0][1] } }
-		await act(async () => {
-			pending.resolve(saved)
-			await completion
-		})
-		expect(items).toEqual(laterItems)
-		expect(dashboard.currentDashboard?.data.items).toEqual(oldItems)
-	}
-)
+test.each(['undo', 'iterate'] as const)('%s merges saved items with edits made while saving', async (action) => {
+	const pending = Promise.withResolvers<Dashboard>()
+	api.update.mockReturnValueOnce(pending.promise)
+	let completion: Promise<void>
+	await act(async () => {
+		completion =
+			action === 'undo'
+				? dashboard.undoAIGeneration()
+				: dashboard.handleIterateDashboard({
+						dashboardName: 'Analysis',
+						visibility: 'public',
+						tags: [],
+						description: '',
+						items: oldItems
+					})
+	})
+	await vi.waitFor(() => expect(api.update).toHaveBeenCalledOnce())
+	await act(async () => editor.handleEditItem('ai', laterItems[0]))
+	const saved = { ...original, data: { ...original.data, ...api.update.mock.calls[0][1] } }
+	await act(async () => {
+		pending.resolve(saved)
+		await completion
+	})
+	// The saved result adds a different item; accepting it must retain the concurrent local edit.
+	expect(items).toEqual([...laterItems, ...oldItems])
+	expect(dashboard.currentDashboard?.data.items).toEqual(oldItems)
+})
 test('undo restores the previous items when no newer edit exists and removes the undo action', async () => {
 	api.update.mockImplementation(async (_id, data) => ({
 		...original,

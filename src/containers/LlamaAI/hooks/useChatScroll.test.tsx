@@ -448,4 +448,83 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 
 		expect(api.isAttached).toBe(false)
 	})
+	test('keeps explicit detachment when streaming finishes near the bottom', async () => {
+		await act(async () => {
+			container.dispatchEvent(new WheelEvent('wheel', { deltaY: -20 }))
+			container.scrollTop = BOTTOM - VIEWPORT - 20
+			container.dispatchEvent(new Event('scroll'))
+			flushFrames()
+		})
+		expect(api.isAttached).toBe(false)
+		await act(async () => root.render(<Harness isStreaming={false} onReady={(next) => (api = next)} />))
+		await act(async () => {
+			vi.advanceTimersByTime(100)
+			flushFrames()
+		})
+		expect(api.isAttached).toBe(false)
+		await act(async () => growContent(BOTTOM + 200))
+		expect(container.scrollTop).toBe(BOTTOM - VIEWPORT - 20)
+	})
+
+	test('keeps following final layout changes when completion was attached', async () => {
+		await act(async () => root.render(<Harness isStreaming={false} onReady={(next) => (api = next)} />))
+		await act(async () => {
+			vi.advanceTimersByTime(100)
+			flushFrames()
+		})
+		expect(api.isAttached).toBe(true)
+		await act(async () => growContent(BOTTOM + 200))
+		expect(container.scrollTop).toBe(BOTTOM + 200)
+	})
+
+	test('detaches when a touch reverses before crossing its starting point', async () => {
+		await act(async () => {
+			const start = new Event('touchstart') as any
+			start.touches = [{ clientY: 200 }]
+			container.dispatchEvent(start)
+			for (const y of [100, 140]) {
+				const move = new Event('touchmove') as any
+				move.touches = [{ clientY: y }]
+				container.dispatchEvent(move)
+			}
+		})
+		expect(api.isAttached).toBe(false)
+	})
+
+	test('accumulates slow touch movement without detaching on a downward scroll', async () => {
+		await act(async () => {
+			const start = new Event('touchstart') as any
+			start.touches = [{ clientY: 200 }]
+			container.dispatchEvent(start)
+			for (const y of [196, 192, 188]) {
+				const move = new Event('touchmove') as any
+				move.touches = [{ clientY: y }]
+				container.dispatchEvent(move)
+			}
+		})
+		expect(api.isAttached).toBe(true)
+		await act(async () => {
+			for (const y of [192, 196, 200]) {
+				const move = new Event('touchmove') as any
+				move.touches = [{ clientY: y }]
+				container.dispatchEvent(move)
+			}
+		})
+		expect(api.isAttached).toBe(false)
+	})
+	test('upward intent cancels earlier downward intent before a layout shift', async () => {
+		await act(async () => {
+			container.dispatchEvent(new WheelEvent('wheel', { deltaY: 30 }))
+			container.dispatchEvent(new WheelEvent('wheel', { deltaY: -20 }))
+			container.scrollTop = BOTTOM - VIEWPORT - 20
+			container.dispatchEvent(new Event('scroll'))
+			flushFrames()
+		})
+		await act(async () => {
+			container.scrollTop += 10
+			container.dispatchEvent(new Event('scroll'))
+			flushFrames()
+		})
+		expect(api.isAttached).toBe(false)
+	})
 })
