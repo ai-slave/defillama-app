@@ -194,6 +194,31 @@ describe('fetchCoreMetadata', () => {
 		})
 	})
 
+	test('stamps the declared RWA platform onto its protocol metadata', async () => {
+		fetchCoreMetadataSourcesMock.mockResolvedValue(
+			createCoreMetadataSources({
+				protocols: {
+					'6378': { name: 'xstocks', displayName: 'xStocks' },
+					'2272': { name: 'okx', displayName: 'OKX', tvl: true },
+					'4980': { name: 'spiko', displayName: 'Spiko', tvl: true }
+				},
+				rwaPlatformsIndex: {
+					generatedAt: 1,
+					byPid: {},
+					byProtocolSlug: { xstocks: 'xstocks', okx: 'okx' },
+					platforms: {}
+				}
+			})
+		)
+		const { fetchCoreMetadata } = await import('../fetch')
+
+		const payload = await fetchCoreMetadata()
+
+		expect(payload.protocols['6378'].rwaPlatformSlug).toBe('xstocks')
+		expect(payload.protocols['2272'].rwaPlatformSlug).toBe('okx')
+		expect(payload.protocols['4980'].rwaPlatformSlug).toBeUndefined()
+	})
+
 	test('precomputes emissions historical prices with a 6h POST', async () => {
 		const day = 86_400
 		const nowSec = 1_700_000_000

@@ -8,7 +8,7 @@ const PRIMARY_METRIC_OVERRIDES: Record<string, PrimaryMetricOverride> = {
 }
 
 export interface ProtocolPrimaryMetric {
-	source: 'perpVolume'
+	source: 'perpVolume' | 'rwaActiveAum'
 	title: string
 	byChainTitle: string
 	value: number
@@ -16,10 +16,11 @@ export interface ProtocolPrimaryMetric {
 }
 
 export function getProtocolPrimaryMetricOverride(
-	protocol: Pick<IProtocolOverviewPageData, 'name'> & Partial<Pick<IProtocolOverviewPageData, 'perpVolume'>>
+	protocol: Pick<IProtocolOverviewPageData, 'name'> & {
+		metrics: Pick<IProtocolOverviewPageData['metrics'], 'tvl'>
+	} & Partial<Pick<IProtocolOverviewPageData, 'perpVolume' | 'rwaActiveAum'>>
 ): ProtocolPrimaryMetric | null {
 	const override = PRIMARY_METRIC_OVERRIDES[slug(protocol.name)]
-	if (!override) return null
 
 	switch (override) {
 		case 'perpVolume30d': {
@@ -43,4 +44,17 @@ export function getProtocolPrimaryMetricOverride(
 			}
 		}
 	}
+
+	// Retired TVL adapters need a replacement headline; live TVL keeps its chain breakdown.
+	if (!protocol.metrics.tvl && protocol.rwaActiveAum != null) {
+		return {
+			source: 'rwaActiveAum',
+			title: 'Active Marketcap',
+			byChainTitle: 'Active Marketcap by chain',
+			value: protocol.rwaActiveAum,
+			valueByChain: []
+		}
+	}
+
+	return null
 }

@@ -112,6 +112,22 @@ beforeEach(() => {
 })
 
 describe('/api/public/protocols/charts', () => {
+	test('returns 500 when the RWA upstream fails', async () => {
+		fetchJsonMock.mockRejectedValueOnce(new Error('RWA unavailable'))
+		const res = createMockNextApiResponse()
+		await handler(createRequest({ kind: 'rwa-aum', platform: 'xstocks' }), res)
+		expect(res.status).toHaveBeenCalledWith(500)
+		expect(res.json).toHaveBeenCalledWith({ error: 'Failed to load protocol chart data' })
+	})
+
+	test('returns a successful empty chart when the RWA upstream has no history', async () => {
+		fetchJsonMock.mockResolvedValueOnce([])
+		const res = createMockNextApiResponse()
+		await handler(createRequest({ kind: 'rwa-aum', platform: 'xstocks' }), res)
+		expect(res.status).toHaveBeenCalledWith(200)
+		expect(res.json).toHaveBeenCalledWith([])
+	})
+
 	test('rejects retired governance chart requests without fetching upstream data', async () => {
 		const req = createRequest({ kind: 'governance', apis: JSON.stringify(['https://example.com/governance']) })
 		const res = createMockNextApiResponse()

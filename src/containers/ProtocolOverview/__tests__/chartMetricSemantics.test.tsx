@@ -119,7 +119,8 @@ const baseMetrics: IProtocolPageMetrics = {
 	liquidationVolume: false,
 	collateralLiquidated: false,
 	borrowed: false,
-	tokenRights: false
+	tokenRights: false,
+	rwa: false
 }
 
 const feeProps: ProbeProps = {

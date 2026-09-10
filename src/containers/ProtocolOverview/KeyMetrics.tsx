@@ -45,6 +45,7 @@ type KeyMetricsOptionalFields = Partial<
 		| 'expenses'
 		| 'treasury'
 		| 'raises'
+		| 'rwaActiveAum'
 	>
 >
 

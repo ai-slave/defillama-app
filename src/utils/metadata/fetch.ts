@@ -147,6 +147,16 @@ export async function fetchCoreMetadata(): Promise<CoreMetadataPayload> {
 	const platformRoutes = Array.from(platformRoutesBySlug.values())
 	const platformNames = platformRoutes.map((platform) => platform.name)
 
+	// Stamp the RWA platform onto the protocol it declares in the sheet, so every protocol
+	// route can offer the RWA tab without re-resolving the index.
+	const platformSlugByProtocolSlug = rwaPlatformsIndex.byProtocolSlug ?? {}
+	for (const protocolId in protocols) {
+		const protocol = protocols[protocolId]
+		if (!protocol) continue
+		const platformSlug = platformSlugByProtocolSlug[normalizeSlug(protocol.displayName || protocol.name)]
+		if (platformSlug) protocol.rwaPlatformSlug = platformSlug
+	}
+
 	return {
 		protocols,
 		chains,

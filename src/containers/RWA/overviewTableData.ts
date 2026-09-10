@@ -49,15 +49,15 @@ export function getRWAOverviewTableData(row: RWAStatsSegmented, inclusion: RWAOv
 		case 'base':
 			addSlice(row.base)
 			break
+		// A dually-classified asset (SKY is the only one today) needs both toggles: turning
+		// stablecoins on is not consent to count a governance token, or the other way round.
 		case 'stablecoins':
 			addSlice(row.base)
 			addSlice(row.stablecoinsOnly)
-			addSlice(row.stablecoinsAndGovernance)
 			break
 		case 'governance':
 			addSlice(row.base)
 			addSlice(row.governanceOnly)
-			addSlice(row.stablecoinsAndGovernance)
 			break
 		case 'all':
 			addSlice(row.base)

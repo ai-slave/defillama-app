@@ -33,7 +33,8 @@ const metrics: IProtocolPageMetrics = {
 	liquidationVolume: false,
 	collateralLiquidated: false,
 	borrowed: false,
-	tokenRights: false
+	tokenRights: false,
+	rwa: false
 }
 
 function setupLayoutMocks(user: unknown) {

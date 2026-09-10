@@ -44,6 +44,10 @@ type ProtocolMetric =
 const protocolTabRoutes = [
 	{ prefix: 'protocol/tvl', hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.tvl) },
 	{
+		prefix: 'protocol/rwa',
+		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.rwaPlatformSlug)
+	},
+	{
 		prefix: 'protocol/stablecoins',
 		hasMetric: (meta: MetadataCache['protocolMetadata'][string]) => Boolean(meta.stablecoins)
 	},
@@ -117,13 +121,15 @@ export function resolveProtocolFeatureRouteFromMetadata({
 	hasMetric,
 	metadataCache,
 	protocol,
-	routePrefix
+	routePrefix,
+	rwaPlatformRedirect = false
 }: {
 	cexRoutePrefix?: string
 	hasMetric: (metadata: IProtocolMetadata) => boolean
 	metadataCache: MetadataCache
 	protocol: string
 	routePrefix: string
+	rwaPlatformRedirect?: boolean
 }): ProtocolFeatureRouteResolution | null {
 	if (cexRoutePrefix) {
 		const cexRoute = resolveCexParamFromMetadata(protocol, metadataCache)
@@ -136,7 +142,14 @@ export function resolveProtocolFeatureRouteFromMetadata({
 	}
 
 	const protocolRoute = resolveProtocolParamFromMetadata(protocol, metadataCache)
-	if (!protocolRoute || !hasMetric(protocolRoute.metadata)) return null
+	if (!protocolRoute) return null
+
+	if (!hasMetric(protocolRoute.metadata)) {
+		// Retiring the TVL adapter (module: dummy.js) drops the metric, which would 404 every
+		// existing link. An RWA platform still has a page, so send them there instead.
+		const platformSlug = rwaPlatformRedirect ? protocolRoute.metadata.rwaPlatformSlug : null
+		return platformSlug ? { type: 'redirect', destination: `/rwa/platform/${platformSlug}` } : null
+	}
 
 	if (protocol !== protocolRoute.canonicalSlug) {
 		return {

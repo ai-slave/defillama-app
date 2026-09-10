@@ -84,7 +84,8 @@ export const useFetchProtocolChartData = ({
 	availableCharts,
 	chartDenominations,
 	tvlSettings,
-	isCEX
+	isCEX,
+	rwaPlatformSlug
 }: IProtocolOverviewPageData & {
 	toggledMetrics: IToggledMetrics
 	groupBy: ChartInterval
@@ -133,6 +134,10 @@ export const useFetchProtocolChartData = ({
 		}
 		return numeric
 	}, [availableCharts, prefetchedChartsInSeconds])
+	const prefetchedRwaAumCharts = useMemo(() => {
+		const rwaAum = getKnownChartValues(prefetchedChartsInSeconds['RWA AUM'])
+		return rwaAum?.length ? { 'RWA AUM': rwaAum } : {}
+	}, [prefetchedChartsInSeconds])
 	const prefetchedTreasuryCharts = useMemo(() => {
 		const treasury = getKnownChartValues(prefetchedChartsForMsRender['Treasury'])
 		return treasury?.length ? { Treasury: treasury } : {}
@@ -460,6 +465,23 @@ export const useFetchProtocolChartData = ({
 			enabled: isUnlocksEnabled
 		})
 
+	const isRwaAumEnabled = !!(
+		toggledMetrics.rwaAum === 'true' &&
+		rwaPlatformSlug &&
+		canFetchClientCharts &&
+		availableCharts.includes('RWA AUM')
+	)
+	const { data: rwaAumData, isLoading: fetchingRwaAum } = usePrefetchedProtocolChartQuery({
+		label: 'RWA AUM',
+		prefetchedCharts: prefetchedRwaAumCharts,
+		queryKey: ['protocol-overview', protocolSlug, 'rwa-aum'],
+		enabled: isRwaAumEnabled,
+		queryFn: () =>
+			fetchJson<Array<[number, number]>>(
+				buildProtocolChartApiUrl({ kind: 'rwa-aum', platform: rwaPlatformSlug ?? undefined })
+			).then(normalizeSeriesToSeconds)
+	})
+
 	const isTreasuryEnabled = !!(toggledMetrics.treasury === 'true' && metrics.treasury && canFetchClientCharts)
 	const { data: treasuryData, isLoading: fetchingTreasury } = usePrefetchedProtocolChartQuery({
 		label: 'Treasury',
@@ -577,6 +599,7 @@ export const useFetchProtocolChartData = ({
 				label: 'Active Loans'
 			},
 			{ isLoading: isTvsToggled && fetchingTvs, label: 'TVS' },
+			{ isLoading: isRwaAumEnabled && fetchingRwaAum, label: 'RWA AUM' },
 			...ADAPTER_CHART_DESCRIPTORS.map((descriptor) => {
 				const state = adapterChartStates.get(descriptor.label)
 				return { isLoading: !!state?.enabled && !!state.isLoading, label: descriptor.label }
@@ -606,6 +629,9 @@ export const useFetchProtocolChartData = ({
 		if (tvlChart !== null && (isTvlToggled || isTotalAssetsToggled)) {
 			const chartName: ProtocolChartsLabels = isCEX ? 'Total Assets' : ('TVL' as const)
 			charts[chartName] = tvlChart
+		}
+		if (rwaAumData != null && toggledMetrics.rwaAum === 'true') {
+			charts['RWA AUM'] = formatLineChart({ data: rwaAumData, groupBy, denominationPriceHistory })
 		}
 		if (tvsData !== null && isTvsToggled) {
 			charts['TVS'] = formatLineChart({ data: tvsData, groupBy, denominationPriceHistory })
@@ -796,6 +822,9 @@ export const useFetchProtocolChartData = ({
 		adapterChartStates,
 		fetchingTvs,
 		tvsData,
+		fetchingRwaAum,
+		rwaAumData,
+		isRwaAumEnabled,
 		fetchingUnlocksAndIncentives,
 		unlocksAndIncentivesData,
 		fetchingTreasury,

@@ -59,7 +59,8 @@ export const getStaticProps = withPerformanceLogging(
 			hasMetric: (metadata) => Boolean(metadata.tvl),
 			metadataCache,
 			protocol,
-			routePrefix: 'protocol/tvl'
+			routePrefix: 'protocol/tvl',
+			rwaPlatformRedirect: true
 		})
 		if (!protocolRoute) {
 			return { notFound: true }

@@ -33,7 +33,8 @@ const metrics = {
 	liquidationVolume: false,
 	collateralLiquidated: false,
 	borrowed: true,
-	tokenRights: false
+	tokenRights: false,
+	rwa: false
 } satisfies IProtocolPageMetrics
 
 afterEach(() => {

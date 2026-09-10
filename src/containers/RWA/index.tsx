@@ -178,7 +178,9 @@ const EMPTY_HBAR_PRESENTATION = {
 	colors: [] as Array<string>
 }
 
-export function RWAOverview(props: IRWAAssetsOverview) {
+// `hideEntityNav`: the platform/chain switcher is how the RWA section browses between
+// entities. On a protocol's own RWA tab the entity is fixed, so the row is dead weight.
+export function RWAOverview(props: IRWAAssetsOverview & { hideEntityNav?: boolean }) {
 	const rankedFilterValues = useMemo(
 		() =>
 			getRankedRwaFilterValues({
@@ -1137,7 +1139,7 @@ export function RWAOverview(props: IRWAAssetsOverview) {
 			{/* <Announcement>
 				Stablecoins, Governance are not included by default. To include them, toggle the corresponding filters.
 			</Announcement> */}
-			<RowLinksWithDropdown links={navLinks} activeLink={selectedModeLabel} />
+			{props.hideEntityNav ? null : <RowLinksWithDropdown links={navLinks} activeLink={selectedModeLabel} />}
 			<RWAOverviewFilters
 				enabled={showFilters}
 				defaultInclusion={props.defaultInclusion}

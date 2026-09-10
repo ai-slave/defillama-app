@@ -82,6 +82,9 @@ export interface IProtocolMetadata {
 	collateralLiquidated?: boolean
 	gecko_id?: string
 	cex?: boolean
+	// Derived at metadata-build time from the RWA platforms index, not published by the
+	// protocols API. Set when the RWA sheet declares this protocol via `*defillamaSlug`.
+	rwaPlatformSlug?: string
 }
 
 export interface ICexItem {

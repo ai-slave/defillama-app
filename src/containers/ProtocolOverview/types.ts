@@ -42,6 +42,7 @@ export interface IProtocolPageMetrics {
 	collateralLiquidated: boolean
 	borrowed: boolean
 	tokenRights: boolean
+	rwa: boolean
 }
 
 export interface IProtocolFaqAnswerPart {
@@ -89,6 +90,9 @@ export interface IProtocolOverviewPageData {
 	}
 	category?: string | null
 	tags?: Array<string> | null
+	// Set when the RWA sheet declares this protocol; drives the RWA AUM metric and chart.
+	rwaPlatformSlug?: string | null
+	rwaActiveAum?: number | null
 	otherProtocols?: Array<string> | null
 	childProtocols?: Array<{
 		name: string
@@ -239,6 +243,7 @@ export interface IToggledMetrics extends Record<
 
 export const createDisabledProtocolToggledMetrics = (): IToggledMetrics => ({
 	tvl: 'false',
+	rwaAum: 'false',
 	totalAssets: 'false',
 	tvs: 'false',
 	mcap: 'false',

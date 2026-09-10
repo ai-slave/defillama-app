@@ -33,6 +33,9 @@ const formatAdapterData = vi.hoisted(() =>
 		defaultChartView: 'daily'
 	})
 )
+const fetchRWAPlatformAumChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
+vi.mock('~/containers/RWA/api', () => ({ fetchRWAPlatformAumChart }))
+
 const fetchProtocolTvlChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 const fetchOracleMetrics = vi.hoisted(() => vi.fn().mockResolvedValue(null))
 const fetchOracleProtocolChart = vi.hoisted(() => vi.fn().mockResolvedValue([]))
@@ -118,6 +121,48 @@ vi.mock('../formatAdapterData', () => ({
 }))
 
 describe('getProtocolOverviewPageData', () => {
+	test('tolerates RWA upstream failure while TVL is live', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+		fetchRWAPlatformAumChart.mockRejectedValueOnce(new Error('RWA unavailable'))
+		const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+		try {
+			const result = getProtocolOverviewPageData({
+				protocolId: 'test-protocol',
+				currentProtocolMetadata: { displayName: 'Test Protocol', tvl: true, rwaPlatformSlug: 'test-platform' },
+				chainMetadata: {},
+				tokenlist: {},
+				cgExchangeIdentifiers: [],
+				emissionsSupplyMetrics: {},
+				yieldsSnapshot
+			})
+			const page = await result
+			expect(page.rwaActiveAum).toBeNull()
+			expect(page.metrics.tvl).toBe(true)
+		} finally {
+			logSpy.mockRestore()
+		}
+	})
+
+	test('rejects RWA upstream failure when TVL is retired', async () => {
+		const { getProtocolOverviewPageData } = await import('../queries')
+		fetchRWAPlatformAumChart.mockRejectedValueOnce(new Error('RWA unavailable'))
+		const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+		try {
+			const result = getProtocolOverviewPageData({
+				protocolId: 'test-protocol',
+				currentProtocolMetadata: { displayName: 'Test Protocol', tvl: false, rwaPlatformSlug: 'test-platform' },
+				chainMetadata: {},
+				tokenlist: {},
+				cgExchangeIdentifiers: [],
+				emissionsSupplyMetrics: {},
+				yieldsSnapshot
+			})
+			await expect(result).rejects.toThrow('RWA unavailable')
+		} finally {
+			logSpy.mockRestore()
+		}
+	})
+
 	afterEach(() => {
 		fetchAdapterProtocolChartData.mockClear()
 		fetchAdapterProtocolMetrics.mockResolvedValue({})

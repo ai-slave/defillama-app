@@ -50,7 +50,8 @@ const metrics: IProtocolPageMetrics = {
 	liquidationVolume: false,
 	collateralLiquidated: false,
 	borrowed: false,
-	tokenRights: false
+	tokenRights: false,
+	rwa: false
 }
 
 const renderKeyMetrics = async (props: IKeyMetricsProps) => {

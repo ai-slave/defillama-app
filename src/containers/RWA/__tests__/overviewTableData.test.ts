@@ -58,26 +58,26 @@ describe('getRWAOverviewTableData', () => {
 			stablecoinsOnly: { ...row.stablecoinsOnly, bridgeTvl: 3 }
 		}
 
-		expect(getRWAOverviewTableData(bridgeRow, getRWAOverviewInclusion(true, false, false)).defiActiveTvl).toBe(79)
+		expect(getRWAOverviewTableData(bridgeRow, getRWAOverviewInclusion(true, false, false)).defiActiveTvl).toBe(67)
 	})
 
-	test('includes stablecoins only', () => {
+	test('includes stablecoins only, holding back the dually-classified bucket', () => {
 		expect(getRWAOverviewTableData(row, getRWAOverviewInclusion(true, false))).toEqual({
-			onChainMcap: 160,
-			activeMcap: 140,
-			defiActiveTvl: 102,
-			assetCount: 8,
-			assetIssuers: 3
+			onChainMcap: 120,
+			activeMcap: 105,
+			defiActiveTvl: 90,
+			assetCount: 4,
+			assetIssuers: 2
 		})
 	})
 
-	test('includes governance only', () => {
+	test('includes governance only, holding back the dually-classified bucket', () => {
 		expect(getRWAOverviewTableData(row, getRWAOverviewInclusion(false, true))).toEqual({
-			onChainMcap: 170,
-			activeMcap: 150,
-			defiActiveTvl: 97,
-			assetCount: 9,
-			assetIssuers: 4
+			onChainMcap: 130,
+			activeMcap: 115,
+			defiActiveTvl: 85,
+			assetCount: 5,
+			assetIssuers: 2
 		})
 	})
 

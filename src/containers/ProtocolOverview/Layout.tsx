@@ -24,6 +24,7 @@ const tabs = {
 	information: { id: 'information', name: 'Information', route: '/protocol' },
 	assets: { id: 'assets', name: 'Assets', route: '/protocol/assets' },
 	tvl: { id: 'tvl', name: 'TVL', route: '/protocol/tvl' },
+	rwa: { id: 'rwa', name: 'RWA', route: '/protocol/rwa' },
 	borrowed: { id: 'borrowed', name: 'Active Loans', route: '/protocol/active-loans' },
 	stablecoins: { id: 'stablecoins', name: 'Stablecoin Info', route: '/protocol/stablecoins' },
 	bridges: { id: 'bridges', name: 'Bridge Info', route: '/protocol/bridges' },
@@ -143,6 +144,10 @@ export function ProtocolOverviewLayout({
 
 	const protocolTabs = useMemo(() => {
 		const final = []
+		// Sits directly after TVL: for an RWA platform it is the metric TVL used to stand in for.
+		if (metrics.rwa) {
+			final.push(tabs.rwa)
+		}
 		if (metrics.borrowed) {
 			final.push(tabs.borrowed)
 		}

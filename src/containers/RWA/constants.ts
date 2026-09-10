@@ -57,7 +57,6 @@ export function inferPlatformRWAOverviewInclusion(
 	let governanceCount = 0
 	let totalMcap = 0
 	let stablecoinMcap = 0
-	let governanceMcap = 0
 
 	for (const asset of assets) {
 		const mcap = asset.onChainMcap?.total ?? 0
@@ -66,19 +65,20 @@ export function inferPlatformRWAOverviewInclusion(
 			stablecoinCount += 1
 			stablecoinMcap += mcap
 		}
-		if (asset.governance) {
-			governanceCount += 1
-			governanceMcap += mcap
-		}
+		if (asset.governance) governanceCount += 1
 		if (!asset.stablecoin && !asset.governance) baseCount += 1
 	}
 	let includeStablecoins = stablecoinCount > assets.length / 2 || stablecoinMcap > totalMcap / 2
-	let includeGovernance = governanceCount > assets.length / 2 || governanceMcap > totalMcap / 2
+	// A governance token is not an asset under management, so it never opens counted into a
+	// platform's mcap however much of the platform it is: Ondo's On-chain AUM headline excludes
+	// ONDO, and a majority rule here would have the chart under it plot nearly double.
+	let includeGovernance = false
 
-	// Avoid an empty initial page when every asset belongs to an evenly split optional classification.
-	if (baseCount === 0 && !includeStablecoins && !includeGovernance) {
+	// Avoid an empty initial page when every asset belongs to an optional classification.
+	if (baseCount === 0 && !includeStablecoins) {
 		includeStablecoins = stablecoinCount > 0
-		includeGovernance = governanceCount > 0
+		// Only a platform holding nothing else falls back to showing governance tokens.
+		includeGovernance = stablecoinCount === 0 && governanceCount > 0
 	}
 
 	return {

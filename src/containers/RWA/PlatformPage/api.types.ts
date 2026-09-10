@@ -93,5 +93,8 @@ export interface RWAPlatformMeta {
 export interface RWAPlatformsIndex {
 	generatedAt: number
 	byPid: Record<string, string>
+	// TVL protocol slug -> platform slug, RWA-category protocols only. Optional: artifacts
+	// published before the map existed omit it.
+	byProtocolSlug?: Record<string, string>
 	platforms: Record<string, RWAPlatformMeta>
 }

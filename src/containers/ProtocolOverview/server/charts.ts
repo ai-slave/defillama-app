@@ -284,6 +284,17 @@ export const protocolCharts = defineApiRoute({
 				return ok(data)
 			}
 
+			if (kind === 'rwa-aum') {
+				const platform = queryString(req.query, 'platform')
+				if (!platform) {
+					return badRequest('platform parameter is required')
+				}
+
+				const { fetchRWAPlatformAumChart } = await import('~/containers/RWA/api')
+				const data = await fetchRWAPlatformAumChart(platform)
+				return ok(data)
+			}
+
 			if (kind === 'median-apy') {
 				// Yield median APY uses yield project IDs, which are not always the
 				// same namespace as protocol route slugs.

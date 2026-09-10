@@ -11,6 +11,7 @@ import { getProtocolIncentivesFromAggregatedEmissions } from '~/containers/Incen
 import { fetchOracleMetrics, fetchOracleProtocolChart } from '~/containers/Oracles/api'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import type { ProtocolsResponse } from '~/containers/ProtocolLists/api.types'
+import { fetchRWAPlatformAumChart } from '~/containers/RWA/api'
 import type { TokenMarketSummary } from '~/containers/Tokens/types'
 import { fetchTreasuries } from '~/containers/Treasuries/api'
 import type { ProtocolEmissionSupplyMetricsMap } from '~/containers/Unlocks/api.types'
@@ -108,7 +109,8 @@ export const getProtocolMetricFlags = ({
 		liquidationVolume: !!metadata.liquidationVolume,
 		collateralLiquidated: !!metadata.collateralLiquidated,
 		borrowed: !!metadata.borrowed,
-		tokenRights: !!metadata.tokenRights
+		tokenRights: !!metadata.tokenRights,
+		rwa: !!metadata.rwaPlatformSlug
 	}
 }
 
@@ -192,6 +194,7 @@ export const getProtocolOverviewPageData = async ({
 	const [
 		protocolData,
 		protocolTvlChartSeed,
+		rwaAumChart,
 		feesData,
 		revenueData,
 		holdersRevenueData,
@@ -246,6 +249,18 @@ export const getProtocolOverviewPageData = async ({
 					data: [],
 					failed: false
 				}),
+		currentProtocolMetadata.rwaPlatformSlug
+			? fetchRWAPlatformAumChart(currentProtocolMetadata.rwaPlatformSlug).catch((error) => {
+					// Without TVL, this is the primary metric; preserve the previous page on failure.
+					if (!currentProtocolMetadata.tvl) throw error
+					console.log(
+						'[HTTP]:[ERROR]:[PROTOCOL_RWA_AUM_CHART]:',
+						currentProtocolSlug,
+						error instanceof Error ? error.message : error
+					)
+					return [] as Array<[number, number]>
+				})
+			: Promise.resolve<Array<[number, number]>>([]),
 		currentProtocolMetadata.fees
 			? fetchAdapterProtocolMetrics({
 					adapterType: 'fees',
@@ -592,7 +607,8 @@ export const getProtocolOverviewPageData = async ({
 		openInterestData?.total24h != null ||
 		bridgeVolumeData?.length ||
 		isOracleProtocol ||
-		protocolData.tokenCGData
+		protocolData.tokenCGData ||
+		rwaAumChart.length > 0
 	)
 
 	const resolvedProtocolChains =
@@ -642,6 +658,7 @@ export const getProtocolOverviewPageData = async ({
 	const availableCharts = buildAvailableCharts({
 		isCEX,
 		hasTvlChart: Boolean(currentProtocolMetadata.tvl && !isOracleProtocol),
+		hasRwaAum: rwaAumChart.length > 0,
 		hasTvsChart: isOracleProtocol,
 		hasGeckoId: Boolean(tokenGeckoId),
 		hasFees: Boolean(feesData),
@@ -696,6 +713,9 @@ export const getProtocolOverviewPageData = async ({
 	}
 	if (oracleChartData?.length) {
 		initialMultiSeriesChartData['TVS'] = oracleChartData
+	}
+	if (rwaAumChart.length > 0) {
+		initialMultiSeriesChartData['RWA AUM'] = rwaAumChart
 	}
 	const availableChartSet = new Set(availableCharts)
 	const primaryTvlChartLabel = isCEX ? 'Total Assets' : ('TVL' as const)
@@ -894,6 +914,8 @@ export const getProtocolOverviewPageData = async ({
 		availableCharts,
 		chartColors,
 		initialMultiSeriesChartData,
+		rwaPlatformSlug: currentProtocolMetadata.rwaPlatformSlug ?? null,
+		rwaActiveAum: rwaAumChart.length > 0 ? (rwaAumChart[rwaAumChart.length - 1]?.[1] ?? null) : null,
 		hallmarks,
 		rangeHallmarks,
 		geckoId: tokenGeckoId,

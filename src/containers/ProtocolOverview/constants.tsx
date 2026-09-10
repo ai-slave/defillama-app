@@ -1,6 +1,7 @@
 // MAKE SURE TO UPDATE ON SERVER TOO https://github.com/DefiLlama/defillama-server/blob/master/defi/src/updateSearch.ts
 export const protocolCharts = {
 	TVL: 'tvl',
+	'RWA AUM': 'rwaAum',
 	'Total Assets': 'totalAssets',
 	TVS: 'tvs',
 	Mcap: 'mcap',
@@ -47,6 +48,7 @@ export const yAxisByChart: {
 	[K in keyof typeof protocolCharts]: ProtocolChartsLabels
 } = {
 	TVL: 'TVL',
+	'RWA AUM': 'TVL',
 	'Total Assets': 'TVL',
 	TVS: 'TVL',
 	Mcap: 'Mcap',
@@ -86,7 +88,7 @@ export const yAxisByChart: {
 }
 
 export const protocolChartCategories = {
-	Core: ['TVL', 'Total Assets', 'TVS', 'Treasury', 'Staking', 'Active Loans', 'USD Inflows', 'Median APY'],
+	Core: ['TVL', 'RWA AUM', 'Total Assets', 'TVS', 'Treasury', 'Staking', 'Active Loans', 'USD Inflows', 'Median APY'],
 	Token: ['Mcap', 'FDV', 'Token Price', 'Token Volume', 'Unlocks', 'Incentives'],
 	Revenue: ['Fees', 'Revenue', 'Holders Revenue'],
 	Volume: [

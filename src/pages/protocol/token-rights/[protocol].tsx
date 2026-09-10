@@ -111,6 +111,7 @@ export const getStaticProps = withPerformanceLogging(
 				liquidationVolume: false,
 				collateralLiquidated: false,
 				borrowed: false,
+				rwa: false,
 				tokenRights: false
 			}),
 			tokenRights: true

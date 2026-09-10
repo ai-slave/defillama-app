@@ -80,24 +80,46 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		})
 	})
 
-	test('enables each classification independently when it is the majority', () => {
+	test('enables stablecoins when they are the majority, but never governance', () => {
 		expect(
 			inferPlatformRWAOverviewInclusion([
 				{ stablecoin: true, governance: true, onChainMcap: { total: 40 } },
 				{ stablecoin: true, governance: true, onChainMcap: { total: 40 } },
 				{ stablecoin: false, governance: false, onChainMcap: { total: 20 } }
 			])
-		).toMatchObject({ includeStablecoins: true, includeGovernance: true })
+		).toMatchObject({ includeStablecoins: true, includeGovernance: false })
 	})
 
-	test('enables a classification that holds most market cap despite having fewer assets', () => {
+	test('enables stablecoins that hold most market cap despite having fewer assets', () => {
 		expect(
 			inferPlatformRWAOverviewInclusion([
-				{ stablecoin: false, governance: true, onChainMcap: { total: 100 } },
+				{ stablecoin: true, governance: false, onChainMcap: { total: 100 } },
 				{ stablecoin: false, governance: false, onChainMcap: { total: 0 } },
 				{ stablecoin: false, governance: false, onChainMcap: { total: 0 } }
 			])
-		).toMatchObject({ includeStablecoins: false, includeGovernance: true })
+		).toMatchObject({ includeStablecoins: true, includeGovernance: false })
+	})
+
+	test('leaves governance off even when it holds most of the platform market cap', () => {
+		// Ondo's shape: 593 real RWAs plus ONDO, which alone is over half the platform's mcap.
+		// Counting it would plot ~$7.5B under an On-chain AUM headline that reads ~$3.7B.
+		expect(
+			inferPlatformRWAOverviewInclusion([
+				{ stablecoin: false, governance: true, onChainMcap: { total: 3_783_000_000 } },
+				{ stablecoin: false, governance: false, onChainMcap: { total: 3_682_000_000 } },
+				{ stablecoin: true, governance: false, onChainMcap: { total: 80_000_000 } }
+			])
+		).toMatchObject({ includeGovernance: false })
+	})
+
+	test('leaves governance off when it is the majority by asset count', () => {
+		expect(
+			inferPlatformRWAOverviewInclusion([
+				{ stablecoin: false, governance: true, onChainMcap: { total: 10 } },
+				{ stablecoin: false, governance: true, onChainMcap: { total: 10 } },
+				{ stablecoin: false, governance: false, onChainMcap: { total: 10 } }
+			])
+		).toMatchObject({ includeGovernance: false })
 	})
 
 	test('keeps optional classifications off on a tie when base assets remain visible', () => {
@@ -114,7 +136,7 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 		})
 	})
 
-	test('enables present classifications when otherwise no base asset would be visible', () => {
+	test('falls back to stablecoins, not governance, when no base asset would be visible', () => {
 		expect(
 			inferPlatformRWAOverviewInclusion([
 				{ stablecoin: true, governance: false, onChainMcap: { total: 0 } },
@@ -122,6 +144,18 @@ describe('inferPlatformRWAOverviewInclusion', () => {
 			])
 		).toEqual({
 			includeStablecoins: true,
+			includeGovernance: false,
+			includeRwaPerps: false,
+			includeBridgeTvl: true
+		})
+	})
+
+	test('falls back to governance only for a platform that holds nothing else', () => {
+		// 24 platforms are governance-token-only; forcing the toggle off would render them empty.
+		expect(
+			inferPlatformRWAOverviewInclusion([{ stablecoin: false, governance: true, onChainMcap: { total: 234_700_000 } }])
+		).toEqual({
+			includeStablecoins: false,
 			includeGovernance: true,
 			includeRwaPerps: false,
 			includeBridgeTvl: true

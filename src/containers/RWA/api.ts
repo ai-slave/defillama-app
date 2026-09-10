@@ -21,6 +21,7 @@ import type {
 	RWAAssetChartTarget,
 	RWAChartMetricKey
 } from './api.types'
+import { rwaSlug } from './rwaSlug'
 
 export function rwaUnixSecondsToMilliseconds(ts: number): number {
 	return ts * 1e3
@@ -125,6 +126,45 @@ export async function fetchRWAFlowAssetBreakdown(
 	return fetchJson<Array<IRWAFlowAssetBreakdownRow>>(
 		`${RWA_SERVER_URL}/flows/asset-breakdown/${target.kind}/${encodeURIComponent(target.slug)}`
 	)
+}
+
+// Platform Active Marketcap history as a bare [unixSec, usd] series — the shape the protocol
+// chart panel expects. Read off the platform breakdown rather than /chart/platform/:slug so
+// governance tokens are excluded and stablecoins kept, matching the platform page's onchainAum.
+export async function fetchRWAPlatformAumChart(platformSlug: string): Promise<Array<[number, number]>> {
+	const rows = await fetchJson<IRWABreakdownChartResponse>(
+		`${RWA_SERVER_URL}/chart/platform-breakdown?key=activeMcap&includeStablecoin=true`
+	).then(normalizeRWABreakdownChartRows)
+	const wantedSlug = rwaSlug(platformSlug)
+	// Breakdown columns are platform display names, so cache the slug test per column.
+	const columnMatches = new Map<string, boolean>()
+	const isWantedColumn = (column: string): boolean => {
+		let matched = columnMatches.get(column)
+		if (matched === undefined) {
+			matched = column !== 'timestamp' && rwaSlug(column) === wantedSlug
+			columnMatches.set(column, matched)
+		}
+		return matched
+	}
+	const series: Array<[number, number]> = []
+	for (const row of rows) {
+		if (row?.timestamp == null) continue
+		let total: number | null = null
+		for (const column in row) {
+			if (!isWantedColumn(column)) continue
+			const value = row[column]
+			if (typeof value === 'number') total = (total ?? 0) + value
+		}
+		if (total == null) continue
+		// The shared breakdown fetcher normalises timestamps to milliseconds; this series is seconds.
+		series.push([row.timestamp / 1e3, total])
+	}
+	series.sort((a, b) => a[0] - b[0])
+	// The platform series starts at the RWA dataset epoch, not the platform's first asset, so
+	// it can carry years of leading zeros that render as a flat line before any real history.
+	let firstNonZero = 0
+	while (firstNonZero < series.length && series[firstNonZero]![1] === 0) firstNonZero++
+	return firstNonZero > 0 ? series.slice(firstNonZero) : series
 }
 
 export async function fetchRWAChartDataByAsset({

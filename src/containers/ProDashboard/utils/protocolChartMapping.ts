@@ -3,6 +3,7 @@ import type { ProtocolChartType } from '../types'
 
 const PROTOCOL_TO_DASHBOARD_CHART_TYPE: Record<ProtocolChartsLabels, ProtocolChartType | null> = {
 	TVL: 'tvl',
+	'RWA AUM': null,
 	'Total Assets': 'tvl',
 	Mcap: 'tokenMcap',
 	'Token Price': 'tokenPrice',

@@ -6,6 +6,7 @@ const isProtocolChartsLabel = (value: string): value is ProtocolChartsLabels => 
 interface IBuildAvailableChartsParams {
 	isCEX: boolean
 	hasTvlChart: boolean
+	hasRwaAum: boolean
 	hasTvsChart: boolean
 	hasGeckoId: boolean
 	hasFees: boolean
@@ -40,6 +41,8 @@ interface IBuildAvailableChartsParams {
 export function buildAvailableCharts(params: IBuildAvailableChartsParams): Array<ProtocolChartsLabels> {
 	const charts: Array<ProtocolChartsLabels> = []
 	if (params.hasTvlChart) charts.push(params.isCEX ? 'Total Assets' : 'TVL')
+	// Sits where TVL would: for an RWA platform, Active Marketcap is the equivalent stock metric.
+	if (params.hasRwaAum) charts.push('RWA AUM')
 	if (params.hasTvsChart) charts.push('TVS')
 	if (params.hasGeckoId) {
 		charts.push('Mcap', 'Token Price', 'Token Volume')
@@ -105,6 +108,11 @@ export function buildDefaultToggledCharts({
 		pushUniqueIfAvailable('TVS')
 	}
 
+	// A retired TVL adapter leaves the chart panel empty; AUM is the stock metric that replaces it.
+	if (!protocolMetricsTvl) {
+		pushUniqueIfAvailable('RWA AUM')
+	}
+
 	if (protocolMetricsTvl) {
 		if (protocolTvlChartData.length === 0 || protocolTvlChartData.every(([, value]) => value === 0)) {
 			const hasStaking = (currentChainTvls?.staking ?? 0) > 0
@@ -132,6 +140,7 @@ export function buildDefaultToggledCharts({
 	} else if (!isCEX) {
 		const cannotShowAsDefault = new Set<ProtocolChartsLabels>([
 			'TVL',
+			'RWA AUM',
 			'Total Assets',
 			'TVS',
 			'Mcap',
