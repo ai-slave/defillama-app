@@ -367,8 +367,12 @@ describe('buildHeadline', () => {
 		for (const c of vm.collateral) {
 			expect(c.exposureUsd).toBeLessThanOrEqual(c.marketLossCeilingUsd + 1)
 			expect(c.exposureUsd).toBeLessThanOrEqual(vm.supplyUsd * 1.001)
-			if (c.allocationUsd != null) expect(c.exposureUsd).toBeLessThanOrEqual(c.allocationUsd + 1)
 			expect(c.magnitudePct).toBeLessThanOrEqual(1)
+		}
+		const allocated = vm.collateral.filter((c) => c.allocationUsd != null)
+		expect(allocated.length).toBeGreaterThan(0)
+		for (const c of allocated) {
+			expect(c.exposureUsd).toBeLessThanOrEqual(c.allocationUsd! + 1)
 		}
 		for (let i = 1; i < vm.collateral.length; i++) {
 			expect(collateralMarketBreakLossUsd(vm.collateral[i - 1]!)).toBeGreaterThanOrEqual(
@@ -420,9 +424,9 @@ describe('buildVaultRiskVM exit readiness', () => {
 				]
 			})
 		)
-		for (const s of vm.scenarios) {
-			if (s.status !== 'computed') expect(s.magnitudePct).toBe(0)
-		}
+		const uncomputed = vm.scenarios.filter((s) => s.status !== 'computed')
+		expect(uncomputed.length).toBeGreaterThan(0)
+		expect(uncomputed.map((s) => s.magnitudePct)).toEqual(uncomputed.map(() => 0))
 		const top = vm.scenarios.find((s) => s.status === 'computed')
 		expect(top!.magnitudePct).toBeGreaterThan(0)
 	})
@@ -479,8 +483,10 @@ describe('depositor cap (loss never exceeds pool supply)', () => {
 			})
 		)
 		expect(vm.headline.worstCaseMaxUsd).toBeLessThanOrEqual(supply)
-		for (const s of vm.scenarios) {
-			if (s.status === 'computed') expect(s.lossMaxUsd).toBeLessThanOrEqual(supply)
+		const computed = vm.scenarios.filter((s) => s.status === 'computed')
+		expect(computed.length).toBeGreaterThan(0)
+		for (const s of computed) {
+			expect(s.lossMaxUsd).toBeLessThanOrEqual(supply)
 		}
 	})
 })
@@ -634,9 +640,8 @@ describe('fixture fields reach the VM (passthrough)', () => {
 		for (const c of vm.collateral)
 			expect(c.vaultMarketShare === null || typeof c.vaultMarketShare === 'number').toBe(true)
 		expect(Array.isArray(vm.vaultExternalDependencies)).toBe(true)
-		for (const d of vm.vaultExternalDependencies) {
-			if (d.relevance) expect(['principal', 'governance', 'rewards', 'ui']).toContain(d.relevance)
-		}
+		const relevances = vm.vaultExternalDependencies.flatMap((d) => (d.relevance ? [d.relevance] : []))
+		expect(relevances.filter((r) => !['principal', 'governance', 'rewards', 'ui'].includes(r))).toEqual([])
 		expect(typeof vm.stale).toBe('boolean')
 	})
 })

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { assert, describe, expect, test } from 'vitest'
 import type { RWAPositionalChartDataset } from '~/containers/RWA/chartDataset'
 import {
 	buildRwaSnapshotCsvRows,
@@ -61,13 +61,11 @@ describe('RWA snapshot presentation', () => {
 			customTimePeriod: { type: 'absolute', startDate: (2 * DAY) / 1e3, endDate: (2 * DAY) / 1e3 },
 			breakdownLabel: 'Category'
 		})
-		expect(presentation.view).toBe('treemap')
-		if (presentation.view === 'treemap') {
-			expect(presentation.data.map(({ name, value }) => ({ name, value: value[0] }))).toEqual([
-				{ name: 'Beta', value: 3 },
-				{ name: 'Gamma', value: 2 }
-			])
-		}
+		assert(presentation.view === 'treemap')
+		expect(presentation.data.map(({ name, value }) => ({ name, value: value[0] }))).toEqual([
+			{ name: 'Beta', value: 3 },
+			{ name: 'Gamma', value: 2 }
+		])
 	})
 
 	test('exposes exports only when the active presentation has data', () => {

@@ -23,11 +23,7 @@ describe('materialChange', () => {
 	})
 
 	test('preserves percentage changes when the previous value is material', () => {
-		const change = materialChange(1_200_000, 1_000_000)
-		expect(change.kind).toBe('change')
-		if (change.kind === 'change') {
-			expect(change.fraction).toBeCloseTo(0.2)
-		}
+		expect(materialChange(1_200_000, 1_000_000)).toEqual({ kind: 'change', fraction: expect.closeTo(0.2) })
 	})
 
 	test('reports a missing current value as unavailable', () => {

@@ -101,10 +101,71 @@ function route(
 }
 afterEach(() => vi.unstubAllGlobals())
 
-test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
-	'retains meme routes and recovers the requested %s page after either leg fails',
+/**
+ * What each scenario expects, rather than branches inside the body. `recovered` is one snapshot of the
+ * section after the second leg finally succeeds, so a scenario whose name drifts fails on a diff instead
+ * of quietly asserting nothing.
+ */
+const DEFAULT_SORT = JSON.stringify([{ id: 'net_apy', desc: true }])
+const AVAILABLE_SORT = JSON.stringify([{ id: 'available', desc: true }])
+
+const SCENARIOS = [
+	{
+		name: 'use',
+		tab: 'use',
+		trigger: 'next-page',
+		hydratesCollateral: true,
+		switchesLegAfterFailure: false,
+		recovered: { page: '1', sort: DEFAULT_SORT, noRoutes: false, retry: false },
+		finalLeg: 'collateral',
+		finalIsEmpty: false
+	},
+	{
+		name: 'borrow',
+		tab: 'borrow',
+		trigger: 'next-page',
+		hydratesCollateral: true,
+		switchesLegAfterFailure: false,
+		recovered: { page: '1', sort: DEFAULT_SORT, noRoutes: false, retry: false },
+		finalLeg: 'borrow',
+		finalIsEmpty: false
+	},
+	{
+		name: 'sort',
+		tab: 'use',
+		trigger: 'sort',
+		hydratesCollateral: true,
+		switchesLegAfterFailure: false,
+		recovered: { page: '0', sort: AVAILABLE_SORT, noRoutes: false, retry: false },
+		finalLeg: 'collateral',
+		finalIsEmpty: false
+	},
+	{
+		name: 'empty',
+		tab: 'use',
+		trigger: 'next-page',
+		hydratesCollateral: true,
+		switchesLegAfterFailure: false,
+		recovered: { page: null, sort: null, noRoutes: true, retry: false },
+		finalLeg: 'collateral',
+		finalIsEmpty: true
+	},
+	{
+		name: 'no-rows',
+		tab: 'borrow',
+		trigger: 'next-page',
+		hydratesCollateral: false,
+		switchesLegAfterFailure: true,
+		recovered: { page: '0', sort: DEFAULT_SORT, noRoutes: false, retry: false },
+		finalLeg: 'collateral',
+		finalIsEmpty: false
+	}
+] as const
+
+test.each(SCENARIOS)(
+	'retains meme routes and recovers the requested $name page after either leg fails',
 	async (scenario) => {
-		const tab = scenario === 'borrow' || scenario === 'no-rows' ? 'borrow' : 'use'
+		const tab = scenario.tab
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		state.rows = [
 			route('plain-c', 'plain-b', 'DOGE', 'DOGE'),
@@ -134,10 +195,12 @@ test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 			...initial,
 			pageSize: 1,
 			data: {
-				useAsCollateral: scenario === 'no-rows' ? [] : ssr.useAsCollateral.slice(0, 1),
+				useAsCollateral: scenario.hydratesCollateral ? ssr.useAsCollateral.slice(0, 1) : [],
 				borrowThis: ssr.borrowThis.slice(0, 1)
 			}
 		}
+		const recoveredRows = scenario.finalIsEmpty ? [] : ssr.useAsCollateral
+		const recoveredDebtRows = scenario.finalIsEmpty ? [] : ssr.borrowThis
 		let collateral = Promise.withResolvers<Response>()
 		let borrow = Promise.withResolvers<Response>()
 		const fetch = vi.fn(async (input: string | URL | Request) => {
@@ -174,6 +237,26 @@ test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 			if (!b) throw new Error(`Missing ${text}`)
 			return b
 		}
+		const shownIds = () => container.querySelector('[data-ids]')?.textContent
+		const sectionState = () => ({
+			page: container.querySelector('[data-page]')?.getAttribute('data-page') ?? null,
+			sort: container.querySelector('[data-sort]')?.getAttribute('data-sort') ?? null,
+			noRoutes: container.textContent?.includes('No borrow routes found') ?? false,
+			retry: container.textContent?.includes('Retry') ?? false
+		})
+		/** Clicks Retry twice, resolves the collateral leg, and leaves the debt leg for the caller. */
+		const retry = async () => {
+			collateral = Promise.withResolvers<Response>()
+			borrow = Promise.withResolvers<Response>()
+			await act(async () => {
+				findButton('Retry').click()
+				findButton('Retry').click()
+			})
+			await vi.waitFor(async () => {
+				await act(async () => expect(findButton('Retrying…').disabled).toBe(true))
+			})
+			await act(async () => collateral.resolve(Response.json({ rows: recoveredRows })))
+		}
 		try {
 			await act(async () =>
 				root.render(
@@ -186,11 +269,11 @@ test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 			if (tab === 'borrow') {
 				await act(async () => findRadio('Borrow DOGE').click())
 			}
-			let retained = container.querySelector('[data-ids]')?.textContent
-			expect(retained).toBeTruthy()
+			const hydrated = shownIds()
+			expect(hydrated).toBeTruthy()
 			expect(fetch).not.toHaveBeenCalled()
 			const next =
-				scenario === 'sort'
+				scenario.trigger === 'sort'
 					? findButton('Sort Available')
 					: container.querySelector<HTMLButtonElement>('[aria-label="Go to next page"]')
 			if (!next) throw new Error('Missing next page')
@@ -208,55 +291,38 @@ test.each(['use', 'borrow', 'sort', 'empty', 'no-rows'] as const)(
 			await vi.waitFor(async () => {
 				await act(async () => expect(findButton('Retry').disabled).toBe(false))
 			})
-			expect(container.querySelector('[data-ids]')?.textContent).toBe(retained)
-			if (scenario === 'no-rows') {
+			expect(shownIds()).toBe(hydrated)
+
+			// Switching to the leg that hydrated empty must show nothing rather than the other leg's rows.
+			if (scenario.switchesLegAfterFailure) {
 				await act(async () => findRadio('Use DOGE').click())
-				retained = undefined
-				expect(container.querySelector('[data-ids]')).toBeNull()
-				expect(findButton('Retry').disabled).toBe(false)
 			}
-			for (const recover of [false, true]) {
-				collateral = Promise.withResolvers<Response>()
-				borrow = Promise.withResolvers<Response>()
-				await act(async () => {
-					findButton('Retry').click()
-					findButton('Retry').click()
-				})
-				await vi.waitFor(async () => {
-					await act(async () => expect(findButton('Retrying…').disabled).toBe(true))
-				})
-				// oxlint-disable-next-line no-loop-func -- the closure reads only the current scenario, and the loop awaits it before moving on.
-				await act(async () =>
-					collateral.resolve(Response.json({ rows: scenario === 'empty' ? [] : ssr.useAsCollateral }))
-				)
-				expect(container.querySelector('[data-ids]')?.textContent).toBe(retained)
-				expect(findButton('Retrying…').disabled).toBe(true)
-				// oxlint-disable-next-line no-loop-func -- see above.
-				await act(async () => {
-					if (recover) borrow.resolve(Response.json({ rows: scenario === 'empty' ? [] : ssr.borrowThis }))
-					else borrow.reject(new Error('Still unavailable'))
-				})
-				await vi.waitFor(async () => {
-					await act(async () => {
-						if (recover) {
-							if (scenario === 'empty') expect(container.textContent).toContain('No borrow routes found')
-							else
-								expect(container.querySelector('[data-page]')?.getAttribute('data-page')).toBe(
-									scenario === 'sort' || scenario === 'no-rows' ? '0' : '1'
-								)
-							if (scenario === 'sort')
-								expect(container.querySelector('[data-sort]')?.getAttribute('data-sort')).toBe(
-									JSON.stringify([{ id: 'available', desc: true }])
-								)
-							expect(container.textContent).not.toContain('Retry')
-						} else expect(findButton('Retry').disabled).toBe(false)
-					})
-				})
-			}
+			const retained = scenario.switchesLegAfterFailure ? undefined : hydrated
+			expect(shownIds()).toBe(retained)
+			expect(findButton('Retry').disabled).toBe(false)
+
+			// A retry whose debt leg fails again keeps the rows and re-enables Retry.
+			await retry()
+			expect(shownIds()).toBe(retained)
+			expect(findButton('Retrying…').disabled).toBe(true)
+			await act(async () => borrow.reject(new Error('Still unavailable')))
+			await vi.waitFor(async () => {
+				await act(async () => expect(findButton('Retry').disabled).toBe(false))
+			})
+
+			// The retry that succeeds restores the page, sort and rows the scenario asked for.
+			await retry()
+			expect(shownIds()).toBe(retained)
+			expect(findButton('Retrying…').disabled).toBe(true)
+			await act(async () => borrow.resolve(Response.json({ rows: recoveredDebtRows })))
+			await vi.waitFor(async () => {
+				await act(async () => expect(sectionState()).toEqual(scenario.recovered))
+			})
+
 			expect(fetch).toHaveBeenCalledTimes(6)
-			const rows = tab === 'use' || scenario === 'no-rows' ? ssr.useAsCollateral : ssr.borrowThis
-			expect(container.querySelector('[data-ids]')?.textContent).toBe(
-				scenario === 'empty' ? undefined : rows.map((row) => `${row.collateralId}:${row.borrowId}`).join(',')
+			const rows = scenario.finalLeg === 'collateral' ? ssr.useAsCollateral : ssr.borrowThis
+			expect(shownIds()).toBe(
+				scenario.finalIsEmpty ? undefined : rows.map((row) => `${row.collateralId}:${row.borrowId}`).join(',')
 			)
 		} finally {
 			await act(async () => root.unmount())

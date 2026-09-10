@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { assert, describe, expect, test } from 'vitest'
 import { buildCompleteStablecoinAssetCsvDataset, buildStablecoinAssetPresentation } from './useStablecoinAssetChartData'
 
 const day = 86_400
@@ -37,17 +37,13 @@ describe('buildStablecoinAssetPresentation', () => {
 			},
 			totalCirculating: 0
 		})
-		expect(area.chartType).toBe('chainMcaps')
-		if (area.chartType === 'chainMcaps') {
-			expect(area.dataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Base'])
-			expect(area.dataset.source[1]).toEqual([(firstDate + day) * 1e3, undefined, 50])
-			expect(area.totalCirculating).toBe(0)
-		}
-		expect(dominance.chartType).toBe('chainDominance')
-		if (dominance.chartType === 'chainDominance') {
-			expect(dominance.dataset.source[1]).toEqual([(firstDate + day) * 1e3, 0, 100])
-			expect(dominance.totalCirculating).toBe(0)
-		}
+		assert(area.chartType === 'chainMcaps')
+		expect(area.dataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Base'])
+		expect(area.dataset.source[1]).toEqual([(firstDate + day) * 1e3, undefined, 50])
+		expect(area.totalCirculating).toBe(0)
+		assert(dominance.chartType === 'chainDominance')
+		expect(dominance.dataset.source[1]).toEqual([(firstDate + day) * 1e3, 0, 100])
+		expect(dominance.totalCirculating).toBe(0)
 	})
 
 	test('builds a pie from the latest sparse point inside the active period', () => {
@@ -74,12 +70,10 @@ describe('buildStablecoinAssetPresentation', () => {
 		})
 		const completeCsvDataset = buildCompleteStablecoinAssetCsvDataset(rawData, 'chainDominance')
 
-		expect(result.chartType).toBe('chainDominance')
-		if (result.chartType === 'chainDominance') {
-			expect(result.availableSeries).toEqual(['Ethereum', 'Base'])
-			expect(result.dataset.dimensions).toEqual(['timestamp', 'Ethereum'])
-			expect(result.dataset.source[0]).toEqual([firstDate * 1e3, 100])
-		}
+		assert(result.chartType === 'chainDominance')
+		expect(result.availableSeries).toEqual(['Ethereum', 'Base'])
+		expect(result.dataset.dimensions).toEqual(['timestamp', 'Ethereum'])
+		expect(result.dataset.source[0]).toEqual([firstDate * 1e3, 100])
 		expect(completeCsvDataset.dimensions).toEqual(['timestamp', 'Ethereum', 'Base'])
 	})
 

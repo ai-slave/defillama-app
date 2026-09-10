@@ -73,9 +73,11 @@ describe('Exchanges top-level navigation', () => {
 		for (const page of PAGES) {
 			expect(html).toContain(`href="${page.href}"`)
 			expect(html).toContain(`>${page.label}</a>`)
-			if (page.id !== selected.id) {
-				expect(html).toContain(`data-tooltip-content="${page.description}"`)
-			}
+		}
+		const inactive = PAGES.filter((page) => page.id !== selected.id)
+		expect(inactive.length).toBeGreaterThan(0)
+		for (const page of inactive) {
+			expect(html).toContain(`data-tooltip-content="${page.description}"`)
 		}
 
 		expect(html).toContain(`>${selected.description}</p>`)

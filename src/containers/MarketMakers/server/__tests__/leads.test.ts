@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, assert, describe, expect, test, vi } from 'vitest'
 import type { ApiRequest } from '~/server/api/types'
 import { clientIp, sendClaimToUserAnalytics, validateClaimBody, validateConnectBody } from '../leads'
 
@@ -24,21 +24,17 @@ const validConnect = {
 describe('validateConnectBody', () => {
 	test('accepts a complete valid payload and keeps whitelisted fields', () => {
 		const result = validateConnectBody(validConnect)
-		expect(result.ok).toBe(true)
-		if (result.ok) {
-			expect(result.payload.interest).toBe('engage-market-maker')
-			expect(result.payload.full_name).toBe('Test User')
-			expect(result.payload.coingecko_id).toBe('test-token')
-		}
+		assert(result.ok)
+		expect(result.payload.interest).toBe('engage-market-maker')
+		expect(result.payload.full_name).toBe('Test User')
+		expect(result.payload.coingecko_id).toBe('test-token')
 	})
 
 	test('forwards the leaderboard slug as market_maker_id', () => {
 		const result = validateConnectBody(validConnect)
-		expect(result.ok).toBe(true)
-		if (result.ok) {
-			expect(result.payload.market_maker_id).toBe('flowdesk')
-			expect(result.payload.market_maker_name).toBe('Flowdesk')
-		}
+		assert(result.ok)
+		expect(result.payload.market_maker_id).toBe('flowdesk')
+		expect(result.payload.market_maker_name).toBe('Flowdesk')
 	})
 
 	test('rejects an unknown interest', () => {
@@ -61,8 +57,8 @@ describe('validateConnectBody', () => {
 
 	test('drops coingecko_id unless token_status is listed', () => {
 		const result = validateConnectBody({ ...validConnect, token_status: 'pre-tge' })
-		expect(result.ok).toBe(true)
-		if (result.ok) expect(result.payload.coingecko_id).toBeNull()
+		assert(result.ok)
+		expect(result.payload.coingecko_id).toBeNull()
 	})
 
 	test('rejects an unknown token status', () => {
@@ -92,11 +88,9 @@ const validClaim = {
 describe('validateClaimBody', () => {
 	test('accepts a complete valid payload', () => {
 		const result = validateClaimBody(validClaim)
-		expect(result.ok).toBe(true)
-		if (result.ok) {
-			expect(result.payload.position).toBe('CEO')
-			expect(result.payload.forgd_contact_name).toBe('Dana Test')
-		}
+		assert(result.ok)
+		expect(result.payload.position).toBe('CEO')
+		expect(result.payload.forgd_contact_name).toBe('Dana Test')
 	})
 
 	test('rejects when either consent is missing', () => {
@@ -112,12 +106,12 @@ describe('validateClaimBody', () => {
 
 	test('accepts profile urls without a protocol and normalizes them to https', () => {
 		const result = validateClaimBody({ ...validClaim, social_profile_url: 'www.linkedin.com/in/test' })
-		expect(result.ok).toBe(true)
-		if (result.ok) expect(result.payload.social_profile_url).toBe('https://www.linkedin.com/in/test')
+		assert(result.ok)
+		expect(result.payload.social_profile_url).toBe('https://www.linkedin.com/in/test')
 
 		const bare = validateClaimBody({ ...validClaim, social_profile_url: 'x.com/test' })
-		expect(bare.ok).toBe(true)
-		if (bare.ok) expect(bare.payload.social_profile_url).toBe('https://x.com/test')
+		assert(bare.ok)
+		expect(bare.payload.social_profile_url).toBe('https://x.com/test')
 	})
 
 	test('rejects a non-boolean has_forgd_contact', () => {
@@ -126,8 +120,8 @@ describe('validateClaimBody', () => {
 
 	test('drops forgd_contact_name when has_forgd_contact is false', () => {
 		const result = validateClaimBody({ ...validClaim, has_forgd_contact: false })
-		expect(result.ok).toBe(true)
-		if (result.ok) expect(result.payload.forgd_contact_name).toBeNull()
+		assert(result.ok)
+		expect(result.payload.forgd_contact_name).toBeNull()
 	})
 
 	test('rejects a filled honeypot field', () => {

@@ -13,14 +13,15 @@ describe('Exchanges definitions', () => {
 		const definitions: Record<string, { label: string; description: string }> = exchangeDefinitions.directory
 
 		expect(Object.keys(byId).sort()).toEqual(Object.keys(definitions).sort())
-		for (const [id, definition] of Object.entries(definitions)) {
-			// Execution headers append the measured basket, which is data and cannot live
-			// in a static definition; everything else must match its definition exactly.
-			if (EXECUTION_COLUMN_IDS.includes(id)) {
-				expect(byId[id]?.header).toContain(definition.label)
-				expect(byId[id]?.meta?.headerHelperText).toContain(definition.description)
-				continue
-			}
+		// Execution headers append the measured basket, which is data and cannot live in a static
+		// definition, so they are only required to contain their label; everything else matches exactly.
+		for (const id of EXECUTION_COLUMN_IDS) {
+			const definition = definitions[id]
+			expect(definition).toBeDefined()
+			expect(byId[id]?.header).toContain(definition!.label)
+			expect(byId[id]?.meta?.headerHelperText).toContain(definition!.description)
+		}
+		for (const [id, definition] of Object.entries(definitions).filter(([id]) => !EXECUTION_COLUMN_IDS.includes(id))) {
 			expect(byId[id]?.header).toBe(definition.label)
 			expect(byId[id]?.meta?.headerHelperText).toBe(definition.description)
 		}

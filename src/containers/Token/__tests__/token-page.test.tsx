@@ -1873,55 +1873,89 @@ describe('token page', () => {
 	})
 })
 
-test.each(['success', 'current failure', 'import failure'] as const)(
-	'overlaps a cold module load and current snapshot with safe %s handling',
-	async (outcome) => {
-		vi.resetModules()
-		const moduleStarted = Promise.withResolvers<void>()
-		const moduleReady = Promise.withResolvers<void>()
-		vi.doMock('~/containers/Markets/server/dataset.server', async () => {
-			moduleStarted.resolve()
-			await moduleReady.promise
-			return { hasTokenMarkets: vi.fn(async () => false) }
-		})
-		const { getTokenOverviewCurrentSnapshot: readCurrent } = await import('~/containers/Tokens/queries.server')
-		const current = Promise.withResolvers<Awaited<ReturnType<typeof readCurrent>>>()
-		vi.mocked(readCurrent).mockReturnValueOnce(current.promise)
-		const { getServerSideProps: request } = await import('~/pages/token/[token]')
-		const error = new Error(outcome)
-		const result = request({ params: { token: 'BTC' } } as never).then(
-			(value) => ({ value }),
-			(caughtError: unknown) => ({ reason: caughtError })
-		)
-		try {
-			// Bounded against `result`: when the mocked factory never runs, the request
-			// settles without it and this would otherwise wait for the whole timeout.
-			await Promise.race([
-				moduleStarted.promise,
-				result.then(() => {
-					throw new Error('getServerSideProps settled before the mocked dataset module started loading')
-				})
-			])
-			expect(readCurrent).toHaveBeenCalledOnce()
-			if (outcome === 'current failure') {
-				current.reject(error)
-				await expect(result).resolves.toEqual({ reason: error })
-			} else if (outcome === 'import failure') {
-				moduleReady.reject(error)
-				// Vitest wraps a failed module factory; the loader's rejection must still escape.
-				await expect(result).resolves.toMatchObject({ reason: { cause: error } })
-			} else {
-				current.resolve({ generatedAt: 42, metrics: null })
-				moduleReady.resolve()
-				expect(await result).toHaveProperty('value.props')
-			}
-		} finally {
-			current.resolve({ generatedAt: 42, metrics: null })
-			moduleReady.resolve()
-			await result
-			// A current-snapshot failure settles the request before its imports finish.
-			await vi.dynamicImportSettled()
-			vi.doMock('~/containers/Markets/server/dataset.server', () => ({ hasTokenMarkets: vi.fn(async () => false) }))
-		}
+/**
+ * Starts a request while the dataset module is still loading and the current snapshot is still pending,
+ * and hands back the levers to settle either one. Each outcome settles them in its own order, so they
+ * are separate tests rather than branches inside one.
+ */
+async function overlapColdModuleLoad() {
+	vi.resetModules()
+	const moduleStarted = Promise.withResolvers<void>()
+	const moduleReady = Promise.withResolvers<void>()
+	vi.doMock('~/containers/Markets/server/dataset.server', async () => {
+		moduleStarted.resolve()
+		await moduleReady.promise
+		return { hasTokenMarkets: vi.fn(async () => false) }
+	})
+	const { getTokenOverviewCurrentSnapshot: readCurrent } = await import('~/containers/Tokens/queries.server')
+	const current = Promise.withResolvers<Awaited<ReturnType<typeof readCurrent>>>()
+	vi.mocked(readCurrent).mockReturnValueOnce(current.promise)
+	const { getServerSideProps: request } = await import('~/pages/token/[token]')
+	const result = request({ params: { token: 'BTC' } } as never).then(
+		(value) => ({ value }),
+		(caughtError: unknown) => ({ reason: caughtError })
+	)
+	const settle = async () => {
+		current.resolve({ generatedAt: 42, metrics: null })
+		moduleReady.resolve()
+		await result
+		// A current-snapshot failure settles the request before its imports finish.
+		await vi.dynamicImportSettled()
+		vi.doMock('~/containers/Markets/server/dataset.server', () => ({ hasTokenMarkets: vi.fn(async () => false) }))
 	}
-)
+
+	// Settled on failure too, or a deferred import stays pending for the rest of the file.
+	try {
+		// Bounded against `result`: when the mocked factory never runs, the request
+		// settles without it and this would otherwise wait for the whole timeout.
+		await Promise.race([
+			moduleStarted.promise,
+			result.then(() => {
+				throw new Error('getServerSideProps settled before the mocked dataset module started loading')
+			})
+		])
+		expect(readCurrent).toHaveBeenCalledOnce()
+	} catch (error) {
+		await settle()
+		throw error
+	}
+
+	return { current, moduleReady, result, settle }
+}
+
+test('overlaps a cold module load and a resolving current snapshot', async () => {
+	const overlap = await overlapColdModuleLoad()
+	try {
+		overlap.current.resolve({ generatedAt: 42, metrics: null })
+		overlap.moduleReady.resolve()
+
+		expect(await overlap.result).toHaveProperty('value.props')
+	} finally {
+		await overlap.settle()
+	}
+})
+
+test('surfaces a current-snapshot failure from an overlapped cold module load', async () => {
+	const overlap = await overlapColdModuleLoad()
+	const error = new Error('current failure')
+	try {
+		overlap.current.reject(error)
+
+		await expect(overlap.result).resolves.toEqual({ reason: error })
+	} finally {
+		await overlap.settle()
+	}
+})
+
+test('surfaces a module import failure from an overlapped cold module load', async () => {
+	const overlap = await overlapColdModuleLoad()
+	const error = new Error('import failure')
+	try {
+		overlap.moduleReady.reject(error)
+
+		// Vitest wraps a failed module factory; the loader's rejection must still escape.
+		await expect(overlap.result).resolves.toMatchObject({ reason: { cause: error } })
+	} finally {
+		await overlap.settle()
+	}
+})

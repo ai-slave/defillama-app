@@ -8,20 +8,27 @@ import { summarizeRaises } from './summary'
 
 describe('fundraising totals', () => {
 	test.each([
-		{ amounts: [2_500_000, 14_000_000], totalUsd: 16_500_000, undisclosedCount: 0, text: '$16.5m' },
-		{ amounts: [2_500_000, null, 14_000_000], totalUsd: 16_500_000, undisclosedCount: 1, text: '$16.5m' },
-		{ amounts: [null, null], totalUsd: null, undisclosedCount: 2, text: 'Undisclosed' },
-		{ amounts: [0], totalUsd: 0, undisclosedCount: 0, text: '$0' },
-		{ amounts: [0, null], totalUsd: 0, undisclosedCount: 1, text: '$0' },
-		{ amounts: [], totalUsd: 0, undisclosedCount: 0, text: '$0' }
+		// `focusable` is only true where a tooltip explains undisclosed rounds alongside a disclosed total.
+		{ amounts: [2_500_000, 14_000_000], totalUsd: 16_500_000, undisclosedCount: 0, text: '$16.5m', focusable: false },
+		{
+			amounts: [2_500_000, null, 14_000_000],
+			totalUsd: 16_500_000,
+			undisclosedCount: 1,
+			text: '$16.5m',
+			focusable: true
+		},
+		{ amounts: [null, null], totalUsd: null, undisclosedCount: 2, text: 'Undisclosed', focusable: false },
+		{ amounts: [0], totalUsd: 0, undisclosedCount: 0, text: '$0', focusable: false },
+		{ amounts: [0, null], totalUsd: 0, undisclosedCount: 1, text: '$0', focusable: true },
+		{ amounts: [], totalUsd: 0, undisclosedCount: 0, text: '$0', focusable: false }
 	])(
 		'distinguishes disclosed zero, missing amounts and empty populations: $amounts',
-		({ amounts, totalUsd, undisclosedCount, text }) => {
+		({ amounts, totalUsd, undisclosedCount, text, focusable }) => {
 			const summary = summarizeRaises(amounts.map((amountUsd) => ({ amountUsd })))
 			expect(summary).toEqual({ totalUsd, undisclosedCount })
 			const markup = renderToStaticMarkup(<RaisesTotal {...summary} />)
 			expect(markup.replace(/<[^>]*>/g, '')).toBe(text)
-			if (undisclosedCount === 0 || totalUsd === null) expect(markup).not.toContain('tabindex')
+			expect(markup.includes('tabindex')).toBe(focusable)
 		}
 	)
 

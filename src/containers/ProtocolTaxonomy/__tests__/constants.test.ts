@@ -49,9 +49,13 @@ describe('ProtocolTaxonomy constants', () => {
 	})
 
 	test('keeps every configured default sort backed by a visible category column', () => {
-		for (const category in protocolCategoryConfig) {
-			const defaultSort = protocolCategoryConfig[category]?.defaultSort
-			if (defaultSort) expect(getProtocolCategoryColumns(category)).toContain(defaultSort)
-		}
+		const sorted = Object.entries(protocolCategoryConfig).flatMap(([category, config]) =>
+			config?.defaultSort ? [{ category, defaultSort: config.defaultSort }] : []
+		)
+
+		expect(sorted.length).toBeGreaterThan(0)
+		expect(
+			sorted.filter(({ category, defaultSort }) => !getProtocolCategoryColumns(category).includes(defaultSort))
+		).toEqual([])
 	})
 })

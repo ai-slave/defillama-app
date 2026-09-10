@@ -32,10 +32,11 @@ describe('buildTokenUsageSummary', () => {
 	})
 
 	test.each([
-		['two', ['usdc', 'dai']],
-		['three', ['usdc', 'dai', 'usdt']],
-		['four', ['usdc', 'dai', 'usdt', 'frax']]
-	])('aggregates %s selected tokens in one pass', (_label, symbols) => {
+		['two', ['usdc', 'dai'], {}],
+		['three', ['usdc', 'dai', 'usdt'], { usdt: { total: 5, protocols: 1 } }],
+		// frax is selected but every row holds zero of it, so it aggregates to an empty entry.
+		['four', ['usdc', 'dai', 'usdt', 'frax'], { usdt: { total: 5, protocols: 1 }, frax: { total: 0, protocols: 0 } }]
+	])('aggregates %s selected tokens in one pass', (_label, symbols, extraTokenStats) => {
 		const summary = buildTokenUsageSummary(
 			[
 				row('Shared', 35, { usdc: 10, dai: 20, usdt: 5, frax: 0 }),
@@ -49,10 +50,11 @@ describe('buildTokenUsageSummary', () => {
 		expect(summary.totalAmount).toBe(51)
 		expect(summary.protocolCount).toBe(4)
 		expect(summary.multiTokenProtocolCount).toBe(1)
-		expect(summary.tokenStats?.usdc).toEqual({ total: 17, protocols: 2 })
-		expect(summary.tokenStats?.dai).toEqual({ total: 20, protocols: 1 })
-		if (symbols.includes('usdt')) expect(summary.tokenStats?.usdt).toEqual({ total: 5, protocols: 1 })
-		if (symbols.includes('frax')) expect(summary.tokenStats?.frax).toEqual({ total: 0, protocols: 0 })
+		expect(summary.tokenStats).toEqual({
+			usdc: { total: 17, protocols: 2 },
+			dai: { total: 20, protocols: 1 },
+			...extraTokenStats
+		})
 		expect(summary.protocolOverlap?.exclusive).toBe(1)
 		expect(summary.protocolOverlap?.exclusiveByToken.usdc).toBe(1)
 		expect(summary.protocolOverlap?.shared).toBe(symbols.length > 1 ? 1 : 0)

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { assert, describe, expect, test } from 'vitest'
 import type {
 	MultiSeriesTimeSeriesDataset,
 	MultiSeriesTimeSeriesRow
@@ -1456,10 +1456,8 @@ describe('getCategoryProtocolNameFilterForChart', () => {
 			hasCategoryParam: true
 		})
 
-		expect(result.kind).toBe('restricted')
-		if (result.kind === 'restricted') {
-			expect([...result.names].sort()).toEqual(['Child A'])
-		}
+		assert(result.kind === 'restricted')
+		expect([...result.names].sort()).toEqual(['Child A'])
 	})
 
 	test('returns no-rows when category param clears the selection', () => {
@@ -1488,10 +1486,8 @@ describe('getCategoryProtocolNameFilterForChart', () => {
 			hasCategoryParam: false
 		})
 
-		expect(result.kind).toBe('restricted')
-		if (result.kind === 'restricted') {
-			expect([...result.names].sort()).toEqual(['Child A', 'Child B'])
-		}
+		assert(result.kind === 'restricted')
+		expect([...result.names].sort()).toEqual(['Child A', 'Child B'])
 	})
 })
 

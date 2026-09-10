@@ -39,11 +39,12 @@ afterEach(() => {
 
 test('writes the cookie before notifying subscribers and reuses snapshots', () => {
 	const observed: Array<string> = []
+	// Recorded rather than asserted inside the subscriber, so a notification that never arrives fails
+	// the test instead of skipping its assertion.
+	const cookieWhileValid: Array<string> = []
 	const unsubscribe = subscribeToAuthStore(() => {
 		const current = getAuthStoreSnapshot()
-		if (current.isValid) {
-			expect(document.cookie).toContain(`pb_auth_token=${current.token}`)
-		}
+		if (current.isValid) cookieWhileValid.push(document.cookie)
 		observed.push(current.token)
 	})
 
@@ -51,6 +52,10 @@ test('writes the cookie before notifying subscribers and reuses snapshots', () =
 	pb.authStore.save(token('refreshed-a'), { ...record('account-a'), name: 'Updated name' })
 
 	expect(observed).toEqual([token('account-a'), token('refreshed-a')])
+	// Each valid notification saw its own token already in the cookie, which is the ordering under test.
+	expect(cookieWhileValid).toHaveLength(2)
+	expect(cookieWhileValid[0]).toContain(`pb_auth_token=${token('account-a')}`)
+	expect(cookieWhileValid[1]).toContain(`pb_auth_token=${token('refreshed-a')}`)
 	expect(getAuthStoreSnapshot()).toBe(getAuthStoreSnapshot())
 	expect(getAuthStoreSnapshot().record?.name).toBe('Updated name')
 	expect(getServerSnapshot()).toEqual({ token: '', record: null, isValid: false })

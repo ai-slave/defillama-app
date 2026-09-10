@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { assert, describe, expect, test } from 'vitest'
 import { parseCustomColumns } from '~/contexts/LocalStorage'
 import { parseProtocolTableColumnVisibility, replaceAliases, sampleProtocol } from '../customColumnsUtils'
 import { evaluateFormula, formatCustomColumnValue, getSortableValue } from '../formula.service'
@@ -29,8 +29,8 @@ describe('protocol ranking custom formulas', () => {
 		(formula) => {
 			const result = evaluateFormula(formula, sampleProtocol)
 
-			expect(result.status).toBe('error')
-			if (result.status === 'error') expect(result.error).toEqual(expect.any(String))
+			assert(result.status === 'error')
+			expect(result.error).toEqual(expect.any(String))
 		}
 	)
 

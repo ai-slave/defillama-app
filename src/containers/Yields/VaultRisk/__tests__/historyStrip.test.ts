@@ -89,12 +89,15 @@ describe('buildHistoryStrip', () => {
 		const vm = buildHistoryStrip(manyAudits, [], [], '2026-06-08')!
 		expect(vm.audits.reduce((a, c) => a + c.count, 0)).toBe(manyAudits.length)
 		expect(vm.audits.length).toBeLessThan(manyAudits.length) // 22 audits over ~2.5y must merge
-		for (let i = 0; i < vm.audits.length; i++) {
-			expect(vm.audits[i]!.x).toBeGreaterThanOrEqual(2)
-			expect(vm.audits[i]!.x).toBeLessThanOrEqual(98)
-			if (i > 0) expect(vm.audits[i]!.x).toBeGreaterThan(vm.audits[i - 1]!.x)
-			expect(vm.audits[i]!.items.length).toBe(vm.audits[i]!.count)
+		for (const marker of vm.audits) {
+			expect(marker.x).toBeGreaterThanOrEqual(2)
+			expect(marker.x).toBeLessThanOrEqual(98)
+			expect(marker.items.length).toBe(marker.count)
 		}
+		// Strictly increasing: sorted, and no two markers share a position.
+		const positions = vm.audits.map((marker) => marker.x)
+		expect(positions).toEqual([...positions].sort((left, right) => left - right))
+		expect(new Set(positions).size).toBe(positions.length)
 		expect(vm.years.length).toBeGreaterThan(0)
 		expect(vm.years.map((y) => y.label)).toEqual(vm.years.map((y) => y.label).sort())
 	})
