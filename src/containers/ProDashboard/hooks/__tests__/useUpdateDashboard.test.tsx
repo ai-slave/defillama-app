@@ -84,6 +84,16 @@ test('sends the cached editedAt as the conflict baseline', async () => {
 	expect(api.get).not.toHaveBeenCalled()
 })
 
+test('saves without a conflict baseline when no dashboard is cached', async () => {
+	await mount()
+	client.removeQueries({ queryKey: ['pro-dashboard', 'dashboard'] })
+	await act(async () => save())
+
+	expect(api.update).toHaveBeenCalledOnce()
+	expect(api.update.mock.calls[0][3]).toBeUndefined()
+	expect(api.get).not.toHaveBeenCalled()
+})
+
 test('a conflict re-reads the dashboard, merges items and retries once against the fresh revision', async () => {
 	api.update.mockRejectedValueOnce(conflict())
 	await mount()

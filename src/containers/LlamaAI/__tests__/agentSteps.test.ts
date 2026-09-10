@@ -146,22 +146,28 @@ describe('agent steps', () => {
 			params: { query: 'select   name\nfrom protocols' },
 			status: 'running'
 		}
-		expect(toolPreview(running)).toBe('{"query":"select name from protocols"}')
+		expect(toolPreview(running, true)).toBe('{"query":"select name from protocols"}')
 		expect(
-			toolPreview({
-				...running,
-				status: 'done',
-				execution: execution('execute_sql', 't', { resultCount: 1 })
-			})
+			toolPreview(
+				{
+					...running,
+					status: 'done',
+					execution: execution('execute_sql', 't', { resultCount: 1 })
+				},
+				true
+			)
 		).toBe('1 result')
 		expect(
-			toolPreview({
-				...running,
-				status: 'error',
-				execution: execution('execute_sql', 't', { error: 'relation missing' })
-			})
+			toolPreview(
+				{
+					...running,
+					status: 'error',
+					execution: execution('execute_sql', 't', { error: 'relation missing' })
+				},
+				true
+			)
 		).toBe('relation missing')
-		expect(toolPreview({ ...running, params: { q: 'x'.repeat(200) } })).toHaveLength(96)
+		expect(toolPreview({ ...running, params: { q: 'x'.repeat(200) } }, true)).toHaveLength(96)
 	})
 
 	test('a tool row opens only when it has arguments or a result worth showing', () => {
@@ -176,7 +182,8 @@ describe('agent steps', () => {
 			execution: { name: 'load_skill', executionTimeMs: 5, success: true }
 		}
 		expect(toolStepHasDetails(bare, true)).toBe(false)
-		expect(toolStepHasDetails({ ...bare, params: { skill: 'fees' } }, false)).toBe(true)
+		expect(toolStepHasDetails({ ...bare, params: { skill: 'fees' } }, false)).toBe(false)
+		expect(toolStepHasDetails({ ...bare, params: { skill: 'fees' } }, true)).toBe(true)
 		expect(toolStepHasDetails({ ...bare, execution: { ...bare.execution!, resultCount: 0 } }, false)).toBe(true)
 		expect(toolStepHasDetails({ ...bare, execution: { ...bare.execution!, sqlQuery: 'select 1' } }, false)).toBe(false)
 		expect(toolStepHasDetails({ ...bare, execution: { ...bare.execution!, sqlQuery: 'select 1' } }, true)).toBe(true)

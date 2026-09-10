@@ -380,7 +380,7 @@ function ToolRow({
 }) {
 	const [open, setOpen] = useState(false)
 	const meta = getOwnRegistryValue(TOOL_ICONS, step.name) || FALLBACK_ICON
-	const preview = toolPreview(step)
+	const preview = toolPreview(step, showToolDetails)
 	const { execution } = step
 	const hasDetails = toolStepHasDetails(step, showToolDetails)
 	const parsedCost = execution?.costUsd ? parseFloat(execution.costUsd) : NaN
@@ -432,7 +432,7 @@ function ToolRow({
 				</button>
 				{open && hasDetails ? (
 					<div className="flex flex-col gap-1 border-t border-ai-line px-2 py-1.5 select-text">
-						{step.params && Object.keys(step.params).length > 0 ? (
+						{showToolDetails && step.params && Object.keys(step.params).length > 0 ? (
 							<pre className="m-0 overflow-x-auto rounded-sm bg-ai-surface p-1.5 font-mono text-[10px] text-ai-secondary">
 								{JSON.stringify(step.params, null, 2)}
 							</pre>

@@ -95,7 +95,7 @@ export function stepsForMessage(message: Message): Array<AgentStep> {
 
 /** Whether a tool row has anything to show when opened; a bare restored result has not. */
 export function toolStepHasDetails(step: Extract<AgentStep, { kind: 'tool' }>, showToolDetails: boolean): boolean {
-	if (step.params && Object.keys(step.params).length > 0) return true
+	if (showToolDetails && step.params && Object.keys(step.params).length > 0) return true
 	const { execution } = step
 	if (!execution) return false
 	if (execution.error || execution.resultCount != null) return true
@@ -146,14 +146,14 @@ function countAll(counts: Map<string, number>): number {
 }
 
 /** One muted line after the label: the result once there is one, the arguments until then. */
-export function toolPreview(step: Extract<AgentStep, { kind: 'tool' }>): string {
+export function toolPreview(step: Extract<AgentStep, { kind: 'tool' }>, showToolDetails: boolean): string {
 	const { execution } = step
 	let preview = ''
 	if (execution?.error) preview = execution.error
 	else if (execution?.resultCount != null)
 		preview = `${execution.resultCount} result${execution.resultCount === 1 ? '' : 's'}`
-	else if (execution?.sqlQuery) preview = execution.sqlQuery
-	else if (step.params && Object.keys(step.params).length > 0) preview = JSON.stringify(step.params)
+	else if (showToolDetails && execution?.sqlQuery) preview = execution.sqlQuery
+	else if (showToolDetails && step.params && Object.keys(step.params).length > 0) preview = JSON.stringify(step.params)
 	// One line: JSON escapes newlines and tabs as `\n` and `\t`, so flatten those too.
 	preview = preview
 		.replace(/\\[nt]/g, ' ')

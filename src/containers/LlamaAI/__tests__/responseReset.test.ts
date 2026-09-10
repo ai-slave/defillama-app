@@ -50,7 +50,6 @@ describe('client handling of a backend correction retry', () => {
 			buffer,
 			dispatch,
 			currentMessageIdRef: { current: 'assistant-1' },
-			toolCallIdRef: { current: 0 },
 			appendMessage,
 			notify: () => {}
 		})

@@ -2,8 +2,9 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import { appendReasoning, completeToolStep, startToolStep } from '~/containers/LlamaAI/agentSteps'
-import type { AgentStep } from '~/containers/LlamaAI/types'
+import { appendReasoning, completeToolStep, startToolStep, stepsForMessage } from '~/containers/LlamaAI/agentSteps'
+import { mapPersistedMessage } from '~/containers/LlamaAI/messageMappers'
+import type { AgentStep, ToolExecution } from '~/containers/LlamaAI/types'
 import { AgentTimeline } from './AgentTimeline'
 
 vi.mock('~/containers/LlamaAI/components/status/useHackerMode', () => ({ useHackerMode: () => false }))
@@ -26,7 +27,9 @@ afterEach(async () => {
 
 const draw = (steps: Array<AgentStep>, streaming: boolean) =>
 	act(async () =>
-		root.render(<AgentTimeline steps={steps} streaming={streaming} executionStartedAt={1_700_000_000_000} />)
+		root.render(
+			<AgentTimeline steps={steps} streaming={streaming} showToolDetails executionStartedAt={1_700_000_000_000} />
+		)
 	)
 // Row text with one space between its parts; textContent runs adjacent spans together.
 const textOf = (node: Node): string =>
@@ -204,3 +207,61 @@ test('renders nothing for a finished message with no steps', async () => {
 	await draw([], false)
 	expect(container.innerHTML).toBe('')
 })
+
+test.each(['live', 'completed', 'restored'] as const)(
+	'%s SQL details follow permission changes without hiding result counts',
+	async (phase) => {
+		const query = 'SELECT name FROM protocols'
+		const execution: ToolExecution = {
+			name: 'execute_sql',
+			tool_call_id: 'sql1',
+			executionTimeMs: 20,
+			success: true,
+			sqlQuery: query
+		}
+		let steps = startToolStep([], { name: 'execute_sql', toolCallId: 'sql1', params: { query } })
+		if (phase === 'completed') steps = completeToolStep(steps, execution)
+		if (phase === 'restored')
+			steps = stepsForMessage(
+				mapPersistedMessage({
+					role: 'assistant',
+					metadata: { toolExecutions: [execution] }
+				})
+			)
+		const render = (showToolDetails: boolean) =>
+			act(async () =>
+				root.render(<AgentTimeline steps={steps} streaming={phase === 'live'} showToolDetails={showToolDetails} />)
+			)
+		await render(false)
+		if (phase !== 'live') await act(async () => header().click())
+		const rowButton = () => container.querySelector<HTMLButtonElement>('li button')!
+		expect(container.textContent).not.toContain(query)
+		expect(rowButton().hasAttribute('aria-expanded')).toBe(false)
+		await act(async () => rowButton().click())
+		expect(container.querySelector('li pre')).toBeNull()
+
+		await render(true)
+		expect(container.textContent).toContain(query)
+		await act(async () => rowButton().click())
+		expect(container.querySelector('li pre')?.textContent).toContain(query)
+
+		// A permission change must also remove details that were already open.
+		await render(false)
+		expect(container.textContent).not.toContain(query)
+		expect(container.querySelector('li pre')).toBeNull()
+		expect(rowButton().hasAttribute('aria-expanded')).toBe(false)
+
+		steps = steps.map((step) =>
+			step.kind === 'tool'
+				? {
+						...step,
+						execution: { ...execution, resultCount: 3 }
+					}
+				: step
+		)
+		await render(false)
+		expect(container.textContent).toContain('3 results')
+		expect(rowButton().hasAttribute('aria-expanded')).toBe(true)
+		expect(container.textContent).not.toContain(query)
+	}
+)

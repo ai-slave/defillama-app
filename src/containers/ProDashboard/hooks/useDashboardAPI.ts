@@ -232,12 +232,13 @@ export function useUpdateDashboard(dashboardId: string | null, source: 'manual' 
 			const latest = cachedDashboard(queryClient, id, isAuthenticated, user?.id)
 			const base = latest ? toDashboardSavePayload(latest) : undefined
 			const payload = changes ? { ...(base ?? data), ...changes } : data
+			const editedAt = latest?.editedAt
 			try {
 				return await dashboardAPI.updateDashboard(
 					id,
 					{ ...payload, items: toPersistedDashboardItems(payload.items) },
 					authorizedFetch,
-					latest?.editedAt
+					editedAt
 				)
 			} catch (error) {
 				if (!(error instanceof DashboardError) || error.status !== 409) throw error
