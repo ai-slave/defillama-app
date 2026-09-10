@@ -2,7 +2,9 @@ import * as Ariakit from '@ariakit/react'
 import { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useUpdateSessionTitle } from '~/containers/LlamaAI/hooks/useUpdateSessionTitle'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { inputStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
@@ -54,7 +56,7 @@ export function ProjectSessionItem({
 				<form
 					ref={formRef}
 					onSubmit={handleRenameSubmit}
-					className="group/row -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg bg-ai-surface-muted px-2 py-1"
+					className="group/row -mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center gap-1 rounded-md bg-hover-row px-1 py-0.5 sm:min-h-9"
 				>
 					<input
 						type="text"
@@ -70,30 +72,32 @@ export function ProjectSessionItem({
 								closeRename()
 							}
 						}}
-						className="min-w-0 flex-1 bg-transparent p-1 text-[13px] text-inherit focus:outline-hidden"
+						className={`${inputStyles} min-w-0 flex-1`}
 					/>
 					<Ariakit.Button
 						accessibleWhenDisabled
 						type="submit"
 						disabled={isBusy}
-						className="flex min-h-7 items-center justify-center gap-1 rounded-md bg-brand px-2 text-ai-white aria-disabled:opacity-60"
+						render={<Button size="md" variant="primary" />}
 						aria-label={updateTitle.isPending ? 'Saving title' : 'Save title'}
 					>
-						{updateTitle.isPending ? <LoadingSpinner size={12} /> : null}
+						{updateTitle.isPending ? <LoadingSpinner size={14} /> : null}
 						{updateTitle.isPending ? 'Saving…' : 'Save'}
 					</Ariakit.Button>
-					<button
+					<Button
 						type="button"
+						size="md"
+						variant="ghost"
+						square
 						onClick={() => closeRename()}
 						disabled={isBusy}
-						className="flex size-7 items-center justify-center rounded-md bg-ai-error-vivid/15 text-ai-error disabled:opacity-60"
 						aria-label="Cancel rename"
 					>
-						<Icon name="x" height={13} width={13} />
-					</button>
+						<Icon name="x" height={16} width={16} />
+					</Button>
 				</form>
 				{updateTitle.error ? (
-					<p role="alert" className="mt-1 text-xs text-ai-error">
+					<p role="alert" className="mt-1 body-sm text-error">
 						{updateTitle.error.message} Edit the title or retry saving.
 					</p>
 				) : null}
@@ -102,30 +106,37 @@ export function ProjectSessionItem({
 	}
 	return (
 		<li key={s.sessionId}>
-			<div className="group/row relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-lg pr-1 transition-colors focus-within:bg-ai-surface-muted hover:bg-ai-surface-muted">
+			<div className="group/row relative -mx-2 flex w-[calc(100%+1rem)] items-center gap-1 rounded-md pr-1 body-md text-primary focus-within:bg-hover-row hover:bg-hover-row">
 				<button
 					type="button"
 					onClick={() => onSelect()}
 					disabled={isBusy}
-					className="flex min-w-0 flex-1 items-center gap-1.5 p-2 text-left disabled:opacity-60"
+					className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 px-2 py-1.5 text-left disabled:opacity-60 sm:min-h-9"
 				>
 					{s.hasUnseenCompletion ? (
-						<Tooltip content="New response ready">
-							<span className="size-1.5 shrink-0 rounded-full bg-brand" aria-label="Unseen completion" />
+						<Tooltip
+							content="New response ready"
+							render={<span aria-label="Unseen completion" />}
+							className="size-1.5 shrink-0 rounded-full bg-brand"
+						>
+							{null}
 						</Tooltip>
 					) : null}
-					<span className="min-w-0 flex-1 truncate text-[13px]">{s.title || 'Untitled chat'}</span>
+					<span className="min-w-0 flex-1 truncate">{s.title || 'Untitled chat'}</span>
 				</button>
 				<RelativeTime
 					value={s.lastActivity ?? s.createdAt}
-					className="shrink-0 text-xs text-ai-muted tabular-nums group-focus-within/row:hidden group-hover/row:hidden max-sm:hidden"
+					className="shrink-0 body-sm text-tertiary tabular-nums group-focus-within/row:hidden group-hover/row:hidden max-sm:hidden"
 				/>
 				<div className="hidden shrink-0 items-center gap-0.5 group-focus-within/row:flex group-hover/row:flex max-sm:flex">
 					<Tooltip
 						content="Rename chat"
 						render={
-							<button
+							<Button
 								type="button"
+								size="md"
+								variant="ghost"
+								square
 								ref={renameRef}
 								aria-label={`Rename ${s.title || 'chat'}`}
 								disabled={isBusy}
@@ -136,15 +147,17 @@ export function ProjectSessionItem({
 								}}
 							/>
 						}
-						className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white disabled:opacity-50"
 					>
-						<Icon name="pencil" height={13} width={13} />
+						<Icon name="pencil" height={16} width={16} />
 					</Tooltip>
 					<Tooltip
 						content="Delete chat"
 						render={
-							<button
+							<Button
 								type="button"
+								size="md"
+								variant="ghost"
+								square
 								aria-label={`Delete ${s.title || 'chat'}`}
 								disabled={isBusy}
 								onClick={(e) => {
@@ -153,9 +166,12 @@ export function ProjectSessionItem({
 								}}
 							/>
 						}
-						className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-ai-error disabled:opacity-50"
 					>
-						{isDeleting ? <LoadingSpinner size={12} /> : <Icon name="trash-2" height={13} width={13} />}
+						{isDeleting ? (
+							<LoadingSpinner size={16} />
+						) : (
+							<Icon name="trash-2" height={16} width={16} className="text-error" />
+						)}
 					</Tooltip>
 				</div>
 			</div>

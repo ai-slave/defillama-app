@@ -27,11 +27,18 @@ import {
 	type SettingsTabId
 } from '~/containers/LlamaAI/utils/settingsIntent'
 import { useDarkModeManager, useLlamaAINotifyBannerDismissed } from '~/contexts/LocalStorage'
+import { Button } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Input, inputStyles, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { Skeleton } from '~/ui/Skeleton'
+import { LoadingIndicator } from '~/ui/Status'
+import { Switch } from '~/ui/Switch'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
+import { RetryNotice } from './RetryNotice'
 
 const MAX_LENGTH = 500
 
@@ -309,10 +316,8 @@ export const SettingsModal = memo(function SettingsModal({
 						<RowDivider />
 						<div role="status" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
 							<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-								<p className="m-0 label-md text-ai-primary">Mobile notifications</p>
-								<p className="m-0 text-xs leading-relaxed text-ai-tertiary">
-									Loading your mobile notification preference…
-								</p>
+								<p className="m-0 label-md text-primary">Mobile notifications</p>
+								<p className="m-0 body-sm text-secondary">Loading your mobile notification preference…</p>
 							</div>
 							<LoadingSpinner size={16} />
 						</div>
@@ -325,18 +330,14 @@ export const SettingsModal = memo(function SettingsModal({
 						<RowDivider />
 						<div role="alert" className="flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left">
 							<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-								<p className="m-0 label-md text-ai-primary">Mobile notifications</p>
-								<p className="m-0 text-xs leading-relaxed text-ai-tertiary">
+								<p className="m-0 label-md text-primary">Mobile notifications</p>
+								<p className="m-0 body-sm text-secondary">
 									Couldn't load mobile notifications. {mobileNotificationPreference.message}
 								</p>
 							</div>
-							<button
-								type="button"
-								onClick={mobileNotificationPreference.retry}
-								className="shrink-0 text-xs font-medium text-ai-accent-blue-deep underline"
-							>
+							<Button type="button" size="sm" onClick={mobileNotificationPreference.retry}>
 								Try again
-							</button>
+							</Button>
 						</div>
 					</>
 				)
@@ -375,33 +376,16 @@ export const SettingsModal = memo(function SettingsModal({
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
 				onClose={() => void commitDraft(instructionsDraft.value)}
-				className="dialog max-h-[88vh] w-full max-w-[720px] gap-0 overflow-hidden rounded-2xl border border-ai-line-subtle bg-ai-surface-card p-0 shadow-ai-lg"
-				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
+				className={`${dialogSurfaceStyles} [--dialog-width:720px]`}
 				portal
 				unmountOnHide
 			>
-				<header className="relative overflow-hidden border-b border-ai-line-subtle">
-					<div className="dark:from-ai-accent-blue-deep/7.000000000000001 pointer-events-none absolute inset-0 bg-linear-to-br from-ai-accent-blue-deep/5 via-transparent to-transparent" />
-					<div className="relative flex items-center justify-between gap-4 px-5 py-4 sm:px-6 sm:py-5">
-						<div className="flex items-center gap-3">
-							<div className="relative flex size-10 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-ai-accent-blue-deep/15 to-ai-accent-blue-deep/5 ring-1 ring-ai-accent-blue-deep/15 ring-inset">
-								<Icon name="settings" className="size-[18px] text-ai-accent-blue-deep" />
-							</div>
-							<div className="flex flex-col leading-tight">
-								<Ariakit.DialogHeading
-									render={<h2>Settings</h2>}
-									className="m-0 text-[15px] font-semibold tracking-tight text-ai-primary"
-								/>
-								<p className="m-0 mt-0.5 text-[11px] text-ai-tertiary">Tune how LlamaAI works for you</p>
-							</div>
-						</div>
-						<Ariakit.DialogDismiss
-							aria-label="Close settings"
-							className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary"
-						>
-							<Icon name="x" className="size-4" />
-						</Ariakit.DialogDismiss>
+				<header className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+					<div className="flex flex-col gap-0.5">
+						<DialogHeading>Settings</DialogHeading>
+						<p className="m-0 body-sm text-secondary">Tune how LlamaAI works for you</p>
 					</div>
+					<DialogCloseButton className="-mr-1" ariaLabel="Close settings" />
 				</header>
 
 				<Tabs<TabId>
@@ -410,10 +394,10 @@ export const SettingsModal = memo(function SettingsModal({
 					values={tabs.map((tab) => tab.id)}
 					orientation="both"
 				>
-					<div className="flex min-h-0 flex-col sm:min-h-[480px] sm:flex-row">
+					<div className="flex min-h-0 flex-auto flex-col sm:min-h-[480px] sm:flex-row">
 						<Ariakit.TabList
 							aria-label="Settings sections"
-							className="flex shrink-0 gap-1 overflow-x-auto border-b border-ai-line-subtle p-2 sm:w-[180px] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:border-r sm:border-b-0 sm:bg-ai-hover-faint sm:p-3"
+							className="flex shrink-0 gap-1 overflow-x-auto border-b border-subtle p-2 sm:w-[180px] sm:flex-col sm:gap-0.5 sm:overflow-visible sm:border-r sm:border-b-0 sm:bg-page sm:p-3"
 						>
 							{tabs.map((tab) => {
 								const isActive = activeTab === tab.id
@@ -422,26 +406,20 @@ export const SettingsModal = memo(function SettingsModal({
 										key={tab.id}
 										type="button"
 										value={tab.id}
-										className={`group relative flex shrink-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium transition-colors ${
+										className={`group relative flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left label-sm ${
 											isActive
-												? 'bg-ai-white text-ai-accent-blue-deep shadow-ai-xs ring-1 ring-ai-line-subtle dark:bg-ai-hover dark:shadow-none dark:ring-ai-line-subtle'
-												: 'text-ai-tertiary hover:bg-ai-hover hover:text-ai-primary'
+												? 'bg-brand-muted text-link-on-tint'
+												: 'text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary'
 										}`}
 									>
-										<Icon
-											name={tab.icon}
-											className={`size-[14px] shrink-0 ${isActive ? 'text-ai-accent-blue-deep' : 'text-ai-muted'}`}
-										/>
+										<Icon name={tab.icon} className="size-3.5 shrink-0" />
 										<span>{tab.label}</span>
 									</Tab>
 								)
 							})}
 						</Ariakit.TabList>
 
-						<TabPanel
-							value={activeTab}
-							className="max-h-[calc(88vh-130px)] min-w-0 flex-1 overflow-y-auto sm:max-h-[calc(88vh-81px)]"
-						>
+						<TabPanel value={activeTab} className="min-h-0 min-w-0 flex-1 overflow-y-auto">
 							<div className="p-5 sm:p-6">
 								{activeTab === 'persona' && (
 									<div className="space-y-6">
@@ -478,20 +456,22 @@ export const SettingsModal = memo(function SettingsModal({
 															}
 														}}
 														placeholder="e.g., Be concise and lead with numbers. Always include % changes."
-														className="w-full resize-none rounded-xl border border-ai-line-medium bg-ai-hover-faint p-3.5 text-sm text-ai-primary placeholder-ai-muted outline-hidden transition-all focus:border-ai-accent-blue-deep/40 focus:bg-ai-hover focus:ring-4 focus:ring-ai-accent-blue-deep/8 dark:focus:ring-ai-accent-blue-deep/10"
+														className={`${textareaStyles} w-full resize-none`}
 														rows={5}
 													/>
 													{showClear ? (
-														<button
+														<Button
 															type="button"
+															size="sm"
+															variant="ghost"
 															onClick={handleClear}
-															className="absolute top-2.5 right-2.5 rounded-md px-2 py-1 text-[10px] font-medium text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid"
+															className="absolute top-1.5 right-1.5"
 														>
 															Clear
-														</button>
+														</Button>
 													) : null}
 												</div>
-												<div className="flex items-center justify-between font-mono text-[10.5px] text-ai-muted">
+												<div className="flex items-center justify-between mono-sm text-tertiary">
 													<span>
 														{instructionsDraft.value.length}/{MAX_LENGTH}
 													</span>
@@ -576,20 +556,19 @@ export const SettingsModal = memo(function SettingsModal({
 													/>
 												</SettingsCard>
 												{settings.enablePremiumTools ? (
-													<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
-														<label
-															htmlFor="llamaai-spend-cap"
-															className="block text-[13px] font-medium text-ai-primary"
-														>
+													<div className="rounded-lg border border-subtle bg-surface p-4">
+														<label htmlFor="llamaai-spend-cap" className="block label-md text-primary">
 															Spend cap per message
 														</label>
-														<p className="mt-1 text-xs text-ai-tertiary">
+														<p className="mt-1 body-sm text-secondary">
 															Max external-data spend per message in USD. Each new message gets a fresh budget. Default
 															$0.50.
 														</p>
-														<div className="mt-3 flex items-center gap-1 rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 transition-colors focus-within:border-ai-accent-blue-deep/40 focus-within:ring-4 focus-within:ring-ai-accent-blue-deep/8 dark:focus-within:ring-ai-accent-blue-deep/10">
-															<span className="font-mono text-sm text-ai-muted">$</span>
-															<input
+														<div className="relative mt-3">
+															<span className="pointer-events-none absolute top-0 bottom-0 left-3 my-auto flex items-center font-mono text-tertiary">
+																$
+															</span>
+															<Input
 																id="llamaai-spend-cap"
 																type="number"
 																inputMode="decimal"
@@ -599,7 +578,7 @@ export const SettingsModal = memo(function SettingsModal({
 																onChange={handleSpendCapChange}
 																onBlur={handleSpendCapBlur}
 																onKeyDown={handleSpendCapKeyDown}
-																className="w-full bg-transparent font-mono text-sm text-ai-primary outline-hidden"
+																className="w-full pl-7 font-mono"
 															/>
 														</div>
 													</div>
@@ -610,7 +589,7 @@ export const SettingsModal = memo(function SettingsModal({
 										{availableModels && availableModels.length > 0 ? (
 											<div>
 												<SectionHeading title="Model" subtitle="Override the AI model that powers your responses." />
-												<div className="mt-3 space-y-3 rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
+												<div className="mt-3 space-y-3 rounded-lg border border-subtle bg-surface p-4">
 													<SelectField
 														id="llamaai-model-select"
 														label="Model"
@@ -656,13 +635,17 @@ export const SettingsModal = memo(function SettingsModal({
 											subtitle="Connect external accounts to chat and receive alerts."
 										/>
 										{isSettingsLoading ? (
-											<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
+											<div
+												role="status"
+												aria-label="Loading integrations"
+												className="rounded-lg border border-subtle bg-surface p-4"
+											>
 												<div className="flex items-center justify-between gap-3">
-													<div className="min-w-0 flex-1">
-														<div className="h-4 w-24 animate-pulse rounded-sm bg-ai-hover-strong" />
-														<div className="mt-2 h-3 w-full max-w-[360px] animate-pulse rounded-sm bg-ai-hover" />
+													<div className="flex min-w-0 flex-1 flex-col gap-2">
+														<Skeleton className="h-4 w-24" />
+														<Skeleton className="h-3 w-full max-w-[360px]" />
 													</div>
-													<div className="h-8 w-20 shrink-0 animate-pulse rounded-lg bg-ai-hover-strong" />
+													<Skeleton className="h-8 w-20 shrink-0 rounded-lg" />
 												</div>
 											</div>
 										) : (
@@ -680,21 +663,23 @@ export const SettingsModal = memo(function SettingsModal({
 													title="Slack"
 													description="Receive scheduled alerts in your Slack channels. Multi-workspace supported."
 												/>
-												<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
+												<div className="rounded-lg border border-subtle bg-surface p-4">
 													<div className="flex flex-wrap items-start justify-between gap-3">
 														<div className="min-w-0 flex-1">
-															<p className="m-0 text-sm font-medium text-ai-primary">Mobile app</p>
-															<p className="m-0 mt-0.5 text-xs text-ai-tertiary">
+															<p className="m-0 label-md text-primary">Mobile app</p>
+															<p className="m-0 mt-0.5 body-sm text-secondary">
 																Chat with LlamaAI and receive alerts on your phone. iOS and Android.
 															</p>
 														</div>
-														<BasicLink
+														<Button
+															as={BasicLink}
 															href="/app"
 															data-umami-event="mobile-app-settings-click"
-															className="shrink-0 rounded-lg bg-ai-accent-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white hover:bg-ai-accent-blue-deep/90"
+															size="md"
+															variant="primary"
 														>
 															Get the app
-														</BasicLink>
+														</Button>
 													</div>
 												</div>
 											</div>
@@ -704,9 +689,32 @@ export const SettingsModal = memo(function SettingsModal({
 
 								{activeTab === 'memory' && (
 									<div className="space-y-6">
+										{agentHome.memories.error ? (
+											<RetryNotice
+												message="Couldn't load memories."
+												retrying={agentHome.memories.isFetching}
+												onRetry={() => void agentHome.memories.refetch()}
+											/>
+										) : null}
+										{agentHome.deleteMemoryMutation.error ? (
+											<RetryNotice
+												message="Couldn't delete this memory."
+												retrying={agentHome.deleteMemoryMutation.isPending}
+												onRetry={() => agentHome.deleteMemoryMutation.mutate(agentHome.deleteMemoryMutation.variables!)}
+											/>
+										) : null}
+										{agentHome.clearMemoriesMutation.error ? (
+											<RetryNotice
+												message="Couldn't clear memories."
+												retrying={agentHome.clearMemoriesMutation.isPending}
+												onRetry={() =>
+													agentHome.clearMemoriesMutation.mutate(agentHome.clearMemoriesMutation.variables!)
+												}
+											/>
+										) : null}
 										{agentHome.memories.data?.available === false ? (
 											<SettingsCard>
-												<p className="px-4 py-3.5 text-xs text-ai-tertiary">Memory is available on paid plans.</p>
+												<p className="px-4 py-3.5 body-sm text-secondary">Memory is available on paid plans.</p>
 											</SettingsCard>
 										) : (
 											<>
@@ -718,19 +726,22 @@ export const SettingsModal = memo(function SettingsModal({
 													<MemoryList
 														entries={agentHome.memories.data?.user}
 														isLoading={agentHome.memories.isLoading}
+														loadFailed={!!agentHome.memories.error}
 														emptyText="Nothing remembered yet."
 														onDelete={(id) => agentHome.deleteMemoryMutation.mutate(id)}
 														deleting={agentHome.deleteMemoryMutation.isPending}
+														deletingId={agentHome.deleteMemoryMutation.variables ?? null}
 													/>
 													{(agentHome.memories.data?.user.length ?? 0) > 0 ? (
-														<button
+														<Button
 															type="button"
+															size="sm"
+															variant="ghost"
 															onClick={() => agentHome.clearMemoriesMutation.mutate('user')}
 															disabled={agentHome.clearMemoriesMutation.isPending}
-															className="text-xs font-medium text-ai-muted transition-colors hover:text-ai-error-vivid disabled:opacity-50"
 														>
-															Clear all
-														</button>
+															{agentHome.clearMemoriesMutation.isPending ? <LoadingSpinner size={12} /> : null}Clear all
+														</Button>
 													) : null}
 												</div>
 
@@ -742,19 +753,22 @@ export const SettingsModal = memo(function SettingsModal({
 													<MemoryList
 														entries={agentHome.memories.data?.memory}
 														isLoading={agentHome.memories.isLoading}
+														loadFailed={!!agentHome.memories.error}
 														emptyText="No notes yet."
 														onDelete={(id) => agentHome.deleteMemoryMutation.mutate(id)}
 														deleting={agentHome.deleteMemoryMutation.isPending}
+														deletingId={agentHome.deleteMemoryMutation.variables ?? null}
 													/>
 													{(agentHome.memories.data?.memory.length ?? 0) > 0 ? (
-														<button
+														<Button
 															type="button"
+															size="sm"
+															variant="ghost"
 															onClick={() => agentHome.clearMemoriesMutation.mutate('memory')}
 															disabled={agentHome.clearMemoriesMutation.isPending}
-															className="text-xs font-medium text-ai-muted transition-colors hover:text-ai-error-vivid disabled:opacity-50"
 														>
-															Clear all
-														</button>
+															{agentHome.clearMemoriesMutation.isPending ? <LoadingSpinner size={12} /> : null}Clear all
+														</Button>
 													) : null}
 												</div>
 
@@ -763,61 +777,102 @@ export const SettingsModal = memo(function SettingsModal({
 														title="Skills"
 														subtitle="Workflows saved in your workspace. Archive one to stop the assistant using it."
 													/>
-													<SettingsCard>
-														{agentHome.skills.isLoading ? (
-															<p className="px-4 py-3.5 text-xs text-ai-tertiary">Loading…</p>
-														) : (agentHome.skills.data?.active.length ?? 0) === 0 ? (
-															<p className="px-4 py-3.5 text-xs text-ai-tertiary">No skills yet.</p>
-														) : (
-															agentHome.skills.data!.active.map((skill, i) => (
-																<div key={skill.name}>
-																	{i > 0 ? <RowDivider /> : null}
-																	<div className="flex items-start justify-between gap-4 px-4 py-3.5">
-																		<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-																			<p className="m-0 flex items-center gap-2 label-md text-ai-primary">
-																				{skill.name}
-																				<span className="rounded-sm bg-ai-hover px-1.5 py-0.5 text-[10px] font-normal text-ai-tertiary">
-																					{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
-																				</span>
-																			</p>
-																			<p className="m-0 text-xs leading-relaxed text-ai-tertiary">
-																				{skill.description}
-																			</p>
-																		</div>
-																		{skill.pinned ? (
-																			<span className="shrink-0 px-2 py-1 text-xs text-ai-muted">Pinned</span>
-																		) : (
-																			<button
-																				type="button"
-																				onClick={() => agentHome.archiveSkillMutation.mutate(skill.name)}
-																				disabled={agentHome.archiveSkillMutation.isPending}
-																				className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-error-vivid disabled:opacity-50"
-																			>
-																				Archive
-																			</button>
-																		)}
-																	</div>
+													{agentHome.skills.error ? (
+														<RetryNotice
+															message="Couldn't load skills."
+															retrying={agentHome.skills.isFetching}
+															onRetry={() => void agentHome.skills.refetch()}
+														/>
+													) : null}
+													{agentHome.archiveSkillMutation.error ? (
+														<RetryNotice
+															message="Couldn't archive this skill."
+															retrying={agentHome.archiveSkillMutation.isPending}
+															onRetry={() =>
+																agentHome.archiveSkillMutation.mutate(agentHome.archiveSkillMutation.variables!)
+															}
+														/>
+													) : null}
+													{agentHome.restoreSkillMutation.error ? (
+														<RetryNotice
+															message="Couldn't restore this skill."
+															retrying={agentHome.restoreSkillMutation.isPending}
+															onRetry={() =>
+																agentHome.restoreSkillMutation.mutate(agentHome.restoreSkillMutation.variables!)
+															}
+														/>
+													) : null}
+													{!agentHome.skills.error || (agentHome.skills.data?.active.length ?? 0) > 0 ? (
+														<SettingsCard>
+															{agentHome.skills.isLoading ? (
+																<div role="status" aria-live="polite" className="px-4 py-3.5">
+																	<LoadingIndicator />
 																</div>
-															))
-														)}
-													</SettingsCard>
+															) : (agentHome.skills.data?.active.length ?? 0) === 0 ? (
+																!agentHome.skills.error ? (
+																	<p className="px-4 py-3.5 body-sm text-secondary">No skills yet.</p>
+																) : null
+															) : (
+																agentHome.skills.data!.active.map((skill, i) => (
+																	<div key={skill.name}>
+																		{i > 0 ? <RowDivider /> : null}
+																		<div className="flex items-start justify-between gap-4 px-4 py-3.5">
+																			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+																				<p className="m-0 flex items-center gap-2 label-md text-primary">
+																					{skill.name}
+																					<span className="rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 label-xs text-secondary">
+																						{skill.createdBy === 'agent' ? 'learned by assistant' : 'added by you'}
+																					</span>
+																				</p>
+																				<p className="m-0 body-sm text-secondary">{skill.description}</p>
+																			</div>
+																			{skill.pinned ? (
+																				<span className="shrink-0 px-2 py-1 body-sm text-tertiary">Pinned</span>
+																			) : (
+																				<Button
+																					type="button"
+																					size="sm"
+																					variant="ghost"
+																					onClick={() => agentHome.archiveSkillMutation.mutate(skill.name)}
+																					disabled={agentHome.archiveSkillMutation.isPending}
+																					className="shrink-0"
+																				>
+																					{agentHome.archiveSkillMutation.isPending &&
+																					agentHome.archiveSkillMutation.variables === skill.name ? (
+																						<LoadingSpinner size={12} />
+																					) : null}
+																					Archive
+																				</Button>
+																			)}
+																		</div>
+																	</div>
+																))
+															)}
+														</SettingsCard>
+													) : null}
 													{(agentHome.skills.data?.archived.length ?? 0) > 0 ? (
-														<details className="text-xs">
-															<summary className="cursor-pointer text-ai-muted">
+														<details className="body-sm">
+															<summary className="cursor-pointer text-tertiary">
 																Archived ({agentHome.skills.data!.archived.length})
 															</summary>
 															<div className="mt-2 space-y-2">
 																{agentHome.skills.data!.archived.map((skill) => (
 																	<div key={skill.name} className="flex items-center justify-between gap-4">
-																		<span className="min-w-0 flex-1 truncate text-ai-tertiary">{skill.name}</span>
-																		<button
+																		<span className="min-w-0 flex-1 truncate text-secondary">{skill.name}</span>
+																		<Button
 																			type="button"
+																			size="sm"
+																			variant="ghost"
 																			onClick={() => agentHome.restoreSkillMutation.mutate(skill.name)}
 																			disabled={agentHome.restoreSkillMutation.isPending}
-																			className="shrink-0 font-medium text-ai-accent-blue-deep disabled:opacity-50"
+																			className="shrink-0"
 																		>
+																			{agentHome.restoreSkillMutation.isPending &&
+																			agentHome.restoreSkillMutation.variables === skill.name ? (
+																				<LoadingSpinner size={12} />
+																			) : null}
 																			Restore
-																		</button>
+																		</Button>
 																	</div>
 																))}
 															</div>
@@ -832,52 +887,42 @@ export const SettingsModal = memo(function SettingsModal({
 								{activeTab === 'lab' ? (
 									<div className="space-y-5">
 										<SectionHeading title="Experimental" subtitle="Bleeding-edge modes. Things may get weird." />
-										<Ariakit.Checkbox
-											render={<button type="button" aria-label="Hacker Mode" />}
-											role="switch"
-											aria-checked={settings.hackerMode}
-											checked={settings.hackerMode}
-											onChange={handleHackerToggle}
-											className={`group relative flex w-full items-center justify-between gap-4 overflow-hidden rounded-xl p-4 text-left transition-all ${
+										{/* The terminal treatment is the product's kept brand exception; the control itself is the shared switch. */}
+										<div
+											className={`flex w-full items-center justify-between gap-4 rounded-xl border p-4 ${
 												settings.hackerMode
-													? 'bg-ai-ink shadow-ai-terminal-glow ring-1 ring-ai-terminal/30'
-													: 'bg-ai-hover-faint ring-1 ring-ai-line-medium hover:ring-ai-line-strong'
+													? 'border-ai-terminal/30 bg-ai-ink shadow-ai-terminal-glow'
+													: 'border-subtle bg-surface'
 											}`}
 										>
-											{settings.hackerMode ? (
-												<div className="pointer-events-none absolute inset-0 opacity-40">
-													<div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,65,0.18)_1px,transparent_1px)] bg-[length:14px_14px]" />
-												</div>
-											) : null}
-											<div className="relative flex items-center gap-3">
-												<img src="/assets/llamaai/hackerllama.webp" alt="" className="size-11 rounded-lg shadow-sm" />
+											<div className="flex items-center gap-3">
+												<img src="/assets/llamaai/hackerllama.webp" alt="" className="size-11 rounded-lg" />
 												<div className="flex flex-col gap-0.5">
 													<p
-														className={`m-0 text-sm font-medium ${
+														className={`m-0 label-md ${
 															settings.hackerMode
 																? 'font-mono text-ai-terminal drop-shadow-ai-terminal'
-																: 'text-ai-white'
+																: 'text-primary'
 														}`}
 													>
 														{settings.hackerMode ? '> hacker_mode --active' : 'Hacker Mode'}
 													</p>
-													<p className="m-0 text-xs text-ai-muted">
+													<p
+														className={`m-0 body-sm ${settings.hackerMode ? 'text-ai-on-ink-muted' : 'text-secondary'}`}
+													>
 														Watch the llama hack through your questions in green.
 													</p>
 												</div>
 											</div>
-											<div
-												className={`relative ml-3 h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
-													settings.hackerMode ? 'bg-ai-terminal shadow-ai-terminal' : 'bg-ai-surface-muted'
-												}`}
-											>
-												<div
-													className={`absolute top-[3px] size-4 rounded-full shadow transition-transform duration-200 ${
-														settings.hackerMode ? 'translate-x-[19px] bg-ai-ink' : 'translate-x-[3px] bg-ai-white'
-													}`}
-												/>
-											</div>
-										</Ariakit.Checkbox>
+											<Switch
+												label="Hacker Mode"
+												hideLabel
+												value="hackerMode"
+												checked={settings.hackerMode}
+												onChange={handleHackerToggle}
+												className="shrink-0"
+											/>
+										</div>
 									</div>
 								) : null}
 							</div>
@@ -892,53 +937,62 @@ export const SettingsModal = memo(function SettingsModal({
 function SectionHeading({ title, subtitle }: { title: string; subtitle?: string }) {
 	return (
 		<div className="space-y-1">
-			<h3 className="m-0 text-[13px] font-semibold tracking-tight text-ai-primary">{title}</h3>
-			{subtitle ? <p className="m-0 text-xs text-ai-tertiary">{subtitle}</p> : null}
+			<h3 className="m-0 label-md text-primary">{title}</h3>
+			{subtitle ? <p className="m-0 body-md text-secondary">{subtitle}</p> : null}
 		</div>
 	)
 }
 
 function SettingsCard({ children }: { children: React.ReactNode }) {
-	return <div className="overflow-hidden rounded-xl border border-ai-line-subtle bg-ai-hover-faint">{children}</div>
+	return <div className="overflow-hidden rounded-lg border border-subtle bg-surface">{children}</div>
 }
 
 function RowDivider() {
-	return <div className="mx-4 h-px bg-ai-hover" />
+	return <div className="mx-4 border-t border-subtle" />
 }
 
 function MemoryList({
 	entries,
 	isLoading,
+	loadFailed,
+	deletingId,
 	emptyText,
 	onDelete,
 	deleting
 }: {
 	entries: Array<MemoryEntry> | undefined
 	isLoading: boolean
+	loadFailed: boolean
+	deletingId: string | null
 	emptyText: string
 	onDelete: (id: string) => void
 	deleting: boolean
 }) {
+	if (loadFailed && !entries?.length) return null
 	return (
 		<SettingsCard>
 			{isLoading ? (
-				<p className="px-4 py-3.5 text-xs text-ai-tertiary">Loading…</p>
+				<div role="status" aria-live="polite" className="px-4 py-3.5">
+					<LoadingIndicator />
+				</div>
 			) : (entries?.length ?? 0) === 0 ? (
-				<p className="px-4 py-3.5 text-xs text-ai-tertiary">{emptyText}</p>
+				<p className="px-4 py-3.5 body-sm text-secondary">{emptyText}</p>
 			) : (
 				entries!.map((entry, i) => (
 					<div key={entry.id}>
 						{i > 0 ? <RowDivider /> : null}
 						<div className="flex items-start justify-between gap-4 px-4 py-3.5">
-							<p className="m-0 min-w-0 flex-1 text-[13px] whitespace-pre-wrap text-ai-primary">{entry.text}</p>
-							<button
+							<p className="m-0 min-w-0 flex-1 body-md whitespace-pre-wrap text-primary">{entry.text}</p>
+							<Button
 								type="button"
+								size="sm"
+								variant="ghost"
 								onClick={() => onDelete(entry.id)}
 								disabled={deleting}
-								className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-error-vivid disabled:opacity-50"
+								className="shrink-0"
 							>
-								Delete
-							</button>
+								{deleting && deletingId === entry.id ? <LoadingSpinner size={12} /> : null}Delete
+							</Button>
 						</div>
 					</div>
 				))
@@ -962,34 +1016,24 @@ function ToggleRow({
 }) {
 	const descriptionId = useId()
 	return (
-		<Ariakit.Checkbox
-			render={<button type="button" aria-label={label} />}
-			role="switch"
-			aria-checked={checked}
-			checked={checked}
-			aria-describedby={descriptionId}
-			onChange={onClick}
-			disabled={!interactive}
-			className="group flex w-full items-start justify-between gap-4 px-4 py-3.5 text-left transition-colors hover:bg-ai-hover-faint disabled:cursor-default disabled:hover:bg-transparent"
-		>
+		<div className="flex w-full items-start justify-between gap-4 px-4 py-3.5">
 			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<p className="m-0 label-md text-ai-primary">{label}</p>
-				<p id={descriptionId} className="m-0 text-xs leading-relaxed text-ai-tertiary">
+				<p className="m-0 label-md text-primary">{label}</p>
+				<p id={descriptionId} className="m-0 body-md text-secondary">
 					{description}
 				</p>
 			</div>
-			<div
-				className={`relative mt-0.5 h-[22px] w-[38px] shrink-0 rounded-full transition-colors ${
-					checked ? 'bg-ai-accent-blue-deep' : 'bg-ai-black/15 dark:bg-ai-white/15'
-				}`}
-			>
-				<div
-					className={`absolute top-[3px] size-4 rounded-full bg-ai-white shadow transition-transform duration-200 ${
-						checked ? 'translate-x-[19px]' : 'translate-x-[3px]'
-					}`}
-				/>
-			</div>
-		</Ariakit.Checkbox>
+			<Switch
+				label={label}
+				hideLabel
+				value={label}
+				checked={checked}
+				onChange={onClick}
+				disabled={!interactive}
+				describedBy={descriptionId}
+				className="mt-0.5 shrink-0"
+			/>
+		</div>
 	)
 }
 
@@ -1008,21 +1052,16 @@ function SelectField({
 }) {
 	return (
 		<div className="flex flex-col gap-1.5">
-			<label htmlFor={id} className="text-xs font-medium text-ai-tertiary">
+			<label htmlFor={id} className="label-sm text-secondary">
 				{label}
 			</label>
 			<div className="relative">
-				<select
-					id={id}
-					value={value}
-					onChange={onChange}
-					className="w-full appearance-none rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-2 pr-9 text-sm text-ai-primary outline-hidden transition-colors focus:border-ai-accent-blue-deep/40 focus:ring-4 focus:ring-ai-accent-blue-deep/8 dark:focus:ring-ai-accent-blue-deep/10"
-				>
+				<select id={id} value={value} onChange={onChange} className={`${inputStyles} w-full appearance-none pr-9`}>
 					{children}
 				</select>
 				<Icon
 					name="chevron-down"
-					className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-ai-muted"
+					className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-tertiary"
 				/>
 			</div>
 		</div>

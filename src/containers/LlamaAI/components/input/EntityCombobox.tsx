@@ -2,6 +2,8 @@ import * as Ariakit from '@ariakit/react'
 import type { RefObject } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getAnchorRect } from '~/containers/LlamaAI/utils/entitySuggestions'
+import { popoverHovercardSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { LoadingIndicator } from '~/ui/Status'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface EntityMatch {
@@ -48,7 +50,7 @@ export function EntityComboboxPopover({
 				if (!textarea) return null
 				return getAnchorRect(textarea)
 			}}
-			className="relative z-50 flex max-h-(--popover-available-height) max-w-[280px] min-w-[100px] flex-col overflow-auto overscroll-contain rounded-lg border border-ai-line bg-page shadow-lg"
+			className={`${popoverHovercardSurfaceStyles} relative flex max-w-[280px] min-w-[100px] flex-col`}
 		>
 			{hasMatches && matches ? (
 				matches.map(({ id, name, logo, type }) => (
@@ -60,17 +62,19 @@ export function EntityComboboxPopover({
 							trackUmamiEvent('llamaai-entity-select', { type })
 							onItemClick({ id, name, type })
 						}}
-						className="flex cursor-pointer items-center gap-1.5 border-t border-ai-line px-3 py-2 first:border-t-0 hover:bg-ai-surface-muted focus-visible:bg-ai-surface-muted data-active-item:bg-ai-surface-muted"
+						className={`${popoverMenuItemStyles} border-t border-subtle first:border-t-0`}
 					>
 						{logo ? <TokenLogo src={logo} alt={`Logo of ${name}`} size={20} /> : null}
 						<span className="flex items-center gap-1.5">
-							<span className="text-sm font-medium">{name}</span>
+							<span className="font-medium">{name}</span>
 							<EntityTypeBadge type={type} />
 						</span>
 					</Ariakit.ComboboxItem>
 				))
 			) : (
-				<p className="px-3 py-2 text-sm text-ai-tertiary">Loading…</p>
+				<div role="status" aria-live="polite" className="px-3 py-2">
+					<LoadingIndicator />
+				</div>
 			)}
 		</Ariakit.ComboboxPopover>
 	)
@@ -79,10 +83,10 @@ export function EntityComboboxPopover({
 function EntityTypeBadge({ type }: { type: string }) {
 	const colorClass =
 		type === 'Chain'
-			? 'bg-ai-accent-blue text-ai-accent-blue'
+			? 'bg-brand/10 text-link'
 			: type === 'Protocol'
-				? 'bg-ai-mention text-ai-mention'
-				: 'bg-ai-success text-ai-success'
+				? 'bg-ai-mention/10 text-ai-mention'
+				: 'bg-success/10 text-success'
 
-	return <span className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${colorClass}`}>{type}</span>
+	return <span className={`rounded-sm px-1.5 py-0.5 label-xs ${colorClass}`}>{type}</span>
 }

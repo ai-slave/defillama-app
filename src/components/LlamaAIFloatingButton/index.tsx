@@ -6,6 +6,11 @@ import { useSuggestedQuestions } from '~/containers/LlamaAI/hooks/useSuggestedQu
 import { notifyKeyChange, subscribeToStorageKey } from '~/contexts/localStorageStore'
 import { useMedia } from '~/hooks/useMedia'
 import type { FormSubmitEvent } from '~/types/forms'
+import { Button } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading } from '~/ui/Dialog'
+import { Icon } from '~/ui/Icon'
+import { inputStyles } from '~/ui/Input'
+import { tooltipSurfaceStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const PENDING_PROMPT_KEY = 'llamaai-pending-prompt'
@@ -214,25 +219,14 @@ export function LlamaAIFloatingButton() {
 						<button
 							type="button"
 							onClick={handleButtonClick}
-							className="fixed right-6 bottom-6 z-50 flex size-14 items-center justify-center rounded-full shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl active:scale-95"
-							style={{
-								background: 'linear-gradient(135deg, #FDE0A9 0%, #FBEDCB 50%, #FDE0A9 100%)',
-								boxShadow: '0 4px 20px rgba(253, 224, 169, 0.5), 0 2px 8px rgba(0, 0, 0, 0.1)'
-							}}
+							className="fixed right-6 bottom-6 z-50 flex size-14 items-center justify-center rounded-full bg-ai-gold-cta shadow-ai-gold-cta transition-transform duration-200 hover:scale-105 active:scale-95"
 							aria-label="Ask LlamaAI"
 						>
-							<img
-								src="/assets/llamaai/llama-ai.svg"
-								alt=""
-								className="size-8 object-contain"
-								style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}
-							/>
+							<img src="/assets/llamaai/llama-ai.svg" alt="" className="size-8 object-contain" />
 						</button>
 					}
 				/>
-				<Ariakit.Tooltip className="z-50 rounded-lg bg-ai-inverse px-3 py-2 text-sm text-ai-on-inverse shadow-lg">
-					Ask LlamaAI
-				</Ariakit.Tooltip>
+				<Ariakit.Tooltip className={`${tooltipSurfaceStyles} px-3 py-2`}>Ask LlamaAI</Ariakit.Tooltip>
 			</Ariakit.TooltipProvider>
 
 			<Ariakit.DialogProvider open={isOpen} setOpen={setIsOpen}>
@@ -243,35 +237,27 @@ export function LlamaAIFloatingButton() {
 						textareaRef.current?.focus()
 						return false
 					}}
-					backdrop={<div className="fixed inset-0 z-40 bg-ai-inverse/30" />}
 					className={
 						isDesktop
-							? 'fixed top-0 right-0 z-50 flex h-full w-[400px] flex-col border-l border-ai-line bg-ai-white shadow-2xl dark:bg-ai-surface-muted'
-							: 'fixed right-0 bottom-0 left-0 z-50 flex max-h-[70vh] flex-col rounded-t-2xl border-t border-ai-line bg-ai-white shadow-2xl dark:bg-ai-surface-muted'
+							? 'fixed top-0 right-0 z-50 flex h-full w-[400px] flex-col border-l border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep'
+							: 'fixed right-0 bottom-0 left-0 z-50 flex max-h-[70dvh] flex-col rounded-t-xl border-t border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep'
 					}
 				>
-					<div className="flex items-center gap-3 border-b border-ai-line px-5 py-4">
-						<div
-							className="flex size-10 items-center justify-center rounded-full"
-							style={{ background: 'linear-gradient(135deg, #FDE0A9 0%, #FBEDCB 100%)' }}
-						>
+					<div className="flex items-center gap-3 border-b border-subtle px-4 py-3">
+						<div className="flex size-10 items-center justify-center rounded-full bg-ai-gold-cta">
 							<img src="/assets/llamaai/llama-ai.svg" alt="" className="size-6 object-contain" />
 						</div>
 						<div className="flex-1">
-							<h3 className="text-base font-semibold text-ai-primary">Ask LlamaAI</h3>
-							<p className="text-sm text-ai-tertiary">AI-powered DeFi insights</p>
+							<DialogHeading>Ask LlamaAI</DialogHeading>
+							<p className="body-sm text-secondary">AI-powered DeFi insights</p>
 						</div>
-						<Ariakit.DialogDismiss className="rounded-full p-2 text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary">
-							<svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-								<path d="M18 6L6 18M6 6l12 12" />
-							</svg>
-						</Ariakit.DialogDismiss>
+						<DialogCloseButton className="-mr-1" />
 					</div>
 
 					<div className="flex flex-1 flex-col overflow-hidden">
 						<div className="flex-1 overflow-y-auto overscroll-contain p-5">
 							<div className="mb-4">
-								<p className="mb-3 text-sm text-ai-tertiary">
+								<p className="mb-3 body-sm text-secondary">
 									{entityContext ? `Ask about ${entityContext.entitySlug}:` : 'Try one of these:'}
 								</p>
 								<div className="flex flex-col gap-2">
@@ -280,7 +266,7 @@ export function LlamaAIFloatingButton() {
 											key={suggestion}
 											type="button"
 											onClick={() => setValue(suggestion)}
-											className="rounded-lg border border-ai-line bg-ai-surface px-3 py-2 text-left text-xs text-ai-tertiary transition-colors hover:border-ai-handle hover:bg-ai-surface-muted dark:bg-ai-surface dark:hover:bg-ai-surface-muted"
+											className="rounded-lg border border-medium bg-page px-3 py-2 text-left body-sm text-secondary transition-colors hover:bg-hover-row hover:text-primary"
 										>
 											{suggestion}
 										</button>
@@ -289,7 +275,7 @@ export function LlamaAIFloatingButton() {
 							</div>
 						</div>
 
-						<form onSubmit={handleSubmit} className="border-t border-ai-line p-4">
+						<form onSubmit={handleSubmit} className="border-t border-subtle p-4">
 							<div className="relative">
 								<textarea
 									ref={textareaRef}
@@ -297,31 +283,23 @@ export function LlamaAIFloatingButton() {
 									onChange={(e) => setValue(e.target.value)}
 									onKeyDown={handleKeyDown}
 									placeholder="Ask LlamaAI about TVL, fees, revenue, protocols..."
-									className="min-h-[100px] w-full resize-none rounded-lg border border-ai-line bg-ai-surface p-3 pr-12 text-sm text-ai-primary placeholder-ai-muted outline-hidden transition-colors focus:border-ai-action dark:bg-ai-surface"
+									className={`${inputStyles} min-h-[100px] w-full resize-none pr-12`}
 									rows={4}
 								/>
-								<button
+								<Button
 									type="submit"
+									size="md"
+									variant="primary"
+									square
 									disabled={!value.trim()}
-									className="absolute right-3 bottom-3 flex size-9 items-center justify-center rounded-lg transition-all disabled:opacity-40"
-									style={{
-										background: value.trim() ? 'linear-gradient(135deg, #FDE0A9 0%, #FBEDCB 100%)' : 'transparent'
-									}}
+									aria-label="Send"
+									className="absolute right-2 bottom-2"
 								>
-									<svg
-										className="size-5 text-ai-black"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										strokeWidth="2"
-									>
-										<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
-									</svg>
-								</button>
+									<Icon name="arrow-up" height={16} width={16} />
+								</Button>
 							</div>
-							<p className="mt-2 text-xs text-ai-muted">
-								Press{' '}
-								<kbd className="rounded-sm bg-ai-surface-muted px-1 font-mono dark:bg-ai-surface-muted">Enter</kbd> to
+							<p className="mt-2 body-sm text-tertiary">
+								Press <kbd className="rounded-sm border border-medium bg-surface-elevated-1 px-1 mono-sm">Enter</kbd> to
 								submit
 							</p>
 						</form>

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { parseMessageToRenderModel } from '~/containers/LlamaAI/renderModel'
+import { Button, buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { LoadingIndicator } from '~/ui/Status'
 import type { DuelArmState } from '../hooks/useDuelStream'
 import type { Message } from '../types'
 import { MessageBubble } from './messages/MessageBubble'
@@ -62,36 +64,40 @@ function AnswerColumn({
 	const hasVisibleContent = isStreaming ? hasProgress(message) : hasAnswer
 
 	return (
-		<section aria-label={label} className="flex min-w-0 flex-1 flex-col rounded-xl border border-ai-line bg-surface">
+		<section aria-label={label} className="flex min-w-0 flex-1 flex-col rounded-lg border border-subtle bg-surface">
 			<div className="flex items-center gap-2 px-4 pt-3 pb-1">
-				<span className="text-xs font-medium text-ai-secondary">{label}</span>
-				{isStreaming ? <span className="size-1.5 animate-pulse rounded-full bg-ai-line-strong" aria-hidden /> : null}
+				<span className="label-sm text-secondary">{label}</span>
+				{isStreaming ? <span className="size-1.5 rounded-full bg-brand motion-safe:animate-pulse" aria-hidden /> : null}
 			</div>
 
 			<div className="min-w-0 grow overflow-x-auto px-4 pb-2">
-				{error ? <p className="py-3 text-sm text-ai-error">{error}</p> : null}
+				{error ? (
+					<p role="alert" className="py-3 text-sm text-error">
+						{error}
+					</p>
+				) : null}
 				{!error && message ? (
 					<MessageBubble message={message} sessionId={sessionId} readOnly hideControls isDraft={isStreaming} />
 				) : null}
 				{!error && !hasVisibleContent ? (
-					<div className="flex flex-col gap-2 py-3" aria-label={`${label} is still loading`}>
-						<span className="h-3 w-4/5 animate-pulse rounded-sm bg-ai-skeleton" />
-						<span className="h-3 w-3/5 animate-pulse rounded-sm bg-ai-skeleton" />
+					<div role="status" aria-live="polite" className="py-3">
+						<LoadingIndicator label={`Waiting for ${label}`} />
 					</div>
 				) : null}
 			</div>
 
 			<div className="px-4 pt-1 pb-3">
-				<button
+				<Button
 					type="button"
+					size="md"
 					aria-label={`I prefer ${label}`}
 					disabled={!canChoose || !hasVisibleContent}
 					onClick={onChoose}
-					className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-ai-line bg-ai-surface-muted px-3 py-2 text-sm font-medium transition-colors hover:bg-ai-hover disabled:cursor-not-allowed disabled:opacity-40"
+					className="w-full"
 				>
 					<Icon name="check" height={14} width={14} />
 					I prefer this response
-				</button>
+				</Button>
 			</div>
 		</section>
 	)
@@ -117,7 +123,7 @@ export function DuelPanel({ a, b, sessionId, isStreaming, canResolve, onVote }: 
 		<div className="mx-auto flex w-full max-w-[80rem] flex-col gap-4 px-2 py-6">
 			<header className="flex flex-col items-center gap-1 text-center">
 				<h2 className="text-base font-medium">You’re giving feedback on a new version of LlamaAI.</h2>
-				<p className="text-sm text-ai-secondary">Which response do you prefer? Responses may take a moment to load.</p>
+				<p className="text-sm text-secondary">Which response do you prefer? Responses may take a moment to load.</p>
 			</header>
 
 			<div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
@@ -143,23 +149,23 @@ export function DuelPanel({ a, b, sessionId, isStreaming, canResolve, onVote }: 
 				/>
 			</div>
 
-			<div className="flex items-center justify-center gap-4 text-sm text-ai-secondary">
+			<div className="flex items-center justify-center gap-2">
 				<button
 					type="button"
 					disabled={!canVote || voted}
 					onClick={() => handleVote('tie')}
-					className="underline-offset-4 hover:text-(--text-primary) hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+					className={buttonStyles({ variant: 'ghost', size: 'sm' })}
 				>
 					They’re about the same
 				</button>
-				<span aria-hidden className="text-ai-line-strong">
+				<span aria-hidden className="text-tertiary">
 					·
 				</span>
 				<button
 					type="button"
 					disabled={!canVote || voted}
 					onClick={() => handleVote('both_bad')}
-					className="underline-offset-4 hover:text-(--text-primary) hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+					className={buttonStyles({ variant: 'ghost', size: 'sm' })}
 				>
 					Neither is good
 				</button>

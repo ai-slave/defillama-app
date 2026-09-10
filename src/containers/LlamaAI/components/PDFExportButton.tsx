@@ -1,8 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { lazy, Suspense, useState } from 'react'
 import toast from 'react-hot-toast'
+import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -41,6 +43,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 	const [shouldRenderModal, setShouldRenderModal] = useState(false)
 	const subscribeModalStore = Ariakit.useDialogStore({ open: shouldRenderModal, setOpen: setShouldRenderModal })
 	const loading = loaders.userLoading || isLoading
+	const menu = Ariakit.useMenuStore()
 
 	const handlePDFExport = async (isDark: boolean) => {
 		if (loading) return
@@ -157,25 +160,21 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 
 	return (
 		<>
-			<Ariakit.MenuProvider>
-				<Tooltip content="Download PDF">
-					<Ariakit.MenuButton
-						aria-label={isLoading ? 'Exporting PDF' : 'Export PDF options'}
-						className={
-							className ??
-							'flex items-center gap-1 rounded-md border border-medium px-1.5 py-1 text-xs hover:border-transparent hover:not-disabled:pro-btn-primary focus-visible:border-transparent focus-visible:not-disabled:pro-btn-primary disabled:border-medium disabled:text-tertiary'
-						}
-						disabled={loading}
-					>
-						{isLoading ? <LoadingSpinner size={12} /> : <Icon name="download-paper" height={14} width={14} />}
-					</Ariakit.MenuButton>
-				</Tooltip>
-				<Ariakit.Menu
-					portal
-					unmountOnHide
-					gutter={8}
-					className="z-50 flex min-w-[140px] flex-col rounded-md border border-ai-line bg-surface text-primary"
+			<Ariakit.MenuProvider store={menu}>
+				<Tooltip
+					content="Download PDF"
+					render={
+						<Ariakit.MenuButton
+							store={menu}
+							aria-label={isLoading ? 'Exporting PDF' : 'Export PDF options'}
+							disabled={loading}
+						/>
+					}
+					className={className ?? buttonStyles({ size: 'md', square: true })}
 				>
+					{isLoading ? <LoadingSpinner size={16} /> : <Icon name="download-paper" height={16} width={16} />}
+				</Tooltip>
+				<Ariakit.Menu portal unmountOnHide gutter={8} className={`${menuSurfaceStyles} z-50 min-w-[160px]`}>
 					<Ariakit.MenuItem
 						data-umami-event="export-pdf"
 						data-umami-event-theme="light"
@@ -183,7 +182,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 							void handlePDFExport(false)
 						}}
 						disabled={loading}
-						className="flex shrink-0 cursor-pointer items-center gap-2 px-3 py-2.5 text-sm first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
+						className={`${popoverMenuItemStyles} aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
 					>
 						<Icon name="sun" height={14} width={14} className="shrink-0" />
 						Light Mode
@@ -195,7 +194,7 @@ export function PDFExportButton({ sessionId, messageId, exportType, className }:
 							void handlePDFExport(true)
 						}}
 						disabled={loading}
-						className="flex shrink-0 cursor-pointer items-center gap-2 px-3 py-2.5 text-sm first-of-type:rounded-t-md last-of-type:rounded-b-md hover:bg-brand-muted focus-visible:bg-brand-muted aria-disabled:cursor-not-allowed aria-disabled:opacity-60 data-active-item:bg-brand-muted"
+						className={`${popoverMenuItemStyles} aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
 					>
 						<Icon name="moon" height={14} width={14} className="shrink-0" />
 						Dark Mode

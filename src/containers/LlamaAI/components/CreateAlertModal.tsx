@@ -36,7 +36,6 @@ import {
 } from '~/containers/LlamaAI/components/alerts/schedule'
 import type { DeliveryChannel } from '~/containers/LlamaAI/components/alerts/types'
 import {
-	alertBackdropClass,
 	alertDialogClass,
 	alertFieldLabelClass,
 	alertGhostButtonClass,
@@ -56,6 +55,7 @@ import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import { useTokenSearch } from '~/containers/ProDashboard/components/datasets/TokenUsageDataset/useTokenSearch'
 import { Icon } from '~/ui/Icon'
+import { textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -84,23 +84,23 @@ function AlertTypeCard({
 	return (
 		<label
 			htmlFor={id}
-			className={`relative flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-left transition-colors has-focus-visible:focus-ring ${
+			className={`relative flex cursor-pointer items-start gap-2.5 rounded-xl border p-2.5 text-left has-focus-visible:focus-ring ${
 				active
-					? 'border-link/40 bg-link/4 ring-1 ring-link/30'
-					: 'border-ai-line-medium hover:border-ai-line-strong hover:bg-ai-hover-faint'
+					? 'border-brand bg-brand-muted'
+					: 'border-medium not-disabled:not-aria-disabled:hover:border-strong not-disabled:not-aria-disabled:hover:bg-hover-row'
 			}`}
 		>
 			<Ariakit.Radio id={id} value={value} aria-label={title} aria-description={description} className="sr-only" />
 			<span
 				className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg ${
-					active ? 'bg-link/10 text-link' : 'bg-ai-hover text-ai-muted'
+					active ? 'bg-brand-muted text-link-on-tint' : 'bg-page text-secondary'
 				}`}
 			>
 				<Icon name={icon} className="size-3.5" />
 			</span>
 			<span className="flex min-w-0 flex-col gap-0.5">
-				<span className={`text-sm font-medium ${active ? 'text-link' : 'text-primary'}`}>{title}</span>
-				<span className="text-xs leading-snug text-ai-tertiary">{description}</span>
+				<span className={`text-sm font-medium ${active ? 'text-link-on-tint' : 'text-primary'}`}>{title}</span>
+				<span className="body-sm text-secondary">{description}</span>
 			</span>
 		</label>
 	)
@@ -112,11 +112,11 @@ function TokenOptionRow({ innerProps, label, data }: any) {
 			{data.logo ? (
 				<img src={data.logo} alt="" width={18} height={18} className="size-[18px] rounded-full" />
 			) : (
-				<div className="size-[18px] rounded-full bg-(--bg-tertiary)" />
+				<div className="size-[18px] rounded-full bg-surface-elevated-2" />
 			)}
 			<span className="text-sm">{label}</span>
 			{typeof data.price === 'number' ? (
-				<span className="ml-auto pl-3 font-mono text-xs text-ai-muted">{formatPriceLabel(data.price)}</span>
+				<span className="ml-auto pl-3 font-mono text-xs text-tertiary">{formatPriceLabel(data.price)}</span>
 			) : null}
 		</div>
 	)
@@ -129,7 +129,7 @@ export function CreateAlertModal(props: CreateAlertModalProps) {
 			<Ariakit.Dialog
 				className={alertDialogClass}
 				initialFocus={initialPromptRef}
-				backdrop={<div className={alertBackdropClass} />}
+
 				portal
 				unmountOnHide
 			>
@@ -317,12 +317,12 @@ function CreateAlertModalForm({
 
 			<div className="flex min-h-0 flex-1 flex-col">
 				{isUpsell ? (
-					<div className="flex min-h-0 flex-1 flex-col items-center gap-3 overflow-y-auto px-5 py-14 text-center">
-						<div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
-							<Icon name="alert-triangle" className="size-6 text-ai-warning-bright" />
+					<div className="flex min-h-0 flex-1 flex-col items-center gap-3 overflow-y-auto px-4 py-14 text-center">
+						<div className="flex size-14 items-center justify-center rounded-lg bg-warning/10 text-warning">
+							<Icon name="alert-triangle" className="size-6 text-warning" />
 						</div>
-						<p className="m-0 text-base font-semibold tracking-tight text-ai-primary">Alert limit reached</p>
-						<p className="m-0 max-w-xs text-xs text-ai-tertiary">{getUpsellCopy(alertsUsage)}</p>
+						<p className="m-0 text-base font-semibold tracking-tight text-primary">Alert limit reached</p>
+						<p className="m-0 max-w-xs text-xs text-tertiary">{getUpsellCopy(alertsUsage)}</p>
 						<BasicLink
 							href={`/subscription?returnUrl=${encodeURIComponent(router.asPath)}`}
 							onClick={() => {
@@ -337,14 +337,14 @@ function CreateAlertModalForm({
 						<button
 							type="button"
 							onClick={() => dialogStore.hide()}
-							className="text-xs text-ai-tertiary hover:underline"
+							className="text-xs text-tertiary not-disabled:not-aria-disabled:hover:underline"
 						>
 							Maybe later
 						</button>
 					</div>
 				) : (
 					<form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-						<div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-3.5">
+						<div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3.5">
 							<Ariakit.RadioProvider
 								value={triggerType}
 								setValue={(value) => {
@@ -381,7 +381,7 @@ function CreateAlertModalForm({
 										onChange={(e) => setPrompt(e.target.value)}
 										rows={2}
 										placeholder="Hyperliquid TVL and its top drivers"
-										className={`${alertInputClass} resize-none`}
+										className={`${textareaStyles} w-full resize-none`}
 									/>
 									<div className="flex flex-wrap gap-1.5">
 										{ALERT_PROMPT_SUGGESTIONS.map((suggestion) => (
@@ -393,7 +393,7 @@ function CreateAlertModalForm({
 													trackUmamiEvent('llamaai-alert-suggestion', { label: suggestion.label })
 												}}
 												data-active={prompt === suggestion.prompt}
-												className="rounded-full border border-ai-line-medium px-2.5 py-1 text-xs text-ai-tertiary transition-colors hover:border-ai-line-strong hover:text-primary data-[active=true]:border-link/40 data-[active=true]:bg-link/6 data-[active=true]:text-link dark:hover:text-ai-primary"
+												className="rounded-full border border-medium px-2.5 py-1 text-xs text-tertiary not-disabled:not-aria-disabled:hover:border-strong not-disabled:not-aria-disabled:hover:text-primary data-[active=true]:border-link/40 data-[active=true]:bg-link/6 data-[active=true]:text-link"
 											>
 												{suggestion.label}
 											</button>
@@ -425,7 +425,7 @@ function CreateAlertModalForm({
 										components={{ Option: TokenOptionRow }}
 									/>
 									<div className="flex flex-wrap items-center gap-2">
-										<span className="text-xs text-ai-muted">goes</span>
+										<span className="text-xs text-tertiary">goes</span>
 										<SegmentedToggle<PriceOp>
 											label="Price comparison"
 											value={priceOp}
@@ -438,21 +438,21 @@ function CreateAlertModalForm({
 										<button
 											type="button"
 											onClick={() => setPriceValue(roundPriceValue(currentPrice))}
-											className="self-start text-xs text-ai-tertiary transition-colors hover:text-link"
+											className="self-start text-xs text-tertiary not-disabled:not-aria-disabled:hover:text-link"
 										>
 											{priceToken.symbol.toUpperCase()} is trading around{' '}
 											<span className="font-mono font-medium text-primary">{formatPriceLabel(currentPrice)}</span> — tap
 											to use
 										</button>
 									) : (
-										<p className="m-0 text-xs text-ai-muted">
+										<p className="m-0 text-xs text-tertiary">
 											Fires once, then pauses — re-arm it anytime from your alerts.
 										</p>
 									)}
 								</div>
 							)}
 
-							<div className="overflow-hidden rounded-xl border border-ai-line-subtle bg-ai-hover-faint">
+							<div className="overflow-hidden rounded-xl border border-subtle bg-page">
 								{triggerType === 'schedule' ? (
 									<div className="flex flex-col gap-1.5 px-4 py-2.5">
 										<span className={alertFieldLabelClass}>When should it arrive?</span>
@@ -480,7 +480,7 @@ function CreateAlertModalForm({
 													))}
 												</select>
 											) : null}
-											<span className="text-xs text-ai-muted">at</span>
+											<span className="text-xs text-tertiary">at</span>
 											<select
 												value={hour}
 												aria-label="Hour"
@@ -510,7 +510,7 @@ function CreateAlertModalForm({
 								) : (
 									<div className="flex flex-col gap-1.5 px-4 py-2.5">
 										<label htmlFor="create-alert-prompt" className={alertFieldLabelClass}>
-											Add context to the ping <span className="font-normal text-ai-muted">(optional)</span>
+											Add context to the ping <span className="font-normal text-tertiary">(optional)</span>
 										</label>
 										<textarea
 											id="create-alert-prompt"
@@ -518,11 +518,11 @@ function CreateAlertModalForm({
 											onChange={(e) => setPrompt(e.target.value)}
 											rows={1}
 											placeholder="ETH price, gas, and what moved the market"
-											className={`${alertInputClass} resize-none`}
+											className={`${textareaStyles} w-full resize-none`}
 										/>
 									</div>
 								)}
-								<div className="mx-4 h-px bg-ai-hover" />
+								<div className="mx-4 h-px bg-surface-elevated-2" />
 								<div className="flex flex-col gap-1.5 px-4 py-2.5">
 									<span className={alertFieldLabelClass}>Where should it go?</span>
 									<div className="flex flex-wrap items-center gap-2">
@@ -535,7 +535,7 @@ function CreateAlertModalForm({
 										{deliveryChannel === 'slack' ? (
 											<>
 												{slackWorkspacesQuery.isLoading ? (
-													<span className="text-xs text-ai-muted">Loading workspaces…</span>
+													<span className="text-xs text-tertiary">Loading workspaces…</span>
 												) : activeSlackWorkspaces.length > 0 ? (
 													<select
 														value={slackTeamId}
@@ -561,9 +561,9 @@ function CreateAlertModalForm({
 												) : null}
 												{slackTeamId ? (
 													slackChannelsQuery.isLoading ? (
-														<span className="text-xs text-ai-muted">Loading channels…</span>
+														<span className="text-xs text-tertiary">Loading channels…</span>
 													) : slackChannelsQuery.isError ? (
-														<span className="text-xs text-ai-error-vivid">Failed to load channels</span>
+														<span className="text-xs text-error">Failed to load channels</span>
 													) : (
 														<select
 															value={slackChannelId}
@@ -589,18 +589,18 @@ function CreateAlertModalForm({
 										) : null}
 									</div>
 									{readinessBlock ? (
-										<p className="text-xs text-ai-warning">
+										<p className="text-xs text-warning">
 											{readinessBlock.label} →{' '}
-											<span className="text-ai-tertiary">
+											<span className="text-tertiary">
 												<SettingsIntegrationsLink />
 											</span>
 										</p>
 									) : null}
 								</div>
-								<div className="mx-4 h-px bg-ai-hover" />
+								<div className="mx-4 h-px bg-surface-elevated-2" />
 								<div className="flex items-center justify-between gap-3 px-4 py-2.5">
 									<label htmlFor="create-alert-title" className={`shrink-0 ${alertFieldLabelClass}`}>
-										Name <span className="font-normal text-ai-muted">(optional)</span>
+										Name <span className="font-normal text-tertiary">(optional)</span>
 									</label>
 									<input
 										id="create-alert-title"
@@ -615,7 +615,7 @@ function CreateAlertModalForm({
 								<button
 									type="button"
 									onClick={handleJustAsk}
-									className="flex items-center gap-1.5 self-start text-xs text-ai-tertiary transition-colors hover:text-link"
+									className="flex items-center gap-1.5 self-start text-xs text-tertiary not-disabled:not-aria-disabled:hover:text-link"
 								>
 									<Icon name="chat" className="size-3.5" />
 									{triggerType === 'price'
@@ -624,19 +624,19 @@ function CreateAlertModalForm({
 								</button>
 							) : null}
 
-							{otherErrorMessage ? <p className="text-xs text-ai-error-vivid">{otherErrorMessage}</p> : null}
+							{otherErrorMessage ? <p className="text-xs text-error">{otherErrorMessage}</p> : null}
 						</div>
 
-						<div className="flex shrink-0 items-center justify-between gap-3 border-t border-ai-line-subtle px-5 py-3.5">
+						<div className="flex shrink-0 items-center justify-between gap-3 border-t border-subtle px-4 py-3.5">
 							{submitBlockReason ? (
-								<p className="m-0 min-w-0 truncate text-xs text-ai-muted">{submitBlockReason}</p>
+								<p className="m-0 min-w-0 truncate text-xs text-tertiary">{submitBlockReason}</p>
 							) : (
 								<p className="m-0 flex min-w-0 items-center gap-2 text-xs">
 									<Icon
 										name={triggerType === 'price' ? 'trending-up' : 'calendar'}
-										className="size-3.5 shrink-0 text-ai-muted"
+										className="size-3.5 shrink-0 text-tertiary"
 									/>
-									<span className="truncate font-mono text-ai-tertiary">
+									<span className="truncate font-mono text-tertiary">
 										{triggerSummary} → {channelSummary}
 									</span>
 								</p>

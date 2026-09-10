@@ -1,18 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
 import { type Virtualizer, useVirtualizer } from '@tanstack/react-virtual'
-import {
-	type CSSProperties,
-	lazy,
-	memo,
-	Suspense,
-	useCallback,
-	useEffect,
-	useEffectEvent,
-	useMemo,
-	useRef,
-	useState
-} from 'react'
+import { type CSSProperties, memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
@@ -24,17 +13,24 @@ import { useSemanticSearch } from '~/containers/LlamaAI/hooks/useSemanticSearch'
 import { ProjectsSidebarSection } from '~/containers/LlamaAI/projects/ProjectsSidebarSection'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { compareSessionsByActivity } from '~/containers/LlamaAI/utils/sessionActivityOrder'
+import { TopupModal } from '~/containers/Subscription/shared/TopupModal'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { useStableCallback } from '~/hooks/useStableCallback'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatUsd } from '~/utils/numberFormat'
 
-const TopupModal = lazy(() =>
-	import('~/containers/Subscription/shared/TopupModal').then((m) => ({ default: m.TopupModal }))
-)
+/* One row recipe for every sidebar list item: 32px, body-sm, hover wash, brand tint when active. */
+export const SIDEBAR_ROW_SURFACE =
+	'flex items-center gap-1.5 rounded-md body-sm text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-within:bg-hover-row data-[active=true]:bg-brand-muted data-[active=true]:text-link-on-tint'
+export const SIDEBAR_ROW = `${SIDEBAR_ROW_SURFACE} px-2 py-1.5`
+export const SIDEBAR_WELL =
+	'flex items-center justify-center rounded-lg border border-dashed border-medium p-4 text-center body-sm text-tertiary'
 
 interface AgenticSidebarProps {
 	sessions: Array<ChatSession>
@@ -103,9 +99,9 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 		return (
 			<h2
 				style={itemStyle}
-				className={`flex items-center gap-1 text-xs text-ai-tertiary ${item.isFirst ? 'pt-0' : 'pt-2.5'}`}
+				className={`flex items-center gap-1 label-sm text-secondary ${item.isFirst ? 'pt-0' : 'pt-3'}`}
 			>
-				{item.groupName === 'Pinned' ? <Icon name="pin" height={10} width={10} className="shrink-0" /> : null}
+				{item.groupName === 'Pinned' ? <Icon name="pin" height={14} width={14} className="shrink-0" /> : null}
 				{item.groupName}
 			</h2>
 		)
@@ -114,20 +110,16 @@ const VirtualizedSidebarItem = memo(function VirtualizedSidebarItem({
 	if (item.type === 'loader') {
 		if (item.loadError) {
 			return (
-				<div style={itemStyle} className="flex items-center justify-center py-1.5">
-					<button
-						type="button"
-						onClick={() => item.onLoadMore?.()}
-						className="rounded-sm px-2 py-1 text-xs text-ai-tertiary hover:bg-ai-surface-muted"
-					>
+				<div style={itemStyle} className="flex items-center justify-center py-1">
+					<Button type="button" size="sm" variant="ghost" onClick={() => item.onLoadMore?.()}>
 						Retry loading chats
-					</button>
+					</Button>
 				</div>
 			)
 		}
 
 		return (
-			<div style={itemStyle} className="flex items-center justify-center py-2 text-xs text-ai-tertiary">
+			<div style={itemStyle} className="flex items-center justify-center py-2 text-tertiary">
 				{item.isFetching ? <LoadingSpinner size={12} /> : null}
 			</div>
 		)
@@ -187,6 +179,8 @@ export function AgenticSidebar({
 		setQuery: setSearchQuery,
 		results: searchResults,
 		isSearching,
+		failed: searchFailed,
+		retry: retrySearch,
 		clear: clearSearch
 	} = useSemanticSearch(!selectMode)
 
@@ -362,36 +356,40 @@ export function AgenticSidebar({
 		<SessionListFocusContext.Provider value={newChatRef}>
 			<aside
 				ref={sidebarRef}
-				className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-ai-line bg-surface max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'animate-[slideInRight_0.08s_ease-out]' : ''}`}
+				className={`llamaai-agentic-sidebar relative flex size-full max-w-[272px] flex-col rounded-lg border border-subtle bg-surface max-lg:absolute max-lg:top-0 max-lg:right-0 max-lg:bottom-0 max-lg:left-0 max-lg:z-10 lg:mr-2 ${shouldAnimate ? 'motion-safe:animate-[slideInRight_0.15s_ease-out]' : ''}`}
 			>
 				<header className="flex flex-col gap-2 p-4 pb-2">
-					<div className="flex h-6 items-center">
+					<div className="flex min-h-6 items-center">
 						{isLoading || hasNonProjectSessions ? (
-							<button
+							<Button
 								type="button"
+								size="sm"
+								variant="ghost"
+								data-active={selectMode}
 								onClick={selectMode ? exitSelectMode : () => setSelectMode(true)}
 								disabled={isLoading && !hasNonProjectSessions}
-								className={`flex h-6 items-center gap-1 rounded-sm px-1.5 text-[11px] transition-colors disabled:invisible ${
-									selectMode ? 'bg-brand/12 text-brand' : 'text-ai-tertiary hover:text-ai-primary'
-								}`}
+								className="-ml-2 disabled:invisible"
 							>
-								<Icon name={selectMode ? 'x' : 'check'} height={12} width={12} />
+								<Icon name={selectMode ? 'x' : 'check'} height={14} width={14} />
 								{selectMode ? 'Cancel' : 'Select'}
-							</button>
+							</Button>
 						) : null}
-						<div className="ml-auto flex items-center gap-2">
+						<div className="ml-auto flex items-center gap-1.5">
 							<Tooltip
 								content={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
 								render={
-									<button
+									<Button
 										type="button"
+										size="sm"
+										variant="outline"
+										square
 										onClick={toggleFullscreen}
 										data-umami-event="llamaai-fullscreen-toggle"
 										data-umami-event-action={isFullscreen ? 'exit' : 'enter'}
 										data-umami-event-source="sidebar_header"
+										className="max-lg:hidden"
 									/>
 								}
-								className="hidden size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white lg:flex"
 							>
 								<Icon name={isFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
 								<span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
@@ -400,15 +398,17 @@ export function AgenticSidebar({
 							<Tooltip
 								content="Close Chat History"
 								render={
-									<button
+									<Button
 										type="button"
+										size="sm"
+										variant="outline"
+										square
 										onClick={toggleSidebar}
 										data-umami-event="llamaai-sidebar-toggle"
 										data-umami-event-action="close"
 										data-umami-event-source="sidebar_header"
 									/>
 								}
-								className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 							>
 								<Icon name="panel-left-close" height={16} width={16} />
 								<span className="sr-only">Close Chat History</span>
@@ -416,28 +416,25 @@ export function AgenticSidebar({
 						</div>
 					</div>
 
-					<button
+					<Button
 						ref={newChatRef}
 						type="button"
+						size="md"
+						variant="outline"
 						onClick={() => {
 							trackUmamiEvent('llamaai-new-chat')
 							onNewChat()
 						}}
-						className="flex items-center justify-center gap-2 rounded-sm border border-brand bg-brand/12 px-2 py-0.75 text-xs text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
+						className="w-full"
 					>
-						<Icon name="message-square-plus" height={16} width={16} />
-						<span>New Chat</span>
-					</button>
+						<Icon name="message-square-plus" height={14} width={14} />
+						New Chat
+					</Button>
 
 					{isLoading || hasNonProjectSessions ? (
-						<div className="group/search relative flex items-center rounded-md bg-ai-surface-muted transition-colors focus-within:bg-ai-surface-muted">
-							<Icon
-								name="search"
-								height={13}
-								width={13}
-								className="pointer-events-none ml-2.5 shrink-0 text-ai-muted transition-colors group-focus-within/search:text-brand"
-							/>
-							<input
+						<div className="relative w-full min-w-0">
+							<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+							<Input
 								type="text"
 								value={searchQuery}
 								onChange={(e) => {
@@ -447,24 +444,30 @@ export function AgenticSidebar({
 								aria-label="Search sessions"
 								placeholder="Search"
 								disabled={isLoading && !hasNonProjectSessions}
-								className="min-w-0 flex-1 bg-transparent py-1.5 pr-2 pl-2 text-[11px] text-inherit placeholder:text-ai-muted focus:outline-hidden disabled:cursor-default"
+								className={`${searchFieldInputPlacementStyles} ${searchQuery || isSearching ? 'pr-9' : ''}`}
 							/>
-							{isSearching ? (
-								<Icon name="search" height={11} width={11} className="mr-1.5 shrink-0 animate-pulse text-ai-muted" />
-							) : null}
-							{searchQuery ? (
-								<button
-									type="button"
-									aria-label="Clear session search"
-									onClick={() => {
-										clearSearch()
-										setSelectedSessionIds(new Set())
-									}}
-									className="mr-1.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-ai-handle text-ai-white transition-colors hover:bg-ai-handle-hover"
-								>
-									<Icon name="x" height={8} width={8} />
-								</button>
-							) : null}
+							<span className="absolute top-0 right-1 bottom-0 my-auto flex items-center gap-1">
+								{isSearching ? (
+									<span role="status" className="flex size-6 items-center justify-center text-tertiary">
+										<LoadingSpinner size={12} />
+										<span className="sr-only">Searching</span>
+									</span>
+								) : searchQuery ? (
+									<Button
+										type="button"
+										variant="ghost"
+										size="sm"
+										square
+										aria-label="Clear session search"
+										onClick={() => {
+											clearSearch()
+											setSelectedSessionIds(new Set())
+										}}
+									>
+										<Icon name="x" height={14} width={14} />
+									</Button>
+								) : null}
+							</span>
 						</div>
 					) : null}
 				</header>
@@ -473,7 +476,7 @@ export function AgenticSidebar({
 					ref={scrollContainerRef}
 					className="flex-1 [scrollbar-width:thin] [scrollbar-gutter:stable] overflow-auto overscroll-contain"
 				>
-					<div ref={projectsSectionRef} className="border-b border-ai-line pb-3">
+					<div ref={projectsSectionRef} className="border-b border-subtle pb-3">
 						<ProjectsSidebarSection
 							sessions={sessions}
 							currentProjectId={currentProjectId}
@@ -491,35 +494,34 @@ export function AgenticSidebar({
 										trackUmamiEvent('llamaai-alerts-open', { source: 'sidebar' })
 										onOpenAlerts()
 									}}
-									className="-mx-1.5 flex w-[calc(100%+0.75rem)] items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+									className={`${SIDEBAR_ROW} -mx-2 w-[calc(100%+1rem)] text-left`}
 								>
-									<Icon name="calendar-plus" height={12} width={12} className="shrink-0 text-ai-warning-bright" />
+									<Icon name="calendar-plus" height={16} width={16} className="shrink-0 text-warning" />
 									<span className="min-w-0 flex-1 truncate">Alerts</span>
 									{typeof alertsCount === 'number' ? (
-										<span className="shrink-0 text-[11px] text-ai-muted">· {alertsCount}</span>
+										<span className="shrink-0 body-sm text-tertiary tabular-nums">{alertsCount}</span>
 									) : null}
 								</button>
 							</div>
 						) : null}
 					</div>
 
-					<nav className="pt-3 pr-2 pb-4 pl-4" aria-label="Chat history">
+					<nav className="px-4 pt-3 pb-4" aria-label="Chat history">
 						{isLoading ? (
-							<div className="flex items-center justify-center rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
-								<LoadingSpinner size={12} />
+							<div role="status" aria-live="polite" className={SIDEBAR_WELL}>
+								<LoadingSpinner size={14} />
+								<span className="sr-only">Loading chats</span>
 							</div>
 						) : loadError ? (
-							<p className="rounded-sm border border-dashed border-ai-error-border bg-ai-error-bg p-4 text-center text-xs text-ai-error-strong">
-								{loadError}
-							</p>
+							<InlineStatus variant="error">{loadError}</InlineStatus>
 						) : nonProjectSessions.length === 0 ? (
-							<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
-								You don't have any chats yet
-							</p>
-						) : !selectMode && trimmedSearchQuery && (searchResults.length > 0 || isSearching) ? (
+							<p className={SIDEBAR_WELL}>You don&apos;t have any chats yet</p>
+						) : !selectMode && trimmedSearchQuery && (searchResults.length > 0 || isSearching || searchFailed) ? (
 							<SearchResults
 								results={searchResults}
 								isSearching={isSearching}
+								failed={searchFailed}
+								onRetry={retrySearch}
 								query={searchQuery}
 								onMatchClick={(sessionId, messageId) => {
 									clearSearch()
@@ -533,9 +535,7 @@ export function AgenticSidebar({
 						) : filteredSessions.length === 0 &&
 						  trimmedSearchQuery &&
 						  (selectMode || (!isSearching && searchResults.length === 0)) ? (
-							<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
-								No chats matching &ldquo;{searchQuery}&rdquo;
-							</p>
+							<p className={SIDEBAR_WELL}>No chats matching &ldquo;{searchQuery}&rdquo;</p>
 						) : (
 							<div
 								style={{
@@ -550,7 +550,8 @@ export function AgenticSidebar({
 										position: 'absolute',
 										top: 0,
 										left: 0,
-										width: '100%',
+										// Session rows extend into both 8px gutters, including when positioned by the virtualizer.
+										width: item.type === 'session' ? 'calc(100% + 1rem)' : '100%',
 										height: `${virtualItem.size}px`,
 										transform: `translateY(${virtualItem.start - projectsSectionHeight}px)`
 									}
@@ -589,15 +590,13 @@ export function AgenticSidebar({
 								: 'Subscribe to a plan to top up your external data balance.'
 						}
 						render={<button type="button" onClick={() => hasActiveSubscription && setIsTopupModalOpen(true)} />}
-						className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-ai-line bg-surface px-4 py-3 transition-colors hover:bg-ai-surface-muted"
+						className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-subtle bg-surface px-4 py-3 body-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
 					>
-						<div className="flex min-w-0 items-center gap-2">
-							<Icon name="package" height={14} width={14} className="shrink-0 text-ai-research" />
-							<span className="text-xs text-ai-tertiary">External Data Balance</span>
+						<div className="flex min-w-0 items-center gap-1.5">
+							<Icon name="package" height={16} width={16} className="shrink-0 text-ai-research" />
+							<span>External Data Balance</span>
 						</div>
-						<span
-							className={`shrink-0 font-jetbrains text-xs font-semibold ${totalAvailable < 1 ? 'text-ai-warning-bright' : 'text-ai-tertiary dark:text-ai-primary'}`}
-						>
+						<span className={`shrink-0 mono-sm-bold ${totalAvailable < 1 ? 'text-warning' : 'text-primary'}`}>
 							{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 						</span>
 					</Tooltip>
@@ -612,9 +611,11 @@ export function AgenticSidebar({
 					finalFocus={bulkDeleteRef}
 				/>
 				{selectMode ? (
-					<footer className="flex min-h-[52px] shrink-0 items-center gap-2 border-t border-ai-line px-4 py-2">
-						<button
+					<footer className="flex min-h-[52px] shrink-0 items-center gap-2 border-t border-subtle px-4 py-2">
+						<Button
 							type="button"
+							size="md"
+							variant="ghost"
 							onClick={() => {
 								if (allSelected) {
 									setSelectedSessionIds(new Set())
@@ -622,35 +623,36 @@ export function AgenticSidebar({
 									setSelectedSessionIds(new Set(filteredSessions.map((s) => s.sessionId)))
 								}
 							}}
-							className="flex min-h-0 flex-1 items-center justify-center rounded-md p-2 text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
+							className="flex-1"
 						>
 							{allSelected ? 'Deselect All' : 'Select All'}
-						</button>
-						<button
+						</Button>
+						<Button
 							type="button"
+							size="md"
+							variant="destructive"
 							ref={bulkDeleteRef}
 							onClick={() => {
 								bulkDeletion.reset()
 								deleteStore.show()
 							}}
 							disabled={selectedIds.length === 0 || !onBulkDelete || bulkDeletion.isPending}
-							className="flex min-h-0 items-center justify-center rounded-md bg-ai-error-vivid/10 px-3 py-2 text-xs font-medium text-ai-error transition-colors hover:bg-ai-error-vivid/20 disabled:opacity-40"
 						>
 							Delete{selectedIds.length > 0 ? ` (${selectedIds.length})` : ''}
-						</button>
+						</Button>
 					</footer>
 				) : (
-					<footer className="flex min-h-[52px] shrink-0 items-stretch border-t border-ai-line">
+					<footer className="flex min-h-[52px] shrink-0 items-stretch border-t border-subtle">
 						{onOpenSettings ? (
 							<button
 								type="button"
 								onClick={onOpenSettings}
-								className="flex min-w-0 flex-1 items-center gap-2.5 px-4 py-3 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+								className="flex min-w-0 flex-1 items-center gap-1.5 rounded-bl-lg px-4 py-3 text-left body-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
 							>
 								<div className="relative">
-									<Icon name="settings" height={14} width={14} />
+									<Icon name="settings" height={16} width={16} />
 									{hasCustomInstructions ? (
-										<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-accent-blue-deep" />
+										<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-brand" />
 									) : null}
 								</div>
 								<span>Settings</span>
@@ -661,19 +663,15 @@ export function AgenticSidebar({
 						<Tooltip
 							content="Get the mobile app · iOS & Android"
 							render={<BasicLink href="/app" data-umami-event="mobile-app-chat-sidebar-click" />}
-							className="flex shrink-0 items-center justify-center px-4 text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+							className="flex shrink-0 items-center justify-center rounded-br-lg px-4 text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
 						>
-							<Icon name="download" height={14} width={14} />
+							<Icon name="download" height={16} width={16} />
 							<span className="sr-only">Get the mobile app</span>
 						</Tooltip>
 					</footer>
 				)}
 
-				{isTopupModalOpen ? (
-					<Suspense fallback={<></>}>
-						<TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
-					</Suspense>
-				) : null}
+				{isTopupModalOpen ? <TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} /> : null}
 			</aside>
 		</SessionListFocusContext.Provider>
 	)

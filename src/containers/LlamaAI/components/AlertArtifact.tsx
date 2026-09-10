@@ -42,24 +42,31 @@ import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLin
 import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import type { AlertIntent } from '~/containers/LlamaAI/types'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
+import { Skeleton } from '~/ui/Skeleton'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 export function AlertArtifactLoading() {
 	return (
-		<div className="my-2 flex flex-col gap-3 rounded-xl border border-ai-line-subtle bg-ai-surface-card p-3.5">
+		<div
+			role="status"
+			aria-label="Loading alert"
+			className="my-2 flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3"
+		>
 			<div className="flex items-center gap-3">
-				<div className="size-10 shrink-0 animate-pulse rounded-xl bg-ai-skeleton" />
+				<Skeleton className="size-10 shrink-0 rounded-lg" />
 				<div className="flex min-w-0 flex-1 flex-col gap-1.5">
-					<div className="h-4 w-28 animate-pulse rounded-sm bg-ai-skeleton" />
-					<div className="h-3 w-44 animate-pulse rounded-sm bg-ai-skeleton" />
+					<Skeleton className="h-4 w-28" />
+					<Skeleton className="h-3 w-44" />
 				</div>
 			</div>
-			<div className="h-10 w-full animate-pulse rounded-md bg-ai-skeleton" />
+			<Skeleton className="h-8 w-full rounded-lg" />
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="h-10 w-20 animate-pulse rounded-md bg-ai-skeleton" />
-				<div className="h-10 w-16 animate-pulse rounded-md bg-ai-skeleton" />
-				<div className="ml-auto h-10 w-28 animate-pulse rounded-md bg-ai-skeleton" />
+				<Skeleton className="h-8 w-20 rounded-lg" />
+				<Skeleton className="h-8 w-16 rounded-lg" />
+				<Skeleton className="ml-auto h-8 w-28 rounded-lg" />
 			</div>
 		</div>
 	)
@@ -245,13 +252,13 @@ export function AlertArtifact({
 
 	if (!isAuthenticated) {
 		return (
-			<div className="my-2 flex items-center gap-3 rounded-xl border border-ai-line-subtle bg-ai-surface-card p-3.5">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
-					<Icon name="calendar-plus" className="size-[18px] text-ai-warning-bright" />
+			<div className="my-2 flex items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
+				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+					<Icon name="calendar-plus" className="size-4" />
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-					<h3 className="m-0 text-sm font-medium text-(--text1)">Sign in to save alerts</h3>
-					<p className="m-0 text-xs text-(--text3)">Scheduled alerts require authentication.</p>
+					<h3 className="m-0 label-md text-primary">Sign in to save alerts</h3>
+					<p className="m-0 body-sm text-secondary">Scheduled alerts require authentication.</p>
 				</div>
 			</div>
 		)
@@ -268,39 +275,23 @@ export function AlertArtifact({
 
 	return (
 		<div
-			className={`my-2 flex flex-col gap-3 rounded-xl border p-3.5 ${
-				isSaved
-					? 'border-ai-line-subtle bg-ai-surface-card'
-					: 'animate-[alertPulse_2s_ease-in-out_infinite] border-ai-warning-bright/40 bg-ai-surface-card'
+			className={`my-2 flex flex-col gap-3 rounded-lg border bg-surface p-3 ${
+				isSaved ? 'border-subtle' : 'border-warning/50 ring-2 ring-warning/15'
 			}`}
-			style={
-				!isSaved
-					? ({
-							'--tw-shadow': '0 0 0 0 rgba(245, 158, 11, 0)',
-							animation: 'alertPulse 2s ease-in-out infinite'
-						} as React.CSSProperties)
-					: undefined
-			}
 		>
-			<style>{`
-				@keyframes alertPulse {
-					0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.15); }
-					50% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1); }
-				}
-			`}</style>
 			<div className="flex items-center gap-3">
-				<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
-					<Icon name="calendar-plus" className="size-[18px] text-ai-warning-bright" />
+				<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+					<Icon name="calendar-plus" className="size-4" />
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-					<h3 className="m-0 truncate text-sm font-semibold tracking-tight text-(--text1)">
+					<h3 className="m-0 truncate label-md text-primary">
 						{isSaved
 							? title.trim() || (isPriceAlert ? 'Price alert' : 'Schedule alert')
 							: isPriceAlert
 								? 'Price alert'
 								: 'Schedule alert'}
 					</h3>
-					<p className="m-0 truncate text-xs text-(--text3)">
+					<p className="m-0 truncate body-sm text-secondary">
 						{getArtifactSubtitle(deliveryChannel, slackChannelName)}
 					</p>
 				</div>
@@ -308,7 +299,7 @@ export function AlertArtifact({
 
 			{isSaved ? (
 				<>
-					<p className="m-0 flex items-center gap-1.5 text-xs text-ai-success">
+					<p className="m-0 flex items-center gap-1.5 text-xs text-success">
 						<Icon name="check" className="size-3.5 shrink-0" />
 						{isPriceAlert
 							? 'Watching continuously — fires within seconds of crossing'
@@ -317,42 +308,43 @@ export function AlertArtifact({
 								: 'Alert saved'}
 					</p>
 
-					<div className="flex flex-col gap-1.5 rounded-lg bg-ai-hover-faint px-3 py-2.5">
-						<p className="m-0 flex items-center gap-2 text-xs text-ai-tertiary">
-							<Icon name={isPriceAlert ? 'trending-up' : 'calendar'} className="size-3.5 shrink-0 text-ai-muted" />
+					<div className="flex flex-col gap-1.5 rounded-lg bg-surface-elevated-1 px-3 py-2.5">
+						<p className="m-0 flex items-center gap-2 text-xs text-tertiary">
+							<Icon name={isPriceAlert ? 'trending-up' : 'calendar'} className="size-3.5 shrink-0 text-tertiary" />
 							<span className="truncate font-mono">
 								{isPriceAlert && editedTrigger
 									? formatPriceAlertSummary(editedTrigger, true, undefined, 0)
 									: scheduleSummary}
 							</span>
 						</p>
-						<p className="m-0 flex items-center gap-2 text-xs text-ai-tertiary">
-							<Icon name="mail" className="size-3.5 shrink-0 text-ai-muted" />
+						<p className="m-0 flex items-center gap-2 text-xs text-tertiary">
+							<Icon name="mail" className="size-3.5 shrink-0 text-tertiary" />
 							<span className="truncate">{destinationLabel}</span>
 						</p>
 					</div>
 
 					{testMutation.isIdle && !testSent ? (
-						<button
+						<Button
 							type="button"
+							size="md"
 							onClick={handleTest}
 							disabled={alertDetailQuery.isLoading}
-							className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-ai-line-medium px-4 py-2 text-sm font-medium text-(--text1) transition-colors hover:bg-ai-hover disabled:opacity-50"
+							className="w-full"
 						>
-							<Icon name="mail" className="size-4" />
-							<span>Send test alert</span>
-						</button>
+							<Icon name="mail" className="size-3.5" />
+							Send test alert
+						</Button>
 					) : null}
 
 					{testSent === 'already' && !testMutation.isPending ? (
-						<p className="flex items-center justify-center gap-1.5 text-xs text-(--text3)">
+						<p className="flex items-center justify-center gap-1.5 body-sm text-secondary">
 							<Icon name="check" className="size-3.5" />
 							Test already sent for this alert
 						</p>
 					) : null}
 
 					{testSent === 'sent' && !testMutation.isPending ? (
-						<p className="flex items-center justify-center gap-1.5 text-xs text-ai-success">
+						<p className="flex items-center justify-center gap-1.5 text-xs text-success">
 							<Icon name="check" className="size-3.5" />
 							{deliveryChannel === 'slack'
 								? slackChannelName
@@ -365,33 +357,30 @@ export function AlertArtifact({
 					) : null}
 
 					{testMutation.isPending ? (
-						<p className="flex items-center justify-center gap-1.5 text-xs text-(--text3)">
-							<span className="inline-block size-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
-							Sending test alert...
+						<p role="status" className="flex items-center justify-center gap-1.5 text-xs text-tertiary">
+							<LoadingSpinner size={12} />
+							Sending test alert…
 						</p>
 					) : null}
 
 					{testMutation.isError && !hasRetriedTest ? (
 						<div className="flex flex-col items-center gap-1.5">
-							<p className="text-xs text-error">{testMutation.error.message}</p>
-							<button type="button" onClick={handleTest} className="text-xs font-medium text-link hover:underline">
+							<p className="body-sm text-error">{testMutation.error.message}</p>
+							<Button type="button" size="sm" onClick={handleTest}>
 								Retry
-							</button>
+							</Button>
 						</div>
 					) : null}
 
 					{testMutation.isError && hasRetriedTest ? (
-						<p className="text-center text-xs text-error">{testMutation.error.message}</p>
+						<p className="text-center body-sm text-error">{testMutation.error.message}</p>
 					) : null}
 
 					{openAlertsModal ? (
-						<button
-							type="button"
-							onClick={handleManageAlerts}
-							className="self-start text-xs text-ai-tertiary transition-colors hover:text-link"
-						>
-							Manage alerts →
-						</button>
+						<Button type="button" size="sm" variant="ghost" onClick={handleManageAlerts} className="self-start">
+							Manage alerts
+							<Icon name="arrow-right" className="size-3.5" />
+						</Button>
 					) : null}
 				</>
 			) : (
@@ -406,14 +395,14 @@ export function AlertArtifact({
 					{prompt ? (
 						<div className="flex flex-col gap-1">
 							<span className={alertFieldLabelClass}>What it will tell you</span>
-							<p className={`m-0 text-sm leading-relaxed text-ai-secondary ${promptExpanded ? '' : 'line-clamp-2'}`}>
+							<p className={`m-0 text-sm leading-relaxed text-secondary ${promptExpanded ? '' : 'line-clamp-2'}`}>
 								{prompt}
 							</p>
 							{prompt.length > 140 ? (
 								<button
 									type="button"
 									onClick={() => setPromptExpanded((v) => !v)}
-									className="self-start text-xs font-medium text-link hover:underline"
+									className="self-start text-xs font-medium text-link not-disabled:not-aria-disabled:hover:underline"
 								>
 									{promptExpanded ? 'Show less' : 'Show more'}
 								</button>
@@ -433,7 +422,7 @@ export function AlertArtifact({
 								/>
 								<PriceInput value={priceValue} onValueChange={setPriceValue} />
 							</div>
-							<p className="m-0 text-xs text-ai-muted">Fires once, then pauses — re-arm it anytime from your alerts.</p>
+							<p className="m-0 text-xs text-tertiary">Fires once, then pauses — re-arm it anytime from your alerts.</p>
 						</div>
 					) : (
 						<div className="flex flex-wrap items-center gap-2">
@@ -460,7 +449,7 @@ export function AlertArtifact({
 								</select>
 							) : null}
 
-							<span className="text-xs text-ai-muted">at</span>
+							<span className="text-xs text-tertiary">at</span>
 
 							<select value={hour} onChange={(e) => setHour(Number(e.target.value))} className={alertSelectClass}>
 								{Array.from({ length: 24 }, (_, h) => (
@@ -492,7 +481,7 @@ export function AlertArtifact({
 							{isSlack ? (
 								<>
 									{slackWorkspacesQuery.isLoading ? (
-										<span className="text-xs text-(--text3)">Loading workspaces…</span>
+										<span className="body-sm text-secondary">Loading workspaces…</span>
 									) : activeWorkspaces.length > 0 ? (
 										<select
 											value={slackTeamId}
@@ -515,9 +504,9 @@ export function AlertArtifact({
 									) : null}
 									{slackTeamId ? (
 										slackChannelsQuery.isLoading ? (
-											<span className="text-xs text-(--text3)">Loading channels…</span>
+											<span className="body-sm text-secondary">Loading channels…</span>
 										) : slackChannelsQuery.isError ? (
-											<span className="text-xs text-ai-error-vivid">Failed to load channels</span>
+											<span className="body-sm text-error">Failed to load channels</span>
 										) : (
 											<select
 												value={slackChannelId}
@@ -542,50 +531,46 @@ export function AlertArtifact({
 							) : null}
 						</div>
 						{readinessBlock ? (
-							<p className="m-0 text-xs text-ai-warning">
+							<p className="m-0 text-xs text-warning">
 								{readinessBlock.label} →{' '}
-								<span className="text-ai-tertiary">
+								<span className="text-tertiary">
 									<SettingsIntegrationsLink />
 								</span>
 							</p>
 						) : null}
 					</div>
 
-					<p className="m-0 flex items-center gap-1.5 text-xs text-ai-warning">
+					<p className="m-0 flex items-center gap-1.5 text-xs text-warning">
 						<Icon name="alert-triangle" className="size-3.5 shrink-0" />
 						Action required — confirm your alert settings and save
 					</p>
 
 					{saveBlockReason && !readinessBlock ? (
-						<p className="m-0 text-center text-xs text-ai-muted">{saveBlockReason}</p>
+						<p className="m-0 text-center body-sm text-tertiary">{saveBlockReason}</p>
 					) : null}
 
-					<button
+					<Button
 						type="button"
+						size="md"
+						variant="primary"
 						onClick={handleSave}
 						disabled={!messageId || isSaving || !!saveBlockReason}
-						className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:cursor-not-allowed disabled:opacity-50"
+						className="w-full"
 					>
-						{isSaving ? (
-							<span>Saving...</span>
-						) : (
-							<>
-								<Icon name="calendar-plus" className="size-4" />
-								<span>Save Alert</span>
-							</>
-						)}
-					</button>
+						{isSaving ? <LoadingSpinner size={14} /> : <Icon name="calendar-plus" className="size-3.5" />}
+						{isSaving ? 'Saving…' : 'Save Alert'}
+					</Button>
 
 					{saveError ? (
 						isCapHit ? (
 							<div className="flex flex-col items-center gap-1.5">
-								<p className="m-0 text-xs text-ai-tertiary">{getUpsellCopy(null)}</p>
+								<p className="m-0 body-sm text-secondary">{getUpsellCopy(null)}</p>
 								<BasicLink href="/subscription" className="text-xs font-medium text-link hover:underline">
 									Upgrade to Pro
 								</BasicLink>
 							</div>
 						) : (
-							<p className="text-center text-xs text-error">{saveError.message}</p>
+							<p className="text-center body-sm text-error">{saveError.message}</p>
 						)
 					) : null}
 				</>

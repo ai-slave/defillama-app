@@ -60,20 +60,20 @@ export function PriceAlertEditor({
 				<button
 					type="button"
 					onClick={onCancel}
-					className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-hover"
+					className="rounded-lg px-3 py-1.5 text-xs text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row"
 				>
 					Cancel
 				</button>
 				<button
 					type="submit"
 					disabled={isSaving || !isValueValid || !canSave}
-					className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:opacity-50"
+					className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white not-disabled:not-aria-disabled:hover:brightness-110 disabled:opacity-50"
 				>
 					{isSaving ? <LoadingSpinner size={12} /> : <Icon name="check" className="size-3.5" />}
 					Save
 				</button>
 			</div>
-			{errorMessage ? <p className="text-center text-xs text-ai-error-vivid">{errorMessage}</p> : null}
+			{errorMessage ? <p className="text-center text-xs text-error">{errorMessage}</p> : null}
 		</form>
 	)
 }

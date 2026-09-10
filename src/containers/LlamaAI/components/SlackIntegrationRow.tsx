@@ -2,6 +2,9 @@ import * as Ariakit from '@ariakit/react'
 import { useState, type ReactNode } from 'react'
 import type { SlackLink } from '~/containers/LlamaAI/api/slack'
 import { useSlackIntegrationLink } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
+import { Button } from '~/ui/Button'
+import { DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { InlineStatus } from '~/ui/Status'
 
 type Props = {
 	title: string
@@ -9,18 +12,14 @@ type Props = {
 	glyph?: ReactNode
 }
 
+// Slack's own button colour is a third-party brand mark; it takes Button md geometry and the shared
+// disabled idiom so it lines up with every other control in the row.
+const SLACK_BUTTON =
+	'inline-flex min-h-8 shrink-0 items-center justify-center gap-1 rounded-lg bg-ai-slack px-3 py-1.5 label-sm whitespace-nowrap text-on-brand not-disabled:not-aria-disabled:hover:bg-ai-slack-deep disabled:cursor-not-allowed disabled:opacity-60'
+
 function ConnectButton({ onClick, disabled, label }: { onClick: () => void; disabled?: boolean; label: string }) {
 	return (
-		<button
-			type="button"
-			onClick={() => {
-				if (!disabled) onClick()
-			}}
-			disabled={disabled}
-			className={`inline-flex shrink-0 items-center gap-2 rounded-lg bg-ai-slack px-3 py-1.5 text-xs font-medium whitespace-nowrap text-ai-white hover:bg-ai-slack-deep ${
-				disabled ? 'opacity-50' : ''
-			}`}
-		>
+		<button type="button" onClick={onClick} disabled={disabled} className={SLACK_BUTTON}>
 			<SlackLogo />
 			{label}
 		</button>
@@ -63,14 +62,14 @@ function WorkspaceRow({
 }) {
 	const needsReconnect = !workspace.revoked && workspace.needs_reconnect === true
 	return (
-		<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-ai-line-subtle bg-ai-hover-faint p-3">
+		<div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-subtle bg-surface p-3">
 			<div className="min-w-0 flex-1">
-				<p className="m-0 text-[13px] font-medium text-ai-primary">{workspace.team_name}</p>
-				<p className="m-0 mt-0.5 text-xs text-ai-tertiary">
+				<p className="m-0 label-md text-primary">{workspace.team_name}</p>
+				<p className="m-0 mt-0.5 body-sm text-secondary">
 					{workspace.revoked ? (
-						<span className="text-ai-warning">Disconnected by Slack. Reconnect to resume alerts.</span>
+						<span className="text-warning">Disconnected by Slack. Reconnect to resume alerts.</span>
 					) : needsReconnect ? (
-						<span className="text-ai-warning">Reconnect to enable LlamaAI chat in this workspace.</span>
+						<span className="text-warning">Reconnect to enable LlamaAI chat in this workspace.</span>
 					) : workspace.default_channel_name ? (
 						<>Default channel: #{workspace.default_channel_name}</>
 					) : (
@@ -78,27 +77,18 @@ function WorkspaceRow({
 					)}
 				</p>
 				{workspace.last_error && !workspace.revoked && (
-					<p className="m-0 mt-0.5 text-xs text-ai-warning">{workspace.last_error}</p>
+					<p className="m-0 mt-0.5 body-sm text-warning">{workspace.last_error}</p>
 				)}
 			</div>
 			<div className="flex shrink-0 gap-2">
 				{workspace.revoked || needsReconnect ? (
-					<button
-						type="button"
-						onClick={onReconnect}
-						className="rounded-lg bg-ai-slack px-3 py-1.5 text-xs font-medium whitespace-nowrap text-ai-white hover:bg-ai-slack-deep"
-					>
+					<button type="button" onClick={onReconnect} className={SLACK_BUTTON}>
 						Reconnect
 					</button>
 				) : (
-					<button
-						type="button"
-						onClick={onDisconnect}
-						disabled={isDisconnecting}
-						className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-hover disabled:opacity-50"
-					>
+					<Button type="button" size="md" onClick={onDisconnect} disabled={isDisconnecting}>
 						{isDisconnecting ? 'Disconnecting…' : 'Disconnect'}
-					</button>
+					</Button>
 				)}
 			</div>
 		</div>
@@ -116,13 +106,13 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 	}
 
 	return (
-		<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
+		<div className="rounded-lg border border-subtle bg-surface-elevated-1 p-4">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 items-center gap-3">
 					{glyph}
 					<div className="min-w-0">
-						<p className="m-0 label-md text-ai-primary">{title}</p>
-						<p className="m-0 mt-0.5 text-xs text-ai-tertiary">{description}</p>
+						<p className="m-0 label-md text-primary">{title}</p>
+						<p className="m-0 mt-0.5 body-sm text-secondary">{description}</p>
 					</div>
 				</div>
 				{(link.state.status === 'idle' || link.state.status === 'starting' || link.state.status === 'loading') && (
@@ -141,28 +131,18 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 			</div>
 
 			{link.state.status === 'pending' && (
-				<div className="mt-3 rounded-lg bg-ai-hover p-3 text-xs text-ai-tertiary">
+				<div className="mt-3 rounded-lg bg-surface-elevated-2 p-3 body-sm text-secondary">
 					<div>
 						Waiting for confirmation in Slack. Once you finish in Slack, come back to this page to see your workspace
 						here.
 					</div>
 					<div className="mt-3 flex flex-wrap gap-2">
-						<button
-							type="button"
-							onClick={() => link.connect()}
-							disabled={link.isStarting}
-							className="rounded-lg bg-ai-slack px-3 py-1.5 text-xs font-medium whitespace-nowrap text-ai-white hover:bg-ai-slack-deep disabled:opacity-50"
-						>
+						<button type="button" onClick={() => link.connect()} disabled={link.isStarting} className={SLACK_BUTTON}>
 							{link.isStarting ? 'Opening…' : 'Start over'}
 						</button>
-						<button
-							type="button"
-							onClick={() => link.cancelPending()}
-							disabled={link.isCancelingPending}
-							className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-hover disabled:opacity-50"
-						>
+						<Button type="button" size="md" onClick={() => link.cancelPending()} disabled={link.isCancelingPending}>
 							{link.isCancelingPending ? 'Canceling…' : 'Cancel'}
-						</button>
+						</Button>
 					</div>
 				</div>
 			)}
@@ -185,37 +165,34 @@ export function SlackIntegrationRow({ title, description, glyph }: Props) {
 			)}
 
 			{link.state.status === 'error' && (
-				<div className="mt-3 rounded-lg border border-ai-error-vivid/40 bg-ai-error-bg p-3 text-xs text-ai-error-strong">
-					{link.state.message}
+				<div className="mt-3">
+					<InlineStatus variant="error">{link.state.message}</InlineStatus>
 				</div>
 			)}
 			<Ariakit.DialogProvider open={!!disconnectTarget} setOpen={(open) => !open && setDisconnectTarget(null)}>
-				<Ariakit.Dialog
-					className="fixed top-1/2 left-1/2 z-50 w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
-					backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
-				>
-					<Ariakit.DialogHeading className="text-base font-semibold text-primary">
-						Disconnect Slack workspace?
-					</Ariakit.DialogHeading>
-					<p className="mt-1 text-sm text-ai-tertiary">
-						{disconnectTarget?.team_name ?? 'This workspace'} will stop receiving LlamaAI alerts. Existing alerts
-						targeting this workspace will be paused.
-					</p>
-					<footer className="mt-5 flex justify-end gap-2">
-						<Ariakit.DialogDismiss
-							type="button"
-							className="rounded-md px-3 py-1.5 text-xs text-ai-tertiary hover:bg-ai-surface-muted"
-						>
+				<Ariakit.Dialog portal className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}>
+					<header className="shrink-0 border-b border-subtle p-3">
+						<DialogHeading>Disconnect Slack workspace?</DialogHeading>
+					</header>
+					<div className={`${dialogScrollableBodyStyles} p-3`}>
+						<Ariakit.DialogDescription className="body-sm text-secondary">
+							{disconnectTarget?.team_name ?? 'This workspace'} will stop receiving LlamaAI alerts. Existing alerts
+							targeting this workspace will be paused.
+						</Ariakit.DialogDescription>
+					</div>
+					<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle p-3">
+						<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
 							Cancel
 						</Ariakit.DialogDismiss>
-						<button
+						<Button
 							type="button"
+							size="md"
+							variant="destructive"
 							onClick={confirmDisconnect}
 							disabled={!disconnectTarget || link.isDisconnecting}
-							className="rounded-md bg-ai-error-vivid/10 px-3 py-1.5 text-xs font-medium text-ai-error transition-colors hover:bg-ai-error-vivid/20 disabled:opacity-50"
 						>
 							Disconnect
-						</button>
+						</Button>
 					</footer>
 				</Ariakit.Dialog>
 			</Ariakit.DialogProvider>

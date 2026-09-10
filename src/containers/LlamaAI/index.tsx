@@ -688,7 +688,7 @@ export function AgenticChat({
 			promptTransitionTimerRef.current = window.setTimeout(() => {
 				setPromptTransitionMode('idle')
 				promptTransitionTimerRef.current = null
-			}, 480)
+			}, 200)
 		},
 		[clearPromptTransitionTimer]
 	)
@@ -2702,7 +2702,7 @@ export function AgenticChat({
 							) : null}
 
 							<div
-								className={`llamaai-chat-panel relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-ai-line bg-surface ${sidebarVisible && shouldAnimateSidebar ? 'lg:animate-[shrinkToRight_0.1s_ease-out]' : ''}`}
+								className={`llamaai-chat-panel relative isolate flex flex-1 flex-col overflow-hidden rounded-lg border border-subtle bg-surface ${sidebarVisible && shouldAnimateSidebar ? 'motion-safe:lg:animate-[shrinkToRight_0.1s_ease-out]' : ''}`}
 							>
 								{!readOnly && !sidebarVisible ? (
 									<ChatControls
@@ -2729,7 +2729,7 @@ export function AgenticChat({
 												data-umami-event-source="header_controls"
 											/>
 										}
-										className="absolute top-2.5 right-2.5 z-10 hidden size-6 items-center justify-center rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:flex"
+										className="absolute top-2.5 right-2.5 z-10 hidden size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:flex"
 									>
 										<Icon name="share" height={14} width={14} />
 										<span className="sr-only">{SHARE_TOOLTIP}</span>
@@ -2760,7 +2760,7 @@ export function AgenticChat({
 								)}
 							</div>
 							{!isRouteSessionPending && rightPanel ? (
-								<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-ai-line bg-surface lg:ml-2 lg:flex">
+								<aside className="hidden w-[340px] shrink-0 flex-col overflow-y-auto rounded-lg border border-subtle bg-surface lg:ml-2 lg:flex">
 									{rightPanel}
 								</aside>
 							) : null}
@@ -2912,7 +2912,7 @@ const ChatControls = memo(function ChatControls({
 							data-umami-event-source="collapsed_controls"
 						/>
 					}
-					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
+					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 				>
 					<Icon name="panel-left-open" height={16} width={16} />
 					<span className="sr-only">Open Chat History</span>
@@ -2920,7 +2920,7 @@ const ChatControls = memo(function ChatControls({
 				<Tooltip
 					content="New Chat"
 					render={<button type="button" onClick={handleNewChat} />}
-					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand text-ai-white hover:bg-brand focus-visible:bg-brand max-lg:ml-auto"
+					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand text-ai-white not-disabled:not-aria-disabled:hover:bg-brand focus-visible:bg-brand max-lg:ml-auto"
 				>
 					<Icon name="message-square-plus" height={16} width={16} />
 					<span className="sr-only">New Chat</span>
@@ -2938,7 +2938,7 @@ const ChatControls = memo(function ChatControls({
 								data-umami-event-source="header_controls"
 							/>
 						}
-						className="flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:hidden"
+						className="flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white aria-disabled:cursor-not-allowed aria-disabled:opacity-50 lg:hidden"
 					>
 						<Icon name="share" height={14} width={14} />
 						<span className="sr-only">{SHARE_TOOLTIP}</span>
@@ -2956,7 +2956,7 @@ const ChatControls = memo(function ChatControls({
 								data-umami-event-source="collapsed_controls"
 							/>
 						}
-						className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
+						className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 					>
 						<Icon name={isFullscreen ? 'shrink' : 'expand'} height={16} width={16} />
 						<span className="sr-only">{isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}</span>
@@ -2966,12 +2966,12 @@ const ChatControls = memo(function ChatControls({
 			<Tooltip
 				content="Settings"
 				render={<button type="button" onClick={onOpenSettings} />}
-				className="absolute bottom-2.5 left-2.5 z-10 flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white max-lg:hidden"
+				className="absolute bottom-2.5 left-2.5 z-10 flex size-6 items-center justify-center rounded-sm bg-brand/12 text-brand not-disabled:not-aria-disabled:hover:bg-brand not-disabled:not-aria-disabled:hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white max-lg:hidden"
 			>
 				<div className="relative">
 					<Icon name="settings" height={16} width={16} />
 					{hasCustomInstructions ? (
-						<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-ai-accent-blue-deep" />
+						<span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-brand" />
 					) : null}
 				</div>
 				<span className="sr-only">Settings</span>

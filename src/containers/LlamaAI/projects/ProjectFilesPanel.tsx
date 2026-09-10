@@ -1,8 +1,11 @@
 import * as Ariakit from '@ariakit/react'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { AddTextContentModal } from './AddTextContentModal'
 import { formatProjectBytes } from './format'
@@ -76,48 +79,56 @@ export function ProjectFilesPanel({
 	const onDropZoneDrop = (e: React.DragEvent) => {
 		e.preventDefault()
 		setIsDragging(false)
+		if (isUploading) return
 		const files = Array.from(e.dataTransfer.files)
 		void handleFiles(files)
 	}
 
 	const files = filesQuery.data?.files ?? []
 	const githubSources = sources.filter((s) => s.adapter_type === 'github')
+	const isInitialLoading = !filesQuery.error && (filesQuery.isLoading || (sourcesQuery.isLoading && files.length === 0))
+
+	const fileErrorNotice = filesQuery.error ? (
+		<div role="alert" className="flex flex-wrap items-center gap-2 body-sm text-error">
+			<p>Couldn&apos;t load files.</p>
+			<Button type="button" size="sm" disabled={filesQuery.isFetching} onClick={() => void filesQuery.refetch()}>
+				{filesQuery.isFetching ? <LoadingSpinner size={12} /> : null}
+				{filesQuery.isFetching ? 'Retrying…' : 'Retry files'}
+			</Button>
+		</div>
+	) : null
 
 	return (
 		<section className="flex flex-1 flex-col gap-3">
 			<header className="flex items-center justify-between">
-				<h3 className="text-[13px] font-semibold text-primary">Files</h3>
+				<div className="flex items-center gap-2">
+					<h3 className="label-md text-primary">Files</h3>
+					{sourcesQuery.isLoading && files.length > 0 ? (
+						<span role="status" aria-label="Loading connected sources">
+							<LoadingSpinner size={14} />
+						</span>
+					) : null}
+				</div>
 				<Ariakit.MenuProvider placement="bottom-end">
 					<Ariakit.MenuButton
 						ref={addButtonRef}
 						aria-label="Add project source"
-						className="flex items-center gap-1.5 rounded-md border border-brand bg-brand/12 px-2 py-1 text-xs font-medium text-brand hover:bg-brand hover:text-ai-white"
+						disabled={isUploading}
+						render={<Button size="sm" variant="outline" />}
 					>
-						<Icon name="plus" height={12} width={12} />
-						Add
+						<Icon name="plus" height={14} width={14} />
+						Add sources
 					</Ariakit.MenuButton>
-					<Ariakit.Menu
-						gutter={6}
-						className="z-50 min-w-[220px] rounded-md border border-ai-line bg-surface p-1 text-xs shadow-lg"
-					>
-						<Ariakit.MenuItem
-							onClick={onPick}
-							className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-ai-surface-muted"
-						>
+					<Ariakit.Menu gutter={6} className={`${menuSurfaceStyles} z-50 min-w-[220px]`}>
+						<Ariakit.MenuItem onClick={onPick} className={popoverMenuItemStyles}>
 							<Icon name="file-plus" height={14} width={14} />
 							Upload from device
 						</Ariakit.MenuItem>
-						<Ariakit.MenuItem
-							onClick={() => addTextStore.show()}
-							className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-ai-surface-muted"
-						>
+						<Ariakit.MenuItem onClick={() => addTextStore.show()} className={popoverMenuItemStyles}>
 							<Icon name="file-text" height={14} width={14} />
 							Add text content
 						</Ariakit.MenuItem>
-						<Ariakit.MenuItem
-							onClick={() => githubStore.show()}
-							className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-left hover:bg-ai-surface-muted"
-						>
+						<Ariakit.MenuItem onClick={() => githubStore.show()} className={popoverMenuItemStyles}>
 							<Icon name="github" height={14} width={14} />
 							Connect GitHub repo
 						</Ariakit.MenuItem>
@@ -137,26 +148,20 @@ export function ProjectFilesPanel({
 				/>
 			</header>
 
-			<div className="flex flex-col gap-1">
-				<div className="flex items-baseline justify-between gap-2 text-[11px] text-ai-tertiary">
-					<span>
-						{projectBytesLimit
-							? `${formatProjectBytes(projectBytesUsed)} / ${formatProjectBytes(projectBytesLimit)} used`
-							: `${formatProjectBytes(projectBytesUsed)} used`}
-						{projectFileLimit ? ` · ${projectFileCount} / ${projectFileLimit} files` : ` · ${projectFileCount} files`}
-					</span>
-					{tier === 'free' ? <span className="text-ai-warning">Free tier</span> : null}
+			{sourcesQuery.error ? (
+				<div role="alert" className="flex flex-wrap items-center gap-2 body-sm text-error">
+					<p>Couldn&apos;t load connected sources.</p>
+					<Button
+						type="button"
+						size="sm"
+						disabled={sourcesQuery.isFetching}
+						onClick={() => void sourcesQuery.refetch()}
+					>
+						{sourcesQuery.isFetching ? <LoadingSpinner size={12} /> : null}
+						{sourcesQuery.isFetching ? 'Retrying…' : 'Retry sources'}
+					</Button>
 				</div>
-				{projectBytesLimit ? (
-					<div className="h-1 w-full overflow-hidden rounded-full bg-ai-surface-muted">
-						<div
-							className={`h-full transition-all ${projectPercent > 90 ? 'bg-ai-error-vivid' : 'bg-brand'}`}
-							style={{ width: `${projectPercent}%` }}
-						/>
-					</div>
-				) : null}
-			</div>
-
+			) : null}
 			{githubSources.length > 0 ? (
 				<ul className="flex flex-col gap-1">
 					{githubSources.map((source) => {
@@ -166,20 +171,23 @@ export function ProjectFilesPanel({
 						return (
 							<li
 								key={source.id}
-								className="group flex items-center gap-2 rounded-md border border-ai-line bg-surface px-2.5 py-1.5 text-xs"
+								className="group flex items-center gap-2 rounded-md border border-subtle bg-surface px-2.5 py-1.5 body-sm text-primary"
 							>
-								<Icon name="github" height={12} width={12} className="shrink-0 text-ai-tertiary" />
+								<Icon name="github" height={14} width={14} className="shrink-0 text-secondary" />
 								<span className="min-w-0 flex-1 truncate font-mono">
 									{owner}/{repo}
 								</span>
-								<span className="shrink-0 rounded-sm bg-ai-surface-muted px-1.5 py-0.5 text-[10px] text-ai-tertiary">
+								<span className="shrink-0 rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 label-xs text-secondary">
 									{branch}
 								</span>
 								<Tooltip
 									content="Disconnect"
 									render={
-										<button
+										<Button
 											type="button"
+											size="sm"
+											variant="ghost"
+											square
 											aria-label={`Disconnect ${source.mount_path}`}
 											onClick={(event) => {
 												disconnect.reset()
@@ -190,11 +198,11 @@ export function ProjectFilesPanel({
 													trigger: event.currentTarget
 												})
 											}}
-											className="flex size-8 shrink-0 items-center justify-center rounded-sm text-ai-muted transition-opacity hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid sm:size-6 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
+											className="shrink-0 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
 										/>
 									}
 								>
-									<Icon name="trash-2" height={12} width={12} />
+									<Icon name="trash-2" height={16} width={16} className="text-error" />
 								</Tooltip>
 							</li>
 						)
@@ -202,49 +210,66 @@ export function ProjectFilesPanel({
 				</ul>
 			) : null}
 
+			{files.length > 0 ? fileErrorNotice : null}
 			<div
 				onDragOver={(e) => {
 					e.preventDefault()
-					setIsDragging(true)
+					if (!isUploading) setIsDragging(true)
 				}}
 				onDragLeave={() => setIsDragging(false)}
 				onDrop={onDropZoneDrop}
-				className={`min-h-[120px] flex-1 overflow-auto rounded-md border border-dashed transition-colors ${
-					isDragging ? 'border-brand bg-brand/5' : 'border-ai-line'
+				className={`min-h-32 flex-1 overflow-auto rounded-md border border-dashed ${
+					isDragging ? 'border-brand bg-brand-muted' : 'border-medium'
 				}`}
 			>
-				{filesQuery.isLoading ? (
-					<div className="flex h-full items-center justify-center p-4 text-xs text-ai-tertiary">
-						<LoadingSpinner size={12} />
-					</div>
-				) : files.length === 0 ? (
-					<div className="flex h-full flex-col items-center justify-center gap-1.5 p-6 text-center text-xs text-ai-tertiary">
-						<Icon name="file-plus" height={16} width={16} className="text-ai-muted" />
-						<p>Drop files here or use the Add menu.</p>
-						<p className="text-[11px]">Markdown, text, code, JSON, CSV. Up to 100 MB per file.</p>
+				{isInitialLoading || files.length === 0 ? (
+					<div className="relative">
+						{/* Keep the upload copy in layout so wrapping and zoom cannot move the storage row when feedback clears. */}
+						<button
+							type="button"
+							onClick={onPick}
+							disabled={isInitialLoading || !!filesQuery.error || isUploading}
+							aria-hidden={isInitialLoading || !!filesQuery.error || undefined}
+							className={`flex min-h-32 w-full cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md p-4 text-center body-sm text-secondary focus-visible:focus-ring enabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60 ${isInitialLoading || filesQuery.error ? 'invisible' : ''}`}
+						>
+							<Icon name="file-plus" height={16} width={16} className="text-tertiary" />
+							<span>Drop files here or choose files</span>
+							<span>Markdown, text, code, JSON, CSV. Up to 100 MB per file.</span>
+						</button>
+						{fileErrorNotice ? (
+							<div className="absolute inset-0 flex items-center justify-center p-4">{fileErrorNotice}</div>
+						) : isInitialLoading ? (
+							<div role="status" aria-live="polite" className="absolute inset-0 flex items-center justify-center p-4">
+								<LoadingIndicator label={filesQuery.isLoading ? 'Loading files' : 'Loading connected sources'} />
+							</div>
+						) : null}
 					</div>
 				) : (
 					<ul className="flex flex-col">
 						{files.map((file) => {
 							const source = sourceById.get(file.source_id)
-							const sourceBadge = source?.adapter_type === 'github' ? 'gh' : 'blob'
 							return (
 								<li
 									key={file.id}
-									className="group flex items-center gap-2 border-b border-ai-line px-2.5 py-1.5 text-xs last:border-b-0 hover:bg-ai-surface"
+									className="group flex items-center gap-2 border-b border-subtle px-2.5 py-1.5 body-sm text-primary last:border-b-0 not-disabled:not-aria-disabled:hover:bg-hover-row"
 								>
-									<Icon name="file-text" height={12} width={12} className="shrink-0 text-ai-tertiary" />
+									<Icon name="file-text" height={14} width={14} className="shrink-0 text-secondary" />
 									<span className="min-w-0 flex-1 truncate font-mono">{file.path}</span>
-									<span className="shrink-0 rounded-sm bg-ai-surface-muted px-1.5 py-0.5 text-[10px] tracking-wide text-ai-tertiary uppercase">
-										{sourceBadge}
-									</span>
-									<span className="shrink-0 text-ai-muted tabular-nums">{formatProjectBytes(file.size)}</span>
-									{sourceBadge === 'blob' ? (
+									{source ? (
+										<span className="shrink-0 rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 body-sm text-secondary">
+											{source.adapter_type === 'github' ? 'GitHub' : 'Uploaded'}
+										</span>
+									) : null}
+									<span className="shrink-0 text-tertiary tabular-nums">{formatProjectBytes(file.size)}</span>
+									{source?.adapter_type === 'blob' ? (
 										<Tooltip
 											content="Delete file"
 											render={
-												<button
+												<Button
 													type="button"
+													size="sm"
+													variant="ghost"
+													square
 													aria-label={`Delete ${file.path}`}
 													onClick={(event) => {
 														deleteFile.reset()
@@ -255,11 +280,11 @@ export function ProjectFilesPanel({
 															trigger: event.currentTarget
 														})
 													}}
-													className="flex size-8 shrink-0 items-center justify-center rounded-sm text-ai-muted transition-opacity hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid sm:size-6 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
+													className="shrink-0 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
 												/>
 											}
 										>
-											<Icon name="trash-2" height={12} width={12} />
+											<Icon name="trash-2" height={16} width={16} className="text-error" />
 										</Tooltip>
 									) : null}
 								</li>
@@ -270,10 +295,37 @@ export function ProjectFilesPanel({
 			</div>
 
 			{isUploading ? (
-				<p className="flex items-center gap-1.5 text-xs text-ai-tertiary">
-					<LoadingSpinner size={10} /> Uploading…
+				<p role="status" className="flex items-center gap-1.5 body-sm text-secondary">
+					<LoadingSpinner size={12} /> Uploading…
 				</p>
 			) : null}
+
+			<div className="flex flex-col gap-1">
+				<div className="flex items-baseline justify-between gap-2 body-sm text-secondary">
+					<span>
+						{projectBytesLimit
+							? `${formatProjectBytes(projectBytesUsed)} / ${formatProjectBytes(projectBytesLimit)} used`
+							: `${formatProjectBytes(projectBytesUsed)} used`}
+						{projectFileLimit ? ` · ${projectFileCount} / ${projectFileLimit} files` : ` · ${projectFileCount} files`}
+					</span>
+					{tier === 'free' ? <span className="shrink-0 text-warning">Free tier</span> : null}
+				</div>
+				{projectBytesLimit ? (
+					<div
+						role="progressbar"
+						aria-label="Project storage usage"
+						aria-valuemin={0}
+						aria-valuemax={projectBytesLimit}
+						aria-valuenow={projectBytesUsed}
+						className="h-1 w-full overflow-hidden rounded-full bg-surface-elevated-2"
+					>
+						<div
+							className={`h-full motion-safe:transition-[width] ${projectPercent > 90 ? 'bg-error' : 'bg-brand'}`}
+							style={{ width: `${projectPercent}%` }}
+						/>
+					</div>
+				) : null}
+			</div>
 
 			<AddTextContentModal dialogStore={addTextStore} projectId={projectId} finalFocus={addButtonRef} />
 			<GitHubConnectModal dialogStore={githubStore} projectId={projectId} finalFocus={addButtonRef} />

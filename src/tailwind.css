@@ -279,6 +279,15 @@
 			transform: translateY(100%);
 		}
 	}
+	@media (prefers-reduced-motion: reduce) {
+		&,
+		&[data-enter],
+		&[data-leave] {
+			transition: none;
+			transform: none;
+			will-change: auto;
+		}
+	}
 }
 
 @utility drawer-to-left {
@@ -309,6 +318,15 @@
 		&[data-enter] {
 			opacity: 0;
 			transform: translateX(100%);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		&,
+		&[data-enter],
+		&[data-leave] {
+			transition: none;
+			transform: none;
+			will-change: auto;
 		}
 	}
 }

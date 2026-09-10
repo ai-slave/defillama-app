@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { EndTrialModal } from '~/containers/Account/EndTrialModal'
+import { Button } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 
 interface ResearchLimitModalProps {
@@ -68,55 +70,39 @@ export function ResearchLimitModal({
 
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
-			<Ariakit.Dialog
-				className="dialog fixed inset-0 z-50 m-auto h-fit w-full max-w-md overflow-hidden rounded-2xl border border-ai-line bg-ai-surface-card p-0 shadow-xl"
-				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-sm" />}
-				portal
-				unmountOnHide
-			>
-				<button
-					type="button"
-					onClick={dialogStore.hide}
-					className="absolute top-4 right-4 z-20 rounded-full p-1.5 text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
-				>
-					<Icon name="x" className="size-5" />
-				</button>
-
-				<div className="relative z-10 px-8 py-10">
-					<div className="mb-6 flex justify-center">
-						<div className="flex size-16 items-center justify-center rounded-full bg-ai-bronze-bg">
-							<Icon name="circle-x" height={32} width={32} className="text-ai-warning-bright" />
+			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:448px]`} portal unmountOnHide>
+				<div className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+					<DialogHeading>{COPY[feature].titleLimit}</DialogHeading>
+					<DialogCloseButton className="-mr-1" />
+				</div>
+				<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
+					<div className="flex justify-center">
+						<div className="flex size-14 items-center justify-center rounded-full bg-warning/10 text-warning">
+							<Icon name="circle-x" height={28} width={28} />
 						</div>
 					</div>
-
-					<h2 className="mb-4 text-center text-xl leading-snug font-bold text-ai-primary">
-						{COPY[feature].titleLimit}
-					</h2>
-					<p className="mb-6 text-center text-base leading-6 text-ai-tertiary">
+					<Ariakit.DialogDescription className="text-center body-md text-secondary">
 						{isBlocked ? COPY[feature].bodyBlocked : limitBody}
-					</p>
-
+					</Ariakit.DialogDescription>
+					{isBlocked ? <p className="text-center body-sm text-tertiary">{COPY[feature].proPitch}</p> : null}
+				</div>
+				<div className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
 					{isBlocked ? (
-						<>
-							<BasicLink
-								href="/subscription"
-								data-umami-event={COPY[feature].umamiUpgrade}
-								className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-ai-research px-6 py-3.5 text-center text-base font-semibold text-ai-white transition-colors hover:bg-ai-research-hover"
-								onClick={dialogStore.hide}
-							>
-								Upgrade to Pro
-							</BasicLink>
-							<p className="mt-4 text-center text-sm text-ai-muted">{COPY[feature].proPitch}</p>
-						</>
+						<Button
+							as={BasicLink}
+							href="/subscription"
+							data-umami-event={COPY[feature].umamiUpgrade}
+							size="md"
+							variant="primary"
+							onClick={dialogStore.hide}
+						>
+							Upgrade to Pro
+						</Button>
 					) : (
 						// Already on a paid plan, just hit the daily cap — informational only, no upsell.
-						<button
-							type="button"
-							onClick={dialogStore.hide}
-							className="mx-auto flex w-full items-center justify-center gap-2 rounded-lg bg-ai-research px-6 py-3.5 text-center text-base font-semibold text-ai-white transition-colors hover:bg-ai-research-hover"
-						>
+						<Button type="button" size="md" variant="primary" onClick={dialogStore.hide}>
 							Got it
-						</button>
+						</Button>
 					)}
 				</div>
 			</Ariakit.Dialog>

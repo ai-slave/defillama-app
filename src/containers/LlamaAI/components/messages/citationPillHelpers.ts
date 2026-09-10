@@ -29,17 +29,50 @@ export function iconFor(sourceType?: string): 'layers' | 'earth' | 'sparkles' | 
 	return 'sparkles'
 }
 
+/** Source-type hue as classes: marker pill, icon chip, and the panel's accent bar. */
 const ACCENT = {
-	data: '#1f67d2',
-	computed: '#7c5cff',
-	web: '#0ea5a4',
-	x: '#1d9bf0',
-	tool: '#d97706',
-	file: '#16a34a'
-} satisfies Record<string, string>
+	data: {
+		text: 'text-link',
+		marker: 'border-brand/35 bg-brand/10 text-link',
+		chip: 'bg-brand/10 text-link',
+		bar: 'bg-brand'
+	},
+	computed: {
+		text: 'text-ai-mention',
+		marker: 'border-ai-mention/35 bg-ai-mention/10 text-ai-mention',
+		chip: 'bg-ai-mention/10 text-ai-mention',
+		bar: 'bg-ai-mention'
+	},
+	web: {
+		text: 'text-secondary',
+		marker: 'border-medium bg-surface-elevated-1 text-secondary',
+		chip: 'bg-surface-elevated-1 text-secondary',
+		bar: 'bg-border-strong'
+	},
+	x: {
+		text: 'text-secondary',
+		marker: 'border-medium bg-surface-elevated-1 text-secondary',
+		chip: 'bg-surface-elevated-1 text-secondary',
+		bar: 'bg-border-strong'
+	},
+	tool: {
+		text: 'text-secondary',
+		marker: 'border-medium bg-surface-elevated-1 text-secondary',
+		chip: 'bg-surface-elevated-1 text-secondary',
+		bar: 'bg-border-strong'
+	},
+	file: {
+		text: 'text-secondary',
+		marker: 'border-medium bg-surface-elevated-1 text-secondary',
+		chip: 'bg-surface-elevated-1 text-secondary',
+		bar: 'bg-border-strong'
+	}
+} satisfies Record<string, { text: string; marker: string; chip: string; bar: string }>
 
-export function accentFor(sourceType?: string): string {
-	return (sourceType && getOwnRegistryValue(ACCENT, sourceType)) || '#1f67d2'
+export type CitationAccent = (typeof ACCENT)[keyof typeof ACCENT]
+
+export function accentFor(sourceType?: string): CitationAccent {
+	return (sourceType && getOwnRegistryValue(ACCENT, sourceType)) || ACCENT.data
 }
 
 export function shouldFlagMismatch(v: UnifiedCitationReference['verification']): boolean {

@@ -3,7 +3,15 @@ import { matchSorter } from 'match-sorter'
 import Router from 'next/router'
 import { type KeyboardEvent, startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import {
+	Input,
+	inputStyles,
+	searchFieldFlexibleWrapperStyles,
+	searchFieldIconStyles,
+	searchFieldInputPlacementStyles
+} from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
@@ -75,18 +83,14 @@ export function ProjectsGrid() {
 					<Icon name="folder-plus" height={28} width={28} className="text-brand" />
 				</div>
 				<div className="flex flex-col gap-2">
-					<h1 className="text-2xl font-semibold">Projects are a paid feature</h1>
-					<p className="max-w-md text-sm text-ai-tertiary">
+					<h1 className="heading-lg text-primary">Projects are a paid feature</h1>
+					<p className="max-w-md body-md text-secondary">
 						Upload files or connect a GitHub repo, then chat with LlamaAI using that knowledge.
 					</p>
 				</div>
-				<button
-					type="button"
-					onClick={() => void Router.push('/subscription')}
-					className="rounded-md border border-brand bg-brand px-4 py-2 text-sm font-medium text-ai-white transition-colors hover:bg-brand/90"
-				>
+				<Button type="button" size="md" variant="primary" onClick={() => void Router.push('/subscription')}>
 					Upgrade to enable Projects
-				</button>
+				</Button>
 			</div>
 		)
 	}
@@ -97,81 +101,83 @@ export function ProjectsGrid() {
 	const hasProjects = allProjects.length > 0
 	const hasSearchQuery = deferredQuery.trim().length > 0
 	const createProjectButton = (
-		<Ariakit.DialogDisclosure
-			store={createStore}
-			ref={createRef}
-			type="button"
-			disabled={reachedProjectCap}
-			className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
+		<Tooltip
+			content={
+				reachedProjectCap ? `Project limit reached (${allProjects.length} / ${projectLimit}).` : 'Create a project'
+			}
+			render={
+				<Ariakit.DialogDisclosure
+					store={createStore}
+					ref={createRef}
+					type="button"
+					disabled={reachedProjectCap}
+					accessibleWhenDisabled
+					render={<Button size="md" variant="primary" />}
+				/>
+			}
 		>
 			<Icon name="plus" height={14} width={14} />
 			New project
-		</Ariakit.DialogDisclosure>
+		</Tooltip>
 	)
 
 	return (
-		<div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6">
+		<div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 p-4">
 			<header className="flex flex-wrap items-center justify-between gap-3">
 				<div>
-					<h1 className="text-xl font-semibold">Projects</h1>
+					<h1 className="heading-sm text-primary">Projects</h1>
 					{hasProjects ? (
-						<p className="text-xs text-ai-tertiary">
+						<p className="body-sm text-secondary">
 							{allProjects.length} project{allProjects.length === 1 ? '' : 's'}
 						</p>
 					) : null}
 				</div>
 				{hasProjects ? (
-					<div className="flex items-center gap-2">
+					<div className="flex flex-wrap items-center gap-2">
 						{hasProjectLimit ? (
-							<span className="text-xs text-ai-tertiary tabular-nums">
+							<span className="body-sm text-secondary tabular-nums">
 								{allProjects.length} / {projectLimit} projects
 							</span>
 						) : null}
-						<label className="flex items-center gap-1.5 text-xs text-ai-tertiary">
+						<label className="flex items-center gap-1.5 label-sm text-secondary">
 							Sort
 							<select
 								value={sortBy}
 								onChange={(e) => startTransition(() => setSortBy(e.target.value as SortBy))}
-								className="rounded-md border border-ai-line bg-surface px-2 py-1 text-xs text-inherit focus:border-brand focus:outline-hidden"
+								className={inputStyles}
 							>
 								<option value="updated">Recently updated</option>
 								<option value="created">Recently created</option>
 								<option value="name">Name</option>
 							</select>
 						</label>
-						<Tooltip
-							content={reachedProjectCap ? `Project limit reached (${allProjects.length} / ${projectLimit}).` : null}
-						>
-							{createProjectButton}
-						</Tooltip>
+						{createProjectButton}
 					</div>
 				) : null}
 			</header>
 
 			{hasProjects ? (
-				<div className="group/search relative flex items-center rounded-md bg-ai-surface-muted transition-colors focus-within:bg-ai-surface-muted">
-					<Icon
-						name="search"
-						height={14}
-						width={14}
-						className="pointer-events-none ml-3 shrink-0 text-ai-muted group-focus-within/search:text-brand"
-					/>
-					<input
+				<div className={searchFieldFlexibleWrapperStyles}>
+					<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+					<Input
 						value={query}
 						onChange={(e) => setQuery(e.target.value)}
 						aria-label="Search projects"
 						placeholder="Search projects"
-						className="min-w-0 flex-1 bg-transparent p-2 text-xs text-inherit placeholder:text-ai-muted focus:outline-hidden"
+						className={`${searchFieldInputPlacementStyles} ${query ? 'pr-9' : ''}`}
 					/>
 					{query ? (
-						<button
+						<Button
 							type="button"
+							variant="ghost"
+							size="sm"
+							square
 							aria-label="Clear project search"
 							onClick={() => setQuery('')}
-							className="mr-2 flex size-4 items-center justify-center rounded-full bg-ai-handle text-ai-white hover:bg-ai-handle-hover"
+							className="absolute top-0 right-1 bottom-0 my-auto"
 						>
-							<Icon name="x" height={8} width={8} />
-						</button>
+							<Icon name="x" height={14} width={14} />
+						</Button>
 					) : null}
 				</div>
 			) : null}
@@ -181,40 +187,30 @@ export function ProjectsGrid() {
 					<LoadingSpinner size={16} />
 				</div>
 			) : error ? (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-ai-error-border bg-ai-error-bg py-12 text-center text-sm text-ai-error-strong">
-					<Icon name="alert-triangle" height={24} width={24} />
-					<p>Couldn't load projects.</p>
-					<button
-						type="button"
-						onClick={() => void refetch()}
-						className="rounded-md border border-ai-error-border px-3 py-1.5 text-xs font-medium hover:bg-ai-error-bg"
-					>
+				<div
+					role="alert"
+					className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-medium py-12 text-center body-md text-secondary"
+				>
+					<Icon name="alert-triangle" height={24} width={24} className="text-error" />
+					<p>Couldn&apos;t load projects.</p>
+					<Button type="button" size="md" onClick={() => void refetch()}>
 						Retry
-					</button>
+					</Button>
 				</div>
 			) : !hasProjects ? (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-ai-line py-12 text-center text-sm text-ai-tertiary">
-					<Icon name="folder-plus" height={28} width={28} className="text-ai-muted" />
+				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-medium py-12 text-center body-md text-secondary">
+					<Icon name="folder-plus" height={28} width={28} className="text-tertiary" />
 					<p>Create your first project to upload files or connect a GitHub repo.</p>
-					<Tooltip
-						content={reachedProjectCap ? `Project limit reached (${allProjects.length} / ${projectLimit}).` : null}
-					>
-						{createProjectButton}
-					</Tooltip>
+					{createProjectButton}
 				</div>
 			) : visibleProjects.length === 0 ? (
-				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-ai-line py-12 text-center text-sm text-ai-tertiary">
-					<Icon name="search" height={24} width={24} className="text-ai-muted" />
-					<p>No projects match "{deferredQuery.trim()}".</p>
+				<div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-medium py-12 text-center body-md text-secondary">
+					<Icon name="search" height={24} width={24} className="text-tertiary" />
+					<p>No projects match &ldquo;{deferredQuery.trim()}&rdquo;.</p>
 					{hasSearchQuery ? (
-						<button
-							type="button"
-							aria-label="Clear project search"
-							onClick={() => setQuery('')}
-							className="rounded-md border border-ai-line px-3 py-1.5 text-xs font-medium text-primary hover:border-brand"
-						>
+						<Button type="button" size="md" aria-label="Clear project search" onClick={() => setQuery('')}>
 							Clear search
-						</button>
+						</Button>
 					) : null}
 				</div>
 			) : (
@@ -226,24 +222,27 @@ export function ProjectsGrid() {
 								tabIndex={0}
 								onClick={() => goToProject(p.id)}
 								onKeyDown={(event) => onProjectCardKeyDown(event, p.id)}
-								className="group flex size-full cursor-pointer flex-col gap-2 rounded-lg border border-ai-line bg-surface p-3 text-left transition-colors hover:border-brand focus-visible:border-brand focus-visible:outline-hidden"
+								className="group hover-wash-card flex size-full cursor-pointer flex-col gap-2 rounded-lg border border-subtle bg-surface p-3 text-left"
 							>
 								<header className="flex items-center gap-2">
-									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand/12 text-brand transition-colors group-hover:bg-brand group-hover:text-ai-white">
-										<Icon name="folder-plus" height={13} width={13} />
+									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
+										<Icon name="folder" height={14} width={14} />
 									</div>
 									<div className="min-w-0 flex-1">
-										<h3 className="truncate text-sm font-semibold">{p.name}</h3>
-										<p className="truncate text-xs text-ai-muted">
+										<h3 className="truncate label-md text-primary">{p.name}</h3>
+										<p className="truncate body-sm text-tertiary">
 											<RelativeTime value={p.updated_at} prefix="Updated" />
 										</p>
 									</div>
-									<div className="-mr-1 flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 max-sm:opacity-100">
+									<div className="-mr-1 flex shrink-0 items-center gap-0.5 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 max-sm:opacity-100">
 										<Tooltip
 											content="Rename project"
 											render={
-												<button
+												<Button
 													type="button"
+													size="sm"
+													variant="ghost"
+													square
 													aria-label={`Rename ${p.name}`}
 													onClick={(e) => {
 														e.preventDefault()
@@ -254,15 +253,17 @@ export function ProjectsGrid() {
 													}}
 												/>
 											}
-											className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-brand hover:text-ai-white focus-visible:bg-brand focus-visible:text-ai-white"
 										>
-											<Icon name="pencil" height={13} width={13} />
+											<Icon name="pencil" height={16} width={16} />
 										</Tooltip>
 										<Tooltip
 											content="Delete project"
 											render={
-												<button
+												<Button
 													type="button"
+													size="sm"
+													variant="ghost"
+													square
 													aria-label={`Delete ${p.name}`}
 													onClick={(e) => {
 														e.preventDefault()
@@ -273,14 +274,13 @@ export function ProjectsGrid() {
 													}}
 												/>
 											}
-											className="flex size-7 items-center justify-center rounded-md text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error focus-visible:bg-ai-error-vivid/10 focus-visible:text-ai-error"
 										>
-											<Icon name="trash-2" height={13} width={13} />
+											<Icon name="trash-2" height={16} width={16} className="text-error" />
 										</Tooltip>
 									</div>
 								</header>
-								{p.description ? <p className="line-clamp-2 text-[13px] text-ai-tertiary">{p.description}</p> : null}
-								<footer className="mt-auto flex items-center justify-between text-xs text-ai-muted tabular-nums">
+								{p.description ? <p className="line-clamp-2 body-sm text-secondary">{p.description}</p> : null}
+								<footer className="mt-auto flex items-center justify-between body-sm text-tertiary tabular-nums">
 									<span>
 										{p.file_count} file{p.file_count === 1 ? '' : 's'}
 									</span>

@@ -1,4 +1,11 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import {
+	CODE_BLOCK,
+	DATA_TABLE,
+	DATA_TABLE_CELL,
+	DATA_TABLE_HEAD,
+	DATA_TABLE_WRAPPER
+} from '~/containers/LlamaAI/components/codeBlockStyles'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { formatPercent } from '~/utils/numberFormat'
 import { formatCellValue, humanizeColumn, type CitedCell } from './citationPillHelpers'
@@ -10,21 +17,21 @@ const TOOL_DATA_RENDERERS = {
 		const results = data.results || (data.topMatch ? { _single: data } : null)
 		if (!results) return null
 		return (
-			<div className="mt-1 mb-1 flex flex-col gap-0.5 rounded-sm border border-ai-line bg-ai-surface p-1.5">
+			<div className="flex flex-col gap-0.5 rounded-lg border border-medium bg-surface-elevated-1 p-2">
 				{Object.entries(results).map(([term, value]: [string, any]) => (
-					<div key={term} className="flex items-center gap-2 text-[10px]">
-						{term !== '_single' ? <span className="font-medium text-ai-tertiary">{term}:</span> : null}
+					<div key={term} className="flex items-center gap-2 body-sm">
+						{term !== '_single' ? <span className="font-medium text-secondary">{term}:</span> : null}
 						{value.topMatch ? (
-							<span className="text-ai-secondary">
+							<span className="text-primary">
 								{value.topMatch.slug}{' '}
-								<span className="text-ai-muted">
+								<span className="text-tertiary">
 									({value.topMatch.type},{' '}
 									{formatPercent(value.topMatch.confidence, { input: 'fraction', maximumFractionDigits: 0 })})
 								</span>
-								{value.matchCount > 1 ? <span className="text-ai-muted"> +{value.matchCount - 1} more</span> : null}
+								{value.matchCount > 1 ? <span className="text-tertiary"> +{value.matchCount - 1} more</span> : null}
 							</span>
 						) : (
-							<span className="text-ai-muted">no match</span>
+							<span className="text-tertiary">no match</span>
 						)}
 					</div>
 				))}
@@ -34,11 +41,11 @@ const TOOL_DATA_RENDERERS = {
 	generate_chart: (data) => {
 		if (!data.charts) return null
 		return (
-			<div className="mt-1 mb-1 flex flex-col gap-0.5 rounded-sm border border-ai-line bg-ai-surface p-1.5">
+			<div className="flex flex-col gap-0.5 rounded-lg border border-medium bg-surface-elevated-1 p-2">
 				{data.charts.map((chart: any) => (
-					<div key={chart.id} className="text-[10px] text-ai-secondary">
+					<div key={chart.id} className="body-sm text-primary">
 						<span className="font-medium">{chart.title}</span>{' '}
-						<span className="text-ai-muted">
+						<span className="text-tertiary">
 							({chart.type}, {chart.seriesCount} series)
 						</span>
 					</div>
@@ -46,28 +53,23 @@ const TOOL_DATA_RENDERERS = {
 			</div>
 		)
 	},
-	execute_code: (data) =>
-		data.logs?.length ? (
-			<pre className="mt-1 mb-1 overflow-x-auto rounded-sm border border-ai-line bg-ai-surface p-1.5 font-mono text-[10px] text-ai-secondary">
-				{data.logs.join('\n')}
-			</pre>
-		) : null,
+	execute_code: (data) => (data.logs?.length ? <pre className={CODE_BLOCK}>{data.logs.join('\n')}</pre> : null),
 	load_skill: (data) => (
-		<div className="mt-1 mb-1 text-[10px] text-ai-secondary">
+		<div className="body-sm text-secondary">
 			<span className="font-medium">{data.skill}</span>
 			{data.unlockedTools?.length > 0 ? (
-				<span className="text-ai-muted"> - unlocked: {data.unlockedTools.join(', ')}</span>
+				<span className="text-tertiary"> - unlocked: {data.unlockedTools.join(', ')}</span>
 			) : null}
 		</div>
 	),
 	spawn_agent: (data) => {
 		if (!data.agents) return null
 		return (
-			<div className="mt-1 mb-1 flex flex-col gap-0.5 rounded-sm border border-ai-line bg-ai-surface p-1.5">
+			<div className="flex flex-col gap-0.5 rounded-lg border border-medium bg-surface-elevated-1 p-2">
 				{data.agents.map((agent: any) => (
-					<div key={agent.id} className="text-[10px] text-ai-secondary">
+					<div key={agent.id} className="body-sm text-primary">
 						Agent {agent.id.slice(0, 6)}{' '}
-						<span className="text-ai-muted">
+						<span className="text-tertiary">
 							({agent.toolCalls} tool calls{agent.chartCount > 0 ? `, ${agent.chartCount} charts` : ''})
 						</span>
 					</div>
@@ -75,8 +77,8 @@ const TOOL_DATA_RENDERERS = {
 			</div>
 		)
 	},
-	web_search: (data) => <span className="mt-1 mb-1 text-[10px] text-ai-muted">{data.citationCount} sources</span>,
-	x_search: (data) => <span className="mt-1 mb-1 text-[10px] text-ai-muted">{data.tweetCount} tweets</span>
+	web_search: (data) => <span className="body-sm text-tertiary">{data.citationCount} sources</span>,
+	x_search: (data) => <span className="body-sm text-tertiary">{data.tweetCount} tweets</span>
 } satisfies Record<string, ToolDataRenderer>
 
 export function ToolDataView({ name, data }: { name: string; data: Record<string, any> }) {
@@ -109,20 +111,12 @@ export function CitationRowsTable({
 	const cols = columns && columns.length > 0 ? columns : Object.keys(rows[0])
 
 	return (
-		<div
-			ref={scrollContainerRef}
-			className="mt-1 mb-1 overflow-x-auto rounded-sm border border-ai-line bg-ai-surface p-1"
-		>
-			<table className="text-[11px]">
+		<div ref={scrollContainerRef} className={DATA_TABLE_WRAPPER}>
+			<table className={DATA_TABLE}>
 				<thead>
 					<tr>
 						{cols.map((c) => (
-							<th
-								key={c}
-								className={`px-2 py-1 text-left font-medium ${
-									citedCell && citedCell.column === c ? 'text-ai-accent-blue' : 'text-ai-tertiary'
-								}`}
-							>
+							<th key={c} className={`${DATA_TABLE_HEAD} ${citedCell && citedCell.column === c ? 'text-link' : ''}`}>
 								{humanizeColumn(c)}
 							</th>
 						))}
@@ -137,16 +131,12 @@ export function CitationRowsTable({
 									<td
 										key={ci}
 										ref={isCited ? citedCellRef : null}
-										className={
-											isCited
-												? 'rounded-[3px] border border-ai-accent-blue/45 bg-ai-accent-blue/12 px-2 py-1 font-medium text-ai-accent-blue'
-												: 'px-2 py-1 text-ai-secondary'
-										}
+										className={`${DATA_TABLE_CELL} ${isCited ? 'bg-brand-muted font-medium text-link-on-tint' : ''}`}
 									>
 										{isCited ? (
 											<span className="inline-flex items-center gap-1">
 												{formatCellValue(row[c])}
-												<span className="rounded-[2px] bg-ai-accent-blue px-1 py-px text-[8px] leading-none font-semibold tracking-wide text-ai-white uppercase">
+												<span className="rounded-xs bg-brand px-1 py-px label-xs tracking-wide text-on-brand uppercase">
 													cited
 												</span>
 											</span>

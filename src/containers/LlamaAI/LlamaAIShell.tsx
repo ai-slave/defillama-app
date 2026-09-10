@@ -7,7 +7,7 @@ import { LlamaAINavigateProvider } from '~/contexts/LlamaAINavigate'
 import { LlamaAIRouteProvider, useLlamaAIRouteState, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
 import Layout from '~/layout'
-import { LoadingDots } from '~/ui/Loaders'
+import { LoadingIndicator } from '~/ui/Status'
 
 const CHAT_SEO = {
 	title: 'AI Crypto Analysis - DeFi & TradFi Data - LlamaAI',
@@ -38,11 +38,12 @@ function seoFromRoute(route: LlamaAIRouteState) {
 
 function LoadingState() {
 	return (
-		<div className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1">
-			<p className="flex items-center gap-1 text-center">
-				Loading
-				<LoadingDots />
-			</p>
+		<div
+			role="status"
+			aria-live="polite"
+			className="isolate flex flex-1 flex-col items-center justify-center rounded-md border border-medium bg-surface p-1"
+		>
+			<LoadingIndicator />
 		</div>
 	)
 }

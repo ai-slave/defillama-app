@@ -1,8 +1,17 @@
 import * as Ariakit from '@ariakit/react'
 import { BrowserContent } from '~/containers/LlamaAI/components/input/CapabilityBrowser'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { nestedPopoverMobileWrapperClassName, nestedMenuHeaderIconButtonStyles } from '~/ui/Popover'
+import {
+	menuSurfaceStyles,
+	nestedMenuHeaderIconButtonStyles,
+	nestedMenuSurfaceStyles,
+	nestedPopoverMobileWrapperClassName,
+	popoverMenuItemStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName
+} from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface MobileToolsPopoverProps {
@@ -20,8 +29,7 @@ interface MobileToolsPopoverProps {
 	walkthroughActive?: boolean
 }
 
-const itemClassName =
-	'flex w-full cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-left text-[13.5px] text-ai-secondary transition-colors hover:bg-ai-surface-muted focus-visible:bg-ai-surface-muted data-active-item:bg-ai-surface-muted'
+const itemClassName = `${popoverMenuItemStyles} w-full gap-3 text-left`
 
 export function MobileToolsPopover({
 	mode,
@@ -39,6 +47,7 @@ export function MobileToolsPopover({
 }: MobileToolsPopoverProps) {
 	const disabled = isPending || !!isStreaming || !!isStopping
 	const menu = Ariakit.useMenuStore({ placement: 'top-start', values: { answerMode: mode } })
+	const open = Ariakit.useStoreState(menu, 'open')
 
 	const handlePromptSelect = (prompt: string, categoryKey?: string) => {
 		menu.hideAll()
@@ -62,7 +71,9 @@ export function MobileToolsPopover({
 				data-walkthrough="mobile-tools-button"
 				disabled={disabled}
 				aria-label="Open mobile tools"
-				className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton hover:text-ai-primary disabled:pointer-events-none disabled:opacity-40 aria-expanded:bg-ai-accent-blue/15 aria-expanded:text-ai-accent-blue @sm:hidden"
+				render={
+					<Button type="button" size="md" variant={open ? 'outline' : 'secondary'} square className="@sm:hidden" />
+				}
 			>
 				<Icon name="plus" height={16} width={16} />
 			</Ariakit.MenuButton>
@@ -73,20 +84,12 @@ export function MobileToolsPopover({
 				unmountOnHide={!walkthroughActive}
 				hideOnInteractOutside={!walkthroughActive}
 				gutter={8}
-				wrapperProps={{
-					className: 'max-sm:fixed! max-sm:bottom-0! max-sm:top-[unset]! max-sm:transform-none! max-sm:w-full!'
-				}}
-				className="z-10 flex flex-col gap-0.5 rounded-xl border border-ai-line-medium bg-ai-surface-card p-1.5 shadow-2xl max-sm:h-[calc(100dvh-80px)] max-sm:drawer max-sm:overflow-auto max-sm:overscroll-contain max-sm:rounded-b-none sm:max-h-[60dvh]"
+				wrapperProps={{ className: popoverMobileWrapperClassName }}
+				className={`${menuSurfaceStyles} max-sm:h-auto! max-sm:max-h-[calc(100dvh-80px)]`}
 			>
-				<div className="flex items-center justify-between px-3 pt-3 pb-1 sm:hidden">
-					{/* <Ariakit.MenuHeading className="text-[13px] font-semibold text-ai-primary">
-						Tools
-					</Ariakit.MenuHeading> */}
-					<Ariakit.MenuDismiss
-						aria-label="Close mobile tools"
-						className="flex size-7 items-center justify-center rounded-full bg-ai-surface-muted text-ai-secondary transition-colors hover:bg-ai-skeleton"
-					>
-						<Icon name="x" height={14} width={14} />
+				<div className="flex items-center justify-between px-2 py-1 sm:hidden">
+					<Ariakit.MenuDismiss aria-label="Close mobile tools" className={popoverMobileDismissStyles}>
+						<Icon name="x" className="size-4" />
 					</Ariakit.MenuDismiss>
 				</div>
 
@@ -96,11 +99,11 @@ export function MobileToolsPopover({
 					hideOnClick={false}
 					onClick={handleImageUpload}
 				>
-					<Icon name="image-plus" height={16} width={16} className="shrink-0 text-ai-tertiary" />
+					<Icon name="paperclip" height={16} width={16} className="shrink-0 text-secondary" />
 					<span>Upload files</span>
 				</Ariakit.MenuItem>
 
-				<Ariakit.MenuSeparator className="mx-2 border-t border-ai-line-subtle" />
+				<Ariakit.MenuSeparator className="border-t border-subtle" />
 
 				<Ariakit.MenuItemRadio
 					className={itemClassName}
@@ -110,11 +113,9 @@ export function MobileToolsPopover({
 					onChange={() => setMode('quick')}
 					data-umami-event="llamaai-quick-mode-toggle"
 				>
-					<Icon name="sparkles" height={16} width={16} className="shrink-0 text-ai-tertiary" />
+					<Icon name="sparkles" height={16} width={16} className="shrink-0 text-secondary" />
 					<span className="flex-1">Quick</span>
-					{mode === 'quick' ? (
-						<Icon name="check" height={14} width={14} className="shrink-0 text-ai-accent-blue" />
-					) : null}
+					{mode === 'quick' ? <Icon name="check" height={14} width={14} className="shrink-0 text-brand" /> : null}
 				</Ariakit.MenuItemRadio>
 
 				<Ariakit.MenuItemRadio
@@ -132,16 +133,16 @@ export function MobileToolsPopover({
 					}}
 					data-umami-event="llamaai-fact-checked-mode-toggle"
 				>
-					<Icon name="check" height={16} width={16} className="shrink-0 text-ai-tertiary" />
+					<Icon name="check" height={16} width={16} className="shrink-0 text-secondary" />
 					<span className="flex-1">Fact-checked</span>
 					<span className="flex items-center gap-1.5">
 						{factCheckedUsage && factCheckedUsage.limit > 0 && factCheckedUsage.period !== 'unlimited' ? (
-							<span className="text-[11px] text-ai-muted">
+							<span className="body-sm text-tertiary">
 								{factCheckedUsage.remainingUsage}/{factCheckedUsage.limit}
 							</span>
 						) : null}
 						{mode === 'fact_checked' ? (
-							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-accent-blue" />
+							<Icon name="check" height={14} width={14} className="shrink-0 text-brand" />
 						) : null}
 					</span>
 				</Ariakit.MenuItemRadio>
@@ -155,21 +156,19 @@ export function MobileToolsPopover({
 					onChange={() => setMode('research')}
 					data-umami-event="llamaai-research-mode-toggle"
 				>
-					<Icon name="search" height={16} width={16} className="shrink-0 text-ai-tertiary" />
+					<Icon name="search" height={16} width={16} className="shrink-0 text-secondary" />
 					<span className="flex-1">Research</span>
 					<span className="flex items-center gap-1.5">
 						{researchUsage && researchUsage.limit > 0 && researchUsage.period !== 'unlimited' ? (
-							<span className="text-[11px] text-ai-muted">
+							<span className="body-sm text-tertiary">
 								{researchUsage.remainingUsage}/{researchUsage.limit}
 							</span>
 						) : null}
-						{mode === 'research' ? (
-							<Icon name="check" height={14} width={14} className="shrink-0 text-ai-accent-blue" />
-						) : null}
+						{mode === 'research' ? <Icon name="check" height={14} width={14} className="shrink-0 text-brand" /> : null}
 					</span>
 				</Ariakit.MenuItemRadio>
 
-				<Ariakit.MenuSeparator className="mx-2 border-t border-ai-line-subtle" />
+				<Ariakit.MenuSeparator className="border-t border-subtle" />
 
 				<Ariakit.PopoverProvider placement="right-start">
 					<Ariakit.PopoverDisclosure
@@ -178,7 +177,7 @@ export function MobileToolsPopover({
 						data-walkthrough="mobile-explore-item"
 						className={itemClassName}
 					>
-						<Icon name="layout-grid" height={16} width={16} className="shrink-0 text-ai-tertiary" />
+						<Icon name="layout-grid" height={16} width={16} className="shrink-0 text-secondary" />
 						<span className="flex-1">Explore</span>
 						<Icon name="chevron-right" className="size-4" />
 					</Ariakit.PopoverDisclosure>
@@ -188,13 +187,13 @@ export function MobileToolsPopover({
 						unmountOnHide
 						aria-label="Explore AI capabilities"
 						wrapperProps={{ className: nestedPopoverMobileWrapperClassName }}
-						className="z-20 flex h-[calc(100dvh-80px)] max-h-dvh w-full flex-col overflow-hidden rounded-t-xl border border-ai-line-medium bg-ai-surface-card p-2 shadow-2xl max-sm:drawer-to-left sm:h-[420px] sm:w-[600px] sm:max-w-[calc(100vw-2rem)] sm:rounded-xl"
+						className={`${nestedMenuSurfaceStyles} z-20 overflow-hidden max-sm:drawer-to-left sm:max-h-[min(420px,var(--popover-available-height))] sm:w-[600px] sm:max-w-[calc(100vw-2rem)]`}
 					>
-						<div className="grid min-h-12 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1">
+						<div className="grid min-h-12 shrink-0 grid-cols-[2.5rem_1fr_2.5rem] items-center px-2 py-1">
 							<Ariakit.PopoverDismiss aria-label="Back to mobile tools" className={nestedMenuHeaderIconButtonStyles}>
 								<Icon name="chevron-left" className="size-4" />
 							</Ariakit.PopoverDismiss>
-							<span className="text-center label-md text-ai-primary">Explore</span>
+							<span className="text-center label-md text-primary">Explore</span>
 							<Ariakit.PopoverDismiss
 								aria-label="Close mobile tools"
 								onClick={() => menu.hideAll()}
@@ -214,7 +213,7 @@ export function MobileToolsPopover({
 						hideOnClick={false}
 						onClick={handleOpenAlerts}
 					>
-						<Icon name="calendar-plus" height={16} width={16} className="shrink-0 text-ai-warning-bright" />
+						<Icon name="calendar-plus" height={16} width={16} className="shrink-0 text-warning" />
 						<span>Alerts</span>
 					</Ariakit.MenuItem>
 				) : null}

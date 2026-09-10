@@ -528,7 +528,7 @@ function LedgerColumn({
 								) : isVerified ? (
 									<CheckIcon className="size-3 text-data-up" />
 								) : (
-									<span className="bg-border-strong size-1.5 rounded-full" aria-hidden />
+									<span className="size-1.5 rounded-full bg-border-strong" aria-hidden />
 								)}
 								{isRechecking
 									? 'Read-only · checking'
@@ -745,7 +745,7 @@ function ReconciliationLedger() {
 					</div>
 					<div className="relative mt-2 h-3" aria-hidden>
 						<span className="absolute top-1/2 right-0 left-0 h-px bg-border-medium" />
-						<span className="bg-border-strong absolute top-0 left-[34%] h-3 w-px" />
+						<span className="absolute top-0 left-[34%] h-3 w-px bg-border-strong" />
 						<span
 							className="attn-threshold-fill absolute top-1/2 left-[34%] h-px w-[48%] bg-data-up"
 							data-active={stage >= verificationStages.coveragePublished}

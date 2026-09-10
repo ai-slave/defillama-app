@@ -10,6 +10,9 @@ import { useHackerMode } from '~/containers/LlamaAI/components/status/useHackerM
 import type { RecoveryState } from '~/containers/LlamaAI/streamState'
 import { getToolLabel } from '~/containers/LlamaAI/toolMetadata'
 import type { SpawnAgentStatus } from '~/containers/LlamaAI/types'
+import { Button } from '~/ui/Button'
+import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 
 export { TodoChecklistPanel, deriveTodosFromToolExecutions, useHackerMode }
 
@@ -38,7 +41,7 @@ export function SpawnProgressCard({
 
 	return (
 		<section
-			className={`flex flex-col gap-2 rounded-lg border border-ai-line bg-surface p-2 sm:p-3 ${indentForActiveTodo ? 'ml-4 border-l-2' : ''}`}
+			className={`flex flex-col gap-2 rounded-lg border border-subtle bg-surface p-2 sm:p-3 ${indentForActiveTodo ? 'ml-4 border-l-2' : ''}`}
 			aria-label={isResearchMode ? 'Parallel research progress' : 'Herd work progress'}
 		>
 			<button
@@ -48,73 +51,38 @@ export function SpawnProgressCard({
 			>
 				<img src={LLAMA_AI_ANIMATION_SRC} alt="" className="size-6 shrink-0" loading="eager" fetchPriority="high" />
 
-				<p className="m-0 flex-1 truncate text-xs text-ai-tertiary sm:text-sm">
+				<p className="m-0 flex-1 truncate text-xs text-tertiary sm:text-sm">
 					{isResearchMode ? <>Researching in parallel&hellip;</> : <>Working in herd&hellip;</>}
 				</p>
 
-				<p className="m-0 flex shrink-0 items-center gap-1 rounded-sm bg-ai-hover px-1.5 py-0.5 text-[10px] text-ai-tertiary sm:text-xs">
+				<p className="m-0 flex shrink-0 items-center gap-1 rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 text-xs text-tertiary">
 					{completed}/{total} done
 				</p>
 
-				<time className="flex shrink-0 items-center gap-1 rounded-sm bg-ai-hover px-1.5 py-0.5 font-mono text-[10px] text-ai-tertiary tabular-nums sm:text-xs">
+				<time className="flex shrink-0 items-center gap-1 rounded-sm bg-surface-elevated-2 px-1.5 py-0.5 font-mono text-xs text-tertiary tabular-nums">
 					{formatTime(elapsed)}
 				</time>
 
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					width="14"
-					height="14"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					strokeWidth="2"
-					strokeLinecap="round"
-					strokeLinejoin="round"
-					className="hidden shrink-0 text-ai-tertiary sm:block"
-				>
-					{isExpanded ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
-				</svg>
+				<Icon
+					name="chevron-right"
+					height={14}
+					width={14}
+					className={`hidden shrink-0 text-tertiary duration-150 motion-safe:transition-transform sm:block ${isExpanded ? 'rotate-90' : ''}`}
+				/>
 			</button>
 
 			{isExpanded ? (
-				<ul className="flex flex-col gap-1 border-t border-ai-line pt-2">
+				<ul className="flex flex-col gap-1 border-t border-subtle pt-2">
 					{agentList.map((agent) => (
 						<li key={agent.id} className="flex items-center gap-2 pl-1">
 							{agent.status === 'completed' ? (
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="12"
-									height="12"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="3"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									className="shrink-0 text-ai-success-vivid"
-								>
-									<polyline points="20 6 9 17 4 12" />
-								</svg>
+								<Icon name="check" height={14} width={14} className="shrink-0 text-success" />
 							) : agent.status === 'error' ? (
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									width="12"
-									height="12"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									strokeWidth="3"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									className="shrink-0 text-ai-error-vivid"
-								>
-									<line x1="18" y1="6" x2="6" y2="18" />
-									<line x1="6" y1="6" x2="18" y2="18" />
-								</svg>
+								<Icon name="x" height={14} width={14} className="shrink-0 text-error" />
 							) : (
-								<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-brand" />
+								<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
 							)}
-							<p className="m-0 text-xs text-ai-tertiary">
+							<p className="m-0 text-xs text-tertiary">
 								{agent.id}
 								{agent.status === 'tool_call' && agent.tool ? (
 									<span className="opacity-60"> - {getToolLabel(agent.tool)}</span>
@@ -144,33 +112,18 @@ export function SpawnProgressCard({
 			) : null}
 
 			{recovery?.status === 'reconnecting' ? (
-				<div className="flex items-center gap-2 border-t border-ai-warning-soft pt-2">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="14"
-						height="14"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						className="shrink-0 animate-spin text-ai-warning-bright"
-					>
-						<path d="M21 12a9 9 0 1 1-6.219-8.56" />
-					</svg>
-					<p className="m-0 flex-1 text-xs text-ai-warning-strong">
+				<div role="status" aria-live="polite" className="flex items-center gap-2 border-t border-warning/30 pt-2">
+					<span className="shrink-0 text-warning">
+						<LoadingSpinner size={14} />
+					</span>
+					<p className="m-0 flex-1 text-xs text-warning">
 						Connection lost. Reconnecting{recovery.attemptCount > 0 ? ` (attempt ${recovery.attemptCount})` : ''}
 						&hellip;
 					</p>
 					{onReconnect ? (
-						<button
-							type="button"
-							onClick={onReconnect}
-							className="shrink-0 rounded-md bg-ai-warning-soft px-2.5 py-1 text-xs font-medium text-ai-warning-strong hover:bg-ai-warning"
-						>
+						<Button type="button" size="sm" onClick={onReconnect}>
 							Reconnect now
-						</button>
+						</Button>
 					) : null}
 				</div>
 			) : null}

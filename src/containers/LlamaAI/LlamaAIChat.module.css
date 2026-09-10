@@ -1,6 +1,6 @@
 @keyframes anchorHighlight {
 	0% {
-		background-color: color-mix(in srgb, var(--ai-accent-blue-bright) 15%, transparent);
+		background-color: color-mix(in srgb, var(--color-brand) 15%, transparent);
 	}
 	100% {
 		background-color: transparent;
@@ -51,6 +51,24 @@
 .prose :global([class~='lead']) {
 	margin-top: 0;
 	margin-bottom: 0;
+}
+
+/* Blocks are spaced by the flex gap, so headings need their own breathing room above to read as
+   section starts rather than as another line. The first block keeps the gap alone. */
+.prose :global(h1),
+.prose :global(h2) {
+	margin-top: 0.75rem;
+}
+
+.prose :global(h3),
+.prose :global(h4),
+.prose :global(h5),
+.prose :global(h6) {
+	margin-top: 0.5rem;
+}
+
+.prose :global(:is(h1, h2, h3, h4, h5, h6):first-child) {
+	margin-top: 0;
 }
 
 .hackerMode :global(pre) {

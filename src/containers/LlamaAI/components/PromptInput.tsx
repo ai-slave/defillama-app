@@ -15,6 +15,7 @@ import { setInputSize, syncHighlightScroll } from '~/containers/LlamaAI/utils/sc
 import { highlightWord } from '~/containers/LlamaAI/utils/textUtils'
 import { useMedia } from '~/hooks/useMedia'
 import type { FormSubmitEvent } from '~/types/forms'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -508,7 +509,7 @@ export function PromptInput({
 
 	return (
 		<form
-			className="@container relative flex w-full flex-col gap-4 rounded-lg border border-ai-line bg-page p-4 has-[textarea:focus]:border-brand"
+			className="@container relative flex w-full flex-col gap-4 rounded-lg border border-medium bg-page p-4 has-[textarea:focus]:border-brand"
 			onDragEnter={isStopping ? undefined : imageUpload.handleDragEnter}
 			onDragLeave={imageUpload.handleDragLeave}
 			onDragOver={(e) => e.preventDefault()}
@@ -535,37 +536,19 @@ export function PromptInput({
 			<PastedContentModal preview={imageUpload.pastedPreview} onClose={() => imageUpload.setPastedPreview(null)} />
 
 			{quotedText ? (
-				<div className="flex items-center gap-2.5 rounded-md border-l-2 border-ai-action/40 bg-ai-action/4 py-2 pr-2 pl-3">
-					<svg
-						className="size-3.5 shrink-0 -scale-x-100 text-ai-action/50"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="2.5"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					>
-						<polyline points="9 14 4 9 9 4" />
-						<path d="M20 20v-7a4 4 0 0 0-4-4H4" />
-					</svg>
-					<p className="min-w-0 flex-1 truncate text-[13px] text-ai-secondary">{quotedText}</p>
-					<button
+				<div className="flex items-center gap-2 rounded-md border-l-2 border-brand bg-brand-muted py-1 pr-1 pl-3">
+					<Icon name="message-square-plus" height={14} width={14} className="shrink-0 text-link-on-tint" />
+					<p className="min-w-0 flex-1 truncate body-sm text-secondary">{quotedText}</p>
+					<Button
 						type="button"
+						size="sm"
+						variant="ghost"
+						square
 						onClick={onClearQuotedText}
 						aria-label="Clear quoted text"
-						className="flex size-5 shrink-0 items-center justify-center rounded-full text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-primary"
 					>
-						<svg
-							className="size-3.5"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="2.5"
-							strokeLinecap="round"
-						>
-							<path d="M18 6L6 18M6 6l12 12" />
-						</svg>
-					</button>
+						<Icon name="x" height={14} width={14} />
+					</Button>
 				</div>
 			) : null}
 
@@ -599,11 +582,17 @@ export function PromptInput({
 			/>
 
 			{submitError ? (
-				<p className="text-xs text-ai-error-strong">{submitError}</p>
+				<p role="alert" className="body-sm text-error">
+					{submitError}
+				</p>
 			) : submitMode.kind === 'blocked' ? (
-				<p className="text-xs text-ai-tertiary">{submitMode.message}</p>
+				<p role="status" className="body-sm text-tertiary">
+					{submitMode.message}
+				</p>
 			) : submitMode.kind === 'queue' && submitMode.atCapacity && submitMode.capacityMessage ? (
-				<p className="text-xs text-ai-tertiary">{submitMode.capacityMessage}</p>
+				<p role="status" className="body-sm text-tertiary">
+					{submitMode.capacityMessage}
+				</p>
 			) : null}
 
 			<div className="flex items-center justify-between gap-4 p-0">
@@ -631,8 +620,10 @@ export function PromptInput({
 						<Tooltip
 							content="Create & manage alerts"
 							render={
-								<button
+								<Button
 									type="button"
+									size="md"
+									variant="ghost"
 									onClick={() => {
 										trackUmamiEvent('llamaai-alerts-open', { source: 'toolbar' })
 										onOpenAlerts()
@@ -640,10 +631,9 @@ export function PromptInput({
 									data-walkthrough="alerts-button"
 								/>
 							}
-							className="flex h-7 items-center gap-1.5 rounded-md bg-ai-warning-bright/12 px-2 text-ai-warning-bright hover:bg-ai-warning-bright hover:text-ai-white"
 						>
-							<Icon name="calendar-plus" height={14} width={14} />
-							<span className="text-xs font-medium">Alerts</span>
+							<Icon name="calendar-plus" height={14} width={14} className="text-warning" />
+							Alerts
 						</Tooltip>
 					) : null}
 				</div>

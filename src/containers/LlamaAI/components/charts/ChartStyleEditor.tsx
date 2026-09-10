@@ -150,10 +150,9 @@ function updateItemAt<T>(items: Array<T>, targetIndex: number, update: (item: T)
 }
 
 const section = 'flex flex-col gap-2 border-t border-subtle pt-3 first:border-t-0 first:pt-0'
-const sectionLabel = 'label-xs text-ai-muted uppercase'
-const swatch =
-	'size-8 shrink-0 cursor-pointer rounded-lg border border-medium bg-page p-1 transition-transform hover:scale-105'
-const axisTag = 'w-3.5 shrink-0 text-center label-sm text-ai-muted'
+const sectionLabel = 'label-xs text-tertiary uppercase'
+const swatch = 'size-8 shrink-0 cursor-pointer rounded-lg border border-medium bg-page p-1'
+const axisTag = 'w-3.5 shrink-0 text-center label-sm text-tertiary'
 const PREVIEW_DEBOUNCE_MS = 350
 
 function getSeriesNameProblem(series: ChartConfiguration['series']): string | null {
@@ -697,7 +696,7 @@ export function ChartStyleEditor({
 
 			<div className="sticky bottom-0 -mx-4 mt-auto -mb-4 flex items-center justify-end gap-2 border-t border-subtle bg-overlay px-4 py-3">
 				{error ? (
-					<span className="mr-auto label-sm text-ai-error-vivid">{error}</span>
+					<span className="mr-auto label-sm text-error">{error}</span>
 				) : (
 					<Button type="button" variant="ghost" size="md" onClick={reset} className="mr-auto">
 						Reset

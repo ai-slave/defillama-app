@@ -1,4 +1,5 @@
 import type { Message } from '~/containers/LlamaAI/types'
+import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 
@@ -14,8 +15,7 @@ export function BranchArrows({
 	const { currentVersion, totalVersions, siblings } = info
 	const goPrev = currentVersion > 1 ? siblings[currentVersion - 2]?.leafMessageId : null
 	const goNext = currentVersion < totalVersions ? siblings[currentVersion]?.leafMessageId : null
-	const arrowClass =
-		'rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-ai-muted'
+	const arrowClass = buttonStyles({ variant: 'ghost', size: 'sm', square: true })
 	return (
 		<div className="flex items-center gap-0.5">
 			<Tooltip
@@ -30,11 +30,10 @@ export function BranchArrows({
 				}
 				className={arrowClass}
 			>
-				<Icon name="chevron-left" height={14} width={14} />
+				<Icon name="chevron-left" height={16} width={16} />
 			</Tooltip>
-			<span className="px-0.5 text-[11px] text-ai-muted tabular-nums">
-				{currentVersion}
-				<span className="opacity-50">/{totalVersions}</span>
+			<span className="px-0.5 body-sm text-tertiary tabular-nums">
+				{currentVersion}/{totalVersions}
 			</span>
 			<Tooltip
 				content="Next version"
@@ -48,7 +47,7 @@ export function BranchArrows({
 				}
 				className={arrowClass}
 			>
-				<Icon name="chevron-right" height={14} width={14} />
+				<Icon name="chevron-right" height={16} width={16} />
 			</Tooltip>
 		</div>
 	)

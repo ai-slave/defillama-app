@@ -1,9 +1,8 @@
-import * as Ariakit from '@ariakit/react'
-import { useId } from 'react'
 import { useAuthContext } from '~/auth'
 import type { AgenticAnswerMode, FactCheckedUsage, ResearchUsage } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
+import { SegmentedControl } from '~/ui/SegmentedControl'
+import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 interface ModeToggleProps {
 	mode: AgenticAnswerMode
@@ -13,92 +12,111 @@ interface ModeToggleProps {
 	onFactCheckedGated?: () => void
 }
 
+const MODE_EVENTS: Record<AgenticAnswerMode, string> = {
+	quick: 'llamaai-quick-mode-toggle',
+	fact_checked: 'llamaai-fact-checked-mode-toggle',
+	research: 'llamaai-research-mode-toggle'
+}
+
+function Usage({ usage }: { usage: ResearchUsage | FactCheckedUsage | null | undefined }) {
+	if (!usage || usage.limit <= 0 || usage.period === 'unlimited') return null
+	return (
+		<span className="body-sm text-tertiary tabular-nums">
+			{usage.remainingUsage}/{usage.limit}
+		</span>
+	)
+}
+
+function TooltipBody({ title, body, footer }: { title: string; body: React.ReactNode; footer?: React.ReactNode }) {
+	return (
+		<div className="flex max-w-[220px] flex-col gap-1.5">
+			<span className="font-medium text-primary">{title}</span>
+			<span className="text-secondary">{body}</span>
+			{footer ? <span className="border-t border-subtle pt-1.5 body-sm text-secondary">{footer}</span> : null}
+		</div>
+	)
+}
+
 export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onFactCheckedGated }: ModeToggleProps) {
-	const id = useId()
 	const { user } = useAuthContext()
 	const needsVerification = !!user && !user.verified
 	const factCheckedBlocked = factCheckedUsage?.period === 'blocked'
 
 	return (
-		<Ariakit.RadioProvider
+		<SegmentedControl<AgenticAnswerMode>
+			label="Answer mode"
+			data-walkthrough="mode-toggle"
+			variant="default"
+			size="md"
 			value={mode}
-			setValue={(next) => {
+			onValueChange={(next) => {
+				trackUmamiEvent(MODE_EVENTS[next])
 				if (next === 'fact_checked' && factCheckedBlocked) {
 					onFactCheckedGated?.()
 					return
 				}
-				if (next === 'quick' || next === 'fact_checked' || next === 'research') setMode(next)
+				setMode(next)
 			}}
-		>
-			<Ariakit.RadioGroup
-				aria-label="Answer mode"
-				data-walkthrough="mode-toggle"
-				className="flex items-center rounded-lg border border-ai-line bg-ai-surface-card p-0.5"
-			>
-				<Tooltip
-					content={
-						<div className="flex max-w-[200px] flex-col gap-1">
-							<span className="font-medium text-ai-primary">Quick Mode</span>
-							<span className="text-ai-tertiary">Fast responses for most queries</span>
-						</div>
-					}
-					render={
-						<label
-							htmlFor={`${id}-quick`}
-							aria-label="Quick"
-							data-umami-event="llamaai-quick-mode-toggle"
-							data-active={mode === 'quick'}
-						/>
-					}
-					className="relative flex min-h-6 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary has-focus-visible:focus-ring data-[active=true]:bg-brand/10 data-[active=true]:text-ai-accent-blue-deep dark:data-[active=true]:bg-brand/15"
-				>
-					<Ariakit.Radio id={`${id}-quick`} value="quick" className="sr-only" />
-					<Icon name="sparkles" height={12} width={12} />
-					<span>Quick</span>
-				</Tooltip>
-				<Tooltip
-					content={
-						<div className="flex max-w-[220px] flex-col gap-1.5">
-							<span className="font-medium text-ai-primary">Fact-checked</span>
-							<span className="text-ai-tertiary">Two-pass verification with cited evidence</span>
-							<span className="border-t border-ai-line pt-1.5 text-[11px] text-ai-secondary">
-								{factCheckedUsage?.period === 'unlimited'
+			options={[
+				{
+					value: 'quick',
+					ariaLabel: 'Quick',
+					label: (
+						<span className="flex items-center gap-1">
+							<Icon name="sparkles" height={14} width={14} />
+							Quick
+						</span>
+					),
+					tooltip: <TooltipBody title="Quick Mode" body="Fast responses for most queries" />
+				},
+				{
+					value: 'fact_checked',
+					ariaLabel: 'Fact-checked',
+					label: (
+						<span className="flex items-center gap-1">
+							<Icon name="check" height={14} width={14} />
+							Fact-checked
+							<Usage usage={factCheckedUsage} />
+						</span>
+					),
+					tooltip: (
+						<TooltipBody
+							title="Fact-checked"
+							body="Two-pass verification with cited evidence"
+							footer={
+								factCheckedUsage?.period === 'unlimited'
 									? 'Unlimited answers'
 									: factCheckedBlocked
 										? 'Subscribe to use fact-checked'
 										: factCheckedUsage
 											? `${factCheckedUsage.remainingUsage}/${factCheckedUsage.limit} remaining${factCheckedUsage.period === 'daily' ? ' today' : ''}`
-											: '10 answers/day on Pro · 10 lifetime on trial'}
-							</span>
-						</div>
-					}
-					render={
-						<label
-							htmlFor={`${id}-fact_checked`}
-							aria-label="Fact-checked"
-							data-umami-event="llamaai-fact-checked-mode-toggle"
-							data-active={mode === 'fact_checked'}
+											: '10 answers/day on Pro · 10 lifetime on trial'
+							}
 						/>
-					}
-					className="relative flex min-h-6 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary has-focus-visible:focus-ring data-[active=true]:bg-brand/10 data-[active=true]:text-ai-accent-blue-deep dark:data-[active=true]:bg-brand/15"
-				>
-					<Ariakit.Radio id={`${id}-fact_checked`} value="fact_checked" className="sr-only" />
-					<Icon name="check" height={12} width={12} />
-					<span>Fact-checked</span>
-					{factCheckedUsage && factCheckedUsage.limit > 0 && factCheckedUsage.period !== 'unlimited' ? (
-						<span className="text-[10px] opacity-70">
-							{factCheckedUsage.remainingUsage}/{factCheckedUsage.limit}
+					)
+				},
+				{
+					value: 'research',
+					ariaLabel: 'Research',
+					label: (
+						<span className="flex items-center gap-1">
+							<Icon name="search" height={14} width={14} />
+							Research
+							<Usage usage={researchUsage} />
 						</span>
-					) : null}
-				</Tooltip>
-				<Tooltip
-					content={
-						<div className="flex max-w-[220px] flex-col gap-1.5">
-							<span className="font-medium text-ai-primary">Research Mode</span>
-							<span className="text-ai-tertiary">Comprehensive reports with in-depth analysis and citations</span>
-							<span className="text-[11px] text-ai-secondary">Usually takes 10–20 minutes</span>
-							<span className="border-t border-ai-line pt-1.5 text-[11px] text-ai-secondary">
-								{researchUsage?.period === 'unlimited'
+					),
+					tooltip: (
+						<TooltipBody
+							title="Research Mode"
+							body={
+								<>
+									Comprehensive reports with in-depth analysis and citations
+									<br />
+									Usually takes 10–20 minutes
+								</>
+							}
+							footer={
+								researchUsage?.period === 'unlimited'
 									? 'Unlimited reports'
 									: researchUsage?.period === 'blocked'
 										? needsVerification
@@ -106,30 +124,12 @@ export function ModeToggle({ mode, setMode, researchUsage, factCheckedUsage, onF
 											: 'Subscribe to Pro to use research'
 										: researchUsage
 											? `${researchUsage.remainingUsage}/${researchUsage.limit} remaining${researchUsage.period === 'daily' ? ' today' : researchUsage.period === 'biweekly' ? ' (every 14 days)' : ''}`
-											: '5 reports/day · Free trial: 3 total'}
-							</span>
-						</div>
-					}
-					render={
-						<label
-							htmlFor={`${id}-research`}
-							aria-label="Research"
-							data-umami-event="llamaai-research-mode-toggle"
-							data-active={mode === 'research'}
+											: '5 reports/day · Free trial: 3 total'
+							}
 						/>
-					}
-					className="relative flex min-h-6 cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ai-tertiary has-focus-visible:focus-ring data-[active=true]:bg-brand/10 data-[active=true]:text-ai-accent-blue-deep dark:data-[active=true]:bg-brand/15"
-				>
-					<Ariakit.Radio id={`${id}-research`} value="research" className="sr-only" />
-					<Icon name="search" height={12} width={12} />
-					<span>Research</span>
-					{researchUsage && researchUsage.limit > 0 && researchUsage.period !== 'unlimited' ? (
-						<span className="text-[10px] opacity-70">
-							{researchUsage.remainingUsage}/{researchUsage.limit}
-						</span>
-					) : null}
-				</Tooltip>
-			</Ariakit.RadioGroup>
-		</Ariakit.RadioProvider>
+					)
+				}
+			]}
+		/>
 	)
 }

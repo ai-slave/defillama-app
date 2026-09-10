@@ -25,7 +25,12 @@ import { tw } from './tw'
    `className={inputStyles}` (plus layout classes) instead of the component.
 ---------------------------------------------------------------------------- */
 
-export const inputStyles = tw`min-h-8 rounded-lg border border-medium bg-page px-3 py-1.5 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden sm:body-sm`
+const fieldSurfaceStyles = tw`rounded-lg border border-medium bg-page px-3 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60`
+
+export const inputStyles = `${fieldSurfaceStyles} min-h-8 py-1.5 sm:body-sm`
+
+/** Multiline prose needs the body ramp; callers own rows, resizing, and height limits. */
+export const textareaStyles = `${fieldSurfaceStyles} py-2 sm:body-md`
 
 export const searchFieldWrapperStyles = tw`relative mr-auto w-full min-w-0 sm:max-w-[280px]`
 

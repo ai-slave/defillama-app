@@ -1,44 +1,62 @@
 import { memo } from 'react'
 import type { SearchMatch, SearchResult } from '~/containers/LlamaAI/types'
-import { Icon } from '~/ui/Icon'
+import { Button } from '~/ui/Button'
 import { RelativeTime } from '~/ui/RelativeTime'
+import { LoadingIndicator } from '~/ui/Status'
 
 function SourceBadge({ type }: { type: SearchMatch['source_type'] }) {
 	const label = type === 'user_message' ? 'You' : type === 'session_title' ? 'Title' : 'AI'
 	const colorClass =
 		type === 'user_message'
-			? 'bg-ai-accent-blue-deep/10 text-ai-accent-blue-deep'
+			? 'bg-brand-muted text-link-on-tint'
 			: type === 'session_title'
 				? 'bg-ai-mention/10 text-ai-mention'
-				: 'bg-ai-hover text-ai-tertiary'
-	return <span className={`shrink-0 rounded-sm px-1 py-0.5 text-[9px] font-medium ${colorClass}`}>{label}</span>
+				: 'bg-surface-elevated-2 text-secondary'
+	return <span className={`shrink-0 rounded-sm px-1 py-0.5 label-xs ${colorClass}`}>{label}</span>
 }
 
 export const SearchResults = memo(function SearchResults({
 	results,
 	isSearching,
+	failed,
+	onRetry,
 	query,
 	onMatchClick,
 	onSessionClick
 }: {
 	results: Array<SearchResult>
 	isSearching: boolean
+	failed: boolean
+	onRetry: () => void
 	query: string
 	onMatchClick: (sessionId: string, messageId: string) => void
 	onSessionClick: (sessionId: string) => void
 }) {
+	if (failed) {
+		return (
+			<div
+				role="alert"
+				className="flex flex-col items-center gap-2 rounded-lg border border-medium bg-surface-elevated-1 px-3 py-2 text-center body-sm text-data-down"
+			>
+				<span>Search failed</span>
+				<Button type="button" size="sm" onClick={onRetry}>
+					Retry
+				</Button>
+			</div>
+		)
+	}
+
 	if (isSearching && results.length === 0) {
 		return (
-			<div className="flex items-center justify-center p-6 text-xs text-ai-muted">
-				<Icon name="search" height={12} width={12} className="mr-2 animate-pulse" />
-				Searching...
+			<div role="status" aria-live="polite" className="flex items-center justify-center p-6">
+				<LoadingIndicator label="Searching" />
 			</div>
 		)
 	}
 
 	if (!isSearching && results.length === 0 && query.trim()) {
 		return (
-			<p className="rounded-sm border border-dashed border-ai-line-strong p-4 text-center text-xs text-ai-tertiary">
+			<p className="flex items-center justify-center rounded-lg border border-dashed border-medium p-4 text-center body-sm text-tertiary">
 				No results for &ldquo;{query}&rdquo;
 			</p>
 		)
@@ -47,18 +65,16 @@ export const SearchResults = memo(function SearchResults({
 	return (
 		<div className="flex flex-col gap-1.5">
 			{results.map((result) => (
-				<div key={result.session_id} className="flex flex-col rounded-md bg-ai-surface-muted">
+				<div key={result.session_id} className="flex flex-col rounded-lg border border-subtle bg-surface">
 					<button
 						type="button"
 						onClick={() => onSessionClick(result.session_id)}
-						className="flex items-center justify-between px-2.5 py-1.5 text-left"
+						className="flex items-center justify-between gap-2 rounded-t-lg px-2 py-1.5 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
 					>
-						<span className="min-w-0 truncate text-[11px] font-medium text-ai-secondary">
-							{result.session_title || 'Untitled'}
-						</span>
-						<RelativeTime className="ml-2 shrink-0 text-[10px] text-ai-muted" value={result.last_activity} />
+						<span className="min-w-0 truncate label-sm text-primary">{result.session_title || 'Untitled'}</span>
+						<RelativeTime className="shrink-0 body-sm text-tertiary" value={result.last_activity} />
 					</button>
-					<div className="flex flex-col gap-0.5 px-1.5 pb-1.5">
+					<div className="flex flex-col gap-0.5 px-1 pb-1">
 						{result.matches
 							.filter((m) => m.message_id)
 							.map((match, i) => (
@@ -66,21 +82,18 @@ export const SearchResults = memo(function SearchResults({
 									key={`${result.session_id}-${match.message_id}-${i}`}
 									type="button"
 									onClick={() => match.message_id && onMatchClick(result.session_id, match.message_id)}
-									className="flex items-start gap-1.5 rounded-sm px-1.5 py-1 text-left transition-colors hover:bg-ai-surface-muted"
+									className="flex items-start gap-1.5 rounded-md px-1 py-1 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
 								>
 									<SourceBadge type={match.source_type} />
-									<span className="line-clamp-2 min-w-0 text-[10px] leading-relaxed text-ai-secondary">
-										{match.content_preview}
-									</span>
+									<span className="line-clamp-2 min-w-0 body-sm text-secondary">{match.content_preview}</span>
 								</button>
 							))}
 					</div>
 				</div>
 			))}
 			{isSearching ? (
-				<div className="flex items-center justify-center py-2 text-[10px] text-ai-muted">
-					<Icon name="search" height={10} width={10} className="mr-1.5 animate-pulse" />
-					Loading more...
+				<div role="status" aria-live="polite" className="flex items-center justify-center py-2">
+					<LoadingIndicator label="Loading more" />
 				</div>
 			) : null}
 		</div>

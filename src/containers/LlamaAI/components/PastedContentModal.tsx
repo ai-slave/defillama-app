@@ -1,6 +1,11 @@
 import * as Ariakit from '@ariakit/react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { CODE_BLOCK } from '~/containers/LlamaAI/components/codeBlockStyles'
+import { Button } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
+import { downloadBlob } from '~/utils/download'
 import { formatNumber, formatFixedNumber } from '~/utils/numberFormat'
 
 interface PastedContentModalProps {
@@ -11,15 +16,30 @@ interface PastedContentModalProps {
 function formatBytes(byteLength: number): string {
 	if (byteLength < 1024) return `${byteLength} B`
 	const kb = byteLength / 1024
-	if (kb < 1024) return `${formatFixedNumber(kb, kb < 10 ? 2 : 1)} KB`
-	return `${formatFixedNumber(kb / 1024, 2)} MB`
+	if (kb < 1024) return `${kb < 10 ? formatFixedNumber(kb, 1) : Math.round(kb)} KB`
+	return `${formatFixedNumber(kb / 1024, 1)} MB`
 }
 
 export function PastedContentModal({ preview, onClose }: PastedContentModalProps) {
-	const [copied, setCopied] = useState(false)
+	return (
+		<Ariakit.DialogProvider open={!!preview} setOpen={(open) => !open && onClose()}>
+			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:820px]`} portal unmountOnHide>
+				{preview ? <TextPreview key={preview.filename} preview={preview} /> : null}
+			</Ariakit.Dialog>
+		</Ariakit.DialogProvider>
+	)
+}
+
+function TextPreview({ preview }: { preview: NonNullable<PastedContentModalProps['preview']> }) {
+	const [copyStatus, setCopyStatus] = useState<'idle' | 'pending' | 'copied' | 'error'>('idle')
+	const isCsv = preview.filename.toLowerCase().endsWith('.csv')
+	useEffect(() => {
+		if (copyStatus !== 'copied') return
+		const timer = setTimeout(() => setCopyStatus('idle'), 1500)
+		return () => clearTimeout(timer)
+	}, [copyStatus])
 
 	const stats = useMemo(() => {
-		if (!preview) return null
 		const content = preview.content
 		const lines = content.length === 0 ? 0 : content.split('\n').length
 		const bytes = new Blob([content]).size
@@ -27,65 +47,86 @@ export function PastedContentModal({ preview, onClose }: PastedContentModalProps
 	}, [preview])
 
 	const handleCopy = async () => {
-		if (!preview) return
+		if (copyStatus === 'pending') return
+		setCopyStatus('pending')
 		try {
 			await navigator.clipboard.writeText(preview.content)
-			setCopied(true)
-			setTimeout(() => setCopied(false), 1500)
+			setCopyStatus('copied')
 		} catch {
-			// silent
+			setCopyStatus('error')
 		}
 	}
+	const handleDownload = () => {
+		const filename = preview.filename
+		const mimeType = isCsv ? 'text/csv' : filename.toLowerCase().endsWith('.md') ? 'text/markdown' : 'text/plain'
+		// Preserve the uploaded text, including CSV quoting and line endings.
+		downloadBlob(filename, new Blob([preview.content], { type: `${mimeType};charset=utf-8` }))
+	}
+	const copyLabel =
+		copyStatus === 'pending'
+			? 'Copying…'
+			: copyStatus === 'copied'
+				? 'Copied'
+				: copyStatus === 'error'
+					? 'Retry copy'
+					: 'Copy'
 
 	return (
-		<Ariakit.DialogProvider open={!!preview} setOpen={(open) => !open && onClose()}>
-			<Ariakit.Dialog
-				className="dialog flex max-h-[85vh] w-[min(92vw,820px)] flex-col gap-0 overflow-hidden rounded-2xl border border-ai-line bg-ai-surface-card p-0 shadow-xl"
-				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-sm" />}
-				portal
-				unmountOnHide
-			>
-				<header className="flex items-start justify-between gap-4 border-b border-ai-line px-6 py-5">
-					<div className="flex min-w-0 flex-col gap-1.5">
-						<h2 className="m-0 truncate text-2xl font-semibold tracking-tight text-ai-primary">
-							{preview?.isPasted ? 'Pasted content' : (preview?.filename ?? 'File preview')}
-						</h2>
-						{stats ? (
-							<div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-ai-muted">
-								<span>{stats.size}</span>
-								<span aria-hidden className="size-1 rounded-full bg-current opacity-50" />
-								<span>{formatNumber(stats.lines)} lines</span>
-								{preview?.isPasted ? (
-									<>
-										<span aria-hidden className="size-1 rounded-full bg-current opacity-50" />
-										<span>Formatting may be inconsistent from source</span>
-									</>
-								) : null}
-							</div>
-						) : null}
+		<>
+			<header className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-2 border-b border-subtle p-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+				<div className="flex min-w-0 flex-col gap-0.5">
+					<DialogHeading className="break-all">{preview.isPasted ? 'Pasted content' : preview.filename}</DialogHeading>
+					<div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 body-sm text-secondary">
+						<span>{stats.size}</span>
+						<span aria-hidden className="size-1 rounded-full bg-current opacity-50" />
+						<span>{formatNumber(stats.lines)} lines</span>
 					</div>
-					<div className="flex shrink-0 items-center gap-1">
-						<button
-							type="button"
-							onClick={handleCopy}
-							className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
-						>
-							<Icon name={copied ? 'check' : 'copy'} height={14} width={14} />
-							<span>{copied ? 'Copied' : 'Copy'}</span>
-						</button>
-						<Ariakit.DialogDismiss className="rounded-full p-1.5 text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary">
-							<Icon name="x" className="size-5" />
-							<span className="sr-only">Close</span>
-						</Ariakit.DialogDismiss>
-					</div>
-				</header>
-
-				<div className="flex-1 overflow-y-auto p-5">
-					<pre className="m-0 max-h-[calc(85vh-148px)] overflow-auto rounded-xl border border-ai-line bg-ai-surface p-4 font-mono text-[12.5px] leading-relaxed break-words whitespace-pre-wrap text-ai-primary">
-						{preview?.content ?? ''}
-					</pre>
 				</div>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+				<div className="col-span-2 row-start-2 flex items-center gap-2 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+					<Button
+						type="button"
+						size="md"
+						variant="ghost"
+						onClick={handleCopy}
+						aria-disabled={copyStatus === 'pending'}
+						aria-busy={copyStatus === 'pending'}
+					>
+						{copyStatus === 'pending' ? (
+							<LoadingSpinner size={14} />
+						) : (
+							<Icon name={copyStatus === 'copied' ? 'check' : 'copy'} height={14} width={14} />
+						)}
+						{copyLabel}
+					</Button>
+					<Button type="button" size="md" onClick={handleDownload}>
+						<Icon name="download" height={14} width={14} />
+						Download
+					</Button>
+				</div>
+				<DialogCloseButton className="col-start-2 row-start-1 sm:col-start-3" />
+				{preview.isPasted ? (
+					<p className="col-span-full body-sm text-secondary">Plain text preview. Original formatting may differ.</p>
+				) : null}
+				{copyStatus === 'error' ? (
+					<p role="alert" className="col-span-full body-sm text-error">
+						Couldn&apos;t copy. Try again or download the file.
+					</p>
+				) : null}
+				<span role="status" className="sr-only">
+					{copyStatus === 'copied' ? 'Content copied' : copyStatus === 'pending' ? 'Copying content…' : ''}
+				</span>
+			</header>
+
+			<div className="flex min-h-0 flex-auto flex-col p-3">
+				<Ariakit.Focusable
+					render={<pre />}
+					role="document"
+					aria-label="File content"
+					className={`${CODE_BLOCK} min-h-0 overscroll-contain focus-visible:focus-ring ${preview.isPasted ? 'font-sans! body-md!' : 'mono-md!'} ${isCsv ? 'whitespace-pre!' : ''}`}
+				>
+					{preview.content}
+				</Ariakit.Focusable>
+			</div>
+		</>
 	)
 }

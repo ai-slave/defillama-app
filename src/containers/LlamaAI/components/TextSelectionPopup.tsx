@@ -103,7 +103,7 @@ export function TextSelectionPopup({
 			)
 		: null
 	const actionButton =
-		'flex shrink-0 cursor-pointer items-center gap-1.5 px-3 py-2 body-sm text-primary hover:bg-hover-row focus-visible:bg-hover-row focus-visible:outline-hidden'
+		'flex shrink-0 cursor-pointer items-center gap-1.5 px-3 py-2 body-sm text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row'
 
 	return (
 		<Ariakit.Popover
@@ -129,7 +129,7 @@ export function TextSelectionPopup({
 			</Ariakit.Button>
 			{onAddToArticle ? (
 				<Ariakit.Button onClick={handleAddToArticle} className={`${actionButton} border-l border-medium`}>
-					<Icon name="file-plus" height={13} width={13} className="opacity-70" />
+					<Icon name="file-plus" height={14} width={14} className="text-secondary" />
 					Add to article
 				</Ariakit.Button>
 			) : null}

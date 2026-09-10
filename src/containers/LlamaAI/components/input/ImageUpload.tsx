@@ -1,7 +1,9 @@
-import type { RefObject } from 'react'
+import { useId, useState, type RefObject } from 'react'
 import { ImagePreviewModal } from '~/containers/LlamaAI/components/ImagePreviewModal'
 import { isReadableTextFile } from '~/containers/LlamaAI/hooks/useImageUpload'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatFixedNumber } from '~/utils/numberFormat'
 
@@ -58,9 +60,21 @@ export function TextChip({
 	sizeBytes: number
 	textContent: string
 	isPasted: boolean
-	onOpen: () => void
+	onOpen: () => void | Promise<void>
 	onRemove?: () => void
 }) {
+	const statusId = useId()
+	const [openStatus, setOpenStatus] = useState<'idle' | 'pending' | 'error'>('idle')
+	const handleOpen = async () => {
+		if (openStatus === 'pending') return
+		setOpenStatus('pending')
+		try {
+			await onOpen()
+			setOpenStatus('idle')
+		} catch {
+			setOpenStatus('error')
+		}
+	}
 	const topLine = isPasted
 		? (textContent.split('\n').find((line) => line.trim().length > 0) ?? '').trim() || name
 		: name
@@ -68,40 +82,49 @@ export function TextChip({
 	const size = formatBytes(sizeBytes)
 	const removeLabel = isPasted ? 'Remove pasted content' : 'Remove file'
 	return (
-		<div className="group relative">
+		<div className="group relative w-60 max-w-full min-w-0">
 			<button
 				type="button"
-				onClick={onOpen}
-				title={isPasted ? 'Open pasted content' : `Open ${name}`}
-				className="flex h-16 w-52 cursor-pointer flex-col justify-between rounded-lg border border-ai-line bg-ai-surface px-3 py-2 text-left transition-colors hover:border-brand/40 hover:bg-ai-surface-muted dark:hover:border-brand/40"
+				onClick={handleOpen}
+				aria-label={isPasted ? 'Open pasted content' : `Open ${name}`}
+				aria-disabled={openStatus === 'pending'}
+				aria-busy={openStatus === 'pending'}
+				aria-describedby={openStatus === 'error' ? statusId : undefined}
+				className="flex min-h-16 w-full cursor-pointer flex-col gap-1.5 rounded-lg border border-medium bg-surface px-3 py-2 text-left not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:focus-ring aria-disabled:cursor-progress"
 			>
-				<p
-					className={`truncate text-[11px] leading-tight ${
-						isPasted ? 'font-mono text-ai-secondary dark:text-ai-tertiary' : 'font-sans font-medium text-ai-primary'
-					}`}
-				>
+				<p className={`line-clamp-2 w-full body-sm font-medium wrap-anywhere text-primary ${onRemove ? 'pr-5' : ''}`}>
 					{topLine}
 				</p>
 				<div className="flex items-center gap-1.5">
-					<span className="rounded-sm bg-brand/15 px-1.5 py-px font-sans text-[9px] font-bold tracking-[0.12em] text-ai-accent-blue-deep uppercase">
-						{badgeLabel}
+					<span className="body-sm text-secondary">{badgeLabel}</span>
+					<span aria-hidden className="text-tertiary">
+						·
 					</span>
-					<span className="font-sans text-[10px] text-ai-muted">{size}</span>
+					<span className="body-sm text-secondary">{size}</span>
+					{openStatus === 'pending' ? (
+						<span role="status" aria-label="Opening attachment">
+							<LoadingSpinner size={14} />
+						</span>
+					) : null}
 				</div>
 			</button>
+			{openStatus === 'error' ? (
+				<p id={statusId} role="alert" className="mt-1 body-sm text-error">
+					Couldn&apos;t open file. Select it to try again.
+				</p>
+			) : null}
 			{onRemove ? (
-				<button
-					type="button"
-					onClick={onRemove}
-					className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-ai-backdrop text-ai-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-ai-black/80 focus-visible:opacity-100"
-				>
-					<Icon name="x" height={12} width={12} />
-					<span className="sr-only">{removeLabel}</span>
+				<button type="button" onClick={onRemove} aria-label={removeLabel} className={ATTACHMENT_REMOVE_BUTTON}>
+					<Icon name="x" height={14} width={14} />
 				</button>
 			) : null}
 		</div>
 	)
 }
+
+// Sits over the attachment thumbnail, so it is a dim chip rather than a themed button.
+const ATTACHMENT_REMOVE_BUTTON =
+	'absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-screen-dim text-on-brand not-disabled:not-aria-disabled:hover:bg-ai-black/80'
 
 export function ImageUpload({
 	disabled = false,
@@ -141,12 +164,7 @@ export function ImageUpload({
 									onOpen={async () => {
 										let content = textContent
 										if (typeof content !== 'string') {
-											try {
-												content = await file.text()
-											} catch (error) {
-												console.error('Failed to read text file content', file.name, error)
-												content = ''
-											}
+											content = await file.text()
 										}
 										openPastedPreview?.({
 											content,
@@ -160,29 +178,25 @@ export function ImageUpload({
 						}
 
 						return (
-							<div
-								key={id}
-								className="relative h-16 overflow-hidden rounded-lg"
-								style={{ width: isImage ? '4rem' : 'auto' }}
-							>
+							<div key={id} className={`relative overflow-hidden rounded-lg ${isImage ? 'size-16' : 'h-16 w-auto'}`}>
 								{isImage ? (
 									<button type="button" onClick={() => setPreviewImage(url)} className="size-full cursor-pointer">
 										<img src={url} alt={file.name} className="size-full object-cover" />
 									</button>
 								) : (
-									<div className="flex h-full items-center gap-2 rounded-lg bg-ai-surface-muted px-3">
-										<Icon name="file-text" height={18} width={18} />
-										<span className="max-w-[120px] truncate text-xs">{file.name}</span>
+									<div className="flex h-full items-center gap-2 rounded-lg border border-medium bg-page px-3">
+										<Icon name="file-text" height={16} width={16} className="text-secondary" />
+										<span className="max-w-[120px] truncate body-sm text-primary">{file.name}</span>
 									</div>
 								)}
 								{disabled ? null : (
 									<button
 										type="button"
 										onClick={() => removeImage(idx)}
-										className="absolute top-1 right-1 flex size-6 items-center justify-center rounded-full bg-ai-backdrop text-ai-white hover:bg-ai-black/80"
+										aria-label="Remove file"
+										className={ATTACHMENT_REMOVE_BUTTON}
 									>
-										<Icon name="x" height={12} width={12} />
-										<span className="sr-only">Remove file</span>
+										<Icon name="x" height={14} width={14} />
 									</button>
 								)}
 							</div>
@@ -204,17 +218,9 @@ export function ImageUploadButton({ onClick, disabled = false }: ImageUploadButt
 	return (
 		<Tooltip
 			content="Attach file (or paste with Ctrl+V)"
-			render={
-				<button
-					type="button"
-					onClick={onClick}
-					aria-label="Attach file"
-					disabled={disabled}
-					className="group flex size-7 items-center justify-center rounded-lg border border-ai-line hover:bg-brand/10 disabled:opacity-25 dark:hover:bg-brand/15"
-				/>
-			}
+			render={<Button type="button" size="md" square onClick={onClick} aria-label="Attach file" disabled={disabled} />}
 		>
-			<Icon name="image-plus" height={14} width={14} />
+			<Icon name="paperclip" height={16} width={16} />
 		</Tooltip>
 	)
 }
@@ -245,7 +251,7 @@ export function DragOverlay({ isDragging, externalDragging }: DragOverlayProps) 
 						strokeLinejoin="round"
 					/>
 				</svg>
-				<span className="text-lg">Drop files here</span>
+				<span className="body-md text-primary">Drop files here</span>
 			</div>
 		</div>
 	)

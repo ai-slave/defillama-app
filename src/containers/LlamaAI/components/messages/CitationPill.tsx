@@ -1,8 +1,10 @@
 import * as Ariakit from '@ariakit/react'
 import { useMemo, type ReactNode } from 'react'
+import { CODE_BLOCK } from '~/containers/LlamaAI/components/codeBlockStyles'
 import type { UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { Icon } from '~/ui/Icon'
+import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import {
 	accentFor,
 	badgeFor,
@@ -44,7 +46,7 @@ interface CitationPillProps {
 // Shared by the resolved marker and the pending one: identical box, so resolving a reference cannot
 // change a cell's width.
 export const CITATION_MARKER_BOX =
-	'mx-px inline-flex h-[18px] max-w-[160px] items-center justify-center gap-0.5 rounded-[4px] border px-1 align-baseline text-[11px] leading-none font-medium no-underline'
+	'mx-px inline-flex h-[18px] max-w-[160px] items-center justify-center gap-0.5 rounded-sm border px-1 align-baseline label-sm no-underline'
 
 /**
  * Holds a citation marker's place until its reference arrives.
@@ -62,7 +64,7 @@ export function PendingCitationMarker({ id }: { id: number }) {
 		<span
 			aria-hidden="true"
 			data-citation-pending="true"
-			className={`${CITATION_MARKER_BOX} border-dashed border-ai-line text-ai-tertiary opacity-70`}
+			className={`${CITATION_MARKER_BOX} border-dashed border-medium text-tertiary`}
 		>
 			{id}
 		</span>
@@ -83,13 +85,7 @@ function ExternalLink({ href, children }: { href: string; children: ReactNode })
 }
 
 function CodePre({ text, className }: { text: string; className?: string }) {
-	return (
-		<pre
-			className={`m-0 max-h-48 overflow-auto rounded-sm border border-ai-line bg-ai-surface p-1.5 font-mono text-[10px] whitespace-pre-wrap text-ai-secondary ${className ?? ''}`}
-		>
-			{text}
-		</pre>
-	)
+	return <pre className={`${CODE_BLOCK} max-h-48 ${className ?? ''}`}>{text}</pre>
 }
 
 function AdvancedDisclosure({
@@ -104,7 +100,7 @@ function AdvancedDisclosure({
 	if (!text) return null
 	return (
 		<details open={defaultTierVisible(advancedProvenance)} className="group">
-			<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-tertiary hover:text-ai-secondary">
+			<summary className="cursor-pointer list-none label-sm text-secondary not-disabled:not-aria-disabled:hover:text-secondary">
 				{label}
 			</summary>
 			<CodePre text={text} className="mt-1" />
@@ -117,27 +113,23 @@ function SourceMiniCard({ reference }: { reference: UnifiedCitationReference }) 
 	const hasRows = !!reference.rows && reference.rows.length > 0
 	const domain = domainFromUrl(reference.url)
 	return (
-		<div className="flex flex-col gap-1 rounded-sm border border-ai-line bg-ai-surface p-1.5">
+		<div className="flex flex-col gap-1 rounded-lg border border-medium bg-surface-elevated-1 p-2">
 			<div className="flex items-center gap-1.5">
-				<span className="shrink-0 text-[10px] font-medium tracking-wide text-ai-accent-blue uppercase">
-					{badgeFor(reference.sourceType)}
-				</span>
-				{domain ? <span className="truncate body-xs text-ai-muted">{domain}</span> : null}
-				{reference.value ? (
-					<span className="ml-auto shrink-0 text-[11px] font-medium text-ai-primary">{reference.value}</span>
-				) : null}
+				<span className="shrink-0 label-xs tracking-wide text-link uppercase">{badgeFor(reference.sourceType)}</span>
+				{domain ? <span className="truncate body-sm text-tertiary">{domain}</span> : null}
+				{reference.value ? <span className="ml-auto shrink-0 label-sm text-primary">{reference.value}</span> : null}
 			</div>
 			{reference.label ? (
 				safeUrl ? (
 					<ExternalLink href={safeUrl}>{reference.label} ↗</ExternalLink>
 				) : (
-					<span className="text-[11px] text-ai-tertiary">{reference.label}</span>
+					<span className="body-sm text-secondary">{reference.label}</span>
 				)
 			) : null}
-			{reference.excerpt ? <p className="m-0 mt-1 body-sm text-ai-secondary">{reference.excerpt}</p> : null}
+			{reference.excerpt ? <p className="m-0 mt-1 body-sm text-secondary">{reference.excerpt}</p> : null}
 			{hasRows ? (
 				<details className="group mt-1">
-					<summary className="cursor-pointer list-none text-[10px] font-medium text-ai-muted hover:text-ai-secondary">
+					<summary className="cursor-pointer list-none label-sm text-tertiary not-disabled:not-aria-disabled:hover:text-secondary">
 						view data
 					</summary>
 					<CitationRowsTable rows={reference.rows} columns={reference.columns} />
@@ -180,32 +172,28 @@ function CitedRowCard({ reference, citedCell }: { reference: UnifiedCitationRefe
 		)
 		.slice(0, 6)
 	return (
-		<div className="flex flex-col gap-2 rounded-lg border border-ai-line bg-ai-surface p-3">
+		<div className="flex flex-col gap-2 rounded-lg border border-medium bg-surface-elevated-1 p-3">
 			{entity || rowDate ? (
 				<div className="flex items-center justify-between gap-2">
-					{entity ? (
-						<span className="text-[11px] font-semibold tracking-wide text-ai-muted uppercase">{entity}</span>
-					) : (
-						<span />
-					)}
+					{entity ? <span className="label-xs tracking-wide text-tertiary uppercase">{entity}</span> : <span />}
 					{rowDate ? (
-						<span className="inline-flex items-center gap-1 rounded-full bg-ai-surface-muted px-2 py-0.5 text-[10px] font-medium text-ai-accent-blue">
-							<Icon name="calendar" height={9} width={9} />
+						<span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated-1 px-2 py-0.5 label-sm text-link">
+							<Icon name="calendar" height={12} width={12} />
 							{rowDate}
 						</span>
 					) : null}
 				</div>
 			) : null}
-			<div className="flex items-baseline justify-between gap-3 border-b border-ai-line pb-2">
-				<span className="text-xs text-ai-secondary">{metricLabel(citedCell.column)}</span>
-				<span className="text-[15px] font-semibold text-ai-accent-blue tabular-nums">
+			<div className="flex items-baseline justify-between gap-3 border-b border-subtle pb-2">
+				<span className="text-xs text-secondary">{metricLabel(citedCell.column)}</span>
+				<span className="label-lg text-link tabular-nums">
 					{formatMetricValue(citedCell.column, row[citedCell.column])}
 				</span>
 			</div>
 			{others.map((c) => (
 				<div key={c} className="flex items-baseline justify-between gap-3">
-					<span className="text-xs text-ai-tertiary">{metricLabel(c)}</span>
-					<span className="text-xs text-ai-secondary tabular-nums">{formatMetricValue(c, row[c])}</span>
+					<span className="text-xs text-secondary">{metricLabel(c)}</span>
+					<span className="text-xs text-secondary tabular-nums">{formatMetricValue(c, row[c])}</span>
 				</div>
 			))}
 		</div>
@@ -238,14 +226,14 @@ function DataView({
 			) : null}
 			{hasRows ? (
 				<details open={!citedRow && sources.length === 0} className="group">
-					<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-accent-blue hover:underline">
+					<summary className="cursor-pointer list-none label-sm text-link not-disabled:not-aria-disabled:hover:underline">
 						<span className="group-open:hidden">{citedRow ? 'Show full table' : 'See the data'}</span>
 						<span className="hidden group-open:inline">Hide table</span>
 					</summary>
 					<CitationRowsTable rows={reference.rows} columns={reference.columns} citedCell={citedCell} />
 				</details>
 			) : hiddenLabel ? (
-				<p className="m-0 text-[10px] text-ai-muted">{hiddenLabel}</p>
+				<p className="m-0 body-sm text-tertiary">{hiddenLabel}</p>
 			) : null}
 			<AdvancedDisclosure label="View query" text={sql} advancedProvenance={advancedProvenance} />
 		</>
@@ -261,16 +249,16 @@ function ComputedView({ reference }: { reference: UnifiedCitationReference }) {
 	return (
 		<>
 			{reference.formula ? (
-				<p className="m-0 font-mono text-xs text-ai-secondary">{reference.formula}</p>
+				<p className="m-0 font-mono text-xs text-secondary">{reference.formula}</p>
 			) : summary ? (
-				<p className="m-0 text-xs text-ai-secondary">{summary}</p>
+				<p className="m-0 text-xs text-secondary">{summary}</p>
 			) : null}
 			{outputs.length > 0 ? (
-				<div className="flex flex-col gap-1.5 rounded-lg border border-ai-line bg-ai-surface p-3">
+				<div className="flex flex-col gap-1.5 rounded-lg border border-medium bg-surface-elevated-1 p-3">
 					{outputs.map((o) => (
 						<div key={o.key} className="flex items-baseline justify-between gap-3">
-							<span className="text-xs text-ai-tertiary">{humanizeColumn(o.key)}</span>
-							<span className="text-xs font-medium text-ai-secondary tabular-nums">
+							<span className="text-xs text-secondary">{humanizeColumn(o.key)}</span>
+							<span className="text-xs font-medium text-secondary tabular-nums">
 								{formatOutputValue(o.key, o.value)}
 							</span>
 						</div>
@@ -279,7 +267,7 @@ function ComputedView({ reference }: { reference: UnifiedCitationReference }) {
 			) : null}
 			{hasWork ? (
 				<details open className="group">
-					<summary className="cursor-pointer list-none text-[11px] font-medium text-ai-accent-blue hover:underline">
+					<summary className="cursor-pointer list-none label-sm text-link not-disabled:not-aria-disabled:hover:underline">
 						<span className="group-open:hidden">How this was calculated</span>
 						<span className="hidden group-open:inline">Hide calculation</span>
 					</summary>
@@ -301,8 +289,8 @@ function WebView({ reference }: { reference: UnifiedCitationReference }) {
 	const excerpt = sanitizeExcerpt(reference.excerpt)
 	return (
 		<>
-			{domain ? <span className="text-[11px] text-ai-muted">{domain}</span> : null}
-			{excerpt ? <p className="m-0 text-xs leading-snug text-ai-secondary">{excerpt}</p> : null}
+			{domain ? <span className="body-sm text-tertiary">{domain}</span> : null}
+			{excerpt ? <p className="m-0 text-xs leading-snug text-secondary">{excerpt}</p> : null}
 			{safeUrl ? <ExternalLink href={safeUrl}>Open link ↗</ExternalLink> : null}
 		</>
 	)
@@ -313,7 +301,7 @@ function XView({ reference }: { reference: UnifiedCitationReference }) {
 	const excerpt = sanitizeExcerpt(reference.excerpt)
 	return (
 		<>
-			{excerpt ? <p className="m-0 text-xs leading-snug text-ai-secondary">{excerpt}</p> : null}
+			{excerpt ? <p className="m-0 text-xs leading-snug text-secondary">{excerpt}</p> : null}
 			{safeUrl ? <ExternalLink href={safeUrl}>Open tweet ↗</ExternalLink> : null}
 		</>
 	)
@@ -325,17 +313,17 @@ function ToolView({ reference }: { reference: UnifiedCitationReference }) {
 	return (
 		<>
 			{rows.length > 0 ? (
-				<div className="flex flex-col gap-0.5 rounded-sm border border-ai-line bg-ai-surface p-1.5">
+				<div className="flex flex-col gap-0.5 rounded-lg border border-medium bg-surface-elevated-1 p-2">
 					{rows.map((row) => (
-						<div key={row.key} className="flex items-baseline gap-2 text-[11px]">
-							<span className="shrink-0 font-medium text-ai-tertiary">{row.key}</span>
-							<span className="text-ai-secondary">{row.value}</span>
+						<div key={row.key} className="flex items-baseline gap-2 body-sm">
+							<span className="shrink-0 font-medium text-secondary">{row.key}</span>
+							<span className="text-secondary">{row.value}</span>
 						</div>
 					))}
 				</div>
 			) : null}
 			{isPrivacySentinel(resultText) ? (
-				<p className="m-0 text-[11px] text-ai-muted">Value hidden for privacy</p>
+				<p className="m-0 body-sm text-tertiary">Value hidden for privacy</p>
 			) : resultText ? (
 				<CodePre text={resultText} />
 			) : null}
@@ -350,12 +338,12 @@ function FileView({ reference, citedCell }: { reference: UnifiedCitationReferenc
 	return (
 		<>
 			{name ? (
-				<p className="m-0 text-[11px] font-medium text-ai-secondary">
+				<p className="m-0 label-sm text-secondary">
 					{name}
 					{reference.locator ? ` · ${reference.locator}` : ''}
 				</p>
 			) : null}
-			{excerpt ? <p className="m-0 text-[11px] text-ai-muted">“{excerpt}”</p> : null}
+			{excerpt ? <p className="m-0 body-sm text-tertiary">“{excerpt}”</p> : null}
 			{hasRows ? <CitationRowsTable rows={reference.rows} columns={reference.columns} citedCell={citedCell} /> : null}
 		</>
 	)
@@ -367,22 +355,22 @@ function FactCheckSection({ reference }: { reference: UnifiedCitationReference }
 	const hasDetail = !!reference.detail && reference.detail !== reference.value
 	if (!hasChecked && !hasEvidence && !hasDetail) return null
 	return (
-		<div className="flex flex-col gap-1 border-t border-ai-line pt-1.5">
+		<div className="flex flex-col gap-1 border-t border-subtle pt-1.5">
 			{hasChecked ? (
-				<p className="m-0 text-[11px] text-ai-secondary">
+				<p className="m-0 body-sm text-secondary">
 					<span className="font-medium">Checked:</span> {reference.checked}
 				</p>
 			) : null}
 			{hasEvidence ? (
 				<ul className="m-0 flex flex-col gap-0.5 pl-3">
 					{reference.evidence!.map((item, i) => (
-						<li key={i} className="text-[11px] text-ai-tertiary">
+						<li key={i} className="body-sm text-secondary">
 							{item}
 						</li>
 					))}
 				</ul>
 			) : null}
-			{hasDetail ? <p className="m-0 text-[11px] text-ai-muted">{reference.detail}</p> : null}
+			{hasDetail ? <p className="m-0 body-sm text-tertiary">{reference.detail}</p> : null}
 		</div>
 	)
 }
@@ -467,48 +455,42 @@ export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps)
 			<Ariakit.HovercardAnchor
 				render={<button type="button" />}
 				onClick={() => (isLink && url ? window.open(url, '_blank', 'noopener,noreferrer') : open(reference))}
-				className={`${CITATION_MARKER_BOX} cursor-pointer transition hover:brightness-110 focus-visible:outline-hidden`}
-				style={{ color: accent, borderColor: `${accent}59`, backgroundColor: `${accent}14` }}
+				className={`${CITATION_MARKER_BOX} ${accent.marker} cursor-pointer not-disabled:not-aria-disabled:hover:brightness-110`}
 				aria-label={headline ? `Source ${id ?? ''}: ${headline}` : `Source ${id ?? ''}`}
 			>
-				{showMarkerIcon ? <Icon name={iconName} height={10} width={10} className="shrink-0" /> : null}
+				{showMarkerIcon ? <Icon name={iconName} height={12} width={12} className="shrink-0" /> : null}
 				<span className={showMarkerIcon ? 'truncate' : ''}>{markerText}</span>
 			</Ariakit.HovercardAnchor>
 			<Ariakit.Hovercard
 				portal
 				gutter={6}
 				overflowPadding={16}
-				className="z-50 flex max-h-[min(70vh,var(--popover-available-height))] w-96 max-w-(--popover-available-width) min-w-[min(18rem,var(--popover-available-width))] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg border border-ai-line bg-ai-surface-card p-3 text-sm shadow-xl"
+				className={`${popoverHovercardSurfaceStyles} flex w-96 min-w-[min(18rem,var(--popover-available-width))] flex-col gap-2 p-3`}
 			>
-				<div className="flex items-center gap-2 border-b border-ai-line pb-2">
-					<span
-						className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-md"
-						style={{ backgroundColor: `${accent}1f`, color: accent }}
-					>
-						<Icon name={iconName} height={11} width={11} />
+				<div className="flex items-center gap-2 border-b border-subtle pb-2">
+					<span className={`flex size-5 shrink-0 items-center justify-center rounded-md ${accent.chip}`}>
+						<Icon name={iconName} height={14} width={14} />
 					</span>
-					<span className="text-[10.5px] font-semibold tracking-[0.08em] uppercase" style={{ color: accent }}>
-						{badge}
-					</span>
-					{asOfText ? <span className="ml-auto text-[10px] text-ai-muted">as of {asOfText}</span> : null}
+					<span className={`label-xs tracking-wide uppercase ${accent.text}`}>{badge}</span>
+					{asOfText ? <span className="ml-auto body-sm text-tertiary">as of {asOfText}</span> : null}
 				</div>
 
 				{headline ? (
 					<div className="flex flex-col gap-0.5">
-						<p className="m-0 text-[15px] leading-tight font-semibold text-ai-primary tabular-nums">{headline}</p>
+						<p className="m-0 label-lg text-primary tabular-nums">{headline}</p>
 					</div>
 				) : null}
 
-				{description ? <p className="m-0 text-[11px] leading-snug text-ai-tertiary">{description}</p> : null}
+				{description ? <p className="m-0 body-sm text-secondary">{description}</p> : null}
 
 				{mismatch ? (
-					<div className="flex items-start gap-1.5 text-xs text-ai-warning">
-						<Icon name="alert-triangle" height={13} width={13} className="mt-px shrink-0" />
+					<div className="flex items-start gap-1.5 text-xs text-warning">
+						<Icon name="alert-triangle" height={14} width={14} className="mt-px shrink-0" />
 						<span>{mismatchLabel(reference)}</span>
 					</div>
 				) : unverified ? (
-					<div className="flex items-start gap-1.5 text-xs text-ai-muted">
-						<Icon name="help-circle" height={13} width={13} className="mt-px shrink-0" />
+					<div className="flex items-start gap-1.5 text-xs text-tertiary">
+						<Icon name="help-circle" height={14} width={14} className="mt-px shrink-0" />
 						<span>{unverifiedLabel()}</span>
 					</div>
 				) : null}
@@ -516,17 +498,17 @@ export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps)
 				{isLink ? (
 					<>
 						{domainFromUrl(reference.url) ? (
-							<span className="text-[11px] text-ai-muted">{domainFromUrl(reference.url)}</span>
+							<span className="body-sm text-tertiary">{domainFromUrl(reference.url)}</span>
 						) : null}
 						{sanitizeExcerpt(reference.excerpt) ? (
-							<p className="m-0 text-[11px] leading-snug text-ai-tertiary">{sanitizeExcerpt(reference.excerpt)}</p>
+							<p className="m-0 body-sm text-secondary">{sanitizeExcerpt(reference.excerpt)}</p>
 						) : null}
 						{url ? (
 							<a
 								href={url}
 								target="_blank"
 								rel="noopener noreferrer"
-								className="self-start text-[11px] font-medium text-ai-accent-blue hover:underline"
+								className="self-start label-sm text-link hover:underline"
 							>
 								Open link ↗
 							</a>
@@ -536,7 +518,7 @@ export function CitationPill({ reference, numberOnlyMarker }: CitationPillProps)
 					<button
 						type="button"
 						onClick={() => open(reference)}
-						className="self-start text-[11px] font-medium text-ai-accent-blue hover:underline"
+						className="self-start label-sm text-link not-disabled:not-aria-disabled:hover:underline"
 					>
 						Click to see the source →
 					</button>

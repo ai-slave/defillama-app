@@ -1,6 +1,10 @@
 import { useState, type ReactNode } from 'react'
 import type { TelegramStatus } from '~/containers/LlamaAI/api/telegram'
 import { useIntegrationLink } from '~/containers/LlamaAI/hooks/useIntegrationLink'
+import { Button } from '~/ui/Button'
+import { Input } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
+import { InlineStatus } from '~/ui/Status'
 
 export type IntegrationKind = 'telegram'
 
@@ -47,51 +51,45 @@ export function IntegrationRow({
 	const [inlineError, setInlineError] = useState<string | null>(null)
 
 	return (
-		<div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint p-4">
+		<div className="rounded-lg border border-subtle bg-surface-elevated-1 p-4">
 			<div className="flex flex-wrap items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 items-center gap-3">
 					{glyph}
 					<div className="min-w-0">
-						<p className="m-0 label-md text-ai-primary">{title}</p>
-						<p className="m-0 mt-0.5 text-xs text-ai-tertiary">{description}</p>
+						<p className="m-0 label-md text-primary">{title}</p>
+						<p className="m-0 mt-0.5 body-sm text-secondary">{description}</p>
 					</div>
 				</div>
 				{link.state.status === 'linked' ? (
 					<div className="flex shrink-0 flex-col items-end gap-2">
-						<span className="text-xs whitespace-nowrap text-ai-tertiary">
+						<span className="body-sm whitespace-nowrap text-secondary">
 							Linked as {formatHandle(link.state.username)}
 						</span>
 						<div className="flex gap-2">
-							<button
-								type="button"
-								onClick={() => link.disconnect()}
-								className="shrink-0 rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs whitespace-nowrap hover:bg-ai-hover"
-							>
+							<Button type="button" size="md" onClick={() => link.disconnect()}>
 								Disconnect
-							</button>
-							<button
-								type="button"
-								onClick={() => link.connect()}
-								className="shrink-0 rounded-lg bg-ai-accent-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white hover:bg-ai-accent-blue-deep/90"
-							>
+							</Button>
+							<Button type="button" size="md" variant="primary" onClick={() => link.connect()}>
 								Switch account
-							</button>
+							</Button>
 						</div>
 					</div>
 				) : link.state.status === 'idle' || link.state.status === 'starting' || link.state.status === 'loading' ? (
-					<button
+					<Button
 						type="button"
+						size="md"
+						variant="primary"
 						disabled={link.state.status === 'starting' || link.state.status === 'loading'}
 						onClick={() => link.connect()}
-						className="shrink-0 rounded-lg bg-ai-accent-blue-deep px-3 py-1.5 text-xs whitespace-nowrap text-ai-white disabled:opacity-50"
 					>
+						{link.state.status !== 'idle' ? <LoadingSpinner size={14} /> : null}
 						{link.state.status === 'starting' ? 'Opening…' : link.state.status === 'loading' ? 'Loading…' : 'Connect'}
-					</button>
+					</Button>
 				) : null}
 			</div>
 
 			{link.state.status === 'awaiting_tg' && (
-				<div className="mt-3 rounded-lg bg-ai-hover p-3 text-xs text-ai-tertiary">
+				<div className="mt-3 rounded-lg bg-surface-elevated-2 p-3 body-sm text-secondary">
 					Waiting for confirmation in Telegram…
 					<div className="mt-2">
 						Didn&apos;t see Telegram open?{' '}
@@ -104,7 +102,9 @@ export function IntegrationRow({
 			)}
 
 			{link.state.status === 'confirming' && (
-				<div className="mt-3 rounded-lg bg-ai-hover p-3 text-xs text-ai-tertiary">Confirming Telegram link…</div>
+				<div className="mt-3 rounded-lg bg-surface-elevated-2 p-3 body-sm text-secondary">
+					Confirming Telegram link…
+				</div>
 			)}
 
 			{link.state.status === 'awaiting_code' && (
@@ -123,62 +123,62 @@ export function IntegrationRow({
 					}}
 					className="mt-3 flex gap-2"
 				>
-					<input
+					<Input
 						value={codeDraft}
 						onChange={(e) => setCodeDraft(e.target.value.replace(/\D/g, '').slice(0, 6))}
 						placeholder="6-digit code from Telegram"
+						aria-label="Telegram code"
 						maxLength={6}
 						inputMode="numeric"
-						className="flex-1 rounded-lg border border-ai-line-medium bg-ai-surface-card px-3 py-1.5 text-sm"
+						className="flex-1"
 					/>
-					<button
-						type="submit"
-						disabled={codeDraft.length !== 6}
-						className="rounded-lg bg-ai-accent-blue-deep px-3 py-1.5 text-xs text-ai-white disabled:opacity-50"
-					>
+					<Button type="submit" size="md" variant="primary" disabled={codeDraft.length !== 6}>
 						Confirm
-					</button>
+					</Button>
 				</form>
 			)}
 
 			{link.state.status === 'awaiting_code' && inlineError && (
-				<div className="mt-2 text-xs text-ai-error">{inlineError}</div>
+				<p role="alert" className="mt-2 body-sm text-error">
+					{inlineError}
+				</p>
 			)}
 
 			{link.state.status === 'switch_confirm' && (
-				<div className="mt-3 rounded-lg border border-ai-warning-bright/40 bg-ai-warning-soft p-3 text-xs">
+				<div className="mt-3 rounded-lg border border-warning/40 bg-warning/10 p-3 body-sm text-primary">
 					<p className="m-0 mb-2">
 						You&apos;re already linked to {formatHandle(link.state.currentTelegramUsername)}. Switch to this Telegram?
 					</p>
 					<div className="flex gap-2">
-						<button
+						<Button
 							type="button"
+							size="md"
+							variant="primary"
 							onClick={() => {
 								link.confirmSwitch().then((consumed) => {
 									if (consumed) onInitialStateConsumed?.()
 								})
 							}}
-							className="rounded-lg bg-ai-warning px-3 py-1.5 text-xs text-ai-white"
 						>
 							Yes, switch
-						</button>
-						<button
+						</Button>
+						<Button
 							type="button"
+							size="md"
 							onClick={() => {
 								link.cancelSwitch()
 								onInitialStateConsumed?.()
 							}}
-							className="rounded-lg border border-ai-line-medium px-3 py-1.5 text-xs"
 						>
 							Cancel
-						</button>
+						</Button>
 					</div>
 				</div>
 			)}
 
 			{link.state.status === 'error' && (
-				<div className="mt-3 rounded-lg border border-ai-error-vivid/40 bg-ai-error-bg p-3 text-xs text-ai-error-strong">
-					{link.state.message}
+				<div className="mt-3">
+					<InlineStatus variant="error">{link.state.message}</InlineStatus>
 				</div>
 			)}
 		</div>

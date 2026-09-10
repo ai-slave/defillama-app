@@ -37,8 +37,10 @@ const noop = () => undefined
 describe('ChartControls grouping lock', () => {
 	let container: HTMLDivElement
 	let root: Root
+	const onGroupingChange = vi.fn()
 
 	beforeEach(() => {
+		onGroupingChange.mockClear()
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -58,7 +60,7 @@ describe('ChartControls grouping lock', () => {
 					onStackedChange={noop}
 					onPercentageChange={noop}
 					onCumulativeChange={noop}
-					onGroupingChange={noop}
+					onGroupingChange={onGroupingChange}
 					onHallmarksChange={noop}
 					onLabelsChange={noop}
 					onLogScaleChange={noop}
@@ -71,7 +73,8 @@ describe('ChartControls grouping lock', () => {
 		const onOpenStyleEditor = vi.fn()
 		await render(model({ groupingLocked: true }), onOpenStyleEditor)
 
-		const disabled = [...container.querySelectorAll<HTMLButtonElement>('button[disabled]')]
+		// The grouping control is a radio group, so locked intervals are disabled radios.
+		const disabled = [...container.querySelectorAll<HTMLInputElement>('input[type="radio"][disabled]')]
 		expect(disabled).toHaveLength(4)
 
 		const hint = [...container.querySelectorAll<HTMLButtonElement>('button')].find((b) =>
@@ -88,9 +91,11 @@ describe('ChartControls grouping lock', () => {
 		expect(container.textContent).not.toContain('Set series aggregation')
 	})
 
-	test('shows nothing extra when grouping is available', async () => {
+	test('allows weekly grouping without a lock warning when grouping is available', async () => {
 		await render(model({}), vi.fn())
-		expect(container.querySelectorAll('button[disabled]')).toHaveLength(0)
+		const week = container.querySelector<HTMLInputElement>('input[aria-label="Week"]')!
+		await act(async () => week.click())
+		expect(onGroupingChange).toHaveBeenCalledExactlyOnceWith('week')
 		expect(container.textContent).not.toContain('aggregation')
 	})
 })

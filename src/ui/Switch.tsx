@@ -5,7 +5,11 @@ import { QuestionHelper } from '~/ui/QuestionHelper'
 /* ----------------------------------------------------------------------------
    Switch — design.md form-control recipe (Figma node 6298:54913).
    40x24 rounded-full track, 16px knob; on = bg-brand, off = elevated-2.
-   Label is label-sm at gap-2.
+   Label is label-sm at gap-2. `hideLabel` keeps the label for assistive tech
+   only, for rows whose visible text sits outside the control; `describedBy`
+   points the input at that row's description. `disabled` is announced with
+   aria-disabled and keeps focus, so a control that is pending or gated does
+   not drop the keyboard user; `isLoading` adds a spinner and the same activation guard.
 ---------------------------------------------------------------------------- */
 
 export function Switch({
@@ -15,7 +19,10 @@ export function Switch({
 	value,
 	className,
 	help,
-	isLoading
+	isLoading,
+	hideLabel,
+	disabled,
+	describedBy
 }: {
 	label: string
 	checked: boolean
@@ -24,26 +31,40 @@ export function Switch({
 	className?: string
 	help?: string
 	isLoading?: boolean
+	hideLabel?: boolean
+	disabled?: boolean
+	describedBy?: string
 }) {
 	return (
 		<label
-			className={`relative isolate flex cursor-pointer flex-nowrap items-center gap-2 label-sm ${className ?? ''}`}
+			className={`relative isolate flex flex-nowrap items-center gap-2 label-sm ${disabled ? 'cursor-not-allowed opacity-60' : isLoading ? 'cursor-progress' : 'cursor-pointer'} ${className ?? ''}`}
 		>
 			<input
 				type="checkbox"
+				role="switch"
+				aria-checked={checked}
+				aria-label={hideLabel ? label : undefined}
+				aria-disabled={disabled || isLoading || undefined}
 				value={value}
 				checked={checked}
-				onChange={onChange}
-				disabled={isLoading}
+				onChange={disabled || isLoading ? (event) => event.preventDefault() : onChange}
 				aria-busy={isLoading}
+				aria-describedby={describedBy}
 				className="peer absolute size-[1em] opacity-[0.00001]"
 			/>
 			<span
-				className={`h-6 w-10 shrink-0 rounded-full p-1 transition-colors ${checked ? 'bg-brand peer-focus-visible:focus-ring-on-brand' : 'bg-surface-elevated-2 peer-focus-visible:focus-ring'}`}
+				className={`relative h-6 w-10 shrink-0 rounded-full p-1 ${checked ? 'bg-brand peer-focus-visible:focus-ring-on-brand' : 'bg-surface-elevated-2 peer-focus-visible:focus-ring'}`}
 			>
 				<span
-					className={`block size-4 rounded-full bg-white shadow-xs transition-transform ${checked ? 'translate-x-4' : ''}`}
+					className={`block size-4 rounded-full bg-white shadow-xs motion-safe:transition-transform motion-safe:duration-150 ${checked ? 'translate-x-4' : ''} ${isLoading ? 'invisible' : ''}`}
 				/>
+				{isLoading ? (
+					<span
+						className={`absolute inset-0 flex items-center justify-center ${checked ? 'text-on-brand' : 'text-primary'}`}
+					>
+						<LoadingSpinner size={14} />
+					</span>
+				) : null}
 			</span>
 			{help ? (
 				<span className="flex items-center gap-1">
@@ -51,14 +72,8 @@ export function Switch({
 					<QuestionHelper text={help} />
 				</span>
 			) : (
-				<span>{label}</span>
+				<span className={hideLabel ? 'sr-only' : undefined}>{label}</span>
 			)}
-
-			{isLoading ? (
-				<span className="absolute top-0 right-0 bottom-0 left-0 z-10 flex items-center rounded-md bg-white/80 pl-0.75 dark:bg-black/80">
-					<LoadingSpinner size={12} />
-				</span>
-			) : null}
 		</label>
 	)
 }

@@ -1,7 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import { useRef, useState, type RefObject } from 'react'
+import { useId, useRef, useState, type RefObject } from 'react'
 import toast from 'react-hot-toast'
-import { Icon } from '~/ui/Icon'
+import { Button } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
+import { Input, textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { useAddTextFile } from './hooks'
 
@@ -18,9 +20,9 @@ export function AddTextContentModal({ dialogStore, projectId, finalFocus }: AddT
 			<Ariakit.Dialog
 				initialFocus={nameRef}
 				finalFocus={finalFocus}
-				className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(640px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
-				backdrop={<div className="backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md" />}
+				className={`${dialogSurfaceStyles} [--dialog-width:640px]`}
 				unmountOnHide
+				portal
 			>
 				<AddTextContentForm dialogStore={dialogStore} projectId={projectId} nameRef={nameRef} />
 			</Ariakit.Dialog>
@@ -35,6 +37,8 @@ function AddTextContentForm({
 	nameRef
 }: AddTextContentModalProps & { nameRef: RefObject<HTMLInputElement | null> }) {
 	const formRef = useRef<HTMLFormElement>(null)
+	const nameId = useId()
+	const contentId = useId()
 	const [name, setName] = useState('')
 	const [content, setContent] = useState('')
 	const add = useAddTextFile(projectId)
@@ -60,71 +64,63 @@ function AddTextContentForm({
 	}
 
 	return (
-		<form ref={formRef} onSubmit={submit} className="flex flex-col gap-4">
-			<header className="flex items-start justify-between">
-				<div>
-					<Ariakit.DialogHeading className="text-base font-semibold text-primary">
-						Add text content
-					</Ariakit.DialogHeading>
-					<p className="mt-0.5 text-xs text-ai-tertiary">
-						Paste a note, prompt, or any plain-text content for this project.
-					</p>
+		<form ref={formRef} onSubmit={submit} className="flex min-h-0 flex-auto flex-col">
+			<header className="flex shrink-0 items-start justify-between gap-3 border-b border-subtle px-4 py-3">
+				<div className="flex flex-col gap-0.5">
+					<DialogHeading>Add text content</DialogHeading>
+					<p className="body-sm text-secondary">Paste a note, prompt, or any plain-text content for this project.</p>
 				</div>
-				<Ariakit.DialogDismiss
-					aria-label="Close text content dialog"
-					className="-mr-1.5 rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary"
-				>
-					<Icon name="x" height={16} width={16} />
-				</Ariakit.DialogDismiss>
+				<DialogCloseButton className="-mr-1" ariaLabel="Close text content dialog" />
 			</header>
 
-			<label className="flex flex-col gap-1.5">
-				<span className="text-xs font-medium text-ai-secondary">Filename</span>
-				<input
-					ref={nameRef}
-					disabled={add.isPending}
-					required
-					maxLength={255}
-					value={name}
-					onChange={(e) => setName(e.target.value)}
-					placeholder="notes.md"
-					className="rounded-md border border-ai-line bg-surface px-3 py-2 font-mono text-sm text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
-				/>
-			</label>
+			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor={nameId} className="label-sm text-secondary">
+						Filename
+					</label>
+					<Input
+						id={nameId}
+						ref={nameRef}
+						disabled={add.isPending}
+						required
+						maxLength={255}
+						value={name}
+						onChange={(e) => setName(e.target.value)}
+						placeholder="notes.md"
+						className="font-mono"
+					/>
+				</div>
 
-			<label className="flex flex-col gap-1.5">
-				<span className="text-xs font-medium text-ai-secondary">Content</span>
-				<textarea
-					disabled={add.isPending}
-					required
-					rows={12}
-					value={content}
-					onChange={(e) => setContent(e.target.value)}
-					placeholder="# my note&#10;Anything goes here…"
-					className="resize-y rounded-md border border-ai-line bg-surface px-3 py-2 font-mono text-xs text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
-				/>
-			</label>
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor={contentId} className="label-sm text-secondary">
+						Content
+					</label>
+					<textarea
+						id={contentId}
+						disabled={add.isPending}
+						required
+						rows={12}
+						value={content}
+						onChange={(e) => setContent(e.target.value)}
+						placeholder="# my note&#10;Anything goes here…"
+						className={`${textareaStyles} resize-y font-mono`}
+					/>
+				</div>
 
-			{add.isError || (add.data?.skipped.length && add.data.imported.length === 0) ? (
-				<p role="alert" className="text-sm text-ai-error">
-					{add.error?.message ?? add.data?.skipped[0].reason}
-				</p>
-			) : null}
-			<footer className="mt-1 flex justify-end gap-2">
-				<Ariakit.DialogDismiss
-					type="button"
-					className="rounded-md px-3 py-1.5 text-xs text-ai-tertiary hover:bg-ai-surface-muted"
-				>
+				{add.isError || (add.data?.skipped.length && add.data.imported.length === 0) ? (
+					<p role="alert" className="body-sm text-data-down">
+						{add.error?.message ?? add.data?.skipped[0].reason}
+					</p>
+				) : null}
+			</div>
+			<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
+				<Ariakit.DialogDismiss type="button" render={<Button size="md" />}>
 					Cancel
 				</Ariakit.DialogDismiss>
-				<button
-					type="submit"
-					disabled={!name.trim() || !content || add.isPending}
-					className="flex items-center gap-1.5 rounded-md border border-brand bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
-				>
-					{add.isPending ? <LoadingSpinner size={12} /> : null}
+				<Button type="submit" size="md" variant="primary" disabled={!name.trim() || !content || add.isPending}>
+					{add.isPending ? <LoadingSpinner size={14} /> : null}
 					{add.isPending ? 'Saving…' : 'Save'}
-				</button>
+				</Button>
 			</footer>
 		</form>
 	)

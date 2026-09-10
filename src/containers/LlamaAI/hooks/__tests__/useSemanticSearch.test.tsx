@@ -127,15 +127,41 @@ test('retyping a settled query serves it without a spinner or a request', async 
 	expect(mocks.authorizedFetch).toHaveBeenCalledOnce()
 })
 
-test('a failed response clears the results for that query', async () => {
+test('a failed response clears the results for that query and reports the failure', async () => {
 	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
 	await type('abc')
 	await settle()
+	expect(api.failed).toBe(false)
 	mocks.authorizedFetch.mockResolvedValue({ ok: false })
 	await type('abcd')
 	await settle()
 	expect(api.results).toEqual([])
 	expect(api.isSearching).toBe(false)
+	expect(api.failed).toBe(true)
+})
+
+// The opposite edge: a server that answers with no matches is an empty result, not a failure.
+test('an empty answer is not reported as a failure', async () => {
+	mocks.authorizedFetch.mockResolvedValue(respond([]))
+	await type('abc')
+	await settle()
+	expect(api.results).toEqual([])
+	expect(api.failed).toBe(false)
+})
+
+test('retry reruns the failed query without retyping', async () => {
+	mocks.authorizedFetch.mockResolvedValue({ ok: false })
+	await type('abc')
+	await settle()
+	expect(api.failed).toBe(true)
+
+	mocks.authorizedFetch.mockResolvedValue(respond([{ id: 'r1' }]))
+	await act(async () => api.retry())
+	expect(api.isSearching).toBe(true)
+	expect(api.failed).toBe(false)
+	await settle()
+	expect(mocks.authorizedFetch).toHaveBeenCalledTimes(2)
+	expect(api.results.map((r: any) => r.id)).toEqual(['r1'])
 })
 
 test('no request runs while the hook is disabled or signed out', async () => {
@@ -154,8 +180,6 @@ test('no request runs while the hook is disabled or signed out', async () => {
 	expect(api.isSearching).toBe(false)
 })
 
-// A failure and a genuinely empty answer are indistinguishable by the time they reach the hook, so
-// remembering either as a settled result would strand the user on a query that can never rerun.
 test('a failed search can be retried by clearing and retyping', async () => {
 	mocks.authorizedFetch.mockResolvedValue({ ok: false })
 	await type('abc')

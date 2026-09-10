@@ -14,7 +14,11 @@ import {
 	type CopyMessageSource
 } from '~/containers/LlamaAI/utils/copyMessage'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { buttonStyles } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
+import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatNumber, formatUsd, formatFixedNumber } from '~/utils/numberFormat'
@@ -35,23 +39,25 @@ interface ResponseControlsProps {
 type Rating = 'good' | 'bad' | null
 
 const ARTIFACT_FETCH_TIMEOUT_MS = 10_000
+// Every control in the row is an icon-only ghost button so the row reads as one toolbar.
+const CONTROL = buttonStyles({ variant: 'ghost', size: 'md', square: true })
 
 interface ResponseControlsState {
-	copied: boolean
+	copyStatus: 'idle' | 'pending' | 'copied' | 'error'
 	showFeedback: boolean
 	selectedRating: Rating
 	submittedRating: Rating
 }
 
 type ResponseControlsAction =
-	| { type: 'setCopied'; value: boolean }
+	| { type: 'setCopyStatus'; value: ResponseControlsState['copyStatus'] }
 	| { type: 'setShowFeedback'; value: boolean }
 	| { type: 'setSelectedRating'; value: Rating }
 	| { type: 'setSubmittedRating'; value: Rating }
 	| { type: 'openFeedbackWithRating'; value: Rating }
 
 const createInitialState = (initialRating: Rating): ResponseControlsState => ({
-	copied: false,
+	copyStatus: 'idle',
 	showFeedback: false,
 	selectedRating: initialRating,
 	submittedRating: initialRating
@@ -59,8 +65,8 @@ const createInitialState = (initialRating: Rating): ResponseControlsState => ({
 
 function responseControlsReducer(state: ResponseControlsState, action: ResponseControlsAction): ResponseControlsState {
 	switch (action.type) {
-		case 'setCopied':
-			return { ...state, copied: action.value }
+		case 'setCopyStatus':
+			return { ...state, copyStatus: action.value }
 		case 'setShowFeedback':
 			return { ...state, showFeedback: action.value }
 		case 'setSelectedRating':
@@ -94,16 +100,14 @@ const FeedbackDialog = memo(function FeedbackDialog({
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
 			<Ariakit.Dialog
-				className="dialog w-full gap-0 border border-medium bg-surface p-4 shadow-2xl max-sm:drawer sm:max-w-md"
+				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
 				unmountOnHide
 				portal
 				hideOnInteractOutside
 			>
-				<div className="mb-4 flex items-center justify-between">
-					<Ariakit.DialogHeading className="text-lg font-semibold">Provide Feedback</Ariakit.DialogHeading>
-					<Ariakit.DialogDismiss className="-m-2 rounded-sm p-2 hover:bg-ai-surface-muted">
-						<Icon name="x" height={16} width={16} />
-					</Ariakit.DialogDismiss>
+				<div className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+					<DialogHeading>Provide Feedback</DialogHeading>
+					<DialogCloseButton className="-mr-1" ariaLabel="Close feedback dialog" />
 				</div>
 				<FeedbackForm
 					messageId={messageId}
@@ -130,9 +134,10 @@ export function ResponseControls({
 	articleExportRequest
 }: ResponseControlsProps) {
 	const openArticleExport = useArticleExport()
+	const detailsPopover = Ariakit.usePopoverStore({ placement: 'top' })
 	const [isDarkMode] = useDarkModeManager()
 	const [state, dispatch] = useReducer(responseControlsReducer, initialRating || null, createInitialState)
-	const { copied, showFeedback, selectedRating, submittedRating } = state
+	const { copyStatus, showFeedback, selectedRating, submittedRating } = state
 	const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
 	useEffect(() => {
@@ -140,6 +145,15 @@ export function ResponseControls({
 			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
 		}
 	}, [])
+
+	const copyLabel =
+		copyStatus === 'pending'
+			? 'Copying…'
+			: copyStatus === 'copied'
+				? 'Copied'
+				: copyStatus === 'error'
+					? 'Retry copy'
+					: 'Copy'
 
 	const isRatedAsGood = submittedRating === 'good'
 	const isRatedAsBad = submittedRating === 'bad'
@@ -175,7 +189,9 @@ export function ResponseControls({
 	}, [handleOpenFeedbackWithRating])
 
 	const handleCopy = useCallback(async () => {
-		if (!content) return
+		if (!content || copyStatus === 'pending') return
+		if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
+		dispatch({ type: 'setCopyStatus', value: 'pending' })
 		trackUmamiEvent('llamaai-copy-response')
 		const context = copyContext?.()
 		const source: CopyMessageSource = {
@@ -192,9 +208,9 @@ export function ResponseControls({
 			captureChart: (chartId: string) => captureChartImage(chartId, isDarkMode)
 		}
 		const markCopied = () => {
-			dispatch({ type: 'setCopied', value: true })
+			dispatch({ type: 'setCopyStatus', value: 'copied' })
 			if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current)
-			copiedTimeoutRef.current = setTimeout(() => dispatch({ type: 'setCopied', value: false }), 2000)
+			copiedTimeoutRef.current = setTimeout(() => dispatch({ type: 'setCopyStatus', value: 'idle' }), 2000)
 		}
 		// A logical test with an optional chain cannot be lowered inside a try. Decided before it, which is
 		// still synchronous and so still inside the user gesture.
@@ -221,39 +237,52 @@ export function ResponseControls({
 			try {
 				await navigator.clipboard.writeText(await buildCopyMarkdown(content, source))
 				markCopied()
-			} catch (error) {
-				console.log('Failed to copy content:', error)
+			} catch {
+				dispatch({ type: 'setCopyStatus', value: 'error' })
 			}
 		}
-	}, [content, copyContext, isDarkMode])
+	}, [content, copyContext, isDarkMode, copyStatus])
 
 	if (!messageId) return null
 
 	return (
 		<>
 			<div
-				className={`flex items-center gap-0.5 pb-3${isLatest ? '' : ' opacity-0 transition-opacity duration-150 group-hover/msg:opacity-100 focus-within:opacity-100'}`}
+				className={`flex flex-wrap items-center gap-0.5 pb-3${isLatest || copyStatus !== 'idle' ? '' : ' opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100'}`}
 			>
 				{content ? (
 					<Tooltip
-						content={copied ? 'Copied' : 'Copy'}
+						content={copyLabel}
 						render={
 							<button
 								type="button"
+								disabled={copyStatus === 'pending'}
+								aria-label={copyLabel}
+								aria-busy={copyStatus === 'pending'}
 								onClick={() => {
 									void handleCopy()
 								}}
 							/>
 						}
-						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
+						className={CONTROL}
 					>
-						{copied ? (
+						{copyStatus === 'pending' ? (
+							<LoadingSpinner size={16} />
+						) : copyStatus === 'copied' ? (
 							<Icon name="check-circle" height={16} width={16} />
 						) : (
 							<Icon name="clipboard" height={16} width={16} />
 						)}
 					</Tooltip>
 				) : null}
+				{copyStatus === 'error' ? (
+					<span role="alert" className="body-sm text-error">
+						Couldn&apos;t copy. Use Retry copy to try again.
+					</span>
+				) : null}
+				<span role="status" className="sr-only">
+					{copyStatus === 'pending' ? 'Copying response…' : copyStatus === 'copied' ? 'Response copied' : ''}
+				</span>
 				{!readOnly ? (
 					<>
 						<Tooltip
@@ -265,9 +294,9 @@ export function ResponseControls({
 									disabled={showFeedback || isRatedAsGood || isRatedAsBad}
 								/>
 							}
-							className={`rounded-md p-1.5 transition-colors hover:bg-ai-hover hover:text-ai-secondary ${isRatedAsGood ? 'text-success' : 'text-ai-muted'}`}
+							className={CONTROL}
 						>
-							<Icon name="thumbs-up" height={16} width={16} />
+							<Icon name="thumbs-up" height={16} width={16} className={isRatedAsGood ? 'text-success' : undefined} />
 							<span className="sr-only">Thumbs Up</span>
 						</Tooltip>
 						<Tooltip
@@ -279,9 +308,9 @@ export function ResponseControls({
 									disabled={showFeedback || isRatedAsGood || isRatedAsBad}
 								/>
 							}
-							className={`rounded-md p-1.5 transition-colors hover:bg-ai-hover hover:text-ai-secondary ${isRatedAsBad ? 'text-error' : 'text-ai-muted'}`}
+							className={CONTROL}
 						>
-							<Icon name="thumbs-down" height={16} width={16} />
+							<Icon name="thumbs-down" height={16} width={16} className={isRatedAsBad ? 'text-error' : undefined} />
 							<span className="sr-only">Thumbs Down</span>
 						</Tooltip>
 					</>
@@ -291,29 +320,29 @@ export function ResponseControls({
 						sessionId={sessionId}
 						messageId={messageId}
 						exportType="single_message"
-						className="flex items-center gap-1 rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
+						className={CONTROL}
 					/>
 				) : null}
 				{messageMetadata && (messageMetadata.outputTokens != null || messageMetadata.x402CostUsd) ? (
-					<Ariakit.PopoverProvider placement="top">
-						<Ariakit.PopoverDisclosure className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary">
-							<Icon name="circle-help" height={16} width={16} />
-						</Ariakit.PopoverDisclosure>
-						<Ariakit.Popover
-							className="z-50 rounded-lg border border-ai-line bg-surface p-3 shadow-lg"
-							portal
-							gutter={8}
+					<Ariakit.PopoverProvider store={detailsPopover}>
+						<Tooltip
+							content="Response details"
+							render={<Ariakit.PopoverDisclosure store={detailsPopover} aria-label="Response details" />}
+							className={CONTROL}
 						>
-							<div className="flex flex-col gap-1.5 text-xs text-ai-secondary">
+							<Icon name="circle-help" height={16} width={16} />
+						</Tooltip>
+						<Ariakit.Popover className={`${popoverHovercardSurfaceStyles} p-3`} portal gutter={8}>
+							<div className="flex flex-col gap-1.5 text-primary">
 								{messageMetadata.outputTokens != null ? (
 									<div className="flex justify-between gap-4">
-										<span className="text-ai-muted">Output</span>
+										<span className="text-tertiary">Output</span>
 										<span className="font-mono tabular-nums">{formatNumber(messageMetadata.outputTokens)} tokens</span>
 									</div>
 								) : null}
 								{messageMetadata.executionTimeMs ? (
 									<div className="flex justify-between gap-4">
-										<span className="text-ai-muted">Time</span>
+										<span className="text-tertiary">Time</span>
 										<span className="font-mono tabular-nums">
 											{formatFixedNumber(messageMetadata.executionTimeMs / 1000, 1)}s
 										</span>
@@ -321,8 +350,8 @@ export function ResponseControls({
 								) : null}
 								{messageMetadata.x402CostUsd ? (
 									<div className="flex justify-between gap-4">
-										<span className="text-ai-muted">Premium data</span>
-										<span className="font-mono text-ai-warning tabular-nums">
+										<span className="text-tertiary">Premium data</span>
+										<span className="font-mono text-warning tabular-nums">
 											{formatUsd(parseFloat(messageMetadata.x402CostUsd), {
 												minimumFractionDigits: 3,
 												maximumFractionDigits: 3
@@ -340,7 +369,7 @@ export function ResponseControls({
 						render={
 							<button type="button" onClick={handleOpenGeneralFeedback} disabled={showFeedback || !!submittedRating} />
 						}
-						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
+						className={CONTROL}
 					>
 						<Icon name="message-square-warning" height={16} width={16} />
 						<span className="sr-only">Provide Feedback</span>
@@ -350,7 +379,7 @@ export function ResponseControls({
 					<Tooltip
 						content="Share"
 						render={<button type="button" onClick={() => onShare(messageId)} />}
-						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
+						className={CONTROL}
 					>
 						<Icon name="share" height={16} width={16} />
 						<span className="sr-only">Share</span>
@@ -360,7 +389,7 @@ export function ResponseControls({
 					<Tooltip
 						content="Export to research article"
 						render={<button type="button" onClick={() => openArticleExport(articleExportRequest())} />}
-						className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
+						className={CONTROL}
 					>
 						<Icon name="file-plus" height={16} width={16} />
 						<span className="sr-only">Export to research article</span>

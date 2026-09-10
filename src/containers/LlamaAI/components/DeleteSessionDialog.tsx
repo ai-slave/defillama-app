@@ -1,5 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { createContext, useContext, type RefObject } from 'react'
+import { Button } from '~/ui/Button'
+import { DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 import { LoadingSpinner } from '~/ui/Loaders'
 
 export const SessionListFocusContext = createContext<RefObject<HTMLElement | null> | null>(null)
@@ -32,24 +34,23 @@ export function DeleteSessionDialog({
 			finalFocus={finalFocus}
 			hideOnEscape={!pending}
 			hideOnInteractOutside={!pending}
-			className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[min(420px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-ai-line bg-surface p-5 shadow-2xl"
-			backdrop={<div className="fixed inset-0 z-50 bg-ai-backdrop backdrop-blur-md" />}
+			className={`${dialogSurfaceStyles} [--dialog-width:448px] max-sm:h-fit max-sm:min-h-0`}
 		>
-			<Ariakit.DialogHeading className="text-base font-semibold text-primary">{title}</Ariakit.DialogHeading>
-			<Ariakit.DialogDescription className="mt-2 text-sm text-ai-secondary">
-				This permanently deletes the selected chat history. This cannot be undone.
-			</Ariakit.DialogDescription>
-			{error ? (
-				<p role="alert" className="mt-3 text-sm text-ai-error">
-					{error.message} Try again.
-				</p>
-			) : null}
-			<div className="mt-5 flex justify-end gap-2">
-				<Ariakit.DialogDismiss
-					autoFocus
-					disabled={pending}
-					className="rounded-md px-3 py-2 text-sm hover:bg-ai-surface-muted"
-				>
+			<header className="shrink-0 border-b border-subtle p-3">
+				<DialogHeading className="break-words">{title}</DialogHeading>
+			</header>
+			<div className={`${dialogScrollableBodyStyles} p-3`}>
+				<Ariakit.DialogDescription className="body-sm text-secondary">
+					This permanently deletes the selected chat history. This cannot be undone.
+				</Ariakit.DialogDescription>
+				{error ? (
+					<p role="alert" className="mt-3 body-sm text-data-down">
+						{error.message} Try again.
+					</p>
+				) : null}
+			</div>
+			<footer className="flex shrink-0 justify-end gap-2 border-t border-subtle p-3">
+				<Ariakit.DialogDismiss autoFocus disabled={pending} render={<Button size="md" />}>
 					Cancel
 				</Ariakit.DialogDismiss>
 				<Ariakit.Button
@@ -57,12 +58,12 @@ export function DeleteSessionDialog({
 					type="button"
 					disabled={pending}
 					onClick={onConfirm}
-					className="flex items-center gap-2 rounded-md bg-ai-error-vivid/10 px-3 py-2 text-sm font-medium text-ai-error aria-disabled:opacity-50"
+					render={<Button size="md" variant="destructive" />}
 				>
 					{pending ? <LoadingSpinner size={14} /> : null}
 					{pending ? 'Deleting…' : error ? 'Retry deletion' : 'Delete'}
 				</Ariakit.Button>
-			</div>
+			</footer>
 			<span role="status" className="sr-only">
 				{pending ? 'Deleting selected sessions' : ''}
 			</span>

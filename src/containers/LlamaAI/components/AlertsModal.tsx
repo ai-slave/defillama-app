@@ -41,7 +41,6 @@ import type {
 	UpdateAlertInput
 } from '~/containers/LlamaAI/components/alerts/types'
 import {
-	alertBackdropClass,
 	alertDialogClass,
 	alertFieldLabelClass,
 	alertIconButtonClass,
@@ -63,10 +62,19 @@ import { useSlackChannels } from '~/containers/LlamaAI/hooks/useSlackChannels'
 import { useSlackWorkspaces } from '~/containers/LlamaAI/hooks/useSlackIntegrationLink'
 import { prepareAlertSummaryMarkdown, sanitizeUrl } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import {
+	menuSurfaceStyles,
+	popoverMenuItemStyles,
+	popoverMobileWrapperClassName,
+	popoverMobileDismissStyles
+} from '~/ui/Popover'
+import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
+import { RetryNotice } from './RetryNotice'
 
 interface AlertsModalProps {
 	dialogStore: Ariakit.DialogStore
@@ -115,7 +123,9 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 	const {
 		data: alerts,
 		isLoading,
-		error: alertsError
+		error: alertsError,
+		isFetching: isFetchingAlerts,
+		refetch: refetchAlerts
 	} = useQuery<Array<Alert>>({
 		queryKey: alertsQueryKey,
 		queryFn: async () => {
@@ -130,7 +140,7 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 			<Ariakit.DialogProvider store={dialogStore}>
 				<Ariakit.Dialog
 					className={alertDialogClass}
-					backdrop={<div className={alertBackdropClass} />}
+
 					portal
 					unmountOnHide
 				>
@@ -139,31 +149,27 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 						subtitle={getAlertsSubtitle(alertsUsage, alerts?.length)}
 						right={
 							accessState === 'ready' && !upsellActive && alerts && alerts.length > 0 ? (
-								<button
-									type="button"
-									onClick={() => openCreateModal('schedule')}
-									className="flex items-center gap-1 rounded-lg bg-brand/10 px-2.5 py-1.5 text-xs font-medium text-link transition-colors hover:bg-brand/20"
-								>
-									<Icon name="plus" className="size-3" />
+								<Button type="button" size="md" variant="outline" onClick={() => openCreateModal('schedule')}>
+									<Icon name="plus" className="size-3.5" />
 									New alert
-								</button>
+								</Button>
 							) : null
 						}
 					/>
 
 					<div className="min-h-0 flex-1 overflow-y-auto">
 						{accessState === 'loading' ? (
-							<div className="flex items-center justify-center py-16">
+							<div role="status" aria-label="Loading alerts" className="flex items-center justify-center py-16">
 								<LoadingSpinner size={24} />
 							</div>
 						) : accessState === 'sign-in' ? (
 							<div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
-								<div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
-									<Icon name="calendar-plus" className="size-6 text-ai-warning-bright" />
+								<div className="flex size-14 items-center justify-center rounded-lg bg-warning/10 text-warning">
+									<Icon name="calendar-plus" className="size-6 text-warning" />
 								</div>
 								<div>
 									<p className="m-0 text-sm font-semibold text-primary">Sign in to use alerts</p>
-									<p className="m-0 mt-1 text-xs text-ai-tertiary">
+									<p className="m-0 mt-1 body-sm text-secondary">
 										Create alerts and manage their delivery from one place.
 									</p>
 								</div>
@@ -172,21 +178,25 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 								</button>
 							</div>
 						) : alertsError ? (
-							<div className="px-5 py-3 text-xs text-ai-error-vivid">
-								{alertsError instanceof Error ? alertsError.message : 'Failed to fetch alerts'}
+							<div className="px-5 py-3">
+								<RetryNotice
+									message="Couldn't load alerts."
+									retrying={isFetchingAlerts}
+									onRetry={() => void refetchAlerts()}
+								/>
 							</div>
 						) : null}
-						{isLoading ? (
-							<div className="flex items-center justify-center py-16">
+						{accessState !== 'ready' ? null : isLoading ? (
+							<div role="status" aria-label="Loading alerts" className="flex items-center justify-center py-16">
 								<LoadingSpinner size={24} />
 							</div>
 						) : !alerts || alerts.length === 0 ? (
 							alertsError ? null : upsellActive ? (
 								<div className="flex flex-col items-center gap-3 px-5 py-16 text-center">
-									<div className="flex size-14 items-center justify-center rounded-2xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
-										<Icon name="alert-triangle" className="size-6 text-ai-warning-bright" />
+									<div className="flex size-14 items-center justify-center rounded-lg bg-warning/10 text-warning">
+										<Icon name="alert-triangle" className="size-6 text-warning" />
 									</div>
-									<p className="text-sm text-ai-tertiary">{getUpsellCopy(alertsUsage ?? null)}</p>
+									<p className="text-sm text-tertiary">{getUpsellCopy(alertsUsage ?? null)}</p>
 									<BasicLink href="/subscription" className={alertPrimaryButtonClass}>
 										Upgrade to Pro
 									</BasicLink>
@@ -197,11 +207,11 @@ export const AlertsModal = memo(function AlertsModal({ dialogStore, alertsUsage,
 						) : (
 							<div className="flex flex-col gap-2 p-3">
 								{upsellActive ? (
-									<div className="bg-ai-warning-bright/0.06 flex items-center justify-between gap-3 rounded-xl border border-ai-warning-bright/20 px-4 py-3">
-										<p className="m-0 text-xs text-ai-warning">{getUpsellCopy(alertsUsage ?? null)}</p>
+									<div className="bg-warning/0.06 flex items-center justify-between gap-3 rounded-xl border border-warning/20 px-4 py-3">
+										<p className="m-0 text-xs text-warning">{getUpsellCopy(alertsUsage ?? null)}</p>
 										<BasicLink
 											href="/subscription"
-											className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-action-hover"
+											className="shrink-0 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white hover:brightness-110"
 										>
 											Upgrade
 										</BasicLink>
@@ -228,7 +238,7 @@ interface AlertRowProps {
 }
 
 function AlertCard({ children }: { children: React.ReactNode }) {
-	return <div className="rounded-xl border border-ai-line-subtle bg-ai-hover-faint px-4 py-3.5">{children}</div>
+	return <div className="rounded-lg border border-subtle bg-surface px-4 py-3.5">{children}</div>
 }
 
 const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
@@ -414,9 +424,9 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	})
 
 	const switchMode = (next: 'view' | 'editing' | 'deleting') => {
-		toggleAlertMutation.reset()
-		updateAlertMutation.reset()
-		deleteAlertMutation.reset()
+		if (!toggleAlertMutation.isPending) toggleAlertMutation.reset()
+		if (!updateAlertMutation.isPending) updateAlertMutation.reset()
+		if (!deleteAlertMutation.isPending) deleteAlertMutation.reset()
 		if (next === 'editing') {
 			resetEditingState()
 		}
@@ -425,6 +435,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	}
 
 	const handleRearm = () => {
+		if (toggleAlertMutation.isPending) return
 		trackUmamiEvent('llamaai-alert-rearm')
 		switchMode('editing')
 		setShowRearmNote(true)
@@ -458,16 +469,16 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 					options={DELIVERY_OPTIONS}
 				/>
 				{deliveryChannel === 'telegram' && !telegramLinked && (
-					<span className="text-xs text-ai-warning">
+					<span className="text-xs text-warning">
 						Telegram isn't linked yet. Link it in <SettingsIntegrationsLink />
 					</span>
 				)}
 				{deliveryChannel === 'slack' && (
 					<>
 						{slackWorkspacesQuery.isLoading ? (
-							<span className="text-xs text-ai-muted">Loading workspaces…</span>
+							<span className="text-xs text-tertiary">Loading workspaces…</span>
 						) : slackWorkspaces.length === 0 ? (
-							<span className="text-xs text-ai-warning">
+							<span className="text-xs text-warning">
 								No Slack workspaces connected. Connect one from <SettingsIntegrationsLink />
 							</span>
 						) : (
@@ -493,9 +504,9 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						{slackTeamId && (
 							<>
 								{slackChannelsQuery.isLoading ? (
-									<span className="text-xs text-ai-muted">Loading channels…</span>
+									<span className="text-xs text-tertiary">Loading channels…</span>
 								) : slackChannelsQuery.isError ? (
-									<span className="text-xs text-ai-error-vivid">Failed to load channels</span>
+									<span className="text-xs text-error">Failed to load channels</span>
 								) : (
 									<select
 										value={slackChannelId}
@@ -524,17 +535,17 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 
 	if (mode === 'deleting') {
 		return (
-			<div className="bg-ai-error-vivid/0.04 rounded-xl border border-ai-error-vivid/20 px-4 py-3.5">
+			<div className="bg-error/0.04 rounded-xl border border-error/20 px-4 py-3.5">
 				<div className="flex flex-wrap items-center justify-between gap-3">
 					<p className="m-0 min-w-0 text-sm text-primary">
 						Delete “{alert.title}”?
-						<span className="ml-1.5 text-xs text-ai-tertiary">This can’t be undone.</span>
+						<span className="ml-1.5 text-xs text-tertiary">This can’t be undone.</span>
 					</p>
 					<div className="flex shrink-0 gap-2">
 						<button
 							type="button"
 							onClick={() => switchMode('view')}
-							className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-hover"
+							className="rounded-lg px-3 py-1.5 text-xs text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row"
 						>
 							Cancel
 						</button>
@@ -542,14 +553,14 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							type="button"
 							onClick={() => deleteAlertMutation.mutate(alert.id)}
 							disabled={deleteAlertMutation.isPending}
-							className="flex items-center gap-1.5 rounded-lg bg-ai-error-vivid px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-error disabled:opacity-50"
+							className="flex items-center gap-1.5 rounded-lg bg-error px-3 py-1.5 text-xs font-medium text-ai-white not-disabled:not-aria-disabled:hover:bg-ai-error disabled:opacity-50"
 						>
 							{deleteAlertMutation.isPending ? <LoadingSpinner size={12} /> : null}
 							Delete
 						</button>
 					</div>
 				</div>
-				{deleteErrorMessage ? <p className="mt-2 text-xs text-ai-error-vivid">{deleteErrorMessage}</p> : null}
+				{deleteErrorMessage ? <p className="mt-2 text-xs text-error">{deleteErrorMessage}</p> : null}
 			</div>
 		)
 	}
@@ -578,13 +589,13 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 				<button
 					type="button"
 					onClick={() => setSelectedExecId(null)}
-					className="mb-3 flex items-center gap-1 text-xs font-medium text-link hover:underline"
+					className="mb-3 flex items-center gap-1 text-xs font-medium text-link not-disabled:not-aria-disabled:hover:underline"
 				>
 					<Icon name="arrow-left" className="size-3" />
 					Back to history
 				</button>
 				<div className="mb-3 flex items-center justify-between">
-					<span className="font-mono text-xs text-ai-tertiary">{formatExecDate(selectedExec.executed_at)}</span>
+					<span className="font-mono text-xs text-tertiary">{formatExecDate(selectedExec.executed_at)}</span>
 					<StatusChip tone={execChipTone(selectedExec.status, !!selectedExec.error_message)}>
 						{execChipLabel(selectedExec.status)}
 					</StatusChip>
@@ -597,9 +608,9 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						/>
 					</div>
 				) : selectedExec.error_message ? (
-					<p className="text-xs text-ai-error-vivid">{selectedExec.error_message}</p>
+					<p className="text-xs text-error">{selectedExec.error_message}</p>
 				) : (
-					<p className="text-xs text-ai-muted">No content available.</p>
+					<p className="text-xs text-tertiary">No content available.</p>
 				)}
 				{charts.length > 0
 					? charts
@@ -614,7 +625,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							))
 					: null}
 				{selectedExec.citations?.length ? (
-					<div className="mt-3 border-t border-ai-line-subtle pt-3">
+					<div className="mt-3 border-t border-subtle pt-3">
 						<SourcesList citations={selectedExec.citations} />
 					</div>
 				) : null}
@@ -623,44 +634,40 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	}
 
 	const typeTileClass = !alert.enabled
-		? 'bg-ai-hover text-ai-muted'
+		? 'bg-surface-elevated-2 text-tertiary'
 		: isPriceAlert
-			? 'bg-ai-warning-bright/10 text-ai-warning-bright'
+			? 'bg-page text-secondary'
 			: 'bg-link/10 text-link'
 
 	return (
 		<AlertCard>
 			<div className="flex items-start justify-between gap-3">
 				<div className="flex min-w-0 flex-1 items-start gap-3">
-					<div
-						className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors ${typeTileClass}`}
-					>
+					<div className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg ${typeTileClass}`}>
 						<Icon name={isPriceAlert ? 'trending-up' : 'calendar'} className="size-4" />
 					</div>
 					<div className="min-w-0 flex-1">
-						<div className="flex items-center gap-2">
-							<h3 className={`truncate text-sm font-medium ${alert.enabled ? 'text-primary' : 'text-ai-muted'}`}>
-								{alert.title}
-							</h3>
+						<div className="flex flex-wrap items-center gap-2">
+							<h3 className="min-w-0 label-md break-words text-primary">{alert.title}</h3>
 							{alert.last_run_status === 'error' ? <StatusChip tone="error">Error</StatusChip> : null}
 							{!alert.enabled && !isFiredOneTimePriceAlert(alert) ? (
 								<StatusChip tone="neutral">Paused</StatusChip>
 							) : null}
 						</div>
-						<p className="mt-1 truncate font-mono text-xs text-ai-tertiary">
+						<p className="mt-1 body-md text-secondary">
 							{isPriceAlert && alert.trigger
 								? formatPriceAlertSummary(alert.trigger, alert.enabled, alert.armed, alert.run_count)
 								: formatScheduleExpression(alert.schedule_expression)}
 						</p>
-						{alert.condition ? <p className="mt-0.5 truncate text-xs text-ai-warning">If: {alert.condition}</p> : null}
-						<p className="mt-1 text-xs text-ai-muted">
+						{alert.condition ? <p className="mt-0.5 body-sm text-secondary">If: {alert.condition}</p> : null}
+						<p className="mt-1 body-sm text-secondary">
 							{channelLabel}
 							{isPriceAlert
 								? ` · ${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`
 								: ` · ${alert.enabled ? `next run ${formatNextRun(alert.next_run_at)}` : 'paused'} · ${alert.run_count} ${alert.run_count === 1 ? 'run' : 'runs'}`}
 						</p>
 						{alert.last_run_status === 'error' && alert.last_error ? (
-							<p className="mt-1 truncate text-xs text-ai-error-vivid">{alert.last_error}</p>
+							<p className="mt-1 body-sm text-error">{alert.last_error}</p>
 						) : null}
 					</div>
 				</div>
@@ -669,43 +676,103 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						<button
 							type="button"
 							onClick={handleRearm}
-							className="mr-1 flex items-center gap-1 rounded-lg bg-ai-warning-bright/10 px-2 py-1 text-xs font-medium text-ai-warning transition-colors hover:bg-ai-warning-bright/20"
+							className="mr-1 hidden items-center gap-1 rounded-lg bg-warning/10 px-2 py-1 text-xs font-medium text-warning not-disabled:not-aria-disabled:hover:bg-warning/20 sm:flex"
 						>
 							<Icon name="repeat" className="size-3" />
 							Re-arm
 						</button>
 					) : null}
-					{alert.run_count > 0 ? (
-						<button
-							type="button"
-							onClick={handleToggleExecutions}
-							className={`${alertIconButtonClass} ${showExecutions ? 'bg-ai-hover text-ai-primary' : ''}`}
-							title="View history"
+					<div className="hidden items-center gap-0.5 sm:flex">
+						{alert.run_count > 0 ? (
+							<Tooltip
+								content="View history"
+								render={
+									<button
+										type="button"
+										onClick={handleToggleExecutions}
+										aria-pressed={showExecutions}
+										aria-label="View history"
+									/>
+								}
+								className={alertIconButtonClass}
+								data-active={showExecutions}
+							>
+								<Icon name="clock" className="size-4" />
+							</Tooltip>
+						) : null}
+						<Tooltip
+							content="Edit"
+							render={
+								<button
+									type="button"
+									onClick={() => switchMode(mode === 'editing' ? 'view' : 'editing')}
+									aria-pressed={mode === 'editing'}
+									aria-label="Edit"
+								/>
+							}
+							className={alertIconButtonClass}
+							data-active={mode === 'editing'}
 						>
-							<Icon name="clock" className="size-3.5" />
-						</button>
-					) : null}
-					<button
-						type="button"
-						onClick={() => switchMode(mode === 'editing' ? 'view' : 'editing')}
-						className={`${alertIconButtonClass} ${mode === 'editing' ? 'bg-ai-hover text-ai-primary' : ''}`}
-						title="Edit"
-					>
-						<Icon name="pencil" className="size-3.5" />
-					</button>
-					<button
-						type="button"
-						onClick={() => switchMode('deleting')}
-						className="flex size-7 items-center justify-center rounded-lg text-ai-muted transition-colors hover:bg-ai-error-vivid/10 hover:text-ai-error-vivid"
-						title="Delete"
-					>
-						<Icon name="trash-2" className="size-3.5" />
-					</button>
+							<Icon name="pencil" className="size-4" />
+						</Tooltip>
+						<Tooltip
+							content="Delete"
+							render={<button type="button" onClick={() => switchMode('deleting')} aria-label="Delete" />}
+							className={alertIconButtonClass}
+						>
+							<Icon name="trash-2" className="size-4 text-error" />
+						</Tooltip>
+					</div>
+					<Ariakit.MenuProvider placement="bottom-end">
+						<Ariakit.MenuButton
+							aria-label={`Actions for alert ${alert.title}`}
+							render={<Button type="button" size="md" variant="ghost" square className="sm:hidden" />}
+							data-active={showExecutions || mode === 'editing'}
+						>
+							<Icon name="ellipsis" height={16} width={16} />
+						</Ariakit.MenuButton>
+						<Ariakit.Menu
+							portal
+							gutter={6}
+							wrapperProps={{ className: popoverMobileWrapperClassName }}
+							className={`${menuSurfaceStyles} z-50 max-sm:h-auto! max-sm:max-h-[calc(100dvh-80px)]`}
+						>
+							<Ariakit.MenuDismiss aria-label="Close alert actions" className={popoverMobileDismissStyles}>
+								<Icon name="x" height={16} width={16} />
+							</Ariakit.MenuDismiss>
+							{isFiredOneTimePriceAlert(alert) ? (
+								<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={handleRearm}>
+									<Icon name="repeat" height={14} width={14} />
+									Re-arm alert
+								</Ariakit.MenuItem>
+							) : null}
+							{alert.run_count > 0 ? (
+								<Ariakit.MenuItem className={popoverMenuItemStyles} onClick={handleToggleExecutions}>
+									<Icon name="clock" height={14} width={14} />
+									{showExecutions ? 'Hide history' : 'View history'}
+								</Ariakit.MenuItem>
+							) : null}
+							<Ariakit.MenuItem
+								className={popoverMenuItemStyles}
+								onClick={() => switchMode(mode === 'editing' ? 'view' : 'editing')}
+							>
+								<Icon name="pencil" height={14} width={14} />
+								{mode === 'editing' ? 'Cancel editing' : 'Edit alert'}
+							</Ariakit.MenuItem>
+							<Ariakit.MenuItem
+								className={`${popoverMenuItemStyles} text-error`}
+								onClick={() => switchMode('deleting')}
+							>
+								<Icon name="trash-2" height={14} width={14} />
+								Delete alert
+							</Ariakit.MenuItem>
+						</Ariakit.Menu>
+					</Ariakit.MenuProvider>
 					<div className="ml-1.5">
 						<ToggleSwitch
 							checked={alert.enabled}
 							label="Alert enabled"
-							disabled={toggleAlertMutation.isPending}
+							isLoading={toggleAlertMutation.isPending}
 							onClick={() => {
 								trackUmamiEvent('llamaai-alert-toggle')
 								if (isFiredOneTimePriceAlert(alert)) {
@@ -720,24 +787,26 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			</div>
 
 			{toggleErrorMessage ? (
-				<p role="alert" className="mt-2 text-xs text-ai-error-vivid">
+				<p role="alert" className="mt-2 text-xs text-error">
 					{toggleErrorMessage}
 				</p>
 			) : null}
 
 			{showExecutions ? (
-				<div className="mt-3 border-t border-ai-line-subtle pt-3">
+				<div className="mt-3 border-t border-subtle pt-3">
 					<p className="mb-2 label-xs tracking-wide text-tertiary uppercase">History</p>
 					{executionsQuery.isLoading ? (
-						<div className="flex justify-center py-4">
+						<div role="status" aria-label="Loading alert history" className="flex justify-center py-4">
 							<LoadingSpinner size={16} />
 						</div>
 					) : executionsQuery.isError ? (
-						<p className="text-center text-xs text-ai-error-vivid">
-							{executionsQuery.error.message || 'Failed to load executions.'}
-						</p>
+						<RetryNotice
+							message="Couldn't load alert history."
+							retrying={executionsQuery.isFetching}
+							onRetry={() => void executionsQuery.refetch()}
+						/>
 					) : !executionsQuery.data || executionsQuery.data.length === 0 ? (
-						<p className="text-center text-xs text-ai-muted">No executions yet.</p>
+						<p className="text-center text-xs text-tertiary">No executions yet.</p>
 					) : (
 						<div className="flex flex-col">
 							{executionsQuery.data.map((exec) => (
@@ -746,7 +815,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 									key={exec.id}
 									onClick={() => setSelectedExecId(exec.id)}
 									disabled={execDetailQuery.isLoading}
-									className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-ai-hover"
+									className="flex items-center justify-between rounded-lg px-2 py-1.5 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
 								>
 									<div className="flex items-baseline gap-2">
 										<span className="font-mono text-xs text-primary">{formatExecDate(exec.executed_at)}</span>
@@ -760,21 +829,23 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						</div>
 					)}
 					{execDetailQuery.isLoading ? (
-						<div className="mt-2 flex justify-center">
+						<div role="status" aria-label="Loading alert execution" className="mt-2 flex justify-center">
 							<LoadingSpinner size={16} />
 						</div>
 					) : execDetailQuery.isError ? (
-						<p className="mt-2 text-xs text-ai-error-vivid">
-							{execDetailQuery.error.message || 'Failed to load execution detail.'}
-						</p>
+						<RetryNotice
+							message="Couldn't load this execution."
+							retrying={execDetailQuery.isFetching}
+							onRetry={() => void execDetailQuery.refetch()}
+						/>
 					) : null}
 				</div>
 			) : null}
 
 			{mode === 'editing' && isPriceAlert && alert.trigger ? (
-				<div className="mt-3 flex flex-col gap-3 border-t border-ai-line-subtle pt-3">
+				<div className="mt-3 flex flex-col gap-3 border-t border-subtle pt-3">
 					{showRearmNote ? (
-						<p className="m-0 text-xs text-ai-warning">
+						<p className="m-0 text-xs text-warning">
 							Re-armed — if the price is still past your level, it fires again within seconds. Adjust the level below to
 							wait for the next cross.
 						</p>
@@ -842,7 +913,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							slack_channel_name: channelName
 						})
 					}}
-					className="mt-3 flex flex-col gap-3 border-t border-ai-line-subtle pt-3"
+					className="mt-3 flex flex-col gap-3 border-t border-subtle pt-3"
 				>
 					<input
 						name="title"
@@ -874,7 +945,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							) : (
 								<input type="hidden" name="dayOfWeek" value={1} />
 							)}
-							<span className="text-xs text-ai-muted">at</span>
+							<span className="text-xs text-tertiary">at</span>
 							<select
 								key={`hour-${timezone}`}
 								name="hour"
@@ -919,14 +990,14 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 						<button
 							type="button"
 							onClick={() => switchMode('view')}
-							className="rounded-lg px-3 py-1.5 text-xs text-ai-tertiary transition-colors hover:bg-ai-hover"
+							className="rounded-lg px-3 py-1.5 text-xs text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row"
 						>
 							Cancel
 						</button>
 						<button
 							type="submit"
 							disabled={updateAlertMutation.isPending || !deliveryReady}
-							className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:opacity-50"
+							className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-ai-white not-disabled:not-aria-disabled:hover:brightness-110 disabled:opacity-50"
 						>
 							{updateAlertMutation.isPending ? (
 								<LoadingSpinner size={12} />
@@ -936,7 +1007,7 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 							Save
 						</button>
 					</div>
-					{updateErrorMessage ? <p className="text-center text-xs text-ai-error-vivid">{updateErrorMessage}</p> : null}
+					{updateErrorMessage ? <p className="text-center text-xs text-error">{updateErrorMessage}</p> : null}
 				</form>
 			) : null}
 		</AlertCard>

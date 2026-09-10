@@ -1,6 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useMedia } from '~/hooks/useMedia'
+import { Button } from '~/ui/Button'
+import { DialogCloseButton, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { PillBody } from './CitationPill'
 import {
@@ -27,19 +29,29 @@ export function CitationDetailPanel({
 }) {
 	const { activeRef, close } = useCitationSheet()
 	const isMobile = useMedia('(max-width: 1023px)')
-	// Which citation the panel has finished animating in for. Deriving `entered` from it means the
-	// closed panel needs no reset write, and a different citation replays the transition rather than
-	// appearing already settled.
-	const [enteredFor, setEnteredFor] = useState<typeof activeRef>(null)
-	const entered = activeRef !== null && enteredFor === activeRef
-
+	const panelRef = useRef<HTMLDivElement>(null)
+	const triggerRef = useRef<HTMLElement | null>(null)
 	useEffect(() => {
-		if (!activeRef) return
-		const raf = requestAnimationFrame(() => setEnteredFor(activeRef))
-		return () => {
-			cancelAnimationFrame(raf)
+		if (isMobile || !activeRef) return
+		if (document.activeElement instanceof HTMLElement && !panelRef.current?.contains(document.activeElement)) {
+			triggerRef.current = document.activeElement
 		}
-	}, [activeRef])
+	}, [isMobile, activeRef])
+	const closeDesktopPanel = useCallback(() => {
+		// Closing a nonmodal panel must not move focus away from another part of the page.
+		if (panelRef.current?.contains(document.activeElement)) triggerRef.current?.focus()
+		close()
+	}, [close])
+	useEffect(() => {
+		if (isMobile || !activeRef) return
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape' && !event.defaultPrevented && panelRef.current?.contains(document.activeElement)) {
+				closeDesktopPanel()
+			}
+		}
+		document.addEventListener('keydown', onKeyDown)
+		return () => document.removeEventListener('keydown', onKeyDown)
+	}, [isMobile, activeRef, closeDesktopPanel])
 
 	const citedCell = useMemo(
 		() =>
@@ -69,90 +81,58 @@ export function CitationDetailPanel({
 	const mismatch = shouldFlagMismatch(activeRef.verification)
 	const unverified = !mismatch && shouldFlagUnverified(activeRef.verification)
 
-	const panel = (mode: 'mobile' | 'desktop') => {
-		const panelClass =
-			mode === 'mobile'
-				? `relative flex max-h-[85vh] w-full flex-col overflow-hidden rounded-t-2xl border border-ai-line bg-surface transition-all duration-200 ease-out ${
-						entered ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'
-					}`
-				: `relative flex h-full w-[min(26vw,420px)] min-w-[320px] flex-col overflow-hidden rounded-lg border border-ai-line bg-surface transition-all duration-200 ease-out ${
-						entered ? 'translate-x-0 opacity-100' : 'translate-x-3 opacity-0'
-					}`
-
-		return (
-			<div className={panelClass}>
-				<div className="absolute top-0 left-0 h-full w-[3px]" style={{ backgroundColor: accent }} />
-
-				{mode === 'mobile' ? (
-					<div className="flex justify-center pt-2">
-						<span className="h-1 w-9 rounded-full bg-ai-handle" />
-					</div>
-				) : null}
-
-				<div className="flex items-start gap-2.5 border-b border-ai-line py-3 pr-3 pl-4">
-					<span
-						className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md"
-						style={{ backgroundColor: `${accent}1f`, color: accent }}
-					>
-						<Icon name={iconName} height={12} width={12} />
-					</span>
-					<div className="flex min-w-0 flex-1 flex-col gap-0.5">
-						<span className="text-[10.5px] font-semibold tracking-[0.08em] uppercase" style={{ color: accent }}>
-							{badge}
-						</span>
-						{headline ? (
-							<span className="text-lg leading-tight font-semibold text-ai-primary tabular-nums">{headline}</span>
-						) : null}
-						{description ? <span className="text-xs text-ai-tertiary">{description}</span> : null}
-						{asOfText ? <span className="text-[11px] text-ai-muted">as of {asOfText}</span> : null}
-					</div>
-					<div className="flex shrink-0 items-center gap-1">
-						{onBackToDashboard ? (
-							<button
-								type="button"
-								onClick={onBackToDashboard}
-								className="rounded-md px-2 py-1 text-[11px] font-medium text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
-							>
-								‹ Dashboard
-							</button>
-						) : null}
-						{mode === 'mobile' ? (
-							<Ariakit.DialogDismiss
-								aria-label="Close"
-								className="flex size-7 items-center justify-center rounded-md text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
-							>
-								<Icon name="x" className="size-4" />
-							</Ariakit.DialogDismiss>
-						) : (
-							<button
-								type="button"
-								onClick={close}
-								aria-label="Close"
-								className="flex size-7 items-center justify-center rounded-md text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
-							>
-								<Icon name="x" className="size-4" />
-							</button>
-						)}
-					</div>
-				</div>
-
-				<div className="flex flex-1 flex-col gap-2.5 overflow-y-auto px-4 py-3.5">
-					{mismatch ? (
-						<div className="flex items-start gap-1.5 rounded-md bg-ai-warning-soft px-2.5 py-2 text-xs text-ai-warning">
-							<Icon name="alert-triangle" height={13} width={13} className="mt-px shrink-0" />
-							<span>{mismatchLabel(activeRef)}</span>
-						</div>
-					) : unverified ? (
-						<div className="flex items-start gap-1.5 rounded-md bg-ai-surface-muted px-2.5 py-2 text-xs text-ai-tertiary">
-							<Icon name="help-circle" height={13} width={13} className="mt-px shrink-0" />
-							<span>{unverifiedLabel()}</span>
-						</div>
-					) : null}
-					<PillBody reference={activeRef} citedCell={citedCell} advancedProvenance={advancedProvenance} />
-				</div>
+	const header = (mode: 'mobile' | 'desktop') => (
+		<div className="flex shrink-0 items-start gap-2.5 border-b border-subtle py-3 pr-3 pl-4">
+			<span className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md ${accent.chip}`}>
+				<Icon name={iconName} height={14} width={14} />
+			</span>
+			<div className="flex min-w-0 flex-1 flex-col gap-0.5">
+				<span className={`label-xs tracking-wide uppercase ${accent.text}`}>{badge}</span>
+				{headline ? <span className="heading-sm text-primary tabular-nums">{headline}</span> : null}
+				{description ? <span className="body-sm text-secondary">{description}</span> : null}
+				{asOfText ? <span className="body-sm text-tertiary">as of {asOfText}</span> : null}
 			</div>
-		)
-	}
+			<div className="flex shrink-0 items-center gap-1">
+				{onBackToDashboard ? (
+					<Button type="button" variant="ghost" size="sm" onClick={onBackToDashboard}>
+						<Icon name="chevron-left" height={14} width={14} />
+						Dashboard
+					</Button>
+				) : null}
+				{mode === 'mobile' ? (
+					<DialogCloseButton ariaLabel="Close source detail" />
+				) : (
+					<Button
+						type="button"
+						variant="ghost"
+						size="md"
+						square
+						onClick={closeDesktopPanel}
+						aria-label="Close source detail"
+					>
+						<Icon name="x" className="size-4" />
+					</Button>
+				)}
+			</div>
+		</div>
+	)
+
+	const body = (
+		<div className={`${dialogScrollableBodyStyles} flex flex-col gap-2.5 px-4 py-3.5`}>
+			{mismatch ? (
+				<div className="flex items-start gap-1.5 rounded-md bg-warning/10 px-2.5 py-2 body-sm text-warning">
+					<Icon name="alert-triangle" height={14} width={14} className="mt-px shrink-0" />
+					<span>{mismatchLabel(activeRef)}</span>
+				</div>
+			) : unverified ? (
+				<div className="flex items-start gap-1.5 rounded-md bg-surface-elevated-1 px-2.5 py-2 body-sm text-secondary">
+					<Icon name="help-circle" height={14} width={14} className="mt-px shrink-0" />
+					<span>{unverifiedLabel()}</span>
+				</div>
+			) : null}
+			<PillBody reference={activeRef} citedCell={citedCell} advancedProvenance={advancedProvenance} />
+		</div>
+	)
 
 	if (isMobile) {
 		return (
@@ -166,20 +146,28 @@ export function CitationDetailPanel({
 					aria-label="Source detail"
 					portal
 					unmountOnHide
-					backdrop={
-						<div
-							className={`fixed inset-0 z-40 bg-ai-backdrop-soft transition-opacity duration-200 ${
-								entered ? 'opacity-100' : 'opacity-0'
-							}`}
-						/>
-					}
-					className="fixed inset-x-0 bottom-0 z-50 m-0 bg-transparent p-0 outline-hidden"
+					className={`${dialogSurfaceStyles} [--dialog-width:480px]`}
 				>
-					{panel('mobile')}
+					<div className={`absolute top-0 left-0 h-full w-[3px] ${accent.bar}`} />
+					{header('mobile')}
+					{body}
 				</Ariakit.Dialog>
 			</Ariakit.DialogProvider>
 		)
 	}
 
-	return <div className="hidden shrink-0 overflow-hidden pl-2.5 lg:block">{panel('desktop')}</div>
+	return (
+		<div className="hidden shrink-0 overflow-hidden pl-2.5 lg:block">
+			<div
+				ref={panelRef}
+				role="region"
+				aria-label="Source detail"
+				className="relative flex h-full w-[min(26vw,420px)] min-w-[320px] flex-col overflow-hidden rounded-lg border border-subtle bg-surface"
+			>
+				<div className={`absolute top-0 left-0 h-full w-[3px] ${accent.bar}`} />
+				{header('desktop')}
+				{body}
+			</div>
+		</div>
+	)
 }

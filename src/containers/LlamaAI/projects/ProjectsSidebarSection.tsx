@@ -3,12 +3,16 @@ import Router from 'next/router'
 import { useEffect, useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
+import { RetryNotice } from '~/containers/LlamaAI/components/RetryNotice'
 import { AgenticSessionItem } from '~/containers/LlamaAI/components/sidebar/AgenticSessionItem'
+import { SIDEBAR_ROW } from '~/containers/LlamaAI/components/sidebar/AgenticSidebar'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { useLlamaAINavigate } from '~/contexts/LlamaAINavigate'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { useMedia } from '~/hooks/useMedia'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { Skeleton } from '~/ui/Skeleton'
 import { CreateProjectModal } from './CreateProjectModal'
 import { useProjectList, useProjectSessions } from './hooks'
 import { orderVisibleProjectSessions } from './sessionOrdering'
@@ -45,7 +49,7 @@ export function ProjectsSidebarSection({
 	const tier = getProjectTier(user, hasActiveSubscription, isTrial)
 	const isLocked = tier === 'free'
 	const createStore = Ariakit.useDialogStore()
-	const { data, isLoading } = useProjectList(!isLocked)
+	const { data, isLoading, error, isFetching, refetch } = useProjectList(!isLocked)
 	const expandedProjectId = currentProjectId ?? currentSessionProjectId ?? storedProjectId
 	const projectSessions = useProjectSessions(isLocked ? null : expandedProjectId)
 	const projects = data ?? EMPTY_PROJECTS
@@ -110,57 +114,48 @@ export function ProjectsSidebarSection({
 
 	return (
 		<div className="flex flex-col gap-1 px-4">
-			<div className="flex items-center justify-between pt-1 pb-0.5">
-				<h2 className="text-xs font-normal tracking-normal text-ai-tertiary normal-case">Projects</h2>
-				<button
-					type="button"
-					onClick={() => goTo('/ai/projects')}
-					className="text-[11px] text-ai-muted hover:text-brand"
-				>
+			<div className="flex min-h-6 items-center justify-between pt-1">
+				<h2 className="label-sm text-secondary">Projects</h2>
+				<Button type="button" size="sm" variant="ghost" onClick={() => goTo('/ai/projects')} className="-mr-2">
 					View all
-				</button>
+				</Button>
 			</div>
 
 			{isLocked ? (
-				<button
-					type="button"
-					onClick={() => goTo('/subscription')}
-					className="flex items-center justify-between gap-2 rounded-md border border-dashed border-ai-line px-2 py-1.5 text-left text-[11px] text-ai-tertiary transition-colors hover:border-brand hover:text-brand"
-				>
-					<span className="flex items-center gap-1.5">
-						<Icon name="folder-plus" height={12} width={12} />
+				<Button type="button" size="md" onClick={() => goTo('/subscription')} className="w-full justify-between">
+					<span className="flex items-center gap-1">
+						<Icon name="folder-plus" height={14} width={14} />
 						Upgrade for projects
 					</span>
-					<Icon name="chevron-right" height={12} width={12} />
-				</button>
+					<Icon name="chevron-right" height={14} width={14} />
+				</Button>
 			) : (
 				<>
 					<Ariakit.DialogDisclosure
 						store={createStore}
 						type="button"
-						className="-mx-1.5 grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-1 rounded-md px-1.5 py-1 text-left text-xs text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+						className={`${SIDEBAR_ROW} -mx-2 text-left text-secondary not-disabled:not-aria-disabled:hover:text-primary`}
 					>
-						<span className="inline-flex justify-center font-medium text-brand" aria-hidden>
-							+
-						</span>
+						<Icon name="plus" height={16} width={16} className="shrink-0 text-link" />
 						<span className="min-w-0 truncate">New project</span>
 					</Ariakit.DialogDisclosure>
 
+					{error ? (
+						<RetryNotice message="Couldn't load projects." retrying={isFetching} onRetry={() => void refetch()} />
+					) : null}
 					{isLoading ? (
-						<ul aria-hidden className="flex flex-col">
+						<ul role="status" aria-label="Loading projects" className="flex flex-col">
 							{[0, 1, 2].map((i) => (
-								<li
-									key={i}
-									className="-mx-1.5 flex h-[26px] items-center gap-1.5 px-1.5 py-1"
-									style={{ opacity: 1 - i * 0.25 }}
-								>
-									<span className="size-3 shrink-0 rounded-sm bg-ai-surface-muted" />
-									<span className="h-3 flex-1 rounded-sm bg-ai-surface-muted" />
+								<li key={i} className="-mx-2 flex h-8 items-center gap-1.5 px-2 py-1.5">
+									<Skeleton className="size-4 shrink-0" />
+									<Skeleton className="h-3 flex-1" />
 								</li>
 							))}
 						</ul>
 					) : visible.length === 0 ? (
-						<p className="-mx-1.5 px-1.5 py-1 text-[10px] text-ai-muted">No projects yet</p>
+						!error ? (
+							<p className="px-2 py-1.5 body-sm text-tertiary">No projects yet</p>
+						) : null
 					) : (
 						<ul className="flex flex-col">
 							{visible.map((p) => {
@@ -173,18 +168,32 @@ export function ProjectsSidebarSection({
 										<button
 											type="button"
 											onClick={() => goToProject(p.id)}
-											className={`-mx-1.5 flex items-center gap-1.5 rounded-md px-1.5 py-1.25 text-left text-xs transition-colors ${
-												isActive
-													? 'bg-brand/12 text-brand'
-													: isSessionContext
-														? 'font-medium text-brand hover:bg-ai-surface-muted'
-														: 'text-ai-tertiary hover:bg-ai-surface-muted hover:text-ai-primary'
-											}`}
+											data-active={isActive}
+											className={`${SIDEBAR_ROW} -mx-2 text-left ${isSessionContext ? 'font-medium text-link' : ''}`}
 										>
+											<Icon
+												name="folder"
+												height={16}
+												width={16}
+												aria-hidden="true"
+												className={`shrink-0 ${isActive || isSessionContext ? '' : 'text-secondary'}`}
+											/>
 											<span className="min-w-0 flex-1 truncate">{p.name}</span>
 										</button>
+										{isExpanded && projectSessions.error ? (
+											<RetryNotice
+												message="Couldn't load project chats."
+												retrying={projectSessions.isFetching}
+												onRetry={() => void projectSessions.refetch()}
+											/>
+										) : null}
+										{isExpanded && projectSessions.isLoading ? (
+											<div role="status" aria-label="Loading project chats" className="py-2">
+												<Skeleton className="h-3 w-full" />
+											</div>
+										) : null}
 										{isExpanded && nestedSessions.length > 0 ? (
-											<ul className="mt-0.5 mb-1 ml-0.5 flex flex-col border-l border-ai-line pl-1.5">
+											<ul className="mt-0.5 mb-1 ml-0.5 flex flex-col border-l border-subtle pl-3">
 												{nestedSessions.map((s) => {
 													const sidebarSession = toSidebarSession(s, p.id)
 													return (
@@ -201,16 +210,17 @@ export function ProjectsSidebarSection({
 												})}
 												{(activeProjectSessions?.length ?? 0) > nestedSessions.length ? (
 													<li>
-														<button
+														<Button
 															type="button"
+															size="sm"
+															variant="ghost"
 															onClick={() => {
 																goToProject(p.id)
 																if (isDrawer) hideSidebar()
 															}}
-															className="rounded-md px-2 py-1 text-left text-[10px] text-ai-muted hover:underline"
 														>
 															Show more
-														</button>
+														</Button>
 													</li>
 												) : null}
 											</ul>
@@ -222,13 +232,10 @@ export function ProjectsSidebarSection({
 					)}
 
 					{hasOverflow ? (
-						<button
-							type="button"
-							onClick={() => goTo('/ai/projects')}
-							className="rounded-md px-2 py-1 text-left text-xs text-brand hover:underline"
-						>
-							All projects ({projects.length}) →
-						</button>
+						<Button type="button" size="sm" variant="ghost" onClick={() => goTo('/ai/projects')} className="self-start">
+							All projects ({projects.length})
+							<Icon name="arrow-right" height={14} width={14} />
+						</Button>
 					) : null}
 				</>
 			)}

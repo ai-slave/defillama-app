@@ -5,7 +5,11 @@ import { toast } from 'react-hot-toast'
 import { useAuthContext } from '~/auth'
 import { AI_SERVER } from '~/constants'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
+import { Button } from '~/ui/Button'
+import { dialogScrollableBodyStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { textareaStyles } from '~/ui/Input'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { handleSimpleFetchResponse } from '~/utils/async'
 
@@ -57,69 +61,70 @@ export function FeedbackForm({
 	}
 
 	return (
-		<div className="flex flex-col gap-4">
-			<div className="flex flex-col gap-2">
-				<p className="m-0 text-sm font-medium">Rate this response</p>
-				<div className="flex gap-2">
-					<button
-						type="button"
-						onClick={() => setSelectedRating('good')}
+		<>
+			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
+				<fieldset className="flex flex-col gap-2">
+					<legend className="mb-2 label-sm text-secondary">Rate this response</legend>
+					<div className="flex gap-2">
+						<button
+							type="button"
+							onClick={() => setSelectedRating('good')}
+							disabled={isSubmittingFeedback}
+							aria-pressed={selectedRating === 'good'}
+							className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
+								selectedRating === 'good'
+									? 'border-success bg-success/12 text-success'
+									: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-success not-disabled:not-aria-disabled:hover:text-success'
+							}`}
+						>
+							<Icon name="thumbs-up" height={14} width={14} />
+							Good
+						</button>
+						<button
+							type="button"
+							onClick={() => setSelectedRating('bad')}
+							disabled={isSubmittingFeedback}
+							aria-pressed={selectedRating === 'bad'}
+							className={`flex min-h-8 flex-1 items-center justify-center gap-1 rounded-lg border px-3 py-1.5 label-sm ${
+								selectedRating === 'bad'
+									? 'border-error bg-error/12 text-error'
+									: 'border-medium text-secondary not-disabled:not-aria-disabled:hover:border-error not-disabled:not-aria-disabled:hover:text-error'
+							}`}
+						>
+							<Icon name="thumbs-down" height={14} width={14} />
+							Bad
+						</button>
+					</div>
+				</fieldset>
+				<label className="flex flex-col gap-1.5">
+					<span className="label-sm text-secondary">Additional feedback (optional)</span>
+					<textarea
+						placeholder="Share your thoughts..."
+						className={`${textareaStyles} w-full resize-none`}
+						rows={3}
+						maxLength={500}
+						value={feedbackText}
 						disabled={isSubmittingFeedback}
-						className={`flex flex-1 items-center justify-center gap-2 rounded-sm border p-3 transition-colors ${
-							selectedRating === 'good'
-								? 'border-success bg-success/12 text-success'
-								: 'border-ai-line text-ai-tertiary hover:border-success hover:bg-success/5'
-						}`}
-					>
-						<Icon name="thumbs-up" height={16} width={16} />
-						<span className="text-sm font-medium">Good</span>
-					</button>
-					<button
-						type="button"
-						onClick={() => setSelectedRating('bad')}
-						disabled={isSubmittingFeedback}
-						className={`flex flex-1 items-center justify-center gap-2 rounded-sm border p-3 transition-colors ${
-							selectedRating === 'bad'
-								? 'border-error bg-error/12 text-error'
-								: 'border-ai-line text-ai-tertiary hover:border-error hover:bg-error/5'
-						}`}
-					>
-						<Icon name="thumbs-down" height={16} width={16} />
-						<span className="text-sm font-medium">Bad</span>
-					</button>
-				</div>
+						onChange={(e) => setFeedbackText(e.target.value)}
+					/>
+					<span className="body-sm text-tertiary">{finalFeedbackText.length}/500</span>
+				</label>
 			</div>
-			<label className="flex flex-col gap-2">
-				<span className="text-sm text-ai-tertiary">Additional feedback (optional)</span>
-				<textarea
-					placeholder="Share your thoughts..."
-					className="w-full rounded-sm border border-ai-line bg-page p-3"
-					rows={3}
-					maxLength={500}
-					value={feedbackText}
-					disabled={isSubmittingFeedback}
-					onChange={(e) => setFeedbackText(e.target.value)}
-				/>
-			</label>
-			<div className="flex items-center justify-between">
-				<p className="m-0 text-xs text-ai-tertiary">{finalFeedbackText.length}/500</p>
-				<div className="flex gap-3">
-					<Ariakit.DialogDismiss
-						disabled={isSubmittingFeedback}
-						className="rounded-sm px-3 py-2 text-xs text-ai-tertiary hover:bg-ai-surface-muted disabled:opacity-50"
-					>
-						Cancel
-					</Ariakit.DialogDismiss>
-					<button
-						type="button"
-						onClick={handleSubmitFeedback}
-						disabled={isSubmittingFeedback || !selectedRating}
-						className="rounded-sm bg-brand px-3 py-2 text-xs text-ai-white hover:opacity-90 disabled:opacity-50"
-					>
-						{isSubmittingFeedback ? 'Submitting...' : 'Submit'}
-					</button>
-				</div>
+			<div className="flex shrink-0 justify-end gap-2 border-t border-subtle px-4 py-3">
+				<Ariakit.DialogDismiss disabled={isSubmittingFeedback} render={<Button size="md" />}>
+					Cancel
+				</Ariakit.DialogDismiss>
+				<Button
+					type="button"
+					size="md"
+					variant="primary"
+					onClick={handleSubmitFeedback}
+					disabled={isSubmittingFeedback || !selectedRating}
+				>
+					{isSubmittingFeedback ? <LoadingSpinner size={14} /> : null}
+					{isSubmittingFeedback ? 'Submitting…' : 'Submit'}
+				</Button>
 			</div>
-		</div>
+		</>
 	)
 }

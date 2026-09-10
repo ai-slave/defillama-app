@@ -153,11 +153,12 @@ test('a restored result with nothing to show is not expandable', async () => {
 	]
 	await draw(steps, false)
 	await act(async () => header().click())
+	// A row with nothing to show is plain text, not a button that does nothing.
+	expect(rows()).toHaveLength(2)
 	const rowButtons = [...container.querySelectorAll<HTMLButtonElement>('li button')]
-	expect(rowButtons.map((b) => b.getAttribute('aria-expanded'))).toEqual([null, 'false'])
-	await act(async () => rowButtons[0].click())
+	expect(rowButtons.map((b) => b.getAttribute('aria-expanded'))).toEqual(['false'])
 	expect(container.querySelector('li .select-text')).toBeNull()
-	await act(async () => rowButtons[1].click())
+	await act(async () => rowButtons[0].click())
 	expect(container.querySelector('li .select-text')?.textContent).toContain('3 results')
 })
 
@@ -234,22 +235,22 @@ test.each(['live', 'completed', 'restored'] as const)(
 			)
 		await render(false)
 		if (phase !== 'live') await act(async () => header().click())
-		const rowButton = () => container.querySelector<HTMLButtonElement>('li button')!
+		const rowButton = () => container.querySelector<HTMLButtonElement>('li button')
 		expect(container.textContent).not.toContain(query)
-		expect(rowButton().hasAttribute('aria-expanded')).toBe(false)
-		await act(async () => rowButton().click())
+		// Without permission the row has nothing to open, so it is not a button at all.
+		expect(rowButton()).toBeNull()
 		expect(container.querySelector('li pre')).toBeNull()
 
 		await render(true)
 		expect(container.textContent).toContain(query)
-		await act(async () => rowButton().click())
+		await act(async () => rowButton()!.click())
 		expect(container.querySelector('li pre')?.textContent).toContain(query)
 
 		// A permission change must also remove details that were already open.
 		await render(false)
 		expect(container.textContent).not.toContain(query)
 		expect(container.querySelector('li pre')).toBeNull()
-		expect(rowButton().hasAttribute('aria-expanded')).toBe(false)
+		expect(rowButton()).toBeNull()
 
 		steps = steps.map((step) =>
 			step.kind === 'tool'

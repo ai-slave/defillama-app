@@ -5,15 +5,19 @@ import type { SearchResult } from '~/containers/LlamaAI/types'
 
 const EMPTY_RESULTS: Array<SearchResult> = []
 
-/** The query the current results answer, and those results. */
+/** The query the current results answer, and those results; `failed` when the request did not complete. */
 interface SettledSearch {
 	query: string
 	results: Array<SearchResult>
+	failed: boolean
 }
 
-const NO_RESULTS: SettledSearch = { query: '', results: EMPTY_RESULTS }
+const NO_RESULTS: SettledSearch = { query: '', results: EMPTY_RESULTS, failed: false }
 
-type SemanticSearchOutcome = { kind: 'results'; results: Array<SearchResult> } | { kind: 'empty' } | { kind: 'aborted' }
+type SemanticSearchOutcome =
+	| { kind: 'results'; results: Array<SearchResult> }
+	| { kind: 'failed' }
+	| { kind: 'aborted' }
 
 // Owns the try: the compiler can lower neither the finalizer nor the logical, coalescing and
 // optional-chained tests inside it. The caller keeps the decisions that touch state.
@@ -24,11 +28,11 @@ async function fetchSemanticResults(
 ): Promise<SemanticSearchOutcome> {
 	try {
 		const res = await authorizedFetch(`${AI_SERVER}/search?q=${encodeURIComponent(query)}&limit=10`, { signal })
-		if (!res || !res.ok) return { kind: 'empty' }
+		if (!res || !res.ok) return { kind: 'failed' }
 		const data = await res.json()
 		return { kind: 'results', results: data.results ?? [] }
 	} catch (error) {
-		return (error as { name?: string } | null)?.name === 'AbortError' ? { kind: 'aborted' } : { kind: 'empty' }
+		return (error as { name?: string } | null)?.name === 'AbortError' ? { kind: 'aborted' } : { kind: 'failed' }
 	}
 }
 
@@ -42,14 +46,13 @@ export function useSemanticSearch(enabled: boolean) {
 
 	const trimmed = query.trim()
 	const active = enabled && isAuthenticated && trimmed !== ''
-	// Forgotten as the box empties, so clearing and retyping runs the search again. Without this a
-	// failed request would be remembered as a settled empty result and never retried, since a failure
-	// and a genuinely empty answer are indistinguishable by the time they get here.
+	// Forgotten as the box empties, so clearing and retyping runs the search again.
 	if (!active && settled.query !== '') setSettled(NO_RESULTS)
 	const isSearching = active && trimmed !== settled.query
 	// Results outlive the keystroke that supersedes them, so the list does not flash empty while the
 	// next search runs.
 	const results = active ? settled.results : EMPTY_RESULTS
+	const failed = active && settled.failed && trimmed === settled.query
 
 	const search = useCallback(
 		async (q: string) => {
@@ -59,10 +62,17 @@ export function useSemanticSearch(enabled: boolean) {
 			const outcome = await fetchSemanticResults(authorizedFetch, q, controller.signal)
 			// A superseded search reports nothing: its results and its emptiness are both stale.
 			if (controller.signal.aborted || outcome.kind === 'aborted') return
-			setSettled({ query: q, results: outcome.kind === 'results' ? outcome.results : EMPTY_RESULTS })
+			setSettled(
+				outcome.kind === 'results'
+					? { query: q, results: outcome.results, failed: false }
+					: { query: q, results: EMPTY_RESULTS, failed: true }
+			)
 		},
 		[authorizedFetch]
 	)
+
+	// Forgetting the failed settlement makes the query unsettled again, so the debounce effect reruns it.
+	const retry = useCallback(() => setSettled(NO_RESULTS), [])
 
 	useEffect(() => {
 		if (!active || trimmed === settled.query) return
@@ -78,5 +88,5 @@ export function useSemanticSearch(enabled: boolean) {
 		abortRef.current?.abort()
 	}, [])
 
-	return { query, setQuery, results, isSearching, clear }
+	return { query, setQuery, results, isSearching, failed, retry, clear }
 }

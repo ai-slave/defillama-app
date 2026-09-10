@@ -101,7 +101,7 @@ async function search(text: string) {
 function checked() {
 	return [...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
 		.filter((el) => el.checked)
-		.map((el) => el.parentElement!.textContent?.trim())
+		.map((el) => el.closest('label')!.textContent?.trim())
 }
 
 test('select all, deselect, and filtering use visible checkbox rows without semantic search', async () => {

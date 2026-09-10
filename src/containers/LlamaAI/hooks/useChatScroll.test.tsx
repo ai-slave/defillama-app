@@ -111,6 +111,7 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 		host.remove()
 		vi.useRealTimers()
 		vi.unstubAllGlobals()
+		vi.restoreAllMocks()
 	})
 
 	// The failure users hit: the ResizeObserver fires between the physical scroll and the
@@ -120,6 +121,72 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 	// The case gesture-sniffing cannot catch: dragging the scrollbar, PageUp, or momentum
 	// scrolling emit no wheel or touch event, so the only evidence the user moved is that
 	// scrollTop sits below where auto-follow last put it.
+	test('reduced-motion scroll reattaches immediately and keeps following new content', async () => {
+		vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: true } as MediaQueryList)
+		const scroll = vi.spyOn(container, 'scrollTo').mockImplementation(() => {})
+		container.scrollTop = 1200
+		await act(async () => growContent(BOTTOM + 100))
+		expect(api.isAttached).toBe(false)
+		await act(async () => api.scrollToBottom())
+		expect(container.scrollTop).toBe(BOTTOM + 100)
+		expect(api.isAttached).toBe(true)
+		expect(scroll).not.toHaveBeenCalled()
+		await act(async () => growContent(BOTTOM + 200))
+		expect(container.scrollTop).toBe(BOTTOM + 200)
+	})
+	test('normal scroll still waits for smooth scrolling to finish before following', async () => {
+		vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList)
+		const scroll = vi.spyOn(container, 'scrollTo').mockImplementation(() => {})
+		container.scrollTop = 1200
+		await act(async () => growContent(BOTTOM + 100))
+		expect(api.isAttached).toBe(false)
+		await act(async () => api.scrollToBottom())
+		expect(scroll).toHaveBeenCalledWith({ top: BOTTOM + 100, behavior: 'smooth' })
+		expect(api.isAttached).toBe(false)
+		await act(async () => growContent(BOTTOM + 200))
+		expect(container.scrollTop).toBe(1200)
+		await act(async () => container.dispatchEvent(new Event('scrollend')))
+		expect(api.isAttached).toBe(true)
+		await act(async () => growContent(BOTTOM + 300))
+		expect(container.scrollTop).toBe(BOTTOM + 300)
+	})
+
+	test.each([false, true])(
+		'preserves upward intent after scroll to bottom and completion (reduced motion: %s)',
+		async (reducedMotion) => {
+			vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: reducedMotion } as MediaQueryList)
+			vi.spyOn(container, 'scrollTo').mockImplementation(() => {})
+			await act(async () => api.scrollToBottom())
+			await act(async () => {
+				container.dispatchEvent(new WheelEvent('wheel', { deltaY: -20 }))
+				container.scrollTop = BOTTOM - VIEWPORT - 20
+				container.dispatchEvent(new Event('scroll'))
+				flushFrames()
+			})
+			await act(async () => root.render(<Harness isStreaming={false} onReady={(next) => (api = next)} />))
+			await act(async () => {
+				container.dispatchEvent(new Event('scrollend'))
+				vi.advanceTimersByTime(900)
+				flushFrames()
+			})
+			expect(api.isAttached).toBe(false)
+			await act(async () => growContent(BOTTOM + 200))
+			expect(container.scrollTop).toBe(BOTTOM - VIEWPORT - 20)
+		}
+	)
+
+	test('smooth scroll still reattaches when the browser omits scrollend', async () => {
+		vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: false } as MediaQueryList)
+		vi.spyOn(container, 'scrollTo').mockImplementation(() => {})
+		await act(async () => api.scrollToBottom())
+		await act(async () => vi.advanceTimersByTime(799))
+		expect(api.isAttached).toBe(false)
+		await act(async () => vi.advanceTimersByTime(1))
+		expect(api.isAttached).toBe(true)
+		await act(async () => growContent(BOTTOM + 200))
+		expect(container.scrollTop).toBe(BOTTOM + 200)
+	})
+
 	test('stops following when the user scrolls up with no wheel or touch event at all', async () => {
 		await act(async () => growContent(BOTTOM + 100))
 		expect(container.scrollTop).toBe(BOTTOM + 100)

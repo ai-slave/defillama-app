@@ -454,7 +454,7 @@ html.dark .investors-dashboard.investors-dashboard-embedded {
 }
 
 /* Legacy dialog shell — consumed ONLY by excluded surfaces (ProDashboard,
-   Subscription/Topup/Stripe modals, LlamaAI welcome, EntityQuestionsStrip).
+   legacy Subscription/Stripe modals, EntityQuestionsStrip).
    In-scope dialogs use dialogSurfaceStyles from src/ui/Dialog.tsx. Do not
    add new consumers. */
 @utility dialog {

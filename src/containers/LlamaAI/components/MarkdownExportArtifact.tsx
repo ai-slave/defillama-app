@@ -72,27 +72,26 @@ export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: Markd
 				})
 				downloadMarkdownMutation.mutate({ url: safeUrl, filename: mdExport.filename })
 			}}
-			className="flex w-full items-center gap-3 rounded-lg border border-ai-line bg-ai-surface-card p-3 text-left transition-colors hover:border-ai-action hover:bg-ai-action/5 disabled:cursor-not-allowed disabled:opacity-70"
+			className="flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface p-3 text-left not-disabled:not-aria-disabled:hover:bg-hover-row disabled:cursor-not-allowed disabled:opacity-60"
 		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-ai-action/10">
-				<Icon name="file-text" className="size-5 text-ai-action" />
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-muted">
+				<Icon name="file-text" className="size-5 text-link-on-tint" />
 			</span>
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<span className="m-0 truncate text-sm font-medium text-(--text1)">{mdExport.title}</span>
-				<span className="m-0 text-xs text-(--text3)">
+				<span className="m-0 truncate label-md text-primary">{mdExport.title}</span>
+				<span className="m-0 body-sm text-secondary">
 					{downloadMarkdownMutation.isPending
 						? 'Downloading…'
 						: (getOwnRegistryValue(FILE_TYPE_LABELS, fileExtension(mdExport.filename)) ?? 'File')}
 				</span>
 				{downloadMarkdownMutation.error ? (
-					<span role="alert" className="m-0 text-xs text-error">
+					<span role="alert" className="m-0 body-sm text-error">
 						{downloadMarkdownMutation.error.message}
 					</span>
 				) : null}
 			</span>
-			<span className="flex shrink-0 items-center gap-1.5 text-ai-action">
-				<Icon name="download-paper" className="size-4" />
-				<span className="text-sm font-medium">.{fileExtension(mdExport.filename)}</span>
+			<span className="flex shrink-0 items-center gap-1 label-sm text-link">
+				<Icon name="download-paper" className="size-3.5" />.{fileExtension(mdExport.filename)}
 			</span>
 		</button>
 	)

@@ -137,7 +137,7 @@ export function LlamaAITab({ selectedChart, onChartSelect }: LlamaAITabProps) {
 										e.stopPropagation()
 										setDeleteConfirmId(chart.id)
 									}}
-									className="rounded-sm p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/10 dark:hover:bg-ai-hover-strong"
+									className="rounded-sm p-1 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/10"
 								>
 									<Icon name="x" height={14} width={14} className="text-pro-text-tertiary" />
 								</button>

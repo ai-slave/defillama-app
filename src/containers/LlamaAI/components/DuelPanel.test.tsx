@@ -77,7 +77,8 @@ describe('DuelPanel voting eligibility', () => {
 
 		await render({ ...arm(artifactAnswer), isStreaming: true }, arm(answer()))
 
-		expect(container.querySelector('[aria-label="Response 1 is still loading"]')).not.toBeNull()
+		const status = container.querySelector('[role="status"]')
+		expect(status?.textContent).toContain('Waiting for Response 1')
 	})
 
 	test('does not treat tool execution progress as an answer', async () => {

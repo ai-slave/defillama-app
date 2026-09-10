@@ -2,6 +2,7 @@ import Router from 'next/router'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
 import { useActiveTip } from '~/containers/LlamaAI/hooks/useLlamaAITip'
 import { isSettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -29,29 +30,34 @@ export function LlamaAITipBanner() {
 	}
 
 	return (
-		<div className="flex items-center gap-3 rounded-lg border border-ai-line bg-surface px-3.5 py-2.5">
-			<Tooltip content={tip.title} className="min-w-0 flex-1" data-fullwidth>
-				<p className="m-0 truncate text-[13px] text-ai-secondary" title={tip.title}>
-					{tip.title}
-				</p>
+		<div className="flex items-center gap-3 rounded-lg border border-subtle bg-surface px-3.5 py-2.5">
+			<Tooltip
+				content={tip.title}
+				render={<p />}
+				className="m-0 min-w-0 flex-1 truncate text-[13px] text-secondary"
+				data-fullwidth
+			>
+				{tip.title}
 			</Tooltip>
 			{tip.cta.kind !== 'none' && (
 				<button
 					type="button"
 					onClick={onPrimary}
-					className="shrink-0 rounded-md bg-ai-inverse px-3 py-1 text-xs font-medium text-ai-on-inverse transition-opacity hover:opacity-90"
+					className="shrink-0 rounded-md bg-primary px-3 py-1 text-xs font-medium text-on-brand not-disabled:not-aria-disabled:hover:opacity-90"
 				>
 					{tip.cta.label}
 				</button>
 			)}
-			<button
+			<Button
 				type="button"
+				variant="ghost"
+				size="md"
+				square
 				onClick={() => void dismissTip(tip)}
 				aria-label="Dismiss tip"
-				className="flex size-6 shrink-0 items-center justify-center rounded-full text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-primary"
 			>
-				<Icon name="x" height={14} width={14} />
-			</button>
+				<Icon name="x" height={16} width={16} />
+			</Button>
 		</div>
 	)
 }

@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { reasoningPreview, summarizeSteps, toolPreview, toolStepHasDetails } from '~/containers/LlamaAI/agentSteps'
+import {
+	CODE_BLOCK,
+	DATA_TABLE,
+	DATA_TABLE_CELL,
+	DATA_TABLE_HEAD,
+	DATA_TABLE_WRAPPER
+} from '~/containers/LlamaAI/components/codeBlockStyles'
 import { ToolDataView } from '~/containers/LlamaAI/components/messages/ToolDataView'
 import {
 	LLAMA_AI_ANIMATION_SRC,
@@ -7,7 +14,7 @@ import {
 } from '~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads'
 import { useCurrentSecond } from '~/containers/LlamaAI/components/status/useCurrentSecond'
 import { useHackerMode } from '~/containers/LlamaAI/components/status/useHackerMode'
-import { getToolLabel, TOOL_ICONS } from '~/containers/LlamaAI/toolMetadata'
+import { getToolLabel, TOOL_ICONS, TOOL_TONE_CLASS } from '~/containers/LlamaAI/toolMetadata'
 import type { AgentStep, SpawnAgentStatus, ToolExecution } from '~/containers/LlamaAI/types'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { Icon } from '~/ui/Icon'
@@ -21,7 +28,7 @@ const FACT_CHECK_LABELS = {
 	verifying: 'Checking claims',
 	finalizing: 'Preparing verified answer'
 }
-const FALLBACK_ICON = { icon: 'sparkles', color: '#919296' }
+const FALLBACK_ICON = { icon: 'sparkles', tone: 'neutral' } as const
 // A return scroll toward a moving bottom rarely lands exactly on it; this close counts as being there.
 const FOLLOW_THRESHOLD_PX = 48
 
@@ -44,7 +51,7 @@ export function ElapsedTimeLabel({ startedAt }: { startedAt?: number }) {
 	if (!startedAt) return null
 	const elapsed = Math.max(0, currentSecond - Math.floor(startedAt / 1000))
 
-	return <span className="font-mono text-xs text-ai-muted tabular-nums">{elapsed}s</span>
+	return <span className="font-mono text-xs text-tertiary tabular-nums">{elapsed}s</span>
 }
 
 function Caret() {
@@ -60,9 +67,9 @@ function Chevron({ open }: { open: boolean }) {
 	return (
 		<Icon
 			name="chevron-right"
-			height={12}
-			width={12}
-			className={`shrink-0 text-ai-muted transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
+			height={14}
+			width={14}
+			className={`shrink-0 text-tertiary duration-150 motion-safe:transition-transform ${open ? 'rotate-90' : ''}`}
 		/>
 	)
 }
@@ -117,7 +124,7 @@ export function AgentTimeline({
 	}
 	const last = steps[steps.length - 1]
 	const showTrailingThinking = streaming && (!last || (last.kind === 'tool' && last.status !== 'running'))
-	const text = hackerMode ? 'font-mono text-ai-terminal drop-shadow-ai-terminal' : 'text-ai-secondary'
+	const text = hackerMode ? 'font-mono text-ai-terminal drop-shadow-ai-terminal' : 'text-secondary'
 	const rows = expanded ? (
 		<TimelineRows
 			steps={steps}
@@ -140,7 +147,11 @@ export function AgentTimeline({
 					? FACT_CHECK_LABELS[factCheckPhase]
 					: 'LlamaAI is working'
 		return (
-			<section className={`flex gap-3 ${indent ? 'border-l-2 border-ai-line pl-4' : ''}`} aria-label="LlamaAI progress">
+			<section className={`flex gap-3 ${indent ? 'border-l-2 border-subtle pl-4' : ''}`} aria-label="LlamaAI progress">
+				{/* Rows stream too fast to announce; the phase is the one sentence worth hearing. */}
+				<p role="status" aria-live="polite" className="sr-only">
+					{phrase}
+				</p>
 				{/* Mounted once per run, not per step, so the animation does not restart. */}
 				<img
 					src={hackerMode ? LLAMA_AI_HACKER_ANIMATION_SRC : LLAMA_AI_ANIMATION_SRC}
@@ -169,25 +180,28 @@ export function AgentTimeline({
 
 	return (
 		<section
-			className={`flex flex-col gap-1.5 ${indent ? 'border-l-2 border-ai-line pl-4' : ''}`}
+			className={`flex flex-col gap-1.5 ${indent ? 'border-l-2 border-subtle pl-4' : ''}`}
 			aria-label="LlamaAI steps"
 		>
+			<p role="status" className="sr-only">
+				{summarizeSteps(steps)}
+			</p>
 			<button
 				type="button"
 				onClick={() => setToggled(!expanded)}
 				aria-expanded={expanded}
-				className={`flex w-full items-center gap-2 rounded-md py-1 text-left text-xs hover:bg-ai-hover-faint ${text}`}
+				className={`flex w-full items-center gap-2 rounded-md py-1 text-left text-xs not-disabled:not-aria-disabled:hover:bg-hover-row ${text}`}
 			>
 				<Icon
 					name="check"
 					height={12}
 					width={12}
-					className={`shrink-0 ${failed > 0 ? 'text-ai-warning' : 'text-ai-success-vivid'}`}
+					className={`shrink-0 ${failed > 0 ? 'text-warning' : 'text-success'}`}
 				/>
 				<span className="min-w-0 flex-1 truncate">{summarizeSteps(steps)}</span>
-				{failed > 0 ? <span className="shrink-0 text-[10px] text-ai-warning">{failed} failed</span> : null}
+				{failed > 0 ? <span className="shrink-0 body-sm text-warning">{failed} failed</span> : null}
 				{totalMs > 0 ? (
-					<span className="shrink-0 font-mono text-[10px] text-ai-muted tabular-nums">
+					<span className="shrink-0 mono-sm text-tertiary tabular-nums">
 						{formatStepDuration(totalMs)}
 						{totalCost > 0 ? ` · ${formatStepCost(totalCost)}` : ''}
 					</span>
@@ -238,7 +252,7 @@ function TimelineRows({
 	// The row being written is open; it collapses to its preview as soon as any later row arrives.
 	const last = steps[steps.length - 1]
 	const liveReasoning = streaming && last?.kind === 'reasoning' ? last.id : undefined
-	const muted = hackerMode ? 'text-ai-terminal/70' : 'text-ai-tertiary'
+	const muted = hackerMode ? 'text-ai-terminal/70' : 'text-tertiary'
 
 	return (
 		<ol
@@ -270,7 +284,7 @@ function TimelineRows({
 			{isCompacting ? (
 				<li className="overflow-clip">
 					<div className="flex items-center gap-2 py-0.5 motion-safe:animate-ai-step-enter">
-						<Icon name="layers" height={12} width={12} className="shrink-0 text-ai-muted motion-safe:animate-pulse" />
+						<Icon name="layers" height={14} width={14} className="shrink-0 text-tertiary motion-safe:animate-pulse" />
 						<span className={`text-xs ${muted}`}>Optimizing context memory&hellip;</span>
 					</div>
 				</li>
@@ -287,9 +301,9 @@ function TimelineRows({
 				<li key={agent.id} className="overflow-clip">
 					<div className="flex items-center gap-2 py-0.5 motion-safe:animate-ai-step-enter">
 						{agent.status === 'completed' ? (
-							<Icon name="check" height={12} width={12} className="shrink-0 text-ai-success-vivid" />
+							<Icon name="check" height={14} width={14} className="shrink-0 text-success" />
 						) : agent.status === 'error' ? (
-							<Icon name="x" height={12} width={12} className="shrink-0 text-ai-error-vivid" />
+							<Icon name="x" height={14} width={14} className="shrink-0 text-error" />
 						) : (
 							<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
 						)}
@@ -305,7 +319,7 @@ function TimelineRows({
 			{showTrailingThinking ? (
 				<li className="overflow-clip">
 					<div className={`flex items-center gap-2 py-0.5 text-xs motion-safe:animate-ai-step-enter ${muted}`}>
-						<span className="size-1.5 shrink-0 rounded-full bg-ai-muted" />
+						<span className="size-1.5 shrink-0 rounded-full bg-border-strong" />
 						<span>
 							Thinking&hellip;
 							<Caret />
@@ -340,14 +354,14 @@ function ReasoningRow({
 					className="flex items-center gap-2 py-0.5 text-left text-xs"
 				>
 					<span
-						className={`size-1.5 shrink-0 rounded-full ${live ? 'bg-brand motion-safe:animate-pulse' : 'bg-ai-muted'}`}
+						className={`size-1.5 shrink-0 rounded-full ${live ? 'bg-brand motion-safe:animate-pulse' : 'bg-border-strong'}`}
 					/>
 					<span className="flex min-w-0 flex-1 items-baseline gap-1">
-						<span className={`shrink-0 font-semibold ${hackerMode ? 'text-ai-terminal' : 'text-ai-secondary'}`}>
+						<span className={`shrink-0 font-semibold ${hackerMode ? 'text-ai-terminal' : 'text-secondary'}`}>
 							Reasoning
 						</span>
 						{open ? null : (
-							<span className={`truncate ${hackerMode ? 'text-ai-terminal/60' : 'text-ai-muted'}`}>
+							<span className={`truncate ${hackerMode ? 'text-ai-terminal/60' : 'text-tertiary'}`}>
 								: {reasoningPreview(step.text)}
 							</span>
 						)}
@@ -356,8 +370,8 @@ function ReasoningRow({
 				</button>
 				{open ? (
 					<div
-						className={`mt-0.5 mb-1 ml-3.5 border-l border-ai-line pl-3 font-mono text-xs leading-relaxed whitespace-pre-wrap ${
-							hackerMode ? 'text-ai-terminal/80' : 'text-ai-tertiary'
+						className={`mt-0.5 mb-1 ml-3.5 border-l border-subtle pl-3 font-mono text-xs leading-relaxed whitespace-pre-wrap ${
+							hackerMode ? 'text-ai-terminal/80' : 'text-tertiary'
 						}`}
 					>
 						{step.text}
@@ -384,58 +398,71 @@ function ToolRow({
 	const { execution } = step
 	const hasDetails = toolStepHasDetails(step, showToolDetails)
 	const parsedCost = execution?.costUsd ? parseFloat(execution.costUsd) : NaN
+	// Reasoning and tool rows share one uncarded row; only an opened row's details get a block.
+	const row = (
+		<>
+			{hasDetails ? <Chevron open={open} /> : <span className="w-3 shrink-0" />}
+			{step.status === 'running' ? (
+				<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
+			) : step.status === 'done' ? (
+				<Icon name="check" height={14} width={14} className="shrink-0 text-success" />
+			) : (
+				<Icon name="x" height={14} width={14} className="shrink-0 text-error" />
+			)}
+			<Icon
+				name={meta.icon as never}
+				height={14}
+				width={14}
+				className={`shrink-0 ${hackerMode ? 'text-ai-terminal' : TOOL_TONE_CLASS[meta.tone]}`}
+			/>
+			<span className="flex min-w-0 flex-1 items-baseline gap-1">
+				<span className={`shrink-0 font-semibold ${hackerMode ? 'text-ai-terminal' : 'text-secondary'}`}>
+					{step.label}
+				</span>
+				{preview ? (
+					<span className={`truncate mono-sm ${hackerMode ? 'text-ai-terminal/60' : 'text-tertiary'}`}>
+						: {preview}
+					</span>
+				) : null}
+			</span>
+			{step.isPremium || execution?.costUsd ? (
+				<span className="shrink-0 rounded-full bg-warning/10 px-1.5 py-px label-xs text-warning">
+					Premium{Number.isFinite(parsedCost) ? ` ${formatStepCost(parsedCost)}` : ''}
+				</span>
+			) : null}
+			<span className="shrink-0 mono-sm text-tertiary tabular-nums">
+				{step.status === 'running'
+					? 'running'
+					: execution
+						? formatStepDuration(execution.executionTimeMs)
+						: 'completed'}
+			</span>
+		</>
+	)
 
 	return (
-		<li
-			className={`overflow-clip rounded-md border ${
-				hackerMode ? 'border-ai-terminal/20 bg-ai-ink' : 'border-ai-line bg-ai-surface-card'
-			}`}
-		>
+		<li className="overflow-clip">
 			<div className="flex flex-col motion-safe:animate-ai-step-enter">
-				<button
-					type="button"
-					onClick={() => hasDetails && setOpen(!open)}
-					aria-expanded={hasDetails ? open : undefined}
-					className={`flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs ${hasDetails ? '' : 'cursor-default'}`}
-				>
-					{hasDetails ? <Chevron open={open} /> : <span className="w-3 shrink-0" />}
-					{step.status === 'running' ? (
-						<span className="size-1.5 shrink-0 rounded-full bg-brand motion-safe:animate-pulse" />
-					) : step.status === 'done' ? (
-						<Icon name="check" height={12} width={12} className="shrink-0 text-ai-success-vivid" />
-					) : (
-						<Icon name="x" height={12} width={12} className="shrink-0 text-ai-error-vivid" />
-					)}
-					<Icon name={meta.icon as never} height={12} width={12} className="shrink-0" style={{ color: meta.color }} />
-					<span className="flex min-w-0 flex-1 items-baseline gap-1">
-						<span className={`shrink-0 font-semibold ${hackerMode ? 'text-ai-terminal' : 'text-ai-secondary'}`}>
-							{step.label}
-						</span>
-						{preview ? (
-							<span className={`truncate font-mono ${hackerMode ? 'text-ai-terminal/60' : 'text-ai-muted'}`}>
-								: {preview}
-							</span>
-						) : null}
-					</span>
-					{step.isPremium || execution?.costUsd ? (
-						<span className="shrink-0 rounded-full bg-ai-warning-soft px-1.5 py-px text-[9px] font-medium text-ai-warning">
-							Premium{Number.isFinite(parsedCost) ? ` ${formatStepCost(parsedCost)}` : ''}
-						</span>
-					) : null}
-					<span className="shrink-0 font-mono text-[10px] text-ai-muted tabular-nums">
-						{step.status === 'running'
-							? 'running'
-							: execution
-								? formatStepDuration(execution.executionTimeMs)
-								: 'completed'}
-					</span>
-				</button>
+				{hasDetails ? (
+					<button
+						type="button"
+						onClick={() => setOpen(!open)}
+						aria-expanded={open}
+						className="flex w-full items-center gap-2 rounded-md py-0.5 text-left text-xs not-disabled:not-aria-disabled:hover:bg-hover-row"
+					>
+						{row}
+					</button>
+				) : (
+					<div className="flex w-full items-center gap-2 py-0.5 text-xs">{row}</div>
+				)}
 				{open && hasDetails ? (
-					<div className="flex flex-col gap-1 border-t border-ai-line px-2 py-1.5 select-text">
+					<div
+						className={`mt-1 mb-1 ml-3.5 flex flex-col gap-1.5 rounded-lg border p-2 select-text ${
+							hackerMode ? 'border-ai-terminal/20 bg-ai-ink' : 'border-subtle bg-surface'
+						}`}
+					>
 						{showToolDetails && step.params && Object.keys(step.params).length > 0 ? (
-							<pre className="m-0 overflow-x-auto rounded-sm bg-ai-surface p-1.5 font-mono text-[10px] text-ai-secondary">
-								{JSON.stringify(step.params, null, 2)}
-							</pre>
+							<pre className={CODE_BLOCK}>{JSON.stringify(step.params, null, 2)}</pre>
 						) : null}
 						{execution ? <ToolExecutionDetails execution={execution} showToolDetails={showToolDetails} /> : null}
 					</div>
@@ -459,22 +486,22 @@ function keyedRows(rows: Array<Record<string, unknown>>) {
 function ToolExecutionDetails({ execution, showToolDetails }: { execution: ToolExecution; showToolDetails: boolean }) {
 	return (
 		<>
-			{execution.error ? <p className="m-0 text-[10px] text-ai-error-vivid/80">{execution.error}</p> : null}
+			{execution.error ? (
+				<p role="alert" className="m-0 body-sm text-error">
+					{execution.error}
+				</p>
+			) : null}
 			{execution.resultCount != null ? (
-				<p className="m-0 text-[10px] text-ai-muted">{execution.resultCount} results</p>
+				<p className="m-0 body-sm text-tertiary">{execution.resultCount} results</p>
 			) : null}
-			{showToolDetails && execution.sqlQuery ? (
-				<pre className="m-0 overflow-x-auto rounded-sm border border-ai-line bg-ai-surface p-1.5 font-mono text-[10px] text-ai-secondary">
-					{execution.sqlQuery}
-				</pre>
-			) : null}
+			{showToolDetails && execution.sqlQuery ? <pre className={CODE_BLOCK}>{execution.sqlQuery}</pre> : null}
 			{showToolDetails && execution.resultPreview && execution.resultPreview.length > 0 ? (
-				<div className="overflow-x-auto rounded-sm border border-ai-line bg-ai-surface p-1">
-					<table className="text-[10px]">
+				<div className={DATA_TABLE_WRAPPER}>
+					<table className={DATA_TABLE}>
 						<thead>
 							<tr>
 								{Object.keys(execution.resultPreview[0]).map((column) => (
-									<th key={column} className="px-1.5 py-0.5 text-left font-medium text-ai-tertiary">
+									<th key={column} className={DATA_TABLE_HEAD}>
 										{column}
 									</th>
 								))}
@@ -484,7 +511,7 @@ function ToolExecutionDetails({ execution, showToolDetails }: { execution: ToolE
 							{keyedRows(execution.resultPreview).map(({ key, row }) => (
 								<tr key={key}>
 									{Object.entries(row).map(([column, value]) => (
-										<td key={column} className="px-1.5 py-0.5 text-ai-secondary">
+										<td key={column} className={DATA_TABLE_CELL}>
 											{String(value ?? '')}
 										</td>
 									))}

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import type { TodoItem } from '~/containers/LlamaAI/types'
+import { Icon } from '~/ui/Icon'
 
 const TODO_STATUS_ORDER: Record<TodoItem['status'], number> = {
 	in_progress: 0,
@@ -13,9 +14,9 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 		return (
 			<span
 				aria-hidden="true"
-				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-ai-success-vivid bg-ai-success-vivid text-[10px] font-bold text-ai-white"
+				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-success bg-success text-on-brand"
 			>
-				✓
+				<Icon name="check" height={10} width={10} />
 			</span>
 		)
 	}
@@ -25,7 +26,7 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 				aria-hidden="true"
 				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-brand"
 			>
-				<span className={`size-1.5 rounded-full bg-brand ${animated ? 'animate-pulse' : ''}`} />
+				<span className={`size-1.5 rounded-full bg-brand ${animated ? 'motion-safe:animate-pulse' : ''}`} />
 			</span>
 		)
 	}
@@ -33,16 +34,16 @@ function TodoStatusIcon({ status, animated = true }: { status: TodoItem['status'
 		return (
 			<span
 				aria-hidden="true"
-				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-ai-line text-[10px] text-ai-muted line-through"
+				className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-medium text-tertiary"
 			>
-				✕
+				<Icon name="x" height={10} width={10} />
 			</span>
 		)
 	}
 	return (
 		<span
 			aria-hidden="true"
-			className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-ai-line"
+			className="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm border border-medium"
 		/>
 	)
 }
@@ -71,21 +72,16 @@ export function TodoChecklistPanel({
 	const completed = orderedTodos.filter((t) => t.status === 'completed').length
 	const total = orderedTodos.filter((t) => t.status !== 'cancelled').length
 	return (
-		<section
-			className="flex flex-col gap-1.5 rounded-lg border border-ai-line bg-surface p-2 sm:p-2.5"
-			aria-label="Progress"
-		>
+		<section className="flex flex-col gap-1.5 rounded-lg border border-subtle bg-surface p-2" aria-label="Progress">
 			<div className="flex items-center gap-2 px-0.5">
 				<span aria-hidden="true" className="text-sm">
 					📋
 				</span>
-				<p className="m-0 flex-1 truncate text-xs font-medium text-ai-secondary sm:text-sm">Progress</p>
+				<p className="m-0 flex-1 truncate label-sm text-primary">Progress</p>
 				{interrupted ? (
-					<p className="m-0 shrink-0 rounded-sm bg-ai-error-vivid/10 px-1.5 py-0.5 text-[10px] text-ai-error sm:text-xs">
-						stopped early
-					</p>
+					<p className="m-0 shrink-0 rounded-sm bg-error/10 px-1.5 py-0.5 label-xs text-error">stopped early</p>
 				) : null}
-				<p className="m-0 shrink-0 rounded-sm bg-ai-hover px-1.5 py-0.5 text-[10px] text-ai-tertiary sm:text-xs">
+				<p className="m-0 shrink-0 rounded-sm bg-surface-elevated-1 px-1.5 py-0.5 label-xs text-secondary tabular-nums">
 					{completed}/{total} done
 				</p>
 			</div>
@@ -100,14 +96,12 @@ export function TodoChecklistPanel({
 								<TodoStatusIcon status={todo.status} animated={isLive} />
 							</span>
 							<p
-								className={`m-0 flex-1 text-xs leading-[1.45] sm:text-sm ${
+								className={`m-0 flex-1 body-sm ${
 									isActive
-										? 'font-medium text-ai-secondary dark:text-ai-landing-text-strong'
-										: isCompleted
-											? 'text-ai-muted line-through'
-											: isCancelled
-												? 'text-ai-secondary line-through dark:text-ai-muted'
-												: 'text-ai-tertiary'
+										? 'font-medium text-primary'
+										: isCompleted || isCancelled
+											? 'text-tertiary line-through'
+											: 'text-secondary'
 								}`}
 							>
 								{todo.content}

@@ -1,6 +1,7 @@
 import * as Ariakit from '@ariakit/react'
 import { useRef } from 'react'
 import { Icon } from '~/ui/Icon'
+import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
 import { AddTextContentModal } from './AddTextContentModal'
 import { GitHubConnectModal } from './GitHubConnectModal'
 import { PROJECT_FILE_ACCEPT, useProjectFileUpload } from './useProjectFileUpload'
@@ -15,7 +16,7 @@ interface AddSourcesMenuProps {
 	onAddPhotosFiles?: () => void
 }
 
-const SECTION_LABEL_CLASS = 'px-3 pt-1.5 pb-1 text-[10px] font-medium uppercase tracking-wider text-ai-muted'
+const SECTION_LABEL_CLASS = 'px-3 pt-2 pb-1 label-xs tracking-wide text-tertiary uppercase'
 
 export function AddSourcesMenu({
 	projectId,
@@ -34,53 +35,47 @@ export function AddSourcesMenu({
 		<>
 			<Ariakit.MenuProvider placement="bottom-start">
 				<Ariakit.MenuButton render={trigger as React.ReactElement} />
-				<Ariakit.Menu
-					gutter={gutter}
-					className={
-						menuClassName ??
-						'z-50 min-w-[240px] rounded-xl border border-ai-line bg-surface p-1 text-sm shadow-xl dark:bg-ai-surface'
-					}
-				>
+				<Ariakit.Menu gutter={gutter} className={menuClassName ?? `${menuSurfaceStyles} z-50 min-w-[240px]`}>
 					{onAddPhotosFiles ? (
 						<>
 							<div className={SECTION_LABEL_CLASS}>This message</div>
 							<Ariakit.MenuItem
 								onClick={onAddPhotosFiles}
-								className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
+								className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
 							>
-								<Icon name="image-plus" height={15} width={15} className="text-ai-tertiary" />
+								<Icon name="image-plus" height={14} width={14} className="text-secondary" />
 								Add photos &amp; files
 							</Ariakit.MenuItem>
-							<div className="mx-2 my-1 h-px bg-ai-surface-muted" />
+							<Ariakit.MenuSeparator className="my-1 border-t border-subtle" />
 							<div className={SECTION_LABEL_CLASS}>Add to project</div>
 						</>
 					) : null}
 					<Ariakit.MenuItem
 						onClick={() => fileInputRef.current?.click()}
-						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
+						className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
 					>
-						<Icon name="file-plus" height={15} width={15} className="text-ai-tertiary" />
+						<Icon name="file-plus" height={14} width={14} className="text-secondary" />
 						Upload files
 					</Ariakit.MenuItem>
 					<Ariakit.MenuItem
 						onClick={() => folderInputRef.current?.click()}
-						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
+						className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
 					>
-						<Icon name="file-plus" height={15} width={15} className="text-ai-tertiary" />
+						<Icon name="file-plus" height={14} width={14} className="text-secondary" />
 						Upload folder
 					</Ariakit.MenuItem>
 					<Ariakit.MenuItem
 						onClick={() => addTextStore.show()}
-						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
+						className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
 					>
-						<Icon name="file-text" height={15} width={15} className="text-ai-tertiary" />
+						<Icon name="file-text" height={14} width={14} className="text-secondary" />
 						Add text content
 					</Ariakit.MenuItem>
 					<Ariakit.MenuItem
 						onClick={() => githubStore.show()}
-						className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-ai-surface-muted"
+						className={`${popoverMenuItemStyles} w-full gap-3 text-left`}
 					>
-						<Icon name="github" height={15} width={15} className="text-ai-tertiary" />
+						<Icon name="github" height={14} width={14} className="text-secondary" />
 						Connect GitHub repo
 					</Ariakit.MenuItem>
 				</Ariakit.Menu>

@@ -30,8 +30,10 @@ import type {
 	SpawnAgentStatus,
 	TodoItem
 } from '~/containers/LlamaAI/types'
+import { getScrollBehavior } from '~/containers/LlamaAI/utils/motion'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { LoadingDots } from '~/ui/Loaders'
+import { LoadingIndicator } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import styles from '../LlamaAIChat.module.css'
 
@@ -324,35 +326,35 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 			) : null}
 
 			{recovery.status === 'reconnecting' && (hideActivity || !(spawnProgress.size > 0 && spawnIsResearchMode)) ? (
-				<div className="flex flex-col gap-1 rounded-lg border border-ai-warning-soft bg-ai-warning-soft p-4">
-					<p className="text-sm font-medium text-ai-warning-strong">Reconnecting&hellip;</p>
-					<p className="text-sm text-ai-warning-strong">
+				<div
+					role="status"
+					aria-live="polite"
+					className="flex flex-col gap-1 rounded-lg border border-warning/30 bg-warning/10 p-4"
+				>
+					<p className="text-sm font-medium text-warning">Reconnecting&hellip;</p>
+					<p className="text-sm text-warning">
 						Trying to reconnect to the running {isResearchMode ? 'research session' : 'quick chat'}.
 					</p>
 					<div className="flex items-center justify-between">
-						<p className="text-xs text-ai-warning-strong">
+						<p className="text-xs text-warning">
 							Attempt {Math.max(recovery.attemptCount, 1)}. Connection lost temporarily.
 						</p>
-						<button
-							type="button"
-							onClick={onReconnectNow}
-							className="shrink-0 rounded-md bg-ai-warning-soft px-3 py-1 text-xs font-medium text-ai-warning-strong hover:bg-ai-warning"
-						>
+						<Button type="button" size="sm" onClick={onReconnectNow}>
 							Reconnect now
-						</button>
+						</Button>
 					</div>
 				</div>
 			) : null}
 
 			{recovery.status !== 'reconnecting' && error ? (
-				<div className="flex flex-col gap-2 rounded-lg border border-ai-error-border bg-ai-error-bg p-4">
-					<p className="text-sm text-ai-error-strong">{error}</p>
+				<div role="alert" className="flex flex-col gap-2 rounded-lg border border-error/30 bg-error/10 p-4">
+					<p className="text-sm text-error">{error}</p>
 					{promptFailureAction ? (
 						<div className="mt-1 flex items-center gap-2">
 							<button
 								type="button"
 								onClick={promptFailureAction.onActivate}
-								className="rounded-md bg-ai-error-bg px-3 py-1 text-sm text-ai-error-strong hover:bg-ai-error-border"
+								className="rounded-md bg-error/10 px-3 py-1 text-sm text-error not-disabled:not-aria-disabled:hover:bg-error/20"
 							>
 								{promptFailureAction.label}
 							</button>
@@ -360,7 +362,7 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 								<button
 									type="button"
 									onClick={promptFailureAction.onDiscard}
-									className="rounded-md px-3 py-1 text-sm text-ai-secondary hover:bg-ai-surface-muted"
+									className="rounded-md px-3 py-1 text-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row"
 								>
 									Discard
 								</button>
@@ -538,7 +540,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 					scrollToBottom()
 					return
 				}
-				nextMessage.node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+				nextMessage.node.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' })
 				highlightAnchorNode(nextMessage.node)
 				return
 			}
@@ -548,10 +550,10 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 			const isAtFirstRenderedMessage =
 				previousMessage?.anchorId === firstMessage.anchorId && firstMessage.top >= containerTop - 8
 			if (!previousMessage || isAtFirstRenderedMessage) {
-				container.scrollTo({ top: 0, behavior: 'smooth' })
+				container.scrollTo({ top: 0, behavior: getScrollBehavior() })
 				return
 			}
-			previousMessage.node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+			previousMessage.node.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' })
 			highlightAnchorNode(previousMessage.node)
 		}
 
@@ -603,7 +605,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 				container?.addEventListener('scrollend', applyHighlight, { once: true })
 				fallbackTimer = window.setTimeout(applyHighlight, 500)
-				node.scrollIntoView({ behavior: 'smooth', block: 'start' })
+				node.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' })
 			})
 		}
 	}
@@ -707,16 +709,16 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 					) : null}
 					<div className={isFullscreen ? 'llamaai-chat-width flex w-full flex-col' : 'contents'}>
 						<div className="flex w-full flex-col gap-2 px-2">
-							<div className="flex flex-col gap-2.5">
+							<div className="flex flex-col gap-4">
 								{paginationState.isLoadingMore ? (
-									<div className="flex justify-center py-2">
-										<p className="m-0 text-xs text-ai-tertiary">Loading older messages&hellip;</p>
+									<div role="status" aria-live="polite" className="flex justify-center py-2">
+										<LoadingIndicator label="Loading older messages" />
 									</div>
 								) : null}
 
 								{paginationError ? (
-									<div className="rounded-lg border border-ai-error-border bg-ai-error-bg px-3 py-2">
-										<p className="text-xs text-ai-error-strong">{paginationError}</p>
+									<div role="alert" className="rounded-lg border border-error/30 bg-error/10 px-3 py-2">
+										<p className="text-xs text-error">{paginationError}</p>
 									</div>
 								) : null}
 
@@ -749,7 +751,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 								{paginationState.isLoadingNewer ? (
 									<div className="flex justify-center py-2">
-										<p className="m-0 text-xs text-ai-tertiary">Loading newer messages&hellip;</p>
+										<p className="m-0 text-xs text-tertiary">Loading newer messages&hellip;</p>
 									</div>
 								) : null}
 
@@ -858,14 +860,14 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 			</div>
 
 			<div
-				className={`pointer-events-none sticky z-10 mx-auto transition-opacity duration-200 ${
+				className={`pointer-events-none sticky z-10 mx-auto ${
 					readOnly ? 'bottom-8 -mb-2' : 'bottom-32 -mb-8'
 				} ${showScrollToBottom ? 'opacity-100' : 'opacity-0'}`}
 			>
 				<Tooltip
 					content="Scroll to bottom"
 					render={<button type="button" onClick={scrollToBottom} />}
-					className={`mx-auto flex size-8 items-center justify-center rounded-full border border-ai-line bg-page shadow-md hover:bg-ai-surface-muted focus-visible:bg-ai-surface-muted ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
+					className={`mx-auto flex size-8 items-center justify-center rounded-full border border-medium bg-overlay text-primary shadow-overlay-sm not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row ${showScrollToBottom ? 'pointer-events-auto' : 'pointer-events-none'}`}
 				>
 					<Icon name="arrow-down" height={16} width={16} />
 					<span className="sr-only">Scroll to bottom</span>
@@ -876,7 +878,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 				// The 10px side inset comes off the width instead of padding so the shared column
 				// max-width still applies to the composer itself and matches the message column.
 				<div className="llamaai-chat-width relative mx-auto flex w-[calc(100%-1.25rem)] flex-col gap-2 pb-2.5">
-					<div className="pointer-events-none absolute -top-8 right-0 left-0 h-8 bg-linear-to-b from-transparent to-ai-surface" />
+					<div className="pointer-events-none absolute -top-8 right-0 left-0 h-8 bg-linear-to-b from-transparent to-surface" />
 					{!isSharedView && contextWarning && onStartNewChat && onDismissContextWarning ? (
 						<ContextWarningBanner
 							warning={contextWarning}
@@ -927,11 +929,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 export function LoadingConversationState() {
 	return (
-		<div className="flex flex-1 items-center justify-center">
-			<p className="flex items-center gap-1 text-ai-tertiary">
-				Loading
-				<LoadingDots />
-			</p>
+		<div role="status" aria-live="polite" className="flex flex-1 items-center justify-center">
+			<LoadingIndicator />
 		</div>
 	)
 }
@@ -947,21 +946,19 @@ export function EmptyConversationErrorState({
 }) {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-2">
-			<p role="alert" className="text-sm text-ai-error-strong">
+			<p role="alert" className="text-sm text-error">
 				{message}
 			</p>
-			{onRetry ? (
-				<button
-					type="button"
-					onClick={onRetry}
-					className="rounded-md bg-ai-error-bg px-3 py-1 text-sm text-ai-error-strong hover:bg-ai-error-border"
-				>
-					Retry
-				</button>
-			) : null}
-			<button type="button" onClick={onNewChat} className="rounded-md px-3 py-2 text-sm underline">
-				Start a new chat
-			</button>
+			<div className="flex items-center gap-2">
+				{onRetry ? (
+					<Button type="button" size="md" onClick={onRetry}>
+						Retry
+					</Button>
+				) : null}
+				<Button type="button" size="md" variant="ghost" onClick={onNewChat}>
+					Start a new chat
+				</Button>
+			</div>
 		</div>
 	)
 }

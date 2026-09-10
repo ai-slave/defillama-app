@@ -4,6 +4,7 @@ import { useAuthContext } from '~/auth'
 import type { AgenticAnswerMode } from '~/containers/LlamaAI/types'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { useMedia } from '~/hooks/useMedia'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { getExperimentVariant } from '~/utils/analytics/experiment'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -74,8 +75,7 @@ interface SpotlightConfig {
 	title: string
 	description: string
 	icon: 'layout-grid' | 'calendar-plus' | 'image-plus' | 'search' | 'plus'
-	iconColor: string
-	accentColor: string
+	tone: 'brand' | 'warning' | 'success'
 	position: 'above' | 'below'
 }
 
@@ -86,8 +86,7 @@ const SPOTLIGHT_CONFIGS = {
 		description:
 			'Not sure what to ask? Browse here to see everything LlamaAI can do — yields, analytics, trade theses, on-chain, and more.',
 		icon: 'layout-grid',
-		iconColor: '#60a5fa',
-		accentColor: 'rgba(37, 99, 235, 0.25)',
+		tone: 'brand',
 		position: 'above'
 	},
 	alerts: {
@@ -96,8 +95,7 @@ const SPOTLIGHT_CONFIGS = {
 		description:
 			'Ask LlamaAI to create alerts for you — daily price checks, portfolio monitors, custom data alerts. This button is for managing them.',
 		icon: 'calendar-plus',
-		iconColor: '#f59e0b',
-		accentColor: 'rgba(245, 158, 11, 0.25)',
+		tone: 'warning',
 		position: 'above'
 	},
 	upload: {
@@ -105,8 +103,7 @@ const SPOTLIGHT_CONFIGS = {
 		title: 'File Upload',
 		description: 'Upload images, PDFs, or CSVs and ask LlamaAI to analyze them — charts, reports, datasets, anything.',
 		icon: 'image-plus',
-		iconColor: '#10b981',
-		accentColor: 'rgba(16, 185, 129, 0.25)',
+		tone: 'success',
 		position: 'above'
 	},
 	research: {
@@ -114,8 +111,7 @@ const SPOTLIGHT_CONFIGS = {
 		title: 'Need deeper answers?',
 		description: '', // Dynamic — set at render time based on isTrial
 		icon: 'search',
-		iconColor: '#60a5fa',
-		accentColor: 'rgba(37, 99, 235, 0.25)',
+		tone: 'brand',
 		position: 'above'
 	},
 	'mobile-upload': {
@@ -123,8 +119,7 @@ const SPOTLIGHT_CONFIGS = {
 		title: 'File Upload',
 		description: 'Upload images, PDFs, or CSVs and ask LlamaAI to analyze them — charts, reports, datasets, anything.',
 		icon: 'image-plus',
-		iconColor: '#10b981',
-		accentColor: 'rgba(16, 185, 129, 0.25)',
+		tone: 'success',
 		position: 'above'
 	},
 	'mobile-research': {
@@ -132,8 +127,7 @@ const SPOTLIGHT_CONFIGS = {
 		title: 'Need deeper answers?',
 		description: '', // Dynamic — set at render time based on isTrial
 		icon: 'search',
-		iconColor: '#60a5fa',
-		accentColor: 'rgba(37, 99, 235, 0.25)',
+		tone: 'brand',
 		position: 'above'
 	},
 	'mobile-explore': {
@@ -142,8 +136,7 @@ const SPOTLIGHT_CONFIGS = {
 		description:
 			'Not sure what to ask? Browse here to see everything LlamaAI can do — yields, analytics, trade theses, on-chain, and more.',
 		icon: 'layout-grid',
-		iconColor: '#60a5fa',
-		accentColor: 'rgba(37, 99, 235, 0.25)',
+		tone: 'brand',
 		position: 'above'
 	},
 	'mobile-alerts': {
@@ -152,11 +145,18 @@ const SPOTLIGHT_CONFIGS = {
 		description:
 			'Ask LlamaAI to create alerts for you — daily price checks, portfolio monitors, custom data alerts. This button is for managing them.',
 		icon: 'calendar-plus',
-		iconColor: '#f59e0b',
-		accentColor: 'rgba(245, 158, 11, 0.25)',
+		tone: 'warning',
 		position: 'above'
 	}
 } satisfies Partial<Record<Step, SpotlightConfig>>
+
+// Spotlight hues as theme colours: the glow, hairline, chip, and icon all derive from one variable.
+const TONE_VAR = {
+	brand: 'var(--color-brand)',
+	warning: 'var(--color-warning)',
+	success: 'var(--color-success)'
+} as const
+const TONE_TEXT = { brand: 'text-brand', warning: 'text-warning', success: 'text-success' } as const
 
 interface OnboardingWalkthroughProps {
 	isAlertsModalOpen: boolean
@@ -365,7 +365,7 @@ export function OnboardingWalkthrough({
 					<button
 						type="button"
 						aria-label="Skip walkthrough"
-						className="pointer-events-auto absolute inset-0 bg-ai-backdrop"
+						className="pointer-events-auto absolute inset-0 bg-screen-dim"
 						onClick={handleSkip}
 					/>
 				) : null}
@@ -376,12 +376,14 @@ export function OnboardingWalkthrough({
 						open
 						onClose={handleSkip}
 						autoFocusOnHide={false}
-						backdrop={<div className="fixed inset-0 z-9999 bg-ai-backdrop" />}
+						backdrop={<div className="fixed inset-0 z-9999 bg-screen-dim" />}
 						className={`pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 ${
-							introExiting ? 'animate-[intro-exit_0.25s_ease-in_forwards]' : 'animate-[fadein_0.3s_ease-out]'
+							introExiting
+								? 'motion-safe:animate-[intro-exit_0.25s_ease-in_forwards]'
+								: 'motion-safe:animate-[fadein_0.3s_ease-out]'
 						}`}
 					>
-						<div className="relative max-h-full w-full max-w-[340px] overflow-y-auto rounded-2xl border border-ai-gold/15 bg-ai-ink shadow-ai-modal">
+						<div className="relative max-h-full w-full max-w-[340px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep">
 							<div className="h-px w-full bg-linear-to-r from-transparent via-ai-gold/60 to-transparent" />
 							<div className="p-6">
 								<div className="mb-5 flex flex-col items-center gap-3 text-center">
@@ -389,7 +391,8 @@ export function OnboardingWalkthrough({
 										<div
 											className="absolute inset-0 -m-3 rounded-full"
 											style={{
-												background: 'radial-gradient(circle, rgba(201,154,74,0.2) 0%, transparent 70%)',
+												background:
+													'radial-gradient(circle, color-mix(in srgb, var(--ai-gold) 20%, transparent) 0%, transparent 70%)',
 												filter: 'blur(10px)'
 											}}
 										/>
@@ -401,10 +404,10 @@ export function OnboardingWalkthrough({
 											height={56}
 										/>
 									</div>
-									<Ariakit.DialogHeading className="text-lg font-bold tracking-tight text-ai-white">
+									<Ariakit.DialogHeading className="text-lg font-bold tracking-tight text-primary">
 										Welcome to LlamaAI
 									</Ariakit.DialogHeading>
-									<p className="text-[13px] leading-relaxed text-ai-on-ink-muted">
+									<p className="text-[13px] leading-relaxed text-secondary">
 										AI-powered research across DeFi, TradFi, and on-chain data. Charts, reports, forecasts, and alerts —
 										all in one conversation.
 									</p>
@@ -414,9 +417,9 @@ export function OnboardingWalkthrough({
 									{CAPABILITY_BADGES.map(([icon, label]) => (
 										<span
 											key={label}
-											className="flex items-center gap-1 rounded-md border border-ai-gold/10 bg-ai-gold/5 px-2 py-0.5 text-[10px] text-ai-gold"
+											className="flex items-center gap-1 rounded-md border border-ai-bronze-deep/20 bg-ai-gold-tint px-2 py-0.5 text-[10px] text-ai-bronze-deep"
 										>
-											<Icon name={icon} height={9} width={9} className="opacity-70" />
+											<Icon name={icon} height={12} width={12} className="opacity-70" />
 											{label}
 										</span>
 									))}
@@ -425,7 +428,7 @@ export function OnboardingWalkthrough({
 								<button
 									type="button"
 									onClick={nextStep}
-									className="w-full rounded-xl bg-ai-gold-cta py-2.5 text-[13px] font-semibold text-ai-on-gold-strong shadow-ai-gold-ring transition-all hover:shadow-ai-gold-ring-hover"
+									className="w-full rounded-xl bg-ai-gold-cta py-2.5 text-[13px] font-semibold text-ai-on-gold-strong shadow-ai-gold-ring not-disabled:not-aria-disabled:hover:shadow-ai-gold-ring-hover"
 								>
 									Show me around
 								</button>
@@ -440,15 +443,15 @@ export function OnboardingWalkthrough({
 					<>
 						{/* Touch-blocking overlay: 4 rects around the spotlight hole */}
 						<div
-							className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
+							className="pointer-events-auto fixed ease-out motion-safe:transition-[top,left,width,height] motion-safe:duration-200"
 							style={{ top: 0, left: 0, right: 0, height: spotlightRect.top - pad }}
 						/>
 						<div
-							className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
+							className="pointer-events-auto fixed ease-out motion-safe:transition-[top,left,width,height] motion-safe:duration-200"
 							style={{ top: spotlightRect.bottom + pad, left: 0, right: 0, bottom: 0 }}
 						/>
 						<div
-							className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
+							className="pointer-events-auto fixed ease-out motion-safe:transition-[top,left,width,height] motion-safe:duration-200"
 							style={{
 								top: spotlightRect.top - pad,
 								left: 0,
@@ -457,7 +460,7 @@ export function OnboardingWalkthrough({
 							}}
 						/>
 						<div
-							className="pointer-events-auto fixed transition-all duration-300 ease-in-out"
+							className="pointer-events-auto fixed ease-out motion-safe:transition-[top,left,width,height] motion-safe:duration-200"
 							style={{
 								top: spotlightRect.top - pad,
 								left: spotlightRect.right + pad,
@@ -468,13 +471,13 @@ export function OnboardingWalkthrough({
 
 						{/* Spotlight cutout (visual dim + glow) */}
 						<div
-							className={`pointer-events-none fixed rounded-xl transition-all duration-300 ease-in-out ${isFirstSpotlight ? 'animate-[spotlight-enter_0.35s_ease-out]' : ''}`}
+							className={`pointer-events-none fixed rounded-xl ease-out motion-safe:transition-[top,left,width,height] motion-safe:duration-200 ${isFirstSpotlight ? 'motion-safe:animate-[spotlight-enter_0.35s_ease-out]' : ''}`}
 							style={{
 								left: spotlightRect.left - pad,
 								top: spotlightRect.top - pad,
 								width: spotlightRect.width + pad * 2,
 								height: spotlightRect.height + pad * 2,
-								boxShadow: `0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 24px 6px ${config.accentColor}`
+								boxShadow: `0 0 0 9999px var(--bg-screen-dim), 0 0 24px 6px color-mix(in srgb, ${TONE_VAR[config.tone]} 25%, transparent)`
 							}}
 						/>
 
@@ -492,34 +495,37 @@ export function OnboardingWalkthrough({
 								onClose={handleSkip}
 								className="pointer-events-auto z-9999 w-[280px] max-w-[calc(100vw-32px)] overflow-y-auto outline-hidden"
 							>
-								<Ariakit.PopoverArrow className="fill-ai-ink" />
+								<Ariakit.PopoverArrow
+									borderWidth={1}
+									style={{ fill: 'var(--bg-overlay)', stroke: 'var(--border-medium)' }}
+								/>
 
-								<div className="overflow-hidden rounded-xl border border-ai-ink-line bg-ai-ink shadow-ai-overlay">
+								<div className="overflow-hidden rounded-xl border border-medium bg-overlay shadow-overlay-sm">
 									<div
 										className="h-px w-full bg-linear-to-r from-transparent to-transparent"
 										style={{
-											backgroundImage: `linear-gradient(to right, transparent, ${config.iconColor}40, transparent)`
+											backgroundImage: `linear-gradient(to right, transparent, color-mix(in srgb, ${TONE_VAR[config.tone]} 25%, transparent), transparent)`
 										}}
 									/>
 									<div className="p-4">
 										<div className="flex items-start gap-3">
 											<div
-												className="flex size-7 shrink-0 items-center justify-center rounded-lg"
-												style={{ backgroundColor: `${config.iconColor}15` }}
+												className={`flex size-7 shrink-0 items-center justify-center rounded-lg ${TONE_TEXT[config.tone]}`}
+												style={{ backgroundColor: `color-mix(in srgb, ${TONE_VAR[config.tone]} 10%, transparent)` }}
 											>
-												<Icon name={config.icon} height={14} width={14} style={{ color: config.iconColor }} />
+												<Icon name={config.icon} height={14} width={14} />
 											</div>
 											<div className="flex flex-col gap-1">
-												<Ariakit.PopoverHeading className="text-[13px] font-semibold text-ai-white">
+												<Ariakit.PopoverHeading className="label-md text-primary">
 													{config.title}
 												</Ariakit.PopoverHeading>
-												<span className="text-xs leading-snug text-ai-on-ink-muted">
+												<span className="body-sm text-secondary">
 													{RESEARCH_STEPS.has(currentStep) ? researchDescription : config.description}
 												</span>
 											</div>
 										</div>
 
-										<button
+										<Button
 											type="button"
 											onClick={() => {
 												const target = document.querySelector<HTMLElement>(config.selectors[0])
@@ -529,18 +535,15 @@ export function OnboardingWalkthrough({
 														target?.querySelector<HTMLElement>('button, input, [tabindex]'))
 												control?.focus()
 											}}
-											className="mt-3 w-full rounded-lg bg-ai-ink-raised py-2 text-xs font-medium text-ai-on-ink hover:bg-ai-ink-hover focus-visible:outline-2"
+											size="md"
+											className="mt-3 w-full"
 										>
 											Try this control
-										</button>
+										</Button>
 										{!RESEARCH_STEPS.has(currentStep) ? (
-											<button
-												type="button"
-												onClick={nextStep}
-												className="mt-3 w-full rounded-lg bg-ai-ink-raised py-2 text-xs font-medium text-ai-on-ink transition-colors hover:bg-ai-ink-hover hover:text-ai-white"
-											>
+											<Button type="button" onClick={nextStep} size="md" className="mt-3 w-full">
 												Next
-											</button>
+											</Button>
 										) : null}
 
 										<ProgressFooter currentStep={currentStep} steps={steps} onSkip={handleSkip} />
@@ -557,21 +560,21 @@ export function OnboardingWalkthrough({
 						open
 						onClose={handleSkip}
 						autoFocusOnHide={false}
-						backdrop={<div className="fixed inset-0 z-9999 bg-ai-backdrop" />}
-						className="pointer-events-auto fixed inset-0 z-9999 flex animate-ai-fade-in items-center justify-center overflow-y-auto p-4"
+						backdrop={<div className="fixed inset-0 z-9999 bg-screen-dim" />}
+						className="pointer-events-auto fixed inset-0 z-9999 flex items-center justify-center overflow-y-auto p-4 motion-safe:animate-ai-fade-in"
 					>
-						<div className="relative max-h-full w-full max-w-[400px] overflow-y-auto rounded-2xl border border-ai-ink-line bg-ai-ink shadow-ai-modal">
-							<div className="h-px w-full bg-linear-to-r from-transparent via-ai-success-vivid/50 to-transparent" />
+						<div className="relative max-h-full w-full max-w-[400px] overflow-y-auto rounded-2xl border border-medium bg-overlay shadow-dialog dark:shadow-dialog-deep">
+							<div className="h-px w-full bg-linear-to-r from-transparent via-success/50 to-transparent" />
 
 							<div className="p-6">
 								<div className="mb-4 flex flex-col items-center gap-1 text-center">
-									<div className="mb-1 flex size-7 items-center justify-center rounded-full bg-ai-success-vivid/12">
-										<Icon name="check" height={14} width={14} className="text-ai-success-vivid" />
+									<div className="mb-1 flex size-7 items-center justify-center rounded-full bg-success/12">
+										<Icon name="check" height={14} width={14} className="text-success" />
 									</div>
-									<Ariakit.DialogHeading className="text-[15px] font-bold text-ai-white">
+									<Ariakit.DialogHeading className="text-[15px] font-bold text-primary">
 										Research mode is on
 									</Ariakit.DialogHeading>
-									<span className="text-[13px] text-ai-on-ink-muted">Unsure what to ask? Try one of these:</span>
+									<span className="body-sm text-secondary">Unsure what to ask? Try one of these:</span>
 								</div>
 
 								<div className="mb-4 flex flex-col gap-1.5">
@@ -580,38 +583,30 @@ export function OnboardingWalkthrough({
 											type="button"
 											key={p.label}
 											onClick={() => handlePromptClick(p.prompt)}
-											className="group flex items-center gap-3 rounded-xl border border-ai-ink-line bg-ai-ink px-3.5 py-2.5 text-left transition-all duration-150 hover:border-ai-accent-blue/20 hover:bg-ai-accent-blue/5"
+											className="group flex items-center gap-3 rounded-lg border border-medium px-3 py-2 text-left not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row"
 										>
 											<Icon
 												name={p.icon}
 												height={14}
 												width={14}
-												className="shrink-0 text-ai-secondary transition-colors group-hover:text-ai-accent-blue-soft"
+												className="shrink-0 text-secondary group-hover:text-link group-focus-visible:text-link"
 											/>
-											<span className="text-[13px] font-medium text-ai-on-ink group-hover:text-ai-white">
-												{p.label}
-											</span>
+											<span className="label-md text-primary">{p.label}</span>
 											<Icon
 												name="arrow-right"
-												height={12}
-												width={12}
-												className="ml-auto shrink-0 text-ai-secondary opacity-0 transition-all group-hover:text-ai-accent-blue-soft group-hover:opacity-100"
+												height={14}
+												width={14}
+												className="ml-auto shrink-0 text-secondary opacity-0 group-hover:text-link group-hover:opacity-100 group-focus-visible:text-link group-focus-visible:opacity-100"
 											/>
 										</button>
 									))}
 								</div>
 
-								<p className="mb-3 text-center text-[11px] text-ai-secondary">
-									Or type your own question in the input below.
-								</p>
+								<p className="mb-3 text-center body-sm text-secondary">Or type your own question in the input below.</p>
 
-								<button
-									type="button"
-									onClick={handleStartChatting}
-									className="w-full rounded-xl border border-ai-ink-line bg-ai-ink py-2.5 text-[13px] font-medium text-ai-on-ink transition-colors hover:bg-ai-ink-raised hover:text-ai-white"
-								>
+								<Button type="button" size="md" onClick={handleStartChatting} className="w-full">
 									Start chatting
-								</button>
+								</Button>
 
 								<ProgressFooter currentStep={currentStep} steps={steps} onSkip={handleSkip} />
 							</div>
@@ -635,19 +630,15 @@ function ProgressFooter({ currentStep, steps, onSkip }: { currentStep: Step; ste
 				{steps.map((stepName, index) => (
 					<div
 						key={stepName}
-						className={`h-1 rounded-full transition-all duration-300 ${
-							index <= currentIndex ? 'w-3.5 bg-ai-gold' : 'w-1 bg-ai-ink-hover'
+						className={`h-1 rounded-full motion-safe:transition-[width,opacity] motion-safe:duration-200 ${
+							index <= currentIndex ? 'w-3.5 bg-ai-bronze-deep' : 'w-1 bg-surface-elevated-2'
 						}`}
 					/>
 				))}
 			</div>
-			<button
-				type="button"
-				onClick={onSkip}
-				className="text-[11px] text-ai-secondary transition-colors hover:text-ai-on-ink-muted"
-			>
+			<Button type="button" size="md" variant="ghost" onClick={onSkip} className="-mr-3">
 				Skip
-			</button>
+			</Button>
 		</div>
 	)
 }

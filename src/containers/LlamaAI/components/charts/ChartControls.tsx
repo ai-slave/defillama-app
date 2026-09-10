@@ -1,7 +1,8 @@
 import { Select } from '~/components/Select/Select'
 import type { ChartControlsModel } from '~/containers/LlamaAI/utils/chartCapabilities'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
+import { SegmentedControl } from '~/ui/SegmentedControl'
 import { capitalizeFirstLetter } from '~/utils'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -72,45 +73,40 @@ export function ChartControls({
 	if (!hasControls && !children && !controls.title) return null
 
 	return (
-		<div className="flex flex-wrap items-center justify-end gap-1 border-b border-ai-line p-2 pt-0">
+		<div className="flex flex-wrap items-center justify-end gap-1.5 border-b border-subtle p-2 pt-0">
 			{controls.title ? (
-				<p className="mr-auto min-w-0 truncate text-base font-semibold" title={controls.title}>
+				<p className="mr-auto min-w-0 truncate heading-xs text-primary" title={controls.title}>
 					{controls.title}
 				</p>
 			) : null}
 			{controls.showGrouping ? (
-				<div className="flex min-h-8 w-fit flex-nowrap items-center overflow-x-auto rounded-lg border border-medium text-secondary">
-					{controls.groupingOptions.map((interval) => (
-						<Tooltip
-							content={capitalizeFirstLetter(interval)}
-							render={<button type="button" />}
-							className="inline-flex min-w-8 items-center justify-center px-3 py-1.5 text-xs whitespace-nowrap hover:not-disabled:pro-btn-primary focus-visible:not-disabled:pro-btn-primary disabled:opacity-50 data-[active=true]:bg-brand data-[active=true]:font-medium data-[active=true]:text-ai-white"
-							data-active={controls.state.grouping === interval}
-							disabled={controls.groupingLocked && interval !== 'day'}
-							onClick={() => {
-								trackUmamiEvent('llamaai-chart-control', { control: 'grouping', selection: interval })
-								onGroupingChange(interval)
-							}}
-							key={`grouping-${interval}`}
-						>
-							{interval.slice(0, 1).toUpperCase()}
-						</Tooltip>
-					))}
-				</div>
+				<SegmentedControl
+					label="Grouping"
+					variant="default"
+					size="md"
+					value={controls.state.grouping}
+					onValueChange={(interval) => {
+						trackUmamiEvent('llamaai-chart-control', { control: 'grouping', selection: interval })
+						onGroupingChange(interval)
+					}}
+					options={controls.groupingOptions.map((interval) => ({
+						value: interval,
+						label: interval.slice(0, 1).toUpperCase(),
+						ariaLabel: capitalizeFirstLetter(interval),
+						tooltip: capitalizeFirstLetter(interval),
+						disabled: controls.groupingLocked && interval !== 'day'
+					}))}
+				/>
 			) : null}
 
 			{controls.groupingLocked ? (
 				onOpenStyleEditor ? (
-					<button
-						type="button"
-						className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-medium px-2 text-xs whitespace-nowrap text-secondary hover:pro-btn-primary"
-						onClick={onOpenStyleEditor}
-					>
-						<Icon name="settings" height={12} width={12} />
+					<Button type="button" size="md" onClick={onOpenStyleEditor}>
+						<Icon name="settings" height={14} width={14} />
 						Set series aggregation to enable W/M/Q/Y
-					</button>
+					</Button>
 				) : (
-					<span className="text-xs whitespace-nowrap text-ai-muted">
+					<span className="body-sm whitespace-nowrap text-tertiary">
 						W/M/Q/Y unavailable: series aggregation not set
 					</span>
 				)
@@ -131,7 +127,6 @@ export function ChartControls({
 					label={controls.state.cumulative ? 'Cumulative' : 'Individual'}
 					labelType="none"
 					variant="filter"
-					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -148,7 +143,6 @@ export function ChartControls({
 					label={controls.state.stacked ? 'Stacked' : 'Separate'}
 					labelType="none"
 					variant="filter"
-					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -164,7 +158,6 @@ export function ChartControls({
 					label={controls.state.percentage ? '% Percentage' : '$ Absolute'}
 					labelType="none"
 					variant="filter"
-					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -180,7 +173,6 @@ export function ChartControls({
 					label={controls.state.logScale ? 'Scale: Log' : 'Scale: Linear'}
 					labelType="none"
 					variant="filter"
-					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -196,7 +188,6 @@ export function ChartControls({
 					label={controls.state.showHallmarks ? 'Hallmarks: On' : 'Hallmarks: Off'}
 					labelType="none"
 					variant="filter"
-					popoverVariant="legacy"
 				/>
 			) : null}
 
@@ -212,7 +203,6 @@ export function ChartControls({
 					label={controls.state.showLabels ? 'Labels: On' : 'Labels: Off'}
 					labelType="none"
 					variant="filter"
-					popoverVariant="legacy"
 				/>
 			) : null}
 			{children}

@@ -24,7 +24,8 @@ import {
 } from '~/containers/LlamaAI/utils/markdownHelpers'
 import { ExternalLinkInterstitial } from '~/containers/ProDashboard/components/ExternalLinkInterstitial'
 import { subscribeToLocalStorage } from '~/contexts/LocalStorage'
-import { buttonStyles } from '~/ui/Button'
+import { Button, buttonStyles } from '~/ui/Button'
+import { DialogCloseButton } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
 import { popoverMenuItemStyles } from '~/ui/Popover'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
@@ -110,7 +111,7 @@ function TableWrapper({
 	const tableRef = useRef<HTMLDivElement>(null)
 	const fullscreenDialogStore = Ariakit.useDialogStore()
 
-	const mergedTableClassName = `z-10 w-full border-collapse border border-ai-line text-sm ${tableProps?.className ?? ''}`
+	const mergedTableClassName = `z-10 w-full border-collapse border border-medium body-sm ${tableProps?.className ?? ''}`
 	const inlineTableClassName = `llamaai-table-inline ${mergedTableClassName}`
 	const fullscreenTableClassName = `llamaai-table-fullscreen ${mergedTableClassName}`
 
@@ -158,23 +159,17 @@ function TableWrapper({
 	}
 
 	return (
-		<div className="flex flex-col gap-2 rounded-lg border border-ai-line p-2">
+		<div className="flex flex-col gap-2 rounded-lg border border-subtle p-2">
 			<Ariakit.DialogProvider store={fullscreenDialogStore}>
 				<Ariakit.Dialog
 					modal
 					portal
 					unmountOnHide
-					backdrop={<div className="backdrop fixed inset-0 z-40 bg-ai-backdrop backdrop-blur-sm" />}
-					className="dialog fixed inset-0 z-50 m-auto flex max-h-[80dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col gap-3 overflow-hidden rounded-xl border border-ai-line bg-surface shadow-2xl sm:w-[calc(100vw-2rem)]"
+					aria-label="Table"
+					className="fixed inset-0 z-50 m-auto flex max-h-[80dvh] w-[calc(100vw-1rem)] max-w-7xl flex-col gap-3 overflow-hidden rounded-xl border border-medium bg-overlay shadow-dialog sm:w-[calc(100vw-2rem)] dark:shadow-dialog-deep"
 				>
-					<div className="flex shrink-0 items-center justify-between gap-2 border-b border-ai-line">
-						{/* <Ariakit.DialogHeading className="text-sm font-medium text-secondary">Table</Ariakit.DialogHeading> */}
-						<Ariakit.DialogDismiss
-							className="ml-auto flex size-8 shrink-0 items-center justify-center rounded-md text-secondary hover:bg-ai-link-hover focus-visible:bg-ai-link-hover"
-							aria-label="Close fullscreen table"
-						>
-							<Icon name="x" height={16} width={16} />
-						</Ariakit.DialogDismiss>
+					<div className="flex shrink-0 items-center justify-end gap-2 border-b border-subtle px-2 py-1">
+						<DialogCloseButton ariaLabel="Close fullscreen table" />
 					</div>
 					<div className="min-h-0 flex-1 overflow-auto overscroll-contain">
 						<div className="relative">
@@ -204,7 +199,7 @@ function TableWrapper({
 			<div className="ml-auto flex flex-nowrap items-center justify-end gap-2" id="ai-table-download">
 				{isStreaming ? (
 					<button type="button" className={TABLE_TOOLBAR_ICON_BUTTON} disabled aria-label="View table fullscreen">
-						<Icon name="expand" className="size-3 shrink-0" />
+						<Icon name="expand" className="size-4 shrink-0" />
 					</button>
 				) : (
 					<button
@@ -213,7 +208,7 @@ function TableWrapper({
 						className={TABLE_TOOLBAR_ICON_BUTTON}
 						aria-label="View table fullscreen"
 					>
-						<Icon name="expand" className="size-3 shrink-0" />
+						<Icon name="expand" className="size-4 shrink-0" />
 					</button>
 				)}
 				<TableImageButtons
@@ -371,20 +366,23 @@ function CodeBlock({ children, node: _node, className, ...props }: MarkdownPrePr
 	return (
 		<div className="group relative">
 			{language ? (
-				<span className="pointer-events-none absolute top-2 left-3 z-10 font-mono text-[11px] tracking-wide text-ai-white/50 select-none">
+				<span className="pointer-events-none absolute top-2 left-3 z-10 mono-sm text-tertiary select-none">
 					{language}
 				</span>
 			) : null}
-			<button
+			<Button
 				type="button"
+				size="sm"
+				variant="ghost"
+				square
 				onClick={handleCopy}
 				aria-label={copied ? 'Copied' : 'Copy code'}
 				data-copied={copied || undefined}
-				className="absolute top-1.5 right-1.5 z-10 flex size-7 items-center justify-center rounded-md text-ai-white/60 opacity-0 transition-[opacity,background-color,color] group-hover:opacity-100 hover:bg-ai-white/10 hover:text-ai-white focus-visible:bg-ai-white/10 focus-visible:text-ai-white focus-visible:opacity-100 focus-visible:outline-hidden data-copied:opacity-100"
+				className="absolute top-1.5 right-1.5 z-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 data-copied:opacity-100"
 			>
-				<Icon name={copied ? 'check' : 'copy'} height={14} width={14} />
-			</button>
-			<pre {...props} className={`${language ? '!pt-8' : ''} ${className ?? ''}`}>
+				<Icon name={copied ? 'check' : 'copy'} height={16} width={16} />
+			</Button>
+			<pre {...props} className={`${language ? 'pt-8!' : ''} ${className ?? ''}`}>
 				{children}
 			</pre>
 		</div>
@@ -412,7 +410,7 @@ export function SourcesList({ citations, isStreaming = false }: { citations: Arr
 
 	return (
 		<details className="flex flex-col text-sm">
-			<summary className="mr-auto flex items-center gap-1 rounded-sm bg-ai-hover px-2 py-1 text-brand">
+			<summary className="mr-auto flex items-center gap-1 rounded-sm bg-surface-elevated-2 px-2 py-1 text-brand">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
 					width="14"
@@ -438,9 +436,9 @@ export function SourcesList({ citations, isStreaming = false }: { citations: Arr
 						href={normalizedUrl}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="group flex items-start gap-2.5 rounded-lg border border-ai-line p-2 hover:border-brand hover:bg-brand/12 focus-visible:border-brand focus-visible:bg-brand/12"
+						className="group flex items-start gap-2.5 rounded-lg border border-subtle p-2 hover:border-brand hover:bg-brand/12 focus-visible:border-brand focus-visible:bg-brand/12"
 					>
-						<span className="rounded-sm bg-ai-hover px-1.5 text-brand">{citationNumber}</span>
+						<span className="rounded-sm bg-surface-elevated-2 px-1.5 text-brand">{citationNumber}</span>
 						<span className="truncate">{normalizedUrl}</span>
 					</a>
 				))}
@@ -567,7 +565,7 @@ const markdownComponents = {
 	th: ({ children, node: _node, ...props }: MarkdownCellProps) => (
 		<th
 			{...props}
-			className={`border border-ai-line bg-page px-3 py-2 align-top whitespace-nowrap [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
+			className={`border border-medium bg-surface-elevated-1 px-3 py-2 text-left align-top label-sm whitespace-nowrap text-secondary [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
 		>
 			{children}
 		</th>
@@ -575,18 +573,18 @@ const markdownComponents = {
 	td: ({ children, node: _node, ...props }: MarkdownDataCellProps) => (
 		<td
 			{...props}
-			className={`border border-ai-line bg-ai-surface-card px-3 py-2 align-top whitespace-nowrap [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
+			className={`border border-medium bg-surface px-3 py-2 align-top whitespace-nowrap text-primary [.llamaai-table-fullscreen_&]:[overflow-wrap:anywhere] [.llamaai-table-fullscreen_&]:break-words [.llamaai-table-fullscreen_&]:whitespace-normal ${props.className ?? ''}`}
 		>
 			{children}
 		</td>
 	),
 	ul: ({ children, node: _node, ...props }: MarkdownListProps) => (
-		<ul {...props} className={`grid list-disc gap-1 pl-4 ${props.className ?? ''}`}>
+		<ul {...props} className={`grid list-disc gap-1 pl-5 ${props.className ?? ''}`}>
 			{children}
 		</ul>
 	),
 	ol: ({ children, node: _node, ...props }: MarkdownOrderedListProps) => (
-		<ol {...props} className={`grid list-decimal gap-1 pl-8 ${props.className ?? ''}`}>
+		<ol {...props} className={`grid list-decimal gap-1 pl-5 ${props.className ?? ''}`}>
 			{children}
 		</ol>
 	),
@@ -683,7 +681,7 @@ export function ChatMarkdownRenderer({
 	return (
 		<div
 			data-llamaai-prose
-			className={`${styles.prose} prose prose-sm flex max-w-none flex-col gap-2.5 overflow-x-auto leading-normal dark:prose-invert prose-a:no-underline${hackerMode ? ` ${styles.hackerMode}` : ''}`}
+			className={`${styles.prose} prose prose-sm flex max-w-none flex-col gap-2.5 overflow-x-auto leading-normal prose-neutral dark:prose-invert prose-headings:font-semibold prose-headings:text-primary prose-p:text-primary prose-a:text-link prose-a:no-underline hover:prose-a:underline prose-blockquote:border-l-2 prose-blockquote:border-brand prose-blockquote:px-3 prose-blockquote:py-0.5 prose-blockquote:text-secondary prose-blockquote:not-italic prose-strong:text-primary prose-code:rounded-sm prose-code:bg-surface-elevated-1 prose-code:px-1 prose-code:py-0.5 prose-code:font-normal prose-code:text-primary prose-code:before:hidden prose-code:after:hidden prose-pre:rounded-lg prose-pre:border prose-pre:border-medium prose-pre:bg-surface-elevated-1 prose-pre:p-3 prose-pre:text-primary prose-li:text-primary prose-img:rounded-lg prose-hr:border-medium [&_pre]:mono-sm [&_pre_code]:bg-transparent [&_pre_code]:p-0${hackerMode ? ` ${styles.hackerMode}` : ''}`}
 		>
 			<MarkdownRenderContextProvider.Provider value={renderContext}>
 				{segments.render(processedContent, processors, unfinished)}

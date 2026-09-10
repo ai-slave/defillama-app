@@ -53,6 +53,7 @@ import { buildRenderPlan, type ChartRenderPlan } from '~/containers/LlamaAI/util
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
 const noop = () => {}
@@ -229,12 +230,7 @@ function renderChartContent(
 				</Suspense>
 			)
 		default:
-			return (
-				<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
-					<Icon name="alert-triangle" height={16} width={16} />
-					<p>Unsupported chart type</p>
-				</div>
-			)
+			return <ChartErrorPlaceholder message="Unsupported chart type" />
 	}
 }
 
@@ -387,15 +383,10 @@ function ChartEditorSession({
 	let previewContent: ReactNode
 	if (previewPresentation.ok === false) {
 		const errorMsg = previewPresentation.error instanceof Error ? previewPresentation.error.message : 'Unknown error'
-		previewContent = (
-			<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
-				<Icon name="alert-triangle" height={16} width={16} />
-				<p>{errorMsg}</p>
-			</div>
-		)
+		previewContent = <ChartErrorPlaceholder message={errorMsg} />
 	} else if (!previewPresentation.plan.hasData) {
 		previewContent = (
-			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-ai-tertiary">
+			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-tertiary">
 				<Icon name="bar-chart" height={16} width={16} />
 				<p>No data available for chart</p>
 			</div>
@@ -409,7 +400,7 @@ function ChartEditorSession({
 			<div className="flex h-[360px] min-h-[360px] shrink-0 items-center justify-center overflow-hidden px-5 lg:h-auto lg:min-h-0 lg:flex-1 lg:overflow-auto lg:p-5">
 				<div className="w-full">{previewContent}</div>
 			</div>
-			<div className="flex w-full shrink-0 flex-col border-t border-ai-line bg-ai-surface lg:h-full lg:min-h-0 lg:w-[340px] lg:overflow-y-auto lg:border-t-0 lg:border-l">
+			<div className="flex w-full shrink-0 flex-col border-t border-subtle bg-surface-elevated-1 lg:h-full lg:min-h-0 lg:w-[340px] lg:overflow-y-auto lg:border-t-0 lg:border-l">
 				<ChartStyleEditor
 					config={config}
 					original={original}
@@ -685,19 +676,14 @@ function ActiveSingleChart({
 
 	if (presentation.ok === false) {
 		const errorMsg = presentation.error instanceof Error ? presentation.error.message : 'Unknown error'
-		return (
-			<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
-				<Icon name="alert-triangle" height={16} width={16} />
-				<p>{errorMsg}</p>
-			</div>
-		)
+		return <ChartErrorPlaceholder message={errorMsg} />
 	}
 
 	const renderPlan = presentation.plan
 
 	if (!renderPlan.hasData) {
 		return (
-			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-ai-tertiary">
+			<div className="flex flex-col items-center justify-center gap-2 p-1 py-8 text-tertiary">
 				<Icon name="bar-chart" height={16} width={16} />
 				<p>No data available for chart</p>
 			</div>
@@ -742,7 +728,7 @@ function ActiveSingleChart({
 						title="Edit chart style"
 						aria-label="Edit chart style"
 					>
-						<Icon name="settings" height={14} width={14} />
+						<Icon name="settings" height={16} width={16} />
 					</Button>
 				) : null}
 				{openArticleExport && messageId && !readOnly ? (
@@ -756,7 +742,7 @@ function ActiveSingleChart({
 							title="Save chart (frozen data)"
 							aria-label="Save chart (frozen data)"
 						>
-							<Icon name="bookmark" height={14} width={14} />
+							<Icon name="bookmark" height={16} width={16} />
 						</Button>
 						<Button
 							type="button"
@@ -775,7 +761,7 @@ function ActiveSingleChart({
 							title="Add to research article"
 							aria-label="Add to research article"
 						>
-							<Icon name="file-plus" height={14} width={14} />
+							<Icon name="file-plus" height={16} width={16} />
 						</Button>
 					</>
 				) : null}
@@ -814,11 +800,10 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 			open
 			onClose={onClose}
 			aria-label={title ? `Edit chart: ${title}` : 'Edit chart'}
-			backdrop={<div className="fixed inset-0 z-50 bg-ai-backdrop" />}
-			className="fixed inset-0 z-50 m-auto flex h-[85dvh] max-h-[560px] w-[calc(100%-2rem)] max-w-5xl flex-col overflow-y-auto overscroll-contain rounded-xl border border-ai-line bg-ai-surface-card shadow-2xl lg:flex-row lg:overflow-hidden"
+			className="fixed inset-0 z-50 m-auto flex h-[85dvh] max-h-[560px] w-[calc(100%-2rem)] max-w-5xl flex-col overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-dialog lg:flex-row lg:overflow-hidden dark:shadow-dialog-deep"
 		>
-			<div className="flex shrink-0 items-center justify-between border-b border-ai-line px-4 py-2.5 lg:hidden">
-				<span className="truncate text-sm font-semibold text-secondary">{title ?? 'Edit chart'}</span>
+			<div className="flex shrink-0 items-center justify-between border-b border-subtle px-4 py-2.5 lg:hidden">
+				<span className="truncate heading-xs text-primary">{title ?? 'Edit chart'}</span>
 				<Ariakit.DialogDismiss
 					render={<Button type="button" variant="ghost" size="md" square />}
 					aria-label="Close editor"
@@ -838,15 +823,15 @@ function ChartEditorModal({ title, onClose, children }: { title?: string; onClos
 	)
 }
 
-function ChartLoadingSpinner() {
-	return <div className="size-4 animate-spin rounded-full border-b-2 border-ai-accent-blue" />
-}
-
 function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | undefined }) {
 	return (
-		<div className="flex flex-col items-center justify-center gap-2 rounded-md border border-ai-line px-1 py-8">
-			<ChartLoadingSpinner />
-			<p className="text-ai-tertiary">
+		<div
+			role="status"
+			aria-live="polite"
+			className="flex flex-col items-center justify-center gap-2 rounded-md border border-subtle px-1 py-8 text-tertiary"
+		>
+			<LoadingSpinner size={16} />
+			<p className="text-tertiary">
 				{chartTypes?.length ? (
 					<>
 						Creating {chartTypes.join(', ')} visualization{chartTypes.length > 1 ? 's' : ''}&hellip;
@@ -859,11 +844,14 @@ function ChartLoadingPlaceholder({ chartTypes }: { chartTypes: Array<string> | u
 	)
 }
 
-function ChartErrorPlaceholder() {
+function ChartErrorPlaceholder({ message = 'Chart generation encountered an issue' }: { message?: string }) {
 	return (
-		<div className="flex flex-col items-center justify-center gap-2 rounded-md bg-ai-error-bg p-1 py-8 text-ai-error-strong">
+		<div
+			role="alert"
+			className="flex flex-col items-center justify-center gap-2 rounded-md bg-error/10 p-1 py-8 text-error"
+		>
 			<Icon name="alert-triangle" height={16} width={16} />
-			<p>Chart generation encountered an issue</p>
+			<p>{message}</p>
 		</div>
 	)
 }
@@ -961,18 +949,18 @@ function ChartRendererImpl({
 	const hasMultipleCharts = charts.length > 1
 
 	return (
-		<div ref={containerRef} className="flex flex-col gap-2 rounded-md border border-brand pt-2">
+		<div ref={containerRef} className="flex flex-col gap-2 rounded-lg border border-subtle bg-surface pt-2">
 			{hasMultipleCharts ? (
-				<div className="-mt-2 flex border-b border-ai-line">
+				<div className="-mt-2 flex border-b border-subtle">
 					{charts.map((chart) => (
 						<button
 							type="button"
 							key={`toggle-${chart.id}`}
 							onClick={() => setSelectedChartId(chart.id)}
-							className={`border-b-2 px-2 py-1.5 text-sm transition-colors ${
+							className={`border-b-2 px-2 py-1.5 label-sm ${
 								activeChartId === chart.id
-									? 'border-brand text-brand'
-									: 'border-transparent text-ai-tertiary hover:text-ai-primary'
+									? 'border-brand text-link'
+									: 'border-transparent text-secondary not-disabled:not-aria-disabled:hover:text-primary'
 							}`}
 						>
 							{chart.title}

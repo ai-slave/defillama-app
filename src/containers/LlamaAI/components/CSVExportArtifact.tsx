@@ -1,4 +1,5 @@
 import { useAuthContext } from '~/auth'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatNumber } from '~/utils/numberFormat'
@@ -22,20 +23,17 @@ export function CSVExportArtifact({ csvExport, sessionId, messageId }: CSVExport
 
 	if (!hasActiveSubscription) {
 		return (
-			<div className="flex items-center gap-3 rounded-lg border border-ai-line bg-ai-surface-card p-3 opacity-60">
-				<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-ai-skeleton">
-					<Icon name="file-text" className="size-5 text-ai-muted" />
+			<div className="flex items-center gap-3 rounded-lg border border-subtle bg-surface p-3">
+				<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-elevated-2">
+					<Icon name="file-text" className="size-5 text-tertiary" />
 				</span>
 				<span className="flex min-w-0 flex-1 flex-col gap-0.5">
-					<span className="m-0 truncate text-sm font-medium text-(--text1)">{csvExport.title}</span>
-					<span className="m-0 text-xs text-(--text3)">CSV exports require a subscription</span>
+					<span className="m-0 truncate label-md text-primary">{csvExport.title}</span>
+					<span className="m-0 body-sm text-secondary">CSV exports require a subscription</span>
 				</span>
-				<a
-					href="https://defillama.com/subscription"
-					className="flex shrink-0 items-center gap-1.5 rounded-md bg-ai-action px-2.5 py-1 text-xs font-medium text-ai-white hover:bg-ai-action-hover"
-				>
+				<Button as="a" href="https://defillama.com/subscription" size="md" variant="primary">
 					Subscribe
-				</a>
+				</Button>
 			</div>
 		)
 	}
@@ -54,18 +52,18 @@ export function CSVExportArtifact({ csvExport, sessionId, messageId }: CSVExport
 					messageId: messageId ?? ''
 				})
 			}
-			className="flex items-center gap-3 rounded-lg border border-ai-line bg-ai-surface-card p-3 transition-colors hover:border-ai-action hover:bg-ai-action/5"
+			className="flex items-center gap-3 rounded-lg border border-subtle bg-surface p-3 not-disabled:not-aria-disabled:hover:bg-hover-row"
 		>
-			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-ai-action/10">
-				<Icon name="file-text" className="size-5 text-ai-action" />
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-muted">
+				<Icon name="file-text" className="size-5 text-link-on-tint" />
 			</span>
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<span className="m-0 truncate text-sm font-medium text-(--text1)">{csvExport.title}</span>
-				<span className="m-0 text-xs text-(--text3)">{formatNumber(csvExport.rowCount)} rows</span>
+				<span className="m-0 truncate label-md text-primary">{csvExport.title}</span>
+				<span className="m-0 body-sm text-secondary">{formatNumber(csvExport.rowCount)} rows</span>
 			</span>
-			<span className="flex shrink-0 items-center gap-1.5 text-ai-action">
-				<Icon name="download-paper" className="size-4" />
-				<span className="text-sm font-medium">.csv</span>
+			<span className="flex shrink-0 items-center gap-1 label-sm text-link">
+				<Icon name="download-paper" className="size-3.5" />
+				.csv
 			</span>
 		</a>
 	)

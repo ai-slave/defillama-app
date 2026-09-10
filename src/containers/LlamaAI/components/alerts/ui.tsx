@@ -4,10 +4,15 @@ import { useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import { formatPriceDisplay, normalizePriceInput } from '~/containers/LlamaAI/components/alerts/createAlertForm'
 import { useTipActions } from '~/containers/LlamaAI/components/TipActionContext'
+import { buttonStyles } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon, type IIcon } from '~/ui/Icon'
+import { inputStyles } from '~/ui/Input'
+import { TAG_GROUP_SIZES, TAG_GROUP_VARIANTS } from '~/ui/SegmentedControl'
+import { Switch } from '~/ui/Switch'
 
 const settingsIntegrationsLinkClass =
-	'cursor-pointer underline decoration-dotted underline-offset-2 transition-colors hover:text-link'
+	'cursor-pointer underline decoration-dotted underline-offset-2 not-disabled:not-aria-disabled:hover:text-link'
 
 export function SettingsIntegrationsLink() {
 	const { openSettingsModal } = useTipActions()
@@ -30,27 +35,19 @@ export function SettingsIntegrationsLink() {
 	)
 }
 
-export const alertDialogClass =
-	'dialog max-h-[85vh] w-full max-w-lg gap-0 overflow-hidden rounded-2xl border border-ai-line-subtle bg-ai-surface-card p-0 shadow-ai-lg max-sm:max-h-[calc(100dvh-80px)] max-sm:rounded-b-none'
+export const alertDialogClass = `${dialogSurfaceStyles} [--dialog-width:512px]`
 
-export const alertBackdropClass = 'backdrop fixed inset-0 bg-ai-backdrop backdrop-blur-md'
+export const alertInputClass = `${inputStyles} w-full`
 
-export const alertInputClass =
-	'w-full rounded-lg border border-ai-line-medium bg-ai-hover-faint px-3 py-2 text-sm text-ai-primary placeholder-ai-muted transition-all outline-hidden focus:border-link/40 focus:bg-ai-hover focus:ring-4 focus:ring-link/8'
+export const alertSelectClass = inputStyles
 
-export const alertSelectClass =
-	'rounded-lg border border-ai-line-medium bg-ai-hover-faint px-2.5 py-2 text-sm text-ai-primary transition-all outline-hidden focus:border-link/40 focus:bg-ai-surface-card focus:ring-4 focus:ring-link/8'
+export const alertFieldLabelClass = 'label-sm text-secondary'
 
-export const alertFieldLabelClass = 'text-xs font-medium text-ai-tertiary'
+export const alertPrimaryButtonClass = buttonStyles({ variant: 'primary', size: 'md' })
 
-export const alertPrimaryButtonClass =
-	'flex items-center justify-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:cursor-not-allowed disabled:opacity-50'
+export const alertGhostButtonClass = buttonStyles({ variant: 'ghost', size: 'md' })
 
-export const alertGhostButtonClass =
-	'rounded-lg px-3 py-2 text-sm text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary'
-
-export const alertIconButtonClass =
-	'flex size-7 items-center justify-center rounded-lg text-ai-muted transition-colors hover:bg-ai-hover hover:text-primary dark:hover:text-ai-primary'
+export const alertIconButtonClass = buttonStyles({ variant: 'ghost', size: 'md', square: true })
 
 export function AlertsDialogHeader({
 	title,
@@ -64,30 +61,19 @@ export function AlertsDialogHeader({
 	right?: ReactNode
 }) {
 	return (
-		<header className="relative shrink-0 overflow-hidden border-b border-ai-line-subtle">
-			<div className="from-ai-warning-bright/0.06 pointer-events-none absolute inset-0 bg-linear-to-br via-transparent to-transparent" />
-			<div className="relative flex items-center justify-between gap-3 px-5 py-3">
-				<div className="flex min-w-0 items-center gap-3">
-					<div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-ai-warning-bright/20 to-ai-warning-bright/5 ring-1 ring-ai-warning-bright/20 ring-inset">
-						<Icon name={icon} className="size-4 text-ai-warning-bright" />
-					</div>
-					<div className="flex min-w-0 flex-col leading-tight">
-						<Ariakit.DialogHeading
-							render={<h2>{title}</h2>}
-							className="m-0 text-base font-semibold tracking-tight text-ai-primary"
-						/>
-						{subtitle ? <p className="m-0 mt-0.5 truncate text-xs text-ai-tertiary">{subtitle}</p> : null}
-					</div>
+		<header className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3">
+			<div className="flex min-w-0 items-center gap-3">
+				<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
+					<Icon name={icon} className="size-4" />
 				</div>
-				<div className="flex shrink-0 items-center gap-1.5">
-					{right}
-					<Ariakit.DialogDismiss
-						aria-label="Close dialog"
-						className="rounded-lg p-2 text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary"
-					>
-						<Icon name="x" className="size-4" />
-					</Ariakit.DialogDismiss>
+				<div className="flex min-w-0 flex-col gap-0.5">
+					<DialogHeading>{title}</DialogHeading>
+					{subtitle ? <p className="m-0 truncate body-sm text-secondary">{subtitle}</p> : null}
 				</div>
+			</div>
+			<div className="flex shrink-0 items-center gap-1.5">
+				{right}
+				<DialogCloseButton className="-mr-1" />
 			</div>
 		</header>
 	)
@@ -108,7 +94,7 @@ export function PriceInput({
 
 	return (
 		<div className="relative w-32">
-			<span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-ai-muted">$</span>
+			<span className="pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2 text-sm text-tertiary">$</span>
 			<input
 				type="text"
 				inputMode="decimal"
@@ -136,33 +122,25 @@ export function ToggleSwitch({
 	checked,
 	onClick,
 	label,
-	disabled
+	disabled,
+	isLoading
 }: {
 	checked: boolean
 	onClick: () => void
 	label: string
 	disabled?: boolean
+	isLoading?: boolean
 }) {
 	return (
-		<Ariakit.Checkbox
-			render={<button type="button" aria-label={label} />}
-			accessibleWhenDisabled
-			role="switch"
-			aria-checked={checked}
+		<Switch
+			label={label}
+			hideLabel
+			value={label}
 			checked={checked}
-			aria-label={label}
 			onChange={onClick}
 			disabled={disabled}
-			className={`relative h-[22px] w-[38px] shrink-0 rounded-full transition-colors aria-disabled:opacity-50 ${
-				checked ? 'bg-link' : 'bg-ai-black/15 dark:bg-ai-white/15'
-			}`}
-		>
-			<span
-				className={`absolute top-[3px] left-0 size-4 rounded-full bg-ai-white shadow transition-transform duration-200 ${
-					checked ? 'translate-x-[19px]' : 'translate-x-[3px]'
-				}`}
-			/>
-		</Ariakit.Checkbox>
+			isLoading={isLoading}
+		/>
 	)
 }
 
@@ -198,12 +176,15 @@ export function SegmentedToggle<T extends string>({
 				if (option && option.value !== value) onChange(option.value)
 			}}
 		>
-			<Ariakit.RadioGroup aria-label={label} className="flex w-fit items-center gap-0.5 rounded-lg bg-ai-hover p-0.5">
+			<Ariakit.RadioGroup
+				aria-label={label}
+				className={`${TAG_GROUP_VARIANTS.default.container} ${TAG_GROUP_SIZES.md}`}
+			>
 				{options.map((option) => (
 					<label
 						key={option.value}
 						data-active={value === option.value}
-						className="relative cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium text-ai-tertiary capitalize transition-colors hover:text-primary has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:opacity-50 data-[active=true]:bg-ai-white data-[active=true]:text-link data-[active=true]:shadow-ai-xs data-[active=true]:ring-1 data-[active=true]:ring-ai-line-subtle dark:hover:text-ai-primary dark:data-[active=true]:bg-ai-hover-strong dark:data-[active=true]:shadow-none dark:data-[active=true]:ring-ai-line-medium"
+						className={`${TAG_GROUP_VARIANTS.default.button} relative cursor-pointer capitalize has-focus-visible:focus-ring has-disabled:cursor-not-allowed has-disabled:opacity-60`}
 					>
 						<Ariakit.Radio value={option.value} aria-label={option.label} disabled={disabled} className="sr-only" />
 						{option.label}
@@ -223,12 +204,12 @@ export function StatusChip({
 }) {
 	const toneClass =
 		tone === 'success'
-			? 'bg-ai-success/10 text-ai-success'
+			? 'bg-success/10 text-success'
 			: tone === 'error'
-				? 'bg-ai-error-vivid/10 text-ai-error'
+				? 'bg-error/10 text-error'
 				: tone === 'warning'
-					? 'bg-ai-warning-bright/10 text-ai-warning'
-					: 'bg-ai-hover text-ai-tertiary'
+					? 'bg-warning/10 text-warning'
+					: 'bg-surface-elevated-2 text-tertiary'
 	return (
 		<span className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 label-xs capitalize ${toneClass}`}>
 			{children}

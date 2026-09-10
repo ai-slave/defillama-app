@@ -1,4 +1,5 @@
 import type { ContextWarningPayload } from '~/containers/LlamaAI/fetchAgenticResponse'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 
@@ -30,25 +31,27 @@ export function ContextWarningBanner({ warning, onStartNewChat, onDismiss }: Con
 	return (
 		<div
 			role="status"
-			className="flex items-center gap-3 rounded-lg border border-ai-warning/60 bg-ai-warning-soft px-3.5 py-2.5"
+			className="flex items-center gap-3 rounded-lg border border-warning/60 bg-warning/10 px-3.5 py-2.5"
 		>
-			<Icon name="alert-triangle" height={16} width={16} className="shrink-0 text-ai-warning" />
-			<p className="m-0 min-w-0 flex-1 text-[13px] text-ai-warning-strong">{warning.message}</p>
+			<Icon name="alert-triangle" height={16} width={16} className="shrink-0 text-warning" />
+			<p className="m-0 min-w-0 flex-1 text-[13px] text-warning">{warning.message}</p>
 			<button
 				type="button"
 				onClick={handleStartNewChat}
-				className="shrink-0 rounded-md bg-ai-warning px-3 py-1 text-xs font-medium text-ai-on-inverse transition-opacity hover:opacity-90"
+				className="shrink-0 rounded-md bg-warning px-3 py-1 text-xs font-medium text-on-brand not-disabled:not-aria-disabled:hover:opacity-90"
 			>
 				Start new chat
 			</button>
-			<button
+			<Button
 				type="button"
+				variant="ghost"
+				size="md"
+				square
 				onClick={handleDismiss}
 				aria-label="Dismiss long-thread warning"
-				className="flex size-6 shrink-0 items-center justify-center rounded-full text-ai-warning-strong/70 transition-colors hover:bg-ai-warning/10 hover:text-ai-warning-strong"
 			>
-				<Icon name="x" height={14} width={14} />
-			</button>
+				<Icon name="x" height={16} width={16} />
+			</Button>
 		</div>
 	)
 }

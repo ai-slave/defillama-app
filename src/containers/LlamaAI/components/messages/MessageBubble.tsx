@@ -26,13 +26,21 @@ import type { DashboardArtifact, Message } from '~/containers/LlamaAI/types'
 import { buildMessageExportRequest } from '~/containers/LlamaAI/utils/articleExport'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { wrapLegacyUrlCitations } from '~/containers/LlamaAI/utils/markdownHelpers'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { Tooltip } from '~/ui/Tooltip'
+
+// Keyboard hints under the edit box.
+const KBD = 'rounded-sm border border-medium bg-surface-elevated-1 px-1 py-px mono-sm text-secondary'
 
 function StreamingChartPlaceholder() {
 	return (
-		<div className="my-4 flex h-[360px] animate-pulse items-center justify-center rounded-lg bg-ai-skeleton">
-			<p className="text-sm text-ai-muted">Loading chart...</p>
+		<div
+			role="status"
+			className="my-4 flex h-[360px] items-center justify-center rounded-lg bg-surface-elevated-2 motion-safe:animate-pulse"
+		>
+			<p className="text-sm text-tertiary">Loading chart…</p>
 		</div>
 	)
 }
@@ -40,7 +48,7 @@ function StreamingChartPlaceholder() {
 function StreamingImagePlaceholder() {
 	return (
 		<div
-			className="my-2 flex w-full max-w-[220px] animate-pulse items-center justify-center overflow-hidden rounded-lg border border-brand/20 bg-brand/5"
+			className="my-2 flex w-full max-w-[220px] items-center justify-center overflow-hidden rounded-lg border border-brand/20 bg-brand/5 motion-safe:animate-pulse"
 			style={{ aspectRatio: '1 / 1' }}
 		>
 			<div className="flex flex-col items-center gap-1.5 text-brand">
@@ -79,7 +87,7 @@ function GeneratedImageBlock({
 			<div
 				role="img"
 				aria-label={prompt ? `Failed to load generated image for prompt: ${prompt}` : 'Failed to load generated image'}
-				className="my-2 flex w-full max-w-sm flex-col items-center justify-center gap-2 rounded-lg border border-ai-error-vivid/20 bg-ai-error-vivid/5 p-6 text-ai-error"
+				className="my-2 flex w-full max-w-sm flex-col items-center justify-center gap-2 rounded-lg border border-error/20 bg-error/5 p-6 text-error"
 				style={aspect ? { aspectRatio: aspect } : undefined}
 			>
 				<Icon name="alert-triangle" height={24} width={24} />
@@ -103,13 +111,13 @@ function GeneratedImageBlock({
 			title={prompt}
 			aria-label={prompt || 'Generated image'}
 			disabled={!interactive}
-			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-ai-line-medium bg-ai-hover transition focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-hidden ${interactive ? 'cursor-pointer hover:border-ai-line-strong dark:hover:border-ai-inverse/20' : 'cursor-default'}`}
+			className={`group/genimg relative my-2 block w-full max-w-sm overflow-hidden rounded-lg border border-medium bg-surface-elevated-2 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-hidden ${interactive ? 'cursor-pointer not-disabled:not-aria-disabled:hover:border-strong' : 'cursor-default'}`}
 			style={aspect ? { aspectRatio: aspect } : undefined}
 		>
 			{!loaded ? (
 				<div
 					aria-hidden="true"
-					className="absolute inset-0 animate-pulse bg-linear-to-br from-brand/10 via-brand/5 to-transparent"
+					className="absolute inset-0 bg-linear-to-br from-brand/10 via-brand/5 to-transparent motion-safe:animate-pulse"
 				/>
 			) : null}
 			<img
@@ -119,7 +127,7 @@ function GeneratedImageBlock({
 				decoding="async"
 				onLoad={() => setLoaded(true)}
 				onError={() => setErrored(true)}
-				className={`block h-auto w-full transition-all duration-500 ease-out ${loaded ? 'blur-0 scale-100 opacity-100' : 'scale-[1.02] opacity-0 blur-sm'}`}
+				className={`block h-auto w-full motion-safe:transition-opacity motion-safe:duration-150 ${loaded ? 'opacity-100' : 'opacity-0'}`}
 			/>
 		</button>
 	)
@@ -357,15 +365,10 @@ function InlineContent({
 	)
 }
 
-// Owns the try: the compiler cannot lower a conditional inside one, and an unreadable paste is simply
-// empty rather than an error the reader has to act on.
 async function readPastedText(url: string) {
-	try {
-		const res = await fetch(url)
-		return res.ok ? await res.text() : ''
-	} catch {
-		return ''
-	}
+	const res = await fetch(url)
+	if (!res.ok) throw new Error('Failed to load attachment')
+	return res.text()
 }
 
 export function MessageBubble(props: ComponentProps<typeof MessageBubbleContent>) {
@@ -465,15 +468,13 @@ function MessageBubbleContent({
 				className={`group/msg ml-auto flex w-full max-w-[80%] flex-col items-end ${anchorClassName ?? ''}`}
 			>
 				<div
-					className={`${isEditing ? 'w-full' : 'w-fit max-w-full'} rounded-lg rounded-tr-none px-3.5 py-2.5 wrap-break-word transition-[background-color,box-shadow] duration-150 ${
-						isEditing
-							? 'bg-ai-white shadow-ai-focus-inset dark:bg-ai-ink'
-							: 'bg-ai-surface-muted dark:bg-ai-surface-muted'
+					className={`${isEditing ? 'w-full' : 'w-fit max-w-full'} rounded-lg rounded-tr-none px-3.5 py-2.5 body-md wrap-break-word text-primary ${
+						isEditing ? 'bg-page ring-1 ring-brand' : 'bg-surface-elevated-1'
 					}`}
 				>
 					{message.quotedText ? (
-						<div className="mb-2 border-l-2 border-ai-line-strong py-1 pl-2.5">
-							<p className="line-clamp-3 text-[13px] text-ai-tertiary">{message.quotedText}</p>
+						<div className="mb-2 border-l-2 border-medium py-0.5 pl-2.5">
+							<p className="line-clamp-3 body-sm text-secondary">{message.quotedText}</p>
 						</div>
 					) : null}
 					{message.images && message.images.length > 0 ? (
@@ -519,11 +520,11 @@ function MessageBubbleContent({
 										href={image.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="flex h-16 items-center gap-2 rounded-lg bg-ai-hover-strong px-3 hover:bg-ai-black/15 dark:bg-ai-white/15"
+										className="flex h-16 items-center gap-2 rounded-lg border border-medium bg-page px-3 body-sm text-primary hover:bg-hover-row"
 									>
-										<Icon name="file-text" height={18} width={18} />
-										<span className="max-w-[120px] truncate text-xs">{displayName}</span>
-										<Icon name="external-link" height={12} width={12} className="opacity-50" />
+										<Icon name="file-text" height={16} width={16} className="text-secondary" />
+										<span className="max-w-[120px] truncate">{displayName}</span>
+										<Icon name="external-link" height={14} width={14} className="text-tertiary" />
 									</a>
 								)
 							})}
@@ -557,51 +558,40 @@ function MessageBubbleContent({
 
 				{isEditing ? (
 					<div className="mt-2 flex w-full items-center gap-3">
-						<p className="mr-auto text-[11px] text-ai-muted">
+						<p className="mr-auto body-sm text-tertiary">
 							{isPersistedId ? 'Saving creates a new branch' : 'This will replace your message'}
 							<span className="hidden sm:inline">
 								{' · '}
 								{enterToSend ? (
-									<kbd className="rounded-sm border border-ai-line-medium bg-ai-white/70 px-1 py-px font-mono text-[10px] text-ai-tertiary dark:bg-ai-white/5">
-										Enter
-									</kbd>
+									<kbd className={KBD}>Enter</kbd>
 								) : (
 									<>
-										<kbd className="rounded-sm border border-ai-line-medium bg-ai-white/70 px-1 py-px font-mono text-[10px] text-ai-tertiary dark:bg-ai-white/5">
-											Shift
-										</kbd>
+										<kbd className={KBD}>Shift</kbd>
 										<span className="mx-0.5">+</span>
-										<kbd className="rounded-sm border border-ai-line-medium bg-ai-white/70 px-1 py-px font-mono text-[10px] text-ai-tertiary dark:bg-ai-white/5">
-											Enter
-										</kbd>
+										<kbd className={KBD}>Enter</kbd>
 									</>
 								)}
 								<span className="mx-1">save</span>
-								<kbd className="rounded-sm border border-ai-line-medium bg-ai-white/70 px-1 py-px font-mono text-[10px] text-ai-tertiary dark:bg-ai-white/5">
-									esc
-								</kbd>
+								<kbd className={KBD}>esc</kbd>
 								<span className="ml-1">cancel</span>
 							</span>
 						</p>
-						<button
-							type="button"
-							onClick={handleCancelEdit}
-							disabled={isSaving}
-							className="rounded-md px-2.5 py-1 text-xs text-ai-tertiary transition-colors hover:bg-ai-hover hover:text-ai-primary disabled:cursor-not-allowed disabled:opacity-40"
-						>
+						<Button type="button" size="sm" variant="ghost" onClick={handleCancelEdit} disabled={isSaving}>
 							Cancel
-						</button>
-						<button
+						</Button>
+						<Button
 							type="button"
+							size="sm"
+							variant="primary"
 							onClick={handleSaveEdit}
 							disabled={isSaving || !draftText.trim() || draftText.trim() === message.content?.trim()}
-							className="rounded-md bg-ai-accent-blue px-3 py-1 text-xs font-medium text-ai-white transition-colors hover:bg-ai-accent-blue-bright disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ai-accent-blue"
 						>
+							{isSaving ? <LoadingSpinner size={12} /> : null}
 							{isSaving ? 'Saving…' : 'Save'}
-						</button>
+						</Button>
 					</div>
 				) : hasControls ? (
-					<div className="mt-1 flex min-h-[26px] items-center gap-0.5 opacity-100 transition-opacity duration-150 sm:opacity-0 sm:group-hover/msg:opacity-100 sm:focus-within:opacity-100">
+					<div className="mt-1 flex min-h-[26px] items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover/msg:opacity-100 sm:focus-within:opacity-100">
 						{canSwitchBranch && message.siblingInfo && message.siblingInfo.totalVersions > 1 && onBranchSwitch ? (
 							<BranchArrows info={message.siblingInfo} onSwitch={onBranchSwitch} disabled={isBranchSwitching} />
 						) : null}
@@ -609,8 +599,11 @@ function MessageBubbleContent({
 							<Tooltip
 								content="Edit message"
 								render={
-									<button
+									<Button
 										type="button"
+										size="sm"
+										variant="ghost"
+										square
 										onClick={() => {
 											setIsEditing(true)
 											setDraftText(message.content || '')
@@ -618,9 +611,8 @@ function MessageBubbleContent({
 										aria-label="Edit message"
 									/>
 								}
-								className="rounded-md p-1.5 text-ai-muted transition-colors hover:bg-ai-hover hover:text-ai-secondary"
 							>
-								<Icon name="pencil" height={14} width={14} />
+								<Icon name="pencil" height={16} width={16} />
 							</Tooltip>
 						) : null}
 					</div>
@@ -745,20 +737,17 @@ function DashboardInlineCard({ dashboard }: { dashboard: DashboardArtifact }) {
 		<button
 			type="button"
 			onClick={toggleDashboardPanel}
-			className="my-2 flex w-full items-center gap-3 rounded-lg border border-ai-action/30 bg-ai-action/5 px-3.5 py-2.5 text-left transition-all hover:border-ai-action/50 hover:bg-ai-action/10"
+			className="my-2 flex w-full items-center gap-3 rounded-lg border border-subtle bg-surface px-3 py-2.5 text-left not-disabled:not-aria-disabled:hover:bg-hover-row"
 		>
-			<Icon name="layout-grid" className="size-4 shrink-0 text-ai-action" />
+			<Icon name="layout-grid" className="size-4 shrink-0 text-link" />
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center gap-2">
-					<span className="truncate text-sm font-semibold text-ai-action">{dashboard.dashboardName}</span>
-					<span className="shrink-0 text-xs text-ai-tertiary">{dashboard.items.length} items</span>
+					<span className="truncate label-md text-primary">{dashboard.dashboardName}</span>
+					<span className="shrink-0 body-sm text-tertiary">{dashboard.items.length} items</span>
 				</div>
-				<div className="truncate text-xs text-ai-tertiary">{summary}</div>
+				<div className="truncate body-sm text-secondary">{summary}</div>
 			</div>
-			<Icon
-				name={isDashboardPanelOpen ? 'chevron-right' : 'chevron-left'}
-				className="size-4 shrink-0 text-ai-tertiary"
-			/>
+			<Icon name={isDashboardPanelOpen ? 'chevron-right' : 'chevron-left'} className="size-4 shrink-0 text-tertiary" />
 		</button>
 	)
 }

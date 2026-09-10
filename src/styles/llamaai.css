@@ -99,6 +99,15 @@
 			opacity 120ms ease-out,
 			transform 120ms ease-out;
 	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&,
+		&[data-enter],
+		&[data-leave] {
+			transition: none;
+			transform: none;
+		}
+	}
 }
 
 /* ----------------------- Fullscreen chat shell layout ---------------------- */
@@ -240,5 +249,27 @@
 	to {
 		opacity: 1;
 		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.llamaai-glow,
+	.llamaai-glow:hover,
+	.llamaai-glow:active {
+		transform: none;
+		transition: none;
+	}
+	.llamaai-glow:hover::before {
+		animation: none;
+	}
+	.llamaai-glow svg,
+	.llamaai-glow:hover svg {
+		--animate-enabled: paused;
+		--star-1-animation: none;
+		--star-2-animation: none;
+	}
+	.llamaai-glow-text,
+	.dark .llamaai-glow-text {
+		transition: none;
 	}
 }

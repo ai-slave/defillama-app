@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import type { Message } from '~/containers/LlamaAI/types'
+import { getScrollBehavior } from '~/containers/LlamaAI/utils/motion'
 
 type Section = { text: string; msgId: string }
 
@@ -64,7 +65,7 @@ export function SectionsTOC({
 			setActiveIndex(index)
 			clickLockUntil.current = Date.now() + 800
 			const headings = getHeadings(container, sections[0].msgId)
-			headings[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+			headings[index]?.scrollIntoView({ behavior: getScrollBehavior(), block: 'start' })
 		},
 		[scrollContainerRef, sections]
 	)
@@ -74,7 +75,7 @@ export function SectionsTOC({
 	return (
 		<div className="w-0 shrink-0">
 			<nav className="sticky top-0 hidden max-h-dvh w-56 -translate-x-full overflow-y-auto py-6 pr-4 min-[1428px]:block">
-				<p className="mb-3 px-2 text-sm font-semibold text-ai-secondary">Sections</p>
+				<p className="mb-3 px-2 text-sm font-semibold text-secondary">Sections</p>
 				<ol className="flex flex-col gap-0.5">
 					{sections.map((section, i) => {
 						const isActive = activeIndex === i
@@ -83,18 +84,16 @@ export function SectionsTOC({
 								<button
 									type="button"
 									onClick={() => handleClick(i)}
-									className={`flex w-full items-start gap-2.5 rounded-md px-2 py-1.5 text-left text-[13px] leading-snug transition-colors ${
+									className={`flex w-full items-start gap-2.5 rounded-md px-2 py-1.5 text-left text-[13px] leading-snug ${
 										isActive
-											? 'bg-ai-surface-muted font-medium text-ai-primary'
-											: 'text-ai-tertiary hover:bg-ai-surface-muted hover:text-ai-secondary'
+											? 'bg-surface-elevated-1 font-medium text-primary'
+											: 'text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-secondary'
 									}`}
 									title={section.text}
 								>
 									<span
 										className={`mt-px flex size-5 shrink-0 items-center justify-center rounded-sm text-[11px] font-medium ${
-											isActive
-												? 'bg-ai-nav-active text-ai-white dark:bg-ai-nav-active'
-												: 'bg-ai-surface-muted text-ai-tertiary dark:bg-ai-surface-muted'
+											isActive ? 'bg-brand-muted text-ai-white' : 'bg-surface-elevated-1 text-tertiary'
 										}`}
 									>
 										{i + 1}

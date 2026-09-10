@@ -4,6 +4,7 @@ import { useSubscribe } from '~/auth/useSubscribe'
 import type { Subscription } from '~/auth/useSubscribe'
 import { BasicLink } from '~/components/Link'
 import { SubscriptionLoadError } from '~/containers/Subscription/shared/SubscriptionLoadError'
+import { TopupModal } from '~/containers/Subscription/shared/TopupModal'
 import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { Icon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
@@ -16,9 +17,6 @@ import { useTeam } from './Team/useTeam'
 import { TrialSubscriptionCard } from './TrialSubscriptionCard'
 import { TrialUpgradeBanner } from './TrialUpgradeBanner'
 
-const TopupModal = lazy(() =>
-	import('~/containers/Subscription/shared/TopupModal').then((m) => ({ default: m.TopupModal }))
-)
 const StripeCheckoutModal = lazy(() =>
 	import('~/containers/Subscription/shared/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
 )
@@ -367,9 +365,7 @@ export function SubscriptionSection() {
 					/>
 					{memberBalanceCard}
 					{isTopupModalOpen ? (
-						<Suspense fallback={null}>
-							<TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
-						</Suspense>
+						<TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
 					) : null}
 				</>
 			)
@@ -527,11 +523,7 @@ export function SubscriptionSection() {
 				variant="pastDue"
 			/>
 			<EndTrialModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
-			{isTopupModalOpen ? (
-				<Suspense fallback={null}>
-					<TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} />
-				</Suspense>
-			) : null}
+			{isTopupModalOpen ? <TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} /> : null}
 			{isYearlyUpgradeModalOpen && yearlyUpgradeType ? (
 				<Suspense fallback={null}>
 					<StripeCheckoutModal

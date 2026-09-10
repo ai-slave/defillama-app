@@ -80,10 +80,10 @@ function SelectableRow({
 		<button
 			type="button"
 			onClick={onClick}
-			className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left body-sm transition-colors ${
+			className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left body-sm ${
 				selected
 					? 'bg-brand-muted text-link'
-					: 'text-secondary hover:bg-hover-row hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'
+					: 'text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary focus-visible:bg-hover-row focus-visible:text-primary'
 			}`}
 		>
 			<span className={`grid size-4 shrink-0 place-items-center text-link ${selected ? '' : 'invisible'}`}>
@@ -295,7 +295,7 @@ function AddToArticleForm({
 				<div className="max-h-56 overflow-y-auto overscroll-contain">
 					{isLoading ? (
 						<div role="status" aria-live="polite" className="flex items-center justify-center py-8">
-							<div className="size-5 animate-spin rounded-full border-2 border-brand border-t-transparent" />
+							<LoadingSpinner size={20} />
 							<span className="sr-only">Loading drafts</span>
 						</div>
 					) : filtered.length === 0 ? (

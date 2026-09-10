@@ -29,7 +29,7 @@ export function ImagePreviewModal({ imageUrl, onClose, ...tracking }: ImagePrevi
 		<Ariakit.DialogProvider open={!!imageUrl} setOpen={(open) => !open && onClose()}>
 			<Ariakit.Dialog
 				aria-label="Image preview"
-				className="data-[enter]:animate-in data-[leave]:animate-out data-[enter]:fade-in data-[leave]:fade-out fixed inset-0 z-50 flex items-center justify-center bg-ai-black/80 p-4 backdrop-blur-md data-[enter]:duration-150"
+				className="motion-safe:data-[enter]:animate-in motion-safe:data-[leave]:animate-out data-[enter]:fade-in data-[leave]:fade-out fixed inset-0 z-50 flex items-center justify-center bg-ai-black/80 p-4 backdrop-blur-md data-[enter]:duration-150"
 				portal
 				unmountOnHide
 				onClick={(event) => {
@@ -38,10 +38,10 @@ export function ImagePreviewModal({ imageUrl, onClose, ...tracking }: ImagePrevi
 			>
 				{imageUrl ? <ImagePreviewContent key={imageUrl} imageUrl={imageUrl} {...tracking} /> : null}
 				<Ariakit.DialogDismiss
-					className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-ai-white/10 text-ai-white backdrop-blur-md transition-colors hover:bg-ai-hover-strong"
+					className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-ai-white/10 text-ai-white backdrop-blur-md not-disabled:not-aria-disabled:hover:bg-hover-row"
 					aria-label="Close preview"
 				>
-					<Icon name="x" height={18} width={18} />
+					<Icon name="x" height={16} width={16} />
 				</Ariakit.DialogDismiss>
 			</Ariakit.Dialog>
 		</Ariakit.DialogProvider>
@@ -115,13 +115,13 @@ function ImagePreviewContent({
 			<div className="shrink-0 overflow-hidden rounded-xl shadow-2xl ring-1 ring-ai-white/10">
 				<img src={imageUrl} alt="Preview" className="block max-h-[80vh] max-w-full object-contain" />
 			</div>
-			<div className="flex max-w-full shrink-0 flex-wrap justify-center gap-2 rounded-2xl bg-ai-backdrop px-2 py-1.5 ring-1 ring-ai-white/10 backdrop-blur-md">
+			<div className="flex max-w-full shrink-0 flex-wrap justify-center gap-2 rounded-2xl bg-screen-dim px-2 py-1.5 ring-1 ring-ai-white/10 backdrop-blur-md">
 				<Ariakit.Button
 					type="button"
 					onClick={handleCopyUrl}
 					disabled={copy === 'pending'}
 					accessibleWhenDisabled
-					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white aria-disabled:opacity-50"
+					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 not-disabled:not-aria-disabled:hover:bg-ai-white/10 not-disabled:not-aria-disabled:hover:text-ai-white aria-disabled:opacity-50"
 				>
 					{copy === 'pending' ? (
 						<LoadingSpinner size={14} />
@@ -135,7 +135,7 @@ function ImagePreviewContent({
 					onClick={handleDownload}
 					disabled={download === 'pending'}
 					accessibleWhenDisabled
-					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white aria-disabled:opacity-50"
+					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 not-disabled:not-aria-disabled:hover:bg-ai-white/10 not-disabled:not-aria-disabled:hover:text-ai-white aria-disabled:opacity-50"
 				>
 					{download === 'pending' ? (
 						<LoadingSpinner size={14} />
@@ -151,7 +151,7 @@ function ImagePreviewContent({
 					target="_blank"
 					rel="noopener noreferrer"
 					title="Open in new tab"
-					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 transition-colors hover:bg-ai-white/10 hover:text-ai-white"
+					className="flex h-9 items-center gap-1.5 rounded-full px-3 text-xs text-ai-white/80 hover:bg-ai-white/10 hover:text-ai-white"
 				>
 					<Icon name="external-link" height={14} width={14} />
 					<span>Open</span>

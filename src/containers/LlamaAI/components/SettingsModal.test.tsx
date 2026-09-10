@@ -4,6 +4,7 @@ import * as Ariakit from '@ariakit/react'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import type { MemoriesResponse, SkillsResponse } from '~/containers/LlamaAI/api/agentHome'
 import { SettingsModal } from '~/containers/LlamaAI/components/SettingsModal'
 import type { LlamaAISettings, LlamaAISettingsActions } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import type {
@@ -11,9 +12,47 @@ import type {
 	WebMobilePushEnabledMutation
 } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 
-vi.mock('~/containers/LlamaAI/hooks/useAgentHomeData', () => ({
-	useAgentHomeData: () => ({})
+const home = vi.hoisted(() => ({
+	memories: {
+		data: undefined as MemoriesResponse | undefined,
+		error: null as Error | null,
+		isLoading: false,
+		isFetching: false,
+		refetch: vi.fn()
+	},
+	skills: {
+		data: undefined as SkillsResponse | undefined,
+		error: null as Error | null,
+		isLoading: false,
+		isFetching: false,
+		refetch: vi.fn()
+	},
+	deleteMemoryMutation: {
+		error: null as Error | null,
+		isPending: false,
+		variables: undefined as string | undefined,
+		mutate: vi.fn()
+	},
+	clearMemoriesMutation: {
+		error: null as Error | null,
+		isPending: false,
+		variables: undefined as string | undefined,
+		mutate: vi.fn()
+	},
+	archiveSkillMutation: {
+		error: null as Error | null,
+		isPending: false,
+		variables: undefined as string | undefined,
+		mutate: vi.fn()
+	},
+	restoreSkillMutation: {
+		error: null as Error | null,
+		isPending: false,
+		variables: undefined as string | undefined,
+		mutate: vi.fn()
+	}
 }))
+vi.mock('~/containers/LlamaAI/hooks/useAgentHomeData', () => ({ useAgentHomeData: () => home }))
 
 vi.mock('~/contexts/LocalStorage', () => ({
 	useDarkModeManager: () => [false, vi.fn()],
@@ -72,6 +111,22 @@ describe('SettingsModal instructions', () => {
 	beforeEach(async () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		vi.clearAllMocks()
+		home.memories.data = undefined
+		home.skills.data = undefined
+		home.memories.error = null
+		home.skills.error = null
+		home.memories.isFetching = false
+		home.skills.isFetching = false
+		for (const mutation of [
+			home.deleteMemoryMutation,
+			home.clearMemoriesMutation,
+			home.archiveSkillMutation,
+			home.restoreSkillMutation
+		]) {
+			mutation.error = null
+			mutation.isPending = false
+			mutation.variables = undefined
+		}
 		setCustomInstructions = vi.fn(async () => true)
 		mutateMobileNotifications = vi.fn(async (enabled: boolean) => ({ available: true, enabled }))
 		setMobileNotifications = {
@@ -113,6 +168,80 @@ describe('SettingsModal instructions', () => {
 		input.dispatchEvent(new Event('input', { bubbles: true }))
 	}
 
+	async function openMemory() {
+		await act(async () =>
+			[...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
+				.find((tab) => tab.textContent === 'Memory')!
+				.click()
+		)
+	}
+	test('memory and skills errors offer retry without claiming an empty workspace', async () => {
+		home.memories.error = new Error('Offline')
+		home.skills.error = new Error('Offline')
+		await openMemory()
+		expect(document.body.textContent).toContain("Couldn't load memories.")
+		expect(document.body.textContent).toContain("Couldn't load skills.")
+		expect(document.body.textContent).not.toContain('Nothing remembered yet.')
+		expect(document.body.textContent).not.toContain('No skills yet.')
+		const retries = document.querySelectorAll<HTMLButtonElement>('[role="alert"] button')
+		await act(async () => {
+			retries[0].click()
+			retries[1].click()
+		})
+		expect(home.memories.refetch).toHaveBeenCalledTimes(1)
+		expect(home.skills.refetch).toHaveBeenCalledTimes(1)
+		home.memories.isFetching = true
+		await act(async () => root.render(<Harness currentSettings={{ ...settings }} />))
+		expect(document.querySelector<HTMLButtonElement>('[role="alert"] button')!.disabled).toBe(true)
+	})
+	test('failed refresh retains cached memories and skills, and a failed deletion retries its original target', async () => {
+		home.memories.data = {
+			available: true,
+			user: [{ id: 'memory-1', text: 'Prefer concise answers', chars: 22 }],
+			memory: [],
+			limits: { user: 1000, memory: 1000 }
+		}
+		home.skills.data = {
+			available: true,
+			active: [
+				{
+					name: 'Research',
+					description: 'Saved workflow',
+					source: 'user',
+					createdBy: 'user',
+					useCount: 1,
+					pinned: false,
+					lastUsedAt: null,
+					referencedSkills: []
+				}
+			],
+			archived: []
+		}
+		home.memories.error = new Error('Offline')
+		home.skills.error = new Error('Offline')
+		home.deleteMemoryMutation.error = new Error('Delete failed')
+		home.deleteMemoryMutation.variables = 'memory-1'
+		await openMemory()
+		expect(document.body.textContent).toContain('Prefer concise answers')
+		expect(document.body.textContent).toContain('Saved workflow')
+		const error = [...document.querySelectorAll<HTMLElement>('[role="alert"]')].find((el) =>
+			el.textContent?.includes("Couldn't delete")
+		)!
+		await act(async () => error.querySelector('button')!.click())
+		expect(home.deleteMemoryMutation.mutate).toHaveBeenCalledExactlyOnceWith('memory-1')
+		home.deleteMemoryMutation.isPending = true
+		await act(async () => root.render(<Harness currentSettings={{ ...settings }} />))
+		const deletion = [...document.querySelectorAll<HTMLButtonElement>('button')].find(
+			(el) => el.textContent === 'Delete'
+		)!
+		expect(deletion.disabled).toBe(true)
+	})
+	test('a successfully loaded empty workspace still shows its empty states', async () => {
+		await openMemory()
+		expect(document.body.textContent).toContain('Nothing remembered yet.')
+		expect(document.body.textContent).toContain('No skills yet.')
+		expect(document.querySelector('[role="alert"]')).toBeNull()
+	})
 	test('section arrows move focus without activating; switching back retains the instruction draft', async () => {
 		await act(async () => change('Keep this draft'))
 		const tabs = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')]
@@ -244,15 +373,19 @@ describe('SettingsModal instructions', () => {
 		)
 		await act(async () => appTab?.click())
 
-		const mobileToggle = document.querySelector('button[aria-label="Mobile notifications"]') as HTMLButtonElement | null
-		expect(mobileToggle).not.toBeNull()
+		const findMobileToggle = () =>
+			Array.from(document.querySelectorAll<HTMLInputElement>('input[role="switch"]')).find((input) =>
+				input.closest('label')?.textContent?.includes('Mobile notifications')
+			)
+		const mobileToggle = findMobileToggle()
+		expect(mobileToggle).toBeDefined()
 		await act(async () => mobileToggle?.click())
 		expect(mutateMobileNotifications).toHaveBeenCalledWith(true)
 
 		await act(async () =>
 			root.render(<Harness mobileNotificationPreference={{ kind: 'known', available: false, enabled: true }} />)
 		)
-		expect(document.querySelector('button[aria-label="Mobile notifications"]')).toBeNull()
+		expect(findMobileToggle()).toBeUndefined()
 	})
 
 	test('shows a disabled loading row while the preference query is pending', async () => {

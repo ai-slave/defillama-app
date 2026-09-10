@@ -13,6 +13,8 @@ const api = vi.hoisted(() => ({
 	add: vi.fn(),
 	remove: vi.fn(),
 	files: vi.fn(),
+	sources: vi.fn(),
+	upload: vi.fn(),
 	success: vi.fn(),
 	error: vi.fn()
 }))
@@ -28,13 +30,15 @@ vi.mock('./api', async (original) => ({
 	addTextFile: api.add,
 	deleteProjectFile: api.remove,
 	listProjectFiles: api.files,
-	listProjectSources: async () => []
+	listProjectSources: api.sources,
+	uploadProjectFiles: api.upload
 }))
 let root: Root
 let container: HTMLDivElement
 let client: QueryClient
 beforeEach(() => {
 	vi.resetAllMocks()
+	api.sources.mockResolvedValue([{ id: 'blob', adapter_type: 'blob' }])
 	client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
 	container = document.createElement('div')
 	document.body.append(container)
@@ -208,4 +212,137 @@ test('file removal prevents duplicates, retries inline, and focuses Add after re
 	await vi.waitFor(() => expect(openDialog()).toBeUndefined())
 	await vi.waitFor(() => expect(document.activeElement).toBe(button('Add project source')))
 	expect(document.body.textContent).not.toContain('notes.md')
+})
+
+async function mountFiles() {
+	await act(async () =>
+		root.render(
+			<QueryClientProvider client={client}>
+				<ProjectFilesPanel
+					projectId="qa"
+					projectBytesUsed={0}
+					projectBytesLimit={1000}
+					projectFileCount={0}
+					projectFileLimit={10}
+					tier="paid"
+				/>
+			</QueryClientProvider>
+		)
+	)
+}
+
+test('file loading and failure do not look empty, retry restores the upload target', async () => {
+	const request = Promise.withResolvers<{ files: [] }>()
+	api.files.mockReturnValueOnce(request.promise).mockResolvedValueOnce({ files: [] })
+	await mountFiles()
+	expect(container.textContent).toContain('Loading files')
+	expect(container.querySelector<HTMLButtonElement>('button[aria-hidden="true"]')?.disabled).toBe(true)
+	await act(async () => request.reject(new Error('Offline')))
+	await vi.waitFor(() =>
+		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load files.")
+	)
+	expect(container.querySelector<HTMLButtonElement>('button[aria-hidden="true"]')?.disabled).toBe(true)
+	await click('Retry files')
+	await vi.waitFor(() => expect(container.querySelector('[role="alert"]')).toBeNull())
+	expect(container.querySelector('[role="alert"]')).toBeNull()
+	expect(api.files).toHaveBeenCalledTimes(2)
+	const input = container.querySelector<HTMLInputElement>('input[type="file"]')!
+	const pick = vi.spyOn(input, 'click').mockImplementation(() => {})
+	const target = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Drop files here'))!
+	await act(async () => target.click())
+	expect(pick).toHaveBeenCalledOnce()
+})
+
+test('connected source failure has its own retry without hiding available files', async () => {
+	api.sources.mockRejectedValueOnce(new Error('Sources offline')).mockResolvedValueOnce([])
+	api.files.mockResolvedValue({ files: [{ id: 'file-1', source_id: 'blob', path: 'notes.md', size: 100 }] })
+	await mountFiles()
+	await vi.waitFor(() =>
+		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load connected sources.")
+	)
+	expect(container.textContent).toContain('notes.md')
+	expect(container.querySelector('[aria-label="Delete notes.md"]')).toBeNull()
+	await click('Retry sources')
+	await vi.waitFor(() => expect(container.querySelector('[role="alert"]')).toBeNull())
+	expect(container.textContent).toContain('notes.md')
+	expect(api.sources).toHaveBeenCalledTimes(2)
+})
+
+test('a background file refresh failure preserves the known files and offers retry', async () => {
+	api.files
+		.mockResolvedValueOnce({ files: [{ id: 'file-1', source_id: 'blob', path: 'notes.md', size: 100 }] })
+		.mockRejectedValueOnce(new Error('Offline'))
+	await mountFiles()
+	await vi.waitFor(() => expect(container.textContent).toContain('notes.md'))
+	await act(async () => {
+		await client.refetchQueries()
+	})
+	await vi.waitFor(() =>
+		expect(container.querySelector('[role="alert"]')?.textContent).toContain("Couldn't load files.")
+	)
+	expect(container.textContent).toContain('notes.md')
+	expect(container.textContent).not.toContain('Drop files here')
+})
+
+test('upload pending disables picking and ignores another drop until completion', async () => {
+	const request = Promise.withResolvers<{ imported: []; skipped: [] }>()
+	api.files.mockResolvedValue({ files: [] })
+	api.upload.mockReturnValueOnce(request.promise)
+	await mountFiles()
+	await vi.waitFor(() => expect(container.textContent).toContain('Drop files here'))
+	const target = [...container.querySelectorAll('button')].find((b) => b.textContent?.includes('Drop files here'))!
+	const file = new File(['Test source'], 'notes.md', { type: 'text/markdown' })
+	async function drop() {
+		await act(async () =>
+			target.dispatchEvent(
+				Object.assign(new Event('drop', { bubbles: true, cancelable: true }), { dataTransfer: { files: [file] } })
+			)
+		)
+	}
+	await drop()
+	await vi.waitFor(() => expect(container.textContent).toContain('Uploading…'))
+	expect(button('Add project source').disabled).toBe(true)
+	expect(target.disabled).toBe(true)
+	await drop()
+	expect(api.upload).toHaveBeenCalledOnce()
+	await act(async () => request.resolve({ imported: [], skipped: [] }))
+	await vi.waitFor(() => expect(target.disabled).toBe(false))
+	expect(button('Add project source').disabled).toBe(false)
+})
+
+test('GitHub files never get a per-file delete action while source metadata loads', async () => {
+	const request = Promise.withResolvers<Array<{ id: string; adapter_type: string; config: object }>>()
+	api.sources.mockReturnValue(request.promise)
+	api.files.mockResolvedValue({ files: [{ id: 'file-1', source_id: 'github-1', path: 'repo/notes.md', size: 100 }] })
+	await mountFiles()
+	await vi.waitFor(() => expect(container.textContent).toContain('repo/notes.md'))
+	expect(container.querySelector('[role="status"][aria-label="Loading connected sources"]')).not.toBeNull()
+	expect(container.querySelector('[aria-label="Delete repo/notes.md"]')).toBeNull()
+	await act(async () =>
+		request.resolve([{ id: 'github-1', adapter_type: 'github', config: { owner: 'owner', repo: 'repo' } }])
+	)
+	await vi.waitFor(() => expect(container.textContent).toContain('GitHub'))
+	expect(container.querySelector('[aria-label="Delete repo/notes.md"]')).toBeNull()
+})
+
+test('file picking stays unavailable until both file and source requests settle', async () => {
+	const files = Promise.withResolvers<{ files: [] }>()
+	const sources = Promise.withResolvers<[]>()
+	api.files.mockReturnValue(files.promise)
+	api.sources.mockReturnValue(sources.promise)
+	await mountFiles()
+	const drop = [...container.querySelectorAll<HTMLButtonElement>('button')].find((node) =>
+		node.textContent?.includes('Drop files here')
+	)!
+	expect(drop.disabled).toBe(true)
+	expect(drop.getAttribute('aria-hidden')).toBe('true')
+	expect(container.querySelectorAll('[role="status"]')).toHaveLength(1)
+	expect(container.querySelector('[role="status"]')?.textContent).toContain('Loading files')
+	await act(async () => files.resolve({ files: [] }))
+	await vi.waitFor(() => expect(container.textContent).toContain('Loading connected sources'))
+	expect(drop.getAttribute('aria-hidden')).toBe('true')
+	await act(async () => sources.resolve([]))
+	await vi.waitFor(() => expect(drop.disabled).toBe(false))
+	expect(drop.hasAttribute('aria-hidden')).toBe(false)
+	expect(container.querySelector('[role="status"]')).toBeNull()
 })

@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { BasicLink } from '~/components/Link'
-import { Icon } from '~/ui/Icon'
+import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 
 interface LlamaAIWelcomeModalProps {
 	isOpen: boolean
@@ -10,51 +10,28 @@ interface LlamaAIWelcomeModalProps {
 export function LlamaAIWelcomeModal({ isOpen, onClose }: LlamaAIWelcomeModalProps) {
 	return (
 		<Ariakit.DialogProvider open={isOpen} setOpen={(open) => !open && onClose()}>
-			<Ariakit.Dialog
-				className="dialog fixed inset-0 z-50 m-auto h-fit w-full max-w-lg overflow-hidden rounded-2xl border border-[#E6E6E6] bg-[#FFFFFF] p-0 shadow-xl dark:border-sub-line dark:bg-sub-dark-card"
-				backdrop={<div className="backdrop fixed inset-0 bg-black/60 backdrop-blur-sm" />}
-				portal
-				unmountOnHide
-			>
-				<Ariakit.DialogDismiss
-					data-umami-event="llamaai-welcome-dismiss"
-					className="absolute top-4 right-4 z-20 rounded-full p-1.5 text-sub-text-muted transition-colors hover:bg-[#f7f7f7] hover:text-black dark:text-ai-tertiary dark:hover:bg-gray-700/50 dark:hover:text-ai-primary"
-				>
-					<Icon name="x" className="size-5" />
-				</Ariakit.DialogDismiss>
-
-				<div className="relative z-10 px-8 py-10">
-					<div className="mb-6 flex justify-center">
-						<span className="relative flex flex-col items-center justify-center">
-							<span
-								className="absolute block size-24.5 shrink-0"
-								style={{ background: 'linear-gradient(90deg, #FEE2AD 0%, #FEE2AD 100%)', filter: 'blur(32px)' }}
-							/>
-							<img
-								src="/assets/llamaai/llama-ai.svg"
-								alt="LlamaAI"
-								className="z-10 object-contain"
-								width={83}
-								height={99}
-							/>
-						</span>
-					</div>
-
-					<h2 className="mb-4 text-center text-2xl leading-snug font-bold text-black dark:text-ai-primary">
-						Introducing LlamaAI 🚀
-					</h2>
-					<p className="mb-6 text-center text-base leading-6 text-sub-text-muted dark:text-ai-tertiary">
+			<Ariakit.Dialog className={`${dialogSurfaceStyles} [--dialog-width:512px]`} portal unmountOnHide>
+				<div className="flex shrink-0 justify-end px-2 py-1">
+					<DialogCloseButton data-umami-event="llamaai-welcome-dismiss" />
+				</div>
+				<div className={`${dialogScrollableBodyStyles} flex flex-col items-center gap-4 px-8 pt-2 pb-8`}>
+					<span className="relative flex items-center justify-center">
+						{/* The gold glow behind the llama is the product's landing-page beacon. */}
+						<span aria-hidden className="absolute size-24 rounded-full bg-ai-gold-bright blur-2xl" />
+						<img src="/assets/llamaai/llama-ai.svg" alt="" className="relative object-contain" width={83} height={99} />
+					</span>
+					<DialogHeading className="text-center">Introducing LlamaAI 🚀</DialogHeading>
+					<Ariakit.DialogDescription className="text-center body-md text-secondary">
 						We're upgrading your subscription with LlamaAI. Turn data into deep, flexible analysis in a conversational
 						way.
-					</p>
-
+					</Ariakit.DialogDescription>
 					<BasicLink
 						href="/ai/chat"
 						data-umami-event="llamaai-welcome-goto-chat"
-						className="llamaai-glow relative mx-auto flex items-center justify-center gap-2.5 overflow-hidden rounded-md bg-ai-gold-cta px-6 py-3.5 text-center text-xl font-semibold text-black shadow-ai-gold-cta"
+						className="llamaai-glow relative flex min-h-8 items-center justify-center gap-2 overflow-hidden rounded-lg bg-ai-gold-cta px-4 py-1.5 label-sm text-ai-on-gold-strong shadow-ai-gold-cta"
 						onClick={onClose}
 					>
-						<svg className="size-4 shrink-0">
+						<svg className="size-4 shrink-0" aria-hidden>
 							<use href="/assets/llamaai/ask-llamaai-3.svg#ai-icon" />
 						</svg>
 						<span className="whitespace-nowrap">Try LlamaAI</span>

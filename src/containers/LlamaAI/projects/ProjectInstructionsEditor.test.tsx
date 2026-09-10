@@ -7,9 +7,10 @@ import { ProjectInstructionsEditor } from './ProjectInstructionsEditor'
 
 const updateProject = vi.fn<(body: { custom_instructions: string | null }) => Promise<void>>()
 let projectUpdatePending = false
+let projectUpdateError: Error | null = null
 
 vi.mock('./hooks', () => ({
-	useUpdateProject: () => ({ isPending: projectUpdatePending, mutateAsync: updateProject })
+	useUpdateProject: () => ({ isPending: projectUpdatePending, error: projectUpdateError, mutate: updateProject })
 }))
 
 vi.mock('react-hot-toast', () => ({
@@ -24,6 +25,7 @@ describe('ProjectInstructionsEditor', () => {
 		globalThis.IS_REACT_ACT_ENVIRONMENT = true
 		vi.clearAllMocks()
 		projectUpdatePending = false
+		projectUpdateError = null
 		updateProject.mockResolvedValue(undefined)
 		container = document.createElement('div')
 		document.body.appendChild(container)
@@ -143,5 +145,52 @@ describe('ProjectInstructionsEditor', () => {
 
 		expect(acknowledged.value).toBe('Original')
 		await act(async () => resolveFirstSave?.())
+	})
+	test('reports pending and failed saves accurately, then retries the current draft once', async () => {
+		const textarea = await render('project-1', 'Original')
+		expect(container.querySelector('[role="status"]')?.textContent).toBe('Saved')
+		expect(textarea.labels?.[0].textContent).toBe('Instructions')
+		await act(async () => change(textarea, 'First draft'))
+		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
+		projectUpdatePending = true
+		await render('project-1', 'Original')
+		expect(container.querySelector('[role="status"]')?.textContent).toContain('Saving…')
+		projectUpdatePending = false
+		projectUpdateError = new Error('Network unavailable')
+		await render('project-1', 'Original')
+		expect(container.querySelector('[role="status"]')?.textContent).toBe('Not saved')
+		expect(container.querySelector('[role="alert"]')?.textContent).toContain('Network unavailable')
+		expect(textarea.getAttribute('aria-invalid')).toBe('true')
+		expect(textarea.value).toBe('First draft')
+		await act(async () => change(textarea, 'Retry this newer draft'))
+		await act(async () => {
+			textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
+			container.querySelector<HTMLButtonElement>('button')!.click()
+		})
+		expect(updateProject).toHaveBeenCalledTimes(2)
+		expect(updateProject).toHaveBeenLastCalledWith({ custom_instructions: 'Retry this newer draft' })
+		projectUpdateError = null
+		await render('project-1', 'Retry this newer draft')
+		expect(container.querySelector('[role="status"]')?.textContent).toBe('Saved')
+		expect(container.querySelector('[role="alert"]')).toBeNull()
+	})
+
+	test('does not label a newer edit Saved when an earlier save finishes', async () => {
+		const textarea = await render('project-1', 'Original')
+		await act(async () => change(textarea, 'Submitted draft'))
+		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
+		await act(async () => change(textarea, 'Newer edit'))
+		await render('project-1', 'Submitted draft')
+		expect(textarea.value).toBe('Newer edit')
+		expect(container.querySelector('[role="status"]')?.textContent).toBe('Unsaved')
+	})
+
+	test('clearing instructions saves null and returns to Saved after acknowledgement', async () => {
+		const textarea = await render('project-1', 'Original')
+		await act(async () => change(textarea, '  '))
+		await act(async () => textarea.dispatchEvent(new FocusEvent('focusout', { bubbles: true })))
+		expect(updateProject).toHaveBeenLastCalledWith({ custom_instructions: null })
+		await render('project-1', null)
+		expect(container.querySelector('[role="status"]')?.textContent).toBe('Saved')
 	})
 })

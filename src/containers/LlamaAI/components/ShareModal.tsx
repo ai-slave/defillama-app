@@ -7,7 +7,10 @@ import { AI_SERVER } from '~/constants'
 import { SESSIONS_QUERY_KEY } from '~/containers/LlamaAI/hooks/useSessionList'
 import { toShareToken, type ShareToken } from '~/containers/LlamaAI/ids'
 import { assertResponse } from '~/containers/LlamaAI/utils/assertResponse'
+import { Button } from '~/ui/Button'
+import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { Input } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { handleSimpleFetchResponse } from '~/utils/async'
@@ -35,7 +38,7 @@ export const ShareModal = memo(function ShareModal({ open, setOpen, sessionId, m
 	return (
 		<Ariakit.DialogProvider open={open} setOpen={setOpen}>
 			<Ariakit.Dialog
-				className="dialog w-full gap-0 border border-medium bg-surface p-4 shadow-2xl max-sm:drawer sm:max-w-sm"
+				className={`${dialogSurfaceStyles} [--dialog-width:448px]`}
 				unmountOnHide
 				portal
 				hideOnInteractOutside
@@ -126,65 +129,94 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 
 	return (
 		<>
-			<div ref={openingRef} className="mb-4 flex items-center justify-between gap-2">
-				<Ariakit.DialogHeading className="text-lg font-semibold">Share conversation</Ariakit.DialogHeading>
-				<Ariakit.DialogDismiss
-					aria-label="Close share dialog"
-					className="-m-2 rounded-sm p-2 hover:bg-ai-surface-muted"
-				>
-					<Icon name="x" height={16} width={16} />
-				</Ariakit.DialogDismiss>
+			<div
+				ref={openingRef}
+				className="flex shrink-0 items-center justify-between gap-3 border-b border-subtle px-4 py-3"
+			>
+				<DialogHeading>Share conversation</DialogHeading>
+				<DialogCloseButton className="-mr-1" ariaLabel="Close share dialog" />
 			</div>
-			<p role="status" className="m-0 text-sm text-ai-tertiary">
-				{!sessionId
-					? 'Sharing is available once the conversation is saved.'
-					: creation.isPending
-						? 'Creating share link…'
-						: copy.isPending
-							? 'Copying share link…'
-							: copy.isSuccess
-								? 'Share link copied to clipboard'
-								: shareLink
-									? 'Share link ready'
-									: ''}
-			</p>
-			{shareLink ? (
-				<div className="mt-4 flex min-w-0 flex-col gap-2">
-					<p className="m-0 text-xs text-ai-tertiary">Anyone with the link can view this conversation.</p>
-					<label htmlFor={shareLinkInputId} className="text-xs font-medium text-ai-tertiary">
-						Share Link
-					</label>
-					<input
-						id={shareLinkInputId}
-						type="text"
-						value={shareLink}
-						readOnly
-						onFocus={(event) => event.currentTarget.select()}
-						className="w-full min-w-0 rounded-sm border border-ai-line bg-page px-3 py-2 text-sm"
-					/>
-				</div>
-			) : null}
-			{creation.error ? (
-				<p role="alert" className="mt-3 text-sm text-data-down">
-					{creation.error.message}
+			<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-4`}>
+				<p role="status" className="m-0 body-sm text-secondary">
+					{!sessionId
+						? 'Sharing is available once the conversation is saved.'
+						: creation.isPending
+							? 'Creating share link…'
+							: copy.isPending
+								? 'Copying share link…'
+								: copy.isSuccess
+									? 'Share link copied to clipboard'
+									: shareLink
+										? 'Share link ready'
+										: ''}
 				</p>
-			) : null}
-			{copy.error ? (
-				<p role="alert" className="mt-3 text-sm text-data-down">
-					{copy.error.message === CLIPBOARD_UNAVAILABLE
-						? CLIPBOARD_UNAVAILABLE
-						: 'Couldn’t copy the link. Try again or copy it from the field above.'}
-				</p>
-			) : null}
-			{nativeShareError ? (
-				<p role="alert" className="mt-3 text-sm text-data-down">
-					Couldn’t share the link. Try again or copy it instead.
-				</p>
-			) : null}
-			<div className="mt-4 flex flex-wrap items-center justify-end gap-3">
-				<Ariakit.DialogDismiss className="rounded-sm px-3 py-2 text-xs text-ai-tertiary hover:bg-ai-surface-muted">
-					Close
-				</Ariakit.DialogDismiss>
+				{shareLink ? (
+					<div className="flex min-w-0 flex-col gap-1.5">
+						<p className="m-0 body-sm text-secondary">Anyone with the link can view this conversation.</p>
+						<label htmlFor={shareLinkInputId} className="label-sm text-secondary">
+							Share Link
+						</label>
+						<Input
+							id={shareLinkInputId}
+							type="text"
+							value={shareLink}
+							readOnly
+							onFocus={(event) => event.currentTarget.select()}
+							className="w-full min-w-0"
+						/>
+					</div>
+				) : null}
+				{creation.error ? (
+					<p role="alert" className="body-sm text-data-down">
+						{creation.error.message}
+					</p>
+				) : null}
+				{copy.error ? (
+					<p role="alert" className="body-sm text-data-down">
+						{copy.error.message === CLIPBOARD_UNAVAILABLE
+							? CLIPBOARD_UNAVAILABLE
+							: 'Couldn’t copy the link. Try again or copy it from the field above.'}
+					</p>
+				) : null}
+				{nativeShareError ? (
+					<p role="alert" className="body-sm text-data-down">
+						Couldn’t share the link. Try again or copy it instead.
+					</p>
+				) : null}
+				{shareLink ? (
+					<div className="flex flex-wrap gap-2">
+						{typeof navigator.share === 'function' ? (
+							<Ariakit.Button
+								type="button"
+								onClick={() => nativeShare.mutate()}
+								disabled={nativeShare.isPending}
+								accessibleWhenDisabled
+								render={<Button size="md" />}
+							>
+								{nativeShare.isPending ? <LoadingSpinner size={14} /> : null}
+								{nativeShare.isPending ? 'Sharing…' : 'Share…'}
+							</Ariakit.Button>
+						) : null}
+						<Button
+							type="button"
+							size="md"
+							onClick={() => {
+								const text = encodeURIComponent('Check out this conversation from LlamaAI')
+								window.open(
+									`https://x.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareLink)}`,
+									'_blank',
+									'noopener,noreferrer'
+								)
+							}}
+							data-umami-event="llamaai-share-to-x"
+						>
+							Share to X
+						</Button>
+					</div>
+				) : null}
+			</div>
+			<div className="flex shrink-0 flex-wrap items-center justify-end gap-2 border-t border-subtle px-4 py-3">
+				<Ariakit.DialogDismiss render={<Button size="md" />}>Close</Ariakit.DialogDismiss>
 				{sessionId ? (
 					<Ariakit.Button
 						type="button"
@@ -195,7 +227,7 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 						}}
 						disabled={pending || copy.error?.message === CLIPBOARD_UNAVAILABLE}
 						accessibleWhenDisabled
-						className="flex items-center gap-2 rounded-sm bg-brand px-3 py-2 text-xs text-ai-white hover:opacity-90 aria-disabled:opacity-50"
+						render={<Button size="md" variant="primary" />}
 					>
 						{pending ? (
 							<LoadingSpinner size={14} />
@@ -214,37 +246,6 @@ function ShareModalBody({ sessionId, messageId }: Pick<ShareModalProps, 'session
 					</Ariakit.Button>
 				) : null}
 			</div>
-			{shareLink ? (
-				<div className="mt-3 flex flex-wrap justify-end gap-3">
-					{typeof navigator.share === 'function' ? (
-						<Ariakit.Button
-							type="button"
-							onClick={() => nativeShare.mutate()}
-							disabled={nativeShare.isPending}
-							accessibleWhenDisabled
-							className="flex items-center gap-2 rounded-sm border border-ai-line px-3 py-2 text-xs hover:bg-ai-surface-muted aria-disabled:opacity-50"
-						>
-							{nativeShare.isPending ? <LoadingSpinner size={14} /> : null}
-							{nativeShare.isPending ? 'Sharing…' : 'Share…'}
-						</Ariakit.Button>
-					) : null}
-					<button
-						type="button"
-						onClick={() => {
-							const text = encodeURIComponent('Check out this conversation from LlamaAI')
-							window.open(
-								`https://x.com/intent/tweet?text=${text}&url=${encodeURIComponent(shareLink)}`,
-								'_blank',
-								'noopener,noreferrer'
-							)
-						}}
-						data-umami-event="llamaai-share-to-x"
-						className="rounded-sm border border-ai-line px-3 py-2 text-xs hover:bg-ai-surface-muted"
-					>
-						Share to X
-					</button>
-				</div>
-			) : null}
 			<span role="status" className="sr-only">
 				{nativeShare.isPending ? 'Sharing link' : ''}
 			</span>

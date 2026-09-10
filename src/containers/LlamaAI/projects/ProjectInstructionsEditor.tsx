@@ -1,6 +1,8 @@
-import { useState } from 'react'
-import toast from 'react-hot-toast'
+import { useId, useState } from 'react'
+import { Button } from '~/ui/Button'
+import { textareaStyles } from '~/ui/Input'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { formatNumber } from '~/utils/numberFormat'
 import { useUpdateProject } from './hooks'
 
 interface ProjectInstructionsEditorProps {
@@ -16,6 +18,7 @@ function saveInstructionsError(error: unknown) {
 
 export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructionsEditorProps) {
 	const update = useUpdateProject(projectId)
+	const inputId = useId()
 	const incomingValue = value ?? ''
 	const [draft, setDraft] = useState(() => ({ value: incomingValue, savedValue: incomingValue, edited: false }))
 
@@ -27,50 +30,67 @@ export function ProjectInstructionsEditor({ projectId, value }: ProjectInstructi
 
 	const dirty = draft.value.trim() !== draft.savedValue.trim()
 
-	const saveDraft = async (nextDraft: string) => {
-		// Neither a logical nor a conditional can be lowered inside a try or catch.
-		const custom_instructions = nextDraft || null
-		try {
-			await update.mutateAsync({ custom_instructions })
-			toast.success('Instructions saved')
-		} catch (error) {
-			toast.error(saveInstructionsError(error))
-		}
+	// The mutation owns the outcome: `update.error` is the inline message, and the next save clears it.
+	const saveDraft = (nextDraft: string) => {
+		setDraft((current) => ({ ...current, edited: false }))
+		update.mutate({ custom_instructions: nextDraft || null })
 	}
 
 	const onBlur = () => {
+		// A failed save is retried explicitly, so focusing Retry cannot submit twice.
+		if (update.error) return
 		const shouldSave = dirty || (draft.edited && update.isPending)
 		if (!shouldSave) {
 			if (draft.edited) setDraft((current) => ({ ...current, edited: false }))
 			return
 		}
-		setDraft((current) => ({ ...current, edited: false }))
-		void saveDraft(draft.value.trim())
+		saveDraft(draft.value.trim())
 	}
 
 	return (
 		<section className="flex flex-col gap-2">
 			<header className="flex items-center justify-between">
-				<h3 className="text-[13px] font-semibold text-primary">Instructions</h3>
-				{update.isPending ? (
-					<LoadingSpinner size={12} />
-				) : dirty ? (
-					<span className="text-[11px] text-ai-muted">Unsaved</span>
-				) : null}
+				<label htmlFor={inputId} className="label-md text-primary">
+					Instructions
+				</label>
+				<span role="status" className="flex items-center gap-1 body-sm text-secondary">
+					{update.isPending ? (
+						<>
+							<LoadingSpinner size={12} /> Saving…
+						</>
+					) : update.error ? (
+						'Not saved'
+					) : dirty ? (
+						'Unsaved'
+					) : (
+						'Saved'
+					)}
+				</span>
 			</header>
 			<textarea
+				id={inputId}
+				aria-describedby={`${inputId}-hint${update.error ? ` ${inputId}-error` : ''}`}
+				aria-invalid={!!update.error}
 				value={draft.value}
 				onChange={(e) => {
 					setDraft((current) => ({ ...current, value: e.target.value, edited: true }))
 				}}
 				onBlur={() => void onBlur()}
 				maxLength={MAX_LENGTH}
-				rows={6}
-				placeholder="System-level guidance for chats in this project. Appended after your global instructions."
-				className="resize-y rounded-md border border-ai-line bg-surface px-3 py-2 text-xs leading-5 text-inherit placeholder:text-ai-muted focus:border-brand focus:outline-hidden"
+				rows={3}
+				placeholder="How should LlamaAI respond in this project?"
+				className={`${textareaStyles} field-sizing-content max-h-64 min-h-20 resize-y`}
 			/>
-			<p className="text-[11px] text-ai-muted">
-				{draft.value.length}/{MAX_LENGTH} chars · saved automatically
+			{update.error ? (
+				<div role="alert" id={`${inputId}-error`} className="flex flex-wrap items-center gap-2 body-sm text-error">
+					<p>{saveInstructionsError(update.error)}</p>
+					<Button type="button" size="sm" onClick={() => saveDraft(draft.value.trim())} disabled={update.isPending}>
+						Retry save
+					</Button>
+				</div>
+			) : null}
+			<p id={`${inputId}-hint`} className="body-sm text-secondary">
+				{formatNumber(draft.value.length)}/{formatNumber(MAX_LENGTH)} characters · Saves when you leave the field
 			</p>
 		</section>
 	)

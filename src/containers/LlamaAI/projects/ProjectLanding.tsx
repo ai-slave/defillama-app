@@ -10,8 +10,12 @@ import { useDeleteSession } from '~/containers/LlamaAI/hooks/useDeleteSession'
 import { fileToBase64, useImageUpload } from '~/containers/LlamaAI/hooks/useImageUpload'
 import { usePromptDraft } from '~/containers/LlamaAI/hooks/usePromptDraft'
 import type { ChatSession } from '~/containers/LlamaAI/types'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
+import { menuSurfaceStyles, popoverMenuItemStyles } from '~/ui/Popover'
+import { LoadingIndicator } from '~/ui/Status'
+import { TabLink, tabTrackStyles } from '~/ui/Tab'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { AddSourcesMenu } from './AddSourcesMenu'
 import { CreateProjectModal } from './CreateProjectModal'
@@ -79,14 +83,14 @@ export function ProjectLanding({
 
 	useEffect(() => {
 		const el = textareaRef.current
-		if (!el) return
+		if (!el || tab !== 'chats' || project.isLoading) return
 		if (!prompt) {
-			el.style.height = '20px'
+			el.style.height = ''
 			return
 		}
 		el.style.height = 'auto'
 		el.style.height = `${Math.min(el.scrollHeight, 200)}px`
-	}, [prompt])
+	}, [prompt, tab, project.isLoading])
 
 	// Track Shift so a held Shift+paste bypasses the paste-to-file collapse, matching PromptInput.
 	useEffect(() => {
@@ -111,26 +115,28 @@ export function ProjectLanding({
 
 	if (project.isLoading) {
 		return (
-			<div className="flex h-full items-center justify-center">
-				<LoadingSpinner size={14} />
+			<div role="status" className="flex h-full items-center justify-center gap-2 body-sm text-secondary">
+				<LoadingSpinner size={14} /> Loading project…
 			</div>
 		)
 	}
 
-	if (project.error || !project.data) {
+	if (!project.data) {
 		return (
 			<div className="mx-auto flex h-full max-w-md flex-col items-center justify-center gap-2 px-4 text-center">
-				<p className="text-sm font-medium">Project unavailable</p>
-				<p className="text-xs text-ai-tertiary">
+				<p role="alert" className="label-md text-error">
+					Project unavailable
+				</p>
+				<p className="text-xs text-secondary">
 					{project.error instanceof Error ? project.error.message : 'Failed to load project'}
 				</p>
-				<button
-					type="button"
-					onClick={() => void Router.push('/ai/projects')}
-					className="rounded-md border border-ai-line px-3 py-1.5 text-xs hover:bg-ai-surface-muted"
-				>
+				<Button type="button" size="md" onClick={() => void project.refetch()} disabled={project.isFetching}>
+					{project.isFetching ? <LoadingSpinner size={12} /> : null}
+					{project.isFetching ? 'Retrying…' : 'Try again'}
+				</Button>
+				<Button type="button" size="sm" variant="ghost" onClick={() => void Router.push('/ai/projects')}>
 					Back to projects
-				</button>
+				</Button>
 			</div>
 		)
 	}
@@ -214,39 +220,35 @@ export function ProjectLanding({
 
 	return (
 		<SessionListFocusContext.Provider value={projectMenuRef}>
-			<div className="size-full overflow-y-auto overscroll-contain px-6 pt-6 pb-16">
+			<div className="size-full overflow-y-auto overscroll-contain px-4 pt-4 pb-8 sm:px-6">
 				<div className="mx-auto flex w-full max-w-[760px] flex-col">
-					<header className="flex items-center justify-between gap-3 pb-6">
-						<button
+					<header className="flex items-center justify-between gap-3 pb-2">
+						<Button
 							type="button"
+							size="sm"
+							variant="ghost"
 							onClick={() => void Router.push('/ai/projects')}
-							className="-ml-2 flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-ai-primary"
+							className="-ml-2"
 						>
 							<Icon name="chevron-left" height={14} width={14} />
 							All projects
-						</button>
+						</Button>
 						<div className="flex items-center gap-1">
 							<Ariakit.MenuProvider placement="bottom-end">
 								<Ariakit.MenuButton
 									ref={projectMenuRef}
 									aria-label={`Actions for ${project.data.name}`}
-									className="rounded-md p-1.5 text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
+									render={<Button size="md" variant="ghost" square />}
 								>
 									<Icon name="ellipsis" height={16} width={16} />
 								</Ariakit.MenuButton>
-								<Ariakit.Menu
-									gutter={6}
-									className="z-50 min-w-[200px] rounded-lg border border-ai-line bg-surface p-1 text-sm shadow-xl"
-								>
-									<Ariakit.MenuItem
-										onClick={renameStore.show}
-										className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left transition-colors hover:bg-ai-surface-muted"
-									>
+								<Ariakit.Menu gutter={6} className={`${menuSurfaceStyles} z-50 min-w-[200px]`}>
+									<Ariakit.MenuItem onClick={renameStore.show} className={popoverMenuItemStyles}>
 										Rename project
 									</Ariakit.MenuItem>
 									<Ariakit.MenuItem
 										onClick={deleteStore.show}
-										className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-ai-error transition-colors hover:bg-ai-error-vivid/10"
+										className={`${popoverMenuItemStyles} text-error not-disabled:not-aria-disabled:hover:text-error`}
 									>
 										Delete project
 									</Ariakit.MenuItem>
@@ -255,103 +257,28 @@ export function ProjectLanding({
 						</div>
 					</header>
 
-					<div className="flex items-center gap-3 pb-5">
-						<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-brand/20 to-brand/5 ring-1 ring-brand/30 ring-inset">
-							<Icon name="folder-plus" height={15} width={15} className="text-brand" />
+					<div className="flex items-center gap-2 pb-2">
+						<div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-muted text-link-on-tint">
+							<Icon name="folder" height={16} width={16} />
 						</div>
 						<div className="min-w-0 flex-1">
-							<h1 className="truncate text-2xl leading-tight font-semibold tracking-tight">{project.data.name}</h1>
+							<h1 className="truncate heading-sm text-primary">{project.data.name}</h1>
 							{project.data.description ? (
-								<p className="mt-1 line-clamp-1 text-[13px] text-ai-tertiary">{project.data.description}</p>
+								<p className="mt-1 line-clamp-1 body-sm text-secondary">{project.data.description}</p>
 							) : null}
 						</div>
 					</div>
 
-					<form
-						onSubmit={(e) => {
-							e.preventDefault()
-							void handleSubmit()
-						}}
-						onDragEnter={imageUpload.handleDragEnter}
-						onDragLeave={imageUpload.handleDragLeave}
-						onDragOver={(e) => e.preventDefault()}
-						onDrop={imageUpload.handleDrop}
-						className="relative mb-5"
-					>
-						<DragOverlay isDragging={imageUpload.isDragging} />
-						<div className={imageUpload.selectedImages.length > 0 ? 'mb-2' : ''}>
-							<ImageUpload
-								selectedImages={imageUpload.selectedImages}
-								previewImage={imageUpload.previewImage}
-								setPreviewImage={imageUpload.setPreviewImage}
-								openPastedPreview={imageUpload.setPastedPreview}
-								removeImage={imageUpload.removeImage}
-								fileInputRef={imageUpload.fileInputRef}
-								handleImageSelect={imageUpload.handleImageSelect}
-							/>
-						</div>
-						<PastedContentModal
-							preview={imageUpload.pastedPreview}
-							onClose={() => imageUpload.setPastedPreview(null)}
-						/>
-						<div className="group/composer flex items-center gap-2.5 rounded-3xl border border-ai-line bg-surface py-2 pr-2 pl-3 shadow-sm transition-all focus-within:border-brand/60 focus-within:shadow-md dark:bg-ai-surface dark:focus-within:border-brand/60">
-							<AddSourcesMenu
-								projectId={projectId}
-								onAddPhotosFiles={imageUpload.openFilePicker}
-								trigger={
-									<button
-										type="button"
-										aria-label="Add files"
-										className="-ml-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-ai-tertiary transition-colors hover:bg-ai-surface-muted hover:text-brand"
-									>
-										<Icon name="plus" height={15} width={15} />
-									</button>
-								}
-							/>
-							<textarea
-								ref={textareaRef}
-								value={prompt}
-								onChange={(e) => setPrompt(e.target.value)}
-								onKeyDown={handleKey}
-								onPaste={handlePaste}
-								rows={1}
-								placeholder={`New chat in ${project.data.name}`}
-								className="block flex-1 resize-none self-center bg-transparent text-[13px] leading-5 text-inherit placeholder:text-ai-muted focus:outline-hidden"
-								style={{ height: 20 }}
-							/>
-							<button
-								type="submit"
-								disabled={(!prompt.trim() && imageUpload.selectedImages.length === 0) || isStreaming}
-								aria-label="Send message"
-								className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand text-ai-white transition-all hover:scale-105 hover:bg-brand/90 disabled:scale-100 disabled:cursor-not-allowed disabled:opacity-30"
-							>
-								<Icon name="arrow-up" height={13} width={13} />
-							</button>
-						</div>
-					</form>
-
 					<Tabs value={tab} onValueChange={setTab} values={projectTabs}>
-						<Ariakit.TabList aria-label="Project sections" className="flex items-center gap-1 border-b border-ai-line">
-							{projectTabs.map((id, index) => (
-								<Tab
-									key={id}
-									type="button"
-									value={id}
-									className={`relative py-2 text-xs font-medium capitalize transition-colors focus-visible:focus-ring ${index === 0 ? 'pr-2 pl-0' : 'px-2'} ${
-										tab === id ? 'text-brand' : 'text-ai-tertiary hover:text-ai-primary'
-									}`}
-								>
-									{id}
-									{tab === id ? (
-										<span
-											className={`absolute -bottom-px h-0.5 rounded-full bg-brand ${index === 0 ? 'right-2 left-0' : 'inset-x-2'}`}
-										/>
-									) : null}
+						<Ariakit.TabList aria-label="Project sections" className={tabTrackStyles}>
+							{projectTabs.map((id) => (
+								<Tab key={id} type="button" value={id} render={<TabLink as="button" />}>
+									{id === 'chats' ? 'Chats' : 'Sources'}
 								</Tab>
 							))}
 						</Ariakit.TabList>
 
-						<TabPanel value="sources" className="flex flex-col gap-6 pt-4">
+						<TabPanel value="sources" hidden={tab !== 'sources'} className="flex flex-col gap-4 pt-4">
 							<div>
 								<ProjectInstructionsEditor
 									key={projectId}
@@ -374,36 +301,117 @@ export function ProjectLanding({
 								</section>
 							) : null}
 						</TabPanel>
-						{tab === 'chats' ? (
-							<TabPanel value="chats" className="pt-4">
-								<section>
-									{projectSessions.isLoading ? (
-										<div className="flex justify-center py-8">
-											<LoadingSpinner size={12} />
+						<TabPanel value="chats" hidden={tab !== 'chats'} className="pt-4">
+							<form
+								onSubmit={(e) => {
+									e.preventDefault()
+									void handleSubmit()
+								}}
+								onDragEnter={imageUpload.handleDragEnter}
+								onDragLeave={imageUpload.handleDragLeave}
+								onDragOver={(e) => e.preventDefault()}
+								onDrop={imageUpload.handleDrop}
+								className="relative mb-4"
+							>
+								<DragOverlay isDragging={imageUpload.isDragging} />
+								<div className={imageUpload.selectedImages.length > 0 ? 'mb-2' : ''}>
+									<ImageUpload
+										selectedImages={imageUpload.selectedImages}
+										previewImage={imageUpload.previewImage}
+										setPreviewImage={imageUpload.setPreviewImage}
+										openPastedPreview={imageUpload.setPastedPreview}
+										removeImage={imageUpload.removeImage}
+										fileInputRef={imageUpload.fileInputRef}
+										handleImageSelect={imageUpload.handleImageSelect}
+									/>
+								</div>
+								<PastedContentModal
+									preview={imageUpload.pastedPreview}
+									onClose={() => imageUpload.setPastedPreview(null)}
+								/>
+								<div className="group/composer flex items-end gap-2 rounded-lg border border-medium bg-page p-1.5 focus-within:border-brand">
+									<AddSourcesMenu
+										projectId={projectId}
+										onAddPhotosFiles={imageUpload.openFilePicker}
+										trigger={
+											<Button
+												type="button"
+												size="md"
+												variant="ghost"
+												square
+												aria-label="Add files"
+												className="self-end"
+											>
+												<Icon name="plus" height={16} width={16} />
+											</Button>
+										}
+									/>
+									<textarea
+										ref={textareaRef}
+										value={prompt}
+										onChange={(e) => setPrompt(e.target.value)}
+										onKeyDown={handleKey}
+										onPaste={handlePaste}
+										rows={1}
+										aria-label={`New chat in ${project.data.name}`}
+										placeholder={`New chat in ${project.data.name}`}
+										className="block min-w-0 flex-1 resize-none self-center bg-transparent text-base text-primary placeholder:text-tertiary focus:outline-hidden sm:body-md"
+									/>
+									<button
+										type="submit"
+										disabled={(!prompt.trim() && imageUpload.selectedImages.length === 0) || isStreaming}
+										aria-label="Send message"
+										className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand text-on-brand focus-visible:focus-ring-on-brand enabled:hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+									>
+										<Icon name="arrow-up" height={16} width={16} />
+									</button>
+								</div>
+							</form>
+							<section>
+								{projectSessions.error ? (
+									<div role="alert" className="mb-3 flex flex-wrap items-center gap-2 body-sm text-error">
+										<p>Couldn&apos;t load chats.</p>
+										<Button
+											type="button"
+											size="sm"
+											disabled={projectSessions.isFetching}
+											onClick={() => void projectSessions.refetch()}
+										>
+											{projectSessions.isFetching ? <LoadingSpinner size={12} /> : null}
+											{projectSessions.isFetching ? 'Retrying…' : 'Retry chats'}
+										</Button>
+									</div>
+								) : null}
+								{projectSessions.isLoading ? (
+									<div role="status" aria-live="polite" className="flex justify-center py-8">
+										<LoadingIndicator label="Loading chats" />
+									</div>
+								) : sessions.length === 0 ? (
+									!projectSessions.error ? (
+										<div className="flex flex-col gap-1 py-4 text-center">
+											<h2 className="label-md text-primary">No chats yet</h2>
+											<p className="body-sm text-secondary">
+												Start a chat above. LlamaAI uses this project&apos;s instructions and files in every
+												conversation.
+											</p>
 										</div>
-									) : sessions.length === 0 ? (
-										<p className="py-10 text-center text-sm text-ai-muted">
-											Start a chat above to keep conversations organized in this project.
-										</p>
-									) : (
-										<ul className="flex flex-col">
-											{sessions.map((session) => (
-												<ProjectSessionItem
-													key={session.sessionId}
-													session={session}
-													projectId={projectId}
-													onSelect={() => handlePickSession(session)}
-													onDelete={() => handleDeleteSession(session)}
-													isDeleting={
-														deleteSession.isPending && deleteSession.variables?.sessionId === session.sessionId
-													}
-												/>
-											))}
-										</ul>
-									)}
-								</section>
-							</TabPanel>
-						) : null}
+									) : null
+								) : (
+									<ul className="flex flex-col">
+										{sessions.map((session) => (
+											<ProjectSessionItem
+												key={session.sessionId}
+												session={session}
+												projectId={projectId}
+												onSelect={() => handlePickSession(session)}
+												onDelete={() => handleDeleteSession(session)}
+												isDeleting={deleteSession.isPending && deleteSession.variables?.sessionId === session.sessionId}
+											/>
+										))}
+									</ul>
+								)}
+							</section>
+						</TabPanel>
 					</Tabs>
 
 					<DeleteSessionDialog

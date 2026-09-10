@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { getScrollBehavior } from '~/containers/LlamaAI/utils/motion'
 
 interface PaginationState {
 	hasMore: boolean
@@ -173,6 +174,12 @@ export function useChatScroll({
 
 		cancelPendingReattach()
 
+		if (getScrollBehavior() === 'instant') {
+			setMode('attached', container)
+			pinBottom(container)
+			return
+		}
+
 		setMode('reattaching', container)
 		container.scrollTo({
 			top: container.scrollHeight,
@@ -192,7 +199,7 @@ export function useChatScroll({
 		container.addEventListener('scrollend', settle, { once: true })
 		fallbackTimer = setTimeout(settle, 800)
 		reattachCleanupRef.current = settle
-	}, [cancelPendingReattach, scrollContainerRef, setMode])
+	}, [cancelPendingReattach, pinBottom, scrollContainerRef, setMode])
 
 	// Cancel any in-flight scrollend listener + timeout on unmount.
 	useEffect(() => cancelPendingReattach, [cancelPendingReattach])

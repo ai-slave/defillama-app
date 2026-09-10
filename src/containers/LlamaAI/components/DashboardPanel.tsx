@@ -9,7 +9,9 @@ import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContex
 import { ChartGrid } from '~/containers/ProDashboard/components/ChartGrid'
 import { ProDashboardAPIProvider } from '~/containers/ProDashboard/ProDashboardAPIContext'
 import { dashboardAPI, dashboardUrlKey } from '~/containers/ProDashboard/services/DashboardAPI'
+import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
+import { LoadingSpinner } from '~/ui/Loaders'
 import { formatUsd } from '~/utils/numberFormat'
 
 interface DashboardPanelProps {
@@ -119,7 +121,7 @@ function DashboardPanelInner({
 
 	return (
 		<div
-			className="shrink-0 overflow-hidden pl-2.5 transition-[width] duration-200 ease-out max-lg:hidden"
+			className="shrink-0 overflow-hidden pl-2.5 duration-200 ease-out motion-safe:transition-[width] max-lg:hidden"
 			style={{ width: isOpen ? 'min(50vw, 800px)' : '0px' }}
 			onTransitionEnd={(event) => {
 				if (!isOpen && event.target === event.currentTarget && event.propertyName === 'width') {
@@ -129,34 +131,38 @@ function DashboardPanelInner({
 		>
 			{config ? (
 				<div
-					className="flex h-full flex-col rounded-lg border border-ai-line bg-surface"
+					className="flex h-full flex-col rounded-lg border border-subtle bg-surface"
 					style={{ width: 'min(50vw, 800px)', minWidth: '400px' }}
 				>
-					<div className="flex items-center justify-between border-b border-ai-line px-4 py-3">
+					<div className="flex items-center justify-between border-b border-subtle px-4 py-3">
 						<div className="flex items-center gap-2 overflow-hidden">
-							<Icon name="layout-grid" className="size-4 shrink-0 text-ai-action" />
-							<span className="truncate text-sm font-medium text-ai-primary">{config.dashboardName}</span>
-							<span className="shrink-0 text-xs text-ai-tertiary">
+							<Icon name="layout-grid" className="size-4 shrink-0 text-link" />
+							<span className="truncate label-md text-primary">{config.dashboardName}</span>
+							<span className="shrink-0 body-sm text-tertiary">
 								{config.items.length} {config.items.length === 1 ? 'item' : 'items'}
 							</span>
 						</div>
 						<div className="flex items-center gap-2">
-							<button
+							<Button
 								type="button"
+								size="md"
+								variant="primary"
 								onClick={() => handleCreateDashboard()}
 								disabled={isPending || !config}
-								className="flex items-center gap-1.5 rounded-md bg-ai-action px-3 py-1.5 text-xs font-medium text-ai-white transition-colors hover:bg-ai-action-hover disabled:opacity-50"
 							>
-								{isPending ? 'Creating...' : 'Create Dashboard'}
-							</button>
-							<button
+								{isPending ? <LoadingSpinner size={14} /> : null}
+								{isPending ? 'Creating…' : 'Create Dashboard'}
+							</Button>
+							<Button
 								type="button"
+								size="md"
+								variant="ghost"
+								square
 								onClick={onClose}
-								aria-label="Close"
-								className="flex size-7 items-center justify-center rounded-md text-ai-tertiary transition-colors hover:bg-ai-surface-muted"
+								aria-label="Close dashboard panel"
 							>
 								<Icon name="x" className="size-4" />
-							</button>
+							</Button>
 						</div>
 					</div>
 
@@ -169,17 +175,17 @@ function DashboardPanelInner({
 					</div>
 
 					{hasMultipleVersions ? (
-						<div className="flex items-center justify-center gap-3 border-t border-ai-line px-4 py-2.5">
+						<div className="flex items-center justify-center gap-3 border-t border-subtle px-4 py-2.5">
 							<button
 								type="button"
 								onClick={() => onVersionChange(versionIndex - 1)}
 								disabled={versionIndex === 0}
 								aria-label="Previous version"
-								className="flex size-6 items-center justify-center rounded-sm text-ai-tertiary transition-colors hover:bg-ai-surface-muted disabled:opacity-30"
+								className="flex size-6 items-center justify-center rounded-sm text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:opacity-30"
 							>
 								<Icon name="chevron-left" className="size-3.5" />
 							</button>
-							<span className="text-xs text-ai-tertiary">
+							<span className="text-xs text-tertiary">
 								Version {versionIndex + 1} of {versions.length}
 							</span>
 							<button
@@ -187,7 +193,7 @@ function DashboardPanelInner({
 								onClick={() => onVersionChange(versionIndex + 1)}
 								disabled={versionIndex === versions.length - 1}
 								aria-label="Next version"
-								className="flex size-6 items-center justify-center rounded-sm text-ai-tertiary transition-colors hover:bg-ai-surface-muted disabled:opacity-30"
+								className="flex size-6 items-center justify-center rounded-sm text-tertiary not-disabled:not-aria-disabled:hover:bg-hover-row disabled:opacity-30"
 							>
 								<Icon name="chevron-right" className="size-3.5" />
 							</button>
