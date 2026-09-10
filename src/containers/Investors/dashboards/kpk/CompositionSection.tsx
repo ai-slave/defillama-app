@@ -1,9 +1,9 @@
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import type { KpkComposition } from './api'
+import type { KpkRangeKey } from './api'
 import { KPK_COMPOSITION_CHART_OPTIONS, kpkCompositionChartOptions, kpkLineStroke, kpkPalette } from './chartDefaults'
-import { buildComposition } from './transform'
+import { asRanged, buildComposition, defaultRange, gapNote, rangeOptions, type CompositionPayload } from './transform'
 import {
 	Card,
 	ChartFootnote,
@@ -19,23 +19,31 @@ import {
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
-/**
- * One stacked-area breakdown with its own toggle and share table. Every tab uses
- * the same `comp` payload, so all three compositions render through this.
- */
+/** A reading the stack implies but has no band of its own for, e.g. a book's total. */
+export interface CompositionSubtotal {
+	name: string
+	/** Absolute USD. */
+	valueUsd: number
+	title?: string
+}
+
 export function CompositionSection({
 	title,
 	subtitle,
 	comps,
-	initialKey
+	initialKey,
+	subtotals
 }: {
 	title: string
 	subtitle?: string
-	comps: Record<string, KpkComposition | undefined> | undefined
+	comps: Record<string, CompositionPayload | undefined> | undefined
 	/** Breakdown shown on first paint. Falls back to the first the payload sent. */
 	initialKey: string
+	/** Extra readings for the share table, per breakdown. */
+	subtotals?: (breakdown: string) => Array<CompositionSubtotal> | undefined
 }) {
 	const [picked, setPicked] = useState<string | null>(null)
+	const [pickedRange, setPickedRange] = useState<KpkRangeKey | null>(null)
 	// The palette has its own steps per theme, so the series repaint on a light/dark toggle.
 	const [isDark] = useDarkModeManager()
 
@@ -49,10 +57,23 @@ export function CompositionSection({
 		(picked && comps?.[picked] ? picked : undefined) ??
 		(comps?.[initialKey] ? initialKey : options[0]?.key) ??
 		initialKey
-	const comp = comps?.[breakdown]
+	// Memoised because the pre-range fallback mints an object, and `ranges` keys off it.
+	const ranged = useMemo(() => asRanged(comps?.[breakdown]), [comps, breakdown])
+
+	const ranges = useMemo(() => rangeOptions(ranged), [ranged])
+	const range = (pickedRange && ranged?.ranges[pickedRange] ? pickedRange : undefined) ?? defaultRange(ranged)
+	const comp = range ? ranged?.ranges[range] : undefined
+	const colorNames = useMemo(
+		() =>
+			Object.values(ranged?.ranges ?? {}).flatMap(
+				(rangeComp) => rangeComp?.segments.map((segment) => segment.name) ?? []
+			),
+		[ranged]
+	)
+
 	const model = useMemo(
-		() => (comp ? buildComposition(comp, kpkPalette(isDark), kpkLineStroke(isDark)) : null),
-		[comp, isDark]
+		() => (comp ? buildComposition(comp, kpkPalette(isDark), kpkLineStroke(isDark), colorNames) : null),
+		[comp, isDark, colorNames]
 	)
 
 	// Rebuilt only when the overlay changes, since the formatter closes over its name.
@@ -62,9 +83,24 @@ export function CompositionSection({
 		[overlay]
 	)
 
+	const note = useMemo(() => gapNote(comp), [comp])
+	const extras = useMemo(() => subtotals?.(breakdown) ?? [], [subtotals, breakdown])
+
 	const footer = useMemo<Array<FooterRow> | undefined>(() => {
 		if (!model) return undefined
-		const rows: Array<FooterRow> = [{ cells: { name: 'Total', valueUsd: usd(model.totalUsd), share: pct(100, 1) } }]
+		const rows: Array<FooterRow> = []
+		for (const extra of extras) {
+			rows.push({
+				muted: true,
+				title: extra.title,
+				cells: {
+					name: extra.name,
+					valueUsd: usd(extra.valueUsd),
+					share: model.totalUsd ? pct((extra.valueUsd / model.totalUsd) * 100, 1) : '—'
+				}
+			})
+		}
+		rows.push({ cells: { name: 'Total', valueUsd: usd(model.totalUsd), share: pct(100, 1) } })
 		if (model.line) {
 			rows.push({
 				muted: true,
@@ -81,7 +117,7 @@ export function CompositionSection({
 			})
 		}
 		return rows
-	}, [model])
+	}, [model, extras])
 
 	return (
 		<section className="flex flex-col gap-3">
@@ -89,6 +125,10 @@ export function CompositionSection({
 				{/* Omitted rather than rendered empty while the payload is still in flight. */}
 				{options.length > 0 && (
 					<ToggleGroup label={`${title} breakdown`} options={options} value={breakdown} onChange={setPicked} />
+				)}
+				{/* A single span is not a choice, so it gets no control. */}
+				{ranges.length > 1 && range && (
+					<ToggleGroup<KpkRangeKey> label={`${title} range`} options={ranges} value={range} onChange={setPickedRange} />
 				)}
 			</SectionHeader>
 			{subtitle && <p className="-mt-1 text-xs text-pro-text-secondary">{subtitle}</p>}
@@ -109,6 +149,9 @@ export function CompositionSection({
 								solidChartAreaStyle
 								hideDataZoom
 							/>
+							{/* A hole the line joins across, named under the chart rather than left to
+							    read as a measurement. */}
+							{note && <p className="mt-2 body-sm text-pro-text-tertiary">{note}</p>}
 							{model.line && <ChartFootnote title={model.line.name}>{model.line.note}</ChartFootnote>}
 						</>
 					) : (
@@ -120,7 +163,7 @@ export function CompositionSection({
 				<Card>
 					{/* The payload's own title, the same string the chip above carries. A hard space
 					    while it is in flight — a collapsed empty heading would jump the table below. */}
-					<h3 className="mb-2 label-sm tracking-wider text-pro-text-label uppercase">{model?.title ?? ' '}</h3>
+					<h3 className="mb-2 label-sm tracking-wider text-pro-text-label uppercase">{model?.title ?? ' '}</h3>
 					<DataTable
 						rows={model?.rows}
 						cols={[
@@ -132,7 +175,9 @@ export function CompositionSection({
 										<span aria-hidden className="size-2 shrink-0 rounded-[2px]" style={{ background: row.color }} />
 										{row.name}
 										{row.duplicate && (
-											<DuplicateMark note={model?.line?.note ?? 'Counted inside another band of this breakdown.'} />
+											<DuplicateMark
+												note={row.note ?? model?.line?.note ?? 'Counted inside another band of this breakdown.'}
+											/>
 										)}
 									</span>
 								)

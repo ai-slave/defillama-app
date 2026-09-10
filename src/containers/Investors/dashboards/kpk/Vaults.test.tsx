@@ -26,22 +26,56 @@ const VAULTS: KpkVaults = {
 	rebalancingVolumeUsd: 9_900_000_000,
 	rebalancingActions: 11_462,
 	rebalancingActionsLabel: '11,462',
+	rebalancingRef: { label: 'KPK Vaults Operations — Dune', url: 'https://dune.com/kpk/kpk-vaults-operations' },
 	liquidityPct: 60.5,
 	liquidityTarget: 15,
 	comp: {
 		venue: {
 			title: 'By venue',
-			total: 31,
-			months: ['Jul 26', 'Aug 26'],
-			segments: [
-				{ name: 'Morpho', value: 30, share: 96.8, series: [25, 30] },
-				{ name: 'Symbiotic', value: 1, share: 3.2, series: [1, 1], duplicate: true }
-			],
-			line: { name: 'Adjusted TVA', note: DOUBLE_COUNT_NOTE, value: 30, series: [25, 30] }
+			ranges: {
+				'1m': {
+					title: 'By venue',
+					total: 31,
+					months: ['11 Aug 26', '12 Aug 26'],
+					segments: [{ name: 'Morpho', value: 31, share: 100, series: [30, 31] }],
+					window: { from: '2026-08-11', to: '2026-08-12', days: 2, points: 2, gaps: [], missingDays: 0 }
+				},
+				max: {
+					title: 'By venue',
+					total: 31,
+					months: ['Jul 26', 'Aug 26'],
+					segments: [
+						{ name: 'Morpho', value: 30, share: 96.8, series: [25, 30] },
+						{
+							name: 'Symbiotic',
+							value: 1,
+							share: 3.2,
+							series: [1, 1],
+							duplicate: true,
+							note: DOUBLE_COUNT_NOTE
+						}
+					],
+					line: { name: 'Adjusted TVA', note: DOUBLE_COUNT_NOTE, value: 30, series: [25, 30] },
+					window: {
+						from: '2026-07-01',
+						to: '2026-08-12',
+						days: 30,
+						points: 30,
+						gaps: [{ from: '2026-07-06', to: '2026-07-19', days: 14 }],
+						missingDays: 14
+					}
+				}
+			}
 		},
-		chain: { title: 'By chain', total: 30, months: [], segments: [] },
-		asset: { title: 'By supply asset', total: 30, months: [], segments: [] },
-		collateral: { title: 'By collateral', total: 30, months: [], segments: [] }
+		chain: { title: 'By chain', ranges: { max: { title: 'By chain', total: 30, months: [], segments: [] } } },
+		asset: {
+			title: 'By supply asset',
+			ranges: { max: { title: 'By supply asset', total: 30, months: [], segments: [] } }
+		},
+		collateral: {
+			title: 'By collateral',
+			ranges: { max: { title: 'By collateral', total: 30, months: [], segments: [] } }
+		}
 	},
 	compAsOf: '2026-08-12',
 	compTotal: 31,
@@ -128,6 +162,18 @@ describe('kpk Vaults tab', () => {
 		[...container.querySelectorAll('button')]
 			.map((button) => button.textContent)
 			.filter((text) => text?.startsWith('By '))
+
+	const RANGE_LABELS = new Set(['1M', '3M', 'YTD', 'Max'])
+
+	const rangeChips = () =>
+		[...container.querySelectorAll('button')]
+			.map((button) => button.textContent ?? '')
+			.filter((text) => RANGE_LABELS.has(text))
+
+	const pressedChip = (labels: Array<string>) =>
+		[...container.querySelectorAll('button[aria-pressed="true"]')]
+			.map((button) => button.textContent ?? '')
+			.find((text) => labels.includes(text))
 
 	async function renderTab() {
 		const { default: Vaults } = await import('./Vaults')
@@ -216,5 +262,43 @@ describe('kpk Vaults tab', () => {
 		expect(container.textContent).not.toContain('KPK USDC Prime Vault')
 		expect(container.textContent).toContain('$10m')
 		expect(container.textContent).toContain('$250k')
+	})
+
+	test('opens the chart on the widest span and offers a chip per range the payload sent', async () => {
+		await renderTab()
+
+		expect(rangeChips()).toEqual(['1M', 'Max'])
+		expect(pressedChip(['1M', 'Max'])).toBe('Max')
+	})
+
+	test('re-ranks the breakdown table on the range it is switched to', async () => {
+		await renderTab()
+		await clickChip('1M')
+
+		const segments = [...container.querySelectorAll('tbody tr')]
+			.map((row) => row.querySelector('td')?.textContent)
+			.filter((name) => name === 'Morpho' || name === 'Symbiotic')
+
+		expect(segments).toEqual(['Morpho'])
+		expect(container.textContent).not.toContain('joins straight across it')
+	})
+
+	test('names the days the widest span joins across rather than letting them read as data', async () => {
+		await renderTab()
+
+		expect(container.textContent).toContain('14 days missing between Jul 6, 2026 and Jul 19, 2026')
+		expect(container.textContent).toContain('the line joins straight across it')
+	})
+
+	test('carries the per-band note on the double-counted segment', async () => {
+		await renderTab()
+
+		expect(container.querySelectorAll(`[title="${DOUBLE_COUNT_NOTE}"]`).length).toBeGreaterThan(1)
+	})
+
+	test('links the Dune query behind the rebalancing figures', async () => {
+		await renderTab()
+
+		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-vaults-operations"]')).not.toBeNull()
 	})
 })

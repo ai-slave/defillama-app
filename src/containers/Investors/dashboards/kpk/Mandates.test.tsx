@@ -18,16 +18,33 @@ const MANDATES: KpkMandates = {
 	yieldIsSample: true,
 	dydxChain: { stakedDydx: 90_041_355, months: 13, usd: 10.61 },
 	aum: 156.81,
-	clientCount: 3,
+	clientCount: 4,
 	deployedOnchain: '$8.03bn',
 	deployedOnchainUsd: 8_030_000_000,
+	deploymentRef: { label: 'KPK Moved Funds — Dune', url: 'https://dune.com/kpk/kpk-moved-funds' },
 	denominations: ['USD', 'EUR'],
 	comp: {
 		client: {
 			title: 'By client',
-			total: 156.81,
-			months: ['1 Sept 26', '2 Sept 26'],
-			segments: [{ name: 'ENS DAO', value: 91.87, share: 58.6, series: [90, 91.87] }]
+			ranges: {
+				'1m': {
+					title: 'By client',
+					total: 156.81,
+					months: ['1 Sept 26', '2 Sept 26'],
+					segments: [{ name: 'ENS DAO', value: 91.87, share: 58.6, series: [90, 91.87] }],
+					window: { from: '2026-08-04', to: '2026-09-02', days: 30, points: 30, gaps: [], missingDays: 0 }
+				},
+				max: {
+					title: 'By client',
+					total: 156.81,
+					months: ['Jan 22', '2 Sept 26'],
+					segments: [
+						{ name: 'ENS DAO', value: 91.87, share: 58.6, series: [0, 91.87] },
+						{ name: 'Gnosis DAO', value: 0, share: 0, series: [12, 0] }
+					],
+					window: { from: '2022-01-01', to: '2026-09-02', days: 1713, points: 370, gaps: [], missingDays: 0 }
+				}
+			}
 		}
 	},
 	perf: {
@@ -36,10 +53,34 @@ const MANDATES: KpkMandates = {
 			usd: 61_996_702,
 			bench: 3.52,
 			benchLabel: 'sUSDS (Sky), 30d avg',
-			excess: 0.5077,
+			excess: 0.138,
+			excessRunRate: 0.5077,
+			earned: 2.61,
+			benchEarned: 2.472,
+			avgBalance: 60.4,
 			windows: [
-				{ label: '1 day', apy: 4.47, bench: 3.11, spread: 1.36, spreadBps: 136, excessAnnualUsd: 590_717 },
-				{ label: '30 day', apy: 4.34, bench: 3.52, spread: 0.82, spreadBps: 82, excessAnnualUsd: 507_713 }
+				{
+					label: '1 day',
+					days: 1,
+					apy: 4.47,
+					bench: 3.11,
+					spread: 1.36,
+					spreadBps: 136,
+					excessAnnualUsd: 590_717,
+					realized: true,
+					avgBalance: 60.1,
+					spot: { apy: 4.51, bench: 3.11, spread: 1.4, spreadBps: 140 }
+				},
+				{
+					label: '30 day',
+					days: 30,
+					apy: 4.34,
+					bench: 3.52,
+					spread: 0.82,
+					spreadBps: 82,
+					excessAnnualUsd: 507_713,
+					realized: false
+				}
 			],
 			scope: {
 				defiUsd: 62,
@@ -58,10 +99,35 @@ const MANDATES: KpkMandates = {
 			bench: 2.68,
 			benchLabel: 'Aave v3 EURC supply, 30d avg',
 			excess: -0.0018,
-			windows: [{ label: '30 day', apy: 2.62, bench: 2.68, spread: -0.057, spreadBps: -6, excessAnnualUsd: -1834 }],
+			earned: 0.201,
+			benchEarned: 0.2028,
+			avgBalance: 3.1,
+			windows: [
+				{ label: '30 day', days: 30, apy: 2.62, bench: 2.68, spread: -0.057, spreadBps: -6, excessAnnualUsd: -1834 }
+			],
 			scope: { defiUsd: 3.21, unresolvedUsd: 0, coveragePct: 100, opsUsd: 0, opsBuckets: [] }
 		}
 	},
+	excessWindow: {
+		from: '2025-09-09',
+		to: '2026-09-08',
+		days: 365,
+		snapshotDays: 361,
+		carriedDays: 3,
+		missingDays: 1,
+		coveragePct: 98,
+		excess: 0.329,
+		earned: 6.42,
+		benchEarned: 6.091,
+		avgBalance: 149.5,
+		fallback: [{ name: 'Stakewise osETH vaults', label: 'stakewise-v3/OSETH', usd: 12.1 }],
+		stacked: [{ name: 'aave-v3/WSTETH', label: 'lido/STETH', usd: 31.4 }],
+		unpriced: [{ name: 'kpk USDC v1', usd: 1.5, days: 365, reason: 'no pool in the yields DB' }]
+	},
+	excessDaily: [
+		{ date: '2026-09-07', excess: 812.44, usd: 151.2 },
+		{ date: '2026-09-08', excess: 903.11, usd: 151.9 }
+	],
 	ops: {
 		usd: 27,
 		pctOfTvl: 17.3,
@@ -88,28 +154,36 @@ const MANDATES: KpkMandates = {
 			deployedPct: 99.58,
 			usd: { mix: 35, alpha: 90 },
 			eth: { mix: 65, alpha: 9 },
-			since: 'Nov 2023',
+			since: 'Mar 2023',
 			url: 'https://app.syncrone.fi/public/ens',
 			alphaBps: 37,
-			excess: 0.337,
+			excess: 0.209,
+			excessRunRate: 0.337,
+			excessAvgBalance: 88.4,
 			yieldAum: 91.15,
 			defiUsd: 90.77,
 			opsUsd: 0.372,
+			deployedUsd: 90.77,
+			idleUsd: 0.372,
 			coveragePct: 100
 		},
 		{
 			name: 'dYdX',
 			aum: 15.63,
 			share: 14.54,
-			deployedPct: 32.12,
+			deployedPct: 39.4,
 			usd: { mix: 100, alpha: -16 },
 			eth: null,
-			since: 'Feb 2024',
+			since: 'Nov 2024',
 			alphaBps: -16,
 			excess: -0.008,
+			excessRunRate: -0.011,
+			excessAvgBalance: 14.2,
 			yieldAum: 15.63,
 			defiUsd: 5.02,
 			opsUsd: 10.61,
+			deployedUsd: 6.16,
+			idleUsd: 9.47,
 			coveragePct: 100
 		},
 		{
@@ -122,13 +196,37 @@ const MANDATES: KpkMandates = {
 			since: null,
 			alphaBps: null,
 			excess: null,
+			excessRunRate: null,
+			excessAvgBalance: null,
 			yieldAum: 4.2,
 			defiUsd: null,
 			opsUsd: null,
+			deployedUsd: null,
+			idleUsd: null,
+			coveragePct: null
+		},
+		{
+			name: 'Safe',
+			aum: null,
+			share: null,
+			deployedPct: null,
+			usd: null,
+			eth: null,
+			since: 'Sep 2022',
+			alphaBps: null,
+			excess: null,
+			excessRunRate: null,
+			excessAvgBalance: 2.4,
+			yieldAum: null,
+			defiUsd: null,
+			opsUsd: null,
+			deployedUsd: null,
+			idleUsd: null,
 			coveragePct: null
 		}
 	],
-	totals: { aum: 107.5, weightedDeployedPct: 82.7, excess: 0.329 },
+	inactive: { count: 1, names: ['Aave DAO'], excess: -0.012 },
+	totals: { aum: 107.5, weightedDeployedPct: 82.7, excess: 0.329, excessRunRate: 0.532 },
 	refs: [{ label: 'KPK on DefiLlama', url: 'https://defillama.com/protocol/kpk' }]
 }
 
@@ -174,8 +272,11 @@ describe('kpk Treasury mandates tab', () => {
 		expect(container.textContent).toContain('Positions report as of Aug 31, 2026')
 		expect(container.textContent).not.toContain('2026-09-02')
 		expect(container.textContent).toContain('sample data')
-		expect(container.textContent).toContain('balance as of Aug 31, 2026')
+		// The excess return is dated on the legs store's own window, not the report's.
+		expect(container.textContent).toContain('over the 365 days to Sep 8, 2026')
 		expect(container.textContent).not.toContain("today's")
+		expect(container.querySelector('[title*="Window Sep 9, 2025 – Sep 8, 2026"]')).not.toBeNull()
+		expect(container.querySelector('[title*="2025-09-09"]')).toBeNull()
 	})
 
 	test('renders each window against its own benchmark', async () => {
@@ -195,7 +296,7 @@ describe('kpk Treasury mandates tab', () => {
 		expect(container.textContent).not.toContain('coverage')
 
 		await clickChip('EUR')
-		expect(container.textContent).toContain('No EUR is held in ops positions.')
+		expect(container.textContent).toContain('No EUR is held in ops positions or idle.')
 	})
 
 	test('dashes the AUM of a client the treasury snapshot has yet to carry', async () => {
@@ -237,5 +338,107 @@ describe('kpk Treasury mandates tab', () => {
 		expect(container.textContent).toContain('Composition of Mandate AUM')
 		expect(container.textContent).toContain('Per-client breakdown')
 		expect(container.textContent).not.toContain('Performance vs benchmark')
+	})
+
+	test('states the window the excess return was earned over', async () => {
+		await renderTab()
+
+		expect(container.textContent).toContain('over the trailing 365 days')
+		expect(container.textContent).toContain('1 day had no snapshot and accrued nothing')
+		expect(container.textContent).not.toContain('4 days had no snapshot and accrued nothing')
+		expect(container.querySelector('[title*="Rates found for 98.0% of balance-days"]')).not.toBeNull()
+	})
+
+	test('describes the excess return for the selected denomination', async () => {
+		await renderTab()
+
+		const usdTitle = container.querySelector('[title*="USD earned $2.61m against $2.47m"]')
+		expect(usdTitle?.textContent).toBe('$138k')
+		expect(usdTitle?.getAttribute('title')).not.toContain('$6.42m')
+
+		await clickChip('EUR')
+		const eurTitle = container.querySelector('[title*="EUR earned $201k against $202.8k"]')
+		expect(eurTitle?.textContent).toBe('−$1.8k')
+	})
+
+	test('signs a negative excess return ahead of the magnitude', async () => {
+		served = { ...MANDATES, totals: { ...MANDATES.totals, excess: -0.088 } }
+		await renderTab()
+
+		expect(container.textContent).toContain('−$88k')
+		expect(container.textContent).not.toContain('$-88k')
+	})
+
+	test('drops the earned caption to a statement of absence when the legs store is unreadable', async () => {
+		served = { ...MANDATES, excessWindow: null, excessDaily: null }
+		await renderTab()
+
+		expect(container.textContent).toContain('No per-position history available')
+		expect(container.textContent).not.toContain('over the trailing 365 days')
+	})
+
+	// A mandate that wound down mid-window is off the table but still inside the
+	// headline, so the column has to reconcile to the tile.
+	test('states the excess earned by mandates with no current balance above the total', async () => {
+		await renderTab()
+
+		expect(container.textContent).toContain('Plus 1 mandate with no current balance')
+		expect(container.querySelector('[title*="Aave DAO"]')).not.toBeNull()
+	})
+
+	test('drops the inactive row when every mandate holds a balance', async () => {
+		served = { ...MANDATES, inactive: null }
+		await renderTab()
+
+		expect(container.textContent).not.toContain('no current balance')
+	})
+
+	test('dashes a client that held a balance only inside the earned window', async () => {
+		await renderTab()
+
+		expect(container.textContent).toContain('Safe')
+		expect(container.querySelector('[title*="held a mean $2.4m"]')).not.toBeNull()
+	})
+
+	test('says whether a window rate was earned or read spot, and keeps the spot reading', async () => {
+		await renderTab()
+
+		expect(container.querySelector('[title*="spot reading on the latest balances is 4.51%"]')).not.toBeNull()
+		expect(container.querySelector('[title^="Spot reading:"]')).not.toBeNull()
+	})
+
+	test('keeps the run-rate off the page, so only the earned figure is shown', async () => {
+		await renderTab()
+
+		expect(container.textContent).toContain('Earned above benchmark on the USD book')
+		expect(container.textContent).not.toContain('annualised at the 30-day spread')
+	})
+
+	test('names what the deployed share leaves out', async () => {
+		await renderTab()
+
+		expect(container.querySelector('[title*="less the $9.47m sitting idle"]')).not.toBeNull()
+	})
+
+	test('links the Dune query behind the cumulative deployment', async () => {
+		await renderTab()
+
+		expect(container.querySelector('a[href="https://dune.com/kpk/kpk-moved-funds"]')).not.toBeNull()
+	})
+
+	test('opens the composition on the widest span it was sent', async () => {
+		await renderTab()
+
+		const chips = [...container.querySelectorAll('button')].map((button) => button.textContent)
+		expect(chips).toContain('1M')
+		expect(chips).toContain('Max')
+
+		const pressed = [...container.querySelectorAll('button[aria-pressed="true"]')].map((button) => button.textContent)
+		expect(pressed).toContain('Max')
+		// `max` ranks Gnosis DAO, which the 1M composition has folded away entirely.
+		expect(container.textContent).toContain('Gnosis DAO')
+
+		await clickChip('1M')
+		expect(container.textContent).not.toContain('Gnosis DAO')
 	})
 })

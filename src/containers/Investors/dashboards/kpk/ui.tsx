@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { formatDate } from '~/utils/dateFormat'
 import { formatNumber, formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
-import type { KpkMandateScope, KpkRef } from './api'
+import type { KpkExcessWindow, KpkMandateScope, KpkRef } from './api'
 import { KPK_BENCH_BG, KPK_MINT_BG, KPK_MINT_TEXT } from './chartDefaults'
 import { MILLION } from './transform'
 
@@ -15,6 +15,11 @@ export function usd(value: number | null | undefined): string {
 /** The same, for the upstream fields carried in $m. */
 export function usdFromMillions(value: number | null | undefined): string {
 	return value == null ? '—' : usd(value * MILLION)
+}
+
+export function usdSignedFromMillions(value: number | null | undefined): string {
+	if (value == null || !Number.isFinite(value)) return '—'
+	return `${value < 0 ? '−' : ''}${usd(Math.abs(value) * MILLION)}`
 }
 
 export function pct(value: number | null | undefined, decimals = 2): string {
@@ -82,13 +87,61 @@ export function scopeLine(denom: string, scope: KpkMandateScope | undefined): st
 	if (!scope) return ''
 	const ops =
 		scope.opsUsd > PROSE_DUST_M
-			? `${usdFromMillions(scope.opsUsd)} of ${denom} sits in ops positions — ` +
+			? `${usdFromMillions(scope.opsUsd)} of ${denom} sits in ops positions or idle — ` +
 				`${andList(scope.opsBuckets.map((bucket) => `${opsBucketLabel(bucket.name)} ${usdFromMillions(bucket.usd)}`))} — ` +
-				`held to meet a requirement rather than to earn, so no benchmark applies. Excluded from the rate above, ` +
+				`held for a purpose other than yield, so no benchmark applies. Excluded from the rate above, ` +
 				`not counted as earning nothing.`
-			: `No ${denom} is held in ops positions.`
+			: `No ${denom} is held in ops positions or idle.`
 
 	return `Rates cover ${usdFromMillions(scope.defiUsd)} of ${denom} defi positions. ${ops}`
+}
+
+export function earnedWindowLine(window: KpkExcessWindow | null | undefined): string {
+	if (!window) return 'No per-position history available, so no earned figure is shown.'
+	const span = window.days === 365 ? 'trailing 365 days' : `${window.days} days`
+	const missing = window.missingDays
+	const missingNote =
+		missing > 0 ? ` ${missing} day${missing === 1 ? '' : 's'} had no snapshot and accrued nothing.` : ''
+	return `Sum of balance × (rate − benchmark) for every defi position, day by day, over the ${span}.${missingNote}`
+}
+
+export function earnedTitle(window: KpkExcessWindow | null | undefined): string | undefined {
+	if (!window) return undefined
+	const from = formatDate(window.from) ?? window.from
+	const to = formatDate(window.to) ?? window.to
+	const parts = [
+		`Window ${from} – ${to} (${window.days} days, ${window.snapshotDays} with a snapshot` +
+			`${window.carriedDays ? `, ${window.carriedDays} carried forward` : ''}` +
+			`${window.missingDays ? `, ${window.missingDays} missing` : ''})`,
+		`Earned ${usdFromMillions(window.earned)} against ${usdFromMillions(
+			window.benchEarned
+		)} at benchmark, on a mean balance of ${usdFromMillions(window.avgBalance)}`,
+		`Rates found for ${pct(window.coveragePct, 1)} of balance-days`
+	]
+	if (window.stacked.length > 0) {
+		parts.push(
+			`Staking + lending both counted for ${andList(
+				window.stacked.map((entry) => `${entry.name} (${usdFromMillions(entry.usd)}/day)`)
+			)}`
+		)
+	}
+	if (window.fallback.length > 0) {
+		const total = window.fallback.reduce((sum, entry) => sum + entry.usd, 0)
+		parts.push(
+			`${window.fallback[0].label} stands in for ${window.fallback.length} position${
+				window.fallback.length === 1 ? '' : 's'
+			} with no series of their own (${usdFromMillions(total)}/day)`
+		)
+	}
+	if (window.unpriced.length > 0) {
+		parts.push(
+			`No rate for ${andList(
+				window.unpriced.map((entry) => `${entry.name} (${usdFromMillions(entry.usd)}/day)`)
+			)} — excluded, never counted as 0%`
+		)
+	}
+	parts.push("Balances are the 00:00 UTC onchain replay; the rates table above is on today's snapshot")
+	return `${parts.join('. ')}.`
 }
 
 /* ──────────────────────────── layout ──────────────────────────── */
@@ -107,50 +160,95 @@ export function LedgerStrip({ children }: { children: React.ReactNode }) {
 	)
 }
 
+export interface LedgerMetric {
+	value: string
+	label?: string
+	title?: string
+}
+
 export function LedgerTile({
 	label,
 	value,
+	valueClass,
 	suffix,
+	suffixBelow,
 	sub,
+	subTitle,
+	subRef,
 	metric,
 	metricLabel,
 	metricTitle,
+	metrics,
 	children
 }: {
 	label: string
 	value?: string
+	/** Colours a headline that carries a sign, e.g. an excess return that can be negative. */
+	valueClass?: string
 	/** Rendered small and dim next to the headline, e.g. the `+` in `$8bn+`. */
 	suffix?: string
+	/**
+	 * Stack the suffix under the number instead of beside it. For a suffix that
+	 * qualifies the figure rather than completing it — "0 since inception" reads as
+	 * one phrase inline, when the fact is the zero and the span is its scope.
+	 */
+	suffixBelow?: boolean
 	sub?: string
+	/** How the headline was measured, where the caption can only summarise it. */
+	subTitle?: string
+	/** The query behind the headline, linked inline from the caption. */
+	subRef?: KpkRef
 	metric?: string
 	metricLabel?: string
 	metricTitle?: string
+	/** Several pairs on the divided row. Wins over the single `metric` triple. */
+	metrics?: Array<LedgerMetric>
 	children?: React.ReactNode
 }) {
+	const pairs = metrics ?? (metric ? [{ value: metric, label: metricLabel, title: metricTitle }] : [])
 	return (
-		<div className="flex min-w-0 flex-col gap-2 border-t border-pro-cards-border p-5 first:border-t-0 lg:border-t-0 lg:border-l lg:first:border-l-0 sm:[&:nth-child(-n+2)]:border-t-0">
+		<div className="flex min-w-0 flex-col gap-2 border-t border-pro-cards-border p-5 text-center first:border-t-0 lg:border-t-0 lg:border-l lg:first:border-l-0 sm:[&:nth-child(-n+2)]:border-t-0">
 			<span className="label-sm tracking-wider text-pro-text-label uppercase">{label}</span>
 			{value == null ? (
-				<div className="h-8 w-28 animate-pulse rounded-sm bg-tertiary opacity-20" />
+				<div className="mx-auto h-8 w-28 animate-pulse rounded-sm bg-tertiary opacity-20" />
 			) : (
-				<span className="flex items-baseline gap-1 font-mono text-3xl font-medium tracking-tight text-pro-text-primary tabular-nums">
+				<span
+					className={`flex font-mono text-3xl font-medium tracking-tight tabular-nums ${
+						suffixBelow ? 'flex-col items-center gap-1.5' : 'items-baseline justify-center gap-1'
+					} ${valueClass ?? 'text-pro-text-primary'}`}
+				>
 					{value}
 					{suffix && <small className="text-sm font-normal text-pro-text-label">{suffix}</small>}
 				</span>
 			)}
-			{sub && <span className="body-sm text-pro-text-secondary">{sub}</span>}
-			{metric && (
-				<span
-					title={metricTitle}
-					className={`mt-auto flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary ${
-						metricTitle ? 'cursor-help' : ''
-					}`}
-				>
-					<b className="shrink-0 font-mono text-sm font-medium text-pro-text-primary tabular-nums">{metric}</b>
-					{metricLabel && <span>{metricLabel}</span>}
+			{sub && (
+				<span title={subTitle} className={`body-sm text-pro-text-secondary ${subTitle ? 'cursor-help' : ''}`}>
+					{sub}
+					{subRef && (
+						<>
+							{' '}
+							<RowLink href={subRef.url} label={subRef.label} size="sm" />
+						</>
+					)}
 				</span>
 			)}
-			{children}
+			{pairs.length > 0 && (
+				<span className="mt-auto flex flex-wrap items-baseline justify-center gap-x-4 gap-y-1 border-t border-pro-cards-border pt-2.5 body-sm text-pro-text-secondary">
+					{pairs.map((pair) => (
+						<span
+							key={`${pair.value}${pair.label ?? ''}`}
+							title={pair.title}
+							className={pair.title ? 'cursor-help' : ''}
+						>
+							<b className="font-mono text-sm font-medium text-pro-text-primary tabular-nums">{pair.value}</b>
+							{pair.label ? ` ${pair.label}` : null}
+						</span>
+					))}
+				</span>
+			)}
+			{/* Centred as its own column: the extras are a fixed-width meter, a note and a
+			    full-width rule, and only the note is text that `text-center` could move. */}
+			{children && <div className="flex flex-col items-center gap-2">{children}</div>}
 		</div>
 	)
 }
@@ -383,9 +481,13 @@ export function ChartFootnote({ title, children }: { title: string; children: Re
 	)
 }
 
-/** Arrow-out link. Renders nothing when a row has no destination. */
-export function RowLink({ href, label }: { href: string | undefined; label: string }) {
+/**
+ * Arrow-out link. Renders nothing when a row has no destination. The `sm` size is
+ * for the same affordance sitting inline in a caption, scaled to its line.
+ */
+export function RowLink({ href, label, size = 'md' }: { href: string | undefined; label: string; size?: 'sm' | 'md' }) {
 	if (!href) return null
+	const isSmall = size === 'sm'
 	return (
 		<a
 			href={href}
@@ -393,9 +495,18 @@ export function RowLink({ href, label }: { href: string | undefined; label: stri
 			rel="noopener noreferrer"
 			title={`Open ${label}`}
 			aria-label={`Open ${label} in a new tab`}
-			className="inline-flex size-6 items-center justify-center rounded-md border border-pro-cards-border text-pro-text-secondary transition-colors hover:border-sl-accent hover:text-sl-accent"
+			className={`inline-flex shrink-0 items-center justify-center rounded-md border border-pro-cards-border text-pro-text-secondary transition-colors hover:border-sl-accent hover:text-sl-accent ${
+				isSmall ? 'size-[18px] align-text-bottom' : 'size-6'
+			}`}
 		>
-			<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.6" className="size-3" aria-hidden>
+			<svg
+				viewBox="0 0 12 12"
+				fill="none"
+				stroke="currentColor"
+				strokeWidth="1.6"
+				className={isSmall ? 'size-2.5' : 'size-3'}
+				aria-hidden
+			>
 				<path d="M3.6 8.4 8.4 3.6" />
 				<path d="M4.4 3.6H8.4V7.6" />
 			</svg>

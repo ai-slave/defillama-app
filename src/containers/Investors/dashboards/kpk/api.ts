@@ -45,6 +45,8 @@ export interface KpkCompositionSegment {
 	 * breakdown. `line` nets it out; the table marks it.
 	 */
 	duplicate?: boolean
+	/** Why this band is a duplicate, stated per band rather than per breakdown. */
+	note?: string
 }
 
 export interface KpkCompositionLine {
@@ -52,6 +54,23 @@ export interface KpkCompositionLine {
 	note: string
 	value: number
 	series: Array<number>
+}
+
+export interface KpkCompositionGap {
+	from: ApiDate
+	to: ApiDate
+	days: number
+}
+
+export interface KpkCompositionWindow {
+	from: ApiDate
+	to: ApiDate
+	/** Measured days in the range. */
+	days: number
+	/** Points plotted — `max` is thinned, the shorter ranges are not. */
+	points: number
+	gaps: Array<KpkCompositionGap>
+	missingDays: number
 }
 
 /** The stacked-area payload every breakdown on every tab uses. */
@@ -66,6 +85,16 @@ export interface KpkComposition {
 	months: Array<string>
 	segments: Array<KpkCompositionSegment>
 	line?: KpkCompositionLine
+	window?: KpkCompositionWindow
+}
+
+export const KPK_RANGES = ['1m', '3m', 'ytd', 'max'] as const
+
+export type KpkRangeKey = (typeof KPK_RANGES)[number]
+
+export interface KpkRangedComposition {
+	title: string
+	ranges: Partial<Record<KpkRangeKey, KpkComposition>>
 }
 
 /* ──────────────────────────── metadata ──────────────────────────── */
@@ -98,6 +127,7 @@ export interface KpkLedgerFact {
 	sub: string
 	metric?: string | null
 	metricLabel?: string
+	ref?: KpkRef
 }
 
 export type KpkOverviewAsOf = {
@@ -107,16 +137,22 @@ export type KpkOverviewAsOf = {
 
 export type KpkOverviewCompKey = 'line' | 'denom' | 'chain' | 'protocol'
 
+export interface KpkOverviewBooks {
+	mandates: number
+	vaults: number
+}
+
 export interface KpkOverview {
 	asOf: KpkOverviewAsOf
 	tva: number
 	tvaAdjusted: number | null
 	tvaAdjustedLabel: string | null
 	doubleCountNote: string | null
+	books?: KpkOverviewBooks
 	deployedOnchain: KpkLedgerFact
 	rebalancing: KpkLedgerFact
 	fundsLost: { value: number; since: number; years: Array<number> }
-	comp: Record<KpkOverviewCompKey, KpkComposition>
+	comp: Record<KpkOverviewCompKey, KpkRangedComposition>
 	refs: Array<KpkRef>
 }
 
@@ -124,7 +160,10 @@ export const useKpkOverview = () => useTab<KpkOverview>('overview')
 
 /* ──────────────────────────── treasury mandates ──────────────────────────── */
 
-/** One denomination sleeve of a mandate: its share of the client's AUM and its alpha. */
+/**
+ * One denomination sleeve of a mandate: its share of the client's AUM today, and
+ * the alpha that denomination actually earned over the trailing 30 days.
+ */
 export interface KpkMandateSleeve {
 	/** Percent of the client's AUM in this denomination. */
 	mix: number
@@ -143,21 +182,43 @@ export interface KpkMandateClient {
 	url?: string
 	/** AUM-weighted alpha across both sleeves, bps. */
 	alphaBps: number | null
-	/** Annual excess return, $m. */
+	/** Excess return earned above benchmark over the trailing year, $m. */
 	excess: number | null
+	excessRunRate: number | null
+	excessAvgBalance: number | null
 	yieldAum: number | null
 	defiUsd: number | null
 	opsUsd: number | null
+	deployedUsd: number | null
+	idleUsd: number | null
 	coveragePct: number | null
+}
+
+export interface KpkMandateSpotRate {
+	apy: number | null
+	bench: number | null
+	spread: number | null
+	spreadBps: number | null
 }
 
 export interface KpkMandateWindow {
 	label: string
+	/** Window length in days, the key the realized rates are matched on. */
+	days: number
 	apy: number | null
 	bench: number | null
 	spread: number | null
 	spreadBps: number | null
 	excessAnnualUsd: number
+	/**
+	 * The rate is money-weighted over leg-days — the same accrual that produces the
+	 * earned dollars — rather than a trailing mean applied to today's balances.
+	 * False where the legs store could not serve the window and the spot rate stands.
+	 */
+	realized?: boolean
+	/** Mean balance the realized rate was earned on, $m. */
+	avgBalance?: number
+	spot?: KpkMandateSpotRate
 }
 
 export interface KpkMandateScope {
@@ -173,10 +234,69 @@ export interface KpkMandatePerf {
 	usd: number
 	bench: number | null
 	benchLabel: string
-	/** Annual excess return at the 30-day spread, $m. */
-	excess: number
+	/** Excess return earned above benchmark over the trailing year, $m. */
+	excess: number | null
+	/** The annualised run-rate at the 30-day spread, $m. */
+	excessRunRate?: number
+	/** $m this denomination earned over the window, gross of the benchmark. */
+	earned?: number | null
+	/** $m the same balances would have earned at benchmark. */
+	benchEarned?: number | null
+	/** Mean balance over the window, $m. */
+	avgBalance?: number | null
 	windows: Array<KpkMandateWindow>
 	scope: KpkMandateScope
+}
+
+/** A position priced by a stand-in series, or by two stacked ones, and declared. */
+export interface KpkExcessSubstitution {
+	name: string
+	label: string
+	/** Mean daily balance it covers, $m. */
+	usd: number
+}
+
+export interface KpkExcessUnpriced {
+	name: string
+	/** Mean daily balance excluded from both sides of the spread, $m. */
+	usd: number
+	days: number
+	reason: string
+}
+
+/** How the trailing-year earned figure was measured, and what it leaves out. */
+export interface KpkExcessWindow {
+	from: ApiDate
+	to: ApiDate
+	days: number
+	/** Days the legs store actually holds a snapshot for. */
+	snapshotDays: number
+	/** Days carried forward from the previous snapshot, up to 7. */
+	carriedDays: number
+	/** Days that accrued nothing at all. */
+	missingDays: number
+	/** Priced balance-days over scoped balance-days. */
+	coveragePct: number
+	/** $m earned above benchmark. */
+	excess: number
+	/** $m earned, gross. */
+	earned: number
+	/** $m the same balances would have earned at benchmark. */
+	benchEarned: number
+	/** Mean daily balance, $m. */
+	avgBalance: number
+	fallback: Array<KpkExcessSubstitution>
+	stacked: Array<KpkExcessSubstitution>
+	unpriced: Array<KpkExcessUnpriced>
+}
+
+/** One day's accrual. The 365 of them sum to `totals.excess`. */
+export interface KpkExcessDay {
+	date: ApiDate
+	/** Dollars and cents, not $m — a single day's accrual is small. */
+	excess: number
+	/** Balance it accrued on, $m. */
+	usd: number
 }
 
 export interface KpkOpsBucket {
@@ -205,6 +325,13 @@ export interface KpkDydxChain {
 	usd: number
 }
 
+export interface KpkInactiveMandates {
+	count: number
+	names: Array<string>
+	/** Their share of the earned excess, $m. */
+	excess: number | null
+}
+
 export interface KpkMandates {
 	asOf: ApiDate | null
 	yieldAsOf: ApiDate | null
@@ -216,13 +343,28 @@ export interface KpkMandates {
 	/** Pre-formatted cumulative deployment, e.g. `"$8.03bn"`. Absent on a Dune outage. */
 	deployedOnchain?: string
 	deployedOnchainUsd?: number
+	/** The query behind the deployment figure. */
+	deploymentRef?: KpkRef
 	/** Empty when the positions report is unavailable, which hides the performance section. */
 	denominations: Array<string>
-	comp: Record<string, KpkComposition>
+	comp: Record<string, KpkRangedComposition>
 	perf: Record<string, KpkMandatePerf>
+	/** Null where the legs store is unreadable, which drops the earned figure's caption. */
+	excessWindow: KpkExcessWindow | null
+	/** The audit trail for the headline. Null alongside `excessWindow`. */
+	excessDaily: Array<KpkExcessDay> | null
 	ops: KpkMandateOps | null
+	/** Only the mandates holding a balance on one of the two sources. */
 	clients: Array<KpkMandateClient>
-	totals: { aum: number; weightedDeployedPct: number | null; excess: number | null }
+	inactive: KpkInactiveMandates | null
+	totals: {
+		aum: number
+		weightedDeployedPct: number | null
+		/** Earned above benchmark over the trailing year, $m. */
+		excess: number | null
+		/** The annualised run-rate it replaced, $m. */
+		excessRunRate?: number | null
+	}
 	refs: Array<KpkRef>
 }
 
@@ -277,10 +419,12 @@ export interface KpkVaults {
 	rebalancingVolumeUsd: number
 	rebalancingActions: number
 	rebalancingActionsLabel: string
+	/** The query behind the rebalancing figures. */
+	rebalancingRef?: KpkRef
 	/** TVA-weighted, over the vaults that report it. Absent when none do. */
 	liquidityPct?: number
 	liquidityTarget: number
-	comp: Partial<Record<KpkVaultCompKey, KpkComposition>>
+	comp: Partial<Record<KpkVaultCompKey, KpkRangedComposition>>
 	/** Last day sampled by the composition chart, `YYYY-MM-DD`. */
 	compAsOf: ApiDate
 	compTotal: number

@@ -1,5 +1,6 @@
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
-import type { KpkComposition, KpkVault } from './api'
+import { formatDate } from '~/utils/dateFormat'
+import { KPK_RANGES, type KpkComposition, type KpkRangedComposition, type KpkRangeKey, type KpkVault } from './api'
 
 /** Upstream monetary fields are in $m; charts and the USD formatters want absolute dollars. */
 export const MILLION = 1e6
@@ -24,11 +25,48 @@ export function compositionColors(
 	palette: ReadonlyArray<string>
 ): Record<string, string> {
 	const colors: Record<string, string> = {}
-	const sorted = [...names].sort()
+	const sorted = [...new Set(names)].sort()
 	for (let i = 0; i < sorted.length; i++) {
 		colors[sorted[i]] = palette[i % palette.length]
 	}
 	return colors
+}
+
+export const RANGE_LABELS: Record<KpkRangeKey, string> = {
+	'1m': '1M',
+	'3m': '3M',
+	ytd: 'YTD',
+	max: 'Max'
+}
+
+export type CompositionPayload = KpkRangedComposition | KpkComposition
+
+export function asRanged(comp: CompositionPayload | undefined): KpkRangedComposition | undefined {
+	if (!comp) return undefined
+	if ('ranges' in comp) return comp
+	return { title: comp.title, ranges: { max: comp } }
+}
+
+export function rangeOptions(ranged: KpkRangedComposition | undefined): Array<{ key: KpkRangeKey; label: string }> {
+	return KPK_RANGES.filter((key) => ranged?.ranges[key]).map((key) => ({ key, label: RANGE_LABELS[key] }))
+}
+
+export function defaultRange(ranged: KpkRangedComposition | undefined): KpkRangeKey | undefined {
+	const available = KPK_RANGES.filter((key) => ranged?.ranges[key])
+	return available[available.length - 1]
+}
+
+export function gapNote(comp: KpkComposition | undefined): string {
+	const gaps = comp?.window?.gaps
+	if (!gaps?.length) return ''
+	return `${gaps
+		.map(
+			(gap) =>
+				`${gap.days} days missing between ${formatDate(gap.from) ?? gap.from} and ${
+					formatDate(gap.to) ?? gap.to
+				} — the line joins straight across it`
+		)
+		.join('. ')}.`
 }
 
 export interface CompositionRow {
@@ -39,6 +77,8 @@ export interface CompositionRow {
 	color: string
 	/** Also counted inside another row of the same breakdown; `line` nets it out. */
 	duplicate?: boolean
+	/** Why this row is a duplicate, where the payload states it per band. */
+	note?: string
 }
 
 export interface CompositionLineModel {
@@ -61,12 +101,10 @@ export interface CompositionModel {
 export function buildComposition(
 	comp: KpkComposition,
 	palette: ReadonlyArray<string>,
-	lineColor: string
+	lineColor: string,
+	colorNames: ReadonlyArray<string> = comp.segments.map((segment) => segment.name)
 ): CompositionModel {
-	const colors = compositionColors(
-		comp.segments.map((segment) => segment.name),
-		palette
-	)
+	const colors = compositionColors(colorNames, palette)
 	const line = comp.line
 	const lineFits = !!line && line.series.length === comp.months.length
 
@@ -116,7 +154,8 @@ export function buildComposition(
 			valueUsd: segment.value * MILLION,
 			share: segment.share,
 			color: colors[segment.name],
-			...(segment.duplicate ? { duplicate: true } : {})
+			...(segment.duplicate ? { duplicate: true } : {}),
+			...(segment.note ? { note: segment.note } : {})
 		})),
 		...(line ? { line: { name: line.name, note: line.note, valueUsd: line.value * MILLION } } : {})
 	}

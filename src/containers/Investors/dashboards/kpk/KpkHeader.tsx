@@ -8,7 +8,7 @@ const LINK_LABELS: Record<KpkLinkKey, string> = {
 	x: 'X'
 }
 
-const LINK_ORDER: Array<KpkLinkKey> = ['website', 'docs', 'app', 'x']
+const LINK_ORDER: Array<KpkLinkKey> = ['website', 'app', 'docs', 'x']
 
 export default function KpkHeader() {
 	const { data } = useKpkMetadata()

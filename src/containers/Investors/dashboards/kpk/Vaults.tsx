@@ -112,6 +112,7 @@ export default function Vaults() {
 					label="Agent rebalancing volume"
 					value={data?.rebalancingVolume}
 					sub="Executed by KPK's non-custodial rebalancing and exit agents"
+					subRef={data?.rebalancingRef}
 					metric={data?.rebalancingActionsLabel}
 					metricLabel="cumulative rebalancing actions"
 				/>
@@ -124,15 +125,7 @@ export default function Vaults() {
 							? `Aggregate instantly withdrawable share of curated TVA against a ${pct(data.liquidityTarget, 1)} target`
 							: undefined
 					}
-				>
-					{data && (
-						<MeterBar
-							value={data.liquidityPct}
-							target={data.liquidityTarget}
-							tone={data.liquidityPct != null && data.liquidityPct < data.liquidityTarget ? 'warning' : 'accent'}
-						/>
-					)}
-				</LedgerTile>
+				/>
 			</LedgerStrip>
 
 			<CompositionSection

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatDate } from '~/utils/dateFormat'
-import type { KpkMandateClient, KpkMandateSleeve } from './api'
+import type { KpkExcessWindow, KpkMandateClient, KpkMandatePerf, KpkMandateSleeve, KpkMandateWindow } from './api'
 import { useKpkMandates } from './api'
 import { KPK_BENCH_TEXT, KPK_MINT_TEXT } from './chartDefaults'
 import { CompositionSection } from './CompositionSection'
@@ -8,6 +8,8 @@ import {
 	Card,
 	CompareBars,
 	DataTable,
+	earnedTitle,
+	earnedWindowLine,
 	LedgerStrip,
 	LedgerTile,
 	MeterBar,
@@ -22,7 +24,9 @@ import {
 	signedInt,
 	signedPp,
 	ToggleGroup,
-	usdFromMillions
+	usdFromMillions,
+	usdSignedFromMillions,
+	type FooterRow
 } from './ui'
 
 /** Sleeve mix with its alpha underneath. A denomination the client does not hold is a dash, not `0%`. */
@@ -37,15 +41,36 @@ function SleeveCell({ sleeve }: { sleeve: KpkMandateSleeve | null }) {
 }
 
 function deployedTitle(client: KpkMandateClient): string | undefined {
-	if (client.defiUsd == null || client.yieldAum == null) return undefined
-	const parts = [
-		`${usdFromMillions(client.defiUsd)} of ${usdFromMillions(client.yieldAum)} in yield-bearing defi positions`
-	]
-	if (client.opsUsd) parts.push(`${usdFromMillions(client.opsUsd)} held as ops`)
-	if (client.coveragePct != null && client.coveragePct < 99.95) {
-		parts.push(`${pct(client.coveragePct, 1)} of the defi book matched a benchmark`)
+	if (client.deployedUsd == null || client.yieldAum == null) return undefined
+	const legs: Array<string> = []
+	if (client.defiUsd) legs.push(`${usdFromMillions(client.defiUsd)} in defi positions`)
+	if (client.opsUsd) legs.push(`${usdFromMillions(client.opsUsd)} in ops positions`)
+	let out = `${usdFromMillions(client.deployedUsd)} of ${usdFromMillions(client.yieldAum)} deployed`
+	if (legs.length > 0) out += ` — ${legs.join(' and ')}`
+	if (client.idleUsd) out += `, less the ${usdFromMillions(client.idleUsd)} sitting idle`
+	return out
+}
+
+function rateBasisTitle(window: KpkMandateWindow): string | undefined {
+	if (window.realized === undefined) return undefined
+	if (!window.realized) {
+		return 'Spot reading: a trailing mean applied to the latest balances. No per-position history covers this window.'
 	}
-	return parts.join(', ')
+	const balance = window.avgBalance == null ? '' : ` on a mean balance of ${usdFromMillions(window.avgBalance)}`
+	const spot = window.spot?.apy == null ? '' : ` The spot reading on the latest balances is ${pct(window.spot.apy)}.`
+	return `Earned: money-weighted across every priced position-day in the window${balance}.${spot}`
+}
+
+function performanceEarnedTitle(
+	perf: KpkMandatePerf | undefined,
+	window: KpkExcessWindow | null | undefined
+): string | undefined {
+	if (!perf || !window || perf.earned == null || perf.benchEarned == null || perf.avgBalance == null) return undefined
+	const from = formatDate(window.from) ?? window.from
+	const to = formatDate(window.to) ?? window.to
+	return `Window ${from} – ${to} (${window.days} days). ${perf.denom} earned ${usdFromMillions(
+		perf.earned
+	)} against ${usdFromMillions(perf.benchEarned)} at benchmark, on a mean balance of ${usdFromMillions(perf.avgBalance)}.`
 }
 
 export default function Mandates() {
@@ -58,6 +83,8 @@ export default function Mandates() {
 	)
 	const activeDenom = selectedDenom && data?.perf?.[selectedDenom] ? selectedDenom : (data?.denominations?.[0] ?? null)
 	const perf = activeDenom ? data?.perf?.[activeDenom] : undefined
+	const excessWindow = data?.excessWindow
+	const perfEarnedTitle = performanceEarnedTitle(perf, excessWindow)
 	// One scale for every row of the comparison bars, headroom above the largest
 	// figure in either series — the benchmark moves per window, so it can lead.
 	const barScale = useMemo(
@@ -68,6 +95,34 @@ export default function Mandates() {
 	const sharesTotal = data ? data.clients.reduce((sum, client) => sum + (client.share ?? 0), 0) : null
 
 	const showPerf = !data || data.denominations.length > 0
+
+	const clientFooter = useMemo<Array<FooterRow> | undefined>(() => {
+		if (!data) return undefined
+		const rows: Array<FooterRow> = []
+		const inactive = data.inactive
+		if (inactive) {
+			rows.push({
+				muted: true,
+				title: `${inactive.names.join(', ')} held nothing in the ${
+					(data.asOf && formatDate(data.asOf)) ?? 'latest'
+				} snapshot, so they are not listed above.`,
+				cells: {
+					name: `Plus ${inactive.count} mandate${inactive.count > 1 ? 's' : ''} with no current balance`,
+					excess: usdSignedFromMillions(inactive.excess)
+				}
+			})
+		}
+		rows.push({
+			cells: {
+				name: 'Total',
+				aum: usdFromMillions(data.totals.aum),
+				share: pct(sharesTotal, 1),
+				deployedPct: pct(data.totals.weightedDeployedPct, 1),
+				excess: usdSignedFromMillions(data.totals.excess)
+			}
+		})
+		return rows
+	}, [data, sharesTotal])
 
 	if (isError) return <QueryError label="Treasury mandates" />
 
@@ -84,16 +139,27 @@ export default function Mandates() {
 								}`
 							: undefined
 					}
-				/>
+				>
+					{data && (
+						<span className="body-sm text-pro-text-secondary">
+							Non-custodial · client assets never leave client-controlled Safes
+						</span>
+					)}
+				</LedgerTile>
 				<LedgerTile
 					label="Deployed onchain"
 					value={data ? (data.deployedOnchain ?? '—') : undefined}
 					sub="Cumulative across all mandates, since inception"
+					subRef={data?.deploymentRef}
 				/>
+				{/* Dollars actually earned above benchmark, so it can be negative — and the
+				    caption has to say what window produced it. */}
 				<LedgerTile
 					label="Annual excess return"
-					value={data ? usdFromMillions(data.totals.excess) : undefined}
-					sub="At the 30-day spread, summed across every benchmarked mandate sleeve"
+					value={data ? usdSignedFromMillions(data.totals.excess) : undefined}
+					valueClass={data ? signClass(data.totals.excess) : undefined}
+					sub={data ? earnedWindowLine(excessWindow) : undefined}
+					subTitle={earnedTitle(excessWindow)}
 				/>
 			</LedgerStrip>
 
@@ -111,7 +177,6 @@ export default function Mandates() {
 							/>
 						)}
 					</SectionHeader>
-					{}
 					{data?.yieldAsOf && (
 						<p className="-mt-1 text-xs text-pro-text-secondary">
 							Positions report as of {formatDate(data.yieldAsOf)}
@@ -119,15 +184,24 @@ export default function Mandates() {
 						</p>
 					)}
 					<Card>
-						<DataTable
+						<DataTable<KpkMandateWindow>
 							rows={perf?.windows}
 							cols={[
 								{ key: 'label', label: 'Window' },
 								{
 									key: 'apy',
 									label: 'KPK APY',
+									title:
+										'Money-weighted over every priced position-day in the window, not a spot read on the latest balances',
 									right: true,
-									render: (row) => <span className={KPK_MINT_TEXT}>{pct(row.apy)}</span>
+									render: (row) => {
+										const basis = rateBasisTitle(row)
+										return (
+											<span title={basis} className={`${KPK_MINT_TEXT} ${basis ? 'cursor-help' : ''}`}>
+												{pct(row.apy)}
+											</span>
+										)
+									}
 								},
 								{
 									key: 'bench',
@@ -168,12 +242,17 @@ export default function Mandates() {
 						<div className="mt-4 flex flex-wrap gap-8 border-t border-pro-cards-border pt-4">
 							<div className="flex flex-col gap-1">
 								<span className="label-sm tracking-wider text-pro-text-label uppercase">Annual excess return</span>
-								<span className={`font-mono text-xl font-medium tabular-nums ${signClass(perf?.excess)}`}>
-									{perf ? usdFromMillions(perf.excess) : '—'}
+								<span
+									title={perfEarnedTitle}
+									className={`font-mono text-xl font-medium tabular-nums ${signClass(perf?.excess)} ${
+										perfEarnedTitle ? 'cursor-help' : ''
+									}`}
+								>
+									{perf ? usdSignedFromMillions(perf.excess) : '—'}
 								</span>
 								<span className="body-sm text-pro-text-secondary">
-									30-day spread on the {activeDenom ?? '—'} balance
-									{data?.yieldAsOf ? ` as of ${formatDate(data.yieldAsOf)}` : ' as reported'}
+									Earned above benchmark on the {activeDenom ?? '—'} book
+									{excessWindow ? ` over the ${excessWindow.days} days to ${formatDate(excessWindow.to)}` : ''}
 								</span>
 							</div>
 							<div className="flex flex-col gap-1">
@@ -205,24 +284,35 @@ export default function Mandates() {
 								key: 'aum',
 								label: 'AUM',
 								right: true,
-								render: (row) =>
-									row.aum == null && row.yieldAum != null ? (
-										<span
-											className="cursor-help"
-											title={`Not in the ${(data?.asOf && formatDate(data.asOf)) ?? 'latest'} treasury snapshot yet; ${usdFromMillions(
-												row.yieldAum
-											)} as of ${(data?.yieldAsOf && formatDate(data.yieldAsOf)) ?? 'the positions report'}`}
-										>
+								render: (row) => {
+									if (row.aum != null) return usdFromMillions(row.aum)
+									const snapshot = (data?.asOf && formatDate(data.asOf)) ?? 'latest'
+									// Two ways a client can be missing from the snapshot and still be real:
+									// the store has not caught up, or it wound down inside the earned window.
+									const title =
+										row.yieldAum != null
+											? `Not in the ${snapshot} treasury snapshot yet; ${usdFromMillions(row.yieldAum)} as of ${
+													(data?.yieldAsOf && formatDate(data.yieldAsOf)) ?? 'the positions report'
+												}`
+											: row.excessAvgBalance != null
+												? `Not in the ${snapshot} treasury snapshot — held a mean ${usdFromMillions(
+														row.excessAvgBalance
+													)} during the earned-return window`
+												: undefined
+									return title ? (
+										<span className="cursor-help" title={title}>
 											—
 										</span>
 									) : (
-										usdFromMillions(row.aum)
+										'—'
 									)
+								}
 							},
 							{ key: 'share', label: 'Share', right: true, render: (row) => pct(row.share, 1) },
 							{
 								key: 'deployedPct',
 								label: 'Deployed',
+								title: 'Defi plus ops positions, less what sits idle in wallets',
 								right: true,
 								render: (row) => (
 									<span
@@ -240,7 +330,7 @@ export default function Mandates() {
 								key: 'excess',
 								label: 'Annual excess return',
 								right: true,
-								render: (row) => <span className={signClass(row.excess)}>{usdFromMillions(row.excess)}</span>
+								render: (row) => <span className={signClass(row.excess)}>{usdSignedFromMillions(row.excess)}</span>
 							},
 							{ key: 'since', label: 'Managed since', right: true },
 							{
@@ -249,17 +339,7 @@ export default function Mandates() {
 								render: (row) => <RowLink href={row.url} label={`${row.name} treasury dashboard`} />
 							}
 						]}
-						footer={
-							data
-								? {
-										name: 'Total',
-										aum: usdFromMillions(data.totals.aum),
-										share: pct(sharesTotal, 1),
-										deployedPct: pct(data.totals.weightedDeployedPct, 1),
-										excess: usdFromMillions(data.totals.excess)
-									}
-								: undefined
-						}
+						footer={clientFooter}
 					/>
 				</Card>
 			</section>

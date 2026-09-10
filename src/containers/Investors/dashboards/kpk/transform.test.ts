@@ -1,9 +1,20 @@
 import { describe, expect, test } from 'vitest'
-import type { KpkComposition, KpkVault } from './api'
+import type { KpkComposition, KpkRangedComposition, KpkVault } from './api'
 import { KPK_LINE_STROKE_DARK, KPK_PALETTE_DARK } from './chartDefaults'
-import { buildComposition as build, compositionColors, MILLION, PERIOD_DIMENSION, vaultTotals } from './transform'
+import {
+	asRanged,
+	buildComposition as build,
+	compositionColors,
+	defaultRange,
+	gapNote,
+	MILLION,
+	PERIOD_DIMENSION,
+	rangeOptions,
+	vaultTotals
+} from './transform'
 
-const buildComposition = (comp: KpkComposition) => build(comp, KPK_PALETTE_DARK, KPK_LINE_STROKE_DARK)
+const buildComposition = (comp: KpkComposition, colorNames?: ReadonlyArray<string>) =>
+	build(comp, KPK_PALETTE_DARK, KPK_LINE_STROKE_DARK, colorNames)
 
 const comp: KpkComposition = {
 	title: 'By venue',
@@ -86,6 +97,21 @@ describe('buildComposition', () => {
 		}
 	})
 
+	test('keeps a surviving segment colour when another range drops an earlier name', () => {
+		const colorNames = ['Aave', 'Morpho', 'Morpho']
+		const widest = buildComposition(
+			{
+				...comp,
+				segments: [{ name: 'Aave', value: 10, share: 33.3333, series: [5, 7.5, 10] }, comp.segments[0]]
+			},
+			colorNames
+		)
+		const shortest = buildComposition({ ...comp, segments: [comp.segments[0]] }, colorNames)
+
+		expect(shortest.rows[0].color).toBe(widest.rows[1].color)
+		expect(shortest.rows[0].color).toBe(KPK_PALETTE_DARK[1])
+	})
+
 	test('emits no line for a breakdown that carries none', () => {
 		const model = buildComposition(comp)
 
@@ -119,6 +145,16 @@ describe('buildComposition', () => {
 		})
 	})
 
+	test("carries a band's own note where the payload states one", () => {
+		const note = 'Symbiotic allocates into another KPK vault.'
+		const model = buildComposition({
+			...withLine,
+			segments: [withLine.segments[0], { ...withLine.segments[1], note }]
+		})
+
+		expect(model.rows.map((row) => row.note)).toEqual([undefined, note])
+	})
+
 	// A short series would plot as a straight run to zero off the left of the chart
 	// rather than as a gap, so it is dropped whole — the footnote and footer stay.
 	test('drops a line whose series does not span the axis', () => {
@@ -127,6 +163,79 @@ describe('buildComposition', () => {
 		expect(model.dataset.dimensions).toEqual([PERIOD_DIMENSION, 'Morpho', 'Euler'])
 		expect(model.charts).toHaveLength(2)
 		expect(model.line?.name).toBe('Adjusted TVA')
+	})
+})
+
+describe('asRanged', () => {
+	const ranged: KpkRangedComposition = { title: 'By venue', ranges: { max: comp } }
+
+	test('passes a ranged payload through untouched', () => {
+		expect(asRanged(ranged)).toBe(ranged)
+	})
+
+	test('lifts a pre-range composition into a lone max range', () => {
+		const lifted = asRanged(comp)
+
+		expect(lifted).toEqual({ title: 'By venue', ranges: { max: comp } })
+		expect(rangeOptions(lifted)).toEqual([{ key: 'max', label: 'Max' }])
+	})
+
+	test('carries nothing through for a breakdown the payload omitted', () => {
+		expect(asRanged(undefined)).toBeUndefined()
+	})
+})
+
+describe('rangeOptions and defaultRange', () => {
+	const ranged: KpkRangedComposition = {
+		title: 'By client',
+		ranges: { '1m': comp, ytd: comp, max: comp }
+	}
+
+	test('offers a chip only for the ranges the payload carries, shortest first', () => {
+		expect(rangeOptions(ranged)).toEqual([
+			{ key: '1m', label: '1M' },
+			{ key: 'ytd', label: 'YTD' },
+			{ key: 'max', label: 'Max' }
+		])
+	})
+
+	test('opens on the widest span available', () => {
+		expect(defaultRange(ranged)).toBe('max')
+		expect(defaultRange({ title: 'By client', ranges: { '1m': comp, '3m': comp } })).toBe('3m')
+	})
+
+	test('has no range to open on for an empty payload', () => {
+		expect(defaultRange({ title: 'By client', ranges: {} })).toBeUndefined()
+		expect(rangeOptions(undefined)).toEqual([])
+	})
+})
+
+describe('gapNote', () => {
+	test('names the days the line joins across', () => {
+		const note = gapNote({
+			...comp,
+			window: {
+				from: '2026-06-01',
+				to: '2026-08-31',
+				days: 78,
+				points: 78,
+				gaps: [{ from: '2026-07-06', to: '2026-07-19', days: 14 }],
+				missingDays: 14
+			}
+		})
+
+		expect(note).toBe('14 days missing between Jul 6, 2026 and Jul 19, 2026 — the line joins straight across it.')
+	})
+
+	test('says nothing for a range with no holes, or none measured at all', () => {
+		expect(
+			gapNote({
+				...comp,
+				window: { from: '2026-06-01', to: '2026-08-31', days: 92, points: 92, gaps: [], missingDays: 0 }
+			})
+		).toBe('')
+		expect(gapNote(comp)).toBe('')
+		expect(gapNote(undefined)).toBe('')
 	})
 })
 
