@@ -230,3 +230,15 @@
 .dark .llamaai-glow-text:hover {
 	text-shadow: 0px 0px 30px color-mix(in srgb, var(--ai-gold-bright) 80%, transparent);
 }
+
+/* A new timeline row: fade in with a 4px rise. */
+@keyframes llamaStepEnter {
+	from {
+		opacity: 0;
+		transform: translateY(4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}

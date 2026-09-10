@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { appendReasoning, completeToolStep, startToolStep } from '~/containers/LlamaAI/agentSteps'
 import type { AgenticArmEvent, AgenticSSECallbacks, SpawnProgressData } from '~/containers/LlamaAI/fetchAgenticResponse'
 import type { QueueSnapshot } from '~/containers/LlamaAI/queue/protocol'
 import {
@@ -7,7 +8,6 @@ import {
 	type StreamBuffer,
 	type StreamDispatch
 } from '~/containers/LlamaAI/streamState'
-import { getToolLabel } from '~/containers/LlamaAI/toolMetadata'
 import type { DashboardArtifact, Message, TodoItem, UnifiedCitationReference } from '~/containers/LlamaAI/types'
 import { stripBeforeReportStart } from '~/containers/LlamaAI/utils/reportMarkers'
 
@@ -36,7 +36,6 @@ export function createAgenticCallbacks({
 	buffer,
 	dispatch,
 	currentMessageIdRef,
-	toolCallIdRef,
 	onSessionId,
 	onTitle,
 	onTokenLimit,
@@ -60,7 +59,6 @@ export function createAgenticCallbacks({
 	buffer: StreamBuffer
 	dispatch: StreamDispatch
 	currentMessageIdRef: RefObject<string | null>
-	toolCallIdRef: RefObject<number>
 	onSessionId?: (sessionId: string) => void
 	onTitle?: (title: string) => void
 	onTokenLimit?: () => void
@@ -104,6 +102,7 @@ export function createAgenticCallbacks({
 			buffer.text = stripBeforeReportStart(buffer.text + content)
 			dispatch({ type: 'APPEND_TOKEN', value: content })
 		}),
+		// A correction retry rewrites the answer, not what the agent did to get there: the steps stay.
 		onResponseReset: guard(() => {
 			buffer.text = ''
 			buffer.hasStartedText = false
@@ -142,13 +141,13 @@ export function createAgenticCallbacks({
 			buffer.legacyUrlCitations = [...new Set([...buffer.legacyUrlCitations, ...citations])]
 			dispatch({ type: 'MERGE_CITATIONS', value: citations })
 		}),
-		onProgress: guard((toolName, isPremium) => {
-			const label = getToolLabel(toolName)
-			const toolCall = { id: ++toolCallIdRef.current, name: toolName, label, ...(isPremium && { isPremium }) }
-			dispatch({ type: 'APPEND_TOOL_CALL', value: toolCall })
+		onToolCall: guard((call) => {
+			buffer.steps = startToolStep(buffer.steps, call)
+			dispatch({ type: 'APPEND_TOOL_CALL', value: call })
 		}),
 		onToolExecution: guard((data) => {
 			buffer.toolExecutions.push(data)
+			buffer.steps = completeToolStep(buffer.steps, data)
 			dispatch({ type: 'APPEND_TOOL_EXECUTION', value: data })
 			if (data.name === 'todo' && data.success) {
 				const todos = (data.toolData as { todos?: Array<TodoItem> } | undefined)?.todos
@@ -165,8 +164,8 @@ export function createAgenticCallbacks({
 			dispatch({ type: 'SET_MESSAGE_METADATA', value: data })
 		}),
 		onThinking: guard((content) => {
-			buffer.thinking += content
-			dispatch({ type: 'APPEND_THINKING', value: content })
+			buffer.steps = appendReasoning(buffer.steps, content)
+			dispatch({ type: 'APPEND_REASONING', value: content })
 		}),
 		onSpawnProgress: guard((data: SpawnProgressData) => {
 			if (data.status === 'started' && !buffer.spawnStarted) {

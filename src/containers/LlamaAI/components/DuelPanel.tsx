@@ -17,10 +17,18 @@ interface DuelPanelProps {
 	onVote: (choice: DuelChoice) => void
 }
 
-// A tool execution alone is progress, not an answer. Artifacts that MessageBubble can render
-// without prose are answers once their arm has settled.
+// A tool call alone is progress, not an answer; prose or reasoning is. Saved messages carry reasoning
+// as `thinking`, live and committed ones as steps. Artifacts that MessageBubble can render without
+// prose are answers once their arm has settled.
 function hasTextAnswer(message: Message | null) {
-	return Boolean(message?.content?.trim() || message?.thinking?.trim())
+	if (!message) return false
+	if (message.content?.trim() || message.thinking?.trim()) return true
+	return (message.steps ?? []).some((step) => step.kind === 'reasoning' && step.text.trim())
+}
+
+// Progress worth showing instead of the loading placeholder while an arm streams.
+function hasProgress(message: Message | null) {
+	return hasTextAnswer(message) || (message?.steps?.length ?? 0) > 0
 }
 
 function hasRenderableAnswer(message: Message | null) {
@@ -51,7 +59,7 @@ function AnswerColumn({
 	onChoose: () => void
 }) {
 	// Out-of-band artifacts receive fallback blocks only after streaming settles.
-	const hasVisibleContent = isStreaming ? hasTextAnswer(message) : hasAnswer
+	const hasVisibleContent = isStreaming ? hasProgress(message) : hasAnswer
 
 	return (
 		<section aria-label={label} className="flex min-w-0 flex-1 flex-col rounded-xl border border-ai-line bg-surface">

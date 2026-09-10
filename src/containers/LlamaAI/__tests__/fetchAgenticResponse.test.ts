@@ -82,7 +82,7 @@ function callbacks(): AgenticSSECallbacks {
 		onToken: vi.fn(),
 		onCharts: vi.fn(),
 		onGeneratedImages: vi.fn(),
-		onProgress: vi.fn(),
+		onToolCall: vi.fn(),
 		onSpawnProgress: vi.fn(),
 		onSessionId: vi.fn(),
 		onCitations: vi.fn(),

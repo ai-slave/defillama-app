@@ -20,7 +20,15 @@ function flushFrames() {
 	for (const cb of queued) cb(0)
 }
 
-function Harness({ isStreaming, onReady }: { isStreaming: boolean; onReady: (api: any) => void }) {
+function Harness({
+	isStreaming,
+	onReady,
+	mounted = true
+}: {
+	isStreaming: boolean
+	onReady: (api: any) => void
+	mounted?: boolean
+}) {
 	const scrollContainerRef = useRef<HTMLDivElement>(null)
 	const scrollContentRef = useRef<HTMLDivElement>(null)
 	const [keyboardOpen, setKeyboardOpen] = useState(false)
@@ -35,9 +43,10 @@ function Harness({ isStreaming, onReady }: { isStreaming: boolean; onReady: (api
 		keyboardOpen
 	})
 	onReady({ ...api, setKeyboardOpen })
+	if (!mounted) return null
 	return (
-		<div ref={scrollContainerRef}>
-			<div ref={scrollContentRef} />
+		<div ref={api.attachScrollContainer}>
+			<div ref={api.attachScrollContent} />
 		</div>
 	)
 }
@@ -387,6 +396,44 @@ describe('useChatScroll lets the user scroll up while content streams in', () =>
 
 		expect(api.isAttached).toBe(false)
 		expect(container.scrollTop).toBe(1200)
+	})
+
+	// The landing page has no scroll container; the conversation mounts on the first answer. Listeners
+	// bound only on the hook's first run never saw it, so small upward scrolls read as layout clamps
+	// and snapped back.
+	test('binds its gesture listeners to a container that mounts later', async () => {
+		await act(async () => root.unmount())
+		host.remove()
+		host = document.createElement('div')
+		document.body.appendChild(host)
+		root = createRoot(host)
+		let lateApi: any
+		await act(async () => {
+			root.render(<Harness isStreaming mounted={false} onReady={(next) => (lateApi = next)} />)
+		})
+		expect(host.querySelector('div')).toBeNull()
+
+		await act(async () => {
+			root.render(<Harness isStreaming mounted onReady={(next) => (lateApi = next)} />)
+		})
+		const late = host.querySelector('div') as HTMLDivElement
+		Object.defineProperty(late, 'scrollHeight', { value: BOTTOM, configurable: true })
+		Object.defineProperty(late, 'clientHeight', { value: VIEWPORT, configurable: true })
+		late.scrollTop = BOTTOM - VIEWPORT
+		await act(async () => flushFrames())
+		expect(lateApi.isAttached).toBe(true)
+
+		// A small wheel-up: with listeners bound this is intent; without them it was a clamp to undo.
+		late.scrollTop -= 30
+		await act(async () => {
+			const wheel = new Event('wheel') as any
+			wheel.deltaY = -30
+			late.dispatchEvent(wheel)
+			late.dispatchEvent(new Event('scroll'))
+			flushFrames()
+		})
+		expect(lateApi.isAttached).toBe(false)
+		expect(late.scrollTop).toBe(BOTTOM - VIEWPORT - 30)
 	})
 
 	test('detaches on a downward touch drag, which scrolls content up', async () => {

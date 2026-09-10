@@ -29,7 +29,6 @@ const fixedFormattingFiles = new Set([
 	'src/containers/LlamaAI/components/ResponseControls.tsx',
 	'src/containers/LlamaAI/components/SettingsModal.tsx',
 	'src/containers/LlamaAI/components/input/ImageUpload.tsx',
-	'src/containers/LlamaAI/components/messages/ToolExecutionPanel.tsx',
 	'src/containers/LlamaAI/projects/format.ts',
 	'src/containers/ProDashboard/components/UnifiedTable/index.tsx',
 	'src/containers/ProDashboard/components/UnifiedTable/utils/csvExport.ts',

@@ -79,6 +79,26 @@ export function useChatScroll({
 	const [showScrollToBottom, setShowScrollToBottom] = useState(false)
 	const reattachCleanupRef = useRef<(() => void) | null>(null)
 	const lastAutoScrollTopRef = useRef<number | null>(null)
+	// The conversation mounts after this hook's first run (the landing page has no scroll container)
+	// and is replaced when the session changes. Listeners and observers bind to the element itself
+	// through these callback refs, so they attach on mount and move with a replacement; the ref
+	// objects stay filled for the callers that read the element on demand.
+	const [mountedContainer, setMountedContainer] = useState<HTMLDivElement | null>(null)
+	const [mountedContent, setMountedContent] = useState<HTMLDivElement | null>(null)
+	const attachScrollContainer = useCallback(
+		(node: HTMLDivElement | null) => {
+			scrollContainerRef.current = node
+			setMountedContainer(node)
+		},
+		[scrollContainerRef]
+	)
+	const attachScrollContent = useCallback(
+		(node: HTMLDivElement | null) => {
+			scrollContentRef.current = node
+			setMountedContent(node)
+		},
+		[scrollContentRef]
+	)
 	// Gesture evidence the scroll handler cannot read from a scroll event alone.
 	// downAt starts at -Infinity: a fresh page's clock reads near zero, which must not count as a gesture.
 	const intentRef = useRef({ downAt: Number.NEGATIVE_INFINITY, scrollbar: false })
@@ -213,18 +233,15 @@ export function useChatScroll({
 	// paint, so text that types in a few characters per frame carries the viewport with it; a timer
 	// here (this used to be a 200ms interval) let the content move first and the viewport catch up
 	// as a visible hop.
-	// Re-subscribes when streaming starts: the conversation view can mount after this hook's first run.
 	useEffect(() => {
-		const content = scrollContentRef.current
-		if (!content) return
+		const container = mountedContainer
+		if (!mountedContent || !container) return
 		const resizeObserver = new ResizeObserver(() => {
-			const container = scrollContainerRef.current
-			if (container && modeRef.current === 'attached') followBottom(container)
+			if (modeRef.current === 'attached') followBottom(container)
 		})
-		resizeObserver.observe(content)
+		resizeObserver.observe(mountedContent)
 		return () => resizeObserver.disconnect()
-		// oxlint-disable-next-line react/exhaustive-effect-dependencies -- isStreaming is a trigger, not an input: the conversation view mounts with the first answer, after this effect first ran against an empty ref.
-	}, [followBottom, isStreaming, scrollContainerRef, scrollContentRef])
+	}, [followBottom, mountedContainer, mountedContent])
 
 	// Items effect: when the message list changes (new message added, content updated),
 	// snap to bottom in the next frame — but only if already attached. This handles
@@ -242,7 +259,7 @@ export function useChatScroll({
 	}, [followBottom, items, scrollContainerRef])
 
 	useEffect(() => {
-		const container = scrollContainerRef.current
+		const container = mountedContainer
 		if (!container) return
 
 		const resizeObserver = new ResizeObserver(() => {
@@ -252,7 +269,7 @@ export function useChatScroll({
 		})
 		resizeObserver.observe(container)
 		return () => resizeObserver.disconnect()
-	}, [scrollContainerRef, syncAfterLayout, syncScrollToBottomVisibility])
+	}, [mountedContainer, syncAfterLayout, syncScrollToBottomVisibility])
 
 	// Keyboard open: when the soft keyboard appears and we're attached, snap to bottom
 	// so the latest content stays visible above the input.
@@ -268,7 +285,7 @@ export function useChatScroll({
 	// gesture itself: upward intent detaches at once, downward intent is remembered so the scroll
 	// handler may re-attach, and a scrollbar grab makes every move intent for as long as it lasts.
 	useEffect(() => {
-		const container = scrollContainerRef.current
+		const container = mountedContainer
 		if (!container) return
 
 		const detachOnUpwardIntent = () => {
@@ -336,7 +353,7 @@ export function useChatScroll({
 			document.removeEventListener('mouseup', onPointerUp)
 			document.removeEventListener('keydown', onKeyDown)
 		}
-	}, [cancelPendingReattach, scrollContainerRef, setMode])
+	}, [cancelPendingReattach, mountedContainer, setMode])
 
 	// Scroll event handler: interprets user scroll intent and manages mode transitions.
 	//
@@ -353,7 +370,7 @@ export function useChatScroll({
 	// Also triggers top-of-thread pagination when scrolled near the top. Uses a
 	// synchronous in-flight ref to prevent duplicate loads before React state updates.
 	useEffect(() => {
-		const container = scrollContainerRef.current
+		const container = mountedContainer
 		if (!container) return
 		lastScrollTopRef.current = container.scrollTop
 
@@ -453,14 +470,16 @@ export function useChatScroll({
 		isStreaming,
 		onLoadMoreMessages,
 		onLoadNewerMessages,
+		mountedContainer,
 		pinBottom,
-		scrollContainerRef,
 		setMode,
 		syncScrollToBottomVisibility
 	])
 
 	return {
 		attach,
+		attachScrollContainer,
+		attachScrollContent,
 		scrollToBottom,
 		syncAfterLayout,
 		isAttached,

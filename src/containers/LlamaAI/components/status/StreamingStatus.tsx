@@ -1,9 +1,5 @@
 import { useMemo, useState } from 'react'
-import {
-	LLAMA_AI_ANIMATION_SRC,
-	LLAMA_AI_HACKER_ANIMATION_SRC
-} from '~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads'
-import { ThinkingPanel } from '~/containers/LlamaAI/components/status/ThinkingPanel'
+import { LLAMA_AI_ANIMATION_SRC } from '~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads'
 import { formatTime } from '~/containers/LlamaAI/components/status/time'
 import {
 	TodoChecklistPanel,
@@ -12,155 +8,10 @@ import {
 import { useCurrentSecond } from '~/containers/LlamaAI/components/status/useCurrentSecond'
 import { useHackerMode } from '~/containers/LlamaAI/components/status/useHackerMode'
 import type { RecoveryState } from '~/containers/LlamaAI/streamState'
-import { getToolLabel, TOOL_ICONS } from '~/containers/LlamaAI/toolMetadata'
-import type { SpawnAgentStatus, ToolCall } from '~/containers/LlamaAI/types'
-import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
-import { Icon } from '~/ui/Icon'
+import { getToolLabel } from '~/containers/LlamaAI/toolMetadata'
+import type { SpawnAgentStatus } from '~/containers/LlamaAI/types'
 
-export { ThinkingPanel, TodoChecklistPanel, deriveTodosFromToolExecutions, useHackerMode }
-
-function ElapsedTimeLabel({ startedAt: serverStartedAt }: { startedAt?: number }) {
-	const currentSecond = useCurrentSecond()
-	const [fallbackStartSecond] = useState(() => Math.floor(Date.now() / 1000))
-	const startSecond = serverStartedAt ? Math.floor(serverStartedAt / 1000) : fallbackStartSecond
-	const elapsed = Math.max(0, currentSecond - startSecond)
-
-	return <span className="font-mono text-xs text-ai-muted tabular-nums">{elapsed}s</span>
-}
-export function ToolProgressIndicator({
-	toolCalls,
-	thinking,
-	isCompacting,
-	spawnProgress,
-	isWaiting,
-	executionStartedAt,
-	indentForActiveTodo,
-	factCheckPhase
-}: {
-	toolCalls: Array<ToolCall>
-	thinking?: string
-	isCompacting?: boolean
-	spawnProgress?: Map<string, SpawnAgentStatus>
-	isWaiting?: boolean
-	executionStartedAt?: number
-	indentForActiveTodo?: boolean
-	factCheckPhase?: 'drafting' | 'verifying' | 'finalizing' | null
-}) {
-	const hasSpawn = spawnProgress && spawnProgress.size > 0
-	const hasActivity =
-		toolCalls.length > 0 || !!thinking || !!isCompacting || hasSpawn || !!isWaiting || !!factCheckPhase
-	const hackerMode = useHackerMode()
-
-	if (!hasActivity) return null
-
-	return (
-		<section
-			className={`flex gap-3 py-1.5 ${indentForActiveTodo ? 'border-l-2 border-ai-line pl-4' : ''}`}
-			aria-label="LlamaAI progress"
-		>
-			<img
-				src={hackerMode ? LLAMA_AI_HACKER_ANIMATION_SRC : LLAMA_AI_ANIMATION_SRC}
-				alt=""
-				className={`size-16 shrink-0 ${hackerMode ? 'rounded-lg drop-shadow-ai-terminal' : ''}`}
-				loading="eager"
-				fetchPriority="high"
-			/>
-			<div className="flex min-w-0 flex-1 flex-col gap-2 pt-1">
-				<div className="flex flex-col gap-0.5">
-					<p
-						className={
-							hackerMode
-								? 'm-0 font-mono text-base font-semibold text-ai-terminal drop-shadow-ai-terminal'
-								: 'm-0 text-base font-semibold text-ai-secondary'
-						}
-					>
-						{hackerMode ? (
-							<>{'>'} infiltrating mainframe&hellip;</>
-						) : factCheckPhase === 'drafting' ? (
-							<>Drafting answer&hellip;</>
-						) : factCheckPhase === 'verifying' ? (
-							<>Checking claims&hellip;</>
-						) : factCheckPhase === 'finalizing' ? (
-							<>Preparing verified answer&hellip;</>
-						) : (
-							<>LlamaAI is thinking&hellip;</>
-						)}
-					</p>
-					<ElapsedTimeLabel startedAt={executionStartedAt} />
-				</div>
-				{thinking ? <ThinkingPanel thinking={thinking} defaultOpen /> : null}
-				{isCompacting ? (
-					<p className="m-0 flex animate-ai-fade-in items-center gap-2">
-						<Icon
-							name="layers"
-							height={14}
-							width={14}
-							className="shrink-0 animate-pulse opacity-70"
-							style={{ color: '#8b5cf6' }}
-						/>
-						<span className="text-xs font-medium text-ai-secondary">Optimizing context memory&hellip;</span>
-					</p>
-				) : null}
-				{toolCalls.length > 0 ? (
-					<ul className="flex flex-col gap-1.5">
-						{toolCalls.map((toolCall) => {
-							const meta = getOwnRegistryValue(TOOL_ICONS, toolCall.name) || {
-								icon: 'sparkles',
-								color: '#919296'
-							}
-							return (
-								<li key={toolCall.id} className="flex animate-ai-fade-in items-center gap-2">
-									<Icon
-										name={meta.icon as never}
-										height={14}
-										width={14}
-										className="shrink-0 opacity-70"
-										style={{ color: meta.color }}
-									/>
-									<p className="m-0 text-xs font-medium text-ai-secondary">{toolCall.label}</p>
-									{toolCall.isPremium ? (
-										<span className="rounded-full bg-ai-warning-soft px-1.5 py-px text-[9px] font-medium text-ai-warning">
-											Premium
-										</span>
-									) : null}
-								</li>
-							)
-						})}
-					</ul>
-				) : null}
-				{hasSpawn ? (
-					<div className="flex flex-col gap-1.5">
-						<p className="m-0 flex items-center gap-2 text-xs font-medium text-ai-secondary">
-							<Icon name="users" height={14} width={14} className="shrink-0 opacity-70" style={{ color: '#f472b6' }} />
-							Working in herd&hellip;
-						</p>
-						<ul className="flex flex-col gap-1 pl-5">
-							{[...spawnProgress!.values()].map((agent) => (
-								<li key={agent.id} className="flex animate-ai-fade-in items-center gap-2">
-									{agent.status === 'completed' ? (
-										<span className="text-[10px] text-ai-success-vivid">✓</span>
-									) : agent.status === 'error' ? (
-										<span className="text-[10px] text-ai-error-vivid">✗</span>
-									) : (
-										<span className="size-1.5 shrink-0 animate-pulse rounded-full bg-brand" />
-									)}
-									<span className="text-xs text-ai-tertiary">
-										{agent.id}
-										{agent.status === 'tool_call' && agent.tool ? (
-											<span className="opacity-60"> — {getToolLabel(agent.tool)}</span>
-										) : null}
-										{agent.status === 'thinking' ? <span className="opacity-60"> — Thinking&hellip;</span> : null}
-										{agent.status === 'completed' ? <span className="opacity-60"> — Done</span> : null}
-									</span>
-								</li>
-							))}
-						</ul>
-					</div>
-				) : null}
-			</div>
-		</section>
-	)
-}
+export { TodoChecklistPanel, deriveTodosFromToolExecutions, useHackerMode }
 
 export function SpawnProgressCard({
 	agents,

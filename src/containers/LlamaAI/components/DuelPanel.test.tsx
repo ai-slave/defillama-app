@@ -89,4 +89,36 @@ describe('DuelPanel voting eligibility', () => {
 
 		expect(buttons.every((button) => button.disabled)).toBe(true)
 	})
+
+	test('does not treat tool steps as an answer either', async () => {
+		const toolStepsOnly = {
+			role: 'assistant',
+			steps: [
+				{
+					kind: 'tool',
+					id: 'c1',
+					toolCallId: 'c1',
+					name: 'execute_sql',
+					label: 'Querying database',
+					params: null,
+					status: 'done',
+					execution: { name: 'execute_sql', executionTimeMs: 10, success: true }
+				}
+			]
+		} satisfies Message
+		const buttons = await render(arm(toolStepsOnly), arm(answer()))
+
+		expect(buttons.every((button) => button.disabled)).toBe(true)
+	})
+
+	test('counts reasoning steps and saved thinking as answers', async () => {
+		const reasoned = {
+			role: 'assistant',
+			steps: [{ kind: 'reasoning', id: 'reasoning-0', text: 'The TVL drop is a data gap.' }]
+		} satisfies Message
+		const saved = { role: 'assistant', thinking: 'Considered the data gap.' } satisfies Message
+		const buttons = await render(arm(reasoned), arm(saved))
+
+		expect(buttons.every((button) => !button.disabled)).toBe(true)
+	})
 })

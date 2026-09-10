@@ -15,24 +15,20 @@ import { MessageBubble } from '~/containers/LlamaAI/components/messages/MessageB
 import { PromptInput, type PromptSubmitMode, type QueueSubmitResult } from '~/containers/LlamaAI/components/PromptInput'
 import { QueueChips } from '~/containers/LlamaAI/components/QueueChips'
 import { SectionsTOC } from '~/containers/LlamaAI/components/SectionsTOC'
-import {
-	SpawnProgressCard,
-	TodoChecklistPanel,
-	ToolProgressIndicator
-} from '~/containers/LlamaAI/components/status/StreamingStatus'
+import { AgentTimeline } from '~/containers/LlamaAI/components/status/AgentTimeline'
+import { SpawnProgressCard, TodoChecklistPanel } from '~/containers/LlamaAI/components/status/StreamingStatus'
 import { TipOrNotifyBanner } from '~/containers/LlamaAI/components/TipOrNotifyBanner'
 import type { ContextWarningPayload } from '~/containers/LlamaAI/fetchAgenticResponse'
 import type { QueueSurface } from '~/containers/LlamaAI/hooks/useChatQueueController'
 import type { RecoveryState } from '~/containers/LlamaAI/streamState'
 import type {
+	AgentStep,
 	AgenticAnswerMode,
-	ChartSet,
 	FactCheckedUsage,
 	Message,
 	ResearchUsage,
 	SpawnAgentStatus,
-	TodoItem,
-	ToolCall
+	TodoItem
 } from '~/containers/LlamaAI/types'
 import { Icon } from '~/ui/Icon'
 import { LoadingDots } from '~/ui/Loaders'
@@ -49,14 +45,13 @@ export interface ConversationViewModel {
 	isStreaming: boolean
 	isQueuedUserMessagePending: boolean
 	isStopping?: boolean
-	activeToolCalls: Array<ToolCall>
+	steps: Array<AgentStep>
 	spawnProgress: Map<string, SpawnAgentStatus>
 	spawnStartTime: number
 	todos: Array<TodoItem>
 	todosStartTime: number
 	executionStartedAt: number
 	spawnIsResearchMode: boolean
-	streamingThinking: string
 	streamingDraft: Message | null
 	duelSlot?: ReactNode
 	isCompacting: boolean
@@ -76,10 +71,16 @@ export interface ConversationViewModel {
 	} | null
 	onReconnectNow: () => void
 	scrollContainerRef: RefObject<HTMLDivElement | null>
-	scrollContentRef: RefObject<HTMLDivElement | null>
+	/** Callback refs from useChatScroll: its listeners bind to the mounted elements through these. */
+	attachScrollContainer: (node: HTMLDivElement | null) => void
+	attachScrollContent: (node: HTMLDivElement | null) => void
 	messagesEndRef: RefObject<HTMLDivElement | null>
 	promptInputRef: RefObject<HTMLTextAreaElement | null>
-	restoreRequest?: { key: number; text: string; entities?: Array<{ term: string; slug: string; type?: string }> } | null
+	restoreRequest?: {
+		key: number
+		text: string
+		entities?: Array<{ term: string; slug: string; type?: string }>
+	} | null
 	onRestoreConsumed?: () => void
 	isScrollAttached: boolean
 	showScrollToBottom: boolean
@@ -89,7 +90,11 @@ export interface ConversationViewModel {
 		prompt: string,
 		preResolvedEntities?: Array<{ term: string; slug: string; type?: string }>,
 		images?: Array<{ data: string; mimeType: string; filename?: string; isPasted?: boolean }>,
-		pageContext?: { entitySlug?: string; entityType?: 'protocol' | 'chain' | 'page'; route: string },
+		pageContext?: {
+			entitySlug?: string
+			entityType?: 'protocol' | 'chain' | 'page'
+			route: string
+		},
 		isSuggestedQuestion?: boolean
 	) => void | Promise<void> | boolean | QueueSubmitResult | Promise<QueueSubmitResult>
 	submitMode: PromptSubmitMode
@@ -184,6 +189,7 @@ const ConversationMessageItem = memo(function ConversationMessageItem({
 		<MessageBubble
 			message={message}
 			isDraft={isDraft}
+			hideTimeline={isDraft}
 			sessionId={sessionId}
 			readOnly={readOnly}
 			isSharedView={isSharedView}
@@ -206,14 +212,13 @@ const ConversationMessageItem = memo(function ConversationMessageItem({
 
 const ConversationLiveStatus = memo(function ConversationLiveStatus({
 	isStreaming,
-	activeToolCalls,
+	steps,
 	spawnProgress,
 	spawnStartTime,
 	todos,
 	todosStartTime,
 	executionStartedAt,
 	spawnIsResearchMode,
-	streamingThinking,
 	streamingDraft,
 	isCompacting,
 	recovery,
@@ -232,14 +237,13 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 	hideActivity = false
 }: {
 	isStreaming: boolean
-	activeToolCalls: Array<ToolCall>
+	steps: Array<AgentStep>
 	spawnProgress: Map<string, SpawnAgentStatus>
 	spawnStartTime: number
 	todos: Array<TodoItem>
 	todosStartTime: number
 	executionStartedAt: number
 	spawnIsResearchMode: boolean
-	streamingThinking: string
 	streamingDraft: Message | null
 	isCompacting: boolean
 	recovery: RecoveryState
@@ -263,7 +267,7 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 			todoCount: todos.length,
 			isStreaming,
 			recoveryStatus: recovery.status,
-			activeToolCallCount: activeToolCalls.length,
+			activeToolCallCount: steps.filter((step) => step.kind === 'tool' && step.status === 'running').length,
 			spawnProgressCount: spawnProgress.size,
 			isCompacting
 		})
@@ -286,23 +290,15 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 							indentForActiveTodo={hasTodos && todos.some((t) => t.status === 'in_progress')}
 						/>
 					) : (
-						<ToolProgressIndicator
-							toolCalls={activeToolCalls}
-							thinking={streamingThinking}
-							isCompacting={isCompacting}
-							spawnProgress={spawnProgress.size > 0 ? spawnProgress : undefined}
-							isWaiting={
-								isStreaming &&
-								activeToolCalls.length === 0 &&
-								spawnProgress.size === 0 &&
-								!streamingDraft?.content &&
-								!streamingThinking &&
-								!isCompacting &&
-								!hasStreamingCharts(streamingDraft?.charts)
-							}
+						<AgentTimeline
+							steps={steps}
+							streaming={isStreaming}
 							executionStartedAt={executionStartedAt}
-							indentForActiveTodo={hasTodos && todos.some((t) => t.status === 'in_progress')}
+							isCompacting={isCompacting}
 							factCheckPhase={factCheckPhase}
+							spawnProgress={spawnProgress.size > 0 ? spawnProgress : undefined}
+							showToolDetails={isLlama}
+							indent={hasTodos && todos.some((t) => t.status === 'in_progress')}
 						/>
 					)}
 				</div>
@@ -318,6 +314,7 @@ const ConversationLiveStatus = memo(function ConversationLiveStatus({
 							message={streamingDraft}
 							sessionId={sessionId}
 							isDraft
+							hideTimeline
 							readOnly={readOnly}
 							isLlama={isLlama}
 							onTableFullscreenOpen={onTableFullscreenOpen}
@@ -412,14 +409,13 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		isStreaming,
 		isQueuedUserMessagePending,
 		isStopping,
-		activeToolCalls,
+		steps,
 		spawnProgress,
 		spawnStartTime,
 		todos,
 		todosStartTime,
 		executionStartedAt,
 		spawnIsResearchMode,
-		streamingThinking,
 		streamingDraft,
 		duelSlot = null,
 		isCompacting,
@@ -430,7 +426,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		promptFailureAction,
 		onReconnectNow,
 		scrollContainerRef,
-		scrollContentRef,
+		attachScrollContainer,
+		attachScrollContent,
 		messagesEndRef,
 		promptInputRef,
 		restoreRequest = null,
@@ -692,7 +689,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 	return (
 		<>
 			<div
-				ref={scrollContainerRef}
+				ref={attachScrollContainer}
 				// `both-edges` keeps the message column centered on the same axis as the composer below,
 				// which sits outside this scroll container and never loses width to a classic scrollbar.
 				className={`relative flex-1 [scrollbar-gutter:stable_both-edges] overflow-y-auto px-2.5 pt-2.5 max-lg:px-0 ${readOnly ? 'pb-2.5' : 'pb-12'}`}
@@ -702,7 +699,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 				}}
 			>
 				<div
-					ref={scrollContentRef}
+					ref={attachScrollContent}
 					className={`relative mx-auto flex ${isFullscreen ? 'max-w-[80rem] justify-center' : 'llamaai-chat-width w-full flex-col'}`}
 				>
 					{isFullscreen && !sidebarVisible ? (
@@ -776,14 +773,13 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 													<ConversationLiveStatus
 														key={item.key}
 														isStreaming={isStreaming}
-														activeToolCalls={activeToolCalls}
+														steps={steps}
 														spawnProgress={spawnProgress}
 														spawnStartTime={spawnStartTime}
 														todos={todos}
 														todosStartTime={todosStartTime}
 														executionStartedAt={executionStartedAt}
 														spawnIsResearchMode={spawnIsResearchMode}
-														streamingThinking={streamingThinking}
 														streamingDraft={streamingDraft}
 														isCompacting={isCompacting}
 														recovery={recovery}
@@ -830,13 +826,12 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 								) : (
 									<ConversationLiveStatus
 										isStreaming={isStreaming}
-										activeToolCalls={activeToolCalls}
+										steps={steps}
 										spawnProgress={spawnProgress}
 										spawnStartTime={spawnStartTime}
 										todos={todos}
 										todosStartTime={todosStartTime}
 										executionStartedAt={executionStartedAt}
-										streamingThinking={streamingThinking}
 										spawnIsResearchMode={spawnIsResearchMode}
 										streamingDraft={streamingDraft}
 										isCompacting={isCompacting}
@@ -969,8 +964,4 @@ export function EmptyConversationErrorState({
 			</button>
 		</div>
 	)
-}
-
-function hasStreamingCharts(charts?: Array<ChartSet>) {
-	return Boolean(charts && charts.length > 0)
 }

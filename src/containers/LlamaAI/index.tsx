@@ -429,7 +429,6 @@ export function AgenticChat({
 	const scrollContentRef = useRef<HTMLDivElement>(null)
 	const { keyboardOpen, viewportHeight } = useVisualViewport()
 	const promptInputRef = useRef<HTMLTextAreaElement>(null)
-	const toolCallIdRef = useRef(0)
 	const promptSubmissionLockRef = useRef<number | null>(null)
 	const nextPromptSubmissionIdRef = useRef(0)
 	const isFirstMessageRef = useRef(true)
@@ -452,8 +451,7 @@ export function AgenticChat({
 		toolExecutions: streamingToolExecutions,
 		generatedImages: streamingGeneratedImages,
 		messageId: streamMessageId,
-		thinking: streamingThinking,
-		activeToolCalls,
+		steps: streamingSteps,
 		spawnProgress,
 		spawnStartTime,
 		spawnIsResearchMode,
@@ -834,6 +832,8 @@ export function AgenticChat({
 
 	const {
 		attach,
+		attachScrollContainer,
+		attachScrollContent,
 		scrollToBottom,
 		syncAfterLayout: syncScrollAfterLayout,
 		isAttached: isScrollAttached,
@@ -1015,7 +1015,6 @@ export function AgenticChat({
 				buffer,
 				dispatch: dispatchStream,
 				currentMessageIdRef,
-				toolCallIdRef,
 				appendMessage,
 				replaceLocalUserMessageId: replaceUserMessageId ?? replaceLocalUserMessageId,
 				setMessageSiblingInfo,
@@ -2540,14 +2539,13 @@ export function AgenticChat({
 		isStreaming,
 		isQueuedUserMessagePending: streamState.pendingQueueItemId !== null,
 		isStopping,
-		activeToolCalls,
+		steps: streamingSteps,
 		spawnProgress,
 		spawnStartTime,
 		todos: streamingTodos,
 		todosStartTime,
 		executionStartedAt,
 		spawnIsResearchMode,
-		streamingThinking,
 		streamingDraft,
 		duelSlot: duelPairId ? (
 			<DuelPanel
@@ -2568,7 +2566,8 @@ export function AgenticChat({
 		promptFailureAction,
 		onReconnectNow: handleReconnectNow,
 		scrollContainerRef,
-		scrollContentRef,
+		attachScrollContainer,
+		attachScrollContent,
 		messagesEndRef,
 		promptInputRef,
 		restoreRequest: alertPrefillRequest,

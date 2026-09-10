@@ -31,7 +31,6 @@ function useDuelArm() {
 	// runtime fields -- because duel answers never enter shared message history. Snapshotting keeps
 	// that lifetime while giving render an immutable value it can memoise.
 	const [message, setMessage] = useState<Message | null>(null)
-	const toolCallIdRef = useRef(0)
 	const callbacksRef = useRef<AgenticSSECallbacks | null>(null)
 
 	const start = useCallback(() => {
@@ -46,7 +45,6 @@ function useDuelArm() {
 			buffer,
 			dispatch,
 			currentMessageIdRef,
-			toolCallIdRef,
 			// Duel answers render from their arm buffer and never enter shared message history;
 			// callback dispatches already provide the render notification for every event.
 			appendMessage: () => undefined,

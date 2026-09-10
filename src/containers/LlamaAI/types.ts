@@ -97,6 +97,8 @@ export interface JsonObject {
 
 export interface ToolExecution {
 	name: string
+	/** Matches the `tool_call` event that started this call, when the backend sent one. */
+	tool_call_id?: string
 	executionTimeMs: number
 	success: boolean
 	error?: string
@@ -226,7 +228,9 @@ export interface Message {
 	}
 	timestamp?: number
 	toolExecutions?: Array<ToolExecution>
+	/** Restored messages carry reasoning as one string; live and committed ones carry ordered steps. */
 	thinking?: string
+	steps?: Array<AgentStep>
 	quotedText?: string
 	messageMetadata?: MessageMetadata
 	freeLimitOffer?: FreeLimitOffer
@@ -246,12 +250,31 @@ export interface GeneratedImage {
 	revised_prompt?: string
 }
 
+/** A tool call as the backend announces it, before its result arrives. */
 export interface ToolCall {
-	id: number
 	name: string
-	label: string
+	params: JsonObject | null
+	toolCallId: string | null
 	isPremium?: boolean
 }
+
+/**
+ * One row of what the agent did, in the order it happened: a stretch of reasoning, or a tool call
+ * that moves from running to done or error in place when its result lands.
+ */
+export type AgentStep =
+	| { kind: 'reasoning'; id: string; text: string }
+	| {
+			kind: 'tool'
+			id: string
+			toolCallId: string | null
+			name: string
+			label: string
+			params: JsonObject | null
+			isPremium?: boolean
+			status: 'running' | 'done' | 'error'
+			execution?: ToolExecution
+	  }
 
 export interface SpawnAgentStatus {
 	id: string

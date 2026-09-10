@@ -24,8 +24,10 @@ import type {
 	ChartArtifactRefs,
 	DashboardArtifact,
 	GeneratedImage,
+	JsonObject,
 	MessageMetadata,
 	TodoItem,
+	ToolCall,
 	ToolExecution,
 	UnifiedCitationReference
 } from '~/containers/LlamaAI/types'
@@ -80,7 +82,7 @@ export interface AgenticSSECallbacks {
 	onResponseReset?: () => void
 	onCharts: (charts: Array<ChartConfiguration>, chartData: ChartDataByKey, artifactRefs?: ChartArtifactRefs) => void
 	onGeneratedImages?: (images: Array<GeneratedImage>) => void
-	onProgress: (toolName: string, isPremium?: boolean) => void
+	onToolCall: (call: ToolCall) => void
 	onSpawnProgress: (data: SpawnProgressData) => void
 	onSessionId: (sessionId: string, startedAt?: number) => void
 	onCitations: (citations: Array<string>) => void
@@ -118,6 +120,8 @@ interface SessionEvent {
 interface ToolCallEvent {
 	type: 'tool_call'
 	name: string
+	params?: JsonObject
+	tool_call_id?: string
 	isPremium?: boolean
 }
 
@@ -542,7 +546,12 @@ export function dispatchAgenticEvent(data: DispatchableAgenticEvent, callbacks: 
 			callbacks.onSessionId(data.sessionId, data.startedAt)
 			break
 		case 'tool_call':
-			callbacks.onProgress(data.name, data.isPremium)
+			callbacks.onToolCall({
+				name: data.name,
+				params: data.params ?? null,
+				toolCallId: data.tool_call_id ?? null,
+				...(data.isPremium && { isPremium: true })
+			})
 			break
 		case 'response_chunk': {
 			const chunk = typeof data.content === 'string' ? data.content.replace(/<bill\s*\/>/g, '') : ''

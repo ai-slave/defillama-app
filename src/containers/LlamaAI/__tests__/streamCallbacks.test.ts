@@ -15,7 +15,6 @@ function setupCallbacks(isCurrent = true, deferEmptyDone = false) {
 		buffer,
 		dispatch,
 		currentMessageIdRef,
-		toolCallIdRef: { current: 0 },
 		appendMessage,
 		deferEmptyDone,
 		onCompletion,
@@ -128,7 +127,6 @@ describe('createAgenticCallbacks', () => {
 			buffer: createStreamBuffer(),
 			dispatch: vi.fn() as unknown as StreamDispatch,
 			currentMessageIdRef: { current: null },
-			toolCallIdRef: { current: 0 },
 			appendMessage: vi.fn(),
 			replaceLocalUserMessageId,
 			onUserMessageIdObserved,
@@ -147,5 +145,32 @@ describe('createAgenticCallbacks', () => {
 		callbacks.onSpawnProgress({ agentId: 'agent-1', status: 'started', startedAt: 0 })
 
 		expect(dispatch).toHaveBeenCalledWith({ type: 'SET_SPAWN_START_TIME', value: 0 })
+	})
+
+	test('turns a tool_call into a running step with its arguments, completed in place by its result', () => {
+		const { buffer, callbacks, dispatch } = setupCallbacks()
+
+		callbacks.onThinking('Checking fees. ')
+		callbacks.onToolCall({ name: 'execute_sql', params: { query: 'select 1' }, toolCallId: 'c1', isPremium: true })
+		callbacks.onToolExecution({ name: 'execute_sql', tool_call_id: 'c1', executionTimeMs: 12, success: true })
+		callbacks.onThinking('Done.')
+
+		expect(buffer.steps).toEqual([
+			{ kind: 'reasoning', id: 'reasoning-0', text: 'Checking fees. ' },
+			expect.objectContaining({
+				kind: 'tool',
+				name: 'execute_sql',
+				label: 'Querying database',
+				params: { query: 'select 1' },
+				isPremium: true,
+				status: 'done'
+			}),
+			{ kind: 'reasoning', id: 'reasoning-2', text: 'Done.' }
+		])
+		expect(buffer.toolExecutions).toHaveLength(1)
+		expect(dispatch).toHaveBeenCalledWith({
+			type: 'APPEND_TOOL_CALL',
+			value: { name: 'execute_sql', params: { query: 'select 1' }, toolCallId: 'c1', isPremium: true }
+		})
 	})
 })

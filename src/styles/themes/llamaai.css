@@ -295,6 +295,7 @@ html.dark {
 	--animate-ai-landing-exit: llamaLandingExit 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 	--animate-ai-conversation-enter: llamaConversationEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 	--animate-ai-exchange-enter: llamaActiveExchangeEnter 0.18s ease-out both;
+	--animate-ai-step-enter: llamaStepEnter 0.2s ease-out both;
 }
 
 /* The LlamaAI CTA gold gradient fill (nav buttons, landing CTAs) */

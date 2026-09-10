@@ -1,4 +1,5 @@
 import { Suspense, useMemo, useState, type RefCallback } from 'react'
+import { stepsForMessage } from '~/containers/LlamaAI/agentSteps'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { AlertArtifact, AlertArtifactLoading } from '~/containers/LlamaAI/components/AlertArtifact'
 import { DeferredChartRenderer } from '~/containers/LlamaAI/components/charts/DeferredChartRenderer'
@@ -10,10 +11,9 @@ import { ChatMarkdownRenderer, SourcesList } from '~/containers/LlamaAI/componen
 import { MarkdownExportArtifact } from '~/containers/LlamaAI/components/MarkdownExportArtifact'
 import { BranchArrows } from '~/containers/LlamaAI/components/messages/BranchControls'
 import { ActionButtonGroup } from '~/containers/LlamaAI/components/messages/MessageActionGroup'
-import { ToolExecutionPanel } from '~/containers/LlamaAI/components/messages/ToolExecutionPanel'
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
 import { ResponseControls } from '~/containers/LlamaAI/components/ResponseControls'
-import { ThinkingPanel } from '~/containers/LlamaAI/components/status/ThinkingPanel'
+import { AgentTimeline } from '~/containers/LlamaAI/components/status/AgentTimeline'
 import { useHackerMode } from '~/containers/LlamaAI/components/status/useHackerMode'
 import { useAdvancedProvenance } from '~/containers/LlamaAI/hooks/useLlamaAISettings'
 import {
@@ -21,7 +21,7 @@ import {
 	type ArtifactRecord,
 	type MessageRenderBlock
 } from '~/containers/LlamaAI/renderModel'
-import type { DashboardArtifact, Message, ToolExecution } from '~/containers/LlamaAI/types'
+import type { DashboardArtifact, Message } from '~/containers/LlamaAI/types'
 import { buildMessageExportRequest } from '~/containers/LlamaAI/utils/articleExport'
 import { getOwnRegistryValue } from '~/containers/LlamaAI/utils/getOwnRegistryValue'
 import { wrapLegacyUrlCitations } from '~/containers/LlamaAI/utils/markdownHelpers'
@@ -302,27 +302,23 @@ function MessageContentBlock({
 
 function InlineContent({
 	message,
-	toolExecutions,
 	isStreaming = false,
 	sessionId,
 	onActionClick,
 	nextUserMessage,
 	hackerMode,
 	advancedProvenance,
-	showToolDetails = false,
 	onTableFullscreenOpen,
 	onImageClick,
 	readOnly
 }: {
 	message: Message
-	toolExecutions?: Array<ToolExecution>
 	isStreaming?: boolean
 	sessionId?: string | null
 	onActionClick?: (message: string) => void
 	nextUserMessage?: string
 	hackerMode?: boolean
 	advancedProvenance?: boolean
-	showToolDetails?: boolean
 	readOnly?: boolean
 	onTableFullscreenOpen?: () => void
 	onImageClick?: (url: string) => void
@@ -355,10 +351,6 @@ function InlineContent({
 				</div>
 			))}
 
-			{!isStreaming && toolExecutions && toolExecutions.length > 0 ? (
-				<ToolExecutionPanel toolExecutions={toolExecutions} showDetails={showToolDetails} />
-			) : null}
-
 			{message.freeLimitOffer ? <FreeLimitCard offer={message.freeLimitOffer} /> : null}
 		</div>
 	)
@@ -379,6 +371,7 @@ export function MessageBubble({
 	message,
 	sessionId,
 	isDraft = false,
+	hideTimeline = false,
 	readOnly = false,
 	hideControls = false,
 	isSharedView = false,
@@ -399,6 +392,8 @@ export function MessageBubble({
 	message: Message
 	sessionId: string | null
 	isDraft?: boolean
+	/** The conversation's live status already shows this draft's steps above it. */
+	hideTimeline?: boolean
 	readOnly?: boolean
 	hideControls?: boolean
 	isSharedView?: boolean
@@ -417,9 +412,11 @@ export function MessageBubble({
 	enterToSend?: boolean
 }) {
 	const [previewImage, setPreviewImage] = useState<string | null>(null)
-	const [pastedPreview, setPastedPreview] = useState<{ content: string; filename: string; isPasted?: boolean } | null>(
-		null
-	)
+	const [pastedPreview, setPastedPreview] = useState<{
+		content: string
+		filename: string
+		isPasted?: boolean
+	} | null>(null)
 	const [isEditing, setIsEditing] = useState(false)
 	const [isSaving, setIsSaving] = useState(false)
 	const [draftText, setDraftText] = useState(message.content || '')
@@ -633,17 +630,17 @@ export function MessageBubble({
 
 	return (
 		<div id={anchorId} ref={anchorRef} className={`group/msg flex flex-col gap-2.5 ${anchorClassName ?? ''}`}>
-			{message.thinking ? <ThinkingPanel thinking={message.thinking} defaultOpen={isDraft} /> : null}
+			{hideTimeline ? null : (
+				<AgentTimeline steps={stepsForMessage(message)} streaming={isDraft} showToolDetails={isLlama} />
+			)}
 			<InlineContent
 				message={readOnly ? { ...message, alerts: undefined } : message}
-				toolExecutions={message.toolExecutions}
 				isStreaming={isDraft}
 				sessionId={sessionId}
 				onActionClick={onActionClick}
 				nextUserMessage={nextUserMessage}
 				hackerMode={hackerMode}
 				advancedProvenance={advancedProvenance}
-				showToolDetails={isLlama}
 				onTableFullscreenOpen={onTableFullscreenOpen}
 				onImageClick={setPreviewImage}
 				readOnly={readOnly || isSharedView}

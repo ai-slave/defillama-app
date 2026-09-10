@@ -126,4 +126,34 @@ describe('streamReducer', () => {
 		expect(failed.isStreaming).toBe(true)
 		expect(failed.error).toBe('Could not stop')
 	})
+
+	test('builds an interleaved step timeline from stream events and keeps it once text arrives', () => {
+		let state = streamReducer(createInitialStreamState(), { type: 'START_STREAM' })
+		state = streamReducer(state, { type: 'APPEND_REASONING', value: 'Looking up fees.' })
+		state = streamReducer(state, {
+			type: 'APPEND_TOOL_CALL',
+			value: { name: 'execute_sql', params: { query: 'select 1' }, toolCallId: 'c1' }
+		})
+		state = streamReducer(state, { type: 'APPEND_REASONING', value: 'Query is running; ' })
+		state = streamReducer(state, { type: 'APPEND_REASONING', value: 'chart next.' })
+		state = streamReducer(state, {
+			type: 'APPEND_TOOL_EXECUTION',
+			value: { name: 'execute_sql', tool_call_id: 'c1', executionTimeMs: 30, success: true, resultCount: 2 }
+		})
+		state = streamReducer(state, { type: 'CLEAR_ACTIVITY' })
+		state = streamReducer(state, { type: 'APPEND_TOKEN', value: 'Aave led' })
+
+		expect(state.steps).toEqual([
+			{ kind: 'reasoning', id: 'reasoning-0', text: 'Looking up fees.' },
+			expect.objectContaining({
+				kind: 'tool',
+				toolCallId: 'c1',
+				status: 'done',
+				execution: expect.objectContaining({ resultCount: 2 })
+			}),
+			{ kind: 'reasoning', id: 'reasoning-2', text: 'Query is running; chart next.' }
+		])
+		expect(state.toolExecutions).toHaveLength(1)
+		expect(state.text).toBe('Aave led')
+	})
 })

@@ -1,6 +1,8 @@
 import type { Dispatch } from 'react'
+import { appendReasoning, completeToolStep, startToolStep } from '~/containers/LlamaAI/agentSteps'
 import type { ContextWarningPayload, CsvExport, MdExport } from '~/containers/LlamaAI/fetchAgenticResponse'
 import type {
+	AgentStep,
 	AlertProposedData,
 	ChartSet,
 	DashboardArtifact,
@@ -59,8 +61,8 @@ export interface StreamState {
 	citations: Array<UnifiedCitationReference>
 	legacyUrlCitations: Array<string>
 	toolExecutions: Array<ToolExecution>
-	thinking: string
-	activeToolCalls: Array<ToolCall>
+	/** What the agent did, in event order: reasoning and tool calls interleaved. */
+	steps: Array<AgentStep>
 	spawnProgress: Map<string, SpawnAgentStatus>
 	spawnStartTime: number
 	spawnIsResearchMode: boolean
@@ -87,7 +89,7 @@ export interface StreamAccumulator {
 	citations: Array<UnifiedCitationReference>
 	legacyUrlCitations: Array<string>
 	toolExecutions: Array<ToolExecution>
-	thinking: string
+	steps: Array<AgentStep>
 	error: string | null
 	hasStartedText: boolean
 	spawnStarted: boolean
@@ -125,7 +127,7 @@ export type StreamAction =
 	| { type: 'MERGE_CITATIONS'; value: Array<string> }
 	| { type: 'APPEND_TOOL_EXECUTION'; value: ToolExecution }
 	| { type: 'SET_MESSAGE_METADATA'; value: MessageMetadata }
-	| { type: 'APPEND_THINKING'; value: string }
+	| { type: 'APPEND_REASONING'; value: string }
 	| { type: 'APPEND_TOOL_CALL'; value: ToolCall }
 	| { type: 'CLEAR_ACTIVITY' }
 	| { type: 'SET_SPAWN_START_TIME'; value: number }
@@ -156,8 +158,7 @@ const createEmptyRuntimeState = (): ResettableStreamState => ({
 	citations: [],
 	legacyUrlCitations: [],
 	toolExecutions: [],
-	thinking: '',
-	activeToolCalls: [],
+	steps: [],
 	spawnProgress: new Map<string, SpawnAgentStatus>(),
 	spawnStartTime: 0,
 	spawnIsResearchMode: false,
@@ -195,7 +196,7 @@ export const createStreamAccumulator = (): StreamAccumulator => ({
 	citations: [],
 	legacyUrlCitations: [],
 	toolExecutions: [],
-	thinking: '',
+	steps: [],
 	error: null,
 	hasStartedText: false,
 	spawnStarted: false,
@@ -216,7 +217,7 @@ export function hasStreamBufferContent(buffer: StreamBuffer) {
 		buffer.citations.length > 0 ||
 		buffer.legacyUrlCitations.length > 0 ||
 		buffer.toolExecutions.length > 0 ||
-		buffer.thinking
+		buffer.steps.length > 0
 	)
 }
 
@@ -288,17 +289,21 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
 		case 'MERGE_CITATIONS':
 			return { ...state, legacyUrlCitations: [...new Set([...state.legacyUrlCitations, ...action.value])] }
 		case 'APPEND_TOOL_EXECUTION':
-			return { ...state, toolExecutions: [...state.toolExecutions, action.value] }
+			return {
+				...state,
+				toolExecutions: [...state.toolExecutions, action.value],
+				steps: completeToolStep(state.steps, action.value)
+			}
 		case 'SET_MESSAGE_METADATA':
 			return { ...state, messageMetadata: action.value }
-		case 'APPEND_THINKING':
-			return { ...state, thinking: state.thinking + action.value }
+		case 'APPEND_REASONING':
+			return { ...state, steps: appendReasoning(state.steps, action.value) }
 		case 'APPEND_TOOL_CALL':
-			return { ...state, activeToolCalls: [...state.activeToolCalls, action.value] }
+			return { ...state, steps: startToolStep(state.steps, action.value) }
+		// The step timeline stays: it is part of the answer, not a status to clear once text arrives.
 		case 'CLEAR_ACTIVITY':
 			return {
 				...state,
-				activeToolCalls: [],
 				spawnProgress: new Map<string, SpawnAgentStatus>(),
 				spawnStartTime: 0,
 				todos: [],
@@ -403,7 +408,7 @@ export function buildAssistantMessage(buffer: StreamBuffer, messageId?: string):
 		citations: nonEmpty(buffer.citations),
 		legacyUrlCitations: nonEmpty(buffer.legacyUrlCitations),
 		toolExecutions: nonEmpty(buffer.toolExecutions),
-		thinking: buffer.thinking || undefined,
+		steps: nonEmpty(buffer.steps),
 		messageMetadata: buffer.messageMetadata,
 		id: messageId
 	}

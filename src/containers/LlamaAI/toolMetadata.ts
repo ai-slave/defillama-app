@@ -108,6 +108,47 @@ export const TOOL_LABELS = {
 	search_messages: 'Searching messages'
 } satisfies Record<string, string>
 
+/**
+ * Past-tense phrases for the finished summary line ("Queried the database twice and generated a
+ * chart"). Tools without one make the summary fall back to a count.
+ */
+export const TOOL_DONE_PHRASES = {
+	execute_sql: 'queried the database',
+	resolve_entity: 'resolved entities',
+	load_skill: 'loaded knowledge',
+	generate_chart: 'generated a chart',
+	generate_image: 'generated an image',
+	web_search: 'searched the web',
+	x_search: 'searched X',
+	x_advanced_search: 'searched X',
+	x_semantic_search: 'searched X',
+	spawn_agent: 'ran parallel agents',
+	export_csv: 'exported a CSV',
+	export_markdown: 'exported Markdown',
+	create_alert: 'created an alert',
+	valyu_search: 'searched financial data',
+	execute_code: 'ran code',
+	read_url: 'read a page',
+	get_polymarket_data: 'fetched prediction markets',
+	get_wallet_data: 'fetched wallet data',
+	get_token_data: 'fetched token data',
+	get_tx_data: 'fetched transaction data',
+	get_docs: 'read documentation',
+	query_allium: 'queried onchain data',
+	query_dune: 'queried Dune',
+	fetch_ohlcv: 'fetched price data',
+	fetch_exchange_data: 'fetched exchange data',
+	get_balance_history: 'fetched balance history',
+	generate_dashboard: 'generated a dashboard',
+	memory: 'updated memory',
+	manage_user_memory: 'updated memory',
+	search_messages: 'searched messages',
+	read_result: 'read a result',
+	ls: 'listed workspace files',
+	cat: 'read a workspace file',
+	grep: 'searched workspace files'
+} satisfies Record<string, string>
+
 export const getToolLabel = (name: string | undefined | null): string =>
 	(name ? getOwnRegistryValue(TOOL_LABELS, name) : undefined) ??
 	(name ?? 'Tool')

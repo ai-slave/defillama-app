@@ -27,8 +27,8 @@ const correctionRetrySequence = [
 	{ type: 'response_chunk', content: 'FIRST DRAFT that the user already saw.' },
 	{ type: 'response_end' },
 	{ type: 'response_reset', reason: 'missing_substantive_answer', attempt: 1 },
-	{ type: 'tool_call', name: 'execute_sql' },
-	{ type: 'tool_execution', name: 'execute_sql', success: true },
+	{ type: 'tool_call', name: 'execute_sql', params: { query: 'select 1' }, tool_call_id: 'call-1' },
+	{ type: 'tool_execution', name: 'execute_sql', tool_call_id: 'call-1', success: true, executionTimeMs: 12 },
 	{ type: 'response_chunk', content: 'SECOND DRAFT with the correction applied.' },
 	{ type: 'response_end' },
 	{ type: 'message_metadata', content: { completionReason: 'natural' } },
@@ -36,14 +36,12 @@ const correctionRetrySequence = [
 ]
 
 describe('client handling of a backend correction retry', () => {
-	test('drops the discarded draft, clears the re-run tool chips on the next token, and commits only the second draft', async () => {
+	test('drops the discarded draft, keeps the re-run tool step in the timeline, and commits only the second draft', async () => {
 		let state: StreamState = streamReducer(createInitialStreamState(), { type: 'START_STREAM' })
-		const textsStreamedWhileToolChipsVisible: Array<string> = []
+		let stepsBeforeCommit: StreamState['steps'] = []
 		const dispatch = (action: StreamAction) => {
+			if (action.type === 'COMMIT_STREAM') stepsBeforeCommit = state.steps
 			state = streamReducer(state, action)
-			if (action.type === 'APPEND_TOKEN' && state.activeToolCalls.length > 0) {
-				textsStreamedWhileToolChipsVisible.push(state.text)
-			}
 		}
 		const buffer = createStreamBuffer()
 		const appendMessage = vi.fn()
@@ -62,8 +60,12 @@ describe('client handling of a backend correction retry', () => {
 		expect(result.sawDone).toBe(true)
 		expect(state.phase.status).toBe('committed')
 		expect(state.isStreaming).toBe(false)
-		expect(textsStreamedWhileToolChipsVisible).toEqual([])
+		// The re-run tool is part of what produced the second draft, so its row stays, completed in place.
+		expect(stepsBeforeCommit).toEqual([
+			expect.objectContaining({ kind: 'tool', name: 'execute_sql', toolCallId: 'call-1', status: 'done' })
+		])
 		expect(appendMessage).toHaveBeenCalledTimes(1)
 		expect(appendMessage.mock.calls[0][0].content).toBe('SECOND DRAFT with the correction applied.')
+		expect(appendMessage.mock.calls[0][0].steps).toEqual(stepsBeforeCommit)
 	})
 })
