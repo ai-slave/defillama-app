@@ -60,6 +60,7 @@ export function QABlockNodeView({ node, updateAttributes, getPos, editor }: Node
 			data-qa-number={questionNumber ?? undefined}
 			className="article-qa"
 		>
+			{/* oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- selects the node inside a contenteditable; TipTap owns keyboard navigation there. */}
 			<div
 				contentEditable={false}
 				onMouseDown={(event) => event.stopPropagation()}

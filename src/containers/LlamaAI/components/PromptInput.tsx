@@ -508,6 +508,7 @@ export function PromptInput({
 	}
 
 	return (
+		// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- a drop target; attaching by keyboard goes through the attach button.
 		<form
 			className="@container relative flex w-full flex-col gap-4 rounded-lg border border-medium bg-page p-4 has-[textarea:focus]:border-brand"
 			onDragEnter={isStopping ? undefined : imageUpload.handleDragEnter}

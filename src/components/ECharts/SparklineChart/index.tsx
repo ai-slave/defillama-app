@@ -71,7 +71,6 @@ interface SparklineChartProps {
 	className?: string
 	height?: number | string
 	smooth?: boolean
-	focusable?: boolean
 }
 
 function SparklineChartRenderer({
@@ -80,8 +79,7 @@ function SparklineChartRenderer({
 	areaColor,
 	className,
 	height = 48,
-	smooth = true,
-	focusable
+	smooth = true
 }: SparklineChartProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
@@ -235,14 +233,7 @@ function SparklineChartRenderer({
 		return null
 	}
 
-	return (
-		<div
-			ref={containerRef}
-			className={className}
-			style={{ width: '100%', height, outline: 'none', pointerEvents: 'none' }}
-			tabIndex={focusable ? 0 : -1}
-		/>
-	)
+	return <div ref={containerRef} className={className} style={{ width: '100%', height, pointerEvents: 'none' }} />
 }
 
 export const SparklineChart = withEChartsRenderVisibility(SparklineChartRenderer)

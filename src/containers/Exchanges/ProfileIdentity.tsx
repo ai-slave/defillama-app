@@ -21,36 +21,42 @@ export function ProfileIdentity({ profile }: { profile: ExchangeProfileModel }) 
 			<span className="rounded-sm border border-subtle px-1.5 py-0.5 label-sm uppercase">{profile.kind}</span>
 			<span className="-m-2 ml-auto flex items-center justify-end gap-1">
 				{venueDestination ? (
-					<Tooltip content={`Open ${profile.name} website`}>
-						<a
-							href={venueDestination.url}
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label={`Open ${profile.name} website`}
-							data-umami-event="exchange-website-click"
-							data-umami-event-exchange={profile.name}
-							data-umami-event-referral={venueDestination.kind === 'referral' ? 'true' : 'false'}
-							data-umami-event-url={venueDestination.url}
-							className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
-						>
-							<Icon name="globe" className="size-4" />
-						</a>
+					<Tooltip
+						content={`Open ${profile.name} website`}
+						render={
+							<a
+								href={venueDestination.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label={`Open ${profile.name} website`}
+								data-umami-event="exchange-website-click"
+								data-umami-event-exchange={profile.name}
+								data-umami-event-referral={venueDestination.kind === 'referral' ? 'true' : 'false'}
+								data-umami-event-url={venueDestination.url}
+							/>
+						}
+						className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
+					>
+						<Icon name="globe" className="size-4" />
 					</Tooltip>
 				) : null}
 				{profile.metadata.twitterUrl ? (
-					<Tooltip content={`Open ${profile.name} on X`}>
-						<a
-							href={profile.metadata.twitterUrl}
-							target="_blank"
-							rel="noopener noreferrer"
-							aria-label={`Open ${profile.name} on X`}
-							data-umami-event="exchange-twitter-click"
-							data-umami-event-exchange={profile.name}
-							data-umami-event-url={profile.metadata.twitterUrl}
-							className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
-						>
-							<Icon name="twitter" className="size-4" />
-						</a>
+					<Tooltip
+						content={`Open ${profile.name} on X`}
+						render={
+							<a
+								href={profile.metadata.twitterUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label={`Open ${profile.name} on X`}
+								data-umami-event="exchange-twitter-click"
+								data-umami-event-exchange={profile.name}
+								data-umami-event-url={profile.metadata.twitterUrl}
+							/>
+						}
+						className={buttonStyles({ variant: 'ghost', size: 'md', square: true })}
+					>
+						<Icon name="twitter" className="size-4" />
 					</Tooltip>
 				) : null}
 			</span>

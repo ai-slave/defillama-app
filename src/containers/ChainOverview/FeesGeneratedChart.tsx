@@ -17,6 +17,7 @@ export function FeesGeneratedChart({ series }: { series: Array<[string, number, 
 
 	return (
 		<div className="flex-1 cursor-pointer">
+			{/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- pointer tracking for the hover readout; the values are in the chart itself. */}
 			<div
 				ref={containerRef}
 				className="relative h-full"

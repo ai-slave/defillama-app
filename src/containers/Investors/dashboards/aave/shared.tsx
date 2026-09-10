@@ -38,15 +38,24 @@ export function InvestorsTable<T extends RowData>({
 				{instance.getHeaderGroups().map((headerGroup) =>
 					headerGroup.headers.map((header) => {
 						const align = header.column.columnDef.meta?.align ?? 'start'
+						const canSort = header.column.getCanSort()
+						// A sortable header is a control: as a span with an onClick, sorting was mouse-only.
+						const HEADER =
+							'relative inline-flex flex-nowrap items-center gap-1 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase'
 						return (
 							<div key={header.id} className="truncate border-b border-subtle px-3 py-2.5" style={{ textAlign: align }}>
-								<span
-									className="relative inline-flex cursor-pointer flex-nowrap items-center gap-1 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase"
-									onClick={header.column.getCanSort() ? () => header.column.toggleSorting() : undefined}
-								>
-									{flexRender(header.column.columnDef.header, header.getContext())}
-									{header.column.getCanSort() ? <SortIcon dir={header.column.getIsSorted()} /> : null}
-								</span>
+								{canSort ? (
+									<button
+										type="button"
+										className={`${HEADER} cursor-pointer`}
+										onClick={() => header.column.toggleSorting()}
+									>
+										{flexRender(header.column.columnDef.header, header.getContext())}
+										<SortIcon dir={header.column.getIsSorted()} />
+									</button>
+								) : (
+									<span className={HEADER}>{flexRender(header.column.columnDef.header, header.getContext())}</span>
+								)}
 							</div>
 						)
 					})

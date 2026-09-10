@@ -91,18 +91,22 @@ export function PresetSelector({ currentFilters, onApplyPreset }: PresetSelector
 								const presetEntries = PRESET_FILTER_ENTRIES.get(preset.id)
 								const isActive = presetEntries ? filtersEqual(currentEntries, presetEntries) : false
 								return (
-									<Tooltip content={preset.tooltip} key={preset.id}>
-										<button
-											type="button"
-											onClick={() => onApplyPreset(preset)}
-											className={`rounded-md border px-2.5 py-1.5 text-xs transition ${
-												isActive
-													? 'border-brand bg-brand/10 text-brand'
-													: 'border-pro-cards-border bg-pro-cards-bg text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
-											}`}
-										>
-											{preset.name}
-										</button>
+									<Tooltip
+										content={preset.tooltip}
+										key={preset.id}
+										render={
+											<button
+												type="button"
+												onClick={() => onApplyPreset(preset)}
+												className={`rounded-md border px-2.5 py-1.5 text-xs transition ${
+													isActive
+														? 'border-brand bg-brand/10 text-brand'
+														: 'border-pro-cards-border bg-pro-cards-bg text-pro-text-secondary hover:border-brand/40 hover:text-pro-text-primary'
+												}`}
+											/>
+										}
+									>
+										{preset.name}
 									</Tooltip>
 								)
 							})}

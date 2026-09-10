@@ -92,6 +92,14 @@
 		// Added on top of the React Compiler rules the correctness category already enables.
 		"react/no-deriving-state-in-effects": "error",
 		"react/void-use-memo": "error",
+		// --- Accessibility ---
+		// A label may wrap its control several elements deep, and the control is usually one of the shared
+		// components rather than a bare input. Without both, 12 of 27 hits were labels that do wrap their
+		// control. Measured: the count stops falling past depth 4.
+		"jsx-a11y/label-has-associated-control": [
+			"error",
+			{ "depth": 8, "controlComponents": ["Input", "SelectWithCombobox"] }
+		],
 		// --- Tests ---
 		"vitest/consistent-test-it": ["error", { "fn": "test", "withinDescribe": "test" }],
 
@@ -134,6 +142,17 @@
 		"import/no-unassigned-import": "off",
 		// The automatic JSX runtime needs no React import.
 		"react/react-in-jsx-scope": "off",
+		// These three want content, or a name, inside the element itself. This codebase composes controls
+		// with Ariakit's `render` prop, so the content arrives as the wrapper's children:
+		// `HovercardAnchor render={<a href=… />}>{label}` is a labelled link that the rule reads as an
+		// empty one. That is every hit of the two content rules, and 46 of 78 for the name rule; 20 of
+		// those carry an explicit `sr-only` label, which an aria-label would override, breaking voice
+		// control. The other 18 need no name at all -- role="separator" dividers, <datalist> options whose
+		// value is the label, a <select> placeholder, aria-hidden virtualizer spacers. Between them the
+		// three found three empty <th> cells, now <td>, and missed two unnamed password toggles.
+		"jsx-a11y/control-has-associated-label": "off",
+		"jsx-a11y/anchor-has-content": "off",
+		"jsx-a11y/heading-has-content": "off",
 		// Recommends <output> over role="status", which is worse for live regions.
 		"jsx-a11y/prefer-tag-over-role": "off",
 		// Autofocus inside a dialog is the expected behavior.
@@ -173,6 +192,14 @@
 				"eslint/no-undef": "off",
 				"eslint/no-unsafe-negation": "off",
 				"eslint/no-with": "off"
+			}
+		},
+		{
+			// The only <audio> elements here are the offline game's sound effects, preloaded in a
+			// <template>. A caption track for a button beep carries nothing.
+			"files": ["src/game/**"],
+			"rules": {
+				"jsx-a11y/media-has-caption": "off"
 			}
 		},
 		{

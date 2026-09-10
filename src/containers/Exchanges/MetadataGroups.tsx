@@ -29,15 +29,12 @@ export function MetadataSource({ source }: { source: ExchangeMetadataSource | un
 		<span className="flex flex-wrap items-center justify-end gap-1.5">
 			{source.asOf ? <span className="label-sm text-tertiary">As of {formatMetadataAsOf(source.asOf)}</span> : null}
 			{source.note ? (
-				<Tooltip content={source.note}>
-					<span
-						tabIndex={0}
-						role="img"
-						aria-label="Source methodology note"
-						className="inline-flex text-tertiary hover:text-primary focus-visible:text-primary"
-					>
-						<Icon name="help-circle" height={14} width={14} />
-					</span>
+				<Tooltip
+					content={source.note}
+					render={<button type="button" aria-label="Source methodology note" />}
+					className="text-tertiary hover:text-primary focus-visible:text-primary"
+				>
+					<Icon name="help-circle" height={14} width={14} />
 				</Tooltip>
 			) : null}
 			<BasicLink

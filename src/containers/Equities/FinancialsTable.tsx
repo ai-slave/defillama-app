@@ -71,35 +71,27 @@ function FinancialRow({
 		<>
 			<tr className="group">
 				<th className="group-hover-wash w-[28%] truncate border border-subtle bg-surface p-2 text-left font-semibold">
-					<div
-						className="flex items-center gap-1"
-						onClick={(event) => {
-							if (!hasSubRows) return
-							event.stopPropagation()
-							setIsExpanded((expanded) => !expanded)
-						}}
-					>
-						{hasSubRows ? (
-							<Button
-								size="sm"
-								variant="ghost"
-								square
-								type="button"
-								aria-expanded={isExpanded}
-								aria-label={`${isExpanded ? 'Hide' : 'Show'} ${row.label} breakdown`}
-								onClick={(event) => {
-									event.stopPropagation()
-									setIsExpanded((expanded) => !expanded)
-								}}
-								className="-m-1"
-							>
-								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
-							</Button>
-						) : showExpandPlaceholder ? (
-							<span aria-hidden="true" className="-ml-1 block size-5 shrink-0" />
-						) : null}
-						<span className="truncate">{row.label}</span>
-					</div>
+					{hasSubRows ? (
+						<Button
+							size="sm"
+							variant="ghost"
+							type="button"
+							aria-expanded={isExpanded}
+							onClick={(event) => {
+								event.stopPropagation()
+								setIsExpanded((expanded) => !expanded)
+							}}
+							className="-m-1 flex w-full items-center gap-1 text-left font-semibold"
+						>
+							<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
+							<span className="truncate">{row.label}</span>
+						</Button>
+					) : (
+						<div className="flex items-center gap-1">
+							{showExpandPlaceholder ? <span aria-hidden="true" className="-ml-1 block size-5 shrink-0" /> : null}
+							<span className="truncate">{row.label}</span>
+						</div>
+					)}
 				</th>
 				{headers.map((header) => (
 					<td

@@ -84,6 +84,7 @@ export function LlamaAIChartNodeView({ node, selected, deleteNode, updateAttribu
 			/>
 
 			{isEditable ? (
+				// oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- selects the node inside a contenteditable; TipTap owns keyboard navigation there.
 				<div
 					contentEditable={false}
 					onMouseDown={(e) => e.stopPropagation()}

@@ -847,15 +847,9 @@ function IncomeStatementByLabel({
 		<>
 			<tr className="group">
 				<TokenPageTableIncomeHeaderCell sticky className="w-[36%] font-semibold group-hover:bg-hover-row">
-					<div
-						className="flex items-center gap-1"
-						onClick={(e) => {
-							if (hasBreakdownRows) {
-								e.stopPropagation()
-								setIsExpanded((expanded) => !expanded)
-							}
-						}}
-					>
+					{/* No handler here: the label can be a tooltip anchor, which cannot live inside the
+					    disclosure button, so the chevron is the only control. */}
+					<div className="flex items-center gap-1">
 						{hasBreakdownRows ? (
 							<button
 								type="button"

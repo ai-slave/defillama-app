@@ -302,6 +302,7 @@ export function ProjectLanding({
 							) : null}
 						</TabPanel>
 						<TabPanel value="chats" hidden={tab !== 'chats'} className="pt-4">
+							{/* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- a drop target; attaching by keyboard goes through the attach button. */}
 							<form
 								onSubmit={(e) => {
 									e.preventDefault()

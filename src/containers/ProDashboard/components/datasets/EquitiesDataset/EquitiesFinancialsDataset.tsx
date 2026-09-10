@@ -48,32 +48,25 @@ function FinancialRow({
 		<>
 			<tr className="group">
 				<th className="w-[28%] truncate border border-medium bg-pro-cards-bg p-2 text-left font-semibold group-hover:bg-pro-link-hover-bg">
-					<div
-						className="flex items-center gap-1"
-						onClick={(event) => {
-							if (!hasSubRows) return
-							event.stopPropagation()
-							setIsExpanded((expanded) => !expanded)
-						}}
-					>
-						{hasSubRows ? (
-							<button
-								type="button"
-								aria-expanded={isExpanded}
-								aria-label={`${isExpanded ? 'Hide' : 'Show'} ${row.label} breakdown`}
-								onClick={(event) => {
-									event.stopPropagation()
-									setIsExpanded((expanded) => !expanded)
-								}}
-								className="-ml-1 flex size-5 shrink-0 items-center justify-center rounded-sm text-pro-text-secondary transition-transform hover:bg-pro-link-hover-bg focus-visible:bg-pro-link-hover-bg"
-							>
-								<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} />
-							</button>
-						) : showExpandPlaceholder ? (
-							<span aria-hidden="true" className="-ml-1 block size-5 shrink-0" />
-						) : null}
-						<span className="truncate">{row.label}</span>
-					</div>
+					{hasSubRows ? (
+						<button
+							type="button"
+							aria-expanded={isExpanded}
+							onClick={(event) => {
+								event.stopPropagation()
+								setIsExpanded((expanded) => !expanded)
+							}}
+							className="-ml-1 flex w-full items-center gap-1 rounded-sm text-left text-pro-text-secondary hover:bg-pro-link-hover-bg focus-visible:bg-pro-link-hover-bg"
+						>
+							<Icon name={isExpanded ? 'chevron-down' : 'chevron-right'} height={14} width={14} className="shrink-0" />
+							<span className="truncate">{row.label}</span>
+						</button>
+					) : (
+						<div className="flex items-center gap-1">
+							{showExpandPlaceholder ? <span aria-hidden="true" className="-ml-1 block size-5 shrink-0" /> : null}
+							<span className="truncate">{row.label}</span>
+						</div>
+					)}
 				</th>
 				{headers.map((header) => (
 					<td

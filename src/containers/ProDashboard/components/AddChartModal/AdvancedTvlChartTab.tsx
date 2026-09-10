@@ -286,16 +286,18 @@ export function AdvancedTvlChartTab({
 					isLoading={protocolsLoading}
 				/>
 
-				<Tooltip content={!hasProtocolSelection ? 'Select protocol first' : null} className="w-full">
-					<div className={`w-full ${!hasProtocolSelection ? 'pointer-events-none opacity-50' : ''}`}>
-						<AriakitSelect
-							label="Chart Type"
-							options={chartTypeOptions}
-							selectedValue={selectedAdvancedTvlChartType}
-							onChange={(option) => onSelectedAdvancedTvlChartTypeChange(option.value)}
-							placeholder="Select chart type..."
-						/>
-					</div>
+				<Tooltip
+					content={!hasProtocolSelection ? 'Select protocol first' : null}
+					className={`w-full ${!hasProtocolSelection ? 'pointer-events-none opacity-50' : ''}`}
+					render={<div />}
+				>
+					<AriakitSelect
+						label="Chart Type"
+						options={chartTypeOptions}
+						selectedValue={selectedAdvancedTvlChartType}
+						onChange={(option) => onSelectedAdvancedTvlChartTypeChange(option.value)}
+						placeholder="Select chart type..."
+					/>
 				</Tooltip>
 
 				{hasProtocolSelection && isLoading ? (

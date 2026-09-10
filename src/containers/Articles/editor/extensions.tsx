@@ -12,7 +12,7 @@ import TaskList from '@tiptap/extension-task-list'
 import { NodeViewContent, NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Icon } from '~/ui/Icon'
 import { validateArticleChartConfig } from '../chartAdapters'
 import { getArticleEntityRoute } from '../entityLinks'
@@ -188,6 +188,7 @@ function ChartNodeView({ node, selected, deleteNode, getPos, updateAttributes }:
 				}`}
 			/>
 
+			{/* oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- selects the node inside a contenteditable; TipTap owns keyboard navigation there. */}
 			<div
 				contentEditable={false}
 				onMouseDown={(e) => e.stopPropagation()}
@@ -295,6 +296,7 @@ function CalloutNodeView({ node, updateAttributes }: NodeViewProps) {
 }
 
 function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor }: NodeViewProps) {
+	const fieldId = useId()
 	const label = node.attrs.label || node.attrs.id
 	const url = (node.attrs.url as string) || ''
 	const title = (node.attrs.title as string) || ''
@@ -339,16 +341,28 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 					className="absolute top-full left-0 z-50 mt-1 grid w-72 gap-1.5 rounded-md border border-medium bg-surface p-2.5 font-sans shadow-xl"
 				>
 					<div className="flex items-center gap-1.5">
-						<label className="w-12 shrink-0 text-[10px] tracking-wider text-tertiary uppercase">Label</label>
+						<label
+							htmlFor={`${fieldId}-label`}
+							className="w-12 shrink-0 text-[10px] tracking-wider text-tertiary uppercase"
+						>
+							Label
+						</label>
 						<input
+							id={`${fieldId}-label`}
 							value={(node.attrs.label as string) || ''}
 							onChange={(e) => updateAttributes({ label: e.target.value, id: e.target.value || node.attrs.id })}
 							className="flex-1 rounded-sm border border-medium bg-page px-1.5 py-1 text-xs text-primary focus:border-link focus:outline-hidden"
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
-						<label className="w-12 shrink-0 text-[10px] tracking-wider text-tertiary uppercase">URL</label>
+						<label
+							htmlFor={`${fieldId}-url`}
+							className="w-12 shrink-0 text-[10px] tracking-wider text-tertiary uppercase"
+						>
+							URL
+						</label>
 						<input
+							id={`${fieldId}-url`}
 							value={url}
 							onChange={(e) => updateAttributes({ url: e.target.value })}
 							placeholder="https://…"
@@ -356,8 +370,14 @@ function CitationNodeView({ node, selected, deleteNode, updateAttributes, editor
 						/>
 					</div>
 					<div className="flex items-center gap-1.5">
-						<label className="w-12 shrink-0 text-[10px] tracking-wider text-tertiary uppercase">Title</label>
+						<label
+							htmlFor={`${fieldId}-title`}
+							className="w-12 shrink-0 text-[10px] tracking-wider text-tertiary uppercase"
+						>
+							Title
+						</label>
 						<input
+							id={`${fieldId}-title`}
 							value={title}
 							onChange={(e) => updateAttributes({ title: e.target.value })}
 							placeholder="Source title"

@@ -140,13 +140,13 @@ function TechniqueChips({ techniques }: { techniques: Array<TechniqueName> }) {
 		<ul className="flex flex-wrap gap-1.5">
 			{techniques.map((t) => (
 				<li key={t}>
-					<span
-						tabIndex={0}
+					<button
+						type="button"
 						title={TECHNIQUE_DOCS[t]}
 						className="inline-flex cursor-help items-center gap-1 rounded-sm border border-subtle bg-pro-app-bg/60 px-1.5 py-0.5 font-mono text-[10.5px] tracking-tight text-pro-text-secondary transition-colors hover:border-brand/50 hover:text-brand focus:border-brand/60 focus:outline-hidden"
 					>
 						{t}
-					</span>
+					</button>
 				</li>
 			))}
 		</ul>

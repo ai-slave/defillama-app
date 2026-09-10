@@ -860,6 +860,7 @@ function SavedDownloadRow({
 
 	return (
 		<li
+			// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role -- the row keeps list semantics and is operable through its own onKeyDown; it holds buttons, so it cannot be one.
 			role="button"
 			tabIndex={0}
 			aria-label={`Run preset ${preset.name}`}

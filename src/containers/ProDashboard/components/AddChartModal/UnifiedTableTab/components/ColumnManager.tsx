@@ -919,18 +919,23 @@ export function ColumnManager({
 								<p className="mb-1 text-[10px] font-medium text-pro-text-secondary">Format</p>
 								<div className="flex gap-1">
 									{FORMAT_OPTIONS.map((opt) => (
-										<Tooltip key={opt.id} content={opt.description} placement="bottom">
-											<button
-												type="button"
-												onClick={() => setCustomFormat(opt.id)}
-												className={`flex-1 rounded-md border px-2 py-1 text-[10px] font-medium transition-colors ${
-													customFormat === opt.id
-														? 'border-brand bg-brand/15 text-brand'
-														: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
-												}`}
-											>
-												{opt.label}
-											</button>
+										<Tooltip
+											key={opt.id}
+											content={opt.description}
+											placement="bottom"
+											render={
+												<button
+													type="button"
+													onClick={() => setCustomFormat(opt.id)}
+													className={`flex-1 rounded-md border px-2 py-1 text-[10px] font-medium transition-colors ${
+														customFormat === opt.id
+															? 'border-brand bg-brand/15 text-brand'
+															: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
+													}`}
+												/>
+											}
+										>
+											{opt.label}
 										</Tooltip>
 									))}
 								</div>
@@ -939,21 +944,26 @@ export function ColumnManager({
 								<p className="mb-1 text-[10px] font-medium text-pro-text-secondary">Aggregation</p>
 								<div className="flex gap-1">
 									{AGGREGATION_OPTIONS.map((opt) => (
-										<Tooltip key={opt.id} content={opt.description} placement="bottom">
-											<button
-												type="button"
-												onClick={() => {
-													setAggregationTouched(true)
-													setCustomAggregation(opt.id)
-												}}
-												className={`flex-1 rounded-md border px-1 py-1 text-[10px] font-medium transition-colors ${
-													resolvedCustomAggregation === opt.id
-														? 'border-brand bg-brand/15 text-brand'
-														: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
-												}`}
-											>
-												{opt.label}
-											</button>
+										<Tooltip
+											key={opt.id}
+											content={opt.description}
+											placement="bottom"
+											render={
+												<button
+													type="button"
+													onClick={() => {
+														setAggregationTouched(true)
+														setCustomAggregation(opt.id)
+													}}
+													className={`flex-1 rounded-md border px-1 py-1 text-[10px] font-medium transition-colors ${
+														resolvedCustomAggregation === opt.id
+															? 'border-brand bg-brand/15 text-brand'
+															: 'border-pro-cards-border text-pro-text-tertiary hover:border-brand/50'
+													}`}
+												/>
+											}
+										>
+											{opt.label}
 										</Tooltip>
 									))}
 								</div>

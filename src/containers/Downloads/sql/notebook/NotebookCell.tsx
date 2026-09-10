@@ -80,6 +80,7 @@ export const NotebookCell = forwardRef<SqlCellHandle, NotebookCellProps>(functio
 	const [draggable, setDraggable] = useState(false)
 
 	return (
+		// oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- onFocus runs the same handler, so focusing the cell by keyboard already selects it.
 		<div
 			ref={outerRef}
 			onFocus={handleCellFocus}

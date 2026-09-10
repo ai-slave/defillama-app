@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { refreshSession } from '~/auth/authStore'
 import { AUTH_SERVER } from '~/constants'
@@ -75,6 +75,7 @@ function switchErrorMessage(error: unknown, fallback: string) {
 }
 
 export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEmailModalProps) {
+	const fieldId = useId()
 	const [step, setStep] = useState<Step>('email')
 	const [email, setEmail] = useState(defaultEmail ?? '')
 	const [otp, setOtp] = useState('')
@@ -212,9 +213,12 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 						{/* Form */}
 						<form onSubmit={handleRequestOtp} className="flex flex-col gap-5">
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-sub-text-primary">Email</label>
+								<label htmlFor={`${fieldId}-email`} className="text-sm leading-[21px] text-sub-text-primary">
+									Email
+								</label>
 								<input
 									type="email"
+									id={`${fieldId}-email`}
 									required
 									value={email}
 									onChange={(e) => {
@@ -258,10 +262,13 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 
 						<form onSubmit={handleConfirm} className="flex flex-col gap-4">
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-sub-text-primary">Verification Code</label>
+								<label htmlFor={`${fieldId}-otp`} className="text-sm leading-[21px] text-sub-text-primary">
+									Verification Code
+								</label>
 								<input
 									type="text"
 									inputMode="numeric"
+									id={`${fieldId}-otp`}
 									maxLength={6}
 									required
 									value={otp}
@@ -280,10 +287,13 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 							</div>
 
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-sub-text-primary">Password</label>
+								<label htmlFor={`${fieldId}-password`} className="text-sm leading-[21px] text-sub-text-primary">
+									Password
+								</label>
 								<div className="relative">
 									<input
 										type={showPassword ? 'text' : 'password'}
+										id={`${fieldId}-password`}
 										required
 										value={password}
 										onChange={(e) => {
@@ -300,6 +310,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 									<button
 										type="button"
 										onClick={() => setShowPassword(!showPassword)}
+										aria-label={showPassword ? 'Hide password' : 'Show password'}
 										className="absolute top-1/2 right-3 -translate-y-1/2 text-sub-text-muted"
 									>
 										<Icon name={showPassword ? 'eye-off' : 'eye'} height={16} width={16} />
@@ -309,10 +320,13 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 
 							{/* Confirm Password */}
 							<div className="flex flex-col gap-2">
-								<label className="text-sm leading-[21px] text-sub-text-primary">Confirm Password</label>
+								<label htmlFor={`${fieldId}-confirm`} className="text-sm leading-[21px] text-sub-text-primary">
+									Confirm Password
+								</label>
 								<div className="relative">
 									<input
 										type={showPasswordConfirm ? 'text' : 'password'}
+										id={`${fieldId}-confirm`}
 										required
 										value={passwordConfirm}
 										onChange={(e) => {
@@ -329,6 +343,7 @@ export function SwitchToEmailModal({ isOpen, onClose, defaultEmail }: SwitchToEm
 									<button
 										type="button"
 										onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
+										aria-label={showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'}
 										className="absolute top-1/2 right-3 -translate-y-1/2 text-sub-text-muted"
 									>
 										<Icon name={showPasswordConfirm ? 'eye-off' : 'eye'} height={16} width={16} />

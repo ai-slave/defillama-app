@@ -350,7 +350,7 @@ export default function Correlations({ initialTokenOptions }: CorrelationsProps)
 							<table className="table-fixed text-center body-sm">
 								<thead>
 									<tr>
-										<th />
+										<td />
 										{coins.map((coin) => (
 											<td
 												key={`h-${coin.id}`}

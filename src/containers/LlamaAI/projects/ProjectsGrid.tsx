@@ -208,7 +208,7 @@ export function ProjectsGrid() {
 					<Icon name="search" height={24} width={24} className="text-tertiary" />
 					<p>No projects match &ldquo;{deferredQuery.trim()}&rdquo;.</p>
 					{hasSearchQuery ? (
-						<Button type="button" size="md" aria-label="Clear project search" onClick={() => setQuery('')}>
+						<Button type="button" size="md" onClick={() => setQuery('')}>
 							Clear search
 						</Button>
 					) : null}

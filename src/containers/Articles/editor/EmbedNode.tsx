@@ -38,6 +38,7 @@ function EmbedNodeView({ node, selected, deleteNode, getPos, editor }: NodeViewP
 					{config.caption ? <p className="mt-2 text-sm text-secondary">{config.caption}</p> : null}
 				</div>
 				{isEditable ? (
+					// oxlint-disable-next-line jsx-a11y/no-static-element-interactions -- selects the node inside a contenteditable; TipTap owns keyboard navigation there.
 					<div
 						contentEditable={false}
 						className="flex shrink-0 items-center gap-1.5"

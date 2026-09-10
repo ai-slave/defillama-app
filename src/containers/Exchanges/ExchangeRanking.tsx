@@ -341,7 +341,7 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 										</Tooltip>
 									</th>
 								))}
-								<th className="pb-1" />
+								<td className="pb-1" />
 							</tr>
 						</thead>
 						<tbody>

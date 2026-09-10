@@ -1,6 +1,5 @@
 import clsx from 'clsx'
 import Link from 'next/link'
-import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DownloadPdfLink } from '~/containers/Articles/landing/DownloadPdfLink'
 import { SponsoredByBadge } from '~/containers/Articles/landing/SponsoredByBadge'
@@ -96,7 +95,6 @@ interface CarouselArticleSlideProps {
 
 /** Carousel card: mirrors DL HoverReport layout for `ArticleDocument`. */
 function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: CarouselArticleSlideProps) {
-	const router = useRouter()
 	const href = articleHref(article)
 	const imgUrl = article.carouselImage?.url ?? article.coverImage?.url
 	const blurb = (article.reportDescription || article.excerpt || article.subtitle || '').trim()
@@ -146,6 +144,7 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 					) : null}
 				</div>
 			) : (
+				// oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- slide selection and a shield over the overlay link; the prev and next controls are buttons.
 				<div
 					className="bottom-[15px] grid gap-2"
 					onClick={(e) => {
@@ -207,16 +206,9 @@ function CarouselArticleSlide({ article, isMobile, edgeFade, addOverlayLink }: C
 			)}
 		>
 			{addOverlayLink ? (
-				<div
-					role="button"
-					tabIndex={0}
-					onClick={() => {
-						void router.push(href)
-					}}
-					className="block size-full cursor-pointer"
-				>
+				<Link href={href} className="block size-full">
 					{inner}
-				</div>
+				</Link>
 			) : (
 				inner
 			)}
@@ -528,6 +520,7 @@ export const ReportsCarousel: React.FC<ReportsCarouselProps> = (props) => {
 						}
 
 						return (
+							// oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- slide selection and a shield over the overlay link; the prev and next controls are buttons.
 							<div key={reportIndex} className={classes} style={styles} onClick={handleClick}>
 								<CarouselArticleSlide
 									article={article}

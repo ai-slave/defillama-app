@@ -733,7 +733,7 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ar
 							<th className="pr-4 pb-3 text-right">Amount</th>
 							<th className="pr-4 pb-3">Round</th>
 							<th className="pr-4 pb-3 text-right">Valuation</th>
-							<th className="w-8 pb-3" />
+							<td className="w-8 pb-3" />
 						</tr>
 					</thead>
 					<tbody>

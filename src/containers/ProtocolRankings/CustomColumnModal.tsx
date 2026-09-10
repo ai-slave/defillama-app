@@ -254,6 +254,7 @@ export function CustomColumnModal({
 								{state.showSuggestions ? (
 									<ul className="absolute right-0 left-0 z-10 mt-1 max-h-40 overflow-y-auto overscroll-contain rounded-xl border border-medium bg-overlay shadow-overlay-sm">
 										{state.suggestions.map((s, i) => (
+											// oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the input owns arrow-key and Enter selection for these suggestions.
 											<li
 												key={s.name}
 												className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-primary ${
@@ -302,12 +303,13 @@ export function CustomColumnModal({
 							<ul className="grid max-h-32 grid-cols-2 gap-x-4 gap-y-1 overflow-y-auto rounded-lg border border-medium bg-page p-2">
 								{AVAILABLE_FIELDS.map((f) => (
 									<li key={f}>
-										<code
-											className="hover-wash cursor-pointer rounded-sm bg-surface-elevated-1 px-1 py-0.5 text-link"
+										<button
+											type="button"
+											className="hover-wash cursor-pointer rounded-sm bg-surface-elevated-1 px-1 py-0.5 font-mono text-link"
 											onClick={() => handleSuggestionClick({ name: f, type: 'field' })}
 										>
 											{f}
-										</code>
+										</button>
 									</li>
 								))}
 							</ul>

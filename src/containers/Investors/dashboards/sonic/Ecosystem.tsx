@@ -252,8 +252,11 @@ function AssetBreakdownSection({
 							const color = pieColors[cat.name] || '#8b949e'
 							return (
 								<div key={cat.name} className="border-b border-pro-cards-border last:border-b-0">
-									<div
-										className={`flex cursor-pointer items-center gap-2 py-2.5 ${hasChildren ? 'hover:opacity-80' : ''}`}
+									<button
+										type="button"
+										disabled={!hasChildren}
+										aria-expanded={hasChildren ? isOpen : undefined}
+										className={`flex w-full items-center gap-2 py-2.5 text-left ${hasChildren ? 'cursor-pointer hover:opacity-80' : ''}`}
 										onClick={() => hasChildren && toggleRow(idx)}
 									>
 										<span className="w-4 shrink-0 text-[10px] text-pro-text-label">
@@ -265,7 +268,7 @@ function AssetBreakdownSection({
 										<span className="w-12 shrink-0 text-right text-xs text-pro-text-label">
 											{formatPercent(cat.pct, { input: 'percent' })}
 										</span>
-									</div>
+									</button>
 									{isOpen && (
 										<div className="pb-2 pl-8">
 											{breakdownEntries.map(([symbol, value]) => (

@@ -15,14 +15,13 @@ interface BarSparklineProps {
 	data?: Array<PrimitiveBarPoint>
 	className?: string
 	height?: number | string
-	focusable?: boolean
 	maxBars?: number
 }
 
 const SUCCESS_COLOR = 'rgb(34, 197, 94)'
 const ERROR_COLOR = 'rgb(239, 68, 68)'
 
-function BarSparklineRenderer({ data, className, height = 48, focusable, maxBars = 60 }: BarSparklineProps) {
+function BarSparklineRenderer({ data, className, height = 48, maxBars = 60 }: BarSparklineProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 
@@ -146,14 +145,7 @@ function BarSparklineRenderer({ data, className, height = 48, focusable, maxBars
 		return null
 	}
 
-	return (
-		<div
-			ref={containerRef}
-			className={className}
-			style={{ width: '100%', height, outline: 'none', pointerEvents: 'none' }}
-			tabIndex={focusable ? 0 : -1}
-		/>
-	)
+	return <div ref={containerRef} className={className} style={{ width: '100%', height, pointerEvents: 'none' }} />
 }
 
 export const BarSparkline = withEChartsRenderVisibility(BarSparklineRenderer)
