@@ -14,6 +14,11 @@ interface RewardsAnalyticsState {
 	pending: Array<{ name: string; data: LinkExposure['data']; impressionKey: string | null }>
 }
 
+function cancelDwell(exposure: LinkExposure) {
+	if (exposure.timer !== null) clearTimeout(exposure.timer)
+	exposure.timer = null
+}
+
 /** One observer per table page. The Open button, not an off-screen part of its row, owns exposure. */
 export function observeRewardsLinks(
 	container: HTMLDivElement,
@@ -71,10 +76,6 @@ export function observeRewardsLinks(
 		flushEvents()
 	}
 
-	function cancelDwell(exposure: LinkExposure) {
-		if (exposure.timer !== null) clearTimeout(exposure.timer)
-		exposure.timer = null
-	}
 	function startDwell(exposure: LinkExposure) {
 		cancelDwell(exposure)
 		if (state.seen.has(`${prefix}:impression:${exposure.data.program_id}`)) return

@@ -41,6 +41,8 @@ type TimeFrameOptionKey = TimeFrameOption['key']
 const isTimeFrameOptionKey = (value: string): value is TimeFrameOptionKey =>
 	timeFrameOptions.some((option) => option.key === value)
 
+const toPageQueryValue = (targetPage: number) => (targetPage === 1 ? undefined : targetPage)
+
 export function DashboardDiscovery({
 	initialCategories
 }: {
@@ -139,8 +141,6 @@ export function DashboardDiscovery({
 		}
 		return pages.filter((page) => page > 0 && page <= totalPages)
 	}, [totalPages, selectedPage])
-
-	const toPageQueryValue = (targetPage: number) => (targetPage === 1 ? undefined : targetPage)
 
 	return (
 		<>

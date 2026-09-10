@@ -87,6 +87,19 @@ function formatTimestamp(ts: number | null | undefined) {
 	})
 }
 
+const renderItem = (coin: string, i: number) => (
+	<span
+		key={`${coin}-${i}`}
+		data-coin={coin}
+		className="inline-flex h-full shrink-0 items-center gap-1.5 border-r border-pro-cards-border px-4 text-xs font-medium text-pro-text-primary transition-colors duration-300"
+	>
+		<span className="shrink-0 text-pro-text-label">{coin}</span>
+		<span data-price className="shrink-0 overflow-hidden font-jetbrains whitespace-nowrap tabular-nums">
+			--
+		</span>
+	</span>
+)
+
 function PriceTickerTape({ coins }: { coins: Array<string> }) {
 	const trackRef = useRef<HTMLDivElement>(null)
 	const priceEls = useRef<Map<string, Array<HTMLElement>>>(new Map())
@@ -196,19 +209,6 @@ function PriceTickerTape({ coins }: { coins: Array<string> }) {
 			lastTsRef.current = null
 		}
 	}, [coins])
-
-	const renderItem = (coin: string, i: number) => (
-		<span
-			key={`${coin}-${i}`}
-			data-coin={coin}
-			className="inline-flex h-full shrink-0 items-center gap-1.5 border-r border-pro-cards-border px-4 text-xs font-medium text-pro-text-primary transition-colors duration-300"
-		>
-			<span className="shrink-0 text-pro-text-label">{coin}</span>
-			<span data-price className="shrink-0 overflow-hidden font-jetbrains whitespace-nowrap tabular-nums">
-				--
-			</span>
-		</span>
-	)
 
 	return (
 		<div className="overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg">

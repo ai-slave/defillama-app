@@ -201,9 +201,10 @@ const HEADER_HELP: Array<{ label: string; help: string; align?: 'end' }> = [
 	}
 ]
 
+const at = (bps: number | null, sizeUnits: number) => (bps == null ? null : bps * sizeUnits)
+
 function PairRow({ pair }: { pair: ExchangeExecutionPairModel }) {
 	// bps → dollars at the column's own trade size: ×10 for $100k, ×100 for $1M
-	const at = (bps: number | null, sizeUnits: number) => (bps == null ? null : bps * sizeUnits)
 	return (
 		<tr>
 			<th

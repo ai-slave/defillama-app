@@ -19,11 +19,12 @@ export function resolveRequestedProjectId(
 	)
 }
 
+const values = (row: UtrLeaderboardRow) =>
+	[row.name, row.symbol, row.asset, `${row.name} (${row.symbol})`].map((value) => value.toLowerCase())
+
 export function findUtrSearchMatch(rows: Array<UtrLeaderboardRow>, query: string): UtrLeaderboardRow | null {
 	const normalized = query.trim().toLowerCase()
 	if (!normalized) return null
-	const values = (row: UtrLeaderboardRow) =>
-		[row.name, row.symbol, row.asset, `${row.name} (${row.symbol})`].map((value) => value.toLowerCase())
 	return (
 		rows.find((row) => values(row).some((value) => value === normalized)) ??
 		rows.find((row) => values(row).some((value) => value.startsWith(normalized))) ??

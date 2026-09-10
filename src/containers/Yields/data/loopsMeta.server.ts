@@ -12,6 +12,9 @@ export interface LoopsPageMeta {
 	attributeIds: Array<AttributeId>
 }
 
+const byCountDesc = (counts: Map<string, number>) =>
+	[...counts.keys()].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a.localeCompare(b))
+
 // Filter vocabulary for the /yields/loop page, derived entirely from the enriched
 // loops dataset + /v2/meta. `chainList` / `projectList` are ordered by occurrence count
 // (most common first, name-tiebroken); `tokens` are the family/asset option keys
@@ -72,8 +75,6 @@ export async function getLoopsPageMeta(snapshot: YieldsSnapshot): Promise<LoopsP
 	// Stable sort keeps the base BORROW_ATTRIBUTE_IDS order for equal counts.
 	const attributeIds = [...BORROW_ATTRIBUTE_IDS].sort((a, b) => attributeCounts[b] - attributeCounts[a])
 
-	const byCountDesc = (counts: Map<string, number>) =>
-		[...counts.keys()].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a.localeCompare(b))
 	const chainList = byCountDesc(chainCounts)
 
 	return {

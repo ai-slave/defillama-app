@@ -34,6 +34,10 @@ interface ProjectsSidebarSectionProps {
 	onDelete: (sessionId: string, projectId?: string | null) => Promise<void>
 }
 
+const goTo = (path: string) => {
+	void Router.push(path)
+}
+
 export function ProjectsSidebarSection({
 	sessions = [],
 	currentProjectId,
@@ -77,10 +81,6 @@ export function ProjectsSidebarSection({
 		const activeProjectId = currentProjectId ?? currentSessionProjectId
 		if (activeProjectId) setStorageItem(storageKey, activeProjectId)
 	}, [currentProjectId, currentSessionProjectId, storageKey])
-
-	const goTo = (path: string) => {
-		void Router.push(path)
-	}
 
 	const goToProject = (projectId: string) => {
 		setStorageItem(storageKey, projectId)

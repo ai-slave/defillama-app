@@ -94,6 +94,7 @@ function requiredCapability(venue: MasterDirectoryVenue, segment: ExchangeSegmen
 
 function mapFiatFees(fees: NonNullable<MasterDirectoryVenue['funding']>['fiat_fees']): ExchangeFiatFees | null {
 	if (fees === null) return null
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- the row type is derived from this function's own parameter
 	const mapRow = (row: (typeof fees.on_ramp)[number]) => ({
 		currency: row.currency,
 		fee: row.fee,
@@ -503,6 +504,18 @@ function directoryOpenInterest(venues: Array<MasterDirectoryVenue>, segment: Mas
 	return observed ? total : null
 }
 
+const volumeSplit = (totals: {
+	spot_volume_24h: number | null
+	linear_perp_volume_24h: number | null
+	inverse_perp_volume_24h: number | null
+	total_trading_volume_24h: number | null
+}) => ({
+	spot: totals.spot_volume_24h,
+	linearPerp: totals.linear_perp_volume_24h,
+	inversePerp: totals.inverse_perp_volume_24h,
+	total: totals.total_trading_volume_24h
+})
+
 export function mapMasterDirectory(
 	response: MasterDirectoryResponse,
 	execution: MasterExecutionQualityResponse | null
@@ -517,17 +530,6 @@ export function mapMasterDirectory(
 		rows[index] = mapDirectoryVenue(venue, venuesBySlug, execution, response.depth_bands, executionBasket)
 	}
 	rows.sort(byQualityRank)
-	const volumeSplit = (totals: {
-		spot_volume_24h: number | null
-		linear_perp_volume_24h: number | null
-		inverse_perp_volume_24h: number | null
-		total_trading_volume_24h: number | null
-	}) => ({
-		spot: totals.spot_volume_24h,
-		linearPerp: totals.linear_perp_volume_24h,
-		inversePerp: totals.inverse_perp_volume_24h,
-		total: totals.total_trading_volume_24h
-	})
 	return {
 		rows,
 		summary: {
@@ -610,11 +612,12 @@ function spreadFraction(pair: MasterExchangePair): number | null {
 	return mid > 0 ? (pair.best_ask - pair.best_bid) / mid : null
 }
 
+const last = (values: Array<number | null> | null) => (values?.length ? values[values.length - 1] : null)
+
 /** Everything the pair's captured book holds, on both sides. The widest band is the
  *  full-book sum by construction (bands past the book's reach inherit it upstream),
  *  so this is the denominator for "the volatility band holds X% of what we can see". */
 function capturedBookUsd(pair: MasterExchangePair): number | null {
-	const last = (values: Array<number | null> | null) => (values?.length ? values[values.length - 1] : null)
 	const bid = last(pair.depth_bid_usd)
 	const ask = last(pair.depth_ask_usd)
 	if (bid == null && ask == null) return null
@@ -877,6 +880,13 @@ function mapProfileExecution(
 	}
 }
 
+const sub = (definition: { key: string; label: string; weight: number; what: string }) => ({
+	key: definition.key,
+	label: definition.label,
+	weight: definition.weight,
+	what: definition.what
+})
+
 /** The ranking page: every scored venue the directory knows, in score order, with the
  * catalog that labels the pillars. Null when either upstream file is missing or they
  * describe different computations — the page then says so instead of rendering a
@@ -917,12 +927,6 @@ export function mapExchangeRanking(
 		const venue = rowsBySlug.get(slug)
 		if (venue) insufficient.push({ slug, name: venue.name, kind: venue.kind, profileHref: venue.profileHref })
 	}
-	const sub = (definition: { key: string; label: string; weight: number; what: string }) => ({
-		key: definition.key,
-		label: definition.label,
-		weight: definition.weight,
-		what: definition.what
-	})
 	return {
 		generatedAt: ranks.generated_at,
 		pillars: methodology.components.map((definition) => ({
@@ -1491,18 +1495,19 @@ export function mapMasterMica(response: MasterMicaResponse): Array<MicaVenueMode
 		})
 }
 
+const mapCryptoRailsRow = (row: MasterCryptoRails['deposit'][number]) => ({
+	asset: row.asset,
+	network: row.network,
+	fee: row.fee,
+	minimum: row.min,
+	note: row.note,
+	processingTime: row.time,
+	source: row.src
+})
+
 function mapCryptoRails(rails: MasterRampVariant['crypto_rails']): CryptoRailsModel | null {
 	if (!rails) return null
-	const mapRow = (row: MasterCryptoRails['deposit'][number]) => ({
-		asset: row.asset,
-		network: row.network,
-		fee: row.fee,
-		minimum: row.min,
-		note: row.note,
-		processingTime: row.time,
-		source: row.src
-	})
-	return { deposit: rails.deposit.map(mapRow), withdraw: rails.withdraw.map(mapRow) }
+	return { deposit: rails.deposit.map(mapCryptoRailsRow), withdraw: rails.withdraw.map(mapCryptoRailsRow) }
 }
 
 function mapRampLeg(leg: MasterRampLeg): RampLegModel {

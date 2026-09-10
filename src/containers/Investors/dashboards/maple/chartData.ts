@@ -107,6 +107,11 @@ export function buildMaplePoolsData(pools: Array<MaplePool>) {
 	}
 }
 
+const bucketDataset = (buckets: typeof RATE_BUCKETS, values: Array<number>): MultiSeriesChartDataset => ({
+	dimensions: ['Name', 'Principal'],
+	source: buckets.flatMap((bucket, index) => (values[index] > 0 ? [[bucket.label, values[index]]] : []))
+})
+
 export function buildMapleLoansData(pools: Array<MaplePoolWithLoans>, nowSec: number) {
 	const rows: Array<LoanRow> = []
 	for (const pool of pools) {
@@ -152,11 +157,6 @@ export function buildMapleLoansData(pools: Array<MaplePoolWithLoans>, nowSec: nu
 		const ageIndex = AGE_BUCKETS.findIndex((bucket) => loan.ageDays >= bucket.min && loan.ageDays < bucket.max)
 		if (ageIndex >= 0) agePrincipal[ageIndex] += loan.principal
 	}
-
-	const bucketDataset = (buckets: typeof RATE_BUCKETS, values: Array<number>): MultiSeriesChartDataset => ({
-		dimensions: ['Name', 'Principal'],
-		source: buckets.flatMap((bucket, index) => (values[index] > 0 ? [[bucket.label, values[index]]] : []))
-	})
 
 	return {
 		rows,

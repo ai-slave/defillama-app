@@ -46,8 +46,6 @@
 	"src/containers/Investors/dashboards/odyssey-ecosystem/ui.tsx": {"react/no-array-index-key":1},
 	"src/containers/Investors/dashboards/sonic/Stablecoins.tsx": {"react/no-array-index-key":3},
 	"src/containers/Investors/dashboards/sonic/VerticalIntegration.tsx": {"react/no-array-index-key":3},
-	"src/containers/Investors/dashboards/uniswap/Economics.tsx": {"react/no-array-index-key":4},
-	"src/containers/Investors/dashboards/uniswap/Liquidity.tsx": {"react/no-array-index-key":5},
 	"src/containers/Investors/dashboards/uniswap/Security.tsx": {"react/no-array-index-key":4},
 	"src/containers/Investors/dashboards/uniswap/ui.tsx": {"react/no-array-index-key":1},
 	"src/containers/Investors/index.tsx": {"react/jsx-no-constructed-context-values":1},

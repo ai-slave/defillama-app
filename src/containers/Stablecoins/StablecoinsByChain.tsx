@@ -106,6 +106,22 @@ interface StablecoinsByChainProps {
 	deprecated?: boolean
 }
 
+const toChangeStat = (
+	days: StablecoinChangeStat['days'],
+	percent: string | null | undefined,
+	absolute: number | null | undefined
+): StablecoinChangeStat => {
+	const absoluteLabel =
+		absolute == null
+			? null
+			: formatUsd(String(absolute), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
+	return {
+		days,
+		percent: percent == null ? null : percent.startsWith('-') ? percent : `+${percent}`,
+		absolute: absoluteLabel == null ? null : absoluteLabel.startsWith('-') ? absoluteLabel : `+${absoluteLabel}`
+	}
+}
+
 export function StablecoinsByChain({
 	selectedChain = 'All',
 	chains = EMPTY_CHAINS,
@@ -272,21 +288,6 @@ export function StablecoinsByChain({
 			? (summaryChartQuery.data?.summary ?? null)
 			: (selectedChartData?.summary ?? null)
 		: (selectedChartData?.summary ?? defaultChartData.summary)
-	const toChangeStat = (
-		days: StablecoinChangeStat['days'],
-		percent: string | null | undefined,
-		absolute: number | null | undefined
-	): StablecoinChangeStat => {
-		const absoluteLabel =
-			absolute == null
-				? null
-				: formatUsd(String(absolute), { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })
-		return {
-			days,
-			percent: percent == null ? null : percent.startsWith('-') ? percent : `+${percent}`,
-			absolute: absoluteLabel == null ? null : absoluteLabel.startsWith('-') ? absoluteLabel : `+${absoluteLabel}`
-		}
-	}
 	const changeStats = [
 		toChangeStat(7, chartSummary?.change7d, chartSummary?.change7dUsd),
 		toChangeStat(1, chartSummary?.change1d, chartSummary?.change1dUsd),

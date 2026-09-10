@@ -142,9 +142,10 @@ export function encodeDownloadConfig(input: SavedDownloadInput): Record<string, 
 	return q
 }
 
+const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/:/g, '\\:')
+
 function encodeTableRef(ref: QueryTableRef): string {
 	// Colons separate parts. Any raw colon in slug/param is escaped as \:
-	const esc = (s: string) => s.replace(/\\/g, '\\\\').replace(/:/g, '\\:')
 	if (ref.kind === 'dataset') return `d:${esc(ref.slug)}`
 	return `c:${esc(ref.slug)}:${esc(ref.param)}`
 }

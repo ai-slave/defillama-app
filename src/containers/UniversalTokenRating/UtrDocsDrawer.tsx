@@ -173,6 +173,10 @@ export function UtrDocsDrawer({
 	)
 }
 
+const scrollToId = (id: string) => {
+	document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
 function UtrDocsDrawerBody({
 	initialChapterId,
 	scoringConfig
@@ -235,10 +239,6 @@ function UtrDocsDrawerBody({
 			observer?.disconnect()
 		}
 	}, [chapters])
-
-	const scrollToId = (id: string) => {
-		document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-	}
 
 	return (
 		<div className="flex flex-col gap-4 md:flex-row md:gap-6">

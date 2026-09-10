@@ -19,6 +19,12 @@ interface YieldsFiltersPanelProps {
 	activeFilterCount: number
 }
 
+const parseFormattedNumber = (value: string): number | undefined => {
+	const cleaned = value.replace(/,/g, '')
+	const parsed = Number(cleaned)
+	return cleaned && !Number.isNaN(parsed) ? parsed : undefined
+}
+
 export function YieldsFiltersPanel({
 	setShowFiltersPanel,
 	filters,
@@ -39,12 +45,6 @@ export function YieldsFiltersPanel({
 			...prev,
 			[key]: value
 		}))
-	}
-
-	const parseFormattedNumber = (value: string): number | undefined => {
-		const cleaned = value.replace(/,/g, '')
-		const parsed = Number(cleaned)
-		return cleaned && !Number.isNaN(parsed) ? parsed : undefined
 	}
 
 	const handleApply = (event: React.FormEvent<HTMLFormElement>) => {

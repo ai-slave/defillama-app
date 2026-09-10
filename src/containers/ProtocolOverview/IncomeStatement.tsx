@@ -75,6 +75,12 @@ interface IncomeStatementProps {
 	description?: string | undefined
 }
 
+const toCsvNumber = (value: number | null | undefined) => {
+	if (value == null) return 0
+	// avoid exporting noisy float precision (eg. 1.23400000000002)
+	return Number.isInteger(value) ? value : Math.round(value * 1e8) / 1e8
+}
+
 export function IncomeStatement({
 	name,
 	incomeStatement,
@@ -493,12 +499,6 @@ export function IncomeStatement({
 		// (No need to include the "*" incomplete marker in CSV.)
 		const headers = isCumulative ? ['Name', 'Total'] : ['', ...tableHeaders.map((h) => h[1])]
 		const rows: Array<Array<string | number | boolean>> = [headers]
-
-		const toCsvNumber = (value: number | null | undefined) => {
-			if (value == null) return 0
-			// avoid exporting noisy float precision (eg. 1.23400000000002)
-			return Number.isInteger(value) ? value : Math.round(value * 1e8) / 1e8
-		}
 
 		const pushMetric = (
 			metricLabel: string,

@@ -166,6 +166,14 @@ function buildChartInputs(
 	return { dataset: { source: rows, dimensions }, charts, hasData }
 }
 
+const li = (inner: string, extra = '') => `<li style="list-style:none;${extra}">${inner}</li>`
+
+const valueOf = (p: ChartTooltipItem): number | null => {
+	const raw = getChartTooltipValue(p)
+	const n = typeof raw === 'number' ? raw : raw == null ? null : Number(raw)
+	return n != null && Number.isFinite(n) ? n : null
+}
+
 // Components keep their declared order (never re-sorted by value).
 function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow) {
 	const rateSuffix = apyWindow === 'daily' ? '' : ` (${apyWindow} avg)`
@@ -182,13 +190,6 @@ function buildTooltipFormatter(model: PoolChartModel, apyWindow: PoolChartWindow
 		const first = items[0]!
 		const ts = getChartTooltipTimestamp(first)
 		const date = Number.isFinite(ts) ? formatTooltipChartDate(ts, 'daily') : ''
-
-		const valueOf = (p: ChartTooltipItem): number | null => {
-			const raw = getChartTooltipValue(p)
-			const n = typeof raw === 'number' ? raw : raw == null ? null : Number(raw)
-			return n != null && Number.isFinite(n) ? n : null
-		}
-		const li = (inner: string, extra = '') => `<li style="list-style:none;${extra}">${inner}</li>`
 
 		const row = (p: ChartTooltipItem, symbol: string) => {
 			const v = valueOf(p)

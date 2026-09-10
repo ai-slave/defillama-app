@@ -54,6 +54,7 @@
 		// --- Allocation and iteration: one pass per dataset, loops over chained transforms ---
 		"oxc/no-accumulating-spread": "error",
 		"unicorn/catch-error-name": "error",
+		"unicorn/consistent-function-scoping": "error",
 		"unicorn/explicit-length-check": "error",
 		"unicorn/no-array-for-each": "error",
 		"unicorn/no-array-reduce": "error",
@@ -127,12 +128,6 @@
 		"eslint/no-await-in-loop": "off",
 		// React escapes JSX text already; the hits are apostrophes and quotes in copy.
 		"react/no-unescaped-entities": "off",
-		// 60 hits over 47 files, each a helper defined next to its only caller. Moving them out costs
-		// locality for one closure allocation per call, and none sit in a measured hot path. The advice is
-		// also incomplete in places: `compareOptions` in Tokens/queries.server.ts captures no variables
-		// but is typed by a `type` declared inside the same function, so it cannot move alone. Revisit
-		// per site if profiling points at one, not as a sweep.
-		"unicorn/consistent-function-scoping": "off",
 		// It requires a setter, and 20 of its 24 hits deliberately omit one: `const [nowMs] =
 		// useState(() => Date.now())` holds a value fixed for the mount, and `const [queryClient] =
 		// useState(() => new QueryClient())` is React Query's own SSR pattern. Adding the setter to

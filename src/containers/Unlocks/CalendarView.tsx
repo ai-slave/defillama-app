@@ -353,6 +353,17 @@ export function CalendarView({ initialUnlocksData, precomputedData }: CalendarVi
 	)
 }
 
+const getValue = (param: { data?: unknown; value?: unknown; seriesName?: string }) => {
+	const dataObj =
+		param?.data && typeof param.data === 'object' && !Array.isArray(param.data)
+			? (param.data as Record<string, unknown>)
+			: null
+	const name = param?.seriesName
+	const raw = dataObj && name && name in dataObj ? dataObj[name] : Array.isArray(param?.value) ? param.value[1] : null
+	const v = typeof raw === 'number' ? raw : Number(raw)
+	return Number.isFinite(v) ? v : 0
+}
+
 const chartOptions = {
 	tooltip: {
 		trigger: 'axis',
@@ -379,18 +390,6 @@ const chartOptions = {
 			const dateStr = Number.isFinite(ts) ? dayjs(ts).format('MMM D, YYYY') : ''
 			let tooltipContent = `<div class="font-semibold mb-1">${dateStr}</div>`
 			let totalValue = 0
-
-			const getValue = (param: { data?: unknown; value?: unknown; seriesName?: string }) => {
-				const dataObj =
-					param?.data && typeof param.data === 'object' && !Array.isArray(param.data)
-						? (param.data as Record<string, unknown>)
-						: null
-				const name = param?.seriesName
-				const raw =
-					dataObj && name && name in dataObj ? dataObj[name] : Array.isArray(param?.value) ? param.value[1] : null
-				const v = typeof raw === 'number' ? raw : Number(raw)
-				return Number.isFinite(v) ? v : 0
-			}
 
 			const validParams = params
 				.map((param) => [param, getValue(param)] as const)

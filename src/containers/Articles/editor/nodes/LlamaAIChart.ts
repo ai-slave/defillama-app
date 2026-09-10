@@ -13,6 +13,12 @@ declare module '@tiptap/core' {
 	}
 }
 
+const stringAttr = (attr: string, dataAttr: string) => ({
+	default: '',
+	parseHTML: (el: HTMLElement) => el.getAttribute(dataAttr) ?? '',
+	renderHTML: (attrs: Record<string, unknown>) => (attrs[attr] ? { [dataAttr]: String(attrs[attr]) } : {})
+})
+
 export const LlamaAIChart = Node.create({
 	name: 'llamaaiChart',
 	group: 'block',
@@ -36,11 +42,6 @@ export const LlamaAIChart = Node.create({
 			},
 			renderHTML: (attrs: Record<string, unknown>) =>
 				attrs[toCamel(attr)] == null ? {} : { [`data-${attr}`]: JSON.stringify(attrs[toCamel(attr)]) }
-		})
-		const stringAttr = (attr: string, dataAttr: string) => ({
-			default: '',
-			parseHTML: (el: HTMLElement) => el.getAttribute(dataAttr) ?? '',
-			renderHTML: (attrs: Record<string, unknown>) => (attrs[attr] ? { [dataAttr]: String(attrs[attr]) } : {})
 		})
 		return {
 			chartConfig: jsonAttr('chart-config'),

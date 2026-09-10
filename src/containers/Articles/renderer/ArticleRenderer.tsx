@@ -619,6 +619,11 @@ function useReadingProgress() {
 	return progress
 }
 
+const onJumpToTop = () => {
+	if (typeof window === 'undefined') return
+	window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 function CompactTocBar({
 	toc,
 	groups,
@@ -642,11 +647,6 @@ function CompactTocBar({
 	const displayNumber = String(Math.min(currentGroupIndex + 1, totalGroups)).padStart(2, '0')
 	const displayTotal = String(totalGroups).padStart(2, '0')
 	const pct = Math.round(progress * 100)
-
-	const onJumpToTop = () => {
-		if (typeof window === 'undefined') return
-		window.scrollTo({ top: 0, behavior: 'smooth' })
-	}
 
 	return (
 		<button

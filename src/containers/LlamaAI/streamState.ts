@@ -392,10 +392,10 @@ export function streamReducer(state: StreamState, action: StreamAction): StreamS
 	}
 }
 
+const nonEmpty = <T>(value: Array<T> | undefined) => (value && value.length > 0 ? value : undefined)
+
 // Convert the buffered stream payload into the same message shape used for restored history.
 export function buildAssistantMessage(buffer: StreamBuffer, messageId?: string): Message {
-	const nonEmpty = <T>(value: Array<T> | undefined) => (value && value.length > 0 ? value : undefined)
-
 	return {
 		role: 'assistant',
 		content: buffer.text || undefined,

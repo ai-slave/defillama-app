@@ -9,6 +9,18 @@ type GetRaisesFiltersListArgs = {
 	investorName?: string | null
 }
 
+const addAmount = (map: Map<string, number>, key: string, amount: number) => {
+	map.set(key, (map.get(key) ?? 0) + amount)
+}
+
+const sortByAmountThenName = (values: Array<string>, amounts: Map<string, number>) => {
+	return values.sort((a, b) => {
+		const diff = (amounts.get(b) ?? 0) - (amounts.get(a) ?? 0)
+		if (diff !== 0) return diff
+		return a.localeCompare(b)
+	})
+}
+
 export function getRaisesFiltersList({ raises, investorName }: GetRaisesFiltersListArgs): IRaisesFilters {
 	if (raises.length === 0)
 		return {
@@ -29,18 +41,6 @@ export function getRaisesFiltersList({ raises, investorName }: GetRaisesFiltersL
 	const roundAmounts = new Map<string, number>()
 	const sectorAmounts = new Map<string, number>()
 	const chainAmounts = new Map<string, number>()
-
-	const addAmount = (map: Map<string, number>, key: string, amount: number) => {
-		map.set(key, (map.get(key) ?? 0) + amount)
-	}
-
-	const sortByAmountThenName = (values: Array<string>, amounts: Map<string, number>) => {
-		return values.sort((a, b) => {
-			const diff = (amounts.get(b) ?? 0) - (amounts.get(a) ?? 0)
-			if (diff !== 0) return diff
-			return a.localeCompare(b)
-		})
-	}
 
 	for (const raise of raises) {
 		const includeRaise =

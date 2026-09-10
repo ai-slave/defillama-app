@@ -135,6 +135,16 @@ export function buildProtocolMetadataIndex(protocolsRaw: Record<string, IProtoco
 	return protocolsBySlug
 }
 
+const fetchPfPs = async (): Promise<{ pf: Array<string>; ps: Array<string> }> => {
+	try {
+		const res = await fetch('/api/public/pro-dashboard/pf-ps-protocols')
+		if (!res.ok) return { pf: [], ps: [] }
+		return res.json()
+	} catch {
+		return { pf: [], ps: [] }
+	}
+}
+
 export function AppMetadataProvider({ children }: { children: React.ReactNode }) {
 	const streamDone = useContext(StreamDoneContext)
 	const [metadataRequested, setMetadataRequested] = useState(false)
@@ -146,16 +156,6 @@ export function AppMetadataProvider({ children }: { children: React.ReactNode })
 	} = useQuery({
 		queryKey: ['pro-dashboard', 'app-metadata'],
 		queryFn: async () => {
-			const fetchPfPs = async (): Promise<{ pf: Array<string>; ps: Array<string> }> => {
-				try {
-					const res = await fetch('/api/public/pro-dashboard/pf-ps-protocols')
-					if (!res.ok) return { pf: [], ps: [] }
-					return res.json()
-				} catch {
-					return { pf: [], ps: [] }
-				}
-			}
-
 			const [protocols, chains, pfPs] = await Promise.all([
 				fetchJson<Record<string, IProtocolMetadata>>('https://api.llama.fi/config/smol/appMetadata-protocols.json'),
 				fetchJson<Record<string, IChainMetadata>>('https://api.llama.fi/config/smol/appMetadata-chains.json'),

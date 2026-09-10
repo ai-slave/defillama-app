@@ -65,14 +65,15 @@ const CHART_OPTIONS = {
 	grid: { top: CHART_LEGEND_RESERVE }
 } satisfies NonNullable<IMultiSeriesChartProps['chartOptions']>
 
+const seriesTotal = (s: TrendSeries) => s.data.reduce((sum, [, value]) => sum + (value || 0), 0)
+
 // Legend order: lifetime size desc, catch-all "Others" bucket last.
 export function orderTrendSeries(series: Array<TrendSeries>): Array<TrendSeries> {
-	const total = (s: TrendSeries) => s.data.reduce((sum, [, value]) => sum + (value || 0), 0)
 	return [...series].sort((a, b) => {
 		const aOthers = a.name.startsWith('Others')
 		const bOthers = b.name.startsWith('Others')
 		if (aOthers !== bOthers) return aOthers ? 1 : -1
-		return total(b) - total(a)
+		return seriesTotal(b) - seriesTotal(a)
 	})
 }
 

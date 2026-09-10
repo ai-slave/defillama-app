@@ -114,11 +114,12 @@ function OperatorLine({
 	)
 }
 
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
+
 // "1 multisig · 2 contracts · 1 EOA" — the collapsed line's make-up summary.
 function entityBreakdown(entities: Array<RoleEntity>): string {
 	const counts: Record<string, number> = {}
 	for (const e of entities) counts[e.kind] = (counts[e.kind] ?? 0) + 1
-	const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 	const parts: Array<string> = []
 	if (counts.safe) parts.push(plural(counts.safe, 'multisig'))
 	if (counts.contract) parts.push(plural(counts.contract, 'contract'))

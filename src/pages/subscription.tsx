@@ -36,6 +36,8 @@ const StripeCheckoutModal = lazy(() =>
 	import('~/containers/Subscription/shared/StripeCheckoutModal').then((m) => ({ default: m.StripeCheckoutModal }))
 )
 
+const planKeyToSubType = (key: PlanKey): 'api' | 'llamafeed' => (key === 'api' ? 'api' : 'llamafeed')
+
 function SubscriptionContent() {
 	const router = useRouter()
 	const returnUrl = safeInternalPath(router.query.returnUrl)
@@ -150,8 +152,6 @@ function SubscriptionContent() {
 			})
 		})
 	}
-
-	const planKeyToSubType = (key: PlanKey): 'api' | 'llamafeed' => (key === 'api' ? 'api' : 'llamafeed')
 
 	/* ── Card handlers ─────────────────────────────────────────────────── */
 	const handlePrimaryCtaClick = (cardKey: PlanKey) => {

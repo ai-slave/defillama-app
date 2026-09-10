@@ -217,6 +217,8 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 	)
 }
 
+const day = (s: number) => Math.round(s / 86_400)
+
 export function GovernanceBlock({
 	protocol,
 	chain,
@@ -230,7 +232,6 @@ export function GovernanceBlock({
 }) {
 	const g = protocol.governance
 	const govGroups = groupMultisigsByRole(protocol.multisigs, chain)
-	const day = (s: number) => Math.round(s / 86_400)
 	const timelock =
 		g && (g.execution_delay_max_sec ?? 0) > 0
 			? g.execution_delay_min_sec === g.execution_delay_max_sec

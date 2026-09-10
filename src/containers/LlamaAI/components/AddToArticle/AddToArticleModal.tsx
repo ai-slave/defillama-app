@@ -122,6 +122,14 @@ function readLastArticleId() {
 	return typeof window === 'undefined' ? null : window.sessionStorage.getItem(LAST_TARGET_KEY)
 }
 
+const toggleSet = (setter: React.Dispatch<React.SetStateAction<Set<string>>>, id: string) =>
+	setter((prev) => {
+		const next = new Set(prev)
+		if (next.has(id)) next.delete(id)
+		else next.add(id)
+		return next
+	})
+
 function AddToArticleForm({
 	dialogStore,
 	request,
@@ -255,14 +263,6 @@ function AddToArticleForm({
 
 	const canSubmit = isCreatingNew ? newTitle.trim().length > 0 : effectiveArticleId !== null
 	const isSubmitting = mutation.isPending
-
-	const toggleSet = (setter: React.Dispatch<React.SetStateAction<Set<string>>>, id: string) =>
-		setter((prev) => {
-			const next = new Set(prev)
-			if (next.has(id)) next.delete(id)
-			else next.add(id)
-			return next
-		})
 
 	return (
 		<form

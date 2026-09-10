@@ -80,13 +80,13 @@ export const DASHBOARD_STREAM_SOURCE_CONCURRENCY = 8
 export const DASHBOARD_STREAM_CLASSIC_SOURCE_LIMIT = MAX_MULTI_CHART_SERIES
 const CHART_BUILDER_STREAM_TIMEOUT_MS = 25_000
 
-function getAuthToken(req: NextApiRequest): string | null {
-	const normalizeToken = (value: string | undefined): string | null => {
-		const token = value?.trim().replace(/^Bearer\s+/i, '')
-		if (!token || token === 'null' || token === 'undefined') return null
-		return token
-	}
+const normalizeToken = (value: string | undefined): string | null => {
+	const token = value?.trim().replace(/^Bearer\s+/i, '')
+	if (!token || token === 'null' || token === 'undefined') return null
+	return token
+}
 
+function getAuthToken(req: NextApiRequest): string | null {
 	const authHeader = req.headers?.authorization
 	const value = Array.isArray(authHeader) ? authHeader[0] : authHeader
 	const normalizedAuthToken = normalizeToken(value)

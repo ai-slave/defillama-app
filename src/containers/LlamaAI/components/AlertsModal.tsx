@@ -241,6 +241,13 @@ function AlertCard({ children }: { children: React.ReactNode }) {
 	return <div className="rounded-lg border border-subtle bg-surface px-4 py-3.5">{children}</div>
 }
 
+const formatExecDate = (iso: string) => {
+	const d = new Date(iso)
+	return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+const formatDuration = (ms: number) => (ms < 1000 ? `${ms}ms` : `${formatFixedNumber(ms / 1000, 1)}s`)
+
 const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	const { authorizedFetch, user } = useAuthContext()
 	const queryClient = useQueryClient()
@@ -446,6 +453,10 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 	const updateErrorMessage = updateAlertMutation.error?.message
 	const deleteErrorMessage = deleteAlertMutation.error?.message
 
+	// Reads the clock, so it must stay a local: at module scope the React Compiler memoizes the call
+	// against the alert fields alone, and the relative label goes stale on rerenders that leave the
+	// alert unchanged (expanding execution history, say).
+	// eslint-disable-next-line unicorn/consistent-function-scoping
 	const formatNextRun = (date: string) => {
 		const d = new Date(date)
 		const now = new Date()
@@ -564,13 +575,6 @@ const AlertRow = memo(function AlertRow({ alert }: AlertRowProps) {
 			</div>
 		)
 	}
-
-	const formatExecDate = (iso: string) => {
-		const d = new Date(iso)
-		return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-	}
-
-	const formatDuration = (ms: number) => (ms < 1000 ? `${ms}ms` : `${formatFixedNumber(ms / 1000, 1)}s`)
 
 	const channelLabel =
 		alert.delivery_channel === 'telegram'

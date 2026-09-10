@@ -13,6 +13,9 @@ export interface EarnPageMeta {
 	attributeIds: Array<AttributeId>
 }
 
+const byCountDesc = (counts: Map<string, number>) =>
+	[...counts.keys()].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a.localeCompare(b))
+
 // Filter vocabulary for the /yields page, derived entirely from the earn dataset +
 // meta. Chains/projects/categories are ordered by pool count (most rows behind the
 // option first — counts are not shipped); `tokens` are the family/asset option keys
@@ -55,8 +58,6 @@ export async function getEarnPageMeta(snapshot: YieldsSnapshot): Promise<EarnPag
 
 	const attributeIds = [...EARN_ATTRIBUTE_IDS]
 
-	const byCountDesc = (counts: Map<string, number>) =>
-		[...counts.keys()].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a.localeCompare(b))
 	const chainList = byCountDesc(chainCounts)
 
 	return {

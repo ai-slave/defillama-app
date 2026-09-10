@@ -25,6 +25,14 @@ import type { ProjectWithStats } from './types'
 type SortBy = 'updated' | 'created' | 'name'
 const EMPTY_PROJECTS: Array<ProjectWithStats> = []
 
+const onCreated = (project: { id: string }) => {
+	void Router.push(`/ai/projects/${project.id}`)
+}
+
+const goToProject = (projectId: string) => {
+	void Router.push(`/ai/projects/${projectId}`)
+}
+
 export function ProjectsGrid() {
 	const { user, hasActiveSubscription, isTrial } = useAuthContext()
 	const tier = getProjectTier(user, hasActiveSubscription, isTrial)
@@ -60,14 +68,6 @@ export function ProjectsGrid() {
 		})
 		return sorted
 	}, [allProjects, deferredQuery, sortBy])
-
-	const onCreated = (project: { id: string }) => {
-		void Router.push(`/ai/projects/${project.id}`)
-	}
-
-	const goToProject = (projectId: string) => {
-		void Router.push(`/ai/projects/${projectId}`)
-	}
 
 	const onProjectCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, projectId: string) => {
 		if (event.target !== event.currentTarget) return

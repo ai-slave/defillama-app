@@ -202,19 +202,18 @@ function AuditReportsTable({ reports }: { reports: Array<AuditReport> }) {
 	)
 }
 
+// Older ir-server payloads bake sentence copy into `formatted` ("7.8 years of continuous
+// uptime"); show just the figure, the card label carries the words. Rebuild the display from
+// the raw `value` so the terse copy never waits on an ir-server redeploy.
+const terse = (k: KpiT | undefined, format: (value: number) => string): KpiT | undefined =>
+	k ? { ...k, formatted: format(k.value) } : undefined
+
 // Security & Governance: track-record KPIs, then audits, then governance, per the
 // partner tracker (audit counting resolved with Uniswap: count by report, group by
 // firm, scanned live from the public Uniswap GitHub repos).
 export default function Security() {
 	const { data } = useUniswapData<SecurityData>('security')
 	if (!data) return <PageLoader />
-
-	// Older ir-server payloads bake sentence copy into `formatted` ("7.8 years of continuous
-	// uptime"); show just the figure, the card label carries the words.
-	// Rebuild the display from the raw `value` so the terse copy never waits on an ir-server
-	// redeploy.
-	const terse = (k: KpiT | undefined, format: (value: number) => string): KpiT | undefined =>
-		k ? { ...k, formatted: format(k.value) } : undefined
 
 	const kpis: Record<string, KpiT | undefined> = {
 		...data.kpis,

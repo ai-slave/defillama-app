@@ -143,6 +143,14 @@ export function getCategoryProtocolNameFilterForChart({
 	return { kind: 'unrestricted' }
 }
 
+const toChartPointMap = (points: Array<[number, number]>) => {
+	const map = new Map<number, number>()
+	for (const [timestamp, value] of points) {
+		map.set(timestamp * 1e3, value)
+	}
+	return map
+}
+
 export function buildAdapterByChainChartDataset({
 	adapterType,
 	metricName,
@@ -156,14 +164,6 @@ export function buildAdapterByChainChartDataset({
 	openInterestChartData: Array<[number, number]>
 	activeLiquidityChartData: Array<[number, number]>
 }): MultiSeriesTimeSeriesDataset {
-	const toChartPointMap = (points: Array<[number, number]>) => {
-		const map = new Map<number, number>()
-		for (const [timestamp, value] of points) {
-			map.set(timestamp * 1e3, value)
-		}
-		return map
-	}
-
 	const primaryDataMap = toChartPointMap(primaryChartData)
 	const primaryDimensionLabel = metricName
 

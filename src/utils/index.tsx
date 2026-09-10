@@ -59,6 +59,27 @@ export const slug = (name: unknown = ''): string =>
 
 const distinctColorsCache = new Map<number, ReadonlyArray<string>>()
 
+const toLinear = (channel: number): number => {
+	const value = channel / 255
+	return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
+}
+
+const getRelativeLuminance = (hex: string): number => {
+	const r = parseInt(hex.slice(1, 3), 16)
+	const g = parseInt(hex.slice(3, 5), 16)
+	const b = parseInt(hex.slice(5, 7), 16)
+
+	return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
+}
+
+const getColorDistance = (hsl1: HSL, hsl2: HSL): number => {
+	const hueDiff = Math.abs(hsl1.h - hsl2.h)
+	const hueDistance = (hueDiff > 180 ? 360 - hueDiff : hueDiff) / 180
+	const satDistance = Math.abs(hsl1.s - hsl2.s) / 100
+	const lightDistance = Math.abs(hsl1.l - hsl2.l) / 100
+	return hueDistance * 0.7 + satDistance * 0.2 + lightDistance * 0.1
+}
+
 export function getNDistinctColors(n: number): Array<string> {
 	if (n <= 0) {
 		return []
@@ -78,31 +99,11 @@ export function getNDistinctColors(n: number): Array<string> {
 	const lightBinSize = 14
 	const hueBinCount = Math.ceil(360 / hueBinSize)
 
-	const getRelativeLuminance = (hex: string): number => {
-		const r = parseInt(hex.slice(1, 3), 16)
-		const g = parseInt(hex.slice(3, 5), 16)
-		const b = parseInt(hex.slice(5, 7), 16)
-		const toLinear = (channel: number): number => {
-			const value = channel / 255
-			return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
-		}
-
-		return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
-	}
-
 	const hasBalancedContrast = (hex: string): boolean => {
 		const luminance = getRelativeLuminance(hex)
 		const contrastOnWhite = 1.05 / (luminance + 0.05)
 		const contrastOnBlack = (luminance + 0.05) / 0.05
 		return contrastOnWhite >= minContrastRatio && contrastOnBlack >= minContrastRatio
-	}
-
-	const getColorDistance = (hsl1: HSL, hsl2: HSL): number => {
-		const hueDiff = Math.abs(hsl1.h - hsl2.h)
-		const hueDistance = (hueDiff > 180 ? 360 - hueDiff : hueDiff) / 180
-		const satDistance = Math.abs(hsl1.s - hsl2.s) / 100
-		const lightDistance = Math.abs(hsl1.l - hsl2.l) / 100
-		return hueDistance * 0.7 + satDistance * 0.2 + lightDistance * 0.1
 	}
 
 	const getBucketKey = (hsl: HSL): string => {

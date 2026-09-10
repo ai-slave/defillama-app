@@ -209,6 +209,15 @@ function isNewOauthUser(authData: { meta?: { isNew?: boolean } }) {
 	return authData.meta?.isNew === true
 }
 
+const saveGoogleSession = async (session: GoogleAuthSession) => {
+	pb.authStore.save(session.token)
+	try {
+		await refreshSession()
+	} catch (error) {
+		console.log('Error refreshing auth after Google sign-in:', error)
+	}
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
 	// Use useSyncExternalStore to listen to authStore changes
 	const authStoreState = useSyncExternalStore(subscribeToAuthStore, getAuthStoreSnapshot, getServerSnapshot)
@@ -547,15 +556,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const signInWithGithubMutation = useMutation({
 		mutationFn: signInWithGithub
 	})
-
-	const saveGoogleSession = async (session: GoogleAuthSession) => {
-		pb.authStore.save(session.token)
-		try {
-			await refreshSession()
-		} catch (error) {
-			console.log('Error refreshing auth after Google sign-in:', error)
-		}
-	}
 
 	const signInWithGoogleMutation = useMutation({
 		mutationFn: async (identityToken: string) => {

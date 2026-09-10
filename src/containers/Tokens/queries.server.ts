@@ -486,6 +486,13 @@ export function buildTokensSourceRows({
 	}
 }
 
+type RankedOption = TokensFilterOption & { marketCap: number }
+
+const compareOptions = (a: RankedOption, b: RankedOption): number => {
+	const marketCapDiff = b.marketCap - a.marketCap
+	return marketCapDiff || a.label.localeCompare(b.label) || a.id.localeCompare(b.id)
+}
+
 export function buildTokenFilterOptions(
 	rows: Array<Pick<TokensSourceRow, 'marketCap' | 'chains' | 'categories'>>,
 	metadata: Partial<Pick<MetadataCache, 'chainDisplayNames' | 'tokenFilterMetadata'>>
@@ -500,11 +507,6 @@ export function buildTokenFilterOptions(
 		}
 	}
 
-	type RankedOption = TokensFilterOption & { marketCap: number }
-	const compareOptions = (a: RankedOption, b: RankedOption): number => {
-		const marketCapDiff = b.marketCap - a.marketCap
-		return marketCapDiff || a.label.localeCompare(b.label) || a.id.localeCompare(b.id)
-	}
 	const chainOptions: Array<RankedOption> = []
 	for (const [id, marketCap] of chainMarketCaps) {
 		chainOptions.push({ id, label: metadata.chainDisplayNames?.get(id) ?? id, marketCap })

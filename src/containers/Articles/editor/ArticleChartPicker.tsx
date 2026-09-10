@@ -102,6 +102,8 @@ type Entity = {
 	geckoId?: string | null
 }
 
+const labelFor = (key: string) => CHART_TYPES[key as keyof typeof CHART_TYPES]?.title || key
+
 function ChartTypeSelect({
 	value,
 	options,
@@ -111,7 +113,6 @@ function ChartTypeSelect({
 	options: Array<string>
 	onChange: (next: string) => void
 }) {
-	const labelFor = (key: string) => CHART_TYPES[key as keyof typeof CHART_TYPES]?.title || key
 	return (
 		<Ariakit.ComboboxProvider
 			selectedValue={value}

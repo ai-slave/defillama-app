@@ -31,6 +31,9 @@ function buildTokenOptions(meta: YieldsMeta, counts: Map<string, number>): Array
 	return options
 }
 
+const byCountDesc = (counts: Map<string, number>) =>
+	[...counts.keys()].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a.localeCompare(b))
+
 // Filter vocabulary for the /yields/borrow page, derived entirely from the enriched
 // borrow markets + /v2/meta. `chainList` / `projectList` / `categoryList` are ordered by
 // occurrence count (most common first, name-tiebroken); `collateralTokens` /
@@ -83,8 +86,6 @@ export async function getBorrowPageMeta(snapshot: YieldsSnapshot): Promise<Borro
 	// Stable sort keeps the base BORROW_ATTRIBUTE_IDS order for equal counts.
 	const attributeIds = [...BORROW_ATTRIBUTE_IDS].sort((a, b) => attributeCounts[b] - attributeCounts[a])
 
-	const byCountDesc = (counts: Map<string, number>) =>
-		[...counts.keys()].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0) || a.localeCompare(b))
 	const chainList = byCountDesc(chainCounts)
 
 	return {

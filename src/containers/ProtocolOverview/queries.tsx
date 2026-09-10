@@ -119,6 +119,17 @@ type IProtocolTvlChartSeedResult = {
 	failed: boolean
 }
 
+const hasFeeFamilyMetrics = (data: Awaited<ReturnType<typeof formatAdapterData>>) =>
+	data != null &&
+	(data.annualized1y != null ||
+		data.total30d != null ||
+		data.total7d != null ||
+		data.total24h != null ||
+		data.totalAllTime != null)
+
+const hasStandardAdapterMetrics = (data: Awaited<ReturnType<typeof formatAdapterData>>) =>
+	data != null && (data.total30d != null || data.total7d != null || data.total24h != null || data.totalAllTime != null)
+
 export const getProtocolOverviewPageData = async ({
 	protocolId,
 	currentProtocolMetadata,
@@ -566,16 +577,6 @@ export const getProtocolOverviewPageData = async ({
 			investors: r.leadInvestors.concat(r.otherInvestors)
 		}))
 	const currentTvlByChain = currentProtocolMetadata.tvl ? protocolData.currentChainTvls : null
-	const hasFeeFamilyMetrics = (data: Awaited<ReturnType<typeof formatAdapterData>>) =>
-		data != null &&
-		(data.annualized1y != null ||
-			data.total30d != null ||
-			data.total7d != null ||
-			data.total24h != null ||
-			data.totalAllTime != null)
-	const hasStandardAdapterMetrics = (data: Awaited<ReturnType<typeof formatAdapterData>>) =>
-		data != null &&
-		(data.total30d != null || data.total7d != null || data.total24h != null || data.totalAllTime != null)
 	const hasIncentiveMetrics =
 		incentives != null &&
 		(incentives.emissions1y != null ||

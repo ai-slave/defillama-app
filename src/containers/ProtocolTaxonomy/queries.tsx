@@ -449,6 +449,25 @@ function hasCategoryMetric({
 	return config.dimAgg[adapterType]?.[dataKey] != null
 }
 
+const sumMetricTotals = ({
+	rows,
+	selector
+}: {
+	rows: Array<ProtocolTableRow>
+	selector: (row: ProtocolTableRow) => ProtocolMetricTotals | null | undefined
+}): ProtocolMetricTotals => {
+	let total24h = 0
+	let total7d = 0
+	let total30d = 0
+	for (const row of rows) {
+		const metric = selector(row)
+		total24h += metric?.total24h ?? 0
+		total7d += metric?.total7d ?? 0
+		total30d += metric?.total30d ?? 0
+	}
+	return { total24h, total7d, total30d }
+}
+
 export async function getProtocolTaxonomyPageData(
 	params: GetProtocolTaxonomyPageDataParams
 ): Promise<IProtocolTaxonomyPageData | null> {
@@ -927,25 +946,6 @@ export async function getProtocolTaxonomyPageData(
 		} else {
 			protocolsStore[protocol.defillamaId] = finalData
 		}
-	}
-
-	const sumMetricTotals = ({
-		rows,
-		selector
-	}: {
-		rows: Array<ProtocolTableRow>
-		selector: (row: ProtocolTableRow) => ProtocolMetricTotals | null | undefined
-	}): ProtocolMetricTotals => {
-		let total24h = 0
-		let total7d = 0
-		let total30d = 0
-		for (const row of rows) {
-			const metric = selector(row)
-			total24h += metric?.total24h ?? 0
-			total7d += metric?.total7d ?? 0
-			total30d += metric?.total30d ?? 0
-		}
-		return { total24h, total7d, total30d }
 	}
 
 	const finalProtocols: Array<ProtocolTableRow> = Object.values(protocolsStore)

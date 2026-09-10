@@ -92,6 +92,7 @@ export function YieldsChartCard({ config }: YieldsChartCardProps) {
 
 	const handleCsvExport = () => {
 		if (currentChartDataset.source.length === 0) return
+		// eslint-disable-next-line unicorn/consistent-function-scoping -- the point type is derived from the dataset in this scope
 		const formatPointDate = (point: (typeof currentChartDataset.source)[number], pointIndex: number) => {
 			const timestamp = point[0]
 			if (typeof timestamp !== 'number') throw new Error(`Invalid yield chart timestamp at index ${pointIndex}`)

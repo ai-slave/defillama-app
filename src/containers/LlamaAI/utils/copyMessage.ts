@@ -97,10 +97,11 @@ function parseCsv(text: string): Array<Array<string>> {
 	return rows
 }
 
+const escapeCell = (cell: string) => cell.replaceAll('|', '\\|').replaceAll('\n', ' ')
+
 function csvToMarkdownTable(rows: Array<Array<string>>): string {
 	const header = rows[0]
 	if (!header) return ''
-	const escapeCell = (cell: string) => cell.replaceAll('|', '\\|').replaceAll('\n', ' ')
 	const body = rows.slice(1)
 	const lines = [
 		`| ${header.map(escapeCell).join(' | ')} |`,

@@ -300,15 +300,16 @@ function findMatchedEmissionForDimensionProtocol(
 	return matched?.protocol
 }
 
+const subtractEmissions = (
+	revenue: number | null | undefined,
+	emission: number | null,
+	hasEmissionsMatch: boolean
+): number | null => (hasEmissionsMatch && emission === null ? null : (revenue ?? 0) - (emission ?? 0))
+
 function calculateDimensionProtocolEarnings(
 	protocolData: AdapterChainProtocol,
 	emissions?: EmissionsBreakdownProtocol
 ): DimensionEarningsProtocolWithEmissions {
-	const subtractEmissions = (
-		revenue: number | null | undefined,
-		emission: number | null,
-		hasEmissionsMatch: boolean
-	): number | null => (hasEmissionsMatch && emission === null ? null : (revenue ?? 0) - (emission ?? 0))
 	const hasEmissionsMatch = emissions !== undefined
 	return {
 		...protocolData,
