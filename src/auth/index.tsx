@@ -218,9 +218,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 	// The undismissable welcome dialog must not outlive the session it was opened
 	// for (cross-tab logout or account switch), or its consent choices would write
 	// into whichever account is current when Continue is clicked.
+	// The user id comes from the sign-in response, not from pb.authStore.record:
+	// the Google flow saves the token before its record, and concurrent
+	// auth-refresh requests auto-cancel each other, so the store may still hold
+	// a null record when the dialog opens.
 	const oauthWelcomeUserRef = useRef<string | null>(null)
-	const openOauthWelcome = useCallback(() => {
-		oauthWelcomeUserRef.current = pb.authStore.record?.id ?? null
+	const openOauthWelcome = useCallback((userId: string) => {
+		oauthWelcomeUserRef.current = userId
 		setOauthWelcomeOpen(true)
 	}, [])
 
@@ -239,11 +243,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 		[subscriptionUserId, subscriptionToken]
 	)
 	const subscriptionQuery = useQuery(subscriptionQueryOptions)
+	// Close on logout (no token) or account switch (a different record id). A
+	// record that has not loaded yet is not a switch, so a null record with a
+	// live token keeps the dialog open.
 	useEffect(() => {
-		if (oauthWelcomeOpen && (authStoreState.record?.id ?? null) !== oauthWelcomeUserRef.current) {
+		if (!oauthWelcomeOpen) return
+		const currentId = authStoreState.record?.id ?? null
+		if (!authStoreState.token || (currentId !== null && currentId !== oauthWelcomeUserRef.current)) {
 			setOauthWelcomeOpen(false)
 		}
-	}, [oauthWelcomeOpen, authStoreState.record?.id])
+	}, [oauthWelcomeOpen, authStoreState.token, authStoreState.record?.id])
 
 	const { isLoading: userQueryIsLoading } = useQuery({
 		queryKey: ['auth', 'status', authStoreState?.record?.id ?? null],
@@ -509,7 +518,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 			})
 
 			if (isNewOauthUser(authData)) {
-				openOauthWelcome()
+				openOauthWelcome(authData.record.id)
 				try {
 					await fetch(`${AUTH_SERVER}/user/attribution`, {
 						method: 'POST',
@@ -568,7 +577,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 			if (result.kind === 'link_verification_required') return result
 			await saveGoogleSession(result)
 			if (result.isNew) {
-				openOauthWelcome()
+				openOauthWelcome(result.user.id)
 				try {
 					await fetch(`${AUTH_SERVER}/user/attribution`, {
 						method: 'POST',

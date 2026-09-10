@@ -34,10 +34,24 @@ beforeEach(() => {
 			if (String(url).endsWith('/subscription/status')) {
 				return jsonResponse({ message: 'No active subscription' }, 404)
 			}
+			if (String(url).endsWith('/auth/google-signin')) {
+				return jsonResponse({
+					isNew: true,
+					kind: 'authenticated',
+					token: token('google-new'),
+					user: { email: 'new@example.com', id: 'google-new', verified: true }
+				})
+			}
+			if (String(url).endsWith('/user/attribution')) {
+				return jsonResponse({ ok: true })
+			}
 			if (!String(url).endsWith('/api/collections/users/auth-refresh')) {
 				throw new Error(`Unexpected fetch in test: ${url}`)
 			}
-			return new Promise<Response>((resolve) => {
+			return new Promise<Response>((resolve, reject) => {
+				// The PocketBase SDK auto-cancels an in-flight request when another one
+				// with the same key starts; a real fetch rejects on abort, so mirror that.
+				config?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')))
 				refreshCalls.push({ authorization: new Headers(config?.headers).get('Authorization'), resolve })
 			})
 		})
@@ -157,4 +171,42 @@ test('clears the session when its own refresh fails with 401', async () => {
 
 	expect(pb.authStore.isValid).toBe(false)
 	expect(sessionView.isAuthenticated).toBe(false)
+})
+
+test('keeps the OAuth welcome dialog open when the sign-in refresh is auto-cancelled', async () => {
+	await render()
+
+	const signIn = act(async () => {
+		await sessionView.signInWithGoogleMutation.mutateAsync('identity-token')
+	})
+	await settle()
+
+	// The sign-in saved a token-only session and started a refresh; the auth
+	// status query started a second one, which auto-cancelled the first.
+	expect(refreshCalls).toHaveLength(2)
+	expect(refreshCalls.every((call) => call.authorization === token('google-new'))).toBe(true)
+	await signIn
+	expect(pb.authStore.record).toBeNull()
+	expect(document.body.textContent).toContain('Thanks for signing up!')
+
+	refreshCalls[1].resolve(jsonResponse({ token: token('google-rotated'), record: record('google-new') }))
+	await settle()
+
+	expect(sessionView.user?.id).toBe('google-new')
+	expect(document.body.textContent).toContain('Thanks for signing up!')
+})
+
+test('closes the OAuth welcome dialog when a different account takes over the session', async () => {
+	await render()
+
+	await act(async () => {
+		await sessionView.signInWithGoogleMutation.mutateAsync('identity-token')
+	})
+	await settle()
+	expect(document.body.textContent).toContain('Thanks for signing up!')
+
+	await act(async () => pb.authStore.save(token('account-b'), record('account-b')))
+	await settle()
+
+	expect(document.body.textContent).not.toContain('Thanks for signing up!')
 })
