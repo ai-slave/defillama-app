@@ -20,7 +20,8 @@ export async function fetchMetadataJson<T>(url: string, options?: RequestInit): 
 		throw new Error(
 			`Failed to parse JSON for URL: ${urlToLog} (status ${res.status}, content-type ${contentType}). Body preview: "${sanitizeResponseTextForError(
 				body
-			)}". Original error: ${getErrorMessage(error)}`
+			)}". Original error: ${getErrorMessage(error)}`,
+			{ cause: error }
 		)
 	}
 }

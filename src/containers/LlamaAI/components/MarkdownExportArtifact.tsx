@@ -28,25 +28,21 @@ function fileExtension(filename: string): string {
 }
 
 async function downloadMarkdownFile({ url, filename }: { url: string; filename: string }) {
-	try {
-		const response = await fetch(url)
-		if (!response.ok) {
-			throw new Error(`Failed to download markdown (${response.status})`)
-		}
-
-		const blob = await response.blob()
-		const objectUrl = URL.createObjectURL(blob)
-		const link = document.createElement('a')
-		link.href = objectUrl
-		link.download = filename
-		link.style.display = 'none'
-		document.body.appendChild(link)
-		link.click()
-		document.body.removeChild(link)
-		URL.revokeObjectURL(objectUrl)
-	} catch (error) {
-		throw new Error(error instanceof Error ? error.message : 'Failed to download markdown')
+	const response = await fetch(url)
+	if (!response.ok) {
+		throw new Error(`Failed to download markdown (${response.status})`)
 	}
+
+	const blob = await response.blob()
+	const objectUrl = URL.createObjectURL(blob)
+	const link = document.createElement('a')
+	link.href = objectUrl
+	link.download = filename
+	link.style.display = 'none'
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	URL.revokeObjectURL(objectUrl)
 }
 
 export function MarkdownExportArtifact({ mdExport, sessionId, messageId }: MarkdownExportArtifactProps) {

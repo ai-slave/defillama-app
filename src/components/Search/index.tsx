@@ -20,12 +20,8 @@ const SEARCH_PAGE_SIZE = 20
 const EMPTY_SEARCH_ITEMS: Array<ISearchItem> = []
 
 async function getDefaultSearchList() {
-	try {
-		const data = await fetchJson('https://defillama-datasets.llama.fi/searchlist.json')
-		return data
-	} catch (error) {
-		throw new Error(error instanceof Error ? error.message : 'Unknown error')
-	}
+	const data = await fetchJson('https://defillama-datasets.llama.fi/searchlist.json')
+	return data
 }
 async function fetchSearchPage(query: string, offset: number): Promise<Array<ISearchItem>> {
 	// Follow-up pages don't need the category merge - only the top of the list

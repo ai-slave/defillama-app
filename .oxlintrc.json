@@ -28,6 +28,7 @@
 		"eslint/prefer-exponentiation-operator": "error",
 		"eslint/prefer-object-has-own": "error",
 		"eslint/prefer-template": "error",
+		"eslint/preserve-caught-error": "error",
 		"eslint/radix": "error",
 		"eslint/no-restricted-imports": [
 			"error",
@@ -167,7 +168,6 @@
 		"jsx-a11y/no-autofocus": "off",
 		// Off since the ratchet was created (#3383). No reason was recorded; revisit when one of them
 		// would have caught something.
-		"eslint/preserve-caught-error": "off",
 		"typescript/no-extraneous-class": "off",
 		"vitest/require-mock-type-parameters": "off",
 		"nextjs/no-duplicate-head": "off",

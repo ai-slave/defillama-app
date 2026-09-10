@@ -60,7 +60,9 @@ export function useSessionList() {
 				return mergeOptimisticSessions(page, existingData)
 			} catch (error) {
 				console.log('Failed to fetch sessions:', error)
-				throw new Error(`Failed to fetch sessions: ${error instanceof Error ? error.message : String(error)}`)
+				throw new Error(`Failed to fetch sessions: ${error instanceof Error ? error.message : String(error)}`, {
+					cause: error
+				})
 			}
 		},
 		initialPageParam: 0,

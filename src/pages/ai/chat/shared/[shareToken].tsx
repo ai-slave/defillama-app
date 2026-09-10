@@ -72,14 +72,10 @@ export const getServerSideProps = withServerSidePropsTelemetry<PageProps>(
 )
 
 async function getSharedSession(shareToken: string) {
-	try {
-		if (!shareToken) {
-			return null
-		}
-		return await fetchJson<SharedSession>(`${AI_SERVER}/user/public/${shareToken}`)
-	} catch (error) {
-		throw new Error(error instanceof Error ? error.message : 'Failed to fetch shared session')
+	if (!shareToken) {
+		return null
 	}
+	return await fetchJson<SharedSession>(`${AI_SERVER}/user/public/${shareToken}`)
 }
 
 export default function SharedConversationPage({ shareToken: ssrToken, sessionTitle }: PageProps) {

@@ -9,15 +9,11 @@ import { Card } from '~/ui/Card'
 import { Input, inputStyles } from '~/ui/Input'
 
 async function submitSupportRequest(formData: FormData) {
-	try {
-		const data = await fetch('https://api.llama.fi/reportSupport', {
-			method: 'POST',
-			body: formData
-		}).then((res) => res.json())
-		return data
-	} catch (error) {
-		throw new Error(error instanceof Error ? error.message : 'Failed to report')
-	}
+	const data = await fetch('https://api.llama.fi/reportSupport', {
+		method: 'POST',
+		body: formData
+	}).then((res) => res.json())
+	return data
 }
 
 function LiveChatCard({ userHash, email }: { userHash: string | null; email: string | null }) {

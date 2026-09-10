@@ -286,7 +286,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 					clearUserSession()
 				}
 
-				throw new Error('Failed to refresh auth')
+				throw new Error('Failed to refresh auth', { cause: error })
 			}
 		},
 		enabled: authStoreState.token != null && authStoreState.isValid,
@@ -304,7 +304,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				return res
 			} catch (error) {
 				console.log('Login error:', error)
-				throw new Error('Invalid credentials')
+				throw new Error('Invalid credentials', { cause: error })
 			}
 		},
 		onError: () => {
@@ -549,7 +549,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			return authData
 		} catch (error) {
 			console.log('github sign-in error:', error)
-			throw new Error('Failed to sign in with GitHub')
+			throw new Error('Failed to sign in with GitHub', { cause: error })
 		}
 	}
 

@@ -178,7 +178,7 @@ export function useSessionMutations() {
 				return response
 			} catch (error) {
 				console.log('Failed to create session:', error)
-				throw new Error(`Failed to create session: ${getErrorMessage(error)}`)
+				throw new Error(`Failed to create session: ${getErrorMessage(error)}`, { cause: error })
 			}
 		},
 		onSuccess: (_data, variables) => {

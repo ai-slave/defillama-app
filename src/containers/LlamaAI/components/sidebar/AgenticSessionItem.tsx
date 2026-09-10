@@ -159,7 +159,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 							)
 						)
 					}
-					throw new Error(`Failed to toggle pin: ${getErrorMessage(error)}`)
+					throw new Error(`Failed to toggle pin: ${getErrorMessage(error)}`, { cause: error })
 				}
 			}),
 		onError: (error) => toast.error(error.message),

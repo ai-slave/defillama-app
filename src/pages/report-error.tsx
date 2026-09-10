@@ -8,15 +8,11 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { fetchJson } from '~/utils/async'
 
 async function reportError(report: any) {
-	try {
-		const data = await fetchJson<{ message?: string }>('https://api.llama.fi/reportError', {
-			method: 'POST',
-			body: JSON.stringify(report)
-		})
-		return data
-	} catch (error) {
-		throw new Error(error instanceof Error ? error.message : 'Failed to report')
-	}
+	const data = await fetchJson<{ message?: string }>('https://api.llama.fi/reportError', {
+		method: 'POST',
+		body: JSON.stringify(report)
+	})
+	return data
 }
 
 function ReportError() {

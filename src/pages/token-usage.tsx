@@ -278,15 +278,10 @@ const fetchProtocols = async (
 	authorizedFetch: (url: string) => Promise<Response | null>
 ): Promise<Array<TokenUsagePageRow> | null> => {
 	if (!tokenSymbol) return null
-	try {
-		const data = await fetchProtocolsByTokenClient(tokenSymbol, authorizedFetch)
-		return (
-			data?.map((p) => ({ ...p, amountUsd: Object.values(p.amountUsd).reduce((s: number, a: number) => s + a, 0) })) ??
-			[]
-		)
-	} catch (error) {
-		throw new Error(error instanceof Error ? error.message : 'Failed to fetch')
-	}
+	const data = await fetchProtocolsByTokenClient(tokenSymbol, authorizedFetch)
+	return (
+		data?.map((p) => ({ ...p, amountUsd: Object.values(p.amountUsd).reduce((s: number, a: number) => s + a, 0) })) ?? []
+	)
 }
 
 const columns = [

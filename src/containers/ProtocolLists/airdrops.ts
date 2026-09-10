@@ -54,6 +54,6 @@ export async function airdropsEligibilityCheck({ addresses }: { addresses: Array
 		return allAirdrops
 	} catch (error) {
 		console.error(error)
-		throw new Error('There was an error fetching your data')
+		throw new Error('There was an error fetching your data', { cause: error })
 	}
 }
