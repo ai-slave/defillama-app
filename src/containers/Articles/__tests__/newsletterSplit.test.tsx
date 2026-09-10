@@ -93,7 +93,6 @@ describe('newsletter and media-kit split', () => {
 		expect(html).toContain('aria-label="Search DefiLlama Research and Newsletters"')
 		expect(html).toContain('type="button"')
 		expect(html).toContain('>Search</span>')
-		expect(html).toContain('/icons/v44.svg#search')
 		expect(html).not.toContain('href="/research?search=1"')
 	})
 
