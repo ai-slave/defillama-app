@@ -1588,6 +1588,11 @@ export function mapMasterRamps(response: MasterRampsResponse): RampCatalogModel 
 				profileHref: venue.links.profile,
 				website: websiteUrl,
 				referralUrl,
+				scope:
+					venue.scope.kind === 'regional'
+						? { kind: 'regional' as const, regions: [...venue.scope.regions] }
+						: { kind: 'global' as const },
+				parentSlug: venue.parent_entity?.slug ?? null,
 				variants
 			}
 		})

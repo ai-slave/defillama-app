@@ -104,17 +104,6 @@ export function Breakdown({
 	)
 }
 
-function CurrencyTag({ row }: { row: RampRowModel }) {
-	if (!row.costIsFallback || !row.cost) return null
-	return (
-		<Tooltip
-			content={`The selected currency doesn't price the full round trip here, so it is priced in ${row.cost.currency}.`}
-		>
-			<span className="ml-1 align-super label-sm text-tertiary">{row.cost.currency}</span>
-		</Tooltip>
-	)
-}
-
 export function RampLegValue({
 	row,
 	direction,
@@ -165,7 +154,6 @@ export function RampLegValue({
 					totalFraction={leg.totalFraction}
 				/>
 			</CostBadge>
-			<CurrencyTag row={row} />
 		</span>
 	)
 }
@@ -191,7 +179,6 @@ export function RampRoundTripValue({ row, size }: { row: RampRowModel; size: num
 					totalFraction={row.roundTripFraction}
 				/>
 			</CostBadge>
-			<CurrencyTag row={row} />
 		</span>
 	)
 }

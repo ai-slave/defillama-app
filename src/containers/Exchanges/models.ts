@@ -800,6 +800,9 @@ export interface CryptoRailsModel {
 	withdraw: Array<CryptoRailRowModel>
 }
 
+/** Which regions a venue entity serves: everywhere, or only the ones it lists. */
+export type VenueScopeModel = { kind: 'global' } | { kind: 'regional'; regions: Array<string> }
+
 export interface RampVariantModel {
 	region: string
 	status: ExchangeRegionStatus
@@ -824,6 +827,10 @@ export interface RampVenueModel {
 	profileHref: string
 	website: string | null
 	referralUrl: string | null
+	/** A regional entity (Bitstamp EU, Binance.US) serves only the regions it lists. */
+	scope: VenueScopeModel
+	/** Set when this venue is a child entity of another listed brand. */
+	parentSlug: string | null
 	/** Keyed by region; `global` is always present and is the fallback. */
 	variants: Partial<Record<string, RampVariantModel>>
 }
