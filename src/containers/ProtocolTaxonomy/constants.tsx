@@ -767,6 +767,10 @@ export const protocolCategoryConfig: Record<string, ProtocolCategoryConfig> = {
 	'Collateral Markets': {
 		description:
 			'Protocols that connect providers of onchain collateral with applications that require committed capital, enabling collateral to be allocated and underwritten against defined financial obligations'
+	},
+	'Onchain Voting': {
+		description:
+			'Protocols for conducting public votes, elections, or opinion-based contests where participation and results are recorded or verifiable onchain'
 	}
 }
 
