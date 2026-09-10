@@ -25,32 +25,36 @@ function circularIcon(url: string): Promise<string | null> {
 			const image = new Image()
 			image.decoding = 'sync'
 			image.crossOrigin = 'anonymous'
-			image.onload = () => {
-				try {
-					const size = 48
-					const canvas = document.createElement('canvas')
-					canvas.width = size
-					canvas.height = size
-					const context = canvas.getContext('2d')
-					if (!context) {
+			image.addEventListener(
+				'load',
+				() => {
+					try {
+						const size = 48
+						const canvas = document.createElement('canvas')
+						canvas.width = size
+						canvas.height = size
+						const context = canvas.getContext('2d')
+						if (!context) {
+							resolve(null)
+							return
+						}
+						context.beginPath()
+						context.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
+						context.clip()
+						context.drawImage(image, 0, 0, size, size)
+						const dataUrl = canvas.toDataURL()
+						const decodedIcon = new Image()
+						decodedIcon.decoding = 'sync'
+						decodedIcon.addEventListener('load', () => resolve(dataUrl), { once: true })
+						decodedIcon.addEventListener('error', () => resolve(null), { once: true })
+						decodedIcon.src = dataUrl
+					} catch {
 						resolve(null)
-						return
 					}
-					context.beginPath()
-					context.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2)
-					context.clip()
-					context.drawImage(image, 0, 0, size, size)
-					const dataUrl = canvas.toDataURL()
-					const decodedIcon = new Image()
-					decodedIcon.decoding = 'sync'
-					decodedIcon.onload = () => resolve(dataUrl)
-					decodedIcon.onerror = () => resolve(null)
-					decodedIcon.src = dataUrl
-				} catch {
-					resolve(null)
-				}
-			}
-			image.onerror = () => resolve(null)
+				},
+				{ once: true }
+			)
+			image.addEventListener('error', () => resolve(null), { once: true })
 			image.src = url
 		})
 		circularIconCache.set(url, cached)

@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useEffect, useEffectEvent, useMemo, useState } from 'react'
+import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
 import {
 	getGeckoIdFromSearchId,
 	getTokenSearchFallback,
@@ -29,11 +30,7 @@ function CoinImage({ src }: { src: string }) {
 			height="24"
 			width="24"
 			loading="lazy"
-			onError={(e) => {
-				const img = e.currentTarget
-				img.onerror = null
-				img.src = '/assets/placeholder.png'
-			}}
+			onError={(e) => applyLogoFallback(e.currentTarget)}
 			className="inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
 		/>
 	)

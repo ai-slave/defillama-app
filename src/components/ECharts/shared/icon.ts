@@ -14,14 +14,22 @@ export function validateIconUrl(url: string): Promise<boolean> {
 
 	const pending = new Promise<boolean>((resolve) => {
 		const image = new Image()
-		image.onload = () => {
-			iconValidityCache.set(url, true)
-			resolve(true)
-		}
-		image.onerror = () => {
-			iconValidityCache.set(url, false)
-			resolve(false)
-		}
+		image.addEventListener(
+			'load',
+			() => {
+				iconValidityCache.set(url, true)
+				resolve(true)
+			},
+			{ once: true }
+		)
+		image.addEventListener(
+			'error',
+			() => {
+				iconValidityCache.set(url, false)
+				resolve(false)
+			},
+			{ once: true }
+		)
 		image.src = url
 	})
 	iconValidityCache.set(url, pending)

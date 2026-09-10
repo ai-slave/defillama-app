@@ -66,9 +66,13 @@ export function checkParentAuth(): Promise<ParentUser | null> {
 		window.addEventListener('message', onMessage)
 		document.body.appendChild(iframe)
 
-		iframe.onerror = () => {
-			cleanup()
-			resolve(null)
-		}
+		iframe.addEventListener(
+			'error',
+			() => {
+				cleanup()
+				resolve(null)
+			},
+			{ once: true }
+		)
 	})
 }

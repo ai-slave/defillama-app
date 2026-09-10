@@ -148,6 +148,7 @@ export function pushBounded<T>(prev: Array<T>, incoming: Array<T> | T, limit: nu
 export function useHyperliquidWs(subscriptions: Array<WsSubscription>, onMessage: (msg: unknown) => void) {
 	const [isConnected, setIsConnected] = useState(false)
 	const wsRef = useRef<WebSocket | null>(null)
+	const handlerControllerRef = useRef<AbortController | null>(null)
 	const subsRef = useRef(subscriptions)
 	const cbRef = useRef(onMessage)
 	const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -208,55 +209,72 @@ export function useHyperliquidWs(subscriptions: Array<WsSubscription>, onMessage
 			const ws = new WebSocket(HL_WS)
 			wsRef.current = ws
 			lastMessageAtRef.current = Date.now()
+			// Detaching every handler at once is what stops a closing socket from scheduling a reconnect
+			// after unmount. A remount sets mountedRef back to true before the old socket's close fires,
+			// so the handler's own mounted check cannot be relied on for that.
+			const handlers = new AbortController()
+			handlerControllerRef.current = handlers
+			const listen = { signal: handlers.signal }
 
-			ws.onopen = () => {
-				if (!mountedRef.current) {
-					ws.close()
-					return
-				}
-				setIsConnected(true)
-				backoffRef.current = 1000
-				syncSubscriptions(ws, subsRef.current)
-
-				heartbeatTimerRef.current = setInterval(() => {
-					if (!mountedRef.current || ws.readyState !== WebSocket.OPEN) return
-					if (Date.now() - lastMessageAtRef.current > HEARTBEAT_TIMEOUT_MS) {
+			ws.addEventListener(
+				'open',
+				() => {
+					if (!mountedRef.current) {
 						ws.close()
+						return
 					}
-				}, HEARTBEAT_CHECK_MS)
-			}
+					setIsConnected(true)
+					backoffRef.current = 1000
+					syncSubscriptions(ws, subsRef.current)
 
-			ws.onmessage = (event) => {
-				lastMessageAtRef.current = Date.now()
-				const message = parseFrame(event.data)
-				// JSON.parse never yields undefined, so it stands in for a frame that would not parse.
-				if (message === undefined || isSubscriptionResponse(message)) return
-				cbRef.current(message)
-			}
+					heartbeatTimerRef.current = setInterval(() => {
+						if (!mountedRef.current || ws.readyState !== WebSocket.OPEN) return
+						if (Date.now() - lastMessageAtRef.current > HEARTBEAT_TIMEOUT_MS) {
+							ws.close()
+						}
+					}, HEARTBEAT_CHECK_MS)
+				},
+				listen
+			)
 
-			ws.onclose = () => {
-				clearTimers()
-				if (!mountedRef.current) return
-				setIsConnected(false)
-				const jitter = 0.8 + Math.random() * 0.4
-				const waitMs = Math.floor(backoffRef.current * jitter)
-				reconnectTimerRef.current = setTimeout(() => {
-					backoffRef.current = Math.min(backoffRef.current * 2, 15_000)
-					connect()
-				}, waitMs)
-			}
+			ws.addEventListener(
+				'message',
+				(event) => {
+					lastMessageAtRef.current = Date.now()
+					const message = parseFrame(event.data)
+					// JSON.parse never yields undefined, so it stands in for a frame that would not parse.
+					if (message === undefined || isSubscriptionResponse(message)) return
+					cbRef.current(message)
+				},
+				listen
+			)
 
-			ws.onerror = () => {
-				ws.close()
-			}
+			ws.addEventListener(
+				'close',
+				() => {
+					clearTimers()
+					if (!mountedRef.current) return
+					setIsConnected(false)
+					const jitter = 0.8 + Math.random() * 0.4
+					const waitMs = Math.floor(backoffRef.current * jitter)
+					reconnectTimerRef.current = setTimeout(() => {
+						backoffRef.current = Math.min(backoffRef.current * 2, 15_000)
+						connect()
+					}, waitMs)
+				},
+				listen
+			)
+
+			ws.addEventListener('error', () => ws.close(), listen)
 		}
 
 		connect()
 		return () => {
 			mountedRef.current = false
 			clearTimers()
+			handlerControllerRef.current?.abort()
+			handlerControllerRef.current = null
 			if (wsRef.current) {
-				wsRef.current.onclose = null
 				wsRef.current.close()
 				wsRef.current = null
 			}

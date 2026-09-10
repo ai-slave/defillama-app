@@ -215,26 +215,34 @@ function preloadLeafIcon(url: string, onSettled: () => void): HTMLCanvasElement 
 		for (const callback of callbacks) callback()
 	}
 	const img = new Image()
-	img.onload = () => {
-		const ctx = canvas.getContext('2d')
-		if (ctx) {
-			ctx.save()
-			ctx.beginPath()
-			ctx.arc(ICON_CANVAS_SIZE / 2, ICON_CANVAS_SIZE / 2, ICON_CANVAS_SIZE / 2, 0, Math.PI * 2)
-			ctx.closePath()
-			ctx.clip()
-			ctx.fillStyle = '#fff'
-			ctx.fillRect(0, 0, ICON_CANVAS_SIZE, ICON_CANVAS_SIZE)
-			ctx.drawImage(img, 0, 0, ICON_CANVAS_SIZE, ICON_CANVAS_SIZE)
-			ctx.restore()
-		}
-		settle()
-	}
-	img.onerror = () => {
-		markIconFailed(url)
-		iconImages.delete(url)
-		settle()
-	}
+	img.addEventListener(
+		'load',
+		() => {
+			const ctx = canvas.getContext('2d')
+			if (ctx) {
+				ctx.save()
+				ctx.beginPath()
+				ctx.arc(ICON_CANVAS_SIZE / 2, ICON_CANVAS_SIZE / 2, ICON_CANVAS_SIZE / 2, 0, Math.PI * 2)
+				ctx.closePath()
+				ctx.clip()
+				ctx.fillStyle = '#fff'
+				ctx.fillRect(0, 0, ICON_CANVAS_SIZE, ICON_CANVAS_SIZE)
+				ctx.drawImage(img, 0, 0, ICON_CANVAS_SIZE, ICON_CANVAS_SIZE)
+				ctx.restore()
+			}
+			settle()
+		},
+		{ once: true }
+	)
+	img.addEventListener(
+		'error',
+		() => {
+			markIconFailed(url)
+			iconImages.delete(url)
+			settle()
+		},
+		{ once: true }
+	)
 	img.src = url
 	return canvas
 }

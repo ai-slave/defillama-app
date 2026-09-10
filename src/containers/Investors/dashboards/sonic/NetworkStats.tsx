@@ -59,14 +59,16 @@ function useBurnStream() {
 			}))
 		}
 
+		function handleError() {
+			setState((prev) => ({ ...prev, connected: false }))
+		}
+
 		try {
 			es = new EventSource('/api/dynamic/sonic/burn-stream')
 			es.addEventListener('init', handleInit)
 			es.addEventListener('block', handleBlock)
 
-			es.onerror = () => {
-				setState((prev) => ({ ...prev, connected: false }))
-			}
+			es.addEventListener('error', handleError)
 		} catch {
 			// EventSource not supported or connection failed
 		}
@@ -75,6 +77,7 @@ function useBurnStream() {
 			if (!es) return
 			es.removeEventListener('init', handleInit)
 			es.removeEventListener('block', handleBlock)
+			es.removeEventListener('error', handleError)
 			es.close()
 		}
 	}, [])

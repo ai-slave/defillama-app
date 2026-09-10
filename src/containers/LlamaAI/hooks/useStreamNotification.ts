@@ -92,11 +92,15 @@ export function useStreamNotification({ soundEnabled, attention }: UseStreamNoti
 			body: 'Llama has answered your question!',
 			icon: '/favicon-badge.png'
 		})
-		notification.onclick = () => {
-			window.focus()
-			window.parent?.focus?.()
-			notification.close()
-		}
+		notification.addEventListener(
+			'click',
+			() => {
+				window.focus()
+				window.parent?.focus?.()
+				notification.close()
+			},
+			{ once: true }
+		)
 		void notification
 	}, [])
 

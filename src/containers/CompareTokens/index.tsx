@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
 import type { IResponseCGTokenRankingsDatasetItem } from '~/api/coingecko.types'
 import { fetchCoinPrices } from '~/api/pricing'
+import { applyLogoFallback } from '~/components/TokenLogo/applyLogoFallback'
 import { TokenSearchDialog } from '~/containers/TokenSearch/TokenSearchDialog'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -108,11 +109,7 @@ export function CompareTokens({
 								height={16}
 								width={16}
 								loading="lazy"
-								onError={(e) => {
-									const img = e.currentTarget
-									img.onerror = null
-									img.src = '/assets/placeholder.png'
-								}}
+								onError={(e) => applyLogoFallback(e.currentTarget)}
 								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
 							/>
 						) : (
@@ -150,11 +147,7 @@ export function CompareTokens({
 								height={16}
 								width={16}
 								loading="lazy"
-								onError={(e) => {
-									const img = e.currentTarget
-									img.onerror = null
-									img.src = '/assets/placeholder.png'
-								}}
+								onError={(e) => applyLogoFallback(e.currentTarget)}
 								className="absolute top-0 bottom-0 left-3 my-auto inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
 							/>
 						) : (
@@ -218,9 +211,7 @@ export function CompareTokens({
 										height="20px"
 										width="20px"
 										loading="lazy"
-										onError={(e) => {
-											e.currentTarget.src = '/assets/placeholder.png'
-										}}
+										onError={(e) => applyLogoFallback(e.currentTarget)}
 										className="inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
 									/>
 									<span>{selectedCoins[0]?.symbol?.toUpperCase()}</span>
@@ -233,9 +224,7 @@ export function CompareTokens({
 										height="20px"
 										width="20px"
 										loading="lazy"
-										onError={(e) => {
-											e.currentTarget.src = '/assets/placeholder.png'
-										}}
+										onError={(e) => applyLogoFallback(e.currentTarget)}
 										className="inline-block aspect-square shrink-0 rounded-full bg-surface-elevated-2 object-cover"
 									/>
 									<span>{selectedCoins[1]?.symbol?.toUpperCase()}</span>

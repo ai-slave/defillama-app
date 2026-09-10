@@ -600,7 +600,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			img.decoding = 'async'
 			img.title = String(categoryValue)
 			img.style.cssText = `position:absolute;left:${x - CATEGORY_LOGO_SIZE / 2}px;top:${centerY - CATEGORY_LOGO_SIZE / 2}px;width:${CATEGORY_LOGO_SIZE}px;height:${CATEGORY_LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${layout.logoBg};pointer-events:none;`
-			img.onerror = () => img.remove()
+			img.addEventListener('error', () => img.remove(), { once: true })
 			layer.appendChild(img)
 		}
 	})

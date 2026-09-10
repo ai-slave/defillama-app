@@ -80,8 +80,8 @@ function HBarChart({
 				(url) =>
 					new Promise<boolean>((resolve) => {
 						const img = new Image()
-						img.onload = () => resolve(true)
-						img.onerror = () => resolve(false)
+						img.addEventListener('load', () => resolve(true), { once: true })
+						img.addEventListener('error', () => resolve(false), { once: true })
 						img.src = url
 					})
 			)
@@ -150,11 +150,15 @@ function HBarChart({
 				img.loading = 'lazy'
 				img.decoding = 'async'
 				img.style.cssText = `width:${LOGO_SIZE}px;height:${LOGO_SIZE}px;border-radius:50%;object-fit:cover;background:${logoBg};display:inline-block;vertical-align:middle;`
-				img.onerror = () => {
-					const spacer = document.createElement('span')
-					spacer.style.cssText = spacerCss
-					img.replaceWith(spacer)
-				}
+				img.addEventListener(
+					'error',
+					() => {
+						const spacer = document.createElement('span')
+						spacer.style.cssText = spacerCss
+						img.replaceWith(spacer)
+					},
+					{ once: true }
+				)
 				row.appendChild(img)
 			} else {
 				const spacer = document.createElement('span')
