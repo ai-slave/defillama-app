@@ -2,7 +2,7 @@ import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { lazy, Suspense } from 'react'
 import { SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
-import { getInvestorsProject, getInvestorsSite, type InvestorsSiteId } from '~/containers/Investors/config'
+import { getInvestorsProject, getInvestorsSiteForRequest, type InvestorsSiteId } from '~/containers/Investors/config'
 import { Logo } from '~/containers/Investors/Logo'
 import { fetchCustomServerData } from '~/containers/Investors/serverDataRegistry'
 import { useInvestorsSite } from '~/containers/Investors/SiteContext'
@@ -14,7 +14,7 @@ export const getServerSideProps: GetServerSideProps<{
 	protocol: string
 	customServerData: Record<string, unknown>
 }> = async (context) => {
-	const site = getInvestorsSite(context.req.headers.host)
+	const site = getInvestorsSiteForRequest(context.req.headers.host, context.req.headers['x-forwarded-host'])
 	const protocol = context.params?.protocol
 
 	if (!site || typeof protocol !== 'string') {

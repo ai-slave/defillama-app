@@ -46,6 +46,28 @@ describe('standalone IR server pages', () => {
 		expect(fetchCustomServerData).not.toHaveBeenCalled()
 	})
 
+	test('uses the same forwarded site for the landing, all page and project data', async () => {
+		const { landing, all, project } = await loadPages()
+		const investorRequest = context('app-origin.example', 'spark')
+		investorRequest.req.headers['x-forwarded-host'] = 'investors.defillama.com'
+		const enterpriseRequest = context('app-origin.example', 'odyssey-ecosystem')
+		enterpriseRequest.req.headers['x-forwarded-host'] = 'enterprise.defillama.com'
+		expect(await landing(investorRequest)).toEqual({ props: { investorsSiteId: 'investors' } })
+		expect(await landing(enterpriseRequest)).toEqual({ props: { investorsSiteId: 'enterprise' } })
+		expect(await all(investorRequest)).toMatchObject({ props: { investorsSiteId: 'investors' } })
+		expect(await all(enterpriseRequest)).toEqual({ redirect: { destination: '/odyssey-ecosystem', permanent: false } })
+		expect(await project(investorRequest)).toMatchObject({ props: { investorsSiteId: 'investors', protocol: 'spark' } })
+		expect(await project(enterpriseRequest)).toMatchObject({
+			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem' }
+		})
+		fetchCustomServerData.mockClear()
+		enterpriseRequest.params = { protocol: 'spark' }
+		expect(await project(enterpriseRequest)).toEqual({ notFound: true })
+		investorRequest.req.headers['x-forwarded-host'] = 'unknown.example'
+		expect(await landing(investorRequest)).toEqual({ notFound: true })
+		expect(fetchCustomServerData).not.toHaveBeenCalled()
+	})
+
 	test('isolates overlapping project requests in the same imported pages', async () => {
 		const { project } = await loadPages()
 		let resolveSpark!: (value: Record<string, unknown>) => void

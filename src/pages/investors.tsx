@@ -6,7 +6,7 @@ import { SEO } from '~/components/SEO'
 import {
 	getInvestorsLandingProjectHref,
 	getInvestorsProjects,
-	getInvestorsSite,
+	getInvestorsSiteForRequest,
 	type InvestorsSiteId,
 	type InvestorsProject,
 	type InvestorsProjectId
@@ -462,7 +462,7 @@ function ProjectCard({ project }: { project: InvestorsProject }) {
 }
 
 export const getServerSideProps: GetServerSideProps<{ investorsSiteId: InvestorsSiteId }> = async (context) => {
-	const site = getInvestorsSite(context.req.headers.host)
+	const site = getInvestorsSiteForRequest(context.req.headers.host, context.req.headers['x-forwarded-host'])
 	if (!site) return { notFound: true }
 	if (site.landingProjectIds.length <= 1 && site.projectIds.length === 1 && site.comingSoonProjectIds.length === 0) {
 		return {

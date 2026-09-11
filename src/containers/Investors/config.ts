@@ -67,10 +67,14 @@ export const INVESTORS_SITES: Readonly<Record<InvestorsSiteId, InvestorsSite>> =
 
 export const ALL_INVESTORS_PROTOCOL_IDS: ReadonlyArray<string> = ALL_INVESTORS_PROJECTS.map((p) => p.id)
 
-/** Host is supplied by the request, never by a deployment-wide site override. */
-export function getInvestorsSite(host: string | null | undefined): InvestorsSite | null {
+function normalizeHost(host: string | null | undefined): string | undefined {
 	// Only accept a hostname with an optional numeric port, not a URL or forwarded-host list.
-	const hostname = host?.match(/^([a-z0-9.-]+)(?::[0-9]+)?$/i)?.[1].toLowerCase()
+	return host?.match(/^([a-z0-9.-]+)(?::[0-9]+)?$/i)?.[1].toLowerCase()
+}
+
+/** Resolve a public/browser hostname independently of deployment configuration. */
+export function getInvestorsSite(host: string | null | undefined): InvestorsSite | null {
+	const hostname = normalizeHost(host)
 	if (!hostname) return null
 
 	for (const site of Object.values(INVESTORS_SITES)) {
@@ -78,6 +82,22 @@ export function getInvestorsSite(host: string | null | undefined): InvestorsSite
 		if (process.env.NODE_ENV === 'development' && hostname === `${site.id}.localhost`) return site
 	}
 	return null
+}
+
+/**
+ * The load balancer uses a technical Host for Coolify routing and overwrites
+ * X-Forwarded-Host with the public domain. That header must be preserved by
+ * subsequent proxies. Direct public hosts take precedence over forwarded input.
+ */
+export function getInvestorsSiteForRequest(
+	host: string | null | undefined,
+	forwardedHost: string | Array<string> | null | undefined
+): InvestorsSite | null {
+	const hostname = normalizeHost(host)
+	if (!hostname) return null
+	const directSite = getInvestorsSite(hostname)
+	if (directSite || hostname === 'defillama.com' || hostname === 'www.defillama.com') return directSite
+	return typeof forwardedHost === 'string' ? getInvestorsSite(forwardedHost) : null
 }
 
 export function getInvestorsProjects(projectIds: ReadonlyArray<InvestorsProjectId>): Array<InvestorsProject> {

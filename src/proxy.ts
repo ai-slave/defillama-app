@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { ALL_INVESTORS_PROTOCOL_IDS, getInvestorsProject, getInvestorsSite } from '~/containers/Investors/config'
+import {
+	ALL_INVESTORS_PROTOCOL_IDS,
+	getInvestorsProject,
+	getInvestorsSiteForRequest
+} from '~/containers/Investors/config'
 import {
 	AB_COOKIE_MAX_AGE_SECONDS,
 	AB_GROUP_COOKIE_NAME,
@@ -132,7 +136,7 @@ function applyABAssignment(response: NextResponse, request: NextRequest) {
 }
 
 function getInvestorsRewrite(request: NextRequest) {
-	const site = getInvestorsSite(request.headers.get('host'))
+	const site = getInvestorsSiteForRequest(request.headers.get('host'), request.headers.get('x-forwarded-host'))
 	if (!site) return null
 
 	const { pathname } = request.nextUrl

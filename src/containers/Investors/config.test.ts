@@ -37,6 +37,33 @@ describe('investor site configuration', () => {
 		}
 	})
 
+	test('resolves the LB public host without overriding an explicit public Host', async () => {
+		const { getInvestorsSiteForRequest } = await loadConfig()
+		const transportHosts = ['app-origin.example', 'defillama-app-pi.vercel.app']
+		for (const host of transportHosts) {
+			expect(getInvestorsSiteForRequest(host, 'INVESTORS.DEFILLAMA.COM:443')?.id).toBe('investors')
+			expect(getInvestorsSiteForRequest(host, 'enterprise.defillama.com')?.id).toBe('enterprise')
+			expect(getInvestorsSiteForRequest(host, 'defillama.com')).toBeNull()
+			for (const forwardedHost of [
+				undefined,
+				null,
+				'',
+				'unknown.example',
+				'investors.defillama.com.evil.com',
+				'https://investors.defillama.com',
+				'investors.defillama.com,enterprise.defillama.com',
+				['investors.defillama.com']
+			]) {
+				expect(getInvestorsSiteForRequest(host, forwardedHost)).toBeNull()
+			}
+		}
+		expect(getInvestorsSiteForRequest('enterprise.defillama.com', 'investors.defillama.com')?.id).toBe('enterprise')
+		expect(getInvestorsSiteForRequest('investors.defillama.com', 'unknown.example')?.id).toBe('investors')
+		expect(getInvestorsSiteForRequest('DEFILLAMA.COM:443', 'investors.defillama.com')).toBeNull()
+		expect(getInvestorsSiteForRequest('www.defillama.com', 'enterprise.defillama.com')).toBeNull()
+		expect(getInvestorsSiteForRequest(undefined, 'investors.defillama.com')).toBeNull()
+	})
+
 	test('supports explicit local hosts only in development', async () => {
 		const { getInvestorsSite } = await loadConfig()
 		vi.stubEnv('NODE_ENV', 'development')

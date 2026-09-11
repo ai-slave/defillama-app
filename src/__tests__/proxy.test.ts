@@ -186,6 +186,29 @@ describe('investors proxy routing', () => {
 		}
 	})
 
+	test('routes both public IR sites behind the LB technical host, including Next data', async () => {
+		const { proxy } = await loadProxy()
+		const cases = [
+			['investors.defillama.com', '/', '/investors'],
+			['enterprise.defillama.com', '/', '/investors'],
+			['investors.defillama.com', '/all', '/investors/all'],
+			['enterprise.defillama.com', '/all', '/investors/odyssey-ecosystem'],
+			['investors.defillama.com', '/spark', '/investors/spark'],
+			['enterprise.defillama.com', '/spark', '/404'],
+			['enterprise.defillama.com', '/odyssey-ecosystem', '/investors/odyssey-ecosystem'],
+			['investors.defillama.com', '/odyssey-ecosystem', '/404'],
+			['investors.defillama.com', '/_next/data/build-id/spark.json', '/_next/data/build-id/investors/spark.json']
+		]
+		for (const [publicHost, path, destination] of cases) {
+			const request = pageRequest(`http://app-origin.example${path}?tab=revenue`, undefined, '*/*')
+			request.headers.set('x-forwarded-host', publicHost)
+			expect(rewriteUrl(proxy(request))).toBe(`http://app-origin.example${destination}?tab=revenue`)
+		}
+		const main = pageRequest('http://app-origin.example/')
+		main.headers.set('x-forwarded-host', 'defillama.com')
+		expect(rewriteUrl(proxy(main))).toBeNull()
+	})
+
 	test('preserves query strings through rewrites', async () => {
 		const { proxy } = await loadProxy()
 		for (const path of ['/', '/all', '/spark']) {
