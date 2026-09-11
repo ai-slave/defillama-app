@@ -249,7 +249,7 @@ function GrowthReadout({
 		<div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-subtle px-3 py-2">
 			{/* Universal, never gated: nothing classifies the denomination's currency (EURC passes
 			    `stablecoin_only`), so hiding it for "stablecoins" would hide it wrongly. */}
-			<Tooltip content="Yield only, measured from the pool's redemption rate. It deliberately excludes the deposit token's own price move: over one stETH window the yield was +10.5% while the dollar value moved +48%.">
+			<Tooltip content="Base yield only, measured from the pool's redemption rate. It deliberately excludes the deposit token's own price move: over one stETH window the yield was +10.5% while the dollar value moved +48%.">
 				<span className={`mono-md-bold underline decoration-dotted ${toneClass}`}>
 					{formatUsd(summary.gain, { ...money, signDisplay: 'exceptZero' })} (
 					{formatPercent(summary.returnPct, { ...percent, signDisplay: 'exceptZero' })})
@@ -259,6 +259,13 @@ function GrowthReadout({
 				{summary.annualizedPct == null ? null : <>{formatPercent(summary.annualizedPct, percent)} APY over </>}
 				{formatNumber(summary.days)} {summary.days === 1 ? 'day' : 'days'}
 			</span>
+			{/* Said in the readout, not only on hover: a vault holding a yield-bearing token compounds two
+			    rates and this line draws exactly one of them. */}
+			<Tooltip content="Growth of the pool's own redemption rate, the verified base APY. Yield the deposit token earns on its own inside the pool (intrinsic growth, such as staking rewards accruing to stETH) is not drawn, and neither is the token's price.">
+				<span className="body-sm text-tertiary underline decoration-dotted">
+					Base yield only, excludes intrinsic growth
+				</span>
+			</Tooltip>
 			{showDrawdown ? (
 				<Tooltip
 					content={`Deepest fall from a previous high: peak ${isoDay(drawdown.peakDate)}, low ${isoDay(

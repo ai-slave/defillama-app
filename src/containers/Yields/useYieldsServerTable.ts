@@ -129,9 +129,10 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 		sortingState: sorting,
 		onPaginationChange: handlePaginationChange,
 		onSortingChange: handleSortingChange,
-		// Only while the rows on screen stand in for the ones requested. A background refresh of the
-		// page already shown (the seed's, on mount) keeps the table live and matches the server render.
-		interactionDisabled: rowsQuery.isFetching && rowsQuery.isPlaceholderData
+		// Whenever the rows on screen may not be the ones requested: the previous filters' page kept as a
+		// placeholder, or a stale cached page being refreshed. Only the seed's own background refresh on
+		// mount stays quiet, since those rows already match the server render.
+		interactionDisabled: rowsQuery.isFetching && (rowsQuery.isPlaceholderData || seed === undefined)
 	}
 
 	return {
