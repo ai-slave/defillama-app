@@ -83,6 +83,7 @@ function ClientMarquee() {
 			<div className="marquee flex items-center">
 				{items.map((c, i) => (
 					<div
+						// oxlint-disable-next-line react/no-array-index-key -- The marquee intentionally repeats each client in two fixed copies.
 						key={`${c.name}-${i}`}
 						className="flex shrink-0 items-center gap-2.5 opacity-50 transition-opacity hover:opacity-100"
 					>

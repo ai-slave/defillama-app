@@ -516,6 +516,7 @@ function Attestations({ meta }: { meta: RWAPlatformMeta }) {
 			{meta.milestones.length > 0 ? (
 				<ol className="flex flex-col gap-3 border-l border-subtle pl-4">
 					{meta.milestones.map((milestone, index) => (
+						// oxlint-disable-next-line react/no-array-index-key -- Read-only milestone entries have no IDs and may share dates or text.
 						<li key={`${milestone.date ?? 'undated'}-${index}`} className="relative flex flex-col">
 							<span className="absolute top-1.5 -left-[1.2rem] size-2 rounded-full bg-brand" aria-hidden="true" />
 							{milestone.date ? <span className="body-sm text-tertiary">{milestone.date}</span> : null}

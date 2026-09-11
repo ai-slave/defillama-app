@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Tooltip } from '~/ui/Tooltip'
+import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 
 export function KpiCard({
@@ -81,6 +82,8 @@ function renderTableValue(value: unknown): React.ReactNode {
 }
 
 export function SimpleTable<Row extends object>({
+	getRowKey,
+	getOccurrenceKey,
 	rows,
 	cols,
 	empty = 'No data'
@@ -88,7 +91,7 @@ export function SimpleTable<Row extends object>({
 	rows: Array<Row> | undefined
 	cols: Array<Col<Row>>
 	empty?: string
-}) {
+} & RowIdentity<Row>) {
 	if (!rows || rows.length === 0) return <div className="px-2 py-4 text-xs text-pro-text-secondary">{empty}</div>
 	return (
 		<div className="overflow-x-auto">
@@ -106,9 +109,12 @@ export function SimpleTable<Row extends object>({
 					</tr>
 				</thead>
 				<tbody>
-					{rows.map((r, i) => (
+					{(getRowKey
+						? rows.map((item) => ({ item, key: getRowKey(item) }))
+						: keyedOccurrences(rows, getOccurrenceKey)
+					).map(({ item: r, key }) => (
 						<tr
-							key={i}
+							key={key}
 							className="border-b border-pro-cards-border/60 transition-colors last:border-0 hover:bg-sl-hover-bg"
 						>
 							{cols.map((c) => {

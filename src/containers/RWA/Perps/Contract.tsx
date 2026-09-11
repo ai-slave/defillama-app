@@ -252,6 +252,7 @@ function RWAPerpsContractInfoCard({ contract }: { contract: IRWAPerpsContractDat
 			</div>
 			<div className="hidden gap-x-6 xl:grid xl:grid-cols-2">
 				{desktopInfoColumns.map((rows, index) => (
+					// oxlint-disable-next-line react/no-array-index-key -- These positions identify layout columns; metric rows have their own keys.
 					<div className="flex flex-col" key={`info-column-${index}`}>
 						{rows.map((row) => (
 							<MetricRow key={row.label} label={row.label} tooltip={row.tooltip} value={renderInfoRowValue(row)} />

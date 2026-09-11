@@ -79,6 +79,7 @@ export const SearchResults = memo(function SearchResults({
 							.filter((m) => m.message_id)
 							.map((match, i) => (
 								<button
+									// oxlint-disable-next-line react/no-array-index-key -- A message can yield multiple anonymous search chunks; these preview slots share its navigation target.
 									key={`${result.session_id}-${match.message_id}-${i}`}
 									type="button"
 									onClick={() => match.message_id && onMatchClick(result.session_id, match.message_id)}

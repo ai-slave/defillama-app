@@ -16,7 +16,6 @@
 		"functions": ["clsx", "cn", "cva", "tw"]
 	},
 	"ignorePatterns": [
-		".oxlintrc.baseline.counts.json",
 		".reactcompiler.baseline.json",
 		"/.claude",
 		"/node_modules",

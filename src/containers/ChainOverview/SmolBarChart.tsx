@@ -28,7 +28,8 @@ export function SmolBarChart({
 		const neg = maxNeg > 0
 
 		return {
-			bars: values.map((v) => ({
+			bars: series.map(([timestamp, v]) => ({
+				timestamp,
 				heightPct: v >= 0 ? (v / maxPos) * 100 : (Math.abs(v) / (maxNeg || 1)) * 100,
 				isNegative: v < 0,
 				fill: v >= 0 ? POSITIVE_BAR_COLOR : purple
@@ -48,8 +49,8 @@ export function SmolBarChart({
 		<div className={className ?? 'my-auto h-[132px]'}>
 			<div ref={containerRef} className="relative h-full" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
 				<div className="flex items-end" style={{ height: posHeight }}>
-					{bars.map((bar, i) => (
-						<div key={i} className="flex h-full flex-1 items-end justify-center">
+					{bars.map((bar) => (
+						<div key={bar.timestamp} className="flex h-full flex-1 items-end justify-center">
 							{!bar.isNegative ? (
 								<div
 									className="min-h-px w-[70%] min-w-[2px]"
@@ -61,8 +62,8 @@ export function SmolBarChart({
 				</div>
 				{hasNegative ? (
 					<div className="flex items-start" style={{ height: negHeight }}>
-						{bars.map((bar, i) => (
-							<div key={i} className="flex h-full flex-1 items-start justify-center">
+						{bars.map((bar) => (
+							<div key={bar.timestamp} className="flex h-full flex-1 items-start justify-center">
 								{bar.isNegative ? (
 									<div
 										className="min-h-px w-[70%] min-w-[2px]"

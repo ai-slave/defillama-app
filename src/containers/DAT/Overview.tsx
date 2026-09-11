@@ -166,14 +166,14 @@ const overviewColumns = [
 
 				return (
 					<Hovercard
-						content={<AssetTooltipContent assetBreakdown={assetBreakdown} protocolName={info.row.original.name} />}
+						content={<AssetTooltipContent assetBreakdown={assetBreakdown} />}
 						contentClassName="w-72 max-w-(--popover-available-width) p-3"
 						render={<button type="button" />}
 						className="ml-auto flex h-5 w-full! flex-nowrap items-center bg-white"
 					>
 						{assetBreakdown.map((asset) => (
 							<div
-								key={asset.name + asset.dominance + info.row.original.name}
+								key={asset.asset}
 								style={{ width: `${asset.dominance}%`, background: asset.color }}
 								className="h-5"
 							/>
@@ -288,6 +288,7 @@ const overviewColumns = [
 // ── Tooltip helpers ─────────────────────────────────────────────────────
 
 interface BreakdownData {
+	asset: string
 	name: string
 	amount?: number | null
 	ticker?: string
@@ -320,17 +321,11 @@ function Breakdown({ data }: { data: BreakdownData }) {
 	)
 }
 
-function AssetTooltipContent({
-	assetBreakdown,
-	protocolName
-}: {
-	assetBreakdown: Array<BreakdownData>
-	protocolName: string
-}) {
+function AssetTooltipContent({ assetBreakdown }: { assetBreakdown: Array<BreakdownData> }) {
 	return (
 		<span className="flex flex-col gap-4">
 			{assetBreakdown.map((breakdown) => (
-				<Breakdown data={breakdown} key={`${breakdown.name + breakdown.usdValue + protocolName}tooltip-content`} />
+				<Breakdown data={breakdown} key={breakdown.asset} />
 			))}
 		</span>
 	)

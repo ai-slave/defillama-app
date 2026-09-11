@@ -44,6 +44,7 @@ function Node({ node, protocol }: { node: ConditionNode; protocol: ProtocolRiskF
 			<span className="label-sm text-primary">{connector}:</span>
 			<ul className="mt-1 ml-4 list-disc space-y-1 marker:text-secondary">
 				{(node.children ?? []).map((child, i) => (
+					// oxlint-disable-next-line react/no-array-index-key -- Read-only condition branches have no IDs and may repeat refs or descriptions.
 					<Node key={i} node={child} protocol={protocol} />
 				))}
 			</ul>

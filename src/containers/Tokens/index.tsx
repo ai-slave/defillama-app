@@ -165,6 +165,7 @@ function RightsChipList({ items, tone, wrap = false }: { items: Array<string>; t
 	return (
 		<span className={`flex min-w-0 items-center gap-1 ${wrap ? 'flex-wrap' : 'flex-nowrap'}`}>
 			{items.map((item, index) => (
+				// oxlint-disable-next-line react/no-array-index-key -- These read-only labels preserve repeated occurrences from authored text.
 				<RightsChip key={`${item}-${index}`} label={item} tone={tone} />
 			))}
 		</span>

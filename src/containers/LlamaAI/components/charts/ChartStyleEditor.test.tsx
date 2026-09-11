@@ -339,7 +339,9 @@ describe('ChartStyleEditor', () => {
 		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
 		await act(async () => root.render(<EditorHarness editorConfig={bucketConfig} onSave={onSave} />))
 
+		const secondSeriesInput = container.querySelector('[aria-label="Series 2 name"]')
 		await clickButton('Move series 2 up')
+		expect(container.querySelector('[aria-label="Series 1 name"]')).toBe(secondSeriesInput)
 		expect(previewNames()).toBe('2 days|11-20 days|6-10 days|1 day')
 
 		await clickButton('Save')
@@ -417,5 +419,34 @@ describe('ChartStyleEditor', () => {
 		const patch = call[1]
 		expect(patch.order).toEqual([1, 0])
 		expect(patch.series?.map((series) => series.metricClass)).toEqual(['stock', 'flow'])
+	})
+	test('preserves duplicate annotation inputs through deletion and edits and saves only tuples', async () => {
+		const onSave = vi.fn(async (_config: ChartConfiguration, _patch: ChartStylePatch) => undefined)
+		const duplicateConfig: ChartConfiguration = {
+			...config,
+			hallmarks: [
+				[1_768_867_200, ''],
+				[1_768_867_200, '']
+			]
+		}
+		await act(async () => root.render(<EditorHarness editorConfig={duplicateConfig} onSave={onSave} />))
+		const surviving = container.querySelector<HTMLInputElement>('[aria-label="Annotation 2 label"]')!
+		surviving.focus()
+		await clickButton('Remove annotation')
+		expect(container.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
+		expect(document.activeElement).toBe(surviving)
+		await act(async () => {
+			Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(surviving, 'Edited')
+			surviving.dispatchEvent(new Event('input', { bubbles: true }))
+		})
+		expect(container.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
+		await clickButton('+ Add annotation')
+		expect(container.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
+		await clickButton('Save')
+		expect(onSave.mock.calls[0][0].hallmarks).toEqual([
+			[1_768_867_200, 'Edited'],
+			[expect.any(Number), '']
+		])
+		expect(onSave.mock.calls[0][1].hallmarks).toEqual(onSave.mock.calls[0][0].hallmarks)
 	})
 })

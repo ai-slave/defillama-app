@@ -239,6 +239,7 @@ export default function Tvl() {
 					</div>
 					<ChartCard title="Vaults Overview">
 						<SimpleTable
+							getOccurrenceKey={(row) => JSON.stringify([row.vault, row.chain])}
 							rows={u.vaults}
 							cols={[
 								{ key: 'vault', label: 'Vault' },
@@ -258,6 +259,7 @@ export default function Tvl() {
 					{(u.marketsByChain || []).map((g) => (
 						<ChartCard key={g.chain} title={`${g.chain} — Markets`}>
 							<SimpleTable
+								getOccurrenceKey={(row) => row.market}
 								rows={g.markets}
 								cols={[
 									{ key: 'market', label: 'Market' },
@@ -344,6 +346,7 @@ export default function Tvl() {
 			<SectionHeader>Ecosystem DEX LP TVL</SectionHeader>
 			<ChartCard title={data?.synthLpTvl?.title || 'Ecosystem Liquidity Pools'} subtitle={data?.synthLpTvl?.subtitle}>
 				<SimpleTable
+					getOccurrenceKey={(row) => JSON.stringify([row.venue, row.chain, row.pool])}
 					rows={data?.synthLpTvl?.pools}
 					cols={[
 						{ key: 'venue', label: 'Venue' },
@@ -361,6 +364,7 @@ export default function Tvl() {
 				subtitle={data?.metbasis?.totalFormatted ? `Total ${data.metbasis.totalFormatted}` : undefined}
 			>
 				<SimpleTable
+					getOccurrenceKey={(row) => JSON.stringify([row.chain, row.venue, row.pool])}
 					rows={data?.metbasis?.pools}
 					cols={[
 						{ key: 'chain', label: 'Chain' },

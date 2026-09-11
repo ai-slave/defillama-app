@@ -42,6 +42,7 @@ export function TeamFaqCard({ defaultOpenIndex = 0 }: { defaultOpenIndex?: numbe
 					const isLast = index === FAQ_ITEMS.length - 1
 
 					return (
+						// oxlint-disable-next-line react/no-array-index-key -- The authored FAQ order is fixed; expansion and aria IDs use these slots.
 						<div key={index} className={`py-3 ${!isLast ? 'border-b border-sub-border' : ''}`}>
 							<button
 								type="button"

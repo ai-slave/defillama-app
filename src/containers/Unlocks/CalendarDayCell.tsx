@@ -111,9 +111,9 @@ export function CalendarDayCell({ dayInfo, unlocksData, maxUnlockValue }: Calend
 						<>
 							<div className="-mx-2 border-t border-medium" />
 							<div className="flex flex-col gap-1.5">
-								{dayData.events.map((event, index) => (
+								{dayData.events.map((event) => (
 									<div
-										key={`${event.protocol}-${event.value}-${index}`}
+										key={JSON.stringify([event.protocol, event.unit ?? 'once'])}
 										className="flex items-center justify-between gap-4"
 									>
 										<BasicLink

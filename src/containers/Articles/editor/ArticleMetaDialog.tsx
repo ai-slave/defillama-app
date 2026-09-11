@@ -88,7 +88,9 @@ export function ArticleMetaDialog({
 	const [scheduleMode, setScheduleMode] = useState(false)
 	const [scheduleAtLocal, setScheduleAtLocal] = useState('')
 	const [scheduleError, setScheduleError] = useState<string | null>(null)
-	const [guestRows, setGuestRows] = useState<Array<ArticleGuestAuthor>>(() => article.guestAuthors ?? [])
+	const [guestRows, setGuestRows] = useState<Array<ArticleGuestAuthor & { id: string }>>(() =>
+		(article.guestAuthors ?? []).map((guest) => ({ ...guest, id: crypto.randomUUID() }))
+	)
 	const [assetRows, setAssetRows] = useState<Array<ArticlePageAsset>>(() => article.pageAssets ?? [])
 
 	// While open, the schedule fields follow the saved schedule; the row drafts restart only when the dialog opens.
@@ -106,19 +108,21 @@ export function ArticleMetaDialog({
 	if (dialogOpen !== wasOpen) {
 		setWasOpen(dialogOpen)
 		if (dialogOpen) {
-			setGuestRows(article.guestAuthors ?? [])
+			setGuestRows((article.guestAuthors ?? []).map((guest) => ({ ...guest, id: crypto.randomUUID() })))
 			setAssetRows(article.pageAssets ?? [])
 		}
 	}
 
 	const minScheduleLocal = toDateTimeLocal(new Date().toISOString())
 
-	const commitGuestAuthors = (rows: Array<ArticleGuestAuthor>) =>
+	const commitGuestAuthors = (rows: Array<ArticleGuestAuthor & { id: string }>) =>
 		updateArticle(
 			'guestAuthors',
-			rows.filter((guest) => guest.name.trim().length > 0)
+			rows
+				.filter((guest) => guest.name.trim().length > 0)
+				.map(({ name, type, url }) => ({ name, type, ...(url !== undefined ? { url } : {}) }))
 		)
-	const addGuestAuthor = () => setGuestRows((rows) => [...rows, { name: '', type: 'Person' }])
+	const addGuestAuthor = () => setGuestRows((rows) => [...rows, { id: crypto.randomUUID(), name: '', type: 'Person' }])
 	const updateGuestAuthor = (index: number, patch: Partial<ArticleGuestAuthor>) => {
 		const next = guestRows.map((guest, i) => (i === index ? { ...guest, ...patch } : guest))
 		setGuestRows(next)
@@ -679,7 +683,7 @@ export function ArticleMetaDialog({
 						<div className="grid gap-2">
 							{guestRows.map((guest, index) => (
 								<div
-									key={index}
+									key={guest.id}
 									className="group flex items-start gap-2.5 rounded-lg border border-medium bg-page px-2.5 py-2 transition-colors focus-within:border-link/50 hover:border-tertiary/40"
 								>
 									<div

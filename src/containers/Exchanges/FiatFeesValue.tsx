@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import type { ExchangeFiatFeeRow, ExchangeFiatFees } from './models'
 
 export function fiatFeeSummary(fees: ExchangeFiatFees): string {
@@ -31,8 +32,8 @@ function FiatFeeTable({ label, rows }: { label: string; rows: Array<ExchangeFiat
 							</tr>
 						</thead>
 						<tbody>
-							{rows.map((row, index) => (
-								<tr key={`${row.method}:${row.currency}:${index}`}>
+							{keyedOccurrences(rows, (row) => JSON.stringify([row.method, row.currency])).map(({ item: row, key }) => (
+								<tr key={key}>
 									<td className="border-b border-subtle px-2 py-1.5 text-primary">{displayText(row.method)}</td>
 									<td className="border-b border-subtle px-2 py-1.5 text-primary">{displayText(row.currency)}</td>
 									<td className="border-b border-subtle px-2 py-1.5 text-primary">{displayText(row.fee)}</td>

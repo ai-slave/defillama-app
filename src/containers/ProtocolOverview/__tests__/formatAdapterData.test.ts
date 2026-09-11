@@ -183,8 +183,13 @@ describe('formatAdapterData', () => {
 		expect(result).toMatchObject({
 			defaultChartView: 'weekly',
 			childMethodologies: [
-				['Gauntlet V1', 'Custom methodology V1', 'https://example.com/v1'],
-				['Gauntlet V2', 'Custom methodology V2', 'https://example.com/v2']
+				{
+					id: '1',
+					name: 'Gauntlet V1',
+					methodology: 'Custom methodology V1',
+					methodologyURL: 'https://example.com/v1'
+				},
+				{ id: '2', name: 'Gauntlet V2', methodology: 'Custom methodology V2', methodologyURL: 'https://example.com/v2' }
 			]
 		})
 	})
@@ -227,11 +232,50 @@ describe('formatAdapterData', () => {
 
 		expect(result).toMatchObject({
 			childMethodologies: [
-				['Uniswap V1', 'No revenue for UNI holders', 'https://example.com/v1'],
-				['Uniswap V2', '17% of fees buyback and burn UNI', 'https://example.com/v2'],
-				['Uniswap V3', 'Portion of fees buyback and burn UNI', 'https://example.com/v3']
+				{
+					id: '1',
+					name: 'Uniswap V1',
+					methodology: 'No revenue for UNI holders',
+					methodologyURL: 'https://example.com/v1'
+				},
+				{
+					id: '2',
+					name: 'Uniswap V2',
+					methodology: '17% of fees buyback and burn UNI',
+					methodologyURL: 'https://example.com/v2'
+				},
+				{
+					id: '3',
+					name: 'Uniswap V3',
+					methodology: 'Portion of fees buyback and burn UNI',
+					methodologyURL: 'https://example.com/v3'
+				}
 			]
 		})
 		expect(result).not.toHaveProperty('methodology')
 	})
+})
+
+test('keeps child IDs when display names collide, change or reorder', () => {
+	const first = {
+		name: 'first',
+		defillamaId: '1',
+		displayName: 'Same',
+		methodology: { HoldersRevenue: 'First method' },
+		methodologyURL: null,
+		breakdownMethodology: {},
+		defaultChartView: 'daily' as const
+	}
+	const second = { ...first, name: 'second', defillamaId: '2', methodology: { HoldersRevenue: 'Second method' } }
+	const format = (children: NonNullable<IAdapterProtocolMetrics['childProtocols']>) =>
+		formatAdapterData({ data: createAdapterMetrics({ childProtocols: children }), methodologyKey: 'HoldersRevenue' })
+			.childMethodologies
+	expect(format([first, second])?.map(({ id, name }) => ({ id, name }))).toEqual([
+		{ id: '1', name: 'Same' },
+		{ id: '2', name: 'Same' }
+	])
+	expect(format([{ ...second, displayName: 'Renamed' }, first])?.map(({ id, name }) => ({ id, name }))).toEqual([
+		{ id: '2', name: 'Renamed' },
+		{ id: '1', name: 'Same' }
+	])
 })

@@ -670,7 +670,7 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 									<span className="text-secondary">Parent Platform</span>
 									<span className="flex flex-wrap items-center gap-x-1 font-medium">
 										{parentPlatforms.map((platform, idx) => (
-											<span key={`${platform}-${idx}`} className="flex items-center gap-0.5">
+											<span key={platform} className="flex items-center gap-0.5">
 												<BasicLink href={`/rwa/platform/${rwaSlug(platform)}`} className="text-link hover:underline">
 													{platform}
 												</BasicLink>
@@ -911,7 +911,8 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 				<SectionCard title="Notes">
 					<ul className="flex list-disc flex-col gap-2 pl-5 body-md text-primary">
 						{asset.descriptionNotes.map((note, idx) => (
-							<li key={`${keyBase}-note-${idx}-${note.slice(0, 50)}`}>{note}</li>
+							// oxlint-disable-next-line react/no-array-index-key -- Notes are read-only prose without IDs; identical notes are valid.
+							<li key={`${keyBase}-note-${idx}`}>{note}</li>
 						))}
 					</ul>
 				</SectionCard>

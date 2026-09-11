@@ -754,6 +754,7 @@ function GridTable<T>({ rows, cols }: { rows: Array<T>; cols: Array<TableCol<T>>
 					const zebra = i % 2 === 1
 					return (
 						<div
+							// oxlint-disable-next-line react/no-array-index-key -- This table only renders fixed demonstration datasets.
 							key={i}
 							className={`grid font-mono text-[11.5px] tabular-nums transition-colors hover:bg-brand/5 ${
 								zebra ? 'bg-pro-app-bg/25' : ''

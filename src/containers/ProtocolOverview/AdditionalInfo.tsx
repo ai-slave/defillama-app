@@ -372,17 +372,17 @@ function MethodologyByAdapter({
 				<h3 className="font-medium text-secondary">{title}:</h3>
 				<div className="flex flex-col gap-0.5">
 					{adapter.childMethodologies.map((child) =>
-						child[1] ? (
-							child[2] ? (
+						child.methodology ? (
+							child.methodologyURL ? (
 								<a
-									key={`${title}-${child[0]}-${child[1] ?? ''}-${child[2] ?? ''}`}
-									href={child[2]}
+									key={child.id}
+									href={child.methodologyURL}
 									target="_blank"
 									rel="noopener noreferrer"
 									className="hover:underline"
 								>
-									<span>{child[0]} - </span> <span>{child[1]}</span>
-									{child[2] ? (
+									<span>{child.name} - </span> <span>{child.methodology}</span>
+									{child.methodologyURL ? (
 										<span className="relative top-0.5 left-1 inline-block">
 											<Icon name="external-link" className="size-3.5" />
 											<span className="sr-only">View code on GitHub</span>
@@ -390,8 +390,8 @@ function MethodologyByAdapter({
 									) : null}
 								</a>
 							) : (
-								<p key={`${title}-${child[0]}-${child[1] ?? ''}`}>
-									{child[0]}: {child[1]}
+								<p key={child.id}>
+									{child.name}: {child.methodology}
 								</p>
 							)
 						) : null

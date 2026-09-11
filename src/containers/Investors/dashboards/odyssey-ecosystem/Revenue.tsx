@@ -314,6 +314,7 @@ export default function Revenue() {
 					<ChartCard title="Revenue by source" subtitle={`Total ${mc.claimedFormatted} this month`}>
 						{mc.hasBreakdown && mc.items?.length ? (
 							<SimpleTable
+								getRowKey={(row) => JSON.stringify([row.chain, row.id])}
 								rows={mc.items}
 								cols={[
 									{ key: 'label', label: 'Source' },
@@ -364,6 +365,7 @@ export default function Revenue() {
 			<SectionHeader>Treasury LP Positions · Pending Rewards</SectionHeader>
 			<SubSectionCard title="Staked LP gauge rewards" total={lpTotal}>
 				<SimpleTable
+					getOccurrenceKey={(row) => row.pool}
 					rows={up.treasuryLps}
 					cols={[
 						{ key: 'pool', label: 'Pool' },
@@ -379,6 +381,7 @@ export default function Revenue() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<SubSectionCard title="Ethereum UniV3" total={ethUniv3Total}>
 					<SimpleTable
+						getOccurrenceKey={(row) => JSON.stringify([row.position, row.pool])}
 						rows={up.ethUniv3}
 						cols={[
 							{ key: 'position', label: 'Position' },
@@ -390,6 +393,7 @@ export default function Revenue() {
 				</SubSectionCard>
 				<SubSectionCard title="Plasma UniV3" total={plasmaTotal}>
 					<SimpleTable
+						getOccurrenceKey={(row) => JSON.stringify([row.position, row.pool])}
 						rows={up.plasmaUniv3}
 						cols={[
 							{ key: 'position', label: 'Position' },
@@ -404,6 +408,7 @@ export default function Revenue() {
 			<SectionHeader>Gauge & Lock Rewards</SectionHeader>
 			<SubSectionCard title="veAERO Locks (Base)" total={veAeroTotal}>
 				<SimpleTable
+					getOccurrenceKey={(row) => String(row.nft)}
 					rows={up.aeroLocks}
 					cols={[
 						{ key: 'nft', label: 'NFT' },
@@ -418,6 +423,7 @@ export default function Revenue() {
 			<SectionHeader>Morpho AMO · Unrealised PnL</SectionHeader>
 			<SubSectionCard title="AMO vault positions" total={amoTotal}>
 				<SimpleTable
+					getOccurrenceKey={(row) => JSON.stringify([row.vaultName, row.asset])}
 					rows={up.amoPositions}
 					cols={[
 						{ key: 'vaultName', label: 'Vault' },
@@ -445,6 +451,7 @@ export default function Revenue() {
 			<SectionHeader>Convex vlCVX · Vote-locked Rewards</SectionHeader>
 			<SubSectionCard title="vlCVX claimable" subtitle={`Claimable rewards total ${fmtUsd(convexClaimable)}.`}>
 				<SimpleTable
+					getOccurrenceKey={(row) => JSON.stringify([row.type, row.unlock])}
 					rows={up.convex}
 					cols={[
 						{ key: 'type', label: 'Type' },
@@ -477,6 +484,7 @@ export default function Revenue() {
 								</div>
 							</div>
 							<SimpleTable
+								getOccurrenceKey={(row) => row.chain}
 								rows={r.byChain}
 								cols={[
 									{ key: 'chain', label: 'Chain' },

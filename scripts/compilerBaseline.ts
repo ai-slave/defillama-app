@@ -22,7 +22,7 @@
 import { spawnSync } from 'node:child_process'
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { type Counts, findGrowth, findStale, parseCounts, renderCounts, total } from './lib/lintBaseline'
+import { type Counts, findGrowth, findStale, parseCounts, renderCounts, total } from './lib/compilerBaselineCounts'
 
 const COUNTS_PATH = '.reactcompiler.baseline.json'
 const SKIP_REASON = 'Skipped by directive'

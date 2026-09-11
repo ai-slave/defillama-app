@@ -11,6 +11,7 @@ import {
 	popoverMobileDismissStyles,
 	popoverMobileWrapperClassName
 } from '~/ui/Popover'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { BasicLink } from './Link'
 
 interface IMenuProps {
@@ -37,7 +38,7 @@ export function Menu({
 }: IMenuProps) {
 	const { _options } = useMemo(() => {
 		return {
-			_options: typeof options === 'string' ? [options] : options
+			_options: keyedOccurrences(typeof options === 'string' ? [options] : options, (value) => value)
 		}
 	}, [options])
 	const surfaceStyles = popoverVariant === 'legacy' ? legacyMenuSurfaceStyles : menuSurfaceStyles
@@ -67,10 +68,10 @@ export function Menu({
 					<Icon name="x" className="size-5" />
 				</Ariakit.PopoverDismiss>
 
-				{_options.map((value, i) =>
+				{_options.map(({ item: value, key }) =>
 					onItemClick ? (
 						<Ariakit.MenuItem
-							key={value + i}
+							key={key}
 							onClick={() => onItemClick(value)}
 							className={`${rowStyles} text-ellipsis whitespace-nowrap`}
 						>
@@ -79,14 +80,14 @@ export function Menu({
 					) : isExternal ? (
 						<Ariakit.MenuItem
 							render={<a href={value} target="_blank" rel="noopener noreferrer" {...getItemAttributes?.(value)} />}
-							key={value + i}
+							key={key}
 							className={externalRowStyles}
 						>
 							{value}
 						</Ariakit.MenuItem>
 					) : (
 						<Ariakit.MenuItem
-							key={value + i}
+							key={key}
 							render={<BasicLink href={value} />}
 							className={`${rowStyles} text-ellipsis whitespace-nowrap`}
 						>

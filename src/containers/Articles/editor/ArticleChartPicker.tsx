@@ -299,8 +299,8 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 	const [caption, setCaption] = useState(normalizedInitialConfig?.caption ?? '')
 	const [range, setRange] = useState<ArticleChartRange>(normalizedInitialConfig?.range ?? 'all')
 	const [logScale, setLogScale] = useState(normalizedInitialConfig?.logScale ?? false)
-	const [annotations, setAnnotations] = useState<Array<ArticleChartAnnotation>>(
-		normalizedInitialConfig?.annotations ?? []
+	const [annotations, setAnnotations] = useState<Array<ArticleChartAnnotation & { id: string }>>(() =>
+		(normalizedInitialConfig?.annotations ?? []).map((annotation) => ({ ...annotation, id: crypto.randomUUID() }))
 	)
 	const [protocolMetric, setProtocolMetric] = useState<string>(initialLastProtocol?.chartType ?? DEFAULT_METRIC)
 	const [chainMetric, setChainMetric] = useState<string>(initialLastChain?.chartType ?? DEFAULT_METRIC)
@@ -441,7 +441,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 			chartType: chartTypeLegacy,
 			...(range !== 'all' ? { range } : {}),
 			...(logScale ? { logScale: true } : {}),
-			...(annotations.length > 0 ? { annotations } : {}),
+			...(annotations.length > 0 ? { annotations: annotations.map(({ date, label }) => ({ date, label })) } : {}),
 			...(caption.trim() ? { caption: caption.trim() } : {})
 		})
 		store.hide()
@@ -452,7 +452,10 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 	}
 	const addAnnotation = () => {
 		if (annotations.length >= MAX_ANNOTATIONS) return
-		setAnnotations((prev) => [...prev, { date: new Date().toISOString().slice(0, 10), label: '' }])
+		setAnnotations((prev) => [
+			...prev,
+			{ id: crypto.randomUUID(), date: new Date().toISOString().slice(0, 10), label: '' }
+		])
 	}
 	const removeAnnotation = (index: number) => {
 		setAnnotations((prev) => prev.filter((_, i) => i !== index))
@@ -683,7 +686,7 @@ export function ArticleChartPickerDialog({ store, onInsert, initialConfig }: Pro
 									<ul className="grid gap-1.5">
 										{annotations.map((annotation, i) => (
 											<li
-												key={i}
+												key={annotation.id}
 												className="grid grid-cols-[16px_120px_1fr_24px] items-center gap-2 rounded-md border border-medium bg-page px-2 py-1.5"
 											>
 												<span className="font-jetbrains text-[10px] font-semibold text-tertiary">

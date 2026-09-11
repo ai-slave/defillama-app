@@ -1,34 +1,15 @@
-# Lint and React Compiler ratchets
+# Lint and React Compiler checks
 
-Two ratchets keep quality debt from growing: one for oxlint violations, one for React Compiler
-bailouts. CI runs both. This note covers how they work and the lessons that are not obvious from
-reading the scripts. Per-rule decisions live in `.oxlintrc.json`, next to the rule.
+`bun run lint` runs plain Oxlint against `.oxlintrc.json`. CI and the pre-commit hook use the same
+rule set. The lint baseline and its file-wide overrides have been retired.
 
-## The lint ratchet
+`react/no-array-index-key` remains an error. Editable rows retain local creation-time IDs; persisted
+records use domain identity. Intentional display slots carry a narrowly scoped inline exception
+explaining their lifecycle. Table callers explicitly opt into occurrence keys when source identity
+is unavailable; those keys cannot track distinct duplicate records swapping positions.
 
-- `.oxlintrc.json` is the hand-written rule set. A rule that is off carries a comment saying why and
-  what would re-open it.
-- `.oxlintrc.baseline.counts.json` is the only committed generated file: violations per file per rule,
-  one line per file, so fixing a file changes one line. `bun run lint:baseline` regenerates it. It is
-  marked `linguist-generated`, so GitHub collapses it in diffs.
-- `.oxlintrc.baseline.json` is derived from the counts by `bun scripts/lintBaseline.ts --emit`, which
-  `bun run lint` and the pre-commit hook run first. It is gitignored. It turns each rule off in the
-  files that violate it, so oxlint passes.
-- `bun run lint:baseline:check` fails when the working tree has more violations than recorded for any
-  rule/file, when a recorded entry is stale, or when the committed counts accept more debt than the
-  same file on `origin/main`. CI passes `--base origin/main`. Regenerating can therefore only shrink
-  the baseline.
-- Every source file is in scope. Scope is narrowed by rule, never by path.
-
-**What is left:** `react/no-array-index-key`, 116 violations across 73 files. That is the whole
-baseline. When it reaches zero the baseline file, `scripts/lintBaseline.ts`, `scripts/lib/lintBaseline.ts`,
-`scripts/lintBaseline.test.ts`, the `lint:baseline*` scripts and the CI step can all be deleted, and
-`bun run lint` becomes plain `oxlint`. A rule nobody intends to fix belongs off in `.oxlintrc.json`
-with a reason, not in a 73-file ledger.
-
-Still awaiting a decision, and not lint decisions: `eslint/no-console` (299 hits) needs a logger call,
-and the five type-aware rules sitting at `warn` need both the strict-types migration and a ruling on
-whether CI can afford type-aware linting.
+Still awaiting a decision: `eslint/no-console` needs a logger call, and the five type-aware rules at
+`warn` need the strict-types migration and a decision on CI cost.
 
 ## The React Compiler baseline
 
@@ -36,7 +17,7 @@ whether CI can afford type-aware linting.
 that stops compiling fails nothing: it simply stops being memoized, and nothing downstream of it is
 cached either. That is how `AgenticChat` went its whole life without compiling.
 
-It mirrors the lint ratchet — `.reactcompiler.baseline.json` records bailouts per file per reason, one
+Its count helpers live in `scripts/lib/compilerBaselineCounts.ts`. `.reactcompiler.baseline.json` records bailouts per file per reason, one
 line per file; the check fails if a file bails more than recorded, if the record is stale, or if the
 committed record accepts more than `origin/main` does. Regenerate with `bun run compiler:baseline`. A
 full run recompiles every non-test `.ts`/`.tsx` under `src` and takes about a minute.

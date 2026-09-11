@@ -59,21 +59,22 @@ export function formatAdapterData({ data, methodologyKey }: NullableAdapterDataO
 	}
 
 	if (data.childProtocols?.length) {
-		const childMethodologies: Array<[string, string | null, string | null]> = []
+		const childMethodologies: NonNullable<AdapterOverview['childMethodologies']> = []
 		for (const childProtocol of data.childProtocols) {
 			if (methodologyKey && !commonMethodology[methodologyKey]) {
-				childMethodologies.push([
-					childProtocol.displayName,
-					getAdapterMethodology(childProtocol.methodology, methodologyKey),
-					childProtocol.methodologyURL ?? null
-				])
+				childMethodologies.push({
+					id: childProtocol.defillamaId,
+					name: childProtocol.displayName,
+					methodology: getAdapterMethodology(childProtocol.methodology, methodologyKey),
+					methodologyURL: childProtocol.methodologyURL ?? null
+				})
 			}
 		}
 
-		const areMethodologiesDifferent = new Set(childMethodologies.map((entry) => entry[1])).size > 1
+		const areMethodologiesDifferent = new Set(childMethodologies.map((entry) => entry.methodology)).size > 1
 		const topChildMethodology =
 			data.childProtocols.length > 1
-				? childMethodologies.find((entry) => entry[0] === data.childProtocols?.[0]?.displayName)
+				? childMethodologies.find((entry) => entry.name === data.childProtocols?.[0]?.displayName)
 				: null
 
 		return {
@@ -84,12 +85,12 @@ export function formatAdapterData({ data, methodologyKey }: NullableAdapterDataO
 			annualized1y: data.annualized1y ?? null,
 			totalAllTime: data.totalAllTime ?? null,
 			...(areMethodologiesDifferent
-				? { childMethodologies: childMethodologies.filter((entry) => !!(entry[1] || entry[2])) }
+				? { childMethodologies: childMethodologies.filter((entry) => !!(entry.methodology || entry.methodologyURL)) }
 				: {
 						methodology: methodologyKey
-							? (topChildMethodology?.[1] ?? commonMethodology[methodologyKey] ?? null)
+							? (topChildMethodology?.methodology ?? commonMethodology[methodologyKey] ?? null)
 							: null,
-						methodologyURL: topChildMethodology?.[2] ?? null
+						methodologyURL: topChildMethodology?.methodologyURL ?? null
 					}),
 			defaultChartView: data.defaultChartView ?? 'daily',
 			chainBreakdown

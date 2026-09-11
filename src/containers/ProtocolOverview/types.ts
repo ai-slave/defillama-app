@@ -66,7 +66,7 @@ interface IAdapterOverview {
 	methodology?: string | null
 	methodologyURL?: string | null
 	breakdownMethodology?: Record<string, string> | null
-	childMethodologies?: Array<[string, string | null, string | null]>
+	childMethodologies?: Array<{ id: string; name: string; methodology: string | null; methodologyURL: string | null }>
 	defaultChartView?: ChartTimeGrouping
 	chainBreakdown?: Record<
 		string,

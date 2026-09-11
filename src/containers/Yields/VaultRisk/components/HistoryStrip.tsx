@@ -3,6 +3,7 @@ import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import { formatVerified } from '../format'
 import { ExternalLink } from '../primitives/ExternalLink'
@@ -76,7 +77,7 @@ export interface AuditCluster {
 	count: number
 	from: string
 	to: string
-	items: Array<{ firm: string; date: string; url?: string }>
+	items: Array<{ key: string; firm: string; date: string; url?: string }>
 }
 
 export interface HistoryStripVM {
@@ -216,17 +217,20 @@ export function buildHistoryStrip(
 		})
 		current = null
 	}
-	for (const { ts, a } of auditTs) {
+	for (const {
+		item: { ts, a },
+		key
+	} of keyedOccurrences(auditTs, ({ a }) => JSON.stringify([a.report.value, a.scope, a.version, a.commit_hash]))) {
 		const px = x(ts)
 		if (current && px - current.startX <= CLUSTER_W) {
 			current.lastX = px
-			current.items.push({ firm: a.firm, date: a.date, url: a.report.value })
+			current.items.push({ key, firm: a.firm, date: a.date, url: a.report.value })
 		} else {
 			flush()
 			current = {
 				startX: px,
 				lastX: px,
-				items: [{ firm: a.firm, date: a.date, url: a.report.value }]
+				items: [{ key, firm: a.firm, date: a.date, url: a.report.value }]
 			}
 		}
 	}
@@ -428,8 +432,8 @@ function DetailPanel({ selection, onClose }: { selection: Selection; onClose: ()
 				</div>
 			) : (
 				<ul className="flex flex-col divide-y divide-(--border-subtle) px-3 py-1">
-					{selection.c.items.map((a, i) => (
-						<li key={i} className="flex items-center justify-between gap-3 py-1.5 body-sm">
+					{selection.c.items.map((a) => (
+						<li key={a.key} className="flex items-center justify-between gap-3 py-1.5 body-sm">
 							<span className="min-w-0 truncate text-secondary">
 								<span className="text-primary">{a.firm}</span> · {formatVerified(a.date)}
 							</span>

@@ -517,7 +517,7 @@ export function ReportsCarousel(props: ReportsCarouselProps) {
 
 						return (
 							// oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- slide selection and a shield over the overlay link; the prev and next controls are buttons.
-							<div key={reportIndex} className={classes} style={styles} onClick={handleClick}>
+							<div key={article.id} className={classes} style={styles} onClick={handleClick}>
 								<CarouselArticleSlide
 									article={article}
 									isMobile={isMobile}

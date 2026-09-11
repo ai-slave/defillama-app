@@ -54,7 +54,13 @@ function ByLine({ article }: { article: ArticleDocument }) {
 	const authorEntries =
 		getArticleBylineAuthorEntries(article) ??
 		(article.authorProfile
-			? [{ name: article.authorProfile.displayName, href: `/research/authors/${article.authorProfile.slug}` }]
+			? [
+					{
+						key: `owner:${article.authorProfile.slug}`,
+						name: article.authorProfile.displayName,
+						href: `/research/authors/${article.authorProfile.slug}`
+					}
+				]
 			: null)
 
 	return (
@@ -62,7 +68,7 @@ function ByLine({ article }: { article: ArticleDocument }) {
 			{authorEntries?.length ? (
 				<span className="flex flex-wrap items-center gap-1 font-medium text-research-heading/80 dark:text-on-brand/75">
 					{authorEntries.map((entry, index) => (
-						<span key={`${entry.name}-${index}`} className="inline-flex items-center gap-1">
+						<span key={entry.key} className="inline-flex items-center gap-1">
 							{entry.href ? (
 								<Link href={entry.href} className="transition-colors hover:text-research-accent-strong">
 									{entry.name}

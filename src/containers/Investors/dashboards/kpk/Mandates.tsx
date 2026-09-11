@@ -194,6 +194,7 @@ export default function Mandates() {
 					)}
 					<Card>
 						<DataTable<KpkMandateWindow>
+							getRowKey={(row) => String(row.days)}
 							rows={perf?.windows}
 							cols={[
 								{ key: 'label', label: 'Window' },
@@ -286,6 +287,7 @@ export default function Mandates() {
 				<SectionHeader title="Per-client breakdown" />
 				<Card>
 					<DataTable<KpkMandateClient>
+						getOccurrenceKey={(row) => row.name}
 						rows={data?.clients}
 						cols={[
 							{

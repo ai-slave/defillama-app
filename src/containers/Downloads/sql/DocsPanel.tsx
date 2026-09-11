@@ -401,8 +401,10 @@ function CodeBlock({ sql }: { sql: string }) {
 			<code>
 				{tokens.map((t, i) => {
 					const cls = TOKEN_CLASS[t.type]
+					// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 					if (!cls) return <Fragment key={i}>{t.text}</Fragment>
 					return (
+						// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 						<span key={i} className={cls}>
 							{t.text}
 						</span>
@@ -432,6 +434,7 @@ export function ShortcutsTab() {
 							</div>
 							<div className="flex shrink-0 items-center gap-1">
 								{s.keys.map((k, i) => (
+									// oxlint-disable-next-line react/no-array-index-key -- Keycaps form a fixed authored chord and may repeat.
 									<Keycap key={i}>{k}</Keycap>
 								))}
 							</div>

@@ -71,7 +71,7 @@ function OracleLegs({ legs }: { legs: Array<OracleLeg> }) {
 				const side = legSide(leg.slot)
 				const showSide = i === 0 || legSide(legs[i - 1]!.slot) !== side
 				return (
-					<span key={`${leg.slot}-${i}`} className="flex items-start gap-2">
+					<span key={leg.slot} className="flex items-start gap-2">
 						<span className="w-10 shrink-0 pt-0.5 label-sm text-secondary">{showSide ? side : ''}</span>
 						<span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 							<span className="text-secondary">{leg.description}</span>

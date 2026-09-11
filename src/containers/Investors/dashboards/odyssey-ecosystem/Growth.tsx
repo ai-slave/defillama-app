@@ -387,6 +387,7 @@ export default function Growth() {
 					<SectionHeader>Loopr · By Strategy</SectionHeader>
 					<ChartCard title="Active strategies" subtitle="Deposits, users and performance fee per strategy">
 						<SimpleTable
+							getOccurrenceKey={(row) => JSON.stringify([row.strategyId, row.asset])}
 							rows={loopr.byStrategy}
 							cols={[
 								{ key: 'strategyId', label: 'ID' },

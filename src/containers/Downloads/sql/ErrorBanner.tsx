@@ -142,6 +142,7 @@ export function ErrorBanner({
 					{expanded ? (
 						<ul className="flex flex-col gap-1 pl-4 text-[11.5px] leading-relaxed text-error/90 dark:text-red-200/90">
 							{hints.map((h, i) => (
+								// oxlint-disable-next-line react/no-array-index-key -- Hints are fixed prose slots for the selected error family.
 								<li key={i} className="list-disc">
 									{h}
 								</li>

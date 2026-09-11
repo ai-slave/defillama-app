@@ -3,9 +3,10 @@ import { BarChart } from 'echarts/charts'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
-import { useEffect, useRef } from 'react'
+import { Fragment, useEffect, useRef } from 'react'
 import { useChartTheme } from '~/components/ECharts/shared/chartTheme'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Chart, Kpi as KpiT } from './transform'
 import { BarListCard, ChartCard, KpiGrid, PageLoader, SectionHeader, TimeAreaCard, useUniswapData } from './ui'
@@ -177,26 +178,29 @@ function AuditReportsTable({ reports }: { reports: Array<AuditReport> }) {
 						{label}
 					</div>
 				))}
-				{sorted.map((report, index) => {
-					const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
-					const cell = `truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${rowBg}`
-					return [
-						<div key={`${index}-repo`} className={cell}>
-							{report.repo}
-						</div>,
-						<div key={`${index}-version`} className={`${cell} font-jetbrains`}>
-							{report.version}
-						</div>,
-						<div key={`${index}-file`} className={cell}>
-							<a href={report.url} target="_blank" rel="noopener noreferrer" className="text-sl-accent hover:underline">
-								{report.file}
-							</a>
-						</div>,
-						<div key={`${index}-firm`} className={cell}>
-							{report.firm}
-						</div>
-					]
-				})}
+				{keyedOccurrences(sorted, (report) => JSON.stringify([report.repo, report.file, report.url])).map(
+					({ item: report, key }, index) => {
+						const rowBg = index % 2 === 1 ? 'bg-pro-cards-bg' : ''
+						const cell = `truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${rowBg}`
+						return (
+							<Fragment key={key}>
+								<div className={cell}>{report.repo}</div>
+								<div className={`${cell} font-jetbrains`}>{report.version}</div>
+								<div className={cell}>
+									<a
+										href={report.url}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-sl-accent hover:underline"
+									>
+										{report.file}
+									</a>
+								</div>
+								<div className={cell}>{report.firm}</div>
+							</Fragment>
+						)
+					}
+				)}
 			</div>
 		</div>
 	)

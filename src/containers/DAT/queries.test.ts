@@ -2,10 +2,10 @@ import type { Table } from '@tanstack/react-table'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
-import { fetchDATInstitutionDetail, toUnixMsTimestamp } from './api'
-import type { IDATInstitutionDetailResponse, IDATTransaction } from './api.types'
+import { fetchDATInstitutionDetail, fetchDATInstitutions, toUnixMsTimestamp } from './api'
+import type { IDATInstitutionDetailResponse, IDATInstitutionsResponse, IDATTransaction } from './api.types'
 import { DATCompany } from './Company'
-import { buildDATTransactionRowsByAsset, getDATCompanyData } from './queries'
+import { buildDATTransactionRowsByAsset, getDATCompanyData, getDATOverviewData } from './queries'
 import type { IDATTransactionRow } from './types'
 
 const captured = vi.hoisted(() => ({ table: null as Table<IDATTransactionRow> | null }))
@@ -19,7 +19,8 @@ vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => null
 vi.mock('~/components/ChartExport/ChartExportButtons', () => ({ ChartExportButtons: () => null }))
 vi.mock('./api', async (importOriginal) => ({
 	...(await importOriginal<typeof import('./api')>()),
-	fetchDATInstitutionDetail: vi.fn()
+	fetchDATInstitutionDetail: vi.fn(),
+	fetchDATInstitutions: vi.fn()
 }))
 
 describe('toUnixMsTimestamp', () => {
@@ -158,4 +159,76 @@ describe('getDATCompanyData transaction rows', () => {
 			}
 		}
 	)
+})
+
+test('retains asset IDs through duplicate labels, valuation sorting and renaming', async () => {
+	const holding = {
+		amount: 1,
+		avgPrice: 10,
+		usdValue: 10,
+		cost: 10,
+		transactionCount: 1,
+		firstAnnouncementDate: '',
+		lastAnnouncementDate: '',
+		supplyPercentage: 0
+	}
+	const assetMetadata = {
+		name: 'Same asset',
+		ticker: 'SAME',
+		geckoId: '',
+		companies: 1,
+		totalAmount: 1,
+		totalUsdValue: 10,
+		circSupplyPerc: 0
+	}
+	const response: IDATInstitutionsResponse = {
+		institutionMetadata: {
+			'1': {
+				institutionId: 1,
+				ticker: 'CO',
+				name: 'Company',
+				type: '',
+				price: 1,
+				priceChange24h: null,
+				volume24h: 0,
+				mcapRealized: null,
+				mcapRealistic: null,
+				mcapMax: null,
+				realized_mNAV: null,
+				realistic_mNAV: null,
+				max_mNAV: null,
+				totalUsdValue: 30,
+				totalCost: 20,
+				holdings: { first: holding, second: { ...holding, usdValue: 20 } }
+			}
+		},
+		assetMetadata: { first: assetMetadata, second: assetMetadata },
+		institutions: [{ institutionId: 1, totalUsdValue: 30, totalCost: 20 }],
+		assets: { first: [], second: [] },
+		totalCompanies: 1,
+		flows: {},
+		mNAV: {}
+	}
+	vi.mocked(fetchDATInstitutions).mockResolvedValue(response)
+	expect(
+		(await getDATOverviewData()).institutions[0].holdings.map(({ asset, name, usdValue }) => ({
+			asset,
+			name,
+			usdValue
+		}))
+	).toEqual([
+		{ asset: 'second', name: 'Same asset', usdValue: 20 },
+		{ asset: 'first', name: 'Same asset', usdValue: 10 }
+	])
+	vi.mocked(fetchDATInstitutions).mockResolvedValue({
+		...response,
+		assetMetadata: { ...response.assetMetadata, first: { ...assetMetadata, name: 'Renamed' } },
+		institutionMetadata: {
+			'1': { ...response.institutionMetadata['1'], holdings: { first: { ...holding, usdValue: 30 }, second: holding } }
+		}
+	})
+	expect((await getDATOverviewData()).institutions[0].holdings.map(({ asset, name }) => ({ asset, name }))).toEqual([
+		{ asset: 'first', name: 'Renamed' },
+		{ asset: 'second', name: 'Same asset' }
+	])
 })

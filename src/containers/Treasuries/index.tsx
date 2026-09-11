@@ -97,7 +97,7 @@ const columns = [
 
 						return (
 							<div
-								key={dom[0] + dom[1] + info.row.original.name}
+								key={JSON.stringify([dom[0], info.row.original.name])}
 								style={{ width: `${dom[1]}%`, background: color }}
 								className="h-5"
 							/>

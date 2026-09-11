@@ -45,7 +45,23 @@ interface ChartStyleEditorProps {
 	onCancel: () => void
 }
 
-const clone = (config: ChartConfiguration): ChartConfiguration => structuredClone(config)
+type EditorDraft = Omit<ChartConfiguration, 'hallmarks'> & {
+	hallmarks?: Array<{ id: string; value: [number, string] }>
+}
+
+function createDraft(config: ChartConfiguration): EditorDraft {
+	return {
+		...structuredClone(config),
+		hallmarks: config.hallmarks?.map((value) => ({
+			id: crypto.randomUUID(),
+			value: [value[0], value[1] ?? '']
+		}))
+	}
+}
+
+function draftConfig(draft: EditorDraft): ChartConfiguration {
+	return { ...draft, hallmarks: draft.hallmarks?.map((hallmark) => hallmark.value) }
+}
 
 const LEGEND_TYPES = new Set<ChartConfiguration['type']>(['line', 'area', 'bar', 'combo'])
 
@@ -178,7 +194,7 @@ export function ChartStyleEditor({
 	onCancel
 }: ChartStyleEditorProps) {
 	// The editor owns this config-only draft. Keystrokes rerender the form, never SingleChart or its dataset pipeline.
-	const [draft, setDraft] = useState<ChartConfiguration>(() => config)
+	const [draft, setDraft] = useState<EditorDraft>(() => createDraft(config))
 	// Draft render order expressed as indices into `config.series` — what update-chart-style permutes.
 	const [seriesOrder, setSeriesOrder] = useState<Array<number>>(() => identityOrder(config.series?.length ?? 0))
 	const [draftView, setDraftView] = useState<ChartStyleEditorView>(() => ({ ...view }))
@@ -193,12 +209,13 @@ export function ChartStyleEditor({
 		previewTimer.current = null
 	}
 
-	const publishPreview = (nextDraft: ChartConfiguration, nextView: ChartStyleEditorView, mode: PreviewMode) => {
+	const publishPreview = (nextDraft: EditorDraft, nextView: ChartStyleEditorView, mode: PreviewMode) => {
+		const previewConfig = draftConfig(nextDraft)
 		clearPreviewTimer()
-		pendingPreview.current = { draft: nextDraft, view: nextView }
+		pendingPreview.current = { draft: previewConfig, view: nextView }
 		if (mode === 'immediate') {
 			pendingPreview.current = null
-			onPreview(nextDraft, nextView)
+			onPreview(previewConfig, nextView)
 			return
 		}
 		previewTimer.current = setTimeout(() => {
@@ -224,8 +241,8 @@ export function ChartStyleEditor({
 		[previewTimer]
 	)
 
-	const update = (mutate: (d: ChartConfiguration) => void, mode: PreviewMode = 'debounced') => {
-		const next = clone(draft)
+	const update = (mutate: (d: EditorDraft) => void, mode: PreviewMode = 'debounced') => {
+		const next = structuredClone(draft)
 		mutate(next)
 		setDraft(next)
 		// Invalid display identities make the adapter reject the entire chart. Keep the
@@ -240,7 +257,7 @@ export function ChartStyleEditor({
 
 	// `positions[i]` = current draft position of the series that lands at position i.
 	const reorderSeries = (positions: Array<number>) => {
-		const next = clone(draft)
+		const next = structuredClone(draft)
 		const reorderedSeries = reorderByPositions(next.series, positions)
 		const reorderedSeriesOrder = reorderByPositions(seriesOrder, positions)
 		if (!reorderedSeries || !reorderedSeriesOrder) return
@@ -305,7 +322,8 @@ export function ChartStyleEditor({
 		setSaving(true)
 		setError(null)
 		try {
-			await onSave(draft, toPatch(draft, draftView, seriesOrder))
+			const savedConfig = draftConfig(draft)
+			await onSave(savedConfig, toPatch(savedConfig, draftView, seriesOrder))
 		} catch (saveError) {
 			setError(saveError instanceof Error ? saveError.message : 'Save failed')
 		}
@@ -313,7 +331,7 @@ export function ChartStyleEditor({
 	}
 
 	const reset = () => {
-		const resetDraft = clone(original)
+		const resetDraft = createDraft(original)
 		const resetOrder = orderRelativeTo(original, config)
 		// Aggregation describes the data, so preserve saved choices by binding when resetting presentation.
 		for (const [index, series] of resetDraft.series.entries()) {
@@ -401,7 +419,7 @@ export function ChartStyleEditor({
 				) : (
 					<div className="flex flex-col gap-1.5">
 						{draft.series?.map((s, i) => (
-							<div key={i} className="flex items-center gap-2">
+							<div key={seriesOrder[i]} className="flex items-center gap-2">
 								<input
 									type="color"
 									value={s.styling?.color ?? '#2563eb'}
@@ -587,17 +605,17 @@ export function ChartStyleEditor({
 					<span className={sectionLabel}>Annotations</span>
 					<div className="flex flex-col gap-1.5">
 						{(draft.hallmarks ?? []).map((h, i) => (
-							<div key={i} className="flex items-center gap-2">
+							<div key={h.id} className="flex items-center gap-2">
 								<Input
 									type="date"
 									className="w-36"
 									aria-label={`Annotation ${i + 1} date`}
-									value={toDateInput(h[0])}
+									value={toDateInput(h.value[0])}
 									onChange={(e) =>
 										update((d) => {
 											const hs = d.hallmarks ?? []
 											const ts = fromDateInput(e.target.value)
-											hs[i] = [Number.isFinite(ts) ? ts : (hs[i]?.[0] ?? 0), hs[i]?.[1] ?? '']
+											hs[i] = { ...hs[i], value: [Number.isFinite(ts) ? ts : hs[i].value[0], hs[i].value[1]] }
 											d.hallmarks = hs
 										})
 									}
@@ -606,11 +624,11 @@ export function ChartStyleEditor({
 									className="flex-1"
 									aria-label={`Annotation ${i + 1} label`}
 									placeholder="label"
-									value={h[1] ?? ''}
+									value={h.value[1]}
 									onChange={(e) =>
 										update((d) => {
 											const hs = d.hallmarks ?? []
-											hs[i] = [hs[i]?.[0] ?? 0, e.target.value]
+											hs[i] = { ...hs[i], value: [hs[i].value[0], e.target.value] }
 											d.hallmarks = hs
 										})
 									}
@@ -639,7 +657,10 @@ export function ChartStyleEditor({
 						size="sm"
 						onClick={() =>
 							update((d) => {
-								d.hallmarks = [...(d.hallmarks ?? []), [Math.floor(Date.now() / 1000), '']]
+								d.hallmarks = [
+									...(d.hallmarks ?? []),
+									{ id: crypto.randomUUID(), value: [Math.floor(Date.now() / 1000), ''] }
+								]
 							}, 'immediate')
 						}
 						className="self-start"

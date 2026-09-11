@@ -1,4 +1,5 @@
 import { flexRender, type RowData, type Table } from '@tanstack/react-table'
+import { Children } from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import { SortIcon } from '~/components/Table/SortIcon'
@@ -131,12 +132,8 @@ export function MetricStrip({ children }: { children: React.ReactNode }) {
 	return (
 		<div className="flex gap-0 overflow-x-auto rounded-lg border border-pro-cards-border bg-pro-cards-bg">
 			{Array.isArray(children) ? (
-				children.map((child, i) => (
-					<div
-						key={i}
-						className={`flex-1 px-5 py-3 ${i > 0 ? 'border-l border-subtle' : ''}`}
-						style={{ minWidth: '120px' }}
-					>
+				Children.map(children, (child, i) => (
+					<div className={`flex-1 px-5 py-3 ${i > 0 ? 'border-l border-subtle' : ''}`} style={{ minWidth: '120px' }}>
 						{child}
 					</div>
 				))

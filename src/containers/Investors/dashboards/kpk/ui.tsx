@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { formatDate } from '~/utils/dateFormat'
+import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatNumber, formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
 import type { KpkExcessWindow, KpkMandateScope, KpkRef } from './api'
 import { KPK_BENCH_BG, KPK_MINT_BG, KPK_MINT_TEXT } from './chartDefaults'
@@ -587,6 +588,8 @@ export interface FooterRow {
 }
 
 export function DataTable<Row extends object>({
+	getRowKey,
+	getOccurrenceKey,
 	rows,
 	cols,
 	footer,
@@ -600,7 +603,7 @@ export function DataTable<Row extends object>({
 	 */
 	footer?: FooterCells | Array<FooterRow>
 	empty?: string
-}) {
+} & RowIdentity<Row>) {
 	if (!rows) return <div className="h-24 animate-pulse rounded-sm bg-tertiary opacity-10" />
 	if (rows.length === 0) return <div className="px-2 py-4 text-xs text-pro-text-secondary">{empty}</div>
 
@@ -628,8 +631,11 @@ export function DataTable<Row extends object>({
 					</tr>
 				</thead>
 				<tbody>
-					{rows.map((row, rowIndex) => (
-						<tr key={rowIndex} className="border-b border-pro-cards-border/60 last:border-0 hover:bg-sl-hover-bg">
+					{(getRowKey
+						? rows.map((item) => ({ item, key: getRowKey(item) }))
+						: keyedOccurrences(rows, getOccurrenceKey)
+					).map(({ item: row, key }) => (
+						<tr key={key} className="border-b border-pro-cards-border/60 last:border-0 hover:bg-sl-hover-bg">
 							{cols.map((col) => (
 								<td
 									key={col.key}
@@ -647,6 +653,7 @@ export function DataTable<Row extends object>({
 					<tfoot>
 						{footerRows.map((row, rowIndex) => (
 							<tr
+								// oxlint-disable-next-line react/no-array-index-key -- Footer positions identify total and secondary-reading slots.
 								key={rowIndex}
 								title={row.title}
 								className={

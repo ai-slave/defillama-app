@@ -126,6 +126,7 @@ export async function getDATOverviewData(): Promise<IDATOverviewPageProps> {
 			...metadata,
 			holdings: Object.entries(metadata.holdings)
 				.map(([asset, holding]) => ({
+					asset,
 					name: res.assetMetadata[asset].name,
 					ticker: res.assetMetadata[asset].ticker,
 					amount: holding.amount,

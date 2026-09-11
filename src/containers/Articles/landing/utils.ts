@@ -1,22 +1,28 @@
 import { ARTICLE_SECTION_SLUGS, type ArticleSection, type LocalArticleDocument } from '~/containers/Articles/types'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 
 const DEFILLAMA_RESEARCH_AUTHOR_HREF = '/research/authors/defillama-research'
 
 export type ArticleBylineAuthorEntry = {
+	key: string
 	name: string
 	href: string | null
 }
 
 export function getArticleBylineAuthorEntries(article: LocalArticleDocument): Array<ArticleBylineAuthorEntry> | null {
-	const coAuthors = (article.coAuthors ?? []).map((profile) => ({
-		name: profile.displayName,
-		href: `/research/authors/${profile.slug}`
-	}))
+	const coAuthors = keyedOccurrences(article.coAuthors ?? [], (profile) => profile.slug).map(
+		({ item: profile, key }) => ({
+			key: `coauthor:${key}`,
+			name: profile.displayName,
+			href: `/research/authors/${profile.slug}`
+		})
+	)
 	if (article.brandByline === true) {
-		return [{ name: 'DefiLlama Research', href: DEFILLAMA_RESEARCH_AUTHOR_HREF }, ...coAuthors]
+		return [{ key: 'brand', name: 'DefiLlama Research', href: DEFILLAMA_RESEARCH_AUTHOR_HREF }, ...coAuthors]
 	}
 	if (!article.author) return coAuthors.length > 0 ? coAuthors : null
 	const owner: ArticleBylineAuthorEntry = {
+		key: `owner:${article.authorProfile?.slug ?? 'legacy'}`,
 		name: article.author,
 		href: article.authorProfile ? `/research/authors/${article.authorProfile.slug}` : null
 	}

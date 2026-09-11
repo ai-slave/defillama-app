@@ -7,6 +7,7 @@ import {
 } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import {
 	aggregateTimeSeries,
 	filterTimeSeries,
@@ -516,9 +517,9 @@ export default function Revenue() {
 				<div className="flex flex-col gap-4">
 					<SectionHeader>Frequently Asked Questions</SectionHeader>
 					<div className="flex flex-col gap-3">
-						{data.metadata.faq.map((item, idx) => (
+						{keyedOccurrences(data.metadata.faq, (item) => item.question).map(({ item, key }, idx) => (
 							<details
-								key={idx}
+								key={key}
 								className="group overflow-hidden rounded-lg border border-pro-cards-border bg-pro-cards-bg transition-all hover:border-pro-text-label"
 							>
 								<summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 text-sm font-medium text-pro-text-primary transition-colors hover:bg-sl-hover-bg">

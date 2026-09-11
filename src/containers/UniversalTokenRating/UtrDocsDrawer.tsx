@@ -105,9 +105,11 @@ function GradeTable({ headers, rows }: { headers: Array<string>; rows: Array<Arr
 				</thead>
 				<tbody>
 					{rows.map((row, rowIndex) => (
+						// oxlint-disable-next-line react/no-array-index-key -- Documentation snapshots have positional blocks/cells and repeated content.
 						<tr key={rowIndex} className="last:[&>td]:border-b-0">
 							{row.map((cell, cellIndex) => (
 								<td
+									// oxlint-disable-next-line react/no-array-index-key -- Documentation snapshots have positional blocks/cells and repeated content.
 									key={cellIndex}
 									className={`${TD} ${cellIndex === 0 && gradeIndex >= 0 ? 'font-jetbrains whitespace-nowrap' : ''} ${
 										cellIndex > 0 && cellIndex === row.length - 1 && gradeIndex < 0 ? 'text-center' : ''
@@ -302,6 +304,7 @@ function UtrDocsDrawerBody({
 					>
 						<h2 className="heading-xs">{chapter.label}</h2>
 						{chapter.blocks.map((block, index) => (
+							// oxlint-disable-next-line react/no-array-index-key -- Documentation snapshots have positional blocks/cells and repeated content.
 							<DocBlock key={index} block={block} chapterId={chapter.id} />
 						))}
 					</section>

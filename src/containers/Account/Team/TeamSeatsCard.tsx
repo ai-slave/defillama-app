@@ -191,14 +191,14 @@ function BillingTotals({ subscriptions }: { subscriptions: Array<TeamSubscriptio
 
 	if (totals.monthly === 0 && totals.yearly === 0) return null
 
-	const rows: Array<{ label: string; value: string }> = []
-	if (totals.monthly > 0) rows.push({ label: 'Total', value: `${formatUsd(totals.monthly)}/month` })
-	if (totals.yearly > 0) rows.push({ label: 'Total', value: `${formatUsd(totals.yearly)}/year` })
+	const rows: Array<{ id: string; label: string; value: string }> = []
+	if (totals.monthly > 0) rows.push({ id: 'monthly', label: 'Total', value: `${formatUsd(totals.monthly)}/month` })
+	if (totals.yearly > 0) rows.push({ id: 'yearly', label: 'Total', value: `${formatUsd(totals.yearly)}/year` })
 
 	return (
 		<div className="flex flex-col gap-1.5 rounded-lg bg-sub-brand-primary/5 p-3">
-			{rows.map((row, i) => (
-				<div key={i} className="flex flex-wrap items-center justify-between gap-2">
+			{rows.map((row) => (
+				<div key={row.id} className="flex flex-wrap items-center justify-between gap-2">
 					<span className="text-sm font-medium text-sub-text-primary">{row.label}</span>
 					<span className="text-sm font-semibold text-sub-text-primary">{row.value}</span>
 				</div>

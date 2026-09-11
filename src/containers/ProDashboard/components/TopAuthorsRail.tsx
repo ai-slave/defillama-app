@@ -114,6 +114,7 @@ export function TopAuthorsRail() {
 				<div className="flex gap-4 overflow-hidden">
 					{Array.from({ length: 6 }).map((_, i) => (
 						<div
+							// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 							key={`skeleton-top-authors-${i}`}
 							className="relative isolate min-h-[150px] w-[260px] shrink-0 overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg"
 						>

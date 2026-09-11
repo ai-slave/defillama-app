@@ -9,12 +9,18 @@ import { Checkbox } from '~/ui/Checkbox'
 import { Icon } from '~/ui/Icon'
 import { Input, inputStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatNumber } from '~/utils/numberFormat'
 import { submitUtrClaim, uploadUtrClaimDocuments } from './claimClient'
-import { CLAIM_BLOCKS, type ClaimColumn, type ClaimSelectOption, type ClaimTableSection } from './claimFormConfig'
+import {
+	CLAIM_BLOCKS,
+	CLAIM_DISCLOSURE_SECTIONS,
+	type ClaimColumn,
+	type ClaimSelectOption,
+	type ClaimTableSection
+} from './claimFormConfig'
 import {
 	buildUtrClaimRequest,
-	createEmptyUtrClaimRows,
 	UTR_CLAIM_DOCUMENT_KEYS,
 	UTR_CLAIM_FILE_ACCEPT,
 	validateUtrClaimFiles,
@@ -34,6 +40,9 @@ import type {
 import { UtrDocsDrawer } from './UtrDocsDrawer'
 
 const ATTACH_HINT = 'Supported formats: PDF, DOCX, XLSX, TXT, MD - Max file size: 10mb'
+
+type ClaimDraftRow = { id: string; values: UtrClaimFormRow }
+type ClaimDraftRows = Record<keyof UtrClaimRows, Array<ClaimDraftRow>>
 
 type UploadStatus = { pending: boolean; error: string | null }
 
@@ -151,9 +160,9 @@ function InlineTableSection({
 	onChange
 }: {
 	section: ClaimTableSection
-	rows: Array<UtrClaimFormRow>
+	rows: Array<ClaimDraftRow>
 	error: string | null
-	onChange: (rows: Array<UtrClaimFormRow>) => void
+	onChange: (rows: Array<ClaimDraftRow>) => void
 }) {
 	return (
 		<div className="flex flex-col gap-3">
@@ -174,12 +183,12 @@ function InlineTableSection({
 						</thead>
 						<tbody>
 							{rows.map((row, rowIndex) => (
-								<tr key={rowIndex} className="border-b border-subtle last:border-b-0">
+								<tr key={row.id} className="border-b border-subtle last:border-b-0">
 									{section.columns.map((column) => (
 										<td key={column.key} className="min-w-[160px] px-2 py-2">
 											<CellInput
 												column={column}
-												value={row[column.key] ?? ''}
+												value={row.values[column.key] ?? ''}
 												onChange={(value) => {
 													const selectedOption = column.options?.find((option) => option.value === value)
 													onChange(
@@ -187,10 +196,13 @@ function InlineTableSection({
 															entryIndex === rowIndex
 																? {
 																		...entry,
-																		[column.key]: value,
-																		...(column.linkedNameKey
-																			? { [column.linkedNameKey]: selectedOption?.label ?? '' }
-																			: null)
+																		values: {
+																			...entry.values,
+																			[column.key]: value,
+																			...(column.linkedNameKey
+																				? { [column.linkedNameKey]: selectedOption?.label ?? '' }
+																				: null)
+																		}
 																	}
 																: entry
 														)
@@ -222,7 +234,12 @@ function InlineTableSection({
 				</span>
 			) : null}
 			<span>
-				<Button type="button" size="md" disabled={rows.length >= 100} onClick={() => onChange([...rows, {}])}>
+				<Button
+					type="button"
+					size="md"
+					disabled={rows.length >= 100}
+					onClick={() => onChange([...rows, { id: crypto.randomUUID(), values: {} }])}
+				>
 					Add More
 					<Icon name="plus" height={14} width={14} />
 				</Button>
@@ -277,9 +294,9 @@ function AttachDocuments({
 			</div>
 			{receipts.length > 0 ? (
 				<div className="flex flex-wrap gap-2">
-					{receipts.map((receipt, index) => (
+					{keyedOccurrences(receipts, (receipt) => receipt.key).map(({ item: receipt, key }, index) => (
 						<span
-							key={`${receipt.key}-${index}`}
+							key={key}
 							className="flex items-center gap-1.5 rounded-full border border-medium bg-surface-elevated-1 px-3 py-1 mono-sm"
 						>
 							{receipt.fileName}
@@ -374,7 +391,9 @@ export function ClaimTokenProfile({
 		if (projectId) setToken(projectId)
 	}, [projects, variant])
 	const [verifyMmEngagements, setVerifyMmEngagements] = useState(true)
-	const [rows, setRows] = useState<UtrClaimRows>(createEmptyUtrClaimRows)
+	const [rows, setRows] = useState<ClaimDraftRows>(
+		() => Object.fromEntries(CLAIM_DISCLOSURE_SECTIONS.map((section) => [section.id, []])) as ClaimDraftRows
+	)
 	const [documents, setDocuments] = useState<UtrClaimDocuments>(createEmptyDocuments)
 	const [uploadStatuses, setUploadStatuses] = useState<Record<UtrClaimDocumentKey, UploadStatus>>(createUploadStatuses)
 	const [submitAttempted, setSubmitAttempted] = useState(false)
@@ -411,7 +430,9 @@ export function ClaimTokenProfile({
 		profileUrl,
 		email,
 		telegram,
-		rows,
+		rows: Object.fromEntries(
+			Object.entries(rows).map(([key, entries]) => [key, entries.map((entry) => entry.values)])
+		) as UtrClaimRows,
 		verifyMmEngagements,
 		documents,
 		alignmentConsent,

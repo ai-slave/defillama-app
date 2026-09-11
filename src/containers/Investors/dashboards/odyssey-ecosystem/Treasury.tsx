@@ -32,6 +32,7 @@ export default function Treasury() {
 				subtitle={`${tlp?.rows?.length ?? 0} positions across Base, Optimism, Plasma`}
 			>
 				<SimpleTable
+					getOccurrenceKey={(row) => row.pool}
 					rows={tlp?.rows}
 					cols={[
 						{ key: 'pool', label: 'Pool' },
@@ -48,6 +49,7 @@ export default function Treasury() {
 					<SectionHeader>Ethereum UniV3 Positions</SectionHeader>
 					<ChartCard title="Ethereum positions">
 						<SimpleTable
+							getOccurrenceKey={(row) => row.pool}
 							rows={eth.rows}
 							cols={[
 								{ key: 'pool', label: 'Pool' },
@@ -62,6 +64,7 @@ export default function Treasury() {
 			<SectionHeader>Plasma UniV3 Unclaimed Fees</SectionHeader>
 			<ChartCard title="Plasma positions" subtitle="One row per NFT">
 				<SimpleTable
+					getOccurrenceKey={(row) => row.pool}
 					rows={plasma?.rows}
 					cols={[
 						{ key: 'pool', label: 'Position' },
@@ -74,6 +77,7 @@ export default function Treasury() {
 			<SectionHeader>Convex vlCVX Locks</SectionHeader>
 			<ChartCard title="vlCVX">
 				<SimpleTable
+					getOccurrenceKey={(row) => JSON.stringify([row.type, row.unlock])}
 					rows={cvx?.rows}
 					cols={[
 						{ key: 'type', label: 'Lock' },
@@ -87,6 +91,7 @@ export default function Treasury() {
 			<SectionHeader>veAERO NFTs</SectionHeader>
 			<ChartCard title="veAERO holdings">
 				<SimpleTable
+					getOccurrenceKey={(row) => String(row.nft)}
 					rows={aero?.rows}
 					cols={[
 						{ key: 'nft', label: 'NFT' },
@@ -102,6 +107,7 @@ export default function Treasury() {
 					<SectionHeader>{gov.title || 'Locked Governance Tokens'}</SectionHeader>
 					<ChartCard title="esMET / esVSP">
 						<SimpleTable
+							getOccurrenceKey={(row) => row.token}
 							rows={gov.rows}
 							cols={[
 								{ key: 'token', label: 'Token' },
@@ -141,6 +147,7 @@ export default function Treasury() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartCard title={met?.title || 'Metronome Allocation'}>
 					<SimpleTable
+						getOccurrenceKey={(row) => row.bucket}
 						rows={met?.rows}
 						cols={[
 							{ key: 'bucket', label: 'Bucket' },
@@ -151,6 +158,7 @@ export default function Treasury() {
 				</ChartCard>
 				<ChartCard title={ves?.title || 'Vesper Allocation'}>
 					<SimpleTable
+						getOccurrenceKey={(row) => row.bucket}
 						rows={ves?.rows}
 						cols={[
 							{ key: 'bucket', label: 'Bucket' },

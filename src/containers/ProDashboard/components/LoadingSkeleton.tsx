@@ -14,6 +14,7 @@ export function LoadingSkeleton({ viewMode = 'grid', items = 18 }: LoadingSkelet
 			aria-busy="true"
 		>
 			{Array.from({ length: items }).map((_, i) => (
+				// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 				<SkeletonCard key={`skeleton-item-${i}`} viewMode={viewMode} />
 			))}
 		</div>

@@ -1616,6 +1616,7 @@ function PlaceholderRows({
 				const isOdd = (rows.length + rowIdx) % 2 === 1
 				return (
 					<div
+						// oxlint-disable-next-line react/no-array-index-key -- Filler intentionally repeats source rows, so source IDs would collide.
 						key={`placeholder-${rowIdx}`}
 						style={{ display: 'grid', gridTemplateColumns: gridTemplate, height: `${ROW_HEIGHT}px` }}
 					>

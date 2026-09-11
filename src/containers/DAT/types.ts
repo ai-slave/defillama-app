@@ -5,6 +5,7 @@ import type { IDATInstitutionHolding, IDATInstitutionMetadata, IDATTransaction }
 
 export interface IDATInstitutionOverview extends Omit<IDATInstitutionMetadata, 'holdings'> {
 	holdings: Array<{
+		asset: string
 		name: string
 		ticker: string
 		amount: number

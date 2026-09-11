@@ -420,7 +420,7 @@ export function TokenUsageSearch() {
 					<Ariakit.ComboboxList ref={comboboxRef}>
 						{data.map((tokenResult) => (
 							<Ariakit.ComboboxItem
-								key={`token-usage-${tokenResult.name}`}
+								key={tokenResult.id}
 								value={tokenResult.name}
 								onClick={() => {
 									void pushShallowQuery(router, { token: tokenResult.symbol }).then(() => {

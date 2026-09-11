@@ -1,7 +1,6 @@
 {
 	"$schema": "./node_modules/oxlint/configuration_schema.json",
-	// Hand-written rules only. `bun run lint` runs .oxlintrc.baseline.json, which extends this file and
-	// turns each rule off in the files that still violate it. Regenerate it with `bun run lint:baseline`.
+	// Shared rule set for `bun run lint`, CI, and the pre-commit hook.
 	// Enabled rules carry no comment. Everything not enforced sits in the two blocks at the end of
 	// `rules`: deferred rules name the trigger that re-opens them, the rest are decisions.
 	"plugins": ["react", "typescript", "nextjs", "oxc", "unicorn", "import", "vitest", "jsx-a11y"],

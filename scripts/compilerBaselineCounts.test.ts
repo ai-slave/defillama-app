@@ -1,30 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import {
-	type Counts,
-	countViolations,
-	findGrowth,
-	findStale,
-	parseCounts,
-	renderBaseline,
-	renderCounts
-} from './lib/lintBaseline'
+import { type Counts, findGrowth, findStale, parseCounts, renderCounts, total } from './lib/compilerBaselineCounts'
 
 const base: Counts = {
 	'react/refs': { 'src/a.tsx': 2, 'src/b.tsx': 1 },
 	'no-empty': { 'src/c.ts': 1 }
 }
-
-describe('countViolations', () => {
-	test('groups diagnostics by rule and file, mapping eslint(x) to a bare rule name', () => {
-		const counts = countViolations([
-			{ filename: 'src/a.tsx', code: 'react(refs)' },
-			{ filename: 'src/a.tsx', code: 'react(refs)' },
-			{ filename: 'src/c.ts', code: 'eslint(no-empty)' },
-			{ filename: 'src/c.ts', code: 'not a rule code' }
-		])
-		expect(counts).toEqual({ 'react/refs': { 'src/a.tsx': 2 }, 'no-empty': { 'src/c.ts': 1 } })
-	})
-})
 
 describe('findGrowth', () => {
 	test('accepts an identical baseline', () => {
@@ -85,16 +65,9 @@ describe('rendering', () => {
 			].join('\n')
 		)
 	})
+})
 
-	test('baseline overrides turn each rule off in its files and escape glob characters', () => {
-		const text = renderBaseline({ 'no-empty': { 'src/pages/api/[id].ts': 1 } }, ['node_modules/**'])
-		const config = JSON.parse(text.replace(/^\/\/.*\n/, '')) as {
-			extends: Array<string>
-			ignorePatterns: Array<string>
-			overrides: Array<{ files: Array<string>; rules: Record<string, string> }>
-		}
-		expect(config.extends).toEqual(['./.oxlintrc.json'])
-		expect(config.ignorePatterns).toEqual(['node_modules/**'])
-		expect(config.overrides).toEqual([{ files: ['src/pages/api/\\[id\\].ts'], rules: { 'no-empty': 'off' } }])
-	})
+test('totals distinct files across reasons', () => {
+	expect(total({ a: { 'x.ts': 2 }, b: { 'x.ts': 1, 'y.ts': 3 } })).toEqual({ rules: 2, files: 2, violations: 6 })
+	expect(total({})).toEqual({ rules: 0, files: 0, violations: 0 })
 })

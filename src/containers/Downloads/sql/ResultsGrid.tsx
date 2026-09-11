@@ -69,12 +69,12 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 						background: 'var(--bg-surface)'
 					}}
 				>
-					{columnMeta.map((col, i) => {
+					{columnMeta.map((col) => {
 						const isNumeric = col.kind === 'int' || col.kind === 'float'
 						return (
 							<div
 								role="columnheader"
-								key={col.name + i}
+								key={col.columnIndex}
 								className={`border-subtle/60 flex flex-col justify-center gap-0.5 truncate border-l px-2.5 first:border-l-0 ${
 									isNumeric ? 'items-end text-right' : 'items-start text-left'
 								}`}
@@ -107,7 +107,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 									gridTemplateColumns: gridTemplate
 								}}
 							>
-								{columnMeta.map((col, i) => {
+								{columnMeta.map((col) => {
 									const value = row[col.columnIndex]
 									const isNull = value === null || value === undefined || value === ''
 									const isNumeric = col.kind === 'int' || col.kind === 'float'
@@ -115,7 +115,7 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 									return (
 										<div
 											role="cell"
-											key={col.name + i}
+											key={col.columnIndex}
 											className={`border-subtle/30 flex items-center truncate border-l px-2.5 first:border-l-0 ${
 												isNumeric ? 'justify-end text-pro-text-primary' : 'text-pro-text-primary'
 											} ${isNull ? 'text-pro-text-tertiary/50' : ''}`}

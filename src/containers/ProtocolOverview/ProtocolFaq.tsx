@@ -31,6 +31,7 @@ export function ProtocolFaq({ items }: { items: Array<IProtocolFaqItem> }) {
 							{item.answer.map((part, partIndex) =>
 								part.href ? (
 									<BasicLink
+										// oxlint-disable-next-line react/no-array-index-key -- Answer fragments are positional prose; text and links can repeat.
 										key={`${item.id}-${partIndex}`}
 										href={part.href}
 										className="text-link underline decoration-dotted underline-offset-2"
@@ -38,6 +39,7 @@ export function ProtocolFaq({ items }: { items: Array<IProtocolFaqItem> }) {
 										{part.text}
 									</BasicLink>
 								) : (
+									// oxlint-disable-next-line react/no-array-index-key -- Answer fragments are positional prose; text and links can repeat.
 									<span key={`${item.id}-${partIndex}`}>{part.text}</span>
 								)
 							)}

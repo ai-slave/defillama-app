@@ -64,7 +64,12 @@ export function VaultStress({
 		)
 
 	const perColl = modelable
-		.map((c) => ({ symbol: c.symbol, drop: dropFor(c), loss: collateralDepegLossUsd(c, dropFor(c) / 100) }))
+		.map((c) => ({
+			key: JSON.stringify([c.chain, c.address]),
+			symbol: c.symbol,
+			drop: dropFor(c),
+			loss: collateralDepegLossUsd(c, dropFor(c) / 100)
+		}))
 		.filter((x) => x.loss > 0)
 		.sort((a, b) => b.loss - a.loss)
 	const total = vaultDepegLossUsdAtDrops(modelable, (c) => dropFor(c) / 100)
@@ -118,7 +123,7 @@ export function VaultStress({
 					<>
 						<span className="text-secondary">Driven by </span>
 						{drivers.map((d, i) => (
-							<span key={d.symbol} className="tabular-nums">
+							<span key={d.key} className="tabular-nums">
 								{i > 0 ? ' · ' : ''}
 								<span className="text-secondary">{d.symbol}</span> {`${dropLabel(d.drop)} `}
 								{asShare(d.loss)}

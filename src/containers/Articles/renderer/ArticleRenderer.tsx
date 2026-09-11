@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { createElement, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { ResearchIcon } from '~/components/ResearchIcon'
 import { Icon } from '~/ui/Icon'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import styles from '../ArticleStyles.module.css'
 import { validateArticleChartConfig } from '../chartAdapters'
 import { normalizeArticleContentJson } from '../document'
@@ -933,7 +934,7 @@ export function ArticleRenderer({
 		<span className="flex flex-wrap items-center gap-1 text-xs text-secondary">
 			<span className="font-normal">{bylineLabel}</span>
 			{bylineAuthorEntries.map((entry, index) => (
-				<span key={`${entry.name}-${index}`} className="flex items-center gap-1">
+				<span key={entry.key} className="flex items-center gap-1">
 					{entry.href ? (
 						<Link href={entry.href} className="font-semibold text-primary hover:text-link">
 							{entry.name}
@@ -953,7 +954,9 @@ export function ArticleRenderer({
 		intervieweesList.length > 0 ? (
 			<span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-secondary">
 				<span className="font-normal">Interviewee{intervieweesList.length > 1 ? 's' : ''}</span>
-				{intervieweesList.map((person, index) => {
+				{keyedOccurrences(intervieweesList, (person) =>
+					JSON.stringify([person.authorSlug, person.externalUrl, person.name])
+				).map(({ item: person, key }, index) => {
 					const labelNode = (
 						<span className="inline-flex items-center gap-1.5">
 							{person.avatarUrl ? (
@@ -987,7 +990,7 @@ export function ArticleRenderer({
 						labelNode
 					)
 					return (
-						<span key={index} className="flex items-center gap-1">
+						<span key={key} className="flex items-center gap-1">
 							{linked}
 							{index < intervieweesList.length - 2 ? <span>,</span> : null}
 							{index === intervieweesList.length - 2 ? <span>and</span> : null}

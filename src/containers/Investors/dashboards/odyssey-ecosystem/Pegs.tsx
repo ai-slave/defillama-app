@@ -168,16 +168,28 @@ export default function Pegs() {
 				return (
 					<>
 						<ChartCard title="Mint Caps" subtitle="totalSupply / maxTotalSupply">
-							<SimpleTable<PegSupplyCap> rows={data?.supplyCaps} cols={capCols} />
+							<SimpleTable<PegSupplyCap>
+								getOccurrenceKey={(row) => JSON.stringify([row.chain, row.synth])}
+								rows={data?.supplyCaps}
+								cols={capCols}
+							/>
 						</ChartCard>
 						{data?.bridgeInCaps?.length ? (
 							<ChartCard title="Bridge-In Caps" subtitle="Per-chain bridged-in supply vs cap">
-								<SimpleTable<PegSupplyCap> rows={data.bridgeInCaps} cols={capCols} />
+								<SimpleTable<PegSupplyCap>
+									getOccurrenceKey={(row) => JSON.stringify([row.chain, row.synth])}
+									rows={data.bridgeInCaps}
+									cols={capCols}
+								/>
 							</ChartCard>
 						) : null}
 						{data?.bridgeOutCaps?.length ? (
 							<ChartCard title="Bridge-Out Caps" subtitle="Per-chain bridged-out supply vs cap">
-								<SimpleTable<PegSupplyCap> rows={data.bridgeOutCaps} cols={capCols} />
+								<SimpleTable<PegSupplyCap>
+									getOccurrenceKey={(row) => JSON.stringify([row.chain, row.synth])}
+									rows={data.bridgeOutCaps}
+									cols={capCols}
+								/>
 							</ChartCard>
 						) : null}
 					</>

@@ -7,6 +7,7 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { geckoTokenIconUrl } from '~/utils/icons'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { UTR_PERCENT_OPTIONS } from './constants'
 import { CriteriaDrawer, type CriteriaDrawerState } from './CriteriaDrawer'
@@ -163,16 +164,16 @@ function VenueList({
 	venues
 }: {
 	title: string
-	venues: Array<{ displayName: string; logoUrl: string | null }>
+	venues: Array<{ name: string; displayName: string; logoUrl: string | null }>
 }) {
 	if (venues.length === 0) return null
 	return (
 		<div className="flex flex-col gap-2">
 			<h4 className="label-md text-primary">{title}</h4>
 			<div className="flex flex-wrap gap-2">
-				{venues.map((venue) => (
+				{keyedOccurrences(venues, (venue) => venue.name).map(({ item: venue, key }) => (
 					<span
-						key={venue.displayName}
+						key={key}
 						className="inline-flex items-center gap-1.5 rounded-lg border border-subtle bg-surface px-2 py-1 body-sm"
 					>
 						{venue.logoUrl ? (

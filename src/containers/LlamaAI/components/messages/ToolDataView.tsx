@@ -124,12 +124,13 @@ export function CitationRowsTable({
 				</thead>
 				<tbody>
 					{rows.map((row, ri) => (
+						// oxlint-disable-next-line react/no-array-index-key -- Citations address rows by ordinal within this result snapshot.
 						<tr key={ri}>
-							{cols.map((c, ci) => {
+							{cols.map((c) => {
 								const isCited = !!citedCell && citedCell.rowIndex === ri && citedCell.column === c
 								return (
 									<td
-										key={ci}
+										key={c}
 										ref={isCited ? citedCellRef : null}
 										className={`${DATA_TABLE_CELL} ${isCited ? 'bg-brand-muted font-medium text-link-on-tint' : ''}`}
 									>

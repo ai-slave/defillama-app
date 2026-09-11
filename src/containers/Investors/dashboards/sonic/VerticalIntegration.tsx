@@ -63,6 +63,7 @@ export default function VerticalIntegration() {
 						<div className="flex flex-col">
 							<div className="flex border-b border-subtle">
 								{Array.from({ length: 5 }).map((_, i) => (
+									// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 									<div key={i} className="flex-1 px-4 py-3.5">
 										<div className="h-2.5 w-16 rounded-full bg-tertiary opacity-40" />
 									</div>
@@ -70,11 +71,13 @@ export default function VerticalIntegration() {
 							</div>
 							{SKELETON_WIDTHS.map((widths, r) => (
 								<div
+									// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 									key={r}
 									className="flex border-b border-subtle last:border-b-0"
 									style={{ opacity: Math.max(0.15, 0.7 - r * 0.08) }}
 								>
 									{widths.map((w, c) => (
+										// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 										<div key={c} className="flex-1 px-4 py-3.5">
 											<div className={`${w} h-3 rounded-full bg-tertiary`} />
 										</div>

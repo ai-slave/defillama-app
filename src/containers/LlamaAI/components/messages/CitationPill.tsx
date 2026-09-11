@@ -364,6 +364,7 @@ function FactCheckSection({ reference }: { reference: UnifiedCitationReference }
 			{hasEvidence ? (
 				<ul className="m-0 flex flex-col gap-0.5 pl-3">
 					{reference.evidence!.map((item, i) => (
+						// oxlint-disable-next-line react/no-array-index-key -- Evidence is a read-only prose snapshot; identical statements may repeat.
 						<li key={i} className="body-sm text-secondary">
 							{item}
 						</li>

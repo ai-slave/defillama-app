@@ -285,6 +285,7 @@ export function ArticleChartBlock({
 			{config.annotations && config.annotations.length > 0 ? (
 				<ol className="grid gap-1 border-t border-dashed border-medium pt-2 text-xs text-secondary">
 					{config.annotations.map((a, i) => (
+						// oxlint-disable-next-line react/no-array-index-key -- Lettered annotation legend slots may share dates and labels.
 						<li key={`${a.date}-${i}`} className="flex gap-2">
 							<span className="font-jetbrains text-[10px] font-semibold text-tertiary">
 								{String.fromCharCode(65 + i)}

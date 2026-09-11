@@ -2,6 +2,7 @@ import * as Ariakit from '@ariakit/react'
 import { useMemo, useRef } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useResize } from '~/hooks/useResize'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 
 const ICON_WIDTH = 24
 const MAX_ROW_WIDTH = 280
@@ -44,6 +45,7 @@ export function IconsRow({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 	const { width: mainWrapWidth } = useResize(mainWrapEl)
 
 	const { visibleItems, hiddenItems } = useMemo(() => {
+		const keyedItems = keyedOccurrences(items, (item) => JSON.stringify([item.kind, item.label, item.href]))
 		let remainingWidth = Math.min(mainWrapWidth, MAX_ROW_WIDTH) - ICON_WIDTH
 		let visibleItemCount = 0
 
@@ -56,8 +58,8 @@ export function IconsRow({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 		visibleItemCount = items.length > 2 ? visibleItemCount : items.length
 		const overflowStartIndex = visibleItemCount < items.length ? Math.max(visibleItemCount - 1, 0) : visibleItemCount
 
-		const visibleItems = items.length > 2 ? items.slice(0, overflowStartIndex) : items
-		const hiddenItems = overflowStartIndex !== visibleItemCount ? items.slice(overflowStartIndex) : []
+		const visibleItems = items.length > 2 ? keyedItems.slice(0, overflowStartIndex) : keyedItems
+		const hiddenItems = overflowStartIndex !== visibleItemCount ? keyedItems.slice(overflowStartIndex) : []
 
 		return { visibleItems, hiddenItems }
 	}, [items, mainWrapWidth])
@@ -67,8 +69,8 @@ export function IconsRow({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 			className={`flex items-center ${align === 'start' ? 'justify-start' : 'justify-end'} overflow-hidden bg-none`}
 			ref={mainWrapEl}
 		>
-			{visibleItems.map((item) => (
-				<IconItemLogo key={item.label} item={item} />
+			{visibleItems.map(({ item, key }) => (
+				<IconItemLogo key={key} item={item} />
 			))}
 			{hiddenItems.length > 0 && items.length > 2 ? (
 				<Ariakit.HovercardProvider>
@@ -84,8 +86,8 @@ export function IconsRow({ items = EMPTY_ITEMS, align = 'end' }: IIconsRowProps)
 						unmountOnHide
 						portal
 					>
-						{hiddenItems.map((item) => (
-							<IconItemLogo key={item.label} item={item} />
+						{hiddenItems.map(({ item, key }) => (
+							<IconItemLogo key={key} item={item} />
 						))}
 					</Ariakit.Hovercard>
 				</Ariakit.HovercardProvider>

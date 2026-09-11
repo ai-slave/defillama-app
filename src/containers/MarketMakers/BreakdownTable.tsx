@@ -215,6 +215,7 @@ export function BreakdownTableSkeleton({ title, rowCount }: { title: string; row
 			<div className={`flex flex-col gap-1 rounded-lg border ${BORDER} bg-surface p-3`}>
 				<span className="sr-only">{title} loading</span>
 				{Array.from({ length: rowCount }).map((_, i) => (
+					// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 					<div key={i} className="h-6 w-full animate-pulse rounded-sm bg-surface-elevated-2" />
 				))}
 			</div>

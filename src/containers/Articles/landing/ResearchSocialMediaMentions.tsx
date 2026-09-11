@@ -283,6 +283,7 @@ function AutoplayCarousel({
 				<div className="mt-4 flex justify-center gap-2">
 					{slides.map((_, idx) => (
 						<button
+							// oxlint-disable-next-line react/no-array-index-key -- Dots identify slide positions, not the content occupying each slide.
 							key={idx}
 							type="button"
 							aria-label={`Go to slide ${idx + 1}`}
@@ -317,6 +318,7 @@ export function ResearchSocialMediaMentions({ mentions }: { mentions?: Array<Soc
 	if (activeBlocks.length === 0) return null
 
 	const desktopSlides = activeBlocks.map((block, blockIndex) => (
+		// oxlint-disable-next-line react/no-array-index-key -- Slides are layout slots; each embedded post keeps its own post identity.
 		<div key={`desktop-${blockIndex}`} className="shrink-0 snap-start">
 			<BlockContent block={block} isEven={blockIndex % 2 === 1} />
 		</div>

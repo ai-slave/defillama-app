@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from 'react'
+import { Children, useEffect, useReducer, useRef, useState } from 'react'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 
@@ -231,10 +231,9 @@ export function Pagination({ items, startIndex = 0 }: PaginationProps) {
 				) : null}
 				<div className="min-w-0 overflow-hidden">
 					<div className={contentClassName} style={contentStyle}>
-						{currentItems.map((item: React.ReactNode, index: number) => (
-							<div key={index} className="relative min-w-0">
-								{item}
-							</div>
+						{/* Callers must key each item by event identity; Children.map preserves those keys on the wrappers. */}
+						{Children.map(currentItems, (item) => (
+							<div className="relative min-w-0">{item}</div>
 						))}
 					</div>
 				</div>

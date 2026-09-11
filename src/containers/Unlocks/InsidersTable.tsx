@@ -14,6 +14,7 @@ import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { truncateAddress } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import type { Insider } from './api.types'
 
@@ -80,16 +81,21 @@ const getColumns = (blockExplorersData: BlockExplorersResponse, tokenChain: stri
 						contentClassName="w-80 max-w-(--popover-available-width) p-3"
 						content={
 							<span className="flex flex-col gap-1">
-								{allocations.map((a, index) => (
-									<span key={`${a.category}-${index}`} className="flex items-center justify-between gap-4">
-										<span className="min-w-0 break-words">
-											{a.allocationSection ?? formatAllocationLabel(a.category)} ({formatAllocationLabel(a.category)})
+								{keyedOccurrences(allocations, (a) => JSON.stringify([a.category, a.allocationSection])).map(
+									({ item: a, key }) => (
+										<span key={key} className="flex items-center justify-between gap-4">
+											<span className="min-w-0 break-words">
+												{a.allocationSection ?? formatAllocationLabel(a.category)} ({formatAllocationLabel(a.category)})
+											</span>
+											<span className="shrink-0 font-medium">
+												{formatCompactNumber(a.received, {
+													minimumCompactValue: 1_000_000,
+													compactSuffix: 'lowercase'
+												})}
+											</span>
 										</span>
-										<span className="shrink-0 font-medium">
-											{formatCompactNumber(a.received, { minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
-										</span>
-									</span>
-								))}
+									)
+								)}
 							</span>
 						}
 					>

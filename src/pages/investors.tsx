@@ -309,6 +309,7 @@ function Backdrop() {
 				))}
 				{stampCells.map((cell, i) => (
 					<div
+						// oxlint-disable-next-line react/no-array-index-key -- Each index owns a recurring animation timer; moving coordinates must not remount it.
 						key={i}
 						className="ir-stamp absolute flex size-12 items-center justify-center border border-sl-accent/35 bg-sl-accent/15 text-sl-accent dark:text-[#4f8ce0]"
 						style={{ left: cell.left, top: cell.top, animationDelay: cell.delay }}

@@ -73,6 +73,7 @@ export function EntityQuestionsStrip({ questions, entitySlug, entityType, entity
 					<div className="flex min-w-max flex-nowrap gap-2">
 						{isLoading
 							? [120, 160, 140, 180, 130].map((w, i) => (
+									// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 									<Skeleton key={`skeleton-${i}`} className="h-8 shrink-0 rounded-lg" style={{ width: w }} />
 								))
 							: questions.map((question) => (

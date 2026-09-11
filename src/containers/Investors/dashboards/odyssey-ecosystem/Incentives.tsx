@@ -168,6 +168,7 @@ export default function Incentives() {
 			</div>
 			<ChartCard title="30d Spend by Venue">
 				<SimpleTable
+					getRowKey={(row) => JSON.stringify([row.chain, row.id])}
 					rows={k.thirtyDayByVenue}
 					cols={[
 						{ key: 'venue', label: 'Venue' },
@@ -200,7 +201,11 @@ export default function Incentives() {
 			<ChartCard title="Epoch breakdown">
 				<TabBtns<VenueId> active={epochTab} onChange={setEpochTab} options={VENUES} />
 				<div key={epochTab}>
-					<SimpleTable<EpochTableRow> rows={data?.epochTables?.[epochTab]} cols={epochCols(epochTab)} />
+					<SimpleTable<EpochTableRow>
+						getOccurrenceKey={(row) => JSON.stringify([row.period, 'pool' in row ? row.pool : null])}
+						rows={data?.epochTables?.[epochTab]}
+						cols={epochCols(epochTab)}
+					/>
 				</div>
 			</ChartCard>
 
@@ -219,6 +224,7 @@ export default function Incentives() {
 							}
 						>
 							<SimpleTable
+								getOccurrenceKey={(row) => JSON.stringify([row.venue, row.pool])}
 								rows={data.nonSpendIncentives.feesRolledIntoIncentives.rows}
 								cols={[
 									{ key: 'venue', label: 'Venue' },
@@ -261,6 +267,7 @@ export default function Incentives() {
 					{data.nonSpendIncentives.thirdPartySponsorship && (
 						<ChartCard title="3rd-party sponsorship">
 							<SimpleTable
+								getOccurrenceKey={(row) => JSON.stringify([row.sponsor, row.pool, row.venue, row.chain, row.token])}
 								rows={data.nonSpendIncentives.thirdPartySponsorship.knownSponsors}
 								cols={[
 									{ key: 'sponsor', label: 'Sponsor' },
@@ -285,6 +292,7 @@ export default function Incentives() {
 			<div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
 				<ChartCard title="Aerodrome (Base)">
 					<SimpleTable
+						getOccurrenceKey={(row) => row.pool}
 						rows={data?.gauges?.aerodrome}
 						cols={[
 							{ key: 'pool', label: 'Pool' },
@@ -295,6 +303,7 @@ export default function Incentives() {
 				</ChartCard>
 				<ChartCard title="Velodrome (Optimism)">
 					<SimpleTable
+						getOccurrenceKey={(row) => row.pool}
 						rows={data?.gauges?.velodrome}
 						cols={[
 							{ key: 'pool', label: 'Pool' },
@@ -306,6 +315,7 @@ export default function Incentives() {
 			</div>
 			<ChartCard title="Lithos (Plasma)">
 				<SimpleTable
+					getOccurrenceKey={(row) => row.pool}
 					rows={data?.gauges?.lithos}
 					cols={[
 						{ key: 'pool', label: 'Pool' },
@@ -318,6 +328,7 @@ export default function Incentives() {
 			<SectionHeader>Curve Pools</SectionHeader>
 			<ChartCard title="Curve Pools">
 				<SimpleTable
+					getOccurrenceKey={(row) => row.pool}
 					rows={data?.curvePools}
 					cols={[
 						{ key: 'pool', label: 'Pool' },

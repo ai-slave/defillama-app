@@ -28,6 +28,7 @@ export function ArticlePeoplePanelBlock({ config, compact = false }: Props) {
 					)
 					return (
 						<article
+							// oxlint-disable-next-line react/no-array-index-key -- This read-only panel has no persisted person IDs; names and images may repeat.
 							key={idx}
 							className="grid grid-cols-[64px_minmax(0,1fr)] items-start gap-5 sm:grid-cols-[88px_minmax(0,1fr)]"
 						>

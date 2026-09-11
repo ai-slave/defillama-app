@@ -91,6 +91,7 @@ export function DiscoverySection({
 				<div className="flex gap-4 overflow-hidden">
 					{Array.from({ length: 5 }).map((_, i) => (
 						<div
+							// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 							key={`skeleton-${title}-${i}`}
 							className="relative isolate min-h-[220px] w-[300px] shrink-0 overflow-hidden rounded-md border border-pro-cards-border bg-pro-cards-bg md:w-[320px]"
 						>

@@ -158,6 +158,7 @@ export default function Assets() {
 							subtitle="Latest complete month, all chains."
 						>
 							<MiniTable
+								getOccurrenceKey={(row) => JSON.stringify([row[0], row[1], row[3], row[4]])}
 								grid="minmax(80px,0.8fr) minmax(140px,1.6fr) minmax(120px,1.2fr) minmax(110px,1.1fr) minmax(130px,1.3fr) minmax(90px,0.9fr) minmax(80px,0.8fr)"
 								headers={[
 									['Ticker', 'left'],
@@ -230,6 +231,7 @@ export default function Assets() {
 					subtitle="Per graduated auction (finalized with swept proceeds and 10+ unique bidders): raised is settled proceeds, committed is total bids submitted."
 				>
 					<MiniTable
+						getOccurrenceKey={(row) => JSON.stringify([row[0], row[1], row[3]])}
 						grid="minmax(90px,1fr) minmax(90px,0.9fr) minmax(70px,0.6fr) minmax(95px,0.9fr) minmax(95px,0.9fr) minmax(90px,0.9fr) minmax(95px,0.9fr) minmax(70px,0.7fr) minmax(75px,0.7fr)"
 						headers={[
 							['Token', 'left'],

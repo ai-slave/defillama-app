@@ -34,17 +34,20 @@ const highlightFormula = (formula: string) => {
 			{parts.map((part, i) => {
 				if (part.startsWith('='))
 					return (
+						// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 						<span key={i} className="text-brand">
 							{part}
 						</span>
 					)
 				if (part.startsWith('"'))
 					return (
+						// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 						<span key={i} className="text-sub-live">
 							{part}
 						</span>
 					)
 				return (
+					// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 					<span key={i} className="text-sub-text-muted">
 						{part}
 					</span>
@@ -392,6 +395,7 @@ function MockTable({
 					</div>
 					{row.cells.map((cell, i) => (
 						<div
+							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
 							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 font-mono text-[11px] whitespace-nowrap ${cellClass(cell.variant)} ${hasRightSeparator(row.cells, i) ? 'border-r border-sub-line/40' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}
@@ -408,6 +412,7 @@ function MockTable({
 					</div>
 					{footer.cells.map((cell, i) => (
 						<div
+							// oxlint-disable-next-line react/no-array-index-key -- Cells identify positions in a fixed spreadsheet demonstration.
 							key={i}
 							className={`flex min-w-0 items-center overflow-hidden px-2.5 py-1.75 font-mono text-[11px] whitespace-nowrap ${cellClass(cell.variant)} ${hasRightSeparator(footer.cells, i) ? 'border-r border-sub-line/40' : ''}`}
 							style={cell.colSpan ? { gridColumn: `span ${cell.colSpan}` } : undefined}

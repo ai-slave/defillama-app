@@ -4,6 +4,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import { formatVerified, guardianText } from '../format'
 import { toneClasses } from '../kindMeta'
@@ -179,36 +180,38 @@ export function AuditsBlock({ audits }: { audits: Array<Audit> }) {
 				</Tooltip>
 			</div>
 			<ul className="mt-2 flex flex-col divide-y divide-(--border-subtle)">
-				{recent.map((a, i) => {
-					const meta = [
-						a.scope,
-						a.version ? `version ${a.version}` : null,
-						a.commit_hash ? `commit ${a.commit_hash.slice(0, 7)}` : null
-					]
-						.filter(Boolean)
-						.join(' · ')
-					const formal = a.findings_status === 'not_applicable_formal_verification'
-					return (
-						<li key={i} className="flex items-center justify-between gap-2 py-1.5 body-sm">
-							<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-secondary">
-								{meta ? (
-									<Tooltip content={meta} className="text-primary underline decoration-dotted">
-										{a.firm}
-									</Tooltip>
-								) : (
-									<span className="text-primary">{a.firm}</span>
-								)}
-								<span>· {formatVerified(a.date)}</span>
-								{formal ? (
-									<span className="rounded-full border border-data-up/30 bg-data-up/10 px-1.5 py-px label-xs text-primary">
-										formal verification
-									</span>
-								) : null}
-							</span>
-							{a.report?.value ? <ExternalLink href={a.report.value}>report</ExternalLink> : null}
-						</li>
-					)
-				})}
+				{keyedOccurrences(recent, (a) => JSON.stringify([a.report.value, a.scope, a.version, a.commit_hash])).map(
+					({ item: a, key }) => {
+						const meta = [
+							a.scope,
+							a.version ? `version ${a.version}` : null,
+							a.commit_hash ? `commit ${a.commit_hash.slice(0, 7)}` : null
+						]
+							.filter(Boolean)
+							.join(' · ')
+						const formal = a.findings_status === 'not_applicable_formal_verification'
+						return (
+							<li key={key} className="flex items-center justify-between gap-2 py-1.5 body-sm">
+								<span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-secondary">
+									{meta ? (
+										<Tooltip content={meta} className="text-primary underline decoration-dotted">
+											{a.firm}
+										</Tooltip>
+									) : (
+										<span className="text-primary">{a.firm}</span>
+									)}
+									<span>· {formatVerified(a.date)}</span>
+									{formal ? (
+										<span className="rounded-full border border-data-up/30 bg-data-up/10 px-1.5 py-px label-xs text-primary">
+											formal verification
+										</span>
+									) : null}
+								</span>
+								{a.report?.value ? <ExternalLink href={a.report.value}>report</ExternalLink> : null}
+							</li>
+						)
+					}
+				)}
 			</ul>
 			{audits.length > recent.length ? (
 				<span className="mt-1 body-sm text-secondary">+{audits.length - recent.length} more audits</span>

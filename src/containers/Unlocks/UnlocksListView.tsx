@@ -45,9 +45,9 @@ export function UnlocksListView({ events }: UnlocksListViewProps) {
 						) : null}
 					</h3>
 					<div className="flex flex-col gap-1">
-						{dailyEvents.map((event, index) => (
+						{dailyEvents.map((event) => (
 							<BasicLink
-								key={`${event.protocol}-${event.value}-${index}`}
+								key={JSON.stringify([event.protocol, event.unit ?? 'once'])}
 								href={`/unlocks/${slug(event.protocol)}`}
 								target="_blank"
 							>

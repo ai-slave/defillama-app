@@ -33,9 +33,9 @@ export function WeekDayColumn({ dayInfo, unlocksData }: WeekDayColumnProps) {
 			</div>
 			<div className="flex grow flex-col gap-1.5 overflow-y-auto">
 				{hasUnlocks ? (
-					dayData.events.map((event, index) => (
+					dayData.events.map((event) => (
 						<BasicLink
-							key={`${event.protocol}-${event.value}-${index}`}
+							key={JSON.stringify([event.protocol, event.unit ?? 'once'])}
 							href={`/unlocks/${slug(event.protocol)}`}
 							target="_blank"
 						>

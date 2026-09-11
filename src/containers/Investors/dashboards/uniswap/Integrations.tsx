@@ -98,6 +98,7 @@ export default function Integrations() {
 					subtitle="Trailing 3-month Uniswap volume against each chain's spot-DEX volume."
 				>
 					<MiniTable
+						getOccurrenceKey={(row) => String(row[0])}
 						grid="minmax(120px,1.2fr) minmax(120px,1fr) minmax(130px,1fr) minmax(90px,0.7fr)"
 						headers={[
 							['Chain', 'left'],
@@ -133,6 +134,7 @@ export default function Integrations() {
 						subtitle="Every labeled entity with volume, trades, and share of routed flow."
 					>
 						<MiniTable
+							getOccurrenceKey={(row) => String(row[0])}
 							grid="minmax(140px,1.5fr) minmax(100px,1fr) minmax(90px,1fr) minmax(70px,0.6fr)"
 							headers={[
 								['Entity', 'left'],
@@ -154,6 +156,7 @@ export default function Integrations() {
 						subtitle="The same order flow split by the AMM version it settled on."
 					>
 						<MiniTable
+							getOccurrenceKey={(row) => String(row[0])}
 							grid="minmax(140px,1.5fr) minmax(90px,1fr) minmax(80px,0.8fr) minmax(80px,0.8fr) minmax(80px,0.8fr)"
 							headers={[
 								['Entity', 'left'],
@@ -205,6 +208,7 @@ export default function Integrations() {
 						subtitle="Projects by 90-day volume through their hooks (labels from Uniswap's own categorization)."
 					>
 						<MiniTable
+							getOccurrenceKey={(row) => String(row[0])}
 							grid="minmax(130px,1.5fr) minmax(60px,0.5fr) minmax(100px,1fr) minmax(70px,0.6fr)"
 							headers={[
 								['Project', 'left'],

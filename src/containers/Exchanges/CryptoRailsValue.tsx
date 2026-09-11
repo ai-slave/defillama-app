@@ -1,5 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import type { CryptoRailRowModel, CryptoRailsModel } from './models'
 
 export function cryptoRailSummary(rails: CryptoRailsModel): string {
@@ -31,8 +32,8 @@ function CryptoRailTable({ label, rows }: { label: string; rows: Array<CryptoRai
 							</tr>
 						</thead>
 						<tbody>
-							{rows.map((row, index) => (
-								<tr key={`${row.asset}:${row.network}:${index}`}>
+							{keyedOccurrences(rows, (row) => JSON.stringify([row.asset, row.network])).map(({ item: row, key }) => (
+								<tr key={key}>
 									<td className="border-b border-subtle px-2 py-1.5 text-primary">{displayText(row.asset)}</td>
 									<td className="border-b border-subtle px-2 py-1.5 text-primary">{displayText(row.network)}</td>
 									<td className="border-b border-subtle px-2 py-1.5 text-primary">{displayText(row.fee)}</td>

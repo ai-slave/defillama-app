@@ -4,7 +4,7 @@ import type { TrustedLogo } from '~/containers/Articles/types'
 import { useMedia } from '~/hooks/useMedia'
 
 interface Logo {
-	id: number
+	id: string | number
 	name: string
 	logo: string
 	link: string
@@ -61,10 +61,9 @@ const getMobileItems = (items: Array<React.ReactNode>): Array<React.ReactNode> =
 		const slideItems = items.slice(i, i + 2)
 		mobileItems.push(
 			<div key={`slide-${i}`} className="grid shrink-0 grid-cols-1 gap-4">
-				{slideItems.map((item, index) => (
-					<div key={`slide-${i}-item-${index}`} className="flex items-center justify-center">
-						{item}
-					</div>
+				{/* renderLogo supplies logo keys; unkeyed children would fall back to positional identity here. */}
+				{React.Children.map(slideItems, (item) => (
+					<div className="flex items-center justify-center">{item}</div>
 				))}
 			</div>
 		)
@@ -72,8 +71,8 @@ const getMobileItems = (items: Array<React.ReactNode>): Array<React.ReactNode> =
 	return mobileItems
 }
 
-const toLogo = (logo: TrustedLogo, index: number): Logo => ({
-	id: index + 1,
+const toLogo = (logo: TrustedLogo): Logo => ({
+	id: logo.id,
 	name: logo.name,
 	logo: logo.imageUrl,
 	link: logo.linkUrl

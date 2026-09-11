@@ -5,6 +5,7 @@ import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 import {
 	formatMetadataAsOf,
@@ -153,8 +154,8 @@ export function MetadataFieldValue({
 	if (field.type === 'kv') {
 		return (
 			<dl className="grid gap-1.5">
-				{field.value.map((item, index) => (
-					<div key={`${item.label}-${index}`} className="flex justify-between gap-4">
+				{keyedOccurrences(field.value, (item) => item.label).map(({ item, key }) => (
+					<div key={key} className="flex justify-between gap-4">
 						<dt className="text-secondary">{item.label}</dt>
 						<dd className="text-right">{formatScalar(item.value, 'text')}</dd>
 					</div>
@@ -222,6 +223,7 @@ function MetadataTable({
 				</thead>
 				<tbody>
 					{visibleRows.map((row, rowIndex) => (
+						// oxlint-disable-next-line react/no-array-index-key -- Read-only metadata rows have no primary key; expansion reveals the same prefix.
 						<tr key={rowIndex} className="hover:bg-hover-row">
 							{columns.map((column) => (
 								<td

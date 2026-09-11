@@ -1,6 +1,7 @@
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import type { ExchangeProfileModel } from './models'
 import { activePromotions, promotionLinks } from './promotions'
 
@@ -15,13 +16,12 @@ export function ProfilePromotions({
 	if (active.length === 0) return null
 	return (
 		<Card as="section" padding="none" aria-label="Exchange promotions" className="overflow-hidden">
-			{active.map((promotion) => {
+			{keyedOccurrences(active, (promotion) =>
+				JSON.stringify([promotion.url, promotion.sourceUrl, promotion.startsAt])
+			).map(({ item: promotion, key }) => {
 				const links = promotionLinks(promotion)
 				return (
-					<div
-						key={`${promotion.label}-${promotion.title}`}
-						className="flex flex-wrap items-center gap-2 border-b border-subtle p-2 last:border-b-0"
-					>
+					<div key={key} className="flex flex-wrap items-center gap-2 border-b border-subtle p-2 last:border-b-0">
 						<span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-medium text-link">
 							<Icon name="gift" className="size-4" />
 						</span>

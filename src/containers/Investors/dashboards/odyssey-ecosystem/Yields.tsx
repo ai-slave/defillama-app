@@ -26,6 +26,7 @@ export default function Yields() {
 			<SectionHeader>Odyssey Loopr · Max APY by Chain</SectionHeader>
 			<ChartCard title="Aggregated APY per chain" subtitle="At max leverage, across all live Looper strategies">
 				<SimpleTable
+					getOccurrenceKey={(row) => row.chain}
 					rows={data?.odysseyApy?.rows}
 					cols={[
 						{ key: 'chain', label: 'Chain' },
@@ -44,6 +45,7 @@ export default function Yields() {
 			<SectionHeader>Odyssey Loopr · Per-Strategy Max APY</SectionHeader>
 			<ChartCard title="Live strategies" subtitle="Collateral / borrow APY per pool (snapshot)">
 				<SimpleTable
+					getOccurrenceKey={(row) => JSON.stringify([row.name, row.chain, row.collateral, row.borrow])}
 					rows={data?.looperApy?.rows}
 					cols={[
 						{ key: 'name', label: 'Strategy' },
@@ -78,6 +80,7 @@ export default function Yields() {
 			<SectionHeader>Vesper Pools · Net APY</SectionHeader>
 			<ChartCard title="All Vesper pools" subtitle="Current snapshot across Ethereum, Optimism and Base">
 				<SimpleTable
+					getOccurrenceKey={(row) => JSON.stringify([row.pool, row.chain, row.asset])}
 					rows={data?.vesperApy?.pools}
 					cols={[
 						{ key: 'pool', label: 'Pool' },
@@ -100,6 +103,7 @@ export default function Yields() {
 				{Object.entries(data?.lpApyHistory || {}).map(([key, venue]) => (
 					<ChartCard key={key} title={venue.venue} subtitle="Latest APY per pool">
 						<SimpleTable
+							getOccurrenceKey={(row) => row.pool}
 							rows={venue.pools}
 							cols={[
 								{ key: 'pool', label: 'Pool' },
@@ -119,6 +123,7 @@ export default function Yields() {
 			<SectionHeader>All Synth LP Pools</SectionHeader>
 			<ChartCard title="LP pools snapshot" subtitle="Live across Aerodrome, Velodrome, Curve, Lithos">
 				<SimpleTable
+					getOccurrenceKey={(row) => JSON.stringify([row.venue, row.chain, row.pool])}
 					rows={data?.lpPools?.rows}
 					cols={[
 						{ key: 'venue', label: 'Venue' },

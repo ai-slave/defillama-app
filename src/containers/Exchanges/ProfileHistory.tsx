@@ -5,6 +5,7 @@ import { summarizeRaises } from '~/containers/Raises/summary'
 import { Card } from '~/ui/Card'
 import { Icon, type IIcon } from '~/ui/Icon'
 import { formatDate } from '~/utils/dateFormat'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import type { ExchangeProfileModel } from './models'
 
@@ -95,64 +96,68 @@ export function ProfileHistory({ profile }: { profile: ExchangeProfileModel }) {
 
 			{profile.hacks.length > 0 ? (
 				<HistorySection icon="alert-triangle" title="Hacks" count={profile.hacks.length}>
-					{profile.hacks.map((hack, index) => (
-						<HistoryRecord
-							key={`${hack.date ?? 'unknown'}-${index}`}
-							details={
-								<>
-									<p className="label-md">{hack.technique ?? hack.name}</p>
-									<p className="mt-0.5 body-sm text-tertiary">
-										{hack.date ? (formatDate(hack.date, { input: 'seconds' }) ?? 'Unknown date') : 'Unknown date'}
-									</p>
-									{hack.returnedFundsUsd != null ? (
-										<p className="mt-1 body-sm text-secondary">
-											Returned funds: {formatUsd(hack.returnedFundsUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
+					{keyedOccurrences(profile.hacks, (hack) => JSON.stringify([hack.date, hack.name, hack.technique])).map(
+						({ item: hack, key }) => (
+							<HistoryRecord
+								key={key}
+								details={
+									<>
+										<p className="label-md">{hack.technique ?? hack.name}</p>
+										<p className="mt-0.5 body-sm text-tertiary">
+											{hack.date ? (formatDate(hack.date, { input: 'seconds' }) ?? 'Unknown date') : 'Unknown date'}
 										</p>
-									) : null}
-								</>
-							}
-							amount={formatUsd(hack.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
-						/>
-					))}
+										{hack.returnedFundsUsd != null ? (
+											<p className="mt-1 body-sm text-secondary">
+												Returned funds: {formatUsd(hack.returnedFundsUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
+											</p>
+										) : null}
+									</>
+								}
+								amount={formatUsd(hack.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
+							/>
+						)
+					)}
 				</HistorySection>
 			) : null}
 
 			{profile.raises.length > 0 ? (
 				<HistorySection icon="trending-up" title="Raises" count={profile.raises.length}>
-					{profile.raises.map((raise, index) => (
-						<HistoryRecord
-							key={`${raise.date}-${index}`}
-							details={
-								<>
-									<p className="label-md">{raise.round || 'Funding round'}</p>
-									<p className="mt-0.5 body-sm text-tertiary">{formatDate(raise.date, { input: 'seconds' })}</p>
-									{raise.valuationUsd != null ? (
-										<p className="mt-1 body-sm text-secondary">
-											Valuation: {formatUsd(raise.valuationUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
-										</p>
-									) : null}
-									{raise.investors.length > 0 ? (
-										<p className="mt-1 body-sm text-secondary">Investors: {raise.investors.join(', ')}</p>
-									) : null}
-								</>
-							}
-							amount={
-								raise.sourceUrl ? (
-									<BasicLink
-										href={raise.sourceUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="inline-flex items-center gap-1 text-link hover:underline"
-									>
-										{formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
-										<Icon name="external-link" height={12} width={12} />
-									</BasicLink>
-								) : (
-									(formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown')
-								)
-							}
-						/>
-					))}
+					{keyedOccurrences(profile.raises, (raise) => JSON.stringify([raise.date, raise.round, raise.sourceUrl])).map(
+						({ item: raise, key }) => (
+							<HistoryRecord
+								key={key}
+								details={
+									<>
+										<p className="label-md">{raise.round || 'Funding round'}</p>
+										<p className="mt-0.5 body-sm text-tertiary">{formatDate(raise.date, { input: 'seconds' })}</p>
+										{raise.valuationUsd != null ? (
+											<p className="mt-1 body-sm text-secondary">
+												Valuation: {formatUsd(raise.valuationUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
+											</p>
+										) : null}
+										{raise.investors.length > 0 ? (
+											<p className="mt-1 body-sm text-secondary">Investors: {raise.investors.join(', ')}</p>
+										) : null}
+									</>
+								}
+								amount={
+									raise.sourceUrl ? (
+										<BasicLink
+											href={raise.sourceUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="inline-flex items-center gap-1 text-link hover:underline"
+										>
+											{formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown'}
+											<Icon name="external-link" height={12} width={12} />
+										</BasicLink>
+									) : (
+										(formatUsd(raise.amountUsd, USD_LOWERCASE_MILLIONS_OPTIONS) ?? 'Unknown')
+									)
+								}
+							/>
+						)
+					)}
 				</HistorySection>
 			) : null}
 		</section>

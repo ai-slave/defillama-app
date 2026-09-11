@@ -176,6 +176,7 @@ export function CriteriaDrawer({
 								</div>
 								{doc.rubric.map((text, index) => (
 									<div
+										// oxlint-disable-next-line react/no-array-index-key -- Rubric position identifies the score band (10 - index), not its prose.
 										key={`${active.key}-${index}`}
 										className="flex items-center justify-between gap-3 border-t border-subtle px-4 py-2"
 									>

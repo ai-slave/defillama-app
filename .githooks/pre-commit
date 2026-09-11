@@ -43,8 +43,7 @@ if [ -s "$staged_files" ]; then
 
 	if [ "$status" -eq 0 ]; then
 		echo "Linting staged files..."
-		bun scripts/lintBaseline.ts --emit || status=$?
-		xargs -0 bunx oxlint -c .oxlintrc.baseline.json --no-error-on-unmatched-pattern -- < "$staged_files" || status=$?
+		xargs -0 bunx oxlint --no-error-on-unmatched-pattern -- < "$staged_files" || status=$?
 	fi
 
 	# The formatting policies check only the staged src/ TypeScript files here;

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { lazy, useMemo } from 'react'
+import { Fragment, lazy, useMemo } from 'react'
 import type { IHBarChartProps } from '~/components/ECharts/HBarChart/types'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
@@ -8,6 +8,7 @@ import { fetchAdapterProtocolMetrics } from '~/containers/AdapterMetrics/api'
 import type { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
+import { keyedOccurrences, type RowIdentity } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import { readInvestorApiJson } from '../../api.types'
 import { chartToDataset, unitSymbol, type Chart, type Kpi as KpiT } from './transform'
@@ -342,6 +343,8 @@ export function SegToggle<T extends string>({
 
 // Shared pre-formatted table: headers set alignment, right-aligned cells render mono.
 export function MiniTable({
+	getRowKey,
+	getOccurrenceKey,
 	grid,
 	headers,
 	rows,
@@ -351,7 +354,7 @@ export function MiniTable({
 	headers: Array<[string, 'left' | 'right']>
 	rows: Array<Array<string | number>>
 	maxHeight?: string
-}) {
+} & RowIdentity<Array<string | number>>) {
 	return (
 		<div className="w-full overflow-auto rounded-lg border border-pro-cards-border" style={{ maxHeight }}>
 			<div style={{ display: 'grid', gridTemplateColumns: grid }}>
@@ -364,21 +367,27 @@ export function MiniTable({
 						{label}
 					</div>
 				))}
-				{rows.map((row, rowIndex) =>
-					row.map((cell, cellIndex) => {
-						const align = headers[cellIndex]?.[1] ?? 'left'
-						return (
-							<div
-								key={`${rowIndex}-${cellIndex}`}
-								className={`truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${
-									align === 'right' ? 'text-right font-jetbrains tabular-nums' : ''
-								} ${rowIndex % 2 === 1 ? 'bg-pro-cards-bg' : ''}`}
-							>
-								{cell}
-							</div>
-						)
-					})
-				)}
+				{(getRowKey
+					? rows.map((item) => ({ item, key: getRowKey(item) }))
+					: keyedOccurrences(rows, getOccurrenceKey)
+				).map(({ item: row, key }, rowIndex) => (
+					<Fragment key={key}>
+						{row.map((cell, cellIndex) => {
+							const align = headers[cellIndex]?.[1] ?? 'left'
+							return (
+								<div
+									// oxlint-disable-next-line react/no-array-index-key -- Cells retain their fixed schema position within the keyed row.
+									key={cellIndex}
+									className={`truncate border-b border-subtle px-3 py-2.5 text-sm text-pro-text-primary ${
+										align === 'right' ? 'text-right font-jetbrains tabular-nums' : ''
+									} ${rowIndex % 2 === 1 ? 'bg-pro-cards-bg' : ''}`}
+								>
+									{cell}
+								</div>
+							)
+						})}
+					</Fragment>
+				))}
 			</div>
 		</div>
 	)

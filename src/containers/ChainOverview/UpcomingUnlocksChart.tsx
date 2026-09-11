@@ -28,7 +28,7 @@ export function UpcomingUnlocksChart({
 			<div ref={containerRef} className="relative h-full" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
 				<div className="flex h-full items-end">
 					{data.map((d, i) => (
-						<div key={i} className="flex h-full flex-1 items-end justify-center">
+						<div key={d.date} className="flex h-full flex-1 items-end justify-center">
 							<div
 								className="w-[60%] min-w-[4px]"
 								style={{

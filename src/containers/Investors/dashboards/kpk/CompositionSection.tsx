@@ -173,6 +173,7 @@ export function CompositionSection({
 					    while it is in flight — a collapsed empty heading would jump the table below. */}
 					<h3 className="mb-2 label-sm tracking-wider text-pro-text-label uppercase">{model?.title ?? ' '}</h3>
 					<DataTable
+						getOccurrenceKey={(row) => row.name}
 						rows={model?.rows}
 						cols={[
 							{

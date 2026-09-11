@@ -38,11 +38,6 @@ jobs:
       - name: Lint
         run: bun run lint
 
-      - name: Check lint baseline is tight
-        run: |
-          git fetch --no-tags --depth=1 origin main
-          bun run lint:baseline:check -- --base origin/main
-
       - name: Check React Compiler baseline is tight
         # A component that stops compiling is invisible otherwise: nothing fails, it just stops being
         # memoized. The baseline records what still bails so everything else is protected.

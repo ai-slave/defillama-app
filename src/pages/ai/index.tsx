@@ -118,6 +118,7 @@ function FreeQuestionsSection({ landingQuestions }: { landingQuestions?: Array<L
 				{displayed.map((q, i) => (
 					<button
 						type="button"
+						// oxlint-disable-next-line react/no-array-index-key -- Landing suggestions are a read-only snapshot with no IDs; text and tags may repeat.
 						key={i}
 						onClick={() => handleClick(q)}
 						className={clsx(
@@ -396,10 +397,10 @@ function ExampleShowcase() {
 			</a>
 
 			<div className="mt-3 flex items-center justify-center gap-2">
-				{EXAMPLE_CONVERSATIONS.map((_, i) => (
+				{EXAMPLE_CONVERSATIONS.map((conversation, i) => (
 					<button
 						type="button"
-						key={i}
+						key={conversation.id}
 						onClick={() => {
 							goTo(i)
 							resetInterval()

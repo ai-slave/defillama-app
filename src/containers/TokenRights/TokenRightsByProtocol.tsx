@@ -10,6 +10,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tabs, TabPanel } from '~/ui/Tabs'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
+import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import { formatUsd } from '~/utils/numberFormat'
 import { TokenRightsPieChart } from './TokenRightsPieChart'
 import type { ITokenRightsData, ITokenRightsParsedLink, ITokenRightsTokenDisplay } from './types'
@@ -164,10 +165,10 @@ export function TokenRightsByProtocol({
 									{resources.addresses.every((a) => !a.label) ? (
 										<h3 className="text-secondary">Foundation Multisigs / Addresses</h3>
 									) : null}
-									{resources.addresses.map((a, i) => {
+									{keyedOccurrences(resources.addresses, (a) => a.value).map(({ item: a, key }) => {
 										const isLink = a.value.startsWith('http://') || a.value.startsWith('https://')
 										return (
-											<div key={`${a.value}-${i}`} className="flex min-w-0 flex-col gap-0.5">
+											<div key={key} className="flex min-w-0 flex-col gap-0.5">
 												{a.label ? <span className="text-secondary">{a.label}</span> : null}
 												{isLink ? (
 													<a
@@ -583,6 +584,7 @@ function TokenRightsChipList({
 	return (
 		<div className={`flex items-center gap-1.5 ${shouldWrap ? 'flex-wrap' : 'flex-nowrap'}`}>
 			{items.map((item, index) => (
+				// oxlint-disable-next-line react/no-array-index-key -- These read-only labels preserve repeated occurrences from authored text.
 				<TokenRightsChip key={`${item}-${index}`} label={item} tone={tone} variant={variant} />
 			))}
 		</div>
@@ -737,9 +739,9 @@ function RaiseHistorySection({ tooltip, raises }: { tooltip?: string; raises: Ar
 						</tr>
 					</thead>
 					<tbody>
-						{raises.map((r, i) => {
+						{keyedOccurrences(raises, (r) => JSON.stringify([r.date, r.round, r.source])).map(({ item: r, key }) => {
 							return (
-								<tr key={`${r.date}-${r.round}-${i}`} className="border-b border-subtle last:border-0">
+								<tr key={key} className="border-b border-subtle last:border-0">
 									<td className="py-2.5 pr-4 whitespace-nowrap">
 										{r.date ? (formatDate(r.date, { input: 'seconds' }) ?? '—') : '—'}
 									</td>

@@ -165,7 +165,7 @@ export function InvestorContainer({
 						</summary>
 
 						{raisesByCategory.map(({ name, value }) => (
-							<p className="my-1 flex flex-wrap items-center justify-between gap-2" key={`total${name}${value}`}>
+							<p className="my-1 flex flex-wrap items-center justify-between gap-2" key={name}>
 								<span className="text-secondary">{name}</span>
 								<span className="font-jetbrains">{value}</span>
 							</p>

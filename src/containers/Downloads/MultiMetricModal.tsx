@@ -962,9 +962,10 @@ function PreviewTable({
 			<table className="w-full text-xs">
 				<thead className="sticky top-0 z-10 bg-surface">
 					<tr>
-						{headers.map((h) => (
+						{headers.map((h, columnIndex) => (
 							<th
-								key={h}
+								// oxlint-disable-next-line react/no-array-index-key -- CSV headings may repeat; the fixed schema ordinal identifies each column.
+								key={columnIndex}
 								className="border-b border-subtle px-3 py-2 text-left font-medium whitespace-nowrap text-pro-text-tertiary"
 							>
 								{h}
@@ -977,6 +978,7 @@ function PreviewTable({
 						<tr key={row.id} className={`border-subtle/40 border-b last:border-b-0 ${rowIdx % 2 === 1 ? '' : ''}`}>
 							{headers.map((_, i) => (
 								<td
+									// oxlint-disable-next-line react/no-array-index-key -- CSV cells identify schema positions; column labels can repeat.
 									key={i}
 									className={`px-3 py-1.5 whitespace-nowrap text-pro-text-primary ${i === 0 ? '' : 'tabular-nums'}`}
 								>
@@ -987,11 +989,13 @@ function PreviewTable({
 					))}
 					{filler.map((row, rowIdx) => (
 						<tr
+							// oxlint-disable-next-line react/no-array-index-key -- Filler intentionally repeats source rows, so source IDs would collide.
 							key={`filler-${rowIdx}`}
 							className={`border-subtle/40 border-b last:border-b-0 ${(display.length + rowIdx) % 2 === 1 ? '' : ''}`}
 						>
 							{headers.map((_, i) => (
 								<td
+									// oxlint-disable-next-line react/no-array-index-key -- CSV cells identify schema positions; column labels can repeat.
 									key={i}
 									className={`px-3 py-1.5 whitespace-nowrap text-pro-text-primary ${i === 0 ? '' : 'tabular-nums'}`}
 								>

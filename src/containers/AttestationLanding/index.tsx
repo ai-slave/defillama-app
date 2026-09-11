@@ -459,6 +459,7 @@ function AuditValue({
 					const maskDelay = delay + index * 90
 					const revealDelay = maskDelay + 135
 					return (
+						// oxlint-disable-next-line react/no-array-index-key -- Digit groups are animation slots; repeated groups are valid.
 						<span key={`${group}-${index}`} className="inline-flex">
 							{index > 0 ? <span>,</span> : null}
 							<span className="attn-audit-group">

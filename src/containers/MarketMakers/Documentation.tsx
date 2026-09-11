@@ -485,6 +485,7 @@ function P({ children }: { children: ReactNode }) {
 function Bullets({ items, ordered = false }: { items: Array<ReactNode>; ordered?: boolean }) {
 	const cls = 'ml-5 flex flex-col gap-2 body-lg text-secondary'
 	const inner = items.map((item, i) => (
+		// oxlint-disable-next-line react/no-array-index-key -- This local documentation list has fixed display order and no row state.
 		<li key={i} className={ordered ? 'list-decimal' : 'list-disc'}>
 			{item}
 		</li>
@@ -506,6 +507,7 @@ function WeightTable({ rows, showRanking = true }: { rows: Array<WeightRow>; sho
 					</thead>
 					<tbody>
 						{rows.map((row, i) => (
+							// oxlint-disable-next-line react/no-array-index-key -- This local documentation list has fixed display order and no row state.
 							<tr key={i} className="border-t border-subtle bg-surface first:border-t-0">
 								<td className="px-4 py-2.5 text-primary">{row.metric}</td>
 								<td className="px-4 py-2.5 text-center text-secondary">{row.weighting}</td>

@@ -46,17 +46,17 @@ type FormState = {
 	bio: string
 	avatarUrl: string
 	socials: Record<string, string>
-	customSocials: Array<{ key: string; value: string }>
+	customSocials: Array<{ id: string; key: string; value: string }>
 }
 
 function profileToForm(profile: ArticleAuthorProfile): FormState {
 	const presetIds = new Set(PRESET_SOCIALS.map((s) => s.id))
 	const presetEntries: Record<string, string> = {}
-	const custom: Array<{ key: string; value: string }> = []
+	const custom: Array<{ id: string; key: string; value: string }> = []
 	for (const [key, value] of Object.entries(profile.socials || {})) {
 		if (!value) continue
 		if (presetIds.has(key)) presetEntries[key] = value
-		else custom.push({ key, value })
+		else custom.push({ id: key, key, value })
 	}
 	return {
 		displayName: profile.displayName || '',
@@ -290,7 +290,10 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 			return { ...current, customSocials: next }
 		})
 	const addCustom = () =>
-		setState((current) => ({ ...current, customSocials: [...current.customSocials, { key: '', value: '' }] }))
+		setState((current) => ({
+			...current,
+			customSocials: [...current.customSocials, { id: crypto.randomUUID(), key: '', value: '' }]
+		}))
 	const removeCustom = (index: number) =>
 		setState((current) => ({ ...current, customSocials: current.customSocials.filter((_, i) => i !== index) }))
 
@@ -472,7 +475,7 @@ function AuthorProfileEditor({ loadedProfile }: { loadedProfile: ArticleAuthorPr
 							</button>
 						) : (
 							state.customSocials.map((entry, index) => (
-								<div key={index} className="grid grid-cols-[120px_minmax(0,1fr)_auto] items-start gap-2">
+								<div key={entry.id} className="grid grid-cols-[120px_minmax(0,1fr)_auto] items-start gap-2">
 									<input
 										type="text"
 										value={entry.key}

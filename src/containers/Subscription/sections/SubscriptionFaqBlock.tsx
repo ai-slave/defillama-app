@@ -44,6 +44,7 @@ export function SubscriptionFaqBlock({
 
 					return (
 						<div
+							// oxlint-disable-next-line react/no-array-index-key -- The authored FAQ order is fixed; expansion and aria IDs use these slots.
 							key={index}
 							className="border-b border-sub-mobile-table-border py-4 md:border-sub-desktop-table-border md:py-0 md:pb-4"
 						>

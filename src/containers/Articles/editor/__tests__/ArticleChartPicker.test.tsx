@@ -180,3 +180,26 @@ test('editing retains caption and annotations; All and Linear omit optional sett
 	expect(saved.caption).toBe('Existing caption')
 	expect(saved.annotations).toEqual(config.annotations)
 })
+
+test('retains a duplicate annotation input after deleting its preceding row', async () => {
+	const onInsert = await mount({
+		initialConfig: {
+			entities: [{ entityType: 'protocol', slug: 'aave', name: 'Aave' }],
+			series: [{ entityType: 'protocol', slug: 'aave', name: 'Aave', chartType: 'tvl' }],
+			chartType: 'tvl',
+			annotations: [
+				{ date: '2026-01-01', label: 'Same' },
+				{ date: '2026-01-01', label: 'Same' }
+			]
+		}
+	})
+	const surviving = document.querySelector<HTMLInputElement>('[aria-label="Annotation 2 label"]')!
+	await click(document.querySelector<HTMLButtonElement>('[aria-label="Remove annotation"]')!)
+	expect(document.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
+	await input(surviving, '')
+	expect(document.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
+	await input(surviving, 'Retained')
+	expect(document.querySelector('[aria-label="Annotation 1 label"]')).toBe(surviving)
+	await click(insert())
+	expect(onInsert.mock.calls[0][0].annotations).toEqual([{ date: '2026-01-01T00:00:00.000Z', label: 'Retained' }])
+})

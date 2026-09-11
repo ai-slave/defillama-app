@@ -719,7 +719,7 @@ function SmolStats({
 			) : null}
 			{restOfData.map((metric) => (
 				<ChainBreakdownMetricRow
-					key={`${metric.name}-${metric.value}-${protocolName}`}
+					key={`${metric.name}-${protocolName}`}
 					metric={metric}
 					protocolName={protocolName}
 					formatPrice={formatPrice}

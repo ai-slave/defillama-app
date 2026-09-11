@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } fro
 import type { Message } from '~/containers/LlamaAI/types'
 import { getScrollBehavior } from '~/containers/LlamaAI/utils/motion'
 
-type Section = { text: string; msgId: string }
+type Section = { text: string; msgId: string; offset: number }
 
 function parseSections(messages: Array<Message>): Array<Section> {
 	for (let i = messages.length - 1; i >= 0; i--) {
@@ -10,7 +10,7 @@ function parseSections(messages: Array<Message>): Array<Section> {
 		if (msg.role !== 'assistant' || !msg.content || !msg.id) continue
 		const matches = [...msg.content.matchAll(/^## (.+)$/gm)]
 		if (matches.length < 2) continue
-		return matches.map((m) => ({ text: m[1].trim(), msgId: msg.id! }))
+		return matches.map((m) => ({ text: m[1].trim(), msgId: msg.id!, offset: m.index }))
 	}
 	return []
 }
@@ -80,7 +80,7 @@ export function SectionsTOC({
 					{sections.map((section, i) => {
 						const isActive = activeIndex === i
 						return (
-							<li key={`${section.msgId}-${section.text}`}>
+							<li key={`${section.msgId}-${section.offset}`}>
 								<button
 									type="button"
 									onClick={() => handleClick(i)}

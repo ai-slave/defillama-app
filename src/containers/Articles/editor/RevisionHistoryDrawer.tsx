@@ -1146,6 +1146,7 @@ function BodyDiffSection({ ops }: { ops: Array<ParagraphDiffOp> }) {
 			</header>
 			<div className="grid gap-2 rounded-md border border-medium bg-surface p-2">
 				{ops.map((op, idx) => (
+					// oxlint-disable-next-line react/no-array-index-key -- Diff paragraphs are a read-only snapshot and may contain identical text.
 					<DiffParagraph key={idx} op={op} />
 				))}
 			</div>
@@ -1194,14 +1195,17 @@ function DiffParagraph({ op }: { op: ParagraphDiffOp }) {
 			</span>
 			<p className="text-sm [overflow-wrap:anywhere]">
 				{op.words.map((word, idx) => {
+					// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 					if (word.type === 'equal') return <span key={idx}>{word.value}</span>
 					if (word.type === 'add')
 						return (
+							// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 							<span key={idx} className="rounded-[2px] bg-success/15 px-0.5 text-emerald-700 dark:text-emerald-300">
 								{word.value}
 							</span>
 						)
 					return (
+						// oxlint-disable-next-line react/no-array-index-key -- Repeated syntax fragments have positional identity and no local state.
 						<span key={idx} className="rounded-[2px] bg-error/12 px-0.5 text-error line-through dark:text-error">
 							{word.value}
 						</span>
@@ -1275,6 +1279,7 @@ function TimelineSkeleton() {
 	return (
 		<div className="grid gap-1 p-5">
 			{[0.9, 0.7, 0.55, 0.85, 0.6, 0.7].map((scale, idx) => (
+				// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 				<div key={idx} className="flex items-start gap-3 py-2">
 					<span aria-hidden className="mt-1 size-2 rounded-full bg-border-medium" />
 					<div className="grid flex-1 gap-1.5">
@@ -1299,6 +1304,7 @@ function PreviewSkeleton() {
 			<div className="mt-6 grid gap-2">
 				{[1, 0.95, 0.9, 0.7, 0.85, 0.6].map((scale, idx) => (
 					<span
+						// oxlint-disable-next-line react/no-array-index-key -- Loading placeholders are fixed display slots, not data items.
 						key={idx}
 						aria-hidden
 						className="bg-border-medium/50 h-3 rounded-sm"
