@@ -71,6 +71,7 @@ export function useStreamNotification({ soundEnabled, attention }: UseStreamNoti
 			document.removeEventListener('visibilitychange', clearBadgeIfAttending)
 			window.removeEventListener('focus', clearBadgeIfAttending)
 		}
+		// eslint-disable-next-line react/exhaustive-effect-dependencies -- attention.uncovered is the trigger: clear the badge when the chat becomes visible
 	}, [attention.uncovered, clearBadgeIfAttending])
 
 	// Reset and replay the short audio cue when a background response completes.

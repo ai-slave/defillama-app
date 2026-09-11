@@ -160,6 +160,7 @@ describe('fetchCsvForSource chart path', () => {
 
 	test('times out hanging customFetch upstreams', async () => {
 		const pending = fetchCsvForSource({ kind: 'chart', slug: 'test-hanging', param: 'x' })
+		// eslint-disable-next-line vitest/valid-expect -- the assertion promise is awaited below, after the fake timers advance
 		const assertion = expect(pending).rejects.toThrow('Upstream timeout for chart "test-hanging"')
 		await vi.advanceTimersByTimeAsync(15_001)
 		await assertion

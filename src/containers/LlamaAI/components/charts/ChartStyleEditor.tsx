@@ -221,7 +221,7 @@ export function ChartStyleEditor({
 		() => () => {
 			if (previewTimer.current) clearTimeout(previewTimer.current)
 		},
-		[]
+		[previewTimer]
 	)
 
 	const update = (mutate: (d: ChartConfiguration) => void, mode: PreviewMode = 'debounced') => {

@@ -196,7 +196,7 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 	const chartDomRef = useRef<HTMLDivElement>(null)
 	const chartRef = useRef<echarts.ECharts | null>(null)
 	const categoryLogosOverlayRef = useRef<HTMLDivElement>(null)
-	const hasCategoryLogos = !!(categoryLogos && categoryLogos.length > 0 && categoryLogos.some(Boolean))
+	const hasCategoryLogos = !!(categoryLogos && categoryLogos.some(Boolean))
 	const eventHoverCleanupRef = useRef<(() => void) | null>(null)
 	const eventHoverStateRef = useRef<EventHoverState>({ hoveredEventDate: null })
 	const eventMarkLineGridRef = useRef<{ top: number; bottom: number } | null>(null)

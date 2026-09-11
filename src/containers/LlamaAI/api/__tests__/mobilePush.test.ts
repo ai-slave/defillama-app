@@ -58,6 +58,7 @@ describe('web mobile push API', () => {
 				})
 
 			const request = markWebCompletionSeen(fetcher, 'session-1', 'message-1')
+			// eslint-disable-next-line vitest/valid-expect -- the assertion promise is awaited below, after the fake timers advance
 			const rejection = expect(request).rejects.toMatchObject({ name: 'AbortError' })
 			await vi.advanceTimersByTimeAsync(2000)
 

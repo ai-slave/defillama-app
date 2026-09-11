@@ -257,6 +257,7 @@ export function useChatScroll({
 				}
 			})
 		}
+		// eslint-disable-next-line react/exhaustive-effect-dependencies -- items is the trigger: follow the bottom when a new message arrives
 	}, [followBottom, items, scrollContainerRef])
 
 	useEffect(() => {
@@ -374,6 +375,7 @@ export function useChatScroll({
 	//
 	// Also triggers top-of-thread pagination when scrolled near the top. Uses a
 	// synchronous in-flight ref to prevent duplicate loads before React state updates.
+	/* eslint-disable react/exhaustive-effect-dependencies -- the streaming and message flags are triggers: the scroll listener re-subscribes with fresh values */
 	useEffect(() => {
 		const container = mountedContainer
 		if (!container) return
@@ -480,6 +482,7 @@ export function useChatScroll({
 		setMode,
 		syncScrollToBottomVisibility
 	])
+	/* eslint-enable react/exhaustive-effect-dependencies */
 
 	return {
 		attach,

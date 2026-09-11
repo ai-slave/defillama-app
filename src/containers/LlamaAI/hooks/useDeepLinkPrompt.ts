@@ -79,6 +79,7 @@ export function useDeepLinkPrompt({
 			if (deepLinkPrompt) {
 				// The one write left here. A pending prompt outranks the link, and the banner has to go
 				// before the url change lands, or it flashes over the answer being submitted.
+				// eslint-disable-next-line react/set-state-in-effect -- deliberate, for the reason above
 				setAnsweredKey(deepLinkKey(deepLinkPrompt, utmSource, utmCampaign))
 				clearDeepLinkFromUrlRef.current()
 			}

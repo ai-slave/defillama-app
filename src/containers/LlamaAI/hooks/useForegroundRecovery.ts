@@ -36,6 +36,8 @@ export function useForegroundRecovery({
 			hasGenericError
 		})
 		switch (intent) {
+			case 'none':
+				return
 			case 'resume-recovery':
 				onResumeRecovery()
 				return
@@ -44,8 +46,6 @@ export function useForegroundRecovery({
 				return
 			case 'probe-session':
 				if (sessionId && !isStreaming) onProbeSession(sessionId)
-				return
-			case 'none':
 				return
 			default: {
 				const _exhaustive: never = intent

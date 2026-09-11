@@ -114,7 +114,7 @@ export function buildDefaultToggledCharts({
 	}
 
 	if (protocolMetricsTvl) {
-		if (protocolTvlChartData.length === 0 || protocolTvlChartData.every(([, value]) => value === 0)) {
+		if (protocolTvlChartData.every(([, value]) => value === 0)) {
 			const hasStaking = (currentChainTvls?.staking ?? 0) > 0
 			if (hasStaking) pushUniqueIfAvailable('Staking')
 			const hasBorrowed = (currentChainTvls?.borrowed ?? 0) > 0

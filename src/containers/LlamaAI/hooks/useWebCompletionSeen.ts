@@ -169,6 +169,7 @@ export function useWebCompletionSeen({ attention, preference }: UseWebCompletion
 		}
 	}, [])
 
+	/* eslint-disable react/exhaustive-effect-dependencies -- the attention fields are triggers: flush the seen set when the user looks at messages */
 	useEffect(() => {
 		if (previousUserIdRef.current !== userId) {
 			previousUserIdRef.current = userId
@@ -188,6 +189,7 @@ export function useWebCompletionSeen({ attention, preference }: UseWebCompletion
 		attention.visibleMessageIds,
 		clearPending
 	])
+	/* eslint-enable react/exhaustive-effect-dependencies */
 
 	const markCompletionSeen = useCallback(
 		(sessionId: string, messageId: string) => {

@@ -177,7 +177,6 @@ export function NotebookView({
 				if (e.key === 'ArrowDown' && idx === cells.length - 1) return
 				e.preventDefault()
 				onMoveCell(activeCellId, e.key === 'ArrowUp' ? 'up' : 'down')
-				return
 			}
 		}
 		window.addEventListener('keydown', handler)

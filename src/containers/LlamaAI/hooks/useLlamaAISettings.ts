@@ -499,9 +499,7 @@ export function useLlamaAISettings() {
 			model === '' || availableModels.length === 0 || availableModels.some((m) => m.id === model) ? model : ''
 		const normalizedEffort =
 			effort === '' ||
-			(availableEfforts.length > 0 &&
-				availableEfforts.some((e) => e.id === effort) &&
-				isEffortAvailableForModel(effort, normalizedModel))
+			(availableEfforts.some((e) => e.id === effort) && isEffortAvailableForModel(effort, normalizedModel))
 				? effort
 				: ''
 		return {

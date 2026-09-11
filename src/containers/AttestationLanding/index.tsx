@@ -1333,6 +1333,7 @@ export default function VerifiedLanding() {
 				/>
 				<link rel="icon" type="image/png" href="/icons/favicon-32x32.png" />
 			</Head>
+			{/* eslint-disable-next-line react/no-danger -- pageCss is a local constant, not input */}
 			<style dangerouslySetInnerHTML={{ __html: pageCss }} />
 			<div className="col-span-full flex min-h-screen w-full flex-col bg-surface font-inter text-primary">
 				<div className="relative flex grow flex-col">

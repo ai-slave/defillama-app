@@ -172,6 +172,7 @@ export function SEO({ title, description, canonicalUrl, noIndex, jsonLd }: ISEOP
 			{description ? <meta name="twitter:description" content={description} /> : null}
 			{/* <meta name="twitter:image" content={cardURL} /> */}
 			{jsonLd ? (
+				// eslint-disable-next-line react/no-danger -- JSON-LD has no React equivalent; stringifyJsonLd escapes < > &
 				<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: stringifyJsonLd(jsonLd) }} />
 			) : null}
 		</Head>

@@ -59,7 +59,9 @@ describe('filesystem dataset snapshot store', () => {
 				throw new Error('upstream failed')
 			})
 		).rejects.toThrow('upstream failed')
-		await expect(store.publish('markets', (writer) => writer.writeJson('tokens-list.json', {}))).rejects.toThrow()
+		await expect(store.publish('markets', (writer) => writer.writeJson('tokens-list.json', {}))).rejects.toThrow(
+			'exchange-directory.json'
+		)
 		await expect(readFile(pointerPath, 'utf8')).resolves.toBe(before)
 	})
 

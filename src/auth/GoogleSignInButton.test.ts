@@ -42,6 +42,7 @@ test('times out when Google never completes credential revocation', async () => 
 	vi.useFakeTimers()
 	installGoogleRevocation(vi.fn())
 
+	// eslint-disable-next-line vitest/valid-expect -- the assertion promise is awaited below, after the fake timers advance
 	const revocation = expect(revokeGoogleCredentialSharing('person@example.com')).rejects.toThrow(
 		'Google credential revocation timed out'
 	)

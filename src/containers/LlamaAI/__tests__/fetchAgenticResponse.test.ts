@@ -792,6 +792,7 @@ describe('fetchAgenticResponse', () => {
 			callbacks: callbacks(),
 			fetchFn: fetchFn as unknown as typeof fetch
 		})
+		// eslint-disable-next-line vitest/valid-expect -- the assertion promise is awaited below, after the fake timers advance
 		const outcome = expect(request).rejects.toMatchObject({
 			name: 'AgenticMutationReconcileError',
 			status: 'pending',

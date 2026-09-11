@@ -45,7 +45,6 @@ export function setRWAPerpsChartScope(
 			return
 		case 'baseAsset':
 			searchParams.set('baseAsset', target.slug)
-			return
 	}
 }
 

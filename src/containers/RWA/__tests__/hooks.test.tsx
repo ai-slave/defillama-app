@@ -1,3 +1,4 @@
+/* eslint-disable react/no-danger -- probes serialize hook output into a JSON script tag to read it back */
 import * as React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'

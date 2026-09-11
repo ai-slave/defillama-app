@@ -83,7 +83,6 @@
 		],
 		"react/jsx-boolean-value": "error",
 		"react/jsx-curly-brace-presence": ["error", { "props": "never", "children": "never" }],
-		"react/jsx-no-constructed-context-values": "error",
 		"react/jsx-no-target-blank": "error",
 		// `<>{children}</>` is how a component returns a ReactNode child; only a fragment around a single element is useless.
 		"react/jsx-no-useless-fragment": ["error", { "allowExpressions": true }],
@@ -105,6 +104,12 @@
 		],
 		// --- Tests ---
 		"vitest/consistent-test-it": ["error", { "fn": "test", "withinDescribe": "test" }],
+		// maxArgs 2 because Vitest's `expect` takes an optional message as its second argument; the rule
+		// defaults to Jest's arity of 1.
+		"vitest/valid-expect": ["error", { "maxArgs": 2 }],
+		// Assertion helpers are named `expect*` so the rule can see that a test asserting only through
+		// one still asserts.
+		"vitest/expect-expect": ["error", { "assertFunctionNames": ["expect", "expect*"] }],
 
 		// --- Deferred: off until the trigger named here happens ---
 		// Trigger: the strict-types migration completes. 175 non-test hits.
@@ -166,12 +171,23 @@
 		"jsx-a11y/prefer-tag-over-role": "off",
 		// Autofocus inside a dialog is the expected behavior.
 		"jsx-a11y/no-autofocus": "off",
-		// Off since the ratchet was created (#3383). No reason was recorded; revisit when one of them
-		// would have caught something.
-		"typescript/no-extraneous-class": "off",
+		// The React Compiler memoizes a constructed context value already; checked in the emitted output for
+		// all five hits, each keyed on the values it is built from. Components that bail out of the compiler
+		// are tracked by .reactcompiler.baseline.json instead.
+		"react/jsx-no-constructed-context-values": "off",
+		// 1951 hits, every bare `vi.fn()` in the suite. The type parameter adds no coverage; the mock's
+		// shape is already constrained by where it is passed.
 		"vitest/require-mock-type-parameters": "off",
+		// 5 hits. Four are `class {}` inside a `vi.mock` factory, the only way to stub a class-valued
+		// export. The fifth, ChartDataTransformer, is a static-only namespace with overloads, and
+		// unpicking an exported shape is a refactor rather than a lint fix.
+		"typescript/no-extraneous-class": "off",
+		// 4 hits, all `<Head>` in ordinary components. The rule guards against two `<Head>` in
+		// pages/_document; next/head merges the rest by design.
 		"nextjs/no-duplicate-head": "off",
+		// 2 hits, both in containers/MCP. Owner decision: these links stay plain anchors.
 		"nextjs/no-html-link-for-pages": "off",
+		// 195 hits. The app does not use next/image at all, so the rule has nothing to migrate toward.
 		"nextjs/no-img-element": "off"
 	},
 	// Overrides replace the root rule config, so each one restates the global restrictions.

@@ -21,6 +21,7 @@ export default function Document() {
 				<link href="/icons/v46.svg" rel="prefetch" as="image" type="image/svg+xml" />
 				<link href="/assets/defillama.webp" rel="preload" as="image" type="image/webp" />
 				<script
+					// eslint-disable-next-line react/no-danger -- an inline head script has no React equivalent; the source is local
 					dangerouslySetInnerHTML={{
 						__html: getHeadBootstrapScript()
 					}}

@@ -51,7 +51,7 @@ describe('metadata page helpers', () => {
 		await writePagesAndTrendingIfNeeded(repoRoot, pages, [])
 
 		expect(JSON.parse(await fs.readFile(path.join(repoRoot, 'public', 'pages.json'), 'utf8'))).toEqual(pages)
-		await expect(fs.stat(path.join(repoRoot, 'public', 'trending.json'))).rejects.toThrow()
+		await expect(fs.stat(path.join(repoRoot, 'public', 'trending.json'))).rejects.toThrow('ENOENT')
 	})
 
 	test('does not filter protocol routes as pro routes', () => {

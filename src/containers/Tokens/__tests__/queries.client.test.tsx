@@ -110,7 +110,7 @@ afterEach(async () => {
 async function render(child: ReactNode) {
 	await act(async () => root.render(<QueryClientProvider client={client}>{child}</QueryClientProvider>))
 }
-async function shows(text: string) {
+async function expectShows(text: string) {
 	await vi.waitFor(async () => {
 		await act(async () => {})
 		expect(element.textContent).toContain(text)
@@ -126,7 +126,7 @@ describe('Tokens response deployment compatibility', () => {
 		// An old deployed wire response deliberately has no availability field.
 		fetchJson.mockResolvedValue({ schemaVersion: 13, rows: [], marketCaps: [] })
 		await render(<Probe />)
-		await shows('error')
+		await expectShows('error')
 		for (const [url] of fetchJson.mock.calls) {
 			expect(new URL(url, 'http://localhost').searchParams.get('schemaVersion')).toBe(
 				String(TOKENS_PAGE_RESPONSE_SCHEMA_VERSION)
@@ -136,26 +136,26 @@ describe('Tokens response deployment compatibility', () => {
 	test('retains measured zero and successful empty responses', async () => {
 		fetchJson.mockResolvedValue(page)
 		await render(<WatchlistProbe />)
-		await shows(':0')
+		await expectShows(':0')
 		expect(client.getQueryCache().getAll()[0]?.state.status).toBe('success')
 	})
 	test('accepts current chart availability with an empty dataset', async () => {
 		fetchJson.mockResolvedValue({ ...chart, unavailableSources: ['unlocks'] })
 		await render(<ChartProbe />)
-		await shows('unlocks:0')
+		await expectShows('unlocks:0')
 	})
 	test('shows a retryable watchlist failure for an old response, then recovers without losing saved tokens', async () => {
 		fetchJson.mockImplementation(async (url: string) =>
 			url === '/api/public/markets/tokens' ? { last_updated: '', tokens: [] } : { schemaVersion: 13, rows: [] }
 		)
 		await render(<TokensWatchlistContainer tokenUniverse={[]} />)
-		await shows('Token data is unavailable')
+		await expectShows('Token data is unavailable')
 		expect(element.textContent).not.toContain('No tokens in your watchlist')
 		fetchJson.mockResolvedValue(page)
 		const retry = Array.from(element.querySelectorAll('button')).find((button) => button.textContent === 'Retry')
 		if (!retry) throw new Error('Missing retry button')
 		await act(async () => retry.click())
-		await shows('No ranking data for your saved tokens')
+		await expectShows('No ranking data for your saved tokens')
 		expect(element.querySelector('[role="alert"]')).toBeNull()
 	})
 })

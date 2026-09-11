@@ -1,5 +1,6 @@
 import {
 	memo,
+	useCallback,
 	useEffect,
 	useLayoutEffect,
 	useMemo,
@@ -479,7 +480,8 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 		[messages]
 	)
 
-	const highlightAnchorNode = (node: HTMLElement) => {
+	// Stable identity: the keydown effect lists it, and it captures only a ref and the stylesheet.
+	const highlightAnchorNode = useCallback((node: HTMLElement) => {
 		node.classList.remove(styles.anchorHighlight)
 		void node.offsetWidth
 		node.classList.add(styles.anchorHighlight)
@@ -490,7 +492,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 			node.classList.remove(styles.anchorHighlight)
 			highlightTimeoutRef.current = null
 		}, 2000)
-	}
+	}, [])
 
 	useEffect(() => {
 		const onKeyDown = (event: KeyboardEvent) => {
@@ -559,7 +561,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 
 		window.addEventListener('keydown', onKeyDown)
 		return () => window.removeEventListener('keydown', onKeyDown)
-	}, [scrollContainerRef, scrollToBottom, userMessageAnchorIds])
+	}, [highlightAnchorNode, scrollContainerRef, scrollToBottom, userMessageAnchorIds])
 
 	useEffect(() => {
 		return () => {

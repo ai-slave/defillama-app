@@ -612,6 +612,7 @@ export function AgenticChat({
 			stopSettlementControllerRef.current?.abort()
 			stopSettlementControllerRef.current = null
 		}
+		// eslint-disable-next-line react/exhaustive-effect-dependencies -- the session ids are the trigger: abort the settlement controller when the chat changes
 	}, [routeSessionId, sessionId])
 
 	// Switching chats should hand the caret back to the composer. Skipped on mobile, where
@@ -639,11 +640,13 @@ export function AgenticChat({
 	const closeCitationSheet = citationSheet.close
 	useEffect(() => {
 		closeCitationSheet()
+		// eslint-disable-next-line react/exhaustive-effect-dependencies -- sessionId is the trigger: close the citation sheet when the chat changes
 	}, [sessionId, closeCitationSheet])
 
 	useEffect(() => {
 		const timer = setTimeout(() => window.dispatchEvent(new CustomEvent('chartResize')), 250)
 		return () => clearTimeout(timer)
+		// eslint-disable-next-line react/exhaustive-effect-dependencies -- the panel state is the trigger: charts remeasure after it opens or its config changes
 	}, [dashboardPanelIsOpen, dashboardPanelMountedConfig])
 
 	useSettingsRouteIntent({ router, user, settingsModalStore, setInitialIntegrationsState })
@@ -2352,10 +2355,7 @@ export function AgenticChat({
 		if (resumeOutcome === 'settled' || resumeOutcome === 'aborted') return
 		if (!ownsTarget()) return
 
-		const restoreResult = await restoreCoordinator.run(targetSessionId, (operation) =>
-			restoreSessionSnapshot(targetSessionId, operation)
-		)
-		if (!ownsTarget() || restoreResult.status !== 'restored') return
+		await restoreCoordinator.run(targetSessionId, (operation) => restoreSessionSnapshot(targetSessionId, operation))
 	})
 
 	// Immediately attempt to reconnect to a running or completed server-side execution.

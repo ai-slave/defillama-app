@@ -293,10 +293,12 @@ export function ArticleSeo({ article }: { article: LocalArticleDocument }) {
 				<>
 					<script
 						type="application/ld+json"
+						// eslint-disable-next-line react/no-danger -- JSON-LD has no React equivalent; toSafeJsonLd escapes <
 						dangerouslySetInnerHTML={{ __html: toSafeJsonLd(buildArticleJsonLd(article)) }}
 					/>
 					<script
 						type="application/ld+json"
+						// eslint-disable-next-line react/no-danger -- JSON-LD has no React equivalent; toSafeJsonLd escapes <
 						dangerouslySetInnerHTML={{ __html: toSafeJsonLd(buildBreadcrumbJsonLd(article)) }}
 					/>
 				</>

@@ -88,7 +88,7 @@ describe('buildScenarios (grouping + status)', () => {
 		expect(scenarios.length).toBe(distinctIds.size)
 		expect(scenarios.length).toBeLessThan(v.vault_specific_risks.length)
 		const oracle = scenarios.find((s) => s.scenarioId === 'market-oracle-compromise')
-		expect(oracle?.perAsset && oracle.perAsset.length).toBeGreaterThan(1)
+		expect(oracle?.perAsset?.length ?? 0).toBeGreaterThan(1)
 		// perAsset sorted desc by loss
 		const losses = oracle!.perAsset!.map((p) => p.lossMaxUsd)
 		expect([...losses].sort((a, b) => b - a)).toEqual(losses)
