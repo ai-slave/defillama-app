@@ -8,6 +8,7 @@ const PROJECT_FILE_ACCEPT_EXTENSIONS = [
 	'.txt',
 	'.csv',
 	'.json',
+	'.pdf',
 	'.js',
 	'.jsx',
 	'.ts',
@@ -49,7 +50,13 @@ const PROJECT_FILE_ACCEPT_EXTENSIONS = [
 	'.svelte'
 ] as const
 
-const PROJECT_FILE_ACCEPT_TYPES = ['text/markdown', 'text/plain', 'text/csv', 'application/json'] as const
+const PROJECT_FILE_ACCEPT_TYPES = [
+	'text/markdown',
+	'text/plain',
+	'text/csv',
+	'application/json',
+	'application/pdf'
+] as const
 
 const PROJECT_FILE_ACCEPT_EXTENSION_SET = new Set<string>(PROJECT_FILE_ACCEPT_EXTENSIONS)
 const PROJECT_FILE_ACCEPT_TYPE_SET = new Set<string>(PROJECT_FILE_ACCEPT_TYPES)
