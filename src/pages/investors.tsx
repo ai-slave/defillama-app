@@ -4,17 +4,15 @@ import { BasicLink } from '~/components/Link'
 import { ThemeSwitch } from '~/components/Nav/ThemeSwitch'
 import { SEO } from '~/components/SEO'
 import {
-	DEFAULT_INVESTORS_PROTOCOL_ID,
-	INVESTORS_COMING_SOON_PROJECTS,
-	INVESTORS_LANDING_PROJECTS,
-	INVESTORS_PROJECTS,
 	getInvestorsLandingProjectHref,
-	isInvestorsEnabled,
-	isInvestorsLandingProjectExternal,
+	getInvestorsProjects,
+	getInvestorsSite,
+	type InvestorsSiteId,
 	type InvestorsProject,
 	type InvestorsProjectId
 } from '~/containers/Investors/config'
 import { Logo } from '~/containers/Investors/Logo'
+import { useInvestorsSite } from '~/containers/Investors/SiteContext'
 import { Icon } from '~/ui/Icon'
 import { chainIconUrl, tokenIconUrl } from '~/utils/icons'
 
@@ -412,9 +410,11 @@ function ProjectFallbackIcon({ name }: { name: string }) {
 }
 
 function ProjectCard({ project }: { project: InvestorsProject }) {
+	const site = useInvestorsSite()
+	if (!site) return null
 	const content = PROJECT_CARD_CONTENT[project.id]
-	const href = getInvestorsLandingProjectHref(project.id)
-	const isExternal = isInvestorsLandingProjectExternal(project.id)
+	const href = getInvestorsLandingProjectHref(site, project.id)
+	const isExternal = href.startsWith('https://')
 	const tags = content?.tags ?? ['Metrics', 'Reporting', 'Analytics']
 
 	return (
@@ -461,26 +461,24 @@ function ProjectCard({ project }: { project: InvestorsProject }) {
 	)
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
-	if (
-		isInvestorsEnabled() &&
-		INVESTORS_LANDING_PROJECTS.length <= 1 &&
-		INVESTORS_PROJECTS.length === 1 &&
-		DEFAULT_INVESTORS_PROTOCOL_ID
-	) {
+export const getServerSideProps: GetServerSideProps<{ investorsSiteId: InvestorsSiteId }> = async (context) => {
+	const site = getInvestorsSite(context.req.headers.host)
+	if (!site) return { notFound: true }
+	if (site.landingProjectIds.length <= 1 && site.projectIds.length === 1 && site.comingSoonProjectIds.length === 0) {
 		return {
 			redirect: {
-				destination: `/${DEFAULT_INVESTORS_PROTOCOL_ID}`,
+				destination: `/${site.defaultProjectId}`,
 				permanent: false
 			}
 		}
 	}
 
-	return { props: {} }
+	return { props: { investorsSiteId: site.id } }
 }
 
 export default function InvestorsPage() {
-	if (!isInvestorsEnabled()) {
+	const site = useInvestorsSite()
+	if (!site) {
 		return null
 	}
 
@@ -548,11 +546,11 @@ export default function InvestorsPage() {
 						Explore dashboards
 					</h2>
 					<div className="mt-4 grid auto-rows-fr grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-						{INVESTORS_LANDING_PROJECTS.map((project) => (
+						{getInvestorsProjects(site.landingProjectIds).map((project) => (
 							<ProjectCard key={project.id} project={project} />
 						))}
 
-						{INVESTORS_COMING_SOON_PROJECTS.map((project) => (
+						{getInvestorsProjects(site.comingSoonProjectIds).map((project) => (
 							<div
 								key={project.id}
 								className="relative isolate flex flex-col items-center justify-center gap-3 overflow-hidden rounded-[20px] border border-pro-cards-border bg-pro-cards-bg p-5 text-center"

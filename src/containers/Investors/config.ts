@@ -32,17 +32,21 @@ const INVESTORS_DOMAIN_PROJECT_IDS = [
 ] as const satisfies ReadonlyArray<InvestorsProjectId>
 const ENTERPRISE_DOMAIN_PROJECT_IDS = ['odyssey-ecosystem'] as const satisfies ReadonlyArray<InvestorsProjectId>
 
-type InvestorsSite = {
+export type InvestorsSiteId = 'investors' | 'enterprise'
+
+export type InvestorsSite = Readonly<{
+	id: InvestorsSiteId
 	hosts: ReadonlyArray<string>
 	projectIds: ReadonlyArray<InvestorsProjectId>
 	landingProjectIds: ReadonlyArray<InvestorsProjectId>
 	defaultProjectId: InvestorsProjectId
 	comingSoonProjectIds: ReadonlyArray<InvestorsProjectId>
 	umamiWebsiteId: string
-}
+}>
 
-export const INVESTORS_SITES = {
+export const INVESTORS_SITES: Readonly<Record<InvestorsSiteId, InvestorsSite>> = {
 	investors: {
+		id: 'investors',
 		hosts: ['investors.defillama.com'],
 		projectIds: INVESTORS_DOMAIN_PROJECT_IDS,
 		landingProjectIds: INVESTORS_LIVE_PROJECT_IDS,
@@ -51,6 +55,7 @@ export const INVESTORS_SITES = {
 		umamiWebsiteId: '11de15eb-61d0-41c5-9e73-0bf496cc653c'
 	},
 	enterprise: {
+		id: 'enterprise',
 		hosts: ['enterprise.defillama.com'],
 		projectIds: ENTERPRISE_DOMAIN_PROJECT_IDS,
 		landingProjectIds: [...INVESTORS_LIVE_PROJECT_IDS, ...ENTERPRISE_DOMAIN_PROJECT_IDS],
@@ -58,101 +63,37 @@ export const INVESTORS_SITES = {
 		comingSoonProjectIds: [],
 		umamiWebsiteId: '1c194e22-d31d-4816-b803-8074419f1b3e'
 	}
-} as const satisfies Record<string, InvestorsSite>
+}
 
-export type InvestorsSiteId = keyof typeof INVESTORS_SITES
+export const ALL_INVESTORS_PROTOCOL_IDS: ReadonlyArray<string> = ALL_INVESTORS_PROJECTS.map((p) => p.id)
 
-function getActiveInvestorsSiteId(): InvestorsSiteId | null {
-	const siteId = process.env.NEXT_PUBLIC_INVESTORS_SITE
-	if (siteId && siteId in INVESTORS_SITES) {
-		return siteId as InvestorsSiteId
+/** Host is supplied by the request, never by a deployment-wide site override. */
+export function getInvestorsSite(host: string | null | undefined): InvestorsSite | null {
+	// Only accept a hostname with an optional numeric port, not a URL or forwarded-host list.
+	const hostname = host?.match(/^([a-z0-9.-]+)(?::[0-9]+)?$/i)?.[1].toLowerCase()
+	if (!hostname) return null
+
+	for (const site of Object.values(INVESTORS_SITES)) {
+		if (site.hosts.includes(hostname)) return site
+		if (process.env.NODE_ENV === 'development' && hostname === `${site.id}.localhost`) return site
 	}
-
-	if (process.env.NEXT_PUBLIC_SUPERLUMINAL_DASHBOARD_ID) {
-		return 'investors'
-	}
-
 	return null
 }
 
-function isInvestorsSiteForcedByEnv(): boolean {
-	const siteId = process.env.NEXT_PUBLIC_INVESTORS_SITE
-	return !!(siteId && siteId in INVESTORS_SITES)
-}
-
-function normalizeHost(host: string | null | undefined): string {
-	return (host ?? '').split(':')[0].toLowerCase()
-}
-
-export const ACTIVE_INVESTORS_SITE_ID = getActiveInvestorsSiteId()
-export const ACTIVE_INVESTORS_SITE = ACTIVE_INVESTORS_SITE_ID ? INVESTORS_SITES[ACTIVE_INVESTORS_SITE_ID] : null
-export const INVESTORS_SITE_FORCED_BY_ENV = isInvestorsSiteForcedByEnv()
-
-function getInvestorsProjects(projectIds: ReadonlyArray<InvestorsProjectId> | undefined): Array<InvestorsProject> {
+export function getInvestorsProjects(projectIds: ReadonlyArray<InvestorsProjectId>): Array<InvestorsProject> {
 	return projectIds
-		? projectIds
-				.map((projectId) => ALL_INVESTORS_PROJECTS.find((project) => project.id === projectId))
-				.filter((project): project is InvestorsProject => !!project)
-		: []
+		.map((projectId) => ALL_INVESTORS_PROJECTS.find((project) => project.id === projectId))
+		.filter((project): project is InvestorsProject => !!project)
 }
 
-export const INVESTORS_PROJECTS: Array<InvestorsProject> = getInvestorsProjects(ACTIVE_INVESTORS_SITE?.projectIds)
-export const INVESTORS_LANDING_PROJECTS: Array<InvestorsProject> = getInvestorsProjects(
-	ACTIVE_INVESTORS_SITE?.landingProjectIds ?? ACTIVE_INVESTORS_SITE?.projectIds
-)
-
-export const INVESTORS_PROTOCOL_IDS: Array<string> = INVESTORS_PROJECTS.map((p) => p.id)
-export const INVESTORS_LANDING_PROTOCOL_IDS: Array<string> = INVESTORS_LANDING_PROJECTS.map((p) => p.id)
-export const ALL_INVESTORS_PROTOCOL_IDS: Array<string> = ALL_INVESTORS_PROJECTS.map((p) => p.id)
-export const DEFAULT_INVESTORS_PROTOCOL_ID =
-	ACTIVE_INVESTORS_SITE?.defaultProjectId ?? INVESTORS_PROJECTS[0]?.id ?? null
-export const INVESTORS_COMING_SOON_PROJECTS: Array<InvestorsProject> = getInvestorsProjects(
-	ACTIVE_INVESTORS_SITE?.comingSoonProjectIds
-)
-export const SHOW_INVESTORS_COMING_SOON_PROJECT = INVESTORS_COMING_SOON_PROJECTS.length > 0
-
-export function isInvestorsEnabled(): boolean {
-	return !!ACTIVE_INVESTORS_SITE
+export function getInvestorsProject(site: InvestorsSite, protocol: string): InvestorsProject | undefined {
+	if (!site.projectIds.some((projectId) => projectId === protocol)) return undefined
+	return ALL_INVESTORS_PROJECTS.find((project) => project.id === protocol)
 }
 
-export function isActiveInvestorsHost(host: string | null | undefined): boolean {
-	if (!ACTIVE_INVESTORS_SITE) return false
+export function getInvestorsLandingProjectHref(site: InvestorsSite, projectId: InvestorsProjectId): string {
+	if (site.projectIds.includes(projectId)) return `/${projectId}`
 
-	if (INVESTORS_SITE_FORCED_BY_ENV) {
-		return true
-	}
-
-	const hostname = normalizeHost(host)
-	if (!hostname) return false
-
-	if (hostname === 'localhost' || hostname === '127.0.0.1') {
-		return true
-	}
-
-	return ACTIVE_INVESTORS_SITE.hosts.some((allowedHost) => allowedHost === hostname)
-}
-
-export function getInvestorsProject(protocol: string): InvestorsProject | undefined {
-	return INVESTORS_PROJECTS.find((project) => project.id === protocol)
-}
-
-export function getInvestorsLandingProjectHref(projectId: InvestorsProjectId): string {
-	if (INVESTORS_PROTOCOL_IDS.includes(projectId)) {
-		return `/${projectId}`
-	}
-
-	const investorsHost = INVESTORS_SITES.investors.hosts[0]
-	const isInvestorsDomainProject = INVESTORS_SITES.investors.projectIds.some(
-		(investorsProjectId) => investorsProjectId === projectId
-	)
-
-	if (investorsHost && isInvestorsDomainProject) {
-		return `https://${investorsHost}/${projectId}`
-	}
-
-	return `/${projectId}`
-}
-
-export function isInvestorsLandingProjectExternal(projectId: InvestorsProjectId): boolean {
-	return getInvestorsLandingProjectHref(projectId).startsWith('https://')
+	const destination = Object.values(INVESTORS_SITES).find((candidate) => candidate.projectIds.includes(projectId))
+	return destination ? `https://${destination.hosts[0]}/${projectId}` : `/${projectId}`
 }

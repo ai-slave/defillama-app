@@ -1,12 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import {
-	ALL_INVESTORS_PROTOCOL_IDS,
-	DEFAULT_INVESTORS_PROTOCOL_ID,
-	INVESTORS_LANDING_PROTOCOL_IDS,
-	INVESTORS_PROTOCOL_IDS,
-	SHOW_INVESTORS_COMING_SOON_PROJECT,
-	isActiveInvestorsHost
-} from '~/containers/Investors/config'
+import { ALL_INVESTORS_PROTOCOL_IDS, getInvestorsProject, getInvestorsSite } from '~/containers/Investors/config'
 import {
 	AB_COOKIE_MAX_AGE_SECONDS,
 	AB_GROUP_COOKIE_NAME,
@@ -139,37 +132,33 @@ function applyABAssignment(response: NextResponse, request: NextRequest) {
 }
 
 function getInvestorsRewrite(request: NextRequest) {
-	if (!isActiveInvestorsHost(request.headers.get('host'))) return null
+	const site = getInvestorsSite(request.headers.get('host'))
+	if (!site) return null
 
 	const { pathname } = request.nextUrl
-	const isSingleProject = INVESTORS_PROTOCOL_IDS.length === 1
-	const hasLandingPage = INVESTORS_LANDING_PROTOCOL_IDS.length > 1 || SHOW_INVESTORS_COMING_SOON_PROJECT
+	const isSingleProject = site.projectIds.length === 1
+	const hasLandingPage = site.landingProjectIds.length > 1 || site.comingSoonProjectIds.length > 0
+	const destination = request.nextUrl.clone()
 
 	if (pathname === '/') {
-		return new URL(
-			isSingleProject && !hasLandingPage && DEFAULT_INVESTORS_PROTOCOL_ID
-				? `/investors/${DEFAULT_INVESTORS_PROTOCOL_ID}`
-				: '/investors',
-			request.url
-		)
+		destination.pathname = isSingleProject && !hasLandingPage ? `/investors/${site.defaultProjectId}` : '/investors'
+		return destination
 	}
 
 	if (pathname === '/all') {
-		return new URL(
-			isSingleProject && DEFAULT_INVESTORS_PROTOCOL_ID
-				? `/investors/${DEFAULT_INVESTORS_PROTOCOL_ID}`
-				: '/investors/all',
-			request.url
-		)
+		destination.pathname = isSingleProject ? `/investors/${site.defaultProjectId}` : '/investors/all'
+		return destination
 	}
 
 	const segment = pathname.slice(1)
-	if (INVESTORS_PROTOCOL_IDS.includes(segment)) {
-		return new URL(`/investors/${segment}`, request.url)
+	if (getInvestorsProject(site, segment)) {
+		destination.pathname = `/investors/${segment}`
+		return destination
 	}
 
 	if (ALL_INVESTORS_PROTOCOL_IDS.includes(segment)) {
-		return new URL('/404', request.url)
+		destination.pathname = '/404'
+		return destination
 	}
 
 	return null

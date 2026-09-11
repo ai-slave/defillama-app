@@ -1,7 +1,7 @@
-import { Suspense, useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { AppMetadataProvider } from '~/containers/ProDashboard/AppMetadataContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { INVESTORS_PROJECTS, SHOW_INVESTORS_COMING_SOON_PROJECT, isInvestorsEnabled } from './config'
+import { getInvestorsProjects, type InvestorsSite } from './config'
 import { ContentReadyContext } from './ContentReadyContext'
 import { CustomServerDataContext } from './CustomServerDataContext'
 import { CustomOnlyContent, DEFAULT_TABS, InvestorsContent, SkeletonTable, TabLabel } from './DashboardTabsContent'
@@ -9,17 +9,17 @@ import type { DashboardModule, DashboardTabConfig } from './dashboardTypes'
 import { Logo } from './Logo'
 import { getDashboardModule } from './registry'
 import { scrollToPageTop } from './scrollToPageTop'
+import { useInvestorsSite } from './SiteContext'
 
 export { useContentReady } from './ContentReadyContext'
 
-const HIDE_DUPLICATE_BUTTON = isInvestorsEnabled()
-
-const ALL_PROJECTS = [
-	...INVESTORS_PROJECTS.map((p) => ({ ...p, comingSoon: false })),
-	...(SHOW_INVESTORS_COMING_SOON_PROJECT
-		? [{ id: 'your-project', name: 'Your Project', dashboardId: '', comingSoon: true, customOnly: false }]
-		: [])
-]
+type ShellProject = {
+	name: string
+	customOnly: boolean
+	id: string
+	dashboardId: string
+	comingSoon: boolean
+}
 
 function ProjectComingSoon() {
 	return (
@@ -36,7 +36,7 @@ function ProjectComingSoon() {
 	)
 }
 
-function useProjectModules(projects: typeof ALL_PROJECTS) {
+function useProjectModules(projects: Array<ShellProject>) {
 	const [tabsByProject, setTabsByProject] = useState<Record<string, Array<DashboardTabConfig>>>({})
 	const [headersByProject, setHeadersByProject] = useState<Record<string, DashboardModule['header']>>({})
 	const [loadingProjects, setLoadingProjects] = useState<Set<string>>(
@@ -79,17 +79,31 @@ function useProjectModules(projects: typeof ALL_PROJECTS) {
 }
 
 function InvestorsShell({
+	site,
 	protocol,
 	customServerData
 }: {
+	site: InvestorsSite
 	protocol?: string
 	customServerData?: Record<string, unknown>
 }) {
 	const [isDark, toggleTheme] = useDarkModeManager()
+	const allProjects = useMemo<Array<ShellProject>>(
+		() => [
+			...getInvestorsProjects(site.projectIds).map((project) => ({ ...project, comingSoon: false })),
+			...(site.comingSoonProjectIds.length > 0
+				? [{ id: 'your-project', name: 'Your Project', dashboardId: '', comingSoon: true, customOnly: false }]
+				: [])
+		],
+		[site]
+	)
 
 	const isSingleProtocol = !!protocol
-	const visibleProjects = protocol ? ALL_PROJECTS.filter((p) => p.id === protocol) : ALL_PROJECTS
-	const defaultProject = visibleProjects[0]?.id ?? ALL_PROJECTS[0].id
+	const visibleProjects = useMemo(
+		() => (protocol ? allProjects.filter((project) => project.id === protocol) : allProjects),
+		[allProjects, protocol]
+	)
+	const defaultProject = visibleProjects[0]?.id ?? site.defaultProjectId
 
 	const { tabsByProject, headersByProject, loadingProjects } = useProjectModules(visibleProjects)
 	const [activeTab, setActiveTab] = useState<string | null>(null)
@@ -107,7 +121,7 @@ function InvestorsShell({
 	}, [activeProject])
 
 	const activeProjectConfig = visibleProjects.find((p) => p.id === activeProject)
-	const dashboardId = activeProjectConfig?.dashboardId ?? visibleProjects[0]?.dashboardId ?? ALL_PROJECTS[0].dashboardId
+	const dashboardId = activeProjectConfig?.dashboardId ?? visibleProjects[0]?.dashboardId ?? ''
 	const displayName = activeProjectConfig?.name ?? 'Dashboard'
 	const tabs = tabsByProject[activeProject] ?? DEFAULT_TABS
 	const HeaderComponent = headersByProject[activeProject]
@@ -320,7 +334,7 @@ function InvestorsShell({
 								activeTab={resolvedTab}
 								displayName={displayName}
 								hasCustomHeader={!!HeaderComponent}
-								hideDuplicateButton={HIDE_DUPLICATE_BUTTON}
+								hideDuplicateButton
 							/>
 						) : loadingProjects.has(activeProject) ? null : (
 							<InvestorsContent
@@ -329,7 +343,7 @@ function InvestorsShell({
 								displayName={displayName}
 								dashboardId={dashboardId}
 								hasCustomHeader={!!HeaderComponent}
-								hideDuplicateButton={HIDE_DUPLICATE_BUTTON}
+								hideDuplicateButton
 							/>
 						)}
 					</ContentReadyContext.Provider>
@@ -346,9 +360,16 @@ export default function InvestorsDashboard({
 	protocol?: string
 	customServerData?: Record<string, unknown>
 }) {
+	const site = useInvestorsSite()
+	if (!site) return null
 	return (
 		<AppMetadataProvider>
-			<InvestorsShell protocol={protocol} customServerData={customServerData} />
+			<InvestorsShell
+				key={`${site.id}:${protocol ?? 'all'}`}
+				site={site}
+				protocol={protocol}
+				customServerData={customServerData}
+			/>
 		</AppMetadataProvider>
 	)
 }

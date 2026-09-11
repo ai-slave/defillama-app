@@ -12,7 +12,7 @@ import { AuthProvider } from '~/auth'
 import { DashboardSaveGuard } from '~/components/DashboardSaveGuard'
 import { RouteProgressIndicator } from '~/components/RouteProgressIndicator'
 import { UserSettingsSync } from '~/components/UserSettingsSync'
-import { ACTIVE_INVESTORS_SITE } from '~/containers/Investors/config'
+import { InvestorsSiteProvider, useInvestorsSite } from '~/containers/Investors/SiteContext'
 import { useAuthBridge } from '~/hooks/useAuthBridge'
 import { useParentAuthTracker } from '~/hooks/useParentAuthTracker'
 import { useReferrer } from '~/hooks/useReferrer'
@@ -38,7 +38,6 @@ type AppPropsWithLayout = AppProps & {
 const CHUNK_LOAD_ERROR_KEY = 'chunk-load-error-reload'
 const AB_EXPOSURE_SESSION_KEY = `ab-exposure:${AB_EXPERIMENT_ID}`
 const MAIN_UMAMI_WEBSITE_ID = 'ca346731-f7ec-437f-9727-162f29bb67ae'
-const UMAMI_WEBSITE_ID = ACTIVE_INVESTORS_SITE?.umamiWebsiteId ?? MAIN_UMAMI_WEBSITE_ID
 
 function ensureClientABAssignment() {
 	const hostname = window.location.hostname
@@ -82,6 +81,8 @@ const isChunkLoadError = (error: unknown) => {
 
 function App({ Component, pageProps }: AppPropsWithLayout) {
 	const reloadInProgressRef = useRef(false)
+	const site = useInvestorsSite()
+	const umamiWebsiteId = site === undefined ? null : (site?.umamiWebsiteId ?? MAIN_UMAMI_WEBSITE_ID)
 
 	useEffect(() => {
 		const trackExposure = () => {
@@ -166,16 +167,18 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 					content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
 				/>
 			</Head>
-			<Script
-				src="/script2.js"
-				strategy="lazyOnload"
-				onReady={() => {
-					window.dispatchEvent(new Event(UMAMI_READY_EVENT))
-				}}
-				data-website-id={UMAMI_WEBSITE_ID}
-				data-host-url="https://tasty.defillama.com"
-				data-before-send="umamiABBeforeSend"
-			/>
+			{umamiWebsiteId ? (
+				<Script
+					src="/script2.js"
+					strategy="lazyOnload"
+					onReady={() => {
+						window.dispatchEvent(new Event(UMAMI_READY_EVENT))
+					}}
+					data-website-id={umamiWebsiteId}
+					data-host-url="https://tasty.defillama.com"
+					data-before-send="umamiABBeforeSend"
+				/>
+			) : null}
 
 			<RouteProgressIndicator />
 			{getLayout(<Component {...pageProps} />)}
@@ -191,7 +194,9 @@ function AppWrapper(props: AppPropsWithLayout) {
 			<AuthProvider>
 				<UserSettingsSync />
 				<DashboardSaveGuard />
-				<App {...props} />
+				<InvestorsSiteProvider siteId={props.pageProps.investorsSiteId}>
+					<App {...props} />
+				</InvestorsSiteProvider>
 			</AuthProvider>
 			<ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
 		</QueryClientProvider>

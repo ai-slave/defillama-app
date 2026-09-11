@@ -2,21 +2,26 @@ import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { lazy, Suspense } from 'react'
 import { SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
-import { DEFAULT_INVESTORS_PROTOCOL_ID, isInvestorsEnabled, INVESTORS_PROJECTS } from '~/containers/Investors/config'
+import { getInvestorsProjects, getInvestorsSite, type InvestorsSiteId } from '~/containers/Investors/config'
 import { Logo } from '~/containers/Investors/Logo'
 import { fetchCustomServerData } from '~/containers/Investors/serverDataRegistry'
+import { useInvestorsSite } from '~/containers/Investors/SiteContext'
 
 const InvestorsDashboard = lazy(() => import('~/containers/Investors'))
 
-export const getServerSideProps: GetServerSideProps = async () => {
-	if (!isInvestorsEnabled()) {
-		return { props: {} }
+export const getServerSideProps: GetServerSideProps<{
+	investorsSiteId: InvestorsSiteId
+	customServerData: Record<string, unknown>
+}> = async (context) => {
+	const site = getInvestorsSite(context.req.headers.host)
+	if (!site) {
+		return { notFound: true }
 	}
 
-	if (INVESTORS_PROJECTS.length === 1 && DEFAULT_INVESTORS_PROTOCOL_ID) {
+	if (site.projectIds.length === 1) {
 		return {
 			redirect: {
-				destination: `/${DEFAULT_INVESTORS_PROTOCOL_ID}`,
+				destination: `/${site.defaultProjectId}`,
 				permanent: false
 			}
 		}
@@ -25,18 +30,19 @@ export const getServerSideProps: GetServerSideProps = async () => {
 	const customServerData: Record<string, unknown> = {}
 	try {
 		const customResults = await Promise.all(
-			INVESTORS_PROJECTS.filter((p) => p.dashboardId).map((project) => fetchCustomServerData(project.dashboardId))
+			getInvestorsProjects(site.projectIds).map((project) => fetchCustomServerData(project.dashboardId))
 		)
 		for (const data of customResults) Object.assign(customServerData, data)
 	} catch {
 		// Custom dashboard data is optional; the page renders without it.
 	}
 
-	return { props: { customServerData } }
+	return { props: { investorsSiteId: site.id, customServerData } }
 }
 
 export default function InvestorsAllPage({ customServerData }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-	if (!isInvestorsEnabled()) {
+	const site = useInvestorsSite()
+	if (!site) {
 		return null
 	}
 

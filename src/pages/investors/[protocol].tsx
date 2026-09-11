@@ -2,29 +2,35 @@ import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { lazy, Suspense } from 'react'
 import { SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
-import { getInvestorsProject, isInvestorsEnabled, INVESTORS_PROTOCOL_IDS } from '~/containers/Investors/config'
+import { getInvestorsProject, getInvestorsSite, type InvestorsSiteId } from '~/containers/Investors/config'
 import { Logo } from '~/containers/Investors/Logo'
 import { fetchCustomServerData } from '~/containers/Investors/serverDataRegistry'
+import { useInvestorsSite } from '~/containers/Investors/SiteContext'
 
 const InvestorsDashboard = lazy(() => import('~/containers/Investors'))
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-	const protocol = context.params?.protocol as string
+export const getServerSideProps: GetServerSideProps<{
+	investorsSiteId: InvestorsSiteId
+	protocol: string
+	customServerData: Record<string, unknown>
+}> = async (context) => {
+	const site = getInvestorsSite(context.req.headers.host)
+	const protocol = context.params?.protocol
 
-	if (!isInvestorsEnabled() || !protocol || !INVESTORS_PROTOCOL_IDS.includes(protocol)) {
-		return { props: { protocol: protocol || '' } }
+	if (!site || typeof protocol !== 'string') {
+		return { notFound: true }
 	}
 
-	const project = getInvestorsProject(protocol)
+	const project = getInvestorsProject(site, protocol)
 	if (!project?.dashboardId) {
-		return { props: { protocol } }
+		return { notFound: true }
 	}
 
 	try {
 		const customServerData = await fetchCustomServerData(project.dashboardId)
-		return { props: { protocol, customServerData } }
+		return { props: { investorsSiteId: site.id, protocol, customServerData } }
 	} catch {
-		return { props: { protocol, customServerData: {} } }
+		return { props: { investorsSiteId: site.id, protocol, customServerData: {} } }
 	}
 }
 
@@ -32,15 +38,9 @@ export default function InvestorsProtocolPage({
 	protocol,
 	customServerData
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-	if (!isInvestorsEnabled() || !protocol) {
-		return null
-	}
-
-	if (!INVESTORS_PROTOCOL_IDS.includes(protocol)) {
-		return null
-	}
-
-	const project = getInvestorsProject(protocol)
+	const site = useInvestorsSite()
+	const project = site ? getInvestorsProject(site, protocol) : undefined
+	if (!project) return null
 	const protocolName = project?.name ?? protocol
 
 	return (

@@ -1,13 +1,11 @@
 import { useEffect } from 'react'
-import { isInvestorsEnabled } from '~/containers/Investors/config'
+import { useInvestorsSite } from '~/containers/Investors/SiteContext'
 
 // ── Auth Bridge (parent-side) ───────────────────────────────────
 // Listens for postMessage from child subdomains and responds with
 // the current user's PocketBase auth data from localStorage.
 //
 // Only runs on the main site.
-
-const IS_INVESTORS_SITE = isInvestorsEnabled()
 
 const ALLOWED_ORIGINS = new Set(['https://investors.defillama.com'])
 
@@ -46,8 +44,9 @@ function handleAuthCheck(e: MessageEvent) {
 }
 
 export function useAuthBridge() {
+	const site = useInvestorsSite()
 	useEffect(() => {
-		if (IS_INVESTORS_SITE) return
+		if (site !== null) return
 
 		window.addEventListener('message', handleAuthCheck)
 
@@ -56,5 +55,5 @@ export function useAuthBridge() {
 		}
 
 		return () => window.removeEventListener('message', handleAuthCheck)
-	}, [])
+	}, [site])
 }

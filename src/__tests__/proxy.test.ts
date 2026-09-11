@@ -2,31 +2,13 @@ import { NextRequest } from 'next/server'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { AB_GROUP_COOKIE_NAME, AB_VISITOR_COOKIE_NAME, getABGroup, isABVisitorId } from '~/utils/abTesting'
 
-function stubProxyEnv(allowedOrigins = '', investorsSite = '', investorsPreview = '') {
+async function loadProxy(allowedOrigins = '', investorsPreview = '') {
+	vi.resetModules()
 	vi.stubEnv('CORS_ALLOWED_ORIGINS', allowedOrigins)
-	vi.stubEnv('NEXT_PUBLIC_INVESTORS_SITE', investorsSite)
 	vi.stubEnv('NEXT_PUBLIC_INVESTORS_PREVIEW', investorsPreview)
+	vi.stubEnv('NEXT_PUBLIC_INVESTORS_SITE', '')
 	vi.stubEnv('NEXT_PUBLIC_SUPERLUMINAL_DASHBOARD_ID', '')
-}
-
-async function loadProxy(allowedOrigins = '', investorsSite = '', investorsPreview = '') {
-	vi.resetModules()
-	stubProxyEnv(allowedOrigins, investorsSite, investorsPreview)
 	return import('~/proxy')
-}
-
-async function loadInvestorsConfig(investorsSite: string, investorsPreview = '') {
-	vi.resetModules()
-	stubProxyEnv('', investorsSite, investorsPreview)
-	return import('~/containers/Investors/config')
-}
-
-async function loadProxyWithInvestorsConfig(investorsSite: string, investorsPreview = '') {
-	vi.resetModules()
-	stubProxyEnv('', investorsSite, investorsPreview)
-	const [proxyModule, investorsConfig] = await Promise.all([import('~/proxy'), import('~/containers/Investors/config')])
-
-	return { proxy: proxyModule.proxy, investorsConfig }
 }
 
 function apiRequest(origin: string, method = 'POST', path = '/api/private/token-usage/BTC') {
@@ -168,202 +150,81 @@ describe('a/b assignment', () => {
 })
 
 describe('investors proxy routing', () => {
-	test('keeps investor routes in the unconditional matcher list', async () => {
-		const { config } = await loadProxy()
+	test('serves both sites in the same process without a site env', async () => {
+		const { proxy, config } = await loadProxy()
+		const cases = [
+			['investors', '/', '/investors'],
+			['enterprise', '/', '/investors'],
+			['investors', '/all', '/investors/all'],
+			['enterprise', '/all', '/investors/odyssey-ecosystem'],
+			['investors', '/spark', '/investors/spark'],
+			['enterprise', '/odyssey-ecosystem', '/investors/odyssey-ecosystem'],
+			['investors', '/odyssey-ecosystem', '/404'],
+			['enterprise', '/spark', '/404'],
+			['investors', '/sonic', '/investors/sonic'],
+			['investors', '/near', '/investors/near'],
+			['investors', '/thorchain', '/investors/thorchain'],
+			['investors', '/flare', '/investors/flare'],
+			['enterprise', '/flare', '/404'],
+			['enterprise', '/thorchain', '/404'],
+			['investors', '/kpk', '/404'],
+			['investors', '/uniswap', '/404'],
+			['enterprise', '/kpk', '/404'],
+			['investors', '/etherfi', '/404'],
+			['investors', '/maple', '/404'],
+			['investors', '/berachain', '/404'],
+			['investors', '/aave', '/404']
+		]
 
-		expect(config.matcher).toEqual(
-			expect.arrayContaining([
-				'/',
-				'/all',
-				'/etherfi',
-				'/spark',
-				'/maple',
-				'/berachain',
-				'/aave',
-				'/sonic',
-				'/near',
-				'/flare',
-				'/odyssey-ecosystem',
-				'/thorchain',
-				'/kpk',
-				'/uniswap'
-			])
-		)
-	})
-
-	test('rewrites investor routes for requests that do not accept HTML', async () => {
-		const { proxy } = await loadProxy('', 'enterprise')
-
-		const response = proxy(pageRequest('https://enterprise.defillama.com/', undefined, '*/*'))
-
-		expect(rewriteUrl(response)).toBe('https://enterprise.defillama.com/investors')
-	})
-
-	test('keeps the enterprise root on the landing page', async () => {
-		const { proxy } = await loadProxy('', 'enterprise')
-
-		const response = proxy(pageRequest('https://enterprise.defillama.com/'))
-
-		expect(rewriteUrl(response)).toBe('https://enterprise.defillama.com/investors')
-	})
-
-	test('serves only active projects locally on the enterprise domain', async () => {
-		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('enterprise', 'true')
-
-		for (const projectId of investorsConfig.INVESTORS_PROTOCOL_IDS) {
-			const response = proxy(pageRequest(`https://enterprise.defillama.com/${projectId}`))
-
-			expect(rewriteUrl(response)).toBe(`https://enterprise.defillama.com/investors/${projectId}`)
-		}
-
-		for (const projectId of investorsConfig.INVESTORS_LANDING_PROTOCOL_IDS.filter(
-			(projectId) => !investorsConfig.INVESTORS_PROTOCOL_IDS.includes(projectId)
-		)) {
-			const response = proxy(pageRequest(`https://enterprise.defillama.com/${projectId}`))
-
-			expect(rewriteUrl(response)).toBe('https://enterprise.defillama.com/404')
-		}
-
-		for (const projectId of ['flare', 'thorchain']) {
-			const response = proxy(pageRequest(`https://enterprise.defillama.com/${projectId}`))
-
-			expect(rewriteUrl(response)).toBe('https://enterprise.defillama.com/404')
+		for (const [site, path, destination] of cases) {
+			// These paths must also match Next data/client-navigation requests without an HTML accept header.
+			expect(config.matcher).toContain(path)
+			const origin = `https://${site}.defillama.com`
+			const response = proxy(pageRequest(`${origin}${path}`, undefined, '*/*'))
+			expect(rewriteUrl(response)).toBe(`${origin}${destination}`)
+			expect(response.cookies.get(AB_VISITOR_COOKIE_NAME)).toBeUndefined()
 		}
 	})
 
-	test('serves active investor projects on the investors domain without preview projects', async () => {
-		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors')
-
-		const rootResponse = proxy(pageRequest('https://investors.defillama.com/'))
-
-		expect(rewriteUrl(rootResponse)).toBe('https://investors.defillama.com/investors')
-
-		for (const projectId of investorsConfig.INVESTORS_PROTOCOL_IDS) {
-			const response = proxy(pageRequest(`https://investors.defillama.com/${projectId}`))
-
-			expect(rewriteUrl(response)).toBe(`https://investors.defillama.com/investors/${projectId}`)
-		}
-
-		for (const projectId of investorsConfig.INVESTORS_LANDING_PROTOCOL_IDS.filter(
-			(projectId) => !investorsConfig.INVESTORS_PROTOCOL_IDS.includes(projectId)
-		)) {
-			const response = proxy(pageRequest(`https://investors.defillama.com/${projectId}`))
-
-			expect(rewriteUrl(response)).toBe('https://investors.defillama.com/404')
-		}
-
-		for (const projectId of ['kpk', 'uniswap']) {
-			const response = proxy(pageRequest(`https://investors.defillama.com/${projectId}`))
-
-			expect(rewriteUrl(response)).toBe('https://investors.defillama.com/404')
+	test('preserves query strings through rewrites', async () => {
+		const { proxy } = await loadProxy()
+		for (const path of ['/', '/all', '/spark']) {
+			const response = proxy(pageRequest(`https://investors.defillama.com${path}?tab=revenue&from=landing`))
+			expect(new URL(rewriteUrl(response)!).search).toBe('?tab=revenue&from=landing')
 		}
 	})
 
-	test('serves preview investor projects on the investors domain when preview is enabled', async () => {
-		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors', 'true')
-
-		expect(investorsConfig.INVESTORS_PROTOCOL_IDS).toEqual([
-			'spark',
-			'sonic',
-			'near',
-			'thorchain',
-			'flare',
-			'kpk',
-			'uniswap'
-		])
-
-		for (const projectId of investorsConfig.INVESTORS_PROTOCOL_IDS) {
-			const response = proxy(pageRequest(`https://investors.defillama.com/${projectId}`))
-
-			expect(rewriteUrl(response)).toBe(`https://investors.defillama.com/investors/${projectId}`)
-		}
-	})
-})
-
-describe('investors landing links', () => {
-	test('uses separate umami website ids for investors and enterprise domains', async () => {
-		const investorsConfig = await loadInvestorsConfig('investors')
-		const enterpriseConfig = await loadInvestorsConfig('enterprise')
-
-		expect(investorsConfig.ACTIVE_INVESTORS_SITE?.umamiWebsiteId).toBe('11de15eb-61d0-41c5-9e73-0bf496cc653c')
-		expect(enterpriseConfig.ACTIVE_INVESTORS_SITE?.umamiWebsiteId).toBe('1c194e22-d31d-4816-b803-8074419f1b3e')
-	})
-
-	test('shows investor-domain dashboards as external enterprise cards', async () => {
-		const config = await loadInvestorsConfig('enterprise')
-		const [investorsHost] = config.INVESTORS_SITES.investors.hosts
-		if (!investorsHost) throw new Error('Investors site host is required')
-		const investorDomainLandingProjectIds = [...config.INVESTORS_SITES.investors.landingProjectIds]
-		const enterpriseDomainProjectIds = [...config.INVESTORS_SITES.enterprise.projectIds]
-
-		expect(config.INVESTORS_LANDING_PROJECTS.map((project) => project.id)).toEqual([
-			...investorDomainLandingProjectIds,
-			...enterpriseDomainProjectIds
-		])
-		expect(config.INVESTORS_PROTOCOL_IDS).toEqual(enterpriseDomainProjectIds)
-
-		for (const projectId of investorDomainLandingProjectIds) {
-			expect(config.getInvestorsLandingProjectHref(projectId)).toBe(`https://${investorsHost}/${projectId}`)
-			expect(config.isInvestorsLandingProjectExternal(projectId)).toBe(true)
-		}
-
-		for (const projectId of enterpriseDomainProjectIds) {
-			expect(config.getInvestorsLandingProjectHref(projectId)).toBe(`/${projectId}`)
-			expect(config.isInvestorsLandingProjectExternal(projectId)).toBe(false)
+	test('keeps the main site, unknown hosts, API routes and assets out of IR rewrites', async () => {
+		const { proxy } = await loadProxy()
+		for (const url of [
+			'https://defillama.com/',
+			'https://www.defillama.com/spark',
+			'https://unknown.example/spark',
+			'https://investors.defillama.com.evil.com/spark',
+			'https://investors.defillama.com/api/public/protocols/charts',
+			'https://investors.defillama.com/_next/static/chunk.js',
+			'https://enterprise.defillama.com/assets/defillama.webp'
+		]) {
+			expect(rewriteUrl(proxy(pageRequest(url)))).toBeNull()
 		}
 	})
 
-	test('keeps investor-domain landing cards local', async () => {
-		const config = await loadInvestorsConfig('investors')
-		const investorDomainProjectIds = [...config.INVESTORS_SITES.investors.projectIds]
-		const investorDomainLandingProjectIds = [...config.INVESTORS_SITES.investors.landingProjectIds]
-
-		expect(config.INVESTORS_LANDING_PROJECTS.map((project) => project.id)).toEqual(investorDomainLandingProjectIds)
-		expect(config.INVESTORS_PROTOCOL_IDS).toEqual(investorDomainProjectIds)
-
-		for (const projectId of investorDomainProjectIds) {
-			expect(config.getInvestorsLandingProjectHref(projectId)).toBe(`/${projectId}`)
-			expect(config.isInvestorsLandingProjectExternal(projectId)).toBe(false)
-		}
+	test('uses Host rather than a forwarded-host override', async () => {
+		const { proxy } = await loadProxy()
+		const request = pageRequest('https://enterprise.defillama.com/odyssey-ecosystem')
+		request.headers.set('x-forwarded-host', 'investors.defillama.com')
+		expect(rewriteUrl(proxy(request))).toBe('https://enterprise.defillama.com/investors/odyssey-ecosystem')
 	})
 
-	test('keeps coming-soon projects on the investors landing page but not routable as dashboards', async () => {
-		const { proxy, investorsConfig } = await loadProxyWithInvestorsConfig('investors')
-
-		expect(investorsConfig.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['kpk'])
-		expect(investorsConfig.INVESTORS_LANDING_PROJECTS.map((project) => project.id)).toEqual([
-			'spark',
-			'sonic',
-			'near',
-			'thorchain',
-			'flare'
-		])
-
-		for (const project of investorsConfig.INVESTORS_COMING_SOON_PROJECTS) {
-			const response = proxy(pageRequest(`https://investors.defillama.com/${project.id}`))
-
-			expect(rewriteUrl(response)).toBe('https://investors.defillama.com/404')
+	test('enables preview projects only on the investors host', async () => {
+		const { proxy } = await loadProxy('', 'true')
+		for (const project of ['kpk', 'uniswap']) {
+			expect(rewriteUrl(proxy(pageRequest(`https://investors.defillama.com/${project}`)))).toBe(
+				`https://investors.defillama.com/investors/${project}`
+			)
+			expect(rewriteUrl(proxy(pageRequest(`https://enterprise.defillama.com/${project}`)))).toBe(
+				'https://enterprise.defillama.com/404'
+			)
 		}
-	})
-
-	test('keeps preview investor dashboards available while showing only preview ones in coming-soon cards', async () => {
-		const config = await loadInvestorsConfig('investors', 'true')
-
-		expect(config.INVESTORS_PROTOCOL_IDS).toEqual(['spark', 'sonic', 'near', 'thorchain', 'flare', 'kpk', 'uniswap'])
-		expect(config.INVESTORS_LANDING_PROJECTS.map((project) => project.id)).toEqual([
-			'spark',
-			'sonic',
-			'near',
-			'thorchain',
-			'flare'
-		])
-		expect(config.INVESTORS_COMING_SOON_PROJECTS.map((project) => project.id)).toEqual(['kpk'])
-
-		for (const projectId of ['kpk'] as const) {
-			expect(config.getInvestorsLandingProjectHref(projectId)).toBe(`/${projectId}`)
-			expect(config.isInvestorsLandingProjectExternal(projectId)).toBe(false)
-		}
-
-		expect(config.INVESTORS_PROTOCOL_IDS).toContain('uniswap')
 	})
 })

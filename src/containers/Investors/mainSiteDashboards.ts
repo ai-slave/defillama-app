@@ -3,8 +3,7 @@ import type { InvestorsProjectId } from './config'
 /**
  * Main-site (defillama.com) surfacing of Investor Relations dashboards.
  *
- * This is intentionally independent of `config.ts` / `isInvestorsEnabled()`, which are gated to the
- * investors.defillama.com / enterprise.defillama.com deployments and resolve to empty on the main build.
+ * This is intentionally independent of the standalone site selected by hostname in `config.ts`.
  * The dashboard modules themselves are loaded through the ungated `registry.ts` by `dashboardId`.
  *
  * Add a row here to surface another entity once its dashboard is ready.
