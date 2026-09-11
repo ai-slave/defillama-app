@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import {
 	ALL_INVESTORS_PROTOCOL_IDS,
 	getInvestorsProject,
-	getInvestorsSiteForRequest
+	getInvestorsSiteForRequest,
+	getInvestorsSiteWithPathFallback
 } from '~/containers/Investors/config'
 import {
 	AB_COOKIE_MAX_AGE_SECONDS,
@@ -135,9 +136,22 @@ function applyABAssignment(response: NextResponse, request: NextRequest) {
 	}
 }
 
+function getInvestorsPathFallbackRewrite(request: NextRequest) {
+	const { pathname } = request.nextUrl
+	const segment = pathname.slice(1)
+	if (pathname !== '/all' && !ALL_INVESTORS_PROTOCOL_IDS.includes(segment)) return null
+	const host = request.headers.get('host')
+	const forwardedHost = request.headers.get('x-forwarded-host')
+	const site = getInvestorsSiteWithPathFallback(host, forwardedHost, pathname === '/all' ? undefined : segment)
+	if (!site) return null
+	const destination = request.nextUrl.clone()
+	destination.pathname = `/investors/${segment}`
+	return destination
+}
+
 function getInvestorsRewrite(request: NextRequest) {
 	const site = getInvestorsSiteForRequest(request.headers.get('host'), request.headers.get('x-forwarded-host'))
-	if (!site) return null
+	if (!site) return getInvestorsPathFallbackRewrite(request)
 
 	const { pathname } = request.nextUrl
 	const isSingleProject = site.projectIds.length === 1

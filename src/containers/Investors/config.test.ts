@@ -64,6 +64,32 @@ describe('investor site configuration', () => {
 		expect(getInvestorsSiteForRequest(undefined, 'investors.defillama.com')).toBeNull()
 	})
 
+	test('falls back to the path only behind an opaque host', async () => {
+		const { getInvestorsSiteWithPathFallback, getInvestorsRootRedirectScript } = await loadConfig()
+		expect(getInvestorsSiteWithPathFallback('app-origin.example', 'app-origin.example')?.id).toBe('investors')
+		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'spark')?.id).toBe('investors')
+		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'odyssey-ecosystem')?.id).toBe('enterprise')
+		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'kpk')).toBeNull()
+		expect(getInvestorsSiteWithPathFallback('app-origin.example', 'enterprise.defillama.com', 'spark')?.id).toBe(
+			'enterprise'
+		)
+		expect(getInvestorsSiteWithPathFallback('enterprise.defillama.com', null, 'spark')?.id).toBe('enterprise')
+		for (const [host, forwardedHost] of [
+			['defillama.com', null],
+			['www.defillama.com:443', 'investors.defillama.com'],
+			['app-origin.example', 'defillama.com'],
+			[undefined, null],
+			['', null],
+			['https://app-origin.example', null]
+		] as const) {
+			expect(getInvestorsSiteWithPathFallback(host, forwardedHost, 'spark')).toBeNull()
+		}
+		const script = getInvestorsRootRedirectScript()
+		expect(script).toContain('"investors.defillama.com":"/investors"')
+		expect(script).toContain('"enterprise.defillama.com":"/odyssey-ecosystem"')
+		expect(script).toContain("location.pathname==='/'")
+	})
+
 	test('supports explicit local hosts only in development', async () => {
 		const { getInvestorsSite } = await loadConfig()
 		vi.stubEnv('NODE_ENV', 'development')

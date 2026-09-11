@@ -1,7 +1,9 @@
-import { Head, Html, Main, NextScript } from 'next/document'
+import { Head, Html, Main, NextScript, type DocumentProps } from 'next/document'
+import { getInvestorsRootRedirectScript } from '~/containers/Investors/config'
 import { getHeadBootstrapScript } from '~/utils/cookies'
 
-export default function Document() {
+export default function Document(props: DocumentProps) {
+	const isMainLanding = props.__NEXT_DATA__.page === '/'
 	return (
 		<Html lang="en">
 			<Head>
@@ -26,6 +28,14 @@ export default function Document() {
 						__html: getHeadBootstrapScript()
 					}}
 				/>
+				{isMainLanding ? (
+					<script
+						// eslint-disable-next-line react/no-danger -- an inline head script has no React equivalent; the source is local
+						dangerouslySetInnerHTML={{
+							__html: getInvestorsRootRedirectScript()
+						}}
+					/>
+				) : null}
 			</Head>
 			<body>
 				<Main />

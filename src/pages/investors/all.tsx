@@ -2,7 +2,11 @@ import type { GetServerSideProps, InferGetServerSidePropsType } from 'next'
 import { lazy, Suspense } from 'react'
 import { SEO } from '~/components/SEO'
 import { Toast } from '~/components/Toast'
-import { getInvestorsProjects, getInvestorsSiteForRequest, type InvestorsSiteId } from '~/containers/Investors/config'
+import {
+	getInvestorsProjects,
+	getInvestorsSiteWithPathFallback,
+	type InvestorsSiteId
+} from '~/containers/Investors/config'
 import { Logo } from '~/containers/Investors/Logo'
 import { fetchCustomServerData } from '~/containers/Investors/serverDataRegistry'
 import { useInvestorsSite } from '~/containers/Investors/SiteContext'
@@ -13,7 +17,7 @@ export const getServerSideProps: GetServerSideProps<{
 	investorsSiteId: InvestorsSiteId
 	customServerData: Record<string, unknown>
 }> = async (context) => {
-	const site = getInvestorsSiteForRequest(context.req.headers.host, context.req.headers['x-forwarded-host'])
+	const site = getInvestorsSiteWithPathFallback(context.req.headers.host, context.req.headers['x-forwarded-host'])
 	if (!site) {
 		return { notFound: true }
 	}

@@ -96,8 +96,38 @@ export function getInvestorsSiteForRequest(
 	const hostname = normalizeHost(host)
 	if (!hostname) return null
 	const directSite = getInvestorsSite(hostname)
-	if (directSite || hostname === 'defillama.com' || hostname === 'www.defillama.com') return directSite
+	if (directSite || isMainSiteHost(hostname)) return directSite
 	return typeof forwardedHost === 'string' ? getInvestorsSite(forwardedHost) : null
+}
+
+const MAIN_SITE_HOSTS: ReadonlySet<string> = new Set(['defillama.com', 'www.defillama.com'])
+
+export function isMainSiteHost(host: string | Array<string> | null | undefined): boolean {
+	const hostname = typeof host === 'string' ? normalizeHost(host) : undefined
+	return !!hostname && MAIN_SITE_HOSTS.has(hostname)
+}
+
+export function getInvestorsSiteForProject(protocol: string): InvestorsSite | null {
+	return Object.values(INVESTORS_SITES).find((site) => site.projectIds.some((id) => id === protocol)) ?? null
+}
+
+export function getInvestorsSiteWithPathFallback(
+	host: string | null | undefined,
+	forwardedHost: string | Array<string> | null | undefined,
+	protocol?: string
+): InvestorsSite | null {
+	const site = getInvestorsSiteForRequest(host, forwardedHost)
+	if (site || !normalizeHost(host) || isMainSiteHost(host) || isMainSiteHost(forwardedHost)) return site
+	return protocol === undefined ? INVESTORS_SITES.investors : getInvestorsSiteForProject(protocol)
+}
+
+export function getInvestorsRootRedirectScript(): string {
+	const destinations = Object.fromEntries(
+		Object.values(INVESTORS_SITES).flatMap((site) =>
+			site.hosts.map((host) => [host, site.projectIds.length === 1 ? `/${site.defaultProjectId}` : '/investors'])
+		)
+	)
+	return `(function(){var d=${JSON.stringify(destinations)}[location.hostname];if(d&&location.pathname==='/')location.replace(d+location.search)})()`
 }
 
 export function getInvestorsProjects(projectIds: ReadonlyArray<InvestorsProjectId>): Array<InvestorsProject> {

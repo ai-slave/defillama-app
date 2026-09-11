@@ -221,15 +221,38 @@ describe('investors proxy routing', () => {
 		const { proxy } = await loadProxy()
 		for (const url of [
 			'https://defillama.com/',
+			'https://defillama.com/all',
 			'https://www.defillama.com/spark',
-			'https://unknown.example/spark',
-			'https://investors.defillama.com.evil.com/spark',
+			'https://unknown.example/',
+			'https://unknown.example/yields',
 			'https://investors.defillama.com/api/public/protocols/charts',
 			'https://investors.defillama.com/_next/static/chunk.js',
 			'https://enterprise.defillama.com/assets/defillama.webp'
 		]) {
 			expect(rewriteUrl(proxy(pageRequest(url)))).toBeNull()
 		}
+	})
+
+	test('falls back to path-based IR routing while the LB host is opaque', async () => {
+		const { proxy } = await loadProxy()
+		const cases = [
+			['/spark', '/investors/spark'],
+			['/odyssey-ecosystem', '/investors/odyssey-ecosystem'],
+			['/all', '/investors/all'],
+			['/kpk', null],
+			['/', null],
+			['/_next/data/build-id/spark.json', '/_next/data/build-id/investors/spark.json']
+		] as const
+		for (const [path, destination] of cases) {
+			const request = pageRequest(`http://app-origin.example${path}?tab=revenue`, undefined, '*/*')
+			request.headers.set('x-forwarded-host', 'app-origin.example')
+			expect(rewriteUrl(proxy(request))).toBe(
+				destination ? `http://app-origin.example${destination}?tab=revenue` : null
+			)
+		}
+		const main = pageRequest('http://app-origin.example/spark')
+		main.headers.set('x-forwarded-host', 'defillama.com')
+		expect(rewriteUrl(proxy(main))).toBeNull()
 	})
 
 	test('uses Host rather than a forwarded-host override', async () => {

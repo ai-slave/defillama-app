@@ -63,8 +63,24 @@ describe('standalone IR server pages', () => {
 		fetchCustomServerData.mockClear()
 		enterpriseRequest.params = { protocol: 'spark' }
 		expect(await project(enterpriseRequest)).toEqual({ notFound: true })
-		investorRequest.req.headers['x-forwarded-host'] = 'unknown.example'
+		investorRequest.req.headers['x-forwarded-host'] = 'defillama.com'
 		expect(await landing(investorRequest)).toEqual({ notFound: true })
+		expect(fetchCustomServerData).not.toHaveBeenCalled()
+	})
+
+	test('derives the site from the path while the LB host is opaque', async () => {
+		const { landing, all, project } = await loadPages()
+		const opaque = (protocol?: string) => context('app-origin.example', protocol)
+		expect(await landing(opaque())).toEqual({ props: { investorsSiteId: 'investors' } })
+		expect(await all(opaque())).toMatchObject({ props: { investorsSiteId: 'investors' } })
+		expect(await project(opaque('spark'))).toMatchObject({ props: { investorsSiteId: 'investors', protocol: 'spark' } })
+		expect(await project(opaque('odyssey-ecosystem'))).toMatchObject({
+			props: { investorsSiteId: 'enterprise', protocol: 'odyssey-ecosystem' }
+		})
+		fetchCustomServerData.mockClear()
+		for (const protocol of ['kpk', 'uniswap', 'unknown']) {
+			expect(await project(opaque(protocol))).toEqual({ notFound: true })
+		}
 		expect(fetchCustomServerData).not.toHaveBeenCalled()
 	})
 
@@ -106,10 +122,10 @@ describe('standalone IR server pages', () => {
 		expect(fetchCustomServerData).not.toHaveBeenCalled()
 	})
 
-	test('does not expose standalone routes on the main site or an unrecognized host', async () => {
+	test('does not expose standalone routes on the main site or without a host', async () => {
 		const pages = await loadPages()
 		await Promise.all(
-			[undefined, 'defillama.com', 'www.defillama.com', 'unknown.example'].flatMap((host) =>
+			[undefined, 'defillama.com', 'www.defillama.com'].flatMap((host) =>
 				Object.values(pages).map(async (page) => {
 					expect(await page(context(host, 'spark'))).toEqual({ notFound: true })
 				})
