@@ -152,11 +152,16 @@ function EarnView({
 		selectedTokenValues.length > 0 && medianApy != null ? { label: medianLabel, apy: medianApy } : undefined
 
 	const filterContext = getYieldsQuestionContext(router.query)
-	const { data: filteredQuestionsData, isFetching: isQuestionsLoading } = useEntityQuestions(
+	// Never a skeleton here: a filter change keeps the current chips (or the page's own set) on screen
+	// and swaps them once the filtered set lands. The strip simply stays away while there is nothing.
+	const { data: filteredQuestionsData } = useEntityQuestions(
 		'yields',
 		'page',
 		!!filterContext,
-		filterContext ?? undefined
+		filterContext ?? undefined,
+		{
+			keepPreviousData: true
+		}
 	)
 	const questions = filteredQuestionsData?.questions?.length ? filteredQuestionsData.questions : baseQuestions
 
@@ -232,17 +237,11 @@ function EarnView({
 
 			<NewsletterSignup layout="strip" />
 
-			{questions.length > 0 || isQuestionsLoading ? (
-				<EntityQuestionsStrip
-					questions={questions}
-					entitySlug="yields"
-					entityType="page"
-					entityName="Yields"
-					isLoading={isQuestionsLoading}
-				/>
+			{questions.length > 0 ? (
+				<EntityQuestionsStrip questions={questions} entitySlug="yields" entityType="page" entityName="Yields" />
 			) : null}
 
-			<VerifiedApyAnnouncement />
+			<VerifiedApyAnnouncement hasAccess={effectiveVerifiedAccess} />
 
 			{isLoading ? (
 				<PanelLoadingStatus label="Loading pools" />

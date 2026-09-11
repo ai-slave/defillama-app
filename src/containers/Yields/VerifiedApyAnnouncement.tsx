@@ -9,12 +9,19 @@ import { useVerifiedAccess } from './useVerifiedAccess'
  * announcement cookie, so closing it on either page keeps it closed on both; bump `version` to
  * bring it back. A subscriber never sees it.
  */
-export function VerifiedApyAnnouncement({ placement = 'banner' }: { placement?: string }) {
+export function VerifiedApyAnnouncement({
+	placement = 'banner',
+	hasAccess: hasAccessFromProps = false
+}: {
+	placement?: string
+	/** The page's own verdict (server-rendered for a subscriber) so their HTML never carries the strip. */
+	hasAccess?: boolean
+}) {
 	const { show, modal } = useSubscribeProModal('verified-yields', placement)
-	const { hasAccess } = useVerifiedAccess()
+	const { hasAccess: hasClientAccess } = useVerifiedAccess()
 	// Rendered while access is still pending: the strip occupies layout, so hiding it until auth
 	// settles would shift the page under every anonymous reader after hydration.
-	if (hasAccess) return null
+	if (hasAccessFromProps || hasClientAccess) return null
 	return (
 		<>
 			<Announcement
