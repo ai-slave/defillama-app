@@ -16,6 +16,7 @@ import { Tooltip } from '~/ui/Tooltip'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { shouldResetYieldsPoolPage } from '../queryState'
 import { pushYieldsQuery } from '../queryUpdates.client'
+import { writeStickyPref, YIELDS_TABLE_PREFS } from '../stickyQueryPrefs'
 import { YieldFilterDropdowns } from './Dropdowns'
 import { ResetAllYieldFilters } from './ResetAll'
 import type { IYieldFiltersProps } from './types'
@@ -69,6 +70,12 @@ function SaveViewButton({ currentFilters }: { currentFilters: Record<string, str
 		}
 		for (const key of Object.keys(router.query)) {
 			if (!(key in filters)) updates[key] = undefined
+		}
+		// Sync saved choices (including omitted defaults) before restoration can run.
+		for (const pref of YIELDS_TABLE_PREFS) {
+			const raw = filters[pref.queryKey]
+			const value = Array.isArray(raw) ? raw[0] : raw
+			writeStickyPref(pref, typeof value === 'string' || typeof value === 'number' ? String(value) : undefined)
 		}
 		void pushYieldsQuery(router, updates)
 		popover.hide()
@@ -189,6 +196,51 @@ export function YieldFilters({
 	})()
 	const hasViewControls = Boolean(apyControls || saveView || prepareCsv || watchlist)
 
+	const viewActions = (
+		<>
+			{saveView ? (
+				<span className="hidden sm:block">
+					<SaveViewButton currentFilters={currentFilters} />
+				</span>
+			) : null}
+			{prepareCsv ? <CSVDownloadButton size="md" prepareCsv={prepareCsv} smol /> : null}
+			{watchlist ? <WatchlistLink /> : null}
+		</>
+	)
+	const filterDropdowns = (
+		<ResponsiveFilterLayout>
+			{(nestedMenu) => <YieldFilterDropdowns {...props} pathname={pathname} nestedMenu={nestedMenu} />}
+		</ResponsiveFilterLayout>
+	)
+	const resetButton = resetFilters ? (
+		<ResetAllYieldFilters
+			pathname={pathname}
+			nestedMenu={false}
+			{...(resetFiltersLabel ? { label: resetFiltersLabel } : {})}
+		/>
+	) : null
+
+	// Without token search or preset chips (protocol yields) the bar is light enough for one
+	// line: the APY view first, since it says what the numbers mean, a divider, then the filters
+	// that pick the rows, with actions right. Flex-wrap still stacks it on narrow screens.
+	if (!tokenSearch && !curatedViews) {
+		return (
+			<Panel padding="none">
+				<TableToolbar className="gap-2">
+					{apyControls}
+					{apyControls ? <span className="mx-0.5 hidden h-5 w-px bg-border-medium sm:block" aria-hidden /> : null}
+					{filterDropdowns}
+					{hasViewControls || resetFilters ? (
+						<div className="ml-auto flex items-center gap-2">
+							{viewActions}
+							{resetButton}
+						</div>
+					) : null}
+				</TableToolbar>
+			</Panel>
+		)
+	}
+
 	return (
 		<Panel padding="none">
 			{/* View row: APY composition + window dials, then preset chips, view actions right.
@@ -200,33 +252,15 @@ export function YieldFilters({
 						<span className="mx-0.5 hidden h-5 w-px bg-border-medium sm:block" aria-hidden />
 					) : null}
 					{curatedViews ? <div className="hidden min-w-0 sm:block">{curatedViews}</div> : null}
-					<div className="ml-auto flex items-center gap-2">
-						{saveView ? (
-							<span className="hidden sm:block">
-								<SaveViewButton currentFilters={currentFilters} />
-							</span>
-						) : null}
-						{prepareCsv ? <CSVDownloadButton size="md" prepareCsv={prepareCsv} smol /> : null}
-						{watchlist ? <WatchlistLink /> : null}
-					</div>
+					<div className="ml-auto flex items-center gap-2">{viewActions}</div>
 				</TableToolbar>
 			) : null}
 
 			{/* Query controls stay together as the final row governing the table below. */}
 			<TableToolbar className="gap-2">
 				{tokenSearch && (showSearchOnMobile || !isSmall) ? tokenSearch : null}
-				<ResponsiveFilterLayout>
-					{(nestedMenu) => <YieldFilterDropdowns {...props} pathname={pathname} nestedMenu={nestedMenu} />}
-				</ResponsiveFilterLayout>
-				{resetFilters ? (
-					<div className="ml-auto">
-						<ResetAllYieldFilters
-							pathname={pathname}
-							nestedMenu={false}
-							{...(resetFiltersLabel ? { label: resetFiltersLabel } : {})}
-						/>
-					</div>
-				) : null}
+				{filterDropdowns}
+				{resetButton ? <div className="ml-auto">{resetButton}</div> : null}
 			</TableToolbar>
 		</Panel>
 	)

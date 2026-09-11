@@ -8,7 +8,10 @@ import {
 	getRangeQueryValue,
 	getSeriesVisibility,
 	getPoolChartWindow,
-	getWindowQueryValue
+	getWindowQueryValue,
+	POOL_CHART_PREFS,
+	POOL_CHART_RANGE_PREF,
+	POOL_CHART_WINDOW_PREFS
 } from './queryState'
 
 describe('pool detail query state', () => {
@@ -52,5 +55,26 @@ describe('pool detail query state', () => {
 		expect(getWindowQueryValue('daily')).toBeUndefined()
 		expect(getWindowQueryValue('7d')).toBe('7d')
 		expect(getWindowQueryValue('30d')).toBe('30d')
+	})
+})
+
+describe('sticky pool chart prefs', () => {
+	test('mirror the URL parsers and never accept a default', () => {
+		expect(POOL_CHART_RANGE_PREF.queryKey).toBe('range')
+		expect(POOL_CHART_RANGE_PREF.isValid('30d')).toBe(true)
+		expect(POOL_CHART_RANGE_PREF.isValid('90d')).toBe(true)
+		expect(POOL_CHART_RANGE_PREF.isValid('max')).toBe(false)
+
+		expect(POOL_CHART_WINDOW_PREFS.borrow.queryKey).toBe('borrowWindow')
+		expect(POOL_CHART_WINDOW_PREFS.borrow.aliasKeys).toEqual(['borrowAvg7d', 'borrowAvg30d'])
+		expect(POOL_CHART_WINDOW_PREFS.supply.isValid('7d')).toBe(true)
+		expect(POOL_CHART_WINDOW_PREFS.supply.isValid('30d')).toBe(true)
+		expect(POOL_CHART_WINDOW_PREFS.supply.isValid('daily')).toBe(false)
+
+		expect(POOL_CHART_PREFS).toEqual([
+			POOL_CHART_RANGE_PREF,
+			POOL_CHART_WINDOW_PREFS.supply,
+			POOL_CHART_WINDOW_PREFS.borrow
+		])
 	})
 })

@@ -127,9 +127,8 @@ function BorrowView({
 				categoriesLabel="Categories"
 				attributeIds={attributeIds}
 				availableRange
-				apyControls={<ApyViewControls />}
+				apyControls={<ApyViewControls ready={normalized} />}
 				resetFilters
-				resetFiltersLabel="Reset Filters"
 				prepareCsv={prepareCsv}
 			/>
 

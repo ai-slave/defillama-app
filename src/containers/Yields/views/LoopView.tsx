@@ -101,13 +101,12 @@ function LoopView({
 				availableRange
 				apyControls={
 					<>
-						<ApyViewControls />
+						<ApyViewControls ready={normalized} />
 						<span className="mx-1 hidden h-5 w-px bg-border-medium sm:block" aria-hidden />
 						<LoopCountSelect />
 					</>
 				}
 				resetFilters
-				resetFiltersLabel="Reset Filters"
 				prepareCsv={prepareCsv}
 			/>
 

@@ -1,4 +1,5 @@
 import { readSingleQueryValue } from '~/utils/routerQuery'
+import type { StickyQueryPref } from '../stickyQueryPrefs'
 import type { PoolHistoryRange } from './types'
 
 type QueryValue = string | Array<string> | undefined
@@ -50,3 +51,30 @@ export function getRangeQueryValue(range: PoolHistoryRange): '30d' | '90d' | und
 export function getHolderModeQueryValue(mode: HolderMode): 'balance' | undefined {
 	return mode === 'share' ? undefined : mode
 }
+
+// Both charts share the range; each keeps its own smoothing preference.
+export const POOL_CHART_RANGE_PREF: StickyQueryPref = {
+	queryKey: 'range',
+	storageKey: 'yields-pool-chart-range',
+	isValid: (value) => value === '30d' || value === '90d'
+}
+
+function poolChartWindowPref(kind: PoolChartKind): StickyQueryPref {
+	return {
+		queryKey: getPoolSeriesQueryKey(kind, 'window'),
+		storageKey: `yields-pool-chart-window-${kind}`,
+		aliasKeys: [getPoolSeriesQueryKey(kind, 'avg7d'), getPoolSeriesQueryKey(kind, 'avg30d')],
+		isValid: (value) => value === '7d' || value === '30d'
+	}
+}
+
+export const POOL_CHART_WINDOW_PREFS: Record<PoolChartKind, StickyQueryPref> = {
+	supply: poolChartWindowPref('supply'),
+	borrow: poolChartWindowPref('borrow')
+}
+
+export const POOL_CHART_PREFS: ReadonlyArray<StickyQueryPref> = [
+	POOL_CHART_RANGE_PREF,
+	POOL_CHART_WINDOW_PREFS.supply,
+	POOL_CHART_WINDOW_PREFS.borrow
+]

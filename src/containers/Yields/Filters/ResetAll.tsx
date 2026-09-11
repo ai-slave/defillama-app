@@ -1,12 +1,16 @@
 import { useRouter } from 'next/router'
 import { Button } from '~/ui/Button'
 import { nestedMenuActionStyles } from '~/ui/Popover'
+import { Tooltip } from '~/ui/Tooltip'
+import { YIELDS_TABLE_PREFS } from '../stickyQueryPrefs'
+
+const preferenceKeys = new Set(YIELDS_TABLE_PREFS.map((pref) => pref.queryKey))
 
 export function ResetAllYieldFilters({
 	pathname,
 	resetContext,
 	nestedMenu,
-	label = 'Reset all filters'
+	label = 'Clear filters'
 }: {
 	pathname: string
 	resetContext?: () => void
@@ -16,7 +20,8 @@ export function ResetAllYieldFilters({
 	const router = useRouter()
 
 	const handleClick = () => {
-		void router.push(pathname, undefined, { shallow: true })
+		const query = Object.fromEntries(Object.entries(router.query).filter(([key]) => preferenceKeys.has(key)))
+		void router.push({ pathname, query }, undefined, { shallow: true })
 		resetContext?.()
 	}
 
@@ -24,22 +29,28 @@ export function ResetAllYieldFilters({
 	const routeParams = new Set(Array.from(router.pathname.matchAll(/\[(?:\.\.\.)?(\w+)\]/g), (m) => m[1]))
 	let hasActiveFilters = false
 	for (const key in router.query) {
-		if (routeParams.has(key)) continue
+		if (routeParams.has(key) || preferenceKeys.has(key)) continue
 		hasActiveFilters = true
 		break
 	}
 
-	if (nestedMenu) {
-		return (
-			<button type="button" onClick={handleClick} disabled={!hasActiveFilters} className={nestedMenuActionStyles}>
-				{label}
-			</button>
-		)
-	}
-
-	return (
+	const button = nestedMenu ? (
+		<button type="button" onClick={handleClick} disabled={!hasActiveFilters} className={nestedMenuActionStyles}>
+			{label}
+		</button>
+	) : (
 		<Button type="button" variant="secondary" size="md" onClick={handleClick} disabled={!hasActiveFilters}>
 			{label}
 		</Button>
+	)
+
+	return (
+		<Tooltip
+			content="Clear filters while keeping your APY window, reward/intrinsic settings, and rows per page."
+			className={nestedMenu ? 'w-full' : undefined}
+			tabIndex={hasActiveFilters ? undefined : 0}
+		>
+			{button}
+		</Tooltip>
 	)
 }

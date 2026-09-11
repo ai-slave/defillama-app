@@ -1,8 +1,10 @@
 import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
+import { useIsClient } from '~/hooks/useIsClient'
 import { useYieldsPaginatedTable, type YieldsTableSeed } from './queries.client'
 import { pushYieldsQuery } from './queryUpdates.client'
+import { TABLE_PAGE_SIZE_PREF, writeStickyPref } from './stickyQueryPrefs'
 import type { IYieldsTableProps } from './Tables/types'
 import {
 	buildYieldsTableQueryString,
@@ -25,22 +27,21 @@ type YieldsServerTableOptions<TRow> = {
 export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRow>) {
 	const { endpoint, enabled = true, extraQuery, defaultSorting = [] } = options
 	const router = useRouter()
+	// router.isReady can be true during hydration; also wait for the client snapshot.
+	const isClient = useIsClient()
+	const ready = router.isReady && isClient
 	const query = router.query as QueryRecord
 	const requestedPagination = React.useMemo(() => getYieldsTablePaginationFromQuery(query), [query])
 	const sorting = React.useMemo(() => getYieldsTableSortingFromQuery(query, defaultSorting), [defaultSorting, query])
 	const queryString = React.useMemo(() => {
-		if (!enabled) return null
-		// On a hard load of this statically-optimized page, router.query is empty on the
-		// first render and hydrates a moment later — fetching before that would issue a
-		// paramless request whose rows flash in the wrong order, then get replaced.
-		if (!router.isReady) return null
+		if (!enabled || !ready) return null
 		return buildYieldsTableQueryString({
 			query,
 			pagination: requestedPagination,
 			sorting,
 			...(extraQuery === undefined ? {} : { extraQuery })
 		})
-	}, [enabled, extraQuery, query, requestedPagination, sorting, router.isReady])
+	}, [enabled, extraQuery, query, requestedPagination, sorting, ready])
 	const defaultQueryString = React.useMemo(
 		() =>
 			buildYieldsTableQueryString({
@@ -53,12 +54,10 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 	)
 	const seed = options.initialSeed && queryString === defaultQueryString ? options.initialSeed : undefined
 	const rowsQuery = useYieldsPaginatedTable<TRow>(endpoint, queryString, seed)
-	// The seed renders during SSR/pre-hydration (the static HTML contains it, so
-	// dropping it before the router resolves would be a hydration mismatch) and
-	// for the default view. A URL known to carry filters must NOT show it - the
-	// seeded rows don't match the URL - and neither must a failed fetch.
-	const seedVisible = (!router.isReady || queryString === defaultQueryString) && !rowsQuery.isError
-	const data = rowsQuery.data ?? (seedVisible ? options.initialSeed?.initialData : undefined)
+	// Preserve SSR content during hydration; reuse the seed only for the default query.
+	const seedVisible = (!ready || queryString === defaultQueryString) && !rowsQuery.isError
+	// Hide stale/default rows while preferences restore.
+	const data = enabled ? (rowsQuery.data ?? (seedVisible ? options.initialSeed?.initialData : undefined)) : undefined
 	const rows = data?.rows ?? []
 	const total = data?.total ?? 0
 	const medianApy = data?.medianApy ?? null
@@ -72,17 +71,21 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 
 	const handlePaginationChange = React.useCallback(
 		(nextPagination: PaginationState) => {
+			const sizeChanged = nextPagination.pageSize !== pagination.pageSize
+			const pageSize =
+				nextPagination.pageSize === DEFAULT_YIELDS_TABLE_PAGE_SIZE ? undefined : String(nextPagination.pageSize)
+			// Paging must preserve both the URL's row count and the stored preference.
+			if (sizeChanged) writeStickyPref(TABLE_PAGE_SIZE_PREF, pageSize)
 			void pushYieldsQuery(
 				router,
 				{
 					page: nextPagination.pageIndex > 0 ? String(nextPagination.pageIndex + 1) : undefined,
-					pageSize:
-						nextPagination.pageSize === DEFAULT_YIELDS_TABLE_PAGE_SIZE ? undefined : String(nextPagination.pageSize)
+					...(sizeChanged ? { pageSize } : {})
 				},
 				{ resetPage: false }
 			)
 		},
-		[router]
+		[router, pagination.pageSize]
 	)
 
 	const handleSortingChange = React.useCallback(
@@ -124,9 +127,7 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 		rows,
 		total,
 		medianApy,
-		// Seed-aware: false during SSR/pre-hydration when the ISR seed is visible,
-		// unlike rowsQuery.data which is always empty before router.isReady.
-		isLoading: !data && !rowsQuery.isError,
+		isLoading: !enabled || (!data && !rowsQuery.isError),
 		rowsQuery,
 		tableProps,
 		buildAllRowsQueryString

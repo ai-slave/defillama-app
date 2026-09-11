@@ -7,10 +7,13 @@ import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
 import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
 import { YieldFilters } from '~/containers/Yields/Filters'
+import { ApyViewControls } from '~/containers/Yields/Filters/ApyViewControls'
 import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
 import { selectedSubsetQuery } from '~/containers/Yields/queryState'
+import { YIELDS_TABLE_PREFS } from '~/containers/Yields/stickyQueryPrefs'
 import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
+import { useStickyPrefsOverlay, useStickyQueryReplace } from '~/containers/Yields/useStickyQueryReplace'
 import { useYieldsServerTable } from '~/containers/Yields/useYieldsServerTable'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { sluggifyProtocol } from '~/utils/cache-client'
@@ -142,10 +145,7 @@ export const getStaticPaths = () => {
 	return { paths: [], fallback: 'blocking' }
 }
 
-// Embedded earn surface, scoped to this protocol's name(s) via a fixed `protocol=` filter
-// (not user-editable). The tab exposes exactly FOUR user controls — Chains, TVL range, APY
-// range, Columns — reusing the earn page's shared components; they compose with the fixed
-// protocol filter through the same server query. No other filters/dials/views.
+// Shared earn controls with a fixed protocol filter.
 function ProtocolYieldsTab({
 	protocolNames,
 	chainList,
@@ -161,6 +161,9 @@ function ProtocolYieldsTab({
 	// against this protocol's chain list, exactly as the earn page does.
 	const router = useRouter()
 	const resolvedPathname = router.asPath.split('?')[0]
+	const preferencesReady = useStickyQueryReplace(
+		useStickyPrefsOverlay(hasProtocols && router.isReady ? router.query : null, YIELDS_TABLE_PREFS)
+	)
 
 	const { selectedChains } = useFormatYieldQueryParams({
 		chainList,
@@ -179,7 +182,7 @@ function ProtocolYieldsTab({
 	}
 	const { rows, total, isLoading, rowsQuery, tableProps } = useYieldsServerTable<IYieldTableRow>({
 		endpoint: YIELD_EARN_DATASET_API,
-		enabled: hasProtocols,
+		enabled: hasProtocols && preferencesReady,
 		extraQuery
 	})
 	const poolsData = rows.length > 0 ? rows : EMPTY_POOL_ROWS
@@ -204,6 +207,7 @@ function ProtocolYieldsTab({
 					tvlRangeLabel="TVL"
 					apyRange
 					showColumns
+					apyControls={<ApyViewControls ready={preferencesReady} />}
 					saveView={false}
 					resetFilters
 					pathname={resolvedPathname}

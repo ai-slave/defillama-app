@@ -15,6 +15,7 @@ import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
+import { writeStickyPref } from '../stickyQueryPrefs'
 import { ChartMetricsPicker, type ChartMetricGroup, type ChartMetricOption } from './ChartMetricsPicker'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from './fetch'
 import { YIELD_PERCENT_OPTIONS } from './format'
@@ -33,6 +34,8 @@ import {
 	getRangeQueryValue,
 	getSeriesVisibility,
 	getWindowQueryValue,
+	POOL_CHART_RANGE_PREF,
+	POOL_CHART_WINDOW_PREFS,
 	type PoolChartWindow
 } from './queryState'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue, type ChartTooltipItem } from './tooltip'
@@ -360,9 +363,11 @@ export function PoolApyChart({
 					<ChartGroupingSelector
 						value={range}
 						options={RANGE_OPTIONS}
-						onValueChange={(next) =>
-							void pushShallowQuery(router, { range: getRangeQueryValue(next) }, router.pathname)
-						}
+						onValueChange={(next) => {
+							const nextRange = getRangeQueryValue(next)
+							writeStickyPref(POOL_CHART_RANGE_PREF, nextRange)
+							void pushShallowQuery(router, { range: nextRange }, router.pathname)
+						}}
 					/>
 					<ChartExportButtons
 						chartInstance={() => chartRef.current}
@@ -382,8 +387,18 @@ export function PoolApyChart({
 					value={apyWindow}
 					options={WINDOW_OPTIONS}
 					onValueChange={(next) => {
-						const windowQueryKey = getPoolSeriesQueryKey(kind, 'window')
-						void pushShallowQuery(router, { [windowQueryKey]: getWindowQueryValue(next) }, router.pathname)
+						const nextWindow = getWindowQueryValue(next)
+						writeStickyPref(POOL_CHART_WINDOW_PREFS[kind], nextWindow)
+						void pushShallowQuery(
+							router,
+							{
+								[getPoolSeriesQueryKey(kind, 'window')]: nextWindow,
+								// Clear legacy smoothing overrides when selecting Daily.
+								[getPoolSeriesQueryKey(kind, 'avg7d')]: undefined,
+								[getPoolSeriesQueryKey(kind, 'avg30d')]: undefined
+							},
+							router.pathname
+						)
 					}}
 				/>
 			</ChartPanelToolbar>

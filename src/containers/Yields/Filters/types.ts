@@ -26,7 +26,7 @@ export interface IDropdownMenusProps {
 	tvlRange?: boolean
 	// Opt-in (/yields): trigger label override for the TVL range (defaults to 'TVL Range').
 	tvlRangeLabel?: string
-	// Opt-in (/yields pages): label override for the reset button (defaults to 'Reset all filters').
+	// Optional label override (defaults to 'Clear filters').
 	resetFiltersLabel?: string
 	apyRange?: boolean
 	availableRange?: boolean

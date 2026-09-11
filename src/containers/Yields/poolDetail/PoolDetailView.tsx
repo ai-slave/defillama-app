@@ -1,15 +1,22 @@
+import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
+import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { MetricRow, MetricSection, SubMetricRow } from '~/ui/MetricPrimitives'
+import { PanelHeader, PanelTitle } from '~/ui/Panel'
+import { Skeleton } from '~/ui/Skeleton'
+import { LoadingIndicator } from '~/ui/Status'
 import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
 import { hasPart } from '../domain/apyPresentation'
+import { useStickyPrefsOverlay, useStickyQueryReplace } from '../useStickyQueryReplace'
 import { scoreValue, YIELD_PERCENT_OPTIONS } from './format'
 import { HoldersPanel } from './HoldersPanel'
 import { PoolApyChart } from './PoolApyChart'
 import type { PoolChartModel } from './poolCharts'
 import { PoolHeader, PoolMetaInfo } from './PoolHeader'
+import { POOL_CHART_PREFS } from './queryState'
 import type { DetailChain, DetailHolders, DetailProtocol, PoolHistoryRange } from './types'
 
 type ApyKind = 'supply' | 'borrow'
@@ -145,6 +152,26 @@ function SideBlock({ side, kind, children }: { side: PoolSide; kind: ApyKind; ch
 	)
 }
 
+function PoolChartPlaceholder({ title }: { title: string }) {
+	return (
+		<ChartPanel className="h-full">
+			<PanelHeader>
+				<PanelTitle>{title}</PanelTitle>
+				<Skeleton className="ml-auto h-8 w-40" />
+			</PanelHeader>
+			<ChartPanelToolbar>
+				<Skeleton className="h-8 w-40" />
+				<Skeleton className="ml-auto h-8 w-40" />
+			</ChartPanelToolbar>
+			<ChartPanelBody>
+				<ChartPanelBodyFallback role="status" aria-live="polite">
+					<LoadingIndicator label="Loading chart" />
+				</ChartPanelBodyFallback>
+			</ChartPanelBody>
+		</ChartPanel>
+	)
+}
+
 export function PoolDetailView({
 	poolId,
 	mode,
@@ -163,6 +190,12 @@ export function PoolDetailView({
 	holders,
 	details
 }: PoolDetailViewProps) {
+	// Restore both charts together before mounting to avoid competing replaces and default flashes.
+	const router = useRouter()
+	const preferencesReady = useStickyQueryReplace(
+		useStickyPrefsOverlay(router.isReady ? router.query : null, POOL_CHART_PREFS)
+	)
+
 	const stabilityRating = stability?.rating ?? null
 	const stabilityScore = stability?.score ?? null
 	const stabilityColor =
@@ -256,24 +289,26 @@ export function PoolDetailView({
 				</Card>
 
 				<div className="flex min-w-0 flex-col gap-2">
-					{supplyChart ? (
-						<PoolApyChart
-							key={`${poolId}:supply`}
-							model={supplyChart}
-							poolId={poolId}
-							kind="supply"
-							initialRange={initialRange}
-						/>
-					) : null}
-					{borrowChart ? (
-						<PoolApyChart
-							key={`${poolId}:borrow`}
-							model={borrowChart}
-							poolId={poolId}
-							kind="borrow"
-							initialRange={initialRange}
-						/>
-					) : null}
+					{(
+						[
+							['supply', supplyChart],
+							['borrow', borrowChart]
+						] as const
+					).map(([kind, model]) =>
+						model ? (
+							preferencesReady ? (
+								<PoolApyChart
+									key={`${poolId}:${kind}`}
+									model={model}
+									poolId={poolId}
+									kind={kind}
+									initialRange={initialRange}
+								/>
+							) : (
+								<PoolChartPlaceholder key={kind} title={model.title} />
+							)
+						) : null
+					)}
 					{!supplyChart && !borrowChart ? (
 						<Card padding="md" className="flex min-h-24 flex-1 items-center justify-center">
 							<p className="text-center body-sm text-tertiary">No history available for this pool yet.</p>

@@ -183,13 +183,12 @@ function EarnView({
 				categoriesLabel="Categories"
 				attributeIds={attributeIds}
 				showColumns
-				apyControls={<ApyViewControls />}
+				apyControls={<ApyViewControls ready={normalized} />}
 				curatedViews={<CuratedViews />}
 				tvlRange
 				tvlRangeLabel="TVL"
 				apyRange
 				resetFilters
-				resetFiltersLabel="Reset Filters"
 				prepareCsv={prepareCsv}
 				watchlist
 			/>

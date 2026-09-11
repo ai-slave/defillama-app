@@ -2,9 +2,12 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Button } from '~/ui/Button'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { Skeleton } from '~/ui/Skeleton'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
+import { readSingleQueryValue } from '~/utils/routerQuery'
 import type { ApyWindow } from '../data/types'
 import { pushYieldsQuery } from '../queryUpdates.client'
+import { APY_COMPONENTS_PREF, APY_WINDOW_PREF, writeStickyPref } from '../stickyQueryPrefs'
 import { HelpDefs, HelpIcon } from './ui'
 
 // URL-param-driven APY view toggle for the /yields page. Pushes `apyWindow` and
@@ -34,19 +37,15 @@ const APY_HELP = (
 	/>
 )
 
-function readSingle(value: string | Array<string> | undefined): string | undefined {
-	return Array.isArray(value) ? value[0] : value
-}
-
 // Mirror the server's parseApyWindow default ('current').
 function decodeWindow(value: string | Array<string> | undefined): ApyWindow {
-	const raw = readSingle(value)
+	const raw = readSingleQueryValue(value)
 	return raw === 'avg_7d' || raw === 'avg_30d' ? raw : 'current'
 }
 
 // Mirror the server's parseApyComponents: absent → base+reward.
 function decodeComponents(value: string | Array<string> | undefined): { reward: boolean; intrinsic: boolean } {
-	const raw = readSingle(value)
+	const raw = readSingleQueryValue(value)
 	if (raw == null) return { reward: true, intrinsic: false }
 	const parts = new Set(raw.split(',').map((part) => part.trim()))
 	return { reward: parts.has('reward'), intrinsic: parts.has('intrinsic') }
@@ -64,6 +63,7 @@ function describeComponents(reward: boolean, intrinsic: boolean): string {
 	return view
 }
 
+// Omit base+reward; use 'base' when both toggles are off.
 function encodeComponents(reward: boolean, intrinsic: boolean): string | undefined {
 	if (reward && !intrinsic) return undefined
 	const parts: Array<string> = []
@@ -72,30 +72,39 @@ function encodeComponents(reward: boolean, intrinsic: boolean): string | undefin
 	return parts.length > 0 ? parts.join(',') : 'base'
 }
 
-export function ApyViewControls() {
+export function ApyViewControls({ ready = true }: { ready?: boolean }) {
 	const router = useRouter()
 	const window = decodeWindow(router.query.apyWindow)
 	const { reward, intrinsic } = decodeComponents(router.query.apyComponents)
 
+	// Write storage before navigation to prevent restoring the previous choice.
 	const setWindow = (next: ApyWindow) => {
 		if (next !== window) trackYieldsEvent(YIELDS_EVENTS.APY_WINDOW, { window: next })
-		void pushYieldsQuery(router, { apyWindow: next === 'current' ? undefined : next })
+		const apyWindow = next === 'current' ? undefined : next
+		writeStickyPref(APY_WINDOW_PREF, apyWindow)
+		void pushYieldsQuery(router, { apyWindow })
 	}
-	const toggleReward = () => {
+	const toggleComponent = (component: 'reward' | 'intrinsic') => {
+		const nextReward = component === 'reward' ? !reward : reward
+		const nextIntrinsic = component === 'intrinsic' ? !intrinsic : intrinsic
 		trackYieldsEvent(YIELDS_EVENTS.APY_COMPONENT_TOGGLE, {
-			component: 'reward',
-			enabled: !reward,
-			view: describeComponents(!reward, intrinsic)
+			component,
+			enabled: component === 'reward' ? nextReward : nextIntrinsic,
+			view: describeComponents(nextReward, nextIntrinsic)
 		})
-		void pushYieldsQuery(router, { apyComponents: encodeComponents(!reward, intrinsic) })
+		const apyComponents = encodeComponents(nextReward, nextIntrinsic)
+		writeStickyPref(APY_COMPONENTS_PREF, apyComponents)
+		void pushYieldsQuery(router, { apyComponents })
 	}
-	const toggleIntrinsic = () => {
-		trackYieldsEvent(YIELDS_EVENTS.APY_COMPONENT_TOGGLE, {
-			component: 'intrinsic',
-			enabled: !intrinsic,
-			view: describeComponents(reward, !intrinsic)
-		})
-		void pushYieldsQuery(router, { apyComponents: encodeComponents(reward, !intrinsic) })
+
+	if (!ready) {
+		return (
+			<div role="status" aria-label="Loading APY preferences" className="flex flex-wrap items-center gap-2">
+				<Skeleton className="h-8 w-12" />
+				<Skeleton className="h-8 w-40" />
+				<Skeleton className="h-8 w-32" />
+			</div>
+		)
 	}
 
 	return (
@@ -105,8 +114,8 @@ export function ApyViewControls() {
 				<HelpIcon content={APY_HELP} label="About APY metric" />
 			</span>
 			<div className="flex items-center gap-1.5">
-				<ComponentToggle label="Reward" active={reward} onClick={toggleReward} />
-				<ComponentToggle label="Intrinsic" active={intrinsic} onClick={toggleIntrinsic} />
+				<ComponentToggle label="Reward" active={reward} onClick={() => toggleComponent('reward')} />
+				<ComponentToggle label="Intrinsic" active={intrinsic} onClick={() => toggleComponent('intrinsic')} />
 			</div>
 			<span className="mx-0.5 h-5 w-px bg-border-medium" aria-hidden />
 			<SegmentedControl
