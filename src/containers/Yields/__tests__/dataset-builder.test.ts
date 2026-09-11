@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { YIELDS_SNAPSHOT_FILES } from '../data/snapshot.contract'
 
 const fetchers = vi.hoisted(() => ({
 	earn: vi.fn(),
+	earnVerified: vi.fn(),
 	trends: vi.fn(),
 	borrowMarkets: vi.fn(),
 	borrowRoutes: vi.fn(),
@@ -15,6 +16,7 @@ const fetchers = vi.hoisted(() => ({
 
 vi.mock('../data/server/fetchers', () => ({
 	fetchEarnFromNetwork: fetchers.earn,
+	fetchEarnVerifiedFromNetwork: fetchers.earnVerified,
 	fetchTrendsFromNetwork: fetchers.trends,
 	fetchBorrowMarketsFromNetwork: fetchers.borrowMarkets,
 	fetchBorrowRoutesFromNetwork: fetchers.borrowRoutes,
@@ -26,6 +28,14 @@ vi.mock('../data/server/fetchers', () => ({
 }))
 
 import { buildYieldsSnapshotCandidate } from '../server/dataset.builder.server'
+
+let warn: ReturnType<typeof vi.spyOn>
+
+beforeAll(() => {
+	warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+})
+
+afterAll(() => warn.mockRestore())
 
 function validMeta() {
 	return {
@@ -41,6 +51,7 @@ function validMeta() {
 beforeEach(() => {
 	vi.clearAllMocks()
 	fetchers.earn.mockResolvedValue([{ id: 'earn' }])
+	fetchers.earnVerified.mockResolvedValue([{ id: 'earn' }])
 	fetchers.trends.mockResolvedValue([{ id: 'trend' }])
 	fetchers.borrowMarkets.mockResolvedValue([{ id: 'borrow-market' }])
 	fetchers.borrowRoutes.mockResolvedValue([{ collateral: { id: 'collateral' }, borrow: { id: 'borrow' } }])
@@ -52,7 +63,7 @@ beforeEach(() => {
 })
 
 describe('Yields v2 snapshot builder', () => {
-	test('writes all nine endpoint responses while allowing empty optional feeds', async () => {
+	test('writes all endpoint responses while allowing empty optional feeds', async () => {
 		const writeJson = vi.fn().mockResolvedValue(undefined)
 
 		await buildYieldsSnapshotCandidate({ writeJson })
@@ -61,6 +72,28 @@ describe('Yields v2 snapshot builder', () => {
 			expect(fetcher).toHaveBeenCalledWith({ extraRetry: true, timeout: 180_000 })
 		}
 		expect(writeJson.mock.calls.map(([path]) => path)).toEqual(Object.values(YIELDS_SNAPSHOT_FILES))
+	})
+
+	test('publishes reported yields with an empty verified sidecar', async () => {
+		fetchers.earnVerified.mockResolvedValueOnce([])
+		const writeJson = vi.fn().mockResolvedValue(undefined)
+
+		await buildYieldsSnapshotCandidate({ writeJson })
+
+		expect(writeJson).toHaveBeenCalledWith(YIELDS_SNAPSHOT_FILES.earnVerified, [])
+		expect(warn).toHaveBeenCalledWith(
+			'[dataset-snapshots] yields verified feed is empty; publishing without measurements'
+		)
+	})
+
+	test('fails the generation when the verified request fails, like every other feed', async () => {
+		fetchers.earnVerified.mockRejectedValueOnce(new Error('verified unavailable'))
+		const writeJson = vi.fn().mockResolvedValue(undefined)
+
+		await expect(buildYieldsSnapshotCandidate({ writeJson })).rejects.toThrow(
+			'Yields snapshot requests failed:\nearn verified: verified unavailable'
+		)
+		expect(writeJson).not.toHaveBeenCalled()
 	})
 
 	test('does not write a partial candidate when an endpoint fails', async () => {

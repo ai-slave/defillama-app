@@ -425,7 +425,7 @@ describe('MultiSeriesChart lifecycle', () => {
 		)
 
 		const options = mocks.instance.setOption.mock.calls[0][0]
-		expect(options.xAxis).toMatchObject({ min: 10, max: 20 })
+		expect(options.xAxis).toMatchObject({ min: 10, max: 20, axisLine: { onZeroAxisIndex: 0 } })
 		expect(options.dataZoom).toBeDefined()
 		expect(mocks.instance.dispatchAction).toHaveBeenCalledWith({
 			type: 'showTip',

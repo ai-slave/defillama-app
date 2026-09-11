@@ -27,6 +27,16 @@ vi.mock('~/utils/metadata', () => ({ default: { tokenDirectory: {} } }))
 vi.mock('next/router', () => ({
 	useRouter: () => ({ pathname: '/token/[token]', query: state.filter ? { minTvl: '0' } : {}, push: vi.fn() })
 }))
+vi.mock('~/containers/Yields/useVerifiedAccess', () => ({
+	// A signed-out reader: the section reads the public tier and shows no paid columns.
+	useVerifiedAccess: () => ({
+		authorizedFetch: vi.fn(),
+		status: 'denied',
+		hasAccess: false,
+		isPending: false,
+		isDenied: true
+	})
+}))
 vi.mock('~/components/Filters/ResponsiveFilterLayout', () => ({
 	ResponsiveFilterLayout: ({ children }: { children: (nested: boolean) => ReactNode }) => children(false)
 }))

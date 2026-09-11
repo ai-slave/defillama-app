@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -6,7 +7,11 @@ import { BasicLink } from '~/components/Link'
 import { Menu } from '~/components/Menu'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
+import { YIELD_EARN_PRIVATE_API } from '~/containers/Yields/constants'
+import type { EarnPageRow } from '~/containers/Yields/data/types'
+import { resolveEarnColumnAccess } from '~/containers/Yields/Filters/columnOptions'
 import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
+import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { buttonStyles } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -22,6 +27,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Switch } from '~/ui/Switch'
 import { Tooltip } from '~/ui/Tooltip'
 import { truncateAddress } from '~/utils'
+import { handleSimpleFetchResponse } from '~/utils/async'
 import { chainIconUrl } from '~/utils/icons'
 import {
 	formatUsd,
@@ -367,6 +373,8 @@ function ChainBadge({
 	)
 }
 
+const EMPTY_YIELD_POOLS: Array<EarnPageRow> = []
+
 export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 	const router = useRouter()
 	const displayName = asset.assetName ?? asset.ticker ?? 'Unknown asset'
@@ -425,7 +433,32 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 		return source.length > 0 ? { source, dimensions: ['timestamp', 'Native Yield'] } : null
 	}, [yieldHistory])
 
-	const displayPools = asset.yieldPools ?? []
+	// The page is static, so its rows are the public tier. A subscriber's measured rows are fetched
+	// for the same pools, in the same order, so the APY cells and the Exit Status column fill in.
+	const { authorizedFetch, hasAccess: paidYields, isDenied } = useVerifiedAccess()
+	const { defaultColumns } = resolveEarnColumnAccess({
+		hasAccess: paidYields,
+		initialVerifiedAccess: false,
+		isDenied
+	})
+	const publicPools = asset.yieldPools ?? EMPTY_YIELD_POOLS
+	const { data: measuredPools } = useQuery({
+		queryKey: ['rwa-yield-pools', 'measured', asset.slug, ...publicPools.map((pool) => pool.id)],
+		queryFn: async () => {
+			const params = new URLSearchParams({ pageSize: 'all', includeMemeTokens: 'true' })
+			for (const pool of publicPools) params.append('id', pool.id)
+			const res = await authorizedFetch(`${YIELD_EARN_PRIVATE_API}?${params.toString()}`)
+			if (!res) throw new Error('Authentication required')
+			const data = (await handleSimpleFetchResponse(res).then((r) => r.json())) as { rows: Array<EarnPageRow> }
+			const byId = new Map(data.rows.map((row) => [row.id, row]))
+			return publicPools.map((pool) => byId.get(pool.id) ?? pool)
+		},
+		staleTime: 5 * 60 * 1000,
+		refetchOnWindowFocus: false,
+		retry: 1,
+		enabled: paidYields && publicPools.length > 0
+	})
+	const displayPools = (paidYields ? measuredPools : undefined) ?? publicPools
 
 	const chartDimensions: ReadonlyArray<string> = asset.chartDataset?.dimensions ?? []
 	const assetChartDataset = asset.chartDataset
@@ -971,7 +1004,12 @@ export function RWAAssetPage({ asset }: { asset: IRWAAssetData }) {
 
 			{displayPools.length > 0 ? (
 				<SectionCard title={`DeFi Yield Opportunities (${displayPools.length})`}>
-					<PaginatedYieldsPoolTable data={displayPools} initialPageSize={10} appearance="embedded" />
+					<PaginatedYieldsPoolTable
+						data={displayPools}
+						initialPageSize={10}
+						appearance="embedded"
+						defaultColumns={defaultColumns}
+					/>
 				</SectionCard>
 			) : null}
 

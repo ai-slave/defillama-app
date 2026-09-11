@@ -1,19 +1,24 @@
 import type { ApiQuery } from '~/server/api/types'
+import { parseSelectedEarnColumns } from '../Filters/columnOptions'
 import type { YieldPoolTableRow } from '../Tables/types'
 import { activeSplit, apyHeaders, apyValues, windowSuffix } from './csvApy'
+import { exitStatusLine } from './exitPresentation'
 
-function selectedColumns(query: ApiQuery): Set<string> {
+function selectedColumns(query: ApiQuery, defaultColumns: ReadonlyArray<string>): Set<string> {
 	const raw = query.column
-	const values = Array.isArray(raw) ? raw : raw ? [raw] : []
-	return new Set(values)
+	return new Set(parseSelectedEarnColumns(raw, defaultColumns))
 }
 
 // Mirrors the earn table: the fixed visible columns, the APY block following the active
 // window/composition, and the optional Columns-dropdown columns only when selected.
-export function prepareYieldPoolsCsv(rows: Array<YieldPoolTableRow>, query: ApiQuery = {}) {
+export function prepareYieldPoolsCsv(
+	rows: Array<YieldPoolTableRow>,
+	query: ApiQuery = {},
+	defaultColumns: ReadonlyArray<string> = []
+) {
 	const suffix = windowSuffix(query)
 	const split = activeSplit(query)
-	const columns = selectedColumns(query)
+	const columns = selectedColumns(query, defaultColumns)
 
 	const headers = [
 		'Pool',
@@ -22,6 +27,7 @@ export function prepareYieldPoolsCsv(rows: Array<YieldPoolTableRow>, query: ApiQ
 		...(columns.has('category') ? ['Category'] : []),
 		'Chain',
 		...apyHeaders('APY', suffix, split, true),
+		...(columns.has('exitStatus') ? ['Exit Status'] : []),
 		'30d Stability Rating',
 		'30d Stability Score',
 		'TVL',
@@ -44,6 +50,7 @@ export function prepareYieldPoolsCsv(rows: Array<YieldPoolTableRow>, query: ApiQ
 			...(columns.has('category') ? [row.category ?? null] : []),
 			row.chains?.[0] ?? null,
 			...apyValues(row.apy, row.apyBase, row.apyReward, resolved?.intrinsic ?? null, split, true),
+			...(columns.has('exitStatus') ? [row.verified?.exit ? exitStatusLine(row.verified) : null] : []),
 			row.stabilityRating,
 			row.stabilityScore,
 			row.tvl,

@@ -2,14 +2,29 @@ import { useRouter } from 'next/router'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { trackYieldsEvent, YIELDS_EVENTS } from '~/utils/analytics/yields'
 import { pushYieldsQuery } from '../queryUpdates.client'
-import { EARN_COLUMN_OPTIONS, EARN_COLUMN_OPTION_KEYS, parseSelectedEarnColumns } from './columnOptions'
+import {
+	EARN_COLUMN_OPTION_KEYS,
+	EARN_COLUMN_OPTIONS,
+	EARN_NO_COLUMNS,
+	NO_DEFAULT_EARN_COLUMNS,
+	parseSelectedEarnColumns
+} from './columnOptions'
 
-export function ColumnsSelect({ nestedMenu }: { nestedMenu?: boolean }) {
+const isOurs = (value: string) => EARN_COLUMN_OPTION_KEYS.has(value) || value === EARN_NO_COLUMNS
+
+export function ColumnsSelect({
+	nestedMenu,
+	defaultColumns = NO_DEFAULT_EARN_COLUMNS
+}: {
+	nestedMenu?: boolean
+	defaultColumns?: ReadonlyArray<string>
+}) {
 	const router = useRouter()
 	const { column } = router.query
 
 	const selectedColumns = parseSelectedEarnColumns(
-		typeof column === 'string' || Array.isArray(column) ? column : undefined
+		typeof column === 'string' || Array.isArray(column) ? column : undefined,
+		defaultColumns
 	)
 
 	// Drive the `column` param directly (state mode): preserve any values owned by other
@@ -24,11 +39,13 @@ export function ColumnsSelect({ nestedMenu }: { nestedMenu?: boolean }) {
 			if (!nextSet.has(value)) trackYieldsEvent(YIELDS_EVENTS.FILTER_COLUMN, { column: value, enabled: false })
 		}
 		const foreign = Array.isArray(column)
-			? column.filter((value) => !EARN_COLUMN_OPTION_KEYS.has(value))
-			: typeof column === 'string' && !EARN_COLUMN_OPTION_KEYS.has(column)
+			? column.filter((value) => !isOurs(value))
+			: typeof column === 'string' && !isOurs(column)
 				? [column]
 				: []
-		const next = [...foreign, ...values]
+		// Clearing every column must outlive a non-empty default set, so it is written explicitly.
+		const own = values.length > 0 ? values : defaultColumns.length > 0 ? [EARN_NO_COLUMNS] : []
+		const next = [...foreign, ...own]
 		void pushYieldsQuery(router, { column: next.length > 0 ? next : undefined })
 	}
 

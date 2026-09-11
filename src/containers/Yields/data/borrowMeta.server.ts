@@ -53,8 +53,8 @@ export async function getBorrowPageMeta(snapshot: YieldsSnapshot): Promise<Borro
 	const collateralCounts = new Map<string, number>()
 	const borrowCounts = new Map<string, number>()
 
-	// Per-attribute occurrence counts (borrow surfaces the 3-option subset; `halal` is
-	// earn-only, kept here only to satisfy the shared AttributeId record type).
+	// Per-attribute occurrence counts (borrow surfaces the 3-option subset; `halal` and
+	// `verified` are earn-only, kept here only to satisfy the shared AttributeId record type).
 	const attributeCounts: Record<AttributeId, number> = {
 		stablecoins: 0,
 		single_exposure: 0,
@@ -63,7 +63,8 @@ export async function getBorrowPageMeta(snapshot: YieldsSnapshot): Promise<Borro
 		no_protocol_token: 0,
 		audited: 0,
 		include_meme_tokens: 0,
-		halal: 0
+		halal: 0,
+		verified: 0
 	}
 
 	for (const row of rows) {

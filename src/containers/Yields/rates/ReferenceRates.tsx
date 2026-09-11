@@ -27,6 +27,7 @@ import {
 import { InstantTooltip } from '../InstantTooltip'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { ProtocolIcon } from '../poolDetail/Icons'
+import { rangeCovers } from '../poolDetail/poolChartUtils'
 import { getChartTooltipItems, getChartTooltipTimestamp, getChartTooltipValue } from '../poolDetail/tooltip'
 import { YieldsTabs } from '../YieldsTabs'
 import {
@@ -205,8 +206,6 @@ const RANGE_OPTIONS = [
 	{ value: '90d', label: '', shortLabel: '90d' },
 	{ value: 'max', label: '', shortLabel: 'Max' }
 ] as const satisfies ReadonlyArray<ChartGroupingOption<RateRange>>
-// A loaded range covers any range of equal-or-lower rank (slice locally instead of refetching).
-const RANGE_RANK: Record<RateRange, number> = { '30d': 0, '90d': 1, max: 2 }
 type ChartStatus = 'idle' | 'loading' | 'error'
 
 function ReferenceRatesSummary({
@@ -485,7 +484,7 @@ export function ReferenceRates({
 			window.history.replaceState(null, '', `${url.pathname}${url.search}`)
 		}
 		const id = ++reqId.current
-		if (RANGE_RANK[next] <= RANGE_RANK[widest.range]) {
+		if (rangeCovers(widest.range, next)) {
 			setChartStatus('idle')
 			return
 		}

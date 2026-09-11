@@ -148,6 +148,8 @@ export function PaginatedTable<T extends RowData>({
 						const isHorizontallySticky = headerClassName?.split(/\s+/).includes('sticky') ?? false
 						const headerAlignmentClass =
 							align === 'center' ? 'mx-auto w-fit' : align === 'end' ? 'ms-auto w-fit' : 'w-fit'
+						const headerLead = header.column.columnDef.meta?.headerLead?.(header.getContext())
+						const headerTrail = header.column.columnDef.meta?.headerTrail?.(header.getContext())
 
 						return (
 							<TokenPageTableHeaderCell
@@ -161,7 +163,14 @@ export function PaginatedTable<T extends RowData>({
 								}
 							>
 								{header.isPlaceholder ? null : (
-									<div className={headerAlignmentClass}>
+									<div
+										className={
+											headerLead || headerTrail
+												? `${headerAlignmentClass} flex items-center gap-1`
+												: headerAlignmentClass
+										}
+									>
+										{headerLead}
 										{interactive ? (
 											<HeaderWithTooltip
 												content={header.column.columnDef.meta?.headerHelperText}
@@ -181,6 +190,7 @@ export function PaginatedTable<T extends RowData>({
 												{header.column.getCanSort() ? <SortIcon dir={header.column.getIsSorted()} /> : null}
 											</span>
 										)}
+										{headerTrail}
 									</div>
 								)}
 							</TokenPageTableHeaderCell>

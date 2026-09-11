@@ -6,6 +6,7 @@ import { useYieldsPaginatedTable, type YieldsTableSeed } from './queries.client'
 import { pushYieldsQuery } from './queryUpdates.client'
 import { TABLE_PAGE_SIZE_PREF, writeStickyPref } from './stickyQueryPrefs'
 import type { IYieldsTableProps } from './Tables/types'
+import { useVerifiedAccess } from './useVerifiedAccess'
 import {
 	buildYieldsTableQueryString,
 	DEFAULT_YIELDS_TABLE_PAGE_SIZE,
@@ -17,6 +18,8 @@ type QueryRecord = Record<string, string | Array<string> | undefined>
 
 type YieldsServerTableOptions<TRow> = {
 	endpoint: string
+	/** Subscriber mirror of `endpoint`, for surfaces with paid columns (earn only, today). */
+	privateEndpoint?: string
 	enabled?: boolean
 	extraQuery?: QueryRecord
 	defaultSorting?: SortingState
@@ -25,7 +28,7 @@ type YieldsServerTableOptions<TRow> = {
 }
 
 export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRow>) {
-	const { endpoint, enabled = true, extraQuery, defaultSorting = [] } = options
+	const { endpoint, privateEndpoint, enabled = true, extraQuery, defaultSorting = [] } = options
 	const router = useRouter()
 	// router.isReady can be true during hydration; also wait for the client snapshot.
 	const isClient = useIsClient()
@@ -53,9 +56,16 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 		[defaultSorting, extraQuery]
 	)
 	const seed = options.initialSeed && queryString === defaultQueryString ? options.initialSeed : undefined
-	const rowsQuery = useYieldsPaginatedTable<TRow>(endpoint, queryString, seed)
-	// Preserve SSR content during hydration; reuse the seed only for the default query.
-	const seedVisible = (!ready || queryString === defaultQueryString) && !rowsQuery.isError
+	const rowsQuery = useYieldsPaginatedTable<TRow>(endpoint, queryString, seed, privateEndpoint)
+	const { isDenied } = useVerifiedAccess()
+	// The server chose the seed's tier for this reader, so it is trusted through hydration. Once the
+	// client CONFIRMS the reader is not paid, a paid seed goes: verified rows must not outlive access.
+	// `userLoading` is not a denial and must not cause a locked flash or a speculative public fetch.
+	const seedTierOk = !((options.initialSeed?.verifiedAccess ?? false) && isDenied)
+	// The seed renders during SSR/pre-hydration (the HTML contains it, so dropping it before the
+	// router resolves would be a hydration mismatch) and for the default view. A URL known to carry
+	// filters must NOT show it - the seeded rows don't match the URL - and neither must a failed fetch.
+	const seedVisible = (!ready || queryString === defaultQueryString) && !rowsQuery.isError && seedTierOk
 	// Hide stale/default rows while preferences restore.
 	const data = enabled ? (rowsQuery.data ?? (seedVisible ? options.initialSeed?.initialData : undefined)) : undefined
 	const rows = data?.rows ?? []
@@ -119,11 +129,14 @@ export function useYieldsServerTable<TRow>(options: YieldsServerTableOptions<TRo
 		sortingState: sorting,
 		onPaginationChange: handlePaginationChange,
 		onSortingChange: handleSortingChange,
-		interactionDisabled: rowsQuery.isFetching
+		// Only while the rows on screen stand in for the ones requested. A background refresh of the
+		// page already shown (the seed's, on mount) keeps the table live and matches the server render.
+		interactionDisabled: rowsQuery.isFetching && rowsQuery.isPlaceholderData
 	}
 
 	return {
 		query,
+		data,
 		rows,
 		total,
 		medianApy,

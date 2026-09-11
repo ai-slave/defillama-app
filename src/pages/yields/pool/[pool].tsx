@@ -1,19 +1,33 @@
 import type { GetServerSideProps } from 'next'
+import { getAuthTokenFromRequest } from '~/containers/ProDashboard/server/auth'
 import { resolveApy, resolveVariant, stabilityRatingFromScore } from '~/containers/Yields/data/apy'
 import { getReferralUrls } from '~/containers/Yields/data/server/raiseValuations'
-import { readYieldsExploits, readYieldsMeta, type YieldsSnapshot } from '~/containers/Yields/data/snapshot'
+import {
+	hasVerifiedEarnPool,
+	readYieldsExploits,
+	readYieldsMeta,
+	type YieldsSnapshot
+} from '~/containers/Yields/data/snapshot'
 import type { ApyComponent } from '~/containers/Yields/data/types'
+import { lockPoolDetail, lockPoolHistory } from '~/containers/Yields/data/verifiedGate'
 import {
 	fetchBorrowMarketDetail,
 	fetchBorrowMarketDetailHistory,
-	fetchPoolDetail,
-	fetchPoolDetailHistory,
 	isNotFoundError
 } from '~/containers/Yields/poolDetail/fetch'
+import { fetchPoolDetailCached, fetchPoolHistoryCached } from '~/containers/Yields/poolDetail/fetch.server'
 import { buildBorrowChart, buildSupplyChart } from '~/containers/Yields/poolDetail/poolCharts'
 import { PoolDetailView, type PoolDetailViewProps, type PoolSide } from '~/containers/Yields/poolDetail/PoolDetailView'
-import { getPoolHistoryRange } from '~/containers/Yields/poolDetail/queryState'
+import {
+	getPoolHistoryRange,
+	getPoolRange,
+	getPoolRangeQueryKey,
+	slicePoolHistory,
+	widestPoolRange
+} from '~/containers/Yields/poolDetail/queryState'
 import type { BorrowMarketDetail, PoolHistoryRange } from '~/containers/Yields/poolDetail/types'
+import { buildPoolVerifiedProps } from '~/containers/Yields/poolDetail/verifiedProps'
+import { resolveSubscription } from '~/containers/Yields/server/requestSubscription'
 import Layout from '~/layout'
 import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
@@ -54,6 +68,10 @@ function assetSymbols(detail: {
 	return detail.reference_asset_symbol ? [detail.reference_asset_symbol] : []
 }
 
+// Scale for the verified block's raw base-unit amounts. `verified.denomination` is authoritative;
+// a handful of measured pools carry none, and those render in USD only rather than in a unit we
+// would be guessing at. The symbol is cosmetic, so it still comes from the underlying token when
+// there is exactly one to name.
 function rewardTokenSymbols(tokens: Array<{ symbol?: string | null }>): Array<string> {
 	return tokens.flatMap(({ symbol }) => (symbol ? [symbol] : []))
 }
@@ -133,6 +151,14 @@ async function buildBorrowOnlyProps(
 		borrow,
 		supplyChart: null,
 		borrowChart,
+		// Borrow-only markets have no earn row, so no simulated redemptions are measured for them.
+		growthChart: null,
+		liquidityChart: null,
+		liquidityDecimals: null,
+		exitReliability: null,
+		verified: null,
+		apy: null,
+		verifiedWindows: [],
 		holders: null,
 		stability: null,
 		details: {
@@ -144,32 +170,64 @@ async function buildBorrowOnlyProps(
 	}
 }
 
-const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async ({ params, query, res }) => {
+// Anonymous requests are publicly cached and always redacted. A request carrying the session cookie
+// is rendered per user, so a subscriber gets the measured page on first paint, and the response
+// never enters the shared cache. Same pattern as the Pro dashboard pages.
+const POOL_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=600'
+const PRIVATE_POOL_CACHE_CONTROL = 'private, no-store'
+
+const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async ({ params, query, req, res }) => {
 	const poolParam = params?.pool
 	const id = typeof poolParam === 'string' ? poolParam : Array.isArray(poolParam) ? poolParam[0] : null
 	if (!id) return { notFound: true }
 
-	// Chart range is URL-driven (?range=), defaulting to max — so deep links/refresh first-paint
-	// at the right window. The client fetches wider ranges on demand and slices narrower locally.
-	const initialRange = getPoolHistoryRange(query.range)
+	const token = getAuthTokenFromRequest(req)
+	const setCacheHeaders = () => {
+		res.setHeader('Vary', 'Cookie, Authorization')
+		res.setHeader('cache-control', token ? PRIVATE_POOL_CACHE_CONTROL : POOL_CACHE_CONTROL)
+	}
+
+	// Every chart keeps its own range in the URL, defaulting to max, so deep links/refresh first-paint
+	// at the right windows. The supply history feeds the APY, growth and deposits panels, so it is
+	// fetched once at the widest of their three ranges and each slices locally; borrow history is its
+	// own fetch. The client fetches wider ranges on demand.
+	const initialRange = widestPoolRange([
+		getPoolHistoryRange(query[getPoolRangeQueryKey('supply')]),
+		getPoolHistoryRange(query[getPoolRangeQueryKey('growth')]),
+		getPoolHistoryRange(query[getPoolRangeQueryKey('liquidity')])
+	])
+	const initialBorrowRange = getPoolRange(query, 'borrow')
 	const { acquireYieldsSnapshot } = await import('~/containers/Yields/server/dataset.server')
 	const snapshot = await acquireYieldsSnapshot('blocking')
 
 	// The risk-entry check only needs the pool id, so it runs alongside the pool data
 	// (hasVaultRisk never throws — it resolves false on any failure).
 	const { hasVaultRisk } = await import('~/containers/Yields/VaultRisk/loader')
-	const [pool, hasRisk, exploits] = await Promise.all([
-		optionalResource(() => fetchPoolDetail(id)),
+	const [reportedPool, hasRisk, exploits, subscription, measuredPool] = await Promise.all([
+		optionalResource(() => fetchPoolDetailCached(id)),
 		hasVaultRisk(id),
-		readYieldsExploits(snapshot)
+		readYieldsExploits(snapshot),
+		resolveSubscription(token),
+		hasVerifiedEarnPool(snapshot, id)
 	])
+	const subscribed = subscription === true
+	// The public detail is useful to every reader. Only a measured subscriber needs the separate
+	// verified detail (the reported half is already warm in the cache), avoiding a 404 for almost
+	// every pool and avoiding any measurement fetch for a public page.
+	const rawPool =
+		reportedPool && subscribed && measuredPool
+			? ((await optionalResource(() => fetchPoolDetailCached(id, true))) ?? reportedPool)
+			: reportedPool
+	// Redacted at the one point the measurement enters the page, unless the reader is a subscriber.
+	const pool = rawPool && !subscribed ? lockPoolDetail(rawPool, measuredPool) : rawPool
+	const verifiedLocked = pool?.verified_locked === true
 	const exploited = exploits.includes(id)
 	if (!pool) {
 		// Borrow-only market: no earn row, fall back to the borrow-markets detail endpoint.
 		const market = await optionalResource(() => fetchBorrowMarketDetail(id))
 		if (!market) return { notFound: true }
-		res.setHeader('cache-control', 'public, s-maxage=300, stale-while-revalidate=600')
-		return { props: { ...(await buildBorrowOnlyProps(snapshot, id, market, initialRange)), hasRisk, exploited } }
+		setCacheHeaders()
+		return { props: { ...(await buildBorrowOnlyProps(snapshot, id, market, initialBorrowRange)), hasRisk, exploited } }
 	}
 
 	// `available_history` gates the history fetch (fallback: assume supply history exists).
@@ -177,13 +235,26 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 	// render the borrow APY chart alongside the supply one, as the old page did.
 	const available = pool.available_history ?? { supply: true, borrow: false }
 	const metaPromise = readYieldsMeta(snapshot)
-	const [history, borrowHistory, meta, borrowMarket, referralUrls] = await Promise.all([
-		available.supply ? optionalResource(() => fetchPoolDetailHistory(id, initialRange)) : Promise.resolve(null),
-		available.borrow ? optionalResource(() => fetchBorrowMarketDetailHistory(id, initialRange)) : Promise.resolve(null),
+	const includeVerifiedHistory = subscribed && measuredPool && pool.verified != null
+	const historyFetchRange = includeVerifiedHistory ? 'max' : initialRange
+	const [fetchedHistory, borrowHistory, meta, borrowMarket, referralUrls] = await Promise.all([
+		available.supply
+			? optionalResource(() => fetchPoolHistoryCached(id, historyFetchRange, includeVerifiedHistory))
+			: Promise.resolve(null),
+		available.borrow
+			? optionalResource(() => fetchBorrowMarketDetailHistory(id, initialBorrowRange))
+			: Promise.resolve(null),
 		metaPromise,
 		available.borrow ? optionalResource(() => fetchBorrowMarketDetail(id)) : Promise.resolve(null),
 		getReferralUrls(snapshot)
 	])
+	// A measured subscriber needs max for reliability; the visible range is a local slice of that
+	// one response. Everyone else fetches only the reported range they can actually render.
+	const rawHistory = fetchedHistory ? slicePoolHistory(fetchedHistory, initialRange) : null
+	const rawMaxHistory = includeVerifiedHistory ? fetchedHistory : null
+
+	const history = rawHistory && !subscribed ? lockPoolHistory(rawHistory) : rawHistory
+	const maxHistory = rawMaxHistory && !subscribed ? lockPoolHistory(rawMaxHistory) : rawMaxHistory
 
 	// Rows carry plain protocol/chain NAME strings; join slug / category / audit from /v2/meta.
 	const protocolMeta = meta.protocols.find((p) => p.name === pool.protocol) ?? null
@@ -194,6 +265,19 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 
 	const supplyChart = history?.length ? buildSupplyChart(history, usesSupplyLabel ? 'Total supplied' : 'TVL') : null
 	const borrowChart = borrowHistory?.length ? buildBorrowChart(borrowHistory) : null
+	// Empty on a redacted page; a subscriber's request carries the measured models from here.
+	const fullHistory = initialRange === 'max' ? history : maxHistory
+	const sourceId = pool.verified && pool.intrinsic ? pool.intrinsic.source_pool.id : null
+	const sourceVerified = sourceId
+		? ((await optionalResource(() => fetchPoolDetailCached(sourceId, true)))?.verified ?? null)
+		: null
+	const { verified, apy, verifiedWindows, growthChart, liquidityChart, liquidityDecimals, exitReliability } =
+		buildPoolVerifiedProps({
+			pool,
+			history,
+			fullHistory,
+			sourceVerified
+		})
 
 	// When this pool is also a borrow market, surface the borrow side (APY + borrowed /
 	// available) from the borrow-markets dataset row (same id), resolved at current
@@ -237,15 +321,17 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 
 	const stabilityScore = resolveVariant(pool.stability_30d, DETAIL_APY_COMPONENTS)
 
-	res.setHeader('cache-control', 'public, s-maxage=300, stale-while-revalidate=600')
+	setCacheHeaders()
 
 	return {
 		props: {
 			hasRisk,
+			verifiedLocked: verifiedLocked && subscription === null ? null : verifiedLocked,
 			exploited,
 			poolId: id,
 			mode: 'pool',
 			initialRange,
+			initialBorrowRange,
 			symbol: pool.display.label ?? '—',
 			name: pool.display.detail ?? '',
 			protocol: {
@@ -262,6 +348,13 @@ const getServerSidePropsHandler: GetServerSideProps<PoolDetailViewProps> = async
 			borrow,
 			supplyChart,
 			borrowChart,
+			growthChart,
+			liquidityChart,
+			liquidityDecimals,
+			exitReliability,
+			verified,
+			apy,
+			verifiedWindows,
 			holders: pool.holders ?? null,
 			stability:
 				stabilityScore != null ? { score: stabilityScore, rating: stabilityRatingFromScore(stabilityScore) } : null,

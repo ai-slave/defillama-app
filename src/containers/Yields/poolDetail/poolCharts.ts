@@ -2,7 +2,10 @@ import type { BorrowMarketHistoryPoint, PoolHistoryPoint } from './types'
 
 // [light, dark] hex pairs because ECharts can't resolve CSS vars; the client wrapper
 // picks the entry for the active theme.
-export type ChartColorKey = 'accent' | 'gold' | 'action' | 'chartFill' | 'warn' | 'mag'
+export type ChartColorKey = 'accent' | 'gold' | 'action' | 'intrinsic' | 'chartFill' | 'warn' | 'mag' | 'verified'
+
+/** The measured line's identity, shared with the metrics picker so its locked stand-in matches exactly. */
+export const VERIFIED_APY_SERIES = { key: 'verifiedApy', label: 'Verified Base' } as const
 
 export const CHART_PALETTE: Record<ChartColorKey, readonly [light: string, dark: string]> = {
 	accent: ['#089981', '#22ab94'],
@@ -10,7 +13,10 @@ export const CHART_PALETTE: Record<ChartColorKey, readonly [light: string, dark:
 	action: ['#2962ff', '#3179f5'],
 	chartFill: ['#c2c8cf', '#515c6b'],
 	warn: ['#f23645', '#f7525f'],
-	mag: ['#7e8aa0', '#7e8aa0']
+	mag: ['#7e8aa0', '#7e8aa0'],
+	// Its own hue: intrinsic bars sit under the verified line, which owns the blue.
+	intrinsic: ['#7c3aed', '#a78bfa'],
+	verified: ['#3b82f6', '#3b82f6']
 }
 
 function ms(date: string): number {
@@ -24,9 +30,24 @@ export interface PoolChartBar {
 	label: string
 	colorKey: ChartColorKey
 	sign?: 1 | -1
+	/** Key of the bar this one replaces: the two draw one at a time. */
+	replaces?: string
 	values: Array<number | null>
 	avg7: Array<number | null>
 	avg30: Array<number | null>
+}
+
+/**
+ * Whether a bar has a day it can draw before `today`. A stand-in whose first reading landed today has
+ * none yet (today's reading completes at the next anchor), so defaulting to it would open the chart on
+ * nothing instead of the reported history.
+ */
+export function hasDrawableDay(
+	bar: PoolChartBar,
+	dates: Array<number>,
+	today: number = Date.now() - (Date.now() % 86_400_000)
+): boolean {
+	return bar.values.some((value, index) => value != null && dates[index]! < today)
 }
 
 export interface PoolChartLine {
@@ -34,6 +55,10 @@ export interface PoolChartLine {
 	label: string
 	colorKey: ChartColorKey
 	values: Array<number | null>
+	unit: 'percent' | 'usd'
+	defaultEnabled?: boolean
+	avg7?: Array<number | null>
+	avg30?: Array<number | null>
 }
 
 export interface PoolChartNet {
@@ -51,8 +76,8 @@ export interface PoolChartModel {
 	net: boolean
 	dates: Array<number>
 	bars: Array<PoolChartBar>
-	// Dollar-magnitude series on the secondary axis (toggleable, default off). Supply: [TVL];
-	// borrow: [Borrowed, Available].
+	// Toggleable overlays. Dollar magnitudes use the secondary axis and default off; a percent
+	// overlay uses the primary axis and can opt into default-on.
 	lines: Array<PoolChartLine>
 	netLine: PoolChartNet | null
 }
@@ -73,15 +98,22 @@ export function buildSupplyChart(series: Array<PoolHistoryPoint>, tvlLabel = 'TV
 	const total = new Array<number | null>(series.length)
 	const total7 = new Array<number | null>(series.length)
 	const total30 = new Array<number | null>(series.length)
+	const verified = new Array<number | null>(series.length)
+	const verified7 = new Array<number | null>(series.length)
+	const verified30 = new Array<number | null>(series.length)
 	let hasBase = false
 	let hasReward = false
 	let hasIntrinsic = false
 	let hasTotal = false
+	let hasVerified = false
 
 	for (let index = 0; index < series.length; index++) {
 		const point = series[index]!
 		dates[index] = ms(point.date)
-		tvl[index] = point.tvl_usd
+		// Days the protocol never reported carry every reported field null while the verified block
+		// is populated; the measured pool size keeps the TVL line honest across them, and on days the
+		// exit could not price the supply, the same supply at the quoted rate does.
+		tvl[index] = point.tvl_usd ?? point.verified?.tvl_usd ?? point.verified?.tvl_quoted_usd ?? null
 		base[index] = point.apy.avg_1d.base
 		base7[index] = point.apy.avg_7d.base
 		base30[index] = point.apy.avg_30d.base
@@ -94,17 +126,32 @@ export function buildSupplyChart(series: Array<PoolHistoryPoint>, tvlLabel = 'TV
 		total[index] = point.apy.avg_1d.total
 		total7[index] = point.apy.avg_7d.total
 		total30[index] = point.apy.avg_30d.total
+		verified[index] = point.verified?.apy.avg_1d ?? null
+		verified7[index] = point.verified?.apy.avg_7d ?? null
+		verified30[index] = point.verified?.apy.avg_30d ?? null
 		hasBase ||= base[index] != null
 		hasReward ||= reward[index] != null
 		hasIntrinsic ||= intrinsic[index] != null
 		hasTotal ||= total[index] != null
+		hasVerified ||= verified[index] != null
 	}
 
 	// Unsplit pool (neither component ever reported): the apy is unattributable, so
 	// the total draws as the single series instead of a component breakdown.
 	const unsplit = !hasBase && !hasReward && hasTotal
 
+	// The verified base replaces the reported one rather than mixing with it: one base at a time.
 	const bars: Array<PoolChartBar> = []
+	if (hasVerified)
+		bars.push({
+			key: VERIFIED_APY_SERIES.key,
+			label: VERIFIED_APY_SERIES.label,
+			colorKey: 'verified',
+			values: verified,
+			avg7: verified7,
+			avg30: verified30,
+			...(hasBase ? { replaces: 'base' } : unsplit ? { replaces: 'apy' } : {})
+		})
 	if (hasBase)
 		bars.push({
 			key: 'base',
@@ -136,7 +183,7 @@ export function buildSupplyChart(series: Array<PoolHistoryPoint>, tvlLabel = 'TV
 		bars.push({
 			key: 'intrinsic',
 			label: 'Intrinsic',
-			colorKey: 'action',
+			colorKey: 'intrinsic',
 			values: intrinsic,
 			avg7: intrinsic7,
 			avg30: intrinsic30
@@ -147,9 +194,19 @@ export function buildSupplyChart(series: Array<PoolHistoryPoint>, tvlLabel = 'TV
 		net: false,
 		dates,
 		bars,
-		lines: [{ key: 'magnitude', label: tvlLabel, colorKey: 'mag', values: tvl }],
+		lines: [{ key: 'magnitude', label: tvlLabel, colorKey: 'mag', values: tvl, unit: 'usd' }],
 		netLine: null
 	}
+}
+
+/**
+ * The reported view of a measured supply chart, for a reader whose access ended after the page was
+ * built: the verified base drops and the bar it replaced draws alone, as the public build would.
+ * (The TVL line may keep a measured pool size on days the protocol never reported.)
+ */
+export function stripVerifiedSeries(model: PoolChartModel): PoolChartModel {
+	const bars = model.bars.filter((bar) => bar.key !== VERIFIED_APY_SERIES.key)
+	return bars.length === model.bars.length ? model : { ...model, bars }
 }
 
 export function buildBorrowChart(series: Array<BorrowMarketHistoryPoint>): PoolChartModel | null {
@@ -220,7 +277,7 @@ export function buildBorrowChart(series: Array<BorrowMarketHistoryPoint>): PoolC
 		bars.push({
 			key: 'intrinsic',
 			label: 'Intrinsic',
-			colorKey: 'action',
+			colorKey: 'intrinsic',
 			sign: 1,
 			values: intrinsic,
 			avg7: intrinsic7,
@@ -233,8 +290,8 @@ export function buildBorrowChart(series: Array<BorrowMarketHistoryPoint>): PoolC
 		dates,
 		bars,
 		lines: [
-			{ key: 'magnitude', label: 'Borrowed', colorKey: 'mag', values: borrowed },
-			{ key: 'available', label: 'Available', colorKey: 'accent', values: available }
+			{ key: 'magnitude', label: 'Borrowed', colorKey: 'mag', values: borrowed, unit: 'usd' },
+			{ key: 'available', label: 'Available', colorKey: 'accent', values: available, unit: 'usd' }
 		],
 		netLine: {
 			key: 'net',

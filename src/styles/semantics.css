@@ -49,6 +49,7 @@
 	--text-data-down: #b53b35; /* Text/data-down */
 	--text-data-up-alt: var(--blue-500); /* Text/data-up-alternative [fixed] */
 	--text-data-down-alt: var(--violet-500); /* Text/data-down-alternative [fixed] */
+	--text-verified: #3b82f6; /* Text/verified: the verified-yields mark; brighter than bg-brand, 3.7:1 on white (a filled glyph, not text) */
 	/* TODO(design): light value for Text/Warning not yet published in the
 	   library pages; using the legacy warning orange until confirmed. */
 	--text-warning: #a15d23;
@@ -160,6 +161,7 @@ html.dark {
 	   same pattern as text-link-on-tint. Chart fills stay on the 500s. */
 	--text-data-up-alt: #4b86db;
 	--text-data-down-alt: #a674ec;
+	--text-verified: #3b82f6;
 	--text-warning: #ffa455; /* Text/Warning */
 
 	/* Stroke */
@@ -233,6 +235,7 @@ html.dark {
 	--color-data-down: var(--text-data-down);
 	--color-data-up-alt: var(--text-data-up-alt);
 	--color-data-down-alt: var(--text-data-down-alt);
+	--color-verified: var(--text-verified);
 	--color-warning: var(--text-warning);
 	--color-error: var(--error);
 	--color-success: var(--success);

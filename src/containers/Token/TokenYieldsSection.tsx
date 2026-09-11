@@ -4,12 +4,14 @@ import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ResponsiveFilterLayout } from '~/components/Filters/ResponsiveFilterLayout'
 import { TVLRange } from '~/components/Filters/TVLRange'
-import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
+import { YIELD_EARN_DATASET_API, YIELD_EARN_PRIVATE_API } from '~/containers/Yields/constants'
 import { TOKEN_PAGE_EARN_QUERY } from '~/containers/Yields/data/tokenPageQuery'
 import { APYRange } from '~/containers/Yields/Filters/APYRange'
 import { FilterByChain } from '~/containers/Yields/Filters/Chains'
+import { resolveEarnColumnAccess } from '~/containers/Yields/Filters/columnOptions'
 import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
+import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useIsClient } from '~/hooks/useIsClient'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -17,7 +19,7 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { nestedMenuActionStyles } from '~/ui/Popover'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { TableToolbar } from '~/ui/Toolbar'
-import { fetchJson } from '~/utils/async'
+import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import { formatPercent } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { DeferredPaginatedYieldsPoolTable } from './deferred/DeferredPaginatedYieldsPoolTable'
@@ -37,11 +39,23 @@ const DEFAULT_TABLE_SORTING_KEY = JSON.stringify(DEFAULT_TABLE_SORTING)
 const EMPTY_YIELD_TABLE_ROWS: Array<IYieldTableRow> = []
 
 type EarnRowsResponse = { rows: Array<IYieldTableRow> }
+type AuthorizedFetch = ReturnType<typeof useVerifiedAccess>['authorizedFetch']
 
-async function fetchTokenYieldRows(tokenKeys: Array<string>): Promise<Array<IYieldTableRow>> {
+// A subscriber reads the private mirror, whose rows carry the measured APY and exit outcome;
+// everyone else reads the public, redacted document.
+async function fetchTokenYieldRows(
+	tokenKeys: Array<string>,
+	authorizedFetch: AuthorizedFetch | null
+): Promise<Array<IYieldTableRow>> {
 	const params = new URLSearchParams(TOKEN_PAGE_EARN_QUERY)
 	for (const key of tokenKeys) params.append('token', key)
-	const data = await fetchJson<EarnRowsResponse>(`${YIELD_EARN_DATASET_API}?${params.toString()}`)
+	if (!authorizedFetch) {
+		const data = await fetchJson<EarnRowsResponse>(`${YIELD_EARN_DATASET_API}?${params.toString()}`)
+		return data.rows
+	}
+	const res = await authorizedFetch(`${YIELD_EARN_PRIVATE_API}?${params.toString()}`)
+	if (!res) throw new Error('Authentication required')
+	const data = (await handleSimpleFetchResponse(res).then((r) => r.json())) as EarnRowsResponse
 	return data.rows
 }
 
@@ -64,11 +78,14 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 	)
 	const tableSortingKey = React.useMemo(() => JSON.stringify(tableSorting), [tableSorting])
 	const hasNonDefaultSorting = tableSortingKey !== DEFAULT_TABLE_SORTING_KEY
+	const { authorizedFetch, hasAccess: paid, isPending, isDenied } = useVerifiedAccess()
+	const { defaultColumns } = resolveEarnColumnAccess({ hasAccess: paid, initialVerifiedAccess: false, isDenied })
 	// Without a hydration snapshot there is nothing to show but the full dataset. With one, the snapshot
 	// stands until the reader needs more than it holds — a filter, a different sort or a later page — and
-	// only a mounted client can want that, since the server has no reader yet.
+	// only a mounted client can want that, since the server has no reader yet. The snapshot is the
+	// public tier, so a subscriber always needs the private rows.
 	const needsFullData =
-		hydration == null || (isClient && (hasActiveFilters || hasNonDefaultSorting || requestedPageIndex > 0))
+		hydration == null || paid || (isClient && (hasActiveFilters || hasNonDefaultSorting || requestedPageIndex > 0))
 
 	const tokenKeys = hydration?.tokenKeys ?? []
 	const {
@@ -78,12 +95,14 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 		isFetched,
 		refetch
 	} = useQuery({
-		queryKey: ['token-yields', 'token-page', TOKEN_PAGE_EARN_QUERY, ...tokenKeys],
-		queryFn: () => fetchTokenYieldRows(tokenKeys),
+		// Tier in the key: a lapsed subscription must not read the paid entry.
+		queryKey: ['token-yields', 'token-page', TOKEN_PAGE_EARN_QUERY, paid, ...tokenKeys],
+		queryFn: () => fetchTokenYieldRows(tokenKeys, paid ? authorizedFetch : null),
 		staleTime: 60 * 60 * 1000,
 		refetchOnWindowFocus: false,
 		retry: false,
-		enabled: tokenKeys.length > 0 && needsFullData
+		// Not while the tier is unknown: a public fetch then would be waste for a subscriber.
+		enabled: tokenKeys.length > 0 && needsFullData && !isPending
 	})
 	const poolsList = fetchedRows ?? hydration?.rows ?? EMPTY_YIELD_TABLE_ROWS
 	const hydrationPageSize = hydration?.pageSize ?? DEFAULT_TABLE_PAGE_SIZE
@@ -259,6 +278,7 @@ export function TokenYieldsSection({ hydration }: TokenYieldsSectionProps) {
 										interactionDisabled={showBackgroundLoading}
 										loadingLabel="Loading full dataset..."
 										appearance="embedded"
+										defaultColumns={defaultColumns}
 									/>
 								</React.Suspense>
 								{hasPartialData && !hasActiveFilters ? (

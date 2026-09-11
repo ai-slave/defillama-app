@@ -37,7 +37,12 @@ export const ATTRIBUTE_DEFS = {
 		help: 'Show pools containing meme tokens (hidden by default)'
 	},
 	// App-side editorial whitelist (earn only); translated to `halal=true` by EarnView.
-	halal: { key: 'halal', name: 'Halal', help: 'Protocols on the curated halal whitelist' }
+	halal: { key: 'halal', name: 'Halal', help: 'Protocols on the curated halal whitelist' },
+	verified: {
+		key: 'verified',
+		name: 'Verified APY',
+		help: "Pools whose yield we measure on-chain by simulating real holders' withdrawals"
+	}
 } as const satisfies Record<string, { key: string; name: string; help: string }>
 
 export type AttributeId = keyof typeof ATTRIBUTE_DEFS

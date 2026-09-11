@@ -68,6 +68,7 @@ import {
 import { getProtocolEmissionsPieData, getProtocolEmissionsScheduleData } from '~/containers/Unlocks/queries'
 import type { YieldsSnapshot } from '~/containers/Yields/data/snapshot'
 import { fetchBorrowMarketDetailHistory, fetchPoolDetailHistory } from '~/containers/Yields/poolDetail/fetch'
+import { resolveSubscription } from '~/containers/Yields/server/requestSubscription'
 import { slug } from '~/utils'
 import type { IProtocolMetadata } from '~/utils/metadata/types'
 import { recordRouteRuntimeError, recordRuntimeError, withApiRouteTelemetry } from '~/utils/telemetry'
@@ -109,6 +110,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 	}
 
 	const authToken = getAuthToken(req)
+	// Measured history is a subscriber product: never fetched for, or cached on behalf of, anyone else.
+	const subscribed = (await resolveSubscription(authToken)) === true
 	let streamEnded = false
 	let writeQueue = Promise.resolve()
 	const isStreamStopped = () => streamEnded || res.destroyed
@@ -389,7 +392,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 				phase2Promises.push(
 					scheduleSource(async () => {
 						const [supplyResult, borrowResult] = await Promise.allSettled([
-							fetchSupply ? withTimeout(fetchPoolDetailHistory(poolConfigId, 'max'), 10_000) : Promise.resolve(null),
+							fetchSupply
+								? withTimeout(fetchPoolDetailHistory(poolConfigId, 'max', { includeVerified: subscribed }), 10_000)
+								: Promise.resolve(null),
 							fetchBorrow
 								? withTimeout(fetchBorrowMarketDetailHistory(poolConfigId, 'max'), 10_000)
 								: Promise.resolve(null)

@@ -127,7 +127,9 @@ export function buildProYieldChartSeries({
 		if (!inBounds(date, bounds)) continue
 		const timestamp = date * 1000
 		if (chartType === 'tvl-apy') {
-			dataset.source.push([timestamp, add(point.apy.avg_1d.total, point.intrinsic?.apy.avg_1d.base), point.tvl_usd])
+			// Measured-only days predating the reported history carry neither value; skip them.
+			const apy = add(point.apy.avg_1d.total, point.intrinsic?.apy.avg_1d.base)
+			if (apy != null || point.tvl_usd != null) dataset.source.push([timestamp, apy, point.tvl_usd])
 		} else if (chartType === 'supply-apy-7d') {
 			const avg7 = add(point.apy.avg_7d.total, point.intrinsic?.apy.avg_7d.base)
 			if (avg7 != null) dataset.source.push([timestamp, avg7])

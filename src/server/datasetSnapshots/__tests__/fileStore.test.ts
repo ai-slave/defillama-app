@@ -160,7 +160,7 @@ describe('filesystem dataset snapshot store', () => {
 			'manifest.json'
 		)
 		const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
-		await writeFile(manifestPath, JSON.stringify({ ...manifest, schemaVersion: 4 }))
+		await writeFile(manifestPath, JSON.stringify({ ...manifest, schemaVersion: 5 }))
 
 		await expect(new FileDatasetSnapshotStore(rootDir).getCurrent('yields')).rejects.toThrow(
 			'cannot replace a newer or invalid schema'

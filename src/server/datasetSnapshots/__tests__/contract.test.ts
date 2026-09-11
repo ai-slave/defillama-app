@@ -14,7 +14,7 @@ describe('dataset snapshot contract', () => {
 			domain: 'yields',
 			snapshotId: 'snapshot-1',
 			formatVersion: 2,
-			schemaVersion: 3,
+			schemaVersion: 4,
 			createdAt: 123
 		})
 		expect(parseDatasetSnapshotManifest(manifest)).toEqual(manifest)
@@ -39,7 +39,7 @@ describe('dataset snapshot contract', () => {
 		expect(() => parseDatasetSnapshotManifest({ ...manifest, schemaVersion: 1 })).toThrow(
 			DatasetSnapshotCompatibilityError
 		)
-		expect(() => parseDatasetSnapshotManifest({ ...manifest, schemaVersion: 4 })).toThrow(
+		expect(() => parseDatasetSnapshotManifest({ ...manifest, schemaVersion: 5 })).toThrow(
 			'cannot replace a newer or invalid schema'
 		)
 		expect(() => parseDatasetSnapshotPointer({ ...pointer, formatVersion: 1 })).toThrow(

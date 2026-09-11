@@ -199,6 +199,7 @@ interface AuthContextType {
 		addEmail: boolean
 		setPromotionalEmails: boolean
 		userLoading: boolean
+		subscriptionInitialCheck: boolean
 	}
 }
 
@@ -904,7 +905,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			verifyOtp: verifyOtpMutation.isPending,
 			addEmail: addEmail.isPending,
 			setPromotionalEmails: setPromotionalEmails.isPending,
-			userLoading
+			userLoading,
+			subscriptionInitialCheck: isAuthenticated && !subscriptionQuery.isFetched
 		}
 	}
 

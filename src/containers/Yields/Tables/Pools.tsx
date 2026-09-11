@@ -7,12 +7,35 @@ import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
 import { parseSelectedEarnColumns } from '../Filters/columnOptions'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
+import { MeasuredColumnHint, MeasuredExitColumnHint } from './Measured'
 import { NameYield, PoolNameLockup } from './Name'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import { Sparkline } from './Sparkline'
 import { hasSparkline } from './sparklineModel'
 import type { IYieldsTableProps, IYieldTableRow, YieldsTableAppearance } from './types'
-import { EarnApyCell, EmptyCell, RewardApyCell, SupplyCapBar, type EarnApyMedian } from './YieldsCells'
+import { EarnApyCell, EmptyCell, ExitCell, RewardApyCell, SupplyCapBar, type EarnApyMedian } from './YieldsCells'
+
+interface EarnPoolNameProps {
+	row: IYieldTableRow
+	value: string
+	rowId: string
+}
+
+function nameLockupProps({ row, value, rowId }: EarnPoolNameProps) {
+	return {
+		rowId,
+		value,
+		configID: row.configID,
+		url: row.url,
+		poolMeta: row.poolMeta,
+		exploited: row.exploited,
+		hasRiskData: row.hasRiskData
+	}
+}
+
+function EarnPoolName(props: EarnPoolNameProps) {
+	return <PoolNameLockup {...nameLockupProps(props)} />
+}
 
 const STABILITY_RATING_STYLES: Record<string, string> = {
 	stable: 'bg-(--apy-mid)/10 text-(--yield-positive-text)',
@@ -91,6 +114,7 @@ const OPTIONAL_COLUMN_IDS = new Set([
 	'apyBase',
 	'apyReward',
 	'apyMean30d',
+	'exitStatus',
 	'volumeUsd1d',
 	'pricePerShare',
 	'top10Pct',
@@ -103,24 +127,18 @@ function apyHeader(query: Record<string, unknown>, label: string) {
 	return `${label}${suffix}`
 }
 
-function createEarnColumns(query: Record<string, unknown>, median?: EarnApyMedian) {
-	const selected = new Set(parseSelectedEarnColumns(query.column as string | Array<string> | undefined))
+function createEarnColumns(
+	query: Record<string, unknown>,
+	median?: EarnApyMedian,
+	defaultColumns: ReadonlyArray<string> = []
+) {
+	const selected = new Set(parseSelectedEarnColumns(query.column as string | Array<string> | undefined, defaultColumns))
 	const columns = [
 		columnHelper.accessor('pool', {
 			id: 'pool',
 			header: 'Pool',
 			enableSorting: false,
-			cell: ({ getValue, row }) => (
-				<PoolNameLockup
-					rowId={row.id}
-					value={getValue()}
-					configID={row.original.configID}
-					url={row.original.url}
-					poolMeta={row.original.poolMeta}
-					exploited={row.original.exploited}
-					hasRiskData={row.original.hasRiskData}
-				/>
-			),
+			cell: ({ getValue, row }) => <EarnPoolName row={row.original} value={getValue()} rowId={row.id} />,
 			meta: { headerClassName: 'w-[190px] min-w-[190px]' }
 		}),
 		columnHelper.accessor((row) => row.referenceAsset ?? undefined, {
@@ -211,10 +229,29 @@ function createEarnColumns(query: Record<string, unknown>, median?: EarnApyMedia
 			enableSorting: true,
 			cell: ({ row }) => <EarnApyCell row={row.original} median={median} />,
 			meta: {
-				headerClassName: 'w-[120px] min-w-[120px]',
+				headerClassName: 'w-[136px] min-w-[136px]',
 				align: 'end',
+				// The lock sits on the column, not beside a figure, where it read as a fixed rate.
+				headerTrail: () => <MeasuredColumnHint />,
 				headerHelperText:
-					'Follows the APY controls above: the composition you toggled (+Reward / +Intrinsic) over the selected window (Now / 7d / 30d)'
+					'Follows the APY controls above: the composition you toggled (+Reward / +Intrinsic) over the selected window (Now / 7d / 30d).'
+			}
+		}),
+		// Measured exit outcome. Sorts on the numeric `exitStatus` (higher is better: instant >
+		// partial by fraction > queued by ETA > blocked), while the cell reads `verified.exit` —
+		// the same score/label split the Stability column uses. Unmeasured pools sort last in
+		// both directions, because the server always pushes null keys to the bottom.
+		columnHelper.accessor((row) => row.exitStatus ?? undefined, {
+			id: 'exitStatus',
+			header: 'Exit Status',
+			enableSorting: true,
+			cell: ({ row }) => <ExitCell row={row.original} />,
+			meta: {
+				headerClassName: 'w-[144px] min-w-[144px]',
+				align: 'end',
+				headerTrail: () => <MeasuredExitColumnHint />,
+				headerHelperText:
+					'Whether you could actually withdraw, and how: instantly, after a queue, only in part, or not at all. Measured daily on-chain.'
 			}
 		}),
 		columnHelper.accessor((row) => row.apyBase ?? undefined, {
@@ -441,10 +478,16 @@ export function PaginatedYieldsPoolTable({
 	interactionDisabled = false,
 	loadingLabel,
 	appearance = 'standalone',
-	median
-}: IYieldsTableProps & { appearance?: YieldsTableAppearance; median?: EarnApyMedian }) {
+	median,
+	defaultColumns
+}: IYieldsTableProps & {
+	appearance?: YieldsTableAppearance
+	median?: EarnApyMedian
+	/** Optional columns shown when the URL names none. Only the earn page's measured tier sets this. */
+	defaultColumns?: ReadonlyArray<string>
+}) {
 	const { query } = useRouter()
-	const columns = createEarnColumns(query, median)
+	const columns = createEarnColumns(query, median, defaultColumns)
 
 	return (
 		<PaginatedYieldsTable

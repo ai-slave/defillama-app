@@ -2,6 +2,7 @@
 // compute the base/reward/intrinsic APY parts, plus the composition-variant fallback used
 // for stability and route net_apy.
 
+import { isVerifiedCurrent } from '../domain/verifiedFreshness'
 import type {
 	ApyComponent,
 	ApyTriple,
@@ -10,7 +11,8 @@ import type {
 	CompositionValues,
 	IntrinsicApy,
 	ResolvedApy,
-	Trend
+	Trend,
+	VerifiedBlock
 } from './types'
 
 // Treat literal 0 / floating-point dust as absent so a zero reward/intrinsic
@@ -45,6 +47,102 @@ export function resolveApy(
 	}
 
 	return { base, reward, intrinsic: intrinsicPart, total }
+}
+
+// 0 is a real measurement and negatives are real losses: never clamp, never treat 0 as absent.
+export function resolveVerifiedApy(verified: VerifiedBlock | null | undefined, window: ApyWindow): number | null {
+	if (!verified) return null
+	if (window === 'avg_7d') return verified.apy.avg_7d
+	if (window === 'avg_30d') return verified.apy.avg_30d
+	return verified.apy.avg_1d
+}
+
+/** A resolved composition after the measured base has been folded in, or refused. */
+export interface MeasuredApy extends ResolvedApy {
+	/** The measured base now in `base`/`total`, or null when nothing was substituted. */
+	measured: number | null
+	/** The reported figure for the slot the measurement replaced, kept for disclosure. */
+	reported: number | null
+	/** The intrinsic source pool's measured base now standing as the intrinsic leg; null when nothing was substituted. */
+	intrinsicMeasured: number | null
+	/** The reported intrinsic figure that measurement replaced. */
+	intrinsicReported: number | null
+	/** The reported total before any substitution, for the side-by-side card. */
+	reportedTotal: number | null
+}
+
+/**
+ * Replace the reported base with the measured one and recompose the total. Reward and intrinsic are
+ * untouched: `verified.apy` is base yield only, so emissions still ride on top.
+ *
+ * Substituting rather than showing a second figure keeps the headline, the sort and the APY filters
+ * on one number. Refused when there is no measurement for the window, when the reading is no longer
+ * current (see `isVerifiedCurrent` — a days-old figure is history, and must not rank the pool), or
+ * when an UNSPLIT reported total belongs to a pool that pays rewards — that total may already
+ * contain emissions we cannot separate, so dropping a base-only figure in would delete them.
+ */
+export function applyMeasuredBase(
+	resolved: ResolvedApy,
+	triple: ApyTriple,
+	verified: VerifiedBlock | null | undefined,
+	window: ApyWindow,
+	hasRewardTokens: boolean,
+	now: number = Date.now()
+): MeasuredApy {
+	const measured = resolveVerifiedApy(verified, window)
+	// No base slot in the reported composition — the protocol served one unattributable number.
+	const unsplit = resolved.base == null
+	if (
+		measured == null ||
+		!isVerifiedCurrent(verified?.apy_as_of, now) ||
+		(unsplit && (hasRewardTokens || triple.reward != null))
+	) {
+		return {
+			...resolved,
+			measured: null,
+			reported: null,
+			intrinsicMeasured: null,
+			intrinsicReported: null,
+			reportedTotal: resolved.total
+		}
+	}
+	return {
+		base: measured,
+		reward: resolved.reward,
+		intrinsic: resolved.intrinsic,
+		total: measured + (resolved.reward ?? 0) + (resolved.intrinsic ?? 0),
+		measured,
+		reported: unsplit ? resolved.total : resolved.base,
+		intrinsicMeasured: null,
+		intrinsicReported: null,
+		reportedTotal: resolved.total
+	}
+}
+
+/**
+ * The intrinsic leg is another pool's yield: the asset this pool holds. Where that source pool is
+ * measured and its reading is current, the measurement stands in for the reported leg, exactly
+ * as the base does for the pool's own figure. The leg is additive in every composition, so there
+ * is nothing to refuse: the total is recomposed around the swapped part.
+ */
+export function applyMeasuredIntrinsic(
+	resolved: MeasuredApy,
+	sourceVerified: VerifiedBlock | null | undefined,
+	window: ApyWindow,
+	now: number = Date.now()
+): MeasuredApy {
+	const measured = resolveVerifiedApy(sourceVerified, window)
+	// No leg in view (toggle off, or none reported) leaves nothing to substitute into.
+	if (resolved.intrinsic == null || measured == null || !isVerifiedCurrent(sourceVerified?.apy_as_of, now)) {
+		return resolved
+	}
+	return {
+		...resolved,
+		intrinsic: measured,
+		total: resolved.total == null ? null : resolved.total - resolved.intrinsic + measured,
+		intrinsicMeasured: measured,
+		intrinsicReported: resolved.intrinsic
+	}
 }
 
 // Composition key shared by every composition-keyed object (stability, route

@@ -4,9 +4,20 @@ import { queryBoolean } from '~/server/api/params'
 import type { ApiQuery } from '~/server/api/types'
 import { slug } from '~/utils'
 import { getCanonicalTokenRoute, type TokenDirectory } from '~/utils/tokenDirectory'
+import { isVerifiedCurrent } from '../domain/verifiedFreshness'
 import { getRiskCoveredPoolIds } from '../VaultRisk/coveredPools'
-import { collapseTrend, resolveApy, resolveVariant, stabilityRatingFromScore } from './apy'
+import {
+	applyMeasuredBase,
+	applyMeasuredIntrinsic,
+	resolveVerifiedApy,
+	collapseTrend,
+	type MeasuredApy,
+	resolveApy,
+	resolveVariant,
+	stabilityRatingFromScore
+} from './apy'
 import { getEnrichedEarn } from './enrich.server'
+import { exitSortScore } from './exit'
 import { legacyMinTvl, legacySortBy, normalizeLegacyTokens } from './legacyQuery'
 import {
 	createTokenFilterMatcher,
@@ -24,6 +35,7 @@ import {
 import { getRaiseValuationsUsd, getReferralUrls } from './server/raiseValuations'
 import { readYieldsDepegs, readYieldsExploits, readYieldsMeta, type YieldsSnapshot } from './snapshot'
 import type { DepegRow, EarnPageRow, EnrichedEarnRow, Token } from './types'
+import { lockEarnRows } from './verifiedGate'
 
 function collectRewardSymbols(tokens: Array<Token>): Array<string> {
 	const symbols: Array<string> = []
@@ -63,9 +75,22 @@ function tokenFilterInput(row: EnrichedEarnRow): TokenFilterInput {
 
 type PreparedEarn = { rows: Array<EarnPageRow>; medianApy: number | null }
 
+export interface EarnPageAccess {
+	/**
+	 * False skips `applyMeasuredBase` outright, so the headline, sort key, APY filters, median and
+	 * CSV are all the reported numbers — a locked reader cannot rank by a withheld figure.
+	 */
+	verifiedAccess: boolean
+}
+
+/**
+ * Defaults to LOCKED: callers like the token and RWA pages embed these rows in shared cacheable
+ * HTML, so a permissive default would leak the paid dataset through whichever surface was forgotten.
+ */
 export async function getEarnPage(
 	snapshot: YieldsSnapshot,
-	query: ApiQuery
+	query: ApiQuery,
+	access: EarnPageAccess = { verifiedAccess: false }
 ): Promise<YieldsPaginatedTableResponse<EarnPageRow>> {
 	// Filter + map + median + sort run once per (generation, filters+sort) and
 	// every page of that combination is a slice. Everything except page/pageSize
@@ -73,8 +98,9 @@ export async function getEarnPage(
 	const prepared = await prepareYieldsTable({
 		surface: 'earn',
 		snapshot,
-		query,
-		prepare: () => buildPreparedEarn(snapshot, query),
+		// The tiers produce different rows and a different order, so they must not share an entry.
+		query: { ...query, __verifiedAccess: access.verifiedAccess ? '1' : '0' },
+		prepare: () => buildPreparedEarn(snapshot, query, access),
 		// Estimated: serializing ~14k rows just to size them costs more than a
 		// mis-sized entry. Earn rows carry sparklines, hence the heavy per-row figure.
 		measureBytes: (value) => value.rows.length * 2048 + 256,
@@ -87,7 +113,14 @@ export async function getEarnPage(
 	}
 }
 
-async function buildPreparedEarn(snapshot: YieldsSnapshot, query: ApiQuery): Promise<PreparedEarn> {
+async function buildPreparedEarn(
+	snapshot: YieldsSnapshot,
+	query: ApiQuery,
+	access: EarnPageAccess
+): Promise<PreparedEarn> {
+	// One clock per prepared table: freshness is judged once for every row, and the memo's lifetime
+	// bounds how far behind that judgement can fall.
+	const now = Date.now()
 	const window = parseApyWindow(query)
 	const components = parseApyComponents(query)
 	const common = parseCommonFilters(query)
@@ -124,6 +157,12 @@ async function buildPreparedEarn(snapshot: YieldsSnapshot, query: ApiQuery): Pro
 	const noIlRisk = queryBoolean(query, 'noIlRisk')
 	const hasAudit = queryBoolean(query, 'hasAudit')
 	const protocolHasToken = parseTriState(query, 'protocolHasToken')
+	// Narrows to pools we measure on-chain. Coverage is sparse (~124 of 15k), so this is the
+	// only practical way to find them without scanning the whole table.
+	const verifiedOnly = queryBoolean(query, 'verified')
+	// Intrinsic legs point at another pool's yield. Where that source pool is measured, its reading
+	// stands in for the reported leg, the same way the base does for the pool's own figure.
+	const verifiedById = new Map(rows.flatMap((row) => (row.verified ? [[row.id, row.verified] as const] : [])))
 
 	const minTvl = legacyMinTvl(query, parseNumber(query, 'minTvl'))
 	const maxTvl = parseNumber(query, 'maxTvl')
@@ -143,18 +182,50 @@ async function buildPreparedEarn(snapshot: YieldsSnapshot, query: ApiQuery): Pro
 		if (!matchesTriState(singleAssetExposure, row.attributes.single_asset_exposure)) continue
 		if (noIlRisk && row.attributes.impermanent_loss_risk !== false) continue
 		if (hasAudit && !row.hasAudit) continue
+		if (verifiedOnly && !row.verified) continue
 		if (!matchesTriState(protocolHasToken, row.protocolHasToken)) continue
 		if (minTvl != null && !(row.tvl_usd != null && row.tvl_usd >= minTvl)) continue
 		if (maxTvl != null && !(row.tvl_usd != null && row.tvl_usd <= maxTvl)) continue
 		if (!matchesToken(tokenFilterInput(row))) continue
 
-		const resolvedApy = resolveApy(row.apy, row.intrinsic, window, components)
+		// Folded in FIRST, so the filters, median, sort key and cell all read the same number.
+		const reportedApy = resolveApy(row.apy, row.intrinsic, window, components)
+		const resolvedApy = access.verifiedAccess
+			? applyMeasuredIntrinsic(
+					applyMeasuredBase(reportedApy, row.apy[window], row.verified, window, row.reward_tokens.length > 0, now),
+					row.intrinsic ? verifiedById.get(row.intrinsic.source_pool.id) : null,
+					window,
+					now
+				)
+			: {
+					...reportedApy,
+					measured: null,
+					reported: null,
+					intrinsicMeasured: null,
+					intrinsicReported: null,
+					reportedTotal: reportedApy.total
+				}
+		// A reading too old to land in the headline still reaches the card, labelled with its age,
+		// so a subscriber sees WHY the seal went quiet rather than a pool that looks unmeasured.
+		const verifiedLastApy =
+			access.verifiedAccess && resolvedApy.measured == null && !isVerifiedCurrent(row.verified?.apy_as_of, now)
+				? resolveVerifiedApy(row.verified, window)
+				: null
+		// A fresh base reading can be real yet unsafe to substitute into an unsplit total that may
+		// already include rewards. Keep it out of the headline/sort, but carry it explicitly to the
+		// subscriber's evidence card instead of calling the window unmeasured.
+		const verifiedUnsubstitutedApy =
+			access.verifiedAccess && resolvedApy.measured == null && isVerifiedCurrent(row.verified?.apy_as_of, now)
+				? resolveVerifiedApy(row.verified, window)
+				: null
 		if (minApy != null && !(resolvedApy.total != null && resolvedApy.total >= minApy)) continue
 		if (maxApy != null && !(resolvedApy.total != null && resolvedApy.total <= maxApy)) continue
 
 		const pageRow = toEarnPageRow(
 			row,
 			resolvedApy,
+			verifiedLastApy,
+			verifiedUnsubstitutedApy,
 			window,
 			components,
 			depegByPool.get(row.id),
@@ -173,8 +244,9 @@ async function buildPreparedEarn(snapshot: YieldsSnapshot, query: ApiQuery): Pro
 	// the same name via a `row[sortBy]` accessor (covers the optional 1d Volume / Top 10 % /
 	// Avg Position columns, whose fields are stamped onto every row).
 	return {
+		// Redacted before memoizing, so the locked tier's cache never holds a measured figure.
 		rows: sortYieldsRows<EarnPageRow, string>({
-			rows: pageRows,
+			rows: access.verifiedAccess ? pageRows : lockEarnRows(pageRows),
 			query: { ...query, sortBy: legacySortBy(typeof query.sortBy === 'string' ? query.sortBy : undefined) },
 			fallbackSortAccessor: (row, sortBy) => row[sortBy as keyof EarnPageRow],
 			defaultSort: { sortBy: 'tvl', sortDesc: true }
@@ -186,7 +258,9 @@ async function buildPreparedEarn(snapshot: YieldsSnapshot, query: ApiQuery): Pro
 // Map an enriched earn row to the shared pools-table row shape (plus reference/APY extras).
 function toEarnPageRow(
 	row: EnrichedEarnRow,
-	resolvedApy: EarnPageRow['resolvedApy'],
+	resolvedApy: MeasuredApy,
+	verifiedLastApy: number | null,
+	verifiedUnsubstitutedApy: number | null,
 	window: ReturnType<typeof parseApyWindow>,
 	components: ReturnType<typeof parseApyComponents>,
 	depeg: DepegRow | undefined,
@@ -252,9 +326,26 @@ function toEarnPageRow(
 		stabilityAvg30d,
 		// Collapsed 30d APY trend series for the inline sparkline column.
 		sparkline: collapseTrend(row.trend, components),
-		// Extra consumed by the APY toggle and the pool page.
-		resolvedApy,
+		// Stripped to the four composition parts; the measurement rides the row fields above.
+		resolvedApy: {
+			base: resolvedApy.base,
+			reward: resolvedApy.reward,
+			intrinsic: resolvedApy.intrinsic,
+			total: resolvedApy.total
+		},
 		availableSupplyUsd: row.available_supply_usd ?? null,
+		// The measured base folded into `apy`/`apyBase` above, and the figure it replaced.
+		verifiedApy: resolvedApy.measured,
+		reportedApyBase: resolvedApy.reported,
+		// The source pool's measured base standing as the intrinsic leg, and the figure it replaced.
+		verifiedIntrinsicApy: resolvedApy.intrinsicMeasured,
+		reportedIntrinsicApy: resolvedApy.intrinsicReported,
+		verifiedUnsubstitutedApy,
+		verifiedLastApy,
+		// `?? null` is load-bearing: snapshots generated before the API served `verified` have
+		// no such key, and getStaticProps cannot serialize `undefined`.
+		verified: row.verified ?? null,
+		exitStatus: exitSortScore(row.verified),
 		// Depeg flag (sparse): drives the always-on APY warning icon and the optional Peg column.
 		// Relative deviation (−0.05 = −5%); formatted only in cells.
 		...(depeg ? { pegDeviation: depeg.deviation_pct, pegTokenSymbol: depeg.token_symbol } : {})

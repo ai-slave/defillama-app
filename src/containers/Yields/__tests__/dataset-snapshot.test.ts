@@ -21,7 +21,8 @@ describe('Yields v2 snapshot reader', () => {
 			generatedAt: 0,
 			async readJson<T>(path: string): Promise<T> {
 				readJson(path)
-				return path as T
+				// `readEarn` joins two artifacts, so the handle has to return real collections.
+				return [] as T
 			}
 		}
 
@@ -37,6 +38,27 @@ describe('Yields v2 snapshot reader', () => {
 			readYieldsExploits(snapshot)
 		])
 
-		expect(readJson.mock.calls.map(([path]) => path)).toEqual(Object.values(YIELDS_SNAPSHOT_FILES))
+		// Order-independent: `readEarn` pulls its two artifacts in parallel.
+		expect(readJson.mock.calls.map(([path]) => path).sort()).toEqual(Object.values(YIELDS_SNAPSHOT_FILES).sort())
+	})
+
+	// enrich.server.ts caches by the earn array's identity, so the join has to be stable per handle.
+	test('returns one joined earn array for repeated reads of the same handle', async () => {
+		const earn = [{ id: 'a' }, { id: 'b' }]
+		const verified = [{ id: 'b', apy: { avg_1d: 1 } }]
+		const snapshot: YieldsSnapshot = {
+			generationId: 'test-gen',
+			generatedAt: 0,
+			async readJson<T>(path: string): Promise<T> {
+				return (path === YIELDS_SNAPSHOT_FILES.earn ? earn : verified) as T
+			}
+		}
+
+		const [first, second] = await Promise.all([readEarn(snapshot), readEarn(snapshot)])
+
+		expect(first).toBe(second)
+		expect(first).toBe(await readEarn(snapshot))
+		expect(first[0]).toBe(earn[0])
+		expect(first[1]).toMatchObject({ id: 'b', verified: { apy: { avg_1d: 1 } } })
 	})
 })

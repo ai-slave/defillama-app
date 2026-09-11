@@ -24,6 +24,15 @@ const mocks = vi.hoisted(() => ({
 	fetchJson: vi.fn()
 }))
 vi.mock('~/utils/async', () => ({ fetchJson: mocks.fetchJson }))
+// A signed-out reader: the table hook resolves its tier without an AuthProvider.
+vi.mock('~/auth', () => ({
+	useAuthContext: () => ({
+		authorizedFetch: vi.fn(),
+		hasActiveSubscription: false,
+		isAuthenticated: false,
+		loaders: { userLoading: false }
+	})
+}))
 vi.mock('~/utils/perf', () => ({ withPerformanceLogging: (_name: string, handler: unknown) => handler }))
 vi.mock('~/containers/ProtocolOverview/api', () => ({ fetchProtocolOverviewMetrics: vi.fn() }))
 vi.mock('~/containers/ProtocolOverview/queries', () => ({ getProtocolMetricFlags: vi.fn() }))

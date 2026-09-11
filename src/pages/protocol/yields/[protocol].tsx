@@ -5,15 +5,17 @@ import { fetchProtocolOverviewMetrics } from '~/containers/ProtocolOverview/api'
 import { ProtocolOverviewLayout } from '~/containers/ProtocolOverview/Layout'
 import { getProtocolMetricFlags } from '~/containers/ProtocolOverview/queries'
 import { getProtocolWarningBanners } from '~/containers/ProtocolOverview/utils'
-import { YIELD_EARN_DATASET_API } from '~/containers/Yields/constants'
+import { YIELD_EARN_DATASET_API, YIELD_EARN_PRIVATE_API } from '~/containers/Yields/constants'
 import { YieldFilters } from '~/containers/Yields/Filters'
 import { ApyViewControls } from '~/containers/Yields/Filters/ApyViewControls'
+import { resolveEarnColumnAccess } from '~/containers/Yields/Filters/columnOptions'
 import { useFormatYieldQueryParams } from '~/containers/Yields/hooks'
 import { selectedSubsetQuery } from '~/containers/Yields/queryState'
 import { YIELDS_TABLE_PREFS } from '~/containers/Yields/stickyQueryPrefs'
 import { PaginatedYieldsPoolTable } from '~/containers/Yields/Tables/Pools'
 import type { IYieldTableRow } from '~/containers/Yields/Tables/types'
 import { useStickyPrefsOverlay, useStickyQueryReplace } from '~/containers/Yields/useStickyQueryReplace'
+import { useVerifiedAccess } from '~/containers/Yields/useVerifiedAccess'
 import { useYieldsServerTable } from '~/containers/Yields/useYieldsServerTable'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { sluggifyProtocol } from '~/utils/cache-client'
@@ -180,8 +182,14 @@ function ProtocolYieldsTab({
 		protocol: protocolNames,
 		chain: chainList.length > 0 ? selectedSubsetQuery(selectedChains, chainList) : undefined
 	}
+	// Same two tiers as the earn page: subscribers read the private mirror, so their APY cells carry
+	// the measured figure and the Exit Status column is on by default. No server-tiered seed here,
+	// so the tier is the client's alone.
+	const { hasAccess, isDenied } = useVerifiedAccess()
+	const { defaultColumns } = resolveEarnColumnAccess({ hasAccess, initialVerifiedAccess: false, isDenied })
 	const { rows, total, isLoading, rowsQuery, tableProps } = useYieldsServerTable<IYieldTableRow>({
 		endpoint: YIELD_EARN_DATASET_API,
+		privateEndpoint: YIELD_EARN_PRIVATE_API,
 		enabled: hasProtocols && preferencesReady,
 		extraQuery
 	})
@@ -218,7 +226,7 @@ function ProtocolYieldsTab({
 			) : rowsQuery.isError && !rowsQuery.data ? (
 				<PanelStatus variant="error">Couldn't load pools.</PanelStatus>
 			) : poolsData.length > 0 ? (
-				<PaginatedYieldsPoolTable data={poolsData} {...tableProps} />
+				<PaginatedYieldsPoolTable data={poolsData} defaultColumns={defaultColumns} {...tableProps} />
 			) : (
 				<PanelStatus variant="empty">No yield pools for this protocol</PanelStatus>
 			)}

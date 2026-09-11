@@ -69,7 +69,7 @@ describe('/api/private/pro-dashboard/fetch', () => {
 
 		await dashboardFetchHandler(request({ request: serialized }), res)
 
-		expect(fetchPoolHistoryMock).toHaveBeenCalledWith('pool-1', 'max')
+		expect(fetchPoolHistoryMock).toHaveBeenCalledWith('pool-1', 'max', { includeVerified: true })
 		expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, max-age=300')
 		expect(res.status).toHaveBeenCalledWith(200)
 		expect(res.send).toHaveBeenCalledWith(JSON.stringify({ data }))

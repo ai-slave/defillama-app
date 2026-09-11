@@ -2,14 +2,18 @@ import { YIELDS_V2_SERVER_URL } from '~/constants'
 
 const YIELDS_BROWSER_HISTORY_PROXY_URL = '/api/public/yields/proxy'
 
-// History fetchers run in both environments: browsers use the allowlisted proxy,
-// while SSR and server jobs avoid an extra HTTP hop and call the upstream directly.
+// Fetchers that run in both environments (history, and the earn detail the verified badge
+// pulls on hover): browsers use the allowlisted proxy, while SSR and server jobs avoid an
+// extra HTTP hop and call the upstream directly.
 export function getYieldsHistoryUrl(path: string): string {
 	return typeof window === 'undefined' ? `${YIELDS_V2_SERVER_URL}${path}` : `${YIELDS_BROWSER_HISTORY_PROXY_URL}${path}`
 }
 
 // Yields APIs
 export const YIELD_EARN_DATASET_API = '/api/public/yields/earn'
+// Same page, measured figures included. Subscribers read this one; it is `private, no-store` and
+// requires the auth header, so the public route above stays a single cacheable document.
+export const YIELD_EARN_PRIVATE_API = '/api/private/yields/earn-verified'
 export const YIELD_BORROW_MARKETS_DATASET_API = '/api/public/yields/borrow-markets'
 export const YIELD_BORROW_ROUTES_DATASET_API = '/api/public/yields/borrow-routes'
 export const YIELD_LOOPS_DATASET_API = '/api/public/yields/loops'

@@ -1,6 +1,7 @@
 /** Yields-owned artifact names inside one immutable v2 generation. */
 export const YIELDS_SNAPSHOT_FILES = {
 	earn: 'earn.json',
+	earnVerified: 'earn-verified.json',
 	trends: 'trends.json',
 	borrowMarkets: 'borrow-markets.json',
 	borrowRoutes: 'borrow-routes.json',

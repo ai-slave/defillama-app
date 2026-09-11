@@ -857,8 +857,16 @@ function MultiSeriesChart(props: IMultiSeriesChartProps) {
 			Number.isFinite(timeRangeMax) &&
 			timeRangeMin < timeRangeMax
 
-		let finalXAxis: XAXisComponentOption | undefined =
-			shouldShowEventRail && hasTimeRange ? { ...xAxis, min: timeRangeMin, max: timeRangeMax } : xAxis
+		let finalXAxis: XAXisComponentOption | undefined = shouldShowEventRail
+			? {
+					...xAxis,
+					// The strip's hidden y-axis spans -1..1. By default the x-axis line sits on the first
+					// y-axis containing zero, which is that strip whenever the primary axis excludes zero:
+					// a line through the middle of the plot. Pin the check to the primary axis instead.
+					axisLine: { ...xAxis.axisLine, onZeroAxisIndex: 0 },
+					...(hasTimeRange ? { min: timeRangeMin, max: timeRangeMax } : {})
+				}
+			: xAxis
 		if (hasCategoryLogos) {
 			finalXAxis = mergeDeep(finalXAxis ?? {}, { axisLabel: { show: false }, axisTick: { show: false } })
 		}

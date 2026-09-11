@@ -2,8 +2,9 @@ import { AUTH_SERVER, FEATURES_SERVER, POCKETBASE_URL } from '~/constants'
 import { fetchWithPoolingOnServer } from '~/utils/http-client'
 
 type ValidationSuccess = { valid: true; isTrial: boolean }
-type ValidationFailure = { valid: false; status: number; error: string }
-export type ValidationResult = ValidationSuccess | ValidationFailure
+type ValidationFailure = { valid: false; status: 401 | 403; error: string }
+type ValidationUnavailable = { valid: false; status: 503; error: string }
+export type ValidationResult = ValidationSuccess | ValidationFailure | ValidationUnavailable
 
 export async function validateSubscription(authHeader: string | undefined): Promise<ValidationResult> {
 	if (!authHeader?.startsWith('Bearer ')) {
@@ -25,6 +26,9 @@ export async function validateSubscription(authHeader: string | undefined): Prom
 	])
 
 	if (!subResponse.ok) {
+		if (![401, 403, 404].includes(subResponse.status)) {
+			return { valid: false, status: 503, error: 'Subscription service unavailable' }
+		}
 		return { valid: false, status: 403, error: 'Invalid subscription' }
 	}
 

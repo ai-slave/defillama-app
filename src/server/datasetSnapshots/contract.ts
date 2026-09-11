@@ -23,7 +23,7 @@ export type DatasetSnapshotDomainContract = {
 
 export const DATASET_SNAPSHOT_CONTRACT = {
 	yields: {
-		schemaVersion: 3,
+		schemaVersion: 4,
 		files: YIELDS_SNAPSHOT_FILES
 	},
 	'token-rights': {

@@ -18,6 +18,15 @@ const routerMock = vi.hoisted(() => ({
 }))
 vi.mock('next/router', () => ({ useRouter: () => routerMock }))
 
+vi.mock('~/auth', () => ({
+	useAuthContext: () => ({
+		authorizedFetch: vi.fn(),
+		hasActiveSubscription: false,
+		isAuthenticated: false,
+		loaders: { userLoading: false }
+	})
+}))
+
 const fetchJson = vi.hoisted(() => vi.fn())
 vi.mock('~/utils/async', () => ({ fetchJson }))
 
@@ -229,6 +238,7 @@ describe('useYieldsServerTable ISR seed', () => {
 		await render()
 
 		expect(latest.rows.map((row) => row.id)).toEqual(['seeded-1', 'seeded-2'])
+		expect(latest.data).toBe(initialData)
 		expect(latest.total).toBe(2)
 		expect(latest.medianApy).toBe(4.2)
 		expect(latest.isLoading).toBe(false)
@@ -280,14 +290,39 @@ describe('useYieldsServerTable ISR seed', () => {
 		expect(latest.isLoading).toBe(false)
 	})
 
+	test('leaves interaction enabled while the seeded page refreshes in the background', async () => {
+		fetchJson.mockImplementation(() => new Promise(() => {}))
+		const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+		function StaleHarness() {
+			latest = useYieldsServerTable<Row>({
+				endpoint: '/api/public/yields/earn',
+				initialSeed: { initialData, initialDataUpdatedAt: Date.now() - 10 * 60_000 }
+			})
+			return null
+		}
+		await act(async () => {
+			root.render(
+				<QueryClientProvider client={client}>
+					<StaleHarness />
+				</QueryClientProvider>
+			)
+		})
+
+		// The server never fetches, so a mount-time refresh must not draw the overlay the server lacks.
+		expect(latest.rowsQuery.isFetching).toBe(true)
+		expect(latest.tableProps.interactionDisabled).toBe(false)
+		expect(latest.rows.map((row) => row.id)).toEqual(['seeded-1', 'seeded-2'])
+	})
+
 	test('renders seeded rows before the router is ready, still without fetching', async () => {
 		routerMock.isReady = false
 
 		await render()
 
 		expect(latest.rows.map((row) => row.id)).toEqual(['seeded-1', 'seeded-2'])
-		// SSR/pre-hydration takes this path - a true here would strand the seed
-		// behind the views' loading panel and strip the rows from static HTML.
+		// SSR never sees a ready router, so the page must resolve here and the loader must not show,
+		// or the seeded rows would be stripped from the static HTML.
+		expect(latest.data).toBe(initialData)
 		expect(latest.isLoading).toBe(false)
 		expect(fetchJson).not.toHaveBeenCalled()
 	})
@@ -331,8 +366,9 @@ describe('useYieldsServerTable hydration', () => {
 		expect(fetchJson).not.toHaveBeenCalled()
 
 		// Client: a static page at a bare URL is already ready on its first render. That pass
-		// must still match the server (no optimistic fetching overlay), and only afterwards may
-		// the stale seed start its background refresh with the rows still showing.
+		// must still match the server, and only afterwards may the stale seed start its background
+		// refresh. The seeded rows are the page being refreshed, not a stand-in for another, so the
+		// table stays live rather than disabled while it runs.
 		routerMock.isReady = true
 		const container = document.createElement('div')
 		document.body.appendChild(container)
@@ -346,9 +382,9 @@ describe('useYieldsServerTable hydration', () => {
 
 		await vi.waitFor(async () => {
 			await act(async () => {})
-			expect(container.textContent).toBe('true:2:false')
+			expect(fetchJson).toHaveBeenCalledTimes(1)
 		})
-		expect(fetchJson).toHaveBeenCalledTimes(1)
+		expect(container.textContent).toBe('false:2:false')
 
 		await act(async () => root?.unmount())
 		container.remove()

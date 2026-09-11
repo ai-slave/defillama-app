@@ -38,6 +38,67 @@ export interface Holders {
 	top_10_share_pct: number | null
 }
 
+// Measured by simulating real holders' withdrawals on-chain. Null means not observed; 0 is a
+// measured zero.
+export type VerifiedConfidence = 'high' | 'medium' | 'low'
+// `unavailable`: no usable exit path (paused or unauthorized). `blocked`: the exit reverted. Null:
+// the last observation could not attest (RPC failure), which is not a claim about the pool.
+// `depleted`: the lane exists but holds effectively nothing (< 0.1% of TVL and < $10k), decided server-side.
+export type VerifiedExitStatus = 'instant' | 'partial' | 'depleted' | 'queued' | 'unavailable' | 'blocked'
+
+export interface VerifiedExit {
+	status: VerifiedExitStatus | null
+	// Non-null only on `queued`.
+	eta_seconds: number | null
+	// 30d median discount vs the reported rate. Signed: negative is a premium the holder received.
+	fee_bps: number | null
+	as_of: string | null
+}
+
+// Raw base units as decimal strings (78-digit safe): scale with `denomination.decimals`, never Number().
+export interface VerifiedAmount {
+	amount: string | null
+	usd: number | null
+	as_of: string | null
+}
+
+export interface VerifiedLiquidity extends VerifiedAmount {
+	slippage_bps: number | null
+}
+
+// What exits pay out in. `address` may be the native sentinel; null for multi-asset redeemers.
+export interface VerifiedDenomination {
+	address: string | null
+	decimals: number | null
+}
+
+/** Served by `/v2/earn/verified` and joined onto the earn row by pool id. Presence is the feature flag. */
+export interface VerifiedBlock {
+	// Realized base yield %, trailing windows ending at `apy_as_of`. Rewards are unmeasurable, so
+	// compare only against the reported `apy.*.base`. Negative allowed.
+	apy: { avg_1d: number | null; avg_7d: number | null; avg_30d: number | null }
+	apy_as_of: string | null
+	// Explains an absent or odd APY; render wherever the APY shows.
+	apy_note?: string | null
+	apy_confidence: VerifiedConfidence | null
+	exit: VerifiedExit | null
+	// Instantly-withdrawable capacity. A null amount means no on-chain liquidity truth (queued-exit
+	// protocols) and must never render as zero.
+	exit_liquidity: VerifiedLiquidity | null
+	// `as_of` can sit a day behind the rest: the backend prefers the latest fully priced day.
+	tvl: VerifiedAmount | null
+	// Per internal share on rebasing tokens: safe as a series, never as an absolute "1 token = X".
+	price_per_share?: number | null
+	denomination?: VerifiedDenomination | null
+	// Detail only: the ordered on-chain calls the simulation executes.
+	methods?: Array<string> | null
+}
+
+/** A `/v2/earn/verified` row: the block plus the pool id it joins to. */
+export interface VerifiedRow extends VerifiedBlock {
+	id: string
+}
+
 export interface Token {
 	address: string
 	symbol: string | null
@@ -153,6 +214,9 @@ export interface EarnRow {
 	volume_1d_usd: number | null
 	attributes: EarnAttributes
 	available_supply_usd: number | null
+	// Optional, not just nullable: a snapshot generated before the API served `verified` has
+	// no such key at all, so the field can be absent as well as null.
+	verified?: VerifiedBlock | null
 }
 
 export interface BorrowMarketRow {
@@ -296,6 +360,28 @@ export interface EarnPageRow {
 	tokenSymbols: Array<string>
 	singleAssetExposure: boolean | null
 	ilRisk: boolean | null
+	// The measured base already folded into `apy` / `apyBase`, and the reported figure it
+	// replaced — the two the cell needs to badge the headline and disclose what it swapped out.
+	// Non-null together, and only when the substitution actually happened. `verified` is the
+	// block the hovercard renders. All null/absent on unmeasured pools, which fall back to the
+	// reported APY with no badge. Optional so other EarnPageRow producers can omit them.
+	verifiedApy?: number | null
+	reportedApyBase?: number | null
+	/** The intrinsic source pool's measured base now standing as the intrinsic leg, and the reported figure it replaced. */
+	verifiedIntrinsicApy?: number | null
+	reportedIntrinsicApy?: number | null
+	/** Fresh measured base that could not safely replace an unsplit reward-bearing headline. */
+	verifiedUnsubstitutedApy?: number | null
+	/** The window's last reading when it was too old to land in the headline; null otherwise. */
+	verifiedLastApy?: number | null
+	verified?: VerifiedBlock | null
+	// Set by `lockEarnRow` in place of all three fields above when the reader has no subscription:
+	// this pool IS measured and the figures were stripped server-side. The cell reads this, never
+	// `verified != null`, so the server owns the access decision and the client only renders it.
+	verifiedLocked?: boolean
+	// Numeric sort key for the Exit column (higher is better); the cell itself reads
+	// `verified.exit`. Mirrors the stabilityScore/stabilityRating split.
+	exitStatus?: number | null
 	// Optional so other EarnPageRow producers can omit it.
 	availableSupplyUsd?: number | null
 }

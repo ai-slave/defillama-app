@@ -34,6 +34,8 @@ export interface IDropdownMenusProps {
 	nestedMenu?: boolean
 	prepareCsv?: PrepareYieldCsv
 	showColumns?: boolean
+	/** Optional columns shown when the URL does not specify a column selection. */
+	defaultColumns?: ReadonlyArray<string>
 }
 
 export interface IYieldFiltersProps extends IDropdownMenusProps {

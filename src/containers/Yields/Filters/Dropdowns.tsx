@@ -38,7 +38,8 @@ export function YieldFilterDropdowns({
 	nestedMenu,
 	prepareCsv,
 	resetFiltersLabel,
-	showColumns
+	showColumns,
+	defaultColumns
 }: IDropdownMenusProps) {
 	const router = useRouter()
 
@@ -107,7 +108,12 @@ export function YieldFilterDropdowns({
 
 			{apyRange ? <APYRange {...(nestedMenu !== undefined ? { nestedMenu } : {})} placement="bottom-start" /> : null}
 
-			{showColumns ? <ColumnsSelect {...(nestedMenu !== undefined ? { nestedMenu } : {})} /> : null}
+			{showColumns ? (
+				<ColumnsSelect
+					{...(defaultColumns ? { defaultColumns } : {})}
+					{...(nestedMenu !== undefined ? { nestedMenu } : {})}
+				/>
+			) : null}
 
 			{availableRange ? (
 				<AvailableRange

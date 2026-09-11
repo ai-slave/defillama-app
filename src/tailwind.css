@@ -433,6 +433,10 @@
 		--yield-negative-text: #b53b35;
 		--yield-warning-text: #9b5000;
 		--yield-reward-text: #9b5000;
+		/* Inset well for measured-on-chain figures: a tint of the product's positive hue, so the
+		   block reads as its own region inside the summary card without a second border or shadow.
+		   Deliberately not a nested card. */
+		--yield-verified-badge: #08998114;
 	}
 
 	* {
@@ -454,6 +458,8 @@
 		--yield-negative-text: #f7525f;
 		--yield-warning-text: #ffa455;
 		--yield-reward-text: #ffa726;
+		/* Dark needs a touch more tint to separate from the surface it sits on. */
+		--yield-verified-badge: #22ab941f;
 
 		--dlnews-logo: oklch(1 0 0);
 		--interim-brand-tint-hover: #1f67d24d;

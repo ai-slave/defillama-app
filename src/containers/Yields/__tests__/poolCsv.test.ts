@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { prepareYieldPoolsCsv } from '../domain/poolCsv'
+import { EARN_NO_COLUMNS, PAID_DEFAULT_EARN_COLUMNS } from '../Filters/columnOptions'
 import type { YieldPoolTableRow } from '../Tables/types'
 
 const row = (overrides: Partial<YieldPoolTableRow> = {}): YieldPoolTableRow =>
@@ -58,5 +59,31 @@ describe('prepareYieldPoolsCsv', () => {
 		expect(withCols.rows[0]).toContain('1d Volume')
 		expect(withCols.rows[0]).toContain('Holders: Top 10 %')
 		expect(withCols.rows[0]).not.toContain('Holders: Avg Position')
+	})
+
+	test('exports the paid Exit default and honors an explicit clear', () => {
+		const measured = row({
+			verified: {
+				apy: { avg_1d: 2.24, avg_7d: null, avg_30d: null },
+				apy_as_of: '2026-09-04T00:00:00.000Z',
+				apy_confidence: 'high',
+				exit: {
+					status: 'instant',
+					eta_seconds: null,
+					fee_bps: 0,
+					as_of: '2026-09-04T00:00:00.000Z'
+				},
+				exit_liquidity: { amount: '1', usd: 1_000_000, slippage_bps: 0, as_of: '2026-09-04' },
+				tvl: { amount: '1', usd: 1_000_000, as_of: '2026-09-04' }
+			}
+		})
+
+		const defaults = prepareYieldPoolsCsv([measured], {}, PAID_DEFAULT_EARN_COLUMNS)
+		const exitIndex = defaults.rows[0]!.indexOf('Exit Status')
+		expect(exitIndex).toBeGreaterThan(-1)
+		expect(defaults.rows[1]?.[exitIndex]).toBe('Instant exit')
+
+		const cleared = prepareYieldPoolsCsv([measured], { column: EARN_NO_COLUMNS }, PAID_DEFAULT_EARN_COLUMNS)
+		expect(cleared.rows[0]).not.toContain('Exit Status')
 	})
 })

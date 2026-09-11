@@ -14,6 +14,8 @@ export interface ChartMetricOption {
 	active: boolean
 	/** The series default, so removing a metric clears the URL override instead of pinning one. */
 	defaultEnabled: boolean
+	/** Measured for this pool but withheld from this reader: listed greyed with a PRO badge, and a click opens the upgrade modal instead of toggling. */
+	locked?: boolean
 }
 
 export interface ChartMetricGroup {
@@ -23,15 +25,20 @@ export interface ChartMetricGroup {
 
 export function ChartMetricsPicker({
 	groups,
-	onToggle
+	onToggle,
+	onUnlock
 }: {
 	groups: Array<ChartMetricGroup>
 	onToggle: (option: ChartMetricOption) => void
+	/** Opens the upgrade path for a locked option. */
+	onUnlock?: () => void
 }) {
 	const dialogStore = Ariakit.useDialogStore()
 	const options = groups.flatMap((group) => group.options)
 	if (options.length === 0) return null
-	const selected = options.filter((option) => option.active)
+	// A locked option is never selectable, so it stays out of the count.
+	const selectable = options.filter((option) => !option.locked)
+	const selected = selectable.filter((option) => option.active)
 
 	return (
 		<>
@@ -45,7 +52,7 @@ export function ChartMetricsPicker({
 						<div className="flex items-baseline gap-2.5">
 							<DialogHeading>Chart metrics</DialogHeading>
 							<span className="body-sm text-tertiary">
-								{selected.length}/{options.length}
+								{selected.length}/{selectable.length}
 							</span>
 						</div>
 						<DialogCloseButton className="-mr-1" />
@@ -58,32 +65,51 @@ export function ChartMetricsPicker({
 								<section key={group.label} className="flex flex-col gap-2">
 									<span className="label-xs tracking-wide text-tertiary uppercase">{group.label}</span>
 									<div className="flex flex-wrap gap-1">
-										{group.options.map((option) => (
-											<button
-												key={option.key}
-												type="button"
-												onClick={() => onToggle(option)}
-												aria-pressed={option.active}
-												data-active={option.active}
-												className={metricOptionChipStyles}
-											>
-												{option.active ? (
-													<span
-														aria-hidden
-														className="size-1.5 rounded-full"
-														style={{
-															backgroundColor: `color-mix(in oklch, ${option.color} 75%, var(--text-secondary))`
-														}}
-													/>
-												) : (
-													<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
-												)}
-												<span>{option.label}</span>
-												{option.active ? (
-													<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
-												) : null}
-											</button>
-										))}
+										{group.options.map((option) =>
+											option.locked ? (
+												<button
+													key={option.key}
+													type="button"
+													onClick={() => {
+														dialogStore.hide()
+														onUnlock?.()
+													}}
+													className={metricOptionChipStyles}
+													aria-label={`${option.label}, available on Pro`}
+												>
+													<Icon name="lock" className="size-3 text-tertiary" />
+													<span className="text-tertiary">{option.label}</span>
+													<span className="rounded-md bg-brand-muted px-1 py-px label-xs tracking-widest text-link">
+														PRO
+													</span>
+												</button>
+											) : (
+												<button
+													key={option.key}
+													type="button"
+													onClick={() => onToggle(option)}
+													aria-pressed={option.active}
+													data-active={option.active}
+													className={metricOptionChipStyles}
+												>
+													{option.active ? (
+														<span
+															aria-hidden
+															className="size-1.5 rounded-full"
+															style={{
+																backgroundColor: `color-mix(in oklch, ${option.color} 75%, var(--text-secondary))`
+															}}
+														/>
+													) : (
+														<Icon name="plus" className="size-3 text-tertiary group-hover:text-link" />
+													)}
+													<span>{option.label}</span>
+													{option.active ? (
+														<Icon name="x" className="size-3 text-secondary group-hover:text-primary" />
+													) : null}
+												</button>
+											)
+										)}
 									</div>
 								</section>
 							))}

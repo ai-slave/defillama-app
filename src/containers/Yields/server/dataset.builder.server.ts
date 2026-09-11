@@ -7,6 +7,7 @@ import {
 	fetchBorrowRoutesFromNetwork,
 	fetchDepegsFromNetwork,
 	fetchEarnFromNetwork,
+	fetchEarnVerifiedFromNetwork,
 	fetchExploitsFromNetwork,
 	fetchLoopsFromNetwork,
 	fetchTokenKeysFromNetwork,
@@ -19,9 +20,10 @@ const YIELDS_SNAPSHOT_FETCH_TIMEOUT_MS = 180_000
 
 export async function buildYieldsSnapshotCandidate(writer: DatasetSnapshotWriter): Promise<void> {
 	const fetchOptions = { extraRetry: true, timeout: YIELDS_SNAPSHOT_FETCH_TIMEOUT_MS }
-	const [earn, trends, borrowMarkets, borrowRoutes, loops, tokenKeys, meta, depegs, exploits] =
+	const [earn, earnVerified, trends, borrowMarkets, borrowRoutes, loops, tokenKeys, meta, depegs, exploits] =
 		await Promise.allSettled([
 			fetchEarnFromNetwork(fetchOptions),
+			fetchEarnVerifiedFromNetwork(fetchOptions),
 			fetchTrendsFromNetwork(fetchOptions),
 			fetchBorrowMarketsFromNetwork(fetchOptions),
 			fetchBorrowRoutesFromNetwork(fetchOptions),
@@ -35,6 +37,7 @@ export async function buildYieldsSnapshotCandidate(writer: DatasetSnapshotWriter
 	const failures: Array<string> = []
 	for (const [name, result] of [
 		['earn', earn],
+		['earn verified', earnVerified],
 		['trends', trends],
 		['borrow markets', borrowMarkets],
 		['borrow routes', borrowRoutes],
@@ -47,6 +50,14 @@ export async function buildYieldsSnapshotCandidate(writer: DatasetSnapshotWriter
 		if (result.status === 'rejected') failures.push(`${name}: ${getErrorMessage(result.reason)}`)
 	}
 	if (failures.length > 0) throw new Error(`Yields snapshot requests failed:\n${failures.join('\n')}`)
+
+	assert(earnVerified.status === 'fulfilled')
+	// A failed verified feed keeps the previous generation, like every other feed. An EMPTY one is a
+	// legitimate state (nothing measured yet): `readEarn` passes the reported rows through unchanged.
+	const earnVerifiedRows = earnVerified.value
+	if (earnVerifiedRows.length === 0) {
+		console.warn('[dataset-snapshots] yields verified feed is empty; publishing without measurements')
+	}
 
 	assert(earn.status === 'fulfilled')
 	assert(trends.status === 'fulfilled')
@@ -91,6 +102,7 @@ export async function buildYieldsSnapshotCandidate(writer: DatasetSnapshotWriter
 
 	await Promise.all([
 		writer.writeJson(YIELDS_SNAPSHOT_FILES.earn, earn.value),
+		writer.writeJson(YIELDS_SNAPSHOT_FILES.earnVerified, earnVerifiedRows),
 		writer.writeJson(YIELDS_SNAPSHOT_FILES.trends, trends.value),
 		writer.writeJson(YIELDS_SNAPSHOT_FILES.borrowMarkets, borrowMarkets.value),
 		writer.writeJson(YIELDS_SNAPSHOT_FILES.borrowRoutes, borrowRoutes.value),

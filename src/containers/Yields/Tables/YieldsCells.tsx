@@ -1,16 +1,35 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
-import { Fragment } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { fetchBlockExplorers } from '~/api'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
+import { RelativeTime } from '~/ui/RelativeTime'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatNumber, formatRatio, formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatRatio, formatUsd, formatPercent, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
+import { withdrawableFraction } from '../data/exit'
 import { getDepegWarningSeverity, hasPart } from '../domain/apyPresentation'
+import {
+	EXIT_TONE_CLASS,
+	exitCoverageLine,
+	exitFeeWarning,
+	exitHeadline,
+	exitStatusLine,
+	exitTone
+} from '../domain/exitPresentation'
 import { InstantTooltip } from '../InstantTooltip'
+import { EXIT_STATUS_ID } from '../poolDetail/ExitReliabilityPanel'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
+import { HOW_WE_VERIFY_ID } from '../poolDetail/VerifiedApyPanel'
+import { useSubscribeProModal } from '../useSubscribeProModal'
+import { useVerifiedAccess } from '../useVerifiedAccess'
 import { tokenIconByAddress } from '../VaultRisk/tokenIcon'
+import { buildApyCardRows } from './apyCardRows'
+import { ExitStatusIcon } from './ExitStatusIcon'
+import { MeasuredCard, MeasuredExitOffer, MeasuredLock, MeasuredSeal } from './Measured'
 import type { IYieldTableRow } from './types'
+
+const pct = (value: number) => formatPercent(value, YIELD_PERCENT_OPTIONS)
 
 // APY column headers name their window when it deviates from the default latest
 // snapshot, so the numbers stay self-documenting outside the controls' viewport.
@@ -32,18 +51,6 @@ function signedPct(value: number, signed?: SignMode): string {
 	return formatPercent(value, YIELD_PERCENT_OPTIONS)
 }
 
-// Percentage-point delta (median comparisons) — pp, not %, so it can't be confused
-// with a rate or a relative change. exceptZero signs after rounding, so a sub-0.005
-// delta prints "0.00pp" rather than "-0.00pp".
-function signedPp(value: number): string {
-	return `${formatNumber(value, {
-		signDisplay: 'exceptZero',
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-		useGrouping: false
-	})}pp`
-}
-
 // The single, shared "no data" marker used across every yields table cell. A plain inline em
 // dash tinted --text-disabled — it carries NO alignment of its own, so the column's `align`
 // meta (applied as text-align on the <td>) places it exactly where that column's real content
@@ -56,11 +63,11 @@ export function EmptyCell() {
 
 // Always-on depeg warning shown next to the earn APY value. A pool's underlying USD stablecoin
 // off peg by >=5% (relative) shows an amber alert-triangle; >=10% escalates to red — because the
-// advertised APY may not reflect realizable returns. Deviation is RELATIVE (−0.05 = −5%).
+// reported APY may not reflect realizable returns. Deviation is RELATIVE (−0.05 = −5%).
 export function DepegWarningIcon({
 	deviation,
 	symbol,
-	consequence = 'the advertised APY may not reflect realizable returns'
+	consequence = 'the reported APY may not reflect realizable returns'
 }: {
 	deviation: number | null | undefined
 	symbol: string | null | undefined
@@ -112,13 +119,34 @@ export function SupplyCapBar({ tvl, available }: { tvl: number | null; available
 // Neutral total (the column header is the category) over a composition sub-line that renders
 // only the non-null resolved-view components: base (secondary), +reward% (amber), +intrinsic%
 // (secondary). A label/value tooltip mirrors the components with a bordered Total row; when a
-// token filter supplies a median, the tooltip appends a "vs median" pp-delta row
+// token filter supplies a median, the tooltip appends a "vs median" pp-delta row.
 
 // Quiet explainer for a null APY under the current toggles when the pool has
 // components the view excludes — distinguishes "nothing for this lens" from
 // "no data at all" (which stays a bare empty cell).
 function ComponentsOnlyHint({ label }: { label: string }) {
 	return <span className="block text-right body-sm text-tertiary">{label}</span>
+}
+
+/**
+ * A component rather than a bare hook call, so the dialog store exists only for the handful of
+ * locked rows on a page. `children` renders the cell's whole layout, putting the modal beside it
+ * rather than inside the hovercard or the flex row — see `useSubscribeProModal`.
+ */
+function LockedCell({ placement, children }: { placement: string; children: (onUpgrade: () => void) => ReactNode }) {
+	const { show, modal } = useSubscribeProModal('verified-yields', placement)
+	return (
+		<>
+			{children(show)}
+			{modal}
+		</>
+	)
+}
+
+/** Public embedded tables cannot serve measurements, but must not upsell a reader who owns them. */
+function useVerifiedLockedForReader(verifiedLocked: boolean | undefined): boolean {
+	const { isDenied } = useVerifiedAccess()
+	return verifiedLocked === true && isDenied
 }
 
 export interface EarnApyMedian {
@@ -129,7 +157,15 @@ export interface EarnApyMedian {
 
 export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: EarnApyMedian | undefined }) {
 	const resolved = row.resolvedApy
+	// Gated server-side: a locked row is computed entirely from the reported figures, with
+	// `verifiedLocked` in place of every measured field. The cell renders that decision, never
+	// makes it, so nothing here can disagree with the sort.
+	const locked = useVerifiedLockedForReader(row.verifiedLocked)
 	const total = row.apy
+	const measured = row.verifiedApy ?? null
+	// A measured leg of either kind puts our reading in the headline; the seal says so.
+	const measuredIntrinsic = row.verifiedIntrinsicApy ?? null
+	const headlineMeasured = measured != null || measuredIntrinsic != null
 	if (total == null) {
 		if (row.apyRewardRaw != null) return <ComponentsOnlyHint label="reward only" />
 		if (row.intrinsicSourceSymbol) return <ComponentsOnlyHint label="intrinsic only" />
@@ -140,36 +176,31 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 	const reward = resolved?.reward ?? row.apyReward ?? null
 	const intrinsic = resolved?.intrinsic ?? null
 	const hasComposition = hasPart(reward) || hasPart(intrinsic)
-	const symbols = (row.rewardTokensSymbols ?? []).filter(Boolean)
 
-	const tipRows: Array<{ label: string; value: number }> = []
-	if (base != null) tipRows.push({ label: 'Base', value: base })
-	if (hasPart(reward)) {
-		tipRows.push({ label: symbols.length > 0 ? `Reward · ${symbols.join(', ')}` : 'Reward', value: reward })
-	}
-	if (hasPart(intrinsic)) {
-		const src = row.intrinsicSourceSymbol
-		tipRows.push({ label: src ? `Intrinsic · ${src}` : 'Intrinsic', value: intrinsic })
-	}
+	// A measured pool always opens a card, locked or not: the seal and the padlock both have to be
+	// explainable.
+	const showCard = row.verified != null || locked || hasComposition || median != null
 
-	const showTooltip = hasComposition || median != null
-
+	// Filled seal = measured; muted = this window isn't; padlock = measured but withheld. The mark
+	// trails the figure; an unmarked row keeps the slot so every figure shares one right edge.
+	const glyph = locked ? (
+		<MeasuredLock size={13} />
+	) : row.verified || measuredIntrinsic != null ? (
+		<MeasuredSeal muted={!headlineMeasured} />
+	) : (
+		<span className="w-[13px] shrink-0" aria-hidden />
+	)
 	const body = (
 		<span className="flex flex-col items-end leading-tight">
-			<span className="flex items-center gap-1 text-sm font-bold text-primary">
-				<span className={showTooltip ? 'underline decoration-dotted' : undefined}>
-					{formatPercent(total, YIELD_PERCENT_OPTIONS)}
-				</span>
+			<span className="flex items-center gap-1.5 text-sm font-bold text-primary">
+				<span className={showCard ? 'underline decoration-dotted' : undefined}>{pct(total)}</span>
+				{glyph}
 			</span>
 			{hasComposition ? (
-				<span className="flex gap-1 body-sm">
-					{base != null ? <span className="text-secondary">{formatPercent(base, YIELD_PERCENT_OPTIONS)}</span> : null}
-					{hasPart(reward) ? (
-						<span className="text-(--yield-reward-text)">+{formatPercent(reward, YIELD_PERCENT_OPTIONS)}</span>
-					) : null}
-					{hasPart(intrinsic) ? (
-						<span className="text-secondary">+{formatPercent(intrinsic, YIELD_PERCENT_OPTIONS)}</span>
-					) : null}
+				<span className="flex gap-1 pr-[19px] body-sm whitespace-nowrap">
+					{base != null ? <span className="text-secondary">{pct(base)}</span> : null}
+					{hasPart(reward) ? <span className="text-(--yield-reward-text)">+{pct(reward)}</span> : null}
+					{hasPart(intrinsic) ? <span className="text-secondary">+{pct(intrinsic)}</span> : null}
 				</span>
 			) : null}
 		</span>
@@ -177,48 +208,195 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 
 	const depeg = <DepegWarningIcon deviation={row.pegDeviation} symbol={row.pegTokenSymbol} />
 
-	if (!showTooltip) {
-		return (
-			<span className="ml-auto flex w-fit max-w-full items-center justify-end gap-1">
-				{depeg}
-				{body}
-			</span>
-		)
-	}
-
-	// The Total separator only earns its rule when component rows sit above it.
-	const totalRowClassName = tipRows.length > 0 ? 'mt-0.5 border-t border-subtle pt-1.5' : ''
-
-	return (
+	const row_ = (content: ReactNode) => (
 		<span className="ml-auto flex w-fit max-w-full items-center justify-end gap-1">
 			{depeg}
-			<Hovercard
-				className="w-fit"
-				contentClassName="p-3"
-				content={
-					<span className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-1 whitespace-nowrap">
-						{tipRows.map((tip) => (
-							<Fragment key={tip.label}>
-								<span className="text-secondary">{tip.label}</span>
-								<span className="text-right text-primary">{formatPercent(tip.value, YIELD_PERCENT_OPTIONS)}</span>
-							</Fragment>
-						))}
-						<span className={`${totalRowClassName} text-secondary`.trim()}>Total</span>
-						<span className={`${totalRowClassName} text-right font-semibold`.trim()}>
-							{formatPercent(total, YIELD_PERCENT_OPTIONS)}
+			{content}
+		</span>
+	)
+
+	if (!showCard) return row_(body)
+
+	// Formatting the full hovercard breakdown is unnecessary for the overwhelmingly common plain
+	// cell. Keep it off the row-render hot path until a card will actually be mounted.
+	const symbols = (row.rewardTokensSymbols ?? []).filter(Boolean)
+	const cardInput = {
+		total,
+		base,
+		reward,
+		intrinsic,
+		symbols,
+		intrinsicSourceSymbol: row.intrinsicSourceSymbol,
+		measured,
+		unsubstitutedMeasured: row.verifiedUnsubstitutedApy ?? null,
+		lastVerified: row.verifiedLastApy ?? null,
+		measuredIntrinsic,
+		locked,
+		median
+	}
+	const cardRows = buildApyCardRows(cardInput)
+
+	// One anchor, one card, so nothing in the cell competes for the cursor.
+	const anchored = (onUpgrade?: () => void) => (
+		<Hovercard
+			className="w-fit"
+			contentClassName="p-3"
+			placement="top-end"
+			content={
+				<MeasuredCard
+					rows={cardRows}
+					verified={row.verified}
+					measured={headlineMeasured}
+					unsubstitutedMeasured={row.verifiedUnsubstitutedApy != null}
+					poolUrl={`/yields/pool/${row.configID}#${HOW_WE_VERIFY_ID}`}
+					{...(onUpgrade ? { offer: { poolName: row.pool, onUpgrade } } : {})}
+				/>
+			}
+		>
+			{body}
+		</Hovercard>
+	)
+
+	if (locked) return <LockedCell placement="apy-cell">{(onUpgrade) => row_(anchored(onUpgrade))}</LockedCell>
+	return row_(anchored())
+}
+
+// --- measured exit cell --------------------------------------------------------------------
+// What actually happened when we simulated a real holder withdrawing, on-chain, yesterday.
+// Status carries a leading glyph so the four outcomes are distinguishable at a glance without
+// reading; only `blocked` is coloured, because it is the only outcome that is bad news on its
+// own (a queue with a known ETA is a fact, not a warning).
+//
+// A measured exit FEE rides along as the table's standard warning triangle — the same glyph
+// depeg and exploit flags use — since it is money out of the holder's pocket either way.
+
+export function ExitCell({ row }: { row: IYieldTableRow }) {
+	const locked = useVerifiedLockedForReader(row.verifiedLocked)
+	// Its own card: both columns sell one subscription but answer different questions.
+	if (locked) {
+		return (
+			<LockedCell placement="exit-cell">
+				{(onUpgrade) => (
+					<Hovercard
+						className="ml-auto w-fit"
+						contentClassName="p-3"
+						placement="top-end"
+						content={
+							<span className="flex w-80 max-w-(--popover-available-width) flex-col">
+								<MeasuredExitOffer poolName={row.pool} onUpgrade={onUpgrade} />
+							</span>
+						}
+					>
+						<span className="flex items-center gap-1.5 text-secondary">
+							<span className="underline decoration-dotted">•••</span>
+							<MeasuredLock size={13} />
 						</span>
-						{median != null ? (
-							<>
-								<span className="text-secondary">{`vs ${median.label} median`}</span>
-								<span className="text-right text-primary">{signedPp(total - median.apy)}</span>
-							</>
+					</Hovercard>
+				)}
+			</LockedCell>
+		)
+	}
+	const verified = row.verified
+	// No measurement is not a claim that exit is bad — it renders like every other missing value.
+	if (!verified?.exit) return <EmptyCell />
+	const exit = verified.exit
+
+	// An unknown status must not fall through to "Blocked".
+	const label = exitHeadline(verified, { compact: true })
+	if (label == null) return <EmptyCell />
+
+	const feeWarning = exitFeeWarning(exit.fee_bps)
+	const share = withdrawableFraction(verified)
+	const availableUsd = verified.exit_liquidity?.usd ?? null
+	const depositsUsd = verified.tvl?.usd ?? null
+	// The bar is the cell's ring unrolled, with the dollars the cell has no room for: colour is the
+	// withdrawable share, filling from the left under the figure that names it. Both figures are
+	// needed; with either missing, the coverage line states what IS known and never draws a zero.
+	const showFigures =
+		(exit.status === 'instant' || exit.status === 'partial') &&
+		share != null &&
+		availableUsd != null &&
+		depositsUsd != null
+	const note = exitCoverageLine(verified)
+	const toneClass = EXIT_TONE_CLASS[exitTone(verified)]
+
+	// A hovercard rather than a tooltip: the footer links out to the pool page's exit ledger.
+	return (
+		<Hovercard
+			className="ml-auto w-fit"
+			contentClassName="p-3"
+			placement="top-end"
+			content={
+				<span className="flex w-80 max-w-(--popover-available-width) flex-col gap-2 text-left body-sm">
+					{/* The status is the headline, its stamp beside it as in the APY card; the line itself is the
+					    APY card's exit footer, so the two never word one fact differently. */}
+					<span className="flex items-center justify-between gap-3">
+						<span className="flex items-center gap-1.5 font-medium text-primary">
+							<ExitStatusIcon verified={verified} />
+							{exitStatusLine(verified)}
+						</span>
+						{exit.as_of ? (
+							<RelativeTime value={exit.as_of} prefix="measured" className="shrink-0 text-tertiary" />
 						) : null}
 					</span>
-				}
-			>
-				{body}
-			</Hovercard>
-		</span>
+					{showFigures ? (
+						<>
+							<span
+								className="block h-1 w-full overflow-hidden rounded-full"
+								style={{ backgroundColor: 'var(--border-medium)' }}
+								aria-hidden
+							>
+								<span
+									className={`block h-full rounded-full ${toneClass}`}
+									style={{
+										width: `${share * 100}%`,
+										minWidth: share > 0 ? 1 : undefined,
+										backgroundColor: 'currentColor'
+									}}
+								/>
+							</span>
+							<span className="flex justify-between gap-3 text-secondary tabular-nums">
+								<span className="whitespace-nowrap">
+									<span className="font-medium text-primary">
+										{formatUsd(availableUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}
+									</span>{' '}
+									withdrawable now
+								</span>
+								<span className="whitespace-nowrap">
+									of{' '}
+									<span className="font-medium text-primary">
+										{formatUsd(depositsUsd, USD_LOWERCASE_MILLIONS_OPTIONS)}
+									</span>{' '}
+									deposits
+								</span>
+							</span>
+						</>
+					) : null}
+					{note ? <span className="text-secondary">{note}</span> : null}
+					{feeWarning ? (
+						<span className="flex items-center gap-1.5 text-warning">
+							<Icon name="alert-triangle" height={12} width={12} className="shrink-0" />
+							{feeWarning}
+						</span>
+					) : null}
+					<span className="flex items-center justify-end border-t border-subtle pt-2">
+						<a
+							href={`/yields/pool/${row.configID}#${EXIT_STATUS_ID}`}
+							className="shrink-0 whitespace-nowrap text-link hover:underline"
+						>
+							Evidence →
+						</a>
+					</span>
+				</span>
+			}
+		>
+			<span className="flex items-center gap-1.5 whitespace-nowrap">
+				<ExitStatusIcon verified={verified} />
+				{/* The value inherits the table's text like every other column; the icon carries the tone. */}
+				<span className="underline decoration-dotted">{label}</span>
+				{feeWarning ? <Icon name="alert-triangle" height={12} width={12} className="shrink-0 text-warning" /> : null}
+			</span>
+		</Hovercard>
 	)
 }
 
@@ -422,29 +600,29 @@ export function AvailableCell({
 }) {
 	if (available == null) return <EmptyCell />
 
-	const pct = capacityFilled != null ? Math.max(0, Math.min(100, capacityFilled * 100)) : null
+	const filledPct = capacityFilled != null ? Math.max(0, Math.min(100, capacityFilled * 100)) : null
 
 	const body = (
 		<span className="flex flex-col items-end gap-1">
 			<span className="text-primary">
 				{formatUsd(available, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 			</span>
-			{pct != null ? (
+			{filledPct != null ? (
 				<span className="hidden h-1 w-20 overflow-hidden rounded-full bg-surface-elevated-2 md:block">
-					<span className="block h-full rounded-full bg-brand" style={{ width: `${pct}%` }} />
+					<span className="block h-full rounded-full bg-brand" style={{ width: `${filledPct}%` }} />
 				</span>
 			) : null}
 		</span>
 	)
 
-	if (pct == null) return body
+	if (filledPct == null) return body
 
 	// `w-fit ml-auto` shrinks the tooltip anchor to the value+bar block and right-aligns it in the
 	// cell, so the (centered, placement='top') tooltip centers over the content rather than the full
 	// cell width — otherwise the anchor spans the whole right-aligned cell and the tooltip drifts left.
 	return (
 		<InstantTooltip
-			content={`${formatPercent(pct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} utilized`}
+			content={`${formatPercent(filledPct, { input: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false })} utilized`}
 			className="ml-auto w-fit max-w-full justify-end"
 		>
 			{body}

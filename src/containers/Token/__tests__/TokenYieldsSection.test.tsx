@@ -57,6 +57,16 @@ vi.mock('@tanstack/react-query', () => ({
 vi.mock('next/router', () => ({
 	useRouter: () => routerState
 }))
+vi.mock('~/containers/Yields/useVerifiedAccess', () => ({
+	// A signed-out reader: the section reads the public tier and shows no paid columns.
+	useVerifiedAccess: () => ({
+		authorizedFetch: vi.fn(),
+		status: 'denied',
+		hasAccess: false,
+		isPending: false,
+		isDenied: true
+	})
+}))
 
 vi.mock('~/components/Filters/ResponsiveFilterLayout', () => ({
 	ResponsiveFilterLayout: ({ children }: { children: (nestedMenu: boolean) => React.ReactNode }) => (

@@ -2,14 +2,17 @@
 // @vitest-environment-options {"url":"https://defillama.com"}
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Storage } from 'happy-dom'
 import { act } from 'react'
-import { createRoot, type Root } from 'react-dom/client'
+import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
+import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { AuthProvider, useAuthContext } from '~/auth'
 import type { Subscription } from '~/auth/subscriptionStatus'
 import { useSubscribe } from '~/auth/useSubscribe'
 import { Account } from '~/components/Nav/Account'
 import { PremiumFeatureGate } from '~/containers/ProDashboard/components/PremiumFeatureGate'
+import { useVerifiedAccess, type VerifiedAccessStatus } from '~/containers/Yields/useVerifiedAccess'
 import pb from '~/utils/pocketbase'
 
 vi.mock('next/router', () => ({
@@ -52,10 +55,12 @@ let client: QueryClient
 let container: HTMLDivElement
 let statusRequests: Array<PendingStatus>
 let statusHandler: (authorization: string | null) => Promise<Response> | Response
+let verifiedStatuses: Array<VerifiedAccessStatus>
 
 function Probe() {
 	sessionView = useAuthContext()
 	subscribeView = useSubscribe()
+	verifiedStatuses.push(useVerifiedAccess().status)
 	return <span data-testid="subscription-detail">{subscribeView.subscription.id}</span>
 }
 
@@ -72,6 +77,8 @@ function App() {
 }
 
 beforeEach(() => {
+	vi.stubGlobal('localStorage', new Storage())
+	verifiedStatuses = []
 	statusRequests = []
 	statusHandler = () => jsonResponse({ message: 'No active subscription' }, 404)
 	vi.stubGlobal(
@@ -98,20 +105,29 @@ afterEach(async () => {
 	await act(async () => root.unmount())
 	client.clear()
 	container.remove()
-	vi.unstubAllGlobals()
 	pb.authStore.clear()
 	localStorage.clear()
+	vi.unstubAllGlobals()
 })
 
-async function renderSession(id: string, hasActiveSubscription: boolean) {
+async function renderSession(id: string, hasActiveSubscription: boolean, hydrate = false) {
 	pb.authStore.save(token(id), record(id, hasActiveSubscription))
-	await act(async () => {
-		root.render(
-			<QueryClientProvider client={client}>
-				<App />
-			</QueryClientProvider>
-		)
-	})
+	const app = (
+		<QueryClientProvider client={client}>
+			<App />
+		</QueryClientProvider>
+	)
+	const onRecoverableError = vi.fn()
+	if (hydrate) {
+		await act(async () => root.unmount())
+		container.innerHTML = renderToString(app)
+		await act(async () => {
+			root = hydrateRoot(container, app, { onRecoverableError })
+		})
+	} else {
+		await act(async () => root.render(app))
+	}
+	expect(onRecoverableError).not.toHaveBeenCalled()
 }
 
 async function waitFor(assertion: () => void) {
@@ -159,6 +175,34 @@ test('shows retryable unknown access after a canonical request failure', async (
 	expect(sessionView.loaders.userLoading).toBe(true)
 })
 
+test('keeps the public tier while a failed entitlement lookup retries', async () => {
+	let statusCalls = 0
+	statusHandler = () =>
+		// The initial request and its two retries fail; the later refetch then hangs in flight.
+		++statusCalls <= 3 ? jsonResponse({ message: 'Internal error' }, 500) : new Promise<Response>(() => {})
+	await renderSession('account-a', false)
+
+	// Two retries at 250ms and 500ms run before the lookup settles into its error state.
+	await vi.waitFor(
+		async () => {
+			await act(async () => {})
+			expect(verifiedStatuses.at(-1)).toBe('denied')
+		},
+		{ timeout: 3000 }
+	)
+	expect(sessionView.loaders.userLoading).toBe(true)
+	expect(sessionView.loaders.subscriptionInitialCheck).toBe(false)
+
+	// The retry has no data to keep, so React Query drops back to pending while it is in flight.
+	void client.refetchQueries({ predicate: (query) => query.state.status === 'error' })
+	await waitFor(() => expect(statusCalls).toBe(4))
+	// React Query notifies observers on a macrotask, so let the fetching state reach the render.
+	await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+	expect(sessionView.loaders.userLoading).toBe(true)
+	expect(sessionView.loaders.subscriptionInitialCheck).toBe(false)
+	expect(verifiedStatuses.at(-1)).toBe('denied')
+})
+
 test('does not flash the free state while canonical access is loading', async () => {
 	statusHandler = (authorization) =>
 		new Promise<Response>((resolve) => {
@@ -187,6 +231,57 @@ test('renders a returning subscriber as Pro on first paint while revalidating', 
 	expect(sessionView.hasActiveSubscription).toBe(true)
 	expect(sessionView.loaders.userLoading).toBe(false)
 	expect(statusRequests).toHaveLength(1)
+})
+
+test.each([true, false])('checks a persisted denial only for verified yields (active: %s)', async (active) => {
+	persistSubscription('account-a', null)
+	statusHandler = (authorization) => new Promise<Response>((resolve) => statusRequests.push({ authorization, resolve }))
+
+	await renderSession('account-a', false, true)
+
+	expect(sessionView.loaders.userLoading).toBe(false)
+	expect(sessionView.loaders.subscriptionInitialCheck).toBe(true)
+	expect(new Set(verifiedStatuses)).toEqual(new Set(['pending']))
+	expect(document.body.textContent).toContain('Upgrade to Pro')
+	expect(document.body.textContent).toContain('No Subscription')
+	expect(statusRequests).toHaveLength(1)
+
+	statusRequests[0].resolve(
+		active
+			? jsonResponse({ subscription: activeSubscription('account-a') })
+			: jsonResponse({ message: 'No active subscription' }, 404)
+	)
+	await waitFor(() => expect(sessionView.loaders.subscriptionInitialCheck).toBe(false))
+	expect(verifiedStatuses.at(-1)).toBe(active ? 'granted' : 'denied')
+	expect(verifiedStatuses.includes('denied')).toBe(!active)
+
+	verifiedStatuses = []
+	await act(async () => {
+		void client.invalidateQueries({ queryKey: ['subscription'] })
+	})
+	expect(statusRequests).toHaveLength(2)
+	expect(sessionView.loaders.userLoading).toBe(false)
+	expect(verifiedStatuses).not.toContain('pending')
+})
+
+test('settles a persisted denial after a failed initial check without flashing on retry', async () => {
+	persistSubscription('account-a', null)
+	statusHandler = () => jsonResponse({ message: 'Internal error' }, 500)
+	await renderSession('account-a', false)
+	expect(sessionView.loaders.userLoading).toBe(false)
+	expect(verifiedStatuses.at(-1)).toBe('pending')
+
+	await waitFor(() => expect(sessionView.loaders.subscriptionInitialCheck).toBe(false))
+	expect(verifiedStatuses.at(-1)).toBe('denied')
+	expect(document.body.textContent).toContain('Subscription unavailable')
+
+	verifiedStatuses = []
+	statusHandler = () => new Promise<Response>(() => {})
+	await act(async () => {
+		void client.invalidateQueries({ queryKey: ['subscription'] })
+	})
+	expect(sessionView.loaders.userLoading).toBe(false)
+	expect(verifiedStatuses).not.toContain('pending')
 })
 
 test('keeps cached access visible and warns when background revalidation fails', async () => {

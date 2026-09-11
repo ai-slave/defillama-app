@@ -47,7 +47,7 @@ async function dispatchFetch(request: ProDashboardProxyRequest): Promise<ProDash
 
 		case 'yields': {
 			const { poolConfigId } = request.params
-			return withTimeout(fetchPoolDetailHistory(poolConfigId, 'max'), FETCH_TIMEOUT)
+			return withTimeout(fetchPoolDetailHistory(poolConfigId, 'max', { includeVerified: true }), FETCH_TIMEOUT)
 		}
 
 		case 'yieldsLendBorrow': {

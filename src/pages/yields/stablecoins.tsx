@@ -1,46 +1,30 @@
-import type { InferGetStaticPropsType } from 'next'
+import type { InferGetServerSidePropsType } from 'next'
 import { Announcement } from '~/components/Announcement'
-import { fetchEntityQuestions } from '~/containers/LlamaAI/api'
 import { disclaimer } from '~/containers/Yields/constants'
+import { loadEarnPageProps } from '~/containers/Yields/server/earnPage.server'
 import EarnView, { type EarnViewProps } from '~/containers/Yields/views/EarnView'
 import Layout from '~/layout'
-import { maxAgeForNext } from '~/utils/maxAgeForNext'
-import { withPerformanceLogging } from '~/utils/perf'
+import { withServerSidePropsTelemetry } from '~/utils/telemetry'
 
 // The subject of this route. Seeds the ISR rows AND locks the live query, so the
 // page is a stablecoin document rather than /yields with a filter chip set.
 const STABLECOIN_QUERY = { stablecoin: 'true', noIlRisk: 'true' } as const
 
-export const getStaticProps = withPerformanceLogging<EarnViewProps>('yields/stablecoins', async () => {
-	const [{ getEarnPageMeta }, { getEarnPage }, { acquireYieldsSnapshot }] = await Promise.all([
-		import('~/containers/Yields/data/earnMeta.server'),
-		import('~/containers/Yields/data/earn.server'),
-		import('~/containers/Yields/server/dataset.server')
-	])
-	const snapshot = await acquireYieldsSnapshot('blocking')
-	const [metadata, initialEarnPage, { questions: entityQuestions }] = await Promise.all([
-		getEarnPageMeta(snapshot),
-		getEarnPage(snapshot, { ...STABLECOIN_QUERY }),
-		fetchEntityQuestions('yields', 'page')
-	])
-
+export const getServerSideProps = withServerSidePropsTelemetry<EarnViewProps>('yields/stablecoins', async (context) => {
+	const props = await loadEarnPageProps(context, 'yields/stablecoins', { ...STABLECOIN_QUERY })
 	return {
 		props: {
-			...metadata,
+			...props,
 			// The two locked attributes are the route itself - offering them as
 			// toggles would let the page filter its own subject away.
-			attributeIds: metadata.attributeIds.filter((id) => id !== 'stablecoins' && id !== 'no_il'),
-			entityQuestions,
-			initialEarnPage,
-			initialEarnPageGeneratedAt: snapshot.generatedAt
-		},
-		revalidate: maxAgeForNext([23])
+			attributeIds: props.attributeIds.filter((id) => id !== 'stablecoins' && id !== 'no_il')
+		}
 	}
 })
 
 const pageName = ['Stablecoin Yields']
 
-export default function StablecoinYieldsPage(data: InferGetStaticPropsType<typeof getStaticProps>) {
+export default function StablecoinYieldsPage(data: InferGetServerSidePropsType<typeof getServerSideProps>) {
 	return (
 		<Layout
 			title="Best Stablecoin Yields - USDC, USDT & DAI APY Rankings - DefiLlama"

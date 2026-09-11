@@ -1,6 +1,16 @@
 import { YIELDS_V2_SERVER_URL } from '~/constants'
 import { fetchJson } from '~/utils/async'
-import type { BorrowMarketRow, DepegRow, EarnRow, LoopRow, RouteRow, TokenKeys, Trend, YieldsMeta } from '../types'
+import type {
+	BorrowMarketRow,
+	DepegRow,
+	EarnRow,
+	LoopRow,
+	RouteRow,
+	TokenKeys,
+	Trend,
+	VerifiedRow,
+	YieldsMeta
+} from '../types'
 
 type FetchOptions = { extraRetry?: boolean; timeout?: number }
 
@@ -13,6 +23,10 @@ async function fetchYieldsData<T>(path: string, options?: FetchOptions): Promise
 
 export function fetchEarnFromNetwork(options?: FetchOptions): Promise<Array<EarnRow>> {
 	return fetchYieldsData<Array<EarnRow>>('/v2/earn', options)
+}
+
+export function fetchEarnVerifiedFromNetwork(options?: FetchOptions): Promise<Array<VerifiedRow>> {
+	return fetchYieldsData<Array<VerifiedRow>>('/v2/earn/verified', options)
 }
 
 export function fetchTrendsFromNetwork(options?: FetchOptions): Promise<Array<Trend>> {

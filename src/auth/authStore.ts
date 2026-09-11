@@ -15,11 +15,13 @@ const listeners = new Set<() => void>()
 
 if (typeof window !== 'undefined') {
 	// PocketBase owns persistence and cross-tab changes. Publish only after the SSR cookie agrees.
+	// Browsers drop a Secure cookie over plain http, hiding the session from SSR in dev.
+	const secure = process.env.NODE_ENV === 'development' && window.location.protocol !== 'https:' ? '' : '; Secure'
 	pb.authStore.onChange((token, record) => {
 		const isValid = pb.authStore.isValid
 		document.cookie = isValid
-			? `pb_auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax; Secure`
-			: 'pb_auth_token=; path=/; max-age=0; SameSite=Lax; Secure'
+			? `pb_auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`
+			: `pb_auth_token=; path=/; max-age=0; SameSite=Lax${secure}`
 		snapshot = { token, record: record ? { ...record } : null, isValid }
 		for (const listener of listeners) listener()
 	}, true)

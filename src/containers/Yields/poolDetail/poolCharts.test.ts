@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { buildBorrowChart, buildSupplyChart } from './poolCharts'
+import { buildBorrowChart, buildSupplyChart, hasDrawableDay, stripVerifiedSeries } from './poolCharts'
 import type { BorrowMarketHistoryPoint, PoolHistoryPoint } from './types'
 
 function apy(base: number | null, reward: number | null, total: number | null) {
@@ -37,6 +37,83 @@ describe('pool chart models', () => {
 		expect(model?.lines[0]?.values).toEqual([100, null])
 	})
 
+	test('stacks the verified base on measured days and the reported base on the others', () => {
+		const series: Array<PoolHistoryPoint> = [
+			{
+				date: '2023-12-03',
+				tvl_usd: 1000,
+				apy: { avg_1d: apy(3.5, null, 3.5), avg_7d: apy(3.6, null, 3.6), avg_30d: apy(3.7, null, 3.7) },
+				intrinsic: null,
+				price_per_share: null,
+				verified: {
+					apy: { avg_1d: 3.55, avg_7d: 3.6, avg_30d: 3.7 },
+					price_per_share: 1.1,
+					liquidity_available: null,
+					liquidity_available_usd: null,
+					tvl: null,
+					tvl_usd: null,
+					exit: { outcome: 'delayed' }
+				}
+			},
+			{
+				date: '2023-12-04',
+				tvl_usd: null,
+				apy: {
+					avg_1d: apy(null, null, null),
+					avg_7d: apy(null, null, null),
+					avg_30d: apy(null, null, null)
+				},
+				intrinsic: null,
+				price_per_share: null,
+				verified: {
+					apy: { avg_1d: 3.8, avg_7d: 3.7, avg_30d: 3.65 },
+					price_per_share: 1.101,
+					liquidity_available: null,
+					liquidity_available_usd: null,
+					tvl: null,
+					tvl_usd: null,
+					exit: { outcome: 'delayed' }
+				}
+			},
+			// The running day: reported rates exist, the measurement completes tomorrow.
+			{
+				date: '2023-12-05',
+				tvl_usd: 1000,
+				apy: { avg_1d: apy(3.6, null, 3.6), avg_7d: apy(3.6, null, 3.6), avg_30d: apy(3.7, null, 3.7) },
+				intrinsic: null,
+				price_per_share: null,
+				verified: {
+					apy: { avg_1d: null, avg_7d: null, avg_30d: null },
+					price_per_share: 1.102,
+					liquidity_available: null,
+					liquidity_available_usd: null,
+					tvl: null,
+					tvl_usd: null,
+					exit: { outcome: 'delayed' }
+				}
+			}
+		]
+
+		const model = buildSupplyChart(series)
+		expect(model?.bars.map((bar) => bar.key)).toEqual(['verifiedApy', 'base'])
+		expect(model?.bars[0]).toMatchObject({
+			label: 'Verified Base',
+			replaces: 'base',
+			values: [3.55, 3.8, null],
+			avg7: [3.6, 3.7, null],
+			avg30: [3.7, 3.65, null]
+		})
+		// The reported base keeps every day; the chart draws one base at a time.
+		expect(model?.bars[1]?.values).toEqual([3.5, null, 3.6])
+		expect(model?.lines.map((line) => line.key)).toEqual(['magnitude'])
+
+		// A reader whose access ended sees the public build's bars; an unmeasured model is untouched.
+		const reported = stripVerifiedSeries(model!)
+		expect(reported.bars.map((bar) => bar.key)).toEqual(['base'])
+		expect(reported.bars[0]?.values).toEqual([3.5, null, 3.6])
+		expect(stripVerifiedSeries(reported)).toBe(reported)
+	})
+
 	test('preserves borrow components, net averages, and liquidity series', () => {
 		const series: Array<BorrowMarketHistoryPoint> = [
 			{
@@ -55,5 +132,22 @@ describe('pool chart models', () => {
 		])
 		expect(model?.lines.map((line) => line.values)).toEqual([[40], [60]])
 		expect(model?.netLine).toMatchObject({ values: [4], avg7: [5], avg30: [6] })
+	})
+
+	test('a stand-in whose only reading landed today has no drawable day', () => {
+		const day = 86_400_000
+		const today = 20_000 * day
+		const dates = [today - 2 * day, today - day, today]
+		const bar = {
+			key: 'verifiedApy',
+			label: 'Verified Base',
+			colorKey: 'verified' as const,
+			replaces: 'base',
+			values: [null, null, 3.5],
+			avg7: [],
+			avg30: []
+		}
+		expect(hasDrawableDay(bar, dates, today)).toBe(false)
+		expect(hasDrawableDay({ ...bar, values: [null, 3.4, 3.5] }, dates, today)).toBe(true)
 	})
 })

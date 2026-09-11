@@ -4,15 +4,17 @@ import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { useEntityQuestions } from '~/containers/LlamaAI/hooks/useEntityQuestions'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
-import { fetchJson } from '~/utils/async'
+import { fetchJson, handleSimpleFetchResponse } from '~/utils/async'
 import { formatNumber, formatPercent } from '~/utils/numberFormat'
-import { YIELD_EARN_DATASET_API } from '../constants'
+import { YIELD_EARN_DATASET_API, YIELD_EARN_PRIVATE_API } from '../constants'
 import type { EarnPageMeta } from '../data/earnMeta.server'
 import { prepareYieldPoolsCsv } from '../domain/poolCsv'
 import { YieldFilters } from '../Filters'
 import { ApyViewControls } from '../Filters/ApyViewControls'
+import { resolveEarnColumnAccess } from '../Filters/columnOptions'
 import { CuratedViews } from '../Filters/CuratedViews'
 import { IncludeTokens } from '../Filters/IncludeTokens'
+import { VerifiedFilterToggle } from '../Filters/VerifiedFilterToggle'
 import { getYieldsQuestionContext } from '../getYieldsQuestionContext'
 import { useFormatYieldQueryParams } from '../hooks'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
@@ -20,7 +22,9 @@ import { selectedSubsetQuery } from '../queryState'
 import { PaginatedYieldsPoolTable } from '../Tables/Pools'
 import type { IYieldTableRow } from '../Tables/types'
 import { useLegacyYieldsUrlNormalizer } from '../useLegacyYieldsUrlNormalizer'
+import { useVerifiedAccess } from '../useVerifiedAccess'
 import { useYieldsServerTable } from '../useYieldsServerTable'
+import { VerifiedApyAnnouncement } from '../VerifiedApyAnnouncement'
 import type { YieldsPaginatedTableResponse } from '../yieldsTableQuery'
 import { YieldsTabs } from '../YieldsTabs'
 
@@ -30,8 +34,11 @@ type EarnRowsResponse = { rows: Array<IYieldTableRow> }
 
 export type EarnViewProps = EarnPageMeta & {
 	entityQuestions: Array<string>
-	initialEarnPage: YieldsPaginatedTableResponse<IYieldTableRow>
+	/** Null when the server could not establish the reader's tier; the client fetches its own. */
+	initialEarnPage: YieldsPaginatedTableResponse<IYieldTableRow> | null
 	initialEarnPageGeneratedAt: number
+	/** True when the server rendered the measured rows for a subscriber, so the seed matches their tier. */
+	initialEarnPageVerifiedAccess?: boolean
 	/**
 	 * Route-level filters for a standalone earn document (e.g. /yields/stablecoins).
 	 * Merged over the URL-derived params so the route's subject cannot be filtered
@@ -53,10 +60,12 @@ function EarnView({
 	entityQuestions: baseQuestions,
 	initialEarnPage,
 	initialEarnPageGeneratedAt,
+	initialEarnPageVerifiedAccess = false,
 	lockedQuery,
 	intro
 }: EarnViewProps) {
 	const router = useRouter()
+	const { authorizedFetch, hasAccess: paidYields, isDenied } = useVerifiedAccess()
 
 	// Rewrite legacy bookmark params to canonical before the first fetch (gates `enabled`).
 	const normalized = useLegacyYieldsUrlNormalizer({ page: 'earn', tokens })
@@ -74,6 +83,12 @@ function EarnView({
 	// (Token filtering flows through `token` on the URL directly — the token search
 	// already emits option keys — so it is not overridden here.)
 	const attributeSet = new Set(selectedAttributes)
+	const { verifiedAccess: effectiveVerifiedAccess, defaultColumns } = resolveEarnColumnAccess({
+		hasAccess: paidYields,
+		initialVerifiedAccess: initialEarnPageVerifiedAccess,
+		isDenied,
+		verifiedFilter: attributeSet.has('verified')
+	})
 	// 'Single asset' → singleAssetExposure=true; 'Multi asset' → =false. Both selected
 	// sends both values, which the tri-state server AND-s to zero rows.
 	const single = attributeSet.has('single_exposure')
@@ -91,6 +106,7 @@ function EarnView({
 		hasAudit: attributeSet.has('audited') ? 'true' : undefined,
 		protocolHasToken: attributeSet.has('no_protocol_token') ? 'false' : undefined,
 		includeMemeTokens: attributeSet.has('include_meme_tokens') ? 'true' : undefined,
+		verified: attributeSet.has('verified') ? 'true' : undefined,
 		// Last so a locked route filter wins over anything the URL says.
 		...lockedQuery
 	}
@@ -99,18 +115,25 @@ function EarnView({
 		rows: serverRows,
 		total: serverTotal,
 		medianApy,
+		data,
 		isLoading,
 		rowsQuery,
 		tableProps,
 		buildAllRowsQueryString
 	} = useYieldsServerTable<IYieldTableRow>({
 		endpoint: YIELD_EARN_DATASET_API,
+		privateEndpoint: YIELD_EARN_PRIVATE_API,
 		enabled: normalized,
 		extraQuery,
-		initialSeed: {
-			initialData: initialEarnPage,
-			initialDataUpdatedAt: initialEarnPageGeneratedAt
-		}
+		...(initialEarnPage
+			? {
+					initialSeed: {
+						initialData: initialEarnPage,
+						initialDataUpdatedAt: initialEarnPageGeneratedAt,
+						verifiedAccess: initialEarnPageVerifiedAccess
+					}
+				}
+			: {})
 	})
 	const poolsData = serverRows.length > 0 ? serverRows : EMPTY_POOL_ROWS
 
@@ -137,9 +160,16 @@ function EarnView({
 	)
 	const questions = filteredQuestionsData?.questions?.length ? filteredQuestionsData.questions : baseQuestions
 
+	// Must follow the same endpoint choice the table made, or a paying reader silently exports the
+	// locked numbers.
 	const prepareCsv = async () => {
-		const csvData = await fetchJson<EarnRowsResponse>(`${YIELD_EARN_DATASET_API}${buildAllRowsQueryString()}`)
-		return prepareYieldPoolsCsv(csvData.rows, router.query)
+		const query = buildAllRowsQueryString()
+		const csvData = effectiveVerifiedAccess
+			? await authorizedFetch(`${YIELD_EARN_PRIVATE_API}${query}`)
+					.then((res) => (res ? handleSimpleFetchResponse(res) : Promise.reject(new Error('Authentication required'))))
+					.then((res) => res.json() as Promise<EarnRowsResponse>)
+			: await fetchJson<EarnRowsResponse>(`${YIELD_EARN_DATASET_API}${query}`)
+		return prepareYieldPoolsCsv(csvData.rows, router.query, defaultColumns)
 	}
 
 	return (
@@ -183,7 +213,14 @@ function EarnView({
 				categoriesLabel="Categories"
 				attributeIds={attributeIds}
 				showColumns
-				apyControls={<ApyViewControls ready={normalized} />}
+				defaultColumns={defaultColumns}
+				apyControls={
+					<>
+						<ApyViewControls ready={normalized} />
+						<span className="mx-0.5 h-5 w-px bg-border-medium" aria-hidden />
+						<VerifiedFilterToggle />
+					</>
+				}
 				curatedViews={<CuratedViews />}
 				tvlRange
 				tvlRangeLabel="TVL"
@@ -205,15 +242,18 @@ function EarnView({
 				/>
 			) : null}
 
+			<VerifiedApyAnnouncement />
+
 			{isLoading ? (
 				<PanelLoadingStatus label="Loading pools" />
-			) : rowsQuery.isError && !rowsQuery.data ? (
+			) : rowsQuery.isError && !data ? (
 				<PanelStatus variant="error">Couldn't load pools.</PanelStatus>
 			) : poolsData.length > 0 ? (
 				<PaginatedYieldsPoolTable
 					data={poolsData}
 					{...(apyCellMedian ? { median: apyCellMedian } : {})}
 					{...tableProps}
+					defaultColumns={defaultColumns}
 				/>
 			) : (
 				<PanelStatus variant="empty">No pools match current filters.</PanelStatus>

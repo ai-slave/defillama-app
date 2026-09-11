@@ -1,11 +1,15 @@
-import type { RowData } from '@tanstack/react-table'
-import type { CSSProperties } from 'react'
+import type { HeaderContext, RowData } from '@tanstack/react-table'
+import type { CSSProperties, ReactNode } from 'react'
 import type { CsvCell } from '~/utils/csvCell'
 
 declare module '@tanstack/react-table' {
 	interface ColumnMeta<TData extends RowData, TValue> {
 		align?: 'start' | 'end' | 'center'
 		headerHelperText?: string
+		/** Rendered before the header's sort button, outside it, so it may carry its own hovercard. */
+		headerLead?: (context: HeaderContext<TData, TValue>) => ReactNode
+		/** Rendered after the header's sort button, outside it, so it may carry its own hovercard. */
+		headerTrail?: (context: HeaderContext<TData, TValue>) => ReactNode
 		headerClassName?: string
 		/** Extra classes for this column's body `<td>` (e.g. `truncate` to ellipsis long text). */
 		cellClassName?: string

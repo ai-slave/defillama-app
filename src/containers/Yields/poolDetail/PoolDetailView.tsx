@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router'
+import { useMemo } from 'react'
 import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Card } from '~/ui/Card'
@@ -9,15 +10,33 @@ import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { Skeleton } from '~/ui/Skeleton'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatPercent, formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
+import type { MeasuredApy } from '../data/apy'
+import type { VerifiedBlock } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
 import { useStickyPrefsOverlay, useStickyQueryReplace } from '../useStickyQueryReplace'
+import { useVerifiedAccess } from '../useVerifiedAccess'
+import { VerifiedApyAnnouncement } from '../VerifiedApyAnnouncement'
+import type { ExitReliabilityModel } from './exitReliability'
+import { ExitReliabilityPanel } from './ExitReliabilityPanel'
 import { scoreValue, YIELD_PERCENT_OPTIONS } from './format'
+import type { GrowthChartModel } from './growthChart'
 import { HoldersPanel } from './HoldersPanel'
+import type { LiquidityChartModel } from './liquidityChart'
 import { PoolApyChart } from './PoolApyChart'
-import type { PoolChartModel } from './poolCharts'
+import { type PoolChartModel, stripVerifiedSeries } from './poolCharts'
+import { PoolGrowthChart } from './PoolGrowthChart'
 import { PoolHeader, PoolMetaInfo } from './PoolHeader'
+import { PoolLiquidityChart } from './PoolLiquidityChart'
 import { POOL_CHART_PREFS } from './queryState'
 import type { DetailChain, DetailHolders, DetailProtocol, PoolHistoryRange } from './types'
+import { usePoolVerifiedProps } from './useVerifiedProps'
+import { VerifiedApyPanel, type VerifiedWindowRow } from './VerifiedApyPanel'
+import {
+	buildVerifiedSnapshot,
+	LockedVerifiedSection,
+	type MeasuredComposition,
+	VerifiedSection
+} from './VerifiedSnapshotCard'
 
 type ApyKind = 'supply' | 'borrow'
 
@@ -57,7 +76,11 @@ export interface PoolDetailViewProps {
 	// Whether a vault-risk entry exists for this pool (gates the "View risk data" link).
 	hasRisk: boolean
 	exploited: boolean
+	// The range the supply history was fetched at — the widest the APY, growth and deposits panels
+	// asked for, since all three read it and slice their own window locally.
 	initialRange: PoolHistoryRange
+	// Borrow history is its own fetch with its own URL range; omitted when it matches `initialRange`.
+	initialBorrowRange?: PoolHistoryRange
 	symbol: string
 	name: string
 	protocol: DetailProtocol
@@ -67,6 +90,27 @@ export interface PoolDetailViewProps {
 	stability: StabilityInfo | null
 	supplyChart: PoolChartModel | null
 	borrowChart: PoolChartModel | null
+	// Only present on pools with at least one measured redemption; unmeasured pools render no
+	// growth chart at all rather than an empty one.
+	growthChart: GrowthChartModel | null
+	// Null when the pool never reported withdrawable liquidity, or when its underlying tokens
+	// disagree on decimals so the raw amounts cannot be denominated.
+	liquidityChart: LiquidityChartModel | null
+	// Aggregated daily withdrawal-check outcomes over the pool's FULL measured history (always
+	// built from max-range history, whatever ?range= says). Null when no day was ever measured.
+	exitReliability: ExitReliabilityModel | null
+	// Needed by the chart to rebuild its model when a wider range is fetched client-side.
+	liquidityDecimals: number | null
+	// Underlying token symbol for the verdict card's native-unit line.
+	// The measured block from `/v2/earn/:id`. Null on unmeasured pools, which render no
+	// verification panel at all rather than an empty or greyed one.
+	verified: VerifiedBlock | null
+	// Supply composition with the measured legs swapped in; null on unmeasured or redacted pages.
+	apy: MeasuredApy | null
+	verifiedWindows: Array<VerifiedWindowRow>
+	// Measured, but stripped server-side: every verified-derived model above arrives empty.
+	// Null means SSR could not establish entitlement; the data is still redacted.
+	verifiedLocked?: boolean | null
 	holders: DetailHolders | null
 	details: {
 		poolTokenAddress: string | null
@@ -111,12 +155,23 @@ function apyParts(apy: ApyBreakdown, kind: ApyKind) {
 const VALUE_CLS = 'ml-auto mono-md-bold'
 const SUB_VALUE_CLS = 'ml-auto mono-md'
 
-function SideBlock({ side, kind, children }: { side: PoolSide; kind: ApyKind; children?: React.ReactNode }) {
+function SideBlock({
+	side,
+	kind,
+	children,
+	hideApy = false
+}: {
+	side: PoolSide
+	kind: ApyKind
+	children?: React.ReactNode
+	/** The verified section states the APY instead; showing both would say it twice. */
+	hideApy?: boolean
+}) {
 	const parts = hasPart(side.apy.reward) || hasPart(side.apy.intrinsic) ? apyParts(side.apy, kind) : []
 	const apyValue = side.apy.total == null ? '—' : formatPercent(side.apy.total, YIELD_PERCENT_OPTIONS)
 	return (
 		<>
-			{parts.length > 0 ? (
+			{hideApy ? null : parts.length > 0 ? (
 				<MetricSection label={side.apyLabel} value={apyValue} valueClassName={VALUE_CLS}>
 					{parts.map((p) => (
 						<SubMetricRow
@@ -178,6 +233,7 @@ export function PoolDetailView({
 	hasRisk,
 	exploited,
 	initialRange,
+	initialBorrowRange,
 	symbol,
 	name,
 	protocol,
@@ -185,12 +241,109 @@ export function PoolDetailView({
 	supply,
 	borrow,
 	stability,
-	supplyChart,
+	supplyChart: supplyChartFromProps,
 	borrowChart,
+	growthChart: growthChartFromProps,
+	liquidityChart: liquidityChartFromProps,
+	liquidityDecimals: liquidityDecimalsFromProps,
+	exitReliability: exitReliabilityFromProps,
+	verified: verifiedFromProps,
+	apy: apyFromProps,
+	verifiedWindows: verifiedWindowsFromProps,
+	verifiedLocked,
 	holders,
 	details
 }: PoolDetailViewProps) {
-	// Restore both charts together before mounting to avoid competing replaces and default flashes.
+	const { hasAccess, isDenied } = useVerifiedAccess()
+	// A subscriber's page carries its measured props; they stand only while the reader is still
+	// entitled, as the table's seed does, so a lapsed or ended session drops them without a reload.
+	const seeded = !isDenied
+	const locked = verifiedLocked === null || verifiedLocked === true || (isDenied && verifiedFromProps != null)
+	// The page's props are redacted for everyone else; a subscriber's measured sections arrive here.
+	const { props: paid, isLoading: paidLoading } = usePoolVerifiedProps({
+		poolId,
+		range: initialRange,
+		locked
+	})
+	const verified = (seeded ? verifiedFromProps : null) ?? paid.verified
+	const verifiedWindows =
+		seeded && verifiedWindowsFromProps.length > 0 ? verifiedWindowsFromProps : paid.verifiedWindows
+	const growthChart = (seeded ? growthChartFromProps : null) ?? paid.growthChart
+	const liquidityChart = (seeded ? liquidityChartFromProps : null) ?? paid.liquidityChart
+	const liquidityDecimals = (seeded ? liquidityDecimalsFromProps : null) ?? paid.liquidityDecimals
+	const exitReliability = (seeded ? exitReliabilityFromProps : null) ?? paid.exitReliability
+	// The measured rebuild defaults its TVL label, which depends on protocol meta only the page
+	// resolves. The page's own chart holds the right one, so it is carried across.
+	const supplyChart = useMemo(() => {
+		if (!paid.supplyChart) {
+			// A subscriber's page carries the measured chart; once their access has ended (a logout in
+			// another tab), it shows what the public build would: the reported bars without the verified base.
+			return seeded || !supplyChartFromProps ? supplyChartFromProps : stripVerifiedSeries(supplyChartFromProps)
+		}
+		const label = supplyChartFromProps?.lines.find((line) => line.unit === 'usd')?.label
+		if (label == null) return paid.supplyChart
+		return {
+			...paid.supplyChart,
+			lines: paid.supplyChart.lines.map((line) => (line.unit === 'usd' ? { ...line, label } : line))
+		}
+	}, [paid.supplyChart, seeded, supplyChartFromProps])
+	// Anonymous SSR keeps its offer; an unavailable server check must wait for a client verdict.
+	const showOffer = locked && verified == null && !paidLoading && !hasAccess && (verifiedLocked !== null || isDenied)
+	// Built once and shared: the section renders it, and the supply block hides the APY it covers.
+	const snapshot = verified ? buildVerifiedSnapshot(verified, verifiedWindows) : null
+	// The table cell's split: only when a leg was substituted and there is more than the base to show.
+	const measuredApy = (seeded ? apyFromProps : null) ?? paid.apy
+	let composition: MeasuredComposition | null = null
+	if (
+		supply &&
+		measuredApy?.measured != null &&
+		measuredApy.total != null &&
+		(hasPart(measuredApy.reward) || hasPart(measuredApy.intrinsic))
+	) {
+		const provenance: Record<string, string> = {
+			base: 'verified',
+			reward: 'reported',
+			intrinsic: measuredApy.intrinsicMeasured != null ? 'verified' : 'reported'
+		}
+		const parts = apyParts({ ...supply.apy, ...measuredApy }, 'supply').map((part) => {
+			const source = provenance[part.key]
+			return source ? { ...part, provenance: source } : part
+		})
+		composition = { total: measuredApy.total, parts }
+	}
+
+	const growthSection = growthChart ? (
+		<PoolGrowthChart key={`${poolId}:growth`} model={growthChart} poolId={poolId} initialRange={initialRange} />
+	) : null
+	const liquiditySection = liquidityChart ? (
+		<PoolLiquidityChart
+			key={`${poolId}:liquidity`}
+			model={liquidityChart}
+			poolId={poolId}
+			decimals={liquidityDecimals}
+			exitStatus={verified?.exit?.status ?? null}
+			initialRange={initialRange}
+		/>
+	) : null
+	// A chart without its product card (history without a current measurement) still gets a panel.
+	const apyCard = verified ? (
+		<VerifiedApyPanel verified={verified} measuredSince={exitReliability?.measuredSince ?? null}>
+			{growthSection}
+		</VerifiedApyPanel>
+	) : growthSection ? (
+		<ChartPanel>{growthSection}</ChartPanel>
+	) : null
+	const exitCard = exitReliability ? (
+		<ExitReliabilityPanel model={exitReliability} verified={verified} holders={holders}>
+			{liquiditySection}
+		</ExitReliabilityPanel>
+	) : liquiditySection ? (
+		<ChartPanel>{liquiditySection}</ChartPanel>
+	) : null
+
+	// Fill the APY charts' range / windows the URL lacks from the sticky per-browser preferences,
+	// once for both so two replaces can never race; mount them only once resolved so neither default
+	// controls nor default history can flash.
 	const router = useRouter()
 	const preferencesReady = useStickyQueryReplace(
 		useStickyPrefsOverlay(router.isReady ? router.query : null, POOL_CHART_PREFS)
@@ -218,6 +371,10 @@ export function PoolDetailView({
 				}
 			/>
 		) : null
+
+	// A queued-exit pool has no instant lane to plot, so the panel would be a second deposits chart
+	// under an exit title. One flag drives both the count and the render, so a suppressed panel can
+	// never leave a lone chart in a half-width column beside an empty one.
 
 	// The donut needs the pool's headline dollar figure (TVL / Total supplied) to derive
 	// per-holder USD. Only earn pools carry that as their first supply metric; borrow-only
@@ -249,14 +406,31 @@ export function PoolDetailView({
 					</span>
 				</p>
 			) : null}
+			{/* The feature's one-sentence pitch lives here, spanning both columns, so the summary card
+			    below can stay as short as the subscriber's and the chart beside it the same height. */}
+			{showOffer ? <VerifiedApyAnnouncement placement="pool-banner" /> : null}
+
 			<div className="grid grid-cols-1 gap-2 @min-[90rem]:grid-cols-[minmax(320px,360px)_minmax(0,1fr)]">
-				<Card padding="sm" className="flex flex-col gap-3">
+				<Card padding="sm" className="flex flex-col gap-3 self-start">
 					<PoolHeader symbol={symbol} name={name} protocol={protocol} chain={chain} />
+
+					{/* Trial placement: straight under the identity, so the measured claim leads the card
+					    and the pool's own reported stats follow it. */}
+					{verified && snapshot ? (
+						<VerifiedSection verified={verified} snapshot={snapshot} composition={composition} />
+					) : null}
+					{/* One panel for every measured section: the rest render nothing without the data. */}
+					{showOffer ? <LockedVerifiedSection /> : null}
+					{verifiedLocked === null && verified == null && !paidLoading && !isDenied ? (
+						<p role="status" className="text-sm text-secondary">
+							Verified APY is temporarily unavailable.
+						</p>
+					) : null}
 
 					{supply || borrow ? (
 						<div className="grid grid-cols-1 gap-x-6 border-t border-subtle pt-1 @min-[40rem]:grid-cols-2 @min-[80rem]:grid-cols-3 @min-[90rem]:grid-cols-1">
 							{supply ? (
-								<SideBlock side={supply} kind="supply">
+								<SideBlock side={supply} kind="supply" hideApy={snapshot?.baseApy != null}>
 									{stabilityRow}
 								</SideBlock>
 							) : null}
@@ -288,27 +462,37 @@ export function PoolDetailView({
 					/>
 				</Card>
 
+				{/* Rhythm carries the hierarchy: the rate charts are the primary read and sit at full
+				    height, the measured pair below them runs compact and side by side. Each chart owns
+				    its range control and URL param, so one panel's window never moves another's. */}
 				<div className="flex min-w-0 flex-col gap-2">
-					{(
-						[
-							['supply', supplyChart],
-							['borrow', borrowChart]
-						] as const
-					).map(([kind, model]) =>
-						model ? (
-							preferencesReady ? (
-								<PoolApyChart
-									key={`${poolId}:${kind}`}
-									model={model}
-									poolId={poolId}
-									kind={kind}
-									initialRange={initialRange}
-								/>
-							) : (
-								<PoolChartPlaceholder key={kind} title={model.title} />
-							)
-						) : null
-					)}
+					{supplyChart ? (
+						preferencesReady ? (
+							<PoolApyChart
+								key={`${poolId}:supply:${paid.supplyChart ? 'measured' : 'reported'}`}
+								model={supplyChart}
+								poolId={poolId}
+								kind="supply"
+								initialRange={initialRange}
+								lockedVerifiedApy={locked && !hasAccess}
+							/>
+						) : (
+							<PoolChartPlaceholder key="supply" title={supplyChart.title} />
+						)
+					) : null}
+					{borrowChart ? (
+						preferencesReady ? (
+							<PoolApyChart
+								key={`${poolId}:borrow`}
+								model={borrowChart}
+								poolId={poolId}
+								kind="borrow"
+								initialRange={initialBorrowRange ?? initialRange}
+							/>
+						) : (
+							<PoolChartPlaceholder key="borrow" title={borrowChart.title} />
+						)
+					) : null}
 					{!supplyChart && !borrowChart ? (
 						<Card padding="md" className="flex min-h-24 flex-1 items-center justify-center">
 							<p className="text-center body-sm text-tertiary">No history available for this pool yet.</p>
@@ -316,6 +500,23 @@ export function PoolDetailView({
 					) : null}
 				</div>
 			</div>
+
+			{apyCard || exitCard ? (
+				/* The conclusions already sit in the summary card. This band is the two products behind
+				   them, each with its answer, its history and its receipts: the yield down the left, the
+				   exit down the right, paired above 64rem and stacked below. */
+				<section
+					aria-label="Measured history"
+					className={
+						apyCard && exitCard
+							? 'grid grid-cols-1 items-start gap-2 @min-[64rem]:grid-cols-2'
+							: 'grid grid-cols-1 gap-2'
+					}
+				>
+					{apyCard}
+					{exitCard}
+				</section>
+			) : null}
 
 			{holders ? (
 				<HoldersPanel holders={holders} chain={chain.name} tvlUsd={tvlUsd} poolId={poolId} exportTitle={exportTitle} />
