@@ -70,14 +70,24 @@ export function completeToolStep(steps: Array<AgentStep>, execution: ToolExecuti
 }
 
 /**
- * Restored messages carry reasoning as one string and tool results in order. Every result is already
- * finished, so the rows are built directly rather than replayed through the live matching.
+ * Restored messages carry reasoning segments keyed by how many tool results preceded them, and tool
+ * results in order. Every result is already finished, so the rows are built directly rather than
+ * replayed through the live matching. Older messages carry reasoning as one string, which leads.
  */
 export function stepsForMessage(message: Message): Array<AgentStep> {
 	if (message.steps) return message.steps
 	const steps: Array<AgentStep> = []
-	if (message.thinking) steps.push({ kind: 'reasoning', id: 'reasoning-0', text: message.thinking })
-	for (const execution of message.toolExecutions ?? []) {
+	const segments = message.thinkingSegments ?? (message.thinking ? [{ text: message.thinking, toolIndex: 0 }] : [])
+	let next = 0
+	const pushReasoningBefore = (toolIndex: number) => {
+		while (next < segments.length && segments[next].toolIndex <= toolIndex) {
+			steps.push({ kind: 'reasoning', id: `reasoning-${next}`, text: segments[next].text })
+			next++
+		}
+	}
+	const executions = message.toolExecutions ?? []
+	for (const [index, execution] of executions.entries()) {
+		pushReasoningBefore(index)
 		steps.push({
 			kind: 'tool',
 			id: execution.tool_call_id ?? `tool-${steps.length}`,
@@ -90,6 +100,7 @@ export function stepsForMessage(message: Message): Array<AgentStep> {
 			execution
 		})
 	}
+	pushReasoningBefore(Infinity)
 	return steps
 }
 

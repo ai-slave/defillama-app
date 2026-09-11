@@ -96,6 +96,27 @@ describe('agent steps', () => {
 		expect(stepsForMessage({ role: 'assistant', steps })).toBe(steps)
 	})
 
+	test('restored reasoning segments go back between the tool rows they were written around', () => {
+		const steps = stepsForMessage({
+			role: 'assistant',
+			thinking: 'Resolve first.Now compare.Wrap up.',
+			thinkingSegments: [
+				{ text: 'Resolve first.', toolIndex: 0 },
+				{ text: 'Now compare.', toolIndex: 1 },
+				{ text: 'Wrap up.', toolIndex: 2 }
+			],
+			toolExecutions: [execution('resolve_entity', 'q1'), execution('execute_sql', 'q2')]
+		})
+		expect(steps.map((step) => (step.kind === 'reasoning' ? step.text : step.name))).toEqual([
+			'Resolve first.',
+			'resolve_entity',
+			'Now compare.',
+			'execute_sql',
+			'Wrap up.'
+		])
+		expect(new Set(steps.map((step) => step.id)).size).toBe(steps.length)
+	})
+
 	test('previews a reasoning stretch by its opening words, cut at a word boundary', () => {
 		expect(reasoningPreview('Considering accounting tasks. The user wants a ledger.')).toBe(
 			'Considering accounting tasks. The user wants a ledger.'

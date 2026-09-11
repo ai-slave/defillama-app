@@ -4,6 +4,7 @@ import type {
 	DashboardArtifact,
 	FactCheckReference,
 	Message,
+	ThinkingSegment,
 	TodoItem,
 	ToolExecution,
 	UnifiedCitationReference
@@ -27,6 +28,7 @@ export interface PersistedToolExecution extends Partial<ToolExecution> {
 export interface PersistedMessageMetadata extends RestoredAlertMetadata {
 	toolExecutions?: Array<PersistedToolExecution>
 	thinking?: string
+	thinkingSegments?: Array<ThinkingSegment>
 	quotedText?: string
 	dashboardConfig?: {
 		dashboardName?: string
@@ -285,6 +287,7 @@ export function mapPersistedMessage(message: PersistedMessage, index?: number): 
 	if (message.generatedImages !== undefined) mapped.generatedImages = message.generatedImages
 	if (toolExecutions !== undefined) mapped.toolExecutions = toolExecutions
 	if (message.metadata?.thinking !== undefined) mapped.thinking = message.metadata.thinking
+	if (message.metadata?.thinkingSegments !== undefined) mapped.thinkingSegments = message.metadata.thinkingSegments
 	if (message.metadata?.quotedText !== undefined) mapped.quotedText = message.metadata.quotedText
 	if (message.messageMetadata !== undefined) mapped.messageMetadata = message.messageMetadata
 	if (id !== undefined) mapped.id = id
@@ -338,6 +341,7 @@ export function mapSharedSessionMessage(message: SharedSessionMessage, index?: n
 	if (message.generatedImages !== undefined) mapped.generatedImages = message.generatedImages
 	if (toolExecutions !== undefined) mapped.toolExecutions = toolExecutions
 	if (message.metadata?.thinking !== undefined) mapped.thinking = message.metadata.thinking
+	if (message.metadata?.thinkingSegments !== undefined) mapped.thinkingSegments = message.metadata.thinkingSegments
 	if (quotedText !== undefined) mapped.quotedText = quotedText
 	if (id !== undefined) mapped.id = id
 	if (timestamp !== undefined) mapped.timestamp = timestamp

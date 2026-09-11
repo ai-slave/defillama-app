@@ -70,10 +70,32 @@ the check runs over the trailing text-and-link run); an unfinished image is hidd
 Single `*` and `_` are left alone because they are also list markers and identifier
 characters. Finished text is always rendered exactly as written.
 
+### 1c. List repairs (`repairLists`)
+
+Models write lists the way people read them, and two of those habits are not
+Markdown. CommonMark lets only a `1.` item interrupt a paragraph, so a bold header
+followed on the next line by `4. ...` is one paragraph, and items 4 to 9 run
+together as wrapped prose. A sub-list indented by one space under `2. item` is
+shallower than the item's content column, so it splits the numbered list in two
+instead of nesting.
+
+Both repairs read the parse tree, not the source text, and rewrite only the
+affected range: a blank line goes between a paragraph and a following list that
+starts above 1, and a shallow sub-list is pushed out to its parent item's content
+column. Code and every other block are untouched, and a repair that changes nothing
+returns null so no reparse happens. These apply to finished text as well as
+streaming text, unlike tail mending.
+
 ### 2. Parser cache (`remarkIncremental`)
 
 Reuses the previous parse for every top-level block except the two trailing ones
 and reparses only the changed suffix. Details and limits are below.
+
+Raw input, detached ordered lists, and nested indented lists each have a separate
+parser cache. Sharing one cache would alternate raw and repaired prefixes; an
+early list repair would then force full-document parses on every reveal commit.
+Tail mending uses whichever stage produced the final tree, since its changes stay
+inside the open suffix. The existing full-parse fallbacks still apply.
 
 ### 3. Cached segments (`markdownSegments`)
 

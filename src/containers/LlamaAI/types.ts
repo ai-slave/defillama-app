@@ -228,8 +228,12 @@ export interface Message {
 	}
 	timestamp?: number
 	toolExecutions?: Array<ToolExecution>
-	/** Restored messages carry reasoning as one string; live and committed ones carry ordered steps. */
+	/**
+	 * Restored messages carry reasoning as one string plus segments keyed by how many tool executions
+	 * preceded each one; live and committed ones carry ordered steps.
+	 */
 	thinking?: string
+	thinkingSegments?: Array<ThinkingSegment>
 	steps?: Array<AgentStep>
 	quotedText?: string
 	messageMetadata?: MessageMetadata
@@ -262,6 +266,11 @@ export interface ToolCall {
  * One row of what the agent did, in the order it happened: a stretch of reasoning, or a tool call
  * that moves from running to done or error in place when its result lands.
  */
+export interface ThinkingSegment {
+	text: string
+	toolIndex: number
+}
+
 export type AgentStep =
 	| { kind: 'reasoning'; id: string; text: string }
 	| {

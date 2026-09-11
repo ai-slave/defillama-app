@@ -306,3 +306,22 @@ describe('messageMappers', () => {
 		).toBeUndefined()
 	})
 })
+
+describe('restored reasoning segments', () => {
+	const metadata = {
+		thinking: 'Plan.Compare.',
+		thinkingSegments: [
+			{ text: 'Plan.', toolIndex: 0 },
+			{ text: 'Compare.', toolIndex: 1 }
+		]
+	}
+
+	test('persisted and shared messages both keep the ordered segments', () => {
+		expect(mapPersistedMessage({ role: 'assistant', content: 'Answer', metadata }).thinkingSegments).toEqual(
+			metadata.thinkingSegments
+		)
+		expect(
+			mapSharedSessionMessage({ role: 'assistant', content: 'Answer', metadata, timestamp: 1 }).thinkingSegments
+		).toEqual(metadata.thinkingSegments)
+	})
+})

@@ -15,6 +15,7 @@ import { VFile } from 'vfile'
 import { mendStreamingMarkdown } from './mendStreamingMarkdown'
 import type { HeadingCounts } from './rehypeHeadingIds'
 import { createRemarkIncremental } from './remarkIncremental'
+import { detachOrderedLists, nestIndentedLists } from './repairLists'
 
 export type SegmentProcessors = {
 	/** Runs on every segment but the last. */
@@ -136,6 +137,9 @@ function segmentRanges(tree: MdastRoot): Array<[number, number]> {
 	return ranges
 }
 
+const createParser = () =>
+	unified().use(remarkParse).use(remarkGfm, { singleTilde: false }).use(createRemarkIncremental())
+
 /**
  * Render markdown as independently cached top-level segments.
  *
@@ -151,14 +155,19 @@ function segmentRanges(tree: MdastRoot): Array<[number, number]> {
  * trailing segment with nothing visible passes the caret back to the last one that has content, as
  * the caret pass would do walking a whole document.
  *
- * With `mend`, the unfinished tail is repaired from its own parse (see `mendStreamingMarkdown`) and
- * parsed again; the parser cache makes the second parse a suffix parse like the first.
+ * Each list-repair stage has its own parser cache so raw and repaired prefixes never compete.
+ * With `mend`, only the unfinished tail changes (see `mendStreamingMarkdown`); reparsing through
+ * the final active stage keeps that change inside its open suffix.
  *
  * `lastCostMs` is how long the previous `render` took. The reveal loop paces commits from it: the
  * trailing block reparses in full each time, and a long open table costs many times a paragraph.
  */
 export function createSegmentRenderer(components: Components) {
-	const parser = unified().use(remarkParse).use(remarkGfm, { singleTilde: false }).use(createRemarkIncremental())
+	const rawParser = createParser()
+	const repairs = [
+		{ repair: detachOrderedLists, parser: createParser() },
+		{ repair: nestIndentedLists, parser: createParser() }
+	]
 	let entries: Array<Entry> = []
 	let processors: SegmentProcessors | undefined
 	let lastCostMs = 0
@@ -178,7 +187,16 @@ export function createSegmentRenderer(components: Components) {
 			processors = next
 		}
 		let source = input
+		let parser = rawParser
 		let tree = parser.parse(new VFile(source)) as MdastRoot
+		for (const stage of repairs) {
+			const repaired = stage.repair(source, tree)
+			if (repaired !== null) {
+				source = repaired
+				parser = stage.parser
+				tree = parser.parse(new VFile(source)) as MdastRoot
+			}
+		}
 		if (mend) {
 			const mended = mendStreamingMarkdown(source, tree)
 			if (mended !== null) {
