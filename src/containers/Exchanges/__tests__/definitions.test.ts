@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { exchangeDefinitions } from '../definitions'
-import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from '../directoryColumns'
+import { byRealPillarOrder, buildDirectoryColumns, EXECUTION_COLUMN_IDS, REAL_PILLAR_ORDER } from '../directoryColumns'
 
 function columnsById(columns: ReturnType<typeof buildDirectoryColumns>) {
 	return Object.fromEntries(columns.map((column) => [column.id, column]))
@@ -48,5 +48,17 @@ describe('Exchanges definitions', () => {
 		for (const id of EXECUTION_COLUMN_IDS) {
 			expect(String(byId[id]?.meta?.headerHelperText)).toContain('own covered perps')
 		}
+	})
+})
+
+// The name only reads if the pillars render in order, and the payload does not promise one.
+describe('REAL pillar order', () => {
+	test('orders pillars R, E, A, L whatever order the payload arrives in', () => {
+		expect(['L', 'A', 'E', 'R'].sort(byRealPillarOrder)).toEqual(['R', 'E', 'A', 'L'])
+		expect(REAL_PILLAR_ORDER).toEqual(['R', 'E', 'A', 'L'])
+	})
+
+	test('sorts a pillar key it does not know last, never first', () => {
+		expect(['X', 'L', 'R'].sort(byRealPillarOrder)).toEqual(['R', 'L', 'X'])
 	})
 })

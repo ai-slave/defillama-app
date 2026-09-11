@@ -207,17 +207,22 @@ export interface ExchangeDirectoryRowModel {
 		markout1mBps: number | null
 		markout5mBps: number | null
 	} | null
-	/** Internal quality rank — rendered as the tier chip + within-kind position beside
-	 * the venue name, and the directory's default sort. `components` is the breakdown,
-	 * kept for a later "why this rank" surface. */
-	quality: {
-		score: number
-		rank: number
-		/** Public tier band (S–D). */
-		tier: string
-		segments: Partial<Record<ExchangeSegment, number>>
-		components: Record<string, number | null>
-	} | null
+	/** REAL score — rendered as the tier chip + within-kind position beside the venue
+	 * name, and the directory's default sort. */
+	quality: ExchangeVenueRankModel | null
+}
+
+/** The venue's REAL score: Reserves, Execution, Activity, Liquidity. `score` is the
+ * 0–100 composite and is comparable across CEX and DEX, so it is what a mixed table
+ * sorts on; `rank` is the position within the venue's own kind. `components` is the
+ * pillar breakdown, keyed R/E/A/L. */
+export interface ExchangeVenueRankModel {
+	score: number
+	rank: number
+	/** Public tier band (S–D). */
+	tier: string
+	segments: Partial<Record<ExchangeSegment, number>>
+	components: Record<string, number | null>
 }
 
 /**
@@ -655,24 +660,24 @@ export type ExchangeResearchGrouping = 'exchange' | 'venue-type' | 'segment'
 
 export type ExchangeResearchView =
 	| 'spot-exchanges'
-	| 'linear-perp-exchanges'
-	| 'inverse-perp-exchanges'
+	| 'usd-perp-exchanges'
+	| 'coin-perp-exchanges'
 	| 'volume-types'
 	| 'open-interest-btc-vs-alt'
-	| 'open-interest-linear-exchanges'
-	| 'open-interest-inverse-exchanges'
+	| 'open-interest-usd-exchanges'
+	| 'open-interest-coin-exchanges'
 	| 'open-interest-types'
 	| 'normalized-spot-exchanges'
-	| 'normalized-linear-exchanges'
-	| 'normalized-inverse-exchanges'
+	| 'normalized-usd-exchanges'
+	| 'normalized-coin-exchanges'
 	| 'normalized-types'
 	| 'normalized-segments'
 	| 'survival-spot-exchanges'
-	| 'survival-linear-exchanges'
-	| 'survival-inverse-exchanges'
+	| 'survival-usd-exchanges'
+	| 'survival-coin-exchanges'
 	| 'depth-spot-exchanges'
-	| 'depth-linear-exchanges'
-	| 'depth-inverse-exchanges'
+	| 'depth-usd-exchanges'
+	| 'depth-coin-exchanges'
 	| 'depth-types'
 	| 'btc-depth'
 
@@ -833,6 +838,8 @@ export interface RampVenueModel {
 	parentSlug: string | null
 	/** Keyed by region; `global` is always present and is the fallback. */
 	variants: Partial<Record<string, RampVariantModel>>
+	/** REAL score, null for a venue not scored yet. The table's default order. */
+	rank: ExchangeVenueRankModel | null
 }
 
 export interface RampCatalogModel {

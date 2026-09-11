@@ -1,6 +1,7 @@
 import type { MasterExchangeRegionCatalogResponse } from './master.types'
 import type {
 	ExchangeRegionStatus,
+	ExchangeVenueRankModel,
 	RampCatalogModel,
 	RampCurrencyCostModel,
 	RampTradeLegsModel,
@@ -11,7 +12,8 @@ import type {
 /** One table row: a venue resolved for the selected country, currency and size. */
 export interface RampRowModel {
 	exchange: string
-	/** Parent brand when this venue is a child entity, for the one-row-per-brand collapse. */
+	/** Parent brand when this venue is a child entity. Carried for callers that want the
+	 *  relationship; this table lists parent and child as separate rows. */
 	parentSlug: string | null
 	name: string
 	profileHref: string
@@ -30,6 +32,8 @@ export interface RampRowModel {
 	/** In and back out at the same size; null unless both directions are complete. */
 	roundTripUsd: number | null
 	roundTripFraction: number | null
+	/** REAL score, null for a venue not scored yet. The table's default order. */
+	rank: ExchangeVenueRankModel | null
 }
 
 /** The record that best represents a venue when no country is selected: one that prices the
@@ -40,7 +44,13 @@ export interface RampRowModel {
  *  larger fiat ramp as an Argentine ARS venue with no price under the USD default. */
 function preferredVariant(venue: RampVenueModel, currency: string | null, size: number): RampVariantModel | null {
 	const regions = Object.keys(venue.variants).sort()
-	const ordered = ['global', ...regions.filter((region) => region !== 'global')]
+	// A regional entity's own regions come before `global`. Its global record is the
+	// "not available outside my region" marker and it carries the SAME cost block, so a
+	// global-first order picked the unavailable twin of a venue that is perfectly
+	// available where it operates — Binance.US, OKX EU, Bitvavo and 23 others read as
+	// unavailable until a country was selected.
+	const own = venue.scope.kind === 'regional' ? venue.scope.regions : []
+	const ordered = [...own, 'global', ...regions.filter((region) => region !== 'global' && !own.includes(region))]
 		.map((region) => venue.variants[region])
 		.filter((variant): variant is RampVariantModel => Boolean(variant))
 	const key = String(size)
@@ -48,11 +58,14 @@ function preferredVariant(venue: RampVenueModel, currency: string | null, size: 
 		const row = currency ? variant.cost[currency]?.[key] : undefined
 		return row ? roundTrip(row) != null : false
 	}
+	// The last resort is `ordered[0]`, which is the global record for a global venue and
+	// the venue's own region for a regional one. Reaching for `variants.global` directly
+	// here sent five EEA venues whose own record carries no rails yet (Bitpanda, eToro,
+	// Strike, Trading 212, Bitstamp EU) back to their unavailable global twin.
 	return (
 		ordered.find(pricesCurrency) ??
 		ordered.find((variant) => currency && variant.cost[currency]?.[key]) ??
 		ordered.find((variant) => variant.rails) ??
-		venue.variants.global ??
 		ordered[0] ??
 		null
 	)
@@ -140,32 +153,30 @@ function tradeCost(trade: RampTradeLegsModel | null): number | null {
 	return trade.tradeFeeUsd + trade.slippageBuyUsd
 }
 
-/** How well a row answers the current filter, for the brand collapse below. */
-const brandRank = (row: RampRowModel) =>
-	(row.status !== 'unavailable' ? 8 : 0) +
-	(row.roundTripUsd != null ? 4 : 0) +
-	(row.cost ? 2 : 0) +
-	(row.variant.rails ? 1 : 0)
+const ACCESS_TIER: Record<ExchangeRegionStatus, number> = { available: 0, restricted: 1, leaving: 1, unavailable: 2 }
 
 /**
- * One row per brand. A brand can be listed as several entities — Binance and Binance.US,
- * Bitstamp and Bitstamp EU — and on a cost table that reads as a duplicate: the same logo
- * and name twice, one of the two usually blank. The directory nests children under the
- * parent for this reason; a flat comparison table instead keeps the entity that best answers
- * the current filter, which is the one that actually prices the trip (so Binance.US wins for
- * a US reader and Binance elsewhere). Its own name and access badge still ride along, so the
- * row never claims to be an entity it isn't.
+ * Best REAL score first among venues the selected country can fully use, with the round
+ * trip as the tiebreak: the cheapest quote is not the answer on its own, since a venue can
+ * price a trip it cannot be trusted to deliver. Rows sink instead of being hidden —
+ * restricted/leaving venues below the available ones, unavailable ones last, unscored
+ * venues under the scored, and within each tier a venue we cannot price completely (blank
+ * is not free) goes after the priced.
+ *
+ * Every listed entity is its own row, parents and regional children alike (Binance and
+ * Binance.US, OKX and OKX EU). They price different rails in different currencies, so
+ * folding a brand into one row — by collapse or by nesting — hid an answer the reader came
+ * for. Their names differ on screen, which is enough to tell them apart.
  */
-function oneRowPerBrand(rows: Array<RampRowModel>): Array<RampRowModel> {
-	const listed = new Set(rows.map((row) => row.exchange))
-	const best = new Map<string, RampRowModel>()
-	for (const row of rows) {
-		// Group only when the parent is on the table too; an orphaned child stands alone.
-		const brand = row.parentSlug && listed.has(row.parentSlug) ? row.parentSlug : row.exchange
-		const current = best.get(brand)
-		if (!current || brandRank(row) > brandRank(current)) best.set(brand, row)
-	}
-	return [...best.values()]
+function byRampOrder(left: RampRowModel, right: RampRowModel): number {
+	const tier = ACCESS_TIER[left.status] - ACCESS_TIER[right.status]
+	if (tier !== 0) return tier
+	const score = (right.rank?.score ?? -1) - (left.rank?.score ?? -1)
+	if (score !== 0) return score
+	if (left.roundTripUsd == null && right.roundTripUsd == null) return left.name.localeCompare(right.name)
+	if (left.roundTripUsd == null) return 1
+	if (right.roundTripUsd == null) return -1
+	return left.roundTripUsd - right.roundTripUsd || left.name.localeCompare(right.name)
 }
 
 export function buildRampRows(
@@ -202,20 +213,11 @@ export function buildRampRows(
 			trade,
 			tradeCostUsd: tradeCost(trade),
 			roundTripUsd,
-			roundTripFraction: roundTripUsd == null ? null : roundTripUsd / options.size
+			roundTripFraction: roundTripUsd == null ? null : roundTripUsd / options.size,
+			rank: venue.rank
 		})
 	}
-	// Cheapest round trip first. Two rows sink instead of being hidden: a venue we
-	// cannot price completely (blank is not free) and one the selected country
-	// cannot use (it stays visible so the Access badge can say why).
-	return oneRowPerBrand(rows).sort((left, right) => {
-		const blocked = Number(left.status === 'unavailable') - Number(right.status === 'unavailable')
-		if (blocked !== 0) return blocked
-		if (left.roundTripUsd == null && right.roundTripUsd == null) return left.name.localeCompare(right.name)
-		if (left.roundTripUsd == null) return 1
-		if (right.roundTripUsd == null) return -1
-		return left.roundTripUsd - right.roundTripUsd || left.name.localeCompare(right.name)
-	})
+	return rows.sort(byRampOrder)
 }
 
 /** Currencies any visible venue prices at the selected size, for the currency select.

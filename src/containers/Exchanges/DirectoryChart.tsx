@@ -13,6 +13,7 @@ import {
 	DEFAULT_DIRECTORY_OVERVIEW_TAB,
 	EXCHANGES_QUERY_KEYS,
 	getDirectoryOverviewTab,
+	segmentQueryValue,
 	type DirectoryOverviewTab,
 	type ExchangeResearchRange
 } from './queryState'
@@ -104,16 +105,10 @@ const TAB_SERIES: Record<DirectoryOverviewTab, Array<SeriesSpec>> = {
 }
 
 const UTC_DAY = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: 'UTC' })
-const UTC_TIMESTAMP = new Intl.DateTimeFormat('en', {
-	year: 'numeric',
-	month: 'short',
-	day: 'numeric',
-	hour: '2-digit',
-	minute: '2-digit',
-	hourCycle: 'h23',
-	timeZone: 'UTC',
-	timeZoneName: 'short'
-})
+
+// Inline so it beats ChartPanelBody's shared 360px floor. Toolbar + 320px body lands on
+// the 360px the summary card next to it occupies, leaving neither column with dead space.
+const CHART_BODY_HEIGHT = { minHeight: 320 }
 
 interface ResolvedSeries {
 	spec: SeriesSpec
@@ -182,7 +177,8 @@ export function DirectoryChart({ chart, range, status, showGlobalDataNotice }: D
 					value={tab}
 					onValueChange={(nextTab) => {
 						void pushShallowQuery(router, {
-							[EXCHANGES_QUERY_KEYS.directoryChart]: nextTab === DEFAULT_DIRECTORY_OVERVIEW_TAB ? undefined : nextTab
+							[EXCHANGES_QUERY_KEYS.directoryChart]:
+								nextTab === DEFAULT_DIRECTORY_OVERVIEW_TAB ? undefined : segmentQueryValue(nextTab)
 						})
 					}}
 					options={TAB_OPTIONS}
@@ -195,18 +191,18 @@ export function DirectoryChart({ chart, range, status, showGlobalDataNotice }: D
 				/* key forces a fresh chart per tab so series/axes are replaced, not merged. */
 				<React.Suspense
 					fallback={
-						<ChartPanelBodyFallback>
+						<ChartPanelBodyFallback style={CHART_BODY_HEIGHT}>
 							<LoadingIndicator />
 						</ChartPanelBodyFallback>
 					}
 				>
-					<ChartPanelBody role="img" aria-label={overviewAriaLabel(chart, resolved)}>
+					<ChartPanelBody role="img" aria-label={overviewAriaLabel(chart, resolved)} style={CHART_BODY_HEIGHT}>
 						<MultiSeriesChart
 							key={tab}
 							dataset={chartModel.dataset}
 							charts={chartModel.charts}
 							valueSymbol="$"
-							height="360px"
+							height="320px"
 							hideDefaultLegend={false}
 							exportButtons="hidden"
 							hallmarks={hallmarks}
@@ -215,6 +211,7 @@ export function DirectoryChart({ chart, range, status, showGlobalDataNotice }: D
 				</React.Suspense>
 			) : (
 				<ChartPanelBodyFallback
+					style={CHART_BODY_HEIGHT}
 					role={status === 'error' ? 'alert' : 'status'}
 					aria-live={status === 'error' ? undefined : 'polite'}
 					className={status === 'error' ? 'body-sm text-data-down' : undefined}
@@ -222,14 +219,10 @@ export function DirectoryChart({ chart, range, status, showGlobalDataNotice }: D
 					{status === 'error' ? 'Failed to load the exchange overview.' : <LoadingIndicator />}
 				</ChartPanelBodyFallback>
 			)}
-			<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-0 pb-2 body-sm text-tertiary">
-				<p>Daily volume, open positions and the liquidity backing them, summed across venues.</p>
-				{showGlobalDataNotice ? <p>Totals and chart show global data</p> : null}
-				{/* Reserve the timestamp line while data loads so only the 360px chart body swaps. */}
-				<p aria-hidden={chart ? undefined : true} className={`ml-auto ${chart ? '' : 'invisible'}`.trim()}>
-					{chart ? `Last updated ${UTC_TIMESTAMP.format(new Date(chart.lastUpdated))}` : 'Last updated'}
-				</p>
-			</div>
+			{/* The blurb and the last-updated stamp were dropped to keep the table above the fold. */}
+			{showGlobalDataNotice ? (
+				<p className="px-2 pt-0 pb-2 body-sm text-tertiary">Totals and chart show global data</p>
+			) : null}
 		</ChartPanel>
 	)
 }

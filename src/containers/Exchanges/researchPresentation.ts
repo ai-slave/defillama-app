@@ -18,10 +18,14 @@ export type ResearchPresentation = Pick<ExchangeResearchChartModel, 'title' | 'd
 const TOP_EXCHANGES =
 	'Up to eight exchanges with the largest latest observation are shown separately; remaining exchanges are grouped as Other.'
 
-const LINEAR_PERPS =
-	'USD perps (also called linear perps) are margined and settled in a quote asset such as USDT or USDC.'
+/** Said wherever normalized volume is charted: the gap it draws is a measurement limit
+ *  as often as a venue's, and the chart should not be read as an accusation. */
+const NVOL_CAVEAT =
+	'A gap to reported volume is not an accusation: real liquidity our snapshot did not reach produces the same gap.'
+
+const LINEAR_PERPS = 'USD perps are margined and settled in a quote asset such as USDT or USDC.'
 const INVERSE_PERPS =
-	'COIN perps (also called inverse perps) are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
+	'COIN perps are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
 
 export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<ResearchPresentation>> = {
 	volume: [
@@ -36,7 +40,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			valueSymbol: '$'
 		},
 		{
-			id: 'linear-perp-exchanges',
+			id: 'usd-perp-exchanges',
 			label: 'USD Perps',
 			metric: 'volume',
 			segment: 'linear_perp',
@@ -46,7 +50,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			valueSymbol: '$'
 		},
 		{
-			id: 'inverse-perp-exchanges',
+			id: 'coin-perp-exchanges',
 			label: 'COIN Perps',
 			metric: 'volume',
 			segment: 'inverse_perp',
@@ -78,7 +82,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			valueSymbol: '$'
 		},
 		{
-			id: 'open-interest-linear-exchanges',
+			id: 'open-interest-usd-exchanges',
 			label: 'USD Perps',
 			metric: 'open-interest',
 			segment: 'linear_perp',
@@ -88,7 +92,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			valueSymbol: '$'
 		},
 		{
-			id: 'open-interest-inverse-exchanges',
+			id: 'open-interest-coin-exchanges',
 			label: 'COIN Perps',
 			metric: 'open-interest',
 			segment: 'inverse_perp',
@@ -121,7 +125,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			valueSymbol: '$'
 		},
 		{
-			id: 'depth-linear-exchanges',
+			id: 'depth-usd-exchanges',
 			label: 'USD Perps',
 			metric: 'depth',
 			segment: 'linear_perp',
@@ -131,7 +135,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			valueSymbol: '$'
 		},
 		{
-			id: 'depth-inverse-exchanges',
+			id: 'depth-coin-exchanges',
 			label: 'COIN Perps',
 			metric: 'depth',
 			segment: 'inverse_perp',
@@ -171,27 +175,27 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'spot',
 			grouping: 'exchange',
 			title: 'Liquidity-normalized spot volume · Exchanges',
-			description: `Daily spot volume constrained by observed active liquidity, by exchange. ${TOP_EXCHANGES}`,
+			description: `Daily spot volume constrained by observed active liquidity, by exchange. ${NVOL_CAVEAT} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
-			id: 'normalized-linear-exchanges',
+			id: 'normalized-usd-exchanges',
 			label: 'USD Perps',
 			metric: 'normalized-volume',
 			segment: 'linear_perp',
 			grouping: 'exchange',
 			title: 'Liquidity-normalized USD perp volume · Exchanges',
-			description: `Daily USD perp volume constrained by observed active liquidity, by exchange. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
+			description: `Daily USD perp volume constrained by observed active liquidity, by exchange. ${NVOL_CAVEAT} ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
-			id: 'normalized-inverse-exchanges',
+			id: 'normalized-coin-exchanges',
 			label: 'COIN Perps',
 			metric: 'normalized-volume',
 			segment: 'inverse_perp',
 			grouping: 'exchange',
 			title: 'Liquidity-normalized COIN perp volume · Exchanges',
-			description: `Daily COIN perp volume constrained by observed active liquidity, by exchange. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
+			description: `Daily COIN perp volume constrained by observed active liquidity, by exchange. ${NVOL_CAVEAT} ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -201,8 +205,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'separate',
 			grouping: 'venue-type',
 			title: 'Liquidity-normalized volume · CEX vs DEX',
-			description:
-				'Daily normalized volume grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate.',
+			description: `Daily normalized volume grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate. ${NVOL_CAVEAT}`,
 			valueSymbol: '$'
 		},
 		{
@@ -212,7 +215,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'separate',
 			grouping: 'segment',
 			title: 'Liquidity-normalized volume · By segment',
-			description: 'Daily normalized volume grouped by market segment: spot, USD perps, and COIN perps.',
+			description: `Daily normalized volume grouped by market segment: spot, USD perps, and COIN perps. ${NVOL_CAVEAT}`,
 			valueSymbol: '$'
 		},
 		{
@@ -227,7 +230,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			valueSymbol: '%'
 		},
 		{
-			id: 'survival-linear-exchanges',
+			id: 'survival-usd-exchanges',
 			label: 'Survival · USD Perps',
 			metric: 'survival-ratio',
 			segment: 'linear_perp',
@@ -237,7 +240,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			valueSymbol: '%'
 		},
 		{
-			id: 'survival-inverse-exchanges',
+			id: 'survival-coin-exchanges',
 			label: 'Survival · COIN Perps',
 			metric: 'survival-ratio',
 			segment: 'inverse_perp',

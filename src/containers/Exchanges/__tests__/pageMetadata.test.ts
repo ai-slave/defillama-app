@@ -17,7 +17,7 @@ describe('Exchanges page metadata', () => {
 			RAMP_PAGE_METADATA.pageName
 		]).toEqual([['Exchanges'], ['CEXs'], ['Exchanges'], ['Exchanges'], ['Exchanges'], ['Exchanges']])
 		expect(EXCHANGE_RANK_PAGE_METADATA).toMatchObject({
-			title: 'Exchange Quality Ranking - DefiLlama',
+			title: 'REAL Ranking — Exchange Scores - DefiLlama',
 			canonicalUrl: '/exchanges/rank'
 		})
 

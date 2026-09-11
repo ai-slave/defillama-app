@@ -3,7 +3,7 @@ import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatUsd, formatNumber } from '~/utils/numberFormat'
-import { TIER_COLORS, TierBadge } from './directoryColumns'
+import { byRealPillarOrder, TIER_COLORS, TierBadge } from './directoryColumns'
 import type { ExchangeExecutionModel, ExchangeProfileModel, ExchangeProfileQualityModel } from './models'
 
 // Score → hue: 0 red, ~50 amber, 100 green. Moderate saturation so the fills sit
@@ -24,7 +24,7 @@ const TIER_BANDS = [
 export function TierScale({ score, tier }: { score: number; tier: string | null }) {
 	return (
 		<Tooltip
-			content={`Fixed bands on the 0 to 100 score: D below 40, C 40+, B 55+, A 70+, S 85+ (S also requires measured execution). The marker is this venue's score, ${formatNumber(score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}.`}
+			content={`Fixed bands on the 0 to 100 score; S also requires measured execution. The marker is this venue's score, ${formatNumber(score, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}.`}
 			className="w-full"
 		>
 			<span className="relative flex h-5 w-full overflow-hidden rounded-sm">
@@ -150,7 +150,7 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 			<div className="flex flex-col gap-6 md:flex-row md:items-start">
 				<div className="flex w-full shrink-0 flex-col gap-3 md:w-64">
 					<Tooltip
-						content={`Composite of the weighted pillar scores on a 0 to 100 scale.${quality.generatedAt ? ` Last computed ${quality.generatedAt}.` : ''}`}
+						content={`REAL score: a composite of the weighted Reserves, Execution, Activity and Liquidity pillars on a 0 to 100 scale.${quality.generatedAt ? ` Last computed ${quality.generatedAt}.` : ''}`}
 						className="w-fit"
 					>
 						<span className="flex items-end gap-3">
@@ -168,22 +168,24 @@ export function ProfileRanking({ profile }: { profile: ExchangeProfileModel }) {
 					</span>
 				</div>
 				<div className="flex min-w-0 flex-1 flex-col gap-2">
-					{quality.components.map((pillar) => (
-						<Fragment key={pillar.key}>
-							<PillarRow pillar={pillar} />
-							{pillar.key === 'E' &&
-								quality.execSubs.map((sub) => (
-									<ExecSubRow
-										key={`E:${sub.key}`}
-										sub={sub}
-										share={
-											sub.weight > 0 && subWeightTotal > 0 ? Math.round((sub.weight / subWeightTotal) * 100) : null
-										}
-										figure={execSubFigure(sub.key, profile.execution)}
-									/>
-								))}
-						</Fragment>
-					))}
+					{[...quality.components]
+						.sort((a, b) => byRealPillarOrder(a.key, b.key))
+						.map((pillar) => (
+							<Fragment key={pillar.key}>
+								<PillarRow pillar={pillar} />
+								{pillar.key === 'E' &&
+									quality.execSubs.map((sub) => (
+										<ExecSubRow
+											key={`E:${sub.key}`}
+											sub={sub}
+											share={
+												sub.weight > 0 && subWeightTotal > 0 ? Math.round((sub.weight / subWeightTotal) * 100) : null
+											}
+											figure={execSubFigure(sub.key, profile.execution)}
+										/>
+									))}
+							</Fragment>
+						))}
 				</div>
 			</div>
 			<p className="body-sm text-tertiary">

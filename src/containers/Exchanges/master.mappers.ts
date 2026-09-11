@@ -33,7 +33,7 @@ import type {
 	MasterVenueCore
 } from './master.types'
 import { MASTER_SEGMENTS } from './master.types'
-import { sumNullable } from './modelHelpers'
+import { byQualityRank, sumNullable } from './modelHelpers'
 import {
 	EXCHANGE_SEGMENTS,
 	type BtcExecutionRowModel,
@@ -472,20 +472,6 @@ function mapDirectoryVenue(
 		execution: directoryExecution(executionMetrics, executionBasket),
 		quality: venue.rank ?? null
 	}
-}
-
-/** Base row order: internal quality score descending, tie-broken on rank. Score is
- * comparable across CEX and DEX; `rank` is the position within a venue's own kind and
- * only breaks ties here. Unranked venues sort last, by volume — the part a column sort
- * can't express, which is why this pre-sort stays even though the table now ALSO
- * carries the ranking as a visible, sortable Rank column with a default sort (see
- * DirectoryTable sortingFor): the stable pre-order supplies the tie/fallback order
- * underneath TanStack's stable sort. */
-function byQualityRank(a: ExchangeDirectoryRowModel, b: ExchangeDirectoryRowModel): number {
-	if (a.quality && b.quality) return b.quality.score - a.quality.score || a.quality.rank - b.quality.rank
-	if (a.quality) return -1
-	if (b.quality) return 1
-	return (b.totalVolume24h ?? 0) - (a.totalVolume24h ?? 0)
 }
 
 /** Cross-venue perp OI is not part of DirectoryTotals; sum venues within one
@@ -1363,8 +1349,8 @@ export function mapMasterResearchReport(
 		return {
 			views: [
 				exchangeView('spot-exchanges', 'spot'),
-				exchangeView('linear-perp-exchanges', 'linear_perp'),
-				exchangeView('inverse-perp-exchanges', 'inverse_perp'),
+				exchangeView('usd-perp-exchanges', 'linear_perp'),
+				exchangeView('coin-perp-exchanges', 'inverse_perp'),
 				typeView('volume-types', CHART_SEGMENTS)
 			]
 		}
@@ -1372,8 +1358,8 @@ export function mapMasterResearchReport(
 
 	if (part === 'oi') {
 		const views: ExchangeResearchReportModel['views'] = [
-			exchangeView('open-interest-linear-exchanges', 'linear_perp'),
-			exchangeView('open-interest-inverse-exchanges', 'inverse_perp'),
+			exchangeView('open-interest-usd-exchanges', 'linear_perp'),
+			exchangeView('open-interest-coin-exchanges', 'inverse_perp'),
 			typeView('open-interest-types', PERP_CHART_SEGMENTS)
 		]
 		// Shown first (need-of-the-hour: compare BTC against the rest before
@@ -1403,8 +1389,8 @@ export function mapMasterResearchReport(
 	if (part === 'depth') {
 		const views: ExchangeResearchReportModel['views'] = [
 			exchangeView('depth-spot-exchanges', 'spot'),
-			exchangeView('depth-linear-exchanges', 'linear_perp'),
-			exchangeView('depth-inverse-exchanges', 'inverse_perp'),
+			exchangeView('depth-usd-exchanges', 'linear_perp'),
+			exchangeView('depth-coin-exchanges', 'inverse_perp'),
 			typeView('depth-types', CHART_SEGMENTS)
 		]
 		if (response.btc_depth) {
@@ -1413,8 +1399,8 @@ export function mapMasterResearchReport(
 				label: getResearchPresentation(part, 'btc-depth').label,
 				chart: researchChart(part, response, 'btc-depth', [
 					{ id: 'btc-spot', label: 'BTC spot depth', values: response.btc_depth.spot },
-					{ id: 'btc-linear-perp', label: 'BTC linear perp depth', values: response.btc_depth.linear_perp },
-					{ id: 'btc-inverse-perp', label: 'BTC inverse perp depth', values: response.btc_depth.inverse_perp }
+					{ id: 'btc-usd-perp', label: 'BTC USD perp depth', values: response.btc_depth.linear_perp },
+					{ id: 'btc-coin-perp', label: 'BTC COIN perp depth', values: response.btc_depth.inverse_perp }
 				])
 			})
 		}
@@ -1430,8 +1416,8 @@ export function mapMasterResearchReport(
 	return {
 		views: [
 			exchangeView('normalized-spot-exchanges', 'spot'),
-			exchangeView('normalized-linear-exchanges', 'linear_perp'),
-			exchangeView('normalized-inverse-exchanges', 'inverse_perp'),
+			exchangeView('normalized-usd-exchanges', 'linear_perp'),
+			exchangeView('normalized-coin-exchanges', 'inverse_perp'),
 			typeView('normalized-types', CHART_SEGMENTS),
 			{
 				id: 'normalized-segments',
@@ -1439,8 +1425,8 @@ export function mapMasterResearchReport(
 				chart: researchChart(part, response, 'normalized-segments', segmentLines(decoded, dayCount))
 			},
 			survivalView('survival-spot-exchanges', CHART_SEGMENTS[0]),
-			survivalView('survival-linear-exchanges', CHART_SEGMENTS[1]),
-			survivalView('survival-inverse-exchanges', CHART_SEGMENTS[2])
+			survivalView('survival-usd-exchanges', CHART_SEGMENTS[1]),
+			survivalView('survival-coin-exchanges', CHART_SEGMENTS[2])
 		]
 	}
 }
@@ -1598,7 +1584,8 @@ export function mapMasterRamps(response: MasterRampsResponse): RampCatalogModel 
 						? { kind: 'regional' as const, regions: [...venue.scope.regions] }
 						: { kind: 'global' as const },
 				parentSlug: venue.parent_entity?.slug ?? null,
-				variants
+				variants,
+				rank: venue.rank ?? null
 			}
 		})
 	}

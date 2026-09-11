@@ -1420,7 +1420,7 @@ describe('canonical research charts', () => {
 			range: '1y'
 		}
 		const report = mapMasterResearchReport('oi', response)
-		const venues = report.views.find((view) => view.id === 'open-interest-linear-exchanges')!.chart.lines
+		const venues = report.views.find((view) => view.id === 'open-interest-usd-exchanges')!.chart.lines
 		const types = report.views.find((view) => view.id === 'open-interest-types')!.chart.lines
 
 		expect(venues.map((line) => line.id)).toEqual([
@@ -1463,18 +1463,18 @@ describe('canonical research charts', () => {
 
 		expect(report.views.map((view) => view.id)).toEqual([
 			'spot-exchanges',
-			'linear-perp-exchanges',
-			'inverse-perp-exchanges',
+			'usd-perp-exchanges',
+			'coin-perp-exchanges',
 			'volume-types'
 		])
 		expect(report.views.find((view) => view.id === 'spot-exchanges')?.chart.lines).toEqual([
 			{ id: 'cex-venue', label: 'cex-venue', values: [10, 11] }
 		])
-		expect(report.views.find((view) => view.id === 'linear-perp-exchanges')?.chart.lines).toEqual([
+		expect(report.views.find((view) => view.id === 'usd-perp-exchanges')?.chart.lines).toEqual([
 			{ id: 'cex-venue', label: 'cex-venue', values: [100, 110] },
 			{ id: 'dex-venue', label: 'dex-venue', values: [20, 21] }
 		])
-		expect(report.views.find((view) => view.id === 'inverse-perp-exchanges')?.chart.lines).toEqual([
+		expect(report.views.find((view) => view.id === 'coin-perp-exchanges')?.chart.lines).toEqual([
 			{ id: 'cex-venue', label: 'cex-venue', values: [1, null] }
 		])
 		expect(report.views.find((view) => view.id === 'volume-types')?.chart.lines).toEqual([
@@ -1554,8 +1554,8 @@ describe('canonical research charts', () => {
 
 		expect(view.chart.lines).toEqual([
 			{ id: 'btc-spot', label: 'BTC spot depth', values: [100, 200] },
-			{ id: 'btc-linear-perp', label: 'BTC linear perp depth', values: [10, 20] },
-			{ id: 'btc-inverse-perp', label: 'BTC inverse perp depth', values: [1, null] }
+			{ id: 'btc-usd-perp', label: 'BTC USD perp depth', values: [10, 20] },
+			{ id: 'btc-coin-perp', label: 'BTC COIN perp depth', values: [1, null] }
 		])
 	})
 
@@ -1624,7 +1624,7 @@ describe('canonical research charts', () => {
 		}
 		const report = mapMasterResearchReport('nvol', response)
 		const spotChart = report.views.find((view) => view.id === 'survival-spot-exchanges')!.chart
-		const linearChart = report.views.find((view) => view.id === 'survival-linear-exchanges')!.chart
+		const linearChart = report.views.find((view) => view.id === 'survival-usd-exchanges')!.chart
 
 		expect(spotChart).toMatchObject({ metric: 'survival-ratio', valueSymbol: '%' })
 		expect(spotChart.lines).toEqual([{ id: 'covered', label: 'covered', values: [0.5, null, null] }])

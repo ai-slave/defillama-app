@@ -6,7 +6,7 @@ import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
-import { TIER_COLORS, TierBadge } from './directoryColumns'
+import { byRealPillarOrder, TIER_COLORS, TierBadge } from './directoryColumns'
 import type {
 	ExchangeRankingModel,
 	ExchangeRankingPillarModel,
@@ -174,7 +174,7 @@ function RankingRow({
 									row.execDelivery !== null ? (
 										<div className="flex items-center justify-between gap-3">
 											<Tooltip
-												content="Whether fills actually paid what the venue's own book promised at that size. 100 means filled at or better than quoted; a shortfall discounts the Execution pillar by up to 12%."
+												content="Did fills pay what the venue's own book promised at that size? 100 means at or better than quoted; a shortfall cuts the Execution pillar by up to 12%."
 												className="min-w-0"
 											>
 												<span className="truncate body-sm underline decoration-dotted">Delivery vs quote</span>
@@ -234,7 +234,10 @@ function PillarSection({ pillar, ranking }: { pillar: ExchangeRankingPillarModel
 	return (
 		<Card as="section" padding="md" className="flex flex-col gap-4" id={`pillar-${pillar.key}`}>
 			<div className="flex flex-wrap items-baseline gap-3">
-				<h3 className="text-lg font-semibold">{pillar.label}</h3>
+				<h3 className="text-lg font-semibold">
+					<span className="pr-2 font-jetbrains text-tertiary">{pillar.key}</span>
+					{pillar.label}
+				</h3>
 				<span className="rounded-sm bg-brand-muted px-2 py-0.5 mono-sm-bold text-primary">{pillar.weight} points</span>
 			</div>
 			<p className="body-md text-secondary">{pillar.what}</p>
@@ -276,16 +279,22 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 			</Card>
 		)
 	}
+	const pillars = [...ranking.pillars].sort((a, b) => byRealPillarOrder(a.key, b.key))
 	const rows = kind === 'all' ? ranking.rows : ranking.rows.filter((row) => row.kind === kind)
 	const insufficient = kind === 'all' ? ranking.insufficient : ranking.insufficient.filter((v) => v.kind === kind)
 	return (
 		<div className="flex flex-col gap-4">
 			<Card padding="md" className="flex flex-col gap-3">
+				{/* The four pillars spell the name: whatever the backend labels them, the keys are R, E, A, L. */}
+				<div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+					<h2 className="heading-sm">REAL Ranking</h2>
+					<p className="label-sm text-tertiary">Reserves · Execution · Activity · Liquidity</p>
+				</div>
 				<p className="body-md text-secondary">
-					One score for every exchange, built only on what we can measure or independently verify: the reserves behind
-					the venue, execution quality from tick-level fills, volume and open interest that survive verification, and
-					order-book depth we snapshot ourselves. It is not a judgement of conduct or solvency; a low pillar means weak
-					measurable evidence, and where our measurement is the limit the venue is not penalized.
+					One REAL score for every exchange, built only on what we can measure or independently verify: the reserves
+					behind the venue, execution quality from tick-level fills, volume and open interest that survive verification,
+					and order-book depth we snapshot ourselves. It is not a judgement of conduct or solvency; a low pillar means
+					weak measurable evidence, and where our measurement is the limit the venue is not penalized.
 				</p>
 				<p className="body-md text-secondary">
 					Why this design: the usual exchange ranking is a volume table, and volume is the one figure a venue reports
@@ -295,12 +304,13 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 					depth we observed. The weights put half the score on those two hardest-to-fake pillars.
 				</p>
 				<div className="flex flex-wrap items-center gap-2">
-					{ranking.pillars.map((pillar) => (
+					{pillars.map((pillar) => (
 						<a
 							key={pillar.key}
 							href={`#pillar-${pillar.key}`}
 							className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1 hover:bg-surface-elevated-1"
 						>
+							<span className="mono-sm-bold text-link">{pillar.key}</span>
 							<span className="label-sm">{pillar.label}</span>
 							<span className="mono-sm-bold text-secondary">{pillar.weight}</span>
 						</a>
@@ -332,7 +342,7 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 								<th className="pr-3 pb-1 font-normal">Exchange</th>
 								<th className="pr-3 pb-1 font-normal">Tier</th>
 								<th className="pr-4 pb-1 font-normal">Score</th>
-								{ranking.pillars.map((pillar) => (
+								{pillars.map((pillar) => (
 									<th key={pillar.key} className="pr-4 pb-1 font-normal">
 										<Tooltip content={pillar.what}>
 											<span className="underline decoration-dotted">
@@ -349,7 +359,7 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 								<RankingRow
 									key={row.slug}
 									row={row}
-									pillars={ranking.pillars}
+									pillars={pillars}
 									ranking={ranking}
 									expanded={expanded === row.slug}
 									onToggle={() => setExpanded(expanded === row.slug ? null : row.slug)}
@@ -374,10 +384,10 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 				) : null}
 			</Card>
 
-			<h2 className="px-1 pt-2 text-xl font-semibold">How the score is built</h2>
+			<h2 className="px-1 pt-2 text-xl font-semibold">How the REAL score is built</h2>
 			<Card padding="md" className="flex flex-col gap-2 body-md text-secondary">
 				<p>
-					The score is a weighted mean of four 0 to 100 pillars. Within each pillar, size is log-scaled: the largest
+					REAL is a weighted mean of its four 0 to 100 pillars. Within each pillar, size is log-scaled: the largest
 					venue scores 100 and a venue a tenth its size still scores about 70, so a mid-sized honest venue is not
 					crushed by the giants. Every credibility check lives inside the pillar whose data it questions and lowers that
 					pillar; there is no separate penalty layer.
@@ -388,8 +398,37 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 					business, so in a venue-wide score their weight scales with the venue&apos;s share of verified volume that is
 					perps; a spot-first venue is judged on its spot business.
 				</p>
+				<p className="pt-1 label-md text-primary">The checks, and the pillar each one lowers</p>
+				<ul className="flex flex-col gap-1.5 border-l-2 border-subtle pl-4">
+					<li>
+						Open interest is credited at most <b>3&times; clean reserves</b>. Positions the venue margins are bounded by
+						what it custodies, so turnover the balance sheet cannot afford is discounted.
+					</li>
+					<li>
+						Depth is capped at clean reserves, and a CEX publishing none takes a <b>&times;0.6</b> haircut: nothing
+						reconciles its book.
+					</li>
+					<li>
+						A book that never moves is decoration. Near-zero 30-day depth variation discounts the Liquidity pillar by up
+						to <b>30%</b>.
+					</li>
+					<li>
+						Where our probes established a book is substantially decorative across the whole ladder, depth credit is
+						withheld rather than capped &mdash; whatever survives a cap is the cap, not measured liquidity.
+					</li>
+					<li>
+						Execution cannot out-credit measurement: a venue with no measured Execution pillar is capped at <b>66</b> on
+						it, so missing data never beats being measured.
+					</li>
+				</ul>
+				<p>
+					CEX and DEX are ranked within their own type, because the composite renormalizes reserves and regulatory
+					inputs away for DEXes and the raw scores stop being comparable across types. Nothing self-reported that we
+					cannot check enters the score &mdash; not reputation, age, brand, listing count or following. A venue&apos;s
+					score moves when its measured behaviour moves.
+				</p>
 			</Card>
-			{ranking.pillars.map((pillar) => (
+			{pillars.map((pillar) => (
 				<PillarSection key={pillar.key} pillar={pillar} ranking={ranking} />
 			))}
 
@@ -418,9 +457,10 @@ export function ExchangeRanking({ ranking }: { ranking: ExchangeRankingModel | n
 			</Card>
 
 			<p className="px-1 pb-2 body-sm text-tertiary">
-				Scores are recomputed after listings or material data changes, reviewed, and published; there is no unreviewed
-				automatic re-ranking. Every venue&apos;s pillar breakdown is shown on its profile so the arithmetic behind every
-				tier is inspectable. The ranking, its pillars and their weights are subject to change as coverage improves.
+				REAL scores are recomputed after listings or material data changes, reviewed, and published; there is no
+				unreviewed automatic re-ranking. Every venue&apos;s pillar breakdown is shown on its profile so the arithmetic
+				behind every tier is inspectable. The ranking, its pillars and their weights are subject to change as coverage
+				improves.
 			</p>
 		</div>
 	)

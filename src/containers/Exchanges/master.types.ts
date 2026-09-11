@@ -244,21 +244,23 @@ export interface MasterDirectoryVenue extends MasterVenueCore {
 	warnings: Array<MasterWarning>
 	regional: Pick<MasterExchangeRegionManifestResponse, 'variants'> | null
 	nvol: Record<MasterSegment, MasterSegmentNormalizedVolume | null>
-	/** Internal quality rank, stamped from a manually refreshed upstream file — null
-	 * for a venue not scored yet. `score` is the 0–100 composite and IS comparable
-	 * across CEX and DEX (the popularity component applies to both), so it is what a
-	 * mixed table sorts on; `rank` is the position within the venue's own kind and only
-	 * breaks ties. `components` is the breakdown, carried for a later "why this rank"
-	 * surface. */
-	rank: {
-		score: number
-		rank: number
-		/** Public tier band (S ≥85, A ≥70, B ≥55, C ≥40, else D); S additionally
-		 * requires measured execution. */
-		tier: string
-		segments: Partial<Record<MasterSegment, number>>
-		components: Record<string, number | null>
-	} | null
+	rank: MasterVenueRank | null
+}
+
+/** The venue's REAL score (Reserves, Execution, Activity, Liquidity), stamped from a
+ * manually refreshed upstream file — null for a venue not scored yet. `score` is the
+ * 0–100 composite and IS comparable across CEX and DEX (the popularity component
+ * applies to both), so it is what a mixed table sorts on; `rank` is the position within
+ * the venue's own kind and only breaks ties. `components` is the pillar breakdown.
+ * Published on the directory and the ramps payloads alike. */
+export interface MasterVenueRank {
+	score: number
+	rank: number
+	/** Public tier band (S ≥85, A ≥70, B ≥55, C ≥40, else D); S additionally
+	 * requires measured execution. */
+	tier: string
+	segments: Partial<Record<MasterSegment, number>>
+	components: Record<string, number | null>
 }
 
 interface MasterExecutionMeasurements {
@@ -821,6 +823,7 @@ export type MasterRampVariant = MasterExchangeRegionVariant & {
 
 export interface MasterRampVenue extends MasterVenueCore {
 	variants: Partial<Record<string, MasterRampVariant>>
+	rank: MasterVenueRank | null
 }
 
 export interface MasterRampsResponse {

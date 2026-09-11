@@ -19,9 +19,11 @@ const OFF_RAMP_HELP =
 	'BTC network fee (your wallet → the venue) + taker fee + BTC book slippage + fiat withdrawal fee. Hover for the breakdown.'
 const TRADE_COST_HELP =
 	'Execution alone: taker fee + slippage walking the venue’s stored BTC book at this size. No fiat rail, no transfer.'
-/** Columns present but hidden by default — reachable from the column select, and
- *  still in the CSV. Regulator is parked until the licence data is filled in. */
-export const RAMP_HIDDEN_COLUMNS = { regulator: false }
+/** Columns present but hidden by default — reachable from the column select, and still in
+ *  the CSV. Regulator is parked until the licence data is filled in. Access is off because
+ *  an "Available" chip beside a row with no published on/off-ramp fee reads as a promise the
+ *  row does not keep; the sort still puts genuinely unavailable venues last. */
+export const RAMP_HIDDEN_COLUMNS = { regulator: false, access: false }
 
 export function buildRampColumns(options: { size: number; currency: string | null; country: string | null }) {
 	const { size, currency, country } = options
@@ -60,15 +62,23 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 								<span className="block truncate label-md">{venue.name}</span>
 							)}
 						</span>
-						{/* Availability rides with the name: it is the first thing to check and
-						    reads faster here than as a column the eye has to travel to. */}
-						<RampAccessValue row={venue} country={country} />
 					</div>
 				)
 			},
 			meta: {
 				headerClassName: 'min-w-[260px]',
 				csvValue: (row) => `${row.name} (${row.status})`
+			}
+		}),
+		columnHelper.accessor((row) => row.status, {
+			id: 'access',
+			header: 'Access',
+			enableSorting: false,
+			cell: ({ row }) => <RampAccessValue row={row.original} country={country} />,
+			meta: {
+				headerClassName: 'min-w-[110px]',
+				headerHelperText: 'Whether the venue serves the selected country, plus its own note.',
+				csvValue: (row) => row.status
 			}
 		}),
 		columnHelper.accessor((row) => row.roundTripUsd ?? undefined, {

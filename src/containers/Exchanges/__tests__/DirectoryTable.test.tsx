@@ -56,6 +56,10 @@ function row(patch: Partial<ExchangeDirectoryRowModel> = {}): ExchangeDirectoryR
 	}
 }
 
+function quality(score: number, rank: number): NonNullable<ExchangeDirectoryRowModel['quality']> {
+	return { score, rank, tier: 'A', segments: {}, components: {} }
+}
+
 function directoryCell(scope: 'spot' | 'linear_perp' | 'inverse_perp', venue: ExchangeDirectoryRowModel, id: string) {
 	const table = createTable({
 		data: [venue],
@@ -113,5 +117,26 @@ describe('exact segment scopes in directory columns', () => {
 		for (const scope of ['spot', 'linear_perp', 'inverse_perp'] as const) {
 			expect(directoryCell(scope, venue, 'volume24h').getValue()).not.toBe(625)
 		}
+	})
+
+	// Sorting by any other column is a one-way trip unless the name column can restore
+	// the ranked order the table opens with.
+	test('sorts the Exchange column by quality rank, best first, not by name', () => {
+		const column = buildDirectoryColumns('spot', true).find((candidate) => candidate.id === 'name')
+		const sortingFn = column?.sortingFn
+		expect(typeof sortingFn).toBe('function')
+		expect(column?.enableSorting).not.toBe(false)
+		expect(column?.sortDescFirst).toBe(false)
+
+		const best = { original: row({ name: 'Alpha', quality: quality(90, 1) }) }
+		const worst = { original: row({ name: 'Zeta', quality: quality(20, 2) }) }
+		const unranked = { original: row({ name: 'Beta', totalVolume24h: 10 }) }
+		const compare = sortingFn as (a: typeof best, b: typeof best, id: string) => number
+
+		expect(compare(best, worst, 'name')).toBeLessThan(0)
+		expect(compare(worst, best, 'name')).toBeGreaterThan(0)
+		// Unranked venues sink under both, whichever side of the comparison they are on.
+		expect(compare(unranked, worst, 'name')).toBeGreaterThan(0)
+		expect(compare(worst, unranked, 'name')).toBeLessThan(0)
 	})
 })

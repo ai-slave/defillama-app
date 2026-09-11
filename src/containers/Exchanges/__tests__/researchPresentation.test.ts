@@ -12,34 +12,34 @@ describe('research chart presentation', () => {
 		})
 		expect(RESEARCH_VIEWS.volume.map((view) => view.id)).toEqual([
 			'spot-exchanges',
-			'linear-perp-exchanges',
-			'inverse-perp-exchanges',
+			'usd-perp-exchanges',
+			'coin-perp-exchanges',
 			'volume-types'
 		])
 		expect(RESEARCH_VIEWS.oi.map((view) => view.id)).toEqual([
 			'open-interest-btc-vs-alt',
-			'open-interest-linear-exchanges',
-			'open-interest-inverse-exchanges',
+			'open-interest-usd-exchanges',
+			'open-interest-coin-exchanges',
 			'open-interest-types'
 		])
 		expect(RESEARCH_VIEWS.depth.map((view) => view.id)).toEqual([
 			'depth-spot-exchanges',
-			'depth-linear-exchanges',
-			'depth-inverse-exchanges',
+			'depth-usd-exchanges',
+			'depth-coin-exchanges',
 			'depth-types',
 			'btc-depth'
 		])
 		expect(RESEARCH_VIEWS.nvol.map((view) => view.id)).toEqual([
 			'normalized-spot-exchanges',
-			'normalized-linear-exchanges',
-			'normalized-inverse-exchanges',
+			'normalized-usd-exchanges',
+			'normalized-coin-exchanges',
 			'normalized-types',
 			'normalized-segments',
 			'survival-spot-exchanges',
-			'survival-linear-exchanges',
-			'survival-inverse-exchanges'
+			'survival-usd-exchanges',
+			'survival-coin-exchanges'
 		])
-		expect(getResearchPresentation('nvol', 'survival-linear-exchanges')).toMatchObject({
+		expect(getResearchPresentation('nvol', 'survival-usd-exchanges')).toMatchObject({
 			metric: 'survival-ratio',
 			segment: 'linear_perp',
 			grouping: 'exchange',
@@ -66,7 +66,7 @@ describe('research chart presentation', () => {
 
 	test('keeps URL-selected views within the metric that supports them', () => {
 		expect(resolveResearchView('depth', 'btc-depth')).toBe('btc-depth')
-		expect(resolveResearchView('nvol', 'survival-inverse-exchanges')).toBe('survival-inverse-exchanges')
+		expect(resolveResearchView('nvol', 'survival-coin-exchanges')).toBe('survival-coin-exchanges')
 		expect(resolveResearchView('volume', 'btc-depth')).toBe('spot-exchanges')
 		expect(resolveResearchView('oi', 'survival-spot-exchanges')).toBe('open-interest-btc-vs-alt')
 	})

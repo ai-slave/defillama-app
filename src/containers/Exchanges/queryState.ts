@@ -56,7 +56,8 @@ export const DEFAULT_DIRECTORY_QUERY_STATE = {
 	group: DirectoryColumnGroup
 }
 
-export const DEFAULT_DIRECTORY_OVERVIEW_TAB: DirectoryOverviewTab = 'total'
+// Literal type, not the union: comparing a tab against it has to narrow away 'total'.
+export const DEFAULT_DIRECTORY_OVERVIEW_TAB = 'total' as const satisfies DirectoryOverviewTab
 export const DEFAULT_MICA_FILTER: MicaFilter = 'all'
 export const DEFAULT_PROFILE_TAB: ProfileTab = 'markets'
 export const DEFAULT_PROFILE_RESERVES_VIEW: ProfileReservesView = 'assets'
@@ -64,6 +65,32 @@ export const DEFAULT_PROFILE_RESERVES_VIEW: ProfileReservesView = 'assets'
 // that hides when a metric started collecting is how a coverage step gets mistaken for
 // a market move.
 export const DEFAULT_RESEARCH_RANGE: ExchangeResearchRange = 'all'
+
+/**
+ * URL spelling of each segment. The payload keys stay `linear_perp`/`inverse_perp`
+ * because that is what the producer publishes, but nothing a reader sees — labels,
+ * tooltips, the address bar — says linear or inverse.
+ */
+const SEGMENT_QUERY_VALUES: Record<ExchangeSegment, string> = {
+	spot: 'spot',
+	linear_perp: 'usd_perp',
+	inverse_perp: 'coin_perp'
+}
+// A Map, not an object: this is looked up with a raw query value, and an object would
+// answer `?scope=constructor` with a function off the prototype instead of null.
+const SEGMENT_BY_QUERY_VALUE = new Map<string, ExchangeSegment>([
+	['spot', 'spot'],
+	['usd_perp', 'linear_perp'],
+	['coin_perp', 'inverse_perp']
+])
+
+export function segmentQueryValue(segment: ExchangeSegment): string {
+	return SEGMENT_QUERY_VALUES[segment]
+}
+
+export function segmentFromQueryValue(value: string | null): ExchangeSegment | null {
+	return (value ? SEGMENT_BY_QUERY_VALUE.get(value) : null) ?? null
+}
 
 export function getResearchRange(query: ParsedUrlQuery): ExchangeResearchRange {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.researchRange])
@@ -95,8 +122,7 @@ export function getDirectoryQueryState(query: ParsedUrlQuery): {
 	const kindQuery = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.directoryKind])
 	const groupQuery = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.directoryGroup])
 
-	const scope: DirectoryScope =
-		scopeQuery === 'spot' || scopeQuery === 'linear_perp' || scopeQuery === 'inverse_perp' ? scopeQuery : 'all'
+	const scope: DirectoryScope = segmentFromQueryValue(scopeQuery) ?? 'all'
 	const kind: DirectoryKind = kindQuery === 'cex' || kindQuery === 'dex' ? kindQuery : 'all'
 	const group: DirectoryColumnGroup =
 		groupQuery === 'transparency' || groupQuery === 'fees' || groupQuery === 'funding' || groupQuery === 'compliance'
@@ -108,9 +134,7 @@ export function getDirectoryQueryState(query: ParsedUrlQuery): {
 
 export function getDirectoryOverviewTab(query: ParsedUrlQuery): DirectoryOverviewTab {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.directoryChart])
-	return value === 'spot' || value === 'linear_perp' || value === 'inverse_perp'
-		? value
-		: DEFAULT_DIRECTORY_OVERVIEW_TAB
+	return segmentFromQueryValue(value) ?? DEFAULT_DIRECTORY_OVERVIEW_TAB
 }
 
 export function getMicaFilter(query: ParsedUrlQuery): MicaFilter {
@@ -137,7 +161,7 @@ export type ProfileSegmentSelection = 'all' | ExchangeSegment
 
 export function getProfileSegment(query: ParsedUrlQuery): ProfileSegmentSelection | null {
 	const value = readSingleQueryValue(query[EXCHANGES_QUERY_KEYS.profileSegment])
-	return value === 'all' || value === 'spot' || value === 'linear_perp' || value === 'inverse_perp' ? value : null
+	return value === 'all' ? 'all' : segmentFromQueryValue(value)
 }
 
 /** Selected fiat currency on /ramp; null means "cheapest rail in any currency". */
@@ -181,29 +205,32 @@ export function getResearchViewQueryKey(part: ExchangeResearchPart): string {
 	return RESEARCH_VIEW_QUERY_KEYS[part]
 }
 
+const RESEARCH_VIEWS: ReadonlyArray<ExchangeResearchView> = [
+	'spot-exchanges',
+	'usd-perp-exchanges',
+	'coin-perp-exchanges',
+	'volume-types',
+	'open-interest-btc-vs-alt',
+	'open-interest-usd-exchanges',
+	'open-interest-coin-exchanges',
+	'open-interest-types',
+	'normalized-spot-exchanges',
+	'normalized-usd-exchanges',
+	'normalized-coin-exchanges',
+	'normalized-types',
+	'normalized-segments',
+	'survival-spot-exchanges',
+	'survival-usd-exchanges',
+	'survival-coin-exchanges',
+	'depth-spot-exchanges',
+	'depth-usd-exchanges',
+	'depth-coin-exchanges',
+	'depth-types',
+	'btc-depth'
+]
+
 export function getResearchView(query: ParsedUrlQuery, part: ExchangeResearchPart): ExchangeResearchView | null {
 	const value = readSingleQueryValue(query[getResearchViewQueryKey(part)])
-	return value === 'spot-exchanges' ||
-		value === 'linear-perp-exchanges' ||
-		value === 'inverse-perp-exchanges' ||
-		value === 'volume-types' ||
-		value === 'open-interest-btc-vs-alt' ||
-		value === 'open-interest-linear-exchanges' ||
-		value === 'open-interest-inverse-exchanges' ||
-		value === 'open-interest-types' ||
-		value === 'normalized-spot-exchanges' ||
-		value === 'normalized-linear-exchanges' ||
-		value === 'normalized-inverse-exchanges' ||
-		value === 'normalized-types' ||
-		value === 'normalized-segments' ||
-		value === 'survival-spot-exchanges' ||
-		value === 'survival-linear-exchanges' ||
-		value === 'survival-inverse-exchanges' ||
-		value === 'depth-spot-exchanges' ||
-		value === 'depth-linear-exchanges' ||
-		value === 'depth-inverse-exchanges' ||
-		value === 'depth-types' ||
-		value === 'btc-depth'
-		? value
-		: null
+	if (!value) return null
+	return RESEARCH_VIEWS.find((view) => view === value) ?? null
 }

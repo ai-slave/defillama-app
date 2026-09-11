@@ -44,6 +44,8 @@ export function DirectoryHeader({ summary }: { summary: ExchangeDirectorySummary
 			padding="sm"
 			className="col-span-1 flex flex-col gap-4 xl:min-h-[360px]"
 		>
+			{/* Negative margin trims the card's gap-4 under the heading; the KPIs read as one block with it. */}
+			<h2 className="-mb-2 heading-xs">Find My Exchange</h2>
 			<details className="group">
 				<Ariakit.TooltipProvider placement="top-start">
 					<Ariakit.TooltipAnchor render={<summary className="flex flex-col" />}>

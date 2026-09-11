@@ -63,7 +63,8 @@ describe('Exchanges top-level navigation', () => {
 		expect(html.match(/aria-current="page"/g)).toHaveLength(1)
 		expect(html.match(/<h1[^>]*>/g)).toHaveLength(1)
 		expect(html).toContain(`>${page.heading}</h1>`)
-		expect(html).toContain(`>${page.description}</p>`)
+		// The directory page drops the blurb: its own "Find My Exchange" heading says the same thing.
+		expect(html.includes(`>${page.description}</p>`)).toBe(page.id !== 'exchanges')
 	})
 
 	test('uses real route links and exposes descriptions only as inactive-link tooltips', () => {
@@ -80,7 +81,7 @@ describe('Exchanges top-level navigation', () => {
 			expect(html).toContain(`data-tooltip-content="${page.description}"`)
 		}
 
-		expect(html).toContain(`>${selected.description}</p>`)
+		expect(html).not.toContain(`>${selected.description}</p>`)
 		expect(html).not.toContain('/mica')
 		expect(html).not.toContain('MiCA venues')
 		expect(html).not.toContain('role="tab"')

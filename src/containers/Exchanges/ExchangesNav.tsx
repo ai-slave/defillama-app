@@ -13,8 +13,9 @@ const EXCHANGES_PAGES = {
 	rank: {
 		href: '/exchanges/rank',
 		label: 'Ranking',
-		heading: 'Exchange quality ranking',
-		description: 'How every exchange scores on reserves, execution, activity and liquidity, and how the score is built.'
+		heading: 'REAL Ranking',
+		description:
+			'The REAL score — Reserves, Execution, Activity, Liquidity — for every exchange, and how each pillar is built.'
 	},
 	reserves: {
 		href: '/cexs',
@@ -77,7 +78,9 @@ export function ExchangesNav({ activePage, country = null }: { activePage: Excha
 				})}
 			</nav>
 			<h1 className="sr-only">{selectedPage.heading}</h1>
-			<p className="px-1 body-sm text-secondary">{selectedPage.description}</p>
+			{/* The directory carries its own visible "Find My Exchange" heading, so the blurb
+			    would only repeat it and push the table below the fold. */}
+			{activePage === 'exchanges' ? null : <p className="px-1 body-sm text-secondary">{selectedPage.description}</p>}
 		</div>
 	)
 }

@@ -291,7 +291,9 @@ if (process.argv.includes('--self-test')) {
 }
 
 const violations = policyTargetFiles(root, sourceRoot).flatMap((file) => {
-	const relative = path.relative(root, file)
+	// Posix separators: every allowlist above is written with forward slashes, and on
+	// Windows path.relative hands back backslashes, so every allowed file would fail.
+	const relative = path.relative(root, file).split(path.sep).join('/')
 	return scanSource(relative, file, fs.readFileSync(file, 'utf8'))
 })
 

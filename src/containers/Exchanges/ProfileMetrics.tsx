@@ -137,7 +137,7 @@ export function ProfileMetrics({
 			{profile.quality ? (
 				<div className="flex flex-col gap-1.5">
 					<Tooltip
-						content="Quality score from measured liquidity, verified volume, reserves, execution quality and stability. Full breakdown on the Information tab."
+						content="REAL score: Reserves, Execution, Activity, Liquidity. Full breakdown on the Information tab."
 						className="w-full"
 					>
 						<span className="flex w-full items-center gap-2">

@@ -10,6 +10,7 @@ import {
 	getResearchRange,
 	getResearchView,
 	getResearchViewQueryKey,
+	segmentQueryValue,
 	getVenueHistoryMetric,
 	withCountryParam
 } from '../queryState'
@@ -28,8 +29,12 @@ describe('Exchanges URL query state', () => {
 		})
 		// Every exact segment still round-trips, including COIN perps, which the merged
 		// view leaves out — the segment tables are unchanged.
-		for (const scope of ['spot', 'linear_perp', 'inverse_perp'] as const) {
-			expect(getDirectoryQueryState({ scope }).scope).toBe(scope)
+		for (const [value, scope] of [
+			['spot', 'spot'],
+			['usd_perp', 'linear_perp'],
+			['coin_perp', 'inverse_perp']
+		] as const) {
+			expect(getDirectoryQueryState({ scope: value }).scope).toBe(scope)
 		}
 		expect(getDirectoryOverviewTab({ chartView: 'depth' })).toBe('total')
 		expect(getMicaFilter({ product: 'options' })).toBe('all')
@@ -48,13 +53,13 @@ describe('Exchanges URL query state', () => {
 	test('reads directory and overview selections directly from the first query value', () => {
 		expect(
 			getDirectoryQueryState({
-				scope: ['inverse_perp', 'spot'],
+				scope: ['coin_perp', 'spot'],
 				venue: 'dex',
 				view: 'compliance'
 			})
 		).toEqual({ scope: 'inverse_perp', kind: 'dex', group: 'compliance' })
-		expect(getDirectoryOverviewTab({ chartView: ['linear_perp', 'spot'] })).toBe('linear_perp')
-		expect(getDirectoryOverviewTab({ chartView: 'inverse_perp' })).toBe('inverse_perp')
+		expect(getDirectoryOverviewTab({ chartView: ['usd_perp', 'spot'] })).toBe('linear_perp')
+		expect(getDirectoryOverviewTab({ chartView: 'coin_perp' })).toBe('inverse_perp')
 		// The combined-perp chart tab no longer exists.
 		expect(getDirectoryOverviewTab({ chartView: 'perp' })).toBe('total')
 	})
@@ -65,11 +70,43 @@ describe('Exchanges URL query state', () => {
 		expect(getProfileTab({ section: 'reserves' })).toBe('reserves')
 		expect(getProfileTab({ section: 'history' })).toBe('history')
 		expect(getProfileReservesView({ reservesView: 'stablecoins' })).toBe('stablecoins')
-		expect(getProfileSegment({ segment: 'linear_perp' })).toBe('linear_perp')
+		expect(getProfileSegment({ segment: 'usd_perp' })).toBe('linear_perp')
 		expect(parseExchangeCountry({ country: 'de' })).toBe('DE')
 		expect(parseExchangeCountry({ country: ['no', 'de'] })).toBe('NO')
 		expect(getVenueHistoryMetric({ history: 'oi' })).toBe('oi')
 		expect(getResearchRange({ range: '90d' })).toBe('90d')
+	})
+
+	// Nothing a reader sees says linear or inverse, the address bar included. The payload
+	// keys keep their own spelling, so the URL value and the segment are not the same string.
+	test('reads and writes USD/COIN perp segment values', () => {
+		expect(segmentQueryValue('linear_perp')).toBe('usd_perp')
+		expect(segmentQueryValue('inverse_perp')).toBe('coin_perp')
+		expect(segmentQueryValue('spot')).toBe('spot')
+
+		expect(getDirectoryQueryState({ scope: 'usd_perp' }).scope).toBe('linear_perp')
+		expect(getDirectoryOverviewTab({ chartView: 'coin_perp' })).toBe('inverse_perp')
+		expect(getProfileSegment({ segment: 'usd_perp' })).toBe('linear_perp')
+		expect(getProfileSegment({ segment: 'all' })).toBe('all')
+		expect(getProfileSegment({ segment: 'options' })).toBeNull()
+
+		// The payload spellings are not URL values and must not resolve.
+		expect(getDirectoryQueryState({ scope: 'linear_perp' }).scope).toBe('all')
+		expect(getDirectoryOverviewTab({ chartView: 'inverse_perp' })).toBe('total')
+		expect(getResearchView({ volumeView: 'usd-perp-exchanges' }, 'volume')).toBe('usd-perp-exchanges')
+		expect(getResearchView({ volumeView: 'linear-perp-exchanges' }, 'volume')).toBeNull()
+		expect(getResearchView({ volumeView: 'made-up-view' }, 'volume')).toBeNull()
+	})
+
+	// These parse a raw query value, so an object lookup would answer `?scope=constructor`
+	// with a function off the prototype and hand it on as a segment.
+	test('rejects prototype keys instead of resolving them', () => {
+		for (const value of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+			expect(getDirectoryQueryState({ scope: value }).scope).toBe('all')
+			expect(getDirectoryOverviewTab({ chartView: value })).toBe('total')
+			expect(getProfileSegment({ segment: value })).toBeNull()
+			expect(getResearchView({ volumeView: value }, 'volume')).toBeNull()
+		}
 	})
 
 	test('carries the country selection onto links between country-aware pages', () => {
@@ -82,17 +119,17 @@ describe('Exchanges URL query state', () => {
 
 	test('keeps each research chart selection independent', () => {
 		const query = {
-			volumeView: 'linear-perp-exchanges',
-			oiView: 'open-interest-inverse-exchanges',
+			volumeView: 'usd-perp-exchanges',
+			oiView: 'open-interest-coin-exchanges',
 			depthView: 'btc-depth',
-			nvolView: 'survival-linear-exchanges'
+			nvolView: 'survival-usd-exchanges'
 		}
 
 		expect(getResearchViewQueryKey('volume')).toBe('volumeView')
-		expect(getResearchView(query, 'volume')).toBe('linear-perp-exchanges')
-		expect(getResearchView(query, 'oi')).toBe('open-interest-inverse-exchanges')
+		expect(getResearchView(query, 'volume')).toBe('usd-perp-exchanges')
+		expect(getResearchView(query, 'oi')).toBe('open-interest-coin-exchanges')
 		expect(getResearchView(query, 'depth')).toBe('btc-depth')
-		expect(getResearchView(query, 'nvol')).toBe('survival-linear-exchanges')
+		expect(getResearchView(query, 'nvol')).toBe('survival-usd-exchanges')
 		expect(getResearchView({ volumeView: 'types' }, 'volume')).toBeNull()
 		// Retired combined-perp view ids fall back to the part default.
 		expect(getResearchView({ volumeView: 'perp-exchanges' }, 'volume')).toBeNull()

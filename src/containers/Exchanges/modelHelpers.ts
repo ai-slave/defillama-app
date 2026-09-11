@@ -11,6 +11,20 @@ import type {
 import { EXCHANGE_SEGMENT_LABELS, EXCHANGE_SEGMENTS } from './models'
 import { DIRECTORY_ALL_SEGMENTS, type DirectoryScope } from './queryState'
 
+/** Base row order: internal quality score descending, tie-broken on rank. Score is
+ * comparable across CEX and DEX; `rank` is the position within a venue's own kind and
+ * only breaks ties here. Unranked venues sort last, by volume — the part a column sort
+ * can't express, which is why this pre-sort stays even though the table now ALSO
+ * exposes it: the Exchange column sorts on this same comparator, so a reader who
+ * sorted by any other column can get the ranked order back. The pre-sort stays
+ * because it supplies the tie and fallback order underneath TanStack's stable sort. */
+export function byQualityRank(a: ExchangeDirectoryRowModel, b: ExchangeDirectoryRowModel): number {
+	if (a.quality && b.quality) return b.quality.score - a.quality.score || a.quality.rank - b.quality.rank
+	if (a.quality) return -1
+	if (b.quality) return 1
+	return (b.totalVolume24h ?? 0) - (a.totalVolume24h ?? 0)
+}
+
 /**
  * Right-aligned element-wise sum of two trailing-daily spark series. Each
  * series ends at its venue's most recent day, so align by the last element and

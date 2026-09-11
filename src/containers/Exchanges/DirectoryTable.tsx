@@ -14,6 +14,7 @@ import {
 	DEFAULT_DIRECTORY_QUERY_STATE,
 	EXCHANGES_QUERY_KEYS,
 	getDirectoryQueryState,
+	segmentQueryValue,
 	type DirectoryColumnGroup,
 	type DirectoryScope
 } from './queryState'
@@ -249,7 +250,7 @@ export function DirectoryTable({
 						onValueChange={(nextScope) => {
 							void pushShallowQuery(router, {
 								[EXCHANGES_QUERY_KEYS.directoryScope]:
-									nextScope === DEFAULT_DIRECTORY_QUERY_STATE.scope ? undefined : nextScope
+									nextScope === DEFAULT_DIRECTORY_QUERY_STATE.scope ? undefined : segmentQueryValue(nextScope)
 							})
 						}}
 						options={SCOPE_OPTIONS}

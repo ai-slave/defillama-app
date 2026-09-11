@@ -17,9 +17,9 @@ export const getStaticProps = withPerformanceLogging<ExchangeRankPageProps>('exc
 }))
 
 export const EXCHANGE_RANK_PAGE_METADATA = {
-	title: 'Exchange Quality Ranking - DefiLlama',
+	title: 'REAL Ranking — Exchange Scores - DefiLlama',
 	description:
-		'Every exchange scored on reserves, measured execution quality, verified activity and observed liquidity, with the methodology behind each pillar.',
+		'The REAL score: every exchange rated on Reserves, measured Execution, verified Activity and observed Liquidity, with the methodology behind each pillar.',
 	canonicalUrl: '/exchanges/rank',
 	pageName: ['Exchanges']
 }

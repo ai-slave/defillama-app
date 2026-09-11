@@ -86,7 +86,7 @@ export function RampTable({ catalog }: { catalog: RampCatalogModel }) {
 			columnVisibility={RAMP_HIDDEN_COLUMNS}
 			showColumnSelect
 			csvExportAllColumns
-			// Opens in the producer's cheapest-round-trip order; any header still re-sorts.
+			// Opens in REAL order (see buildRampRows), cost as the tiebreak; any header still re-sorts.
 			sortingState={[]}
 			csvFileName="fiat-ramp-costs"
 			skipVirtualization

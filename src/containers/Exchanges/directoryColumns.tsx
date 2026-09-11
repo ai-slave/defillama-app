@@ -28,6 +28,7 @@ import { FiatFeesValue, fiatFeeSummary } from './FiatFeesValue'
 import { MiniSparkline } from './MiniSparkline'
 import {
 	activityForScope,
+	byQualityRank,
 	depthMetricState,
 	depthTotal,
 	describeChildLiquidity,
@@ -75,7 +76,7 @@ function KindBadge({ kind }: { kind: ExchangeVenueKind }) {
 	return <span className="rounded-sm border border-subtle px-1.5 py-0.5 label-sm uppercase">{kind}</span>
 }
 
-// Quality tier chip — the public summary of the measured quality score.
+// Tier chip — the public summary of the venue's REAL score.
 // Fixed bands: S ≥85 (requires measured execution), A ≥70, B ≥55, C ≥40, else D.
 export const TIER_COLORS: Record<string, string> = {
 	S: '#c9a227',
@@ -104,6 +105,17 @@ export const RANK_PILLAR_LABELS: Record<string, string> = {
 	L: 'Liquidity'
 }
 
+/**
+ * R, E, A, L — the pillar keys spell the ranking's name, so every surface that lists
+ * them renders in this order. The payload does not promise one.
+ */
+export const REAL_PILLAR_ORDER = ['R', 'E', 'A', 'L']
+
+export function byRealPillarOrder(a: string, b: string): number {
+	// Unknown keys sort last rather than first, where a plain indexOf would put -1.
+	return (REAL_PILLAR_ORDER.indexOf(a) + 1 || 99) - (REAL_PILLAR_ORDER.indexOf(b) + 1 || 99)
+}
+
 // Pillar weights restated for the hover card only (the profile and the /exchanges/rank
 // page read them live from rank-methodology.json). Must match upstream
 // lib/rank-components.ts — R, E, A, L.
@@ -117,12 +129,10 @@ export function QualityHover({
 	quality: NonNullable<ExchangeDirectoryRowModel['quality']>
 	kind: string
 }) {
-	// Weight order, not the JSON's alphabetical key order.
-	const pillars = Object.entries(quality.components ?? {}).sort(
-		([a], [b]) => (RANK_PILLAR_WEIGHTS[b] ?? 0) - (RANK_PILLAR_WEIGHTS[a] ?? 0)
-	)
+	const pillars = Object.entries(quality.components ?? {}).sort(([a], [b]) => byRealPillarOrder(a, b))
 	return (
 		<div className="flex w-72 flex-col gap-2 py-0.5 text-left">
+			<span className="label-sm text-tertiary">REAL score</span>
 			<div className="flex items-center gap-2">
 				{quality.tier ? <TierBadge tier={quality.tier} /> : null}
 				<span className="mono-md-bold">
@@ -342,7 +352,10 @@ export function buildDirectoryColumns(
 		columnHelper.accessor((row) => `${row.name} ${row.slug} ${row.profile?.nativeToken ?? ''}`, {
 			id: 'name',
 			header: definitions.name.label,
-			enableSorting: false,
+			// Sorts on the ranking the rows arrive in, not the name: it is the only way back
+			// to the default order once a reader has sorted by some other column.
+			sortDescFirst: false,
+			sortingFn: (a, b) => byQualityRank(a.original, b.original),
 			cell: ({ row }) => {
 				const venue = row.original
 				const profileHref = withCountryParam(venue.profileHref, venue.selectedCountry)
@@ -471,12 +484,6 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.venueLinks.description
 			}
 		}),
-		columnHelper.accessor('kind', {
-			id: 'kind',
-			header: definitions.kind.label,
-			cell: ({ getValue }) => <KindBadge kind={getValue()} />,
-			meta: { headerClassName: 'w-[71px] min-w-[71px]', headerHelperText: definitions.kind.description }
-		}),
 		// Measured execution quality — tick-level fills on the shared perp basket, so it
 		// exists for linear-perp scope only today (hidden elsewhere via scope visibility).
 		// 1bp of $10k = $1, so bps figures ARE dollars per $10k trade.
@@ -496,9 +503,7 @@ export function buildDirectoryColumns(
 				// tooltip, where it can say so.
 				return (
 					<Tooltip
-						content={`Base-tier taker fee plus half the effective spread of ${formatUsd(execution?.effectiveSpreadBps ?? null, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}. Median across ${execution?.costAssets?.join(', ') ?? 'the measured'} perps over ${
-							execution?.hoursCovered ?? 'n/a'
-						}h of tick data; VIP tiers can lower the fee part.`}
+						content={`Base-tier taker fee plus half the effective spread of ${formatUsd(execution?.effectiveSpreadBps ?? null, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? 'n/a'}. Median over ${execution?.hoursCovered ?? 'n/a'}h; VIP tiers lower the fee part.`}
 						className="ms-auto w-fit"
 					>
 						<span className="underline decoration-dotted">
@@ -636,36 +641,9 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.depth2Usd.description
 			}
 		}),
-		columnHelper.accessor((row) => scopedActivity(row)?.volume24h ?? undefined, {
-			id: 'volume24h',
-			header: definitions.volume24h.label,
-			cell: ({ row, getValue }) =>
-				linkedMetric(
-					formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
-					scopedActivity(row.original)?.doubleCount?.volume
-				),
-			meta: {
-				headerClassName: 'w-[124px] min-w-[124px]',
-				align: 'end',
-				headerHelperText: definitions.volume24h.description
-			}
-		}),
-		columnHelper.accessor(
-			(row) => {
-				const activity = scopedActivity(row)
-				return fractionChange(activity?.volume24h, activity?.volumePrevious24h) ?? undefined
-			},
-			{
-				id: 'volumeChange24h',
-				header: definitions.volumeChange24h.label,
-				cell: ({ getValue }) => <Change value={getValue()} />,
-				meta: {
-					headerClassName: 'w-[102px] min-w-[102px]',
-					align: 'end',
-					headerHelperText: definitions.volumeChange24h.description
-				}
-			}
-		),
+		// Scoped tables read execution quality, then liquidity, then the open interest that
+		// liquidity backs, then volume: reported, normalized, and only then the delta. Spot
+		// has no open interest, so that scope hides these two (SCOPE_HIDDEN_COLUMN_IDS).
 		columnHelper.accessor((row) => scopedActivity(row)?.openInterestUsd ?? undefined, {
 			id: 'openInterestUsd',
 			header: definitions.openInterestUsd.label,
@@ -700,6 +678,20 @@ export function buildDirectoryColumns(
 				}
 			}
 		),
+		columnHelper.accessor((row) => scopedActivity(row)?.volume24h ?? undefined, {
+			id: 'volume24h',
+			header: definitions.volume24h.label,
+			cell: ({ row, getValue }) =>
+				linkedMetric(
+					formatUsd(getValue(), USD_LOWERCASE_MILLIONS_OPTIONS) ?? '–',
+					scopedActivity(row.original)?.doubleCount?.volume
+				),
+			meta: {
+				headerClassName: 'w-[124px] min-w-[124px]',
+				align: 'end',
+				headerHelperText: definitions.volume24h.description
+			}
+		}),
 		columnHelper.accessor((row) => scopedNvol(row)?.normalized ?? undefined, {
 			id: 'normalizedVolume',
 			header: definitions.normalizedVolume.label,
@@ -724,6 +716,22 @@ export function buildDirectoryColumns(
 				headerHelperText: definitions.normalizedVolume.description
 			}
 		}),
+		columnHelper.accessor(
+			(row) => {
+				const activity = scopedActivity(row)
+				return fractionChange(activity?.volume24h, activity?.volumePrevious24h) ?? undefined
+			},
+			{
+				id: 'volumeChange24h',
+				header: definitions.volumeChange24h.label,
+				cell: ({ getValue }) => <Change value={getValue()} />,
+				meta: {
+					headerClassName: 'w-[102px] min-w-[102px]',
+					align: 'end',
+					headerHelperText: definitions.volumeChange24h.description
+				}
+			}
+		),
 		columnHelper.accessor((row) => volumeToOpenInterest(scopedActivity(row)) ?? undefined, {
 			id: 'volumeToOi',
 			header: definitions.volumeToOi.label,
@@ -1070,6 +1078,13 @@ export function buildDirectoryColumns(
 				align: 'end',
 				headerHelperText: definitions.founded.description
 			}
+		}),
+		// Last column: type is a static label, not a measurement, and the merged view hides it.
+		columnHelper.accessor('kind', {
+			id: 'kind',
+			header: definitions.kind.label,
+			cell: ({ getValue }) => <KindBadge kind={getValue()} />,
+			meta: { headerClassName: 'w-[71px] min-w-[71px]', headerHelperText: definitions.kind.description }
 		})
 	]
 	return executionAvailable ? columns : columns.filter((column) => !EXECUTION_COLUMN_IDS.includes(column.id ?? ''))

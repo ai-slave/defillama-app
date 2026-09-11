@@ -31,6 +31,7 @@ import {
 	EXCHANGES_QUERY_KEYS,
 	getProfileSegment,
 	getProfileTab,
+	segmentQueryValue,
 	withCountryParam,
 	type ExchangeResearchRange,
 	type ProfileSegmentSelection,
@@ -156,7 +157,8 @@ function MarketsExchangeProfile({
 
 	const setSegment = (nextSegment: ProfileSegmentSelection) => {
 		void pushShallowQuery(router, {
-			[EXCHANGES_QUERY_KEYS.profileSegment]: nextSegment === defaultSegment ? undefined : nextSegment
+			[EXCHANGES_QUERY_KEYS.profileSegment]:
+				nextSegment === defaultSegment ? undefined : nextSegment === 'all' ? 'all' : segmentQueryValue(nextSegment)
 		})
 	}
 	const panelId = 'exchange-profile-panel'

@@ -107,7 +107,8 @@ function followingLiteral(node: ts.Expression): string | null {
 }
 
 for (const file of policyTargetFiles(root, sourceRoot)) {
-	const relative = path.relative(root, file)
+	// Posix separators, so the allowlists match on Windows too.
+	const relative = path.relative(root, file).split(path.sep).join('/')
 	const source = fs.readFileSync(file, 'utf8')
 	const sourceFile = ts.createSourceFile(
 		file,

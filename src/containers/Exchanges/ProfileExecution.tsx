@@ -306,7 +306,7 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 				</Tooltip>
 				{feed.degraded ? (
 					<Tooltip
-						content="This day's reading is outside the venue's normal range. That can also come from a capture problem on our side rather than the venue, which is one reason feed speed never affects the ranking."
+						content="Outside the venue's normal range — which can also mean a capture problem on our side, one reason feed speed never affects the REAL score."
 						className="w-fit"
 					>
 						<span className="rounded-sm border border-current px-1.5 py-0.5 label-sm text-warning">degraded day</span>
@@ -327,7 +327,7 @@ function FeedHealth({ feed }: { feed: ExchangeExecutionFeedHealth }) {
 				Measured from our own capture of the venue's public order book feed. Fast venues push many updates a second;
 				some venues publish on a fixed interval by design, and a quiet market updates less because nothing changes, so
 				this reflects the public feed, not order-processing speed. It is shown for transparency and never enters the
-				quality ranking.
+				REAL score.
 			</p>
 		</Card>
 	)

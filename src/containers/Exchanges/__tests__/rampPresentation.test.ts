@@ -254,6 +254,112 @@ describe('buildRampRows', () => {
 	})
 })
 
+describe('brand grouping', () => {
+	const base = { country: null, regionCatalog: REGION_CATALOG, currency: 'EUR', size: 1000 }
+
+	// A regional entity publishes a `global` record that says "not available outside my
+	// region" AND carries the same cost block. Resolving to it made every regional venue
+	// read as unavailable until a country was picked, and the brand collapse then deleted
+	// the ones whose parent was also listed.
+	const regional = (slug: string, parent: string | null, region: string) => ({
+		...response().exchanges[0],
+		slug,
+		display_name: slug,
+		scope: { kind: 'regional', regions: [region] },
+		parent_entity: parent
+			? { slug: parent, name: parent, scope: { kind: 'global' }, profile_url: `/exchange/${parent}` }
+			: null,
+		links: { ...response().exchanges[0].links, profile: `/exchange/${slug}` },
+		variants: {
+			global: variant({ status: 'unavailable' }),
+			[region]: variant({ status: 'available' })
+		}
+	})
+
+	const brand = (slug: string) => ({
+		...response().exchanges[0],
+		slug,
+		display_name: slug,
+		links: { ...response().exchanges[0].links, profile: `/exchange/${slug}` }
+	})
+
+	test('resolves a regional venue to its own region, not its unavailable global twin', () => {
+		const venue = catalog({ exchanges: [regional('bitvavo', null, 'eea')] } as Partial<MasterRampsResponse>).venues[0]
+		expect(resolveRampVariant(venue, null, REGION_CATALOG)?.status).toBe('available')
+		const [row] = buildRampRows(
+			catalog({ exchanges: [regional('bitvavo', null, 'eea')] } as Partial<MasterRampsResponse>),
+			base
+		)
+		expect(row.status).toBe('available')
+	})
+
+	test('lists a regional entity and its parent as separate rows', () => {
+		const rows = buildRampRows(
+			catalog({
+				exchanges: [brand('binance'), regional('binance-us', 'binance', 'us')]
+			} as Partial<MasterRampsResponse>),
+			base
+		)
+		expect(rows.map((row) => row.exchange).sort()).toEqual(['binance', 'binance-us'])
+	})
+
+	test('lists an orphaned child whose parent is not on the table', () => {
+		const rows = buildRampRows(
+			catalog({ exchanges: [regional('binance-us', 'binance', 'us')] } as Partial<MasterRampsResponse>),
+			base
+		)
+		expect(rows.map((row) => row.exchange)).toEqual(['binance-us'])
+	})
+})
+
+describe('REAL ordering', () => {
+	const base = { country: null, regionCatalog: REGION_CATALOG, currency: 'EUR', size: 1000 }
+
+	// One venue priced cheaper than a better-scored one: the cheap quote must not lead,
+	// since a venue can price a trip it cannot be trusted to deliver.
+	const scored = (slug: string, score: number | null, fiatFee: number) => ({
+		...response().exchanges[0],
+		slug,
+		display_name: slug,
+		links: { ...response().exchanges[0].links, profile: `/exchange/${slug}` },
+		rank: score == null ? null : { score, rank: 1, tier: 'A', segments: {}, components: {} },
+		variants: {
+			global: variant({
+				ramp: {
+					...variant().ramp,
+					cost: { EUR: { '1000': { currency: 'EUR', on_ramp: leg(fiatFee, 2), off_ramp: leg(fiatFee, 2) } } }
+				}
+			})
+		}
+	})
+
+	test('leads with the best REAL score and falls back to cost for the rest', () => {
+		const rows = buildRampRows(
+			catalog({
+				exchanges: [scored('cheap', 40, 0), scored('best', 90, 9), scored('mid', 70, 3)]
+			} as Partial<MasterRampsResponse>),
+			base
+		)
+		expect(rows.map((row) => row.exchange)).toEqual(['best', 'mid', 'cheap'])
+	})
+
+	test('sinks unscored venues under every scored one, however cheap', () => {
+		const rows = buildRampRows(
+			catalog({ exchanges: [scored('unscored', null, 0), scored('scored', 10, 9)] } as Partial<MasterRampsResponse>),
+			base
+		)
+		expect(rows.map((row) => row.exchange)).toEqual(['scored', 'unscored'])
+	})
+
+	test('keeps cheapest-first when nothing is scored', () => {
+		const rows = buildRampRows(
+			catalog({ exchanges: [scored('pricey', null, 9), scored('cheap', null, 0)] } as Partial<MasterRampsResponse>),
+			base
+		)
+		expect(rows.map((row) => row.exchange)).toEqual(['cheap', 'pricey'])
+	})
+})
+
 describe('currency selection', () => {
 	test('offers only currencies with a priced rail', () => {
 		const rows = buildRampRows(catalog(), { country: null, regionCatalog: REGION_CATALOG, currency: null, size: 1000 })
@@ -332,7 +438,7 @@ describe('no country selected', () => {
 	})
 })
 
-describe('one row per brand', () => {
+describe('brand entities', () => {
 	// Bitstamp's shape: a global entity plus an EEA child that carries its own MiCA record.
 	const brandPair = (patch: Record<string, unknown> = {}) =>
 		mapMasterRamps(
@@ -365,19 +471,19 @@ describe('one row per brand', () => {
 		expect(rows.map((row) => row.exchange)).toEqual(['venue'])
 	})
 
-	test('keeps one row for the brand where both entities are in scope', () => {
+	// Both price the trip in Germany, on their own rails: the reader came for both numbers,
+	// so neither entity is folded into the other.
+	test('keeps both entities where both are in scope', () => {
 		const rows = buildRampRows(brandPair(), {
 			country: 'DE',
 			regionCatalog: REGION_CATALOG,
 			currency: 'EUR',
 			size: 1000
 		})
-		expect(rows).toHaveLength(1)
-		// Both price the trip here, and a tie keeps the brand's main entity.
-		expect(rows[0].exchange).toBe('venue')
+		expect(rows.map((row) => row.exchange).sort()).toEqual(['venue', 'venue-eu'])
 	})
 
-	test('leaves an orphaned child alone when its parent is not listed', () => {
+	test('lists an orphaned child whose parent is not listed', () => {
 		const orphan = mapMasterRamps(
 			response({
 				exchanges: [

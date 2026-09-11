@@ -11,20 +11,19 @@ export const exchangeDefinitions = {
 		},
 		linearPerps: {
 			label: 'USD Perps',
-			description:
-				'Perpetual contracts margined and settled in a quote asset such as USDT or USDC. Also called linear perps.'
+			description: 'Perpetual contracts margined and settled in a quote asset such as USDT or USDC.'
 		},
 		inversePerps: {
 			label: 'COIN Perps',
 			description:
-				'Perpetual contracts margined and settled in the underlying coin, so collateral and PnL are denominated in that coin. Also called inverse perps.'
+				'Perpetual contracts margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
 		}
 	},
 	summary: {
 		totalVolume24h: {
 			label: 'Total Trading Volume (24h)',
 			description:
-				'Combined USD spot and perpetual volume across tracked venues over the latest 24-hour observation, built from each venue’s own per-market feeds and priced with our own quote prices. One-sided: each trade is counted once, and where a venue’s feed counts both buy and sell we halve it. Shared order books are counted once in this total.'
+				"Spot plus perpetual USD volume across tracked venues over the latest 24h, valued at each day's own volume-weighted average price. One-sided: each trade counted once, and shared order books counted once."
 		},
 		cex: {
 			label: 'CEX',
@@ -36,60 +35,54 @@ export const exchangeDefinitions = {
 		},
 		spot: {
 			label: 'Spot',
-			description:
-				'USD spot-market volume over the latest 24-hour observation. One-sided: each trade is counted once, and where a venue’s feed counts both buy and sell we halve it.'
+			description: 'USD spot-market volume over the latest 24h, counted one-sided (each trade once).'
 		},
 		linearPerp: {
 			label: 'USD Perps',
 			description:
-				'USD volume in perpetual contracts margined and settled in a quote asset such as USDT or USDC, over the latest 24-hour observation. One-sided: each trade is counted once, and where a venue’s feed counts both buy and sell we halve it.'
+				'USD volume in perps margined and settled in a quote asset such as USDT or USDC, over the latest 24h, counted one-sided (each trade once).'
 		},
 		inversePerp: {
 			label: 'COIN Perps',
 			description:
-				'USD volume in perpetual contracts margined and settled in the underlying coin (collateral and PnL denominated in that coin), over the latest 24-hour observation. One-sided: each trade is counted once, and where a venue’s feed counts both buy and sell we halve it.'
+				'USD volume in perps margined and settled in the underlying coin (collateral and PnL in that coin), over the latest 24h, counted one-sided (each trade once).'
 		},
 		spotVolume24h: {
 			label: 'Spot volume 24h',
-			description:
-				'Total USD spot trading volume across tracked venues, built from each venue’s own market feeds and priced with our own quote prices. One-sided: each trade is counted once; where a venue’s feed counts both buy and sell we halve it.'
+			description: 'Total USD spot volume across tracked venues, counted one-sided (each trade once).'
 		},
 		linearPerpVolume24h: {
 			label: 'USD perp volume 24h',
 			description:
-				'Total USD volume in USD-margined perpetuals across tracked venues. One-sided: each trade is counted once; where a venue’s feed counts both buy and sell we halve it. USD perps (also called linear perps) are margined and settled in a quote asset such as USDT or USDC.'
+				'Total USD volume in USD-margined perps across tracked venues, counted one-sided (each trade once). Margined and settled in a quote asset such as USDT or USDC.'
 		},
 		inversePerpVolume24h: {
 			label: 'COIN perp volume 24h',
 			description:
-				'Total USD volume in coin-margined perpetuals across tracked venues. One-sided: each trade is counted once; where a venue’s feed counts both buy and sell we halve it. COIN perps (also called inverse perps) are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
+				'Total USD volume in coin-margined perps across tracked venues, counted one-sided (each trade once). Collateral and PnL are denominated in the underlying coin.'
 		},
 		linearPerpOpenInterest: {
 			label: 'USD perp open interest',
-			description:
-				'USD value of one side of open positions across tracked USD perp markets, priced with our own prices. Where a venue publishes long plus short summed, we halve it.'
+			description: 'USD value of one side of open positions across tracked USD perp markets.'
 		},
 		inversePerpOpenInterest: {
 			label: 'COIN perp open interest',
-			description:
-				'USD value of one side of open positions across tracked COIN perp markets, priced with our own prices. Where a venue publishes long plus short summed, we halve it.'
+			description: 'USD value of one side of open positions across tracked COIN perp markets.'
 		},
 		reserves: {
 			label: 'Reserves',
-			description:
-				'Sum of assets held in tracked exchange reserve wallets. This measures assets, not liabilities or solvency.'
+			description: 'Assets held in tracked exchange reserve wallets. Assets only, not liabilities or solvency.'
 		},
 		venues: {
 			label: 'Venues',
-			description:
-				'Tracked venues have market activity data. Listed venues include both tracked and metadata-only entries.'
+			description: 'Tracked venues have market activity data; listed also counts metadata-only entries.'
 		}
 	},
 	directory: {
 		name: {
 			label: 'Exchange',
 			description:
-				'Venue identity. “Metadata only” means exchange information exists but market activity is not tracked.'
+				'Venue identity; sorts by the REAL ranking the table opens with. “Metadata only” means exchange information exists but market activity is not tracked.'
 		},
 		venueLinks: {
 			label: 'Links',
@@ -98,12 +91,12 @@ export const exchangeDefinitions = {
 		execCostToTrade: {
 			label: 'Cost to trade $10k',
 			description:
-				'What a $10k market order costs all in: taker fee plus half the spread you cross, measured from real fills. VIP tiers can lower the fee part.'
+				'What a $10k market order costs all in: taker fee plus half the spread you cross, measured from real fills. VIP tiers can lower the fee part. N/A until 72 measured hours.'
 		},
 		execSlippage10k: {
 			label: 'Slippage',
 			description:
-				'What fills actually paid beyond the mid price at $10k and $100k, with what the order book promised shown first. Actual far above predicted means displayed depth moves before fills land.'
+				'What fills actually paid beyond the mid price at $10k and $100k, with what the order book promised shown first. Actual far above predicted means displayed depth moves before fills land. N/A until 72 measured hours.'
 		},
 		execMarkout1m: {
 			label: 'Markout',
@@ -117,7 +110,7 @@ export const exchangeDefinitions = {
 		volume24h: {
 			label: '24h Volume',
 			description:
-				'USD trading volume over the latest 24-hour observation for the selected market scope, built from the venue’s own per-market feeds and priced with our own quote prices. One-sided: each trade is counted once, and where a venue’s feed counts both buy and sell we halve it. A dotted value carries a note that the order book is shared with, and also counted under, another venue. On a brand row it is the parent plus each regional entity that runs its own separate order book.'
+				'USD volume over the latest 24h for the selected scope, counted one-sided (each trade once). A dotted value shares its order book with another venue that also counts it; brand rows add the parent plus each own-book entity.'
 		},
 		volumeChange24h: {
 			label: 'Volume Δ',
@@ -126,12 +119,12 @@ export const exchangeDefinitions = {
 		openInterestUsd: {
 			label: 'Open Interest',
 			description:
-				'USD value of one side of open perpetual positions at the latest available snapshot, priced with our own prices. Where a venue publishes long plus short summed, we halve it. A dotted value carries a note that the order book is shared with, and also counted under, another venue. Brand rows sum only own-book children.'
+				'USD value of one side of open perp positions at the latest snapshot. A dotted value shares its order book with another venue that also counts it; brand rows sum own-book children only.'
 		},
 		volumeToOi: {
 			label: 'Vol / OI',
 			description:
-				'24h volume divided by open interest: how many times the open position base turned over in a day. Very high values can mean wash-like churn or a thin real position base. Perpetual scopes only.'
+				'24h volume divided by open interest: how many times the open position base turned over in a day. Very high values suggest wash-like churn or a thin position base. Perp scopes only.'
 		},
 		volumeToDepth: {
 			label: 'Vol / Depth',
@@ -153,7 +146,7 @@ export const exchangeDefinitions = {
 		normalizedVolume: {
 			label: 'Norm Volume',
 			description:
-				'Reported 24-hour volume (one-sided) capped at what the order book we snapshot could plausibly support. Always less than or equal to reported volume. Markets with no captured book show reported volume marked with a * (not liquidity-checked). On a brand row it sums the parent and each own-book regional entity.'
+				'Reported 24h volume (one-sided) capped at what the order book we snapshot could support, so never above reported. A * marks a market with no captured book. Brand rows sum the parent plus each own-book entity.'
 		},
 		activeLiquidity: {
 			label: 'Active liquidity',
@@ -163,7 +156,7 @@ export const exchangeDefinitions = {
 		depth2Usd: {
 			label: 'Depth ±2%',
 			description:
-				'Bid plus ask depth within 2% of mid, from our own order-book snapshots, never venue-reported. Active liquidity is the volatility-adjusted version of this.'
+				'Bid plus ask depth within 2% of mid, from our own snapshots, never venue-reported, and a floor: endpoint level caps can stop a book short. Active liquidity is the volatility-adjusted version.'
 		},
 		spotActiveLiquidity: {
 			label: 'Spot liq.',
@@ -243,12 +236,12 @@ export const exchangeDefinitions = {
 		linearPerpFee: {
 			label: 'USD Perps fees',
 			description:
-				'Regular-tier USD perp maker and taker fees, before VIP or fee-token discounts. USD perps (also called linear perps) are margined and settled in a quote asset such as USDT or USDC.'
+				'Regular-tier USD perp maker and taker fees, before VIP or fee-token discounts. USD perps are margined and settled in a quote asset such as USDT or USDC.'
 		},
 		inversePerpFee: {
 			label: 'COIN Perps fees',
 			description:
-				'Regular-tier COIN perp maker and taker fees, before VIP or fee-token discounts. COIN perps (also called inverse perps) are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
+				'Regular-tier COIN perp maker and taker fees, before VIP or fee-token discounts. COIN perps are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
 		},
 		feeToken: {
 			label: 'Fee Token',
@@ -321,8 +314,7 @@ export const exchangeDefinitions = {
 		},
 		volume24h: {
 			label: 'Volume',
-			description:
-				'USD trading volume for this market over the latest 24-hour observation, from the venue’s own market feed priced with our own quote prices. One-sided: each trade is counted once; where the venue’s feed counts both buy and sell we halve it.'
+			description: 'USD volume for this market over the latest 24h, counted one-sided (each trade once).'
 		},
 		volumeChange24h: {
 			label: 'Volume Δ',
@@ -331,7 +323,7 @@ export const exchangeDefinitions = {
 		normalizedVolume: {
 			label: 'Norm Volume',
 			description:
-				'Reported 24-hour volume (one-sided) capped at what the order book we snapshot could plausibly support. Always less than or equal to reported volume. A * marks a market with no captured book, where reported volume is shown unchecked.'
+				'Reported 24h volume (one-sided) capped at what the order book we snapshot could support, so never above reported. A * marks a market with no captured book, shown unchecked.'
 		},
 		activeLiquidity: {
 			label: 'Active liquidity',
@@ -362,8 +354,7 @@ export const exchangeDefinitions = {
 		},
 		openInterestUsd: {
 			label: 'Open Interest',
-			description:
-				'USD value of one side of open positions in this market at the latest available snapshot, priced with our own prices. Where the venue publishes long plus short summed, we halve it.'
+			description: 'USD value of one side of open positions in this market at the latest snapshot.'
 		},
 		openInterestChange24h: {
 			label: 'OI Δ',
