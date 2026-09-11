@@ -40,7 +40,7 @@ import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
 import { RetryNotice } from './RetryNotice'
 
-const MAX_LENGTH = 500
+const MAX_LENGTH = 5000
 
 type TabId = SettingsTabId
 

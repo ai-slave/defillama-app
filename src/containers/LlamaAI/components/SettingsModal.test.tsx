@@ -274,7 +274,7 @@ describe('SettingsModal instructions', () => {
 	test('derives the character count from the controlled draft', async () => {
 		await act(async () => change('Short'))
 
-		expect(document.body.textContent).toContain('5/500')
+		expect(document.body.textContent).toContain('5/5000')
 	})
 
 	test('saves once when blur and dialog close happen together', async () => {
