@@ -389,13 +389,16 @@ export function PoolApyChart({
 					onValueChange={(next) => {
 						const nextWindow = getWindowQueryValue(next)
 						writeStickyPref(POOL_CHART_WINDOW_PREFS[kind], nextWindow)
+						const windowQueryKey = getPoolSeriesQueryKey(kind, 'window')
+						const avg7dQueryKey = getPoolSeriesQueryKey(kind, 'avg7d')
+						const avg30dQueryKey = getPoolSeriesQueryKey(kind, 'avg30d')
 						void pushShallowQuery(
 							router,
 							{
-								[getPoolSeriesQueryKey(kind, 'window')]: nextWindow,
+								[windowQueryKey]: nextWindow,
 								// Clear legacy smoothing overrides when selecting Daily.
-								[getPoolSeriesQueryKey(kind, 'avg7d')]: undefined,
-								[getPoolSeriesQueryKey(kind, 'avg30d')]: undefined
+								[avg7dQueryKey]: undefined,
+								[avg30dQueryKey]: undefined
 							},
 							router.pathname
 						)
