@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 import {
 	ALL_INVESTORS_PROTOCOL_IDS,
 	getInvestorsProject,
-	getInvestorsRootRoute,
 	getInvestorsSiteForRequest,
 	getInvestorsSiteWithPathFallback
 } from '~/containers/Investors/config'
@@ -156,10 +155,11 @@ function getInvestorsRewrite(request: NextRequest) {
 
 	const { pathname } = request.nextUrl
 	const isSingleProject = site.projectIds.length === 1
+	const hasLandingPage = site.landingProjectIds.length > 1 || site.comingSoonProjectIds.length > 0
 	const destination = request.nextUrl.clone()
 
 	if (pathname === '/') {
-		destination.pathname = getInvestorsRootRoute(site)
+		destination.pathname = isSingleProject && !hasLandingPage ? `/investors/${site.defaultProjectId}` : '/investors'
 		return destination
 	}
 

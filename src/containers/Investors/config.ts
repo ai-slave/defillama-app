@@ -121,14 +121,13 @@ export function getInvestorsSiteWithPathFallback(
 	return protocol === undefined ? INVESTORS_SITES.investors : getInvestorsSiteForProject(protocol)
 }
 
-export function getInvestorsRootRoute(site: InvestorsSite): string {
-	const hasLandingPage = site.landingProjectIds.length > 1 || site.comingSoonProjectIds.length > 0
-	return site.projectIds.length === 1 && !hasLandingPage ? `/investors/${site.defaultProjectId}` : '/investors'
-}
-
-export function getInvestorsRootHideScript(): string {
-	const hosts = Object.values(INVESTORS_SITES).flatMap((site) => site.hosts)
-	return `(function(){if(location.pathname!=='/'||${JSON.stringify(hosts)}.indexOf(location.hostname)<0)return;var s=document.documentElement.style;s.visibility='hidden';setTimeout(function(){s.visibility=''},8000)})()`
+export function getInvestorsRootRedirectScript(): string {
+	const destinations = Object.fromEntries(
+		Object.values(INVESTORS_SITES).flatMap((site) =>
+			site.hosts.map((host) => [host, site.projectIds.length === 1 ? `/${site.defaultProjectId}` : '/investors'])
+		)
+	)
+	return `(function(){var d=${JSON.stringify(destinations)}[location.hostname];if(d&&location.pathname==='/')location.replace(d+location.search)})()`
 }
 
 export function getInvestorsProjects(projectIds: ReadonlyArray<InvestorsProjectId>): Array<InvestorsProject> {

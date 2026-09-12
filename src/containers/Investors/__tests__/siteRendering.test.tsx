@@ -18,8 +18,7 @@ vi.mock('next/script', () => ({
 		return <span data-website-id={props['data-website-id']} />
 	}
 }))
-const router = vi.hoisted(() => ({ pathname: '/investors', replace: vi.fn(async () => true) }))
-vi.mock('next/router', () => ({ default: { events: { on: vi.fn(), off: vi.fn() } }, useRouter: () => ({ ...router }) }))
+vi.mock('next/router', () => ({ default: { events: { on: vi.fn(), off: vi.fn() } } }))
 vi.mock('~/auth', () => ({ AuthProvider: ({ children }: { children: ReactNode }) => <>{children}</> }))
 vi.mock('@tanstack/react-query-devtools', () => ({ ReactQueryDevtools: () => null }))
 vi.mock('~/components/DashboardSaveGuard', () => ({ DashboardSaveGuard: () => null }))
@@ -94,8 +93,6 @@ describe('request-specific IR rendering and analytics', () => {
 		container = document.createElement('div')
 		document.body.appendChild(container)
 		window.location.href = 'https://defillama.com/'
-		router.pathname = '/investors'
-		router.replace.mockClear()
 		localStorage.clear()
 		sessionStorage.clear()
 		checkParentAuth.mockClear()
@@ -157,40 +154,6 @@ describe('request-specific IR rendering and analytics', () => {
 		expect(renderedAnalyticsIds.length).toBeGreaterThan(0)
 		expect(new Set(renderedAnalyticsIds)).toEqual(new Set([INVESTORS_SITES.enterprise.umamiWebsiteId]))
 		expect(checkParentAuth).toHaveBeenCalledTimes(1)
-	})
-
-	test.each([
-		['investors', '/investors'],
-		['enterprise', '/investors']
-	] as const)('swaps the main landing for the %s root without leaving /', async (siteId, route) => {
-		window.location.href = `https://${siteId}.defillama.com/`
-		router.pathname = '/'
-		document.documentElement.style.visibility = 'hidden'
-		const MainLanding = () => <div data-main-landing>main</div>
-		const view = app(undefined, MainLanding)
-		container.innerHTML = renderToString(view)
-		expect(container.querySelector('[data-main-landing]')).not.toBeNull()
-		await act(async () => {
-			root = hydrateRoot(container, view)
-		})
-		expect(container.querySelector('[data-main-landing]')).toBeNull()
-		expect(router.replace).toHaveBeenCalledWith(route, '/', { scroll: false })
-		expect(document.documentElement.style.visibility).toBe('hidden')
-		router.pathname = route
-		await act(async () => root?.render(app(siteId, Branding)))
-		expect(document.documentElement.style.visibility).toBe('')
-		expect(container.textContent).toContain(siteId === 'enterprise' ? 'Enterprise' : 'Investor Relations')
-	})
-
-	test('leaves the main landing alone on the main site and on IR pages', async () => {
-		router.pathname = '/'
-		document.documentElement.style.visibility = 'hidden'
-		const MainLanding = () => <div data-main-landing>main</div>
-		root = createRoot(container)
-		await act(async () => root?.render(app(undefined, MainLanding)))
-		expect(container.querySelector('[data-main-landing]')).not.toBeNull()
-		expect(router.replace).not.toHaveBeenCalled()
-		expect(document.documentElement.style.visibility).toBe('')
 	})
 
 	test('keeps the shell projects, navigation and scroll behavior specific to each site', async () => {
