@@ -191,13 +191,13 @@ export function EarnApyCell({ row, median }: { row: IYieldTableRow; median: Earn
 		<span className="w-[13px] shrink-0" aria-hidden />
 	)
 	const body = (
-		<span className="flex flex-col items-end leading-tight">
-			<span className="flex items-center gap-1.5 text-sm font-bold text-primary">
+		<span className="grid grid-cols-[1fr_auto] items-center justify-items-end gap-x-1.5 leading-tight">
+			<span className="text-sm font-bold text-primary">
 				<span className={showCard ? 'underline decoration-dotted' : undefined}>{pct(total)}</span>
-				{glyph}
 			</span>
+			{glyph}
 			{hasComposition ? (
-				<span className="flex gap-1 pr-[19px] body-sm whitespace-nowrap">
+				<span className="col-start-1 row-start-2 flex gap-1 body-sm whitespace-nowrap">
 					{base != null ? <span className="text-secondary">{pct(base)}</span> : null}
 					{hasPart(reward) ? <span className="text-(--yield-reward-text)">+{pct(reward)}</span> : null}
 					{hasPart(intrinsic) ? <span className="text-secondary">+{pct(intrinsic)}</span> : null}

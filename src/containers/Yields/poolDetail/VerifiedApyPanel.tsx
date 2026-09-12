@@ -126,7 +126,7 @@ export function VerifiedApyPanel({
 									<span className="pt-0.5 mono-sm text-tertiary">{ordinal(index)}</span>
 									<span className="font-mono text-xs break-words text-primary">{call.signature}</span>
 									<span
-										className={`mt-px rounded border border-medium px-1.5 label-xs tracking-widest uppercase ${
+										className={`mt-px rounded-sm border border-medium px-1.5 label-xs tracking-widest uppercase ${
 											call.executed ? 'text-link' : 'text-tertiary'
 										}`}
 									>
