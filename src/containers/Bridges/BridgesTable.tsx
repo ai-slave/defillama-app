@@ -2,25 +2,25 @@ import {
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import type { Ref } from 'react'
 import * as React from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
-import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
+import { prepareTableCsv, useSortColumnOrders } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { PercentChange } from '~/ui/PercentChange'
 import { slug } from '~/utils'
 import type { CsvCell } from '~/utils/csvCell'
 import { formatUsd } from '~/utils/numberFormat'
+
+const tableFeaturesConfig = orderedFilteredTableFeatures
 
 type BridgesTableRow = {
 	displayName: string
@@ -43,9 +43,9 @@ type BridgesTableProps = {
 	csvFileName?: string
 }
 
-const columnHelper = createColumnHelper<BridgesTableRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, BridgesTableRow>()
 
-const BRIDGES_COLUMNS = [
+const BRIDGES_COLUMNS = columnHelper.columns([
 	columnHelper.accessor('displayName', {
 		header: 'Name',
 		enableSorting: false,
@@ -139,7 +139,7 @@ const BRIDGES_COLUMNS = [
 			align: 'end'
 		}
 	})
-]
+])
 
 // key: min width of window/screen
 // values: table columns order
@@ -156,7 +156,8 @@ export function BridgesTable({
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'lastDailyVolume', desc: true }])
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns: BRIDGES_COLUMNS,
 		state: {
@@ -170,10 +171,7 @@ export function BridgesTable({
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater))
 	})
 
 	React.useEffect(() => {
@@ -195,5 +193,5 @@ export function BridgesTable({
 		[csvFileName, instance]
 	)
 
-	return <VirtualTable instance={instance} />
+	return <VirtualTable table={instance} />
 }

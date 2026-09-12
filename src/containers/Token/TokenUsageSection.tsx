@@ -1,13 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-	type PaginationState,
-	type SortingState,
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	useReactTable
-} from '@tanstack/react-table'
+import { createColumnHelper, type PaginationState, type SortingState } from '@tanstack/react-table'
 import dynamic from 'next/dynamic'
 import { startTransition, Suspense, useMemo, useState } from 'react'
 import { ChartPngExportButton } from '~/components/ChartExport/ChartPngExportButton'
@@ -16,6 +8,7 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocolsByTokenClient } from '~/containers/TokenUsage/api'
@@ -36,18 +29,20 @@ import { DEFAULT_TABLE_PAGE_SIZE, resolveUpdater, TABLE_PAGE_SIZE_OPTIONS } from
 import { TokenPrivateSectionGate, useTokenPrivateSectionAccess } from './TokenPrivateSectionGate'
 import { buildTokenUsageRows, filterTokenUsageRows, type TokenUsageSectionRow } from './TokenUsageSection.utils'
 
+const tableFeaturesConfig = paginatedTableFeatures
+
 type TokenUsageView = 'list' | 'treemap'
 
 const DEFAULT_SORTING: SortingState = [{ desc: true, id: 'amountUsd' }]
 const TOKEN_USAGE_SECTION_ID = 'token-usage'
-const columnHelper = createColumnHelper<TokenUsageSectionRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokenUsageSectionRow>()
 const TOKEN_USAGE_NAME_MAX_WIDTH = 'max-sm:max-w-[clamp(160px,40vw,260px)]'
 
 const TreemapChart = dynamic(() => import('~/components/ECharts/TreemapChart'), {
 	loading: () => <div className="min-h-[480px]" />
 }) as React.FC<TreemapChartProps>
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -92,7 +87,7 @@ const columns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 async function fetchTokenUsageRows(
 	tokenSymbol: string,
@@ -170,7 +165,7 @@ export function TokenUsageSection({
 		[canonicalTreemapTreeData, selectedTreemapProtocolSet]
 	)
 
-	const table = useReactTable({
+	const table = usePaginatedTable({
 		data: filteredRows,
 		columns,
 		state: {
@@ -183,9 +178,6 @@ export function TokenUsageSection({
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => startTransition(() => setSorting(resolveUpdater(updater, sorting))),
 		onPaginationChange: (updater) => startTransition(() => setPagination(resolveUpdater(updater, pagination))),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
 		autoResetPageIndex: false
 	})
 

@@ -2,19 +2,17 @@ import {
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
-import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
+import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
@@ -23,9 +21,11 @@ import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import type { BridgeChainTableRow } from './utils'
 
-const columnHelper = createColumnHelper<BridgeChainTableRow>()
+const tableFeaturesConfig = orderedFilteredTableFeatures
 
-const bridgeChainsColumn = [
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, BridgeChainTableRow>()
+
+const bridgeChainsColumn = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -135,7 +135,7 @@ const bridgeChainsColumn = [
 			align: 'end'
 		}
 	})
-]
+])
 
 const bridgeChainsColumnOrders: ColumnOrdersByBreakpoint = {
 	0: [
@@ -163,7 +163,8 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'prevDayNetFlow', desc: true }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns: bridgeChainsColumn,
 		state: {
@@ -177,10 +178,7 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -206,7 +204,7 @@ export function BridgeChainsTable({ data }: { data: Array<BridgeChainTableRow> }
 				</label>
 				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'bridge-chains' })} smol size="md" />
 			</PanelHeader>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }

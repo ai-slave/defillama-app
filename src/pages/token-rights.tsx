@@ -1,16 +1,11 @@
 import * as Ariakit from '@ariakit/react'
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { matchSorter } from 'match-sorter'
 import Link from 'next/link'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { AdapterChainProtocol } from '~/containers/AdapterMetrics/api.types'
@@ -38,6 +33,8 @@ import {
 	findTokenDirectoryRecordByGeckoId,
 	type TokenDirectory
 } from '~/utils/tokenDirectory'
+
+const tableFeaturesConfig = displayTableFeatures
 
 interface TokenRightsListItem {
 	name: string
@@ -87,7 +84,7 @@ type TokenRightsLinkResolution =
 	| { type: 'linked'; item: TokenRightsListItem }
 	| { type: 'skipped'; entry: SkippedTokenRightsEntry }
 
-const columnHelper = createColumnHelper<TokenRightsListItem>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokenRightsListItem>()
 
 const TOKEN_RIGHTS_PILL_TOOLTIPS = {
 	feeSwitch:
@@ -453,15 +450,14 @@ function TokenRightsPage({
 	)
 	const stats = useMemo(() => getTokenRightsStats(filteredProtocols), [filteredProtocols])
 	const latestUpdated = useMemo(() => getLatestUpdatedMonth(protocols), [protocols])
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		data: filteredProtocols,
 		columns,
 		state: { sorting, columnVisibility: { holdersRevenue24h: holdersRevenueAvailable } },
 		defaultColumn: { sortUndefined: 'last' },
 		enableSortingRemoval: true,
-		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: (updater) => startTransition(() => setSorting(updater))
 	})
 
 	const toggleFilter = (filter: TokenRightsFilter) => {
@@ -527,7 +523,7 @@ function TokenRightsPage({
 					</TableToolbar>
 
 					<div className="overflow-hidden">
-						<VirtualTable instance={table} rowSize={58} skipVirtualization />
+						<VirtualTable table={table} rowSize={58} skipVirtualization />
 						{filteredProtocols.length === 0 ? (
 							<div className="flex min-h-[180px] items-center justify-center border-t border-subtle px-4 text-center body-sm text-secondary">
 								No protocols found for these filters
@@ -611,7 +607,7 @@ function getLatestUpdatedMonth(protocols: Array<TokenRightsListItem>): string | 
 	return latestTime ? formatMonthYear(latestTime, { input: 'milliseconds' }) : null
 }
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Protocol',
 		enableSorting: false,
@@ -733,7 +729,7 @@ const columns = [
 			headerHelperText: 'Whether token holders have exposure to protocol or company revenue similar to equity'
 		}
 	})
-]
+])
 
 function TokenPills({ tokens }: { tokens: Array<string> }) {
 	return (

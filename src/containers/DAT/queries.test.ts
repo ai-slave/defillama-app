@@ -2,15 +2,16 @@ import type { Table } from '@tanstack/react-table'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { fetchDATInstitutionDetail, fetchDATInstitutions, toUnixMsTimestamp } from './api'
 import type { IDATInstitutionDetailResponse, IDATInstitutionsResponse, IDATTransaction } from './api.types'
 import { DATCompany } from './Company'
 import { buildDATTransactionRowsByAsset, getDATCompanyData, getDATOverviewData } from './queries'
 import type { IDATTransactionRow } from './types'
 
-const captured = vi.hoisted(() => ({ table: null as Table<IDATTransactionRow> | null }))
+const captured = vi.hoisted(() => ({ table: null as Table<SearchTableFeatures, IDATTransactionRow> | null }))
 vi.mock('~/components/Table/Table', () => ({
-	VirtualTable: ({ instance }: { instance: Table<IDATTransactionRow> }) => {
+	VirtualTable: ({ table: instance }: { table: Table<SearchTableFeatures, IDATTransactionRow> }) => {
 		captured.table = instance
 		return null
 	}

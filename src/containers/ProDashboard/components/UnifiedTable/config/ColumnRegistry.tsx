@@ -15,6 +15,7 @@ import { COLUMN_DICTIONARY_BY_ID } from '../../../unifiedTable/config/columnDict
 import { FILTERED_SHARE_METRIC_KEYS, getFilteredShareColumnId } from '../../../unifiedTable/config/filteredShareColumns'
 import type { CustomColumnDefinition } from '../../../unifiedTable/config/types'
 import type { ProtocolTableMetrics } from '../../../unifiedTable/contracts'
+import type { tableFeaturesConfig } from '../core/useUnifiedTable'
 import type { ProtocolTableRow } from '../types'
 import { createCustomColumnDef, validateCustomColumnOnLoad } from '../utils/customColumns'
 
@@ -62,7 +63,7 @@ const renderRatio = (value: number | null | undefined) => {
 
 type MetricKey = keyof ProtocolTableMetrics
 const renderMetricCell = (
-	ctx: CellContext<ProtocolTableRow, unknown>,
+	ctx: CellContext<typeof tableFeaturesConfig, ProtocolTableRow, unknown>,
 	key: MetricKey,
 	renderer: (value: number | null | undefined) => ReactNode
 ) => renderer(ctx.row.original.metrics[key])
@@ -72,7 +73,10 @@ const metricAccessor =
 	(row: ProtocolTableRow): number | undefined =>
 		row.metrics[key] ?? undefined
 
-const buildUsdMetricColumn = (key: MetricKey, header: string): ColumnDef<ProtocolTableRow> => ({
+const buildUsdMetricColumn = (
+	key: MetricKey,
+	header: string
+): ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow> => ({
 	id: key,
 	header,
 	accessorFn: metricAccessor(key),
@@ -80,7 +84,10 @@ const buildUsdMetricColumn = (key: MetricKey, header: string): ColumnDef<Protoco
 	cell: (ctx) => renderMetricCell(ctx, key, renderUsd)
 })
 
-const buildPercentMetricColumn = (key: MetricKey, header: string): ColumnDef<ProtocolTableRow> => ({
+const buildPercentMetricColumn = (
+	key: MetricKey,
+	header: string
+): ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow> => ({
 	id: key,
 	header,
 	accessorFn: metricAccessor(key),
@@ -88,7 +95,10 @@ const buildPercentMetricColumn = (key: MetricKey, header: string): ColumnDef<Pro
 	cell: (ctx) => renderMetricCell(ctx, key, renderPercent)
 })
 
-const buildPercentChangeColumn = (key: MetricKey, header: string): ColumnDef<ProtocolTableRow> => ({
+const buildPercentChangeColumn = (
+	key: MetricKey,
+	header: string
+): ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow> => ({
 	id: key,
 	header,
 	accessorFn: metricAccessor(key),
@@ -96,7 +106,10 @@ const buildPercentChangeColumn = (key: MetricKey, header: string): ColumnDef<Pro
 	cell: (ctx) => renderMetricCell(ctx, key, renderPercentChangeCell)
 })
 
-const buildRatioMetricColumn = (key: MetricKey, header: string): ColumnDef<ProtocolTableRow> => ({
+const buildRatioMetricColumn = (
+	key: MetricKey,
+	header: string
+): ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow> => ({
 	id: key,
 	header,
 	accessorFn: metricAccessor(key),
@@ -112,10 +125,10 @@ export const getUnifiedTableColumns = ({
 	customColumns: Array<CustomColumnDefinition> | undefined
 	columnIds: ReadonlyArray<string>
 	earningsAreEstimated: boolean
-}): Array<ColumnDef<ProtocolTableRow>> => {
+}): Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> => {
 	const requestedColumnIds = new Set(columnIds)
 	requestedColumnIds.add('name')
-	const columns: Array<ColumnDef<ProtocolTableRow>> = [
+	const columns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		{
 			id: 'name',
 			header: 'Name',
@@ -269,7 +282,7 @@ export const getUnifiedTableColumns = ({
 		buildUsdMetricColumn('fdv', 'FDV')
 	]
 
-	const volumeColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const volumeColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildUsdMetricColumn('volume_7d', '7d Volume'),
 		buildUsdMetricColumn('volume_30d', '30d Volume'),
 		buildUsdMetricColumn('volume_90d', '90d Volume'),
@@ -285,7 +298,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('volume24hShare', '24h Chain Volume Share')
 	]
 
-	const feesColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const feesColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildUsdMetricColumn('fees_7d', '7d Fees'),
 		buildUsdMetricColumn('fees_30d', '30d Fees'),
 		buildUsdMetricColumn('fees_90d', '90d Fees'),
@@ -321,7 +334,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentChangeColumn('feesChangeYtd', 'YTD Fees Change')
 	]
 
-	const revenueColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const revenueColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildUsdMetricColumn('revenue_7d', '7d Revenue'),
 		buildUsdMetricColumn('revenue_30d', '30d Revenue'),
 		buildUsdMetricColumn('revenue_90d', '90d Revenue'),
@@ -341,7 +354,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentChangeColumn('revenueChangeYtd', 'YTD Revenue Change')
 	]
 
-	const earningsColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const earningsColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildUsdMetricColumn('earnings24h', earningsAreEstimated ? 'Est. 24h Earnings' : '24h Earnings'),
 		buildUsdMetricColumn('earnings7d', earningsAreEstimated ? 'Est. 7d Earnings' : '7d Earnings'),
 		buildUsdMetricColumn('earnings30d', earningsAreEstimated ? 'Est. 30d Earnings' : '30d Earnings'),
@@ -360,7 +373,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentChangeColumn('emissionsChange30dOver30d', '30d over 30d Emissions Change')
 	]
 
-	const perpsColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const perpsColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildUsdMetricColumn('perps_volume_7d', '7d Perps Volume'),
 		buildUsdMetricColumn('perps_volume_30d', '30d Perps Volume'),
 		buildUsdMetricColumn('perps_volume_90d', '90d Perps Volume'),
@@ -374,7 +387,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('perps_volume_dominance_24h', '24h Perps Volume Share')
 	]
 
-	const dexAggregatorColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const dexAggregatorColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildUsdMetricColumn('aggregators_volume_24h', '24h Aggregator Volume'),
 		buildUsdMetricColumn('aggregators_volume_7d', '7d Aggregator Volume'),
 		buildUsdMetricColumn('aggregators_volume_30d', '30d Aggregator Volume'),
@@ -390,7 +403,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('aggregators_volume_marketShare7d', '7d Aggregator Volume Share')
 	]
 
-	const derivativesAggregatorColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const derivativesAggregatorColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildUsdMetricColumn('derivatives_aggregators_volume_24h', '24h Derivatives Aggregator Volume'),
 		buildUsdMetricColumn('derivatives_aggregators_volume_7d', '7d Derivatives Aggregator Volume'),
 		buildUsdMetricColumn('derivatives_aggregators_volume_30d', '30d Derivatives Aggregator Volume'),
@@ -410,7 +423,7 @@ export const getUnifiedTableColumns = ({
 		)
 	]
 
-	const bridgeAggregatorColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const bridgeAggregatorColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildUsdMetricColumn('bridgeAggregatorVolume24h', '24h Bridge Aggregator Volume'),
 		buildUsdMetricColumn('bridgeAggregatorVolume7d', '7d Bridge Aggregator Volume'),
 		buildUsdMetricColumn('bridgeAggregatorVolume30d', '30d Bridge Aggregator Volume'),
@@ -419,7 +432,7 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('bridgeAggregatorVolumeDominance24h', '24h Bridge Aggregator Volume Share')
 	]
 
-	const optionsColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const optionsColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildUsdMetricColumn('options_volume_24h', '24h Options Volume'),
 		buildUsdMetricColumn('options_volume_7d', '7d Options Volume'),
 		buildUsdMetricColumn('options_volume_30d', '30d Options Volume'),
@@ -437,21 +450,22 @@ export const getUnifiedTableColumns = ({
 		buildPercentMetricColumn('options_volume_dominance_24h', '24h Options Volume Share')
 	]
 
-	const ratioColumns: Array<ColumnDef<ProtocolTableRow>> = [
+	const ratioColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 		buildRatioMetricColumn('mcaptvl', 'Mcap / TVL'),
 		buildRatioMetricColumn('pf', 'P/F'),
 		buildRatioMetricColumn('ps', 'P/S')
 	]
-	const filteredShareColumns: Array<ColumnDef<ProtocolTableRow>> = FILTERED_SHARE_METRIC_KEYS.map((metric) => {
-		const id = getFilteredShareColumnId(metric)
-		return {
-			id,
-			header: COLUMN_DICTIONARY_BY_ID.get(id)?.header ?? id,
-			accessorFn: (row) => row.filteredShares[metric] ?? undefined,
-			meta: { align: 'end' },
-			cell: ({ row }) => renderPercent(row.original.filteredShares[metric])
-		}
-	})
+	const filteredShareColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> =
+		FILTERED_SHARE_METRIC_KEYS.map((metric) => {
+			const id = getFilteredShareColumnId(metric)
+			return {
+				id,
+				header: COLUMN_DICTIONARY_BY_ID.get(id)?.header ?? id,
+				accessorFn: (row) => row.filteredShares[metric] ?? undefined,
+				meta: { align: 'end' },
+				cell: ({ row }) => renderPercent(row.original.filteredShares[metric])
+			}
+		})
 
 	const allMetricColumns = [
 		...volumeColumns,
@@ -490,7 +504,7 @@ export const getUnifiedTableColumns = ({
 		return dictEntry?.group === 'meta'
 	})
 
-	const columnsByGroup = new Map<MetricGroup, Array<ColumnDef<ProtocolTableRow>>>()
+	const columnsByGroup = new Map<MetricGroup, Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>>>()
 
 	for (const col of allColumns) {
 		const columnId = String(col.id)
@@ -506,7 +520,7 @@ export const getUnifiedTableColumns = ({
 		}
 	}
 
-	const groupedColumns: Array<ColumnDef<ProtocolTableRow>> = []
+	const groupedColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = []
 
 	if (nameColumn) {
 		groupedColumns.push(nameColumn)
@@ -543,7 +557,7 @@ export const getUnifiedTableColumns = ({
 		})
 	}
 
-	const validCustomColumns: Array<ColumnDef<ProtocolTableRow>> = []
+	const validCustomColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = []
 	for (const definition of customColumns ?? []) {
 		if (!requestedColumnIds.has(definition.id) || !validateCustomColumnOnLoad(definition).isValid) continue
 		validCustomColumns.push(createCustomColumnDef({ definition }))

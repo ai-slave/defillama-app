@@ -1,13 +1,14 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { Parser } from 'expr-eval'
 import { PercentChange } from '~/ui/PercentChange'
-import { formatRatio, formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
 import {
 	isProtocolTableMetricKey,
 	UNIFIED_TABLE_COLUMN_DICTIONARY
 } from '../../../unifiedTable/config/columnDictionary'
 import type { CustomColumnDefinition } from '../../../unifiedTable/config/types'
 import type { ProtocolTableMetrics } from '../../../unifiedTable/contracts'
+import type { tableFeaturesConfig } from '../core/useUnifiedTable'
 import type { ProtocolTableRow } from '../types'
 
 const parser = new Parser()
@@ -358,7 +359,7 @@ export function createCustomColumnDef({
 	definition
 }: {
 	definition: CustomColumnDefinition
-}): ColumnDef<ProtocolTableRow> {
+}): ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow> {
 	const renderer = getRenderer(definition.format)
 
 	return {

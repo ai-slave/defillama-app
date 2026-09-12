@@ -2,17 +2,18 @@ import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { formatUsd } from '~/utils/numberFormat'
 import type { IProtocolTotalValueLostInHacksByProtocol } from './types'
 
 type ProtocolRow = IProtocolTotalValueLostInHacksByProtocol['protocols'][number]
-const columnHelper = createColumnHelper<ProtocolRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, ProtocolRow>()
 
 const DEFAULT_SORTING_STATE = [{ id: 'Net User Loss', desc: true }]
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.name, {
 		id: 'Name',
 		header: 'Name',
@@ -69,7 +70,7 @@ const columns = [
 			headerHelperText: 'Total Hacked - Returned Funds'
 		}
 	})
-]
+])
 
 const columnIds: Array<string> = columns.map((c) => c.id).filter((id): id is string => id != null)
 
@@ -106,7 +107,7 @@ export function TotalValueLostContainer({ protocols }: IProtocolTotalValueLostIn
 				/>
 			)}
 			csvFileName="total-value-lost-in-hacks"
-			sortingState={DEFAULT_SORTING_STATE}
+			initialSorting={DEFAULT_SORTING_STATE}
 		/>
 	)
 }

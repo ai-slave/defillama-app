@@ -1,16 +1,11 @@
-import {
-	type ColumnFiltersState,
-	type ColumnOrderState,
-	type ExpandedState,
-	type RowData,
-	type VisibilityState,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
-	type SortingState,
-	type TableOptions,
-	useReactTable
+import type {
+	ColumnFiltersState,
+	ColumnOrderState,
+	ColumnVisibilityState,
+	ExpandedState,
+	RowData,
+	SortingState,
+	TableOptions
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
@@ -27,8 +22,10 @@ import {
 } from '~/ui/Input'
 import { PanelHeader, PanelTitle } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
-import { prepareTableCsv, useSortColumnOrders, useTableSearch } from './utils'
+import type { SearchTableFeatures } from './features/search'
+import { useSearchTable } from './features/searchHook'
 import type { ColumnOrdersByBreakpoint } from './utils'
+import { prepareTableCsv, useSortColumnOrders, useTableSearch } from './utils'
 
 const EMPTY_SORTING: SortingState = []
 const EMPTY_EXPANDED: ExpandedState = {}
@@ -41,7 +38,7 @@ interface ITableWithSearchBaseProps<T extends RowData> {
 	data: Array<T>
 	// Each column keeps the value type inferred by createColumnHelper; TanStack erases
 	// those heterogeneous value types only when the columns enter a table together.
-	columns: TableOptions<T>['columns']
+	columns: TableOptions<SearchTableFeatures, T>['columns']
 	placeholder?: string
 	columnToSearch?: string
 	header?: string | null
@@ -49,8 +46,8 @@ interface ITableWithSearchBaseProps<T extends RowData> {
 	searchAlign?: 'start' | 'end'
 	headingAs?: 'h1' | 'h2'
 	columnOrders?: ColumnOrdersByBreakpoint | null
-	sortingState?: SortingState
-	columnVisibility?: VisibilityState | null
+	initialSorting?: SortingState
+	columnVisibility?: ColumnVisibilityState | null
 	rowSize?: number | null
 	compact?: boolean
 	embedded?: boolean
@@ -88,7 +85,7 @@ export function TableWithSearch<T extends RowData>({
 	searchAlign = 'end',
 	headingAs: HeadingTag = 'h2',
 	columnOrders = null,
-	sortingState = EMPTY_SORTING,
+	initialSorting = EMPTY_SORTING,
 	columnVisibility: columnVisibilityProp = null,
 	rowSize = null,
 	compact = false,
@@ -104,12 +101,12 @@ export function TableWithSearch<T extends RowData>({
 	initialExpanded = EMPTY_EXPANDED
 }: ITableWithSearchProps<T>) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-	const [sorting, setSorting] = React.useState<SortingState>(sortingState)
+	const [sorting, setSorting] = React.useState<SortingState>(initialSorting)
 	const [expanded, setExpanded] = React.useState<ExpandedState>(initialExpanded)
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
-	const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(columnVisibilityProp ?? {})
+	const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>(columnVisibilityProp ?? {})
 
-	const instance = useReactTable({
+	const instance = useSearchTable({
 		data,
 		columns,
 		state: {
@@ -129,11 +126,7 @@ export function TableWithSearch<T extends RowData>({
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
 		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
-		onColumnVisibilityChange: (updater) => React.startTransition(() => setColumnVisibility(updater)),
-		getFilteredRowModel: getFilteredRowModel(),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel()
+		onColumnVisibilityChange: (updater) => React.startTransition(() => setColumnVisibility(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch })
@@ -260,7 +253,7 @@ export function TableWithSearch<T extends RowData>({
 
 	const table = (
 		<VirtualTable
-			instance={instance}
+			table={instance}
 			{...(rowSize != null ? { rowSize } : {})}
 			compact={compact}
 			skipVirtualization={skipVirtualization}

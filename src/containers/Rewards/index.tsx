@@ -1,13 +1,18 @@
 import {
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	useReactTable,
+	columnSizingFeature,
+	columnVisibilityFeature,
+	createPaginatedRowModel,
+	createSortedRowModel,
+	rowExpandingFeature,
+	rowPaginationFeature,
+	tableFeatures,
+	useTable,
 	type PaginationState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { useMemo, useState } from 'react'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
+import { sortingFeatures } from '~/components/Table/features/sorting'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
@@ -23,6 +28,16 @@ import { LIFECYCLES, REWARD_TYPES, type RewardsPageProps } from './types'
 import { useRewardsAnalytics } from './useRewardsAnalytics'
 import { getRewardsView } from './utils'
 
+export const tableFeaturesConfig = tableFeatures({
+	rowExpandingFeature,
+	...sortingFeatures,
+	columnVisibilityFeature,
+	columnSizingFeature,
+	rowPaginationFeature,
+	sortedRowModel: createSortedRowModel(),
+	paginatedRowModel: createPaginatedRowModel()
+})
+
 const PAGE_SIZES = [10, 25, 50, 100] as const
 const LIFECYCLE_OPTIONS = ['All', ...LIFECYCLES] as const
 
@@ -35,17 +50,15 @@ export default function Rewards({ programs, analyticsMode }: RewardsPageProps) {
 	function updateQuery(patch: Partial<typeof query>) {
 		void pushShallowQuery(router, serializeRewardsQuery({ ...query, ...patch }))
 	}
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		data: view.rows,
 		columns,
 		getRowId: (row) => row.programId,
 		getRowCanExpand: () => true,
 		state: { pagination },
 		enableMultiSort: false,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 	const analyticsRef = useRewardsAnalytics(analyticsMode, table.getRowModel().rows)
 	return (

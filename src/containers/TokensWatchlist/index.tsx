@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import {
+	createExpandedRowModel,
+	createPaginatedRowModel,
+	createSortedRowModel,
 	type ExpandedState,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
 	type Row,
 	type SortingState,
-	useReactTable
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
@@ -27,6 +27,7 @@ import {
 } from '~/containers/Tokens'
 import { useWatchlistTokensTable } from '~/containers/Tokens/queries.client'
 import { TokensSourceAvailability } from '~/containers/Tokens/SourceAvailability'
+import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens/tableFeatures'
 import type { TokensTableRow } from '~/containers/Tokens/types'
 import { WatchListTabs } from '~/containers/Yields/views/WatchlistView'
 import { DEFAULT_PORTFOLIO_NAME } from '~/contexts/LocalStorage'
@@ -37,6 +38,13 @@ import { Icon } from '~/ui/Icon'
 import { InlineStatus, SurfaceBodyLoadingStatus, SurfaceBodyStatus } from '~/ui/Status'
 import { fetchJson } from '~/utils/async'
 import { mergeMarketsSummary } from './marketsMerge'
+
+const tableFeaturesConfig: TokenTableFeatures = tableFeatures({
+	...tokenTableFeatures,
+	sortedRowModel: createSortedRowModel(),
+	expandedRowModel: createExpandedRowModel(),
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 const PAGE_SIZE_OPTIONS = [20, 50, 100] as const
 const DEFAULT_SORTING: SortingState = [{ id: 'marketCap', desc: true }]
@@ -107,7 +115,8 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 	const [sorting, setSorting] = useState<SortingState>(DEFAULT_SORTING)
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: rows,
 		columns,
@@ -116,11 +125,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 		onExpandedChange: setExpanded,
 		getRowId: (row) => row.id,
 		getRowCanExpand: () => true,
-		enableSortingRemoval: false,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		enableSortingRemoval: false
 	})
 
 	const rankColumnWidth = getRankColumnWidth(rows)
@@ -190,7 +195,7 @@ export function TokensWatchlistContainer({ tokenUniverse }: { tokenUniverse: Arr
 							tableClassName="min-w-(--tokens-table-min-width)"
 							shell="none"
 							interactionDisabled={isFetching}
-							renderSubComponent={(row: Row<TokensTableRow>) => (
+							renderSubComponent={(row: Row<typeof tableFeaturesConfig, TokensTableRow>) => (
 								<ExpandedTokenMarkets geckoId={row.original.id} symbol={row.original.symbol} />
 							)}
 						/>

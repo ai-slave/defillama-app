@@ -24,17 +24,16 @@ full run recompiles every non-test `.ts`/`.tsx` under `src` and takes about a mi
 
 Two reasons are exempt from the growth check against the base ref, because a new entry for either is
 expected rather than a regression: `Skipped by directive`, which somebody chose, and
-`Use of incompatible library`, the deferred TanStack rule. That reason fires on every `useReactTable`
-and `useVirtualizer` call site, so adding a table page tripped it with no fix available. Both still
+`Use of incompatible library`, which still applies to React Virtual hooks. Native TanStack Table v9
+uses reactive subscriptions and no longer needs the v8 `useReactTable` bailout. Both still
 fail the working-tree check until the baseline is regenerated, so every new entry stays a visible diff
 and a review decision.
 
-Staleness is deliberately not exempt. A file that stops bailing on the library has started compiling,
-which for a component reading TanStack row or cell state is the failure below.
+Staleness is deliberately not exempt. A file that stops bailing has started compiling, so verify
+that its newly memoized reads remain reactive before regenerating the baseline.
 
-Of the 82 recorded bailouts, 79 are those two accepted reasons, so regeneration prints the split
-rather than one total: what is left to burn down, and what is a register of components the deferred
-rule keeps out of the compiler.
+Regeneration prints accepted reasons separately from the remaining compiler bailouts. Read current
+counts from the baseline rather than treating historical totals as the current state.
 
 Two traps when working with the checker directly, both of which produced false clean runs:
 
@@ -63,39 +62,25 @@ two of seventeen files in one sweep did exactly that. Three consequences:
 A bailout can be the only thing keeping a component out of the compiler, and removing it is a
 behaviour change even when the edit itself is a no-op.
 
-`components/Table/Table.tsx` is the worked example. Its three `['--x' as string]` computed keys kept
-`TableRow` and `VirtualTable` uncompiled. Rewriting them into the `{ '--x': v } as CSSProperties` form
-used elsewhere is provably equivalent CSS — and it let both components compile, which cached
-`instance.getRowModel()` against the instance identity and `row.getVisibleCells()` against the row
-identity. TanStack keeps both objects stable while their state mutates, so the cached reads froze
-after the first render: sorting and filtering stopped taking effect, replaced data kept its old
-values, and hiding a column dropped its header while leaving the cells under the wrong headings. A
-reviewer caught it in compiled browser fixtures; no unit test in the suite would have.
+The v8 table renderer exposed this problem: compiling reads against stable table and row objects
+froze sorting, filtering, replaced data, and column visibility. The incompatible-library bailout
+at the hook call site did not protect nested components receiving those objects as props.
 
-The compiler does not protect itself here because `instance` arrives as a **prop**. The
-`Use of incompatible library` bailout fires on `useReactTable` and `useVirtualizer` call sites, so a
-component handed a table object never trips it.
+Native Table v9 uses reactive subscriptions. Keep these rules when changing table rendering:
 
-Three rules follow:
+- Put `Subscribe` inside the component that reads state from stable row, cell, column, or core
+  table objects. Keep state-dependent reads inside its render callback. When using `useSelector`,
+  render from the selected result or pass it to children as a prop.
+- Test store-state changes and columns-only option changes under the compiler. Sorting, filtering,
+  visibility, pagination, replaced data, and same-ID column formatter changes must update the UI.
+  The shared table regression fixtures run both with and without the compiler.
+- Keep React Virtual exceptions separate from Table state subscriptions. The remaining virtualizer
+  bailouts do not justify adding directives to table-only components.
+- Record intentional opt-outs in the baseline. Removing a directive makes its entry stale;
+  regenerate only after verifying that the newly compiled component still behaves correctly.
 
-- Before removing a bailout from a file that reads TanStack row, cell, header or column state, check
-  where that read ends up in the compiled output. `node scripts/reactCompilerCheck.cjs . <file>` says
-  whether the component compiles; dumping the compiled code says whether the read landed inside an
-  `if ($[n] !== x)` guard. A read in a cache guard against a stable-identity object is the bug.
-- **There is already a convention, and it is a directive.** `PaginatedTable`, ProDashboard's
-  `TableBody` and `MarketMakers/StickyTable` each open with `'use no memo'`, precisely because they
-  take a table instance as a prop. Use it rather than inventing something.
-  `containers/Investors/dashboards/aave/shared.tsx` had missed it and was a live bug on main; it now
-  carries the directive. Two files in that group are fine for other reasons:
-  `UnifiedTable/index.tsx` reads columns inside click handlers, which run after render and so must
-  read fresh, and `Table/utils.ts` is a plain function the compiler never visits.
-- **Opt-outs are recorded in the baseline.** `scripts/reactCompilerCheck.cjs` prints a `SKIPPED` line
-  for a directive and `scripts/compilerBaseline.ts` records it as `Skipped by directive`. Deleting a
-  directive makes its entry stale and fails the check, instead of quietly letting the component
-  compile again. Adding one shows up as growth against `origin/main`.
-
-When a bailout turns out to be load-bearing, keep it and say so at the line, so the next person to
-tidy the expression knows what it is holding up.
+When another bailout is required for correctness, explain why at the line so future edits preserve
+that behavior.
 
 ### Read the line the checker gives you
 

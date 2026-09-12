@@ -1,7 +1,9 @@
-import { createColumnHelper, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import { searchTableFeatures } from '../features/search'
 import { VirtualTable } from '../Table'
+const features = searchTableFeatures
 
 vi.mock('next/router', () => ({
 	useRouter: () => ({ pathname: '/stablecoins' })
@@ -12,7 +14,7 @@ type TestRow = {
 	mcap: number
 }
 
-const columnHelper = createColumnHelper<TestRow>()
+const columnHelper = createColumnHelper<typeof features, TestRow>()
 const columns = [
 	columnHelper.accessor('name', {
 		header: 'Name',
@@ -44,13 +46,13 @@ function TestVirtualTable({
 		name: `Asset ${index + 1}`,
 		mcap: index + 1
 	}))
-	const instance = useReactTable({
+	const instance = useTable({
+		features,
 		data,
-		columns,
-		getCoreRowModel: getCoreRowModel()
+		columns
 	})
 
-	return <VirtualTable instance={instance} rowSize={rowSize} tableLayout={tableLayout} compact={compact} />
+	return <VirtualTable table={instance} rowSize={rowSize} tableLayout={tableLayout} compact={compact} />
 }
 
 describe('VirtualTable SSR', () => {
@@ -90,4 +92,49 @@ describe('VirtualTable SSR', () => {
 
 		expect(html).toContain('background-color:red')
 	})
+})
+
+const groupedColumns = columnHelper.columns([
+	columnHelper.accessor('name', { header: 'Name', meta: { headerClassName: 'w-[180px]' } }),
+	columnHelper.group({
+		id: 'metrics',
+		header: 'Metrics',
+		columns: [
+			columnHelper.accessor('mcap', { header: 'Market Cap', meta: { headerClassName: 'w-[120px]' } }),
+			columnHelper.group({
+				id: 'changes',
+				header: 'Changes',
+				columns: [
+					columnHelper.display({ id: 'day', header: 'Day', meta: { headerClassName: 'w-[100px]' } }),
+					columnHelper.display({ id: 'week', header: 'Week', meta: { headerClassName: 'w-[100px]' } })
+				]
+			})
+		]
+	})
+])
+
+function GroupedTable({ hideDay = false }: { hideDay?: boolean }) {
+	const table = useTable({
+		features,
+		columns: groupedColumns,
+		data: [{ name: 'Asset', mcap: 1 }],
+		state: { columnVisibility: { day: !hideDay } }
+	})
+	return <VirtualTable table={table} skipVirtualization />
+}
+
+test('spans leaf headers across three levels without duplicate labels', () => {
+	const html = renderToStaticMarkup(<GroupedTable />)
+	expect(html.match(/>Name</g)).toHaveLength(1)
+	expect(html.match(/>Market Cap</g)).toHaveLength(1)
+	expect(html).toMatch(/<th[^>]*rowSpan="3"/i)
+	expect(html).toMatch(/<th[^>]*rowSpan="2"/i)
+})
+
+test('recomputes group spans when a nested column is hidden', () => {
+	const html = renderToStaticMarkup(<GroupedTable hideDay />)
+	expect(html).not.toContain('>Day<')
+	expect(html).toContain('>Week<')
+	expect(html).toMatch(/<th[^>]*colSpan="2"/i)
+	expect(html.match(/>Name</g)).toHaveLength(1)
 })

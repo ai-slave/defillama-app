@@ -1,25 +1,44 @@
-'use no memo'
-
 import {
+	columnFilteringFeature,
+	columnOrderingFeature,
+	columnSizingFeature,
+	columnVisibilityFeature,
+	createFilteredRowModel,
+	createPaginatedRowModel,
+	createSortedRowModel,
+	filterFn_includesString,
+	filterFn_inNumberRange,
+	rowPaginationFeature,
+	tableFeatures,
+	useTable,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	type ColumnVisibilityState,
 	type PaginationState,
-	type SortingState,
-	useReactTable,
-	type VisibilityState
+	type SortingState
 } from '@tanstack/react-table'
 import * as React from 'react'
+import { sortingFeatures } from '~/components/Table/features/sorting'
 import { useTableSearch } from '~/components/Table/utils'
 import type { YieldsFilters } from '~/containers/ProDashboard/types'
 import { downloadCSV as downloadCSVFile } from '~/utils/download'
 import type { ProYieldRow } from '../../../yieldData'
-import { YIELDS_COLUMN_IDS, YIELDS_COLUMN_ID_SET, yieldsDatasetColumns, type YieldColumnId } from './columns'
+import { YIELDS_COLUMN_ID_SET, YIELDS_COLUMN_IDS, yieldsDatasetColumns, type YieldColumnId } from './columns'
 import { buildYieldsFilterOptions } from './options'
+
+export const tableFeaturesConfig = tableFeatures({
+	...sortingFeatures,
+	columnVisibilityFeature,
+	columnSizingFeature,
+	columnOrderingFeature,
+	columnFilteringFeature,
+	rowPaginationFeature,
+	filterFns: { includesString: filterFn_includesString, inNumberRange: filterFn_inNumberRange },
+	filteredRowModel: createFilteredRowModel(),
+	sortedRowModel: createSortedRowModel(),
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 const ESSENTIAL_YIELDS_COLUMNS: ReadonlyArray<YieldColumnId> = [
 	'pool',
@@ -38,10 +57,6 @@ const YIELDS_COLUMN_PRESETS = {
 	activity: ['pool', 'project', 'chains', 'tvl', 'apy', 'volumeUsd1d']
 } satisfies Record<string, ReadonlyArray<YieldColumnId>>
 const EMPTY_TABLE_DATA: Array<ProYieldRow> = []
-const getYieldsCoreRowModel = getCoreRowModel<ProYieldRow>()
-const getYieldsSortedRowModel = getSortedRowModel<ProYieldRow>()
-const getYieldsFilteredRowModel = getFilteredRowModel<ProYieldRow>()
-const getYieldsPaginationRowModel = getPaginationRowModel<ProYieldRow>()
 const DEFAULT_COLUMN_SIZING: ColumnSizingState = {
 	pool: 320,
 	project: 140,
@@ -125,8 +140,8 @@ export function useYieldsTable({
 		}
 	}
 	const initialPreset = hasInitialVisibility ? null : 'essential'
-	const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(() => {
-		const visibility: VisibilityState = {}
+	const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>(() => {
+		const visibility: ColumnVisibilityState = {}
 		for (const id of YIELDS_COLUMN_IDS) {
 			visibility[id] = hasInitialVisibility
 				? initialColumnVisibility?.[id] !== false
@@ -198,7 +213,8 @@ export function useYieldsTable({
 		})
 	}, [data, filters])
 
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: filteredData.length > 0 ? filteredData : EMPTY_TABLE_DATA,
 		columns: yieldsDatasetColumns,
@@ -217,10 +233,6 @@ export function useYieldsTable({
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
 		onColumnVisibilityChange: setColumnVisibility,
-		getCoreRowModel: getYieldsCoreRowModel,
-		getSortedRowModel: getYieldsSortedRowModel,
-		getFilteredRowModel: getYieldsFilteredRowModel,
-		getPaginationRowModel: getYieldsPaginationRowModel,
 		maxMultiSortColCount: 1,
 		autoResetPageIndex: true
 	})
@@ -230,7 +242,7 @@ export function useYieldsTable({
 			const preset = getYieldColumnPreset(presetName)
 			if (!preset) return
 			const nextOrder = [...preset]
-			const nextVisibility: VisibilityState = {}
+			const nextVisibility: ColumnVisibilityState = {}
 
 			for (const colId of YIELDS_COLUMN_IDS) nextVisibility[colId] = preset.includes(colId)
 
@@ -245,7 +257,7 @@ export function useYieldsTable({
 
 	const currentColumns = React.useMemo(() => {
 		const allColumns = table.getAllLeafColumns()
-		const visibility: VisibilityState = {}
+		const visibility: ColumnVisibilityState = {}
 		for (const col of allColumns) {
 			visibility[col.id] = columnVisibility[col.id] !== false
 		}

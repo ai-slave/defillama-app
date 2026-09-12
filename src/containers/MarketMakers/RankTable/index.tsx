@@ -1,5 +1,6 @@
-import { getCoreRowModel, getSortedRowModel, type SortingState, useReactTable } from '@tanstack/react-table'
+import { type SortingState, useTable } from '@tanstack/react-table'
 import * as React from 'react'
+import { sortedTableFeatures } from '~/components/Table/features/sorting'
 import { Button } from '~/ui/Button'
 import { Panel, PanelHeader } from '~/ui/Panel'
 import { LoadingIndicator } from '~/ui/Status'
@@ -34,7 +35,6 @@ export function RankTable({
 	onSelectMM,
 	isLoading
 }: IRankTableProps) {
-	'use no memo'
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: '#', desc: true }])
 
 	const tableColumns = React.useMemo(
@@ -42,14 +42,13 @@ export function RankTable({
 		[columns, mode, rows.length, onSelectMM]
 	)
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: sortedTableFeatures,
 		data: rows,
 		columns: tableColumns,
 		state: { sorting },
 		enableSortingRemoval: false,
-		onSortingChange: setSorting,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: setSorting
 	})
 
 	return (
@@ -79,7 +78,7 @@ export function RankTable({
 					</Button>
 				</div>
 			) : (
-				<StickyTable headerGroups={instance.getHeaderGroups()} rows={instance.getRowModel().rows} />
+				<StickyTable table={instance} />
 			)}
 		</Panel>
 	)

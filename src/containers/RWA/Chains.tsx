@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
@@ -32,9 +33,9 @@ type RWAChainsTableRow = {
 	hasExcludedAssets: boolean
 }
 
-const columnHelper = createColumnHelper<RWAChainsTableRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, RWAChainsTableRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('chain', {
 		id: 'chain',
 		header: 'Name',
@@ -107,7 +108,7 @@ const columns = [
 			headerHelperText: definitions.totalDefiActiveTvl.description
 		}
 	})
-]
+])
 export function RWAChains({
 	chains,
 	initialChartDataset,
@@ -188,7 +189,7 @@ export function RWAChains({
 				header="Chains"
 				headingAs="h1"
 				csvFileName={csvFileName}
-				sortingState={[{ id: 'totalActiveMcap', desc: true }]}
+				initialSorting={[{ id: 'totalActiveMcap', desc: true }]}
 			/>
 		</div>
 	)

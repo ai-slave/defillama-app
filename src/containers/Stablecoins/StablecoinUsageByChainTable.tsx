@@ -3,15 +3,12 @@ import {
 	type ColumnOrderState,
 	createColumnHelper,
 	type ExpandedState,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
+import { searchTableFeatures } from '~/components/Table/features/search'
 import { VirtualTable } from '~/components/Table/Table'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
@@ -25,10 +22,12 @@ import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber, formatPercent } from '~/utils/numberFormat'
 
-type StablecoinByChainRow = ReturnType<typeof useGroupBridgeData>[number]
-const columnHelper = createColumnHelper<StablecoinByChainRow>()
+export const tableFeaturesConfig = searchTableFeatures
 
-const stablecoinsByChainColumns = [
+type StablecoinByChainRow = ReturnType<typeof useGroupBridgeData>[number]
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, StablecoinByChainRow>()
+
+const stablecoinsByChainColumns = columnHelper.columns([
 	columnHelper.accessor((row) => `${row.name}${row.symbol && row.symbol !== '-' ? ` (${row.symbol})` : ''}`, {
 		id: 'name',
 		header: 'Name',
@@ -164,7 +163,7 @@ const stablecoinsByChainColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 const assetsByChainColumnOrders: ColumnOrdersByBreakpoint = {
 	0: ['name', 'change_7d', 'circulating', 'change_1d', 'change_1m', 'bridgeInfo', 'bridgedAmount'],
@@ -177,7 +176,8 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 	const [expanded, setExpanded] = React.useState<ExpandedState>({})
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns: stablecoinsByChainColumns,
 		state: {
@@ -194,11 +194,7 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 		getSubRows: (row: StablecoinByChainRow) => row.subRows,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -221,7 +217,7 @@ export function StablecoinByChainUsageTable({ data }: { data: Array<StablecoinBy
 					/>
 				</label>
 			</TableToolbar>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }

@@ -1,5 +1,12 @@
-import { flexRender, type Row, type RowData, type Table } from '@tanstack/react-table'
-import { type VirtualItem, useWindowVirtualizer } from '@tanstack/react-virtual'
+import { FlexRender, Subscribe, type Cell, type Row, type RowData, type Table } from '@tanstack/react-table'
+import {
+	column_getCanSort,
+	column_getIsVisible,
+	column_getIsSorted,
+	column_toggleSorting,
+	table_getVisibleLeafColumns
+} from '@tanstack/react-table/static-functions'
+import { useWindowVirtualizer, type VirtualItem } from '@tanstack/react-virtual'
 import clsx from 'clsx'
 import { useRouter } from 'next/router'
 import * as React from 'react'
@@ -9,27 +16,15 @@ import { SortIcon } from '~/components/Table/SortIcon'
 import { useMedia } from '~/hooks/useMedia'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
-
-// `TableRow` and `VirtualTable` carry `'use no memo'` and must keep it until they take reactive row and
-// cell data. `instance` arrives as a prop, so the compiler never sees `useReactTable` and does not flag
-// the incompatible library; it happily caches `instance.getRowModel()` against the instance identity and
-// `row.getVisibleCells()` against the row identity. TanStack keeps both objects stable while their state
-// mutates, so the cached reads freeze after the first render: sorting and filtering stop taking effect,
-// replaced data keeps its old values, and hiding a column drops its header while leaving the cells.
-//
-// The opt-out used to be implicit -- `['--x' as string]` computed keys the compiler could not lower --
-// which read as an unexplained bailout in the baseline and would have broken silently the moment someone
-// tidied the casts. The directive is what PaginatedTable, ProDashboard's TableBody and
-// MarketMakers/StickyTable already do, and the baseline records it as `Skipped by directive`, so
-// deleting it fails the ratchet instead of quietly compiling these two.
+import type { SortingFeatures, VisibilityFeatures } from './features/contracts'
 
 export type VirtualTableLayout = 'fixed' | 'auto'
 
 /** CSSProperties has no index signature, so the row-counter custom properties need a cast. */
 type TableCssVars = React.CSSProperties & Record<`--${string}`, string>
 
-interface ITableProps<T extends RowData = RowData> {
-	instance: Table<T>
+interface ITableProps<F extends SortingFeatures & VisibilityFeatures, T extends RowData> {
+	table: Table<F, T>
 	skipVirtualization?: boolean
 	rowSize?: number
 	stripedBg?: boolean
@@ -78,8 +73,9 @@ const isSameStickyHeaderLayout = (a: StickyHeaderLayout | null, b: StickyHeaderL
 		a.scrollLeft === b.scrollLeft
 	)
 
-interface TableRowProps<T extends RowData = RowData> {
-	row: Row<T>
+interface TableRowProps<F extends SortingFeatures & VisibilityFeatures, T extends RowData> {
+	row: Row<F, T>
+	cells: Array<Cell<F, T, unknown>>
 	index: number
 	virtualRow?: VirtualItem | null
 	rowHeight?: number
@@ -91,8 +87,9 @@ interface TableRowProps<T extends RowData = RowData> {
 	compact: boolean
 }
 
-function TableRow<T extends RowData>({
+function TableRow<F extends SortingFeatures & VisibilityFeatures, T extends RowData>({
 	row: rowToRender,
+	cells,
 	index: i,
 	virtualRow,
 	rowHeight,
@@ -102,62 +99,64 @@ function TableRow<T extends RowData>({
 	stripedBg,
 	isChainPage,
 	compact
-}: TableRowProps<T>) {
-	'use no memo'
+}: TableRowProps<F, T>) {
 	const explicitIndex =
 		rowToRender.depth > 0
 			? (subRowOrdinalById.get(rowToRender.id) ?? rowToRender.index + 1)
 			: rowRankById?.get(rowToRender.id)
 	return (
-		<tr
-			data-index={virtualRow?.index}
-			style={
-				{
-					height: rowHeight,
-					opacity: (rowToRender.original as Record<string, unknown>)?.disabled ? 0.3 : 1,
-					...(explicitIndex != null ? { '--vf-subrow-index': `"${explicitIndex}"` } : null)
-				} as TableCssVars
-			}
-			data-depth={rowToRender.depth}
-			className="vf-row"
-		>
-			{rowToRender
-				.getVisibleCells()
-				.filter((cell) => !cell.column.columnDef.meta?.hidden)
-				.map((cell) => {
-					const textAlign = cell.column.columnDef.meta?.align ?? 'start'
-					const isSticky = cell.column.id === firstColumnId
-					const cellStyle = cell.column.columnDef.meta?.cellStyle?.(cell.row.original)
-					return (
-						<td
-							key={cell.id}
-							data-lighter={stripedBg && i % 2 === 0}
-							data-chainpage={isChainPage}
-							className={`truncate border-t border-r border-subtle p-3 ${
-								compact ? 'border-r-0 px-5 py-2' : ''
-							} ${cell.column.columnDef.meta?.cellClassName ?? ''}`}
-							style={{
-								textAlign,
-								verticalAlign: compact ? 'middle' : undefined,
-								position: isSticky ? 'sticky' : undefined,
-								left: isSticky ? 0 : undefined,
-								zIndex: isSticky ? 1 : undefined,
-								background: isSticky ? 'var(--bg-surface)' : undefined,
-								borderRightColor: isSticky ? 'transparent' : undefined,
-								boxShadow: isSticky && !compact ? '-1px 0 0 var(--border-subtle) inset' : undefined,
-								...cellStyle
-							}}
-						>
-							{flexRender(cell.column.columnDef.cell, cell.getContext())}
-						</td>
-					)
-				})}
-		</tr>
+		<Subscribe source={rowToRender.table.store}>
+			{() => (
+				<tr
+					data-index={virtualRow?.index}
+					style={
+						{
+							height: rowHeight,
+							opacity: (rowToRender.original as Record<string, unknown>)?.disabled ? 0.3 : 1,
+							...(explicitIndex != null ? { '--vf-subrow-index': `"${explicitIndex}"` } : null)
+						} as TableCssVars
+					}
+					data-depth={rowToRender.depth}
+					className="vf-row"
+				>
+					{cells
+						.filter((cell) => column_getIsVisible(cell.column) && !cell.column.columnDef.meta?.hidden)
+						.map((cell) => {
+							const textAlign = cell.column.columnDef.meta?.align ?? 'start'
+							const isSticky = cell.column.id === firstColumnId
+							const cellStyle = cell.column.columnDef.meta?.cellStyle?.(cell.row.original)
+							return (
+								<td
+									key={cell.id}
+									data-lighter={stripedBg && i % 2 === 0}
+									data-chainpage={isChainPage}
+									className={`truncate border-t border-r border-subtle p-3 ${
+										compact ? 'border-r-0 px-5 py-2' : ''
+									} ${cell.column.columnDef.meta?.cellClassName ?? ''}`}
+									style={{
+										textAlign,
+										verticalAlign: compact ? 'middle' : undefined,
+										position: isSticky ? 'sticky' : undefined,
+										left: isSticky ? 0 : undefined,
+										zIndex: isSticky ? 1 : undefined,
+										background: isSticky ? 'var(--bg-surface)' : undefined,
+										borderRightColor: isSticky ? 'transparent' : undefined,
+										boxShadow: isSticky && !compact ? '-1px 0 0 var(--border-subtle) inset' : undefined,
+										...cellStyle
+									}}
+								>
+									<FlexRender cell={cell} />
+								</td>
+							)
+						})}
+				</tr>
+			)}
+		</Subscribe>
 	)
 }
 
-export function VirtualTable<T extends RowData>({
-	instance,
+export function VirtualTable<F extends SortingFeatures & VisibilityFeatures, T extends RowData>({
+	table,
 	skipVirtualization,
 	rowSize,
 	stripedBg = false,
@@ -169,12 +168,13 @@ export function VirtualTable<T extends RowData>({
 	className,
 	style,
 	...props
-}: ITableProps<T>) {
+}: ITableProps<F, T>) {
 	'use no memo'
+	// React Virtual still exposes mutable render values behind a stable instance.
 	const router = useRouter()
 	const isSmallScreen = useMedia('(max-width: 768px)')
 	const tableContainerRef = useRef<HTMLDivElement>(null)
-	const { rows } = instance.getRowModel()
+	const { rows } = table.getRowModel()
 
 	const subRowOrdinalById = React.useMemo(() => {
 		const ordById = new Map<string, number>()
@@ -182,8 +182,7 @@ export function VirtualTable<T extends RowData>({
 
 		for (const r of rows) {
 			if (r.depth > 0) {
-				const parentId =
-					r.getParentRow?.()?.id ?? (typeof r.id === 'string' ? r.id.split('.').slice(0, -1).join('.') : String(r.id))
+				const parentId = r.parentId!
 				const next = (perParent.get(parentId) ?? 0) + 1
 				perParent.set(parentId, next)
 				ordById.set(r.id, next)
@@ -241,24 +240,15 @@ export function VirtualTable<T extends RowData>({
 	const stickyScrollbarContentRef = useRef<HTMLDivElement>(null)
 	const [stickyHeaderLayout, setStickyHeaderLayout] = useState<StickyHeaderLayout | null>(null)
 	const [leafColumnWidths, setLeafColumnWidths] = useState<Array<number>>([])
-	const visibleLeafColumns = instance
-		.getVisibleLeafColumns()
-		.filter((column) => !isGroupingColumn(column.id) && !column.columnDef.meta?.hidden)
+	const visibleLeafColumns = table_getVisibleLeafColumns(table).filter(
+		(column) => !isGroupingColumn(column.id) && !column.columnDef.meta?.hidden
+	)
 	const firstColumn = visibleLeafColumns[0]
 	const firstColumnId = firstColumn?.id
 	const isChainPage =
 		router.pathname === '/' || router.pathname.startsWith('/chain') || router.pathname.startsWith('/protocols')
 
-	const headerGroups = instance.getHeaderGroups()
-	const rowSpannedHeaderIds = new Set<string>()
-	for (const headerGroup of headerGroups) {
-		for (const header of headerGroup.headers) {
-			if (header.isPlaceholder && header.subHeaders.length === 1 && header.subHeaders[0].colSpan === 1) {
-				rowSpannedHeaderIds.add(header.subHeaders[0].id)
-			}
-		}
-	}
-
+	const headerGroups = table.getHeaderGroups()
 	const hasNoVisibleColumns = visibleLeafColumns.length === 0
 
 	// useEffectEvent for keyboard handler - reads skipVirtualization without re-subscribing
@@ -473,7 +463,7 @@ export function VirtualTable<T extends RowData>({
 	const renderHeaderRows = ({ isStickyMirror = false }: { isStickyMirror?: boolean } = {}) =>
 		headerGroups.map((headerGroup) => {
 			const headers = headerGroup.headers.filter(
-				(header) => !rowSpannedHeaderIds.has(header.id) && !header.column.columnDef.meta?.hidden
+				(header) => header.rowSpan > 0 && !header.column.columnDef.meta?.hidden
 			)
 			if (headers.length === 0) {
 				return null
@@ -481,28 +471,24 @@ export function VirtualTable<T extends RowData>({
 			return (
 				<tr key={headerGroup.id}>
 					{headers.map((header) => {
-						const rowSpannedHeader =
-							header.isPlaceholder && header.subHeaders.length === 1 && header.subHeaders[0].colSpan === 1
-								? header.subHeaders[0]
-								: null
-						const headerToRender = rowSpannedHeader ?? header
-						const meta = headerToRender.column.columnDef.meta
-						const value = flexRender(headerToRender.column.columnDef.header, headerToRender.getContext())
-						const isSticky = headerToRender.column.id === firstColumnId
-						const isRepeatedLeafHeader = header.isPlaceholder && !rowSpannedHeader && header.subHeaders.length === 0
+						const spansRows = header.rowSpan > 1
+						const meta = header.column.columnDef.meta
+						const value = <FlexRender header={header} />
+						const isSticky = header.column.id === firstColumnId
+						const isRepeatedLeafHeader = header.isPlaceholder && !spansRows
 						const isLastHeaderRow = headerGroup.depth === headerGroups.length - 1
 						const isGroupedChildHeader = headerGroup.depth > 0 && !isRepeatedLeafHeader
-						const isLeafHeader = headerToRender.subHeaders.length === 0
+						const isLeafHeader = header.column.columns.length === 0
 						const isTopGroupedHeader = headerGroup.depth === 0 && headerGroups.length > 1
 
 						return (
 							<th
 								key={header.id}
-								colSpan={rowSpannedHeader ? 1 : header.colSpan}
-								rowSpan={rowSpannedHeader ? headerGroups.length - headerGroup.depth : undefined}
+								colSpan={header.colSpan}
+								rowSpan={header.rowSpan}
 								data-chainpage={isChainPage}
 								data-align={meta?.align ?? 'start'}
-								data-leaf-column-id={isLeafHeader ? headerToRender.column.id : undefined}
+								data-leaf-column-id={isLeafHeader ? header.column.id : undefined}
 								style={{
 									position: isSticky ? 'sticky' : undefined,
 									left: isSticky ? 0 : undefined,
@@ -516,8 +502,8 @@ export function VirtualTable<T extends RowData>({
 									boxShadow: isSticky && !compact ? '-1px 0 0 0 var(--border-subtle) inset' : undefined
 								}}
 								className={`truncate border-r border-subtle p-3 last:border-r-0 ${
-									rowSpannedHeader || headerGroup.depth === 0 || isGroupedChildHeader ? 'border-t' : ''
-								} ${rowSpannedHeader || isLastHeaderRow ? 'border-b' : ''} ${
+									spansRows || headerGroup.depth === 0 || isGroupedChildHeader ? 'border-t' : ''
+								} ${spansRows || isLastHeaderRow ? 'border-b' : ''} ${
 									compact ? 'h-10 border-r-0 px-5 py-2' : ''
 								} ${isRepeatedLeafHeader ? 'p-0' : ''} ${isLeafHeader ? (meta?.headerClassName ?? '') : ''}`}
 							>
@@ -529,15 +515,15 @@ export function VirtualTable<T extends RowData>({
 										<HeaderWithTooltip
 											content={meta?.headerHelperText}
 											onClick={
-												!headerToRender.isPlaceholder && headerToRender.column.getCanSort()
-													? () => React.startTransition(() => headerToRender.column.toggleSorting())
+												(!header.isPlaceholder || spansRows) && column_getCanSort(header.column)
+													? () => React.startTransition(() => column_toggleSorting(header.column))
 													: null
 											}
 											tabIndex={isStickyMirror ? -1 : undefined}
 										>
-											{headerToRender.isPlaceholder ? null : value}
-											{!headerToRender.isPlaceholder && headerToRender.column.getCanSort() ? (
-												<SortIcon dir={headerToRender.column.getIsSorted()} />
+											{value}
+											{(!header.isPlaceholder || spansRows) && column_getCanSort(header.column) ? (
+												<SortIcon dir={column_getIsSorted(header.column)} />
 											) : null}
 										</HeaderWithTooltip>
 									</span>
@@ -589,6 +575,7 @@ export function VirtualTable<T extends RowData>({
 							<TableRow
 								key={row.id}
 								row={row}
+								cells={row.getAllCells()}
 								index={i}
 								rowHeight={estimatedRowSize}
 								subRowOrdinalById={subRowOrdinalById}
@@ -614,6 +601,7 @@ export function VirtualTable<T extends RowData>({
 								<TableRow
 									key={rows[virtualRow.index].id}
 									row={rows[virtualRow.index]}
+									cells={rows[virtualRow.index].getAllCells()}
 									index={virtualRow.index}
 									virtualRow={virtualRow}
 									rowHeight={virtualRow.size}

@@ -1,4 +1,4 @@
-import type { SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { useCallback, useMemo, useState } from 'react'
 import { SurfaceBodyStatus } from '~/ui/Status'
 import { downloadCSV } from '~/utils/download'
@@ -106,7 +106,7 @@ const PROTOCOL_GROUPING_OPTIONS: Array<RowGroupingOption> = [
 const PROTOCOL_GROUPING_OPTION_MAP = new Map(PROTOCOL_GROUPING_OPTIONS.map((option) => [option.id, option]))
 const PROTOCOL_GROUPING_HEADERS = PROTOCOL_GROUPING_OPTIONS.map(({ id, label }) => ({ id, label }))
 const EMPTY_COLUMN_ORDER: Array<string> = []
-const EMPTY_COLUMN_VISIBILITY: VisibilityState = {}
+const EMPTY_COLUMN_VISIBILITY: ColumnVisibilityState = {}
 const EMPTY_CUSTOM_COLUMNS: Array<CustomColumnDefinition> = []
 const EMPTY_CHAINS: Array<string> = []
 

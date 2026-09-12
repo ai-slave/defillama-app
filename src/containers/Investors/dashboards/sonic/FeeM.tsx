@@ -1,18 +1,13 @@
-import {
-	createColumnHelper,
-	useReactTable,
-	getCoreRowModel,
-	getSortedRowModel,
-	getPaginationRowModel
-} from '@tanstack/react-table'
+import { createColumnHelper } from '@tanstack/react-table'
 import type { EChartsOption } from 'echarts'
 import { TreemapChart as EChartsTreemap } from 'echarts/charts'
-import { TooltipComponent, GraphicComponent } from 'echarts/components'
+import { GraphicComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { lazy, useEffect, useMemo, useRef } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { useChartResize } from '~/hooks/useChartResize'
@@ -20,6 +15,8 @@ import { lastNDaysZoom } from './chartDefaults'
 import { useFeeMData, type FeeMLeaderboardEntry } from './feemApi'
 import { formatSonicCount } from './format'
 import { SonicIcon } from './SonicIcon'
+
+const tableFeaturesConfig = paginatedTableFeatures
 
 echarts.use([EChartsTreemap, TooltipComponent, GraphicComponent, CanvasRenderer])
 
@@ -169,9 +166,9 @@ function FeeMTreemap({ leaderboard }: { leaderboard: Array<FeeMLeaderboardEntry>
 	return <div ref={containerRef} className="w-full" style={{ height: '400px' }} />
 }
 
-const columnHelper = createColumnHelper<FeeMLeaderboardEntry>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, FeeMLeaderboardEntry>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.display({
 		id: 'rank',
 		header: '#',
@@ -252,7 +249,7 @@ const columns = [
 		cell: (info) => <span className="tabular-nums">{formatSonicCount(info.getValue())} S</span>,
 		size: 120
 	})
-]
+])
 
 export default function FeeM() {
 	const { data, isLoading } = useFeeMData()
@@ -264,16 +261,13 @@ export default function FeeM() {
 		}
 	}, [data, isLoading, onContentReady])
 
-	const table = useReactTable({
+	const table = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
 		data: data?.leaderboard ?? [],
 		columns,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
 		initialState: {
 			sorting: [{ id: 'collectedRewards', desc: true }],
-			pagination: { pageSize: 15 }
+			pagination: { pageIndex: 0, pageSize: 15 }
 		}
 	})
 
@@ -390,7 +384,7 @@ export default function FeeM() {
 					{table.getPageCount() > 1 && (
 						<div className="flex items-center justify-between border-t border-pro-cards-border px-4 py-3">
 							<span className="text-xs text-pro-text-label">
-								Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+								Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
 							</span>
 							<div className="flex gap-1">
 								<button

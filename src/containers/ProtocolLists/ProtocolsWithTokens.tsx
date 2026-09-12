@@ -6,6 +6,7 @@ import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
@@ -85,7 +86,7 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 					</>
 				)}
 				csvFileName={`protocols-with-tokens-${props.type}-${props.chain}`}
-				sortingState={sortingState}
+				initialSorting={sortingState}
 			/>
 		</>
 	)
@@ -135,10 +136,10 @@ const protocolChartsKeys: Partial<Record<TokenMetricType, string>> = {
 	fdv: 'fdv'
 }
 
-const columnHelper = createColumnHelper<ITokenMetricProtocolRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, ITokenMetricProtocolRow>()
 
 function defaultColumns(type: TokenMetricType) {
-	return [
+	return columnHelper.columns([
 		columnHelper.accessor('name', {
 			header: 'Name',
 			enableSorting: false,
@@ -227,10 +228,10 @@ function defaultColumns(type: TokenMetricType) {
 				align: 'end'
 			}
 		})
-	]
+	])
 }
 
-const mcapColumns = [
+const mcapColumns = columnHelper.columns([
 	...defaultColumns('mcap'),
 	columnHelper.accessor((row) => row.value ?? undefined, {
 		id: 'mcap',
@@ -244,9 +245,9 @@ const mcapColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
-const fdvColumns = [
+const fdvColumns = columnHelper.columns([
 	...defaultColumns('fdv'),
 	columnHelper.accessor((row) => row.value ?? undefined, {
 		id: 'fdv',
@@ -260,9 +261,9 @@ const fdvColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
-const priceColumns = [
+const priceColumns = columnHelper.columns([
 	...defaultColumns('price'),
 	columnHelper.accessor((row) => row.value ?? undefined, {
 		id: 'price',
@@ -276,9 +277,9 @@ const priceColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
-const outstandingFdvColumns = [
+const outstandingFdvColumns = columnHelper.columns([
 	...defaultColumns('outstanding-fdv'),
 	columnHelper.accessor((row) => row.value ?? undefined, {
 		id: 'outstanding-fdv',
@@ -294,10 +295,10 @@ const outstandingFdvColumns = [
 				'Token price multiplied by outstanding supply.\n\nOutstanding supply is the total supply minus the supply that is not yet allocated to anything (eg coins in treasury or reserve).'
 		}
 	})
-]
+])
 
 function getMetricNameAndColumns(type: TokenMetricType): {
-	columns: Array<ColumnDef<ITokenMetricProtocolRow>>
+	columns: Array<ColumnDef<SearchTableFeatures, ITokenMetricProtocolRow>>
 	sortingState: SortingState
 } {
 	switch (type) {

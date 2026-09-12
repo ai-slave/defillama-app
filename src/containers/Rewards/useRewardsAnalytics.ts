@@ -1,6 +1,7 @@
 import type { Row } from '@tanstack/react-table'
 import { useEffect, useRef } from 'react'
 import { trackUmamiEvent, UMAMI_READY_EVENT } from '~/utils/analytics/umami'
+import type { tableFeaturesConfig } from './index'
 import type { RewardProgram, RewardsAnalyticsMode } from './types'
 
 interface LinkExposure {
@@ -134,7 +135,10 @@ export function observeRewardsLinks(
 	}
 }
 
-export function useRewardsAnalytics(mode: RewardsAnalyticsMode, rows: Array<Row<RewardProgram>>) {
+export function useRewardsAnalytics(
+	mode: RewardsAnalyticsMode,
+	rows: Array<Row<typeof tableFeaturesConfig, RewardProgram>>
+) {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const analytics = useRef<RewardsAnalyticsState | null>(null)
 	useEffect(() => {

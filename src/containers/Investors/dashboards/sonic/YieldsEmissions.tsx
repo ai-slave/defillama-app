@@ -1,16 +1,13 @@
-import {
-	createColumnHelper,
-	useReactTable,
-	getCoreRowModel,
-	getSortedRowModel,
-	getPaginationRowModel
-} from '@tanstack/react-table'
+import { createColumnHelper } from '@tanstack/react-table'
 import { lazy, useEffect } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { formatPercent, PERCENT_POINTS_TWO_DECIMALS_OPTIONS } from '~/utils/numberFormat'
 import { STACKED_UNITLESS_TIME_CHART_OPTIONS } from './chartDefaults'
 import { useYieldsEmissionsData, type YieldPool } from './yieldsEmissionsApi'
+
+const tableFeaturesConfig = paginatedTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -36,9 +33,9 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
-const columnHelper = createColumnHelper<YieldPool>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, YieldPool>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('project', {
 		header: 'Project',
 		cell: (info) => <span className="font-medium">{info.getValue()}</span>,
@@ -77,7 +74,7 @@ const columns = [
 		),
 		size: 110
 	})
-]
+])
 
 export default function YieldsEmissions() {
 	const { data, isLoading } = useYieldsEmissionsData()
@@ -89,16 +86,13 @@ export default function YieldsEmissions() {
 		}
 	}, [data, isLoading, onContentReady])
 
-	const table = useReactTable({
+	const table = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
 		data: data?.yields.pools ?? [],
 		columns,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
 		initialState: {
 			sorting: [{ id: 'tvlUsd', desc: true }],
-			pagination: { pageSize: 15 }
+			pagination: { pageIndex: 0, pageSize: 15 }
 		}
 	})
 
@@ -200,7 +194,7 @@ export default function YieldsEmissions() {
 					{table.getPageCount() > 1 && (
 						<div className="flex items-center justify-between border-t border-pro-cards-border px-4 py-3">
 							<span className="text-xs text-pro-text-label">
-								Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+								Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
 							</span>
 							<div className="flex gap-1">
 								<button

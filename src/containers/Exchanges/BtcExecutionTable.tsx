@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { letterLogoDataUri } from '~/utils/icons'
@@ -8,9 +9,9 @@ import { TierBadge } from './directoryColumns'
 import type { BtcExecutionRowModel } from './models'
 import { Markout, MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
 
-const columnHelper = createColumnHelper<BtcExecutionRowModel>()
+const columnHelper = createColumnHelper<SearchTableFeatures, BtcExecutionRowModel>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor((row) => row.name, {
 		id: 'name',
 		header: 'Exchange',
@@ -133,7 +134,7 @@ const columns = [
 		cell: ({ getValue }) => formatNumber(getValue(), { maximumFractionDigits: 0 }),
 		meta: { align: 'end', headerClassName: 'min-w-[155px]' }
 	})
-]
+])
 
 export function BtcExecutionTable({ rows }: { rows: Array<BtcExecutionRowModel> }) {
 	return (

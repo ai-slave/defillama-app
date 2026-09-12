@@ -1,6 +1,8 @@
-import { createTable, flexRender, getCoreRowModel } from '@tanstack/react-table'
+import { flexRender } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
+import { searchTableFeatures as tableFeaturesConfig } from '~/components/Table/features/search'
 import { buildDirectoryColumns } from '../directoryColumns'
 import type { ExchangeDirectoryRowModel, ExchangeSegmentActivity } from '../models'
 
@@ -61,12 +63,11 @@ function quality(score: number, rank: number): NonNullable<ExchangeDirectoryRowM
 }
 
 function directoryCell(scope: 'spot' | 'linear_perp' | 'inverse_perp', venue: ExchangeDirectoryRowModel, id: string) {
-	const table = createTable({
+	const table = constructTestTable({
+		features: tableFeaturesConfig,
 		data: [venue],
 		columns: buildDirectoryColumns(scope, true),
-		getCoreRowModel: getCoreRowModel(),
 		state: {},
-		onStateChange: () => {},
 		renderFallbackValue: null
 	})
 	const cell = table
@@ -123,15 +124,15 @@ describe('exact segment scopes in directory columns', () => {
 	// the ranked order the table opens with.
 	test('sorts the Exchange column by quality rank, best first, not by name', () => {
 		const column = buildDirectoryColumns('spot', true).find((candidate) => candidate.id === 'name')
-		const sortingFn = column?.sortingFn
-		expect(typeof sortingFn).toBe('function')
+		const sortFn = column?.sortFn
+		expect(typeof sortFn).toBe('function')
 		expect(column?.enableSorting).not.toBe(false)
 		expect(column?.sortDescFirst).toBe(false)
 
 		const best = { original: row({ name: 'Alpha', quality: quality(90, 1) }) }
 		const worst = { original: row({ name: 'Zeta', quality: quality(20, 2) }) }
 		const unranked = { original: row({ name: 'Beta', totalVolume24h: 10 }) }
-		const compare = sortingFn as (a: typeof best, b: typeof best, id: string) => number
+		const compare = sortFn as (a: typeof best, b: typeof best, id: string) => number
 
 		expect(compare(best, worst, 'name')).toBeLessThan(0)
 		expect(compare(worst, best, 'name')).toBeGreaterThan(0)

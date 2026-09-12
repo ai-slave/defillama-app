@@ -1,6 +1,10 @@
-import type { Row } from '@tanstack/react-table'
+import type { Row, RowData, TableFeatures } from '@tanstack/react-table'
 
-export const percentageSortingFn = <T extends object>(rowA: Row<T>, rowB: Row<T>, columnId: string): number => {
+export const percentageSortingFn = <F extends TableFeatures, T extends RowData>(
+	rowA: Row<F, T>,
+	rowB: Row<F, T>,
+	columnId: string
+): number => {
 	const a = rowA.getValue<number | null | undefined>(columnId)
 	const b = rowB.getValue<number | null | undefined>(columnId)
 

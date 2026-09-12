@@ -1,16 +1,18 @@
-import {
-	createTable,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel
-} from '@tanstack/react-table'
+import { createPaginatedRowModel, rowPaginationFeature, tableFeatures } from '@tanstack/react-table'
 import { expect, test } from 'vitest'
+import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
 import { serializeCsv } from '~/utils/csv'
+import { searchTableFeatures } from '../features/search'
 import { prepareTableCsv } from '../utils'
+const features = tableFeatures({
+	...searchTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 test('exports every filtered and sorted row before pagination with literal CSV values', () => {
-	const table = createTable({
+	const table = constructTestTable({
+		features,
 		data: [
 			{ name: 'Alpha, Inc.', volume: 12 },
 			{ name: 'Beta', volume: -3 },
@@ -26,12 +28,8 @@ test('exports every filtered and sorted row before pagination with literal CSV v
 			columnFilters: [{ id: 'name', value: 'Excluded' }],
 			columnVisibility: { volume: false }
 		},
-		onStateChange: () => {},
-		renderFallbackValue: null,
-		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+
+		renderFallbackValue: null
 	})
 	expect(table.getRowModel().rows.map((row) => row.original.name)).toEqual(['Beta'])
 	expect(serializeCsv(prepareTableCsv({ instance: table, filename: 'markets' }).rows)).toBe('Name\nBeta\n"Alpha, Inc."')

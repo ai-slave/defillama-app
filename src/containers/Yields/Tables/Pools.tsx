@@ -4,11 +4,12 @@ import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatUsd, formatCompactNumber, formatNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { parseSelectedEarnColumns } from '../Filters/columnOptions'
 import { YIELD_PERCENT_OPTIONS } from '../poolDetail/format'
 import { MeasuredColumnHint, MeasuredExitColumnHint } from './Measured'
 import { NameYield, PoolNameLockup } from './Name'
+import type { tableFeaturesConfig } from './PaginatedYieldsTable'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import { Sparkline } from './Sparkline'
 import { hasSparkline } from './sparklineModel'
@@ -108,7 +109,7 @@ function ProjectNameCell({ row }: { row: { original: IYieldTableRow } }) {
 	)
 }
 
-const columnHelper = createColumnHelper<IYieldTableRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IYieldTableRow>()
 const OPTIONAL_COLUMN_IDS = new Set([
 	'category',
 	'apyBase',
@@ -133,7 +134,7 @@ function createEarnColumns(
 	defaultColumns: ReadonlyArray<string> = []
 ) {
 	const selected = new Set(parseSelectedEarnColumns(query.column as string | Array<string> | undefined, defaultColumns))
-	const columns = [
+	const columns = columnHelper.columns([
 		columnHelper.accessor('pool', {
 			id: 'pool',
 			header: 'Pool',
@@ -459,7 +460,7 @@ function createEarnColumns(
 				headerHelperText: 'Average position size in USD (TVL / holder count).'
 			}
 		})
-	]
+	])
 
 	return columns.filter((column) => !OPTIONAL_COLUMN_IDS.has(column.id ?? '') || selected.has(column.id ?? ''))
 }

@@ -5,6 +5,7 @@ import { createInflowsTooltipFormatter } from '~/components/ECharts/MultiSeriesC
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
@@ -14,7 +15,7 @@ import { MetricRow } from '~/ui/MetricPrimitives'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { IDATOverviewDataByAssetProps } from './types'
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
@@ -117,7 +118,7 @@ export function DATByAsset({
 				columns={columns}
 				placeholder="Search institutions"
 				columnToSearch="name"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 				csvFileName={`${metadata.name}-treasury-holdings`}
 			/>
 		</>
@@ -127,8 +128,8 @@ export function DATByAsset({
 // ── Table columns ───────────────────────────────────────────────────────
 
 function byAssetColumns({ symbol }: { symbol: string }) {
-	const columnHelper = createColumnHelper<IDATOverviewDataByAssetProps['institutions'][number]>()
-	return [
+	const columnHelper = createColumnHelper<SearchTableFeatures, IDATOverviewDataByAssetProps['institutions'][number]>()
+	return columnHelper.columns([
 		columnHelper.accessor('name', {
 			header: 'Institution',
 			enableSorting: false,
@@ -308,7 +309,7 @@ function byAssetColumns({ symbol }: { symbol: string }) {
 					'Some companies do not update their holdings frequently, so the last announcement date may not be the most recent'
 			}
 		})
-	]
+	])
 }
 
 // ── mNAV chart sub-component ────────────────────────────────────────────

@@ -1,21 +1,21 @@
-import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { VirtualTable } from '~/components/Table/Table'
 import {
-	formatUsd,
 	formatCompactNumber,
 	formatPercent,
-	USD_LOWERCASE_MILLIONS_OPTIONS,
+	formatUsd,
+	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
 	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
-	NUMBER_LOWERCASE_MILLIONS_OPTIONS
+	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
 import { useMapleActivePools } from './api'
 import { buildMaplePoolsData, type PoolRow } from './chartData'
 import {
-	ChartCard,
 	CardSkeleton,
+	ChartCard,
 	KpiCard,
 	KpiSkeleton,
 	MAPLE_CSV_ONLY_EXPORT,
@@ -23,6 +23,8 @@ import {
 	MAPLE_USD_CATEGORY_CHART_OPTIONS,
 	Pagination
 } from './shared'
+
+const tableFeaturesConfig = paginatedTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -54,7 +56,7 @@ const APY_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const poolColumns: Array<ColumnDef<PoolRow>> = [
+const poolColumns: Array<ColumnDef<typeof tableFeaturesConfig, PoolRow>> = [
 	{ header: 'Pool', accessorKey: 'name', size: 220 },
 	{ header: 'Asset', accessorKey: 'asset', size: 80 },
 	{
@@ -116,16 +118,13 @@ function PoolsTable({ data }: { data: Array<PoolRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'tvlUsd', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
-	const instance = useReactTable({
+	const instance = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: poolColumns,
 		state: { sorting, pagination },
 		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 
 	if (data.length === 0) return null
@@ -133,7 +132,7 @@ function PoolsTable({ data }: { data: Array<PoolRow> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Active Pools</h3>
-			<VirtualTable instance={instance} skipVirtualization />
+			<VirtualTable table={instance} skipVirtualization />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
 	)

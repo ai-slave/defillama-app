@@ -1,8 +1,8 @@
-import { createTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
 import { describe, expect, test } from 'vitest'
+import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import type { RaisesSummary } from '~/containers/Raises/summary'
-import { airdropsColumns, type RecentlyListedProtocolsTable } from '../RecentProtocolsTable'
+import { airdropsColumns, tableFeaturesConfig, type RecentlyListedProtocolsTable } from '../RecentProtocolsTable'
 
 type Row = Parameters<typeof RecentlyListedProtocolsTable>[0]['data'][number]
 function row(name: string, raiseSummary: RaisesSummary): Row {
@@ -32,7 +32,8 @@ function row(name: string, raiseSummary: RaisesSummary): Row {
 
 describe('Potential Airdrops funding export', () => {
 	test('sorts and exports disclosed subtotals with unknown-round counts, preserving zero', () => {
-		const table = createTable({
+		const table = constructTestTable({
+			features: tableFeaturesConfig,
 			data: [
 				row('Unknown', { totalUsd: null, undisclosedCount: 2 }),
 				row('Partial', { totalUsd: 16_500_000, undisclosedCount: 1 }),
@@ -41,10 +42,7 @@ describe('Potential Airdrops funding export', () => {
 			columns: airdropsColumns,
 			state: { sorting: [{ id: 'totalRaised', desc: true }] },
 			defaultColumn: { sortUndefined: 'last' },
-			onStateChange: () => {},
-			renderFallbackValue: null,
-			getCoreRowModel: getCoreRowModel(),
-			getSortedRowModel: getSortedRowModel()
+			renderFallbackValue: null
 		})
 		const csv = prepareTableCsv({ instance: table, filename: 'airdrops' })
 		const header = csv.rows[0]!

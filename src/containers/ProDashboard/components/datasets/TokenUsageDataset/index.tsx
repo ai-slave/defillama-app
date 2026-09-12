@@ -1,21 +1,16 @@
-import {
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type PaginationState,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import type { PaginationState, SortingState } from '@tanstack/react-table'
 import { matchSorter } from 'match-sorter'
-import { useDeferredValue, useEffect, useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 import { components, type GroupBase, type MultiValue, type OptionProps, type ValueContainerProps } from 'react-select'
 import { ReactSelect } from '~/components/MultiSelect/ReactSelect'
+import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { normalizeProTokenSymbols } from '~/containers/ProDashboard/tableQueryKeys'
 import type { TokenUsageDatasetTableConfig } from '~/containers/ProDashboard/types'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
+import { useIsClient } from '~/hooks/useIsClient'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV as downloadCSVFile } from '~/utils/download'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { reactSelectStyles } from '../../../utils/reactSelectStyles'
 import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
@@ -26,11 +21,10 @@ import { buildTokenUsageSummary } from './summary'
 import { type TokenOption, useTokenSearch } from './useTokenSearch'
 import { useTokenUsageData } from './useTokenUsageData'
 
+export const tableFeaturesConfig = paginatedTableFeatures
+
 const EMPTY_TOKEN_OPTIONS: Array<TokenOption> = []
 const EMPTY_USAGE_DATA: Array<ProtocolTokenUsageData> = []
-const getTokenUsageCoreRowModel = getCoreRowModel<ProtocolTokenUsageData>()
-const getTokenUsageSortedRowModel = getSortedRowModel<ProtocolTokenUsageData>()
-const getTokenUsagePaginationRowModel = getPaginationRowModel<ProtocolTokenUsageData>()
 
 interface TokenUsageDatasetProps {
 	config: TokenUsageDatasetTableConfig
@@ -131,16 +125,13 @@ function TokenSelector({ config, onConfigChange, placeholder, menuPortalTarget }
 
 export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOnlyTokenUsageDatasetProps) {
 	const { config } = props
-	const [menuPortalTarget, setMenuPortalTarget] = useState<HTMLElement | null>(null)
+	const isClient = useIsClient()
+	const menuPortalTarget =
+		isClient && props.editable ? document.querySelector<HTMLElement>('.pro-dashboard-container') : null
 	const [search, setSearch] = useState('')
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'amountUsd' }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
 	const includeCex = config.includeCex
-
-	useEffect(() => {
-		if (!props.editable) return
-		setMenuPortalTarget(document.querySelector<HTMLElement>('.pro-dashboard-container'))
-	}, [props.editable])
 
 	const tokenSymbols = useMemo(() => normalizeProTokenSymbols(config.tokenSymbols), [config.tokenSymbols])
 
@@ -159,7 +150,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 
 	const columns = useMemo(() => getColumns(tokenSymbols), [tokenSymbols])
 
-	const table = useReactTable({
+	const table = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
 		data: filteredData,
 		columns,
@@ -170,9 +161,6 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 		onSortingChange: setSorting,
 		enableSortingRemoval: false,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getTokenUsageCoreRowModel,
-		getSortedRowModel: getTokenUsageSortedRowModel,
-		getPaginationRowModel: getTokenUsagePaginationRowModel,
 		autoResetPageIndex: true
 	})
 
@@ -191,7 +179,7 @@ export function TokenUsageDataset(props: EditableTokenUsageDatasetProps | ReadOn
 		headers.push('Total Amount (USD)')
 
 		const csv: Array<Array<CsvCell>> = [headers]
-		for (const row of table.getPrePaginationRowModel().rows) {
+		for (const row of table.getPrePaginatedRowModel().rows) {
 			const data: Array<CsvCell> = [row.original.name, row.original.category ?? '']
 
 			if (isMultiToken) {

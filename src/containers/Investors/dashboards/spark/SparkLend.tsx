@@ -1,13 +1,14 @@
-import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
+import { createPaginatedRowModel, rowPaginationFeature, tableFeatures, useTable } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/Table'
 import {
-	formatUsd,
 	formatPercent,
-	USD_LOWERCASE_MILLIONS_OPTIONS,
-	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+	formatUsd,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
 import { AREA_EXPORT, BAR_EXPORT, DOLLAR_CHART_OPTIONS, DOLLAR_STACKED_CHART_OPTIONS } from './chartDefaults'
 import {
@@ -18,6 +19,12 @@ import {
 	useSparklendTvlChart,
 	useSparklendYieldPools
 } from './sparklendApi'
+
+const tableFeaturesConfig = tableFeatures({
+	...filteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -100,7 +107,7 @@ interface PoolRow {
 	poolMeta: string | null
 }
 
-const poolColumns: Array<ColumnDef<PoolRow>> = [
+const poolColumns: Array<ColumnDef<typeof tableFeaturesConfig, PoolRow>> = [
 	{
 		header: 'Pool',
 		accessorKey: 'symbol',
@@ -149,16 +156,14 @@ function YieldPoolsTable({ data }: { data: Array<PoolRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'tvlUsd', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: poolColumns,
 		state: { sorting, pagination },
 		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 
 	if (data.length === 0) return null
@@ -166,14 +171,14 @@ function YieldPoolsTable({ data }: { data: Array<PoolRow> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Yield Pools</h3>
-			<VirtualTable instance={instance} skipVirtualization />
+			<VirtualTable table={instance} skipVirtualization />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
 	)
 }
 
-function Pagination({ table }: { table: ReturnType<typeof useReactTable<PoolRow>> }) {
-	const { pageIndex, pageSize } = table.getState().pagination
+function Pagination({ table }: { table: ReturnType<typeof useTable<typeof tableFeaturesConfig, PoolRow>> }) {
+	const { pageIndex, pageSize } = table.state.pagination
 	const total = table.getFilteredRowModel().rows.length
 
 	return (

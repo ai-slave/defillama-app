@@ -2,11 +2,12 @@ import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch, type TableWithSearchLayout } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import type { LiquidationPosition, OverviewChainRow, OverviewProtocolRow, ProtocolChainRow } from './api.types'
 import { LiquidationsExplorerProvider, LiquidationsOwnerLink } from './OwnerLink'
 
@@ -16,10 +17,10 @@ interface LiquidationsTableProps {
 	renderLayout?: TableWithSearchLayout
 }
 
-const protocolColumnHelper = createColumnHelper<OverviewProtocolRow>()
-const overviewChainColumnHelper = createColumnHelper<OverviewChainRow>()
-const protocolChainColumnHelper = createColumnHelper<ProtocolChainRow>()
-const positionColumnHelper = createColumnHelper<LiquidationPosition>()
+const protocolColumnHelper = createColumnHelper<SearchTableFeatures, OverviewProtocolRow>()
+const overviewChainColumnHelper = createColumnHelper<SearchTableFeatures, OverviewChainRow>()
+const protocolChainColumnHelper = createColumnHelper<SearchTableFeatures, ProtocolChainRow>()
+const positionColumnHelper = createColumnHelper<SearchTableFeatures, LiquidationPosition>()
 
 type LiquidationPositionSearchIndex = WeakMap<LiquidationPosition, string>
 
@@ -57,7 +58,7 @@ export function filterLiquidationPositions(
 	return filtered
 }
 
-const protocolColumns = [
+const protocolColumns = protocolColumnHelper.columns([
 	protocolColumnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -111,9 +112,9 @@ const protocolColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
-const overviewChainColumns = [
+const overviewChainColumns = overviewChainColumnHelper.columns([
 	overviewChainColumnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -165,9 +166,9 @@ const overviewChainColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
-const protocolChainColumns = [
+const protocolChainColumns = protocolChainColumnHelper.columns([
 	protocolChainColumnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -216,9 +217,9 @@ const protocolChainColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
-const positionColumns = [
+const positionColumns = positionColumnHelper.columns([
 	positionColumnHelper.accessor('protocolName', {
 		id: 'protocolName',
 		header: 'Protocol',
@@ -308,7 +309,7 @@ const positionColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 export function LiquidationsProtocolsTable({
 	rows,
@@ -327,7 +328,7 @@ export function LiquidationsProtocolsTable({
 			placeholder="Search protocols..."
 			csvFileName="liquidations-v2-100k-protocols"
 			embedded={embedded}
-			sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
+			initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
 		/>
 	)
 }
@@ -349,7 +350,7 @@ export function LiquidationsOverviewChainsTable({
 			placeholder="Search chains..."
 			csvFileName="liquidations-v2-100k-chains"
 			embedded={embedded}
-			sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
+			initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
 		/>
 	)
 }
@@ -371,7 +372,7 @@ export function LiquidationsProtocolChainsTable({
 			placeholder="Search chains..."
 			csvFileName="liquidations-v2-100k-protocol-chains"
 			embedded={embedded}
-			sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
+			initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
 		/>
 	)
 }
@@ -417,7 +418,7 @@ export function LiquidationsPositionsTable({
 				}
 				csvFileName="liquidations-v2-100k-positions"
 				embedded={embedded}
-				sortingState={[{ id: 'collateralAmountUsd', desc: true }]}
+				initialSorting={[{ id: 'collateralAmountUsd', desc: true }]}
 			/>
 		</LiquidationsExplorerProvider>
 	)

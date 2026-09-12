@@ -1,26 +1,29 @@
-import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import { useTable } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import {
-	formatUsd,
 	formatPercent,
-	USD_LOWERCASE_MILLIONS_OPTIONS,
-	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+	formatUsd,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
-import { useAaveGHOReserve, useAaveMarkets, useAaveAPYHistory, num, pct } from './api'
 import type { TimeWindow } from './api'
+import { num, pct, useAaveAPYHistory, useAaveGHOReserve, useAaveMarkets } from './api'
 import {
-	InvestorsTable,
-	PageLoader,
+	AAVE_AREA_EXPORT,
+	AAVE_PERCENT_TIME_CHART_OPTIONS,
 	CardSkeleton,
+	InvestorsTable,
 	KpiCard,
 	MetricStrip,
+	PageLoader,
 	SectionHeader,
-	WindowToggle,
-	AAVE_AREA_EXPORT,
-	AAVE_PERCENT_TIME_CHART_OPTIONS
+	WindowToggle
 } from './shared'
+
+const tableFeaturesConfig = displayTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -53,7 +56,7 @@ interface GHOMarketRow {
 	utilization: number
 }
 
-const ghoMarketColumns: Array<ColumnDef<GHOMarketRow>> = [
+const ghoMarketColumns: Array<ColumnDef<typeof tableFeaturesConfig, GHOMarketRow>> = [
 	{ header: 'Chain', accessorKey: 'chain', size: 120 },
 	{
 		header: 'Market Size',
@@ -100,14 +103,13 @@ const ghoMarketColumns: Array<ColumnDef<GHOMarketRow>> = [
 function GHOMarketsTable({ data }: { data: Array<GHOMarketRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: ghoMarketColumns,
 		state: { sorting },
-		onSortingChange: setSorting,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: setSorting
 	})
 
 	if (data.length === 0) return null

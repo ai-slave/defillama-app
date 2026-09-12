@@ -4,15 +4,19 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { buildChainShareTotals, getChainMetricShare } from './chainShares'
+import type { tableFeaturesConfig } from './index'
 import { ChainsDataset } from './index'
 
-const mocks = vi.hoisted(() => ({ data: [] as Array<ChainsDatasetRow>, table: null as Table<ChainsDatasetRow> | null }))
+const mocks = vi.hoisted(() => ({
+	data: [] as Array<ChainsDatasetRow>,
+	table: null as Table<typeof tableFeaturesConfig, ChainsDatasetRow> | null
+}))
 vi.mock('./useChainsData', () => ({ useChainsData: () => ({ data: mocks.data, isLoading: false, error: null }) }))
 vi.mock('./ChainsTableHeader', () => ({ ChainsTableHeader: () => null }))
 vi.mock('./ColumnManagementPanel', () => ({ ColumnManagementPanel: () => null }))
 vi.mock('../../Table/TablePagination', () => ({ TablePagination: () => null }))
 vi.mock('../../Table/TableBody', () => ({
-	TableBody: ({ table }: { table: Table<ChainsDatasetRow> }) => {
+	TableBody: ({ table }: { table: Table<typeof tableFeaturesConfig, ChainsDatasetRow> }) => {
 		mocks.table = table
 		return null
 	}

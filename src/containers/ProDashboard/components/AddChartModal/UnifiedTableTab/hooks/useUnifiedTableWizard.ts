@@ -1,4 +1,4 @@
-import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { useCallback, useMemo, useReducer } from 'react'
 import { sanitizeConfigColumns } from '~/containers/ProDashboard/components/UnifiedTable/config/metricCapabilities'
 import { UNIFIED_TABLE_PRESETS_BY_ID } from '~/containers/ProDashboard/components/UnifiedTable/config/PresetRegistry'
@@ -23,7 +23,7 @@ type WizardAction =
 	| { type: 'SET_ROW_HEADERS'; rowHeaders: Array<UnifiedRowHeaderType> }
 	| { type: 'SET_FILTERS'; filters: UnifiedTableFilters }
 	| { type: 'SET_PRESET'; presetId: string }
-	| { type: 'SET_COLUMNS'; columnOrder: ColumnOrderState; columnVisibility: VisibilityState }
+	| { type: 'SET_COLUMNS'; columnOrder: ColumnOrderState; columnVisibility: ColumnVisibilityState }
 	| { type: 'SET_SORTING'; sorting: SortingState }
 	| { type: 'ADD_CUSTOM_COLUMN'; column: CustomColumnDefinition }
 	| { type: 'UPDATE_CUSTOM_COLUMN'; id: string; updates: Partial<CustomColumnDefinition> }
@@ -35,7 +35,7 @@ interface WizardState {
 	filters: UnifiedTableFilters
 	activePresetId: string
 	columnOrder: ColumnOrderState
-	columnVisibility: VisibilityState
+	columnVisibility: ColumnVisibilityState
 	sorting: SortingState
 	customColumns: Array<CustomColumnDefinition>
 }
@@ -240,7 +240,7 @@ export const useUnifiedTableWizard = (presetId?: string, existingConfig?: Unifie
 	const setFilters = useCallback((filters: UnifiedTableFilters) => dispatch({ type: 'SET_FILTERS', filters }), [])
 	const setPreset = useCallback((nextPresetId: string) => dispatch({ type: 'SET_PRESET', presetId: nextPresetId }), [])
 	const setColumns = useCallback(
-		(columnOrder: ColumnOrderState, columnVisibility: VisibilityState) =>
+		(columnOrder: ColumnOrderState, columnVisibility: ColumnVisibilityState) =>
 			dispatch({ type: 'SET_COLUMNS', columnOrder, columnVisibility }),
 		[]
 	)

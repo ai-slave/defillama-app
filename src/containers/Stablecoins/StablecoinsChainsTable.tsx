@@ -2,18 +2,15 @@ import {
 	type ColumnFiltersState,
 	createColumnHelper,
 	type ExpandedState,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -21,19 +18,21 @@ import type { useGroupChainsPegged } from '~/containers/Stablecoins/hooks'
 import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 
+const tableFeaturesConfig = expandedFilteredTableFeatures
+
 type StablecoinsByChainRow = ReturnType<typeof useGroupChainsPegged>[number]
 type StablecoinsChainsTableMeta = { deprecatedChains: Record<string, true> }
 type DominanceCell = NonNullable<StablecoinsByChainRow['dominance']>
-const columnHelper = createColumnHelper<StablecoinsByChainRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, StablecoinsByChainRow>()
 
-const stablecoinsByChainColumns = [
+const stablecoinsByChainColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -168,7 +167,7 @@ const stablecoinsByChainColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 export function StablecoinsChainsTable({
 	data,
@@ -181,7 +180,8 @@ export function StablecoinsChainsTable({
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'mcap', desc: true }])
 	const [expanded, setExpanded] = React.useState<ExpandedState>({})
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns: stablecoinsByChainColumns,
 		state: {
@@ -199,15 +199,15 @@ export function StablecoinsChainsTable({
 		onExpandedChange: (updater) => React.startTransition(() => setExpanded(updater)),
 		getSubRows: (row: StablecoinsByChainRow) => row.subRows,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
 	const [groupTvls, updater] = useLocalStorageSettingsManager('tvl_chains')
+
+	const selectedAggregateTypes = React.useMemo(() => {
+		return CHAINS_CATEGORY_GROUP_SETTINGS.flatMap((key) => (groupTvls[key.key] ? [key.key] : []))
+	}, [groupTvls])
 
 	const setAggrOptions: React.Dispatch<React.SetStateAction<Array<string>>> = (action) => {
 		const selectedKeys = typeof action === 'function' ? action(selectedAggregateTypes) : action
@@ -219,10 +219,6 @@ export function StablecoinsChainsTable({
 			}
 		}
 	}
-
-	const selectedAggregateTypes = React.useMemo(() => {
-		return CHAINS_CATEGORY_GROUP_SETTINGS.flatMap((key) => (groupTvls[key.key] ? [key.key] : []))
-	}, [groupTvls])
 
 	return (
 		<Panel padding="none">
@@ -252,7 +248,7 @@ export function StablecoinsChainsTable({
 					size="md"
 				/>
 			</TableToolbar>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }

@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { getAirdropDirectoryData } from '~/containers/ProtocolLists/queries'
 import Layout from '~/layout'
@@ -13,9 +14,9 @@ interface IAirdropRow {
 	page: string
 }
 
-const columnHelper = createColumnHelper<IAirdropRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IAirdropRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -42,7 +43,7 @@ const columns = [
 				</a>
 			) : null
 	})
-]
+])
 
 export const getStaticProps = withPerformanceLogging('airdrop-directory', async () => {
 	const airdrops = await getAirdropDirectoryData()
@@ -68,7 +69,7 @@ export default function Airdrops({ airdrops }) {
 				header="Airdrop Directory"
 				headingAs="h1"
 				csvFileName="airdrop-directory"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</Layout>
 	)

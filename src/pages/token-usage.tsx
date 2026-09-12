@@ -1,12 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, startTransition, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
@@ -17,6 +11,7 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
@@ -41,14 +36,16 @@ import { searchFieldInputStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import {
-	popoverRowWithBorderStyles,
-	popoverSurfaceStyles,
 	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
+	popoverMobileWrapperClassName,
+	popoverRowWithBorderStyles,
+	popoverSurfaceStyles
 } from '~/ui/Popover'
 import { PanelLoadingStatus, PanelStatus } from '~/ui/Status'
 import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
+
+const tableFeaturesConfig = displayTableFeatures
 
 const TreemapChart = lazy(() => import('~/components/ECharts/TreemapChart')) as React.FC<TreemapChartProps>
 
@@ -63,7 +60,7 @@ type TokenUsagePageRow = {
 	misrepresentedTokens?: boolean
 }
 
-const columnHelper = createColumnHelper<TokenUsagePageRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokenUsagePageRow>()
 
 export default function Tokens() {
 	const router = useRouter()
@@ -129,7 +126,8 @@ export default function Tokens() {
 	const totalTrackedUsd = useMemo(() => getTokenUsageTreemapTotal(treemapTreeData), [treemapTreeData])
 
 	const [sorting, setSorting] = useState<SortingState>([{ desc: true, id: 'amountUsd' }])
-	const tableInstance = useReactTable({
+	const tableInstance = useTable({
+		features: tableFeaturesConfig,
 		data: filteredProtocols,
 		columns,
 		state: {
@@ -139,9 +137,7 @@ export default function Tokens() {
 			sortUndefined: 'last'
 		},
 		enableSortingRemoval: false,
-		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: (updater) => startTransition(() => setSorting(updater))
 	})
 
 	return (
@@ -264,7 +260,7 @@ export default function Tokens() {
 					<Suspense
 						fallback={<div style={{ minHeight: `${filteredProtocols.length * 50 + 200}px` }} className="bg-surface" />}
 					>
-						<VirtualTable instance={tableInstance} />
+						<VirtualTable table={tableInstance} />
 					</Suspense>
 				</Panel>
 			)}
@@ -284,7 +280,7 @@ const fetchProtocols = async (
 	)
 }
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -328,7 +324,7 @@ const columns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 function getPreHydrationTokenSearchValue() {
 	if (typeof window === 'undefined') return ''

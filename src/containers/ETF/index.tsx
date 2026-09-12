@@ -10,6 +10,7 @@ import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
@@ -125,15 +126,15 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 				placeholder="Search ETF..."
 				header="Exchange Traded Funds"
 				csvFileName="etf-overview"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</>
 	)
 }
 
-const columnHelper = createColumnHelper<IETFSnapshotRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IETFSnapshotRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('ticker', {
 		header: 'Ticker',
 		enableSorting: false,
@@ -214,4 +215,4 @@ const columns = [
 			align: 'end'
 		}
 	})
-]
+])

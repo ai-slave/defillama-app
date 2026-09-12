@@ -1,4 +1,4 @@
-import type { SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '../../../unifiedTable/config/columnDictionary'
 import type { UnifiedTableConfig } from '../../../unifiedTable/config/current'
 import { DEFAULT_COLUMN_ORDER, DEFAULT_COLUMN_VISIBILITY } from '../../../unifiedTable/config/defaults'
@@ -55,8 +55,8 @@ export function getDefaultColumnVisibility(
 	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	fallbackPreset?: UnifiedTablePreset,
 	includeDefaults = false
-): VisibilityState {
-	let visibility: VisibilityState
+): ColumnVisibilityState {
+	let visibility: ColumnVisibilityState
 
 	if (includeDefaults) {
 		visibility = {
@@ -118,7 +118,7 @@ interface ApplyPresetOptions {
 
 export function applyPresetToConfig(options: ApplyPresetOptions): {
 	columnOrder: Array<string>
-	columnVisibility: VisibilityState
+	columnVisibility: ColumnVisibilityState
 	sorting: SortingState
 	rowHeaders: Array<UnifiedRowHeaderType>
 } {

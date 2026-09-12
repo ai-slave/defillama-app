@@ -5,6 +5,7 @@ import type { IMultiSeriesChartProps, MultiSeriesChartOptions } from '~/componen
 import type { TreemapChartProps } from '~/components/ECharts/TreemapChart/types'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -14,8 +15,8 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { formatUsd } from '~/utils/numberFormat'
 import {
 	buildNarrativeTreemapTreeData,
-	calculateDenominatedTimeSeries,
 	calculateDenominatedChange,
+	calculateDenominatedTimeSeries,
 	filterNarrativeTreemapTreeData
 } from './chartData'
 import type { CategoryPerformanceProps, IPctChangeRow } from './types'
@@ -27,7 +28,7 @@ const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart'
 
 const DEFAULT_SORTING_STATE = [{ id: 'change', desc: true }]
 const MAX_VISIBLE_TIME_SERIES = 30
-const columnHelper = createColumnHelper<IPctChangeRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IPctChangeRow>()
 
 const PERIODS = ['7D', '30D', 'YTD', '365D'] as const
 const DENOMS = ['$', 'BTC', 'ETH', 'SOL'] as const
@@ -337,13 +338,13 @@ export function CategoryPerformanceContainer({
 				placeholder="Search..."
 				header="Categories"
 				csvFileName={isCoinPage ? 'narrative-tracker-coin' : 'narrative-tracker-category'}
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</>
 	)
 }
 
-const CoinPerformanceColumn = [
+const CoinPerformanceColumn = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Coin',
 		enableSorting: false,
@@ -403,9 +404,9 @@ const CoinPerformanceColumn = [
 			align: 'end'
 		}
 	})
-]
+])
 
-const CategoryPerformanceColumn = [
+const CategoryPerformanceColumn = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Category',
 		enableSorting: false,
@@ -476,4 +477,4 @@ const CategoryPerformanceColumn = [
 			align: 'end'
 		}
 	})
-]
+])

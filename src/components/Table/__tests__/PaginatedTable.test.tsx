@@ -1,8 +1,20 @@
-import { createColumnHelper, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table'
+import {
+	createColumnHelper,
+	createPaginatedRowModel,
+	rowPaginationFeature,
+	tableFeatures,
+	useTable
+} from '@tanstack/react-table'
 import { cloneElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import { searchTableFeatures } from '../features/search'
 import { PaginatedTable } from '../PaginatedTable'
+const features = tableFeatures({
+	...searchTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 vi.mock('~/ui/Icon', () => ({
 	Icon: ({ name }: { name: string }) => <span>{name}</span>
@@ -20,7 +32,7 @@ vi.mock('~/ui/Tooltip', () => ({
 	}) => (render ? cloneElement(render, { 'data-tooltip-content': content }, children) : <>{children}</>)
 }))
 
-const columnHelper = createColumnHelper<{ name: string }>()
+const columnHelper = createColumnHelper<typeof features, { name: string }>()
 
 function TestTable({
 	rowCount,
@@ -38,7 +50,8 @@ function TestTable({
 	stickyHeader?: boolean
 }) {
 	const data = Array.from({ length: rowCount }, (_, index) => ({ name: `row-${index + 1}` }))
-	const table = useReactTable({
+	const table = useTable({
+		features,
 		data,
 		columns: [
 			columnHelper.accessor('name', {
@@ -54,9 +67,7 @@ function TestTable({
 				pageIndex: 0,
 				pageSize: initialPageSize
 			}
-		},
-		getCoreRowModel: getCoreRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		}
 	})
 
 	return (

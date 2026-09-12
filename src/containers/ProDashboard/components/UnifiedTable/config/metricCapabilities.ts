@@ -1,4 +1,4 @@
-import type { SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '../../../unifiedTable/config/columnDictionary'
 import { isColumnAvailableForGrouping } from '../../../unifiedTable/config/groupingCapabilities'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
@@ -28,12 +28,12 @@ function filterByCapabilities(
 }
 
 function pruneVisibility(
-	visibility: VisibilityState | undefined,
+	visibility: ColumnVisibilityState | undefined,
 	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>,
 	validCustomColumnIds?: Set<string>
-): VisibilityState {
+): ColumnVisibilityState {
 	if (!visibility) return {}
-	const result: VisibilityState = {}
+	const result: ColumnVisibilityState = {}
 	for (const key in visibility) {
 		const isVisible = visibility[key]
 		if (isVisible !== undefined && isColumnSupported(key, rowHeaders, validCustomColumnIds)) result[key] = isVisible
@@ -66,13 +66,13 @@ export function sanitizeConfigColumns({
 	rowHeaders
 }: {
 	order: Array<string>
-	visibility?: VisibilityState
+	visibility?: ColumnVisibilityState
 	sorting?: SortingState
 	customColumns?: Array<CustomColumnDefinition> | undefined
 	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>
 }): {
 	order: Array<string>
-	visibility: VisibilityState
+	visibility: ColumnVisibilityState
 	sorting: SortingState
 } {
 	const validCustomColumnIds = getValidCustomColumnIds(customColumns)

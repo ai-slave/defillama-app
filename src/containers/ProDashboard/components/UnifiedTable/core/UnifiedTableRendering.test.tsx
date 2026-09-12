@@ -1,15 +1,6 @@
-// @vitest-environment happy-dom
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import {
-	type ColumnDef,
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type PaginationState,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+// @vitest-environment happy-dom
+import { type ColumnDef, type PaginationState, type SortingState, useTable } from '@tanstack/react-table'
 import { act, useMemo, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -20,7 +11,7 @@ import { TablePagination } from '../../Table/TablePagination'
 import UnifiedTable from '../index'
 import type { ProtocolTableLeafRow, ProtocolTableRow } from '../types'
 import { UnifiedVirtualTable } from './UnifiedVirtualTable'
-import { useUnifiedTable } from './useUnifiedTable'
+import { tableFeaturesConfig, useUnifiedTable } from './useUnifiedTable'
 
 const dashboardMocks = vi.hoisted(() => ({
 	handleDuplicateUnifiedTable: vi.fn(),
@@ -93,7 +84,7 @@ const createRow = (index: number): ProtocolTableLeafRow => {
 	}
 }
 
-const columns: Array<ColumnDef<ProtocolTableRow>> = [
+const columns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 	{
 		id: 'name',
 		header: 'Name',
@@ -182,15 +173,13 @@ function TableHarness() {
 	const [data, setData] = useState(() => Array.from({ length: 21 }, (_, index) => createRow(index + 1)))
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
 	const [sorting, setSorting] = useState<SortingState>([])
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns,
 		state: { pagination, sorting },
 		onPaginationChange: setPagination,
-		onSortingChange: setSorting,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onSortingChange: setSorting
 	})
 
 	return (

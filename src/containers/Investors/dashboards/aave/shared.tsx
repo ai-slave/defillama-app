@@ -1,7 +1,23 @@
-import { flexRender, type RowData, type Table } from '@tanstack/react-table'
+import { useSelector } from '@tanstack/react-store'
+import { type RowData as TableRowData, FlexRender, Subscribe, type RowData, type Table } from '@tanstack/react-table'
+import {
+	column_getCanSort,
+	column_getIsSorted,
+	column_getSize,
+	column_toggleSorting,
+	row_getVisibleCells,
+	table_getTotalSize,
+	table_getVisibleLeafColumns
+} from '@tanstack/react-table/static-functions'
 import { Children } from 'react'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type {
+	PaginatedTableInstance,
+	PaginationFeatures,
+	SortingFeatures,
+	VisibilityFeatures
+} from '~/components/Table/features/contracts'
 import { SortIcon } from '~/components/Table/SortIcon'
 
 export const AAVE_AREA_EXPORT = { csv: true, png: true, filename: 'chart' } as const
@@ -13,71 +29,75 @@ export const AAVE_CATEGORY_PERCENT_CHART_OPTIONS = createCategoryChartOptions('%
 
 export const AAVE_PERCENT_TIME_CHART_OPTIONS = createTimeSeriesChartOptions('%')
 
-// Every read below comes off a table instance handed in as a prop, so the compiler never sees
-// `useReactTable` and does not flag the incompatible library. Compiled, it caches the row model and the
-// header groups against the instance identity, which TanStack keeps stable while its state mutates:
-// sorting stops taking effect and replaced data keeps its old values. Opted out until the component
-// takes reactive rows, headers, columns and sizes rather than reading them off the instance.
-// See "Some bailouts are load-bearing" in docs/lint-burn-down.md.
-export function InvestorsTable<T extends RowData>({
+export function InvestorsTable<F extends SortingFeatures & VisibilityFeatures, T extends RowData>({
 	instance,
 	overrideRows
 }: {
-	instance: Table<T>
-	overrideRows?: Array<import('@tanstack/react-table').Row<T>>
+	instance: Table<F, T>
+	overrideRows?: Array<import('@tanstack/react-table').Row<F, T>>
 }) {
-	'use no memo'
-
-	const columns = instance.getVisibleLeafColumns()
-	const gridTemplateColumns = columns.map((col) => `${col.getSize() ?? 100}fr`).join(' ')
-	const rows = overrideRows ?? instance.getRowModel().rows
-
 	return (
-		<div className="w-full overflow-auto">
-			<div style={{ display: 'grid', gridTemplateColumns, minWidth: `${instance.getTotalSize()}px` }}>
-				{instance.getHeaderGroups().map((headerGroup) =>
-					headerGroup.headers.map((header) => {
-						const align = header.column.columnDef.meta?.align ?? 'start'
-						const canSort = header.column.getCanSort()
-						// A sortable header is a control: as a span with an onClick, sorting was mouse-only.
-						const HEADER =
-							'relative inline-flex flex-nowrap items-center gap-1 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase'
-						return (
-							<div key={header.id} className="truncate border-b border-subtle px-3 py-2.5" style={{ textAlign: align }}>
-								{canSort ? (
-									<button
-										type="button"
-										className={`${HEADER} cursor-pointer`}
-										onClick={() => header.column.toggleSorting()}
-									>
-										{flexRender(header.column.columnDef.header, header.getContext())}
-										<SortIcon dir={header.column.getIsSorted()} />
-									</button>
-								) : (
-									<span className={HEADER}>{flexRender(header.column.columnDef.header, header.getContext())}</span>
-								)}
-							</div>
-						)
-					})
-				)}
-				{rows.map((row, rowIdx) =>
-					row.getVisibleCells().map((cell) => {
-						const align = cell.column.columnDef.meta?.align ?? 'start'
-						return (
-							<div
-								key={cell.id}
-								className={`truncate border-b border-subtle px-3 py-2.5 text-[13px] text-pro-text-primary transition-colors ${
-									rowIdx % 2 === 1 ? 'bg-pro-cards-bg' : ''
-								}`}
-								style={{ textAlign: align }}
-							>
-								{flexRender(cell.column.columnDef.cell, cell.getContext())}
-							</div>
-						)
-					})
-				)}
-			</div>
-		</div>
+		<Subscribe source={instance.store}>
+			{() => {
+				const columns = table_getVisibleLeafColumns(instance)
+				const gridTemplateColumns = columns.map((col) => `${column_getSize(col) ?? 100}fr`).join(' ')
+				const rows = overrideRows ?? instance.getRowModel().rows
+
+				return (
+					<div className="w-full overflow-auto">
+						<div style={{ display: 'grid', gridTemplateColumns, minWidth: `${table_getTotalSize(instance)}px` }}>
+							{instance.getHeaderGroups().map((headerGroup) =>
+								headerGroup.headers.map((header) => {
+									const align = header.column.columnDef.meta?.align ?? 'start'
+									const canSort = column_getCanSort(header.column)
+									// A sortable header is a control: as a span with an onClick, sorting was mouse-only.
+									const HEADER =
+										'relative inline-flex flex-nowrap items-center gap-1 text-[11px] font-semibold tracking-wider text-pro-text-tertiary uppercase'
+									return (
+										<div
+											key={header.id}
+											className="truncate border-b border-subtle px-3 py-2.5"
+											style={{ textAlign: align }}
+										>
+											{canSort ? (
+												<button
+													type="button"
+													className={`${HEADER} cursor-pointer`}
+													onClick={() => column_toggleSorting(header.column)}
+												>
+													<FlexRender header={header} />
+													<SortIcon dir={column_getIsSorted(header.column)} />
+												</button>
+											) : (
+												<span className={HEADER}>
+													<FlexRender header={header} />
+												</span>
+											)}
+										</div>
+									)
+								})
+							)}
+							{rows.map((row, rowIdx) =>
+								row_getVisibleCells(row).map((cell) => {
+									const align = cell.column.columnDef.meta?.align ?? 'start'
+									return (
+										<div
+											key={cell.id}
+											className={`truncate border-b border-subtle px-3 py-2.5 text-[13px] text-pro-text-primary transition-colors ${
+												rowIdx % 2 === 1 ? 'bg-pro-cards-bg' : ''
+											}`}
+											style={{ textAlign: align }}
+										>
+											<FlexRender cell={cell} />
+										</div>
+									)
+								})
+							)}
+						</div>
+					</div>
+				)
+			}}
+		</Subscribe>
 	)
 }
 
@@ -187,9 +207,13 @@ export function WindowToggle({
 	)
 }
 
-export function Pagination<T>({ table }: { table: Table<T> }) {
-	const { pageIndex, pageSize } = table.getState().pagination
-	const total = table.getPrePaginationRowModel().rows.length
+export function Pagination<F extends PaginationFeatures, T extends TableRowData>({
+	table
+}: {
+	table: PaginatedTableInstance<F, T>
+}) {
+	const { pageIndex, pageSize } = useSelector(table.atoms.pagination)
+	const total = table.getPrePaginatedRowModel().rows.length
 
 	return (
 		<div className="mt-3 flex items-center justify-between border-t border-subtle pt-3 text-[11px] text-pro-text-tertiary">

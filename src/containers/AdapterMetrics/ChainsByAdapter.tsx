@@ -2,24 +2,21 @@ import {
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	createColumnHelper,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import { startTransition, useState } from 'react'
 import { Announcement } from '~/components/Announcement'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
+import { searchTableFeatures } from '~/components/Table/features/search'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { definitions } from '~/public/definitions'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -27,6 +24,8 @@ import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { ChainsByAdapterChart } from './ChainChart'
 import type { IChainsByAdapterPageData } from './types'
+
+const tableFeaturesConfig = searchTableFeatures
 
 type TPageType =
 	| 'Fees'
@@ -54,7 +53,8 @@ export function ChainsByAdapter(props: IProps) {
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: props.chains,
 		columns: columnsByType[props.type],
 		state: {
@@ -69,11 +69,7 @@ export function ChainsByAdapter(props: IProps) {
 		filterFromLeafRows: true,
 		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
 		onColumnFiltersChange: (updater) => startTransition(() => setColumnFilters(updater)),
-		onColumnOrderChange: (updater) => startTransition(() => setColumnOrder(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnOrderChange: (updater) => startTransition(() => setColumnOrder(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -123,14 +119,14 @@ export function ChainsByAdapter(props: IProps) {
 						size="md"
 					/>
 				</TableToolbar>
-				<VirtualTable instance={instance} rowSize={64} compact />
+				<VirtualTable table={instance} rowSize={64} compact />
 			</Panel>
 		</>
 	)
 }
 type ChainRow = IChainsByAdapterPageData['chains'][0]
 
-const columnHelper = createColumnHelper<ChainRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, ChainRow>()
 
 const NameColumn = (route: string) =>
 	columnHelper.accessor('name', {

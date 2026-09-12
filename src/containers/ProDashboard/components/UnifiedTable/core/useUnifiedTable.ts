@@ -1,20 +1,24 @@
-'use no memo'
-
 import { useQuery } from '@tanstack/react-query'
 import {
+	columnOrderingFeature,
+	columnSizingFeature,
+	columnVisibilityFeature,
+	createExpandedRowModel,
+	createPaginatedRowModel,
+	createSortedRowModel,
+	rowExpandingFeature,
+	rowPaginationFeature,
+	tableFeatures,
+	useTable,
 	type ColumnOrderState,
+	type ColumnVisibilityState,
 	type ExpandedState,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
 	type PaginationState,
-	type SortingState,
-	useReactTable,
-	type VisibilityState,
-	type Row
+	type Row,
+	type SortingState
 } from '@tanstack/react-table'
 import { useContext, useDeferredValue, useMemo, useState } from 'react'
+import { sortingFeatures } from '~/components/Table/features/sorting'
 import type {
 	ParentProtocolMetrics,
 	ProtocolTableSourceRow,
@@ -43,27 +47,35 @@ import type { ProtocolTableRow } from '../types'
 import { getProtocolAggregationPlan } from '../utils/aggregation'
 import { filterReadModelRowsByConfig, filterRowsByConfig, hasProtocolSubsetFilters } from '../utils/dataFilters'
 
+export const tableFeaturesConfig = tableFeatures({
+	...sortingFeatures,
+	columnVisibilityFeature,
+	columnSizingFeature,
+	columnOrderingFeature,
+	rowExpandingFeature,
+	rowPaginationFeature,
+	sortedRowModel: createSortedRowModel(),
+	expandedRowModel: createExpandedRowModel(),
+	paginatedRowModel: createPaginatedRowModel()
+})
+
 const EMPTY_ROWS: Array<ProtocolTableSourceRow> = []
 const EMPTY_PARENT_METRICS: Record<string, ParentProtocolMetrics> = {}
 const EMPTY_CHAIN_METRICS: NonNullable<ProtocolsUnifiedTableResponse['chainMetrics']> = {}
 const getProtocolTableRowId = (row: ProtocolTableRow) => row.id
 const getProtocolTableSubRows = (row: ProtocolTableRow) => (row.nodeType === 'group' ? row.subRows : undefined)
-const getProtocolTableRowCanExpand = (row: Row<ProtocolTableRow>) => {
+const getProtocolTableRowCanExpand = (row: Row<typeof tableFeaturesConfig, ProtocolTableRow>) => {
 	if (row.original.nodeType === 'leaf') return false
 	if (row.original.header === 'protocol') return row.original.subRows.length > 1
 	return row.original.subRows.length > 0
 }
-const getProtocolTableCoreRowModel = getCoreRowModel<ProtocolTableRow>()
-const getProtocolTableExpandedRowModel = getExpandedRowModel<ProtocolTableRow>()
-const getProtocolTableSortedRowModel = getSortedRowModel<ProtocolTableRow>()
-const getProtocolTablePaginationRowModel = getPaginationRowModel<ProtocolTableRow>()
 
 interface UseUnifiedTableArgs {
 	config: UnifiedTableConfig
 	rowHeaders: Array<UnifiedRowHeaderType>
 	searchTerm: string
 	columnOrder: ColumnOrderState
-	columnVisibility: VisibilityState
+	columnVisibility: ColumnVisibilityState
 	sorting: SortingState
 	onSortingChange: (updater: SortingState | ((prev: SortingState) => SortingState)) => void
 }
@@ -217,7 +229,8 @@ export function useUnifiedTable({
 		[expanded, pagination, sorting, columnOrder, columnVisibility]
 	)
 
-	const table = useReactTable<ProtocolTableRow>({
+	const table = useTable<typeof tableFeaturesConfig, ProtocolTableRow>({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: readModel.rows,
 		columns,
@@ -229,10 +242,6 @@ export function useUnifiedTable({
 		onPaginationChange: setPagination,
 		paginateExpandedRows: true,
 		getRowCanExpand: getProtocolTableRowCanExpand,
-		getCoreRowModel: getProtocolTableCoreRowModel,
-		getExpandedRowModel: getProtocolTableExpandedRowModel,
-		getSortedRowModel: getProtocolTableSortedRowModel,
-		getPaginationRowModel: getProtocolTablePaginationRowModel,
 		autoResetExpanded: false,
 		autoResetPageIndex: true
 	})

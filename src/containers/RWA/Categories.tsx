@@ -1,10 +1,11 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWACategoriesOverviewRow, RWAOverviewPage } from './api.types'
 import type { RWAPositionalChartDataset } from './chartDataset'
@@ -23,9 +24,9 @@ type RWACategoriesTableRow = {
 	defiActiveTvl: number
 }
 
-const columnHelper = createColumnHelper<RWACategoriesTableRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, RWACategoriesTableRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('category', {
 		id: 'category',
 		header: 'Name',
@@ -103,7 +104,7 @@ const columns = [
 			headerHelperText: definitions.totalDefiActiveTvl.description
 		}
 	})
-]
+])
 export function RWACategories({
 	categories,
 	initialChartDataset,
@@ -176,7 +177,7 @@ export function RWACategories({
 				header="Categories"
 				headingAs="h1"
 				csvFileName={csvFileName}
-				sortingState={[{ id: 'activeMcap', desc: true }]}
+				initialSorting={[{ id: 'activeMcap', desc: true }]}
 			/>
 		</div>
 	)

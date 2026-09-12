@@ -1,13 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { startTransition, useDeferredValue, useState } from 'react'
 import { useBlockExplorers } from '~/api/client'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import { VirtualTable } from '~/components/Table/Table'
 import Layout from '~/layout'
 import { CopyHelper } from '~/ui/Copy'
@@ -19,6 +14,8 @@ import { truncateAddress } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatNumber } from '~/utils/numberFormat'
+
+const tableFeaturesConfig = displayTableFeatures
 
 const valueToFilter = {
 	'1d': 'day',
@@ -40,7 +37,7 @@ interface ITrendingContracts {
 	name?: string
 }
 
-const columnHelper = createColumnHelper<ITrendingContracts>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, ITrendingContracts>()
 
 async function getContracts(chain: string, time: string) {
 	return await fetchJson(
@@ -101,7 +98,8 @@ export default function TrendingContracts() {
 
 	const results = data?.results ?? []
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: results,
 		state: {
 			sorting
@@ -111,9 +109,7 @@ export default function TrendingContracts() {
 		},
 		enableSortingRemoval: false,
 		columns: columns(activeChain, blockExplorers),
-		getCoreRowModel: getCoreRowModel(),
-		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: (updater) => startTransition(() => setSorting(updater))
 	})
 
 	return (
@@ -145,94 +141,95 @@ export default function TrendingContracts() {
 						No trending contracts found for this chain and time range.
 					</SurfaceBodyStatus>
 				) : (
-					<VirtualTable instance={instance} />
+					<VirtualTable table={instance} />
 				)}
 			</Panel>
 		</Layout>
 	)
 }
 
-const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplorers>['data'] = []) => [
-	columnHelper.accessor('contract', {
-		header: 'Contract',
-		cell: (info) => {
-			const value = info.getValue()
-			const name = info.row.original.name
-			const explorer = getBlockExplorerNew({
-				apiResponse: blockExplorers,
-				address: value,
-				chainId: chain,
-				urlType: 'address'
-			})
-			const label = name ?? truncateAddress(value)
-			return (
-				<span className="flex items-center gap-1.5">
-					{explorer ? (
-						<a href={explorer.url} target="_blank" rel="noopener noreferrer" className="underline hover:opacity-80">
-							{label}
-						</a>
-					) : (
-						<span>{label}</span>
-					)}
-					<CopyHelper toCopy={value} />
-				</span>
-			)
-		},
-		enableSorting: false,
-		meta: {
-			headerClassName: 'w-[min(280px,40vw)]'
-		}
-	}),
-	columnHelper.accessor((row) => row.txns ?? undefined, {
-		id: 'txns',
-		header: 'Transactions',
-		meta: {
-			headerClassName: 'w-[120px]',
-			align: 'end'
-		}
-	}),
-	columnHelper.accessor((row) => row.txns_percentage_growth ?? undefined, {
-		id: 'txns_percentage_growth',
-		header: 'Tx Growth',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
-		meta: {
-			headerClassName: 'w-[120px]',
-			align: 'end'
-		}
-	}),
-	columnHelper.accessor((row) => row.active_accounts ?? undefined, {
-		id: 'active_accounts',
-		header: 'Active Accounts',
-		meta: {
-			headerClassName: 'w-[150px]',
-			align: 'end'
-		}
-	}),
-	columnHelper.accessor((row) => row.accounts_percentage_growth ?? undefined, {
-		id: 'accounts_percentage_growth',
-		header: 'Account Growth',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
-		meta: {
-			headerClassName: 'w-[150px]',
-			align: 'end'
-		}
-	}),
-	columnHelper.accessor((row) => row.gas_spend ?? undefined, {
-		id: 'gas_spend',
-		header: 'Gas Spent',
-		cell: (info) => <>{formatNumber(info.getValue())} ETH</>,
-		meta: {
-			headerClassName: 'w-[120px]',
-			align: 'end'
-		}
-	}),
-	columnHelper.accessor((row) => row.gas_spend_percentage_growth ?? undefined, {
-		id: 'gas_spend_percentage_growth',
-		header: 'Gas Growth',
-		cell: (info) => <PercentChange percent={info.getValue()} />,
-		meta: {
-			headerClassName: 'w-[120px]',
-			align: 'end'
-		}
-	})
-]
+const columns = (chain: string, blockExplorers: ReturnType<typeof useBlockExplorers>['data'] = []) =>
+	columnHelper.columns([
+		columnHelper.accessor('contract', {
+			header: 'Contract',
+			cell: (info) => {
+				const value = info.getValue()
+				const name = info.row.original.name
+				const explorer = getBlockExplorerNew({
+					apiResponse: blockExplorers,
+					address: value,
+					chainId: chain,
+					urlType: 'address'
+				})
+				const label = name ?? truncateAddress(value)
+				return (
+					<span className="flex items-center gap-1.5">
+						{explorer ? (
+							<a href={explorer.url} target="_blank" rel="noopener noreferrer" className="underline hover:opacity-80">
+								{label}
+							</a>
+						) : (
+							<span>{label}</span>
+						)}
+						<CopyHelper toCopy={value} />
+					</span>
+				)
+			},
+			enableSorting: false,
+			meta: {
+				headerClassName: 'w-[min(280px,40vw)]'
+			}
+		}),
+		columnHelper.accessor((row) => row.txns ?? undefined, {
+			id: 'txns',
+			header: 'Transactions',
+			meta: {
+				headerClassName: 'w-[120px]',
+				align: 'end'
+			}
+		}),
+		columnHelper.accessor((row) => row.txns_percentage_growth ?? undefined, {
+			id: 'txns_percentage_growth',
+			header: 'Tx Growth',
+			cell: (info) => <PercentChange percent={info.getValue()} />,
+			meta: {
+				headerClassName: 'w-[120px]',
+				align: 'end'
+			}
+		}),
+		columnHelper.accessor((row) => row.active_accounts ?? undefined, {
+			id: 'active_accounts',
+			header: 'Active Accounts',
+			meta: {
+				headerClassName: 'w-[150px]',
+				align: 'end'
+			}
+		}),
+		columnHelper.accessor((row) => row.accounts_percentage_growth ?? undefined, {
+			id: 'accounts_percentage_growth',
+			header: 'Account Growth',
+			cell: (info) => <PercentChange percent={info.getValue()} />,
+			meta: {
+				headerClassName: 'w-[150px]',
+				align: 'end'
+			}
+		}),
+		columnHelper.accessor((row) => row.gas_spend ?? undefined, {
+			id: 'gas_spend',
+			header: 'Gas Spent',
+			cell: (info) => <>{formatNumber(info.getValue())} ETH</>,
+			meta: {
+				headerClassName: 'w-[120px]',
+				align: 'end'
+			}
+		}),
+		columnHelper.accessor((row) => row.gas_spend_percentage_growth ?? undefined, {
+			id: 'gas_spend_percentage_growth',
+			header: 'Gas Growth',
+			cell: (info) => <PercentChange percent={info.getValue()} />,
+			meta: {
+				headerClassName: 'w-[120px]',
+				align: 'end'
+			}
+		})
+	])

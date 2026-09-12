@@ -8,6 +8,7 @@ import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -205,7 +206,7 @@ export function OraclesByChain({
 					header="Oracle Rankings"
 					headingAs="h1"
 					csvFileName="oracle-rankings"
-					sortingState={DEFAULT_SORTING_STATE}
+					initialSorting={DEFAULT_SORTING_STATE}
 				/>
 			</React.Suspense>
 		</>
@@ -213,9 +214,9 @@ export function OraclesByChain({
 }
 
 type IOracleTableRow = OraclesByChainPageData['tableData'][number]
-const columnHelper = createColumnHelper<IOracleTableRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IOracleTableRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -275,4 +276,4 @@ const columns = [
 			headerHelperText: 'Total Value Secured by the Oracle'
 		}
 	})
-]
+])

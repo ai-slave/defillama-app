@@ -1,18 +1,11 @@
 import * as Ariakit from '@ariakit/react'
-import {
-	type ColumnFiltersState,
-	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { type ColumnFiltersState, createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import { BasicLink } from '~/components/Link'
 import { selectTriggerStyles } from '~/components/Select/types'
+import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import calendarEvents from '~/constants/calendar'
@@ -27,17 +20,19 @@ import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import {
 	popoverActionBarStyles,
 	popoverActionButtonStyles,
+	popoverMobileDismissStyles,
+	popoverMobileWrapperClassName,
 	popoverMultiSelectCheckStyles,
 	popoverRowWithBorderStyles,
-	popoverSurfaceStyles,
-	popoverMobileDismissStyles,
-	popoverMobileWrapperClassName
+	popoverSurfaceStyles
 } from '~/ui/Popover'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatPercent } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { pushShallowQuery } from '~/utils/routerQuery'
+
+const tableFeaturesConfig = filteredTableFeatures
 
 type CalendarEmission = ProtocolEmission & {
 	unlock: [timestamp: number, amount: number]
@@ -89,7 +84,7 @@ type CalendarRow = {
 	link?: string
 }
 
-const columnHelper = createColumnHelper<CalendarRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, CalendarRow>()
 
 const options = ['Unlock', 'Close', 'Macro', 'Crypto']
 
@@ -160,7 +155,8 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 		return filteredEvents
 	}, [emissions, selectedOptionsSet, mountedAtMs])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: allEvents,
 		columns: calendarColumns,
 		state: {
@@ -172,10 +168,7 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 		},
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getFilteredRowModel: getFilteredRowModel(),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 	const [_projectName, setProjectName] = useTableSearch({
 		instance,
@@ -278,13 +271,13 @@ export default function Protocols({ emissions }: { emissions: Array<CalendarEmis
 						/>
 					</label>
 				</PanelHeader>
-				<VirtualTable instance={instance} />
+				<VirtualTable table={instance} />
 			</Panel>
 		</Layout>
 	)
 }
 
-export const calendarColumns = [
+export const calendarColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -325,7 +318,7 @@ export const calendarColumns = [
 			headerClassName: 'w-[min(800px,40vw)]'
 		}
 	})
-]
+])
 
 function SimpleUpcomingEvent({ timestamp, name }: { timestamp: number; name: string }) {
 	const [nowMs, setNowMs] = React.useState(() => Date.now())

@@ -1,5 +1,6 @@
-import { flexRender, type HeaderGroup, type Row } from '@tanstack/react-table'
+import { FlexRender, type ReactTable, type RowData } from '@tanstack/react-table'
 import type { CSSProperties } from 'react'
+import type { SortedTableFeatures } from '~/components/Table/features/sorting'
 import { SortIcon } from '~/components/Table/SortIcon'
 
 const RANK_WIDTH = 48
@@ -35,70 +36,77 @@ export function SortArrow({ dir }: { dir: false | 'asc' | 'desc' }) {
 	)
 }
 
-export function StickyTable<T>({ headerGroups, rows }: { headerGroups: Array<HeaderGroup<T>>; rows: Array<Row<T>> }) {
-	'use no memo'
+export function StickyTable<T extends RowData>({ table }: { table: ReactTable<SortedTableFeatures, T> }) {
 	return (
-		<div className="w-full overflow-x-auto">
-			<table className="w-full text-sm" style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
-				<thead>
-					{headerGroups.map((headerGroup) => (
-						<tr key={headerGroup.id}>
-							{headerGroup.headers.map((header, index) => {
-								const align = header.column.columnDef.meta?.align ?? 'start'
-								const canSort = header.column.getCanSort()
-								const justify =
-									align === 'center' ? 'justify-center' : align === 'end' ? 'justify-end' : 'justify-start'
-								return (
-									<th
-										key={header.id}
-										style={{ ...colWidth(index), textAlign: align, ...stickyStyle(index) }}
-										className="border-b border-subtle px-3 py-2 font-medium whitespace-nowrap text-secondary"
-									>
-										{canSort ? (
-											<button
-												type="button"
-												onClick={() => header.column.toggleSorting()}
-												className={`flex w-full cursor-pointer items-center gap-1 whitespace-nowrap select-none ${justify}`}
+		<table.Subscribe source={table.atoms.sorting}>
+			{() => (
+				<div className="w-full overflow-x-auto">
+					<table className="w-full text-sm" style={{ minWidth: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+						<thead>
+							{table.getHeaderGroups().map((headerGroup) => (
+								<tr key={headerGroup.id}>
+									{headerGroup.headers
+										.filter((header) => header.rowSpan > 0)
+										.map((header, index) => {
+											const align = header.column.columnDef.meta?.align ?? 'start'
+											const canSort = header.column.getCanSort()
+											const justify =
+												align === 'center' ? 'justify-center' : align === 'end' ? 'justify-end' : 'justify-start'
+											return (
+												<th
+													key={header.id}
+													colSpan={header.colSpan}
+													rowSpan={header.rowSpan}
+													style={{ ...colWidth(index), textAlign: align, ...stickyStyle(index) }}
+													className="border-b border-subtle px-3 py-2 font-medium whitespace-nowrap text-secondary"
+												>
+													{canSort ? (
+														<button
+															type="button"
+															onClick={() => header.column.toggleSorting()}
+															className={`flex w-full cursor-pointer items-center gap-1 whitespace-nowrap select-none ${justify}`}
+														>
+															<FlexRender header={header} />
+															{header.column.id === '#' ? (
+																<SortArrow dir={header.column.getIsSorted()} />
+															) : (
+																<SortIcon dir={header.column.getIsSorted()} />
+															)}
+														</button>
+													) : (
+														<span className={`flex items-center gap-1 ${justify}`}>
+															<FlexRender header={header} />
+														</span>
+													)}
+												</th>
+											)
+										})}
+								</tr>
+							))}
+						</thead>
+						<tbody>
+							{table.getRowModel().rows.map((row) => (
+								<tr key={row.id}>
+									{row.getAllCells().map((cell, index) => {
+										const align = cell.column.columnDef.meta?.align ?? 'start'
+										const cellStyle = cell.column.columnDef.meta?.cellStyle?.(cell.row.original)
+										const cellClass = cell.column.columnDef.meta?.cellClass?.(cell.row.original)
+										return (
+											<td
+												key={cell.id}
+												style={{ ...colWidth(index), textAlign: align, ...stickyStyle(index), ...cellStyle }}
+												className={`border-b border-subtle px-3 py-3 align-middle ${cell.column.columnDef.meta?.cellClassName ?? ''} ${cellClass ?? ''}`}
 											>
-												{flexRender(header.column.columnDef.header, header.getContext())}
-												{header.column.id === '#' ? (
-													<SortArrow dir={header.column.getIsSorted()} />
-												) : (
-													<SortIcon dir={header.column.getIsSorted()} />
-												)}
-											</button>
-										) : (
-											<span className={`flex items-center gap-1 ${justify}`}>
-												{flexRender(header.column.columnDef.header, header.getContext())}
-											</span>
-										)}
-									</th>
-								)
-							})}
-						</tr>
-					))}
-				</thead>
-				<tbody>
-					{rows.map((row) => (
-						<tr key={row.id}>
-							{row.getVisibleCells().map((cell, index) => {
-								const align = cell.column.columnDef.meta?.align ?? 'start'
-								const cellStyle = cell.column.columnDef.meta?.cellStyle?.(cell.row.original)
-								const cellClass = cell.column.columnDef.meta?.cellClass?.(cell.row.original)
-								return (
-									<td
-										key={cell.id}
-										style={{ ...colWidth(index), textAlign: align, ...stickyStyle(index), ...cellStyle }}
-										className={`border-b border-subtle px-3 py-3 align-middle ${cell.column.columnDef.meta?.cellClassName ?? ''} ${cellClass ?? ''}`}
-									>
-										{flexRender(cell.column.columnDef.cell, cell.getContext())}
-									</td>
-								)
-							})}
-						</tr>
-					))}
-				</tbody>
-			</table>
-		</div>
+												<FlexRender cell={cell} />
+											</td>
+										)
+									})}
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+			)}
+		</table.Subscribe>
 	)
 }

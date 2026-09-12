@@ -7,6 +7,7 @@ import { buildRuntimePieChartCsvDataset, buildRuntimePieChartPresentation } from
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
@@ -17,7 +18,7 @@ import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { slug } from '~/utils'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
 import { buildForksOverviewDisplayData, mergeForkOverviewChartData } from './overviewData'
 import { useForksOverviewExtraSeries } from './queries.client'
@@ -27,9 +28,12 @@ const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
 
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const columnHelper = createColumnHelper<ReturnType<typeof buildForksOverviewDisplayData>['tableData'][number]>()
+const columnHelper = createColumnHelper<
+	SearchTableFeatures,
+	ReturnType<typeof buildForksOverviewDisplayData>['tableData'][number]
+>()
 
-const forksColumn = [
+const forksColumn = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -91,7 +95,7 @@ const forksColumn = [
 			align: 'end'
 		}
 	})
-]
+])
 
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]
 
@@ -265,7 +269,7 @@ export function ForksOverview({
 					header="Protocol Rankings"
 					headingAs="h1"
 					csvFileName="forks-overview"
-					sortingState={DEFAULT_SORTING_STATE}
+					initialSorting={DEFAULT_SORTING_STATE}
 				/>
 			</React.Suspense>
 		</>

@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getNetProjectTreasuryData } from '~/containers/Treasuries/queries'
@@ -20,7 +21,7 @@ export const getStaticProps = withPerformanceLogging(`net-project-treasury/index
 
 const pageName = ['Protocols', 'ranked by', 'Net Project Treasury']
 const DEFAULT_SORTING_STATE = [{ id: 'netTreasury', desc: true }]
-const columnHelper = createColumnHelper<INetProjectTreasury>()
+const columnHelper = createColumnHelper<SearchTableFeatures, INetProjectTreasury>()
 
 function NetProjectTreasuries(props: InferGetStaticPropsType<typeof getStaticProps>) {
 	return (
@@ -38,13 +39,13 @@ function NetProjectTreasuries(props: InferGetStaticPropsType<typeof getStaticPro
 				header="Protocol Rankings"
 				headingAs="h1"
 				csvFileName="net-project-treasury"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</Layout>
 	)
 }
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -85,6 +86,6 @@ const columns = [
 			headerHelperText: "Value of tokens owned by a protocol, excluding it's own token"
 		}
 	})
-]
+])
 
 export default NetProjectTreasuries

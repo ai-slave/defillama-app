@@ -1,6 +1,8 @@
-import type { Table } from '@tanstack/react-table'
+import { useSelector } from '@tanstack/react-store'
+import type { RowData as TableRowData } from '@tanstack/react-table'
 import { createCategoryChartOptions } from '~/components/ECharts/MultiSeriesChart/categoryOptions'
 import { createTimeSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
+import type { PaginatedTableInstance, PaginationFeatures } from '~/components/Table/features/contracts'
 
 export const MAPLE_USD_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('$')
 export const MAPLE_PERCENT_CATEGORY_CHART_OPTIONS = createCategoryChartOptions('%')
@@ -47,8 +49,12 @@ export function KpiSkeleton({ label }: { label: string }) {
 	)
 }
 
-export function Pagination<T>({ table }: { table: Table<T> }) {
-	const { pageIndex, pageSize } = table.getState().pagination
+export function Pagination<F extends PaginationFeatures, T extends TableRowData>({
+	table
+}: {
+	table: PaginatedTableInstance<F, T>
+}) {
+	const { pageIndex, pageSize } = useSelector(table.atoms.pagination)
 	const total = table.getFilteredRowModel().rows.length
 
 	return (

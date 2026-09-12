@@ -1,18 +1,18 @@
 import {
+	createPaginatedRowModel,
+	rowPaginationFeature,
+	tableFeatures,
+	useTable,
 	type ColumnDef,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	type ColumnVisibilityState,
 	type PaginationState,
-	type SortingState,
-	useReactTable,
-	type VisibilityState
+	type SortingState
 } from '@tanstack/react-table'
 import * as React from 'react'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { downloadCSV } from '~/utils/download'
 import { formatPercent } from '~/utils/numberFormat'
@@ -25,11 +25,13 @@ import { ColumnManagementPanel } from './ColumnManagementPanel'
 import { chainsDatasetColumns } from './columns'
 import { useChainsData } from './useChainsData'
 
+export const tableFeaturesConfig = tableFeatures({
+	...orderedFilteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
+
 const EMPTY_DATA: Array<ChainsDatasetRow> = []
-const getChainsCoreRowModel = getCoreRowModel<ChainsDatasetRow>()
-const getChainsSortedRowModel = getSortedRowModel<ChainsDatasetRow>()
-const getChainsFilteredRowModel = getFilteredRowModel<ChainsDatasetRow>()
-const getChainsPaginationRowModel = getPaginationRowModel<ChainsDatasetRow>()
 const CHAIN_COLUMN_PRESETS = {
 	essential: ['name', 'protocols', 'users', 'change_1d', 'change_7d', 'tvl', 'stablesMcap'],
 	defi: [
@@ -122,7 +124,7 @@ export function ChainsDataset({
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 	const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({})
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-	const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+	const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>({})
 	const [pagination, setPagination] = React.useState<PaginationState>({
 		pageIndex: 0,
 		pageSize: 10
@@ -137,7 +139,7 @@ export function ChainsDataset({
 	const totals = React.useMemo(() => buildChainShareTotals(data), [data])
 
 	const percentageShareColumns = React.useMemo(() => {
-		return CHAIN_SHARE_METRICS.map((metric): ColumnDef<ChainsDatasetRow> => ({
+		return CHAIN_SHARE_METRICS.map((metric): ColumnDef<typeof tableFeaturesConfig, ChainsDatasetRow> => ({
 			id: `${metric.key}_share`,
 			header: metric.name,
 			size: 120,
@@ -171,7 +173,8 @@ export function ChainsDataset({
 		return [...chainsDatasetColumns, ...percentageShareColumns]
 	}, [percentageShareColumns])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns: allColumns,
@@ -190,10 +193,6 @@ export function ChainsDataset({
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange: setColumnVisibility,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getChainsCoreRowModel,
-		getSortedRowModel: getChainsSortedRowModel,
-		getFilteredRowModel: getChainsFilteredRowModel,
-		getPaginationRowModel: getChainsPaginationRowModel,
 		autoResetPageIndex: true
 	})
 
@@ -253,73 +252,75 @@ export function ChainsDataset({
 		}
 	}
 
-	const onSyncInitialColumns = React.useEffectEvent(() => {
-		const defaultOrder = instance.getAllLeafColumns().map((d) => d.id)
-		const defaultSizing = {
-			name: 200,
-			protocols: 100,
-			users: 130,
-			change_1d: 90,
-			change_7d: 90,
-			change_1m: 90,
-			tvl: 140,
-			bridgedTvl: 120,
-			stablesMcap: 120,
-			totalVolume24h: 150,
-			totalVolume30d: 150,
-			totalFees24h: 130,
-			totalFees30d: 130,
-			totalAppRevenue24h: 120,
-			totalAppRevenue30d: 140,
-			totalRevenue30d: 140,
-			mcaptvl: 120,
-			mcap: 140,
-			nftVolume: 120
-		}
+	const onSyncInitialColumns = React.useEffectEvent(
+		(nextColumnOrder: ColumnOrderState | undefined, nextColumnVisibility: ColumnVisibilityState | undefined) => {
+			const defaultOrder = instance.getAllLeafColumns().map((d) => d.id)
+			const defaultSizing = {
+				name: 200,
+				protocols: 100,
+				users: 130,
+				change_1d: 90,
+				change_7d: 90,
+				change_1m: 90,
+				tvl: 140,
+				bridgedTvl: 120,
+				stablesMcap: 120,
+				totalVolume24h: 150,
+				totalVolume30d: 150,
+				totalFees24h: 130,
+				totalFees30d: 130,
+				totalAppRevenue24h: 120,
+				totalAppRevenue30d: 140,
+				totalRevenue30d: 140,
+				mcaptvl: 120,
+				mcap: 140,
+				nftVolume: 120
+			}
 
-		instance.setColumnSizing(defaultSizing)
+			instance.setColumnSizing(defaultSizing)
 
-		if (savedColumnOrder && savedColumnOrder.length > 0) {
-			setColumnOrder(savedColumnOrder)
-			instance.setColumnOrder(savedColumnOrder)
-		} else if (columnOrder.length === 0) {
-			setColumnOrder(defaultOrder)
-			instance.setColumnOrder(defaultOrder)
-		}
+			if (nextColumnOrder && nextColumnOrder.length > 0) {
+				setColumnOrder(nextColumnOrder)
+				instance.setColumnOrder(nextColumnOrder)
+			} else if (columnOrder.length === 0) {
+				setColumnOrder(defaultOrder)
+				instance.setColumnOrder(defaultOrder)
+			}
 
-		let hasSavedVisibility = false
-		if (savedColumnVisibility) {
-			for (const _ in savedColumnVisibility) {
-				hasSavedVisibility = true
+			let hasSavedVisibility = false
+			if (nextColumnVisibility) {
+				for (const _ in nextColumnVisibility) {
+					hasSavedVisibility = true
+					break
+				}
+			}
+			let hasCurrentVisibility = false
+			for (const _ in columnVisibility) {
+				hasCurrentVisibility = true
 				break
 			}
-		}
-		let hasCurrentVisibility = false
-		for (const _ in columnVisibility) {
-			hasCurrentVisibility = true
-			break
-		}
-		if (savedColumnVisibility && hasSavedVisibility) {
-			setColumnVisibility(savedColumnVisibility)
-			instance.setColumnVisibility(savedColumnVisibility)
-		} else if (!hasCurrentVisibility && selectedPreset === 'essential') {
-			const presetColumns = CHAIN_COLUMN_PRESETS.essential
-			if (presetColumns) {
-				const tableColumns = instance.getAllColumns()
-				const newVisibility: Record<string, boolean> = {}
-				for (const column of tableColumns) {
-					newVisibility[column.id] = presetColumns.includes(column.id)
+			if (nextColumnVisibility && hasSavedVisibility) {
+				setColumnVisibility(nextColumnVisibility)
+				instance.setColumnVisibility(nextColumnVisibility)
+			} else if (!hasCurrentVisibility && selectedPreset === 'essential') {
+				const presetColumns = CHAIN_COLUMN_PRESETS.essential
+				if (presetColumns) {
+					const tableColumns = instance.getAllColumns()
+					const newVisibility: Record<string, boolean> = {}
+					for (const column of tableColumns) {
+						newVisibility[column.id] = presetColumns.includes(column.id)
+					}
+					setColumnVisibility(newVisibility)
+					setColumnOrder(presetColumns)
+					instance.setColumnVisibility(newVisibility)
+					instance.setColumnOrder(presetColumns)
 				}
-				setColumnVisibility(newVisibility)
-				setColumnOrder(presetColumns)
-				instance.setColumnVisibility(newVisibility)
-				instance.setColumnOrder(presetColumns)
 			}
 		}
-	})
+	)
 
 	React.useEffect(() => {
-		onSyncInitialColumns()
+		React.startTransition(() => onSyncInitialColumns(savedColumnOrder, savedColumnVisibility))
 	}, [savedColumnOrder, savedColumnVisibility])
 
 	const handleExportCSV = () => {

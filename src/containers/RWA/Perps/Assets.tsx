@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
@@ -13,7 +14,7 @@ import { perpsDefinitions as d } from './definitions'
 import { RWAPerpsOverviewChart } from './OverviewChart'
 import type { IRWAPerpsAssetsOverviewRow } from './types'
 
-const columnHelper = createColumnHelper<IRWAPerpsAssetsOverviewRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IRWAPerpsAssetsOverviewRow>()
 
 function formatFundingRate(value: number) {
 	return formatPercent(value * 100, {
@@ -24,7 +25,7 @@ function formatFundingRate(value: number) {
 	})
 }
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('asset', {
 		id: 'asset',
 		header: d.baseAsset.label,
@@ -106,7 +107,7 @@ const columns = [
 		),
 		meta: { headerClassName: 'w-[200px]', align: 'end', headerHelperText: d.fundingRate.description }
 	})
-]
+])
 
 export function RWAPerpsAssetsOverview({
 	assets,
@@ -147,7 +148,7 @@ export function RWAPerpsAssetsOverview({
 				header="Asset Rankings"
 				headingAs="h1"
 				csvFileName="rwa-perps-assets.csv"
-				sortingState={[{ id: 'openInterest', desc: true }]}
+				initialSorting={[{ id: 'openInterest', desc: true }]}
 			/>
 		</div>
 	)

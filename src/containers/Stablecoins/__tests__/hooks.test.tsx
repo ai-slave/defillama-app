@@ -2,12 +2,13 @@ import { flexRender, type Table } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { calcCirculating, groupBridgeData, groupChainsPegged } from '../hooks'
+import type { tableFeaturesConfig } from '../StablecoinUsageByChainTable'
 import { StablecoinByChainUsageTable } from '../StablecoinUsageByChainTable'
 
 type BridgeRow = ReturnType<typeof groupBridgeData>[number]
-const captured = vi.hoisted(() => ({ table: null as Table<BridgeRow> | null }))
+const captured = vi.hoisted(() => ({ table: null as Table<typeof tableFeaturesConfig, BridgeRow> | null }))
 vi.mock('~/components/Table/Table', () => ({
-	VirtualTable: ({ instance }: { instance: Table<BridgeRow> }) => {
+	VirtualTable: ({ table: instance }: { table: Table<typeof tableFeaturesConfig, BridgeRow> }) => {
 		captured.table = instance
 		return null
 	}

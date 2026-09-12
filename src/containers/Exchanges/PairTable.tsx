@@ -1,15 +1,16 @@
-import { createColumnHelper, type SortingState, type VisibilityState } from '@tanstack/react-table'
+import { createColumnHelper, type ColumnVisibilityState, type SortingState } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch, type TableWithSearchLayout } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import {
-	formatUsd,
 	formatCompactNumber,
 	formatPercent,
+	formatUsd,
 	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
 	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
@@ -38,7 +39,7 @@ export type PairTableRow = ExchangePairModel & {
 	venueUrl?: string | null
 }
 
-const columnHelper = createColumnHelper<PairTableRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, PairTableRow>()
 
 export function formatPairPrice(price: number | null | undefined, quote: string) {
 	return price == null ? '–' : `${formatCompactNumber(price, NUMBER_LOWERCASE_MILLIONS_OPTIONS)} ${quote.toUpperCase()}`
@@ -66,7 +67,7 @@ export function pairDepthTotal(bid: number | null, ask: number | null) {
 // OI, funding and fees are core to reading a market, so they ship visible; the perp-only
 // ones are simply not built for spot. The rest stay defined but off — reachable via the
 // column selector. maxLeverage is CSV-only because it renders beside the pair name.
-function pairColumnVisibility(): VisibilityState {
+function pairColumnVisibility(): ColumnVisibilityState {
 	return {
 		markPrice: false,
 		indexPrice: false,
@@ -84,7 +85,7 @@ export function buildPairColumns(
 ) {
 	const isPerp = segment !== 'spot'
 	const definitions = exchangeDefinitions.markets
-	const baseColumns = [
+	const baseColumns = columnHelper.columns([
 		columnHelper.accessor('base', {
 			id: 'token',
 			header: definitions.token.label,
@@ -272,10 +273,10 @@ export function buildPairColumns(
 				headerHelperText: definitions.spreadFraction.description
 			}
 		})
-	]
+	])
 
 	const perpColumns = isPerp
-		? [
+		? columnHelper.columns([
 				columnHelper.accessor((row) => row.markPrice ?? undefined, {
 					id: 'markPrice',
 					header: definitions.markPrice.label,
@@ -379,10 +380,10 @@ export function buildPairColumns(
 						headerHelperText: definitions.maxLeverage.description
 					}
 				})
-			]
+			])
 		: []
 
-	const trailingColumns = [
+	const trailingColumns = columnHelper.columns([
 		columnHelper.accessor('volumeUpdatedAt', {
 			id: 'volumeFreshness',
 			header: definitions.volumeFreshness.label,
@@ -411,10 +412,10 @@ export function buildPairColumns(
 			cell: ({ getValue }) => (getValue() == null ? '–' : (formatDate(getValue(), { input: 'seconds' }) ?? '–')),
 			meta: { headerClassName: 'w-[110px]', align: 'end', headerHelperText: definitions.listedAt.description }
 		})
-	]
+	])
 
 	const venueColumns = showVenue
-		? [
+		? columnHelper.columns([
 				columnHelper.accessor((row) => row.venue ?? '', {
 					id: 'venue',
 					header: definitions.venue.label,
@@ -450,7 +451,7 @@ export function buildPairColumns(
 					},
 					meta: { headerClassName: 'w-[160px]', headerHelperText: definitions.venue.description }
 				})
-			]
+			])
 		: []
 
 	return [...venueColumns, ...baseColumns, ...perpColumns, ...trailingColumns]
@@ -484,10 +485,10 @@ export function resolvePairColumns({
 export function resolvePairColumnVisibility(
 	columns: ReturnType<typeof buildPairColumns>,
 	initialVisibleColumns?: ReadonlyArray<string>
-): VisibilityState {
+): ColumnVisibilityState {
 	if (!initialVisibleColumns) return pairColumnVisibility()
 	const visible = new Set(initialVisibleColumns)
-	const visibility: VisibilityState = {}
+	const visibility: ColumnVisibilityState = {}
 	for (const column of columns) {
 		if (column.id !== undefined) visibility[column.id] = visible.has(column.id)
 	}
@@ -563,7 +564,7 @@ export function PairTable({
 			showColumnSelect
 			csvExportAllColumns
 			csvFileName={csvFileName}
-			sortingState={sorting ?? DEFAULT_PAIR_SORTING}
+			initialSorting={sorting ?? DEFAULT_PAIR_SORTING}
 			embedded={embedded}
 			tableLayout="fixed"
 		/>

@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
@@ -156,14 +157,14 @@ export function Cexs({ cexs }: { cexs: Array<ICex> }) {
 				/>
 			)}
 			csvFileName="cex-transparency"
-			sortingState={DEFAULT_SORTING_STATE}
+			initialSorting={DEFAULT_SORTING_STATE}
 		/>
 	)
 }
 
-const columnHelper = createColumnHelper<CexRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, CexRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -368,4 +369,4 @@ const columns = [
 			align: 'end'
 		}
 	})
-]
+])

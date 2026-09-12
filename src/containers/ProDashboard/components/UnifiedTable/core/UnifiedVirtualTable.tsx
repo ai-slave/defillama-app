@@ -1,18 +1,18 @@
 'use no memo'
 
+import { FlexRender, type Column, type HeaderGroup, type Row } from '@tanstack/react-table'
 // TODO(PRO-2004): Remove this opt-out once React Compiler no longer regresses virtualized column sizing/layout sync.
-
-import { flexRender, type Column, type HeaderGroup, type Row } from '@tanstack/react-table'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useLayoutEffect, useRef } from 'react'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { Tooltip } from '~/ui/Tooltip'
 import type { ProtocolTableRow } from '../types'
+import type { tableFeaturesConfig } from './useUnifiedTable'
 
 interface UnifiedVirtualTableProps {
-	rows: Array<Row<ProtocolTableRow>>
-	headerGroups: Array<HeaderGroup<ProtocolTableRow>>
-	visibleLeafColumns: Array<Column<ProtocolTableRow, unknown>>
+	rows: Array<Row<typeof tableFeaturesConfig, ProtocolTableRow>>
+	headerGroups: Array<HeaderGroup<typeof tableFeaturesConfig, ProtocolTableRow>>
+	visibleLeafColumns: Array<Column<typeof tableFeaturesConfig, ProtocolTableRow, unknown>>
 	totalTableWidth: number
 	pageIndex: number
 	pageSize: number
@@ -89,7 +89,7 @@ export function UnifiedVirtualTable({
 						>
 							{headers.map((header) => {
 								const meta = header.column.columnDef.meta
-								const value = flexRender(header.column.columnDef.header, header.getContext())
+								const value = <FlexRender header={header} />
 								const isSticky = header.column.id === firstColumnId
 
 								return (
@@ -180,7 +180,7 @@ export function UnifiedVirtualTable({
 											background: isSticky ? 'var(--pro-cards-bg)' : undefined
 										}}
 									>
-										{flexRender(cell.column.columnDef.cell, cell.getContext())}
+										<FlexRender cell={cell} />
 									</div>
 								)
 							})}

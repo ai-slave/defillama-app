@@ -1,9 +1,9 @@
 import {
 	createColumnHelper,
 	functionalUpdate,
-	getCoreRowModel,
-	useReactTable,
-	type VisibilityState
+	tableFeatures,
+	useTable,
+	type ColumnVisibilityState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
@@ -15,6 +15,7 @@ import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
 import { TokenRightsPieChart } from '~/containers/TokenRights/TokenRightsPieChart'
+import { tokenTableFeatures, type TokenTableFeatures } from '~/containers/Tokens/tableFeatures'
 import { useDebouncedCallback } from '~/hooks/useDebounce'
 import { Button } from '~/ui/Button'
 import { Checkbox } from '~/ui/Checkbox'
@@ -24,7 +25,7 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { InlineStatStrip, type InlineStatStripItem } from '~/ui/SummaryStats'
-import { Tabs, TabPanel } from '~/ui/Tabs'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { getTokensChartQueryValue, parseTokensChartState, type TokensPageView } from './chartState'
@@ -51,11 +52,15 @@ import type {
 import { useTokensServerTable } from './useTokensServerTable'
 import { buildTokensChartQueryString, resolveTokenFilterValues } from './utils'
 
+const tableFeaturesConfig: TokenTableFeatures = tableFeatures({
+	...tokenTableFeatures
+})
+
 const PAGE_SIZE_OPTIONS = [50, 100, 200] as const
 export const TOKENS_TABLE_WIDTH_EXCLUDING_RANK = NAME_COLUMN_WIDTH + TOKENS_HIDEABLE_COLUMNS_WIDTH
 // Width of the optional "Markets" expander column (added only in the expandable/watchlist variant).
 export const TOKENS_MARKETS_EXPANDER_COLUMN_WIDTH = 104
-const columnHelper = createColumnHelper<TokensTableRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TokensTableRow>()
 
 type RightsTone = 'positive' | 'negative' | 'warning' | 'neutral'
 
@@ -248,7 +253,7 @@ function RightsPie({ rights, fullRightsHref }: { rights: TokensRightsSummary | n
 	)
 }
 
-export const TOKENS_COLUMNS = [
+export const TOKENS_COLUMNS = columnHelper.columns([
 	columnHelper.accessor((row) => row.rank ?? undefined, {
 		id: 'rank',
 		header: '#',
@@ -475,7 +480,7 @@ export const TOKENS_COLUMNS = [
 				'Estimated value of scheduled cliff and linear releases during the next 30 days, valued at current token prices'
 		}
 	})
-]
+])
 
 const expanderColumn = columnHelper.display({
 	id: 'expander',
@@ -694,11 +699,11 @@ const DEFAULT_VISIBLE_COLUMN_IDS = new Set([
 	'revenue24h'
 ])
 
-const DEFAULT_COLUMN_VISIBILITY: VisibilityState = Object.fromEntries(
+const DEFAULT_COLUMN_VISIBILITY: ColumnVisibilityState = Object.fromEntries(
 	HIDEABLE_COLUMNS.map((column) => [column.id, DEFAULT_VISIBLE_COLUMN_IDS.has(column.id)])
 )
 
-function readStoredColumnVisibility(): VisibilityState | null {
+function readStoredColumnVisibility(): ColumnVisibilityState | null {
 	try {
 		const stored = window.localStorage.getItem(TOKENS_COLUMN_VISIBILITY_STORAGE_KEY)
 		const parsed = stored ? JSON.parse(stored) : null
@@ -735,14 +740,14 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		[categoryOptionIds, serverTable.pageQuery.categories, serverTable.pageQuery.excludeCategories]
 	)
 	const hasChainQuery = serverTable.pageQuery.chains !== null || serverTable.pageQuery.excludeChains.length > 0
-	const pendingFiltersRef = React.useRef<Array<TokensActiveFilter> | null>(null)
-	React.useEffect(() => {
-		pendingFiltersRef.current = null
-	}, [router.query])
+	const pendingFiltersRef = React.useRef<{ query: typeof router.query; filters: Array<TokensActiveFilter> } | null>(
+		null
+	)
 	const currentSorting = serverTable.sorting[0]
 	const applyFilters = React.useCallback(
 		(nextFilters: Array<TokensActiveFilter>) => {
-			const previousFilters = pendingFiltersRef.current ?? filters
+			const previousFilters =
+				pendingFiltersRef.current?.query === router.query ? pendingFiltersRef.current.filters : filters
 			const update = buildTokensFiltersQueryUpdate(nextFilters)
 			if (shouldApplyTokensFilterSorting(currentSorting, previousFilters)) {
 				const nextSorting = getTokensFiltersDefaultSorting(nextFilters)
@@ -750,17 +755,18 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 					nextSorting && !(nextSorting.id === 'marketCap' && nextSorting.desc) ? nextSorting.id : undefined
 				update.sortDesc = nextSorting && !nextSorting.desc ? 'false' : undefined
 			}
-			pendingFiltersRef.current = nextFilters
+			pendingFiltersRef.current = { query: router.query, filters: nextFilters }
 			void pushShallowQuery(router, update)
 		},
 		[currentSorting, filters, router]
 	)
 	const removeFilter = React.useCallback(
 		(id: TokensActiveFilter['id']) => {
-			const baseFilters = pendingFiltersRef.current ?? filters
+			const baseFilters =
+				pendingFiltersRef.current?.query === router.query ? pendingFiltersRef.current.filters : filters
 			applyFilters(baseFilters.filter((filter) => filter.id !== id))
 		},
-		[applyFilters, filters]
+		[applyFilters, filters, router.query]
 	)
 	const updateNativeOnly = React.useCallback(
 		(nativeOnly: boolean) => {
@@ -776,7 +782,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		[router]
 	)
 	const rankColumnWidth = getRankColumnWidth(serverTable.rows)
-	const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(DEFAULT_COLUMN_VISIBILITY)
+	const [columnVisibility, setColumnVisibility] = React.useState<ColumnVisibilityState>(DEFAULT_COLUMN_VISIBILITY)
 	const effectiveColumnVisibility = React.useMemo(() => {
 		const next = { ...columnVisibility }
 		for (const filter of filters) {
@@ -794,10 +800,10 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 	}
 	React.useEffect(() => {
 		const stored = readStoredColumnVisibility()
-		if (stored) setColumnVisibility(stored)
+		if (stored) React.startTransition(() => setColumnVisibility(stored))
 	}, [])
 	const handleColumnVisibilityChange = React.useCallback(
-		(updater: VisibilityState | ((old: VisibilityState) => VisibilityState)) => {
+		(updater: ColumnVisibilityState | ((old: ColumnVisibilityState) => ColumnVisibilityState)) => {
 			setColumnVisibility((old) => {
 				const next = functionalUpdate(updater, old)
 				try {
@@ -810,7 +816,8 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		},
 		[]
 	)
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		data: serverTable.rows,
 		columns: TOKENS_COLUMNS,
 		state: {
@@ -824,8 +831,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 		rowCount: serverTable.total,
 		onPaginationChange: serverTable.onPaginationChange,
 		onSortingChange: serverTable.onSortingChange,
-		onColumnVisibilityChange: handleColumnVisibilityChange,
-		getCoreRowModel: getCoreRowModel()
+		onColumnVisibilityChange: handleColumnVisibilityChange
 	})
 	const selectedColumns = HIDEABLE_COLUMNS.filter((column) => columnVisibility[column.id] !== false).map(
 		(column) => column.id
@@ -835,7 +841,7 @@ export default function TokensPage({ initialData }: TokensPageProps) {
 			handleColumnVisibilityChange((old) => {
 				const current = HIDEABLE_COLUMNS.filter((column) => old[column.id] !== false).map((column) => column.id)
 				const next = typeof updater === 'function' ? updater(current) : updater
-				const visibility: VisibilityState = { ...old }
+				const visibility: ColumnVisibilityState = { ...old }
 				for (const column of HIDEABLE_COLUMNS) {
 					visibility[column.id] = next.includes(column.id)
 				}

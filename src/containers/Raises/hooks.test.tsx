@@ -1,11 +1,11 @@
-import { createTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
 import { serializeCsv } from '~/utils/csv'
 import { useRaisesData } from './hooks'
 import type { Raise } from './model'
 import { summarizeRaises } from './summary'
-import { prepareRaisesCsv, raisesColumns } from './Table'
+import { prepareRaisesCsv, raisesColumns, tableFeaturesConfig } from './Table'
 import { getRaisesFiltersList } from './utils'
 
 const router = vi.hoisted(() => ({ query: {} as Record<string, string | Array<string>> }))
@@ -59,13 +59,12 @@ describe('Raises filters and chart population', () => {
 		expect(data.fundingSummary).toEqual(summarizeRaises(data.filteredRaisesList))
 		expect(data.monthlyInvestmentChart.dataset.source).toEqual([[Date.UTC(2025, 0, 1), expectedTotal]])
 		expect(data.fundingRoundsByMonthChart.dataset.source).toEqual([[Date.UTC(2025, 0, 1), names.length]])
-		const table = createTable({
+		const table = constructTestTable({
+			features: tableFeaturesConfig,
 			data: data.filteredRaisesList,
 			columns: raisesColumns,
 			state: {},
-			onStateChange: () => {},
-			renderFallbackValue: null,
-			getCoreRowModel: getCoreRowModel()
+			renderFallbackValue: null
 		})
 		expect(
 			prepareRaisesCsv(table)
@@ -109,15 +108,13 @@ describe('Raises filters and chart population', () => {
 
 describe('Shared Raises CSV contract', () => {
 	test('exports raw whole USD and both dates in table sort order, with unknowns last and zero intact', () => {
-		const table = createTable({
+		const table = constructTestTable({
+			features: tableFeaturesConfig,
 			data: [raise('Unknown', null), raise('Zero', 0), raise('Measured', 3_100_000, { valuationUsd: 300_000_000 })],
 			columns: raisesColumns,
 			state: { sorting: [{ id: 'amount', desc: false }] },
 			defaultColumn: { sortUndefined: 'last' },
-			onStateChange: () => {},
-			renderFallbackValue: null,
-			getCoreRowModel: getCoreRowModel(),
-			getSortedRowModel: getSortedRowModel()
+			renderFallbackValue: null
 		})
 		const csv = prepareRaisesCsv(table)
 		const header = csv.rows[0]!

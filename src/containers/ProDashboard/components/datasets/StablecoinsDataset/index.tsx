@@ -2,15 +2,15 @@ import {
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	createPaginatedRowModel,
 	type PaginationState,
+	rowPaginationFeature,
 	type SortingState,
-	useReactTable
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
@@ -20,6 +20,12 @@ import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { stablecoinsDatasetColumns } from './columns'
 import { type StablecoinsTableRow, useStablecoinsData } from './useStablecoinsData'
+
+export const tableFeaturesConfig = tableFeatures({
+	...orderedFilteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 interface StablecoinsDatasetProps {
 	chain: string
@@ -44,10 +50,6 @@ const DEFAULT_COLUMN_SIZING: ColumnSizingState = {
 	price: 100,
 	chains: 200
 }
-const getStablecoinsCoreRowModel = getCoreRowModel<StablecoinsTableRow>()
-const getStablecoinsSortedRowModel = getSortedRowModel<StablecoinsTableRow>()
-const getStablecoinsFilteredRowModel = getFilteredRowModel<StablecoinsTableRow>()
-const getStablecoinsPaginationRowModel = getPaginationRowModel<StablecoinsTableRow>()
 
 export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'mcap', desc: true }])
@@ -60,7 +62,8 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 	})
 
 	const { data, isLoading, error } = useStablecoinsData(chain)
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns: stablecoinsDatasetColumns,
@@ -77,10 +80,6 @@ export function StablecoinsDataset({ chain }: StablecoinsDatasetProps) {
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getStablecoinsCoreRowModel,
-		getSortedRowModel: getStablecoinsSortedRowModel,
-		getFilteredRowModel: getStablecoinsFilteredRowModel,
-		getPaginationRowModel: getStablecoinsPaginationRowModel,
 		autoResetPageIndex: true
 	})
 

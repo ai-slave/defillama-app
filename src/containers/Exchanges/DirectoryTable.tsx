@@ -1,4 +1,4 @@
-import type { SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
@@ -148,7 +148,7 @@ const SCOPE_HIDDEN_COLUMN_IDS: Record<DirectoryScope, Array<string>> = {
 	inverse_perp: ['spotFee', 'linearPerpFee', 'activeLiquidity', ...MERGED_ONLY_COLUMN_IDS, ...EXECUTION_COLUMN_IDS]
 }
 
-export function directoryColumnVisibility(group: DirectoryColumnGroup, scope: DirectoryScope): VisibilityState {
+export function directoryColumnVisibility(group: DirectoryColumnGroup, scope: DirectoryScope): ColumnVisibilityState {
 	// The merged view hides fee columns so the metric views spend their width on
 	// measurements, but the Fees view IS those columns: apply the hidden list as-is
 	// there and the view renders only Name and Fee Token. Fees are per-segment, not
@@ -305,7 +305,7 @@ export function DirectoryTable({
 			showColumnSelect
 			csvExportAllColumns
 			csvFileName="exchanges-directory"
-			sortingState={sortingFor(group)}
+			initialSorting={sortingFor(group)}
 			tableLayout="fixed"
 			rowSize={56}
 		/>

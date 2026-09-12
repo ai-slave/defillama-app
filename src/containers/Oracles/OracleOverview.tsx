@@ -3,6 +3,7 @@ import { lazy, Suspense, useMemo } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
@@ -31,7 +32,7 @@ import type { OracleOverviewPageData } from './types'
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
 type IProtocolTableRow = OracleOverviewPageData['protocolTableData'][number]
-const columnHelper = createColumnHelper<IProtocolTableRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IProtocolTableRow>()
 
 const DEFAULT_PROTOCOL_TABLE_SORTING_STATE = [{ id: 'tvl', desc: true }]
 
@@ -66,83 +67,87 @@ export function OracleOverview({
 }: OracleOverviewPageData) {
 	const [extraTvlsEnabled] = useLocalStorageSettingsManager('tvl')
 	const protocolColumns = useMemo(
-		() => [
-			columnHelper.accessor('name', {
-				header: 'Name',
-				enableSorting: false,
-				cell: ({ getValue, row }) => {
-					const name = getValue()
-					return (
-						<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
-							{row.subRows.length > 0 ? (
-								<Button
-									size="sm"
-									variant="ghost"
-									square
-									type="button"
-									className="absolute -left-1.5"
-									onClick={row.getToggleExpandedHandler()}
-								>
-									<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} height={16} width={16} />
-									<span className="sr-only">
-										{row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
-									</span>
-								</Button>
-							) : null}
-							<span className="vf-row-index shrink-0" aria-hidden="true" />
+		() =>
+			columnHelper.columns([
+				columnHelper.accessor('name', {
+					header: 'Name',
+					enableSorting: false,
+					cell: ({ getValue, row }) => {
+						const name = getValue()
+						return (
+							<span className={`relative flex items-center gap-2 ${row.depth > 0 ? 'pl-8' : 'pl-4'}`}>
+								{row.subRows.length > 0 ? (
+									<Button
+										size="sm"
+										variant="ghost"
+										square
+										type="button"
+										className="absolute -left-1.5"
+										onClick={row.getToggleExpandedHandler()}
+									>
+										<Icon name={row.getIsExpanded() ? 'chevron-down' : 'chevron-right'} height={16} width={16} />
+										<span className="sr-only">
+											{row.getIsExpanded() ? 'Hide child protocols' : 'View child protocols'}
+										</span>
+									</Button>
+								) : null}
+								<span className="vf-row-index shrink-0" aria-hidden="true" />
 
-							<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
+								<TokenLogo src={row.original.logo} data-lgonly alt={`Logo of ${name}`} />
 
-							<span className="flex items-center gap-1 overflow-hidden">
-								<BasicLink href={`/protocol/${slug(name)}`} className="min-w-0 truncate text-sm font-medium text-link">
-									{name}
-								</BasicLink>
-								{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+								<span className="flex items-center gap-1 overflow-hidden">
+									<BasicLink
+										href={`/protocol/${slug(name)}`}
+										className="min-w-0 truncate text-sm font-medium text-link"
+									>
+										{name}
+									</BasicLink>
+									{row.original.deprecated ? <DeprecatedProtocolMarker /> : null}
+								</span>
 							</span>
-						</span>
-					)
-				},
-				meta: {
-					headerClassName: 'w-[min(240px,40vw)]'
-				}
-			}),
-			columnHelper.accessor('category', {
-				header: 'Category',
-				enableSorting: false,
-				cell: ({ getValue }) => getValue() ?? 'Unknown',
-				meta: {
-					headerClassName: 'w-[140px]',
-					align: 'center'
-				}
-			}),
-			columnHelper.accessor((row) => row.tvl ?? undefined, {
-				id: 'tvl',
-				header: 'TVL',
-				enableSorting: true,
-				sortUndefined: 'last',
-				cell: ({ row }) => {
-					const strikeText = getStrikeTvlText({ row: row.original, extraTvlsEnabled })
-					return (
-						<span className="flex items-center justify-center gap-1">
-							{strikeText ? <QuestionHelper text={strikeText} /> : null}
-							<span className={strikeText ? 'text-tertiary' : ''}>
-								{row.original.tvl === null
-									? null
-									: formatUsd(row.original.tvl, {
-											compact: true,
-											minimumCompactValue: 1_000_000,
-											compactSuffix: 'lowercase'
-										})}
+						)
+					},
+					meta: {
+						headerClassName: 'w-[min(240px,40vw)]'
+					}
+				}),
+				columnHelper.accessor('category', {
+					header: 'Category',
+					enableSorting: false,
+					cell: ({ getValue }) => getValue() ?? 'Unknown',
+					meta: {
+						headerClassName: 'w-[140px]',
+						align: 'center'
+					}
+				}),
+				columnHelper.accessor((row) => row.tvl ?? undefined, {
+					id: 'tvl',
+					header: 'TVL',
+					enableSorting: true,
+					sortUndefined: 'last',
+					cell: ({ row }) => {
+						const strikeText = getStrikeTvlText({ row: row.original, extraTvlsEnabled })
+						return (
+							<span className="flex items-center justify-center gap-1">
+								{strikeText ? <QuestionHelper text={strikeText} /> : null}
+								<span className={strikeText ? 'text-tertiary' : ''}>
+									{row.original.tvl === null
+										? null
+										: formatUsd(row.original.tvl, {
+												compact: true,
+												minimumCompactValue: 1_000_000,
+												compactSuffix: 'lowercase'
+											})}
+								</span>
 							</span>
-						</span>
-					)
-				},
-				meta: {
-					headerClassName: 'w-[120px]',
-					align: 'center'
-				}
-			})
-		],
+						)
+					},
+					meta: {
+						headerClassName: 'w-[120px]',
+						align: 'center'
+					}
+				})
+			]),
 		[extraTvlsEnabled]
 	)
 	const enabledExtraApiKeys = useMemo(() => getEnabledExtraTvlApiKeys(extraTvlsEnabled), [extraTvlsEnabled])
@@ -325,7 +330,7 @@ export function OracleOverview({
 					columnToSearch="name"
 					placeholder="Search protocols..."
 					header="Protocols"
-					sortingState={DEFAULT_PROTOCOL_TABLE_SORTING_STATE}
+					initialSorting={DEFAULT_PROTOCOL_TABLE_SORTING_STATE}
 					csvFileName="oracle-protocols"
 					compact
 				/>

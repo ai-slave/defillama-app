@@ -11,13 +11,14 @@ import {
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { IDATOverviewFlowSeries, IDATOverviewPageProps } from './types'
 
@@ -113,7 +114,7 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 				columns={overviewColumns}
 				placeholder="Search institutions"
 				columnToSearch="name"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 				csvFileName="digital-asset-treasuries"
 			/>
 		</>
@@ -122,9 +123,9 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 
 // ── Table columns ───────────────────────────────────────────────────────
 
-const columnHelper = createColumnHelper<IDATOverviewPageProps['institutions'][0]>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IDATOverviewPageProps['institutions'][0]>()
 
-const overviewColumns = [
+const overviewColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Institution',
 		enableSorting: false,
@@ -283,7 +284,7 @@ const overviewColumns = [
 				'Market Net Asset Value under the fully diluted scenario, assuming every warrant, option, and convertible is exercised (the most conservative/worst-case view)'
 		}
 	})
-]
+])
 
 // ── Tooltip helpers ─────────────────────────────────────────────────────
 

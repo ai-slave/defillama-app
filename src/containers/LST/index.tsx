@@ -16,6 +16,7 @@ import {
 } from '~/components/ECharts/shared/ChartGroupingSelector'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -25,7 +26,7 @@ import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatRatio, formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
 import { buildActiveLstChartData } from './chartData'
 import type { ILSTTokenRow, LSTOverviewProps } from './types'
 
@@ -34,9 +35,9 @@ const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeri
 
 const DEFAULT_SORTING_STATE = [{ id: 'stakedEth', desc: true }]
 
-const columnHelper = createColumnHelper<ILSTTokenRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, ILSTTokenRow>()
 
-const LST_BASE_COLUMNS = [
+const LST_BASE_COLUMNS = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -134,7 +135,7 @@ const LST_BASE_COLUMNS = [
 			headerHelperText: 'Share of current staked ETH across all providers shown in this table'
 		}
 	})
-]
+])
 
 const LST_SYMBOL_COLUMN = columnHelper.accessor('lsdSymbol', {
 	header: 'LST',
@@ -515,7 +516,7 @@ export function LSTOverview({
 				placeholder="Search protocols..."
 				header="Liquid Staking Protocols"
 				csvFileName="liquid-staking"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</>
 	)

@@ -5,10 +5,11 @@ import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { Tooltip } from '~/ui/Tooltip'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
+import type { tableFeaturesConfig } from './index'
 import type { StablecoinsTableRow } from './useStablecoinsData'
 
-export const stablecoinsDatasetColumns: Array<ColumnDef<StablecoinsTableRow>> = [
+export const stablecoinsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, StablecoinsTableRow>> = [
 	{
 		header: 'Name',
 		id: 'name',

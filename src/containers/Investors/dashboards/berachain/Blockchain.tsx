@@ -1,10 +1,13 @@
-import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
+import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { lazy, useEffect } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { formatCompactNumber } from '~/utils/numberFormat'
 import { useBlockchainData, type TopToken } from './blockchainApi'
 import { AREA_CHART_EXPORTS, BAR_CHART_EXPORTS, createChartOptions } from './chartDefaults'
+
+const tableFeaturesConfig = displayTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -98,9 +101,9 @@ const DEFAULT_CHART_OPTIONS = createChartOptions('')
 const DOLLAR_CHART_OPTIONS = createChartOptions('$')
 const PERCENT_CHART_OPTIONS = createChartOptions('%')
 
-const tokenColumnHelper = createColumnHelper<TopToken>()
+const tokenColumnHelper = createColumnHelper<typeof tableFeaturesConfig, TopToken>()
 
-const tokenColumns = [
+const tokenColumns = tokenColumnHelper.columns([
 	tokenColumnHelper.accessor('symbol', {
 		header: 'Token',
 		cell: (info) => <span className="font-medium">{info.getValue()}</span>,
@@ -132,7 +135,7 @@ const tokenColumns = [
 		),
 		size: 120
 	})
-]
+])
 
 export default function Blockchain() {
 	const { data, isLoading } = useBlockchainData()
@@ -142,12 +145,11 @@ export default function Blockchain() {
 		if (data && !isLoading) onContentReady()
 	}, [data, isLoading, onContentReady])
 
-	const tokenTable = useReactTable({
+	const tokenTable = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data?.topTokens ?? [],
 		columns: tokenColumns,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
 		initialState: {
 			sorting: [{ id: 'volumeFormatted', desc: true }]
 		}

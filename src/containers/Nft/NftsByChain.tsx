@@ -1,6 +1,7 @@
 import { createColumnHelper, type SortingState } from '@tanstack/react-table'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { slug } from '~/utils'
@@ -27,15 +28,15 @@ export function NftsByChain({ chains }: INftsByChainProps) {
 			header="Protocol Rankings"
 			headingAs="h1"
 			csvFileName="nft-chains"
-			sortingState={DEFAULT_SORTING_STATE}
+			initialSorting={DEFAULT_SORTING_STATE}
 		/>
 	)
 }
 
 const DEFAULT_SORTING_STATE: SortingState = [{ id: 'total24h', desc: true }]
-const columnHelper = createColumnHelper<INftChainRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, INftChainRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -73,4 +74,4 @@ const columns = [
 			headerHelperText: 'Sum of volume across all NFT exchanges on the chain in the last 24 hours'
 		}
 	})
-]
+])

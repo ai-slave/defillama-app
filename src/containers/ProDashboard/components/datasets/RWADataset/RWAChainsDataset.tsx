@@ -4,16 +4,16 @@ import {
 	type ColumnOrderState,
 	type ColumnSizingState,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	createPaginatedRowModel,
 	type PaginationState,
+	rowPaginationFeature,
 	type SortingState,
-	useReactTable
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useContext } from 'react'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
@@ -22,11 +22,17 @@ import { fetchRWAStats } from '~/containers/RWA/api'
 import type { IRWAStatsResponse } from '~/containers/RWA/api.types'
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
+
+const tableFeaturesConfig = tableFeatures({
+	...orderedFilteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 type RWAChainsTableRow = {
 	chain: string
@@ -37,9 +43,9 @@ type RWAChainsTableRow = {
 	totalDefiActiveTvl: number
 }
 
-const columnHelper = createColumnHelper<RWAChainsTableRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, RWAChainsTableRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('chain', {
 		id: 'chain',
 		header: 'Chain',
@@ -87,7 +93,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 160
 	})
-]
+])
 
 const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
 	'chain',
@@ -105,10 +111,6 @@ const DEFAULT_COLUMN_SIZING: ColumnSizingState = {
 	totalOnChainMcap: 160,
 	totalDefiActiveTvl: 160
 }
-const getRWAChainsCoreRowModel = getCoreRowModel<RWAChainsTableRow>()
-const getRWAChainsSortedRowModel = getSortedRowModel<RWAChainsTableRow>()
-const getRWAChainsFilteredRowModel = getFilteredRowModel<RWAChainsTableRow>()
-const getRWAChainsPaginationRowModel = getPaginationRowModel<RWAChainsTableRow>()
 
 const STALE_TIME = 5 * 60 * 1000
 
@@ -164,7 +166,8 @@ export function RWAChainsDataset() {
 	})
 
 	const { data, isLoading, error } = useRWAChainsTableData()
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns,
@@ -181,10 +184,6 @@ export function RWAChainsDataset() {
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getRWAChainsCoreRowModel,
-		getSortedRowModel: getRWAChainsSortedRowModel,
-		getFilteredRowModel: getRWAChainsFilteredRowModel,
-		getPaginationRowModel: getRWAChainsPaginationRowModel,
 		autoResetPageIndex: true
 	})
 

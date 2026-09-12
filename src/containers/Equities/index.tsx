@@ -1,17 +1,22 @@
 import {
-	type ColumnDef,
+	columnSizingFeature,
+	columnVisibilityFeature,
 	createColumnHelper,
 	functionalUpdate,
-	getCoreRowModel,
-	type SortingState,
-	type VisibilityState,
-	useReactTable
+	rowExpandingFeature,
+	rowPaginationFeature,
+	tableFeatures,
+	useTable,
+	type ColumnDef,
+	type ColumnVisibilityState,
+	type SortingState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { startTransition, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { sortingFeatures } from '~/components/Table/features/sorting'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { ViewTabs, type ViewTab } from '~/components/ViewTabs'
@@ -21,11 +26,11 @@ import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
-import { Tabs, TabPanel } from '~/ui/Tabs'
+import { TabPanel, Tabs } from '~/ui/Tabs'
 import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatDateTime } from '~/utils/dateFormat'
 import { equityCountryFlagUrl } from '~/utils/icons'
-import { readSingleQueryValue, pushShallowQuery } from '~/utils/routerQuery'
+import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { prepareEquitiesCsv, type EquitiesCsvColumn } from './csv'
 import { EquitiesFiltersDialog, EquityActiveFilterPills } from './EquityFiltersDialog'
 import {
@@ -46,7 +51,15 @@ import { getEquitiesTreemapQueryValue, parseEquitiesTreemapState, type EquitiesP
 import type { IEquitiesListCompanyRow, IEquitiesListPageProps } from './types'
 import { useEquitiesServerTable } from './useEquitiesServerTable'
 
-const columnHelper = createColumnHelper<IEquitiesListCompanyRow>()
+const tableFeaturesConfig = tableFeatures({
+	...sortingFeatures,
+	columnVisibilityFeature,
+	columnSizingFeature,
+	rowExpandingFeature,
+	rowPaginationFeature
+})
+
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IEquitiesListCompanyRow>()
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 
 function ChangePercent({ value }: { value: number | null }) {
@@ -87,7 +100,7 @@ function EquityTickerCell({ row }: { row: { id: string; original: IEquitiesListC
 	)
 }
 
-const columns: Array<ColumnDef<IEquitiesListCompanyRow>> = [
+const columns: Array<ColumnDef<typeof tableFeaturesConfig, IEquitiesListCompanyRow>> = columnHelper.columns([
 	columnHelper.accessor('ticker', {
 		header: 'Ticker',
 		enableSorting: false,
@@ -509,7 +522,7 @@ const columns: Array<ColumnDef<IEquitiesListCompanyRow>> = [
 			headerHelperText: defs.employeeCount.description
 		}
 	})
-]
+])
 
 const EQUITIES_PRIMARY_PRESETS = [
 	'Market Cap',
@@ -693,9 +706,9 @@ function getPresetFromQuery(value?: string): EquitiesPreset {
 	return match ?? 'Market Cap'
 }
 
-function buildPresetVisibility(preset: EquitiesPreset): VisibilityState {
+function buildPresetVisibility(preset: EquitiesPreset): ColumnVisibilityState {
 	const visible = new Set(PRESET_VISIBLE_COLUMNS[preset])
-	const visibility: VisibilityState = { name: false }
+	const visibility: ColumnVisibilityState = { name: false }
 	for (const id of DATA_COLUMN_IDS) {
 		visibility[id] = visible.has(id)
 	}
@@ -719,13 +732,14 @@ function EquitiesRankingsTable({
 	filterPills: ReactNode
 	presetsRow: ReactNode
 }) {
-	const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => buildPresetVisibility(preset))
+	const [columnVisibility, setColumnVisibility] = useState<ColumnVisibilityState>(() => buildPresetVisibility(preset))
 	const tableColumnVisibility = useMemo(
 		() => applyEquityFilterColumnVisibility({ columnVisibility, filters }),
 		[columnVisibility, filters]
 	)
 
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		data: serverTable.rows,
 		columns,
 		state: {
@@ -740,8 +754,7 @@ function EquitiesRankingsTable({
 		onSortingChange: serverTable.onSortingChange,
 		onPaginationChange: serverTable.onPaginationChange,
 		onColumnVisibilityChange: (updater) =>
-			startTransition(() => setColumnVisibility((old) => functionalUpdate(updater, old))),
-		getCoreRowModel: getCoreRowModel()
+			startTransition(() => setColumnVisibility((old) => functionalUpdate(updater, old)))
 	})
 
 	const columnOptions = useMemo(() => {
@@ -755,13 +768,10 @@ function EquitiesRankingsTable({
 			const key = column.id ?? ('accessorKey' in column ? String(column.accessorKey) : '')
 			if (!key) continue
 			const name = typeof column.header === 'function' ? key : column.header != null ? String(column.header) : key
-			const help =
-				[
-					column.meta?.headerHelperText,
-					filterColumnIds.has(key) ? 'Visible while this column has an active filter.' : undefined
-				]
-					.filter(Boolean)
-					.join(' ') || undefined
+			const helpParts: Array<string> = []
+			if (column.meta?.headerHelperText) helpParts.push(column.meta.headerHelperText)
+			if (filterColumnIds.has(key)) helpParts.push('Visible while this column has an active filter.')
+			const help = helpParts.join(' ') || undefined
 			options.push({ key, name, ...(help === undefined ? {} : { help }) })
 		}
 		return options
@@ -779,7 +789,7 @@ function EquitiesRankingsTable({
 		const resolvedOptions = typeof newOptions === 'function' ? newOptions(selectedColumns) : newOptions
 		startTransition(() =>
 			setColumnVisibility(() => {
-				const nextVisibility: VisibilityState = {}
+				const nextVisibility: ColumnVisibilityState = {}
 				for (const column of table.getAllLeafColumns()) {
 					nextVisibility[column.id] = resolvedOptions.includes(column.id)
 				}

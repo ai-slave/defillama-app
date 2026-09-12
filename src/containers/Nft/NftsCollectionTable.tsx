@@ -1,14 +1,7 @@
-import {
-	type ColumnFiltersState,
-	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { type ColumnFiltersState, createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
+import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -17,6 +10,8 @@ import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInput
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { slug } from '~/utils'
+
+const tableFeaturesConfig = filteredTableFeatures
 
 interface INftCollection {
 	name: string
@@ -52,9 +47,9 @@ function EthValueCell({ value }: { value: unknown }) {
 	) : null
 }
 
-const columnHelper = createColumnHelper<INftCollection>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, INftCollection>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -145,13 +140,14 @@ const columns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 export function NftsCollectionTable({ data }: { data: Array<INftCollection> }) {
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'volume1d', desc: true }])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns,
 		state: {
@@ -163,10 +159,7 @@ export function NftsCollectionTable({ data }: { data: Array<INftCollection> }) {
 		},
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_collectionName, setCollectionName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -186,7 +179,7 @@ export function NftsCollectionTable({ data }: { data: Array<INftCollection> }) {
 					/>
 				</label>
 			</PanelHeader>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }

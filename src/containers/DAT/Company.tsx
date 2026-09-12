@@ -4,6 +4,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { ICandlestickChartProps } from '~/components/ECharts/CandlestickChart/types'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { Button } from '~/ui/Button'
@@ -15,7 +16,7 @@ import { TagGroup } from '~/ui/SegmentedControl'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { IDATCompanyPageProps } from './types'
 
 const DEFAULT_SORTING_STATE = [{ id: 'report_date', desc: true }]
@@ -321,16 +322,16 @@ export function DATCompany(props: IDATCompanyPageProps) {
 				placeholder="Search assets"
 				columnToSearch="assetName"
 				csvFileName={`${props.name}-transactions`}
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</>
 	)
 }
 
 type TransactionRow = IDATCompanyPageProps['transactions'][number]
-const columnHelper = createColumnHelper<TransactionRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, TransactionRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('assetName', {
 		header: 'Asset',
 		enableSorting: false,
@@ -447,7 +448,7 @@ const columns = [
 			headerClassName: 'w-[min(1000px,40vw)]'
 		}
 	})
-]
+])
 
 /** Narrow an unknown echarts tooltip param to a record, or return undefined. */
 function asRecord(value: unknown): Record<string, unknown> | undefined {

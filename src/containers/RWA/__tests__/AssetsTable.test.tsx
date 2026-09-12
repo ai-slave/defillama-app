@@ -1,6 +1,7 @@
-import { createTable, flexRender, getCoreRowModel } from '@tanstack/react-table'
+import { flexRender } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import type { IRWAAssetsOverview, IRWAFlowSummaryResponse } from '../api.types'
 import {
@@ -10,7 +11,8 @@ import {
 	getDefiMetricValue,
 	getDefiUtilization,
 	getMetricColumnHeaders,
-	getOnChainMetricValue
+	getOnChainMetricValue,
+	tableFeaturesConfig
 } from '../AssetsTable'
 
 function createSpotAsset(
@@ -208,12 +210,11 @@ describe('RWAAssetsTable', () => {
 })
 
 function renderAttestations(asset: IRWAAssetsOverview['assets'][number]) {
-	const table = createTable({
+	const table = constructTestTable({
+		features: tableFeaturesConfig,
 		data: createAssetTableRows([asset], undefined),
 		columns: createRWAAssetColumns(true, false, false),
-		getCoreRowModel: getCoreRowModel(),
 		state: {},
-		onStateChange: () => {},
 		renderFallbackValue: null
 	})
 	const cell = table

@@ -1,10 +1,4 @@
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -19,6 +13,7 @@ import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { LinkPreviewCard } from '~/components/SEO'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -32,6 +27,8 @@ import { formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import type { ChainAsset, ChainAssetCategoryKey } from './api.types'
 import { hasVisibleChainAssetTotal } from './presentation'
+
+const tableFeaturesConfig = displayTableFeatures
 
 interface BridgedChainRow {
 	name: string
@@ -49,9 +46,9 @@ interface BridgedTVLByChainProps {
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart'))
 const EMPTY_CHAIN_ASSET_BREAKDOWN: Record<string, number> = {}
 
-const columnHelper = createColumnHelper<BridgedChainRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, BridgedChainRow>()
 
-const bridgedChainColumns = [
+const bridgedChainColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Token',
 		enableSorting: false,
@@ -68,7 +65,7 @@ const bridgedChainColumns = [
 			headerClassName: 'w-[120px]'
 		}
 	})
-]
+])
 
 export function BridgedTVLByChain({
 	chainData,
@@ -141,7 +138,8 @@ export function BridgedTVLByChain({
 	const totalBridged = chainData ? chainData.total.total + (chainData.ownTokens?.total ?? 0) : null
 
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'value', desc: true }])
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: tableData,
 		columns: bridgedChainColumns,
 		state: {
@@ -151,9 +149,7 @@ export function BridgedTVLByChain({
 			sortUndefined: 'last'
 		},
 		enableSortingRemoval: false,
-		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: (updater) => React.startTransition(() => setSorting(updater))
 	})
 
 	return (
@@ -268,7 +264,7 @@ export function BridgedTVLByChain({
 					</React.Suspense>
 				</ChartPanel>
 			</SummaryCardGrid>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</>
 	)
 }

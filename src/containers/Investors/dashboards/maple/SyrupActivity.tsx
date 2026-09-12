@@ -1,23 +1,23 @@
-import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { VirtualTable } from '~/components/Table/Table'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
-import { formatRatio, formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
 import {
-	useStSyrupTxes,
-	useSyrupTxes,
-	useSyrupGlobals,
-	useStSyrupState,
-	useSyrupDripTxes,
+	parseTokenAmount,
 	parseWad,
-	parseTokenAmount
+	useStSyrupState,
+	useStSyrupTxes,
+	useSyrupDripTxes,
+	useSyrupGlobals,
+	useSyrupTxes
 } from './api'
 import { aggregateByMonth, aggregateDripByMonth, monthTimestampMs, type DripRow, type TxRow } from './chartData'
 import {
-	ChartCard,
 	CardSkeleton,
+	ChartCard,
 	KpiCard,
 	KpiSkeleton,
 	MAPLE_CSV_ONLY_EXPORT,
@@ -25,6 +25,8 @@ import {
 	MAPLE_UNITLESS_TIME_CHART_OPTIONS,
 	Pagination
 } from './shared'
+
+const tableFeaturesConfig = paginatedTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -63,7 +65,7 @@ const DRIP_CLAIMS_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const txColumns: Array<ColumnDef<TxRow>> = [
+const txColumns: Array<ColumnDef<typeof tableFeaturesConfig, TxRow>> = [
 	{
 		header: 'Date',
 		id: 'timestamp',
@@ -111,7 +113,7 @@ const txColumns: Array<ColumnDef<TxRow>> = [
 	}
 ]
 
-const dripColumns: Array<ColumnDef<DripRow>> = [
+const dripColumns: Array<ColumnDef<typeof tableFeaturesConfig, DripRow>> = [
 	{
 		header: 'Date',
 		id: 'timestamp',
@@ -156,16 +158,13 @@ function TxTable({ data }: { data: Array<TxRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'timestamp', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
-	const instance = useReactTable({
+	const instance = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: txColumns,
 		state: { sorting, pagination },
 		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 
 	if (data.length === 0) return null
@@ -173,7 +172,7 @@ function TxTable({ data }: { data: Array<TxRow> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Recent stSyrup Transactions</h3>
-			<VirtualTable instance={instance} skipVirtualization />
+			<VirtualTable table={instance} skipVirtualization />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
 	)
@@ -183,16 +182,13 @@ function DripTable({ data }: { data: Array<DripRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'timestamp', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
-	const instance = useReactTable({
+	const instance = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: dripColumns,
 		state: { sorting, pagination },
 		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 
 	if (data.length === 0) return null
@@ -200,7 +196,7 @@ function DripTable({ data }: { data: Array<DripRow> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Recent Drip Reward Claims</h3>
-			<VirtualTable instance={instance} skipVirtualization />
+			<VirtualTable table={instance} skipVirtualization />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
 	)

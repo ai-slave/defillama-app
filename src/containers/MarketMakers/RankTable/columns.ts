@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { createElement } from 'react'
+import type { SortedTableFeatures } from '~/components/Table/features/sorting'
 import { TokenLogo } from '~/components/TokenLogo'
 import { buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -9,7 +10,7 @@ import { selectCellNumber } from '../constants'
 import type { LeaderboardRow } from '../types'
 import { MetricCell } from './MetricCell'
 
-const columnHelper = createColumnHelper<LeaderboardRow>()
+const columnHelper = createColumnHelper<SortedTableFeatures, LeaderboardRow>()
 
 interface IBuildRankColumns {
 	columns: Array<ColumnConfig>
@@ -120,5 +121,5 @@ export function buildRankColumns({ columns, mode, rowCount, onSelectMM }: IBuild
 		})
 	})
 
-	return [rankColumn, marketMakerColumn, ...metricColumns]
+	return columnHelper.columns([rankColumn, marketMakerColumn, ...metricColumns])
 }

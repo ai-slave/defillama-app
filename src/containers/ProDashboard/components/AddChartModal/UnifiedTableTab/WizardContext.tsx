@@ -1,4 +1,4 @@
-import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { createContext, useContext } from 'react'
 import type { UnifiedTableConfig, UnifiedTableFilters } from '../../../unifiedTable/config/current'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
@@ -11,7 +11,7 @@ interface WizardContextValue {
 		filters: UnifiedTableFilters
 		activePresetId: string
 		columnOrder: ColumnOrderState
-		columnVisibility: VisibilityState
+		columnVisibility: ColumnVisibilityState
 		sorting: SortingState
 		customColumns: Array<CustomColumnDefinition>
 	}

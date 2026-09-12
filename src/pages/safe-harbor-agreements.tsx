@@ -2,6 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/server/tableData.server'
@@ -96,7 +97,7 @@ export default function SafeHarborAgreements({ protocols }: InferGetStaticPropsT
 				headingAs="h1"
 				compact
 				csvFileName="safe-harbor-agreements"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</Layout>
 	)
@@ -115,9 +116,9 @@ type SafeHarborRow = {
 	dexVolume: number | null
 }
 
-const columnHelper = createColumnHelper<SafeHarborRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, SafeHarborRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -224,4 +225,4 @@ const columns = [
 			align: 'end'
 		}
 	})
-]
+])

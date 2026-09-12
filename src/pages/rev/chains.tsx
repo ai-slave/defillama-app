@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
@@ -27,7 +28,7 @@ export const getStaticProps = withPerformanceLogging(`${adapterType}/chains`, as
 const pageName = ['Chains', 'ranked by', 'REV']
 const DEFAULT_SORTING_STATE = [{ id: 'total24h', desc: true }]
 
-const columnHelper = createColumnHelper<IChainsByREVPageData['chains'][0]>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IChainsByREVPageData['chains'][0]>()
 
 function REVByChain(props: IChainsByREVPageData) {
 	return (
@@ -47,13 +48,13 @@ function REVByChain(props: IChainsByREVPageData) {
 				rowSize={64}
 				compact
 				csvFileName="revenue-chains"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</Layout>
 	)
 }
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -108,6 +109,6 @@ const columns = [
 			headerHelperText: definitions.rev.chain['30d']
 		}
 	})
-]
+])
 
 export default REVByChain

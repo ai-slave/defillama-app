@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { letterLogoDataUri } from '~/utils/icons'
@@ -19,7 +20,7 @@ import {
 import type { MicaVenueRowModel } from './models'
 import { selectVenueDestination } from './venueLinks'
 
-const columnHelper = createColumnHelper<MicaVenueRowModel>()
+const columnHelper = createColumnHelper<SearchTableFeatures, MicaVenueRowModel>()
 
 function pairTotal(bid: number | null, ask: number | null): number | null {
 	return bid == null || ask == null ? null : bid + ask
@@ -28,7 +29,7 @@ function pairTotal(bid: number | null, ask: number | null): number | null {
 /** Contractual placement: Bybit EU must lead the MiCA table and stay visually highlighted. */
 export const PINNED_MICA_EXCHANGE = 'bybit-eu'
 
-export const MICA_COLUMNS = [
+export const MICA_COLUMNS = columnHelper.columns([
 	columnHelper.accessor(
 		(row) => `${row.name} ${row.exchange} ${row.micaMemberState ?? ''} ${row.micaRegulator ?? ''}`,
 		{
@@ -253,7 +254,7 @@ export const MICA_COLUMNS = [
 			headerHelperText: 'Documents and verification steps required to use the exchange.'
 		}
 	})
-]
+])
 
 for (const [index, column] of MICA_COLUMNS.entries()) {
 	column.meta = {

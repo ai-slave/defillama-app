@@ -4,12 +4,13 @@ import { TokenLogo } from '~/components/TokenLogo'
 import type { ChainsDatasetRow } from '~/containers/ChainsByCategory/types'
 import { PercentChange } from '~/ui/PercentChange'
 import {
+	formatCompactNumber,
 	formatRatio,
 	formatUsd,
-	formatCompactNumber,
 	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
 	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
+import type { tableFeaturesConfig } from './index'
 
 const renderChange = (value: number | null) => (
 	<span
@@ -19,12 +20,11 @@ const renderChange = (value: number | null) => (
 	</span>
 )
 
-export const chainsDatasetColumns: Array<ColumnDef<ChainsDatasetRow>> = [
+export const chainsDatasetColumns: Array<ColumnDef<typeof tableFeaturesConfig, ChainsDatasetRow>> = [
 	{
 		header: 'Chain',
 		accessorKey: 'name',
 		size: 200,
-		enableGlobalFilter: true,
 		cell: ({ row }) => {
 			return (
 				<div className="flex items-center gap-2">

@@ -87,7 +87,7 @@ export function RampTable({ catalog }: { catalog: RampCatalogModel }) {
 			showColumnSelect
 			csvExportAllColumns
 			// Opens in REAL order (see buildRampRows), cost as the tiebreak; any header still re-sorts.
-			sortingState={[]}
+			initialSorting={[]}
 			csvFileName="fiat-ramp-costs"
 			skipVirtualization
 			tableLayout="auto"

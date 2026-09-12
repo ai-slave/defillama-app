@@ -1,15 +1,8 @@
 import * as Ariakit from '@ariakit/react'
-import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-import { Icon } from '~/ui/Icon'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 import type { CexAnalyticsMetric, CexAnalyticsView } from '~/containers/Cexs/api.types'
 import {
 	UNIFIED_TABLE_PRESETS,
@@ -19,6 +12,7 @@ import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '~/containers/ProDashboard/unifi
 import type { UnifiedTableConfig, UnifiedTableFilters } from '~/containers/ProDashboard/unifiedTable/config/current'
 import { normalizeUnifiedTableSorting } from '~/containers/ProDashboard/unifiedTable/config/layoutPolicy'
 import type { UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
+import { Icon } from '~/ui/Icon'
 import { useProDashboardEditorActions } from '../../../ProDashboardAPIContext'
 import { AriakitVirtualizedSelect } from '../../AriakitVirtualizedSelect'
 import { EquitiesCompaniesDataset } from '../../datasets/EquitiesDataset/EquitiesCompaniesDataset'
@@ -45,6 +39,12 @@ import { SimpleTableConfig } from './components/SimpleTableConfig'
 import { usePresetRecommendations } from './hooks/usePresetRecommendations'
 import type { FilterPreset } from './presets/filterPresets'
 import { UnifiedTableWizardProvider, useUnifiedTableWizardContext } from './WizardContext'
+
+const SubscribeProModal = lazy(() =>
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
+)
 
 interface UnifiedTableTabProps {
 	onClose: () => void
@@ -101,7 +101,7 @@ const arraysEqual = (a: Array<string>, b: Array<string>) => {
 	return a.every((value, index) => value === b[index])
 }
 
-const visibilityEqual = (a: VisibilityState, b: VisibilityState) => {
+const visibilityEqual = (a: ColumnVisibilityState, b: ColumnVisibilityState) => {
 	const keys = new Set([...Object.keys(a), ...Object.keys(b)])
 	for (const key of keys) {
 		const aValue = key in a ? a[key] : true
@@ -314,7 +314,7 @@ function TabContent({
 			}
 		}
 		const baseOrder = ['name', ...allColumns.slice(1)]
-		const baseVisibility: VisibilityState = {}
+		const baseVisibility: ColumnVisibilityState = {}
 		for (const id of allColumns) baseVisibility[id] = id === 'name' || customColumnIds.includes(id)
 		return {
 			order: baseOrder,
@@ -379,7 +379,7 @@ function TabContent({
 		handlePresetSelect(activePreset.id)
 	}
 
-	const handleColumnChange = (order: ColumnOrderState, visibility: VisibilityState) => {
+	const handleColumnChange = (order: ColumnOrderState, visibility: ColumnVisibilityState) => {
 		setColumns(order, visibility)
 	}
 

@@ -1,4 +1,9 @@
-import type { ColumnOrderState, Table } from '@tanstack/react-table'
+import type { ColumnOrderState, RowData, Table } from '@tanstack/react-table'
+import {
+	column_getFilterValue,
+	column_setFilterValue,
+	table_getVisibleLeafColumns
+} from '@tanstack/react-table/static-functions'
 import {
 	startTransition,
 	useCallback,
@@ -9,24 +14,17 @@ import {
 	useSyncExternalStore
 } from 'react'
 import type { CsvCell } from '~/utils/csvCell'
+import type {
+	FilteringFeatures,
+	OrderedTableInstance,
+	OrderingFeatures,
+	VisibilityFeatures
+} from './features/contracts'
 
 type BreakpointMap<T> = Record<number, T>
 export type ColumnOrdersByBreakpoint = BreakpointMap<ColumnOrderState>
 
-type ColumnTableInstance = {
-	setColumnOrder: (order: ColumnOrderState) => void
-	getState: () => {
-		columnOrder?: ColumnOrderState
-	}
-	getAllColumns?: () => Array<ColumnTableColumn>
-	getAllLeafColumns?: () => Array<{ id: string }>
-}
-
-type ColumnTableColumn = {
-	id: string
-	columns?: Array<ColumnTableColumn>
-	getLeafColumns?: () => Array<{ id: string }>
-}
+type ColumnTableColumn = { getLeafColumns: () => Array<{ id: string }> }
 
 const isColumnOrderEqual = (current: ColumnOrderState, next: ColumnOrderState) => {
 	if (current === next) return true
@@ -94,27 +92,11 @@ const getOrderForBreakpoint = (entries: Array<ColumnOrderEntry>, breakpoint: num
 	return entries.find(([size]) => size === breakpoint)?.[1] ?? null
 }
 
-const appendLeafColumnIds = (columns: Array<ColumnTableColumn>, columnIds: ColumnOrderState) => {
-	for (const column of columns) {
-		if (column.columns && column.columns.length > 0) {
-			appendLeafColumnIds(column.columns, columnIds)
-		} else {
-			const leafColumns = column.getLeafColumns?.()
-			if (!leafColumns || leafColumns.length === 0) {
-				columnIds.push(column.id)
-				continue
-			}
-			for (const leafColumn of leafColumns) {
-				columnIds.push(leafColumn.id)
-			}
-		}
-	}
-}
-
 const getLeafColumnIds = (columns: Array<ColumnTableColumn>) => {
 	const columnIds: ColumnOrderState = []
-	appendLeafColumnIds(columns, columnIds)
-
+	for (const column of columns) {
+		for (const leaf of column.getLeafColumns()) columnIds.push(leaf.id)
+	}
 	return columnIds
 }
 
@@ -129,18 +111,19 @@ export function splitArrayByFalsyValues<T extends object, K extends keyof T>(dat
 	return [truthy, falsy] as [Array<T>, Array<T>]
 }
 
-function applyColumnOrder({ instance, order }: { instance: ColumnTableInstance; order: ColumnOrderState | null }) {
+function applyColumnOrder<F extends OrderingFeatures, T extends RowData>({
+	instance,
+	order
+}: {
+	instance: OrderedTableInstance<F, T>
+	order: ColumnOrderState | null
+}) {
 	if (order == null) return
 
-	const { columnOrder: currentOrder } = instance.getState()
-	const columns = instance.getAllLeafColumns?.()
-
+	const currentOrder = instance.atoms.columnOrder.get()
 	const effectiveOrder =
-		currentOrder && currentOrder.length > 0 ? currentOrder : (columns?.map((col) => col.id) ?? currentOrder)
-
-	if (currentOrder != null && effectiveOrder != null && !isColumnOrderEqual(effectiveOrder, order)) {
-		instance.setColumnOrder(order)
-	}
+		currentOrder.length > 0 ? currentOrder : instance.getAllLeafColumns().map((column) => column.id)
+	if (!isColumnOrderEqual(effectiveOrder, order)) instance.setColumnOrder(order)
 }
 
 function useColumnOrderBreakpoint(
@@ -176,11 +159,11 @@ function useColumnOrderBreakpoint(
 	return useSyncExternalStore(subscribe, getSnapshot, () => null)
 }
 
-export function useTableSearch<T>({
+export function useTableSearch<F extends FilteringFeatures, T extends RowData>({
 	instance,
 	columnToSearch
 }: {
-	instance: Table<T>
+	instance: Table<F, T>
 	columnToSearch: string | undefined
 }): [string, (value: string) => void] {
 	const [search, setSearch] = useState('')
@@ -191,30 +174,26 @@ export function useTableSearch<T>({
 		const column = instance.getColumn(columnToSearch)
 		if (!column) return
 
-		const currentValue = column.getFilterValue()
+		const currentValue = column_getFilterValue(column)
 		if (currentValue === deferredSearch) return
 
 		startTransition(() => {
-			column.setFilterValue(deferredSearch)
+			column_setFilterValue(column, deferredSearch)
 		})
 	}, [deferredSearch, instance, columnToSearch])
 
 	return [search, setSearch]
 }
 
-export function useSortColumnOrders({
+export function useSortColumnOrders<F extends OrderingFeatures, T extends RowData>({
 	instance,
 	columnOrders
 }: {
-	instance: ColumnTableInstance
+	instance: OrderedTableInstance<F, T>
 	columnOrders?: ColumnOrdersByBreakpoint | null
 }) {
-	const allColumns = instance.getAllColumns?.()
-	const defaultColumnOrder = useMemo(
-		() =>
-			allColumns ? getLeafColumnIds(allColumns) : (instance.getAllLeafColumns?.().map((column) => column.id) ?? null),
-		[allColumns, instance]
-	)
+	const allColumns = instance.getAllColumns()
+	const defaultColumnOrder = useMemo(() => getLeafColumnIds(allColumns), [allColumns])
 	const columnOrderEntries = useMemo(() => (columnOrders ? getColumnOrderEntries(columnOrders) : []), [columnOrders])
 	const fixedColumnOrder = useMemo(() => getFixedColumnOrder(columnOrderEntries), [columnOrderEntries])
 	const onlyDefaultColumnOrders =
@@ -237,22 +216,22 @@ export function useSortColumnOrders({
 	}, [instance, selectedColumnOrder])
 }
 
-export function prepareTableCsv<T>({
+export function prepareTableCsv<F extends VisibilityFeatures, T extends RowData>({
 	instance,
 	filename,
 	includeHiddenColumns = false
 }: {
-	instance: Table<T>
+	instance: Table<F, T>
 	filename: string
 	includeHiddenColumns?: boolean
 }): {
 	filename: string
 	rows: Array<Array<CsvCell>>
 } {
-	const columns = (includeHiddenColumns ? instance.getAllLeafColumns() : instance.getVisibleLeafColumns()).filter(
+	const columns = (includeHiddenColumns ? instance.getAllLeafColumns() : table_getVisibleLeafColumns(instance)).filter(
 		(column) => !column.columnDef.meta?.hidden || column.columnDef.meta?.csvOnly
 	)
-	const tableRows = instance.getPrePaginationRowModel().rows
+	const tableRows = instance.getPrePaginatedRowModel().rows
 	if (columns.length === 0) return { filename, rows: [] }
 
 	const headers = columns.map((column) => {

@@ -5,6 +5,7 @@ import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChart/selection'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
@@ -28,10 +29,10 @@ import {
 import type { IProtocolsCategoriesChartData, IProtocolsCategoriesPageData, IProtocolsCategoriesTableRow } from './types'
 
 const DEFAULT_SORTING_STATE = [{ id: 'tvl', desc: true }]
-const columnHelper = createColumnHelper<IProtocolsCategoriesTableRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IProtocolsCategoriesTableRow>()
 const MultiSeriesChart = React.lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
-const categoriesColumns = [
+const categoriesColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Category',
 		enableSorting: false,
@@ -144,7 +145,7 @@ const categoriesColumns = [
 			headerClassName: 'w-[min(1600px,40vw)]'
 		}
 	})
-]
+])
 
 export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 	const { categories, tableData, chartSource, categoryColors, extraTvlCharts } = props
@@ -259,7 +260,7 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 					columnToSearch="name"
 					placeholder="Search category..."
 					csvFileName="protocol-categories"
-					sortingState={DEFAULT_SORTING_STATE}
+					initialSorting={DEFAULT_SORTING_STATE}
 				/>
 			</React.Suspense>
 		</>

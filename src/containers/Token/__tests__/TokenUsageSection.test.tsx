@@ -13,7 +13,7 @@ const { DynamicPaginatedTable, paginatedTableCalls } = vi.hoisted(() => {
 
 	function DynamicPaginatedTable({ table, pageSizeOptions }: any) {
 		const rows = table.getRowModel().rows
-		const { pageSize } = table.getState().pagination
+		const { pageSize } = table.state.pagination
 
 		paginatedTableCalls.push({
 			pageSizeOptions,

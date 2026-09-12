@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
@@ -13,11 +14,11 @@ import { definitions } from './definitions'
 import type { RWAFlowTreemapSizeRow } from './flowTreemap'
 import { RWAOverviewBreakdownChart } from './OverviewBreakdownChart'
 import {
+	formatRWAOverviewUsd,
 	getRWAOverviewAssetCount,
 	getRWAOverviewCsvFileName,
 	getRWAOverviewInclusion,
 	getRWAOverviewTableData,
-	formatRWAOverviewUsd,
 	hasExcludedRWAOverviewAssets
 } from './overviewTableData'
 import { rwaSlug } from './rwaSlug'
@@ -32,9 +33,9 @@ type RWAPlatformsTableRow = {
 	hasExcludedAssets: boolean
 }
 
-const columnHelper = createColumnHelper<RWAPlatformsTableRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, RWAPlatformsTableRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('platform', {
 		id: 'platform',
 		header: 'Name',
@@ -101,7 +102,7 @@ const columns = [
 			headerHelperText: definitions.totalDefiActiveTvl.description
 		}
 	})
-]
+])
 export function RWAPlatforms({
 	platforms,
 	initialChartDataset
@@ -175,7 +176,7 @@ export function RWAPlatforms({
 				header="Platforms"
 				headingAs="h1"
 				csvFileName={csvFileName}
-				sortingState={[{ id: 'activeMcap', desc: true }]}
+				initialSorting={[{ id: 'activeMcap', desc: true }]}
 			/>
 		</div>
 	)

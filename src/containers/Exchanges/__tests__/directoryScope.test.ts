@@ -1,5 +1,6 @@
-import { createTable, getCoreRowModel } from '@tanstack/react-table'
 import { describe, expect, test } from 'vitest'
+import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
+import { searchTableFeatures as tableFeaturesConfig } from '~/components/Table/features/search'
 import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from '../directoryColumns'
 import { directoryColumnVisibility } from '../DirectoryTable'
 import type { ExchangeDirectoryRowModel } from '../models'
@@ -35,12 +36,11 @@ describe('merged directory scope', () => {
 				inverse_perp: null
 			}
 		} as unknown as ExchangeDirectoryRowModel
-		const table = createTable({
+		const table = constructTestTable({
+			features: tableFeaturesConfig,
 			data: [row],
 			columns: buildDirectoryColumns('all', false),
-			getCoreRowModel: getCoreRowModel(),
 			state: {},
-			onStateChange: () => {},
 			renderFallbackValue: null
 		})
 		const value = (id: string) => {

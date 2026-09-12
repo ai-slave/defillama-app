@@ -1,12 +1,4 @@
-import {
-	type ColumnFiltersState,
-	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { type ColumnFiltersState, createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -15,12 +7,13 @@ import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesCha
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
+import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TagGroup } from '~/ui/SegmentedControl'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
@@ -32,6 +25,8 @@ import { isParamNone, parseArrayParam, parseExcludeParam, parseNumberQueryParam 
 import { buildFilteredHacksSummary, filterHacksRows } from './data'
 import { HacksFilters } from './Filters'
 import type { IHacksPageData } from './types'
+
+const tableFeaturesConfig = filteredTableFeatures
 
 const PieChart = React.lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
 const MultiSeriesChart = React.lazy(
@@ -45,7 +40,8 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 	const searchInputRef = React.useRef<HTMLInputElement | null>(null)
 	const initialSearchAppliedRef = React.useRef(false)
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns: hacksColumns,
 		state: {
@@ -57,10 +53,7 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 		},
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getFilteredRowModel: getFilteredRowModel(),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -93,7 +86,7 @@ function HacksTable({ data }: { data: IHacksPageData['data'] }) {
 
 				<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: 'hacks' })} smol free size="md" />
 			</TableToolbar>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }
@@ -301,9 +294,9 @@ export function HacksContainer({
 	)
 }
 
-const columnHelper = createColumnHelper<IHacksPageData['data'][0]>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IHacksPageData['data'][0]>()
 
-const hacksColumns = [
+const hacksColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -383,4 +376,4 @@ const hacksColumns = [
 			headerClassName: 'w-[148px]'
 		}
 	})
-]
+])

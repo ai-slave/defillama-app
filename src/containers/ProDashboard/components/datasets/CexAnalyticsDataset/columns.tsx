@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import type { CexAnalyticsSnapshotRow } from '~/containers/Cexs/api.types'
 import { formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
+import type { tableFeaturesConfig } from './index'
 
 const renderRatio = (value: number | null, suffix = 'x') => {
 	const formatted = formatRatio(value)
@@ -24,7 +25,7 @@ const renderCurrency = (value: number | null) => {
 	return formatted == null ? <span className="text-pro-text-tertiary">-</span> : <>{formatted}</>
 }
 
-export const cexAnalyticsColumns: Array<ColumnDef<CexAnalyticsSnapshotRow>> = [
+export const cexAnalyticsColumns: Array<ColumnDef<typeof tableFeaturesConfig, CexAnalyticsSnapshotRow>> = [
 	{
 		header: 'CEX',
 		id: 'venue',

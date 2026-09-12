@@ -1,4 +1,4 @@
-import type { VisibilityState } from '@tanstack/react-table'
+import type { ColumnVisibilityState } from '@tanstack/react-table'
 import { describe, expect, test } from 'vitest'
 import type { EquityActiveFilter } from '../filters'
 import {
@@ -16,7 +16,7 @@ const cashFilter: EquityActiveFilter = {
 
 describe('equity filter column visibility', () => {
 	test('forces active filter columns visible in the table', () => {
-		const columnVisibility: VisibilityState = {
+		const columnVisibility: ColumnVisibilityState = {
 			cashAndCashEquivalents: false,
 			totalDebt: false
 		}
@@ -29,7 +29,7 @@ describe('equity filter column visibility', () => {
 	})
 
 	test('leaves the user-picked visibility untouched when there are no active filters', () => {
-		const columnVisibility: VisibilityState = {
+		const columnVisibility: ColumnVisibilityState = {
 			cashAndCashEquivalents: false,
 			totalDebt: true
 		}

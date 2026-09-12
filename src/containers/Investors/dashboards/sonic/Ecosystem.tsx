@@ -1,18 +1,33 @@
 import {
+	columnSizingFeature,
+	columnVisibilityFeature,
 	createColumnHelper,
-	useReactTable,
-	getCoreRowModel,
-	getSortedRowModel,
-	getPaginationRowModel
+	createPaginatedRowModel,
+	createSortedRowModel,
+	rowExpandingFeature,
+	rowPaginationFeature,
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import { lazy, useEffect, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { sortingFeatures } from '~/components/Table/features/sorting'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { formatPercent } from '~/utils/numberFormat'
 import { CSV_ONLY_EXPORT } from './chartDefaults'
-import { useEcosystemData, type TopProtocolEntry, type AssetCategory } from './ecosystemApi'
+import { useEcosystemData, type AssetCategory, type TopProtocolEntry } from './ecosystemApi'
 import { formatSonicUsd } from './format'
+
+const tableFeaturesConfig = tableFeatures({
+	...sortingFeatures,
+	columnVisibilityFeature,
+	columnSizingFeature,
+	rowExpandingFeature,
+	rowPaginationFeature,
+	sortedRowModel: createSortedRowModel(),
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 const PieChart = lazy(() => import('~/components/ECharts/PieChart')) as React.FC<IPieChartProps>
@@ -54,10 +69,10 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 	return <h2 className="text-xs font-semibold tracking-wider text-pro-text-label uppercase">{children}</h2>
 }
 
-const protocolColumnHelper = createColumnHelper<TopProtocolEntry>()
+const protocolColumnHelper = createColumnHelper<typeof tableFeaturesConfig, TopProtocolEntry>()
 
 function makeProtocolColumns(valueLabel: string) {
-	return [
+	return protocolColumnHelper.columns([
 		protocolColumnHelper.display({
 			id: 'rank',
 			header: '#',
@@ -120,22 +135,20 @@ function makeProtocolColumns(valueLabel: string) {
 			cell: (info) => <span className="tabular-nums">{formatSonicUsd(info.getValue())}</span>,
 			size: 130
 		})
-	]
+	])
 }
 
 function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; valueLabel: string }) {
 	const columns = useMemo(() => makeProtocolColumns(valueLabel), [valueLabel])
 
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
 		initialState: {
 			sorting: [{ id: 'total24h', desc: true }],
-			pagination: { pageSize: 10 }
+			pagination: { pageIndex: 0, pageSize: 10 }
 		}
 	})
 
@@ -182,7 +195,7 @@ function ProtocolTable({ data, valueLabel }: { data: Array<TopProtocolEntry>; va
 			{table.getPageCount() > 1 && (
 				<div className="flex items-center justify-between border-t border-pro-cards-border px-4 py-3">
 					<span className="text-xs text-pro-text-label">
-						Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+						Page {table.state.pagination.pageIndex + 1} of {table.getPageCount()}
 					</span>
 					<div className="flex gap-1">
 						<button

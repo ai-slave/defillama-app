@@ -1,4 +1,4 @@
-import type { VisibilityState } from '@tanstack/react-table'
+import type { ColumnVisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
@@ -16,7 +16,7 @@ const FILTER_OPTIONS = [
 	{ value: 'fiat', label: 'Fiat onramp' }
 ] as const
 
-const MICA_COLUMN_VISIBILITY: Record<MicaFilter, VisibilityState> = {
+const MICA_COLUMN_VISIBILITY: Record<MicaFilter, ColumnVisibilityState> = {
 	all: { micaStatus: false, fiatOnramp: false },
 	spot: {
 		micaStatus: false,
@@ -49,7 +49,7 @@ const MICA_COLUMN_VISIBILITY: Record<MicaFilter, VisibilityState> = {
 	}
 }
 
-export function micaColumnVisibility(filter: MicaFilter): VisibilityState {
+export function micaColumnVisibility(filter: MicaFilter): ColumnVisibilityState {
 	return MICA_COLUMN_VISIBILITY[filter]
 }
 
@@ -105,7 +105,7 @@ export function MicaTable({ venues }: { venues: Array<MicaVenueRowModel> }) {
 			csvExportAllColumns
 			// Open in the curated order (Bybit EU pinned first), not an active column
 			// sort — users can still click any header to re-sort.
-			sortingState={[]}
+			initialSorting={[]}
 			csvFileName="mica-exchanges"
 			skipVirtualization
 			tableLayout="auto"

@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -34,8 +35,8 @@ function EmptyIntegrationTable({ title, message }: { title: string; message: str
 	)
 }
 
-const perpColumnHelper = createColumnHelper<PreIpoPerpIntegration>()
-const perpColumns = [
+const perpColumnHelper = createColumnHelper<SearchTableFeatures, PreIpoPerpIntegration>()
+const perpColumns = perpColumnHelper.columns([
 	perpColumnHelper.accessor('exchangeName', {
 		header: 'Exchange',
 		enableSorting: false,
@@ -116,10 +117,10 @@ const perpColumns = [
 		enableSorting: false,
 		meta: { hidden: true, csvOnly: true }
 	})
-]
+])
 
-const issuerColumnHelper = createColumnHelper<PreIpoTokenIssuerIntegration>()
-const issuerColumns = [
+const issuerColumnHelper = createColumnHelper<SearchTableFeatures, PreIpoTokenIssuerIntegration>()
+const issuerColumns = issuerColumnHelper.columns([
 	issuerColumnHelper.accessor('issuerName', {
 		header: preIpoDefinitions.tokenIssuer.issuer.label,
 		enableSorting: false,
@@ -174,7 +175,7 @@ const issuerColumns = [
 		enableSorting: false,
 		meta: { hidden: true, csvOnly: true }
 	})
-]
+])
 
 export function PerpetualMarketsTable({
 	companyName,

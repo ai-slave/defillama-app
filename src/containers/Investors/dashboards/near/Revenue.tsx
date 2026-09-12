@@ -1,4 +1,4 @@
-import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel } from '@tanstack/react-table'
+import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { lazy, useEffect, useMemo, useState } from 'react'
 import { buildSparseCartesianChartModel } from '~/components/ECharts/MultiSeriesChart/model'
 import {
@@ -6,6 +6,7 @@ import {
 	createTimeSeriesChartOptions
 } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import { useContentReady } from '~/containers/Investors/ContentReadyContext'
 import { keyedOccurrences } from '~/utils/keyedOccurrences'
 import {
@@ -15,7 +16,9 @@ import {
 	type Aggregation,
 	type Timeframe
 } from './chartData'
-import { useRevenueData, getValidTimeframeForAggregation, type WalletEntry } from './revenueApi'
+import { getValidTimeframeForAggregation, useRevenueData, type WalletEntry } from './revenueApi'
+
+const tableFeaturesConfig = displayTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -110,9 +113,9 @@ function TimeframeToggle({
 	)
 }
 
-const walletColumnHelper = createColumnHelper<WalletEntry>()
+const walletColumnHelper = createColumnHelper<typeof tableFeaturesConfig, WalletEntry>()
 
-const walletColumns = [
+const walletColumns = walletColumnHelper.columns([
 	walletColumnHelper.accessor('wallet', {
 		header: 'Wallet',
 		cell: (info) => {
@@ -144,7 +147,7 @@ const walletColumns = [
 		cell: ({ row }) => <span className="tabular-nums">{row.original.shareFormatted}</span>,
 		size: 100
 	})
-]
+])
 
 export default function Revenue() {
 	const { data, isLoading } = useRevenueData()
@@ -153,26 +156,17 @@ export default function Revenue() {
 	const [aggregation, setAggregation] = useState<Aggregation>('daily')
 	const [emissionsView, setEmissionsView] = useState<'percentage' | 'absolute'>('percentage')
 
-	// Auto-adjust timeframe when aggregation changes
-	useEffect(() => {
-		const validTimeframe = getValidTimeframeForAggregation(globalTimeframe, aggregation)
-		if (validTimeframe !== globalTimeframe) {
-			setGlobalTimeframe(validTimeframe as typeof globalTimeframe)
-		}
-	}, [aggregation, globalTimeframe])
-
 	useEffect(() => {
 		if (data && !isLoading) {
 			onContentReady()
 		}
 	}, [data, isLoading, onContentReady])
 
-	const walletTable = useReactTable({
+	const walletTable = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data?.walletBreakdown ?? [],
 		columns: walletColumns,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
 		initialState: {
 			sorting: [{ id: 'totalFormatted', desc: true }]
 		}
@@ -339,7 +333,9 @@ export default function Revenue() {
 				<SectionHeader>Dashboard Timeframe</SectionHeader>
 				<TimeframeToggle
 					value={globalTimeframe}
-					onChange={(v) => setGlobalTimeframe(v as typeof globalTimeframe)}
+					onChange={(v) =>
+						setGlobalTimeframe(getValidTimeframeForAggregation(v as Timeframe, aggregation) as Timeframe)
+					}
 					options={[
 						{ value: '7d', label: '7D' },
 						{ value: '30d', label: '30D' },
@@ -380,7 +376,11 @@ export default function Revenue() {
 				<SectionHeader>Data Aggregation</SectionHeader>
 				<TimeframeToggle
 					value={aggregation}
-					onChange={(v) => setAggregation(v as typeof aggregation)}
+					onChange={(v) => {
+						const nextAggregation = v as typeof aggregation
+						setAggregation(nextAggregation)
+						setGlobalTimeframe(getValidTimeframeForAggregation(globalTimeframe, nextAggregation) as Timeframe)
+					}}
 					options={[
 						{ value: 'daily', label: 'Daily' },
 						{ value: 'weekly', label: 'Weekly' },

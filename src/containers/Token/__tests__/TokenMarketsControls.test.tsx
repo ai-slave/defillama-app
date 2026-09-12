@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { Table } from '@tanstack/react-table'
+import type { ReactTable } from '@tanstack/react-table'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import type { PairTableRow } from '~/containers/Exchanges/PairTable'
 import type { MarketPair, TokenMarketsResponse } from '~/containers/Markets/api.types'
 import { fetchTokenMarkets } from '../api'
@@ -20,10 +21,10 @@ vi.mock('../deferred/DeferredPairTable', async () => ({
 vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => <button type="button">Export</button> }))
 vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
 vi.mock('~/components/Table/Table', () => ({
-	VirtualTable: ({ instance }: { instance: Table<PairTableRow> }) => (
+	VirtualTable: ({ table: instance }: { table: ReactTable<SearchTableFeatures, PairTableRow> }) => (
 		<div
 			data-table
-			data-sort={JSON.stringify(instance.getState().sorting)}
+			data-sort={JSON.stringify(instance.state.sorting)}
 			data-columns={instance
 				.getVisibleLeafColumns()
 				.map((column) => column.id)

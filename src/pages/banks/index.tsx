@@ -1,6 +1,7 @@
-import { createColumnHelper, sortingFns } from '@tanstack/react-table'
+import { createColumnHelper, sortFn_datetime } from '@tanstack/react-table'
 import * as React from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
 import Layout from '~/layout'
@@ -21,9 +22,9 @@ type BankRow = Record<string, string | number> & {
 	date: number
 }
 
-const columnHelper = createColumnHelper<BankRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, BankRow>()
 
-const banksTableColumns = [
+const banksTableColumns = columnHelper.columns([
 	columnHelper.accessor('1', {
 		header: 'Name',
 		enableSorting: false,
@@ -34,7 +35,7 @@ const banksTableColumns = [
 	columnHelper.accessor((row) => row.date ?? undefined, {
 		id: 'date',
 		header: 'Closing date',
-		sortingFn: sortingFns.datetime,
+		sortFn: sortFn_datetime,
 		cell: (info) => (info.getValue() ? formatDate(info.getValue(), { input: 'seconds' }) : ''),
 		meta: {
 			headerClassName: 'w-[120px]',
@@ -65,7 +66,7 @@ const banksTableColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 const tableData: Array<BankRow> = data.banks.map((bank) => ({
 	...(bank as unknown as BankRow),
@@ -116,7 +117,7 @@ function Banks() {
 				placeholder="Search banks..."
 				columnToSearch="1"
 				csvFileName="banks"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</Layout>
 	)

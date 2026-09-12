@@ -1,20 +1,21 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { perpsDefinitions as d } from './definitions'
 import { RWAPerpsOverviewChart } from './OverviewChart'
 import type { IRWAPerpsAssetGroupsOverviewRow } from './types'
 
-const columnHelper = createColumnHelper<IRWAPerpsAssetGroupsOverviewRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IRWAPerpsAssetGroupsOverviewRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('assetGroup', {
 		id: 'assetGroup',
 		header: 'Name',
@@ -90,7 +91,7 @@ const columns = [
 			headerHelperText: d.markets.description
 		}
 	})
-]
+])
 export function RWAPerpsAssetGroupsOverview({
 	assetGroups,
 	dexAssetGroups,
@@ -128,7 +129,7 @@ export function RWAPerpsAssetGroupsOverview({
 				header="Asset Groups"
 				headingAs="h1"
 				csvFileName="rwa-perps-asset-groups.csv"
-				sortingState={[{ id: 'openInterest', desc: true }]}
+				initialSorting={[{ id: 'openInterest', desc: true }]}
 			/>
 		</div>
 	)

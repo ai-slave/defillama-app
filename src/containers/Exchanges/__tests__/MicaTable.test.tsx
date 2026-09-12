@@ -1,6 +1,8 @@
-import { createTable, flexRender, getCoreRowModel } from '@tanstack/react-table'
+import { flexRender } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
+import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
+import { searchTableFeatures as tableFeaturesConfig } from '~/components/Table/features/search'
 import { RampCostValue } from '../MicaCells'
 import { MICA_COLUMNS } from '../micaColumns'
 import { micaColumnVisibility, prepareMicaVenues } from '../MicaTable'
@@ -85,12 +87,11 @@ const PROMOTION: ExchangePromotionModel = {
 }
 
 function micaCell(venue: MicaVenueRowModel, id: string) {
-	const table = createTable({
+	const table = constructTestTable({
+		features: tableFeaturesConfig,
 		data: [venue],
 		columns: MICA_COLUMNS,
-		getCoreRowModel: getCoreRowModel(),
 		state: {},
-		onStateChange: () => {},
 		renderFallbackValue: null
 	})
 	const cell = table

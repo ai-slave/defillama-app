@@ -4,16 +4,16 @@ import {
 	type ColumnOrderState,
 	type ColumnSizingState,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	createPaginatedRowModel,
 	type PaginationState,
+	rowPaginationFeature,
 	type SortingState,
-	useReactTable
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useContext } from 'react'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesCompanyApiItem } from '~/containers/Equities/api.types'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
@@ -22,14 +22,14 @@ import { PRO_EQUITIES_COMPANIES_QUERY_KEY } from '~/containers/ProDashboard/tabl
 import type { CsvCell } from '~/utils/csvCell'
 import { downloadCSV } from '~/utils/download'
 import {
+	formatCompactNumber,
+	formatPercent,
 	formatPercentChange,
 	formatRatio,
 	formatUsd,
-	formatCompactNumber,
-	formatPercent,
-	USD_LOWERCASE_MILLIONS_OPTIONS,
 	NUMBER_LOWERCASE_MILLIONS_OPTIONS,
-	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
 import { CSVExportButton } from '../../CSVExportButton'
 import { LoadingSpinner } from '../../LoadingSpinner'
@@ -37,9 +37,15 @@ import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { getEquitiesCompanyCsvRow } from './EquitiesCompaniesDataset.utils'
 
-const columnHelper = createColumnHelper<IEquitiesCompanyApiItem>()
+const tableFeaturesConfig = tableFeatures({
+	...orderedFilteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
-const columns = [
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IEquitiesCompanyApiItem>()
+
+const columns = columnHelper.columns([
 	columnHelper.accessor('ticker', {
 		id: 'ticker',
 		header: 'Ticker',
@@ -141,7 +147,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 140
 	})
-]
+])
 
 const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
 	'ticker',
@@ -157,10 +163,6 @@ const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
 	'revenueTTM',
 	'earningsTTM'
 ]
-const getEquitiesCompaniesCoreRowModel = getCoreRowModel<IEquitiesCompanyApiItem>()
-const getEquitiesCompaniesSortedRowModel = getSortedRowModel<IEquitiesCompanyApiItem>()
-const getEquitiesCompaniesFilteredRowModel = getFilteredRowModel<IEquitiesCompanyApiItem>()
-const getEquitiesCompaniesPaginationRowModel = getPaginationRowModel<IEquitiesCompanyApiItem>()
 
 const STALE_TIME = 5 * 60 * 1000
 
@@ -195,7 +197,8 @@ export function EquitiesCompaniesDataset() {
 	})
 
 	const { data, isLoading, error } = useEquitiesCompaniesTableData()
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns,
@@ -212,10 +215,6 @@ export function EquitiesCompaniesDataset() {
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getEquitiesCompaniesCoreRowModel,
-		getSortedRowModel: getEquitiesCompaniesSortedRowModel,
-		getFilteredRowModel: getEquitiesCompaniesFilteredRowModel,
-		getPaginationRowModel: getEquitiesCompaniesPaginationRowModel,
 		autoResetPageIndex: true
 	})
 

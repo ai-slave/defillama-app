@@ -2,12 +2,8 @@ import {
 	type ColumnFiltersState,
 	createColumnHelper,
 	type ExpandedState,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
@@ -18,6 +14,7 @@ import { TVLRange } from '~/components/Filters/TVLRange'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -26,7 +23,7 @@ import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { RaisesTotal } from '~/containers/Raises/RaisesTotal'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -39,6 +36,8 @@ import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import type { IRecentProtocol } from './types'
 
+export const tableFeaturesConfig = expandedFilteredTableFeatures
+
 /** Row type after applyExtraTvl adds change/mcaptvl fields. */
 type RecentProtocolTableRow = IRecentProtocol & {
 	change_1d: number | null
@@ -46,7 +45,7 @@ type RecentProtocolTableRow = IRecentProtocol & {
 	change_1m: number | null
 	mcaptvl: number | null
 }
-const columnHelper = createColumnHelper<RecentProtocolTableRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, RecentProtocolTableRow>()
 
 function normaliseCategoryFilterValues(values: unknown): Array<string> {
 	if (Array.isArray(values)) {
@@ -98,7 +97,8 @@ export function RecentlyListedProtocolsTable({
 
 	const columns = router.pathname === '/airdrops' ? airdropsColumns : recentlyListedProtocolsColumns
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns,
 		state: {
@@ -112,11 +112,7 @@ export function RecentlyListedProtocolsTable({
 		enableSortingRemoval: false,
 		onExpandedChange: (updater) => React.startTransition(() => setExpanded(updater)),
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getFilteredRowModel: getFilteredRowModel(),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -183,14 +179,14 @@ export function RecentlyListedProtocolsTable({
 					<CSVDownloadButton prepareCsv={() => prepareTableCsv({ instance, filename: csvFileName })} smol size="md" />
 				</div>
 			</TableToolbar>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }
 
 const whiteLabeledVaultProviders = new Set(['Veda'])
 
-const protocolsColumns = [
+const protocolsColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -342,7 +338,7 @@ const protocolsColumns = [
 			headerHelperText: 'Market cap / TVL ratio'
 		}
 	})
-]
+])
 type ProtocolTvlRow = RecentProtocolTableRow & {
 	strikeTvl?: boolean
 	parentExcluded?: boolean
@@ -419,7 +415,7 @@ const recentlyListedProtocolsColumns = [
 	...protocolsColumns.slice(3, -1)
 ]
 
-export const airdropsColumns = [
+export const airdropsColumns = columnHelper.columns([
 	...protocolsColumns.slice(0, 3),
 	columnHelper.accessor((row) => row.raiseSummary?.totalUsd ?? undefined, {
 		id: 'totalRaised',
@@ -438,7 +434,7 @@ export const airdropsColumns = [
 	}),
 	listedAtColumn,
 	...protocolsColumns.slice(3, -1)
-]
+])
 
 function HideForkedProtocols() {
 	const router = useRouter()

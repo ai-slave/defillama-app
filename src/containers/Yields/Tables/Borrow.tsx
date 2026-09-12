@@ -1,19 +1,20 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { MarketTableRow, RouteTableRow } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
 import { NameYield, PoolNameLockup } from './Name'
+import type { tableFeaturesConfig } from './PaginatedYieldsTable'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import type { IYieldsTableProps, YieldsTableAppearance } from './types'
 import {
 	ApyWindowHeader,
 	AvailableCell,
 	EmptyCell,
-	type SignedTipRow,
 	SignedApyCell,
-	TotalApyCell
+	TotalApyCell,
+	type SignedTipRow
 } from './YieldsCells'
 
 // Net-APY breakdown for an unleveraged route: each leg split into its resolved-view components
@@ -46,9 +47,9 @@ function UsdCell({ value }: { value: number | null | undefined }) {
 // Shared server-paginated table for the /yields/borrow markets & routes views.
 // Same tanstack + PaginatedTable infra the pools table uses, with bespoke column
 // defs (not the pools config). Column ids double as the server `sortBy` keys.
-const marketHelper = createColumnHelper<MarketTableRow>()
+const marketHelper = createColumnHelper<typeof tableFeaturesConfig, MarketTableRow>()
 
-const marketColumns = [
+const marketColumns = marketHelper.columns([
 	marketHelper.accessor('pool', {
 		id: 'market',
 		header: 'Market',
@@ -155,11 +156,11 @@ const marketColumns = [
 		cell: ({ row }) => <LtvCell value={row.original.ltv} />,
 		meta: { headerClassName: 'w-[55px] min-w-[55px]', align: 'end' }
 	})
-]
+])
 
-const routeHelper = createColumnHelper<RouteTableRow>()
+const routeHelper = createColumnHelper<typeof tableFeaturesConfig, RouteTableRow>()
 
-const routeColumns = [
+const routeColumns = routeHelper.columns([
 	routeHelper.accessor('pool', {
 		id: 'route',
 		header: 'Collateral / Borrow',
@@ -282,7 +283,7 @@ const routeColumns = [
 		cell: ({ row }) => <LtvCell value={row.original.ltv} />,
 		meta: { headerClassName: 'w-[70px]', align: 'end' }
 	})
-]
+])
 
 export function PaginatedBorrowMarketsTable({
 	appearance = 'standalone',

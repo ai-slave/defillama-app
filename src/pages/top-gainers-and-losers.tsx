@@ -1,10 +1,4 @@
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
 import { startTransition, useMemo, useState } from 'react'
 import { Bookmark } from '~/components/Bookmark'
@@ -12,6 +6,7 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import { VirtualTable } from '~/components/Table/Table'
 import { splitArrayByFalsyValues } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -25,6 +20,8 @@ import { getPercentChange, slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
+
+const tableFeaturesConfig = displayTableFeatures
 
 const GAINERS_SORTING_STATE: SortingState = [{ id: 'change_1d', desc: true }]
 const LOSERS_SORTING_STATE: SortingState = [{ id: 'change_1d', desc: false }]
@@ -46,9 +43,9 @@ type ProtocolRow = ProtocolBaseRow & {
 	mcaptvl: number | null
 }
 
-const columnHelper = createColumnHelper<ProtocolRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, ProtocolRow>()
 
-const topGainersAndLosersColumns = [
+const topGainersAndLosersColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -119,12 +116,13 @@ const topGainersAndLosersColumns = [
 			headerHelperText: 'Market cap / TVL ratio'
 		}
 	})
-]
+])
 
 function TopGainersAndLosersTable({ data, sortingState }: { data: Array<ProtocolRow>; sortingState: SortingState }) {
 	const [sorting, setSorting] = useState<SortingState>(sortingState)
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns: topGainersAndLosersColumns,
 		state: {
@@ -134,12 +132,10 @@ function TopGainersAndLosersTable({ data, sortingState }: { data: Array<Protocol
 			sortUndefined: 'last'
 		},
 		enableSortingRemoval: false,
-		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: (updater) => startTransition(() => setSorting(updater))
 	})
 
-	return <VirtualTable instance={instance} />
+	return <VirtualTable table={instance} />
 }
 
 export const getStaticProps = withPerformanceLogging('top-gainers-and-losers', async () => {

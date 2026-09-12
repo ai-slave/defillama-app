@@ -1,13 +1,10 @@
 import {
 	type ColumnFiltersState,
 	createColumnHelper,
+	type ColumnDef,
 	type ExpandedState,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { Bookmark } from '~/components/Bookmark'
@@ -16,23 +13,26 @@ import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { TVLRange } from '~/components/Filters/TVLRange'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { searchTableFeatures } from '~/components/Table/features/search'
 import { VirtualTable } from '~/components/Table/Table'
-import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
+import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHAINS_CATEGORY_GROUP_SETTINGS, useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { setStorageItem, useStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { formatRatio, formatUsd, formatCompactNumber, roundNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatRatio, formatUsd, roundNumber } from '~/utils/numberFormat'
 import type { IFormattedDataWithExtraTvl } from './types'
+
+const tableFeaturesConfig = searchTableFeatures
 
 /** Tooltip rows in display order; the v2-only sections stay hidden until the producer reports them. */
 const CHAIN_ASSET_TOOLTIP_ROWS = [
@@ -88,7 +88,8 @@ export function ChainsByCategoryTable({
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: 'tvl', desc: true }])
 	const [expanded, setExpanded] = React.useState<ExpandedState>(showByGroup ? true : {})
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns,
 		state: {
@@ -104,11 +105,7 @@ export function ChainsByCategoryTable({
 		onExpandedChange: (updater) => React.startTransition(() => setExpanded(updater)),
 		getSubRows: (row: IFormattedDataWithExtraTvl) => row.subRows,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -118,6 +115,10 @@ export function ChainsByCategoryTable({
 	})
 
 	const [groupTvls, updater] = useLocalStorageSettingsManager('tvl_chains')
+
+	const selectedAggregateTypes = React.useMemo(() => {
+		return CHAINS_CATEGORY_GROUP_SETTINGS.flatMap((key) => (groupTvls[key.key] ? [key.key] : []))
+	}, [groupTvls])
 
 	const setAggrOptions: React.Dispatch<React.SetStateAction<Array<string>>> = (selectedKeys) => {
 		const nextSelectedKeys = typeof selectedKeys === 'function' ? selectedKeys(selectedAggregateTypes) : selectedKeys
@@ -131,10 +132,6 @@ export function ChainsByCategoryTable({
 			}
 		}
 	}
-
-	const selectedAggregateTypes = React.useMemo(() => {
-		return CHAINS_CATEGORY_GROUP_SETTINGS.flatMap((key) => (groupTvls[key.key] ? [key.key] : []))
-	}, [groupTvls])
 
 	const tableContent = (
 		<>
@@ -183,7 +180,7 @@ export function ChainsByCategoryTable({
 					/>
 				</div>
 			</TableToolbar>
-			<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
+			<VirtualTable table={instance} useStickyHeader={useStickyHeader} />
 		</>
 	)
 
@@ -259,9 +256,9 @@ const chainsTableColumnOrders: ColumnOrdersByBreakpoint = {
 	]
 }
 
-const columnHelper = createColumnHelper<IFormattedDataWithExtraTvl>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IFormattedDataWithExtraTvl>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: true,
@@ -505,9 +502,9 @@ const columns = [
 			headerHelperText: 'Sum of 24h volume on all NFTs on the chain. Updated daily at 00:00UTC'
 		}
 	})
-]
+])
 
-const getColumnKey = (column: (typeof columns)[number]) =>
+const getColumnKey = (column: ColumnDef<typeof tableFeaturesConfig, IFormattedDataWithExtraTvl>) =>
 	column.id ?? ('accessorKey' in column ? column.accessorKey : '')
 
 const columnOptions = columns

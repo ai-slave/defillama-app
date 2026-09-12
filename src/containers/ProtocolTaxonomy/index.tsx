@@ -12,6 +12,7 @@ import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { Select } from '~/components/Select/Select'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
@@ -28,9 +29,9 @@ import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
 import { buildProtocolTaxonomyGroupedCharts } from './chartGrouping'
 import {
-	getProtocolCategoryDexVolumeLabel,
 	getProtocolCategoryColumns,
 	getProtocolCategoryDefaultSort,
+	getProtocolCategoryDexVolumeLabel,
 	getProtocolCategoryPresentation,
 	type ProtocolCategoryColumn
 } from './constants'
@@ -277,7 +278,7 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 				placeholder={categoryPresentation.searchPlaceholder}
 				columnToSearch="name"
 				header={categoryPresentation.tableHeader}
-				sortingState={sortingState}
+				initialSorting={sortingState}
 				showColumnSelect
 				csvFileName={`defillama-${namePrefix}${props.chain || 'all'}-protocols`}
 			/>
@@ -287,12 +288,12 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 
 type ProtocolRow = IProtocolTaxonomyPageData['protocols'][0]
 
-const columnHelper = createColumnHelper<ProtocolRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, ProtocolRow>()
 export function getProtocolMcapTvlRatio(mcap: number | null, tvl: number | null): number | undefined {
 	return mcap !== null && tvl !== null && tvl > 0 ? mcap / tvl : undefined
 }
 
-const perpVolumeCell = (info: CellContext<ProtocolRow, number | undefined>) => {
+const perpVolumeCell = (info: CellContext<SearchTableFeatures, ProtocolRow, number | undefined>) => {
 	if (info.getValue() == null) return null
 	const helpers: Array<string> = []
 	if (info.row.original.perpVolume?.zeroFeePerp) {

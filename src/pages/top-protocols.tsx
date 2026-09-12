@@ -1,9 +1,14 @@
 import {
+	columnFilteringFeature,
 	type ColumnFiltersState,
+	columnSizingFeature,
+	columnVisibilityFeature,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	useReactTable
+	createFilteredRowModel,
+	filterFn_includesString,
+	filterFn_inNumberRange,
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
@@ -11,6 +16,7 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { sortingFeatures } from '~/components/Table/features/sorting'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -20,7 +26,7 @@ import { TVL_SETTINGS_KEYS } from '~/contexts/LocalStorage'
 import Layout from '~/layout'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { NoResults } from '~/ui/NoResults'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -29,6 +35,15 @@ import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { withPerformanceLogging } from '~/utils/perf'
 import { parseExcludeParam } from '~/utils/routerQuery'
 
+const tableFeaturesConfig = tableFeatures({
+	...sortingFeatures,
+	columnVisibilityFeature,
+	columnSizingFeature,
+	columnFilteringFeature,
+	filterFns: { includesString: filterFn_includesString, inNumberRange: filterFn_inNumberRange },
+	filteredRowModel: createFilteredRowModel()
+})
+
 const excludeChainsStatic = new Set([...TVL_SETTINGS_KEYS, 'offers', 'dcAndLsOverlap', 'excludeParent'])
 const excludeCategories = new Set(['Bridge', 'Canonical Bridge', 'Staking Pool'])
 
@@ -36,7 +51,7 @@ type TopProtocolsRow = {
 	chain: string
 } & Record<string, string | boolean | undefined>
 
-const COLUMN_HELPER = createColumnHelper<TopProtocolsRow>()
+const COLUMN_HELPER = createColumnHelper<typeof tableFeaturesConfig, TopProtocolsRow>()
 
 export const getStaticProps = withPerformanceLogging('top-protocols', async () => {
 	const { protocols, chains } = await fetchProtocols()
@@ -186,7 +201,8 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns,
 		state: {
@@ -197,9 +213,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 			sortUndefined: 'last'
 		},
 		enableSortingRemoval: false,
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_searchValue, setSearchValue] = useTableSearch({ instance: table, columnToSearch: 'chain' })
@@ -257,7 +271,7 @@ export default function TopProtocols({ data, chains, uniqueCategories }) {
 						/>
 					</div>
 				</TableToolbar>
-				{table.getFilteredRowModel().rows.length > 0 ? <VirtualTable instance={table} /> : <NoResults />}
+				{table.getFilteredRowModel().rows.length > 0 ? <VirtualTable table={table} /> : <NoResults />}
 			</Panel>
 		</Layout>
 	)

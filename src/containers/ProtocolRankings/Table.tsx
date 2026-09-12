@@ -1,14 +1,5 @@
 import * as Ariakit from '@ariakit/react'
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
-	useReactTable,
-	type ExpandedState,
-	type SortingState
-} from '@tanstack/react-table'
+import { createColumnHelper, useTable, type ExpandedState, type SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -19,6 +10,7 @@ import { TVLRange } from '~/components/Filters/TVLRange'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
 import { TablePagesStatus } from '~/components/Table/TablePagesStatus'
 import { prepareTableCsv } from '~/components/Table/utils'
@@ -66,6 +58,8 @@ import {
 } from './sortAccessors'
 import type { ProtocolRankingInitialPage } from './tableQuery'
 import type { IProtocol } from './types'
+
+const tableFeaturesConfig = expandedFilteredTableFeatures
 
 type ChainProtocolsTableProps = {
 	protocols: Array<IProtocol>
@@ -146,9 +140,7 @@ function ChainProtocolsTableInner({
 	const [ignoreTvlRangeDuringReset, setIgnoreTvlRangeDuringReset] = useState(false)
 	const effectiveMinTvl = ignoreTvlRangeDuringReset ? null : minTvl
 	const effectiveMaxTvl = ignoreTvlRangeDuringReset ? null : maxTvl
-	useEffect(() => {
-		if (ignoreTvlRangeDuringReset && minTvl === null && maxTvl === null) setIgnoreTvlRangeDuringReset(false)
-	}, [ignoreTvlRangeDuringReset, maxTvl, minTvl])
+	if (ignoreTvlRangeDuringReset && minTvl === null && maxTvl === null) setIgnoreTvlRangeDuringReset(false)
 	const [nameSearch, setNameSearch] = useState('')
 	const deferredNameSearch = useDeferredValue(nameSearch.trim())
 	const columnFilters = useMemo(
@@ -304,14 +296,14 @@ function ChainProtocolsTableInner({
 	useEffect(() => {
 		if (!selectedMetricPreset && !selectedPeriod) return
 		const id = selectedMetricPreset ? getMainColumnForPreset(selectedMetricPreset, selectedPeriod) : 'tvl'
-		setSorting((current) =>
-			current.length === 1 && current[0]?.id === id && current[0]?.desc ? current : [{ id, desc: true }]
+		startTransition(() =>
+			setSorting((current) =>
+				current.length === 1 && current[0]?.id === id && current[0]?.desc ? current : [{ id, desc: true }]
+			)
 		)
 	}, [getMainColumnForPreset, selectedMetricPreset, selectedPeriod])
 	const [expanded, setExpanded] = useState<ExpandedState>({})
 	const userReplacementPendingRef = useRef(false)
-	const sortingRef = useRef(sorting)
-	sortingRef.current = sorting
 	const chainQuery = router.query.chain
 	const activeChain = Array.isArray(chainQuery) ? chainQuery[0] : chainQuery
 	const exportColumns = useMemo(() => {
@@ -413,9 +405,9 @@ function ChainProtocolsTableInner({
 
 						return <span className="flex items-center">{formatCustomColumnValue(value, displayFormat)}</span>
 					},
-					sortingFn: (rowA, rowB, sortColumnId) => {
-						const sortEntry = sortingRef.current.find((s) => s.id === sortColumnId)
-						const desc = sortEntry?.desc ?? true
+					sortFn: (rowA, rowB, sortColumnId) => {
+						const direction = rowA.table.getColumn(sortColumnId)?.getIsSorted()
+						const desc = direction ? direction === 'desc' : true
 
 						const a = getSortableValue(rowA.getValue(sortColumnId), displayFormat)
 						const b = getSortableValue(rowB.getValue(sortColumnId), displayFormat)
@@ -469,7 +461,8 @@ function ChainProtocolsTableInner({
 		]
 	}, [customColumns])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: finalProtocols,
 		columns: allColumns,
 		state: {
@@ -491,15 +484,7 @@ function ChainProtocolsTableInner({
 			setSorting(updater)
 		},
 		manualSorting: remoteEnabled,
-		manualFiltering: remoteEnabled,
-		getCoreRowModel: getCoreRowModel(),
-		...(remoteEnabled
-			? {}
-			: {
-					getFilteredRowModel: getFilteredRowModel(),
-					getSortedRowModel: getSortedRowModel()
-				}),
-		getExpandedRowModel: getExpandedRowModel()
+		manualFiltering: remoteEnabled
 	})
 
 	const setSortingForPresetSelection = (selection: TablePresetSelection) => {
@@ -648,7 +633,7 @@ function ChainProtocolsTableInner({
 				</div>
 			)}
 			<div className="relative">
-				<VirtualTable instance={instance} useStickyHeader={useStickyHeader} />
+				<VirtualTable table={instance} useStickyHeader={useStickyHeader} />
 				{remoteEnabled && remoteRankings.isReplacing ? <SurfaceLoadingOverlay label="Updating rankings…" /> : null}
 			</div>
 			{remoteEnabled ? (
@@ -1172,7 +1157,7 @@ export function getProtocolRankingPresetColumnVisibility(
 	)
 }
 
-const columnHelper = createColumnHelper<IProtocol>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IProtocol>()
 
 const protocolRankingAccessor = (key: ProtocolRankingSortKey) => (row: IProtocol) => {
 	const value = getProtocolRankingSortValue(row, key)
@@ -1217,7 +1202,7 @@ const activityMetricColumnsByGroup = (group: TABLE_COLUMN_GROUPS) =>
 		)
 	)
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -1310,7 +1295,7 @@ const columns = [
 	columnHelper.group({
 		id: 'tvl',
 		header: 'TVL',
-		columns: [
+		columns: columnHelper.columns([
 			columnHelper.accessor(protocolRankingAccessor('tvl'), {
 				id: 'tvl',
 				header: 'TVL',
@@ -1362,7 +1347,7 @@ const columns = [
 					headerHelperText: 'Change in TVL in the last 30 days'
 				}
 			})
-		],
+		]),
 		meta: { headerHelperText: 'Value of all coins held in smart contracts of the protocol' }
 	}),
 	columnHelper.accessor(protocolRankingAccessor('mcap'), {
@@ -1404,7 +1389,7 @@ const columns = [
 	columnHelper.group({
 		id: 'fees',
 		header: 'Fees & Revenue',
-		columns: [
+		columns: columnHelper.columns([
 			columnHelper.accessor(protocolRankingAccessor('fees_24h'), {
 				id: 'fees_24h',
 				header: 'Fees 24h',
@@ -1821,7 +1806,7 @@ const columns = [
 					headerHelperText: definitions.earnings.protocol['cumulative']
 				}
 			})
-		],
+		]),
 		meta: {
 			headerHelperText: `${definitions.fees.common}\n\n${definitions.revenue.common}\n\n${definitions.holdersRevenue.common}`
 		}
@@ -1829,7 +1814,7 @@ const columns = [
 	columnHelper.group({
 		id: 'spot',
 		header: 'Spot Volume',
-		columns: [
+		columns: columnHelper.columns([
 			columnHelper.accessor(protocolRankingAccessor('dex_volume_24h'), {
 				id: 'dex_volume_24h',
 				header: 'Spot Volume 24h',
@@ -1893,7 +1878,7 @@ const columns = [
 				}
 			}),
 			...activityMetricColumnsByGroup(TABLE_COLUMN_GROUPS.SPOT)
-		],
+		]),
 		meta: {
 			headerHelperText: definitions.dexs.common
 		}
@@ -1936,7 +1921,7 @@ const columns = [
 			headerHelperText: definitions.bridgeAggregators.common
 		}
 	})
-]
+])
 const defaultColumns = JSON.stringify({
 	name: true,
 	category: true,

@@ -1,18 +1,20 @@
+import { useSelector } from '@tanstack/react-store'
 import {
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type PaginationState,
-	type SortingState,
-	useReactTable,
 	type ColumnDef,
-	type Table
+	createPaginatedRowModel,
+	type PaginationState,
+	rowPaginationFeature,
+	type SortingState,
+	type Table,
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import { lazy, Suspense, useMemo, useState } from 'react'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/Table'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
 import {
 	type HlpData,
@@ -25,6 +27,12 @@ import {
 	useHyperliquidHlpPositions
 } from './api'
 import { buildPortfolioTrendDataset, PORTFOLIO_SERIES_NAME } from './chartData'
+
+const tableFeaturesConfig = tableFeatures({
+	...filteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 type VaultFilter = 'All' | 'A' | 'B'
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
@@ -50,8 +58,8 @@ function MetricCard({ label, value, helper }: { label: string; value: string | n
 	)
 }
 
-function Pagination<Row>({ table }: { table: Table<Row> }) {
-	const { pageIndex, pageSize } = table.getState().pagination
+function Pagination<Row>({ table }: { table: Table<typeof tableFeaturesConfig, Row> }) {
+	const { pageIndex, pageSize } = useSelector(table.atoms.pagination)
 	const total = table.getFilteredRowModel().rows.length
 	const from = total === 0 ? 0 : pageIndex * pageSize + 1
 	const to = Math.min((pageIndex + 1) * pageSize, total)
@@ -158,7 +166,7 @@ function PortfolioTrend({
 	)
 }
 
-const positionColumns: Array<ColumnDef<HlpPosition>> = [
+const positionColumns: Array<ColumnDef<typeof tableFeaturesConfig, HlpPosition>> = [
 	{
 		header: 'Coin',
 		accessorKey: 'coin',
@@ -249,7 +257,7 @@ const positionColumns: Array<ColumnDef<HlpPosition>> = [
 	}
 ]
 
-const fillColumns: Array<ColumnDef<HlpFill>> = [
+const fillColumns: Array<ColumnDef<typeof tableFeaturesConfig, HlpFill>> = [
 	{
 		header: 'Time',
 		id: 'time',
@@ -322,7 +330,7 @@ const fillColumns: Array<ColumnDef<HlpFill>> = [
 	}
 ]
 
-const openOrderColumns: Array<ColumnDef<HlpOpenOrder>> = [
+const openOrderColumns: Array<ColumnDef<typeof tableFeaturesConfig, HlpOpenOrder>> = [
 	{
 		header: 'Time',
 		id: 'timestamp',
@@ -382,29 +390,27 @@ function DataTable<T>({
 }: {
 	title: string
 	data: Array<T>
-	columns: Array<ColumnDef<T>>
+	columns: Array<ColumnDef<typeof tableFeaturesConfig, T>>
 	defaultSort: SortingState
 	pageSize: number
 }) {
 	const [sorting, setSorting] = useState<SortingState>(defaultSort)
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize })
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns,
 		state: { sorting, pagination },
 		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">{title}</h3>
-			<VirtualTable instance={instance} skipVirtualization />
+			<VirtualTable table={instance} skipVirtualization />
 			{data.length > pageSize ? <Pagination table={instance} /> : null}
 		</div>
 	)

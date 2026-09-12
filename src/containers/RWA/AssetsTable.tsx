@@ -2,11 +2,8 @@ import {
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import clsx from 'clsx'
 import { matchSorter } from 'match-sorter'
@@ -14,6 +11,7 @@ import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -35,6 +33,8 @@ import { useRWAFlowSummary } from './flows.hooks'
 import { getRwaPlatforms, UNKNOWN_PLATFORM } from './grouping'
 import { rwaSlug } from './rwaSlug'
 import { RWASuspiciousWarning } from './SuspiciousWarning'
+
+export const tableFeaturesConfig = orderedFilteredTableFeatures
 
 export function RWAAssetsTable({
 	assets,
@@ -80,7 +80,8 @@ export function RWAAssetsTable({
 		[flowSummary, includeBridgeTvl, includeRwaPerps, isFlowSummaryError, isLoadingFlowSummary]
 	)
 
-	const instance = useReactTable<AssetTableRow>({
+	const instance = useTable<typeof tableFeaturesConfig, AssetTableRow>({
+		features: tableFeaturesConfig,
 		data: assetsData,
 		columns,
 		state: {
@@ -94,10 +95,7 @@ export function RWAAssetsTable({
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
 		onColumnFiltersChange: (updater) => startTransition(() => setColumnFilters(updater)),
-		onColumnOrderChange: (updater) => startTransition(() => setColumnOrder(updater)),
-		getFilteredRowModel: getFilteredRowModel(),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onColumnOrderChange: (updater) => startTransition(() => setColumnOrder(updater))
 	})
 
 	const columnsOptions = useMemo(
@@ -172,7 +170,7 @@ export function RWAAssetsTable({
 					/>
 				</TableToolbarControlGroup>
 			</PanelHeader>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }
@@ -198,7 +196,7 @@ export function createAssetTableRows(
 	})
 }
 
-const columnHelper = createColumnHelper<AssetTableRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, AssetTableRow>()
 const PLATFORM_COLUMN_HELP = 'Platform associated with issuance, custody, trading, or management of the asset.'
 
 function assertNever(value: never): never {
@@ -331,7 +329,7 @@ export function createRWAAssetColumns(
 ) {
 	const metricHeaders = getMetricColumnHeaders(includeRwaPerps)
 
-	return [
+	return columnHelper.columns([
 		columnHelper.accessor((asset) => asset.assetName ?? asset.ticker, {
 			id: 'name',
 			header: 'Name',
@@ -831,7 +829,7 @@ export function createRWAAssetColumns(
 				headerHelperText: definitions.selfCustody.description
 			}
 		})
-	]
+	])
 }
 
 function getAssetSecondaryLabel(asset: AssetRow): string {

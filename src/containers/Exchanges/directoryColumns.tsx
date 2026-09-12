@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button, buttonStyles } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -9,9 +10,9 @@ import { Tooltip } from '~/ui/Tooltip'
 import { letterLogoDataUri } from '~/utils/icons'
 import {
 	formatNumber,
+	formatPercent,
 	formatRatio,
 	formatUsd,
-	formatPercent,
 	roundNumber,
 	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
@@ -23,8 +24,8 @@ import {
 	MicaLicenseValue
 } from './ComplianceCells'
 import { exchangeDefinitions, usdPerpLabel } from './definitions'
-import { FeeValue, feeLabel } from './feePresentation'
-import { FiatFeesValue, fiatFeeSummary } from './FiatFeesValue'
+import { feeLabel, FeeValue } from './feePresentation'
+import { fiatFeeSummary, FiatFeesValue } from './FiatFeesValue'
 import { MiniSparkline } from './MiniSparkline'
 import {
 	activityForScope,
@@ -51,7 +52,7 @@ const PERCENT_OPTIONS = {
 	useGrouping: false
 } as const
 
-const columnHelper = createColumnHelper<ExchangeDirectoryRowModel>()
+const columnHelper = createColumnHelper<SearchTableFeatures, ExchangeDirectoryRowModel>()
 export const EXECUTION_COLUMN_IDS = ['execCostToTrade', 'execSlippage10k', 'execMarkout1m']
 
 function ratio(value: number | null | undefined): string {
@@ -348,14 +349,14 @@ export function buildDirectoryColumns(
 	const execLabel = (label: string) => (scope === 'all' ? usdPerpLabel(label) : label)
 	const costNote = executionScopeNote(executionCostBasket)
 	const fillNote = executionScopeNote(executionFillBasket)
-	const columns = [
+	const columns = columnHelper.columns([
 		columnHelper.accessor((row) => `${row.name} ${row.slug} ${row.profile?.nativeToken ?? ''}`, {
 			id: 'name',
 			header: definitions.name.label,
 			// Sorts on the ranking the rows arrive in, not the name: it is the only way back
 			// to the default order once a reader has sorted by some other column.
 			sortDescFirst: false,
-			sortingFn: (a, b) => byQualityRank(a.original, b.original),
+			sortFn: (a, b) => byQualityRank(a.original, b.original),
 			cell: ({ row }) => {
 				const venue = row.original
 				const profileHref = withCountryParam(venue.profileHref, venue.selectedCountry)
@@ -1086,6 +1087,6 @@ export function buildDirectoryColumns(
 			cell: ({ getValue }) => <KindBadge kind={getValue()} />,
 			meta: { headerClassName: 'w-[71px] min-w-[71px]', headerHelperText: definitions.kind.description }
 		})
-	]
+	])
 	return executionAvailable ? columns : columns.filter((column) => !EXECUTION_COLUMN_IDS.includes(column.id ?? ''))
 }

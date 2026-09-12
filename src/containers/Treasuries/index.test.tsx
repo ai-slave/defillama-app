@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import type { RawTreasuryProtocol } from './api.types'
 import { Treasuries } from './index'
 import { buildNetProjectTreasuryRows, buildTreasuryRows } from './queries'
@@ -10,7 +11,7 @@ const renderTable = vi.hoisted(() => vi.fn())
 
 vi.mock('~/components/Table/TableWithSearch', () => ({
 	TableWithSearch: (props: {
-		columns: Array<ColumnDef<ITreasuryRow>>
+		columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>
 		csvFileName: string
 		data: Array<ITreasuryRow>
 	}) => {
@@ -47,15 +48,15 @@ describe('treasury table columns', () => {
 	test('keeps protocol-only metrics out of entity treasuries after switching to accessor functions', () => {
 		renderToStaticMarkup(<Treasuries data={[{ ...row, protocolHref: null }]} entity />)
 		const entityTable = renderTable.mock.calls.at(-1)?.[0] as {
-			columns: Array<ColumnDef<ITreasuryRow>>
+			columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>
 			csvFileName: string
 		}
 		renderToStaticMarkup(<Treasuries data={[row]} entity={false} />)
 		const protocolTable = renderTable.mock.calls.at(-1)?.[0] as {
-			columns: Array<ColumnDef<ITreasuryRow>>
+			columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>
 			csvFileName: string
 		}
-		const columnIds = (columns: Array<ColumnDef<ITreasuryRow>>) =>
+		const columnIds = (columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>) =>
 			columns.map((column) => column.id ?? ('accessorKey' in column ? column.accessorKey : ''))
 		const entityColumnIds = columnIds(entityTable.columns)
 		const protocolColumnIds = columnIds(protocolTable.columns)

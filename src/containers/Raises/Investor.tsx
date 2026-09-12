@@ -1,23 +1,16 @@
-import {
-	type ColumnFiltersState,
-	type ColumnOrderState,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { type ColumnFiltersState, type ColumnOrderState, type SortingState, useTable } from '@tanstack/react-table'
 import * as React from 'react'
 import { Announcement } from '~/components/Announcement'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import type { IPieChartProps } from '~/components/ECharts/PieChart/types'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
 import { useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { RaisesFilters } from '~/containers/Raises/Filters'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
@@ -25,6 +18,8 @@ import { slug } from '~/utils'
 import { useRaisesData } from './hooks'
 import type { Raise } from './model'
 import { prepareRaisesCsv, raisesColumnOrders, raisesColumns } from './Table'
+
+const tableFeaturesConfig = orderedFilteredTableFeatures
 
 const MultiSeriesChart = React.lazy(
 	() => import('~/components/ECharts/MultiSeriesChart')
@@ -37,7 +32,8 @@ function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ desc: true, id: 'date' }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: raises,
 		columns: raisesColumns,
 		state: {
@@ -51,10 +47,7 @@ function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getFilteredRowModel: getFilteredRowModel(),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -75,7 +68,7 @@ function RaisesByInvestorTable({ raises }: { raises: Array<Raise> }) {
 				</label>
 				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol size="md" />
 			</TableToolbar>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }

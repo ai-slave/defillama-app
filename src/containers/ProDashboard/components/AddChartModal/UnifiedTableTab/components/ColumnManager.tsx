@@ -19,18 +19,10 @@ import {
 	useSortable
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { ColumnOrderState, SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnOrderState, ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
 import { setSignupSource } from '~/auth/signupSource'
-import { Icon } from '~/ui/Icon'
-import { Tooltip } from '~/ui/Tooltip'
-
-const SubscribeProModal = lazy(() =>
-	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
-		default: m.SubscribeProModal
-	}))
-)
 import { isColumnSupported } from '~/containers/ProDashboard/components/UnifiedTable/config/metricCapabilities'
 import {
 	compileExpression,
@@ -42,12 +34,20 @@ import {
 	SAMPLE_METRICS,
 	validateExpression
 } from '~/containers/ProDashboard/components/UnifiedTable/utils/customColumns'
+import type { MetricGroup } from '~/containers/ProDashboard/unifiedTable/config/columnDictionary'
 import {
 	COLUMN_DICTIONARY_BY_ID,
 	UNIFIED_TABLE_COLUMN_DICTIONARY
 } from '~/containers/ProDashboard/unifiedTable/config/columnDictionary'
-import type { MetricGroup } from '~/containers/ProDashboard/unifiedTable/config/columnDictionary'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '~/containers/ProDashboard/unifiedTable/config/types'
+import { Icon } from '~/ui/Icon'
+import { Tooltip } from '~/ui/Tooltip'
+
+const SubscribeProModal = lazy(() =>
+	import('~/containers/Subscription/shared/SubscribeCards/SubscribeProCard').then((m) => ({
+		default: m.SubscribeProModal
+	}))
+)
 
 const AVAILABLE_VARIABLES = getAvailableVariables()
 const AVAILABLE_VARIABLES_BY_KEY = new Map(AVAILABLE_VARIABLES.map((variable) => [variable.key, variable]))
@@ -57,8 +57,8 @@ const EMPTY_CUSTOM_COLUMNS: Array<CustomColumnDefinition> = []
 interface ColumnManagerProps {
 	rowHeaders: ReadonlyArray<UnifiedRowHeaderType>
 	columnOrder: ColumnOrderState
-	columnVisibility: VisibilityState
-	onChange: (columnOrder: ColumnOrderState, columnVisibility: VisibilityState) => void
+	columnVisibility: ColumnVisibilityState
+	onChange: (columnOrder: ColumnOrderState, columnVisibility: ColumnVisibilityState) => void
 	customColumns?: Array<CustomColumnDefinition>
 	onAddCustomColumn?: (column: CustomColumnDefinition) => void
 	onUpdateCustomColumn?: (id: string, updates: Partial<CustomColumnDefinition>) => void
@@ -345,7 +345,7 @@ export function ColumnManager({
 		const nextSelectedSet = new Set(nextSelected)
 		const remaining = allColumns.map((c) => c.id).filter((id) => id !== 'name' && !nextSelectedSet.has(id))
 		const nextOrder: ColumnOrderState = ['name', ...nextSelected, ...remaining]
-		const nextVisibility: VisibilityState = { name: true }
+		const nextVisibility: ColumnVisibilityState = { name: true }
 		for (const column of allColumns) {
 			if (column.id === 'name') continue
 			nextVisibility[column.id] = nextSelectedSet.has(column.id)

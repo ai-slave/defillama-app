@@ -1,12 +1,12 @@
 import { useMutation } from '@tanstack/react-query'
 import {
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	createPaginatedRowModel,
+	globalFilteringFeature,
+	rowPaginationFeature,
 	type SortingState,
-	useReactTable
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
@@ -14,6 +14,7 @@ import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { selectTriggerStyles } from '~/components/Select/types'
+import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useDateRangeValidation } from '~/hooks/useDateRangeValidation'
@@ -27,9 +28,16 @@ import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { fetchBridgeTransactionsClient } from './api'
 import type { RawBridgeInfo, RawBridgeTransaction } from './api.types'
+
+const tableFeaturesConfig = tableFeatures({
+	...filteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel(),
+	globalFilteringFeature
+})
 
 export type BridgeTransaction = RawBridgeTransaction
 
@@ -169,7 +177,7 @@ export const createBridgeTransactionCollector = ({ startTimestamp, endTimestamp 
 	}
 }
 
-const columnHelper = createColumnHelper<TransformedTransaction>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, TransformedTransaction>()
 
 const truncateMiddle = (value: string, lead = 6, tail = 4) => {
 	if (!value) return ''
@@ -177,227 +185,228 @@ const truncateMiddle = (value: string, lead = 6, tail = 4) => {
 	return `${value.slice(0, lead)}…${value.slice(-tail)}`
 }
 
-const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplorers>['data']) => [
-	columnHelper.accessor((row) => row.timestamp ?? undefined, {
-		id: 'timestamp',
-		header: 'Timestamp',
-		cell: ({ getValue }) => (
-			<span className="whitespace-nowrap text-secondary">
-				{formatDateTime(getValue(), { input: 'seconds', timeZone: 'UTC' }) ?? '–'}
-			</span>
-		),
-		meta: {
-			headerClassName: 'w-[220px]'
-		}
-	}),
-	columnHelper.accessor('bridge_name', {
-		header: 'Bridge',
-		cell: ({ row }) => (
-			<BasicLink href={`/bridge/${row.original.bridge_slug}`} className="font-medium text-link hover:underline">
-				{row.original.bridge_name}
-			</BasicLink>
-		),
-		meta: {
-			headerClassName: 'w-[160px]'
-		}
-	}),
-	columnHelper.accessor('chain', {
-		header: 'Chain',
-		cell: ({ getValue }) => (
-			<span className="inline-flex items-center gap-1.5">
-				<TokenLogo name={getValue()} kind="chain" size={16} />
-				<span>{getValue()}</span>
-			</span>
-		),
-		meta: {
-			headerClassName: 'w-[140px]'
-		}
-	}),
-	columnHelper.accessor('is_deposit', {
-		header: 'Direction',
-		cell: ({ getValue }) => {
-			const deposit = getValue()
-			return (
-				<span
-					className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-sm ${
-						deposit ? 'bg-success/10 text-success' : 'bg-error/10 text-error'
-					}`}
-				>
-					<Icon name={deposit ? 'arrow-down' : 'arrow-up-right'} height={12} width={12} />
-					{deposit ? 'Deposit' : 'Withdrawal'}
+const buildBridgeColumns = (blockExplorersData: ReturnType<typeof useBlockExplorers>['data']) =>
+	columnHelper.columns([
+		columnHelper.accessor((row) => row.timestamp ?? undefined, {
+			id: 'timestamp',
+			header: 'Timestamp',
+			cell: ({ getValue }) => (
+				<span className="whitespace-nowrap text-secondary">
+					{formatDateTime(getValue(), { input: 'seconds', timeZone: 'UTC' }) ?? '–'}
 				</span>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[130px]'
-		}
-	}),
-	columnHelper.accessor('token', {
-		header: 'Token',
-		cell: ({ getValue, row }) => {
-			const value = getValue() ?? ''
-			if (!value) return <span className="text-tertiary">—</span>
-
-			const looksLikeAddress = /^0x[0-9a-fA-F]{4,}$/.test(value) || value.includes(':')
-			const explorer = looksLikeAddress
-				? getBlockExplorerNew({
-						apiResponse: blockExplorersData ?? [],
-						address: value,
-						chainName: row.original.chain,
-						urlType: 'token'
-					})
-				: null
-
-			if (!explorer) {
+			),
+			meta: {
+				headerClassName: 'w-[220px]'
+			}
+		}),
+		columnHelper.accessor('bridge_name', {
+			header: 'Bridge',
+			cell: ({ row }) => (
+				<BasicLink href={`/bridge/${row.original.bridge_slug}`} className="font-medium text-link hover:underline">
+					{row.original.bridge_name}
+				</BasicLink>
+			),
+			meta: {
+				headerClassName: 'w-[160px]'
+			}
+		}),
+		columnHelper.accessor('chain', {
+			header: 'Chain',
+			cell: ({ getValue }) => (
+				<span className="inline-flex items-center gap-1.5">
+					<TokenLogo name={getValue()} kind="chain" size={16} />
+					<span>{getValue()}</span>
+				</span>
+			),
+			meta: {
+				headerClassName: 'w-[140px]'
+			}
+		}),
+		columnHelper.accessor('is_deposit', {
+			header: 'Direction',
+			cell: ({ getValue }) => {
+				const deposit = getValue()
 				return (
-					<span className="font-mono text-xs text-secondary" title={value}>
+					<span
+						className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 label-sm ${
+							deposit ? 'bg-success/10 text-success' : 'bg-error/10 text-error'
+						}`}
+					>
+						<Icon name={deposit ? 'arrow-down' : 'arrow-up-right'} height={12} width={12} />
+						{deposit ? 'Deposit' : 'Withdrawal'}
+					</span>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[130px]'
+			}
+		}),
+		columnHelper.accessor('token', {
+			header: 'Token',
+			cell: ({ getValue, row }) => {
+				const value = getValue() ?? ''
+				if (!value) return <span className="text-tertiary">—</span>
+
+				const looksLikeAddress = /^0x[0-9a-fA-F]{4,}$/.test(value) || value.includes(':')
+				const explorer = looksLikeAddress
+					? getBlockExplorerNew({
+							apiResponse: blockExplorersData ?? [],
+							address: value,
+							chainName: row.original.chain,
+							urlType: 'token'
+						})
+					: null
+
+				if (!explorer) {
+					return (
+						<span className="font-mono text-xs text-secondary" title={value}>
+							{truncateMiddle(value, 8, 4)}
+						</span>
+					)
+				}
+				return (
+					<a
+						href={explorer.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex items-center gap-1 font-mono text-xs text-link hover:underline"
+						title={value}
+					>
 						{truncateMiddle(value, 8, 4)}
-					</span>
+						<Icon name="external-link" height={10} width={10} />
+					</a>
 				)
+			},
+			meta: {
+				headerClassName: 'w-[140px]'
 			}
-			return (
-				<a
-					href={explorer.url}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 font-mono text-xs text-link hover:underline"
-					title={value}
-				>
-					{truncateMiddle(value, 8, 4)}
-					<Icon name="external-link" height={10} width={10} />
-				</a>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[140px]'
-		}
-	}),
-	columnHelper.accessor((row) => row.amount ?? undefined, {
-		id: 'amount',
-		header: 'Amount',
-		cell: ({ getValue }) => (
-			<span className="block max-w-[120px] truncate text-right" title={getValue()}>
-				{getValue()}
-			</span>
-		),
-		meta: {
-			headerClassName: 'w-[120px]',
-			align: 'end' as const
-		}
-	}),
-	columnHelper.accessor((row) => row.usd_value ?? undefined, {
-		id: 'usd_value',
-		header: 'USD Value',
-		cell: ({ getValue }) => {
-			const value = getValue()
-			if (value == null) return <span className="text-tertiary">—</span>
-			return (
-				<span className="font-medium">
-					{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
+		}),
+		columnHelper.accessor((row) => row.amount ?? undefined, {
+			id: 'amount',
+			header: 'Amount',
+			cell: ({ getValue }) => (
+				<span className="block max-w-[120px] truncate text-right" title={getValue()}>
+					{getValue()}
 				</span>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[130px]',
-			align: 'end' as const
-		}
-	}),
-	columnHelper.accessor('tx_from', {
-		header: 'From',
-		cell: ({ getValue, row }) => {
-			const value = getValue()
-			if (!value) return <span className="text-tertiary">—</span>
-			const explorer = getBlockExplorerNew({
-				apiResponse: blockExplorersData ?? [],
-				address: value,
-				chainName: row.original.chain,
-				urlType: 'address'
-			})
-			const display = <span className="font-mono text-xs">{truncateMiddle(value)}</span>
-			if (!explorer) return display
-			return (
-				<a
-					href={explorer.url}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 text-link hover:underline"
-					title={value}
-				>
-					{display}
-					<Icon name="external-link" height={10} width={10} />
-				</a>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[160px]'
-		}
-	}),
-	columnHelper.accessor('tx_to', {
-		header: 'To',
-		cell: ({ getValue, row }) => {
-			const value = getValue()
-			if (!value) return <span className="text-tertiary">—</span>
-			const explorer = getBlockExplorerNew({
-				apiResponse: blockExplorersData ?? [],
-				address: value,
-				chainName: row.original.chain,
-				urlType: 'address'
-			})
-			const display = <span className="font-mono text-xs">{truncateMiddle(value)}</span>
-			if (!explorer) return display
-			return (
-				<a
-					href={explorer.url}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 text-link hover:underline"
-					title={value}
-				>
-					{display}
-					<Icon name="external-link" height={10} width={10} />
-				</a>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[160px]'
-		}
-	}),
-	columnHelper.accessor('tx_hash', {
-		header: 'Transaction',
-		cell: ({ getValue, row }) => {
-			const value = getValue()
-			if (!value) return <span className="text-tertiary">—</span>
-			const explorer = getBlockExplorerNew({
-				apiResponse: blockExplorersData ?? [],
-				address: value,
-				chainName: row.original.chain,
-				urlType: 'tx'
-			})
-			if (!explorer) {
+			),
+			meta: {
+				headerClassName: 'w-[120px]',
+				align: 'end' as const
+			}
+		}),
+		columnHelper.accessor((row) => row.usd_value ?? undefined, {
+			id: 'usd_value',
+			header: 'USD Value',
+			cell: ({ getValue }) => {
+				const value = getValue()
+				if (value == null) return <span className="text-tertiary">—</span>
 				return (
-					<span className="font-mono text-xs" title={value}>
-						{truncateMiddle(value)}
+					<span className="font-medium">
+						{formatUsd(value, { compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}
 					</span>
 				)
+			},
+			meta: {
+				headerClassName: 'w-[130px]',
+				align: 'end' as const
 			}
-			return (
-				<a
-					href={explorer.url}
-					target="_blank"
-					rel="noopener noreferrer"
-					className="inline-flex items-center gap-1 text-link hover:underline"
-					title={value}
-				>
-					<span className="font-mono text-xs">{truncateMiddle(value)}</span>
-					<Icon name="external-link" height={10} width={10} />
-				</a>
-			)
-		},
-		meta: {
-			headerClassName: 'w-[170px]'
-		}
-	})
-]
+		}),
+		columnHelper.accessor('tx_from', {
+			header: 'From',
+			cell: ({ getValue, row }) => {
+				const value = getValue()
+				if (!value) return <span className="text-tertiary">—</span>
+				const explorer = getBlockExplorerNew({
+					apiResponse: blockExplorersData ?? [],
+					address: value,
+					chainName: row.original.chain,
+					urlType: 'address'
+				})
+				const display = <span className="font-mono text-xs">{truncateMiddle(value)}</span>
+				if (!explorer) return display
+				return (
+					<a
+						href={explorer.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex items-center gap-1 text-link hover:underline"
+						title={value}
+					>
+						{display}
+						<Icon name="external-link" height={10} width={10} />
+					</a>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[160px]'
+			}
+		}),
+		columnHelper.accessor('tx_to', {
+			header: 'To',
+			cell: ({ getValue, row }) => {
+				const value = getValue()
+				if (!value) return <span className="text-tertiary">—</span>
+				const explorer = getBlockExplorerNew({
+					apiResponse: blockExplorersData ?? [],
+					address: value,
+					chainName: row.original.chain,
+					urlType: 'address'
+				})
+				const display = <span className="font-mono text-xs">{truncateMiddle(value)}</span>
+				if (!explorer) return display
+				return (
+					<a
+						href={explorer.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex items-center gap-1 text-link hover:underline"
+						title={value}
+					>
+						{display}
+						<Icon name="external-link" height={10} width={10} />
+					</a>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[160px]'
+			}
+		}),
+		columnHelper.accessor('tx_hash', {
+			header: 'Transaction',
+			cell: ({ getValue, row }) => {
+				const value = getValue()
+				if (!value) return <span className="text-tertiary">—</span>
+				const explorer = getBlockExplorerNew({
+					apiResponse: blockExplorersData ?? [],
+					address: value,
+					chainName: row.original.chain,
+					urlType: 'tx'
+				})
+				if (!explorer) {
+					return (
+						<span className="font-mono text-xs" title={value}>
+							{truncateMiddle(value)}
+						</span>
+					)
+				}
+				return (
+					<a
+						href={explorer.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex items-center gap-1 text-link hover:underline"
+						title={value}
+					>
+						<span className="font-mono text-xs">{truncateMiddle(value)}</span>
+						<Icon name="external-link" height={10} width={10} />
+					</a>
+				)
+			},
+			meta: {
+				headerClassName: 'w-[170px]'
+			}
+		})
+	])
 
 interface FetchArgs {
 	bridge: Pick<RawBridgeInfo, 'id' | 'displayName'>
@@ -768,7 +777,14 @@ function TransactionsTable({
 	const normalizedFilter = deferredFilter.toLowerCase()
 	const searchIndex = React.useMemo(() => createBridgeTransactionSearchIndex(data), [data])
 
-	const instance = useReactTable({
+	const [pageInputs, setPageInputs] = React.useState({ filter: normalizedFilter, sorting })
+	if (pageInputs.filter !== normalizedFilter || pageInputs.sorting !== sorting) {
+		setPageInputs({ filter: normalizedFilter, sorting })
+		setPagination((prev) => (prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 }))
+	}
+
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns,
 		state: { sorting, globalFilter: normalizedFilter, pagination },
@@ -780,27 +796,17 @@ function TransactionsTable({
 		// The index contains every searchable value, so TanStack only needs to call it once per row.
 		getColumnCanGlobalFilter: (column) => column.id === 'timestamp',
 		enableSortingRemoval: false,
-		defaultColumn: { sortUndefined: 'last' },
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		defaultColumn: { sortUndefined: 'last' }
 	})
-
-	React.useEffect(() => {
-		React.startTransition(() => {
-			setPagination((prev) => (prev.pageIndex === 0 ? prev : { ...prev, pageIndex: 0 }))
-		})
-	}, [normalizedFilter, sorting])
 
 	const filteredCount = instance.getFilteredRowModel().rows.length
 	const pageCount = instance.getPageCount()
-	const { pageIndex, pageSize } = instance.getState().pagination
+	const { pageIndex, pageSize } = instance.state.pagination
 	const pageStart = filteredCount === 0 ? 0 : pageIndex * pageSize + 1
 	const pageEnd = Math.min(filteredCount, pageStart + pageSize - 1)
 
 	const prepareCsv = React.useCallback(() => {
-		const filteredRows = instance.getPrePaginationRowModel().rows
+		const filteredRows = instance.getPrePaginatedRowModel().rows
 		const rows: Array<Array<BridgeTransactionCsvCell>> = new Array(filteredRows.length + 1)
 		rows[0] = BRIDGE_TRANSACTION_CSV_HEADERS
 		let outputIndex = 1
@@ -837,7 +843,7 @@ function TransactionsTable({
 				</TableToolbarControlGroup>
 			</TableToolbar>
 
-			<VirtualTable instance={instance} rowSize={48} />
+			<VirtualTable table={instance} rowSize={48} />
 
 			<div className="flex flex-wrap items-center justify-between gap-3 border-t border-subtle p-2 label-sm text-secondary">
 				<span>

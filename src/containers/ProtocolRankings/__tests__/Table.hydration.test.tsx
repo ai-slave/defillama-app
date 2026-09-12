@@ -24,9 +24,9 @@ vi.mock('react-hot-toast', () => ({ default: { error: toastError } }))
 
 vi.mock('~/components/Table/Table', () => ({
 	VirtualTable: ({
-		instance
+		table: instance
 	}: {
-		instance: { getRowModel: () => { rows: Array<{ id: string; depth: number; original: { name: string } }> } }
+		table: { getRowModel: () => { rows: Array<{ id: string; depth: number; original: { name: string } }> } }
 	}) => (
 		<div data-testid="protocol-rankings-table">
 			{instance.getRowModel().rows.map((row) => (

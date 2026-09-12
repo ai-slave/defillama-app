@@ -1,10 +1,11 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
-import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
+import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWAAssetGroupsOverviewRow, RWAOverviewPage } from './api.types'
 import type { RWAPositionalChartDataset } from './chartDataset'
@@ -22,9 +23,9 @@ type RWAAssetGroupsTableRow = {
 	defiActiveTvl: number
 }
 
-const columnHelper = createColumnHelper<RWAAssetGroupsTableRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, RWAAssetGroupsTableRow>()
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('assetGroup', {
 		id: 'assetGroup',
 		header: 'Name',
@@ -91,7 +92,7 @@ const columns = [
 			headerHelperText: definitions.totalDefiActiveTvl.description
 		}
 	})
-]
+])
 export function RWAAssetGroups({
 	assetGroups,
 	initialChartDataset,
@@ -164,7 +165,7 @@ export function RWAAssetGroups({
 				header="Asset Groups"
 				headingAs="h1"
 				csvFileName={csvFileName}
-				sortingState={[{ id: 'activeMcap', desc: true }]}
+				initialSorting={[{ id: 'activeMcap', desc: true }]}
 			/>
 		</div>
 	)

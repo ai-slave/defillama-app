@@ -1,29 +1,32 @@
-import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import { useTable } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import {
 	formatPercent,
 	formatUsd,
-	USD_LOWERCASE_MILLIONS_OPTIONS,
-	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
-import { useAaveMarkets, useAaveAPYHistory } from './api'
 import type { TimeWindow } from './api'
+import { useAaveAPYHistory, useAaveMarkets } from './api'
 import {
-	InvestorsTable,
-	PageLoader,
-	ChartCard,
-	CardSkeleton,
-	KpiCard,
-	MetricStrip,
-	SectionHeader,
-	WindowToggle,
 	AAVE_AREA_EXPORT,
 	AAVE_BAR_EXPORT,
 	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
-	AAVE_PERCENT_TIME_CHART_OPTIONS
+	AAVE_PERCENT_TIME_CHART_OPTIONS,
+	CardSkeleton,
+	ChartCard,
+	InvestorsTable,
+	KpiCard,
+	MetricStrip,
+	PageLoader,
+	SectionHeader,
+	WindowToggle
 } from './shared'
+
+const tableFeaturesConfig = displayTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -77,7 +80,7 @@ interface RateComparisonRow {
 	sizeUsd: number
 }
 
-const rateColumns: Array<ColumnDef<RateComparisonRow>> = [
+const rateColumns: Array<ColumnDef<typeof tableFeaturesConfig, RateComparisonRow>> = [
 	{ header: 'Chain', accessorKey: 'chain', size: 120 },
 	{ header: 'Market', accessorKey: 'market', size: 200 },
 	{
@@ -117,14 +120,13 @@ const rateColumns: Array<ColumnDef<RateComparisonRow>> = [
 function RateComparisonTable({ data }: { data: Array<RateComparisonRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: rateColumns,
 		state: { sorting },
-		onSortingChange: setSorting,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: setSorting
 	})
 
 	if (data.length === 0) return null

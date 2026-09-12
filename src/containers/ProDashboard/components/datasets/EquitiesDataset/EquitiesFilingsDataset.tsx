@@ -4,16 +4,16 @@ import {
 	type ColumnOrderState,
 	type ColumnSizingState,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	createPaginatedRowModel,
 	type PaginationState,
+	rowPaginationFeature,
 	type SortingState,
-	useReactTable
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { useContext, useMemo, useState } from 'react'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
 import type { IEquitiesFilingApiItem } from '~/containers/Equities/api.types'
 import { parseEquityTickerCountryParam } from '~/containers/Equities/tickerCountry'
@@ -30,9 +30,15 @@ import { LoadingSpinner } from '../../LoadingSpinner'
 import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 
-const columnHelper = createColumnHelper<IEquitiesFilingApiItem>()
+const tableFeaturesConfig = tableFeatures({
+	...orderedFilteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
-const columns = [
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IEquitiesFilingApiItem>()
+
+const columns = columnHelper.columns([
 	columnHelper.accessor('filingDate', {
 		id: 'filingDate',
 		header: 'Filing Date',
@@ -77,7 +83,7 @@ const columns = [
 		meta: { align: 'end' },
 		size: 80
 	})
-]
+])
 
 const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
 	'filingDate',
@@ -86,10 +92,6 @@ const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
 	'documentDescription',
 	'primaryDocumentUrl'
 ]
-const getEquitiesFilingsCoreRowModel = getCoreRowModel<IEquitiesFilingApiItem>()
-const getEquitiesFilingsSortedRowModel = getSortedRowModel<IEquitiesFilingApiItem>()
-const getEquitiesFilingsFilteredRowModel = getFilteredRowModel<IEquitiesFilingApiItem>()
-const getEquitiesFilingsPaginationRowModel = getPaginationRowModel<IEquitiesFilingApiItem>()
 
 const STALE_TIME = 5 * 60 * 1000
 
@@ -154,7 +156,8 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 		return matchingFilings
 	}, [data, selectedForm])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: filteredData,
 		columns,
@@ -171,10 +174,6 @@ export function EquitiesFilingsDataset({ ticker }: { ticker: string }) {
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getEquitiesFilingsCoreRowModel,
-		getSortedRowModel: getEquitiesFilingsSortedRowModel,
-		getFilteredRowModel: getEquitiesFilingsFilteredRowModel,
-		getPaginationRowModel: getEquitiesFilingsPaginationRowModel,
 		autoResetPageIndex: true
 	})
 

@@ -9,6 +9,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Tooltip } from '~/ui/Tooltip'
@@ -19,7 +20,7 @@ import { EXCHANGE_SEGMENT_LABELS, type ExchangeProfileModel } from './models'
 import { MarkoutHorizons, NA, SlippageLadder } from './ProfileExecution'
 import { exchangeTokenRows, type ExchangeTokenRow } from './profileTokens'
 
-const columnHelper = createColumnHelper<ExchangeTokenRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, ExchangeTokenRow>()
 
 const REPORTED_NOTE =
 	'Reported volume, not liquidity-checked: no order book captured for one of these markets, so there is nothing to normalize against.'
@@ -35,7 +36,7 @@ function Volume({ value, reported }: { value: number | null; reported: boolean }
 }
 
 const definitions = exchangeDefinitions.directory
-const TOKEN_COLUMNS = [
+const TOKEN_COLUMNS = columnHelper.columns([
 	columnHelper.accessor('token', {
 		id: 'token',
 		header: 'Token',
@@ -179,7 +180,7 @@ const TOKEN_COLUMNS = [
 			headerHelperText: definitions.perpNormalizedVolume.description
 		}
 	})
-]
+])
 
 export function ProfileTokenTable({
 	profile,

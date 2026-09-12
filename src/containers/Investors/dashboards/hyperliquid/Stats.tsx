@@ -1,12 +1,13 @@
+import { useSelector } from '@tanstack/react-store'
 import {
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type PaginationState,
-	type SortingState,
-	useReactTable,
 	type ColumnDef,
-	type Table
+	createPaginatedRowModel,
+	type PaginationState,
+	rowPaginationFeature,
+	type SortingState,
+	type Table,
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import type { EChartsOption } from 'echarts'
 import { BarChart, PieChart as EPieChart, ScatterChart as EScatterChart } from 'echarts/charts'
@@ -15,9 +16,10 @@ import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
+import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/Table'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
 import {
 	type PerpMarket,
@@ -29,6 +31,12 @@ import {
 	useHyperliquidWsChannels,
 	type WsSubscription
 } from './api'
+
+const tableFeaturesConfig = tableFeatures({
+	...filteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 echarts.use([CanvasRenderer, BarChart, EPieChart, EScatterChart, GridComponent, TooltipComponent])
 
@@ -299,8 +307,8 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 	)
 }
 
-function Pagination<Row>({ table }: { table: Table<Row> }) {
-	const { pageIndex, pageSize } = table.getState().pagination
+function Pagination<Row>({ table }: { table: Table<typeof tableFeaturesConfig, Row> }) {
+	const { pageIndex, pageSize } = useSelector(table.atoms.pagination)
 	const total = table.getFilteredRowModel().rows.length
 	const from = total === 0 ? 0 : pageIndex * pageSize + 1
 	const to = Math.min((pageIndex + 1) * pageSize, total)
@@ -332,7 +340,7 @@ function Pagination<Row>({ table }: { table: Table<Row> }) {
 	)
 }
 
-const perpColumns: Array<ColumnDef<PerpMarket>> = [
+const perpColumns: Array<ColumnDef<typeof tableFeaturesConfig, PerpMarket>> = [
 	{
 		header: 'Asset',
 		accessorKey: 'name',
@@ -423,7 +431,7 @@ const perpColumns: Array<ColumnDef<PerpMarket>> = [
 	}
 ]
 
-const spotColumns: Array<ColumnDef<SpotMarket>> = [
+const spotColumns: Array<ColumnDef<typeof tableFeaturesConfig, SpotMarket>> = [
 	{
 		header: 'Pair',
 		accessorKey: 'name',
@@ -462,7 +470,7 @@ const spotColumns: Array<ColumnDef<SpotMarket>> = [
 	}
 ]
 
-const predictedFundingColumns: Array<ColumnDef<PredictedFunding>> = [
+const predictedFundingColumns: Array<ColumnDef<typeof tableFeaturesConfig, PredictedFunding>> = [
 	{
 		header: 'Coin',
 		accessorKey: 'coin',
@@ -668,16 +676,14 @@ function PredictedFundingTable({ data }: { data: Array<PredictedFunding> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'spreadToBestCex', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: predictedFundingColumns,
 		state: { sorting, pagination },
 		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 
 	if (data.length === 0) return null
@@ -687,7 +693,7 @@ function PredictedFundingTable({ data }: { data: Array<PredictedFunding> }) {
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">
 				Predicted Funding Rates (Annualized) — HL vs CEXs
 			</h3>
-			<VirtualTable instance={instance} skipVirtualization />
+			<VirtualTable table={instance} skipVirtualization />
 			<Pagination table={instance} />
 		</div>
 	)
@@ -697,22 +703,20 @@ function PerpsTable({ data }: { data: Array<PerpMarket> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'dayNtlVlm', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: perpColumns,
 		state: { sorting, pagination },
 		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Perpetual Markets</h3>
-			<VirtualTable instance={instance} skipVirtualization />
+			<VirtualTable table={instance} skipVirtualization />
 			<Pagination table={instance} />
 		</div>
 	)
@@ -722,22 +726,20 @@ function SpotTable({ data }: { data: Array<SpotMarket> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'dayNtlVlm', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: PAGE_SIZE })
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: spotColumns,
 		state: { sorting, pagination },
 		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Spot Markets</h3>
-			<VirtualTable instance={instance} skipVirtualization />
+			<VirtualTable table={instance} skipVirtualization />
 			<Pagination table={instance} />
 		</div>
 	)

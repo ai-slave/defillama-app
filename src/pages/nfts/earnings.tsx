@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { FallbackLogo, TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollectionEarnings } from '~/containers/Nft/queries'
@@ -50,15 +51,15 @@ function Earnings({ earnings }: InferGetStaticPropsType<typeof getStaticProps>) 
 				header="NFT Collection Earnings"
 				headingAs="h1"
 				csvFileName="nft-earnings"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</Layout>
 	)
 }
 
-const columnHelper = createColumnHelper<NFTCollectionEarningsRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, NFTCollectionEarningsRow>()
 
-const earningsColumns = [
+const earningsColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -169,6 +170,6 @@ const earningsColumns = [
 			headerHelperText: 'mint + royalties'
 		}
 	})
-]
+])
 
 export default Earnings

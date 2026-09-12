@@ -1,14 +1,14 @@
-import type { SortingState, VisibilityState } from '@tanstack/react-table'
+import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import type { EquityActiveFilter } from './filters'
 
 export function applyEquityFilterColumnVisibility({
 	columnVisibility,
 	filters
 }: {
-	columnVisibility: VisibilityState
+	columnVisibility: ColumnVisibilityState
 	filters: Array<EquityActiveFilter>
-}): VisibilityState {
-	const effectiveVisibility: VisibilityState = { ...columnVisibility, searchPriority: false }
+}): ColumnVisibilityState {
+	const effectiveVisibility: ColumnVisibilityState = { ...columnVisibility, searchPriority: false }
 	for (const filter of filters) {
 		effectiveVisibility[filter.id] = true
 	}

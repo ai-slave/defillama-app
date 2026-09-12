@@ -1,17 +1,10 @@
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type PaginationState,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { createColumnHelper, type PaginationState, type SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { PaginatedTable, usePaginatedTableDisplayRowNumber } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv } from '~/components/Table/utils'
 import { Card } from '~/ui/Card'
@@ -28,6 +21,8 @@ import { preIpoDefinitions } from './definitions'
 import { filterPreIpoCompanies, getPreIpoSectors } from './overviewData'
 import { getSelectedPreIpoSectors, PRE_IPO_EXCLUDE_SECTOR_QUERY_KEY, PRE_IPO_SECTOR_QUERY_KEY } from './queryState'
 import type { PreIpoOverviewPageProps } from './types'
+
+const tableFeaturesConfig = paginatedTableFeatures
 
 const PERCENT_OPTIONS = {
 	input: 'percent',
@@ -63,8 +58,8 @@ function CompanyCell({ row }: { row: { id: string; original: PreIpoCompanyListIt
 	)
 }
 
-const columnHelper = createColumnHelper<PreIpoCompanyListItem>()
-const columns = [
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, PreIpoCompanyListItem>()
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Company',
 		enableSorting: false,
@@ -180,7 +175,7 @@ const columns = [
 			headerHelperText: preIpoDefinitions.company.valuationAsOf.description
 		}
 	})
-]
+])
 
 export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps) {
 	const router = useRouter()
@@ -199,7 +194,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 		[companies, deferredSearchValue, sectorFilter]
 	)
 
-	const table = useReactTable({
+	const table = usePaginatedTable({
 		data: filteredCompanies,
 		columns,
 		state: { sorting, pagination },
@@ -207,10 +202,7 @@ export function PreIpoOverview({ companies, updatedAt }: PreIpoOverviewPageProps
 		defaultColumn: { sortUndefined: 'last' },
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
-		onPaginationChange: (updater) => startTransition(() => setPagination(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: (updater) => startTransition(() => setPagination(updater))
 	})
 
 	const resetPage = () => setPagination((state) => ({ ...state, pageIndex: 0 }))

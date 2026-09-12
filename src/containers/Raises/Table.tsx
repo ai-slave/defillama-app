@@ -1,24 +1,22 @@
 import {
 	type ColumnFiltersState,
 	type ColumnOrderState,
-	type Table,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	type Table,
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
@@ -26,9 +24,11 @@ import { formatDate, formatIsoDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import type { Raise } from './model'
 
-const columnHelper = createColumnHelper<Raise>()
+export const tableFeaturesConfig = orderedFilteredTableFeatures
 
-export const raisesColumns = [
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, Raise>()
+
+export const raisesColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -113,7 +113,7 @@ export const raisesColumns = [
 		enableSorting: false,
 		cell: (info) => <Tooltip content={info.getValue().join(', ')}>{info.getValue().join(', ')}</Tooltip>
 	})
-]
+])
 
 export const raisesColumnOrders: ColumnOrdersByBreakpoint = {
 	0: [
@@ -142,7 +142,7 @@ export const raisesColumnOrders: ColumnOrdersByBreakpoint = {
 	]
 }
 
-export const prepareRaisesCsv = (instance: Table<Raise>) => {
+export const prepareRaisesCsv = (instance: Table<typeof tableFeaturesConfig, Raise>) => {
 	const csv = prepareTableCsv({ instance, filename: 'raises' })
 	const headers = csv.rows[0]
 	if (!headers) return csv
@@ -174,7 +174,8 @@ export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 	const [sorting, setSorting] = React.useState<SortingState>([{ desc: true, id: 'date' }])
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: raises,
 		columns: raisesColumns,
 		state: {
@@ -188,10 +189,7 @@ export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getFilteredRowModel: getFilteredRowModel(),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -219,7 +217,7 @@ export function RaisesTable({ raises }: { raises: Array<Raise> }) {
 				<CSVDownloadButton prepareCsv={() => prepareRaisesCsv(instance)} smol size="md" />
 			</TableToolbar>
 
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }

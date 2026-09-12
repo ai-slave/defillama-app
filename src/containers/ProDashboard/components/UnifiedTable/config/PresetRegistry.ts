@@ -1,4 +1,4 @@
-import type { VisibilityState } from '@tanstack/react-table'
+import type { ColumnVisibilityState } from '@tanstack/react-table'
 import { UNIFIED_TABLE_COLUMN_DICTIONARY } from '../../../unifiedTable/config/columnDictionary'
 import type { UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
 
@@ -7,17 +7,17 @@ export interface UnifiedTablePreset {
 	name: string
 	description?: string
 	columnOrder: Array<string>
-	columnVisibility: VisibilityState
+	columnVisibility: ColumnVisibilityState
 	rowHeaders: Array<UnifiedRowHeaderType>
 	defaultSorting?: Array<{ id: string; desc?: boolean }>
 }
 
 const ALL_COLUMN_IDS = ['name', ...UNIFIED_TABLE_COLUMN_DICTIONARY.map((column) => column.id)]
 
-const createVisibility = (columns: Array<string>): VisibilityState => {
+const createVisibility = (columns: Array<string>): ColumnVisibilityState => {
 	const visible = new Set(columns)
 	visible.add('name')
-	const visibility: VisibilityState = {}
+	const visibility: ColumnVisibilityState = {}
 	for (const id of ALL_COLUMN_IDS) visibility[id] = visible.has(id)
 	return visibility
 }

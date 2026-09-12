@@ -1,15 +1,15 @@
 import {
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	createPaginatedRowModel,
+	rowPaginationFeature,
 	type SortingState,
-	useReactTable
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { selectTriggerStyles } from '~/components/Select/types'
+import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { PaginatedTable } from '~/components/Table/PaginatedTable'
 import { prepareTableCsv, useTableSearch } from '~/components/Table/utils'
 import { Icon } from '~/ui/Icon'
@@ -19,12 +19,18 @@ import { TableToolbar, TableToolbarControlGroup } from '~/ui/Toolbar'
 import { formatDate } from '~/utils/dateFormat'
 import type { IEquitiesFilingApiItem } from './api.types'
 
-const columnHelper = createColumnHelper<IEquitiesFilingApiItem>()
+const tableFeaturesConfig = tableFeatures({
+	...filteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
+
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IEquitiesFilingApiItem>()
 const DEFAULT_SORTING_STATE: SortingState = [{ id: 'filingDate', desc: true }]
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 const DEFAULT_PAGE_SIZE = 10
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('filingDate', {
 		header: 'Filing Date',
 		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
@@ -85,7 +91,7 @@ const columns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 export function EquitiesFilingsTable({
 	filings,
@@ -104,7 +110,8 @@ export function EquitiesFilingsTable({
 		}
 		return matchingFilings
 	}, [filings, selectedForm])
-	const table = useReactTable({
+	const table = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: filteredFilings,
 		columns,
@@ -115,11 +122,7 @@ export function EquitiesFilingsTable({
 			},
 			sorting: DEFAULT_SORTING_STATE
 		},
-		enableSortingRemoval: false,
-		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		enableSortingRemoval: false
 	})
 	const [_searchValue, setSearchValue] = useTableSearch({ instance: table, columnToSearch: 'documentDescription' })
 

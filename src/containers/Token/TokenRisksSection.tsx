@@ -1,13 +1,8 @@
 import * as Ariakit from '@ariakit/react'
 import type { PaginationState, SortingState } from '@tanstack/react-table'
-import {
-	createColumnHelper,
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	useReactTable
-} from '@tanstack/react-table'
+import { createColumnHelper } from '@tanstack/react-table'
 import { startTransition, Suspense, useMemo, useState } from 'react'
+import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
@@ -24,8 +19,10 @@ import type {
 	TokenRiskResponse
 } from './tokenRisk.types'
 
+const tableFeaturesConfig = paginatedTableFeatures
+
 const TOKEN_RISKS_SECTION_ID = 'token-risks'
-const exposureColumnHelper = createColumnHelper<TokenRiskExposureRow>()
+const exposureColumnHelper = createColumnHelper<typeof tableFeaturesConfig, TokenRiskExposureRow>()
 const DEFAULT_EXPOSURES_SORTING: SortingState = [{ id: 'currentMaxBorrowUsd', desc: true }]
 
 function TableEntityCell({
@@ -152,7 +149,7 @@ function ProtocolChainsLabel({ chainBreakdowns }: { chainBreakdowns: Array<Token
 }
 
 function createExposureColumns(methodologies: TokenRiskResponse['exposures']['methodologies']) {
-	return [
+	return exposureColumnHelper.columns([
 		exposureColumnHelper.accessor('protocolDisplayName', {
 			header: 'Protocol',
 			enableSorting: false,
@@ -197,7 +194,7 @@ function createExposureColumns(methodologies: TokenRiskResponse['exposures']['me
 				headerHelperText: methodologies.minBadDebtAtPriceZeroUsd
 			}
 		})
-	]
+	])
 }
 
 export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: string; riskData: TokenRiskResponse }) {
@@ -210,7 +207,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 
 	const exposureColumns = useMemo(() => createExposureColumns(exposures.methodologies), [exposures.methodologies])
 
-	const exposureTable = useReactTable({
+	const exposureTable = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
 		data: exposures.rows,
 		columns: exposureColumns,
@@ -220,10 +217,7 @@ export function TokenRisksSection({ tokenSymbol, riskData }: { tokenSymbol: stri
 		},
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => startTransition(() => setSorting(resolveUpdater(updater, sorting))),
-		onPaginationChange: (updater) => startTransition(() => setPagination(resolveUpdater(updater, pagination))),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: (updater) => startTransition(() => setPagination(resolveUpdater(updater, pagination)))
 	})
 
 	const selectedCandidateDisplayName = scopeCandidates.length === 1 ? scopeCandidates[0]!.displayName : 'onchain'

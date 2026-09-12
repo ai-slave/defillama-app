@@ -1,20 +1,20 @@
 import {
+	createPaginatedRowModel,
+	rowPaginationFeature,
+	tableFeatures,
+	useTable,
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	type ColumnSizingState,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
 	type PaginationState,
-	type SortingState,
-	useReactTable
+	type SortingState
 } from '@tanstack/react-table'
 import { lazy, Suspense, useContext, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
 import type { MultiSeriesChartDataset, MultiSeriesChartSeriesConfig } from '~/components/ECharts/MultiSeriesChart/types'
 import { CHART_LEGEND_RESERVE } from '~/components/ECharts/shared/chartSpacing'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
 import type {
 	CexAnalyticsMarketSharePoint,
@@ -38,6 +38,12 @@ import { TableBody } from '../../Table/TableBody'
 import { TablePagination } from '../../Table/TablePagination'
 import { cexAnalyticsColumns } from './columns'
 import { useCexAnalyticsMarketShare, useCexAnalyticsSnapshot, useCexAnalyticsTotals } from './useCexAnalyticsData'
+
+export const tableFeaturesConfig = tableFeatures({
+	...orderedFilteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart'))
 
@@ -66,10 +72,6 @@ const CEX_COLUMN_SIZING: ColumnSizingState = {
 	cleanTvl: 120,
 	volumeToTvl: 120
 }
-const getCexCoreRowModel = getCoreRowModel<CexAnalyticsSnapshotRow>()
-const getCexSortedRowModel = getSortedRowModel<CexAnalyticsSnapshotRow>()
-const getCexFilteredRowModel = getFilteredRowModel<CexAnalyticsSnapshotRow>()
-const getCexPaginationRowModel = getPaginationRowModel<CexAnalyticsSnapshotRow>()
 const STACK_COLORS = {
 	Spot: '#2d8cf0',
 	Derivatives: '#f28b36'
@@ -259,7 +261,8 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 		pageSize: 10
 	})
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data.rows ?? EMPTY_ROWS,
 		columns: cexAnalyticsColumns,
@@ -276,10 +279,6 @@ function VenueComparisonTable({ data }: { data: CexAnalyticsSnapshotResponse }) 
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getCexCoreRowModel,
-		getSortedRowModel: getCexSortedRowModel,
-		getFilteredRowModel: getCexFilteredRowModel,
-		getPaginationRowModel: getCexPaginationRowModel,
 		autoResetPageIndex: true
 	})
 

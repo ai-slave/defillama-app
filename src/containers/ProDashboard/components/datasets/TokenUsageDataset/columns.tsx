@@ -4,10 +4,14 @@ import { TokenLogo } from '~/components/TokenLogo'
 import type { ProtocolTokenUsageData } from '~/containers/TokenUsage/api.types'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
+import type { tableFeaturesConfig } from './index'
 
-const ranksBySortedRows = new WeakMap<ReadonlyArray<Row<ProtocolTokenUsageData>>, ReadonlyMap<string, number>>()
+const ranksBySortedRows = new WeakMap<
+	ReadonlyArray<Row<typeof tableFeaturesConfig, ProtocolTokenUsageData>>,
+	ReadonlyMap<string, number>
+>()
 
-function getSortedRowIndex(table: Table<ProtocolTokenUsageData>, rowId: string): number {
+function getSortedRowIndex(table: Table<typeof tableFeaturesConfig, ProtocolTokenUsageData>, rowId: string): number {
 	const sortedRows = table.getSortedRowModel().rows
 	let ranks = ranksBySortedRows.get(sortedRows)
 	if (!ranks) {
@@ -21,10 +25,12 @@ function getSortedRowIndex(table: Table<ProtocolTokenUsageData>, rowId: string):
 	return index
 }
 
-export const getColumns = (tokenSymbols: Array<string>): Array<ColumnDef<ProtocolTokenUsageData>> => {
+export const getColumns = (
+	tokenSymbols: Array<string>
+): Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTokenUsageData>> => {
 	const isMultiToken = tokenSymbols.length > 1
 
-	const baseColumns: Array<ColumnDef<ProtocolTokenUsageData>> = [
+	const baseColumns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTokenUsageData>> = [
 		{
 			header: 'Protocol',
 			accessorKey: 'name',

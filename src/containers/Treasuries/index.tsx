@@ -2,6 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import type { CSSProperties } from 'react'
 import { useMemo } from 'react'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Hovercard } from '~/ui/Hovercard'
@@ -9,7 +10,7 @@ import { getDominancePercent } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { ITreasuryRow, TreasuryTokenBreakdowns } from './types'
 
-const columnHelper = createColumnHelper<ITreasuryRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, ITreasuryRow>()
 
 export function Treasuries({ data, entity }: { data: Array<ITreasuryRow>; entity: boolean }) {
 	const tableColumns = useMemo(
@@ -33,13 +34,13 @@ export function Treasuries({ data, entity }: { data: Array<ITreasuryRow>; entity
 			placeholder="Search projects..."
 			header="Treasuries"
 			headingAs="h1"
-			sortingState={sortingState}
+			initialSorting={sortingState}
 			csvFileName={entity ? 'entities' : 'treasuries'}
 		/>
 	)
 }
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -183,7 +184,7 @@ const columns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 const BREAKDOWN_COLORS: Record<string, string> = {
 	stablecoins: '#16a34a',

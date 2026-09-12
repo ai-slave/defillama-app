@@ -5,6 +5,7 @@ import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Tag } from '~/ui/Tag'
+import type { tableFeaturesConfig } from './index'
 import type { RewardLifecycle, RewardProgram } from './types'
 
 const lifecycleStyles: Record<RewardLifecycle, string> = {
@@ -14,11 +15,11 @@ const lifecycleStyles: Record<RewardLifecycle, string> = {
 	Ended: 'text-secondary',
 	Unknown: 'text-tertiary'
 }
-const helper = createColumnHelper<RewardProgram>()
+const helper = createColumnHelper<typeof tableFeaturesConfig, RewardProgram>()
 
 // Widths follow COLUMN_WIDTHS.md: 24px padding + max(header + 14px sort, widest
 // realistic body), measured against public/fonts/inter.woff2.
-export const columns = [
+export const columns = helper.columns([
 	helper.accessor('protocol', {
 		header: 'Protocol / Program',
 		meta: { headerClassName: 'w-[300px] min-w-[300px]' },
@@ -107,7 +108,7 @@ export const columns = [
 		id: 'dates',
 		header: 'Dates',
 		sortUndefined: 'last',
-		sortingFn: 'text',
+		sortFn: 'text',
 		meta: { headerClassName: 'w-[173px] min-w-[173px]' },
 		cell: ({ row }) =>
 			row.original.dateRangeLabel ? <span className="text-secondary">{row.original.dateRangeLabel}</span> : null
@@ -131,9 +132,9 @@ export const columns = [
 				<span className="text-tertiary">—</span>
 			)
 	})
-]
+])
 
-export function renderProgramDetails(row: Row<RewardProgram>) {
+export function renderProgramDetails(row: Row<typeof tableFeaturesConfig, RewardProgram>) {
 	const program = row.original
 	return (
 		<div id={`reward-details-${row.id}`} className="flex flex-col gap-4 bg-surface-elevated-1 p-4">

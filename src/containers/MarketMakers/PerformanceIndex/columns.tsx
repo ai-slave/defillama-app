@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { ReactNode } from 'react'
+import type { SortedTableFeatures } from '~/components/Table/features/sorting'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -10,7 +11,7 @@ import { formatComposite, resolveGrade } from '../format'
 import { GRADE_SCALE_SUMMARY } from '../gradeBands'
 import type { IntegrationStatus, PerformanceRow } from './types'
 
-const columnHelper = createColumnHelper<PerformanceRow>()
+const columnHelper = createColumnHelper<SortedTableFeatures, PerformanceRow>()
 
 interface IBuildPerformanceColumns {
 	onSelectMM: (marketMakerId: string, marketMakerName: string) => void
@@ -139,7 +140,7 @@ export function buildPerformanceColumns({ onSelectMM, rankById }: IBuildPerforma
 		meta: { align: 'start' }
 	})
 
-	return [
+	return columnHelper.columns([
 		rankColumn,
 		marketMakerColumn,
 		gradeColumn,
@@ -154,7 +155,7 @@ export function buildPerformanceColumns({ onSelectMM, rankById }: IBuildPerforma
 		),
 		buildScoreColumn(onSelectMM, 'uptime', 'Uptime', SCORE_TOOLTIPS.uptime),
 		integrationLevelColumn
-	]
+	])
 }
 
 const STATUS_LABELS: Record<'full' | 'partial' | 'none', string> = {

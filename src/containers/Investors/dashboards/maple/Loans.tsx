@@ -1,25 +1,27 @@
-import { getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
+import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
 import { VirtualTable } from '~/components/Table/Table'
 import {
-	formatUsd,
 	formatPercent,
-	USD_LOWERCASE_MILLIONS_OPTIONS,
-	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+	formatUsd,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
 import { useMaplePoolsWithLoans } from './api'
 import { buildMapleLoansData, type LoanRow } from './chartData'
 import {
-	ChartCard,
 	CardSkeleton,
+	ChartCard,
 	KpiCard,
 	KpiSkeleton,
 	MAPLE_CSV_ONLY_EXPORT,
 	MAPLE_USD_CATEGORY_CHART_OPTIONS,
 	Pagination
 } from './shared'
+
+const tableFeaturesConfig = paginatedTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -51,7 +53,7 @@ const AGE_DISTRIBUTION_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const loanColumns: Array<ColumnDef<LoanRow>> = [
+const loanColumns: Array<ColumnDef<typeof tableFeaturesConfig, LoanRow>> = [
 	{
 		header: 'Borrower',
 		accessorKey: 'borrower',
@@ -127,16 +129,13 @@ function LoansTable({ data }: { data: Array<LoanRow> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'principal', desc: true }])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 15 })
 
-	const instance = useReactTable({
+	const instance = usePaginatedTable({
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: loanColumns,
 		state: { sorting, pagination },
 		onSortingChange: setSorting,
-		onPaginationChange: setPagination,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel()
+		onPaginationChange: setPagination
 	})
 
 	if (data.length === 0) return null
@@ -144,7 +143,7 @@ function LoansTable({ data }: { data: Array<LoanRow> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Open-Term Loans</h3>
-			<VirtualTable instance={instance} skipVirtualization />
+			<VirtualTable table={instance} skipVirtualization />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
 	)

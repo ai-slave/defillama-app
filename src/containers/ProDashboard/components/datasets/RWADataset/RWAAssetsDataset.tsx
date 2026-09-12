@@ -4,15 +4,15 @@ import {
 	type ColumnOrderState,
 	type ColumnSizingState,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	createPaginatedRowModel,
 	type PaginationState,
+	rowPaginationFeature,
 	type SortingState,
-	useReactTable
+	tableFeatures,
+	useTable
 } from '@tanstack/react-table'
 import { useCallback, useContext, useState } from 'react'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { useTableSearch } from '~/components/Table/utils'
 import { ProxyAuthTokenContext, StreamDoneContext } from '~/containers/ProDashboard/queries'
 import { fetchProDashboardProxy } from '~/containers/ProDashboard/services/fetchViaProxy'
@@ -33,9 +33,15 @@ import {
 	type RWAAssetTableRow
 } from './rwaAssetsTableData'
 
-const columnHelper = createColumnHelper<RWAAssetTableRow>()
+const tableFeaturesConfig = tableFeatures({
+	...orderedFilteredTableFeatures,
+	rowPaginationFeature,
+	paginatedRowModel: createPaginatedRowModel()
+})
 
-const columns = [
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, RWAAssetTableRow>()
+
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -87,7 +93,7 @@ const columns = [
 		cell: (info) => info.getValue() || '—',
 		size: 120
 	})
-]
+])
 
 const DEFAULT_COLUMN_ORDER: ColumnOrderState = [
 	'name',
@@ -107,10 +113,6 @@ const DEFAULT_COLUMN_SIZING: ColumnSizingState = {
 	category: 140,
 	type: 120
 }
-const getAssetsCoreRowModel = getCoreRowModel<RWAAssetTableRow>()
-const getAssetsSortedRowModel = getSortedRowModel<RWAAssetTableRow>()
-const getAssetsFilteredRowModel = getFilteredRowModel<RWAAssetTableRow>()
-const getAssetsPaginationRowModel = getPaginationRowModel<RWAAssetTableRow>()
 const EMPTY_DATA: Array<RWAAssetTableRow> = []
 const STALE_TIME = 5 * 60 * 1000
 
@@ -143,7 +145,8 @@ function RWAAssetsTable({ chain }: { chain?: string }) {
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 })
 	const { data, isLoading, error } = useRWAAssetsTableData(chain)
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data: data ?? EMPTY_DATA,
 		columns,
@@ -154,10 +157,6 @@ function RWAAssetsTable({ chain }: { chain?: string }) {
 		onColumnSizingChange: setColumnSizing,
 		onColumnFiltersChange: setColumnFilters,
 		onPaginationChange: setPagination,
-		getCoreRowModel: getAssetsCoreRowModel,
-		getSortedRowModel: getAssetsSortedRowModel,
-		getFilteredRowModel: getAssetsFilteredRowModel,
-		getPaginationRowModel: getAssetsPaginationRowModel,
 		autoResetPageIndex: true
 	})
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })

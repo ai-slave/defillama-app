@@ -1,12 +1,8 @@
 import {
+	createColumnHelper,
+	useTable,
 	type ColumnFiltersState,
 	type ColumnOrderState,
-	createColumnHelper,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
-	useReactTable,
 	type SortingState
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
@@ -19,12 +15,13 @@ import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { searchTableFeatures } from '~/components/Table/features/search'
 import { VirtualTable } from '~/components/Table/Table'
 import {
 	prepareTableCsv,
-	type ColumnOrdersByBreakpoint,
 	useSortColumnOrders,
-	useTableSearch
+	useTableSearch,
+	type ColumnOrdersByBreakpoint
 } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import { FullOldViewButton } from '~/containers/AdapterMetrics/FullOldViewButton'
@@ -35,7 +32,7 @@ import { setStorageItem } from '~/contexts/localStorageStore'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
@@ -43,11 +40,13 @@ import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { formatRatio, formatPercentChange, formatUsd } from '~/utils/numberFormat'
+import { formatPercentChange, formatRatio, formatUsd } from '~/utils/numberFormat'
 import { parseExcludeParam } from '~/utils/routerQuery'
 import { AdapterByChainChart } from './ChainChart'
 import type { IAdapterByChainPageData, IProtocol } from './types'
 import { getProtocolsByCategory } from './utils'
+
+const tableFeaturesConfig = searchTableFeatures
 
 type TPageType =
 	| 'Fees'
@@ -161,13 +160,14 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 			selectedCategories,
 			protocols
 		}
-	}, [categoryParam, excludeCategoryParam, hasCategoryParam, props.categories, props.protocols])
+	}, [categoryParam, excludeCategoryParam, hasCategoryParam, props])
 
 	const [sorting, setSorting] = useState<SortingState>(defaultSorting ?? DEFAULT_SORTING)
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
 	const [columnOrder, setColumnOrder] = useState<ColumnOrderState>([])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: protocols,
 		columns: tableColumns,
 		state: {
@@ -183,21 +183,16 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 		getSubRows: (row: IAdapterByChainPageData['protocols'][0]) => row.childProtocols,
 		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
 		onColumnFiltersChange: (updater) => startTransition(() => setColumnFilters(updater)),
-		onColumnOrderChange: (updater) => startTransition(() => setColumnOrder(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnOrderChange: (updater) => startTransition(() => setColumnOrder(updater))
 	})
 
-	const rankInstance = useReactTable({
+	const rankInstance = useTable({
+		features: tableFeaturesConfig,
 		data: protocols,
 		columns: tableColumns,
 		state: { sorting },
 		defaultColumn: { sortUndefined: 'last' },
-		enableSortingRemoval: false,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		enableSortingRemoval: false
 	})
 
 	const sortedRankRows = rankInstance.getSortedRowModel().rows
@@ -381,7 +376,7 @@ export function AdapterByChain({ children, defaultSorting, ...props }: IProps) {
 						size="md"
 					/>
 				</TableToolbar>
-				<VirtualTable instance={instance} rowSize={64} compact rowRankById={rowRankById} />
+				<VirtualTable table={instance} rowSize={64} compact rowRankById={rowRankById} />
 			</Panel>
 		</>
 	)
@@ -483,7 +478,7 @@ const getColumnsOptions = <T extends { id?: string; header?: unknown }>(type: IP
 
 type AdapterProtocolRow = IAdapterByChainPageData['protocols'][0]
 
-const columnHelper = createColumnHelper<AdapterProtocolRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, AdapterProtocolRow>()
 
 const NameColumn = (type: IProps['type']) =>
 	columnHelper.accessor('name', {

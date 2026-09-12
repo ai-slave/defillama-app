@@ -1,5 +1,6 @@
-import { getCoreRowModel, getSortedRowModel, type SortingState, useReactTable } from '@tanstack/react-table'
+import { type SortingState, useTable } from '@tanstack/react-table'
 import * as React from 'react'
+import { sortedTableFeatures } from '~/components/Table/features/sorting'
 import { StickyTable } from '../StickyTable'
 import { buildPerformanceColumns } from './columns'
 import type { PerformanceRow } from './types'
@@ -10,7 +11,6 @@ interface IScoresTableProps {
 }
 
 export function ScoresTable({ rows, onSelectMM }: IScoresTableProps) {
-	'use no memo'
 	const [sorting, setSorting] = React.useState<SortingState>([{ id: '#', desc: true }])
 
 	const rankById = React.useMemo(() => {
@@ -22,15 +22,14 @@ export function ScoresTable({ rows, onSelectMM }: IScoresTableProps) {
 
 	const tableColumns = React.useMemo(() => buildPerformanceColumns({ onSelectMM, rankById }), [onSelectMM, rankById])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: sortedTableFeatures,
 		data: rows,
 		columns: tableColumns,
 		state: { sorting },
 		enableSortingRemoval: false,
-		onSortingChange: setSorting,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: setSorting
 	})
 
-	return <StickyTable headerGroups={instance.getHeaderGroups()} rows={instance.getRowModel().rows} />
+	return <StickyTable table={instance} />
 }

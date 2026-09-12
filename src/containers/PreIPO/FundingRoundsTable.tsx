@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
 import { formatDate } from '~/utils/dateFormat'
@@ -7,12 +8,12 @@ import type { PreIpoRaise } from './api.types'
 import { PRE_IPO_USD_OPTIONS } from './constants'
 import { preIpoDefinitions } from './definitions'
 
-const columnHelper = createColumnHelper<PreIpoRaise>()
+const columnHelper = createColumnHelper<SearchTableFeatures, PreIpoRaise>()
 const DEFAULT_SORTING = [
 	{ id: 'date', desc: true },
 	{ id: 'amountRaised', desc: true }
 ]
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('date', {
 		header: 'Date',
 		cell: ({ getValue }) => formatDate(getValue()) ?? '-',
@@ -43,7 +44,7 @@ const columns = [
 			headerHelperText: preIpoDefinitions.fundingRound.valuation.description
 		}
 	})
-]
+])
 
 export function FundingRoundsTable({ companyName, raises }: { companyName: string; raises: Array<PreIpoRaise> }) {
 	if (raises.length === 0) {
@@ -65,7 +66,7 @@ export function FundingRoundsTable({ companyName, raises }: { companyName: strin
 			placeholder="Search rounds..."
 			columnToSearch="series"
 			csvFileName={`${companyName}-funding-rounds`}
-			sortingState={DEFAULT_SORTING}
+			initialSorting={DEFAULT_SORTING}
 			skipVirtualization
 		/>
 	)

@@ -1,15 +1,8 @@
-import {
-	getCoreRowModel,
-	getExpandedRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	type ColumnDef,
-	type Table,
-	useReactTable
-} from '@tanstack/react-table'
+import { type ColumnDef, type Table, useTable } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import type { ProtocolAggregateTableRow } from '../../../unifiedTable/contracts'
+import { tableFeaturesConfig } from '../core/useUnifiedTable'
 import { buildProtocolTableReadModel } from '../readModel'
 import type { ProtocolTableRow } from '../types'
 import { buildGroupedCsvData, getRowsAtGroupLevel } from './csvExport'
@@ -49,17 +42,18 @@ describe('Unified Table CSV export', () => {
 			chainMetrics: {},
 			customColumns: []
 		}).rows
-		const columns: Array<ColumnDef<ProtocolTableRow>> = [{ id: 'name', accessorKey: 'displayName', header: 'Protocol' }]
-		const rendered: { table?: Table<ProtocolTableRow> } = {}
+		const columns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
+			{ id: 'name', accessorKey: 'displayName', header: 'Protocol' }
+		]
+		const rendered: { table?: Table<typeof tableFeaturesConfig, ProtocolTableRow> } = {}
 
 		function Probe() {
-			rendered.table = useReactTable({
+			rendered.table = useTable({
+				features: tableFeaturesConfig,
 				data: rows,
 				columns,
 				state: { pagination: { pageIndex: 0, pageSize: 1 } },
-				getSubRows: (row) => (row.nodeType === 'group' ? row.subRows : undefined),
-				getCoreRowModel: getCoreRowModel(),
-				getPaginationRowModel: getPaginationRowModel()
+				getSubRows: (row) => (row.nodeType === 'group' ? row.subRows : undefined)
 			})
 			return null
 		}
@@ -91,23 +85,21 @@ describe('Unified Table CSV export', () => {
 			chainMetrics: {},
 			customColumns: []
 		}).rows
-		const columns: Array<ColumnDef<ProtocolTableRow>> = [
+		const columns: Array<ColumnDef<typeof tableFeaturesConfig, ProtocolTableRow>> = [
 			{ id: 'name', accessorKey: 'displayName', header: 'Name' },
 			{ id: 'category', accessorKey: 'category', header: 'Category' },
 			{ id: 'chains', accessorKey: 'chains', header: 'Chains' },
 			{ id: 'oracles', accessorKey: 'oracles', header: 'Oracles' }
 		]
-		const rendered: { table?: Table<ProtocolTableRow> } = {}
+		const rendered: { table?: Table<typeof tableFeaturesConfig, ProtocolTableRow> } = {}
 
 		function Probe() {
-			rendered.table = useReactTable({
+			rendered.table = useTable({
+				features: tableFeaturesConfig,
 				data: rows,
 				columns,
 				state: { expanded: true },
-				getSubRows: (row) => (row.nodeType === 'group' ? row.subRows : undefined),
-				getCoreRowModel: getCoreRowModel(),
-				getSortedRowModel: getSortedRowModel(),
-				getExpandedRowModel: getExpandedRowModel()
+				getSubRows: (row) => (row.nodeType === 'group' ? row.subRows : undefined)
 			})
 			return null
 		}

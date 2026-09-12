@@ -2,12 +2,8 @@ import {
 	type ColumnFiltersState,
 	createColumnHelper,
 	type ExpandedState,
-	getCoreRowModel,
-	getExpandedRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { startTransition, useDeferredValue, useMemo, useState } from 'react'
@@ -15,6 +11,7 @@ import { Bookmark } from '~/components/Bookmark'
 import { FilterBetweenRange } from '~/components/Filters/FilterBetweenRange'
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
+import { expandedFilteredTableFeatures } from '~/components/Table/features/expandedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
@@ -32,8 +29,10 @@ import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { geckoTokenIconUrl } from '~/utils/icons'
-import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
+
+const tableFeaturesConfig = expandedFilteredTableFeatures
 
 const optionsKey = 'unlockTable'
 
@@ -50,7 +49,7 @@ interface IUnlocksTableProps {
 	showOnlyWatchlist: boolean
 	savedProtocols: Set<string>
 }
-const columnHelper = createColumnHelper<IEmission>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, IEmission>()
 
 const formatUnlockTypeLabel = (type: string) =>
 	type
@@ -271,7 +270,8 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols }: I
 	const [nowSec] = useState(() => Math.floor(Date.now() / 1000))
 	const columns = useMemo(() => [...emissionsColumns, upcomingEventColumn(nowSec)], [nowSec])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: filteredData,
 		columns,
 		state: {
@@ -287,11 +287,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols }: I
 		filterFromLeafRows: true,
 		onSortingChange: (updater) => startTransition(() => setSorting(updater)),
 		onColumnFiltersChange: (updater) => startTransition(() => setColumnFilters(updater)),
-		onExpandedChange: (updater) => startTransition(() => setExpanded(updater)),
-		getFilteredRowModel: getFilteredRowModel(),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getExpandedRowModel: getExpandedRowModel()
+		onExpandedChange: (updater) => startTransition(() => setExpanded(updater))
 	})
 	const [_projectName, setProjectName] = useTableSearch({
 		instance,
@@ -378,7 +374,7 @@ export function UnlocksTable({ protocols, showOnlyWatchlist, savedProtocols }: I
 					size="md"
 				/>
 			</TableToolbar>
-			<VirtualTable instance={instance} stripedBg rowSize={56} />
+			<VirtualTable table={instance} stripedBg rowSize={56} />
 		</Card>
 	)
 }
@@ -405,7 +401,7 @@ const defaultColumns = JSON.stringify(Object.fromEntries(columnOptions.map((colu
 
 export type IEmission = EnrichedProtocolEmission
 
-const emissionsColumns = [
+const emissionsColumns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		filterFn: (row, _columnId, filterValue) => {
@@ -623,7 +619,7 @@ const emissionsColumns = [
 				'Cliff unlocks plus linear releases accrued during the exact rolling 24-hour period from the emissions artifact snapshot. Events without a known amount or valid snapshot price are excluded.'
 		}
 	})
-]
+])
 
 const upcomingEventColumn = (nowSec: number) =>
 	columnHelper.accessor(

@@ -1,9 +1,9 @@
+import type { ReactTable } from '@tanstack/react-table'
 // @vitest-environment happy-dom
-
-import type { Table } from '@tanstack/react-table'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLiquidationsSection } from '~/containers/Token/TokenLiquidationsSection'
 import { LiquidationsChainPage } from '../ChainPage'
 import { LiquidationsOverview } from '../index'
@@ -29,9 +29,9 @@ vi.mock('../LiquidationsDistributionChart', () => ({ LiquidationsDistributionCha
 vi.mock('../Summary', () => ({ LiquidationsSummaryStats: () => null, LiquidationsPageHeader: () => null }))
 vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => <button type="button">Export</button> }))
 vi.mock('~/components/Table/Table', () => ({
-	VirtualTable: ({ instance }: { instance: Table<unknown> }) => (
-		<div data-testid="table" data-sort={JSON.stringify(instance.getState().sorting)}>
-			<button type="button" onClick={() => instance.getColumn(instance.getState().sorting[0].id)!.toggleSorting(false)}>
+	VirtualTable: ({ table: instance }: { table: ReactTable<SearchTableFeatures, unknown> }) => (
+		<div data-testid="table" data-sort={JSON.stringify(instance.state.sorting)}>
+			<button type="button" onClick={() => instance.getColumn(instance.state.sorting[0].id)!.toggleSorting(false)}>
 				Sort ascending
 			</button>
 			<output>{instance.getRowModel().rows.length} rows</output>

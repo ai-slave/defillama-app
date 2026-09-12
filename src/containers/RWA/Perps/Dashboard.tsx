@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { skipToken, useQuery } from '@tanstack/react-query'
-import { createColumnHelper, type VisibilityState } from '@tanstack/react-table'
+import { createColumnHelper, type ColumnVisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { lazy, Suspense, useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { ChartExportButtons } from '~/components/ChartExport/ChartExportButtons'
@@ -23,6 +23,7 @@ import { Select } from '~/components/Select/Select'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey } from '~/components/Select/types'
 import { selectTriggerStyles } from '~/components/Select/types'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { CHART_COLORS } from '~/constants/colors'
 import {
@@ -45,7 +46,7 @@ import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
-import { formatUsd, formatCompactNumber, formatPercent } from '~/utils/numberFormat'
+import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import {
 	isTrueQueryParam,
 	parseArrayParam,
@@ -56,6 +57,7 @@ import {
 import { setRWAPerpsChartScope } from './api'
 import type { IRWAPerpsMarket } from './api.types'
 import { getRWAPerpsAssetGroupBreakdownLabel, getRWAPerpsBaseAssetBreakdownLabel } from './breakdownLabels'
+import type { RWAPerpsChartDefaults } from './chartState'
 import {
 	getDefaultRWAPerpsChartBreakdown,
 	getRWAPerpsBreakdownLabel,
@@ -63,22 +65,21 @@ import {
 	getRWAPerpsChartBreakdownQueryValue,
 	getRWAPerpsChartMetricLabel,
 	getRWAPerpsChartMetricOptions,
-	getRWAPerpsTimeSeriesModeQueryValue,
 	getRWAPerpsChartMetricQueryValue,
-	getRWAPerpsVolumeGroupByQueryValue,
+	getRWAPerpsChartViewOptions,
+	getRWAPerpsChartViewQueryValueForMode,
+	getRWAPerpsTimeSeriesModeQueryValue,
 	getRWAPerpsTreemapNestedByLabel,
 	getRWAPerpsTreemapNestedByOptions,
 	getRWAPerpsTreemapNestedByQueryValue,
-	getRWAPerpsChartViewOptions,
-	getRWAPerpsChartViewQueryValueForMode,
+	getRWAPerpsVolumeGroupByQueryValue,
 	parseRWAPerpsChartState,
 	parseRWAPerpsVolumeGroupBy,
 	setRWAPerpsChartBreakdown,
+	setRWAPerpsChartView,
 	setRWAPerpsTimeSeriesMode,
-	setRWAPerpsTreemapNestedBy,
-	setRWAPerpsChartView
+	setRWAPerpsTreemapNestedBy
 } from './chartState'
-import type { RWAPerpsChartDefaults } from './chartState'
 import {
 	buildRWAPerpsTimeSeriesCharts,
 	buildRWAPerpsTimeSeriesDatasetForRows,
@@ -86,11 +87,11 @@ import {
 } from './dashboardData'
 import { perpsDefinitions as d } from './definitions'
 import {
+	appendRWAPerpsTimeSeriesDatasetTotal,
 	buildRWAPerpsAssetGroupSnapshotBreakdownTotals,
 	buildRWAPerpsAssetSnapshotBreakdownTotals,
 	buildRWAPerpsOverviewSnapshotBreakdownTotals,
 	buildRWAPerpsVenueSnapshotBreakdownTotals,
-	appendRWAPerpsTimeSeriesDatasetTotal,
 	getAggregateOpenInterestChange24h,
 	getAggregateVolume24hChange24h,
 	groupRWAPerpsTimeSeriesDataset,
@@ -270,10 +271,10 @@ type RWAPerpsDashboardProps = (
 	assetClassFilter?: string
 }
 
-const overviewColumnHelper = createColumnHelper<IRWAPerpsOverviewPageData['markets'][number]>()
-const venueColumnHelper = createColumnHelper<IRWAPerpsVenuePageData['markets'][number]>()
+const overviewColumnHelper = createColumnHelper<SearchTableFeatures, IRWAPerpsOverviewPageData['markets'][number]>()
+const venueColumnHelper = createColumnHelper<SearchTableFeatures, IRWAPerpsVenuePageData['markets'][number]>()
 
-const overviewColumns = [
+const overviewColumns = overviewColumnHelper.columns([
 	overviewColumnHelper.accessor((row) => row.contract, {
 		id: 'contract',
 		header: d.contract.label,
@@ -740,9 +741,9 @@ const overviewColumns = [
 			headerHelperText: d.estimatedProtocolFeesAllTime.description
 		}
 	})
-]
+])
 
-const venueColumns = [
+const venueColumns = venueColumnHelper.columns([
 	venueColumnHelper.accessor((row) => row.contract, {
 		id: 'contract',
 		header: d.contract.label,
@@ -1035,7 +1036,7 @@ const venueColumns = [
 			headerHelperText: d.estimatedProtocolFees24h.description
 		}
 	})
-]
+])
 
 const assetGroupPriorityColumns = ['contract', 'venue', 'baseAsset', 'assetClass'] as const
 
@@ -1061,7 +1062,7 @@ const assetColumns = [
 	)
 ]
 
-const overviewColumnVisibility: VisibilityState = {
+const overviewColumnVisibility: ColumnVisibilityState = {
 	category: false,
 	parentPlatform: false,
 	marginAsset: false,
@@ -1082,7 +1083,7 @@ const overviewColumnVisibility: VisibilityState = {
 	estimatedProtocolFeesAllTime: false
 }
 
-const venueColumnVisibility: VisibilityState = {
+const venueColumnVisibility: ColumnVisibilityState = {
 	category: false,
 	rwaClassification: false,
 	oracleProvider: false,
@@ -1092,12 +1093,12 @@ const venueColumnVisibility: VisibilityState = {
 	issuer: false
 }
 
-const assetGroupColumnVisibility: VisibilityState = {
+const assetGroupColumnVisibility: ColumnVisibilityState = {
 	...overviewColumnVisibility,
 	baseAssetGroup: false
 }
 
-const assetColumnVisibility: VisibilityState = {
+const assetColumnVisibility: ColumnVisibilityState = {
 	...overviewColumnVisibility,
 	baseAsset: false,
 	baseAssetGroup: false
@@ -2510,7 +2511,7 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 						: `${isVenueMode ? props.data.venue : isAssetGroupMode ? props.data.assetGroup : props.data.asset} Markets`
 				}
 				headingAs="h1"
-				sortingState={[{ id: 'openInterest', desc: true }]}
+				initialSorting={[{ id: 'openInterest', desc: true }]}
 				columnVisibility={
 					isOverviewMode
 						? overviewColumnVisibility

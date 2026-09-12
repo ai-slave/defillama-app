@@ -3,16 +3,17 @@ import { formatFixedNumber } from '~/utils/numberFormat'
 import { isProtocolTableMetricKey } from '../../../unifiedTable/config/columnDictionary'
 import { getFilteredShareMetricKey } from '../../../unifiedTable/config/filteredShareColumns'
 import type { CustomColumnDefinition, UnifiedRowHeaderType } from '../../../unifiedTable/config/types'
+import type { tableFeaturesConfig } from '../core/useUnifiedTable'
 import type { ProtocolTableRow } from '../types'
 import { isCustomColumnId } from './customColumns'
 
 export function getRowsAtGroupLevel(
-	table: Table<ProtocolTableRow>,
+	table: Table<typeof tableFeaturesConfig, ProtocolTableRow>,
 	level: UnifiedRowHeaderType
-): Array<Row<ProtocolTableRow>> {
-	const result: Array<Row<ProtocolTableRow>> = []
+): Array<Row<typeof tableFeaturesConfig, ProtocolTableRow>> {
+	const result: Array<Row<typeof tableFeaturesConfig, ProtocolTableRow>> = []
 
-	const collectRows = (rows: Array<Row<ProtocolTableRow>>) => {
+	const collectRows = (rows: Array<Row<typeof tableFeaturesConfig, ProtocolTableRow>>) => {
 		for (const row of rows) {
 			if (row.original.nodeType === 'group') {
 				if (row.original.header === level) {
@@ -103,8 +104,8 @@ export function buildGroupedCsvData({
 	level,
 	customColumns
 }: {
-	rows: Array<Row<ProtocolTableRow>>
-	columns: Array<Column<ProtocolTableRow>>
+	rows: Array<Row<typeof tableFeaturesConfig, ProtocolTableRow>>
+	columns: Array<Column<typeof tableFeaturesConfig, ProtocolTableRow>>
 	percentColumns: Set<string>
 	level: UnifiedRowHeaderType
 	customColumns: ReadonlyArray<CustomColumnDefinition>

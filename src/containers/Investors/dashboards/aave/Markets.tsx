@@ -1,26 +1,29 @@
-import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef, SortingState } from '@tanstack/react-table'
+import { useTable } from '@tanstack/react-table'
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
+import { displayTableFeatures } from '~/components/Table/features/display'
 import {
-	formatUsd,
 	formatPercent,
-	USD_LOWERCASE_MILLIONS_OPTIONS,
-	PERCENT_POINTS_TWO_DECIMALS_OPTIONS
+	formatUsd,
+	PERCENT_POINTS_TWO_DECIMALS_OPTIONS,
+	USD_LOWERCASE_MILLIONS_OPTIONS
 } from '~/utils/numberFormat'
-import { useAaveMarkets } from './api'
 import type { FlatReserve } from './api'
+import { useAaveMarkets } from './api'
 import {
-	InvestorsTable,
-	PageLoader,
-	ChartCard,
-	KpiCard,
-	MetricStrip,
-	SectionHeader,
 	AAVE_BAR_EXPORT,
 	AAVE_CATEGORY_DOLLAR_CHART_OPTIONS,
-	AAVE_CATEGORY_PERCENT_CHART_OPTIONS
+	AAVE_CATEGORY_PERCENT_CHART_OPTIONS,
+	ChartCard,
+	InvestorsTable,
+	KpiCard,
+	MetricStrip,
+	PageLoader,
+	SectionHeader
 } from './shared'
+
+const tableFeaturesConfig = displayTableFeatures
 
 const MultiSeriesChart = lazy(() => import('~/components/ECharts/MultiSeriesChart')) as React.FC<IMultiSeriesChartProps>
 
@@ -43,7 +46,7 @@ const UTILIZATION_CHART: IMultiSeriesChartProps['charts'] = [
 	}
 ]
 
-const reserveColumns: Array<ColumnDef<FlatReserve>> = [
+const reserveColumns: Array<ColumnDef<typeof tableFeaturesConfig, FlatReserve>> = [
 	{ header: 'Asset', accessorKey: 'symbol', size: 100 },
 	{ header: 'Chain', accessorKey: 'chain', size: 100 },
 	{
@@ -152,14 +155,13 @@ function ReservesTable({ data }: { data: Array<FlatReserve> }) {
 	const [sorting, setSorting] = useState<SortingState>([{ id: 'sizeUsd', desc: true }])
 	const [page, setPage] = useState(0)
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		defaultColumn: { sortUndefined: 'last' },
 		data,
 		columns: reserveColumns,
 		state: { sorting },
-		onSortingChange: setSorting,
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel()
+		onSortingChange: setSorting
 	})
 
 	const allRows = instance.getSortedRowModel().rows

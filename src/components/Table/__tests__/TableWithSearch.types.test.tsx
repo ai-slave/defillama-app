@@ -1,7 +1,9 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { describe, expect, test } from 'vitest'
 import { formatNumber } from '~/utils/numberFormat'
+import { searchTableFeatures } from '../features/search'
 import { TableWithSearch } from '../TableWithSearch'
+const features = searchTableFeatures
 
 interface TestRow {
 	name: string
@@ -9,7 +11,7 @@ interface TestRow {
 	tags: Array<string>
 }
 
-const columnHelper = createColumnHelper<TestRow>()
+const columnHelper = createColumnHelper<typeof features, TestRow>()
 const columns = [
 	columnHelper.accessor('name', {
 		header: 'Name',

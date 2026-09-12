@@ -5,15 +5,16 @@ import { formatPercent, formatRatio } from '~/utils/numberFormat'
 import type { LoopTableRow } from '../data/types'
 import { hasPart } from '../domain/apyPresentation'
 import { NameYield, PoolNameLockup } from './Name'
+import type { tableFeaturesConfig } from './PaginatedYieldsTable'
 import { PaginatedYieldsTable } from './PaginatedYieldsTable'
 import type { IYieldsTableProps } from './types'
 import {
 	ApyWindowHeader,
 	AvailableCell,
 	EmptyCell,
-	type SignedTipRow,
 	SignedApyCell,
-	TotalApyCell
+	TotalApyCell,
+	type SignedTipRow
 } from './YieldsCells'
 
 // Looped-APY breakdown: split each leg into its resolved-view components, scaled by the loop
@@ -86,11 +87,11 @@ function LeverageCell({ value }: { value: number | null | undefined }) {
 // infra the borrow tables use, with bespoke loop column defs. Column ids double as the
 // server `sortBy` keys (the loops handler exposes loop_apy / supply_apy / borrow_apy /
 // available_borrow / ltv accessors).
-const loopHelper = createColumnHelper<LoopTableRow>()
+const loopHelper = createColumnHelper<typeof tableFeaturesConfig, LoopTableRow>()
 
 // Column order / labels: Token, Protocol, Chain, Leverage, Supply APY, Borrow APY,
 // Looped APY, Available, Loop LTV.
-const loopColumns: TableOptions<LoopTableRow>['columns'] = [
+const loopColumns: TableOptions<typeof tableFeaturesConfig, LoopTableRow>['columns'] = loopHelper.columns([
 	loopHelper.accessor('pool', {
 		id: 'token',
 		header: 'Token',
@@ -250,7 +251,7 @@ const loopColumns: TableOptions<LoopTableRow>['columns'] = [
 		cell: ({ row }) => <LtvCell value={row.original.ltv} />,
 		meta: { headerClassName: 'w-[80px] min-w-[80px]', align: 'end' }
 	})
-]
+])
 
 export function PaginatedLoopsTable(props: IYieldsTableProps<LoopTableRow>) {
 	return (

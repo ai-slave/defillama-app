@@ -2,11 +2,8 @@ import {
 	type ColumnFiltersState,
 	type ColumnOrderState,
 	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
 	type SortingState,
-	useReactTable
+	useTable
 } from '@tanstack/react-table'
 import * as React from 'react'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
@@ -14,20 +11,23 @@ import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { IconsRow } from '~/components/IconsRow'
 import { chainHref, toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
+import { orderedFilteredTableFeatures } from '~/components/Table/features/orderedFiltering'
 import { VirtualTable } from '~/components/Table/Table'
 import type { ColumnOrdersByBreakpoint } from '~/components/Table/utils'
 import { prepareTableCsv, useSortColumnOrders, useTableSearch } from '~/components/Table/utils'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { useCalcCirculating } from '~/containers/Stablecoins/hooks'
 import { Icon } from '~/ui/Icon'
-import { searchFieldWrapperStyles, searchFieldIconStyles, searchFieldInputStyles } from '~/ui/Input'
+import { searchFieldIconStyles, searchFieldInputStyles, searchFieldWrapperStyles } from '~/ui/Input'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
-import { formatUsd, formatPercent, roundNumber } from '~/utils/numberFormat'
+import { formatPercent, formatUsd, roundNumber } from '~/utils/numberFormat'
+
+const tableFeaturesConfig = orderedFilteredTableFeatures
 
 type StablecoinDeviationInfo = {
 	timestamp: number
@@ -63,9 +63,9 @@ type StablecoinsTableInputRow = {
 	subRows?: Array<StablecoinsTableInputRow>
 }
 type StablecoinRow = ReturnType<typeof useCalcCirculating<StablecoinsTableInputRow>>[number]
-const columnHelper = createColumnHelper<StablecoinRow>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, StablecoinRow>()
 
-const stablecoinsColumns = [
+const stablecoinsColumns = columnHelper.columns([
 	columnHelper.accessor((row) => `${row.name}${row.symbol && row.symbol !== '-' ? ` (${row.symbol})` : ''}`, {
 		id: 'name',
 		header: 'Name',
@@ -277,7 +277,7 @@ const stablecoinsColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 const assetsColumnOrders: ColumnOrdersByBreakpoint = {
 	0: ['name', 'mcap', 'change_1d', 'change_7d', 'change_1m', 'price', 'pegDeviation', 'pegDeviation_1m', 'chains'],
@@ -352,7 +352,8 @@ export function StablecoinsTable({ data }: { data: Array<StablecoinRow> }) {
 	const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>([])
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data,
 		columns: stablecoinsColumns,
 		state: {
@@ -366,10 +367,7 @@ export function StablecoinsTable({ data }: { data: Array<StablecoinRow> }) {
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
 		onColumnOrderChange: (updater) => React.startTransition(() => setColumnOrder(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_projectName, setProjectName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -393,7 +391,7 @@ export function StablecoinsTable({ data }: { data: Array<StablecoinRow> }) {
 					size="md"
 				/>
 			</TableToolbar>
-			<VirtualTable instance={instance} />
+			<VirtualTable table={instance} />
 		</Panel>
 	)
 }

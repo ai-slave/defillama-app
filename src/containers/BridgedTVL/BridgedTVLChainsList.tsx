@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { slug } from '~/utils'
@@ -19,7 +20,7 @@ interface BridgedTVLChainsListProps {
 
 const DEFAULT_SORTING_STATE = [{ id: 'total', desc: true }]
 
-const columnHelper = createColumnHelper<IBridgedRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IBridgedRow>()
 
 export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains }: BridgedTVLChainsListProps) {
 	const data = useMemo(() => {
@@ -51,7 +52,7 @@ export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains
 				placeholder="Search chains..."
 				columnToSearch="name"
 				csvFileName="bridged-chains"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</>
 	)

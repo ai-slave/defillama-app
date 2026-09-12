@@ -2,6 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
@@ -29,7 +30,7 @@ const DEFAULT_SORTING_STATE = [{ id: 'sumAnnualUsdExpenses', desc: true }]
 
 type ExpenseRow = InferGetStaticPropsType<typeof getStaticProps>['expenses'][number]
 
-const columnHelper = createColumnHelper<ExpenseRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, ExpenseRow>()
 
 function isDeprecatedProtocol(
 	protocol: ExpenseRow['protocol']
@@ -53,13 +54,13 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 				header="Protocol Expenses"
 				headingAs="h1"
 				csvFileName="protocol-expenses"
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</Layout>
 	)
 }
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Name',
 		enableSorting: false,
@@ -124,4 +125,4 @@ const columns = [
 			headerClassName: 'w-[90px]'
 		}
 	})
-]
+])

@@ -1,4 +1,5 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { letterLogoDataUri } from '~/utils/icons'
@@ -9,7 +10,7 @@ import { RampAccessValue, RampCurrenciesValue, RampLegValue, RampRoundTripValue,
 import type { RampRowModel } from './rampPresentation'
 import { selectVenueDestination } from './venueLinks'
 
-const columnHelper = createColumnHelper<RampRowModel>()
+const columnHelper = createColumnHelper<SearchTableFeatures, RampRowModel>()
 
 const ROUND_TRIP_HELP =
 	'Fiat in, then fiat out: deposit → buy BTC → withdraw to your own wallet, plus the same trip in reverse. The full cost of using the venue as a ramp.'
@@ -27,7 +28,7 @@ export const RAMP_HIDDEN_COLUMNS = { regulator: false, access: false }
 
 export function buildRampColumns(options: { size: number; currency: string | null; country: string | null }) {
 	const { size, currency, country } = options
-	return [
+	return columnHelper.columns([
 		columnHelper.accessor((row) => `${row.name} ${row.exchange} ${row.variant.regulator ?? ''}`, {
 			id: 'name',
 			header: 'Exchange',
@@ -194,5 +195,5 @@ export function buildRampColumns(options: { size: number; currency: string | nul
 				headerHelperText: 'Lead regulator for the licence covering this region; the badge marks a MiCA licence.'
 			}
 		})
-	]
+	])
 }

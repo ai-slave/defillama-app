@@ -3,6 +3,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 import dynamic from 'next/dynamic'
 import { Suspense, useState } from 'react'
 import { BasicLink } from '~/components/Link'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
 import { LiquidationsTableTabs, renderLiquidationsTableLayout } from '~/containers/LiquidationsV2/TableTabs'
 import { Panel } from '~/ui/Panel'
@@ -35,10 +36,10 @@ const DeferredLiquidationsDistributionChart = dynamic(
 	}
 )
 
-const protocolColumnHelper = createColumnHelper<OverviewProtocolRow>()
-const chainColumnHelper = createColumnHelper<OverviewChainRow>()
+const protocolColumnHelper = createColumnHelper<SearchTableFeatures, OverviewProtocolRow>()
+const chainColumnHelper = createColumnHelper<SearchTableFeatures, OverviewChainRow>()
 
-const protocolColumns = [
+const protocolColumns = protocolColumnHelper.columns([
 	protocolColumnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -85,9 +86,9 @@ const protocolColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
-const chainColumns = [
+const chainColumns = chainColumnHelper.columns([
 	chainColumnHelper.accessor('name', {
 		id: 'name',
 		header: 'Name',
@@ -132,7 +133,7 @@ const chainColumns = [
 			align: 'end'
 		}
 	})
-]
+])
 
 async function fetchTokenLiquidationsRows(
 	tokenSymbol: string,
@@ -213,7 +214,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 										placeholder="Search protocols..."
 										csvFileName={`token-liquidations-100k-protocols-${tokenSymbol}`}
 										embedded
-										sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
+										initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
 									/>
 								) : (
 									<DeferredTableWithSearch
@@ -224,7 +225,7 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 										placeholder="Search chains..."
 										csvFileName={`token-liquidations-100k-chains-${tokenSymbol}`}
 										embedded
-										sortingState={[{ id: 'totalCollateralUsd', desc: true }]}
+										initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
 									/>
 								)}
 							</LiquidationsTableTabs>

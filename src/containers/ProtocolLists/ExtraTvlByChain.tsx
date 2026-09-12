@@ -4,6 +4,7 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
+import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TableWithSearch } from '~/components/Table/TableWithSearch'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
@@ -98,7 +99,7 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 				columnToSearch="name"
 				compact
 				csvFileName={`protocols-${props.metric}-${props.chain}`}
-				sortingState={DEFAULT_SORTING_STATE}
+				initialSorting={DEFAULT_SORTING_STATE}
 			/>
 		</>
 	)
@@ -110,13 +111,13 @@ const METRIC_CHART_PARAMS: Record<ExtraTvlMetric, string> = {
 	pool2: 'pool2=true'
 }
 
-const columnHelper = createColumnHelper<IExtraTvlProtocolRow>()
+const columnHelper = createColumnHelper<SearchTableFeatures, IExtraTvlProtocolRow>()
 
 function createColumns(metric: ExtraTvlMetric) {
 	const metricInfo = METRIC_LABELS[metric]
 	const chartParam = METRIC_CHART_PARAMS[metric]
 
-	return [
+	return columnHelper.columns([
 		columnHelper.accessor('name', {
 			id: 'name',
 			header: 'Name',
@@ -214,7 +215,7 @@ function createColumns(metric: ExtraTvlMetric) {
 				align: 'end'
 			}
 		})
-	]
+	])
 }
 
 const EXTRA_TVL_COLUMNS_BY_METRIC = {

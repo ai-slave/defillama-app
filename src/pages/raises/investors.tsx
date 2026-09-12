@@ -1,17 +1,10 @@
-import {
-	type ColumnFiltersState,
-	createColumnHelper,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getSortedRowModel,
-	type SortingState,
-	useReactTable
-} from '@tanstack/react-table'
+import { type ColumnFiltersState, createColumnHelper, type SortingState, useTable } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { IconsRow } from '~/components/IconsRow'
 import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
+import { filteredTableFeatures } from '~/components/Table/features/filtering'
 import { VirtualTable } from '~/components/Table/Table'
 import { useTableSearch } from '~/components/Table/utils'
 import { getInvestorsPageData } from '~/containers/Raises/queries'
@@ -28,11 +21,13 @@ import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
 import { pushShallowQuery } from '~/utils/routerQuery'
 
+const tableFeaturesConfig = filteredTableFeatures
+
 interface INormalizedInvestor extends IInvestorTimespan {
 	name: string
 }
 
-const columnHelper = createColumnHelper<INormalizedInvestor>()
+const columnHelper = createColumnHelper<typeof tableFeaturesConfig, INormalizedInvestor>()
 
 export const getStaticProps = withPerformanceLogging('raises/active-investors', async () => {
 	const data = await getInvestorsPageData()
@@ -45,7 +40,7 @@ export const getStaticProps = withPerformanceLogging('raises/active-investors', 
 
 const pageName = ['Investors']
 
-const columns = [
+const columns = columnHelper.columns([
 	columnHelper.accessor('name', {
 		header: 'Investor',
 		enableSorting: false,
@@ -121,7 +116,7 @@ const columns = [
 			headerClassName: 'w-[min(240px,40vw)]'
 		}
 	})
-]
+])
 
 const allPeriods = [
 	{ value: 'allTime', label: 'All Time' },
@@ -159,7 +154,8 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
 
-	const instance = useReactTable({
+	const instance = useTable({
+		features: tableFeaturesConfig,
 		data: normalizedData,
 		columns,
 		state: {
@@ -171,10 +167,7 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 		},
 		enableSortingRemoval: false,
 		onSortingChange: (updater) => React.startTransition(() => setSorting(updater)),
-		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater)),
-		getCoreRowModel: getCoreRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getFilteredRowModel: getFilteredRowModel()
+		onColumnFiltersChange: (updater) => React.startTransition(() => setColumnFilters(updater))
 	})
 
 	const [_investorName, setInvestorName] = useTableSearch({ instance, columnToSearch: 'name' })
@@ -215,7 +208,7 @@ function ActiveInvestors({ investors }: IInvestorsPageData) {
 						))}
 					</div>
 				</PanelHeader>
-				<VirtualTable instance={instance} />
+				<VirtualTable table={instance} />
 			</Panel>
 		</Layout>
 	)
