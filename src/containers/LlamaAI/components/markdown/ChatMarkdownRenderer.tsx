@@ -1,6 +1,15 @@
 import * as Ariakit from '@ariakit/react'
-import type { ComponentPropsWithoutRef, ReactNode } from 'react'
-import { createContext, createElement, useContext, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import {
+	type ComponentPropsWithoutRef,
+	type ReactNode,
+	createContext,
+	createElement,
+	useContext,
+	useMemo,
+	useRef,
+	useState,
+	useSyncExternalStore
+} from 'react'
 import type { Components } from 'react-markdown'
 import { CSVDownloadButton } from '~/components/CsvDownloadButton'
 import { readTableRows, TableImageButtons } from '~/components/TableImage/TableImageButtons'
@@ -654,7 +663,10 @@ export function ChatMarkdownRenderer({
 			],
 			[rehypeHeadingIds, { messageId }]
 		]
-		return createSegmentProcessors(plugins, [...plugins, [rehypeStreamingCaret, { active: caretActive }]])
+		return {
+			...createSegmentProcessors(plugins, [...plugins, [rehypeStreamingCaret, { active: caretActive }]]),
+			cacheTableRows: true as const
+		}
 	}, [caretActive, citationRefsById, isStreaming, messageId])
 	const renderContext = useMemo<MarkdownRenderContext>(
 		() => ({

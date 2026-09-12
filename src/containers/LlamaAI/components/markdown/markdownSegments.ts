@@ -1,8 +1,8 @@
-import type { Root as HastRoot } from 'hast'
+import type { Root as HastRoot, Element as HastElement } from 'hast'
 import { toJsxRuntime } from 'hast-util-to-jsx-runtime'
 import { urlAttributes } from 'html-url-attributes'
-import type { Root as MdastRoot, RootContent } from 'mdast'
-import { createElement, Fragment, type ReactNode } from 'react'
+import type { Root as MdastRoot, RootContent, Table } from 'mdast'
+import { cloneElement, createElement, Fragment, type ReactElement, type ReactNode } from 'react'
 import type { Components } from 'react-markdown'
 import { defaultUrlTransform } from 'react-markdown'
 import { jsx, jsxs } from 'react/jsx-runtime'
@@ -18,13 +18,27 @@ import { createRemarkIncremental } from './remarkIncremental'
 import { detachOrderedLists, nestIndentedLists } from './repairLists'
 
 export type SegmentProcessors = {
+	/** Row-local plugins must preserve standard table structure and render tables identically in body and tail. */
+	cacheTableRows?: true
 	/** Runs on every segment but the last. */
 	body: Processor<undefined, MdastRoot, HastRoot>
 	/** Runs on the last segment; the only place a streaming caret can land. */
 	tail: Processor<undefined, MdastRoot, HastRoot>
 }
 
+type TableRows = {
+	markdown: Table
+	prefix: string
+	hast: HastRoot
+	table: HastElement
+	head: HastElement
+	body: HastElement
+	heading: ReactNode
+	rows: Array<ReactNode>
+}
+
 type Entry = {
+	tableRows?: TableRows
 	source: string
 	start: number
 	end: number
@@ -73,6 +87,82 @@ function toReact(tree: HastRoot, components: Components): ReactNode {
 		passKeys: true,
 		passNode: true
 	})
+}
+
+// HTML can change neighboring rows during raw-HTML parsing. Such tables stay whole.
+function rowLocalTable(table: Table): boolean {
+	let local = true
+	visit(table, 'html', () => {
+		local = false
+	})
+	return local
+}
+
+function tableParts(hast: HastRoot) {
+	const [space, table] = hast.children
+	if (
+		hast.children.length !== 2 ||
+		space.type !== 'text' ||
+		!/^\n*$/.test(space.value) ||
+		table.type !== 'element' ||
+		table.tagName !== 'table'
+	)
+		return null
+	const [head, body] = table.children
+	if (
+		table.children.length !== 2 ||
+		head.type !== 'element' ||
+		head.tagName !== 'thead' ||
+		body.type !== 'element' ||
+		body.tagName !== 'tbody' ||
+		head.children.some((node) => node.type !== 'element' || node.tagName !== 'tr') ||
+		body.children.some((node) => node.type !== 'element' || node.tagName !== 'tr')
+	)
+		return null
+	return { table, head, body }
+}
+
+function rowElement(row: HastElement, components: Components, index: number): ReactNode {
+	return cloneElement(toReact({ type: 'root', children: [row] }, components) as ReactElement, {
+		key: `row-${index}`
+	})
+}
+
+type TableWrapper = ReactElement<{ children: ReactNode; node?: HastElement }>
+
+function fillTableWrapper(element: TableWrapper, node: HastElement, children: ReactNode) {
+	return cloneElement(element, { ...('node' in element.props ? { node } : {}), children })
+}
+
+// Convert only empty wrappers, then supply cached rows and complete node props. The cached
+// HAST stays immutable so previously returned elements remain safe during concurrent renders.
+// The table component reads the complete node, including cached rows, for CSV export.
+function tableElement(cache: TableRows, components: Components): ReactNode {
+	const shell: HastRoot = {
+		...cache.hast,
+		children: [
+			cache.hast.children[0],
+			{
+				...cache.table,
+				children: [
+					{ ...cache.head, children: [] },
+					{ ...cache.body, children: [] }
+				]
+			}
+		]
+	}
+	const root = toReact(shell, components) as ReactElement<{ children: Array<ReactNode> }>
+	const table = root.props.children[1] as TableWrapper
+	const [head, body] = table.props.children as Array<TableWrapper>
+	return cloneElement(
+		root,
+		{},
+		root.props.children[0],
+		fillTableWrapper(table, cache.table, [
+			fillTableWrapper(head, cache.head, cache.heading),
+			fillTableWrapper(body, cache.body, cache.rows)
+		])
+	)
 }
 
 // Elements whose tags never open anything, so they cannot leave HTML unclosed.
@@ -160,7 +250,7 @@ const createParser = () =>
  * the final active stage keeps that change inside its open suffix.
  *
  * `lastCostMs` is how long the previous `render` took. The reveal loop paces commits from it: the
- * trailing block reparses in full each time, and a long open table costs many times a paragraph.
+ * active suffix still needs processing, even when completed table rows are cached.
  */
 export function createSegmentRenderer(components: Components) {
 	const rawParser = createParser()
@@ -211,7 +301,7 @@ export function createSegmentRenderer(components: Components) {
 		}
 		const ranges = segmentRanges(tree)
 		const result: Array<Entry> = []
-		const build = (i: number, tail: boolean): Entry => {
+		const build = (i: number, tail: boolean, previousRows?: TableRows): Entry => {
 			const [start, end] = ranges[i]
 			const counts: HeadingCounts = new Map(i ? result[i - 1].counts : undefined)
 			const segmentFile = new VFile(source)
@@ -221,19 +311,75 @@ export function createSegmentRenderer(components: Components) {
 				children: blocks.slice(start, end + 1),
 				position: { start: blocks[start].position!.start, end: blocks[end].position!.end }
 			}
-			const hast = (tail ? next.tail : next.body).runSync(root, segmentFile)
+			const markdown = blocks[start]
+			const canCacheRows =
+				next.cacheTableRows &&
+				start === end &&
+				markdown.type === 'table' &&
+				markdown.children.length > 2 &&
+				rowLocalTable(markdown)
+			const keep = previousRows ? previousRows.markdown.children.length - 2 : 0
+			const reuseRows =
+				canCacheRows &&
+				previousRows &&
+				keep > 0 &&
+				markdown.children.length > keep + 1 &&
+				source.startsWith(previousRows.prefix)
+			if (reuseRows)
+				root.children = [{ ...markdown, children: [markdown.children[0], ...markdown.children.slice(keep + 1)] }]
+			let hast = (tail ? next.tail : next.body).runSync(root, segmentFile)
+			const parts = canCacheRows ? tableParts(hast) : null
+			// An opted-in plugin changed the table structure: use its whole-table output.
+			if (reuseRows && !parts) {
+				root.children = [markdown]
+				hast = (tail ? next.tail : next.body).runSync(root, segmentFile)
+			}
+			let tableRows: TableRows | undefined
+			if (parts && canCacheRows) {
+				let rows: Array<ReactNode>
+				let heading: ReactNode
+				if (reuseRows) {
+					rows = previousRows.rows.slice(0, keep)
+					for (const row of parts.body.children) rows.push(rowElement(row as HastElement, components, rows.length))
+					heading = previousRows.heading
+					parts.head = previousRows.head
+					parts.body.children = [...previousRows.body.children.slice(0, keep), ...parts.body.children]
+					parts.body.position = { start: markdown.children[1].position!.start, end: markdown.position!.end }
+					parts.table.children = [parts.head, parts.body]
+					// remark-rehype contributes a newline around each cell and row; rehypeRaw
+					// moves this whitespace before the table. The omitted rows contribute it too.
+					const space = hast.children[0] as { type: 'text'; value: string }
+					space.value += '\n'.repeat(keep * (markdown.align!.length + 2))
+				} else {
+					heading = rowElement(parts.head.children[0] as HastElement, components, 0)
+					rows = parts.body.children.map((row, index) => rowElement(row as HastElement, components, index))
+				}
+				tableRows = {
+					markdown,
+					prefix: source.slice(0, markdown.children.at(-1)!.position!.start.offset),
+					hast,
+					...parts,
+					heading,
+					rows
+				}
+			}
 			let empty = true
 			for (const child of hast.children) {
 				if (child.type === 'element' || (child.type === 'text' && child.value.trim())) empty = false
 			}
 			return {
+				tableRows,
 				source: source.slice(blocks[start].position!.start.offset, blocks[end].position!.end.offset),
 				start,
 				end,
 				tail,
 				empty,
 				counts,
-				node: createElement(Fragment, { key: `segment-${i}` }, toReact(hast, components))
+				node: createElement(
+					Fragment,
+					{ key: `segment-${i}` },
+					tableRows ? tableElement(tableRows, components) : toReact(hast, components)
+				)
 			}
 		}
 		let reusable = true
@@ -252,8 +398,9 @@ export function createSegmentRenderer(components: Components) {
 				result.push(previous)
 				continue
 			}
+			const previousRows = reusable ? previous?.tableRows : undefined
 			reusable = false
-			result.push(build(i, tail))
+			result.push(build(i, tail, previousRows))
 		}
 		let last = result.length - 1
 		while (last > 0 && result[last].empty) last--

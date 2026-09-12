@@ -13,6 +13,62 @@ export function createRemarkIncremental() {
 		this.parser = (source, file) => {
 			if (cached?.source === source) return cached.tree
 			const previous = cached
+			const table = previous?.tree.children.at(-1)
+			// Only an append to a top-level pipe table can reuse finished rows. The last row
+			// stays open; parsing its suffix with the original header retains GFM cell rules.
+			if (
+				previous &&
+				!previous.needsFullParse &&
+				table?.type === 'table' &&
+				table.children.length > 1 &&
+				table.position!.start.column === 1 &&
+				source.startsWith(previous.source) &&
+				!source.includes('\r') &&
+				!source.includes('\uFEFF') &&
+				source[table.position!.start.offset!] === '|'
+			) {
+				const lastRow = table.children.at(-1)!
+				const boundary = lastRow.position!.start.offset!
+				const headerEnd = source.indexOf('\n', source.indexOf('\n', table.position!.start.offset!) + 1) + 1
+				const header = source.slice(table.position!.start.offset, headerEnd)
+				const suffixSource = header + source.slice(boundary)
+				// Escapes and code delimiters use the complete parser until that row closes.
+				if (lastRow.position!.start.column === 1 && source[boundary] === '|' && !/[\\`]/.test(suffixSource)) {
+					const suffix = parse(suffixSource, file)
+					const nextTable = suffix.children[0]
+					// A terminating block or definition needs the original document context.
+					if (suffix.children.length === 1 && nextTable?.type === 'table' && nextTable.children.length > 1) {
+						const offsetDelta = boundary - header.length
+						const lineDelta = lastRow.position!.start.line - 3
+						for (const row of nextTable.children.slice(1)) {
+							visit(row, (node) => {
+								for (const point of [node.position!.start, node.position!.end]) {
+									point.offset! += offsetDelta
+									point.line += lineDelta
+								}
+							})
+						}
+						const end = suffix.position!.end
+						const tree: Root = {
+							...previous.tree,
+							children: [
+								...previous.tree.children.slice(0, -1),
+								{
+									...table,
+									children: [...table.children.slice(0, -1), ...nextTable.children.slice(1)],
+									position: { start: table.position!.start, end: nextTable.children.at(-1)!.position!.end }
+								}
+							],
+							position: {
+								start: previous.tree.position!.start,
+								end: { ...end, offset: end.offset! + offsetDelta, line: end.line + lineDelta }
+							}
+						}
+						cached = { ...previous, source, tree }
+						return tree
+					}
+				}
+			}
 			// Definitions resolve earlier references; indented code carries parser interruption state.
 			// Untagged fences share its AST shape, so conservatively use the full parser for those too.
 			// A BOM is special at the start of input; never turn an interior BOM into a suffix start.
