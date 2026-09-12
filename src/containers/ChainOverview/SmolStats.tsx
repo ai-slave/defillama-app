@@ -1,6 +1,7 @@
 import { BasicLink } from '~/components/Link'
 import { Card } from '~/ui/Card'
 import { Tooltip } from '~/ui/Tooltip'
+import { Watermark } from '~/ui/Watermark'
 import { slug } from '~/utils'
 import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
 import { FeesGeneratedChart } from './FeesGeneratedChart'
@@ -113,7 +114,7 @@ export function SmolStats(props: IChainOverviewData) {
 					) : null}
 					{datInflows && datInflows.chart.length > 0 ? (
 						<Card padding="sm" className="col-span-1 flex max-h-[196px] min-h-[119px] flex-col gap-1">
-							<div className="flex flex-col gap-1 xl:flex-row xl:items-start xl:justify-between">
+							<div className="flex items-center justify-between gap-2">
 								<Tooltip
 									render={<BasicLink href="/digital-asset-treasuries" />}
 									className="text-sm font-semibold"
@@ -121,36 +122,36 @@ export function SmolStats(props: IChainOverviewData) {
 								>
 									DAT Inflows
 								</Tooltip>
-								{datInflows.chart.length > 0 ? (
-									<p className="truncate text-secondary">
-										{formatUsd(datInflows.total30d, {
-											compact: true,
-											minimumCompactValue: 1_000_000,
-											compactSuffix: 'lowercase'
-										})}{' '}
-										<span className="text-tertiary">30d</span>
-									</p>
-								) : null}
+								<Watermark className="shrink-0" />
 							</div>
-							<SmolBarChart
-								series={datInflows.chart}
-								className="my-auto h-[53px] md:h-[132px] xl:h-[156px]"
-								groupBy="weekly"
-							/>
+							{datInflows.chart.length > 0 ? (
+								<p className="truncate text-secondary">
+									{formatUsd(datInflows.total30d, {
+										compact: true,
+										minimumCompactValue: 1_000_000,
+										compactSuffix: 'lowercase'
+									})}{' '}
+									<span className="text-tertiary">30d</span>
+								</p>
+							) : null}
+							<SmolBarChart series={datInflows.chart} className="my-auto h-[53px] md:h-[132px]" groupBy="weekly" />
 						</Card>
 					) : null}
 				</>
 			) : dexsChart && dexsChart.length > 0 ? (
 				<Card padding="sm" className="col-span-1 flex h-[196px] flex-col gap-1">
-					<Tooltip
-						render={<BasicLink href={props.metadata.name === 'All' ? '/dexs' : `/dexs/chain/${chainSlug}`} />}
-						className="text-sm font-semibold"
-						content={`Total value of all spot trades executed on decentralized exchanges${
-							props.metadata.name === 'All' ? '' : ` deployed on ${props.metadata.name}`
-						}`}
-					>
-						DEXs Volume
-					</Tooltip>
+					<div className="flex items-center justify-between gap-2">
+						<Tooltip
+							render={<BasicLink href={props.metadata.name === 'All' ? '/dexs' : `/dexs/chain/${chainSlug}`} />}
+							className="text-sm font-semibold"
+							content={`Total value of all spot trades executed on decentralized exchanges${
+								props.metadata.name === 'All' ? '' : ` deployed on ${props.metadata.name}`
+							}`}
+						>
+							DEXs Volume
+						</Tooltip>
+						<Watermark className="shrink-0" />
+					</div>
 					{dexsChart.length > 0 ? (
 						<p className="truncate text-secondary">
 							{formatUsd(dexs.total24h, {
@@ -166,7 +167,7 @@ export function SmolStats(props: IChainOverviewData) {
 			) : null}
 			{feesChart && feesChart.length > 0 ? (
 				<Card padding="sm" className="col-span-1 flex h-[196px] flex-col gap-1">
-					<div className="flex items-start justify-between gap-4">
+					<div className="flex items-center justify-between gap-2">
 						<Tooltip
 							render={<BasicLink href={props.metadata.name === 'All' ? '/fees' : `/fees/chain/${chainSlug}`} />}
 							className="text-sm font-semibold"
@@ -176,32 +177,36 @@ export function SmolStats(props: IChainOverviewData) {
 						>
 							Fees Paid
 						</Tooltip>
-						{props.chainFees.feesGenerated24h != null ? (
-							<p className="text-secondary">
-								{formatUsd(props.chainFees.feesGenerated24h, {
-									compact: true,
-									minimumCompactValue: 1_000_000,
-									compactSuffix: 'lowercase'
-								})}{' '}
-								<span className="text-tertiary">24h</span>
-							</p>
-						) : null}
+						<Watermark className="shrink-0" />
 					</div>
+					{props.chainFees.feesGenerated24h != null ? (
+						<p className="text-secondary">
+							{formatUsd(props.chainFees.feesGenerated24h, {
+								compact: true,
+								minimumCompactValue: 1_000_000,
+								compactSuffix: 'lowercase'
+							})}{' '}
+							<span className="text-tertiary">24h</span>
+						</p>
+					) : null}
 					<FeesGeneratedChart series={feesChart} />
 				</Card>
 			) : null}
 			{stablecoins && stablecoinChart && stablecoinChart.length > 0 ? (
 				<Card padding="sm" className="col-span-1 flex h-[196px] flex-col gap-1">
-					<Tooltip
-						placement="top-start"
-						render={<BasicLink href={props.metadata.name === 'All' ? '/stablecoins' : `/stablecoins/${chainSlug}`} />}
-						className="text-sm font-semibold"
-						content={`Total market cap of all stablecoins issued on ${
-							props.metadata.name === 'All' ? 'all chains' : props.metadata.name
-						}`}
-					>
-						Stablecoins Market Cap
-					</Tooltip>
+					<div className="flex items-center justify-between gap-2">
+						<Tooltip
+							placement="top-start"
+							render={<BasicLink href={props.metadata.name === 'All' ? '/stablecoins' : `/stablecoins/${chainSlug}`} />}
+							className="text-sm font-semibold"
+							content={`Total market cap of all stablecoins issued on ${
+								props.metadata.name === 'All' ? 'all chains' : props.metadata.name
+							}`}
+						>
+							Stablecoins Market Cap
+						</Tooltip>
+						<Watermark className="shrink-0" />
+					</div>
 					{stablecoins.mcap != null ? (
 						<>
 							<p className="truncate text-secondary">
