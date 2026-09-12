@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { AgenticSidebar } from '../AgenticSidebar'
 const api = vi.hoisted(() => ({ fetch: vi.fn(), bulk: vi.fn(), open: vi.fn() }))
+const viewport = vi.hoisted(() => ({ scroll: (_offset: number, _isScrolling: boolean) => {} }))
 vi.mock('~/auth', () => ({
 	useAuthContext: () => ({
 		user: { id: 'user' },
@@ -34,6 +35,7 @@ vi.mock('@tanstack/react-virtual', async (importOriginal) => {
 					return () => {}
 				},
 				observeElementOffset: (_, callback) => {
+					viewport.scroll = callback
 					callback(0, false)
 					return () => {}
 				}
@@ -150,4 +152,23 @@ test('removed selections do not count toward deletion and a failed bulk delete c
 	await click('Retry deletion')
 	await vi.waitFor(() => expect(api.bulk).toHaveBeenCalledTimes(2))
 	expect(api.bulk).toHaveBeenLastCalledWith(['Beta', 'Gamma'])
+})
+
+test('virtual rows refresh when scrolling away from and back to the start', async () => {
+	const items = Array.from({ length: 100 }, (_, index) => ({
+		...sessions[0],
+		sessionId: `session-${index}`,
+		title: `Chat ${String(index).padStart(3, '0')}`,
+		isPinned: true
+	}))
+	await render(items)
+	const history = container.querySelector('[aria-label="Chat history"]')!
+	expect(history.textContent).toContain('Chat 000')
+	expect(history.textContent).not.toContain('Chat 050')
+	await act(async () => viewport.scroll(1620, true))
+	expect(history.textContent).toContain('Chat 050')
+	expect(history.textContent).not.toContain('Chat 000')
+	await act(async () => viewport.scroll(0, false))
+	expect(history.textContent).toContain('Chat 000')
+	expect(history.textContent).not.toContain('Chat 050')
 })

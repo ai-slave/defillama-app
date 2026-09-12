@@ -364,7 +364,7 @@ function ProDashboardContent() {
 								<>
 									{mode === 'view' && dashboardId && currentDashboard?.user === user?.id ? (
 										<EditDashboardButton
-											key={dashboardId}
+											key={`edit-${dashboardId}`}
 											href={`/pro/${currentDashboard?.slug ?? dashboardId}/edit`}
 										/>
 									) : null}
@@ -384,7 +384,7 @@ function ProDashboardContent() {
 									) : null}
 									{isReadOnly ? (
 										<CopyDashboardButton
-											key={dashboardId}
+											key={`copy-${dashboardId}`}
 											onCopy={copyDashboard}
 											onLimitReached={canCreateDashboard ? undefined : () => showPaywall('dashboard-limit')}
 										/>

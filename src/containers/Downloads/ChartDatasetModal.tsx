@@ -1,12 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import Link from 'next/link'
 import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { setSignupSource } from '~/auth/signupSource'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { slug as toSlug } from '~/utils'
@@ -193,7 +193,7 @@ export function ChartDatasetModal({
 	const { savedDownloads, saveDownload } = useSavedDownloads()
 	const { recordRecent } = useRecentDownloads()
 	const [selectedParams, setSelectedParams] = useState<Array<ParamOption>>([])
-	const [activePreviewValue, setActivePreviewValue] = useState<string | null>(null)
+	const [preferredPreviewValue, setActivePreviewValue] = useState<string | null>(null)
 	const [selectedColumns, setSelectedColumns] = useState<Set<number> | null>(null)
 	const [search, setSearch] = useState('')
 	const [sortState, setSortState] = useState<SortState | null>(null)
@@ -201,10 +201,11 @@ export function ChartDatasetModal({
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
 	const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 	const [sumMode, setSumMode] = useState(false)
-	const initialParamsAppliedRef = useRef(false)
-	const initialColumnsAppliedRef = useRef(false)
-	const wasInCategoryModeRef = useRef(false)
-	const alignedCategoryRef = useRef<string | null>(null)
+	const [appliedInitialParams, setAppliedInitialParams] = useState<ReturnType<typeof applyChartParams> | null>(null)
+	const [appliedInitialColumns, setAppliedInitialColumns] = useState<ReturnType<
+		typeof applyChartColumnsAndSort
+	> | null>(null)
+	const [categoryDraft, setCategoryDraft] = useState({ category: selectedCategory, options, aligned: false })
 	const tableContainerRef = useRef<HTMLDivElement>(null)
 	const rightShadowRef = useRef<HTMLDivElement>(null)
 	const deferredSearch = useDeferredValue(search.trim().toLowerCase())
@@ -212,27 +213,27 @@ export function ChartDatasetModal({
 	const supportsBreakdown = dataset.paramType === 'protocol' && !!dataset.categoryBreakdown
 	const isCategoryMode = supportsBreakdown && selectedCategory !== null
 	const maxSelections = isCategoryMode ? Number.POSITIVE_INFINITY : MAX_PARAMS
+	const activePreviewValue = isCategoryMode
+		? null
+		: (selectedParams.find((param) => param.value === preferredPreviewValue)?.value ?? selectedParams[0]?.value ?? null)
 
-	// Apply saved params once options are loaded.
-	useEffect(() => {
-		if (!initialConfig || initialParamsAppliedRef.current) return
-		if (options.length === 0) return
+	// Seed the editable selection once asynchronous options can resolve the saved values.
+	if (initialConfig && appliedInitialParams === null && options.length > 0) {
+		const applied = applyChartParams(initialConfig, options)
+		setAppliedInitialParams(applied)
 		if (initialConfig.categoryBreakdown && supportsBreakdown) {
 			setSelectedCategory(initialConfig.categoryBreakdown.category)
-			initialParamsAppliedRef.current = true
-			return
+		} else {
+			setSelectedParams(applied.params)
 		}
-		const { params, missingParams } = applyChartParams(initialConfig, options)
-		setSelectedParams(params)
-		initialParamsAppliedRef.current = true
-		if (missingParams.length > 0) {
-			toast(
-				`${missingParams.length} saved ${dataset.paramLabel.toLowerCase()}${
-					missingParams.length === 1 ? '' : 's'
-				} no longer available`
-			)
-		}
-	}, [initialConfig, options, dataset.paramLabel, supportsBreakdown])
+	}
+
+	useEffect(() => {
+		if (!appliedInitialParams || appliedInitialParams.missingParams.length === 0) return
+		if (initialConfig?.categoryBreakdown && supportsBreakdown) return
+		const count = appliedInitialParams.missingParams.length
+		toast(`${count} saved ${dataset.paramLabel.toLowerCase()}${count === 1 ? '' : 's'} no longer available`)
+	}, [appliedInitialParams, initialConfig?.categoryBreakdown, supportsBreakdown, dataset.paramLabel])
 
 	const protocolCategories = useMemo(() => {
 		if (!supportsBreakdown) return []
@@ -253,28 +254,17 @@ export function ChartDatasetModal({
 		[selectedParams, activePreviewValue]
 	)
 
-	useEffect(() => {
-		if (!supportsBreakdown) return
-		if (selectedCategory === null) return
-		const inCategory = options.filter((o) => o.category === selectedCategory)
-		setSelectedParams(inCategory)
+	if (
+		supportsBreakdown &&
+		(categoryDraft.category !== selectedCategory || (selectedCategory !== null && categoryDraft.options !== options))
+	) {
+		setCategoryDraft({ category: selectedCategory, options, aligned: false })
+		setSelectedParams(selectedCategory === null ? [] : filteredOptions)
+		setActivePreviewValue(null)
 		setSelectedColumns(null)
 		setSortState(null)
-	}, [supportsBreakdown, selectedCategory, options])
-
-	useEffect(() => {
-		if (!supportsBreakdown) return
-		if (selectedCategory !== null) {
-			wasInCategoryModeRef.current = true
-			return
-		}
-		if (wasInCategoryModeRef.current) {
-			wasInCategoryModeRef.current = false
-			setSelectedParams([])
-			setSelectedColumns(null)
-			setSortState(null)
-		}
-	}, [supportsBreakdown, selectedCategory])
+		if (selectedCategory === null) setSearch('')
+	}
 
 	const perProtocolQueries = useQueries({
 		queries:
@@ -372,94 +362,50 @@ export function ChartDatasetModal({
 		return parseCsv(csvText)
 	}, [csvText])
 
-	useEffect(() => {
-		if (!isCategoryMode) {
-			alignedCategoryRef.current = null
-			return
-		}
-		if (!csvText || headers.length === 0) return
-		if (alignedCategoryRef.current === selectedCategory) return
-
+	// Category CSV headers are authoritative, including protocols missing from the catalog.
+	if (
+		isCategoryMode &&
+		csvText &&
+		headers.length > 0 &&
+		!categoryDraft.aligned &&
+		categoryDraft.category === selectedCategory
+	) {
 		const optionBySlug = new Map<string, ParamOption>()
 		for (const opt of options) optionBySlug.set(opt.value, opt)
-
 		const chipsFromCsv: Array<ParamOption> = []
-		for (const h of headers) {
-			if (h === 'date') continue
-			const slug = toSlug(h)
-			const existing = optionBySlug.get(slug)
-			chipsFromCsv.push(existing ?? { label: h, value: slug, category: selectedCategory ?? undefined })
+		for (const header of headers) {
+			if (header === 'date') continue
+			const value = toSlug(header)
+			chipsFromCsv.push(optionBySlug.get(value) ?? { label: header, value, category: selectedCategory ?? undefined })
 		}
-
 		setSelectedParams(chipsFromCsv)
-		alignedCategoryRef.current = selectedCategory
-	}, [isCategoryMode, csvText, headers, options, selectedCategory])
+		setCategoryDraft({ ...categoryDraft, aligned: true })
+	}
 
-	useEffect(() => {
-		if (isCategoryMode) {
-			setActivePreviewValue(null)
-			return
+	if (headers.length > 0 && selectedColumns === null) {
+		const dateIndex = headers.indexOf('date')
+		const defaultSort: SortState | null = dateIndex === -1 ? null : { index: dateIndex, direction: 'desc' }
+		if (initialConfig && appliedInitialColumns === null) {
+			const applied = applyChartColumnsAndSort(initialConfig, headers)
+			setSelectedColumns(applied.selectedColumns ?? new Set(headers.map((_, index) => index)))
+			setSortState(applied.sort ?? sortState ?? defaultSort)
+			setAppliedInitialColumns(applied)
+		} else {
+			setSelectedColumns(new Set(headers.map((_, index) => index)))
+			if (sortState === null) setSortState(defaultSort)
 		}
-		setActivePreviewValue((cur) => {
-			if (selectedParams.length === 0) return null
-			if (cur && selectedParams.some((p) => p.value === cur)) return cur
-			return selectedParams[0].value
-		})
-	}, [isCategoryMode, selectedParams])
+	}
 
 	useEffect(() => {
-		if (isCategoryMode) return
-		setSelectedColumns(null)
-		setSearch('')
-		setSortState(null)
-	}, [isCategoryMode, activePreviewValue])
-
-	useEffect(() => {
-		setSelectedColumns(null)
-		setSortState(null)
-	}, [sumModeActive])
-
-	useEffect(() => {
-		if (headers.length === 0 || selectedColumns !== null) return
-
-		if (initialConfig && !initialColumnsAppliedRef.current) {
-			const {
-				selectedColumns: appliedCols,
-				sort,
-				missingColumns,
-				missingSortColumn
-			} = applyChartColumnsAndSort(initialConfig, headers)
-			setSelectedColumns(appliedCols ?? new Set(headers.map((_, i) => i)))
-			if (sort) {
-				setSortState(sort)
-			} else if (sortState === null) {
-				const dateIndex = headers.indexOf('date')
-				if (dateIndex !== -1) {
-					setSortState({ index: dateIndex, direction: 'desc' })
-				}
-			}
-			initialColumnsAppliedRef.current = true
-			if (missingColumns.length > 0) {
-				toast(
-					`${missingColumns.length} saved column${
-						missingColumns.length === 1 ? '' : 's'
-					} no longer available: ${missingColumns.slice(0, 3).join(', ')}${missingColumns.length > 3 ? '…' : ''}`
-				)
-			}
-			if (missingSortColumn) {
-				toast(`Saved sort column "${missingSortColumn}" no longer available`)
-			}
-			return
+		if (!appliedInitialColumns) return
+		const { missingColumns, missingSortColumn } = appliedInitialColumns
+		if (missingColumns.length > 0) {
+			toast(
+				`${missingColumns.length} saved column${missingColumns.length === 1 ? '' : 's'} no longer available: ${missingColumns.slice(0, 3).join(', ')}${missingColumns.length > 3 ? '…' : ''}`
+			)
 		}
-
-		setSelectedColumns(new Set(headers.map((_, i) => i)))
-		if (sortState === null) {
-			const dateIndex = headers.indexOf('date')
-			if (dateIndex !== -1) {
-				setSortState({ index: dateIndex, direction: 'desc' })
-			}
-		}
-	}, [headers, selectedColumns, sortState, initialConfig])
+		if (missingSortColumn) toast(`Saved sort column "${missingSortColumn}" no longer available`)
+	}, [appliedInitialColumns])
 
 	const cols = selectedColumns ?? EMPTY_SELECTION
 
@@ -582,7 +528,7 @@ export function ChartDatasetModal({
 		}
 	}, [updateScrollShadows, hasData])
 
-	const rowVirtualizer = useVirtualizer({
+	const rowVirtualizer = useVirtualItems({
 		count: sortedRows.length,
 		getScrollElement: () => tableContainerRef.current,
 		estimateSize: () => ROW_HEIGHT,
@@ -629,22 +575,43 @@ export function ChartDatasetModal({
 		[headers]
 	)
 
+	const handleSetActive = useCallback(
+		(value: string | null) => {
+			if (value === activePreviewValue) return
+			setActivePreviewValue(value)
+			setSelectedColumns(null)
+			setSortState(null)
+			setSearch('')
+		},
+		[activePreviewValue]
+	)
+
+	const handleRemoveParam = useCallback(
+		(value: string) => {
+			setSelectedParams((prev) => prev.filter((p) => p.value !== value))
+			if (!isCategoryMode && activePreviewValue === value) {
+				handleSetActive(null)
+			}
+			if (isCategoryMode) {
+				const idx = findBreakdownColumnIndex(value)
+				if (idx >= 0) {
+					setSelectedColumns((prev) => {
+						if (!prev) return prev
+						const next = new Set(prev)
+						next.delete(idx)
+						return next
+					})
+				}
+			}
+		},
+		[isCategoryMode, findBreakdownColumnIndex, activePreviewValue, handleSetActive]
+	)
+
 	const handleToggleParam = useCallback(
 		(opt: ParamOption) => {
 			const exists = selectedParams.some((p) => p.value === opt.value)
 			if (exists) {
-				setSelectedParams((prev) => prev.filter((p) => p.value !== opt.value))
-				if (isCategoryMode) {
-					const idx = findBreakdownColumnIndex(opt.value)
-					if (idx >= 0) {
-						setSelectedColumns((prev) => {
-							if (!prev) return prev
-							const next = new Set(prev)
-							next.delete(idx)
-							return next
-						})
-					}
-				}
+				handleRemoveParam(opt.value)
 				return
 			}
 			if (selectedParams.length >= maxSelections) {
@@ -664,25 +631,7 @@ export function ChartDatasetModal({
 				}
 			}
 		},
-		[selectedParams, isCategoryMode, maxSelections, findBreakdownColumnIndex]
-	)
-
-	const handleRemoveParam = useCallback(
-		(value: string) => {
-			setSelectedParams((prev) => prev.filter((p) => p.value !== value))
-			if (isCategoryMode) {
-				const idx = findBreakdownColumnIndex(value)
-				if (idx >= 0) {
-					setSelectedColumns((prev) => {
-						if (!prev) return prev
-						const next = new Set(prev)
-						next.delete(idx)
-						return next
-					})
-				}
-			}
-		},
-		[isCategoryMode, findBreakdownColumnIndex]
+		[selectedParams, isCategoryMode, maxSelections, findBreakdownColumnIndex, handleRemoveParam]
 	)
 
 	const handleClearParams = useCallback(() => {
@@ -694,6 +643,10 @@ export function ChartDatasetModal({
 			return
 		}
 		setSelectedParams([])
+		setActivePreviewValue(null)
+		setSelectedColumns(null)
+		setSortState(null)
+		setSearch('')
 	}, [isCategoryMode])
 
 	const handleAddMultipleParams = useCallback(
@@ -711,10 +664,6 @@ export function ChartDatasetModal({
 		},
 		[maxSelections]
 	)
-
-	const handleSetActive = useCallback((value: string) => {
-		setActivePreviewValue(value)
-	}, [])
 
 	const handleSelectCategory = useCallback(
 		(cat: string | null) => {
@@ -1273,7 +1222,11 @@ export function ChartDatasetModal({
 							{dataset.sumMode && !isCategoryMode ? (
 								<button
 									type="button"
-									onClick={() => setSumMode((s) => !s)}
+									onClick={() => {
+										setSumMode((s) => !s)
+										setSelectedColumns(null)
+										setSortState(null)
+									}}
 									aria-pressed={sumModeActive}
 									title={
 										sumModeActive
@@ -1430,6 +1383,7 @@ export function ChartDatasetModal({
 															<div className="flex items-center gap-0.5 p-2">
 																<input
 																	type="checkbox"
+																	aria-label={`Include ${column.header} column`}
 																	checked={isSelected}
 																	onChange={() => toggleColumn(column.index)}
 																	className="mr-1 size-3.5 shrink-0 cursor-pointer accent-brand"
@@ -1455,12 +1409,12 @@ export function ChartDatasetModal({
 
 										<div
 											style={{
-												height: `${rowVirtualizer.getTotalSize()}px`,
+												height: `${rowVirtualizer.totalSize}px`,
 												minWidth: `${tableWidth}px`,
 												position: 'relative'
 											}}
 										>
-											{rowVirtualizer.getVirtualItems().map((virtualRow) => {
+											{rowVirtualizer.items.map((virtualRow) => {
 												const row = sortedRows[virtualRow.index]
 												const isOdd = virtualRow.index % 2 === 1
 												return (
@@ -1659,6 +1613,7 @@ function CategoryPickerPopover({
 	selected: string | null
 	onSelect: (cat: string | null) => void
 }) {
+	const disclosureRef = useRef<HTMLButtonElement>(null)
 	const [search, setSearch] = useState('')
 	const deferred = useDeferredValue(search.trim().toLowerCase())
 
@@ -1669,22 +1624,28 @@ function CategoryPickerPopover({
 
 	return (
 		<Ariakit.PopoverProvider>
-			<Ariakit.PopoverDisclosure className="flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary">
-				<Icon name="tag" className="size-3.5" />
-				<span>{selected ?? 'All categories'}</span>
+			<div className="relative">
+				<Ariakit.PopoverDisclosure
+					ref={disclosureRef}
+					className={`flex items-center gap-1.5 rounded-md border border-subtle px-2.5 py-1.5 text-xs font-medium text-pro-text-secondary transition-colors hover:bg-hover-row hover:text-pro-text-primary ${selected ? 'pr-8' : ''}`}
+				>
+					<Icon name="tag" className="size-3.5" />
+					<span>{selected ?? 'All categories'}</span>
+				</Ariakit.PopoverDisclosure>
 				{selected ? (
 					<button
 						type="button"
-						onClick={(e) => {
-							e.stopPropagation()
+						aria-label="Clear category"
+						onClick={() => {
+							disclosureRef.current?.focus()
 							onSelect(null)
 						}}
-						className="rounded-full p-0.5 hover:bg-hover-row"
+						className="absolute top-1/2 right-2 -translate-y-1/2 rounded-full p-0.5 hover:bg-hover-row"
 					>
 						<Icon name="x" className="size-2.5" />
 					</button>
 				) : null}
-			</Ariakit.PopoverDisclosure>
+			</div>
 			<Ariakit.Popover
 				gutter={6}
 				portal
@@ -2004,6 +1965,7 @@ function BulkPreviewSidebar({
 								onClick={() => onSelectActive(param.value)}
 								className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
 								title={`Preview ${param.label}`}
+								aria-current={isActive ? true : undefined}
 							>
 								<span className="flex size-4 shrink-0 items-center justify-center">
 									{isQueryLoading ? (
@@ -2025,6 +1987,7 @@ function BulkPreviewSidebar({
 								onClick={() => onDownloadSingle(param)}
 								disabled={!isReady || isPreview}
 								title={isPreview ? 'Subscribe to download' : 'Download this CSV'}
+								aria-label={`Download ${param.label} CSV`}
 								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-brand disabled:cursor-not-allowed disabled:opacity-30"
 							>
 								<Icon name="download-cloud" className="size-3.5" />
@@ -2033,6 +1996,7 @@ function BulkPreviewSidebar({
 								type="button"
 								onClick={() => onRemove(param.value)}
 								title="Remove"
+								aria-label={`Remove ${param.label}`}
 								className="shrink-0 rounded-sm p-1 text-pro-text-tertiary transition-colors hover:bg-surface hover:text-error"
 							>
 								<Icon name="x" className="size-3.5" />

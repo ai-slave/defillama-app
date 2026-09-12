@@ -1,6 +1,6 @@
 import * as Ariakit from '@ariakit/react'
 import { useMutation } from '@tanstack/react-query'
-import { type Virtualizer, useVirtualizer } from '@tanstack/react-virtual'
+import type { Virtualizer } from '@tanstack/react-virtual'
 import { type CSSProperties, memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { BasicLink } from '~/components/Link'
@@ -13,6 +13,7 @@ import { ProjectsSidebarSection } from '~/containers/LlamaAI/projects/ProjectsSi
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { compareSessionsByActivity } from '~/containers/LlamaAI/utils/sessionActivityOrder'
 import { useStableCallback } from '~/hooks/useStableCallback'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import { Input, searchFieldIconStyles, searchFieldInputPlacementStyles } from '~/ui/Input'
@@ -197,16 +198,6 @@ export function AgenticSidebar({
 			if (!deleteStore.getState().contentElement?.isConnected) toast.error(error.message)
 		}
 	})
-	const handleBulkDelete = () => {
-		if (selectedIds.length === 0 || !onBulkDelete || bulkDeletion.isPending) return
-		bulkDeletion.mutate(selectedIds, {
-			onSuccess: () => {
-				deleteStore.hide()
-				setSelectMode(false)
-				setSelectedSessionIds(new Set())
-			}
-		})
-	}
 
 	const exitSelectMode = useCallback(() => {
 		setSelectMode(false)
@@ -231,6 +222,17 @@ export function AgenticSidebar({
 		}
 		return ids
 	}, [filteredSessions, selectedSessionIds])
+	const handleBulkDelete = () => {
+		if (selectedIds.length === 0 || !onBulkDelete || bulkDeletion.isPending) return
+		bulkDeletion.mutate(selectedIds, {
+			onSuccess: () => {
+				deleteStore.hide()
+				setSelectMode(false)
+				setSelectedSessionIds(new Set())
+			}
+		})
+	}
+
 	const allSelected = filteredSessions.length > 0 && selectedIds.length === filteredSessions.length
 
 	const { pinnedSessions, unpinnedSessions } = useMemo(() => {
@@ -242,7 +244,8 @@ export function AgenticSidebar({
 	const groupedSessions = useMemo(() => {
 		const groups: Record<string, Array<ChatSession>> = {}
 		for (const session of unpinnedSessions) {
-			const group = (groups[getGroupName(session.lastActivity, nowMs)] ??= [])
+			const groupName = getGroupName(session.lastActivity, nowMs)
+			const group = groups[groupName] ?? (groups[groupName] = [])
 			group.push(session)
 		}
 		return Object.entries(groups).sort((a, b) => Date.parse(b[1][0].lastActivity) - Date.parse(a[1][0].lastActivity))
@@ -299,7 +302,7 @@ export function AgenticSidebar({
 		onLoadMoreSessions()
 	})
 
-	const virtualizer = useVirtualizer({
+	const { items: virtualizedItems, totalSize } = useVirtualItems({
 		count: virtualItems.length,
 		getScrollElement: () => scrollContainerRef.current,
 		estimateSize: (index) => {
@@ -316,7 +319,6 @@ export function AgenticSidebar({
 		scrollMargin: projectsSectionHeight,
 		onChange: handleVirtualizerChange
 	})
-	const virtualizedItems = virtualizer.getVirtualItems()
 
 	useEffect(() => {
 		const el = projectsSectionRef.current
@@ -532,7 +534,7 @@ export function AgenticSidebar({
 						) : (
 							<div
 								style={{
-									height: `${virtualizer.getTotalSize()}px`,
+									height: `${totalSize}px`,
 									width: '100%',
 									position: 'relative'
 								}}

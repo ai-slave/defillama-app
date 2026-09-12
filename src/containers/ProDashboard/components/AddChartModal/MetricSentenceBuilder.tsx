@@ -8,11 +8,11 @@ import {
 	usePopoverStore,
 	useStoreState
 } from '@ariakit/react'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import type { Ref } from 'react'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { useMedia } from '~/hooks/useMedia'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { useAppMetadata } from '../../AppMetadataContext'
@@ -346,14 +346,14 @@ export function MetricSentenceBuilder({
 		return matchSorter(protocolOptionsByMetric, deferredSubjectSearchValue, { keys: ['label'] })
 	}, [protocolOptionsByMetric, deferredSubjectSearchValue])
 
-	const chainVirtualizer = useVirtualizer({
+	const chainVirtualizer = useVirtualItems({
 		count: subjectTab === 'chain' ? filteredChainOptions.length : 0,
 		getScrollElement: () => chainListRef.current,
 		estimateSize: () => 38,
 		overscan: 8
 	})
 
-	const protocolVirtualizer = useVirtualizer({
+	const protocolVirtualizer = useVirtualItems({
 		count: subjectTab === 'protocol' ? filteredProtocolOptions.length : 0,
 		getScrollElement: () => protocolListRef.current,
 		estimateSize: () => 42,
@@ -576,8 +576,8 @@ export function MetricSentenceBuilder({
 									{subjectTab === 'chain' ? (
 										filteredChainOptions.length > 0 ? (
 											<ComboboxList ref={chainListRef} className="max-h-[240px] overflow-y-auto overscroll-contain">
-												<div style={{ height: chainVirtualizer.getTotalSize(), position: 'relative' }}>
-													{chainVirtualizer.getVirtualItems().map((virtualRow) => {
+												<div style={{ height: chainVirtualizer.totalSize, position: 'relative' }}>
+													{chainVirtualizer.items.map((virtualRow) => {
 														const option = filteredChainOptions[virtualRow.index]
 														if (!option) return null
 														const isActive = metricChain === option.value
@@ -627,8 +627,8 @@ export function MetricSentenceBuilder({
 										)
 									) : filteredProtocolOptions.length > 0 ? (
 										<ComboboxList ref={protocolListRef} className="max-h-[240px] overflow-y-auto overscroll-contain">
-											<div style={{ height: protocolVirtualizer.getTotalSize(), position: 'relative' }}>
-												{protocolVirtualizer.getVirtualItems().map((virtualRow) => {
+											<div style={{ height: protocolVirtualizer.totalSize, position: 'relative' }}>
+												{protocolVirtualizer.items.map((virtualRow) => {
 													const option = filteredProtocolOptions[virtualRow.index]
 													if (!option) return null
 													const isActive = metricProtocol === option.value

@@ -1,6 +1,6 @@
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useMemo, useRef, useState } from 'react'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { getItemIconUrl } from '../../utils'
@@ -76,7 +76,7 @@ export function EntityPickerList({
 
 	const visibleEntityValues = useMemo(() => new Set(filteredEntities.map((entity) => entity.value)), [filteredEntities])
 
-	const virtualizer = useVirtualizer({
+	const virtualizer = useVirtualItems({
 		count: filteredEntities.length,
 		getScrollElement: () => listRef.current,
 		estimateSize: () => 40,
@@ -129,11 +129,11 @@ export function EntityPickerList({
 				) : (
 					<div
 						style={{
-							height: virtualizer.getTotalSize(),
+							height: virtualizer.totalSize,
 							position: 'relative'
 						}}
 					>
-						{virtualizer.getVirtualItems().map((row) => {
+						{virtualizer.items.map((row) => {
 							const entity = filteredEntities[row.index]
 							if (!entity) return null
 							const isSelected = selectedEntities.includes(entity.value)

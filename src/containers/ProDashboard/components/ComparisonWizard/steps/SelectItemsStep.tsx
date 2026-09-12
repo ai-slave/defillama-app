@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useMemo, useRef, useState } from 'react'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchChainsByCategory, fetchChainsCategories } from '~/containers/Chains/api'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { chainIconUrl } from '~/utils/icons'
 import { useProDashboardCatalog } from '../../../ProDashboardAPIContext'
@@ -18,12 +18,28 @@ interface Option {
 	parentSlug?: string
 }
 
+async function fetchCategoryChains(category: string) {
+	try {
+		const data = await fetchChainsByCategory(category)
+		return { category, chains: (data?.chainsUnique as Array<string>) || [] }
+	} catch {
+		return { category, chains: [] as Array<string> }
+	}
+}
+
 export function SelectItemsStep() {
 	const { state, actions } = useComparisonWizardContext()
 	const { protocols, chains, protocolsLoading, protocolCatalog } = useProDashboardCatalog()
 	const [search, setSearch] = useState('')
 	const deferredSearch = useDeferredValue(search)
-	const [selectedCategories, setSelectedCategories] = useState<Array<string>>([])
+	const [categoryFilter, setCategoryFilter] = useState({
+		comparisonType: state.comparisonType,
+		selected: [] as Array<string>
+	})
+	if (categoryFilter.comparisonType !== state.comparisonType) {
+		setCategoryFilter({ comparisonType: state.comparisonType, selected: [] })
+	}
+	const selectedCategories = categoryFilter.selected
 	const listRef = useRef<HTMLDivElement>(null)
 
 	const { data: chainCategoriesList } = useQuery({
@@ -40,16 +56,7 @@ export function SelectItemsStep() {
 		queryKey: ['pro-dashboard', 'chains-by-category', chainCategoriesList],
 		queryFn: async () => {
 			if (!chainCategoriesList) return new Map<string, Set<string>>()
-			const results = await Promise.all(
-				chainCategoriesList.map(async (cat) => {
-					try {
-						const data = await fetchChainsByCategory(cat)
-						return { category: cat, chains: (data?.chainsUnique as Array<string>) || [] }
-					} catch {
-						return { category: cat, chains: [] as Array<string> }
-					}
-				})
-			)
+			const results = await Promise.all(chainCategoriesList.map(fetchCategoryChains))
 			const chainsInCategory = new Map<string, Set<string>>()
 			for (const { category, chains: categoryChains } of results) {
 				chainsInCategory.set(category, new Set(categoryChains))
@@ -162,7 +169,7 @@ export function SelectItemsStep() {
 		return filtered
 	}, [options, deferredSearch, selectedCategoriesSet, state.comparisonType, chainCategoryData, protocols])
 
-	const virtualizer = useVirtualizer({
+	const virtualizer = useVirtualItems({
 		count: filteredOptions.length,
 		getScrollElement: () => listRef.current,
 		estimateSize: () => 44,
@@ -189,10 +196,6 @@ export function SelectItemsStep() {
 	}, [state.selectedItems, optionsMap])
 
 	const selectedItemsSet = useMemo(() => new Set(state.selectedItems), [state.selectedItems])
-
-	useEffect(() => {
-		setSelectedCategories([])
-	}, [state.comparisonType])
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -226,6 +229,7 @@ export function SelectItemsStep() {
 									<span className="whitespace-nowrap text-pro-text-primary">{item.label}</span>
 									<button
 										type="button"
+										aria-label={`Remove ${item.label}`}
 										onClick={() => handleRemoveItem(item.value)}
 										className="flex size-5 shrink-0 items-center justify-center rounded-full text-pro-text-tertiary transition-colors hover:bg-error/20 hover:text-error"
 									>
@@ -254,7 +258,7 @@ export function SelectItemsStep() {
 									: protocolCategoryOptions
 							}
 							selectedValues={selectedCategories}
-							onChange={setSelectedCategories}
+							onChange={(selected) => setCategoryFilter({ comparisonType: state.comparisonType, selected })}
 							placeholder="All categories"
 							maxSelections={5}
 						/>
@@ -269,6 +273,7 @@ export function SelectItemsStep() {
 						<input
 							type="text"
 							onInput={(e) => setSearch(e.currentTarget.value)}
+							aria-label={`Search ${typeLabel.toLowerCase()}`}
 							placeholder={`Search ${typeLabel.toLowerCase()}...`}
 							className="w-full rounded-md border border-pro-form-control-border bg-surface-elevated-1 py-2 pr-3 pl-9 text-sm placeholder:text-pro-text-tertiary focus:border-brand focus:ring-1 focus:ring-brand focus:outline-hidden"
 						/>
@@ -295,12 +300,12 @@ export function SelectItemsStep() {
 					) : (
 						<div
 							style={{
-								height: `${virtualizer.getTotalSize()}px`,
+								height: `${virtualizer.totalSize}px`,
 								width: '100%',
 								position: 'relative'
 							}}
 						>
-							{virtualizer.getVirtualItems().map((virtualRow) => {
+							{virtualizer.items.map((virtualRow) => {
 								const option = filteredOptions[virtualRow.index]
 								const isDirectlySelected = selectedItemsSet.has(option.value)
 								const isParentSelected = option.isChild && option.parentSlug && selectedItemsSet.has(option.parentSlug)
@@ -313,6 +318,9 @@ export function SelectItemsStep() {
 									<button
 										key={option.value}
 										type="button"
+										role="checkbox"
+										aria-checked={!!isSelected}
+										aria-label={option.label}
 										onClick={() => !isDisabled && handleToggle(option.value)}
 										disabled={isDisabled}
 										className={`absolute top-0 left-0 flex w-full items-center gap-3 px-3 py-2 text-left transition-colors ${

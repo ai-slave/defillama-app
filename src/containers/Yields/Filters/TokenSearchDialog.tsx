@@ -1,7 +1,7 @@
 import * as Ariakit from '@ariakit/react'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { DialogCloseButton, DialogHeading, dialogScrollableBodyStyles, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
@@ -132,15 +132,13 @@ function TokenResults({
 	assets,
 	selectedSet,
 	multiple,
-	onToggle,
-	query
+	onToggle
 }: {
 	families: Array<TokenOption>
 	assets: Array<TokenOption>
 	selectedSet: Set<string>
 	multiple: boolean
 	onToggle: (value: string, wasSelected: boolean) => void
-	query: string
 }) {
 	const resultsRef = useRef<HTMLDivElement | null>(null)
 	const familiesRef = useRef<HTMLDivElement | null>(null)
@@ -150,7 +148,7 @@ function TokenResults({
 
 	// This component mounts inside Ariakit's portal, so the scroll element exists
 	// before the virtualizer runs its first layout measurement.
-	const assetVirtualizer = useVirtualizer({
+	const assetVirtualizer = useVirtualItems({
 		count: assets.length,
 		getScrollElement: () => resultsRef.current,
 		estimateSize: () => 37,
@@ -159,12 +157,9 @@ function TokenResults({
 		getItemKey: getAssetKey
 	})
 
-	useEffect(() => {
-		resultsRef.current?.scrollTo({ top: 0 })
-	}, [query])
-
 	// The assets share their scroll container with the groups above. Measure that
-	// offset initially and whenever responsive layout changes either region.
+	// offset initially and whenever responsive layout changes either region. Both
+	// measured regions remain mounted so the observer also covers empty-to-loaded results.
 	useLayoutEffect(() => {
 		const scrollEl = resultsRef.current
 		const familiesEl = familiesRef.current
@@ -178,56 +173,48 @@ function TokenResults({
 		if (familiesEl) observer.observe(familiesEl)
 		observer.observe(assetsEl)
 		return () => observer.disconnect()
-	}, [query, families.length, assets.length])
+	}, [])
 
 	return (
 		<div className={`${dialogScrollableBodyStyles} px-2 pb-2`} ref={resultsRef}>
-			{families.length > 0 ? (
-				<div className="mb-1" ref={familiesRef}>
-					<SectionHeader
-						label="Groups"
-						hint="curated families — one pick covers every variant"
-						count={families.length}
-					/>
-					<div className="grid gap-x-1 sm:grid-cols-2">
-						{families.map((option) => (
-							<TokenOptionRow
-								key={option[1]}
-								option={option}
-								selected={selectedSet.has(option[1])}
-								multiple={multiple}
-								onToggle={onToggle}
-							/>
-						))}
-					</div>
+			<div className="mb-1" ref={familiesRef} hidden={families.length === 0}>
+				<SectionHeader label="Groups" hint="curated families — one pick covers every variant" count={families.length} />
+				<div className="grid gap-x-1 sm:grid-cols-2">
+					{families.map((option) => (
+						<TokenOptionRow
+							key={option[1]}
+							option={option}
+							selected={selectedSet.has(option[1])}
+							multiple={multiple}
+							onToggle={onToggle}
+						/>
+					))}
 				</div>
-			) : null}
+			</div>
 
-			{assets.length > 0 ? (
-				<div>
-					<SectionHeader label="Assets" hint="individual tokens" count={assets.length} />
-					<div className="relative" style={{ height: assetVirtualizer.getTotalSize() }} ref={assetsRef}>
-						{assetVirtualizer.getVirtualItems().map((virtualRow) => {
-							const option = assets[virtualRow.index]
-							if (!option) return null
-							return (
-								<div
-									key={virtualRow.key}
-									className="absolute top-0 left-0 w-full"
-									style={{ transform: `translateY(${virtualRow.start - scrollMargin}px)` }}
-								>
-									<TokenOptionRow
-										option={option}
-										selected={selectedSet.has(option[1])}
-										multiple={multiple}
-										onToggle={onToggle}
-									/>
-								</div>
-							)
-						})}
-					</div>
+			<div hidden={assets.length === 0}>
+				<SectionHeader label="Assets" hint="individual tokens" count={assets.length} />
+				<div className="relative" style={{ height: assetVirtualizer.totalSize }} ref={assetsRef}>
+					{assetVirtualizer.items.map((virtualRow) => {
+						const option = assets[virtualRow.index]
+						if (!option) return null
+						return (
+							<div
+								key={virtualRow.key}
+								className="absolute top-0 left-0 w-full"
+								style={{ transform: `translateY(${virtualRow.start - scrollMargin}px)` }}
+							>
+								<TokenOptionRow
+									option={option}
+									selected={selectedSet.has(option[1])}
+									multiple={multiple}
+									onToggle={onToggle}
+								/>
+							</div>
+						)
+					})}
 				</div>
-			) : null}
+			</div>
 
 			{families.length === 0 && assets.length === 0 ? (
 				<div className="px-3 py-6 text-center body-sm text-tertiary">No matches</div>
@@ -364,12 +351,12 @@ export function TokenSearchDialog({
 						</button>
 					) : null}
 					<TokenResults
+						key={query}
 						families={families}
 						assets={assets}
 						selectedSet={selectedSet}
 						multiple={multiple}
 						onToggle={onToggle}
-						query={query}
 					/>
 				</>
 			</Ariakit.Dialog>

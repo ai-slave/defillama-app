@@ -1,5 +1,5 @@
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { lazy, Suspense, useMemo, useRef } from 'react'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { formatNumber } from '~/utils/numberFormat'
 import type { QueryResult } from './exportResults'
 import { inferColumnKind, TypeBadge } from './primitives'
@@ -27,7 +27,7 @@ type ColumnKind = ReturnType<typeof inferColumnKind>
 export function ResultsGrid({ result }: ResultsGridProps) {
 	const parentRef = useRef<HTMLDivElement>(null)
 
-	const rowVirtualizer = useVirtualizer({
+	const rowVirtualizer = useVirtualItems({
 		count: result.rows.length,
 		getScrollElement: () => parentRef.current,
 		estimateSize: () => ROW_HEIGHT,
@@ -90,8 +90,8 @@ export function ResultsGrid({ result }: ResultsGridProps) {
 						)
 					})}
 				</div>
-				<div style={{ height: rowVirtualizer.getTotalSize(), position: 'relative' }}>
-					{rowVirtualizer.getVirtualItems().map((v) => {
+				<div style={{ height: rowVirtualizer.totalSize, position: 'relative' }}>
+					{rowVirtualizer.items.map((v) => {
 						const row = result.rows[v.index]
 						const zebra = v.index % 2 === 1
 						return (

@@ -1,11 +1,11 @@
 import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { lazy, Suspense, useDeferredValue, useEffect, useMemo, useReducer, useRef } from 'react'
 import { useYieldsData } from '~/containers/ProDashboard/components/datasets/YieldsDataset/useYieldsData'
 import type { ProYieldRow } from '~/containers/ProDashboard/yieldData'
 import { normalizeYieldToken } from '~/containers/Yields/domain/tokenNormalization'
 import { useYieldChartData, useYieldChartLendBorrow } from '~/containers/Yields/queries.client'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { LocalLoader } from '~/ui/Loaders'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
@@ -218,21 +218,21 @@ export function YieldsChartTab({
 		return matchSorter(tokenOptions, deferredTokenSearch, { keys: ['label'] })
 	}, [tokenOptions, deferredTokenSearch])
 
-	const chainVirtualizer = useVirtualizer({
+	const chainVirtualizer = useVirtualItems({
 		count: filteredChainOptions.length,
 		getScrollElement: () => chainListRef.current,
 		estimateSize: () => 44,
 		overscan: 8
 	})
 
-	const projectVirtualizer = useVirtualizer({
+	const projectVirtualizer = useVirtualItems({
 		count: filteredProjectOptions.length,
 		getScrollElement: () => projectListRef.current,
 		estimateSize: () => 44,
 		overscan: 8
 	})
 
-	const tokenVirtualizer = useVirtualizer({
+	const tokenVirtualizer = useVirtualItems({
 		count: filteredTokenOptions.length,
 		getScrollElement: () => tokenListRef.current,
 		estimateSize: () => 44,
@@ -345,7 +345,7 @@ export function YieldsChartTab({
 		})
 	}, [filteredPools, deferredPoolSearch, sortColumn, sortDirection])
 
-	const poolListVirtualizer = useVirtualizer({
+	const poolListVirtualizer = useVirtualItems({
 		count: searchedAndSortedPools.length,
 		getScrollElement: () => poolListRef.current,
 		estimateSize: () => 64,
@@ -505,11 +505,11 @@ export function YieldsChartTab({
 										<div
 											className="p-1"
 											style={{
-												height: chainVirtualizer.getTotalSize(),
+												height: chainVirtualizer.totalSize,
 												position: 'relative'
 											}}
 										>
-											{chainVirtualizer.getVirtualItems().map((row) => {
+											{chainVirtualizer.items.map((row) => {
 												const option = filteredChainOptions[row.index]
 												if (!option) return null
 												const isActive = selectedYieldChains.includes(option.value)
@@ -616,11 +616,11 @@ export function YieldsChartTab({
 										<div
 											className="p-1"
 											style={{
-												height: projectVirtualizer.getTotalSize(),
+												height: projectVirtualizer.totalSize,
 												position: 'relative'
 											}}
 										>
-											{projectVirtualizer.getVirtualItems().map((row) => {
+											{projectVirtualizer.items.map((row) => {
 												const option = filteredProjectOptions[row.index]
 												if (!option) return null
 												const isActive = selectedYieldProjects.includes(option.value)
@@ -728,11 +728,11 @@ export function YieldsChartTab({
 										<div
 											className="p-1"
 											style={{
-												height: tokenVirtualizer.getTotalSize(),
+												height: tokenVirtualizer.totalSize,
 												position: 'relative'
 											}}
 										>
-											{tokenVirtualizer.getVirtualItems().map((row) => {
+											{tokenVirtualizer.items.map((row) => {
 												const option = filteredTokenOptions[row.index]
 												if (!option) return null
 												const isActive = normalizedSelectedTokenSet.has(option.value)
@@ -961,11 +961,11 @@ export function YieldsChartTab({
 								) : (
 									<div
 										style={{
-											height: poolListVirtualizer.getTotalSize(),
+											height: poolListVirtualizer.totalSize,
 											position: 'relative'
 										}}
 									>
-										{poolListVirtualizer.getVirtualItems().map((row) => {
+										{poolListVirtualizer.items.map((row) => {
 											const pool = searchedAndSortedPools[row.index]
 											if (!pool) return null
 											const isSelected = selectedYieldPool?.configID === pool.configID

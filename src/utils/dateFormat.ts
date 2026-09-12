@@ -44,15 +44,6 @@ const LOCAL_DATE_TIME_WITH_ZONE_FORMATTER = new Intl.DateTimeFormat(DISPLAY_LOCA
 	timeZoneName: 'short'
 })
 
-const UTC_DATE_TIME_FORMATTER = new Intl.DateTimeFormat(DISPLAY_LOCALE, {
-	year: 'numeric',
-	month: 'short',
-	day: 'numeric',
-	hour: 'numeric',
-	minute: '2-digit',
-	timeZone: 'UTC'
-})
-
 function fromNumericTimestamp(value: number, input: TimestampInput) {
 	return new Date(input === 'seconds' ? value * 1000 : value)
 }
@@ -140,11 +131,15 @@ export function formatDateTime(value: DateValue, options?: DateTimeOptions | Num
 	if (options?.timeZone !== 'UTC' && options?.timeZone !== 'local') return null
 	const date = parseInstant(value, 'input' in options ? options.input : undefined)
 	if (!date) return null
-	return options.timeZone === 'UTC'
-		? `${UTC_DATE_TIME_FORMATTER.format(date)} UTC`
-		: options.timeZoneName === 'short'
-			? LOCAL_DATE_TIME_WITH_ZONE_FORMATTER.format(date)
-			: LOCAL_DATE_TIME_FORMATTER.format(date)
+	if (options.timeZone === 'UTC') {
+		// ICU versions disagree on the date/time separator, so keep SSR punctuation explicit.
+		const hour = date.getUTCHours()
+		const minute = String(date.getUTCMinutes()).padStart(2, '0')
+		return `${UTC_DATE_FORMATTER.format(date)}, ${hour % 12 || 12}:${minute} ${hour < 12 ? 'AM' : 'PM'} UTC`
+	}
+	return options.timeZoneName === 'short'
+		? LOCAL_DATE_TIME_WITH_ZONE_FORMATTER.format(date)
+		: LOCAL_DATE_TIME_FORMATTER.format(date)
 }
 
 /** Formats the UTC calendar month containing a date. */

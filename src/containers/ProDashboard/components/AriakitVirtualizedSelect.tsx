@@ -1,7 +1,7 @@
 import { Popover, PopoverDisclosure, usePopoverStore, useStoreState } from '@ariakit/react'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from './LoadingSpinner'
 
@@ -51,21 +51,23 @@ export function AriakitVirtualizedSelect({
 		return matchSorter(options, deferredSearch, { keys: ['label', 'value'] })
 	}, [options, deferredSearch])
 
-	const virtualizer = useVirtualizer({
+	const virtualizer = useVirtualItems({
 		count: filteredOptions.length,
 		getScrollElement: () => listRef.current,
 		estimateSize: () => 44,
 		overscan: 8
 	})
 
+	const { measure, scrollToIndex } = virtualizer
+
 	useEffect(() => {
 		if (!isPopoverOpen) return
 
-		virtualizer.measure()
+		measure()
 		if (filteredOptions.length > 0) {
-			virtualizer.scrollToIndex(0, { align: 'start' })
+			scrollToIndex(0, { align: 'start' })
 		}
-	}, [isPopoverOpen, filteredOptions.length, virtualizer])
+	}, [isPopoverOpen, filteredOptions.length, measure, scrollToIndex])
 
 	const selectedOption = options.find((opt) => opt.value === selectedValue)
 
@@ -141,11 +143,11 @@ export function AriakitVirtualizedSelect({
 									<div
 										className="p-1"
 										style={{
-											height: virtualizer.getTotalSize(),
+											height: virtualizer.totalSize,
 											position: 'relative'
 										}}
 									>
-										{virtualizer.getVirtualItems().map((row) => {
+										{virtualizer.items.map((row) => {
 											const option = filteredOptions[row.index]
 											if (!option) return null
 											const isActive = option.value === selectedValue

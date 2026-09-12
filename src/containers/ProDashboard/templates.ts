@@ -10,6 +10,7 @@ import {
 	type Protocol
 } from './types'
 import { UNIFIED_TABLE_CONFIG_VERSION, type UnifiedTableConfig } from './unifiedTable/config/current'
+import { generateItemId } from './utils/dashboardUtils'
 
 export interface DashboardTemplate {
 	id: string
@@ -193,10 +194,6 @@ const TEMPLATE_TABLE_COLUMNS: Record<string, { columns: Array<string>; sortBy: s
 	}
 }
 
-function generateId(prefix: string, suffix: string): string {
-	return `${prefix}-${suffix}-${Date.now()}`
-}
-
 export interface ChainCategoryData {
 	chainsInCategory: Map<string, Set<string>>
 }
@@ -282,7 +279,7 @@ function generateTemplateMetrics(template: DashboardTemplate, selectedItems: Arr
 	const metrics: Array<MetricConfig> = []
 	for (const item of selectedItems) {
 		const metric = createMetricConfig({
-			id: generateId('metric', `${item.slug}-${primaryMetric}`),
+			id: generateItemId('metric', `${item.slug}-${primaryMetric}`),
 			kind: 'metric',
 			subject:
 				template.type === 'chains'
@@ -314,7 +311,7 @@ function generateTemplateTable(template: DashboardTemplate, selectedItems: Array
 	const itemSlugs = selectedItems.map((item) => item.slug)
 
 	return {
-		id: generateId('unified-table', `template-${template.id}`),
+		id: generateItemId('unified-table', `template-${template.id}`),
 		kind: 'unified-table',
 		configVersion: UNIFIED_TABLE_CONFIG_VERSION,
 		strategy: 'protocols',
@@ -338,7 +335,7 @@ function generateTemplateMultiCharts(
 		const chartItems: Array<ChartConfig> = []
 		for (const item of selectedItems) {
 			const chartBase = {
-				id: generateId('chart', `${item.slug}-${metric}`),
+				id: generateItemId('chart', `${item.slug}-${metric}`),
 				kind: 'chart' as const,
 				...(isGroupable && template.grouping !== undefined ? { grouping: template.grouping } : {})
 			}
@@ -351,7 +348,7 @@ function generateTemplateMultiCharts(
 		if (chartItems.length === 0) return []
 
 		const chart: MultiChartConfig = {
-			id: generateId('multi', `template-${metric}`),
+			id: generateItemId('multi', `template-${metric}`),
 			kind: 'multi',
 			name: `${chartTypeInfo?.title || metric} Comparison`,
 			items: chartItems,

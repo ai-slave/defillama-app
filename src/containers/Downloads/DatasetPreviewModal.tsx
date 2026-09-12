@@ -1,12 +1,12 @@
 import * as Ariakit from '@ariakit/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import Link from 'next/link'
 import { lazy, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { setSignupSource } from '~/auth/signupSource'
 import { SortIcon } from '~/components/Table/SortIcon'
 import { useRecentDownloads, useSavedDownloads } from '~/contexts/LocalStorage'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from '~/ui/Loaders'
 import { downloadTabular, type DownloadFormat } from '~/utils/download'
@@ -198,7 +198,7 @@ export function DatasetPreviewModal({
 		return initial
 	})
 	const [showSaveDialog, setShowSaveDialog] = useState(false)
-	const initialConfigAppliedRef = useRef(false)
+	const [appliedInitialConfig, setAppliedInitialConfig] = useState<ReturnType<typeof applyDatasetConfig> | null>(null)
 	const tableContainerRef = useRef<HTMLDivElement>(null)
 	const rightShadowRef = useRef<HTMLDivElement>(null)
 	const deferredSearch = useDeferredValue(search.trim().toLowerCase())
@@ -248,40 +248,36 @@ export function DatasetPreviewModal({
 		return parseCsv(csvText)
 	}, [csvText])
 
-	useEffect(() => {
-		if (headers.length === 0 || selectedColumns !== null) return
-
-		if (initialConfig && !initialConfigAppliedRef.current) {
+	// Initialize the editable draft once the CSV arrives. Subsequent user edits stay authoritative.
+	if (headers.length > 0 && selectedColumns === null) {
+		if (initialConfig && appliedInitialConfig === null) {
 			const applied = applyDatasetConfig(initialConfig, headers)
 			setSelectedColumns(applied.selectedColumns)
 			setSortState(applied.sort)
-			initialConfigAppliedRef.current = true
-			if (applied.missingColumns.length > 0) {
-				toast(
-					`${applied.missingColumns.length} saved column${
-						applied.missingColumns.length === 1 ? '' : 's'
-					} no longer available: ${applied.missingColumns.slice(0, 3).join(', ')}${
-						applied.missingColumns.length > 3 ? '…' : ''
-					}`
-				)
-			}
-			if (applied.missingSortColumn) {
-				toast(`Saved sort column "${applied.missingSortColumn}" no longer available`)
-			}
-			return
-		}
-
-		setSelectedColumns(new Set(headers.map((_, index) => index)))
-
-		if (dataset.defaultSortField && sortState === null) {
-			const sortIndex = headers.indexOf(dataset.defaultSortField)
-			if (sortIndex !== -1) {
-				const values = rows.map((row) => row.values[sortIndex] ?? '')
-				const kind = detectColumnKind(dataset.defaultSortField, values)
-				setSortState({ index: sortIndex, direction: getInitialSortDirection(kind) })
+			setAppliedInitialConfig(applied)
+		} else {
+			setSelectedColumns(new Set(headers.map((_, index) => index)))
+			if (dataset.defaultSortField && sortState === null) {
+				const sortIndex = headers.indexOf(dataset.defaultSortField)
+				if (sortIndex !== -1) {
+					const values = rows.map((row) => row.values[sortIndex] ?? '')
+					const kind = detectColumnKind(dataset.defaultSortField, values)
+					setSortState({ index: sortIndex, direction: getInitialSortDirection(kind) })
+				}
 			}
 		}
-	}, [headers, selectedColumns, dataset.defaultSortField, rows, sortState, initialConfig])
+	}
+
+	useEffect(() => {
+		if (!appliedInitialConfig) return
+		const { missingColumns, missingSortColumn } = appliedInitialConfig
+		if (missingColumns.length > 0) {
+			toast(
+				`${missingColumns.length} saved column${missingColumns.length === 1 ? '' : 's'} no longer available: ${missingColumns.slice(0, 3).join(', ')}${missingColumns.length > 3 ? '…' : ''}`
+			)
+		}
+		if (missingSortColumn) toast(`Saved sort column "${missingSortColumn}" no longer available`)
+	}, [appliedInitialConfig])
 
 	const cols = selectedColumns ?? EMPTY_SELECTION
 
@@ -401,7 +397,7 @@ export function DatasetPreviewModal({
 		}
 	}, [updateScrollShadows, hasData])
 
-	const rowVirtualizer = useVirtualizer({
+	const rowVirtualizer = useVirtualItems({
 		count: displayedRows.length,
 		getScrollElement: () => tableContainerRef.current,
 		estimateSize: () => ROW_HEIGHT,
@@ -812,6 +808,7 @@ export function DatasetPreviewModal({
 													<div className="flex items-center gap-0.5 p-2">
 														<input
 															type="checkbox"
+															aria-label={`Include ${column.header} column`}
 															checked={isSelected}
 															onChange={() => toggleColumn(column.index)}
 															className="mr-1 size-3.5 shrink-0 cursor-pointer accent-brand"
@@ -837,12 +834,12 @@ export function DatasetPreviewModal({
 
 								<div
 									style={{
-										height: `${rowVirtualizer.getTotalSize()}px`,
+										height: `${rowVirtualizer.totalSize}px`,
 										minWidth: `${tableWidth}px`,
 										position: 'relative'
 									}}
 								>
-									{rowVirtualizer.getVirtualItems().map((virtualRow) => {
+									{rowVirtualizer.items.map((virtualRow) => {
 										const row = displayedRows[virtualRow.index]
 										const isOdd = virtualRow.index % 2 === 1
 										return (

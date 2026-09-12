@@ -33,6 +33,17 @@ describe('date formatters', () => {
 		expect(formatRelativeTime('2026-07-24T16:30:00Z', { now: new Date(Number.NaN) })).toBeNull()
 	})
 
+	test('keeps UTC date-time punctuation and 12-hour boundaries stable across runtimes', () => {
+		for (const [value, expected] of [
+			['2026-07-24T00:05:00Z', 'Jul 24, 2026, 12:05 AM UTC'],
+			['2026-07-24T12:00:00Z', 'Jul 24, 2026, 12:00 PM UTC'],
+			['2026-07-24T23:59:00Z', 'Jul 24, 2026, 11:59 PM UTC'],
+			['2026-07-24T00:30:00+14:00', 'Jul 23, 2026, 10:30 AM UTC']
+		]) {
+			expect(formatDateTime(value, { timeZone: 'UTC' })).toBe(expected)
+		}
+	})
+
 	test('formats months and machine dates in UTC', () => {
 		expect(formatMonthYear('2026-07-24')).toBe('Jul 2026')
 		expect(formatIsoDate('2026-07-24T00:30:00+14:00')).toBe('2026-07-23')

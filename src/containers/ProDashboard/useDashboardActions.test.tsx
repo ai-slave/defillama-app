@@ -5,7 +5,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { DashboardItemConfig } from './dashboardItemConfig'
 import type { DashboardAction, DashboardState } from './dashboardReducer'
-import type { TextConfig } from './types'
+import type { MultiChartConfig, TextConfig } from './types'
 import type { UnifiedTableConfig } from './unifiedTable/config/current'
 import { useDashboardActions } from './useDashboardActions'
 
@@ -113,6 +113,44 @@ describe('useDashboardActions', () => {
 		expect(autoSave).toHaveBeenCalledTimes(2)
 		expect(autoSave.mock.calls[0]?.[0].map((item) => item.id)).toEqual(['second', 'first'])
 		expect(autoSave.mock.calls[1]?.[0].map((item) => item.id)).toEqual(['second', 'first', 'third'])
+	})
+
+	test('duplicating a multi-chart preserves repeated series with distinct ids', async () => {
+		const clock = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000)
+		try {
+			const multi: MultiChartConfig = {
+				id: 'original-multi',
+				kind: 'multi',
+				items: [
+					{ id: 'first-series', kind: 'chart', subjectType: 'chain', chain: 'Ethereum', type: 'tvl' },
+					{ id: 'second-series', kind: 'chart', subjectType: 'chain', chain: 'Ethereum', type: 'tvl' }
+				]
+			}
+			const autoSave = vi.fn<(items: Array<DashboardItemConfig>) => void>()
+			const rendered: { actions?: ReturnType<typeof useDashboardActions> } = {}
+			function Harness() {
+				rendered.actions = useDashboardActions(vi.fn(), dashboardState(), autoSave, false)
+				return null
+			}
+			await act(async () => root.render(<Harness />))
+			act(() => rendered.actions!.handleDuplicateMultiChart(multi))
+			const duplicate = autoSave.mock.calls[0][0].at(-1)
+			if (duplicate?.kind !== 'multi') throw new Error('Expected a duplicated multi-chart')
+			expect(duplicate.items).toHaveLength(2)
+			expect(new Set(duplicate.items.map((item) => item.id)).size).toBe(2)
+			for (const [index, item] of duplicate.items.entries()) {
+				expect(item).toEqual({
+					id: expect.any(String),
+					kind: 'chart',
+					subjectType: 'chain',
+					chain: 'Ethereum',
+					type: 'tvl'
+				})
+				expect(item.id).not.toBe(multi.items[index].id)
+			}
+		} finally {
+			clock.mockRestore()
+		}
 	})
 
 	test('duplicates a unified table with independent nested configuration and a fresh id', async () => {

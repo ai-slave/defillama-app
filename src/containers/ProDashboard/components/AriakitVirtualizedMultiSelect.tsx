@@ -1,8 +1,8 @@
 import { Popover, PopoverDisclosure, usePopoverStore } from '@ariakit/react'
-import { useVirtualizer } from '@tanstack/react-virtual'
 import { matchSorter } from 'match-sorter'
 import { useDeferredValue, useId, useMemo, useRef, useState } from 'react'
 import type { MultiSelectOption } from '~/components/Select/types'
+import { useVirtualItems } from '~/hooks/useVirtualItems'
 import { Icon } from '~/ui/Icon'
 import { LoadingSpinner } from './LoadingSpinner'
 
@@ -43,7 +43,7 @@ function MultiSelectPopoverBody({
 		return matchSorter(options, deferredSearch, { keys: ['label', 'value'] })
 	}, [options, deferredSearch])
 
-	const virtualizer = useVirtualizer({
+	const virtualizer = useVirtualItems({
 		count: filteredOptions.length,
 		getScrollElement: () => listRef.current,
 		estimateSize: () => 40,
@@ -100,12 +100,12 @@ function MultiSelectPopoverBody({
 					<div
 						key={`virtual-${filteredOptions.length}`}
 						style={{
-							height: `${virtualizer.getTotalSize()}px`,
+							height: `${virtualizer.totalSize}px`,
 							width: '100%',
 							position: 'relative'
 						}}
 					>
-						{virtualizer.getVirtualItems().map((virtualRow) => {
+						{virtualizer.items.map((virtualRow) => {
 							const option = filteredOptions[virtualRow.index]
 							if (!option) return null
 							const isActive = selectedValues.includes(option.value)

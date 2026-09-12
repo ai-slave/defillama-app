@@ -61,7 +61,7 @@ export function mergeDashboardItems(
  * Generate a unique ID for dashboard items
  */
 export function generateItemId(type: string, identifier: string): string {
-	return `${type}-${identifier}-${Date.now()}`
+	return `${type}-${identifier}-${crypto.randomUUID()}`
 }
 
 export function toDashboardSavePayload(dashboard: Dashboard): DashboardSavePayload {

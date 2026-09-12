@@ -9,13 +9,21 @@ import type { DashboardItemConfig } from './dashboardItemConfig'
 const mocks = vi.hoisted(() => ({
 	items: [] as Array<DashboardItemConfig>,
 	mode: 'view' as 'view' | 'edit',
+	authenticated: false,
+	dashboardId: 'fixture',
 	undo: vi.fn(),
 	refresh: vi.fn(),
 	progress: { active: 0, failed: 0, total: 0, bulk: false }
 }))
 vi.mock('~/auth', () => ({
-	useAuthContext: () => ({ isAuthenticated: false, hasActiveSubscription: false, authorizedFetch: vi.fn() })
+	useAuthContext: () => ({
+		isAuthenticated: mocks.authenticated,
+		hasActiveSubscription: false,
+		authorizedFetch: vi.fn(),
+		user: mocks.authenticated ? { id: 'owner' } : undefined
+	})
 }))
+vi.mock('~/containers/Authors/api', () => ({ getMyDashboardAuthorProfile: async () => null }))
 vi.mock('next/router', () => ({ useRouter: () => ({ events: { on: vi.fn(), off: vi.fn() } }) }))
 vi.mock('./hooks/useFreeTierStatus', () => ({ useFreeTierStatus: () => ({ canCreateDashboard: true }) }))
 vi.mock('./AppMetadataContext', () => ({ AppMetadataProvider: ({ children }: { children: ReactNode }) => children }))
@@ -28,7 +36,8 @@ vi.mock('./ProDashboardAPIContext', () => ({
 	useProDashboardTime: () => ({ timePeriod: '365d', customTimePeriod: null }),
 	useProDashboardDashboard: () => ({
 		dashboardName: 'Fixture',
-		dashboardId: 'fixture',
+		dashboardId: mocks.dashboardId,
+		currentDashboard: mocks.authenticated ? { id: mocks.dashboardId, user: 'owner' } : undefined,
 		dashboardVisibility: 'public',
 		dashboardTags: [],
 		getCurrentRatingSession: () => null,
@@ -58,6 +67,8 @@ let container: HTMLDivElement
 beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	mocks.mode = 'view'
+	mocks.authenticated = false
+	mocks.dashboardId = 'fixture'
 	mocks.undo.mockClear()
 	mocks.refresh.mockClear()
 	container = document.createElement('div')
@@ -99,6 +110,29 @@ test('a view without SQL or period charts has no toolbar', async () => {
 	expect(button('Refresh all SQL')).toBeUndefined()
 	expect(button('30d')).toBeUndefined()
 	expect(button('Actions')).toBeUndefined()
+})
+
+test('owner view keeps edit and copy actions distinct across dashboard and mode changes', async () => {
+	const errors = vi.spyOn(console, 'error')
+	try {
+		mocks.authenticated = true
+		mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
+		await renderDashboard()
+		expect(button('Edit')?.textContent?.trim()).toBe('Edit')
+		expect(button('Copy Dashboard')?.textContent?.trim()).toBe('Copy Dashboard')
+		mocks.dashboardId = 'another-dashboard'
+		await renderDashboard()
+		expect(button('Edit')?.textContent?.trim()).toBe('Edit')
+		expect(button('Copy Dashboard')?.textContent?.trim()).toBe('Copy Dashboard')
+		mocks.mode = 'edit'
+		await renderDashboard()
+		expect(button('Done')?.textContent?.trim()).toBe('Done')
+		expect(button('Edit')).toBeUndefined()
+		expect(button('Copy Dashboard')).toBeUndefined()
+		expect(errors.mock.calls.filter(([message]) => String(message).includes('same key'))).toEqual([])
+	} finally {
+		errors.mockRestore()
+	}
 })
 test('mobile editor actions close the sheet and run the selected action', async () => {
 	mocks.items = [{ id: 'text', kind: 'text', content: 'Note' }]
