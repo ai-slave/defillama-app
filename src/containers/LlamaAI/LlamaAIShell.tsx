@@ -3,7 +3,6 @@ import { useAuthContext } from '~/auth'
 import { AgenticChat } from '~/containers/LlamaAI'
 import { LlamaAIAnimationPreloads } from '~/containers/LlamaAI/components/status/LlamaAIAnimationPreloads'
 import { LlamaAIMobileAppGate } from '~/containers/MobileApp/LlamaAIMobileAppGate'
-import { LlamaAINavigateProvider } from '~/contexts/LlamaAINavigate'
 import { LlamaAIRouteProvider, useLlamaAIRouteState, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
 import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
 import Layout from '~/layout'
@@ -58,15 +57,13 @@ export function LlamaAIShell({ children }: { children: ReactNode }) {
 		<Layout {...seoFromRoute(route)} hideDesktopSearchLlamaAiButton>
 			<LlamaAIMobileAppGate interactive>
 				<LlamaAIAnimationPreloads />
-				<LlamaAINavigateProvider>
-					<SessionAliasProvider userId={userId}>
-						<LlamaAIRouteProvider value={route}>
-							{loaders.userLoading ? <LoadingState /> : null}
-							{shouldMountChat ? <AgenticChat /> : null}
-							{children}
-						</LlamaAIRouteProvider>
-					</SessionAliasProvider>
-				</LlamaAINavigateProvider>
+				<SessionAliasProvider userId={userId}>
+					<LlamaAIRouteProvider value={route}>
+						{loaders.userLoading ? <LoadingState /> : null}
+						{shouldMountChat ? <AgenticChat /> : null}
+						{children}
+					</LlamaAIRouteProvider>
+				</SessionAliasProvider>
 			</LlamaAIMobileAppGate>
 		</Layout>
 	)

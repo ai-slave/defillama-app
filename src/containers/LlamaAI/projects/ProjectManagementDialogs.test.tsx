@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { CreateProjectModal } from './CreateProjectModal'
 import { DeleteProjectModal } from './DeleteProjectModal'
 import { ProjectSessionItem } from './ProjectSessionItem'
+import { ProjectsSidebarSection } from './ProjectsSidebarSection'
 import type { Project } from './types'
 
 const api = vi.hoisted(() => ({
@@ -14,9 +15,21 @@ const api = vi.hoisted(() => ({
 	created: vi.fn(),
 	deleted: vi.fn(),
 	success: vi.fn(),
-	error: vi.fn()
+	error: vi.fn(),
+	push: vi.fn()
 }))
-vi.mock('~/auth', () => ({ useAuthContext: () => ({ user: { id: 'user' }, authorizedFetch: vi.fn() }) }))
+vi.mock('~/auth', () => ({
+	useAuthContext: () => ({
+		user: { id: 'user' },
+		authorizedFetch: vi.fn(),
+		hasActiveSubscription: true,
+		isAuthenticated: true
+	})
+}))
+vi.mock('next/router', () => ({ useRouter: () => ({ push: api.push }) }))
+vi.mock('~/containers/LlamaAI/chrome', () => ({ useLlamaAIChrome: () => ({ hideSidebar: vi.fn() }) }))
+vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSidebar', () => ({ SIDEBAR_ROW: '', SIDEBAR_ROW_SURFACE: '' }))
+vi.mock('~/containers/LlamaAI/components/sidebar/AgenticSessionItem', () => ({ AgenticSessionItem: () => null }))
 vi.mock('~/containers/LlamaAI/api/transport', () => ({ llamaAIRequest: api.request }))
 vi.mock('react-hot-toast', () => ({ default: { success: api.success, error: api.error } }))
 let root: Root
@@ -35,6 +48,7 @@ const project: Project = {
 }
 beforeEach(() => {
 	vi.resetAllMocks()
+	localStorage.clear()
 	client = new QueryClient()
 	container = document.createElement('div')
 	document.body.append(container)
@@ -253,5 +267,68 @@ test.each(['success', 'failure'] as const)(
 		expect(dialog.textContent).toContain('Beta')
 		expect(dialog.hasAttribute('hidden')).toBe(false)
 		expect(document.querySelector('[role="alert"]')).toBeNull()
+	}
+)
+
+test.each([true, false])(
+	'sidebar project actions preserve navigation after deletion (switched chat: %s)',
+	async (switchedChat) => {
+		let savedProject = project
+		let removed = false
+		const deletion = Promise.withResolvers<void>()
+		api.request.mockImplementation(async (_fetch, path, options) => {
+			if (path === '/projects') return { projects: removed ? [] : [savedProject] }
+			if (path === '/projects/qa/sessions') return { sessions: [] }
+			if (options?.method === 'PATCH') {
+				savedProject = { ...savedProject, ...options.json }
+				return { project: savedProject }
+			}
+			if (options?.method === 'DELETE') {
+				await deletion.promise
+				removed = true
+				return {}
+			}
+			throw new Error(`Unexpected project request: ${path}`)
+		})
+		const renderSidebar = async (currentProjectId: string | null) => {
+			await act(async () =>
+				root.render(
+					<QueryClientProvider client={client}>
+						<ProjectsSidebarSection currentProjectId={currentProjectId} onSessionSelect={vi.fn()} onDelete={vi.fn()} />
+					</QueryClientProvider>
+				)
+			)
+		}
+		const chooseAction = async (name: string) => {
+			const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+				(el) => el.textContent?.trim() === name
+			)!
+			await act(async () => item.click())
+		}
+		await renderSidebar('qa')
+		await vi.waitFor(() => expect(container.textContent).toContain('QA Project'))
+		await click('Actions for project QA Project')
+		await chooseAction('Rename project')
+		await vi.waitFor(() => expect(document.querySelector('input')).not.toBeNull())
+		await fill(document.querySelector<HTMLInputElement>('input')!, 'Renamed project')
+		await click('Save')
+		await vi.waitFor(() => expect(container.textContent).toContain('Renamed project'))
+		await vi.waitFor(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
+		expect(api.push).not.toHaveBeenCalled()
+		await click('Actions for project Renamed project')
+		await chooseAction('Delete project')
+		await vi.waitFor(() =>
+			expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Attached sessions remain')
+		)
+		await click('Delete project')
+		await vi.waitFor(() => expect(button('Deleting…').getAttribute('aria-disabled')).toBe('true'))
+		await click('Deleting…')
+		expect(api.request.mock.calls.filter(([, , options]) => options?.method === 'DELETE')).toHaveLength(1)
+		if (switchedChat) await renderSidebar(null)
+		await act(async () => deletion.resolve())
+		await vi.waitFor(() => expect(container.textContent).not.toContain('Renamed project'))
+		await vi.waitFor(() => expect(document.querySelector('[role="dialog"]:not([hidden])')).toBeNull())
+		expect(api.push.mock.calls).toEqual(switchedChat ? [] : [['/ai/projects']])
+		await vi.waitFor(() => expect(document.activeElement).toBe(button('New project')))
 	}
 )

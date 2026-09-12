@@ -1,8 +1,9 @@
 import * as Ariakit from '@ariakit/react'
 import { matchSorter } from 'match-sorter'
-import Router from 'next/router'
-import { type KeyboardEvent, startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/router'
+import { startTransition, useDeferredValue, useMemo, useRef, useState } from 'react'
 import { useAuthContext } from '~/auth'
+import { BasicLink } from '~/components/Link'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
 import {
@@ -25,15 +26,11 @@ import type { ProjectWithStats } from './types'
 type SortBy = 'updated' | 'created' | 'name'
 const EMPTY_PROJECTS: Array<ProjectWithStats> = []
 
-const onCreated = (project: { id: string }) => {
-	void Router.push(`/ai/projects/${project.id}`)
-}
-
-const goToProject = (projectId: string) => {
-	void Router.push(`/ai/projects/${projectId}`)
-}
-
 export function ProjectsGrid() {
+	const router = useRouter()
+	const onCreated = (project: { id: string }) => {
+		void router.push(`/ai/projects/${project.id}`)
+	}
 	const { user, hasActiveSubscription, isTrial } = useAuthContext()
 	const tier = getProjectTier(user, hasActiveSubscription, isTrial)
 	const isLocked = tier === 'free'
@@ -69,13 +66,6 @@ export function ProjectsGrid() {
 		return sorted
 	}, [allProjects, deferredQuery, sortBy])
 
-	const onProjectCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, projectId: string) => {
-		if (event.target !== event.currentTarget) return
-		if (event.key !== 'Enter' && event.key !== ' ') return
-		event.preventDefault()
-		goToProject(projectId)
-	}
-
 	if (isLocked) {
 		return (
 			<div className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-5 px-4 py-12 text-center">
@@ -88,7 +78,7 @@ export function ProjectsGrid() {
 						Upload files or connect a GitHub repo, then chat with LlamaAI using that knowledge.
 					</p>
 				</div>
-				<Button type="button" size="md" variant="primary" onClick={() => void Router.push('/subscription')}>
+				<Button as={BasicLink} href="/subscription" size="md" variant="primary">
 					Upgrade to enable Projects
 				</Button>
 			</div>
@@ -217,24 +207,25 @@ export function ProjectsGrid() {
 				<ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 					{visibleProjects.map((p) => (
 						<li key={p.id}>
-							<div
-								role="link"
-								tabIndex={0}
-								onClick={() => goToProject(p.id)}
-								onKeyDown={(event) => onProjectCardKeyDown(event, p.id)}
-								className="group hover-wash-card flex size-full cursor-pointer flex-col gap-2 rounded-lg border border-subtle bg-surface p-3 text-left"
-							>
+							<div className="group hover-wash-card relative flex size-full flex-col gap-2 rounded-lg border border-subtle bg-surface p-3 text-left">
 								<header className="flex items-center gap-2">
 									<div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-brand-muted text-link-on-tint">
 										<Icon name="folder" height={14} width={14} />
 									</div>
 									<div className="min-w-0 flex-1">
-										<h3 className="truncate label-md text-primary">{p.name}</h3>
+										<h3 className="truncate label-md text-primary">
+											<BasicLink
+												href={`/ai/projects/${p.id}`}
+												className="after:absolute after:inset-0 after:rounded-lg"
+											>
+												{p.name}
+											</BasicLink>
+										</h3>
 										<p className="truncate body-sm text-tertiary">
 											<RelativeTime value={p.updated_at} prefix="Updated" />
 										</p>
 									</div>
-									<div className="-mr-1 flex shrink-0 items-center gap-0.5 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 max-sm:opacity-100">
+									<div className="relative z-10 -mr-1 flex shrink-0 items-center gap-0.5 opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 max-sm:opacity-100">
 										<Tooltip
 											content="Rename project"
 											render={
@@ -245,8 +236,6 @@ export function ProjectsGrid() {
 													square
 													aria-label={`Rename ${p.name}`}
 													onClick={(e) => {
-														e.preventDefault()
-														e.stopPropagation()
 														renameRef.current = e.currentTarget
 														setProjectToRename(p)
 														renameStore.show()
@@ -266,8 +255,6 @@ export function ProjectsGrid() {
 													square
 													aria-label={`Delete ${p.name}`}
 													onClick={(e) => {
-														e.preventDefault()
-														e.stopPropagation()
 														deleteRef.current = e.currentTarget
 														setProjectToDelete(p)
 														deleteStore.show()

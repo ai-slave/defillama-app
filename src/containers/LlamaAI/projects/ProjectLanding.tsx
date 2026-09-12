@@ -1,7 +1,9 @@
 import * as Ariakit from '@ariakit/react'
-import Router, { useRouter } from 'next/router'
+import { useRouter } from 'next/router'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { BasicLink } from '~/components/Link'
+import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
 import { DeleteSessionDialog, SessionListFocusContext } from '~/containers/LlamaAI/components/DeleteSessionDialog'
 import { DragOverlay, ImageUpload } from '~/containers/LlamaAI/components/input/ImageUpload'
 import { PastedContentModal } from '~/containers/LlamaAI/components/PastedContentModal'
@@ -122,19 +124,27 @@ export function ProjectLanding({
 	}
 
 	if (!project.data) {
+		const notFound =
+			project.error instanceof LlamaAITransportError && (project.error.status === 403 || project.error.status === 404)
 		return (
 			<div className="mx-auto flex h-full max-w-md flex-col items-center justify-center gap-2 px-4 text-center">
 				<p role="alert" className="label-md text-error">
-					Project unavailable
+					{notFound ? 'Project not found' : 'Project unavailable'}
 				</p>
 				<p className="text-xs text-secondary">
-					{project.error instanceof Error ? project.error.message : 'Failed to load project'}
+					{notFound
+						? 'This project does not exist or you do not have access to it.'
+						: project.error instanceof Error
+							? project.error.message
+							: 'Failed to load project'}
 				</p>
-				<Button type="button" size="md" onClick={() => void project.refetch()} disabled={project.isFetching}>
-					{project.isFetching ? <LoadingSpinner size={12} /> : null}
-					{project.isFetching ? 'Retrying…' : 'Try again'}
-				</Button>
-				<Button type="button" size="sm" variant="ghost" onClick={() => void Router.push('/ai/projects')}>
+				{notFound ? null : (
+					<Button type="button" size="md" onClick={() => void project.refetch()} disabled={project.isFetching}>
+						{project.isFetching ? <LoadingSpinner size={12} /> : null}
+						{project.isFetching ? 'Retrying…' : 'Try again'}
+					</Button>
+				)}
+				<Button as={BasicLink} href="/ai/projects" size="sm" variant="ghost">
 					Back to projects
 				</Button>
 			</div>
@@ -223,13 +233,7 @@ export function ProjectLanding({
 			<div className="size-full overflow-y-auto overscroll-contain px-4 pt-4 pb-8 sm:px-6">
 				<div className="mx-auto flex w-full max-w-[760px] flex-col">
 					<header className="flex items-center justify-between gap-3 pb-2">
-						<Button
-							type="button"
-							size="sm"
-							variant="ghost"
-							onClick={() => void Router.push('/ai/projects')}
-							className="-ml-2"
-						>
+						<Button size="sm" variant="ghost" as={BasicLink} href="/ai/projects" className="-ml-2">
 							<Icon name="chevron-left" height={14} width={14} />
 							All projects
 						</Button>
@@ -246,10 +250,7 @@ export function ProjectLanding({
 									<Ariakit.MenuItem onClick={renameStore.show} className={popoverMenuItemStyles}>
 										Rename project
 									</Ariakit.MenuItem>
-									<Ariakit.MenuItem
-										onClick={deleteStore.show}
-										className={`${popoverMenuItemStyles} text-error not-disabled:not-aria-disabled:hover:text-error`}
-									>
+									<Ariakit.MenuItem onClick={deleteStore.show} className={`${popoverMenuItemStyles} text-error!`}>
 										Delete project
 									</Ariakit.MenuItem>
 								</Ariakit.Menu>
@@ -425,7 +426,7 @@ export function ProjectLanding({
 							void deleteSession
 								.mutateAsync({ sessionId: sessionToDelete.sessionId, projectId })
 								.then(() => {
-									if (Router.query.id === projectId) sessionDeleteStore.hide()
+									if (projectMenuRef.current?.isConnected) sessionDeleteStore.hide()
 								})
 								.catch((error) => {
 									if (!sessionDeleteStore.getState().contentElement?.isConnected) toast.error(error.message)
@@ -445,7 +446,7 @@ export function ProjectLanding({
 						dialogStore={deleteStore}
 						project={project.data}
 						onDeleted={() => {
-							if (Router.query.id === projectId) void Router.push('/ai/projects')
+							if (projectMenuRef.current?.isConnected) void router.push('/ai/projects')
 						}}
 					/>
 				</div>

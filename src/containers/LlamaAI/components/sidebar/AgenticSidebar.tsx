@@ -420,7 +420,7 @@ export function AgenticSidebar({
 						}}
 						className="w-full"
 					>
-						<Icon name="message-square-plus" height={14} width={14} />
+						<Icon name="square-pen" height={14} width={14} />
 						New Chat
 					</Button>
 

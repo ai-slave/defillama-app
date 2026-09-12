@@ -397,7 +397,7 @@ export const AgenticSessionItem = memo(function AgenticSessionItem({
 								}}
 								disabled={updateTitle.isPending || deletion.isPending || isRestoring || visibility.isPending}
 								data-deleting={deletion.isPending}
-								className={`${popoverMenuItemStyles} border-b border-subtle last-of-type:border-b-0 not-disabled:not-aria-disabled:hover:text-error focus-visible:text-error data-active-item:text-error data-[deleting=true]:text-error`}
+								className={`${popoverMenuItemStyles} border-b border-subtle text-error! last-of-type:border-b-0`}
 							>
 								{deletion.isPending ? (
 									<LoadingSpinner size={14} />

@@ -56,6 +56,8 @@ export function shouldSkipCurrentSessionRouteRestore(
 ) {
 	if (routeTransition.sessionId !== currentSessionId) return false
 	if (routeTransition.aroundMessageId) return false
+	// Publishing a newly started chat's URL must not restore over its live stream.
+	if (previousTransition?.kind === 'new-chat' || previousTransition?.kind === 'project') return true
 	if (previousTransition?.kind !== 'session') return false
 	if (previousTransition.sessionId !== routeTransition.sessionId) return false
 	if (previousTransition.aroundMessageId) return false

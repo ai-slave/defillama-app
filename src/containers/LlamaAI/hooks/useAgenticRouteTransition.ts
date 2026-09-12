@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import {
 	isSameAgenticRouteTransition,
 	shouldSkipCurrentSessionRouteRestore,
@@ -12,7 +12,6 @@ interface UseAgenticRouteTransitionOptions {
 	readOnly: boolean
 	sharedSession: boolean
 	resolveSessionAlias: (id: string) => string
-	projectHomeSignal: number
 	getCurrentSessionId: () => string | null
 	onNewChat: () => void
 	onOpenSession: (sessionId: string, aroundMessageId?: string) => void | Promise<void>
@@ -24,7 +23,6 @@ export function useAgenticRouteTransition({
 	readOnly,
 	sharedSession,
 	resolveSessionAlias,
-	projectHomeSignal,
 	getCurrentSessionId,
 	onNewChat,
 	onOpenSession,
@@ -44,7 +42,6 @@ export function useAgenticRouteTransition({
 	})
 
 	const previousRouteTransitionRef = useRef<AgenticRouteTransition | null>(null)
-	const projectHomeSignalRef = useRef(projectHomeSignal)
 
 	const routeTransition = useMemo(() => {
 		if (readOnly || sharedSession) return null
@@ -71,7 +68,13 @@ export function useAgenticRouteTransition({
 					return
 				case 'session': {
 					if (
-						shouldSkipCurrentSessionRouteRestore(routeTransition, previousTransition, getCurrentSessionIdRef.current())
+						shouldSkipCurrentSessionRouteRestore(
+							routeTransition,
+							previousTransition?.kind === 'session'
+								? { ...previousTransition, sessionId: resolveSessionAlias(previousTransition.sessionId) }
+								: previousTransition,
+							getCurrentSessionIdRef.current()
+						)
 					) {
 						return
 					}
@@ -90,13 +93,5 @@ export function useAgenticRouteTransition({
 		}
 
 		void transition()
-	}, [routeTransition])
-
-	useEffect(() => {
-		if (projectHomeSignal === projectHomeSignalRef.current) return
-		projectHomeSignalRef.current = projectHomeSignal
-		if (readOnly || sharedSession) return
-		if (route.kind !== 'project') return
-		onClearChatRef.current()
-	}, [projectHomeSignal, route.kind, readOnly, sharedSession])
+	}, [routeTransition, resolveSessionAlias])
 }

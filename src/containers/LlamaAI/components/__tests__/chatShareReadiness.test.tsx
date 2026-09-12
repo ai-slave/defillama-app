@@ -4,7 +4,9 @@ import { act, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { LlamaAIRouteProvider, type LlamaAIRouteState } from '~/contexts/LlamaAIRouteState'
+import { SessionAliasProvider } from '~/contexts/SessionAliasRegistry'
 import type { ChatSurface } from '../ChatSurface'
+import type { AgenticSidebar } from '../sidebar/AgenticSidebar'
 
 const api = vi.hoisted(() => ({
 	fetch: vi.fn(),
@@ -36,7 +38,13 @@ vi.mock('../ChatSurface', () => ({
 		</>
 	)
 }))
-vi.mock('../sidebar/AgenticSidebar', () => ({ AgenticSidebar: () => null }))
+vi.mock('../sidebar/AgenticSidebar', () => ({
+	AgenticSidebar: ({ onNewChat }: ComponentProps<typeof AgenticSidebar>) => (
+		<button type="button" onClick={onNewChat}>
+			New Chat
+		</button>
+	)
+}))
 vi.mock('../AlertsModal', () => ({ AlertsModal: () => null }))
 vi.mock('../SettingsModal', () => ({ SettingsModal: () => null }))
 vi.mock('../TokenLimitModal', () => ({ TokenLimitModal: () => null }))
@@ -76,14 +84,21 @@ let client: QueryClient
 let request: ReturnType<typeof Promise.withResolvers<Response>>
 let submittedId: string
 let shareRequests: Array<string>
+let routeStartListeners: Set<(url: string) => void>
+
+function startNavigation(url: string) {
+	for (const listener of routeStartListeners) listener(url)
+}
 
 async function mount(route: LlamaAIRouteState = { kind: 'chat-new' }) {
 	await act(async () =>
 		root.render(
 			<QueryClientProvider client={client}>
-				<LlamaAIRouteProvider value={route}>
-					<AgenticChat />
-				</LlamaAIRouteProvider>
+				<SessionAliasProvider userId="reader">
+					<LlamaAIRouteProvider value={route}>
+						<AgenticChat />
+					</LlamaAIRouteProvider>
+				</SessionAliasProvider>
 			</QueryClientProvider>
 		)
 	)
@@ -105,8 +120,21 @@ beforeEach(() => {
 	globalThis.IS_REACT_ACT_ENVIRONMENT = true
 	vi.clearAllMocks()
 	api.copy.mockResolvedValue(undefined)
-	api.router.push.mockResolvedValue(true)
-	api.router.replace.mockResolvedValue(true)
+	routeStartListeners = new Set()
+	api.router.events.on.mockImplementation((event, listener) => {
+		if (event === 'routeChangeStart') routeStartListeners.add(listener)
+	})
+	api.router.events.off.mockImplementation((event, listener) => {
+		if (event === 'routeChangeStart') routeStartListeners.delete(listener)
+	})
+	api.router.push.mockImplementation(async (url: string) => {
+		startNavigation(url)
+		return true
+	})
+	api.router.replace.mockImplementation(async (url: string) => {
+		startNavigation(url)
+		return true
+	})
 	Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: api.copy } })
 	client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } })
 	const container = document.createElement('div')
@@ -131,6 +159,7 @@ beforeEach(() => {
 			)
 		if (path.endsWith('/agentic/active/old-chat'))
 			return Promise.resolve(Response.json({ active: false, execution: null }))
+		if (path.endsWith('/projects/project-1/sessions')) return Promise.resolve(Response.json({ sessions: [] }))
 		if (path.endsWith('/user/sessions')) return Promise.resolve(Response.json({ sessions: [], hasMore: false }))
 		throw new Error(`Unexpected request: ${url}`)
 	})
@@ -236,3 +265,126 @@ test('a preparation failure clears streaming, displays the error, and permits an
 		consoleError.mockRestore()
 	}
 })
+
+test.each(['chat-new', 'project'] as const)(
+	'moves a prompt from %s to its chat URL without restarting the request',
+	async (kind) => {
+		await mount(kind === 'project' ? { kind, projectId: 'project-1', initialTab: 'chats' } : { kind })
+		await act(async () =>
+			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
+		)
+		await waitFor(() =>
+			expect(api.router.push).toHaveBeenCalledWith(`/ai/chat/${submittedId}`, undefined, { scroll: false })
+		)
+		await mount({ kind: 'chat-session', sessionId: submittedId })
+		expect(document.querySelector('[data-testid="streaming"]')?.textContent).toBe('true')
+		expect(api.fetch.mock.calls.some(([url]) => String(url).endsWith('/restore'))).toBe(false)
+		const prompts = api.fetch.mock.calls.filter(([url]) => String(url).endsWith('/agentic'))
+		expect(prompts).toHaveLength(1)
+		expect(JSON.parse(prompts[0][1].body).projectId).toBe(kind === 'project' ? 'project-1' : undefined)
+		await act(async () =>
+			request.resolve(
+				new Response(
+					'data: {"type":"session","sessionId":"server-session"}\n\ndata: {"type":"title","title":"Saved conversation"}\n\ndata: {"type":"done"}\n\n',
+					{
+						headers: { 'Content-Type': 'text/event-stream' }
+					}
+				)
+			)
+		)
+		await waitFor(() =>
+			expect(api.router.replace).toHaveBeenCalledWith('/ai/chat/server-session', undefined, { scroll: false })
+		)
+		expect(api.router.push).toHaveBeenCalledTimes(1)
+	}
+)
+
+test('returning to the project stops the visible chat and ignores its late session response', async () => {
+	const projectRoute = { kind: 'project', projectId: 'project-1', initialTab: 'chats' } as const
+	await mount(projectRoute)
+	await act(async () =>
+		[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
+	)
+	await waitFor(() => expect(api.router.push).toHaveBeenCalled())
+	await mount({ kind: 'chat-session', sessionId: submittedId })
+	await mount(projectRoute)
+	expect(document.querySelector('[data-testid="streaming"]')?.textContent).toBe('false')
+	api.router.push.mockClear()
+	api.router.replace.mockClear()
+	await act(async () =>
+		request.resolve(
+			new Response('data: {"type":"session","sessionId":"late-session"}\n\ndata: {"type":"done"}\n\n', {
+				headers: { 'Content-Type': 'text/event-stream' }
+			})
+		)
+	)
+	expect(api.router.push).not.toHaveBeenCalled()
+	expect(api.router.replace).not.toHaveBeenCalled()
+})
+
+test('New Chat supersedes the first prompt navigation before its session route commits', async () => {
+	const navigation = Promise.withResolvers<boolean>()
+	api.router.push
+		.mockImplementationOnce((url: string) => {
+			startNavigation(url)
+			return navigation.promise
+		})
+		.mockImplementationOnce(async (url: string) => {
+			startNavigation(url)
+			// Next cancels the older route load when a new navigation starts.
+			navigation.resolve(false)
+			return true
+		})
+	await mount()
+	await act(async () =>
+		[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
+	)
+	await waitFor(() => expect(api.router.push).toHaveBeenCalledTimes(1))
+	await act(async () =>
+		[...document.querySelectorAll('button')].find((button) => button.textContent === 'New Chat')!.click()
+	)
+	expect(api.router.push).toHaveBeenLastCalledWith('/ai/chat')
+	expect(await navigation.promise).toBe(false)
+	expect(document.querySelector('[data-testid="streaming"]')?.textContent).toBe('false')
+	await act(async () =>
+		request.resolve(
+			new Response('data: {"type":"session","sessionId":"late-session"}\n\ndata: {"type":"done"}\n\n', {
+				headers: { 'Content-Type': 'text/event-stream' }
+			})
+		)
+	)
+	expect(api.router.replace).not.toHaveBeenCalled()
+	expect(api.fetch.mock.calls.some(([url]) => String(url).endsWith('/restore'))).toBe(false)
+})
+
+test.each(['/ai/projects/project-1', '/ai/chat/another-session'])(
+	'a late session ID does not override pending navigation to %s',
+	async (destination) => {
+		await mount()
+		await act(async () =>
+			[...document.querySelectorAll('button')].find((button) => button.textContent === 'Send prompt')!.click()
+		)
+		await waitFor(() => expect(api.router.push).toHaveBeenCalledTimes(1))
+		await mount({ kind: 'chat-session', sessionId: submittedId })
+		const navigation = Promise.withResolvers<boolean>()
+		api.router.push.mockImplementationOnce((url: string) => {
+			startNavigation(url)
+			return navigation.promise
+		})
+		await act(async () => {
+			void api.router.push(destination)
+		})
+		// Keep the old route mounted until after the response arrives.
+		await act(async () =>
+			request.resolve(
+				new Response(
+					'data: {"type":"session","sessionId":"late-session"}\n\ndata: {"type":"response_chunk","content":"Hello back"}\n\ndata: {"type":"done"}\n\n',
+					{ headers: { 'Content-Type': 'text/event-stream' } }
+				)
+			)
+		)
+		await waitFor(() => expect(routeStartListeners.size).toBe(0))
+		expect(api.router.replace).not.toHaveBeenCalled()
+		navigation.resolve(true)
+	}
+)

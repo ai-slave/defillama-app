@@ -100,7 +100,7 @@ export function MoveToProjectMenuItem({ sessionId, currentProjectId = null }: Mo
 										className={`${popoverMenuItemStyles} aria-disabled:cursor-not-allowed aria-disabled:opacity-60`}
 									>
 										<Icon
-											name={isCurrentProject ? 'check' : 'folder-plus'}
+											name={isCurrentProject ? 'check' : 'folder'}
 											height={14}
 											width={14}
 											className="shrink-0 opacity-70"

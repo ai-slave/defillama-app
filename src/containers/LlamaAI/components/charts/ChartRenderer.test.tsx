@@ -236,7 +236,10 @@ describe('ChartRenderer', () => {
 	})
 
 	afterEach(async () => {
-		if (container.childNodes.length > 0) await act(async () => root.unmount())
+		// Dialogs render through portals, so an empty container can still have a mounted root.
+		await act(async () => root.unmount())
+		// oxlint-disable-next-line vitest/no-standalone-expect -- Verify portal cleanup after every test, including roots with empty containers.
+		expect(document.querySelector('[role="dialog"]')).toBeNull()
 		container.remove()
 		vi.unstubAllGlobals()
 	})

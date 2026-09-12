@@ -10,8 +10,8 @@ const mocks = vi.hoisted(() => ({
 	route: { kind: 'chat-new' } as LlamaAIRouteState,
 	readOnly: false,
 	sharedSession: false,
-	projectHomeSignal: 0,
-	currentSessionId: null as string | null
+	currentSessionId: null as string | null,
+	aliases: new Map<string, string>()
 }))
 
 const mocksApi = vi.hoisted(() => ({
@@ -25,8 +25,7 @@ function Harness() {
 		route: mocks.route,
 		readOnly: mocks.readOnly,
 		sharedSession: mocks.sharedSession,
-		resolveSessionAlias: (id) => id,
-		projectHomeSignal: mocks.projectHomeSignal,
+		resolveSessionAlias: (id) => mocks.aliases.get(id) ?? id,
 		getCurrentSessionId: () => mocks.currentSessionId,
 		onNewChat: mocksApi.onNewChat,
 		onOpenSession: mocksApi.onOpenSession,
@@ -44,8 +43,8 @@ describe('useAgenticRouteTransition', () => {
 		mocks.route = { kind: 'chat-new' }
 		mocks.readOnly = false
 		mocks.sharedSession = false
-		mocks.projectHomeSignal = 0
 		mocks.currentSessionId = null
+		mocks.aliases.clear()
 		mocksApi.onNewChat.mockReset()
 		mocksApi.onOpenSession.mockReset()
 		mocksApi.onClearChat.mockReset()
@@ -104,22 +103,46 @@ describe('useAgenticRouteTransition', () => {
 		expect(mocksApi.onClearChat).toHaveBeenCalledTimes(2)
 	})
 
-	test('clears the chat when the same project URL is clicked again', async () => {
+	test('keeps the same project landing and resets when switching projects or returning from a chat', async () => {
 		mocks.route = { kind: 'project', projectId: 'project-1', initialTab: 'chats' }
 		await rerender()
+		mocks.route = { ...mocks.route }
+		await rerender()
 		expect(mocksApi.onClearChat).toHaveBeenCalledOnce()
-
-		mocks.projectHomeSignal = 1
+		mocks.route = { kind: 'project', projectId: 'project-2', initialTab: 'chats' }
 		await rerender()
 		expect(mocksApi.onClearChat).toHaveBeenCalledTimes(2)
+		mocks.route = { kind: 'chat-session', sessionId: 'session-1' }
+		await rerender()
+		mocks.route = { kind: 'project', projectId: 'project-2', initialTab: 'chats' }
+		await rerender()
+		expect(mocksApi.onClearChat).toHaveBeenCalledTimes(3)
 	})
 
-	test('does not treat a project-home signal as a reset on a chat route', async () => {
-		mocks.projectHomeSignal = 1
-		await rerender()
+	test.each(['chat-new', 'project'] as const)(
+		'publishes a chat started from %s without restoring over its stream',
+		async (kind) => {
+			mocks.route = kind === 'project' ? { kind, projectId: 'project-1', initialTab: 'chats' } : { kind }
+			await rerender()
+			mocks.currentSessionId = 'new-session'
+			mocks.route = { kind: 'chat-session', sessionId: 'new-session' }
+			await rerender()
+			expect(mocksApi.onOpenSession).not.toHaveBeenCalled()
+			mocks.route = { kind: 'chat-session', sessionId: 'new-session', aroundMessageId: 'message-1' }
+			await rerender()
+			expect(mocksApi.onOpenSession).toHaveBeenCalledWith('new-session', 'message-1')
+		}
+	)
 
-		expect(mocksApi.onClearChat).not.toHaveBeenCalled()
-		expect(mocksApi.onNewChat).toHaveBeenCalledOnce()
+	test('keeps the live conversation when the server replaces its temporary session ID', async () => {
+		mocks.currentSessionId = 'temporary-id'
+		mocks.route = { kind: 'chat-session', sessionId: 'temporary-id' }
+		await rerender()
+		mocks.aliases.set('temporary-id', 'saved-id')
+		mocks.currentSessionId = 'saved-id'
+		mocks.route = { kind: 'chat-session', sessionId: 'saved-id' }
+		await rerender()
+		expect(mocksApi.onOpenSession).not.toHaveBeenCalled()
 	})
 
 	test('does not run route side effects in read-only or shared views', async () => {

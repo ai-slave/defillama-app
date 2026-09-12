@@ -4,7 +4,6 @@ import { useEffect } from 'react'
 import { useAuthContext } from '~/auth'
 import { LlamaAIShell } from '~/containers/LlamaAI/LlamaAIShell'
 import { SignInModal } from '~/containers/Subscription/SignInModal'
-import { useLlamaAINavigate } from '~/contexts/LlamaAINavigate'
 
 function SessionPage() {
 	const router = useRouter()
@@ -12,7 +11,6 @@ function SessionPage() {
 	const resolvedSessionId = typeof sessionId === 'string' ? sessionId : null
 	const { user, loaders } = useAuthContext()
 	const signInDialogStore = Ariakit.useDialogStore()
-	const navigate = useLlamaAINavigate()
 
 	useEffect(() => {
 		if (!router.isReady || !resolvedSessionId) return
@@ -25,7 +23,7 @@ function SessionPage() {
 		const frameId = window.requestAnimationFrame(() => {
 			if (cancelled) return
 
-			void navigate.refineCurrent(`/ai/chat/${resolvedSessionId}`)
+			void router.replace(`/ai/chat/${resolvedSessionId}`, undefined, { shallow: true })
 			clearFrameId = window.requestAnimationFrame(() => {})
 		})
 
@@ -34,7 +32,7 @@ function SessionPage() {
 			window.cancelAnimationFrame(frameId)
 			window.cancelAnimationFrame(clearFrameId)
 		}
-	}, [router.isReady, promptParam, shareTokenParam, resolvedSessionId, navigate])
+	}, [promptParam, shareTokenParam, resolvedSessionId, router])
 
 	if (loaders.userLoading || user) return null
 

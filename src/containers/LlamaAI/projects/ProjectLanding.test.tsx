@@ -3,9 +3,12 @@
 import { act, useState } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
+import { LlamaAITransportError } from '~/containers/LlamaAI/api/transport'
 import { ProjectLanding } from './ProjectLanding'
 
 const mocks = vi.hoisted(() => ({
+	projectError: null as Error | null,
+	refetchProject: vi.fn(),
 	router: { pathname: '/ai/projects/[id]', query: { id: 'project-1' } as Record<string, string>, replace: vi.fn() },
 	updateProject: vi.fn(),
 	filesRendered: vi.fn(),
@@ -25,7 +28,11 @@ function setSessions(patch: Partial<typeof mocks.sessions>): void {
 vi.mock('./hooks', () => ({
 	useProjectUsage: () => ({ data: { limits: { project_bytes: 1000, project_files: 10 } } }),
 	useProjectDetail: () => ({
-		data: { name: 'Research', custom_instructions: mocks.instructions, file_count: 2, total_bytes: 100 }
+		data: mocks.projectError
+			? undefined
+			: { name: 'Research', custom_instructions: mocks.instructions, file_count: 2, total_bytes: 100 },
+		error: mocks.projectError,
+		refetch: mocks.refetchProject
 	}),
 	useProjectSessions: () => ({ ...mocks.sessions }),
 	useUpdateProject: () => ({ isPending: false, error: null, mutate: mocks.updateProject })
@@ -64,6 +71,7 @@ let root: Root
 let container: HTMLDivElement
 beforeEach(() => {
 	vi.clearAllMocks()
+	mocks.projectError = null
 	mocks.router.query = { id: 'project-1', connectGithub: '1' }
 	mocks.instructions = 'Saved instructions'
 	setSessions({ isLoading: false })
@@ -264,4 +272,23 @@ test('only the route-selected panel is visible while tab navigation is pending',
 			.querySelector<HTMLTextAreaElement>('[aria-label="New chat in Research"]')!
 			.closest<HTMLElement>('[role="tabpanel"]')!.hidden
 	).toBe(true)
+})
+
+test.each([403, 404])('shows the same not-found page for inaccessible or missing projects (%s)', async (status) => {
+	mocks.projectError = new LlamaAITransportError('Private server detail', status, {})
+	await render()
+	expect(container.querySelector('[role="alert"]')?.textContent).toBe('Project not found')
+	expect(container.textContent).not.toContain('Private server detail')
+	expect(container.querySelector('a[href="/ai/projects"]')).not.toBeNull()
+	expect(container.textContent).not.toContain('Try again')
+})
+
+test('keeps retry available for temporary project failures', async () => {
+	mocks.projectError = new LlamaAITransportError('Service unavailable', 503, {})
+	await render()
+	expect(container.querySelector('[role="alert"]')?.textContent).toBe('Project unavailable')
+	await act(async () =>
+		[...container.querySelectorAll('button')].find((button) => button.textContent === 'Try again')!.click()
+	)
+	expect(mocks.refetchProject).toHaveBeenCalledOnce()
 })

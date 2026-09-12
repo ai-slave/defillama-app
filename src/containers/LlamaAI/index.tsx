@@ -114,7 +114,6 @@ import { materializePersistedUserMessage } from '~/containers/LlamaAI/utils/mate
 import { hasClaimableQueueWork } from '~/containers/LlamaAI/utils/queueAttach'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
 import { AI_BALANCE_QUERY_KEY } from '~/containers/Subscription/useTopup'
-import { useLlamaAINavigate, useProjectHomeSignal } from '~/contexts/LlamaAINavigate'
 import { useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
 import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
 import { useConstant } from '~/hooks/useConstant'
@@ -261,8 +260,6 @@ export function AgenticChat({
 	const hasUser = !!user
 	const isMobileChatView = useMedia('(max-width: 1023px)')
 	const route = useLlamaAIRouteContext()
-	const navigate = useLlamaAINavigate()
-	const projectHomeSignal = useProjectHomeSignal()
 	const sessionAliases = useOptionalSessionAliases()
 	const resolveSessionAlias = useCallback((id: string) => sessionAliases?.resolve(id) ?? id, [sessionAliases])
 	const registerSessionAlias = useCallback(
@@ -383,7 +380,7 @@ export function AgenticChat({
 		utmSource: deepLinkUtmSource,
 		utmCampaign: deepLinkUtmCampaign,
 		clearDeepLinkFromUrl: () => {
-			void navigate.refineCurrent('/ai/chat')
+			void router.replace('/ai/chat', undefined, { shallow: true })
 		},
 		submitPrompt: (prompt, pageContext, isSuggestedQuestion) =>
 			submitPendingPromptRef.current(prompt, pageContext, isSuggestedQuestion)
@@ -1355,10 +1352,10 @@ export function AgenticChat({
 			// Check the current view after the request; the reader may have switched chats while it ran.
 			if ((routeSessionIdRef.current ?? currentSessionIdRef.current) === targetSessionId) {
 				clearConversationState()
-				void navigate.toNewChat()
+				void router.push('/ai/chat')
 			}
 		},
-		[clearConversationState, clearPromptFailure, deleteSession, forgetQueueSession, navigate]
+		[clearConversationState, clearPromptFailure, deleteSession, forgetQueueSession, router]
 	)
 
 	const handleBulkDeleteSessions = useCallback(
@@ -1371,10 +1368,10 @@ export function AgenticChat({
 			const viewedSessionId = routeSessionIdRef.current ?? currentSessionIdRef.current
 			if (viewedSessionId && sessionIds.includes(viewedSessionId)) {
 				clearConversationState()
-				void navigate.toNewChat()
+				void router.push('/ai/chat')
 			}
 		},
-		[bulkDeleteSessions, clearConversationState, clearPromptFailure, forgetQueueSession, navigate]
+		[bulkDeleteSessions, clearConversationState, clearPromptFailure, forgetQueueSession, router]
 	)
 
 	useLayoutEffect(() => {
@@ -1405,7 +1402,7 @@ export function AgenticChat({
 			try {
 				await persistSession
 				if (currentSessionIdRef.current !== nextSessionId) return
-				void navigate.toSession(nextSessionId)
+				void router.push(`/ai/chat/${nextSessionId}`)
 			} catch (createSessionError) {
 				console.error('[llama-ai] [createSession] failed:', getErrorMessage(createSessionError))
 			}
@@ -1413,21 +1410,13 @@ export function AgenticChat({
 			return
 		}
 
-		if (route.kind !== 'chat-new' || sharedSession) {
-			void navigate.toNewChat()
-			return
+		if (route.kind === 'chat-new' && !sharedSession) {
+			clearConversationState()
+			promptInputRef.current?.focus()
 		}
-		clearConversationState()
-		promptInputRef.current?.focus()
-	}, [
-		clearConversationState,
-		createFakeSession,
-		createSession,
-		currentSessionProjectId,
-		navigate,
-		route,
-		sharedSession
-	])
+		// A first prompt may still be loading its session route while /ai/chat is visible.
+		void router.push('/ai/chat')
+	}, [clearConversationState, createFakeSession, createSession, currentSessionProjectId, router, route, sharedSession])
 
 	// Restore a saved session, and resume any still-active server execution attached to it.
 	const handleSessionSelect = useCallback(
@@ -1488,9 +1477,9 @@ export function AgenticChat({
 
 	const handleSearchMatchClick = useCallback(
 		(targetSessionId: string, messageId: string) => {
-			void navigate.toSession(targetSessionId, { around: messageId })
+			void router.push(`/ai/chat/${targetSessionId}#msg-${messageId}`)
 		},
-		[navigate]
+		[router]
 	)
 
 	useAgenticRouteTransition({
@@ -1498,7 +1487,6 @@ export function AgenticChat({
 		readOnly,
 		sharedSession: !!sharedSession,
 		resolveSessionAlias,
-		projectHomeSignal,
 		getCurrentSessionId: () => currentSessionIdRef.current,
 		onNewChat: () => {
 			clearConversationState()
@@ -1576,6 +1564,15 @@ export function AgenticChat({
 				)
 				attach()
 				moveSessionToTop(currentSessionId, submitProjectId)
+				let ownsSessionNavigation = true
+				const onRouteChangeStart = (url: string) => {
+					// Yield URL ownership before the destination commits, while the stream is still current.
+					if (url !== `/ai/chat/${currentSessionId}`) ownsSessionNavigation = false
+				}
+				router.events.on('routeChangeStart', onRouteChangeStart)
+				if (!sharedSession && routeSessionIdRef.current !== currentSessionId) {
+					void router.push(`/ai/chat/${currentSessionId}`, undefined, { scroll: false })
+				}
 
 				const buffer = createStreamBuffer()
 				let mutationAccepted = false
@@ -1593,6 +1590,9 @@ export function AgenticChat({
 					// The server can persist the client UUID without assigning a different ID.
 					replaceOptimisticSessionId(previousSessionId, id, submitProjectId)
 					if (sharedSession) onSharedSessionFork?.(id)
+					else if (ownsSessionNavigation && previousSessionId !== id) {
+						void router.replace(`/ai/chat/${id}`, undefined, { scroll: false })
+					}
 					if (previousSessionId !== id && !sessions.some((session) => session.sessionId === id)) {
 						void createSession
 							.mutateAsync({
@@ -1606,7 +1606,7 @@ export function AgenticChat({
 					}
 				}
 
-				await executionCoordinator.run(currentSessionId, 'prompt', async (operation) => {
+				const execution = executionCoordinator.run(currentSessionId, 'prompt', async (operation) => {
 					await runAgenticRequest({
 						mode: 'prompt',
 						operation,
@@ -1788,6 +1788,7 @@ export function AgenticChat({
 						}
 					})
 				})
+				await execution.finally(() => router.events.off('routeChangeStart', onRouteChangeStart))
 			}
 			void runPromptSubmission({
 				submissionId,
@@ -1835,7 +1836,8 @@ export function AgenticChat({
 			rememberPromptFailure,
 			clearPromptFailure,
 			movePromptFailure,
-			onSharedSessionFork
+			onSharedSessionFork,
+			router
 		]
 	)
 
@@ -2626,7 +2628,7 @@ export function AgenticChat({
 							isStreaming={api.isStreaming}
 							enterToSend={settings.enterToSend}
 							onPickSession={(nextSessionId) => {
-								void navigate.toSession(nextSessionId)
+								void router.push(`/ai/chat/${nextSessionId}`)
 							}}
 						/>
 					)
@@ -2678,7 +2680,7 @@ export function AgenticChat({
 										currentSessionId={routeSessionId ?? sessionId ?? null}
 										restoringSessionId={restoringSessionId}
 										onSessionSelect={(nextSessionId) => {
-											void navigate.toSession(nextSessionId)
+											void router.push(`/ai/chat/${nextSessionId}`)
 										}}
 										onNewChat={handleNewChat}
 										onDelete={handleDeleteSession}
@@ -2738,7 +2740,7 @@ export function AgenticChat({
 									<LoadingConversationState />
 								) : !hasMessages && visibleError ? (
 									<EmptyConversationErrorState
-										onNewChat={() => void navigate.toNewChat()}
+										onNewChat={() => void router.push('/ai/chat')}
 										message={visibleError}
 										onRetry={
 											isRouteSessionPending && routeSessionId
@@ -2906,7 +2908,7 @@ const ChatControls = memo(function ChatControls({
 					render={<button type="button" onClick={handleNewChat} />}
 					className="flex size-6 items-center justify-center gap-2 rounded-sm bg-brand text-ai-white not-disabled:not-aria-disabled:hover:bg-brand focus-visible:bg-brand max-lg:ml-auto"
 				>
-					<Icon name="message-square-plus" height={16} width={16} />
+					<Icon name="square-pen" height={16} width={16} />
 					<span className="sr-only">New Chat</span>
 				</Tooltip>
 				{canShare ? (

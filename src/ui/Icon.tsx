@@ -83,6 +83,7 @@ const ICON_NAMES = [
 	'tag',
 	'file-lock-2',
 	'message-square-plus',
+	'square-pen',
 	'arrow-up',
 	'arrow-right-to-line',
 	'ellipsis',
@@ -147,7 +148,7 @@ export interface IIcon extends SVGProps<SVGSVGElement> {
 export function Icon({ name, ...props }: IIcon) {
 	return (
 		<svg {...props}>
-			<use href={`/icons/v47.svg#${name}`} />
+			<use href={`/icons/v48.svg#${name}`} />
 		</svg>
 	)
 }
