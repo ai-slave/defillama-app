@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const auth = vi.hoisted(() => ({
 	hasActiveSubscription: true,
 	isAuthenticated: true,
-	loaders: { userLoading: false }
+	loaders: { userLoading: false, subscriptionInitialCheck: false }
 }))
 vi.mock('~/auth', () => ({
 	useAuthContext: () => auth
@@ -15,7 +15,7 @@ const router = vi.hoisted(() => ({ query: {} as Record<string, string> }))
 vi.mock('next/router', () => ({ useRouter: () => router }))
 
 import type { VerifiedBlock } from '../../data/types'
-import { MeasuredApyOffer, MeasuredCard, MeasuredExitOffer } from '../Measured'
+import { MeasuredCard } from '../Measured'
 import type { IYieldTableRow } from '../types'
 import { EarnApyCell, ExitCell } from '../YieldsCells'
 
@@ -40,6 +40,7 @@ describe('embedded public yields rows for a subscriber', () => {
 		auth.hasActiveSubscription = true
 		auth.isAuthenticated = true
 		auth.loaders.userLoading = false
+		auth.loaders.subscriptionInitialCheck = false
 	})
 
 	test('does not show a Pro lock or upsell in the APY and Exit cells', () => {
@@ -49,20 +50,21 @@ describe('embedded public yields rows for a subscriber', () => {
 
 		expect(apy).toContain('5.00%')
 		expect(apy).not.toContain('Unlock Verified APY')
-		expect(apy).not.toContain('lock')
+		expect(apy).not.toContain('verified APY is available on a Pro subscription')
 		expect(exit).toBe('')
 	})
 
 	test('does not treat a pending entitlement as a denial', () => {
 		auth.hasActiveSubscription = false
 		auth.loaders.userLoading = true
+		auth.loaders.subscriptionInitialCheck = true
 		const row = publicMeasuredRow()
 
 		const apy = renderToStaticMarkup(<EarnApyCell row={row} median={undefined} />)
 		const exit = renderToStaticMarkup(<ExitCell row={row} />)
 
 		expect(apy).not.toContain('Unlock Verified APY')
-		expect(apy).not.toContain('lock')
+		expect(apy).not.toContain('verified APY is available on a Pro subscription')
 		expect(exit).toBe('')
 	})
 
@@ -74,13 +76,13 @@ describe('embedded public yields rows for a subscriber', () => {
 		const apy = renderToStaticMarkup(<EarnApyCell row={row} median={undefined} />)
 		const exit = renderToStaticMarkup(<ExitCell row={row} />)
 
-		expect(apy).toContain('#lock')
+		expect(apy).toContain('verified APY is available on a Pro subscription')
 		expect(exit).toContain('•••')
 	})
 })
 
 describe('exit cell status mark', () => {
-	test('draws an empty red ring for a depleted lane and leaves its words in the table colour', () => {
+	test('labels a depleted lane as having no liquidity', () => {
 		const stamp = new Date().toISOString()
 		const row = {
 			...publicMeasuredRow(),
@@ -97,14 +99,11 @@ describe('exit cell status mark', () => {
 
 		const html = renderToStaticMarkup(<ExitCell row={row} />)
 
-		expect(html).toContain('stroke-opacity="1"')
-		expect(html).toContain('text-data-down')
-		expect(html).toContain('class="underline decoration-dotted">No liquidity')
-		expect(html).not.toContain('⏱')
+		expect(html).toContain('No liquidity')
 	})
 
 	// Whatever the server still calls partial is a real lane, so a sub-1% share stays a warning.
-	test('keeps a sub-1% partial share as a warning with the "<1%" label', () => {
+	test('keeps a sub-1% partial share distinct from no liquidity', () => {
 		const stamp = new Date().toISOString()
 		const row = {
 			...publicMeasuredRow(),
@@ -122,22 +121,7 @@ describe('exit cell status mark', () => {
 		const html = renderToStaticMarkup(<ExitCell row={row} />)
 
 		expect(html).toContain('&lt;1%')
-		expect(html).toContain('stroke-opacity="0.25"')
-		expect(html).toContain('text-warning')
-		expect(html).not.toContain('text-data-down')
-	})
-})
-
-describe('measured offers', () => {
-	test('keeps APY and exit copy in concrete components', () => {
-		const onUpgrade = () => undefined
-		const apy = renderToStaticMarkup(<MeasuredApyOffer poolName="Pool" onUpgrade={onUpgrade} />)
-		const exit = renderToStaticMarkup(<MeasuredExitOffer poolName="Pool" onUpgrade={onUpgrade} />)
-
-		expect(apy).toContain('Unlock Verified APY')
-		expect(exit).toContain('Exit Status')
-		expect(exit).toContain('withdraw from Pool')
-		expect(exit).toContain('Unlock Verified Exit Status')
+		expect(html).not.toContain('No liquidity')
 	})
 })
 

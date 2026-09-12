@@ -2,12 +2,12 @@
 
 import { Storage } from 'happy-dom'
 import { act } from 'react'
-import { hydrateRoot, type Root } from 'react-dom/client'
+import { createRoot, hydrateRoot, type Root } from 'react-dom/client'
 import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { PoolDetailView, type PoolDetailViewProps } from './PoolDetailView'
 import { POOL_CHART_RANGE_PREFS, POOL_CHART_WINDOW_PREFS } from './queryState'
-import { EMPTY_POOL_VERIFIED_PROPS } from './verifiedProps'
+import { EMPTY_POOL_VERIFIED_PROPS, type PoolVerifiedProps } from './verifiedProps'
 
 const mocks = vi.hoisted(() => ({
 	router: {
@@ -19,22 +19,35 @@ const mocks = vi.hoisted(() => ({
 	},
 	access: { hasAccess: false, isDenied: true },
 	paidLoading: false,
+	paid: null as PoolVerifiedProps | null,
 	chart: vi.fn()
 }))
 vi.mock('next/router', () => ({ useRouter: () => mocks.router }))
 vi.mock('./PoolApyChart', () => ({
-	PoolApyChart: (props: { kind: string; model: { bars: Array<{ key: string }> } }) => {
+	PoolApyChart: (props: { kind: string; model: { bars: Array<{ key: string; values: Array<number | null> }> } }) => {
 		mocks.chart(
 			props.kind,
 			mocks.router.query,
 			props.model.bars.map((bar) => bar.key)
 		)
 		return (
-			<div>{`${props.kind}:${mocks.router.query.range ?? 'max'}:${mocks.router.query[`${props.kind}Window`] ?? 'daily'}`}</div>
+			<div
+				data-chart={props.kind}
+				data-series={JSON.stringify(props.model.bars)}
+			>{`${props.kind}:${mocks.router.query.range ?? 'max'}:${mocks.router.query[`${props.kind}Window`] ?? 'daily'}`}</div>
 		)
 	}
 }))
 vi.mock('./PoolHeader', () => ({ PoolHeader: () => <h1>Pool summary</h1>, PoolMetaInfo: () => null }))
+vi.mock('./PoolLiquidityChart', () => ({
+	PoolLiquidityChart: ({
+		model,
+		decimals
+	}: {
+		model: PoolVerifiedProps['liquidityChart']
+		decimals: number | null
+	}) => <div data-liquidity-decimals={decimals}>{model!.units.available.join(',')}</div>
+}))
 vi.mock('./HoldersPanel', () => ({ HoldersPanel: () => null }))
 vi.mock('../useVerifiedAccess', () => ({ useVerifiedAccess: () => mocks.access }))
 vi.mock('../VerifiedApyAnnouncement', () => ({ VerifiedApyAnnouncement: () => <div>Upgrade banner</div> }))
@@ -43,7 +56,7 @@ vi.mock('./VerifiedSnapshotCard', async (importOriginal) => ({
 	LockedVerifiedSection: () => <div>Upgrade offer</div>
 }))
 vi.mock('./useVerifiedProps', () => ({
-	usePoolVerifiedProps: () => ({ props: EMPTY_POOL_VERIFIED_PROPS, isLoading: mocks.paidLoading })
+	usePoolVerifiedProps: () => ({ props: mocks.paid ?? EMPTY_POOL_VERIFIED_PROPS, isLoading: mocks.paidLoading })
 }))
 
 const props: PoolDetailViewProps = {
@@ -76,6 +89,7 @@ beforeEach(() => {
 	vi.stubGlobal('localStorage', new Storage())
 	mocks.access = { hasAccess: false, isDenied: true }
 	mocks.paidLoading = false
+	mocks.paid = null
 	mocks.chart.mockClear()
 	mocks.router = { ...mocks.router, query: { pool: 'pool-1' }, replace: vi.fn().mockResolvedValue(true) }
 })
@@ -137,26 +151,92 @@ test.each([true, false])('shows unavailable copy only after the paid fetch settl
 	expect(html.includes('Verified APY is temporarily unavailable')).toBe(!loading)
 })
 
-// Signed out in another tab: the page keeps the chart, minus the verified base it can no longer show.
-test('falls back to the reported supply chart when a seeded subscriber is denied', () => {
-	const bar = { values: [3.5], avg7: [3.6], avg30: [3.7] }
-	const html = renderToString(
-		<PoolDetailView
-			{...props}
-			supplyChart={{
+test('keeps seeded chart measurements while pending and removes them on denial', async () => {
+	const base = { key: 'base', label: 'Base', colorKey: 'accent' as const, values: [3.5], avg7: [3.6], avg30: [3.7] }
+	const verified = {
+		...base,
+		key: 'verifiedApy',
+		label: 'Verified Base',
+		colorKey: 'verified' as const,
+		replaces: 'base',
+		values: [4.5]
+	}
+	const seededProps: PoolDetailViewProps = {
+		...props,
+		supplyChart: {
+			title: 'Supply APY',
+			net: false,
+			dates: [1_701_561_600_000],
+			bars: [verified, base],
+			lines: [],
+			netLine: null
+		}
+	}
+	mocks.access = { hasAccess: true, isDenied: false }
+	const container = document.createElement('div')
+	const root = createRoot(container)
+	try {
+		await act(async () => root.render(<PoolDetailView {...seededProps} />))
+		expect(JSON.parse(container.querySelector('[data-chart="supply"]')!.getAttribute('data-series')!)).toEqual([
+			verified,
+			base
+		])
+		mocks.access = { hasAccess: false, isDenied: false }
+		await act(async () => root.render(<PoolDetailView {...seededProps} />))
+		expect(JSON.parse(container.querySelector('[data-chart="supply"]')!.getAttribute('data-series')!)).toEqual([
+			verified,
+			base
+		])
+		mocks.access = { hasAccess: false, isDenied: true }
+		await act(async () => root.render(<PoolDetailView {...seededProps} />))
+		expect(JSON.parse(container.querySelector('[data-chart="supply"]')!.getAttribute('data-series')!)).toEqual([base])
+	} finally {
+		await act(async () => root.unmount())
+	}
+})
+
+test('renders fetched liquidity with its denomination and replaces the public APY chart', async () => {
+	mocks.access = { hasAccess: true, isDenied: false }
+	const container = document.createElement('div')
+	const root = createRoot(container)
+	try {
+		await act(async () => root.render(<PoolDetailView {...props} verifiedLocked />))
+		expect(container.querySelector('[data-liquidity-decimals]')).toBeNull()
+		const base = {
+			key: 'verifiedApy',
+			label: 'Verified Base',
+			colorKey: 'verified' as const,
+			values: [4.5],
+			avg7: [],
+			avg30: []
+		}
+		mocks.paid = {
+			...EMPTY_POOL_VERIFIED_PROPS,
+			liquidityDecimals: 18,
+			liquidityChart: {
+				dates: [1_701_561_600_000],
+				usd: { total: [4000], available: [2000], remainder: [2000] },
+				units: { total: [2], available: [1], remainder: [1] },
+				classes: [null],
+				quotedTotal: [false],
+				symbol: 'ETH',
+				hasUnits: true,
+				uncappedQueue: false
+			},
+			supplyChart: {
 				title: 'Supply APY',
 				net: false,
 				dates: [1_701_561_600_000],
-				bars: [
-					{ key: 'verifiedApy', label: 'Verified Base', colorKey: 'verified', replaces: 'base', ...bar },
-					{ key: 'base', label: 'Base', colorKey: 'accent', ...bar }
-				],
+				bars: [base],
 				lines: [],
 				netLine: null
-			}}
-		/>
-	)
-	// The server renders the chart's placeholder, so the slot is what proves the chart survived.
-	expect(html).toContain('Supply APY')
-	expect(html).not.toContain('No history available')
+			}
+		}
+		await act(async () => root.render(<PoolDetailView {...props} verifiedLocked />))
+		expect(container.querySelector('[data-liquidity-decimals]')?.getAttribute('data-liquidity-decimals')).toBe('18')
+		expect(container.querySelector('[data-liquidity-decimals]')?.textContent).toBe('1')
+		expect(JSON.parse(container.querySelector('[data-chart="supply"]')!.getAttribute('data-series')!)).toEqual([base])
+	} finally {
+		await act(async () => root.unmount())
+	}
 })

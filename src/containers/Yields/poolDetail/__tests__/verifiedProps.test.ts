@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs'
-import path from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { lockPoolDetail, lockPoolHistory } from '../../data/verifiedGate'
 import type { PoolDetail, PoolHistory } from '../types'
@@ -55,16 +53,5 @@ describe('buildPoolVerifiedProps', () => {
 		})
 
 		expect(props).toEqual(EMPTY_POOL_VERIFIED_PROPS)
-	})
-})
-
-// The page's props are always redacted, so every one of these arrives empty and the view has to
-// fall back to the copy it fetched. Forgetting one silently hides a panel for paying readers —
-// which is exactly what happened to `liquidityDecimals`.
-describe('PoolDetailView merge', () => {
-	const source = readFileSync(path.join(process.cwd(), 'src/containers/Yields/poolDetail/PoolDetailView.tsx'), 'utf8')
-
-	test.each(Object.keys(EMPTY_POOL_VERIFIED_PROPS))('falls back to the fetched %s', (key) => {
-		expect(source).toContain(`paid.${key}`)
 	})
 })

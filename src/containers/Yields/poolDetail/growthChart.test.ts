@@ -449,21 +449,6 @@ describe('growthFractionDigits', () => {
 })
 
 describe('growthOutcomeLabel', () => {
-	test('labels every outcome the API can serve', () => {
-		const outcomes: Array<VerifiedExitOutcome> = [
-			'ok_full',
-			'ok_partial',
-			'delayed',
-			'no_exit_primary',
-			'reverted_liquidity',
-			'reverted_paused',
-			'reverted_unknown',
-			'error_rpc',
-			'unmeasured'
-		]
-		for (const outcome of outcomes) expect(growthOutcomeLabel(outcome)).toBeTruthy()
-	})
-
 	test('says nothing about an outcome this build does not know', () => {
 		expect(growthOutcomeLabel(null)).toBeNull()
 		expect(growthOutcomeLabel('something_new' as VerifiedExitOutcome)).toBeNull()

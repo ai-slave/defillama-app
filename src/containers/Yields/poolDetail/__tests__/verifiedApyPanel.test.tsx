@@ -1,3 +1,5 @@
+// @vitest-environment happy-dom
+
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test } from 'vitest'
 import type { VerifiedBlock } from '../../data/types'
@@ -36,11 +38,14 @@ describe('VerifiedApyPanel', () => {
 		}
 		const html = renderToStaticMarkup(<VerifiedApyPanel verified={verified} measuredSince="2023-02-06" />)
 
-		expect(html).toContain('high</span> confidence')
-		expect(html).toContain('>read<')
-		expect(html).toContain('>executed<')
-		expect(html).toContain('As the holder')
-		expect(html).toContain('Measured since')
-		expect(html).toContain('Feb 6, 2023')
+		const body = new DOMParser().parseFromString(html, 'text/html').body
+		const text = body.textContent
+		expect(text).toContain('high confidence')
+		const calls = Array.from(body.querySelectorAll('li'), (item) => item.textContent)
+		expect(calls.find((call) => call.includes('balanceOf(holder)'))).toContain('read')
+		expect(calls.find((call) => call.includes('Pool.withdraw'))).toContain('executed')
+		expect(text).toContain('As the holder')
+		expect(text).toContain('Measured since')
+		expect(text).toContain('Feb 6, 2023')
 	})
 })
