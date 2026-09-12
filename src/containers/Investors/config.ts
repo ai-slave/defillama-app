@@ -47,7 +47,7 @@ export type InvestorsSite = Readonly<{
 export const INVESTORS_SITES: Readonly<Record<InvestorsSiteId, InvestorsSite>> = {
 	investors: {
 		id: 'investors',
-		hosts: ['investors.defillama.com'],
+		hosts: ['investors.defillama.com', 'ir-staging.llama.fi'],
 		projectIds: INVESTORS_DOMAIN_PROJECT_IDS,
 		landingProjectIds: INVESTORS_LIVE_PROJECT_IDS,
 		defaultProjectId: 'spark',
@@ -121,13 +121,14 @@ export function getInvestorsSiteWithPathFallback(
 	return protocol === undefined ? INVESTORS_SITES.investors : getInvestorsSiteForProject(protocol)
 }
 
-export function getInvestorsRootRedirectScript(): string {
-	const destinations = Object.fromEntries(
-		Object.values(INVESTORS_SITES).flatMap((site) =>
-			site.hosts.map((host) => [host, site.projectIds.length === 1 ? `/${site.defaultProjectId}` : '/investors'])
-		)
-	)
-	return `(function(){var d=${JSON.stringify(destinations)}[location.hostname];if(d&&location.pathname==='/')location.replace(d+location.search)})()`
+export function getInvestorsRootRoute(site: InvestorsSite): string {
+	const hasLandingPage = site.landingProjectIds.length > 1 || site.comingSoonProjectIds.length > 0
+	return site.projectIds.length === 1 && !hasLandingPage ? `/investors/${site.defaultProjectId}` : '/investors'
+}
+
+export function getInvestorsRootHideScript(): string {
+	const hosts = Object.values(INVESTORS_SITES).flatMap((site) => site.hosts)
+	return `(function(){if(location.pathname!=='/'||${JSON.stringify(hosts)}.indexOf(location.hostname)<0)return;var s=document.documentElement.style;s.visibility='hidden';setTimeout(function(){s.visibility=''},8000)})()`
 }
 
 export function getInvestorsProjects(projectIds: ReadonlyArray<InvestorsProjectId>): Array<InvestorsProject> {

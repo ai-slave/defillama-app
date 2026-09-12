@@ -1,5 +1,5 @@
 import { Head, Html, Main, NextScript, type DocumentProps } from 'next/document'
-import { getInvestorsRootRedirectScript } from '~/containers/Investors/config'
+import { getInvestorsRootHideScript } from '~/containers/Investors/config'
 import { getHeadBootstrapScript } from '~/utils/cookies'
 
 export default function Document(props: DocumentProps) {
@@ -32,7 +32,7 @@ export default function Document(props: DocumentProps) {
 					<script
 						// eslint-disable-next-line react/no-danger -- an inline head script has no React equivalent; the source is local
 						dangerouslySetInnerHTML={{
-							__html: getInvestorsRootRedirectScript()
+							__html: getInvestorsRootHideScript()
 						}}
 					/>
 				) : null}

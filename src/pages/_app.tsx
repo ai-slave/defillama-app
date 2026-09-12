@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import type { AppProps } from 'next/app'
 import Head from 'next/head'
-import Router from 'next/router'
+import Router, { useRouter } from 'next/router'
 import '@rainbow-me/rainbowkit/styles.css'
 import '~/tailwind.css'
 import Script from 'next/script'
@@ -12,6 +12,7 @@ import { AuthProvider } from '~/auth'
 import { DashboardSaveGuard } from '~/components/DashboardSaveGuard'
 import { RouteProgressIndicator } from '~/components/RouteProgressIndicator'
 import { UserSettingsSync } from '~/components/UserSettingsSync'
+import { getInvestorsRootRoute } from '~/containers/Investors/config'
 import { InvestorsSiteProvider, useInvestorsSite } from '~/containers/Investors/SiteContext'
 import { useAuthBridge } from '~/hooks/useAuthBridge'
 import { useParentAuthTracker } from '~/hooks/useParentAuthTracker'
@@ -82,7 +83,18 @@ const isChunkLoadError = (error: unknown) => {
 function App({ Component, pageProps }: AppPropsWithLayout) {
 	const reloadInProgressRef = useRef(false)
 	const site = useInvestorsSite()
+	const router = useRouter()
 	const umamiWebsiteId = site === undefined ? null : (site?.umamiWebsiteId ?? MAIN_UMAMI_WEBSITE_ID)
+	const investorsRootRoute = site && router.pathname === '/' ? getInvestorsRootRoute(site) : null
+
+	useEffect(() => {
+		if (site === undefined) return
+		if (!investorsRootRoute) {
+			document.documentElement.style.visibility = ''
+			return
+		}
+		router.replace(investorsRootRoute, '/', { scroll: false })
+	}, [site, investorsRootRoute, router])
 
 	useEffect(() => {
 		const trackExposure = () => {
@@ -181,7 +193,7 @@ function App({ Component, pageProps }: AppPropsWithLayout) {
 			) : null}
 
 			<RouteProgressIndicator />
-			{getLayout(<Component {...pageProps} />)}
+			{investorsRootRoute ? null : getLayout(<Component {...pageProps} />)}
 		</>
 	)
 }

@@ -16,6 +16,7 @@ describe('investor site configuration', () => {
 		expect(getInvestorsSite('INVESTORS.DEFILLAMA.COM:3000')?.id).toBe('investors')
 		expect(getInvestorsSite('enterprise.defillama.com')?.id).toBe('enterprise')
 		expect(getInvestorsSite('investors.defillama.com')?.id).toBe('investors')
+		expect(getInvestorsSite('ir-staging.llama.fi')?.id).toBe('investors')
 		for (const host of [
 			undefined,
 			null,
@@ -65,7 +66,8 @@ describe('investor site configuration', () => {
 	})
 
 	test('falls back to the path only behind an opaque host', async () => {
-		const { getInvestorsSiteWithPathFallback, getInvestorsRootRedirectScript } = await loadConfig()
+		const { getInvestorsSiteWithPathFallback, getInvestorsRootHideScript, getInvestorsRootRoute, INVESTORS_SITES } =
+			await loadConfig()
 		expect(getInvestorsSiteWithPathFallback('app-origin.example', 'app-origin.example')?.id).toBe('investors')
 		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'spark')?.id).toBe('investors')
 		expect(getInvestorsSiteWithPathFallback('app-origin.example', null, 'odyssey-ecosystem')?.id).toBe('enterprise')
@@ -84,10 +86,12 @@ describe('investor site configuration', () => {
 		] as const) {
 			expect(getInvestorsSiteWithPathFallback(host, forwardedHost, 'spark')).toBeNull()
 		}
-		const script = getInvestorsRootRedirectScript()
-		expect(script).toContain('"investors.defillama.com":"/investors"')
-		expect(script).toContain('"enterprise.defillama.com":"/odyssey-ecosystem"')
-		expect(script).toContain("location.pathname==='/'")
+		expect(getInvestorsRootRoute(INVESTORS_SITES.investors)).toBe('/investors')
+		expect(getInvestorsRootRoute(INVESTORS_SITES.enterprise)).toBe('/investors')
+		const script = getInvestorsRootHideScript()
+		expect(script).toContain('["investors.defillama.com","ir-staging.llama.fi","enterprise.defillama.com"]')
+		expect(script).toContain("location.pathname!=='/'")
+		expect(script).toContain("visibility='hidden'")
 	})
 
 	test('supports explicit local hosts only in development', async () => {
