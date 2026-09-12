@@ -299,13 +299,7 @@ interface ArmMessageIdEvent {
 
 interface MessageMetadataEvent {
 	type: 'message_metadata'
-	content: {
-		inputTokens?: number
-		outputTokens?: number
-		executionTimeMs?: number
-		x402CostUsd?: string
-		completionReason?: string
-	}
+	content: MessageMetadata
 }
 
 interface QueueUpdatedEvent {

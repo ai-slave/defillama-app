@@ -3,7 +3,6 @@ import { useMutation } from '@tanstack/react-query'
 import { type Virtualizer, useVirtualizer } from '@tanstack/react-virtual'
 import { type CSSProperties, memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import { useLlamaAIChrome } from '~/containers/LlamaAI/chrome'
 import { DeleteSessionDialog, SessionListFocusContext } from '~/containers/LlamaAI/components/DeleteSessionDialog'
@@ -13,8 +12,6 @@ import { useSemanticSearch } from '~/containers/LlamaAI/hooks/useSemanticSearch'
 import { ProjectsSidebarSection } from '~/containers/LlamaAI/projects/ProjectsSidebarSection'
 import type { ChatSession } from '~/containers/LlamaAI/types'
 import { compareSessionsByActivity } from '~/containers/LlamaAI/utils/sessionActivityOrder'
-import { TopupModal } from '~/containers/Subscription/shared/TopupModal'
-import { useAiBalance } from '~/containers/Subscription/useTopup'
 import { useStableCallback } from '~/hooks/useStableCallback'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -23,7 +20,6 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { InlineStatus } from '~/ui/Status'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
-import { formatUsd } from '~/utils/numberFormat'
 
 /* One row recipe for every sidebar list item: 32px, body-sm, hover wash, brand tint when active. */
 export const SIDEBAR_ROW_SURFACE =
@@ -171,9 +167,6 @@ export function AgenticSidebar({
 	const [projectsSectionHeight, setProjectsSectionHeight] = useState(0)
 	const [selectMode, setSelectMode] = useState(false)
 	const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set())
-	const { balance, totalAvailable } = useAiBalance()
-	const { hasActiveSubscription } = useAuthContext()
-	const [isTopupModalOpen, setIsTopupModalOpen] = useState(false)
 	const {
 		query: searchQuery,
 		setQuery: setSearchQuery,
@@ -582,26 +575,6 @@ export function AgenticSidebar({
 					</nav>
 				</div>
 
-				{balance ? (
-					<Tooltip
-						content={
-							hasActiveSubscription
-								? 'Credits that let LlamaAI access premium external data sources like onchain data, X profiles, LinkedIn, and more.'
-								: 'Subscribe to a plan to top up your external data balance.'
-						}
-						render={<button type="button" onClick={() => hasActiveSubscription && setIsTopupModalOpen(true)} />}
-						className="flex min-h-[52px] w-full shrink-0 items-center justify-between truncate border-t border-subtle bg-surface px-4 py-3 body-sm text-secondary not-disabled:not-aria-disabled:hover:bg-hover-row not-disabled:not-aria-disabled:hover:text-primary"
-					>
-						<div className="flex min-w-0 items-center gap-1.5">
-							<Icon name="package" height={16} width={16} className="shrink-0 text-ai-research" />
-							<span>External Data Balance</span>
-						</div>
-						<span className={`shrink-0 mono-sm-bold ${totalAvailable < 1 ? 'text-warning' : 'text-primary'}`}>
-							{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-						</span>
-					</Tooltip>
-				) : null}
-
 				<DeleteSessionDialog
 					store={deleteStore}
 					title={`Delete ${selectedIds.length} session${selectedIds.length === 1 ? '' : 's'}?`}
@@ -670,8 +643,6 @@ export function AgenticSidebar({
 						</Tooltip>
 					</footer>
 				)}
-
-				{isTopupModalOpen ? <TopupModal isOpen={isTopupModalOpen} onClose={() => setIsTopupModalOpen(false)} /> : null}
 			</aside>
 		</SessionListFocusContext.Provider>
 	)

@@ -1,4 +1,4 @@
-export const SETTINGS_TAB_IDS = ['persona', 'app', 'capabilities', 'integrations', 'memory', 'lab'] as const
+export const SETTINGS_TAB_IDS = ['persona', 'app', 'capabilities', 'integrations', 'memory', 'balance', 'lab'] as const
 
 export type SettingsTabId = (typeof SETTINGS_TAB_IDS)[number]
 
@@ -14,7 +14,10 @@ export const SLACK_RESULT_VALUES = [
 
 export type SlackResult = (typeof SLACK_RESULT_VALUES)[number]
 
+export type TopupResult = 'success' | 'cancelled'
+
 export type SettingsInitialState = {
+	topupResult?: TopupResult
 	tab?: SettingsTabId
 	tgloginToken?: string | null
 	slackloginToken?: string | null
@@ -29,6 +32,8 @@ export function isSlackResult(value: unknown): value is SlackResult {
 
 type RouterQuery = Record<string, string | Array<string> | undefined>
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
+
+const PENDING_TOPUP_RESULT_KEY = 'pending_topup_result'
 
 const PENDING_TGLOGIN_KEY = 'pending_tglogin'
 const PENDING_SLACKLOGIN_KEY = 'pending_slacklogin'
@@ -87,6 +92,14 @@ export function getSettingsIntentFromQuery(query: RouterQuery): {
 		}
 	}
 
+	const topup = firstQueryValue(query.topup)
+	if (topup === 'success' || topup === 'cancelled') {
+		return {
+			initialState: { tab: 'balance', topupResult: topup },
+			nextQuery: withoutQueryKeys(query, ['topup', 'modal', 'tab'])
+		}
+	}
+
 	if (firstQueryValue(query.modal) !== 'settings') return null
 	const tab = firstQueryValue(query.tab)
 	return {
@@ -104,6 +117,8 @@ export function stashSettingsIntent(storage: StorageLike, initialState: Settings
 		storage.setItem(PENDING_SLACKLOGIN_KEY, initialState.slackloginToken)
 		return
 	}
+	if (initialState.topupResult) storage.setItem(PENDING_TOPUP_RESULT_KEY, initialState.topupResult)
+	else storage.removeItem(PENDING_TOPUP_RESULT_KEY)
 	if (initialState.tab) storage.setItem(PENDING_SETTINGS_TAB_KEY, initialState.tab)
 	if (initialState.slackResult) storage.setItem(PENDING_SLACK_RESULT_KEY, initialState.slackResult)
 	if (initialState.slackTeamName) storage.setItem(PENDING_SLACK_TEAM_KEY, initialState.slackTeamName)
@@ -111,6 +126,8 @@ export function stashSettingsIntent(storage: StorageLike, initialState: Settings
 }
 
 export function readPendingSettingsIntent(storage: StorageLike): SettingsInitialState | null {
+	const topupResult = storage.getItem(PENDING_TOPUP_RESULT_KEY)
+	storage.removeItem(PENDING_TOPUP_RESULT_KEY)
 	const tgloginToken = storage.getItem(PENDING_TGLOGIN_KEY)
 	if (tgloginToken) {
 		storage.removeItem(PENDING_TGLOGIN_KEY)
@@ -153,6 +170,9 @@ export function readPendingSettingsIntent(storage: StorageLike): SettingsInitial
 		}
 	}
 
+	if (tab === 'balance' && (topupResult === 'success' || topupResult === 'cancelled')) {
+		return { tab, topupResult }
+	}
 	if (!isSettingsTabId(tab)) return null
 	return { tab, tgloginToken: null }
 }

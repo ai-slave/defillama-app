@@ -102,6 +102,12 @@ export function TextSelectionPopup({
 				'p, li, pre, h1, h2, h3, h4, h5, h6, [data-llamaai-prose]'
 			)
 		: null
+	useEffect(() => {
+		popover.setAnchorElement(anchor)
+		// A virtual range can move without resizing its element or reopening the popup.
+		if (selectionRange) popover.render()
+	}, [popover, anchor, selectionRange])
+
 	const actionButton =
 		'flex shrink-0 cursor-pointer items-center gap-1.5 px-3 py-2 body-sm text-primary not-disabled:not-aria-disabled:hover:bg-hover-row focus-visible:bg-hover-row'
 

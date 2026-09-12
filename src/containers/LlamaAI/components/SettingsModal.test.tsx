@@ -12,6 +12,14 @@ import type {
 	WebMobilePushEnabledMutation
 } from '~/containers/LlamaAI/hooks/useWebMobilePushPreference'
 
+const balanceRefetch = vi.hoisted(() => vi.fn())
+vi.mock('~/auth', () => ({ useAuthContext: () => ({ hasActiveSubscription: true }) }))
+vi.mock('~/containers/Subscription/useTopup', () => ({
+	TOPUP_CONFIG: { minAmount: 1, maxAmount: 500, quickAmounts: [5, 10, 25, 50] },
+	useAiBalance: () => ({ balance: {}, totalAvailable: 10, isLoading: false, isError: false, refetch: balanceRefetch }),
+	useCreateTopup: () => ({ mutateAsync: vi.fn(), reset: vi.fn(), isPending: false, error: null })
+}))
+
 const home = vi.hoisted(() => ({
 	memories: {
 		data: undefined as MemoriesResponse | undefined,
@@ -452,7 +460,11 @@ describe('SettingsModal initial tab', () => {
 	let root: Root
 	let actions: LlamaAISettingsActions
 
-	function Harness({ initialState }: { initialState?: { tab?: string; tgloginToken?: string } | null }) {
+	function Harness({
+		initialState
+	}: {
+		initialState?: { tab?: string; tgloginToken?: string; topupResult?: 'success' | 'cancelled' } | null
+	}) {
 		const dialogStore = Ariakit.useDialogStore({ defaultOpen: true })
 		return (
 			<SettingsModal
@@ -492,8 +504,9 @@ describe('SettingsModal initial tab', () => {
 		container.remove()
 	})
 
-	const render = async (initialState?: { tab?: string; tgloginToken?: string } | null) =>
-		act(async () => root.render(<Harness initialState={initialState} />))
+	const render = async (
+		initialState?: { tab?: string; tgloginToken?: string; topupResult?: 'success' | 'cancelled' } | null
+	) => act(async () => root.render(<Harness initialState={initialState} />))
 
 	const tab = (label: string) =>
 		[...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((node) => node.textContent === label)!
@@ -525,5 +538,22 @@ describe('SettingsModal initial tab', () => {
 	test('falls back from a requested lab tab outside dark mode', async () => {
 		await render({ tab: 'lab' })
 		expect(openTabId()).toBe(tab('Persona').id)
+	})
+	test('Balance follows Memory and keeps return feedback after the route intent is consumed', async () => {
+		await render({ tab: 'balance', topupResult: 'cancelled' })
+		expect(openTabId()).toBe(tab('Balance').id)
+		expect([...document.querySelectorAll('[role="tab"]')].map((node) => node.textContent)).toEqual([
+			'Persona',
+			'App',
+			'Capabilities',
+			'Integrations',
+			'Memory',
+			'Balance'
+		])
+		await render(null)
+		expect(document.querySelector('[role="tabpanel"]')?.textContent).toContain('Payment cancelled')
+		expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(1)
+		await act(async () => tab('App').click())
+		expect(openTabId()).toBe(tab('App').id)
 	})
 })

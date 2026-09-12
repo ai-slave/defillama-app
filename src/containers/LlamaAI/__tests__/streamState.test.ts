@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest'
-import { createInitialStreamState, streamReducer } from '~/containers/LlamaAI/streamState'
+import {
+	buildAssistantMessage,
+	createStreamBuffer,
+	createInitialStreamState,
+	streamReducer
+} from '~/containers/LlamaAI/streamState'
 
 describe('streamReducer', () => {
 	test('preserves prior spawn progress metadata when later updates omit optional fields', () => {
@@ -156,4 +161,11 @@ describe('streamReducer', () => {
 		expect(state.toolExecutions).toHaveLength(1)
 		expect(state.text).toBe('Aave led')
 	})
+})
+
+test('committed answers retain the server timestamp rather than the client clock', () => {
+	const buffer = createStreamBuffer()
+	buffer.messageMetadata = { timestamp: 1_700_000_000_000, executionTimeMs: 1200 }
+	expect(buildAssistantMessage(buffer, 'answer').timestamp).toBe(1_700_000_000_000)
+	expect(buildAssistantMessage(createStreamBuffer(), 'legacy').timestamp).toBeUndefined()
 })

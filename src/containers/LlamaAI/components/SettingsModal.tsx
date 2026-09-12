@@ -38,6 +38,7 @@ import { Switch } from '~/ui/Switch'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
 import { formatFixedNumber } from '~/utils/numberFormat'
+import { BalanceSettings } from './BalanceSettings'
 import { RetryNotice } from './RetryNotice'
 
 const MAX_LENGTH = 5000
@@ -90,7 +91,7 @@ export const SettingsModal = memo(function SettingsModal({
 	// from opening on the old tab for a frame, and identity is what marks it applied -- the parent
 	// hands over a fresh object each time it asks for a tab.
 	const [appliedInitialState, setAppliedInitialState] = useState(initialState)
-	if (isOpen && initialState !== appliedInitialState) {
+	if (isOpen && initialState && initialState !== appliedInitialState) {
 		setAppliedInitialState(initialState)
 		if (isSettingsTabId(initialState?.tab)) setSelectedTab(initialState.tab)
 	}
@@ -295,13 +296,14 @@ export const SettingsModal = memo(function SettingsModal({
 	const tabs: Array<{
 		id: TabId
 		label: string
-		icon: 'pencil' | 'gear-settings' | 'sparkles' | 'flame' | 'link'
+		icon: 'pencil' | 'gear-settings' | 'sparkles' | 'flame' | 'link' | 'wallet'
 	}> = [
 		{ id: 'persona', label: 'Persona', icon: 'pencil' },
 		{ id: 'app', label: 'App', icon: 'gear-settings' },
 		{ id: 'capabilities', label: 'Capabilities', icon: 'sparkles' },
 		{ id: 'integrations', label: 'Integrations', icon: 'link' },
-		{ id: 'memory', label: 'Memory', icon: 'sparkles' }
+		{ id: 'memory', label: 'Memory', icon: 'sparkles' },
+		{ id: 'balance', label: 'Balance', icon: 'wallet' }
 	]
 	if (isDark) tabs.push({ id: 'lab', label: 'Lab', icon: 'flame' })
 
@@ -375,7 +377,10 @@ export const SettingsModal = memo(function SettingsModal({
 	return (
 		<Ariakit.DialogProvider store={dialogStore}>
 			<Ariakit.Dialog
-				onClose={() => void commitDraft(instructionsDraft.value)}
+				onClose={() => {
+					setAppliedInitialState(null)
+					void commitDraft(instructionsDraft.value)
+				}}
 				className={`${dialogSurfaceStyles} [--dialog-width:720px]`}
 				portal
 				unmountOnHide
@@ -421,6 +426,7 @@ export const SettingsModal = memo(function SettingsModal({
 
 						<TabPanel value={activeTab} className="min-h-0 min-w-0 flex-1 overflow-y-auto">
 							<div className="p-5 sm:p-6">
+								{activeTab === 'balance' && <BalanceSettings result={appliedInitialState?.topupResult} />}
 								{activeTab === 'persona' && (
 									<div className="space-y-6">
 										<div>

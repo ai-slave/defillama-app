@@ -13,7 +13,9 @@ import {
 	withFetchCache,
 	type CopyMessageSource
 } from '~/containers/LlamaAI/utils/copyMessage'
+import { formatResponseCost, formatResponseDuration } from '~/containers/LlamaAI/utils/responseMetrics'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
+import { useIsClient } from '~/hooks/useIsClient'
 import { buttonStyles } from '~/ui/Button'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
@@ -21,9 +23,11 @@ import { LoadingSpinner } from '~/ui/Loaders'
 import { popoverHovercardSurfaceStyles } from '~/ui/Popover'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
-import { formatNumber, formatUsd, formatFixedNumber } from '~/utils/numberFormat'
+import { formatDateTime, formatLocalTime } from '~/utils/dateFormat'
+import { formatNumber } from '~/utils/numberFormat'
 
 interface ResponseControlsProps {
+	timestamp?: number
 	messageId?: string
 	content?: string
 	copyContext?: () => { artifacts: ArtifactRegistry; citations?: Array<UnifiedCitationReference> }
@@ -122,17 +126,21 @@ const FeedbackDialog = memo(function FeedbackDialog({
 })
 
 export function ResponseControls({
+	timestamp,
 	messageId,
 	content,
 	copyContext,
 	initialRating,
 	sessionId,
 	readOnly = false,
-	messageMetadata,
 	isLatest = false,
+	messageMetadata,
 	onShare,
 	articleExportRequest
 }: ResponseControlsProps) {
+	const isClient = useIsClient()
+	const completedAt = timestamp != null ? new Date(timestamp) : null
+	const completedToday = completedAt?.toDateString() === new Date().toDateString()
 	const openArticleExport = useArticleExport()
 	const detailsPopover = Ariakit.usePopoverStore({ placement: 'top' })
 	const [isDarkMode] = useDarkModeManager()
@@ -247,154 +255,161 @@ export function ResponseControls({
 
 	return (
 		<>
-			<div
-				className={`flex flex-wrap items-center gap-0.5 pb-3${isLatest || copyStatus !== 'idle' ? '' : ' opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100'}`}
-			>
-				{content ? (
-					<Tooltip
-						content={copyLabel}
-						render={
-							<button
-								type="button"
-								disabled={copyStatus === 'pending'}
-								aria-label={copyLabel}
-								aria-busy={copyStatus === 'pending'}
-								onClick={() => {
-									void handleCopy()
-								}}
-							/>
-						}
-						className={CONTROL}
-					>
-						{copyStatus === 'pending' ? (
-							<LoadingSpinner size={16} />
-						) : copyStatus === 'copied' ? (
-							<Icon name="check-circle" height={16} width={16} />
-						) : (
-							<Icon name="clipboard" height={16} width={16} />
-						)}
-					</Tooltip>
-				) : null}
-				{copyStatus === 'error' ? (
-					<span role="alert" className="body-sm text-error">
-						Couldn&apos;t copy. Use Retry copy to try again.
+			<div className="flex flex-wrap items-center gap-0.5 pb-3">
+				<div
+					className={`flex flex-wrap items-center gap-0.5${isLatest || copyStatus !== 'idle' ? '' : ' opacity-0 group-hover/msg:opacity-100 focus-within:opacity-100'}`}
+				>
+					{content ? (
+						<Tooltip
+							content={copyLabel}
+							render={
+								<button
+									type="button"
+									disabled={copyStatus === 'pending'}
+									aria-label={copyLabel}
+									aria-busy={copyStatus === 'pending'}
+									onClick={() => {
+										void handleCopy()
+									}}
+								/>
+							}
+							className={CONTROL}
+						>
+							{copyStatus === 'pending' ? (
+								<LoadingSpinner size={16} />
+							) : copyStatus === 'copied' ? (
+								<Icon name="check-circle" height={16} width={16} />
+							) : (
+								<Icon name="clipboard" height={16} width={16} />
+							)}
+						</Tooltip>
+					) : null}
+					{copyStatus === 'error' ? (
+						<span role="alert" className="body-sm text-error">
+							Couldn&apos;t copy. Use Retry copy to try again.
+						</span>
+					) : null}
+					<span role="status" className="sr-only">
+						{copyStatus === 'pending' ? 'Copying response…' : copyStatus === 'copied' ? 'Response copied' : ''}
 					</span>
-				) : null}
-				<span role="status" className="sr-only">
-					{copyStatus === 'pending' ? 'Copying response…' : copyStatus === 'copied' ? 'Response copied' : ''}
-				</span>
-				{!readOnly ? (
-					<>
-						<Tooltip
-							content={isRatedAsGood ? 'Rated as good' : 'Rate as good'}
-							render={
-								<button
-									type="button"
-									onClick={handleRateGood}
-									disabled={showFeedback || isRatedAsGood || isRatedAsBad}
-								/>
-							}
+
+					{!readOnly ? (
+						<>
+							<Tooltip
+								content={isRatedAsGood ? 'Rated as good' : 'Rate as good'}
+								render={
+									<button
+										type="button"
+										onClick={handleRateGood}
+										disabled={showFeedback || isRatedAsGood || isRatedAsBad}
+									/>
+								}
+								className={CONTROL}
+							>
+								<Icon name="thumbs-up" height={16} width={16} className={isRatedAsGood ? 'text-success' : undefined} />
+								<span className="sr-only">Thumbs Up</span>
+							</Tooltip>
+							<Tooltip
+								content={isRatedAsBad ? 'Rated as bad' : 'Rate as bad'}
+								render={
+									<button
+										type="button"
+										onClick={handleRateBad}
+										disabled={showFeedback || isRatedAsGood || isRatedAsBad}
+									/>
+								}
+								className={CONTROL}
+							>
+								<Icon name="thumbs-down" height={16} width={16} className={isRatedAsBad ? 'text-error' : undefined} />
+								<span className="sr-only">Thumbs Down</span>
+							</Tooltip>
+						</>
+					) : null}
+					{content && sessionId && !readOnly ? (
+						<PDFExportButton
+							sessionId={sessionId}
+							messageId={messageId}
+							exportType="single_message"
 							className={CONTROL}
-						>
-							<Icon name="thumbs-up" height={16} width={16} className={isRatedAsGood ? 'text-success' : undefined} />
-							<span className="sr-only">Thumbs Up</span>
-						</Tooltip>
-						<Tooltip
-							content={isRatedAsBad ? 'Rated as bad' : 'Rate as bad'}
-							render={
-								<button
-									type="button"
-									onClick={handleRateBad}
-									disabled={showFeedback || isRatedAsGood || isRatedAsBad}
-								/>
-							}
-							className={CONTROL}
-						>
-							<Icon name="thumbs-down" height={16} width={16} className={isRatedAsBad ? 'text-error' : undefined} />
-							<span className="sr-only">Thumbs Down</span>
-						</Tooltip>
-					</>
-				) : null}
-				{content && sessionId && !readOnly ? (
-					<PDFExportButton
-						sessionId={sessionId}
-						messageId={messageId}
-						exportType="single_message"
-						className={CONTROL}
-					/>
-				) : null}
-				{messageMetadata && (messageMetadata.outputTokens != null || messageMetadata.x402CostUsd) ? (
-					<Ariakit.PopoverProvider store={detailsPopover}>
-						<Tooltip
-							content="Response details"
-							render={<Ariakit.PopoverDisclosure store={detailsPopover} aria-label="Response details" />}
-							className={CONTROL}
-						>
-							<Icon name="circle-help" height={16} width={16} />
-						</Tooltip>
-						<Ariakit.Popover className={`${popoverHovercardSurfaceStyles} p-3`} portal gutter={8}>
-							<div className="flex flex-col gap-1.5 text-primary">
-								{messageMetadata.outputTokens != null ? (
+						/>
+					) : null}
+					{messageMetadata?.outputTokens != null ? (
+						<Ariakit.PopoverProvider store={detailsPopover}>
+							<Tooltip
+								content="Response details"
+								render={<Ariakit.PopoverDisclosure store={detailsPopover} aria-label="Response details" />}
+								className={CONTROL}
+							>
+								<Icon name="circle-help" height={16} width={16} />
+							</Tooltip>
+							<Ariakit.Popover className={`${popoverHovercardSurfaceStyles} p-3`} portal gutter={8}>
+								<div className="flex flex-col gap-1.5 text-primary">
 									<div className="flex justify-between gap-4">
 										<span className="text-tertiary">Output</span>
 										<span className="font-mono tabular-nums">{formatNumber(messageMetadata.outputTokens)} tokens</span>
 									</div>
-								) : null}
-								{messageMetadata.executionTimeMs ? (
-									<div className="flex justify-between gap-4">
-										<span className="text-tertiary">Time</span>
-										<span className="font-mono tabular-nums">
-											{formatFixedNumber(messageMetadata.executionTimeMs / 1000, 1)}s
-										</span>
-									</div>
-								) : null}
-								{messageMetadata.x402CostUsd ? (
-									<div className="flex justify-between gap-4">
-										<span className="text-tertiary">Premium data</span>
-										<span className="font-mono text-warning tabular-nums">
-											{formatUsd(parseFloat(messageMetadata.x402CostUsd), {
-												minimumFractionDigits: 3,
-												maximumFractionDigits: 3
-											})}
-										</span>
-									</div>
-								) : null}
-							</div>
-						</Ariakit.Popover>
-					</Ariakit.PopoverProvider>
-				) : null}
-				{!readOnly ? (
-					<Tooltip
-						content="Provide Feedback"
-						render={
-							<button type="button" onClick={handleOpenGeneralFeedback} disabled={showFeedback || !!submittedRating} />
-						}
-						className={CONTROL}
-					>
-						<Icon name="message-square-warning" height={16} width={16} />
-						<span className="sr-only">Provide Feedback</span>
-					</Tooltip>
-				) : null}
-				{sessionId && !readOnly && onShare ? (
-					<Tooltip
-						content="Share"
-						render={<button type="button" onClick={() => onShare(messageId)} />}
-						className={CONTROL}
-					>
-						<Icon name="share" height={16} width={16} />
-						<span className="sr-only">Share</span>
-					</Tooltip>
-				) : null}
-				{openArticleExport && articleExportRequest && !readOnly ? (
-					<Tooltip
-						content="Export to research article"
-						render={<button type="button" onClick={() => openArticleExport(articleExportRequest())} />}
-						className={CONTROL}
-					>
-						<Icon name="file-plus" height={16} width={16} />
-						<span className="sr-only">Export to research article</span>
-					</Tooltip>
-				) : null}
+								</div>
+							</Ariakit.Popover>
+						</Ariakit.PopoverProvider>
+					) : null}
+					{!readOnly ? (
+						<Tooltip
+							content="Provide Feedback"
+							render={
+								<button
+									type="button"
+									onClick={handleOpenGeneralFeedback}
+									disabled={showFeedback || !!submittedRating}
+								/>
+							}
+							className={CONTROL}
+						>
+							<Icon name="message-square-warning" height={16} width={16} />
+							<span className="sr-only">Provide Feedback</span>
+						</Tooltip>
+					) : null}
+					{sessionId && !readOnly && onShare ? (
+						<Tooltip
+							content="Share"
+							render={<button type="button" onClick={() => onShare(messageId)} />}
+							className={CONTROL}
+						>
+							<Icon name="share" height={16} width={16} />
+							<span className="sr-only">Share</span>
+						</Tooltip>
+					) : null}
+					{openArticleExport && articleExportRequest && !readOnly ? (
+						<Tooltip
+							content="Export to research article"
+							render={<button type="button" onClick={() => openArticleExport(articleExportRequest())} />}
+							className={CONTROL}
+						>
+							<Icon name="file-plus" height={16} width={16} />
+							<span className="sr-only">Export to research article</span>
+						</Tooltip>
+					) : null}
+				</div>
+				<div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 body-sm text-tertiary tabular-nums">
+					{messageMetadata?.x402CostUsd != null ? (
+						<span>External data {formatResponseCost(Number(messageMetadata.x402CostUsd))}</span>
+					) : null}
+					{messageMetadata?.executionTimeMs != null && messageMetadata.x402CostUsd != null ? (
+						<span aria-hidden="true">·</span>
+					) : null}
+					{messageMetadata?.executionTimeMs != null ? (
+						<span>{formatResponseDuration(messageMetadata.executionTimeMs)}</span>
+					) : null}
+					{completedAt &&
+					isClient &&
+					(messageMetadata?.executionTimeMs != null || messageMetadata?.x402CostUsd != null) ? (
+						<span aria-hidden="true">·</span>
+					) : null}
+					{completedAt && isClient ? (
+						<time dateTime={completedAt.toISOString()} title="Response completed at">
+							{completedToday ? formatLocalTime(completedAt) : formatDateTime(completedAt, { timeZone: 'local' })}
+						</time>
+					) : null}
+				</div>
 			</div>
 			<FeedbackDialog
 				open={showFeedback}

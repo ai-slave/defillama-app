@@ -112,15 +112,10 @@ export function AgentTimeline({
 	const hasRows = steps.length > 0 || agents.length > 0 || !!isCompacting || !!factCheckPhase
 	if (!streaming && !hasRows) return null
 
-	let totalMs = 0
-	let totalCost = 0
 	let failed = 0
 	for (const step of steps) {
 		if (step.kind !== 'tool' || !step.execution) continue
-		totalMs += step.execution.executionTimeMs
 		if (!step.execution.success) failed++
-		const cost = step.execution.costUsd ? parseFloat(step.execution.costUsd) : NaN
-		if (Number.isFinite(cost)) totalCost += cost
 	}
 	const last = steps[steps.length - 1]
 	const showTrailingThinking = streaming && (!last || (last.kind === 'tool' && last.status !== 'running'))
@@ -200,12 +195,7 @@ export function AgentTimeline({
 				/>
 				<span className="min-w-0 flex-1 truncate">{summarizeSteps(steps)}</span>
 				{failed > 0 ? <span className="shrink-0 body-sm text-warning">{failed} failed</span> : null}
-				{totalMs > 0 ? (
-					<span className="shrink-0 mono-sm text-tertiary tabular-nums">
-						{formatStepDuration(totalMs)}
-						{totalCost > 0 ? ` · ${formatStepCost(totalCost)}` : ''}
-					</span>
-				) : null}
+
 				<Chevron open={expanded} />
 			</button>
 			{rows}

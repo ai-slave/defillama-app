@@ -668,6 +668,7 @@ function MessageBubbleContent({
 			{message.id && !isDraft && !hideControls ? (
 				<ResponseControls
 					messageId={message.id}
+					timestamp={message.timestamp}
 					{...(message.content === undefined ? {} : { content: message.content })}
 					copyContext={() => {
 						const citations = message.citations?.length

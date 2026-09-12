@@ -890,7 +890,13 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 					) : null}
 					{!isSharedView && !contextWarning ? (
 						<div className="absolute right-0 bottom-[calc(100%+8px)] left-0 z-20">
-							<TipOrNotifyBanner />
+							<TipOrNotifyBanner
+								premiumResponseId={
+									!isStreaming && Number(messages.at(-1)?.messageMetadata?.x402CostUsd ?? 0) > 0
+										? messages.at(-1)?.id
+										: undefined
+								}
+							/>
 						</div>
 					) : null}
 					{queueSurface && queueSurface.rows.length > 0 ? (

@@ -110,7 +110,7 @@ test('a finished message folds to a sentence of what happened, and that sentence
 	const summary = header()
 	expect(summary.textContent).toContain('Queried the database twice and generated a chart')
 	expect(summary.textContent).toContain('1 failed')
-	expect(summary.textContent).toContain('1s')
+	expect(summary.textContent).not.toContain('1s')
 	expect(summary.textContent).not.toContain('…')
 
 	await act(async () => summary.click())

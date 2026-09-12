@@ -17,6 +17,39 @@ interface TopupModalProps {
 }
 
 export function TopupModal({ isOpen, onClose }: TopupModalProps) {
+	const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/account'
+	const origin = typeof window !== 'undefined' ? window.location.origin : ''
+	return (
+		<Ariakit.DialogProvider
+			open={isOpen}
+			setOpen={(open) => {
+				if (!open) onClose()
+			}}
+		>
+			<Ariakit.Dialog
+				className={`${dialogSurfaceStyles} [--dialog-width:420px] max-sm:h-fit max-sm:min-h-0`}
+				portal
+				unmountOnHide
+			>
+				<TopupForm
+					inDialog
+					redirectUrl={`${origin}${currentPath}?topup=success`}
+					cancelUrl={`${origin}${currentPath}`}
+				/>
+			</Ariakit.Dialog>
+		</Ariakit.DialogProvider>
+	)
+}
+
+export function TopupForm({
+	inDialog,
+	redirectUrl,
+	cancelUrl
+}: {
+	inDialog: boolean
+	redirectUrl: string
+	cancelUrl: string
+}) {
 	const amountId = useId()
 	const [amount, setAmount] = useState('10')
 	const [step, setStep] = useState<'select' | 'stripe'>('select')
@@ -30,19 +63,6 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 	const hasAmountError = amount !== '' && !isValidAmount
 	const amountErrorId = `${amountId}-error`
 	const isPaymentPending = topupMutation.isPending || isRedirecting
-
-	const handleClose = useCallback(() => {
-		setAmount('10')
-		setStep('select')
-		setIsRedirecting(false)
-		topupMutation.reset()
-		onClose()
-	}, [onClose, topupMutation])
-
-	const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/account'
-	const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}${currentPath}?topup=success` : ''
-	const cancelUrl = typeof window !== 'undefined' ? `${window.location.origin}${currentPath}` : ''
-
 	const fetchClientSecret = useCallback(async (): Promise<string> => {
 		const result = await topupMutation.mutateAsync({
 			amount: parsedAmount,
@@ -87,41 +107,34 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 
 	const errorMessage = topupMutation.error?.message ?? null
 
+	const Heading = inDialog ? DialogHeading : 'h3'
+	const Description = inDialog ? Ariakit.DialogDescription : 'p'
 	return (
-		<Ariakit.DialogProvider
-			open={isOpen}
-			setOpen={(open) => {
-				if (!open) handleClose()
-			}}
-		>
-			<Ariakit.Dialog
-				className={`${dialogSurfaceStyles} [--dialog-width:420px] max-sm:h-fit max-sm:min-h-0`}
-				portal
-				unmountOnHide
-			>
-				<header className="flex flex-col gap-1 border-b border-subtle p-3">
-					<div className="flex items-center gap-2">
-						{step === 'stripe' ? (
-							<Button
-								type="button"
-								variant="ghost"
-								size="md"
-								square
-								aria-label="Back to amount"
-								onClick={() => {
-									setStep('select')
-									topupMutation.reset()
-								}}
-							>
-								<Icon name="arrow-left" height={16} width={16} />
-							</Button>
-						) : null}
-						<DialogHeading className="min-w-0 flex-1">
-							{step === 'stripe' ? 'Complete Payment' : 'Top Up Balance'}
-						</DialogHeading>
-						<DialogCloseButton ariaLabel="Close balance dialog" />
-					</div>
-					<Ariakit.DialogDescription className="body-md text-secondary">
+		<>
+			<header className={`flex flex-col gap-1 ${inDialog ? 'border-b border-subtle p-3' : ''}`}>
+				<div className="flex items-center gap-2">
+					{step === 'stripe' ? (
+						<Button
+							type="button"
+							variant="ghost"
+							size="md"
+							square
+							aria-label="Back to amount"
+							onClick={() => {
+								setStep('select')
+								topupMutation.reset()
+							}}
+						>
+							<Icon name="arrow-left" height={16} width={16} />
+						</Button>
+					) : null}
+					<Heading className={`min-w-0 flex-1 ${inDialog ? 'heading-sm' : 'label-md text-primary'}`}>
+						{step === 'stripe' ? 'Complete Payment' : inDialog ? 'Top Up Balance' : 'Top up'}
+					</Heading>
+					{inDialog ? <DialogCloseButton ariaLabel="Close balance dialog" /> : null}
+				</div>
+				{inDialog || step === 'stripe' ? (
+					<Description className="body-md text-secondary">
 						{step === 'stripe' ? (
 							<>
 								Top up{' '}
@@ -133,97 +146,97 @@ export function TopupModal({ isOpen, onClose }: TopupModalProps) {
 						) : (
 							'Add credits for LlamaAI to access premium data'
 						)}
-					</Ariakit.DialogDescription>
-				</header>
-				<div className={`${dialogScrollableBodyStyles} flex flex-col gap-4 p-3`}>
-					{step === 'select' ? (
-						<>
-							<div className="flex flex-col gap-2">
-								<label htmlFor={amountId} className="label-md text-primary">
-									Amount (USD)
-								</label>
-								<div className="relative">
-									<span
-										aria-hidden="true"
-										className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 body-md text-secondary"
-									>
-										$
-									</span>
-									<input
-										id={amountId}
-										type="text"
-										inputMode="decimal"
-										value={amount}
-										onChange={(e) => handleAmountInput(e.target.value)}
-										placeholder="0.00"
-										disabled={isPaymentPending}
-										aria-invalid={hasAmountError || undefined}
-										aria-describedby={hasAmountError ? amountErrorId : undefined}
-										autoFocus
-										className="h-10 w-full rounded-lg border border-medium bg-page pr-3 pl-7 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-error sm:body-md"
-									/>
-								</div>
-								{hasAmountError ? (
-									<p id={amountErrorId} role="alert" className="body-sm text-error">
-										Enter an amount between ${TOPUP_CONFIG.minAmount} and ${TOPUP_CONFIG.maxAmount}
-									</p>
-								) : null}
+					</Description>
+				) : null}
+			</header>
+			<div className={`flex flex-col gap-4 ${inDialog ? `${dialogScrollableBodyStyles} p-3` : ''}`}>
+				{step === 'select' ? (
+					<>
+						<div className="flex flex-col gap-2">
+							<label htmlFor={amountId} className="label-md text-primary">
+								Amount (USD)
+							</label>
+							<div className="relative">
+								<span
+									aria-hidden="true"
+									className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 body-md text-secondary"
+								>
+									$
+								</span>
+								<input
+									id={amountId}
+									type="text"
+									inputMode="decimal"
+									value={amount}
+									onChange={(e) => handleAmountInput(e.target.value)}
+									placeholder="0.00"
+									disabled={isPaymentPending}
+									aria-invalid={hasAmountError || undefined}
+									aria-describedby={hasAmountError ? amountErrorId : undefined}
+									autoFocus={inDialog}
+									className="h-10 w-full rounded-lg border border-medium bg-page pr-3 pl-7 text-base text-primary placeholder:text-tertiary focus:border-brand focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-error sm:body-md"
+								/>
 							</div>
-							<div role="group" aria-label="Suggested amounts" className="flex gap-2">
-								{TOPUP_CONFIG.quickAmounts.map((qa) => (
-									<Button
-										type="button"
-										key={qa}
-										size="md"
-										variant="toggle"
-										data-active={parsedAmount === qa}
-										aria-pressed={parsedAmount === qa}
-										disabled={isPaymentPending}
-										onClick={() => setAmount(String(qa))}
-										className="flex-1"
-									>
-										${qa}
-									</Button>
-								))}
-							</div>
-							<fieldset className="flex flex-col gap-2">
-								<legend className="mb-2 label-md text-primary">Payment method</legend>
-								<div className="grid grid-cols-2 gap-2">
-									<Button type="button" size="md" onClick={handleStripe} disabled={!isValidAmount || isPaymentPending}>
-										<Icon name="credit-card" height={14} width={14} />
-										Pay with Card
-									</Button>
-									<Button
-										type="button"
-										size="md"
-										onClick={() => void handleLlamaPay()}
-										disabled={!isValidAmount || isPaymentPending}
-										aria-busy={isRedirecting || undefined}
-									>
-										{isRedirecting ? <LoadingSpinner size={14} /> : <Icon name="wallet" height={14} width={14} />}
-										<span role={isRedirecting ? 'status' : undefined}>
-											{isRedirecting ? 'Redirecting…' : 'Pay with Crypto'}
-										</span>
-									</Button>
-								</div>
-							</fieldset>
-						</>
-					) : errorMessage ? null : (
-						<Suspense fallback={<TopupCheckoutLoading />}>
-							<TopupStripeCheckout fetchClientSecret={fetchClientSecret} isPending={topupMutation.isPending} />
-						</Suspense>
-					)}
-					{errorMessage ? (
-						<div
-							role="alert"
-							className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 p-3 body-md text-error"
-						>
-							<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
-							<p>{errorMessage}</p>
+							{hasAmountError ? (
+								<p id={amountErrorId} role="alert" className="body-sm text-error">
+									Enter an amount between ${TOPUP_CONFIG.minAmount} and ${TOPUP_CONFIG.maxAmount}
+								</p>
+							) : null}
 						</div>
-					) : null}
-				</div>
-			</Ariakit.Dialog>
-		</Ariakit.DialogProvider>
+						<div role="group" aria-label="Suggested amounts" className="flex gap-2">
+							{TOPUP_CONFIG.quickAmounts.map((qa) => (
+								<Button
+									type="button"
+									key={qa}
+									size="md"
+									variant="toggle"
+									data-active={parsedAmount === qa}
+									aria-pressed={parsedAmount === qa}
+									disabled={isPaymentPending}
+									onClick={() => setAmount(String(qa))}
+									className="flex-1"
+								>
+									${qa}
+								</Button>
+							))}
+						</div>
+						<fieldset className="flex flex-col gap-2">
+							<legend className="mb-2 label-md text-primary">Payment method</legend>
+							<div className="grid grid-cols-2 gap-2">
+								<Button type="button" size="md" onClick={handleStripe} disabled={!isValidAmount || isPaymentPending}>
+									<Icon name="credit-card" height={14} width={14} />
+									Pay with Card
+								</Button>
+								<Button
+									type="button"
+									size="md"
+									onClick={() => void handleLlamaPay()}
+									disabled={!isValidAmount || isPaymentPending}
+									aria-busy={isRedirecting || undefined}
+								>
+									{isRedirecting ? <LoadingSpinner size={14} /> : <Icon name="wallet" height={14} width={14} />}
+									<span role={isRedirecting ? 'status' : undefined}>
+										{isRedirecting ? 'Redirecting…' : 'Pay with Crypto'}
+									</span>
+								</Button>
+							</div>
+						</fieldset>
+					</>
+				) : errorMessage ? null : (
+					<Suspense fallback={<TopupCheckoutLoading />}>
+						<TopupStripeCheckout fetchClientSecret={fetchClientSecret} isPending={topupMutation.isPending} />
+					</Suspense>
+				)}
+				{errorMessage ? (
+					<div
+						role="alert"
+						className="flex items-start gap-2 rounded-lg border border-error/30 bg-error/10 p-3 body-md text-error"
+					>
+						<Icon name="alert-warning" height={16} width={16} className="shrink-0" />
+						<p>{errorMessage}</p>
+					</div>
+				) : null}
+			</div>
+		</>
 	)
 }

@@ -188,3 +188,10 @@ export function formatIsoDate(value: DateValue, options?: NumericDateOptions) {
 	const date = parseDate(value, options?.input)
 	return date ? date.toISOString().slice(0, 10) : null
 }
+
+const LOCAL_TIME_FORMATTER = new Intl.DateTimeFormat(DISPLAY_LOCALE, { hour: 'numeric', minute: '2-digit' })
+
+/** Formats a local clock time; callers must render through a hydration-safe client path. */
+export function formatLocalTime(value: Date): string {
+	return LOCAL_TIME_FORMATTER.format(value)
+}

@@ -85,3 +85,43 @@ test('Escape preserves the text selection without reopening on an unrelated poin
 	expect(window.getSelection()?.toString()).toBe('Read this formatted passage now.')
 	expect(selected).not.toHaveBeenCalled()
 })
+
+test.each([new DOMRect(), new DOMRect(200, 300, 100, 20)])(
+	'moving the selection repositions the open popup from %j',
+	async (initialRect) => {
+		let rect = initialRect
+		const measurement = vi.spyOn(Range.prototype, 'getBoundingClientRect').mockImplementation(() => rect)
+		try {
+			await selectProse()
+			const popup = document.querySelector<HTMLElement>('[role="dialog"]')!
+			const wrapper = popup.parentElement!
+			const initialPosition = wrapper.style.transform
+			expect(initialPosition).toContain('translate3d(')
+			rect = new DOMRect(400, 500, 100, 20)
+			await selectProse()
+			expect(wrapper.style.transform).not.toBe(initialPosition)
+		} finally {
+			measurement.mockRestore()
+		}
+	}
+)
+
+test('scrolling the message container repositions the popup without changing the selection', async () => {
+	container.style.overflow = 'auto'
+	let rect = new DOMRect(200, 300, 100, 20)
+	const measurement = vi.spyOn(Range.prototype, 'getBoundingClientRect').mockImplementation(() => rect)
+	try {
+		await selectProse()
+		const wrapper = document.querySelector<HTMLElement>('[role="dialog"]')!.parentElement!
+		const initialPosition = wrapper.style.transform
+		expect(initialPosition).toContain('translate3d(')
+		rect = new DOMRect(200, 200, 100, 20)
+		await act(async () => {
+			container.dispatchEvent(new Event('scroll'))
+			await new Promise((resolve) => setTimeout(resolve, 40))
+		})
+		expect(wrapper.style.transform).not.toBe(initialPosition)
+	} finally {
+		measurement.mockRestore()
+	}
+})

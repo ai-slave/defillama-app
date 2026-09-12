@@ -113,7 +113,7 @@ import { shouldQueuePrompt } from '~/containers/LlamaAI/utils/composerSubmit'
 import { materializePersistedUserMessage } from '~/containers/LlamaAI/utils/materializeUserMessage'
 import { hasClaimableQueueWork } from '~/containers/LlamaAI/utils/queueAttach'
 import type { SettingsInitialState, SettingsTabId } from '~/containers/LlamaAI/utils/settingsIntent'
-import { AI_BALANCE_QUERY_KEY, useAiBalance } from '~/containers/Subscription/useTopup'
+import { AI_BALANCE_QUERY_KEY } from '~/containers/Subscription/useTopup'
 import { useLlamaAINavigate, useProjectHomeSignal } from '~/contexts/LlamaAINavigate'
 import { useLlamaAIRouteContext } from '~/contexts/LlamaAIRouteState'
 import { useOptionalSessionAliases } from '~/contexts/SessionAliasRegistry'
@@ -123,7 +123,6 @@ import { useStableCallback } from '~/hooks/useStableCallback'
 import { Icon } from '~/ui/Icon'
 import { Tooltip } from '~/ui/Tooltip'
 import { trackUmamiEvent } from '~/utils/analytics/umami'
-import { formatUsd } from '~/utils/numberFormat'
 import { DuelPanel, type DuelChoice } from './components/DuelPanel'
 import { useDuelStream } from './hooks/useDuelStream'
 
@@ -2878,22 +2877,7 @@ const ChatControls = memo(function ChatControls({
 }) {
 	const isMobile = useMedia('(max-width: 1023px)')
 	const { isFullscreen, toggleFullscreen, toggleSidebar } = useLlamaAIChrome()
-	const { balance, totalAvailable } = useAiBalance()
-
-	const tooltipContent =
-		sessionTitle || balance ? (
-			<div className="flex items-center gap-3">
-				<span>Open</span>
-				<div className="flex flex-col items-end text-right">
-					{sessionTitle ? <span>{sessionTitle}</span> : null}
-					{balance ? (
-						<span>{formatUsd(totalAvailable, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-					) : null}
-				</div>
-			</div>
-		) : (
-			'Open Chat History'
-		)
+	const tooltipContent = sessionTitle ? `Open Chat History: ${sessionTitle}` : 'Open Chat History'
 
 	return (
 		<div className="llamaai-chat-controls">

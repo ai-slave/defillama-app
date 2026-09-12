@@ -187,6 +187,7 @@ export interface CsvItem {
 }
 
 export interface MessageMetadata {
+	timestamp?: number
 	inputTokens?: number
 	outputTokens?: number
 	executionTimeMs?: number

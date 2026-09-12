@@ -83,3 +83,35 @@ test('a rejected rich clipboard write falls back to plain text without reporting
 	expect(copyButton().getAttribute('aria-label')).toBe('Copied')
 	expect(container.querySelector('[role="alert"]')).toBeNull()
 })
+
+test('shows final cost, duration and server completion time without opening details', async () => {
+	const timestamp = Date.parse('2026-09-11T10:00:00Z')
+	await act(async () =>
+		root.render(
+			<ResponseControls
+				messageId="message"
+				content="Response"
+				readOnly
+				timestamp={timestamp}
+				messageMetadata={{ executionTimeMs: 112_000, x402CostUsd: '0.00004' }}
+			/>
+		)
+	)
+	expect(container.textContent).toContain('External data $0.00004')
+	expect(container.textContent).toContain('1m 52s')
+	expect(container.querySelector('time')?.getAttribute('datetime')).toBe('2026-09-11T10:00:00.000Z')
+	expect(container.textContent).toContain('1m 52s·')
+	expect(container.querySelector('[aria-label="Response details"]')).toBeNull()
+})
+
+test('older answers omit missing timing, while a recorded zero remains visible', async () => {
+	expect(container.querySelector('time')).toBeNull()
+	expect(container.textContent).not.toContain('External data')
+	await act(async () =>
+		root.render(
+			<ResponseControls messageId="message" readOnly messageMetadata={{ executionTimeMs: 0, x402CostUsd: '0' }} />
+		)
+	)
+	expect(container.textContent).toContain('0s')
+	expect(container.textContent).toContain('External data $0.00')
+})

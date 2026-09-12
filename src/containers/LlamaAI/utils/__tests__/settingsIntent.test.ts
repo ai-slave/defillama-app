@@ -110,3 +110,17 @@ describe('settingsIntent', () => {
 		expect(readPendingSettingsIntent(storage)).toBeNull()
 	})
 })
+
+test.each(['success', 'cancelled'] as const)('returns top-up %s to Balance and preserves the session', (topup) => {
+	const intent = getSettingsIntentFromQuery({ modal: 'settings', tab: 'balance', topup, chat: 'session-1' })!
+	expect(intent.initialState).toEqual({ tab: 'balance', topupResult: topup })
+	expect(intent.nextQuery).toEqual({ chat: 'session-1' })
+	const storage = new MemoryStorage()
+	stashSettingsIntent(storage, intent.initialState)
+	expect(readPendingSettingsIntent(storage)).toEqual(intent.initialState)
+	expect(readPendingSettingsIntent(storage)).toBeNull()
+})
+
+test('an invalid top-up result is not treated as a successful payment', () => {
+	expect(getSettingsIntentFromQuery({ topup: 'anything' })).toBeNull()
+})

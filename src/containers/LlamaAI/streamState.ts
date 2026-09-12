@@ -410,6 +410,7 @@ export function buildAssistantMessage(buffer: StreamBuffer, messageId?: string):
 		toolExecutions: nonEmpty(buffer.toolExecutions),
 		steps: nonEmpty(buffer.steps),
 		messageMetadata: buffer.messageMetadata,
+		timestamp: buffer.messageMetadata?.timestamp,
 		id: messageId
 	}
 }
