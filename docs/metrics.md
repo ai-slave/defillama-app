@@ -500,6 +500,22 @@ The export fails if its snapshot cannot be saved or retrieved, rather than conti
 An unavailable snapshot returns HTTP 503: storage cannot distinguish expiry from an outage or unreadable data.
 Tokens page and chart clients check response schema versions and version their request URLs for deployment compatibility.
 
+### Token Classification And Narrative Tracker
+
+Token filters consume backend `filters.json` schema 2, with schema 1 compatibility during rollout.
+Deployment `chains` and singular `primaryChain` describe different facts. Category membership uses exact
+CoinGecko IDs and can overlap. RWA includes tokenized assets and tokens issued by RWA-focused protocols.
+Governance classification requires token-holder rights evidence; it is independent of governance pages.
+
+FDV consumes the separate `classifications.json` schema 2 artifact. Its explicit
+`narrativeExcludedTokenIds` removes stablecoins from every Narrative sector basket while preserving their
+RWA and Stablecoins filter memberships. Bitcoin, Ethereum and Solana remain standalone benchmark series.
+Current constituents apply across stored history; this is not historical membership reconstruction.
+
+When a selected token denomination lacks a usable benchmark, relative returns remain unavailable.
+Keep the selected denomination and show its availability message rather than substituting USD returns.
+USD returns do not require a token benchmark. A benchmark return of -100% also makes division undefined.
+
 ## RWA
 
 RWA metrics have their own definitions and breakdown files:

@@ -15,14 +15,7 @@ export function calculateDenominatedTimeSeries(
 	const rows = data ?? []
 	if (rows.length === 0) return rows
 
-	let hasDenominatedCoin = false
-	for (const row of rows) {
-		if (row[denominatedCoin] != null) {
-			hasDenominatedCoin = true
-			break
-		}
-	}
-	if (!hasDenominatedCoin) return rows
+	if (denominatedCoin === '$') return rows
 
 	const denominatedReturns: Array<TimeSeriesEntry> = []
 
@@ -48,6 +41,31 @@ export function calculateDenominatedTimeSeries(
 		}
 
 		denominatedReturns.push(newDayData)
+	}
+
+	return denominatedReturns
+}
+
+export function calculateDenominatedChange(
+	data: Array<IPctChangeRow>,
+	denominatedCoin: string,
+	field: 'change1W' | 'change1M' | 'change1Y' | 'changeYtd'
+): Array<IPctChangeRow> {
+	if (denominatedCoin === '$') return data
+	const denomRow = data.find((i) => i.name === denominatedCoin)
+	const denomChange = denomRow?.[field]
+	const denominatedCoinPerformance = denomChange == null ? null : 1 + denomChange / 100
+
+	const denominatedReturns: Array<IPctChangeRow> = []
+	for (const i of data) {
+		const change = i[field]
+		if (change == null || denominatedCoinPerformance == null || denominatedCoinPerformance === 0) {
+			denominatedReturns.push({ ...i, [field]: null })
+			continue
+		}
+		const categoryPerformance = 1 + change / 100
+		const relativePerformance = (categoryPerformance / denominatedCoinPerformance - 1) * 100
+		denominatedReturns.push({ ...i, [field]: relativePerformance })
 	}
 
 	return denominatedReturns

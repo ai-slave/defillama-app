@@ -15,6 +15,7 @@ import { formatUsd } from '~/utils/numberFormat'
 import {
 	buildNarrativeTreemapTreeData,
 	calculateDenominatedTimeSeries,
+	calculateDenominatedChange,
 	filterNarrativeTreemapTreeData
 } from './chartData'
 import type { CategoryPerformanceProps, IPctChangeRow } from './types'
@@ -27,34 +28,6 @@ const TreemapChart = React.lazy(() => import('~/components/ECharts/TreemapChart'
 const DEFAULT_SORTING_STATE = [{ id: 'change', desc: true }]
 const MAX_VISIBLE_TIME_SERIES = 30
 const columnHelper = createColumnHelper<IPctChangeRow>()
-
-// for bar + heatmap
-function calculateDenominatedChange2(
-	data: Array<IPctChangeRow>,
-	denominatedCoin: string,
-	field: PeriodConfig['field']
-): Array<IPctChangeRow> {
-	const denomRow = data.find((i) => i.name === denominatedCoin)
-	const denomChange = denomRow?.[field]
-	if (denomChange == null) return data
-
-	const denominatedCoinPerformance = 1 + denomChange / 100
-	if (denominatedCoinPerformance === 0) return data
-
-	const denominatedReturns: Array<IPctChangeRow> = []
-	for (const i of data) {
-		const change = i[field]
-		if (change == null) {
-			denominatedReturns.push(i)
-			continue
-		}
-		const categoryPerformance = 1 + change / 100
-		const relativePerformance = (categoryPerformance / denominatedCoinPerformance - 1) * 100
-		denominatedReturns.push({ ...i, [field]: relativePerformance })
-	}
-
-	return denominatedReturns
-}
 
 const PERIODS = ['7D', '30D', 'YTD', '365D'] as const
 const DENOMS = ['$', 'BTC', 'ETH', 'SOL'] as const
@@ -124,14 +97,14 @@ export function CategoryPerformanceContainer({
 
 		for (const row of series) {
 			for (const coinName of DENOM_COIN_NAMES) {
-				if (row[coinName] != null) {
+				if (row[coinName] != null && row[coinName] !== -100) {
 					timeSeriesDenoms.add(coinName)
 				}
 			}
 		}
 
 		for (const row of pctChanges) {
-			if (row[field] != null && DENOM_COIN_NAME_SET.has(row.name)) {
+			if (row[field] != null && row[field] !== -100 && DENOM_COIN_NAME_SET.has(row.name)) {
 				pctDenoms.add(row.name)
 			}
 		}
@@ -145,10 +118,6 @@ export function CategoryPerformanceContainer({
 		return disabled
 	}, [groupBy, performanceTimeSeries, pctChanges])
 
-	// Prevent selecting a denom that can't be applied (would look like "filter doesn't work"). Done in
-	// render and self-terminating: the next render sees the dollar denom, which is never disabled.
-	if (disabledDenoms.includes(groupByDenom)) setGroupByDenom('$')
-
 	// All values here are returns / relative returns expressed in percent.
 	const chartValueSymbol = '%'
 
@@ -161,7 +130,7 @@ export function CategoryPerformanceContainer({
 		const { field, seriesKey } = PERIOD_CONFIG[groupBy]
 		const denomCoin = DENOM_COIN_MAP[groupByDenom]
 
-		let pctChangesDenom = denomCoin === '$' ? pctChanges : calculateDenominatedChange2(pctChanges, denomCoin, field)
+		let pctChangesDenom = calculateDenominatedChange(pctChanges, denomCoin, field)
 		pctChangesDenom = isCoinPage
 			? pctChangesDenom.filter((i) => !['bitcoin', 'ethereum', 'solana'].includes(i.id))
 			: pctChangesDenom
@@ -175,7 +144,7 @@ export function CategoryPerformanceContainer({
 			.map((i) => ({ ...i, change: i[field] ?? null }))
 
 		let chart = performanceTimeSeries?.[seriesKey]
-		chart = denomCoin === '$' ? chart : calculateDenominatedTimeSeries(chart, denomCoin)
+		chart = calculateDenominatedTimeSeries(chart, denomCoin)
 
 		return { sortedPctChanges: sorted, timeSeries: chart }
 	}, [pctChanges, groupBy, performanceTimeSeries, groupByDenom, isCoinPage])
@@ -247,8 +216,15 @@ export function CategoryPerformanceContainer({
 					MCap-Weighted Category Performance: Shows how a category of coins has performed over your chosen time period
 					and in your selected denomination (e.g., $, BTC). Method: 1. calculating the percentage change for each
 					individual coin in the category. 2. weighting these changes based on each coin's market capitalization. 3.
-					averaging these weighted changes to get the overall category performance.
+					averaging these weighted changes to get the overall category performance. Stablecoins are excluded from sector
+					baskets.
 				</p>
+				{disabledDenoms.includes(groupByDenom) ? (
+					<p role="status" className="text-sm text-secondary">
+						{groupByDenom} benchmark data is unavailable for this period. Relative returns are shown only where
+						benchmark data exists.
+					</p>
+				) : null}
 			</div>
 
 			<div className="rounded-lg border border-subtle bg-surface">

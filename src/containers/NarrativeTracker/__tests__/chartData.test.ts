@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
 	buildNarrativeTreemapTreeData,
 	calculateDenominatedTimeSeries,
+	calculateDenominatedChange,
 	filterNarrativeTreemapTreeData
 } from '../chartData'
 import type { IPctChangeRow } from '../types'
@@ -171,13 +172,13 @@ describe('calculateDenominatedTimeSeries', () => {
 		expect(result[1].Bitcoin).toBeUndefined()
 	})
 
-	test('returns the original ordered rows when no row has the selected denomination', () => {
+	test('withholds relative returns when no row has the selected denomination', () => {
 		const rows = [
 			{ date: 1, DeFi: 10 },
 			{ date: 2, DeFi: 20 }
 		]
 
-		expect(calculateDenominatedTimeSeries(rows, 'Bitcoin')).toBe(rows)
+		expect(calculateDenominatedTimeSeries(rows, 'Bitcoin')).toEqual([{ date: 1 }, { date: 2 }])
 	})
 
 	test('returns date-only rows when denomination performance is zero or missing for a day', () => {
@@ -194,5 +195,30 @@ describe('calculateDenominatedTimeSeries', () => {
 		expect(result[0].DeFi).toBeCloseTo(10)
 		expect(result[1]).toEqual({ date: 2 })
 		expect(result[2]).toEqual({ date: 3 })
+	})
+})
+
+describe('calculateDenominatedChange', () => {
+	test('withholds relative returns without a benchmark or with a zero denominator', () => {
+		const rows = [row({ name: 'DeFi', change1W: 21 }), row({ name: 'Bitcoin', change1W: null })]
+		expect(calculateDenominatedChange(rows, 'Bitcoin', 'change1W').map((item) => item.change1W)).toEqual([null, null])
+		rows[1].change1W = -100
+		expect(calculateDenominatedChange(rows, 'Bitcoin', 'change1W').map((item) => item.change1W)).toEqual([null, null])
+	})
+
+	test('converts valid relative returns and preserves missing category values', () => {
+		const rows = [row({ name: 'DeFi', change1W: 21 }), row({ name: 'Bitcoin', change1W: 10 }), row({ name: 'Gaming' })]
+		const result = calculateDenominatedChange(rows, 'Bitcoin', 'change1W')
+		expect(result[0].change1W).toBeCloseTo(10)
+		expect(result[1].change1W).toBeCloseTo(0)
+		expect(result[2].change1W).toBeNull()
+		expect(rows[0].change1W).toBe(21)
+	})
+
+	test('preserves USD returns without requiring token benchmarks', () => {
+		const rows = [row({ name: 'DeFi', change1W: 21 })]
+		expect(calculateDenominatedChange(rows, '$', 'change1W')).toBe(rows)
+		const series = [{ date: 1, DeFi: 21 }]
+		expect(calculateDenominatedTimeSeries(series, '$')).toBe(series)
 	})
 })
