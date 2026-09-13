@@ -72,7 +72,7 @@ export function YieldsTableHeader({
 							onClick={() => applyPreset(preset)}
 							className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-sm capitalize transition-colors ${
 								activePreset === preset
-									? 'border-primary bg-primary text-on-brand'
+									? 'border-brand bg-brand text-on-brand'
 									: 'hover:bg-surface-secondary border-subtle bg-surface'
 							}`}
 						>
@@ -92,7 +92,7 @@ export function YieldsTableHeader({
 						<Icon name="align-left" height={14} width={14} />
 						Filters
 						{activeFilterCount > 0 ? (
-							<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-xs text-on-brand">
+							<span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-brand text-xs text-on-brand">
 								{activeFilterCount}
 							</span>
 						) : null}

@@ -48,7 +48,7 @@ export function NotificationPermissionBanner() {
 				type="button"
 				onClick={handleEnable}
 				disabled={isRequesting}
-				className="shrink-0 rounded-md bg-primary px-3 py-1 text-xs font-medium text-on-brand not-disabled:not-aria-disabled:hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+				className="shrink-0 rounded-md bg-brand px-3 py-1 text-xs font-medium text-on-brand not-disabled:not-aria-disabled:hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
 			>
 				Notify
 			</button>

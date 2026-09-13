@@ -43,7 +43,7 @@ export function LlamaAITipBanner() {
 				<button
 					type="button"
 					onClick={onPrimary}
-					className="shrink-0 rounded-md bg-primary px-3 py-1 text-xs font-medium text-on-brand not-disabled:not-aria-disabled:hover:opacity-90"
+					className="shrink-0 rounded-md bg-brand px-3 py-1 text-xs font-medium text-on-brand not-disabled:not-aria-disabled:hover:opacity-90"
 				>
 					{tip.cta.label}
 				</button>
