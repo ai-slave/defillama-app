@@ -5,7 +5,7 @@ import {
 	type PaginationState,
 	rowPaginationFeature,
 	type SortingState,
-	type Table,
+	type Table as TableInstance,
 	tableFeatures,
 	useTable
 } from '@tanstack/react-table'
@@ -17,7 +17,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getTooltipRawYValue, normalizeTooltipItems } from '~/components/ECharts/shared/tooltip'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
-import { VirtualTable } from '~/components/Table/Table'
+import { Table } from '~/components/Table/Table'
 import { useDarkModeManager } from '~/contexts/LocalStorage'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
@@ -307,7 +307,7 @@ function FundingChart({ data }: { data: Array<{ name: string; value: number }> }
 	)
 }
 
-function Pagination<Row>({ table }: { table: Table<typeof tableFeaturesConfig, Row> }) {
+function Pagination<Row>({ table }: { table: TableInstance<typeof tableFeaturesConfig, Row> }) {
 	const { pageIndex, pageSize } = useSelector(table.atoms.pagination)
 	const total = table.getFilteredRowModel().rows.length
 	const from = total === 0 ? 0 : pageIndex * pageSize + 1
@@ -693,7 +693,7 @@ function PredictedFundingTable({ data }: { data: Array<PredictedFunding> }) {
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">
 				Predicted Funding Rates (Annualized) — HL vs CEXs
 			</h3>
-			<VirtualTable table={instance} skipVirtualization />
+			<Table table={instance} />
 			<Pagination table={instance} />
 		</div>
 	)
@@ -716,7 +716,7 @@ function PerpsTable({ data }: { data: Array<PerpMarket> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Perpetual Markets</h3>
-			<VirtualTable table={instance} skipVirtualization />
+			<Table table={instance} />
 			<Pagination table={instance} />
 		</div>
 	)
@@ -739,7 +739,7 @@ function SpotTable({ data }: { data: Array<SpotMarket> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Spot Markets</h3>
-			<VirtualTable table={instance} skipVirtualization />
+			<Table table={instance} />
 			<Pagination table={instance} />
 		</div>
 	)

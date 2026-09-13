@@ -1,9 +1,15 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { SearchTableView } from '~/components/Table/search/SearchTableView'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { PreIpoPerpIntegration, PreIpoTokenIssuerIntegration } from './api.types'
 import { PRE_IPO_USD_OPTIONS } from './constants'
@@ -188,15 +194,22 @@ export function PerpetualMarketsTable({
 		return <EmptyIntegrationTable title="Perpetual Markets" message="No perpetual markets available." />
 	}
 	return (
-		<TableWithSearch
-			data={perps}
-			columns={perpColumns}
-			header="Perpetual Markets"
-			placeholder="Search exchanges..."
-			columnToSearch="exchangeName"
-			csvFileName={`${companyName}-perpetual-markets`}
-			skipVirtualization
-		/>
+		<SearchTableProvider options={{ data: perps, columns: perpColumns }}>
+			<Card padding="none">
+				<TableToolbar className="w-full justify-end">
+					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+						<h2 className="label-md whitespace-nowrap">Perpetual Markets</h2>
+					</div>
+					<TableSearchInput
+						columnId="exchangeName"
+						placeholder="Search exchanges..."
+						className={searchFieldInlineWrapperStyles}
+					/>
+					<TableCsvExport filename={`${companyName}-perpetual-markets`} />
+				</TableToolbar>
+				<SearchTableView />
+			</Card>
+		</SearchTableProvider>
 	)
 }
 
@@ -211,14 +224,21 @@ export function TokenIssuersTable({
 		return <EmptyIntegrationTable title="Token Issuers" message="No token issuer markets available." />
 	}
 	return (
-		<TableWithSearch
-			data={tokenIssuers}
-			columns={issuerColumns}
-			header="Token Issuers"
-			placeholder="Search issuers..."
-			columnToSearch="issuerName"
-			csvFileName={`${companyName}-token-issuers`}
-			skipVirtualization
-		/>
+		<SearchTableProvider options={{ data: tokenIssuers, columns: issuerColumns }}>
+			<Card padding="none">
+				<TableToolbar className="w-full justify-end">
+					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+						<h2 className="label-md whitespace-nowrap">Token Issuers</h2>
+					</div>
+					<TableSearchInput
+						columnId="issuerName"
+						placeholder="Search issuers..."
+						className={searchFieldInlineWrapperStyles}
+					/>
+					<TableCsvExport filename={`${companyName}-token-issuers`} />
+				</TableToolbar>
+				<SearchTableView />
+			</Card>
+		</SearchTableProvider>
 	)
 }

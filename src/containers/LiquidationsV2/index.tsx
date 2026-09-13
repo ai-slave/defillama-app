@@ -5,7 +5,7 @@ import type { LiquidationsOverviewPageProps } from './api.types'
 import { LiquidationsDistributionChart } from './LiquidationsDistributionChart'
 import { LiquidationsSummaryStats } from './Summary'
 import { LiquidationsOverviewChainsTable, LiquidationsProtocolsTable } from './Table'
-import { LiquidationsTableTabs, renderLiquidationsTableLayout } from './TableTabs'
+import { LiquidationsTableTabs } from './TableTabs'
 
 const OVERVIEW_TABS = [
 	{ id: 'protocols', label: 'Protocols' },
@@ -45,17 +45,9 @@ export function LiquidationsOverview(props: LiquidationsOverviewPageProps) {
 					resetTableOnChange
 				>
 					{activeTab === 'protocols' ? (
-						<LiquidationsProtocolsTable
-							rows={props.protocolRows}
-							embedded
-							renderLayout={renderLiquidationsTableLayout}
-						/>
+						<LiquidationsProtocolsTable rows={props.protocolRows} />
 					) : (
-						<LiquidationsOverviewChainsTable
-							rows={props.chainRows}
-							embedded
-							renderLayout={renderLiquidationsTableLayout}
-						/>
+						<LiquidationsOverviewChainsTable rows={props.chainRows} />
 					)}
 				</LiquidationsTableTabs>
 			</Panel>

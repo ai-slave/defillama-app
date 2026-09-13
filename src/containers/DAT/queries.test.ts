@@ -10,7 +10,7 @@ import { buildDATTransactionRowsByAsset, getDATCompanyData, getDATOverviewData }
 import type { IDATTransactionRow } from './types'
 
 const captured = vi.hoisted(() => ({ table: null as Table<SearchTableFeatures, IDATTransactionRow> | null }))
-vi.mock('~/components/Table/Table', () => ({
+vi.mock('~/components/Table/VirtualTable', () => ({
 	VirtualTable: ({ table: instance }: { table: Table<SearchTableFeatures, IDATTransactionRow> }) => {
 		captured.table = instance
 		return null

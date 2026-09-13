@@ -2,10 +2,15 @@ import { createColumnHelper, sortFn_datetime } from '@tanstack/react-table'
 import * as React from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { CHART_COLORS } from '~/constants/colors'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import data from './final.json'
@@ -111,14 +116,17 @@ function Banks() {
 					/>
 				</React.Suspense>
 			</ChartPanel>
-			<TableWithSearch
-				data={tableData}
-				columns={banksTableColumns}
-				placeholder="Search banks..."
-				columnToSearch="1"
-				csvFileName="banks"
-				initialSorting={DEFAULT_SORTING_STATE}
-			/>
+			<SearchTableProvider
+				options={{ data: tableData, columns: banksTableColumns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
+			>
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						<TableSearchInput columnId="1" placeholder="Search banks..." />
+						<TableCsvExport filename="banks" />
+					</TableToolbar>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</Layout>
 	)
 }

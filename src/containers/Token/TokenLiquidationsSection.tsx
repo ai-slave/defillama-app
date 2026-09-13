@@ -5,12 +5,12 @@ import { Suspense, useState } from 'react'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
 import { TokenLogo } from '~/components/TokenLogo'
-import { LiquidationsTableTabs, renderLiquidationsTableLayout } from '~/containers/LiquidationsV2/TableTabs'
+import { LiquidationsTableTabs } from '~/containers/LiquidationsV2/TableTabs'
 import { Panel } from '~/ui/Panel'
 import { formatUsd } from '~/utils/numberFormat'
 import { fetchTokenLiquidationsClient } from '../LiquidationsV2/api'
 import type { OverviewChainRow, OverviewProtocolRow, TokenLiquidationsSectionData } from '../LiquidationsV2/api.types'
-import { DeferredTableWithSearch } from './deferred/DeferredTableWithSearch'
+import { DeferredTokenLiquidationsTable } from './deferred/DeferredTokenLiquidationsTable'
 import { TokenPrivateSectionGate, useTokenPrivateSectionAccess } from './TokenPrivateSectionGate'
 
 const TOKEN_LIQUIDATIONS_SECTION_ID = 'token-liquidations'
@@ -206,26 +206,24 @@ export function TokenLiquidationsSection({ tokenSymbol }: { tokenSymbol: string 
 								resetTableOnChange={false}
 							>
 								{activeTab === 'protocols' ? (
-									<DeferredTableWithSearch
-										data={data.protocolRows}
-										columns={protocolColumns}
-										renderLayout={renderLiquidationsTableLayout}
-										columnToSearch="name"
+									<DeferredTokenLiquidationsTable
+										options={{
+											data: data.protocolRows,
+											columns: protocolColumns,
+											initialState: { sorting: [{ id: 'totalCollateralUsd', desc: true }] }
+										}}
 										placeholder="Search protocols..."
 										csvFileName={`token-liquidations-100k-protocols-${tokenSymbol}`}
-										embedded
-										initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
 									/>
 								) : (
-									<DeferredTableWithSearch
-										data={data.chainRows}
-										columns={chainColumns}
-										renderLayout={renderLiquidationsTableLayout}
-										columnToSearch="name"
+									<DeferredTokenLiquidationsTable
+										options={{
+											data: data.chainRows,
+											columns: chainColumns,
+											initialState: { sorting: [{ id: 'totalCollateralUsd', desc: true }] }
+										}}
 										placeholder="Search chains..."
 										csvFileName={`token-liquidations-100k-chains-${tokenSymbol}`}
-										embedded
-										initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
 									/>
 								)}
 							</LiquidationsTableTabs>

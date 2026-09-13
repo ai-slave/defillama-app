@@ -8,17 +8,28 @@ import { buildNetProjectTreasuryRows, buildTreasuryRows } from './queries'
 import type { ITreasuryRow } from './types'
 
 const renderTable = vi.hoisted(() => vi.fn())
+const renderCsv = vi.hoisted(() => vi.fn())
 
-vi.mock('~/components/Table/TableWithSearch', () => ({
-	TableWithSearch: (props: {
-		columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>
-		csvFileName: string
-		data: Array<ITreasuryRow>
+vi.mock('~/components/Table/search/SearchTableProvider', () => ({
+	SearchTableProvider: ({
+		options,
+		children
+	}: {
+		options: { columns: Array<ColumnDef<SearchTableFeatures, ITreasuryRow>>; data: Array<ITreasuryRow> }
+		children: React.ReactNode
 	}) => {
-		renderTable(props)
+		renderTable(options)
+		return children
+	}
+}))
+vi.mock('~/components/Table/search/TableCsvExport', () => ({
+	TableCsvExport: ({ filename }: { filename: string }) => {
+		renderCsv(filename)
 		return null
 	}
 }))
+vi.mock('~/components/Table/search/TableSearchInput', () => ({ TableSearchInput: () => null }))
+vi.mock('~/components/Table/search/VirtualSearchTableView', () => ({ VirtualSearchTableView: () => null }))
 
 const row: ITreasuryRow = {
 	name: 'Example',
@@ -65,8 +76,8 @@ describe('treasury table columns', () => {
 			expect(protocolColumnIds).toContain(id)
 		}
 		expect(entityColumnIds).toContain('tvl')
-		expect(entityTable.csvFileName).toBe('entities')
-		expect(protocolTable.csvFileName).toBe('treasuries')
+		expect(renderCsv.mock.calls.at(-2)?.[0]).toBe('entities')
+		expect(renderCsv.mock.calls.at(-1)?.[0]).toBe('treasuries')
 
 		const mcapColumn = protocolTable.columns.find((column) => column.id === 'mcap')
 		if (!mcapColumn || !('accessorFn' in mcapColumn) || !mcapColumn.accessorFn) {

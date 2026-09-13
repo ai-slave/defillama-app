@@ -2,11 +2,17 @@ import { createColumnHelper } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getNetProjectTreasuryData } from '~/containers/Treasuries/queries'
 import type { INetProjectTreasury } from '~/containers/Treasuries/types'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -31,16 +37,24 @@ function NetProjectTreasuries(props: InferGetStaticPropsType<typeof getStaticPro
 			canonicalUrl="/net-project-treasury"
 			pageName={pageName}
 		>
-			<TableWithSearch
-				data={props.protocols}
-				columns={columns}
-				placeholder="Search protocols..."
-				columnToSearch="name"
-				header="Protocol Rankings"
-				headingAs="h1"
-				csvFileName="net-project-treasury"
-				initialSorting={DEFAULT_SORTING_STATE}
-			/>
+			<SearchTableProvider
+				options={{ data: props.protocols, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
+			>
+				<Card padding="none">
+					<PanelHeader className="w-full justify-end">
+						<PanelTitle as="h1" className="whitespace-nowrap">
+							Protocol Rankings
+						</PanelTitle>
+						<TableSearchInput
+							columnId="name"
+							placeholder="Search protocols..."
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableCsvExport filename="net-project-treasury" />
+					</PanelHeader>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</Layout>
 	)
 }

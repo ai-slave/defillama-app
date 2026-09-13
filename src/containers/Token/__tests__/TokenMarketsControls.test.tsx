@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useSelector } from '@tanstack/react-store'
 import type { ReactTable } from '@tanstack/react-table'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
@@ -15,35 +16,34 @@ vi.mock('~/containers/Exchanges/ExchangeAccessGate', () => ({
 	ExchangeFeatureGate: () => null,
 	useExchangeAccessState: () => 'unauthorized'
 }))
-vi.mock('../deferred/DeferredPairTable', async () => ({
-	DeferredPairTable: (await import('~/containers/Exchanges/PairTable')).PairTable
+vi.mock('../deferred/DeferredTokenMarketsTable', async () => ({
+	DeferredTokenMarketsTable: (await import('../TokenMarketsTable')).TokenMarketsTable
 }))
 vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => <button type="button">Export</button> }))
 vi.mock('~/components/Select/SelectWithCombobox', () => ({ SelectWithCombobox: () => null }))
-vi.mock('~/components/Table/Table', () => ({
-	VirtualTable: ({ table: instance }: { table: ReactTable<SearchTableFeatures, PairTableRow> }) => (
-		<div
-			data-table
-			data-sort={JSON.stringify(instance.state.sorting)}
-			data-columns={instance
-				.getVisibleLeafColumns()
-				.map((column) => column.id)
-				.join(',')}
-		>
-			<button type="button" onClick={() => instance.getColumn('volume24h')!.toggleSorting(false)}>
-				Sort ascending
-			</button>
-			<button type="button" onClick={() => instance.getColumn('price')!.toggleVisibility(false)}>
-				Hide price
-			</button>
-			<output>
-				{instance
-					.getRowModel()
-					.rows.map((row) => row.original.venue)
+vi.mock('~/components/Table/VirtualTable', () => ({
+	VirtualTable: ({ table: instance }: { table: ReactTable<SearchTableFeatures, PairTableRow> }) => {
+		const state = useSelector(instance.store)
+		const rows = useSelector(instance.store, () => instance.getRowModel().rows)
+		return (
+			<div
+				data-table
+				data-sort={JSON.stringify(state.sorting)}
+				data-columns={instance
+					.getVisibleLeafColumns()
+					.map((column) => column.id)
 					.join(',')}
-			</output>
-		</div>
-	)
+			>
+				<button type="button" onClick={() => instance.getColumn('volume24h')!.toggleSorting(false)}>
+					Sort ascending
+				</button>
+				<button type="button" onClick={() => instance.getColumn('price')!.toggleVisibility(false)}>
+					Hide price
+				</button>
+				<output>{rows.map((row) => row.original.venue).join(',')}</output>
+			</div>
+		)
+	}
 }))
 
 function marketPair(slug: string, displayName: string, volume24h: number): MarketPair {

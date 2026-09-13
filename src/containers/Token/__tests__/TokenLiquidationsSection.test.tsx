@@ -6,10 +6,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 const {
 	DynamicLiquidationsSummaryStats,
 	DynamicLiquidationsDistributionChart,
-	DynamicTableWithSearch,
+	DynamicTokenLiquidationsTable,
 	liquidationsDistributionChartCalls,
 	liquidationsSummaryCalls,
-	tableWithSearchCalls
+	tableCalls
 } = vi.hoisted(() => {
 	const liquidationsDistributionChartCalls: Array<{
 		defaultBreakdownMode?: string
@@ -17,7 +17,7 @@ const {
 		title?: string
 	}> = []
 	const liquidationsSummaryCalls: Array<{ items: Array<{ label: string; value: number }> }> = []
-	const tableWithSearchCalls: Array<{ csvFileName?: string; dataLength: number; placeholder?: string }> = []
+	const tableCalls: Array<{ csvFileName?: string; dataLength: number; placeholder?: string }> = []
 	function DynamicLiquidationsSummaryStats({ items }: { items: Array<{ label: string; value: number }> }) {
 		liquidationsSummaryCalls.push({ items })
 		return <div>Liquidations summary</div>
@@ -30,18 +30,18 @@ const {
 		liquidationsDistributionChartCalls.push(props)
 		return <div>Liquidations distribution</div>
 	}
-	function DynamicTableWithSearch({ data, leadingControls, placeholder, csvFileName }: any) {
-		tableWithSearchCalls.push({ csvFileName, dataLength: data.length, placeholder })
-		return <div>{leadingControls}</div>
+	function DynamicTokenLiquidationsTable({ options, placeholder, csvFileName }: any) {
+		tableCalls.push({ csvFileName, dataLength: options.data.length, placeholder })
+		return <div />
 	}
 
 	return {
 		DynamicLiquidationsDistributionChart,
 		DynamicLiquidationsSummaryStats,
-		DynamicTableWithSearch,
+		DynamicTokenLiquidationsTable,
 		liquidationsDistributionChartCalls,
 		liquidationsSummaryCalls,
-		tableWithSearchCalls
+		tableCalls
 	}
 })
 
@@ -121,8 +121,8 @@ vi.mock('~/components/TokenLogo', () => ({
 	TokenLogo: ({ alt }: { alt: string }) => <span>{alt}</span>
 }))
 
-vi.mock('../deferred/DeferredTableWithSearch', () => ({
-	DeferredTableWithSearch: DynamicTableWithSearch
+vi.mock('../deferred/DeferredTokenLiquidationsTable', () => ({
+	DeferredTokenLiquidationsTable: DynamicTokenLiquidationsTable
 }))
 
 vi.mock('~/containers/LiquidationsV2/Summary', () => ({
@@ -149,7 +149,7 @@ afterEach(() => {
 	}
 	liquidationsDistributionChartCalls.length = 0
 	liquidationsSummaryCalls.length = 0
-	tableWithSearchCalls.length = 0
+	tableCalls.length = 0
 	vi.clearAllMocks()
 })
 
@@ -193,7 +193,7 @@ describe('TokenLiquidationsSection', () => {
 			hideTokenSelector: true,
 			title: 'wstETH Liquidation Distribution'
 		})
-		expect(tableWithSearchCalls[0]).toMatchObject({
+		expect(tableCalls[0]).toMatchObject({
 			csvFileName: 'token-liquidations-100k-protocols-wstETH',
 			dataLength: 1,
 			placeholder: 'Search protocols...'

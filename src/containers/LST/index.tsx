@@ -17,14 +17,19 @@ import {
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Card } from '~/ui/Card'
 import { ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { PercentChange } from '~/ui/PercentChange'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
 import { buildActiveLstChartData } from './chartData'
@@ -509,15 +514,22 @@ export function LSTOverview({
 				</div>
 			</Card>
 
-			<TableWithSearch
-				data={tokensList}
-				columns={columns}
-				columnToSearch="name"
-				placeholder="Search protocols..."
-				header="Liquid Staking Protocols"
-				csvFileName="liquid-staking"
-				initialSorting={DEFAULT_SORTING_STATE}
-			/>
+			<SearchTableProvider options={{ data: tokensList, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+							<h2 className="label-md whitespace-nowrap">Liquid Staking Protocols</h2>
+						</div>
+						<TableSearchInput
+							columnId="name"
+							placeholder="Search protocols..."
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableCsvExport filename="liquid-staking" />
+					</TableToolbar>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</>
 	)
 }

@@ -5,7 +5,7 @@ import {
 	type PaginationState,
 	rowPaginationFeature,
 	type SortingState,
-	type Table,
+	type Table as TableInstance,
 	tableFeatures,
 	useTable
 } from '@tanstack/react-table'
@@ -13,7 +13,7 @@ import { lazy, Suspense, useMemo, useState } from 'react'
 import { createSingleSeriesChartOptions } from '~/components/ECharts/MultiSeriesChart/timeSeriesOptions'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { filteredTableFeatures } from '~/components/Table/features/filtering'
-import { VirtualTable } from '~/components/Table/Table'
+import { Table } from '~/components/Table/Table'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { TextLoader } from '../../Logo'
 import {
@@ -58,7 +58,7 @@ function MetricCard({ label, value, helper }: { label: string; value: string | n
 	)
 }
 
-function Pagination<Row>({ table }: { table: Table<typeof tableFeaturesConfig, Row> }) {
+function Pagination<Row>({ table }: { table: TableInstance<typeof tableFeaturesConfig, Row> }) {
 	const { pageIndex, pageSize } = useSelector(table.atoms.pagination)
 	const total = table.getFilteredRowModel().rows.length
 	const from = total === 0 ? 0 : pageIndex * pageSize + 1
@@ -410,7 +410,7 @@ function DataTable<T>({
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">{title}</h3>
-			<VirtualTable table={instance} skipVirtualization />
+			<Table table={instance} />
 			{data.length > pageSize ? <Pagination table={instance} /> : null}
 		</div>
 	)

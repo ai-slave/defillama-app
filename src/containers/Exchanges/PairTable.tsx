@@ -2,8 +2,15 @@ import { createColumnHelper, type ColumnVisibilityState, type SortingState } fro
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch, type TableWithSearchLayout } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
+import { searchFieldInlineWrapperStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
@@ -510,9 +517,8 @@ export function PairTable({
 	columnToSearch = 'pair',
 	placeholder = 'Search pairs...',
 	header = 'Markets',
-	embedded = false,
 	leadingControls = null,
-	renderLayout
+	children
 }: {
 	pairs: Array<PairTableRow>
 	segment: ExchangeSegment
@@ -528,13 +534,22 @@ export function PairTable({
 	initialVisibleColumns?: ReadonlyArray<string>
 	/** Initial sorting. Pass [] to preserve the caller's pre-ranked row order (e.g. bybit-first). */
 	sorting?: SortingState
-	columnToSearch?: string
-	placeholder?: string
-	header?: string | null
-	embedded?: boolean
-	leadingControls?: React.ReactNode
-	renderLayout?: TableWithSearchLayout
-}) {
+} & (
+	| {
+			children: NonNullable<React.ReactNode>
+			columnToSearch?: never
+			placeholder?: never
+			header?: never
+			leadingControls?: never
+	  }
+	| {
+			children?: never
+			columnToSearch?: string
+			placeholder?: string
+			header?: string | null
+			leadingControls?: React.ReactNode
+	  }
+)) {
 	const { openInterest, funding, depth: supportsDepth } = capabilities
 	const columns = React.useMemo(() => {
 		const options: Parameters<typeof resolvePairColumns>[0] = {
@@ -551,22 +566,30 @@ export function PairTable({
 		[columns, initialVisibleColumns]
 	)
 	return (
-		<TableWithSearch
+		<SearchTableProvider
 			key={segment}
-			data={pairs}
-			columns={columns}
-			columnToSearch={columnToSearch}
-			placeholder={placeholder}
-			header={header}
-			leadingControls={leadingControls}
-			renderLayout={renderLayout}
-			columnVisibility={columnVisibility}
-			showColumnSelect
-			csvExportAllColumns
-			csvFileName={csvFileName}
-			initialSorting={sorting ?? DEFAULT_PAIR_SORTING}
-			embedded={embedded}
-			tableLayout="fixed"
-		/>
+			options={{ data: pairs, columns, initialState: { columnVisibility, sorting: sorting ?? DEFAULT_PAIR_SORTING } }}
+		>
+			{children ?? (
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						{leadingControls || header ? (
+							<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+								{leadingControls ? <div className="flex items-center overflow-x-auto">{leadingControls}</div> : null}
+								{header ? <h2 className="label-md whitespace-nowrap">{header}</h2> : null}
+							</div>
+						) : null}
+						<TableSearchInput
+							columnId={columnToSearch}
+							placeholder={placeholder}
+							className={leadingControls || header ? searchFieldInlineWrapperStyles : searchFieldWrapperStyles}
+						/>
+						<TableColumnSelect />
+						<TableCsvExport filename={csvFileName} includeHiddenColumns />
+					</TableToolbar>
+					<VirtualSearchTableView />
+				</Card>
+			)}
+		</SearchTableProvider>
 	)
 }

@@ -22,7 +22,7 @@ vi.mock('next/router', () => ({
 
 vi.mock('react-hot-toast', () => ({ default: { error: toastError } }))
 
-vi.mock('~/components/Table/Table', () => ({
+vi.mock('~/components/Table/VirtualTable', () => ({
 	VirtualTable: ({
 		table: instance
 	}: {

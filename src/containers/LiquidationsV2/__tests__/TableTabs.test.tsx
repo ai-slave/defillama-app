@@ -1,3 +1,4 @@
+import { useSelector } from '@tanstack/react-store'
 import type { ReactTable } from '@tanstack/react-table'
 // @vitest-environment happy-dom
 import { act } from 'react'
@@ -21,22 +22,26 @@ vi.mock('~/containers/Token/TokenPrivateSectionGate', () => ({
 	}),
 	TokenPrivateSectionGate: ({ children }: { children: React.ReactNode }) => children
 }))
-vi.mock('~/containers/Token/deferred/DeferredTableWithSearch', async () => ({
-	DeferredTableWithSearch: (await import('~/components/Table/TableWithSearch')).TableWithSearch
+vi.mock('~/containers/Token/deferred/DeferredTokenLiquidationsTable', async () => ({
+	DeferredTokenLiquidationsTable: (await import('~/containers/Token/TokenLiquidationsTable')).TokenLiquidationsTable
 }))
 vi.mock('~/components/RowLinksWithDropdown', () => ({ RowLinksWithDropdown: () => null }))
 vi.mock('../LiquidationsDistributionChart', () => ({ LiquidationsDistributionChart: () => null }))
 vi.mock('../Summary', () => ({ LiquidationsSummaryStats: () => null, LiquidationsPageHeader: () => null }))
 vi.mock('~/components/CsvDownloadButton', () => ({ CSVDownloadButton: () => <button type="button">Export</button> }))
-vi.mock('~/components/Table/Table', () => ({
-	VirtualTable: ({ table: instance }: { table: ReactTable<SearchTableFeatures, unknown> }) => (
-		<div data-testid="table" data-sort={JSON.stringify(instance.state.sorting)}>
-			<button type="button" onClick={() => instance.getColumn(instance.state.sorting[0].id)!.toggleSorting(false)}>
-				Sort ascending
-			</button>
-			<output>{instance.getRowModel().rows.length} rows</output>
-		</div>
-	)
+vi.mock('~/components/Table/VirtualTable', () => ({
+	VirtualTable: ({ table: instance }: { table: ReactTable<SearchTableFeatures, unknown> }) => {
+		const state = useSelector(instance.store)
+		const rows = useSelector(instance.store, () => instance.getRowModel().rows)
+		return (
+			<div data-testid="table" data-sort={JSON.stringify(state.sorting)}>
+				<button type="button" onClick={() => instance.getColumn(state.sorting[0].id)!.toggleSorting(false)}>
+					Sort ascending
+				</button>
+				<output>{rows.length} rows</output>
+			</div>
+		)
+	}
 }))
 
 const chain = {

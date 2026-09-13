@@ -1,7 +1,13 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { SearchTableView } from '~/components/Table/search/SearchTableView'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { Card } from '~/ui/Card'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formatDate } from '~/utils/dateFormat'
 import { formatUsd } from '~/utils/numberFormat'
 import type { PreIpoRaise } from './api.types'
@@ -59,15 +65,21 @@ export function FundingRoundsTable({ companyName, raises }: { companyName: strin
 	}
 
 	return (
-		<TableWithSearch
-			data={raises}
-			columns={columns}
-			header="Funding Rounds"
-			placeholder="Search rounds..."
-			columnToSearch="series"
-			csvFileName={`${companyName}-funding-rounds`}
-			initialSorting={DEFAULT_SORTING}
-			skipVirtualization
-		/>
+		<SearchTableProvider options={{ data: raises, columns, initialState: { sorting: DEFAULT_SORTING } }}>
+			<Card padding="none">
+				<TableToolbar className="w-full justify-end">
+					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+						<h2 className="label-md whitespace-nowrap">Funding Rounds</h2>
+					</div>
+					<TableSearchInput
+						columnId="series"
+						placeholder="Search rounds..."
+						className={searchFieldInlineWrapperStyles}
+					/>
+					<TableCsvExport filename={`${companyName}-funding-rounds`} />
+				</TableToolbar>
+				<SearchTableView />
+			</Card>
+		</SearchTableProvider>
 	)
 }

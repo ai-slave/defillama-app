@@ -2,11 +2,16 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
@@ -140,16 +145,24 @@ export function RWAPerpsAssetsOverview({
 				includeCex={includeCex}
 				stackLabel={d.baseAsset.label}
 			/>
-			<TableWithSearch
-				data={rows}
-				columns={columns}
-				placeholder="Search assets..."
-				columnToSearch="asset"
-				header="Asset Rankings"
-				headingAs="h1"
-				csvFileName="rwa-perps-assets.csv"
-				initialSorting={[{ id: 'openInterest', desc: true }]}
-			/>
+			<SearchTableProvider
+				options={{ data: rows, columns, initialState: { sorting: [{ id: 'openInterest', desc: true }] } }}
+			>
+				<Card padding="none">
+					<PanelHeader className="w-full justify-end">
+						<PanelTitle as="h1" className="whitespace-nowrap">
+							Asset Rankings
+						</PanelTitle>
+						<TableSearchInput
+							columnId="asset"
+							placeholder="Search assets..."
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableCsvExport filename="rwa-perps-assets.csv" />
+					</PanelHeader>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</div>
 	)
 }

@@ -12,11 +12,16 @@ import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Hovercard } from '~/ui/Hovercard'
+import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -109,14 +114,17 @@ export function DATOverview({ allAssets, institutions, dailyFlowsByAsset }: IDAT
 					/>
 				</Suspense>
 			</ChartPanel>
-			<TableWithSearch
-				data={institutions}
-				columns={overviewColumns}
-				placeholder="Search institutions"
-				columnToSearch="name"
-				initialSorting={DEFAULT_SORTING_STATE}
-				csvFileName="digital-asset-treasuries"
-			/>
+			<SearchTableProvider
+				options={{ data: institutions, columns: overviewColumns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
+			>
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						<TableSearchInput columnId="name" placeholder="Search institutions" />
+						<TableCsvExport filename="digital-asset-treasuries" />
+					</TableToolbar>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</>
 	)
 }

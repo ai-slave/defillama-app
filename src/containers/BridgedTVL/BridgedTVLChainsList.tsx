@@ -4,8 +4,13 @@ import { DeprecatedEntityMarker } from '~/components/DeprecatedEntityMarker'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
+import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import type { ChainAssetCategoryKey, ChainsAssetsFlows1dResponse, ChainsAssetTotalsResponse } from './api.types'
@@ -46,14 +51,15 @@ export function BridgedTVLChainsList({ assets, chains, flows1d, deprecatedChains
 	return (
 		<>
 			<RowLinksWithDropdown links={chains} activeLink="All" />
-			<TableWithSearch
-				data={data}
-				columns={columns}
-				placeholder="Search chains..."
-				columnToSearch="name"
-				csvFileName="bridged-chains"
-				initialSorting={DEFAULT_SORTING_STATE}
-			/>
+			<SearchTableProvider options={{ data, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						<TableSearchInput columnId="name" placeholder="Search chains..." />
+						<TableCsvExport filename="bridged-chains" />
+					</TableToolbar>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</>
 	)
 }

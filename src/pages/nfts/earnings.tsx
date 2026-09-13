@@ -1,12 +1,18 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import type { InferGetStaticPropsType } from 'next'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { FallbackLogo, TokenLogo } from '~/components/TokenLogo'
 import { getNFTCollectionEarnings } from '~/containers/Nft/queries'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
 import { formatUsd } from '~/utils/numberFormat'
 import { withPerformanceLogging } from '~/utils/perf'
@@ -42,17 +48,29 @@ function Earnings({ earnings }: InferGetStaticPropsType<typeof getStaticProps>) 
 			canonicalUrl="/nfts/earnings"
 			pageName={pageName}
 		>
-			<TableWithSearch
-				data={earnings}
-				getSubRows={getEarningsSubRows}
-				columns={earningsColumns}
-				columnToSearch="name"
-				placeholder="Search collections..."
-				header="NFT Collection Earnings"
-				headingAs="h1"
-				csvFileName="nft-earnings"
-				initialSorting={DEFAULT_SORTING_STATE}
-			/>
+			<SearchTableProvider
+				options={{
+					data: earnings,
+					columns: earningsColumns,
+					initialState: { sorting: DEFAULT_SORTING_STATE },
+					getSubRows: getEarningsSubRows
+				}}
+			>
+				<Card padding="none">
+					<PanelHeader className="w-full justify-end">
+						<PanelTitle as="h1" className="whitespace-nowrap">
+							NFT Collection Earnings
+						</PanelTitle>
+						<TableSearchInput
+							columnId="name"
+							placeholder="Search collections..."
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableCsvExport filename="nft-earnings" />
+					</PanelHeader>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</Layout>
 	)
 }

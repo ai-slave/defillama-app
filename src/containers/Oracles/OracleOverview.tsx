@@ -4,18 +4,24 @@ import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { CHART_COLORS } from '~/constants/colors'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
 import { Icon } from '~/ui/Icon'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
 import { Panel } from '~/ui/Panel'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TableToolbar } from '~/ui/Toolbar'
 import { getTokenDominance, slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -323,17 +329,29 @@ export function OracleOverview({
 			</SummaryCardGrid>
 
 			<Suspense fallback={<Panel padding="none" style={{ minHeight: `${tableData.length * 50 + 200}px` }} />}>
-				<TableWithSearch
-					data={tableData}
-					columns={protocolColumns}
-					getSubRows={(row) => row.childProtocols}
-					columnToSearch="name"
-					placeholder="Search protocols..."
-					header="Protocols"
-					initialSorting={DEFAULT_PROTOCOL_TABLE_SORTING_STATE}
-					csvFileName="oracle-protocols"
-					compact
-				/>
+				<SearchTableProvider
+					options={{
+						data: tableData,
+						columns: protocolColumns,
+						initialState: { sorting: DEFAULT_PROTOCOL_TABLE_SORTING_STATE },
+						getSubRows: (row) => row.childProtocols
+					}}
+				>
+					<Card padding="none">
+						<TableToolbar className="w-full justify-end">
+							<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+								<h2 className="label-md whitespace-nowrap">Protocols</h2>
+							</div>
+							<TableSearchInput
+								columnId="name"
+								placeholder="Search protocols..."
+								className={searchFieldInlineWrapperStyles}
+							/>
+							<TableCsvExport filename="oracle-protocols" />
+						</TableToolbar>
+						<VirtualSearchTableView compact />
+					</Card>
+				</SearchTableProvider>
 			</Suspense>
 		</>
 	)

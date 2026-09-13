@@ -2,7 +2,7 @@ import { createColumnHelper, type SortingState, useTable } from '@tanstack/react
 import * as React from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { VirtualTable } from '~/components/Table/Table'
+import { VirtualTable } from '~/components/Table/VirtualTable'
 import { Icon } from '~/ui/Icon'
 import { getBlockExplorerNew } from '~/utils/blockExplorers'
 import { formatUsd } from '~/utils/numberFormat'

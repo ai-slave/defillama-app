@@ -3,11 +3,17 @@ import type { InferGetStaticPropsType } from 'next'
 import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getProtocolRankingsSnapshot } from '~/containers/ProtocolRankings/server/tableData.server'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { tokenIconUrl } from '~/utils/icons'
@@ -88,17 +94,22 @@ export default function SafeHarborAgreements({ protocols }: InferGetStaticPropsT
 			canonicalUrl="/safe-harbor-agreements"
 			pageName={pageName}
 		>
-			<TableWithSearch
-				data={protocols}
-				columns={columns}
-				placeholder="Search protocols..."
-				columnToSearch="name"
-				header="Safe Harbor Agreements"
-				headingAs="h1"
-				compact
-				csvFileName="safe-harbor-agreements"
-				initialSorting={DEFAULT_SORTING_STATE}
-			/>
+			<SearchTableProvider options={{ data: protocols, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
+				<Card padding="none">
+					<PanelHeader className="w-full justify-end">
+						<PanelTitle as="h1" className="whitespace-nowrap">
+							Safe Harbor Agreements
+						</PanelTitle>
+						<TableSearchInput
+							columnId="name"
+							placeholder="Search protocols..."
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableCsvExport filename="safe-harbor-agreements" />
+					</PanelHeader>
+					<VirtualSearchTableView compact />
+				</Card>
+			</SearchTableProvider>
 		</Layout>
 	)
 }

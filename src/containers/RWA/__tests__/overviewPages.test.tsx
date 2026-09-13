@@ -12,13 +12,26 @@ vi.mock('next/router', () => ({
 	useRouter: () => ({ query: routerQuery })
 }))
 
-vi.mock('~/components/Table/TableWithSearch', () => ({
-	TableWithSearch: ({ data, csvFileName }: { data: Array<Record<string, unknown>>; csvFileName: string }) => {
-		lastTableData = data
-		lastCsvFileName = csvFileName
+vi.mock('~/components/Table/search/SearchTableProvider', () => ({
+	SearchTableProvider: ({
+		options,
+		children
+	}: {
+		options: { data: Array<Record<string, unknown>> }
+		children: React.ReactNode
+	}) => {
+		lastTableData = options.data
+		return children
+	}
+}))
+vi.mock('~/components/Table/search/TableCsvExport', () => ({
+	TableCsvExport: ({ filename }: { filename: string }) => {
+		lastCsvFileName = filename
 		return null
 	}
 }))
+vi.mock('~/components/Table/search/TableSearchInput', () => ({ TableSearchInput: () => null }))
+vi.mock('~/components/Table/search/VirtualSearchTableView', () => ({ VirtualSearchTableView: () => null }))
 
 vi.mock('../OverviewBreakdownChart', () => ({
 	RWAOverviewBreakdownChart: () => null

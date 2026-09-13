@@ -5,14 +5,19 @@ import { BasicLink } from '~/components/Link'
 import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelExportShellFallback } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { PercentChange } from '~/ui/PercentChange'
 import { StatItem, SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { chainIconUrl } from '~/utils/icons'
 import { formatPercentChange, formatUsd } from '~/utils/numberFormat'
@@ -91,16 +96,22 @@ export function ExtraTvlByChain(props: IExtraTvlByChainPageData) {
 					</Suspense>
 				</ChartPanel>
 			</SummaryCardGrid>
-			<TableWithSearch
-				data={props.protocols}
-				getSubRows={(row) => row.subRows}
-				columns={EXTRA_TVL_COLUMNS_BY_METRIC[props.metric]}
-				placeholder="Search protocols..."
-				columnToSearch="name"
-				compact
-				csvFileName={`protocols-${props.metric}-${props.chain}`}
-				initialSorting={DEFAULT_SORTING_STATE}
-			/>
+			<SearchTableProvider
+				options={{
+					data: props.protocols,
+					columns: EXTRA_TVL_COLUMNS_BY_METRIC[props.metric],
+					initialState: { sorting: DEFAULT_SORTING_STATE },
+					getSubRows: (row) => row.subRows
+				}}
+			>
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						<TableSearchInput columnId="name" placeholder="Search protocols..." />
+						<TableCsvExport filename={`protocols-${props.metric}-${props.chain}`} />
+					</TableToolbar>
+					<VirtualSearchTableView compact />
+				</Card>
+			</SearchTableProvider>
 		</>
 	)
 }

@@ -3,13 +3,19 @@ import type { InferGetStaticPropsType } from 'next'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { fetchProtocols } from '~/containers/ProtocolLists/api'
 import { fetchProtocolExpenses } from '~/containers/ProtocolOverview/api'
 import { buildProtocolExpenseRows } from '~/containers/ProtocolOverview/expenses'
 import Layout from '~/layout'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { maxAgeForNext } from '~/utils/maxAgeForNext'
@@ -46,16 +52,24 @@ export default function Protocols(props: InferGetStaticPropsType<typeof getStati
 			canonicalUrl="/expenses"
 			pageName={pageName}
 		>
-			<TableWithSearch
-				data={props.expenses}
-				columns={columns}
-				columnToSearch="name"
-				placeholder="Search protocol..."
-				header="Protocol Expenses"
-				headingAs="h1"
-				csvFileName="protocol-expenses"
-				initialSorting={DEFAULT_SORTING_STATE}
-			/>
+			<SearchTableProvider
+				options={{ data: props.expenses, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
+			>
+				<Card padding="none">
+					<PanelHeader className="w-full justify-end">
+						<PanelTitle as="h1" className="whitespace-nowrap">
+							Protocol Expenses
+						</PanelTitle>
+						<TableSearchInput
+							columnId="name"
+							placeholder="Search protocol..."
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableCsvExport filename="protocol-expenses" />
+					</PanelHeader>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</Layout>
 	)
 }

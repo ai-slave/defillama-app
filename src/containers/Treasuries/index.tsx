@@ -3,9 +3,15 @@ import type { CSSProperties } from 'react'
 import { useMemo } from 'react'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
 import { Hovercard } from '~/ui/Hovercard'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { getDominancePercent } from '~/utils'
 import { formatPercent, formatUsd } from '~/utils/numberFormat'
 import type { ITreasuryRow, TreasuryTokenBreakdowns } from './types'
@@ -27,16 +33,22 @@ export function Treasuries({ data, entity }: { data: Array<ITreasuryRow>; entity
 	const sortingState = entity ? [{ id: 'tvl', desc: true }] : [{ id: 'coreTvl', desc: true }]
 
 	return (
-		<TableWithSearch
-			data={data}
-			columns={tableColumns}
-			columnToSearch="name"
-			placeholder="Search projects..."
-			header="Treasuries"
-			headingAs="h1"
-			initialSorting={sortingState}
-			csvFileName={entity ? 'entities' : 'treasuries'}
-		/>
+		<SearchTableProvider options={{ data, columns: tableColumns, initialState: { sorting: sortingState } }}>
+			<Card padding="none">
+				<PanelHeader className="w-full justify-end">
+					<PanelTitle as="h1" className="whitespace-nowrap">
+						Treasuries
+					</PanelTitle>
+					<TableSearchInput
+						columnId="name"
+						placeholder="Search projects..."
+						className={searchFieldInlineWrapperStyles}
+					/>
+					<TableCsvExport filename={entity ? 'entities' : 'treasuries'} />
+				</PanelHeader>
+				<VirtualSearchTableView />
+			</Card>
+		</SearchTableProvider>
 	)
 }
 

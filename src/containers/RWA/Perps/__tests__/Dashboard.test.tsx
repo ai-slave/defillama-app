@@ -35,12 +35,12 @@ type CapturedTableProps = {
 	columns: Array<CapturedColumn>
 }
 
-let lastTableWithSearchProps: CapturedTableProps | null = null
+let lastTableOptions: CapturedTableProps | null = null
 let lastUseQueryOptions: CapturedQueryOptions | null = null
 
-function getLastTableWithSearchProps(): CapturedTableProps {
-	if (!lastTableWithSearchProps) throw new Error('Expected the table props to be captured')
-	return lastTableWithSearchProps
+function getLastTableOptions(): CapturedTableProps {
+	if (!lastTableOptions) throw new Error('Expected the table props to be captured')
+	return lastTableOptions
 }
 
 function getLastUseQueryOptions(): CapturedQueryOptions {
@@ -99,9 +99,9 @@ vi.mock('~/ui/QuestionHelper', () => ({
 	QuestionHelper: ({ text }: { text: string }) => <span>{text}</span>
 }))
 
-vi.mock('~/components/Table/TableWithSearch', () => ({
-	TableWithSearch: (props: CapturedTableProps) => {
-		lastTableWithSearchProps = props
+vi.mock('~/components/Table/search/SearchTableProvider', () => ({
+	SearchTableProvider: ({ options: props }: { options: CapturedTableProps }) => {
+		lastTableOptions = props
 		return <div>table</div>
 	}
 }))
@@ -321,7 +321,7 @@ describe('getRWAPerpsIncludedRows', () => {
 describe('RWAPerpsDashboard treemap controls', () => {
 	beforeEach(() => {
 		routerQuery = {}
-		lastTableWithSearchProps = null
+		lastTableOptions = null
 		lastUseQueryOptions = null
 		fetchJson.mockReset()
 		fetchJson.mockResolvedValue({ source: [], dimensions: ['timestamp'] })
@@ -369,7 +369,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 	test('hides CEX venues from the table by default', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={cexOverviewData} />)
 
-		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['xyz:META'])
+		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['xyz:META'])
 	})
 
 	test('drops the DEX scope from both table and chart once CEX is opted in', async () => {
@@ -379,7 +379,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		routerQuery = { includeCex: 'true' }
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={cexOverviewData} />)
 
-		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['binance:METAUSDT', 'xyz:META'])
+		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['binance:METAUSDT', 'xyz:META'])
 		expect(getLastUseQueryOptions().queryKey).not.toEqual(dexQueryKey)
 
 		await getLastUseQueryOptions().queryFn()
@@ -502,7 +502,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			/>
 		)
 
-		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['EURUSD'])
+		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['EURUSD'])
 
 		await getLastUseQueryOptions().queryFn()
 
@@ -542,7 +542,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 			/>
 		)
 
-		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['EURUSD', 'GBPUSD'])
+		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['EURUSD', 'GBPUSD'])
 	})
 
 	test('shows a filters dialog next to the separate Forex filter when multiple filters are available', () => {
@@ -558,7 +558,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		routerQuery = { baseAssets: 'Meta' }
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
 
-		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['xyz:META'])
+		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['xyz:META'])
 
 		await getLastUseQueryOptions().queryFn()
 
@@ -571,7 +571,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		routerQuery = { excludeBaseAssets: 'Gold' }
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={multiBaseAssetOverviewData} />)
 
-		expect(getLastTableWithSearchProps().data.map((row) => row.contract)).toEqual(['xyz:META', 'xyz:NVDA'])
+		expect(getLastTableOptions().data.map((row) => row.contract)).toEqual(['xyz:META', 'xyz:NVDA'])
 	})
 
 	test('regroups fetched contract time-series data by the selected breakdown for Base Asset filters', () => {
@@ -742,7 +742,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
 
 		expect(
-			getLastTableWithSearchProps()
+			getLastTableOptions()
 				.columns.slice(0, 5)
 				.map((column) => column.header)
 		).toEqual(['Contract', 'Venue', 'Asset Class', 'Asset Group', 'Base Asset'])
@@ -752,7 +752,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="venue" data={venueData} />)
 
 		expect(
-			getLastTableWithSearchProps()
+			getLastTableOptions()
 				.columns.slice(0, 4)
 				.map((column) => column.header)
 		).toEqual(['Contract', 'Base Asset', 'Asset Group', 'Asset Class'])
@@ -762,7 +762,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="assetGroup" data={assetGroupData} />)
 
 		expect(
-			getLastTableWithSearchProps()
+			getLastTableOptions()
 				.columns.slice(0, 4)
 				.map((column) => column.header)
 		).toEqual(['Contract', 'Venue', 'Base Asset', 'Asset Class'])
@@ -801,9 +801,9 @@ describe('RWAPerpsDashboard treemap controls', () => {
 
 		expect(html).toContain('$1m')
 		expect(html).not.toContain('$10m')
-		expect(getLastTableWithSearchProps().data).toEqual([ordinaryMarket, suspiciousMarket])
+		expect(getLastTableOptions().data).toEqual([ordinaryMarket, suspiciousMarket])
 
-		const contractColumn = getLastTableWithSearchProps().columns.find((column) => column.id === 'contract')
+		const contractColumn = getLastTableOptions().columns.find((column) => column.id === 'contract')
 		if (!contractColumn?.cell) throw new Error('Expected the contract cell renderer')
 		const cellHtml = renderToStaticMarkup(
 			<>
@@ -819,13 +819,13 @@ describe('RWAPerpsDashboard treemap controls', () => {
 	test('omits the access model column from the shared tables', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
 
-		expect(getLastTableWithSearchProps().columns.map((column) => column.id)).not.toContain('accessModel')
+		expect(getLastTableOptions().columns.map((column) => column.id)).not.toContain('accessModel')
 	})
 
 	test('shows 24h open interest and volume change columns in the shared tables', () => {
 		renderToStaticMarkup(<RWAPerpsDashboard mode="overview" data={overviewData} />)
 
-		expect(getLastTableWithSearchProps().columns.map((column) => column.id)).toEqual(
+		expect(getLastTableOptions().columns.map((column) => column.id)).toEqual(
 			expect.arrayContaining(['openInterestChange24h', 'volume24hChange24h', 'priceChange24h'])
 		)
 	})
@@ -1094,7 +1094,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		const venueHtml = renderToStaticMarkup(<RWAPerpsDashboard mode="venue" data={cexVenueData} />)
 
 		expect(venueHtml).toContain('CEX Venues')
-		expect(getLastTableWithSearchProps().data).toEqual([cexMarket])
+		expect(getLastTableOptions().data).toEqual([cexMarket])
 
 		const cexAssetData = {
 			...assetData,
@@ -1103,7 +1103,7 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		const assetHtml = renderToStaticMarkup(<RWAPerpsDashboard mode="asset" data={cexAssetData} />)
 
 		expect(assetHtml).toContain('CEX Venues')
-		expect(getLastTableWithSearchProps().data).toEqual([cexMarket])
+		expect(getLastTableOptions().data).toEqual([cexMarket])
 		expect(getLastUseQueryOptions().queryKey).toEqual([
 			'rwa-perps-chart',
 			{
@@ -1121,6 +1121,6 @@ describe('RWAPerpsDashboard treemap controls', () => {
 		const assetGroupHtml = renderToStaticMarkup(<RWAPerpsDashboard mode="assetGroup" data={cexAssetGroupData} />)
 
 		expect(assetGroupHtml).toContain('CEX Venues')
-		expect(getLastTableWithSearchProps().data).toEqual([])
+		expect(getLastTableOptions().data).toEqual([])
 	})
 })

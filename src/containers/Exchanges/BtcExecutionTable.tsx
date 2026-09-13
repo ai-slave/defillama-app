@@ -1,8 +1,13 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { SearchTableView } from '~/components/Table/search/SearchTableView'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
+import { TableToolbar } from '~/ui/Toolbar'
 import { letterLogoDataUri } from '~/utils/icons'
 import { formatNumber, formatUsd } from '~/utils/numberFormat'
 import { TierBadge } from './directoryColumns'
@@ -138,17 +143,15 @@ const columns = columnHelper.columns([
 
 export function BtcExecutionTable({ rows }: { rows: Array<BtcExecutionRowModel> }) {
 	return (
-		<TableWithSearch<BtcExecutionRowModel>
-			data={rows}
-			columns={columns}
-			columnToSearch="name"
-			placeholder="Search exchanges..."
-			header={null}
-			// Auto layout sizes columns from mounted rows, so it must not be virtualized
-			// (see COLUMN_WIDTHS.md); the row count here is small enough to render whole.
-			skipVirtualization
-			tableLayout="auto"
-			csvFileName="btc-execution"
-		/>
+		<SearchTableProvider<BtcExecutionRowModel> options={{ data: rows, columns }}>
+			<Card padding="none">
+				<TableToolbar className="w-full justify-end">
+					<TableSearchInput columnId="name" placeholder="Search exchanges..." />
+					<TableCsvExport filename="btc-execution" />
+				</TableToolbar>
+				{/* Auto sizing needs every row mounted; this list is short. */}
+				<SearchTableView tableLayout="auto" />
+			</Card>
+		</SearchTableProvider>
 	)
 }

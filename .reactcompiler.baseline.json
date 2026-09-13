@@ -1,5 +1,5 @@
 {
-	"src/components/Table/Table.tsx": {"Skipped by directive":1},
+	"src/components/Table/VirtualTable.tsx": {"Skipped by directive":1},
 	"src/containers/ProDashboard/components/UnifiedTable/core/UnifiedVirtualTable.tsx": {"Use of incompatible library":1},
 	"src/hooks/useVirtualItems.ts": {"Use of incompatible library":1}
 }

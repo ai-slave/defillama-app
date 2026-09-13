@@ -7,7 +7,7 @@ import { StablecoinByChainUsageTable } from '../StablecoinUsageByChainTable'
 
 type BridgeRow = ReturnType<typeof groupBridgeData>[number]
 const captured = vi.hoisted(() => ({ table: null as Table<typeof tableFeaturesConfig, BridgeRow> | null }))
-vi.mock('~/components/Table/Table', () => ({
+vi.mock('~/components/Table/VirtualTable', () => ({
 	VirtualTable: ({ table: instance }: { table: Table<typeof tableFeaturesConfig, BridgeRow> }) => {
 		captured.table = instance
 		return null

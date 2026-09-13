@@ -6,13 +6,18 @@ import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelExportShellFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { formatDate } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
@@ -113,14 +118,15 @@ export function DATByAsset({
 				/>
 				<MNAVChart metadata={metadata} title="mNAV Max" data={mNAVMaxChart} institutionsNames={institutionsNames} />
 			</div>
-			<TableWithSearch
-				data={institutions}
-				columns={columns}
-				placeholder="Search institutions"
-				columnToSearch="name"
-				initialSorting={DEFAULT_SORTING_STATE}
-				csvFileName={`${metadata.name}-treasury-holdings`}
-			/>
+			<SearchTableProvider options={{ data: institutions, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						<TableSearchInput columnId="name" placeholder="Search institutions" />
+						<TableCsvExport filename={`${metadata.name}-treasury-holdings`} />
+					</TableToolbar>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</>
 	)
 }

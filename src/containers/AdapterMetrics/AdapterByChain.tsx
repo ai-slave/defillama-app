@@ -16,13 +16,13 @@ import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import { searchTableFeatures } from '~/components/Table/features/search'
-import { VirtualTable } from '~/components/Table/Table'
 import {
 	prepareTableCsv,
 	useSortColumnOrders,
 	useTableSearch,
 	type ColumnOrdersByBreakpoint
 } from '~/components/Table/utils'
+import { VirtualTable } from '~/components/Table/VirtualTable'
 import { TokenLogo } from '~/components/TokenLogo'
 import { FullOldViewButton } from '~/containers/AdapterMetrics/FullOldViewButton'
 import type { chainCharts } from '~/containers/ChainOverview/constants'

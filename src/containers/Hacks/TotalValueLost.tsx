@@ -1,10 +1,15 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import * as React from 'react'
 import { BasicLink } from '~/components/Link'
-import { Select } from '~/components/Select/Select'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { formatUsd } from '~/utils/numberFormat'
 import type { IProtocolTotalValueLostInHacksByProtocol } from './types'
 
@@ -72,42 +77,20 @@ const columns = columnHelper.columns([
 	})
 ])
 
-const columnIds: Array<string> = columns.map((c) => c.id).filter((id): id is string => id != null)
-
 export function TotalValueLostContainer({ protocols }: IProtocolTotalValueLostInHacksByProtocol) {
-	const [selectedColumns, setSelectedColumns] = React.useState<Array<string>>([
-		'Name',
-		'Total Hacked',
-		'Returned Funds',
-		'Net User Loss'
-	])
-
-	const filteredColumns = React.useMemo(() => {
-		return columns.filter((c) => c.id != null && selectedColumns.includes(c.id))
-	}, [selectedColumns])
-
 	return (
-		<TableWithSearch
-			data={protocols}
-			columns={filteredColumns}
-			placeholder="Search..."
-			columnToSearch="Name"
-			header="Total Value Lost in Hacks"
-			headingAs="h1"
-			compact
-			customFilters={() => (
-				<Select
-					allValues={columnIds}
-					selectedValues={selectedColumns}
-					setSelectedValues={setSelectedColumns}
-					label="Columns"
-					labelType="smol"
-					variant="filter-responsive"
-					size="md"
-				/>
-			)}
-			csvFileName="total-value-lost-in-hacks"
-			initialSorting={DEFAULT_SORTING_STATE}
-		/>
+		<SearchTableProvider options={{ data: protocols, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
+			<Card padding="none">
+				<PanelHeader className="w-full justify-end">
+					<PanelTitle as="h1" className="whitespace-nowrap">
+						Total Value Lost in Hacks
+					</PanelTitle>
+					<TableSearchInput columnId="Name" placeholder="Search..." className={searchFieldInlineWrapperStyles} />
+					<TableColumnSelect />
+					<TableCsvExport filename="total-value-lost-in-hacks" />
+				</PanelHeader>
+				<VirtualSearchTableView compact />
+			</Card>
+		</SearchTableProvider>
 	)
 }

@@ -7,7 +7,7 @@ import { collectSourceFiles } from '../../../../scripts/lib/sourceFiles'
 
 const SRC_DIR = path.join(process.cwd(), 'src')
 const TABLE_USAGE_PATTERN =
-	/components\/Table\/(Table|TableWithSearch)['"]|<VirtualTable\b|<TableWithSearch\b|\b\w+TableWrapper\b|<\w+TableWrapper\b/
+	/components\/Table\/(Table|VirtualTable)['"]|<VirtualTable\b|<SearchTableProvider\b|\b\w+TableWrapper\b|<\w+TableWrapper\b/
 
 function sourceFiles(): Array<string> {
 	return collectSourceFiles(SRC_DIR, ['.ts', '.tsx']).filter(

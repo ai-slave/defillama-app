@@ -1,8 +1,15 @@
 import type { ColumnVisibilityState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { SearchTableView } from '~/components/Table/search/SearchTableView'
+import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { Card } from '~/ui/Card'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TableToolbar } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { supportsMicaProduct } from './MicaCells'
 import { MICA_COLUMNS, PINNED_MICA_EXCHANGE } from './micaColumns'
@@ -79,36 +86,45 @@ export function MicaTable({ venues }: { venues: Array<MicaVenueRowModel> }) {
 	const rows = React.useMemo(() => prepareMicaVenues(venues, filter), [filter, venues])
 
 	return (
-		<TableWithSearch
+		<SearchTableProvider
 			key={filter}
-			data={rows}
-			columns={MICA_COLUMNS}
-			columnToSearch="name"
-			placeholder="Search exchanges..."
-			header={null}
-			leadingControls={
-				<SegmentedControl<MicaFilter>
-					value={filter}
-					onValueChange={(nextFilter) => {
-						void pushShallowQuery(router, {
-							[EXCHANGES_QUERY_KEYS.micaFilter]: nextFilter === DEFAULT_MICA_FILTER ? undefined : nextFilter
-						})
-					}}
-					options={FILTER_OPTIONS}
-					label="Exchange product"
-					variant="responsive"
-					size="md"
-				/>
-			}
-			columnVisibility={micaColumnVisibility(filter)}
-			showColumnSelect
-			csvExportAllColumns
-			// Open in the curated order (Bybit EU pinned first), not an active column
-			// sort — users can still click any header to re-sort.
-			initialSorting={[]}
-			csvFileName="mica-exchanges"
-			skipVirtualization
-			tableLayout="auto"
-		/>
+			options={{
+				data: rows,
+				columns: MICA_COLUMNS,
+				initialState: {
+					columnVisibility: micaColumnVisibility(filter), // Preserve the curated order (Bybit EU first) until the user sorts.
+					sorting: []
+				}
+			}}
+		>
+			<Card padding="none">
+				<TableToolbar className="w-full justify-end">
+					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+						<div className="flex items-center overflow-x-auto">
+							<SegmentedControl<MicaFilter>
+								value={filter}
+								onValueChange={(nextFilter) => {
+									void pushShallowQuery(router, {
+										[EXCHANGES_QUERY_KEYS.micaFilter]: nextFilter === DEFAULT_MICA_FILTER ? undefined : nextFilter
+									})
+								}}
+								options={FILTER_OPTIONS}
+								label="Exchange product"
+								variant="responsive"
+								size="md"
+							/>
+						</div>
+					</div>
+					<TableSearchInput
+						columnId="name"
+						placeholder="Search exchanges..."
+						className={searchFieldInlineWrapperStyles}
+					/>
+					<TableColumnSelect />
+					<TableCsvExport filename="mica-exchanges" includeHiddenColumns />
+				</TableToolbar>
+				<SearchTableView tableLayout="auto" />
+			</Card>
+		</SearchTableProvider>
 	)
 }

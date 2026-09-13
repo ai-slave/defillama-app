@@ -2,9 +2,14 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import type { IRWACategoriesOverviewRow, RWAOverviewPage } from './api.types'
@@ -169,16 +174,22 @@ export function RWACategories({
 				stackLabel="Categories"
 				treemapSizeRows={treemapSizeRows}
 			/>
-			<TableWithSearch
-				data={data}
-				columns={columns}
-				placeholder="Search categories..."
-				columnToSearch="category"
-				header="Categories"
-				headingAs="h1"
-				csvFileName={csvFileName}
-				initialSorting={[{ id: 'activeMcap', desc: true }]}
-			/>
+			<SearchTableProvider options={{ data, columns, initialState: { sorting: [{ id: 'activeMcap', desc: true }] } }}>
+				<Card padding="none">
+					<PanelHeader className="w-full justify-end">
+						<PanelTitle as="h1" className="whitespace-nowrap">
+							Categories
+						</PanelTitle>
+						<TableSearchInput
+							columnId="category"
+							placeholder="Search categories..."
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableCsvExport filename={csvFileName} />
+					</PanelHeader>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</div>
 	)
 }

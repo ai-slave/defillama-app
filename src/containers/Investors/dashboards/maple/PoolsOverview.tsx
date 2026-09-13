@@ -2,7 +2,7 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps } from '~/components/ECharts/MultiSeriesChart/types'
 import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
-import { VirtualTable } from '~/components/Table/Table'
+import { Table } from '~/components/Table/Table'
 import {
 	formatCompactNumber,
 	formatPercent,
@@ -132,7 +132,7 @@ function PoolsTable({ data }: { data: Array<PoolRow> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Active Pools</h3>
-			<VirtualTable table={instance} skipVirtualization />
+			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
 	)

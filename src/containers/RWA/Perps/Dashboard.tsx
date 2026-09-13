@@ -24,7 +24,11 @@ import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { ExcludeQueryKey } from '~/components/Select/types'
 import { selectTriggerStyles } from '~/components/Select/types'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { CHART_COLORS } from '~/constants/colors'
 import {
 	limitRwaHorizontalBarData,
@@ -40,7 +44,9 @@ import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/Char
 import { Checkbox } from '~/ui/Checkbox'
 import { DialogCloseButton, DialogHeading, dialogSurfaceStyles } from '~/ui/Dialog'
 import { Icon } from '~/ui/Icon'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { SegmentedControl } from '~/ui/SegmentedControl'
 import { Tooltip } from '~/ui/Tooltip'
@@ -2484,56 +2490,64 @@ export function RWAPerpsDashboard(props: RWAPerpsDashboardProps) {
 					)}
 				</ChartPanel>
 			)}
-			<TableWithSearch
-				data={currentRows}
-				columns={
-					isOverviewMode
+			<SearchTableProvider
+				options={{
+					data: currentRows,
+					columns: isOverviewMode
 						? overviewColumns
 						: isVenueMode
 							? venueColumns
 							: isAssetGroupMode
 								? assetGroupColumns
-								: assetColumns
-				}
-				placeholder={
-					isOverviewMode
-						? 'Search markets or assets...'
-						: isVenueMode
-							? 'Search venue markets...'
-							: isAssetGroupMode
-								? 'Search asset-group markets...'
-								: 'Search asset markets...'
-				}
-				columnToSearch="contract"
-				header={
-					isOverviewMode
-						? 'Markets Rankings'
-						: `${isVenueMode ? props.data.venue : isAssetGroupMode ? props.data.assetGroup : props.data.asset} Markets`
-				}
-				headingAs="h1"
-				initialSorting={[{ id: 'openInterest', desc: true }]}
-				columnVisibility={
-					isOverviewMode
-						? overviewColumnVisibility
-						: isVenueMode
-							? venueColumnVisibility
-							: isAssetGroupMode
-								? assetGroupColumnVisibility
-								: assetColumnVisibility
-				}
-				rowSize={56}
-				compact
-				showColumnSelect
-				csvFileName={
-					isOverviewMode
-						? 'rwa-perps-overview-markets'
-						: isVenueMode
-							? `rwa-perps-${props.data.venue}-markets`
-							: isAssetGroupMode
-								? `rwa-perps-${props.data.assetGroup}-markets`
-								: `rwa-perps-${props.data.asset}-markets`
-				}
-			/>
+								: assetColumns,
+					initialState: {
+						sorting: [{ id: 'openInterest', desc: true }],
+						columnVisibility: isOverviewMode
+							? overviewColumnVisibility
+							: isVenueMode
+								? venueColumnVisibility
+								: isAssetGroupMode
+									? assetGroupColumnVisibility
+									: assetColumnVisibility
+					}
+				}}
+			>
+				<Card padding="none">
+					<PanelHeader className="w-full justify-end">
+						<PanelTitle as="h1" className="whitespace-nowrap">
+							{isOverviewMode
+								? 'Markets Rankings'
+								: `${isVenueMode ? props.data.venue : isAssetGroupMode ? props.data.assetGroup : props.data.asset} Markets`}
+						</PanelTitle>
+						<TableSearchInput
+							columnId="contract"
+							placeholder={
+								isOverviewMode
+									? 'Search markets or assets...'
+									: isVenueMode
+										? 'Search venue markets...'
+										: isAssetGroupMode
+											? 'Search asset-group markets...'
+											: 'Search asset markets...'
+							}
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableColumnSelect />
+						<TableCsvExport
+							filename={
+								isOverviewMode
+									? 'rwa-perps-overview-markets'
+									: isVenueMode
+										? `rwa-perps-${props.data.venue}-markets`
+										: isAssetGroupMode
+											? `rwa-perps-${props.data.assetGroup}-markets`
+											: `rwa-perps-${props.data.asset}-markets`
+							}
+						/>
+					</PanelHeader>
+					<VirtualSearchTableView rowSize={56} compact />
+				</Card>
+			</SearchTableProvider>
 		</div>
 	)
 }

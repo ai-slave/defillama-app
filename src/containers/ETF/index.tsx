@@ -11,11 +11,17 @@ import { toChainIconItems } from '~/components/IconsRow/utils'
 import { BasicLink } from '~/components/Link'
 import { Select } from '~/components/Select/Select'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TableToolbar } from '~/ui/Toolbar'
 import { tokenIconUrl } from '~/utils/icons'
 import { formatUsd } from '~/utils/numberFormat'
 import { buildETFChartSpec, ETF_ASSET_NAMES } from './chartData'
@@ -119,15 +125,22 @@ export function ETFOverview({ snapshot, flows, totalsByAsset, lastUpdated }: ETF
 					</React.Suspense>
 				</ChartPanel>
 			</SummaryCardGrid>
-			<TableWithSearch
-				data={snapshot}
-				columns={columns}
-				columnToSearch="ticker"
-				placeholder="Search ETF..."
-				header="Exchange Traded Funds"
-				csvFileName="etf-overview"
-				initialSorting={DEFAULT_SORTING_STATE}
-			/>
+			<SearchTableProvider options={{ data: snapshot, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}>
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+							<h2 className="label-md whitespace-nowrap">Exchange Traded Funds</h2>
+						</div>
+						<TableSearchInput
+							columnId="ticker"
+							placeholder="Search ETF..."
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableCsvExport filename="etf-overview" />
+					</TableToolbar>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</>
 	)
 }

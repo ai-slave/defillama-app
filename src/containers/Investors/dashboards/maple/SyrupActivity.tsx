@@ -2,7 +2,7 @@ import type { ColumnDef, PaginationState, SortingState } from '@tanstack/react-t
 import { lazy, useMemo, useState } from 'react'
 import type { IMultiSeriesChartProps, MultiSeriesChartDataset } from '~/components/ECharts/MultiSeriesChart/types'
 import { paginatedTableFeatures, usePaginatedTable } from '~/components/Table/features/pagination'
-import { VirtualTable } from '~/components/Table/Table'
+import { Table } from '~/components/Table/Table'
 import { formatDate, formatDateTime } from '~/utils/dateFormat'
 import { formatCompactNumber, formatPercent, formatRatio, formatUsd } from '~/utils/numberFormat'
 import {
@@ -172,7 +172,7 @@ function TxTable({ data }: { data: Array<TxRow> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Recent stSyrup Transactions</h3>
-			<VirtualTable table={instance} skipVirtualization />
+			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
 	)
@@ -196,7 +196,7 @@ function DripTable({ data }: { data: Array<DripRow> }) {
 	return (
 		<div className="rounded-lg border border-pro-cards-border bg-pro-cards-bg p-4">
 			<h3 className="mb-3 text-sm font-medium text-pro-text-label">Recent Drip Reward Claims</h3>
-			<VirtualTable table={instance} skipVirtualization />
+			<Table table={instance} />
 			{data.length > 15 && <Pagination table={instance} />}
 		</div>
 	)

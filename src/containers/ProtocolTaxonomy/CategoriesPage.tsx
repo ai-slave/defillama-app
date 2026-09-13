@@ -6,16 +6,21 @@ import { buildSelectedAdditiveChart } from '~/components/ECharts/MultiSeriesChar
 import { BasicLink } from '~/components/Link'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useSeriesSelection } from '~/hooks/useSeriesSelection'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
 import { Panel } from '~/ui/Panel'
 import { PercentChange } from '~/ui/PercentChange'
 import { LoadingIndicator } from '~/ui/Status'
+import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { fetchJson } from '~/utils/async'
 import { getErrorMessage } from '~/utils/error'
@@ -253,15 +258,22 @@ export function ProtocolsCategoriesPage(props: IProtocolsCategoriesPageData) {
 			</ChartPanel>
 
 			<React.Suspense fallback={<Panel padding="none" style={{ minHeight: `${categories.length * 50 + 200}px` }} />}>
-				<TableWithSearch
-					data={finalCategoriesList}
-					getSubRows={(row) => row.subRows}
-					columns={categoriesColumns}
-					columnToSearch="name"
-					placeholder="Search category..."
-					csvFileName="protocol-categories"
-					initialSorting={DEFAULT_SORTING_STATE}
-				/>
+				<SearchTableProvider
+					options={{
+						data: finalCategoriesList,
+						columns: categoriesColumns,
+						initialState: { sorting: DEFAULT_SORTING_STATE },
+						getSubRows: (row) => row.subRows
+					}}
+				>
+					<Card padding="none">
+						<TableToolbar className="w-full justify-end">
+							<TableSearchInput columnId="name" placeholder="Search category..." />
+							<TableCsvExport filename="protocol-categories" />
+						</TableToolbar>
+						<VirtualSearchTableView />
+					</Card>
+				</SearchTableProvider>
 			</React.Suspense>
 		</>
 	)

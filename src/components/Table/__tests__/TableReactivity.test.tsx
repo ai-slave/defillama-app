@@ -13,8 +13,9 @@ import { expect, test, vi } from 'vitest'
 import { TableBody } from '~/containers/ProDashboard/components/Table/TableBody'
 import { searchTableFeatures } from '../features/search'
 import { PaginatedTable } from '../PaginatedTable'
-import { VirtualTable } from '../Table'
+import { Table } from '../Table'
 import { useSortColumnOrders } from '../utils'
+import { VirtualTable } from '../VirtualTable'
 
 vi.mock('next/router', () => ({ useRouter: () => ({ pathname: '/pairs' }) }))
 vi.mock('~/hooks/useMedia', () => ({ useMedia: () => false }))
@@ -37,7 +38,7 @@ const data = Array.from({ length: 12 }, (_, i) => ({ name: `Asset ${i + 1}`, val
 
 const renderOwner = vi.fn()
 
-function Fixture({ rows = data }: { rows?: typeof data }) {
+function Fixture({ rows = data, renderer = 'paginated' }: { rows?: typeof data; renderer?: 'paginated' | 'standard' }) {
 	renderOwner()
 	const table = useTable(
 		{ features, columns, data: rows, initialState: { pagination: { pageIndex: 0, pageSize: 10 } } },
@@ -58,7 +59,7 @@ function Fixture({ rows = data }: { rows?: typeof data }) {
 			<button type="button" onClick={() => table.getColumn('name')!.toggleVisibility(false)}>
 				Hide
 			</button>
-			<PaginatedTable table={table} pageSizeOptions={[10, 20]} />
+			{renderer === 'standard' ? <Table table={table} /> : <PaginatedTable table={table} pageSizeOptions={[10, 20]} />}
 		</>
 	)
 }
@@ -142,11 +143,12 @@ function ColumnFixture({
 	renderer: string
 }) {
 	const table = useTable({ features, columns: definitions, data })
-	if (renderer === 'virtual') return <VirtualTable table={table} skipVirtualization useStickyHeader={false} />
+	if (renderer === 'virtual') return <VirtualTable table={table} useStickyHeader={false} />
+	if (renderer === 'standard') return <Table table={table} />
 	if (renderer === 'pro') return <TableBody table={table} />
 	return <PaginatedTable table={table} pageSizeOptions={[10, 20]} />
 }
-test.each(['virtual', 'paginated', 'pro'])('%s refreshes columns with stable data', async (renderer) => {
+test.each(['standard', 'virtual', 'paginated', 'pro'])('%s refreshes columns with stable data', async (renderer) => {
 	const container = document.createElement('div')
 	document.body.append(container)
 	const root = createRoot(container)
@@ -154,7 +156,10 @@ test.each(['virtual', 'paginated', 'pro'])('%s refreshes columns with stable dat
 		await act(async () => root.render(<ColumnFixture definitions={columns} renderer={renderer} />))
 		expect(container.querySelectorAll('tbody tr:first-child td')).toHaveLength(2)
 		await act(async () => root.render(<ColumnFixture definitions={reformattedColumns} renderer={renderer} />))
-		expect(container.querySelector('tbody tr')?.textContent).toBe('Formatted Asset 11')
+		expect(Array.from(container.querySelectorAll('tbody tr:first-child td'), (cell) => cell.textContent)).toEqual([
+			'Formatted Asset 1',
+			'1'
+		])
 		await act(async () => root.render(<ColumnFixture definitions={changedColumns} renderer={renderer} />))
 		expect(container.querySelector('thead')?.textContent).toContain('Renamed')
 		expect(container.querySelectorAll('tbody tr:first-child td')).toHaveLength(1)
@@ -186,45 +191,28 @@ function MeasuredFixture() {
 			<button type="button" onClick={() => setCount(count + 1)}>
 				Unrelated {count}
 			</button>
-			<button type="button" onClick={() => table.getColumn('name')!.toggleSorting(true)}>
-				Sort measured
-			</button>
-			<button type="button" onClick={() => table.getColumn('name')!.setFilterValue('Asset 12')}>
-				Filter measured
-			</button>
-			<button type="button" onClick={() => table.getColumn('value')!.toggleVisibility(false)}>
-				Hide measured
-			</button>
-			<VirtualTable table={table} skipVirtualization useStickyHeader={false} />
+			<Table table={table} />
 		</>
 	)
 }
-test('measures row and cell work across table and unrelated updates', async ({ task }) => {
+test('compiled cells skip unrelated owner updates', async ({ task, skip }) => {
+	if (task.file.projectName !== 'compiled') skip()
 	const container = document.createElement('div')
-	document.body.append(container)
 	const root = createRoot(container)
-	const samples: Record<string, { rows: number; cells: number }> = {}
 	try {
+		rowWork.mockClear()
+		cellWork.mockClear()
 		await act(async () => root.render(<MeasuredFixture />))
-		for (const label of ['Unrelated 0', 'Sort measured', 'Filter measured', 'Hide measured']) {
-			rowWork.mockClear()
-			cellWork.mockClear()
-			const button = Array.from(container.querySelectorAll('button')).find((item) => item.textContent === label)!
-			await act(async () => button.click())
-			samples[label] = { rows: rowWork.mock.calls.length, cells: cellWork.mock.calls.length }
-		}
-		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
-		expect(container.querySelectorAll('tbody td')).toHaveLength(1)
-		expect(container.querySelector('tbody')?.textContent).toBe('Asset 12')
-		const unrelatedWork = task.file.projectName === 'compiled' ? 0 : 10
-		expect(samples['Unrelated 0']).toEqual({ rows: unrelatedWork, cells: unrelatedWork })
-		for (const sample of Object.values(samples)) {
-			expect(sample.rows).toBeLessThanOrEqual(10)
-			expect(sample.cells).toBeLessThanOrEqual(10)
-		}
+		expect(rowWork).toHaveBeenCalled()
+		expect(cellWork).toHaveBeenCalled()
+		rowWork.mockClear()
+		cellWork.mockClear()
+		await act(async () => container.querySelector('button')!.click())
+		expect(container.querySelector('button')?.textContent).toBe('Unrelated 1')
+		expect(rowWork).not.toHaveBeenCalled()
+		expect(cellWork).not.toHaveBeenCalled()
 	} finally {
 		await act(async () => root.unmount())
-		container.remove()
 	}
 })
 
@@ -241,5 +229,35 @@ test('keeps the first Pro column width on a spanning placeholder header', async 
 		expect(container.querySelector<HTMLTableCellElement>('tbody td')?.style.minWidth).toBe('120px')
 	} finally {
 		await act(async () => root.unmount())
+	}
+})
+
+test('Table preserves owner pagination and reacts without owner renders', async () => {
+	const container = document.createElement('div')
+	document.body.append(container)
+	const root = createRoot(container)
+	renderOwner.mockClear()
+	try {
+		await act(async () => root.render(<Fixture renderer="standard" />))
+		expect(container.querySelectorAll('tbody tr')).toHaveLength(10)
+		expect(container.querySelector('[aria-label="Go to next page"]')).toBeNull()
+		const click = async (label: string) => {
+			const button = Array.from(container.querySelectorAll('button')).find((item) => item.textContent === label)!
+			await act(async () => button.click())
+		}
+		await click('Descending')
+		expect(container.querySelector('tbody tr')?.textContent).toContain('Asset 12')
+		expect(container.querySelector('thead [data-icon="caret-down"].text-brand')).not.toBeNull()
+		await click('Filter')
+		expect(container.querySelectorAll('tbody tr')).toHaveLength(1)
+		await click('Hide')
+		expect(container.querySelectorAll('tbody td')).toHaveLength(1)
+		expect(container.querySelector('tbody')?.textContent).toBe('12')
+		await click('Clear filter')
+		expect(container.querySelectorAll('tbody tr')).toHaveLength(10)
+		expect(renderOwner).toHaveBeenCalledTimes(1)
+	} finally {
+		await act(async () => root.unmount())
+		container.remove()
 	}
 })

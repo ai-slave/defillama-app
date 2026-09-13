@@ -13,17 +13,24 @@ import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { Select } from '~/components/Select/Select'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { definitions } from '~/public/definitions'
 import { Button } from '~/ui/Button'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { Icon } from '~/ui/Icon'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { MetricRow } from '~/ui/MetricPrimitives'
 import { QuestionHelper } from '~/ui/QuestionHelper'
 import { SummaryCardGrid, SummaryStatsCard } from '~/ui/SummaryStats'
+import { TableToolbar } from '~/ui/Toolbar'
 import { chainIconUrl } from '~/utils/icons'
 import { formatRatio, formatUsd } from '~/utils/numberFormat'
 import { pushShallowQuery, readSingleQueryValue } from '~/utils/routerQuery'
@@ -271,17 +278,30 @@ export function ProtocolTaxonomyPage(props: IProtocolTaxonomyPageData) {
 					</Suspense>
 				</ChartPanel>
 			</SummaryCardGrid>
-			<TableWithSearch
-				data={finalProtocols}
-				getSubRows={(row) => row.subRows}
-				columns={categoryColumns}
-				placeholder={categoryPresentation.searchPlaceholder}
-				columnToSearch="name"
-				header={categoryPresentation.tableHeader}
-				initialSorting={sortingState}
-				showColumnSelect
-				csvFileName={`defillama-${namePrefix}${props.chain || 'all'}-protocols`}
-			/>
+			<SearchTableProvider
+				options={{
+					data: finalProtocols,
+					columns: categoryColumns,
+					initialState: { sorting: sortingState },
+					getSubRows: (row) => row.subRows
+				}}
+			>
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+							<h2 className="label-md whitespace-nowrap">{categoryPresentation.tableHeader}</h2>
+						</div>
+						<TableSearchInput
+							columnId="name"
+							placeholder={categoryPresentation.searchPlaceholder}
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableColumnSelect />
+						<TableCsvExport filename={`defillama-${namePrefix}${props.chain || 'all'}-protocols`} />
+					</TableToolbar>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</>
 	)
 }

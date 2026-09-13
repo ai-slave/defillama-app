@@ -40,6 +40,8 @@ import type {
 	SortingFeatures,
 	VisibilityFeatures
 } from './features/contracts'
+import { TableColumnGroup } from './TableColumnGroup'
+import { useTableCells } from './useTableCells'
 
 interface PaginatedTableProps<F extends PaginationFeatures & SortingFeatures & VisibilityFeatures, T extends RowData> {
 	table: PaginatedTableInstance<F, T> & Table_ColumnVisibility<F, T>
@@ -142,15 +144,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 			}),
 			{ compare: shallow }
 		)
-	// Use the selected columns as inputs so same-ID formatter replacements invalidate cells.
-	const cellsByRow = useMemo(
-		() =>
-			rows.map((row) => {
-				const cells = row.getAllCellsByColumnId()
-				return visibleLeafColumns.map((column) => cells[column.id])
-			}),
-		[rows, visibleLeafColumns]
-	)
+	const cellsByRow = useTableCells(rows, visibleLeafColumns)
 	const { pageIndex, pageSize } = pagination
 	const displayPageCount = Math.max(1, pageCount)
 	const displayPageIndex = pageCount === 0 ? 0 : Math.min(pageIndex, displayPageCount - 1)
@@ -277,11 +271,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 				className={`z-10 bg-surface ${tableClassName ?? ''}`}
 				style={{ tableLayout: 'fixed', width: '100%' }}
 			>
-				<colgroup>
-					{visibleLeafColumns.map((column) => (
-						<col key={column.id} className={column.columnDef.meta?.headerClassName} />
-					))}
-				</colgroup>
+				<TableColumnGroup columns={visibleLeafColumns} />
 				{renderHeader({ interactive: !stickyHeader })}
 				<Subscribe source={table.store}>
 					{() => (
@@ -338,11 +328,7 @@ export function PaginatedTable<F extends PaginationFeatures & SortingFeatures & 
 									className="z-10 bg-surface"
 									style={{ tableLayout: 'fixed', width: '100%' }}
 								>
-									<colgroup>
-										{visibleLeafColumns.map((column) => (
-											<col key={column.id} className={column.columnDef.meta?.headerClassName} />
-										))}
-									</colgroup>
+									<TableColumnGroup columns={visibleLeafColumns} />
 									{renderHeader({ stickyMirror: true })}
 								</TokenPageTable>
 							</div>

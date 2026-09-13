@@ -2,8 +2,15 @@ import type { ColumnVisibilityState, SortingState } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import * as React from 'react'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
+import { Card } from '~/ui/Card'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { SegmentedControl } from '~/ui/SegmentedControl'
+import { TableToolbar } from '~/ui/Toolbar'
 import { pushShallowQuery } from '~/utils/routerQuery'
 import { buildDirectoryColumns, EXECUTION_COLUMN_IDS } from './directoryColumns'
 import { ExchangeCountrySelect } from './ExchangeCountrySelect'
@@ -235,79 +242,90 @@ export function DirectoryTable({
 	const columns = useDirectoryColumns(scope, executionAvailable, executionCostBasket, executionFillBasket)
 
 	return (
-		<TableWithSearch<DirectoryTreeRow>
+		<SearchTableProvider<DirectoryTreeRow>
 			key={`${scope}-${group}`}
-			data={filteredRows}
-			getSubRows={(row) => row.subRows}
-			columns={columns}
-			columnToSearch="name"
-			placeholder="Search exchanges..."
-			header={null}
-			leadingControls={
-				<div className="flex flex-wrap items-center gap-2">
-					<SegmentedControl<DirectoryScope>
-						value={scope}
-						onValueChange={(nextScope) => {
-							void pushShallowQuery(router, {
-								[EXCHANGES_QUERY_KEYS.directoryScope]:
-									nextScope === DEFAULT_DIRECTORY_QUERY_STATE.scope ? undefined : segmentQueryValue(nextScope)
-							})
-						}}
-						options={SCOPE_OPTIONS}
-						label="Market scope"
-						variant="responsive"
-						size="md"
+			options={{
+				data: filteredRows,
+				columns,
+				initialState: {
+					sorting: sortingFor(group),
+					columnVisibility: directoryColumnVisibility(group, scope),
+					expanded: brandRowsExpanded
+				},
+				getSubRows: (row) => row.subRows
+			}}
+		>
+			<Card padding="none">
+				<TableToolbar className="w-full justify-end">
+					<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+						<div className="flex items-center overflow-x-auto">
+							<div className="flex flex-wrap items-center gap-2">
+								<SegmentedControl<DirectoryScope>
+									value={scope}
+									onValueChange={(nextScope) => {
+										void pushShallowQuery(router, {
+											[EXCHANGES_QUERY_KEYS.directoryScope]:
+												nextScope === DEFAULT_DIRECTORY_QUERY_STATE.scope ? undefined : segmentQueryValue(nextScope)
+										})
+									}}
+									options={SCOPE_OPTIONS}
+									label="Market scope"
+									variant="responsive"
+									size="md"
+								/>
+								<SelectWithCombobox
+									allValues={KIND_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
+									selectedValues={[kind]}
+									setSelectedValues={(values) => {
+										const nextKind = values[0] as DirectoryKind | undefined
+										if (!nextKind) return
+										void pushShallowQuery(router, {
+											[EXCHANGES_QUERY_KEYS.directoryKind]:
+												nextKind === DEFAULT_DIRECTORY_QUERY_STATE.kind ? undefined : nextKind
+										})
+									}}
+									label="Venue"
+									singleSelect
+									labelType="regular"
+									variant="filter-responsive"
+									size="md"
+								/>
+								<ExchangeCountrySelect
+									catalog={catalog}
+									catalogFailed={catalogFailed}
+									selectedCountry={country}
+									onCountryChange={onCountryChange}
+								/>
+								<SelectWithCombobox
+									allValues={GROUP_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
+									selectedValues={[group]}
+									setSelectedValues={(values) => {
+										const nextGroup = values[0] as DirectoryColumnGroup | undefined
+										if (!nextGroup) return
+										void pushShallowQuery(router, {
+											[EXCHANGES_QUERY_KEYS.directoryGroup]:
+												nextGroup === DEFAULT_DIRECTORY_QUERY_STATE.group ? undefined : nextGroup
+										})
+									}}
+									label="View"
+									singleSelect
+									labelType="regular"
+									variant="filter-responsive"
+									size="md"
+								/>
+							</div>
+						</div>
+					</div>
+					<TableSearchInput
+						columnId="name"
+						placeholder="Search exchanges..."
+						className={searchFieldInlineWrapperStyles}
 					/>
-					<SelectWithCombobox
-						allValues={KIND_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
-						selectedValues={[kind]}
-						setSelectedValues={(values) => {
-							const nextKind = values[0] as DirectoryKind | undefined
-							if (!nextKind) return
-							void pushShallowQuery(router, {
-								[EXCHANGES_QUERY_KEYS.directoryKind]:
-									nextKind === DEFAULT_DIRECTORY_QUERY_STATE.kind ? undefined : nextKind
-							})
-						}}
-						label="Venue"
-						singleSelect
-						labelType="regular"
-						variant="filter-responsive"
-						size="md"
-					/>
-					<ExchangeCountrySelect
-						catalog={catalog}
-						catalogFailed={catalogFailed}
-						selectedCountry={country}
-						onCountryChange={onCountryChange}
-					/>
-					<SelectWithCombobox
-						allValues={GROUP_OPTIONS.map((option) => ({ key: option.value, name: option.label }))}
-						selectedValues={[group]}
-						setSelectedValues={(values) => {
-							const nextGroup = values[0] as DirectoryColumnGroup | undefined
-							if (!nextGroup) return
-							void pushShallowQuery(router, {
-								[EXCHANGES_QUERY_KEYS.directoryGroup]:
-									nextGroup === DEFAULT_DIRECTORY_QUERY_STATE.group ? undefined : nextGroup
-							})
-						}}
-						label="View"
-						singleSelect
-						labelType="regular"
-						variant="filter-responsive"
-						size="md"
-					/>
-				</div>
-			}
-			columnVisibility={directoryColumnVisibility(group, scope)}
-			initialExpanded={brandRowsExpanded}
-			showColumnSelect
-			csvExportAllColumns
-			csvFileName="exchanges-directory"
-			initialSorting={sortingFor(group)}
-			tableLayout="fixed"
-			rowSize={56}
-		/>
+					<TableColumnSelect />
+					<TableCsvExport filename="exchanges-directory" includeHiddenColumns />
+				</TableToolbar>
+				<VirtualSearchTableView rowSize={56} tableLayout="fixed" />
+			</Card>
+		</SearchTableProvider>
 	)
 }

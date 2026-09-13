@@ -1,6 +1,5 @@
 import * as Ariakit from '@ariakit/react'
 import type { ReactNode } from 'react'
-import type { TableWithSearchLayout } from '~/components/Table/TableWithSearch'
 import { TabLink } from '~/ui/Tab'
 import { Tabs, Tab, TabPanel } from '~/ui/Tabs'
 
@@ -45,11 +44,13 @@ export function LiquidationsTableTabs<T extends string>({
 	)
 }
 
-export const renderLiquidationsTableLayout: TableWithSearchLayout = (controls, table) => (
-	<>
-		<div className="col-start-1 row-start-1 min-w-0 self-center sm:col-start-2 sm:[&_label]:mr-0 sm:[&_label]:ml-auto">
-			{controls}
-		</div>
-		<div className="col-span-full row-start-2 min-w-0">{table}</div>
-	</>
-)
+export function LiquidationsTableContent({ toolbar, children }: { toolbar: ReactNode; children: ReactNode }) {
+	return (
+		<>
+			<div className="col-start-1 row-start-1 min-w-0 self-center sm:col-start-2 sm:[&_label]:mr-0 sm:[&_label]:ml-auto">
+				{toolbar}
+			</div>
+			<div className="col-span-full row-start-2 min-w-0">{children}</div>
+		</>
+	)
+}

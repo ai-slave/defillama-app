@@ -12,7 +12,7 @@ vi.mock('~/components/CsvDownloadButton', () => ({
 	CSVDownloadButton: () => null
 }))
 
-vi.mock('~/components/Table/Table', () => ({
+vi.mock('~/components/Table/VirtualTable', () => ({
 	VirtualTable: ({ table: instance }: { table: { options: { data: Array<Record<string, unknown>> } } }) => {
 		mocks.tableData.push(instance.options.data)
 		return null

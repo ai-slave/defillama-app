@@ -4,6 +4,10 @@ This file records the rationale behind design-system decisions, reviewed excepti
 historical findings. Current normative rules live in [`design.md`](design.md), and current
 behavior must be verified from source before proposing a visual change.
 
+Table-shell references to `TableWithSearch` below are historical. Its replacement is
+`SearchTableProvider` plus explicit controls and layout primitives, as recorded in
+[ADR 0007](docs/adr/0007-composed-searchable-tables.md). Use `design.md` and that ADR for new code.
+
 ## How To Use
 
 - Add one entry per pointed-out component, state, or page area.

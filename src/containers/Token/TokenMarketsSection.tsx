@@ -2,7 +2,6 @@ import * as Ariakit from '@ariakit/react'
 import { useQuery } from '@tanstack/react-query'
 import type { SortingState } from '@tanstack/react-table'
 import { Suspense, useMemo, useReducer } from 'react'
-import type { TableWithSearchLayout } from '~/components/Table/TableWithSearch'
 import { ExchangeFeatureGate, useExchangeAccessState } from '~/containers/Exchanges/ExchangeAccessGate'
 import { fetchExchangeExecutionSlippage } from '~/containers/Exchanges/master.api'
 import { mapExchangePair } from '~/containers/Exchanges/master.mappers'
@@ -23,7 +22,7 @@ import { LoadingIndicator, SurfaceBodyLoadingStatus } from '~/ui/Status'
 import { TabLink } from '~/ui/Tab'
 import { formatUsd, formatCompactNumber } from '~/utils/numberFormat'
 import { fetchTokenMarkets } from './api'
-import { DeferredPairTable } from './deferred/DeferredPairTable'
+import { DeferredTokenMarketsTable } from './deferred/DeferredTokenMarketsTable'
 
 const DEFAULT_SORTING: SortingState = [{ id: 'volume24h', desc: true }]
 const NO_SORTING: SortingState = []
@@ -250,15 +249,6 @@ function MarketFilter<T extends string>({
 	)
 }
 
-const renderMarketTableLayout: TableWithSearchLayout = (controls, table) => (
-	<>
-		<div className="col-start-1 row-start-2 min-w-0 self-center sm:col-start-2 sm:row-start-1 sm:[&_label]:mr-0 sm:[&_label]:ml-auto">
-			{controls}
-		</div>
-		<div className="col-span-full row-start-3 min-w-0 sm:row-start-2">{table}</div>
-	</>
-)
-
 interface TokenMarketsSectionProps {
 	geckoId: string
 	tokenSymbol: string
@@ -435,7 +425,7 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 				{/* Reset table state per venue/category without replacing the focused filter.
 				    All/CEX preserve pre-ranked rows; DEX starts sorted by volume. */}
 				<Suspense fallback={<div className="col-span-full min-h-[360px]" />}>
-					<DeferredPairTable
+					<DeferredTokenMarketsTable
 						key={`${selectedVenueTab}-${selectedCategoryTab}`}
 						pairs={tableRows}
 						segment={selectedCategoryTab}
@@ -446,11 +436,6 @@ export function TokenMarketsSection({ geckoId, tokenSymbol, variant = 'section' 
 						columnOrder={TOKEN_PAGE_COLUMN_ORDER}
 						initialVisibleColumns={TOKEN_PAGE_VISIBLE_COLUMNS[selectedCategoryTab]}
 						sorting={selectedVenueTab === 'dex' ? DEFAULT_SORTING : NO_SORTING}
-						columnToSearch="venue"
-						placeholder="Search exchanges..."
-						header={null}
-						embedded
-						renderLayout={renderMarketTableLayout}
 					/>
 				</Suspense>
 			</div>

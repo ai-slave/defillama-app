@@ -83,11 +83,13 @@ function TestTable({
 }
 
 describe('PaginatedTable', () => {
-	test('hides pagination controls when there are ten or fewer rows', () => {
-		const html = renderToStaticMarkup(<TestTable rowCount={10} />)
+	test.each([0, 1, 10])('hides pagination controls for %s rows', (rowCount) => {
+		const html = renderToStaticMarkup(<TestTable rowCount={rowCount} />)
 
 		expect(html).not.toContain('Page 1 of')
 		expect(html).not.toContain('Rows per page')
+		expect(html).not.toContain('Go to next page')
+		expect(html).not.toContain('Go to previous page')
 	})
 
 	test('keeps configured rows-per-page options available for paginated tables', () => {
@@ -123,13 +125,6 @@ describe('PaginatedTable', () => {
 		expect(html.match(/<button/g)).toHaveLength(1)
 		expect(html.match(/data-tooltip-content="Name help"/g)).toHaveLength(1)
 		expect(html).not.toContain('<thead aria-hidden="true"')
-	})
-
-	test('shows rows-per-page when at least two valid options remain', () => {
-		const html = renderToStaticMarkup(<TestTable rowCount={20} />)
-
-		expect(html).toContain('Page 1 of 2')
-		expect(html).toContain('Rows per page')
 	})
 
 	test('keeps the current page size available when it is not in configured options', () => {

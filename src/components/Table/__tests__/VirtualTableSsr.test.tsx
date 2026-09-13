@@ -2,7 +2,8 @@ import { createColumnHelper, useTable } from '@tanstack/react-table'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, test, vi } from 'vitest'
 import { searchTableFeatures } from '../features/search'
-import { VirtualTable } from '../Table'
+import { Table } from '../Table'
+import { VirtualTable } from '../VirtualTable'
 const features = searchTableFeatures
 
 vi.mock('next/router', () => ({
@@ -36,11 +37,13 @@ const columns = [
 function TestVirtualTable({
 	rowSize,
 	tableLayout,
-	compact = false
+	compact = false,
+	renderer = 'virtual'
 }: {
 	rowSize?: number
 	tableLayout?: 'fixed' | 'auto'
 	compact?: boolean
+	renderer?: 'standard' | 'virtual'
 }) {
 	const data: Array<TestRow> = Array.from({ length: 40 }, (_, index) => ({
 		name: `Asset ${index + 1}`,
@@ -52,6 +55,8 @@ function TestVirtualTable({
 		columns
 	})
 
+	if (renderer === 'standard')
+		return <Table table={instance} rowSize={rowSize} tableLayout={tableLayout} compact={compact} />
 	return <VirtualTable table={instance} rowSize={rowSize} tableLayout={tableLayout} compact={compact} />
 }
 
@@ -120,7 +125,7 @@ function GroupedTable({ hideDay = false }: { hideDay?: boolean }) {
 		data: [{ name: 'Asset', mcap: 1 }],
 		state: { columnVisibility: { day: !hideDay } }
 	})
-	return <VirtualTable table={table} skipVirtualization />
+	return <Table table={table} />
 }
 
 test('spans leaf headers across three levels without duplicate labels', () => {
@@ -137,4 +142,15 @@ test('recomputes group spans when a nested column is hidden', () => {
 	expect(html).toContain('>Week<')
 	expect(html).toMatch(/<th[^>]*colSpan="2"/i)
 	expect(html.match(/>Name</g)).toHaveLength(1)
+})
+
+test('Table renders every row while VirtualTable limits the initial window', () => {
+	const standard = renderToStaticMarkup(<TestVirtualTable renderer="standard" />)
+	const virtual = renderToStaticMarkup(<TestVirtualTable />)
+	expect(standard).toContain('Asset 40')
+	expect(virtual).not.toContain('Asset 40')
+	expect(standard).toContain('height:50px')
+	expect(standard).toContain('background-color:red')
+	expect(standard).not.toContain('data-index=')
+	expect(virtual).toContain('data-index="0"')
 })

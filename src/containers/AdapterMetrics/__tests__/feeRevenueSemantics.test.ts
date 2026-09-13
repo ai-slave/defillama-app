@@ -37,8 +37,8 @@ vi.mock('~/components/Link', () => ({
 	BasicLink: () => null
 }))
 
-vi.mock('~/components/Table/TableWithSearch', () => ({
-	TableWithSearch: () => null
+vi.mock('~/components/Table/search/SearchTableProvider', () => ({
+	SearchTableProvider: () => null
 }))
 
 vi.mock('~/components/TokenLogo', () => ({

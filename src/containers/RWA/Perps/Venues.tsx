@@ -2,11 +2,16 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { useRouter } from 'next/router'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import type { RWAChartDataset } from '~/containers/RWA/chartDataset'
 import { rwaSlug } from '~/containers/RWA/rwaSlug'
 import { Card } from '~/ui/Card'
 import { Checkbox } from '~/ui/Checkbox'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
+import { PanelTitle, PanelHeader } from '~/ui/Panel'
 import { formatCompactNumber, formatPercent, formatUsd } from '~/utils/numberFormat'
 import { isTrueQueryParam, pushShallowQuery } from '~/utils/routerQuery'
 import { perpsDefinitions as d } from './definitions'
@@ -130,16 +135,24 @@ export function RWAPerpsVenuesOverview({
 				includeCex={includeCex}
 				stackLabel={d.venue.label}
 			/>
-			<TableWithSearch
-				data={rows}
-				columns={columns}
-				placeholder="Search venues..."
-				columnToSearch="venue"
-				header="Venues"
-				headingAs="h1"
-				csvFileName="rwa-perps-venues.csv"
-				initialSorting={[{ id: 'openInterest', desc: true }]}
-			/>
+			<SearchTableProvider
+				options={{ data: rows, columns, initialState: { sorting: [{ id: 'openInterest', desc: true }] } }}
+			>
+				<Card padding="none">
+					<PanelHeader className="w-full justify-end">
+						<PanelTitle as="h1" className="whitespace-nowrap">
+							Venues
+						</PanelTitle>
+						<TableSearchInput
+							columnId="venue"
+							placeholder="Search venues..."
+							className={searchFieldInlineWrapperStyles}
+						/>
+						<TableCsvExport filename="rwa-perps-venues.csv" />
+					</PanelHeader>
+					<VirtualSearchTableView />
+				</Card>
+			</SearchTableProvider>
 		</div>
 	)
 }

@@ -10,8 +10,15 @@ import { createColumnHelper } from '@tanstack/react-table'
 import * as React from 'react'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableColumnSelect } from '~/components/Table/search/TableColumnSelect'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
+import { searchFieldInlineWrapperStyles, searchFieldWrapperStyles } from '~/ui/Input'
+import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { geckoTokenIconUrl, letterLogoDataUri } from '~/utils/icons'
 import { formatUsd, USD_LOWERCASE_MILLIONS_OPTIONS } from '~/utils/numberFormat'
@@ -191,19 +198,25 @@ export function ProfileTokenTable({
 }) {
 	const rows = React.useMemo(() => exchangeTokenRows(profile), [profile])
 	return (
-		<TableWithSearch
-			data={rows}
-			columns={TOKEN_COLUMNS}
-			columnToSearch="token"
-			placeholder="Search tokens..."
-			header={null}
-			leadingControls={leadingControls}
-			showColumnSelect
-			csvExportAllColumns
-			csvFileName={`${profile.slug}-tokens`}
-			tableLayout="fixed"
-			// Two-line execution cells need the taller row.
-			rowSize={56}
-		/>
+		<SearchTableProvider options={{ data: rows, columns: TOKEN_COLUMNS }}>
+			<Card padding="none">
+				<TableToolbar className="w-full justify-end">
+					{leadingControls ? (
+						<div className="mr-auto flex items-center gap-2 overflow-x-auto">
+							<div className="flex items-center overflow-x-auto">{leadingControls}</div>
+						</div>
+					) : null}
+					<TableSearchInput
+						columnId="token"
+						placeholder="Search tokens..."
+						className={leadingControls ? searchFieldInlineWrapperStyles : searchFieldWrapperStyles}
+					/>
+					<TableColumnSelect />
+					<TableCsvExport filename={`${profile.slug}-tokens`} includeHiddenColumns />
+				</TableToolbar>
+				{/* Two-line execution cells need the taller row. */}
+				<VirtualSearchTableView rowSize={56} tableLayout="fixed" />
+			</Card>
+		</SearchTableProvider>
 	)
 }

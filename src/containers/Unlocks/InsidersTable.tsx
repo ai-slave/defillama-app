@@ -3,7 +3,7 @@ import { startTransition, useMemo, useState } from 'react'
 import { useBlockExplorers } from '~/api/client'
 import type { BlockExplorersResponse } from '~/api/types'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { VirtualTable } from '~/components/Table/Table'
+import { Table } from '~/components/Table/Table'
 import { Hovercard } from '~/ui/Hovercard'
 import { Icon } from '~/ui/Icon'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'
@@ -178,7 +178,7 @@ export function InsidersTable({
 				{methodology ? <p className="text-sm text-secondary">{methodology}</p> : null}
 			</PanelHeader>
 			<div className="max-h-100 overflow-y-auto">
-				<VirtualTable table={instance} stripedBg skipVirtualization />
+				<Table table={instance} stripedBg />
 			</div>
 		</Panel>
 	)

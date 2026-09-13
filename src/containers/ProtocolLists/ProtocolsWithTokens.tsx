@@ -7,10 +7,15 @@ import { ProtocolChainsHovercard } from '~/components/ProtocolChainsHovercard'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { getCategoryRoute } from '~/containers/ProtocolTaxonomy/categoryRoutes'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
+import { TableToolbar } from '~/ui/Toolbar'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { parseExcludeParam } from '~/utils/routerQuery'
@@ -61,15 +66,17 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 	return (
 		<>
 			<RowLinksWithDropdown links={props.chains} activeLink={props.chain} />
-			<TableWithSearch
-				data={protocols}
-				getSubRows={(row) => row.subRows}
-				columns={columns}
-				placeholder="Search protocols..."
-				columnToSearch="name"
-				compact
-				customFilters={() => (
-					<>
+			<SearchTableProvider
+				options={{
+					data: protocols,
+					columns,
+					initialState: { sorting: sortingState },
+					getSubRows: (row) => row.subRows
+				}}
+			>
+				<Card padding="none">
+					<TableToolbar className="w-full justify-end">
+						<TableSearchInput columnId="name" placeholder="Search protocols..." />
 						{props.categories.length > 0 ? (
 							<SelectWithCombobox
 								allValues={props.categories}
@@ -83,11 +90,11 @@ export function ProtocolsWithTokens(props: IProtocolsWithTokensByChainPageData) 
 								size="md"
 							/>
 						) : null}
-					</>
-				)}
-				csvFileName={`protocols-with-tokens-${props.type}-${props.chain}`}
-				initialSorting={sortingState}
-			/>
+						<TableCsvExport filename={`protocols-with-tokens-${props.type}-${props.chain}`} />
+					</TableToolbar>
+					<VirtualSearchTableView compact />
+				</Card>
+			</SearchTableProvider>
 		</>
 	)
 }

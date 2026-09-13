@@ -3,19 +3,18 @@ import * as React from 'react'
 import type { BlockExplorersResponse } from '~/api/types'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch, type TableWithSearchLayout } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
 import { Icon } from '~/ui/Icon'
 import { searchFieldIconStyles, searchFieldInlineWrapperStyles, searchFieldInputStyles } from '~/ui/Input'
+import { TableToolbar } from '~/ui/Toolbar'
 import { formatCompactNumber, formatUsd } from '~/utils/numberFormat'
 import type { LiquidationPosition, OverviewChainRow, OverviewProtocolRow, ProtocolChainRow } from './api.types'
 import { LiquidationsExplorerProvider, LiquidationsOwnerLink } from './OwnerLink'
-
-interface LiquidationsTableProps {
-	embedded?: boolean
-	leadingControls?: React.ReactNode | null
-	renderLayout?: TableWithSearchLayout
-}
+import { LiquidationsTableContent } from './TableTabs'
 
 const protocolColumnHelper = createColumnHelper<SearchTableFeatures, OverviewProtocolRow>()
 const overviewChainColumnHelper = createColumnHelper<SearchTableFeatures, OverviewChainRow>()
@@ -311,84 +310,79 @@ const positionColumns = positionColumnHelper.columns([
 	})
 ])
 
-export function LiquidationsProtocolsTable({
-	rows,
-	embedded = false,
-	leadingControls = null,
-	renderLayout
-}: { rows: Array<OverviewProtocolRow> } & LiquidationsTableProps) {
+export function LiquidationsProtocolsTable({ rows }: { rows: Array<OverviewProtocolRow> }) {
 	return (
-		<TableWithSearch
-			data={rows}
-			columns={protocolColumns}
-			header={embedded ? null : 'Protocols'}
-			leadingControls={leadingControls}
-			renderLayout={renderLayout}
-			columnToSearch="name"
-			placeholder="Search protocols..."
-			csvFileName="liquidations-v2-100k-protocols"
-			embedded={embedded}
-			initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
-		/>
+		<SearchTableProvider
+			options={{
+				data: rows,
+				columns: protocolColumns,
+				initialState: { sorting: [{ id: 'totalCollateralUsd', desc: true }] }
+			}}
+		>
+			<LiquidationsTableContent
+				toolbar={
+					<TableToolbar className="w-full justify-end">
+						<TableSearchInput columnId="name" placeholder="Search protocols..." />
+						<TableCsvExport filename="liquidations-v2-100k-protocols" />
+					</TableToolbar>
+				}
+			>
+				<VirtualSearchTableView />
+			</LiquidationsTableContent>
+		</SearchTableProvider>
 	)
 }
-
-export function LiquidationsOverviewChainsTable({
-	rows,
-	embedded = false,
-	leadingControls = null,
-	renderLayout
-}: { rows: Array<OverviewChainRow> } & LiquidationsTableProps) {
+export function LiquidationsOverviewChainsTable({ rows }: { rows: Array<OverviewChainRow> }) {
 	return (
-		<TableWithSearch
-			data={rows}
-			columns={overviewChainColumns}
-			header={embedded ? null : 'Chains'}
-			leadingControls={leadingControls}
-			renderLayout={renderLayout}
-			columnToSearch="name"
-			placeholder="Search chains..."
-			csvFileName="liquidations-v2-100k-chains"
-			embedded={embedded}
-			initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
-		/>
+		<SearchTableProvider
+			options={{
+				data: rows,
+				columns: overviewChainColumns,
+				initialState: { sorting: [{ id: 'totalCollateralUsd', desc: true }] }
+			}}
+		>
+			<LiquidationsTableContent
+				toolbar={
+					<TableToolbar className="w-full justify-end">
+						<TableSearchInput columnId="name" placeholder="Search chains..." />
+						<TableCsvExport filename="liquidations-v2-100k-chains" />
+					</TableToolbar>
+				}
+			>
+				<VirtualSearchTableView />
+			</LiquidationsTableContent>
+		</SearchTableProvider>
 	)
 }
-
-export function LiquidationsProtocolChainsTable({
-	rows,
-	embedded = false,
-	leadingControls = null,
-	renderLayout
-}: { rows: Array<ProtocolChainRow> } & LiquidationsTableProps) {
+export function LiquidationsProtocolChainsTable({ rows }: { rows: Array<ProtocolChainRow> }) {
 	return (
-		<TableWithSearch
-			data={rows}
-			columns={protocolChainColumns}
-			header={embedded ? null : 'Chains'}
-			leadingControls={leadingControls}
-			renderLayout={renderLayout}
-			columnToSearch="name"
-			placeholder="Search chains..."
-			csvFileName="liquidations-v2-100k-protocol-chains"
-			embedded={embedded}
-			initialSorting={[{ id: 'totalCollateralUsd', desc: true }]}
-		/>
+		<SearchTableProvider
+			options={{
+				data: rows,
+				columns: protocolChainColumns,
+				initialState: { sorting: [{ id: 'totalCollateralUsd', desc: true }] }
+			}}
+		>
+			<LiquidationsTableContent
+				toolbar={
+					<TableToolbar className="w-full justify-end">
+						<TableSearchInput columnId="name" placeholder="Search chains..." />
+						<TableCsvExport filename="liquidations-v2-100k-protocol-chains" />
+					</TableToolbar>
+				}
+			>
+				<VirtualSearchTableView />
+			</LiquidationsTableContent>
+		</SearchTableProvider>
 	)
 }
-
 export function LiquidationsPositionsTable({
 	rows,
-	ownerBlockExplorers,
-	header,
-	embedded = false,
-	leadingControls = null,
-	renderLayout
+	ownerBlockExplorers
 }: {
 	rows: Array<LiquidationPosition>
 	ownerBlockExplorers: BlockExplorersResponse
-	header: string
-} & LiquidationsTableProps) {
+}) {
 	const [searchValue, setSearchValue] = React.useState('')
 	const deferredSearchValue = React.useDeferredValue(searchValue)
 	const searchIndex = React.useMemo(() => createLiquidationPositionSearchIndex(rows), [rows])
@@ -399,27 +393,32 @@ export function LiquidationsPositionsTable({
 
 	return (
 		<LiquidationsExplorerProvider blockExplorers={ownerBlockExplorers}>
-			<TableWithSearch
-				data={filteredRows}
-				columns={positionColumns}
-				header={embedded ? null : header}
-				leadingControls={leadingControls}
-				renderLayout={renderLayout}
-				customFilters={
-					<label className={searchFieldInlineWrapperStyles}>
-						<span className="sr-only">Search positions</span>
-						<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
-						<input
-							onInput={(e) => setSearchValue(e.currentTarget.value)}
-							placeholder="Search positions by protocol, chain, owner, or collateral"
-							className={searchFieldInputStyles}
-						/>
-					</label>
-				}
-				csvFileName="liquidations-v2-100k-positions"
-				embedded={embedded}
-				initialSorting={[{ id: 'collateralAmountUsd', desc: true }]}
-			/>
+			<SearchTableProvider
+				options={{
+					data: filteredRows,
+					columns: positionColumns,
+					initialState: { sorting: [{ id: 'collateralAmountUsd', desc: true }] }
+				}}
+			>
+				<LiquidationsTableContent
+					toolbar={
+						<TableToolbar className="w-full justify-end">
+							<label className={searchFieldInlineWrapperStyles}>
+								<span className="sr-only">Search positions</span>
+								<Icon name="search" height={16} width={16} className={searchFieldIconStyles} />
+								<input
+									onInput={(e) => setSearchValue(e.currentTarget.value)}
+									placeholder="Search positions by protocol, chain, owner, or collateral"
+									className={searchFieldInputStyles}
+								/>
+							</label>
+							<TableCsvExport filename="liquidations-v2-100k-positions" />
+						</TableToolbar>
+					}
+				>
+					<VirtualSearchTableView />
+				</LiquidationsTableContent>
+			</SearchTableProvider>
 		</LiquidationsExplorerProvider>
 	)
 }

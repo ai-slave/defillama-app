@@ -9,14 +9,19 @@ import { BasicLink } from '~/components/Link'
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { SelectWithCombobox } from '~/components/Select/SelectWithCombobox'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { useLocalStorageSettingsManager } from '~/contexts/LocalStorage'
 import { useGetChartInstance } from '~/hooks/useGetChartInstance'
 import { useAllSeriesSelection, useSeriesSelection } from '~/hooks/useSeriesSelection'
+import { Card } from '~/ui/Card'
 import { ChartPanel, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { FailedDataPopover } from '~/ui/FailedDataPopover'
+import { searchFieldInlineWrapperStyles } from '~/ui/Input'
 import { LoadingDots } from '~/ui/Loaders'
-import { Panel } from '~/ui/Panel'
+import { PanelTitle, PanelHeader, Panel } from '~/ui/Panel'
 import { slug } from '~/utils'
 import { formatUsd } from '~/utils/numberFormat'
 import { getEnabledExtraTvlApiKeys, getEnabledForkOracleExtraTvlChartApiKeys } from '~/utils/tvlOverlap'
@@ -198,16 +203,28 @@ export function OraclesByChain({
 			<React.Suspense
 				fallback={<Panel padding="none" style={{ minHeight: `${tableAndPieData.tableData.length * 50 + 200}px` }} />}
 			>
-				<TableWithSearch
-					data={tableAndPieData.tableData}
-					columns={columns}
-					columnToSearch="name"
-					placeholder="Search oracles..."
-					header="Oracle Rankings"
-					headingAs="h1"
-					csvFileName="oracle-rankings"
-					initialSorting={DEFAULT_SORTING_STATE}
-				/>
+				<SearchTableProvider
+					options={{
+						data: tableAndPieData.tableData,
+						columns,
+						initialState: { sorting: DEFAULT_SORTING_STATE }
+					}}
+				>
+					<Card padding="none">
+						<PanelHeader className="w-full justify-end">
+							<PanelTitle as="h1" className="whitespace-nowrap">
+								Oracle Rankings
+							</PanelTitle>
+							<TableSearchInput
+								columnId="name"
+								placeholder="Search oracles..."
+								className={searchFieldInlineWrapperStyles}
+							/>
+							<TableCsvExport filename="oracle-rankings" />
+						</PanelHeader>
+						<VirtualSearchTableView />
+					</Card>
+				</SearchTableProvider>
 			</React.Suspense>
 		</>
 	)

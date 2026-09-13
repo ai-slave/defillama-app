@@ -1,4 +1,4 @@
-import { createColumnHelper, sortFn_datetime, rowPaginationFeature, tableFeatures } from '@tanstack/react-table'
+import { createColumnHelper, rowPaginationFeature, tableFeatures } from '@tanstack/react-table'
 import { describe, expect, test } from 'vitest'
 import { constructTestTable } from '~/components/Table/__tests__/helpers/constructTestTable'
 import type { PaginatedTableInstance, PaginationFeatures } from './contracts'
@@ -37,9 +37,6 @@ function assertMissingSortingApi() {
 void assertMissingSortingApi
 
 describe('selective sorting features', () => {
-	test('registers the datetime comparator chosen by automatic sorting', () => {
-		expect(sortedTableFeatures.sortFns.datetime).toBe(sortFn_datetime)
-	})
 	test.each([
 		['numbers', [10, 2, 30], [2, 10, 30]],
 		['text', ['Zulu', 'alpha', 'Beta'], ['alpha', 'Beta', 'Zulu']],

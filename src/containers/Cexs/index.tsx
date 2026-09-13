@@ -5,10 +5,15 @@ import { useMemo } from 'react'
 import { useAuthContext } from '~/auth'
 import { BasicLink } from '~/components/Link'
 import type { SearchTableFeatures } from '~/components/Table/features/search'
-import { TableWithSearch } from '~/components/Table/TableWithSearch'
+import { SearchTableProvider } from '~/components/Table/search/SearchTableProvider'
+import { TableCsvExport } from '~/components/Table/search/TableCsvExport'
+import { TableSearchInput } from '~/components/Table/search/TableSearchInput'
+import { VirtualSearchTableView } from '~/components/Table/search/VirtualSearchTableView'
 import { TokenLogo } from '~/components/TokenLogo'
+import { Card } from '~/ui/Card'
 import { Icon } from '~/ui/Icon'
 import { QuestionHelper } from '~/ui/QuestionHelper'
+import { TableToolbar } from '~/ui/Toolbar'
 import { Tooltip } from '~/ui/Tooltip'
 import { slug } from '~/utils'
 import { formatDate } from '~/utils/dateFormat'
@@ -142,23 +147,23 @@ export function Cexs({ cexs }: { cexs: Array<ICex> }) {
 	}, [cexs, customRangeData, customRangeEnabled, customRangeError, customRangeLoading])
 
 	return (
-		<TableWithSearch<CexRow>
-			data={enrichedData}
-			columns={columns}
-			columnToSearch="name"
-			placeholder="Search exchange..."
-			header={null}
-			customFilters={() => (
-				<DateFilter
-					startDate={startDate}
-					endDate={endDate}
-					isLoading={customRangeLoading}
-					key={`cexs-date-filter-${startDate}-${endDate}`}
-				/>
-			)}
-			csvFileName="cex-transparency"
-			initialSorting={DEFAULT_SORTING_STATE}
-		/>
+		<SearchTableProvider<CexRow>
+			options={{ data: enrichedData, columns, initialState: { sorting: DEFAULT_SORTING_STATE } }}
+		>
+			<Card padding="none">
+				<TableToolbar className="w-full justify-end">
+					<TableSearchInput columnId="name" placeholder="Search exchange..." />
+					<DateFilter
+						startDate={startDate}
+						endDate={endDate}
+						isLoading={customRangeLoading}
+						key={`cexs-date-filter-${startDate}-${endDate}`}
+					/>
+					<TableCsvExport filename="cex-transparency" />
+				</TableToolbar>
+				<VirtualSearchTableView />
+			</Card>
+		</SearchTableProvider>
 	)
 }
 

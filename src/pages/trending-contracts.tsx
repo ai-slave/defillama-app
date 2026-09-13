@@ -3,7 +3,7 @@ import { createColumnHelper, type SortingState, useTable } from '@tanstack/react
 import { startTransition, useDeferredValue, useState } from 'react'
 import { useBlockExplorers } from '~/api/client'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { VirtualTable } from '~/components/Table/Table'
+import { VirtualTable } from '~/components/Table/VirtualTable'
 import Layout from '~/layout'
 import { CopyHelper } from '~/ui/Copy'
 import { Panel, PanelHeader, PanelTitle } from '~/ui/Panel'

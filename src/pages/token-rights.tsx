@@ -6,7 +6,7 @@ import { startTransition, useDeferredValue, useMemo, useState } from 'react'
 import { DeprecatedProtocolMarker } from '~/components/DeprecatedProtocolMarker'
 import { ExternalLinkButton } from '~/components/ExternalLinkButton'
 import { displayTableFeatures } from '~/components/Table/features/display'
-import { VirtualTable } from '~/components/Table/Table'
+import { Table } from '~/components/Table/Table'
 import { TokenLogo } from '~/components/TokenLogo'
 import type { AdapterChainProtocol } from '~/containers/AdapterMetrics/api.types'
 import { ADAPTER_DATA_TYPES, ADAPTER_TYPES } from '~/containers/AdapterMetrics/constants'
@@ -523,7 +523,7 @@ function TokenRightsPage({
 					</TableToolbar>
 
 					<div className="overflow-hidden">
-						<VirtualTable table={table} rowSize={58} skipVirtualization />
+						<Table table={table} rowSize={58} />
 						{filteredProtocols.length === 0 ? (
 							<div className="flex min-h-[180px] items-center justify-center border-t border-subtle px-4 text-center body-sm text-secondary">
 								No protocols found for these filters
