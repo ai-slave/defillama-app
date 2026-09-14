@@ -1037,6 +1037,12 @@
       "route": "https://investors.defillama.com",
       "category": "Tools",
       "description": "Institutional-grade DeFi analytics and research tools for investors"
+    },
+    {
+      "name": "Token Pricing Coverage",
+      "route": "/price-check",
+      "category": "Tools",
+      "description": "Check whether DefiLlama has a current price for a token address on a chain"
     }
   ],
   "Main": [
