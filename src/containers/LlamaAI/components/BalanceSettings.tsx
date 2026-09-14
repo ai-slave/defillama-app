@@ -54,7 +54,7 @@ export function BalanceSettings({ result }: { result?: TopupResult }) {
 					Credits that let LlamaAI access premium external data sources like onchain data, X profiles, LinkedIn, and
 					more.
 				</p>
-				<div className="flex items-center justify-between gap-3">
+				<div className="flex min-h-7 items-center justify-between gap-3">
 					{isLoading ? (
 						<p role="status">Loading balance…</p>
 					) : balance ? (

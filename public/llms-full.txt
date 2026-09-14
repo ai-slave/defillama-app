@@ -220,6 +220,7 @@ Common usage examples:
 - [Token Usage by Protocol](https://defillama.com/token-usage?token=ETH): View token usage across different protocols
 - [Llama News Round-Up](https://defillama.com/roundup): Recent round-up of the most important news in the ecosystem
 - [Rewards](https://defillama.com/rewards): Explore protocol rewards, points, referral programs, and trading contests
+- [Token Pricing Coverage](https://defillama.com/price-check): Check whether DefiLlama has a current price for a token address on a chain
 
 ## Dashboard catalog - Main
 
