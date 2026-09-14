@@ -38,10 +38,16 @@ describe('InvestorRelationsView', () => {
 	let container: HTMLDivElement
 	let root: Root
 
-	function render(dashboardId: string) {
+	function render(dashboardId: string, activeTab?: string) {
 		return act(async () => {
 			root.render(
-				<InvestorRelationsView dashboardId={dashboardId} customOnly={false} entityName="Entity" customServerData={{}} />
+				<InvestorRelationsView
+					dashboardId={dashboardId}
+					customOnly={false}
+					entityName="Entity"
+					customServerData={{}}
+					activeTab={activeTab}
+				/>
 			)
 		})
 	}
@@ -100,6 +106,24 @@ describe('InvestorRelationsView', () => {
 		await act(async () => modules.b.resolve({ tabs: [{ id: 'b-1', label: 'B one' }] }))
 		expect(tabButtons()).toEqual(['B one'])
 		expect(activeContent()).toBe('b-1')
+	})
+
+	test('a controlled active tab hides the pill strip and drives the content', async () => {
+		registerModule('a')
+		await render('a', 'a-2')
+		await act(async () =>
+			modules.a.resolve({
+				tabs: [
+					{ id: 'a-1', label: 'A one' },
+					{ id: 'a-2', label: 'A two' }
+				]
+			})
+		)
+		expect(tabButtons()).toEqual([])
+		expect(activeContent()).toBe('a-2')
+
+		await render('a', 'a-1')
+		expect(activeContent()).toBe('a-1')
 	})
 
 	test('a module that resolves after the dashboard changed is ignored', async () => {

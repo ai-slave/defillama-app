@@ -1,12 +1,16 @@
 import { describe, expect, test } from 'vitest'
 import {
 	getMainSiteIrDashboard,
+	getMainSiteIrRoutePrefix,
+	getMainSiteIrTabHref,
 	hasMainSiteIrDashboard,
+	isMainSiteIrVisible,
 	MAIN_SITE_IR_CHAIN_SLUGS,
 	MAIN_SITE_IR_DASHBOARDS,
-	MAIN_SITE_IR_PROTOCOL_SLUGS
+	MAIN_SITE_IR_PROTOCOL_SLUGS,
+	resolveMainSiteIrTab
 } from '../mainSiteDashboards'
-import { isDashboardRegistered } from '../registry'
+import { getDashboardModule, isDashboardRegistered } from '../registry'
 
 describe('mainSiteDashboards', () => {
 	test('maps the odyssey-ecosystem dashboard onto the odyssey-finance protocol slug', () => {
@@ -52,9 +56,11 @@ describe('mainSiteDashboards', () => {
 	})
 
 	test('exposes protocol and chain slug lists that match the dashboard table', () => {
-		expect(new Set(MAIN_SITE_IR_PROTOCOL_SLUGS)).toEqual(new Set(['spark', 'odyssey-finance', 'near', 'thorchain']))
+		expect(new Set(MAIN_SITE_IR_PROTOCOL_SLUGS)).toEqual(
+			new Set(['spark', 'odyssey-finance', 'near', 'thorchain', 'uniswap'])
+		)
 		expect(new Set(MAIN_SITE_IR_CHAIN_SLUGS)).toEqual(new Set(['near', 'sonic', 'thorchain', 'flare']))
-		expect(MAIN_SITE_IR_DASHBOARDS).toHaveLength(8)
+		expect(MAIN_SITE_IR_DASHBOARDS).toHaveLength(9)
 	})
 
 	test('uses a non-empty brand gradient for every dashboard', () => {
@@ -75,8 +81,65 @@ describe('mainSiteDashboards', () => {
 	})
 
 	test('uses the configured dashboard labels', () => {
-		for (const dashboard of MAIN_SITE_IR_DASHBOARDS) {
-			expect(dashboard.tabLabel).toBe('Enterprise')
+		const singleTabDashboards = MAIN_SITE_IR_DASHBOARDS.filter((dashboard) => dashboard.tabPlacement === 'single')
+		expect(singleTabDashboards.length).toBeGreaterThan(0)
+		expect(singleTabDashboards.map((dashboard) => dashboard.tabLabel)).toEqual(
+			singleTabDashboards.map(() => 'Enterprise')
+		)
+	})
+
+	test('surfaces uniswap as a tab menu behind the llama flag', () => {
+		const uniswap = getMainSiteIrDashboard('protocol', 'uniswap')
+		expect(uniswap?.dashboardId).toBe('un1swapd4shb0rd')
+		expect(uniswap?.tabPlacement).toBe('menu')
+		expect(uniswap?.tabLabel).toBe('Deep Dive')
+		expect(getMainSiteIrRoutePrefix(uniswap!)).toBe('deep-dive')
+		expect(getMainSiteIrRoutePrefix(getMainSiteIrDashboard('protocol', 'spark')!)).toBe('investor-relations')
+		expect(uniswap?.llamaOnly).toBe(true)
+		expect(isMainSiteIrVisible(uniswap!, false)).toBe(false)
+		expect(isMainSiteIrVisible(uniswap!, true)).toBe(true)
+	})
+
+	test('public dashboards are visible without the llama flag', () => {
+		expect(isMainSiteIrVisible(getMainSiteIrDashboard('protocol', 'spark')!, false)).toBe(true)
+	})
+
+	test('menu tab lists match the tabs of the registered module', async () => {
+		const menuDashboards = MAIN_SITE_IR_DASHBOARDS.flatMap((dashboard) =>
+			dashboard.tabPlacement === 'menu' ? [dashboard] : []
+		)
+		expect(menuDashboards.length).toBeGreaterThan(0)
+		for (const dashboard of menuDashboards) {
+			const mod = await getDashboardModule(dashboard.dashboardId)
+			expect(mod?.tabs.map(({ id, label }) => ({ id, label }))).toEqual(
+				dashboard.menuTabs.map(({ id, label }) => ({ id, label }))
+			)
 		}
+	})
+
+	test('routes the first menu tab to the base href and the others to a tab segment', () => {
+		const uniswap = getMainSiteIrDashboard('protocol', 'uniswap')!
+		expect(getMainSiteIrTabHref(uniswap, 'overview')).toBe('/protocol/deep-dive/uniswap')
+		expect(getMainSiteIrTabHref(uniswap, 'liquidity')).toBe('/protocol/deep-dive/uniswap/liquidity')
+		expect(getMainSiteIrTabHref(getMainSiteIrDashboard('protocol', 'spark')!, 'anything')).toBe(
+			'/protocol/investor-relations/spark'
+		)
+	})
+
+	test('resolves the tab segment of a menu dashboard', () => {
+		const uniswap = getMainSiteIrDashboard('protocol', 'uniswap')!
+		expect(resolveMainSiteIrTab(uniswap, undefined)).toEqual({ type: 'tab', tabId: 'overview' })
+		expect(resolveMainSiteIrTab(uniswap, 'security')).toEqual({ type: 'tab', tabId: 'security' })
+		expect(resolveMainSiteIrTab(uniswap, 'overview')).toEqual({
+			type: 'redirect',
+			destination: '/protocol/deep-dive/uniswap'
+		})
+		expect(resolveMainSiteIrTab(uniswap, 'nope')).toEqual({ type: 'not-found' })
+	})
+
+	test('a single-tab dashboard accepts no tab segment', () => {
+		const spark = getMainSiteIrDashboard('protocol', 'spark')!
+		expect(resolveMainSiteIrTab(spark, undefined)).toEqual({ type: 'tab', tabId: null })
+		expect(resolveMainSiteIrTab(spark, 'overview')).toEqual({ type: 'not-found' })
 	})
 })

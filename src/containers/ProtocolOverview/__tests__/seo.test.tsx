@@ -405,6 +405,71 @@ describe('ProtocolOverviewLayout SEO', () => {
 		expect(markup).not.toContain('href="https://enterprise.defillama.com/odyssey-ecosystem"')
 		expect(markup).not.toContain('Odyssey Enterprise')
 	})
+
+	test('hides the Uniswap dashboard tabs from users without the llama flag', async () => {
+		setupLayoutMocks()
+
+		const { ProtocolOverviewLayout } = await import('../Layout')
+		const markup = renderToStaticMarkup(
+			<ProtocolOverviewLayout name="Uniswap" category="Dexs" metrics={metrics} tab="information">
+				{null}
+			</ProtocolOverviewLayout>
+		)
+
+		expect(markup).not.toContain('/protocol/deep-dive/uniswap')
+		expect(markup).not.toContain('Deep Dive')
+	})
+
+	test('shows the Uniswap dashboard as one menu tab listing every page for llama users', async () => {
+		setupLayoutMocks()
+		vi.doMock('~/auth', () => ({
+			useAuthContext: () => ({ user: { flags: { is_llama: true } } })
+		}))
+
+		const { ProtocolOverviewLayout } = await import('../Layout')
+		const markup = renderToStaticMarkup(
+			<ProtocolOverviewLayout
+				name="Uniswap"
+				category="Dexs"
+				metrics={metrics}
+				tab="investorRelations"
+				irTab="liquidity"
+			>
+				{null}
+			</ProtocolOverviewLayout>
+		)
+
+		expect(markup).toContain('Deep Dive')
+		for (const label of ['Overview', 'Liquidity Depth', 'Ecosystem &amp; Integrations', 'Economic Model', 'Security']) {
+			expect(markup).toContain(`>${label}<`)
+		}
+		expect(markup).not.toContain('Enterprise')
+		expect(markup).not.toContain('Investor')
+		expect(markup).toMatch(/Deep Dive(<[^>]*>)*<span[^>]*opacity:1/)
+	})
+
+	test('shows the parent dashboard tabs on a child protocol page for llama users', async () => {
+		setupLayoutMocks()
+		vi.doMock('~/auth', () => ({
+			useAuthContext: () => ({ user: { flags: { is_llama: true } } })
+		}))
+
+		const { ProtocolOverviewLayout } = await import('../Layout')
+		const markup = renderToStaticMarkup(
+			<ProtocolOverviewLayout
+				name="Uniswap V3"
+				category="Dexs"
+				metrics={metrics}
+				tab="information"
+				otherProtocols={['Uniswap', 'Uniswap V2', 'Uniswap V3']}
+			>
+				{null}
+			</ProtocolOverviewLayout>
+		)
+
+		expect(markup).toContain('Deep Dive')
+		expect(markup).toContain('>Economic Model<')
+	})
 })
 
 describe('ProtocolOverview SEO contract', () => {

@@ -1,3 +1,4 @@
+import type { IIcon } from '~/ui/Icon'
 import type { InvestorsProjectId } from './config'
 
 /**
@@ -11,7 +12,22 @@ import type { InvestorsProjectId } from './config'
 
 export type IrEntityType = 'protocol' | 'chain'
 
-export interface MainSiteIrDashboard {
+export type MainSiteIrRoutePrefix = 'investor-relations' | 'deep-dive'
+
+export const DEFAULT_MAIN_SITE_IR_ROUTE_PREFIX: MainSiteIrRoutePrefix = 'investor-relations'
+
+export interface MainSiteIrTab {
+	id: string
+	label: string
+	icon?: IIcon['name']
+	description?: string
+}
+
+export type MainSiteIrTabPlacement =
+	| { tabPlacement: 'single' }
+	| { tabPlacement: 'menu'; menuTabs: Array<MainSiteIrTab>; menuTagline: string }
+
+export interface MainSiteIrDashboardBase {
 	/** Investors project id (its dashboard module is the one rendered). */
 	irProjectId: InvestorsProjectId
 	/** Saved ProDashboard id — both the `registry.ts` key and the ProDashboard embed id. */
@@ -28,7 +44,11 @@ export interface MainSiteIrDashboard {
 	brandGradient: string
 	/** Tab label on the main site, e.g. "Investor Relations" or "Enterprise Dashboard". */
 	tabLabel: string
+	llamaOnly?: boolean
+	routePrefix?: MainSiteIrRoutePrefix
 }
+
+export type MainSiteIrDashboard = MainSiteIrDashboardBase & MainSiteIrTabPlacement
 
 export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 	{
@@ -39,7 +59,8 @@ export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 		entityName: 'Spark',
 		customOnly: false,
 		brandGradient: 'linear-gradient(90deg, #FA43BD, #FFA930)',
-		tabLabel: 'Enterprise'
+		tabLabel: 'Enterprise',
+		tabPlacement: 'single'
 	},
 	{
 		irProjectId: 'near',
@@ -49,7 +70,8 @@ export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 		entityName: 'NEAR',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00C1DE, #00E4AA, #00EC97)',
-		tabLabel: 'Enterprise'
+		tabLabel: 'Enterprise',
+		tabPlacement: 'single'
 	},
 	{
 		// NEAR exists as both a chain (/chain/Near) and a protocol (/protocol/near); surface IR on both.
@@ -60,7 +82,8 @@ export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 		entityName: 'NEAR',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00C1DE, #00E4AA, #00EC97)',
-		tabLabel: 'Enterprise'
+		tabLabel: 'Enterprise',
+		tabPlacement: 'single'
 	},
 	{
 		irProjectId: 'sonic',
@@ -70,7 +93,8 @@ export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 		entityName: 'Sonic',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #fac461, #fe7d2d, #e3570a)',
-		tabLabel: 'Enterprise'
+		tabLabel: 'Enterprise',
+		tabPlacement: 'single'
 	},
 	{
 		irProjectId: 'thorchain',
@@ -80,7 +104,8 @@ export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 		entityName: 'THORChain',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00CCFF, #31FD9D)',
-		tabLabel: 'Enterprise'
+		tabLabel: 'Enterprise',
+		tabPlacement: 'single'
 	},
 	{
 		irProjectId: 'thorchain',
@@ -90,7 +115,8 @@ export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 		entityName: 'THORChain',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #00CCFF, #31FD9D)',
-		tabLabel: 'Enterprise'
+		tabLabel: 'Enterprise',
+		tabPlacement: 'single'
 	},
 	{
 		irProjectId: 'flare',
@@ -100,7 +126,8 @@ export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 		entityName: 'Flare',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #E62058, #FF7A8A)',
-		tabLabel: 'Enterprise'
+		tabLabel: 'Enterprise',
+		tabPlacement: 'single'
 	},
 	{
 		irProjectId: 'odyssey-ecosystem',
@@ -110,7 +137,55 @@ export const MAIN_SITE_IR_DASHBOARDS: Array<MainSiteIrDashboard> = [
 		entityName: 'Odyssey Ecosystem',
 		customOnly: true,
 		brandGradient: 'linear-gradient(90deg, #3b82f6, #60a5fa, #93c5fd)',
-		tabLabel: 'Enterprise'
+		tabLabel: 'Enterprise',
+		tabPlacement: 'single'
+	},
+	{
+		irProjectId: 'uniswap',
+		dashboardId: 'un1swapd4shb0rd',
+		entityType: 'protocol',
+		slug: 'uniswap',
+		entityName: 'Uniswap',
+		customOnly: true,
+		brandGradient: 'linear-gradient(90deg, #FF007A, #FC72FF)',
+		tabLabel: 'Deep Dive',
+		tabPlacement: 'menu',
+		menuTagline: 'Protocol analytics powered by DefiLlama',
+		menuTabs: [
+			{
+				id: 'overview',
+				label: 'Overview',
+				icon: 'layers',
+				description: 'Volume, TVL, fees and traders across chains and versions'
+			},
+			{
+				id: 'liquidity',
+				label: 'Liquidity Depth',
+				icon: 'bar-chart-2',
+				description: 'TVL by version, token segment and LP custody'
+			},
+			{
+				id: 'integrations',
+				label: 'Ecosystem & Integrations',
+				icon: 'globe',
+				description: 'Chain share and order flow routed by aggregators'
+			},
+			{
+				id: 'assets',
+				label: 'Asset Breadth',
+				icon: 'pie-chart',
+				description: 'Tokens traded, new listings and RWA venues'
+			},
+			{
+				id: 'economics',
+				label: 'Economic Model',
+				icon: 'banknote',
+				description: 'Protocol fees by pair category and chain, UNI unlocks'
+			},
+			{ id: 'security', label: 'Security', icon: 'shield-check', description: 'Audit reports by firm and product' }
+		],
+		llamaOnly: true,
+		routePrefix: 'deep-dive'
 	}
 ]
 
@@ -126,6 +201,45 @@ export function getMainSiteIrDashboard(entityType: IrEntityType, entitySlug: str
 /** Pass an already-normalized slug (e.g. `slug(name)`). */
 export function hasMainSiteIrDashboard(entityType: IrEntityType, entitySlug: string): boolean {
 	return BY_ENTITY_SLUG.has(`${entityType}:${entitySlug}`)
+}
+
+export function isMainSiteIrVisible(dashboard: MainSiteIrDashboard, isLlama: boolean): boolean {
+	return !dashboard.llamaOnly || isLlama
+}
+
+export function getMainSiteIrRoutePrefix(dashboard: MainSiteIrDashboard): MainSiteIrRoutePrefix {
+	return dashboard.routePrefix ?? DEFAULT_MAIN_SITE_IR_ROUTE_PREFIX
+}
+
+export function getMainSiteIrBaseHref(dashboard: MainSiteIrDashboard): string {
+	return `/${dashboard.entityType}/${getMainSiteIrRoutePrefix(dashboard)}/${dashboard.slug}`
+}
+
+export function getMainSiteIrTabHref(dashboard: MainSiteIrDashboard, tabId: string): string {
+	const base = getMainSiteIrBaseHref(dashboard)
+	if (dashboard.tabPlacement !== 'menu') return base
+	return dashboard.menuTabs[0]?.id === tabId ? base : `${base}/${tabId}`
+}
+
+export type MainSiteIrTabResolution =
+	| { type: 'tab'; tabId: string | null }
+	| { type: 'redirect'; destination: string }
+	| { type: 'not-found' }
+
+export function resolveMainSiteIrTab(
+	dashboard: MainSiteIrDashboard,
+	tabSegment: string | undefined
+): MainSiteIrTabResolution {
+	if (dashboard.tabPlacement !== 'menu') {
+		return tabSegment === undefined ? { type: 'tab', tabId: null } : { type: 'not-found' }
+	}
+	const firstTab = dashboard.menuTabs[0]
+	if (!firstTab) return { type: 'not-found' }
+	if (tabSegment === undefined) return { type: 'tab', tabId: firstTab.id }
+	if (tabSegment === firstTab.id) return { type: 'redirect', destination: getMainSiteIrBaseHref(dashboard) }
+	return dashboard.menuTabs.some((tab) => tab.id === tabSegment)
+		? { type: 'tab', tabId: tabSegment }
+		: { type: 'not-found' }
 }
 
 export const MAIN_SITE_IR_PROTOCOL_SLUGS = MAIN_SITE_IR_DASHBOARDS.filter(

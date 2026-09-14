@@ -81,22 +81,25 @@ export function InvestorRelationsView({
 	dashboardId,
 	customOnly,
 	entityName,
-	customServerData
+	customServerData,
+	activeTab
 }: {
 	dashboardId: string
 	customOnly: boolean
 	entityName: string
 	customServerData?: Record<string, unknown>
+	activeTab?: string
 }) {
 	// The loaded module is remembered with the dashboard it belongs to, so a dashboard switch shows the
 	// skeleton again instead of the previous dashboard's tabs, and the tab choice starts over.
 	const [loaded, setLoaded] = useState<{ dashboardId: string; dashboardModule: DashboardModule | null } | null>(null)
-	const [activeTab, setActiveTab] = useState<string | null>(null)
+	const [selectedTab, setSelectedTab] = useState<string | null>(null)
 	const [syncedDashboardId, setSyncedDashboardId] = useState(dashboardId)
 	if (dashboardId !== syncedDashboardId) {
 		setSyncedDashboardId(dashboardId)
-		setActiveTab(null)
+		setSelectedTab(null)
 	}
+	const isControlled = activeTab !== undefined
 	const loadedForDashboard = loaded?.dashboardId === dashboardId ? loaded : null
 	const dashboardModule = loadedForDashboard?.dashboardModule ?? null
 	const tabs = !isDashboardRegistered(dashboardId)
@@ -119,8 +122,11 @@ export function InvestorRelationsView({
 	}, [dashboardId])
 
 	const resolvedTabs = tabs ?? DEFAULT_TABS
-	const resolvedTab =
-		activeTab && resolvedTabs.some((t) => t.id === activeTab) ? activeTab : (resolvedTabs[0]?.id ?? 'dashboard')
+	const resolvedTab = isControlled
+		? activeTab
+		: selectedTab && resolvedTabs.some((t) => t.id === selectedTab)
+			? selectedTab
+			: (resolvedTabs[0]?.id ?? 'dashboard')
 
 	return (
 		<AppMetadataProvider>
@@ -136,7 +142,9 @@ export function InvestorRelationsView({
 							<SkeletonTable />
 						) : (
 							<>
-								<PillStrip tabs={resolvedTabs} activeTab={resolvedTab} onSelect={setActiveTab} />
+								{isControlled ? null : (
+									<PillStrip tabs={resolvedTabs} activeTab={resolvedTab} onSelect={setSelectedTab} />
+								)}
 								{customOnly ? (
 									<CustomOnlyContent
 										tabs={resolvedTabs}

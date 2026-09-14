@@ -6,7 +6,12 @@ import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { BasicLink, ButtonLink } from '~/components/Link'
 import { TokenLogo } from '~/components/TokenLogo'
 import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
-import { getMainSiteIrDashboard } from '~/containers/Investors/mainSiteDashboards'
+import { IrTabMenu } from '~/containers/Investors/IrTabMenu'
+import {
+	getMainSiteIrBaseHref,
+	getMainSiteIrDashboard,
+	isMainSiteIrVisible
+} from '~/containers/Investors/mainSiteDashboards'
 import Layout from '~/layout'
 import { Button } from '~/ui/Button'
 import { Icon } from '~/ui/Icon'
@@ -115,6 +120,7 @@ export function ProtocolOverviewLayout({
 	toggleOptions,
 	metrics,
 	tab,
+	irTab,
 	warningBanners,
 	seoTitle,
 	seoDescription,
@@ -131,6 +137,7 @@ export function ProtocolOverviewLayout({
 	}>
 	metrics: IProtocolPageMetrics
 	tab: keyof typeof tabs
+	irTab?: string
 	warningBanners?: Array<{
 		message: string
 		until?: number | string // unix timestamp or "forever" or date string  in 'YYYY-MM-DD' format, 'forever' if the field is not set
@@ -197,8 +204,14 @@ export function ProtocolOverviewLayout({
 	}, [metrics])
 
 	const entitySlug = slug(name)
-	const irDashboard = isCEX ? undefined : getMainSiteIrDashboard('protocol', entitySlug)
-	const showInvestorRelations = !!irDashboard
+	const parentSlug = otherProtocols?.[0] ? slug(otherProtocols[0]) : null
+	const ownIrDashboard = isCEX ? undefined : getMainSiteIrDashboard('protocol', entitySlug)
+	const parentIrDashboard =
+		!isCEX && !ownIrDashboard && parentSlug && parentSlug !== entitySlug
+			? getMainSiteIrDashboard('protocol', parentSlug)
+			: undefined
+	const irDashboard = ownIrDashboard ?? (parentIrDashboard?.tabPlacement === 'menu' ? parentIrDashboard : undefined)
+	const showInvestorRelations = !!irDashboard && isMainSiteIrVisible(irDashboard, user?.flags?.is_llama === true)
 	const shouldNoIndex = !standaloneCanonicals[tab] || noIndexProtocolSlugs.has(entitySlug)
 	const canonicalUrl = isCEX
 		? tab === 'assets'
@@ -389,22 +402,26 @@ export function ProtocolOverviewLayout({
 							))
 						: null}
 					{showInvestorRelations && irDashboard ? (
-						<TabLink
-							as={ButtonLink}
-							href={`/protocol/investor-relations/${entitySlug}`}
-							data-active={tab === 'investorRelations'}
-							data-umami-event="investor-relations-tab-click"
-							data-umami-event-entity-type="protocol"
-							data-umami-event-entity={entitySlug}
-							data-umami-event-dashboard-id={irDashboard.dashboardId}
-							className="flex items-center gap-1.5"
-						>
-							<IrTabLabel
-								label={irDashboard.tabLabel}
-								gradient={irDashboard.brandGradient}
-								active={tab === 'investorRelations'}
-							/>
-						</TabLink>
+						irDashboard.tabPlacement === 'menu' ? (
+							<IrTabMenu dashboard={irDashboard} active={tab === 'investorRelations'} activeTabId={irTab} />
+						) : (
+							<TabLink
+								as={ButtonLink}
+								href={getMainSiteIrBaseHref(irDashboard)}
+								data-active={tab === 'investorRelations'}
+								data-umami-event="investor-relations-tab-click"
+								data-umami-event-entity-type="protocol"
+								data-umami-event-entity={entitySlug}
+								data-umami-event-dashboard-id={irDashboard.dashboardId}
+								className="flex items-center gap-1.5"
+							>
+								<IrTabLabel
+									label={irDashboard.tabLabel}
+									gradient={irDashboard.brandGradient}
+									active={tab === 'investorRelations'}
+								/>
+							</TabLink>
+						)
 					) : null}
 				</div>
 				{tab !== 'investorRelations' && entityQuestions ? (

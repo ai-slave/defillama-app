@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router'
 import { lazy, Suspense } from 'react'
+import { useAuthContext } from '~/auth'
 import { DeprecatedEntityText } from '~/components/DeprecatedEntityMarker'
 import { EntityQuestionsStrip } from '~/components/EntityQuestionsStrip'
 import { NewsletterSignup } from '~/components/Newsletter/NewsletterSignup'
@@ -7,7 +8,7 @@ import { SponsoredResearchReportsCard } from '~/components/Research/SponsoredRes
 import { RowLinksWithDropdown } from '~/components/RowLinksWithDropdown'
 import { TokenLogo } from '~/components/TokenLogo'
 import { IrTabLabel } from '~/containers/Investors/IrTabLabel'
-import { getMainSiteIrDashboard } from '~/containers/Investors/mainSiteDashboards'
+import { getMainSiteIrDashboard, isMainSiteIrVisible } from '~/containers/Investors/mainSiteDashboards'
 import { ChainProtocolsTable } from '~/containers/ProtocolRankings/Table'
 import { Card } from '~/ui/Card'
 import { EntityTitleStrip } from '~/ui/EntityTitleStrip'
@@ -27,8 +28,9 @@ export function ChainOverview(props: IChainOverviewData) {
 	const router = useRouter()
 	const entitySlug = slug(props.metadata.name)
 	const researchSponsorEntitySlug = props.researchSponsorEntitySlug ?? entitySlug
+	const { user } = useAuthContext()
 	const irDashboard = getMainSiteIrDashboard('chain', entitySlug)
-	const showInvestorRelations = !!irDashboard
+	const showInvestorRelations = !!irDashboard && isMainSiteIrVisible(irDashboard, user?.flags?.is_llama === true)
 	const irActive = showInvestorRelations && router.query.tab === 'investor-relations'
 
 	const goToTab = (tab?: string) => {
