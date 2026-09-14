@@ -80,8 +80,17 @@ function toEntries(routes: Array<string>): Array<SitemapUrlEntry> {
 	return [...paths].map((path) => ({ path }))
 }
 
+// Indexable listing pages that are intentionally kept out of the nav (pages.json)
+// but must still be discoverable via the static sitemap section.
+const STATIC_SITEMAP_ONLY_ROUTES = ['/yields/stablecoins']
+
 function getNavRoutes(): Array<string> {
 	const routes: Array<string> = []
+
+	for (const route of STATIC_SITEMAP_ONLY_ROUTES) {
+		const normalized = normalizeSitemapRoute(route)
+		if (normalized != null) routes.push(normalized)
+	}
 
 	for (const category in defillamaPages) {
 		if (category === 'Hidden') continue
