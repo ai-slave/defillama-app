@@ -115,16 +115,6 @@ function compactDiscoveryResponse(response: DiscoveryCategoryResponse): Discover
 	}
 }
 
-function emptyDiscoveryResponse(category: (typeof DISCOVERY_CATEGORIES)[number]): DiscoveryCategoryResponse {
-	return {
-		items: [],
-		page: 1,
-		perPage: category.limit,
-		totalItems: 0,
-		totalPages: 0
-	}
-}
-
 async function fetchDiscoveryCategory(
 	category: (typeof DISCOVERY_CATEGORIES)[number]
 ): Promise<DiscoveryCategoryResponse> {
@@ -152,7 +142,7 @@ async function fetchInitialDiscoveryCategories(): Promise<DiscoveryCategoriesIni
 	const results = await Promise.allSettled(
 		DISCOVERY_CATEGORIES.map(async (category) => ({
 			key: category.key,
-			data: await fetchDiscoveryCategory(category).catch(() => emptyDiscoveryResponse(category))
+			data: await fetchDiscoveryCategory(category)
 		}))
 	)
 	const categories: DiscoveryCategoriesInitialData = {}
