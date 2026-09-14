@@ -449,12 +449,12 @@ export function PoolDetailView({
 								<Button
 									as={BasicLink}
 									href={`/yields/pool/${poolId}/risk`}
-									variant="secondary"
+									variant="warning"
 									size="md"
 									className="group w-fit"
 								>
 									<Icon name="shield-check" className="size-3.5 text-warning" />
-									View risk data
+									Open {symbol} risk report
 									<span className="transition-transform group-hover:translate-x-0.5">→</span>
 								</Button>
 							) : null

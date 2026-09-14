@@ -75,7 +75,8 @@ export function PoolNameLockup({
 	// Layout: a single `items-center` flex row — bookmark, the truncating (min-w-0) two-line
 	// symbol/detail link and an optional exploit icon hugging the name. The external-link
 	// glyph sits centered right after the row number (main's anatomy): constant x on every
-	// row, vertically centered by the row's items-center.
+	// row, vertically centered by the row's items-center. The risk-report shield sits at the
+	// trailing edge (ml-auto) so it aligns down the column.
 	return (
 		<span className="flex h-9 min-w-0 items-center gap-2">
 			{bookmark ? (
@@ -102,13 +103,13 @@ export function PoolNameLockup({
 					</Tooltip>
 				) : null}
 			</BasicLink>
-			{hasRiskData ? <RiskDataHint configID={configID} className={poolMeta ? 'self-end pb-0.5' : undefined} /> : null}
 			<DepegWarningIcon deviation={pegDeviation} symbol={pegTokenSymbol} consequence={pegConsequence} />
 			{exploited ? (
 				<Tooltip content="This pool involves a protocol or token affected by an exploit or an ongoing incident. Proceed with extreme caution.">
 					<Icon name="alert-triangle-filled" height={20} width={20} className="shrink-0 text-data-down" />
 				</Tooltip>
 			) : null}
+			{hasRiskData ? <RiskDataHint configID={configID} poolName={value} /> : null}
 		</span>
 	)
 }
@@ -147,16 +148,16 @@ function AirdropHint({ raiseValuationUsd }: { raiseValuationUsd?: number | null 
 	)
 }
 
-// Quiet risk-page entry on the meta line: only for pools with confirmed vault-risk
-// coverage (per-pool ids from the risk server — never a dead link).
-export function RiskDataHint({ configID, className }: { configID: string; className?: string | undefined }) {
+// Risk-report link, only for pools with vault-risk coverage (never a dead link).
+export function RiskDataHint({ configID, poolName }: { configID: string; poolName: string }) {
+	const label = `Open ${poolName} risk report`
 	return (
-		<Tooltip content="View risk data" className={`shrink-0 ${className ?? ''}`}>
+		<Tooltip content={label} className="ml-auto">
 			<BasicLink
 				href={`/yields/pool/${configID}/risk`}
 				target="_blank"
 				rel="noopener noreferrer"
-				aria-label="View risk data"
+				aria-label={label}
 				className="flex items-center text-warning transition-colors hover:text-primary"
 			>
 				<Icon name="shield-check" height={21} width={21} />
