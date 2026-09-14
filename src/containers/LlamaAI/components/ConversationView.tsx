@@ -696,7 +696,7 @@ export function ConversationView({ viewModel, animateActiveExchange }: Conversat
 				ref={attachScrollContainer}
 				// `both-edges` keeps the message column centered on the same axis as the composer below,
 				// which sits outside this scroll container and never loses width to a classic scrollbar.
-				className={`relative flex-1 [scrollbar-gutter:stable_both-edges] overflow-y-auto px-2.5 pt-2.5 max-lg:px-0 ${readOnly ? 'pb-2.5' : 'pb-12'}`}
+				className="relative flex-1 [scrollbar-gutter:stable_both-edges] overflow-y-auto p-2.5 max-lg:px-0"
 				style={{
 					// Browser anchoring can otherwise move scrollTop and look like an upward user gesture.
 					overflowAnchor: isScrollAttached ? 'none' : 'auto'
