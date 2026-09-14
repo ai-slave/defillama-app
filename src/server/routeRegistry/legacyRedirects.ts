@@ -705,5 +705,40 @@ export const legacyRedirects = [
 		source: '/category/RWA',
 		destination: '/rwa',
 		permanent: true
+	},
+	{
+		source: '/chain/story',
+		destination: '/chain/data-network',
+		permanent: true
+	},
+	{
+		source: '/chain/story-protocol',
+		destination: '/chain/data-network',
+		permanent: true
+	},
+	{
+		source: '/perps/chain/story',
+		destination: '/perps/chain/data-network',
+		permanent: true
+	},
+	{
+		source: '/fees/chain/story',
+		destination: '/fees/chain/data-network',
+		permanent: true
+	},
+	{
+		source: '/dexs/chain/story',
+		destination: '/dexs/chain/data-network',
+		permanent: true
+	},
+	{
+		source: '/unlocks/story',
+		destination: '/unlocks/data-network',
+		permanent: true
+	},
+	{
+		source: '/unlocks/arbitrum',
+		destination: '/unlocks/arbitrum-foundation',
+		permanent: true
 	}
 ] satisfies Array<LegacyRedirect>
