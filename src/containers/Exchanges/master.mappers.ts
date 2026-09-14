@@ -1099,6 +1099,24 @@ function aggregateResearchSeries(series: Array<NullableSeries>, dayCount: number
 	return aggregated
 }
 
+/**
+ * Drop the leading days where every line is still null. Upstream trims each part to its
+ * own earliest observation, but a single view inside that part can start far later —
+ * spot depth opens 81% of the way along the depth axis — and that lead reads as a real
+ * flat line rather than "we were not collecting this yet".
+ *
+ * A view with no observations at all is left untrimmed: there is no first day to anchor
+ * to, and an empty axis is the caller's decision to make, not this function's.
+ */
+function trimLeadingBlank(days: Array<number>, lines: ExchangeResearchChartModel['lines']) {
+	const first = days.findIndex((_, index) => lines.some((line) => line.values[index] != null))
+	if (first <= 0) return { days, lines }
+	return {
+		days: days.slice(first),
+		lines: lines.map((line) => ({ ...line, values: line.values.slice(first) }))
+	}
+}
+
 function researchChart(
 	part: MasterChartPart,
 	response: MasterChartColumnarResponse,
@@ -1106,14 +1124,15 @@ function researchChart(
 	lines: ExchangeResearchChartModel['lines']
 ): ExchangeResearchChartModel {
 	const presentation = getResearchPresentation(part, view)
+	const trimmed = trimLeadingBlank(response.days, lines)
 	return {
 		metric: presentation.metric,
 		segment: presentation.segment,
 		grouping: presentation.grouping,
 		title: presentation.title,
 		description: presentation.description,
-		days: response.days,
-		lines,
+		days: trimmed.days,
+		lines: trimmed.lines,
 		valueSymbol: presentation.valueSymbol,
 		builtAt: response.built_at ?? response.last_updated ?? null
 	}
@@ -1131,13 +1150,14 @@ export function decodeMasterChart(response: MasterChartColumnarResponse): Array<
 		throw new Error('Chart type and series axes do not match the exchange axis')
 	}
 	for (const [label, columns] of [
-		['depth', response.btc_depth],
-		['OI', response.btc_oi]
+		['BTC depth', response.btc_depth],
+		['BTC OI', response.btc_oi],
+		['ETH OI', response.eth_oi]
 	] as const) {
 		if (!columns) continue
 		for (const segment of MASTER_SEGMENTS) {
 			if (columns[segment].length !== response.days.length) {
-				throw new Error(`BTC ${label} columns do not match the day axis`)
+				throw new Error(`${label} columns do not match the day axis`)
 			}
 		}
 	}
@@ -1362,24 +1382,43 @@ export function mapMasterResearchReport(
 			exchangeView('open-interest-coin-exchanges', 'inverse_perp'),
 			typeView('open-interest-types', PERP_CHART_SEGMENTS)
 		]
-		// Shown first (need-of-the-hour: compare BTC against the rest before
-		// drilling into per-exchange lines) — the total is the same cross-exchange
-		// sum exchangeView/summedOther already compute, just over every exchange
-		// rather than the top N, so "Alt" reconciles exactly with the other views.
-		if (response.btc_oi) {
+		// Shown first (need-of-the-hour: how open interest splits across the majors before
+		// drilling into per-exchange lines). The denominator is the same cross-exchange sum
+		// exchangeView/summedOther already compute, over every exchange rather than the top
+		// N, so the shares reconcile exactly with the other views.
+		//
+		// Overlapping lines, not a stack: the question is "how much of OI is BTC", which is
+		// read off one line against 100%, not off a band whose baseline moves with its
+		// neighbours.
+		if (response.btc_oi && response.eth_oi) {
 			const total = summedOther(dayCount)(
 				exchangeSeriesItems(decoded, (exchange) => metricSeries(exchange, 'linear_perp'))
 			)
 			const btc = response.btc_oi.linear_perp
-			const alt = total.map((value, index) =>
-				value == null || btc[index] == null ? null : Math.max(value - btc[index]!, 0)
-			)
+			const eth = response.eth_oi.linear_perp
+			// A share needs a positive denominator and its own numerator; either missing
+			// leaves the day unavailable rather than implying a zero share.
+			const shareOf = (series: Array<number | null>) =>
+				total.map((value, index) => {
+					const observed = series[index]
+					return value == null || value <= 0 || observed == null ? null : observed / value
+				})
+			// Labelled 'Other', not 'Others': the tooltip treats the exact name 'Others' as a
+			// truncated top-N bucket and rules it off from the rows above. Here it is a peer
+			// category, and 'Other' is what every other research chart calls its leftover.
+			const others = total.map((value, index) => {
+				const btcValue = btc[index]
+				const ethValue = eth[index]
+				if (value == null || value <= 0 || btcValue == null || ethValue == null) return null
+				return Math.max(value - btcValue - ethValue, 0) / value
+			})
 			views.unshift({
-				id: 'open-interest-btc-vs-alt',
-				label: getResearchPresentation(part, 'open-interest-btc-vs-alt').label,
-				chart: researchChart(part, response, 'open-interest-btc-vs-alt', [
-					{ id: 'btc', label: 'BTC', values: btc },
-					{ id: 'alt', label: 'Alt (ex-BTC)', values: alt }
+				id: 'open-interest-base-share',
+				label: getResearchPresentation(part, 'open-interest-base-share').label,
+				chart: researchChart(part, response, 'open-interest-base-share', [
+					{ id: 'btc', label: 'BTC', values: shareOf(btc) },
+					{ id: 'eth', label: 'ETH', values: shareOf(eth) },
+					{ id: 'other', label: 'Other', values: others }
 				])
 			})
 		}

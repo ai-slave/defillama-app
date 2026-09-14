@@ -48,6 +48,9 @@ const EXCHANGES_PAGE_ORDER = ['exchanges', 'rank', 'reserves', 'charts', 'tokens
 
 export type ExchangesPage = keyof typeof EXCHANGES_PAGES
 
+/** Pages whose own content already states the description; see the render note below. */
+const BLURB_IS_REDUNDANT = new Set<ExchangesPage>(['exchanges', 'charts'])
+
 export function ExchangesNav({ activePage, country = null }: { activePage: ExchangesPage; country?: string | null }) {
 	const selectedPage = EXCHANGES_PAGES[activePage]
 	return (
@@ -78,9 +81,13 @@ export function ExchangesNav({ activePage, country = null }: { activePage: Excha
 				})}
 			</nav>
 			<h1 className="sr-only">{selectedPage.heading}</h1>
-			{/* The directory carries its own visible "Find My Exchange" heading, so the blurb
-			    would only repeat it and push the table below the fold. */}
-			{activePage === 'exchanges' ? null : <p className="px-1 body-sm text-secondary">{selectedPage.description}</p>}
+			{/* Two pages drop the blurb because they already say it themselves: the directory
+			    carries a visible "Find My Exchange" heading, and charts opens on section
+			    headings ("Activity", "Liquidity") that name the same four metrics. On both it
+			    would only repeat and push the content below the fold. */}
+			{BLURB_IS_REDUNDANT.has(activePage) ? null : (
+				<p className="px-1 body-sm text-secondary">{selectedPage.description}</p>
+			)}
 		</div>
 	)
 }

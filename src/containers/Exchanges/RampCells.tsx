@@ -237,7 +237,9 @@ export function RampAccessValue({ row, country }: { row: RampRowModel; country: 
 		.join('\n')
 	return (
 		<Tooltip content={detail}>
-			<span className={`inline-flex rounded-sm border px-1.5 py-0.5 label-sm ${FEE_TONE_CLASS[presentation.tone]}`}>
+			<span
+				className={`inline-flex h-[18px] items-center rounded-sm border px-1.5 label-sm ${FEE_TONE_CLASS[presentation.tone]}`}
+			>
 				{presentation.label}
 			</span>
 		</Tooltip>

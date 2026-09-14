@@ -883,8 +883,8 @@ export const MASTER_CHART_KEYS = {
  * `key[keyIdx]`, aligned to `days`, or null when that venue lacks the metric.
  * `exchanges[]` and `names` keys are canonical public slugs; all four parts share
  * identical exchanges/types/names. Each part trims its own empty leading period,
- * so day axes may differ. `btc_depth` (depth part only) and `btc_oi` (oi part only)
- * are each keyed by all three segments.
+ * so day axes may differ.  `btc_depth` (depth part only) and `btc_oi` /
+ * `eth_oi` (oi part only) are each keyed by all three segments.
  */
 interface MasterChartColumnarBase {
 	days: Array<number>
@@ -893,6 +893,7 @@ interface MasterChartColumnarBase {
 	series: Array<Array<Array<number | null> | null>>
 	btc_depth?: Record<MasterSegment, Array<number | null>>
 	btc_oi?: Record<MasterSegment, Array<number | null>>
+	eth_oi?: Record<MasterSegment, Array<number | null>>
 	names: Record<string, string>
 	range: '30d' | '90d' | '1y' | '2y' | 'all'
 	last_updated?: string

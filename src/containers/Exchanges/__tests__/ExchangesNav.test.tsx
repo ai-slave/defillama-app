@@ -63,8 +63,8 @@ describe('Exchanges top-level navigation', () => {
 		expect(html.match(/aria-current="page"/g)).toHaveLength(1)
 		expect(html.match(/<h1[^>]*>/g)).toHaveLength(1)
 		expect(html).toContain(`>${page.heading}</h1>`)
-		// The directory page drops the blurb: its own "Find My Exchange" heading says the same thing.
-		expect(html.includes(`>${page.description}</p>`)).toBe(page.id !== 'exchanges')
+		// Directory and charts drop the blurb: each already says the same thing in its own content.
+		expect(html.includes(`>${page.description}</p>`)).toBe(page.id !== 'exchanges' && page.id !== 'charts')
 	})
 
 	test('uses real route links and exposes descriptions only as inactive-link tooltips', () => {

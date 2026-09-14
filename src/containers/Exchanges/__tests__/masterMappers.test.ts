@@ -1559,38 +1559,87 @@ describe('canonical research charts', () => {
 		])
 	})
 
-	test('shows BTC vs Alt open interest first, with Alt as the cross-exchange total minus BTC', () => {
-		const response: MasterChartColumnarResponse<'oi'> = {
-			days: [1, 2],
-			key: ['linear_perp', 'inverse_perp'],
-			exchanges: ['venue-a', 'venue-b'],
-			types: ['cex', 'cex'],
+	test('trims the leading days a view has no observations for, and keeps a fully blank view intact', () => {
+		const response: MasterChartColumnarResponse<'depth'> = {
+			days: [1, 2, 3, 4],
+			key: ['spot', 'linear_perp', 'inverse_perp'],
+			exchanges: ['venue'],
+			types: ['cex'],
 			series: [
 				[
-					[10, 20],
-					[0, 0]
-				],
-				[
-					[5, 15],
-					[0, 0]
+					[null, null, 30, 40],
+					[1, 2, 3, 4],
+					[null, null, null, null]
 				]
 			],
-			btc_oi: {
-				spot: [0, 0],
-				linear_perp: [4, 10],
-				inverse_perp: [0, 0]
+			btc_depth: {
+				spot: [null, null, 300, 400],
+				linear_perp: [10, 20, 30, 40],
+				inverse_perp: [null, null, null, null]
 			},
-			names: { 'venue-a': 'venue-a', 'venue-b': 'venue-b' },
+			names: { venue: 'venue' },
 			last_updated: '2026-07-14T00:00:00Z',
 			built_at: '2026-07-14T00:02:00Z',
 			range: '1y'
 		}
-		const report = mapMasterResearchReport('oi', response)
+		const views = mapMasterResearchReport('depth', response).views
 
-		expect(report.views[0]?.id).toBe('open-interest-btc-vs-alt')
-		expect(report.views[0]?.chart.lines).toEqual([
-			{ id: 'btc', label: 'BTC', values: [4, 10] },
-			{ id: 'alt', label: 'Alt (ex-BTC)', values: [11, 25] }
+		// Spot opens on day 3, so the two blank leading days go rather than draw as a floor.
+		const spot = views.find((item) => item.id === 'depth-spot-exchanges')!
+		expect(spot.chart.days).toEqual([3, 4])
+		expect(spot.chart.lines.every((line) => line.values.length === 2)).toBe(true)
+
+		// USD perps cover every day, so that view is untouched.
+		const usd = views.find((item) => item.id === 'depth-usd-exchanges')!
+		expect(usd.chart.days).toEqual([1, 2, 3, 4])
+
+		// Nothing to anchor to: a view with no observations keeps its full axis.
+		const coin = views.find((item) => item.id === 'depth-coin-exchanges')!
+		expect(coin.chart.days).toEqual([1, 2, 3, 4])
+	})
+
+	test('reads BTC, ETH and Others as overlapping shares of the same cross-exchange total', () => {
+		const response: MasterChartColumnarResponse<'oi'> = {
+			days: [1, 2, 3],
+			key: ['linear_perp', 'inverse_perp'],
+			exchanges: ['venue-a'],
+			types: ['cex'],
+			series: [
+				[
+					[100, 200, 0],
+					[0, 0, 0]
+				]
+			],
+			btc_oi: {
+				spot: [0, 0, 0],
+				linear_perp: [50, 80, 10],
+				inverse_perp: [0, 0, 0]
+			},
+			eth_oi: {
+				spot: [0, 0, 0],
+				linear_perp: [20, null, 5],
+				inverse_perp: [0, 0, 0]
+			},
+			names: { 'venue-a': 'venue-a' },
+			last_updated: '2026-07-14T00:00:00Z',
+			built_at: '2026-07-14T00:02:00Z',
+			range: '1y'
+		}
+		const views = mapMasterResearchReport('oi', response)
+
+		// The share chart leads the open-interest part.
+		const share = views.views[0]!
+		expect(share.id).toBe('open-interest-base-share')
+		expect(share.chart.valueSymbol).toBe('%')
+
+		// Day 1: 50/100 BTC, 20/100 ETH, the remaining 30/100 Other — the three sum to 1.
+		// Day 2: ETH is unobserved, so ETH and Other are unavailable rather than zero,
+		//        but BTC's own share is still knowable at 80/200.
+		// Day 3: the denominator is 0, so no share is defined.
+		expect(share.chart.lines).toEqual([
+			{ id: 'btc', label: 'BTC', values: [0.5, 0.4, null] },
+			{ id: 'eth', label: 'ETH', values: [0.2, null, null] },
+			{ id: 'other', label: 'Other', values: [0.3, null, null] }
 		])
 	})
 

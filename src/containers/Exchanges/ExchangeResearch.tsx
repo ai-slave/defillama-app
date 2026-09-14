@@ -50,14 +50,20 @@ export function ExchangeResearch({
 	const range = getResearchRange(router.query)
 	return (
 		<div className="flex flex-1 flex-col gap-3">
-			<div className="flex justify-end">
-				<ChartRangeControl range={range} />
-			</div>
-			{RESEARCH_SECTIONS.map((section) => (
+			{RESEARCH_SECTIONS.map((section, sectionIndex) => (
 				<section key={section.title} className="flex flex-col gap-2">
-					<div className="flex flex-col gap-0.5 px-1">
-						<h2 className="heading-xs">{section.title}</h2>
-						<p className="body-sm text-secondary">{section.description}</p>
+					<div className="flex flex-wrap items-start justify-between gap-2 px-1">
+						<div className="flex flex-col gap-0.5">
+							<h2 className="heading-xs">{section.title}</h2>
+							<p className="body-sm text-secondary">{section.description}</p>
+						</div>
+						{/* The range drives every chart on the page, so it rides the first section's
+						    heading instead of owning a near-empty row above it. */}
+						{sectionIndex === 0 ? (
+							<div className="ml-auto shrink-0">
+								<ChartRangeControl range={range} />
+							</div>
+						) : null}
 					</div>
 					<div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
 						{section.charts.map((part) => (

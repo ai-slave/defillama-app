@@ -74,7 +74,11 @@ function UnsupportedMetric() {
 }
 
 function KindBadge({ kind }: { kind: ExchangeVenueKind }) {
-	return <span className="rounded-sm border border-subtle px-1.5 py-0.5 label-sm uppercase">{kind}</span>
+	return (
+		<span className="inline-flex h-[18px] items-center rounded-sm border border-subtle px-1.5 label-sm uppercase">
+			{kind}
+		</span>
+	)
 }
 
 // Tier chip — the public summary of the venue's REAL score.
@@ -90,9 +94,11 @@ export const TIER_COLORS: Record<string, string> = {
 export function TierBadge({ tier }: { tier: string }) {
 	const color = TIER_COLORS[tier] ?? 'inherit'
 	return (
+		// Fixed height, not padding: the cell is a fixed-height <td> with overflow:hidden,
+		// so a padding-sized badge clips its own top and bottom border.
 		<span
-			className="rounded-sm border border-current px-1.5 py-0.5 text-center mono-sm-bold"
-			style={{ color, minWidth: '22px' }}
+			className="inline-flex h-[18px] min-w-[22px] items-center justify-center rounded-sm border border-current px-1.5 mono-sm-bold"
+			style={{ color }}
 		>
 			{tier}
 		</span>
@@ -388,18 +394,24 @@ export function buildDirectoryColumns(
 								)}
 							</Button>
 						) : null}
-						<span className="vf-row-index shrink-0" aria-hidden="true" />
-						{quality?.tier ? (
-							// data-fullwidth lifts the tooltip surface's max-w-56 cap; the hover
-							// card is a ~280px layout, not wrapping prose, and clips without it.
-							<Tooltip
-								content={<QualityHover quality={quality} kind={venue.kind} />}
-								className="shrink-0"
-								data-fullwidth
-							>
-								<TierBadge tier={quality.tier} />
-							</Tooltip>
-						) : null}
+						{/* min-w-2ch holds 1-99, so the 9 -> 10 jump stops shifting the badge, logo and
+						    name right. Scoped here rather than on the shared vf-row-index utility, which
+						    every other table also uses. */}
+						<span className="vf-row-index min-w-[2ch] shrink-0" aria-hidden="true" />
+						{/* Fixed slot: untiered rows keep the badge's width so every logo and name lines up. */}
+						<span className="flex w-[22px] shrink-0 justify-center">
+							{quality?.tier ? (
+								// data-fullwidth lifts the tooltip surface's max-w-56 cap; the hover
+								// card is a ~280px layout, not wrapping prose, and clips without it.
+								<Tooltip
+									content={<QualityHover quality={quality} kind={venue.kind} />}
+									className="shrink-0"
+									data-fullwidth
+								>
+									<TierBadge tier={quality.tier} />
+								</Tooltip>
+							) : null}
+						</span>
 						<TokenLogo
 							name={venue.slug}
 							kind="exchange"

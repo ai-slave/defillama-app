@@ -45,14 +45,22 @@ export function ExchangeDirectory({ directory, loadOverview, countryState }: Exc
 				href={sponsorBannerHref(directory.rows)}
 				target="_blank"
 				rel="noopener noreferrer sponsored"
-				className="mx-auto block w-full overflow-hidden rounded-md sm:w-3/5"
+				className="relative mx-auto block w-full max-w-[1800px] overflow-hidden rounded-md"
 			>
+				{/* Colours are inline rather than classes: the badge sits on the banner art, which is
+				    dark in both themes, so it must not follow the theme the way a semantic token would. */}
+				<span
+					className="absolute top-2 right-2 z-10 rounded-sm px-1.5 py-0.5 label-xs tracking-wide uppercase backdrop-blur-sm"
+					style={{ background: 'rgb(0 0 0 / 0.55)', color: 'rgb(255 255 255 / 0.85)' }}
+				>
+					Sponsored
+				</span>
 				{/* eslint-disable-next-line @next/next/no-img-element */}
 				<img
 					src={SPONSOR_BANNER.imageUrl}
 					alt={SPONSOR_BANNER.alt}
-					width={2560}
-					height={421}
+					width={3840}
+					height={362}
 					className="block h-auto w-full"
 					loading="lazy"
 				/>

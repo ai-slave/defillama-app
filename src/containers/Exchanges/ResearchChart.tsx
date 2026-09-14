@@ -3,6 +3,7 @@ import { buildAlignedCartesianChartModel } from '~/components/ECharts/MultiSerie
 import { ChartPanel, ChartPanelBody, ChartPanelBodyFallback, ChartPanelToolbar } from '~/ui/ChartPanel'
 import { LoadingIndicator } from '~/ui/Status'
 import { formatUsd, formatPercent } from '~/utils/numberFormat'
+import { researchHallmarks } from './chartHallmarks'
 import type { ExchangeResearchChartModel } from './models'
 import type { ResearchPresentation } from './researchPresentation'
 
@@ -33,7 +34,46 @@ function accessibleValue(value: number, symbol: ExchangeResearchChartModel['valu
 		: `${formatPercent(researchChartDisplayValue(value, symbol), { input: 'percent', compact: true, minimumCompactValue: 1_000_000, compactSuffix: 'lowercase' })}`
 }
 
+/**
+ * Brand and asset colors, keyed by the line id the mappers emit. A venue keeps the same
+ * colour on every chart it appears in, and BTC reads as BTC rather than as whatever slot
+ * it landed in. Anything not named here falls through to the index palette.
+ *
+ * ponytail: a flat map, not a token per venue — these are third-party brand colours, not
+ * ours to systematize. Add a row when a venue starts reaching a top-eight slot.
+ *
+ * `btc-spot` / `btc-usd-perp` / `btc-coin-perp` are deliberately absent: they are three
+ * BTC series on one chart, so brand orange would make all three the same line.
+ */
+const BRAND_COLORS: Record<string, string> = {
+	// Assets. the leftover `other` line takes the neutral via researchSeriesColor's fallback.
+	btc: '#f7931a',
+	eth: '#627eea',
+	// Venues.
+	binance: '#f3ba2f',
+	bybit: '#f7a600',
+	// OKX's brand is black, which disappears on the dark theme; this is its lightest
+	// readable stand-in rather than a colour they actually publish.
+	okx: '#b4bcc8',
+	coinbase: '#0052ff',
+	kraken: '#7132f5',
+	bitget: '#00e8d0',
+	gate: '#17e6a1',
+	mexc: '#00b897',
+	htx: '#1b8fe3',
+	kucoin: '#24ae8f',
+	hyperliquid: '#50d2c1',
+	upbit: '#1e5eff',
+	'crypto-com': '#03316c',
+	bitfinex: '#16b157',
+	dydx: '#6966ff',
+	deribit: '#04a7c8',
+	bingx: '#2b5cff'
+}
+
 export function researchSeriesColor(lineId: string, index: number): string {
+	const brand = BRAND_COLORS[lineId]
+	if (brand) return brand
 	return lineId === 'other' ? OTHER_COLOR : (EXCHANGE_COLORS[index % EXCHANGE_COLORS.length] ?? OTHER_COLOR)
 }
 
@@ -74,6 +114,7 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 			),
 		[chart]
 	)
+	const hallmarks = React.useMemo(() => researchHallmarks(chart.metric), [chart.metric])
 	return (
 		<ResearchChartFrame title={chart.title} description={chart.description} toolbar={toolbar} updatedAt={chart.builtAt}>
 			<React.Suspense
@@ -91,6 +132,7 @@ export function ResearchChart({ chart, toolbar }: { chart: ExchangeResearchChart
 						height="360px"
 						hideDefaultLegend={false}
 						exportButtons="hidden"
+						hallmarks={hallmarks}
 					/>
 				</ChartPanelBody>
 			</React.Suspense>

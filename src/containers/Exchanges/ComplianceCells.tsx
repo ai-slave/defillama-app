@@ -160,7 +160,7 @@ function eeaOrderbookTooltip(ownership: ExchangeEeaOrderbookOwnership | null): s
 function StatusBadge({ presentation }: { presentation: StatusPresentation }) {
 	return (
 		<span
-			className={`inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 label-sm ${TONE_CLASS[presentation.tone]}`}
+			className={`inline-flex h-[18px] items-center gap-1 rounded-sm border px-1.5 label-sm ${TONE_CLASS[presentation.tone]}`}
 		>
 			<Icon name={presentation.icon} height={13} width={13} aria-hidden="true" />
 			{presentation.label}

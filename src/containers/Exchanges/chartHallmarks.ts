@@ -14,6 +14,8 @@
  * naming the metrics it affects, and keep the label short enough to sit on an axis.
  */
 
+import type { ExchangeResearchMetric } from './models'
+
 /** Which family of series an event explains. */
 export type HallmarkMetric = 'volume' | 'oi' | 'liquidity' | 'depth'
 
@@ -70,4 +72,22 @@ export function hallmarkMetricsForKeys(keys: ReadonlyArray<string>): Array<Hallm
 		else if (key.includes('volume')) metrics.add('volume')
 	}
 	return [...metrics]
+}
+
+/**
+ * The research report names its metric outright, so it maps straight across rather than
+ * going through `hallmarkMetricsForKeys`. Normalized volume and survival ratio are both
+ * built from volume, so volume events apply to them too.
+ */
+const RESEARCH_METRIC_HALLMARKS: Record<ExchangeResearchMetric, HallmarkMetric> = {
+	volume: 'volume',
+	'normalized-volume': 'volume',
+	'survival-ratio': 'volume',
+	'open-interest': 'oi',
+	depth: 'depth'
+}
+
+/** `[unix seconds, label]` pairs for a research view's metric, oldest first. */
+export function researchHallmarks(metric: ExchangeResearchMetric): Array<[number, string]> {
+	return collectionHallmarks([RESEARCH_METRIC_HALLMARKS[metric]])
 }

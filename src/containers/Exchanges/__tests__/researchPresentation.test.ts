@@ -17,7 +17,7 @@ describe('research chart presentation', () => {
 			'volume-types'
 		])
 		expect(RESEARCH_VIEWS.oi.map((view) => view.id)).toEqual([
-			'open-interest-btc-vs-alt',
+			'open-interest-base-share',
 			'open-interest-usd-exchanges',
 			'open-interest-coin-exchanges',
 			'open-interest-types'
@@ -54,7 +54,12 @@ describe('research chart presentation', () => {
 			expect(labels).toContain('USD Perps')
 			expect(labels).toContain('COIN Perps')
 		}
-		expect(RESEARCH_VIEWS.oi.map((view) => view.label)).toEqual(['BTC vs Alt', 'USD Perps', 'COIN Perps', 'CEX vs DEX'])
+		expect(RESEARCH_VIEWS.oi.map((view) => view.label)).toEqual([
+			'BTC vs ETH vs Others',
+			'USD Perps',
+			'COIN Perps',
+			'CEX vs DEX'
+		])
 		// No view presents a combined "perp" segment.
 		for (const views of Object.values(RESEARCH_VIEWS)) {
 			for (const view of views) {
@@ -68,6 +73,6 @@ describe('research chart presentation', () => {
 		expect(resolveResearchView('depth', 'btc-depth')).toBe('btc-depth')
 		expect(resolveResearchView('nvol', 'survival-coin-exchanges')).toBe('survival-coin-exchanges')
 		expect(resolveResearchView('volume', 'btc-depth')).toBe('spot-exchanges')
-		expect(resolveResearchView('oi', 'survival-spot-exchanges')).toBe('open-interest-btc-vs-alt')
+		expect(resolveResearchView('oi', 'survival-spot-exchanges')).toBe('open-interest-base-share')
 	})
 })

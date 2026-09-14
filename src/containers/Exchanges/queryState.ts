@@ -210,7 +210,7 @@ const RESEARCH_VIEWS: ReadonlyArray<ExchangeResearchView> = [
 	'usd-perp-exchanges',
 	'coin-perp-exchanges',
 	'volume-types',
-	'open-interest-btc-vs-alt',
+	'open-interest-base-share',
 	'open-interest-usd-exchanges',
 	'open-interest-coin-exchanges',
 	'open-interest-types',

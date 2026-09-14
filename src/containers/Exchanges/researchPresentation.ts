@@ -15,17 +15,20 @@ export type ResearchPresentation = Pick<ExchangeResearchChartModel, 'title' | 'd
 	grouping: ExchangeResearchGrouping
 }
 
-const TOP_EXCHANGES =
-	'Up to eight exchanges with the largest latest observation are shown separately; remaining exchanges are grouped as Other.'
+const TOP_EXCHANGES = 'Top eight by latest observation; the rest grouped as Other.'
+
+/** Provenance, not decoration: these are our measurements, not venue-reported figures. */
+const OWN_BOOKS = 'Measured from our own order-book snapshots.'
+
+/** Repeated tail of the survival-ratio views. */
+const SURVIVAL_OTHER = 'Ranked by latest reported volume; Other is aggregated before dividing.'
 
 /** Said wherever normalized volume is charted: the gap it draws is a measurement limit
  *  as often as a venue's, and the chart should not be read as an accusation. */
-const NVOL_CAVEAT =
-	'A gap to reported volume is not an accusation: real liquidity our snapshot did not reach produces the same gap.'
+const NVOL_CAVEAT = 'A gap to reported volume may also be liquidity our snapshot missed.'
 
-const LINEAR_PERPS = 'USD perps are margined and settled in a quote asset such as USDT or USDC.'
-const INVERSE_PERPS =
-	'COIN perps are margined and settled in the underlying coin, so collateral and PnL are denominated in that coin.'
+const LINEAR_PERPS = 'USD perps settle in USDT or USDC.'
+const INVERSE_PERPS = 'COIN perps settle in the underlying coin.'
 
 export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<ResearchPresentation>> = {
 	volume: [
@@ -66,20 +69,20 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'separate',
 			grouping: 'venue-type',
 			title: 'Volume · CEX vs DEX',
-			description: 'Daily volume grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate.',
+			description: 'Daily volume by exchange type, segments kept separate.',
 			valueSymbol: '$'
 		}
 	],
 	oi: [
 		{
-			id: 'open-interest-btc-vs-alt',
-			label: 'BTC vs Alt',
+			id: 'open-interest-base-share',
+			label: 'BTC vs ETH vs Others',
 			metric: 'open-interest',
 			segment: 'linear_perp',
 			grouping: 'segment',
-			title: 'USD perp open interest · BTC vs Alt',
-			description: `Daily USD perp open interest split between BTC and every other base combined, across all exchanges. ${LINEAR_PERPS}`,
-			valueSymbol: '$'
+			title: 'USD perp open interest share · BTC vs ETH vs Others',
+			description: `Each base's share of daily USD perp open interest. ${LINEAR_PERPS}`,
+			valueSymbol: '%'
 		},
 		{
 			id: 'open-interest-usd-exchanges',
@@ -108,8 +111,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'separate',
 			grouping: 'venue-type',
 			title: 'Open interest · CEX vs DEX',
-			description:
-				'Daily perpetual open interest grouped by exchange type, with USD and COIN perp lines kept separate.',
+			description: 'Daily perp open interest by exchange type, segments kept separate.',
 			valueSymbol: '$'
 		}
 	],
@@ -121,7 +123,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'spot',
 			grouping: 'exchange',
 			title: 'Spot market depth · Exchanges',
-			description: `End-of-day spot bid plus ask depth within ±2% of mid by exchange, from our own order-book snapshots. ${TOP_EXCHANGES}`,
+			description: `End-of-day spot depth within ±2% of mid, by exchange. ${OWN_BOOKS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -131,7 +133,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'linear_perp',
 			grouping: 'exchange',
 			title: 'USD perp market depth · Exchanges',
-			description: `End-of-day USD perp bid plus ask depth within ±2% of mid by exchange, from our own order-book snapshots. ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
+			description: `End-of-day USD perp depth within ±2% of mid, by exchange. ${OWN_BOOKS} ${LINEAR_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -141,7 +143,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'inverse_perp',
 			grouping: 'exchange',
 			title: 'COIN perp market depth · Exchanges',
-			description: `End-of-day COIN perp bid plus ask depth within ±2% of mid by exchange, from our own order-book snapshots. ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
+			description: `End-of-day COIN perp depth within ±2% of mid, by exchange. ${OWN_BOOKS} ${INVERSE_PERPS} ${TOP_EXCHANGES}`,
 			valueSymbol: '$'
 		},
 		{
@@ -151,8 +153,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'separate',
 			grouping: 'venue-type',
 			title: 'Market depth · CEX vs DEX',
-			description:
-				'End-of-day bid plus ask depth within ±2% of mid from our own order-book snapshots, grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate.',
+			description: `End-of-day depth within ±2% of mid by exchange type, segments kept separate. ${OWN_BOOKS}`,
 			valueSymbol: '$'
 		},
 		{
@@ -162,8 +163,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'separate',
 			grouping: 'segment',
 			title: 'Market depth · BTC by segment',
-			description:
-				'Daily BTC bid plus ask depth within ±2% of mid across all exchanges, from our own order-book snapshots, with spot, USD perp, and COIN perp lines kept separate.',
+			description: `Daily BTC depth within ±2% of mid across all exchanges, by segment. ${OWN_BOOKS}`,
 			valueSymbol: '$'
 		}
 	],
@@ -205,7 +205,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'separate',
 			grouping: 'venue-type',
 			title: 'Liquidity-normalized volume · CEX vs DEX',
-			description: `Daily normalized volume grouped by exchange type, with spot, USD perp, and COIN perp lines kept separate. ${NVOL_CAVEAT}`,
+			description: `Daily normalized volume by exchange type, segments kept separate. ${NVOL_CAVEAT}`,
 			valueSymbol: '$'
 		},
 		{
@@ -215,7 +215,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'separate',
 			grouping: 'segment',
 			title: 'Liquidity-normalized volume · By segment',
-			description: `Daily normalized volume grouped by market segment: spot, USD perps, and COIN perps. ${NVOL_CAVEAT}`,
+			description: `Daily normalized volume by market segment: spot, USD perps, COIN perps. ${NVOL_CAVEAT}`,
 			valueSymbol: '$'
 		},
 		{
@@ -225,8 +225,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'spot',
 			grouping: 'exchange',
 			title: 'Normalized / reported spot volume · Exchanges',
-			description:
-				'Daily normalized spot volume divided by reported spot volume for each exchange. Exchanges are ranked by latest reported volume; Other is calculated from aggregated normalized and reported volume.',
+			description: `Daily normalized spot volume divided by reported, by exchange. ${SURVIVAL_OTHER}`,
 			valueSymbol: '%'
 		},
 		{
@@ -236,7 +235,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'linear_perp',
 			grouping: 'exchange',
 			title: 'Normalized / reported USD perp volume · Exchanges',
-			description: `Daily normalized USD perp volume divided by reported USD perp volume for each exchange. ${LINEAR_PERPS} Exchanges are ranked by latest reported volume; Other is calculated from aggregated normalized and reported volume.`,
+			description: `Daily normalized USD perp volume divided by reported, by exchange. ${LINEAR_PERPS} ${SURVIVAL_OTHER}`,
 			valueSymbol: '%'
 		},
 		{
@@ -246,7 +245,7 @@ export const RESEARCH_VIEWS: Record<ExchangeResearchPart, ReadonlyArray<Research
 			segment: 'inverse_perp',
 			grouping: 'exchange',
 			title: 'Normalized / reported COIN perp volume · Exchanges',
-			description: `Daily normalized COIN perp volume divided by reported COIN perp volume for each exchange. ${INVERSE_PERPS} Exchanges are ranked by latest reported volume; Other is calculated from aggregated normalized and reported volume.`,
+			description: `Daily normalized COIN perp volume divided by reported, by exchange. ${INVERSE_PERPS} ${SURVIVAL_OTHER}`,
 			valueSymbol: '%'
 		}
 	]
